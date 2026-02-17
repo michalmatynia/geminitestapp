@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-02-17T16:32:39.028Z",
+  "generatedAt": "2026-02-17T16:19:24.878Z",
   "source": {
-    "totalFiles": 2657,
-    "totalLines": 427283,
+    "totalFiles": 2655,
+    "totalLines": 427121,
     "useClientFiles": 897,
-    "filesOver800": 83,
-    "filesOver1000": 19,
-    "filesOver1500": 19,
+    "filesOver800": 82,
+    "filesOver1000": 21,
+    "filesOver1500": 20,
     "largestFile": {
       "path": "src/features/database/services/database-sync.ts",
       "lines": 3352
@@ -118,7 +118,7 @@
     "topCrossFeatureEdges": [
       {
         "edge": "integrations -> products",
-        "references": 56
+        "references": 54
       },
       {
         "edge": "ai -> observability",
@@ -221,12 +221,12 @@
       {
         "feature": "ai",
         "files": 455,
-        "lines": 119699
+        "lines": 119680
       },
       {
         "feature": "products",
         "files": 196,
-        "lines": 38618
+        "lines": 38620
       },
       {
         "feature": "cms",
@@ -235,8 +235,8 @@
       },
       {
         "feature": "integrations",
-        "files": 153,
-        "lines": 29087
+        "files": 151,
+        "lines": 29044
       },
       {
         "feature": "prompt-exploder",
@@ -246,7 +246,7 @@
       {
         "feature": "case-resolver",
         "files": 40,
-        "lines": 18816
+        "lines": 18823
       },
       {
         "feature": "notesapp",
@@ -391,7 +391,7 @@
       },
       {
         "path": "src/features/ai/image-studio/components/StudioModals.tsx",
-        "lines": 2842
+        "lines": 2839
       },
       {
         "path": "src/features/prompt-exploder/parser.ts",
@@ -420,6 +420,10 @@
       {
         "path": "src/features/ai/agent-runtime/planning/llm.ts",
         "lines": 2225
+      },
+      {
+        "path": "src/features/integrations/services/exports/base-exporter.ts",
+        "lines": 2148
       },
       {
         "path": "src/features/ai/image-studio/components/GenerationToolbar.tsx",
@@ -455,11 +459,15 @@
       },
       {
         "path": "src/features/ai/image-studio/components/CenterPreview.tsx",
-        "lines": 1766
+        "lines": 1767
       },
       {
         "path": "src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx",
         "lines": 1763
+      },
+      {
+        "path": "src/app/api/integrations/products/[id]/export-to-base/handler.ts",
+        "lines": 1469
       },
       {
         "path": "src/app/api/image-studio/slots/[slotId]/upscale/handler.ts",
@@ -467,6 +475,10 @@
       },
       {
         "path": "src/features/ai/ai-paths/components/canvas-board.tsx",
+        "lines": 996
+      },
+      {
+        "path": "src/features/case-resolver/components/CaseResolverFolderTree.tsx",
         "lines": 996
       },
       {
@@ -486,20 +498,8 @@
         "lines": 990
       },
       {
-        "path": "src/features/case-resolver/components/CaseResolverFolderTree.tsx",
-        "lines": 989
-      },
-      {
         "path": "src/features/integrations/services/category-mapping-repository.ts",
         "lines": 988
-      },
-      {
-        "path": "src/app/api/integrations/products/[id]/export-to-base/handler.ts",
-        "lines": 986
-      },
-      {
-        "path": "src/features/integrations/services/exports/base-exporter-template-mappings.ts",
-        "lines": 985
       },
       {
         "path": "src/app/api/integrations/[id]/connections/[connectionId]/test/handler.ts",

@@ -32,7 +32,6 @@ import { useUiActions, useUiState } from '../context/UiContext';
 import { useVersionGraphState } from '../context/VersionGraphContext';
 import { estimateGenerationCost } from '../utils/generation-cost';
 import { getImageStudioSlotImageSrc, isLikelyImageStudioErrorText } from '../utils/image-src';
-import { isImageStudioSlotImageLocked } from '../utils/slot-image-lock';
 import {
   asFiniteNumber,
   asObjectRecord,
@@ -53,7 +52,20 @@ const PREVIEW_MODE_OPTIONS = [
   { value: 'image', label: 'Image' },
   { value: '3d', label: '3D' },
 ] as const;
+type PreviewCanvasSize = 'regular' | 'large' | 'xlarge';
+const PREVIEW_CANVAS_SIZE_OPTIONS: Array<{ value: PreviewCanvasSize; label: string }> = [
+  { value: 'regular', label: 'Regular' },
+  { value: 'large', label: 'Large' },
+  { value: 'xlarge', label: 'XLarge' },
+];
+const PREVIEW_CANVAS_MIN_HEIGHT_BY_SIZE: Record<PreviewCanvasSize, number> = {
+  regular: 280,
+  large: 380,
+  xlarge: 480,
+};
+const PREVIEW_VARIANT_PANEL_HEIGHT = '15rem';
 const REVEAL_IN_TREE_EVENT = 'image-studio:reveal-in-tree';
+const IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID = 'image-studio-quick-actions-host';
 const GENERATED_SOURCE_PATH_REGEX = /^\/uploads\/studio\/(?:center|crops|upscale)\/[^/]+\/([^/]+)\//i;
 
 const resolveSourceSlotIdFromGeneratedPath = (slot: ImageStudioSlotRecord | null): string | null => {
@@ -150,6 +162,7 @@ export function CenterPreview(): React.JSX.Element {
   const [variantTimestampQuery, setVariantTimestampQuery] = useState('');
   const [singleVariantView, setSingleVariantView] = useState<'variant' | 'source'>('variant');
   const [splitVariantView, setSplitVariantView] = useState(false);
+  const [previewCanvasSize, setPreviewCanvasSize] = useState<PreviewCanvasSize>('regular');
   const [compareVariantIds, setCompareVariantIds] = useState<[string | null, string | null]>([null, null]);
   const [leftSplitZoom, setLeftSplitZoom] = useState(1);
   const [rightSplitZoom, setRightSplitZoom] = useState(1);
@@ -179,13 +192,6 @@ export function CenterPreview(): React.JSX.Element {
   const workingSlotImageSrc = useMemo(() => {
     return getImageStudioSlotImageSrc(workingSlot, productImagesExternalBaseUrl);
   }, [workingSlot, productImagesExternalBaseUrl]);
-  const selectedSlotImageSrc = useMemo(() => {
-    return getImageStudioSlotImageSrc(selectedSlot, productImagesExternalBaseUrl);
-  }, [productImagesExternalBaseUrl, selectedSlot]);
-  const selectedSlotImageLocked = useMemo(
-    () => isImageStudioSlotImageLocked(selectedSlot),
-    [selectedSlot]
-  );
   const temporaryObjectImageSrc = useMemo(() => {
     const raw = temporaryObjectUpload?.filepath?.trim() ?? '';
     if (!raw) return null;
@@ -281,14 +287,11 @@ export function CenterPreview(): React.JSX.Element {
     // Composite preview: use composited result image when available
     if (isCompositeSlot && compositeResultImage) return compositeResultImage;
     if (canCompareWithSource && singleVariantView === 'source') return sourceSlotImageSrc;
-    const selectedCanvasImageSrc = selectedSlotImageLocked ? null : selectedSlotImageSrc;
-    return workingSlotImageSrc ?? selectedCanvasImageSrc ?? temporaryObjectImageSrc;
+    return workingSlotImageSrc ?? temporaryObjectImageSrc;
   }, [
     isCompositeSlot,
     compositeResultImage,
     canCompareWithSource,
-    selectedSlotImageLocked,
-    selectedSlotImageSrc,
     temporaryObjectImageSrc,
     singleVariantView,
     sourceSlotImageSrc,
@@ -300,18 +303,16 @@ export function CenterPreview(): React.JSX.Element {
     if (canCompareWithSource && singleVariantView === 'source') {
       return sourceSlot?.id ?? null;
     }
-    return workingSlot?.id ?? (selectedSlotImageLocked ? null : selectedSlot?.id ?? null);
+    return workingSlot?.id ?? null;
   }, [
     canCompareWithSource,
     previewMode,
-    selectedSlot?.id,
-    selectedSlotImageLocked,
     singleVariantView,
     sourceSlot?.id,
     splitVariantView,
     workingSlot?.id,
   ]);
-  const revealableCanvasSlot = workingSlot ?? (selectedSlotImageLocked ? null : selectedSlot) ?? null;
+  const revealableCanvasSlot = workingSlot ?? null;
   const canRevealLoadedCardInTree = useMemo(
     () => isTreeRevealableCardSlot(revealableCanvasSlot),
     [revealableCanvasSlot]
@@ -340,7 +341,7 @@ export function CenterPreview(): React.JSX.Element {
   const previewCanvasClassName = useMemo(
     () =>
       cn(
-        'h-[clamp(280px,46vh,520px)]',
+        'h-full',
         'bg-slate-900',
       ),
     [],
@@ -849,6 +850,19 @@ export function CenterPreview(): React.JSX.Element {
   const compareVariantImageA = compareVariantA?.imageSrc ?? compareVariantA?.output?.filepath ?? null;
   const compareVariantImageB = compareVariantB?.imageSrc ?? compareVariantB?.output?.filepath ?? null;
   const canCompareSelectedVariants = Boolean(compareVariantImageA && compareVariantImageB);
+  const activeProjectIdLabel = useMemo(() => {
+    const normalized = projectId.trim();
+    return normalized || 'No project';
+  }, [projectId]);
+  const previewGridStyle = useMemo((): React.CSSProperties => {
+    const canvasMinHeightPx = PREVIEW_CANVAS_MIN_HEIGHT_BY_SIZE[previewCanvasSize];
+    if (!showVariantPanel) {
+      return { gridTemplateRows: `minmax(${canvasMinHeightPx}px, 1fr)` };
+    }
+    return {
+      gridTemplateRows: `minmax(${canvasMinHeightPx}px, 1fr) ${PREVIEW_VARIANT_PANEL_HEIGHT}`,
+    };
+  }, [previewCanvasSize, showVariantPanel]);
 
   useEffect(() => {
     if (canCompareWithSource) return;
@@ -1448,18 +1462,35 @@ export function CenterPreview(): React.JSX.Element {
           ) : null}
         </div>
         <div />
-        <div />
+        <div className='flex min-w-0 items-center justify-end gap-2'>
+          {previewMode === 'image' ? (
+            <>
+              <span className='text-[10px] uppercase tracking-wide text-gray-500'>Canvas</span>
+              <ToggleButtonGroup
+                value={previewCanvasSize}
+                onChange={setPreviewCanvasSize}
+                options={PREVIEW_CANVAS_SIZE_OPTIONS}
+                className='text-[11px] text-gray-300'
+                size='xs'
+              />
+            </>
+          ) : null}
+          <span
+            className='max-w-[220px] truncate rounded border border-border/60 bg-card/30 px-2 py-1 text-[11px] text-gray-300'
+            title={activeProjectIdLabel}
+          >
+            {activeProjectIdLabel}
+          </span>
+        </div>
       </div>
       {focusToggleButton}
       {variantPointerTooltip}
       <div className='flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-3 pt-0'>
         <div
-          className={cn(
-            'grid min-h-0 flex-1 gap-3',
-            showVariantPanel ? 'grid-rows-[minmax(0,1fr)_auto]' : 'grid-rows-[minmax(0,1fr)]',
-          )}
+          className='grid min-h-0 flex-1 gap-3'
+          style={previewGridStyle}
         >
-          <div className='relative min-h-0'>
+          <div className='relative min-h-0 overflow-hidden'>
             <VectorDrawingProvider value={vectorContextValue}>
               {previewMode === '3d' && workingSlot?.asset3dId ? (
                 <Viewer3D
@@ -1542,7 +1573,7 @@ export function CenterPreview(): React.JSX.Element {
             ) : null}
           </div>
           {showVariantPanel ? (
-            <div className='shrink-0 overflow-hidden rounded-lg border border-border/60 bg-card/40 p-2'>
+            <div className='h-full shrink-0 overflow-hidden rounded-lg border border-border/60 bg-card/40 p-2'>
               <div className='mb-2 flex items-center gap-2'>
                 <Input size='sm'
                   value={variantTimestampQuery}
@@ -1568,7 +1599,7 @@ export function CenterPreview(): React.JSX.Element {
                   onClick={(): void => setCompareVariantIds([null, null])}
                   className='h-6 px-2 text-[10px] text-gray-300'
                 >
-                  Clear
+                    Clear
                 </Button>
               </div>
               <div className='overflow-x-auto overflow-y-hidden pb-1 pr-1'>
@@ -1577,14 +1608,14 @@ export function CenterPreview(): React.JSX.Element {
                     {filteredVariantThumbnails.map((variant) => {
                       const isActive = activeVariantId === variant.id;
                       const canDeleteVariant =
-                        variant.status !== 'pending' &&
-                        (variant.status === 'failed' || Boolean(variant.output) || Boolean(variant.slotId));
+                          variant.status !== 'pending' &&
+                          (variant.status === 'failed' || Boolean(variant.output) || Boolean(variant.slotId));
                       const statusClasses =
-                        variant.status === 'completed'
-                          ? 'border-border/60 bg-card/30'
-                          : variant.status === 'failed'
-                            ? 'border-red-400/40 bg-red-500/5'
-                            : 'border-border/60 bg-card/30';
+                          variant.status === 'completed'
+                            ? 'border-border/60 bg-card/30'
+                            : variant.status === 'failed'
+                              ? 'border-red-400/40 bg-red-500/5'
+                              : 'border-border/60 bg-card/30';
                       const activeClasses = isActive
                         ? 'border-sky-400/80 bg-sky-500/15 ring-2 ring-sky-400/70'
                         : '';
@@ -1613,7 +1644,7 @@ export function CenterPreview(): React.JSX.Element {
                           >
                             <div className='mb-1 text-[10px] text-gray-400'>Variant {variant.index}</div>
                             {variant.output ? (
-                              // eslint-disable-next-line @next/next/no-img-element
+                            // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 src={variant.imageSrc || variant.output.filepath}
                                 alt={variant.output.filename || `Generated ${variant.index}`}
@@ -1624,7 +1655,7 @@ export function CenterPreview(): React.JSX.Element {
                                 {variant.status === 'pending' ? (
                                   <span className='inline-flex items-center gap-1'>
                                     {isRunInFlight ? <Loader2 className='size-3 animate-spin' /> : null}
-                                    Waiting
+                                      Waiting
                                   </span>
                                 ) : (
                                   <span>Failed</span>
@@ -1645,7 +1676,7 @@ export function CenterPreview(): React.JSX.Element {
                                 aria-pressed={isCompareA}
                                 className={cn('size-5 rounded bg-black/65 px-0 text-[10px] text-cyan-200 hover:bg-cyan-500/20 hover:text-cyan-100', isCompareA && 'bg-cyan-500/30 text-cyan-100')}
                               >
-                                1
+                                  1
                               </Button>
                               <Button
                                 size='xs'
@@ -1658,7 +1689,7 @@ export function CenterPreview(): React.JSX.Element {
                                 aria-pressed={isCompareB}
                                 className={cn('size-5 rounded bg-black/65 px-0 text-[10px] text-amber-200 hover:bg-amber-500/20 hover:text-amber-100', isCompareB && 'bg-amber-500/30 text-amber-100')}
                               >
-                                2
+                                  2
                               </Button>
                             </div>
                             <div className='flex items-center gap-1'>
@@ -1695,11 +1726,11 @@ export function CenterPreview(): React.JSX.Element {
                   </div>
                 ) : visibleVariantThumbnails.length > 0 ? (
                   <div className='px-2 py-3 text-xs text-gray-500'>
-                    No variants match this timestamp search.
+                      No variants match this timestamp search.
                   </div>
                 ) : (
                   <div className='px-2 py-3 text-xs text-gray-500'>
-                    Start generation to prepare output slots under the canvas.
+                      Start generation to prepare output slots under the canvas.
                   </div>
                 )}
                 {activeRunError ? (
@@ -1712,7 +1743,7 @@ export function CenterPreview(): React.JSX.Element {
                       className='h-6 shrink-0 px-2 text-[10px] text-red-200 hover:text-red-100'
                       onClick={clearActiveRunError}
                     >
-                      Dismiss
+                        Dismiss
                     </Button>
                   </div>
                 ) : null}
@@ -1720,6 +1751,7 @@ export function CenterPreview(): React.JSX.Element {
             </div>
           ) : null}
         </div>
+        {showVariantPanel ? <div id={IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID} className='shrink-0' /> : null}
       </div>
       <VersionNodeDetailsModal
         isOpen={Boolean(detailsNode)}

@@ -2,38 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { auth } from '@/features/auth/server';
-import { getIntegrationRepository } from '@/features/integrations/server';
-import { getProductListingRepository } from '@/features/integrations/server';
-import { findProductListingByIdAcrossProviders } from '@/features/integrations/server';
-import { findProductListingByProductAndConnectionAcrossProviders } from '@/features/integrations/server';
-import { getCategoryMappingRepository } from '@/features/integrations/server';
-import { getProducerMappingRepository } from '@/features/integrations/server';
-import { getTagMappingRepository } from '@/features/integrations/server';
-import {
-  getExportActiveTemplateId,
-  getExportWarehouseId
-} from '@/features/integrations/server';
-import {
-  getExportDefaultInventoryId,
-  getExportStockFallbackEnabled,
-  listExportTemplates
-} from '@/features/integrations/server';
 import {
   buildBaseProductData,
+  checkBaseSkuExists,
+  decryptSecret,
   exportProductImagesToBase,
   exportProductToBase,
-  normalizeStockKey,
-  type ImageBase64Mode,
-  type ImageTransformOptions
+  getExportDefaultInventoryId,
+  getExportWarehouseId,
+  getIntegrationRepository,
+  getProductListingRepository,
+  getExportStockFallbackEnabled,
+  LogCapture,
+  findProductListingByIdAcrossProviders,
+  findProductListingByProductAndConnectionAcrossProviders,
 } from '@/features/integrations/server';
-import { checkBaseSkuExists, fetchBaseWarehouses } from '@/features/integrations/server';
-import { decryptSecret } from '@/features/integrations/server';
-import { LogCapture } from '@/features/integrations/server';
 import { ErrorSystem } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
-import { getProducerRepository } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';
-import { getTagRepository } from '@/features/products/server';
 import {
   badRequestError,
   conflictError,
@@ -46,20 +32,14 @@ import {
   BASE_EXPORT_RUN_PATH_ID,
   BASE_EXPORT_RUN_PATH_NAME,
   BASE_EXPORT_SOURCE,
-  CATEGORY_TEMPLATE_PRODUCT_FIELDS,
-  PRODUCER_ID_TEMPLATE_FIELDS,
-  TAG_ID_TEMPLATE_FIELDS,
   buildImageDiagnosticsLogger,
   clearExpiredExportRequestLocks,
   exportSchema,
-  getProducerRefId,
   inFlightExportRequests,
   isBaseImageError,
-  isMissingExternalEntity,
   logImageDiagnostics,
-  matchesTemplateField,
-  toTimeMs,
-  toTrimmedString,
+  prepareBaseExportMappingsAndProduct,
+  resolveWarehouseAndStockMappings,
 } from './helpers';
 
 /**
@@ -263,407 +243,26 @@ export async function postExportToBaseHandler(
       );
     }
 
-    // Get template mappings (explicit template first, then active export template fallback)
-    let mappings: { sourceKey: string; targetField: string }[] = [];
-    let resolvedTemplateId: string | null = null;
-    const requestedTemplateId = toTrimmedString(data.templateId);
-    const hasImageOverrides = Boolean(data.imageBase64Mode || data.imageTransform);
-    let exportImagesAsBase64 = imagesOnly
-      ? true
-      : data.exportImagesAsBase64 ?? hasImageOverrides;
-    let imageBase64Mode: ImageBase64Mode = data.imageBase64Mode ?? 'base-only';
-    let imageTransform: ImageTransformOptions | null = null;
-    if (data.imageTransform) {
-      imageTransform = {};
-      if (data.imageTransform.forceJpeg !== undefined)
-        imageTransform.forceJpeg = data.imageTransform.forceJpeg;
-      if (data.imageTransform.maxDimension !== undefined)
-        imageTransform.maxDimension = data.imageTransform.maxDimension;
-      if (data.imageTransform.jpegQuality !== undefined)
-        imageTransform.jpegQuality = data.imageTransform.jpegQuality;
-    }
-    if (!imagesOnly) {
-      const fallbackTemplateId = requestedTemplateId
-        ? ''
-        : toTrimmedString(
-          await getExportActiveTemplateId({
-            connectionId: data.connectionId,
-            inventoryId: resolvedInventoryId,
-          })
-        );
-      const templateIdToUse = requestedTemplateId || fallbackTemplateId;
-      if (templateIdToUse) {
-        const templates = await listExportTemplates();
-        const template = templates.find((entry) => entry.id === templateIdToUse);
-        if (!template) {
-          if (requestedTemplateId) {
-            throw badRequestError(
-              `Export template "${requestedTemplateId}" was not found. Select an existing template and retry.`
-            );
-          }
-          await ErrorSystem.logWarning(
-            '[export-to-base] Active export template not found; continuing without template mappings.',
-            {
-              productId,
-              connectionId: data.connectionId,
-              templateId: templateIdToUse,
-            }
-          );
-        } else {
-          mappings = template.mappings;
-          resolvedTemplateId = template.id;
-          // Use template's exportImagesAsBase64 setting if not explicitly overridden
-          if (
-            !hasImageOverrides &&
-            data.exportImagesAsBase64 === undefined &&
-            template.exportImagesAsBase64 !== undefined
-          ) {
-            exportImagesAsBase64 = template.exportImagesAsBase64;
-          }
-        }
-      }
-    }
-
-    const productProducerIds = !imagesOnly
-      ? Array.from(
-        new Set(
-          (product.producers ?? [])
-            .map((producer) => getProducerRefId(producer))
-            .filter((producerId): producerId is string => Boolean(producerId))
-        )
-      )
-      : [];
-    const productTagIds = !imagesOnly
-      ? Array.from(
-        new Set(
-          (product.tags ?? [])
-            .map((tag: { tagId?: string }) => tag.tagId?.trim())
-            .filter((tagId): tagId is string => Boolean(tagId))
-        )
-      )
-      : [];
-    let producerNameById: Record<string, string> | null = null;
-    let producerExternalIdByInternalId: Record<string, string> | null = null;
-    let tagNameById: Record<string, string> | null = null;
-    let tagExternalIdByInternalId: Record<string, string> | null = null;
-    if (!imagesOnly && productProducerIds.length > 0) {
-      try {
-        const producerRepository = await getProducerRepository();
-        const resolvedProducers = await Promise.all(
-          productProducerIds.map(async (producerId: string) => {
-            try {
-              return await producerRepository.getProducerById(producerId);
-            } catch {
-              return null;
-            }
-          })
-        );
-        const mappedEntries = resolvedProducers
-          .map((producer) => {
-            const id = typeof producer?.id === 'string' ? producer.id.trim() : '';
-            const name =
-              typeof producer?.name === 'string' ? producer.name.trim() : '';
-            if (!id || !name) return null;
-            return [id, name] as const;
-          })
-          .filter(
-            (entry): entry is readonly [string, string] => entry !== null
-          );
-        if (mappedEntries.length > 0) {
-          producerNameById = Object.fromEntries([
-            ...mappedEntries,
-            ...mappedEntries.map(([id, name]) => [id.toLowerCase(), name] as const),
-          ]);
-        }
-      } catch (error) {
-        await ErrorSystem.logWarning(
-          '[export-to-base] Failed to resolve producer names for export',
-          {
-            productId,
-            producerCount: productProducerIds.length,
-            error: error instanceof Error ? error.message : String(error),
-          }
-        );
-      }
-
-      try {
-        const producerMappingRepo = getProducerMappingRepository();
-        const producerMappings =
-          await producerMappingRepo.listByInternalProducerIds(
-            data.connectionId,
-            productProducerIds
-          );
-        const mappedEntries = producerMappings
-          .map((mapping) => {
-            const internalProducerId =
-              typeof mapping.internalProducerId === 'string'
-                ? mapping.internalProducerId.trim()
-                : '';
-            const externalProducerId =
-              typeof mapping.externalProducer?.externalId === 'string'
-                ? mapping.externalProducer.externalId.trim()
-                : '';
-            const missingExternalProducer = isMissingExternalEntity(
-              mapping.externalProducer?.name,
-              'producer'
-            );
-            if (!internalProducerId || !externalProducerId || missingExternalProducer) return null;
-            return [internalProducerId, externalProducerId] as const;
-          })
-          .filter(
-            (entry): entry is readonly [string, string] => entry !== null
-          );
-        if (mappedEntries.length > 0) {
-          producerExternalIdByInternalId = Object.fromEntries([
-            ...mappedEntries,
-            ...mappedEntries.map(([id, externalId]) => [id.toLowerCase(), externalId] as const),
-          ]);
-        }
-      } catch (error) {
-        await ErrorSystem.logWarning(
-          '[export-to-base] Failed to resolve producer mappings for export',
-          {
-            productId,
-            producerCount: productProducerIds.length,
-            error: error instanceof Error ? error.message : String(error),
-          }
-        );
-      }
-    }
-
-    if (!imagesOnly && productTagIds.length > 0) {
-      try {
-        const tagRepository = await getTagRepository();
-        const resolvedTags = await Promise.all(
-          productTagIds.map(async (tagId: string) => {
-            try {
-              return await tagRepository.getTagById(tagId);
-            } catch {
-              return null;
-            }
-          })
-        );
-        const mappedEntries = resolvedTags
-          .map((tag) => {
-            const id = typeof tag?.id === 'string' ? tag.id.trim() : '';
-            const name = typeof tag?.name === 'string' ? tag.name.trim() : '';
-            if (!id || !name) return null;
-            return [id, name] as const;
-          })
-          .filter((entry): entry is readonly [string, string] => entry !== null);
-        if (mappedEntries.length > 0) {
-          tagNameById = Object.fromEntries([
-            ...mappedEntries,
-            ...mappedEntries.map(([id, name]) => [id.toLowerCase(), name] as const),
-          ]);
-        }
-      } catch (error) {
-        await ErrorSystem.logWarning(
-          '[export-to-base] Failed to resolve tag names for export',
-          {
-            productId,
-            tagCount: productTagIds.length,
-            error: error instanceof Error ? error.message : String(error),
-          }
-        );
-      }
-
-      try {
-        const tagMappingRepo = getTagMappingRepository();
-        const tagMappings = await tagMappingRepo.listByInternalTagIds(
-          data.connectionId,
-          productTagIds
-        );
-        const mappedEntries = tagMappings
-          .map((mapping) => {
-            const internalTagId =
-              typeof mapping.internalTagId === 'string'
-                ? mapping.internalTagId.trim()
-                : '';
-            const externalTagId =
-              typeof mapping.externalTag?.externalId === 'string'
-                ? mapping.externalTag.externalId.trim()
-                : '';
-            if (!internalTagId || !externalTagId) return null;
-            return [internalTagId, externalTagId] as const;
-          })
-          .filter((entry): entry is readonly [string, string] => entry !== null);
-        if (mappedEntries.length > 0) {
-          tagExternalIdByInternalId = Object.fromEntries([
-            ...mappedEntries,
-            ...mappedEntries.map(([id, externalId]) => [id.toLowerCase(), externalId] as const),
-          ]);
-        }
-      } catch (error) {
-        await ErrorSystem.logWarning(
-          '[export-to-base] Failed to resolve tag mappings for export',
-          {
-            productId,
-            tagCount: productTagIds.length,
-            error: error instanceof Error ? error.message : String(error),
-          }
-        );
-      }
-    }
-
-    let exportProduct = product;
-    if (!imagesOnly) {
-      const hasProducerIdTemplateMapping = mappings.some((mapping) => {
-        const sourceKey = mapping['sourceKey'];
-        const targetField = mapping['targetField'];
-        return (
-          matchesTemplateField(sourceKey, PRODUCER_ID_TEMPLATE_FIELDS) ||
-          matchesTemplateField(targetField, PRODUCER_ID_TEMPLATE_FIELDS)
-        );
-      });
-      if (hasProducerIdTemplateMapping && productProducerIds.length > 0) {
-        const missingProducerIds = productProducerIds.filter((producerId: string) => {
-          const direct = producerExternalIdByInternalId?.[producerId];
-          const lowered = producerExternalIdByInternalId?.[producerId.toLowerCase()];
-          return !direct && !lowered;
-        });
-        if (missingProducerIds.length > 0) {
-          const missingProducerNames = missingProducerIds.map((producerId: string) => {
-            const direct = producerNameById?.[producerId];
-            const lowered = producerNameById?.[producerId.toLowerCase()];
-            return direct ?? lowered ?? producerId;
-          });
-          throw badRequestError(
-            `No Base.com producer mapping found for: ${missingProducerNames.join(', ')}. Map producers in Producer Mapper first.`
-          );
-        }
-      }
-
-      const hasTagIdTemplateMapping = mappings.some((mapping) => {
-        const sourceKey = mapping['sourceKey'];
-        const targetField = mapping['targetField'];
-        return (
-          matchesTemplateField(sourceKey, TAG_ID_TEMPLATE_FIELDS) ||
-          matchesTemplateField(targetField, TAG_ID_TEMPLATE_FIELDS)
-        );
-      });
-      if (hasTagIdTemplateMapping && productTagIds.length > 0) {
-        const missingTagIds = productTagIds.filter((tagId: string) => {
-          const direct = tagExternalIdByInternalId?.[tagId];
-          const lowered = tagExternalIdByInternalId?.[tagId.toLowerCase()];
-          return !direct && !lowered;
-        });
-        if (missingTagIds.length > 0) {
-          const missingTagNames = missingTagIds.map((tagId: string) => {
-            const direct = tagNameById?.[tagId];
-            const lowered = tagNameById?.[tagId.toLowerCase()];
-            return direct ?? lowered ?? tagId;
-          });
-          throw badRequestError(
-            `No Base.com tag mapping found for: ${missingTagNames.join(', ')}. Map tags in Tag Mapper first.`
-          );
-        }
-      }
-
-      const hasCategoryTemplateMapping = mappings.some((mapping) => {
-        const sourceKey = mapping['sourceKey'];
-        const targetField = mapping['targetField'];
-        return (
-          matchesTemplateField(sourceKey, CATEGORY_TEMPLATE_PRODUCT_FIELDS) ||
-          matchesTemplateField(targetField, CATEGORY_TEMPLATE_PRODUCT_FIELDS)
-        );
-      });
-
-      if (hasCategoryTemplateMapping) {
-        const internalCategoryId =
-          typeof product.categoryId === 'string' ? product.categoryId.trim() : '';
-        if (!internalCategoryId) {
-          throw badRequestError(
-            'Product has no internal category assigned. Assign a category before exporting with category mapping.'
-          );
-        }
-
-        const categoryMappingRepo = getCategoryMappingRepository();
-        const categoryMappings = await categoryMappingRepo.listByConnection(
-          data.connectionId
-        );
-        const productCatalogIds = new Set(
-          (product.catalogs ?? []).map((catalog) => catalog.catalogId)
-        );
-
-        const matchingMappings = categoryMappings.filter(
-          (mapping) =>
-            mapping.isActive && mapping.internalCategoryId === internalCategoryId
-        );
-        const validMappings = matchingMappings.filter((mapping) => {
-          const externalCategoryId = toTrimmedString(
-            mapping.externalCategory?.externalId
-          );
-          if (!externalCategoryId) return false;
-          if (
-            isMissingExternalEntity(mapping.externalCategory?.name, 'category')
-          ) {
-            return false;
-          }
-          return true;
-        });
-        const catalogMatchedMappings = validMappings.filter((mapping) =>
-          productCatalogIds.has(mapping.catalogId)
-        );
-        const prioritizedMappings =
-          catalogMatchedMappings.length > 0
-            ? catalogMatchedMappings
-            : validMappings;
-        const externalCategoryIds = Array.from(
-          new Set(
-            prioritizedMappings
-              .map((mapping) =>
-                toTrimmedString(mapping.externalCategory?.externalId)
-              )
-              .filter(Boolean)
-          )
-        );
-        if (externalCategoryIds.length > 1) {
-          const mappingLabels = prioritizedMappings
-            .map((mapping) => {
-              const categoryName = toTrimmedString(mapping.externalCategory?.name);
-              const externalId = toTrimmedString(mapping.externalCategory?.externalId);
-              if (!externalId) return '';
-              return categoryName ? `${categoryName} (${externalId})` : externalId;
-            })
-            .filter(Boolean);
-          throw badRequestError(
-            `Multiple active Base.com category mappings found for this category. Keep only one active mapping and retry. Found: ${mappingLabels.join(', ')}`
-          );
-        }
-        const selectedMapping =
-          [...prioritizedMappings].sort(
-            (a, b) => toTimeMs(b.updatedAt) - toTimeMs(a.updatedAt)
-          )[0] ?? null;
-
-        if (!selectedMapping) {
-          if (matchingMappings.length > 0) {
-            throw badRequestError(
-              `Category mapping for internal category "${internalCategoryId}" points to stale external categories. Re-fetch categories and re-save mapping in Category Mapper.`
-            );
-          }
-          throw badRequestError(
-            `No Base.com category mapping found for internal category "${internalCategoryId}". Map this category in Category Mapper first.`
-          );
-        }
-
-        exportProduct = {
-          ...product,
-          categoryId: selectedMapping.externalCategory.externalId,
-        };
-
-        await ErrorSystem.logInfo(
-          '[export-to-base] Resolved category mapping for export',
-          {
-            productId,
-            connectionId: data.connectionId,
-            internalCategoryId,
-            mappedExternalCategoryId: selectedMapping.externalCategory.externalId,
-            catalogId: selectedMapping.catalogId,
-          }
-        );
-      }
-    }
+    const preparedExportContext = await prepareBaseExportMappingsAndProduct({
+      data,
+      imagesOnly,
+      productId,
+      resolvedInventoryId,
+      product,
+    });
+    const mappings = preparedExportContext.mappings;
+    const resolvedTemplateId = preparedExportContext.resolvedTemplateId;
+    const requestedTemplateId = preparedExportContext.requestedTemplateId;
+    let exportImagesAsBase64 = preparedExportContext.exportImagesAsBase64;
+    let imageBase64Mode = preparedExportContext.imageBase64Mode;
+    let imageTransform = preparedExportContext.imageTransform;
+    const producerNameById = preparedExportContext.producerNameById;
+    const producerExternalIdByInternalId =
+      preparedExportContext.producerExternalIdByInternalId;
+    const tagNameById = preparedExportContext.tagNameById;
+    const tagExternalIdByInternalId =
+      preparedExportContext.tagExternalIdByInternalId;
+    const exportProduct = preparedExportContext.exportProduct;
 
     // Check for duplicate SKU in Base.com if not allowed
     const allowDuplicateSku = imagesOnly ? true : data.allowDuplicateSku ?? false;
@@ -855,102 +454,20 @@ export async function postExportToBaseHandler(
       inventoryId: targetInventoryId
     };
 
-    let warehouseId = imagesOnly ? null : await getExportWarehouseId(targetInventoryId);
-    let stockWarehouseAliases: Record<string, string> | null = null;
-    let validWarehouseIds: Set<string> | null = null;
-    if (!imagesOnly) {
-      try {
-        const warehouses = await fetchBaseWarehouses(token, targetInventoryId);
-        const warehouseIdSet = new Set<string>();
-        const warehouseAliases: Record<string, string> = {};
-        const inferTypedWarehouseId = (value: string) => {
-          const match = value.match(/([a-z]+)[_-]?(\d+)/i);
-          if (!match?.[1] || !match?.[2]) return null;
-          const typed = `${match[1].toLowerCase()}_${match[2]}`;
-          return { typed, numeric: match[2] };
-        };
-        for (const warehouse of warehouses) {
-          warehouseIdSet.add(warehouse['id']);
-          const inferred = warehouse['typedId'] ?? inferTypedWarehouseId(warehouse['id'])?.typed;
-          if (inferred) {
-            warehouseIdSet.add(inferred);
-            if (inferred !== warehouse['id']) {
-              const numeric = inferTypedWarehouseId(inferred)?.numeric;
-              if (numeric) {
-                warehouseAliases[numeric] = inferred;
-              } else {
-                warehouseAliases[warehouse['id']] = inferred;
-              }
-            }
-          }
-          if (warehouse['typedId'] && warehouse['typedId'] !== warehouse['id']) {
-            warehouseAliases[warehouse['id']] = warehouse['typedId'];
-          }
-        }
-        if (warehouseId) {
-          const inferred = inferTypedWarehouseId(warehouseId);
-          if (inferred?.numeric && inferred.typed) {
-            warehouseAliases[inferred.numeric] = inferred.typed;
-            warehouseIdSet.add(inferred.typed);
-          }
-        }
-        stockWarehouseAliases =
-          Object.keys(warehouseAliases).length > 0 ? warehouseAliases : null;
-        validWarehouseIds = warehouseIdSet;
-        if (warehouseId && stockWarehouseAliases?.[warehouseId]) {
-          warehouseId = stockWarehouseAliases[warehouseId] ?? null;
-        } else if (warehouseId) {
-          const match = warehouses.find(
-            (warehouse) =>
-              warehouse['id'] === warehouseId || warehouse['typedId'] === warehouseId
-          );
-          if (match?.typedId) {
-            warehouseId = match.typedId ?? null;
-          }
-        }
-        if (warehouseId) {
-          if (!validWarehouseIds.has(warehouseId)) {
-            const fallbackWarehouseId =
-              warehouses[0]?.typedId ?? warehouses[0]?.id ?? null;
-            await ErrorSystem.logWarning('[export-to-base] Warehouse not in inventory, using fallback', {
-              warehouseId,
-              fallbackWarehouseId,
-              inventoryId: targetInventoryId
-            });
-            warehouseId = fallbackWarehouseId;
-          }
-        } else {
-          warehouseId = warehouses[0]?.typedId ?? warehouses[0]?.id ?? null;
-        }
-      } catch (error) {
-        await ErrorSystem.logWarning('[export-to-base] Failed to verify warehouse, skipping stock export', {
-          warehouseId,
-          inventoryId: targetInventoryId,
-          error
-        });
-        validWarehouseIds = null;
-      }
-    }
-
-    const normalizeStockMappingKey = (value: string) => {
-      const trimmed = value.trim();
-      const withoutPrefix = trimmed.replace(/^stock[._-]?/i, '');
-      return normalizeStockKey(withoutPrefix);
-    };
-
-    const filterStockMappings = (entries: typeof mappings) => {
-      if (!validWarehouseIds) return entries;
-      return entries.filter((mapping) => {
-        const key = mapping['sourceKey'].trim();
-        const lowered = key.toLowerCase();
-        if (!lowered.startsWith('stock')) return true;
-        const normalized = normalizeStockMappingKey(key);
-        if (!normalized) return true;
-        return validWarehouseIds.has(normalized);
-      });
-    };
-
-    let effectiveMappings = imagesOnly ? [] : filterStockMappings(mappings);
+    let warehouseId = imagesOnly
+      ? null
+      : await getExportWarehouseId(targetInventoryId);
+    const warehouseResolution = await resolveWarehouseAndStockMappings({
+      imagesOnly,
+      token,
+      targetInventoryId,
+      initialWarehouseId: warehouseId,
+      mappings,
+      productId,
+    });
+    warehouseId = warehouseResolution.warehouseId;
+    const stockWarehouseAliases = warehouseResolution.stockWarehouseAliases;
+    let effectiveMappings = warehouseResolution.effectiveMappings;
 
     // Export to Base.com
     await ErrorSystem.logInfo('[export-to-base] Calling Base.com API', {

@@ -6,13 +6,8 @@ import React from 'react';
 import { runsApi } from '@/features/ai/ai-paths/lib';
 import type {
   AiPathRunEventRecord,
-  AiPathRunNodeRecord,
   AiPathRunRecord,
 } from '@/features/ai/ai-paths/lib';
-import {
-  AI_PATHS_RUN_SOURCE_TABS,
-  AI_PATHS_RUN_SOURCE_VALUES,
-} from '@/features/ai/ai-paths/lib/run-sources';
 import { fetchAiPathsSettingsCached } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { createDeleteMutationV2, createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -22,23 +17,29 @@ import {
   Input,
   Label,
   SelectSimple,
-  Textarea,
   useToast,
-  StatusBadge,
-  Alert,
-  type StatusVariant,
 } from '@/shared/ui';
 
-import { safeJsonStringify } from './AiPathsSettingsUtils';
+import { JobQueueOverview } from './job-queue-overview';
+import {
+  getLatestEventTimestamp,
+  getPanelDescription,
+  getPanelLabel,
+  isRunningStatus,
+  normalizeRunDetail,
+  normalizeRunEvents,
+  normalizeRunNodes,
+  resolveRunExecutionKind,
+  resolveRunOrigin,
+  resolveRunSource,
+  resolveRunSourceDebug,
+  type QueueHistoryEntry,
+  type QueueStatus,
+  type RunDetail,
+  type StreamConnectionStatus,
+} from './job-queue-panel-utils';
+import { JobQueueRunCard } from './job-queue-run-card';
 import { buildHistoryNodeOptions } from './run-history-utils';
-import { RunHistoryEntries } from './RunHistoryEntries';
-
-type QueueHistoryEntry = {
-  ts: number;
-  queued: number;
-  lagMs: number | null;
-  throughput: number | null;
-};
 
 type JobQueuePanelProps = {
   activePathId?: string | null;
@@ -46,90 +47,7 @@ type JobQueuePanelProps = {
   sourceMode?: 'include' | 'exclude';
 };
 
-type RunDetail = {
-  run: AiPathRunRecord;
-  nodes: AiPathRunNodeRecord[];
-  events: AiPathRunEventRecord[];
-};
-
-type QueueStatus = {
-  running: boolean;
-  healthy: boolean;
-  processing: boolean;
-  activeRuns: number;
-  concurrency: number;
-  lastPollTime: number;
-  timeSinceLastPoll: number;
-  queuedCount: number;
-  oldestQueuedAt: number | null;
-  queueLagMs: number | null;
-  completedLastMinute: number;
-  throughputPerMinute: number;
-  avgRuntimeMs: number | null;
-  p50RuntimeMs: number | null;
-  p95RuntimeMs: number | null;
-  brainQueue: {
-    running: boolean;
-    healthy: boolean;
-    processing: boolean;
-    activeJobs: number;
-    waitingJobs: number;
-    failedJobs: number;
-    completedJobs: number;
-  };
-  brainAnalytics24h: {
-    analyticsReports: number;
-    logReports: number;
-    totalReports: number;
-    warningReports: number;
-    errorReports: number;
-  };
-  slo?: {
-    overall: 'ok' | 'warning' | 'critical';
-    evaluatedAt: string;
-    breachCount: number;
-    breaches: Array<{
-      indicator: string;
-      level: 'warning' | 'critical';
-      message: string;
-    }>;
-    indicators: {
-      workerHealth: {
-        level: 'ok' | 'warning' | 'critical';
-        running: boolean;
-        healthy: boolean;
-        message: string;
-      };
-      queueLag: {
-        level: 'ok' | 'warning' | 'critical';
-        valueMs: number | null;
-        message: string;
-      };
-      successRate24h: {
-        level: 'ok' | 'warning' | 'critical';
-        valuePct: number;
-        sampleSize: number;
-        message: string;
-      };
-      deadLetterRate24h: {
-        level: 'ok' | 'warning' | 'critical';
-        valuePct: number;
-        sampleSize: number;
-        message: string;
-      };
-      brainErrorRate24h: {
-        level: 'ok' | 'warning' | 'critical';
-        valuePct: number;
-        sampleSize: number;
-        message: string;
-      };
-    };
-  };
-};
-
 type StreamMessageEvent = Event & { data: string };
-type RunOrigin = 'node' | 'external' | 'unknown';
-type RunExecutionKind = 'server' | 'local' | 'other' | 'unknown';
 
 const PAGE_SIZES = [10, 25, 50];
 const SEARCH_DEBOUNCE_MS = 300;
@@ -146,258 +64,6 @@ const STATUS_FILTERS = [
   { id: 'canceled', label: 'Canceled' },
   { id: 'dead_lettered', label: 'Dead-lettered' },
 ] as const;
-const AI_PATHS_RUN_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
-const AI_PATHS_SOURCE_TABS = new Set<string>(AI_PATHS_RUN_SOURCE_TABS);
-
-const formatDate = (value?: Date | string | null): string => {
-  if (!value) return '-';
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
-  return date.toLocaleString();
-};
-
-const formatDurationMs = (value?: number | null): string => {
-  if (value === null || value === undefined || Number.isNaN(value)) return '-';
-  if (value < 1000) return `${Math.max(0, value)}ms`;
-  const seconds = Math.round(value / 1000);
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remaining = seconds % 60;
-  return `${minutes}m ${remaining}s`;
-};
-
-const getSloVariant = (level?: 'ok' | 'warning' | 'critical'): 'error' | 'warning' | 'success' => {
-  if (level === 'critical') return 'error';
-  if (level === 'warning') return 'warning';
-  return 'success';
-};
-
-const safePrettyJson = (value: unknown): string => {
-  const raw = safeJsonStringify(value);
-  if (!raw) return '';
-  try {
-    return JSON.stringify(JSON.parse(raw), null, 2);
-  } catch {
-    return raw;
-  }
-};
-
-const getLatestEventTimestamp = (events: AiPathRunEventRecord[]): string | null => {
-  let max = 0;
-  events.forEach((event: AiPathRunEventRecord) => {
-    const time = new Date(event.createdAt).getTime();
-    if (Number.isFinite(time) && time > max) {
-      max = time;
-    }
-  });
-  return max > 0 ? new Date(max).toISOString() : null;
-};
-
-const normalizeRunNodes = (value: unknown): AiPathRunNodeRecord[] => (
-  Array.isArray(value) ? value as AiPathRunNodeRecord[] : []
-);
-
-const normalizeRunEvents = (value: unknown): AiPathRunEventRecord[] => (
-  Array.isArray(value) ? value as AiPathRunEventRecord[] : []
-);
-
-const normalizeRunDetail = (value: unknown, fallbackRun?: AiPathRunRecord): RunDetail | null => {
-  if (!value || typeof value !== 'object') {
-    return fallbackRun ? { run: fallbackRun, nodes: [], events: [] } : null;
-  }
-  const detail = value as { run?: unknown; nodes?: unknown; events?: unknown };
-  const runCandidate = detail.run ?? fallbackRun;
-  if (!runCandidate || typeof runCandidate !== 'object') {
-    return null;
-  }
-  return {
-    run: runCandidate as AiPathRunRecord,
-    nodes: normalizeRunNodes(detail.nodes),
-    events: normalizeRunEvents(detail.events),
-  };
-};
-
-const readMetaRecord = (meta: AiPathRunRecord['meta']): Record<string, unknown> | null => {
-  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return null;
-  return meta;
-};
-
-const readStringValue = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const normalized = value.trim();
-  return normalized.length > 0 ? normalized : null;
-};
-
-const resolveRunSource = (run: AiPathRunRecord): string | null => {
-  const meta = readMetaRecord(run.meta);
-  if (!meta) return null;
-
-  const sourceRaw = meta['source'];
-  const directSource = readStringValue(sourceRaw);
-  if (directSource) return directSource.toLowerCase();
-
-  if (sourceRaw && typeof sourceRaw === 'object' && !Array.isArray(sourceRaw)) {
-    const sourceTab = readStringValue((sourceRaw as Record<string, unknown>)['tab']);
-    if (sourceTab) return `tab:${sourceTab.toLowerCase()}`;
-  }
-
-  const sourceInfoRaw = meta['sourceInfo'];
-  if (sourceInfoRaw && typeof sourceInfoRaw === 'object' && !Array.isArray(sourceInfoRaw)) {
-    const sourceInfoTab = readStringValue((sourceInfoRaw as Record<string, unknown>)['tab']);
-    if (sourceInfoTab) return `tab:${sourceInfoTab.toLowerCase()}`;
-  }
-
-  return null;
-};
-
-const resolveRunSourceDebug = (run: AiPathRunRecord): string => {
-  const meta = readMetaRecord(run.meta);
-  if (!meta) return 'src=- infoTab=-';
-
-  const sourceRaw = meta['source'];
-  const sourceValue = readStringValue(sourceRaw)?.toLowerCase() ?? (
-    sourceRaw && typeof sourceRaw === 'object' && !Array.isArray(sourceRaw) ? 'object' : '-'
-  );
-
-  const sourceInfoRaw = meta['sourceInfo'];
-  const sourceInfoTab =
-    sourceInfoRaw && typeof sourceInfoRaw === 'object' && !Array.isArray(sourceInfoRaw)
-      ? readStringValue((sourceInfoRaw as Record<string, unknown>)['tab'])?.toLowerCase() ?? '-'
-      : '-';
-
-  return `src=${sourceValue} infoTab=${sourceInfoTab}`;
-};
-
-const resolveRunOrigin = (run: AiPathRunRecord): RunOrigin => {
-  const source = resolveRunSource(run);
-  if (!source) return 'unknown';
-  if (source.startsWith('tab:')) {
-    const tab = source.slice(4);
-    return AI_PATHS_SOURCE_TABS.has(tab) ? 'node' : 'external';
-  }
-  return AI_PATHS_RUN_SOURCES.has(source) ? 'node' : 'external';
-};
-
-const resolveExecutionCandidate = (raw: unknown): RunExecutionKind | null => {
-  const value = readStringValue(raw)?.toLowerCase();
-  if (!value) return null;
-  if (
-    value === 'server' ||
-    value.includes('server') ||
-    value === 'queue' ||
-    value === 'worker' ||
-    value === 'remote'
-  ) {
-    return 'server';
-  }
-  if (
-    value === 'local' ||
-    value.includes('local') ||
-    value === 'client' ||
-    value === 'browser'
-  ) {
-    return 'local';
-  }
-  if (value === 'unknown') return 'unknown';
-  return 'other';
-};
-
-const resolveRunExecutionKind = (run: AiPathRunRecord): RunExecutionKind => {
-  const meta = readMetaRecord(run.meta);
-  if (!meta) return 'unknown';
-
-  const runtimeMeta =
-    meta['runtime'] && typeof meta['runtime'] === 'object' && !Array.isArray(meta['runtime'])
-      ? (meta['runtime'] as Record<string, unknown>)
-      : null;
-  const sourceInfoMeta =
-    meta['sourceInfo'] && typeof meta['sourceInfo'] === 'object' && !Array.isArray(meta['sourceInfo'])
-      ? (meta['sourceInfo'] as Record<string, unknown>)
-      : null;
-
-  const candidates: unknown[] = [
-    meta['executionMode'],
-    meta['execution_mode'],
-    meta['runMode'],
-    meta['run_mode'],
-    meta['mode'],
-    runtimeMeta?.['executionMode'],
-    runtimeMeta?.['mode'],
-    sourceInfoMeta?.['executionMode'],
-    sourceInfoMeta?.['mode'],
-  ];
-  for (const candidate of candidates) {
-    const resolved = resolveExecutionCandidate(candidate);
-    if (resolved) return resolved;
-  }
-
-  return 'unknown';
-};
-
-const getPanelLabel = (
-  sourceFilter?: string | null,
-  sourceMode?: 'include' | 'exclude'
-): string => {
-  if (sourceFilter === 'ai_paths_ui' && sourceMode === 'exclude') return 'External Runs';
-  if (sourceFilter === 'ai_paths_ui') return 'Node Runs';
-  return 'Job Runs';
-};
-
-const getPanelDescription = (
-  sourceFilter?: string | null,
-  sourceMode?: 'include' | 'exclude'
-): string => {
-  if (sourceFilter === 'ai_paths_ui' && sourceMode === 'exclude') {
-    return 'Runs that do not originate from the AI Paths node system.';
-  }
-  if (sourceFilter === 'ai_paths_ui') {
-    return 'Runs that originate from the AI Paths node system.';
-  }
-  return 'Full run payloads and queue snapshots.';
-};
-
-const getOriginLabel = (origin: RunOrigin): string => {
-  if (origin === 'node') return 'Node';
-  if (origin === 'external') return 'External';
-  return 'Unknown';
-};
-
-const getOriginVariant = (origin: RunOrigin): StatusVariant => {
-  if (origin === 'node') return 'success';
-  if (origin === 'external') return 'warning';
-  return 'neutral';
-};
-
-const getExecutionLabel = (execution: RunExecutionKind): string => {
-  if (execution === 'server') return 'Server';
-  if (execution === 'local') return 'Local';
-  if (execution === 'other') return 'Other';
-  return 'Unknown';
-};
-
-const getExecutionVariant = (execution: RunExecutionKind): StatusVariant => {
-  if (execution === 'server') return 'processing';
-  if (execution === 'local') return 'info';
-  if (execution === 'other') return 'neutral';
-  return 'neutral';
-};
-
-const isRunningStatus = (status: unknown): boolean =>
-  typeof status === 'string' && status.trim().toLowerCase() === 'running';
-
-const RunningIndicator = ({ label = 'Running' }: { label?: string }): React.JSX.Element => (
-  <StatusBadge
-    status={label}
-    variant='processing'
-    size='sm'
-    icon={(
-      <span className='relative inline-flex h-2 w-2'>
-        <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400/80' />
-        <span className='relative inline-flex h-2 w-2 rounded-full bg-sky-300' />
-      </span>
-    )}
-  />
-);
 
 export function JobQueuePanel({
   activePathId,
@@ -417,7 +83,7 @@ export function JobQueuePanel({
   const [runDetailErrors, setRunDetailErrors] = React.useState<Record<string, string>>({});
   const [historySelection, setHistorySelection] = React.useState<Record<string, string>>({});
   const [streamStatuses, setStreamStatuses] = React.useState<
-    Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>
+    Record<string, StreamConnectionStatus>
   >({});
   const streamSourcesRef = React.useRef<Map<string, EventSource>>(new Map());
   const [pausedStreams, setPausedStreams] = React.useState<Set<string>>(new Set());
@@ -642,7 +308,7 @@ export function JobQueuePanel({
       delete next[runId];
       return next;
     });
-    setStreamStatuses((prev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => {
+    setStreamStatuses((prev: Record<string, StreamConnectionStatus>) => {
       const next = { ...prev };
       delete next[runId];
       return next;
@@ -731,7 +397,7 @@ export function JobQueuePanel({
       if (!expandedRunIds.has(runId)) {
         source.close();
         streamSourcesRef.current.delete(runId);
-        setStreamStatuses((prev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => ({ ...prev, [runId]: 'stopped' }));
+        setStreamStatuses((prev: Record<string, StreamConnectionStatus>) => ({ ...prev, [runId]: 'stopped' }));
       }
     });
 
@@ -747,7 +413,7 @@ export function JobQueuePanel({
         : `/api/ai-paths/runs/${encodeURIComponent(runId)}/stream`;
       const source = new EventSource(url);
       streamSourcesRef.current.set(runId, source);
-      setStreamStatuses((prev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => ({ ...prev, [runId]: 'connecting' }));
+      setStreamStatuses((prev: Record<string, StreamConnectionStatus>) => ({ ...prev, [runId]: 'connecting' }));
 
       const mergeEvents = (incoming: AiPathRunEventRecord[]): void => {
         const safeIncoming = normalizeRunEvents(incoming);
@@ -776,7 +442,7 @@ export function JobQueuePanel({
       };
           
       source.addEventListener('ready', () => {
-        setStreamStatuses((prev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => ({ ...prev, [runId]: 'live' }));
+        setStreamStatuses((prev: Record<string, StreamConnectionStatus>) => ({ ...prev, [runId]: 'live' }));
       });
       source.addEventListener('run', (event: Event) => {
         try {
@@ -822,12 +488,12 @@ export function JobQueuePanel({
         }
       });
       source.addEventListener('done', () => {
-        setStreamStatuses((prev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => ({ ...prev, [runId]: 'stopped' }));
+        setStreamStatuses((prev: Record<string, StreamConnectionStatus>) => ({ ...prev, [runId]: 'stopped' }));
         source.close();
         streamSourcesRef.current.delete(runId);
       });
       source.addEventListener('error', () => {
-        setStreamStatuses((prev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => ({ ...prev, [runId]: 'stopped' }));
+        setStreamStatuses((prev: Record<string, StreamConnectionStatus>) => ({ ...prev, [runId]: 'stopped' }));
         source.close();
         streamSourcesRef.current.delete(runId);
       });
@@ -885,10 +551,10 @@ export function JobQueuePanel({
       const next = new Set(prev);
       if (next.has(runId)) {
         next.delete(runId);
-        setStreamStatuses((statusPrev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => ({ ...statusPrev, [runId]: 'connecting' }));
+        setStreamStatuses((statusPrev: Record<string, StreamConnectionStatus>) => ({ ...statusPrev, [runId]: 'connecting' }));
       } else {
         next.add(runId);
-        setStreamStatuses((statusPrev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => ({ ...statusPrev, [runId]: 'paused' }));
+        setStreamStatuses((statusPrev: Record<string, StreamConnectionStatus>) => ({ ...statusPrev, [runId]: 'paused' }));
       }
       return next;
     });
@@ -904,7 +570,7 @@ export function JobQueuePanel({
     setPausedStreams(() => new Set(expandedIds));
     streamSourcesRef.current.forEach((source: EventSource) => source.close());
     streamSourcesRef.current.clear();
-    setStreamStatuses((prev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => {
+    setStreamStatuses((prev: Record<string, StreamConnectionStatus>) => {
       const next = { ...prev };
       expandedIds.forEach((id: string) => {
         next[id] = 'paused';
@@ -916,7 +582,7 @@ export function JobQueuePanel({
   const resumeAllStreams = (): void => {
     if (expandedRunIds.size === 0) return;
     setPausedStreams(new Set());
-    setStreamStatuses((prev: Record<string, 'connecting' | 'live' | 'stopped' | 'paused'>) => {
+    setStreamStatuses((prev: Record<string, StreamConnectionStatus>) => {
       const next = { ...prev };
       expandedRunIds.forEach((id: string) => {
         next[id] = 'connecting';
@@ -1016,222 +682,18 @@ export function JobQueuePanel({
         </Button>
       </div>
 
-      <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-6'>
-        <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
-          <div className='text-[10px] uppercase text-gray-500'>Worker</div>
-          <div className='mt-1 flex items-center gap-2 text-sm text-white'>
-            {queueStatus ? (queueStatus.running ? 'Running' : 'Stopped') : '-'}
-            {queueStatus?.running ? <RunningIndicator label='Active' /> : null}
-          </div>
-          <div className='mt-1 text-[11px] text-gray-400'>
-            Healthy: {queueStatus ? (queueStatus.healthy ? 'Yes' : 'No') : '-'}
-          </div>
-        </div>
-        <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
-          <div className='text-[10px] uppercase text-gray-500'>Concurrency</div>
-          <div className='mt-1 text-sm text-white'>
-            {queueStatus?.concurrency ?? '-'}
-          </div>
-          <div className='mt-1 flex items-center gap-2 text-[11px] text-gray-400'>
-            <span>Active runs: {queueStatus?.activeRuns ?? 0}</span>
-            {(queueStatus?.activeRuns ?? 0) > 0 ? <RunningIndicator label='Busy' /> : null}
-          </div>
-        </div>
-        <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
-          <div className='text-[10px] uppercase text-gray-500'>Last poll</div>
-          <div className='mt-1 text-sm text-white'>
-            {queueStatus?.lastPollTime
-              ? new Date(queueStatus.lastPollTime).toLocaleTimeString()
-              : '-'}
-          </div>
-          <div className='mt-1 text-[11px] text-gray-400'>
-            Age:{' '}
-            {formatDurationMs(queueStatus?.timeSinceLastPoll ?? null)}
-          </div>
-        </div>
-        <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
-          <div className='text-[10px] uppercase text-gray-500'>Status</div>
-          <div className='mt-1 text-sm text-white'>
-            {queueStatusQuery.isFetching ? 'Refreshing...' : 'Live'}
-          </div>
-          {queueStatusQuery.error ? (
-            <div className='mt-1 text-[11px] text-rose-200'>
-              {queueStatusQuery.error instanceof Error
-                ? queueStatusQuery.error.message
-                : 'Failed to load queue status.'}
-            </div>
-          ) : (
-            <div className='mt-1 text-[11px] text-gray-400'>
-              Updated every 5s
-            </div>
-          )}
-          {queueStatus?.slo ? (
-            <StatusBadge
-              status={`SLO ${queueStatus.slo.overall} · ${queueStatus.slo.breachCount} breach${queueStatus.slo.breachCount === 1 ? '' : 'es'}`}
-              variant={getSloVariant(queueStatus.slo.overall)}
-              size='sm'
-              className='mt-2 font-bold'
-            />
-          ) : null}
-        </div>
-        <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
-          <div className='text-[10px] uppercase text-gray-500'>Queue Depth</div>
-          <div className='mt-1 text-sm text-white'>
-            {queueStatus?.queuedCount ?? 0} queued
-          </div>
-          <div className='mt-1 text-[11px] text-gray-400'>
-            Lag: {formatDurationMs(queueStatus?.queueLagMs ?? null)}
-          </div>
-          <div className='mt-2 h-10 w-full rounded bg-foreground/5 px-1 py-1'>
-            <div className='flex h-full items-end gap-[2px]'>
-              {queueHistory.length === 0 ? (
-                <div className='text-[10px] text-gray-500'>No samples</div>
-              ) : (
-                queueHistory.slice(-30).map((entry: QueueHistoryEntry, index: number) => {
-                  const max = Math.max(1, ...queueHistory.slice(-30).map((item: QueueHistoryEntry) => item.queued));
-                  const height = Math.max(8, Math.round((entry.queued / max) * 100));
-                  return (
-                    <div
-                      key={`${entry.ts}-${index}`}
-                      className='w-[6px] rounded bg-sky-400/60'
-                      style={{ height: `${height}%` }}
-                      title={`${entry.queued} queued`}
-                    />
-                  );
-                })
-              )}
-            </div>
-          </div>
-          <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-gray-400'>
-            <span>Throughput: {queueStatus?.throughputPerMinute ?? 0}/min</span>
-            <span>p50: {formatDurationMs(queueStatus?.p50RuntimeMs ?? null)}</span>
-            <span>p95: {formatDurationMs(queueStatus?.p95RuntimeMs ?? null)}</span>
-          </div>
-        </div>
-        <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
-          <div className='text-[10px] uppercase text-gray-500'>Brain Analytics Queue</div>
-          <div className='mt-1 flex items-center gap-2 text-sm text-white'>
-            {queueStatus?.brainQueue?.running ? 'Running' : 'Stopped'}
-            {queueStatus?.brainQueue?.running ? <RunningIndicator label='Active' /> : null}
-          </div>
-          <div className='mt-1 flex items-center gap-2 text-[11px] text-gray-400'>
-            <span>
-              Active {queueStatus?.brainQueue?.activeJobs ?? 0} · Waiting {queueStatus?.brainQueue?.waitingJobs ?? 0}
-            </span>
-            {(queueStatus?.brainQueue?.activeJobs ?? 0) > 0 ? (
-              <RunningIndicator label='Busy' />
-            ) : null}
-          </div>
-          <div className='mt-2 text-[10px] text-gray-400'>
-            Reports 24h: {queueStatus?.brainAnalytics24h?.totalReports ?? 0}
-          </div>
-          <div className='mt-1 text-[10px] text-gray-400'>
-            Analytics {queueStatus?.brainAnalytics24h?.analyticsReports ?? 0} · Logs {queueStatus?.brainAnalytics24h?.logReports ?? 0}
-          </div>
-          <div className='mt-1 text-[10px] text-amber-200/90'>
-            Warnings {queueStatus?.brainAnalytics24h?.warningReports ?? 0} · Errors {queueStatus?.brainAnalytics24h?.errorReports ?? 0}
-          </div>
-        </div>
-      </div>
-
-      {queueStatus?.queueLagMs && queueStatus.queueLagMs > lagThresholdMs ? (
-        <Alert variant='error' className='mt-4'>
-          Queue lag is high: {formatDurationMs(queueStatus.queueLagMs)} (threshold {formatDurationMs(lagThresholdMs)}). Consider increasing concurrency or investigating slow nodes.
-        </Alert>
-      ) : null}
-
-      {queueStatus?.slo && queueStatus.slo.overall !== 'ok' ? (
-        <Alert
-          variant={getSloVariant(queueStatus.slo.overall)}
-          className='mt-3'
-        >
-          <div className='font-medium'>
-            Runtime SLO is {queueStatus.slo.overall}.
-          </div>
-          <div className='mt-1 text-xs opacity-90'>
-            {queueStatus.slo.breaches.slice(0, 3).map((breach) => breach.message).join(' ')}
-          </div>
-        </Alert>
-      ) : null}
-
-      <div className='mt-4 rounded-md border border-border/60 bg-card/40 p-3'>
-        <div className='flex items-center justify-between'>
-          <div>
-            <div className='text-xs text-gray-200'>Queue Metrics (History)</div>
-            <div className='text-[11px] text-gray-500'>
-              Last {queueHistory.length} samples · refresh {autoRefreshEnabled ? `${Math.round(autoRefreshInterval / 1000)}s` : 'off'}
-              {queueHistory.length > 0
-                ? ` · last sample ${new Date(queueHistory[queueHistory.length - 1]!.ts).toLocaleTimeString()}`
-                : ''}
-            </div>
-          </div>
-          <div className='flex items-center gap-2'>
-            <Button
-              type='button'
-              className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
-              onClick={() => setShowMetricsPanel((prev: boolean) => !prev)}
-            >
-              {showMetricsPanel ? 'Hide' : 'Show'}
-            </Button>
-            <Button
-              type='button'
-              className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
-              onClick={() => setQueueHistory([])}
-            >
-              Clear
-            </Button>
-          </div>
-        </div>
-        {showMetricsPanel ? (
-          <div className='mt-3 space-y-3'>
-            <div className='h-24 w-full rounded bg-foreground/5 px-2 py-2'>
-              <div className='flex h-full items-end gap-[2px]'>
-                {queueHistory.length === 0 ? (
-                  <div className='text-[10px] text-gray-500'>No samples</div>
-                ) : (
-                  queueHistory.map((entry: QueueHistoryEntry, index: number) => {
-                    const max = Math.max(1, ...queueHistory.map((item: QueueHistoryEntry) => item.queued));
-                    const height = Math.max(6, Math.round((entry.queued / max) * 100));
-                    return (
-                      <div
-                        key={`${entry.ts}-${index}`}
-                        className='w-[5px] rounded bg-emerald-400/60'
-                        style={{ height: `${height}%` }}
-                        title={`${entry.queued} queued @ ${new Date(entry.ts).toLocaleTimeString()}`}
-                      />
-                    );
-                  })
-                )}
-              </div>
-            </div>
-            <div className='grid gap-2 md:grid-cols-3'>
-              <div className='rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'>
-                <div className='text-[10px] uppercase text-gray-500'>Queue Depth</div>
-                <div className='mt-1 text-sm text-white'>{queueStatus?.queuedCount ?? 0}</div>
-                <div className='mt-1 text-[10px] text-gray-400'>
-                  Lag: {formatDurationMs(queueStatus?.queueLagMs ?? null)}
-                </div>
-              </div>
-              <div className='rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'>
-                <div className='text-[10px] uppercase text-gray-500'>Throughput</div>
-                <div className='mt-1 text-sm text-white'>{queueStatus?.throughputPerMinute ?? 0}/min</div>
-                <div className='mt-1 text-[10px] text-gray-400'>
-                  Completed: {queueStatus?.completedLastMinute ?? 0} (last min)
-                </div>
-              </div>
-              <div className='rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'>
-                <div className='text-[10px] uppercase text-gray-500'>Runtime</div>
-                <div className='mt-1 text-sm text-white'>
-                  avg {formatDurationMs(queueStatus?.avgRuntimeMs ?? null)}
-                </div>
-                <div className='mt-1 text-[10px] text-gray-400'>
-                  p50 {formatDurationMs(queueStatus?.p50RuntimeMs ?? null)} · p95 {formatDurationMs(queueStatus?.p95RuntimeMs ?? null)}
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : null}
-      </div>
+      <JobQueueOverview
+        queueStatus={queueStatus}
+        queueStatusError={queueStatusQuery.error}
+        queueStatusFetching={queueStatusQuery.isFetching}
+        queueHistory={queueHistory}
+        lagThresholdMs={lagThresholdMs}
+        autoRefreshEnabled={autoRefreshEnabled}
+        autoRefreshInterval={autoRefreshInterval}
+        showMetricsPanel={showMetricsPanel}
+        onToggleMetricsPanel={() => setShowMetricsPanel((prev: boolean) => !prev)}
+        onClearHistory={() => setQueueHistory([])}
+      />
 
       <div className='grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]'>
         <div className='space-y-1'>
@@ -1316,14 +778,15 @@ export function JobQueuePanel({
         </div>
       ) : (
         <div className='space-y-3'>
-          {runs.map((run: AiPathRunRecord) => {            const isExpanded = expandedRunIds.has(run.id);
+          {runs.map((run: AiPathRunRecord) => {
+            const isExpanded = expandedRunIds.has(run.id);
             const detail = normalizeRunDetail(runDetails[run.id]);
             const detailLoading = runDetailLoading.has(run.id);
             const detailError = runDetailErrors[run.id];
             const detailRun = detail?.run ?? run;
             const isRunning = isRunningStatus(detailRun.status);
             const isScheduledRun = detailRun.triggerEvent === 'scheduled_run';
-            const streamStatus = pausedStreams.has(run.id)
+            const streamStatus: StreamConnectionStatus = pausedStreams.has(run.id)
               ? 'paused'
               : streamStatuses[run.id] ?? 'stopped';
             const canCancel = ['queued', 'running', 'paused'].includes(detailRun.status);
@@ -1337,7 +800,7 @@ export function JobQueuePanel({
             const runSourceDebug = resolveRunSourceDebug(detailRun);
             const nodes = normalizeRunNodes(detail?.nodes);
             const events = normalizeRunEvents(detail?.events);
-            const history = (detailRun.runtimeState?.history ?? undefined);
+            const history = detailRun.runtimeState?.history ?? undefined;
             const historyOptions = buildHistoryNodeOptions(
               history,
               nodes,
@@ -1350,397 +813,43 @@ export function JobQueuePanel({
                 : [];
 
             return (
-              <div
+              <JobQueueRunCard
                 key={run.id}
-                className='rounded-md border border-border/60 bg-card/70 p-3 text-xs text-gray-300'
-              >
-                <div className='flex flex-wrap items-start justify-between gap-3'>
-                  <div>
-                    <div className='flex flex-wrap items-center gap-2'>
-                      <StatusBadge status={detailRun.status} size='sm' className='font-bold' />
-                      {isRunning ? <RunningIndicator /> : null}
-                    </div>
-                    {isScheduledRun ? (
-                      <div className='mt-1'>
-                        <StatusBadge status='Scheduled' variant='warning' size='sm' className='font-bold' />
-                      </div>
-                    ) : null}
-                    <div className='mt-1 flex flex-wrap items-center gap-1'>
-                      <StatusBadge
-                        status={'Origin: ' + getOriginLabel(runOrigin)}
-                        variant={getOriginVariant(runOrigin)}
-                        size='sm'
-                        className='font-medium'
-                      />
-                      <StatusBadge
-                        status={'Run: ' + getExecutionLabel(runExecution)}
-                        variant={getExecutionVariant(runExecution)}
-                        size='sm'
-                        className='font-medium'
-                      />
-                      <StatusBadge
-                        status={'Source: ' + runSource}
-                        variant='neutral'
-                        size='sm'
-                        className='font-medium'
-                      />
-                      <StatusBadge
-                        status={'Debug: ' + runSourceDebug}
-                        variant='info'
-                        size='sm'
-                        title={runSourceDebug}
-                        className='font-medium'
-                      />
-                    </div>
-                    <div className='text-sm text-white'>{detailRun.pathName ?? 'AI Path'}</div>
-                    <div className='text-[11px] text-gray-400'>
-                      Run ID: <span className='font-mono'>{detailRun.id}</span>
-                    </div>
-                    <div className='text-[11px] text-gray-500'>
-                      Created {formatDate(detailRun.createdAt)}
-                    </div>
-                    <div className='text-[11px] text-gray-500'>
-                      Stream: {streamStatus}
-                    </div>
-                    {(detailRun.entityType || detailRun.entityId) && (
-                      <div className='text-[11px] text-gray-500'>
-                        Entity: {detailRun.entityType ?? '?'} {detailRun.entityId ?? ''}
-                      </div>
-                    )}
-                    {detailRun.errorMessage && (
-                      <Alert variant='error' className='mt-1 px-2 py-1 text-[11px]'>
-                        Error: {detailRun.errorMessage}
-                      </Alert>
-                    )}
-                  </div>
-                  <div className='flex flex-wrap items-center gap-2'>
-                    <Button
-                      type='button'
-                      className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
-                      onClick={() => toggleRun(run.id)}
-                    >
-                      {isExpanded ? 'Hide details' : 'Details'}
-                    </Button>
-                    <Button
-                      type='button'
-                      className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
-                      onClick={() => toggleStream(run.id)}
-                      disabled={!isExpanded}
-                    >
-                      {pausedStreams.has(run.id) ? 'Resume stream' : 'Pause stream'}
-                    </Button>
-                    <Button
-                      type='button'
-                      className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
-                      onClick={() => void loadRunDetail(run.id)}
-                      disabled={detailLoading}
-                    >
-                      {detailLoading ? 'Loading...' : 'Refresh detail'}
-                    </Button>
-                    <Button
-                      type='button'
-                      variant='outline'
-                      className='rounded-md border px-2 py-1 text-[10px] text-amber-200 hover:bg-amber-500/10'
-                      onClick={() => cancelRunMutation.mutate(run.id)}
-                      disabled={!canCancel || isCancellingThisRun}
-                    >
-                      {isCancellingThisRun ? 'Canceling...' : 'Cancel'}
-                    </Button>
-                    <Button
-                      type='button'
-                      variant='destructive'
-                      className='rounded-md border px-2 py-1 text-[10px]'
-                      onClick={() => setRunToDelete(detailRun)}
-                      disabled={isDeletingThisRun}
-                    >
-                      {isDeletingThisRun ? 'Deleting...' : 'Delete'}
-                    </Button>
-                  </div>
-                </div>
-
-                {isExpanded ? (
-                  <div className='mt-4 space-y-3'>
-                    {detailError ? (
-                      <div className='rounded-md border border-rose-500/30 bg-rose-500/10 p-3 text-[11px] text-rose-200'>
-                        {detailError}
-                      </div>
-                    ) : null}
-
-                    {!detail && !detailLoading ? (
-                      <div className='text-[11px] text-gray-500'>
-                        Loading run details...
-                      </div>
-                    ) : null}
-
-                    {detail ? (
-                      <>
-                        <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-[11px] text-gray-400'>
-                          <div>
-                            <span className='uppercase text-gray-500'>Path ID</span>
-                            <div className='text-white'>{detailRun.pathId ?? '-'}</div>
-                          </div>
-                          <div>
-                            <span className='uppercase text-gray-500'>Status</span>
-                            <div className='text-white'>{detailRun.status}</div>
-                          </div>
-                          <div>
-                            <span className='uppercase text-gray-500'>Trigger</span>
-                            <div className='text-white'>{detailRun.triggerEvent ?? '-'}</div>
-                          </div>
-                          <div>
-                            <span className='uppercase text-gray-500'>Origin</span>
-                            <div className='text-white'>{getOriginLabel(runOrigin)}</div>
-                          </div>
-                          <div>
-                            <span className='uppercase text-gray-500'>Run type</span>
-                            <div className='text-white'>{getExecutionLabel(runExecution)}</div>
-                          </div>
-                          <div>
-                            <span className='uppercase text-gray-500'>Source</span>
-                            <div className='text-white'>{runSource}</div>
-                          </div>
-                          <div className='sm:col-span-2 lg:col-span-3'>
-                            <span className='uppercase text-gray-500'>Source debug</span>
-                            <div className='font-mono text-sky-200'>{runSourceDebug}</div>
-                          </div>
-                          <div>
-                            <span className='uppercase text-gray-500'>Started</span>
-                            <div className='text-white'>{formatDate(detailRun.startedAt)}</div>
-                          </div>
-                          <div>
-                            <span className='uppercase text-gray-500'>Finished</span>
-                            <div className='text-white'>{formatDate(detailRun.finishedAt)}</div>
-                          </div>
-                          <div>
-                            <span className='uppercase text-gray-500'>Dead-lettered</span>
-                            <div className='text-white'>{formatDate(detailRun.deadLetteredAt)}</div>
-                          </div>
-                          <div>
-                            <span className='uppercase text-gray-500'>Retry</span>
-                            <div className='text-white'>
-                              {detailRun.retryCount ?? 0}/{detailRun.maxAttempts ?? '-'}
-                            </div>
-                          </div>
-                          <div>
-                            <span className='uppercase text-gray-500'>Next retry</span>
-                            <div className='text-white'>{formatDate(detailRun.nextRetryAt)}</div>
-                          </div>
-                          <div>
-                            <span className='uppercase text-gray-500'>Trigger node</span>
-                            <div className='text-white'>{detailRun.triggerNodeId ?? '-'}</div>
-                          </div>
-                        </div>
-
-                        <details className='rounded-md border border-border/70 bg-black/20 p-3'>
-                          <summary className='cursor-pointer text-[11px] uppercase text-gray-400'>
-                            Run history
-                          </summary>
-                          {historyOptions.length > 1 ? (
-                            <div className='mt-3 flex flex-wrap items-center gap-2'>
-                              <Label className='text-[10px] uppercase text-gray-500'>
-                                Node
-                              </Label>
-                              <SelectSimple
-                                size='sm'
-                                value={selectedHistoryNodeId || ''}
-                                onValueChange={(value: string) =>
-                                  setHistorySelection((prev: Record<string, string>) => ({ ...prev, [run.id]: value }))
-                                }
-                                options={historyOptions.map((option: { id: string; label: string }) => ({
-                                  value: option.id,
-                                  label: option.label,
-                                }))}
-                                placeholder='Select node'
-                                triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
-                              />                            </div>
-                          ) : (
-                            <div className='mt-2 text-[11px] text-gray-500'>
-                              {historyOptions[0]?.label ?? 'No history nodes'}
-                            </div>
-                          )}
-                          <div className='mt-3'>
-                            <RunHistoryEntries
-                              entries={historyEntries}
-                              emptyMessage='No history recorded for this run.'
-                              showNodeLabel
-                            />
-                          </div>
-                        </details>
-
-                        <details className='rounded-md border border-border/70 bg-black/20 p-3'>
-                          <summary className='cursor-pointer text-[11px] uppercase text-gray-400'>
-                            Nodes ({nodes.length})
-                          </summary>
-                          {nodes.length === 0 ? (
-                            <div className='mt-2 text-[11px] text-gray-500'>
-                              No nodes recorded for this run.
-                            </div>
-                          ) : (
-                            <div className='mt-3 space-y-2'>
-                              {nodes.map((node: AiPathRunNodeRecord) => (
-                                <details
-                                  key={node.id}
-                                  className='rounded-md border border-border/60 bg-black/30 p-3'
-                                >                                  <summary className='cursor-pointer text-[11px] text-gray-300'>
-                                    {node.nodeTitle ?? node.nodeId}{' '}
-                                    {node.nodeType ? `(${node.nodeType})` : ''}
-                                    <span className='ml-2 text-gray-500'>
-                                      {node.status}
-                                    </span>
-                                  </summary>
-                                  <div className='mt-2 grid gap-2 text-[11px] text-gray-400 sm:grid-cols-2 lg:grid-cols-3'>
-                                    <div>
-                                      <span className='uppercase text-gray-500'>Started</span>
-                                      <div className='text-white'>{formatDate(node.startedAt)}</div>
-                                    </div>
-                                    <div>
-                                      <span className='uppercase text-gray-500'>Finished</span>
-                                      <div className='text-white'>{formatDate(node.finishedAt)}</div>
-                                    </div>
-                                    <div>
-                                      <span className='uppercase text-gray-500'>Attempt</span>
-                                      <div className='text-white'>{node.attempt}</div>
-                                    </div>
-                                  </div>
-                                  {node.errorMessage ? (
-                                    <div className='mt-2 rounded-md border border-rose-500/30 bg-rose-500/10 p-2 text-[11px] text-rose-200'>
-                                      Error: {node.errorMessage}
-                                    </div>
-                                  ) : null}
-                                  <div className='mt-3 grid gap-3 lg:grid-cols-2'>
-                                    <div>
-                                      <Label className='text-[10px] uppercase text-gray-500'>
-                                        Inputs
-                                      </Label>
-                                      <Textarea
-                                        className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                                        readOnly
-                                        value={safePrettyJson(node.inputs)}
-                                      />
-                                    </div>
-                                    <div>
-                                      <Label className='text-[10px] uppercase text-gray-500'>
-                                        Outputs
-                                      </Label>
-                                      <Textarea
-                                        className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                                        readOnly
-                                        value={safePrettyJson(node.outputs)}
-                                      />
-                                    </div>
-                                  </div>
-                                </details>
-                              ))}
-                            </div>
-                          )}
-                        </details>
-
-                        <details className='rounded-md border border-border/70 bg-black/20 p-3'>
-                          <summary className='cursor-pointer text-[11px] uppercase text-gray-400'>
-                            Events ({events.length})
-                          </summary>
-                          {events.length === 0 ? (
-                            <div className='mt-2 text-[11px] text-gray-500'>No events.</div>
-                          ) : (
-                            <div className='mt-3 divide-y divide-border/70'>
-                              {events.map((event: AiPathRunEventRecord) => (
-                                <div key={event.id} className='py-2'>                                  <div className='flex flex-wrap items-center gap-2 text-[11px] text-gray-400'>
-                                  <span>{formatDate(event.createdAt)}</span>
-                                  <span className='rounded-full border px-2 py-0.5 text-[10px] text-gray-300'>
-                                    {event.level}
-                                  </span>
-                                </div>
-                                <div className='mt-1 text-sm text-white'>{event.message}</div>
-                                {event.metadata ? (
-                                  <pre className='mt-2 max-h-40 overflow-auto rounded-md border border-border bg-black/30 p-2 text-[11px] text-gray-200'>
-                                    {safePrettyJson(event.metadata)}
-                                  </pre>
-                                ) : null}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </details>
-
-                        <details className='rounded-md border border-border/70 bg-black/20 p-3'>
-                          <summary className='cursor-pointer text-[11px] uppercase text-gray-400'>
-                            Runtime state
-                          </summary>
-                          <div className='mt-3 grid gap-3 lg:grid-cols-2'>
-                            <div>
-                              <Label className='text-[10px] uppercase text-gray-500'>Inputs</Label>
-                              <Textarea
-                                className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                                readOnly
-                                value={safePrettyJson(detailRun.runtimeState?.inputs)}
-                              />
-                            </div>
-                            <div>
-                              <Label className='text-[10px] uppercase text-gray-500'>Outputs</Label>
-                              <Textarea
-                                className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                                readOnly
-                                value={safePrettyJson(detailRun.runtimeState?.outputs)}
-                              />
-                            </div>
-                          </div>
-                          <div className='mt-3'>
-                            <Label className='text-[10px] uppercase text-gray-500'>Hashes</Label>
-                            <Textarea
-                              className='mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                              readOnly
-                              value={safePrettyJson(detailRun.runtimeState?.hashes)}
-                            />
-                          </div>
-                        </details>
-
-                        <details className='rounded-md border border-border/70 bg-black/20 p-3'>
-                          <summary className='cursor-pointer text-[11px] uppercase text-gray-400'>
-                            Graph snapshot
-                          </summary>
-                          <Textarea
-                            className='mt-2 min-h-[160px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                            readOnly
-                            value={safePrettyJson(detailRun.graph)}
-                          />
-                        </details>
-
-                        <details className='rounded-md border border-border/70 bg-black/20 p-3'>
-                          <summary className='cursor-pointer text-[11px] uppercase text-gray-400'>
-                            Raw payloads
-                          </summary>
-                          <div className='mt-3 space-y-3'>
-                            <div>
-                              <Label className='text-[10px] uppercase text-gray-500'>Run</Label>
-                              <Textarea
-                                className='mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                                readOnly
-                                value={safePrettyJson(detailRun)}
-                              />
-                            </div>
-                            <div>
-                              <Label className='text-[10px] uppercase text-gray-500'>Nodes</Label>
-                              <Textarea
-                                className='mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                                readOnly
-                                value={safePrettyJson(nodes)}
-                              />
-                            </div>
-                            <div>
-                              <Label className='text-[10px] uppercase text-gray-500'>Events</Label>
-                              <Textarea
-                                className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                                readOnly
-                                value={safePrettyJson(events)}
-                              />
-                            </div>
-                          </div>
-                        </details>
-                      </>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
+                detailRun={detailRun}
+                detail={detail}
+                detailLoading={detailLoading}
+                detailError={detailError}
+                isExpanded={isExpanded}
+                isRunning={isRunning}
+                isScheduledRun={isScheduledRun}
+                streamStatus={streamStatus}
+                paused={pausedStreams.has(run.id)}
+                canCancel={canCancel}
+                isCancellingThisRun={isCancellingThisRun}
+                isDeletingThisRun={isDeletingThisRun}
+                runOrigin={runOrigin}
+                runExecution={runExecution}
+                runSource={runSource}
+                runSourceDebug={runSourceDebug}
+                nodes={nodes}
+                events={events}
+                historyOptions={historyOptions}
+                selectedHistoryNodeId={selectedHistoryNodeId}
+                historyEntries={historyEntries}
+                onToggleRun={() => toggleRun(run.id)}
+                onToggleStream={() => toggleStream(run.id)}
+                onRefreshDetail={() => {
+                  void loadRunDetail(run.id);
+                }}
+                onCancelRun={() => cancelRunMutation.mutate(run.id)}
+                onDeleteRun={() => setRunToDelete(detailRun)}
+                onSelectHistoryNode={(value: string) => {
+                  setHistorySelection((prev: Record<string, string>) => ({
+                    ...prev,
+                    [run.id]: value,
+                  }));
+                }}
+              />
             );
           })}
         </div>

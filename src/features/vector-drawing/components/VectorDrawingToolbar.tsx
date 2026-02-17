@@ -124,9 +124,15 @@ export function VectorDrawingToolbar({
         <Tooltip key={option.key} content={option.label}>
           <Button
             type='button'
-            variant={tool === option.key ? 'secondary' : 'outline'}
+            variant={tool === option.key ? 'default' : 'outline'}
             size='icon'
+            aria-pressed={tool === option.key}
             onClick={() => onSelectTool(option.key)}
+            className={cn(
+              tool === option.key
+                ? 'border-cyan-400/70 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30'
+                : 'text-foreground/70 hover:text-foreground'
+            )}
           >
             {option.icon}
           </Button>

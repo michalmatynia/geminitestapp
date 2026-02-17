@@ -128,7 +128,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   }, [selectedSlot?.id, selectedSlot?.name, toast]);
 
   return (
-    <div className='container mx-auto box-border flex h-[calc(100dvh-4.25rem)] min-h-0 min-w-0 max-w-none flex-col gap-3 overflow-hidden py-3'>
+    <div className='mx-auto box-border flex h-[calc((100dvh-4rem)*1.035)] w-full min-h-0 min-w-0 max-w-none flex-col gap-2 overflow-hidden px-1 pb-0 pt-2'>
       <ClientOnly fallback={<div className='flex min-h-0 flex-1' />}>
         <Tabs
           id='image-studio-tabs'
@@ -137,7 +137,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
           className={hideTopBar ? 'flex min-h-0 min-w-0 flex-1 flex-col gap-0' : 'flex min-h-0 min-w-0 flex-1 flex-col gap-3'}
         >
           {!hideTopBar ? (
-            <div className='border-b bg-muted/40 px-4 py-2'>
+            <div className='border-b bg-muted/40 px-2 py-2'>
               <div className='flex items-center gap-3'>
                 <TabsList className='bg-card'>
                   <TabsTrigger value='studio'>Studio</TabsTrigger>

@@ -13,6 +13,8 @@ import {
 
 import type { PromptExploderRuntimeValidationScope } from './validation-stack';
 
+export { PROMPT_EXPLODER_PATTERN_PACK };
+
 export type PromptExploderPatternPackResult = {
   nextSettings: PromptEngineSettings;
   addedRuleIds: string[];

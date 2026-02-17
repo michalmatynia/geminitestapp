@@ -1728,43 +1728,32 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       }
 
       const runDelete = async (): Promise<void> => {
-        const childrenByParentId = new Map<string, string[]>();
-        workspace.files.forEach((file: CaseResolverFile): void => {
-          if (!file.parentCaseId || file.parentCaseId === file.id) return;
-          const current = childrenByParentId.get(file.parentCaseId) ?? [];
-          current.push(file.id);
-          childrenByParentId.set(file.parentCaseId, current);
-        });
-        const removedIds = new Set<string>();
-        const collectRemoved = (targetId: string): void => {
-          if (removedIds.has(targetId)) return;
-          removedIds.add(targetId);
-          const children = childrenByParentId.get(targetId) ?? [];
-          children.forEach((childId: string): void => {
-            collectRemoved(childId);
+        const removedIds = new Set<string>([fileId]);
+        let expanded = true;
+        while (expanded) {
+          expanded = false;
+          workspace.files.forEach((file: CaseResolverFile): void => {
+            if (removedIds.has(file.id)) return;
+            if (!file.parentCaseId) return;
+            if (!removedIds.has(file.parentCaseId)) return;
+            removedIds.add(file.id);
+            expanded = true;
           });
-        };
-        collectRemoved(fileId);
+        }
 
         const now = new Date().toISOString();
         const nextFiles = workspace.files
           .filter((file: CaseResolverFile) => !removedIds.has(file.id))
           .map((file: CaseResolverFile): CaseResolverFile => {
-            const nextParentCaseId =
-              file.parentCaseId && removedIds.has(file.parentCaseId)
-                ? null
-                : file.parentCaseId;
             const nextReferenceCaseIds = file.referenceCaseIds.filter(
               (referenceCaseId: string): boolean =>
                 !removedIds.has(referenceCaseId),
             );
-            const parentChanged = nextParentCaseId !== file.parentCaseId;
             const referencesChanged =
               nextReferenceCaseIds.length !== file.referenceCaseIds.length;
-            if (!parentChanged && !referencesChanged) return file;
+            if (!referencesChanged) return file;
             return {
               ...file,
-              parentCaseId: nextParentCaseId,
               referenceCaseIds: nextReferenceCaseIds,
               updatedAt: now,
             };
@@ -1773,8 +1762,12 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           ...workspace,
           files: nextFiles,
           activeFileId:
-            workspace.activeFileId === fileId
-              ? (nextFiles[0]?.id ?? null)
+            workspace.activeFileId && removedIds.has(workspace.activeFileId)
+              ? (
+                nextFiles.find((file: CaseResolverFile): boolean => file.fileType === 'case')?.id ??
+                nextFiles[0]?.id ??
+                null
+              )
               : workspace.activeFileId,
         };
 

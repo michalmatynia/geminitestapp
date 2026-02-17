@@ -58,12 +58,14 @@ type ProductImageManagerProps = {
   controller?: ProductImageManagerController;
   minimalUi?: boolean;
   showDragHandle?: boolean;
+  minimalSingleSlotAlign?: 'left' | 'center';
 };
 
 export default function ProductImageManager({
   controller,
   minimalUi = false,
   showDragHandle = true,
+  minimalSingleSlotAlign = 'center',
 }: ProductImageManagerProps = {}): React.JSX.Element {
   const formContext = React.useContext(ProductFormContext);
   const controllerContext = useOptionalProductImageManagerController();
@@ -493,7 +495,7 @@ export default function ProductImageManager({
         className={
           minimalUi
             ? imageSlots.length === 1
-              ? 'flex w-full justify-center overflow-x-hidden'
+              ? `flex w-full overflow-x-hidden ${minimalSingleSlotAlign === 'left' ? 'justify-start' : 'justify-center'}`
               : 'grid w-full grid-cols-2 justify-items-start gap-2 overflow-x-hidden'
             : 'grid grid-cols-5 gap-2'
         }
@@ -614,7 +616,7 @@ export default function ProductImageManager({
                   {base64LoadingSlots[index] ? 'Converting...' : 'Convert to Base64'}
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  disabled={!hasBase64}
+                  disabled={!hasBase64 || imageLocked}
                   onClick={() => {
                     setImageBase64At(index, '');
                     setSlotViewModes((prev: SlotViewMode[]) => {
@@ -632,7 +634,7 @@ export default function ProductImageManager({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  disabled={!hasLink}
+                  disabled={!hasLink || imageLocked}
                   onClick={() => setImageLinkAt(index, '')}
                 >
                   Clear link
@@ -721,15 +723,13 @@ export default function ProductImageManager({
                         }}
                       />
                     )}
-                    {displayUrl ? (
+                    {displayUrl && !minimalUi && !imageLocked ? (
                       <Button
                         type='button'
                         variant='destructive'
                         size='icon'
                         className='absolute right-0 top-0 h-6 w-6 rounded-full'
                         onClick={clearVisibleImage}
-                        disabled={imageLocked}
-                        title={imageLocked ? slotImageLockedReason : undefined}
                         aria-label={`Remove image from slot ${index + 1}`}
                       >
                         <XIcon className='h-4 w-4' />
@@ -773,9 +773,18 @@ export default function ProductImageManager({
           const slotKey = `slot-${index}`;
 
           return (
-            <div key={slotKey} className='flex flex-col items-center gap-1'>
+            <div
+              key={slotKey}
+              className={`flex flex-col gap-1 ${isSingleMinimalSlot && minimalSingleSlotAlign === 'left' ? 'items-start' : 'items-center'}`}
+            >
               {minimalUi && slotLabel ? (
-                <div className={isSingleMinimalSlot ? `${singleMinimalSlotSizeClass} text-center text-[10px] font-medium tracking-wide text-gray-400` : 'w-24 text-center text-[10px] font-medium tracking-wide text-gray-400'}>
+                <div
+                  className={
+                    isSingleMinimalSlot
+                      ? `${singleMinimalSlotSizeClass} ${minimalSingleSlotAlign === 'left' ? 'text-left' : 'text-center'} text-[10px] font-medium tracking-wide text-gray-400`
+                      : 'w-24 text-center text-[10px] font-medium tracking-wide text-gray-400'
+                  }
+                >
                   {slotLabel}
                 </div>
               ) : null}
@@ -796,7 +805,7 @@ export default function ProductImageManager({
                 tabIndex={-1}
               />
               {minimalUi ? (
-                <div className={`mx-auto flex ${minimalLayoutWidthClass} items-start gap-2`}>
+                <div className={`${isSingleMinimalSlot && minimalSingleSlotAlign === 'left' ? '' : 'mx-auto'} flex ${minimalLayoutWidthClass} items-start gap-2`}>
                   {thumbnailFrame}
                   <div className='flex w-[4.25rem] flex-col items-stretch gap-1'>
                     <Button

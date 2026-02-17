@@ -3,6 +3,7 @@
 import { Clock3, Eye, GitBranch, Loader2, Move, Play, Redo2, SlidersHorizontal, Sparkles, Undo2, Workflow } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { logClientError } from '@/features/observability';
 import { formatProgrammaticPrompt } from '@/features/prompt-engine/prompt-formatter';
@@ -89,6 +90,7 @@ const MODEL_COST_PROFILES: Array<{ prefix: string; profile: ModelCostProfile }> 
   { prefix: 'dall-e-2', profile: { imageUsdPerImage: 0.02, inputUsdPer1KTokens: 0.0 } },
 ];
 const ACTION_HISTORY_MAX_STEPS = 10;
+const IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID = 'image-studio-quick-actions-host';
 
 type StudioActionHistorySnapshot = {
   selectedFolder: string;
@@ -340,6 +342,7 @@ export function RightSidebar(): React.JSX.Element {
   const [controlsOpen, setControlsOpen] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<'controls' | 'graph' | 'sequencing' | 'history'>('controls');
   const [historyMode, setHistoryMode] = useState<'actions' | 'runs'>('actions');
+  const [quickActionsHostEl, setQuickActionsHostEl] = useState<HTMLElement | null>(null);
   const [actionHistoryEntries, setActionHistoryEntries] = useState<StudioActionHistoryEntry[]>([]);
   const [activeActionHistoryIndex, setActiveActionHistoryIndex] = useState(-1);
   const isApplyingActionHistoryRef = useRef(false);
@@ -407,6 +410,8 @@ export function RightSidebar(): React.JSX.Element {
     (selectedSlot && !isImageStudioSlotImageLocked(selectedSlot))
   );
   const canResetCanvasImageOffset = Math.abs(canvasImageOffset.x) > 0.5 || Math.abs(canvasImageOffset.y) > 0.5;
+  const isMoveImageActive = imageTransformMode === 'move';
+  const canRecenterCanvasImage = isMoveImageActive && canResetCanvasImageOffset;
 
   const buildActionHistorySnapshot = useCallback((): StudioActionHistorySnapshot => ({
     selectedFolder,
@@ -613,6 +618,21 @@ export function RightSidebar(): React.JSX.Element {
     isApplyingActionHistoryRef.current = false;
     applyingActionHistorySignatureRef.current = null;
   }, [projectId]);
+
+  useEffect((): (() => void) | void => {
+    if (typeof document === 'undefined') return;
+
+    const resolveHost = (): void => {
+      const nextHost = document.getElementById(IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID);
+      setQuickActionsHostEl((currentHost) => (currentHost === nextHost ? currentHost : nextHost));
+    };
+
+    resolveHost();
+    const frameId = window.requestAnimationFrame(resolveHost);
+    return (): void => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [projectId, sidebarTab]);
 
   useEffect(() => {
     const snapshot = buildActionHistorySnapshot();
@@ -1152,6 +1172,108 @@ export function RightSidebar(): React.JSX.Element {
     </div>
   );
 
+  const quickActionsPanelContent = (
+    <>
+      <div className='rounded border border-border/60 bg-card/30 p-2'>
+        <div className='space-y-2'>
+          <SelectSimple size='sm'
+            value={studioSettings.targetAi.openai.model}
+            onValueChange={(value: string) => {
+              setStudioSettings((prev) => ({
+                ...prev,
+                targetAi: {
+                  ...prev.targetAi,
+                  openai: {
+                    ...prev.targetAi.openai,
+                    api: 'images',
+                    model: value,
+                  },
+                },
+              }));
+            }}
+            options={quickModelOptions}
+            placeholder='Select model'
+            triggerClassName='h-8 text-xs'
+            ariaLabel='Quick generation model'
+          />
+          <div className='flex flex-wrap items-center gap-2 sm:justify-end'>
+            <Button size='xs'
+              onClick={handleRunGeneration}
+              disabled={!promptText.trim() || generationBusy || sequenceRunBusy}
+              className='sm:min-w-[140px]'
+            >
+              {generationBusy ? (
+                <Loader2 className='mr-2 size-4 animate-spin' />
+              ) : (
+                <Play className='mr-2 size-4' />
+              )}
+              {generationLabel}
+            </Button>
+            {modelSupportsSequenceGeneration ? (
+              <Button size='xs'
+                variant='outline'
+                onClick={handleRunSequenceGeneration}
+                disabled={generationBusy || sequenceRunBusy}
+                className='sm:min-w-[160px]'
+                title='Run enabled sequence steps in sequencer'
+                aria-label='Generate sequence'
+              >
+                {sequenceRunBusy ? (
+                  <Loader2 className='mr-2 size-4 animate-spin' />
+                ) : (
+                  <Workflow className='mr-2 size-4' />
+                )}
+                {sequenceRunBusy ? 'Starting...' : 'Generate Sequence'}
+              </Button>
+            ) : null}
+          </div>
+        </div>
+        <div className='mt-2 flex flex-wrap items-center gap-3 text-[11px] text-gray-400'>
+          <span className='text-gray-300'>
+          Tokens ~{estimatedPromptTokens.toLocaleString()}
+          </span>
+          <span
+            className='max-w-full truncate text-gray-300'
+            title={`Estimated generation cost for ${selectedModelId}`}
+          >
+          Est. Cost ({selectedModelId}) ${estimatedGenerationCost.toFixed(3)}
+          </span>
+        </div>
+      </div>
+
+      <div className='flex flex-wrap items-center justify-end gap-2'>
+        <Button size='xs'
+          variant='outline'
+          title='Open prompt controls'
+          aria-label='Open prompt controls'
+          onClick={() => setPromptControlOpen(true)}
+        >
+          <Sparkles className='mr-2 size-4' />
+  Control Prompt
+        </Button>
+        <Button size='xs'
+          variant='outline'
+          title='Preview generation request payload and input images'
+          aria-label='Preview generation request payload and input images'
+          onClick={() => setRequestPreviewOpen(true)}
+        >
+          <Eye className='mr-2 size-4' />
+  Preview Request
+        </Button>
+        <Button size='xs'
+          variant='outline'
+          title={hasExtractedControls ? 'Open extracted controls' : 'Extract controls first'}
+          aria-label='Open extracted controls'
+          disabled={!hasExtractedControls}
+          onClick={() => setControlsOpen(true)}
+        >
+          <SlidersHorizontal className='mr-2 size-4' />
+    Controls
+        </Button>
+      </div>
+    </>
+  );
+
   return (
     <>
       <RightSidebarProvider value={{ switchToControls }}>
@@ -1255,6 +1377,15 @@ export function RightSidebar(): React.JSX.Element {
             </div>
           </div>
 
+          {quickActionsHostEl
+            ? createPortal(
+              <div className='space-y-2 pb-2'>
+                {quickActionsPanelContent}
+              </div>,
+              quickActionsHostEl
+            )
+            : null}
+
           {sidebarTab === 'graph' ? (
             selectedSlotId ? (
               <VersionNodeMapPanel />
@@ -1347,210 +1478,122 @@ export function RightSidebar(): React.JSX.Element {
             </div>
           ) : (
             <>
-              <div className='space-y-2 px-4 py-2'>
-                <div className='rounded border border-border/60 bg-card/30 p-2'>
-                  <div className='space-y-2'>
-                    <SelectSimple size='sm'
-                      value={studioSettings.targetAi.openai.model}
-                      onValueChange={(value: string) => {
-                        setStudioSettings((prev) => ({
-                          ...prev,
-                          targetAi: {
-                            ...prev.targetAi,
-                            openai: {
-                              ...prev.targetAi.openai,
-                              api: 'images',
-                              model: value,
-                            },
-                          },
-                        }));
-                      }}
-                      options={quickModelOptions}
-                      placeholder='Select model'
-                      triggerClassName='h-8 text-xs'
-                      ariaLabel='Quick generation model'
-                    />
-                    <div className='flex flex-wrap items-center gap-2 sm:justify-end'>
-                      <Button size='xs'
-                        onClick={handleRunGeneration}
-                        disabled={!promptText.trim() || generationBusy || sequenceRunBusy}
-                        className='sm:min-w-[140px]'
-                      >
-                        {generationBusy ? (
-                          <Loader2 className='mr-2 size-4 animate-spin' />
-                        ) : (
-                          <Play className='mr-2 size-4' />
-                        )}
-                        {generationLabel}
-                      </Button>
-                      {modelSupportsSequenceGeneration ? (
-                        <Button size='xs'
-                          variant='outline'
-                          onClick={handleRunSequenceGeneration}
-                          disabled={generationBusy || sequenceRunBusy}
-                          className='sm:min-w-[160px]'
-                          title='Run enabled sequence steps in sequencer'
-                          aria-label='Generate sequence'
-                        >
-                          {sequenceRunBusy ? (
-                            <Loader2 className='mr-2 size-4 animate-spin' />
-                          ) : (
-                            <Workflow className='mr-2 size-4' />
-                          )}
-                          {sequenceRunBusy ? 'Starting...' : 'Generate Sequence'}
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className='mt-2 flex flex-wrap items-center gap-3 text-[11px] text-gray-400'>
-                    <span className='text-gray-300'>
-                    Tokens ~{estimatedPromptTokens.toLocaleString()}
-                    </span>
-                    <span
-                      className='max-w-full truncate text-gray-300'
-                      title={`Estimated generation cost for ${selectedModelId}`}
-                    >
-                    Est. Cost ({selectedModelId}) ${estimatedGenerationCost.toFixed(3)}
-                    </span>
-                  </div>
+              {!quickActionsHostEl ? (
+                <div className='space-y-2 px-4 py-2'>
+                  {quickActionsPanelContent}
                 </div>
-
-                <div className='flex flex-wrap items-center justify-end gap-2'>
-                  <Button size='xs'
-                    variant='outline'
-                    title='Open prompt controls'
-                    aria-label='Open prompt controls'
-                    onClick={() => setPromptControlOpen(true)}
-                  >
-                    <Sparkles className='mr-2 size-4' />
-            Control Prompt
-                  </Button>
-                  <Button size='xs'
-                    variant='outline'
-                    title='Preview generation request payload and input images'
-                    aria-label='Preview generation request payload and input images'
-                    onClick={() => setRequestPreviewOpen(true)}
-                  >
-                    <Eye className='mr-2 size-4' />
-            Preview Request
-                  </Button>
-                  <Button size='xs'
-                    variant='outline'
-                    title={hasExtractedControls ? 'Open extracted controls' : 'Extract controls first'}
-                    aria-label='Open extracted controls'
-                    disabled={!hasExtractedControls}
-                    onClick={() => setControlsOpen(true)}
-                  >
-                    <SlidersHorizontal className='mr-2 size-4' />
-              Controls
-                  </Button>
-                </div>
-
-              </div>
+              ) : null}
               <div className='relative flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-4 pt-0'>
-                <StudioCard label='Tools' className='shrink-0'>
-                  <div className='space-y-3'>
-                    <div className='rounded border border-border/60 bg-card/30 p-3'>
-                      <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Shape Tools</div>
-                      <VectorDrawingToolbar
-                        tool={tool}
-                        onSelectTool={setTool}
-                        onClear={handleClearAllShapes}
-                        disableClear={maskShapes.length === 0}
-                        className='w-full flex-wrap justify-start rounded-xl border-border/60 bg-card/40'
-                      />
-                      {tool !== 'select' ? (
-                        <div className='mt-3 rounded border border-border/60 bg-card/30 p-3'>
-                          <div className='grid grid-cols-[auto_1fr] gap-x-2 gap-y-2'>
+                <div className='space-y-3 shrink-0'>
+                  <div className='rounded border border-border/60 bg-card/30 p-3'>
+                    <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Shape Tools</div>
+                    <VectorDrawingToolbar
+                      tool={tool}
+                      onSelectTool={setTool}
+                      onClear={handleClearAllShapes}
+                      disableClear={maskShapes.length === 0}
+                      className='w-full flex-wrap justify-start rounded-xl border-border/60 bg-card/40'
+                    />
+                    {tool !== 'select' ? (
+                      <div className='mt-3 rounded border border-border/60 bg-card/30 p-3'>
+                        <div className='grid grid-cols-[auto_1fr] gap-x-2 gap-y-2'>
+                          <LabeledSlider
+                            label='Mask Feather'
+                            value={maskFeather}
+                            onChange={setMaskFeather}
+                          />
+                          {tool === 'brush' ? (
                             <LabeledSlider
-                              label='Mask Feather'
-                              value={maskFeather}
-                              onChange={setMaskFeather}
+                              label='Brush Radius'
+                              value={brushRadius}
+                              onChange={setBrushRadius}
+                              min={1}
+                              max={64}
+                              fallbackValue={8}
                             />
-                            {tool === 'brush' ? (
-                              <LabeledSlider
-                                label='Brush Radius'
-                                value={brushRadius}
-                                onChange={setBrushRadius}
-                                min={1}
-                                max={64}
-                                fallbackValue={8}
-                              />
-                            ) : null}
-                          </div>
+                          ) : null}
                         </div>
-                      ) : (
-                        <div className='mt-2 text-[11px] text-gray-500'>
-                          Select a drawing tool to see contextual settings.
-                        </div>
-                      )}
-                    </div>
-
-                    <div className='rounded border border-border/60 bg-card/30 p-3'>
-                      <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Image Transform</div>
-                      <div className='flex flex-wrap items-center gap-2'>
-                        <Button
-                          size='xs'
-                          type='button'
-                          variant={imageTransformMode === 'move' ? 'default' : 'outline'}
-                          onClick={() => {
-                            setImageTransformMode(imageTransformMode === 'move' ? 'none' : 'move');
-                          }}
-                          disabled={!hasCanvasImage}
-                          title='Enable image reposition mode in canvas'
-                          aria-label='Toggle image move mode'
-                        >
-                          <Move className='mr-1.5 size-3.5' />
-                          Move Image
-                        </Button>
-                        <Button
-                          size='xs'
-                          type='button'
-                          variant='outline'
-                          onClick={() => {
-                            resetCanvasImageOffset();
-                            setImageTransformMode('none');
-                          }}
-                          disabled={!canResetCanvasImageOffset}
-                          title='Re-center image on canvas'
-                          aria-label='Re-center image on canvas'
-                        >
-                          Re-center
-                        </Button>
                       </div>
+                    ) : (
                       <div className='mt-2 text-[11px] text-gray-500'>
+                          Select a drawing tool to see contextual settings.
+                      </div>
+                    )}
+                  </div>
+
+                  <div className='rounded border border-border/60 bg-card/30 p-3'>
+                    <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Image Transform</div>
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <Button
+                        size='xs'
+                        type='button'
+                        variant={isMoveImageActive ? 'default' : 'outline'}
+                        onClick={() => {
+                          setImageTransformMode(isMoveImageActive ? 'none' : 'move');
+                        }}
+                        disabled={!hasCanvasImage}
+                        aria-pressed={isMoveImageActive}
+                        title={isMoveImageActive ? 'Disable image reposition mode' : 'Enable image reposition mode in canvas'}
+                        aria-label='Toggle image move mode'
+                        className={cn(
+                          isMoveImageActive
+                            ? 'border-cyan-400/70 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30'
+                            : undefined
+                        )}
+                      >
+                        <Move className='mr-1.5 size-3.5' />
+                          Move Image
+                      </Button>
+                      <Button
+                        size='xs'
+                        type='button'
+                        variant='outline'
+                        onClick={() => {
+                          resetCanvasImageOffset();
+                        }}
+                        disabled={!canRecenterCanvasImage}
+                        title={
+                          isMoveImageActive
+                            ? 'Re-center image on canvas'
+                            : 'Enable Move Image to re-center'
+                        }
+                        aria-label='Re-center image on canvas'
+                      >
+                          Re-center
+                      </Button>
+                    </div>
+                    <div className='mt-2 text-[11px] text-gray-500'>
                         Use Move Image, then drag the canvas image to manually align it in frame.
-                      </div>
-                    </div>
-
-                    <div className='rounded border border-border/60 bg-card/30 p-3'>
-                      <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>
-                        Image Operations
-                      </div>
-                      <GenerationToolbar />
-                    </div>
-
-                    <div className='rounded border border-border/60 bg-card/30 p-3'>
-                      <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Masking Tools</div>
-                      <div className='grid grid-cols-[auto_1fr] gap-x-2 gap-y-2'>
-                        <LabeledSlider
-                          label='Threshold Sensitivity'
-                          value={maskThresholdSensitivity}
-                          onChange={setMaskThresholdSensitivity}
-                          fallbackValue={55}
-                          disabled={!workingSlot}
-                        />
-                        <LabeledSlider
-                          label='Edge Sensitivity'
-                          value={maskEdgeSensitivity}
-                          onChange={setMaskEdgeSensitivity}
-                          fallbackValue={55}
-                          disabled={!workingSlot}
-                        />
-                      </div>
                     </div>
                   </div>
-                </StudioCard>
+
+                  <div className='rounded border border-border/60 bg-card/30 p-3'>
+                    <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>
+                        Image Operations
+                    </div>
+                    <GenerationToolbar />
+                  </div>
+
+                  <div className='rounded border border-border/60 bg-card/30 p-3'>
+                    <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Masking Tools</div>
+                    <div className='grid grid-cols-[auto_1fr] gap-x-2 gap-y-2'>
+                      <LabeledSlider
+                        label='Threshold Sensitivity'
+                        value={maskThresholdSensitivity}
+                        onChange={setMaskThresholdSensitivity}
+                        fallbackValue={55}
+                        disabled={!workingSlot}
+                      />
+                      <LabeledSlider
+                        label='Edge Sensitivity'
+                        value={maskEdgeSensitivity}
+                        onChange={setMaskEdgeSensitivity}
+                        fallbackValue={55}
+                        disabled={!workingSlot}
+                      />
+                    </div>
+                  </div>
+                </div>
 
                 <StudioCard label='Composite References'>
                   <MultiSelect

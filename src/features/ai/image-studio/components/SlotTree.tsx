@@ -69,7 +69,6 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
   const {
     setSelectedFolder: onSelectFolder,
     setSelectedSlotId,
-    setWorkingSlotId,
     updateSlotMutation,
     moveSlot,
     deleteSlotMutation,
@@ -188,11 +187,10 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     const isDerivedGeneration = ownerSlotId !== null && ownerSlotId !== slot.id;
     if (isDerivedGeneration) {
       setSelectedSlotId(ownerSlotId);
-      setWorkingSlotId(slot.id);
       return;
     }
     onSelectSlot(slot);
-  }, [onSelectSlot, resolveOwnerCardSlotId, setSelectedSlotId, setWorkingSlotId]);
+  }, [onSelectSlot, resolveOwnerCardSlotId, setSelectedSlotId]);
 
   const onMoveSlot = useCallback((slot: ImageStudioSlotRecord, targetFolder: string): void => {
     void moveSlot({ slot, targetFolder });
@@ -673,7 +671,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
                         </span>
                       )}
                       <span
-                        className='min-w-0 flex-1 truncate cursor-text'
+                        className='min-w-0 flex-1 truncate'
                         onDoubleClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
                           event.preventDefault();
                           event.stopPropagation();

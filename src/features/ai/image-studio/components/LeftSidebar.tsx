@@ -381,7 +381,7 @@ export function LeftSidebar(): React.JSX.Element {
         </div>
 
         <div
-          className='grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 px-1 py-1'
+          className='grid grid-cols-[minmax(0,1fr)_auto_auto] items-start gap-2 px-1 py-1'
           data-preserve-slot-selection='true'
         >
           <div className='min-w-0 overflow-hidden'>
@@ -391,6 +391,20 @@ export function LeftSidebar(): React.JSX.Element {
                 Temporary upload is staged. Click Load to canvas to create one card and load it.
               </p>
             ) : null}
+          </div>
+          <div className='flex shrink-0 flex-col items-center gap-2 self-start'>
+            <Tooltip content={selectedSlot ? 'Edit card' : 'Select card to edit'}>
+              <Button size='xs'
+                type='button'
+                variant='outline'
+                title='Edit card'
+                onClick={() => setSlotInlineEditOpen(true)}
+                disabled={!selectedSlot}
+                aria-label='Edit card'
+              >
+                <Settings2 className='size-4' />
+              </Button>
+            </Tooltip>
           </div>
           <div className='flex shrink-0 flex-col items-center gap-2 self-start'>
             <Tooltip content='Load to canvas'>
@@ -441,19 +455,6 @@ export function LeftSidebar(): React.JSX.Element {
                 <FolderPlus className='size-4' />
               </Button>
             </Tooltip>
-            {selectedSlot ? (
-              <Tooltip content='Edit card'>
-                <Button size='xs'
-                  type='button'
-                  variant='outline'
-                  title='Edit card'
-                  onClick={() => setSlotInlineEditOpen(true)}
-                  aria-label='Edit card'
-                >
-                  <Settings2 className='size-4' />
-                </Button>
-              </Tooltip>
-            ) : null}
           </div>
         </div>
 

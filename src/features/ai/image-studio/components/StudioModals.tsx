@@ -181,6 +181,9 @@ const slotHasRenderableImage = (slot: ImageStudioSlotRecord | null | undefined):
   return Boolean(fileId || filePath || imageUrl || imageBase64);
 };
 
+const isCardImageRemovalLocked = (slot: ImageStudioSlotRecord | null | undefined): boolean =>
+  slotHasRenderableImage(slot) || isImageStudioSlotImageLocked(slot ?? null);
+
 const readEnvironmentReferenceDraft = (
   slot: ImageStudioSlotRecord | null
 ): EnvironmentReferenceDraft => {
@@ -1162,7 +1165,7 @@ export function StudioModals(): React.JSX.Element {
   const handleInlineCardDisconnectImage = useCallback(
     async (index: number): Promise<void> => {
       if (index !== INLINE_CARD_IMAGE_SLOT_INDEX || !selectedSlot?.id) return;
-      if (isImageStudioSlotImageLocked(selectedSlot)) {
+      if (isCardImageRemovalLocked(selectedSlot)) {
         setInlineSlotUploadError('Card image is locked and can only be removed by deleting the card.');
         return;
       }
@@ -1284,7 +1287,7 @@ export function StudioModals(): React.JSX.Element {
       },
       slotLabels: [''],
       isSlotImageLocked: (slotIndex: number): boolean =>
-        slotIndex === INLINE_CARD_IMAGE_SLOT_INDEX && isImageStudioSlotImageLocked(selectedSlot),
+        slotIndex === INLINE_CARD_IMAGE_SLOT_INDEX && isCardImageRemovalLocked(selectedSlot),
       slotImageLockedReason: 'Card image is locked and can only be removed by deleting the card.',
       swapImageSlots: (): void => {
         // Single-slot manager: no reordering.
@@ -1691,7 +1694,7 @@ export function StudioModals(): React.JSX.Element {
 
   const handleClearSlotImage = async () => {
     if (!selectedSlot) return;
-    if (isImageStudioSlotImageLocked(selectedSlot)) {
+    if (isCardImageRemovalLocked(selectedSlot)) {
       toast('Card image is locked and can only be removed by deleting the card.', { variant: 'warning' });
       return;
     }
@@ -2351,9 +2354,9 @@ export function StudioModals(): React.JSX.Element {
                 onClick={() => {
                   void handleClearSlotImage();
                 }}
-                disabled={slotUpdateBusy || isImageStudioSlotImageLocked(selectedSlot)}
+                disabled={slotUpdateBusy || isCardImageRemovalLocked(selectedSlot)}
                 title={
-                  isImageStudioSlotImageLocked(selectedSlot)
+                  isCardImageRemovalLocked(selectedSlot)
                     ? 'Card image is locked and can only be removed by deleting the card.'
                     : undefined
                 }

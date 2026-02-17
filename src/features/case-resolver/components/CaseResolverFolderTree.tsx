@@ -14,6 +14,7 @@ import {
   GripVertical,
   Lock,
   Pencil,
+  Sparkles,
   Trash2,
   Unlock,
 } from 'lucide-react';
@@ -99,88 +100,81 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     const clearDragHandleArming = (): void => {
       dragHandleNodeIdRef.current = null;
     };
-    window.addEventListener('pointerup', clearDragHandleArming);
     window.addEventListener('dragend', clearDragHandleArming);
     return (): void => {
-      window.removeEventListener('pointerup', clearDragHandleArming);
       window.removeEventListener('dragend', clearDragHandleArming);
     };
   }, []);
 
   const treeWorkspace = useMemo((): CaseResolverWorkspace => {
-    const selectedCase =
-      selectedFileId
-        ? workspace.files.find((file: CaseResolverFile): boolean => file.id === selectedFileId) ?? null
-        : null;
-    const shouldScopeToCase = Boolean(
-      selectedCase &&
-      (
-        selectedCase.fileType === 'case' ||
-        (selectedCase.parentCaseId && selectedCase.parentCaseId !== selectedCase.id)
-      )
-    );
-    if (!selectedCase || !shouldScopeToCase) {
-      return workspace;
-    }
-
     const filesById = new Map<string, CaseResolverFile>(
       workspace.files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
     );
-    const childIdsByParentId = new Map<string, string[]>();
+    const contextFileId = selectedFileId ?? workspace.activeFileId;
+    const contextFile = contextFileId ? (filesById.get(contextFileId) ?? null) : null;
+    if (!contextFile) return workspace;
+
+    const scopedRootCaseId =
+      contextFile.fileType === 'case'
+        ? contextFile.id
+        : (
+          contextFile.parentCaseId &&
+          (filesById.get(contextFile.parentCaseId)?.fileType === 'case')
+            ? contextFile.parentCaseId
+            : null
+        );
+    if (!scopedRootCaseId) return workspace;
+
+    const caseChildIdsByParentId = new Map<string, string[]>();
     workspace.files.forEach((file: CaseResolverFile): void => {
+      if (file.fileType !== 'case') return;
       const parentCaseId = file.parentCaseId;
       if (!parentCaseId || parentCaseId === file.id) return;
-      const current = childIdsByParentId.get(parentCaseId) ?? [];
+      const parentFile = filesById.get(parentCaseId);
+      if (parentFile?.fileType !== 'case') return;
+      const current = caseChildIdsByParentId.get(parentCaseId) ?? [];
       current.push(file.id);
-      childIdsByParentId.set(parentCaseId, current);
+      caseChildIdsByParentId.set(parentCaseId, current);
     });
 
-    const relatedCaseIds = new Set<string>();
+    const scopedCaseIds = new Set<string>();
     const visitCase = (caseId: string): void => {
-      if (!caseId || relatedCaseIds.has(caseId)) return;
-      const file = filesById.get(caseId);
-      if (!file) return;
-      relatedCaseIds.add(caseId);
-
-      if (file.parentCaseId && file.parentCaseId !== file.id) {
-        visitCase(file.parentCaseId);
-      }
-      const childIds = childIdsByParentId.get(file.id) ?? [];
-      childIds.forEach((childId: string): void => {
-        visitCase(childId);
-      });
-      file.referenceCaseIds.forEach((referenceCaseId: string): void => {
-        visitCase(referenceCaseId);
+      if (!caseId || scopedCaseIds.has(caseId)) return;
+      const candidate = filesById.get(caseId);
+      if (candidate?.fileType !== 'case') return;
+      scopedCaseIds.add(caseId);
+      const childCaseIds = caseChildIdsByParentId.get(caseId) ?? [];
+      childCaseIds.forEach((childCaseId: string): void => {
+        visitCase(childCaseId);
       });
     };
+    visitCase(scopedRootCaseId);
+    if (scopedCaseIds.size === 0) return workspace;
 
-    visitCase(selectedCase.id);
-    workspace.files.forEach((file: CaseResolverFile): void => {
-      if (file.referenceCaseIds.includes(selectedCase.id)) {
-        visitCase(file.id);
+    const scopedFiles = workspace.files.filter((file: CaseResolverFile): boolean => {
+      if (file.fileType === 'case') {
+        return scopedCaseIds.has(file.id);
       }
+      return Boolean(file.parentCaseId && scopedCaseIds.has(file.parentCaseId));
     });
+    if (scopedFiles.length === 0) return workspace;
 
-    const scopedFiles = workspace.files.filter((file: CaseResolverFile): boolean =>
-      relatedCaseIds.has(file.id)
+    const scopedFileIds = new Set<string>(
+      scopedFiles.map((file: CaseResolverFile): string => file.id)
     );
-    if (scopedFiles.length === 0) {
-      return workspace;
-    }
-
-    const folderPaths = new Set<string>();
-    const registerFolderPath = (folderPath: string): void => {
-      const normalizedFolderPath = folderPath.trim();
-      if (!normalizedFolderPath) return;
-      const segments = normalizedFolderPath.split('/').filter(Boolean);
-      for (let index = 0; index < segments.length; index += 1) {
-        folderPaths.add(segments.slice(0, index + 1).join('/'));
-      }
-    };
-
-    scopedFiles.forEach((file: CaseResolverFile): void => {
-      registerFolderPath(file.folder);
-    });
+    const scopedAssets = workspace.assets.filter((asset): boolean =>
+      Boolean(asset.sourceFileId && scopedFileIds.has(asset.sourceFileId))
+    );
+    const activeCandidates = [
+      selectedFileId,
+      workspace.activeFileId,
+      scopedRootCaseId,
+      scopedFiles[0]?.id ?? null,
+    ];
+    const nextActiveFileId =
+      activeCandidates.find((candidate: string | null): candidate is string =>
+        typeof candidate === 'string' && scopedFileIds.has(candidate)
+      ) ?? null;
 
     return {
       ...workspace,
@@ -189,10 +183,8 @@ export function CaseResolverFolderTree(): React.JSX.Element {
       folders: workspace.folders,
       folderTimestamps: workspace.folderTimestamps,
       files: scopedFiles,
-      assets: [],
-      activeFileId: scopedFiles.some((file: CaseResolverFile): boolean => file.id === selectedCase.id)
-        ? selectedCase.id
-        : (scopedFiles[0]?.id ?? null),
+      assets: scopedAssets,
+      activeFileId: nextActiveFileId,
     };
   }, [selectedFileId, workspace]);
 
@@ -263,6 +255,15 @@ export function CaseResolverFolderTree(): React.JSX.Element {
       if (eventTarget instanceof Element) {
         const fromHandle = eventTarget.closest('[data-master-tree-drag-handle="true"]') !== null;
         if (fromHandle) {
+          dragHandleNodeIdRef.current = node.id;
+          return true;
+        }
+      }
+      if (typeof document !== 'undefined') {
+        const pointerElement = document.elementFromPoint(event.clientX, event.clientY);
+        const fromPointerHandle =
+          pointerElement?.closest('[data-master-tree-drag-handle="true"]') !== null;
+        if (fromPointerHandle) {
           dragHandleNodeIdRef.current = node.id;
           return true;
         }
@@ -759,6 +760,9 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                 <DragHandleIcon
                   data-master-tree-drag-handle='true'
                   onPointerDown={(): void => {
+                    dragHandleNodeIdRef.current = node.id;
+                  }}
+                  onMouseDown={(): void => {
                     dragHandleNodeIdRef.current = node.id;
                   }}
                   className={`size-3 shrink-0 ${

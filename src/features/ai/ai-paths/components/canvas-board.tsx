@@ -1,12 +1,6 @@
 import React from 'react';
 
-
-import type {
-  AiNode,
-  AiPathRuntimeEvent,
-  PathFlowIntensity,
-  Edge,
-} from '@/features/ai/ai-paths/lib';
+import type { AiNode, PathFlowIntensity, Edge } from '@/features/ai/ai-paths/lib';
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
@@ -14,17 +8,9 @@ import {
   NODE_WIDTH,
   PORT_SIZE,
   getPortOffsetY,
-  formatRuntimeValue,
   formatDurationMs,
   typeStyles,
   validateConnection,
-  arePortTypesCompatible,
-  formatPortDataTypes,
-  getPortDataTypes,
-  getValueTypeLabel,
-  isValueCompatibleWithTypes,
-  type PortDataType,
-  hashRuntimeValue,
 } from '@/features/ai/ai-paths/lib';
 import { Button, Tooltip } from '@/shared/ui';
 
@@ -38,39 +24,17 @@ import {
   useSelectionState,
   useSelectionActions,
 } from '../context';
+import {
+  buildConnectorInfo,
+  renderConnectorTooltip,
+} from './canvas-board-connectors';
+import { useCanvasPulseEffects } from './canvas-board-pulse-effects';
 import { NodeProcessingDots } from './NodeProcessingDots';
 import { SignalDots } from './SignalDots';
 import { formatPortLabel } from '../utils/ui-utils';
 
 export type EdgePath = { id: string; path: string; label?: string | undefined; arrow?: { x: number; y: number; angle: number } | undefined };
 const DEFAULT_NODE_NOTE_COLOR = '#f5e7c3';
-type ConnectionTypeMismatch = {
-  fromNode?: AiNode | null;
-  toNode?: AiNode | null;
-  fromPort: string;
-  toPort: string;
-  fromTypes: PortDataType[];
-  toTypes: PortDataType[];
-};
-type ConnectorInfo = {
-  direction: 'input' | 'output';
-  port: string;
-  expectedTypes: PortDataType[];
-  expectedLabel: string;
-  rawValue: unknown;
-  value: unknown;
-  isHistory: boolean;
-  historyLength: number;
-  actualType: string | null;
-  runtimeMismatch: boolean;
-  connectionMismatches: ConnectionTypeMismatch[];
-  hasMismatch: boolean;
-};
-
-type RuntimeHashes = {
-  inputs: Record<string, Record<string, string>>;
-  outputs: Record<string, Record<string, string>>;
-};
 
 export type CanvasBoardConnectorTooltipOverrideInput = {
   direction: 'input' | 'output';
@@ -179,17 +143,8 @@ export function CanvasBoard({
   // --- Local State & Refs ---
   const [hoveredConnectorKey, setHoveredConnectorKey] = React.useState<string | null>(null);
   const [pinnedConnectorKey, setPinnedConnectorKey] = React.useState<string | null>(null);
-  const [activeEdgeIds, setActiveEdgeIds] = React.useState<Set<string>>(() => new Set());
-  const [inputPulseNodes, setInputPulseNodes] = React.useState<Set<string>>(() => new Set());
-  const [outputPulseNodes, setOutputPulseNodes] = React.useState<Set<string>>(() => new Set());
-  const prevHashesRef = React.useRef<RuntimeHashes | null>(null);
-  const edgePulseTimeouts = React.useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-  const nodePulseTimeouts = React.useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
-  const lastRuntimeEventIdRef = React.useRef<string | null>(null);
-
   // --- Constants & Derived ---
-  const FLOW_ANIMATION_MS = 1600;
-  const NODE_PULSE_MS = 1400;
+  const FLOW_ANIMATION_MS = 1600; const NODE_PULSE_MS = 1400;
   const resolvedFlowIntensity: PathFlowIntensity = flowIntensity ?? 'medium';
   const flowEnabled = resolvedFlowIntensity !== 'off';
 
@@ -242,9 +197,7 @@ export function CanvasBoard({
     (nodeId: string, port: string): string => `${nodeId}:${port}`,
     []
   );
-
-  const canRemoveSelectedEdge = true;
-  const canDeleteSelectedNode = true;
+  const canRemoveSelectedEdge = true; const canDeleteSelectedNode = true;
 
   React.useEffect((): void | (() => void) => {
     const isTypingTarget = (target: EventTarget | null): boolean => {
@@ -283,55 +236,6 @@ export function CanvasBoard({
     selectedNodeId,
   ]);
 
-  const formatConnectorValue = (value: unknown): string => {
-    if (value === undefined) return 'No data yet.';
-    if (value === null) return 'null';
-    const formatted = typeof value === 'string' ? value : formatRuntimeValue(value);
-    if (formatted.length > 1200) return `${formatted.slice(0, 1200)}…`;
-    return formatted;
-  };
-
-  const stringifyForDiff = (value: unknown): string => {
-    if (value === undefined) return '';
-    if (value === null) return 'null';
-    if (typeof value === 'string') return value;
-    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-    try {
-      return JSON.stringify(value, null, 2);
-    } catch {
-      return '[Complex Object]';
-    }
-  };
-
-  const buildDiffLines = (prev: string, next: string, limit: number = 120): { lines: Array<{ type: 'add' | 'remove' | 'same'; text: string }>; truncated: boolean } => {
-    const prevLines = prev.split('\n');
-    const nextLines = next.split('\n');
-    const max = Math.max(prevLines.length, nextLines.length);
-    const lines: Array<{ type: 'add' | 'remove' | 'same'; text: string }> = [];
-    let truncated = false;
-    for (let index = 0; index < max; index += 1) {
-      const prevLine = prevLines[index];
-      const nextLine = nextLines[index];
-      if (prevLine === nextLine) {
-        if (prevLine !== undefined) {
-          lines.push({ type: 'same', text: prevLine });
-        }
-      } else {
-        if (prevLine !== undefined) {
-          lines.push({ type: 'remove', text: prevLine });
-        }
-        if (nextLine !== undefined) {
-          lines.push({ type: 'add', text: nextLine });
-        }
-      }
-      if (lines.length >= limit) {
-        truncated = true;
-        break;
-      }
-    }
-    return { lines, truncated };
-  };
-
   const getPortValue = React.useCallback(
     (direction: 'input' | 'output', nodeId: string, port: string): unknown => {
       const source = direction === 'input' ? runtimeState.inputs : runtimeState.outputs;
@@ -353,159 +257,18 @@ export function CanvasBoard({
     [nodes]
   );
 
-  const getConnectionMismatches = (
-    direction: 'input' | 'output',
-    nodeId: string,
-    port: string
-  ): ConnectionTypeMismatch[] => {
-    const relevantEdges =
-      direction === 'input'
-        ? edges.filter((edge) => edge.to === nodeId && edge.toPort === port)
-        : edges.filter((edge) => edge.from === nodeId && edge.fromPort === port);
-    return relevantEdges.flatMap((edge) => {
-      if (!edge.fromPort || !edge.toPort) return [];
-      const fromTypes = getPortDataTypes(edge.fromPort);
-      const toTypes = getPortDataTypes(edge.toPort);
-      if (arePortTypesCompatible(fromTypes, toTypes)) return [];
-      return [
-        {
-          fromNode: nodeById.get(edge.from) ?? null,
-          toNode: nodeById.get(edge.to) ?? null,
-          fromPort: edge.fromPort,
-          toPort: edge.toPort,
-          fromTypes,
-          toTypes,
-        },
-      ];
-    });
-  };
-
-  const buildConnectorInfo = (
-    direction: 'input' | 'output',
-    nodeId: string,
-    port: string
-  ): ConnectorInfo => {
-    const expectedTypes = getPortDataTypes(port);
-    const rawValue = getPortValue(direction, nodeId, port);
-    const treatArrayAsHistory =
-      Array.isArray(rawValue) &&
-      !expectedTypes.includes('array') &&
-      !expectedTypes.includes('image') &&
-      !expectedTypes.includes('any') &&
-      !expectedTypes.includes('json');
-    const history = treatArrayAsHistory ? (rawValue as unknown[]) : null;
-    const value = history ? history[history.length - 1] : rawValue;
-    const actualType = value !== undefined ? getValueTypeLabel(value) : null;
-    const runtimeMismatch =
-      value !== undefined && value !== null
-        ? !isValueCompatibleWithTypes(value, expectedTypes)
-        : false;
-    const connectionMismatches = getConnectionMismatches(direction, nodeId, port);
-    const hasMismatch = runtimeMismatch || connectionMismatches.length > 0;
-    return {
-      direction,
-      port,
-      expectedTypes,
-      expectedLabel: formatPortDataTypes(expectedTypes),
-      rawValue,
-      value,
-      isHistory: Boolean(history),
-      historyLength: history ? history.length : 0,
-      actualType,
-      runtimeMismatch,
-      connectionMismatches,
-      hasMismatch,
-    };
-  };
-
-  const renderConnectorTooltip = (info: ConnectorInfo): React.JSX.Element => {
-    const label = info.direction === 'input' ? 'Input' : 'Output';
-    const diff =
-      info.isHistory && Array.isArray(info.rawValue) && info.rawValue.length > 1
-        ? buildDiffLines(
-          stringifyForDiff(info.rawValue[info.rawValue.length - 2]),
-          stringifyForDiff(info.rawValue[info.rawValue.length - 1])
-        )
-        : null;
-    return (
-      <div className='space-y-1'>
-        <div className='text-[11px] text-gray-400'>
-          {label}: {formatPortLabel(info.port)}
-        </div>
-        <div className='text-[10px] text-gray-400'>
-          Data type: <span className='text-gray-200'>{info.expectedLabel}</span>
-        </div>
-        {info.actualType ? (
-          <div
-            className={`text-[10px] ${
-              info.runtimeMismatch ? 'text-rose-300' : 'text-gray-400'
-            }`}
-          >
-            Actual: {info.actualType}
-          </div>
-        ) : null}
-        {info.isHistory ? (
-          <div className='text-[10px] text-amber-200'>
-            {info.historyLength > 1 ? `History (${info.historyLength})` : 'Single value'}
-          </div>
-        ) : null}
-        {info.runtimeMismatch ? (
-          <div className='text-[10px] text-rose-300'>
-            Type mismatch (expected {info.expectedLabel})
-          </div>
-        ) : null}
-        {info.connectionMismatches.length > 0 ? (
-          <div className='space-y-1 text-[10px] text-rose-300'>
-            {info.connectionMismatches.map((mismatch, index) => {
-              const fromLabel = mismatch.fromNode?.title ?? mismatch.fromNode?.id ?? 'unknown';
-              const toLabel = mismatch.toNode?.title ?? mismatch.toNode?.id ?? 'unknown';
-              return (
-                <div key={`${mismatch.fromPort}-${mismatch.toPort}-${index}`}>
-                  Connection mismatch: {fromLabel}.{formatPortLabel(mismatch.fromPort)} (
-                  {formatPortDataTypes(mismatch.fromTypes)}) {'->'} {toLabel}.
-                  {formatPortLabel(mismatch.toPort)} ({formatPortDataTypes(mismatch.toTypes)})
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
-        <pre className='mt-1 max-h-56 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200'>
-          {formatConnectorValue(info.value)}
-        </pre>
-        <div className='text-[10px] text-gray-500'>
-          Right-click to disconnect. Drag to reconnect.
-        </div>
-        {diff ? (
-          <div className='mt-2'>
-            <div className='text-[10px] text-gray-400'>Diff (last two passes)</div>
-            <div className='mt-1 max-h-40 overflow-auto rounded bg-black/50 p-2 font-mono text-[10px] leading-relaxed'>
-              {diff.lines.map((line, index) => {
-                const prefix = line.type === 'add' ? '+ ' : line.type === 'remove' ? '- ' : '  ';
-                const colorClass =
-                  line.type === 'add'
-                    ? 'text-emerald-300'
-                    : line.type === 'remove'
-                      ? 'text-rose-300'
-                      : 'text-gray-300';
-                return (
-                  <div
-                    key={`${line.type}-${index}`}
-                    className={`whitespace-pre ${colorClass}`}
-                  >
-                    {prefix}
-                    {line.text}
-                  </div>
-                );
-              })}
-              {diff.truncated ? (
-                <div className='mt-1 text-gray-500'>Diff truncated…</div>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
-      </div>
-    );
-  };
+  const getConnectorInfo = React.useCallback(
+    (direction: 'input' | 'output', nodeId: string, port: string) =>
+      buildConnectorInfo({
+        direction,
+        nodeId,
+        port,
+        edges,
+        nodeById,
+        getPortValue,
+      }),
+    [edges, getPortValue, nodeById]
+  );
 
   const triggerConnected = React.useMemo((): Set<string> => {
     const triggerIds = nodes.filter((node) => node.type === 'trigger').map((node) => node.id);
@@ -584,230 +347,24 @@ export function CanvasBoard({
     return map;
   }, [edges]);
 
-  const buildRuntimeHashes = React.useCallback((): RuntimeHashes => {
-    const inputHashes: Record<string, Record<string, string>> = {};
-    const outputHashes: Record<string, Record<string, string>> = {};
-    nodes.forEach((node) => {
-      if (node.inputs?.length) {
-        const nodeInputs = (runtimeState.inputs?.[node.id] ?? {}) as Record<
-          string,
-          unknown
-        >;
-        const hashed: Record<string, string> = {};
-        node.inputs.forEach((port) => {
-          hashed[port] = hashRuntimeValue(nodeInputs[port]);
-        });
-        inputHashes[node.id] = hashed;
-      }
-      if (node.outputs?.length) {
-        const nodeOutputs = (runtimeState.outputs?.[node.id] ?? {}) as Record<
-          string,
-          unknown
-        >;
-        const hashed: Record<string, string> = {};
-        node.outputs.forEach((port) => {
-          hashed[port] = hashRuntimeValue(nodeOutputs[port]);
-        });
-        outputHashes[node.id] = hashed;
-      }
-    });
-    return { inputs: inputHashes, outputs: outputHashes };
-  }, [nodes, runtimeState]);
-
-  const scheduleEdgePulse = React.useCallback(
-    (edgeId: string): void => {
-      setActiveEdgeIds((prev) => {
-        if (prev.has(edgeId)) return prev;
-        const next = new Set(prev);
-        next.add(edgeId);
-        return next;
-      });
-      const existing = edgePulseTimeouts.current.get(edgeId);
-      if (existing) clearTimeout(existing);
-      const timeout = setTimeout(() => {
-        setActiveEdgeIds((prev) => {
-          if (!prev.has(edgeId)) return prev;
-          const next = new Set(prev);
-          next.delete(edgeId);
-          return next;
-        });
-        edgePulseTimeouts.current.delete(edgeId);
-      }, FLOW_ANIMATION_MS);
-      edgePulseTimeouts.current.set(edgeId, timeout);
-    },
-    [FLOW_ANIMATION_MS]
-  );
-
-  const scheduleNodePulse = React.useCallback(
-    (nodeId: string, direction: 'input' | 'output'): void => {
-      const setState = direction === 'input' ? setInputPulseNodes : setOutputPulseNodes;
-      const key = `${direction}:${nodeId}`;
-      setState((prev) => {
-        if (prev.has(nodeId)) return prev;
-        const next = new Set(prev);
-        next.add(nodeId);
-        return next;
-      });
-      const existing = nodePulseTimeouts.current.get(key);
-      if (existing) clearTimeout(existing);
-      const timeout = setTimeout(() => {
-        setState((prev) => {
-          if (!prev.has(nodeId)) return prev;
-          const next = new Set(prev);
-          next.delete(nodeId);
-          return next;
-        });
-        nodePulseTimeouts.current.delete(key);
-      }, NODE_PULSE_MS);
-      nodePulseTimeouts.current.set(key, timeout);
-    },
-    [NODE_PULSE_MS]
-  );
-
-  React.useEffect(() => {
-    if (!runtimeEvents || runtimeEvents.length === 0) {
-      lastRuntimeEventIdRef.current = null;
-      return;
-    }
-    const lastSeenId = lastRuntimeEventIdRef.current;
-    const fallbackStart = Math.max(0, runtimeEvents.length - 40);
-    const startIndex = lastSeenId
-      ? runtimeEvents.findIndex((event: AiPathRuntimeEvent) => event.id === lastSeenId) + 1
-      : fallbackStart;
-    const nextEvents = runtimeEvents.slice(
-      startIndex >= 0 ? startIndex : fallbackStart
-    );
-    if (nextEvents.length === 0) return;
-
-    nextEvents.forEach((event: AiPathRuntimeEvent) => {
-      const normalizedStatus =
-        typeof event.status === 'string'
-          ? event.status.trim().toLowerCase()
-          : '';
-      const nodeId = event.nodeId?.trim() ?? '';
-      if (!nodeId) return;
-
-      const isStartSignal =
-        event.kind === 'node_started' ||
-        normalizedStatus === 'running';
-      const isFinishSignal =
-        event.kind === 'node_finished' ||
-        normalizedStatus === 'completed' ||
-        normalizedStatus === 'cached';
-      const isFailureSignal =
-        event.kind === 'node_failed' ||
-        normalizedStatus === 'failed' ||
-        normalizedStatus === 'timeout' ||
-        normalizedStatus === 'canceled';
-
-      if (isStartSignal || isFailureSignal) {
-        scheduleNodePulse(nodeId, 'input');
-        (incomingEdgeIdsByNode.get(nodeId) ?? []).forEach((edgeId: string) => {
-          scheduleEdgePulse(edgeId);
-        });
-      }
-      if (isFinishSignal) {
-        scheduleNodePulse(nodeId, 'output');
-        (outgoingEdgeIdsByNode.get(nodeId) ?? []).forEach((edgeId: string) => {
-          scheduleEdgePulse(edgeId);
-        });
-      }
-    });
-
-    lastRuntimeEventIdRef.current = runtimeEvents[runtimeEvents.length - 1]?.id ?? null;
-  }, [
-    incomingEdgeIdsByNode,
-    outgoingEdgeIdsByNode,
-    runtimeEvents,
-    scheduleEdgePulse,
-    scheduleNodePulse,
-  ]);
-
-  React.useEffect(() => {
-    if ((runtimeEvents?.length ?? 0) > 0) return;
-    const nextHashes = buildRuntimeHashes();
-    const prevHashes = prevHashesRef.current;
-    prevHashesRef.current = nextHashes;
-    if (!prevHashes) return;
-    const outputChanges: Array<{ nodeId: string; port: string }> = [];
-    const inputChanges: Array<{ nodeId: string; port: string }> = [];
-    Object.entries(nextHashes.outputs).forEach(([nodeId, ports]) => {
-      const prevPorts = prevHashes.outputs[nodeId];
-      if (!prevPorts) return;
-      Object.entries(ports).forEach(([port, nextHash]) => {
-        const prevHash = prevPorts[port];
-        if (prevHash === undefined) return;
-        if (prevHash !== nextHash) outputChanges.push({ nodeId, port });
-      });
-    });
-    Object.entries(nextHashes.inputs).forEach(([nodeId, ports]) => {
-      const prevPorts = prevHashes.inputs[nodeId];
-      if (!prevPorts) return;
-      Object.entries(ports).forEach(([port, nextHash]) => {
-        const prevHash = prevPorts[port];
-        if (prevHash === undefined) return;
-        if (prevHash !== nextHash) inputChanges.push({ nodeId, port });
-      });
-    });
-    if (outputChanges.length === 0 && inputChanges.length === 0) return;
-    const edgeIds = new Set<string>();
-    const inputNodes = new Set<string>();
-    const outputNodes = new Set<string>();
-    outputChanges.forEach(({ nodeId, port }) => {
-      const value = getPortValue('output', nodeId, port);
-      if (value === undefined) return;
-      outputNodes.add(nodeId);
-      const outgoing = edgesByFromPort.get(buildEdgePortKey(nodeId, port));
-      outgoing?.forEach((edge: Edge) => {
-        edgeIds.add(edge.id);
-        if (edge.to) inputNodes.add(edge.to);
-      });
-    });
-    inputChanges.forEach(({ nodeId, port }) => {
-      const value = getPortValue('input', nodeId, port);
-      if (value === undefined) return;
-      inputNodes.add(nodeId);
-      const incoming = edgesByToPort.get(buildEdgePortKey(nodeId, port));
-      incoming?.forEach((edge: Edge) => {
-        edgeIds.add(edge.id);
-      });
-    });
-
-    outputNodes.forEach((nodeId) => {
-      const node = nodeById.get(nodeId);
-      if (node?.type !== 'trigger') return;
-      edges.forEach((edge: Edge) => {
-        if (edge.from !== nodeId) return;
-        edgeIds.add(edge.id);
-        if (edge.to) inputNodes.add(edge.to);
-      });
-    });
-    edgeIds.forEach((edgeId) => scheduleEdgePulse(edgeId));
-    outputNodes.forEach((nodeId) => scheduleNodePulse(nodeId, 'output'));
-    inputNodes.forEach((nodeId) => scheduleNodePulse(nodeId, 'input'));
-  }, [
-    buildRuntimeHashes,
-    buildEdgePortKey,
+  const { activeEdgeIds, inputPulseNodes, outputPulseNodes } = useCanvasPulseEffects({
+    nodes,
     edges,
+    runtimeEvents,
+    runtimeState: {
+      inputs: runtimeState.inputs,
+      outputs: runtimeState.outputs,
+    },
+    getPortValue,
     edgesByFromPort,
     edgesByToPort,
-    getPortValue,
+    incomingEdgeIdsByNode,
+    outgoingEdgeIdsByNode,
+    buildEdgePortKey,
     nodeById,
-    runtimeEvents,
-    scheduleEdgePulse,
-    scheduleNodePulse,
-  ]);
-
-  React.useEffect(() => {
-    const epTimeouts = edgePulseTimeouts.current;
-    const npTimeouts = nodePulseTimeouts.current;
-    return (): void => {
-      epTimeouts.forEach((timeout) => clearTimeout(timeout));
-      npTimeouts.forEach((timeout) => clearTimeout(timeout));
-      epTimeouts.clear();
-      npTimeouts.clear();
-    };
-  }, []);
+    flowAnimationMs: FLOW_ANIMATION_MS,
+    nodePulseMs: NODE_PULSE_MS,
+  });
 
   return (
     <div
@@ -1159,7 +716,7 @@ export function CanvasBoard({
                             input
                         ).valid
                         : false;
-                      const connectorInfo = buildConnectorInfo('input', node.id, input);
+                      const connectorInfo = getConnectorInfo('input', node.id, input);
                       const hasIncomingEdge = edges.some(
                         (edge): boolean =>
                           edge.to === node.id && edge.toPort === input
@@ -1265,7 +822,7 @@ export function CanvasBoard({
                     }
                   >
                     {((): React.JSX.Element => {
-                      const connectorInfo = buildConnectorInfo('output', node.id, output);
+                      const connectorInfo = getConnectorInfo('output', node.id, output);
                       const connectorKey = buildConnectorKey('output', node.id, output);
                       const isPinned = pinnedConnectorKey === connectorKey;
                       const isHovered = hoveredConnectorKey === connectorKey;

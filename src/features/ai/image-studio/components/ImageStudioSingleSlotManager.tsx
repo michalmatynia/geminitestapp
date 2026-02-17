@@ -440,15 +440,30 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
           const selectedSlotId = objectSlot?.id?.trim() ?? '';
           const selectedSlotIsEmpty = Boolean(selectedSlotId && !slotHasRenderableImage(objectSlot));
           if (selectedSlotIsEmpty) {
-            await updateSlotMutation.mutateAsync({
-              id: selectedSlotId,
-              data: {
-                imageFileId: uploaded.id,
-                imageUrl: uploaded.filepath,
-                imageBase64: null,
-                metadata: setImageStudioSlotImageLocked(objectSlot?.metadata ?? null, true),
-              },
-            });
+            const updatePayload = {
+              imageFileId: uploaded.id,
+              imageUrl: uploaded.filepath,
+              imageBase64: null,
+              metadata: setImageStudioSlotImageLocked(objectSlot?.metadata ?? null, true),
+            } as const;
+            const slotIdCandidates = resolveSlotIdCandidates(selectedSlotId);
+            let updatedSlot: ImageStudioSlotRecord | null = null;
+            let updateError: unknown = null;
+            for (const candidate of slotIdCandidates) {
+              try {
+                updatedSlot = await updateSlotMutation.mutateAsync({
+                  id: candidate,
+                  data: updatePayload,
+                });
+                if (updatedSlot) break;
+              } catch (error: unknown) {
+                updateError = error;
+              }
+            }
+            if (!updatedSlot) {
+              throw (updateError instanceof Error ? updateError : new Error('Failed to assign image to empty card.'));
+            }
+            setSelectedSlotId(updatedSlot.id);
             setTemporaryObjectUpload(null);
             setObjectImageLinkDraft(uploaded.filepath);
             setObjectImageBase64Draft('');
@@ -487,6 +502,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
         objectSlot,
         projectId,
         setPreviewMode,
+        setSelectedSlotId,
         setTemporaryObjectUpload,
         temporaryObjectUpload,
         updateSlotMutation,
@@ -558,7 +574,9 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
         setUploadError(null);
         const previousTemporaryUpload = temporaryObjectUpload;
         const selectedSlotImageLocked = Boolean(
-          objectSlot && isImageStudioSlotImageLocked(objectSlot)
+          objectSlot &&
+          !previousTemporaryUpload &&
+          slotHasRenderableImage(objectSlot)
         );
         try {
           let clearedCardImage = false;
@@ -745,7 +763,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
         isSlotImageLocked: (slotIndex: number): boolean =>
           slotIndex === OBJECT_SLOT_INDEX &&
           !temporaryObjectUpload &&
-          isImageStudioSlotImageLocked(objectSlot),
+          slotHasRenderableImage(objectSlot),
         slotImageLockedReason: 'Card image is locked and can only be removed by deleting the card.',
         swapImageSlots: (): void => {
           // Single-slot layout: no reordering.
@@ -777,6 +795,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
           key={`obj:${objectSlot?.id ?? temporaryObjectUpload?.id ?? 'none'}`}
           minimalUi
           showDragHandle={false}
+          minimalSingleSlotAlign='left'
         />
       </ProductImageManagerControllerProvider>
     );

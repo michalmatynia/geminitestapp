@@ -17,35 +17,27 @@ import { useProjectsState } from '../context/ProjectsContext';
 import { useSettingsState, useSettingsActions } from '../context/SettingsContext';
 import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 import { useUiActions, useUiState } from '../context/UiContext';
+import { createGenerationToolbarActionHandlers } from './generation-toolbar/generation-toolbar-action-handlers';
 import { GenerationToolbarCenterSection } from './generation-toolbar/GenerationToolbarCenterSection';
 import { GenerationToolbarCropSection } from './generation-toolbar/GenerationToolbarCropSection';
 import { GenerationToolbarDefaultsSection } from './generation-toolbar/GenerationToolbarDefaultsSection';
 import {
   buildCenterRequestId,
-  buildCropRequestId,
-  buildUpscaleRequestId,
   centerCanvasImageObject,
-  cropCanvasImage,
   dataUrlToUploadBlob,
   isCenterAbortError,
   isClientCenterCrossOriginError,
-  isClientCropCrossOriginError,
-  isClientUpscaleCrossOriginError,
-  isCropAbortError,
-  isUpscaleAbortError,
   loadImageElement,
   polygonsFromShapes,
   renderMaskDataUrlFromPolygons,
+  resolveCropRectFromShapesWithDiagnostics,
   resolveClientProcessingImageSrc,
-  resolveCropRectFromShapes,
   shapeHasUsableCropGeometry,
-  upscaleCanvasImage,
   withCenterRetry,
-  withCropRetry,
-  withUpscaleRetry,
+  type CropRectResolutionDiagnostics,
   type CropRect,
+  type ImageContentFrame,
   type MaskShapeForExport,
-  type UpscaleRequestStrategyPayload,
   type UpscaleSmoothingQuality,
 } from './generation-toolbar/GenerationToolbarImageUtils';
 import { GenerationToolbarMaskSection } from './generation-toolbar/GenerationToolbarMaskSection';
@@ -62,27 +54,6 @@ type UpscaleMode = 'client_canvas' | 'server_sharp';
 type UpscaleStrategy = 'scale' | 'target_resolution';
 type CropMode = 'client_bbox' | 'server_bbox';
 type CenterMode = 'client_alpha_bbox' | 'server_alpha_bbox';
-
-type UpscaleActionResponse = {
-  slot?: ImageStudioSlotRecord;
-  mode?: 'client_data_url' | 'server_sharp';
-  effectiveMode?: 'client_data_url' | 'server_sharp';
-  strategy?: UpscaleStrategy;
-  scale?: number | null;
-  targetWidth?: number | null;
-  targetHeight?: number | null;
-  requestId?: string | null;
-  deduplicated?: boolean;
-};
-
-type CropActionResponse = {
-  slot?: ImageStudioSlotRecord;
-  mode?: CropMode;
-  effectiveMode?: CropMode;
-  cropRect?: CropRect | null;
-  requestId?: string | null;
-  deduplicated?: boolean;
-};
 
 type CenterActionResponse = {
   slot?: ImageStudioSlotRecord;
@@ -130,6 +101,7 @@ export function GenerationToolbar(): React.JSX.Element {
     setCenterGuidesEnabled,
     setCanvasSelectionEnabled,
     getPreviewCanvasViewportCrop,
+    getPreviewCanvasImageFrame,
   } = useUiActions();
   const { projectId } = useProjectsState();
   const { workingSlot } = useSlotsState();
@@ -218,7 +190,21 @@ export function GenerationToolbar(): React.JSX.Element {
     [workingSlot, workingSlotImageSrc]
   );
 
-  const resolveCropRect = async (): Promise<CropRect> => {
+  const cropDiagnosticsRef = useRef<CropRectResolutionDiagnostics | null>(null);
+
+  const resolveWorkingSlotImageContentFrame = (): ImageContentFrame | null => {
+    const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
+    if (!normalizedWorkingSlotId) return null;
+    const frameBinding = getPreviewCanvasImageFrame();
+    if (!frameBinding) return null;
+    if (frameBinding.slotId !== normalizedWorkingSlotId) return null;
+    return frameBinding.frame;
+  };
+
+  const resolveCropRect = async (): Promise<{
+    cropRect: CropRect;
+    diagnostics: CropRectResolutionDiagnostics | null;
+  }> => {
     let sourceWidth = workingSlot?.imageFile?.width ?? 0;
     let sourceHeight = workingSlot?.imageFile?.height ?? 0;
     if (!(sourceWidth > 0 && sourceHeight > 0)) {
@@ -231,16 +217,25 @@ export function GenerationToolbar(): React.JSX.Element {
       throw new Error('Source image dimensions are invalid.');
     }
 
-    const cropRect = resolveCropRectFromShapes(
+    const imageContentFrame = resolveWorkingSlotImageContentFrame();
+    const resolved = resolveCropRectFromShapesWithDiagnostics(
       exportMaskShapes,
       sourceWidth,
       sourceHeight,
-      activeMaskId
+      activeMaskId,
+      imageContentFrame
     );
-    if (cropRect) {
-      return cropRect;
+    cropDiagnosticsRef.current = resolved.diagnostics;
+    if (resolved.cropRect) {
+      return {
+        cropRect: resolved.cropRect,
+        diagnostics: resolved.diagnostics,
+      };
     }
 
+    if (resolved.diagnostics?.usedImageContentFrameMapping) {
+      throw new Error('Selected shape is outside the loaded image area. Move or redraw it over the image, then crop.');
+    }
     throw new Error('Set a valid crop boundary first (polygon/lasso/brush, rectangle, or ellipse).');
   };
 
@@ -324,7 +319,9 @@ export function GenerationToolbar(): React.JSX.Element {
         height = 1024;
       }
 
-      const polygons = polygonsFromShapes(shapes, width, height);
+      const polygons = polygonsFromShapes(shapes, width, height, {
+        imageContentFrame: resolveWorkingSlotImageContentFrame(),
+      });
       if (polygons.length === 0) {
         toast('No closed polygon-compatible shapes are available for mask export.', { variant: 'info' });
         return;
@@ -403,395 +400,44 @@ export function GenerationToolbar(): React.JSX.Element {
     };
   };
 
-  const appendUpscaleStrategyToFormData = (
-    formData: FormData,
-    request: UpscaleRequestStrategyPayload
-  ): void => {
-    formData.append('strategy', request.strategy);
-    if (request.strategy === 'scale') {
-      formData.append('scale', String(request.scale));
-      return;
-    }
-    formData.append('targetWidth', String(request.targetWidth));
-    formData.append('targetHeight', String(request.targetHeight));
-  };
-
-  const buildUpscaleRequestBody = (
-    mode: 'client_data_url' | 'server_sharp',
-    request: UpscaleRequestStrategyPayload,
-    requestId: string
-  ): Record<string, unknown> => ({
-    mode,
-    strategy: request.strategy,
-    ...(request.strategy === 'scale'
-      ? { scale: request.scale }
-      : { targetWidth: request.targetWidth, targetHeight: request.targetHeight }),
-    requestId,
+  const { handleUpscale, handleCrop } = createGenerationToolbarActionHandlers({
+    clientProcessingImageSrc,
+    cropAbortControllerRef,
+    cropMode,
+    cropRequestInFlightRef,
+    cropRequestTimeoutMs: CROP_REQUEST_TIMEOUT_MS,
+    fetchProjectSlots,
+    getCropDiagnostics: (): CropRectResolutionDiagnostics | null => cropDiagnosticsRef.current,
+    hasCropBoundary,
+    projectId,
+    queryClient,
+    resolveCropRect,
+    resolveUpscaleSourceDimensions,
+    setCropBusy,
+    setCropStatus,
+    setSelectedSlotId,
+    setUpscaleBusy,
+    setUpscaleStatus,
+    setWorkingSlotId,
+    toast,
+    upscaleAbortControllerRef,
+    upscaleMaxOutputSide: UPSCALE_MAX_OUTPUT_SIDE,
+    upscaleMode,
+    upscaleRequestInFlightRef,
+    upscaleRequestTimeoutMs: UPSCALE_REQUEST_TIMEOUT_MS,
+    upscaleScale,
+    upscaleSmoothingQuality,
+    upscaleStrategy,
+    upscaleTargetHeight,
+    upscaleTargetWidth,
+    workingSlot,
+    workingSlotImageSrc,
   });
-
-  const handleUpscale = async (): Promise<void> => {
-    if (!workingSlot?.id) {
-      toast('No active source slot selected.', { variant: 'info' });
-      return;
-    }
-    if (!workingSlotImageSrc) {
-      toast('Select a slot image before upscaling.', { variant: 'info' });
-      return;
-    }
-    if (upscaleRequestInFlightRef.current) {
-      return;
-    }
-
-    let upscaleRequestPayload: UpscaleRequestStrategyPayload;
-    if (upscaleStrategy === 'scale') {
-      const scale = Number(upscaleScale);
-      if (!Number.isFinite(scale) || scale <= 1 || scale > 8) {
-        toast('Upscale multiplier must be greater than 1 and at most 8.', { variant: 'info' });
-        return;
-      }
-      upscaleRequestPayload = {
-        strategy: 'scale',
-        scale,
-      };
-    } else {
-      const parsedTargetWidth = Math.floor(Number(upscaleTargetWidth));
-      const parsedTargetHeight = Math.floor(Number(upscaleTargetHeight));
-      if (!(parsedTargetWidth > 0 && parsedTargetHeight > 0)) {
-        toast('Enter both target width and target height as positive integers.', { variant: 'info' });
-        return;
-      }
-      if (parsedTargetWidth > UPSCALE_MAX_OUTPUT_SIDE || parsedTargetHeight > UPSCALE_MAX_OUTPUT_SIDE) {
-        toast(`Target resolution side cannot exceed ${UPSCALE_MAX_OUTPUT_SIDE}px.`, { variant: 'info' });
-        return;
-      }
-      const sourceDimensions = await resolveUpscaleSourceDimensions();
-      if (
-        parsedTargetWidth < sourceDimensions.width ||
-        parsedTargetHeight < sourceDimensions.height ||
-        (
-          parsedTargetWidth === sourceDimensions.width &&
-          parsedTargetHeight === sourceDimensions.height
-        )
-      ) {
-        toast(
-          'Target resolution must upscale at least one side and not reduce source dimensions.',
-          { variant: 'info' }
-        );
-        return;
-      }
-      upscaleRequestPayload = {
-        strategy: 'target_resolution',
-        targetWidth: parsedTargetWidth,
-        targetHeight: parsedTargetHeight,
-      };
-    }
-
-    upscaleRequestInFlightRef.current = true;
-    setUpscaleBusy(true);
-    setUpscaleStatus('resolving');
-    const upscaleRequestId = buildUpscaleRequestId();
-    const abortController = new AbortController();
-    upscaleAbortControllerRef.current = abortController;
-    try {
-      const mode = upscaleMode === 'client_canvas' ? 'client_data_url' : 'server_sharp';
-      let response: UpscaleActionResponse;
-      let resolvedMode: 'client_data_url' | 'server_sharp' = mode;
-      if (mode === 'client_data_url') {
-        const sourceForClientUpscale = clientProcessingImageSrc || workingSlotImageSrc;
-        if (!sourceForClientUpscale) {
-          throw new Error('No client image source is available for upscale.');
-        }
-        try {
-          setUpscaleStatus('preparing');
-          const clientUpscale = await upscaleCanvasImage(
-            sourceForClientUpscale,
-            upscaleRequestPayload,
-            upscaleSmoothingQuality
-          );
-          let uploadBlob: Blob;
-          try {
-            uploadBlob = await dataUrlToUploadBlob(clientUpscale.dataUrl);
-          } catch {
-            throw new Error('Failed to prepare client upscaled image for upload.');
-          }
-
-          setUpscaleStatus('uploading');
-          response = await withUpscaleRetry(
-            () => {
-              const formData = new FormData();
-              formData.append('mode', mode);
-              appendUpscaleStrategyToFormData(formData, upscaleRequestPayload);
-              formData.append('smoothingQuality', upscaleSmoothingQuality);
-              formData.append('requestId', upscaleRequestId);
-              formData.append('image', uploadBlob, `upscale-client-${Date.now()}.png`);
-              return api.post<UpscaleActionResponse>(
-                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/upscale`,
-                formData,
-                {
-                  signal: abortController.signal,
-                  timeout: UPSCALE_REQUEST_TIMEOUT_MS,
-                  headers: {
-                    'x-idempotency-key': upscaleRequestId,
-                  },
-                }
-              );
-            },
-            abortController.signal
-          );
-        } catch (error) {
-          if (!isClientUpscaleCrossOriginError(error)) {
-            throw error;
-          }
-          setUpscaleStatus('processing');
-          response = await withUpscaleRetry(
-            () =>
-              api.post<UpscaleActionResponse>(
-                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/upscale`,
-                buildUpscaleRequestBody('server_sharp', upscaleRequestPayload, upscaleRequestId),
-                {
-                  signal: abortController.signal,
-                  timeout: UPSCALE_REQUEST_TIMEOUT_MS,
-                  headers: {
-                    'x-idempotency-key': upscaleRequestId,
-                  },
-                }
-              ),
-            abortController.signal
-          );
-          resolvedMode = 'server_sharp';
-          toast('Client upscale was blocked by cross-origin restrictions; used server upscale instead.', {
-            variant: 'info',
-          });
-        }
-      } else {
-        setUpscaleStatus('processing');
-        response = await withUpscaleRetry(
-          () =>
-            api.post<UpscaleActionResponse>(
-              `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/upscale`,
-              buildUpscaleRequestBody(mode, upscaleRequestPayload, upscaleRequestId),
-              {
-                signal: abortController.signal,
-                timeout: UPSCALE_REQUEST_TIMEOUT_MS,
-                headers: {
-                  'x-idempotency-key': upscaleRequestId,
-                },
-              }
-            ),
-          abortController.signal
-        );
-      }
-
-      const normalizedProjectId = projectId?.trim() ?? '';
-      if (normalizedProjectId) {
-        setUpscaleStatus('persisting');
-        await invalidateImageStudioSlots(queryClient, normalizedProjectId);
-        const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
-        const createdSlotId = response.slot?.id ?? '';
-        const mergedSlots =
-          createdSlotId
-            ? [response.slot!, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
-            : slotsSnapshot;
-        queryClient.setQueryData<StudioSlotsResponse>(
-          studioKeys.slots(normalizedProjectId),
-          { slots: mergedSlots }
-        );
-      }
-
-      if (response.slot?.id) {
-        setSelectedSlotId(response.slot.id);
-        setWorkingSlotId(response.slot.id);
-      }
-
-      const effectiveMode = response.effectiveMode ?? resolvedMode;
-      const modeLabel = effectiveMode === 'client_data_url' ? 'Client' : 'Server';
-      const effectiveStrategy = response.strategy ?? upscaleRequestPayload.strategy;
-      const fallbackTargetWidth =
-        upscaleRequestPayload.strategy === 'target_resolution' ? upscaleRequestPayload.targetWidth : null;
-      const fallbackTargetHeight =
-        upscaleRequestPayload.strategy === 'target_resolution' ? upscaleRequestPayload.targetHeight : null;
-      const upscaleLabel =
-        effectiveStrategy === 'target_resolution'
-          ? `${response.targetWidth ?? fallbackTargetWidth}x${response.targetHeight ?? fallbackTargetHeight}`
-          : `${Number(
-            (response.scale ?? (upscaleRequestPayload.strategy === 'scale' ? upscaleRequestPayload.scale : 2))
-              .toFixed(2)
-          )}x`;
-      const createdLabel = response.slot?.name?.trim() || `Upscale ${upscaleLabel}`;
-      toast(`Created ${createdLabel} (${modeLabel} upscale).`, { variant: 'success' });
-    } catch (error) {
-      if (isUpscaleAbortError(error)) {
-        toast('Upscale canceled.', { variant: 'info' });
-        return;
-      }
-      toast(error instanceof Error ? error.message : 'Failed to upscale image.', { variant: 'error' });
-    } finally {
-      upscaleRequestInFlightRef.current = false;
-      upscaleAbortControllerRef.current = null;
-      setUpscaleBusy(false);
-      setUpscaleStatus('idle');
-    }
-  };
 
   const handleCancelUpscale = (): void => {
     const controller = upscaleAbortControllerRef.current;
     if (!controller) return;
     controller.abort();
-  };
-
-  const handleCrop = async (cropRectOverride?: CropRect): Promise<void> => {
-    if (!workingSlot?.id) {
-      toast('No active source slot selected.', { variant: 'info' });
-      return;
-    }
-    if (!workingSlotImageSrc) {
-      toast('Select a slot image before cropping.', { variant: 'info' });
-      return;
-    }
-    if (!cropRectOverride && !hasCropBoundary) {
-      toast('Set a valid crop boundary first.', { variant: 'info' });
-      return;
-    }
-    if (cropRequestInFlightRef.current) {
-      return;
-    }
-
-    cropRequestInFlightRef.current = true;
-    setCropBusy(true);
-    setCropStatus('resolving');
-    const cropRequestId = buildCropRequestId();
-    const abortController = new AbortController();
-    cropAbortControllerRef.current = abortController;
-    try {
-      const cropRect = cropRectOverride ?? await resolveCropRect();
-      let response: CropActionResponse;
-      let resolvedMode: CropMode = cropMode;
-      if (cropMode === 'client_bbox') {
-        const sourceForClientCrop = clientProcessingImageSrc || workingSlotImageSrc;
-        if (!sourceForClientCrop) {
-          throw new Error('No client image source is available for crop.');
-        }
-        try {
-          setCropStatus('preparing');
-          const croppedDataUrl = await cropCanvasImage(sourceForClientCrop, cropRect);
-          let uploadBlob: Blob;
-          try {
-            uploadBlob = await dataUrlToUploadBlob(croppedDataUrl);
-          } catch {
-            throw new Error('Failed to prepare client crop image for upload.');
-          }
-
-          setCropStatus('uploading');
-          response = await withCropRetry(
-            () => {
-              const formData = new FormData();
-              formData.append('mode', cropMode);
-              formData.append('cropRect', JSON.stringify(cropRect));
-              formData.append('requestId', cropRequestId);
-              formData.append('image', uploadBlob, `crop-client-${Date.now()}.png`);
-              return api.post<CropActionResponse>(
-                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/crop`,
-                formData,
-                {
-                  signal: abortController.signal,
-                  timeout: CROP_REQUEST_TIMEOUT_MS,
-                  headers: {
-                    'x-idempotency-key': cropRequestId,
-                  },
-                }
-              );
-            },
-            abortController.signal
-          );
-        } catch (error) {
-          if (!isClientCropCrossOriginError(error)) {
-            throw error;
-          }
-          setCropStatus('processing');
-          response = await withCropRetry(
-            () =>
-              api.post<CropActionResponse>(
-                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/crop`,
-                {
-                  mode: 'server_bbox',
-                  cropRect,
-                  requestId: cropRequestId,
-                },
-                {
-                  signal: abortController.signal,
-                  timeout: CROP_REQUEST_TIMEOUT_MS,
-                  headers: {
-                    'x-idempotency-key': cropRequestId,
-                  },
-                }
-              ),
-            abortController.signal
-          );
-          resolvedMode = 'server_bbox';
-          toast('Client crop was blocked by cross-origin restrictions; used server crop instead.', {
-            variant: 'info',
-          });
-        }
-      } else {
-        setCropStatus('processing');
-        response = await withCropRetry(
-          () =>
-            api.post<CropActionResponse>(
-              `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/crop`,
-              {
-                mode: cropMode,
-                cropRect,
-                requestId: cropRequestId,
-              },
-              {
-                signal: abortController.signal,
-                timeout: CROP_REQUEST_TIMEOUT_MS,
-                headers: {
-                  'x-idempotency-key': cropRequestId,
-                },
-              }
-            ),
-          abortController.signal
-        );
-      }
-
-      const normalizedProjectId = projectId?.trim() ?? '';
-      if (normalizedProjectId) {
-        setCropStatus('persisting');
-        await invalidateImageStudioSlots(queryClient, normalizedProjectId);
-        const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
-        const createdSlotId = response.slot?.id ?? '';
-        const mergedSlots =
-          createdSlotId
-            ? [response.slot!, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
-            : slotsSnapshot;
-        queryClient.setQueryData<StudioSlotsResponse>(
-          studioKeys.slots(normalizedProjectId),
-          { slots: mergedSlots }
-        );
-      }
-
-      if (response.slot?.id) {
-        setSelectedSlotId(response.slot.id);
-        setWorkingSlotId(response.slot.id);
-      }
-
-      const createdLabel = response.slot?.name?.trim() || 'Cropped variant';
-      const effectiveMode = response.effectiveMode ?? resolvedMode;
-      const modeLabel = effectiveMode === 'client_bbox' ? 'Client' : 'Server';
-      toast(`Created ${createdLabel} (${modeLabel} crop).`, { variant: 'success' });
-    } catch (error) {
-      if (isCropAbortError(error)) {
-        toast('Crop canceled.', { variant: 'info' });
-        return;
-      }
-      toast(error instanceof Error ? error.message : 'Failed to crop image.', { variant: 'error' });
-    } finally {
-      cropRequestInFlightRef.current = false;
-      cropAbortControllerRef.current = null;
-      setCropBusy(false);
-      setCropStatus('idle');
-    }
   };
 
   const handleCancelCrop = (): void => {
@@ -811,6 +457,7 @@ export function GenerationToolbar(): React.JSX.Element {
     }
     try {
       const squareCropRect = await resolveCenteredSquareCropRect();
+      cropDiagnosticsRef.current = null;
       await handleCrop(squareCropRect);
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to prepare square crop.', { variant: 'error' });
@@ -843,6 +490,7 @@ export function GenerationToolbar(): React.JSX.Element {
     }
 
     try {
+      cropDiagnosticsRef.current = null;
       await handleCrop(previewCrop.cropRect);
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to prepare crop from preview view.', { variant: 'error' });

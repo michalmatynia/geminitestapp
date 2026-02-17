@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import type { ProductImageManagerController } from '@/features/products/components/ProductImageManager';

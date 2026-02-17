@@ -1,6 +1,6 @@
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-02-17T19:15:17.532Z
+Generated at: 2026-02-17T19:33:24.551Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -33,7 +33,7 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 | Page | LOC |
 | --- | ---: |
-| `src/app/(frontend)/page.tsx` | 113 |
+| `src/app/(frontend)/page.tsx` | 117 |
 | `src/app/(frontend)/[...slug]/page.tsx` | 63 |
 | `src/app/(frontend)/preview/[id]/page.tsx` | 63 |
 | `src/app/(admin)/admin/agentcreator/page.tsx` | 45 |

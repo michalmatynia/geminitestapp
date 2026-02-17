@@ -1,0 +1,374 @@
+import { useCallback } from 'react';
+
+import {
+  normalizeFolderPath,
+  normalizeFolderPaths,
+  renameFolderPath,
+} from '../settings';
+import {
+  collectCaseScopeIds,
+  removeOwnedFolderRecordsWithinPath,
+  renameOwnedFolderRecordsWithinPath,
+} from './useCaseResolverState.helpers';
+import { isPathWithinFolder } from '../utils/caseResolverUtils';
+
+import type {
+  CaseResolverAssetFile,
+  CaseResolverFile,
+  CaseResolverWorkspace,
+} from '../types';
+
+type ConfirmFn = (input: {
+  title: string;
+  message: string;
+  confirmText: string;
+  isDangerous: boolean;
+  onConfirm: () => void;
+}) => void;
+
+type UpdateWorkspaceOptions = {
+  persistToast?: string;
+  mutationId?: string;
+  source?: string;
+};
+
+type UpdateWorkspaceFn = (
+  updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
+  options?: UpdateWorkspaceOptions
+) => void;
+
+type UseCaseResolverStateFolderActionsInput = {
+  confirm: ConfirmFn;
+  updateWorkspace: UpdateWorkspaceFn;
+  workspace: CaseResolverWorkspace;
+  selectedCaseScopeIds: Set<string> | null;
+  selectedCaseContainerId: string | null;
+  setSelectedFileId: React.Dispatch<React.SetStateAction<string | null>>;
+  setSelectedAssetId: React.Dispatch<React.SetStateAction<string | null>>;
+  setSelectedFolderPath: React.Dispatch<React.SetStateAction<string | null>>;
+  treeSaveToast: string;
+};
+
+type UseCaseResolverStateFolderActionsResult = {
+  handleDeleteFolder: (folderPath: string) => void;
+  handleMoveFile: (fileId: string, targetFolder: string) => Promise<void>;
+  handleMoveAsset: (assetId: string, targetFolder: string) => Promise<void>;
+  handleRenameFile: (fileId: string, nextName: string) => Promise<void>;
+  handleRenameAsset: (assetId: string, nextName: string) => Promise<void>;
+  handleRenameFolder: (folderPath: string, nextFolderPath: string) => Promise<void>;
+};
+
+export const useCaseResolverStateFolderActions = ({
+  confirm,
+  updateWorkspace,
+  workspace,
+  selectedCaseScopeIds,
+  selectedCaseContainerId,
+  setSelectedFileId,
+  setSelectedAssetId,
+  setSelectedFolderPath,
+  treeSaveToast,
+}: UseCaseResolverStateFolderActionsInput): UseCaseResolverStateFolderActionsResult => {
+  const handleDeleteFolder = useCallback((folderPath: string): void => {
+    const normalizedFolder = normalizeFolderPath(folderPath);
+    if (!normalizedFolder) return;
+    const scopedCaseIds = selectedCaseScopeIds;
+    const scopedFileIds = scopedCaseIds
+      ? new Set<string>(
+        workspace.files
+          .filter(
+            (file: CaseResolverFile): boolean =>
+              file.fileType !== 'case' &&
+              Boolean(file.parentCaseId && scopedCaseIds.has(file.parentCaseId))
+          )
+          .map((file: CaseResolverFile): string => file.id)
+      )
+      : null;
+
+    confirm({
+      title: 'Delete Folder?',
+      message: `Are you sure you want to delete folder "${normalizedFolder}" and all nested content? This action cannot be undone.`,
+      confirmText: 'Delete Folder',
+      isDangerous: true,
+      onConfirm: () => {
+        const filesInDeletedFolder = workspace.files.filter((file: CaseResolverFile): boolean =>
+          file.fileType !== 'case' &&
+          isPathWithinFolder(file.folder, normalizedFolder) &&
+          (!scopedCaseIds || Boolean(file.parentCaseId && scopedCaseIds.has(file.parentCaseId)))
+        );
+        const assetsInDeletedFolder = workspace.assets.filter((asset: CaseResolverAssetFile): boolean =>
+          isPathWithinFolder(asset.folder, normalizedFolder) &&
+          (!scopedFileIds || Boolean(asset.sourceFileId && scopedFileIds.has(asset.sourceFileId)))
+        );
+        const removedFileIds = new Set<string>(
+          filesInDeletedFolder.map((file: CaseResolverFile): string => file.id)
+        );
+        const removedAssetIds = new Set<string>(
+          assetsInDeletedFolder.map((asset: CaseResolverAssetFile): string => asset.id)
+        );
+
+        updateWorkspace((current) => {
+          const currentScopeCaseIds = collectCaseScopeIds(
+            current.files,
+            selectedCaseContainerId
+          );
+          const currentScopeFileIds = currentScopeCaseIds
+            ? new Set<string>(
+              current.files
+                .filter(
+                  (file: CaseResolverFile): boolean =>
+                    file.fileType !== 'case' &&
+                    Boolean(file.parentCaseId && currentScopeCaseIds.has(file.parentCaseId))
+                )
+                .map((file: CaseResolverFile): string => file.id)
+            )
+            : null;
+          const currentRemovedFileIds = new Set(
+            current.files
+              .filter(
+                (file: CaseResolverFile): boolean =>
+                  file.fileType !== 'case' &&
+                  isPathWithinFolder(file.folder, normalizedFolder) &&
+                  (!currentScopeCaseIds ||
+                    Boolean(file.parentCaseId && currentScopeCaseIds.has(file.parentCaseId)))
+              )
+              .map((file) => file.id)
+          );
+          const nextFiles = current.files.filter(
+            (file: CaseResolverFile): boolean =>
+              file.fileType === 'case' ||
+              !isPathWithinFolder(file.folder, normalizedFolder) ||
+              (currentScopeCaseIds !== null &&
+                (!file.parentCaseId || !currentScopeCaseIds.has(file.parentCaseId)))
+          );
+          const nextAssets = current.assets.filter(
+            (asset: CaseResolverAssetFile): boolean =>
+              !isPathWithinFolder(asset.folder, normalizedFolder) ||
+              (currentScopeFileIds !== null &&
+                (!asset.sourceFileId || !currentScopeFileIds.has(asset.sourceFileId)))
+          );
+          const fallbackCaseId = (() => {
+            if (!current.activeFileId || !currentRemovedFileIds.has(current.activeFileId)) {
+              return null;
+            }
+            const removedActiveFile =
+              current.files.find((file) => file.id === current.activeFileId) ?? null;
+            if (!removedActiveFile?.parentCaseId) return null;
+            const parentCase =
+              current.files.find((file) => file.id === removedActiveFile.parentCaseId) ?? null;
+            return parentCase?.fileType === 'case' ? parentCase.id : null;
+          })();
+          const fallbackFileId =
+            nextFiles.find((file) => file.fileType !== 'case')?.id ??
+            nextFiles.find((file) => file.fileType === 'case')?.id ??
+            null;
+
+          return {
+            ...current,
+            folders: current.folders.filter((path) => !isPathWithinFolder(path, normalizedFolder)),
+            folderRecords: removeOwnedFolderRecordsWithinPath({
+              records: current.folderRecords,
+              folderPath: normalizedFolder,
+              ownerCaseIds: currentScopeCaseIds,
+            }),
+            files: nextFiles,
+            assets: nextAssets,
+            activeFileId: current.activeFileId && currentRemovedFileIds.has(current.activeFileId)
+              ? (fallbackCaseId ?? fallbackFileId)
+              : current.activeFileId,
+          };
+        }, { persistToast: treeSaveToast });
+
+        setSelectedFileId((current: string | null): string | null => {
+          if (!current || !removedFileIds.has(current)) return current;
+          const removedSelectedFile =
+            workspace.files.find((file: CaseResolverFile): boolean => file.id === current) ?? null;
+          if (!removedSelectedFile?.parentCaseId) return null;
+          const parentCase =
+            workspace.files.find(
+              (file: CaseResolverFile): boolean =>
+                file.id === removedSelectedFile.parentCaseId && file.fileType === 'case'
+            ) ?? null;
+          return parentCase?.id ?? null;
+        });
+        setSelectedAssetId((current: string | null): string | null =>
+          current && removedAssetIds.has(current) ? null : current
+        );
+        setSelectedFolderPath((current: string | null): string | null =>
+          current && isPathWithinFolder(current, normalizedFolder) ? null : current
+        );
+      }
+    });
+  }, [
+    confirm,
+    selectedCaseContainerId,
+    selectedCaseScopeIds,
+    setSelectedAssetId,
+    setSelectedFileId,
+    setSelectedFolderPath,
+    treeSaveToast,
+    updateWorkspace,
+    workspace.assets,
+    workspace.files,
+  ]);
+
+  const handleMoveFile = useCallback(
+    async (fileId: string, targetFolder: string): Promise<void> => {
+      const normalizedTarget = normalizeFolderPath(targetFolder);
+      updateWorkspace((current) => ({
+        ...current,
+        files: current.files.map((file) =>
+          file.id === fileId
+            ? { ...file, folder: normalizedTarget, updatedAt: new Date().toISOString() }
+            : file
+        ),
+        folders: normalizeFolderPaths(
+          normalizedTarget
+            ? [...current.folders, normalizedTarget]
+            : current.folders
+        ),
+      }), { persistToast: treeSaveToast });
+    },
+    [treeSaveToast, updateWorkspace]
+  );
+
+  const handleMoveAsset = useCallback(
+    async (assetId: string, targetFolder: string): Promise<void> => {
+      const normalizedTarget = normalizeFolderPath(targetFolder);
+      updateWorkspace((current) => ({
+        ...current,
+        assets: current.assets.map((asset) =>
+          asset.id === assetId
+            ? { ...asset, folder: normalizedTarget, updatedAt: new Date().toISOString() }
+            : asset
+        ),
+        folders: normalizeFolderPaths(
+          normalizedTarget
+            ? [...current.folders, normalizedTarget]
+            : current.folders
+        ),
+      }), { persistToast: treeSaveToast });
+    },
+    [treeSaveToast, updateWorkspace]
+  );
+
+  const handleRenameFile = useCallback(
+    async (fileId: string, nextName: string): Promise<void> => {
+      const trimmedName = nextName.trim();
+      if (!trimmedName) return;
+      updateWorkspace((current) => ({
+        ...current,
+        files: current.files.map((file) =>
+          file.id === fileId
+            ? { ...file, name: trimmedName, updatedAt: new Date().toISOString() }
+            : file
+        ),
+      }), { persistToast: treeSaveToast });
+    },
+    [treeSaveToast, updateWorkspace]
+  );
+
+  const handleRenameAsset = useCallback(
+    async (assetId: string, nextName: string): Promise<void> => {
+      const trimmedName = nextName.trim();
+      if (!trimmedName) return;
+      updateWorkspace((current) => ({
+        ...current,
+        assets: current.assets.map((asset) =>
+          asset.id === assetId
+            ? { ...asset, name: trimmedName, updatedAt: new Date().toISOString() }
+            : asset
+        ),
+      }), { persistToast: treeSaveToast });
+    },
+    [treeSaveToast, updateWorkspace]
+  );
+
+  const handleRenameFolder = useCallback(
+    async (folderPath: string, nextFolderPath: string): Promise<void> => {
+      const normalizedSource = normalizeFolderPath(folderPath);
+      const normalizedTarget = normalizeFolderPath(nextFolderPath);
+      if (!normalizedSource || !normalizedTarget) return;
+      if (normalizedSource === normalizedTarget) return;
+
+      updateWorkspace((current) => {
+        const now = new Date().toISOString();
+        const rename = (value: string): string =>
+          renameFolderPath(value, normalizedSource, normalizedTarget);
+        const currentScopeCaseIds = collectCaseScopeIds(
+          current.files,
+          selectedCaseContainerId
+        );
+        const currentScopeFileIds = currentScopeCaseIds
+          ? new Set<string>(
+            current.files
+              .filter(
+                (file: CaseResolverFile): boolean =>
+                  file.fileType !== 'case' &&
+                  Boolean(file.parentCaseId && currentScopeCaseIds.has(file.parentCaseId))
+              )
+              .map((file: CaseResolverFile): string => file.id)
+          )
+          : null;
+
+        return {
+          ...current,
+          folders: normalizeFolderPaths(current.folders.map(rename)),
+          folderRecords: renameOwnedFolderRecordsWithinPath({
+            records: current.folderRecords,
+            sourceFolderPath: normalizedSource,
+            targetFolderPath: normalizedTarget,
+            ownerCaseIds: currentScopeCaseIds,
+          }),
+          folderTimestamps: Object.fromEntries(
+            Object.entries(current.folderTimestamps ?? {}).map(([path, timestamps]) => [
+              rename(path),
+              timestamps,
+            ])
+          ),
+          files: current.files.map((file) => {
+            const shouldRename =
+              isPathWithinFolder(file.folder, normalizedSource) &&
+              (
+                !currentScopeCaseIds ||
+                (file.fileType === 'case'
+                  ? currentScopeCaseIds.has(file.id)
+                  : Boolean(file.parentCaseId && currentScopeCaseIds.has(file.parentCaseId)))
+              );
+            if (!shouldRename) return file;
+            const nextFolder = rename(file.folder);
+            if (nextFolder === file.folder) return file;
+            return { ...file, folder: nextFolder, updatedAt: now };
+          }),
+          assets: current.assets.map((asset) => {
+            const shouldRename =
+              isPathWithinFolder(asset.folder, normalizedSource) &&
+              (
+                !currentScopeFileIds ||
+                Boolean(asset.sourceFileId && currentScopeFileIds.has(asset.sourceFileId))
+              );
+            if (!shouldRename) return asset;
+            const nextFolder = rename(asset.folder);
+            if (nextFolder === asset.folder) return asset;
+            return { ...asset, folder: nextFolder, updatedAt: now };
+          }),
+        };
+      }, { persistToast: treeSaveToast });
+
+      setSelectedFolderPath((current) => {
+        if (!current || !isPathWithinFolder(current, normalizedSource)) return current;
+        return renameFolderPath(current, normalizedSource, normalizedTarget);
+      });
+    },
+    [selectedCaseContainerId, setSelectedFolderPath, treeSaveToast, updateWorkspace]
+  );
+
+  return {
+    handleDeleteFolder,
+    handleMoveFile,
+    handleMoveAsset,
+    handleRenameFile,
+    handleRenameAsset,
+    handleRenameFolder,
+  };
+};

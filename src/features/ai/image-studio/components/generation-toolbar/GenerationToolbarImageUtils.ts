@@ -30,26 +30,82 @@ export type MaskShapeForExport = {
   visible: boolean;
 };
 
+export type ImageContentFrame = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+export type CropRectResolutionDiagnostics = {
+  rawCanvasBounds: CropRect | null;
+  mappedImageBounds: CropRect | null;
+  imageContentFrame: ImageContentFrame | null;
+  usedImageContentFrameMapping: boolean;
+};
+
+type ShapeBounds = {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+};
+
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
+
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const shapePointsAreUnitNormalized = (shape: {
+  points: Array<{ x: number; y: number }>;
+}): boolean =>
+  shape.points.every((point) => (
+    isFiniteNumber(point.x) &&
+    isFiniteNumber(point.y) &&
+    point.x >= 0 &&
+    point.x <= 1 &&
+    point.y >= 0 &&
+    point.y <= 1
+  ));
+
+const normalizeImageContentFrame = (
+  frame: ImageContentFrame | null | undefined
+): ImageContentFrame | null => {
+  if (!frame) return null;
+  if (
+    !isFiniteNumber(frame.x) ||
+    !isFiniteNumber(frame.y) ||
+    !isFiniteNumber(frame.width) ||
+    !isFiniteNumber(frame.height)
+  ) {
+    return null;
+  }
+  if (!(frame.width > 0 && frame.height > 0)) return null;
+  return {
+    x: frame.x,
+    y: frame.y,
+    width: frame.width,
+    height: frame.height,
+  };
+};
+
+const mapCanvasUnitToImageUnit = (
+  value: number,
+  frameStart: number,
+  frameSize: number
+): number | null => {
+  if (!isFiniteNumber(value) || !isFiniteNumber(frameStart) || !isFiniteNumber(frameSize)) return null;
+  if (!(frameSize > 0)) return null;
+  return clamp01((value - frameStart) / frameSize);
+};
 
 const toNormalizedUnit = (value: number, sourceSize: number): number | null => {
   if (!Number.isFinite(value)) return null;
   if (value >= 0 && value <= 1) return clamp01(value);
   if (!(sourceSize > 0)) return null;
   return clamp01(value / sourceSize);
-};
-
-const toUnitPoint = (
-  point: { x: number; y: number },
-  sourceWidth: number,
-  sourceHeight: number
-): { x: number; y: number } | null => {
-  const x = toNormalizedUnit(point.x, sourceWidth);
-  const y = toNormalizedUnit(point.y, sourceHeight);
-  if (x === null || y === null) return null;
-  return { x, y };
 };
 
 export const normalizeShapeToPolygons = (
@@ -59,24 +115,52 @@ export const normalizeShapeToPolygons = (
     closed: boolean;
   },
   sourceWidth: number,
-  sourceHeight: number
+  sourceHeight: number,
+  options?: {
+    imageContentFrame?: ImageContentFrame | null;
+  }
 ): Array<Array<{ x: number; y: number }>> => {
+  const normalizedFrame = normalizeImageContentFrame(options?.imageContentFrame);
+  const shouldMapCanvasToImage = Boolean(normalizedFrame && shapePointsAreUnitNormalized(shape));
+  const mapX = (value: number): number | null => {
+    const unitValue = toNormalizedUnit(value, sourceWidth);
+    if (unitValue === null) return null;
+    if (!shouldMapCanvasToImage || !normalizedFrame) return unitValue;
+    return mapCanvasUnitToImageUnit(unitValue, normalizedFrame.x, normalizedFrame.width);
+  };
+  const mapY = (value: number): number | null => {
+    const unitValue = toNormalizedUnit(value, sourceHeight);
+    if (unitValue === null) return null;
+    if (!shouldMapCanvasToImage || !normalizedFrame) return unitValue;
+    return mapCanvasUnitToImageUnit(unitValue, normalizedFrame.y, normalizedFrame.height);
+  };
+
   if (shape.type === 'polygon' || shape.type === 'lasso' || shape.type === 'brush') {
     if (!shape.closed || shape.points.length < 3) return [];
     const polygon = shape.points
-      .map((point) => toUnitPoint(point, sourceWidth, sourceHeight))
+      .map((point) => {
+        const x = mapX(point.x);
+        const y = mapY(point.y);
+        if (x === null || y === null) return null;
+        return { x, y };
+      })
       .filter((point): point is { x: number; y: number } => point !== null);
     if (polygon.length < 3) return [];
+    const minX = Math.min(...polygon.map((point) => point.x));
+    const maxX = Math.max(...polygon.map((point) => point.x));
+    const minY = Math.min(...polygon.map((point) => point.y));
+    const maxY = Math.max(...polygon.map((point) => point.y));
+    if (maxX <= minX || maxY <= minY) return [];
     return [polygon];
   }
 
   if (shape.type === 'rect') {
     if (shape.points.length < 2) return [];
     const xs = shape.points
-      .map((point) => toNormalizedUnit(point.x, sourceWidth))
+      .map((point) => mapX(point.x))
       .filter((value): value is number => value !== null);
     const ys = shape.points
-      .map((point) => toNormalizedUnit(point.y, sourceHeight))
+      .map((point) => mapY(point.y))
       .filter((value): value is number => value !== null);
     if (xs.length < 2 || ys.length < 2) return [];
     const minX = clamp01(Math.min(...xs));
@@ -95,10 +179,10 @@ export const normalizeShapeToPolygons = (
   if (shape.type === 'ellipse') {
     if (shape.points.length < 2) return [];
     const xs = shape.points
-      .map((point) => toNormalizedUnit(point.x, sourceWidth))
+      .map((point) => mapX(point.x))
       .filter((value): value is number => value !== null);
     const ys = shape.points
-      .map((point) => toNormalizedUnit(point.y, sourceHeight))
+      .map((point) => mapY(point.y))
       .filter((value): value is number => value !== null);
     if (xs.length < 2 || ys.length < 2) return [];
     const minX = clamp01(Math.min(...xs));
@@ -128,9 +212,12 @@ export const normalizeShapeToPolygons = (
 export const polygonsFromShapes = (
   shapes: MaskShapeForExport[],
   sourceWidth: number,
-  sourceHeight: number
+  sourceHeight: number,
+  options?: {
+    imageContentFrame?: ImageContentFrame | null;
+  }
 ): Array<Array<{ x: number; y: number }>> =>
-  shapes.flatMap((shape) => normalizeShapeToPolygons(shape, sourceWidth, sourceHeight));
+  shapes.flatMap((shape) => normalizeShapeToPolygons(shape, sourceWidth, sourceHeight, options));
 
 export const shapeHasUsableCropGeometry = (shape: MaskShapeForExport): boolean => {
   if (!shape.visible) return false;
@@ -559,13 +646,55 @@ export const centerCanvasImageObject = async (src: string): Promise<string> => {
   }
 };
 
-export const resolveCropRectFromShapes = (
+const resolveBounds = (
+  points: Array<{ x: number; y: number }>
+): ShapeBounds | null => {
+  if (points.length === 0) return null;
+  const xs = points.map((point) => point.x).filter((value) => Number.isFinite(value));
+  const ys = points.map((point) => point.y).filter((value) => Number.isFinite(value));
+  if (xs.length === 0 || ys.length === 0) return null;
+  return {
+    minX: Math.min(...xs),
+    maxX: Math.max(...xs),
+    minY: Math.min(...ys),
+    maxY: Math.max(...ys),
+  };
+};
+
+const boundsToCropRect = (
+  bounds: ShapeBounds | null,
+  sourceWidth: number,
+  sourceHeight: number
+): CropRect | null => {
+  if (!bounds) return null;
+  const minX = clamp01(bounds.minX);
+  const maxX = clamp01(bounds.maxX);
+  const minY = clamp01(bounds.minY);
+  const maxY = clamp01(bounds.maxY);
+  if (!(maxX > minX && maxY > minY)) return null;
+
+  const left = Math.max(0, Math.min(Math.floor(minX * sourceWidth), sourceWidth - 1));
+  const top = Math.max(0, Math.min(Math.floor(minY * sourceHeight), sourceHeight - 1));
+  const width = Math.max(1, Math.min(Math.ceil((maxX - minX) * sourceWidth), sourceWidth - left));
+  const height = Math.max(1, Math.min(Math.ceil((maxY - minY) * sourceHeight), sourceHeight - top));
+  return {
+    x: left,
+    y: top,
+    width,
+    height,
+  };
+};
+
+export const resolveCropRectFromShapesWithDiagnostics = (
   shapes: MaskShapeForExport[],
   sourceWidth: number,
   sourceHeight: number,
-  activeMaskId?: string | null
-): CropRect | null => {
-  if (!(sourceWidth > 0 && sourceHeight > 0)) return null;
+  activeMaskId?: string | null,
+  imageContentFrame?: ImageContentFrame | null
+): { cropRect: CropRect | null; diagnostics: CropRectResolutionDiagnostics | null } => {
+  if (!(sourceWidth > 0 && sourceHeight > 0)) {
+    return { cropRect: null, diagnostics: null };
+  }
   const normalizedActiveMaskId = activeMaskId?.trim() ?? '';
   const orderedShapes = normalizedActiveMaskId
     ? [
@@ -573,33 +702,55 @@ export const resolveCropRectFromShapes = (
       ...shapes.filter((shape) => shape.id !== normalizedActiveMaskId),
     ]
     : shapes;
+  const normalizedFrame = normalizeImageContentFrame(imageContentFrame);
 
+  let lastDiagnostics: CropRectResolutionDiagnostics | null = null;
   for (const shape of orderedShapes) {
-    const polygons = normalizeShapeToPolygons(shape, sourceWidth, sourceHeight);
-    if (polygons.length === 0) continue;
-    const points = polygons.flatMap((polygon) => polygon);
-    if (points.length === 0) continue;
-    const xs = points.map((point) => clamp01(point.x));
-    const ys = points.map((point) => clamp01(point.y));
-    if (xs.length === 0 || ys.length === 0) continue;
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs);
-    const minY = Math.min(...ys);
-    const maxY = Math.max(...ys);
+    const rawPolygons = normalizeShapeToPolygons(shape, sourceWidth, sourceHeight);
+    const mappedPolygons = normalizeShapeToPolygons(shape, sourceWidth, sourceHeight, {
+      imageContentFrame: normalizedFrame,
+    });
 
-    const left = Math.max(0, Math.min(Math.floor(minX * sourceWidth), sourceWidth - 1));
-    const top = Math.max(0, Math.min(Math.floor(minY * sourceHeight), sourceHeight - 1));
-    const width = Math.max(1, Math.min(Math.ceil((maxX - minX) * sourceWidth), sourceWidth - left));
-    const height = Math.max(1, Math.min(Math.ceil((maxY - minY) * sourceHeight), sourceHeight - top));
+    const rawBounds = resolveBounds(rawPolygons.flatMap((polygon) => polygon));
+    const mappedBounds = resolveBounds(mappedPolygons.flatMap((polygon) => polygon));
+    const usedImageContentFrameMapping = Boolean(normalizedFrame && shapePointsAreUnitNormalized(shape));
+    const diagnostics: CropRectResolutionDiagnostics = {
+      rawCanvasBounds: boundsToCropRect(rawBounds, sourceWidth, sourceHeight),
+      mappedImageBounds: boundsToCropRect(mappedBounds, sourceWidth, sourceHeight),
+      imageContentFrame: normalizedFrame,
+      usedImageContentFrameMapping,
+    };
+
+    lastDiagnostics = diagnostics;
+    if (mappedPolygons.length === 0) continue;
+    const cropRect = diagnostics.mappedImageBounds;
+    if (!cropRect) continue;
     return {
-      x: left,
-      y: top,
-      width,
-      height,
+      cropRect,
+      diagnostics,
     };
   }
 
-  return null;
+  return {
+    cropRect: null,
+    diagnostics: lastDiagnostics,
+  };
+};
+
+export const resolveCropRectFromShapes = (
+  shapes: MaskShapeForExport[],
+  sourceWidth: number,
+  sourceHeight: number,
+  activeMaskId?: string | null,
+  imageContentFrame?: ImageContentFrame | null
+): CropRect | null => {
+  return resolveCropRectFromShapesWithDiagnostics(
+    shapes,
+    sourceWidth,
+    sourceHeight,
+    activeMaskId,
+    imageContentFrame
+  ).cropRect;
 };
 
 export const renderMaskDataUrlFromPolygons = (

@@ -31,6 +31,7 @@ export function VectorDrawingCanvas({
   baseCanvasWidthPx,
   baseCanvasHeightPx,
   onViewCropRectChange,
+  onImageContentFrameChange,
   showCanvasGrid: propShowCanvasGrid,
   imageMoveEnabled,
   selectionEnabled,
@@ -90,6 +91,7 @@ export function VectorDrawingCanvas({
       {...(baseCanvasWidthPx !== undefined ? { baseCanvasWidthPx } : {})}
       {...(baseCanvasHeightPx !== undefined ? { baseCanvasHeightPx } : {})}
       {...(onViewCropRectChange !== undefined ? { onViewCropRectChange } : {})}
+      {...(onImageContentFrameChange !== undefined ? { onImageContentFrameChange } : {})}
       {...(showCanvasGrid !== undefined ? { showCanvasGrid } : {})}
       {...(imageMoveEnabled !== undefined ? { imageMoveEnabled } : {})}
       {...(selectionEnabled !== undefined ? { selectionEnabled } : {})}

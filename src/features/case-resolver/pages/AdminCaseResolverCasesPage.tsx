@@ -15,7 +15,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
@@ -509,6 +509,7 @@ const normalizeCaseListViewDefaults = (
 
 export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const router = useRouter();
+  const pathname = usePathname();
   const preferencesQuery = useUserPreferences();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
@@ -606,7 +607,6 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const lastPersistedWorkspaceRevisionRef = useRef<number>(
     getCaseResolverWorkspaceRevision(parsedWorkspace),
   );
-  const initialWorkspaceSyncDoneRef = useRef(false);
   const [isCreatingCase, setIsCreatingCase] = useState(false);
   const createCaseMutationIdRef = useRef<string | null>(null);
 
@@ -669,31 +669,38 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       } | null>(null);
 
   useEffect(() => {
-    if (initialWorkspaceSyncDoneRef.current) return;
-    initialWorkspaceSyncDoneRef.current = true;
+    if (pathname !== '/admin/case-resolver/cases') return;
     settingsStore.refetch();
     let isCancelled = false;
     void (async (): Promise<void> => {
       const latestWorkspace = await fetchCaseResolverWorkspaceSnapshot(
-        'cases_page_initial_sync',
+        'cases_page_route_sync',
       );
       if (!latestWorkspace || isCancelled) return;
       const latestSerialized = JSON.stringify(latestWorkspace);
       const latestRevision = getCaseResolverWorkspaceRevision(latestWorkspace);
       setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
+        const currentSerialized = JSON.stringify(current);
+        if (latestSerialized === currentSerialized) return current;
         const currentRevision = getCaseResolverWorkspaceRevision(current);
-        if (latestRevision <= currentRevision) return current;
+        if (latestRevision < currentRevision) return current;
         lastPersistedWorkspaceValueRef.current = latestSerialized;
         lastPersistedWorkspaceRevisionRef.current = latestRevision;
+        logCaseResolverWorkspaceEvent({
+          source: 'cases_page',
+          action: 'route_sync_workspace',
+          workspaceRevision: latestRevision,
+        });
         return latestWorkspace;
       });
     })();
     return (): void => {
       isCancelled = true;
     };
-  }, [settingsStore]);
+  }, [pathname, settingsStore]);
 
   useEffect(() => {
+    if (pathname !== '/admin/case-resolver/cases') return;
     if (!canHydrateWorkspaceFromStore) return;
     const incomingSerialized = JSON.stringify(parsedWorkspace);
     const incomingRevision = getCaseResolverWorkspaceRevision(parsedWorkspace);
@@ -711,7 +718,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       });
       return parsedWorkspace;
     });
-  }, [canHydrateWorkspaceFromStore, parsedWorkspace]);
+  }, [canHydrateWorkspaceFromStore, parsedWorkspace, pathname]);
 
   useEffect(() => {
     if (didHydrateCaseListViewDefaults) return;

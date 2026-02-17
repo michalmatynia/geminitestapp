@@ -78,6 +78,14 @@ const getSlotRelationType = (slot: ImageStudioSlotRecord): string | null => {
   return normalized || null;
 };
 
+const getSlotSourceSlotId = (slot: ImageStudioSlotRecord): string | null => {
+  const metadata = getSlotMetadata(slot);
+  const sourceSlotId = metadata?.['sourceSlotId'];
+  if (typeof sourceSlotId !== 'string') return null;
+  const normalized = sourceSlotId.trim();
+  return normalized || null;
+};
+
 const getRoleLabel = (slot: ImageStudioSlotRecord, derivedFromCard: boolean): string | null => {
   const metadata = getSlotMetadata(slot);
   const role = getSlotRole(slot);
@@ -160,6 +168,15 @@ const buildStudioTreeRoot = (
   const visibleSlots = slots
     .filter((slot: ImageStudioSlotRecord) => !isGenerationDerivedTreeSlot(slot))
     .sort(compareSlots);
+  const visibleSlotById = new Map<string, ImageStudioSlotRecord>(
+    visibleSlots.map((slot: ImageStudioSlotRecord): [string, ImageStudioSlotRecord] => [slot.id, slot])
+  );
+  const sourceBySlotId = new Map<string, string>();
+  visibleSlots.forEach((slot: ImageStudioSlotRecord) => {
+    const sourceSlotId = getSlotSourceSlotId(slot);
+    if (!sourceSlotId || sourceSlotId === slot.id || !visibleSlotById.has(sourceSlotId)) return;
+    sourceBySlotId.set(slot.id, sourceSlotId);
+  });
 
   normalizeFolderPaths(folders).forEach((folderPath: string) => {
     const normalized = normalizeTreePath(folderPath);
@@ -172,26 +189,64 @@ const buildStudioTreeRoot = (
     }
   });
 
+  const hasDerivationCycle = (slotId: string, sourceSlotId: string): boolean => {
+    const seen = new Set<string>([slotId]);
+    let cursor: string | null = sourceSlotId;
+    while (cursor) {
+      if (seen.has(cursor)) return true;
+      seen.add(cursor);
+      cursor = sourceBySlotId.get(cursor) ?? null;
+    }
+    return false;
+  };
+
+  const canNestUnderSourceCard = (slot: ImageStudioSlotRecord): boolean => {
+    const sourceSlotId = sourceBySlotId.get(slot.id);
+    if (!sourceSlotId) return false;
+    const sourceSlot = visibleSlotById.get(sourceSlotId);
+    if (!sourceSlot) return false;
+    if (hasDerivationCycle(slot.id, sourceSlotId)) return false;
+    return normalizeSlotFolderPath(sourceSlot.folderPath) === normalizeSlotFolderPath(slot.folderPath);
+  };
+
+  const slotNodeById = new Map<string, SlotTreeNode>();
   visibleSlots.forEach((slot: ImageStudioSlotRecord) => {
+    const derivedFromCard = canNestUnderSourceCard(slot);
+    slotNodeById.set(slot.id, {
+      id: toSlotMasterNodeId(slot.id),
+      name: slot.name ?? slot.id,
+      type: 'card',
+      path: normalizeSlotFolderPath(slot.folderPath),
+      slotId: slot.id,
+      roleLabel: getRoleLabel(slot, derivedFromCard),
+      derivedFromCard,
+      children: [],
+    });
+  });
+
+  visibleSlots.forEach((slot: ImageStudioSlotRecord) => {
+    const slotNode = slotNodeById.get(slot.id);
+    if (!slotNode) return;
+
+    if (slotNode.derivedFromCard) {
+      const sourceSlotId = sourceBySlotId.get(slot.id);
+      const sourceNode = sourceSlotId ? slotNodeById.get(sourceSlotId) : null;
+      if (sourceNode) {
+        sourceNode.children.push(slotNode);
+        sourceNode.children.sort(compareNodes);
+        return;
+      }
+    }
+
     const folderPath = normalizeSlotFolderPath(slot.folderPath);
     const parts = folderPath ? folderPath.split('/').filter(Boolean) : [];
-
     let cursor = root;
     for (let index = 0; index < parts.length; index += 1) {
       const segmentPath = parts.slice(0, index + 1).join('/');
       cursor = ensureFolderNode(cursor, segmentPath);
     }
 
-    cursor.children.push({
-      id: toSlotMasterNodeId(slot.id),
-      name: slot.name ?? slot.id,
-      type: 'card',
-      path: folderPath,
-      slotId: slot.id,
-      roleLabel: getRoleLabel(slot, false),
-      derivedFromCard: false,
-      children: [],
-    });
+    cursor.children.push(slotNode);
     cursor.children.sort(compareNodes);
   });
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
+import { useRef } from 'react';
 
 import { api } from '@/shared/lib/api-client';
 import {
@@ -20,13 +21,6 @@ import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
 
 const normalizeStudioSlotId = (rawId: string): string => rawId.trim();
 
-const asMetadataRecord = (
-  value: unknown
-): Record<string, unknown> | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  return value as Record<string, unknown>;
-};
-
 const resolveStudioSlotIdCandidates = (rawId: string): string[] => {
   const normalized = normalizeStudioSlotId(rawId);
   if (!normalized) return [];
@@ -43,79 +37,6 @@ const resolveStudioSlotIdCandidates = (rawId: string): string[] => {
     candidates.add(`card:${unprefixed}`);
   }
   return Array.from(candidates);
-};
-
-const getSlotSourceIds = (slot: ImageStudioSlotRecord): string[] => {
-  const metadata = asMetadataRecord(slot.metadata);
-  if (!metadata) return [];
-  const sourceIds = new Set<string>();
-
-  const primary = metadata['sourceSlotId'];
-  if (typeof primary === 'string' && primary.trim().length > 0) {
-    resolveStudioSlotIdCandidates(primary).forEach((candidate: string) => {
-      sourceIds.add(candidate);
-    });
-  }
-
-  const nested = metadata['sourceSlotIds'];
-  if (Array.isArray(nested)) {
-    nested.forEach((value: unknown) => {
-      if (typeof value !== 'string' || value.trim().length === 0) return;
-      resolveStudioSlotIdCandidates(value).forEach((candidate: string) => {
-        sourceIds.add(candidate);
-      });
-    });
-  }
-
-  return Array.from(sourceIds);
-};
-
-const collectSlotsToDeleteFromRoots = (
-  slots: ImageStudioSlotRecord[],
-  rootSlotCandidates: Set<string>
-): Set<string> => {
-  if (slots.length === 0 || rootSlotCandidates.size === 0) return new Set();
-
-  const slotById = new Map<string, ImageStudioSlotRecord>(
-    slots.map((slot: ImageStudioSlotRecord) => [slot.id, slot])
-  );
-  const childIdsBySource = new Map<string, Set<string>>();
-  slots.forEach((slot: ImageStudioSlotRecord) => {
-    getSlotSourceIds(slot).forEach((sourceSlotId: string) => {
-      const resolvedSourceSlotId = resolveStudioSlotIdCandidates(sourceSlotId).find((candidate: string) =>
-        slotById.has(candidate)
-      );
-      if (!resolvedSourceSlotId) return;
-      const childIds = childIdsBySource.get(resolvedSourceSlotId) ?? new Set<string>();
-      childIds.add(slot.id);
-      childIdsBySource.set(resolvedSourceSlotId, childIds);
-    });
-  });
-
-  const deleteIds = new Set<string>();
-  const queue: string[] = [];
-  rootSlotCandidates.forEach((rootCandidate: string) => {
-    const resolvedRootId = resolveStudioSlotIdCandidates(rootCandidate).find((candidate: string) =>
-      slotById.has(candidate)
-    );
-    if (!resolvedRootId || deleteIds.has(resolvedRootId)) return;
-    deleteIds.add(resolvedRootId);
-    queue.push(resolvedRootId);
-  });
-
-  while (queue.length > 0) {
-    const sourceSlotId = queue.shift();
-    if (!sourceSlotId) continue;
-    const childIds = childIdsBySource.get(sourceSlotId);
-    if (!childIds || childIds.size === 0) continue;
-    childIds.forEach((childId: string) => {
-      if (deleteIds.has(childId)) return;
-      deleteIds.add(childId);
-      queue.push(childId);
-    });
-  }
-
-  return deleteIds;
 };
 
 export interface RunStudioPayload {
@@ -447,11 +368,21 @@ export function useUpdateStudioSlot(projectId: string): UpdateMutation<ImageStud
 
 export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, string> {
   const queryClient = useQueryClient();
+  const deletedIdsByRequestRef = useRef<Map<string, string[]>>(new Map());
 
   return createDeleteMutationV2<void, string>({
-    mutationFn: (id: string) => {
+    mutationFn: async (id: string) => {
       const slotId = normalizeStudioSlotId(id);
-      return api.delete<void>(`/api/image-studio/slots/${encodeURIComponent(slotId)}`);
+      const response = await api.delete<{ deletedSlotIds?: string[] }>(
+        `/api/image-studio/slots/${encodeURIComponent(slotId)}`
+      );
+      const deletedSlotIds = Array.isArray(response?.deletedSlotIds)
+        ? response.deletedSlotIds
+          .filter((value: unknown): value is string => typeof value === 'string')
+          .map((value: string) => normalizeStudioSlotId(value))
+          .filter((value: string) => value.length > 0)
+        : [];
+      deletedIdsByRequestRef.current.set(slotId, deletedSlotIds);
     },
     mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
     meta: {
@@ -462,20 +393,22 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
       mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
       tags: ['image-studio', 'slots', 'delete'],
     },
-    onSuccess: (_result: void, deletedSlotRawId: string) => {
+    onMutate: async (deletedSlotRawId: string) => {
       const normalizedDeletedSlotId = normalizeStudioSlotId(deletedSlotRawId);
-      const deletedSlotCandidates = new Set<string>(
+      const deleteCandidates = new Set<string>(
         resolveStudioSlotIdCandidates(normalizedDeletedSlotId)
+      );
+
+      const previousSlots = queryClient.getQueryData<StudioSlotsResponse | undefined>(
+        QUERY_KEYS.imageStudio.slots(projectId),
       );
 
       queryClient.setQueryData<StudioSlotsResponse | undefined>(
         QUERY_KEYS.imageStudio.slots(projectId),
         (current: StudioSlotsResponse | undefined): StudioSlotsResponse | undefined => {
           if (!current?.slots?.length) return current;
-          const deleteIds = collectSlotsToDeleteFromRoots(current.slots, deletedSlotCandidates);
-          if (deleteIds.size === 0) return current;
           const nextSlots = current.slots.filter(
-            (slot: ImageStudioSlotRecord) => !deleteIds.has(slot.id),
+            (slot: ImageStudioSlotRecord) => !deleteCandidates.has(slot.id),
           );
           if (nextSlots.length === current.slots.length) return current;
           return {
@@ -484,6 +417,47 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
           };
         },
       );
+
+      return { previousSlots };
+    },
+    onError: (_error: Error, deletedSlotRawId: string, context?: { previousSlots?: StudioSlotsResponse }) => {
+      const normalizedDeletedSlotId = normalizeStudioSlotId(deletedSlotRawId);
+      deletedIdsByRequestRef.current.delete(normalizedDeletedSlotId);
+      if (context?.previousSlots) {
+        queryClient.setQueryData<StudioSlotsResponse | undefined>(
+          QUERY_KEYS.imageStudio.slots(projectId),
+          context.previousSlots,
+        );
+      }
+    },
+    onSuccess: (_result: void, deletedSlotRawId: string) => {
+      const normalizedDeletedSlotId = normalizeStudioSlotId(deletedSlotRawId);
+      const deletedSlotIds = deletedIdsByRequestRef.current.get(normalizedDeletedSlotId) ?? [];
+      deletedIdsByRequestRef.current.delete(normalizedDeletedSlotId);
+      const deletedSlotCandidates = new Set<string>();
+      const baseDeletedIds = deletedSlotIds.length > 0 ? deletedSlotIds : [normalizedDeletedSlotId];
+      baseDeletedIds.forEach((deletedSlotId: string) => {
+        resolveStudioSlotIdCandidates(deletedSlotId).forEach((candidate: string) => {
+          deletedSlotCandidates.add(candidate);
+        });
+      });
+
+      queryClient.setQueryData<StudioSlotsResponse | undefined>(
+        QUERY_KEYS.imageStudio.slots(projectId),
+        (current: StudioSlotsResponse | undefined): StudioSlotsResponse | undefined => {
+          if (!current?.slots?.length) return current;
+          const nextSlots = current.slots.filter(
+            (slot: ImageStudioSlotRecord) => !deletedSlotCandidates.has(slot.id),
+          );
+          if (nextSlots.length === current.slots.length) return current;
+          return {
+            ...current,
+            slots: nextSlots,
+          };
+        },
+      );
+    },
+    onSettled: () => {
       void invalidateImageStudioSlots(queryClient, projectId);
     },
   });
@@ -540,7 +514,9 @@ export function useImportStudioAssetsFromDrive(projectId: string): CreateMutatio
 export function useRunStudio(): CreateMutation<RunStudioEnqueueResult, RunStudioPayload> {
   return createCreateMutationV2({
     mutationFn: async (payload: RunStudioPayload): Promise<RunStudioEnqueueResult> => {
-      return api.post<RunStudioEnqueueResult>('/api/image-studio/run', payload);
+      return api.post<RunStudioEnqueueResult>('/api/image-studio/run', payload, {
+        timeout: 60_000,
+      });
     },
     mutationKey: QUERY_KEYS.imageStudio.all,
     meta: {

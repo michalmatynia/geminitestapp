@@ -55,6 +55,8 @@ import {
   normalizeConfigForHash,
   normalizeHistoryRetentionOptionsMax,
   normalizeHistoryRetentionPasses,
+  normalizeLoadedPathName,
+  normalizeLoadedPathMetas,
   resolvePathSaveBlockedMessage,
   stripNodeConfig,
 } from './useAiPathsPersistence.helpers';
@@ -429,9 +431,14 @@ export function useAiPathsPersistence({
           }
         }
         if (indexRaw) {
-          const parsedIndex = JSON.parse(indexRaw) as PathMeta[];
+          const parsedIndex = safeParseJson(indexRaw).value;
           if (Array.isArray(parsedIndex)) {
-            settingsMetas = parsedIndex;
+            settingsMetas = normalizeLoadedPathMetas(
+              parsedIndex.filter(
+                (meta: unknown): meta is PathMeta =>
+                  Boolean(meta) && typeof meta === 'object'
+              )
+            );
           }
         }
 
@@ -441,14 +448,22 @@ export function useAiPathsPersistence({
             if (configRaw) {
               try {
                 const parsedConfig = JSON.parse(configRaw) as PathConfig;
+                const resolvedName =
+                  normalizeLoadedPathName(meta.id, parsedConfig.name) ||
+                  normalizeLoadedPathName(meta.id, meta.name) ||
+                  `Path ${meta.id.slice(0, 6)}`;
                 const mergedConfig: PathConfig = {
                   ...parsedConfig,
                   id: meta.id,
-                  name: parsedConfig.name || meta.name,
+                  name: resolvedName,
                 };
                 const migration = migratePathConfigCollections(mergedConfig);
                 settingsConfigs[meta.id] = migration.config;
-                if (migration.changed) {
+                if (
+                  migration.changed ||
+                  normalizeLoadedPathName(meta.id, parsedConfig.name) !==
+                    resolvedName
+                ) {
                   migrationPayload.push({
                     key: `${PATH_CONFIG_PREFIX}${meta.id}`,
                     value: JSON.stringify(migration.config),
@@ -473,12 +488,13 @@ export function useAiPathsPersistence({
         }
 
         const normalizeMetaName = (name: unknown, pathId: string): string => {
-          if (typeof name === 'string' && name.trim().length > 0) {
-            return name.trim();
+          const normalizedSourceName = normalizeLoadedPathName(pathId, name);
+          if (normalizedSourceName.length > 0) {
+            return normalizedSourceName;
           }
-          const configName = configs[pathId]?.name;
-          if (typeof configName === 'string' && configName.trim().length > 0) {
-            return configName.trim();
+          const configName = normalizeLoadedPathName(pathId, configs[pathId]?.name);
+          if (configName.length > 0) {
+            return configName;
           }
           return `Path ${pathId.slice(0, 6)}`;
         };

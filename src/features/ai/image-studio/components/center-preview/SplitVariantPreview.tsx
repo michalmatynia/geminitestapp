@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/shared/ui';
 
@@ -32,6 +32,99 @@ export function SplitVariantPreview({
 }: SplitVariantPreviewProps): React.JSX.Element {
   const leftPaneRef = useRef<HTMLDivElement | null>(null);
   const rightPaneRef = useRef<HTMLDivElement | null>(null);
+  const [leftOffset, setLeftOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [rightOffset, setRightOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [activeDrag, setActiveDrag] = useState<{
+    pane: Pane;
+    pointerId: number;
+    startClientX: number;
+    startClientY: number;
+    startOffsetX: number;
+    startOffsetY: number;
+  } | null>(null);
+
+  const clampOffset = useCallback(
+    (pane: Pane, zoom: number, next: { x: number; y: number }): { x: number; y: number } => {
+      if (zoom <= 1) return { x: 0, y: 0 };
+      const paneElement = pane === 'left' ? leftPaneRef.current : rightPaneRef.current;
+      if (!paneElement) return next;
+      const paneRect = paneElement.getBoundingClientRect();
+      const maxOffsetX = Math.max(0, (paneRect.width * (zoom - 1)) / 2);
+      const maxOffsetY = Math.max(0, (paneRect.height * (zoom - 1)) / 2);
+      return {
+        x: Math.max(-maxOffsetX, Math.min(maxOffsetX, next.x)),
+        y: Math.max(-maxOffsetY, Math.min(maxOffsetY, next.y)),
+      };
+    },
+    []
+  );
+
+  useEffect(() => {
+    setLeftOffset((previous) => clampOffset('left', leftSplitZoom, previous));
+  }, [clampOffset, leftSplitZoom]);
+
+  useEffect(() => {
+    setRightOffset((previous) => clampOffset('right', rightSplitZoom, previous));
+  }, [clampOffset, rightSplitZoom]);
+
+  useEffect(() => {
+    setActiveDrag(null);
+    setLeftOffset({ x: 0, y: 0 });
+    setRightOffset({ x: 0, y: 0 });
+  }, [sourceSlotImageSrc, workingSlotImageSrc]);
+
+  useEffect((): (() => void) => {
+    if (!activeDrag) return () => {};
+
+    const handlePointerMove = (event: PointerEvent): void => {
+      if (event.pointerId !== activeDrag.pointerId) return;
+      const zoom = activeDrag.pane === 'left' ? leftSplitZoom : rightSplitZoom;
+      const nextOffset = clampOffset(activeDrag.pane, zoom, {
+        x: activeDrag.startOffsetX + (event.clientX - activeDrag.startClientX),
+        y: activeDrag.startOffsetY + (event.clientY - activeDrag.startClientY),
+      });
+      if (activeDrag.pane === 'left') {
+        setLeftOffset(nextOffset);
+      } else {
+        setRightOffset(nextOffset);
+      }
+    };
+
+    const handlePointerUp = (event: PointerEvent): void => {
+      if (event.pointerId !== activeDrag.pointerId) return;
+      setActiveDrag(null);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
+    return (): void => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
+    };
+  }, [activeDrag, clampOffset, leftSplitZoom, rightSplitZoom]);
+
+  const handlePanePointerDown = useCallback(
+    (pane: Pane, event: React.PointerEvent<HTMLDivElement>): void => {
+      if (event.button !== 0) return;
+      if ((event.target as HTMLElement).closest('[data-split-preview-controls="true"]')) return;
+      const zoom = pane === 'left' ? leftSplitZoom : rightSplitZoom;
+      if (zoom <= 1) return;
+
+      event.preventDefault();
+      const currentOffset = pane === 'left' ? leftOffset : rightOffset;
+      setActiveDrag({
+        pane,
+        pointerId: event.pointerId,
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        startOffsetX: currentOffset.x,
+        startOffsetY: currentOffset.y,
+      });
+    },
+    [leftOffset, leftSplitZoom, rightOffset, rightSplitZoom]
+  );
 
   useEffect((): (() => void) => {
     const leftElement = leftPaneRef.current;
@@ -73,11 +166,18 @@ export function SplitVariantPreview({
       <div
         ref={leftPaneRef}
         className='relative min-h-0 overflow-hidden rounded border border-border/60 bg-card/30'
+        style={{ touchAction: 'none' }}
+        onPointerDown={(event): void => {
+          handlePanePointerDown('left', event);
+        }}
       >
         <div className='absolute left-1 top-1 z-10 rounded bg-black/65 px-1.5 py-0.5 text-[10px] text-gray-100'>
           Source
         </div>
-        <div className='absolute right-1 top-1 z-10 flex items-center gap-1 rounded bg-black/65 p-1'>
+        <div
+          data-split-preview-controls='true'
+          className='absolute right-1 top-1 z-10 flex items-center gap-1 rounded bg-black/65 p-1'
+        >
           <Button size='xs'
             type='button'
             variant='outline'
@@ -108,6 +208,7 @@ export function SplitVariantPreview({
             variant='outline'
             className='h-5 px-1 text-[10px]'
             onClick={(): void => {
+              setLeftOffset({ x: 0, y: 0 });
               onResetSplitZoom('left');
             }}
             title='Reset source zoom'
@@ -120,17 +221,33 @@ export function SplitVariantPreview({
           src={sourceSlotImageSrc}
           alt='Source image'
           className='h-full w-full object-contain transition-transform duration-150 ease-out'
-          style={{ transform: `scale(${leftSplitZoom})`, transformOrigin: 'center center' }}
+          style={{
+            transform: `translate(${leftOffset.x}px, ${leftOffset.y}px) scale(${leftSplitZoom})`,
+            transformOrigin: 'center center',
+            cursor: activeDrag?.pane === 'left'
+              ? 'grabbing'
+              : leftSplitZoom > 1
+                ? 'grab'
+                : 'default',
+          }}
+          draggable={false}
         />
       </div>
       <div
         ref={rightPaneRef}
         className='relative min-h-0 overflow-hidden rounded border border-border/60 bg-card/30'
+        style={{ touchAction: 'none' }}
+        onPointerDown={(event): void => {
+          handlePanePointerDown('right', event);
+        }}
       >
         <div className='absolute left-1 top-1 z-10 rounded bg-black/65 px-1.5 py-0.5 text-[10px] text-gray-100'>
           Variant
         </div>
-        <div className='absolute right-1 top-1 z-10 flex items-center gap-1 rounded bg-black/65 p-1'>
+        <div
+          data-split-preview-controls='true'
+          className='absolute right-1 top-1 z-10 flex items-center gap-1 rounded bg-black/65 p-1'
+        >
           <Button size='xs'
             type='button'
             variant='outline'
@@ -161,6 +278,7 @@ export function SplitVariantPreview({
             variant='outline'
             className='h-5 px-1 text-[10px]'
             onClick={(): void => {
+              setRightOffset({ x: 0, y: 0 });
               onResetSplitZoom('right');
             }}
             title='Reset variant zoom'
@@ -173,7 +291,16 @@ export function SplitVariantPreview({
           src={workingSlotImageSrc}
           alt='Generated variant'
           className='h-full w-full object-contain transition-transform duration-150 ease-out'
-          style={{ transform: `scale(${rightSplitZoom})`, transformOrigin: 'center center' }}
+          style={{
+            transform: `translate(${rightOffset.x}px, ${rightOffset.y}px) scale(${rightSplitZoom})`,
+            transformOrigin: 'center center',
+            cursor: activeDrag?.pane === 'right'
+              ? 'grabbing'
+              : rightSplitZoom > 1
+                ? 'grab'
+                : 'default',
+          }}
+          draggable={false}
         />
       </div>
       <div

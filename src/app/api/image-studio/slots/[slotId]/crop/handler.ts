@@ -125,6 +125,7 @@ async function parseCropRequestPayload(
   const dataUrl = form.get('dataUrl');
   const name = form.get('name');
   const requestId = form.get('requestId');
+  const diagnostics = parseJsonFormValue<Record<string, unknown>>(form.get('diagnostics'));
   const image = form.get('image');
 
   let uploadedClientImage: UploadedClientCropImage | null = null;
@@ -144,6 +145,7 @@ async function parseCropRequestPayload(
       ...(typeof dataUrl === 'string' ? { dataUrl } : {}),
       ...(typeof name === 'string' ? { name } : {}),
       ...(typeof requestId === 'string' ? { requestId } : {}),
+      ...(diagnostics ? { diagnostics } : {}),
     },
     uploadedClientImage,
   };
@@ -609,6 +611,7 @@ export async function postCropSlotHandler(
           projectId: sourceSlot.projectId,
           sourceSlotId: sourceSlot.id,
           mode: payload.mode,
+          diagnostics: payload.diagnostics ?? null,
           requestId: idempotencyKey,
           fingerprint,
         },
@@ -657,6 +660,7 @@ export async function postCropSlotHandler(
             effectiveMode: processed.effectiveMode,
             authoritativeSource: processed.authoritativeSource,
             cropRect: processed.cropRect,
+            diagnostics: payload.diagnostics ?? null,
             polygon: payload.mode === 'server_polygon' ? payload.polygon : undefined,
             requestId: idempotencyKey,
             fingerprint,
@@ -684,6 +688,7 @@ export async function postCropSlotHandler(
         mode: payload.mode,
         effectiveMode: processed.effectiveMode,
         cropRect: processed.cropRect,
+        diagnostics: payload.diagnostics ?? null,
         fingerprint,
         requestId: idempotencyKey,
         pipelineVersion: CROP_PIPELINE_VERSION,
@@ -700,6 +705,7 @@ export async function postCropSlotHandler(
           mode: payload.mode,
           effectiveMode: processed.effectiveMode,
           cropRect: processed.cropRect,
+          diagnostics: payload.diagnostics ?? null,
           fingerprint,
           requestId: idempotencyKey,
           pipelineVersion: CROP_PIPELINE_VERSION,
@@ -721,6 +727,7 @@ export async function postCropSlotHandler(
         mode: payload.mode,
         effectiveMode: processed.effectiveMode,
         authoritativeSource: processed.authoritativeSource,
+        diagnostics: payload.diagnostics ?? null,
         outputWidth: processed.outputWidth,
         outputHeight: processed.outputHeight,
         outputBytes: processed.outputBuffer.length,
@@ -763,6 +770,7 @@ export async function postCropSlotHandler(
         mode: payload.mode,
         requestId: idempotencyKey,
         fingerprint,
+        diagnostics: payload.diagnostics ?? null,
         cropErrorCode: isAppError(error) ? error.meta?.['cropErrorCode'] : undefined,
         durationMs: Date.now() - startedAt,
       },

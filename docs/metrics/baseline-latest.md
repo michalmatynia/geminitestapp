@@ -1,14 +1,14 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-17T19:15:16.889Z
+Generated at: 2026-02-17T20:38:14.393Z
 
 ## Snapshot
 
-- Source files: 2710
-- Source lines: 434019
+- Source files: 2736
+- Source lines: 436935
 - use client files: 901
-- Files >= 1000 LOC: 16
-- Files >= 1500 LOC: 9
+- Files >= 1000 LOC: 8
+- Files >= 1500 LOC: 6
 - Largest file: `src/features/database/services/database-sync.ts` (3352 LOC)
 - API routes: 294
 - API delegated server routes: 21
@@ -51,34 +51,34 @@ Generated at: 2026-02-17T19:15:16.889Z
 | `jobs -> ai` | 26 |
 | `products -> ai` | 25 |
 | `cms -> gsap` | 22 |
-| `ai -> products` | 20 |
+| `ai -> products` | 21 |
 | `integrations -> observability` | 19 |
-| `ai -> prompt-engine` | 16 |
+| `ai -> prompt-engine` | 17 |
+| `case-resolver -> ai` | 16 |
 | `integrations -> data-import-export` | 16 |
 | `cms -> observability` | 14 |
-| `data-import-export -> integrations` | 13 |
 
 ## Top File Hotspots (by LOC)
 
 | File | LOC |
 | --- | ---: |
 | `src/features/database/services/database-sync.ts` | 3352 |
-| `src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts` | 3264 |
-| `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 2597 |
+| `src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts` | 3289 |
+| `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 2604 |
 | `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 2524 |
-| `src/shared/ui/vector-canvas.tsx` | 2382 |
-| `src/features/case-resolver/hooks/useCaseResolverState.ts` | 2349 |
-| `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 2045 |
-| `src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx` | 1808 |
-| `src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx` | 1763 |
-| `src/features/ai/image-studio/components/RightSidebar.tsx` | 1497 |
-| `src/features/ai/image-studio/components/GenerationToolbar.tsx` | 1307 |
-| `src/features/ai/image-studio/components/StudioModals.tsx` | 1282 |
-| `src/features/ai/ai-paths/server/settings-store.ts` | 1262 |
-| `src/features/case-resolver/settings.ts` | 1136 |
+| `src/shared/ui/vector-canvas.tsx` | 2472 |
+| `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 2056 |
 | `src/features/case-resolver/__tests__/settings.test.ts` | 1016 |
-| `src/features/case-resolver/components/CaseResolverFolderTree.tsx` | 1015 |
+| `src/features/ai/image-studio/components/RightSidebar.tsx` | 1014 |
 | `src/app/api/image-studio/slots/[slotId]/upscale/handler.ts` | 999 |
+| `src/features/ai/image-studio/components/StudioModals.tsx` | 999 |
 | `src/features/ai/ai-paths/components/canvas-board.tsx` | 996 |
 | `src/features/integrations/services/tradera-listing-service.ts` | 996 |
 | `src/features/ai/agent-runtime/tools/index.ts` | 995 |
+| `src/features/data-import-export/context/ImportExportContext.tsx` | 995 |
+| `src/features/products/services/product-studio-service.ts` | 990 |
+| `src/features/prompt-exploder/pattern-pack-rules.ts` | 990 |
+| `src/features/ai/agent-runtime/planning/llm.ts` | 989 |
+| `src/features/integrations/services/category-mapping-repository.ts` | 988 |
+| `src/app/api/integrations/products/[id]/export-to-base/handler.ts` | 986 |
+| `src/features/integrations/services/exports/base-exporter-template-mappings.ts` | 985 |

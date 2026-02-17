@@ -8,11 +8,11 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { VectorShape } from '@/features/vector-drawing';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { Button, SelectSimple, Switch, useToast } from '@/shared/ui';
 
+import { collectSequenceMaskPolygons } from './right-sidebar/right-sidebar-utils';
 import { SequenceStackCard } from './sequencing/SequenceStackCard';
 import {
   PRESET_NAME_MAX_LENGTH,
@@ -24,6 +24,7 @@ import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptState } from '../context/PromptContext';
 import { useSettingsActions, useSettingsState } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
+import { useUiActions } from '../context/UiContext';
 import { resolvePromptPlaceholders } from '../utils/run-request-preview';
 import {
   normalizeImageStudioSequenceSteps,
@@ -84,8 +85,6 @@ type SequenceRunStartResponse = {
 
 const POLL_INTERVAL_MS = 1500;
 
-const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
-
 const deriveLegacySequencingFields = (steps: ImageStudioSequenceStep[]): {
   operations: ImageStudioSequenceOperation[];
   upscaleStrategy: 'scale' | 'target_resolution';
@@ -138,80 +137,6 @@ const buildPresetId = (
   return next;
 };
 
-const normalizeShapeToPolygons = (
-  shape: VectorShape,
-): Array<Array<{ x: number; y: number }>> => {
-  if (shape.type === 'polygon' || shape.type === 'lasso' || shape.type === 'brush') {
-    if (!shape.closed || shape.points.length < 3) return [];
-    return [
-      shape.points.map((point: { x: number; y: number }) => ({
-        x: clamp01(point.x),
-        y: clamp01(point.y),
-      })),
-    ];
-  }
-
-  if (shape.type === 'rect') {
-    if (shape.points.length < 2) return [];
-    const xs = shape.points.map((point: { x: number; y: number }) => point.x);
-    const ys = shape.points.map((point: { x: number; y: number }) => point.y);
-    const minX = clamp01(Math.min(...xs));
-    const maxX = clamp01(Math.max(...xs));
-    const minY = clamp01(Math.min(...ys));
-    const maxY = clamp01(Math.max(...ys));
-    if (maxX <= minX || maxY <= minY) return [];
-    return [[
-      { x: minX, y: minY },
-      { x: maxX, y: minY },
-      { x: maxX, y: maxY },
-      { x: minX, y: maxY },
-    ]];
-  }
-
-  if (shape.type === 'ellipse') {
-    if (shape.points.length < 2) return [];
-    const xs = shape.points.map((point: { x: number; y: number }) => point.x);
-    const ys = shape.points.map((point: { x: number; y: number }) => point.y);
-    const minX = clamp01(Math.min(...xs));
-    const maxX = clamp01(Math.max(...xs));
-    const minY = clamp01(Math.min(...ys));
-    const maxY = clamp01(Math.max(...ys));
-    if (maxX <= minX || maxY <= minY) return [];
-
-    const cx = (minX + maxX) / 2;
-    const cy = (minY + maxY) / 2;
-    const rx = (maxX - minX) / 2;
-    const ry = (maxY - minY) / 2;
-    const steps = 24;
-
-    return [
-      Array.from({ length: steps }, (_value, index) => {
-        const theta = (index / steps) * Math.PI * 2;
-        return {
-          x: clamp01(cx + rx * Math.cos(theta)),
-          y: clamp01(cy + ry * Math.sin(theta)),
-        };
-      }),
-    ];
-  }
-
-  return [];
-};
-
-const collectMaskPolygons = (
-  maskShapes: VectorShape[],
-): Array<Array<{ x: number; y: number }>> => {
-  const eligibleShapes = maskShapes.filter((shape) => {
-    if (!shape.visible) return false;
-    if (shape.type === 'rect' || shape.type === 'ellipse') {
-      return shape.points.length >= 2;
-    }
-    return shape.closed && shape.points.length >= 3;
-  });
-
-  return eligibleShapes.flatMap((shape) => normalizeShapeToPolygons(shape));
-};
-
 const toStepLogLine = (event: SequenceRunHistoryEvent): string => {
   const timestamp = new Date(event.at).toLocaleTimeString();
   return `${timestamp} ${event.message}`;
@@ -230,6 +155,7 @@ export function SequencingPanel(): React.JSX.Element {
   const { maskShapes, maskInvert, maskFeather } = useMaskingState();
   const { studioSettings } = useSettingsState();
   const { setStudioSettings, saveStudioSettings } = useSettingsActions();
+  const { getPreviewCanvasImageFrame } = useUiActions();
 
   const [activeSequenceRunId, setActiveSequenceRunId] = useState<string | null>(null);
   const [activeSequenceStatus, setActiveSequenceStatus] = useState<SequenceRunStatus | null>(null);
@@ -278,6 +204,21 @@ export function SequencingPanel(): React.JSX.Element {
     () => runtimeSequenceSteps.filter((step) => step.enabled),
     [runtimeSequenceSteps],
   );
+  const workingSlotImageWidth = useMemo((): number | null => {
+    const width = workingSlot?.imageFile?.width ?? null;
+    return typeof width === 'number' && Number.isFinite(width) && width > 0 ? width : null;
+  }, [workingSlot?.imageFile?.width]);
+  const workingSlotImageHeight = useMemo((): number | null => {
+    const height = workingSlot?.imageFile?.height ?? null;
+    return typeof height === 'number' && Number.isFinite(height) && height > 0 ? height : null;
+  }, [workingSlot?.imageFile?.height]);
+  const sequenceImageContentFrame = useMemo((): { x: number; y: number; width: number; height: number } | null => {
+    const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
+    if (!normalizedWorkingSlotId) return null;
+    const frameBinding = getPreviewCanvasImageFrame();
+    if (frameBinding?.slotId !== normalizedWorkingSlotId) return null;
+    return frameBinding.frame;
+  }, [getPreviewCanvasImageFrame, workingSlot?.id, workingSlot?.imageFileId, workingSlot?.updatedAt]);
   const normalizeStepsWithCurrentFallback = useCallback(
     (input: unknown): ImageStudioSequenceStep[] =>
       normalizeImageStudioSequenceSteps(input, {
@@ -635,7 +576,12 @@ export function SequencingPanel(): React.JSX.Element {
       setSequenceError(null);
       setActiveStepLabel(null);
 
-      const polygons = collectMaskPolygons(maskShapes);
+      const polygons = collectSequenceMaskPolygons(
+        maskShapes,
+        workingSlotImageWidth ?? 1,
+        workingSlotImageHeight ?? 1,
+        sequenceImageContentFrame
+      );
 
       const result = await api.post<SequenceRunStartResponse>(
         '/api/image-studio/sequences/run',
@@ -681,6 +627,9 @@ export function SequencingPanel(): React.JSX.Element {
     maskFeather,
     maskInvert,
     maskShapes,
+    workingSlotImageHeight,
+    workingSlotImageWidth,
+    sequenceImageContentFrame,
     paramsState,
     pollRun,
     projectId,

@@ -621,15 +621,26 @@ export const startImageStudioRunQueue = (): void => {
   queue.startWorker();
 };
 
+const processInlineRunInBackground = (runId: string, reason: 'redis_unavailable' | 'enqueue_failed'): void => {
+  void queue.processInline({ runId }).catch(async (inlineError: unknown) => {
+    await ErrorSystem.captureException(inlineError, {
+      service: LOG_SOURCE,
+      action: 'inline-background-failed',
+      runId,
+      reason,
+    });
+  });
+};
+
 export const enqueueImageStudioRunJob = async (runId: string): Promise<ImageStudioRunDispatchMode> => {
   if (!isRedisAvailable()) {
     await logSystemEvent({
       level: 'info',
       source: LOG_SOURCE,
-      message: `Redis unavailable for run ${runId}; processing inline`,
+      message: `Redis unavailable for run ${runId}; processing inline in background`,
       context: { runId },
     });
-    await queue.processInline({ runId });
+    processInlineRunInBackground(runId, 'redis_unavailable');
     return 'inline';
   }
 
@@ -647,16 +658,7 @@ export const enqueueImageStudioRunJob = async (runId: string): Promise<ImageStud
       },
     });
 
-    try {
-      await queue.processInline({ runId });
-      return 'inline';
-    } catch (inlineError) {
-      await ErrorSystem.captureException(inlineError, {
-        service: LOG_SOURCE,
-        action: 'inline-fallback-failed',
-        runId,
-      });
-      throw inlineError;
-    }
+    processInlineRunInBackground(runId, 'enqueue_failed');
+    return 'inline';
   }
 };

@@ -82,9 +82,9 @@ export function GenerationToolbarCropSection({
             variant='outline'
             onClick={onCreateCropBox}
             disabled={!hasSourceImage}
-            title={cropTooltipContent.cropBoxTool}
+            title={cropTooltipsEnabled ? cropTooltipContent.cropBoxTool : undefined}
           >
-            Crop Box Tool
+            Create Rectangle
           </Button>
         )}
       </div>
@@ -96,7 +96,7 @@ export function GenerationToolbarCropSection({
             variant='outline'
             onClick={onCrop}
             disabled={!hasSourceImage || cropBusy || !hasCropBoundary}
-            title={cropTooltipContent.crop}
+            title={cropTooltipsEnabled ? cropTooltipContent.crop : undefined}
           >
             {cropBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
             {cropBusyLabel}
@@ -109,7 +109,7 @@ export function GenerationToolbarCropSection({
             variant='outline'
             onClick={onSquareCrop}
             disabled={!hasSourceImage || cropBusy}
-            title={cropTooltipContent.squareCrop}
+            title={cropTooltipsEnabled ? cropTooltipContent.squareCrop : undefined}
           >
             Square Crop
           </Button>
@@ -121,7 +121,7 @@ export function GenerationToolbarCropSection({
             variant='outline'
             onClick={onViewCrop}
             disabled={!hasSourceImage || cropBusy}
-            title={cropTooltipContent.viewCrop}
+            title={cropTooltipsEnabled ? cropTooltipContent.viewCrop : undefined}
           >
             View Crop
           </Button>
@@ -134,7 +134,7 @@ export function GenerationToolbarCropSection({
               type='button'
               variant='outline'
               onClick={onCancelCrop}
-              title={cropTooltipContent.cancelCrop}
+              title={cropTooltipsEnabled ? cropTooltipContent.cancelCrop : undefined}
             >
               Cancel Crop
             </Button>

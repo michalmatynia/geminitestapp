@@ -371,6 +371,90 @@ describe('evaluateGraph', () => {
     expect(result.outputs['n1']!['value']).toBeLessThanOrEqual(4);
   });
 
+  it('keeps inferred array values for database update mappings', async () => {
+    const inferredParameters = [
+      { parameterId: 'p_material', value: 'Metal' },
+      { parameterId: 'p_colour', value: 'Silver' },
+    ];
+
+    const nodes: AiNode[] = [
+      {
+        id: 'node-array',
+        type: 'constant',
+        title: 'Inferred Params',
+        description: '',
+        inputs: [],
+        outputs: ['value'],
+        position: { x: 0, y: 0 },
+        config: {
+          constant: {
+            valueType: 'json',
+            value: JSON.stringify(inferredParameters),
+          },
+        },
+      },
+      {
+        id: 'node-db',
+        type: 'database',
+        title: 'DB Update',
+        description: '',
+        inputs: ['value', 'entityId', 'entityType', 'productId'],
+        outputs: ['result', 'bundle'],
+        position: { x: 250, y: 0 },
+        config: {
+          runtime: { waitForInputs: true },
+          database: {
+            operation: 'update',
+            entityType: 'product',
+            useMongoActions: true,
+            actionCategory: 'update',
+            action: 'updateOne',
+            mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
+            query: {
+              provider: 'auto',
+              collection: 'products',
+              mode: 'custom',
+              queryTemplate: '{"id":"{{entityId}}"}',
+              single: true,
+            },
+            dryRun: true,
+            skipEmpty: true,
+          },
+        },
+      },
+    ];
+
+    const edges: Edge[] = [
+      {
+        id: 'edge-array-db',
+        from: 'node-array',
+        to: 'node-db',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+    ];
+
+    const onNodeStart = vi.fn();
+
+    await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+      triggerContext: {
+        entityId: 'product-1',
+        productId: 'product-1',
+        entityType: 'product',
+      },
+      onNodeStart,
+    });
+
+    const dbStart = onNodeStart.mock.calls
+      .map((args) => args[0])
+      .find((payload) => payload?.node?.id === 'node-db');
+
+    expect(dbStart?.nodeInputs?.value).toEqual(inferredParameters);
+  });
+
   describe('Graph Caching', () => {
     const triggerNode: AiNode = {
       id: 'trigger',

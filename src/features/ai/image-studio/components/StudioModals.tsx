@@ -30,6 +30,7 @@ import {
   applyEnvironmentReferenceAssetToDraft,
   createUploadHandlers,
 } from './studio-modals/studio-modals-upload-handlers';
+import { StudioImportPanels } from './studio-modals/StudioImportPanels';
 import { StudioInlineEditPanels, type EditCardTab } from './studio-modals/StudioInlineEditPanels';
 import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptActions, usePromptState } from '../context/PromptContext';
@@ -37,8 +38,6 @@ import { useSettingsState } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { studioKeys } from '../hooks/useImageStudioQueries';
 import { type ParamUiControl } from '../utils/param-ui';
-import { DriveImportModal } from './modals/DriveImportModal';
-import { SlotCreateModal } from './modals/SlotCreateModal';
 import {
   EMPTY_ENVIRONMENT_REFERENCE_DRAFT,
   INLINE_CARD_IMAGE_SLOT_INDEX,
@@ -831,29 +830,11 @@ export function StudioModals(): React.JSX.Element {
         // Best-effort cleanup for replaced temporary assets.
       });
     },
-    createSlots,
-    driveImportMode,
-    driveImportTargetId,
-    importFromDriveMutation,
-    localUploadInputRef,
-    localUploadMode,
-    localUploadTargetId,
-    selectedFolder,
-    selectedSlot,
-    setDriveImportMode,
-    setDriveImportOpen,
-    setDriveImportTargetId,
-    setLocalUploadMode,
-    setLocalUploadTargetId,
-    setSelectedSlotId,
-    setTemporaryObjectUpload,
-    slotHasRenderableImage,
+    createSlots, driveImportMode, driveImportTargetId, importFromDriveMutation, localUploadInputRef, localUploadMode,
+    localUploadTargetId, selectedFolder, selectedSlot, setDriveImportMode, setDriveImportOpen, setDriveImportTargetId,
+    setLocalUploadMode, setLocalUploadTargetId, setSelectedSlotId, setTemporaryObjectUpload, slotHasRenderableImage,
     slotsCount: slots.length,
-    temporaryObjectUpload,
-    toast,
-    toSlotName,
-    updateSlotMutation,
-    uploadMutation,
+    temporaryObjectUpload, toast, toSlotName, updateSlotMutation, uploadMutation,
   });
 
   const {
@@ -863,128 +844,48 @@ export function StudioModals(): React.JSX.Element {
     handleSuggestUiControls,
     handleApplyExtraction,
   } = createPromptExtractionHandlers({
-    extractDraftPrompt,
-    previewControls,
-    previewParams,
-    previewSpecs,
-    setExtractBusy,
-    setExtractDraftPrompt,
-    setExtractError,
-    setExtractHistory,
-    setExtractPreviewUiOverrides,
-    setExtractReviewOpen,
-    setParamSpecs,
-    setParamUiOverrides,
-    setParamsState,
-    setPreviewControls,
-    setPreviewParams,
-    setPreviewSpecs,
-    setPreviewValidation,
-    setPromptText,
-    setSelectedExtractHistoryId,
-    studioSettings,
-    toast,
+    extractDraftPrompt, previewControls, previewParams, previewSpecs, setExtractBusy, setExtractDraftPrompt,
+    setExtractError, setExtractHistory, setExtractPreviewUiOverrides, setExtractReviewOpen, setParamSpecs,
+    setParamUiOverrides, setParamsState, setPreviewControls, setPreviewParams, setPreviewSpecs,
+    setPreviewValidation, setPromptText, setSelectedExtractHistoryId, studioSettings, toast,
   });
-
-  const handleCreateEmptySlot = async (): Promise<void> => {
-    setSlotCreateOpen(false);
-    await handleCreateEmptySlotCore();
-  };
-
-  const triggerLocalUpload = (
-    mode: 'create' | 'replace' | 'temporary-object' | 'environment',
-    targetId: string | null
-  ): void => {
-    setLocalUploadMode(mode);
-    setLocalUploadTargetId(targetId);
+  const handleCreateEmptySlot = async (): Promise<void> => { setSlotCreateOpen(false); await handleCreateEmptySlotCore(); };
+  const triggerLocalUpload = (mode: 'create' | 'replace' | 'temporary-object' | 'environment', targetId: string | null): void => {
+    setLocalUploadMode(mode); setLocalUploadTargetId(targetId);
     window.setTimeout(() => localUploadInputRef.current?.click(), 0);
   };
-
   const {
     handleSaveInlineSlot,
     handleClearSlotImage,
     handleApplyLinkedVariantToCard,
   } = createInlineSlotHandlers({
-    clearInlineSlotSyncTimeouts,
-    environmentReferenceDraft,
-    flushInlineSlotDraftSync,
-    isCardImageRemovalLocked,
-    setLinkedVariantApplyBusyKey,
-    setSlotBase64Draft,
-    setSlotImageUrlDraft,
-    setSlotInlineEditOpen,
-    setSlotUpdateBusy,
-    selectedSlot,
-    slotFolderDraft,
-    slotNameDraft,
+    clearInlineSlotSyncTimeouts, environmentReferenceDraft, flushInlineSlotDraftSync, isCardImageRemovalLocked,
+    setLinkedVariantApplyBusyKey, setSlotBase64Draft, setSlotImageUrlDraft, setSlotInlineEditOpen, setSlotUpdateBusy,
+    selectedSlot, slotFolderDraft, slotNameDraft,
     slotsCount: slots.length,
-    toast,
-    updateSlotMutation,
+    toast, updateSlotMutation,
   });
-
-  const driveImportTitle =
-    driveImportMode === 'replace'
-      ? 'Attach Image To Selected Card'
-      : driveImportMode === 'temporary-object'
-        ? 'Select Object Image'
-        : driveImportMode === 'environment'
-          ? 'Select Environment Reference Image'
-          : 'Import Images';
-
   return (
     <>
-      <input
-        ref={localUploadInputRef}
-        type='file'
-        accept='image/*'
-        multiple={false}
-        className='hidden'
-        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-          void handleLocalUpload(event.target.files);
-        }}
-      />
-      <DriveImportModal
-        isOpen={driveImportOpen}
-        onClose={() => {
-          setDriveImportOpen(false);
-          setDriveImportMode('create');
-          setDriveImportTargetId(null);
-        }}
-        onSuccess={() => {}}
-        title={driveImportTitle}
-        isUploading={uploadMutation.isPending}
-        onLocalUploadTrigger={() => {
-          setLocalUploadMode(driveImportMode);
-          setLocalUploadTargetId(
-            driveImportMode === 'replace' || driveImportMode === 'environment'
-              ? (driveImportTargetId ?? selectedSlot?.id ?? null)
-              : null
-          );
-          window.setTimeout(() => localUploadInputRef.current?.click(), 0);
-        }}
-        onSelectFile={(files) => {
-          void handleDriveSelection(files);
-        }}
-      />
-
-      <SlotCreateModal
-        isOpen={slotCreateOpen}
-        onClose={() => setSlotCreateOpen(false)}
-        onSuccess={() => {}}
-        disabled={!projectId}
-        onSelectMode={(mode) => {
-          if (mode === 'empty') {
-            void handleCreateEmptySlot();
-          } else if (mode === 'image') {
-            setSlotCreateOpen(false);
-            setDriveImportMode('create');
-            setDriveImportTargetId(null);
-            setDriveImportOpen(true);
-          } else if (mode === 'local') {
-            setSlotCreateOpen(false);
-            triggerLocalUpload('create', null);
-          }
-        }}
+      <StudioImportPanels
+        driveImportMode={driveImportMode}
+        driveImportOpen={driveImportOpen}
+        driveImportTargetId={driveImportTargetId}
+        handleCreateEmptySlot={handleCreateEmptySlot}
+        handleDriveSelection={handleDriveSelection}
+        handleLocalUpload={handleLocalUpload}
+        localUploadInputRef={localUploadInputRef}
+        projectId={projectId ?? null}
+        selectedSlot={selectedSlot}
+        setDriveImportMode={setDriveImportMode}
+        setDriveImportOpen={setDriveImportOpen}
+        setDriveImportTargetId={setDriveImportTargetId}
+        setLocalUploadMode={setLocalUploadMode}
+        setLocalUploadTargetId={setLocalUploadTargetId}
+        setSlotCreateOpen={setSlotCreateOpen}
+        slotCreateOpen={slotCreateOpen}
+        triggerLocalUpload={triggerLocalUpload}
+        uploadPending={uploadMutation.isPending}
       />
 
       <StudioInlineEditPanels

@@ -22,7 +22,7 @@ export const IMAGE_STUDIO_CROP_DOC_KEYS: ImageStudioDocKey[] = [
 export const IMAGE_STUDIO_DOCS: Record<ImageStudioDocKey, ImageStudioDocEntry> = {
   crop_box_tool: {
     key: 'crop_box_tool',
-    title: 'Crop Box Tool',
+    title: 'Create Rectangle',
     description: 'Creates a rectangle shape you can resize and move, then use as the crop boundary.',
   },
   crop: {

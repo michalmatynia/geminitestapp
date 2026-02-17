@@ -14,19 +14,21 @@ import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import type { VectorCanvasViewCropRect } from '@/shared/ui';
+import type { VectorCanvasImageContentFrame, VectorCanvasViewCropRect } from '@/shared/ui';
 import { Button, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { FocusModeTogglePortal } from './center-preview/FocusModeTogglePortal';
 import { SplitVariantPreview } from './center-preview/SplitVariantPreview';
 import { SplitViewControls } from './center-preview/SplitViewControls';
+import { useCenterPreviewVariants } from './center-preview/useCenterPreviewVariants';
 import {
   deleteVariantFromCenterPreview,
   loadVariantIntoCanvas,
 } from './center-preview/variant-actions';
 import { VariantPanel } from './center-preview/VariantPanel';
 import { VariantTooltipPortal, type VariantTooltipState } from './center-preview/VariantTooltipPortal';
+import { ToggleButtonGroup } from './ToggleButtonGroup';
 import { VersionNodeDetailsModal } from './VersionNodeDetailsModal';
 import { useGenerationActions, useGenerationState } from '../context/GenerationContext';
 import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
@@ -38,12 +40,10 @@ import { getImageStudioSlotImageSrc } from '../utils/image-src';
 import {
   asObjectRecord,
   clampSplitZoom,
-  normalizeImagePath,
   type VariantThumbnailInfo,
 } from './center-preview/preview-utils';
 import {
   buildDetailsNodeForCenterPreview,
-  buildVariantThumbnails,
   isTreeRevealableCardSlot,
   resolveSourceSlotIdFromGeneratedPath,
   resolveVariantSlotIdForCenterPreview,
@@ -78,6 +78,7 @@ export function CenterPreview(): React.JSX.Element {
   const {
     toggleFocusMode,
     registerPreviewCanvasViewportCropResolver,
+    registerPreviewCanvasImageFrameResolver,
     setCanvasImageOffset,
     resetCanvasImageOffset,
   } = useUiActions();
@@ -129,16 +130,13 @@ export function CenterPreview(): React.JSX.Element {
   } = useMaskingActions();
 
   const [screenshotBusy, setScreenshotBusy] = useState(false);
-  const [variantTimestampQuery, setVariantTimestampQuery] = useState('');
   const [singleVariantView, setSingleVariantView] = useState<'variant' | 'source'>('variant');
   const [splitVariantView, setSplitVariantView] = useState(false);
-  const [compareVariantIds, setCompareVariantIds] = useState<[string | null, string | null]>([null, null]);
   const [leftSplitZoom, setLeftSplitZoom] = useState(1);
   const [rightSplitZoom, setRightSplitZoom] = useState(1);
-  const [dismissedVariantKeys, setDismissedVariantKeys] = useState<Set<string>>(new Set());
-  const pendingDismissedVariantHydrationKeyRef = useRef<string | null>(null);
   const [variantLoadingId, setVariantLoadingId] = useState<string | null>(null);
   const previewCanvasCropRectRef = useRef<VectorCanvasViewCropRect | null>(null);
+  const previewCanvasImageFrameRef = useRef<VectorCanvasImageContentFrame | null>(null);
   const previewCanvasSlotIdRef = useRef<string | null>(null);
   const [variantTooltip, setVariantTooltip] = useState<VariantTooltipState | null>(null);
   const [detailsSlotId, setDetailsSlotId] = useState<string | null>(null);
@@ -146,13 +144,6 @@ export function CenterPreview(): React.JSX.Element {
   const productImagesExternalBaseUrl =
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
     DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
-
-  const dismissedVariantStorageKey = useMemo((): string | null => {
-    const normalizedProjectId = projectId?.trim() ?? '';
-    const normalizedRunId = activeRunId?.trim() ?? '';
-    if (!normalizedProjectId || !normalizedRunId) return null;
-    return `image_studio_dismissed_variants:${normalizedProjectId}:${normalizedRunId}`;
-  }, [activeRunId, projectId]);
 
   const workingSlotImageSrc = useMemo(() => {
     return getImageStudioSlotImageSrc(workingSlot, productImagesExternalBaseUrl);
@@ -244,6 +235,32 @@ export function CenterPreview(): React.JSX.Element {
       Boolean(workingSlotImageSrc && sourceSlotImageSrc),
     [hasSourceSlotReference, sourceSlotImageSrc, workingSlotImageSrc]
   );
+  const {
+    activeVariantId,
+    buildVariantDismissKeys,
+    canCompareSelectedVariants,
+    compareVariantA,
+    compareVariantB,
+    compareVariantIds,
+    compareVariantImageA,
+    compareVariantImageB,
+    filteredVariantThumbnails,
+    setCompareVariantIds,
+    setCompareVariantLookup,
+    setDismissedVariantKeys,
+    setVariantTimestampQuery,
+    variantTimestampQuery,
+    visibleVariantThumbnails,
+  } = useCenterPreviewVariants({
+    activeRunId,
+    activeRunSourceSlotId,
+    landingSlots,
+    productImagesExternalBaseUrl,
+    projectId,
+    rootVariantSourceSlotId,
+    slots,
+    workingSlot,
+  });
 
   const activeCanvasImageSrc = useMemo(() => {
     // Composite preview: use composited result image when available
@@ -369,6 +386,10 @@ export function CenterPreview(): React.JSX.Element {
     previewCanvasCropRectRef.current = cropRect;
   }, []);
 
+  const handlePreviewCanvasImageFrameChange = useCallback((frame: VectorCanvasImageContentFrame | null): void => {
+    previewCanvasImageFrameRef.current = frame;
+  }, []);
+
   useEffect(() => {
     previewCanvasSlotIdRef.current = activeCanvasSlotId;
   }, [activeCanvasSlotId]);
@@ -380,6 +401,7 @@ export function CenterPreview(): React.JSX.Element {
   useEffect(() => {
     if (previewMode !== 'image' || splitVariantView) {
       previewCanvasCropRectRef.current = null;
+      previewCanvasImageFrameRef.current = null;
     }
   }, [previewMode, splitVariantView]);
 
@@ -399,132 +421,24 @@ export function CenterPreview(): React.JSX.Element {
   }, [registerPreviewCanvasViewportCropResolver]);
 
   useEffect(() => {
+    registerPreviewCanvasImageFrameResolver(() => {
+      const slotId = previewCanvasSlotIdRef.current?.trim() ?? '';
+      const frame = previewCanvasImageFrameRef.current;
+      if (!slotId || !frame) return null;
+      return {
+        slotId,
+        frame,
+      };
+    });
+    return (): void => {
+      registerPreviewCanvasImageFrameResolver(null);
+    };
+  }, [registerPreviewCanvasImageFrameResolver]);
+
+  useEffect(() => {
     setSingleVariantView('variant');
     setSplitVariantView(false);
   }, [workingSlot?.id]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!dismissedVariantStorageKey) {
-      pendingDismissedVariantHydrationKeyRef.current = null;
-      setDismissedVariantKeys(new Set());
-      return;
-    }
-    pendingDismissedVariantHydrationKeyRef.current = dismissedVariantStorageKey;
-    const raw = window.localStorage.getItem(dismissedVariantStorageKey);
-    if (!raw) {
-      setDismissedVariantKeys(new Set());
-      return;
-    }
-    try {
-      const parsed = JSON.parse(raw) as unknown;
-      if (!Array.isArray(parsed)) {
-        setDismissedVariantKeys(new Set());
-        return;
-      }
-      const keys = parsed
-        .filter((value: unknown): value is string => typeof value === 'string')
-        .map((value: string) => value.trim())
-        .filter(Boolean);
-      setDismissedVariantKeys(new Set(keys));
-    } catch {
-      setDismissedVariantKeys(new Set());
-    }
-  }, [dismissedVariantStorageKey]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!dismissedVariantStorageKey) return;
-    if (pendingDismissedVariantHydrationKeyRef.current === dismissedVariantStorageKey) {
-      pendingDismissedVariantHydrationKeyRef.current = null;
-      return;
-    }
-    const serialized = JSON.stringify(Array.from(dismissedVariantKeys));
-    window.localStorage.setItem(dismissedVariantStorageKey, serialized);
-  }, [dismissedVariantKeys, dismissedVariantStorageKey]);
-
-  const buildVariantDismissKeys = useCallback(
-    (variant: VariantThumbnailInfo): string[] => {
-      const keys = new Set<string>();
-      keys.add(`id:${variant.id}`);
-      const normalizedSlotId = variant.slotId?.trim() ?? '';
-      if (normalizedSlotId) {
-        keys.add(`slot:${normalizedSlotId}`);
-      } else {
-        // For transient variants without a concrete slot, fall back to output/path keys.
-        if (variant.output?.id) {
-          keys.add(`output:${variant.output.id}`);
-        }
-        const normalizedPath = normalizeImagePath(
-          variant.output?.filepath ?? variant.imageSrc
-        );
-        if (normalizedPath) {
-          keys.add(`path:${normalizedPath}`);
-        }
-      }
-      return Array.from(keys);
-    },
-    []
-  );
-
-  const variantThumbnails = useMemo(
-    () => buildVariantThumbnails({
-      activeRunId,
-      activeRunSourceSlotId,
-      landingSlots,
-      productImagesExternalBaseUrl,
-      rootVariantSourceSlotId,
-      slots,
-    }),
-    [
-      activeRunId,
-      activeRunSourceSlotId,
-      landingSlots,
-      productImagesExternalBaseUrl,
-      rootVariantSourceSlotId,
-      slots,
-    ],
-  );
-
-  const visibleVariantThumbnails = useMemo(
-    () =>
-      variantThumbnails.filter((variant) => {
-        if (dismissedVariantKeys.has(`id:${variant.id}`)) return false;
-        if (variant.slotId && dismissedVariantKeys.has(`slot:${variant.slotId}`)) {
-          return false;
-        }
-        if (variant.output?.id && dismissedVariantKeys.has(`output:${variant.output.id}`)) {
-          return false;
-        }
-        const normalizedPath = normalizeImagePath(
-          variant.output?.filepath ?? variant.imageSrc
-        );
-        if (normalizedPath && dismissedVariantKeys.has(`path:${normalizedPath}`)) {
-          return false;
-        }
-        return true;
-      }),
-    [dismissedVariantKeys, variantThumbnails]
-  );
-
-  const normalizedVariantTimestampQuery = variantTimestampQuery.trim().toLowerCase();
-  const filteredVariantThumbnails = useMemo((): VariantThumbnailInfo[] => {
-    if (!normalizedVariantTimestampQuery) return visibleVariantThumbnails;
-    return visibleVariantThumbnails.filter((variant) =>
-      variant.timestampSearchText.includes(normalizedVariantTimestampQuery)
-    );
-  }, [normalizedVariantTimestampQuery, visibleVariantThumbnails]);
-  const compareVariantA = useMemo(
-    () => visibleVariantThumbnails.find((variant) => variant.id === compareVariantIds[0]) ?? null,
-    [compareVariantIds, visibleVariantThumbnails]
-  );
-  const compareVariantB = useMemo(
-    () => visibleVariantThumbnails.find((variant) => variant.id === compareVariantIds[1]) ?? null,
-    [compareVariantIds, visibleVariantThumbnails]
-  );
-  const compareVariantImageA = compareVariantA?.imageSrc ?? compareVariantA?.output?.filepath ?? null;
-  const compareVariantImageB = compareVariantB?.imageSrc ?? compareVariantB?.output?.filepath ?? null;
-  const canCompareSelectedVariants = Boolean(compareVariantImageA && compareVariantImageB);
   const previewGridStyle = useMemo((): React.CSSProperties => {
     const canvasMinHeightPx = PREVIEW_CANVAS_MIN_HEIGHT_BY_SIZE[previewCanvasSize];
     if (!showVariantPanel) {
@@ -547,50 +461,6 @@ export function CenterPreview(): React.JSX.Element {
     if (!canCompareSelectedVariants) return;
     setSplitVariantView(true);
   }, [canCompareSelectedVariants, previewMode]);
-
-  useEffect(() => {
-    setCompareVariantIds((prev) => {
-      const nextA = prev[0] && visibleVariantThumbnails.some((variant) => variant.id === prev[0]) ? prev[0] : null;
-      const nextB = prev[1] && visibleVariantThumbnails.some((variant) => variant.id === prev[1]) ? prev[1] : null;
-      if (nextA === prev[0] && nextB === prev[1]) return prev;
-      return [nextA, nextB];
-    });
-  }, [visibleVariantThumbnails]);
-
-  const activeVariantId = useMemo((): string | null => {
-    if (!workingSlot) return null;
-
-    const workingSlotId = workingSlot.id?.trim() ?? '';
-    const workingOutputId = workingSlot.imageFileId?.trim() ?? '';
-    const workingImagePath = normalizeImagePath(
-      workingSlot.imageFile?.filepath ?? workingSlot.imageUrl ?? null
-    );
-
-    if (workingSlotId) {
-      const bySlotId = visibleVariantThumbnails.find(
-        (variant) => variant.slotId === workingSlotId
-      );
-      if (bySlotId) return bySlotId.id;
-    }
-
-    for (const variant of visibleVariantThumbnails) {
-      if (workingOutputId && variant.output?.id === workingOutputId) {
-        return variant.id;
-      }
-      const variantPath = normalizeImagePath(variant.output?.filepath ?? variant.imageSrc);
-      if (workingImagePath && variantPath && workingImagePath === variantPath) {
-        return variant.id;
-      }
-    }
-
-    return null;
-  }, [
-    visibleVariantThumbnails,
-    workingSlot,
-    workingSlot?.imageFile?.filepath,
-    workingSlot?.imageFileId,
-    workingSlot?.imageUrl,
-  ]);
 
   const variantTooltipPosition = useMemo(() => {
     if (!variantTooltip || typeof window === 'undefined') return null;
@@ -749,6 +619,16 @@ export function CenterPreview(): React.JSX.Element {
           toast,
           variant,
         });
+        setCompareVariantIds((prev) => [
+          prev[0] === variant.id ? null : prev[0],
+          prev[1] === variant.id ? null : prev[1],
+        ]);
+        setCompareVariantLookup((prev) => {
+          if (!prev[variant.id]) return prev;
+          const next = { ...prev };
+          delete next[variant.id];
+          return next;
+        });
       }
     });
   }, [
@@ -760,6 +640,8 @@ export function CenterPreview(): React.JSX.Element {
     projectId,
     queryClient,
     rootVariantSourceSlotId,
+    setCompareVariantIds,
+    setCompareVariantLookup,
     setDismissedVariantKeys,
     setVariantTooltip,
     slots,
@@ -912,6 +794,7 @@ export function CenterPreview(): React.JSX.Element {
                   imageOffset={canvasImageOffset}
                   onImageOffsetChange={setCanvasImageOffset}
                   onViewCropRectChange={handlePreviewCanvasCropRectChange}
+                  onImageContentFrameChange={handlePreviewCanvasImageFrameChange}
                   className={previewCanvasClassName}
                 />
               )}

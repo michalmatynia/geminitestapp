@@ -62,7 +62,13 @@ export function useTriggerButtons({
 
   const buttons = useMemo(() => {
     const all = triggerButtonsQuery.data ?? [];
-    return all.filter((button: AiTriggerButtonRecord) => button.locations.includes(location));
+    const seen = new Set<string>();
+    return all.filter((button: AiTriggerButtonRecord) => {
+      if (!button.locations.includes(location)) return false;
+      if (!button.id || seen.has(button.id)) return false;
+      seen.add(button.id);
+      return true;
+    });
   }, [triggerButtonsQuery.data, location]);
 
   const handleTrigger = useCallback(async (button: AiTriggerButtonRecord, options: { mode: 'click' | 'toggle', checked?: boolean, event?: React.MouseEvent }) => {

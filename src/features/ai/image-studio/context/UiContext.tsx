@@ -14,7 +14,20 @@ export interface PreviewCanvasViewportCrop {
   cropRect: PreviewCanvasCropRect;
 }
 
+export interface PreviewCanvasImageContentFrame {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface PreviewCanvasImageFrameBinding {
+  slotId: string;
+  frame: PreviewCanvasImageContentFrame;
+}
+
 export type PreviewCanvasViewportCropResolver = () => PreviewCanvasViewportCrop | null;
+export type PreviewCanvasImageFrameResolver = () => PreviewCanvasImageFrameBinding | null;
 export type ImageTransformMode = 'none' | 'move';
 export type PreviewCanvasSize = 'regular' | 'large' | 'xlarge';
 
@@ -55,6 +68,8 @@ export interface UiActions {
   resetCanvasImageOffset: () => void;
   registerPreviewCanvasViewportCropResolver: (resolver: PreviewCanvasViewportCropResolver | null) => void;
   getPreviewCanvasViewportCrop: () => PreviewCanvasViewportCrop | null;
+  registerPreviewCanvasImageFrameResolver: (resolver: PreviewCanvasImageFrameResolver | null) => void;
+  getPreviewCanvasImageFrame: () => PreviewCanvasImageFrameBinding | null;
 }
 
 const UiStateContext = createContext<UiState | null>(null);
@@ -71,6 +86,7 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
   const [imageTransformMode, setImageTransformMode] = useState<ImageTransformMode>('none');
   const [canvasImageOffsetState, setCanvasImageOffsetState] = useState<CanvasImageOffset>(DEFAULT_CANVAS_IMAGE_OFFSET);
   const previewCanvasViewportCropResolverRef = useRef<PreviewCanvasViewportCropResolver | null>(null);
+  const previewCanvasImageFrameResolverRef = useRef<PreviewCanvasImageFrameResolver | null>(null);
 
   const state = useMemo<UiState>(
     () => ({
@@ -128,6 +144,11 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
       },
       getPreviewCanvasViewportCrop: (): PreviewCanvasViewportCrop | null =>
         previewCanvasViewportCropResolverRef.current?.() ?? null,
+      registerPreviewCanvasImageFrameResolver: (resolver: PreviewCanvasImageFrameResolver | null): void => {
+        previewCanvasImageFrameResolverRef.current = resolver;
+      },
+      getPreviewCanvasImageFrame: (): PreviewCanvasImageFrameBinding | null =>
+        previewCanvasImageFrameResolverRef.current?.() ?? null,
     }),
     []
   );

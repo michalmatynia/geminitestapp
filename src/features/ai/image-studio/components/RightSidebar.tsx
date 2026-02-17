@@ -2,7 +2,7 @@
 
 import { Clock3, GitBranch, Loader2, Play, Redo2, Sparkles, Undo2, Workflow } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { logClientError } from '@/features/observability';
@@ -15,11 +15,9 @@ import {
 } from '@/features/prompt-engine/settings';
 import { savePromptExploderDraftPrompt } from '@/features/prompt-exploder/bridge';
 import {
-  type VectorShape,
   type VectorToolMode,
 } from '@/features/vector-drawing';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
@@ -32,11 +30,20 @@ import {
 import { cn } from '@/shared/utils';
 
 import { ParamRow } from './ParamRow';
+import {
+  ACTION_HISTORY_MAX_STEPS,
+  cloneSerializableValue,
+  estimatePromptTokens,
+  resolveModelCostProfile,
+  type StudioActionHistorySnapshot,
+} from './right-sidebar/right-sidebar-utils';
 import { RightSidebarControlsTab } from './right-sidebar/RightSidebarControlsTab';
 import { RightSidebarHistoryTab } from './right-sidebar/RightSidebarHistoryTab';
 import { RightSidebarPromptControlHeader } from './right-sidebar/RightSidebarPromptControlHeader';
 import { RightSidebarQuickActions } from './right-sidebar/RightSidebarQuickActions';
 import { RightSidebarRequestPreviewBody } from './right-sidebar/RightSidebarRequestPreviewBody';
+import { useRightSidebarActionHistory } from './right-sidebar/useRightSidebarActionHistory';
+import { useRightSidebarSequence } from './right-sidebar/useRightSidebarSequence';
 import { RightSidebarProvider } from './RightSidebarContext';
 import { SequencingPanel } from './SequencingPanel';
 import { UIPresetsPanel } from './UIPresetsPanel';
@@ -57,207 +64,15 @@ import {
   serializeImageStudioProjectSession,
   type ImageStudioProjectSession,
 } from '../utils/project-session';
-import { buildRunRequestPreview, resolvePromptPlaceholders } from '../utils/run-request-preview';
+import { buildRunRequestPreview } from '../utils/run-request-preview';
 import { isImageStudioSlotImageLocked } from '../utils/slot-image-lock';
 import { normalizeImageStudioModelPresets, resolveImageStudioSequenceActiveSteps } from '../utils/studio-settings';
 
-import type { ImageStudioSlotRecord } from '../types';
 import type { ParamUiControl } from '../utils/param-ui';
-import type { RequestPreviewImage } from '../utils/run-request-preview';
 
-const CHARS_PER_TOKEN_ESTIMATE = 4;
-type ModelCostProfile = {
-  imageUsdPerImage: number;
-  inputUsdPer1KTokens: number;
-};
-
-const DEFAULT_MODEL_COST_PROFILE: ModelCostProfile = {
-  imageUsdPerImage: 0.03,
-  inputUsdPer1KTokens: 0.004,
-};
-
-const MODEL_COST_PROFILES: Array<{ prefix: string; profile: ModelCostProfile }> = [
-  { prefix: 'gpt-image-1', profile: { imageUsdPerImage: 0.04, inputUsdPer1KTokens: 0.006 } },
-  { prefix: 'gpt-5.2', profile: { imageUsdPerImage: 0.05, inputUsdPer1KTokens: 0.01 } },
-  { prefix: 'gpt-5', profile: { imageUsdPerImage: 0.045, inputUsdPer1KTokens: 0.009 } },
-  { prefix: 'gpt-4.1-mini', profile: { imageUsdPerImage: 0.02, inputUsdPer1KTokens: 0.003 } },
-  { prefix: 'gpt-4.1', profile: { imageUsdPerImage: 0.028, inputUsdPer1KTokens: 0.005 } },
-  { prefix: 'gpt-4o-mini', profile: { imageUsdPerImage: 0.018, inputUsdPer1KTokens: 0.0025 } },
-  { prefix: 'gpt-4o', profile: { imageUsdPerImage: 0.026, inputUsdPer1KTokens: 0.0045 } },
-  { prefix: 'dall-e-3', profile: { imageUsdPerImage: 0.08, inputUsdPer1KTokens: 0.0 } },
-  { prefix: 'dall-e-2', profile: { imageUsdPerImage: 0.02, inputUsdPer1KTokens: 0.0 } },
-];
-const ACTION_HISTORY_MAX_STEPS = 10;
 const IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID = 'image-studio-quick-actions-host';
 
-type StudioActionHistorySnapshot = {
-  selectedFolder: string;
-  selectedSlotId: string | null;
-  workingSlotId: string | null;
-  previewMode: 'image' | '3d';
-  compositeAssetIds: string[];
-  tool: VectorToolMode;
-  canvasSelectionEnabled: boolean;
-  imageTransformMode: 'none' | 'move';
-  canvasImageOffset: { x: number; y: number };
-  maskShapes: VectorShape[];
-  activeMaskId: string | null;
-  selectedPointIndex: number | null;
-  maskInvert: boolean;
-  maskFeather: number;
-  brushRadius: number;
-  promptText: string;
-  paramsState: Record<string, unknown> | null;
-  paramSpecs: Record<string, unknown> | null;
-  paramUiOverrides: Record<string, unknown>;
-  validatorEnabled: boolean;
-  formatterEnabled: boolean;
-  studioSettings: Record<string, unknown>;
-};
-
-type StudioActionHistoryEntry = {
-  id: string;
-  label: string;
-  createdAt: string;
-  signature: string;
-  snapshot: StudioActionHistorySnapshot;
-};
-
-type SequenceRunStartResponse = {
-  runId: string;
-  status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
-  dispatchMode: 'queued' | 'inline';
-  currentSlotId: string;
-  stepCount: number;
-};
-
 type RequestPreviewMode = 'without_sequence' | 'with_sequence';
-
-type SequenceRequestPreview = {
-  payload: Record<string, unknown> | null;
-  errors: string[];
-  resolvedPrompt: string;
-  maskShapeCount: number;
-  images: RequestPreviewImage[];
-  stepCount: number;
-};
-
-const cloneSerializableValue = <T,>(value: T): T => {
-  const seen = new WeakSet<object>();
-  const serialized = JSON.stringify(value, (_key: string, candidate: unknown): unknown => {
-    if (typeof candidate === 'bigint') return candidate.toString();
-    if (typeof candidate === 'function' || typeof candidate === 'symbol') return undefined;
-    if (candidate instanceof Date) return candidate.toISOString();
-    if (candidate && typeof candidate === 'object') {
-      if (seen.has(candidate)) return undefined;
-      seen.add(candidate);
-    }
-    return candidate;
-  });
-  if (typeof serialized !== 'string') {
-    return value;
-  }
-  return JSON.parse(serialized) as T;
-};
-
-const areStringArraysEqual = (left: string[], right: string[]): boolean => {
-  if (left.length !== right.length) return false;
-  for (let index = 0; index < left.length; index += 1) {
-    if (left[index] !== right[index]) return false;
-  }
-  return true;
-};
-
-const clampUnit = (value: number): number => Math.max(0, Math.min(1, value));
-
-const normalizeMaskShapeToSequencePolygons = (
-  shape: VectorShape
-): Array<Array<{ x: number; y: number }>> => {
-  if (shape.type === 'polygon' || shape.type === 'lasso' || shape.type === 'brush') {
-    if (!shape.closed || shape.points.length < 3) return [];
-    return [
-      shape.points.map((point: { x: number; y: number }) => ({
-        x: clampUnit(point.x),
-        y: clampUnit(point.y),
-      })),
-    ];
-  }
-
-  if (shape.type === 'rect') {
-    if (shape.points.length < 2) return [];
-    const xs = shape.points.map((point: { x: number; y: number }) => point.x);
-    const ys = shape.points.map((point: { x: number; y: number }) => point.y);
-    const minX = clampUnit(Math.min(...xs));
-    const maxX = clampUnit(Math.max(...xs));
-    const minY = clampUnit(Math.min(...ys));
-    const maxY = clampUnit(Math.max(...ys));
-    if (maxX <= minX || maxY <= minY) return [];
-    return [[
-      { x: minX, y: minY },
-      { x: maxX, y: minY },
-      { x: maxX, y: maxY },
-      { x: minX, y: maxY },
-    ]];
-  }
-
-  if (shape.type === 'ellipse') {
-    if (shape.points.length < 2) return [];
-    const xs = shape.points.map((point: { x: number; y: number }) => point.x);
-    const ys = shape.points.map((point: { x: number; y: number }) => point.y);
-    const minX = clampUnit(Math.min(...xs));
-    const maxX = clampUnit(Math.max(...xs));
-    const minY = clampUnit(Math.min(...ys));
-    const maxY = clampUnit(Math.max(...ys));
-    if (maxX <= minX || maxY <= minY) return [];
-
-    const cx = (minX + maxX) / 2;
-    const cy = (minY + maxY) / 2;
-    const rx = (maxX - minX) / 2;
-    const ry = (maxY - minY) / 2;
-    const steps = 24;
-
-    return [
-      Array.from({ length: steps }, (_value, index) => {
-        const theta = (index / steps) * Math.PI * 2;
-        return {
-          x: clampUnit(cx + rx * Math.cos(theta)),
-          y: clampUnit(cy + ry * Math.sin(theta)),
-        };
-      }),
-    ];
-  }
-
-  return [];
-};
-
-const collectSequenceMaskPolygons = (
-  shapes: VectorShape[]
-): Array<Array<{ x: number; y: number }>> => {
-  const eligibleShapes = shapes.filter((shape) => {
-    if (!shape.visible) return false;
-    if (shape.type === 'rect' || shape.type === 'ellipse') {
-      return shape.points.length >= 2;
-    }
-    return shape.closed && shape.points.length >= 3;
-  });
-
-  return eligibleShapes.flatMap((shape) => normalizeMaskShapeToSequencePolygons(shape));
-};
-
-const estimatePromptTokens = (prompt: string): number => {
-  const trimmed = prompt.trim();
-  if (!trimmed) return 0;
-  return Math.max(1, Math.ceil(trimmed.length / CHARS_PER_TOKEN_ESTIMATE));
-};
-
-const resolveModelCostProfile = (model: string): ModelCostProfile => {
-  const normalizedModel = model.trim().toLowerCase();
-  if (!normalizedModel) return DEFAULT_MODEL_COST_PROFILE;
-  const matched = MODEL_COST_PROFILES.find(({ prefix }) =>
-    normalizedModel.startsWith(prefix)
-  );
-  return matched ? matched.profile : DEFAULT_MODEL_COST_PROFILE;
-};
 
 export function RightSidebar(): React.JSX.Element {
   const router = useRouter();
@@ -277,6 +92,7 @@ export function RightSidebar(): React.JSX.Element {
     setImageTransformMode,
     setCanvasImageOffset,
     resetCanvasImageOffset,
+    getPreviewCanvasImageFrame,
   } = useUiActions();
   const { projectId } = useProjectsState();
   const {
@@ -344,10 +160,6 @@ export function RightSidebar(): React.JSX.Element {
   const [sidebarTab, setSidebarTab] = useState<'controls' | 'graph' | 'sequencing' | 'history'>('controls');
   const [historyMode, setHistoryMode] = useState<'actions' | 'runs'>('actions');
   const [quickActionsHostEl, setQuickActionsHostEl] = useState<HTMLElement | null>(null);
-  const [actionHistoryEntries, setActionHistoryEntries] = useState<StudioActionHistoryEntry[]>([]);
-  const [activeActionHistoryIndex, setActiveActionHistoryIndex] = useState(-1);
-  const isApplyingActionHistoryRef = useRef(false);
-  const applyingActionHistorySignatureRef = useRef<string | null>(null);
   const switchToControls = useCallback(() => setSidebarTab('controls'), []);
 
   const promptValidationSettings = useMemo(
@@ -400,6 +212,27 @@ export function RightSidebar(): React.JSX.Element {
     () => enabledSequenceRuntimeSteps.some((step) => step.type === 'generate' || step.type === 'regenerate'),
     [enabledSequenceRuntimeSteps]
   );
+  const workingSlotImageWidth = useMemo((): number | null => {
+    const width = workingSlot?.imageFile?.width ?? null;
+    return typeof width === 'number' && Number.isFinite(width) && width > 0 ? width : null;
+  }, [workingSlot?.imageFile?.width]);
+  const workingSlotImageHeight = useMemo((): number | null => {
+    const height = workingSlot?.imageFile?.height ?? null;
+    return typeof height === 'number' && Number.isFinite(height) && height > 0 ? height : null;
+  }, [workingSlot?.imageFile?.height]);
+  const sequenceImageContentFrame = useMemo((): { x: number; y: number; width: number; height: number } | null => {
+    const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
+    if (!normalizedWorkingSlotId) return null;
+    const frameBinding = getPreviewCanvasImageFrame();
+    if (frameBinding?.slotId !== normalizedWorkingSlotId) return null;
+    return frameBinding.frame;
+  }, [
+    canvasImageOffset.x,
+    canvasImageOffset.y,
+    getPreviewCanvasImageFrame,
+    previewMode,
+    workingSlot?.id,
+  ]);
   const generationBusy = runMutation.isPending || isRunInFlight;
   const generationLabel = generationBusy
     ? activeRunStatus === 'queued'
@@ -436,118 +269,7 @@ export function RightSidebar(): React.JSX.Element {
     }
   }, [canvasSelectionEnabled, setCanvasSelectionEnabled, setTool]);
 
-  const buildActionHistorySnapshot = useCallback((): StudioActionHistorySnapshot => ({
-    selectedFolder,
-    selectedSlotId,
-    workingSlotId,
-    previewMode,
-    compositeAssetIds: cloneSerializableValue(compositeAssetIds),
-    tool,
-    canvasSelectionEnabled,
-    imageTransformMode,
-    canvasImageOffset: cloneSerializableValue(canvasImageOffset),
-    maskShapes: cloneSerializableValue(maskShapes),
-    activeMaskId: typeof activeMaskId === 'string' ? String(activeMaskId) : null,
-    selectedPointIndex: Number.isFinite(selectedPointIndex) ? Number(selectedPointIndex) : null,
-    maskInvert,
-    maskFeather,
-    brushRadius,
-    promptText,
-    paramsState: cloneSerializableValue(paramsState),
-    paramSpecs: cloneSerializableValue((paramSpecs ?? null) as Record<string, unknown> | null),
-    paramUiOverrides: cloneSerializableValue((paramUiOverrides ?? {}) as Record<string, unknown>),
-    validatorEnabled,
-    formatterEnabled,
-    studioSettings: cloneSerializableValue(studioSettings as Record<string, unknown>),
-  }), [
-    selectedFolder,
-    selectedSlotId,
-    workingSlotId,
-    previewMode,
-    compositeAssetIds,
-    tool,
-    canvasSelectionEnabled,
-    imageTransformMode,
-    canvasImageOffset,
-    maskShapes,
-    activeMaskId,
-    selectedPointIndex,
-    maskInvert,
-    maskFeather,
-    brushRadius,
-    promptText,
-    paramsState,
-    paramSpecs,
-    paramUiOverrides,
-    validatorEnabled,
-    formatterEnabled,
-    studioSettings,
-  ]);
-
-  const resolveActionHistoryLabel = useCallback((
-    previous: StudioActionHistorySnapshot | null,
-    next: StudioActionHistorySnapshot
-  ): string => {
-    if (!previous) return 'Initial editor state';
-    if (previous.promptText !== next.promptText) return 'Control prompt updated';
-    if (previous.tool !== next.tool) return 'Drawing tool changed';
-    if (previous.canvasSelectionEnabled !== next.canvasSelectionEnabled) return 'Select tool toggled';
-    if (previous.imageTransformMode !== next.imageTransformMode) return 'Image transform tool changed';
-    if (
-      previous.canvasImageOffset.x !== next.canvasImageOffset.x ||
-      previous.canvasImageOffset.y !== next.canvasImageOffset.y
-    ) {
-      return 'Canvas image position adjusted';
-    }
-    if (previous.maskShapes.length !== next.maskShapes.length) {
-      return next.maskShapes.length > previous.maskShapes.length ? 'Shape added' : 'Shape removed';
-    }
-    if (JSON.stringify(previous.maskShapes) !== JSON.stringify(next.maskShapes)) return 'Shape edited';
-    if (previous.activeMaskId !== next.activeMaskId || previous.selectedPointIndex !== next.selectedPointIndex) {
-      return 'Shape selection changed';
-    }
-    if (
-      previous.maskInvert !== next.maskInvert ||
-      previous.maskFeather !== next.maskFeather ||
-      previous.brushRadius !== next.brushRadius
-    ) {
-      return 'Mask settings changed';
-    }
-    if (
-      previous.selectedFolder !== next.selectedFolder ||
-      previous.selectedSlotId !== next.selectedSlotId ||
-      previous.workingSlotId !== next.workingSlotId
-    ) {
-      return 'Card/folder selection changed';
-    }
-    if (previous.previewMode !== next.previewMode) return 'Preview mode changed';
-    if (!areStringArraysEqual(previous.compositeAssetIds, next.compositeAssetIds)) {
-      return 'Composite references changed';
-    }
-    if (
-      JSON.stringify(previous.paramsState) !== JSON.stringify(next.paramsState) ||
-      JSON.stringify(previous.paramSpecs) !== JSON.stringify(next.paramSpecs) ||
-      JSON.stringify(previous.paramUiOverrides) !== JSON.stringify(next.paramUiOverrides)
-    ) {
-      return 'Control parameters changed';
-    }
-    if (
-      previous.validatorEnabled !== next.validatorEnabled ||
-      previous.formatterEnabled !== next.formatterEnabled
-    ) {
-      return 'Validator/formatter toggled';
-    }
-    if (JSON.stringify(previous.studioSettings) !== JSON.stringify(next.studioSettings)) {
-      return 'Generation settings changed';
-    }
-    return 'Editor state changed';
-  }, []);
-
-  const applyActionHistoryEntry = useCallback((entry: StudioActionHistoryEntry): void => {
-    const snapshot = entry.snapshot;
-    isApplyingActionHistoryRef.current = true;
-    applyingActionHistorySignatureRef.current = entry.signature;
-
+  const applyActionHistorySnapshot = useCallback((snapshot: StudioActionHistorySnapshot): void => {
     setSelectedFolder(snapshot.selectedFolder);
     setSelectedSlotId(snapshot.selectedSlotId);
     setWorkingSlotId(snapshot.workingSlotId);
@@ -603,48 +325,72 @@ export function RightSidebar(): React.JSX.Element {
     setFormatterEnabled,
   ]);
 
-  const handleUndoAction = useCallback((): void => {
-    setActiveActionHistoryIndex((prevIndex) => {
-      if (prevIndex <= 0) return prevIndex;
-      const nextIndex = prevIndex - 1;
-      const targetEntry = actionHistoryEntries[nextIndex];
-      if (targetEntry) applyActionHistoryEntry(targetEntry);
-      return nextIndex;
-    });
-  }, [actionHistoryEntries, applyActionHistoryEntry]);
+  const actionHistorySnapshotInput = useMemo(() => ({
+    activeMaskId,
+    brushRadius,
+    canvasImageOffset,
+    canvasSelectionEnabled,
+    compositeAssetIds,
+    formatterEnabled,
+    imageTransformMode,
+    maskFeather,
+    maskInvert,
+    maskShapes,
+    paramSpecs,
+    paramUiOverrides,
+    paramsState,
+    previewMode,
+    promptText,
+    selectedFolder,
+    selectedPointIndex,
+    selectedSlotId,
+    studioSettings: studioSettings as unknown as Record<string, unknown>,
+    tool,
+    validatorEnabled,
+    workingSlotId,
+  }), [
+    activeMaskId,
+    brushRadius,
+    canvasImageOffset,
+    canvasSelectionEnabled,
+    compositeAssetIds,
+    formatterEnabled,
+    imageTransformMode,
+    maskFeather,
+    maskInvert,
+    maskShapes,
+    paramSpecs,
+    paramUiOverrides,
+    paramsState,
+    previewMode,
+    promptText,
+    selectedFolder,
+    selectedPointIndex,
+    selectedSlotId,
+    studioSettings,
+    tool,
+    validatorEnabled,
+    workingSlotId,
+  ]);
 
-  const handleRedoAction = useCallback((): void => {
-    setActiveActionHistoryIndex((prevIndex) => {
-      if (prevIndex < 0 || prevIndex >= actionHistoryEntries.length - 1) return prevIndex;
-      const nextIndex = prevIndex + 1;
-      const targetEntry = actionHistoryEntries[nextIndex];
-      if (targetEntry) applyActionHistoryEntry(targetEntry);
-      return nextIndex;
-    });
-  }, [actionHistoryEntries, applyActionHistoryEntry]);
-
-  const handleRestoreActionStep = useCallback((targetIndex: number): void => {
-    if (targetIndex < 0 || targetIndex >= actionHistoryEntries.length) return;
-    if (targetIndex === activeActionHistoryIndex) return;
-    const targetEntry = actionHistoryEntries[targetIndex];
-    if (!targetEntry) return;
-    applyActionHistoryEntry(targetEntry);
-    setActiveActionHistoryIndex(targetIndex);
-  }, [actionHistoryEntries, activeActionHistoryIndex, applyActionHistoryEntry]);
-
-  const canUndoAction = activeActionHistoryIndex > 0;
-  const canRedoAction = activeActionHistoryIndex >= 0 && activeActionHistoryIndex < actionHistoryEntries.length - 1;
-  const actionHistoryItems = useMemo(
-    () => actionHistoryEntries.map((entry, index) => ({ entry, index })).reverse(),
-    [actionHistoryEntries]
-  );
+  const {
+    actionHistoryEntries,
+    actionHistoryItems,
+    activeActionHistoryIndex,
+    canRedoAction,
+    canUndoAction,
+    handleRedoAction,
+    handleRestoreActionStep,
+    handleUndoAction,
+  } = useRightSidebarActionHistory({
+    actionHistoryMaxSteps: ACTION_HISTORY_MAX_STEPS,
+    applySnapshot: applyActionHistorySnapshot,
+    projectId,
+    snapshotInput: actionHistorySnapshotInput,
+  });
 
   useEffect(() => {
     setHistoryMode('actions');
-    setActionHistoryEntries([]);
-    setActiveActionHistoryIndex(-1);
-    isApplyingActionHistoryRef.current = false;
-    applyingActionHistorySignatureRef.current = null;
   }, [projectId]);
 
   useEffect((): (() => void) | void => {
@@ -661,43 +407,6 @@ export function RightSidebar(): React.JSX.Element {
       window.cancelAnimationFrame(frameId);
     };
   }, [projectId, sidebarTab]);
-
-  useEffect(() => {
-    const snapshot = buildActionHistorySnapshot();
-    const signature = JSON.stringify(snapshot);
-
-    if (isApplyingActionHistoryRef.current) {
-      if (applyingActionHistorySignatureRef.current === signature) {
-        isApplyingActionHistoryRef.current = false;
-        applyingActionHistorySignatureRef.current = null;
-      } else {
-        // Fallback unlock in case restored state is normalized by other providers.
-        isApplyingActionHistoryRef.current = false;
-        applyingActionHistorySignatureRef.current = null;
-      }
-      return;
-    }
-
-    setActionHistoryEntries((prevEntries) => {
-      const currentEntry = prevEntries[activeActionHistoryIndex];
-      if (currentEntry?.signature === signature) return prevEntries;
-
-      const previousSnapshot = currentEntry?.snapshot ?? null;
-      const nextEntry: StudioActionHistoryEntry = {
-        id: `action_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
-        label: resolveActionHistoryLabel(previousSnapshot, snapshot),
-        createdAt: new Date().toISOString(),
-        signature,
-        snapshot,
-      };
-
-      const truncated = prevEntries.slice(0, activeActionHistoryIndex + 1);
-      const appended = [...truncated, nextEntry];
-      const trimmed = appended.slice(-ACTION_HISTORY_MAX_STEPS);
-      setActiveActionHistoryIndex(trimmed.length - 1);
-      return trimmed;
-    });
-  }, [activeActionHistoryIndex, buildActionHistorySnapshot, resolveActionHistoryLabel]);
 
   const handleClearAllShapes = useCallback((): void => {
     if (maskShapes.length === 0) return;
@@ -749,105 +458,11 @@ export function RightSidebar(): React.JSX.Element {
     [requestPreview]
   );
 
-  const sequenceRequestPreview = useMemo((): SequenceRequestPreview => {
-    const errors: string[] = [];
-    const normalizedProjectId = projectId.trim();
-    if (!normalizedProjectId) {
-      errors.push('Select a project first.');
-    }
-    if (!modelSupportsSequenceGeneration) {
-      errors.push('Selected model does not support sequence generation.');
-    }
-    if (!workingSlot) {
-      errors.push('Select a source card before running a sequence.');
-    }
-    if (!studioSettings.projectSequencing.enabled) {
-      errors.push('Enable sequencing first.');
-    }
-    if (enabledSequenceRuntimeSteps.length === 0) {
-      errors.push('Select at least one enabled sequence step.');
-    }
-
-    const resolvedPrompt = resolvePromptPlaceholders(promptText, paramsState).trim();
-    if (sequenceRequiresPrompt && !resolvedPrompt) {
-      errors.push('Enter a prompt before running generation steps.');
-    }
-    const promptForSequence = (resolvedPrompt || promptText.trim()).trim();
-    if (!promptForSequence) {
-      errors.push('Sequence prompt is empty.');
-    }
-
-    const sourceSlotId = workingSlot?.id ?? '';
-    if (!sourceSlotId.trim()) {
-      errors.push('Source card id is missing.');
-    }
-
-    const sequencePolygons = collectSequenceMaskPolygons(maskShapes);
-    const mask =
-      sequencePolygons.length > 0
-        ? {
-          polygons: sequencePolygons,
-          invert: maskInvert,
-          feather: maskFeather,
-        }
-        : null;
-
-    const images: RequestPreviewImage[] = [];
-    const sourceImagePath = workingSlot?.imageFile?.filepath || workingSlot?.imageUrl || '';
-    if (sourceImagePath) {
-      images.push({
-        kind: 'base',
-        id: workingSlot?.id,
-        name: workingSlot?.name || workingSlot?.id || 'Source card',
-        filepath: sourceImagePath,
-      });
-    }
-    const referenceSlots = compositeAssetIds
-      .map((slotId: string) => slots.find((slot) => slot.id === slotId))
-      .filter((slot): slot is ImageStudioSlotRecord => Boolean(slot));
-    referenceSlots.forEach((slot) => {
-      const filepath = slot.imageFile?.filepath || slot.imageUrl || '';
-      if (!filepath) return;
-      images.push({
-        kind: 'reference',
-        id: slot.id,
-        name: slot.name || slot.id || 'Reference card',
-        filepath,
-      });
-    });
-
-    if (errors.length > 0) {
-      return {
-        payload: null,
-        errors,
-        resolvedPrompt: promptForSequence,
-        maskShapeCount: sequencePolygons.length,
-        images,
-        stepCount: enabledSequenceRuntimeSteps.length,
-      };
-    }
-
-    return {
-      payload: {
-        projectId: normalizedProjectId,
-        sourceSlotId,
-        prompt: promptForSequence,
-        paramsState,
-        referenceSlotIds: compositeAssetIds,
-        mask,
-        studioSettings: studioSettings as unknown as Record<string, unknown>,
-        steps: enabledSequenceRuntimeSteps,
-        metadata: {
-          source: 'right-sidebar-sequence-generate',
-        },
-      },
-      errors,
-      resolvedPrompt: promptForSequence,
-      maskShapeCount: sequencePolygons.length,
-      images,
-      stepCount: enabledSequenceRuntimeSteps.length,
-    };
-  }, [
+  const {
+    handleRunSequenceGeneration,
+    sequenceRequestPreview,
+    sequenceRequestPreviewJson,
+  } = useRightSidebarSequence({
     compositeAssetIds,
     enabledSequenceRuntimeSteps,
     maskFeather,
@@ -858,24 +473,20 @@ export function RightSidebar(): React.JSX.Element {
     projectId,
     promptText,
     sequenceRequiresPrompt,
+    sequenceRunBusy,
+    setPromptControlOpen,
+    setSequenceRunBusy,
+    setSidebarTab,
     slots,
-    studioSettings,
+    studioSettings: studioSettings as unknown as Record<string, unknown> & {
+      projectSequencing: { enabled: boolean };
+    },
+    toast,
     workingSlot,
-  ]);
-
-  const sequenceRequestPreviewJson = useMemo(
-    () =>
-      sequenceRequestPreview.payload
-        ? JSON.stringify(sequenceRequestPreview.payload, null, 2)
-        : JSON.stringify(
-          {
-            errors: sequenceRequestPreview.errors,
-          },
-          null,
-          2
-        ),
-    [sequenceRequestPreview]
-  );
+    workingSlotImageWidth,
+    workingSlotImageHeight,
+    imageContentFrame: sequenceImageContentFrame,
+  });
 
   const activeRequestPreview = requestPreviewMode === 'with_sequence'
     ? sequenceRequestPreview
@@ -886,100 +497,6 @@ export function RightSidebar(): React.JSX.Element {
   const activeRequestPreviewEndpoint = requestPreviewMode === 'with_sequence'
     ? '/api/image-studio/sequences/run'
     : '/api/image-studio/run';
-
-  const handleRunSequenceGeneration = useCallback((): void => {
-    if (sequenceRunBusy) return;
-
-    if (!modelSupportsSequenceGeneration) {
-      toast('Selected model does not support sequence generation.', { variant: 'info' });
-      return;
-    }
-
-    const normalizedProjectId = projectId.trim();
-    if (!normalizedProjectId) {
-      toast('Select a project before running a sequence.', { variant: 'info' });
-      return;
-    }
-    if (!workingSlot) {
-      toast('Select a source card before running a sequence.', { variant: 'info' });
-      return;
-    }
-    if (!studioSettings.projectSequencing.enabled) {
-      toast('Enable sequencing first.', { variant: 'info' });
-      setSidebarTab('sequencing');
-      return;
-    }
-    if (enabledSequenceRuntimeSteps.length === 0) {
-      toast('Select at least one enabled sequence step.', { variant: 'info' });
-      setSidebarTab('sequencing');
-      return;
-    }
-
-    const resolvedPrompt = resolvePromptPlaceholders(promptText, paramsState).trim();
-    if (sequenceRequiresPrompt && !resolvedPrompt) {
-      toast('Enter a prompt before running generation steps.', { variant: 'info' });
-      return;
-    }
-
-    const polygons = collectSequenceMaskPolygons(maskShapes);
-    setSequenceRunBusy(true);
-    void api.post<SequenceRunStartResponse>(
-      '/api/image-studio/sequences/run',
-      {
-        projectId: normalizedProjectId,
-        sourceSlotId: workingSlot.id,
-        prompt: resolvedPrompt || promptText.trim(),
-        paramsState,
-        referenceSlotIds: compositeAssetIds,
-        mask:
-          polygons.length > 0
-            ? {
-              polygons,
-              invert: maskInvert,
-              feather: maskFeather,
-            }
-            : null,
-        studioSettings: studioSettings as unknown as Record<string, unknown>,
-        steps: enabledSequenceRuntimeSteps,
-        metadata: {
-          source: 'right-sidebar-sequence-generate',
-        },
-      }
-    )
-      .then((result) => {
-        const stepCount =
-          typeof result.stepCount === 'number' && Number.isFinite(result.stepCount)
-            ? Math.max(1, Math.floor(result.stepCount))
-            : Math.max(1, enabledSequenceRuntimeSteps.length);
-        toast(`Sequence started (${stepCount} step${stepCount === 1 ? '' : 's'}).`, { variant: 'success' });
-        if (result.dispatchMode === 'inline') {
-          toast('Redis queue unavailable, sequence is running inline.', { variant: 'info' });
-        }
-        setPromptControlOpen(false);
-        setSidebarTab('sequencing');
-      })
-      .catch((error: unknown) => {
-        toast(error instanceof Error ? error.message : 'Failed to start sequence.', { variant: 'error' });
-      })
-      .finally(() => {
-        setSequenceRunBusy(false);
-      });
-  }, [
-    sequenceRunBusy,
-    modelSupportsSequenceGeneration,
-    projectId,
-    workingSlot,
-    studioSettings,
-    enabledSequenceRuntimeSteps,
-    promptText,
-    paramsState,
-    sequenceRequiresPrompt,
-    maskShapes,
-    compositeAssetIds,
-    maskInvert,
-    maskFeather,
-    toast,
-  ]);
 
   const handleSavePromptToProject = useCallback((): void => {
     const normalizedProjectId = projectId.trim();

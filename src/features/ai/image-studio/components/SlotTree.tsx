@@ -203,13 +203,13 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
       message: `Are you sure you want to delete card "${cardLabel}"? This action cannot be undone.`,
       confirmText: 'Delete',
       isDangerous: true,
-      onConfirm: async () => {
-        try {
-          await deleteSlotMutation.mutateAsync(slot.id);
-        } catch (error: unknown) {
-          toast(error instanceof Error ? error.message : 'Failed to delete card.', { variant: 'error' });
-        }
-      }
+      onConfirm: () => {
+        deleteSlotMutation.mutate(slot.id, {
+          onError: (error: unknown) => {
+            toast(error instanceof Error ? error.message : 'Failed to delete card.', { variant: 'error' });
+          },
+        });
+      },
     });
   }, [confirm, deleteSlotMutation, toast]);
 

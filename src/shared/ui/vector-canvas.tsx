@@ -180,6 +180,13 @@ export interface VectorCanvasViewCropRect {
   height: number;
 }
 
+export interface VectorCanvasImageContentFrame {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
 
 const rotatePoint = (point: { x: number; y: number }, angleRad: number): { x: number; y: number } => {
@@ -355,6 +362,7 @@ export interface VectorCanvasProps {
   baseCanvasWidthPx?: number | null;
   baseCanvasHeightPx?: number | null;
   onViewCropRectChange?: (cropRect: VectorCanvasViewCropRect | null) => void;
+  onImageContentFrameChange?: (frame: VectorCanvasImageContentFrame | null) => void;
   showCanvasGrid?: boolean;
   imageMoveEnabled?: boolean;
   imageOffset?: { x: number; y: number };
@@ -386,6 +394,7 @@ export function VectorCanvas({
   baseCanvasWidthPx = null,
   baseCanvasHeightPx = null,
   onViewCropRectChange,
+  onImageContentFrameChange,
   showCanvasGrid = false,
   imageMoveEnabled = false,
   imageOffset = { x: 0, y: 0 },
@@ -422,9 +431,11 @@ export function VectorCanvas({
   const [isPanning, setIsPanning] = useState(false);
   const [isDraggingImage, setIsDraggingImage] = useState(false);
   const [isHoveringEditablePoint, setIsHoveringEditablePoint] = useState(false);
+  const [isHoveringMovableShape, setIsHoveringMovableShape] = useState(false);
   const [isDraggingEditablePoint, setIsDraggingEditablePoint] = useState(false);
   const [canvasRenderSize, setCanvasRenderSize] = useState<{ width: number; height: number }>({ width: 1, height: 1 });
   const emittedViewCropRectRef = useRef<VectorCanvasViewCropRect | null>(null);
+  const emittedImageContentFrameRef = useRef<VectorCanvasImageContentFrame | null>(null);
   const panRafIdRef = useRef<number>(0);
   const pendingPanRef = useRef<{ panX: number; panY: number } | null>(null);
   const resolvedBaseCanvasWidth = useMemo(() => {
@@ -643,6 +654,7 @@ export function VectorCanvas({
     dragRef.current = null;
     dragShapeRef.current = null;
     setIsHoveringEditablePoint(false);
+    setIsHoveringMovableShape(false);
     setIsDraggingEditablePoint(false);
   }, [selectToolActive]);
 
@@ -723,6 +735,40 @@ export function VectorCanvas({
     };
   }, [canvasRenderSize.height, canvasRenderSize.width, resolvedImageOffset.x, resolvedImageOffset.y, src]);
 
+  const resolveImageContentFrame = useCallback((): VectorCanvasImageContentFrame | null => {
+    if (!src) return null;
+    const image = imgRef.current;
+    if (!image) return null;
+    const sourceWidth = image.naturalWidth || image.width;
+    const sourceHeight = image.naturalHeight || image.height;
+    if (!(sourceWidth > 0 && sourceHeight > 0)) return null;
+
+    const canvasWidth = canvasRenderSize.width;
+    const canvasHeight = canvasRenderSize.height;
+    if (!(canvasWidth > 0 && canvasHeight > 0)) return null;
+
+    const sourceAspect = sourceWidth / sourceHeight;
+    const renderAspect = canvasWidth / canvasHeight;
+
+    let contentWidth = canvasWidth;
+    let contentHeight = canvasHeight;
+    if (sourceAspect > 0 && Number.isFinite(sourceAspect)) {
+      if (sourceAspect > renderAspect) {
+        contentHeight = canvasWidth / sourceAspect;
+      } else {
+        contentWidth = canvasHeight * sourceAspect;
+      }
+    }
+    if (!(contentWidth > 0 && contentHeight > 0)) return null;
+
+    return {
+      x: (resolvedImageOffset.x + ((canvasWidth - contentWidth) / 2)) / canvasWidth,
+      y: resolvedImageOffset.y / canvasHeight,
+      width: contentWidth / canvasWidth,
+      height: contentHeight / canvasHeight,
+    };
+  }, [canvasRenderSize.height, canvasRenderSize.width, resolvedImageOffset.x, resolvedImageOffset.y, src]);
+
   useEffect(() => {
     if (!onViewCropRectChange) {
       emittedViewCropRectRef.current = null;
@@ -748,6 +794,33 @@ export function VectorCanvas({
     viewTransform,
     canvasRenderSize.width,
     canvasRenderSize.height,
+  ]);
+
+  useEffect(() => {
+    if (!onImageContentFrameChange) {
+      emittedImageContentFrameRef.current = null;
+      return;
+    }
+    const nextFrame = resolveImageContentFrame();
+    const previousFrame = emittedImageContentFrameRef.current;
+    const isSame =
+      nextFrame === null
+        ? previousFrame === null
+        : previousFrame !== null &&
+          previousFrame.x === nextFrame.x &&
+          previousFrame.y === nextFrame.y &&
+          previousFrame.width === nextFrame.width &&
+          previousFrame.height === nextFrame.height;
+    if (isSame) return;
+    emittedImageContentFrameRef.current = nextFrame;
+    onImageContentFrameChange(nextFrame);
+  }, [
+    canvasRenderSize.height,
+    canvasRenderSize.width,
+    onImageContentFrameChange,
+    resolveImageContentFrame,
+    src,
+    viewTransform,
   ]);
 
   const getInteractionRect = useCallback((): DOMRect | null => {
@@ -1469,6 +1542,7 @@ export function VectorCanvas({
         drawingRef.current = null;
         setIsDraggingEditablePoint(false);
         setIsHoveringEditablePoint(false);
+        setIsHoveringMovableShape(false);
         return;
       }
       if (!canDraw) return;
@@ -1696,9 +1770,18 @@ export function VectorCanvas({
       }
       if (selectToolActive) {
         const hoveredPoint = hitTestPoint(event);
-        setIsHoveringEditablePoint((prev) => (prev === Boolean(hoveredPoint) ? prev : Boolean(hoveredPoint)));
+        const hoveringEditablePoint = Boolean(hoveredPoint);
+        setIsHoveringEditablePoint((prev) => (prev === hoveringEditablePoint ? prev : hoveringEditablePoint));
+        if (hoveringEditablePoint) {
+          setIsHoveringMovableShape((prev) => (prev ? false : prev));
+        } else {
+          const hoveredShape = hitTestShape(event);
+          const hoveringMovableShape = Boolean(hoveredShape);
+          setIsHoveringMovableShape((prev) => (prev === hoveringMovableShape ? prev : hoveringMovableShape));
+        }
       } else {
         setIsHoveringEditablePoint((prev) => (prev ? false : prev));
+        setIsHoveringMovableShape((prev) => (prev ? false : prev));
       }
       if (dragShapeRef.current) {
         const nextPoint = toPoint(event);
@@ -1798,6 +1881,7 @@ export function VectorCanvas({
       canDraw,
       getInteractionRect,
       hitTestPoint,
+      hitTestShape,
       onChange,
       onImageOffsetChange,
       selectToolActive,
@@ -1938,17 +2022,20 @@ export function VectorCanvas({
                       ? 'cursor-grabbing'
                       : isHoveringEditablePoint
                         ? 'cursor-pointer'
-                        : imageMoveEnabled && src
-                          ? 'cursor-grab'
-                          : spaceDownRef.current || tool === 'select'
+                        : isHoveringMovableShape
+                          ? 'cursor-move'
+                          : imageMoveEnabled && src
                             ? 'cursor-grab'
-                            : 'cursor-crosshair'
+                            : spaceDownRef.current || tool === 'select'
+                              ? 'cursor-grab'
+                              : 'cursor-crosshair'
               )}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={() => {
                 setIsHoveringEditablePoint(false);
+                setIsHoveringMovableShape(false);
                 handleMouseUp();
               }}
               onDoubleClick={handleDoubleClick}
@@ -2076,11 +2163,13 @@ export function VectorCanvas({
                         ? 'cursor-grabbing'
                         : isHoveringEditablePoint
                           ? 'cursor-pointer'
-                          : imageMoveEnabled && src
-                            ? 'cursor-grab'
-                            : spaceDownRef.current || tool === 'select'
+                          : isHoveringMovableShape
+                            ? 'cursor-move'
+                            : imageMoveEnabled && src
                               ? 'cursor-grab'
-                              : 'cursor-crosshair'
+                              : spaceDownRef.current || tool === 'select'
+                                ? 'cursor-grab'
+                                : 'cursor-crosshair'
                 )}
                 style={{ width: `${canvasRenderSize.width}px`, height: `${canvasRenderSize.height}px` }}
                 onMouseDown={handleMouseDown}
@@ -2088,6 +2177,7 @@ export function VectorCanvas({
                 onMouseUp={handleMouseUp}
                 onMouseLeave={() => {
                   setIsHoveringEditablePoint(false);
+                  setIsHoveringMovableShape(false);
                   handleMouseUp();
                 }}
                 onDoubleClick={handleDoubleClick}

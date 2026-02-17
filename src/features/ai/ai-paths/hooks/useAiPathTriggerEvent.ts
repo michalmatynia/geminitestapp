@@ -46,6 +46,60 @@ type TriggerEventEntityType = 'product' | 'note' | 'custom';
 
 const AI_PATHS_SETTINGS_STALE_MS = 10_000;
 const USER_PREFERENCES_STALE_MS = 5 * 60_000;
+const PARAMETER_INFERENCE_PATH_ID = 'path_syr8f4';
+const PARAMETER_INFERENCE_PATH_NAME = 'Parameter Inference';
+const LEGACY_PARAMETER_INFERENCE_PATH_NAME = 'Category Inference';
+
+const normalizeLoadedPathName = (pathId: string, name: unknown): string => {
+  const trimmed = typeof name === 'string' ? name.trim() : '';
+  if (
+    pathId === PARAMETER_INFERENCE_PATH_ID &&
+    trimmed.toLowerCase() === LEGACY_PARAMETER_INFERENCE_PATH_NAME.toLowerCase()
+  ) {
+    return PARAMETER_INFERENCE_PATH_NAME;
+  }
+  return trimmed;
+};
+
+const normalizeLoadedPathMetas = (metas: PathMeta[]): PathMeta[] => {
+  const byId = new Map<string, PathMeta>();
+  metas.forEach((meta: PathMeta) => {
+    const id = typeof meta.id === 'string' ? meta.id.trim() : '';
+    if (!id) return;
+    const normalizedName =
+      normalizeLoadedPathName(id, meta.name) || `Path ${id.slice(0, 6)}`;
+    const fallbackTimestamp = new Date().toISOString();
+    const normalizedCreatedAt =
+      typeof meta.createdAt === 'string' && meta.createdAt.trim().length > 0
+        ? meta.createdAt
+        : fallbackTimestamp;
+    const normalizedUpdatedAt =
+      typeof meta.updatedAt === 'string' && meta.updatedAt.trim().length > 0
+        ? meta.updatedAt
+        : normalizedCreatedAt;
+    const normalizedMeta: PathMeta = {
+      ...meta,
+      id,
+      name: normalizedName,
+      createdAt: normalizedCreatedAt,
+      updatedAt: normalizedUpdatedAt,
+    };
+    const existing = byId.get(id);
+    if (!existing) {
+      byId.set(id, normalizedMeta);
+      return;
+    }
+    const existingUpdatedAt = Date.parse(existing.updatedAt || '') || 0;
+    const nextUpdatedAt = Date.parse(normalizedMeta.updatedAt || '') || 0;
+    if (nextUpdatedAt >= existingUpdatedAt) {
+      byId.set(id, normalizedMeta);
+    }
+  });
+  return Array.from(byId.values()).sort(
+    (a: PathMeta, b: PathMeta): number =>
+      b.updatedAt.localeCompare(a.updatedAt)
+  );
+};
 
 const normalizeHistoryRetentionPasses = (value: unknown): number => {
   const parsed =
@@ -107,12 +161,18 @@ const loadPathConfigsFromSettings = async (
     const indexRaw = map.get(PATH_INDEX_KEY);
     if (indexRaw) {
       try {
-        const parsedIndex = JSON.parse(indexRaw) as PathMeta[];
+        const parsedIndex = JSON.parse(indexRaw) as unknown;
         if (Array.isArray(parsedIndex)) {
-          settingsPathOrder = parsedIndex
+          const normalizedMetas = normalizeLoadedPathMetas(
+            parsedIndex.filter(
+              (meta: unknown): meta is PathMeta =>
+                Boolean(meta) && typeof meta === 'object'
+            )
+          );
+          settingsPathOrder = normalizedMetas
             .map((meta: PathMeta) => meta?.id)
             .filter((id: string | undefined): id is string => typeof id === 'string' && id.length > 0);
-          parsedIndex.forEach((meta: PathMeta) => {
+          normalizedMetas.forEach((meta: PathMeta) => {
             if (!meta?.id) return;
             const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
             if (!configRaw) {
@@ -125,7 +185,10 @@ const loadPathConfigsFromSettings = async (
                 ...createDefaultPathConfig(meta.id),
                 ...parsedConfig,
                 id: meta.id,
-                name: parsedConfig?.name || meta.name || `Path ${meta.id}`,
+                name:
+                  normalizeLoadedPathName(meta.id, parsedConfig?.name) ||
+                  normalizeLoadedPathName(meta.id, meta.name) ||
+                  `Path ${meta.id}`,
               };
             } catch {
               configs[meta.id] = createDefaultPathConfig(meta.id);

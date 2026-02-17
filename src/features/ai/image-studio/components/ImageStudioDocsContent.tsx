@@ -14,8 +14,8 @@ import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptState } from '../context/PromptContext';
 import { useSettingsState } from '../context/SettingsContext';
 import { useSlotsState } from '../context/SlotsContext';
-import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '../utils/studio-settings';
 import { IMAGE_STUDIO_CROP_DOC_KEYS, IMAGE_STUDIO_DOCS } from '../utils/studio-docs';
+import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '../utils/studio-settings';
 import { IMAGE_STUDIO_TREE_KEY_PREFIX, parseImageStudioFolderTree } from '../utils/studio-tree';
 import {
   IMAGE_STUDIO_UI_ACTIVE_KEY,
@@ -589,10 +589,16 @@ export function ImageStudioDocsContent(): React.JSX.Element {
   const filteredSettingsRows = settingsRows.filter((row) =>
     includeByQuery([row.path, row.label, row.description, row.value])
   );
+  const filteredCropControlDocs = IMAGE_STUDIO_CROP_DOC_KEYS
+    .map((key) => IMAGE_STUDIO_DOCS[key])
+    .filter((entry) =>
+      includeByQuery(['crop', 'tooltips', entry.title, entry.description, entry.key])
+    );
 
   const noResults =
     query.length > 0 &&
     filteredSettingsRows.length === 0 &&
+    filteredCropControlDocs.length === 0 &&
     !includeByQuery(['Image Studio Docs', 'runtime', 'snapshot', 'settings']);
 
   return (
@@ -648,6 +654,21 @@ export function ImageStudioDocsContent(): React.JSX.Element {
                 <div className='text-[11px] uppercase tracking-wide text-gray-500'>{row.path}</div>
                 <div className='mt-1 text-sm text-gray-100'>{row.label}: {row.value}</div>
                 <div className='mt-1 text-xs text-gray-400'>{row.description}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {filteredCropControlDocs.length > 0 ? (
+        <div className='space-y-3 rounded-lg border border-border/60 bg-card/40 p-5'>
+          <h3 className='text-base font-semibold text-white'>Crop Controls Reference</h3>
+          <div className='grid gap-2'>
+            {filteredCropControlDocs.map((entry) => (
+              <div key={entry.key} className='rounded-md border border-border/60 bg-card/40 px-3 py-2'>
+                <div className='text-[11px] uppercase tracking-wide text-gray-500'>crop.{entry.key}</div>
+                <div className='mt-1 text-sm text-gray-100'>{entry.title}</div>
+                <div className='mt-1 text-xs text-gray-400'>{entry.description}</div>
               </div>
             ))}
           </div>

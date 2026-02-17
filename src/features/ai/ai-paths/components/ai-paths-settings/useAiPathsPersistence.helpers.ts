@@ -1,10 +1,14 @@
-import type { AiNode, Edge, PathConfig } from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge, PathConfig, PathMeta } from '@/features/ai/ai-paths/lib';
 import {
   AI_PATHS_HISTORY_RETENTION_DEFAULT,
   AI_PATHS_HISTORY_RETENTION_MAX,
   AI_PATHS_HISTORY_RETENTION_MIN,
   AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT,
 } from '@/features/ai/ai-paths/lib';
+
+const PARAMETER_INFERENCE_PATH_ID = 'path_syr8f4';
+const PARAMETER_INFERENCE_PATH_NAME = 'Parameter Inference';
+const LEGACY_PARAMETER_INFERENCE_PATH_NAME = 'Category Inference';
 
 const normalizeHistoryRetentionValue = (value: unknown, fallback: number): number => {
   const parsed =
@@ -83,4 +87,56 @@ export const resolvePathSaveBlockedMessage = (
     return 'This path is deactivated. Activate it to save.';
   }
   return null;
+};
+
+export const normalizeLoadedPathName = (pathId: string, name: unknown): string => {
+  const trimmed = typeof name === 'string' ? name.trim() : '';
+  if (
+    pathId === PARAMETER_INFERENCE_PATH_ID &&
+    trimmed.toLowerCase() === LEGACY_PARAMETER_INFERENCE_PATH_NAME.toLowerCase()
+  ) {
+    return PARAMETER_INFERENCE_PATH_NAME;
+  }
+  return trimmed;
+};
+
+export const normalizeLoadedPathMetas = (metas: PathMeta[]): PathMeta[] => {
+  const byId = new Map<string, PathMeta>();
+  metas.forEach((meta: PathMeta) => {
+    const id = typeof meta.id === 'string' ? meta.id.trim() : '';
+    if (!id) return;
+    const normalizedName =
+      normalizeLoadedPathName(id, meta.name) || `Path ${id.slice(0, 6)}`;
+    const fallbackTimestamp = new Date().toISOString();
+    const normalizedCreatedAt =
+      typeof meta.createdAt === 'string' && meta.createdAt.trim().length > 0
+        ? meta.createdAt
+        : fallbackTimestamp;
+    const normalizedUpdatedAt =
+      typeof meta.updatedAt === 'string' && meta.updatedAt.trim().length > 0
+        ? meta.updatedAt
+        : normalizedCreatedAt;
+    const normalizedMeta: PathMeta = {
+      ...meta,
+      id,
+      name: normalizedName,
+      createdAt: normalizedCreatedAt,
+      updatedAt: normalizedUpdatedAt,
+    };
+    const existing = byId.get(id);
+    if (!existing) {
+      byId.set(id, normalizedMeta);
+      return;
+    }
+    const existingUpdatedAt = Date.parse(existing.updatedAt || '') || 0;
+    const nextUpdatedAt = Date.parse(normalizedMeta.updatedAt || '') || 0;
+    if (nextUpdatedAt >= existingUpdatedAt) {
+      byId.set(id, normalizedMeta);
+    }
+  });
+
+  return Array.from(byId.values()).sort(
+    (a: PathMeta, b: PathMeta): number =>
+      b.updatedAt.localeCompare(a.updatedAt)
+  );
 };

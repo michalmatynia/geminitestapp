@@ -21,6 +21,19 @@ export const imageStudioCropRectSchema = z.object({
 });
 export type ImageStudioCropRect = z.infer<typeof imageStudioCropRectSchema>;
 
+export const imageStudioCropDiagnosticsSchema = z.object({
+  rawCanvasBounds: imageStudioCropRectSchema.nullable().optional(),
+  mappedImageBounds: imageStudioCropRectSchema.nullable().optional(),
+  imageContentFrame: z.object({
+    x: z.number().finite(),
+    y: z.number().finite(),
+    width: z.number().finite().positive(),
+    height: z.number().finite().positive(),
+  }).nullable().optional(),
+  usedImageContentFrameMapping: z.boolean().optional(),
+});
+export type ImageStudioCropDiagnostics = z.infer<typeof imageStudioCropDiagnosticsSchema>;
+
 export const imageStudioCropRequestSchema = z
   .object({
     mode: imageStudioCropModeSchema,
@@ -29,6 +42,7 @@ export const imageStudioCropRequestSchema = z
     dataUrl: z.string().trim().min(1).optional(),
     name: z.string().trim().min(1).max(180).optional(),
     requestId: z.string().trim().min(8).max(160).optional(),
+    diagnostics: imageStudioCropDiagnosticsSchema.optional(),
   })
   .superRefine((value, ctx) => {
     if ((value.mode === 'client_bbox' || value.mode === 'server_bbox') && !value.cropRect) {

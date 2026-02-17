@@ -1245,6 +1245,16 @@ export async function evaluateGraph({
       }
       return undefined;
     };
+    const hasExplicitValue = (value: unknown): boolean => {
+      const resolved = coerceInput(value);
+      if (resolved === undefined || resolved === null) return false;
+      if (typeof resolved === 'string') return resolved.trim().length > 0;
+      if (Array.isArray(resolved)) return resolved.length > 0;
+      if (typeof resolved === 'object') {
+        return Object.keys(resolved as Record<string, unknown>).length > 0;
+      }
+      return true;
+    };
     const applyRecord = (value: unknown): void => {
       if (!value || typeof value !== 'object') return;
       const record = value as Record<string, unknown>;
@@ -1332,7 +1342,7 @@ export async function evaluateGraph({
     if (!resolvedEntityType && simulationEntityType) {
       next['entityType'] = simulationEntityType;
     }
-    if (!pickString(next['value'])) {
+    if (!hasExplicitValue(next['value'])) {
       const fallbackValue =
         pickString(next['entityId']) ??
         pickString(next['productId']);

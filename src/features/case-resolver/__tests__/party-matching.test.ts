@@ -17,6 +17,9 @@ const NOW = '2026-02-16T00:00:00.000Z';
 
 const createDatabase = (): FilemakerDatabase => ({
   version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
   persons: [
     {
       id: 'person-1',

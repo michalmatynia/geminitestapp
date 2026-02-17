@@ -216,6 +216,9 @@ export type CaseResolverFolderTimestamp = {
 
 export type CaseResolverWorkspace = {
   version: 2;
+  workspaceRevision: number;
+  lastMutationId: string | null;
+  lastMutationAt: string | null;
   folders: string[];
   folderTimestamps: Record<string, CaseResolverFolderTimestamp>;
   files: CaseResolverFile[];

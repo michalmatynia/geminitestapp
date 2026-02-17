@@ -1,11 +1,11 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-17T16:48:59.056Z
+Generated at: 2026-02-17T17:00:37.914Z
 
 ## Snapshot
 
-- Source files: 2663
-- Source lines: 427667
+- Source files: 2665
+- Source lines: 428314
 - use client files: 897
 - Files >= 1000 LOC: 17
 - Files >= 1500 LOC: 17
@@ -67,17 +67,17 @@ Generated at: 2026-02-17T16:48:59.056Z
 | `src/features/prompt-exploder/parser.ts` | 2811 |
 | `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 2524 |
 | `src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts` | 2481 |
-| `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 2415 |
-| `src/features/case-resolver/settings.ts` | 2408 |
-| `src/shared/ui/vector-canvas.tsx` | 2364 |
-| `src/features/ai/image-studio/components/GenerationToolbar.tsx` | 2129 |
+| `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 2429 |
+| `src/shared/ui/vector-canvas.tsx` | 2382 |
+| `src/features/ai/image-studio/components/GenerationToolbar.tsx` | 2135 |
 | `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 2045 |
+| `src/features/case-resolver/hooks/useCaseResolverState.ts` | 1961 |
 | `src/features/prompt-exploder/components/SegmentEditorPanel.tsx` | 1908 |
 | `src/features/ai/image-studio/components/SequencingPanel.tsx` | 1896 |
-| `src/features/case-resolver/hooks/useCaseResolverState.ts` | 1889 |
+| `src/features/ai/image-studio/components/RightSidebar.tsx` | 1861 |
 | `src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx` | 1808 |
-| `src/features/ai/image-studio/components/RightSidebar.tsx` | 1806 |
-| `src/features/ai/image-studio/components/CenterPreview.tsx` | 1766 |
+| `src/features/case-resolver/settings.ts` | 1796 |
+| `src/features/ai/image-studio/components/CenterPreview.tsx` | 1768 |
 | `src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx` | 1763 |
 | `src/app/api/image-studio/slots/[slotId]/upscale/handler.ts` | 999 |
 | `src/features/case-resolver/components/CaseResolverFolderTree.tsx` | 998 |

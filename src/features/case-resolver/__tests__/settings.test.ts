@@ -53,6 +53,9 @@ describe('case-resolver settings', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
         folders: [],
         files: [
           {
@@ -179,6 +182,9 @@ describe('case-resolver settings', () => {
   it('normalizes uploaded assets and infers asset kind', () => {
     const raw = JSON.stringify({
       version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
       folders: ['Assets'],
       files: [
         {
@@ -227,6 +233,9 @@ describe('case-resolver settings', () => {
   it('preserves editor metadata and sanitizes html content payloads', () => {
     const raw = JSON.stringify({
       version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
       folders: [],
       files: [
         {
@@ -262,6 +271,9 @@ describe('case-resolver settings', () => {
   it('normalizes and preserves document history snapshots', () => {
     const raw = JSON.stringify({
       version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
       folders: [],
       files: [
         {
@@ -314,6 +326,9 @@ describe('case-resolver settings', () => {
   it('synchronizes relation graph structure and preserves custom links', () => {
     const raw = JSON.stringify({
       version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
       folders: ['Root/Sub'],
       files: [
         {
@@ -452,6 +467,9 @@ describe('case-resolver settings', () => {
   it('coerces unknown relation node types to a safe template type', () => {
     const raw = JSON.stringify({
       version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
       folders: [],
       files: [
         {
@@ -506,6 +524,9 @@ describe('case-resolver settings', () => {
   it('drops stale structural relation graph links and keeps valid custom ones', () => {
     const raw = JSON.stringify({
       version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
       folders: [],
       files: [
         {
@@ -751,6 +772,9 @@ describe('case-resolver settings', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
         folders: [],
         files: [
           {
@@ -791,6 +815,9 @@ describe('case-resolver settings', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
         folders: [],
         files: [
           {

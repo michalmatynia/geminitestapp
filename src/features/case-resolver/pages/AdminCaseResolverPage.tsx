@@ -25,6 +25,7 @@ import { savePromptExploderDraftPromptFromCaseResolver } from '@/features/prompt
 import { useToast } from '@/shared/ui';
 
 import { buildPathLabelMap } from './admin-case-resolver-page-helpers';
+import { CaseResolverWorkspaceDebugPanel } from '../components/CaseResolverWorkspaceDebugPanel';
 import { CaseResolverPageView } from '../components/CaseResolverPageView';
 import { useCaseResolverState } from '../hooks/useCaseResolverState';
 import {
@@ -48,6 +49,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const state = useCaseResolverState();
   const router = useRouter();
   const { toast } = useToast();
+  const workspaceDebugEnabled = process.env['NODE_ENV'] !== 'production';
   const [workspaceView, setWorkspaceView] = React.useState<'document' | 'relations'>('document');
   const {
     workspace,
@@ -830,53 +832,56 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   );
 
   return (
-    <CaseResolverPageView
-      state={state}
-      workspaceView={workspaceView}
-      setWorkspaceView={setWorkspaceView}
-      handleMoveFolder={handleMoveFolder}
-      handleToggleFolderLock={handleToggleFolderLock}
-      handleToggleFileLock={handleToggleFileLock}
-      handleDeleteFile={handleDeleteFile}
-      handleGraphChange={handleGraphChange}
-      handleRelationGraphChange={handleRelationGraphChange}
-      editorDetailsTab={editorDetailsTab}
-      setEditorDetailsTab={setEditorDetailsTab}
-      isScanDraftDropActive={isScanDraftDropActive}
-      scanDraftUploadInputRef={scanDraftUploadInputRef}
-      handleScanDraftDragEnter={handleScanDraftDragEnter}
-      handleScanDraftDragOver={handleScanDraftDragOver}
-      handleScanDraftDragLeave={handleScanDraftDragLeave}
-      handleScanDraftDrop={handleScanDraftDrop}
-      handleScanDraftUploadInputChange={handleScanDraftUploadInputChange}
-      handleTriggerScanDraftUpload={handleTriggerScanDraftUpload}
-      handleRunScanDraftOcr={handleRunScanDraftOcr}
-      updateEditingDocumentDraft={updateEditingDocumentDraft}
-      caseTagOptions={caseTagOptions}
-      caseIdentifierOptions={caseIdentifierOptions}
-      caseCategoryOptions={caseCategoryOptions}
-      caseReferenceOptions={caseReferenceOptions}
-      parentCaseOptions={parentCaseOptions}
-      partyOptions={partyOptions}
-      handleUseHistoryEntry={handleUseHistoryEntry}
-      isEditorDraftDirty={isEditorDraftDirty}
-      handleOpenPromptExploderForDraft={handleOpenPromptExploderForDraft}
-      editorContentRevisionSeed={editorContentRevisionSeed}
-      handleUpdateDraftDocumentContent={handleUpdateDraftDocumentContent}
-      editorTextareaRef={editorTextareaRef}
-      editorSplitRef={editorSplitRef}
-      editorWidth={editorWidth}
-      setEditorWidth={setEditorWidth}
-      isDraggingSplitter={isDraggingSplitter}
-      setIsDraggingSplitter={setIsDraggingSplitter}
-      handleCopyDraftFileId={handleCopyDraftFileId}
-      promptExploderProposalDraft={promptExploderProposalDraft}
-      captureProposalTargetFileName={captureProposalTargetFileName}
-      handleClosePromptExploderProposalModal={handleClosePromptExploderProposalModal}
-      handleApplyPromptExploderProposal={handleApplyPromptExploderProposal}
-      updatePromptExploderProposalAction={updatePromptExploderProposalAction}
-      updatePromptExploderProposalReference={updatePromptExploderProposalReference}
-      resolvePromptExploderMatchedPartyLabel={resolvePromptExploderMatchedPartyLabel}
-    />
+    <>
+      <CaseResolverPageView
+        state={state}
+        workspaceView={workspaceView}
+        setWorkspaceView={setWorkspaceView}
+        handleMoveFolder={handleMoveFolder}
+        handleToggleFolderLock={handleToggleFolderLock}
+        handleToggleFileLock={handleToggleFileLock}
+        handleDeleteFile={handleDeleteFile}
+        handleGraphChange={handleGraphChange}
+        handleRelationGraphChange={handleRelationGraphChange}
+        editorDetailsTab={editorDetailsTab}
+        setEditorDetailsTab={setEditorDetailsTab}
+        isScanDraftDropActive={isScanDraftDropActive}
+        scanDraftUploadInputRef={scanDraftUploadInputRef}
+        handleScanDraftDragEnter={handleScanDraftDragEnter}
+        handleScanDraftDragOver={handleScanDraftDragOver}
+        handleScanDraftDragLeave={handleScanDraftDragLeave}
+        handleScanDraftDrop={handleScanDraftDrop}
+        handleScanDraftUploadInputChange={handleScanDraftUploadInputChange}
+        handleTriggerScanDraftUpload={handleTriggerScanDraftUpload}
+        handleRunScanDraftOcr={handleRunScanDraftOcr}
+        updateEditingDocumentDraft={updateEditingDocumentDraft}
+        caseTagOptions={caseTagOptions}
+        caseIdentifierOptions={caseIdentifierOptions}
+        caseCategoryOptions={caseCategoryOptions}
+        caseReferenceOptions={caseReferenceOptions}
+        parentCaseOptions={parentCaseOptions}
+        partyOptions={partyOptions}
+        handleUseHistoryEntry={handleUseHistoryEntry}
+        isEditorDraftDirty={isEditorDraftDirty}
+        handleOpenPromptExploderForDraft={handleOpenPromptExploderForDraft}
+        editorContentRevisionSeed={editorContentRevisionSeed}
+        handleUpdateDraftDocumentContent={handleUpdateDraftDocumentContent}
+        editorTextareaRef={editorTextareaRef}
+        editorSplitRef={editorSplitRef}
+        editorWidth={editorWidth}
+        setEditorWidth={setEditorWidth}
+        isDraggingSplitter={isDraggingSplitter}
+        setIsDraggingSplitter={setIsDraggingSplitter}
+        handleCopyDraftFileId={handleCopyDraftFileId}
+        promptExploderProposalDraft={promptExploderProposalDraft}
+        captureProposalTargetFileName={captureProposalTargetFileName}
+        handleClosePromptExploderProposalModal={handleClosePromptExploderProposalModal}
+        handleApplyPromptExploderProposal={handleApplyPromptExploderProposal}
+        updatePromptExploderProposalAction={updatePromptExploderProposalAction}
+        updatePromptExploderProposalReference={updatePromptExploderProposalReference}
+        resolvePromptExploderMatchedPartyLabel={resolvePromptExploderMatchedPartyLabel}
+      />
+      <CaseResolverWorkspaceDebugPanel enabled={workspaceDebugEnabled} />
+    </>
   );
 }

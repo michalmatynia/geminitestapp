@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -40,6 +40,7 @@ import {
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
+import { CaseResolverWorkspaceDebugPanel } from '../components/CaseResolverWorkspaceDebugPanel';
 import {
   CASE_RESOLVER_CATEGORIES_KEY,
   CASE_RESOLVER_IDENTIFIERS_KEY,
@@ -47,7 +48,6 @@ import {
   CASE_RESOLVER_TAGS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
   createCaseResolverFile,
-  getCaseResolverWorkspaceLatestTimestampMs,
   hasCaseResolverWorkspaceFilesArray,
   normalizeCaseResolverWorkspace,
   parseCaseResolverCategories,
@@ -56,6 +56,13 @@ import {
   parseCaseResolverTags,
   parseCaseResolverWorkspace,
 } from '../settings';
+import {
+  createCaseResolverWorkspaceMutationId,
+  getCaseResolverWorkspaceRevision,
+  logCaseResolverWorkspaceEvent,
+  persistCaseResolverWorkspaceSnapshot,
+  stampCaseResolverWorkspaceMutation,
+} from '../workspace-persistence';
 
 import type {
   CaseResolverCategory,
@@ -502,6 +509,9 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
+  const workspaceDebugEnabled =
+    process.env['NODE_ENV'] !== 'production' ||
+    settingsStore.getBoolean('case_resolver_workspace_debug', false);
   const caseListViewDefaults = useMemo(
     () => normalizeCaseListViewDefaults(preferencesQuery.data),
     [preferencesQuery.data],
@@ -586,6 +596,14 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const defaultCategoryId = caseResolverCategories[0]?.id ?? null;
   const [workspace, setWorkspace] =
     useState<CaseResolverWorkspace>(parsedWorkspace);
+  const lastPersistedWorkspaceValueRef = useRef<string>(
+    JSON.stringify(parsedWorkspace),
+  );
+  const lastPersistedWorkspaceRevisionRef = useRef<number>(
+    getCaseResolverWorkspaceRevision(parsedWorkspace),
+  );
+  const [isCreatingCase, setIsCreatingCase] = useState(false);
+  const createCaseMutationIdRef = useRef<string | null>(null);
 
   const [caseDraft, setCaseDraft] = useState<Partial<CaseResolverFile>>({});
   const [isCreateCaseModalOpen, setIsCreateCaseModalOpen] = useState(false);
@@ -647,21 +665,20 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
 
   useEffect(() => {
     if (!canHydrateWorkspaceFromStore) return;
+    const incomingSerialized = JSON.stringify(parsedWorkspace);
+    const incomingRevision = getCaseResolverWorkspaceRevision(parsedWorkspace);
     setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
-      const currentLatestMs =
-        getCaseResolverWorkspaceLatestTimestampMs(current);
-      const incomingLatestMs =
-        getCaseResolverWorkspaceLatestTimestampMs(parsedWorkspace);
-      const currentItemCount = current.files.length + current.assets.length;
-      const incomingItemCount =
-        parsedWorkspace.files.length + parsedWorkspace.assets.length;
-      if (
-        incomingLatestMs < currentLatestMs ||
-        (incomingLatestMs === currentLatestMs &&
-          incomingItemCount < currentItemCount)
-      ) {
-        return current;
-      }
+      const currentSerialized = JSON.stringify(current);
+      if (currentSerialized === incomingSerialized) return current;
+      const currentRevision = getCaseResolverWorkspaceRevision(current);
+      if (incomingRevision <= currentRevision) return current;
+      lastPersistedWorkspaceValueRef.current = incomingSerialized;
+      lastPersistedWorkspaceRevisionRef.current = incomingRevision;
+      logCaseResolverWorkspaceEvent({
+        source: 'cases_page',
+        action: 'hydrate_workspace',
+        workspaceRevision: incomingRevision,
+      });
       return parsedWorkspace;
     });
   }, [canHydrateWorkspaceFromStore, parsedWorkspace]);
@@ -1298,12 +1315,14 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       const normalizedParentCaseId =
         parentCaseId && validCaseIds.has(parentCaseId) ? parentCaseId : null;
       resetCreateCaseDraft(normalizedParentCaseId);
+      createCaseMutationIdRef.current = null;
       setIsCreateCaseModalOpen(true);
     },
     [files, resetCreateCaseDraft],
   );
 
   const handleCloseCreateCaseModal = useCallback((): void => {
+    createCaseMutationIdRef.current = null;
     setIsCreateCaseModalOpen(false);
   }, []);
 
@@ -1494,28 +1513,58 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     async (
       nextWorkspace: CaseResolverWorkspace,
       successMessage: string,
-    ): Promise<void> => {
+      options?: { mutationId?: string; source?: string },
+    ): Promise<boolean> => {
       const normalized = normalizeCaseResolverWorkspace(nextWorkspace);
-      try {
-        await updateSetting.mutateAsync({
-          key: CASE_RESOLVER_WORKSPACE_KEY,
-          value: JSON.stringify(normalized),
-        });
-        setWorkspace(normalized);
+      const expectedRevision = lastPersistedWorkspaceRevisionRef.current;
+      const mutationId =
+        options?.mutationId?.trim() ??
+        createCaseResolverWorkspaceMutationId('cases-page-workspace');
+      const stampedWorkspace = stampCaseResolverWorkspaceMutation(normalized, {
+        baseRevision: expectedRevision,
+        mutationId,
+      });
+
+      const result = await persistCaseResolverWorkspaceSnapshot({
+        workspace: stampedWorkspace,
+        expectedRevision,
+        mutationId,
+        source: options?.source ?? 'cases_page',
+      });
+
+      if (result.ok) {
+        const persistedWorkspace = result.workspace;
+        lastPersistedWorkspaceValueRef.current = JSON.stringify(persistedWorkspace);
+        lastPersistedWorkspaceRevisionRef.current =
+          getCaseResolverWorkspaceRevision(persistedWorkspace);
+        setWorkspace(persistedWorkspace);
         toast(successMessage, { variant: 'success' });
-      } catch (error: unknown) {
-        toast(
-          error instanceof Error
-            ? error.message
-            : 'Failed to save Case Resolver cases.',
-          { variant: 'error' },
-        );
+        return true;
       }
+
+      if (result.conflict) {
+        const serverWorkspace = result.workspace;
+        lastPersistedWorkspaceValueRef.current = JSON.stringify(serverWorkspace);
+        lastPersistedWorkspaceRevisionRef.current =
+          getCaseResolverWorkspaceRevision(serverWorkspace);
+        setWorkspace(serverWorkspace);
+        toast(
+          'Case Resolver workspace changed in another tab. Latest server state has been loaded.',
+          { variant: 'warning' },
+        );
+        return false;
+      }
+
+      toast(result.error || 'Failed to save Case Resolver cases.', {
+        variant: 'error',
+      });
+      return false;
     },
-    [toast, updateSetting],
+    [toast],
   );
 
   const handleCreateCase = useCallback(async (): Promise<void> => {
+    if (isCreatingCase) return;
     const normalizedName = caseDraft.name?.trim();
     if (!normalizedName) {
       toast('Case name is required.', { variant: 'error' });
@@ -1580,15 +1629,42 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       folders: workspace.folders,
     };
 
-    await persistWorkspace(nextWorkspace, 'Case created.');
-    resetCreateCaseDraft();
-    setIsCreateCaseModalOpen(false);
+    setIsCreatingCase(true);
+    const mutationId =
+      createCaseMutationIdRef.current ??
+      createCaseResolverWorkspaceMutationId('case-create');
+    createCaseMutationIdRef.current = mutationId;
+    try {
+      logCaseResolverWorkspaceEvent({
+        source: 'cases_page',
+        action: 'case_create_attempt',
+        mutationId,
+        expectedRevision: getCaseResolverWorkspaceRevision(workspace),
+      });
+      const didPersist = await persistWorkspace(nextWorkspace, 'Case created.', {
+        mutationId,
+        source: 'cases_page',
+      });
+      if (!didPersist) return;
+      logCaseResolverWorkspaceEvent({
+        source: 'cases_page',
+        action: 'case_create_success',
+        mutationId,
+        workspaceRevision: getCaseResolverWorkspaceRevision(nextWorkspace),
+      });
+      createCaseMutationIdRef.current = null;
+      resetCreateCaseDraft();
+      setIsCreateCaseModalOpen(false);
+    } finally {
+      setIsCreatingCase(false);
+    }
   }, [
     caseResolverCategories,
     caseResolverIdentifiers,
     caseResolverTags,
     caseDraft,
     files,
+    isCreatingCase,
     pendingCaseIdentifierIds,
     persistWorkspace,
     resetCreateCaseDraft,
@@ -1692,8 +1768,13 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       folders: workspace.folders,
     };
 
-    await persistWorkspace(nextWorkspace, 'Case updated.');
-    handleCancelEditCase();
+    const didPersist = await persistWorkspace(nextWorkspace, 'Case updated.', {
+      mutationId: createCaseResolverWorkspaceMutationId('case-update'),
+      source: 'cases_page',
+    });
+    if (didPersist) {
+      handleCancelEditCase();
+    }
   }, [
     editingCaseId,
     editingCaseName,
@@ -1771,8 +1852,11 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
               : workspace.activeFileId,
         };
 
-        await persistWorkspace(nextWorkspace, 'Case removed.');
-        if (editingCaseId === fileId) {
+        const didPersist = await persistWorkspace(nextWorkspace, 'Case removed.', {
+          mutationId: createCaseResolverWorkspaceMutationId('case-delete'),
+          source: 'cases_page',
+        });
+        if (didPersist && editingCaseId === fileId) {
           handleCancelEditCase();
         }
       };
@@ -2217,7 +2301,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         values={caseDraft}
         onChange={(vals) => setCaseDraft((prev) => ({ ...prev, ...vals }))}
         onSave={handleCreateCase}
-        isSaving={updateSetting.isPending}
+        isSaving={updateSetting.isPending || isCreatingCase}
       />
 
       <ListPanel
@@ -2409,6 +2493,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           setConfirmation(null);
         }}
       />
+      <CaseResolverWorkspaceDebugPanel enabled={workspaceDebugEnabled} />
     </>
   );
 }

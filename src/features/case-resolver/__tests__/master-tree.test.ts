@@ -13,6 +13,9 @@ describe('case-resolver master tree', () => {
   it('orders siblings by type first (folders first) then alphabetically', () => {
     const workspace: CaseResolverWorkspace = {
       version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
       folders: ['beta', 'alpha', 'alpha/sub'],
       folderTimestamps: {},
       files: [
@@ -57,6 +60,9 @@ describe('case-resolver master tree', () => {
   it('hides legacy image placeholders without uploaded file paths', () => {
     const workspace: CaseResolverWorkspace = {
       version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
       folders: ['alpha'],
       folderTimestamps: {},
       files: [

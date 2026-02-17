@@ -858,10 +858,10 @@ export function CenterPreview(): React.JSX.Element {
   const previewGridStyle = useMemo((): React.CSSProperties => {
     const canvasMinHeightPx = PREVIEW_CANVAS_MIN_HEIGHT_BY_SIZE[previewCanvasSize];
     if (!showVariantPanel) {
-      return { gridTemplateRows: `minmax(${canvasMinHeightPx}px, 1fr)` };
+      return { gridTemplateRows: `${canvasMinHeightPx}px` };
     }
     return {
-      gridTemplateRows: `minmax(${canvasMinHeightPx}px, 1fr) ${PREVIEW_VARIANT_PANEL_HEIGHT}`,
+      gridTemplateRows: `${canvasMinHeightPx}px ${PREVIEW_VARIANT_PANEL_HEIGHT}`,
     };
   }, [previewCanvasSize, showVariantPanel]);
 
@@ -1465,7 +1465,7 @@ export function CenterPreview(): React.JSX.Element {
         <div />
         <div className='flex min-w-0 items-center justify-end gap-2'>
           {previewMode === 'image' ? (
-            <>
+            <div className='order-1 flex items-center gap-2'>
               <span className='text-[10px] uppercase tracking-wide text-gray-500'>Canvas</span>
               <ToggleButtonGroup
                 value={previewCanvasSize}
@@ -1474,10 +1474,10 @@ export function CenterPreview(): React.JSX.Element {
                 className='text-[11px] text-gray-300'
                 size='xs'
               />
-            </>
+            </div>
           ) : null}
           <span
-            className='max-w-[220px] truncate rounded border border-border/60 bg-card/30 px-2 py-1 text-[11px] text-gray-300'
+            className='order-2 max-w-[220px] truncate rounded border border-border/60 bg-card/30 px-2 py-1 text-[11px] text-gray-300'
             title={activeProjectIdLabel}
           >
             {activeProjectIdLabel}
@@ -1488,10 +1488,10 @@ export function CenterPreview(): React.JSX.Element {
       {variantPointerTooltip}
       <div className='flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-3 pt-0'>
         <div
-          className='grid min-h-0 flex-1 gap-3'
+          className='grid content-start gap-3'
           style={previewGridStyle}
         >
-          <div className='relative min-h-0 overflow-hidden'>
+          <div className='sticky top-0 z-20 relative min-h-0 overflow-hidden bg-card/40'>
             <VectorDrawingProvider value={vectorContextValue}>
               {previewMode === '3d' && workingSlot?.asset3dId ? (
                 <Viewer3D

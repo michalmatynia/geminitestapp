@@ -54,6 +54,7 @@ type SettingDocument = {
 const SETTINGS_COLLECTION = 'settings';
 const AI_PATHS_CONFIG_PREFIX = 'ai_paths_config_';
 const AI_PATHS_KEY_PREFIX = 'ai_paths_';
+const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v1';
 const HEAVY_PREFIXES = ['image_studio_', 'base_import_', 'base_export_'];
 const HEAVY_KEYS = new Set<string>(['agent_personas']);
 const HEAVY_PREFIX_REGEX = new RegExp(`^(${HEAVY_PREFIXES.map((p) => p.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|')})`);
@@ -261,7 +262,49 @@ const readCurrentSettingValue = async (
 const settingSchema = z.object({
   key: z.string().trim().min(1),
   value: z.string(),
+  expectedRevision: z.number().int().min(0).optional(),
+  mutationId: z.string().trim().min(1).max(200).optional(),
 });
+
+const parseCaseResolverWorkspaceMetadata = (raw: string | null): {
+  revision: number;
+  lastMutationId: string | null;
+} => {
+  if (!raw) {
+    return {
+      revision: 0,
+      lastMutationId: null,
+    };
+  }
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown> | null;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {
+        revision: 0,
+        lastMutationId: null,
+      };
+    }
+    const revisionRaw = parsed['workspaceRevision'];
+    const revision =
+      typeof revisionRaw === 'number' && Number.isFinite(revisionRaw) && revisionRaw > 0
+        ? Math.floor(revisionRaw)
+        : 0;
+    const mutationRaw = parsed['lastMutationId'];
+    const lastMutationId =
+      typeof mutationRaw === 'string' && mutationRaw.trim().length > 0
+        ? mutationRaw.trim()
+        : null;
+    return {
+      revision,
+      lastMutationId,
+    };
+  } catch {
+    return {
+      revision: 0,
+      lastMutationId: null,
+    };
+  }
+};
 
 
 const normalizeScope = (scope?: string | null): SettingsScope => {
@@ -670,6 +713,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     return parsed.response;
   }
   const { key } = parsed.data;
+  const expectedRevision = parsed.data.expectedRevision;
+  const mutationId = parsed.data.mutationId;
   let value = parsed.data.value;
   if (isAiPathsSettingKey(key)) {
     const migrated = await upsertAiPathsSetting(key, value);
@@ -679,6 +724,35 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     await ErrorSystem.logInfo('[settings] upserting', { service: 'api/settings', key, valuePreview: value.slice(0, 40) });
   }
   const provider = await getAppDbProvider();
+  if (key === CASE_RESOLVER_WORKSPACE_KEY && expectedRevision !== undefined) {
+    const currentValue = await readCurrentSettingValue(key, provider);
+    const currentMetadata = parseCaseResolverWorkspaceMetadata(currentValue);
+    if (
+      mutationId &&
+      currentMetadata.lastMutationId &&
+      currentMetadata.lastMutationId === mutationId
+    ) {
+      return NextResponse.json({
+        key,
+        value: currentValue ?? value,
+        idempotent: true,
+        currentRevision: currentMetadata.revision,
+      });
+    }
+
+    if (currentMetadata.revision !== expectedRevision) {
+      return NextResponse.json(
+        {
+          key,
+          value: currentValue ?? value,
+          conflict: true,
+          expectedRevision,
+          currentRevision: currentMetadata.revision,
+        },
+        { status: 409 }
+      );
+    }
+  }
   let currentValueForPathConfig: string | null = null;
   if (key.startsWith(AI_PATHS_CONFIG_PREFIX)) {
     currentValueForPathConfig = await readCurrentSettingValue(key, provider);

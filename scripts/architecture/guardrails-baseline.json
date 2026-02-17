@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-02-16T21:43:49.614Z",
+  "generatedAt": "2026-02-17T17:00:37.918Z",
   "hardLimits": {
     "sourceLargestFileLines": 4000
   },
   "max": {
-    "source.filesOver1000": 47,
-    "source.filesOver1500": 21,
+    "source.filesOver1000": 17,
+    "source.filesOver1500": 17,
     "source.useClientFiles": 897,
     "source.largestFileLines": 3352,
     "api.totalRoutes": 294,

@@ -27,7 +27,6 @@ import { useCountries } from '@/features/internationalization/hooks/useInternati
 import { consumePromptExploderApplyPromptForCaseResolver, } from '@/features/prompt-exploder/bridge';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { usePrompt } from '@/shared/hooks/ui/usePrompt';
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 
@@ -42,7 +41,6 @@ import {
   createCaseResolverAssetFile,
   createCaseResolverFile,
   extractCaseResolverDocumentDate,
-  getCaseResolverWorkspaceLatestTimestampMs,
   hasCaseResolverWorkspaceFilesArray,
   inferCaseResolverAssetKind,
   parseCaseResolverCategories,
@@ -63,6 +61,14 @@ import {
   createUniqueFolderPath,
   isPathWithinFolder,
 } from '../utils/caseResolverUtils';
+import {
+  createCaseResolverWorkspaceMutationId,
+  fetchCaseResolverWorkspaceSnapshot,
+  getCaseResolverWorkspaceRevision,
+  logCaseResolverWorkspaceEvent,
+  persistCaseResolverWorkspaceSnapshot,
+  stampCaseResolverWorkspaceMutation,
+} from '../workspace-persistence';
 
 import type {
   CaseResolverAssetFile,
@@ -282,7 +288,6 @@ const resolveUploadBaseFolder = (folder: string, kind: CaseResolverAssetKind): s
  */
 export function useCaseResolverState() {
   const settingsStore = useSettingsStore();
-  const updateSetting = useUpdateSetting();
   const { toast } = useToast();
   const { isMenuCollapsed, setIsMenuCollapsed } = useAdminLayout();
   const searchParams = useSearchParams();
@@ -365,8 +370,11 @@ export function useCaseResolverState() {
   const defaultCategoryId = caseResolverCategories[0]?.id ?? null;
 
   const lastPersistedValueRef = useRef<string>(JSON.stringify(parsedWorkspace));
+  const lastPersistedRevisionRef = useRef<number>(getCaseResolverWorkspaceRevision(parsedWorkspace));
   const pendingSaveToastRef = useRef<string | null>(null);
   const queuedSerializedWorkspaceRef = useRef<string | null>(null);
+  const queuedExpectedRevisionRef = useRef<number | null>(null);
+  const queuedMutationIdRef = useRef<string | null>(null);
   const persistWorkspaceTimerRef = useRef<number | null>(null);
   const persistWorkspaceInFlightRef = useRef(false);
   const handledRequestedFileIdRef = useRef<string | null>(null);
@@ -376,22 +384,59 @@ export function useCaseResolverState() {
     if (persistWorkspaceInFlightRef.current) return;
     const nextSerialized = queuedSerializedWorkspaceRef.current;
     if (!nextSerialized || nextSerialized === lastPersistedValueRef.current) return;
+    const expectedRevision =
+      queuedExpectedRevisionRef.current ?? lastPersistedRevisionRef.current;
+    const mutationId =
+      queuedMutationIdRef.current ??
+      createCaseResolverWorkspaceMutationId('case-resolver-workspace-auto');
+    const parsedWorkspaceForPersist = parseCaseResolverWorkspace(nextSerialized);
 
     persistWorkspaceInFlightRef.current = true;
-    void updateSetting.mutateAsync({
-      key: CASE_RESOLVER_WORKSPACE_KEY,
-      value: nextSerialized,
-    }).then(() => {
-      lastPersistedValueRef.current = nextSerialized;
-      if (queuedSerializedWorkspaceRef.current === nextSerialized) {
-        queuedSerializedWorkspaceRef.current = null;
+    void persistCaseResolverWorkspaceSnapshot({
+      workspace: parsedWorkspaceForPersist,
+      expectedRevision,
+      mutationId,
+      source: 'case_view',
+    }).then((result) => {
+      if (result.ok) {
+        const persistedWorkspace = result.workspace;
+        const persistedSerialized = JSON.stringify(persistedWorkspace);
+        lastPersistedValueRef.current = persistedSerialized;
+        lastPersistedRevisionRef.current = getCaseResolverWorkspaceRevision(persistedWorkspace);
+        if (queuedSerializedWorkspaceRef.current === nextSerialized) {
+          queuedSerializedWorkspaceRef.current = null;
+          queuedExpectedRevisionRef.current = null;
+          queuedMutationIdRef.current = null;
+        } else if (queuedSerializedWorkspaceRef.current) {
+          queuedExpectedRevisionRef.current = lastPersistedRevisionRef.current;
+        }
+        if (pendingSaveToastRef.current) {
+          toast(pendingSaveToastRef.current, { variant: 'success' });
+          pendingSaveToastRef.current = null;
+        }
+        return;
       }
+
+      if (result.conflict) {
+        const serverWorkspace = result.workspace;
+        const serverSerialized = JSON.stringify(serverWorkspace);
+        lastPersistedValueRef.current = serverSerialized;
+        lastPersistedRevisionRef.current = getCaseResolverWorkspaceRevision(serverWorkspace);
+        queuedSerializedWorkspaceRef.current = null;
+        queuedExpectedRevisionRef.current = null;
+        queuedMutationIdRef.current = null;
+        pendingSaveToastRef.current = null;
+        setWorkspace(serverWorkspace);
+        toast('Case Resolver workspace changed in another tab. Loaded latest server state.', {
+          variant: 'warning',
+        });
+        return;
+      }
+
       if (pendingSaveToastRef.current) {
-        toast(pendingSaveToastRef.current, { variant: 'success' });
         pendingSaveToastRef.current = null;
       }
-    }).catch(() => {
-      toast('Failed to save Case Resolver workspace.', { variant: 'error' });
+      toast(result.error || 'Failed to save Case Resolver workspace.', { variant: 'error' });
     }).finally(() => {
       persistWorkspaceInFlightRef.current = false;
       if (
@@ -401,12 +446,14 @@ export function useCaseResolverState() {
         flushWorkspacePersist();
       }
     });
-  }, [toast, updateSetting]);
+    });
+  }, [toast]);
 
   // Sync with store
   useEffect(() => {
     if (!canHydrateWorkspaceFromStore) return;
     const incomingSerialized = JSON.stringify(parsedWorkspace);
+    const incomingRevision = getCaseResolverWorkspaceRevision(parsedWorkspace);
     setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
       const currentSerialized = JSON.stringify(current);
       if (incomingSerialized === currentSerialized) {
@@ -422,17 +469,22 @@ export function useCaseResolverState() {
         );
         if (!currentHasRequestedFile && incomingHasRequestedFile) {
           lastPersistedValueRef.current = incomingSerialized;
+          lastPersistedRevisionRef.current = incomingRevision;
           queuedSerializedWorkspaceRef.current = null;
+          queuedExpectedRevisionRef.current = null;
+          queuedMutationIdRef.current = null;
           return parsedWorkspace;
         }
       }
 
-      const currentLatestMs = getCaseResolverWorkspaceLatestTimestampMs(current);
-      const incomingLatestMs = getCaseResolverWorkspaceLatestTimestampMs(parsedWorkspace);
-      if (incomingLatestMs <= currentLatestMs) return current;
+      const currentRevision = getCaseResolverWorkspaceRevision(current);
+      if (incomingRevision <= currentRevision) return current;
 
       lastPersistedValueRef.current = incomingSerialized;
+      lastPersistedRevisionRef.current = incomingRevision;
       queuedSerializedWorkspaceRef.current = null;
+      queuedExpectedRevisionRef.current = null;
+      queuedMutationIdRef.current = null;
       return parsedWorkspace;
     });
   }, [canHydrateWorkspaceFromStore, parsedWorkspace, requestedFileId]);
@@ -442,6 +494,14 @@ export function useCaseResolverState() {
     const serialized = JSON.stringify(workspace);
     if (serialized === lastPersistedValueRef.current) return;
     queuedSerializedWorkspaceRef.current = serialized;
+    if (queuedExpectedRevisionRef.current === null) {
+      queuedExpectedRevisionRef.current = lastPersistedRevisionRef.current;
+    }
+    if (!queuedMutationIdRef.current) {
+      queuedMutationIdRef.current =
+        workspace.lastMutationId ??
+        createCaseResolverWorkspaceMutationId('case-resolver-workspace-auto');
+    }
 
     if (persistWorkspaceTimerRef.current) {
       window.clearTimeout(persistWorkspaceTimerRef.current);
@@ -466,13 +526,34 @@ export function useCaseResolverState() {
   const updateWorkspace = useCallback(
     (
       updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
-      options?: { persistToast?: string }
+      options?: { persistToast?: string; mutationId?: string; source?: string }
     ): void => {
       setWorkspace((current: CaseResolverWorkspace) => {
-        const updated = updater(current);
-        if (updated === current) return current;
+        const normalizedCurrent = normalizeCaseResolverWorkspace(current);
+        const updated = updater(normalizedCurrent);
+        if (updated === current || updated === normalizedCurrent) return current;
+        const normalizedUpdated = normalizeCaseResolverWorkspace(updated);
+        const mutationId =
+          options?.mutationId?.trim() ||
+          createCaseResolverWorkspaceMutationId('case-resolver-workspace');
+        const stampedWorkspace = stampCaseResolverWorkspaceMutation(normalizedUpdated, {
+          baseRevision: getCaseResolverWorkspaceRevision(normalizedCurrent),
+          mutationId,
+        });
+        logCaseResolverWorkspaceEvent({
+          source: options?.source ?? 'case_view',
+          action: 'mutation_enqueued',
+          mutationId,
+          expectedRevision:
+            queuedExpectedRevisionRef.current ?? lastPersistedRevisionRef.current,
+          workspaceRevision: getCaseResolverWorkspaceRevision(stampedWorkspace),
+        });
         if (options?.persistToast) pendingSaveToastRef.current = options.persistToast;
-        return normalizeCaseResolverWorkspace(updated);
+        if (queuedExpectedRevisionRef.current === null) {
+          queuedExpectedRevisionRef.current = lastPersistedRevisionRef.current;
+        }
+        queuedMutationIdRef.current = mutationId;
+        return stampedWorkspace;
       });
     },
     []
@@ -1224,34 +1305,25 @@ export function useCaseResolverState() {
     requestedWorkspaceRefreshFileIdRef.current = requestedFileId;
     let isCancelled = false;
     void (async (): Promise<void> => {
-      try {
-        const response = await fetch('/api/settings?scope=light', {
-          method: 'GET',
-          cache: 'no-store',
-        });
-        if (!response.ok) return;
-        const payload = (await response.json()) as Array<{
-          key?: unknown;
-          value?: unknown;
-        }>;
-        const workspaceEntry = payload.find(
-          (entry): boolean => entry?.key === CASE_RESOLVER_WORKSPACE_KEY
-        );
-        const rawWorkspaceValue =
-          typeof workspaceEntry?.value === 'string' ? workspaceEntry.value : null;
-        const refreshedWorkspace = parseCaseResolverWorkspace(rawWorkspaceValue);
-        const refreshedHasRequestedFile = refreshedWorkspace.files.some(
-          (file: CaseResolverFile): boolean => file.id === requestedFileId
-        );
-        if (isCancelled || !refreshedHasRequestedFile) return;
+      const refreshedWorkspace = await fetchCaseResolverWorkspaceSnapshot('case_view');
+      if (!refreshedWorkspace) return;
+      const refreshedHasRequestedFile = refreshedWorkspace.files.some(
+        (file: CaseResolverFile): boolean => file.id === requestedFileId
+      );
+      if (isCancelled || !refreshedHasRequestedFile) return;
 
-        lastPersistedValueRef.current = JSON.stringify(refreshedWorkspace);
-        queuedSerializedWorkspaceRef.current = null;
-        setWorkspace(refreshedWorkspace);
-        handledRequestedFileIdRef.current = null;
-      } catch {
-        // Keep current workspace if refresh fails; route/file selection effect will retry on the next change.
-      }
+      lastPersistedValueRef.current = JSON.stringify(refreshedWorkspace);
+      lastPersistedRevisionRef.current = getCaseResolverWorkspaceRevision(refreshedWorkspace);
+      queuedSerializedWorkspaceRef.current = null;
+      queuedExpectedRevisionRef.current = null;
+      queuedMutationIdRef.current = null;
+      setWorkspace(refreshedWorkspace);
+      handledRequestedFileIdRef.current = null;
+      logCaseResolverWorkspaceEvent({
+        source: 'case_view',
+        action: 'requested_file_refresh_applied',
+        workspaceRevision: getCaseResolverWorkspaceRevision(refreshedWorkspace),
+      });
     })();
 
     return (): void => {

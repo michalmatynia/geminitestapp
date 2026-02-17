@@ -638,6 +638,14 @@ export function VectorCanvas({
   const canDraw = allowWithoutImage || Boolean(src);
   const selectToolActive = tool === 'select' && selectionEnabled;
 
+  useEffect(() => {
+    if (selectToolActive) return;
+    dragRef.current = null;
+    dragShapeRef.current = null;
+    setIsHoveringEditablePoint(false);
+    setIsDraggingEditablePoint(false);
+  }, [selectToolActive]);
+
   const resolveVisibleViewCropRect = useCallback((): VectorCanvasViewCropRect | null => {
     if (!src) return null;
     const container = containerRef.current;

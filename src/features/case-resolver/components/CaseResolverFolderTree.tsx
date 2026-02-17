@@ -60,8 +60,9 @@ import {
   type FolderCaseFileStats,
   type PaletteEntry,
 } from './CaseResolverFolderTree.helpers';
+import { normalizeFolderPaths } from '../settings';
 
-import type { CaseResolverFile, CaseResolverWorkspace } from '../types';
+import type { CaseResolverFile, CaseResolverFolderRecord, CaseResolverWorkspace } from '../types';
 
 export function CaseResolverFolderTree(): React.JSX.Element {
   const router = useRouter();
@@ -110,7 +111,9 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     const filesById = new Map<string, CaseResolverFile>(
       workspace.files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
     );
-    const contextFileId = selectedFileId ?? workspace.activeFileId;
+    const fallbackCaseId =
+      workspace.files.find((file: CaseResolverFile): boolean => file.fileType === 'case')?.id ?? null;
+    const contextFileId = selectedFileId ?? workspace.activeFileId ?? fallbackCaseId;
     if (!contextFileId) return workspace;
     const contextFile = filesById.get(contextFileId) ?? null;
     if (!contextFile) {
@@ -174,6 +177,20 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     const scopedAssets = workspace.assets.filter((asset): boolean =>
       Boolean(asset.sourceFileId && scopedFileIds.has(asset.sourceFileId))
     );
+    const scopedFolderRecords = (workspace.folderRecords ?? []).filter(
+      (record: CaseResolverFolderRecord): boolean =>
+        Boolean(record.ownerCaseId && scopedCaseIds.has(record.ownerCaseId))
+    );
+    const scopedFolders = normalizeFolderPaths([
+      ...scopedFolderRecords.map((record: CaseResolverFolderRecord): string => record.path),
+      ...scopedFiles.map((file: CaseResolverFile): string => file.folder),
+      ...scopedAssets.map((asset): string => asset.folder),
+    ]);
+    const scopedFolderTimestamps = Object.fromEntries(
+      Object.entries(workspace.folderTimestamps ?? {}).filter(
+        ([folderPath]: [string, unknown]): boolean => scopedFolders.includes(folderPath)
+      )
+    );
     const activeCandidates = [
       selectedFileId,
       workspace.activeFileId,
@@ -187,10 +204,9 @@ export function CaseResolverFolderTree(): React.JSX.Element {
 
     return {
       ...workspace,
-      // Preserve empty folders in scoped mode so newly created folders do not disappear
-      // before any document is moved into them.
-      folders: workspace.folders,
-      folderTimestamps: workspace.folderTimestamps,
+      folders: scopedFolders,
+      folderRecords: scopedFolderRecords,
+      folderTimestamps: scopedFolderTimestamps,
       files: scopedFiles,
       assets: scopedAssets,
       activeFileId: nextActiveFileId,
@@ -298,6 +314,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     if (!selectedNode?.parentId) return '';
     return fromCaseResolverFolderNodeId(selectedNode.parentId);
   }, [controller.nodes, controller.selectedNodeId, selectedFolderPath]);
+  const selectedFolderForFolderCreate = selectedFolderPath;
 
   const fileLockById = useMemo((): Map<string, boolean> => {
     return new Map(
@@ -432,7 +449,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               <Button
                 type='button'
                 onClick={(): void => {
-                  onCreateFolder(selectedFolderForCreate);
+                  onCreateFolder(selectedFolderForFolderCreate);
                 }}
                 size='sm'
                 variant='outline'

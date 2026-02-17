@@ -66,7 +66,7 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
   const [centerGuidesEnabled, setCenterGuidesEnabled] = useState(false);
   const [validatorEnabled, setValidatorEnabledState] = useState(true);
   const [formatterEnabled, setFormatterEnabledState] = useState(false);
-  const [canvasSelectionEnabled, setCanvasSelectionEnabled] = useState(true);
+  const [canvasSelectionEnabled, setCanvasSelectionEnabled] = useState(false);
   const [previewCanvasSize, setPreviewCanvasSize] = useState<PreviewCanvasSize>('regular');
   const [imageTransformMode, setImageTransformMode] = useState<ImageTransformMode>('none');
   const [canvasImageOffsetState, setCanvasImageOffsetState] = useState<CanvasImageOffset>(DEFAULT_CANVAS_IMAGE_OFFSET);

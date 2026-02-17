@@ -50,6 +50,7 @@ import {
   createCaseResolverFile,
   hasCaseResolverWorkspaceFilesArray,
   normalizeCaseResolverWorkspace,
+  normalizeFolderPaths,
   parseCaseResolverCategories,
   parseCaseResolverIdentifiers,
   parseCaseResolverSettings,
@@ -66,8 +67,10 @@ import {
 } from '../workspace-persistence';
 
 import type {
+  CaseResolverAssetFile,
   CaseResolverCategory,
   CaseResolverFile,
+  CaseResolverFolderRecord,
   CaseResolverIdentifier,
   CaseResolverTag,
   CaseResolverWorkspace,
@@ -1901,9 +1904,41 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
               updatedAt: now,
             };
           });
+        const remainingFileIds = new Set<string>(
+          nextFiles.map((file: CaseResolverFile): string => file.id),
+        );
+        const nextAssets = baseWorkspace.assets.filter(
+          (asset: CaseResolverAssetFile): boolean =>
+            !asset.sourceFileId || remainingFileIds.has(asset.sourceFileId),
+        );
+        const nextFolderRecords = (baseWorkspace.folderRecords ?? []).filter(
+          (record: CaseResolverFolderRecord): boolean =>
+            !record.ownerCaseId || !removedIds.has(record.ownerCaseId),
+        );
+        const nextFolders = normalizeFolderPaths([
+          ...nextFolderRecords.map((record: CaseResolverFolderRecord): string => record.path),
+          ...nextFiles.map((file: CaseResolverFile): string => file.folder),
+          ...nextAssets
+            .filter(
+              (asset: CaseResolverAssetFile): boolean =>
+                Boolean(asset.sourceFileId && remainingFileIds.has(asset.sourceFileId)),
+            )
+            .map((asset: CaseResolverAssetFile): string => asset.folder),
+        ]);
+        const nextFolderTimestamps = Object.fromEntries(
+          Object.entries(baseWorkspace.folderTimestamps).filter(
+            ([path]: [string, unknown]): boolean => nextFolders.includes(path),
+          ),
+        );
         const nextWorkspace: CaseResolverWorkspace = {
           ...baseWorkspace,
+          folders: nextFolders,
+          folderRecords: nextFolderRecords.filter((record: CaseResolverFolderRecord): boolean =>
+            nextFolders.includes(record.path),
+          ),
+          folderTimestamps: nextFolderTimestamps,
           files: nextFiles,
+          assets: nextAssets,
           activeFileId:
             baseWorkspace.activeFileId && removedIds.has(baseWorkspace.activeFileId)
               ? (

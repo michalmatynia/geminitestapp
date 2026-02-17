@@ -3,8 +3,12 @@
 import { 
   SaveIcon, 
   RefreshCwIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  SlidersHorizontalIcon,
+  ArchiveIcon,
+  ClipboardListIcon,
 } from 'lucide-react';
+import Link from 'next/link';
 import React, { useMemo, Suspense } from 'react';
 
 import type { DatabaseEngineOperationJobDto } from '@/shared/contracts/database';
@@ -16,6 +20,7 @@ import {
   SelectSimple, 
   Checkbox, 
   StatusBadge,
+  Badge,
   Tabs,
   TabsList,
   TabsTrigger,
@@ -129,13 +134,36 @@ function DatabaseEngineContent(): React.JSX.Element {
     return <div className='p-12 text-center text-sm text-gray-500 animate-pulse'>Initializing database engine console...</div>;
   }
 
+  const activeViewLabel =
+    workspaceView === 'engine'
+      ? 'Engine Settings'
+      : workspaceView === 'backups'
+        ? 'Backups'
+        : 'Operations Log';
+
   return (
     <div className='mx-auto w-full max-w-none py-10 space-y-6'>
       <SectionHeader
         title='Database Engine'
+        subtitle={
+          <nav aria-label='Breadcrumb' className='flex flex-wrap items-center gap-1 text-xs text-gray-400'>
+            <Link href='/admin' className='transition-colors hover:text-gray-200'>
+              Admin
+            </Link>
+            <span>/</span>
+            <Link href='/admin/databases/engine' className='transition-colors hover:text-gray-200'>
+              Databases
+            </Link>
+            <span>/</span>
+            <span className='text-gray-300'>{activeViewLabel}</span>
+          </nav>
+        }
         description='Control center for data provider routing, synchronization, and fallback policies.'
         actions={
           <div className='flex gap-2'>
+            <Badge variant='processing' className='hidden h-8 items-center px-3 text-[11px] uppercase tracking-wide md:inline-flex'>
+              {activeViewLabel}
+            </Badge>
             <Button variant='outline' size='xs' className='h-8' onClick={refetch} disabled={isFetching}>
               <RefreshCwIcon className={`size-3.5 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
               Refresh
@@ -149,10 +177,19 @@ function DatabaseEngineContent(): React.JSX.Element {
       />
 
       <Tabs value={workspaceView} onValueChange={(v) => setView(v as DatabaseEngineWorkspaceView)} className='w-full'>
-        <TabsList className='bg-card/40 border border-border/60 p-1 h-10'>
-          <TabsTrigger value='engine' className='px-6'>Engine Settings</TabsTrigger>
-          <TabsTrigger value='backups' className='px-6'>Backups</TabsTrigger>
-          <TabsTrigger value='operations' className='px-6'>Operations Log</TabsTrigger>
+        <TabsList className='grid h-auto w-full grid-cols-1 gap-2 border border-border/60 bg-card/30 p-2 md:grid-cols-3'>
+          <TabsTrigger value='engine' className='h-12 justify-start gap-2 px-3 text-left'>
+            <SlidersHorizontalIcon className='size-4' />
+            <span className='text-xs font-semibold uppercase tracking-wide'>Engine Settings</span>
+          </TabsTrigger>
+          <TabsTrigger value='backups' className='h-12 justify-start gap-2 px-3 text-left'>
+            <ArchiveIcon className='size-4' />
+            <span className='text-xs font-semibold uppercase tracking-wide'>Backups</span>
+          </TabsTrigger>
+          <TabsTrigger value='operations' className='h-12 justify-start gap-2 px-3 text-left'>
+            <ClipboardListIcon className='size-4' />
+            <span className='text-xs font-semibold uppercase tracking-wide'>Operations Log</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value='engine' className='space-y-6 mt-6'>

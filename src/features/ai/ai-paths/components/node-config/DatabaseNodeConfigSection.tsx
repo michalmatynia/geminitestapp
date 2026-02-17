@@ -2,6 +2,12 @@
 
 import React from 'react';
 
+import {
+  getProviderActionCategoryOptions,
+  getProviderActionOptions,
+  isProviderActionCategorySupported,
+  resolveProviderAction,
+} from '@/features/ai/ai-paths/lib/core/utils/provider-actions';
 import { 
   Tabs, 
   TabsContent, 
@@ -28,6 +34,32 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode } = state;
 
   if (!selectedNode || selectedNode.type !== 'database') return null;
+
+  const actionCategoryOptions = React.useMemo(
+    () => getProviderActionCategoryOptions(state.resolvedProvider),
+    [state.resolvedProvider]
+  );
+  const resolvedActionCategory = React.useMemo(
+    () =>
+      isProviderActionCategorySupported(state.resolvedProvider, state.actionCategory)
+        ? state.actionCategory
+        : (actionCategoryOptions[0]?.value ?? 'read'),
+    [actionCategoryOptions, state.actionCategory, state.resolvedProvider]
+  );
+  const actionOptions = React.useMemo(
+    () => getProviderActionOptions(state.resolvedProvider, resolvedActionCategory),
+    [resolvedActionCategory, state.resolvedProvider]
+  );
+  const resolvedAction = React.useMemo(
+    () =>
+      resolveProviderAction(
+        state.resolvedProvider,
+        resolvedActionCategory,
+        state.action,
+        state.queryConfig.single ?? false
+      ),
+    [resolvedActionCategory, state.action, state.queryConfig.single, state.resolvedProvider]
+  );
 
   const constructorValue: DatabaseConstructorContextValue = {
     pendingAiQuery: state.pendingAiQuery,
@@ -67,10 +99,10 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
 
   const queryInputControlsValue: DatabaseQueryInputControlsContextValue = {
     provider: state.resolvedProvider,
-    actionCategory: state.actionCategory,
-    action: state.action,
-    actionCategoryOptions: [], 
-    actionOptions: [],
+    actionCategory: resolvedActionCategory,
+    action: resolvedAction,
+    actionCategoryOptions,
+    actionOptions,
     queryTemplateValue: state.queryTemplateValue,
     queryPlaceholder: '',
     showFilterInput: state.isUpdateAction,
@@ -85,7 +117,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     testQueryLoading: state.testQueryLoading,
     queryTemplateRef: state.queryTemplateRef,
     onActionCategoryChange: state.handleActionCategoryChange,
-    onActionChange: (val) => state.applyActionConfig(state.actionCategory, val),
+    onActionChange: (val) => state.applyActionConfig(resolvedActionCategory, val),
     onFormatClick: () => {},
     onFormatContextMenu: () => {},
     onToggleValidator: () => state.setQueryValidatorEnabled(!state.queryValidatorEnabled),

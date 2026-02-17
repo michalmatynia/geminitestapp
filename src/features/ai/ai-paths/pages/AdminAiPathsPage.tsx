@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 
-import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import { Tabs, TabsList, TabsTrigger } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -11,7 +10,6 @@ import { AiPathsSettings } from '../components/AiPathsSettings';
 
 
 export function AdminAiPathsPage(): React.JSX.Element {
-  const { isMenuCollapsed } = useAdminLayout();
   const [activeTab, setActiveTab] = useState<'canvas' | 'paths' | 'docs'>(
     'canvas'
   );
@@ -25,13 +23,11 @@ export function AdminAiPathsPage(): React.JSX.Element {
 
   const wrapperClass = isFocusMode
     ? 'h-[calc(100%+2rem)] w-[calc(100%+2rem)] -m-4'
-    : isMenuCollapsed
-      ? 'w-full py-6'
-      : 'container mx-auto py-10';
+    : 'mx-auto box-border flex h-[calc((100dvh-4rem)*1.19)] w-full min-h-0 min-w-0 max-w-none flex-col gap-2 overflow-hidden px-0.5 pb-0 pt-2';
 
   return (
     <div className={wrapperClass}>
-      <div className={`mb-4 flex items-center justify-between gap-4 ${isFocusMode ? 'hidden' : ''}`}>
+      <div className={`mb-2 flex items-center justify-between gap-4 px-1 ${isFocusMode ? 'hidden' : ''}`}>
         {mounted ? (
           <Tabs
             value={activeTab}
@@ -51,10 +47,10 @@ export function AdminAiPathsPage(): React.JSX.Element {
         <div id='ai-paths-name' className='text-sm text-gray-300' />
       </div>
       <div className={cn(
-        'overflow-hidden rounded-lg border border-border/60 bg-card/40 transition-all duration-300 ease-in-out',
-        isFocusMode ? 'h-full p-0 border-0 rounded-none' : 'p-6'
+        'min-h-0 flex-1 overflow-x-hidden overflow-y-auto rounded-lg border border-border/60 bg-card/40 transition-all duration-300 ease-in-out',
+        isFocusMode ? 'h-full p-0 border-0 rounded-none' : 'p-2'
       )}>
-        <div className={`mb-4 flex items-center ${isFocusMode ? 'hidden' : ''}`}>
+        <div className={`mb-2 flex items-center ${isFocusMode ? 'hidden' : ''}`}>
           <div id='ai-paths-actions' className='flex w-full items-center' />
         </div>
         <AiPathsSettings

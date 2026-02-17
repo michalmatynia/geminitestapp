@@ -214,12 +214,18 @@ export type CaseResolverFolderTimestamp = {
   updatedAt: string;
 };
 
+export type CaseResolverFolderRecord = {
+  path: string;
+  ownerCaseId: string | null;
+};
+
 export type CaseResolverWorkspace = {
   version: 2;
   workspaceRevision: number;
   lastMutationId: string | null;
   lastMutationAt: string | null;
   folders: string[];
+  folderRecords?: CaseResolverFolderRecord[];
   folderTimestamps: Record<string, CaseResolverFolderTimestamp>;
   files: CaseResolverFile[];
   assets: CaseResolverAssetFile[];

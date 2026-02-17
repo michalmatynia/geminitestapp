@@ -237,6 +237,74 @@ describe('case-resolver settings', () => {
     expect(workspace.files[0]?.graph.pdfExtractionPresetId).toBe('plain_text');
   });
 
+  it('retains owner-scoped folder records for case-isolated empty folders', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        workspaceRevision: 1,
+        lastMutationId: null,
+        lastMutationAt: null,
+        folders: ['Shared'],
+        folderRecords: [
+          { path: 'Shared', ownerCaseId: 'case-a' },
+          { path: 'Shared', ownerCaseId: 'case-b' },
+          { path: 'Shared', ownerCaseId: 'missing-case' },
+        ],
+        files: [
+          {
+            id: 'case-a',
+            fileType: 'case',
+            name: 'Case A',
+            folder: '',
+            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+          },
+          {
+            id: 'case-b',
+            fileType: 'case',
+            name: 'Case B',
+            folder: '',
+            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+          },
+        ],
+        assets: [],
+        activeFileId: 'case-a',
+      })
+    );
+
+    expect(workspace.folders).toEqual(['Shared']);
+    expect(workspace.folderRecords).toEqual([
+      { path: 'Shared', ownerCaseId: 'case-a' },
+      { path: 'Shared', ownerCaseId: 'case-b' },
+    ]);
+  });
+
+  it('assigns legacy folders to the only case when owner is missing', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        workspaceRevision: 1,
+        lastMutationId: null,
+        lastMutationAt: null,
+        folders: ['Legacy Folder'],
+        files: [
+          {
+            id: 'case-only',
+            fileType: 'case',
+            name: 'Case Only',
+            folder: '',
+            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+          },
+        ],
+        assets: [],
+        activeFileId: 'case-only',
+      })
+    );
+
+    expect(workspace.folderRecords).toEqual([
+      { path: 'Legacy_Folder', ownerCaseId: 'case-only' },
+    ]);
+  });
+
   it('normalizes uploaded assets and infers asset kind', () => {
     const raw = JSON.stringify({
       version: 2,

@@ -703,6 +703,42 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
       description:
         'Optional AI prompt string used by some presets/helpers (does not call a model by itself).',
     },
+    {
+      path: 'database.parameterInferenceGuard.enabled',
+      description:
+        'When true, sanitizes inferred `parameters` updates against parameter definitions before write.',
+      defaultValue: 'false',
+    },
+    {
+      path: 'database.parameterInferenceGuard.targetPath',
+      description:
+        'Update field to sanitize (default: parameters).',
+      defaultValue: 'parameters',
+    },
+    {
+      path: 'database.parameterInferenceGuard.definitionsPort',
+      description:
+        'Input port carrying parameter definitions used for validation (default: result).',
+      defaultValue: 'result',
+    },
+    {
+      path: 'database.parameterInferenceGuard.definitionsPath',
+      description:
+        'Optional JSON path inside definitionsPort payload to locate definition rows.',
+      defaultValue: '""',
+    },
+    {
+      path: 'database.parameterInferenceGuard.enforceOptionLabels',
+      description:
+        'When true, radio/select/dropdown values must match optionLabels from definitions.',
+      defaultValue: 'true',
+    },
+    {
+      path: 'database.parameterInferenceGuard.allowUnknownParameterIds',
+      description:
+        'When true, keeps inferred parameterIds missing from definitions.',
+      defaultValue: 'false',
+    },
     ...COMMON_RUNTIME_FIELDS,
   ],
   db_schema: [

@@ -73,9 +73,8 @@ export const ProductListPanel = memo(function ProductListPanel() {
 
   return (
     <ListPanel
-      header={<ProductListHeader />}
+      header={<ProductListHeader filtersContent={<ProductFilters />} />}
       alerts={alerts}
-      filters={<ProductFilters />}
       actions={
         <ProductSelectionActions />
       }

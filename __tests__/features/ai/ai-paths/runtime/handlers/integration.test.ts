@@ -163,6 +163,196 @@ describe('Integration Handlers', () => {
       );
       expect(result['result']).toEqual({ id: 'p-2', name_en: 'Product 2' });
     });
+
+    it('falls back to product parameter IDs when catalogId lookup returns no definitions', async () => {
+      vi.mocked(api.dbApi.query)
+        .mockResolvedValueOnce({
+          ok: true,
+          data: { items: [], count: 0 },
+        } as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          data: {
+            items: [
+              { id: 'p_color', selectorType: 'select', optionLabels: ['Blue'] },
+              { id: 'p_material', selectorType: 'text', optionLabels: [] },
+            ],
+            count: 2,
+          },
+        } as any);
+
+      const ctx = createMockContext({
+        node: {
+          id: 'n-fallback',
+          type: 'database',
+          config: {
+            database: {
+              operation: 'query',
+              query: {
+                provider: 'mongodb',
+                collection: 'product_parameters',
+                mode: 'custom',
+                queryTemplate: '{"catalogId":"{{context.entity.catalogId}}"}',
+                single: false,
+                limit: 200,
+              },
+            },
+          },
+        } as any,
+        nodeInputs: {
+          context: {
+            entity: {
+              catalogId: '',
+              parameters: [
+                { parameterId: 'p_color', value: '' },
+                { parameterId: 'p_material', value: '' },
+              ],
+            },
+          },
+        },
+      });
+
+      const result = await handleDatabase(ctx);
+
+      expect(api.dbApi.query).toHaveBeenCalledTimes(2);
+      expect(api.dbApi.query).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          query: {
+            id: { $in: ['p_color', 'p_material'] },
+          },
+        })
+      );
+      expect(result['result']).toEqual([
+        { id: 'p_color', selectorType: 'select', optionLabels: ['Blue'] },
+        { id: 'p_material', selectorType: 'text', optionLabels: [] },
+      ]);
+      expect((result['bundle'] as Record<string, unknown>)['fallback']).toEqual(
+        expect.objectContaining({
+          used: true,
+          by: 'product_parameter_ids',
+        })
+      );
+    });
+
+    it('blocks parameter updates when guard has no resolved definitions', async () => {
+      const ctx = createMockContext({
+        node: {
+          id: 'n-guard-block',
+          type: 'database',
+          config: {
+            database: {
+              operation: 'update',
+              useMongoActions: true,
+              actionCategory: 'update',
+              action: 'updateOne',
+              entityType: 'product',
+              mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
+              query: {
+                provider: 'mongodb',
+                collection: 'products',
+                mode: 'custom',
+                queryTemplate: '{"id":"{{entityId}}"}',
+                single: true,
+              },
+              parameterInferenceGuard: {
+                enabled: true,
+                targetPath: 'parameters',
+                definitionsPort: 'result',
+                allowUnknownParameterIds: false,
+              },
+            },
+          },
+        } as any,
+        nodeInputs: {
+          entityId: 'product-1',
+          value: [{ parameterId: 'p_color', value: 'Blue' }],
+          result: [],
+        },
+      });
+
+      await expect(handleDatabase(ctx)).rejects.toThrow(
+        'No parameter definitions resolved for parameter inference.'
+      );
+      expect(api.entityApi.update).not.toHaveBeenCalled();
+    });
+
+    it('merges inferred parameters with existing values and preserves non-empty entries', async () => {
+      vi.mocked(api.entityApi.update).mockResolvedValue({
+        ok: true,
+        data: { modifiedCount: 1 },
+      } as any);
+
+      const ctx = createMockContext({
+        node: {
+          id: 'n-guard-merge',
+          type: 'database',
+          config: {
+            database: {
+              operation: 'update',
+              useMongoActions: true,
+              actionCategory: 'update',
+              action: 'updateOne',
+              entityType: 'product',
+              mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
+              query: {
+                provider: 'mongodb',
+                collection: 'products',
+                mode: 'custom',
+                queryTemplate: '{"id":"{{entityId}}"}',
+                single: true,
+              },
+              parameterInferenceGuard: {
+                enabled: true,
+                targetPath: 'parameters',
+                definitionsPort: 'result',
+                allowUnknownParameterIds: false,
+              },
+            },
+          },
+        } as any,
+        nodeInputs: {
+          entityId: 'product-1',
+          context: {
+            entity: {
+              parameters: [
+                { parameterId: 'p_material', value: 'Steel' },
+                { parameterId: 'p_color', value: '' },
+              ],
+            },
+          },
+          value: [
+            { parameterId: 'p_material', value: 'Metal' },
+            { parameterId: 'p_color', value: 'Blue' },
+          ],
+          result: [
+            { id: 'p_material', selectorType: 'text', optionLabels: [] },
+            { id: 'p_color', selectorType: 'text', optionLabels: [] },
+          ],
+        },
+      });
+
+      const result = await handleDatabase(ctx);
+
+      expect(api.entityApi.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          updates: expect.objectContaining({
+            parameters: [
+              { parameterId: 'p_material', value: 'Steel' },
+              { parameterId: 'p_color', value: 'Blue' },
+            ],
+          }),
+        })
+      );
+      expect(
+        ((result['debugPayload'] as Record<string, unknown>)?.[
+          'parameterInferenceGuard'
+        ] as Record<string, unknown>)?.['written']
+      ).toEqual(
+        expect.objectContaining({
+          targetPath: 'parameters',
+        })
+      );
+    });
   });
 
   describe('handleHttp', () => {

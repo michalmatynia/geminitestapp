@@ -2,7 +2,7 @@
 
 import { Copy } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
 
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import {
@@ -51,22 +51,6 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   const { setPreviewCanvasSize } = useUiActions();
   const { setIsMenuHidden } = useAdminLayout();
   const hideTopBar = activeTab === 'studio' && isFocusMode;
-  const activeProjectNameLabel = useMemo((): string => {
-    const normalizedProjectId = projectId.trim();
-    if (!normalizedProjectId) return 'No active project';
-    const rawProjects: unknown = projectsQuery.data;
-    const projectList: unknown[] = Array.isArray(rawProjects) ? (rawProjects as unknown[]) : [];
-    const activeProject = projectList.find((candidate): boolean => {
-      if (!candidate || typeof candidate !== 'object') return false;
-      const projectRecord = candidate as Record<string, unknown>;
-      return projectRecord['id'] === normalizedProjectId;
-    });
-    if (!activeProject || typeof activeProject !== 'object') return normalizedProjectId;
-    const activeProjectRecord = activeProject as Record<string, unknown>;
-    const activeProjectNameRaw = activeProjectRecord['name'];
-    const activeProjectName = typeof activeProjectNameRaw === 'string' ? activeProjectNameRaw.trim() : '';
-    return activeProjectName || normalizedProjectId;
-  }, [projectId, projectsQuery.data]);
 
   useEffect(() => {
     const rawTab = searchParams?.get('tab');
@@ -172,12 +156,6 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                 </TabsList>
                 <div className='ml-auto flex min-w-0 flex-col items-end gap-1 text-right'>
                   <div className='flex min-w-0 items-center justify-end gap-2'>
-                    <span
-                      className='w-[280px] shrink-0 truncate text-left text-[13px] text-muted-foreground'
-                      title={activeProjectNameLabel}
-                    >
-                      {activeProjectNameLabel}
-                    </span>
                     {activeTab === 'studio' ? (
                       <>
                         <div className='flex items-center gap-2'>

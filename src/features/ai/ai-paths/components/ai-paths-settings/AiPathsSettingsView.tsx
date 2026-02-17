@@ -277,9 +277,24 @@ export function AiPathsSettingsView(): React.JSX.Element {
           {!isFocusMode && typeof document !== 'undefined' && renderActions
             ? createPortal(
               renderActions(
-                <div className='grid w-full grid-cols-[1fr_auto_1fr] items-start gap-3'>
+                <div className='flex w-full items-start'>
                   <div className='flex flex-col items-start gap-2'>
                     <div className='flex flex-wrap items-center gap-3'>
+                      <Button
+                        className='rounded-md border text-sm text-white hover:bg-muted/60'
+                        onClick={() => {
+                          if (nodeConfigDirty) {
+                            toast(
+                              'Unsaved node-config dialog changes are not included. Click "Update Node" first, then "Save Path".',
+                              { variant: 'info' },
+                            );
+                          }
+                          void savePathConfig();
+                        }}
+                        disabled={saving}
+                      >
+                        {saving ? 'Saving...' : 'Save Path'}
+                      </Button>
                       <Button
                         type='button'
                         className='rounded-md border border-border text-sm text-gray-300 hover:bg-card/60'
@@ -303,8 +318,6 @@ export function AiPathsSettingsView(): React.JSX.Element {
                       >
                           Clear Connector Data
                       </Button>
-                    </div>
-                    <div className='flex flex-wrap items-center gap-3'>
                       <Button
                         type='button'
                         className={`rounded-md border text-sm ${isPathActive ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10' : 'border-rose-500/40 text-rose-200 hover:bg-rose-500/10'}`}
@@ -378,24 +391,6 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         </Button>
                       </div>
                     )}
-                  </div>
-                  <div />
-                  <div className='flex flex-col items-end gap-2'>
-                    <Button
-                      className='rounded-md border text-sm text-white hover:bg-muted/60'
-                      onClick={() => {
-                        if (nodeConfigDirty) {
-                          toast(
-                            'Unsaved node-config dialog changes are not included. Click "Update Node" first, then "Save Path".',
-                            { variant: 'info' },
-                          );
-                        }
-                        void savePathConfig();
-                      }}
-                      disabled={saving}
-                    >
-                      {saving ? 'Saving...' : 'Save Path'}
-                    </Button>
                   </div>
                 </div>,
               ),

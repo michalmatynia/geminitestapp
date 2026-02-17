@@ -24,7 +24,7 @@ import {
 import { ShapeListPanel } from './ShapeListPanel';
 import { SlotTree } from './SlotTree';
 import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
-import { useProjectsState } from '../context/ProjectsContext';
+import { useProjectsActions, useProjectsState } from '../context/ProjectsContext';
 import { usePromptState } from '../context/PromptContext';
 import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 import { useUiState } from '../context/UiContext';
@@ -42,6 +42,7 @@ const REVEAL_IN_TREE_EVENT = 'image-studio:reveal-in-tree';
 
 export function LeftSidebar(): React.JSX.Element {
   const { projectId, projectsQuery } = useProjectsState();
+  const { handleRenameProject } = useProjectsActions();
   const { isFocusMode } = useUiState();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
@@ -76,10 +77,13 @@ export function LeftSidebar(): React.JSX.Element {
   const { toast } = useToast();
   const [revealRequest, setRevealRequest] = useState<{ slotId: string; nonce: number } | null>(null);
   const [projectSaveBusy, setProjectSaveBusy] = useState(false);
+  const [projectRenameEditing, setProjectRenameEditing] = useState(false);
+  const [projectNameDraft, setProjectNameDraft] = useState('');
   const [loadToCanvasBusy, setLoadToCanvasBusy] = useState(false);
   const [duplicateCardBusy, setDuplicateCardBusy] = useState(false);
   const loadToCanvasBusyRef = useRef(false);
   const singleSlotManagerRef = useRef<ImageStudioSingleSlotManagerHandle | null>(null);
+  const projectNameInputRef = useRef<HTMLInputElement | null>(null);
   const productImagesExternalBaseUrl =
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
     DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
@@ -106,6 +110,7 @@ export function LeftSidebar(): React.JSX.Element {
     const activeProjectName = typeof activeProjectNameRaw === 'string' ? activeProjectNameRaw.trim() : '';
     return activeProjectName || normalizedProjectId;
   }, [projectId, projectsQuery.data]);
+  const visibleProjectNameFieldValue = projectRenameEditing ? projectNameDraft : activeProjectNameFieldValue;
 
   const cloneSettingValue = <T,>(value: T): T => {
     const seen = new WeakSet<object>();
@@ -380,9 +385,72 @@ export function LeftSidebar(): React.JSX.Element {
       });
   };
 
+  const handleBeginProjectRename = useCallback((): void => {
+    const normalizedProjectId = projectId.trim();
+    if (!normalizedProjectId) return;
+    setProjectNameDraft(activeProjectNameFieldValue || normalizedProjectId);
+    setProjectRenameEditing(true);
+  }, [activeProjectNameFieldValue, projectId]);
+
+  const handleCancelProjectRename = useCallback((): void => {
+    setProjectRenameEditing(false);
+    setProjectNameDraft(activeProjectNameFieldValue);
+  }, [activeProjectNameFieldValue]);
+
+  const handleCommitProjectRename = useCallback((): void => {
+    if (!projectRenameEditing) return;
+    const sourceProjectId = projectId.trim();
+    if (!sourceProjectId) {
+      setProjectRenameEditing(false);
+      return;
+    }
+    const nextProjectId = projectNameDraft.trim();
+    if (!nextProjectId) {
+      toast('Project name cannot be empty.', { variant: 'info' });
+      setProjectNameDraft(activeProjectNameFieldValue || sourceProjectId);
+      setProjectRenameEditing(false);
+      return;
+    }
+    if (nextProjectId === sourceProjectId) {
+      setProjectRenameEditing(false);
+      return;
+    }
+    void handleRenameProject(sourceProjectId, nextProjectId)
+      .then(() => {
+        setProjectRenameEditing(false);
+      })
+      .catch(() => {
+        setProjectRenameEditing(false);
+        setProjectNameDraft(activeProjectNameFieldValue || sourceProjectId);
+      });
+  }, [
+    activeProjectNameFieldValue,
+    handleRenameProject,
+    projectId,
+    projectNameDraft,
+    projectRenameEditing,
+    toast,
+  ]);
+
   useEffect(() => {
     setRevealRequest(null);
   }, [projectId]);
+
+  useEffect(() => {
+    if (projectRenameEditing) return;
+    setProjectNameDraft(activeProjectNameFieldValue);
+  }, [activeProjectNameFieldValue, projectRenameEditing]);
+
+  useEffect(() => {
+    if (!projectRenameEditing || typeof window === 'undefined') return;
+    const raf = window.requestAnimationFrame(() => {
+      projectNameInputRef.current?.focus();
+      projectNameInputRef.current?.select();
+    });
+    return (): void => {
+      window.cancelAnimationFrame(raf);
+    };
+  }, [projectRenameEditing]);
 
   useEffect((): (() => void) => {
     if (typeof window === 'undefined') return () => {};
@@ -423,12 +491,30 @@ export function LeftSidebar(): React.JSX.Element {
             {projectSaveBusy ? 'Saving...' : 'Save Project'}
           </Button>
           <Input
+            ref={projectNameInputRef}
             size='sm'
-            value={activeProjectNameFieldValue}
-            readOnly
+            value={visibleProjectNameFieldValue}
+            readOnly={!projectRenameEditing}
             placeholder='No active project'
-            title={activeProjectNameFieldValue || 'No active project'}
+            title={visibleProjectNameFieldValue || 'No active project'}
             className='h-7 min-w-0 flex-1 text-[11px]'
+            onDoubleClick={handleBeginProjectRename}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              if (!projectRenameEditing) return;
+              setProjectNameDraft(event.target.value);
+            }}
+            onBlur={handleCommitProjectRename}
+            onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                handleCommitProjectRename();
+                return;
+              }
+              if (event.key === 'Escape') {
+                event.preventDefault();
+                handleCancelProjectRename();
+              }
+            }}
             data-preserve-slot-selection='true'
             aria-label='Active project name'
           />

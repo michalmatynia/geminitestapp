@@ -41,10 +41,15 @@ const PARAMETER_INFERENCE_PATH_ID = 'path_syr8f4';
 const PARAMETER_INFERENCE_PATH_NAME = 'Parameter Inference';
 const PARAMETER_INFERENCE_TRIGGER_BUTTON_ID = '0ef40981-7ac6-416e-9205-7200289f851c';
 const PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME = 'Infer Parameters';
+const LEGACY_PARAMETER_INFERENCE_PATH_NAME = 'Category Inference';
 
 type TriggerButtonSettingRecord = Record<string, unknown> & {
   id: string;
 };
+
+const isLegacyParameterInferencePathName = (value: unknown): boolean =>
+  typeof value === 'string' &&
+  value.trim().toLowerCase() === LEGACY_PARAMETER_INFERENCE_PATH_NAME.toLowerCase();
 
 const parsePositiveInt = (value: string | undefined, fallback: number): number => {
   if (!value) return fallback;
@@ -519,7 +524,7 @@ const parseTriggerButtons = (
 const buildParameterInferencePathConfigValue = (timestamp: string): string =>
   JSON.stringify({
     id: PARAMETER_INFERENCE_PATH_ID,
-    version: 1,
+    version: 2,
     name: PARAMETER_INFERENCE_PATH_NAME,
     description:
       'Infer product parameter values from name and images, then update product parameters.',
@@ -547,23 +552,7 @@ const buildParameterInferencePathConfigValue = (timestamp: string): string =>
           },
         },
         id: 'node-trigger-params',
-        position: { x: 16, y: 560 },
-      },
-      {
-        type: 'simulation',
-        title: 'Simulation: Entity Modal',
-        description: 'Simulate a modal action by Entity ID.',
-        inputs: ['trigger'],
-        outputs: ['context', 'entityId', 'entityType', 'productId'],
-        id: 'node-sim-params',
-        position: { x: 16, y: 280 },
-        config: {
-          simulation: {
-            productId: 'cmlfnkx87001dggc9lji1wiw3',
-            entityType: 'products',
-            entityId: 'cmlfnkx87001dggc9lji1wiw3',
-          },
-        },
+        position: { x: 24, y: 480 },
       },
       {
         type: 'parser',
@@ -770,6 +759,14 @@ const buildParameterInferencePathConfigValue = (timestamp: string): string =>
             trimStrings: false,
             aiPrompt: '',
             validationRuleIds: [],
+            parameterInferenceGuard: {
+              enabled: true,
+              targetPath: 'parameters',
+              definitionsPort: 'result',
+              definitionsPath: '',
+              enforceOptionLabels: true,
+              allowUnknownParameterIds: false,
+            },
           },
           runtime: { waitForInputs: true },
         },
@@ -779,86 +776,79 @@ const buildParameterInferencePathConfigValue = (timestamp: string): string =>
       {
         id: 'edge-params-01',
         from: 'node-trigger-params',
-        to: 'node-sim-params',
-        fromPort: 'trigger',
-        toPort: 'trigger',
-      },
-      {
-        id: 'edge-params-02',
-        from: 'node-sim-params',
-        to: 'node-trigger-params',
-        fromPort: 'context',
-        toPort: 'context',
-      },
-      {
-        id: 'edge-params-03',
-        from: 'node-trigger-params',
         to: 'node-parser-params',
         fromPort: 'context',
         toPort: 'context',
       },
       {
-        id: 'edge-params-04',
+        id: 'edge-params-02',
         from: 'node-trigger-params',
         to: 'node-query-params',
         fromPort: 'context',
         toPort: 'context',
       },
       {
-        id: 'edge-params-05',
+        id: 'edge-params-03',
         from: 'node-parser-params',
         to: 'node-prompt-params',
         fromPort: 'bundle',
         toPort: 'bundle',
       },
       {
-        id: 'edge-params-06',
+        id: 'edge-params-04',
         from: 'node-query-params',
         to: 'node-prompt-params',
         fromPort: 'result',
         toPort: 'result',
       },
       {
-        id: 'edge-params-07',
+        id: 'edge-params-05',
         from: 'node-prompt-params',
         to: 'node-model-params',
         fromPort: 'prompt',
         toPort: 'prompt',
       },
       {
-        id: 'edge-params-08',
+        id: 'edge-params-06',
         from: 'node-prompt-params',
         to: 'node-model-params',
         fromPort: 'images',
         toPort: 'images',
       },
       {
-        id: 'edge-params-09',
+        id: 'edge-params-07',
         from: 'node-model-params',
         to: 'node-regex-params',
         fromPort: 'result',
         toPort: 'value',
       },
       {
-        id: 'edge-params-10',
+        id: 'edge-params-08',
         from: 'node-regex-params',
         to: 'node-update-params',
         fromPort: 'value',
         toPort: 'value',
       },
       {
-        id: 'edge-params-11',
+        id: 'edge-params-09',
         from: 'node-trigger-params',
         to: 'node-update-params',
         fromPort: 'entityId',
         toPort: 'entityId',
       },
       {
-        id: 'edge-params-12',
+        id: 'edge-params-10',
         from: 'node-trigger-params',
         to: 'node-update-params',
         fromPort: 'entityType',
         toPort: 'entityType',
+      },
+      {
+        id: 'edge-params-11',
+        from: 'node-query-params',
+        to: 'node-update-params',
+        fromPort: 'result',
+        toPort: 'result',
       },
     ],
     updatedAt: timestamp,
@@ -867,6 +857,84 @@ const buildParameterInferencePathConfigValue = (timestamp: string): string =>
     parserSamples: {},
     updaterSamples: {},
   });
+
+const needsParameterInferenceConfigUpgrade = (
+  raw: string | undefined
+): boolean => {
+  if (!raw) return true;
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    if (!parsed || typeof parsed !== 'object') return true;
+
+    const currentName = parsed['name'];
+    if (isLegacyParameterInferencePathName(currentName)) return true;
+
+    const nodes = Array.isArray(parsed['nodes'])
+      ? (parsed['nodes'] as Array<Record<string, unknown>>)
+      : [];
+    if (nodes.some((node) => node?.['id'] === 'node-sim-params')) return true;
+
+    const triggerNode = nodes.find(
+      (node) => node?.['id'] === 'node-trigger-params'
+    );
+    const triggerEvent =
+      triggerNode &&
+      typeof triggerNode === 'object' &&
+      triggerNode['config'] &&
+      typeof triggerNode['config'] === 'object' &&
+      (triggerNode['config'] as Record<string, unknown>)['trigger'] &&
+      typeof (triggerNode['config'] as Record<string, unknown>)['trigger'] ===
+        'object'
+        ? (
+          (triggerNode['config'] as Record<string, unknown>)[
+            'trigger'
+          ] as Record<string, unknown>
+        )['event']
+        : null;
+    if (triggerEvent !== PARAMETER_INFERENCE_TRIGGER_BUTTON_ID) return true;
+
+    const updateNode = nodes.find(
+      (node) => node?.['id'] === 'node-update-params'
+    );
+    const updateDatabase =
+      updateNode &&
+      typeof updateNode === 'object' &&
+      updateNode['config'] &&
+      typeof updateNode['config'] === 'object' &&
+      (updateNode['config'] as Record<string, unknown>)['database'] &&
+      typeof (updateNode['config'] as Record<string, unknown>)['database'] ===
+        'object'
+        ? ((updateNode['config'] as Record<string, unknown>)[
+          'database'
+        ] as Record<string, unknown>)
+        : null;
+    const guardEnabled =
+      updateDatabase &&
+      typeof updateDatabase['parameterInferenceGuard'] === 'object' &&
+      updateDatabase['parameterInferenceGuard'] !== null
+        ? (
+          updateDatabase['parameterInferenceGuard'] as Record<string, unknown>
+        )['enabled'] === true
+        : false;
+    if (!guardEnabled) return true;
+
+    const edges = Array.isArray(parsed['edges'])
+      ? (parsed['edges'] as Array<Record<string, unknown>>)
+      : [];
+    const hasDefinitionsEdge = edges.some((edge) => {
+      if (!edge || typeof edge !== 'object') return false;
+      return (
+        edge['from'] === 'node-query-params' &&
+        edge['to'] === 'node-update-params' &&
+        edge['fromPort'] === 'result' &&
+        edge['toPort'] === 'result'
+      );
+    });
+    return !hasDefinitionsEdge;
+  } catch {
+    return true;
+  }
+};
 
 const ensureParameterInferenceDefaults = async (
   records: AiPathsSettingRecord[]
@@ -879,17 +947,43 @@ const ensureParameterInferenceDefaults = async (
   const pathConfigKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${PARAMETER_INFERENCE_PATH_ID}`;
 
   let pathConfigRaw = map.get(pathConfigKey);
+
+  if (pathConfigRaw) {
+    try {
+      const parsedPathConfig = JSON.parse(pathConfigRaw) as Record<string, unknown>;
+      if (parsedPathConfig && typeof parsedPathConfig === 'object') {
+        const currentName = parsedPathConfig['name'];
+        if (isLegacyParameterInferencePathName(currentName)) {
+          const normalizedPathConfig = {
+            ...parsedPathConfig,
+            id: PARAMETER_INFERENCE_PATH_ID,
+            name: PARAMETER_INFERENCE_PATH_NAME,
+            updatedAt: now,
+          };
+          pathConfigRaw = JSON.stringify(normalizedPathConfig);
+          map.set(pathConfigKey, pathConfigRaw);
+          updates.push({ key: pathConfigKey, value: pathConfigRaw });
+        }
+      }
+    } catch {
+      // Invalid JSON will be replaced by canonical seeded config below.
+    }
+  }
+
   const parsedConfigMeta = pathConfigRaw
     ? parsePathConfigMeta(PARAMETER_INFERENCE_PATH_ID, pathConfigRaw)
     : null;
-  if (!pathConfigRaw || !parsedConfigMeta) {
+  if (!pathConfigRaw || !parsedConfigMeta || needsParameterInferenceConfigUpgrade(pathConfigRaw)) {
     pathConfigRaw = buildParameterInferencePathConfigValue(now);
     map.set(pathConfigKey, pathConfigRaw);
     updates.push({ key: pathConfigKey, value: pathConfigRaw });
   }
 
   const currentMetas = parsePathMetas(map.get(AI_PATHS_INDEX_KEY));
-  if (!currentMetas.some((meta: ParsedPathMeta): boolean => meta.id === PARAMETER_INFERENCE_PATH_ID)) {
+  const parameterPathMetaIndex = currentMetas.findIndex(
+    (meta: ParsedPathMeta): boolean => meta.id === PARAMETER_INFERENCE_PATH_ID
+  );
+  if (parameterPathMetaIndex === -1) {
     const fallbackMeta: ParsedPathMeta = {
       id: PARAMETER_INFERENCE_PATH_ID,
       name: PARAMETER_INFERENCE_PATH_NAME,
@@ -905,10 +999,41 @@ const ensureParameterInferenceDefaults = async (
     const indexValue = JSON.stringify(nextMetas);
     map.set(AI_PATHS_INDEX_KEY, indexValue);
     updates.push({ key: AI_PATHS_INDEX_KEY, value: indexValue });
+  } else {
+    const currentMeta = currentMetas[parameterPathMetaIndex];
+    if (currentMeta && isLegacyParameterInferencePathName(currentMeta.name)) {
+      const nextMetas = [...currentMetas];
+      nextMetas[parameterPathMetaIndex] = {
+        ...currentMeta,
+        name: PARAMETER_INFERENCE_PATH_NAME,
+        updatedAt: now,
+      };
+      const indexValue = JSON.stringify(nextMetas);
+      map.set(AI_PATHS_INDEX_KEY, indexValue);
+      updates.push({ key: AI_PATHS_INDEX_KEY, value: indexValue });
+    }
   }
 
   const parsedButtons = parseTriggerButtons(map.get(AI_PATHS_TRIGGER_BUTTONS_KEY));
-  if (parsedButtons && !parsedButtons.some((button) => button.id === PARAMETER_INFERENCE_TRIGGER_BUTTON_ID)) {
+  if (parsedButtons === null) {
+    const triggerButtonsValue = JSON.stringify([
+      {
+        id: PARAMETER_INFERENCE_TRIGGER_BUTTON_ID,
+        name: PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME,
+        iconId: null,
+        locations: ['product_modal'],
+        mode: 'click',
+        display: 'icon_label',
+        createdAt: now,
+        updatedAt: now,
+      },
+    ]);
+    map.set(AI_PATHS_TRIGGER_BUTTONS_KEY, triggerButtonsValue);
+    updates.push({
+      key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+      value: triggerButtonsValue,
+    });
+  } else if (parsedButtons) {
     const seededButton: TriggerButtonSettingRecord = {
       id: PARAMETER_INFERENCE_TRIGGER_BUTTON_ID,
       name: PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME,
@@ -919,22 +1044,59 @@ const ensureParameterInferenceDefaults = async (
       createdAt: now,
       updatedAt: now,
     };
-    const insertAfterIndex = parsedButtons.findIndex(
-      (button: TriggerButtonSettingRecord): boolean =>
-        button.id === INFER_FIELDS_TRIGGER_BUTTON_ID
-    );
     const nextButtons = [...parsedButtons];
-    if (insertAfterIndex >= 0) {
-      nextButtons.splice(insertAfterIndex + 1, 0, seededButton);
+    const existingIndex = nextButtons.findIndex(
+      (button: TriggerButtonSettingRecord): boolean =>
+        button.id === PARAMETER_INFERENCE_TRIGGER_BUTTON_ID
+    );
+    if (existingIndex >= 0) {
+      const existingButton = nextButtons[existingIndex]!;
+      nextButtons[existingIndex] = {
+        ...existingButton,
+        name: PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME,
+        locations: Array.from(
+          new Set([
+            ...(Array.isArray(existingButton.locations)
+              ? (existingButton.locations as string[])
+              : []),
+            'product_modal',
+          ])
+        ),
+        mode: 'click',
+        display: 'icon_label',
+        updatedAt: now,
+      };
     } else {
       nextButtons.push(seededButton);
     }
-    const triggerButtonsValue = JSON.stringify(nextButtons);
-    map.set(AI_PATHS_TRIGGER_BUTTONS_KEY, triggerButtonsValue);
-    updates.push({
-      key: AI_PATHS_TRIGGER_BUTTONS_KEY,
-      value: triggerButtonsValue,
-    });
+
+    const inferFieldsIndex = nextButtons.findIndex(
+      (button: TriggerButtonSettingRecord): boolean =>
+        button.id === INFER_FIELDS_TRIGGER_BUTTON_ID
+    );
+    const parameterIndex = nextButtons.findIndex(
+      (button: TriggerButtonSettingRecord): boolean =>
+        button.id === PARAMETER_INFERENCE_TRIGGER_BUTTON_ID
+    );
+    if (parameterIndex >= 0) {
+      const [parameterButton] = nextButtons.splice(parameterIndex, 1);
+      if (parameterButton) {
+        const targetIndex =
+          inferFieldsIndex >= 0
+            ? Math.min(inferFieldsIndex + 1, nextButtons.length)
+            : nextButtons.length;
+        nextButtons.splice(targetIndex, 0, parameterButton);
+      }
+    }
+
+    if (JSON.stringify(nextButtons) !== JSON.stringify(parsedButtons)) {
+      const triggerButtonsValue = JSON.stringify(nextButtons);
+      map.set(AI_PATHS_TRIGGER_BUTTONS_KEY, triggerButtonsValue);
+      updates.push({
+        key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+        value: triggerButtonsValue,
+      });
+    }
   }
 
   if (updates.length === 0) return records;
@@ -986,10 +1148,48 @@ const ensurePathIndexConsistency = async (
   );
 };
 
+const hasParameterInferenceDefaults = (records: AiPathsSettingRecord[]): boolean => {
+  if (records.length === 0) return false;
+  const map = new Map<string, string>(
+    records.map((entry: AiPathsSettingRecord): [string, string] => [entry.key, entry.value])
+  );
+  const configRaw = map.get(
+    `${AI_PATHS_CONFIG_KEY_PREFIX}${PARAMETER_INFERENCE_PATH_ID}`
+  );
+  if (needsParameterInferenceConfigUpgrade(configRaw)) return false;
+  const configMeta = configRaw
+    ? parsePathConfigMeta(PARAMETER_INFERENCE_PATH_ID, configRaw)
+    : null;
+  if (!configMeta) return false;
+  if (isLegacyParameterInferencePathName(configMeta.name)) return false;
+
+  const metas = parsePathMetas(map.get(AI_PATHS_INDEX_KEY));
+  const parameterMeta = metas.find(
+    (meta: ParsedPathMeta): boolean => meta.id === PARAMETER_INFERENCE_PATH_ID
+  );
+  if (!parameterMeta) return false;
+  if (isLegacyParameterInferencePathName(parameterMeta.name)) return false;
+
+  const buttons = parseTriggerButtons(map.get(AI_PATHS_TRIGGER_BUTTONS_KEY));
+  if (buttons === null) return false;
+  const parameterButton = buttons.find(
+    (button: TriggerButtonSettingRecord): boolean =>
+      button.id === PARAMETER_INFERENCE_TRIGGER_BUTTON_ID
+  );
+  if (!parameterButton) return false;
+  const buttonName =
+    typeof parameterButton.name === 'string' ? parameterButton.name.trim() : '';
+  if (buttonName !== PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME) return false;
+  const locations = Array.isArray(parameterButton.locations)
+    ? parameterButton.locations
+    : [];
+  return locations.includes('product_modal');
+};
+
 export async function listAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
   assertMongoConfigured();
   const cached = getCachedAiPathsSettings();
-  if (cached) return cached;
+  if (cached && hasParameterInferenceDefaults(cached)) return cached;
 
   const settings = await listMongoAiPathsSettings();
   const compacted = await compactOversizedPathConfigs(settings);

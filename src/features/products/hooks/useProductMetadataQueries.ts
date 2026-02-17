@@ -12,6 +12,7 @@ import type {
   PriceGroupWithDetails,
   Producer,
   ProductCategory,
+  ProductCategoryWithChildren,
   ProductParameter,
   ProductTag,
 } from '@/features/products/types';
@@ -32,6 +33,25 @@ import type {
 } from '@/shared/types/query-result-types';
 
 export { productMetadataKeys };
+
+const flattenCategoryTree = (
+  nodes: ProductCategoryWithChildren[],
+  parentId: string | null = null
+): ProductCategory[] => {
+  const flattened: ProductCategory[] = [];
+  for (const node of nodes) {
+    const { children, ...nodeWithoutChildren } = node;
+    const normalizedNode: ProductCategory = {
+      ...nodeWithoutChildren,
+      parentId: node.parentId ?? parentId ?? null,
+    };
+    flattened.push(normalizedNode);
+    if (Array.isArray(children) && children.length > 0) {
+      flattened.push(...flattenCategoryTree(children, node.id));
+    }
+  }
+  return flattened;
+};
 
 export function useCatalogs(): ListQuery<CatalogRecord> {
   const queryKey = productMetadataKeys.catalogs();
@@ -55,9 +75,10 @@ export function useCategories(catalogId?: string): ListQuery<ProductCategory> {
     queryKey,
     queryFn: async (): Promise<ProductCategory[]> => {
       if (!catalogId) return [];
-      return await api.get<ProductCategory[]>(
-        `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`
+      const tree = await api.get<ProductCategoryWithChildren[]>(
+        `/api/products/categories/tree?catalogId=${encodeURIComponent(catalogId)}`
       );
+      return flattenCategoryTree(tree);
     },
     enabled: Boolean(catalogId),
     meta: {

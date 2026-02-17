@@ -63,7 +63,7 @@ type CaseResolverPageViewProps = {
   state: ReturnType<typeof useCaseResolverState>;
   workspaceView: WorkspaceView;
   setWorkspaceView: React.Dispatch<React.SetStateAction<WorkspaceView>>;
-  handleMoveFolder: (fromPath: string, toPath: string) => void;
+  handleMoveFolder: (fromPath: string, toPath: string) => Promise<void>;
   handleToggleFolderLock: (folderPath: string) => void;
   handleToggleFileLock: (fileId: string) => void;
   handleDeleteFile: (fileId: string) => void;

@@ -79,6 +79,537 @@ interface DbActionResult {
   matchedCount?: number;
 }
 
+type ParameterDefinitionRecord = {
+  id: string;
+  selectorType: string;
+  optionLabels: string[];
+};
+
+const SELECTOR_TYPES_REQUIRING_OPTIONS = new Set<string>([
+  'radio',
+  'select',
+  'dropdown',
+]);
+
+class ParameterInferenceGateError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ParameterInferenceGateError';
+  }
+}
+
+const normalizeNonEmptyString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const coerceArrayLike = (value: unknown): unknown[] => {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const record = value as Record<string, unknown>;
+    const nested =
+      record['items'] ??
+      record['rows'] ??
+      record['results'] ??
+      record['data'];
+    if (Array.isArray(nested)) return nested;
+  }
+  if (typeof value === 'string') {
+    const parsed = parseJsonSafe(value);
+    if (Array.isArray(parsed)) return parsed;
+    return [];
+  }
+  return [];
+};
+
+const coerceParameterInferenceCandidates = (
+  value: unknown
+): { candidates: unknown[]; repaired: boolean } => {
+  if (Array.isArray(value)) {
+    return { candidates: value, repaired: false };
+  }
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const nested = coerceArrayLike(value);
+    if (nested.length > 0) {
+      return { candidates: nested, repaired: false };
+    }
+  }
+  if (typeof value !== 'string') {
+    return { candidates: [], repaired: false };
+  }
+  const direct = parseJsonSafe(value);
+  if (Array.isArray(direct)) {
+    return { candidates: direct, repaired: false };
+  }
+  const openIndex = value.indexOf('[');
+  const closeIndex = value.lastIndexOf(']');
+  if (openIndex < 0 || closeIndex <= openIndex) {
+    return { candidates: [], repaired: false };
+  }
+  const repairedCandidate = value.slice(openIndex, closeIndex + 1);
+  const repaired = parseJsonSafe(repairedCandidate);
+  if (Array.isArray(repaired)) {
+    return { candidates: repaired, repaired: true };
+  }
+  return { candidates: [], repaired: false };
+};
+
+const toRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
+const resolveObjectPathValue = (
+  source: Record<string, unknown> | null,
+  path: string
+): unknown => {
+  if (!source) return undefined;
+  if (!path) return undefined;
+  if (Object.prototype.hasOwnProperty.call(source, path)) {
+    return source[path];
+  }
+  return getValueAtMappingPath(source, path);
+};
+
+const normalizeParameterId = (value: unknown): string | null =>
+  normalizeNonEmptyString(value);
+
+const resolveParameterDefinitionRows = (
+  definitionsValue: unknown,
+  definitionsPath: string
+): unknown[] => {
+  let source: unknown = definitionsValue;
+  if (
+    definitionsPath &&
+    source &&
+    typeof source === 'object' &&
+    !Array.isArray(source)
+  ) {
+    const resolved = getValueAtMappingPath(source, definitionsPath);
+    source = resolved ?? source;
+  }
+  if (
+    source &&
+    typeof source === 'object' &&
+    !Array.isArray(source)
+  ) {
+    const nested =
+      (source as Record<string, unknown>)['items'] ??
+      (source as Record<string, unknown>)['rows'] ??
+      (source as Record<string, unknown>)['results'] ??
+      (source as Record<string, unknown>)['data'];
+    if (Array.isArray(nested)) return nested;
+  }
+  return coerceArrayLike(source);
+};
+
+const normalizeParameterDefinitions = (
+  definitionsValue: unknown,
+  definitionsPath: string
+): Map<string, ParameterDefinitionRecord> => {
+  const map = new Map<string, ParameterDefinitionRecord>();
+  const rows = resolveParameterDefinitionRows(definitionsValue, definitionsPath);
+  rows.forEach((row: unknown) => {
+    if (!row || typeof row !== 'object') return;
+    const record = row as Record<string, unknown>;
+    const id =
+      normalizeNonEmptyString(record['id']) ??
+      normalizeNonEmptyString(record['_id']) ??
+      normalizeNonEmptyString(record['parameterId']);
+    if (!id) return;
+    const selectorType =
+      normalizeNonEmptyString(record['selectorType'])?.toLowerCase() ?? 'text';
+    const optionLabels = coerceArrayLike(record['optionLabels'])
+      .map((option: unknown): string | null => normalizeNonEmptyString(option))
+      .filter((option: string | null): option is string => Boolean(option));
+    map.set(id, {
+      id,
+      selectorType,
+      optionLabels,
+    });
+  });
+  return map;
+};
+
+const resolveParameterValue = (value: unknown): string | null => {
+  if (typeof value === 'string') return normalizeNonEmptyString(value);
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const resolved = resolveParameterValue(item);
+      if (resolved) return resolved;
+    }
+    return null;
+  }
+  if (!value || typeof value !== 'object') return null;
+  const record = value as Record<string, unknown>;
+  const direct =
+    resolveParameterValue(record['value']) ??
+    resolveParameterValue(record['value_en']) ??
+    resolveParameterValue(record['en']) ??
+    resolveParameterValue(record['english']) ??
+    resolveParameterValue(record['label']);
+  if (direct) return direct;
+  const valuesByLanguage = record['valuesByLanguage'];
+  if (valuesByLanguage && typeof valuesByLanguage === 'object') {
+    const localized = valuesByLanguage as Record<string, unknown>;
+    return (
+      resolveParameterValue(localized['en']) ??
+      resolveParameterValue(localized['en-US']) ??
+      resolveParameterValue(localized['english']) ??
+      null
+    );
+  }
+  return null;
+};
+
+const normalizeParameterEntries = (
+  value: unknown,
+  options: { allowEmptyValue: boolean }
+): Array<{ parameterId: string; value: string; raw: Record<string, unknown> }> => {
+  const entries = coerceArrayLike(value);
+  const normalized: Array<{ parameterId: string; value: string; raw: Record<string, unknown> }> = [];
+  const seen = new Set<string>();
+  entries.forEach((entry: unknown) => {
+    const record = toRecord(entry);
+    if (!record) return;
+    const parameterId =
+      normalizeParameterId(record['parameterId']) ??
+      normalizeParameterId(record['id']);
+    if (!parameterId || seen.has(parameterId)) return;
+    const resolvedValue = resolveParameterValue(record['value']);
+    if (!resolvedValue && !options.allowEmptyValue) return;
+    normalized.push({
+      parameterId,
+      value: resolvedValue ?? '',
+      raw: { ...record },
+    });
+    seen.add(parameterId);
+  });
+  return normalized;
+};
+
+const resolveExistingParameterValueFromInputs = (
+  templateInputs: RuntimePortValues,
+  targetPath: string
+): unknown => {
+  const candidates: unknown[] = [];
+  const pushFromRecord = (value: unknown): void => {
+    const record = toRecord(value);
+    if (!record) return;
+    candidates.push(resolveObjectPathValue(record, targetPath));
+    const nestedKeys = ['entity', 'entityJson', 'product', 'item', 'data', 'current'];
+    nestedKeys.forEach((key: string) => {
+      candidates.push(resolveObjectPathValue(toRecord(record[key]), targetPath));
+    });
+  };
+  pushFromRecord(templateInputs as Record<string, unknown>);
+  pushFromRecord(coerceInput(templateInputs['context']));
+  pushFromRecord(coerceInput(templateInputs['bundle']));
+  pushFromRecord(coerceInput(templateInputs['value']));
+  pushFromRecord(coerceInput(templateInputs['result']));
+  for (const candidate of candidates) {
+    if (coerceArrayLike(candidate).length > 0) {
+      return candidate;
+    }
+  }
+  return undefined;
+};
+
+const mergeParameterInferenceUpdates = (args: {
+  targetPath: string;
+  updates: Record<string, unknown>;
+  templateInputs: RuntimePortValues;
+}): {
+  updates: Record<string, unknown>;
+  applied: boolean;
+  meta?: Record<string, unknown>;
+} => {
+  const inferred = normalizeParameterEntries(args.updates[args.targetPath], {
+    allowEmptyValue: false,
+  });
+  if (inferred.length === 0) {
+    return { updates: args.updates, applied: false };
+  }
+
+  const existingSource = resolveExistingParameterValueFromInputs(
+    args.templateInputs,
+    args.targetPath
+  );
+  const existing = normalizeParameterEntries(existingSource, {
+    allowEmptyValue: true,
+  });
+  if (existing.length === 0) {
+    return { updates: args.updates, applied: false };
+  }
+
+  const nextRecords = existing.map((entry) => ({ ...entry.raw }));
+  const indexByParameterId = new Map<string, number>();
+  existing.forEach((entry, index) => {
+    indexByParameterId.set(entry.parameterId, index);
+  });
+
+  let filledBlankCount = 0;
+  let preservedNonEmptyCount = 0;
+  let appendedCount = 0;
+
+  inferred.forEach((entry) => {
+    const existingIndex = indexByParameterId.get(entry.parameterId);
+    if (existingIndex === undefined) {
+      nextRecords.push({
+        parameterId: entry.parameterId,
+        value: entry.value,
+      });
+      indexByParameterId.set(entry.parameterId, nextRecords.length - 1);
+      appendedCount += 1;
+      return;
+    }
+    const current = nextRecords[existingIndex] ?? {};
+    const currentValue = resolveParameterValue(current['value']);
+    if (currentValue) {
+      preservedNonEmptyCount += 1;
+      return;
+    }
+    nextRecords[existingIndex] = {
+      ...current,
+      parameterId: entry.parameterId,
+      value: entry.value,
+    };
+    filledBlankCount += 1;
+  });
+
+  const nextUpdates: Record<string, unknown> = {
+    ...args.updates,
+    [args.targetPath]: nextRecords,
+  };
+  return {
+    updates: nextUpdates,
+    applied: true,
+    meta: {
+      targetPath: args.targetPath,
+      existingCount: existing.length,
+      inferredCount: inferred.length,
+      finalCount: nextRecords.length,
+      merged: {
+        filledBlank: filledBlankCount,
+        preservedNonEmpty: preservedNonEmptyCount,
+        appended: appendedCount,
+      },
+      writeCandidates: filledBlankCount + appendedCount,
+    },
+  };
+};
+
+const resolveParameterIdsFromInputs = (inputs: RuntimePortValues): string[] => {
+  const ids = new Set<string>();
+  const collectFromParameters = (value: unknown): void => {
+    const entries = coerceArrayLike(value);
+    entries.forEach((entry: unknown) => {
+      const record = toRecord(entry);
+      if (!record) return;
+      const parameterId =
+        normalizeParameterId(record['parameterId']) ??
+        normalizeParameterId(record['id']) ??
+        normalizeParameterId(record['_id']);
+      if (parameterId) ids.add(parameterId);
+    });
+  };
+  const collectFromRecord = (value: unknown): void => {
+    const record = toRecord(value);
+    if (!record) return;
+    collectFromParameters(record['parameters']);
+    ['entity', 'entityJson', 'product', 'item', 'data'].forEach((key: string) => {
+      const nested = toRecord(record[key]);
+      if (!nested) return;
+      collectFromParameters(nested['parameters']);
+    });
+  };
+  collectFromRecord(inputs as Record<string, unknown>);
+  collectFromRecord(coerceInput(inputs['context']));
+  collectFromRecord(coerceInput(inputs['bundle']));
+  collectFromRecord(coerceInput(inputs['value']));
+  collectFromRecord(coerceInput(inputs['result']));
+  return Array.from(ids);
+};
+
+const isMissingCatalogIdQuery = (query: unknown): boolean => {
+  const record = toRecord(query);
+  if (!record) return false;
+  if (Object.prototype.hasOwnProperty.call(record, 'catalogId')) {
+    const catalogId = normalizeNonEmptyString(record['catalogId']);
+    return !catalogId;
+  }
+  const orConditions = coerceArrayLike(record['$or']);
+  return orConditions.some((candidate: unknown) => isMissingCatalogIdQuery(candidate));
+};
+
+const shouldRunParameterDefinitionFallback = (args: {
+  collection: string;
+  query: unknown;
+  count: number;
+  queryTemplate: string;
+}): boolean => {
+  if (args.count > 0) return false;
+  if (args.collection.trim().toLowerCase() !== 'product_parameters') return false;
+  if (args.queryTemplate.includes('catalogId')) return true;
+  return isMissingCatalogIdQuery(args.query);
+};
+
+const applyParameterInferenceGuard = (args: {
+  dbConfig: DatabaseConfig;
+  updates: Record<string, unknown>;
+  templateInputs: RuntimePortValues;
+}): {
+  updates: Record<string, unknown>;
+  applied: boolean;
+  blocked?: boolean;
+  errorMessage?: string;
+  meta?: Record<string, unknown>;
+} => {
+  const guard = args.dbConfig.parameterInferenceGuard;
+  if (!guard?.enabled) {
+    return { updates: args.updates, applied: false };
+  }
+
+  const targetPath =
+    normalizeNonEmptyString(guard.targetPath) ?? 'parameters';
+  const rawCandidate = args.updates[targetPath];
+  if (rawCandidate === undefined) {
+    return { updates: args.updates, applied: false };
+  }
+
+  const definitionsPort =
+    normalizeNonEmptyString(guard.definitionsPort) ?? 'result';
+  const definitionsPath =
+    normalizeNonEmptyString(guard.definitionsPath) ?? '';
+  const definitions = normalizeParameterDefinitions(
+    args.templateInputs[definitionsPort],
+    definitionsPath
+  );
+  const allowUnknownParameterIds = Boolean(guard.allowUnknownParameterIds);
+  const enforceOptionLabels = guard.enforceOptionLabels !== false;
+
+  const {
+    candidates,
+    repaired: candidateRepairApplied,
+  } = coerceParameterInferenceCandidates(rawCandidate);
+  const accepted: Array<{ parameterId: string; value: string }> = [];
+  const acceptedIds = new Set<string>();
+  let unknownParameterIdCount = 0;
+  let invalidOptionCount = 0;
+  let emptyValueCount = 0;
+  let duplicateCount = 0;
+  let invalidShapeCount = 0;
+
+  if (definitions.size === 0 && !allowUnknownParameterIds) {
+    const nextUpdates: Record<string, unknown> = { ...args.updates };
+    delete nextUpdates[targetPath];
+    const errorMessage = 'No parameter definitions resolved for parameter inference.';
+    return {
+      updates: nextUpdates,
+      applied: true,
+      blocked: true,
+      errorMessage,
+      meta: {
+        targetPath,
+        definitionsPort,
+        definitionsPath,
+        candidates: candidates.length,
+        accepted: 0,
+        definitions: 0,
+        repairedCandidates: candidateRepairApplied,
+        blocked: {
+          reason: 'missing_definitions',
+          message: errorMessage,
+        },
+      },
+    };
+  }
+
+  candidates.forEach((entry: unknown) => {
+    const record = toRecord(entry);
+    if (!record) {
+      invalidShapeCount += 1;
+      return;
+    }
+    const parameterId =
+      normalizeNonEmptyString(record['parameterId']) ??
+      normalizeNonEmptyString(record['id']);
+    if (!parameterId) {
+      unknownParameterIdCount += 1;
+      return;
+    }
+    if (acceptedIds.has(parameterId)) {
+      duplicateCount += 1;
+      return;
+    }
+
+    const definition = definitions.get(parameterId);
+    if (!definition && !allowUnknownParameterIds) {
+      unknownParameterIdCount += 1;
+      return;
+    }
+
+    let value = resolveParameterValue(record['value']);
+    if (!value) {
+      emptyValueCount += 1;
+      return;
+    }
+
+    if (
+      definition &&
+      enforceOptionLabels &&
+      SELECTOR_TYPES_REQUIRING_OPTIONS.has(definition.selectorType) &&
+      definition.optionLabels.length > 0
+    ) {
+      const lookup = new Map<string, string>();
+      definition.optionLabels.forEach((option: string) => {
+        lookup.set(option.trim().toLowerCase(), option);
+      });
+      const canonical = lookup.get(value.trim().toLowerCase());
+      if (!canonical) {
+        invalidOptionCount += 1;
+        return;
+      }
+      value = canonical;
+    }
+
+    accepted.push({ parameterId, value });
+    acceptedIds.add(parameterId);
+  });
+
+  const nextUpdates: Record<string, unknown> = { ...args.updates };
+  if (accepted.length > 0) {
+    nextUpdates[targetPath] = accepted;
+  } else {
+    delete nextUpdates[targetPath];
+  }
+
+  return {
+    updates: nextUpdates,
+    applied: true,
+    meta: {
+      targetPath,
+      definitionsPort,
+      definitionsPath,
+      candidates: candidates.length,
+      accepted: accepted.length,
+      definitions: definitions.size,
+      repairedCandidates: candidateRepairApplied,
+      dropped: {
+        unknownParameterId: unknownParameterIdCount,
+        invalidOption: invalidOptionCount,
+        emptyValue: emptyValueCount,
+        duplicate: duplicateCount,
+        invalidShape: invalidShapeCount,
+      },
+    },
+  };
+};
+
 export const handleTrigger: NodeHandler = async ({
   node,
   nodeInputs,
@@ -655,6 +1186,7 @@ export const handleDatabase: NodeHandler = async ({
     const resolvedInputs: Record<string, unknown> = resolveDatabaseInputs(
     nodeInputs as Record<string, unknown>,
     );
+    const nodeInputPorts: string[] = Array.isArray(node.inputs) ? node.inputs : [];
     const defaultQuery: DbQueryConfig = DEFAULT_DB_QUERY;
     const dbConfig: DatabaseConfig = (node.config?.database as DatabaseConfig) ?? {
       operation: 'query',
@@ -912,10 +1444,61 @@ export const handleDatabase: NodeHandler = async ({
           return { result: null, bundle: { error: 'Read failed' }, aiPrompt };
         }
         const data: DbActionResult = readResult.data;
-        const result: unknown = data['item'] ?? data['items'] ?? data['values'] ?? data['count'] ?? [];
-        const count: number =
+        let result: unknown = data['item'] ?? data['items'] ?? data['values'] ?? data['count'] ?? [];
+        let count: number =
         (data['count'] as number) ??
         (Array.isArray(result) ? (result as unknown[]).length : result ? 1 : 0);
+        let filterForBundle: Record<string, unknown> = filter;
+        let fallbackMeta: Record<string, unknown> | undefined;
+        if (
+          (action === 'find' || action === 'findOne') &&
+          shouldRunParameterDefinitionFallback({
+            collection,
+            query: filter,
+            count,
+            queryTemplate: queryConfig.queryTemplate ?? '',
+          })
+        ) {
+          const parameterIds = resolveParameterIdsFromInputs(templateInputs);
+          if (parameterIds.length > 0) {
+            const fallbackFilter: Record<string, unknown> = {
+              id: { $in: parameterIds },
+            };
+            const fallbackReadResult: ApiResponse<DbActionResult> = await dbApi.action<DbActionResult>({
+              ...(queryPayload['provider'] ? { provider: queryPayload['provider'] } : {}),
+              action: 'find',
+              collection,
+              filter: fallbackFilter,
+              ...(projection !== undefined ? { projection } : {}),
+              ...(sort !== undefined ? { sort } : {}),
+              ...(limit !== undefined ? { limit } : {}),
+              ...(idType !== undefined ? { idType } : {}),
+            });
+            if (fallbackReadResult.ok) {
+              const fallbackData: DbActionResult = fallbackReadResult.data;
+              const fallbackItems: unknown =
+                fallbackData['items'] ?? fallbackData['item'] ?? [];
+              const fallbackCount: number =
+                (fallbackData['count'] as number) ??
+                (Array.isArray(fallbackItems)
+                  ? (fallbackItems as unknown[]).length
+                  : fallbackItems
+                    ? 1
+                    : 0);
+              if (fallbackCount > 0) {
+                result = fallbackItems;
+                count = fallbackCount;
+                filterForBundle = fallbackFilter;
+                fallbackMeta = {
+                  used: true,
+                  reason: 'catalogId_missing',
+                  by: 'product_parameter_ids',
+                  parameterIds: parameterIds.slice(0, 50),
+                };
+              }
+            }
+          }
+        }
         toast(
           `Database query succeeded for ${collection} (${count} result${count === 1 ? '' : 's'}).`,
           { variant: 'success' },
@@ -925,7 +1508,8 @@ export const handleDatabase: NodeHandler = async ({
           bundle: {
             count,
             collection,
-            filter,
+            filter: filterForBundle,
+            ...(fallbackMeta ? { fallback: fallbackMeta } : {}),
           },
           aiPrompt,
         };
@@ -1064,7 +1648,7 @@ export const handleDatabase: NodeHandler = async ({
       } => {
           const fallbackTarget: string =
           dbConfig.mappings?.[0]?.['targetPath'] ?? 'content_en';
-          const fallbackSourcePort: string = node.inputs.includes('result')
+          const fallbackSourcePort: string = nodeInputPorts.includes('result')
             ? 'result'
             : 'content_en';
           const mappings: UpdaterMapping[] =
@@ -1146,12 +1730,57 @@ export const handleDatabase: NodeHandler = async ({
           };
         };
 
-        const {
+        let {
           updates,
           primaryTarget,
           missingSourcePorts,
           unresolvedSourcePorts,
         } = buildUpdatesFromMappings();
+        const parameterTargetPath =
+          normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ??
+          'parameters';
+        const guardResult = applyParameterInferenceGuard({
+          dbConfig,
+          updates,
+          templateInputs,
+        });
+        if (guardResult.applied) {
+          updates = guardResult.updates;
+          debugPayload['parameterInferenceGuard'] = guardResult.meta ?? {
+            targetPath: dbConfig.parameterInferenceGuard?.targetPath ?? 'parameters',
+          };
+        }
+        if (guardResult.blocked) {
+          const message =
+            guardResult.errorMessage ??
+            'Parameter inference blocked due to missing parameter definitions.';
+          reportAiPathsError(
+            new Error(message),
+            {
+              action: 'parameterInferenceGuard',
+              nodeId: node.id,
+              targetPath: parameterTargetPath,
+            },
+            'Parameter inference guard blocked update:'
+          );
+          toast(message, { variant: 'error' });
+          throw new ParameterInferenceGateError(message);
+        }
+        const mergeResult = mergeParameterInferenceUpdates({
+          targetPath: parameterTargetPath,
+          updates,
+          templateInputs,
+        });
+        if (mergeResult.applied) {
+          updates = mergeResult.updates;
+          if (
+            debugPayload['parameterInferenceGuard'] &&
+            typeof debugPayload['parameterInferenceGuard'] === 'object'
+          ) {
+            (debugPayload['parameterInferenceGuard'] as Record<string, unknown>)['writePlan'] =
+              mergeResult.meta ?? null;
+          }
+        }
         const extractMissingTemplatePorts = (template: string): string[] => {
           const missing: Set<string> = new Set<string>();
           const tokenRegex: RegExp = /{{\s*([^}]+)\s*}}|\[\s*([^\]]+)\s*\]/g;
@@ -1289,8 +1918,25 @@ export const handleDatabase: NodeHandler = async ({
           updateDocRecord && !Object.keys(updateDocRecord).some((key) => key.startsWith('$'))
             ? updateDocRecord
             : null;
-          const updatesForEntity =
+          let updatesForEntity =
           updateSet ?? updatePlain ?? updates;
+          const mergeForEntityResult = mergeParameterInferenceUpdates({
+            targetPath: parameterTargetPath,
+            updates: updatesForEntity,
+            templateInputs,
+          });
+          if (mergeForEntityResult.applied) {
+            updatesForEntity = mergeForEntityResult.updates;
+            if (
+              debugPayload['parameterInferenceGuard'] &&
+              typeof debugPayload['parameterInferenceGuard'] === 'object'
+            ) {
+              (debugPayload['parameterInferenceGuard'] as Record<string, unknown>)['writePlan'] = {
+                ...((debugPayload['parameterInferenceGuard'] as Record<string, unknown>)['writePlan'] as Record<string, unknown> | undefined),
+                ...(mergeForEntityResult.meta ?? {}),
+              };
+            }
+          }
           if (!updatesForEntity || Object.keys(updatesForEntity).length === 0) {
             return prevOutputs;
           }
@@ -1339,6 +1985,20 @@ export const handleDatabase: NodeHandler = async ({
           typeof (updateResult.data as Record<string, unknown> | null)?.['modifiedCount'] === 'number'
             ? ((updateResult.data as Record<string, unknown>)['modifiedCount'] as number)
             : 1;
+          if (
+            debugPayload['parameterInferenceGuard'] &&
+            typeof debugPayload['parameterInferenceGuard'] === 'object'
+          ) {
+            const writeTarget = resolveObjectPathValue(
+              toRecord(updatesForEntity),
+              parameterTargetPath
+            );
+            (debugPayload['parameterInferenceGuard'] as Record<string, unknown>)['written'] = {
+              targetPath: parameterTargetPath,
+              count: coerceArrayLike(writeTarget).length,
+              modifiedCount,
+            };
+          }
           toast(
             `Entity updated in ${collection} (${modifiedCount} row${modifiedCount === 1 ? '' : 's'}).`,
             { variant: 'success' },
@@ -1409,6 +2069,16 @@ export const handleDatabase: NodeHandler = async ({
         typeof (updateResult.data as Record<string, unknown> | null)?.['modifiedCount'] === 'number'
           ? ((updateResult.data as Record<string, unknown>)['modifiedCount'] as number)
           : 1;
+        if (
+          debugPayload['parameterInferenceGuard'] &&
+          typeof debugPayload['parameterInferenceGuard'] === 'object'
+        ) {
+          (debugPayload['parameterInferenceGuard'] as Record<string, unknown>)['written'] = {
+            targetPath: parameterTargetPath,
+            count: coerceArrayLike(updates[parameterTargetPath]).length,
+            modifiedCount,
+          };
+        }
         toast(
           `Entity updated in ${collection} (${modifiedCount} row${modifiedCount === 1 ? '' : 's'}).`,
           { variant: 'success' },
@@ -1667,12 +2337,61 @@ export const handleDatabase: NodeHandler = async ({
           aiPrompt,
         };
       }
-      const result: unknown = queryConfig.single
+      let result: unknown = queryConfig.single
         ? ((queryResult.data as Record<string, unknown>)['item'] ?? null)
         : ((queryResult.data as Record<string, unknown>)['items'] ?? []);
-      const count: number =
+      let count: number =
       ((queryResult.data as Record<string, unknown>)['count'] as number) ??
       (Array.isArray(result) ? (result as unknown[]).length : result ? 1 : 0);
+      let queryForBundle: Record<string, unknown> = query;
+      let fallbackMeta: Record<string, unknown> | undefined;
+      if (
+        shouldRunParameterDefinitionFallback({
+          collection: queryConfig.collection,
+          query,
+          count,
+          queryTemplate: queryConfig.queryTemplate ?? '',
+        })
+      ) {
+        const parameterIds = resolveParameterIdsFromInputs(templateInputs);
+        if (parameterIds.length > 0) {
+          const fallbackQuery: Record<string, unknown> = {
+            id: { $in: parameterIds },
+          };
+          const fallbackQueryResult: ApiResponse<DbQueryResult> = await dbApi.query<DbQueryResult>({
+            provider: queryConfig.provider,
+            collection: queryConfig.collection,
+            query: fallbackQuery,
+            projection,
+            sort,
+            limit: Math.max(queryConfig.limit ?? 20, parameterIds.length),
+            single: false,
+            idType: queryConfig.idType as 'string' | 'objectId' | undefined,
+          });
+          if (fallbackQueryResult.ok) {
+            const fallbackItems: unknown =
+              (fallbackQueryResult.data as Record<string, unknown>)['items'] ?? [];
+            const fallbackCount: number =
+              ((fallbackQueryResult.data as Record<string, unknown>)['count'] as number) ??
+              (Array.isArray(fallbackItems)
+                ? (fallbackItems as unknown[]).length
+                : fallbackItems
+                  ? 1
+                  : 0);
+            if (fallbackCount > 0) {
+              result = fallbackItems;
+              count = fallbackCount;
+              queryForBundle = fallbackQuery;
+              fallbackMeta = {
+                used: true,
+                reason: 'catalogId_missing',
+                by: 'product_parameter_ids',
+                parameterIds: parameterIds.slice(0, 50),
+              };
+            }
+          }
+        }
+      }
       const collectionLabel =
       typeof queryConfig.collection === 'string' && queryConfig.collection.trim()
         ? queryConfig.collection
@@ -1685,8 +2404,9 @@ export const handleDatabase: NodeHandler = async ({
         result,
         bundle: {
           count,
-          query,
+          query: queryForBundle,
           collection: queryConfig.collection,
+          ...(fallbackMeta ? { fallback: fallbackMeta } : {}),
         },
         aiPrompt,
       };
@@ -1694,7 +2414,7 @@ export const handleDatabase: NodeHandler = async ({
 
     if (operation === 'update') {
       const fallbackTarget: string = dbConfig.mappings?.[0]?.targetPath ?? 'content_en';
-      const fallbackSourcePort: string = node.inputs.includes('result')
+      const fallbackSourcePort: string = nodeInputPorts.includes('result')
         ? 'result'
         : 'content_en';
       const mappings: UpdaterMapping[] =
@@ -1719,7 +2439,7 @@ export const handleDatabase: NodeHandler = async ({
         !Array.isArray(value) &&
         value !== null &&
         Object.keys(value as Record<string, unknown>).length === 0);
-      const updates: Record<string, unknown> = {};
+      let updates: Record<string, unknown> = {};
       const requiredSourcePorts: Set<string> = new Set<string>();
       const unresolvedSourcePorts: Set<string> = new Set<string>();
       mappings.forEach((mapping: UpdaterMapping) => {
@@ -1763,6 +2483,41 @@ export const handleDatabase: NodeHandler = async ({
           updates[mapping.targetPath] = value;
         }
       });
+      const parameterTargetPath =
+        normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ??
+        'parameters';
+      const guardResult = applyParameterInferenceGuard({
+        dbConfig,
+        updates,
+        templateInputs,
+      });
+      if (guardResult.applied) {
+        updates = guardResult.updates;
+      }
+      if (guardResult.blocked) {
+        const message =
+          guardResult.errorMessage ??
+          'Parameter inference blocked due to missing parameter definitions.';
+        reportAiPathsError(
+          new Error(message),
+          {
+            action: 'parameterInferenceGuard',
+            nodeId: node.id,
+            targetPath: parameterTargetPath,
+          },
+          'Parameter inference guard blocked update:'
+        );
+        toast(message, { variant: 'error' });
+        throw new ParameterInferenceGateError(message);
+      }
+      const mergeResult = mergeParameterInferenceUpdates({
+        targetPath: parameterTargetPath,
+        updates,
+        templateInputs,
+      });
+      if (mergeResult.applied) {
+        updates = mergeResult.updates;
+      }
       const missingSourcePorts: string[] = Array.from(requiredSourcePorts).filter(
         (sourcePort: string): boolean => resolvedInputs[sourcePort] === undefined,
       );
@@ -1789,7 +2544,7 @@ export const handleDatabase: NodeHandler = async ({
       simulationEntityType,
       simulationEntityId,
       );
-      const debugPayload = {
+      const debugPayload: Record<string, unknown> = {
         mode: 'mapping',
         updateStrategy,
         entityType,
@@ -1799,6 +2554,16 @@ export const handleDatabase: NodeHandler = async ({
         entityId,
         updates,
         mappings,
+        ...(guardResult.applied
+          ? {
+            parameterInferenceGuard: {
+              ...(guardResult.meta ?? {}),
+              ...(mergeResult.applied && mergeResult.meta
+                ? { writePlan: mergeResult.meta }
+                : {}),
+            },
+          }
+          : {}),
       };
       let updateResult: unknown = updates;
 
@@ -2018,6 +2783,21 @@ export const handleDatabase: NodeHandler = async ({
       const primaryTarget =
       mappings.find((mapping: UpdaterMapping) => mapping.targetPath)?.targetPath ??
       fallbackTarget;
+      if (
+        guardResult.applied &&
+        debugPayload['parameterInferenceGuard'] &&
+        typeof debugPayload['parameterInferenceGuard'] === 'object'
+      ) {
+        const updateResultRecord = toRecord(updateResult);
+        const modifiedCountValue = updateResultRecord?.['modifiedCount'];
+        const modifiedCount =
+          typeof modifiedCountValue === 'number' ? modifiedCountValue : null;
+        (debugPayload['parameterInferenceGuard'] as Record<string, unknown>)['written'] = {
+          targetPath: parameterTargetPath,
+          count: coerceArrayLike(updates[parameterTargetPath]).length,
+          ...(modifiedCount !== null ? { modifiedCount } : {}),
+        };
+      }
       const primaryValue = updates[primaryTarget];
       return {
         content_en:
@@ -2334,6 +3114,9 @@ export const handleDatabase: NodeHandler = async ({
 
     return { aiPrompt };
   } catch (error) {
+    if (error instanceof ParameterInferenceGateError) {
+      throw error;
+    }
     reportAiPathsError(
       error,
       { action: 'handleDatabase', nodeId: node.id },

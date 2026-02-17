@@ -48,6 +48,7 @@ import {
   parseCaseResolverIdentifiers,
   parseCaseResolverSettings,
   parseCaseResolverTags,
+  expandFolderPath,
   normalizeCaseResolverWorkspace,
   normalizeFolderPath,
   normalizeFolderPaths,
@@ -76,6 +77,7 @@ import type {
   CaseResolverCategory,
   CaseResolverFile,
   CaseResolverFileEditDraft,
+  CaseResolverFolderRecord,
   CaseResolverIdentifier,
   CaseResolverScanSlot,
   CaseResolverTag,
@@ -261,6 +263,149 @@ const createUniqueCaseFileName = ({
     index += 1;
   }
   return `${normalizedBase}-${createId('dup')}`;
+};
+
+const buildFolderRecordKey = (path: string, ownerCaseId: string | null): string =>
+  `${ownerCaseId ?? '__none__'}::${path}`;
+
+const normalizeFolderRecords = (
+  source: CaseResolverFolderRecord[] | null | undefined
+): CaseResolverFolderRecord[] => {
+  if (!Array.isArray(source)) return [];
+  const byKey = new Map<string, CaseResolverFolderRecord>();
+  source.forEach((record: CaseResolverFolderRecord): void => {
+    const normalizedPath = normalizeFolderPath(record.path);
+    if (!normalizedPath) return;
+    const ownerCaseId =
+      typeof record.ownerCaseId === 'string' && record.ownerCaseId.trim().length > 0
+        ? record.ownerCaseId.trim()
+        : null;
+    const key = buildFolderRecordKey(normalizedPath, ownerCaseId);
+    if (byKey.has(key)) return;
+    byKey.set(key, {
+      path: normalizedPath,
+      ownerCaseId,
+    });
+  });
+  return Array.from(byKey.values()).sort((left: CaseResolverFolderRecord, right: CaseResolverFolderRecord) => {
+    const pathDelta = left.path.localeCompare(right.path);
+    if (pathDelta !== 0) return pathDelta;
+    return (left.ownerCaseId ?? '').localeCompare(right.ownerCaseId ?? '');
+  });
+};
+
+const appendOwnedFolderRecords = ({
+  records,
+  folderPath,
+  ownerCaseId,
+}: {
+  records: CaseResolverFolderRecord[] | null | undefined;
+  folderPath: string;
+  ownerCaseId: string | null;
+}): CaseResolverFolderRecord[] => {
+  const normalizedPath = normalizeFolderPath(folderPath);
+  if (!normalizedPath) return normalizeFolderRecords(records);
+  const current = normalizeFolderRecords(records);
+  const byKey = new Map<string, CaseResolverFolderRecord>(
+    current.map(
+      (record: CaseResolverFolderRecord): [string, CaseResolverFolderRecord] => [
+        buildFolderRecordKey(record.path, record.ownerCaseId),
+        record,
+      ]
+    )
+  );
+  expandFolderPath(normalizedPath).forEach((path: string): void => {
+    const key = buildFolderRecordKey(path, ownerCaseId);
+    if (byKey.has(key)) return;
+    byKey.set(key, { path, ownerCaseId });
+  });
+  return normalizeFolderRecords(Array.from(byKey.values()));
+};
+
+const removeOwnedFolderRecordsWithinPath = ({
+  records,
+  folderPath,
+  ownerCaseIds,
+}: {
+  records: CaseResolverFolderRecord[] | null | undefined;
+  folderPath: string;
+  ownerCaseIds: Set<string> | null;
+}): CaseResolverFolderRecord[] => {
+  const normalizedPath = normalizeFolderPath(folderPath);
+  if (!normalizedPath) return normalizeFolderRecords(records);
+  const current = normalizeFolderRecords(records);
+  const filtered = current.filter((record: CaseResolverFolderRecord): boolean => {
+    if (!isPathWithinFolder(record.path, normalizedPath)) return true;
+    if (!ownerCaseIds || ownerCaseIds.size === 0) return false;
+    if (!record.ownerCaseId) return true;
+    return !ownerCaseIds.has(record.ownerCaseId);
+  });
+  return normalizeFolderRecords(filtered);
+};
+
+const renameOwnedFolderRecordsWithinPath = ({
+  records,
+  sourceFolderPath,
+  targetFolderPath,
+  ownerCaseIds,
+}: {
+  records: CaseResolverFolderRecord[] | null | undefined;
+  sourceFolderPath: string;
+  targetFolderPath: string;
+  ownerCaseIds: Set<string> | null;
+}): CaseResolverFolderRecord[] => {
+  const normalizedSource = normalizeFolderPath(sourceFolderPath);
+  const normalizedTarget = normalizeFolderPath(targetFolderPath);
+  if (!normalizedSource || !normalizedTarget) return normalizeFolderRecords(records);
+  const current = normalizeFolderRecords(records);
+  const renamed = current.map((record: CaseResolverFolderRecord): CaseResolverFolderRecord => {
+    if (!isPathWithinFolder(record.path, normalizedSource)) return record;
+    if (ownerCaseIds && ownerCaseIds.size > 0) {
+      if (!record.ownerCaseId || !ownerCaseIds.has(record.ownerCaseId)) {
+        return record;
+      }
+    }
+    return {
+      ...record,
+      path: renameFolderPath(record.path, normalizedSource, normalizedTarget),
+    };
+  });
+  return normalizeFolderRecords(renamed);
+};
+
+const collectCaseScopeIds = (
+  files: CaseResolverFile[],
+  rootCaseId: string | null
+): Set<string> | null => {
+  if (!rootCaseId) return null;
+  const fileById = new Map<string, CaseResolverFile>(
+    files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
+  );
+  if (fileById.get(rootCaseId)?.fileType !== 'case') return null;
+
+  const childCaseIdsByParentId = new Map<string, string[]>();
+  files.forEach((file: CaseResolverFile): void => {
+    if (file.fileType !== 'case') return;
+    const parentCaseId = file.parentCaseId;
+    if (!parentCaseId || parentCaseId === file.id) return;
+    const parentFile = fileById.get(parentCaseId);
+    if (parentFile?.fileType !== 'case') return;
+    const currentChildren = childCaseIdsByParentId.get(parentCaseId) ?? [];
+    currentChildren.push(file.id);
+    childCaseIdsByParentId.set(parentCaseId, currentChildren);
+  });
+
+  const scopedCaseIds = new Set<string>();
+  const visitCase = (caseId: string): void => {
+    if (!caseId || scopedCaseIds.has(caseId)) return;
+    const caseFile = fileById.get(caseId);
+    if (caseFile?.fileType !== 'case') return;
+    scopedCaseIds.add(caseId);
+    const children = childCaseIdsByParentId.get(caseId) ?? [];
+    children.forEach((childId: string): void => visitCase(childId));
+  };
+  visitCase(rootCaseId);
+  return scopedCaseIds.size > 0 ? scopedCaseIds : null;
 };
 
 const resolveUploadBucketForAssetKind = (
@@ -561,7 +706,7 @@ export function useCaseResolverState() {
   );
 
   const { confirm, ConfirmationModal } = useConfirm();
-  const { prompt, PromptInputModal } = usePrompt();
+  const { PromptInputModal } = usePrompt();
 
   const handleSelectFile = useCallback((fileId: string): void => {
     if (selectedFileId === fileId) {
@@ -594,21 +739,6 @@ export function useCaseResolverState() {
     setSelectedAssetId(null);
   }, [selectedFolderPath]);
 
-  const handleCreateFolder = useCallback((targetFolderPath: string | null): void => {
-    let createdPath: string | null = null;
-    updateWorkspace((current) => {
-      const nextPath = createUniqueFolderPath(current.folders, targetFolderPath);
-      createdPath = nextPath;
-      if (current.folders.includes(nextPath)) return current;
-      return { ...current, folders: normalizeFolderPaths([...current.folders, nextPath]) };
-    }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
-    if (createdPath) {
-      setSelectedFileId(null);
-      setSelectedAssetId(null);
-      setSelectedFolderPath(createdPath);
-    }
-  }, [updateWorkspace]);
-
   const filesById = useMemo(
     () => new Map(workspace.files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])),
     [workspace.files]
@@ -625,52 +755,154 @@ export function useCaseResolverState() {
     return parentFile?.fileType === 'case' ? parentFile.id : null;
   }, [filesById, selectedFileId, workspace.activeFileId]);
 
-  const handleCreateFile = useCallback((targetFolderPath: string | null): void => {
-    prompt({
-      title: 'Create New Document',
-      label: 'Document Name',
-      defaultValue: 'New Document',
-      placeholder: 'Enter document name...',
-      required: true,
-      onConfirm: (fileName) => {
-        const folder = normalizeFolderPath(targetFolderPath ?? '');
-        const runtimeCaseResolverSettings = parseCaseResolverSettings(
-          settingsStore.get(CASE_RESOLVER_SETTINGS_KEY)
-        );
-        const runtimeDefaultDocumentFormat = parseCaseResolverDefaultDocumentFormat(
-          settingsStore.get(CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY),
-          runtimeCaseResolverSettings.defaultDocumentFormat
-        );
-        const file = createCaseResolverFile({
-          id: createId('case-file'),
-          fileType: 'document',
-          name: fileName,
-          folder,
-          parentCaseId: selectedCaseContainerId,
-          editorType: runtimeDefaultDocumentFormat,
-          tagId: defaultTagId,
-          caseIdentifierId: defaultCaseIdentifierId,
-          categoryId: defaultCategoryId,
-        });
-        updateWorkspace((current) => ({
-          ...current,
-          files: [...current.files, file],
-          activeFileId: file.id,
-          folders: normalizeFolderPaths([...current.folders, folder]),
-        }), { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
-        setSelectedFileId(file.id);
-        setSelectedFolderPath(null);
-        setSelectedAssetId(null);
+  const resolvedCaseContainerIdForCreate = useMemo((): string | null => {
+    if (selectedCaseContainerId) return selectedCaseContainerId;
+
+    if (requestedFileId) {
+      const requestedFile = filesById.get(requestedFileId) ?? null;
+      if (requestedFile?.fileType === 'case') return requestedFile.id;
+      if (requestedFile?.parentCaseId) {
+        const parentCase = filesById.get(requestedFile.parentCaseId) ?? null;
+        if (parentCase?.fileType === 'case') return parentCase.id;
       }
-    });
+    }
+
+    const firstCaseFile = workspace.files.find(
+      (file: CaseResolverFile): boolean => file.fileType === 'case'
+    );
+    return firstCaseFile?.id ?? null;
+  }, [filesById, requestedFileId, selectedCaseContainerId, workspace.files]);
+
+  const selectedCaseScopeIds = useMemo(
+    (): Set<string> | null => collectCaseScopeIds(workspace.files, selectedCaseContainerId),
+    [selectedCaseContainerId, workspace.files]
+  );
+
+  const handleCreateFolder = useCallback((targetFolderPath: string | null): void => {
+    let createdPath: string | null = null;
+    const ownerCaseId = selectedCaseContainerId ?? resolvedCaseContainerIdForCreate ?? null;
+    updateWorkspace((current) => {
+      const normalizedTargetFolder = normalizeFolderPath(targetFolderPath ?? '');
+      const existingFoldersForOwner =
+        ownerCaseId
+          ? normalizeFolderRecords(current.folderRecords)
+            .filter((record: CaseResolverFolderRecord): boolean => record.ownerCaseId === ownerCaseId)
+            .map((record: CaseResolverFolderRecord): string => record.path)
+          : current.folders;
+      const nextPath = createUniqueFolderPath(existingFoldersForOwner, normalizedTargetFolder);
+      createdPath = nextPath;
+      const currentFolderRecords = normalizeFolderRecords(current.folderRecords);
+      const ownedRecordExists = currentFolderRecords.some(
+        (record: CaseResolverFolderRecord): boolean =>
+          record.path === nextPath && (record.ownerCaseId ?? null) === ownerCaseId
+      );
+      if (ownedRecordExists) return current;
+      return {
+        ...current,
+        folders: normalizeFolderPaths([...current.folders, nextPath]),
+        folderRecords: appendOwnedFolderRecords({
+          records: current.folderRecords,
+          folderPath: nextPath,
+          ownerCaseId,
+        }),
+      };
+    }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+    if (createdPath) {
+      setSelectedFileId(null);
+      setSelectedAssetId(null);
+      setSelectedFolderPath(createdPath);
+    }
+  }, [resolvedCaseContainerIdForCreate, selectedCaseContainerId, updateWorkspace]);
+
+  const handleCreateFile = useCallback((targetFolderPath: string | null): void => {
+    const folder = normalizeFolderPath(targetFolderPath ?? '');
+    const runtimeCaseResolverSettings = parseCaseResolverSettings(
+      settingsStore.get(CASE_RESOLVER_SETTINGS_KEY)
+    );
+    const runtimeDefaultDocumentFormat = parseCaseResolverDefaultDocumentFormat(
+      settingsStore.get(CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY),
+      runtimeCaseResolverSettings.defaultDocumentFormat
+    );
+    let createdFileId: string | null = null;
+    let missingCaseContainer = false;
+    updateWorkspace((current) => {
+      const filesMap = new Map<string, CaseResolverFile>(
+        current.files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
+      );
+      const resolveContextCaseId = (): string | null => {
+        const contextCandidates = [
+          selectedFileId,
+          current.activeFileId,
+          requestedFileId,
+        ];
+        for (const candidateId of contextCandidates) {
+          if (!candidateId) continue;
+          const candidate = filesMap.get(candidateId) ?? null;
+          if (!candidate) continue;
+          if (candidate.fileType === 'case') return candidate.id;
+          if (!candidate.parentCaseId) continue;
+          const parent = filesMap.get(candidate.parentCaseId) ?? null;
+          if (parent?.fileType === 'case') return parent.id;
+        }
+        return current.files.find(
+          (file: CaseResolverFile): boolean => file.fileType === 'case'
+        )?.id ?? null;
+      };
+
+      const parentCaseId = resolveContextCaseId();
+      if (!parentCaseId) {
+        missingCaseContainer = true;
+        return current;
+      }
+
+      const name = createUniqueCaseFileName({
+        files: current.files,
+        folder,
+        baseName: 'New Document',
+      });
+      const file = createCaseResolverFile({
+        id: createId('case-file'),
+        fileType: 'document',
+        name,
+        folder,
+        parentCaseId,
+        editorType: runtimeDefaultDocumentFormat,
+        tagId: defaultTagId,
+        caseIdentifierId: defaultCaseIdentifierId,
+        categoryId: defaultCategoryId,
+      });
+      createdFileId = file.id;
+
+      return {
+        ...current,
+        files: [...current.files, file],
+        activeFileId: file.id,
+        folders: normalizeFolderPaths([...current.folders, folder]),
+        folderRecords: appendOwnedFolderRecords({
+          records: current.folderRecords,
+          folderPath: folder,
+          ownerCaseId: parentCaseId,
+        }),
+      };
+    }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+
+    if (missingCaseContainer) {
+      toast('Cannot create document without a selected case.', { variant: 'error' });
+      return;
+    }
+    if (!createdFileId) return;
+    setSelectedFileId(createdFileId);
+    setSelectedFolderPath(null);
+    setSelectedAssetId(null);
   }, [
     defaultCaseIdentifierId,
     defaultCategoryId,
     defaultTagId,
+    requestedFileId,
+    selectedFileId,
     settingsStore,
-    selectedCaseContainerId,
+    toast,
     updateWorkspace,
-    prompt,
   ]);
 
   const uploadSourceFileToCaseResolver = useCallback(
@@ -806,39 +1038,81 @@ export function useCaseResolverState() {
       settingsStore.get(CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY),
       runtimeCaseResolverSettings.defaultDocumentFormat
     );
-    const createdFileId = createId('case-file');
+    let missingCaseContainer = false;
+    let createdImageFile = false;
 
     updateWorkspace((current) => {
+      const filesMap = new Map<string, CaseResolverFile>(
+        current.files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
+      );
+      const resolveContextCaseId = (): string | null => {
+        const contextCandidates = [
+          selectedFileId,
+          current.activeFileId,
+          requestedFileId,
+        ];
+        for (const candidateId of contextCandidates) {
+          if (!candidateId) continue;
+          const candidate = filesMap.get(candidateId) ?? null;
+          if (!candidate) continue;
+          if (candidate.fileType === 'case') return candidate.id;
+          if (!candidate.parentCaseId) continue;
+          const parent = filesMap.get(candidate.parentCaseId) ?? null;
+          if (parent?.fileType === 'case') return parent.id;
+        }
+        return current.files.find(
+          (file: CaseResolverFile): boolean => file.fileType === 'case'
+        )?.id ?? null;
+      };
+      const parentCaseId = resolveContextCaseId();
+      if (!parentCaseId) {
+        missingCaseContainer = true;
+        return current;
+      }
       const name = createUniqueCaseFileName({
         files: current.files,
         folder,
         baseName: 'New Image',
       });
+      const createdFileId = createId('case-file');
       const createdFile = createCaseResolverFile({
         id: createdFileId,
         fileType: 'scanfile',
         name,
         folder,
-        parentCaseId: selectedCaseContainerId,
+        parentCaseId,
         editorType: runtimeDefaultDocumentFormat,
         scanSlots: [],
         tagId: defaultTagId,
         caseIdentifierId: defaultCaseIdentifierId,
         categoryId: defaultCategoryId,
       });
+      createdImageFile = true;
       return {
         ...current,
         files: [...current.files, createdFile],
         folders: normalizeFolderPaths([...current.folders, folder]),
+        folderRecords: appendOwnedFolderRecords({
+          records: current.folderRecords,
+          folderPath: folder,
+          ownerCaseId: parentCaseId,
+        }),
       };
     }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
 
-    toast('New image file created.', { variant: 'success' });
+    if (missingCaseContainer) {
+      toast('Cannot create image file without a selected case.', { variant: 'error' });
+      return;
+    }
+    if (createdImageFile) {
+      toast('New image file created.', { variant: 'success' });
+    }
   }, [
     defaultCaseIdentifierId,
     defaultCategoryId,
     defaultTagId,
-    selectedCaseContainerId,
+    requestedFileId,
+    selectedFileId,
     settingsStore,
     toast,
     updateWorkspace,
@@ -1118,6 +1392,7 @@ export function useCaseResolverState() {
   const handleCreateImageAsset = useCallback((targetFolderPath: string | null): void => {
     const folder = normalizeFolderPath(targetFolderPath ?? '');
     const createdAssetId = createId('asset');
+    const ownerCaseId = selectedCaseContainerId ?? resolvedCaseContainerIdForCreate ?? null;
     updateWorkspace((current) => {
       const name = createPlaceholderAssetName({
         assets: current.assets,
@@ -1134,13 +1409,18 @@ export function useCaseResolverState() {
         ...current,
         assets: [...current.assets, createdAsset],
         folders: normalizeFolderPaths([...current.folders, folder]),
+        folderRecords: appendOwnedFolderRecords({
+          records: current.folderRecords,
+          folderPath: folder,
+          ownerCaseId,
+        }),
       };
     }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
     setSelectedFileId(null);
     setSelectedFolderPath(null);
     setSelectedAssetId(createdAssetId);
     toast('Image placeholder created. Upload the file when ready.', { variant: 'success' });
-  }, [toast, updateWorkspace]);
+  }, [resolvedCaseContainerIdForCreate, selectedCaseContainerId, toast, updateWorkspace]);
 
   const handleUploadAssets = useCallback(
     async (
@@ -1352,20 +1632,41 @@ export function useCaseResolverState() {
     setSelectedFileId(requestedFileId);
     setSelectedAssetId(null);
     setSelectedFolderPath(null);
-    updateWorkspace((current: CaseResolverWorkspace) =>
-      current.activeFileId === requestedFileId
-        ? current
-        : {
-          ...current,
-          activeFileId: requestedFileId,
-        }
-    );
-  }, [requestedFileId, updateWorkspace, workspace.files]);
+    setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
+      if (current.activeFileId === requestedFileId) return current;
+      const nextWorkspace = {
+        ...current,
+        activeFileId: requestedFileId,
+      };
+      const serialized = JSON.stringify(nextWorkspace);
+      lastPersistedValueRef.current = serialized;
+      queuedSerializedWorkspaceRef.current = null;
+      queuedExpectedRevisionRef.current = null;
+      queuedMutationIdRef.current = null;
+      if (persistWorkspaceTimerRef.current) {
+        window.clearTimeout(persistWorkspaceTimerRef.current);
+        persistWorkspaceTimerRef.current = null;
+      }
+      return nextWorkspace;
+    });
+  }, [requestedFileId, workspace.files]);
 
   const handleDeleteFolder = useCallback((folderPath: string): void => {
     const normalizedFolder = normalizeFolderPath(folderPath);
     if (!normalizedFolder) return;
-    
+    const scopedCaseIds = selectedCaseScopeIds;
+    const scopedFileIds = scopedCaseIds
+      ? new Set<string>(
+        workspace.files
+          .filter(
+            (file: CaseResolverFile): boolean =>
+              file.fileType !== 'case' &&
+              Boolean(file.parentCaseId && scopedCaseIds.has(file.parentCaseId))
+          )
+          .map((file: CaseResolverFile): string => file.id)
+      )
+      : null;
+
     confirm({
       title: 'Delete Folder?',
       message: `Are you sure you want to delete folder "${normalizedFolder}" and all nested content? This action cannot be undone.`,
@@ -1373,10 +1674,13 @@ export function useCaseResolverState() {
       isDangerous: true,
       onConfirm: () => {
         const filesInDeletedFolder = workspace.files.filter((file: CaseResolverFile): boolean =>
-          file.fileType !== 'case' && isPathWithinFolder(file.folder, normalizedFolder)
+          file.fileType !== 'case' &&
+          isPathWithinFolder(file.folder, normalizedFolder) &&
+          (!scopedCaseIds || Boolean(file.parentCaseId && scopedCaseIds.has(file.parentCaseId)))
         );
         const assetsInDeletedFolder = workspace.assets.filter((asset: CaseResolverAssetFile): boolean =>
-          isPathWithinFolder(asset.folder, normalizedFolder)
+          isPathWithinFolder(asset.folder, normalizedFolder) &&
+          (!scopedFileIds || Boolean(asset.sourceFileId && scopedFileIds.has(asset.sourceFileId)))
         );
         const removedFileIds = new Set<string>(
           filesInDeletedFolder.map((file: CaseResolverFile): string => file.id)
@@ -1386,13 +1690,44 @@ export function useCaseResolverState() {
         );
 
         updateWorkspace((current) => {
+          const currentScopeCaseIds = collectCaseScopeIds(
+            current.files,
+            selectedCaseContainerId
+          );
+          const currentScopeFileIds = currentScopeCaseIds
+            ? new Set<string>(
+              current.files
+                .filter(
+                  (file: CaseResolverFile): boolean =>
+                    file.fileType !== 'case' &&
+                    Boolean(file.parentCaseId && currentScopeCaseIds.has(file.parentCaseId))
+                )
+                .map((file: CaseResolverFile): string => file.id)
+            )
+            : null;
           const currentRemovedFileIds = new Set(
             current.files
-              .filter((file) => file.fileType !== 'case' && isPathWithinFolder(file.folder, normalizedFolder))
+              .filter(
+                (file: CaseResolverFile): boolean =>
+                  file.fileType !== 'case' &&
+                  isPathWithinFolder(file.folder, normalizedFolder) &&
+                  (!currentScopeCaseIds ||
+                    Boolean(file.parentCaseId && currentScopeCaseIds.has(file.parentCaseId)))
+              )
               .map((file) => file.id)
           );
           const nextFiles = current.files.filter(
-            (file) => file.fileType === 'case' || !isPathWithinFolder(file.folder, normalizedFolder)
+            (file: CaseResolverFile): boolean =>
+              file.fileType === 'case' ||
+              !isPathWithinFolder(file.folder, normalizedFolder) ||
+              (currentScopeCaseIds !== null &&
+                (!file.parentCaseId || !currentScopeCaseIds.has(file.parentCaseId)))
+          );
+          const nextAssets = current.assets.filter(
+            (asset: CaseResolverAssetFile): boolean =>
+              !isPathWithinFolder(asset.folder, normalizedFolder) ||
+              (currentScopeFileIds !== null &&
+                (!asset.sourceFileId || !currentScopeFileIds.has(asset.sourceFileId)))
           );
           const fallbackCaseId = (() => {
             if (!current.activeFileId || !currentRemovedFileIds.has(current.activeFileId)) {
@@ -1409,12 +1744,17 @@ export function useCaseResolverState() {
             nextFiles.find((file) => file.fileType !== 'case')?.id ??
             nextFiles.find((file) => file.fileType === 'case')?.id ??
             null;
-          
+
           return {
             ...current,
             folders: current.folders.filter((path) => !isPathWithinFolder(path, normalizedFolder)),
+            folderRecords: removeOwnedFolderRecordsWithinPath({
+              records: current.folderRecords,
+              folderPath: normalizedFolder,
+              ownerCaseIds: currentScopeCaseIds,
+            }),
             files: nextFiles,
-            assets: current.assets.filter((asset) => !isPathWithinFolder(asset.folder, normalizedFolder)),
+            assets: nextAssets,
             activeFileId: current.activeFileId && currentRemovedFileIds.has(current.activeFileId)
               ? (fallbackCaseId ?? fallbackFileId)
               : current.activeFileId,
@@ -1441,7 +1781,17 @@ export function useCaseResolverState() {
         );
       }
     });
-  }, [confirm, setSelectedAssetId, setSelectedFileId, setSelectedFolderPath, updateWorkspace, workspace.assets, workspace.files]);
+  }, [
+    confirm,
+    selectedCaseContainerId,
+    selectedCaseScopeIds,
+    setSelectedAssetId,
+    setSelectedFileId,
+    setSelectedFolderPath,
+    updateWorkspace,
+    workspace.assets,
+    workspace.files,
+  ]);
 
   const handleMoveFile = useCallback(
     async (fileId: string, targetFolder: string): Promise<void> => {
@@ -1526,10 +1876,31 @@ export function useCaseResolverState() {
         const now = new Date().toISOString();
         const rename = (value: string): string =>
           renameFolderPath(value, normalizedSource, normalizedTarget);
+        const currentScopeCaseIds = collectCaseScopeIds(
+          current.files,
+          selectedCaseContainerId
+        );
+        const currentScopeFileIds = currentScopeCaseIds
+          ? new Set<string>(
+            current.files
+              .filter(
+                (file: CaseResolverFile): boolean =>
+                  file.fileType !== 'case' &&
+                  Boolean(file.parentCaseId && currentScopeCaseIds.has(file.parentCaseId))
+              )
+              .map((file: CaseResolverFile): string => file.id)
+          )
+          : null;
 
         return {
           ...current,
           folders: normalizeFolderPaths(current.folders.map(rename)),
+          folderRecords: renameOwnedFolderRecordsWithinPath({
+            records: current.folderRecords,
+            sourceFolderPath: normalizedSource,
+            targetFolderPath: normalizedTarget,
+            ownerCaseIds: currentScopeCaseIds,
+          }),
           folderTimestamps: Object.fromEntries(
             Object.entries(current.folderTimestamps ?? {}).map(([path, timestamps]) => [
               rename(path),
@@ -1537,11 +1908,27 @@ export function useCaseResolverState() {
             ])
           ),
           files: current.files.map((file) => {
+            const shouldRename =
+              isPathWithinFolder(file.folder, normalizedSource) &&
+              (
+                !currentScopeCaseIds ||
+                (file.fileType === 'case'
+                  ? currentScopeCaseIds.has(file.id)
+                  : Boolean(file.parentCaseId && currentScopeCaseIds.has(file.parentCaseId)))
+              );
+            if (!shouldRename) return file;
             const nextFolder = rename(file.folder);
             if (nextFolder === file.folder) return file;
             return { ...file, folder: nextFolder, updatedAt: now };
           }),
           assets: current.assets.map((asset) => {
+            const shouldRename =
+              isPathWithinFolder(asset.folder, normalizedSource) &&
+              (
+                !currentScopeFileIds ||
+                Boolean(asset.sourceFileId && currentScopeFileIds.has(asset.sourceFileId))
+              );
+            if (!shouldRename) return asset;
             const nextFolder = rename(asset.folder);
             if (nextFolder === asset.folder) return asset;
             return { ...asset, folder: nextFolder, updatedAt: now };
@@ -1554,7 +1941,7 @@ export function useCaseResolverState() {
         return renameFolderPath(current, normalizedSource, normalizedTarget);
       });
     },
-    [setSelectedFolderPath, updateWorkspace]
+    [selectedCaseContainerId, setSelectedFolderPath, updateWorkspace]
   );
 
   const handleOpenFileEditor = useCallback((fileId: string): void => {

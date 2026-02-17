@@ -64,6 +64,7 @@ export const getDatabaseColumns = (options?: {
           {options?.onPreview && (
             <Button
               variant='secondary'
+              size='xs'
               onClick={(): void => options.onPreview?.(backup.name)}
             >
               Preview
@@ -71,6 +72,7 @@ export const getDatabaseColumns = (options?: {
           )}
 
           <Button
+            size='xs'
             disabled={Boolean(options?.disableRestore)}
             title={options?.disableRestore ? options.restoreDisabledReason : undefined}
             onClick={(): void => {
@@ -82,6 +84,7 @@ export const getDatabaseColumns = (options?: {
 
           <Button
             variant='destructive'
+            size='xs'
             disabled={Boolean(options?.disableDelete)}
             title={options?.disableDelete ? options.deleteDisabledReason : undefined}
             onClick={(): void => {

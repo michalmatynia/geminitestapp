@@ -113,6 +113,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
       setSelectedSlotId,
       setWorkingSlotId,
       setPreviewMode,
+      createSlots,
       updateSlotMutation,
       uploadMutation,
       setDriveImportOpen,
@@ -425,7 +426,8 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
     const handleSlotImageChange = useCallback(
       async (file: File | null, index: number): Promise<void> => {
         if (!file || index !== OBJECT_SLOT_INDEX) return;
-        if (!projectId) {
+        const normalizedProjectId = projectId.trim();
+        if (!normalizedProjectId) {
           setUploadError('Select a project first.');
           return;
         }
@@ -441,63 +443,24 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
             throw new Error(result.failures?.[0]?.error || 'Upload failed');
           }
 
-          const selectedSlotId = objectSlot?.id?.trim() ?? '';
-          const selectedSlotCandidates = new Set(resolveSlotIdCandidates(selectedSlotId));
-          const cachedSlots =
-            queryClient.getQueryData<StudioSlotsResponse>(studioKeys.slots(projectId.trim()))?.slots ?? [];
-          const selectedSlotSnapshot =
-            (selectedSlotCandidates.size > 0
-              ? cachedSlots.find((slot: ImageStudioSlotRecord) => selectedSlotCandidates.has(slot.id)) ?? null
-              : null) ??
-            objectSlot;
-          const selectedSlotIsEmpty = Boolean(
-            selectedSlotId && !slotHasRenderableImage(selectedSlotSnapshot)
-          );
-          if (selectedSlotIsEmpty) {
-            const updatePayload = {
+          lastConsumedTemporaryUploadIdRef.current = null;
+          lastConsumedSlotIdRef.current = null;
+          const createdSlots = await createSlots([
+            {
+              name: uploaded.filename?.trim() || `Card ${Date.now()}`,
+              ...(getFolderForNewSlot() ? { folderPath: getFolderForNewSlot() } : {}),
               imageFileId: uploaded.id,
               imageUrl: uploaded.filepath,
               imageBase64: null,
-              metadata: setImageStudioSlotImageLocked(selectedSlotSnapshot?.metadata ?? null, true),
-            } as const;
-            const slotIdCandidates = resolveSlotIdCandidates(selectedSlotId);
-            let updatedSlot: ImageStudioSlotRecord | null = null;
-            let updateError: unknown = null;
-            for (const candidate of slotIdCandidates) {
-              try {
-                updatedSlot = await updateSlotMutation.mutateAsync({
-                  id: candidate,
-                  data: updatePayload,
-                });
-                if (updatedSlot) break;
-              } catch (error: unknown) {
-                updateError = error;
-              }
-            }
-            if (!updatedSlot) {
-              throw (updateError instanceof Error ? updateError : new Error('Failed to assign image to empty card.'));
-            }
-            setSelectedSlotId(updatedSlot.id);
-            setTemporaryObjectUpload(null);
-            setObjectImageLinkDraft(uploaded.filepath);
-            setObjectImageBase64Draft('');
-            if (previousTemp && previousTemp.id !== uploaded.id) {
-              await deleteUploadedAsset(previousTemp).catch(() => {
-                // Best effort cleanup of replaced temporary upload.
-              });
-            }
-            return;
+            },
+          ]);
+          const createdSlot = createdSlots[0] ?? null;
+          if (!createdSlot?.id) {
+            throw new Error('Failed to create card from uploaded image.');
           }
 
-          lastConsumedTemporaryUploadIdRef.current = null;
-          lastConsumedSlotIdRef.current = null;
-          setTemporaryObjectUpload({
-            id: uploaded.id,
-            filepath: uploaded.filepath,
-            filename: uploaded.filename,
-            width: uploaded.width,
-            height: uploaded.height,
-          });
+          setTemporaryObjectUpload(null);
+          setSelectedSlotId(createdSlot.id);
           setObjectImageLinkDraft(uploaded.filepath);
           setObjectImageBase64Draft('');
           if (previousTemp && previousTemp.id !== uploaded.id) {
@@ -505,21 +468,23 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
               // Best effort cleanup of replaced temporary upload.
             });
           }
-          setPreviewMode('image');
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent(REVEAL_IN_TREE_EVENT, { detail: { slotId: createdSlot.id } }));
+          }
+          void invalidateImageStudioSlots(queryClient, normalizedProjectId);
         } catch (error: unknown) {
           setUploadError(error instanceof Error ? error.message : 'Failed to upload image');
         }
       },
       [
+        createSlots,
         deleteUploadedAsset,
         getFolderForNewSlot,
-        objectSlot,
         projectId,
-        setPreviewMode,
+        queryClient,
         setSelectedSlotId,
         setTemporaryObjectUpload,
         temporaryObjectUpload,
-        updateSlotMutation,
         uploadMutation,
       ]
     );

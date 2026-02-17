@@ -404,6 +404,18 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
         const inferredUseMongoActions =
         databaseConfig.useMongoActions ??
         Boolean(databaseConfig.actionCategory || databaseConfig.action);
+        const parameterInferenceGuard = databaseConfig.parameterInferenceGuard
+          ? {
+            enabled: databaseConfig.parameterInferenceGuard.enabled ?? false,
+            targetPath: databaseConfig.parameterInferenceGuard.targetPath ?? 'parameters',
+            definitionsPort: databaseConfig.parameterInferenceGuard.definitionsPort ?? 'result',
+            definitionsPath: databaseConfig.parameterInferenceGuard.definitionsPath ?? '',
+            enforceOptionLabels:
+              databaseConfig.parameterInferenceGuard.enforceOptionLabels ?? true,
+            allowUnknownParameterIds:
+              databaseConfig.parameterInferenceGuard.allowUnknownParameterIds ?? false,
+          }
+          : undefined;
         const runtimeConfig = node.config?.runtime
           ? {
             ...node.config.runtime,
@@ -439,6 +451,9 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
               trimStrings: databaseConfig.trimStrings ?? false,
               aiPrompt: databaseConfig.aiPrompt ?? '',
               validationRuleIds: databaseConfig.validationRuleIds ?? [],
+              ...(parameterInferenceGuard
+                ? { parameterInferenceGuard }
+                : {}),
             },
           },
         };

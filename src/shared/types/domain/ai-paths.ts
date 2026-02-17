@@ -148,6 +148,16 @@ export type DatabaseConfig = {
   trimStrings?: boolean | undefined;
   aiPrompt?: string | undefined;
   validationRuleIds?: string[] | undefined;
+  parameterInferenceGuard?:
+    | {
+      enabled?: boolean | undefined;
+      targetPath?: string | undefined;
+      definitionsPort?: string | undefined;
+      definitionsPath?: string | undefined;
+      enforceOptionLabels?: boolean | undefined;
+      allowUnknownParameterIds?: boolean | undefined;
+    }
+    | undefined;
   schemaSnapshot?: DbSchemaSnapshot | undefined;
 };
 

@@ -1,8 +1,10 @@
 'use client';
 
-import { AlertTriangleIcon } from 'lucide-react';
+import { AlertTriangleIcon, CheckCircle2Icon, DatabaseIcon, Table2Icon, TerminalSquareIcon } from 'lucide-react';
+import Link from 'next/link';
 
-import { FormSection, Tabs, TabsContent, TabsList, TabsTrigger, SelectSimple, Alert } from '@/shared/ui';
+import { Alert, Badge, FormSection, ListPanel, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import { CrudPanel } from './CrudPanel';
 import { SqlQueryConsole } from './SqlQueryConsole';
@@ -10,39 +12,119 @@ import { DatabaseProvider, useDatabase } from '../context/DatabaseContext';
 
 import type { DatabaseType } from '../types';
 
+const DATABASE_OPTIONS: Array<{
+  value: DatabaseType;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'postgresql',
+    label: 'PostgreSQL',
+    description: 'Use SQL Console and table-level CRUD operations.',
+  },
+  {
+    value: 'mongodb',
+    label: 'MongoDB',
+    description: 'Use SQL Console for MongoDB-compatible operations.',
+  },
+];
+
 function DatabaseOperationsPanelContent(): React.JSX.Element {
   const { dbType, setDbType, tableDetails, isLoading: previewLoading } = useDatabase();
   const isProduction = process.env['NODE_ENV'] === 'production';
+  const selectedDatabase = DATABASE_OPTIONS.find((option) => option.value === dbType) ?? DATABASE_OPTIONS[0];
 
   return (
-    <div className='space-y-4'>
-      <div className='flex items-center gap-2'>
-        <SelectSimple size='sm'
-          value={dbType}
-          onValueChange={(value: string): void =>
-            setDbType(value as DatabaseType)
-          }
-          options={[
-            { value: 'postgresql', label: 'PostgreSQL' },
-            { value: 'mongodb', label: 'MongoDB' },
-          ]}
-          triggerClassName='h-8 text-xs w-[120px]'
-        />
-      </div>
-
-      {isProduction && (
-        <Alert variant='warning' className='flex items-center gap-2'>
-          <AlertTriangleIcon className='size-4' />
-          Database operations are disabled in production environments.
-        </Alert>
-      )}
-
+    <ListPanel
+      header={
+        <div className='space-y-3'>
+          <div className='flex flex-wrap items-start justify-between gap-3'>
+            <div className='space-y-1'>
+              <h2 className='text-2xl font-bold tracking-tight text-white'>Operations Console</h2>
+              <nav aria-label='Breadcrumb' className='flex flex-wrap items-center gap-1 text-xs text-gray-400'>
+                <Link href='/admin' className='transition-colors hover:text-gray-200'>
+                  Admin
+                </Link>
+                <span>/</span>
+                <Link href='/admin/databases/engine' className='transition-colors hover:text-gray-200'>
+                  Databases
+                </Link>
+                <span>/</span>
+                <span className='text-gray-300'>Operations</span>
+              </nav>
+            </div>
+            <div className='flex flex-wrap items-center gap-2'>
+              <Badge variant='active' className='gap-1.5'>
+                <DatabaseIcon className='size-3.5' />
+                {selectedDatabase.label}
+              </Badge>
+              <Badge variant='outline' className='border-white/10 text-gray-300'>
+                {tableDetails.length.toLocaleString()} table{tableDetails.length === 1 ? '' : 's'}
+              </Badge>
+            </div>
+          </div>
+        </div>
+      }
+      alerts={
+        isProduction ? (
+          <Alert variant='warning' className='flex items-center gap-2'>
+            <AlertTriangleIcon className='size-4' />
+            Database operations are disabled in production environments.
+          </Alert>
+        ) : null
+      }
+      filters={
+        <div className='grid gap-3 lg:grid-cols-2'>
+          {DATABASE_OPTIONS.map((option) => {
+            const isActive = dbType === option.value;
+            return (
+              <button
+                key={option.value}
+                type='button'
+                aria-pressed={isActive}
+                onClick={(): void => setDbType(option.value)}
+                className={cn(
+                  'rounded-lg border p-4 text-left transition-all',
+                  isActive
+                    ? 'border-emerald-500/50 bg-emerald-500/10 shadow-[0_0_0_1px_rgba(16,185,129,0.2)]'
+                    : 'border-border/60 bg-card/30 hover:border-border hover:bg-card/40'
+                )}
+              >
+                <div className='flex items-start justify-between gap-3'>
+                  <div className='flex min-w-0 items-start gap-3'>
+                    <div className={cn(
+                      'mt-0.5 rounded-md border p-2',
+                      isActive ? 'border-emerald-400/40 bg-emerald-500/20' : 'border-white/10 bg-white/5'
+                    )}>
+                      <DatabaseIcon className={cn('size-4', isActive ? 'text-emerald-200' : 'text-gray-400')} />
+                    </div>
+                    <div className='min-w-0'>
+                      <p className={cn('text-sm font-semibold', isActive ? 'text-emerald-100' : 'text-gray-100')}>
+                        {option.label}
+                      </p>
+                      <p className='text-xs text-gray-400'>{option.description}</p>
+                    </div>
+                  </div>
+                  {isActive ? (
+                    <CheckCircle2Icon className='size-4 text-emerald-300' />
+                  ) : (
+                    <span className='text-[11px] text-gray-500'>Select</span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      }
+    >
       <Tabs defaultValue='sql' className='w-full'>
-        <TabsList className='mb-4'>
-          <TabsTrigger value='sql' className='text-xs'>
+        <TabsList className='mb-4 border border-border/60 bg-card/30'>
+          <TabsTrigger value='sql' className='gap-2 text-xs'>
+            <TerminalSquareIcon className='size-3.5' />
             SQL Console
           </TabsTrigger>
-          <TabsTrigger value='crud' className='text-xs'>
+          <TabsTrigger value='crud' className='gap-2 text-xs'>
+            <Table2Icon className='size-3.5' />
             Table Manager {tableDetails.length > 0 && `(${tableDetails.length})`}
           </TabsTrigger>
         </TabsList>
@@ -71,7 +153,7 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
           {!previewLoading && tableDetails.length > 0 && <CrudPanel />}
         </TabsContent>
       </Tabs>
-    </div>
+    </ListPanel>
   );
 }
 

@@ -105,6 +105,10 @@ export function useValidationPatterns(): ListQuery<ProductValidationPattern> {
   return createListQueryV2({
     queryKey,
     queryFn: api.getValidationPatterns,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     meta: {
       source: 'products.hooks.useValidationPatterns',
       operation: 'list',
@@ -123,6 +127,10 @@ export function useProductValidatorConfig(includeDisabled: boolean = false): Sin
     id,
     queryKey,
     queryFn: () => api.getProductValidatorConfig(includeDisabled),
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     meta: {
       source: 'products.hooks.useProductValidatorConfig',
       operation: 'detail',

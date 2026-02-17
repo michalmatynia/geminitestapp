@@ -30,8 +30,6 @@ import { CaseResolverWorkspaceDebugPanel } from '../components/CaseResolverWorks
 import { useCaseResolverState } from '../hooks/useCaseResolverState';
 import {
   normalizeFolderPath,
-  normalizeFolderPaths,
-  renameFolderPath,
 } from '../settings';
 import { isPathWithinFolder } from '../utils/caseResolverUtils';
 
@@ -70,6 +68,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     handleUploadScanFiles,
     handleRunScanFileOcr,
     handleOpenFileEditor,
+    handleRenameFolder,
     updateWorkspace,
     promptExploderPartyProposal,
     setPromptExploderPartyProposal,
@@ -578,7 +577,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   ]);
 
   const handleMoveFolder = useCallback(
-    (folderPath: string, targetFolder: string): void => {
+    async (folderPath: string, targetFolder: string): Promise<void> => {
       const normalizedSourceFolder = normalizeFolderPath(folderPath);
       if (!normalizedSourceFolder) return;
       const normalizedTargetFolder = normalizeFolderPath(targetFolder);
@@ -591,58 +590,9 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       if (!nextRootFolder || nextRootFolder === normalizedSourceFolder) {
         return;
       }
-
-      updateWorkspace(
-        (current) => {
-          const now = new Date().toISOString();
-          const renamePath = (value: string): string =>
-            renameFolderPath(value, normalizedSourceFolder, nextRootFolder);
-
-          const movedFolders = current.folders.map((folder: string): string => renamePath(folder));
-          const movedFolderTimestamps = Object.fromEntries(
-            Object.entries(current.folderTimestamps ?? {}).map(([path, timestamps]) => [
-              renamePath(path),
-              timestamps,
-            ])
-          );
-          const movedFiles = current.files.map((file) => {
-            const nextFolder = renamePath(file.folder);
-            if (nextFolder === file.folder) return file;
-            return {
-              ...file,
-              folder: nextFolder,
-              updatedAt: now,
-            };
-          });
-          const movedAssets = current.assets.map((asset) => {
-            const nextFolder = renamePath(asset.folder);
-            if (nextFolder === asset.folder) return asset;
-            return {
-              ...asset,
-              folder: nextFolder,
-              updatedAt: now,
-            };
-          });
-
-          return {
-            ...current,
-            folders: normalizeFolderPaths(movedFolders),
-            folderTimestamps: movedFolderTimestamps,
-            files: movedFiles,
-            assets: movedAssets,
-          };
-        },
-        { persistToast: 'Case Resolver tree changes saved.' }
-      );
-
-      setSelectedFolderPath((current) => {
-        if (!current || !isPathWithinFolder(current, normalizedSourceFolder)) {
-          return current;
-        }
-        return renameFolderPath(current, normalizedSourceFolder, nextRootFolder);
-      });
+      await handleRenameFolder(normalizedSourceFolder, nextRootFolder);
     },
-    [setSelectedFolderPath, updateWorkspace]
+    [handleRenameFolder]
   );
 
   const handleToggleFolderLock = useCallback(

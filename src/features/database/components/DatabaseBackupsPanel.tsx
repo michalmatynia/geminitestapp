@@ -1,18 +1,56 @@
 'use client';
 
 import {
+  CheckCircle2Icon,
+  DatabaseIcon,
+  HardDriveIcon,
+  ServerIcon,
+  UploadIcon,
+  EyeIcon,
+  PlusIcon,
+} from 'lucide-react';
+import Link from 'next/link';
+
+import {
+  Badge,
   Button,
   DataTable,
   FileUploadButton,
   type FileUploadHelpers,
   Alert,
+  ListPanel,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { cn } from '@/shared/utils';
 
 import { getDatabaseColumns } from './DatabaseColumns';
 import { LogModal } from './LogModal';
 import { RestoreModal } from './RestoreModal';
 import { useDatabaseBackupsState } from '../hooks/useDatabaseBackupsState';
+
+import type { DatabaseType } from '../types';
+
+type BackupDatabaseOption = {
+  value: DatabaseType;
+  label: string;
+  description: string;
+  extension: string;
+};
+
+const BACKUP_DATABASE_OPTIONS: BackupDatabaseOption[] = [
+  {
+    value: 'postgresql',
+    label: 'PostgreSQL',
+    description: 'Uses pg_dump/pg_restore data backups.',
+    extension: '.dump',
+  },
+  {
+    value: 'mongodb',
+    label: 'MongoDB',
+    description: 'Uses mongodump/mongorestore archive backups.',
+    extension: '.archive',
+  },
+];
 
 export function DatabaseBackupsPanel(): React.JSX.Element {
   const {
@@ -42,63 +80,176 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
     handlePreviewCurrent,
   } = useDatabaseBackupsState();
 
-  return (
-    <div className='space-y-4'>
-      <div className='flex flex-wrap items-center justify-between gap-2'>
-        <div className='flex items-center gap-2'>
-          <Button
-            variant={activeTab === 'postgresql' ? 'default' : 'outline'}
-            size='sm'
-            onClick={(): void => setActiveTab('postgresql')}
-          >
-            PostgreSQL
-          </Button>
-          <Button
-            variant={activeTab === 'mongodb' ? 'default' : 'outline'}
-            size='sm'
-            onClick={(): void => setActiveTab('mongodb')}
-          >
-            MongoDB
-          </Button>
-        </div>
+  const selectedDatabase =
+    BACKUP_DATABASE_OPTIONS.find((option) => option.value === activeTab) ??
+    BACKUP_DATABASE_OPTIONS[0];
+  const backupCountLabel = `${data.length.toLocaleString()} backup${data.length === 1 ? '' : 's'}`;
 
-        <div className='flex flex-wrap items-center gap-2'>
-          <Button
-            size='sm'
-            disabled={isProd || !backupRunNowAllowed}
-            title={
-              isProd
-                ? 'Disabled in production'
-                : !backupRunNowAllowed
-                  ? 'Disabled by Database Engine operation controls'
-                  : undefined
-            }
-            onClick={(): void => {
-              void handleBackup();
-            }}
-          >
-            Create Backup
-          </Button>
-          <FileUploadButton
-            size='sm'
-            onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => handleUpload(files, helpers)}
-            accept={activeTab === 'postgresql' ? '.dump' : '.archive'}
-            disabled={isProd || !backupMaintenanceAllowed}
-            title={
-              isProd
-                ? 'Disabled in production'
-                : !backupMaintenanceAllowed
-                  ? 'Disabled by Database Engine operation controls'
-                  : undefined
-            }
-          >
-            Upload Backup
-          </FileUploadButton>
-          <Button size='sm' variant='secondary' onClick={handlePreviewCurrent}>
-            Preview Current DB
-          </Button>
+  return (
+    <div className='space-y-6'>
+      <ListPanel
+        title='Backup Center'
+        description='Create, upload, preview, restore, and delete backups with clear source selection.'
+        header={
+          <div className='space-y-3'>
+            <div className='flex flex-wrap items-start justify-between gap-3'>
+              <div className='space-y-1'>
+                <h2 className='text-2xl font-bold tracking-tight text-white'>Backup Center</h2>
+                <nav aria-label='Breadcrumb' className='flex flex-wrap items-center gap-1 text-xs text-gray-400'>
+                  <Link href='/admin' className='transition-colors hover:text-gray-200'>
+                    Admin
+                  </Link>
+                  <span>/</span>
+                  <Link href='/admin/databases/engine' className='transition-colors hover:text-gray-200'>
+                    Databases
+                  </Link>
+                  <span>/</span>
+                  <span className='text-gray-300'>Backups</span>
+                </nav>
+              </div>
+              <div className='flex flex-wrap items-center gap-2'>
+                <Badge variant='active' className='gap-1.5'>
+                  <ServerIcon className='size-3.5' />
+                  {selectedDatabase.label}
+                </Badge>
+                <Badge variant='outline' className='border-white/10 text-gray-300'>
+                  {backupCountLabel}
+                </Badge>
+              </div>
+            </div>
+          </div>
+        }
+        alerts={
+          <>
+            {isProd && (
+              <Alert variant='warning'>
+                Backups are disabled in production. Create or upload backups in a non-production environment.
+              </Alert>
+            )}
+
+            {(!backupRunNowAllowed || !backupMaintenanceAllowed) && (
+              <Alert variant='warning'>
+                Some backup actions are disabled by Database Engine manual operation controls.
+              </Alert>
+            )}
+          </>
+        }
+        filters={
+          <div className='space-y-3'>
+            <div className='grid gap-3 lg:grid-cols-2'>
+              {BACKUP_DATABASE_OPTIONS.map((option) => {
+                const isActive = activeTab === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type='button'
+                    aria-pressed={isActive}
+                    onClick={(): void => setActiveTab(option.value)}
+                    className={cn(
+                      'rounded-lg border p-4 text-left transition-all',
+                      isActive
+                        ? 'border-emerald-500/50 bg-emerald-500/10 shadow-[0_0_0_1px_rgba(16,185,129,0.2)]'
+                        : 'border-border/60 bg-card/30 hover:border-border hover:bg-card/40'
+                    )}
+                  >
+                    <div className='flex items-start justify-between gap-3'>
+                      <div className='flex min-w-0 items-start gap-3'>
+                        <div className={cn(
+                          'mt-0.5 rounded-md border p-2',
+                          isActive ? 'border-emerald-400/40 bg-emerald-500/20' : 'border-white/10 bg-white/5'
+                        )}>
+                          <DatabaseIcon className={cn('size-4', isActive ? 'text-emerald-200' : 'text-gray-400')} />
+                        </div>
+                        <div className='min-w-0'>
+                          <p className={cn('text-sm font-semibold', isActive ? 'text-emerald-100' : 'text-gray-100')}>
+                            {option.label}
+                          </p>
+                          <p className='text-xs text-gray-400'>{option.description}</p>
+                        </div>
+                      </div>
+                      {isActive ? (
+                        <CheckCircle2Icon className='size-4 text-emerald-300' />
+                      ) : (
+                        <span className='text-[11px] text-gray-500'>Select</span>
+                      )}
+                    </div>
+                    <div className='mt-3 flex items-center gap-2 text-[11px] text-gray-400'>
+                      <HardDriveIcon className='size-3.5' />
+                      <span>Expected format: {option.extension}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className='rounded-lg border border-border/60 bg-card/20 px-3 py-2 text-xs text-gray-300'>
+              Active source: <span className='font-semibold text-white'>{selectedDatabase.label}</span>
+            </div>
+          </div>
+        }
+        actions={
+          <div className='flex flex-wrap items-center gap-2'>
+            <Button
+              size='sm'
+              disabled={isProd || !backupRunNowAllowed}
+              title={
+                isProd
+                  ? 'Disabled in production'
+                  : !backupRunNowAllowed
+                    ? 'Disabled by Database Engine operation controls'
+                    : undefined
+              }
+              onClick={(): void => {
+                void handleBackup();
+              }}
+            >
+              <PlusIcon className='mr-2 size-3.5' />
+              Create Backup
+            </Button>
+            <FileUploadButton
+              size='sm'
+              variant='outline'
+              onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => handleUpload(files, helpers)}
+              accept={activeTab === 'postgresql' ? '.dump' : '.archive'}
+              disabled={isProd || !backupMaintenanceAllowed}
+              title={
+                isProd
+                  ? 'Disabled in production'
+                  : !backupMaintenanceAllowed
+                    ? 'Disabled by Database Engine operation controls'
+                    : undefined
+              }
+            >
+              <UploadIcon className='mr-2 size-3.5' />
+              Upload Backup
+            </FileUploadButton>
+            <Button size='sm' variant='secondary' onClick={handlePreviewCurrent}>
+              <EyeIcon className='mr-2 size-3.5' />
+              Preview Current DB
+            </Button>
+          </div>
+        }
+      >
+        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+          <DataTable
+            columns={getDatabaseColumns({
+              onPreview: handlePreview,
+              onRestoreRequest: handleRestoreRequest,
+              onDeleteRequest: (name: string): void => {
+                handleDeleteRequest(name);
+              },
+              disableRestore: !backupMaintenanceAllowed,
+              disableDelete: !backupMaintenanceAllowed,
+              restoreDisabledReason: 'Disabled by Database Engine operation controls',
+              deleteDisabledReason: 'Disabled by Database Engine operation controls',
+            })}
+            data={data}
+            initialSorting={[{ id: 'lastModifiedAt', desc: true }]}
+            sortingStorageKey={`stardb:database-backups:${activeTab}:sorting`}
+            isLoading={isLoading}
+          />
         </div>
-      </div>
+      </ListPanel>
 
       {isLogModalOpen && <LogModal isOpen={true} content={logModalContent} onClose={closeLogModal} />}
 
@@ -125,38 +276,6 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
         confirmText='Delete'
         isDangerous={true}
       />
-
-      {isProd && (
-        <Alert variant='warning'>
-          Backups are disabled in production. Create or upload backups in a non-production environment.
-        </Alert>
-      )}
-      
-      {(!backupRunNowAllowed || !backupMaintenanceAllowed) && (
-        <Alert variant='warning'>
-          Some backup actions are disabled by Database Engine manual operation controls.
-        </Alert>
-      )}
-
-      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-        <DataTable
-          columns={getDatabaseColumns({
-            onPreview: handlePreview,
-            onRestoreRequest: handleRestoreRequest,
-            onDeleteRequest: (name: string): void => {
-              handleDeleteRequest(name);
-            },
-            disableRestore: !backupMaintenanceAllowed,
-            disableDelete: !backupMaintenanceAllowed,
-            restoreDisabledReason: 'Disabled by Database Engine operation controls',
-            deleteDisabledReason: 'Disabled by Database Engine operation controls',
-          })}
-          data={data}
-          initialSorting={[{ id: 'lastModifiedAt', desc: true }]}
-          sortingStorageKey={`stardb:database-backups:${activeTab}:sorting`}
-          isLoading={isLoading}
-        />
-      </div>
     </div>
   );
 }

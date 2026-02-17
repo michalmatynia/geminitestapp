@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock3, Eye, GitBranch, Loader2, MousePointer2, Move, Play, Redo2, SlidersHorizontal, Sparkles, Undo2, Workflow } from 'lucide-react';
+import { Clock3, GitBranch, Loader2, Play, Redo2, Sparkles, Undo2, Workflow } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -17,7 +17,6 @@ import { savePromptExploderDraftPrompt } from '@/features/prompt-exploder/bridge
 import {
   type VectorShape,
   type VectorToolMode,
-  VectorDrawingToolbar,
 } from '@/features/vector-drawing';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
@@ -26,21 +25,20 @@ import {
   Button,
   AppModal,
   Label,
-  MultiSelect,
   Textarea,
-  SelectSimple,
   ValidatorFormatterToggle,
   useToast,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { GenerationToolbar } from './GenerationToolbar';
-import { LabeledSlider } from './LabeledSlider';
 import { ParamRow } from './ParamRow';
-import { ProjectGenerationHistoryTab } from './ProjectGenerationHistoryTab';
+import { RightSidebarControlsTab } from './right-sidebar/RightSidebarControlsTab';
+import { RightSidebarHistoryTab } from './right-sidebar/RightSidebarHistoryTab';
+import { RightSidebarPromptControlHeader } from './right-sidebar/RightSidebarPromptControlHeader';
+import { RightSidebarQuickActions } from './right-sidebar/RightSidebarQuickActions';
+import { RightSidebarRequestPreviewBody } from './right-sidebar/RightSidebarRequestPreviewBody';
 import { RightSidebarProvider } from './RightSidebarContext';
 import { SequencingPanel } from './SequencingPanel';
-import { StudioCard } from './StudioCard';
 import { UIPresetsPanel } from './UIPresetsPanel';
 import { VersionNodeMapPanel } from './VersionNodeMapPanel';
 import { useGenerationState, useGenerationActions } from '../context/GenerationContext';
@@ -1162,146 +1160,50 @@ export function RightSidebar(): React.JSX.Element {
   };
 
   const promptControlHeader = (
-    <div className='flex items-center justify-between gap-3'>
-      <div className='flex items-center gap-4'>
-        <Button
-          type='button'
-          onClick={handleSavePromptToProject}
-          disabled={promptSaveBusy || !projectId.trim()}
-          className='min-w-[100px] border border-white/20 hover:border-white/40'
-        >
-          {promptSaveBusy ? 'Saving...' : 'Save'}
-        </Button>
-        <div className='flex items-center gap-2'>
-          <h2 className='text-2xl font-bold text-white'>Control Prompt</h2>
-        </div>
-      </div>
-      <div className='flex items-center gap-2'>
-        <Button
-          size='xs'
-          type='button'
-          variant='outline'
-          title='Open Prompt Exploder with current prompt'
-          aria-label='Open Prompt Exploder with current prompt'
-          disabled={!promptText.trim()}
-          onClick={() => {
-            setPromptControlOpen(false);
-            handleOpenPromptExploder();
-          }}
-        >
-          Prompt Exploder
-        </Button>
-        <Button
-          type='button'
-          onClick={() => setPromptControlOpen(false)}
-          className='min-w-[100px] border border-white/20 hover:border-white/40'
-        >
-          Close
-        </Button>
-      </div>
-    </div>
+    <RightSidebarPromptControlHeader
+      onClose={() => setPromptControlOpen(false)}
+      onOpenPromptExploder={() => {
+        setPromptControlOpen(false);
+        handleOpenPromptExploder();
+      }}
+      onSave={handleSavePromptToProject}
+      projectId={projectId}
+      promptSaveBusy={promptSaveBusy}
+      promptText={promptText}
+    />
   );
 
   const quickActionsPanelContent = (
-    <>
-      <div className='rounded border border-border/60 bg-card/30 p-2'>
-        <div className='space-y-2'>
-          <SelectSimple size='sm'
-            value={studioSettings.targetAi.openai.model}
-            onValueChange={(value: string) => {
-              setStudioSettings((prev) => ({
-                ...prev,
-                targetAi: {
-                  ...prev.targetAi,
-                  openai: {
-                    ...prev.targetAi.openai,
-                    api: 'images',
-                    model: value,
-                  },
-                },
-              }));
-            }}
-            options={quickModelOptions}
-            placeholder='Select model'
-            triggerClassName='h-8 text-xs'
-            ariaLabel='Quick generation model'
-          />
-          <div className='flex flex-wrap items-center gap-2 sm:justify-end'>
-            <Button size='xs'
-              onClick={handleRunGeneration}
-              disabled={!promptText.trim() || generationBusy || sequenceRunBusy}
-              className='sm:min-w-[140px]'
-            >
-              {generationBusy ? (
-                <Loader2 className='mr-2 size-4 animate-spin' />
-              ) : (
-                <Play className='mr-2 size-4' />
-              )}
-              {generationLabel}
-            </Button>
-            {modelSupportsSequenceGeneration ? (
-              <Button size='xs'
-                variant='outline'
-                onClick={handleRunSequenceGeneration}
-                disabled={generationBusy || sequenceRunBusy}
-                className='sm:min-w-[160px]'
-                title='Run enabled sequence steps in sequencer'
-                aria-label='Generate sequence'
-              >
-                {sequenceRunBusy ? (
-                  <Loader2 className='mr-2 size-4 animate-spin' />
-                ) : (
-                  <Workflow className='mr-2 size-4' />
-                )}
-                {sequenceRunBusy ? 'Starting...' : 'Generate Sequence'}
-              </Button>
-            ) : null}
-          </div>
-        </div>
-        <div className='mt-2 flex flex-wrap items-center gap-3 text-[11px] text-gray-400'>
-          <span className='text-gray-300'>
-          Tokens ~{estimatedPromptTokens.toLocaleString()}
-          </span>
-          <span
-            className='max-w-full truncate text-gray-300'
-            title={`Estimated generation cost for ${selectedModelId}`}
-          >
-          Est. Cost ({selectedModelId}) ${estimatedGenerationCost.toFixed(3)}
-          </span>
-        </div>
-      </div>
-
-      <div className='flex flex-wrap items-center justify-end gap-2'>
-        <Button size='xs'
-          variant='outline'
-          title='Open prompt controls'
-          aria-label='Open prompt controls'
-          onClick={() => setPromptControlOpen(true)}
-        >
-          <Sparkles className='mr-2 size-4' />
-  Control Prompt
-        </Button>
-        <Button size='xs'
-          variant='outline'
-          title='Preview generation request payload and input images'
-          aria-label='Preview generation request payload and input images'
-          onClick={() => setRequestPreviewOpen(true)}
-        >
-          <Eye className='mr-2 size-4' />
-  Preview Request
-        </Button>
-        <Button size='xs'
-          variant='outline'
-          title={hasExtractedControls ? 'Open extracted controls' : 'Extract controls first'}
-          aria-label='Open extracted controls'
-          disabled={!hasExtractedControls}
-          onClick={() => setControlsOpen(true)}
-        >
-          <SlidersHorizontal className='mr-2 size-4' />
-    Controls
-        </Button>
-      </div>
-    </>
+    <RightSidebarQuickActions
+      estimatedGenerationCost={estimatedGenerationCost}
+      estimatedPromptTokens={estimatedPromptTokens}
+      generationBusy={generationBusy}
+      generationLabel={generationLabel}
+      hasExtractedControls={hasExtractedControls}
+      modelSupportsSequenceGeneration={modelSupportsSequenceGeneration}
+      modelValue={studioSettings.targetAi.openai.model}
+      onModelChange={(value: string) => {
+        setStudioSettings((prev) => ({
+          ...prev,
+          targetAi: {
+            ...prev.targetAi,
+            openai: {
+              ...prev.targetAi.openai,
+              api: 'images',
+              model: value,
+            },
+          },
+        }));
+      }}
+      onOpenControls={() => setControlsOpen(true)}
+      onOpenPromptControl={() => setPromptControlOpen(true)}
+      onOpenRequestPreview={() => setRequestPreviewOpen(true)}
+      onRunGeneration={handleRunGeneration}
+      onRunSequenceGeneration={handleRunSequenceGeneration}
+      quickModelOptions={quickModelOptions}
+      selectedModelId={selectedModelId}
+      sequenceRunBusy={sequenceRunBusy}
+    />
   );
 
   return (
@@ -1427,246 +1329,46 @@ export function RightSidebar(): React.JSX.Element {
           ) : sidebarTab === 'sequencing' ? (
             <SequencingPanel />
           ) : sidebarTab === 'history' ? (
-            <div className='min-h-0 flex flex-1 flex-col overflow-hidden px-4 py-3'>
-              <div className='mb-3 grid grid-cols-2 gap-2'>
-                <Button
-                  size='xs'
-                  type='button'
-                  variant='ghost'
-                  className={cn(
-                    'h-7 rounded border border-border/60 px-2 text-[11px]',
-                    historyMode === 'actions'
-                      ? 'border-blue-400/70 bg-blue-500/10 text-blue-200 hover:bg-blue-500/10'
-                      : 'text-gray-400 hover:text-gray-200'
-                  )}
-                  onClick={() => setHistoryMode('actions')}
-                >
-                  Action Steps
-                </Button>
-                <Button
-                  size='xs'
-                  type='button'
-                  variant='ghost'
-                  className={cn(
-                    'h-7 rounded border border-border/60 px-2 text-[11px]',
-                    historyMode === 'runs'
-                      ? 'border-blue-400/70 bg-blue-500/10 text-blue-200 hover:bg-blue-500/10'
-                      : 'text-gray-400 hover:text-gray-200'
-                  )}
-                  onClick={() => setHistoryMode('runs')}
-                >
-                  Generation Runs
-                </Button>
-              </div>
-              {historyMode === 'actions' ? (
-                <div className='min-h-0 flex-1 overflow-y-auto'>
-                  <div className='mb-2 rounded border border-border/60 bg-card/30 p-2 text-[11px] text-gray-400'>
-                    Tracks editor state changes (up to {ACTION_HISTORY_MAX_STEPS} steps). Click any step to restore it.
-                  </div>
-                  {actionHistoryItems.length > 0 ? (
-                    <div className='space-y-2'>
-                      {actionHistoryItems.map(({ entry, index }) => {
-                        const isActiveStep = index === activeActionHistoryIndex;
-                        return (
-                          <button
-                            key={entry.id}
-                            type='button'
-                            onClick={() => handleRestoreActionStep(index)}
-                            className={cn(
-                              'w-full rounded border px-2 py-2 text-left transition-colors',
-                              isActiveStep
-                                ? 'border-blue-400/70 bg-blue-500/10'
-                                : 'border-border/60 bg-card/30 hover:border-border/80 hover:bg-card/50'
-                            )}
-                          >
-                            <div className='flex items-center justify-between gap-2'>
-                              <span className={cn('text-xs', isActiveStep ? 'text-blue-100' : 'text-gray-200')}>
-                                {entry.label}
-                              </span>
-                              <span className='text-[10px] text-gray-500'>
-                                {new Date(entry.createdAt).toLocaleTimeString()}
-                              </span>
-                            </div>
-                            <div className='mt-1 text-[10px] text-gray-500'>
-                              Step {index + 1} of {actionHistoryEntries.length}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className='rounded border border-border/60 bg-card/30 p-3 text-xs text-gray-500'>
-                      No editor actions recorded yet.
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className='min-h-0 flex-1 overflow-y-auto'>
-                  <ProjectGenerationHistoryTab />
-                </div>
-              )}
-            </div>
+            <RightSidebarHistoryTab
+              actionHistoryEntriesLength={actionHistoryEntries.length}
+              actionHistoryItems={actionHistoryItems}
+              actionHistoryMaxSteps={ACTION_HISTORY_MAX_STEPS}
+              activeActionHistoryIndex={activeActionHistoryIndex}
+              historyMode={historyMode}
+              onHistoryModeChange={setHistoryMode}
+              onRestoreActionStep={handleRestoreActionStep}
+            />
           ) : (
-            <>
-              {!quickActionsHostEl ? (
-                <div className='space-y-2 px-4 py-2'>
-                  {quickActionsPanelContent}
-                </div>
-              ) : null}
-              <div className='relative flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-4 pt-0'>
-                <div className='space-y-3 shrink-0'>
-                  <div className='rounded border border-border/60 bg-card/30 p-3'>
-                    <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Shape Tools</div>
-                    <div className='mb-2 flex items-center gap-2'>
-                      <Button
-                        size='xs'
-                        type='button'
-                        variant={isSelectToolActive ? 'default' : 'outline'}
-                        onClick={handleToggleSelectTool}
-                        aria-pressed={isSelectToolActive}
-                        title={isSelectToolActive
-                          ? 'Disable selection mode (canvas drag pans view)'
-                          : 'Enable selection mode for canvas elements'}
-                        aria-label='Toggle select tool mode'
-                        className={cn(
-                          isSelectToolActive
-                            ? 'border-cyan-400/70 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30'
-                            : undefined
-                        )}
-                      >
-                        <MousePointer2 className='mr-1.5 size-3.5' />
-                        Select
-                      </Button>
-                      <span className='text-[11px] text-gray-500'>When off, drag to pan.</span>
-                    </div>
-                    <VectorDrawingToolbar
-                      tool={tool}
-                      onSelectTool={handleSelectShapeTool}
-                      showSelectTool={false}
-                      onClear={handleClearAllShapes}
-                      disableClear={maskShapes.length === 0}
-                      className='w-full flex-wrap justify-start rounded-xl border-border/60 bg-card/40'
-                    />
-                    {activeShapeDrawingTool ? (
-                      <div className='mt-3 rounded border border-border/60 bg-card/30 p-3'>
-                        <div className='grid grid-cols-[auto_1fr] gap-x-2 gap-y-2'>
-                          <LabeledSlider
-                            label='Mask Feather'
-                            value={maskFeather}
-                            onChange={setMaskFeather}
-                          />
-                          {activeShapeDrawingTool === 'brush' ? (
-                            <LabeledSlider
-                              label='Brush Radius'
-                              value={brushRadius}
-                              onChange={setBrushRadius}
-                              min={1}
-                              max={64}
-                              fallbackValue={8}
-                            />
-                          ) : null}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className='mt-2 text-[11px] text-gray-500'>
-                        {isSelectToolActive
-                          ? 'Select mode is active. Click shapes to edit points or drag empty area to pan.'
-                          : 'Select mode is off. Drag canvas to pan, or choose a drawing tool.'}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className='rounded border border-border/60 bg-card/30 p-3'>
-                    <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Image Transform</div>
-                    <div className='flex flex-wrap items-center gap-2'>
-                      <Button
-                        size='xs'
-                        type='button'
-                        variant={isMoveImageActive ? 'default' : 'outline'}
-                        onClick={() => {
-                          setImageTransformMode(isMoveImageActive ? 'none' : 'move');
-                        }}
-                        disabled={!hasCanvasImage}
-                        aria-pressed={isMoveImageActive}
-                        title={isMoveImageActive ? 'Disable image reposition mode' : 'Enable image reposition mode in canvas'}
-                        aria-label='Toggle image move mode'
-                        className={cn(
-                          isMoveImageActive
-                            ? 'border-cyan-400/70 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30'
-                            : undefined
-                        )}
-                      >
-                        <Move className='mr-1.5 size-3.5' />
-                          Move Image
-                      </Button>
-                      <Button
-                        size='xs'
-                        type='button'
-                        variant='outline'
-                        onClick={() => {
-                          resetCanvasImageOffset();
-                        }}
-                        disabled={!canRecenterCanvasImage}
-                        title={
-                          isMoveImageActive
-                            ? 'Re-center image on canvas'
-                            : 'Enable Move Image to re-center'
-                        }
-                        aria-label='Re-center image on canvas'
-                      >
-                          Re-center
-                      </Button>
-                    </div>
-                    <div className='mt-2 text-[11px] text-gray-500'>
-                        Use Move Image, then drag the canvas image to manually align it in frame.
-                    </div>
-                  </div>
-
-                  <div className='rounded border border-border/60 bg-card/30 p-3'>
-                    <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>
-                        Image Operations
-                    </div>
-                    <GenerationToolbar />
-                  </div>
-
-                  <div className='rounded border border-border/60 bg-card/30 p-3'>
-                    <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Masking Tools</div>
-                    <div className='grid grid-cols-[auto_1fr] gap-x-2 gap-y-2'>
-                      <LabeledSlider
-                        label='Threshold Sensitivity'
-                        value={maskThresholdSensitivity}
-                        onChange={setMaskThresholdSensitivity}
-                        fallbackValue={55}
-                        disabled={!workingSlot}
-                      />
-                      <LabeledSlider
-                        label='Edge Sensitivity'
-                        value={maskEdgeSensitivity}
-                        onChange={setMaskEdgeSensitivity}
-                        fallbackValue={55}
-                        disabled={!workingSlot}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <StudioCard label='Composite References'>
-                  <MultiSelect
-                    options={compositeAssetOptions}
-                    selected={compositeAssetIds}
-                    onChange={setCompositeAssetIds}
-                    placeholder='Select additional reference cards'
-                    searchPlaceholder='Search cards...'
-                    emptyMessage='No cards available.'
-                    className='w-full'
-                  />
-                  <div className='text-[10px] text-gray-500'>
-            Selected references are sent with the base image for multi-image generation.
-                  </div>
-                </StudioCard>
-
-              </div>
-            </>
+            <RightSidebarControlsTab
+              activeShapeDrawingTool={activeShapeDrawingTool}
+              brushRadius={brushRadius}
+              canRecenterCanvasImage={canRecenterCanvasImage}
+              compositeAssetIds={compositeAssetIds}
+              compositeAssetOptions={compositeAssetOptions}
+              hasCanvasImage={hasCanvasImage}
+              isMoveImageActive={isMoveImageActive}
+              isSelectToolActive={isSelectToolActive}
+              maskEdgeSensitivity={maskEdgeSensitivity}
+              maskFeather={maskFeather}
+              maskShapesLength={maskShapes.length}
+              maskThresholdSensitivity={maskThresholdSensitivity}
+              onBrushRadiusChange={setBrushRadius}
+              onClearAllShapes={handleClearAllShapes}
+              onCompositeAssetIdsChange={setCompositeAssetIds}
+              onMaskEdgeSensitivityChange={setMaskEdgeSensitivity}
+              onMaskFeatherChange={setMaskFeather}
+              onMaskThresholdSensitivityChange={setMaskThresholdSensitivity}
+              onRecenterCanvasImage={resetCanvasImageOffset}
+              onSelectShapeTool={handleSelectShapeTool}
+              onToggleMoveImage={() => {
+                setImageTransformMode(isMoveImageActive ? 'none' : 'move');
+              }}
+              onToggleSelectTool={handleToggleSelectTool}
+              quickActionsHostEl={quickActionsHostEl}
+              quickActionsPanelContent={quickActionsPanelContent}
+              tool={tool}
+              workingSlotPresent={Boolean(workingSlot)}
+            />
           )}
         </div>
       </RightSidebarProvider>
@@ -1777,83 +1479,17 @@ export function RightSidebar(): React.JSX.Element {
         title='Generation Request Preview'
         size='xl'
       >
-        <div className='space-y-4 text-xs text-gray-200'>
-          <div className='flex flex-wrap items-center gap-2'>
-            <span className='text-[11px] text-gray-400'>Preview Mode</span>
-            <SelectSimple
-              size='sm'
-              value={requestPreviewMode}
-              onValueChange={(value: string): void => {
-                setRequestPreviewMode(
-                  value === 'with_sequence' ? 'with_sequence' : 'without_sequence'
-                );
-              }}
-              options={[
-                { value: 'without_sequence', label: 'Without Sequence' },
-                { value: 'with_sequence', label: 'With Sequence' },
-              ]}
-              className='w-[240px]'
-              triggerClassName='h-8 text-[11px]'
-            />
-          </div>
-          <div className='rounded border border-border/60 bg-card/40 p-3 text-[11px] text-gray-300'>
-            This is the exact payload enqueued to{' '}
-            <span className='text-gray-100'>`{activeRequestPreviewEndpoint}`</span>{' '}
-            before runtime processing.
-          </div>
-          <div className='text-[11px] text-gray-400'>
-            Resolved prompt length:{' '}
-            <span className='text-gray-200'>{activeRequestPreview.resolvedPrompt.length}</span> ·
-            mask shapes in payload:{' '}
-            <span className='text-gray-200'>{activeRequestPreview.maskShapeCount}</span>
-            {requestPreviewMode === 'with_sequence' ? (
-              <>
-                {' '}· enabled steps:{' '}
-                <span className='text-gray-200'>{sequenceRequestPreview.stepCount}</span>
-              </>
-            ) : null}
-          </div>
-
-          {activeRequestPreview.errors.length > 0 ? (
-            <div className='rounded border border-red-400/40 bg-red-500/10 p-3 text-[11px] text-red-200'>
-              {activeRequestPreview.errors.join(' ')}
-            </div>
-          ) : null}
-
-          <div className='space-y-2'>
-            <div className='text-[11px] text-gray-400'>
-              Input Images ({activeRequestPreview.images.length})
-            </div>
-            {activeRequestPreview.images.length > 0 ? (
-              <div className='grid grid-cols-2 gap-2 md:grid-cols-3'>
-                {activeRequestPreview.images.map((image) => (
-                  <div key={`${image.kind}:${image.id ?? image.filepath}`} className='rounded border border-border/60 bg-card/30 p-2'>
-                    <div className='mb-1 text-[10px] uppercase tracking-wide text-gray-500'>
-                      {image.kind === 'base' ? 'Base' : 'Reference'}
-                    </div>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={image.filepath}
-                      alt={image.name}
-                      className='h-28 w-full rounded object-cover'
-                    />
-                    <div className='mt-1 truncate text-[11px] text-gray-200'>{image.name}</div>
-                    <div className='truncate text-[10px] text-gray-500'>{image.filepath}</div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className='text-[11px] text-gray-500'>No request images are available yet.</div>
-            )}
-          </div>
-
-          <div className='space-y-2'>
-            <div className='text-[11px] text-gray-400'>Payload JSON</div>
-            <pre className='max-h-[50vh] overflow-auto rounded border border-border/60 bg-black/30 p-3 font-mono text-[11px] text-gray-100 whitespace-pre-wrap'>
-              {activeRequestPreviewJson}
-            </pre>
-          </div>
-        </div>
+        <RightSidebarRequestPreviewBody
+          activeErrors={activeRequestPreview.errors}
+          activeImages={activeRequestPreview.images}
+          activeRequestPreviewEndpoint={activeRequestPreviewEndpoint}
+          activeRequestPreviewJson={activeRequestPreviewJson}
+          maskShapeCount={activeRequestPreview.maskShapeCount}
+          requestPreviewMode={requestPreviewMode}
+          resolvedPromptLength={activeRequestPreview.resolvedPrompt.length}
+          sequenceStepCount={sequenceRequestPreview.stepCount}
+          setRequestPreviewMode={setRequestPreviewMode}
+        />
       </AppModal>
     </>
   );

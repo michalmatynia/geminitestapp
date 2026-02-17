@@ -6,6 +6,8 @@ export const IMAGE_STUDIO_SEQUENCE_OPERATIONS = [
   'upscale',
 ] as const;
 
+export const IMAGE_STUDIO_SEQUENCE_MAX_STEPS = 20;
+
 export type ImageStudioSequenceOperation =
   (typeof IMAGE_STUDIO_SEQUENCE_OPERATIONS)[number];
 
@@ -620,7 +622,7 @@ export const buildSequenceStepsFromOperations = (
 ): ImageStudioSequenceStep[] => {
   const sequence =
     operations.length > 0
-      ? operations
+      ? operations.slice(0, IMAGE_STUDIO_SEQUENCE_MAX_STEPS)
       : [...IMAGE_STUDIO_SEQUENCE_DEFAULT_OPERATIONS];
   return sequence.map((operation, index) => {
     const baseStep = defaultSequenceStepByType(operation, index);
@@ -708,7 +710,11 @@ export function normalizeImageStudioSequenceSteps(
   });
 
   if (!Array.isArray(input)) {
-    return dedupeStepIds(fallbackSteps.map((step) => cloneStep(step)));
+    return dedupeStepIds(
+      fallbackSteps
+        .slice(0, IMAGE_STUDIO_SEQUENCE_MAX_STEPS)
+        .map((step) => cloneStep(step)),
+    );
   }
   if (input.length === 0) {
     // Preserve explicit "no steps" state (do not auto-rebuild fallback stack).
@@ -727,10 +733,18 @@ export function normalizeImageStudioSequenceSteps(
     .filter((entry): entry is ImageStudioSequenceStep => Boolean(entry));
 
   if (normalized.length === 0) {
-    return dedupeStepIds(fallbackSteps.map((step) => cloneStep(step)));
+    return dedupeStepIds(
+      fallbackSteps
+        .slice(0, IMAGE_STUDIO_SEQUENCE_MAX_STEPS)
+        .map((step) => cloneStep(step)),
+    );
   }
 
-  return dedupeStepIds(normalized.map((step) => cloneStep(step)));
+  return dedupeStepIds(
+    normalized
+      .slice(0, IMAGE_STUDIO_SEQUENCE_MAX_STEPS)
+      .map((step) => cloneStep(step)),
+  );
 }
 
 const normalizeSequencePreset = (

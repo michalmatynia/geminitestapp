@@ -1,13 +1,13 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-17T22:24:32.639Z
+Generated at: 2026-02-17T23:08:37.554Z
 
 ## Snapshot
 
-- Source files: 2776
-- Source lines: 442729
+- Source files: 2777
+- Source lines: 442238
 - use client files: 903
-- Files >= 1000 LOC: 11
+- Files >= 1000 LOC: 12
 - Files >= 1500 LOC: 5
 - Largest file: `src/features/database/services/database-sync.ts` (3352 LOC)
 - API routes: 297
@@ -68,8 +68,9 @@ Generated at: 2026-02-17T22:24:32.639Z
 | `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 1968 |
 | `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 1502 |
 | `src/features/ai/image-studio/components/SequencingPanel.tsx` | 1148 |
-| `src/features/ai/ai-paths/server/settings-store.ts` | 1126 |
+| `src/features/ai/ai-paths/server/settings-store.ts` | 1128 |
 | `src/features/foldertree/master/useMasterFolderTree.ts` | 1056 |
+| `src/features/products/components/ProductImageManager.tsx` | 1056 |
 | `src/features/case-resolver/__tests__/settings.test.ts` | 1016 |
 | `src/features/ai/image-studio/components/RightSidebar.tsx` | 1014 |
 | `src/features/ai/image-studio/components/StudioModals.tsx` | 1007 |
@@ -81,4 +82,3 @@ Generated at: 2026-02-17T22:24:32.639Z
 | `src/features/products/services/product-studio-service.ts` | 990 |
 | `src/features/prompt-exploder/pattern-pack-rules.ts` | 990 |
 | `src/features/ai/agent-runtime/planning/llm.ts` | 989 |
-| `src/features/integrations/services/category-mapping-repository.ts` | 988 |

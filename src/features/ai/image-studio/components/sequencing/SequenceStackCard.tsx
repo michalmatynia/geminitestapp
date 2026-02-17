@@ -1,10 +1,13 @@
 import { GripVertical, Trash2 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import { useToast } from '@/shared/ui';
+
 import { StudioCard } from '../StudioCard';
 import { SequenceStepEditor } from './SequenceStepEditor';
 import { PROJECT_SEQUENCE_OPERATION_LABELS } from './sequencing-constants';
 import {
+  IMAGE_STUDIO_SEQUENCE_MAX_STEPS,
   IMAGE_STUDIO_SEQUENCE_OPERATIONS,
   type ImageStudioSequenceOperation,
   type ImageStudioSequenceStep,
@@ -16,11 +19,24 @@ type SequenceStackCardProps = {
   mutateSteps: (updater: (steps: ImageStudioSequenceStep[]) => ImageStudioSequenceStep[]) => void;
 };
 
+const createSequenceStepId = (
+  operation: ImageStudioSequenceOperation,
+  index: number,
+): string => {
+  const randomUuid = globalThis.crypto?.randomUUID?.();
+  if (typeof randomUuid === 'string' && randomUuid.trim().length > 0) {
+    return `step_${operation}_${randomUuid.replace(/-/g, '').slice(0, 12)}`;
+  }
+  return `step_${index + 1}_${operation}_${Date.now().toString(36)}_${Math.random()
+    .toString(36)
+    .slice(2, 8)}`;
+};
+
 const createStepForOperation = (
   operation: ImageStudioSequenceOperation,
   index: number,
 ): ImageStudioSequenceStep => {
-  const id = `step_${index + 1}_${operation}`;
+  const id = createSequenceStepId(operation, index);
 
   if (operation === 'crop_center') {
     return {
@@ -111,17 +127,19 @@ export function SequenceStackCard({
   enabledRuntimeSteps,
   mutateSteps,
 }: SequenceStackCardProps): React.JSX.Element {
-  const [draggingOperation, setDraggingOperation] = useState<ImageStudioSequenceOperation | null>(null);
+  const { toast } = useToast();
+  const [draggingStepId, setDraggingStepId] = useState<string | null>(null);
+  const [draggingCatalogOperation, setDraggingCatalogOperation] =
+    useState<ImageStudioSequenceOperation | null>(null);
   const [dragSource, setDragSource] = useState<'stack' | 'catalog' | null>(null);
   const [dropIndicator, setDropIndicator] = useState<{
-    operation: ImageStudioSequenceOperation;
+    stepId: string;
     position: 'before' | 'after';
   } | null>(null);
 
   const orderedRows = useMemo(
     () =>
       editableSequenceSteps.map((step, index) => ({
-        operation: step.type,
         step,
         index,
       })),
@@ -138,14 +156,20 @@ export function SequenceStackCard({
     [enabledRuntimeSteps],
   );
 
+  const notifyStepLimit = useCallback((): void => {
+    toast(`You can add up to ${IMAGE_STUDIO_SEQUENCE_MAX_STEPS} sequence steps.`, {
+      variant: 'info',
+    });
+  }, [toast]);
+
   const updateStep = useCallback(
     (
-      operation: ImageStudioSequenceOperation,
+      stepId: string,
       updater: (step: ImageStudioSequenceStep) => ImageStudioSequenceStep,
     ): void => {
       mutateSteps((steps) => {
         const next = [...steps];
-        const index = next.findIndex((step) => step.type === operation);
+        const index = next.findIndex((step) => step.id === stepId);
         if (index < 0) return next;
         next[index] = updater(next[index]!);
         return next;
@@ -154,15 +178,12 @@ export function SequenceStackCard({
     [mutateSteps],
   );
 
-  const toggleSequenceOperation = useCallback(
-    (operation: ImageStudioSequenceOperation, checked: boolean): void => {
+  const toggleSequenceStep = useCallback(
+    (stepId: string, checked: boolean): void => {
       mutateSteps((steps) => {
         const next = [...steps];
-        const index = next.findIndex((step) => step.type === operation);
-        if (index < 0) {
-          if (!checked) return next;
-          return [...next, { ...createStepForOperation(operation, next.length), enabled: true }];
-        }
+        const index = next.findIndex((step) => step.id === stepId);
+        if (index < 0) return next;
         next[index] = {
           ...next[index]!,
           enabled: checked,
@@ -178,53 +199,65 @@ export function SequenceStackCard({
       operation: ImageStudioSequenceOperation,
       options?: { enableStep?: boolean },
     ): void => {
+      if (editableSequenceSteps.length >= IMAGE_STUDIO_SEQUENCE_MAX_STEPS) {
+        notifyStepLimit();
+        return;
+      }
       const enableStep = options?.enableStep ?? true;
       mutateSteps((steps) => {
+        if (steps.length >= IMAGE_STUDIO_SEQUENCE_MAX_STEPS) return steps;
         const next = [...steps];
-        const index = next.findIndex((step) => step.type === operation);
-        if (index < 0) {
-          const created = createStepForOperation(operation, next.length);
-          return [
-            ...next,
-            enableStep ? { ...created, enabled: true } : created,
-          ];
-        }
-        const [moved] = next.splice(index, 1);
-        if (!moved) return next;
-        next.push({
-          ...moved,
-          ...(enableStep ? { enabled: true } : {}),
-        });
+        const created = createStepForOperation(operation, next.length);
+        next.push(enableStep ? { ...created, enabled: true } : created);
         return next;
       });
     },
-    [mutateSteps],
+    [editableSequenceSteps.length, mutateSteps, notifyStepLimit],
   );
 
-  const moveSequenceOperation = useCallback(
+  const insertSequenceOperationRelative = useCallback(
     (
       operation: ImageStudioSequenceOperation,
-      targetOperation: ImageStudioSequenceOperation,
+      targetStepId: string,
+      position: 'before' | 'after',
+      options?: { enableStep?: boolean },
+    ): void => {
+      if (editableSequenceSteps.length >= IMAGE_STUDIO_SEQUENCE_MAX_STEPS) {
+        notifyStepLimit();
+        return;
+      }
+      const enableStep = options?.enableStep ?? true;
+      mutateSteps((steps) => {
+        if (steps.length >= IMAGE_STUDIO_SEQUENCE_MAX_STEPS) return steps;
+        const next = [...steps];
+        const pivotIndex = next.findIndex((step) => step.id === targetStepId);
+        if (pivotIndex < 0) return next;
+        const created = createStepForOperation(operation, next.length);
+        const insertIndex = position === 'before' ? pivotIndex : pivotIndex + 1;
+        next.splice(insertIndex, 0, enableStep ? { ...created, enabled: true } : created);
+        return next;
+      });
+    },
+    [editableSequenceSteps.length, mutateSteps, notifyStepLimit],
+  );
+
+  const moveSequenceStep = useCallback(
+    (
+      sourceStepId: string,
+      targetStepId: string,
       position: 'before' | 'after',
     ): void => {
-      if (operation === targetOperation) return;
+      if (sourceStepId === targetStepId) return;
       mutateSteps((steps) => {
         const next = [...steps];
-        const sourceIndex = next.findIndex((step) => step.type === operation);
-        const pivotIndex = next.findIndex((step) => step.type === targetOperation);
-        if (pivotIndex < 0) return next;
-
-        if (sourceIndex < 0) {
-          const created = createStepForOperation(operation, next.length);
-          const insertIndex = position === 'before' ? pivotIndex : pivotIndex + 1;
-          next.splice(insertIndex, 0, created);
-          return next;
-        }
+        const sourceIndex = next.findIndex((step) => step.id === sourceStepId);
+        const pivotIndex = next.findIndex((step) => step.id === targetStepId);
+        if (sourceIndex < 0 || pivotIndex < 0) return next;
 
         const [moved] = next.splice(sourceIndex, 1);
         if (!moved) return next;
 
-        const resolvedPivotIndex = next.findIndex((step) => step.type === targetOperation);
+        const resolvedPivotIndex = next.findIndex((step) => step.id === targetStepId);
         if (resolvedPivotIndex < 0) {
           next.splice(sourceIndex, 0, moved);
           return next;
@@ -240,15 +273,31 @@ export function SequenceStackCard({
     [mutateSteps],
   );
 
-  const removeSequenceOperationFromStack = useCallback(
-    (operation: ImageStudioSequenceOperation): void => {
-      mutateSteps((steps) => steps.filter((step) => step.type !== operation));
+  const moveSequenceStepToEnd = useCallback(
+    (stepId: string): void => {
+      mutateSteps((steps) => {
+        const next = [...steps];
+        const sourceIndex = next.findIndex((step) => step.id === stepId);
+        if (sourceIndex < 0) return next;
+        const [moved] = next.splice(sourceIndex, 1);
+        if (!moved) return next;
+        next.push(moved);
+        return next;
+      });
+    },
+    [mutateSteps],
+  );
+
+  const removeSequenceStepFromStack = useCallback(
+    (stepId: string): void => {
+      mutateSteps((steps) => steps.filter((step) => step.id !== stepId));
     },
     [mutateSteps],
   );
 
   const clearDragState = useCallback((): void => {
-    setDraggingOperation(null);
+    setDraggingStepId(null);
+    setDraggingCatalogOperation(null);
     setDragSource(null);
     setDropIndicator(null);
   }, []);
@@ -266,13 +315,14 @@ export function SequenceStackCard({
   const handleStackItemDragStart = useCallback(
     (
       event: React.DragEvent<HTMLButtonElement>,
-      operation: ImageStudioSequenceOperation,
+      stepId: string,
     ): void => {
-      setDraggingOperation(operation);
+      setDraggingStepId(stepId);
+      setDraggingCatalogOperation(null);
       setDragSource('stack');
       setDropIndicator(null);
       event.dataTransfer.effectAllowed = 'move';
-      event.dataTransfer.setData('text/plain', operation);
+      event.dataTransfer.setData('text/plain', stepId);
     },
     [],
   );
@@ -282,7 +332,8 @@ export function SequenceStackCard({
       event: React.DragEvent<HTMLButtonElement>,
       operation: ImageStudioSequenceOperation,
     ): void => {
-      setDraggingOperation(operation);
+      setDraggingCatalogOperation(operation);
+      setDraggingStepId(null);
       setDragSource('catalog');
       setDropIndicator(null);
       event.dataTransfer.effectAllowed = 'move';
@@ -294,82 +345,119 @@ export function SequenceStackCard({
   const handleStackItemDragOver = useCallback(
     (
       event: React.DragEvent<HTMLDivElement>,
-      operation: ImageStudioSequenceOperation,
+      stepId: string,
     ): void => {
-      if (!draggingOperation) return;
-      if (draggingOperation === operation && dragSource !== 'catalog') return;
+      if (dragSource === 'catalog' && !draggingCatalogOperation) return;
+      if (dragSource === 'stack' && !draggingStepId) return;
+      if (dragSource === 'stack' && draggingStepId === stepId) return;
+      if (!dragSource) return;
       event.preventDefault();
       event.dataTransfer.dropEffect = 'move';
       const position = resolveDropPosition(event);
       setDropIndicator((current) => {
-        if (current?.operation === operation && current.position === position) {
+        if (current?.stepId === stepId && current.position === position) {
           return current;
         }
-        return { operation, position };
+        return { stepId, position };
       });
     },
-    [dragSource, draggingOperation, resolveDropPosition],
+    [dragSource, draggingCatalogOperation, draggingStepId, resolveDropPosition],
   );
 
   const handleStackItemDrop = useCallback(
     (
       event: React.DragEvent<HTMLDivElement>,
-      operation: ImageStudioSequenceOperation,
+      targetStepId: string,
     ): void => {
-      if (!draggingOperation) return;
+      if (!dragSource) return;
       event.preventDefault();
+
       if (dragSource === 'catalog') {
-        if (draggingOperation === operation) {
-          toggleSequenceOperation(operation, true);
+        if (!draggingCatalogOperation) {
           clearDragState();
           return;
         }
         const position = resolveDropPosition(event);
-        moveSequenceOperation(draggingOperation, operation, position);
-        toggleSequenceOperation(draggingOperation, true);
+        insertSequenceOperationRelative(
+          draggingCatalogOperation,
+          targetStepId,
+          position,
+          { enableStep: true },
+        );
         clearDragState();
         return;
       }
-      if (draggingOperation === operation) {
+
+      if (!draggingStepId) {
+        clearDragState();
+        return;
+      }
+      if (draggingStepId === targetStepId) {
         clearDragState();
         return;
       }
       const position = resolveDropPosition(event);
-      moveSequenceOperation(draggingOperation, operation, position);
+      moveSequenceStep(draggingStepId, targetStepId, position);
       clearDragState();
     },
     [
       clearDragState,
       dragSource,
-      draggingOperation,
-      moveSequenceOperation,
+      draggingCatalogOperation,
+      draggingStepId,
+      insertSequenceOperationRelative,
+      moveSequenceStep,
       resolveDropPosition,
-      toggleSequenceOperation,
     ],
   );
 
+  const hasActiveDrag = Boolean(
+    (dragSource === 'catalog' && draggingCatalogOperation)
+    || (dragSource === 'stack' && draggingStepId),
+  );
+
   const handleStackAppendDragOver = useCallback((event: React.DragEvent<HTMLDivElement>): void => {
-    if (!draggingOperation) return;
+    if (!hasActiveDrag) return;
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
     setDropIndicator(null);
-  }, [draggingOperation]);
+  }, [hasActiveDrag]);
 
   const handleStackAppendDrop = useCallback((event: React.DragEvent<HTMLDivElement>): void => {
-    if (!draggingOperation) return;
+    if (!hasActiveDrag) return;
     event.preventDefault();
-    appendSequenceOperationToEnd(draggingOperation, {
-      enableStep: dragSource === 'catalog',
-    });
+    if (dragSource === 'catalog' && draggingCatalogOperation) {
+      appendSequenceOperationToEnd(draggingCatalogOperation, {
+        enableStep: true,
+      });
+      clearDragState();
+      return;
+    }
+    if (dragSource === 'stack' && draggingStepId) {
+      moveSequenceStepToEnd(draggingStepId);
+      clearDragState();
+      return;
+    }
     clearDragState();
-  }, [appendSequenceOperationToEnd, clearDragState, dragSource, draggingOperation]);
+  }, [
+    appendSequenceOperationToEnd,
+    clearDragState,
+    dragSource,
+    draggingCatalogOperation,
+    draggingStepId,
+    hasActiveDrag,
+    moveSequenceStepToEnd,
+  ]);
 
   return (
     <StudioCard label='Stack' className='shrink-0'>
       <div className='space-y-2'>
         <div className='rounded border border-border/50 bg-card/30 p-2'>
-          <div className='mb-2 text-[11px] text-gray-400'>
-            Step Catalog (drag or click to add at stack end)
+          <div className='mb-2 flex items-center justify-between text-[11px] text-gray-400'>
+            <span>Step Catalog (drag or click to add at stack end)</span>
+            <span>
+              {editableSequenceSteps.length}/{IMAGE_STUDIO_SEQUENCE_MAX_STEPS}
+            </span>
           </div>
           <div className='flex flex-wrap gap-2'>
             {IMAGE_STUDIO_SEQUENCE_OPERATIONS.map((operation) => {
@@ -404,26 +492,27 @@ export function SequenceStackCard({
         <div className='text-[11px] text-gray-500'>
           Drag step handles to reorder the stack.
         </div>
-        {orderedRows.map(({ operation, step, index }) => {
+        {orderedRows.map(({ step, index }) => {
+          const operation = step.type;
           const enabled = step.enabled;
-          const isDragSource = draggingOperation === operation;
+          const isDragSource = dragSource === 'stack' && draggingStepId === step.id;
           const showDropBefore =
-            dropIndicator?.operation === operation && dropIndicator.position === 'before';
+            dropIndicator?.stepId === step.id && dropIndicator.position === 'before';
           const showDropAfter =
-            dropIndicator?.operation === operation && dropIndicator.position === 'after';
+            dropIndicator?.stepId === step.id && dropIndicator.position === 'after';
           return (
             <div
-              key={operation}
+              key={step.id}
               className='rounded border border-border/50 bg-card/40 px-2 py-2'
               onDragOver={(event: React.DragEvent<HTMLDivElement>) => {
-                handleStackItemDragOver(event, operation);
+                handleStackItemDragOver(event, step.id);
               }}
               onDrop={(event: React.DragEvent<HTMLDivElement>) => {
-                handleStackItemDrop(event, operation);
+                handleStackItemDrop(event, step.id);
               }}
               onDragLeave={(event: React.DragEvent<HTMLDivElement>) => {
                 if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
-                setDropIndicator((current) => (current?.operation === operation ? null : current));
+                setDropIndicator((current) => (current?.stepId === step.id ? null : current));
               }}
             >
               {showDropBefore ? (
@@ -436,7 +525,7 @@ export function SequenceStackCard({
                     draggable
                     className='inline-flex h-6 w-6 cursor-grab items-center justify-center rounded border border-border/60 bg-card/50 text-gray-300 hover:text-gray-100 active:cursor-grabbing'
                     onDragStart={(event: React.DragEvent<HTMLButtonElement>) => {
-                      handleStackItemDragStart(event, operation);
+                      handleStackItemDragStart(event, step.id);
                     }}
                     onDragEnd={clearDragState}
                     aria-label={`Drag to reorder ${PROJECT_SEQUENCE_OPERATION_LABELS[operation]}`}
@@ -450,7 +539,7 @@ export function SequenceStackCard({
                       className='h-3.5 w-3.5'
                       checked={enabled}
                       onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        toggleSequenceOperation(operation, event.target.checked)
+                        toggleSequenceStep(step.id, event.target.checked)
                       }
                     />
                     <span>{PROJECT_SEQUENCE_OPERATION_LABELS[operation]}</span>
@@ -465,7 +554,7 @@ export function SequenceStackCard({
                   ) : null}
                   <button
                     type='button'
-                    onClick={(): void => removeSequenceOperationFromStack(operation)}
+                    onClick={(): void => removeSequenceStepFromStack(step.id)}
                     className='inline-flex h-6 w-6 items-center justify-center rounded border border-red-400/40 bg-red-500/10 text-red-200 transition-colors hover:bg-red-500/20 hover:text-red-100'
                     aria-label={`Remove ${PROJECT_SEQUENCE_OPERATION_LABELS[operation]} from stack`}
                     title={`Remove ${PROJECT_SEQUENCE_OPERATION_LABELS[operation]} from stack`}
@@ -477,6 +566,7 @@ export function SequenceStackCard({
 
               {enabled ? (
                 <SequenceStepEditor
+                  stepId={step.id}
                   operation={operation}
                   step={step}
                   updateStep={updateStep}
@@ -491,7 +581,7 @@ export function SequenceStackCard({
         })}
         <div
           className={`rounded border border-dashed px-2 py-2 text-center text-[11px] ${
-            draggingOperation
+            hasActiveDrag
               ? 'border-blue-400/70 bg-blue-500/10 text-blue-200'
               : 'border-border/60 bg-card/20 text-gray-500'
           }`}

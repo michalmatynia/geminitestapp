@@ -44,13 +44,13 @@ export type ProductImageManagerController = Pick<
   | 'setImageLinkAt'
   | 'setImageBase64At'
   | 'handleSlotImageChange'
-  | 'handleSlotFileSelect'
   | 'handleSlotDisconnectImage'
   | 'setShowFileManager'
   | 'swapImageSlots'
   | 'setImagesReordering'
   | 'uploadError'
 > & {
+  handleSlotFileSelect?: (file: ImageFileSelection | null, index: number) => void;
   setShowFileManagerForSlot?: (slotIndex: number) => void;
   slotLabels?: string[];
   isSlotImageLocked?: (slotIndex: number) => boolean;
@@ -379,6 +379,80 @@ export default function ProductImageManager({
     }
   };
 
+  const convertLinkToFile = async (index: number): Promise<void> => {
+    const linkValue = (imageLinks[index] ?? '').trim();
+    if (!linkValue) {
+      pushDebug({
+        action: 'link-to-file',
+        message: 'No link available to convert',
+        slotIndex: index,
+      });
+      return;
+    }
+
+    try {
+      setLinkToFileLoadingSlots((prev: Record<number, boolean>) => ({
+        ...prev,
+        [index]: true,
+      }));
+
+      const productId = formContext?.product?.id ?? null;
+      const useServerConversion =
+        Boolean(productId && handleSlotFileSelect) &&
+        !linkValue.toLowerCase().startsWith('data:');
+
+      if (useServerConversion && productId && handleSlotFileSelect) {
+        const result = await api.post<{
+          status: 'ok';
+          imageFile: ImageFileSelection;
+        }>(`/api/products/${encodeURIComponent(productId)}/images/link-to-file`, {
+          url: linkValue,
+        });
+        if (!result.imageFile?.id || !result.imageFile?.filepath) {
+          throw new Error('Image conversion failed to return file metadata.');
+        }
+        handleSlotFileSelect(result.imageFile, index);
+      } else {
+        const response = await fetch(linkValue);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch linked image (${response.status}).`);
+        }
+        const blob = await response.blob();
+        const mimetype = blob.type?.trim() || 'image/jpeg';
+        const filename = filenameFromLink(linkValue, mimetype, index);
+        const file = new File([blob], filename, { type: mimetype });
+        handleSlotImageChange(file, index);
+      }
+
+      setImageLinkAt(index, '');
+      setSlotViewModes((prev: SlotViewMode[]) => {
+        const next = [...prev];
+        next[index] = 'upload';
+        return next;
+      });
+      pushDebug({
+        action: 'link-to-file',
+        message: 'Linked image converted to file',
+        slotIndex: index,
+      });
+    } catch (error: unknown) {
+      pushDebug({
+        action: 'link-to-file',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Failed to convert linked image to file',
+        slotIndex: index,
+      });
+    } finally {
+      setLinkToFileLoadingSlots((prev: Record<number, boolean>) => {
+        const next = { ...prev };
+        delete next[index];
+        return next;
+      });
+    }
+  };
+
   const resolveSlotUploadUrl = (slot: ProductImageSlot | null): string => {
     if (!slot) return '';
     if (slot.type === 'existing') {
@@ -649,6 +723,14 @@ export default function ProductImageManager({
                   onClick={() => void convertSlotToBase64(index)}
                 >
                   {base64LoadingSlots[index] ? 'Converting...' : 'Convert to Base64'}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={Boolean(!hasLink || imageLocked || !!linkToFileLoadingSlots[index])}
+                  onClick={() => void convertLinkToFile(index)}
+                >
+                  {linkToFileLoadingSlots[index]
+                    ? 'Converting link...'
+                    : 'Convert link to file'}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={!hasBase64 || imageLocked}

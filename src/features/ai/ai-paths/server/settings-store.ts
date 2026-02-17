@@ -15,12 +15,14 @@ import {
   PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME,
 } from './settings-store-parameter-inference';
 import {
-  buildDescriptionInferenceV2PathConfigValue,
-  DESCRIPTION_INFERENCE_V2_PATH_ID,
-  DESCRIPTION_INFERENCE_V2_PATH_NAME,
-  DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID,
-  DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_NAME,
-  needsDescriptionInferenceV2ConfigUpgrade,
+  buildDescriptionInferenceLitePathConfigValue,
+  DESCRIPTION_INFERENCE_LITE_PATH_ID,
+  DESCRIPTION_INFERENCE_LITE_PATH_NAME,
+  DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID,
+  DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_NAME,
+  LEGACY_DESCRIPTION_INFERENCE_V2_PATH_ID,
+  LEGACY_DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID,
+  needsDescriptionInferenceLiteConfigUpgrade,
 } from './settings-store-description-inference';
 
 export type AiPathsSettingRecord = SettingRecordDto;

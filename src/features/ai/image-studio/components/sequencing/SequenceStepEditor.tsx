@@ -21,15 +21,17 @@ import type {
 } from '../../utils/studio-settings';
 
 type SequenceStepEditorProps = {
+  stepId: string;
   operation: ImageStudioSequenceOperation;
   step: ImageStudioSequenceStep;
   updateStep: (
-    operation: ImageStudioSequenceOperation,
+    stepId: string,
     updater: (step: ImageStudioSequenceStep) => ImageStudioSequenceStep,
   ) => void;
 };
 
 export function SequenceStepEditor({
+  stepId,
   operation,
   step,
   updateStep,
@@ -43,7 +45,7 @@ export function SequenceStepEditor({
           onValueChange={(value: string) => {
             if (value !== 'server' && value !== 'client') return;
             const runtime: ImageStudioSequenceStepRuntime = value;
-            updateStep(operation, (current) => ({
+            updateStep(stepId, (current) => ({
               ...current,
               runtime,
             }));
@@ -57,7 +59,7 @@ export function SequenceStepEditor({
           value={step.onFailure}
           onValueChange={(value: string) => {
             if (value !== 'stop' && value !== 'continue' && value !== 'skip') return;
-            updateStep(operation, (current) => ({
+            updateStep(stepId, (current) => ({
               ...current,
               onFailure: value,
             }));
@@ -75,7 +77,7 @@ export function SequenceStepEditor({
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
             const numeric = Math.floor(Number(event.target.value));
             if (!Number.isFinite(numeric) || numeric < 0 || numeric > 5) return;
-            updateStep(operation, (current) => ({
+            updateStep(stepId, (current) => ({
               ...current,
               retries: numeric,
             }));
@@ -93,7 +95,7 @@ export function SequenceStepEditor({
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
             const numeric = Math.floor(Number(event.target.value));
             if (!Number.isFinite(numeric) || numeric < 0 || numeric > 60000) return;
-            updateStep(operation, (current) => ({
+            updateStep(stepId, (current) => ({
               ...current,
               retryBackoffMs: numeric,
             }));
@@ -119,7 +121,7 @@ export function SequenceStepEditor({
               ) {
                 return;
               }
-              updateStep(operation, (current) => {
+              updateStep(stepId, (current) => {
                 const typed = current as ImageStudioSequenceCropStep;
                 return {
                   ...typed,
@@ -144,7 +146,7 @@ export function SequenceStepEditor({
             type='text'
             value={step.config.aspectRatio ?? ''}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-              updateStep(operation, (current) => {
+              updateStep(stepId, (current) => {
                 const typed = current as ImageStudioSequenceCropStep;
                 return {
                   ...typed,
@@ -168,7 +170,7 @@ export function SequenceStepEditor({
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
               const numeric = Number(event.target.value);
               if (!Number.isFinite(numeric) || numeric < 0 || numeric > 100) return;
-              updateStep(operation, (current) => {
+              updateStep(stepId, (current) => {
                 const typed = current as ImageStudioSequenceCropStep;
                 return {
                   ...typed,
@@ -193,7 +195,7 @@ export function SequenceStepEditor({
             value={step.config.source}
             onValueChange={(value: string) => {
               if (value !== 'current_shapes' && value !== 'preset_polygons') return;
-              updateStep(operation, (current) => {
+              updateStep(stepId, (current) => {
                 const typed = current as ImageStudioSequenceMaskStep;
                 return {
                   ...typed,
@@ -216,7 +218,7 @@ export function SequenceStepEditor({
             value={step.config.variant}
             onValueChange={(value: string) => {
               if (value !== 'white' && value !== 'black') return;
-              updateStep(operation, (current) => {
+              updateStep(stepId, (current) => {
                 const typed = current as ImageStudioSequenceMaskStep;
                 return {
                   ...typed,
@@ -243,7 +245,7 @@ export function SequenceStepEditor({
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
               const numeric = Number(event.target.value);
               if (!Number.isFinite(numeric) || numeric < 0 || numeric > 50) return;
-              updateStep(operation, (current) => {
+              updateStep(stepId, (current) => {
                 const typed = current as ImageStudioSequenceMaskStep;
                 return {
                   ...typed,
@@ -264,7 +266,7 @@ export function SequenceStepEditor({
               checked={step.config.invert}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                 const checked = event.target.checked;
-                updateStep(operation, (current) => {
+                updateStep(stepId, (current) => {
                   const typed = current as ImageStudioSequenceMaskStep;
                   return {
                     ...typed,
@@ -288,7 +290,7 @@ export function SequenceStepEditor({
             value={step.config.promptMode}
             onValueChange={(value: string) => {
               if (value !== 'inherit' && value !== 'override') return;
-              updateStep(operation, (current) => {
+              updateStep(stepId, (current) => {
                 const typed = current as ImageStudioSequenceGenerateStep;
                 return {
                   ...typed,
@@ -310,7 +312,7 @@ export function SequenceStepEditor({
             type='text'
             value={step.config.modelOverride ?? ''}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-              updateStep(operation, (current) => {
+              updateStep(stepId, (current) => {
                 const typed = current as ImageStudioSequenceGenerateStep;
                 return {
                   ...typed,
@@ -338,7 +340,7 @@ export function SequenceStepEditor({
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
               const value = event.target.value.trim();
               if (!value) {
-                updateStep(operation, (current) => {
+                updateStep(stepId, (current) => {
                   const typed = current as ImageStudioSequenceGenerateStep;
                   return {
                     ...typed,
@@ -352,7 +354,7 @@ export function SequenceStepEditor({
               }
               const numeric = Math.floor(Number(value));
               if (!Number.isFinite(numeric) || numeric < 1 || numeric > 10) return;
-              updateStep(operation, (current) => {
+              updateStep(stepId, (current) => {
                 const typed = current as ImageStudioSequenceGenerateStep;
                 return {
                   ...typed,
@@ -372,7 +374,7 @@ export function SequenceStepEditor({
             value={step.config.referencePolicy}
             onValueChange={(value: string) => {
               if (value !== 'inherit' && value !== 'none') return;
-              updateStep(operation, (current) => {
+              updateStep(stepId, (current) => {
                 const typed = current as ImageStudioSequenceGenerateStep;
                 return {
                   ...typed,
@@ -395,7 +397,7 @@ export function SequenceStepEditor({
               type='text'
               value={step.config.promptTemplate ?? ''}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                updateStep(operation, (current) => {
+                updateStep(stepId, (current) => {
                   const typed = current as ImageStudioSequenceGenerateStep;
                   return {
                     ...typed,
@@ -421,7 +423,7 @@ export function SequenceStepEditor({
             value={step.config.strategy}
             onValueChange={(value: string) => {
               const strategy = value === 'target_resolution' ? 'target_resolution' : 'scale';
-              updateStep(operation, (current) => {
+              updateStep(stepId, (current) => {
                 const typed = current as ImageStudioSequenceUpscaleStep;
                 return {
                   ...typed,
@@ -444,7 +446,7 @@ export function SequenceStepEditor({
               onValueChange={(value: string) => {
                 const numeric = Number(value);
                 if (!Number.isFinite(numeric)) return;
-                updateStep(operation, (current) => {
+                updateStep(stepId, (current) => {
                   const typed = current as ImageStudioSequenceUpscaleStep;
                   return {
                     ...typed,
@@ -471,7 +473,7 @@ export function SequenceStepEditor({
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                   const numeric = Math.floor(Number(event.target.value));
                   if (!Number.isFinite(numeric) || numeric < 1 || numeric > 32768) return;
-                  updateStep(operation, (current) => {
+                  updateStep(stepId, (current) => {
                     const typed = current as ImageStudioSequenceUpscaleStep;
                     return {
                       ...typed,
@@ -496,7 +498,7 @@ export function SequenceStepEditor({
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                   const numeric = Math.floor(Number(event.target.value));
                   if (!Number.isFinite(numeric) || numeric < 1 || numeric > 32768) return;
-                  updateStep(operation, (current) => {
+                  updateStep(stepId, (current) => {
                     const typed = current as ImageStudioSequenceUpscaleStep;
                     return {
                       ...typed,
@@ -518,7 +520,7 @@ export function SequenceStepEditor({
             value={step.config.smoothingQuality}
             onValueChange={(value: string) => {
               if (value !== 'low' && value !== 'medium' && value !== 'high') return;
-              updateStep(operation, (current) => {
+              updateStep(stepId, (current) => {
                 const typed = current as ImageStudioSequenceUpscaleStep;
                 return {
                   ...typed,

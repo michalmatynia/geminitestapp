@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
+
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { uploadFile } from '@/features/files/server';
@@ -93,8 +94,8 @@ export async function POST_handler(
 
   const filename = resolveFilename({
     url: parsed.data.url,
-    preferred: parsed.data.filename,
     mimetype: detectedMime,
+    ...(parsed.data.filename ? { preferred: parsed.data.filename } : {}),
   });
   const file = new File([blob], filename, { type: detectedMime });
 

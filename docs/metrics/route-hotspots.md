@@ -1,6 +1,6 @@
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-02-16T23:53:42.360Z
+Generated at: 2026-02-17T00:27:46.837Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -8,26 +8,26 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/integrations/import-templates/[id]/route.ts` | 98 |
-| `src/app/api/settings/database/sync/route.ts` | 97 |
-| `src/app/api/image-studio/mask/ai/route.ts` | 96 |
-| `src/app/api/image-studio/slots/[slotId]/screenshot/route.ts` | 96 |
-| `src/app/api/auth/mfa/disable/route.ts` | 94 |
-| `src/app/api/cms/slugs/[id]/domains/route.ts` | 94 |
-| `src/app/api/marketplace/categories/fetch/route.ts` | 93 |
-| `src/app/api/cms/pages/route.ts` | 91 |
-| `src/app/api/products/[id]/studio/route.ts` | 91 |
-| `src/app/api/integrations/imports/base/runs/route.ts` | 90 |
-| `src/app/api/ai-paths/runtime-analytics/summary/route.ts` | 89 |
-| `src/app/api/currencies/[id]/route.ts` | 89 |
-| `src/app/api/ai-paths/trigger-buttons/[id]/route.ts` | 88 |
-| `src/app/api/integrations/export-templates/[id]/route.ts` | 88 |
-| `src/app/api/databases/backups/route.ts` | 86 |
-| `src/app/api/products/ai-jobs/enqueue/route.ts` | 86 |
-| `src/app/api/ai-paths/runs/enqueue/route.ts` | 85 |
-| `src/app/api/marketplace/mappings/route.ts` | 85 |
-| `src/app/api/notes/[id]/files/route.ts` | 85 |
-| `src/app/api/ai-paths/runs/[runId]/cancel/route.ts` | 84 |
+| `src/app/api/integrations/imports/base/runs/[runId]/route.ts` | 60 |
+| `src/app/api/marketplace/producer-mappings/bulk/route.ts` | 60 |
+| `src/app/api/marketplace/tag-mappings/bulk/route.ts` | 60 |
+| `src/app/api/ai-paths/runs/[runId]/route.ts` | 59 |
+| `src/app/api/databases/upload/route.ts` | 59 |
+| `src/app/api/integrations/[id]/connections/[connectionId]/base/inventories/route.ts` | 59 |
+| `src/app/api/products/ai-jobs/[jobId]/route.ts` | 59 |
+| `src/app/api/prompt-runtime/health/route.ts` | 59 |
+| `src/app/api/databases/engine/backup-scheduler/tick/route.ts` | 58 |
+| `src/app/api/marketplace/mappings/bulk/route.ts` | 58 |
+| `src/app/api/products/images/base64/route.ts` | 58 |
+| `src/app/api/integrations/exports/base/image-retry-presets/route.ts` | 57 |
+| `src/app/api/integrations/imports/base/runs/[runId]/resume/route.ts` | 57 |
+| `src/app/api/assets3d/[id]/route.ts` | 56 |
+| `src/app/api/products/[id]/studio/accept/route.ts` | 56 |
+| `src/app/api/cms/themes/[id]/route.ts` | 55 |
+| `src/app/api/integrations/export-templates/route.ts` | 55 |
+| `src/app/api/notes/categories/route.ts` | 54 |
+| `src/app/api/notes/tags/route.ts` | 54 |
+| `src/app/api/products/[id]/studio/send/route.ts` | 54 |
 
 ## Top App Pages by LOC
 
@@ -41,7 +41,6 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | `src/app/(frontend)/preview/[id]/page.tsx` | 101 |
 | `src/app/(admin)/admin/agentcreator/page.tsx` | 45 |
 | `src/app/(admin)/admin/agentcreator/teaching/page.tsx` | 45 |
-| `src/app/(admin)/admin/products/builder/page.tsx` | 17 |
 | `src/app/(admin)/admin/chatbot/context/page.tsx` | 14 |
 | `src/app/(admin)/admin/chatbot/page.tsx` | 14 |
 | `src/app/(admin)/admin/integrations/marketplaces/page.tsx` | 14 |
@@ -53,16 +52,17 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | `src/app/auth/signin/page.tsx` | 14 |
 | `src/app/(admin)/admin/products/[id]/edit/page.tsx` | 13 |
 | `src/app/(admin)/admin/cms/slugs/create/page.tsx` | 12 |
+| `src/app/(admin)/admin/cms/slugs/page.tsx` | 12 |
 
 ## Recommended First Runtime Profiling Targets
 
-- `src/app/api/integrations/import-templates/[id]/route.ts`
-- `src/app/api/settings/database/sync/route.ts`
-- `src/app/api/image-studio/mask/ai/route.ts`
-- `src/app/api/image-studio/slots/[slotId]/screenshot/route.ts`
-- `src/app/api/auth/mfa/disable/route.ts`
-- `src/app/api/cms/slugs/[id]/domains/route.ts`
-- `src/app/api/marketplace/categories/fetch/route.ts`
-- `src/app/api/cms/pages/route.ts`
-- `src/app/api/products/[id]/studio/route.ts`
-- `src/app/api/integrations/imports/base/runs/route.ts`
+- `src/app/api/integrations/imports/base/runs/[runId]/route.ts`
+- `src/app/api/marketplace/producer-mappings/bulk/route.ts`
+- `src/app/api/marketplace/tag-mappings/bulk/route.ts`
+- `src/app/api/ai-paths/runs/[runId]/route.ts`
+- `src/app/api/databases/upload/route.ts`
+- `src/app/api/integrations/[id]/connections/[connectionId]/base/inventories/route.ts`
+- `src/app/api/products/ai-jobs/[jobId]/route.ts`
+- `src/app/api/prompt-runtime/health/route.ts`
+- `src/app/api/databases/engine/backup-scheduler/tick/route.ts`
+- `src/app/api/marketplace/mappings/bulk/route.ts`

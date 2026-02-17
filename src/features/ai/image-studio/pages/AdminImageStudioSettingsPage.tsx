@@ -163,6 +163,8 @@ export function AdminImageStudioSettingsPage(
   const [backfillResultText, setBackfillResultText] = useState<string>('');
   const [modelToAdd, setModelToAdd] = useState<string>('');
   const hydratedSignatureRef = useRef<string | null>(null);
+  const presetPersistSignatureRef = useRef<string | null>(null);
+  const presetPersistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const promptEngineRaw = settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY);
   const promptEngineSettings = useMemo(
@@ -197,10 +199,11 @@ export function AdminImageStudioSettingsPage(
 
     const storedRaw = studioSettingsRaw;
     const stored = parseImageStudioSettings(storedRaw);
+    const globalSettings = parseImageStudioSettings(globalStudioSettingsRaw);
     const promptEngineStored = parsePromptEngineSettings(settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY));
     const hasStoredStudioSettings = Boolean(storedRaw && storedRaw.trim().length > 0);
 
-    const hydrated: ImageStudioSettings =
+    const hydratedBase: ImageStudioSettings =
       openaiModelFallback && !hasStoredStudioSettings
         ? {
           ...stored,
@@ -217,6 +220,23 @@ export function AdminImageStudioSettingsPage(
           },
         }
         : stored;
+    const mergedModelPresets = normalizeImageStudioModelPresets(
+      [
+        ...globalSettings.targetAi.openai.modelPresets,
+        ...hydratedBase.targetAi.openai.modelPresets,
+      ],
+      hydratedBase.targetAi.openai.model,
+    );
+    const hydrated: ImageStudioSettings = {
+      ...hydratedBase,
+      targetAi: {
+        ...hydratedBase.targetAi,
+        openai: {
+          ...hydratedBase.targetAi.openai,
+          modelPresets: mergedModelPresets,
+        },
+      },
+    };
 
     setStudioSettings(hydrated);
     setAdvancedOverridesText(JSON.stringify(hydrated.targetAi.openai.advanced_overrides ?? {}, null, 2));
@@ -235,6 +255,7 @@ export function AdminImageStudioSettingsPage(
     settingsStore,
     userPreferencesQuery.isLoading,
     studioSettingsRaw,
+    globalStudioSettingsRaw,
   ]);
 
   const handleRefresh = useCallback(async (): Promise<void> => {
@@ -399,6 +420,100 @@ export function AdminImageStudioSettingsPage(
     setPromptValidationRulesError(null);
     setModelToAdd('');
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (presetPersistTimerRef.current) {
+        clearTimeout(presetPersistTimerRef.current);
+        presetPersistTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  const persistGenerationModelPresets = useCallback(
+    (nextModel: string, nextPresets: string[]): void => {
+      const normalizedModel = nextModel.trim();
+      if (!normalizedModel) return;
+      const normalizedPresets = normalizeImageStudioModelPresets(nextPresets, normalizedModel);
+      const targetProjectId = selectedProjectId.trim() || activeProjectId.trim();
+      const targetSettingsKey =
+        getImageStudioProjectSettingsKey(targetProjectId) ?? IMAGE_STUDIO_SETTINGS_KEY;
+      const persistedRaw = heavyMap.get(targetSettingsKey) ?? studioSettingsRaw;
+      const persistedSettings = parseImageStudioSettings(persistedRaw);
+      const persistedModel = persistedSettings.targetAi.openai.model.trim();
+      const persistedPresets = normalizeImageStudioModelPresets(
+        persistedSettings.targetAi.openai.modelPresets,
+        persistedModel,
+      );
+
+      const presetsChanged =
+        normalizedPresets.length !== persistedPresets.length ||
+        normalizedPresets.some((entry: string, index: number) => entry !== persistedPresets[index]);
+      const modelChanged = normalizedModel !== persistedModel;
+      if (!modelChanged && !presetsChanged) {
+        presetPersistSignatureRef.current = null;
+        return;
+      }
+
+      const persistSignature = `${targetSettingsKey}:${normalizedModel}:${normalizedPresets.join('|')}`;
+      if (presetPersistSignatureRef.current === persistSignature) return;
+
+      if (presetPersistTimerRef.current) {
+        clearTimeout(presetPersistTimerRef.current);
+      }
+      presetPersistTimerRef.current = setTimeout(() => {
+        presetPersistSignatureRef.current = persistSignature;
+        const nextPersistedSettings: ImageStudioSettings = {
+          ...persistedSettings,
+          targetAi: {
+            ...persistedSettings.targetAi,
+            openai: {
+              ...persistedSettings.targetAi.openai,
+              api: 'images',
+              model: normalizedModel,
+              modelPresets: normalizedPresets,
+            },
+          },
+        };
+        void updateSetting.mutateAsync({
+          key: targetSettingsKey,
+          value: serializeSetting(nextPersistedSettings),
+        }).catch(() => {
+          if (presetPersistSignatureRef.current === persistSignature) {
+            presetPersistSignatureRef.current = null;
+          }
+        });
+      }, 350);
+    },
+    [
+      activeProjectId,
+      heavyMap,
+      selectedProjectId,
+      studioSettingsRaw,
+      updateSetting,
+    ]
+  );
+
+  const setGenerationModelAndPresets = useCallback(
+    (nextModel: string, nextPresets: string[]): void => {
+      const normalizedModel = nextModel.trim();
+      if (!normalizedModel) return;
+      const normalizedPresets = normalizeImageStudioModelPresets(nextPresets, normalizedModel);
+      setStudioSettings((prev: ImageStudioSettings) => ({
+        ...prev,
+        targetAi: {
+          ...prev.targetAi,
+          openai: {
+            ...prev.targetAi.openai,
+            model: normalizedModel,
+            modelPresets: normalizedPresets,
+          },
+        },
+      }));
+      persistGenerationModelPresets(normalizedModel, normalizedPresets);
+    },
+    [persistGenerationModelPresets]
+  );
 
   const runCardBackfill = useCallback(async (): Promise<void> => {
     setBackfillRunning(true);
@@ -1011,7 +1126,7 @@ export function AdminImageStudioSettingsPage(
                     <SelectSimple
                       size='sm'
                       value={selectedGenerationModel}
-                      onValueChange={(v) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, model: v } } }))}
+                      onValueChange={(v) => setGenerationModelAndPresets(v, quickSwitchModels)}
                       options={quickSwitchModelSelectOptions}
                       placeholder='Select model'
                       triggerClassName='h-10'
@@ -1028,33 +1143,46 @@ export function AdminImageStudioSettingsPage(
                   </Button>
                 </div>
 
-                <div className='rounded-lg border border-border/40 bg-card/20 p-4'>
-                  <Label className='text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3 block'>Quick-switch Presets</Label>
+                <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+                  <Label className='mb-3 block text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground'>
+                    Quick-switch Presets
+                  </Label>
                   <div className='flex flex-wrap gap-2 mb-4'>
                     {quickSwitchModels.map((modelId) => {
                       const isActive = modelId === studioSettings.targetAi.openai.model;
+                      const canRemove = quickSwitchModels.length > 1 || !isActive;
                       return (
                         <div
                           key={modelId}
                           className={cn(
-                            'group flex items-center gap-2 rounded-full border px-3 py-1 text-xs transition-all',
+                            'group inline-flex items-center gap-1 rounded-md border px-1 py-1 text-xs transition-colors',
                             isActive
-                              ? 'border-primary/50 bg-primary/10 text-primary-foreground font-semibold shadow-sm'
-                              : 'border-border/60 bg-muted/30 text-muted-foreground hover:border-border hover:bg-muted/50'
+                              ? 'border-sky-400/50 bg-sky-500/10 text-sky-100'
+                              : 'border-border/60 bg-card/30 text-muted-foreground hover:border-sky-400/40 hover:bg-card/60'
                           )}
                         >
-                          <span 
-                            className='cursor-pointer'
-                            onClick={() => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, model: modelId } } }))}
-                          >
-                            {modelId}
-                          </span>
                           <button
                             type='button'
-                            className='ml-1 text-muted-foreground/60 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100'
+                            className='rounded px-2 py-1 text-left font-medium leading-none'
+                            onClick={() =>
+                              setGenerationModelAndPresets(modelId, quickSwitchModels)
+                            }
+                          >
+                            {modelId}
+                          </button>
+                          <button
+                            type='button'
+                            className={cn(
+                              'rounded p-1 text-muted-foreground/70 transition-colors hover:bg-red-500/15 hover:text-red-300',
+                              !canRemove && 'cursor-not-allowed opacity-40 hover:bg-transparent hover:text-muted-foreground/70'
+                            )}
+                            disabled={!canRemove}
                             onClick={() => {
-                              const nextPresets = studioSettings.targetAi.openai.modelPresets.filter(m => m !== modelId);
-                              setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, modelPresets: nextPresets } } }));
+                              const nextPresets = quickSwitchModels.filter((presetId) => presetId !== modelId);
+                              const nextModel = studioSettings.targetAi.openai.model === modelId
+                                ? (nextPresets[0] ?? studioSettings.targetAi.openai.model)
+                                : studioSettings.targetAi.openai.model;
+                              setGenerationModelAndPresets(nextModel, nextPresets);
                             }}
                           >
                             <X className='size-3' />
@@ -1082,8 +1210,8 @@ export function AdminImageStudioSettingsPage(
                       className='h-9 px-4'
                       disabled={!modelToAdd}
                       onClick={() => {
-                        const nextPresets = [...studioSettings.targetAi.openai.modelPresets, modelToAdd];
-                        setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, modelPresets: nextPresets } } }));
+                        const nextPresets = [...quickSwitchModels, modelToAdd];
+                        setGenerationModelAndPresets(studioSettings.targetAi.openai.model, nextPresets);
                         setModelToAdd('');
                       }}
                     >

@@ -3,7 +3,9 @@ import { ObjectId } from 'mongodb';
 
 import type { 
   ParameterRepository, 
-  ParameterFilters 
+  ParameterFilters,
+  ParameterCreateInput,
+  ParameterUpdateInput,
 } from '@/features/products/types/services/parameter-repository';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -20,16 +22,50 @@ interface ProductParameterDoc extends Document {
   name_en: string;
   name_pl: string | null;
   name_de: string | null;
+  selectorType: ProductParameter['selectorType'];
+  optionLabels: string[];
   catalogId: string;
   createdAt: Date;
   updatedAt: Date;
 }
+
+const ALLOWED_SELECTOR_TYPES = new Set<ProductParameter['selectorType']>([
+  'text',
+  'textarea',
+  'radio',
+  'select',
+  'dropdown',
+]);
+
+const normalizeSelectorType = (value: unknown): ProductParameter['selectorType'] => {
+  if (typeof value !== 'string') return 'text';
+  const normalized = value.trim().toLowerCase();
+  return ALLOWED_SELECTOR_TYPES.has(normalized as ProductParameter['selectorType'])
+    ? (normalized as ProductParameter['selectorType'])
+    : 'text';
+};
+
+const normalizeOptionLabels = (input: unknown): string[] => {
+  if (!Array.isArray(input)) return [];
+  const seen = new Set<string>();
+  const labels: string[] = [];
+  input.forEach((entry: unknown) => {
+    if (typeof entry !== 'string') return;
+    const normalized = entry.trim();
+    if (!normalized || seen.has(normalized.toLowerCase())) return;
+    seen.add(normalized.toLowerCase());
+    labels.push(normalized);
+  });
+  return labels;
+};
 
 const toParameterDomain = (doc: ProductParameterDoc): ProductParameter => ({
   id: doc._id.toString(),
   name_en: doc.name_en,
   name_pl: doc.name_pl ?? null,
   name_de: doc.name_de ?? null,
+  selectorType: normalizeSelectorType(doc.selectorType),
+  optionLabels: normalizeOptionLabels(doc.optionLabels),
   catalogId: doc.catalogId?.toString(),
   createdAt: doc.createdAt?.toISOString() ?? new Date().toISOString(),
   updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
@@ -58,13 +94,15 @@ export const mongoParameterRepository: ParameterRepository = {
     return doc ? toParameterDomain(doc) : null;
   },
 
-  async createParameter(data: { name_en: string; name_pl?: string | null; name_de?: string | null; catalogId: string }): Promise<ProductParameter> {
+  async createParameter(data: ParameterCreateInput): Promise<ProductParameter> {
     const db = await getMongoDb();
     const now = new Date();
     const doc: Omit<ProductParameterDoc, '_id'> = {
       name_en: data.name_en,
       name_pl: data.name_pl ?? null,
       name_de: data.name_de ?? null,
+      selectorType: normalizeSelectorType(data.selectorType),
+      optionLabels: normalizeOptionLabels(data.optionLabels ?? []),
       catalogId: data.catalogId,
       createdAt: now,
       updatedAt: now,
@@ -73,7 +111,7 @@ export const mongoParameterRepository: ParameterRepository = {
     return toParameterDomain({ ...doc, _id: result.insertedId } as ProductParameterDoc);
   },
 
-  async updateParameter(id: string, data: { name_en?: string; name_pl?: string | null; name_de?: string | null }): Promise<ProductParameter> {
+  async updateParameter(id: string, data: ParameterUpdateInput): Promise<ProductParameter> {
     const db = await getMongoDb();
     
     const set: Partial<ProductParameterDoc> = {
@@ -83,6 +121,8 @@ export const mongoParameterRepository: ParameterRepository = {
     if (data.name_en !== undefined) set.name_en = data.name_en;
     if (data.name_pl !== undefined) set.name_pl = data.name_pl;
     if (data.name_de !== undefined) set.name_de = data.name_de;
+    if (data.selectorType !== undefined) set.selectorType = normalizeSelectorType(data.selectorType);
+    if (data.optionLabels !== undefined) set.optionLabels = normalizeOptionLabels(data.optionLabels);
 
     await db.collection<ProductParameterDoc>(COLLECTION).updateOne(
       { _id: new ObjectId(id) }, 

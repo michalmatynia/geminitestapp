@@ -4,14 +4,12 @@ import { useState, useCallback, useMemo } from 'react';
 
 import { PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY, DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL } from '@/features/products/constants';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
-
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-
-
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 import { useToast } from '@/shared/ui';
+
 import {
   toSlotName,
 } from '../components/studio-modals/prompt-extract-utils';

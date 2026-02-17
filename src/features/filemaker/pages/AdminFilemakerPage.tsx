@@ -94,7 +94,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
     onConfirm: () => void | Promise<void>;
     confirmText?: string;
     isDangerous?: boolean;
-  } | null>(null);
+      } | null>(null);
 
   useEffect(() => {
     setDatabase(parsedDatabase);

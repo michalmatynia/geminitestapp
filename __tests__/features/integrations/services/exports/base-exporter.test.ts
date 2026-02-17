@@ -40,6 +40,7 @@ const createProduct = (): ProductWithImages =>
     images: [],
     catalogs: [],
     tags: [],
+    parameters: [],
     producers: [
       {
         productId: 'product-1',
@@ -100,5 +101,45 @@ describe('buildBaseProductData producer mapping', () => {
     );
 
     expect(payload['producer_ids']).toEqual(['producer-local-1']);
+  });
+
+  it('exports custom-field values via parameter:<id> mapping', async () => {
+    const product = createProduct();
+    product.parameters = [
+      {
+        parameterId: 'param-color',
+        value: 'Red',
+      },
+    ];
+    const payload = await buildBaseProductData(product, [
+      {
+        sourceKey: 'custom_color',
+        targetField: 'parameter:param-color',
+      },
+    ]);
+
+    expect(payload['custom_color']).toBe('Red');
+  });
+
+  it('falls back to valuesByLanguage for parameter mappings', async () => {
+    const product = createProduct();
+    product.parameters = [
+      {
+        parameterId: 'param-material',
+        value: '',
+        valuesByLanguage: {
+          en: 'Wood',
+          de: 'Holz',
+        },
+      },
+    ];
+    const payload = await buildBaseProductData(product, [
+      {
+        sourceKey: 'custom_material',
+        targetField: 'parameter:param-material',
+      },
+    ]);
+
+    expect(payload['custom_material']).toBe('Wood');
   });
 });

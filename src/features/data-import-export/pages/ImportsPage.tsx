@@ -6,6 +6,8 @@ import React from 'react';
 import {
   PRODUCT_FIELDS,
   EXPORT_PARAMETER_KEYS,
+  PRODUCT_PARAMETER_TARGET_PATTERN,
+  PRODUCT_PARAMETER_TARGET_PREFIX,
 } from '@/features/data-import-export/components/imports/constants';
 import { ExportTab } from '@/features/data-import-export/components/imports/ExportTab';
 import { ImportTab } from '@/features/data-import-export/components/imports/ImportTab';
@@ -13,6 +15,8 @@ import {
   ImportExportProvider,
   useImportExport,
 } from '@/features/data-import-export/context/ImportExportContext';
+import { useParameters as useProductParameters } from '@/features/products/hooks/useProductSettingsQueries';
+import type { ProductParameter } from '@/features/products/types';
 import type {
   Template,
   TemplateMapping,
@@ -64,10 +68,45 @@ function ImportsPageContent(): React.JSX.Element {
     setExportTemplateMappings,
     exportImagesAsBase64,
     setExportImagesAsBase64,
+    catalogId,
     importSourceFields,
     importSourceFieldValues,
     loadingImportSourceFields,
   } = useImportExport();
+
+  const customParameterTargetsQuery = useProductParameters(catalogId || null);
+  const customParameterTargetFields = React.useMemo(
+    (): Array<{ value: string; label: string }> => {
+      const parameters = customParameterTargetsQuery.data ?? [];
+      const seen = new Set<string>();
+      return parameters
+        .map((parameter: ProductParameter): { value: string; label: string } | null => {
+          const parameterId = parameter.id.trim();
+          if (!parameterId || seen.has(parameterId)) return null;
+          seen.add(parameterId);
+          const label =
+            parameter.name_en?.trim() ||
+            parameter.name_pl?.trim() ||
+            parameter.name_de?.trim() ||
+            parameterId;
+          return {
+            value: `${PRODUCT_PARAMETER_TARGET_PREFIX}${parameterId}`,
+            label: `Custom Field: ${label}`,
+          };
+        })
+        .filter(
+          (entry): entry is { value: string; label: string } => entry !== null
+        );
+    },
+    [customParameterTargetsQuery.data]
+  );
+  const templateTargetFieldOptions = React.useMemo(
+    (): Array<{ value: string; label: string }> => [
+      ...PRODUCT_FIELDS,
+      ...customParameterTargetFields,
+    ],
+    [customParameterTargetFields]
+  );
 
   const isImportTemplateScope = templateScope === 'import';
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
@@ -412,11 +451,26 @@ function ImportsPageContent(): React.JSX.Element {
                         <div className='flex-1'>
                           <SelectSimple 
                             size='sm'
-                            value={m.targetField}
-                            onValueChange={(v: string): void => updateMapping(i, { targetField: v })}
+                            value={m.targetField || '__none__'}
+                            onValueChange={(v: string): void =>
+                              updateMapping(i, {
+                                targetField: v === '__none__' ? '' : v,
+                              })
+                            }
                             options={[
                               { value: '__none__', label: 'Target Field' },
-                              ...PRODUCT_FIELDS,
+                              ...(m.targetField &&
+                              !templateTargetFieldOptions.some(
+                                (option) => option.value === m.targetField
+                              )
+                                ? [
+                                  {
+                                    value: m.targetField,
+                                    label: `${m.targetField} (custom)`,
+                                  },
+                                ]
+                                : []),
+                              ...templateTargetFieldOptions,
                             ]}
                             triggerClassName='w-full h-9 bg-gray-950/40'
                             placeholder='Target Field'
@@ -449,6 +503,7 @@ function ImportsPageContent(): React.JSX.Element {
                       </datalist>
                       <p className='text-xs text-gray-500 italic'>
                         Tip: For category mapping use source <code>category_id</code> and target <code>categoryId</code>.
+                        {' '}For custom product fields use target <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code>.
                       </p>
                     </>
                   )}
@@ -459,6 +514,11 @@ function ImportsPageContent(): React.JSX.Element {
                         : importSourceFieldOptions.length > 0
                           ? `Loaded ${importSourceFieldOptions.length} source fields from the selected inventory schema.`
                           : 'No source fields loaded yet. Go to Imports tab, select connection + inventory to load schema.'}
+                      {catalogId
+                        ? customParameterTargetsQuery.isLoading
+                          ? ' Loading custom field targets...'
+                          : ` Custom field targets: ${customParameterTargetFields.length}.`
+                        : ' Select a catalog in Imports tab to load custom field targets.'}
                     </p>
                   )}
                 </div>

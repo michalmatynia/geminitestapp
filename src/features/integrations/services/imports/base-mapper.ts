@@ -560,6 +560,16 @@ const applyTemplateMappings = (
   mapped: ProductCreateInput,
   mappings: TemplateMapping[]
 ): void => {
+  const parameterValuesById = new Map<string, { parameterId: string; value: string }>();
+  if (Array.isArray(mapped.parameters)) {
+    mapped.parameters.forEach((entry) => {
+      const parameterId = toTrimmedString(entry?.parameterId);
+      const value = toTrimmedString(entry?.value);
+      if (!parameterId || !value) return;
+      parameterValuesById.set(parameterId, { parameterId, value });
+    });
+  }
+
   for (const mapping of mappings) {
     const sourceKey = mapping.sourceKey.trim();
     const targetField = mapping.targetField.trim();
@@ -579,6 +589,17 @@ const applyTemplateMappings = (
       if (tagIds.length > 0) {
         (mapped as ProductCreateInput & { tagIds?: string[] }).tagIds = tagIds;
       }
+      continue;
+    }
+    if (normalizedTargetField.startsWith('parameter:')) {
+      const parameterId = targetField.slice('parameter:'.length).trim();
+      if (!parameterId) continue;
+      const parameterValue = toStringValue(rawValue);
+      if (!parameterValue) continue;
+      parameterValuesById.set(parameterId, {
+        parameterId,
+        value: parameterValue,
+      });
       continue;
     }
     if (NUMBER_FIELDS.has(targetField)) {
@@ -616,6 +637,9 @@ const applyTemplateMappings = (
   // Clean up any empty slots if we created a sparse array
   if (mapped.imageLinks) {
     mapped.imageLinks = mapped.imageLinks.filter(Boolean);
+  }
+  if (parameterValuesById.size > 0) {
+    mapped.parameters = Array.from(parameterValuesById.values());
   }
 };
 

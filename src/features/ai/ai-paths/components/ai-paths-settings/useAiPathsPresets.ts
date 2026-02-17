@@ -14,6 +14,7 @@ import {
   parsePathList,
 } from '@/features/ai/ai-paths/lib';
 import { updateAiPathsSetting } from '@/features/ai/ai-paths/lib/settings-store-client';
+import { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 
 import type { ClusterPresetDraft } from '../cluster-presets-panel';
 
@@ -30,6 +31,7 @@ type UseAiPathsPresetsArgs = {
   ensureNodeVisible: (node: AiNode) => void;
   getCanvasCenterPosition: () => { x: number; y: number };
   toast: ToastFn;
+  confirm: (config: ConfirmConfig) => void;
   reportAiPathsError: (
     error: unknown,
     context: Record<string, unknown>,
@@ -76,6 +78,7 @@ export interface AiPathsPresets {
   togglePaletteGroup: (title: string) => void;
   normalizeDbQueryPreset: (raw: Partial<DbQueryPreset>) => DbQueryPreset;
   normalizeDbNodePreset: (raw: Partial<DbNodePreset>) => DbNodePreset;
+  ConfirmationModal: React.ComponentType;
 }
 
 export function useAiPathsPresets({
@@ -89,6 +92,7 @@ export function useAiPathsPresets({
   ensureNodeVisible,
   getCanvasCenterPosition,
   toast,
+  confirm,
   reportAiPathsError,
 }: UseAiPathsPresetsArgs): AiPathsPresets {
   const [clusterPresets, setClusterPresets] = useState<ClusterPreset[]>([]);
@@ -247,17 +251,25 @@ export function useAiPathsPresets({
       (preset: ClusterPreset): boolean => preset.id === presetId
     );
     if (!target) return;
-    const confirmed = window.confirm(`Delete preset "${target.name}"?`);
-    if (!confirmed) return;
-    const nextPresets = clusterPresets.filter(
-      (preset: ClusterPreset): boolean => preset.id !== presetId
-    );
-    setClusterPresets(nextPresets);
-    await saveClusterPresets(nextPresets);
-    if (editingPresetId === presetId) {
-      setEditingPresetId(null);
-      setPresetDraft(DEFAULT_PRESET_DRAFT);
-    }
+    
+    confirm({
+      title: 'Delete Preset?',
+      message: `Are you sure you want to delete preset "${target.name}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      isDangerous: true,
+      onConfirm: async () => {
+        const nextPresets = clusterPresets.filter(
+          (preset: ClusterPreset): boolean => preset.id !== presetId
+        );
+        setClusterPresets(nextPresets);
+        await saveClusterPresets(nextPresets);
+        if (editingPresetId === presetId) {
+          setEditingPresetId(null);
+          setPresetDraft(DEFAULT_PRESET_DRAFT);
+        }
+        toast('Preset deleted.', { variant: 'success' });
+      }
+    });
   };
 
   const handleApplyPreset = (preset: ClusterPreset): void => {
@@ -319,40 +331,52 @@ export function useAiPathsPresets({
       toast('Paste presets JSON to import.', { variant: 'error' });
       return;
     }
-    if (mode === 'replace') {
-      const confirmed = window.confirm('Replace existing presets? This cannot be undone.');
-      if (!confirmed) return;
-    }
-    try {
-      const parsed = JSON.parse(presetsJson) as unknown;
-      const list = (Array.isArray(parsed)
-        ? parsed
-        : parsed && typeof parsed === 'object' && 'presets' in (parsed as Record<string, unknown>)
-          ? (parsed as Record<string, unknown>)['presets']
-          : null) as unknown[] | null;
-      if (!list) {
-        toast('Invalid presets JSON. Expected an array.', { variant: 'error' });
-        return;
-      }
-      const normalized = list.map((item: unknown): ClusterPreset =>
-        normalizePreset(item as Partial<ClusterPreset>)
-      );
-      let nextPresets = mode === 'replace' ? [] : [...clusterPresets];
-      const existingIds = new Set(nextPresets.map((preset: ClusterPreset): string => preset.id));
-      const merged = normalized.map((preset: ClusterPreset): ClusterPreset => {
-        if (existingIds.has(preset.id)) {
-          return { ...preset, id: createPresetId(), updatedAt: new Date().toISOString() };
+
+    const performImport = async () => {
+      try {
+        const parsed = JSON.parse(presetsJson) as unknown;
+        const list = (Array.isArray(parsed)
+          ? parsed
+          : parsed && typeof parsed === 'object' && 'presets' in (parsed as Record<string, unknown>)
+            ? (parsed as Record<string, unknown>)['presets']
+            : null) as unknown[] | null;
+        if (!list) {
+          toast('Invalid presets JSON. Expected an array.', { variant: 'error' });
+          return;
         }
-        return preset;
+        const normalized = list.map((item: unknown): ClusterPreset =>
+          normalizePreset(item as Partial<ClusterPreset>)
+        );
+        let nextPresets = mode === 'replace' ? [] : [...clusterPresets];
+        const existingIds = new Set(nextPresets.map((preset: ClusterPreset): string => preset.id));
+        const merged = normalized.map((preset: ClusterPreset): ClusterPreset => {
+          if (existingIds.has(preset.id)) {
+            return { ...preset, id: createPresetId(), updatedAt: new Date().toISOString() };
+          }
+          return preset;
+        });
+        nextPresets = [...nextPresets, ...merged];
+        setClusterPresets(nextPresets);
+        await saveClusterPresets(nextPresets);
+        toast('Presets imported.', { variant: 'success' });
+      } catch (error) {
+        reportAiPathsError(error, { action: 'importPresets' }, 'Failed to import presets:');
+        toast('Failed to import presets. Check JSON format.', { variant: 'error' });
+      }
+    };
+
+    if (mode === 'replace') {
+      confirm({
+        title: 'Replace Presets?',
+        message: 'Replace existing presets? This cannot be undone.',
+        confirmText: 'Replace All',
+        isDangerous: true,
+        onConfirm: performImport
       });
-      nextPresets = [...nextPresets, ...merged];
-      setClusterPresets(nextPresets);
-      await saveClusterPresets(nextPresets);
-      toast('Presets imported.', { variant: 'success' });
-    } catch (error) {
-      reportAiPathsError(error, { action: 'importPresets' }, 'Failed to import presets:');
-      toast('Failed to import presets. Check JSON format.', { variant: 'error' });
+      return;
     }
+
+    await performImport();
   };
 
   const handlePresetFromSelection = (): void => {
@@ -455,5 +479,6 @@ export function useAiPathsPresets({
     togglePaletteGroup,
     normalizeDbQueryPreset,
     normalizeDbNodePreset,
+    ConfirmationModal,
   };
 }

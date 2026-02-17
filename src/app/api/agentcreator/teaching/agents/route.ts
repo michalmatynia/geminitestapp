@@ -1,62 +1,9 @@
 export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-
-import { listTeachingAgents, upsertTeachingAgent } from '@/features/ai/agentcreator/teaching/server/repository';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { AgentTeachingAgentRecord } from '@/shared/types/domain/agent-teaching';
 
-const createAgentSchema = z.object({
-  name: z.string().trim().min(1),
-  description: z.string().trim().optional().nullable(),
-  llmModel: z.string().trim().min(1),
-  embeddingModel: z.string().trim().min(1),
-  systemPrompt: z.string().optional().default(''),
-  collectionIds: z.array(z.string().trim().min(1)).optional().default([]),
-  temperature: z.number().min(0).max(2).optional().default(0.2),
-  maxTokens: z.number().int().min(1).max(8000).optional().default(800),
-  retrievalTopK: z.number().int().min(1).max(50).optional().default(6),
-  retrievalMinScore: z.number().min(-1).max(1).optional().default(0.15),
-  maxDocsPerCollection: z.number().int().min(10).max(2000).optional().default(400),
-});
+import { GET_handler, POST_handler } from './handler';
 
-async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const agents = await listTeachingAgents();
-  return NextResponse.json({ agents });
-}
+export const GET = apiHandler(GET_handler, { source: 'agentcreator.teaching.agents.GET' });
 
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const parsed = await parseJsonBody(req, createAgentSchema, {
-    logPrefix: 'agentcreator.teaching.agents.POST',
-  });
-  if (!parsed.ok) return parsed.response;
-
-  const data = parsed.data;
-  const agent: AgentTeachingAgentRecord = await upsertTeachingAgent({
-    name: data.name,
-    description: data.description ?? null,
-    llmModel: data.llmModel,
-    embeddingModel: data.embeddingModel,
-    systemPrompt: data.systemPrompt,
-    collectionIds: data.collectionIds,
-    temperature: data.temperature,
-    maxTokens: data.maxTokens,
-    retrievalTopK: data.retrievalTopK,
-    retrievalMinScore: data.retrievalMinScore,
-    maxDocsPerCollection: data.maxDocsPerCollection,
-  });
-  return NextResponse.json({ agent });
-}
-
-export const GET = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
-  { source: 'agentcreator.teaching.agents.GET' }
-);
-
-export const POST = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
-  { source: 'agentcreator.teaching.agents.POST' }
-);
+export const POST = apiHandler(POST_handler, { source: 'agentcreator.teaching.agents.POST' });

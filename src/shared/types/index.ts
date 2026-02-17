@@ -65,6 +65,7 @@ export {
   type ProductCategoryWithChildren,
   type ProductTag,
   type ProductParameter,
+  type ProductParameterSelectorType,
   type ProductParameterValue,
   type ProductDto,
   type ProductTagDto,

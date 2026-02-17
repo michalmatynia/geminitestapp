@@ -29,10 +29,8 @@ import {
   resolveProviderAction,
   getDefaultProviderAction
 } from '@/features/ai/ai-paths/lib/core/utils/provider-actions';
-import { 
-  PROMPT_ENGINE_SETTINGS_KEY, 
-  parsePromptEngineSettings 
-} from '@/features/prompt-engine/settings';
+import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings } from '@/features/prompt-engine/settings';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -89,6 +87,8 @@ export function useDatabaseNodeConfigState() {
     saveDbQueryPresets,
     toast,
   } = useAiPathConfig();
+
+  const { confirm, ConfirmationModal } = useConfirm();
 
   const [databaseTab, setDatabaseTab] = useState<'settings' | 'constructor' | 'presets'>('settings');
   const [selectedQueryPresetId, setSelectedQueryPresetId] = useState<string>('');
@@ -313,20 +313,30 @@ export function useDatabaseNodeConfigState() {
   }, [dbQueryPresets, saveDbQueryPresets, selectedQueryPresetId, setDbQueryPresets, toast]);
 
   const handleDeleteQueryPresetById = useCallback(async (presetId: string) => {
-    if (!window.confirm('Delete this preset?')) return;
-    const nextPresets = dbQueryPresets.filter(p => p.id !== presetId);
-    setDbQueryPresets(nextPresets);
-    if (selectedQueryPresetId === presetId) {
-      setSelectedQueryPresetId('');
-      setQueryPresetName('');
-    }
-    try {
-      await saveDbQueryPresets(nextPresets);
-      toast('Query preset deleted.', { variant: 'success' });
-    } catch {
-      setDbQueryPresets(dbQueryPresets);
-    }
-  }, [dbQueryPresets, saveDbQueryPresets, selectedQueryPresetId, setDbQueryPresets, toast]);
+    const target = dbQueryPresets.find(p => p.id === presetId);
+    if (!target) return;
+
+    confirm({
+      title: 'Delete Preset?',
+      message: `Are you sure you want to delete preset "${target.name}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      isDangerous: true,
+      onConfirm: async () => {
+        const nextPresets = dbQueryPresets.filter(p => p.id !== presetId);
+        setDbQueryPresets(nextPresets);
+        if (selectedQueryPresetId === presetId) {
+          setSelectedQueryPresetId('');
+          setQueryPresetName('');
+        }
+        try {
+          await saveDbQueryPresets(nextPresets);
+          toast('Query preset deleted.', { variant: 'success' });
+        } catch {
+          setDbQueryPresets(dbQueryPresets);
+        }
+      }
+    });
+  }, [dbQueryPresets, saveDbQueryPresets, selectedQueryPresetId, setDbQueryPresets, toast, confirm]);
 
   const actionCategory = databaseConfig.actionCategory || 'read';
   const action = databaseConfig.action || 'find';
@@ -483,6 +493,7 @@ export function useDatabaseNodeConfigState() {
     closeSaveQueryPresetModal: () => setSaveQueryPresetModalOpen(false),
     handleSaveQueryPreset, handleRunQuery, isUpdateAction, queryTemplateValue,
     handleRenameQueryPreset, handleDeleteQueryPresetById,
-    handleActionCategoryChange, applyActionConfig, schemaSyncMutation, bundleKeys
+    handleActionCategoryChange, applyActionConfig, schemaSyncMutation, bundleKeys,
+    ConfirmationModal
   };
 }

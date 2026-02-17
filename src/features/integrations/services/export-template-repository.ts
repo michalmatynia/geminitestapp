@@ -49,6 +49,18 @@ const DEFAULT_CONNECTION_KEY = 'base_export_default_connection_id';
 const STOCK_FALLBACK_KEY = 'base_export_stock_fallback_enabled';
 const IMAGE_RETRY_PRESETS_KEY = 'base_export_image_retry_presets';
 const BASEHOST_MAPPING_KEYS = new Set(['images_basehost_all', 'image_basehost_all']);
+const ACTIVE_TEMPLATE_SCOPE_SEPARATOR = '::';
+const LEGACY_ACTIVE_TEMPLATE_SCOPE_KEY = '__global__';
+
+type ActiveTemplateScopeInput = {
+  connectionId?: string | null;
+  inventoryId?: string | null;
+};
+
+type ScopedActiveTemplateMap = {
+  defaultTemplateId: string | null;
+  byScope: Record<string, string>;
+};
 
 const stripBasehostMappings = (mappings: TemplateMapping[]): TemplateMapping[] =>
   mappings.filter((mapping: TemplateMapping) => {
@@ -89,6 +101,95 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
     }
     return [];
   }
+};
+
+const normalizeOptionalId = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const buildActiveTemplateScopeKey = (
+  scope?: ActiveTemplateScopeInput
+): string | null => {
+  const connectionId = normalizeOptionalId(scope?.connectionId);
+  const inventoryId = normalizeOptionalId(scope?.inventoryId);
+  if (!connectionId || !inventoryId) return null;
+  return `${connectionId}${ACTIVE_TEMPLATE_SCOPE_SEPARATOR}${inventoryId}`;
+};
+
+const parseActiveTemplateMap = (raw: string | null): ScopedActiveTemplateMap => {
+  if (!raw) {
+    return { defaultTemplateId: null, byScope: {} };
+  }
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return { defaultTemplateId: null, byScope: {} };
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return { defaultTemplateId: trimmed, byScope: {} };
+    }
+    const record = parsed as Record<string, unknown>;
+    const byScopeRaw = record['byScope'];
+    const byScope: Record<string, string> = {};
+    if (byScopeRaw && typeof byScopeRaw === 'object' && !Array.isArray(byScopeRaw)) {
+      Object.entries(byScopeRaw as Record<string, unknown>).forEach(
+        ([scopeKey, scopeValue]: [string, unknown]) => {
+          const normalizedScopeKey = scopeKey.trim();
+          const normalizedTemplateId = normalizeOptionalId(scopeValue);
+          if (!normalizedScopeKey || !normalizedTemplateId) return;
+          byScope[normalizedScopeKey] = normalizedTemplateId;
+        }
+      );
+    } else {
+      Object.entries(record).forEach(([key, value]: [string, unknown]) => {
+        const normalizedKey = key.trim();
+        const normalizedValue = normalizeOptionalId(value);
+        if (!normalizedKey || !normalizedValue) return;
+        if (
+          normalizedKey.includes(ACTIVE_TEMPLATE_SCOPE_SEPARATOR) ||
+          normalizedKey === LEGACY_ACTIVE_TEMPLATE_SCOPE_KEY
+        ) {
+          byScope[normalizedKey] = normalizedValue;
+        }
+      });
+    }
+
+    const defaultTemplateId =
+      normalizeOptionalId(record['defaultTemplateId']) ??
+      normalizeOptionalId(record['templateId']) ??
+      null;
+
+    return { defaultTemplateId, byScope };
+  } catch {
+    return { defaultTemplateId: trimmed, byScope: {} };
+  }
+};
+
+const stringifyActiveTemplateMap = (map: ScopedActiveTemplateMap): string => {
+  const defaultTemplateId = normalizeOptionalId(map.defaultTemplateId);
+  const byScopeEntries = Object.entries(map.byScope).reduce(
+    (acc: Record<string, string>, [scopeKey, templateId]: [string, string]) => {
+      const normalizedScopeKey = scopeKey.trim();
+      const normalizedTemplateId = normalizeOptionalId(templateId);
+      if (!normalizedScopeKey || !normalizedTemplateId) return acc;
+      acc[normalizedScopeKey] = normalizedTemplateId;
+      return acc;
+    },
+    {}
+  );
+
+  if (Object.keys(byScopeEntries).length === 0) {
+    return defaultTemplateId ?? '';
+  }
+
+  return JSON.stringify({
+    defaultTemplateId,
+    byScope: byScopeEntries,
+  });
 };
 
 const readTemplatesValue = async (): Promise<string | null> => {
@@ -442,13 +543,36 @@ export const deleteExportTemplate = async (id: string): Promise<boolean> => {
   return true;
 };
 
-export const getExportActiveTemplateId = async (): Promise<string | null> => {
+export const getExportActiveTemplateId = async (
+  scope?: ActiveTemplateScopeInput
+): Promise<string | null> => {
   const value = await readActiveTemplateValue();
-  return value ? value : null;
+  const map = parseActiveTemplateMap(value);
+  const scopeKey = buildActiveTemplateScopeKey(scope);
+  if (scopeKey) {
+    const scopedTemplateId = map.byScope[scopeKey];
+    if (scopedTemplateId) return scopedTemplateId;
+  }
+  return map.defaultTemplateId ?? null;
 };
 
-export const setExportActiveTemplateId = async (value: string | null): Promise<void> => {
-  await writeActiveTemplateValue(value?.trim() ? value.trim() : '');
+export const setExportActiveTemplateId = async (
+  value: string | null,
+  scope?: ActiveTemplateScopeInput
+): Promise<void> => {
+  const current = parseActiveTemplateMap(await readActiveTemplateValue());
+  const normalizedValue = normalizeOptionalId(value);
+  const scopeKey = buildActiveTemplateScopeKey(scope);
+
+  if (!scopeKey) {
+    current.defaultTemplateId = normalizedValue;
+  } else if (normalizedValue) {
+    current.byScope[scopeKey] = normalizedValue;
+  } else {
+    delete current.byScope[scopeKey];
+  }
+
+  await writeActiveTemplateValue(stringifyActiveTemplateMap(current));
 };
 
 export const getExportDefaultInventoryId = async (): Promise<string | null> => {

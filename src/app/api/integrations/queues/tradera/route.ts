@@ -1,67 +1,11 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-import { NextRequest, NextResponse } from 'next/server';
-
-import { initializeQueues } from '@/features/jobs/lib/queue-init';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import { getQueueHealth, isRedisAvailable } from '@/shared/lib/queue';
-import type { QueueHealthStatus } from '@/shared/lib/queue/types';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
 
-type TraderaQueueHealthResponse = {
-  ok: boolean;
-  mode: 'bullmq' | 'inline';
-  redisAvailable: boolean;
-  timestamp: string;
-  queues: {
-    listings: QueueHealthStatus | null;
-    relistScheduler: QueueHealthStatus | null;
-  };
-};
-
-async function GET_handler(
-  _req: NextRequest,
-  _ctx: ApiHandlerContext
-): Promise<Response> {
-  initializeQueues();
-  await Promise.all([
-    import('@/features/jobs/workers/traderaListingQueue'),
-    import('@/features/jobs/workers/traderaRelistSchedulerQueue'),
-  ]);
-
-  const redisAvailable = isRedisAvailable();
-  const mode: TraderaQueueHealthResponse['mode'] = redisAvailable
-    ? 'bullmq'
-    : 'inline';
-  const healthMap =
-    (await getQueueHealth().catch(
-      () => ({}) as Record<string, QueueHealthStatus>
-    )) ?? {};
-
-  const listings = healthMap['tradera-listings'] ?? null;
-  const relistScheduler = healthMap['tradera-relist-scheduler'] ?? null;
-
-  const payload: TraderaQueueHealthResponse = {
-    ok: mode === 'inline' ? true : Boolean(listings?.running),
-    mode,
-    redisAvailable,
-    timestamp: new Date().toISOString(),
-    queues: {
-      listings,
-      relistScheduler,
-    },
-  };
-
-  return NextResponse.json(payload, {
-    headers: {
-      'Cache-Control': 'no-store',
-    },
-  });
-}
+import { GET_handler } from './handler';
 
 export const GET = apiHandler(GET_handler, {
   source: 'integrations.queues.tradera.GET',
   requireCsrf: false,
 });
-

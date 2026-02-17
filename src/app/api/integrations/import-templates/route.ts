@@ -1,63 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-
-import {
-  createImportTemplate,
-  listImportTemplates
-} from '@/features/integrations/server';
-import { parseJsonBody } from '@/features/products/server';
-import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
-
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const mappingSchema = z.object({
-  sourceKey: z.string().trim().min(1),
-  targetField: z.string().trim().min(1)
+import { apiHandler } from '@/shared/lib/api/api-handler';
+
+import { GET_handler, POST_handler } from './handler';
+
+export const GET = apiHandler(GET_handler, {
+  source: 'products.import-templates.GET',
+  requireCsrf: false,
+  cacheControl: 'no-store',
 });
 
-const parameterImportSchema = z.object({
-  enabled: z.boolean().optional(),
-  mode: z.enum(['all', 'mapped']).optional(),
-  languageScope: z.enum(['catalog_languages', 'default_only']).optional(),
-  createMissingParameters: z.boolean().optional(),
-  overwriteExistingValues: z.boolean().optional(),
-  matchBy: z.enum(['base_id_then_name', 'name_only']).optional(),
+export const POST = apiHandler(POST_handler, {
+  source: 'products.import-templates.POST',
+  requireCsrf: false,
+  cacheControl: 'no-store',
 });
-
-const templateSchema = z.object({
-  name: z.string().trim().min(1),
-  description: z.string().trim().optional(),
-  mappings: z.array(mappingSchema).default([]),
-  parameterImport: parameterImportSchema.optional(),
-});
-
-async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const templates = await listImportTemplates();
-  return NextResponse.json(templates);
-}
-
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const parsed = await parseJsonBody(req, templateSchema, {
-    logPrefix: 'import-templates.POST'
-  });
-  if (!parsed.ok) {
-    return parsed.response;
-  }
-  const data = parsed.data;
-  const template = await createImportTemplate({
-    name: data.name,
-    description: data.description ?? null,
-    mappings: data.mappings,
-    ...(data.parameterImport ? { parameterImport: data.parameterImport } : {}),
-  });
-  return NextResponse.json(template);
-}
-
-export const GET = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx),
-  { source: 'products.import-templates.GET', requireCsrf: false, cacheControl: 'no-store' });
-export const POST = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
-  { source: 'products.import-templates.POST', requireCsrf: false, cacheControl: 'no-store' });

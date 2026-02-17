@@ -1,0 +1,99 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { getParameterRepository } from '@/features/products/server';
+import { badRequestError, conflictError } from '@/shared/errors/app-error';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+
+const SELECTOR_TYPES = ['text', 'textarea', 'radio', 'select', 'dropdown'] as const;
+const selectorTypeSchema = z.enum(SELECTOR_TYPES);
+const SELECTOR_TYPES_REQUIRING_OPTIONS = new Set<typeof SELECTOR_TYPES[number]>([
+  'radio',
+  'select',
+  'dropdown',
+]);
+
+const normalizeOptionLabels = (input: unknown): string[] => {
+  if (!Array.isArray(input)) return [];
+  const seen = new Set<string>();
+  const labels: string[] = [];
+  input.forEach((entry: unknown) => {
+    if (typeof entry !== 'string') return;
+    const normalized = entry.trim();
+    if (!normalized || seen.has(normalized.toLowerCase())) return;
+    seen.add(normalized.toLowerCase());
+    labels.push(normalized);
+  });
+  return labels;
+};
+
+export const productParameterCreateSchema = z.object({
+  name_en: z.string().min(1, 'English name is required'),
+  name_pl: z.string().optional().nullable(),
+  name_de: z.string().optional().nullable(),
+  catalogId: z.string().min(1, 'Catalog ID is required'),
+  selectorType: selectorTypeSchema.default('text'),
+  optionLabels: z.array(z.string()).optional().default([]),
+}).superRefine((value, ctx) => {
+  const normalizedOptionLabels = normalizeOptionLabels(value.optionLabels);
+  if (
+    SELECTOR_TYPES_REQUIRING_OPTIONS.has(value.selectorType) &&
+    normalizedOptionLabels.length === 0
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['optionLabels'],
+      message: 'At least one option label is required for this selector type.',
+    });
+  }
+});
+
+/**
+ * GET /api/products/parameters
+ * Fetches all product parameters (flat list).
+ * Query params:
+ * - catalogId: Filter by catalog (required)
+ */
+export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const { searchParams } = new URL(req.url);
+  const catalogId = searchParams.get('catalogId');
+
+  if (!catalogId) {
+    throw badRequestError('catalogId query parameter is required');
+  }
+
+  const repository = await getParameterRepository();
+  const parameters = await repository.listParameters({ catalogId });
+  
+  return NextResponse.json(parameters);
+}
+
+/**
+ * POST /api/products/parameters
+ * Creates a new product parameter.
+ */
+export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  const data = ctx.body as z.infer<typeof productParameterCreateSchema>;
+  const { name_en, catalogId } = data;
+
+  const repository = await getParameterRepository();
+  const existing = await repository.findByName(catalogId, name_en);
+  
+  if (existing) {
+    throw conflictError(
+      'A parameter with this name already exists in this catalog',
+      { name_en, catalogId }
+    );
+  }
+
+  const parameter = await repository.createParameter({
+    name_en,
+    catalogId,
+    ...(data.name_pl !== undefined && { name_pl: data.name_pl }),
+    ...(data.name_de !== undefined && { name_de: data.name_de }),
+    selectorType: data.selectorType,
+    optionLabels: normalizeOptionLabels(data.optionLabels),
+  });
+
+  return NextResponse.json(parameter, { status: 201 });
+}

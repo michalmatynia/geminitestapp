@@ -12,6 +12,7 @@ export function FileManagerModals(): React.JSX.Element {
   const {
     previewFile, setPreviewFile,
     previewAsset, setPreviewAsset,
+    ConfirmationModal,
   } = useFileManager();
 
   return (
@@ -41,6 +42,8 @@ export function FileManagerModals(): React.JSX.Element {
         onClose={() => setPreviewAsset(null)}
         item={previewAsset}
       />
+
+      <ConfirmationModal />
     </>
   );
 }

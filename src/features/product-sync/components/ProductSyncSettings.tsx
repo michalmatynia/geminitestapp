@@ -23,6 +23,7 @@ import type {
   ProductSyncFieldRule,
   ProductSyncProfile,
 } from '@/features/product-sync/types/product-sync';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import {
   Badge,
   Button,
@@ -116,6 +117,7 @@ const directionLabel = (value: ProductSyncDirection): string => {
 
 export function ProductSyncSettings(): React.JSX.Element {
   const { toast } = useToast();
+  const { confirm, ConfirmationModal } = useConfirm();
 
   const profilesQuery = useProductSyncProfiles();
   const createProfileMutation = useCreateProductSyncProfileMutation();
@@ -219,18 +221,25 @@ export function ProductSyncSettings(): React.JSX.Element {
 
   const handleDelete = async (): Promise<void> => {
     if (!selectedProfileId) return;
-    if (!confirm('Delete this sync profile?')) return;
-
-    try {
-      await deleteProfileMutation.mutateAsync(selectedProfileId);
-      toast('Sync profile deleted.', { variant: 'success' });
-      setSelectedProfileId('');
-      setDraft(defaultDraft(baseConnections[0]?.id ?? ''));
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to delete profile.', {
-        variant: 'error',
-      });
-    }
+    
+    confirm({
+      title: 'Delete Sync Profile?',
+      message: 'Are you sure you want to delete this sync profile? This action cannot be undone.',
+      confirmText: 'Delete',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await deleteProfileMutation.mutateAsync(selectedProfileId);
+          toast('Sync profile deleted.', { variant: 'success' });
+          setSelectedProfileId('');
+          setDraft(defaultDraft(baseConnections[0]?.id ?? ''));
+        } catch (error) {
+          toast(error instanceof Error ? error.message : 'Failed to delete profile.', {
+            variant: 'error',
+          });
+        }
+      }
+    });
   };
 
   const handleRunNow = async (): Promise<void> => {
@@ -623,6 +632,7 @@ export function ProductSyncSettings(): React.JSX.Element {
           )}
         </div>
       </div>
+      <ConfirmationModal />
     </div>
   );
 }

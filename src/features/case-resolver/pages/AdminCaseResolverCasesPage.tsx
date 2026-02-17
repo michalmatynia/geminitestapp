@@ -28,13 +28,13 @@ import {
   Input, 
   ListPanel,
   MultiSelect, 
-  SectionHeader,
+  SectionHeader, 
   SelectSimple, 
   useToast
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 import type { FilterField } from '@/shared/ui/templates/panels';
+import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import {
   CASE_RESOLVER_CATEGORIES_KEY,
@@ -311,14 +311,6 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const [caseDraft, setCaseDraft] = useState<Partial<CaseResolverFile>>({});
   const [isCreateCaseModalOpen, setIsCreateCaseModalOpen] = useState(false);
   const [editingCaseId, setEditingCaseId] = useState<string | null>(null);
-  const [confirmation, setConfirmation] = useState<{
-    title: string;
-    message: string;
-    onConfirm: () => void | Promise<void>;
-    confirmText?: string;
-    isDangerous?: boolean;
-  } | null>(null);
-
   const [editingCaseName, setEditingCaseName] = useState('');
   const [editingCaseParentId, setEditingCaseParentId] = useState<string | null>(null);
   const [editingCaseReferenceCaseIds, setEditingCaseReferenceCaseIds] = useState<string[]>([]);
@@ -351,6 +343,14 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   );
   const [didHydrateCaseListViewDefaults, setDidHydrateCaseListViewDefaults] =
     useState(false);
+
+  const [confirmation, setConfirmation] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    confirmText?: string;
+    isDangerous?: boolean;
+      } | null>(null);
 
   useEffect(() => {
     setWorkspace(parsedWorkspace);
@@ -837,6 +837,16 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     );
   }, [caseResolverCategories]);
 
+  useEffect(() => {
+    const validCaseIds = new Set(files.map((file: CaseResolverFile) => file.id));
+    setCaseDraft((prev) => {
+      const nextParentId = prev.parentCaseId && validCaseIds.has(prev.parentCaseId) ? prev.parentCaseId : null;
+      const nextRefIds = (prev.referenceCaseIds || []).filter(id => validCaseIds.has(id));
+      if (nextParentId === prev.parentCaseId && nextRefIds.length === (prev.referenceCaseIds || []).length) return prev;
+      return { ...prev, parentCaseId: nextParentId, referenceCaseIds: nextRefIds };
+    });
+  }, [files]);
+
   const resetCreateCaseDraft = useCallback(
     (parentCaseId: string | null = null): void => {
       setCaseDraft({
@@ -866,7 +876,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     setIsCreateCaseModalOpen(false);
   }, []);
 
-  const createFields: SettingsField<Partial<CaseResolverFile>>[] = useMemo(() => [
+  const createFields: (SettingsField<Partial<CaseResolverFile>>)[] = useMemo(() => [
     {
       key: 'name',
       label: 'Case Name',

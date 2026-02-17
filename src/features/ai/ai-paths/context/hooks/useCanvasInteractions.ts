@@ -15,6 +15,7 @@ import {
   getPortOffsetY,
   validateConnection,
 } from '@/features/ai/ai-paths/lib';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
 import { DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils/drag-drop';
 
@@ -31,8 +32,12 @@ import { useSelectionState, useSelectionActions } from './useSelection';
  * This hook replaces the prop-drilling of handlers by providing them directly
  * from the context-aware logic.
  */
-export function useCanvasInteractions() {
+export function useCanvasInteractions(args?: {
+  confirmNodeSwitch?: (nodeId: string) => boolean | Promise<boolean>;
+}) {
+  const { confirmNodeSwitch } = args ?? {};
   const { toast } = useToast();
+  const { confirm, ConfirmationModal } = useConfirm();
 
   // Context: Canvas
   const { view, panState, dragState, connecting, connectingPos, lastDrop } = useCanvasState();
@@ -241,14 +246,21 @@ export function useCanvasInteractions() {
   // Interaction Handlers
   // ---------------------------------------------------------------------------
 
-  const handlePointerDownNode = useCallback((
+  const handlePointerDownNode = useCallback(async (
     event: React.PointerEvent<HTMLDivElement>,
     nodeId: string
-  ): void => {
+  ): Promise<void> => {
     if (isPathLocked) {
       notifyLocked();
       return;
     }
+    
+    if (confirmNodeSwitch) {
+      const result = confirmNodeSwitch(nodeId);
+      const confirmed = result instanceof Promise ? await result : result;
+      if (!confirmed) return;
+    }
+
     event.stopPropagation();
     const target = event.currentTarget;
     target.setPointerCapture(event.pointerId);
@@ -260,7 +272,7 @@ export function useCanvasInteractions() {
     const canvasY = (event.clientY - viewport.top - view.y) / view.scale;
     
     startDrag(nodeId, canvasX - node.position.x, canvasY - node.position.y);
-  }, [isPathLocked, nodes, view, viewportRef, startDrag, notifyLocked]);
+  }, [isPathLocked, nodes, view, viewportRef, startDrag, notifyLocked, confirmNodeSwitch]);
 
   const handlePointerMoveNode = useCallback((
     event: React.PointerEvent<HTMLDivElement>,
@@ -406,19 +418,26 @@ export function useCanvasInteractions() {
     }
   }, [edges, isPathLocked, notifyLocked, setEdges, setRuntimeState, pruneRuntimeInputsInternal, selectedEdgeId, selectEdge]);
 
-  const handleStartConnection = useCallback((
+  const handleStartConnection = useCallback(async (
     event: React.PointerEvent<HTMLButtonElement>,
     node: AiNode,
     port: string
-  ): void => {
+  ): Promise<void> => {
     if (isPathLocked) {
       notifyLocked();
       return;
     }
+    
+    if (confirmNodeSwitch) {
+      const result = confirmNodeSwitch(node.id);
+      const confirmed = result instanceof Promise ? await result : result;
+      if (!confirmed) return;
+    }
+
     event.stopPropagation();
     const start = getPortPosition(node, port, 'output');
     startConnection(node.id, port, start);
-  }, [isPathLocked, getPortPosition, startConnection, notifyLocked]);
+  }, [isPathLocked, getPortPosition, startConnection, notifyLocked, confirmNodeSwitch]);
 
   const handleCompleteConnection = useCallback((
     event: React.PointerEvent<HTMLButtonElement>,
@@ -462,11 +481,11 @@ export function useCanvasInteractions() {
     endConnection();
   }, [connecting, nodes, isPathLocked, endConnection, setEdges, toast, notifyLocked]);
 
-  const handleReconnectInput = useCallback((
+  const handleReconnectInput = useCallback(async (
     event: React.PointerEvent<HTMLButtonElement>,
     nodeId: string,
     port: string
-  ): void => {
+  ): Promise<void> => {
     if (isPathLocked) {
       notifyLocked();
       return;
@@ -478,6 +497,12 @@ export function useCanvasInteractions() {
     
     const fromNode = nodes.find((n) => n.id === edgeToMove.from);
     if (!fromNode) return;
+
+    if (confirmNodeSwitch) {
+      const result = confirmNodeSwitch(nodeId);
+      const confirmed = result instanceof Promise ? await result : result;
+      if (!confirmed) return;
+    }
 
     const start = getPortPosition(fromNode, edgeToMove.fromPort, 'output');
     const viewport = viewportRef.current?.getBoundingClientRect();
@@ -513,7 +538,8 @@ export function useCanvasInteractions() {
     selectedEdgeId,
     selectEdge,
     getPortPosition,
-    notifyLocked
+    notifyLocked,
+    confirmNodeSwitch
   ]);
 
   // ---------------------------------------------------------------------------
@@ -528,29 +554,42 @@ export function useCanvasInteractions() {
     }
     const targetNode = nodes.find((n) => n.id === selectedNodeId);
     const label = targetNode?.title || 'this node';
-    const confirmed = window.confirm(`Remove ${label}? This will delete connected wires.`);
-    if (!confirmed) return;
+    
+    confirm({
+      title: 'Remove Node?',
+      message: `Are you sure you want to remove ${label}? This will delete all connected wires.`,
+      confirmText: 'Remove',
+      isDangerous: true,
+      onConfirm: () => {
+        removeNode(selectedNodeId);
+        
+        const removedEdges = edges.filter(
+          (e) => e.from === selectedNodeId || e.to === selectedNodeId
+        );
+        const remainingEdges = edges.filter(
+          (e) => e.from !== selectedNodeId && e.to !== selectedNodeId
+        );
+        
+        setEdges(remainingEdges);
+        setRuntimeState((prev: RuntimeState) => pruneRuntimeInputsInternal(prev, removedEdges, remainingEdges));
+        
+        selectNode(null);
+      }
+    });
+  }, [selectedNodeId, isPathLocked, nodes, edges, removeNode, setEdges, setRuntimeState, pruneRuntimeInputsInternal, selectNode, notifyLocked, confirm]);
 
-    removeNode(selectedNodeId);
-    
-    const removedEdges = edges.filter(
-      (e) => e.from === selectedNodeId || e.to === selectedNodeId
-    );
-    const remainingEdges = edges.filter(
-      (e) => e.from !== selectedNodeId && e.to !== selectedNodeId
-    );
-    
-    setEdges(remainingEdges);
-    setRuntimeState((prev: RuntimeState) => pruneRuntimeInputsInternal(prev, removedEdges, remainingEdges));
-    
-    selectNode(null);
-  }, [selectedNodeId, isPathLocked, nodes, edges, removeNode, setEdges, setRuntimeState, pruneRuntimeInputsInternal, selectNode, notifyLocked]);
-
-  const handleSelectNode = useCallback((nodeId: string): void => {
+  const handleSelectNode = useCallback(async (nodeId: string): Promise<void> => {
     if (nodeId === selectedNodeId) return;
+    
+    if (confirmNodeSwitch) {
+      const result = confirmNodeSwitch(nodeId);
+      const confirmed = result instanceof Promise ? await result : result;
+      if (!confirmed) return;
+    }
+    
     selectEdge(null);
     selectNode(nodeId);
-  }, [selectedNodeId, selectNode, selectEdge]);
+  }, [selectedNodeId, selectNode, selectEdge, confirmNodeSwitch]);
 
   // ---------------------------------------------------------------------------
   // Drag & Drop Handlers
@@ -716,6 +755,7 @@ export function useCanvasInteractions() {
     handleDragStart,
     handleDragOver,
     handleDrop,
+    ConfirmationModal,
     // Actions
     zoomTo,
     fitToNodes,

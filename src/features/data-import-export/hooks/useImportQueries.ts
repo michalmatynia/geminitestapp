@@ -610,7 +610,11 @@ export function useSaveExportSettingsMutation(): MutationResult<void, {
       const normalizedConnectionId = params.selectedBaseConnectionId?.trim() || null;
       const normalizedWarehouseId = params.exportWarehouseId?.trim() || null;
       await Promise.all([
-        api.post('/api/integrations/exports/base/active-template', { templateId: normalizedTemplateId }),
+        api.post('/api/integrations/exports/base/active-template', {
+          templateId: normalizedTemplateId,
+          connectionId: normalizedConnectionId,
+          inventoryId: normalizedInventoryId,
+        }),
         api.post('/api/integrations/exports/base/default-inventory', { inventoryId: normalizedInventoryId }),
         api.post('/api/integrations/exports/base/default-connection', { connectionId: normalizedConnectionId }),
         api.post('/api/integrations/exports/base/stock-fallback', { enabled: params.exportStockFallbackEnabled }),

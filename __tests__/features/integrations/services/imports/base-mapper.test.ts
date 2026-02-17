@@ -83,5 +83,20 @@ describe('Base Mapper', () => {
       const result = mapBaseProduct(record, mappings);
       expect(result.description_pl).toBe('https://img.com/b.jpg');
     });
+
+    it('maps template values into custom product parameters', () => {
+      const record = {
+        params: [
+          { name: 'Material', value: 'Wood' },
+        ],
+      };
+      const mappings = [
+        { sourceKey: 'Material', targetField: 'parameter:param-material' },
+      ];
+      const result = mapBaseProduct(record, mappings);
+      expect(result.parameters).toEqual([
+        { parameterId: 'param-material', value: 'Wood' },
+      ]);
+    });
   });
 });

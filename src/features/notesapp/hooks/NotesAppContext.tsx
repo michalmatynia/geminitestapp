@@ -146,14 +146,14 @@ export function NotesAppProvider({
   const [draggedNoteId, setDraggedNoteId] = useState<string | null>(null);
   const [isFolderTreeCollapsed, setIsFolderTreeCollapsed] = useState<boolean>(false);
   const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
-    const [confirmation, setConfirmation] = useState<{
+  const [confirmation, setConfirmation] = useState<{
       title: string;
       message: string;
       onConfirm: () => void | Promise<void>;
       confirmText?: string;
       isDangerous?: boolean;
-    } | null>(null);
-    const [prompt, setPrompt] = useState<{
+        } | null>(null);
+  const [prompt, setPrompt] = useState<{
       title: string;
       message?: string;
       label?: string;
@@ -161,19 +161,19 @@ export function NotesAppProvider({
       placeholder?: string;
       onConfirm: (value: string) => void | Promise<void>;
       required?: boolean;
-    } | null>(null);
+        } | null>(null);
   
-    const confirmAction = useCallback((config: {
+  const confirmAction = useCallback((config: {
       title: string;
       message: string;
       onConfirm: () => void | Promise<void>;
       confirmText?: string;
       isDangerous?: boolean;
     }): void => {
-      setConfirmation(config);
-    }, []);
+    setConfirmation(config);
+  }, []);
   
-    const promptAction = useCallback((config: {
+  const promptAction = useCallback((config: {
       title: string;
       message?: string;
       label?: string;
@@ -182,10 +182,10 @@ export function NotesAppProvider({
       onConfirm: (value: string) => void | Promise<void>;
       required?: boolean;
     }): void => {
-      setPrompt(config);
-    }, []);
+    setPrompt(config);
+  }, []);
   
-    // Settings helpers
+  // Settings helpers
   
   const setSelectedFolderId = useCallback((id: string | null): void => {
     updateSettings({ selectedFolderId: id });

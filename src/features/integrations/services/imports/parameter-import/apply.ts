@@ -193,7 +193,11 @@ export const applyBaseParameterImport = async (
   const { byId, byName } = buildLookupMaps(allCatalogParameters);
   const useLinkMap = input.settings.matchBy === 'base_id_then_name';
   const linkMap = useLinkMap
-    ? await getCatalogParameterLinks(input.catalogId)
+    ? await getCatalogParameterLinks({
+      catalogId: input.catalogId,
+      connectionId: input.connectionId ?? null,
+      inventoryId: input.inventoryId ?? null,
+    })
     : {};
   const linkUpdates: Record<string, string> = {};
 
@@ -288,6 +292,8 @@ export const applyBaseParameterImport = async (
   if (Object.keys(linkUpdates).length > 0 && useLinkMap) {
     await mergeCatalogParameterLinks({
       catalogId: input.catalogId,
+      connectionId: input.connectionId ?? null,
+      inventoryId: input.inventoryId ?? null,
       links: linkUpdates,
     });
   }

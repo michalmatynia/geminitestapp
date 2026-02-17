@@ -18,13 +18,51 @@ type SettingDoc = {
   updatedAt?: Date;
 };
 
-type ParameterLinkMap = Record<string, Record<string, string>>;
+type LinkScopeInput = {
+  connectionId?: string | null;
+  inventoryId?: string | null;
+};
+
+type ParameterLinkMap = Record<string, Record<string, Record<string, string>>>;
 
 const SETTINGS_KEY = 'base_import_parameter_link_map';
+const DEFAULT_SCOPE_KEY = '__global__';
+const SCOPE_SEPARATOR = '::';
 
 const toMongoId = (id: string): string | ObjectId => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
   return id;
+};
+
+const normalizeOptionalId = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+};
+
+const buildScopeKey = (scope?: LinkScopeInput): string => {
+  const connectionId = normalizeOptionalId(scope?.connectionId);
+  const inventoryId = normalizeOptionalId(scope?.inventoryId);
+  if (!connectionId || !inventoryId) return DEFAULT_SCOPE_KEY;
+  return `${connectionId}${SCOPE_SEPARATOR}${inventoryId}`;
+};
+
+const normalizeLinkEntries = (
+  raw: unknown
+): Record<string, string> => {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return {};
+  }
+  return Object.entries(raw as Record<string, unknown>).reduce(
+    (acc: Record<string, string>, [baseParameterId, parameterId]: [string, unknown]) => {
+      const normalizedBase = baseParameterId.trim();
+      const normalizedParameterId = normalizeOptionalId(parameterId);
+      if (!normalizedBase || !normalizedParameterId) return acc;
+      acc[normalizedBase] = normalizedParameterId;
+      return acc;
+    },
+    {}
+  );
 };
 
 const resolveProvider = async (): Promise<Provider> => {
@@ -83,59 +121,86 @@ const parseLinkMap = (raw: string | null): ParameterLinkMap => {
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
       return {};
     }
+
     const normalized: ParameterLinkMap = {};
     Object.entries(parsed as Record<string, unknown>).forEach(
-      ([catalogId, value]: [string, unknown]) => {
-        const normalizedCatalogId = catalogId.trim();
-        if (!normalizedCatalogId) return;
-        if (!value || typeof value !== 'object' || Array.isArray(value)) return;
-        const map: Record<string, string> = {};
-        Object.entries(value as Record<string, unknown>).forEach(
-          ([baseParameterId, parameterId]: [string, unknown]) => {
-            const normalizedBaseId = baseParameterId.trim();
-            const normalizedParameterId =
-              typeof parameterId === 'string' ? parameterId.trim() : '';
-            if (!normalizedBaseId || !normalizedParameterId) return;
-            map[normalizedBaseId] = normalizedParameterId;
-          }
-        );
-        normalized[normalizedCatalogId] = map;
+      ([topLevelKey, topLevelValue]: [string, unknown]) => {
+        const normalizedTopLevelKey = topLevelKey.trim();
+        if (!normalizedTopLevelKey) return;
+        if (!topLevelValue || typeof topLevelValue !== 'object' || Array.isArray(topLevelValue)) {
+          return;
+        }
+
+        const topEntries = Object.entries(topLevelValue as Record<string, unknown>);
+        const isLegacyCatalogMap =
+          topEntries.length > 0 &&
+          topEntries.every(([, value]: [string, unknown]) =>
+            typeof value === 'string'
+          );
+
+        if (isLegacyCatalogMap) {
+          const legacyCatalogLinks = normalizeLinkEntries(topLevelValue);
+          if (Object.keys(legacyCatalogLinks).length === 0) return;
+          if (!normalized[DEFAULT_SCOPE_KEY]) normalized[DEFAULT_SCOPE_KEY] = {};
+          normalized[DEFAULT_SCOPE_KEY][normalizedTopLevelKey] = legacyCatalogLinks;
+          return;
+        }
+
+        const scopeBucket: Record<string, Record<string, string>> = {};
+        topEntries.forEach(([catalogId, catalogLinksRaw]: [string, unknown]) => {
+          const normalizedCatalogId = catalogId.trim();
+          if (!normalizedCatalogId) return;
+          const links = normalizeLinkEntries(catalogLinksRaw);
+          if (Object.keys(links).length === 0) return;
+          scopeBucket[normalizedCatalogId] = links;
+        });
+        if (Object.keys(scopeBucket).length > 0) {
+          normalized[normalizedTopLevelKey] = scopeBucket;
+        }
       }
     );
+
     return normalized;
   } catch {
     return {};
   }
 };
 
-export const getCatalogParameterLinks = async (
-  catalogId: string
-): Promise<Record<string, string>> => {
-  const normalizedCatalogId = catalogId.trim();
+const serializeLinkMap = (map: ParameterLinkMap): string =>
+  JSON.stringify(map);
+
+export const getCatalogParameterLinks = async (input: {
+  catalogId: string;
+  connectionId?: string | null;
+  inventoryId?: string | null;
+}): Promise<Record<string, string>> => {
+  const normalizedCatalogId = input.catalogId.trim();
   if (!normalizedCatalogId) return {};
   const all = parseLinkMap(await readSettingsValue());
-  return all[normalizedCatalogId] ?? {};
+  const scopeKey = buildScopeKey(input);
+  const scopedLinks =
+    all[scopeKey]?.[normalizedCatalogId] ??
+    (scopeKey !== DEFAULT_SCOPE_KEY
+      ? all[DEFAULT_SCOPE_KEY]?.[normalizedCatalogId]
+      : undefined);
+  return scopedLinks ?? {};
 };
 
 export const mergeCatalogParameterLinks = async (input: {
   catalogId: string;
+  connectionId?: string | null;
+  inventoryId?: string | null;
   links: Record<string, string>;
 }): Promise<void> => {
   const normalizedCatalogId = input.catalogId.trim();
   if (!normalizedCatalogId) return;
-  const nextEntries = Object.entries(input.links).reduce(
-    (acc: Record<string, string>, [baseParameterId, parameterId]: [string, string]) => {
-      const normalizedBase = baseParameterId.trim();
-      const normalizedParameterId = parameterId.trim();
-      if (!normalizedBase || !normalizedParameterId) return acc;
-      acc[normalizedBase] = normalizedParameterId;
-      return acc;
-    },
-    {}
-  );
+  const nextEntries = normalizeLinkEntries(input.links);
   if (Object.keys(nextEntries).length === 0) return;
+
   const all = parseLinkMap(await readSettingsValue());
-  const previous = all[normalizedCatalogId] ?? {};
-  all[normalizedCatalogId] = { ...previous, ...nextEntries };
-  await writeSettingsValue(JSON.stringify(all));
+  const scopeKey = buildScopeKey(input);
+  if (!all[scopeKey]) all[scopeKey] = {};
+  const previous = all[scopeKey][normalizedCatalogId] ?? {};
+  all[scopeKey][normalizedCatalogId] = { ...previous, ...nextEntries };
+  await writeSettingsValue(serializeLinkMap(all));
 };

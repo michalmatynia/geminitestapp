@@ -116,6 +116,9 @@ export function AiPathsSettingsView(): React.JSX.Element {
     handleHistoryRetentionChange,
     handleClearConnectorData,
     handleClearHistory,
+    ConfirmationModal,
+    CanvasConfirmationModal,
+    PresetsConfirmationModal,
   } = state;
 
   // Derived from Persistence context
@@ -845,6 +848,9 @@ export function AiPathsSettingsView(): React.JSX.Element {
           });
         }}
       />
+      <ConfirmationModal />
+      <CanvasConfirmationModal />
+      <PresetsConfirmationModal />
     </div>
   );
 }

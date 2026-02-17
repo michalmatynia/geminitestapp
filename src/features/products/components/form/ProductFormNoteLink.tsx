@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -61,6 +62,7 @@ function useNotesLookup(noteIds: string[]): { notes: NotesLookupResult; loading:
 
 export default function ProductFormNoteLink(): React.JSX.Element {
   const { selectedNoteIds, toggleNote, removeNote } = useProductFormContext();
+  const { confirm, ConfirmationModal } = useConfirm();
   const [query, setQuery] = useState('');
 
   const { notes: searchResults, loading: searching } = useNotesSearch(query);
@@ -151,9 +153,15 @@ export default function ProductFormNoteLink(): React.JSX.Element {
             className='text-[11px] h-7 text-red-400 border-red-900/30 hover:bg-red-950/30'
             onClick={(): void => {
               if (selectedNoteIds.length === 0) return;
-              if (confirm('Remove all linked notes from this product?')) {
-                selectedNoteIds.forEach((id: string) => removeNote(id));
-              }
+              confirm({
+                title: 'Unlink All Notes?',
+                message: 'Are you sure you want to remove all linked notes from this product? The notes themselves will not be deleted.',
+                confirmText: 'Unlink All',
+                isDangerous: true,
+                onConfirm: () => {
+                  selectedNoteIds.forEach((id: string) => removeNote(id));
+                }
+              });
             }}
             disabled={selectedNoteIds.length === 0}
           >
@@ -202,6 +210,8 @@ export default function ProductFormNoteLink(): React.JSX.Element {
           )}
         </div>
       </FormSection>
+
+      <ConfirmationModal />
     </div>
   );
 }

@@ -21,6 +21,8 @@ export type BaseParameterImportSummary = {
 export type ApplyBaseParameterImportInput = {
   record: BaseProductRecord;
   catalogId: string;
+  connectionId?: string | null;
+  inventoryId?: string | null;
   parameterRepository: ParameterRepository;
   existingValues: ProductParameterValue[];
   catalogLanguageCodes: string[];

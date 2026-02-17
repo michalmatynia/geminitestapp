@@ -19,6 +19,8 @@ import {
   validateConnection,
 } from '@/features/ai/ai-paths/lib';
 import { ToastFn } from '@/shared/types/domain/ai-paths-runtime';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import { useToast } from '@/shared/ui';
 import { DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils/drag-drop';
 
 type UseAiPathsCanvasInteractionsArgs = {
@@ -29,7 +31,7 @@ type UseAiPathsCanvasInteractionsArgs = {
   isPathLocked: boolean;
   selectedNodeId: string | null;
   setSelectedNodeId: (value: string | null) => void;
-  confirmNodeSwitch?: (nextNodeId: string) => boolean;
+  confirmNodeSwitch?: (nextNodeId: string) => boolean | Promise<boolean>;
   clearRuntimeInputsForEdges: (removed: Edge[], remaining: Edge[]) => void;
   reportAiPathsError: (error: unknown, context: Record<string, unknown>, fallbackMessage?: string) => void;
   toast: ToastFn;
@@ -110,6 +112,7 @@ export function useAiPathsCanvasInteractions({
   } | null>(null);
   const { selectedEdgeId, selectedNodeId: selectedNodeIdCtx } = useSelectionState();
   const { selectEdge, selectNode } = useSelectionActions();
+  const { confirm, ConfirmationModal } = useConfirm();
 
   const { viewportRef, canvasRef } = useCanvasRefs();
   const pendingDragRef = useRef<{ nodeId: string; x: number; y: number } | null>(null);
@@ -239,21 +242,28 @@ export function useAiPathsCanvasInteractions({
     }
     const targetNode = nodes.find((node: AiNode): boolean => node.id === activeNodeId);
     const label = targetNode?.title || 'this node';
-    const confirmed = window.confirm(`Remove ${label}? This will delete connected wires.`);
-    if (!confirmed) return;
-    setNodes((prev: AiNode[]): AiNode[] => prev.filter((node: AiNode): boolean => node.id !== activeNodeId));
-    setEdges((prev: Edge[]): Edge[] => {
-      const removed = prev.filter(
-        (edge: Edge): boolean => edge.from === activeNodeId || edge.to === activeNodeId
-      );
-      const remaining = prev.filter(
-        (edge: Edge): boolean => edge.from !== activeNodeId && edge.to !== activeNodeId
-      );
-      clearRuntimeInputsForEdges(removed, remaining);
-      return remaining;
+    
+    confirm({
+      title: 'Remove Node?',
+      message: `Are you sure you want to remove ${label}? This will delete all connected wires.`,
+      confirmText: 'Remove',
+      isDangerous: true,
+      onConfirm: () => {
+        setNodes((prev: AiNode[]): AiNode[] => prev.filter((node: AiNode): boolean => node.id !== activeNodeId));
+        setEdges((prev: Edge[]): Edge[] => {
+          const removed = prev.filter(
+            (edge: Edge): boolean => edge.from === activeNodeId || edge.to === activeNodeId
+          );
+          const remaining = prev.filter(
+            (edge: Edge): boolean => edge.from !== activeNodeId && edge.to !== activeNodeId
+          );
+          clearRuntimeInputsForEdges(removed, remaining);
+          return remaining;
+        });
+        selectNode(null);
+        setSelectedNodeId(null);
+      }
     });
-    selectNode(null);
-    setSelectedNodeId(null);
   }, [
     nodes,
     selectedNodeId,
@@ -265,6 +275,7 @@ export function useAiPathsCanvasInteractions({
     setNodes,
     setSelectedNodeId,
     selectNode,
+    confirm,
   ]);
 
   useEffect((): void | (() => void) => {
@@ -811,10 +822,25 @@ export function useAiPathsCanvasInteractions({
 
   const handleSelectNode = (nodeId: string): void => {
     if (nodeId === (selectedNodeIdCtx ?? selectedNodeId)) return;
-    if (confirmNodeSwitch && !confirmNodeSwitch(nodeId)) return;
-    selectEdge(null);
-    selectNode(nodeId);
-    setSelectedNodeId(nodeId);
+    
+    const proceed = (): void => {
+      selectEdge(null);
+      selectNode(nodeId);
+      setSelectedNodeId(nodeId);
+    };
+
+    if (confirmNodeSwitch) {
+      const result = confirmNodeSwitch(nodeId);
+      if (result instanceof Promise) {
+        void result.then((confirmed: boolean): void => {
+          if (confirmed) proceed();
+        });
+      } else if (result) {
+        proceed();
+      }
+    } else {
+      proceed();
+    }
   };
 
   const getCanvasCenterPosition = (): { x: number; y: number } => {
@@ -872,5 +898,6 @@ export function useAiPathsCanvasInteractions({
     zoomTo,
     fitToNodes,
     resetView,
+    ConfirmationModal,
   };
 }

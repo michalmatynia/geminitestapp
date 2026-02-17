@@ -433,6 +433,55 @@ const toTrimmedString = (value: unknown): string | null => {
   return trimmed || null;
 };
 
+const parseParameterSourceKey = (sourceKey: string): string | null => {
+  const trimmed = sourceKey.trim();
+  if (!trimmed) return null;
+  if (!trimmed.toLowerCase().startsWith('parameter:')) return null;
+  const parameterId = trimmed.slice('parameter:'.length).trim();
+  return parameterId || null;
+};
+
+const getProductParameterValue = (
+  product: ProductWithImages,
+  parameterId: string
+): string | null => {
+  const normalizedParameterId = parameterId.trim().toLowerCase();
+  if (!normalizedParameterId) return null;
+  const entries = Array.isArray(product.parameters)
+    ? product.parameters
+    : [];
+  const match = entries.find((entry) => {
+    const entryParameterId = toTrimmedString(entry?.parameterId);
+    return (
+      typeof entryParameterId === 'string' &&
+      entryParameterId.toLowerCase() === normalizedParameterId
+    );
+  });
+  if (!match) return null;
+
+  const directValue = toTrimmedString(match.value);
+  if (directValue) return directValue;
+
+  if (
+    match.valuesByLanguage &&
+    typeof match.valuesByLanguage === 'object' &&
+    !Array.isArray(match.valuesByLanguage)
+  ) {
+    const valuesByLanguage = match.valuesByLanguage as Record<string, unknown>;
+    const preferred = ['default', 'en', 'pl', 'de']
+      .map((code: string) => toTrimmedString(valuesByLanguage[code]))
+      .find((value): value is string => Boolean(value));
+    if (preferred) return preferred;
+
+    const fallback = Object.values(valuesByLanguage)
+      .map((value) => toTrimmedString(value))
+      .find((value): value is string => Boolean(value));
+    if (fallback) return fallback;
+  }
+
+  return null;
+};
+
 const getProducerEntryId = (entry: ProducerEntry): string | null => {
   return (
     toTrimmedString(entry.producerId) ??
@@ -1406,6 +1455,11 @@ const getProductValue = (
   tagExternalIdByInternalId?: TagExternalIdLookup
 ): unknown => {
   if (!sourceKey) return null;
+
+  const parameterId = parseParameterSourceKey(sourceKey);
+  if (parameterId) {
+    return getProductParameterValue(product, parameterId);
+  }
 
   const normalized = sourceKey.trim().toLowerCase();
   if (normalized === 'category' || normalized === 'category_id' || normalized === 'categoryid') {

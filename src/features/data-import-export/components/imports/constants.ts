@@ -51,6 +51,9 @@ export const PRODUCT_FIELDS = [
   { value: 'images_all', label: 'Images (All: slots + links)' },
 ] as const;
 
+export const PRODUCT_PARAMETER_TARGET_PREFIX = 'parameter:' as const;
+export const PRODUCT_PARAMETER_TARGET_PATTERN = `${PRODUCT_PARAMETER_TARGET_PREFIX}<parameter_id>`;
+
 export const IMAGE_SLOT_KEYS = Array.from(
   { length: 15 },
   (_: unknown, index: number) => `image_slot_${index + 1}`,

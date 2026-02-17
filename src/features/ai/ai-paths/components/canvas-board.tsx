@@ -38,6 +38,9 @@ import {
   useSelectionState,
   useSelectionActions,
 } from '../context';
+import {
+  useAiPathsSettingsOrchestrator,
+} from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 import { NodeProcessingDots } from './NodeProcessingDots';
 import { SignalDots } from './SignalDots';
 import { formatPortLabel } from '../utils/ui-utils';
@@ -151,6 +154,7 @@ export function CanvasBoard({
   const { fireTrigger } = useRuntimeActions();
   const { selectedNodeId, selectedEdgeId } = useSelectionState();
   const { selectEdge, setConfigOpen } = useSelectionActions();
+  const { confirmNodeSwitch } = useAiPathsSettingsOrchestrator();
   const {
     edgePaths,
     handlePointerDownNode,
@@ -171,7 +175,8 @@ export function CanvasBoard({
     zoomTo,
     fitToNodes,
     resetView,
-  } = useCanvasInteractions();
+    ConfirmationModal,
+  } = useCanvasInteractions({ confirmNodeSwitch });
 
   // --- Local State & Refs ---
   const [hoveredConnectorKey, setHoveredConnectorKey] = React.useState<string | null>(null);
@@ -1080,10 +1085,10 @@ export function CanvasBoard({
                 width: NODE_WIDTH,
                 transform: `translate(${node.position.x}px, ${node.position.y}px)`,
               }}
-              onPointerDown={(event) => handlePointerDownNode(event, node.id)}
-              onPointerMove={(event) => handlePointerMoveNode(event, node.id)}
-              onPointerUp={(event) => handlePointerUpNode(event, node.id)}
-              onClick={() => handleSelectNode(node.id)}
+              onPointerDown={(event) => { handlePointerDownNode(event, node.id); }}
+              onPointerMove={(event) => { handlePointerMoveNode(event, node.id); }}
+              onPointerUp={(event) => { handlePointerUpNode(event, node.id); }}
+              onClick={() => { handleSelectNode(node.id); }}
               onDoubleClick={(event) => {
                 event.stopPropagation();
                 handleSelectNode(node.id);
@@ -1199,7 +1204,7 @@ export function CanvasBoard({
                                 onPointerDown={(event) => {
                                   event.stopPropagation();
                                   if (hasIncomingEdge) {
-                                    handleReconnectInput(event, node.id, input);
+                                    void handleReconnectInput(event, node.id, input);
                                   }
                                 }}
                                 onClick={(event) => {
@@ -1208,12 +1213,11 @@ export function CanvasBoard({
                                     prev === connectorKey ? null : connectorKey
                                   );
                                 }}
-                                onContextMenu={(event) => {
-                                  event.preventDefault();
-                                  event.stopPropagation();
-                                  handleDisconnectPort('input', node.id, input);
-                                }}
-                                aria-label={`Connect to ${formatPortLabel(input)}`}
+                                                                  onContextMenu={(event) => {
+                                                                    event.preventDefault();
+                                                                    event.stopPropagation();
+                                                                    handleDisconnectPort('input', node.id, input);
+                                                                  }}                                aria-label={`Connect to ${formatPortLabel(input)}`}
                                 title={`Input: ${formatPortLabel(input)}`}
                               />
                               {hasMismatch ? (
@@ -1296,7 +1300,7 @@ export function CanvasBoard({
                                   height: PORT_SIZE + 2,
                                 }}
                                 onPointerDown={(event) =>
-                                  handleStartConnection(event, node, output)
+                                  { void handleStartConnection(event, node, output); }
                                 }
                                 onClick={(event) => {
                                   event.stopPropagation();
@@ -1304,12 +1308,11 @@ export function CanvasBoard({
                                     prev === connectorKey ? null : connectorKey
                                   );
                                 }}
-                                onContextMenu={(event) => {
-                                  event.preventDefault();
-                                  event.stopPropagation();
-                                  handleDisconnectPort('output', node.id, output);
-                                }}
-                                aria-label={`Start connection from ${formatPortLabel(output)}`}
+                                                                  onContextMenu={(event) => {
+                                                                    event.preventDefault();
+                                                                    event.stopPropagation();
+                                                                    handleDisconnectPort('output', node.id, output);
+                                                                  }}                                aria-label={`Start connection from ${formatPortLabel(output)}`}
                                 title={`Output: ${formatPortLabel(output)}`}
                               />
                               {hasMismatch ? (
@@ -1423,6 +1426,7 @@ export function CanvasBoard({
           );
         })}
       </div>
+      <ConfirmationModal />
     </div>
   );
 }

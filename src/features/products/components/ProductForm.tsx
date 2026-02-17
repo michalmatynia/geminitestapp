@@ -88,6 +88,7 @@ export default function ProductForm({
     selectedCatalogIds,
     product,
     draft,
+    ConfirmationModal,
   } = useProductFormContext();
   const { watch } = useFormContext<ProductFormData>();
   
@@ -709,6 +710,7 @@ export default function ProductForm({
           </span>
         </div>
       )}
+      <ConfirmationModal />
     </form>
   );
 }

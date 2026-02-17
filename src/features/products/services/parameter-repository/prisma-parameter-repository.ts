@@ -2,12 +2,44 @@ import { Prisma, ProductParameter as PrismaProductParameter } from '@prisma/clie
 
 import type { 
   ParameterRepository, 
-  ParameterFilters 
+  ParameterFilters,
+  ParameterCreateInput,
+  ParameterUpdateInput,
 } from '@/features/products/types/services/parameter-repository';
 import prisma from '@/shared/lib/db/prisma';
 import type { 
   ProductParameter 
 } from '@/shared/types/domain/products';
+
+const ALLOWED_SELECTOR_TYPES = new Set<ProductParameter['selectorType']>([
+  'text',
+  'textarea',
+  'radio',
+  'select',
+  'dropdown',
+]);
+
+const normalizeSelectorType = (value: unknown): ProductParameter['selectorType'] => {
+  if (typeof value !== 'string') return 'text';
+  const normalized = value.trim().toLowerCase();
+  return ALLOWED_SELECTOR_TYPES.has(normalized as ProductParameter['selectorType'])
+    ? (normalized as ProductParameter['selectorType'])
+    : 'text';
+};
+
+const normalizeOptionLabels = (input: unknown): string[] => {
+  if (!Array.isArray(input)) return [];
+  const seen = new Set<string>();
+  const labels: string[] = [];
+  input.forEach((entry: unknown) => {
+    if (typeof entry !== 'string') return;
+    const normalized = entry.trim();
+    if (!normalized || seen.has(normalized.toLowerCase())) return;
+    seen.add(normalized.toLowerCase());
+    labels.push(normalized);
+  });
+  return labels;
+};
 
 const toParameterDomain = (param: PrismaProductParameter): ProductParameter => ({
   id: param.id,
@@ -15,6 +47,8 @@ const toParameterDomain = (param: PrismaProductParameter): ProductParameter => (
   name_pl: param.name_pl ?? null,
   name_de: param.name_de ?? null,
   catalogId: param.catalogId,
+  selectorType: normalizeSelectorType((param as unknown as Record<string, unknown>)['selectorType']),
+  optionLabels: normalizeOptionLabels((param as unknown as Record<string, unknown>)['optionLabels']),
   createdAt: param.createdAt.toISOString(),
   updatedAt: param.updatedAt.toISOString(),
 });
@@ -46,26 +80,37 @@ export const prismaParameterRepository: ParameterRepository = {
     return param ? toParameterDomain(param) : null;
   },
 
-  async createParameter(data: { name_en: string; name_pl?: string | null; name_de?: string | null; catalogId: string }): Promise<ProductParameter> {
+  async createParameter(data: ParameterCreateInput): Promise<ProductParameter> {
+    const selectorType = normalizeSelectorType(data.selectorType);
+    const optionLabels = normalizeOptionLabels(data.optionLabels ?? []);
     const param = await prisma.productParameter.create({
       data: {
         name_en: data.name_en,
-        catalogId: data.catalogId,
+        catalog: { connect: { id: data.catalogId } },
         ...(data.name_pl !== undefined && { name_pl: data.name_pl }),
         ...(data.name_de !== undefined && { name_de: data.name_de }),
-      },
+        selectorType,
+        optionLabels,
+      } as Prisma.ProductParameterCreateInput,
     });
     return toParameterDomain(param);
   },
 
-  async updateParameter(id: string, data: { name_en?: string; name_pl?: string | null; name_de?: string | null }): Promise<ProductParameter> {
+  async updateParameter(id: string, data: ParameterUpdateInput): Promise<ProductParameter> {
+    const updateData = {
+      ...(data.name_en !== undefined && { name_en: data.name_en }),
+      ...(data.name_pl !== undefined && { name_pl: data.name_pl }),
+      ...(data.name_de !== undefined && { name_de: data.name_de }),
+      ...(data.selectorType !== undefined && {
+        selectorType: normalizeSelectorType(data.selectorType),
+      }),
+      ...(data.optionLabels !== undefined && {
+        optionLabels: normalizeOptionLabels(data.optionLabels),
+      }),
+    } as Prisma.ProductParameterUpdateInput;
     const param = await prisma.productParameter.update({
       where: { id },
-      data: {
-        ...(data.name_en !== undefined && { name_en: data.name_en }),
-        ...(data.name_pl !== undefined && { name_pl: data.name_pl }),
-        ...(data.name_de !== undefined && { name_de: data.name_de }),
-      },
+      data: updateData,
     });
     return toParameterDomain(param);
   },

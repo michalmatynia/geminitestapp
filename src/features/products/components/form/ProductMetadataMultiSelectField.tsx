@@ -73,34 +73,34 @@ export function ProductMetadataMultiSelectField({
     onChangeProp ??
     (metadataContext?.[contextOnChangeKey] as (ids: string[] | string | null) => void) ??
           (formContext
-          ? (nextIds: string[]): void => {
-            if (single) {
-              const handler = (metadataContext?.[contextOnChangeKey] ?? (formContext as unknown as Record<string, unknown> | null)?.[contextOnChangeKey]) as (id: string | null) => void;
-              if (handler) {
-                handler(nextIds[0] || null);            return;
-          }
-        }
+            ? (nextIds: string[]): void => {
+              if (single) {
+                const handler = (metadataContext?.[contextOnChangeKey] ?? (formContext as unknown as Record<string, unknown> | null)?.[contextOnChangeKey]) as (id: string | null) => void;
+                if (handler) {
+                  handler(nextIds[0] || null);            return;
+                }
+              }
 
-        if (!formContextToggleName) return;
+              if (!formContextToggleName) return;
 
-        const previous = new Set(formContext[contextSelectedKey] as string[]);
-        const next = new Set(nextIds);
+              const previous = new Set(formContext[contextSelectedKey] as string[]);
+              const next = new Set(nextIds);
         
-        // Items to add
-        for (const id of nextIds) {
-          if (!previous.has(id)) {
-            (formContext[formContextToggleName] as (id: string) => void)(id);
-          }
-        }
+              // Items to add
+              for (const id of nextIds) {
+                if (!previous.has(id)) {
+                  (formContext[formContextToggleName] as (id: string) => void)(id);
+                }
+              }
         
-        // Items to remove
-        for (const id of (formContext[contextSelectedKey] as string[])) {
-          if (!next.has(id)) {
-            (formContext[formContextToggleName] as (id: string) => void)(id);
-          }
-        }
-      }
-      : null);
+              // Items to remove
+              for (const id of (formContext[contextSelectedKey] as string[])) {
+                if (!next.has(id)) {
+                  (formContext[formContextToggleName] as (id: string) => void)(id);
+                }
+              }
+            }
+            : null);
 
   if (!resolvedOnChange) {
     throw internalError(

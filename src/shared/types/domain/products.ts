@@ -11,6 +11,7 @@ import type {
   UpdateProductDto,
   CreateProductCategoryDto as CreateCategoryDto,
   UpdateProductCategoryDto as UpdateCategoryDto,
+  ProductParameterSelectorTypeDto,
   ProductImageDto,
   ProductCatalogDto,
   ProductTagRelationDto,
@@ -28,6 +29,7 @@ export type {
   UpdateProductDto,
   CreateCategoryDto,
   UpdateCategoryDto,
+  ProductParameterSelectorTypeDto,
   ProductImageDto,
   ProductCatalogDto,
   ProductTagRelationDto,
@@ -40,12 +42,15 @@ export type ProductMigrationDirection = 'prisma-to-mongo' | 'mongo-to-prisma';
 export type SyncDirection = 'to_base' | 'from_base' | 'bidirectional';
 
 export type PriceGroupType = 'standard' | 'dependent';
+export type ProductParameterSelectorType = ProductParameterSelectorTypeDto;
 
 export type ProductParameter = Entity & {
   catalogId: string;
   name_en: string;
   name_pl: string | null;
   name_de: string | null;
+  selectorType: ProductParameterSelectorType;
+  optionLabels: string[];
 };
 
 export type ProductParameterValue = ProductParameterValueDto;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 
 export interface ConfirmConfig {

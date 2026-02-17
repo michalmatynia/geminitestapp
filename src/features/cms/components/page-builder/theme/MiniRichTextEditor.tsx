@@ -6,6 +6,7 @@ import StarterKit from '@tiptap/starter-kit';
 import { Bold, Italic, Link2, List, ListOrdered } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
+import { usePrompt } from '@/shared/hooks/ui/usePrompt';
 import {
   Button,
   Label,
@@ -61,6 +62,7 @@ export function MiniRichTextEditor({
   showFormatSelect?: boolean;
   enableLists?: boolean;
 }): React.JSX.Element {
+  const { prompt, PromptInputModal } = usePrompt();
   const lastValueRef = useRef<string>(value);
   const [formatValue, setFormatValue] = useState<string>('paragraph');
 
@@ -141,13 +143,19 @@ export function MiniRichTextEditor({
   const addLink = (): void => {
     if (!editor) return;
     const previousUrl = editor.getAttributes('link')['href'] as string | undefined;
-    const url = window.prompt('Enter URL:', previousUrl ?? '');
-    if (url === null) return;
-    if (url.trim() === '') {
-      editor.chain().focus().unsetLink().run();
-      return;
-    }
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+    prompt({
+      title: 'Insert Link',
+      label: 'URL',
+      defaultValue: previousUrl ?? '',
+      placeholder: 'https://...',
+      onConfirm: (url) => {
+        if (url.trim() === '') {
+          editor.chain().focus().unsetLink().run();
+          return;
+        }
+        editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+      }
+    });
   };
 
   if (!editor) {
@@ -227,6 +235,7 @@ export function MiniRichTextEditor({
           style={{ minHeight }}
         />
       </div>
+      <PromptInputModal />
     </div>
   );
 }

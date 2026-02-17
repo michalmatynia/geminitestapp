@@ -496,14 +496,6 @@ export const buildCaseResolverTagPickerOptions = (
     );
 };
 
-export const promptForName = (label: string, fallback: string): string | null => {
-  const result = window.prompt(label, fallback);
-  if (!result) return null;
-  const normalized = result.trim();
-  if (!normalized) return null;
-  return normalized;
-};
-
 export const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEditDraft => {
   const originalDocumentContent = file.originalDocumentContent ?? file.documentContent;
   const explodedDocumentContent = file.explodedDocumentContent ?? '';

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { Catalog, PriceGroup, ProductCategoryWithChildren, ProductTag } from '@/features/products/types';
+import type { Catalog, PriceGroup, ProductCategoryWithChildren, ProductParameter, ProductTag } from '@/features/products/types';
 
 type ProductSettingsContextValue = {
   loadingCatalogs: boolean;
@@ -28,6 +28,11 @@ type ProductSettingsContextValue = {
   selectedTagCatalogId: string | null;
   onTagCatalogChange: (catalogId: string | null) => void;
   onRefreshTags: () => void;
+  loadingParameters: boolean;
+  parameters: ProductParameter[];
+  selectedParameterCatalogId: string | null;
+  onParameterCatalogChange: (catalogId: string | null) => void;
+  onRefreshParameters: () => void;
 };
 
 const ProductSettingsContext = React.createContext<ProductSettingsContextValue | null>(null);

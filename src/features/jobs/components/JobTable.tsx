@@ -63,7 +63,7 @@ export function JobTable({
   const { 
     setSelectedListing, 
     listingJobs, 
-    handleCancelListing, 
+    confirmCancelListing, 
     isCancellingListing 
   } = useJobsContext();
 
@@ -74,8 +74,8 @@ export function JobTable({
 
   const handleCancel = useMemo(() => onCancelProp || ((id: string) => {
     const row = listingJobs.flatMap(j => j.listings.map(l => ({ job: j, listing: l }))).find(r => r.listing.id === id);
-    if (row) void handleCancelListing(row.job.productId, row.listing.id);
-  }), [onCancelProp, listingJobs, handleCancelListing]);
+    if (row) confirmCancelListing(row.job.productId, row.listing.id);
+  }), [onCancelProp, listingJobs, confirmCancelListing]);
 
   const isCancelling = isCancellingProp || isCancellingListing;
 

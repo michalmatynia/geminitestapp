@@ -12,6 +12,7 @@ import type {
   ProductParameterValue,
 } from '@/features/products/types';
 import type { ProductImageSlot } from '@/features/products/types/products-ui';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
 import { delay } from '@/shared/utils';
 
@@ -45,6 +46,7 @@ export interface UseProductFormSubmitResult {
   uploading: boolean;
   uploadError: string | null;
   uploadSuccess: boolean;
+  ConfirmationModal: React.ComponentType;
 }
 
 function buildFormData(
@@ -175,6 +177,7 @@ export function useProductFormSubmit({
 }: UseProductFormSubmitProps): UseProductFormSubmitResult {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { confirm, ConfirmationModal } = useConfirm();
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -198,80 +201,85 @@ export function useProductFormSubmit({
       return slot.previewUrl.startsWith('/uploads/products/temp/');
     });
 
+    const performSubmit = async () => {
+      setUploadError(null);
+      setUploadSuccess(false);
+
+      try {
+        const formData = buildFormData(
+          data,
+          imageSlots,
+          imageLinks,
+          imageBase64s,
+          selectedCatalogIds,
+          selectedCategoryId,
+          selectedTagIds,
+          selectedProducerIds,
+          selectedNoteIds,
+          parameterValues,
+          studioProjectId,
+        );
+
+        const savedProduct = product
+          ? await updateMutation.mutateAsync({ id: product.id, data: formData })
+          : await createMutation.mutateAsync(formData);
+
+        const isQueued = savedProduct == null;
+
+        if (isQueued) {
+          onSuccess?.({ queued: true });
+          return;
+        }
+
+        await delay(500);
+
+        await invalidateProductsAndCounts(queryClient);
+
+        if (!product) {
+          onSuccess?.();
+        } else {
+          refreshImages(savedProduct as ProductWithImages);
+          setUploadSuccess(true);
+          if (successTimerRef.current) {
+            clearTimeout(successTimerRef.current);
+          }
+          successTimerRef.current = setTimeout(() => {
+            setUploadSuccess(false);
+          }, 3000);
+          if (!onSuccess) {
+            toast('Product updated successfully.', { variant: 'success' });
+          }
+          onEditSave?.(savedProduct as ProductWithImages);
+          onSuccess?.();
+        }
+      } catch (error: unknown) {
+        logClientError(error, {
+          context: {
+            service: 'product-form',
+            action: 'submit',
+            productId: product?.id,
+          },
+        });
+        if (error instanceof Error) {
+          setUploadError(error.message);
+        } else {
+          setUploadError('An unknown error occurred');
+        }
+      }
+    };
+
     if (!skuValue && hasTempImages) {
-      const shouldContinue = window.confirm(
-        'This product has images without an SKU. They will stay in the temporary folder until you set an SKU. Continue?'
-      );
-      if (!shouldContinue) {
-        return;
-      }
-    }
-
-    setUploadError(null);
-    setUploadSuccess(false);
-
-    try {
-      const formData = buildFormData(
-        data,
-        imageSlots,
-        imageLinks,
-        imageBase64s,
-        selectedCatalogIds,
-        selectedCategoryId,
-        selectedTagIds,
-        selectedProducerIds,
-        selectedNoteIds,
-        parameterValues,
-        studioProjectId,
-      );
-
-      const savedProduct = product
-        ? await updateMutation.mutateAsync({ id: product.id, data: formData })
-        : await createMutation.mutateAsync(formData);
-
-      const isQueued = savedProduct == null;
-
-      if (isQueued) {
-        onSuccess?.({ queued: true });
-        return;
-      }
-
-      await delay(500);
-
-      await invalidateProductsAndCounts(queryClient);
-
-      if (!product) {
-        onSuccess?.();
-      } else {
-        refreshImages(savedProduct as ProductWithImages);
-        setUploadSuccess(true);
-        if (successTimerRef.current) {
-          clearTimeout(successTimerRef.current);
-        }
-        successTimerRef.current = setTimeout(() => {
-          setUploadSuccess(false);
-        }, 3000);
-        if (!onSuccess) {
-          toast('Product updated successfully.', { variant: 'success' });
-        }
-        onEditSave?.(savedProduct as ProductWithImages);
-        onSuccess?.();
-      }
-    } catch (error: unknown) {
-      logClientError(error, {
-        context: {
-          service: 'product-form',
-          action: 'submit',
-          productId: product?.id,
-        },
+      confirm({
+        title: 'Submit without SKU?',
+        message: 'This product has images without an SKU. They will stay in the temporary folder until you set an SKU. Continue anyway?',
+        confirmText: 'Continue',
+        onConfirm: performSubmit
       });
-      if (error instanceof Error) {
-        setUploadError(error.message);
-      } else {
-        setUploadError('An unknown error occurred');
-      }
+      return;
     }
-  }, [product, imageSlots, imageLinks, imageBase64s, selectedCatalogIds, selectedCategoryId, selectedTagIds, selectedProducerIds, selectedNoteIds, parameterValues, studioProjectId, createMutation, updateMutation, onSuccess, queryClient, refreshImages, onEditSave, toast]);
+
+    await performSubmit();
+  }, [product, imageSlots, imageLinks, imageBase64s, selectedCatalogIds, selectedCategoryId, selectedTagIds, selectedProducerIds, selectedNoteIds, parameterValues, studioProjectId, createMutation, updateMutation, onSuccess, queryClient, refreshImages, onEditSave, toast, confirm]);
 
   const submitHandler = useCallback(
     (e?: BaseSyntheticEvent): Promise<void> => methods.handleSubmit(onSubmit)(e),
@@ -283,5 +291,6 @@ export function useProductFormSubmit({
     uploading: createMutation.isPending || updateMutation.isPending,
     uploadError,
     uploadSuccess,
+    ConfirmationModal,
   };
 }

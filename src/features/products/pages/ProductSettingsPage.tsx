@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { InternationalizationSettings, InternationalizationProvider, useInternationalizationContext } from '@/features/internationalization';
 import { logClientError } from '@/features/observability';
 import { ProductSyncSettings } from '@/features/product-sync/components/ProductSyncSettings';
+import { ParametersSettings } from '@/features/products/components/constructor/ParametersSettings';
 import { CatalogsSettings } from '@/features/products/components/settings/catalogs/CatalogsSettings';
 import { CategoriesSettings } from '@/features/products/components/settings/CategoriesSettings';
 import { CatalogModal } from '@/features/products/components/settings/modals/CatalogModal';
@@ -17,7 +18,7 @@ import { ProductImageRoutingSettings } from '@/features/products/components/sett
 import { ProductSettingsProvider } from '@/features/products/components/settings/ProductSettingsContext';
 import { TagsSettings } from '@/features/products/components/settings/TagsSettings';
 import { ValidatorSettings } from '@/features/products/components/settings/ValidatorSettings';
-import { useCatalogs, useCategories, usePriceGroups, useTags, useDeleteCatalogMutation, useDeletePriceGroupMutation, useUpdatePriceGroupMutation } from '@/features/products/hooks/useProductSettingsQueries';
+import { useCatalogs, useCategories, useParameters, usePriceGroups, useTags, useDeleteCatalogMutation, useDeletePriceGroupMutation, useUpdatePriceGroupMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import { Catalog, PriceGroup } from '@/features/products/types';
 import { Button, SectionHeader, useToast } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
@@ -74,7 +75,7 @@ export function ProductSettingsPage(): React.JSX.Element {
     onConfirm: () => void | Promise<void>;
     confirmText?: string;
     isDangerous?: boolean;
-  } | null>(null);
+      } | null>(null);
 
   const { toast } = useToast();
 
@@ -84,9 +85,11 @@ export function ProductSettingsPage(): React.JSX.Element {
 
   const [selectedCategoryCatalogId, setSelectedCategoryCatalogId] = useState<string | null>(null);
   const [selectedTagCatalogId, setSelectedTagCatalogId] = useState<string | null>(null);
+  const [selectedParameterCatalogId, setSelectedParameterCatalogId] = useState<string | null>(null);
 
   const { data: productCategories = [], isLoading: loadingCategories, refetch: refetchCategories } = useCategories(selectedCategoryCatalogId);
   const { data: productTags = [], isLoading: loadingTags, refetch: refetchTags } = useTags(selectedTagCatalogId);
+  const { data: productParameters = [], isLoading: loadingParameters, refetch: refetchParameters } = useParameters(selectedParameterCatalogId);
 
   // Mutations
   const updatePriceGroupMutation = useUpdatePriceGroupMutation();
@@ -107,12 +110,16 @@ export function ProductSettingsPage(): React.JSX.Element {
           const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
           if (def) setSelectedTagCatalogId(def.id);
         }
+        if (!selectedParameterCatalogId) {
+          const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
+          if (def) setSelectedParameterCatalogId(def.id);
+        }
       }, 0);
     }
     return (): void => {
       if (timer) clearTimeout(timer);
     };
-  }, [catalogs, selectedCategoryCatalogId, selectedTagCatalogId]);
+  }, [catalogs, selectedCategoryCatalogId, selectedTagCatalogId, selectedParameterCatalogId]);
 
   const handleSetDefaultGroup = async (groupId: string): Promise<void> => {
     const group = priceGroups.find((g: PriceGroup) => g.id === groupId);
@@ -214,6 +221,15 @@ export function ProductSettingsPage(): React.JSX.Element {
     onRefreshTags: (): void => {
       void refetchTags();
     },
+    loadingParameters,
+    parameters: productParameters,
+    selectedParameterCatalogId,
+    onParameterCatalogChange: (id: string | null): void => {
+      setSelectedParameterCatalogId(id);
+    },
+    onRefreshParameters: (): void => {
+      void refetchParameters();
+    },
   };
 
   return (
@@ -263,6 +279,16 @@ export function ProductSettingsPage(): React.JSX.Element {
             <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
               {activeSection === 'Categories' && <CategoriesSettings />}
               {activeSection === 'Tags' && <TagsSettings />}
+              {activeSection === 'Custom Fields' && (
+                <ParametersSettings
+                  loading={loadingParameters}
+                  parameters={productParameters}
+                  catalogs={catalogs}
+                  selectedCatalogId={selectedParameterCatalogId}
+                  onCatalogChange={(catalogId: string): void => setSelectedParameterCatalogId(catalogId)}
+                  onRefresh={(): void => { void refetchParameters(); }}
+                />
+              )}
               {activeSection === 'Price Groups' && (
                 <PriceGroupsSettings />
               )}

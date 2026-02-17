@@ -9,6 +9,7 @@ import {
   MasterFolderTree,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { TreeCaret, TreeContextMenu, TreeRow, useToast } from '@/shared/ui';
 import {
   canNestTreeNodeV2,
@@ -76,17 +77,19 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     handleRenameFolder: onRenameFolder,
     handleDeleteFolder: onDeleteFolderPath,
   } = useSlotsActions();
+  const moveSlotMutateAsync = moveSlotMutation.mutateAsync;
   const moveSlot = useCallback(
     async (input: { slot: ImageStudioSlotRecord; targetFolder: string }): Promise<void> => {
-      await moveSlotMutation.mutateAsync(input);
+      await moveSlotMutateAsync(input);
     },
-    [moveSlotMutation]
+    [moveSlotMutateAsync]
   );
+  const updateSlotMutateAsync = updateSlotMutation.mutateAsync;
   const updateSlot = useCallback(
     async (input: { id: string; data: { name: string } }): Promise<void> => {
-      await updateSlotMutation.mutateAsync(input);
+      await updateSlotMutateAsync(input);
     },
-    [updateSlotMutation]
+    [updateSlotMutateAsync]
   );
   const masterNodes = useMemo(
     () => buildMasterNodesFromStudioTree(slots, folders),
@@ -126,6 +129,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     adapter: slotTreeAdapter,
   });
   const { toast } = useToast();
+  const { confirm, ConfirmationModal } = useConfirm();
   const { selectNode, expandNode } = controller;
   const stickySelectionMode = profile.interactions.selectionBehavior === 'toggle_only';
   const clearSelectionOnAwayClick = profile.interactions.selectionBehavior === 'click_away';
@@ -203,25 +207,37 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
 
   const onDeleteSlot = useCallback((slot: ImageStudioSlotRecord): void => {
     const cardLabel = slot.name?.trim() || slot.id;
-    if (typeof window !== 'undefined') {
-      const confirmed = window.confirm(`Delete card "${cardLabel}"?`);
-      if (!confirmed) return;
-    }
-    void deleteSlotMutation.mutateAsync(slot.id).catch((error: unknown) => {
-      toast(error instanceof Error ? error.message : 'Failed to delete card.', { variant: 'error' });
+    confirm({
+      title: 'Delete Card?',
+      message: `Are you sure you want to delete card "${cardLabel}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await deleteSlotMutation.mutateAsync(slot.id);
+        } catch (error: unknown) {
+          toast(error instanceof Error ? error.message : 'Failed to delete card.', { variant: 'error' });
+        }
+      }
     });
-  }, [deleteSlotMutation, toast]);
+  }, [confirm, deleteSlotMutation, toast]);
 
   const onDeleteFolder = useCallback((folderPath: string): void => {
     if (!folderPath) return;
-    if (typeof window !== 'undefined') {
-      const confirmed = window.confirm(`Delete folder "${folderPath}" and all cards inside it?`);
-      if (!confirmed) return;
-    }
-    void onDeleteFolderPath(folderPath).catch((error: unknown) => {
-      toast(error instanceof Error ? error.message : 'Failed to delete folder.', { variant: 'error' });
+    confirm({
+      title: 'Delete Folder?',
+      message: `Are you sure you want to delete folder "${folderPath}" and all cards inside it? This action cannot be undone.`,
+      confirmText: 'Delete Folder',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await onDeleteFolderPath(folderPath);
+        } catch (error: unknown) {
+          toast(error instanceof Error ? error.message : 'Failed to delete folder.', { variant: 'error' });
+        }
+      }
     });
-  }, [onDeleteFolderPath, toast]);
+  }, [confirm, onDeleteFolderPath, toast]);
 
   const clearSelection = useCallback((): void => {
     onSelectFolder('');
@@ -917,6 +933,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
       >
         m
       </button>
+      <ConfirmationModal />
     </div>
   );
 }

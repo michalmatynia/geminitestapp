@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
+import { usePrompt } from '@/shared/hooks/ui/usePrompt';
 import { Button, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -219,6 +220,7 @@ export function RichTextEditor({
   editorContentClassName,
   surfaceStyle,
 }: RichTextEditorProps): React.JSX.Element {
+  const { prompt, PromptInputModal } = usePrompt();
   const lastValueRef = useRef(value);
   const headingLevelsSignature = headingLevels.join(',');
   const normalizedFontFamilyOptions = useMemo<RichTextEditorFontOption[]>(
@@ -327,17 +329,29 @@ export function RichTextEditor({
 
   const addLink = useCallback((): void => {
     if (!editor) return;
-    const href = window.prompt('Enter URL');
-    if (!href) return;
-    editor.chain().focus().setLink({ href }).run();
-  }, [editor]);
+    prompt({
+      title: 'Insert Link',
+      label: 'URL',
+      placeholder: 'https://...',
+      required: true,
+      onConfirm: (href: string) => {
+        editor.chain().focus().setLink({ href }).run();
+      }
+    });
+  }, [editor, prompt]);
 
   const addImage = useCallback((): void => {
     if (!editor || !allowImage) return;
-    const src = window.prompt('Enter image URL');
-    if (!src) return;
-    editor.chain().focus().setImage({ src }).run();
-  }, [allowImage, editor]);
+    prompt({
+      title: 'Insert Image',
+      label: 'Image URL',
+      placeholder: 'https://...',
+      required: true,
+      onConfirm: (src: string) => {
+        editor.chain().focus().setImage({ src }).run();
+      }
+    });
+  }, [allowImage, editor, prompt]);
 
   const addTable = useCallback((): void => {
     if (!editor || !allowTable) return;
@@ -644,6 +658,7 @@ export function RichTextEditor({
           </div>
         ) : null}
       </div>
+      <PromptInputModal />
     </div>
   );
 }

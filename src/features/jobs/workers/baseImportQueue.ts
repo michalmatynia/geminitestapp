@@ -63,7 +63,8 @@ export const enqueueBaseImportRunJob = async (
 ): Promise<string> => {
   const dedupeBucket = Math.floor(Date.now() / 30_000);
   const statusesKey = (data.statuses ?? ['pending']).join('-');
-  const jobId = `${data.reason}:${data.runId}:${statusesKey}:${dedupeBucket}`;
+  // BullMQ rejects custom job IDs containing ":".
+  const jobId = [data.reason, data.runId, statusesKey, String(dedupeBucket)].join('__');
   const queuedJobId = await queue.enqueue(data, { jobId });
 
   await ErrorSystem.logInfo('Base import job queued', {

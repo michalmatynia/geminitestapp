@@ -299,6 +299,8 @@ model ProductParameter {
   name_en   String
   name_pl   String?
   name_de   String?
+  selectorType String @default("text")
+  optionLabels String[] @default([])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   catalog   Catalog  @relation(fields: [catalogId], references: [id], onDelete: Cascade)

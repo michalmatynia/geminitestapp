@@ -122,11 +122,25 @@ export type CreateProducerDto = z.infer<typeof createProducerSchema>;
 /**
  * Product Parameter Contract
  */
+export const productParameterSelectorTypeSchema = z.enum([
+  'text',
+  'textarea',
+  'radio',
+  'select',
+  'dropdown',
+]);
+
+export type ProductParameterSelectorTypeDto = z.infer<
+  typeof productParameterSelectorTypeSchema
+>;
+
 export const productParameterSchema = namedDtoSchema.extend({
   catalogId: z.string(),
   name_en: z.string(),
   name_pl: z.string().nullable(),
   name_de: z.string().nullable(),
+  selectorType: productParameterSelectorTypeSchema,
+  optionLabels: z.array(z.string()),
 });
 
 export type ProductParameterDto = z.infer<typeof productParameterSchema>;

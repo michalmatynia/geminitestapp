@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+
 import { PromptModal } from '@/shared/ui/templates/modals/PromptModal';
 
 export interface PromptConfig {

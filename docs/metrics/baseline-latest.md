@@ -1,14 +1,14 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-16T23:53:41.748Z
+Generated at: 2026-02-17T00:27:46.104Z
 
 ## Snapshot
 
-- Source files: 2398
-- Source lines: 407635
+- Source files: 2468
+- Source lines: 412044
 - use client files: 897
-- Files >= 1000 LOC: 46
-- Files >= 1500 LOC: 20
+- Files >= 1000 LOC: 47
+- Files >= 1500 LOC: 21
 - Largest file: `src/features/database/services/database-sync.ts` (3352 LOC)
 - API routes: 294
 - API delegated server routes: 21
@@ -22,21 +22,21 @@ Generated at: 2026-02-16T23:53:41.748Z
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/integrations/import-templates/[id]/route.ts` | 98 |
-| `src/app/api/settings/database/sync/route.ts` | 97 |
-| `src/app/api/image-studio/mask/ai/route.ts` | 96 |
-| `src/app/api/image-studio/slots/[slotId]/screenshot/route.ts` | 96 |
-| `src/app/api/auth/mfa/disable/route.ts` | 94 |
-| `src/app/api/cms/slugs/[id]/domains/route.ts` | 94 |
-| `src/app/api/marketplace/categories/fetch/route.ts` | 93 |
-| `src/app/api/cms/pages/route.ts` | 91 |
-| `src/app/api/products/[id]/studio/route.ts` | 91 |
-| `src/app/api/integrations/imports/base/runs/route.ts` | 90 |
-| `src/app/api/ai-paths/runtime-analytics/summary/route.ts` | 89 |
-| `src/app/api/currencies/[id]/route.ts` | 89 |
-| `src/app/api/ai-paths/trigger-buttons/[id]/route.ts` | 88 |
-| `src/app/api/integrations/export-templates/[id]/route.ts` | 88 |
-| `src/app/api/databases/backups/route.ts` | 86 |
+| `src/app/api/integrations/imports/base/runs/[runId]/route.ts` | 60 |
+| `src/app/api/marketplace/producer-mappings/bulk/route.ts` | 60 |
+| `src/app/api/marketplace/tag-mappings/bulk/route.ts` | 60 |
+| `src/app/api/ai-paths/runs/[runId]/route.ts` | 59 |
+| `src/app/api/databases/upload/route.ts` | 59 |
+| `src/app/api/integrations/[id]/connections/[connectionId]/base/inventories/route.ts` | 59 |
+| `src/app/api/products/ai-jobs/[jobId]/route.ts` | 59 |
+| `src/app/api/prompt-runtime/health/route.ts` | 59 |
+| `src/app/api/databases/engine/backup-scheduler/tick/route.ts` | 58 |
+| `src/app/api/marketplace/mappings/bulk/route.ts` | 58 |
+| `src/app/api/products/images/base64/route.ts` | 58 |
+| `src/app/api/integrations/exports/base/image-retry-presets/route.ts` | 57 |
+| `src/app/api/integrations/imports/base/runs/[runId]/resume/route.ts` | 57 |
+| `src/app/api/assets3d/[id]/route.ts` | 56 |
+| `src/app/api/products/[id]/studio/accept/route.ts` | 56 |
 
 ## Top Cross-Feature Dependencies
 
@@ -52,10 +52,10 @@ Generated at: 2026-02-16T23:53:41.748Z
 | `products -> ai` | 23 |
 | `cms -> gsap` | 20 |
 | `integrations -> observability` | 19 |
+| `ai -> products` | 18 |
 | `integrations -> data-import-export` | 16 |
-| `ai -> prompt-engine` | 14 |
+| `ai -> prompt-engine` | 15 |
 | `cms -> observability` | 14 |
-| `ai -> products` | 13 |
 | `auth -> observability` | 12 |
 
 ## Top File Hotspots (by LOC)
@@ -64,12 +64,13 @@ Generated at: 2026-02-16T23:53:41.748Z
 | --- | ---: |
 | `src/features/database/services/database-sync.ts` | 3352 |
 | `src/features/prompt-exploder/parser.ts` | 2811 |
+| `src/features/ai/image-studio/components/StudioModals.tsx` | 2685 |
 | `src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts` | 2481 |
+| `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 2260 |
 | `src/features/ai/agent-runtime/planning/llm.ts` | 2225 |
-| `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 2203 |
+| `src/features/integrations/services/exports/base-exporter.ts` | 2148 |
 | `src/features/case-resolver/settings.ts` | 2145 |
 | `src/features/ai/image-studio/components/GenerationToolbar.tsx` | 2131 |
-| `src/features/integrations/services/exports/base-exporter.ts` | 2094 |
 | `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 2045 |
 | `src/features/case-resolver/components/CaseResolverRelationsWorkspace.tsx` | 2031 |
 | `src/shared/ui/vector-canvas.tsx` | 1986 |
@@ -78,7 +79,6 @@ Generated at: 2026-02-16T23:53:41.748Z
 | `src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx` | 1806 |
 | `src/features/ai/ai-paths/components/job-queue-panel.tsx` | 1787 |
 | `src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx` | 1763 |
+| `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 1726 |
 | `src/features/cms/components/page-builder/registry/block-definitions.ts` | 1692 |
-| `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 1663 |
-| `src/features/ai/image-studio/components/CenterPreview.tsx` | 1614 |
-| `src/features/products/components/settings/validator-settings/useValidatorSettingsController.ts` | 1555 |
+| `src/features/ai/image-studio/components/CenterPreview.tsx` | 1627 |

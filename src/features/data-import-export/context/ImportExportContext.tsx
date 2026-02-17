@@ -233,8 +233,10 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const hasInitializedCatalog = useRef(false);
   const hasInitializedPrefs = useRef(false);
   const hasInitializedInventories = useRef(false);
-  const hasHydratedImportActiveTemplatePref = useRef(false);
-  const hasHydratedExportActiveTemplatePref = useRef(false);
+  const lastHydratedImportActiveTemplateScope = useRef('');
+  const lastHydratedExportActiveTemplateScope = useRef('');
+  const skipNextImportActiveTemplatePersist = useRef(false);
+  const skipNextExportActiveTemplatePersist = useRef(false);
   const lastHydratedImportSchemaKey = useRef('');
 
   // Queries
@@ -249,6 +251,32 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   
   const { data: importTemplates = [], isLoading: loadingImportTemplates } = useTemplates('import');
   const { data: exportTemplates = [], isLoading: loadingExportTemplates } = useTemplates('export');
+  const normalizedSelectedBaseConnectionId = selectedBaseConnectionId.trim();
+  const normalizedImportInventoryId = inventoryId.trim();
+  const normalizedExportInventoryId = exportInventoryId.trim();
+  const importTemplateScopeReady =
+    normalizedSelectedBaseConnectionId.length > 0 &&
+    normalizedImportInventoryId.length > 0;
+  const exportTemplateScopeReady =
+    normalizedSelectedBaseConnectionId.length > 0 &&
+    normalizedExportInventoryId.length > 0;
+  const importTemplateScopeKey = importTemplateScopeReady
+    ? `${normalizedSelectedBaseConnectionId}:${normalizedImportInventoryId}`
+    : '';
+  const exportTemplateScopeKey = exportTemplateScopeReady
+    ? `${normalizedSelectedBaseConnectionId}:${normalizedExportInventoryId}`
+    : '';
+  const buildScopedTemplatePreferenceEndpoint = (
+    endpoint: string,
+    connectionId: string,
+    inventoryId: string
+  ): string => {
+    const params = new URLSearchParams({
+      connectionId,
+      inventoryId,
+    });
+    return `${endpoint}?${params.toString()}`;
+  };
 
   // Sync connections
   useEffect(() => {
@@ -303,12 +331,26 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     '/api/integrations/imports/base/last-template'
   );
   const { data: activeImportTemplatePref, isFetched: hasFetchedActiveImportTemplatePref } = useImportPreference<{ templateId?: string | null }>(
-    'active-template',
-    '/api/integrations/imports/base/active-template'
+    `active-template:${importTemplateScopeKey || 'none'}`,
+    importTemplateScopeReady
+      ? buildScopedTemplatePreferenceEndpoint(
+        '/api/integrations/imports/base/active-template',
+        normalizedSelectedBaseConnectionId,
+        normalizedImportInventoryId
+      )
+      : '/api/integrations/imports/base/active-template',
+    { enabled: importTemplateScopeReady }
   );
   const { data: activeExportTemplatePref, isFetched: hasFetchedActiveExportTemplatePref } = useImportPreference<{ templateId?: string | null }>(
-    'export-active-template',
-    '/api/integrations/exports/base/active-template'
+    `export-active-template:${exportTemplateScopeKey || 'none'}`,
+    exportTemplateScopeReady
+      ? buildScopedTemplatePreferenceEndpoint(
+        '/api/integrations/exports/base/active-template',
+        normalizedSelectedBaseConnectionId,
+        normalizedExportInventoryId
+      )
+      : '/api/integrations/exports/base/active-template',
+    { enabled: exportTemplateScopeReady }
   );
   const { data: defaultExportInventoryPref } = useImportPreference<{ inventoryId?: string | null }>(
     'default-inventory',
@@ -409,38 +451,60 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   }, [lastImportTemplatePref, defaultExportInventoryPref, defaultConnectionPref, exportStockFallbackPref, imageRetryPresetsPref, sampleProductPref, baseConnections]);
 
   useEffect(() => {
-    if (hasHydratedImportActiveTemplatePref.current) return;
+    if (!importTemplateScopeReady) return;
     if (!hasFetchedActiveImportTemplatePref || importTemplates.length === 0) return;
-    if (activeImportTemplatePref?.templateId && !importActiveTemplateId) {
-      const preferred = importTemplates.find((t: Template) => t.id === activeImportTemplatePref.templateId);
-      if (preferred) {
-        requestAnimationFrame(() => applyTemplate(preferred, 'import'));
-      }
+    if (lastHydratedImportActiveTemplateScope.current === importTemplateScopeKey) return;
+    const preferredTemplateId = activeImportTemplatePref?.templateId?.trim() || '';
+    const preferred = preferredTemplateId
+      ? importTemplates.find((t: Template) => t.id === preferredTemplateId) ?? null
+      : null;
+    skipNextImportActiveTemplatePersist.current = true;
+    if (preferred) {
+      applyTemplate(preferred, 'import');
+    } else {
+      setImportActiveTemplateId('');
+      setImportTemplateName('');
+      setImportTemplateDescription('');
+      setImportTemplateMappings([{ sourceKey: '', targetField: '' }]);
+      setImportTemplateParameterImport(
+        defaultBaseImportParameterImportSettings
+      );
     }
-    hasHydratedImportActiveTemplatePref.current = true;
+    lastHydratedImportActiveTemplateScope.current = importTemplateScopeKey;
   }, [
+    importTemplateScopeReady,
+    importTemplateScopeKey,
     activeImportTemplatePref,
     hasFetchedActiveImportTemplatePref,
     importTemplates,
-    importActiveTemplateId,
     applyTemplate,
   ]);
 
   useEffect(() => {
-    if (hasHydratedExportActiveTemplatePref.current) return;
+    if (!exportTemplateScopeReady) return;
     if (!hasFetchedActiveExportTemplatePref || exportTemplates.length === 0) return;
-    if (activeExportTemplatePref?.templateId && !exportActiveTemplateId) {
-      const preferred = exportTemplates.find((t: Template) => t.id === activeExportTemplatePref.templateId);
-      if (preferred) {
-        requestAnimationFrame(() => applyTemplate(preferred, 'export'));
-      }
+    if (lastHydratedExportActiveTemplateScope.current === exportTemplateScopeKey) return;
+    const preferredTemplateId = activeExportTemplatePref?.templateId?.trim() || '';
+    const preferred = preferredTemplateId
+      ? exportTemplates.find((t: Template) => t.id === preferredTemplateId) ?? null
+      : null;
+    skipNextExportActiveTemplatePersist.current = true;
+    if (preferred) {
+      applyTemplate(preferred, 'export');
+    } else {
+      setExportActiveTemplateId('');
+      setExportTemplateName('');
+      setExportTemplateDescription('');
+      setExportTemplateMappings([{ sourceKey: '', targetField: '' }]);
+      setExportImagesAsBase64(false);
     }
-    hasHydratedExportActiveTemplatePref.current = true;
+    lastHydratedExportActiveTemplateScope.current = exportTemplateScopeKey;
   }, [
+    exportTemplateScopeReady,
+    exportTemplateScopeKey,
     activeExportTemplatePref,
     hasFetchedActiveExportTemplatePref,
     exportTemplates,
-    exportActiveTemplateId,
     applyTemplate,
   ]);
 
@@ -472,28 +536,70 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   }, [importTemplateId, lastImportTemplatePref?.templateId, savePreferenceMutation]);
 
   useEffect(() => {
+    if (!importTemplateScopeReady) return;
+    if (!hasFetchedActiveImportTemplatePref) return;
+    if (lastHydratedImportActiveTemplateScope.current !== importTemplateScopeKey) return;
+    if (skipNextImportActiveTemplatePersist.current) {
+      skipNextImportActiveTemplatePersist.current = false;
+      return;
+    }
     const normalized = importActiveTemplateId.trim() || null;
     const persisted = activeImportTemplatePref?.templateId?.trim() || null;
     if (persisted === normalized) return;
-    if (lastSavedImportActiveTemplateId.current === normalized) return;
-    lastSavedImportActiveTemplateId.current = normalized;
+    const saveSignature = `${importTemplateScopeKey}:${normalized ?? ''}`;
+    if (lastSavedImportActiveTemplateId.current === saveSignature) return;
+    lastSavedImportActiveTemplateId.current = saveSignature;
     savePreferenceMutation.mutate({
       endpoint: '/api/integrations/imports/base/active-template',
-      data: { templateId: normalized },
+      data: {
+        templateId: normalized,
+        connectionId: normalizedSelectedBaseConnectionId,
+        inventoryId: normalizedImportInventoryId,
+      },
     });
-  }, [importActiveTemplateId, activeImportTemplatePref?.templateId, savePreferenceMutation]);
+  }, [
+    importTemplateScopeReady,
+    importTemplateScopeKey,
+    hasFetchedActiveImportTemplatePref,
+    importActiveTemplateId,
+    activeImportTemplatePref?.templateId,
+    normalizedSelectedBaseConnectionId,
+    normalizedImportInventoryId,
+    savePreferenceMutation,
+  ]);
 
   useEffect(() => {
+    if (!exportTemplateScopeReady) return;
+    if (!hasFetchedActiveExportTemplatePref) return;
+    if (lastHydratedExportActiveTemplateScope.current !== exportTemplateScopeKey) return;
+    if (skipNextExportActiveTemplatePersist.current) {
+      skipNextExportActiveTemplatePersist.current = false;
+      return;
+    }
     const normalized = exportActiveTemplateId.trim() || null;
     const persisted = activeExportTemplatePref?.templateId?.trim() || null;
     if (persisted === normalized) return;
-    if (lastSavedExportActiveTemplateId.current === normalized) return;
-    lastSavedExportActiveTemplateId.current = normalized;
+    const saveSignature = `${exportTemplateScopeKey}:${normalized ?? ''}`;
+    if (lastSavedExportActiveTemplateId.current === saveSignature) return;
+    lastSavedExportActiveTemplateId.current = saveSignature;
     savePreferenceMutation.mutate({
       endpoint: '/api/integrations/exports/base/active-template',
-      data: { templateId: normalized },
+      data: {
+        templateId: normalized,
+        connectionId: normalizedSelectedBaseConnectionId,
+        inventoryId: normalizedExportInventoryId,
+      },
     });
-  }, [exportActiveTemplateId, activeExportTemplatePref?.templateId, savePreferenceMutation]);
+  }, [
+    exportTemplateScopeReady,
+    exportTemplateScopeKey,
+    hasFetchedActiveExportTemplatePref,
+    exportActiveTemplateId,
+    activeExportTemplatePref?.templateId,
+    normalizedSelectedBaseConnectionId,
+    normalizedExportInventoryId,
+    savePreferenceMutation,
+  ]);
 
   // Data loading hooks
   const inventoriesQuery = useInventories(

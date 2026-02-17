@@ -520,6 +520,8 @@ export const importSingleItem = async (input: {
     const parameterImportResult = await applyBaseParameterImport({
       record: input.raw,
       catalogId: input.targetCatalogId,
+      connectionId: input.connectionId,
+      inventoryId: input.inventoryId,
       parameterRepository: input.parameterRepository,
       existingValues: Array.isArray(decision.target.parameters)
         ? decision.target.parameters
@@ -538,6 +540,11 @@ export const importSingleItem = async (input: {
     if (parameterImportResult.applied) {
       mapped.parameters = parameterImportResult.parameters;
     }
+    const resolvedParameterValues = parameterImportResult.applied
+      ? parameterImportResult.parameters
+      : Array.isArray(mapped.parameters)
+        ? mapped.parameters
+        : undefined;
 
     const updateData: ProductUpdateInput = {
       baseProductId: mappedBaseProductId ?? decision.target.baseProductId ?? null,
@@ -556,8 +563,8 @@ export const importSingleItem = async (input: {
       sizeWidth: mapped.sizeWidth,
       length: mapped.length,
       imageLinks: imageUrls,
-      ...(parameterImportResult.applied
-        ? { parameters: parameterImportResult.parameters }
+      ...(resolvedParameterValues
+        ? { parameters: resolvedParameterValues }
         : {}),
     };
 
@@ -698,6 +705,8 @@ export const importSingleItem = async (input: {
   const parameterImportResult = await applyBaseParameterImport({
     record: input.raw,
     catalogId: input.targetCatalogId,
+    connectionId: input.connectionId,
+    inventoryId: input.inventoryId,
     parameterRepository: input.parameterRepository,
     existingValues: [],
     catalogLanguageCodes: input.catalogLanguageCodes ?? [],

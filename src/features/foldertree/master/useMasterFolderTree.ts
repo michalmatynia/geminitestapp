@@ -306,6 +306,12 @@ export function useMasterFolderTree(
       incomingNodes: MasterTreeNode[],
       reason: 'refresh' | 'external_sync' = 'external_sync'
     ): Promise<MasterFolderTreeActionResult> => {
+      // Skip external sync while an optimistic operation is in progress
+      // to prevent stale external state from overwriting the optimistic nodes.
+      if (reason === 'external_sync' && stateRef.current.isApplying) {
+        return { ok: true };
+      }
+
       const normalized = normalizeMasterTreeNodes(incomingNodes);
       const previousNodes = stateRef.current.nodes;
       syncState((prev: InternalMasterFolderTreeState) => ({

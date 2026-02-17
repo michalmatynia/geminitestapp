@@ -7,6 +7,7 @@ import { logClientError } from '@/features/observability';
 import type { ExpandedImageFile } from '@/features/products';
 import { useAssets3D } from '@/features/viewer3d/hooks/useAsset3dQueries';
 import type { Asset3DRecord, Asset3DListFilters } from '@/features/viewer3d/types';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 import { useToast } from '@/shared/ui';
 
@@ -61,6 +62,9 @@ interface FileManagerContextState {
   handleDeleteSelected: () => Promise<void>;
   handleApplyTags: () => Promise<void>;
   handleDelete: (fileId: string) => Promise<void>;
+  
+  // Confirmation
+  ConfirmationModal: React.ComponentType;
 }
 
 const FileManagerContext = createContext<FileManagerContextState | undefined>(undefined);
@@ -104,6 +108,7 @@ export function FileManagerProvider({
   const [selectedFiles, setSelectedFiles] = useState<ImageFileSelection[]>([]);
 
   const { toast } = useToast();
+  const { confirm, ConfirmationModal } = useConfirm();
   const deleteFileMutation = useDeleteFile();
   const updateTagsMutation = useUpdateFileTags();
 
@@ -231,18 +236,25 @@ export function FileManagerProvider({
 
   const handleDeleteSelected = useCallback(async (): Promise<void> => {
     if (selectedFiles.length === 0) return;
-    if (!confirm(`Delete ${selectedFiles.length} selected file(s)?`)) return;
-    try {
-      for (const file of selectedFiles) {
-        await deleteFileMutation.mutateAsync(file.id);
+    confirm({
+      title: 'Delete Selected Files?',
+      message: `Are you sure you want to delete ${selectedFiles.length} selected file(s)? This action cannot be undone.`,
+      confirmText: 'Delete',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          for (const file of selectedFiles) {
+            await deleteFileMutation.mutateAsync(file.id);
+          }
+          setSelectedFiles([]);
+          toast('Selected files deleted.', { variant: 'success' });
+        } catch (error) {
+          logClientError(error, { context: { source: 'FileManager', action: 'deleteSelected', count: selectedFiles.length } });
+          toast('Failed to delete selected files.', { variant: 'error' });
+        }
       }
-      setSelectedFiles([]);
-      toast('Selected files deleted.', { variant: 'success' });
-    } catch (error) {
-      logClientError(error, { context: { source: 'FileManager', action: 'deleteSelected', count: selectedFiles.length } });
-      toast('Failed to delete selected files.', { variant: 'error' });
-    }
-  }, [selectedFiles, deleteFileMutation, toast]);
+    });
+  }, [selectedFiles, deleteFileMutation, toast, confirm]);
 
   const handleApplyTags = useCallback(async (): Promise<void> => {
     const tags = parseTagInput(bulkTagInput);
@@ -273,16 +285,22 @@ export function FileManagerProvider({
   }, [bulkTagInput, selectedFiles, bulkTagMode, fileById, updateTagsMutation, toast]);
 
   const handleDelete = useCallback(async (fileId: string): Promise<void> => {
-    if (confirm('Are you sure you want to delete this file?')) {
-      try {
-        await deleteFileMutation.mutateAsync(fileId);
-        toast('File deleted successfully.', { variant: 'success' });
-      } catch (error) {
-        logClientError(error, { context: { source: 'FileManager', action: 'deleteFile', fileId } });
-        toast('Failed to delete file.', { variant: 'error' });
+    confirm({
+      title: 'Delete File?',
+      message: 'Are you sure you want to delete this file? This action cannot be undone.',
+      confirmText: 'Delete',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await deleteFileMutation.mutateAsync(fileId);
+          toast('File deleted successfully.', { variant: 'success' });
+        } catch (error) {
+          logClientError(error, { context: { source: 'FileManager', action: 'deleteFile', fileId } });
+          toast('Failed to delete file.', { variant: 'error' });
+        }
       }
-    }
-  }, [deleteFileMutation, toast]);
+    });
+  }, [deleteFileMutation, toast, confirm]);
 
   const value = useMemo(() => ({
     mode,
@@ -330,12 +348,14 @@ export function FileManagerProvider({
     handleDeleteSelected,
     handleApplyTags,
     handleDelete,
+    ConfirmationModal,
   }), [
     mode, selectionMode, autoConfirmSelection, showFolderFilter, defaultFolder, showBulkActions, showTagSearch, onSelectFile,
     filenameSearch, productNameSearch, tagSearch, bulkTagInput, bulkTagMode, localFolderFilter, previewFile, previewAsset, activeTab, selectedFiles,
     files, assets3d, folderOptions, tagOptions, filteredFiles, folderFilter,
     updateTagsMutation.isPending, deleteFileMutation.isPending,
-    handleToggleSelect, handleConfirmSelection, handleSelectAll, handleClearSelection, handleDeleteSelected, handleApplyTags, handleDelete
+    handleToggleSelect, handleConfirmSelection, handleSelectAll, handleClearSelection, handleDeleteSelected, handleApplyTags, handleDelete,
+    ConfirmationModal
   ]);
 
   return (

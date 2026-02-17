@@ -58,10 +58,11 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
     createProjectMutation,
     renameProjectMutation,
     deleteProjectMutation,
-    handleDeleteProject,
+    handleConfirmDeleteProject,
     handleRenameProject,
     projectSearch,
     setProjectSearch,
+    ConfirmationModal,
   } = useProjects();
 
   const [newProjectId, setNewProjectId] = React.useState('');
@@ -222,33 +223,9 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
         });
         return;
       }
-      await handleDeleteProject(id);
-      if (editingProjectId === id) {
-        handleCancelEdit();
-      }
-      const nextLocks = setImageStudioProjectDeletionLock(projectLocks, id, false);
-      if (
-        serializeImageStudioProjectLocks(nextLocks) ===
-        serializeImageStudioProjectLocks(projectLocks)
-      ) {
-        return;
-      }
-      try {
-        await persistProjectLocks(nextLocks);
-      } catch {
-        toast('Project removed, but failed to clean up lock state.', {
-          variant: 'warning',
-        });
-      }
+      handleConfirmDeleteProject(id);
     },
-    [
-      editingProjectId,
-      handleCancelEdit,
-      handleDeleteProject,
-      persistProjectLocks,
-      projectLocks,
-      toast,
-    ]
+    [handleConfirmDeleteProject, projectLocks, toast]
   );
 
   const handleOpenProject = useCallback(
@@ -509,6 +486,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
           getRowClassName={(row) => (row.original === projectId ? 'bg-primary/5' : '')}
         />
       </ListPanel>
+      <ConfirmationModal />
     </div>
   );
 }

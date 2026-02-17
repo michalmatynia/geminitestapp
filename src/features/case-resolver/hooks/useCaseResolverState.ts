@@ -23,9 +23,9 @@ import {
   parseFilemakerDatabase,
 } from '@/features/filemaker/settings';
 import { useCountries } from '@/features/internationalization/hooks/useInternationalizationQueries';
-import {
-  consumePromptExploderApplyPromptForCaseResolver,
-} from '@/features/prompt-exploder/bridge';
+import { consumePromptExploderApplyPromptForCaseResolver, } from '@/features/prompt-exploder/bridge';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import { usePrompt } from '@/shared/hooks/ui/usePrompt';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
@@ -51,7 +51,6 @@ import {
   createId,
   createUniqueFolderPath,
   isPathWithinFolder,
-  promptForName,
 } from '../utils/caseResolverUtils';
 
 import type {
@@ -260,6 +259,9 @@ export function useCaseResolverState() {
     []
   );
 
+  const { confirm, ConfirmationModal } = useConfirm();
+  const { prompt, PromptInputModal } = usePrompt();
+
   const handleSelectFile = useCallback((fileId: string): void => {
     if (selectedFileId === fileId) {
       setSelectedFileId(null);
@@ -307,56 +309,67 @@ export function useCaseResolverState() {
   }, [updateWorkspace]);
 
   const handleCreateFile = useCallback((targetFolderPath: string | null): void => {
-    const fileName = promptForName('Case name', 'New Case');
-    if (!fileName) return;
-    const folder = normalizeFolderPath(targetFolderPath ?? '');
-    const file = createCaseResolverFile({
-      id: createId('case-file'),
-      fileType: 'document',
-      name: fileName,
-      folder,
-      tagId: defaultTagId,
-      caseIdentifierId: defaultCaseIdentifierId,
-      categoryId: defaultCategoryId,
+    prompt({
+      title: 'Create New Case',
+      label: 'Case Name',
+      defaultValue: 'New Case',
+      placeholder: 'Enter case name...',
+      required: true,
+      onConfirm: (fileName) => {
+        const folder = normalizeFolderPath(targetFolderPath ?? '');
+        const file = createCaseResolverFile({
+          id: createId('case-file'),
+          fileType: 'document',
+          name: fileName,
+          folder,
+          tagId: defaultTagId,
+          caseIdentifierId: defaultCaseIdentifierId,
+          categoryId: defaultCategoryId,
+        });
+        updateWorkspace((current) => ({
+          ...current,
+          files: [...current.files, file],
+          activeFileId: file.id,
+          folders: normalizeFolderPaths([...current.folders, folder]),
+        }), { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+        setSelectedFileId(file.id);
+        setSelectedFolderPath(null);
+        setSelectedAssetId(null);
+      }
     });
-    updateWorkspace((current) => ({
-      ...current,
-      files: [...current.files, file],
-      activeFileId: file.id,
-      folders: normalizeFolderPaths([...current.folders, folder]),
-    }), { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
-    setSelectedFileId(file.id);
-    setSelectedFolderPath(null);
-    setSelectedAssetId(null);
-  }, [defaultCaseIdentifierId, defaultCategoryId, defaultTagId, updateWorkspace]);
+  }, [defaultCaseIdentifierId, defaultCategoryId, defaultTagId, updateWorkspace, prompt]);
 
   const handleDeleteFolder = useCallback((folderPath: string): void => {
     const normalizedFolder = normalizeFolderPath(folderPath);
     if (!normalizedFolder) return;
     
-    if (typeof window !== 'undefined' && !window.confirm(`Delete folder "${normalizedFolder}" and all nested content?`)) {
-      return;
-    }
-
-    updateWorkspace((current) => {
-      const currentRemovedFileIds = new Set(
-        current.files
-          .filter((file) => isPathWithinFolder(file.folder, normalizedFolder))
-          .map((file) => file.id)
-      );
-      const nextFiles = current.files.filter((file) => !isPathWithinFolder(file.folder, normalizedFolder));
-      
-      return {
-        ...current,
-        folders: current.folders.filter((path) => !isPathWithinFolder(path, normalizedFolder)),
-        files: nextFiles,
-        assets: current.assets.filter((asset) => !isPathWithinFolder(asset.folder, normalizedFolder)),
-        activeFileId: current.activeFileId && currentRemovedFileIds.has(current.activeFileId)
-          ? (nextFiles[0]?.id ?? null)
-          : current.activeFileId,
-      };
-    }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
-  }, [updateWorkspace]);
+    confirm({
+      title: 'Delete Folder?',
+      message: `Are you sure you want to delete folder "${normalizedFolder}" and all nested content? This action cannot be undone.`,
+      confirmText: 'Delete Folder',
+      isDangerous: true,
+      onConfirm: () => {
+        updateWorkspace((current) => {
+          const currentRemovedFileIds = new Set(
+            current.files
+              .filter((file) => isPathWithinFolder(file.folder, normalizedFolder))
+              .map((file) => file.id)
+          );
+          const nextFiles = current.files.filter((file) => !isPathWithinFolder(file.folder, normalizedFolder));
+          
+          return {
+            ...current,
+            folders: current.folders.filter((path) => !isPathWithinFolder(path, normalizedFolder)),
+            files: nextFiles,
+            assets: current.assets.filter((asset) => !isPathWithinFolder(asset.folder, normalizedFolder)),
+            activeFileId: current.activeFileId && currentRemovedFileIds.has(current.activeFileId)
+              ? (nextFiles[0]?.id ?? null)
+              : current.activeFileId,
+          };
+        }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+      }
+    });
+  }, [updateWorkspace, confirm]);
 
   const handleMoveFile = useCallback(
     async (fileId: string, targetFolder: string): Promise<void> => {
@@ -778,6 +791,9 @@ export function useCaseResolverState() {
     isPromptExploderPartyProposalOpen,
     setIsPromptExploderPartyProposalOpen,
     isApplyingPromptExploderPartyProposal,
-    setIsApplyingPromptExploderPartyProposal
+    setIsApplyingPromptExploderPartyProposal,
+    confirmAction: confirm,
+    ConfirmationModal,
+    PromptInputModal,
   };
 }

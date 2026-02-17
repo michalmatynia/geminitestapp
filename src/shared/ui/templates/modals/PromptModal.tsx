@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+
 import { AppModal } from '@/shared/ui/app-modal';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
@@ -49,13 +50,13 @@ export function PromptModal({
 
   const handleConfirm = () => {
     if (required && !value.trim()) return;
-    void onConfirm(value);
+    onConfirm(value);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      void handleConfirm();
+      handleConfirm();
     }
   };
 

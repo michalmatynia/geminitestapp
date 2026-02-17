@@ -145,6 +145,8 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
           }}>
             <DatabaseSaveQueryPresetDialog />
           </DatabaseSaveQueryPresetDialogContextProvider>
+          
+          <state.ConfirmationModal />
         </div>
       </DatabaseConstructorContextProvider>
     </DatabaseQueryInputControlsContextProvider>

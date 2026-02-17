@@ -672,7 +672,6 @@ export const buildAdminNav = (handlers: {
         children: [
           { id: 'commerce/products/all', label: 'All Products', href: '/admin/products', exact: true },
           { id: 'commerce/products/drafts', label: 'Drafts', href: '/admin/drafts' },
-          { id: 'commerce/products/builder', label: 'Builder', href: '/admin/products/builder' },
           { id: 'commerce/products/producers', label: 'Producers', href: '/admin/products/producers' },
           { id: 'commerce/products/preferences', label: 'Preferences', href: '/admin/products/preferences' },
           { id: 'commerce/products/settings', label: 'Settings', href: '/admin/products/settings' },

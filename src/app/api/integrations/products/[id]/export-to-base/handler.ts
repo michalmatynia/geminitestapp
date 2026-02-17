@@ -285,7 +285,12 @@ export async function postExportToBaseHandler(
     if (!imagesOnly) {
       const fallbackTemplateId = requestedTemplateId
         ? ''
-        : toTrimmedString(await getExportActiveTemplateId());
+        : toTrimmedString(
+          await getExportActiveTemplateId({
+            connectionId: data.connectionId,
+            inventoryId: resolvedInventoryId,
+          })
+        );
       const templateIdToUse = requestedTemplateId || fallbackTemplateId;
       if (templateIdToUse) {
         const templates = await listExportTemplates();

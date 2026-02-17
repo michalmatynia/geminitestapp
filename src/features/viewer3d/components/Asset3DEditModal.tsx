@@ -14,6 +14,7 @@ import {
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useAsset3DForm } from '../hooks/useAsset3DForm';
+
 import type { Asset3DRecord } from '../types';
 
 interface Asset3DEditModalProps extends EntityModalProps<Asset3DRecord> {

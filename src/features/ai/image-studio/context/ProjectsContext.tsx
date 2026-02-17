@@ -24,6 +24,7 @@ import {
   useUpdateUserPreferencesMutation,
   useUserPreferences,
 } from '@/features/auth/hooks/useUserPreferences';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { ApiError } from '@/shared/lib/api-client';
 import {
@@ -63,7 +64,9 @@ export interface ProjectsActions {
   deleteProjectMutation: DeleteMutation<string, string>;
   handleRenameProject: (id: string, nextId: string) => Promise<string>;
   handleDeleteProject: (id: string) => Promise<void>;
+  handleConfirmDeleteProject: (id: string, onDeleted?: () => Promise<void>) => void;
   setProjectSearch: (s: string) => void;
+  ConfirmationModal: React.ComponentType;
 }
 
 // ── Contexts ─────────────────────────────────────────────────────────────────
@@ -202,8 +205,9 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
     userPreferencesQuery.isLoading,
   ]);
 
+  const { confirm, ConfirmationModal } = useConfirm();
+
   const handleDeleteProject = useCallback(async (id: string): Promise<void> => {
-    if (!window.confirm(`Delete project "${id}" and all connected cards, runs, and assets?`)) return;
     try {
       await deleteProjectMutation.mutateAsync(id);
       if (projectId === id) {
@@ -225,6 +229,19 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
       throw error;
     }
   }, [deleteProjectMutation, projectId, queryClient, toast]);
+
+  const handleConfirmDeleteProject = useCallback((id: string, onDeleted?: () => Promise<void>) => {
+    confirm({
+      title: 'Delete Project?',
+      message: `Delete project "${id}" and all connected cards, runs, and assets? This action cannot be undone.`,
+      confirmText: 'Delete Project',
+      isDangerous: true,
+      onConfirm: async () => {
+        await handleDeleteProject(id);
+        if (onDeleted) await onDeleted();
+      },
+    });
+  }, [confirm, handleDeleteProject]);
 
   const handleRenameProject = useCallback(async (id: string, nextId: string): Promise<string> => {
     const sourceId = id.trim();
@@ -270,14 +287,18 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
       deleteProjectMutation,
       handleRenameProject,
       handleDeleteProject,
+      handleConfirmDeleteProject,
       setProjectSearch,
+      ConfirmationModal,
     }),
     [
       createProjectMutation,
       deleteProjectMutation,
       handleDeleteProject,
+      handleConfirmDeleteProject,
       handleRenameProject,
       renameProjectMutation,
+      ConfirmationModal,
     ]
   );
 

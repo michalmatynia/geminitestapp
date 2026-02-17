@@ -97,7 +97,7 @@ export function InternationalizationProvider({ children }: { children: ReactNode
     onConfirm: () => void | Promise<void>;
     confirmText?: string;
     isDangerous?: boolean;
-  } | null>(null);
+      } | null>(null);
 
   const confirmAction = (config: {
     title: string;

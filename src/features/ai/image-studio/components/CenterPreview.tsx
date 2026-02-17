@@ -12,6 +12,7 @@ import {
 } from '@/features/products/constants';
 import { VectorDrawingCanvas, VectorDrawingProvider } from '@/features/vector-drawing';
 import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -77,6 +78,7 @@ export function CenterPreview(): React.JSX.Element {
   } = useSlotsActions();
   const settingsStore = useSettingsStore();
   const { toast } = useToast();
+  const { confirm, ConfirmationModal } = useConfirm();
   const queryClient = useQueryClient();
   const {
     landingSlots,
@@ -1060,106 +1062,110 @@ export function CenterPreview(): React.JSX.Element {
 
   const handleDeleteVariant = useCallback((variant: VariantThumbnailInfo): void => {
     const variantLabel = variant.output?.filename?.trim() || `Variant ${variant.index}`;
-    if (typeof window !== 'undefined') {
-      const confirmed = window.confirm(`Delete variant "${variantLabel}"?`);
-      if (!confirmed) return;
-    }
+    confirm({
+      title: 'Delete Variant?',
+      message: `Delete variant "${variantLabel}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      isDangerous: true,
+      onConfirm: async () => {
+        const dismissVariantFromUi = (): void => {
+          setDismissedVariantKeys((current) => {
+            const next = new Set(current);
+            buildVariantDismissKeys(variant).forEach((key) => {
+              next.add(key);
+            });
+            return next;
+          });
+          setVariantTooltip((current) => (current?.variant.id === variant.id ? null : current));
+          clearActiveRunError();
+        };
 
-    const dismissVariantFromUi = (): void => {
-      setDismissedVariantKeys((current) => {
-        const next = new Set(current);
-        buildVariantDismissKeys(variant).forEach((key) => {
-          next.add(key);
-        });
-        return next;
-      });
-      setVariantTooltip((current) => (current?.variant.id === variant.id ? null : current));
-      clearActiveRunError();
-    };
+        const refreshGenerationQueries = (): void => {
+          void queryClient.invalidateQueries({
+            predicate: (query) =>
+              Array.isArray(query.queryKey) &&
+              query.queryKey[0] === studioKeys.all[0] &&
+              query.queryKey[1] === 'list' &&
+              query.queryKey[2] === 'runs',
+          });
+        };
 
-    const refreshGenerationQueries = (): void => {
-      void queryClient.invalidateQueries({
-        predicate: (query) =>
-          Array.isArray(query.queryKey) &&
-          query.queryKey[0] === studioKeys.all[0] &&
-          query.queryKey[1] === 'list' &&
-          query.queryKey[2] === 'runs',
-      });
-    };
+        const deleteVariantAssetFallback = async (): Promise<void> => {
+          const output = variant.output;
+          if (!output) return;
+          if (!projectId) return;
 
-    const deleteVariantAssetFallback = async (): Promise<void> => {
-      const output = variant.output;
-      if (!output) return;
-      if (!projectId) return;
-
-      try {
-        await api.post(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/delete`, {
-          id: output.id,
-          filepath: output.filepath,
-        });
-      } catch (error: unknown) {
-        if (error instanceof ApiError && error.status === 404) {
-          return;
-        }
-        throw error;
-      }
-    };
-
-    const resolveTargetSlotId = async (): Promise<string | null> => {
-      const direct = resolveVariantSlotId(variant);
-      if (direct) return direct;
-      if (!projectId) return null;
-
-      for (let attempt = 0; attempt < 4; attempt += 1) {
-        await queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
-        const cached = queryClient.getQueryData<{ slots?: ImageStudioSlotRecord[] }>(studioKeys.slots(projectId));
-        const candidateSlots = Array.isArray(cached?.slots) ? cached.slots : slots;
-        const resolved = resolveVariantSlotId(variant, candidateSlots);
-        if (resolved) return resolved;
-        await wait(180);
-      }
-
-      return null;
-    };
-
-    void (async (): Promise<void> => {
-      const targetSlotId = await resolveTargetSlotId();
-      if (!targetSlotId) {
-        await deleteVariantAssetFallback();
-        dismissVariantFromUi();
-        refreshGenerationQueries();
-        return;
-      }
-
-      try {
-        await deleteSlotMutation.mutateAsync(targetSlotId);
-        if (workingSlot?.id === targetSlotId) {
-          setWorkingSlotId(null);
-        }
-        if (selectedSlotId === targetSlotId) {
-          setSelectedSlotId(null);
-        }
-        dismissVariantFromUi();
-        refreshGenerationQueries();
-      } catch (error: unknown) {
-        if (error instanceof ApiError && error.status === 404) {
-          await deleteVariantAssetFallback();
-          if (workingSlot?.id === targetSlotId) {
-            setWorkingSlotId(null);
+          try {
+            await api.post(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/delete`, {
+              id: output.id,
+              filepath: output.filepath,
+            });
+          } catch (error: unknown) {
+            if (error instanceof ApiError && error.status === 404) {
+              return;
+            }
+            throw error;
           }
-          if (selectedSlotId === targetSlotId) {
-            setSelectedSlotId(null);
+        };
+
+        const resolveTargetSlotId = async (): Promise<string | null> => {
+          const direct = resolveVariantSlotId(variant);
+          if (direct) return direct;
+          if (!projectId) return null;
+
+          for (let attempt = 0; attempt < 4; attempt += 1) {
+            await queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
+            const cached = queryClient.getQueryData<{ slots?: ImageStudioSlotRecord[] }>(studioKeys.slots(projectId));
+            const candidateSlots = Array.isArray(cached?.slots) ? cached.slots : slots;
+            const resolved = resolveVariantSlotId(variant, candidateSlots);
+            if (resolved) return resolved;
+            await wait(180);
           }
-          dismissVariantFromUi();
-          refreshGenerationQueries();
-          return;
+
+          return null;
+        };
+
+        try {
+          const targetSlotId = await resolveTargetSlotId();
+          if (!targetSlotId) {
+            await deleteVariantAssetFallback();
+            dismissVariantFromUi();
+            refreshGenerationQueries();
+            return;
+          }
+
+          try {
+            await deleteSlotMutation.mutateAsync(targetSlotId);
+            if (workingSlot?.id === targetSlotId) {
+              setWorkingSlotId(null);
+            }
+            if (selectedSlotId === targetSlotId) {
+              setSelectedSlotId(null);
+            }
+            dismissVariantFromUi();
+            refreshGenerationQueries();
+          } catch (error: unknown) {
+            if (error instanceof ApiError && error.status === 404) {
+              await deleteVariantAssetFallback();
+              if (workingSlot?.id === targetSlotId) {
+                setWorkingSlotId(null);
+              }
+              if (selectedSlotId === targetSlotId) {
+                setSelectedSlotId(null);
+              }
+              dismissVariantFromUi();
+              refreshGenerationQueries();
+              return;
+            }
+            throw error;
+          }
+        } catch (error: unknown) {
+          toast(error instanceof Error ? error.message : 'Failed to delete variant.', { variant: 'error' });
         }
-        throw error;
       }
-    })().catch((error: unknown) => {
-      toast(error instanceof Error ? error.message : 'Failed to delete variant.', { variant: 'error' });
     });
   }, [
+    confirm,
     buildVariantDismissKeys,
     deleteSlotMutation,
     projectId,
@@ -1486,43 +1492,7 @@ export function CenterPreview(): React.JSX.Element {
                           : '';
 
                       return (
-                        <div key={variant.id} className='relative w-28 shrink-0'>
-                          <div className='absolute bottom-1 left-1 z-10 flex gap-1'>
-                            <Button
-                              size='xs'
-                              type='button'
-                              variant='ghost'
-                              onClick={(): void => {
-                                setCompareVariantIds((prev) => [variant.id, prev[1] === variant.id ? null : prev[1]]);
-                              }}
-                              title='Set as compare thumbnail 1'
-                              className={cn('size-5 rounded bg-black/65 px-0 text-[10px] text-cyan-200 hover:bg-cyan-500/20 hover:text-cyan-100', isCompareA && 'bg-cyan-500/30 text-cyan-100')}
-                            >
-                              1
-                            </Button>
-                            <Button
-                              size='xs'
-                              type='button'
-                              variant='ghost'
-                              onClick={(): void => {
-                                setCompareVariantIds((prev) => [prev[0] === variant.id ? null : prev[0], variant.id]);
-                              }}
-                              title='Set as compare thumbnail 2'
-                              className={cn('size-5 rounded bg-black/65 px-0 text-[10px] text-amber-200 hover:bg-amber-500/20 hover:text-amber-100', isCompareB && 'bg-amber-500/30 text-amber-100')}
-                            >
-                              2
-                            </Button>
-                          </div>
-                          <Button size='xs'
-                            type='button'
-                            variant='ghost'
-                            onClick={(): void => handleOpenVariantDetails(variant)}
-                            aria-label={`View variant ${variant.index} details`}
-                            title='View variant details'
-                            className='absolute left-1 top-1 z-10 size-5 rounded bg-black/65 text-blue-200 hover:bg-blue-500/20 hover:text-blue-100'
-                          >
-                            <Info className='size-3.5' />
-                          </Button>
+                        <div key={variant.id} className='w-28 shrink-0'>
                           <button
                             type='button'
                             onClick={(): void => {
@@ -1557,19 +1527,61 @@ export function CenterPreview(): React.JSX.Element {
                               </div>
                             )}
                           </button>
-                          {canDeleteVariant ? (
-                            <Button size='xs'
-                              type='button'
-                              variant='ghost'
-                              onClick={(): void => handleDeleteVariant(variant)}
-                              disabled={deleteSlotMutation.isPending}
-                              aria-label={`Delete variant ${variant.index}`}
-                              title='Delete variant'
-                              className='absolute right-1 top-1 z-10 size-5 rounded bg-black/65 text-red-200 hover:bg-red-500/20 hover:text-red-100'
-                            >
-                              <Trash2 className='size-3.5' />
-                            </Button>
-                          ) : null}
+                          <div className='mt-1 flex items-center justify-between gap-1'>
+                            <div className='flex items-center gap-1'>
+                              <Button
+                                size='xs'
+                                type='button'
+                                variant='ghost'
+                                onClick={(): void => {
+                                  setCompareVariantIds((prev) => [variant.id, prev[1] === variant.id ? null : prev[1]]);
+                                }}
+                                title='Set as compare thumbnail 1'
+                                aria-pressed={isCompareA}
+                                className={cn('size-5 rounded bg-black/65 px-0 text-[10px] text-cyan-200 hover:bg-cyan-500/20 hover:text-cyan-100', isCompareA && 'bg-cyan-500/30 text-cyan-100')}
+                              >
+                                1
+                              </Button>
+                              <Button
+                                size='xs'
+                                type='button'
+                                variant='ghost'
+                                onClick={(): void => {
+                                  setCompareVariantIds((prev) => [prev[0] === variant.id ? null : prev[0], variant.id]);
+                                }}
+                                title='Set as compare thumbnail 2'
+                                aria-pressed={isCompareB}
+                                className={cn('size-5 rounded bg-black/65 px-0 text-[10px] text-amber-200 hover:bg-amber-500/20 hover:text-amber-100', isCompareB && 'bg-amber-500/30 text-amber-100')}
+                              >
+                                2
+                              </Button>
+                            </div>
+                            <div className='flex items-center gap-1'>
+                              <Button size='xs'
+                                type='button'
+                                variant='ghost'
+                                onClick={(): void => handleOpenVariantDetails(variant)}
+                                aria-label={`View variant ${variant.index} details`}
+                                title='View variant details'
+                                className='size-5 rounded bg-black/65 text-blue-200 hover:bg-blue-500/20 hover:text-blue-100'
+                              >
+                                <Info className='size-3.5' />
+                              </Button>
+                              {canDeleteVariant ? (
+                                <Button size='xs'
+                                  type='button'
+                                  variant='ghost'
+                                  onClick={(): void => handleDeleteVariant(variant)}
+                                  disabled={deleteSlotMutation.isPending}
+                                  aria-label={`Delete variant ${variant.index}`}
+                                  title='Delete variant'
+                                  className='size-5 rounded bg-black/65 text-red-200 hover:bg-red-500/20 hover:text-red-100'
+                                >
+                                  <Trash2 className='size-3.5' />
+                                </Button>
+                              ) : null}
+                            </div>
+                          </div>
                         </div>
                       );
                     })}
@@ -1608,6 +1620,7 @@ export function CenterPreview(): React.JSX.Element {
         onClose={handleCloseVariantDetails}
         getSlotImageSrc={getSlotImageSrc}
       />
+      <ConfirmationModal />
     </div>
   );
 }

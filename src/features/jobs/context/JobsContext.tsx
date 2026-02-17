@@ -6,8 +6,8 @@ import type { TraderaQueueHealthResponse } from '@/features/jobs/api';
 import { useCancelListingMutation, useChatbotJobMutation, useClearChatbotJobsMutation } from '@/features/jobs/hooks/useJobMutations';
 import { useIntegrationJobs, useChatbotJobs, useTraderaQueueHealth } from '@/features/jobs/hooks/useJobQueries';
 import { logClientError } from '@/features/observability';
-import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { internalError } from '@/shared/errors/app-error';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import type { ListingJob, ProductJob } from '@/shared/types/domain/listing-jobs';
 
 export type ChatbotJob = {
@@ -63,7 +63,7 @@ interface JobsContextType {
 
   // Confirmation
   confirmCancelListing: (productId: string, listingId: string) => void;
-  ConfirmationModal: React.ComponentType;
+  ConfirmationModal: React.FC;
 }
 
 const JobsContext = createContext<JobsContextType | null>(null);
@@ -136,7 +136,7 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
     listingJobs,
     listingJobsLoading: listingJobsQuery.isLoading,
     listingJobsRefreshing: listingJobsQuery.isFetching,
-    refetchListingJobs: listingJobsQuery.refetch,
+    refetchListingJobs: async () => { await listingJobsQuery.refetch(); },
     listingJobsError: listingJobsQuery.error,
     traderaQueueHealth: traderaQueueHealthQuery.data ?? null,
     traderaQueueHealthLoading: traderaQueueHealthQuery.isLoading,
@@ -144,7 +144,7 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
     chatbotJobs,
     chatbotJobsLoading: chatbotJobsQuery.isLoading,
     chatbotJobsRefreshing: chatbotJobsQuery.isFetching,
-    refetchChatbotJobs: chatbotJobsQuery.refetch,
+    refetchChatbotJobs: async () => { await chatbotJobsQuery.refetch(); },
     chatbotJobsError: chatbotJobsQuery.error,
     
     query,
@@ -165,6 +165,9 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
     
     handleClearCompletedChatbotJobs,
     isClearingChatbotJobs: clearChatbotMutation.isPending,
+
+    confirmCancelListing,
+    ConfirmationModal,
   };
 
   return (

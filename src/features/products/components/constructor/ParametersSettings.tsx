@@ -6,7 +6,7 @@ import { useState, useCallback } from 'react';
 import { useSaveParameterMutation, useDeleteParameterMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { CatalogRecord } from '@/features/products/types';
 import type { ProductParameter } from '@/features/products/types';
-import { useToast, Button, Input, SelectSimple, FormModal, EmptyState, Skeleton, FormSection, FormField } from '@/shared/ui';
+import { useToast, Button, Input, SelectSimple, FormModal, EmptyState, Skeleton, FormSection, FormField, Textarea } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 type ParametersSettingsProps = {
@@ -17,6 +17,52 @@ type ParametersSettingsProps = {
   onCatalogChange: (catalogId: string) => void;
   onRefresh: () => void;
 };
+
+type ParameterSelectorType = ProductParameter['selectorType'];
+
+type ParameterFormData = {
+  name_en: string;
+  name_pl: string;
+  name_de: string;
+  catalogId: string;
+  selectorType: ParameterSelectorType;
+  optionLabelsInput: string;
+};
+
+const SELECTOR_TYPE_OPTIONS: Array<{ value: ParameterSelectorType; label: string }> = [
+  { value: 'text', label: 'Text Field' },
+  { value: 'textarea', label: 'Textarea' },
+  { value: 'radio', label: 'Radio Buttons' },
+  { value: 'select', label: 'Select List' },
+  { value: 'dropdown', label: 'Dropdown' },
+];
+
+const SELECTOR_TYPES_REQUIRING_OPTIONS = new Set<ParameterSelectorType>([
+  'radio',
+  'select',
+  'dropdown',
+]);
+
+const normalizeOptionLabels = (input: string): string[] => {
+  const seen = new Set<string>();
+  return input
+    .split('\n')
+    .flatMap((line: string) => line.split(','))
+    .map((value: string) => value.trim())
+    .filter((value: string) => {
+      if (!value) return false;
+      const key = value.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+};
+
+const optionLabelsToMultiline = (labels: string[] | null | undefined): string =>
+  (labels ?? []).filter(Boolean).join('\n');
+
+const getSelectorTypeLabel = (value: ParameterSelectorType): string =>
+  SELECTOR_TYPE_OPTIONS.find((option) => option.value === value)?.label ?? value;
 
 export function ParametersSettings({
   loading,
@@ -29,11 +75,13 @@ export function ParametersSettings({
   const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [editingParameter, setEditingParameter] = useState<ProductParameter | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ParameterFormData>({
     name_en: '',
     name_pl: '',
     name_de: '',
     catalogId: '',
+    selectorType: 'text',
+    optionLabelsInput: '',
   });
   const [parameterToDelete, setParameterToDelete] = useState<ProductParameter | null>(null);
 
@@ -51,6 +99,8 @@ export function ParametersSettings({
       name_pl: '',
       name_de: '',
       catalogId: selectedCatalogId,
+      selectorType: 'text',
+      optionLabelsInput: '',
     });
     setShowModal(true);
   };
@@ -62,6 +112,8 @@ export function ParametersSettings({
       name_pl: parameter.name_pl ?? '',
       name_de: parameter.name_de ?? '',
       catalogId: parameter.catalogId,
+      selectorType: parameter.selectorType ?? 'text',
+      optionLabelsInput: optionLabelsToMultiline(parameter.optionLabels),
     });
     setShowModal(true);
   };
@@ -76,12 +128,25 @@ export function ParametersSettings({
       return;
     }
 
+    const optionLabels = normalizeOptionLabels(formData.optionLabelsInput);
+    if (
+      SELECTOR_TYPES_REQUIRING_OPTIONS.has(formData.selectorType) &&
+      optionLabels.length === 0
+    ) {
+      toast('This selector type requires at least one value label.', {
+        variant: 'error',
+      });
+      return;
+    }
+
     try {
       const payload = {
         name_en: formData.name_en.trim(),
         name_pl: formData.name_pl.trim() || null,
         name_de: formData.name_de.trim() || null,
         catalogId: formData.catalogId,
+        selectorType: formData.selectorType,
+        optionLabels,
       };
 
       await saveParameterMutation.mutateAsync({
@@ -89,14 +154,14 @@ export function ParametersSettings({
         data: payload,
       });
 
-      toast(editingParameter ? 'Parameter updated.' : 'Parameter created.', {
+      toast(editingParameter ? 'Custom field updated.' : 'Custom field created.', {
         variant: 'success',
       });
       setShowModal(false);
       onRefresh();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Failed to save parameter.';
+        error instanceof Error ? error.message : 'Failed to save custom field.';
       toast(message, { variant: 'error' });
     }
   };
@@ -109,11 +174,11 @@ export function ParametersSettings({
     if (!parameterToDelete) return;
     try {
       await deleteParameterMutation.mutateAsync({ id: parameterToDelete.id, catalogId: selectedCatalogId });
-      toast('Parameter deleted.', { variant: 'success' });
+      toast('Custom field deleted.', { variant: 'success' });
       onRefresh();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Failed to delete parameter.';
+        error instanceof Error ? error.message : 'Failed to delete custom field.';
       toast(message, { variant: 'error' });
     } finally {
       setParameterToDelete(null);
@@ -123,15 +188,16 @@ export function ParametersSettings({
   const selectedCatalog = catalogs.find(
     (catalog: CatalogRecord): boolean => catalog.id === selectedCatalogId
   );
+  const selectorNeedsOptions = SELECTOR_TYPES_REQUIRING_OPTIONS.has(formData.selectorType);
 
   return (
     <div className='space-y-5'>
       <FormSection
         title='Select Catalog'
-        description='Parameters are managed per catalog.'
+        description='Custom fields are managed per catalog.'
         className='p-4'
       >
-        <div className='w-full max-w-xs mt-4'>
+        <div className='mt-4 w-full max-w-xs'>
           <SelectSimple size='sm'
             value={selectedCatalogId || ''}
             onValueChange={onCatalogChange}
@@ -151,13 +217,13 @@ export function ParametersSettings({
               onClick={openCreateModal}
               className='bg-white text-gray-900 hover:bg-gray-200'
             >
-              <Plus className='size-4 mr-2' />
-              Add Parameter
+              <Plus className='mr-2 size-4' />
+              Add Custom Field
             </Button>
           </div>
 
           <FormSection
-            title={`Parameters for "${selectedCatalog?.name}"`}
+            title={`Custom Fields for "${selectedCatalog?.name}"`}
             className='p-4'
           >
             <div className='mt-4'>
@@ -169,12 +235,12 @@ export function ParametersSettings({
                 </div>
               ) : parameters.length === 0 ? (
                 <EmptyState
-                  title='No parameters yet'
-                  description='Parameters allow you to define custom fields for products in this catalog.'
+                  title='No custom fields yet'
+                  description='Create custom product fields and choose their selector type.'
                   action={
                     <Button onClick={openCreateModal} variant='outline'>
-                      <Plus className='size-4 mr-2' />
-                      Create Your First Parameter
+                      <Plus className='mr-2 size-4' />
+                      Create Your First Custom Field
                     </Button>
                   }
                 />
@@ -186,10 +252,14 @@ export function ParametersSettings({
                       className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-gray-900/40 p-3'
                     >
                       <div className='min-w-0'>
-                        <p className='text-sm text-gray-100 truncate'>
+                        <p className='truncate text-sm text-gray-100'>
                           {parameter.name_en}
                         </p>
-                        <div className='text-xs text-gray-400 space-x-2'>
+                        <div className='space-x-2 text-xs text-gray-400'>
+                          <span>Type: {getSelectorTypeLabel(parameter.selectorType)}</span>
+                          {parameter.optionLabels.length > 0 && (
+                            <span>Options: {parameter.optionLabels.length}</span>
+                          )}
                           {parameter.name_pl && (
                             <span>PL: {parameter.name_pl}</span>
                           )}
@@ -210,7 +280,7 @@ export function ParametersSettings({
                           type='button'
                           onClick={(): void => { handleDelete(parameter); }}
                           className='rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600'
-                          title='Delete parameter'
+                          title='Delete custom field'
                         >
                           <Trash2 className='size-3' />
                         </Button>
@@ -227,7 +297,7 @@ export function ParametersSettings({
       {!selectedCatalogId && catalogs.length === 0 && (
         <EmptyState
           title='No catalogs found'
-          description='Please create a catalog first in the Catalogs section before adding parameters.'
+          description='Please create a catalog first in the Catalogs section before adding custom fields.'
         />
       )}
 
@@ -236,8 +306,8 @@ export function ParametersSettings({
         isOpen={!!parameterToDelete}
         onClose={() => setParameterToDelete(null)}
         onConfirm={handleConfirmDelete}
-        title='Delete Parameter'
-        message={`Are you sure you want to delete parameter "${parameterToDelete?.name_en}"? This action cannot be undone.`}
+        title='Delete Custom Field'
+        message={`Are you sure you want to delete custom field "${parameterToDelete?.name_en}"? This action cannot be undone.`}
         confirmText='Delete'
         isDangerous={true}
       />
@@ -246,7 +316,7 @@ export function ParametersSettings({
         <FormModal
           open={showModal}
           onClose={(): void => setShowModal(false)}
-          title={editingParameter ? 'Edit Parameter' : 'Create Parameter'}
+          title={editingParameter ? 'Edit Custom Field' : 'Create Custom Field'}
           onSave={(): void => { void handleSave(); }}
           isSaving={saveParameterMutation.isPending}
           size='md'
@@ -256,12 +326,12 @@ export function ParametersSettings({
               <Input
                 value={formData.name_en}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                  setFormData((prev: typeof formData) => ({
+                  setFormData((prev: ParameterFormData) => ({
                     ...prev,
                     name_en: event.target.value,
                   }))
                 }
-                placeholder='Parameter name in English'
+                placeholder='Field name in English'
                 className='h-9'
               />
             </FormField>
@@ -269,7 +339,7 @@ export function ParametersSettings({
               <Input
                 value={formData.name_pl}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                  setFormData((prev: typeof formData) => ({
+                  setFormData((prev: ParameterFormData) => ({
                     ...prev,
                     name_pl: event.target.value,
                   }))
@@ -282,7 +352,7 @@ export function ParametersSettings({
               <Input
                 value={formData.name_de}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                  setFormData((prev: typeof formData) => ({
+                  setFormData((prev: ParameterFormData) => ({
                     ...prev,
                     name_de: event.target.value,
                   }))
@@ -291,6 +361,39 @@ export function ParametersSettings({
                 className='h-9'
               />
             </FormField>
+            <FormField label='Selector Type'>
+              <SelectSimple
+                size='sm'
+                value={formData.selectorType}
+                onValueChange={(value: string): void =>
+                  setFormData((prev: ParameterFormData) => ({
+                    ...prev,
+                    selectorType: value as ParameterSelectorType,
+                  }))
+                }
+                options={SELECTOR_TYPE_OPTIONS}
+                placeholder='Select selector type'
+                triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
+              />
+            </FormField>
+            {selectorNeedsOptions && (
+              <FormField label='Option Labels'>
+                <Textarea
+                  value={formData.optionLabelsInput}
+                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
+                    setFormData((prev: ParameterFormData) => ({
+                      ...prev,
+                      optionLabelsInput: event.target.value,
+                    }))
+                  }
+                  className='min-h-[110px] bg-gray-900'
+                  placeholder={'One value label per line\nSmall\nMedium\nLarge'}
+                />
+                <p className='mt-1 text-xs text-gray-500'>
+                  Value labels only. Saved labels are exported/imported as plain text values.
+                </p>
+              </FormField>
+            )}
           </div>
         </FormModal>
       )}

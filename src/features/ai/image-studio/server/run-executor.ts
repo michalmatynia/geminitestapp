@@ -153,6 +153,8 @@ export type ImageStudioRunExecutionResult = {
 export const sanitizeImageStudioProjectId = (value: string): string =>
   value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
+const PROJECT_SCOPED_STUDIO_ASSET_GROUPS = ['crops', 'center', 'upscale'] as const;
+
 export const resolveExpectedOutputCount = (rawRequest: unknown): number => {
   const parsed = imageStudioRunRequestSchema.safeParse(rawRequest);
   if (!parsed.success) return 1;
@@ -165,14 +167,46 @@ export const resolveExpectedOutputCount = (rawRequest: unknown): number => {
   return Math.max(1, Math.min(10, Math.floor(requested)));
 };
 
+const normalizePublicAssetPath = (filepath: string): string => {
+  const trimmed = filepath.trim();
+  if (!trimmed) return '';
+  try {
+    return new URL(trimmed, 'http://localhost').pathname || '';
+  } catch {
+    const [withoutQuery] = trimmed.split(/[?#]/, 1);
+    if (!withoutQuery) return '';
+    return withoutQuery.startsWith('/') ? withoutQuery : `/${withoutQuery}`;
+  }
+};
+
 const resolveAssetPath = (filepath: string): string => {
   const normalized = filepath.replace(/^\/+/, '');
   return path.resolve(publicRoot, normalized);
 };
 
+const getProjectScopedPublicPrefixes = (projectId: string): string[] => [
+  `/uploads/studio/${projectId}/`,
+  ...PROJECT_SCOPED_STUDIO_ASSET_GROUPS.map((group) => `/uploads/studio/${group}/${projectId}/`),
+];
+
+const isProjectScopedAssetPath = (filepath: string, projectId: string): boolean => {
+  if (!filepath) return false;
+  const normalized = normalizePublicAssetPath(filepath);
+  if (!normalized) return false;
+  return getProjectScopedPublicPrefixes(projectId).some((prefix) => normalized.startsWith(prefix));
+};
+
+const getProjectScopedRoots = (projectId: string): string[] => [
+  path.resolve(projectsRoot, projectId),
+  ...PROJECT_SCOPED_STUDIO_ASSET_GROUPS.map((group) => path.resolve(projectsRoot, group, projectId)),
+];
+
 const ensureWithinProject = (diskPath: string, projectId: string): void => {
-  const projectRoot = path.resolve(projectsRoot, projectId);
-  if (!diskPath.startsWith(`${projectRoot}${path.sep}`)) {
+  const resolvedPath = path.resolve(diskPath);
+  const withinProject = getProjectScopedRoots(projectId).some((projectRoot) =>
+    resolvedPath === projectRoot || resolvedPath.startsWith(`${projectRoot}${path.sep}`)
+  );
+  if (!withinProject) {
     throw badRequestError('Asset path is outside the project.');
   }
 };
@@ -493,8 +527,8 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
   const projectId = sanitizeImageStudioProjectId(request.projectId);
   if (!projectId) throw badRequestError('Project id is required.');
 
-  const assetPath = request.asset.filepath;
-  if (!assetPath.startsWith(`/uploads/studio/${projectId}/`)) {
+  const assetPath = normalizePublicAssetPath(request.asset.filepath);
+  if (!isProjectScopedAssetPath(assetPath, projectId)) {
     throw badRequestError('Asset must belong to the current project.');
   }
 
@@ -565,11 +599,11 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
   const seenPaths = new Set<string>();
 
   for (const ref of referenceAssets) {
-    const refPath = ref.filepath;
+    const refPath = normalizePublicAssetPath(ref.filepath);
     if (!refPath) continue;
     if (refPath === assetPath) continue;
     if (seenPaths.has(refPath)) continue;
-    if (!refPath.startsWith(`/uploads/studio/${projectId}/`)) {
+    if (!isProjectScopedAssetPath(refPath, projectId)) {
       throw badRequestError('Reference asset must belong to the current project.');
     }
     const refDiskPath = resolveAssetPath(refPath);

@@ -168,6 +168,7 @@ export interface ProductFormContextType {
   refreshImagesFromProduct: (savedProduct: ProductWithImages) => void;
   product?: ProductWithImages | undefined;
   draft?: ProductDraft | null | undefined;
+  ConfirmationModal: React.ComponentType;
 }
 
 export const ProductFormContext = createContext<ProductFormContextType | null>(
@@ -440,7 +441,13 @@ export function ProductFormProvider({
     () => normalizeParameterValues(product?.parameters ?? draft?.parameters ?? [])
   );
 
-  const { handleSubmit: submitHandler, uploading, uploadError, uploadSuccess } = useProductFormSubmit({
+  const {
+    handleSubmit: submitHandler,
+    uploading,
+    uploadError,
+    uploadSuccess,
+    ConfirmationModal,
+  } = useProductFormSubmit({
     product,
     methods,
     imageSlots,
@@ -536,6 +543,7 @@ export function ProductFormProvider({
           refreshImagesFromProduct: refreshImages,
           product,
           draft,
+          ConfirmationModal,
         }}
       >
         {children}

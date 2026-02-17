@@ -142,6 +142,9 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     setIsPromptExploderPartyProposalOpen,
     isApplyingPromptExploderPartyProposal,
     setIsApplyingPromptExploderPartyProposal,
+    confirmAction,
+    ConfirmationModal,
+    PromptInputModal,
   } = state;
 
   React.useEffect(() => {
@@ -494,7 +497,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           lastContentConversionAt: now,
         };
       });
-      setEditorContentRevisionSeed((value) => value + 1);
     },
     [setEditingDocumentDraft]
   );
@@ -522,16 +524,22 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     if (!editingDocumentDraft) return;
     if (nextMode === editingDocumentDraft.editorType) return;
 
+    const performSwitch = (markdownValue?: string, htmlValue?: string, warnings?: string[]) => {
+      applyDraftCanonicalContent({
+        mode: nextMode,
+        value: markdownValue || htmlValue || '',
+        markdown: markdownValue,
+        html: htmlValue,
+        warnings,
+      });
+    };
+
     setIsMigratingEditorMode(true);
     try {
       if (nextMode === 'wysiwyg') {
         const sourceMarkdown =
           editingDocumentDraft.documentContentMarkdown || editingDocumentDraft.documentContent;
-        applyDraftCanonicalContent({
-          mode: 'wysiwyg',
-          value: ensureHtmlForPreview(sourceMarkdown, 'markdown'),
-          markdown: sourceMarkdown,
-        });
+        performSwitch(sourceMarkdown, ensureHtmlForPreview(sourceMarkdown, 'markdown'));
         return;
       }
 
@@ -539,24 +547,25 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         editingDocumentDraft.documentContentHtml ||
         ensureHtmlForPreview(editingDocumentDraft.documentContent, 'markdown');
       const markdownConversion = await convertHtmlToMarkdown(sourceHtml);
-      if (markdownConversion.warnings.length > 0 && typeof window !== 'undefined') {
-        const proceed = window.confirm(
-          `${markdownConversion.warnings[0]}\n\nContinue mode switch anyway?`
-        );
-        if (!proceed) return;
+      
+      if (markdownConversion.warnings.length > 0) {
+        confirmAction({
+          title: 'Switch Editor Mode?',
+          message: `${markdownConversion.warnings[0]}\n\nContinue mode switch anyway? Content may be partially lost or reformatted.`,
+          confirmText: 'Switch Anyway',
+          isDangerous: true,
+          onConfirm: () => {
+            performSwitch(markdownConversion.markdown, sourceHtml, markdownConversion.warnings);
+          }
+        });
+        return;
       }
 
-      applyDraftCanonicalContent({
-        mode: nextMode,
-        value: markdownConversion.markdown,
-        markdown: markdownConversion.markdown,
-        html: sourceHtml,
-        warnings: markdownConversion.warnings,
-      });
+      performSwitch(markdownConversion.markdown, sourceHtml, markdownConversion.warnings);
     } finally {
       setIsMigratingEditorMode(false);
     }
-  }, [applyDraftCanonicalContent, editingDocumentDraft]);
+  }, [applyDraftCanonicalContent, editingDocumentDraft, confirmAction]);
 
   const applyWrap = useCallback((prefix: string, suffix: string, placeholder: string): void => {
     const textarea = editorTextareaRef.current;
@@ -977,6 +986,11 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                       />
                     </div>
 
+                  </div>
+                </TabsContent>
+
+                <TabsContent value='metadata' className='mt-0'>
+                  <div className='grid gap-3 md:grid-cols-2'>
                     <div className='md:col-span-2'>
                       <Label className='mb-2 block text-xs text-gray-400'>Reference Cases</Label>
                       <MultiSelect
@@ -999,11 +1013,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                         className='w-full'
                       />
                     </div>
-                  </div>
-                </TabsContent>
 
-                <TabsContent value='metadata' className='mt-0'>
-                  <div className='grid gap-3 md:grid-cols-2'>
                     <div className='space-y-2'>
                       <Label className='text-xs text-gray-400'>Parent Case</Label>
                       <SelectSimple
@@ -1319,6 +1329,9 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             </div>
           ) : null}
         </AppModal>
+        
+        <ConfirmationModal />
+        <PromptInputModal />
       </div>
     </CaseResolverPageProvider>
   );

@@ -1,0 +1,50 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { getBaseImportRunDetailOrThrow } from '@/features/integrations/services/imports/base-import-service';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+
+const querySchema = z.object({
+  statuses: z.string().trim().optional(),
+  page: z.coerce.number().int().positive().optional(),
+  pageSize: z.coerce.number().int().positive().max(1000).optional(),
+  includeItems: z.enum(['true', 'false']).optional(),
+});
+
+export async function GET_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { runId: string }
+): Promise<Response> {
+  const parsed = querySchema.safeParse(
+    Object.fromEntries(new URL(req.url).searchParams.entries())
+  );
+  const statusesRaw = parsed.success ? parsed.data.statuses ?? '' : '';
+  const statuses = statusesRaw
+    .split(',')
+    .map((value: string): string => value.trim())
+    .filter((value: string): boolean => value.length > 0)
+    .filter((value: string): boolean =>
+      value === 'pending' ||
+      value === 'processing' ||
+      value === 'imported' ||
+      value === 'updated' ||
+      value === 'skipped' ||
+      value === 'failed'
+    ) as Array<'pending' | 'processing' | 'imported' | 'updated' | 'skipped' | 'failed'>;
+  const includeItems =
+    parsed.success && parsed.data.includeItems
+      ? parsed.data.includeItems === 'true'
+      : undefined;
+  const detail = await getBaseImportRunDetailOrThrow(params.runId, {
+    ...(statuses.length > 0 ? { statuses } : {}),
+    ...(parsed.success && typeof parsed.data.page === 'number' ? { page: parsed.data.page } : {}),
+    ...(parsed.success && typeof parsed.data.pageSize === 'number' ? { pageSize: parsed.data.pageSize } : {}),
+    ...(typeof includeItems === 'boolean' ? { includeItems } : {}),
+  });
+  return NextResponse.json(detail, {
+    headers: {
+      'Cache-Control': 'no-store',
+    },
+  });
+}

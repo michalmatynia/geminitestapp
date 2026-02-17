@@ -13,6 +13,8 @@ const createInMemoryParameterRepository = (): ParameterRepository => {
     name_en: string;
     name_pl: string | null;
     name_de: string | null;
+    selectorType: 'text' | 'select' | 'textarea' | 'radio' | 'dropdown';
+    optionLabels: string[];
   }> = [];
   let counter = 1;
 
@@ -43,6 +45,8 @@ const createInMemoryParameterRepository = (): ParameterRepository => {
         name_en: data.name_en,
         name_pl: data.name_pl ?? null,
         name_de: data.name_de ?? null,
+        selectorType: data.selectorType ?? 'text',
+        optionLabels: data.optionLabels ?? [],
       };
       items.push(created);
       return {
@@ -62,6 +66,8 @@ const createInMemoryParameterRepository = (): ParameterRepository => {
         ...(data.name_en !== undefined ? { name_en: data.name_en } : {}),
         ...(data.name_pl !== undefined ? { name_pl: data.name_pl ?? null } : {}),
         ...(data.name_de !== undefined ? { name_de: data.name_de ?? null } : {}),
+        ...(data.selectorType !== undefined ? { selectorType: data.selectorType } : {}),
+        ...(data.optionLabels !== undefined ? { optionLabels: data.optionLabels } : {}),
       };
       items[index] = updated;
       return {

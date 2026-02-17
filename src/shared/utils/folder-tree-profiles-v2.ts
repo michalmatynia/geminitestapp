@@ -522,7 +522,7 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
         },
         {
           childType: 'file',
-          childKinds: ['case_file', 'node_file', 'asset_image', 'asset_pdf', 'asset_file'],
+          childKinds: ['case_file', 'case_file_scan', 'node_file', 'asset_image', 'asset_pdf', 'asset_file'],
           targetType: 'folder',
           targetKinds: ['*'],
           allow: true,
@@ -536,7 +536,7 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
         },
         {
           childType: 'file',
-          childKinds: ['case_file', 'node_file', 'asset_image', 'asset_pdf', 'asset_file'],
+          childKinds: ['case_file', 'case_file_scan', 'node_file', 'asset_image', 'asset_pdf', 'asset_file'],
           targetType: 'root',
           targetKinds: ['root'],
           allow: true,

@@ -30,6 +30,7 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
     setPageSize,
     selectedListing,
     setSelectedListing,
+    ConfirmationModal,
   } = useJobsContext();
 
   const {
@@ -167,6 +168,7 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
         onClose={() => setSelectedListing(null)}
         item={selectedListing}
       />
+      <ConfirmationModal />
     </>
   );
 }

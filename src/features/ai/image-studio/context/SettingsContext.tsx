@@ -83,10 +83,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     }
 
     const stored = parseImageStudioSettings(studioSettingsRaw);
+    const globalSettings = parseImageStudioSettings(globalStudioSettingsRaw);
     const hasStoredStudioSettings = Boolean(
       studioSettingsRaw && studioSettingsRaw.trim().length > 0
     );
-    const hydrated: ImageStudioSettings =
+    const hydratedBase: ImageStudioSettings =
       openaiModelFallback && !hasStoredStudioSettings
         ? {
           ...stored,
@@ -103,6 +104,23 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
           },
         }
         : stored;
+    const mergedModelPresets = normalizeImageStudioModelPresets(
+      [
+        ...globalSettings.targetAi.openai.modelPresets,
+        ...hydratedBase.targetAi.openai.modelPresets,
+      ],
+      hydratedBase.targetAi.openai.model,
+    );
+    const hydrated: ImageStudioSettings = {
+      ...hydratedBase,
+      targetAi: {
+        ...hydratedBase.targetAi,
+        openai: {
+          ...hydratedBase.targetAi.openai,
+          modelPresets: mergedModelPresets,
+        },
+      },
+    };
 
     setStudioSettings(hydrated);
     hydratedSignatureRef.current = settingsSignature;
@@ -115,6 +133,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     userPreferencesQuery.isLoading,
     studioSettingsRaw,
     openaiModelFallback,
+    globalStudioSettingsRaw,
   ]);
 
   useEffect(() => {

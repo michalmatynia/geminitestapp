@@ -1,5 +1,3 @@
-'use client';
-
 import { Eye, EyeOff } from 'lucide-react';
 import React from 'react';
 import { createPortal } from 'react-dom';

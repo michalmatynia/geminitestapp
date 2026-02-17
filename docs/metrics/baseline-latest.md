@@ -1,14 +1,14 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-17T17:56:27.917Z
+Generated at: 2026-02-17T18:13:55.962Z
 
 ## Snapshot
 
-- Source files: 2681
-- Source lines: 429409
+- Source files: 2686
+- Source lines: 430260
 - use client files: 901
 - Files >= 1000 LOC: 14
-- Files >= 1500 LOC: 14
+- Files >= 1500 LOC: 13
 - Largest file: `src/features/database/services/database-sync.ts` (3352 LOC)
 - API routes: 294
 - API delegated server routes: 21
@@ -64,21 +64,21 @@ Generated at: 2026-02-17T17:56:27.917Z
 | --- | ---: |
 | `src/features/database/services/database-sync.ts` | 3352 |
 | `src/features/ai/image-studio/components/StudioModals.tsx` | 2842 |
-| `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 2534 |
+| `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 2562 |
 | `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 2524 |
 | `src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts` | 2481 |
 | `src/shared/ui/vector-canvas.tsx` | 2382 |
 | `src/features/ai/image-studio/components/GenerationToolbar.tsx` | 2135 |
 | `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 2045 |
-| `src/features/case-resolver/hooks/useCaseResolverState.ts` | 1960 |
+| `src/features/case-resolver/hooks/useCaseResolverState.ts` | 1962 |
 | `src/features/ai/image-studio/components/SequencingPanel.tsx` | 1896 |
 | `src/features/ai/image-studio/components/RightSidebar.tsx` | 1861 |
 | `src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx` | 1808 |
 | `src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx` | 1763 |
-| `src/features/ai/image-studio/components/CenterPreview.tsx` | 1738 |
+| `src/features/ai/ai-paths/server/settings-store.ts` | 1062 |
 | `src/app/api/image-studio/slots/[slotId]/upscale/handler.ts` | 999 |
 | `src/features/case-resolver/components/CaseResolverFolderTree.tsx` | 998 |
 | `src/features/ai/ai-paths/components/canvas-board.tsx` | 996 |
 | `src/features/integrations/services/tradera-listing-service.ts` | 996 |
 | `src/features/ai/agent-runtime/tools/index.ts` | 995 |
-| `src/features/data-import-export/context/ImportExportContext.tsx` | 995 |
+| `src/features/ai/image-studio/components/CenterPreview.tsx` | 995 |

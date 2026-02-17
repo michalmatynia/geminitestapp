@@ -603,6 +603,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const lastPersistedWorkspaceRevisionRef = useRef<number>(
     getCaseResolverWorkspaceRevision(parsedWorkspace),
   );
+  const initialWorkspaceSyncDoneRef = useRef(false);
   const [isCreatingCase, setIsCreatingCase] = useState(false);
   const createCaseMutationIdRef = useRef<string | null>(null);
 
@@ -663,6 +664,31 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     confirmText?: string;
     isDangerous?: boolean;
       } | null>(null);
+
+  useEffect(() => {
+    if (initialWorkspaceSyncDoneRef.current) return;
+    initialWorkspaceSyncDoneRef.current = true;
+    settingsStore.refetch();
+    let isCancelled = false;
+    void (async (): Promise<void> => {
+      const latestWorkspace = await fetchCaseResolverWorkspaceSnapshot(
+        'cases_page_initial_sync',
+      );
+      if (!latestWorkspace || isCancelled) return;
+      const latestSerialized = JSON.stringify(latestWorkspace);
+      const latestRevision = getCaseResolverWorkspaceRevision(latestWorkspace);
+      setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
+        const currentRevision = getCaseResolverWorkspaceRevision(current);
+        if (latestRevision <= currentRevision) return current;
+        lastPersistedWorkspaceValueRef.current = latestSerialized;
+        lastPersistedWorkspaceRevisionRef.current = latestRevision;
+        return latestWorkspace;
+      });
+    })();
+    return (): void => {
+      isCancelled = true;
+    };
+  }, [settingsStore]);
 
   useEffect(() => {
     if (!canHydrateWorkspaceFromStore) return;
@@ -1539,6 +1565,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         lastPersistedWorkspaceRevisionRef.current =
           getCaseResolverWorkspaceRevision(persistedWorkspace);
         setWorkspace(persistedWorkspace);
+        settingsStore.refetch();
         toast(successMessage, { variant: 'success' });
         return true;
       }
@@ -1549,6 +1576,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         lastPersistedWorkspaceRevisionRef.current =
           getCaseResolverWorkspaceRevision(serverWorkspace);
         setWorkspace(serverWorkspace);
+        settingsStore.refetch();
         toast(
           'Case Resolver workspace changed before save completed. Latest server state has been loaded. Please retry.',
           { variant: 'warning' },

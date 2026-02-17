@@ -1,5 +1,3 @@
-'use client';
-
 import { Eye, Loader2, Trash2 } from 'lucide-react';
 import React from 'react';
 

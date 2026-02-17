@@ -403,6 +403,7 @@ export function useCaseResolverState() {
         const persistedSerialized = JSON.stringify(persistedWorkspace);
         lastPersistedValueRef.current = persistedSerialized;
         lastPersistedRevisionRef.current = getCaseResolverWorkspaceRevision(persistedWorkspace);
+        settingsStore.refetch();
         if (queuedSerializedWorkspaceRef.current === nextSerialized) {
           queuedSerializedWorkspaceRef.current = null;
           queuedExpectedRevisionRef.current = null;
@@ -427,6 +428,7 @@ export function useCaseResolverState() {
         queuedMutationIdRef.current = null;
         pendingSaveToastRef.current = null;
         setWorkspace(serverWorkspace);
+        settingsStore.refetch();
         toast('Case Resolver workspace changed before save completed. Loaded latest server state.', {
           variant: 'warning',
         });

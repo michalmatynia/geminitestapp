@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-02-17T18:13:55.962Z",
+  "generatedAt": "2026-02-17T18:12:11.621Z",
   "source": {
     "totalFiles": 2686,
-    "totalLines": 430260,
-    "useClientFiles": 901,
+    "totalLines": 430279,
+    "useClientFiles": 904,
     "filesOver800": 86,
     "filesOver1000": 14,
     "filesOver1500": 13,
@@ -221,7 +221,7 @@
       {
         "feature": "ai",
         "files": 466,
-        "lines": 120956
+        "lines": 120975
       },
       {
         "feature": "products",

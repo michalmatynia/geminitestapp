@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-02-17T18:13:55.962Z",
+  "generatedAt": "2026-02-17T18:09:10.607Z",
   "source": {
-    "totalFiles": 2686,
-    "totalLines": 430260,
-    "useClientFiles": 901,
+    "totalFiles": 2685,
+    "totalLines": 430111,
+    "useClientFiles": 904,
     "filesOver800": 86,
-    "filesOver1000": 14,
+    "filesOver1000": 15,
     "filesOver1500": 13,
     "largestFile": {
       "path": "src/features/database/services/database-sync.ts",
@@ -220,8 +220,8 @@
     "featureSizeByLines": [
       {
         "feature": "ai",
-        "files": 466,
-        "lines": 120956
+        "files": 465,
+        "lines": 120807
       },
       {
         "feature": "products",
@@ -438,6 +438,10 @@
         "lines": 1763
       },
       {
+        "path": "src/features/ai/image-studio/components/CenterPreview.tsx",
+        "lines": 1122
+      },
+      {
         "path": "src/features/ai/ai-paths/server/settings-store.ts",
         "lines": 1062
       },
@@ -459,10 +463,6 @@
       },
       {
         "path": "src/features/ai/agent-runtime/tools/index.ts",
-        "lines": 995
-      },
-      {
-        "path": "src/features/ai/image-studio/components/CenterPreview.tsx",
         "lines": 995
       },
       {

@@ -1,5 +1,6 @@
 'use client';
 
+import { Eye, EyeOff } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -31,7 +32,6 @@ import { CanvasBoard } from '../canvas-board';
 import { CanvasSidebar } from '../canvas-sidebar';
 import { ClusterPresetsPanel } from '../cluster-presets-panel';
 import { GraphModelDebugPanel } from '../graph-model-debug-panel';
-import { RenamePathModal } from '../modals/RenamePathModal';
 import { NodeConfigDialog } from '../node-config-dialog';
 import { PresetsDialog } from '../presets-dialog';
 import { RunDetailDialog } from '../run-detail-dialog';
@@ -44,11 +44,9 @@ import {
   RUN_MODE_OPTIONS,
   EXECUTION_OPTIONS,
   buildHistoryRetentionOptions,
-  buildSwitchPathOptions,
   formatDurationMs,
   formatPercent,
   formatStatusLabel,
-  sortPathMetas,
   statusToVariant,
 } from './ai-paths-settings-view-utils';
 
@@ -86,7 +84,6 @@ export function AiPathsSettingsView(): React.JSX.Element {
     executionMode,
     flowIntensity,
     runMode,
-    paths,
     nodes,
   } = useGraphState();
   const { setPathName, setPaths } = useGraphActions();
@@ -108,11 +105,9 @@ export function AiPathsSettingsView(): React.JSX.Element {
   const { persistLastError } = useAiPathsErrorReporting(activeTab);
 
   const {
-    handleCreatePath,
     handleDeletePath,
     handleTogglePathLock,
     handleTogglePathActive,
-    handleSwitchPath,
     historyRetentionPasses,
     historyRetentionOptionsMax,
     handleHistoryRetentionChange,
@@ -144,10 +139,47 @@ export function AiPathsSettingsView(): React.JSX.Element {
   const hasHistory = Object.keys(runtimeState.history ?? {}).length > 0;
 
   const [isFocusModeInternal, setIsFocusModeInternal] = useState(false);
-  const [renameOpen, setRenameOpen] = useState(false);
+  const [isPathNameEditing, setIsPathNameEditing] = useState(false);
   const [renameDraft, setRenameDraft] = useState('');
   const isFocusMode = isFocusModeProp ?? isFocusModeInternal;
   const setIsFocusMode = onFocusModeChange ?? setIsFocusModeInternal;
+
+  const startPathNameEdit = (): void => {
+    if (!activePathId) return;
+    setRenameDraft(pathName);
+    setIsPathNameEditing(true);
+  };
+
+  const cancelPathNameEdit = (): void => {
+    setRenameDraft(pathName);
+    setIsPathNameEditing(false);
+  };
+
+  const commitPathNameEdit = (): void => {
+    if (!activePathId) {
+      setIsPathNameEditing(false);
+      return;
+    }
+    const nextName = renameDraft.trim();
+    if (!nextName) {
+      toast('Path name is required.', { variant: 'error' });
+      cancelPathNameEdit();
+      return;
+    }
+    if (nextName !== pathName) {
+      const updatedAt = new Date().toISOString();
+      setPathName(nextName);
+      setPaths((prev) =>
+        prev.map((p) =>
+          p.id === activePathId
+            ? { ...p, name: nextName, updatedAt }
+            : p,
+        ),
+      );
+      void savePathConfig({ pathNameOverride: nextName });
+    }
+    setIsPathNameEditing(false);
+  };
 
   // State for dialogs
   const [runDetailOpen, setRunDetailOpen] = useState(false);
@@ -167,11 +199,6 @@ export function AiPathsSettingsView(): React.JSX.Element {
   const { setNodes } = useGraphActions();
   const { runSimulation } = useRuntimeActions();
 
-  const sortedPaths = useMemo(() => sortPathMetas(paths), [paths]);
-  const switchPathOptions = useMemo(
-    () => buildSwitchPathOptions(sortedPaths),
-    [sortedPaths],
-  );
   const historyRetentionOptions = useMemo(
     () =>
       buildHistoryRetentionOptions(
@@ -352,26 +379,8 @@ export function AiPathsSettingsView(): React.JSX.Element {
                       </div>
                     )}
                   </div>
-                  <div className='flex justify-center'>
-                    {!isFocusMode && (
-                      <Button
-                        type='button'
-                        className='rounded-md border border-border text-sm text-gray-200 hover:bg-card/60'
-                        onClick={() => setIsFocusMode(true)}
-                        title='Show canvas only'
-                      >
-                          Show
-                      </Button>
-                    )}
-                  </div>
+                  <div />
                   <div className='flex flex-col items-end gap-2'>
-                    <Button
-                      className='rounded-md border text-sm text-white hover:bg-muted/60'
-                      type='button'
-                      onClick={handleCreatePath}
-                    >
-                        New Path
-                    </Button>
                     <Button
                       className='rounded-md border text-sm text-white hover:bg-muted/60'
                       onClick={() => {
@@ -393,22 +402,20 @@ export function AiPathsSettingsView(): React.JSX.Element {
               document.getElementById('ai-paths-actions') ?? document.body,
             )
             : null}
-          {isFocusMode && typeof document !== 'undefined'
+          {typeof document !== 'undefined'
             ? (() => {
-              const headerTarget = document.getElementById(
-                'ai-paths-header-actions',
-              );
-              if (!headerTarget) return null;
               return createPortal(
-                <Button
+                <Button size='xs'
                   type='button'
-                  className='rounded-md border border-border text-sm text-gray-200 hover:bg-card/60'
-                  onClick={() => setIsFocusMode(false)}
-                  title='Show side panels'
+                  variant='outline'
+                  onClick={() => setIsFocusMode(!isFocusMode)}
+                  title={isFocusMode ? 'Show side panels' : 'Show canvas only'}
+                  aria-label={isFocusMode ? 'Show side panels' : 'Show canvas only'}
+                  className='fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2'
                 >
-                    Edit
+                  {isFocusMode ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
                 </Button>,
-                headerTarget,
+                document.body,
               );
             })()
             : null}
@@ -511,62 +518,53 @@ export function AiPathsSettingsView(): React.JSX.Element {
                     disabled={saving}
                   />
                 </div>
-                <SelectSimple
-                  size='sm'
-                  value={activePathId}
-                  onValueChange={(value: string): void => {
-                    if (!value || value === activePathId) return;
-                    handleSwitchPath(value);
-                  }}
-                  options={switchPathOptions}
-                  placeholder='Switch path'
-                  className='w-[320px]'
-                  triggerClassName='h-9 border-border bg-card/60 px-3 text-sm text-white'
-                />
-                <Button
-                  type='button'
-                  className='h-9 rounded-md border border-border text-sm text-gray-200 hover:bg-card/60'
-                  onClick={() => {
-                    setRenameDraft(pathName);
-                    setRenameOpen(true);
-                  }}
-                  disabled={!activePathId}
-                  title='Rename this path'
-                >
-                    Rename
-                </Button>
+                <div className='flex items-center'>
+                  {isPathNameEditing ? (
+                    <input
+                      type='text'
+                      value={renameDraft}
+                      onChange={(event) => {
+                        setRenameDraft(event.target.value);
+                      }}
+                      onBlur={commitPathNameEdit}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          event.currentTarget.blur();
+                          return;
+                        }
+                        if (event.key === 'Escape') {
+                          event.preventDefault();
+                          cancelPathNameEdit();
+                        }
+                      }}
+                      autoFocus
+                      className='h-9 w-[320px] rounded-md border border-border bg-card/60 px-3 text-sm text-white outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+                      placeholder='Path name'
+                      disabled={!activePathId}
+                    />
+                  ) : (
+                    <button
+                      type='button'
+                      className='h-9 w-[320px] rounded-md border border-border bg-card/60 px-3 text-left text-sm text-gray-200 hover:bg-card/70 disabled:cursor-not-allowed disabled:opacity-60'
+                      onDoubleClick={startPathNameEdit}
+                      disabled={!activePathId}
+                      title={
+                        activePathId
+                          ? 'Double-click to rename this path'
+                          : 'No active path selected'
+                      }
+                    >
+                      <span className='block truncate'>
+                        {pathName || 'Untitled path'}
+                      </span>
+                    </button>
+                  )}
+                </div>
               </div>,
               document.getElementById('ai-paths-name') ?? document.body,
             )
             : null}
-
-          <RenamePathModal
-            isOpen={renameOpen}
-            onClose={() => setRenameOpen(false)}
-            onSuccess={() => {}}
-            draftName={renameDraft}
-            setDraftName={setRenameDraft}
-            onSave={() => {
-              const nextName = renameDraft.trim();
-              if (!nextName) {
-                toast('Path name is required.', { variant: 'error' });
-                return;
-              }
-              setPathName(nextName);
-              if (activePathId) {
-                const updatedAt = new Date().toISOString();
-                setPaths((prev) =>
-                  prev.map((p) =>
-                    p.id === activePathId
-                      ? { ...p, name: nextName, updatedAt }
-                      : p,
-                  ),
-                );
-              }
-              setRenameOpen(false);
-              void savePathConfig({ pathNameOverride: nextName });
-            }}
-          />
 
           <div
             className={`grid grid-cols-1 min-h-0 transition-[grid-template-columns] duration-300 ease-in-out ${

@@ -3,9 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Camera, Loader2, Locate } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 
-import { studioKeys } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
@@ -13,16 +11,20 @@ import {
 import { VectorDrawingCanvas, VectorDrawingProvider } from '@/features/vector-drawing';
 import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { api, ApiError } from '@/shared/lib/api-client';
+import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { VectorCanvasViewCropRect } from '@/shared/ui';
-import { Button, Input, useToast } from '@/shared/ui';
+import { Button, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { FocusModeTogglePortal } from './center-preview/FocusModeTogglePortal';
 import { SplitVariantPreview } from './center-preview/SplitVariantPreview';
 import { SplitViewControls } from './center-preview/SplitViewControls';
+import {
+  deleteVariantFromCenterPreview,
+  loadVariantIntoCanvas,
+} from './center-preview/variant-actions';
 import { VariantPanel } from './center-preview/VariantPanel';
 import { VariantTooltipPortal, type VariantTooltipState } from './center-preview/VariantTooltipPortal';
 import { VersionNodeDetailsModal } from './VersionNodeDetailsModal';
@@ -34,19 +36,18 @@ import { useUiActions, useUiState, type PreviewCanvasSize } from '../context/UiC
 import { useVersionGraphState } from '../context/VersionGraphContext';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
 import {
+  asObjectRecord,
+  clampSplitZoom,
+  normalizeImagePath,
+  type VariantThumbnailInfo,
+} from './center-preview/preview-utils';
+import {
   buildDetailsNodeForCenterPreview,
   buildVariantThumbnails,
   isTreeRevealableCardSlot,
   resolveSourceSlotIdFromGeneratedPath,
   resolveVariantSlotIdForCenterPreview,
 } from './center-preview/variant-thumbnails';
-import {
-  asObjectRecord,
-  clampSplitZoom,
-  normalizeImagePath,
-  type VariantThumbnailInfo,
-  wait,
-} from './center-preview/preview-utils';
 
 import type { VersionNode } from '../context/VersionGraphContext';
 import type { ImageStudioSlotRecord, SlotGenerationMetadata } from '../types';
@@ -224,19 +225,16 @@ export function CenterPreview(): React.JSX.Element {
     [productImagesExternalBaseUrl, sourceSlot]
   );
 
-  const hasSourceSlotReference = useMemo(
-    () => {
-      const normalizedSourceSlotId = sourceSlotId?.trim() ?? '';
-      const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
-      return Boolean(
-        previewMode === 'image' &&
-        normalizedSourceSlotId &&
-        normalizedWorkingSlotId &&
-        normalizedSourceSlotId !== normalizedWorkingSlotId
-      );
-    },
-    [previewMode, sourceSlotId, workingSlot?.id]
-  );
+  const hasSourceSlotReference = useMemo(() => {
+    const normalizedSourceSlotId = sourceSlotId?.trim() ?? '';
+    const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
+    return Boolean(
+      previewMode === 'image' &&
+      normalizedSourceSlotId &&
+      normalizedWorkingSlotId &&
+      normalizedSourceSlotId !== normalizedWorkingSlotId
+    );
+  }, [previewMode, sourceSlotId, workingSlot?.id]);
 
   const canNavigateToSource = hasSourceSlotReference;
 
@@ -302,14 +300,7 @@ export function CenterPreview(): React.JSX.Element {
     if (width < 64 || width > 32_768 || height < 64 || height > 32_768) return null;
     return { width, height };
   }, [activeProject?.canvasHeightPx, activeProject?.canvasWidthPx]);
-  const previewCanvasClassName = useMemo(
-    () =>
-      cn(
-        'h-full',
-        'bg-slate-900',
-      ),
-    [],
-  );
+  const previewCanvasClassName = cn('h-full', 'bg-slate-900');
 
   const eligibleMaskShapes = useMemo(
     () =>
@@ -486,12 +477,12 @@ export function CenterPreview(): React.JSX.Element {
       slots,
     }),
     [
-    activeRunId,
-    activeRunSourceSlotId,
-    landingSlots,
-    productImagesExternalBaseUrl,
-    rootVariantSourceSlotId,
-    slots,
+      activeRunId,
+      activeRunSourceSlotId,
+      landingSlots,
+      productImagesExternalBaseUrl,
+      rootVariantSourceSlotId,
+      slots,
     ],
   );
 
@@ -603,17 +594,8 @@ export function CenterPreview(): React.JSX.Element {
 
   const variantTooltipPosition = useMemo(() => {
     if (!variantTooltip || typeof window === 'undefined') return null;
-    const panelWidth = 250;
-    const panelHeight = 130;
-    const padding = 8;
-    const left = Math.max(
-      padding,
-      Math.min(variantTooltip.x + 14, window.innerWidth - panelWidth - padding)
-    );
-    const top = Math.max(
-      padding,
-      Math.min(variantTooltip.y + 14, window.innerHeight - panelHeight - padding)
-    );
+    const left = Math.max(8, Math.min(variantTooltip.x + 14, window.innerWidth - 258));
+    const top = Math.max(8, Math.min(variantTooltip.y + 14, window.innerHeight - 138));
     return { left, top };
   }, [variantTooltip]);
 
@@ -622,68 +604,21 @@ export function CenterPreview(): React.JSX.Element {
     setVariantLoadingId(variant.id);
 
     try {
-      let resolvedSlotId = resolveVariantSlotIdForCenterPreview({
+      await loadVariantIntoCanvas({
         activeRunId,
-        candidateSlots: slots,
+        projectId,
+        queryClient,
         rootVariantSourceSlotId,
+        setPreviewMode,
+        setSelectedSlotId,
+        setSingleVariantView,
+        setSplitVariantView,
+        setTemporaryObjectUpload,
+        setWorkingSlotId,
+        slots,
+        toast,
         variant,
       });
-
-      if (!resolvedSlotId) {
-        for (let attempt = 0; attempt < 6; attempt += 1) {
-          await queryClient.refetchQueries({
-            queryKey: studioKeys.slots(projectId),
-            type: 'active',
-          });
-
-          const cached = queryClient.getQueryData<{ slots?: typeof slots }>(
-            studioKeys.slots(projectId)
-          );
-          const candidateSlots = Array.isArray(cached?.slots) ? cached.slots : slots;
-          resolvedSlotId = resolveVariantSlotIdForCenterPreview({
-            activeRunId,
-            candidateSlots,
-            rootVariantSourceSlotId,
-            variant,
-          });
-          if (resolvedSlotId) break;
-          await wait(180);
-        }
-      }
-
-      if (!resolvedSlotId) {
-        if (variant.output) {
-          setTemporaryObjectUpload({
-            id: variant.output.id,
-            filepath: variant.output.filepath,
-            filename: variant.output.filename,
-            width: variant.output.width,
-            height: variant.output.height,
-          });
-          toast('Variant linked to card. Open Edit Card to apply this generated output.', {
-            variant: 'info',
-          });
-          return;
-        }
-        toast('Variant is still syncing to run outputs. Try again in a second.', { variant: 'info' });
-        return;
-      }
-
-      if (variant.output) {
-        setTemporaryObjectUpload({
-          id: variant.output.id,
-          filepath: variant.output.filepath,
-          filename: variant.output.filename,
-          width: variant.output.width,
-          height: variant.output.height,
-        });
-      }
-
-      setSingleVariantView('variant');
-      setSplitVariantView(false);
-      setSelectedSlotId(resolvedSlotId);
-      setWorkingSlotId(resolvedSlotId);
-      setPreviewMode('image');
     } catch (error: unknown) {
       toast(error instanceof Error ? error.message : 'Failed to load variant into canvas.', {
         variant: 'error',
@@ -698,6 +633,8 @@ export function CenterPreview(): React.JSX.Element {
     rootVariantSourceSlotId,
     setPreviewMode,
     setSelectedSlotId,
+    setSingleVariantView,
+    setSplitVariantView,
     setTemporaryObjectUpload,
     setWorkingSlotId,
     slots,
@@ -798,100 +735,35 @@ export function CenterPreview(): React.JSX.Element {
       confirmText: 'Delete',
       isDangerous: true,
       onConfirm: async () => {
-        const dismissVariantFromUi = (): void => {
-          setDismissedVariantKeys((current) => {
-            const next = new Set(current);
-            buildVariantDismissKeys(variant).forEach((key) => {
-              next.add(key);
-            });
-            return next;
-          });
-          setVariantTooltip((current) => (current?.variant.id === variant.id ? null : current));
-          clearActiveRunError();
-        };
-
-        const refreshGenerationQueries = (): void => {
-          void queryClient.invalidateQueries({
-            predicate: (query) =>
-              Array.isArray(query.queryKey) &&
-              query.queryKey[0] === studioKeys.all[0] &&
-              query.queryKey[1] === 'list' &&
-              query.queryKey[2] === 'runs',
-          });
-        };
-
-        const deleteVariantAssetFallback = async (): Promise<void> => {
-          const output = variant.output;
-          if (!output) return;
-          if (!projectId) return;
-
-          try {
-            await api.post(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/delete`, {
-              id: output.id,
-              filepath: output.filepath,
-            });
-          } catch (error: unknown) {
-            if (error instanceof ApiError && error.status === 404) {
-              return;
-            }
-            throw error;
-          }
-        };
-
-        const resolveTargetSlotId = async (): Promise<string | null> => {
-          const direct = resolveVariantSlotId(variant);
-          if (direct) return direct;
-          if (!projectId) return null;
-
-          for (let attempt = 0; attempt < 4; attempt += 1) {
-            await queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
-            const cached = queryClient.getQueryData<{ slots?: ImageStudioSlotRecord[] }>(studioKeys.slots(projectId));
-            const candidateSlots = Array.isArray(cached?.slots) ? cached.slots : slots;
-            const resolved = resolveVariantSlotId(variant, candidateSlots);
-            if (resolved) return resolved;
-            await wait(180);
-          }
-
-          return null;
-        };
-
-        try {
-          const targetSlotId = await resolveTargetSlotId();
-          if (!targetSlotId) {
-            await deleteVariantAssetFallback();
-            dismissVariantFromUi();
-            refreshGenerationQueries();
-            return;
-          }
-
-          try {
-            await deleteSlotMutation.mutateAsync(targetSlotId);
-            dismissVariantFromUi();
-            refreshGenerationQueries();
-          } catch (error: unknown) {
-            if (error instanceof ApiError && error.status === 404) {
-              await deleteVariantAssetFallback();
-              dismissVariantFromUi();
-              refreshGenerationQueries();
-              return;
-            }
-            throw error;
-          }
-        } catch (error: unknown) {
-          toast(error instanceof Error ? error.message : 'Failed to delete variant.', { variant: 'error' });
-        }
+        await deleteVariantFromCenterPreview({
+          activeRunId,
+          buildVariantDismissKeys,
+          clearActiveRunError,
+          deleteSlotMutation,
+          projectId,
+          queryClient,
+          rootVariantSourceSlotId,
+          setDismissedVariantKeys,
+          setVariantTooltip,
+          slots,
+          toast,
+          variant,
+        });
       }
     });
   }, [
+    activeRunId,
     confirm,
     buildVariantDismissKeys,
+    clearActiveRunError,
     deleteSlotMutation,
     projectId,
     queryClient,
-    resolveVariantSlotId,
+    rootVariantSourceSlotId,
+    setDismissedVariantKeys,
+    setVariantTooltip,
     slots,
     toast,
-    clearActiveRunError,
   ]);
 
   const handleOpenVariantDetails = useCallback((variant: VariantThumbnailInfo): void => {
@@ -1079,182 +951,33 @@ export function CenterPreview(): React.JSX.Element {
             ) : null}
           </div>
           {showVariantPanel ? (
-            <div className='h-full shrink-0 overflow-hidden rounded-lg border border-border/60 bg-card/40 p-2'>
-              <div className='mb-2 flex items-center gap-2'>
-                <Input size='sm'
-                  value={variantTimestampQuery}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                    setVariantTimestampQuery(event.target.value);
-                  }}
-                  placeholder='Search variants by timestamp'
-                  className='h-8 text-xs'
-                  aria-label='Search generated variants by timestamp'
-                />
-                <span className='shrink-0 text-[11px] text-gray-400'>
-                  {filteredVariantThumbnails.length}/{visibleVariantThumbnails.length}
-                </span>
-              </div>
-              <div className='mb-2 flex items-center gap-2 text-[11px] text-gray-400'>
-                <span>Compare in canvas:</span>
-                <span className={cn('rounded border px-1.5 py-0.5', compareVariantA ? 'border-cyan-400/60 text-cyan-200' : 'border-border/60')}>1 {compareVariantA ? `#${compareVariantA.index}` : 'unset'}</span>
-                <span className={cn('rounded border px-1.5 py-0.5', compareVariantB ? 'border-amber-400/60 text-amber-200' : 'border-border/60')}>2 {compareVariantB ? `#${compareVariantB.index}` : 'unset'}</span>
-                <Button
-                  size='xs'
-                  type='button'
-                  variant='ghost'
-                  onClick={(): void => setCompareVariantIds([null, null])}
-                  className='h-6 px-2 text-[10px] text-gray-300'
-                >
-                    Clear
-                </Button>
-              </div>
-              <div className='overflow-x-auto overflow-y-hidden pb-1 pr-1'>
-                {filteredVariantThumbnails.length > 0 ? (
-                  <div className='flex w-max min-w-full gap-2'>
-                    {filteredVariantThumbnails.map((variant) => {
-                      const isActive = activeVariantId === variant.id;
-                      const canDeleteVariant =
-                          variant.status !== 'pending' &&
-                          (variant.status === 'failed' || Boolean(variant.output) || Boolean(variant.slotId));
-                      const statusClasses =
-                          variant.status === 'completed'
-                            ? 'border-border/60 bg-card/30'
-                            : variant.status === 'failed'
-                              ? 'border-red-400/40 bg-red-500/5'
-                              : 'border-border/60 bg-card/30';
-                      const activeClasses = isActive
-                        ? 'border-sky-400/80 bg-sky-500/15 ring-2 ring-sky-400/70'
-                        : '';
-                      const isCompareA = compareVariantIds[0] === variant.id;
-                      const isCompareB = compareVariantIds[1] === variant.id;
-                      const compareClasses = isCompareA
-                        ? 'ring-2 ring-cyan-400/70'
-                        : isCompareB
-                          ? 'ring-2 ring-amber-400/70'
-                          : '';
-
-                      return (
-                        <div key={variant.id} className='w-28 shrink-0'>
-                          <button
-                            type='button'
-                            onClick={(): void => {
-                              void handleLoadVariantToCanvas(variant);
-                            }}
-                            onMouseEnter={(event): void => handleVariantTooltipMove(event, variant)}
-                            onMouseMove={(event): void => handleVariantTooltipMove(event, variant)}
-                            onMouseLeave={(): void => setVariantTooltip(null)}
-                            onBlur={(): void => setVariantTooltip(null)}
-                            disabled={!variant.output || variantLoadingId === variant.id}
-                            aria-pressed={isActive}
-                            className={`group relative w-full overflow-hidden rounded border p-1 text-left transition ${statusClasses} ${activeClasses} ${compareClasses}`}
-                          >
-                            <div className='mb-1 text-[10px] text-gray-400'>Variant {variant.index}</div>
-                            {variant.output ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={variant.imageSrc || variant.output.filepath}
-                                alt={variant.output.filename || `Generated ${variant.index}`}
-                                className='h-20 w-full rounded object-cover'
-                              />
-                            ) : (
-                              <div className='flex h-20 w-full items-center justify-center rounded border border-dashed border-border/70 text-[10px] text-gray-500'>
-                                {variant.status === 'pending' ? (
-                                  <span className='inline-flex items-center gap-1'>
-                                    {isRunInFlight ? <Loader2 className='size-3 animate-spin' /> : null}
-                                      Waiting
-                                  </span>
-                                ) : (
-                                  <span>Failed</span>
-                                )}
-                              </div>
-                            )}
-                          </button>
-                          <div className='mt-1 flex items-center justify-between gap-1'>
-                            <div className='flex items-center gap-1'>
-                              <Button
-                                size='xs'
-                                type='button'
-                                variant='ghost'
-                                onClick={(): void => {
-                                  setCompareVariantIds((prev) => [variant.id, prev[1] === variant.id ? null : prev[1]]);
-                                }}
-                                title='Set as compare thumbnail 1'
-                                aria-pressed={isCompareA}
-                                className={cn('size-5 rounded bg-black/65 px-0 text-[10px] text-cyan-200 hover:bg-cyan-500/20 hover:text-cyan-100', isCompareA && 'bg-cyan-500/30 text-cyan-100')}
-                              >
-                                  1
-                              </Button>
-                              <Button
-                                size='xs'
-                                type='button'
-                                variant='ghost'
-                                onClick={(): void => {
-                                  setCompareVariantIds((prev) => [prev[0] === variant.id ? null : prev[0], variant.id]);
-                                }}
-                                title='Set as compare thumbnail 2'
-                                aria-pressed={isCompareB}
-                                className={cn('size-5 rounded bg-black/65 px-0 text-[10px] text-amber-200 hover:bg-amber-500/20 hover:text-amber-100', isCompareB && 'bg-amber-500/30 text-amber-100')}
-                              >
-                                  2
-                              </Button>
-                            </div>
-                            <div className='flex items-center gap-1'>
-                              <Button
-                                size='xs'
-                                type='button'
-                                variant='ghost'
-                                onClick={(): void => handleOpenVariantDetails(variant)}
-                                aria-label={`View variant ${variant.index} details`}
-                                title='View variant details'
-                                className='size-6 rounded bg-black/65 hover:bg-blue-500/20'
-                              >
-                                <Eye className='size-4 shrink-0 stroke-[2.25] text-blue-200' />
-                              </Button>
-                              {canDeleteVariant ? (
-                                <Button
-                                  size='xs'
-                                  type='button'
-                                  variant='ghost'
-                                  onClick={(): void => handleDeleteVariant(variant)}
-                                  disabled={deleteSlotMutation.isPending}
-                                  aria-label={`Delete variant ${variant.index}`}
-                                  title='Delete variant'
-                                  className='size-6 rounded bg-black/65 hover:bg-red-500/20'
-                                >
-                                  <Trash2 className='size-4 shrink-0 stroke-[2.25] text-red-200' />
-                                </Button>
-                              ) : null}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : visibleVariantThumbnails.length > 0 ? (
-                  <div className='px-2 py-3 text-xs text-gray-500'>
-                      No variants match this timestamp search.
-                  </div>
-                ) : (
-                  <div className='px-2 py-3 text-xs text-gray-500'>
-                      Start generation to prepare output slots under the canvas.
-                  </div>
-                )}
-                {activeRunError ? (
-                  <div className='mt-2 flex items-start justify-between gap-2 rounded border border-red-500/30 bg-red-500/10 p-2'>
-                    <div className='text-[11px] text-red-300'>{activeRunError}</div>
-                    <Button
-                      type='button'
-                      size='xs'
-                      variant='ghost'
-                      className='h-6 shrink-0 px-2 text-[10px] text-red-200 hover:text-red-100'
-                      onClick={clearActiveRunError}
-                    >
-                        Dismiss
-                    </Button>
-                  </div>
-                ) : null}
-              </div>
-            </div>
+            <VariantPanel
+              activeRunError={activeRunError}
+              activeVariantId={activeVariantId}
+              compareVariantA={compareVariantA}
+              compareVariantB={compareVariantB}
+              compareVariantIds={compareVariantIds}
+              deletePending={deleteSlotMutation.isPending}
+              filteredVariantThumbnails={filteredVariantThumbnails}
+              isRunInFlight={isRunInFlight}
+              variantLoadingId={variantLoadingId}
+              variantTimestampQuery={variantTimestampQuery}
+              visibleVariantThumbnails={visibleVariantThumbnails}
+              onClearCompare={(): void => setCompareVariantIds([null, null])}
+              onDeleteVariant={handleDeleteVariant}
+              onDismissRunError={clearActiveRunError}
+              onLoadVariantToCanvas={handleLoadVariantToCanvas}
+              onOpenVariantDetails={handleOpenVariantDetails}
+              onSetCompareVariantA={(variantId): void => {
+                setCompareVariantIds((prev) => [variantId, prev[1] === variantId ? null : prev[1]]);
+              }}
+              onSetCompareVariantB={(variantId): void => {
+                setCompareVariantIds((prev) => [prev[0] === variantId ? null : prev[0], variantId]);
+              }}
+              onVariantTimestampQueryChange={setVariantTimestampQuery}
+              onVariantTooltipLeave={(): void => setVariantTooltip(null)}
+              onVariantTooltipMove={handleVariantTooltipMove}
+            />
           ) : null}
         </div>
         {showVariantPanel ? <div id={IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID} className='shrink-0' /> : null}

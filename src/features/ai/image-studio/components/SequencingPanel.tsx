@@ -6,6 +6,7 @@ import {
   Loader2,
   Play,
   Square,
+  Trash2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -31,6 +32,7 @@ import {
   type ImageStudioSequenceOperation,
   type ImageStudioSequencePreset,
   type ImageStudioSequenceStep,
+  type ImageStudioSequenceStepRuntime,
   type ImageStudioSequenceUpscaleStep,
 } from '../utils/studio-settings';
 
@@ -96,6 +98,10 @@ const STEP_ON_FAILURE_OPTIONS = [
   { value: 'continue', label: 'Continue (Mark Failed)' },
   { value: 'skip', label: 'Skip Step' },
 ];
+const STEP_RUNTIME_OPTIONS = [
+  { value: 'server', label: 'Server' },
+  { value: 'client', label: 'Client' },
+];
 const PRESET_NAME_MAX_LENGTH = 72;
 
 const PROJECT_SEQUENCE_OPERATION_LABELS: Record<ImageStudioSequenceOperation, string> = {
@@ -118,6 +124,7 @@ const createStepForOperation = (
     return {
       id,
       type: 'crop_center',
+      runtime: 'server',
       enabled: false,
       label: null,
       onFailure: 'stop',
@@ -138,6 +145,7 @@ const createStepForOperation = (
     return {
       id,
       type: 'mask',
+      runtime: 'server',
       enabled: false,
       label: null,
       onFailure: 'stop',
@@ -159,6 +167,7 @@ const createStepForOperation = (
     return {
       id,
       type: 'upscale',
+      runtime: 'server',
       enabled: false,
       label: null,
       onFailure: 'stop',
@@ -178,6 +187,7 @@ const createStepForOperation = (
   return {
     id,
     type: operation,
+    runtime: 'server',
     enabled: false,
     label: null,
     onFailure: 'stop',
@@ -192,27 +202,6 @@ const createStepForOperation = (
       referencePolicy: 'inherit',
     },
   };
-};
-
-const ensureSequenceOperationCoverage = (
-  steps: ImageStudioSequenceStep[],
-): ImageStudioSequenceStep[] => {
-  const next: ImageStudioSequenceStep[] = [];
-  const seen = new Set<ImageStudioSequenceOperation>();
-
-  for (const step of steps) {
-    if (seen.has(step.type)) continue;
-    seen.add(step.type);
-    next.push(step);
-  }
-
-  for (const operation of IMAGE_STUDIO_SEQUENCE_OPERATIONS) {
-    if (seen.has(operation)) continue;
-    seen.add(operation);
-    next.push(createStepForOperation(operation, next.length));
-  }
-
-  return next;
 };
 
 const deriveLegacySequencingFields = (steps: ImageStudioSequenceStep[]): {
@@ -375,15 +364,13 @@ export function SequencingPanel(): React.JSX.Element {
   } | null>(null);
 
   const editableSequenceSteps = useMemo(
-    () => ensureSequenceOperationCoverage(
-      normalizeImageStudioSequenceSteps(studioSettings.projectSequencing.steps, {
-        fallbackOperations: studioSettings.projectSequencing.operations,
-        upscaleStrategy: studioSettings.projectSequencing.upscaleStrategy,
-        upscaleScale: studioSettings.projectSequencing.upscaleScale,
-        upscaleTargetWidth: studioSettings.projectSequencing.upscaleTargetWidth,
-        upscaleTargetHeight: studioSettings.projectSequencing.upscaleTargetHeight,
-      }),
-    ),
+    () => normalizeImageStudioSequenceSteps(studioSettings.projectSequencing.steps, {
+      fallbackOperations: studioSettings.projectSequencing.operations,
+      upscaleStrategy: studioSettings.projectSequencing.upscaleStrategy,
+      upscaleScale: studioSettings.projectSequencing.upscaleScale,
+      upscaleTargetWidth: studioSettings.projectSequencing.upscaleTargetWidth,
+      upscaleTargetHeight: studioSettings.projectSequencing.upscaleTargetHeight,
+    }),
     [
       studioSettings.projectSequencing.steps,
       studioSettings.projectSequencing.operations,
@@ -417,15 +404,13 @@ export function SequencingPanel(): React.JSX.Element {
   );
   const normalizeStepsWithCurrentFallback = useCallback(
     (input: unknown): ImageStudioSequenceStep[] =>
-      ensureSequenceOperationCoverage(
-        normalizeImageStudioSequenceSteps(input, {
-          fallbackOperations: studioSettings.projectSequencing.operations,
-          upscaleStrategy: studioSettings.projectSequencing.upscaleStrategy,
-          upscaleScale: studioSettings.projectSequencing.upscaleScale,
-          upscaleTargetWidth: studioSettings.projectSequencing.upscaleTargetWidth,
-          upscaleTargetHeight: studioSettings.projectSequencing.upscaleTargetHeight,
-        }),
-      ),
+      normalizeImageStudioSequenceSteps(input, {
+        fallbackOperations: studioSettings.projectSequencing.operations,
+        upscaleStrategy: studioSettings.projectSequencing.upscaleStrategy,
+        upscaleScale: studioSettings.projectSequencing.upscaleScale,
+        upscaleTargetWidth: studioSettings.projectSequencing.upscaleTargetWidth,
+        upscaleTargetHeight: studioSettings.projectSequencing.upscaleTargetHeight,
+      }),
     [
       studioSettings.projectSequencing.operations,
       studioSettings.projectSequencing.upscaleStrategy,
@@ -599,24 +584,20 @@ export function SequencingPanel(): React.JSX.Element {
   const mutateSteps = useCallback(
     (updater: (steps: ImageStudioSequenceStep[]) => ImageStudioSequenceStep[]) => {
       setStudioSettings((prev) => {
-        const currentSteps = ensureSequenceOperationCoverage(
-          normalizeImageStudioSequenceSteps(prev.projectSequencing.steps, {
-            fallbackOperations: prev.projectSequencing.operations,
-            upscaleStrategy: prev.projectSequencing.upscaleStrategy,
-            upscaleScale: prev.projectSequencing.upscaleScale,
-            upscaleTargetWidth: prev.projectSequencing.upscaleTargetWidth,
-            upscaleTargetHeight: prev.projectSequencing.upscaleTargetHeight,
-          }),
-        );
-        const updatedSteps = ensureSequenceOperationCoverage(
-          normalizeImageStudioSequenceSteps(updater(currentSteps), {
-            fallbackOperations: prev.projectSequencing.operations,
-            upscaleStrategy: prev.projectSequencing.upscaleStrategy,
-            upscaleScale: prev.projectSequencing.upscaleScale,
-            upscaleTargetWidth: prev.projectSequencing.upscaleTargetWidth,
-            upscaleTargetHeight: prev.projectSequencing.upscaleTargetHeight,
-          }),
-        );
+        const currentSteps = normalizeImageStudioSequenceSteps(prev.projectSequencing.steps, {
+          fallbackOperations: prev.projectSequencing.operations,
+          upscaleStrategy: prev.projectSequencing.upscaleStrategy,
+          upscaleScale: prev.projectSequencing.upscaleScale,
+          upscaleTargetWidth: prev.projectSequencing.upscaleTargetWidth,
+          upscaleTargetHeight: prev.projectSequencing.upscaleTargetHeight,
+        });
+        const updatedSteps = normalizeImageStudioSequenceSteps(updater(currentSteps), {
+          fallbackOperations: prev.projectSequencing.operations,
+          upscaleStrategy: prev.projectSequencing.upscaleStrategy,
+          upscaleScale: prev.projectSequencing.upscaleScale,
+          upscaleTargetWidth: prev.projectSequencing.upscaleTargetWidth,
+          upscaleTargetHeight: prev.projectSequencing.upscaleTargetHeight,
+        });
 
         const legacy = deriveLegacySequencingFields(updatedSteps);
 
@@ -696,7 +677,14 @@ export function SequencingPanel(): React.JSX.Element {
         const next = [...steps];
         const sourceIndex = next.findIndex((step) => step.type === operation);
         const pivotIndex = next.findIndex((step) => step.type === targetOperation);
-        if (sourceIndex < 0 || pivotIndex < 0) return next;
+        if (pivotIndex < 0) return next;
+
+        if (sourceIndex < 0) {
+          const created = createStepForOperation(operation, next.length);
+          const insertIndex = position === 'before' ? pivotIndex : pivotIndex + 1;
+          next.splice(insertIndex, 0, created);
+          return next;
+        }
 
         const [moved] = next.splice(sourceIndex, 1);
         if (!moved) return next;
@@ -713,6 +701,13 @@ export function SequencingPanel(): React.JSX.Element {
         next.splice(insertIndex, 0, moved);
         return next;
       });
+    },
+    [mutateSteps],
+  );
+
+  const removeSequenceOperationFromStack = useCallback(
+    (operation: ImageStudioSequenceOperation): void => {
+      mutateSteps((steps) => steps.filter((step) => step.type !== operation));
     },
     [mutateSteps],
   );
@@ -1277,16 +1272,42 @@ export function SequencingPanel(): React.JSX.Element {
                       <span className='text-gray-500'>#{index + 1}</span>
                     </label>
                   </div>
-                  {isDragSource ? (
-                    <span className='text-[10px] uppercase tracking-wide text-blue-300'>
-                      Dragging
-                    </span>
-                  ) : null}
+                  <div className='flex items-center gap-2'>
+                    {isDragSource ? (
+                      <span className='text-[10px] uppercase tracking-wide text-blue-300'>
+                        Dragging
+                      </span>
+                    ) : null}
+                    <button
+                      type='button'
+                      onClick={(): void => removeSequenceOperationFromStack(operation)}
+                      className='inline-flex h-6 w-6 items-center justify-center rounded border border-red-400/40 bg-red-500/10 text-red-200 transition-colors hover:bg-red-500/20 hover:text-red-100'
+                      aria-label={`Remove ${PROJECT_SEQUENCE_OPERATION_LABELS[operation]} from stack`}
+                      title={`Remove ${PROJECT_SEQUENCE_OPERATION_LABELS[operation]} from stack`}
+                    >
+                      <Trash2 className='size-3.5' />
+                    </button>
+                  </div>
                 </div>
 
                 {enabled ? (
                   <div className='mt-2 space-y-2 rounded border border-border/40 bg-foreground/5 p-2'>
-                    <div className='grid grid-cols-1 gap-2 sm:grid-cols-3'>
+                    <div className='grid grid-cols-1 gap-2 sm:grid-cols-4'>
+                      <SelectSimple
+                        size='sm'
+                        value={step.runtime}
+                        onValueChange={(value: string) => {
+                          if (value !== 'server' && value !== 'client') return;
+                          const runtime: ImageStudioSequenceStepRuntime = value;
+                          updateStep(operation, (current) => ({
+                            ...current,
+                            runtime,
+                          }));
+                        }}
+                        options={STEP_RUNTIME_OPTIONS}
+                        triggerClassName='h-8 text-xs'
+                        ariaLabel={`${operation} runtime`}
+                      />
                       <SelectSimple
                         size='sm'
                         value={step.onFailure}

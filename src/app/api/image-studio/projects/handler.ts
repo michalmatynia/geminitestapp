@@ -16,6 +16,8 @@ const sanitizeProjectId = (value: string): string =>
 
 const createProjectSchema = z.object({
   projectId: z.string().min(1).max(120),
+  canvasWidthPx: z.number().int().min(64).max(32_768).nullable().optional(),
+  canvasHeightPx: z.number().int().min(64).max(32_768).nullable().optional(),
 });
 
 const parseTimestamp = (value: unknown, fallback: string): string => {
@@ -23,6 +25,13 @@ const parseTimestamp = (value: unknown, fallback: string): string => {
   const parsedMs = Date.parse(value);
   if (!Number.isFinite(parsedMs)) return fallback;
   return new Date(parsedMs).toISOString();
+};
+
+const parseCanvasDimension = (value: unknown): number | null => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  const normalized = Math.floor(value);
+  if (normalized < 64 || normalized > 32_768) return null;
+  return normalized;
 };
 
 const resolveProjectSummary = async (projectId: string): Promise<ImageStudioProjectRecord | null> => {
@@ -48,6 +57,8 @@ const resolveProjectSummary = async (projectId: string): Promise<ImageStudioProj
       id: projectId,
       createdAt: fallbackCreatedAt,
       updatedAt: fallbackUpdatedAt,
+      canvasWidthPx: null,
+      canvasHeightPx: null,
     };
   }
 
@@ -58,6 +69,8 @@ const resolveProjectSummary = async (projectId: string): Promise<ImageStudioProj
         id: projectId,
         createdAt: fallbackCreatedAt,
         updatedAt: fallbackUpdatedAt,
+        canvasWidthPx: null,
+        canvasHeightPx: null,
       };
     }
     const metadata = parsed as Record<string, unknown>;
@@ -66,23 +79,41 @@ const resolveProjectSummary = async (projectId: string): Promise<ImageStudioProj
       id: projectId,
       createdAt: parseTimestamp(metadata['createdAt'], fallbackCreatedAt),
       updatedAt: parseTimestamp(metadata['updatedAt'], fallbackUpdatedAt),
+      canvasWidthPx: parseCanvasDimension(metadata['canvasWidthPx']),
+      canvasHeightPx: parseCanvasDimension(metadata['canvasHeightPx']),
     };
   } catch {
     return {
       id: projectId,
       createdAt: fallbackCreatedAt,
       updatedAt: fallbackUpdatedAt,
+      canvasWidthPx: null,
+      canvasHeightPx: null,
     };
   }
 };
 
-const upsertProjectSummary = async (projectId: string): Promise<ImageStudioProjectRecord> => {
+const upsertProjectSummary = async (
+  projectId: string,
+  options?: {
+    canvasWidthPx?: number | null;
+    canvasHeightPx?: number | null;
+  },
+): Promise<ImageStudioProjectRecord> => {
   const existing = await resolveProjectSummary(projectId);
   const nowIso = new Date().toISOString();
   const nextSummary: ImageStudioProjectRecord = {
     id: projectId,
     createdAt: existing?.createdAt ?? nowIso,
     updatedAt: nowIso,
+    canvasWidthPx:
+      options?.canvasWidthPx !== undefined
+        ? options.canvasWidthPx
+        : (existing?.canvasWidthPx ?? null),
+    canvasHeightPx:
+      options?.canvasHeightPx !== undefined
+        ? options.canvasHeightPx
+        : (existing?.canvasHeightPx ?? null),
   };
 
   const projectDir = path.join(projectsRoot, projectId);
@@ -132,7 +163,14 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     throw badRequestError('Project id is required');
   }
 
-  const project = await upsertProjectSummary(sanitized);
+  const project = await upsertProjectSummary(sanitized, {
+    ...(parsed.data.canvasWidthPx !== undefined
+      ? { canvasWidthPx: parsed.data.canvasWidthPx }
+      : {}),
+    ...(parsed.data.canvasHeightPx !== undefined
+      ? { canvasHeightPx: parsed.data.canvasHeightPx }
+      : {}),
+  });
 
   return NextResponse.json({ projectId: sanitized, project });
 }

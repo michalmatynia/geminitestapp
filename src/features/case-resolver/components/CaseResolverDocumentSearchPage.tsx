@@ -95,7 +95,11 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
     onOpenFileFromSearch,
     onEditFileFromSearch,
   } = useCaseResolverPageContext();
-  const files = workspace.files;
+  const files = useMemo(
+    (): CaseResolverFile[] =>
+      workspace.files.filter((file: CaseResolverFile): boolean => file.fileType !== 'case'),
+    [workspace.files]
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFileType, setSelectedFileType] = useState<FileTypeFilter>('all');
   const [selectedTagId, setSelectedTagId] = useState<string>('__all__');

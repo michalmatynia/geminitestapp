@@ -532,6 +532,38 @@ export default function ProductImageManager({
             });
           };
 
+          const reportRemoveImageError = (error: unknown): void => {
+            pushDebug({
+              action: 'remove-image',
+              message:
+                error instanceof Error
+                  ? error.message
+                  : 'Failed to remove image',
+              slotIndex: index,
+            });
+          };
+
+          const clearVisibleImage = (): void => {
+            void (async (): Promise<void> => {
+              if (hasUpload) {
+                await handleSlotDisconnectImage(index);
+              }
+              if (hasBase64) {
+                setImageBase64At(index, '');
+              }
+              if (hasLink) {
+                setImageLinkAt(index, '');
+              }
+              setSlotViewModes((prev: SlotViewMode[]) => {
+                const next = [...prev];
+                next[index] = 'upload';
+                return next;
+              });
+            })().catch((error: unknown) => {
+              reportRemoveImageError(error);
+            });
+          };
+
           const actionsMenu = (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -584,18 +616,7 @@ export default function ProductImageManager({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={!hasUpload}
-                  onClick={() => {
-                    handleSlotDisconnectImage(index).catch((error: unknown) => {
-                      pushDebug({
-                        action: 'remove-image',
-                        message:
-                          error instanceof Error
-                            ? error.message
-                            : 'Failed to remove image',
-                        slotIndex: index,
-                      });
-                    });
-                  }}
+                  onClick={clearVisibleImage}
                 >
                   Clear upload
                 </DropdownMenuItem>
@@ -677,25 +698,14 @@ export default function ProductImageManager({
                         }}
                       />
                     )}
-                    {hasUpload ? (
+                    {displayUrl ? (
                       <Button
                         type='button'
                         variant='destructive'
                         size='icon'
                         className='absolute right-0 top-0 h-6 w-6 rounded-full'
-                        onClick={() => {
-                          handleSlotDisconnectImage(index).catch((error: unknown) => {
-                            pushDebug({
-                              action: 'remove-image',
-                              message:
-                                error instanceof Error
-                                  ? error.message
-                                  : 'Failed to remove image',
-                              slotIndex: index,
-                            });
-                          });
-                        }}
-                        aria-label={`Remove image ${index + 1}`}
+                        onClick={clearVisibleImage}
+                        aria-label={`Remove image from slot ${index + 1}`}
                       >
                         <XIcon className='h-4 w-4' />
                       </Button>

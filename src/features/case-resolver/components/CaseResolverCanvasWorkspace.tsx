@@ -431,7 +431,9 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   } = useCaseResolverPageContext();
   const graph = activeFile!.graph;
   const defaultDropFolder = activeFile!.folder;
-  const availableFiles = workspace.files;
+  const availableFiles = workspace.files.filter(
+    (file: CaseResolverFile): boolean => file.fileType !== 'case'
+  );
   const { toast } = useToast();
   const { viewportRef, canvasRef } = useCanvasRefs();
   const { view } = useCanvasState();

@@ -12,7 +12,7 @@ import {
   Trash2,
   Unlink,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { VectorPoint, VectorShape, VectorShapeType, VectorToolMode } from '@/shared/types/domain/vector';
 import { cn } from '@/shared/utils';
@@ -128,10 +128,20 @@ export function resolveRectResizePoints(
 
   const scaleFromCenter = options?.scaleFromCenter ?? false;
   const lockSquare = options?.lockSquare ?? false;
-  const viewportOptions = {
-    viewportWidth: options?.viewportWidth,
-    viewportHeight: options?.viewportHeight,
-    centeredSquareExponent: options?.centeredSquareExponent,
+  const viewportOptions: {
+    viewportWidth?: number;
+    viewportHeight?: number;
+    centeredSquareExponent?: number;
+  } = {
+    ...(typeof options?.viewportWidth === 'number'
+      ? { viewportWidth: options.viewportWidth }
+      : {}),
+    ...(typeof options?.viewportHeight === 'number'
+      ? { viewportHeight: options.viewportHeight }
+      : {}),
+    ...(typeof options?.centeredSquareExponent === 'number'
+      ? { centeredSquareExponent: options.centeredSquareExponent }
+      : {}),
   };
 
   if (scaleFromCenter) {
@@ -341,7 +351,10 @@ export interface VectorCanvasProps {
   maskPreviewFeather?: number;
   showCenterGuides?: boolean;
   enableTwoFingerRotate?: boolean;
+  baseCanvasWidthPx?: number | null;
+  baseCanvasHeightPx?: number | null;
   onViewCropRectChange?: (cropRect: VectorCanvasViewCropRect | null) => void;
+  showCanvasGrid?: boolean;
   className?: string;
 }
 
@@ -365,7 +378,10 @@ export function VectorCanvas({
   maskPreviewFeather = 0,
   showCenterGuides = false,
   enableTwoFingerRotate = false,
+  baseCanvasWidthPx = null,
+  baseCanvasHeightPx = null,
   onViewCropRectChange,
+  showCanvasGrid = false,
   className,
 }: VectorCanvasProps): React.JSX.Element {
   const SHAPE_VIEWBOX_SIZE = 1000;
@@ -396,6 +412,22 @@ export function VectorCanvas({
   const emittedViewCropRectRef = useRef<VectorCanvasViewCropRect | null>(null);
   const panRafIdRef = useRef<number>(0);
   const pendingPanRef = useRef<{ panX: number; panY: number } | null>(null);
+  const resolvedBaseCanvasWidth = useMemo(() => {
+    if (typeof baseCanvasWidthPx !== 'number' || !Number.isFinite(baseCanvasWidthPx)) {
+      return null;
+    }
+    const normalized = Math.floor(baseCanvasWidthPx);
+    if (normalized < 64 || normalized > 32_768) return null;
+    return normalized;
+  }, [baseCanvasWidthPx]);
+  const resolvedBaseCanvasHeight = useMemo(() => {
+    if (typeof baseCanvasHeightPx !== 'number' || !Number.isFinite(baseCanvasHeightPx)) {
+      return null;
+    }
+    const normalized = Math.floor(baseCanvasHeightPx);
+    if (normalized < 64 || normalized > 32_768) return null;
+    return normalized;
+  }, [baseCanvasHeightPx]);
   const touchGestureRef = useRef<{
     initialDistance: number;
     initialAngleRad: number;
@@ -602,10 +634,26 @@ export function VectorCanvas({
     const imageRenderHeight = canvasRenderSize.height;
     if (!(imageRenderWidth > 0 && imageRenderHeight > 0)) return null;
 
-    const imageLeft = (containerWidth - imageRenderWidth) / 2;
-    const imageRight = imageLeft + imageRenderWidth;
-    const imageTop = 0;
-    const imageBottom = imageRenderHeight;
+    const imageElementLeft = (containerWidth - imageRenderWidth) / 2;
+    const imageElementTop = 0;
+    const renderAspect = imageRenderWidth / imageRenderHeight;
+    const sourceAspect = sourceWidth / sourceHeight;
+    let contentWidth = imageRenderWidth;
+    let contentHeight = imageRenderHeight;
+
+    if (sourceAspect > 0 && Number.isFinite(sourceAspect)) {
+      if (sourceAspect > renderAspect) {
+        contentHeight = imageRenderWidth / sourceAspect;
+      } else {
+        contentWidth = imageRenderHeight * sourceAspect;
+      }
+    }
+    if (!(contentWidth > 0 && contentHeight > 0)) return null;
+
+    const imageLeft = imageElementLeft + (imageRenderWidth - contentWidth) / 2;
+    const imageRight = imageLeft + contentWidth;
+    const imageTop = imageElementTop;
+    const imageBottom = imageTop + contentHeight;
 
     const viewTransformSnapshot = viewTransformRef.current;
     const visibleQuad = [
@@ -623,10 +671,10 @@ export function VectorCanvas({
     const visibleMaxY = Math.min(imageBottom, Math.max(...ys));
     if (!(visibleMaxX > visibleMinX && visibleMaxY > visibleMinY)) return null;
 
-    const normalizedLeft = clampUnit((visibleMinX - imageLeft) / imageRenderWidth);
-    const normalizedRight = clampUnit((visibleMaxX - imageLeft) / imageRenderWidth);
-    const normalizedTop = clampUnit((visibleMinY - imageTop) / imageRenderHeight);
-    const normalizedBottom = clampUnit((visibleMaxY - imageTop) / imageRenderHeight);
+    const normalizedLeft = clampUnit((visibleMinX - imageLeft) / contentWidth);
+    const normalizedRight = clampUnit((visibleMaxX - imageLeft) / contentWidth);
+    const normalizedTop = clampUnit((visibleMinY - imageTop) / contentHeight);
+    const normalizedBottom = clampUnit((visibleMaxY - imageTop) / contentHeight);
     if (!(normalizedRight > normalizedLeft && normalizedBottom > normalizedTop)) return null;
 
     const cropLeft = Math.max(0, Math.min(Math.floor(normalizedLeft * sourceWidth), sourceWidth - 1));
@@ -906,21 +954,45 @@ export function VectorCanvas({
 
     let width = cw;
     let height = ch;
+    let fitMaxWidth = cw;
+    let fitMaxHeight = ch;
 
-    if (src && imgRef.current) {
-      const img = imgRef.current;
-      const nw = img.naturalWidth;
-      const nh = img.naturalHeight;
-      if (nw > 0 && nh > 0) {
-        const imageAspect = nw / nh;
-        const containerAspect = cw / ch;
-        if (imageAspect > containerAspect) {
-          width = cw;
-          height = Math.max(1, Math.round(cw / imageAspect));
-        } else {
-          height = ch;
-          width = Math.max(1, Math.round(ch * imageAspect));
-        }
+    let targetAspect: number | null = null;
+
+    let referenceWidth = resolvedBaseCanvasWidth;
+    let referenceHeight = resolvedBaseCanvasHeight;
+
+    if ((referenceWidth === null || referenceHeight === null) && src && imgRef.current) {
+      const image = imgRef.current;
+      const naturalWidth = image.naturalWidth;
+      const naturalHeight = image.naturalHeight;
+      if (naturalWidth > 0 && naturalHeight > 0) {
+        referenceWidth = naturalWidth;
+        referenceHeight = naturalHeight;
+      }
+    }
+
+    if (
+      typeof referenceWidth === 'number' &&
+      Number.isFinite(referenceWidth) &&
+      referenceWidth > 0 &&
+      typeof referenceHeight === 'number' &&
+      Number.isFinite(referenceHeight) &&
+      referenceHeight > 0
+    ) {
+      targetAspect = referenceWidth / referenceHeight;
+      fitMaxWidth = Math.max(1, Math.min(cw, Math.round(referenceWidth)));
+      fitMaxHeight = Math.max(1, Math.min(ch, Math.round(referenceHeight)));
+    }
+
+    if (targetAspect && targetAspect > 0) {
+      const containerAspect = fitMaxWidth / fitMaxHeight;
+      if (targetAspect > containerAspect) {
+        width = fitMaxWidth;
+        height = Math.max(1, Math.round(fitMaxWidth / targetAspect));
+      } else {
+        height = fitMaxHeight;
+        width = Math.max(1, Math.round(fitMaxHeight * targetAspect));
       }
     }
 
@@ -934,7 +1006,7 @@ export function VectorCanvas({
         : { width, height }
     );
     scheduleDraw();
-  }, [scheduleDraw, src]);
+  }, [resolvedBaseCanvasHeight, resolvedBaseCanvasWidth, scheduleDraw, src]);
 
   useEffect(() => {
     syncCanvasSize();
@@ -954,7 +1026,7 @@ export function VectorCanvas({
     setIsPanning(false);
     panningRef.current = false;
     touchGestureRef.current = null;
-  }, [src]);
+  }, [resolvedBaseCanvasHeight, resolvedBaseCanvasWidth, src]);
 
   // Re-draw when shapes/selection/mask-preview change (draw callback updates)
   useEffect(() => {
@@ -1670,6 +1742,13 @@ export function VectorCanvas({
     viewTransform.panX !== 0 ||
     viewTransform.panY !== 0 ||
     Math.abs(viewTransform.rotateDeg) > 1e-3;
+  const canvasGridLayer = showCanvasGrid ? (
+    <div
+      className='pointer-events-none absolute left-1/2 top-0 z-[5] -translate-x-1/2 border border-slate-700/70 bg-slate-900 [background-size:24px_24px] [background-image:linear-gradient(to_right,rgba(148,163,184,0.16)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.16)_1px,transparent_1px)]'
+      style={{ width: `${canvasRenderSize.width}px`, height: `${canvasRenderSize.height}px` }}
+      aria-hidden='true'
+    />
+  ) : null;
 
   return (
     <div
@@ -1698,12 +1777,14 @@ export function VectorCanvas({
                 : undefined
             }
           >
+            {canvasGridLayer}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               ref={imgRef}
               src={src}
               alt='Selected slot'
-              className='pointer-events-none absolute inset-0 h-full w-full select-none object-contain object-top'
+              className='pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 select-none object-contain object-top'
+              style={{ width: `${canvasRenderSize.width}px`, height: `${canvasRenderSize.height}px` }}
               onLoad={() => syncCanvasSize()}
               draggable={false}
             />
@@ -1826,7 +1907,7 @@ export function VectorCanvas({
           {allowWithoutImage ? (
             <div
               ref={viewportRef}
-              className='absolute inset-0'
+              className='relative h-full w-full'
               style={
                 viewTransform.scale !== 1 ||
                 viewTransform.panX !== 0 ||
@@ -1840,10 +1921,11 @@ export function VectorCanvas({
                   : undefined
               }
             >
+              {canvasGridLayer}
               <canvas
                 ref={canvasRef}
                 className={cn(
-                  'absolute inset-0 z-20',
+                  'absolute left-1/2 top-0 z-20 -translate-x-1/2',
                   isPanning
                     ? 'cursor-grabbing'
                     : isDraggingEditablePoint
@@ -1854,6 +1936,7 @@ export function VectorCanvas({
                           ? 'cursor-grab'
                           : 'cursor-crosshair'
                 )}
+                style={{ width: `${canvasRenderSize.width}px`, height: `${canvasRenderSize.height}px` }}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
@@ -1865,7 +1948,8 @@ export function VectorCanvas({
                 onContextMenu={(event) => event.preventDefault()}
               />
               <svg
-                className='pointer-events-none absolute inset-0 z-[21]'
+                className='pointer-events-none absolute left-1/2 top-0 z-[21] -translate-x-1/2'
+                style={{ width: `${canvasRenderSize.width}px`, height: `${canvasRenderSize.height}px` }}
                 viewBox={`0 0 ${SHAPE_VIEWBOX_SIZE} ${SHAPE_VIEWBOX_SIZE}`}
                 preserveAspectRatio='none'
                 aria-hidden='true'
@@ -1941,7 +2025,11 @@ export function VectorCanvas({
                 })}
               </svg>
               {showCenterGuides ? (
-                <div className='pointer-events-none absolute inset-0 z-[22]' aria-hidden='true'>
+                <div
+                  className='pointer-events-none absolute left-1/2 top-0 z-[22] -translate-x-1/2'
+                  style={{ width: `${canvasRenderSize.width}px`, height: `${canvasRenderSize.height}px` }}
+                  aria-hidden='true'
+                >
                   <div className='absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-cyan-300/80 shadow-[0_0_0_1px_rgba(2,6,23,0.55)]' />
                   <div className='absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-cyan-300/80 shadow-[0_0_0_1px_rgba(2,6,23,0.55)]' />
                   <div className='absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-100/90 bg-cyan-400/90 shadow-[0_0_0_1px_rgba(2,6,23,0.65)]' />

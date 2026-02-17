@@ -7,9 +7,6 @@ import { useCategoryMapperPageContext } from '@/features/integrations/context/Ca
 
 import { BaseProducerMapper } from './BaseProducerMapper';
 import { BaseTagMapper } from './BaseTagMapper';
-import { CategoryMapperCatalogSelector } from './CategoryMapperCatalogSelector';
-import { CategoryMapperHeader } from './CategoryMapperHeader';
-import { CategoryMapperStats } from './CategoryMapperStats';
 import { CategoryMapperTable } from './CategoryMapperTable';
 
 export function BaseCategoryMapper(): React.JSX.Element {
@@ -24,9 +21,6 @@ export function BaseCategoryMapper(): React.JSX.Element {
       connectionName={selectedConnection.name}
     >
       <div className='space-y-6'>
-        <CategoryMapperHeader />
-        <CategoryMapperCatalogSelector />
-        <CategoryMapperStats />
         <CategoryMapperTable />
         <BaseProducerMapper />
         <BaseTagMapper />

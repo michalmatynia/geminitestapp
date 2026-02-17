@@ -26,6 +26,7 @@ import {
 } from '@/features/ai/image-studio/server/upscale-utils';
 import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
 import {
+  normalizeImageStudioSequenceSteps,
   parseImageStudioSettings,
   resolveImageStudioSequenceActiveSteps,
   type ImageStudioSequenceCropStep,
@@ -928,15 +929,21 @@ export async function executeImageStudioSequenceStep(
 export function resolveSequenceStepsForExecution(
   run: ImageStudioSequenceRunRecord,
 ): ImageStudioSequenceStep[] {
-  if (Array.isArray(run.request.steps) && run.request.steps.length > 0) {
-    return run.request.steps;
-  }
-
   const parsedSettings = parseImageStudioSettings(
     run.request.studioSettings
       ? JSON.stringify(run.request.studioSettings)
       : null,
   );
+
+  if (Array.isArray(run.request.steps) && run.request.steps.length > 0) {
+    return normalizeImageStudioSequenceSteps(run.request.steps, {
+      fallbackOperations: run.request.steps.map((step) => step.type),
+      upscaleStrategy: parsedSettings.projectSequencing.upscaleStrategy,
+      upscaleScale: parsedSettings.projectSequencing.upscaleScale,
+      upscaleTargetWidth: parsedSettings.projectSequencing.upscaleTargetWidth,
+      upscaleTargetHeight: parsedSettings.projectSequencing.upscaleTargetHeight,
+    });
+  }
 
   return resolveImageStudioSequenceActiveSteps(parsedSettings.projectSequencing);
 }

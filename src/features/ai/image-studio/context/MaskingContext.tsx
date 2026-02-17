@@ -8,6 +8,7 @@ import { useToast } from '@/shared/ui';
 
 import { useProjectsState } from './ProjectsContext';
 import { useSlotsState } from './SlotsContext';
+import { sanitizeStudioProjectId } from '../utils/project-session';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,6 +29,239 @@ type MaskDetectionSettings = {
 const DEFAULT_MASK_DETECTION_SETTINGS: MaskDetectionSettings = {
   thresholdSensitivity: 55,
   edgeSensitivity: 55,
+};
+
+const IMAGE_STUDIO_MASK_STATE_LOCAL_KEY_PREFIX = 'image_studio_mask_state_';
+
+type MaskingProjectLocalState = {
+  version: 1;
+  projectId: string;
+  savedAt: string;
+  tool: VectorToolMode;
+  maskShapes: VectorShape[];
+  activeMaskId: string | null;
+  selectedPointIndex: number | null;
+  maskInvert: boolean;
+  maskFeather: number;
+  brushRadius: number;
+  maskGenMode: MaskGenerationMode;
+  slotMaskDetectionSettings: Record<string, MaskDetectionSettings>;
+};
+
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
+const asTrimmedString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const clampInt = (value: unknown, min: number, max: number, fallback: number): number => {
+  const numeric = typeof value === 'number' && Number.isFinite(value)
+    ? Math.round(value)
+    : fallback;
+  return Math.max(min, Math.min(max, numeric));
+};
+
+const normalizeTool = (value: unknown): VectorToolMode => {
+  if (
+    value === 'select' ||
+    value === 'polygon' ||
+    value === 'lasso' ||
+    value === 'rect' ||
+    value === 'ellipse' ||
+    value === 'brush'
+  ) {
+    return value;
+  }
+  return 'select';
+};
+
+const normalizeMaskGenMode = (value: unknown): MaskGenerationMode => {
+  if (
+    value === 'ai-polygon' ||
+    value === 'ai-bbox' ||
+    value === 'threshold' ||
+    value === 'edges'
+  ) {
+    return value;
+  }
+  return 'ai-polygon';
+};
+
+const normalizeMaskDetectionSettingsMap = (
+  value: unknown,
+): Record<string, MaskDetectionSettings> => {
+  const record = asRecord(value);
+  if (!record) return {};
+
+  const next: Record<string, MaskDetectionSettings> = {};
+  Object.entries(record).forEach(([key, candidate]) => {
+    const normalizedKey = key.trim();
+    if (!normalizedKey) return;
+    const entry = asRecord(candidate);
+    if (!entry) return;
+    next[normalizedKey] = {
+      thresholdSensitivity: clampInt(
+        entry['thresholdSensitivity'],
+        0,
+        100,
+        DEFAULT_MASK_DETECTION_SETTINGS.thresholdSensitivity,
+      ),
+      edgeSensitivity: clampInt(
+        entry['edgeSensitivity'],
+        0,
+        100,
+        DEFAULT_MASK_DETECTION_SETTINGS.edgeSensitivity,
+      ),
+    };
+  });
+  return next;
+};
+
+const normalizeMaskShape = (value: unknown, index: number): VectorShape | null => {
+  const record = asRecord(value);
+  if (!record) return null;
+
+  const type = record['type'];
+  if (
+    type !== 'polygon' &&
+    type !== 'lasso' &&
+    type !== 'rect' &&
+    type !== 'ellipse' &&
+    type !== 'brush'
+  ) {
+    return null;
+  }
+
+  const pointsRaw = Array.isArray(record['points']) ? record['points'] : [];
+  const points = pointsRaw
+    .map((point) => {
+      const pointRecord = asRecord(point);
+      if (!pointRecord) return null;
+      const x = typeof pointRecord['x'] === 'number' && Number.isFinite(pointRecord['x'])
+        ? pointRecord['x']
+        : null;
+      const y = typeof pointRecord['y'] === 'number' && Number.isFinite(pointRecord['y'])
+        ? pointRecord['y']
+        : null;
+      if (x === null || y === null) return null;
+      return { x, y };
+    })
+    .filter((point): point is { x: number; y: number } => Boolean(point));
+
+  if (points.length === 0) return null;
+
+  const normalizedId = asTrimmedString(record['id']) ?? `shape_${index + 1}`;
+  const normalizedName = asTrimmedString(record['name']) ?? `Shape ${index + 1}`;
+  const roleRaw = asTrimmedString(record['role']);
+  const role =
+    roleRaw === 'product' ||
+      roleRaw === 'shadow' ||
+      roleRaw === 'background' ||
+      roleRaw === 'custom'
+      ? roleRaw
+      : undefined;
+  const label = asTrimmedString(record['label']) ?? undefined;
+  const color = asTrimmedString(record['color']) ?? undefined;
+
+  return {
+    id: normalizedId,
+    name: normalizedName,
+    type,
+    points,
+    closed: typeof record['closed'] === 'boolean' ? record['closed'] : true,
+    visible: typeof record['visible'] === 'boolean' ? record['visible'] : true,
+    ...(label ? { label } : {}),
+    ...(role ? { role } : {}),
+    ...(color ? { color } : {}),
+  };
+};
+
+const normalizeMaskShapes = (value: unknown): VectorShape[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry, index) => normalizeMaskShape(entry, index))
+    .filter((entry): entry is VectorShape => Boolean(entry));
+};
+
+const getMaskStateLocalKey = (projectId: string): string | null => {
+  const normalized = projectId.trim();
+  if (!normalized) return null;
+  return `${IMAGE_STUDIO_MASK_STATE_LOCAL_KEY_PREFIX}${sanitizeStudioProjectId(normalized)}`;
+};
+
+const parseMaskingProjectLocalState = (
+  raw: string | null,
+  expectedProjectId: string,
+): MaskingProjectLocalState | null => {
+  if (!raw?.trim()) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  const record = asRecord(parsed);
+  if (!record) return null;
+
+  const storedProjectId = asTrimmedString(record['projectId']) ?? '';
+  const expected = expectedProjectId.trim();
+  if (!storedProjectId || !expected) return null;
+  if (
+    storedProjectId !== expected &&
+    sanitizeStudioProjectId(storedProjectId) !== sanitizeStudioProjectId(expected)
+  ) {
+    return null;
+  }
+
+  const selectedPointIndexRaw = record['selectedPointIndex'];
+  const selectedPointIndex =
+    typeof selectedPointIndexRaw === 'number' && Number.isFinite(selectedPointIndexRaw)
+      ? Math.max(0, Math.floor(selectedPointIndexRaw))
+      : null;
+
+  return {
+    version: 1,
+    projectId: storedProjectId,
+    savedAt: asTrimmedString(record['savedAt']) ?? '',
+    tool: normalizeTool(record['tool']),
+    maskShapes: normalizeMaskShapes(record['maskShapes']),
+    activeMaskId: asTrimmedString(record['activeMaskId']),
+    selectedPointIndex,
+    maskInvert: Boolean(record['maskInvert']),
+    maskFeather: clampInt(record['maskFeather'], 0, 100, 0),
+    brushRadius: clampInt(record['brushRadius'], 1, 64, 8),
+    maskGenMode: normalizeMaskGenMode(record['maskGenMode']),
+    slotMaskDetectionSettings: normalizeMaskDetectionSettingsMap(record['slotMaskDetectionSettings']),
+  };
+};
+
+const loadMaskingProjectLocalState = (
+  projectId: string,
+): MaskingProjectLocalState | null => {
+  if (typeof window === 'undefined') return null;
+  const key = getMaskStateLocalKey(projectId);
+  if (!key) return null;
+  const raw = window.localStorage.getItem(key);
+  return parseMaskingProjectLocalState(raw, projectId);
+};
+
+const saveMaskingProjectLocalState = (
+  projectId: string,
+  state: MaskingProjectLocalState,
+): void => {
+  if (typeof window === 'undefined') return;
+  const key = getMaskStateLocalKey(projectId);
+  if (!key) return;
+  try {
+    window.localStorage.setItem(key, JSON.stringify(state));
+  } catch {
+    // Best-effort local cache.
+  }
 };
 
 // ── Mask Utilities ───────────────────────────────────────────────────────────
@@ -194,17 +428,105 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
   const [slotMaskDetectionSettings, setSlotMaskDetectionSettings] = useState<Record<string, MaskDetectionSettings>>({});
 
   useEffect(() => {
-    setTool('select');
-    setMaskShapes([]);
-    setActiveMaskId(null);
-    setSelectedPointIndex(null);
-    setMaskInvert(false);
-    setMaskFeather(0);
-    setBrushRadius(8);
+    const normalizedProjectId = projectId.trim();
+    if (!normalizedProjectId) {
+      setTool('select');
+      setMaskShapes([]);
+      setActiveMaskId(null);
+      setSelectedPointIndex(null);
+      setMaskInvert(false);
+      setMaskFeather(0);
+      setBrushRadius(8);
+      setMaskGenLoading(false);
+      setMaskGenMode('ai-polygon');
+      setSlotMaskDetectionSettings({});
+      return;
+    }
+
+    const restored = loadMaskingProjectLocalState(normalizedProjectId);
+    const restoredShapes = restored?.maskShapes ?? [];
+    const restoredShapeIds = new Set(restoredShapes.map((shape) => shape.id));
+    const restoredActiveMaskId =
+      restored?.activeMaskId && restoredShapeIds.has(restored.activeMaskId)
+        ? restored.activeMaskId
+        : null;
+    const restoredActiveShape =
+      restoredActiveMaskId
+        ? restoredShapes.find((shape) => shape.id === restoredActiveMaskId) ?? null
+        : null;
+    const restoredSelectedPointIndex =
+      typeof restored?.selectedPointIndex === 'number' &&
+        Number.isFinite(restored.selectedPointIndex) &&
+        restored.selectedPointIndex >= 0 &&
+        restoredActiveShape &&
+        restored.selectedPointIndex < restoredActiveShape.points.length
+        ? restored.selectedPointIndex
+        : null;
+
+    setTool(restored?.tool ?? 'select');
+    setMaskShapes(restoredShapes);
+    setActiveMaskId(restoredActiveMaskId);
+    setSelectedPointIndex(restoredSelectedPointIndex);
+    setMaskInvert(restored?.maskInvert ?? false);
+    setMaskFeather(restored?.maskFeather ?? 0);
+    setBrushRadius(restored?.brushRadius ?? 8);
     setMaskGenLoading(false);
-    setMaskGenMode('ai-polygon');
-    setSlotMaskDetectionSettings({});
+    setMaskGenMode(restored?.maskGenMode ?? 'ai-polygon');
+    setSlotMaskDetectionSettings(restored?.slotMaskDetectionSettings ?? {});
   }, [projectId]);
+
+  useEffect(() => {
+    const normalizedProjectId = projectId.trim();
+    if (!normalizedProjectId) return;
+
+    const activeShape =
+      activeMaskId
+        ? maskShapes.find((shape) => shape.id === activeMaskId) ?? null
+        : null;
+    const persistedActiveMaskId = activeShape ? activeShape.id : null;
+    const persistedSelectedPointIndex =
+      typeof selectedPointIndex === 'number' &&
+        Number.isFinite(selectedPointIndex) &&
+        selectedPointIndex >= 0 &&
+        activeShape &&
+        selectedPointIndex < activeShape.points.length
+        ? selectedPointIndex
+        : null;
+    const persistedMaskFeather = Math.max(0, Math.min(100, Math.round(maskFeather)));
+    const persistedBrushRadius = Math.max(1, Math.min(64, Math.round(brushRadius)));
+
+    const timer = window.setTimeout(() => {
+      saveMaskingProjectLocalState(normalizedProjectId, {
+        version: 1,
+        projectId: normalizedProjectId,
+        savedAt: new Date().toISOString(),
+        tool,
+        maskShapes,
+        activeMaskId: persistedActiveMaskId,
+        selectedPointIndex: persistedSelectedPointIndex,
+        maskInvert,
+        maskFeather: persistedMaskFeather,
+        brushRadius: persistedBrushRadius,
+        maskGenMode,
+        slotMaskDetectionSettings,
+      });
+    }, 220);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [
+    projectId,
+    tool,
+    maskShapes,
+    activeMaskId,
+    selectedPointIndex,
+    maskInvert,
+    maskFeather,
+    brushRadius,
+    maskGenMode,
+    slotMaskDetectionSettings,
+  ]);
 
   const activeMaskDetectionKey = workingSlot?.id ?? selectedSlot?.id ?? '__global__';
   const maskDetectionSettings = slotMaskDetectionSettings[activeMaskDetectionKey] ?? DEFAULT_MASK_DETECTION_SETTINGS;

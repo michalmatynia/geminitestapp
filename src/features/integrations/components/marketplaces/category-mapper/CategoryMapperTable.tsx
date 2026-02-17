@@ -1,13 +1,16 @@
 'use client';
 
 import { ColumnDef, ExpandedState, Updater } from '@tanstack/react-table';
-import { ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { ChevronDown, ChevronRight, Check, Download, RefreshCw, Save } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 import type { ExternalCategory } from '@/features/integrations/types/category-mapping';
-import { Button, DataTable, SelectSimple } from '@/shared/ui';
+import { Button, DataTable, ListPanel } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+
+import { CategoryMapperCatalogSelector } from './CategoryMapperCatalogSelector';
+import { CategoryMapperStats } from './CategoryMapperStats';
 
 type CategoryRow = ExternalCategory & {
   subRows?: CategoryRow[] | undefined;
@@ -60,6 +63,7 @@ const buildCategoryTree = (categories: ExternalCategory[]): CategoryRow[] => {
 
 export function CategoryMapperTable(): React.JSX.Element {
   const {
+    connectionName,
     externalCategoriesLoading,
     mappingsLoading,
     externalCategories,
@@ -70,7 +74,11 @@ export function CategoryMapperTable(): React.JSX.Element {
     internalCategoryOptions,
     pendingMappings,
     expandedIds,
-    toggleExpand, // We might need to bypass this if we want full control or sync
+    toggleExpand,
+    handleFetchFromBase,
+    handleSave,
+    fetchMutation,
+    saveMutation,
   } = useCategoryMapper();
 
   const data = useMemo(() => buildCategoryTree(externalCategories), [externalCategories]);
@@ -85,18 +93,12 @@ export function CategoryMapperTable(): React.JSX.Element {
   }, [expandedIds]);
 
   const onExpandedChange = (_updater: Updater<ExpandedState>) => {
-    // We let the table handle expansion state internally for now,
-    // but we could sync it back to context if needed.
-    // Since the context initializes expansion for roots, and we pass `expanded` prop,
-    // we need to handle updates if we want interactive expansion.
-    
-    // However, we are using the toggle function from context directly in the cell renderer.
-    // So this handler might not be triggered by the table's default expanders if we don't use them.
-    // But since we pass `expanded` prop, the table is controlled.
-    // The cell renderer calls `toggleExpand` which updates `expandedIds` in context.
-    // `expandedIds` updates `expanded` memo, which updates the table.
-    // So this handler is technically not needed unless we use standard table expanders.
+    // Controlled via expandedIds in context
   };
+
+  const isFetchPending = fetchMutation.isPending;
+  const isSavePending = saveMutation.isPending;
+  const pendingCount = pendingMappings.size;
 
   const columns = useMemo<ColumnDef<CategoryRow>[]>(() => [
     {
@@ -141,19 +143,21 @@ export function CategoryMapperTable(): React.JSX.Element {
         const currentMapping = getMappingForExternal(row.original.id);
         
         return (
-          <SelectSimple
+          <select
             value={currentMapping ?? '__unmapped__'}
-            onValueChange={(v: string): void =>
-              handleMappingChange(row.original.id, v === '__unmapped__' ? null : v)
+            onChange={(e): void =>
+              handleMappingChange(row.original.id, e.target.value === '__unmapped__' ? null : e.target.value)
             }
             disabled={internalCategoriesLoading || !selectedCatalogId}
-            options={[
-              { value: '__unmapped__', label: '— Not mapped —' },
-              ...internalCategoryOptions
-            ]}
-            size='sm'
-            className='w-full max-w-md'
-          />
+            className='w-full max-w-md rounded-md border border-input bg-background px-3 py-1 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
+          >
+            <option value='__unmapped__'>— Not mapped —</option>
+            {internalCategoryOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         );
       },
     },
@@ -167,15 +171,9 @@ export function CategoryMapperTable(): React.JSX.Element {
     internalCategoryOptions
   ]);
 
-  if (externalCategoriesLoading || mappingsLoading) {
-    return (
-      <div className='rounded-md border border-border p-8 text-center text-gray-500'>
-        Loading categories...
-      </div>
-    );
-  }
+  const isLoading = externalCategoriesLoading || mappingsLoading;
 
-  if (externalCategories.length === 0) {
+  if (externalCategories.length === 0 && !isLoading) {
     return (
       <div className='rounded-md border border-border p-8 text-center text-gray-500'>
         No external categories found. Click &quot;Fetch Categories&quot; to load from Base.com.
@@ -184,15 +182,54 @@ export function CategoryMapperTable(): React.JSX.Element {
   }
 
   return (
-    <DataTable
-      columns={columns}
-      data={data}
-      expanded={expanded}
-      onExpandedChange={onExpandedChange} // We override cell click, so this might not be called, but good to have
-      getRowId={(row) => row.id}
-      isLoading={externalCategoriesLoading || mappingsLoading}
-      maxHeight='60vh'
-      stickyHeader
-    />
+    <ListPanel
+      title='Marketplace Categories'
+      description={`Connection: ${connectionName}`}
+      headerActions={
+        <div className='flex items-center gap-2'>
+          <Button
+            variant='outline'
+            size='xs'
+            className='h-8'
+            onClick={(): void => { void handleFetchFromBase(); }}
+            disabled={isFetchPending}
+          >
+            {isFetchPending ? <RefreshCw className='mr-2 h-3.5 w-3.5 animate-spin' /> : <Download className='mr-2 h-3.5 w-3.5' />}
+            {isFetchPending ? 'Fetching...' : 'Fetch Categories'}
+          </Button>
+
+          <Button
+            size='xs'
+            className='h-8'
+            onClick={(): void => { void handleSave(); }}
+            disabled={isSavePending || pendingCount === 0}
+          >
+            {isSavePending ? <RefreshCw className='mr-2 h-3.5 w-3.5 animate-spin' /> : <Save className='mr-2 h-3.5 w-3.5' />}
+            {isSavePending ? 'Saving...' : `Save (${pendingCount})`}
+          </Button>
+        </div>
+      }
+      filters={(
+        <div className='space-y-4'>
+          <CategoryMapperCatalogSelector />
+          <CategoryMapperStats />
+        </div>
+      )}
+      isLoading={isLoading}
+      variant='flat'
+    >
+      <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
+        <DataTable
+          columns={columns}
+          data={data}
+          expanded={expanded}
+          onExpandedChange={onExpandedChange}
+          getRowId={(row) => row.id}
+          isLoading={isLoading}
+          maxHeight='60vh'
+          stickyHeader
+        />
+      </div>
+    </ListPanel>
   );
 }

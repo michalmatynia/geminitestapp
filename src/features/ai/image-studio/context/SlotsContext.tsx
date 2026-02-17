@@ -152,6 +152,8 @@ export interface SlotsState {
     id: string;
     filepath: string;
     filename?: string;
+    width?: number | null;
+    height?: number | null;
   } | null;
   slotUpdateBusy: boolean;
   slotInlineEditOpen: boolean;
@@ -190,6 +192,8 @@ export interface SlotsActions {
     id: string;
     filepath: string;
     filename?: string;
+    width?: number | null;
+    height?: number | null;
   } | null>>;
   setSlotUpdateBusy: (b: boolean) => void;
   setSlotInlineEditOpen: (o: boolean) => void;
@@ -297,6 +301,8 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     id: string;
     filepath: string;
     filename?: string;
+    width?: number | null;
+    height?: number | null;
   } | null>(null);
   const [slotUpdateBusy, setSlotUpdateBusy] = useState<boolean>(false);
   const [slotInlineEditOpen, setSlotInlineEditOpen] = useState<boolean>(false);

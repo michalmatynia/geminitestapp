@@ -22,9 +22,9 @@ import {
   PageLayout, 
   FormSection,
   Alert,
+  ListPanel,
   type StatusVariant
 } from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { cn } from '@/shared/utils';
 
 import type { ColumnDef, Row } from '@tanstack/react-table';
@@ -118,7 +118,8 @@ function LogDiagnostics(): React.JSX.Element {
     diagnostics,
     diagnosticsUpdatedAt,
     mongoDiagnosticsQuery,
-    setIsRebuildIndexesConfirmOpen,
+    confirmAction,
+    handleRebuildMongoIndexes,
   } = useSystemLogsContext();
 
   const columns = useMemo<ColumnDef<MongoCollectionIndexStatus>[]>(() => [
@@ -181,7 +182,17 @@ function LogDiagnostics(): React.JSX.Element {
           <Button variant='outline' size='xs' onClick={() => void mongoDiagnosticsQuery.refetch()} disabled={mongoDiagnosticsQuery.isFetching}>
             Refresh
           </Button>
-          <Button variant='outline' size='xs' onClick={() => setIsRebuildIndexesConfirmOpen(true)} className='border-amber-500/20 text-amber-200 hover:bg-amber-500/5'>
+          <Button 
+            variant='outline' 
+            size='xs' 
+            onClick={() => confirmAction({
+              title: 'Restore Index Health',
+              message: 'Initiate a background scan and reconstruction of missing telemetry indexes.',
+              confirmText: 'Begin Rebuild',
+              onConfirm: handleRebuildMongoIndexes,
+            })} 
+            className='border-amber-500/20 text-amber-200 hover:bg-amber-500/5'
+          >
             Rebuild Indexes
           </Button>
         </div>
@@ -384,22 +395,23 @@ function LogList(): React.JSX.Element {
   ], [interpretLogMutation]);
 
   return (
-    <div className='space-y-4'>
-      <div className='flex items-center justify-between px-2'>
-        <h3 className='text-xs font-semibold uppercase tracking-widest text-gray-500'>Event Stream</h3>
-        <div className='flex items-center gap-4'>
-          <span className='text-xs text-gray-600 font-bold'>{total} Total Events</span>
-          <Pagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-            variant='compact'
-          />
-        </div>
-      </div>
-
+    <ListPanel
+      title='Event Stream'
+      headerActions={
+        <span className='text-xs text-gray-600 font-bold self-center'>{total} Total Events</span>
+      }
+      footer={
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          variant='compact'
+        />
+      }
+      isLoading={logsQuery.isLoading}
+      variant='flat'
+    >
       <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
-
         <DataTable
 
           columns={columns}
@@ -472,7 +484,7 @@ function LogList(): React.JSX.Element {
           }}
         />
       </div>
-    </div>
+    </ListPanel>
   );
 }
 
@@ -496,12 +508,8 @@ function SystemLogsContent(): React.JSX.Element {
     logsJson,
     logsQuery,
     metricsQuery,
-    isClearLogsConfirmOpen,
-    setIsClearLogsConfirmOpen,
-    isRebuildIndexesConfirmOpen,
-    setIsRebuildIndexesConfirmOpen,
+    confirmAction,
     handleClearLogs,
-    handleRebuildMongoIndexes,
     clearLogsMutation,
     toast,
   } = useSystemLogsContext();
@@ -596,7 +604,13 @@ function SystemLogsContent(): React.JSX.Element {
             variant='outline'
             size='xs'
             className='h-8 border-rose-500/20 text-rose-300 hover:bg-rose-500/5'
-            onClick={() => setIsClearLogsConfirmOpen(true)}
+            onClick={() => confirmAction({
+              title: 'Wipe Observation Logs',
+              message: 'Permanently delete all captured telemetry data. This action is irreversible.',
+              confirmText: 'Confirm Wipe',
+              isDangerous: true,
+              onConfirm: handleClearLogs,
+            })}
             disabled={clearLogsMutation.isPending}
           >
             <Trash2 className='size-3.5 mr-2' />
@@ -648,25 +662,6 @@ function SystemLogsContent(): React.JSX.Element {
 
         <LogList />
       </div>
-
-      <ConfirmModal
-        isOpen={isClearLogsConfirmOpen}
-        onClose={() => setIsClearLogsConfirmOpen(false)}
-        onConfirm={handleClearLogs}
-        title='Wipe Observation Logs'
-        message='Permanently delete all captured telemetry data. This action is irreversible.'
-        confirmText='Confirm Wipe'
-        isDangerous={true}
-      />
-      
-      <ConfirmModal
-        isOpen={isRebuildIndexesConfirmOpen}
-        onClose={() => setIsRebuildIndexesConfirmOpen(false)}
-        onConfirm={handleRebuildMongoIndexes}
-        title='Restore Index Health'
-        message='Initiate a background scan and reconstruction of missing telemetry indexes.'
-        confirmText='Begin Rebuild'
-      />
     </PageLayout>
   );
 }

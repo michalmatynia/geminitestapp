@@ -28,7 +28,10 @@ export function VectorDrawingCanvas({
   maskPreviewFeather,
   showCenterGuides,
   enableTwoFingerRotate,
+  baseCanvasWidthPx,
+  baseCanvasHeightPx,
   onViewCropRectChange,
+  showCanvasGrid: propShowCanvasGrid,
   className,
 }: Partial<VectorCanvasProps>): React.JSX.Element {
   const context = useOptionalVectorDrawing();
@@ -45,6 +48,7 @@ export function VectorDrawingCanvas({
   const allowWithoutImage = propAllowWithoutImage ?? context?.allowWithoutImage;
   const showEmptyState = propShowEmptyState ?? context?.showEmptyState;
   const emptyStateLabel = propEmptyStateLabel ?? context?.emptyStateLabel;
+  const showCanvasGrid = propShowCanvasGrid;
 
   if (
     !shapes ||
@@ -79,7 +83,10 @@ export function VectorDrawingCanvas({
       {...(maskPreviewFeather !== undefined ? { maskPreviewFeather } : {})}
       {...(showCenterGuides !== undefined ? { showCenterGuides } : {})}
       {...(enableTwoFingerRotate !== undefined ? { enableTwoFingerRotate } : {})}
+      {...(baseCanvasWidthPx !== undefined ? { baseCanvasWidthPx } : {})}
+      {...(baseCanvasHeightPx !== undefined ? { baseCanvasHeightPx } : {})}
       {...(onViewCropRectChange !== undefined ? { onViewCropRectChange } : {})}
+      {...(showCanvasGrid !== undefined ? { showCanvasGrid } : {})}
       {...(className !== undefined ? { className } : {})}
     />
   );

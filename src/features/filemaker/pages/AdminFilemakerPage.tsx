@@ -176,7 +176,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
           lastName,
           country,
           updatedAt: new Date().toISOString()
-        } as any) 
+        }) 
         : p)
       : [...database.persons, createFilemakerPerson({
         id: createId('person'),
@@ -184,7 +184,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
         firstName,
         lastName,
         country,
-      } as any)];
+      })];
 
     await persistDatabase({ ...database, persons: nextPersons }, editingPerson ? 'Person updated.' : 'Person added.');
     setIsPersonModalOpen(false);
@@ -221,7 +221,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
     setPersonDraft({
       ...person,
       countryId: resolveCountryId(person.countryId, person.country),
-      phoneNumbers: person.phoneNumbers.join(', ') as any
+      phoneNumbers: person.phoneNumbers.join(', ')
     });
     setIsPersonModalOpen(true);
   }, [resolveCountryId]);
@@ -256,14 +256,14 @@ export function AdminFilemakerPage(): React.JSX.Element {
           name,
           country,
           updatedAt: new Date().toISOString()
-        } as any)
+        })
         : o)
       : [...database.organizations, createFilemakerOrganization({
         id: createId('organization'),
         ...orgDraft,
         name,
         country,
-      } as any)];
+      })];
 
     await persistDatabase({ ...database, organizations: nextOrgs }, editingOrg ? 'Organization updated.' : 'Organization added.');
     setIsOrgModalOpen(false);
@@ -332,7 +332,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
     },
     { key: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP code' },
     { key: 'regon', label: 'REGON', type: 'text', placeholder: 'REGON code' },
-    { key: 'phoneNumbers' as any, label: 'Telephone Numbers', type: 'text', placeholder: 'Comma-separated numbers' },
+    { key: 'phoneNumbers', label: 'Telephone Numbers', type: 'text', placeholder: 'Comma-separated numbers' },
   ], [countryOptions, countriesQuery.isLoading]);
 
   const orgFields: SettingsField<Partial<FilemakerOrganization>>[] = useMemo(() => [

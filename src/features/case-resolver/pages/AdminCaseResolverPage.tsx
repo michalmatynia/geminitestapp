@@ -9,6 +9,7 @@ import {
   stableStringify,
 } from '@/features/ai/ai-paths/lib';
 import { CaseResolverCanvasWorkspace } from '@/features/case-resolver/components/CaseResolverCanvasWorkspace';
+import { CaseResolverFileViewer } from '@/features/case-resolver/components/CaseResolverFileViewer';
 import { CaseResolverFolderTree } from '@/features/case-resolver/components/CaseResolverFolderTree';
 import { CaseResolverRelationsWorkspace } from '@/features/case-resolver/components/CaseResolverRelationsWorkspace';
 import {
@@ -125,6 +126,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     caseResolverTags,
     caseResolverIdentifiers,
     caseResolverCategories,
+    caseResolverSettings,
     filemakerDatabase,
     requestedFileId,
     shouldOpenEditorFromQuery,
@@ -133,10 +135,15 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     handleSelectFolder,
     handleCreateFolder,
     handleCreateFile,
+    handleCreateScanFile,
+    handleCreateImageAsset,
+    handleUploadAssets,
+    handleAttachAssetFile,
     handleDeleteFolder,
     handleOpenFileEditor,
     activeFile,
     selectedAsset,
+    handleUpdateSelectedAsset,
     updateWorkspace,
     handleSaveFileEditor,
     handleDiscardFileEditorDraft,
@@ -146,15 +153,10 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     setIsPromptExploderPartyProposalOpen,
     isApplyingPromptExploderPartyProposal,
     setIsApplyingPromptExploderPartyProposal,
+    confirmAction,
     ConfirmationModal,
     PromptInputModal,
   } = state;
-
-  React.useEffect(() => {
-    if (!activeFile && workspaceView === 'document') {
-      setWorkspaceView('relations');
-    }
-  }, [activeFile, workspaceView]);
 
   const openEditorFromQueryHandledRef = React.useRef<string | null>(null);
   React.useEffect(() => {
@@ -186,6 +188,15 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const editorSplitRef = React.useRef<HTMLDivElement | null>(null);
   const editorTextareaRef = React.useRef<HTMLTextAreaElement | null>(null);
   const initialDraftFingerprintRef = React.useRef<string | null>(null);
+
+  const preserveWorkspaceView = useCallback(
+    (view: 'document' | 'relations'): void => {
+      window.setTimeout((): void => {
+        setWorkspaceView((current) => (current === view ? current : view));
+      }, 0);
+    },
+    []
+  );
 
   const buildDraftFingerprint = useCallback((input: typeof editingDocumentDraft): string => {
     if (!input) return '';
@@ -272,6 +283,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const caseReferenceOptions = React.useMemo(
     () =>
       workspace.files
+        .filter((file) => file.fileType === 'case')
         .map((file) => ({
           value: file.id,
           label: file.folder ? `${file.name} (${file.folder})` : file.name,
@@ -660,39 +672,83 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const handleDeleteFile = useCallback(
     (fileId: string): void => {
-      updateWorkspace(
-        (current) => {
-          const exists = current.files.some((file) => file.id === fileId);
-          if (!exists) return current;
-          const nextFiles = current.files.filter((file) => file.id !== fileId);
-          return {
-            ...current,
-            files: nextFiles,
-            activeFileId:
-              current.activeFileId === fileId
-                ? (nextFiles[0]?.id ?? null)
-                : current.activeFileId,
-          };
-        },
-        { persistToast: 'Case removed.' }
-      );
-      if (selectedFileId === fileId) {
-        setSelectedFileId(null);
-        setSelectedAssetId(null);
-        setSelectedFolderPath(null);
+      const target = workspace.files.find((file) => file.id === fileId);
+      if (!target) return;
+      const behavesAsCaseContainer =
+        target.fileType === 'case' ||
+        workspace.files.some((file) => file.parentCaseId === target.id);
+      if (behavesAsCaseContainer) {
+        toast('Cases cannot be removed from folder tree. Remove the case in Cases list.', {
+          variant: 'warning',
+        });
+        return;
       }
-      if (editingDocumentDraft?.id === fileId) {
-        setEditingDocumentDraft(null);
+      if (target.isLocked) {
+        toast('Document is locked. Unlock it in Case Resolver before removing.', { variant: 'warning' });
+        return;
       }
+
+      const parentContainerId =
+        target.parentCaseId &&
+        workspace.files.some((file) => file.id === target.parentCaseId && file.fileType === 'case')
+          ? target.parentCaseId
+          : null;
+      const viewBeforeDelete = workspaceView;
+      const runDelete = (): void => {
+        updateWorkspace(
+          (current) => {
+            const exists = current.files.some((file) => file.id === fileId);
+            if (!exists) return current;
+            const nextFiles = current.files.filter((file) => file.id !== fileId);
+            return {
+              ...current,
+              files: nextFiles,
+              activeFileId:
+                current.activeFileId === fileId
+                  ? (parentContainerId ?? nextFiles[0]?.id ?? null)
+                  : current.activeFileId,
+            };
+          },
+          { persistToast: 'Document removed.' }
+        );
+        if (selectedFileId === fileId) {
+          setSelectedFileId(parentContainerId);
+          setSelectedAssetId(null);
+          setSelectedFolderPath(null);
+        }
+        if (editingDocumentDraft?.id === fileId) {
+          setEditingDocumentDraft(null);
+        }
+        preserveWorkspaceView(viewBeforeDelete);
+      };
+
+      if (!caseResolverSettings.confirmDeleteDocument) {
+        runDelete();
+        return;
+      }
+
+      confirmAction({
+        title: 'Delete Document?',
+        message: `Are you sure you want to delete document "${target.name}"? This action cannot be undone.`,
+        confirmText: 'Delete Document',
+        isDangerous: true,
+        onConfirm: runDelete,
+      });
     },
     [
+      caseResolverSettings.confirmDeleteDocument,
+      confirmAction,
       editingDocumentDraft?.id,
+      preserveWorkspaceView,
       selectedFileId,
       setEditingDocumentDraft,
       setSelectedAssetId,
       setSelectedFileId,
       setSelectedFolderPath,
+      toast,
       updateWorkspace,
+      workspace.files,
+      workspaceView,
     ]
   );
 
@@ -753,9 +809,11 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       onCreateFile: handleCreateFile,
       onCreateFolder: handleCreateFolder,
       onDeleteFolder: handleDeleteFolder,
-      onCreateScanFile: () => { handleCreateFile(null); }, // Simplified
+      onCreateScanFile: handleCreateScanFile,
+      onCreateImageAsset: handleCreateImageAsset,
       onCreateNodeFile: () => { handleCreateFile(null); }, // Simplified
-      onUploadAssets: async () => [], // Simplified
+      onUploadAssets: handleUploadAssets,
+      onAttachAssetFile: handleAttachAssetFile,
       onMoveFile: state.handleMoveFile,
       onMoveAsset: state.handleMoveAsset,
       onMoveFolder: handleMoveFolder,
@@ -772,7 +830,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       onCreateDocumentFromSearch: () => { setActiveMainView('workspace'); handleCreateFile(null); },
       onOpenFileFromSearch: (id) => { setActiveMainView('workspace'); handleSelectFile(id); },
       onEditFileFromSearch: (id) => { setActiveMainView('workspace'); handleOpenFileEditor(id); },
-      onUpdateSelectedAsset: () => {},
+      onUpdateSelectedAsset: handleUpdateSelectedAsset,
       onGraphChange: handleGraphChange,
       onRelationGraphChange: handleRelationGraphChange,
     }}>
@@ -804,7 +862,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                   variant={workspaceView === 'document' ? 'default' : 'outline'}
                   size='sm'
                   onClick={() => setWorkspaceView('document')}
-                  disabled={!activeFile}
                 >
                   Document Canvas
                 </Button>
@@ -822,7 +879,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                     if (!activeFile) return;
                     handleOpenFileEditor(activeFile.id);
                   }}
-                  disabled={!activeFile}
+                  disabled={Boolean(selectedAsset) || !activeFile || activeFile.fileType === 'case'}
                 >
                   Parties & References
                 </Button>
@@ -831,6 +888,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
             {workspaceView === 'relations' ? (
               <CaseResolverRelationsWorkspace />
+            ) : selectedAsset ? (
+              <CaseResolverFileViewer />
             ) : activeFile ? (
               activeFile.fileType === 'scanfile' ? (
                 <div className='rounded-lg border border-border p-6 bg-card/10'>

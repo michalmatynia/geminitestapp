@@ -4,6 +4,7 @@ import React from 'react';
 
 import type {
   CaseResolverAssetFile,
+  CaseResolverAssetKind,
   CaseResolverCategory,
   CaseResolverFile,
   CaseResolverGraph,
@@ -29,12 +30,18 @@ export type CaseResolverPageContextValue = {
   onSelectFolder: (folderPath: string | null) => void;
   onCreateFolder: (targetFolderPath: string | null) => void;
   onCreateFile: (targetFolderPath: string | null) => void;
-  onCreateScanFile: (targetFolderPath: string | null) => void;
+  onCreateScanFile: (targetFolderPath: string | null, files: File[]) => Promise<void>;
   onCreateNodeFile: (targetFolderPath: string | null) => void;
+  onCreateImageAsset: (targetFolderPath: string | null) => void;
   onUploadAssets: (
     files: File[],
     targetFolderPath: string | null
   ) => Promise<CaseResolverAssetFile[]>;
+  onAttachAssetFile: (
+    assetId: string,
+    file: File,
+    options?: { expectedKind?: CaseResolverAssetKind | null }
+  ) => Promise<CaseResolverAssetFile>;
   onMoveFile: (fileId: string, targetFolder: string) => Promise<void>;
   onMoveAsset: (assetId: string, targetFolder: string) => Promise<void>;
   onMoveFolder: (folderPath: string, targetFolder: string) => Promise<void>;

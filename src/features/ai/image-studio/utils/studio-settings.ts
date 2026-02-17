@@ -88,6 +88,11 @@ export const IMAGE_STUDIO_SEQUENCE_FAILURE_MODES = ['stop', 'continue', 'skip'] 
 export type ImageStudioSequenceFailureMode =
   (typeof IMAGE_STUDIO_SEQUENCE_FAILURE_MODES)[number];
 
+export const IMAGE_STUDIO_SEQUENCE_STEP_RUNTIMES = ['server', 'client'] as const;
+
+export type ImageStudioSequenceStepRuntime =
+  (typeof IMAGE_STUDIO_SEQUENCE_STEP_RUNTIMES)[number];
+
 export type ImageStudioSequencePoint = {
   x: number;
   y: number;
@@ -103,6 +108,7 @@ export type ImageStudioSequenceCropRect = {
 export type ImageStudioSequenceStepBase = {
   id: string;
   type: ImageStudioSequenceOperation;
+  runtime: ImageStudioSequenceStepRuntime;
   enabled: boolean;
   label: string | null;
   onFailure: ImageStudioSequenceFailureMode;
@@ -258,6 +264,9 @@ const isSequenceOperation = (value: unknown): value is ImageStudioSequenceOperat
 const isCropKind = (value: unknown): value is ImageStudioSequenceCropKind =>
   typeof value === 'string' && IMAGE_STUDIO_SEQUENCE_CROP_KINDS.includes(value as ImageStudioSequenceCropKind);
 
+const isStepRuntime = (value: unknown): value is ImageStudioSequenceStepRuntime =>
+  typeof value === 'string' && IMAGE_STUDIO_SEQUENCE_STEP_RUNTIMES.includes(value as ImageStudioSequenceStepRuntime);
+
 const toStepId = (value: unknown, fallbackType: ImageStudioSequenceOperation, index: number): string => {
   const candidate = asTrimmedString(value);
   if (!candidate) return `step_${index + 1}_${fallbackType}`;
@@ -319,11 +328,16 @@ const normalizeSequenceBase = (
     failureModeRaw === 'continue' || failureModeRaw === 'skip' || failureModeRaw === 'stop'
       ? failureModeRaw
       : fallback.onFailure;
+  const runtimeRaw = asTrimmedString(value?.['runtime']);
+  const runtime: ImageStudioSequenceStepRuntime = isStepRuntime(runtimeRaw)
+    ? runtimeRaw
+    : fallback.runtime;
 
   const timeoutRaw = asInteger(value?.['timeoutMs']);
 
   return {
     id: toStepId(value?.['id'], type, index),
+    runtime,
     enabled: asBoolean(value?.['enabled'], fallback.enabled),
     label: asTrimmedString(value?.['label']) ?? null,
     onFailure,
@@ -338,6 +352,7 @@ const normalizeSequenceBase = (
 const cloneStep = (step: ImageStudioSequenceStep): ImageStudioSequenceStep => {
   const base: Omit<ImageStudioSequenceStepBase, 'type'> = {
     id: step.id,
+    runtime: step.runtime,
     enabled: step.enabled,
     label: step.label,
     onFailure: step.onFailure,
@@ -414,6 +429,7 @@ const defaultSequenceStepByType = (
 ): ImageStudioSequenceStep => {
   const base: Omit<ImageStudioSequenceStepBase, 'type'> = {
     id: `step_${index + 1}_${type}`,
+    runtime: 'server',
     enabled: true,
     label: null,
     onFailure: 'stop',
@@ -727,6 +743,10 @@ export function normalizeImageStudioSequenceSteps(
 
   if (!Array.isArray(input)) {
     return dedupeStepIds(fallbackSteps.map((step) => cloneStep(step)));
+  }
+  if (input.length === 0) {
+    // Preserve explicit "no steps" state (do not auto-rebuild fallback stack).
+    return [];
   }
 
   const fallbackByType: Partial<Record<ImageStudioSequenceOperation, ImageStudioSequenceStep>> = {};

@@ -4,7 +4,7 @@ import { ArrowLeft, RefreshCcw, Settings2 } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -12,8 +12,11 @@ import { Button, FormSection, Input, Label, SectionHeader, SelectSimple, useToas
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
+  CASE_RESOLVER_CONFIRM_DELETE_OPTIONS,
+  CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY,
   CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_OPTIONS,
   CASE_RESOLVER_SETTINGS_KEY,
+  parseCaseResolverDefaultDocumentFormat,
   parseCaseResolverSettings,
   type CaseResolverSettings,
 } from '../settings';
@@ -28,8 +31,8 @@ type ChatbotModelListResponse = {
 
 export function AdminCaseResolverSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
-  const settingsQuery = useSettingsMap({ scope: 'heavy' });
-  const updateSetting = useUpdateSetting();
+  const settingsQuery = useSettingsMap({ scope: 'light' });
+  const updateSettingsBulk = useUpdateSettingsBulk();
   const modelsQuery = createListQueryV2<ChatbotModelListResponse, ChatbotModelListResponse>({
     queryKey: QUERY_KEYS.ai.chatbot.models(),
     queryFn: ({ signal }) => api.get<ChatbotModelListResponse>('/api/chatbot', { signal }),
@@ -50,9 +53,22 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
   const [loadedFrom, setLoadedFrom] = useState<string | null>(null);
 
   const rawSettings = settingsQuery.data?.get(CASE_RESOLVER_SETTINGS_KEY) ?? null;
+  const rawDefaultDocumentFormat =
+    settingsQuery.data?.get(CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY) ?? null;
   const openaiModelFallback = (settingsQuery.data?.get('openai_model') ?? '').trim();
   const parsedSettings = useMemo(() => {
-    const parsed = parseCaseResolverSettings(rawSettings);
+    const parsedBase = parseCaseResolverSettings(rawSettings);
+    const defaultDocumentFormat = parseCaseResolverDefaultDocumentFormat(
+      rawDefaultDocumentFormat,
+      parsedBase.defaultDocumentFormat
+    );
+    const parsed =
+      defaultDocumentFormat === parsedBase.defaultDocumentFormat
+        ? parsedBase
+        : {
+          ...parsedBase,
+          defaultDocumentFormat,
+        };
     if (!parsed.ocrModel && openaiModelFallback) {
       return {
         ...parsed,
@@ -60,8 +76,8 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
       };
     }
     return parsed;
-  }, [openaiModelFallback, rawSettings]);
-  const hydrationSignature = `${rawSettings ?? ''}|${openaiModelFallback}`;
+  }, [openaiModelFallback, rawDefaultDocumentFormat, rawSettings]);
+  const hydrationSignature = `${rawSettings ?? ''}|${rawDefaultDocumentFormat ?? ''}|${openaiModelFallback}`;
 
   useEffect(() => {
     if (loadedFrom === hydrationSignature && draft) return;
@@ -95,8 +111,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
   const saveDisabled =
     !draft ||
     settingsQuery.isLoading ||
-    updateSetting.isPending ||
-    draft.ocrModel.trim().length === 0;
+    updateSettingsBulk.isPending;
 
   const modelSummary = `${modelsQuery.data?.models?.length ?? 0} discovered model(s) available`;
   const headerBreadcrumb = (
@@ -121,20 +136,24 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
     const nextSettings: CaseResolverSettings = {
       ocrModel: draft.ocrModel.trim(),
       defaultDocumentFormat: draft.defaultDocumentFormat === 'wysiwyg' ? 'wysiwyg' : 'markdown',
+      confirmDeleteDocument: draft.confirmDeleteDocument !== false,
     };
 
-    if (!nextSettings.ocrModel) {
-      toast('Choose an OCR model.', { variant: 'error' });
-      return;
-    }
-
     try {
-      await updateSetting.mutateAsync({
-        key: CASE_RESOLVER_SETTINGS_KEY,
-        value: serializeSetting(nextSettings),
-      });
+      await updateSettingsBulk.mutateAsync([
+        {
+          key: CASE_RESOLVER_SETTINGS_KEY,
+          value: serializeSetting(nextSettings),
+        },
+        {
+          key: CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY,
+          value: nextSettings.defaultDocumentFormat,
+        },
+      ]);
       setDraft(nextSettings);
-      setLoadedFrom(`${serializeSetting(nextSettings)}|${openaiModelFallback}`);
+      setLoadedFrom(
+        `${serializeSetting(nextSettings)}|${nextSettings.defaultDocumentFormat}|${openaiModelFallback}`
+      );
       toast('Case Resolver settings saved.', { variant: 'success' });
     } catch (error) {
       toast(
@@ -275,6 +294,27 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
             />
             <div className='text-[11px] text-gray-500'>
               Legacy documents continue to open using their stored format (for example WYSIWYG documents stay WYSIWYG).
+            </div>
+          </div>
+          <div className='space-y-1'>
+            <Label className='text-[11px] text-gray-400'>Confirm Document Delete</Label>
+            <SelectSimple
+              value={draft.confirmDeleteDocument ? 'on' : 'off'}
+              onValueChange={(value: string): void => {
+                setDraft((previous: CaseResolverSettings | null) =>
+                  previous
+                    ? {
+                      ...previous,
+                      confirmDeleteDocument: value !== 'off',
+                    }
+                    : previous
+                );
+              }}
+              options={CASE_RESOLVER_CONFIRM_DELETE_OPTIONS}
+              placeholder='Choose confirmation behavior'
+            />
+            <div className='text-[11px] text-gray-500'>
+              Applies when deleting documents from Case Resolver tree and Cases list.
             </div>
           </div>
         </div>

@@ -27,6 +27,8 @@ const LITE_SETTINGS_KEYS = [
   'noteSettings:selectedNotebookId',
   'noteSettings:autoformatOnPaste',
   'noteSettings:editorMode',
+  'case_resolver_default_document_format_v1',
+  'case_resolver_settings_v1',
   FOLDER_TREE_PROFILES_V2_SETTING_KEY,
   CLIENT_LOGGING_KEYS.featureFlags,
   CLIENT_LOGGING_KEYS.tags,

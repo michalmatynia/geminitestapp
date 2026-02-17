@@ -1076,7 +1076,7 @@ export function AdminImageStudioSettingsPage(
                     <SelectSimple
                       size='sm'
                       value={studioSettings.uiExtractor.mode}
-                      onValueChange={(v) => setStudioSettings(p => ({ ...p, uiExtractor: { ...p.uiExtractor, mode: v as any } }))}
+                      onValueChange={(v) => setStudioSettings(p => ({ ...p, uiExtractor: { ...p.uiExtractor, mode: v as 'heuristic' | 'ai' | 'both' } }))}
                       options={UI_EXTRACTOR_MODE_OPTIONS}
                       triggerClassName='h-9'
                     />
@@ -1268,7 +1268,7 @@ export function AdminImageStudioSettingsPage(
                       <SelectSimple
                         size='sm'
                         value={modelAwareQualityValue}
-                        onValueChange={(v) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, image: { ...p.targetAi.openai.image, quality: v === '__null__' ? null : v as any } } } }))}
+                        onValueChange={(v) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, image: { ...p.targetAi.openai.image, quality: v === '__null__' ? null : v as 'auto' | 'low' | 'medium' | 'high' | 'standard' | 'hd' } } } }))}
                         options={modelAwareQualityOptions}
                         triggerClassName='h-9'
                       />
@@ -1277,7 +1277,7 @@ export function AdminImageStudioSettingsPage(
                       <SelectSimple
                         size='sm'
                         value={modelAwareBackgroundValue}
-                        onValueChange={(v) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, image: { ...p.targetAi.openai.image, background: v === '__null__' ? null : v as any } } } }))}
+                        onValueChange={(v) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, image: { ...p.targetAi.openai.image, background: v === '__null__' ? null : v as 'auto' | 'transparent' | 'opaque' | 'white' } } } }))}
                         options={modelAwareBackgroundOptions}
                         triggerClassName='h-9'
                       />
@@ -1287,7 +1287,7 @@ export function AdminImageStudioSettingsPage(
                         <SelectSimple
                           size='sm'
                           value={modelAwareFormatValue}
-                          onValueChange={(v) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, image: { ...p.targetAi.openai.image, format: v as any } } } }))}
+                          onValueChange={(v) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, image: { ...p.targetAi.openai.image, format: v as 'png' | 'jpeg' | 'webp' } } } }))}
                           options={modelAwareFormatOptions}
                           triggerClassName='h-9'
                         />
@@ -1313,7 +1313,7 @@ export function AdminImageStudioSettingsPage(
                           <SelectSimple
                             size='sm'
                             value={studioSettings.targetAi.openai.image.moderation ?? '__null__'}
-                            onValueChange={(v) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, image: { ...p.targetAi.openai.image, moderation: v === '__null__' ? null : v as any } } } }))}
+                            onValueChange={(v) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, image: { ...p.targetAi.openai.image, moderation: v === '__null__' ? null : v as 'auto' | 'low' } } } }))}
                             options={MODERATION_OPTIONS}
                             triggerClassName='h-9'
                           />

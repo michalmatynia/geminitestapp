@@ -1087,10 +1087,10 @@ export function CanvasBoard({
                 void handlePointerDownNode(event, node.id);
               }}
               onPointerMove={(event) => {
-                void handlePointerMoveNode(event, node.id);
+                handlePointerMoveNode(event, node.id);
               }}
               onPointerUp={(event) => {
-                void handlePointerUpNode(event, node.id);
+                handlePointerUpNode(event, node.id);
               }}
               onClick={() => {
                 void handleSelectNode(node.id);

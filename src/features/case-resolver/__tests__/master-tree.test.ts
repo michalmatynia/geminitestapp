@@ -16,6 +16,7 @@ describe('case-resolver master tree', () => {
       folders: ['beta', 'alpha', 'alpha/sub'],
       folderTimestamps: {},
       files: [
+        createCaseResolverFile({ id: 'case-root-hidden', name: 'Case Root', fileType: 'case', folder: '' }),
         createCaseResolverFile({ id: 'file-root-z', name: 'zeta', folder: '' }),
         createCaseResolverFile({ id: 'file-root-a', name: 'apple', folder: '' }),
         createCaseResolverFile({ id: 'file-alpha-z', name: 'zulu', folder: 'alpha' }),

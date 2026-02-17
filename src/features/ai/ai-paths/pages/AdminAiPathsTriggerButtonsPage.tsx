@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { MousePointer2, Plus, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -30,6 +30,7 @@ import {
   useToast,
   PanelHeader,
   ListPanel,
+  ConfirmModal,
 } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { cn } from '@/shared/utils';
@@ -72,9 +73,9 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const [editorOpen, setEditorOpen] = useState(false);
   const [draft, setDraft] = useState<TriggerButtonDraft>(() => normalizeDraft(null));
 
-  const triggerButtonsQuery = createListQueryV2<AiTriggerButtonDto[], AiTriggerButtonDto[]>({
+  const triggerButtonsQuery = createListQueryV2<AiTriggerButtonDto[], Error>({
     queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
-    queryFn: async () => {
+    queryFn: async (): Promise<AiTriggerButtonDto[]> => {
       const result = await triggerButtonsApi.list();
       if (!result.ok) throw new Error(result.error);
       return Array.isArray(result.data) ? result.data : [];
@@ -167,7 +168,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
   });
 
-  const deleteMutation = createDeleteMutationV2<void, string>({
+  const deleteMutation: UseMutationResult<void, Error, string> = createDeleteMutationV2({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.delete'),
     mutationFn: async (id: string): Promise<void> => {
       const result = await triggerButtonsApi.remove(id);
@@ -191,7 +192,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
   });
 
-  const reorderMutation = createUpdateMutationV2<AiTriggerButtonDto[], string[]>({
+  const reorderMutation: UseMutationResult<AiTriggerButtonDto[], Error, string[]> = createUpdateMutationV2({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.reorder'),
     mutationFn: async (orderedIds: string[]): Promise<AiTriggerButtonDto[]> => {
       const result = await triggerButtonsApi.reorder(orderedIds);
@@ -227,7 +228,8 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   }, []);
 
   const handleDeleteRequest = useCallback((id: string): void => {
-    const btn = triggerButtonsQuery.data?.find(b => b.id === id);
+    const list = triggerButtonsQuery.data ?? [];
+    const btn = list.find((b: AiTriggerButtonDto) => b.id === id);
     if (btn) setButtonToDelete(btn);
   }, [triggerButtonsQuery.data]);
 
@@ -347,8 +349,9 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   };
 
   const saving = createMutation.isPending || updateMutation.isPending;
-  const rows: AiTriggerButtonRecord[] = useMemo(() => {
-    return (triggerButtonsQuery.data ?? []).map((btn: AiTriggerButtonDto) => ({
+  const rows: AiTriggerButtonRecord[] = useMemo((): AiTriggerButtonRecord[] => {
+    const list = triggerButtonsQuery.data ?? [];
+    return list.map((btn: AiTriggerButtonDto): AiTriggerButtonRecord => ({
       ...btn,
       pathName: 'N/A' 
     }));
@@ -362,13 +365,13 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         icon={<MousePointer2 className='size-4' />}
         refreshable={true}
         isRefreshing={triggerButtonsQuery.isFetching}
-        onRefresh={() => { void triggerButtonsQuery.refetch(); }}
+        onRefresh={(): void => { void triggerButtonsQuery.refetch(); }}
         actions={[
           {
             key: 'create',
             label: 'New Trigger Button',
             icon: <Plus className='size-4' />,
-            onClick: openCreate,
+            onClick: (): void => { openCreate(); },
           }
         ]}
       />
@@ -376,9 +379,9 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       <ListPanel>
         <TriggerButtonListManager
           data={rows}
-          onEdit={handleEdit}
-          onDelete={handleDeleteRequest}
-          onOrderChange={handleOrderChange}
+          onEdit={(record: AiTriggerButtonRecord): void => { handleEdit(record); }}
+          onDelete={(id: string): void => { handleDeleteRequest(id); }}
+          onOrderChange={(ids: string[]): void => { handleOrderChange(ids); }}
           isLoading={triggerButtonsQuery.isLoading}
         />
         <div className='mt-4 flex items-center gap-2 text-[11px] text-muted-foreground bg-muted/20 p-2 rounded'>
@@ -393,18 +396,18 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         title={draft.id ? 'Edit Trigger Button' : 'Create Trigger Button'}
         fields={editorFields}
         values={draft}
-        onChange={(vals) => setDraft(prev => ({ ...prev, ...vals }))}
-        onSave={handleSave}
+        onChange={(vals: Partial<TriggerButtonDraft>): void => { setDraft(prev => ({ ...prev, ...vals })); }}
+        onSave={async (): Promise<void> => { await handleSave(); }}
         isSaving={saving}
         size='md'
       />
 
       <ConfirmModal
         isOpen={!!buttonToDelete}
-        onClose={() => setButtonToDelete(null)}
-        onConfirm={handleConfirmDelete}
+        onClose={(): void => { setButtonToDelete(null); }}
+        onConfirm={(): void => { handleConfirmDelete(); }}
         title='Delete Trigger Button'
-        message={`Are you sure you want to delete "${buttonToDelete?.name ?? ''}"? This will remove it from all assigned locations.`}
+        message={`Are you sure you want to delete "${buttonToDelete ? (buttonToDelete as AiTriggerButtonDto).name : ''}"? This will remove it from all assigned locations.`}
         confirmText='Delete Button'
         isDangerous={true}
         loading={deleteMutation.isPending}

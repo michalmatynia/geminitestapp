@@ -9,6 +9,7 @@ import { useSystemLogs, useSystemLogMetrics, useMongoDiagnostics, useLogInsights
 import { readSystemLogUrlState, writeSystemLogUrlState } from '@/features/observability/lib/system-log-filter-url-state';
 import { logClientError } from '@/features/observability/utils/client-error-logger';
 import { internalError } from '@/shared/errors/app-error';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import type { SystemLogMetrics, SystemLogRecord, SystemLogLevel, AiInsightRecord } from '@/shared/types';
 import { useToast, type FilterField } from '@/shared/ui';
 
@@ -107,14 +108,22 @@ type SystemLogsContextValue = {
   interpretLogMutation: UseMutationResult<{ insight: AiInsightRecord }, Error, string>;
   clearLogsMutation: UseMutationResult<{ deleted: number }, Error, void>;
   rebuildIndexesMutation: UseMutationResult<unknown, Error, void>;
-  isClearLogsConfirmOpen: boolean;
-  setIsClearLogsConfirmOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  isRebuildIndexesConfirmOpen: boolean;
-  setIsRebuildIndexesConfirmOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  confirmAction: (config: {
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    confirmText?: string;
+    isDangerous?: boolean;
+  }) => void;
+  ConfirmationModal: React.ComponentType;
   handleClearLogs: () => Promise<void>;
   handleRebuildMongoIndexes: () => Promise<void>;
   handleRunInsight: () => Promise<void>;
   handleInterpretLog: (logId: string) => Promise<void>;
+  isClearLogsConfirmOpen: boolean;
+  setIsClearLogsConfirmOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isRebuildIndexesConfirmOpen: boolean;
+  setIsRebuildIndexesConfirmOpen: React.Dispatch<React.SetStateAction<boolean>>;
   toast: ToastFn;
 };
 
@@ -149,6 +158,8 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
 
   const [isClearLogsConfirmOpen, setIsClearLogsConfirmOpen] = useState(false);
   const [isRebuildIndexesConfirmOpen, setIsRebuildIndexesConfirmOpen] = useState(false);
+
+  const { confirm: confirmAction, ConfirmationModal } = useConfirm();
   const [logInterpretations, setLogInterpretations] = useState<Record<string, AiInsightRecord>>({});
 
   const [page, setPage] = useState(() => initialUrlState.page);
@@ -334,7 +345,6 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
   };
 
   const handleClearLogs = async (): Promise<void> => {
-    setIsClearLogsConfirmOpen(false);
     try {
       const result = await clearLogsMutation.mutateAsync();
       const deleted = typeof result?.deleted === 'number' ? result.deleted : 0;
@@ -403,14 +413,16 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     interpretLogMutation,
     clearLogsMutation,
     rebuildIndexesMutation,
-    isClearLogsConfirmOpen,
-    setIsClearLogsConfirmOpen,
-    isRebuildIndexesConfirmOpen,
-    setIsRebuildIndexesConfirmOpen,
+    confirmAction,
+    ConfirmationModal,
     handleClearLogs,
     handleRebuildMongoIndexes,
     handleRunInsight,
     handleInterpretLog,
+    isClearLogsConfirmOpen,
+    setIsClearLogsConfirmOpen,
+    isRebuildIndexesConfirmOpen,
+    setIsRebuildIndexesConfirmOpen,
     toast,
   };
 

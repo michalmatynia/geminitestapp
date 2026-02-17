@@ -116,6 +116,7 @@ export const buildMasterNodesFromCaseResolverWorkspace = (
   };
 
   workspace.files.forEach((file: CaseResolverFile) => {
+    if (file.fileType === 'case') return;
     const isScanFile = file.fileType === 'scanfile';
     appendFileEntry(file.folder, {
       id: file.id,

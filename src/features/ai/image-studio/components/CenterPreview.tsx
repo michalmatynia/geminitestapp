@@ -87,8 +87,15 @@ const isTreeRevealableCardSlot = (slot: ImageStudioSlotRecord | null): boolean =
 export function CenterPreview(): React.JSX.Element {
   const { isFocusMode, maskPreviewEnabled, centerGuidesEnabled } = useUiState();
   const { toggleFocusMode, registerPreviewCanvasViewportCropResolver } = useUiActions();
-  const { projectId } = useProjectsState();
-  const { workingSlot, selectedSlot, selectedSlotId, previewMode, captureRef, slots } = useSlotsState();
+  const { projectId, projectsQuery } = useProjectsState();
+  const {
+    workingSlot,
+    selectedSlot,
+    selectedSlotId,
+    previewMode,
+    captureRef,
+    slots,
+  } = useSlotsState();
   const {
     setPreviewMode,
     setSelectedSlotId,
@@ -210,7 +217,7 @@ export function CenterPreview(): React.JSX.Element {
     if (!normalizedSelectedSlotId) return null;
     return selectedSourceSlotId ?? normalizedSelectedSlotId;
   }, [selectedSlotId, selectedSourceSlotId, sourceSlotId, workingSlot?.id]);
-  const showVariantPanel = Boolean(selectedSlotId?.trim());
+  const showVariantPanel = previewMode === 'image';
 
   const sourceSlot = useMemo(
     () => (sourceSlotId ? slots.find((slot) => slot.id === sourceSlotId) ?? null : null),
@@ -259,14 +266,38 @@ export function CenterPreview(): React.JSX.Element {
     }
     return workingSlot?.id ?? null;
   }, [canCompareWithSource, previewMode, singleVariantView, sourceSlot?.id, splitVariantView, workingSlot?.id]);
-  const useBlankWhiteCanvas = useMemo(
-    () => previewMode === 'image' && !splitVariantView && !activeCanvasImageSrc,
-    [activeCanvasImageSrc, previewMode, splitVariantView]
-  );
-
   const canRevealLoadedCardInTree = useMemo(
     () => isTreeRevealableCardSlot(workingSlot),
     [workingSlot]
+  );
+  const activeProject = useMemo(
+    () =>
+      (projectsQuery.data ?? []).find((project) => project.id === projectId) ??
+      null,
+    [projectId, projectsQuery.data]
+  );
+  const projectCanvasSize = useMemo((): { width: number; height: number } | null => {
+    const width =
+      typeof activeProject?.canvasWidthPx === 'number' &&
+      Number.isFinite(activeProject.canvasWidthPx)
+        ? Math.floor(activeProject.canvasWidthPx)
+        : null;
+    const height =
+      typeof activeProject?.canvasHeightPx === 'number' &&
+      Number.isFinite(activeProject.canvasHeightPx)
+        ? Math.floor(activeProject.canvasHeightPx)
+        : null;
+    if (width === null || height === null) return null;
+    if (width < 64 || width > 32_768 || height < 64 || height > 32_768) return null;
+    return { width, height };
+  }, [activeProject?.canvasHeightPx, activeProject?.canvasWidthPx]);
+  const previewCanvasClassName = useMemo(
+    () =>
+      cn(
+        'h-[clamp(280px,46vh,520px)]',
+        'bg-slate-900',
+      ),
+    [],
   );
 
   const eligibleMaskShapes = useMemo(
@@ -911,6 +942,8 @@ export function CenterPreview(): React.JSX.Element {
             id: variant.output.id,
             filepath: variant.output.filepath,
             filename: variant.output.filename,
+            width: variant.output.width,
+            height: variant.output.height,
           });
           toast('Variant linked to card. Open Edit Card to apply this generated output.', {
             variant: 'info',
@@ -926,6 +959,8 @@ export function CenterPreview(): React.JSX.Element {
           id: variant.output.id,
           filepath: variant.output.filepath,
           filename: variant.output.filename,
+          width: variant.output.width,
+          height: variant.output.height,
         });
       }
 
@@ -1403,16 +1438,19 @@ export function CenterPreview(): React.JSX.Element {
                 />
               ) : (
                 <VectorDrawingCanvas
-                  key={workingSlot?.id ?? 'canvas-empty'}
+                  key={`${workingSlot?.id ?? 'canvas-empty'}:${projectCanvasSize?.width ?? 'auto'}x${projectCanvasSize?.height ?? 'auto'}`}
                   maskPreviewEnabled={maskPreviewEnabled}
                   maskPreviewShapes={liveMaskShapes}
                   maskPreviewInvert={maskInvert}
                   maskPreviewOpacity={0.5}
                   maskPreviewFeather={maskFeather}
                   showCenterGuides={centerGuidesEnabled}
+                  showCanvasGrid
                   enableTwoFingerRotate
+                  baseCanvasWidthPx={projectCanvasSize?.width ?? null}
+                  baseCanvasHeightPx={projectCanvasSize?.height ?? null}
                   onViewCropRectChange={handlePreviewCanvasCropRectChange}
-                  className={useBlankWhiteCanvas ? 'bg-white' : undefined}
+                  className={previewCanvasClassName}
                 />
               )}
             </VectorDrawingProvider>

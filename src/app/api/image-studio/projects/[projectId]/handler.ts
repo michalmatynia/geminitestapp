@@ -52,9 +52,21 @@ const parseTimestamp = (value: unknown, fallback: string): string => {
   return new Date(parsedMs).toISOString();
 };
 
+const parseCanvasDimension = (value: unknown): number | null => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  const normalized = Math.floor(value);
+  if (normalized < 64 || normalized > 32_768) return null;
+  return normalized;
+};
+
 const resolveProjectSummaryFromDirectory = async (
   projectId: string
-): Promise<{ createdAt: string; updatedAt: string } | null> => {
+): Promise<{
+  createdAt: string;
+  updatedAt: string;
+  canvasWidthPx: number | null;
+  canvasHeightPx: number | null;
+} | null> => {
   const projectDir = resolveProjectDir(projectId);
   if (!projectDir) return null;
 
@@ -75,27 +87,54 @@ const resolveProjectSummaryFromDirectory = async (
   const metadataPath = path.join(projectDir, PROJECT_METADATA_FILENAME);
   const metadataRaw = await fs.readFile(metadataPath, 'utf8').catch(() => null);
   if (!metadataRaw) {
-    return { createdAt: fallbackCreatedAt, updatedAt: fallbackUpdatedAt };
+    return {
+      createdAt: fallbackCreatedAt,
+      updatedAt: fallbackUpdatedAt,
+      canvasWidthPx: null,
+      canvasHeightPx: null,
+    };
   }
 
   try {
     const parsed = JSON.parse(metadataRaw) as unknown;
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      return { createdAt: fallbackCreatedAt, updatedAt: fallbackUpdatedAt };
+      return {
+        createdAt: fallbackCreatedAt,
+        updatedAt: fallbackUpdatedAt,
+        canvasWidthPx: null,
+        canvasHeightPx: null,
+      };
     }
     const metadata = parsed as Record<string, unknown>;
     return {
       createdAt: parseTimestamp(metadata['createdAt'], fallbackCreatedAt),
       updatedAt: parseTimestamp(metadata['updatedAt'], fallbackUpdatedAt),
+      canvasWidthPx: parseCanvasDimension(metadata['canvasWidthPx']),
+      canvasHeightPx: parseCanvasDimension(metadata['canvasHeightPx']),
     };
   } catch {
-    return { createdAt: fallbackCreatedAt, updatedAt: fallbackUpdatedAt };
+    return {
+      createdAt: fallbackCreatedAt,
+      updatedAt: fallbackUpdatedAt,
+      canvasWidthPx: null,
+      canvasHeightPx: null,
+    };
   }
 };
 
 const upsertProjectSummary = async (
-  projectId: string
-): Promise<{ id: string; createdAt: string; updatedAt: string }> => {
+  projectId: string,
+  options?: {
+    canvasWidthPx?: number | null;
+    canvasHeightPx?: number | null;
+  },
+): Promise<{
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  canvasWidthPx: number | null;
+  canvasHeightPx: number | null;
+}> => {
   const projectDir = resolveProjectDir(projectId);
   if (!projectDir) {
     throw badRequestError('Invalid target project id.');
@@ -106,6 +145,14 @@ const upsertProjectSummary = async (
     id: projectId,
     createdAt: existing?.createdAt ?? nowIso,
     updatedAt: nowIso,
+    canvasWidthPx:
+      options?.canvasWidthPx !== undefined
+        ? options.canvasWidthPx
+        : (existing?.canvasWidthPx ?? null),
+    canvasHeightPx:
+      options?.canvasHeightPx !== undefined
+        ? options.canvasHeightPx
+        : (existing?.canvasHeightPx ?? null),
   };
   await fs.mkdir(projectDir, { recursive: true });
   const metadataPath = path.join(projectDir, PROJECT_METADATA_FILENAME);

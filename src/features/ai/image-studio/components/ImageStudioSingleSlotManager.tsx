@@ -23,6 +23,8 @@ type UploadedAsset = {
   id: string;
   filepath: string;
   filename?: string;
+  width?: number | null;
+  height?: number | null;
 };
 
 function toManagedSlot(slot: ImageStudioSlotRecord | null): ProductImageSlot {
@@ -81,6 +83,17 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
     const objectLinkSyncTimeoutRef = useRef<number | null>(null);
     const objectBase64SyncTimeoutRef = useRef<number | null>(null);
 
+    const clearObjectDraftSyncTimeouts = useCallback((): void => {
+      if (objectLinkSyncTimeoutRef.current) {
+        window.clearTimeout(objectLinkSyncTimeoutRef.current);
+        objectLinkSyncTimeoutRef.current = null;
+      }
+      if (objectBase64SyncTimeoutRef.current) {
+        window.clearTimeout(objectBase64SyncTimeoutRef.current);
+        objectBase64SyncTimeoutRef.current = null;
+      }
+    }, []);
+
     const objectSlot = selectedSlot;
     const managedObjectSlot = useMemo(
       () => toManagedUploadedAsset(temporaryObjectUpload) ?? toManagedSlot(objectSlot),
@@ -89,20 +102,16 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
 
     useEffect(() => {
       return () => {
-        if (objectLinkSyncTimeoutRef.current) {
-          window.clearTimeout(objectLinkSyncTimeoutRef.current);
-        }
-        if (objectBase64SyncTimeoutRef.current) {
-          window.clearTimeout(objectBase64SyncTimeoutRef.current);
-        }
+        clearObjectDraftSyncTimeouts();
       };
-    }, []);
+    }, [clearObjectDraftSyncTimeouts]);
 
     useEffect(() => {
       setTemporaryObjectUpload(null);
     }, [projectId, setTemporaryObjectUpload]);
 
     useEffect(() => {
+      clearObjectDraftSyncTimeouts();
       const slotImageUrl = objectSlot?.imageUrl ?? '';
       setUploadError(null);
       setObjectImageLinkDraft(
@@ -111,7 +120,12 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
           : slotImageUrl
       );
       setObjectImageBase64Draft(objectSlot?.imageBase64 ?? '');
-    }, [objectSlot?.id, objectSlot?.imageUrl, objectSlot?.imageBase64]);
+    }, [
+      clearObjectDraftSyncTimeouts,
+      objectSlot?.id,
+      objectSlot?.imageUrl,
+      objectSlot?.imageBase64,
+    ]);
 
     const getFolderForNewSlot = useCallback(
       (): string => selectedFolder.trim(),
@@ -198,6 +212,8 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
             id: uploaded.id,
             filepath: uploaded.filepath,
             filename: uploaded.filename,
+            width: uploaded.width,
+            height: uploaded.height,
           });
           setObjectImageLinkDraft(uploaded.filepath);
           setObjectImageBase64Draft('');
@@ -228,9 +244,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
         setObjectImageLinkDraft(value);
         if (temporaryObjectUpload || !objectSlot) return;
 
-        if (objectLinkSyncTimeoutRef.current) {
-          window.clearTimeout(objectLinkSyncTimeoutRef.current);
-        }
+        clearObjectDraftSyncTimeouts();
         objectLinkSyncTimeoutRef.current = window.setTimeout(() => {
           void updateSlotMutation
             .mutateAsync({
@@ -244,7 +258,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
             });
         }, 450);
       },
-      [objectSlot, temporaryObjectUpload, updateSlotMutation]
+      [clearObjectDraftSyncTimeouts, objectSlot, temporaryObjectUpload, updateSlotMutation]
     );
 
     const setImageBase64At = useCallback(
@@ -253,9 +267,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
         setObjectImageBase64Draft(value);
         if (temporaryObjectUpload || !objectSlot) return;
 
-        if (objectBase64SyncTimeoutRef.current) {
-          window.clearTimeout(objectBase64SyncTimeoutRef.current);
-        }
+        clearObjectDraftSyncTimeouts();
         objectBase64SyncTimeoutRef.current = window.setTimeout(() => {
           void updateSlotMutation
             .mutateAsync({
@@ -270,17 +282,19 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
             });
         }, 450);
       },
-      [objectSlot, temporaryObjectUpload, updateSlotMutation]
+      [clearObjectDraftSyncTimeouts, objectSlot, temporaryObjectUpload, updateSlotMutation]
     );
 
     const handleSlotDisconnectImage = useCallback(
       async (index: number): Promise<void> => {
         if (index !== OBJECT_SLOT_INDEX) return;
+        clearObjectDraftSyncTimeouts();
         if (temporaryObjectUpload) {
           await deleteUploadedAsset(temporaryObjectUpload).catch(() => {
             // Best effort cleanup.
           });
           setTemporaryObjectUpload(null);
+          setSelectedSlotId(null);
           setObjectImageLinkDraft('');
           setObjectImageBase64Draft('');
           return;
@@ -298,7 +312,15 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
         setObjectImageLinkDraft('');
         setObjectImageBase64Draft('');
       },
-      [deleteUploadedAsset, objectSlot, setTemporaryObjectUpload, temporaryObjectUpload, updateSlotMutation]
+      [
+        clearObjectDraftSyncTimeouts,
+        deleteUploadedAsset,
+        objectSlot,
+        setSelectedSlotId,
+        setTemporaryObjectUpload,
+        temporaryObjectUpload,
+        updateSlotMutation,
+      ]
     );
 
     const openFileManagerForObject = useCallback((): void => {

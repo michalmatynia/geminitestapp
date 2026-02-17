@@ -3,7 +3,7 @@
 import { ExternalLink, FileText, FolderOpen, Image as ImageIcon } from 'lucide-react';
 import React from 'react';
 
-import { Button, Label, Textarea } from '@/shared/ui';
+import { Button, Label, Textarea, useToast } from '@/shared/ui';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 
@@ -29,7 +29,12 @@ export function CaseResolverFileViewer(): React.JSX.Element {
     selectedFolderPath,
     activeFile,
     onUpdateSelectedAsset,
+    onAttachAssetFile,
   } = useCaseResolverPageContext();
+  const { toast } = useToast();
+  const imageUploadInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [isDragActive, setIsDragActive] = React.useState(false);
+  const [isAttachingImage, setIsAttachingImage] = React.useState(false);
 
   if (!selectedAsset) {
     return (
@@ -46,9 +51,59 @@ export function CaseResolverFileViewer(): React.JSX.Element {
     );
   }
 
-  const showImagePreview = selectedAsset.kind === 'image' && Boolean(selectedAsset.filepath);
+  const isImageAsset = selectedAsset.kind === 'image';
+  const showImagePreview = isImageAsset && Boolean(selectedAsset.filepath);
   const showPdfPreview = selectedAsset.kind === 'pdf' && Boolean(selectedAsset.filepath);
-  const showGenericPreview = !showImagePreview && !showPdfPreview;
+  const showGenericPreview = !isImageAsset && !showPdfPreview;
+
+  const handleAttachImageFile = React.useCallback(
+    async (file: File): Promise<void> => {
+      if (!selectedAsset || selectedAsset.kind !== 'image') return;
+      setIsAttachingImage(true);
+      try {
+        await onAttachAssetFile(selectedAsset.id, file, { expectedKind: 'image' });
+      } catch (error: unknown) {
+        toast(
+          error instanceof Error ? error.message : 'Failed to attach image file.',
+          { variant: 'error' }
+        );
+      } finally {
+        setIsAttachingImage(false);
+        setIsDragActive(false);
+      }
+    },
+    [onAttachAssetFile, selectedAsset, toast]
+  );
+
+  const triggerImageUpload = React.useCallback((): void => {
+    if (isAttachingImage) return;
+    imageUploadInputRef.current?.click();
+  }, [isAttachingImage]);
+
+  const handleImageInputChange = React.useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>): void => {
+      const file = event.target.files?.[0] ?? null;
+      event.target.value = '';
+      if (!file) return;
+      void handleAttachImageFile(file);
+    },
+    [handleAttachImageFile]
+  );
+
+  const handleImageDrop = React.useCallback(
+    (event: React.DragEvent<HTMLDivElement>): void => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (isAttachingImage) return;
+      const file = event.dataTransfer.files?.[0] ?? null;
+      if (!file) {
+        setIsDragActive(false);
+        return;
+      }
+      void handleAttachImageFile(file);
+    },
+    [handleAttachImageFile, isAttachingImage]
+  );
 
   return (
     <div className='flex h-[calc(100vh-120px)] flex-col gap-4 rounded-lg border border-border/60 bg-card/35 p-4'>
@@ -104,14 +159,67 @@ export function CaseResolverFileViewer(): React.JSX.Element {
       </div>
 
       <div className='min-h-0 flex-1 overflow-hidden rounded border border-border/60 bg-card/25'>
-        {showImagePreview ? (
-          <div className='flex h-full items-center justify-center p-3'>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={selectedAsset.filepath ?? ''}
-              alt={selectedAsset.name}
-              className='max-h-full max-w-full rounded object-contain'
+        {isImageAsset ? (
+          <div className='h-full p-3'>
+            <input
+              ref={imageUploadInputRef}
+              type='file'
+              accept='image/*'
+              className='hidden'
+              onChange={handleImageInputChange}
             />
+            <div
+              role='button'
+              tabIndex={0}
+              className={`relative flex h-full items-center justify-center overflow-hidden rounded border border-dashed p-3 transition ${
+                isDragActive
+                  ? 'border-blue-500 bg-blue-500/10'
+                  : 'border-border/70 bg-card/40 hover:bg-card/55'
+              } ${isAttachingImage ? 'pointer-events-none opacity-70' : 'cursor-pointer'}`}
+              onClick={triggerImageUpload}
+              onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  triggerImageUpload();
+                }
+              }}
+              onDragEnter={(event: React.DragEvent<HTMLDivElement>): void => {
+                event.preventDefault();
+                setIsDragActive(true);
+              }}
+              onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'copy';
+                setIsDragActive(true);
+              }}
+              onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
+                event.preventDefault();
+                setIsDragActive(false);
+              }}
+              onDrop={handleImageDrop}
+            >
+              {showImagePreview ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={selectedAsset.filepath ?? ''}
+                    alt={selectedAsset.name}
+                    className='max-h-full max-w-full rounded object-contain'
+                  />
+                  <div className='absolute bottom-3 left-1/2 -translate-x-1/2 rounded bg-black/55 px-2 py-1 text-[11px] text-white'>
+                    {isAttachingImage ? 'Uploading image...' : 'Drop image to replace'}
+                  </div>
+                </>
+              ) : (
+                <div className='flex flex-col items-center gap-2 text-center'>
+                  <ImageIcon className='size-9 text-gray-400' />
+                  <div className='text-sm font-medium text-gray-200'>
+                    {isAttachingImage ? 'Uploading image...' : 'Drop image here'}
+                  </div>
+                  <div className='text-xs text-gray-400'>or click to browse files</div>
+                </div>
+              )}
+            </div>
           </div>
         ) : null}
 

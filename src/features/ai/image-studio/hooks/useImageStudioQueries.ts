@@ -24,6 +24,13 @@ export type StudioImageModelsResponse = {
 const normalizeProjectRecord = (
   entry: unknown
 ): ImageStudioProjectRecord | null => {
+  const normalizeCanvasDimension = (value: unknown): number | null => {
+    if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+    const parsed = Math.floor(value);
+    if (parsed < 64 || parsed > 32_768) return null;
+    return parsed;
+  };
+
   if (typeof entry === 'string') {
     const id = entry.trim();
     if (!id) return null;
@@ -32,6 +39,8 @@ const normalizeProjectRecord = (
       id,
       createdAt: now,
       updatedAt: now,
+      canvasWidthPx: null,
+      canvasHeightPx: null,
     };
   }
   if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
@@ -46,7 +55,13 @@ const normalizeProjectRecord = (
     typeof record['updatedAt'] === 'string' && record['updatedAt'].trim()
       ? record['updatedAt'].trim()
       : createdAt;
-  return { id, createdAt, updatedAt };
+  return {
+    id,
+    createdAt,
+    updatedAt,
+    canvasWidthPx: normalizeCanvasDimension(record['canvasWidthPx']),
+    canvasHeightPx: normalizeCanvasDimension(record['canvasHeightPx']),
+  };
 };
 
 export function useStudioProjects(): ListQuery<ImageStudioProjectRecord> {

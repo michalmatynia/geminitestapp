@@ -22,20 +22,20 @@ import { useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { UserPreferences } from '@/shared/types/domain/user-preferences';
-import { 
+import {
   Badge, 
   Button, 
   FilterPanel, 
   Input, 
   ListPanel,
   MultiSelect, 
-  SectionHeader, 
   SelectSimple, 
   useToast
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import type { FilterField } from '@/shared/ui/templates/panels';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
   CASE_RESOLVER_CATEGORIES_KEY,
@@ -44,6 +44,8 @@ import {
   CASE_RESOLVER_TAGS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
   createCaseResolverFile,
+  getCaseResolverWorkspaceLatestTimestampMs,
+  hasCaseResolverWorkspaceFilesArray,
   normalizeCaseResolverWorkspace,
   parseCaseResolverCategories,
   parseCaseResolverIdentifiers,
@@ -55,7 +57,6 @@ import {
 import type {
   CaseResolverCategory,
   CaseResolverFile,
-  CaseResolverFileType,
   CaseResolverIdentifier,
   CaseResolverTag,
   CaseResolverWorkspace,
@@ -71,7 +72,7 @@ const createId = (prefix: string): string => {
 const formatCaseTimestamp = (value: string): string => {
   const parsed = Date.parse(value);
   if (Number.isNaN(parsed)) return 'Unknown';
-  return new Date(parsed).toLocaleString();
+  return `${new Date(parsed).toISOString().slice(0, 19).replace('T', ' ')} UTC`;
 };
 
 type CaseTreeNode = {
@@ -83,7 +84,7 @@ type CaseSortKey = 'updated' | 'created' | 'name';
 type CaseSortOrder = 'asc' | 'desc';
 type CaseViewMode = 'hierarchy' | 'list';
 type CaseSearchScope = 'all' | 'name' | 'folder' | 'content';
-type CaseFileTypeFilter = 'all' | CaseResolverFileType;
+type CaseFileTypeFilter = 'all' | 'case';
 type IndexedCaseRow = {
   file: CaseResolverFile;
   normalizedName: string;
@@ -94,6 +95,23 @@ type IndexedCaseRow = {
   normalizedCategory: string;
 };
 type CaseFileComparator = (left: CaseResolverFile, right: CaseResolverFile) => number;
+type CaseIdentifierSelectorOption = {
+  id: string;
+  label: string;
+  searchableLabel: string;
+};
+
+type CaseIdentifierTextSelectorProps = {
+  value: string | null | undefined;
+  identifiers: CaseResolverIdentifier[];
+  identifierPathById: Map<string, string>;
+  placeholder: string;
+  onChange: (value: string | null) => void;
+  onCreateIdentifier: (name: string) => Promise<string | null>;
+  onPillClick?: (identifierId: string) => void;
+  disabled?: boolean;
+  inputClassName?: string;
+};
 
 const defaultCaseComparator: CaseFileComparator = (
   left: CaseResolverFile,
@@ -113,6 +131,215 @@ const stripHtml = (value: string): string =>
     .replace(/&gt;/g, '>')
     .replace(/\s+/g, ' ')
     .trim();
+
+const normalizeIdentifierTerm = (value: string): string => value.trim().toLowerCase();
+
+const buildCaseIdentifierOption = (
+  identifier: CaseResolverIdentifier,
+  identifierPathById: Map<string, string>
+): CaseIdentifierSelectorOption => {
+  const label = identifierPathById.get(identifier.id) ?? identifier.name;
+  return {
+    id: identifier.id,
+    label,
+    searchableLabel: `${identifier.name} ${label}`.toLowerCase(),
+  };
+};
+
+function CaseIdentifierTextSelector({
+  value,
+  identifiers,
+  identifierPathById,
+  placeholder,
+  onChange,
+  onCreateIdentifier,
+  onPillClick,
+  disabled = false,
+  inputClassName,
+}: CaseIdentifierTextSelectorProps): React.JSX.Element {
+  const selectedIdentifier = useMemo(
+    () =>
+      value
+        ? identifiers.find(
+          (identifier: CaseResolverIdentifier): boolean => identifier.id === value
+        ) ?? null
+        : null,
+    [identifiers, value]
+  );
+  const selectedIdentifierLabel = selectedIdentifier
+    ? identifierPathById.get(selectedIdentifier.id) ?? selectedIdentifier.name
+    : '';
+  const [query, setQuery] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) return;
+    if (!selectedIdentifierLabel || !value) {
+      setQuery('');
+    }
+  }, [isOpen, selectedIdentifierLabel, value]);
+
+  const normalizedQuery = normalizeIdentifierTerm(query);
+  const options = useMemo(
+    (): CaseIdentifierSelectorOption[] =>
+      identifiers.map((identifier: CaseResolverIdentifier): CaseIdentifierSelectorOption =>
+        buildCaseIdentifierOption(identifier, identifierPathById)
+      ),
+    [identifierPathById, identifiers]
+  );
+  const filteredOptions = useMemo((): CaseIdentifierSelectorOption[] => {
+    if (!normalizedQuery) return options.slice(0, 12);
+    return options
+      .filter((option: CaseIdentifierSelectorOption): boolean =>
+        option.searchableLabel.includes(normalizedQuery)
+      )
+      .slice(0, 12);
+  }, [normalizedQuery, options]);
+  const exactMatch = useMemo((): CaseIdentifierSelectorOption | null => {
+    if (!normalizedQuery) return null;
+    return (
+      options.find(
+        (option: CaseIdentifierSelectorOption): boolean =>
+          normalizeIdentifierTerm(option.label) === normalizedQuery
+      ) ??
+      options.find((option: CaseIdentifierSelectorOption): boolean => {
+        const identifier = identifiers.find(
+          (entry: CaseResolverIdentifier): boolean => entry.id === option.id
+        );
+        if (!identifier) return false;
+        return normalizeIdentifierTerm(identifier.name) === normalizedQuery;
+      }) ??
+      null
+    );
+  }, [identifiers, normalizedQuery, options]);
+
+  const applySelection = useCallback(
+    (identifierId: string | null): void => {
+      onChange(identifierId);
+      setQuery('');
+      setIsOpen(false);
+    },
+    [onChange]
+  );
+
+  const handleEnter = useCallback(async (): Promise<void> => {
+    const normalizedValue = query.trim();
+    if (!normalizedValue) {
+      applySelection(null);
+      return;
+    }
+    if (exactMatch) {
+      applySelection(exactMatch.id);
+      return;
+    }
+    const [firstFilteredOption] = filteredOptions;
+    if (firstFilteredOption) {
+      applySelection(firstFilteredOption.id);
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const createdIdentifierId = await onCreateIdentifier(normalizedValue);
+      if (!createdIdentifierId) return;
+      onChange(createdIdentifierId);
+      setQuery('');
+      setIsOpen(false);
+    } finally {
+      setIsCreating(false);
+    }
+  }, [applySelection, exactMatch, filteredOptions, onChange, onCreateIdentifier, query]);
+
+  const isDisabled = disabled || isCreating;
+
+  return (
+    <div className='relative'>
+      <Input
+        value={query}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+          const nextQuery = event.target.value;
+          setQuery(nextQuery);
+          setIsOpen(true);
+          if (!nextQuery.trim()) {
+            onChange(null);
+            return;
+          }
+          if (selectedIdentifierLabel && normalizeIdentifierTerm(nextQuery) !== normalizeIdentifierTerm(selectedIdentifierLabel)) {
+            onChange(null);
+          }
+        }}
+        onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            void handleEnter();
+            return;
+          }
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            setIsOpen(false);
+          }
+        }}
+        onFocus={(): void => {
+          setIsOpen(true);
+        }}
+        onBlur={(): void => {
+          setIsOpen(false);
+        }}
+        disabled={isDisabled}
+        placeholder={placeholder}
+        className={inputClassName}
+      />
+      {isOpen ? (
+        <div className='absolute left-0 right-0 z-30 mt-1 max-h-56 overflow-y-auto rounded-md border border-border/50 bg-popover/95 p-1 shadow-lg backdrop-blur-md'>
+          {filteredOptions.length > 0 ? (
+            filteredOptions.map((option: CaseIdentifierSelectorOption) => (
+              <button
+                key={option.id}
+                type='button'
+                className='block w-full rounded px-2 py-1.5 text-left text-xs text-popover-foreground hover:bg-muted/70'
+                onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                  event.preventDefault();
+                  applySelection(option.id);
+                }}
+              >
+                {option.label}
+              </button>
+            ))
+          ) : (
+            <div className='px-2 py-1.5 text-xs text-muted-foreground'>
+              {query.trim()
+                ? `No matching identifiers. Press Enter to create "${query.trim()}".`
+                : 'Type to search case identifiers.'}
+            </div>
+          )}
+        </div>
+      ) : null}
+      {selectedIdentifier ? (
+        <div className='mt-2'>
+          {onPillClick ? (
+            <button
+              type='button'
+              className='rounded-full'
+              onClick={(): void => {
+                onPillClick(selectedIdentifier.id);
+              }}
+              title='Filter cases by this identifier'
+            >
+              <Badge variant='outline' className='w-fit cursor-pointer text-[10px] hover:bg-muted/60'>
+                {selectedIdentifierLabel}
+              </Badge>
+            </button>
+          ) : (
+            <Badge variant='outline' className='w-fit text-[10px]'>
+              {selectedIdentifierLabel}
+            </Badge>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 const buildPathLabelMap = <T extends { id: string; name: string; parentId: string | null }>(
   items: T[]
@@ -255,6 +482,10 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     (): CaseResolverWorkspace => parseCaseResolverWorkspace(rawWorkspace),
     [rawWorkspace]
   );
+  const canHydrateWorkspaceFromStore = useMemo(
+    (): boolean => hasCaseResolverWorkspaceFilesArray(rawWorkspace),
+    [rawWorkspace]
+  );
   const caseResolverTags = useMemo(
     (): CaseResolverTag[] => parseCaseResolverTags(rawCaseResolverTags),
     [rawCaseResolverTags]
@@ -271,7 +502,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     () => parseCaseResolverSettings(rawCaseResolverSettings),
     [rawCaseResolverSettings]
   );
-  const caseResolverTagOptions = useMemo(
+  const caseResolverTagOptions = useMemo<Array<{ value: string; label: string }>>(
     () =>
       caseResolverTags.map((tag: CaseResolverTag) => ({
         value: tag.id,
@@ -279,15 +510,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       })),
     [caseResolverTags]
   );
-  const caseResolverIdentifierOptions = useMemo(
-    () =>
-      caseResolverIdentifiers.map((identifier: CaseResolverIdentifier) => ({
-        value: identifier.id,
-        label: identifier.name,
-      })),
-    [caseResolverIdentifiers]
-  );
-  const caseResolverCategoryOptions = useMemo(() => {
+  const caseResolverCategoryOptions = useMemo<Array<{ value: string; label: string }>>(() => {
     const byId = new Map<string, CaseResolverCategory>(
       caseResolverCategories.map(
         (category: CaseResolverCategory): [string, CaseResolverCategory] => [category.id, category]
@@ -326,6 +549,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const [editingCaseCaseIdentifierId, setEditingCaseCaseIdentifierId] = useState<string | null>(
     null
   );
+  const [pendingCaseIdentifierIds, setPendingCaseIdentifierIds] = useState<string[]>([]);
   const [editingCaseCategoryId, setEditingCaseCategoryId] = useState<string | null>(null);
   const [collapsedCaseIds, setCollapsedCaseIds] = useState<Set<string>>(new Set<string>());
   const [caseSearchQuery, setCaseSearchQuery] = useState('');
@@ -361,8 +585,21 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       } | null>(null);
 
   useEffect(() => {
-    setWorkspace(parsedWorkspace);
-  }, [parsedWorkspace]);
+    if (!canHydrateWorkspaceFromStore) return;
+    setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
+      const currentLatestMs = getCaseResolverWorkspaceLatestTimestampMs(current);
+      const incomingLatestMs = getCaseResolverWorkspaceLatestTimestampMs(parsedWorkspace);
+      const currentItemCount = current.files.length + current.assets.length;
+      const incomingItemCount = parsedWorkspace.files.length + parsedWorkspace.assets.length;
+      if (
+        incomingLatestMs < currentLatestMs ||
+        (incomingLatestMs === currentLatestMs && incomingItemCount < currentItemCount)
+      ) {
+        return current;
+      }
+      return parsedWorkspace;
+    });
+  }, [canHydrateWorkspaceFromStore, parsedWorkspace]);
 
   useEffect(() => {
     if (didHydrateCaseListViewDefaults) return;
@@ -412,12 +649,14 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
 
   const files = useMemo(
     () =>
-      [...workspace.files].sort((left: CaseResolverFile, right: CaseResolverFile) => {
-        if (left.folder !== right.folder) {
-          return left.folder.localeCompare(right.folder);
-        }
-        return left.name.localeCompare(right.name);
-      }),
+      workspace.files
+        .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
+        .sort((left: CaseResolverFile, right: CaseResolverFile) => {
+          if (left.folder !== right.folder) {
+            return left.folder.localeCompare(right.folder);
+          }
+          return left.name.localeCompare(right.name);
+        }),
     [workspace.files]
   );
 
@@ -504,9 +743,8 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         label: 'File Type',
         type: 'select',
         options: [
-          { value: 'all', label: 'All file types' },
-          { value: 'document', label: 'Document' },
-          { value: 'scanfile', label: 'Scan File' },
+          { value: 'all', label: 'All case types' },
+          { value: 'case', label: 'Case' },
         ],
         width: '180px',
       },
@@ -754,9 +992,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const handleCaseFilterChange = useCallback((key: string, value: unknown): void => {
     switch (key) {
       case 'fileType':
-        setCaseFileTypeFilter(
-          value === 'document' || value === 'scanfile' || value === 'all' ? value : 'all'
-        );
+        setCaseFileTypeFilter(value === 'case' || value === 'all' ? value : 'all');
         break;
       case 'folder':
         setCaseFilterFolder(typeof value === 'string' && value !== '' ? value : '__all__');
@@ -811,6 +1047,15 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     caseListViewDefaults.sortBy,
     caseListViewDefaults.sortOrder,
   ]);
+  const handleFilterByCaseIdentifier = useCallback((caseIdentifierId: string): void => {
+    setCaseSearchQuery('');
+    setCaseSearchScope('all');
+    setCaseFileTypeFilter('all');
+    setCaseFilterFolder('__all__');
+    setCaseFilterTagIds([]);
+    setCaseFilterCategoryIds([]);
+    setCaseFilterCaseIdentifierIds([caseIdentifierId]);
+  }, []);
 
   useEffect(() => {
     if (caseFilterFolder === '__all__') return;
@@ -884,6 +1129,52 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     setIsCreateCaseModalOpen(false);
   }, []);
 
+  const handleCreateCaseIdentifier = useCallback(
+    async (rawName: string): Promise<string | null> => {
+      const normalizedName = rawName.trim();
+      if (!normalizedName) return null;
+
+      const existingIdentifier = caseResolverIdentifiers.find(
+        (identifier: CaseResolverIdentifier): boolean =>
+          normalizeIdentifierTerm(identifier.name) === normalizeIdentifierTerm(normalizedName)
+      );
+      if (existingIdentifier) return existingIdentifier.id;
+
+      const now = new Date().toISOString();
+      const nextIdentifier: CaseResolverIdentifier = {
+        id: createId('case-identifier'),
+        name: normalizedName,
+        parentId: null,
+        color: '#f59e0b',
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      try {
+        await updateSetting.mutateAsync({
+          key: CASE_RESOLVER_IDENTIFIERS_KEY,
+          value: serializeSetting([...caseResolverIdentifiers, nextIdentifier]),
+        });
+        setPendingCaseIdentifierIds((current: string[]): string[] =>
+          current.includes(nextIdentifier.id)
+            ? current
+            : [...current, nextIdentifier.id]
+        );
+        toast('Case identifier created.', { variant: 'success' });
+        return nextIdentifier.id;
+      } catch (error: unknown) {
+        toast(
+          error instanceof Error
+            ? error.message
+            : 'Failed to create case identifier.',
+          { variant: 'error' }
+        );
+        return null;
+      }
+    },
+    [caseResolverIdentifiers, toast, updateSetting]
+  );
+
   const createFields: (SettingsField<Partial<CaseResolverFile>>)[] = useMemo(() => [
     {
       key: 'name',
@@ -932,18 +1223,22 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     {
       key: 'caseIdentifierId',
       label: 'Case Identifier',
-      type: 'select',
-      options: [
-        {
-          value: '__none__',
-          label:
-            caseResolverIdentifiers.length > 0
-              ? 'Select identifier'
-              : 'No identifiers defined',
-        },
-        ...caseResolverIdentifierOptions,
-      ],
-      placeholder: 'Assign identifier',
+      type: 'custom',
+      render: ({ value, onChange, disabled }) => (
+        <CaseIdentifierTextSelector
+          value={typeof value === 'string' ? value : null}
+          identifiers={caseResolverIdentifiers}
+          identifierPathById={caseIdentifierPathById}
+          placeholder='Type to search identifier or press Enter to create'
+          onChange={(nextValue: string | null): void => {
+            onChange(nextValue);
+          }}
+          onCreateIdentifier={handleCreateCaseIdentifier}
+          onPillClick={handleFilterByCaseIdentifier}
+          disabled={Boolean(disabled)}
+          inputClassName='h-9'
+        />
+      ),
       required: true,
     },
     {
@@ -963,10 +1258,12 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     caseReferenceOptions,
     caseResolverCategories,
     caseResolverCategoryOptions,
-    caseResolverIdentifierOptions,
+    caseIdentifierPathById,
     caseResolverIdentifiers,
     caseResolverTagOptions,
     caseResolverTags,
+    handleFilterByCaseIdentifier,
+    handleCreateCaseIdentifier,
   ]);
 
   const childrenByParentId = useMemo((): Map<string, string[]> => {
@@ -1034,9 +1331,10 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         : null;
     const normalizedCaseIdentifierId =
       caseDraft.caseIdentifierId &&
-      caseResolverIdentifiers.some(
+      (caseResolverIdentifiers.some(
         (identifier: CaseResolverIdentifier) => identifier.id === caseDraft.caseIdentifierId
-      )
+      ) ||
+        pendingCaseIdentifierIds.includes(caseDraft.caseIdentifierId))
         ? caseDraft.caseIdentifierId
         : null;
     const normalizedCategoryId =
@@ -1044,7 +1342,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         ? caseDraft.categoryId
         : null;
 
-    const validCaseIds = new Set(workspace.files.map((file: CaseResolverFile) => file.id));
+    const validCaseIds = new Set(files.map((file: CaseResolverFile) => file.id));
     const normalizedParentCaseId =
       caseDraft.parentCaseId && validCaseIds.has(caseDraft.parentCaseId) ? caseDraft.parentCaseId : null;
     const normalizedReferenceCaseIds = Array.from(
@@ -1057,9 +1355,8 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     );
     const file = createCaseResolverFile({
       id: createId('case-file'),
-      fileType: 'document',
+      fileType: 'case',
       name: normalizedName,
-      editorType: caseResolverSettings.defaultDocumentFormat,
       parentCaseId: normalizedParentCaseId,
       referenceCaseIds: normalizedReferenceCaseIds,
       tagId: normalizedTagId,
@@ -1080,9 +1377,10 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   }, [
     caseResolverCategories,
     caseResolverIdentifiers,
-    caseResolverSettings.defaultDocumentFormat,
     caseResolverTags,
     caseDraft,
+    files,
+    pendingCaseIdentifierIds,
     persistWorkspace,
     resetCreateCaseDraft,
     toast,
@@ -1122,9 +1420,10 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         : null;
     const normalizedCaseIdentifierId =
       editingCaseCaseIdentifierId &&
-      caseResolverIdentifiers.some(
+      (caseResolverIdentifiers.some(
         (identifier: CaseResolverIdentifier) => identifier.id === editingCaseCaseIdentifierId
-      )
+      ) ||
+        pendingCaseIdentifierIds.includes(editingCaseCaseIdentifierId))
         ? editingCaseCaseIdentifierId
         : null;
     const normalizedCategoryId =
@@ -1133,7 +1432,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         ? editingCaseCategoryId
         : null;
 
-    const validCaseIds = new Set(workspace.files.map((file: CaseResolverFile) => file.id));
+    const validCaseIds = new Set(files.map((file: CaseResolverFile) => file.id));
     const blockedParentIds = new Set<string>(
       editingCaseId ? [editingCaseId, ...collectDescendantCaseIds(editingCaseId)] : []
     );
@@ -1188,6 +1487,8 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     caseResolverCategories,
     caseResolverIdentifiers,
     caseResolverTags,
+    files,
+    pendingCaseIdentifierIds,
     persistWorkspace,
     toast,
     workspace,
@@ -1202,47 +1503,73 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         return;
       }
 
+      const runDelete = async (): Promise<void> => {
+        const childrenByParentId = new Map<string, string[]>();
+        workspace.files.forEach((file: CaseResolverFile): void => {
+          if (!file.parentCaseId || file.parentCaseId === file.id) return;
+          const current = childrenByParentId.get(file.parentCaseId) ?? [];
+          current.push(file.id);
+          childrenByParentId.set(file.parentCaseId, current);
+        });
+        const removedIds = new Set<string>();
+        const collectRemoved = (targetId: string): void => {
+          if (removedIds.has(targetId)) return;
+          removedIds.add(targetId);
+          const children = childrenByParentId.get(targetId) ?? [];
+          children.forEach((childId: string): void => {
+            collectRemoved(childId);
+          });
+        };
+        collectRemoved(fileId);
+
+        const now = new Date().toISOString();
+        const nextFiles = workspace.files
+          .filter((file: CaseResolverFile) => !removedIds.has(file.id))
+          .map((file: CaseResolverFile): CaseResolverFile => {
+            const nextParentCaseId =
+              file.parentCaseId && removedIds.has(file.parentCaseId) ? null : file.parentCaseId;
+            const nextReferenceCaseIds = file.referenceCaseIds.filter(
+              (referenceCaseId: string): boolean => !removedIds.has(referenceCaseId)
+            );
+            const parentChanged = nextParentCaseId !== file.parentCaseId;
+            const referencesChanged = nextReferenceCaseIds.length !== file.referenceCaseIds.length;
+            if (!parentChanged && !referencesChanged) return file;
+            return {
+              ...file,
+              parentCaseId: nextParentCaseId,
+              referenceCaseIds: nextReferenceCaseIds,
+              updatedAt: now,
+            };
+          });
+        const nextWorkspace: CaseResolverWorkspace = {
+          ...workspace,
+          files: nextFiles,
+          activeFileId:
+            workspace.activeFileId === fileId
+              ? (nextFiles[0]?.id ?? null)
+              : workspace.activeFileId,
+        };
+
+        await persistWorkspace(nextWorkspace, 'Case removed.');
+        if (editingCaseId === fileId) {
+          handleCancelEditCase();
+        }
+      };
+
+      if (!caseResolverSettings.confirmDeleteDocument) {
+        await runDelete();
+        return;
+      }
+
       setConfirmation({
         title: 'Delete Case?',
         message: `Are you sure you want to delete case "${target.name}"? This action cannot be undone.`,
         confirmText: 'Delete Case',
         isDangerous: true,
-        onConfirm: async () => {
-          const now = new Date().toISOString();
-          const nextFiles = workspace.files
-            .filter((file: CaseResolverFile) => file.id !== fileId)
-            .map((file: CaseResolverFile): CaseResolverFile => {
-              const nextParentCaseId = file.parentCaseId === fileId ? null : file.parentCaseId;
-              const nextReferenceCaseIds = file.referenceCaseIds.filter(
-                (referenceCaseId: string): boolean => referenceCaseId !== fileId
-              );
-              const parentChanged = nextParentCaseId !== file.parentCaseId;
-              const referencesChanged = nextReferenceCaseIds.length !== file.referenceCaseIds.length;
-              if (!parentChanged && !referencesChanged) return file;
-              return {
-                ...file,
-                parentCaseId: nextParentCaseId,
-                referenceCaseIds: nextReferenceCaseIds,
-                updatedAt: now,
-              };
-            });
-          const nextWorkspace: CaseResolverWorkspace = {
-            ...workspace,
-            files: nextFiles,
-            activeFileId:
-              workspace.activeFileId === fileId
-                ? (nextFiles[0]?.id ?? null)
-                : workspace.activeFileId,
-          };
-
-          await persistWorkspace(nextWorkspace, 'Case removed.');
-          if (editingCaseId === fileId) {
-            handleCancelEditCase();
-          }
-        }
+        onConfirm: runDelete,
       });
     },
-    [editingCaseId, handleCancelEditCase, persistWorkspace, workspace]
+    [caseResolverSettings.confirmDeleteDocument, editingCaseId, handleCancelEditCase, persistWorkspace, toast, workspace]
   );
 
   const handleViewCase = useCallback(
@@ -1304,6 +1631,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           const isEditing = editingCaseId === file.id;
           const hasChildren = node.children.length > 0;
           const isCollapsed = collapsedCaseIds.has(file.id);
+          const caseIdentifierId = file.caseIdentifierId;
           const parentCase = file.parentCaseId
             ? workspace.files.find((candidate: CaseResolverFile) => candidate.id === file.parentCaseId) ?? null
             : null;
@@ -1378,24 +1706,16 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                         placeholder='Select tag'
                         triggerClassName='h-9'
                       />
-                      <SelectSimple
-                        size='sm'
-                        value={editingCaseCaseIdentifierId ?? '__none__'}
-                        onValueChange={(value: string): void => {
-                          setEditingCaseCaseIdentifierId(value === '__none__' ? null : value);
-                        }}
-                        options={[
-                          {
-                            value: '__none__',
-                            label:
-                              caseResolverIdentifiers.length > 0
-                                ? 'Select case identifier'
-                                : 'No case identifiers',
-                          },
-                          ...caseResolverIdentifierOptions,
-                        ]}
-                        placeholder='Select case identifier'
-                        triggerClassName='h-9'
+                      <CaseIdentifierTextSelector
+                        value={editingCaseCaseIdentifierId}
+                        identifiers={caseResolverIdentifiers}
+                        identifierPathById={caseIdentifierPathById}
+                        onChange={setEditingCaseCaseIdentifierId}
+                        onCreateIdentifier={handleCreateCaseIdentifier}
+                        onPillClick={handleFilterByCaseIdentifier}
+                        placeholder='Type to search identifier or press Enter to create'
+                        disabled={updateSetting.isPending}
+                        inputClassName='h-9'
                       />
                       <SelectSimple size='sm'
                         value={editingCaseCategoryId ?? '__none__'}
@@ -1470,13 +1790,24 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                             {caseResolverTags.find((tag: CaseResolverTag) => tag.id === file.tagId)?.name ?? 'Tag'}
                           </Badge>
                         ) : null}
-                        {file.caseIdentifierId ? (
-                          <Badge variant='outline' className='text-[10px]'>
-                            {caseResolverIdentifiers.find(
-                              (identifier: CaseResolverIdentifier) =>
-                                identifier.id === file.caseIdentifierId
-                            )?.name ?? 'Case Identifier'}
-                          </Badge>
+                        {caseIdentifierId ? (
+                          <button
+                            type='button'
+                            className='rounded-full'
+                            onClick={(): void => {
+                              handleFilterByCaseIdentifier(caseIdentifierId);
+                            }}
+                            title='Show cases with this identifier'
+                          >
+                            <Badge variant='outline' className='cursor-pointer text-[10px] hover:bg-muted/60'>
+                              {caseIdentifierPathById.get(caseIdentifierId) ??
+                                caseResolverIdentifiers.find(
+                                  (identifier: CaseResolverIdentifier) =>
+                                    identifier.id === caseIdentifierId
+                                )?.name ??
+                                'Case Identifier'}
+                            </Badge>
+                          </button>
                         ) : null}
                         {file.categoryId ? (
                           <Badge variant='outline' className='text-[10px]'>
@@ -1553,14 +1884,15 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       </div>
     ),
     [
+      caseIdentifierPathById,
       caseReferenceOptions,
       caseResolverCategories,
       caseResolverCategoryOptions,
-      caseResolverIdentifierOptions,
       caseResolverIdentifiers,
       caseResolverTags,
       caseResolverTagOptions,
       collapsedCaseIds,
+      handleCreateCaseIdentifier,
       editingCaseCaseIdentifierId,
       editingCaseCategoryId,
       editingCaseId,
@@ -1575,6 +1907,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       handleCopyCaseId,
       handleSaveCase,
       handleStartEditCase,
+      handleFilterByCaseIdentifier,
       handleViewCase,
       toggleCaseCollapsed,
       updateSetting.isPending,
@@ -1583,27 +1916,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   );
 
   return (
-    <div className='container mx-auto space-y-6 py-8'>
-      <SectionHeader
-        title='Case Resolver Cases'
-        subtitle={(
-          <nav
-            aria-label='Breadcrumb'
-            className='mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-400'
-          >
-            <Link href='/admin' className='transition-colors hover:text-gray-200'>
-              Admin
-            </Link>
-            <span>/</span>
-            <Link href='/admin/case-resolver' className='transition-colors hover:text-gray-200'>
-              Case Resolver
-            </Link>
-            <span>/</span>
-            <span className='text-gray-300'>Cases</span>
-          </nav>
-        )}
-      />
-
+    <>
       <SettingsPanelBuilder
         open={isCreateCaseModalOpen}
         onClose={handleCloseCreateCaseModal}
@@ -1618,9 +1931,47 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       />
 
       <ListPanel
-        title={`Case Hierarchy (${filteredCases.length} matches of ${files.length} total cases)`}
+        header={(
+          <div className='space-y-4'>
+            <div className='mb-2 flex flex-wrap items-center gap-2'>
+              <Button
+                type='button'
+                onClick={(): void => {
+                  handleOpenCreateCaseModal();
+                }}
+                size='icon-lg'
+                variant='outline'
+                aria-label='Create new case'
+                title='Create new case'
+              >
+                <Plus className='h-6 w-6' />
+              </Button>
+            </div>
+            <div className='space-y-1'>
+              <h1 className='text-3xl font-bold tracking-tight text-white'>Cases</h1>
+              <nav
+                aria-label='Breadcrumb'
+                className='mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-400'
+              >
+                <Link href='/admin' className='transition-colors hover:text-gray-200'>
+                  Admin
+                </Link>
+                <span>/</span>
+                <Link href='/admin/case-resolver' className='transition-colors hover:text-gray-200'>
+                  Case Resolver
+                </Link>
+                <span>/</span>
+                <span className='text-gray-300'>Cases</span>
+              </nav>
+            </div>
+          </div>
+        )}
       >
         <div className='space-y-6'>
+          <div className='text-sm text-muted-foreground'>
+            Case Hierarchy ({filteredCases.length} matches of {files.length} total cases)
+          </div>
+
           <FilterPanel
             key={`case-resolver-filters-${caseFilterPanelDefaultExpanded ? 'expanded' : 'collapsed'}`}
             filters={caseFilterConfig}
@@ -1745,6 +2096,6 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           setConfirmation(null);
         }}
       />
-    </div>
+    </>
   );
 }

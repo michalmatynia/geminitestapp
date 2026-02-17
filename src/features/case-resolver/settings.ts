@@ -47,17 +47,21 @@ export const CASE_RESOLVER_TAGS_KEY = 'case_resolver_tags_v1';
 export const CASE_RESOLVER_IDENTIFIERS_KEY = 'case_resolver_identifiers_v1';
 export const CASE_RESOLVER_CATEGORIES_KEY = 'case_resolver_categories_v1';
 export const CASE_RESOLVER_SETTINGS_KEY = 'case_resolver_settings_v1';
+export const CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY = 'case_resolver_default_document_format_v1';
+export const CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
 export type CaseResolverDefaultDocumentFormat = Extract<CaseResolverEditorType, 'markdown' | 'wysiwyg'>;
 
 export type CaseResolverSettings = {
   ocrModel: string;
   defaultDocumentFormat: CaseResolverDefaultDocumentFormat;
+  confirmDeleteDocument: boolean;
 };
 
 export const DEFAULT_CASE_RESOLVER_SETTINGS: CaseResolverSettings = {
   ocrModel: '',
   defaultDocumentFormat: 'markdown',
+  confirmDeleteDocument: true,
 };
 
 export const CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_OPTIONS: Array<{
@@ -74,6 +78,23 @@ export const CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_OPTIONS: Array<{
     value: 'markdown',
     label: 'Markdown',
     description: 'Open and create documents using markdown mode.',
+  },
+];
+
+export const CASE_RESOLVER_CONFIRM_DELETE_OPTIONS: Array<{
+  value: 'on' | 'off';
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'on',
+    label: 'On',
+    description: 'Ask for confirmation before deleting a document.',
+  },
+  {
+    value: 'off',
+    label: 'Off',
+    description: 'Delete documents immediately without confirmation.',
   },
 ];
 
@@ -394,8 +415,12 @@ const sanitizePartyReference = (value: unknown): CaseResolverPartyReference | nu
   };
 };
 
-const normalizeCaseResolverFileType = (value: unknown): CaseResolverFileType =>
-  value === 'scanfile' ? 'scanfile' : 'document';
+const normalizeCaseResolverFileType = (value: unknown): CaseResolverFileType => {
+  if (value === 'case' || value === 'document' || value === 'scanfile') {
+    return value;
+  }
+  return 'document';
+};
 
 const normalizeCaseResolverDocumentVersion = (
   value: unknown
@@ -414,17 +439,22 @@ const normalizeDocumentFormatVersion = (value: unknown): CaseResolverDocumentFor
 
 const resolveSafeCaseParentId = (
   caseId: string,
+  caseType: CaseResolverFileType,
   parentCaseId: string | null,
   caseMap: Map<string, CaseResolverFile>
 ): string | null => {
-  if (!parentCaseId || !caseMap.has(parentCaseId) || parentCaseId === caseId) return null;
+  if (!parentCaseId || parentCaseId === caseId) return null;
+  const parentCase = caseMap.get(parentCaseId);
+  if (parentCase?.fileType !== 'case') return null;
+  if (caseType !== 'case') return parentCaseId;
   let current: string | null = parentCaseId;
   const visited = new Set<string>();
   while (current) {
     if (current === caseId || visited.has(current)) return null;
     visited.add(current);
     const parent = caseMap.get(current);
-    current = parent?.parentCaseId ?? null;
+    if (parent?.fileType !== 'case') return null;
+    current = parent.parentCaseId ?? null;
   }
   return parentCaseId;
 };
@@ -780,23 +810,88 @@ export const parseCaseResolverIdentifiers = (
 export const parseCaseResolverCategories = (raw: string | null | undefined): CaseResolverCategory[] =>
   normalizeCaseResolverCategories(parseJsonSetting<unknown>(raw, []));
 
+const normalizeCaseResolverDefaultDocumentFormatValue = (
+  input: unknown
+): CaseResolverDefaultDocumentFormat | null => {
+  if (typeof input !== 'string') return null;
+  const normalized = input.trim().toLowerCase();
+  if (normalized === 'wysiwyg' || normalized === 'markdown') {
+    return normalized;
+  }
+  return null;
+};
+
+export const parseCaseResolverDefaultDocumentFormat = (
+  raw: string | null | undefined,
+  fallback: CaseResolverDefaultDocumentFormat = DEFAULT_CASE_RESOLVER_SETTINGS.defaultDocumentFormat
+): CaseResolverDefaultDocumentFormat => {
+  const direct = normalizeCaseResolverDefaultDocumentFormatValue(raw);
+  if (direct) return direct;
+
+  if (typeof raw === 'string') {
+    const parsed = parseJsonSetting<unknown>(raw, null);
+    const parsedDirect = normalizeCaseResolverDefaultDocumentFormatValue(parsed);
+    if (parsedDirect) return parsedDirect;
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      const record = parsed as Record<string, unknown>;
+      const candidate =
+        record['defaultDocumentFormat'] ??
+        record['defaultDocumentEditorType'] ??
+        record['editorType'] ??
+        null;
+      const parsedFromObject = normalizeCaseResolverDefaultDocumentFormatValue(candidate);
+      if (parsedFromObject) return parsedFromObject;
+    }
+  }
+
+  return fallback;
+};
+
 const normalizeCaseResolverSettings = (input: unknown): CaseResolverSettings => {
+  if (typeof input === 'string') {
+    const defaultDocumentFormat = normalizeCaseResolverDefaultDocumentFormatValue(input);
+    if (defaultDocumentFormat) {
+      return {
+        ...DEFAULT_CASE_RESOLVER_SETTINGS,
+        defaultDocumentFormat,
+      };
+    }
+    return DEFAULT_CASE_RESOLVER_SETTINGS;
+  }
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return DEFAULT_CASE_RESOLVER_SETTINGS;
   }
   const record = input as Record<string, unknown>;
   const ocrModel = typeof record['ocrModel'] === 'string' ? record['ocrModel'].trim() : '';
-  const defaultDocumentFormat = record['defaultDocumentFormat'] === 'wysiwyg'
-    ? 'wysiwyg'
-    : 'markdown';
+  const rawFormatCandidate =
+    typeof record['defaultDocumentFormat'] === 'string'
+      ? record['defaultDocumentFormat']
+      : typeof record['defaultDocumentEditorType'] === 'string'
+        ? record['defaultDocumentEditorType']
+        : typeof record['editorType'] === 'string'
+          ? record['editorType']
+          : null;
+  const defaultDocumentFormat =
+    normalizeCaseResolverDefaultDocumentFormatValue(rawFormatCandidate) ??
+    DEFAULT_CASE_RESOLVER_SETTINGS.defaultDocumentFormat;
+  const confirmDeleteDocument = record['confirmDeleteDocument'] !== false;
   return {
     ocrModel,
     defaultDocumentFormat,
+    confirmDeleteDocument,
   };
 };
 
-export const parseCaseResolverSettings = (raw: string | null | undefined): CaseResolverSettings =>
-  normalizeCaseResolverSettings(parseJsonSetting<unknown>(raw, DEFAULT_CASE_RESOLVER_SETTINGS));
+export const parseCaseResolverSettings = (raw: string | null | undefined): CaseResolverSettings => {
+  const parsedDefaultDocumentFormat = normalizeCaseResolverDefaultDocumentFormatValue(raw);
+  if (parsedDefaultDocumentFormat) {
+    return {
+      ...DEFAULT_CASE_RESOLVER_SETTINGS,
+      defaultDocumentFormat: parsedDefaultDocumentFormat,
+    };
+  }
+  return normalizeCaseResolverSettings(parseJsonSetting<unknown>(raw, DEFAULT_CASE_RESOLVER_SETTINGS));
+};
 
 const ensureDocumentPromptPorts = (
   nodes: AiNode[],
@@ -1276,6 +1371,7 @@ const buildCaseResolverRelationGraph = ({
   const existingNodeById = new Map<string, AiNode>(
     rawNodes.map((node: AiNode): [string, AiNode] => [node.id, node])
   );
+  const caseFiles = files.filter((file: CaseResolverFile): boolean => file.fileType === 'case');
 
   const nextNodes: AiNode[] = [];
   const nextNodeMeta: Record<string, CaseResolverRelationNodeMeta> = {};
@@ -1351,7 +1447,7 @@ const buildCaseResolverRelationGraph = ({
     if (!normalizedFolderPath) return;
     folderEntityIds.add(relationFolderEntityIdFromPath(normalizedFolderPath));
   });
-  files.forEach((file: CaseResolverFile): void => {
+  caseFiles.forEach((file: CaseResolverFile): void => {
     folderEntityIds.add(relationFolderEntityIdFromPath(file.folder));
   });
   assets.forEach((asset: CaseResolverAssetFile): void => {
@@ -1390,7 +1486,7 @@ const buildCaseResolverRelationGraph = ({
     });
   });
 
-  files.forEach((file: CaseResolverFile): void => {
+  caseFiles.forEach((file: CaseResolverFile): void => {
     upsertNode({
       id: toCaseResolverRelationCaseNodeId(file.id),
       entityType: 'case',
@@ -1400,20 +1496,6 @@ const buildCaseResolverRelationGraph = ({
       description: `Case ID: ${file.id}`,
       group: 'case',
       fileKind: null,
-      folderPath: normalizeRelationMetaFolderPath(file.folder),
-      sourceFileId: file.id,
-      isStructural: true,
-    });
-
-    upsertNode({
-      id: toCaseResolverRelationCaseFileNodeId(file.id),
-      entityType: 'file',
-      entityId: `case:${file.id}`,
-      label: `${file.name} File`,
-      title: `File: ${file.name}`,
-      description: `Case file (${file.fileType})`,
-      group: 'file',
-      fileKind: 'case_file',
       folderPath: normalizeRelationMetaFolderPath(file.folder),
       sourceFileId: file.id,
       isStructural: true,
@@ -1439,6 +1521,7 @@ const buildCaseResolverRelationGraph = ({
   rawNodes.forEach((node: AiNode): void => {
     if (usedNodeIds.has(node.id)) return;
     const existingMeta = rawNodeMeta[node.id];
+    if (existingMeta?.isStructural) return;
     const entityType = existingMeta ? existingMeta.entityType : 'custom';
     const label = existingMeta?.label?.trim() ? existingMeta.label.trim() : node.title;
     const entityId = existingMeta?.entityId?.trim() ? existingMeta.entityId.trim() : node.id;
@@ -1531,33 +1614,16 @@ const buildCaseResolverRelationGraph = ({
     });
   });
 
-  const validCaseIds = new Set<string>(files.map((file: CaseResolverFile): string => file.id));
-  files.forEach((file: CaseResolverFile): void => {
+  const validCaseIds = new Set<string>(caseFiles.map((file: CaseResolverFile): string => file.id));
+  caseFiles.forEach((file: CaseResolverFile): void => {
     const folderNodeId = toCaseResolverRelationFolderNodeId(file.folder);
     const caseNodeId = toCaseResolverRelationCaseNodeId(file.id);
-    const caseFileNodeId = toCaseResolverRelationCaseFileNodeId(file.id);
     upsertEdge({
       id: structuralRelationEdgeId('contains', folderNodeId, caseNodeId),
       from: folderNodeId,
       to: caseNodeId,
       relationType: 'contains',
       label: 'contains case',
-      isStructural: true,
-    });
-    upsertEdge({
-      id: structuralRelationEdgeId('contains', caseNodeId, caseFileNodeId),
-      from: caseNodeId,
-      to: caseFileNodeId,
-      relationType: 'contains',
-      label: 'contains file',
-      isStructural: true,
-    });
-    upsertEdge({
-      id: structuralRelationEdgeId('contains', folderNodeId, caseFileNodeId),
-      from: folderNodeId,
-      to: caseFileNodeId,
-      relationType: 'contains',
-      label: 'contains file',
       isStructural: true,
     });
     if (file.parentCaseId && validCaseIds.has(file.parentCaseId)) {
@@ -1969,26 +2035,20 @@ const normalizeCaseResolverFolderTimestamps = ({
 };
 
 export const createDefaultCaseResolverWorkspace = (): CaseResolverWorkspace => {
-  const firstFile = createCaseResolverFile({
-    id: 'case-file-default',
-    name: 'Case 1',
-    folder: '',
-    graph: createEmptyCaseResolverGraph(),
-  });
   const relationGraph = buildCaseResolverRelationGraph({
     source: null,
     folders: [],
-    files: [firstFile],
+    files: [],
     assets: [],
   });
   return {
     version: 2,
     folders: [],
     folderTimestamps: {},
-    files: [firstFile],
+    files: [],
     assets: [],
     relationGraph,
-    activeFileId: firstFile.id,
+    activeFileId: null,
   };
 };
 
@@ -2002,6 +2062,15 @@ export const normalizeCaseResolverWorkspace = (
   const now = new Date().toISOString();
 
   const rawFiles = Array.isArray(workspace.files) ? workspace.files : [];
+  const rawChildParentIds = new Set<string>();
+  rawFiles.forEach((entry: unknown): void => {
+    if (!entry || typeof entry !== 'object') return;
+    const entryRecord = entry as Record<string, unknown>;
+    const parentCaseId = sanitizeOptionalId(entryRecord['parentCaseId']);
+    if (parentCaseId) {
+      rawChildParentIds.add(parentCaseId);
+    }
+  });
   const fileIds = new Set<string>();
   const files = rawFiles
     .filter((file): file is CaseResolverFile => Boolean(file) && typeof file === 'object')
@@ -2011,9 +2080,23 @@ export const normalizeCaseResolverWorkspace = (
         return null;
       }
       fileIds.add(id);
+      const fileRecord = file as unknown as Record<string, unknown>;
+      const rawFileType = fileRecord['fileType'];
+      const normalizedRawFileType = normalizeCaseResolverFileType(rawFileType);
+      const shouldForceCaseType =
+        fileRecord['isCaseContainer'] === true || rawChildParentIds.has(id);
+      const normalizedFileType: CaseResolverFileType =
+        shouldForceCaseType && normalizedRawFileType !== 'scanfile'
+          ? 'case'
+          : normalizedRawFileType;
+      const normalizedCreatedAt = normalizeTimestamp(
+        file.createdAt,
+        CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP
+      );
+      const normalizedUpdatedAt = normalizeTimestamp(file.updatedAt, normalizedCreatedAt);
       return createCaseResolverFile({
         id,
-        fileType: file.fileType,
+        fileType: normalizedFileType,
         name: file.name,
         folder: file.folder,
         parentCaseId: file.parentCaseId,
@@ -2039,21 +2122,28 @@ export const normalizeCaseResolverWorkspace = (
         tagId: file.tagId,
         caseIdentifierId: file.caseIdentifierId,
         categoryId: file.categoryId,
-        createdAt: file.createdAt,
-        updatedAt: file.updatedAt,
+        createdAt: normalizedCreatedAt,
+        updatedAt: normalizedUpdatedAt,
       });
     })
     .filter((file: CaseResolverFile | null): file is CaseResolverFile => Boolean(file));
 
   const normalizedFilesBase = files;
-  const filesById = new Map<string, CaseResolverFile>(
-    normalizedFilesBase.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
+  const caseFilesById = new Map<string, CaseResolverFile>(
+    normalizedFilesBase
+      .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
+      .map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
   );
-  const validFileIds = new Set<string>(filesById.keys());
+  const validCaseIds = new Set<string>(caseFilesById.keys());
   const normalizedFiles = normalizedFilesBase.map((file: CaseResolverFile): CaseResolverFile => {
-    const parentCaseId = resolveSafeCaseParentId(file.id, file.parentCaseId, filesById);
+    const parentCaseId = resolveSafeCaseParentId(
+      file.id,
+      file.fileType,
+      file.parentCaseId,
+      caseFilesById
+    );
     const referenceCaseIds = file.referenceCaseIds
-      .filter((referenceId: string): boolean => referenceId !== file.id && validFileIds.has(referenceId));
+      .filter((referenceId: string): boolean => referenceId !== file.id && validCaseIds.has(referenceId));
     const uniqueReferenceCaseIds = Array.from(new Set(referenceCaseIds));
     return {
       ...file,
@@ -2073,6 +2163,11 @@ export const normalizeCaseResolverWorkspace = (
         return null;
       }
       assetIds.add(id);
+      const normalizedCreatedAt = normalizeTimestamp(
+        asset.createdAt,
+        CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP
+      );
+      const normalizedUpdatedAt = normalizeTimestamp(asset.updatedAt, normalizedCreatedAt);
       return createCaseResolverAssetFile({
         id,
         name: asset.name,
@@ -2084,8 +2179,8 @@ export const normalizeCaseResolverWorkspace = (
         size: asset.size,
         textContent: asset.textContent,
         description: asset.description,
-        createdAt: asset.createdAt,
-        updatedAt: asset.updatedAt,
+        createdAt: normalizedCreatedAt,
+        updatedAt: normalizedUpdatedAt,
       });
     })
     .filter((asset: CaseResolverAssetFile | null): asset is CaseResolverAssetFile => Boolean(asset));
@@ -2135,6 +2230,47 @@ export const parseCaseResolverWorkspace = (
 ): CaseResolverWorkspace => {
   const parsed = parseJsonSetting<CaseResolverWorkspace | null>(raw, null);
   return normalizeCaseResolverWorkspace(parsed);
+};
+
+export const hasCaseResolverWorkspaceFilesArray = (
+  raw: string | null | undefined
+): boolean => {
+  if (typeof raw !== 'string' || raw.trim().length === 0) return false;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
+    const record = parsed as Record<string, unknown>;
+    return Array.isArray(record['files']);
+  } catch {
+    return false;
+  }
+};
+
+const parseWorkspaceTimestampMs = (value: string | null | undefined): number => {
+  if (!value) return 0;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+export const getCaseResolverWorkspaceLatestTimestampMs = (
+  workspace: CaseResolverWorkspace
+): number => {
+  let latest = 0;
+  workspace.files.forEach((file: CaseResolverFile): void => {
+    latest = Math.max(
+      latest,
+      parseWorkspaceTimestampMs(file.createdAt),
+      parseWorkspaceTimestampMs(file.updatedAt)
+    );
+  });
+  workspace.assets.forEach((asset: CaseResolverAssetFile): void => {
+    latest = Math.max(
+      latest,
+      parseWorkspaceTimestampMs(asset.createdAt),
+      parseWorkspaceTimestampMs(asset.updatedAt)
+    );
+  });
+  return latest;
 };
 
 export const upsertFileGraph = (

@@ -8,6 +8,7 @@ import {
   FileImage,
   FilePlus,
   FileText,
+  Image as ImageIcon,
   Eye,
   Folder,
   FolderOpen,
@@ -119,8 +120,10 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     onCreateFolder,
     onCreateFile,
     onCreateScanFile,
+    onCreateImageAsset,
     onCreateNodeFile,
     onUploadAssets,
+    onAttachAssetFile,
     onMoveFile,
     onMoveAsset,
     onMoveFolder,
@@ -133,22 +136,30 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     onToggleFileLock,
     onEditFile,
     activeFile,
+    selectedAsset,
   } = useCaseResolverPageContext();
   const { toast } = useToast();
   const [isUploadingAssets, setIsUploadingAssets] = useState(false);
+  const [isAttachingAssetFile, setIsAttachingAssetFile] = useState(false);
+  const [isCreatingScanFiles, setIsCreatingScanFiles] = useState(false);
   const [isRootExplicitlySelected, setIsRootExplicitlySelected] = useState(true);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
+  const attachUploadInputRef = useRef<HTMLInputElement | null>(null);
+  const scanUploadInputRef = useRef<HTMLInputElement | null>(null);
 
   const treeWorkspace = useMemo((): CaseResolverWorkspace => {
     const selectedCase =
       selectedFileId
         ? workspace.files.find((file: CaseResolverFile): boolean => file.id === selectedFileId) ?? null
         : null;
-    const isChildCase = Boolean(
-      selectedCase?.parentCaseId &&
-      selectedCase.parentCaseId !== selectedCase.id
+    const shouldScopeToCase = Boolean(
+      selectedCase &&
+      (
+        selectedCase.fileType === 'case' ||
+        (selectedCase.parentCaseId && selectedCase.parentCaseId !== selectedCase.id)
+      )
     );
-    if (!selectedCase || !isChildCase) {
+    if (!selectedCase || !shouldScopeToCase) {
       return workspace;
     }
 
@@ -325,6 +336,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
   const folderCaseFileStatsByPath = useMemo((): Map<string, FolderCaseFileStats> => {
     const stats = new Map<string, FolderCaseFileStats>();
     treeWorkspace.files.forEach((file): void => {
+      if (file.fileType === 'case') return;
       const normalizedFolder = file.folder.trim();
       if (!normalizedFolder) return;
       const segments = normalizedFolder.split('/').filter(Boolean);
@@ -421,8 +433,18 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     [resolveIcon]
   );
 
+  const canAttachSelectedAssetFile = Boolean(selectedAsset && !selectedAsset.filepath);
+
   const triggerAssetUpload = (): void => {
+    if (canAttachSelectedAssetFile) {
+      attachUploadInputRef.current?.click();
+      return;
+    }
     uploadInputRef.current?.click();
+  };
+
+  const triggerScanUpload = (): void => {
+    scanUploadInputRef.current?.click();
   };
 
   const handleUploadInputChange = async (
@@ -442,6 +464,48 @@ export function CaseResolverFolderTree(): React.JSX.Element {
       );
     } finally {
       setIsUploadingAssets(false);
+    }
+  };
+
+  const handleAttachUploadInputChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ): Promise<void> => {
+    const selectedFile = event.target.files?.[0] ?? null;
+    event.target.value = '';
+    if (!selectedFile || !selectedAsset) return;
+
+    setIsAttachingAssetFile(true);
+    try {
+      await onAttachAssetFile(selectedAsset.id, selectedFile, {
+        expectedKind: selectedAsset.kind,
+      });
+    } catch (error: unknown) {
+      toast(
+        error instanceof Error ? error.message : 'Failed to attach file to placeholder.',
+        { variant: 'error' }
+      );
+    } finally {
+      setIsAttachingAssetFile(false);
+    }
+  };
+
+  const handleScanUploadInputChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ): Promise<void> => {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = '';
+    if (files.length === 0) return;
+
+    setIsCreatingScanFiles(true);
+    try {
+      await onCreateScanFile(selectedFolderForCreate, files);
+    } catch (error: unknown) {
+      toast(
+        error instanceof Error ? error.message : 'Failed to create scan file.',
+        { variant: 'error' }
+      );
+    } finally {
+      setIsCreatingScanFiles(false);
     }
   };
 
@@ -495,15 +559,26 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               </Button>
               <Button
                 type='button'
+                onClick={triggerScanUpload}
+                size='sm'
+                variant='outline'
+                disabled={isCreatingScanFiles}
+                className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50 disabled:opacity-60'
+                title='Add scan file'
+              >
+                <FileImage className='size-4' />
+              </Button>
+              <Button
+                type='button'
                 onClick={(): void => {
-                  onCreateScanFile(selectedFolderForCreate);
+                  onCreateImageAsset(selectedFolderForCreate);
                 }}
                 size='sm'
                 variant='outline'
                 className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50'
-                title='Add scan file'
+                title='Create image placeholder'
               >
-                <FileImage className='size-4' />
+                <ImageIcon className='size-4' />
               </Button>
               <Button
                 type='button'
@@ -522,9 +597,9 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                 onClick={triggerAssetUpload}
                 size='sm'
                 variant='outline'
-                disabled={isUploadingAssets}
+                disabled={isUploadingAssets || isAttachingAssetFile}
                 className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50 disabled:opacity-60'
-                title='Upload files'
+                title={canAttachSelectedAssetFile ? 'Upload to selected placeholder' : 'Upload files'}
               >
                 <Upload className='size-4' />
               </Button>
@@ -549,12 +624,33 @@ export function CaseResolverFolderTree(): React.JSX.Element {
       )}
     >
       <input
+        ref={scanUploadInputRef}
+        type='file'
+        accept='image/*'
+        multiple
+        className='hidden'
+        onChange={(event): void => {
+          void handleScanUploadInputChange(event);
+        }}
+      />
+
+      <input
         ref={uploadInputRef}
         type='file'
         multiple
         className='hidden'
         onChange={(event): void => {
           void handleUploadInputChange(event);
+        }}
+      />
+
+      <input
+        ref={attachUploadInputRef}
+        type='file'
+        accept={selectedAsset?.kind === 'image' ? 'image/*' : undefined}
+        className='hidden'
+        onChange={(event): void => {
+          void handleAttachUploadInputChange(event);
         }}
       />
 

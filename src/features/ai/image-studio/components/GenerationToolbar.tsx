@@ -2092,7 +2092,6 @@ export function GenerationToolbar(): React.JSX.Element {
             onClick={() => {
               setCenterGuidesEnabled(!centerGuidesEnabled);
             }}
-            disabled={!workingSlotImageSrc}
             title='Toggle center guides overlay'
           >
             {centerGuidesEnabled ? 'Hide Guides' : 'Show Guides'}

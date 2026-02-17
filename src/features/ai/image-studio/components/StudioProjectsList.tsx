@@ -30,6 +30,11 @@ import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { useProjects } from '../context/ProjectsContext';
 import {
+  IMAGE_STUDIO_CANVAS_TEMPLATES_KEY,
+  parseImageStudioCanvasTemplates,
+  type ImageStudioCanvasTemplate,
+} from '../utils/canvas-templates';
+import {
   IMAGE_STUDIO_PROJECT_LOCKS_KEY,
   isImageStudioProjectLocked,
   moveImageStudioProjectLock,
@@ -51,11 +56,37 @@ const formatProjectTimestamp = (value: string): string => {
   return new Date(parsed).toLocaleString();
 };
 
+const parseCanvasDimensionInput = (value: string): number | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed)) return null;
+  const normalized = Math.floor(parsed);
+  if (normalized < 64 || normalized > 32_768) return null;
+  return normalized;
+};
+
+const formatProjectCanvasSize = (project: ImageStudioProjectRecord): string => {
+  if (
+    typeof project.canvasWidthPx !== 'number' ||
+    !Number.isFinite(project.canvasWidthPx) ||
+    typeof project.canvasHeightPx !== 'number' ||
+    !Number.isFinite(project.canvasHeightPx)
+  ) {
+    return 'Auto';
+  }
+  return `${project.canvasWidthPx} x ${project.canvasHeightPx}`;
+};
+
+const buildCanvasTemplateId = (width: number, height: number): string =>
+  `template_${width}x${height}_${Date.now().toString(36)}`;
+
 export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): React.JSX.Element {
   const { toast } = useToast();
-  const settingsQuery = useSettingsMap({ scope: 'light' });
+  const settingsQuery = useSettingsMap({ scope: 'heavy' });
   const projectSettingsMutation = useUpdateSetting();
   const projectLocksMutation = useUpdateSetting();
+  const canvasTemplatesMutation = useUpdateSetting();
   const {
     projectId,
     setProjectId,
@@ -71,6 +102,8 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
   } = useProjects();
 
   const [newProjectId, setNewProjectId] = React.useState('');
+  const [newProjectCanvasWidthPx, setNewProjectCanvasWidthPx] = React.useState('1024');
+  const [newProjectCanvasHeightPx, setNewProjectCanvasHeightPx] = React.useState('1024');
   const [editingProjectId, setEditingProjectId] = React.useState<string | null>(null);
   const [editingProjectValue, setEditingProjectValue] = React.useState('');
 
@@ -78,6 +111,13 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
     () =>
       parseImageStudioProjectLocks(
         settingsQuery.data?.get(IMAGE_STUDIO_PROJECT_LOCKS_KEY) ?? null
+      ),
+    [settingsQuery.data]
+  );
+  const canvasTemplates = useMemo(
+    () =>
+      parseImageStudioCanvasTemplates(
+        settingsQuery.data?.get(IMAGE_STUDIO_CANVAS_TEMPLATES_KEY) ?? null
       ),
     [settingsQuery.data]
   );
@@ -109,11 +149,33 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
     [projectLocksMutation]
   );
 
+  const persistCanvasTemplates = useCallback(
+    async (templates: ImageStudioCanvasTemplate[]): Promise<void> => {
+      await canvasTemplatesMutation.mutateAsync({
+        key: IMAGE_STUDIO_CANVAS_TEMPLATES_KEY,
+        value: serializeSetting(templates),
+      });
+    },
+    [canvasTemplatesMutation]
+  );
+
   const handleCreate = async () => {
     const id = newProjectId.trim();
     if (!id) return;
+    const canvasWidthPx = parseCanvasDimensionInput(newProjectCanvasWidthPx);
+    const canvasHeightPx = parseCanvasDimensionInput(newProjectCanvasHeightPx);
+    if (canvasWidthPx === null || canvasHeightPx === null) {
+      toast('Canvas size must be between 64 and 32768 pixels for both width and height.', {
+        variant: 'error',
+      });
+      return;
+    }
     try {
-      const createdProjectId = await createProjectMutation.mutateAsync(id);
+      const createdProjectId = await createProjectMutation.mutateAsync({
+        projectId: id,
+        canvasWidthPx,
+        canvasHeightPx,
+      });
       const projectSettingsKey = getImageStudioProjectSettingsKey(createdProjectId);
       if (projectSettingsKey) {
         try {
@@ -138,14 +200,83 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
         });
       }
       setNewProjectId('');
+      setNewProjectCanvasWidthPx('1024');
+      setNewProjectCanvasHeightPx('1024');
       setProjectId(createdProjectId);
-      toast(`Project "${createdProjectId}" added and locked by default.`, {
+      toast(`Project "${createdProjectId}" added (${canvasWidthPx}x${canvasHeightPx}) and locked by default.`, {
         variant: 'success',
       });
     } catch (error: unknown) {
       toast(error instanceof Error ? error.message : 'Failed to create project', { variant: 'error' });
     }
   };
+
+  const handleSaveCanvasTemplate = useCallback(async (): Promise<void> => {
+    const width = parseCanvasDimensionInput(newProjectCanvasWidthPx);
+    const height = parseCanvasDimensionInput(newProjectCanvasHeightPx);
+    if (width === null || height === null) {
+      toast('Enter a valid canvas width and height first.', { variant: 'info' });
+      return;
+    }
+
+    const duplicate = canvasTemplates.find(
+      (template) => template.width === width && template.height === height
+    );
+    if (duplicate) {
+      toast(`Template "${duplicate.label}" already exists.`, { variant: 'info' });
+      return;
+    }
+
+    const label = `${width} x ${height}`;
+    const nextTemplates: ImageStudioCanvasTemplate[] = [
+      {
+        id: buildCanvasTemplateId(width, height),
+        width,
+        height,
+        label,
+      },
+      ...canvasTemplates,
+    ];
+
+    try {
+      await persistCanvasTemplates(nextTemplates);
+      toast(`Saved canvas template "${label}".`, { variant: 'success' });
+    } catch (error: unknown) {
+      toast(
+        error instanceof Error
+          ? error.message
+          : 'Failed to save canvas template.',
+        { variant: 'error' }
+      );
+    }
+  }, [
+    canvasTemplates,
+    newProjectCanvasWidthPx,
+    newProjectCanvasHeightPx,
+    persistCanvasTemplates,
+    toast,
+  ]);
+
+  const handleDeleteCanvasTemplate = useCallback(
+    async (templateId: string): Promise<void> => {
+      const template = canvasTemplates.find((entry) => entry.id === templateId);
+      if (!template) return;
+
+      const nextTemplates = canvasTemplates.filter((entry) => entry.id !== templateId);
+      try {
+        await persistCanvasTemplates(nextTemplates);
+        toast(`Deleted canvas template "${template.label}".`, { variant: 'success' });
+      } catch (error: unknown) {
+        toast(
+          error instanceof Error
+            ? error.message
+            : 'Failed to delete canvas template.',
+          { variant: 'error' }
+        );
+      }
+    },
+    [canvasTemplates, persistCanvasTemplates, toast]
+  );
 
   const handleStartEdit = useCallback((id: string): void => {
     setEditingProjectId(id);
@@ -296,6 +427,15 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
       },
     },
     {
+      id: 'canvas',
+      header: 'Canvas',
+      cell: ({ row }) => (
+        <span className='text-xs text-gray-400'>
+          {formatProjectCanvasSize(row.original)}
+        </span>
+      ),
+    },
+    {
       accessorKey: 'createdAt',
       header: 'Created',
       cell: ({ row }) => (
@@ -443,26 +583,130 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
     handleDelete,
   ]);
 
+  const canvasWidthDraftValid = parseCanvasDimensionInput(newProjectCanvasWidthPx) !== null;
+  const canvasHeightDraftValid = parseCanvasDimensionInput(newProjectCanvasHeightPx) !== null;
+  const canCreateProject =
+    Boolean(newProjectId.trim()) &&
+    canvasWidthDraftValid &&
+    canvasHeightDraftValid &&
+    !createProjectMutation.isPending;
+  const canSaveCanvasTemplate =
+    canvasWidthDraftValid &&
+    canvasHeightDraftValid &&
+    !canvasTemplatesMutation.isPending;
+  const normalizedDraftCanvasWidth = parseCanvasDimensionInput(newProjectCanvasWidthPx);
+  const normalizedDraftCanvasHeight = parseCanvasDimensionInput(newProjectCanvasHeightPx);
+
   return (
     <div className='space-y-4'>
-      <div className='flex items-center gap-2 rounded-lg border border-border/60 bg-card/40 p-3'>
-        <Input
-          size='sm'
-          placeholder='New project ID...'
-          value={newProjectId}
-          onChange={(e) => setNewProjectId(e.target.value)}
-          className='h-9'
-          onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              void handleCreate();
-            }
-          }}
-        />
+      <div className='flex flex-wrap items-end gap-2 rounded-lg border border-border/60 bg-card/40 p-3'>
+        <div className='min-w-[220px] flex-1 space-y-1'>
+          <div className='text-[11px] text-gray-500'>Project ID</div>
+          <Input
+            size='sm'
+            placeholder='New project ID...'
+            value={newProjectId}
+            onChange={(e) => setNewProjectId(e.target.value)}
+            className='h-9'
+            onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                void handleCreate();
+              }
+            }}
+          />
+        </div>
+        <div className='w-[120px] space-y-1'>
+          <div className='text-[11px] text-gray-500'>Canvas W (px)</div>
+          <Input
+            size='sm'
+            type='number'
+            min={64}
+            max={32768}
+            step={1}
+            value={newProjectCanvasWidthPx}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              setNewProjectCanvasWidthPx(event.target.value);
+            }}
+            className={cn('h-9', !canvasWidthDraftValid && 'border-red-400/50')}
+          />
+        </div>
+        <div className='w-[120px] space-y-1'>
+          <div className='text-[11px] text-gray-500'>Canvas H (px)</div>
+          <Input
+            size='sm'
+            type='number'
+            min={64}
+            max={32768}
+            step={1}
+            value={newProjectCanvasHeightPx}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              setNewProjectCanvasHeightPx(event.target.value);
+            }}
+            className={cn('h-9', !canvasHeightDraftValid && 'border-red-400/50')}
+          />
+        </div>
+        <div className='flex w-full flex-wrap items-center gap-2'>
+          <div className='text-[11px] text-gray-500'>Canvas Templates:</div>
+          {canvasTemplates.length === 0 ? (
+            <span className='text-[11px] text-gray-500'>No saved templates.</span>
+          ) : null}
+          {canvasTemplates.map((template) => {
+            const selected =
+              normalizedDraftCanvasWidth === template.width &&
+              normalizedDraftCanvasHeight === template.height;
+            return (
+              <div
+                key={template.id}
+                className='inline-flex items-center gap-1 rounded border border-border/60 bg-card/20 p-0.5'
+              >
+                <Button
+                  type='button'
+                  size='xs'
+                  variant={selected ? 'secondary' : 'ghost'}
+                  className='h-6 px-2 text-[11px]'
+                  onClick={(): void => {
+                    setNewProjectCanvasWidthPx(String(template.width));
+                    setNewProjectCanvasHeightPx(String(template.height));
+                  }}
+                >
+                  {template.label}
+                </Button>
+                <Button
+                  type='button'
+                  size='xs'
+                  variant='ghost'
+                  className='h-6 w-6 p-0 text-red-300 hover:text-red-200'
+                  onClick={(): void => {
+                    void handleDeleteCanvasTemplate(template.id);
+                  }}
+                  disabled={canvasTemplatesMutation.isPending}
+                  title={`Delete template ${template.label}`}
+                  aria-label={`Delete template ${template.label}`}
+                >
+                  <Trash2 className='size-3.5' />
+                </Button>
+              </div>
+            );
+          })}
+          <Button
+            size='xs'
+            type='button'
+            variant='outline'
+            className='h-7 px-2 text-[11px]'
+            onClick={() => {
+              void handleSaveCanvasTemplate();
+            }}
+            disabled={!canSaveCanvasTemplate}
+            title='Save current width and height as template'
+          >
+            Save Template
+          </Button>
+        </div>
         <Button
           size='xs'
           onClick={() => void handleCreate()}
-          disabled={!newProjectId.trim() || createProjectMutation.isPending}
+          disabled={!canCreateProject}
         >
           <Plus className='mr-2 size-4' />
           Add Project

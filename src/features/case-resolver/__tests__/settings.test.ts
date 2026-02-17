@@ -2,10 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import type { AiNode } from '@/features/ai/ai-paths/lib';
 import {
+  CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP,
   extractCaseResolverDocumentDate,
+  getCaseResolverWorkspaceLatestTimestampMs,
+  hasCaseResolverWorkspaceFilesArray,
   inferCaseResolverAssetKind,
   normalizeCaseResolverIdentifiers,
   normalizeCaseResolverTags,
+  parseCaseResolverDefaultDocumentFormat,
   parseCaseResolverIdentifiers,
   parseCaseResolverSettings,
   parseCaseResolverWorkspace,
@@ -29,6 +33,55 @@ const createPromptNode = (id: string): AiNode => ({
 });
 
 describe('case-resolver settings', () => {
+  it('starts with an empty workspace and no placeholder files', () => {
+    const workspace = parseCaseResolverWorkspace(null);
+    expect(workspace.files).toEqual([]);
+    expect(workspace.activeFileId).toBeNull();
+  });
+
+  it('detects whether raw workspace payload includes a files array', () => {
+    expect(hasCaseResolverWorkspaceFilesArray(null)).toBe(false);
+    expect(hasCaseResolverWorkspaceFilesArray('')).toBe(false);
+    expect(hasCaseResolverWorkspaceFilesArray('not-json')).toBe(false);
+    expect(hasCaseResolverWorkspaceFilesArray(JSON.stringify({}))).toBe(false);
+    expect(hasCaseResolverWorkspaceFilesArray(JSON.stringify({ files: {} }))).toBe(false);
+    expect(hasCaseResolverWorkspaceFilesArray(JSON.stringify({ files: [] }))).toBe(true);
+  });
+
+  it('returns the newest timestamp across workspace files and assets', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        folders: [],
+        files: [
+          {
+            id: 'case-a',
+            name: 'Case A',
+            folder: '',
+            createdAt: '2026-01-01T10:00:00.000Z',
+            updatedAt: '2026-01-02T10:00:00.000Z',
+            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+          },
+        ],
+        assets: [
+          {
+            id: 'asset-a',
+            name: 'Asset A',
+            folder: '',
+            kind: 'file',
+            createdAt: '2026-01-03T10:00:00.000Z',
+            updatedAt: '2026-01-04T10:00:00.000Z',
+          },
+        ],
+        activeFileId: 'case-a',
+      })
+    );
+
+    expect(getCaseResolverWorkspaceLatestTimestampMs(workspace)).toBe(
+      Date.parse('2026-01-04T10:00:00.000Z')
+    );
+  });
+
   it('normalizes folders, deduplicates files, and sanitizes node metadata', () => {
     const raw = JSON.stringify({
       version: 1,
@@ -97,8 +150,8 @@ describe('case-resolver settings', () => {
     expect(workspace.files[0]?.documentContentVersion).toBe(1);
     expect(workspace.files[0]?.documentContentMarkdown).toBe('');
     expect(workspace.files[0]?.documentContentPlainText).toBeTypeOf('string');
-    expect(workspace.files[0]?.createdAt).not.toBe('');
-    expect(workspace.files[0]?.updatedAt).not.toBe('');
+    expect(workspace.files[0]?.createdAt).toBe(CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP);
+    expect(workspace.files[0]?.updatedAt).toBe(CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP);
     expect(Object.keys(workspace.folderTimestamps).sort()).toEqual(['Root_A', 'Root_A/Sub__']);
     expect(Number.isNaN(Date.parse(workspace.folderTimestamps['Root_A']?.createdAt ?? ''))).toBe(false);
     expect(Number.isNaN(Date.parse(workspace.folderTimestamps['Root_A']?.updatedAt ?? ''))).toBe(false);
@@ -212,6 +265,7 @@ describe('case-resolver settings', () => {
       files: [
         {
           id: 'case-a',
+          fileType: 'case',
           name: 'Case A',
           folder: 'Root',
           parentCaseId: null,
@@ -220,6 +274,7 @@ describe('case-resolver settings', () => {
         },
         {
           id: 'case-b',
+          fileType: 'case',
           name: 'Case B',
           folder: 'Root/Sub',
           parentCaseId: 'case-a',
@@ -303,7 +358,7 @@ describe('case-resolver settings', () => {
     ).toBe(true);
     expect(
       relationGraph.nodes.some((node: AiNode): boolean => node.id === 'file:case:case-a')
-    ).toBe(true);
+    ).toBe(false);
     expect(
       relationGraph.nodes.some((node: AiNode): boolean => node.id === 'file:asset:asset-1')
     ).toBe(true);
@@ -348,6 +403,7 @@ describe('case-resolver settings', () => {
       files: [
         {
           id: 'case-a',
+          fileType: 'case',
           name: 'Case A',
           folder: '',
           parentCaseId: null,
@@ -401,6 +457,7 @@ describe('case-resolver settings', () => {
       files: [
         {
           id: 'case-x',
+          fileType: 'case',
           name: 'Case X',
           folder: '',
           parentCaseId: null,
@@ -539,18 +596,41 @@ describe('case-resolver settings', () => {
       JSON.stringify({
         ocrModel: '  llama3.2-vision  ',
         defaultDocumentFormat: 'wysiwyg',
+        confirmDeleteDocument: false,
       })
     );
     expect(parsedWithValues.ocrModel).toBe('llama3.2-vision');
     expect(parsedWithValues.defaultDocumentFormat).toBe('wysiwyg');
+    expect(parsedWithValues.confirmDeleteDocument).toBe(false);
 
     const parsedDefaults = parseCaseResolverSettings(JSON.stringify({}));
     expect(parsedDefaults.ocrModel).toBe('');
     expect(parsedDefaults.defaultDocumentFormat).toBe('markdown');
+    expect(parsedDefaults.confirmDeleteDocument).toBe(true);
 
     const parsedNull = parseCaseResolverSettings(null);
     expect(parsedNull.ocrModel).toBe('');
     expect(parsedNull.defaultDocumentFormat).toBe('markdown');
+    expect(parsedNull.confirmDeleteDocument).toBe(true);
+
+    const parsedLegacyPlainValue = parseCaseResolverSettings('wysiwyg');
+    expect(parsedLegacyPlainValue.defaultDocumentFormat).toBe('wysiwyg');
+
+    const parsedLegacyJsonString = parseCaseResolverSettings(JSON.stringify('wysiwyg'));
+    expect(parsedLegacyJsonString.defaultDocumentFormat).toBe('wysiwyg');
+
+    const parsedLegacyObjectKey = parseCaseResolverSettings(
+      JSON.stringify({ editorType: 'wysiwyg' })
+    );
+    expect(parsedLegacyObjectKey.defaultDocumentFormat).toBe('wysiwyg');
+
+    expect(parseCaseResolverDefaultDocumentFormat('wysiwyg')).toBe('wysiwyg');
+    expect(parseCaseResolverDefaultDocumentFormat(JSON.stringify('wysiwyg'))).toBe('wysiwyg');
+    expect(
+      parseCaseResolverDefaultDocumentFormat(JSON.stringify({ defaultDocumentFormat: 'wysiwyg' }))
+    ).toBe('wysiwyg');
+    expect(parseCaseResolverDefaultDocumentFormat('invalid-value')).toBe('markdown');
+    expect(parseCaseResolverDefaultDocumentFormat('invalid-value', 'wysiwyg')).toBe('wysiwyg');
   });
 
   it('extracts document date from exploded text formats', () => {

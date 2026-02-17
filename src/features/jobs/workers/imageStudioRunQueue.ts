@@ -495,6 +495,9 @@ const queue = createManagedQueue<ImageStudioRunJobData>({
 
     try {
       const result = await executeImageStudioRun(run.request);
+      if (!Array.isArray(result.outputs) || result.outputs.length === 0) {
+        throw new Error('Image API run produced no output images.');
+      }
       const finishedAt = new Date().toISOString();
       const createdSlotIds = await materializeRunOutputSlots({
         run,

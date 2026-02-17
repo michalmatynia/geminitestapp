@@ -209,18 +209,33 @@ export interface RenameStudioProjectPayload {
   nextProjectId: string;
 }
 
+export interface CreateStudioProjectPayload {
+  projectId: string;
+  canvasWidthPx?: number | null;
+  canvasHeightPx?: number | null;
+}
+
 export interface RenameStudioProjectResult {
   projectId: string;
   fromProjectId: string;
   renamed: boolean;
 }
 
-export function useCreateStudioProject(): CreateMutation<string, string> {
+export function useCreateStudioProject(): CreateMutation<string, CreateStudioProjectPayload> {
   const queryClient = useQueryClient();
 
   return createCreateMutationV2({
-    mutationFn: async (id: string): Promise<string> => {
-      const data = await api.post<{ projectId?: string }>('/api/image-studio/projects', { projectId: id });
+    mutationFn: async (payload: CreateStudioProjectPayload): Promise<string> => {
+      const projectId = payload.projectId.trim();
+      const data = await api.post<{ projectId?: string }>('/api/image-studio/projects', {
+        projectId,
+        ...(typeof payload.canvasWidthPx === 'number'
+          ? { canvasWidthPx: payload.canvasWidthPx }
+          : {}),
+        ...(typeof payload.canvasHeightPx === 'number'
+          ? { canvasHeightPx: payload.canvasHeightPx }
+          : {}),
+      });
       if (!data.projectId) throw new Error('Failed to create project');
       return data.projectId;
     },
@@ -332,7 +347,11 @@ export function useCreateStudioSlots(projectId: string): CreateMutation<StudioSl
 export function useUpdateStudioSlot(projectId: string): UpdateMutation<ImageStudioSlotRecord, { id: string; data: Partial<ImageStudioSlotRecord> }> {
   const queryClient = useQueryClient();
 
-  return createUpdateMutationV2({
+  return createUpdateMutationV2<
+    ImageStudioSlotRecord,
+    { id: string; data: Partial<ImageStudioSlotRecord> },
+    { previous?: StudioSlotsResponse | undefined }
+  >({
     mutationFn: async ({ id, data }: { id: string; data: Partial<ImageStudioSlotRecord> }): Promise<ImageStudioSlotRecord> => {
       const slotId = normalizeStudioSlotId(id);
       const response = await api.patch<{ slot?: ImageStudioSlotRecord }>(`/api/image-studio/slots/${encodeURIComponent(slotId)}`, data);
@@ -340,6 +359,76 @@ export function useUpdateStudioSlot(projectId: string): UpdateMutation<ImageStud
         throw new Error('Failed to update image studio slot');
       }
       return response.slot;
+    },
+    onMutate: async ({ id, data }: { id: string; data: Partial<ImageStudioSlotRecord> }) => {
+      const slotsQueryKey = QUERY_KEYS.imageStudio.slots(projectId);
+      const slotCandidates = new Set(resolveStudioSlotIdCandidates(id));
+      if (slotCandidates.size === 0) {
+        return { previous: undefined };
+      }
+
+      await queryClient.cancelQueries({ queryKey: slotsQueryKey });
+      const previous = queryClient.getQueryData<StudioSlotsResponse>(slotsQueryKey);
+
+      queryClient.setQueryData<StudioSlotsResponse | undefined>(
+        slotsQueryKey,
+        (current: StudioSlotsResponse | undefined): StudioSlotsResponse | undefined => {
+          if (!current?.slots?.length) return current;
+          return {
+            ...current,
+            slots: current.slots.map((slot: ImageStudioSlotRecord) => {
+              if (!slotCandidates.has(slot.id)) return slot;
+
+              const next: ImageStudioSlotRecord = { ...slot };
+              if (data.name !== undefined) next.name = data.name ?? null;
+              if (data.folderPath !== undefined) next.folderPath = data.folderPath ?? null;
+              if (data.imageUrl !== undefined) next.imageUrl = data.imageUrl ?? null;
+              if (data.imageBase64 !== undefined) next.imageBase64 = data.imageBase64 ?? null;
+              if (data.imageFileId !== undefined) {
+                next.imageFileId = data.imageFileId ?? null;
+                if (data.imageFileId === null) {
+                  next.imageFile = null;
+                }
+              }
+              if (data.asset3dId !== undefined) {
+                next.asset3dId = data.asset3dId ?? null;
+                if (data.asset3dId === null) {
+                  next.asset3d = null;
+                }
+              }
+              if (data.screenshotFileId !== undefined) {
+                next.screenshotFileId = data.screenshotFileId ?? null;
+                if (data.screenshotFileId === null) {
+                  next.screenshotFile = null;
+                }
+              }
+              if (data.metadata !== undefined) next.metadata = data.metadata ?? null;
+              next.updatedAt = new Date().toISOString();
+              return next;
+            }),
+          };
+        }
+      );
+
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (!context?.previous) return;
+      queryClient.setQueryData(QUERY_KEYS.imageStudio.slots(projectId), context.previous);
+    },
+    onSuccess: (updatedSlot: ImageStudioSlotRecord) => {
+      queryClient.setQueryData<StudioSlotsResponse | undefined>(
+        QUERY_KEYS.imageStudio.slots(projectId),
+        (current: StudioSlotsResponse | undefined): StudioSlotsResponse | undefined => {
+          if (!current?.slots?.length) return current;
+          return {
+            ...current,
+            slots: current.slots.map((slot: ImageStudioSlotRecord) =>
+              slot.id === updatedSlot.id ? updatedSlot : slot
+            ),
+          };
+        }
+      );
     },
     mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
     meta: {
@@ -350,7 +439,7 @@ export function useUpdateStudioSlot(projectId: string): UpdateMutation<ImageStud
       mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
       tags: ['image-studio', 'slots', 'update'],
     },
-    onSuccess: () => {
+    onSettled: () => {
       void invalidateImageStudioSlots(queryClient, projectId);
     },
   });

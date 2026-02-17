@@ -94,6 +94,8 @@ export type ImageStudioProjectRecord = {
   id: string;
   createdAt: string;
   updatedAt: string;
+  canvasWidthPx: number | null;
+  canvasHeightPx: number | null;
 };
 
 export type StudioProjectsResponse = { projects: ImageStudioProjectRecord[] };

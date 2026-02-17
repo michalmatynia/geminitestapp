@@ -31,17 +31,23 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 
 import {
+  CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY,
   CASE_RESOLVER_CATEGORIES_KEY,
   CASE_RESOLVER_IDENTIFIERS_KEY,
   CASE_RESOLVER_SETTINGS_KEY,
   CASE_RESOLVER_TAGS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
+  createCaseResolverAssetFile,
+  createCaseResolverFile,
   extractCaseResolverDocumentDate,
+  getCaseResolverWorkspaceLatestTimestampMs,
+  hasCaseResolverWorkspaceFilesArray,
+  inferCaseResolverAssetKind,
   parseCaseResolverCategories,
+  parseCaseResolverDefaultDocumentFormat,
   parseCaseResolverIdentifiers,
   parseCaseResolverSettings,
   parseCaseResolverTags,
-  createCaseResolverFile,
   normalizeCaseResolverWorkspace,
   normalizeFolderPath,
   normalizeFolderPaths,
@@ -57,6 +63,7 @@ import {
 
 import type {
   CaseResolverAssetFile,
+  CaseResolverAssetKind,
   CaseResolverCategory,
   CaseResolverFile,
   CaseResolverFileEditDraft,
@@ -73,6 +80,16 @@ type StoredCaseResolverEditorDraft = {
   baseDocumentContentVersion: number;
   updatedAt: string;
   draft: CaseResolverFileEditDraft;
+};
+
+type CaseResolverUploadedFile = {
+  id: string | null;
+  originalName: string;
+  kind: CaseResolverAssetKind;
+  filepath: string | null;
+  mimetype: string | null;
+  size: number | null;
+  folder: string;
 };
 
 const buildEditorDraftStorageKey = (fileId: string): string =>
@@ -109,6 +126,123 @@ const clearStoredEditorDraft = (fileId: string): void => {
   window.localStorage.removeItem(buildEditorDraftStorageKey(fileId));
 };
 
+const normalizeUploadedCaseResolverFile = (
+  payload: unknown,
+  fallbackFile: File,
+  fallbackFolder: string
+): CaseResolverUploadedFile => {
+  const record =
+    payload && typeof payload === 'object' && !Array.isArray(payload)
+      ? (payload as Record<string, unknown>)
+      : {};
+  const originalName =
+    typeof record['originalName'] === 'string' && record['originalName'].trim().length > 0
+      ? record['originalName'].trim()
+      : fallbackFile.name.trim() || 'Scan';
+  const filepath =
+    typeof record['filepath'] === 'string' && record['filepath'].trim().length > 0
+      ? record['filepath'].trim()
+      : null;
+  const mimetype =
+    typeof record['mimetype'] === 'string' && record['mimetype'].trim().length > 0
+      ? record['mimetype'].trim()
+      : fallbackFile.type.trim() || null;
+  const size =
+    typeof record['size'] === 'number' && Number.isFinite(record['size']) && record['size'] >= 0
+      ? Math.round(record['size'])
+      : Number.isFinite(fallbackFile.size) && fallbackFile.size >= 0
+        ? Math.round(fallbackFile.size)
+        : null;
+  const folder =
+    typeof record['folder'] === 'string' && record['folder'].trim().length > 0
+      ? record['folder'].trim()
+      : fallbackFolder;
+  const kind = inferCaseResolverAssetKind({
+    kind: typeof record['kind'] === 'string' ? record['kind'] : null,
+    mimeType: typeof record['mimetype'] === 'string' ? record['mimetype'] : fallbackFile.type,
+    name:
+      typeof record['originalName'] === 'string' && record['originalName'].trim().length > 0
+        ? record['originalName']
+        : fallbackFile.name,
+  });
+  return {
+    id:
+      typeof record['id'] === 'string' && record['id'].trim().length > 0
+        ? record['id'].trim()
+        : null,
+    originalName,
+    kind,
+    filepath,
+    mimetype,
+    size,
+    folder,
+  };
+};
+
+const stripExtension = (name: string): string => {
+  const trimmed = name.trim();
+  const dotIndex = trimmed.lastIndexOf('.');
+  if (dotIndex <= 0) return trimmed;
+  return trimmed.slice(0, dotIndex).trim();
+};
+
+const IMAGE_FILENAME_EXTENSION_PATTERN =
+  /\.(jpg|jpeg|png|webp|gif|bmp|avif|heic|heif|tif|tiff|svg)$/i;
+
+const isLikelyImageFile = (file: File): boolean => {
+  const mimeType = file.type.trim().toLowerCase();
+  if (mimeType.startsWith('image/')) return true;
+  return IMAGE_FILENAME_EXTENSION_PATTERN.test(file.name.trim());
+};
+
+const createPlaceholderAssetName = ({
+  assets,
+  folder,
+  baseName,
+}: {
+  assets: CaseResolverAssetFile[];
+  folder: string;
+  baseName: string;
+}): string => {
+  const normalizedBase = baseName.trim() || 'Untitled Asset';
+  const normalizedFolder = normalizeFolderPath(folder);
+  const namesInFolder = new Set(
+    assets
+      .filter((asset: CaseResolverAssetFile): boolean => asset.folder === normalizedFolder)
+      .map((asset: CaseResolverAssetFile): string => asset.name.trim().toLowerCase())
+  );
+  if (!namesInFolder.has(normalizedBase.toLowerCase())) return normalizedBase;
+  let index = 2;
+  while (index < 10_000) {
+    const candidate = `${normalizedBase} ${index}`;
+    if (!namesInFolder.has(candidate.toLowerCase())) {
+      return candidate;
+    }
+    index += 1;
+  }
+  return `${normalizedBase}-${createId('dup')}`;
+};
+
+const resolveUploadBucketForAssetKind = (
+  kind: CaseResolverAssetKind
+): 'images' | 'pdfs' | 'files' => {
+  if (kind === 'image') return 'images';
+  if (kind === 'pdf') return 'pdfs';
+  return 'files';
+};
+
+const resolveUploadBaseFolder = (folder: string, kind: CaseResolverAssetKind): string => {
+  const normalizedFolder = normalizeFolderPath(folder);
+  if (!normalizedFolder) return '';
+  const bucket = resolveUploadBucketForAssetKind(kind);
+  if (normalizedFolder === bucket) return '';
+  const suffix = `/${bucket}`;
+  if (normalizedFolder.endsWith(suffix)) {
+    return normalizedFolder.slice(0, -suffix.length);
+  }
+  return normalizedFolder;
+};
+
 /**
  * Custom hook to manage the complex state and logic of the Case Resolver page.
  */
@@ -126,11 +260,18 @@ export function useCaseResolverState() {
   const rawCaseResolverIdentifiers = settingsStore.get(CASE_RESOLVER_IDENTIFIERS_KEY);
   const rawCaseResolverCategories = settingsStore.get(CASE_RESOLVER_CATEGORIES_KEY);
   const rawCaseResolverSettings = settingsStore.get(CASE_RESOLVER_SETTINGS_KEY);
+  const rawCaseResolverDefaultDocumentFormat = settingsStore.get(
+    CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY
+  );
   const rawFilemakerDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
   const rawCaseResolverCaptureSettings = settingsStore.get(CASE_RESOLVER_CAPTURE_SETTINGS_KEY);
   
   const parsedWorkspace = useMemo(
     (): CaseResolverWorkspace => parseCaseResolverWorkspace(rawWorkspace),
+    [rawWorkspace]
+  );
+  const canHydrateWorkspaceFromStore = useMemo(
+    (): boolean => hasCaseResolverWorkspaceFilesArray(rawWorkspace),
     [rawWorkspace]
   );
   const caseResolverTags = useMemo(
@@ -145,10 +286,18 @@ export function useCaseResolverState() {
     (): CaseResolverCategory[] => parseCaseResolverCategories(rawCaseResolverCategories),
     [rawCaseResolverCategories]
   );
-  const caseResolverSettings = useMemo(
-    () => parseCaseResolverSettings(rawCaseResolverSettings),
-    [rawCaseResolverSettings]
-  );
+  const caseResolverSettings = useMemo(() => {
+    const parsed = parseCaseResolverSettings(rawCaseResolverSettings);
+    const defaultDocumentFormat = parseCaseResolverDefaultDocumentFormat(
+      rawCaseResolverDefaultDocumentFormat,
+      parsed.defaultDocumentFormat
+    );
+    if (defaultDocumentFormat === parsed.defaultDocumentFormat) return parsed;
+    return {
+      ...parsed,
+      defaultDocumentFormat,
+    };
+  }, [rawCaseResolverDefaultDocumentFormat, rawCaseResolverSettings]);
   const filemakerDatabase = useMemo(
     () => parseFilemakerDatabase(rawFilemakerDatabase),
     [rawFilemakerDatabase]
@@ -221,10 +370,23 @@ export function useCaseResolverState() {
 
   // Sync with store
   useEffect(() => {
-    setWorkspace(parsedWorkspace);
-    lastPersistedValueRef.current = JSON.stringify(parsedWorkspace);
-    queuedSerializedWorkspaceRef.current = null;
-  }, [parsedWorkspace]);
+    if (!canHydrateWorkspaceFromStore) return;
+    setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
+      const currentLatestMs = getCaseResolverWorkspaceLatestTimestampMs(current);
+      const incomingLatestMs = getCaseResolverWorkspaceLatestTimestampMs(parsedWorkspace);
+      const currentItemCount = current.files.length + current.assets.length;
+      const incomingItemCount = parsedWorkspace.files.length + parsedWorkspace.assets.length;
+      const shouldKeepCurrent =
+        incomingLatestMs < currentLatestMs ||
+        (incomingLatestMs === currentLatestMs && incomingItemCount < currentItemCount);
+
+      if (shouldKeepCurrent) return current;
+
+      lastPersistedValueRef.current = JSON.stringify(parsedWorkspace);
+      queuedSerializedWorkspaceRef.current = null;
+      return parsedWorkspace;
+    });
+  }, [canHydrateWorkspaceFromStore, parsedWorkspace]);
 
   // Handle auto-save
   useEffect(() => {
@@ -316,21 +478,45 @@ export function useCaseResolverState() {
     }
   }, [updateWorkspace]);
 
+  const filesById = useMemo(
+    () => new Map(workspace.files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])),
+    [workspace.files]
+  );
+
+  const selectedCaseContainerId = useMemo((): string | null => {
+    const contextFileId = selectedFileId ?? workspace.activeFileId;
+    if (!contextFileId) return null;
+    const contextFile = filesById.get(contextFileId) ?? null;
+    if (!contextFile) return null;
+    if (contextFile.fileType === 'case') return contextFile.id;
+    if (!contextFile.parentCaseId) return null;
+    const parentFile = filesById.get(contextFile.parentCaseId) ?? null;
+    return parentFile?.fileType === 'case' ? parentFile.id : null;
+  }, [filesById, selectedFileId, workspace.activeFileId]);
+
   const handleCreateFile = useCallback((targetFolderPath: string | null): void => {
     prompt({
-      title: 'Create New Case',
-      label: 'Case Name',
-      defaultValue: 'New Case',
-      placeholder: 'Enter case name...',
+      title: 'Create New Document',
+      label: 'Document Name',
+      defaultValue: 'New Document',
+      placeholder: 'Enter document name...',
       required: true,
       onConfirm: (fileName) => {
         const folder = normalizeFolderPath(targetFolderPath ?? '');
+        const runtimeCaseResolverSettings = parseCaseResolverSettings(
+          settingsStore.get(CASE_RESOLVER_SETTINGS_KEY)
+        );
+        const runtimeDefaultDocumentFormat = parseCaseResolverDefaultDocumentFormat(
+          settingsStore.get(CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY),
+          runtimeCaseResolverSettings.defaultDocumentFormat
+        );
         const file = createCaseResolverFile({
           id: createId('case-file'),
           fileType: 'document',
           name: fileName,
           folder,
-          editorType: caseResolverSettings.defaultDocumentFormat,
+          parentCaseId: selectedCaseContainerId,
+          editorType: runtimeDefaultDocumentFormat,
           tagId: defaultTagId,
           caseIdentifierId: defaultCaseIdentifierId,
           categoryId: defaultCategoryId,
@@ -347,13 +533,358 @@ export function useCaseResolverState() {
       }
     });
   }, [
-    caseResolverSettings.defaultDocumentFormat,
     defaultCaseIdentifierId,
     defaultCategoryId,
     defaultTagId,
+    settingsStore,
+    selectedCaseContainerId,
     updateWorkspace,
     prompt,
   ]);
+
+  const uploadSourceFileToCaseResolver = useCallback(
+    async (sourceFile: File, targetFolderPath: string): Promise<CaseResolverUploadedFile> => {
+      const uploadFormData = new FormData();
+      uploadFormData.append('folder', targetFolderPath);
+      uploadFormData.append('file', sourceFile);
+      const uploadResponse = await fetch('/api/case-resolver/assets/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+      if (!uploadResponse.ok) {
+        const fallbackMessage = `Failed to upload file (${uploadResponse.status})`;
+        const errorBody = await uploadResponse.text();
+        throw new Error(errorBody || fallbackMessage);
+      }
+      const uploadPayload = (await uploadResponse.json()) as unknown;
+      const firstEntry: unknown = Array.isArray(uploadPayload)
+        ? (uploadPayload[0] ?? null)
+        : uploadPayload;
+      return normalizeUploadedCaseResolverFile(firstEntry, sourceFile, targetFolderPath);
+    },
+    []
+  );
+
+  const handleCreateScanFile = useCallback(
+    async (targetFolderPath: string | null, files: File[]): Promise<void> => {
+      const sourceFiles = files.filter(
+        (file: File): boolean => file instanceof File && file.size >= 0
+      );
+      if (sourceFiles.length === 0) return;
+
+      const normalizedFolder = normalizeFolderPath(targetFolderPath ?? '');
+      const runtimeCaseResolverSettings = parseCaseResolverSettings(
+        settingsStore.get(CASE_RESOLVER_SETTINGS_KEY)
+      );
+      const configuredOcrModel =
+        runtimeCaseResolverSettings.ocrModel.trim() ||
+        (settingsStore.get('openai_model') ?? '').trim();
+
+      const runImageOcr = async (sourceFile: File): Promise<string> => {
+        const messages = [
+          {
+            role: 'user',
+            content:
+              'Extract all readable text from the attached image and return plain text only. Keep line breaks. Do not add commentary.',
+          },
+        ];
+        const ocrFormData = new FormData();
+        ocrFormData.append('messages', JSON.stringify(messages));
+        if (configuredOcrModel) {
+          ocrFormData.append('model', configuredOcrModel);
+        }
+        ocrFormData.append('files', sourceFile);
+        const ocrResponse = await fetch('/api/chatbot', {
+          method: 'POST',
+          body: ocrFormData,
+        });
+        if (!ocrResponse.ok) {
+          const fallbackMessage = `OCR request failed (${ocrResponse.status})`;
+          const errorBody = await ocrResponse.text();
+          throw new Error(errorBody || fallbackMessage);
+        }
+        const ocrPayload = (await ocrResponse.json()) as {
+          message?: unknown;
+        };
+        return typeof ocrPayload.message === 'string' ? ocrPayload.message.trim() : '';
+      };
+
+      const createdFiles: CaseResolverFile[] = [];
+      const failedFiles: string[] = [];
+
+      for (const sourceFile of sourceFiles) {
+        try {
+          const uploadBaseFolder = resolveUploadBaseFolder(normalizedFolder, 'image');
+          const uploaded = await uploadSourceFileToCaseResolver(sourceFile, uploadBaseFolder);
+          const normalizedMimeType = (uploaded.mimetype ?? sourceFile.type ?? '')
+            .trim()
+            .toLowerCase();
+          if (!normalizedMimeType.startsWith('image/')) {
+            throw new Error('Only image files are supported for scan OCR.');
+          }
+          const extractedText = await runImageOcr(sourceFile);
+
+          const canonicalDocument = deriveDocumentContentSync({
+            mode: 'markdown',
+            value: extractedText,
+          });
+          const storedDocumentContent = toStorageDocumentValue(canonicalDocument);
+          const defaultName = stripExtension(uploaded.originalName);
+          const displayName = defaultName || `Scan ${createdFiles.length + 1}`;
+          const scanFile = createCaseResolverFile({
+            id: createId('case-file'),
+            fileType: 'scanfile',
+            name: displayName,
+            folder: normalizeFolderPath(uploaded.folder || normalizedFolder),
+            parentCaseId: selectedCaseContainerId,
+            editorType: 'markdown',
+            documentContent: storedDocumentContent,
+            documentContentMarkdown: canonicalDocument.markdown,
+            documentContentHtml: canonicalDocument.html,
+            documentContentPlainText: canonicalDocument.plainText,
+            documentConversionWarnings: canonicalDocument.warnings,
+            scanSlots: [
+              {
+                id: createId('scan-slot'),
+                name: uploaded.originalName,
+                filepath: uploaded.filepath,
+                sourceFileId: uploaded.id,
+                mimeType: uploaded.mimetype,
+                size: uploaded.size,
+                ocrText: extractedText,
+              },
+            ],
+            tagId: defaultTagId,
+            caseIdentifierId: defaultCaseIdentifierId,
+            categoryId: defaultCategoryId,
+          });
+          createdFiles.push(scanFile);
+        } catch (error: unknown) {
+          failedFiles.push(
+            `${sourceFile.name || 'scan file'}: ${
+              error instanceof Error ? error.message : 'Upload/OCR failed'
+            }`
+          );
+        }
+      }
+
+      if (createdFiles.length > 0) {
+        const foldersToMerge = createdFiles.map((file: CaseResolverFile): string => file.folder);
+        updateWorkspace(
+          (current) => ({
+            ...current,
+            files: [...current.files, ...createdFiles],
+            activeFileId: createdFiles[0]?.id ?? current.activeFileId,
+            folders: normalizeFolderPaths([...current.folders, ...foldersToMerge]),
+          }),
+          { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST }
+        );
+        const firstCreatedFileId = createdFiles[0]?.id ?? null;
+        setSelectedFileId(firstCreatedFileId);
+        setSelectedFolderPath(null);
+        setSelectedAssetId(null);
+        toast(
+          createdFiles.length === 1
+            ? 'Scan file created and OCR applied.'
+            : `${createdFiles.length} scan files created and OCR applied.`,
+          { variant: 'success' }
+        );
+      }
+
+      if (failedFiles.length > 0) {
+        toast(
+          failedFiles.length === 1
+            ? failedFiles[0] ?? 'Failed to create scan file.'
+            : `${failedFiles.length} files failed during scan OCR processing.`,
+          { variant: 'error' }
+        );
+      }
+    },
+    [
+      defaultCaseIdentifierId,
+      defaultCategoryId,
+      defaultTagId,
+      selectedCaseContainerId,
+      settingsStore,
+      toast,
+      updateWorkspace,
+      uploadSourceFileToCaseResolver,
+    ]
+  );
+
+  const handleCreateImageAsset = useCallback((targetFolderPath: string | null): void => {
+    const folder = normalizeFolderPath(targetFolderPath ?? '');
+    const createdAssetId = createId('asset');
+    updateWorkspace((current) => {
+      const name = createPlaceholderAssetName({
+        assets: current.assets,
+        folder,
+        baseName: 'New Image',
+      });
+      const createdAsset = createCaseResolverAssetFile({
+        id: createdAssetId,
+        name,
+        folder,
+        kind: 'image',
+      });
+      return {
+        ...current,
+        assets: [...current.assets, createdAsset],
+        folders: normalizeFolderPaths([...current.folders, folder]),
+      };
+    }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+    setSelectedFileId(null);
+    setSelectedFolderPath(null);
+    setSelectedAssetId(createdAssetId);
+    toast('Image placeholder created. Upload the file when ready.', { variant: 'success' });
+  }, [toast, updateWorkspace]);
+
+  const handleUploadAssets = useCallback(
+    async (
+      files: File[],
+      targetFolderPath: string | null
+    ): Promise<CaseResolverAssetFile[]> => {
+      const sourceFiles = files.filter(
+        (file: File): boolean => file instanceof File && file.size >= 0
+      );
+      if (sourceFiles.length === 0) return [];
+
+      const normalizedFolder = normalizeFolderPath(targetFolderPath ?? '');
+      const createdAssets: CaseResolverAssetFile[] = [];
+      const failedFiles: string[] = [];
+
+      for (const sourceFile of sourceFiles) {
+        try {
+          const inferredKind = inferCaseResolverAssetKind({
+            mimeType: sourceFile.type,
+            name: sourceFile.name,
+          });
+          const uploadBaseFolder = resolveUploadBaseFolder(normalizedFolder, inferredKind);
+          const uploaded = await uploadSourceFileToCaseResolver(sourceFile, uploadBaseFolder);
+          const fallbackName = sourceFile.name.trim() || `File ${createdAssets.length + 1}`;
+          const assetName = uploaded.originalName.trim() || fallbackName;
+          createdAssets.push(
+            createCaseResolverAssetFile({
+              id: createId('asset'),
+              name: assetName,
+              folder: uploaded.folder || normalizedFolder,
+              kind: uploaded.kind,
+              filepath: uploaded.filepath,
+              sourceFileId: uploaded.id,
+              mimeType: uploaded.mimetype,
+              size: uploaded.size,
+            })
+          );
+        } catch (error: unknown) {
+          failedFiles.push(
+            `${sourceFile.name || 'file'}: ${error instanceof Error ? error.message : 'Upload failed'}`
+          );
+        }
+      }
+
+      if (createdAssets.length > 0) {
+        updateWorkspace((current) => ({
+          ...current,
+          assets: [...current.assets, ...createdAssets],
+          folders: normalizeFolderPaths([
+            ...current.folders,
+            ...createdAssets.map((asset: CaseResolverAssetFile): string => asset.folder),
+          ]),
+        }), { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+      }
+
+      if (failedFiles.length > 0) {
+        toast(
+          failedFiles.length === 1
+            ? failedFiles[0] ?? 'Failed to upload file.'
+            : `${failedFiles.length} files failed to upload.`,
+          { variant: 'error' }
+        );
+      }
+
+      if (createdAssets.length === 0 && failedFiles.length > 0) {
+        throw new Error(failedFiles[0] ?? 'Failed to upload files.');
+      }
+
+      return createdAssets;
+    },
+    [toast, updateWorkspace, uploadSourceFileToCaseResolver]
+  );
+
+  const handleAttachAssetFile = useCallback(
+    async (
+      assetId: string,
+      file: File,
+      options?: { expectedKind?: CaseResolverAssetKind | null }
+    ): Promise<CaseResolverAssetFile> => {
+      const currentAsset = workspace.assets.find(
+        (asset: CaseResolverAssetFile): boolean => asset.id === assetId
+      );
+      if (!currentAsset) {
+        throw new Error('Asset placeholder no longer exists.');
+      }
+
+      const expectedKind = options?.expectedKind ?? currentAsset.kind;
+      if (expectedKind === 'image' && !isLikelyImageFile(file)) {
+        throw new Error('Please upload an image file for this image placeholder.');
+      }
+
+      const uploadFolder = normalizeFolderPath(currentAsset.folder);
+      const uploadBaseFolder = resolveUploadBaseFolder(uploadFolder, expectedKind);
+      const uploaded = await uploadSourceFileToCaseResolver(file, uploadBaseFolder);
+      const uploadedKind = inferCaseResolverAssetKind({
+        kind: uploaded.kind,
+        mimeType: uploaded.mimetype,
+        name: uploaded.originalName,
+      });
+      if (
+        expectedKind &&
+        expectedKind !== 'file' &&
+        uploadedKind !== expectedKind
+      ) {
+        throw new Error(`Uploaded file type does not match this ${expectedKind} placeholder.`);
+      }
+
+      const now = new Date().toISOString();
+      const resolvedKind = expectedKind && expectedKind !== 'file'
+        ? expectedKind
+        : uploadedKind;
+      const updatedAsset: CaseResolverAssetFile = {
+        ...currentAsset,
+        folder: normalizeFolderPath(uploaded.folder || uploadFolder),
+        kind: resolvedKind,
+        filepath: uploaded.filepath,
+        sourceFileId: uploaded.id,
+        mimeType: uploaded.mimetype,
+        size: uploaded.size,
+        updatedAt: now,
+      };
+      updateWorkspace((current) => {
+        let didUpdate = false;
+        const nextAssets = current.assets.map((asset) => {
+          if (asset.id !== assetId) return asset;
+          didUpdate = true;
+          return updatedAsset;
+        });
+        if (!didUpdate) return current;
+        return {
+          ...current,
+          assets: nextAssets,
+          folders: normalizeFolderPaths([
+            ...current.folders,
+            normalizeFolderPath(uploaded.folder || uploadFolder),
+          ]),
+        };
+      }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+
+      setSelectedFileId(null);
+      setSelectedFolderPath(null);
+      setSelectedAssetId(updatedAsset.id);
+      toast('File attached to image placeholder.', { variant: 'success' });
+      return updatedAsset;
+    },
+    [toast, updateWorkspace, uploadSourceFileToCaseResolver, workspace.assets]
+  );
 
   useEffect(() => {
     if (!requestedFileId) {
@@ -391,7 +922,7 @@ export function useCaseResolverState() {
       isDangerous: true,
       onConfirm: () => {
         const filesInDeletedFolder = workspace.files.filter((file: CaseResolverFile): boolean =>
-          isPathWithinFolder(file.folder, normalizedFolder)
+          file.fileType !== 'case' && isPathWithinFolder(file.folder, normalizedFolder)
         );
         const assetsInDeletedFolder = workspace.assets.filter((asset: CaseResolverAssetFile): boolean =>
           isPathWithinFolder(asset.folder, normalizedFolder)
@@ -406,10 +937,27 @@ export function useCaseResolverState() {
         updateWorkspace((current) => {
           const currentRemovedFileIds = new Set(
             current.files
-              .filter((file) => isPathWithinFolder(file.folder, normalizedFolder))
+              .filter((file) => file.fileType !== 'case' && isPathWithinFolder(file.folder, normalizedFolder))
               .map((file) => file.id)
           );
-          const nextFiles = current.files.filter((file) => !isPathWithinFolder(file.folder, normalizedFolder));
+          const nextFiles = current.files.filter(
+            (file) => file.fileType === 'case' || !isPathWithinFolder(file.folder, normalizedFolder)
+          );
+          const fallbackCaseId = (() => {
+            if (!current.activeFileId || !currentRemovedFileIds.has(current.activeFileId)) {
+              return null;
+            }
+            const removedActiveFile =
+              current.files.find((file) => file.id === current.activeFileId) ?? null;
+            if (!removedActiveFile?.parentCaseId) return null;
+            const parentCase =
+              current.files.find((file) => file.id === removedActiveFile.parentCaseId) ?? null;
+            return parentCase?.fileType === 'case' ? parentCase.id : null;
+          })();
+          const fallbackFileId =
+            nextFiles.find((file) => file.fileType !== 'case')?.id ??
+            nextFiles.find((file) => file.fileType === 'case')?.id ??
+            null;
           
           return {
             ...current,
@@ -417,14 +965,23 @@ export function useCaseResolverState() {
             files: nextFiles,
             assets: current.assets.filter((asset) => !isPathWithinFolder(asset.folder, normalizedFolder)),
             activeFileId: current.activeFileId && currentRemovedFileIds.has(current.activeFileId)
-              ? (nextFiles[0]?.id ?? null)
+              ? (fallbackCaseId ?? fallbackFileId)
               : current.activeFileId,
           };
         }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
 
-        setSelectedFileId((current: string | null): string | null =>
-          current && removedFileIds.has(current) ? null : current
-        );
+        setSelectedFileId((current: string | null): string | null => {
+          if (!current || !removedFileIds.has(current)) return current;
+          const removedSelectedFile =
+            workspace.files.find((file: CaseResolverFile): boolean => file.id === current) ?? null;
+          if (!removedSelectedFile?.parentCaseId) return null;
+          const parentCase =
+            workspace.files.find(
+              (file: CaseResolverFile): boolean =>
+                file.id === removedSelectedFile.parentCaseId && file.fileType === 'case'
+            ) ?? null;
+          return parentCase?.id ?? null;
+        });
         setSelectedAssetId((current: string | null): string | null =>
           current && removedAssetIds.has(current) ? null : current
         );
@@ -555,6 +1112,12 @@ export function useCaseResolverState() {
       toast('File not found.', { variant: 'warning' });
       return;
     }
+    if (target.fileType === 'case') {
+      toast('Cases are edited in the Cases list. Select a document to edit.', {
+        variant: 'info',
+      });
+      return;
+    }
     const baseDraft = buildFileEditDraft(target);
     const recoveredDraft = readStoredEditorDraft(fileId);
     const canRecoverStoredDraft =
@@ -586,6 +1149,25 @@ export function useCaseResolverState() {
         ? workspace.assets.find((asset) => asset.id === selectedAssetId) ?? null
         : null,
     [selectedAssetId, workspace.assets]
+  );
+
+  const handleUpdateSelectedAsset = useCallback(
+    (patch: Partial<Pick<CaseResolverAssetFile, 'textContent' | 'description'>>): void => {
+      if (!selectedAssetId) return;
+      updateWorkspace((current) => ({
+        ...current,
+        assets: current.assets.map((asset) =>
+          asset.id === selectedAssetId
+            ? {
+              ...asset,
+              ...patch,
+              updatedAt: new Date().toISOString(),
+            }
+            : asset
+        ),
+      }), { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+    },
+    [selectedAssetId, updateWorkspace]
   );
 
   const handleUpdateActiveFileParties = useCallback(
@@ -827,6 +1409,7 @@ export function useCaseResolverState() {
     caseResolverTags,
     caseResolverIdentifiers,
     caseResolverCategories,
+    caseResolverSettings,
     filemakerDatabase,
     countries,
     isMenuCollapsed,
@@ -838,6 +1421,10 @@ export function useCaseResolverState() {
     handleSelectFolder,
     handleCreateFolder,
     handleCreateFile,
+    handleCreateScanFile,
+    handleCreateImageAsset,
+    handleUploadAssets,
+    handleAttachAssetFile,
     handleDeleteFolder,
     handleMoveFile,
     handleMoveAsset,
@@ -847,6 +1434,7 @@ export function useCaseResolverState() {
     handleOpenFileEditor,
     activeFile,
     selectedAsset,
+    handleUpdateSelectedAsset,
     handleUpdateActiveFileParties,
     handleSaveFileEditor,
     handleDiscardFileEditorDraft,

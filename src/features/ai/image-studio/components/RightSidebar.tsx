@@ -61,7 +61,9 @@ import {
 import { buildRunRequestPreview, resolvePromptPlaceholders } from '../utils/run-request-preview';
 import { normalizeImageStudioModelPresets, resolveImageStudioSequenceActiveSteps } from '../utils/studio-settings';
 
+import type { ImageStudioSlotRecord } from '../types';
 import type { ParamUiControl } from '../utils/param-ui';
+import type { RequestPreviewImage } from '../utils/run-request-preview';
 
 const CHARS_PER_TOKEN_ESTIMATE = 4;
 type ModelCostProfile = {
@@ -122,6 +124,17 @@ type SequenceRunStartResponse = {
   status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
   dispatchMode: 'queued' | 'inline';
   currentSlotId: string;
+  stepCount: number;
+};
+
+type RequestPreviewMode = 'without_sequence' | 'with_sequence';
+
+type SequenceRequestPreview = {
+  payload: Record<string, unknown> | null;
+  errors: string[];
+  resolvedPrompt: string;
+  maskShapeCount: number;
+  images: RequestPreviewImage[];
   stepCount: number;
 };
 
@@ -304,6 +317,7 @@ export function RightSidebar(): React.JSX.Element {
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
   const [requestPreviewOpen, setRequestPreviewOpen] = useState(false);
+  const [requestPreviewMode, setRequestPreviewMode] = useState<RequestPreviewMode>('without_sequence');
   const [promptControlOpen, setPromptControlOpen] = useState(false);
   const [promptSaveBusy, setPromptSaveBusy] = useState(false);
   const [sequenceRunBusy, setSequenceRunBusy] = useState(false);
@@ -637,7 +651,7 @@ export function RightSidebar(): React.JSX.Element {
     ]
   );
 
-  const requestPreviewJson = useMemo(
+  const generationRequestPreviewJson = useMemo(
     () =>
       requestPreview.payload
         ? JSON.stringify(requestPreview.payload, null, 2)
@@ -650,6 +664,144 @@ export function RightSidebar(): React.JSX.Element {
         ),
     [requestPreview]
   );
+
+  const sequenceRequestPreview = useMemo((): SequenceRequestPreview => {
+    const errors: string[] = [];
+    const normalizedProjectId = projectId.trim();
+    if (!normalizedProjectId) {
+      errors.push('Select a project first.');
+    }
+    if (!modelSupportsSequenceGeneration) {
+      errors.push('Selected model does not support sequence generation.');
+    }
+    if (!workingSlot) {
+      errors.push('Select a source card before running a sequence.');
+    }
+    if (!studioSettings.projectSequencing.enabled) {
+      errors.push('Enable sequencing first.');
+    }
+    if (enabledSequenceRuntimeSteps.length === 0) {
+      errors.push('Select at least one enabled sequence step.');
+    }
+
+    const resolvedPrompt = resolvePromptPlaceholders(promptText, paramsState).trim();
+    if (sequenceRequiresPrompt && !resolvedPrompt) {
+      errors.push('Enter a prompt before running generation steps.');
+    }
+    const promptForSequence = (resolvedPrompt || promptText.trim()).trim();
+    if (!promptForSequence) {
+      errors.push('Sequence prompt is empty.');
+    }
+
+    const sourceSlotId = workingSlot?.id ?? '';
+    if (!sourceSlotId.trim()) {
+      errors.push('Source card id is missing.');
+    }
+
+    const sequencePolygons = collectSequenceMaskPolygons(maskShapes);
+    const mask =
+      sequencePolygons.length > 0
+        ? {
+          polygons: sequencePolygons,
+          invert: maskInvert,
+          feather: maskFeather,
+        }
+        : null;
+
+    const images: RequestPreviewImage[] = [];
+    const sourceImagePath = workingSlot?.imageFile?.filepath || workingSlot?.imageUrl || '';
+    if (sourceImagePath) {
+      images.push({
+        kind: 'base',
+        id: workingSlot?.id,
+        name: workingSlot?.name || workingSlot?.id || 'Source card',
+        filepath: sourceImagePath,
+      });
+    }
+    const referenceSlots = compositeAssetIds
+      .map((slotId: string) => slots.find((slot) => slot.id === slotId))
+      .filter((slot): slot is ImageStudioSlotRecord => Boolean(slot));
+    referenceSlots.forEach((slot) => {
+      const filepath = slot.imageFile?.filepath || slot.imageUrl || '';
+      if (!filepath) return;
+      images.push({
+        kind: 'reference',
+        id: slot.id,
+        name: slot.name || slot.id || 'Reference card',
+        filepath,
+      });
+    });
+
+    if (errors.length > 0) {
+      return {
+        payload: null,
+        errors,
+        resolvedPrompt: promptForSequence,
+        maskShapeCount: sequencePolygons.length,
+        images,
+        stepCount: enabledSequenceRuntimeSteps.length,
+      };
+    }
+
+    return {
+      payload: {
+        projectId: normalizedProjectId,
+        sourceSlotId,
+        prompt: promptForSequence,
+        paramsState,
+        referenceSlotIds: compositeAssetIds,
+        mask,
+        studioSettings: studioSettings as unknown as Record<string, unknown>,
+        steps: enabledSequenceRuntimeSteps,
+        metadata: {
+          source: 'right-sidebar-sequence-generate',
+        },
+      },
+      errors,
+      resolvedPrompt: promptForSequence,
+      maskShapeCount: sequencePolygons.length,
+      images,
+      stepCount: enabledSequenceRuntimeSteps.length,
+    };
+  }, [
+    compositeAssetIds,
+    enabledSequenceRuntimeSteps,
+    maskFeather,
+    maskInvert,
+    maskShapes,
+    modelSupportsSequenceGeneration,
+    paramsState,
+    projectId,
+    promptText,
+    sequenceRequiresPrompt,
+    slots,
+    studioSettings,
+    workingSlot,
+  ]);
+
+  const sequenceRequestPreviewJson = useMemo(
+    () =>
+      sequenceRequestPreview.payload
+        ? JSON.stringify(sequenceRequestPreview.payload, null, 2)
+        : JSON.stringify(
+          {
+            errors: sequenceRequestPreview.errors,
+          },
+          null,
+          2
+        ),
+    [sequenceRequestPreview]
+  );
+
+  const activeRequestPreview = requestPreviewMode === 'with_sequence'
+    ? sequenceRequestPreview
+    : requestPreview;
+  const activeRequestPreviewJson = requestPreviewMode === 'with_sequence'
+    ? sequenceRequestPreviewJson
+    : generationRequestPreviewJson;
+  const activeRequestPreviewEndpoint = requestPreviewMode === 'with_sequence'
+    ? '/api/image-studio/sequences/run'
+    : '/api/image-studio/run';
 
   const handleRunSequenceGeneration = useCallback((): void => {
     if (sequenceRunBusy) return;
@@ -1455,27 +1607,55 @@ export function RightSidebar(): React.JSX.Element {
         size='xl'
       >
         <div className='space-y-4 text-xs text-gray-200'>
+          <div className='flex flex-wrap items-center gap-2'>
+            <span className='text-[11px] text-gray-400'>Preview Mode</span>
+            <SelectSimple
+              size='sm'
+              value={requestPreviewMode}
+              onValueChange={(value: string): void => {
+                setRequestPreviewMode(
+                  value === 'with_sequence' ? 'with_sequence' : 'without_sequence'
+                );
+              }}
+              options={[
+                { value: 'without_sequence', label: 'Without Sequence' },
+                { value: 'with_sequence', label: 'With Sequence' },
+              ]}
+              className='w-[240px]'
+              triggerClassName='h-8 text-[11px]'
+            />
+          </div>
           <div className='rounded border border-border/60 bg-card/40 p-3 text-[11px] text-gray-300'>
-            This is the exact payload enqueued to <span className='text-gray-100'>`/api/image-studio/run`</span> before Redis runtime processing.
+            This is the exact payload enqueued to{' '}
+            <span className='text-gray-100'>`{activeRequestPreviewEndpoint}`</span>{' '}
+            before runtime processing.
           </div>
           <div className='text-[11px] text-gray-400'>
-            Resolved prompt length: <span className='text-gray-200'>{requestPreview.resolvedPrompt.length}</span> ·
-            mask shapes in payload: <span className='text-gray-200'>{requestPreview.maskShapeCount}</span>
+            Resolved prompt length:{' '}
+            <span className='text-gray-200'>{activeRequestPreview.resolvedPrompt.length}</span> ·
+            mask shapes in payload:{' '}
+            <span className='text-gray-200'>{activeRequestPreview.maskShapeCount}</span>
+            {requestPreviewMode === 'with_sequence' ? (
+              <>
+                {' '}· enabled steps:{' '}
+                <span className='text-gray-200'>{sequenceRequestPreview.stepCount}</span>
+              </>
+            ) : null}
           </div>
 
-          {requestPreview.errors.length > 0 ? (
+          {activeRequestPreview.errors.length > 0 ? (
             <div className='rounded border border-red-400/40 bg-red-500/10 p-3 text-[11px] text-red-200'>
-              {requestPreview.errors.join(' ')}
+              {activeRequestPreview.errors.join(' ')}
             </div>
           ) : null}
 
           <div className='space-y-2'>
             <div className='text-[11px] text-gray-400'>
-              Input Images ({requestPreview.images.length})
+              Input Images ({activeRequestPreview.images.length})
             </div>
-            {requestPreview.images.length > 0 ? (
+            {activeRequestPreview.images.length > 0 ? (
               <div className='grid grid-cols-2 gap-2 md:grid-cols-3'>
-                {requestPreview.images.map((image) => (
+                {activeRequestPreview.images.map((image) => (
                   <div key={`${image.kind}:${image.id ?? image.filepath}`} className='rounded border border-border/60 bg-card/30 p-2'>
                     <div className='mb-1 text-[10px] uppercase tracking-wide text-gray-500'>
                       {image.kind === 'base' ? 'Base' : 'Reference'}
@@ -1499,7 +1679,7 @@ export function RightSidebar(): React.JSX.Element {
           <div className='space-y-2'>
             <div className='text-[11px] text-gray-400'>Payload JSON</div>
             <pre className='max-h-[50vh] overflow-auto rounded border border-border/60 bg-black/30 p-3 font-mono text-[11px] text-gray-100 whitespace-pre-wrap'>
-              {requestPreviewJson}
+              {activeRequestPreviewJson}
             </pre>
           </div>
         </div>

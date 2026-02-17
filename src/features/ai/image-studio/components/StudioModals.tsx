@@ -1337,6 +1337,8 @@ export function StudioModals(): React.JSX.Element {
           id: primary.id,
           filepath: primary.filepath,
           filename: primary.filename,
+          width: primary.width,
+          height: primary.height,
         });
         if (previousTemporary && previousTemporary.id !== primary.id) {
           await deleteStagedAsset(previousTemporary).catch(() => {
@@ -1439,6 +1441,8 @@ export function StudioModals(): React.JSX.Element {
           id: primary.id,
           filepath: primary.filepath,
           filename: primary.filename,
+          width: primary.width,
+          height: primary.height,
         });
         if (previousTemporary && previousTemporary.id !== primary.id) {
           await deleteStagedAsset(previousTemporary).catch(() => {

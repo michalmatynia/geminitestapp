@@ -54,24 +54,29 @@ export function SettingsStoreProvider({
   const adminQuery = useSettingsMap({ scope: 'light', enabled: useAdmin });
   const liteQuery = useLiteSettingsMap({ enabled: !useAdmin });
   const settingsQuery = useAdmin ? adminQuery : liteQuery;
+  const mapData = settingsQuery.data;
+  const isLoading = settingsQuery.isLoading;
+  const isFetching = settingsQuery.isFetching;
+  const error = settingsQuery.error ?? null;
+  const refetch = settingsQuery.refetch;
 
   const value = useMemo<SettingsStoreValue>(() => {
-    const map = settingsQuery.data ?? new Map<string, string>();
+    const map = mapData ?? new Map<string, string>();
     return {
       map,
-      isLoading: settingsQuery.isLoading,
-      isFetching: settingsQuery.isFetching,
-      error: settingsQuery.error ?? null,
+      isLoading,
+      isFetching,
+      error,
       get: (key: string): string | undefined => map.get(key),
       getBoolean: (key: string, fallback: boolean = false): boolean =>
         parseBoolean(map.get(key), fallback),
       getNumber: (key: string, fallback?: number): number | undefined =>
         parseNumber(map.get(key), fallback),
       refetch: (): void => {
-        void settingsQuery.refetch();
+        void refetch();
       },
     };
-  }, [settingsQuery]);
+  }, [error, isFetching, isLoading, mapData, refetch]);
 
   return (
     <SettingsStoreContext.Provider value={value}>

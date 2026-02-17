@@ -15,6 +15,7 @@ import {
 } from 'react';
 
 import {
+  type CreateStudioProjectPayload,
   useCreateStudioProject,
   useDeleteStudioProject,
   useRenameStudioProject,
@@ -58,7 +59,7 @@ export interface ProjectsState {
 
 export interface ProjectsActions {
   setProjectId: (id: string) => void;
-  createProjectMutation: CreateMutation<string, string>;
+  createProjectMutation: CreateMutation<string, CreateStudioProjectPayload>;
   renameProjectMutation: UpdateMutation<
     { projectId: string; fromProjectId: string; renamed: boolean },
     { projectId: string; nextProjectId: string }

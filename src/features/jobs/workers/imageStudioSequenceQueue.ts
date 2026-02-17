@@ -188,6 +188,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
 
       for (let index = startIndex; index < steps.length; index += 1) {
         const step = steps[index]!;
+        const stepRuntime = step.runtime === 'client' ? 'client' : 'server';
 
         const maybeCancelledRun = await maybeRefreshRun(run.id);
         if (!maybeCancelledRun) {
@@ -213,6 +214,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
                 runId: run.id,
                 stepId: step.id,
                 stepType: step.type,
+                stepRuntime,
                 stepIndex: index,
                 stepCount: steps.length,
                 currentSlotId,
@@ -229,6 +231,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
             phase: 'started',
             stepId: step.id,
             stepType: step.type,
+            stepRuntime,
             stepIndex: index,
             stepCount: steps.length,
             currentSlotId,
@@ -271,6 +274,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
                     runId: run.id,
                     stepId: step.id,
                     stepType: step.type,
+                    stepRuntime,
                     stepIndex: index,
                     stepCount: steps.length,
                     attempt,
@@ -290,6 +294,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
                 phase: 'completed',
                 stepId: step.id,
                 stepType: step.type,
+                stepRuntime,
                 stepIndex: index,
                 stepCount: steps.length,
                 attempt,
@@ -319,6 +324,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
                       runId: run.id,
                       stepId: step.id,
                       stepType: step.type,
+                      stepRuntime,
                       stepIndex: index,
                       stepCount: steps.length,
                       attempt,
@@ -338,6 +344,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
                   phase: 'retry',
                   stepId: step.id,
                   stepType: step.type,
+                  stepRuntime,
                   stepIndex: index,
                   stepCount: steps.length,
                   attempt,
@@ -365,6 +372,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
                       runId: run.id,
                       stepId: step.id,
                       stepType: step.type,
+                      stepRuntime,
                       stepIndex: index,
                       stepCount: steps.length,
                       onFailure: step.onFailure,
@@ -382,6 +390,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
                   phase: 'skipped',
                   stepId: step.id,
                   stepType: step.type,
+                  stepRuntime,
                   stepIndex: index,
                   stepCount: steps.length,
                   onFailure: step.onFailure,

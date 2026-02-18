@@ -163,8 +163,27 @@ export function getPromptExploderScopedRules(
     ...settings.promptValidation.rules,
     ...(settings.promptValidation.learnedRules ?? []),
   ];
-  return mergedRules.filter((rule) => {
+  const scopedRules = mergedRules.filter((rule) => {
     const scopes = rule.appliesToScopes ?? [];
     return scopes.length === 0 || scopes.includes(scope) || scopes.includes('global');
   });
+  const nextRules = [...scopedRules];
+  const existingRuleIds = new Set(nextRules.map((rule) => rule.id));
+
+  PROMPT_EXPLODER_PATTERN_PACK
+    .filter((rule) => includesScope(rule.appliesToScopes, scope))
+    .forEach((rule) => {
+      if (existingRuleIds.has(rule.id)) return;
+      nextRules.push({
+        ...rule,
+        appliesToScopes: remapExploderScopesForTarget(rule.appliesToScopes, scope),
+        launchAppliesToScopes: remapExploderScopesForTarget(
+          rule.launchAppliesToScopes,
+          scope
+        ),
+      });
+      existingRuleIds.add(rule.id);
+    });
+
+  return nextRules;
 }

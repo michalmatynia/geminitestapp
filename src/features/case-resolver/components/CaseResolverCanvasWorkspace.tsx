@@ -86,8 +86,9 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   } = useCaseResolverPageContext();
   const graph = activeFile!.graph;
   const defaultDropFolder = activeFile!.folder;
-  const availableFiles = workspace.files.filter(
-    (file: CaseResolverFile): boolean => file.fileType !== 'case'
+  const availableFiles = useMemo(
+    () => workspace.files.filter((file: CaseResolverFile): boolean => file.fileType !== 'case'),
+    [workspace.files]
   );
   const { toast } = useToast();
   const { viewportRef, canvasRef } = useCanvasRefs();
@@ -205,7 +206,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     if (incomingPreset !== pdfExtractionPresetId) {
       setPdfExtractionPresetId(incomingPreset);
     }
-  }, [graph.pdfExtractionPresetId, pdfExtractionPresetId]);
+  }, [graph.pdfExtractionPresetId]);
 
   useEffect(() => {
     const nextGraph: CaseResolverGraph = {
@@ -278,7 +279,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     addDroppedAssetNode,
     handleDroppedDocuments,
     showDocumentNodeInCanvas,
-  } = createCaseResolverCanvasDropHandlers({
+  } = useMemo(() => createCaseResolverCanvasDropHandlers({
     addNode,
     addEdge,
     updateNode,
@@ -296,7 +297,25 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     availableFileIds,
     availableFilesById,
     toast,
-  });
+  }), [
+    addNode,
+    addEdge,
+    updateNode,
+    selectNode,
+    focusNodeInCanvas,
+    onGraphChange,
+    nodes,
+    edges,
+    normalizedNodeMeta,
+    normalizedEdgeMeta,
+    normalizedDocumentFileLinksByNode,
+    normalizedDocumentDropNodeId,
+    normalizedDocumentSourceFileIdByNode,
+    pdfExtractionPresetId,
+    availableFileIds,
+    availableFilesById,
+    toast,
+  ]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

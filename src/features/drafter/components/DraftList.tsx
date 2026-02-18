@@ -2,7 +2,6 @@
 import {
   PlusIcon,
   Edit2Icon,
-  TrashIcon,
   CheckIcon,
   XIcon,
 } from 'lucide-react';
@@ -12,7 +11,7 @@ import { useDraftQueries, useDeleteDraft } from '@/features/drafter/hooks/useDra
 import { ICON_LIBRARY_MAP } from '@/features/icons';
 import { logClientError } from '@/features/observability';
 import type { ProductDraftDto } from '@/features/products/types/drafts';
-import { Button, ListPanel, useToast, EmptyState } from '@/shared/ui';
+import { Button, ListPanel, useToast, SimpleSettingsList } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 
 import { useDrafterContext } from '../context/DrafterContext';
@@ -70,118 +69,90 @@ export function DraftList(): React.JSX.Element {
         isDangerous={true}
         loading={!!deleting}
       />
-      {loading ? (
-        <p className='text-sm text-gray-400'>Loading drafts...</p>
-      ) : drafts.length === 0 ? (
-        <EmptyState
-          title='No drafts yet'
-          description='Create your first product template to speed up product creation.'
-          action={
-            <Button onClick={() => openCreator()} variant='outline'>
-              <PlusIcon className='mr-2 h-4 w-4' />
-              Create Your First Draft
-            </Button>
-          }
-        />
-      ) : (
-        <div className='space-y-3'>
-          {drafts.map((draft: ProductDraftDto) => (
-            <div
-              key={draft.id}
-              className='rounded-lg border border-border bg-card/50 p-4 transition-colors hover:border'
-            >
-              <div className='flex items-start justify-between'>
-                <div className='flex-1'>
-                  <div className='flex items-center gap-3'>
-                    {draft.icon &&
-                      ((): React.JSX.Element | null => {
-                        const IconComponent = ICON_LIBRARY_MAP[draft.icon];
-                        const iconColor = resolveDraftIconColor(draft);
-                        return IconComponent ? (
-                          <div className='flex h-8 w-8 items-center justify-center rounded-md border bg-gray-800 text-gray-400'>
-                            <IconComponent className='h-4 w-4' style={iconColor ? { color: iconColor } : undefined} />
-                          </div>
-                        ) : null;
-                      })()}
-                    <h3 className='text-lg font-medium text-white'>
-                      {draft.name}
-                    </h3>
-                    {draft.active !== undefined && (
-                      <span
-                        className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${
-                          draft.active
-                            ? 'bg-emerald-500/10 text-emerald-500'
-                            : 'bg-gray-500/10 text-gray-500'
-                        }`}
-                      >
-                        {draft.active ? (
-                          <>
-                            <CheckIcon className='h-3 w-3' />
-                            Active
-                          </>
-                        ) : (
-                          <>
-                            <XIcon className='h-3 w-3' />
-                            Inactive
-                          </>
-                        )}
-                      </span>
-                    )}
-                  </div>
-                  {draft.description && (
-                    <p className='mt-1 text-sm text-gray-400'>
-                      {draft.description}
-                    </p>
+      <SimpleSettingsList
+        items={drafts.map((draft: ProductDraftDto) => ({
+          id: draft.id,
+          title: (
+            <div className='flex items-center gap-3'>
+              <h3 className='text-lg font-medium text-white'>
+                {draft.name}
+              </h3>
+              {draft.active !== undefined && (
+                <span
+                  className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${
+                    draft.active
+                      ? 'bg-emerald-500/10 text-emerald-500'
+                      : 'bg-gray-500/10 text-gray-500'
+                  }`}
+                >
+                  {draft.active ? (
+                    <>
+                      <CheckIcon className='h-3 w-3' />
+                      Active
+                    </>
+                  ) : (
+                    <>
+                      <XIcon className='h-3 w-3' />
+                      Inactive
+                    </>
                   )}
-                  <div className='mt-3 flex flex-wrap gap-2 text-xs text-gray-500'>
-                    {draft.sku && (
-                      <span className='rounded bg-gray-800 px-2 py-1'>
-                        SKU: {draft.sku}
-                      </span>
-                    )}
-                    {draft.catalogIds && draft.catalogIds.length > 0 && (
-                      <span className='rounded bg-gray-800 px-2 py-1'>
-                        {draft.catalogIds.length} Catalog(s)
-                      </span>
-                    )}
-                    {draft.categoryId && (
-                      <span className='rounded bg-gray-800 px-2 py-1'>
-                        Category set
-                      </span>
-                    )}
-                    {draft.tagIds && draft.tagIds.length > 0 && (
-                      <span className='rounded bg-gray-800 px-2 py-1'>
-                        {draft.tagIds.length} Tag(s)
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className='flex gap-2'>
-                  <Button
-                    onClick={() => openCreator(draft.id)}
-                    variant='outline'
-                    size='sm'
-                    className='flex items-center gap-1'
-                  >
-                    <Edit2Icon className='h-3 w-3' />
-                    Edit
-                  </Button>
-                  <Button
-                    onClick={() => setDraftToDelete(draft.id)}
-                    variant='outline'
-                    size='sm'
-                    disabled={deleting === draft.id}
-                    className='flex items-center gap-1 border-red-600 text-red-600 hover:bg-red-600/10'
-                  >
-                    <TrashIcon className='h-3 w-3' />
-                    {deleting === draft.id ? 'Deleting...' : 'Delete'}
-                  </Button>
-                </div>
-              </div>
+                </span>
+              )}
             </div>
-          ))}
-        </div>
-      )}
+          ),
+          description: draft.description,
+          icon: draft.icon && ((): React.JSX.Element | null => {
+            const IconComponent = ICON_LIBRARY_MAP[draft.icon];
+            const iconColor = resolveDraftIconColor(draft);
+            return IconComponent ? (
+              <div className='flex h-8 w-8 items-center justify-center rounded-md border bg-gray-800 text-gray-400'>
+                <IconComponent className='h-4 w-4' style={iconColor ? { color: iconColor } : undefined} />
+              </div>
+            ) : null;
+          })(),
+          original: draft
+        }))}
+        isLoading={loading}
+        emptyMessage='No drafts yet. Create your first product template to speed up product creation.'
+        renderActions={(item) => (
+          <div className='flex items-center gap-2'>
+            <Button
+              onClick={() => openCreator(item.original.id)}
+              variant='outline'
+              size='sm'
+              className='flex items-center gap-1'
+            >
+              <Edit2Icon className='h-3 w-3' />
+              Edit
+            </Button>
+          </div>
+        )}
+        onDelete={(item) => setDraftToDelete(item.original.id)}
+        renderCustomContent={(item) => (
+          <div className='flex flex-wrap gap-2 text-xs text-gray-500'>
+            {item.original.sku && (
+              <span className='rounded bg-gray-800 px-2 py-1'>
+                SKU: {item.original.sku}
+              </span>
+            )}
+            {item.original.catalogIds && item.original.catalogIds.length > 0 && (
+              <span className='rounded bg-gray-800 px-2 py-1'>
+                {item.original.catalogIds.length} Catalog(s)
+              </span>
+            )}
+            {item.original.categoryId && (
+              <span className='rounded bg-gray-800 px-2 py-1'>
+                Category set
+              </span>
+            )}
+            {item.original.tagIds && item.original.tagIds.length > 0 && (
+              <span className='rounded bg-gray-800 px-2 py-1'>
+                {item.original.tagIds.length} Tag(s)
+              </span>
+            )}
+          </div>
+        )}
+      />
     </ListPanel>
   );
 }

@@ -9,6 +9,7 @@ import {
 import {
   CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY,
   CASE_RESOLVER_SETTINGS_KEY,
+  DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT,
   DEFAULT_CASE_RESOLVER_OCR_PROMPT,
   createCaseResolverAssetFile,
   createCaseResolverFile,
@@ -25,6 +26,7 @@ import {
   createPlaceholderAssetName,
   createUniqueCaseFileName,
   isLikelyImageFile,
+  isLikelyScanInputFile,
   normalizeUploadedCaseResolverFile,
   resolveUploadBaseFolder,
   sleep,
@@ -87,7 +89,10 @@ type UseCaseResolverStateAssetActionsInput = {
 type UseCaseResolverStateAssetActionsResult = {
   handleCreateScanFile: (targetFolderPath: string | null) => void;
   handleUploadScanFiles: (fileId: string, files: File[]) => Promise<void>;
-  handleRunScanFileOcr: (fileId: string) => Promise<void>;
+  handleRunScanFileOcr: (
+    fileId: string,
+    options?: { model?: string | null; prompt?: string | null }
+  ) => Promise<void>;
   handleCreateImageAsset: (targetFolderPath: string | null) => void;
   handleUploadAssets: (files: File[], targetFolderPath: string | null) => Promise<CaseResolverAssetFile[]>;
   handleAttachAssetFile: (
@@ -143,15 +148,19 @@ export const useCaseResolverStateAssetActions = ({
   );
 
   const resolveRuntimeScanOcrSettings = useCallback(
-    (): { model: string; prompt: string } => {
+    (options?: { modelOverride?: string | null; promptOverride?: string | null }): { model: string; prompt: string } => {
       const runtimeCaseResolverSettings = parseCaseResolverSettings(
         settingsStoreRef.current.get(CASE_RESOLVER_SETTINGS_KEY)
       );
+      const modelOverride = options?.modelOverride?.trim() ?? '';
+      const promptOverride = options?.promptOverride?.trim() ?? '';
       return {
         model:
+          modelOverride ||
           runtimeCaseResolverSettings.ocrModel.trim() ||
           (settingsStoreRef.current.get('openai_model') ?? '').trim(),
         prompt:
+          promptOverride ||
           runtimeCaseResolverSettings.ocrPrompt.trim() ||
           DEFAULT_CASE_RESOLVER_OCR_PROMPT,
       };
@@ -278,6 +287,10 @@ export const useCaseResolverStateAssetActions = ({
         parentCaseId: activeCaseId,
         editorType: runtimeDefaultDocumentFormat,
         scanSlots: [],
+        scanOcrModel:
+          runtimeCaseResolverSettings.ocrModel.trim() ||
+          (settingsStoreRef.current.get('openai_model') ?? '').trim(),
+        scanOcrPrompt: DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT,
         tagId: defaultTagId,
         caseIdentifierId: defaultCaseIdentifierId,
         categoryId: defaultCategoryId,
@@ -329,12 +342,24 @@ export const useCaseResolverStateAssetActions = ({
       const failedFiles: string[] = [];
 
       for (const sourceFile of sourceFiles) {
-        if (!isLikelyImageFile(sourceFile)) {
-          failedFiles.push(`${sourceFile.name || 'file'}: Only image files are supported.`);
+        if (!isLikelyScanInputFile(sourceFile)) {
+          failedFiles.push(
+            `${sourceFile.name || 'file'}: Only image and PDF files are supported.`
+          );
+          continue;
+        }
+        const inferredKind = inferCaseResolverAssetKind({
+          mimeType: sourceFile.type,
+          name: sourceFile.name,
+        });
+        if (inferredKind !== 'image' && inferredKind !== 'pdf') {
+          failedFiles.push(
+            `${sourceFile.name || 'file'}: Only image and PDF files are supported.`
+          );
           continue;
         }
         try {
-          const uploadBaseFolder = resolveUploadBaseFolder(normalizedFolder, 'image');
+          const uploadBaseFolder = resolveUploadBaseFolder(normalizedFolder, inferredKind);
           const uploaded = await uploadSourceFileToCaseResolver(sourceFile, uploadBaseFolder);
           createdSlots.push({
             id: createId('scan-slot'),
@@ -344,6 +369,7 @@ export const useCaseResolverStateAssetActions = ({
             mimeType: uploaded.mimetype,
             size: uploaded.size,
             ocrText: '',
+            ocrError: null,
           });
           createdFolders.add(normalizeFolderPath(uploaded.folder || normalizedFolder));
         } catch (error: unknown) {
@@ -388,8 +414,8 @@ export const useCaseResolverStateAssetActions = ({
         });
         toast(
           createdSlots.length === 1
-            ? 'Image uploaded to scan file.'
-            : `${createdSlots.length} images uploaded to scan file.`,
+            ? '1 file uploaded to scan file.'
+            : `${createdSlots.length} files uploaded to scan file.`,
           { variant: 'success' }
         );
       }
@@ -397,8 +423,8 @@ export const useCaseResolverStateAssetActions = ({
       if (failedFiles.length > 0) {
         toast(
           failedFiles.length === 1
-            ? failedFiles[0] ?? 'Failed to upload image.'
-            : `${failedFiles.length} images failed to upload.`,
+            ? failedFiles[0] ?? 'Failed to upload file.'
+            : `${failedFiles.length} files failed to upload.`,
           { variant: 'error' }
         );
       }
@@ -407,7 +433,10 @@ export const useCaseResolverStateAssetActions = ({
   );
 
   const handleRunScanFileOcr = useCallback(
-    async (fileId: string): Promise<void> => {
+    async (
+      fileId: string,
+      options?: { model?: string | null; prompt?: string | null }
+    ): Promise<void> => {
       const targetFile = workspace.files.find(
         (file: CaseResolverFile): boolean => file.id === fileId
       );
@@ -422,9 +451,16 @@ export const useCaseResolverStateAssetActions = ({
         draftScanSlots && draftScanSlots.length > 0
           ? draftScanSlots
           : targetFile.scanSlots;
+      const draftRuntimeSettings =
+        editingDocumentDraft?.id === fileId && editingDocumentDraft.fileType === 'scanfile'
+          ? {
+            model: editingDocumentDraft.scanOcrModel,
+            prompt: editingDocumentDraft.scanOcrPrompt,
+          }
+          : null;
 
       if (scanSlotsForOcr.length === 0) {
-        toast('Upload at least one image to this file before running OCR.', {
+        toast('Upload at least one image or PDF to this file before running OCR.', {
           variant: 'warning',
         });
         return;
@@ -434,7 +470,16 @@ export const useCaseResolverStateAssetActions = ({
       setUploadingScanSlotId('all');
 
       try {
-        const runtime = resolveRuntimeScanOcrSettings();
+        const runtime = resolveRuntimeScanOcrSettings({
+          modelOverride:
+            options?.model ??
+            draftRuntimeSettings?.model ??
+            targetFile.scanOcrModel,
+          promptOverride:
+            options?.prompt ??
+            draftRuntimeSettings?.prompt ??
+            targetFile.scanOcrPrompt,
+        });
         const nextSlots: CaseResolverScanSlot[] = [];
         const failedSlots: string[] = [];
         let successfulSlots = 0;
@@ -444,8 +489,12 @@ export const useCaseResolverStateAssetActions = ({
           if (!slot) continue;
           setUploadingScanSlotId(slot.id);
           if (!slot.filepath) {
-            nextSlots.push(slot);
-            failedSlots.push(`${slot.name || `Slot ${index + 1}`}: Missing file path.`);
+            const missingFilepathMessage = 'Missing file path.';
+            nextSlots.push({
+              ...slot,
+              ocrError: missingFilepathMessage,
+            });
+            failedSlots.push(`${slot.name || `Slot ${index + 1}`}: ${missingFilepathMessage}`);
             continue;
           }
           try {
@@ -457,15 +506,28 @@ export const useCaseResolverStateAssetActions = ({
             nextSlots.push({
               ...slot,
               ocrText: extractedText,
+              ocrError: null,
             });
             successfulSlots += 1;
           } catch (error: unknown) {
+            const message =
+              error instanceof Error ? error.message : 'OCR failed';
             nextSlots.push(slot);
             failedSlots.push(
               `${slot.name || `Slot ${index + 1}`}: ${
-                error instanceof Error ? error.message : 'OCR failed'
+                message
               }`
             );
+            if (nextSlots.length > 0) {
+              const lastIndex = nextSlots.length - 1;
+              const currentSlot = nextSlots[lastIndex];
+              if (currentSlot) {
+                nextSlots[lastIndex] = {
+                  ...currentSlot,
+                  ocrError: message,
+                };
+              }
+            }
           }
         }
 
@@ -494,6 +556,8 @@ export const useCaseResolverStateAssetActions = ({
               return {
                 ...file,
                 scanSlots: nextSlots,
+                scanOcrModel: runtime.model,
+                scanOcrPrompt: runtime.prompt,
                 editorType: canonicalDocument.mode,
                 documentContentVersion: file.documentContentVersion + 1,
                 documentContent: storedDocumentContent,
@@ -534,6 +598,8 @@ export const useCaseResolverStateAssetActions = ({
             return {
               ...current,
               scanSlots: nextSlots,
+              scanOcrModel: runtime.model,
+              scanOcrPrompt: runtime.prompt,
               editorType: canonicalDocument.mode,
               baseDocumentContentVersion: current.baseDocumentContentVersion + 1,
               documentContentVersion: current.documentContentVersion + 1,
@@ -550,8 +616,8 @@ export const useCaseResolverStateAssetActions = ({
           });
           toast(
             successfulSlots === 1
-              ? 'OCR finished for 1 image.'
-              : `OCR finished for ${successfulSlots} images.`,
+              ? 'OCR finished for 1 file.'
+              : `OCR finished for ${successfulSlots} files.`,
             { variant: 'success' }
           );
         }
@@ -559,8 +625,8 @@ export const useCaseResolverStateAssetActions = ({
         if (failedSlots.length > 0) {
           toast(
             failedSlots.length === 1
-              ? failedSlots[0] ?? 'OCR failed for one image.'
-              : `${failedSlots.length} images failed during OCR.`,
+              ? failedSlots[0] ?? 'OCR failed for one file.'
+              : `${failedSlots.length} files failed during OCR.`,
             { variant: 'error' }
           );
         }

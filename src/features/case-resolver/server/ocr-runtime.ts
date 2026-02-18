@@ -13,6 +13,9 @@ const CASE_RESOLVER_UPLOAD_DISK_PREFIX = path.resolve(
 );
 const CASE_RESOLVER_IMAGE_EXTENSION_PATTERN =
   /\.(jpg|jpeg|png|webp|gif|bmp|avif|heic|heif|tif|tiff|svg)$/i;
+const CASE_RESOLVER_PDF_EXTENSION_PATTERN = /\.pdf$/i;
+
+export type CaseResolverOcrFileKind = 'image' | 'pdf';
 
 export const normalizeCaseResolverPublicFilepath = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
@@ -31,16 +34,41 @@ export const isCaseResolverImageFilepath = (filepath: string): boolean => {
   return CASE_RESOLVER_IMAGE_EXTENSION_PATTERN.test(normalized);
 };
 
-export const resolveCaseResolverImageDiskPath = (value: unknown): string => {
+export const isCaseResolverPdfFilepath = (filepath: string): boolean => {
+  const normalized = normalizeCaseResolverPublicFilepath(filepath);
+  if (!normalized) return false;
+  if (!normalized.startsWith(CASE_RESOLVER_UPLOAD_PREFIX)) return false;
+  return CASE_RESOLVER_PDF_EXTENSION_PATTERN.test(normalized);
+};
+
+export const inferCaseResolverOcrFileKind = (
+  filepath: string
+): CaseResolverOcrFileKind | null => {
+  if (isCaseResolverImageFilepath(filepath)) return 'image';
+  if (isCaseResolverPdfFilepath(filepath)) return 'pdf';
+  return null;
+};
+
+export const isCaseResolverOcrFilepath = (filepath: string): boolean =>
+  inferCaseResolverOcrFileKind(filepath) !== null;
+
+export const resolveCaseResolverOcrDiskPath = (
+  value: unknown
+): {
+  filepath: string;
+  diskPath: string;
+  kind: CaseResolverOcrFileKind;
+} => {
   const filepath = normalizeCaseResolverPublicFilepath(value);
   if (!filepath) {
     throw new Error('filepath is required.');
   }
   if (!filepath.startsWith(CASE_RESOLVER_UPLOAD_PREFIX)) {
-    throw new Error('Only Case Resolver uploaded images are supported.');
+    throw new Error('Only Case Resolver uploaded files are supported.');
   }
-  if (!CASE_RESOLVER_IMAGE_EXTENSION_PATTERN.test(filepath)) {
-    throw new Error('Only image files are supported for OCR runtime.');
+  const kind = inferCaseResolverOcrFileKind(filepath);
+  if (!kind) {
+    throw new Error('Only image and PDF files are supported for OCR runtime.');
   }
 
   const diskPath = path.resolve(getDiskPathFromPublicPath(filepath));
@@ -49,6 +77,12 @@ export const resolveCaseResolverImageDiskPath = (value: unknown): string => {
     throw new Error('Resolved OCR path is outside Case Resolver uploads.');
   }
 
-  return diskPath;
+  return {
+    filepath,
+    diskPath,
+    kind,
+  };
 };
 
+export const resolveCaseResolverImageDiskPath = (value: unknown): string =>
+  resolveCaseResolverOcrDiskPath(value).diskPath;

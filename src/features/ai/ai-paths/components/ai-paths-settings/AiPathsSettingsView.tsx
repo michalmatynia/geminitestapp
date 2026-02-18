@@ -26,6 +26,7 @@ import {
   usePersistenceState,
   useRuntimeActions,
   useRuntimeState,
+  useSelectionActions,
   useSelectionState,
 } from '../../context';
 import { CanvasBoard } from '../canvas-board';
@@ -89,7 +90,8 @@ export function AiPathsSettingsView(): React.JSX.Element {
   const { setPathName, setPaths } = useGraphActions();
 
   // Domain: Selection — read from context
-  const { nodeConfigDirty } = useSelectionState();
+  const { nodeConfigDirty, selectedNodeIds, selectionToolMode } = useSelectionState();
+  const { setSelectionToolMode } = useSelectionActions();
 
   // Utility — imported directly
   const { toast } = useToast();
@@ -308,6 +310,47 @@ export function AiPathsSettingsView(): React.JSX.Element {
                       >
                         {isPathLocked ? 'Unlock Path' : 'Lock Path'}
                       </Button>
+                      <div className='flex items-center rounded-md border border-border/60 bg-card/40 p-0.5'>
+                        <Button
+                          type='button'
+                          className={`h-8 rounded-md px-2 text-xs ${
+                            selectionToolMode === 'pan'
+                              ? 'bg-sky-500/20 text-sky-200'
+                              : 'text-gray-300 hover:bg-card/60'
+                          }`}
+                          onClick={() => setSelectionToolMode('pan')}
+                          title='Pan canvas'
+                        >
+                          Pan
+                        </Button>
+                        <Button
+                          type='button'
+                          className={`h-8 rounded-md px-2 text-xs ${
+                            selectionToolMode === 'select'
+                              ? 'bg-sky-500/20 text-sky-200'
+                              : 'text-gray-300 hover:bg-card/60'
+                          }`}
+                          onClick={() => setSelectionToolMode('select')}
+                          title='Rectangle selection tool'
+                        >
+                          Select
+                        </Button>
+                      </div>
+                      <StatusBadge
+                        status={`Selected: ${selectedNodeIds.length}`}
+                        variant='neutral'
+                        size='sm'
+                        className='font-medium'
+                        title='Selected nodes count'
+                      />
+                      <div className='text-[11px] text-gray-400'>
+                        {selectionToolMode === 'select'
+                          ? 'Drag to select nodes. Shift add, Alt subtract.'
+                          : 'Use Select tool to draw a selection rectangle.'}
+                      </div>
+                      <div className='text-[11px] text-gray-500'>
+                        Ctrl/Cmd+C copy, Ctrl/Cmd+V paste
+                      </div>
                       <Button
                         className='rounded-md border border-amber-500/40 text-sm text-amber-200 hover:bg-amber-500/10'
                         onClick={() => {

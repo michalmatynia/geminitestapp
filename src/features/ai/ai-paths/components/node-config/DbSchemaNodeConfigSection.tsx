@@ -10,7 +10,8 @@ import {
   Button, 
   Label, 
   SelectSimple, 
-  SearchInput 
+  SearchInput,
+  Pagination
 } from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
@@ -577,32 +578,13 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
 
                   {/* Pagination */}
                   {browseTotal > browseLimit && (
-                    <div className='flex items-center justify-between pt-2'>
-                      <Button
-                        type='button'
-                        disabled={browseSkip === 0}
-                        className='rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50'
-                        onClick={(): void => {
-                          const newSkip = Math.max(0, browseSkip - browseLimit);
-                          setBrowseSkip(newSkip);
-                        }}
-                      >
-                        Previous
-                      </Button>
-                      <span className='text-[10px] text-gray-500'>
-                        Page {Math.floor(browseSkip / browseLimit) + 1} of {Math.ceil(browseTotal / browseLimit)}
-                      </span>
-                      <Button
-                        type='button'
-                        disabled={browseSkip + browseLimit >= browseTotal}
-                        className='rounded border px-3 py-1 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50'
-                        onClick={(): void => {
-                          const newSkip = browseSkip + browseLimit;
-                          setBrowseSkip(newSkip);
-                        }}
-                      >
-                        Next
-                      </Button>
+                    <div className='flex justify-end pt-2'>
+                      <Pagination
+                        page={Math.floor(browseSkip / browseLimit) + 1}
+                        totalPages={Math.ceil(browseTotal / browseLimit)}
+                        onPageChange={(p) => setBrowseSkip((p - 1) * browseLimit)}
+                        variant='compact'
+                      />
                     </div>
                   )}
                 </div>

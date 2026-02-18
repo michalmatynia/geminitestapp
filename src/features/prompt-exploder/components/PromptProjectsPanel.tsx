@@ -2,12 +2,14 @@
 
 import React from 'react';
 
-import { Button, FormSection, Input, Label } from '@/shared/ui';
+import { Button, FormSection, Input, Label, SimpleSettingsList } from '@/shared/ui';
 
 import { useDocumentState } from '../context/hooks/useDocument';
 import { useLibraryState, useLibraryActions } from '../context/hooks/useLibrary';
 import { useSettingsState } from '../context/hooks/useSettings';
 import { promptExploderFormatTimestamp } from '../helpers/formatting';
+
+import type { PromptExploderLibraryItem } from '../prompt-library';
 
 export function PromptProjectsPanel(): React.JSX.Element {
   const { promptText, documentState } = useDocumentState();
@@ -68,36 +70,21 @@ export function PromptProjectsPanel(): React.JSX.Element {
       <div className='grid gap-3 lg:grid-cols-[320px_minmax(0,1fr)]'>
         <div className='space-y-1'>
           <Label className='text-[11px] text-gray-400'>Projects</Label>
-          {promptLibraryItems.length === 0 ? (
-            <div className='rounded border border-border/50 bg-card/20 px-3 py-4 text-xs text-gray-500'>
-              No projects saved yet.
-            </div>
-          ) : (
-            <div className='max-h-[280px] space-y-2 overflow-auto rounded border border-border/50 bg-card/20 p-2'>
-              {promptLibraryItems.map((item) => {
-                const isSelected = selectedLibraryItemId === item.id;
-                const segmentCount = item.document?.segments.length ?? 0;
-                return (
-                  <button
-                    key={item.id}
-                    type='button'
-                    className={`w-full rounded border px-2 py-2 text-left text-xs transition-colors ${isSelected ? 'border-blue-400 bg-blue-500/10 text-gray-100' : 'border-border/50 bg-card/30 text-gray-300 hover:border-blue-300/50'}`}
-                    onClick={() => {
-                      handleLoadLibraryItem(item.id);
-                    }}
-                  >
-                    <div className='truncate font-medium'>{item.name}</div>
-                    <div className='mt-1 text-[10px] text-gray-500'>
-                      segments {segmentCount} · updated {promptExploderFormatTimestamp(item.updatedAt)}
-                    </div>
-                    <div className='mt-1 line-clamp-2 text-[10px] text-gray-500'>
-                      {item.prompt}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          <div className='max-h-[280px] overflow-auto rounded border border-border/50 bg-card/20'>
+            <SimpleSettingsList
+              items={promptLibraryItems.map((item: PromptExploderLibraryItem) => ({
+                id: item.id,
+                title: item.name,
+                description: item.prompt,
+                subtitle: `segments ${item.document?.segments.length ?? 0} · updated ${promptExploderFormatTimestamp(item.updatedAt)}`,
+                original: item
+              }))}
+              selectedId={selectedLibraryItemId ?? undefined}
+              onSelect={(item) => handleLoadLibraryItem(item.id)}
+              emptyMessage='No projects saved yet.'
+              padding='sm'
+            />
+          </div>
         </div>
         <div className='space-y-2'>
           <div className='space-y-1'>

@@ -1,12 +1,12 @@
 'use client';
 
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
 import { useSaveParameterMutation, useDeleteParameterMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { CatalogRecord } from '@/features/products/types';
 import type { ProductParameter } from '@/features/products/types';
-import { useToast, Button, Input, SelectSimple, FormModal, EmptyState, Skeleton, FormSection, FormField, Textarea } from '@/shared/ui';
+import { useToast, Button, Input, SelectSimple, FormModal, EmptyState, FormSection, FormField, Textarea, SimpleSettingsList } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 type ParametersSettingsProps = {
@@ -220,7 +220,7 @@ export function ParametersSettings({
               onClick={openCreateModal}
               className='bg-white text-gray-900 hover:bg-gray-200'
             >
-              <Plus className='mr-2 size-4' />
+              <Plus className='size-4 mr-2' />
               Add Parameter
             </Button>
           </div>
@@ -230,68 +230,31 @@ export function ParametersSettings({
             className='p-4'
           >
             <div className='mt-4'>
-              {loading ? (
-                <div className='space-y-2 p-4'>
-                  <Skeleton className='h-8 w-full' />
-                  <Skeleton className='h-8 w-full' />
-                  <Skeleton className='h-8 w-full' />
-                </div>
-              ) : parameters.length === 0 ? (
-                <EmptyState
-                  title='No parameters yet'
-                  description='Create product parameters and choose their selector type.'
-                  action={
-                    <Button onClick={openCreateModal} variant='outline'>
-                      <Plus className='mr-2 size-4' />
-                      Create Your First Parameter
-                    </Button>
-                  }
-                />
-              ) : (
-                <div className='space-y-2'>
-                  {parameters.map((parameter: ProductParameter) => (
-                    <div
-                      key={parameter.id}
-                      className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-gray-900/40 p-3'
-                    >
-                      <div className='min-w-0'>
-                        <p className='truncate text-sm text-gray-100'>
-                          {parameter.name_en}
-                        </p>
-                        <div className='space-x-2 text-xs text-gray-400'>
-                          <span>Type: {getSelectorTypeLabel(parameter.selectorType)}</span>
-                          {parameter.optionLabels.length > 0 && (
-                            <span>Options: {parameter.optionLabels.length}</span>
-                          )}
-                          {parameter.name_pl && (
-                            <span>PL: {parameter.name_pl}</span>
-                          )}
-                          {parameter.name_de && (
-                            <span>DE: {parameter.name_de}</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className='flex items-center gap-2'>
-                        <Button
-                          type='button'
-                          onClick={(): void => openEditModal(parameter)}
-                          className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700'
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          type='button'
-                          onClick={(): void => { handleDelete(parameter); }}
-                          className='rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600'
-                          title='Delete parameter'
-                        >
-                          <Trash2 className='size-3' />
-                        </Button>
-                      </div>
+              <SimpleSettingsList
+                items={parameters.map((parameter: ProductParameter) => ({
+                  id: parameter.id,
+                  title: parameter.name_en,
+                  subtitle: `Type: ${getSelectorTypeLabel(parameter.selectorType)}`,
+                  description: (
+                    <div className='flex flex-wrap gap-x-3 gap-y-1'>
+                      {parameter.optionLabels.length > 0 && (
+                        <span>Options: {parameter.optionLabels.length}</span>
+                      )}
+                      {parameter.name_pl && (
+                        <span>PL: {parameter.name_pl}</span>
+                      )}
+                      {parameter.name_de && (
+                        <span>DE: {parameter.name_de}</span>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
+                  ),
+                  original: parameter
+                }))}
+                isLoading={loading}
+                onEdit={(item) => openEditModal(item.original)}
+                onDelete={(item) => { handleDelete(item.original); }}
+                emptyMessage='No parameters yet. Create product parameters and choose their selector type.'
+              />
             </div>
           </FormSection>
         </>
@@ -305,7 +268,6 @@ export function ParametersSettings({
       )}
 
       <ConfirmModal
-
         isOpen={!!parameterToDelete}
         onClose={() => setParameterToDelete(null)}
         onConfirm={handleConfirmDelete}

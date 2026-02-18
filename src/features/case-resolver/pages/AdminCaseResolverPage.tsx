@@ -22,6 +22,9 @@ import {
   resolveFilemakerPartyLabel,
 } from '@/features/filemaker/settings';
 import { savePromptExploderDraftPromptFromCaseResolver } from '@/features/prompt-exploder/bridge';
+import { api } from '@/shared/lib/api-client';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
 
 import { buildPathLabelMap } from './admin-case-resolver-page-helpers';
@@ -29,6 +32,7 @@ import { CaseResolverPageView } from '../components/CaseResolverPageView';
 import { CaseResolverWorkspaceDebugPanel } from '../components/CaseResolverWorkspaceDebugPanel';
 import { useCaseResolverState } from '../hooks/useCaseResolverState';
 import {
+  DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT,
   normalizeFolderPath,
 } from '../settings';
 import { isPathWithinFolder } from '../utils/caseResolverUtils';
@@ -43,12 +47,56 @@ import type {
   CaseResolverTag,
 } from '../types';
 
+type ChatbotModelListResponse = {
+  models?: string[];
+  warning?: {
+    code?: string;
+    message?: string;
+  };
+};
+
+const OCR_MODEL_ID_HINTS = [
+  'vision',
+  'vl',
+  'llava',
+  'minicpm',
+  'moondream',
+  'ocr',
+  'gpt-4o',
+  'gpt-4.1',
+  'gpt-5',
+  'gemini',
+  'claude-3',
+  'pixtral',
+] as const;
+
+const isLikelyOcrCapableModelId = (value: string): boolean => {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return false;
+  return OCR_MODEL_ID_HINTS.some((hint) => normalized.includes(hint));
+};
+
 export function AdminCaseResolverPage(): React.JSX.Element {
   const state = useCaseResolverState();
   const router = useRouter();
   const { toast } = useToast();
   const workspaceDebugEnabled = process.env['NODE_ENV'] !== 'production';
   const [workspaceView, setWorkspaceView] = React.useState<'document' | 'relations'>('document');
+  const modelsQuery = createListQueryV2<ChatbotModelListResponse, ChatbotModelListResponse>({
+    queryKey: QUERY_KEYS.ai.chatbot.models(),
+    queryFn: ({ signal }) => api.get<ChatbotModelListResponse>('/api/chatbot', { signal }),
+    staleTime: 60_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'case-resolver.page.models-query',
+      operation: 'list',
+      resource: 'ai.chatbot.models',
+      domain: 'global',
+      tags: ['case-resolver', 'ocr', 'models'],
+    },
+  });
   const {
     workspace,
     selectedFileId,
@@ -138,6 +186,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       tagId: input.tagId,
       caseIdentifierId: input.caseIdentifierId,
       categoryId: input.categoryId,
+      scanOcrModel: input.scanOcrModel,
+      scanOcrPrompt: input.scanOcrPrompt,
     });
   }, []);
 
@@ -214,6 +264,31 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         .sort((left, right) => left.label.localeCompare(right.label)),
     [workspace.files]
   );
+  const scanOcrModelOptions = React.useMemo(() => {
+    const candidates = Array.from(
+      new Set([
+        ...(modelsQuery.data?.models ?? []),
+        caseResolverSettings.ocrModel,
+        editingDocumentDraft?.fileType === 'scanfile' ? editingDocumentDraft.scanOcrModel : '',
+      ]
+        .map((value: string) => value.trim())
+        .filter(Boolean))
+    );
+    const likelyOcrModels = candidates.filter((value: string) =>
+      isLikelyOcrCapableModelId(value)
+    );
+    const resolvedModels =
+      likelyOcrModels.length > 0 ? likelyOcrModels : candidates;
+    return resolvedModels.map((model) => ({
+      value: model,
+      label: model,
+    }));
+  }, [
+    caseResolverSettings.ocrModel,
+    editingDocumentDraft?.fileType,
+    editingDocumentDraft?.scanOcrModel,
+    modelsQuery.data?.models,
+  ]);
   const parentCaseOptions = React.useMemo(
     () => [{ value: '__none__', label: 'No parent (root case)' }, ...caseReferenceOptions],
     [caseReferenceOptions]
@@ -386,6 +461,33 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     [setEditingDocumentDraft]
   );
 
+  React.useEffect(() => {
+    if (editingDocumentDraft?.fileType !== 'scanfile') return;
+    const promptValue = editingDocumentDraft.scanOcrPrompt.trim();
+    const currentModelValue = editingDocumentDraft.scanOcrModel.trim();
+    const fallbackModel =
+      caseResolverSettings.ocrModel.trim() ||
+      scanOcrModelOptions[0]?.value?.trim() ||
+      '';
+    const nextModel = currentModelValue || fallbackModel;
+    const needsPromptDefault = promptValue.length === 0;
+    const needsModelDefault = currentModelValue.length === 0 && nextModel.length > 0;
+    if (!needsPromptDefault && !needsModelDefault) return;
+    updateEditingDocumentDraft({
+      ...(needsPromptDefault
+        ? { scanOcrPrompt: DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT }
+        : {}),
+      ...(needsModelDefault ? { scanOcrModel: nextModel } : {}),
+    });
+  }, [
+    caseResolverSettings.ocrModel,
+    editingDocumentDraft?.fileType,
+    editingDocumentDraft?.scanOcrModel,
+    editingDocumentDraft?.scanOcrPrompt,
+    scanOcrModelOptions,
+    updateEditingDocumentDraft,
+  ]);
+
   const handleOpenPromptExploderForDraft = useCallback((): void => {
     if (!editingDocumentDraft) return;
     const promptSource = (
@@ -446,15 +548,87 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     [uploadScanDraftFiles]
   );
 
+  const handleDeleteScanDraftSlot = useCallback(
+    (slotId: string): void => {
+      if (editingDocumentDraft?.fileType !== 'scanfile') return;
+      if (isUploadingScanDraftFiles) return;
+      const fileId = editingDocumentDraft.id;
+      const targetSlot = editingDocumentDraft.scanSlots.find((slot) => slot.id === slotId);
+      if (!targetSlot) return;
+
+      updateWorkspace(
+        (current) => {
+          const now = new Date().toISOString();
+          let changed = false;
+          const nextFiles = current.files.map((file) => {
+            if (file.id !== fileId || file.fileType !== 'scanfile') return file;
+            const nextSlots = file.scanSlots.filter((slot) => slot.id !== slotId);
+            if (nextSlots.length === file.scanSlots.length) return file;
+            changed = true;
+            return {
+              ...file,
+              scanSlots: nextSlots,
+              updatedAt: now,
+            };
+          });
+          if (!changed) return current;
+          return {
+            ...current,
+            files: nextFiles,
+          };
+        },
+        { persistToast: 'Document slot removed.' }
+      );
+      setEditingDocumentDraft((current) => {
+        if (current?.id !== fileId || current.fileType !== 'scanfile') return current;
+        const nextSlots = current.scanSlots.filter((slot) => slot.id !== slotId);
+        if (nextSlots.length === current.scanSlots.length) return current;
+        return {
+          ...current,
+          scanSlots: nextSlots,
+          updatedAt: new Date().toISOString(),
+        };
+      });
+      toast(`Removed "${targetSlot.name || 'file'}" from document slots.`, {
+        variant: 'success',
+      });
+    },
+    [editingDocumentDraft, isUploadingScanDraftFiles, setEditingDocumentDraft, toast, updateWorkspace]
+  );
+
   const handleRunScanDraftOcr = useCallback((): void => {
     if (editingDocumentDraft?.fileType !== 'scanfile') return;
-    void handleRunScanFileOcr(editingDocumentDraft.id).catch((error: unknown) => {
+    void handleRunScanFileOcr(editingDocumentDraft.id, {
+      model: editingDocumentDraft.scanOcrModel,
+      prompt: editingDocumentDraft.scanOcrPrompt,
+    }).catch((error: unknown) => {
       toast(
         error instanceof Error ? error.message : 'Failed to run OCR.',
         { variant: 'error' }
       );
     });
   }, [editingDocumentDraft, handleRunScanFileOcr, toast]);
+
+  const handleScanDraftOcrModelChange = useCallback((value: string): void => {
+    if (editingDocumentDraft?.fileType !== 'scanfile') return;
+    updateEditingDocumentDraft({
+      scanOcrModel: value,
+    });
+  }, [editingDocumentDraft, updateEditingDocumentDraft]);
+
+  const handleScanDraftOcrPromptChange = useCallback((value: string): void => {
+    if (editingDocumentDraft?.fileType !== 'scanfile') return;
+    updateEditingDocumentDraft({
+      scanOcrPrompt: value,
+    });
+  }, [editingDocumentDraft, updateEditingDocumentDraft]);
+
+  const handleResetScanDraftOcrPrompt = useCallback((): void => {
+    if (editingDocumentDraft?.fileType !== 'scanfile') return;
+    updateEditingDocumentDraft({
+      scanOcrPrompt: DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT,
+    });
+  }, [editingDocumentDraft, updateEditingDocumentDraft]);
 
   const handleScanDraftDrop = useCallback(
     (event: React.DragEvent<HTMLDivElement>): void => {
@@ -804,7 +978,12 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         handleScanDraftDrop={handleScanDraftDrop}
         handleScanDraftUploadInputChange={handleScanDraftUploadInputChange}
         handleTriggerScanDraftUpload={handleTriggerScanDraftUpload}
+        handleDeleteScanDraftSlot={handleDeleteScanDraftSlot}
         handleRunScanDraftOcr={handleRunScanDraftOcr}
+        scanOcrModelOptions={scanOcrModelOptions}
+        handleScanDraftOcrModelChange={handleScanDraftOcrModelChange}
+        handleScanDraftOcrPromptChange={handleScanDraftOcrPromptChange}
+        handleResetScanDraftOcrPrompt={handleResetScanDraftOcrPrompt}
         updateEditingDocumentDraft={updateEditingDocumentDraft}
         caseTagOptions={caseTagOptions}
         caseIdentifierOptions={caseIdentifierOptions}

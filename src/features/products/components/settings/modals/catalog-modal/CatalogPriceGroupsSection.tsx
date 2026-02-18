@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { Button, Label, SelectSimple } from '@/shared/ui';
 
 import { useCatalogModalContext } from './context/CatalogModalContext';
 
@@ -64,25 +64,21 @@ export function CatalogPriceGroupsSection(): React.JSX.Element {
             <Label className='text-xs text-gray-400'>
               Default price group
             </Label>
-            <Select
+            <SelectSimple
+              size='sm'
               value={catalogDefaultPriceGroupId}
               onValueChange={setCatalogDefaultPriceGroupId}
               disabled={catalogPriceGroupIds.length === 0}
-            >
-              <SelectTrigger className='w-full bg-gray-900 border-border text-xs text-white'>
-                <SelectValue placeholder='Select default price group' />
-              </SelectTrigger>
-              <SelectContent>
-                {catalogPriceGroupIds.map((id) => {
-                  const group = priceGroups.find((g) => g.id === id);
-                  return (
-                    <SelectItem key={id} value={id}>
-                      {group?.name}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+              placeholder='Select default price group'
+              options={catalogPriceGroupIds.map((id) => {
+                const group = priceGroups.find((g) => g.id === id);
+                return {
+                  value: id,
+                  label: group?.name ?? id
+                };
+              })}
+              triggerClassName='w-full bg-gray-900 border-border text-xs text-white h-9'
+            />
           </div>
         </div>
       )}

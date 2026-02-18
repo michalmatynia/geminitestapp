@@ -8,11 +8,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  SelectSimple,
 } from '@/shared/ui';
 
 export type PlaceholderTarget = 'query' | 'aiPrompt' | 'prompt' | 'template';
@@ -81,18 +77,14 @@ export function PlaceholderMatrixDialog({
           <div className='flex items-center gap-2 text-xs text-gray-400'>
             <span>Insert into</span>
             {hasMultipleTargets ? (
-              <Select value={target} onValueChange={(value: string) => onTargetChange(value as PlaceholderTarget)}>
-                <SelectTrigger className='h-7 w-[160px] border-border bg-card/70 text-xs text-white'>
-                  <SelectValue placeholder='Pick target' />
-                </SelectTrigger>
-                <SelectContent className='border-border bg-gray-900'>
-                  {resolvedTargets.map((option: PlaceholderTargetOption) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SelectSimple
+                size='xs'
+                value={target}
+                onValueChange={(value: string) => onTargetChange(value as PlaceholderTarget)}
+                options={resolvedTargets}
+                placeholder='Pick target'
+                triggerClassName='h-7 w-[160px] border-border bg-card/70 text-xs text-white'
+              />
             ) : (
               <div className='rounded-md border border-border bg-card/70 px-2 py-1 text-[10px] text-gray-200'>
                 {selectedTarget?.label ?? 'Target'}

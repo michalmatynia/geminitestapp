@@ -36,6 +36,7 @@ import {
   Label,
   SelectSimple,
   useToast,
+  SimpleSettingsList,
 } from '@/shared/ui';
 
 type ProductSyncProfileDraft = {
@@ -638,35 +639,27 @@ export function ProductSyncSettings(): React.JSX.Element {
           Latest sync runs for the selected profile.
         </p>
 
-        <div className='mt-3 space-y-2'>
-          {runs.length === 0 ? (
-            <p className='text-xs text-gray-500'>No sync runs yet.</p>
-          ) : (
-            runs.map((run) => (
-              <div key={run.id} className='rounded-md border border-border/60 bg-card/40 p-3'>
-                <div className='flex flex-wrap items-center justify-between gap-2'>
-                  <div className='text-xs text-gray-300'>
-                    <span className='font-mono text-[11px]'>{run.id}</span>
-                  </div>
-                  <div className='flex items-center gap-2'>
-                    <Badge variant='outline' className='text-[10px] uppercase'>
-                      {run.trigger}
-                    </Badge>
-                    <Badge variant='outline' className='text-[10px] uppercase'>
-                      {run.status}
-                    </Badge>
-                  </div>
+        <div className='mt-3'>
+          <SimpleSettingsList
+            items={runs.map((run) => ({
+              id: run.id,
+              title: (
+                <div className='flex items-center gap-2'>
+                  <span className='font-mono text-[11px]'>{run.id}</span>
+                  <Badge variant='outline' className='text-[9px] uppercase h-4 px-1'>
+                    {run.trigger}
+                  </Badge>
+                  <Badge variant='outline' className='text-[9px] uppercase h-4 px-1'>
+                    {run.status}
+                  </Badge>
                 </div>
-                <p className='mt-2 text-xs text-gray-400'>
-                  {run.summaryMessage ||
-                    `Processed ${run.stats.processed}/${run.stats.total} items.`}
-                </p>
-                <p className='mt-1 text-[11px] text-gray-500'>
-                  {new Date(run.createdAt).toLocaleString()} · success {run.stats.success} · skipped {run.stats.skipped} · failed {run.stats.failed}
-                </p>
-              </div>
-            ))
-          )}
+              ),
+              description: run.summaryMessage || `Processed ${run.stats.processed}/${run.stats.total} items.`,
+              subtitle: `${new Date(run.createdAt).toLocaleString()} · success ${run.stats.success} · skipped ${run.stats.skipped} · failed ${run.stats.failed}`,
+              original: run
+            }))}
+            emptyMessage='No sync runs yet.'
+          />
         </div>
       </div>
       <ConfirmationModal />

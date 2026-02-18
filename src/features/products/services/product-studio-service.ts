@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { createHash } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -126,6 +127,9 @@ type ResolvePostProductionRouteResult = {
   warnings: string[];
 };
 
+const PRODUCT_STUDIO_STRICT_SEQUENCE_MODE =
+  process.env['PRODUCT_STUDIO_STRICT_SEQUENCE_MODE'] !== 'false';
+
 const normalizeProjectId = (
   value: string | null | undefined,
 ): string | null => {
@@ -153,12 +157,40 @@ const trimString = (value: unknown): string | null => {
   return normalized.length > 0 ? normalized : null;
 };
 
+const sanitizeSkuSegment = (value: string | null): string | null => {
+  if (!value) return null;
+  const cleaned = value
+    .trim()
+    .replace(/[^\p{L}\p{N}_-]+/gu, '-')
+    .replace(/-{2,}/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 120);
+  return cleaned.length > 0 ? cleaned : null;
+};
+
 const resolvePostProductionRoute = (
   input: ResolvePostProductionRouteInput,
 ): ResolvePostProductionRouteResult => {
   const warnings: string[] = [];
   const modelSupportsFullSequence = supportsImageSequenceGeneration(input.modelId);
   const sequencerEnabled = input.sequencing.enabled && input.sequencing.runViaSequence;
+
+  if (sequencerEnabled && PRODUCT_STUDIO_STRICT_SEQUENCE_MODE) {
+    if (
+      input.requestedMode === 'model_full_sequence' ||
+      input.requestedMode === 'studio_native_sequencer_prior_generation'
+    ) {
+      warnings.push(
+        'Project sequencing is enabled, so Product Studio runs the Image Studio sequence exactly as configured.',
+      );
+    }
+    return {
+      executionRoute: 'studio_sequencer',
+      runKind: 'sequence',
+      resolvedMode: 'studio_prompt_then_sequence',
+      warnings,
+    };
+  }
 
   if (!sequencerEnabled) {
     return {
@@ -281,36 +313,64 @@ ${sequencePlan}
 Return only the final post-produced image output.`;
 };
 
-const ensureSequenceHasPriorGenerationStep = (
+const validateProductStudioSequenceSteps = (
   inputSteps: ImageStudioSequenceStep[],
-  fallbackOutputCount: number,
-): ImageStudioSequenceStep[] => {
-  const activeSteps = inputSteps.filter((step) => step.enabled);
-  const firstStep = activeSteps[0] ?? null;
-  if (firstStep?.type === 'generate' || firstStep?.type === 'regenerate') {
-    return activeSteps;
+): void => {
+  const errors: string[] = [];
+  if (inputSteps.length === 0) {
+    errors.push('No enabled sequence steps are available for execution.');
+  } else if (inputSteps.length > 20) {
+    errors.push(
+      `Project sequence has ${inputSteps.length} enabled steps. Product Studio supports up to 20 enabled sequence steps.`,
+    );
   }
 
-  const injectedGenerateStep: ImageStudioSequenceStep = {
-    id: 'product_studio_prior_generate',
-    type: 'generate',
-    runtime: 'server',
-    enabled: true,
-    label: 'Product Studio Prior Generation',
-    onFailure: 'stop',
-    retries: 1,
-    retryBackoffMs: 1000,
-    timeoutMs: null,
-    config: {
-      promptMode: 'inherit',
-      promptTemplate: null,
-      modelOverride: null,
-      outputCount: Math.max(1, Math.min(10, Math.floor(fallbackOutputCount || 1))),
-      referencePolicy: 'inherit',
-    },
-  };
+  const seenStepIds = new Set<string>();
+  for (const step of inputSteps) {
+    const stepId = trimString(step.id);
+    if (!stepId) {
+      errors.push(`Sequence step "${step.type}" is missing a valid step id.`);
+    } else if (seenStepIds.has(stepId)) {
+      errors.push(`Sequence step id "${stepId}" is duplicated. Use unique step ids.`);
+    } else {
+      seenStepIds.add(stepId);
+    }
 
-  return [injectedGenerateStep, ...activeSteps];
+    if (step.runtime !== 'server') {
+      errors.push(
+        `Step "${step.id}" (${step.type}) is configured for "${step.runtime}" runtime. Product Studio executes project sequences on server runtime only.`,
+      );
+    }
+
+    if (step.type !== 'crop_center') continue;
+    if (step.config.kind !== 'selected_shape') continue;
+    const hasBbox = Boolean(step.config.bbox);
+    const hasPolygon =
+      Array.isArray(step.config.polygon) && step.config.polygon.length >= 3;
+    if (hasBbox || hasPolygon) continue;
+    const selectedShapeId = trimString(step.config.selectedShapeId);
+    errors.push(
+      selectedShapeId
+        ? `Sequence step "${step.id}" uses selected shape "${selectedShapeId}" but no crop geometry snapshot was saved. Open Image Studio for this project, re-select the shape in the sequence step, save project, and retry.`
+        : `Sequence step "${step.id}" uses selected shape crop but has no selected shape. Configure the shape in Image Studio and retry.`,
+    );
+  }
+
+  if (errors.length > 0) {
+    throw badRequestError(errors[0] ?? 'Sequence preflight validation failed.', {
+      errors,
+    });
+  }
+};
+
+const buildSequenceSnapshotHash = (steps: ImageStudioSequenceStep[]): string => {
+  const payload = JSON.stringify(steps);
+  return createHash('sha1').update(payload).digest('hex').slice(0, 20);
+};
+
+const buildSettingsSnapshotHash = (settings: Record<string, unknown>): string => {
+  const payload = JSON.stringify(settings);
+  return createHash('sha1').update(payload).digest('hex').slice(0, 20);
 };
 
 const ensureProduct = async (productId: string): Promise<ProductWithImages> => {
@@ -494,6 +554,7 @@ const importSourceProductImageToStudio = async (params: {
   imageSlotIndex: number;
   sequencing: ProductStudioSequencingConfig;
   rotateBeforeSendDeg: 90 | null;
+  productFolderSegment: string;
 }): Promise<{
   id: string;
   filepath: string;
@@ -550,7 +611,7 @@ const importSourceProductImageToStudio = async (params: {
   const uploaded = await uploadFile(file, {
     category: 'studio',
     projectId: params.projectId,
-    folder: `products/${params.productId}`,
+    folder: `products/${params.productFolderSegment}`,
     filenameOverride: uploadFilename,
   });
 
@@ -718,7 +779,7 @@ const sortSlotsNewestFirst = (
 
 const resolveGenerationVariants = async (params: {
   projectId: string;
-  sourceSlotId: string;
+  sourceSlotIds: string[];
 }): Promise<{
   sourceSlot: ImageStudioSlotRecord | null;
   variants: ImageStudioSlotRecord[];
@@ -732,19 +793,54 @@ const resolveGenerationVariants = async (params: {
     slots.map((slot: ImageStudioSlotRecord) => [slot.id, slot]),
   );
 
-  const sourceSlot = slotById.get(params.sourceSlotId) ?? null;
+  const sourceSlotId = params.sourceSlotIds.find((id) => slotById.has(id)) ?? null;
+  const sourceSlot = sourceSlotId ? slotById.get(sourceSlotId) ?? null : null;
+  if (!sourceSlotId) {
+    return {
+      sourceSlot: null,
+      variants: [],
+    };
+  }
 
-  const linkedVariants = links
-    .filter(
-      (link) =>
-        link.sourceSlotId === params.sourceSlotId &&
-        link.relationType.startsWith('generation:output:'),
-    )
-    .map((link) => slotById.get(link.targetSlotId) ?? null)
+  const linkAdjacency = new Map<string, string[]>();
+  links.forEach((link) => {
+    const relationType = trimString(link.relationType)?.toLowerCase() ?? '';
+    const isOutputRelation =
+      relationType.includes('output') ||
+      relationType.startsWith('sequence:step:') ||
+      relationType.startsWith('generation:output:');
+    if (!isOutputRelation) return;
+    const sourceId = trimString(link.sourceSlotId);
+    const targetId = trimString(link.targetSlotId);
+    if (!sourceId || !targetId) return;
+    const bucket = linkAdjacency.get(sourceId) ?? [];
+    if (!bucket.includes(targetId)) {
+      bucket.push(targetId);
+      linkAdjacency.set(sourceId, bucket);
+    }
+  });
+
+  const descendantSlotIds = new Set<string>();
+  const visited = new Set<string>([sourceSlotId]);
+  const queue: string[] = [sourceSlotId];
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current) continue;
+    const targets = linkAdjacency.get(current) ?? [];
+    targets.forEach((targetId) => {
+      if (visited.has(targetId)) return;
+      visited.add(targetId);
+      descendantSlotIds.add(targetId);
+      queue.push(targetId);
+    });
+  }
+
+  const linkedVariants = Array.from(descendantSlotIds)
+    .map((slotId) => slotById.get(slotId) ?? null)
     .filter((slot): slot is ImageStudioSlotRecord => Boolean(slot));
 
   const metadataVariants = slots.filter((slot) => {
-    if (slot.id === params.sourceSlotId) return false;
+    if (slot.id === sourceSlotId) return false;
     const metadata = asRecord(slot.metadata);
     if (!metadata) return false;
 
@@ -752,13 +848,13 @@ const resolveGenerationVariants = async (params: {
     if (role !== 'generation') return false;
 
     const directSourceSlotId = trimString(metadata['sourceSlotId']);
-    if (directSourceSlotId === params.sourceSlotId) return true;
+    if (directSourceSlotId === sourceSlotId) return true;
 
     const sourceSlotIdsRaw = metadata['sourceSlotIds'];
     if (!Array.isArray(sourceSlotIdsRaw)) return false;
 
     return sourceSlotIdsRaw.some(
-      (value: unknown): boolean => trimString(value) === params.sourceSlotId,
+      (value: unknown): boolean => trimString(value) === sourceSlotId,
     );
   });
 
@@ -816,12 +912,22 @@ export async function getProductStudioVariants(params: {
 }): Promise<ProductStudioVariantsResult> {
   const resolved = await resolveProductAndStudioTarget(params);
   const { sequencing } = await resolveStudioSettingsBundle(resolved.projectId);
-  const sourceSlotId = resolveSourceSlotIdForIndex(
-    resolved.config,
-    resolved.imageSlotIndex,
+  const sourceSlotId = resolveSourceSlotIdForIndex(resolved.config, resolved.imageSlotIndex);
+  const sourceSlotHistory = Array.isArray(
+    resolved.config.sourceSlotHistoryByImageIndex[String(resolved.imageSlotIndex)],
+  )
+    ? resolved.config.sourceSlotHistoryByImageIndex[String(resolved.imageSlotIndex)] ?? []
+    : [];
+  const sourceSlotCandidates = Array.from(
+    new Set<string>(
+      [sourceSlotId, ...sourceSlotHistory]
+        .filter((value): value is string => typeof value === 'string')
+        .map((value) => value.trim())
+        .filter(Boolean),
+    ),
   );
 
-  if (!sourceSlotId) {
+  if (sourceSlotCandidates.length === 0) {
     return {
       config: resolved.config,
       sequencing,
@@ -834,14 +940,14 @@ export async function getProductStudioVariants(params: {
 
   const { sourceSlot, variants } = await resolveGenerationVariants({
     projectId: resolved.projectId,
-    sourceSlotId,
+    sourceSlotIds: sourceSlotCandidates,
   });
 
   return {
     config: resolved.config,
     sequencing,
     projectId: resolved.projectId,
-    sourceSlotId,
+    sourceSlotId: sourceSlot?.id ?? sourceSlotCandidates[0] ?? null,
     sourceSlot,
     variants,
   };
@@ -870,9 +976,21 @@ export async function sendProductImageToStudio(params: {
   const requestedSequenceMode = normalizeProductStudioSequenceGenerationMode(
     params.sequenceGenerationMode ?? sequenceGenerationMode,
   );
+  if (
+    requestedSequenceMode === 'studio_native_sequencer_prior_generation' &&
+    (!sequencing.enabled || !sequencing.runViaSequence)
+  ) {
+    throw badRequestError(
+      'Native Image Studio sequence mode is selected, but project sequencing is disabled. Enable sequencing steps in Image Studio project settings.',
+    );
+  }
   const sourceImage = toProductImageFileSource(
     resolved.product.images[resolved.imageSlotIndex]?.imageFile,
   );
+  const skuFolderSegment =
+    sanitizeSkuSegment(trimString(resolved.product.sku)) ??
+    sanitizeSkuSegment(trimString(resolved.product.id)) ??
+    resolved.product.id;
 
   if (!sourceImage) {
     throw badRequestError(
@@ -888,27 +1006,16 @@ export async function sendProductImageToStudio(params: {
     projectId: resolved.projectId,
     sequencing,
     rotateBeforeSendDeg: params.rotateBeforeSendDeg === 90 ? 90 : null,
+    productFolderSegment: skuFolderSegment,
   });
   importMs = Date.now() - importStartMs;
 
   const slotName = `${pickProductName(resolved.product)} • Slot ${resolved.imageSlotIndex + 1}`;
-  const folderPath = `products/${resolved.product.id}`;
-  const existingSourceSlotId = resolveSourceSlotIdForIndex(
-    resolved.config,
-    resolved.imageSlotIndex,
-  );
-
-  let sourceSlot = existingSourceSlotId
-    ? await getImageStudioSlotById(existingSourceSlotId)
-    : null;
-
-  if (sourceSlot && sourceSlot.projectId !== resolved.projectId) {
-    sourceSlot = null;
-  }
+  const folderPath = `products/${skuFolderSegment}`;
 
   const sourceUpsertStartMs = Date.now();
-  if (sourceSlot) {
-    sourceSlot = await updateImageStudioSlot(sourceSlot.id, {
+  const created = await createImageStudioSlots(resolved.projectId, [
+    {
       name: slotName,
       folderPath,
       imageFileId: imported.id,
@@ -920,25 +1027,9 @@ export async function sendProductImageToStudio(params: {
         sourceImageFileId: sourceImage.id,
         rotateBeforeSendDeg: params.rotateBeforeSendDeg === 90 ? 90 : null,
       }),
-    });
-  } else {
-    const created = await createImageStudioSlots(resolved.projectId, [
-      {
-        name: slotName,
-        folderPath,
-        imageFileId: imported.id,
-        imageUrl: imported.filepath,
-        imageBase64: null,
-        metadata: buildSourceSlotMetadata({
-          productId: resolved.product.id,
-          imageSlotIndex: resolved.imageSlotIndex,
-          sourceImageFileId: sourceImage.id,
-          rotateBeforeSendDeg: params.rotateBeforeSendDeg === 90 ? 90 : null,
-        }),
-      },
-    ]);
-    sourceSlot = created[0] ?? null;
-  }
+    },
+  ]);
+  const sourceSlot = created[0] ?? null;
 
   if (!sourceSlot) {
     throw operationFailedError(
@@ -970,13 +1061,44 @@ export async function sendProductImageToStudio(params: {
     routeDecision.executionRoute === 'studio_sequencer' ||
     routeDecision.executionRoute === 'studio_native_sequencer_prior_generation'
   ) {
-    const stepsForSequenceRun =
-      routeDecision.executionRoute === 'studio_native_sequencer_prior_generation'
-        ? ensureSequenceHasPriorGenerationStep(
-          resolvedActiveSteps,
-          parsedStudioSettings.targetAi.openai.image.n ?? sequencing.expectedOutputs,
-        )
-        : resolvedActiveSteps;
+    const stepsForSequenceRun = resolvedActiveSteps;
+    const settingsSnapshotHash = buildSettingsSnapshotHash(studioSettings);
+    const projectModelId = trimString(parsedStudioSettings.targetAi.openai.model);
+    let sequenceSnapshotHash = '';
+    try {
+      validateProductStudioSequenceSteps(stepsForSequenceRun);
+      sequenceSnapshotHash = buildSequenceSnapshotHash(stepsForSequenceRun);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Product Studio sequence preflight validation failed.';
+      const fallbackReason = warnings[0] ?? null;
+      await createProductStudioRunAudit({
+        productId: resolved.product.id,
+        imageSlotIndex: resolved.imageSlotIndex,
+        projectId: resolved.projectId,
+        status: 'failed',
+        requestedSequenceMode,
+        resolvedSequenceMode: routeDecision.resolvedMode,
+        executionRoute: routeDecision.executionRoute,
+        runKind: 'sequence',
+        runId: null,
+        sequenceRunId: null,
+        dispatchMode: null,
+        fallbackReason,
+        warnings,
+        timings: {
+          importMs,
+          sourceSlotUpsertMs,
+          routeDecisionMs,
+          dispatchMs,
+          totalMs: Date.now() - startedAtMs,
+        },
+        errorMessage: message,
+      }).catch(() => {});
+      throw error;
+    }
     let sequenceRun;
     try {
       const dispatchStartMs = Date.now();
@@ -995,6 +1117,12 @@ export async function sendProductImageToStudio(params: {
           executionRoute: routeDecision.executionRoute,
           requestedSequenceMode,
           resolvedSequenceMode: routeDecision.resolvedMode,
+          sourceFolderPath: folderPath,
+          sourceSku: trimString(resolved.product.sku),
+          sequenceSnapshotHash,
+          sequenceSnapshotStepCount: stepsForSequenceRun.length,
+          settingsSnapshotHash,
+          projectModelId,
         },
       });
       dispatchMs = Date.now() - dispatchStartMs;
@@ -1285,6 +1413,95 @@ export async function acceptProductStudioVariant(params: {
   if (!updatedProduct) {
     throw operationFailedError(
       'Product image was updated, but failed to reload product.',
+    );
+  }
+
+  return updatedProduct;
+}
+
+export async function rotateProductStudioImageSlot(params: {
+  productId: string;
+  imageSlotIndex: number;
+  direction: 'left' | 'right';
+}): Promise<ProductWithImages> {
+  const imageSlotIndex = normalizeImageSlotIndex(params.imageSlotIndex);
+  const product = await ensureProduct(params.productId);
+  const sourceImage = toProductImageFileSource(
+    product.images[imageSlotIndex]?.imageFile,
+  );
+
+  if (!sourceImage) {
+    throw badRequestError('Selected product image slot has no uploaded source image.');
+  }
+
+  const sourcePath = trimString(sourceImage.filepath);
+  if (!sourcePath) {
+    throw badRequestError('Selected product image has no filepath.');
+  }
+
+  const sourceFilename =
+    trimString(sourceImage.filename) ?? `product-image-${imageSlotIndex + 1}.png`;
+  const { buffer } = await resolveBufferFromImagePath(sourcePath);
+  const rotationDegrees = params.direction === 'left' ? -90 : 90;
+  const rotatedBuffer = await sharp(buffer)
+    .rotate(rotationDegrees)
+    .png()
+    .toBuffer();
+  const targetFilename = appendFilenameSuffix(
+    sourceFilename,
+    params.direction === 'left' ? '-rotl90' : '-rotr90',
+    '.png',
+  );
+
+  const file = new File([new Uint8Array(rotatedBuffer)], targetFilename, {
+    type: 'image/png',
+  });
+  const uploaded = await uploadFile(file, {
+    category: 'products',
+    sku: product.sku?.trim() ?? undefined,
+    filenameOverride: targetFilename,
+  });
+
+  // Keep mapped Image Studio source card in sync with the rotated product slot image.
+  const existingConfig = await getProductStudioConfig(product.id);
+  const sourceSlotId = resolveSourceSlotIdForIndex(existingConfig, imageSlotIndex);
+  if (sourceSlotId) {
+    const sourceSlot = await getImageStudioSlotById(sourceSlotId);
+    if (sourceSlot) {
+      const currentMetadata = asRecord(sourceSlot.metadata) ?? {};
+      await updateImageStudioSlot(sourceSlot.id, {
+        imageFileId: uploaded.id,
+        imageUrl: uploaded.filepath,
+        imageBase64: null,
+        metadata: {
+          ...currentMetadata,
+          source: 'product-studio',
+          rotateUpdatedAt: new Date().toISOString(),
+          rotateDirection: params.direction,
+        },
+      });
+    }
+  }
+
+  const nextImageFileIds = product.images
+    .slice(0, DEFAULT_IMAGE_SLOT_COUNT)
+    .map((image) => trimString(image.imageFileId) ?? '')
+    .filter(Boolean);
+
+  while (nextImageFileIds.length <= imageSlotIndex) {
+    nextImageFileIds.push('');
+  }
+
+  nextImageFileIds[imageSlotIndex] = uploaded.id;
+
+  const compactedImageIds = nextImageFileIds.filter((id) => id.length > 0);
+  const productRepository = await getProductRepository();
+  await productRepository.replaceProductImages(product.id, compactedImageIds);
+
+  const updatedProduct = await productService.getProductById(product.id);
+  if (!updatedProduct) {
+    throw operationFailedError(
+      'Product image was rotated, but failed to reload product.',
     );
   }
 

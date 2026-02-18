@@ -15,7 +15,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
@@ -512,6 +512,7 @@ const normalizeCaseListViewDefaults = (
 export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const preferencesQuery = useUserPreferences();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
@@ -643,9 +644,14 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           if (hasCase) {
             const serialized = JSON.stringify(snapshot);
             const revision = getCaseResolverWorkspaceRevision(snapshot);
-            lastPersistedWorkspaceValueRef.current = serialized;
-            lastPersistedWorkspaceRevisionRef.current = revision;
-            setWorkspace(snapshot);
+            // Guard against concurrent calls returning stale snapshots in the
+            // wrong order — only update local state if the revision is at least
+            // as recent as what we already have, preventing a revision rollback.
+            if (revision >= lastPersistedWorkspaceRevisionRef.current) {
+              lastPersistedWorkspaceValueRef.current = serialized;
+              lastPersistedWorkspaceRevisionRef.current = revision;
+              setWorkspace(snapshot);
+            }
             settingsStoreRefetchRef.current();
             logCaseResolverWorkspaceEvent({
               source,
@@ -723,6 +729,13 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     );
   const [didHydrateCaseListViewDefaults, setDidHydrateCaseListViewDefaults] =
     useState(false);
+  const requestedCaseIdentifierFilterFromQuery = useMemo((): string | null => {
+    const rawCaseIdentifierId = searchParams.get('caseIdentifierId');
+    if (!rawCaseIdentifierId) return null;
+    const normalized = rawCaseIdentifierId.trim();
+    return normalized.length > 0 ? normalized : null;
+  }, [searchParams]);
+  const appliedCaseIdentifierFilterFromQueryRef = useRef<string | null>(null);
 
   const [confirmation, setConfirmation] = useState<{
     title: string;
@@ -1324,6 +1337,32 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   );
 
   useEffect(() => {
+    if (!requestedCaseIdentifierFilterFromQuery) {
+      appliedCaseIdentifierFilterFromQueryRef.current = null;
+      return;
+    }
+    if (
+      appliedCaseIdentifierFilterFromQueryRef.current ===
+      requestedCaseIdentifierFilterFromQuery
+    ) {
+      return;
+    }
+    const hasIdentifier = caseResolverIdentifiers.some(
+      (identifier: CaseResolverIdentifier): boolean =>
+        identifier.id === requestedCaseIdentifierFilterFromQuery,
+    );
+    if (!hasIdentifier) return;
+    handleFilterByCaseIdentifier(requestedCaseIdentifierFilterFromQuery);
+    setCaseFilterPanelDefaultExpanded(true);
+    appliedCaseIdentifierFilterFromQueryRef.current =
+      requestedCaseIdentifierFilterFromQuery;
+  }, [
+    caseResolverIdentifiers,
+    handleFilterByCaseIdentifier,
+    requestedCaseIdentifierFilterFromQuery,
+  ]);
+
+  useEffect(() => {
     if (caseFilterFolder === '__all__') return;
     if (
       files.some(
@@ -1680,37 +1719,47 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         ? caseDraft.categoryId
         : null;
 
-    const validCaseIds = new Set(
-      files.map((file: CaseResolverFile) => file.id),
-    );
-    const normalizedParentCaseId =
-      caseDraft.parentCaseId && validCaseIds.has(caseDraft.parentCaseId)
-        ? caseDraft.parentCaseId
-        : null;
-    const normalizedReferenceCaseIds = Array.from(
-      new Set(
-        (caseDraft.referenceCaseIds || []).filter(
-          (referenceCaseId: string): boolean =>
-            referenceCaseId !== '' && validCaseIds.has(referenceCaseId),
-        ),
-      ),
-    );
-    const file = createCaseResolverFile({
-      id: createId('case-file'),
-      fileType: 'case',
-      name: normalizedName,
-      parentCaseId: normalizedParentCaseId,
-      referenceCaseIds: normalizedReferenceCaseIds,
-      tagId: normalizedTagId,
-      caseIdentifierId: normalizedCaseIdentifierId,
-      categoryId: normalizedCategoryId,
-    });
+    // Fixed ID generated once so retries are idempotent (same case, new revision).
+    const fileId = createId('case-file');
 
-    const nextWorkspace: CaseResolverWorkspace = {
-      ...workspace,
-      files: [...workspace.files, file],
-      activeFileId: file.id,
-      folders: workspace.folders,
+    // Rebuild nextWorkspace from whichever base we have after each conflict resolve.
+    // parentCaseId and referenceCaseIds are re-validated against the refreshed file list.
+    const buildNextWorkspace = (
+      baseWorkspace: CaseResolverWorkspace,
+    ): CaseResolverWorkspace => {
+      const validCaseIds = new Set(
+        baseWorkspace.files
+          .filter((f: CaseResolverFile): boolean => f.fileType === 'case')
+          .map((f: CaseResolverFile): string => f.id),
+      );
+      const normalizedParentCaseId =
+        caseDraft.parentCaseId && validCaseIds.has(caseDraft.parentCaseId)
+          ? caseDraft.parentCaseId
+          : null;
+      const normalizedReferenceCaseIds = Array.from(
+        new Set(
+          (caseDraft.referenceCaseIds || []).filter(
+            (referenceCaseId: string): boolean =>
+              referenceCaseId !== '' && validCaseIds.has(referenceCaseId),
+          ),
+        ),
+      );
+      const file = createCaseResolverFile({
+        id: fileId,
+        fileType: 'case',
+        name: normalizedName,
+        parentCaseId: normalizedParentCaseId,
+        referenceCaseIds: normalizedReferenceCaseIds,
+        tagId: normalizedTagId,
+        caseIdentifierId: normalizedCaseIdentifierId,
+        categoryId: normalizedCategoryId,
+      });
+      return {
+        ...baseWorkspace,
+        files: [...baseWorkspace.files, file],
+        activeFileId: fileId,
+        folders: baseWorkspace.folders,
+      };
     };
 
     setIsCreatingCase(true);
@@ -1719,24 +1768,80 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       createCaseResolverWorkspaceMutationId('case-create');
     createCaseMutationIdRef.current = mutationId;
     try {
-      logCaseResolverWorkspaceEvent({
-        source: 'cases_page',
-        action: 'case_create_attempt',
-        mutationId,
-        expectedRevision: getCaseResolverWorkspaceRevision(workspace),
-      });
-      const didPersist = await persistWorkspace(nextWorkspace, 'Case created.', {
-        mutationId,
-        source: 'cases_page',
-      });
-      if (!didPersist) return;
-      logCaseResolverWorkspaceEvent({
-        source: 'cases_page',
-        action: 'case_create_success',
-        mutationId,
-        workspaceRevision: getCaseResolverWorkspaceRevision(nextWorkspace),
-      });
-      const isCaseAvailable = await waitForCaseAvailability(file.id, {
+      const syncLocalWorkspace = (nextWorkspace: CaseResolverWorkspace): void => {
+        lastPersistedWorkspaceValueRef.current = JSON.stringify(nextWorkspace);
+        lastPersistedWorkspaceRevisionRef.current =
+          getCaseResolverWorkspaceRevision(nextWorkspace);
+        setWorkspace(nextWorkspace);
+      };
+
+      const resolveLatestWorkspace = async (
+        fallback: CaseResolverWorkspace,
+        source: string,
+      ): Promise<CaseResolverWorkspace> => {
+        const latestWorkspaceSnapshot =
+          await fetchCaseResolverWorkspaceSnapshot(source);
+        if (!latestWorkspaceSnapshot) return fallback;
+        const fallbackRevision = getCaseResolverWorkspaceRevision(fallback);
+        const latestRevision =
+          getCaseResolverWorkspaceRevision(latestWorkspaceSnapshot);
+        return latestRevision > fallbackRevision
+          ? latestWorkspaceSnapshot
+          : fallback;
+      };
+
+      let baseWorkspace = await resolveLatestWorkspace(
+        workspace,
+        'cases_page_create_prepare',
+      );
+      if (baseWorkspace !== workspace) {
+        syncLocalWorkspace(baseWorkspace);
+      }
+
+      const CREATE_ATTEMPTS = 3;
+      let didCreate = false;
+
+      for (let attempt = 0; attempt < CREATE_ATTEMPTS; attempt += 1) {
+        const nextWorkspace = buildNextWorkspace(baseWorkspace);
+        logCaseResolverWorkspaceEvent({
+          source: 'cases_page',
+          action: 'case_create_attempt',
+          mutationId,
+          expectedRevision: getCaseResolverWorkspaceRevision(baseWorkspace),
+        });
+        const didPersist = await persistWorkspace(nextWorkspace, 'Case created.', {
+          mutationId,
+          source: 'cases_page',
+          suppressConflictToast: true,
+        });
+        if (didPersist) {
+          didCreate = true;
+          logCaseResolverWorkspaceEvent({
+            source: 'cases_page',
+            action: 'case_create_success',
+            mutationId,
+            workspaceRevision: getCaseResolverWorkspaceRevision(nextWorkspace),
+          });
+          break;
+        }
+        const refreshedWorkspace = await resolveLatestWorkspace(
+          baseWorkspace,
+          'cases_page_create_retry',
+        );
+        if (refreshedWorkspace === baseWorkspace) break;
+        baseWorkspace = refreshedWorkspace;
+        syncLocalWorkspace(baseWorkspace);
+      }
+
+      if (!didCreate) {
+        toast(
+          'Failed to create case because workspace changed while saving. Please retry.',
+          { variant: 'warning' },
+        );
+        return;
+      }
+
+      const isCaseAvailable = await waitForCaseAvailability(fileId, {
         source: 'cases_page_post_create_sync',
       });
       if (!isCaseAvailable) {
@@ -1756,7 +1861,6 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     caseResolverIdentifiers,
     caseResolverTags,
     caseDraft,
-    files,
     isCreatingCase,
     pendingCaseIdentifierIds,
     persistWorkspace,
@@ -1818,56 +1922,124 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         ? editingCaseCategoryId
         : null;
 
-    const validCaseIds = new Set(
-      files.map((file: CaseResolverFile) => file.id),
-    );
-    const blockedParentIds = new Set<string>(
-      editingCaseId
-        ? [editingCaseId, ...collectDescendantCaseIds(editingCaseId)]
-        : [],
-    );
-    const normalizedParentCaseId =
-      editingCaseParentId &&
-      validCaseIds.has(editingCaseParentId) &&
-      !blockedParentIds.has(editingCaseParentId)
-        ? editingCaseParentId
-        : null;
-    const normalizedReferenceCaseIds = Array.from(
-      new Set(
-        editingCaseReferenceCaseIds.filter(
-          (referenceCaseId: string): boolean =>
-            referenceCaseId !== '' &&
-            referenceCaseId !== editingCaseId &&
-            validCaseIds.has(referenceCaseId),
-        ),
-      ),
-    );
+    // Capture so async callbacks don't read stale editingCaseId after the modal closes.
+    const caseId = editingCaseId;
 
-    const nextWorkspace: CaseResolverWorkspace = {
-      ...workspace,
-      files: workspace.files.map((file: CaseResolverFile) =>
-        file.id === editingCaseId
-          ? {
-            ...file,
-            name: normalizedName,
-            parentCaseId: normalizedParentCaseId,
-            referenceCaseIds: normalizedReferenceCaseIds,
-            tagId: normalizedTagId,
-            caseIdentifierId: normalizedCaseIdentifierId,
-            categoryId: normalizedCategoryId,
-            updatedAt: new Date().toISOString(),
-          }
-          : file,
-      ),
-      folders: workspace.folders,
+    const syncLocalWorkspace = (nextWorkspace: CaseResolverWorkspace): void => {
+      lastPersistedWorkspaceValueRef.current = JSON.stringify(nextWorkspace);
+      lastPersistedWorkspaceRevisionRef.current =
+        getCaseResolverWorkspaceRevision(nextWorkspace);
+      setWorkspace(nextWorkspace);
     };
 
-    const didPersist = await persistWorkspace(nextWorkspace, 'Case updated.', {
-      mutationId: createCaseResolverWorkspaceMutationId('case-update'),
-      source: 'cases_page',
-    });
-    if (didPersist) {
+    const resolveLatestWorkspace = async (
+      fallback: CaseResolverWorkspace,
+      source: string,
+    ): Promise<CaseResolverWorkspace> => {
+      const latestWorkspaceSnapshot =
+        await fetchCaseResolverWorkspaceSnapshot(source);
+      if (!latestWorkspaceSnapshot) return fallback;
+      const fallbackRevision = getCaseResolverWorkspaceRevision(fallback);
+      const latestRevision =
+        getCaseResolverWorkspaceRevision(latestWorkspaceSnapshot);
+      return latestRevision > fallbackRevision ? latestWorkspaceSnapshot : fallback;
+    };
+
+    let baseWorkspace = await resolveLatestWorkspace(
+      workspace,
+      'cases_page_save_prepare',
+    );
+    if (baseWorkspace !== workspace) {
+      syncLocalWorkspace(baseWorkspace);
+    }
+
+    const SAVE_ATTEMPTS = 3;
+    let didSave = false;
+
+    for (let attempt = 0; attempt < SAVE_ATTEMPTS; attempt += 1) {
+      const targetInBase = baseWorkspace.files.find(
+        (file: CaseResolverFile): boolean => file.id === caseId,
+      );
+      if (!targetInBase) {
+        handleCancelEditCase();
+        toast(
+          'The case being edited was removed by another change. Edit cancelled.',
+          { variant: 'warning' },
+        );
+        return;
+      }
+
+      const validCaseIds = new Set(
+        baseWorkspace.files
+          .filter((f: CaseResolverFile): boolean => f.fileType === 'case')
+          .map((f: CaseResolverFile): string => f.id),
+      );
+      const blockedParentIds = new Set<string>(
+        caseId ? [caseId, ...collectDescendantCaseIds(caseId)] : [],
+      );
+      const normalizedParentCaseId =
+        editingCaseParentId &&
+        validCaseIds.has(editingCaseParentId) &&
+        !blockedParentIds.has(editingCaseParentId)
+          ? editingCaseParentId
+          : null;
+      const normalizedReferenceCaseIds = Array.from(
+        new Set(
+          editingCaseReferenceCaseIds.filter(
+            (referenceCaseId: string): boolean =>
+              referenceCaseId !== '' &&
+              referenceCaseId !== caseId &&
+              validCaseIds.has(referenceCaseId),
+          ),
+        ),
+      );
+
+      const nextWorkspace: CaseResolverWorkspace = {
+        ...baseWorkspace,
+        files: baseWorkspace.files.map((file: CaseResolverFile) =>
+          file.id === caseId
+            ? {
+              ...file,
+              name: normalizedName,
+              parentCaseId: normalizedParentCaseId,
+              referenceCaseIds: normalizedReferenceCaseIds,
+              tagId: normalizedTagId,
+              caseIdentifierId: normalizedCaseIdentifierId,
+              categoryId: normalizedCategoryId,
+              updatedAt: new Date().toISOString(),
+            }
+            : file,
+        ),
+        folders: baseWorkspace.folders,
+      };
+
+      const didPersist = await persistWorkspace(nextWorkspace, 'Case updated.', {
+        mutationId: createCaseResolverWorkspaceMutationId(
+          `case-update-attempt-${attempt + 1}`,
+        ),
+        source: 'cases_page',
+        suppressConflictToast: true,
+      });
+      if (didPersist) {
+        didSave = true;
+        break;
+      }
+      const refreshedWorkspace = await resolveLatestWorkspace(
+        baseWorkspace,
+        'cases_page_save_retry',
+      );
+      if (refreshedWorkspace === baseWorkspace) break;
+      baseWorkspace = refreshedWorkspace;
+      syncLocalWorkspace(baseWorkspace);
+    }
+
+    if (didSave) {
       handleCancelEditCase();
+    } else {
+      toast(
+        'Failed to save case because workspace changed. Please retry.',
+        { variant: 'warning' },
+      );
     }
   }, [
     editingCaseId,
@@ -1882,7 +2054,6 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     caseResolverCategories,
     caseResolverIdentifiers,
     caseResolverTags,
-    files,
     pendingCaseIdentifierIds,
     persistWorkspace,
     toast,

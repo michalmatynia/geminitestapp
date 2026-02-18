@@ -18,12 +18,14 @@ type SettingDocument = {
 export type ProductStudioConfig = {
   projectId: string | null;
   sourceSlotByImageIndex: Record<string, string>;
+  sourceSlotHistoryByImageIndex: Record<string, string[]>;
   updatedAt: string;
 };
 
 type ProductStudioConfigInput = {
   projectId?: string | null | undefined;
   sourceSlotByImageIndex?: Record<string, string> | null | undefined;
+  sourceSlotHistoryByImageIndex?: Record<string, string[]> | null | undefined;
 };
 
 const SETTINGS_COLLECTION = 'settings';
@@ -70,9 +72,36 @@ const normalizeSourceSlotByImageIndex = (
   return next;
 };
 
+const normalizeSourceSlotHistoryByImageIndex = (
+  input: Record<string, unknown> | null | undefined
+): Record<string, string[]> => {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return {};
+
+  const next: Record<string, string[]> = {};
+  for (const [rawIndex, rawSlotIds] of Object.entries(input)) {
+    const index = Number.parseInt(rawIndex, 10);
+    if (!Number.isFinite(index) || index < 0) continue;
+    if (!Array.isArray(rawSlotIds)) continue;
+    const deduped = new Set<string>();
+    rawSlotIds.forEach((rawSlotId: unknown) => {
+      if (typeof rawSlotId !== 'string') return;
+      const slotId = rawSlotId.trim();
+      if (!slotId) return;
+      deduped.add(slotId);
+    });
+    const ordered = Array.from(deduped);
+    if (ordered.length > 0) {
+      next[String(index)] = ordered;
+    }
+  }
+
+  return next;
+};
+
 const createDefaultConfig = (): ProductStudioConfig => ({
   projectId: null,
   sourceSlotByImageIndex: {},
+  sourceSlotHistoryByImageIndex: {},
   updatedAt: new Date().toISOString(),
 });
 
@@ -100,6 +129,9 @@ const toConfig = (raw: string | null): ProductStudioConfig => {
       sourceSlotByImageIndex: normalizeSourceSlotByImageIndex(
         objectValue['sourceSlotByImageIndex'] as Record<string, unknown> | null
       ),
+      sourceSlotHistoryByImageIndex: normalizeSourceSlotHistoryByImageIndex(
+        objectValue['sourceSlotHistoryByImageIndex'] as Record<string, unknown> | null
+      ),
       updatedAt,
     };
   } catch {
@@ -111,6 +143,7 @@ const toStorageValue = (config: ProductStudioConfig): string =>
   JSON.stringify({
     projectId: config.projectId,
     sourceSlotByImageIndex: config.sourceSlotByImageIndex,
+    sourceSlotHistoryByImageIndex: config.sourceSlotHistoryByImageIndex,
     updatedAt: config.updatedAt,
   });
 
@@ -245,10 +278,17 @@ export async function setProductStudioConfig(
       : projectChanged
         ? {}
         : existing.sourceSlotByImageIndex;
+  const nextSourceSlotHistoryByImageIndex =
+    input.sourceSlotHistoryByImageIndex !== undefined
+      ? normalizeSourceSlotHistoryByImageIndex(input.sourceSlotHistoryByImageIndex)
+      : projectChanged
+        ? {}
+        : existing.sourceSlotHistoryByImageIndex;
 
   const next: ProductStudioConfig = {
     projectId: nextProjectId,
     sourceSlotByImageIndex: nextSourceSlotByImageIndex,
+    sourceSlotHistoryByImageIndex: nextSourceSlotHistoryByImageIndex,
     updatedAt: new Date().toISOString(),
   };
 
@@ -276,16 +316,30 @@ export async function setProductStudioSourceSlot(
   const nextSourceMap: Record<string, string> = {
     ...existing.sourceSlotByImageIndex,
   };
+  const nextSourceHistoryMap: Record<string, string[]> = {
+    ...existing.sourceSlotHistoryByImageIndex,
+  };
 
   const normalizedSlotId =
     typeof sourceSlotId === 'string' ? sourceSlotId.trim() : '';
+  const historyKey = String(normalizedIndex);
   if (!normalizedSlotId) {
-    delete nextSourceMap[String(normalizedIndex)];
+    delete nextSourceMap[historyKey];
+    delete nextSourceHistoryMap[historyKey];
   } else {
-    nextSourceMap[String(normalizedIndex)] = normalizedSlotId;
+    nextSourceMap[historyKey] = normalizedSlotId;
+    const currentHistory = Array.isArray(nextSourceHistoryMap[historyKey])
+      ? nextSourceHistoryMap[historyKey]
+      : [];
+    const deduped = [
+      normalizedSlotId,
+      ...currentHistory.filter((entry) => entry !== normalizedSlotId),
+    ].slice(0, 50);
+    nextSourceHistoryMap[historyKey] = deduped;
   }
 
   return await setProductStudioConfig(productId, {
     sourceSlotByImageIndex: nextSourceMap,
+    sourceSlotHistoryByImageIndex: nextSourceHistoryMap,
   });
 }

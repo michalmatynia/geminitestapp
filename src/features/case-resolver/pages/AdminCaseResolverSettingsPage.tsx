@@ -8,9 +8,10 @@ import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settin
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Button, FormSection, Input, Label, SectionHeader, SelectSimple, Textarea, useToast } from '@/shared/ui';
+import { Badge, Button, FormSection, Input, Label, SectionHeader, SelectSimple, Textarea, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
+import { resolveCaseResolverOcrProviderLabel } from '../ocr-provider';
 import {
   CASE_RESOLVER_CONFIRM_DELETE_OPTIONS,
   CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY,
@@ -83,7 +84,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
     if (loadedFrom === hydrationSignature && draft) return;
     setDraft(parsedSettings);
     setLoadedFrom(hydrationSignature);
-  }, [draft, hydrationSignature, loadedFrom, parsedSettings]);
+  }, [hydrationSignature, loadedFrom, parsedSettings]);
 
   const modelOptions = useMemo(() => {
     const options: Array<{ value: string; label: string; description: string }> = [];
@@ -107,6 +108,11 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
 
     return options;
   }, [draft?.ocrModel, modelsQuery.data?.models, openaiModelFallback]);
+  const detectedOcrProviderLabel = useMemo((): string => {
+    const model = draft?.ocrModel.trim() ?? '';
+    if (!model) return 'Not set';
+    return resolveCaseResolverOcrProviderLabel(model);
+  }, [draft?.ocrModel]);
 
   const saveDisabled =
     !draft ||
@@ -221,7 +227,12 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
       >
         <div className='grid gap-3 md:grid-cols-2'>
           <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>OCR Model</Label>
+            <div className='flex items-center justify-between gap-2'>
+              <Label className='text-[11px] text-gray-400'>OCR Model</Label>
+              <Badge variant='outline' className='px-1.5 py-0 text-[9px] uppercase tracking-wide'>
+                {detectedOcrProviderLabel}
+              </Badge>
+            </div>
             <SelectSimple
               value={draft.ocrModel}
               onValueChange={(value: string): void => {

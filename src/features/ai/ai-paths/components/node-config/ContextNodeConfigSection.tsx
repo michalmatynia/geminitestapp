@@ -2,13 +2,6 @@
 
 import React from 'react';
 
-
-
-
-
-
-
-
 import {
   DEFAULT_CONTEXT_ROLE,
   applyContextPreset,
@@ -19,7 +12,7 @@ import {
   toggleContextTarget,
 } from '@/features/ai/ai-paths/lib';
 import { logClientError } from '@/features/observability';
-import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { Button, Input, Label, Textarea, SelectSimple } from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
 
@@ -383,29 +376,28 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
       <div className='grid gap-3 sm:grid-cols-2'>
         <div>
           <Label className='text-xs text-gray-400'>Collection Type</Label>
-          <Select
+          <SelectSimple
+            size='sm'
             value={contextConfig.entityType ?? 'auto'}
             onValueChange={(value: string) =>
               updateSelectedNodeConfig({
                 context: { ...contextConfig, entityType: value },
               })
             }
-          >
-            <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-              <SelectValue placeholder='Select collection' />
-            </SelectTrigger>
-            <SelectContent className='border-border bg-gray-900'>
-              <SelectItem value='auto'>Auto (use trigger)</SelectItem>
-              <SelectItem value='product'>Product</SelectItem>
-              <SelectItem value='note'>Note</SelectItem>
-              <SelectItem value='chat'>Chat</SelectItem>
-              <SelectItem value='log'>Log Entry</SelectItem>
-            </SelectContent>
-          </Select>
+            options={[
+              { value: 'auto', label: 'Auto (use trigger)' },
+              { value: 'product', label: 'Product' },
+              { value: 'note', label: 'Note' },
+              { value: 'chat', label: 'Chat' },
+              { value: 'log', label: 'Log Entry' },
+            ]}
+            triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+          />
         </div>
         <div>
           <Label className='text-xs text-gray-400'>Scope Target</Label>
-          <Select
+          <SelectSimple
+            size='sm'
             value={contextConfig.scopeTarget ?? 'entity'}
             onValueChange={(value: string) =>
               updateSelectedNodeConfig({
@@ -415,15 +407,12 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
                 },
               })
             }
-          >
-            <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-              <SelectValue placeholder='Select target' />
-            </SelectTrigger>
-            <SelectContent className='border-border bg-gray-900'>
-              <SelectItem value='entity'>Entity only</SelectItem>
-              <SelectItem value='context'>Full context</SelectItem>
-            </SelectContent>
-          </Select>
+            options={[
+              { value: 'entity', label: 'Entity only' },
+              { value: 'context', label: 'Full context' },
+            ]}
+            triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+          />
           <p className='mt-2 text-[11px] text-gray-500'>
             Choose whether scope filters apply to the entity payload or the
             full context object.
@@ -431,7 +420,8 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
         </div>
         <div>
           <Label className='text-xs text-gray-400'>Entity ID Source</Label>
-          <Select
+          <SelectSimple
+            size='sm'
             value={contextConfig.entityIdSource ?? 'simulation'}
             onValueChange={(value: string) =>
               updateSelectedNodeConfig({
@@ -441,16 +431,13 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
                 },
               })
             }
-          >
-            <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-              <SelectValue placeholder='Select source' />
-            </SelectTrigger>
-            <SelectContent className='border-border bg-gray-900'>
-              <SelectItem value='simulation'>Simulation node</SelectItem>
-              <SelectItem value='context'>Context payload</SelectItem>
-              <SelectItem value='manual'>Manual ID</SelectItem>
-            </SelectContent>
-          </Select>
+            options={[
+              { value: 'simulation', label: 'Simulation node' },
+              { value: 'context', label: 'Context payload' },
+              { value: 'manual', label: 'Manual ID' },
+            ]}
+            triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+          />
         </div>
       </div>
       <div>
@@ -514,7 +501,8 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
       )}
       <div>
         <Label className='text-xs text-gray-400'>Data Scope</Label>
-        <Select
+        <SelectSimple
+          size='sm'
           value={contextConfig.scopeMode ?? 'full'}
           onValueChange={(value: string) =>
             updateSelectedNodeConfig({
@@ -524,17 +512,13 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
               },
             })
           }
-        >
-
-          <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-            <SelectValue placeholder='Select scope' />
-          </SelectTrigger>
-          <SelectContent className='border-border bg-gray-900'>
-            <SelectItem value='full'>Full entity payload</SelectItem>
-            <SelectItem value='include'>Include only listed paths</SelectItem>
-            <SelectItem value='exclude'>Exclude listed paths</SelectItem>
-          </SelectContent>
-        </Select>
+          options={[
+            { value: 'full', label: 'Full entity payload' },
+            { value: 'include', label: 'Include only listed paths' },
+            { value: 'exclude', label: 'Exclude listed paths' },
+          ]}
+          triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+        />
         <p className='mt-2 text-[11px] text-gray-500'>
           Use dot paths (e.g. <span className='text-gray-300'>priceGroups.default</span>).
         </p>
@@ -575,5 +559,4 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
       )}
     </div>
   );
-            
 }

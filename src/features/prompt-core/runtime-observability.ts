@@ -1,4 +1,4 @@
-type PromptValidationTimingName =
+export type PromptValidationTimingName =
   | 'scope_resolve_ms'
   | 'runtime_select_ms'
   | 'runtime_compile_ms'
@@ -7,16 +7,17 @@ type PromptValidationTimingName =
   | 'validator_ms'
   | 'formatter_ms';
 
-type PromptValidationErrorName =
+export type PromptValidationErrorName =
   | 'scope_resolution'
   | 'rule_compile'
   | 'runtime_execution';
 
-type PromptValidationCounterName =
+export type PromptValidationCounterName =
   | 'runtime_selection_total'
   | 'runtime_selection_fallback'
   | 'runtime_cache_hit'
   | 'runtime_cache_miss'
+  | 'runtime_case_resolver_pack_fallback'
   | 'runtime_fast_path_hit'
   | 'runtime_fast_path_miss'
   | 'runtime_inflight_dedup_hit'
@@ -246,6 +247,7 @@ export const getPromptValidationObservabilitySnapshot = (
     runtime_selection_fallback: getCounterValue('runtime_selection_fallback'),
     runtime_cache_hit: getCounterValue('runtime_cache_hit'),
     runtime_cache_miss: getCounterValue('runtime_cache_miss'),
+    runtime_case_resolver_pack_fallback: getCounterValue('runtime_case_resolver_pack_fallback'),
     runtime_fast_path_hit: getCounterValue('runtime_fast_path_hit'),
     runtime_fast_path_miss: getCounterValue('runtime_fast_path_miss'),
     runtime_inflight_dedup_hit: getCounterValue('runtime_inflight_dedup_hit'),

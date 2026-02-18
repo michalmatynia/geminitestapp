@@ -272,4 +272,103 @@ describe('case resolver prompt exploder segmentation', () => {
     );
     expect(closingSegment?.title).toBe('');
   });
+
+  it('splits a full real-world ZUS letter into multiple case-resolver segments', () => {
+    const prompt = `Szczecin 25.01.2026
+
+Michał Matynia
+Fioletowa 71/2
+70-781 Szczecin
+Polska
+Inspektorat ZUS w Gryficach
+ Dąbskiego 5
+72-300 Gryfice
+
+
+Wniosek o umorzenie zadłużenia lub korektę rozliczeń oraz o zawieszenie postępowania administracyjnego
+Dotyczy: postępowanie administracyjne ZUS O/Szczecin nr 390000/71/RKS3/2026/282
+
+Niniejszym wnoszę o umorzenie powstałego zadłużenia z tytułu należności składkowych, ewentualnie o korektę rozliczeń w zakresie tych należności. Jednocześnie, na podstawie art. 97 § 1 pkt 4 Kodeksu postępowania administracyjnego, wnoszę o zawieszenie postępowania administracyjnego w ww. sprawie, albowiem rozstrzygnięcie niniejszej sprawy zależy od uprzedniego wyjaśnienia zagadnienia wstępnego (ustalenia daty skutecznego zamknięcia działalności gospodarczej wnioskodawcy).
+Uzasadnienie
+
+Przez kilka lat nie nastąpiło skuteczne doręczenie wnioskodawcy informacji o narastającym zadłużeniu względem ZUS. Organ rentowy nie dopełnił tym samym obowiązków wynikających z art. 9 i art. 10 KPA – nie poinformował strony należycie o okolicznościach sprawy ani nie zapewnił jej czynnego udziału na każdym etapie postępowania. W efekcie wnioskodawca został pozbawiony możliwości podjęcia odpowiednio wczesnych działań zaradczych, ponieważ nie miał wiedzy o powstających zaległościach. Gdyby informacje o zadłużeniu były prawidłowo doręczane, wnioskodawca mógłby wcześniej zareagować i wyjaśnić sprawę. Brak takiego działania ze strony organu stanowi naruszenie podstawowych zasad postępowania administracyjnego, co uzasadnia wyjątkowe potraktowanie niniejszej sprawy.
+
+Wnioskodawca działał w usprawiedliwionym błędzie co do stanu faktycznego – był przekonany, że prowadzona przez niego działalność gospodarcza została skutecznie zamknięta (wyrejestrowana) już w 2022 roku. Przekonanie to wynikało z informacji otrzymanych od księgowej zatrudnionej przez firmę Last Minute / Bonaventure, w której wnioskodawca podjął pracę. W ramach procesu zatrudnienia wnioskodawca poinformował o zamiarze zakończenia działalności gospodarczej i pozostawał w przeświadczeniu, że wszelkie formalności związane z wyrejestrowaniem działalności zostały dopełnione przez wspomnianą księgową. Wypełniając formularz rekrutacyjny przekazany do działu HR firmy Last Minute, wnioskodawca wyraźnie zaznaczył planowane zamknięcie działalności. Świadczy to o jego braku intencji dalszego prowadzenia firmy oraz o dochowaniu należytej staranności – nowy pracodawca został poinformowany o zamknięciu biznesu. Powyższe okoliczności dowodzą, że wnioskodawca nie działał z zamiarem uchylania się od obowiązków wobec ZUS, lecz padł ofiarą nieporozumienia co do stanu formalnego działalności.
+
+Pomimo opisanej pomyłki, wnioskodawca reagował na każde otrzymane wezwanie z ZUS, co potwierdza jego dobrą wolę. Gdy tylko dowiedział się o zaległościach, niezwłocznie podejmował działania w celu ich uregulowania. Świadczą o tym dokonane wpłaty: w dniach 02.08.2022 r., 29.12.2022 r., 20.11.2023 r. oraz 04.12.2025 r. – każda zrealizowana bezpośrednio po otrzymaniu informacji o zadłużeniu. W szczególności w roku 2022, a następnie ponownie w 2025, wnioskodawca nawiązał kontakt z organem rentowym i podjął stosowne kroki zaraz po tym, gdy tylko otrzymał zawiadomienia o zaległych składkach. Takie konsekwentne zachowanie dowodzi, że wnioskodawca nie działał w złej wierze i nie miał zamiaru wyrządzić szkody systemowi ubezpieczeń społecznych. Przeciwnie – starał się wywiązać z obowiązków, gdy tylko stały się one dla niego oczywiste.
+
+Należy również podkreślić, że faktyczne zaprzestanie działalności nastąpiło już w czerwcu 2022 r. Od tego czasu wnioskodawca nie prowadzi działalności gospodarczej i nie osiąga z niej żadnych przychodów. Co istotne, od października 2022 r. nie zostały złożone do ZUS żadne dokumenty rozliczeniowe dotyczące tej działalności (np. deklaracje DRA). Sam Zakład Ubezpieczeń Społecznych potwierdził ten stan rzeczy w piśmie z dnia 24.11.2025 r., wskazując na brak dokumentów od 10/2022. Oznacza to, że od ponad trzech lat nie odnotowano jakiejkolwiek aktywności gospodarczej po stronie wnioskodawcy. W związku z powyższym naliczanie kolejnych składek za ten okres jest nieuzasadnione, a powstałe zadłużenie ma charakter czysto formalny. Sytuacja, w której ZUS domaga się zaległości za okres, w którym działalność faktycznie nie była prowadzona, przemawia za zastosowaniem korekty rozliczeń lub umorzeniem należności, aby przywrócić stan zgodny z zasadami sprawiedliwości i zaufania obywatela do organu.
+
+Na skutek wieloletniego naliczania odsetek od zaległości, których istnienia wnioskodawca nie był świadomy, kwota odsetek urosła do poziomu przekraczającego 50% kwoty należności głównej. Taka rażąca dysproporcja może stanowić naruszenie zasady proporcjonalności, wyrażonej w art. 7 KPA. Zgodnie z tą zasadą organ administracji publicznej ma obowiązek działać w sposób proporcjonalny, celowy i sprawiedliwy, uwzględniając zarówno interes publiczny, jak i słuszny interes obywatela. Obciążenie strony odsetkami przewyższającymi połowę długu głównego wydaje się nieadekwatne do okoliczności niniejszej sprawy. Warto zauważyć, że zadłużenie narosło w wyniku splotu okoliczności niezawinionych bezpośrednio przez wnioskodawcę – w szczególności braku informacji od organu oraz usprawiedliwionego błędu co do statusu działalności. Dlatego też dalsze egzekwowanie tak wysokich odsetek byłoby sprzeczne z zasadą proporcjonalności i godziłoby w zaufanie obywatela do organów państwa.
+
+Biorąc pod uwagę powyższe argumenty i wyjątkowe okoliczności sprawy, wnoszę o pozytywne rozpatrzenie niniejszego wniosku. Umorzenie zadłużenia (ewentualnie stosowna korekta rozliczeń za sporny okres) jest w pełni uzasadnione brakiem winy umyślnej po stronie płatnika, jego rzetelnym postępowaniem oraz uchybieniami proceduralnymi po stronie organu. Jednocześnie zawieszenie postępowania pozwoli na ostateczne wyjaśnienie statusu działalności gospodarczej i uniknięcie pochopnego rozstrzygnięcia, które mogłoby naruszać słuszne interesy strony.
+
+Na zakończenie, na podstawie art. 73 § 1 KPA, wnoszę o umożliwienie dostępu do akt sprawy. Proszę o udostępnienie mi akt postępowania do wglądu oraz o umożliwienie sporządzenia z nich notatek lub kopii. Prawo wglądu w akta własnej sprawy przysługuje stronie na każdym etapie postępowania administracyjnego, co ma na celu zapewnienie pełnej transparentności i możliwości obrony swoich praw. Skorzystanie z tego uprawnienia pozwoli wnioskodawcy na zapoznanie się ze zgromadzonym materiałem dowodowym i ewentualne uzupełnienie argumentacji.
+
+Z poważaniem,`;
+
+    const rules = getPromptExploderScopedRules(
+      defaultPromptEngineSettings,
+      'case_resolver_prompt_exploder'
+    );
+    const document = explodePromptText({
+      prompt,
+      validationRules: rules,
+      validationScope: 'case_resolver_prompt_exploder',
+    });
+
+    expect(document.segments.length).toBeGreaterThan(5);
+
+    const placeDateSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes('Szczecin 25.01.2026')
+    );
+    const addresserSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes('Michał Matynia')
+    );
+    const addresseeSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes('Inspektorat ZUS w Gryficach')
+    );
+    const dotyczySegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes(
+        'Dotyczy: postępowanie administracyjne ZUS O/Szczecin nr 390000/71/RKS3/2026/282'
+      )
+    );
+    const bodySegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes(
+        'Niniejszym wnoszę o umorzenie powstałego zadłużenia'
+      )
+    );
+    const closingSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes(
+        'Na zakończenie, na podstawie art. 73 § 1 KPA'
+      )
+    );
+
+    expect(placeDateSegment).toBeDefined();
+    expect(addresserSegment).toBeDefined();
+    expect(addresseeSegment).toBeDefined();
+    expect(dotyczySegment).toBeDefined();
+    expect(bodySegment).toBeDefined();
+    expect(closingSegment).toBeDefined();
+    expect(addresserSegment?.id).not.toBe(addresseeSegment?.id);
+    expect(dotyczySegment?.id).not.toBe(bodySegment?.id);
+    expect(addresserSegment?.raw).toContain('Fioletowa 71/2');
+    expect(addresserSegment?.raw).toContain('Polska');
+    expect(addresserSegment?.raw).not.toContain('Inspektorat ZUS w Gryficach');
+    expect(dotyczySegment?.title).toBe('');
+    expect(dotyczySegment?.matchedPatternLabels).toContain(
+      'Case Resolver Heading: Dotyczy Subheading'
+    );
+    expect(closingSegment?.matchedPatternLabels).toContain(
+      'Case Resolver Heading: Closing Statement'
+    );
+
+    const uzasadnienieSegment = document.segments.find(
+      (segment) => segment.title === 'Uzasadnienie'
+    );
+    expect(uzasadnienieSegment).toBeDefined();
+    const uzasadnienieBody =
+      uzasadnienieSegment?.raw || uzasadnienieSegment?.text || '';
+    expect(uzasadnienieBody.startsWith('Uzasadnienie')).toBe(false);
+  });
 });

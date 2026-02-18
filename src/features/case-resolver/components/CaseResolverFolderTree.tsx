@@ -14,6 +14,7 @@ import {
   GripVertical,
   Lock,
   Pencil,
+  Save,
   Sparkles,
   Trash2,
   Unlock,
@@ -75,8 +76,11 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     selectedFileId,
     selectedAssetId,
     selectedFolderPath,
+    isWorkspaceDirty,
+    isWorkspaceSaving,
     panelCollapsed,
     onPanelCollapsedChange,
+    onSaveWorkspace,
     onSelectFile,
     onSelectAsset,
     onSelectFolder,
@@ -360,6 +364,23 @@ export function CaseResolverFolderTree(): React.JSX.Element {
             <>
               <Button
                 type='button'
+                onClick={onSaveWorkspace}
+                size='sm'
+                variant={isWorkspaceDirty ? 'default' : 'outline'}
+                className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50'
+                title={
+                  isWorkspaceSaving
+                    ? 'Saving Case Resolver changes...'
+                    : isWorkspaceDirty
+                      ? 'Save Case Resolver changes (Ctrl/Cmd+S)'
+                      : 'All Case Resolver changes saved'
+                }
+                disabled={isWorkspaceSaving || !isWorkspaceDirty}
+              >
+                <Save className='size-4' />
+              </Button>
+              <Button
+                type='button'
                 onClick={(): void => {
                   onCreateFolder(selectedFolderForFolderCreate);
                 }}
@@ -416,6 +437,12 @@ export function CaseResolverFolderTree(): React.JSX.Element {
           <Button
             type='button'
             onClick={(): void => {
+              if (isWorkspaceDirty) {
+                const shouldLeave = window.confirm(
+                  'You have unsaved Case Resolver changes. Leave without saving?'
+                );
+                if (!shouldLeave) return;
+              }
               router.push('/admin/case-resolver/cases');
             }}
             className={`w-full justify-start gap-2 px-2 py-1.5 text-left text-sm ${

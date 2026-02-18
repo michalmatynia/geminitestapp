@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { Check, Loader2, Monitor } from 'lucide-react';
+import { Check, Loader2, Monitor, RotateCcw, RotateCw, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { clampSplitZoom } from '@/features/ai/image-studio/components/center-preview/preview-utils';
@@ -49,6 +49,17 @@ type ProductStudioSendResponse = {
 
 type ProductStudioAcceptResponse = {
   product: ProductWithImages;
+};
+
+type ProductStudioRotateResponse = {
+  product: ProductWithImages;
+};
+
+type ProductStudioDeleteVariantResponse = {
+  ok: boolean;
+  modeUsed: 'slot_cascade' | 'asset_only' | 'noop';
+  deletedSlotIds: string[];
+  warnings?: string[];
 };
 
 type ProductStudioAuditEntry = {
@@ -160,12 +171,15 @@ export default function ProductFormStudio(): React.JSX.Element {
   const [selectedVariantSlotId, setSelectedVariantSlotId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [accepting, setAccepting] = useState(false);
-  const [rotateBeforeSendDeg, setRotateBeforeSendDeg] = useState<90 | null>(null);
+  const [rotatingDirection, setRotatingDirection] = useState<'left' | 'right' | null>(null);
+  const [deletingVariantId, setDeletingVariantId] = useState<string | null>(null);
   const [auditEntries, setAuditEntries] = useState<ProductStudioAuditEntry[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditError, setAuditError] = useState<string | null>(null);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [activeRunKind, setActiveRunKind] = useState<'generation' | 'sequence' | null>(null);
+  const [activeRunBaselineVariantIds, setActiveRunBaselineVariantIds] = useState<string[]>([]);
+  const [pendingExpectedOutputs, setPendingExpectedOutputs] = useState<number>(0);
   const [runStatus, setRunStatus] = useState<
     'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | null
   >(null);
@@ -216,11 +230,11 @@ export default function ProductFormStudio(): React.JSX.Element {
     setRightSplitZoom(SPLIT_ZOOM_RESET);
   }, [selectedImageIndex, selectedVariantSlotId]);
 
-  const refreshVariants = useCallback(async (): Promise<void> => {
+  const refreshVariants = useCallback(async (): Promise<ProductStudioVariantsResponse | null> => {
     if (!product?.id || !studioProjectId || selectedImageIndex === null) {
       setVariantsData(null);
       setSelectedVariantSlotId(null);
-      return;
+      return null;
     }
 
     setVariantsLoading(true);
@@ -245,12 +259,14 @@ export default function ProductFormStudio(): React.JSX.Element {
         }
         return response.variants[0]?.id ?? null;
       });
+      return response;
     } catch (error) {
       setVariantsData(null);
       setSelectedVariantSlotId(null);
       setStudioActionError(
         error instanceof Error ? error.message : 'Failed to load Studio variants.'
       );
+      return null;
     } finally {
       setVariantsLoading(false);
     }
@@ -328,9 +344,43 @@ export default function ProductFormStudio(): React.JSX.Element {
             status === 'failed' ||
             status === 'cancelled';
           if (terminal) {
+            const baselineIdsSet = new Set(activeRunBaselineVariantIds);
+            clearInterval(timer);
             setActiveRunId(null);
             setActiveRunKind(null);
-            void refreshVariants();
+            void (async (): Promise<void> => {
+              if (status === 'completed') {
+                const expectedCount = Math.max(
+                  0,
+                  Math.floor(pendingExpectedOutputs ?? 0),
+                );
+                if (expectedCount > 0) {
+                  const maxAttempts = 12;
+                  for (let attempt = 0; attempt < maxAttempts && !cancelled; attempt += 1) {
+                    const latest = await refreshVariants();
+                    const latestVariants = Array.isArray(latest?.variants)
+                      ? latest.variants
+                      : [];
+                    const producedSinceRunCount =
+                      baselineIdsSet.size > 0
+                        ? latestVariants.filter((slot) => !baselineIdsSet.has(slot.id)).length
+                        : latestVariants.length;
+                    if (producedSinceRunCount >= expectedCount) {
+                      break;
+                    }
+                    await new Promise<void>((resolve) => {
+                      window.setTimeout(resolve, 900);
+                    });
+                  }
+                } else {
+                  await refreshVariants();
+                }
+              } else {
+                await refreshVariants();
+              }
+            })();
+            setActiveRunBaselineVariantIds([]);
+            setPendingExpectedOutputs(0);
             void refreshAudit();
           }
         })
@@ -338,6 +388,7 @@ export default function ProductFormStudio(): React.JSX.Element {
           if (cancelled) return;
           setActiveRunId(null);
           setActiveRunKind(null);
+          setActiveRunBaselineVariantIds([]);
           setRunStatus('failed');
         });
     }, 2000);
@@ -346,7 +397,17 @@ export default function ProductFormStudio(): React.JSX.Element {
       cancelled = true;
       clearInterval(timer);
     };
-  }, [activeRunId, activeRunKind, product?.id, refreshAudit, refreshVariants, selectedImageIndex, studioProjectId]);
+  }, [
+    activeRunId,
+    activeRunKind,
+    activeRunBaselineVariantIds,
+    pendingExpectedOutputs,
+    product?.id,
+    refreshAudit,
+    refreshVariants,
+    selectedImageIndex,
+    studioProjectId,
+  ]);
 
   const selectedSourcePreview = useMemo(() => {
     if (selectedImageIndex === null) return null;
@@ -356,6 +417,18 @@ export default function ProductFormStudio(): React.JSX.Element {
   }, [imageSlotPreviews, selectedImageIndex]);
 
   const variants = variantsData?.variants ?? [];
+  const activeRunBaselineVariantIdSet = useMemo(
+    () => new Set(activeRunBaselineVariantIds),
+    [activeRunBaselineVariantIds],
+  );
+  const variantsProducedForActiveRun = useMemo((): number => {
+    if (activeRunBaselineVariantIdSet.size === 0) return variants.length;
+    return variants.filter((slot) => !activeRunBaselineVariantIdSet.has(slot.id)).length;
+  }, [activeRunBaselineVariantIdSet, variants]);
+  const pendingVariantPlaceholderCount =
+    activeRunId && (runStatus === 'queued' || runStatus === 'running')
+      ? Math.max(0, pendingExpectedOutputs - variantsProducedForActiveRun)
+      : 0;
   const selectedVariant =
     variants.find((slot) => slot.id === selectedVariantSlotId) ?? variants[0] ?? null;
 
@@ -382,6 +455,9 @@ export default function ProductFormStudio(): React.JSX.Element {
 
     setSending(true);
     setStudioActionError(null);
+    const baselineVariantIds = (variantsData?.variants ?? [])
+      .map((slot) => slot.id)
+      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
 
     try {
       const result = await api.post<ProductStudioSendResponse>(
@@ -389,16 +465,17 @@ export default function ProductFormStudio(): React.JSX.Element {
         {
           imageSlotIndex: selectedImageIndex,
           projectId: studioProjectId,
-          rotateBeforeSendDeg,
         }
       );
 
       setActiveRunId(result.runId);
       setActiveRunKind(result.runKind);
+      setActiveRunBaselineVariantIds(baselineVariantIds);
       setRunStatus(result.runStatus);
+      setPendingExpectedOutputs(Math.max(0, Math.floor(result.expectedOutputs ?? 0)));
       toast(
         result.runKind === 'sequence'
-          ? 'Sequence started in Studio runtime.'
+          ? 'Running Image Studio project sequence exactly as configured.'
           : result.executionRoute === 'ai_model_full_sequence'
             ? 'Image sent for model-native full sequence generation.'
             : 'Image sent to Studio.',
@@ -414,6 +491,7 @@ export default function ProductFormStudio(): React.JSX.Element {
       await refreshVariants();
       await refreshAudit();
     } catch (error) {
+      setActiveRunBaselineVariantIds([]);
       const message =
         error instanceof Error
           ? error.message
@@ -461,6 +539,76 @@ export default function ProductFormStudio(): React.JSX.Element {
       toast(message, { variant: 'error' });
     } finally {
       setAccepting(false);
+    }
+  };
+
+  const handleDeleteVariant = async (slot: ImageStudioSlotRecord): Promise<void> => {
+    if (!studioProjectId) return;
+    if (!slot.id) return;
+
+    setDeletingVariantId(slot.id);
+    setStudioActionError(null);
+
+    try {
+      const response = await api.post<ProductStudioDeleteVariantResponse>(
+        `/api/image-studio/projects/${encodeURIComponent(studioProjectId)}/variants/delete`,
+        {
+          slotId: slot.id,
+          sourceSlotId: variantsData?.sourceSlotId ?? undefined,
+          assetId: slot.imageFileId ?? slot.imageFile?.id ?? undefined,
+          filepath: slot.imageFile?.filepath ?? slot.imageUrl ?? undefined,
+        },
+      );
+      if (response.modeUsed === 'noop') {
+        toast(response.warnings?.[0] || 'Variant was already removed.', { variant: 'info' });
+      } else {
+        toast('Variant deleted.', { variant: 'success' });
+      }
+      await refreshVariants();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to delete generated variant.';
+      setStudioActionError(message);
+      toast(message, { variant: 'error' });
+    } finally {
+      setDeletingVariantId(null);
+    }
+  };
+
+  const handleRotateImageSlot = async (direction: 'left' | 'right'): Promise<void> => {
+    if (!product?.id || selectedImageIndex === null) return;
+
+    setRotatingDirection(direction);
+    setStudioActionError(null);
+
+    try {
+      const response = await api.post<ProductStudioRotateResponse>(
+        `/api/products/${encodeURIComponent(product.id)}/studio/rotate`,
+        {
+          imageSlotIndex: selectedImageIndex,
+          direction,
+        }
+      );
+      refreshImagesFromProduct(response.product);
+      await invalidateProductsAndCounts(queryClient);
+      await refreshVariants();
+      toast(
+        direction === 'left'
+          ? 'Image rotated 90° left.'
+          : 'Image rotated 90° right.',
+        { variant: 'success' },
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to rotate the selected image slot.';
+      setStudioActionError(message);
+      toast(message, { variant: 'error' });
+    } finally {
+      setRotatingDirection(null);
     }
   };
 
@@ -520,17 +668,34 @@ export default function ProductFormStudio(): React.JSX.Element {
             type='button'
             variant='outline'
             onClick={(): void => {
-              setRotateBeforeSendDeg((current) => (current === 90 ? null : 90));
+              void handleRotateImageSlot('left');
             }}
-            disabled={sending || accepting}
-            className={
-              rotateBeforeSendDeg === 90
-                ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20'
-                : ''
-            }
-            title='Rotate selected product image by 90° before sending to Image Studio'
+            disabled={sending || accepting || rotatingDirection !== null || selectedImageIndex === null || !selectedSourcePreview}
+            title='Rotate selected image slot 90° left'
           >
-            Rotate +90°
+            {rotatingDirection === 'left' ? (
+              <Loader2 className='mr-2 size-4 animate-spin' />
+            ) : (
+              <RotateCcw className='mr-2 size-4' />
+            )}
+            Rotate Left
+          </Button>
+
+          <Button size='xs'
+            type='button'
+            variant='outline'
+            onClick={(): void => {
+              void handleRotateImageSlot('right');
+            }}
+            disabled={sending || accepting || rotatingDirection !== null || selectedImageIndex === null || !selectedSourcePreview}
+            title='Rotate selected image slot 90° right'
+          >
+            {rotatingDirection === 'right' ? (
+              <Loader2 className='mr-2 size-4 animate-spin' />
+            ) : (
+              <RotateCw className='mr-2 size-4' />
+            )}
+            Rotate Right
           </Button>
 
           <Button size='xs'
@@ -594,9 +759,6 @@ export default function ProductFormStudio(): React.JSX.Element {
             size='sm'
             className='font-medium'
           />
-          {rotateBeforeSendDeg === 90 ? (
-            <StatusBadge status='Pre-send rotation: +90°' variant='info' size='sm' className='font-medium' />
-          ) : null}
         </div>
 
         {studioActionError ? (
@@ -652,7 +814,7 @@ export default function ProductFormStudio(): React.JSX.Element {
             <Loader2 className='size-4 animate-spin' />
             Loading variants...
           </div>
-        ) : variants.length === 0 ? (
+        ) : variants.length === 0 && pendingVariantPlaceholderCount === 0 ? (
           <p className='text-sm text-gray-400'>
             No generations yet for the selected product image.
           </p>
@@ -662,47 +824,82 @@ export default function ProductFormStudio(): React.JSX.Element {
               const src = getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl);
               const isSelected = slot.id === selectedVariant?.id;
               const timestamp = getSlotTimestamp(slot);
+              const isDeleting = deletingVariantId === slot.id;
 
               return (
-                <button
-                  key={slot.id}
-                  type='button'
-                  onClick={(): void => {
-                    setSelectedVariantSlotId(slot.id);
-                  }}
-                  className={cn(
-                    'group rounded border p-1 text-left transition',
-                    isSelected
-                      ? 'border-blue-400/80 bg-blue-500/10'
-                      : 'border-border/60 hover:border-blue-400/40'
-                  )}
-                >
-                  {src ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={src}
-                      alt={slot.name ?? 'Variant'}
-                      className='h-24 w-full rounded object-contain bg-black/20'
-                    />
-                  ) : (
-                    <div className='flex h-24 w-full items-center justify-center rounded bg-black/20 text-xs text-gray-500'>
-                      No preview
+                <div key={slot.id} className='space-y-1'>
+                  <button
+                    type='button'
+                    onClick={(): void => {
+                      setSelectedVariantSlotId(slot.id);
+                    }}
+                    className={cn(
+                      'group w-full rounded border p-1 text-left transition',
+                      isSelected
+                        ? 'border-blue-400/80 bg-blue-500/10'
+                        : 'border-border/60 hover:border-blue-400/40'
+                    )}
+                  >
+                    {src ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={src}
+                        alt={slot.name ?? 'Variant'}
+                        className='h-24 w-full rounded object-contain bg-black/20'
+                      />
+                    ) : (
+                      <div className='flex h-24 w-full items-center justify-center rounded bg-black/20 text-xs text-gray-500'>
+                        No preview
+                      </div>
+                    )}
+                    <div className='mt-1 space-y-0.5 text-[11px] text-gray-300'>
+                      <div className='flex items-center justify-between'>
+                        <span className='truncate'>{slot.name ?? 'Variant'}</span>
+                        {isSelected ? (
+                          <StatusBadge status='Selected' variant='info' size='sm' className='font-bold' />
+                        ) : null}
+                      </div>
+                      <div className='text-[10px] text-gray-500'>
+                        {formatTimestamp(timestamp)}
+                      </div>
                     </div>
-                  )}
-                  <div className='mt-1 space-y-0.5 text-[11px] text-gray-300'>
-                    <div className='flex items-center justify-between'>
-                      <span className='truncate'>{slot.name ?? 'Variant'}</span>
-                      {isSelected ? (
-                        <StatusBadge status='Selected' variant='info' size='sm' className='font-bold' />
-                      ) : null}
-                    </div>
-                    <div className='text-[10px] text-gray-500'>
-                      {formatTimestamp(timestamp)}
-                    </div>
-                  </div>
-                </button>
+                  </button>
+                  <Button size='xs'
+                    type='button'
+                    variant='outline'
+                    className='h-6 w-full border-red-500/40 text-[10px] text-red-200 hover:bg-red-500/10'
+                    onClick={(): void => {
+                      void handleDeleteVariant(slot);
+                    }}
+                    disabled={deletingVariantId !== null || sending || accepting}
+                    title='Delete generated variant'
+                  >
+                    {isDeleting ? (
+                      <Loader2 className='mr-1 size-3 animate-spin' />
+                    ) : (
+                      <Trash2 className='mr-1 size-3' />
+                    )}
+                    Delete
+                  </Button>
+                </div>
               );
             })}
+            {Array.from({ length: pendingVariantPlaceholderCount }).map((_, index) => (
+              <div
+                key={`pending-variant-${index}`}
+                className='space-y-1 rounded border border-border/60 p-1'
+              >
+                <div className='flex h-24 w-full items-center justify-center rounded bg-black/20 text-xs text-gray-500'>
+                  <span className='inline-flex items-center gap-1'>
+                    <Loader2 className='size-3 animate-spin' />
+                    Syncing...
+                  </span>
+                </div>
+                <div className='px-0.5 text-[10px] text-gray-500'>
+                  Waiting for sequence output
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </FormSection>

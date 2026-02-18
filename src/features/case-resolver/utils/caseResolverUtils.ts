@@ -539,6 +539,8 @@ export const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEdit
     documentConversionWarnings: file.documentConversionWarnings,
     lastContentConversionAt: file.lastContentConversionAt,
     scanSlots: file.scanSlots,
+    scanOcrModel: file.scanOcrModel,
+    scanOcrPrompt: file.scanOcrPrompt,
     addresser: file.addresser,
     addressee: file.addressee,
     tagId: file.tagId,

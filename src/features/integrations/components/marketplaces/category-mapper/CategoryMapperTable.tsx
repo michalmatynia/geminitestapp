@@ -6,7 +6,7 @@ import React, { useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 import type { ExternalCategory } from '@/features/integrations/types/category-mapping';
-import { Button, DataTable, ListPanel } from '@/shared/ui';
+import { Button, DataTable, ListPanel, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { CategoryMapperCatalogSelector } from './CategoryMapperCatalogSelector';
@@ -143,21 +143,20 @@ export function CategoryMapperTable(): React.JSX.Element {
         const currentMapping = getMappingForExternal(row.original.id);
         
         return (
-          <select
+          <SelectSimple
+            size='sm'
             value={currentMapping ?? '__unmapped__'}
-            onChange={(e): void =>
-              handleMappingChange(row.original.id, e.target.value === '__unmapped__' ? null : e.target.value)
+            onValueChange={(value: string): void =>
+              handleMappingChange(row.original.id, value === '__unmapped__' ? null : value)
             }
             disabled={internalCategoriesLoading || !selectedCatalogId}
-            className='w-full max-w-md rounded-md border border-input bg-background px-3 py-1 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
-          >
-            <option value='__unmapped__'>— Not mapped —</option>
-            {internalCategoryOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '__unmapped__', label: '— Not mapped —' },
+              ...internalCategoryOptions
+            ]}
+            placeholder='— Not mapped —'
+            triggerClassName='w-full max-w-md h-8 text-xs'
+          />
         );
       },
     },

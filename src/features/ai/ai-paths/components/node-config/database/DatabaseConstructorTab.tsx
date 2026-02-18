@@ -25,7 +25,7 @@ import type {
 } from '@/features/ai/ai-paths/lib';
 import { DB_PROVIDER_PLACEHOLDERS } from '@/features/ai/ai-paths/lib';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import { Button, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Input, Tooltip } from '@/shared/ui';
+import { Button, Label, Textarea, SelectSimple, Input, Tooltip } from '@/shared/ui';
 
 import {
   extractCodeSnippets,
@@ -406,22 +406,19 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
           >
             Save As Preset
           </Button>
-          <Select
+          <SelectSimple
+            size='xs'
             value={databaseConfig.presetId ?? 'custom'}
             onValueChange={(value: string): void => applyDatabasePreset(value)}
-          >
-            <SelectTrigger className='h-7 w-[180px] border-border bg-card/70 text-xs text-white'>
-              <SelectValue placeholder='Select preset' />
-            </SelectTrigger>
-            <SelectContent className='border-border bg-gray-900'>
-              {presetOptions.map((preset: DatabasePresetOption): React.JSX.Element => (
-                <SelectItem key={preset.id} value={preset.id}>
-                  {preset.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
+            options={presetOptions.map((preset: DatabasePresetOption) => ({
+              value: preset.id,
+              label: preset.label
+            }))}
+            placeholder='Select preset'
+            triggerClassName='h-7 w-[180px] border-border bg-card/70 text-xs text-white'
+          />
+          <SelectSimple
+            size='xs'
             value={selectedAiQueryId || 'none'}
             onValueChange={(value: string): void => {
               if (value === 'none') {
@@ -443,19 +440,16 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
                 });
               }
             }}
-          >
-            <SelectTrigger className='h-7 w-[180px] border-border bg-card/70 text-xs text-white'>
-              <SelectValue placeholder='AI Queries' />
-            </SelectTrigger>
-            <SelectContent className='border-border bg-gray-900'>
-              <SelectItem value='none'>No AI Query</SelectItem>
-              {aiQueries.map((aiQuery: AiQuery): React.JSX.Element => (
-                <SelectItem key={aiQuery.id} value={aiQuery.id}>
-                  AI Query {new Date(aiQuery.timestamp).toLocaleTimeString()}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={[
+              { value: 'none', label: 'No AI Query' },
+              ...aiQueries.map((aiQuery: AiQuery) => ({
+                value: aiQuery.id,
+                label: `AI Query ${new Date(aiQuery.timestamp).toLocaleTimeString()}`
+              }))
+            ]}
+            placeholder='AI Queries'
+            triggerClassName='h-7 w-[180px] border-border bg-card/70 text-xs text-white'
+          />
           <Button
             type='button'
             className='h-7 rounded-md border border-rose-500/40 px-2 text-[10px] text-rose-200 hover:bg-rose-500/10 disabled:opacity-40'
@@ -679,7 +673,8 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
           <Label className='text-xs text-gray-400'>Sample JSON (fetch to enable Field Mapping)</Label>
           <div className='flex flex-wrap gap-2 items-center'>
             {hasSchemaConnection && fetchedCollections.length > 0 && (
-              <Select
+              <SelectSimple
+                size='sm'
                 value={sampleState.entityType}
                 onValueChange={(value: string): void => {
                   setUpdaterSamples((prev: Record<string, UpdaterSampleState>): Record<string, UpdaterSampleState> => ({
@@ -694,18 +689,13 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
                     notify: false,
                   });
                 }}
-              >
-                <SelectTrigger className='w-[180px] border-border bg-card/70 text-sm text-white'>
-                  <SelectValue placeholder='Select collection' />
-                </SelectTrigger>
-                <SelectContent className='border-border bg-gray-900 max-h-60 overflow-y-auto'>
-                  {fetchedCollections.map((coll: CollectionSchema): React.JSX.Element => (
-                    <SelectItem key={`${coll.provider ?? 'db'}:${coll.name}`} value={coll.name}>
-                      {formatCollectionLabel(coll, Boolean(fetchedDbSchema?.provider === 'multi'))}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={fetchedCollections.map((coll: CollectionSchema) => ({
+                  value: coll.name,
+                  label: formatCollectionLabel(coll, Boolean(fetchedDbSchema?.provider === 'multi'))
+                }))}
+                placeholder='Select collection'
+                triggerClassName='w-[180px] border-border bg-card/70 text-sm text-white'
+              />
             )}
             <Input
               className='w-[200px] rounded-md border border-border bg-card/70 text-sm text-white'
@@ -757,7 +747,8 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
             <p className='text-[11px] text-rose-300'>{parsedSampleError}</p>
           ) : null}
           <div className='flex flex-wrap gap-2'>
-            <Select
+            <SelectSimple
+              size='sm'
               value={String(sampleState.depth)}
               onValueChange={(value: string): void =>
                 setUpdaterSamples((prev: Record<string, UpdaterSampleState>): Record<string, UpdaterSampleState> => ({
@@ -768,18 +759,13 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
                   },
                 }))
               }
-            >
-              <SelectTrigger className='w-[150px] border-border bg-card/70 text-sm text-white'>
-                <SelectValue placeholder='Depth' />
-              </SelectTrigger>
-              <SelectContent className='border-border bg-gray-900'>
-                {[1, 2, 3, 4].map((depth: number): React.JSX.Element => (
-                  <SelectItem key={depth} value={String(depth)}>
-                    Depth {depth}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={[1, 2, 3, 4].map((depth: number) => ({
+                value: String(depth),
+                label: `Depth ${depth}`
+              }))}
+              placeholder='Depth'
+              triggerClassName='w-[150px] border-border bg-card/70 text-sm text-white'
+            />
             <Button
               type='button'
               className={`rounded-md border px-3 text-[10px] ${
@@ -844,7 +830,8 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
                 >
                   {/* "Pick from schema" dropdown - ALWAYS visible */}
                   <div className='space-y-2 min-w-[180px]'>
-                    <Select
+                    <SelectSimple
+                      size='xs'
                       value={hasSchemaSelection ? targetValue : ''}
                       onValueChange={(value: string): void => {
                         if (value && value !== '__empty__') {
@@ -853,24 +840,19 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
                           updateMapping(index, { targetPath: '' } as Partial<UpdaterMapping>);
                         }
                       }}
-                    >
-                      <SelectTrigger className='border-border bg-card/70 text-[10px] text-gray-200'>
-                        <SelectValue placeholder='Pick from schema' />
-                      </SelectTrigger>
-                      <SelectContent className='border-border bg-gray-900'>
-                        <SelectItem value='__empty__'>— None —</SelectItem>
-                        {uniqueTargetPathOptions.map((option: { label: string; value: string }): React.JSX.Element => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      options={[
+                        { value: '__empty__', label: '— None —' },
+                        ...uniqueTargetPathOptions
+                      ]}
+                      placeholder='Pick from schema'
+                      triggerClassName='border-border bg-card/70 text-[10px] text-gray-200'
+                    />
                   </div>
 
                   {/* Source port selector */}
                   <div className='space-y-2 min-w-[160px]'>
-                    <Select
+                    <SelectSimple
+                      size='xs'
                       value={sourcePort}
                       onValueChange={(value: string): void =>
                         updateMapping(index, {
@@ -878,43 +860,34 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
                           sourcePath: mapping.sourcePath ?? '',
                         } as Partial<UpdaterMapping>)
                       }
-                    >
-                      <SelectTrigger className='border-border bg-card/70 text-[10px] text-gray-200'>
-                        <SelectValue placeholder='Select input' />
-                      </SelectTrigger>
-                      <SelectContent className='border-border bg-gray-900'>
-                        {sourcePortOptions.map((port: string): React.JSX.Element => (
-                          <SelectItem key={port} value={port}>
-                            {formatPortLabel(port)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      options={sourcePortOptions.map((port: string) => ({
+                        value: port,
+                        label: formatPortLabel(port)
+                      }))}
+                      placeholder='Select input'
+                      triggerClassName='border-border bg-card/70 text-[10px] text-gray-200'
+                    />
                   </div>
 
                   {/* Source path input */}
                   {hasSchemaSelection && sourcePort && (
                     <div className='space-y-2 min-w-[140px]'>
                       {sourcePort === 'bundle' && bundleKeys.size > 0 ? (
-                        <Select
+                        <SelectSimple
+                          size='xs'
                           value={customValue}
                           onValueChange={(value: string): void =>
                             updateMapping(index, {
                               sourcePath: value,
                             } as Partial<UpdaterMapping>)
                           }
-                        >
-                          <SelectTrigger className='border-border bg-card/70 text-[10px] text-gray-200'>
-                            <SelectValue placeholder='Pick bundle key' />
-                          </SelectTrigger>
-                          <SelectContent className='border-border bg-gray-900'>
-                            {Array.from(bundleKeys).map((key: string): React.JSX.Element => (
-                              <SelectItem key={key} value={key}>
-                                {formatPortLabel(key)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          options={Array.from(bundleKeys).map((key: string) => ({
+                            value: key,
+                            label: formatPortLabel(key)
+                          }))}
+                          placeholder='Pick bundle key'
+                          triggerClassName='border-border bg-card/70 text-[10px] text-gray-200'
+                        />
                       ) : (
                         <Input
                           className='w-full rounded-md border border-border bg-card/70 text-sm text-white'

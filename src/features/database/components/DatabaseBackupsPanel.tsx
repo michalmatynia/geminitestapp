@@ -1,9 +1,7 @@
 'use client';
 
 import {
-  CheckCircle2Icon,
   DatabaseIcon,
-  HardDriveIcon,
   ServerIcon,
   UploadIcon,
   EyeIcon,
@@ -19,6 +17,7 @@ import {
   type FileUploadHelpers,
   Alert,
   ListPanel,
+  SimpleSettingsList,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { cn } from '@/shared/utils';
@@ -31,6 +30,7 @@ import { useDatabaseBackupsState } from '../hooks/useDatabaseBackupsState';
 import type { DatabaseType } from '../types';
 
 type BackupDatabaseOption = {
+  id: string;
   value: DatabaseType;
   label: string;
   description: string;
@@ -39,12 +39,14 @@ type BackupDatabaseOption = {
 
 const BACKUP_DATABASE_OPTIONS: BackupDatabaseOption[] = [
   {
+    id: 'postgresql',
     value: 'postgresql',
     label: 'PostgreSQL',
     description: 'Uses pg_dump/pg_restore data backups.',
     extension: '.dump',
   },
   {
+    id: 'mongodb',
     value: 'mongodb',
     label: 'MongoDB',
     description: 'Uses mongodump/mongorestore archive backups.',
@@ -136,51 +138,27 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
         }
         filters={
           <div className='space-y-3'>
-            <div className='grid gap-3 lg:grid-cols-2'>
-              {BACKUP_DATABASE_OPTIONS.map((option) => {
-                const isActive = activeTab === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    type='button'
-                    aria-pressed={isActive}
-                    onClick={(): void => setActiveTab(option.value)}
-                    className={cn(
-                      'rounded-lg border p-4 text-left transition-all',
-                      isActive
-                        ? 'border-emerald-500/50 bg-emerald-500/10 shadow-[0_0_0_1px_rgba(16,185,129,0.2)]'
-                        : 'border-border/60 bg-card/30 hover:border-border hover:bg-card/40'
-                    )}
-                  >
-                    <div className='flex items-start justify-between gap-3'>
-                      <div className='flex min-w-0 items-start gap-3'>
-                        <div className={cn(
-                          'mt-0.5 rounded-md border p-2',
-                          isActive ? 'border-emerald-400/40 bg-emerald-500/20' : 'border-white/10 bg-white/5'
-                        )}>
-                          <DatabaseIcon className={cn('size-4', isActive ? 'text-emerald-200' : 'text-gray-400')} />
-                        </div>
-                        <div className='min-w-0'>
-                          <p className={cn('text-sm font-semibold', isActive ? 'text-emerald-100' : 'text-gray-100')}>
-                            {option.label}
-                          </p>
-                          <p className='text-xs text-gray-400'>{option.description}</p>
-                        </div>
-                      </div>
-                      {isActive ? (
-                        <CheckCircle2Icon className='size-4 text-emerald-300' />
-                      ) : (
-                        <span className='text-[11px] text-gray-500'>Select</span>
-                      )}
-                    </div>
-                    <div className='mt-3 flex items-center gap-2 text-[11px] text-gray-400'>
-                      <HardDriveIcon className='size-3.5' />
-                      <span>Expected format: {option.extension}</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+            <SimpleSettingsList
+              items={BACKUP_DATABASE_OPTIONS.map((option) => ({
+                id: option.value,
+                title: option.label,
+                description: option.description,
+                icon: (
+                  <div className={cn(
+                    'rounded-md border p-2',
+                    activeTab === option.value ? 'border-emerald-400/40 bg-emerald-500/20' : 'border-white/10 bg-white/5'
+                  )}>
+                    <DatabaseIcon className={cn('size-4', activeTab === option.value ? 'text-emerald-200' : 'text-gray-400')} />
+                  </div>
+                ),
+                subtitle: `Expected format: ${option.extension}`,
+                original: option
+              }))}
+              selectedId={activeTab}
+              onSelect={(item) => setActiveTab(item.original.value)}
+              columns={2}
+              padding='md'
+            />
 
             <div className='rounded-lg border border-border/60 bg-card/20 px-3 py-2 text-xs text-gray-300'>
               Active source: <span className='font-semibold text-white'>{selectedDatabase.label}</span>

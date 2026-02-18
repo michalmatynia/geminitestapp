@@ -55,6 +55,7 @@ export type CaseResolverScanSlot = {
   mimeType: string | null;
   size: number | null;
   ocrText: string;
+  ocrError: string | null;
 };
 
 export type CaseResolverDocumentHistoryEntry = {
@@ -151,6 +152,8 @@ export type CaseResolverFile = {
   documentConversionWarnings: string[];
   lastContentConversionAt: string;
   scanSlots: CaseResolverScanSlot[];
+  scanOcrModel: string;
+  scanOcrPrompt: string;
   isLocked: boolean;
   graph: CaseResolverGraph;
   addresser: CaseResolverPartyReference | null;
@@ -187,6 +190,8 @@ export type CaseResolverFileEditDraft = {
   documentConversionWarnings: string[];
   lastContentConversionAt: string;
   scanSlots: CaseResolverScanSlot[];
+  scanOcrModel: string;
+  scanOcrPrompt: string;
   addresser: CaseResolverPartyReference | null;
   addressee: CaseResolverPartyReference | null;
   tagId: string | null;

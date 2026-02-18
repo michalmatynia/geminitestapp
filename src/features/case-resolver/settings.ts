@@ -68,6 +68,8 @@ export type CaseResolverDefaultDocumentFormat = Extract<CaseResolverEditorType, 
 
 export const DEFAULT_CASE_RESOLVER_OCR_PROMPT =
   'Extract all readable text from the attached image and return plain text only. Keep line breaks. Do not add commentary.';
+export const DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT =
+  'Extract text from the uploaded document';
 
 export type CaseResolverSettings = {
   ocrModel: string;
@@ -454,6 +456,10 @@ const normalizeCaseResolverScanSlots = (input: unknown): CaseResolverScanSlot[] 
           ? Math.round(record['size'])
           : null,
       ocrText: typeof record['ocrText'] === 'string' ? record['ocrText'] : '',
+      ocrError:
+        typeof record['ocrError'] === 'string' && record['ocrError'].trim().length > 0
+          ? record['ocrError'].trim()
+          : null,
     });
   });
 
@@ -569,6 +575,8 @@ export const createCaseResolverFile = (input: {
   documentConversionWarnings?: string[] | null | undefined;
   lastContentConversionAt?: string | null | undefined;
   scanSlots?: CaseResolverScanSlot[] | null | undefined;
+  scanOcrModel?: string | null | undefined;
+  scanOcrPrompt?: string | null | undefined;
   isLocked?: boolean | null | undefined;
   graph?: Partial<CaseResolverGraph> | null;
   addresser?: CaseResolverPartyReference | null | undefined;
@@ -634,9 +642,16 @@ export const createCaseResolverFile = (input: {
   const referenceCaseIds = sanitizeOptionalIdArray(input.referenceCaseIds).filter(
     (referenceId: string): boolean => referenceId !== input.id
   );
+  const fileType = normalizeCaseResolverFileType(input.fileType);
+  const scanOcrModel =
+    typeof input.scanOcrModel === 'string' ? input.scanOcrModel.trim() : '';
+  const scanOcrPrompt =
+    typeof input.scanOcrPrompt === 'string' && input.scanOcrPrompt.trim().length > 0
+      ? input.scanOcrPrompt.trim()
+      : DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT;
   return {
     id: input.id,
-    fileType: normalizeCaseResolverFileType(input.fileType),
+    fileType,
     name: input.name.trim() || 'Untitled Case',
     folder: normalizeFolderPath(input.folder ?? ''),
     parentCaseId,
@@ -656,6 +671,8 @@ export const createCaseResolverFile = (input: {
     documentConversionWarnings,
     lastContentConversionAt,
     scanSlots: normalizeCaseResolverScanSlots(input.scanSlots),
+    scanOcrModel: fileType === 'scanfile' ? scanOcrModel : '',
+    scanOcrPrompt: fileType === 'scanfile' ? scanOcrPrompt : '',
     isLocked: input.isLocked === true,
     addresser: sanitizePartyReference(input.addresser),
     addressee: sanitizePartyReference(input.addressee),
@@ -766,6 +783,8 @@ export const normalizeCaseResolverWorkspace = (
         documentConversionWarnings: file.documentConversionWarnings,
         lastContentConversionAt: file.lastContentConversionAt,
         scanSlots: file.scanSlots,
+        scanOcrModel: fileRecord['scanOcrModel'] as string | null | undefined,
+        scanOcrPrompt: fileRecord['scanOcrPrompt'] as string | null | undefined,
         isLocked: file.isLocked,
         graph: file.graph,
         addresser: file.addresser,

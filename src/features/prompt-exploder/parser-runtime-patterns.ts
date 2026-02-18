@@ -339,11 +339,11 @@ const compileRuntimePatterns = (
     (rule) => !rule.treatAsHeading && /^segment\.not_heading\./i.test(rule.id)
   );
 
-  if (!allowDefaultFallback && regexRules.length === 0 && scopedRules.length > 0) {
+  if (!allowDefaultFallback && headingRules.length === 0) {
     throw (
       compileErrors[0] ??
       new PromptValidationRuleCompileError(
-        'No regex rules could be compiled for case-resolver Prompt Exploder scope.',
+        'No heading regex rules could be compiled for case-resolver Prompt Exploder scope.',
         {
           scope,
           correlationId: correlationId ?? null,

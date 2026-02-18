@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import {
   normalizeCaseResolverPublicFilepath,
-  resolveCaseResolverImageDiskPath,
+  resolveCaseResolverOcrDiskPath,
 } from '@/features/case-resolver/server/ocr-runtime';
 import {
   createCaseResolverOcrJob,
@@ -37,7 +37,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     throw badRequestError('filepath is required.');
   }
   try {
-    resolveCaseResolverImageDiskPath(filepath);
+    resolveCaseResolverOcrDiskPath(filepath);
   } catch (error) {
     throw badRequestError(error instanceof Error ? error.message : 'Invalid filepath.');
   }

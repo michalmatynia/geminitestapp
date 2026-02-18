@@ -198,6 +198,10 @@ export function useCaseResolverState() {
   const [promptExploderPartyProposal, setPromptExploderPartyProposal] = useState<CaseResolverCaptureProposalState | null>(null);
   const [isPromptExploderPartyProposalOpen, setIsPromptExploderPartyProposalOpen] = useState(false);
   const [isApplyingPromptExploderPartyProposal, setIsApplyingPromptExploderPartyProposal] = useState(false);
+  const [persistedWorkspaceSnapshot, setPersistedWorkspaceSnapshot] = useState<string>(
+    JSON.stringify(initialWorkspaceState)
+  );
+  const [isWorkspaceSaving, setIsWorkspaceSaving] = useState(false);
 
   const defaultTagId = caseResolverTags[0]?.id ?? null;
   const defaultCaseIdentifierId = caseResolverIdentifiers[0]?.id ?? null;
@@ -218,16 +222,34 @@ export function useCaseResolverState() {
 
   const flushWorkspacePersist = useCallback((): void => {
     if (persistWorkspaceInFlightRef.current) return;
+
+    // If the settings store is currently fetching (e.g. after navigation from the
+    // Cases page which called refetch() after its own save), defer the save.
+    // The pending store update will trigger the sync effect to update
+    // lastPersistedRevisionRef to the server's actual revision, preventing
+    // a spurious conflict caused by a stale expectedRevision on mount.
+    if (settingsStoreRef.current.isFetching) {
+      persistWorkspaceTimerRef.current = window.setTimeout(() => {
+        persistWorkspaceTimerRef.current = null;
+        flushWorkspacePersist();
+      }, 100);
+      return;
+    }
+
     const nextSerialized = queuedSerializedWorkspaceRef.current;
-    if (!nextSerialized || nextSerialized === lastPersistedValueRef.current) return;
+    if (!nextSerialized || nextSerialized === lastPersistedValueRef.current) {
+      setIsWorkspaceSaving(false);
+      return;
+    }
     const expectedRevision =
       queuedExpectedRevisionRef.current ?? lastPersistedRevisionRef.current;
     const mutationId =
       queuedMutationIdRef.current ??
-      createCaseResolverWorkspaceMutationId('case-resolver-workspace-auto');
+      createCaseResolverWorkspaceMutationId('case-resolver-workspace-manual');
     const parsedWorkspaceForPersist = parseCaseResolverWorkspace(nextSerialized);
 
     persistWorkspaceInFlightRef.current = true;
+    setIsWorkspaceSaving(true);
     void persistCaseResolverWorkspaceSnapshot({
       workspace: parsedWorkspaceForPersist,
       expectedRevision,
@@ -238,6 +260,7 @@ export function useCaseResolverState() {
         const persistedWorkspace = result.workspace;
         const persistedSerialized = JSON.stringify(persistedWorkspace);
         lastPersistedValueRef.current = persistedSerialized;
+        setPersistedWorkspaceSnapshot(persistedSerialized);
         lastPersistedRevisionRef.current = getCaseResolverWorkspaceRevision(persistedWorkspace);
         settingsStoreRef.current.refetch();
         if (queuedSerializedWorkspaceRef.current === nextSerialized) {
@@ -258,6 +281,7 @@ export function useCaseResolverState() {
         const serverWorkspace = result.workspace;
         const serverSerialized = JSON.stringify(serverWorkspace);
         lastPersistedValueRef.current = serverSerialized;
+        setPersistedWorkspaceSnapshot(serverSerialized);
         lastPersistedRevisionRef.current = getCaseResolverWorkspaceRevision(serverWorkspace);
         queuedSerializedWorkspaceRef.current = null;
         queuedExpectedRevisionRef.current = null;
@@ -282,7 +306,9 @@ export function useCaseResolverState() {
         queuedSerializedWorkspaceRef.current !== lastPersistedValueRef.current
       ) {
         flushWorkspacePersist();
+        return;
       }
+      setIsWorkspaceSaving(false);
     });
   }, [toast]);
 
@@ -306,6 +332,7 @@ export function useCaseResolverState() {
         );
         if (!currentHasRequestedFile && incomingHasRequestedFile) {
           lastPersistedValueRef.current = incomingSerialized;
+          setPersistedWorkspaceSnapshot(incomingSerialized);
           lastPersistedRevisionRef.current = incomingRevision;
           queuedSerializedWorkspaceRef.current = null;
           queuedExpectedRevisionRef.current = null;
@@ -318,6 +345,7 @@ export function useCaseResolverState() {
       if (incomingRevision <= currentRevision) return current;
 
       lastPersistedValueRef.current = incomingSerialized;
+      setPersistedWorkspaceSnapshot(incomingSerialized);
       lastPersistedRevisionRef.current = incomingRevision;
       queuedSerializedWorkspaceRef.current = null;
       queuedExpectedRevisionRef.current = null;
@@ -325,31 +353,6 @@ export function useCaseResolverState() {
       return parsedWorkspace;
     });
   }, [canHydrateWorkspaceFromStore, parsedWorkspace, requestedFileId]);
-
-  // Handle auto-save
-  useEffect(() => {
-    const serialized = JSON.stringify(workspace);
-    if (serialized === lastPersistedValueRef.current) return;
-    queuedSerializedWorkspaceRef.current = serialized;
-    if (queuedExpectedRevisionRef.current === null) {
-      queuedExpectedRevisionRef.current = lastPersistedRevisionRef.current;
-    }
-    if (!queuedMutationIdRef.current) {
-      queuedMutationIdRef.current =
-        workspace.lastMutationId ??
-        createCaseResolverWorkspaceMutationId('case-resolver-workspace-auto');
-    }
-
-    if (persistWorkspaceTimerRef.current) {
-      window.clearTimeout(persistWorkspaceTimerRef.current);
-      persistWorkspaceTimerRef.current = null;
-    }
-
-    persistWorkspaceTimerRef.current = window.setTimeout(() => {
-      persistWorkspaceTimerRef.current = null;
-      flushWorkspacePersist();
-    }, 350);
-  }, [flushWorkspacePersist, workspace]);
 
   useEffect(() => {
     return (): void => {
@@ -390,11 +393,41 @@ export function useCaseResolverState() {
           queuedExpectedRevisionRef.current = lastPersistedRevisionRef.current;
         }
         queuedMutationIdRef.current = mutationId;
+        queuedSerializedWorkspaceRef.current = JSON.stringify(stampedWorkspace);
         return stampedWorkspace;
       });
     },
     []
   );
+
+  const isWorkspaceDirty = useMemo(
+    (): boolean => JSON.stringify(workspace) !== persistedWorkspaceSnapshot,
+    [persistedWorkspaceSnapshot, workspace]
+  );
+
+  const handleSaveWorkspace = useCallback((): void => {
+    const normalizedWorkspace = normalizeCaseResolverWorkspace(workspace);
+    const serializedWorkspace = JSON.stringify(normalizedWorkspace);
+    if (serializedWorkspace === lastPersistedValueRef.current) {
+      setIsWorkspaceSaving(false);
+      toast('No changes to save.', { variant: 'info' });
+      return;
+    }
+    queuedSerializedWorkspaceRef.current = serializedWorkspace;
+    if (queuedExpectedRevisionRef.current === null) {
+      queuedExpectedRevisionRef.current = lastPersistedRevisionRef.current;
+    }
+    if (!queuedMutationIdRef.current) {
+      queuedMutationIdRef.current =
+        normalizedWorkspace.lastMutationId ??
+        createCaseResolverWorkspaceMutationId('case-resolver-workspace-manual');
+    }
+    if (!pendingSaveToastRef.current) {
+      pendingSaveToastRef.current = 'Case Resolver changes saved.';
+    }
+    setIsWorkspaceSaving(true);
+    flushWorkspacePersist();
+  }, [flushWorkspacePersist, toast, workspace]);
 
   const { confirm, ConfirmationModal } = useConfirm();
   const { PromptInputModal } = usePrompt();
@@ -495,6 +528,7 @@ export function useCaseResolverState() {
 
         const refreshedSerialized = JSON.stringify(refreshedWorkspace);
         lastPersistedValueRef.current = refreshedSerialized;
+        setPersistedWorkspaceSnapshot(refreshedSerialized);
         lastPersistedRevisionRef.current =
           getCaseResolverWorkspaceRevision(refreshedWorkspace);
         queuedSerializedWorkspaceRef.current = null;
@@ -784,7 +818,9 @@ export function useCaseResolverState() {
           if (refreshedHasRequestedFile) {
             requestedWorkspaceMissingFileIdRef.current = null;
             setRequestedCaseStatus('ready');
-            lastPersistedValueRef.current = JSON.stringify(refreshedWorkspace);
+            const refreshedSerialized = JSON.stringify(refreshedWorkspace);
+            lastPersistedValueRef.current = refreshedSerialized;
+            setPersistedWorkspaceSnapshot(refreshedSerialized);
             lastPersistedRevisionRef.current = getCaseResolverWorkspaceRevision(refreshedWorkspace);
             queuedSerializedWorkspaceRef.current = null;
             queuedExpectedRevisionRef.current = null;
@@ -846,13 +882,10 @@ export function useCaseResolverState() {
         };
         const serialized = JSON.stringify(nextWorkspace);
         lastPersistedValueRef.current = serialized;
+        setPersistedWorkspaceSnapshot(serialized);
         queuedSerializedWorkspaceRef.current = null;
         queuedExpectedRevisionRef.current = null;
         queuedMutationIdRef.current = null;
-        if (persistWorkspaceTimerRef.current) {
-          window.clearTimeout(persistWorkspaceTimerRef.current);
-          persistWorkspaceTimerRef.current = null;
-        }
         return nextWorkspace;
       });
       return;
@@ -870,13 +903,10 @@ export function useCaseResolverState() {
       };
       const serialized = JSON.stringify(nextWorkspace);
       lastPersistedValueRef.current = serialized;
+      setPersistedWorkspaceSnapshot(serialized);
       queuedSerializedWorkspaceRef.current = null;
       queuedExpectedRevisionRef.current = null;
       queuedMutationIdRef.current = null;
-      if (persistWorkspaceTimerRef.current) {
-        window.clearTimeout(persistWorkspaceTimerRef.current);
-        persistWorkspaceTimerRef.current = null;
-      }
       return nextWorkspace;
     });
   }, [requestedFileId, workspace.files]);
@@ -1004,6 +1034,8 @@ export function useCaseResolverState() {
       currentFile.tagId !== editingDocumentDraft.tagId ||
       currentFile.caseIdentifierId !== editingDocumentDraft.caseIdentifierId ||
       currentFile.categoryId !== editingDocumentDraft.categoryId ||
+      currentFile.scanOcrModel !== editingDocumentDraft.scanOcrModel ||
+      currentFile.scanOcrPrompt !== editingDocumentDraft.scanOcrPrompt ||
       JSON.stringify(currentFile.addresser) !== JSON.stringify(editingDocumentDraft.addresser) ||
       JSON.stringify(currentFile.addressee) !== JSON.stringify(editingDocumentDraft.addressee) ||
       hasContentChanges;
@@ -1091,6 +1123,9 @@ export function useCaseResolverState() {
     workspace,
     setWorkspace,
     updateWorkspace,
+    isWorkspaceDirty,
+    isWorkspaceSaving,
+    handleSaveWorkspace,
     selectedFileId,
     setSelectedFileId,
     selectedFolderPath,

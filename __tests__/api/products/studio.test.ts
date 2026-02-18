@@ -71,6 +71,7 @@ describe('Product Studio API', () => {
     vi.mocked(getProductStudioConfig).mockResolvedValue({
       projectId: 'studio-a',
       sourceSlotByImageIndex: { '0': 'slot-1' },
+      sourceSlotHistoryByImageIndex: {},
       updatedAt: '2026-02-13T10:00:00.000Z',
     });
 
@@ -91,6 +92,7 @@ describe('Product Studio API', () => {
     vi.mocked(setProductStudioConfig).mockResolvedValue({
       projectId: 'studio-b',
       sourceSlotByImageIndex: {},
+      sourceSlotHistoryByImageIndex: {},
       updatedAt: '2026-02-13T10:00:00.000Z',
     });
 
@@ -112,6 +114,7 @@ describe('Product Studio API', () => {
     vi.mocked(setProductStudioConfig).mockResolvedValue({
       projectId: 'studio-a',
       sourceSlotByImageIndex: {},
+      sourceSlotHistoryByImageIndex: {},
       updatedAt: '2026-02-13T10:00:00.000Z',
     });
 
@@ -139,6 +142,7 @@ describe('Product Studio API', () => {
       config: {
         projectId: 'studio-a',
         sourceSlotByImageIndex: { '0': 'slot-1' },
+        sourceSlotHistoryByImageIndex: {},
         updatedAt: '2026-02-13T10:00:00.000Z',
       },
       sequencing: {
@@ -175,11 +179,13 @@ describe('Product Studio API', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(sendProductImageToStudio).toHaveBeenCalledWith({
-      productId: 'prod-1',
-      imageSlotIndex: 0,
-      projectId: 'studio-a',
-    });
+    expect(sendProductImageToStudio).toHaveBeenCalledWith(
+      expect.objectContaining({
+        productId: 'prod-1',
+        imageSlotIndex: 0,
+        projectId: 'studio-a',
+      })
+    );
   });
 
   it('GET /api/products/[id]/studio/variants forwards request', async () => {
@@ -187,6 +193,7 @@ describe('Product Studio API', () => {
       config: {
         projectId: 'studio-a',
         sourceSlotByImageIndex: { '1': 'slot-source' },
+        sourceSlotHistoryByImageIndex: {},
         updatedAt: '2026-02-13T10:00:00.000Z',
       },
       sequencing: {

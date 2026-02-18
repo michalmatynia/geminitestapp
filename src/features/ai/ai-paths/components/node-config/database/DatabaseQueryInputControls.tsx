@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { DatabaseAction, DatabaseActionCategory } from '@/features/ai/ai-paths/lib';
-import { Button, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { Button, Textarea, SelectSimple } from '@/shared/ui';
 
 import { useDatabaseQueryInputControlsContext } from './DatabaseQueryInputControlsContext';
 
@@ -46,36 +46,26 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
     <div className='space-y-2'>
       <div className='flex items-center justify-between'>
         <div className='flex gap-2 items-center'>
-          <Select
+          <SelectSimple
+            size='xs'
             value={actionCategory}
-            onValueChange={(value: DatabaseActionCategory): void => onActionCategoryChange(value)}
-          >
-            <SelectTrigger className='h-7 w-[140px] border-border bg-card/70 text-xs text-white'>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className='border-border bg-gray-900'>
-              {actionCategoryOptions.map((option: { value: DatabaseActionCategory; label: string }): React.JSX.Element => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
+            onValueChange={(value: string): void => onActionCategoryChange(value as DatabaseActionCategory)}
+            options={actionCategoryOptions.map((option: { value: DatabaseActionCategory; label: string }) => ({
+              value: option.value,
+              label: option.label
+            }))}
+            triggerClassName='h-7 w-[140px] border-border bg-card/70 text-xs text-white'
+          />
+          <SelectSimple
+            size='xs'
             value={action}
-            onValueChange={(value: DatabaseAction): void => onActionChange(value)}
-          >
-            <SelectTrigger className='h-7 w-[170px] border-border bg-card/70 text-xs text-white'>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className='border-border bg-gray-900 max-h-72'>
-              {actionOptions.map((option: { value: DatabaseAction; label: string }): React.JSX.Element => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onValueChange={(value: string): void => onActionChange(value as DatabaseAction)}
+            options={actionOptions.map((option: { value: DatabaseAction; label: string }) => ({
+              value: option.value,
+              label: option.label
+            }))}
+            triggerClassName='h-7 w-[170px] border-border bg-card/70 text-xs text-white'
+          />
         </div>
         <div className='flex gap-2'>
           <Button

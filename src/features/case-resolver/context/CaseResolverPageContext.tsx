@@ -26,8 +26,11 @@ export type CaseResolverPageContextValue = {
   selectedFileId: string | null;
   selectedAssetId: string | null;
   selectedFolderPath: string | null;
+  isWorkspaceDirty: boolean;
+  isWorkspaceSaving: boolean;
   panelCollapsed: boolean;
   onPanelCollapsedChange: (collapsed: boolean) => void;
+  onSaveWorkspace: () => void;
   onSelectFile: (fileId: string) => void;
   onSelectAsset: (assetId: string) => void;
   onSelectFolder: (folderPath: string | null) => void;

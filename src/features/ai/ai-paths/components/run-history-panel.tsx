@@ -6,11 +6,7 @@ import type { AiPathRunRecord } from '@/features/ai/ai-paths/lib';
 import {
   Button,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  SelectSimple,
   StatusBadge,
   Alert,
 } from '@/shared/ui';
@@ -246,26 +242,22 @@ export function RunHistoryPanel(): React.JSX.Element {
                       <Label className='text-[10px] uppercase text-gray-500'>History</Label>
                       {runHistory ? (
                         runHistoryOptions.length > 1 ? (
-                          <Select
-                            {...(selectedHistoryNodeId != null ? { value: selectedHistoryNodeId } : {})}
+                          <SelectSimple
+                            size='sm'
+                            value={selectedHistoryNodeId ?? ''}
                             onValueChange={(value: string): void =>
                               setRunHistorySelection((prev: Record<string, string>) => ({
                                 ...prev,
                                 [run.id]: value,
                               }))
                             }
-                          >
-                            <SelectTrigger className='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'>
-                              <SelectValue placeholder='Select node' />
-                            </SelectTrigger>
-                            <SelectContent className='border-border bg-gray-900 text-white'>
-                              {runHistoryOptions.map((option: { id: string; label: string }): React.JSX.Element => (
-                                <SelectItem key={option.id} value={option.id}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                            options={runHistoryOptions.map((option: { id: string; label: string }) => ({
+                              value: option.id,
+                              label: option.label
+                            }))}
+                            triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
+                            placeholder='Select node'
+                          />
                         ) : (
                           <div className='text-[11px] text-gray-400'>
                             {runHistoryOptions[0]?.label ?? 'No nodes'}

@@ -4,6 +4,7 @@ import type { AiNode } from '@/features/ai/ai-paths/lib';
 import {
   CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP,
   DEFAULT_CASE_RESOLVER_OCR_PROMPT,
+  DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT,
   extractCaseResolverDocumentDate,
   getCaseResolverWorkspaceLatestTimestampMs,
   hasCaseResolverWorkspaceFilesArray,
@@ -835,6 +836,47 @@ describe('case-resolver settings', () => {
     ).toBe('wysiwyg');
     expect(parseCaseResolverDefaultDocumentFormat('invalid-value')).toBe('markdown');
     expect(parseCaseResolverDefaultDocumentFormat('invalid-value', 'wysiwyg')).toBe('wysiwyg');
+  });
+
+  it('defaults scanfile OCR fields and preserves custom overrides', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        files: [
+          {
+            id: 'scan-default',
+            fileType: 'scanfile',
+            name: 'Scan Default',
+            folder: '',
+            parentCaseId: 'case-a',
+          },
+          {
+            id: 'scan-custom',
+            fileType: 'scanfile',
+            name: 'Scan Custom',
+            folder: '',
+            parentCaseId: 'case-a',
+            scanOcrModel: 'llama3.2-vision',
+            scanOcrPrompt: 'Use this custom OCR prompt.',
+          },
+          {
+            id: 'case-a',
+            fileType: 'case',
+            name: 'Case A',
+            folder: '',
+            parentCaseId: null,
+          },
+        ],
+      })
+    );
+
+    const defaultScan = workspace.files.find((file) => file.id === 'scan-default');
+    expect(defaultScan?.scanOcrModel).toBe('');
+    expect(defaultScan?.scanOcrPrompt).toBe(DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT);
+
+    const customScan = workspace.files.find((file) => file.id === 'scan-custom');
+    expect(customScan?.scanOcrModel).toBe('llama3.2-vision');
+    expect(customScan?.scanOcrPrompt).toBe('Use this custom OCR prompt.');
   });
 
   it('extracts document date from exploded text formats', () => {

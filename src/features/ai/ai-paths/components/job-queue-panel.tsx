@@ -18,6 +18,7 @@ import {
   Label,
   SelectSimple,
   useToast,
+  Pagination,
 } from '@/shared/ui';
 
 import { JobQueueOverview } from './job-queue-overview';
@@ -745,33 +746,22 @@ export function JobQueuePanel({
           );
         })}
       </div>            
-      <div className='flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-400'>
-        <span>
-                        Showing {runs.length} of {total} runs
-        </span>
-        <div className='flex items-center gap-2'>
-          <Button
-            type='button'
-            className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
-            onClick={() => setPage((prev: number) => Math.max(1, prev - 1))}
-            disabled={page <= 1}
-          >
-                          Prev
-          </Button>
-          <span>
-                          Page {page} / {totalPages}
-          </span>
-          <Button
-            type='button'
-            className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
-            onClick={() => setPage((prev: number) => Math.min(totalPages, prev + 1))}
-            disabled={page >= totalPages}
-          >
-                          Next
-          </Button>
+      <div className='flex flex-wrap items-center justify-between gap-2'>
+        <div className='text-[11px] text-gray-400'>
+          Showing {runs.length} of {total} runs
         </div>
-      </div>
-            
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
+          pageSizeOptions={PAGE_SIZES}
+          showPageSize
+          variant='compact'
+        />
+      </div>            
+      
       {runs.length === 0 ? (
         <div className='rounded-md border border-border bg-card/40 p-4 text-sm text-gray-400'>
                         No runs found for the current filters.

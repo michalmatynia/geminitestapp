@@ -13,6 +13,10 @@ import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { Button, SelectSimple, Switch, useToast } from '@/shared/ui';
 
 import {
+  normalizeShapeToPolygons,
+  type MaskShapeForExport,
+} from './generation-toolbar/GenerationToolbarImageUtils';
+import {
   collectSequenceMaskPolygons,
   resolveSequenceStepsForRun,
 } from './right-sidebar/right-sidebar-utils';
@@ -117,6 +121,11 @@ const wait = async (ms: number): Promise<void> =>
   new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+
+const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
+
+const serializeGeometryValue = (value: unknown): string =>
+  JSON.stringify(value ?? null);
 
 const deriveLegacySequencingFields = (steps: ImageStudioSequenceStep[]): {
   operations: ImageStudioSequenceOperation[];
@@ -273,6 +282,58 @@ export function SequencingPanel(): React.JSX.Element {
       }),
     [maskShapes],
   );
+  const cropShapeGeometryById = useMemo((): Record<string, {
+    bbox: { x: number; y: number; width: number; height: number } | null;
+    polygon: Array<{ x: number; y: number }> | null;
+  }> => {
+    const sourceWidth = workingSlotImageWidth ?? 1;
+    const sourceHeight = workingSlotImageHeight ?? 1;
+    const next: Record<string, {
+      bbox: { x: number; y: number; width: number; height: number } | null;
+      polygon: Array<{ x: number; y: number }> | null;
+    }> = {};
+    maskShapes.forEach((shape) => {
+      const polygons = normalizeShapeToPolygons(
+        shape as MaskShapeForExport,
+        sourceWidth,
+        sourceHeight,
+        { imageContentFrame: sequenceImageContentFrame },
+      );
+      const polygon = polygons[0] ?? null;
+      if (!polygon || polygon.length < 3) {
+        next[shape.id] = { bbox: null, polygon: null };
+        return;
+      }
+      const xs = polygon.map((point) => clamp01(point.x));
+      const ys = polygon.map((point) => clamp01(point.y));
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+      if (!(maxX > minX && maxY > minY)) {
+        next[shape.id] = { bbox: null, polygon: null };
+        return;
+      }
+      next[shape.id] = {
+        polygon: polygon.map((point) => ({
+          x: Number(clamp01(point.x).toFixed(6)),
+          y: Number(clamp01(point.y).toFixed(6)),
+        })),
+        bbox: {
+          x: Number(minX.toFixed(6)),
+          y: Number(minY.toFixed(6)),
+          width: Number((maxX - minX).toFixed(6)),
+          height: Number((maxY - minY).toFixed(6)),
+        },
+      };
+    });
+    return next;
+  }, [
+    maskShapes,
+    sequenceImageContentFrame,
+    workingSlotImageHeight,
+    workingSlotImageWidth,
+  ]);
   const normalizeStepsWithCurrentFallback = useCallback(
     (input: unknown): ImageStudioSequenceStep[] =>
       normalizeImageStudioSequenceSteps(input, {
@@ -735,6 +796,66 @@ export function SequencingPanel(): React.JSX.Element {
     [setStudioSettings],
   );
 
+  useEffect(() => {
+    setStudioSettings((prev) => {
+      const currentSteps = normalizeImageStudioSequenceSteps(prev.projectSequencing.steps, {
+        fallbackOperations: prev.projectSequencing.operations,
+        upscaleStrategy: prev.projectSequencing.upscaleStrategy,
+        upscaleScale: prev.projectSequencing.upscaleScale,
+        upscaleTargetWidth: prev.projectSequencing.upscaleTargetWidth,
+        upscaleTargetHeight: prev.projectSequencing.upscaleTargetHeight,
+      });
+      let changed = false;
+      const updatedSteps = currentSteps.map((step) => {
+        if (step.type !== 'crop_center') return step;
+        if (step.config.kind !== 'selected_shape') return step;
+        const selectedShapeId = step.config.selectedShapeId?.trim() ?? '';
+        if (!selectedShapeId) return step;
+        const geometry = cropShapeGeometryById[selectedShapeId] ?? null;
+        const nextBbox = geometry?.bbox ?? null;
+        const nextPolygon = geometry?.polygon ?? null;
+        const bboxChanged =
+          serializeGeometryValue(step.config.bbox) !== serializeGeometryValue(nextBbox);
+        const polygonChanged =
+          serializeGeometryValue(step.config.polygon) !== serializeGeometryValue(nextPolygon);
+        if (!bboxChanged && !polygonChanged) return step;
+        changed = true;
+        return {
+          ...step,
+          config: {
+            ...step.config,
+            bbox: nextBbox,
+            polygon: nextPolygon,
+          },
+        };
+      });
+      if (!changed) return prev;
+
+      const normalizedUpdatedSteps = normalizeImageStudioSequenceSteps(updatedSteps, {
+        fallbackOperations: prev.projectSequencing.operations,
+        upscaleStrategy: prev.projectSequencing.upscaleStrategy,
+        upscaleScale: prev.projectSequencing.upscaleScale,
+        upscaleTargetWidth: prev.projectSequencing.upscaleTargetWidth,
+        upscaleTargetHeight: prev.projectSequencing.upscaleTargetHeight,
+      });
+      const legacy = deriveLegacySequencingFields(normalizedUpdatedSteps);
+
+      return {
+        ...prev,
+        projectSequencing: {
+          ...prev.projectSequencing,
+          activePresetId: null,
+          steps: normalizedUpdatedSteps,
+          operations: legacy.operations,
+          upscaleStrategy: legacy.upscaleStrategy,
+          upscaleScale: legacy.upscaleScale,
+          upscaleTargetWidth: legacy.upscaleTargetWidth,
+          upscaleTargetHeight: legacy.upscaleTargetHeight,
+        },
+      };
+    });
+  }, [cropShapeGeometryById, setStudioSettings]);
+
   const handleSavePreset = useCallback((): void => {
     const name = presetNameDraft.trim();
     if (!name) {
@@ -1186,6 +1307,7 @@ export function SequencingPanel(): React.JSX.Element {
         editableSequenceSteps={editableSequenceSteps}
         enabledRuntimeSteps={enabledRuntimeSteps}
         cropShapeOptions={cropShapeOptions}
+        cropShapeGeometryById={cropShapeGeometryById}
         mutateSteps={mutateSteps}
       />
 

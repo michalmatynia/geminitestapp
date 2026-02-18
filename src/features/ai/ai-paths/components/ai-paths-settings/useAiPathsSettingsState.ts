@@ -98,6 +98,7 @@ export interface UseAiPathsSettingsStateReturn {
   saving: boolean;
   handleCreatePath: () => void;
   handleCreateAiDescriptionPath: () => void;
+  handleDuplicatePath: (pathId?: string) => void;
   handleSave: (options?: {
     silent?: boolean | undefined;
     includeNodeConfig?: boolean | undefined;
@@ -1174,6 +1175,7 @@ export function useAiPathsSettingsState({
     handleReset,
     handleCreatePath,
     handleCreateAiDescriptionPath,
+    handleDuplicatePath,
     handleDeletePath,
     handleSwitchPath,
   } = useAiPathsSettingsPathActions({
@@ -1326,6 +1328,7 @@ export function useAiPathsSettingsState({
     saving,
     handleCreatePath,
     handleCreateAiDescriptionPath,
+    handleDuplicatePath,
     handleSave,
     handleReset,
     handleDeletePath,

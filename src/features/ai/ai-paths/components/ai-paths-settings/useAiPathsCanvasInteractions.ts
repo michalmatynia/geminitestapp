@@ -280,15 +280,6 @@ export function useAiPathsCanvasInteractions({
     [clearRuntimeInputsForEdges, isPathLocked, notifyLocked, selectedEdgeId, setEdges, selectEdge]
   );
 
-  const isTypingTarget = (target: EventTarget | null): boolean => {
-    const element = target as HTMLElement | null;
-    if (!element) return false;
-    if (element.isContentEditable) return true;
-    const tag = element.tagName?.toLowerCase();
-    if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
-    return Boolean(element.closest('input, textarea, select, [contenteditable="true"]'));
-  };
-
   const handleDeleteSelectedNode = useCallback((): void => {
     const activeNodeId = selectedNodeIdCtx ?? selectedNodeId;
     if (!activeNodeId) return;
@@ -333,30 +324,6 @@ export function useAiPathsCanvasInteractions({
     selectNode,
     confirm,
   ]);
-
-  useEffect((): void | (() => void) => {
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') {
-        setConnecting(null);
-        setConnectingPos(null);
-        selectEdge(null);
-      }
-      if (event.key === 'Backspace' || event.key === 'Delete') {
-        if (isTypingTarget(event.target)) return;
-        if (selectedEdgeId) {
-          event.preventDefault();
-          handleRemoveEdge(selectedEdgeId);
-          return;
-        }
-        if (selectedNodeIdCtx ?? selectedNodeId) {
-          event.preventDefault();
-          handleDeleteSelectedNode();
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return (): void => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedEdgeId, selectedNodeId, selectedNodeIdCtx, handleRemoveEdge, handleDeleteSelectedNode]);
 
   useEffect((): void => {
     setEdges((prev: Edge[]): Edge[] => sanitizeEdges(nodes, prev));

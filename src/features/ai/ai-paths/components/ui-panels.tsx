@@ -1,6 +1,6 @@
 'use client';
 
-import { Lock, Edit, Trash2 } from 'lucide-react';
+import { Lock, Edit, Copy, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import type { PathMeta } from '@/features/ai/ai-paths/lib';
@@ -58,6 +58,9 @@ export function PathsTabPanel({
   };
   const handleDeletePath = (pathId: string) => {
     void orchestrator.handleDeletePath(pathId).catch(() => {});
+  };
+  const handleDuplicatePath = (pathId: string) => {
+    orchestrator.handleDuplicatePath(pathId);
   };
 
   const columns = useMemo<ColumnDef<PathMeta>[]>(() => [
@@ -128,6 +131,15 @@ export function PathsTabPanel({
           <Button
             variant='ghost'
             size='xs'
+            className='h-7 w-7 p-0 text-sky-300 hover:text-sky-200'
+            onClick={() => handleDuplicatePath(row.original.id)}
+            title='Duplicate path'
+          >
+            <Copy className='size-3.5' />
+          </Button>
+          <Button
+            variant='ghost'
+            size='xs'
             className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
             onClick={() => handleDeletePath(row.original.id)}
           >
@@ -136,7 +148,7 @@ export function PathsTabPanel({
         </div>
       ),
     },
-  ], [resolvedPathFlagsById, handleOpenPath, handleDeletePath]);
+  ], [resolvedPathFlagsById, handleOpenPath, handleDuplicatePath, handleDeletePath]);
 
   return (
     <div className='space-y-4'>

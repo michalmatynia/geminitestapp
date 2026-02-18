@@ -22,16 +22,19 @@ export interface SimpleSettingsListItem {
 
 interface SimpleSettingsListProps<T extends SimpleSettingsListItem> {
   items: T[];
-  isLoading?: boolean;
-  onEdit?: (item: T) => void;
-  onDelete?: (item: T) => void | Promise<void>;
-  emptyMessage?: string;
-  renderActions?: (item: T) => React.ReactNode;
-  renderExtraActions?: (item: T) => React.ReactNode;
-  renderCustomContent?: (item: T) => React.ReactNode;
-  className?: string;
-  itemClassName?: string;
-  columns?: 1 | 2 | 3;
+  isLoading?: boolean | undefined;
+  selectedId?: string | undefined;
+  onSelect?: ((item: T) => void) | undefined;
+  onEdit?: ((item: T) => void) | undefined;
+  onDelete?: ((item: T) => void | Promise<void>) | undefined;
+  emptyMessage?: string | undefined;
+  renderActions?: ((item: T) => React.ReactNode) | undefined;
+  renderExtraActions?: ((item: T) => React.ReactNode) | undefined;
+  renderCustomContent?: ((item: T) => React.ReactNode) | undefined;
+  className?: string | undefined;
+  itemClassName?: string | undefined;
+  columns?: 1 | 2 | 3 | undefined;
+  padding?: 'none' | 'sm' | 'md' | 'lg' | undefined;
 }
 
 /**
@@ -41,6 +44,8 @@ interface SimpleSettingsListProps<T extends SimpleSettingsListItem> {
 export function SimpleSettingsList<T extends SimpleSettingsListItem>({
   items,
   isLoading,
+  selectedId,
+  onSelect,
   onEdit,
   onDelete,
   emptyMessage = 'No items found.',
@@ -50,6 +55,7 @@ export function SimpleSettingsList<T extends SimpleSettingsListItem>({
   className,
   itemClassName,
   columns = 1,
+  padding = 'md',
 }: SimpleSettingsListProps<T>): React.JSX.Element {
   if (isLoading) {
     return (
@@ -74,85 +80,106 @@ export function SimpleSettingsList<T extends SimpleSettingsListItem>({
     3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
   }[columns];
 
+  const paddingClasses = {
+    none: 'p-0',
+    sm: 'p-2',
+    md: 'p-4',
+    lg: 'p-6',
+  }[padding];
+
   return (
     <div className={cn('grid gap-4', gridCols, className)}>
-      {items.map((item) => (
-        <div
-          key={item.id}
-          className={cn(
-            'group flex flex-col justify-between rounded-lg border border-border bg-card/40 p-4 transition-colors hover:bg-card/60',
-            itemClassName
-          )}
-        >
-          <div className='flex items-start justify-between gap-3'>
-            <div className='flex items-start gap-3 min-w-0'>
-              {item.icon && (
-                <div className='mt-0.5 shrink-0'>
-                  {item.icon}
-                </div>
-              )}
-              <div className='min-w-0'>
-                <div className='flex items-center gap-2'>
-                  <span className='font-semibold text-white truncate'>
-                    {item.title}
-                  </span>
-                  {item.subtitle && (
-                    <span className='text-xs text-gray-400 truncate'>
-                      {item.subtitle}
+      {items.map((item) => {
+        const isSelected = selectedId === item.id;
+        return (
+          <div
+            key={item.id}
+            onClick={() => onSelect?.(item)}
+            className={cn(
+              'group flex flex-col justify-between rounded-lg border border-border bg-card/40 transition-colors',
+              onSelect && 'cursor-pointer hover:border-blue-500/50',
+              isSelected ? 'border-blue-500/50 bg-blue-500/5' : 'hover:bg-card/60',
+              paddingClasses,
+              itemClassName
+            )}
+          >
+            <div className='flex items-start justify-between gap-3'>
+              <div className='flex items-start gap-3 min-w-0'>
+                {item.icon && (
+                  <div className='mt-0.5 shrink-0'>
+                    {item.icon}
+                  </div>
+                )}
+                <div className='min-w-0'>
+                  <div className='flex items-center gap-2'>
+                    <span className='font-semibold text-white truncate'>
+                      {item.title}
                     </span>
+                    {item.subtitle && (
+                      <span className='text-xs text-gray-400 truncate'>
+                        {item.subtitle}
+                      </span>
+                    )}
+                  </div>
+                  {item.description && (
+                    <p className='mt-1 text-xs text-gray-400 line-clamp-2'>
+                      {item.description}
+                    </p>
                   )}
                 </div>
-                {item.description && (
-                  <p className='mt-1 text-xs text-gray-400 line-clamp-2'>
-                    {item.description}
-                  </p>
+              </div>
+
+              <div className='flex items-center gap-2 shrink-0'>
+                {renderActions?.(item)}
+                
+                {(onEdit || onDelete || renderExtraActions) && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant='ghost'
+                        size='icon'
+                        className='-mr-2 size-8 text-gray-400 hover:text-white'
+                        type='button'
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreVertical className='size-4' />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align='end'>
+                      {renderExtraActions?.(item)}
+                      {onEdit && (
+                        <DropdownMenuItem onSelect={(e) => {
+                          e.stopPropagation();
+                          onEdit(item);
+                        }}>
+                          Edit
+                        </DropdownMenuItem>
+                      )}
+                      {onDelete && (
+                        <DropdownMenuItem
+                          className='text-red-300 focus:text-red-300'
+                          onSelect={(e) => {
+                            e.stopPropagation();
+                            void onDelete(item);
+                          }}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
             </div>
 
-            <div className='flex items-center gap-2 shrink-0'>
-              {renderActions?.(item)}
-              
-              {(onEdit || onDelete || renderExtraActions) && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant='ghost'
-                      size='icon'
-                      className='-mr-2 size-8 text-gray-400 hover:text-white'
-                      type='button'
-                    >
-                      <MoreVertical className='size-4' />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end'>
-                    {renderExtraActions?.(item)}
-                    {onEdit && (
-                      <DropdownMenuItem onSelect={() => onEdit(item)}>
-                        Edit
-                      </DropdownMenuItem>
-                    )}
-                    {onDelete && (
-                      <DropdownMenuItem
-                        className='text-red-300 focus:text-red-300'
-                        onSelect={() => void onDelete(item)}
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
+            {renderCustomContent && (
+              <div className='mt-4'>
+                {renderCustomContent(item)}
+              </div>
+            )}
           </div>
-
-          {renderCustomContent && (
-            <div className='mt-4'>
-              {renderCustomContent(item)}
-            </div>
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

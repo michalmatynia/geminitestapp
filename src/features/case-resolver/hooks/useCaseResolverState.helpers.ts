@@ -126,12 +126,22 @@ export const normalizeUploadedCaseResolverFile = (
 
 const IMAGE_FILENAME_EXTENSION_PATTERN =
   /\.(jpg|jpeg|png|webp|gif|bmp|avif|heic|heif|tif|tiff|svg)$/i;
+const PDF_FILENAME_EXTENSION_PATTERN = /\.pdf$/i;
 
 export const isLikelyImageFile = (file: File): boolean => {
   const mimeType = file.type.trim().toLowerCase();
   if (mimeType.startsWith('image/')) return true;
   return IMAGE_FILENAME_EXTENSION_PATTERN.test(file.name.trim());
 };
+
+export const isLikelyPdfFile = (file: File): boolean => {
+  const mimeType = file.type.trim().toLowerCase();
+  if (mimeType === 'application/pdf') return true;
+  return PDF_FILENAME_EXTENSION_PATTERN.test(file.name.trim());
+};
+
+export const isLikelyScanInputFile = (file: File): boolean =>
+  isLikelyImageFile(file) || isLikelyPdfFile(file);
 
 export const sleep = (durationMs: number): Promise<void> =>
   new Promise((resolve) => {

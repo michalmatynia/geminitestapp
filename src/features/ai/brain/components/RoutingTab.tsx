@@ -1,6 +1,6 @@
 'use client';
 
-import { Checkbox } from '@/shared/ui';
+import { Checkbox, SimpleSettingsList } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 import { type AiBrainFeature, type AiBrainAssignment } from '../settings';
@@ -49,56 +49,50 @@ export function RoutingTab(): React.JSX.Element {
       </div>
 
       <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-        <div className='text-xs uppercase text-gray-500'>Global defaults</div>
-        <div className='mt-2'>
-          <AssignmentEditor
-            assignment={settings.defaults}
-            onChange={handleDefaultChange}
-          />
-        </div>
+        <div className='text-xs uppercase text-gray-500 font-semibold mb-2'>Global defaults</div>
+        <AssignmentEditor
+          assignment={settings.defaults}
+          onChange={handleDefaultChange}
+        />
       </div>
 
-      <div className='grid gap-4 md:grid-cols-2'>
-        {ROUTING_FEATURES.map((feature: FeatureConfig) => {
+      <SimpleSettingsList
+        items={ROUTING_FEATURES.map((feature: FeatureConfig) => {
           const overrideEnabled = overridesEnabled[feature.key];
           const assignment = overrideEnabled
             ? settings.assignments[feature.key] ?? effectiveAssignments[feature.key]
             : effectiveAssignments[feature.key];
-
-          return (
-            <div
-              key={feature.key}
-              className='rounded-lg border border-border/60 bg-card/40 p-4'
-            >
-              <div className='flex items-start justify-between gap-2'>
-                <div>
-                  <div className='text-sm font-semibold text-gray-100'>{feature.label}</div>
-                  <div className='text-xs text-gray-400'>{feature.description}</div>
-                </div>
-                <label className='flex items-center gap-2 text-[11px] text-gray-400'>
-                  <Checkbox
-                    checked={overrideEnabled}
-                    onCheckedChange={(checked: boolean | 'indeterminate') => toggleOverride(feature.key, Boolean(checked))}
-                  />
-                  Override
-                </label>
-              </div>
-
-              <div className='mt-3'>
-                <AssignmentEditor
-                  assignment={assignment}
-                  onChange={(next: AiBrainAssignment) => handleOverrideChange(feature.key, next)}
-                  readOnly={!overrideEnabled}
-                />
-              </div>
-
-              {!overrideEnabled ? (
-                <div className='mt-2 text-[11px] text-gray-500'>Using global defaults.</div>
-              ) : null}
-            </div>
-          );
+          
+          return {
+            id: feature.key,
+            title: feature.label,
+            description: feature.description,
+            original: { feature, overrideEnabled, assignment }
+          };
         })}
-      </div>
+        columns={2}
+        renderActions={(item) => (
+          <label className='flex items-center gap-2 text-[11px] text-gray-400 cursor-pointer'>
+            <Checkbox
+              checked={item.original.overrideEnabled}
+              onCheckedChange={(checked: boolean | 'indeterminate') => toggleOverride(item.original.feature.key, Boolean(checked))}
+            />
+            Override
+          </label>
+        )}
+        renderCustomContent={(item) => (
+          <div className='space-y-2'>
+            <AssignmentEditor
+              assignment={item.original.assignment}
+              onChange={(next: AiBrainAssignment) => handleOverrideChange(item.original.feature.key, next)}
+              readOnly={!item.original.overrideEnabled}
+            />
+            {!item.original.overrideEnabled && (
+              <div className='text-[11px] text-gray-500'>Using global defaults.</div>
+            )}
+          </div>
+        )}
+      />
     </div>
   );
 }

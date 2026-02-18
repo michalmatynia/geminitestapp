@@ -27,6 +27,7 @@ import {
   RadioGroup,
   RadioGroupItem,
   SelectSimple,
+  SimpleSettingsList,
   useToast,
 } from '@/shared/ui';
 
@@ -414,37 +415,34 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
       </div>
 
       <div className='space-y-2'>
-        <Label>Available Routes</Label>
+        <Label className='text-sm font-semibold text-white'>Available Routes</Label>
         <RadioGroup
           value={defaultRoute}
           onValueChange={setDefaultRoute}
-          className='space-y-2'
           disabled={updateSettingsBulk.isPending}
         >
-          {routes.map((route: string) => {
-            return (
-              <div
-                key={route}
-                className='flex items-center gap-3 rounded-md border border-gray-200 px-3 py-2'
+          <SimpleSettingsList
+            items={routes.map((route: string) => ({
+              id: route,
+              title: route,
+              icon: (
+                <RadioGroupItem value={route} id={`route-${route}`} className='mt-1' />
+              ),
+              original: route
+            }))}
+            renderActions={(item) => (
+              <Button size='xs'
+                type='button'
+                variant='ghost'
+                className='text-red-400 hover:text-red-300 hover:bg-red-500/10'
+                onClick={() => handleRemoveRoute(item.original)}
+                disabled={routes.length <= 1 || updateSettingsBulk.isPending}
               >
-                <RadioGroupItem value={route} id={`route-${route}`} />
-                <Label
-                  htmlFor={`route-${route}`}
-                  className='min-w-0 flex-1 truncate text-sm font-normal cursor-pointer'
-                >
-                  {route}
-                </Label>
-                <Button size='xs'
-                  type='button'
-                  variant='ghost'
-                  onClick={() => handleRemoveRoute(route)}
-                  disabled={routes.length <= 1 || updateSettingsBulk.isPending}
-                >
-                  Remove
-                </Button>
-              </div>
-            );
-          })}
+                Remove
+              </Button>
+            )}
+            emptyMessage='No routes available.'
+          />
         </RadioGroup>
       </div>
 

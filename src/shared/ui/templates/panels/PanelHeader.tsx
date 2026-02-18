@@ -11,7 +11,7 @@ import { PanelAction } from './types';
 
 interface PanelHeaderProps {
   title: string;
-  description?: string;
+  description?: React.ReactNode;
   subtitle?: React.ReactNode;
   icon?: React.ReactNode;
   refreshable?: boolean;
@@ -73,9 +73,9 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
               <span className='text-xs text-muted-foreground font-medium'>{subtitle}</span>
             )}
           </div>
-          {description && (
-            <p className='text-xs text-muted-foreground mt-1'>{description}</p>
-          )}
+          {description ? (
+            <div className='mt-1 text-xs text-muted-foreground'>{description}</div>
+          ) : null}
         </div>
       </div>
 

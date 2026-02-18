@@ -1,8 +1,12 @@
 import 'server-only';
 
 import fs from 'fs/promises';
+import path from 'path';
 
-import { resolveCaseResolverImageDiskPath } from '@/features/case-resolver/server/ocr-runtime';
+import OpenAI from 'openai';
+
+import { detectCaseResolverOcrProvider, type CaseResolverOcrProvider } from '@/features/case-resolver/ocr-provider';
+import { resolveCaseResolverOcrDiskPath } from '@/features/case-resolver/server/ocr-runtime';
 import {
   markCaseResolverOcrJobCompleted,
   markCaseResolverOcrJobFailed,
@@ -10,11 +14,15 @@ import {
 } from '@/features/case-resolver/server/ocr-runtime-job-store';
 import { DEFAULT_CASE_RESOLVER_OCR_PROMPT } from '@/features/case-resolver/settings';
 import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
+import { getSettingValue } from '@/features/products/services/aiDescriptionService';
 import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';
+
+import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
 
 const LOG_SOURCE = 'case-resolver-ocr-queue';
 const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env['OLLAMA_MODEL']?.trim() || '';
+const MAX_PDF_OCR_TEXT_CHARS = 80_000;
 
 type CaseResolverOcrQueueJobData = {
   jobId: string;
@@ -23,18 +31,153 @@ type CaseResolverOcrQueueJobData = {
   prompt: string;
 };
 
+type CaseResolverResolvedOcrModel = {
+  model: string;
+  provider: CaseResolverOcrProvider;
+};
+
 type OllamaChatPayload = {
   message?: { content?: unknown };
   response?: unknown;
 };
 
+type OpenAiChatCompletionPayload = {
+  choices?: Array<{
+    message?: {
+      content?: unknown;
+    };
+  }>;
+};
+
+type AnthropicMessageResponse = {
+  content?: Array<{
+    type?: unknown;
+    text?: unknown;
+  }>;
+};
+
+type GeminiResponse = {
+  candidates?: Array<{
+    content?: {
+      parts?: Array<{
+        text?: unknown;
+      }>;
+    };
+  }>;
+};
+
 export type CaseResolverOcrDispatchMode = 'queued' | 'inline';
 
-const resolveOcrModel = (model: string): string => {
+const parseProviderPrefixedModel = (
+  value: string
+): CaseResolverResolvedOcrModel | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const match = trimmed.match(/^(openai|anthropic|gemini|ollama)\s*[:/]\s*(.+)$/i);
+  if (!match) return null;
+
+  const providerRaw = match[1]?.toLowerCase();
+  const modelRaw = match[2]?.trim() ?? '';
+  if (!providerRaw || !modelRaw) return null;
+
+  if (
+    providerRaw !== 'openai' &&
+    providerRaw !== 'anthropic' &&
+    providerRaw !== 'gemini' &&
+    providerRaw !== 'ollama'
+  ) {
+    return null;
+  }
+
+  return {
+    provider: providerRaw,
+    model: modelRaw,
+  };
+};
+
+export const inferCaseResolverOcrProviderFromModel = (
+  modelName: string
+): CaseResolverOcrProvider => detectCaseResolverOcrProvider(modelName);
+
+export const resolveCaseResolverOcrModel = (
+  model: string,
+  fallbackModel: string = OLLAMA_MODEL
+): CaseResolverResolvedOcrModel => {
   const runtimeModel = model.trim();
-  if (runtimeModel) return runtimeModel;
-  if (OLLAMA_MODEL) return OLLAMA_MODEL;
-  throw new Error('OCR model is not configured.');
+  const selectedModel = runtimeModel || fallbackModel.trim();
+  if (!selectedModel) {
+    throw new Error('OCR model is not configured.');
+  }
+  const explicitModel = parseProviderPrefixedModel(selectedModel);
+  if (explicitModel) return explicitModel;
+  return {
+    model: selectedModel,
+    provider: inferCaseResolverOcrProviderFromModel(selectedModel),
+  };
+};
+
+const resolveOpenAiApiKey = async (): Promise<string> => {
+  const apiKey =
+    (await getSettingValue('openai_api_key'))?.trim() ||
+    process.env['OPENAI_API_KEY']?.trim() ||
+    '';
+  if (!apiKey) {
+    throw new Error('OpenAI API key is missing for selected OCR model.');
+  }
+  return apiKey;
+};
+
+const resolveAnthropicApiKey = async (): Promise<string> => {
+  const apiKey =
+    (await getSettingValue('anthropic_api_key'))?.trim() ||
+    process.env['ANTHROPIC_API_KEY']?.trim() ||
+    '';
+  if (!apiKey) {
+    throw new Error('Anthropic API key is missing for selected OCR model.');
+  }
+  return apiKey;
+};
+
+const resolveGeminiApiKey = async (): Promise<string> => {
+  const apiKey =
+    (await getSettingValue('gemini_api_key'))?.trim() ||
+    process.env['GEMINI_API_KEY']?.trim() ||
+    '';
+  if (!apiKey) {
+    throw new Error('Gemini API key is missing for selected OCR model.');
+  }
+  return apiKey;
+};
+
+const resolveImageMimeType = (filepath: string): string => {
+  const extension = path.extname(filepath).toLowerCase();
+  switch (extension) {
+    case '.jpg':
+    case '.jpeg':
+      return 'image/jpeg';
+    case '.png':
+      return 'image/png';
+    case '.webp':
+      return 'image/webp';
+    case '.gif':
+      return 'image/gif';
+    case '.bmp':
+      return 'image/bmp';
+    case '.avif':
+      return 'image/avif';
+    case '.heic':
+      return 'image/heic';
+    case '.heif':
+      return 'image/heif';
+    case '.tif':
+    case '.tiff':
+      return 'image/tiff';
+    case '.svg':
+      return 'image/svg+xml';
+    default:
+      return 'image/jpeg';
+  }
 };
 
 const resolveOcrPrompt = (prompt: string): string => {
@@ -43,28 +186,90 @@ const resolveOcrPrompt = (prompt: string): string => {
   return DEFAULT_CASE_RESOLVER_OCR_PROMPT;
 };
 
-const runCaseResolverOcr = async (input: {
+const buildOcrPromptContent = (input: {
+  prompt: string;
   filepath: string;
+  extractedDocumentText?: string | undefined;
+}): string => {
+  if (typeof input.extractedDocumentText !== 'string') {
+    return input.prompt;
+  }
+  return [
+    input.prompt,
+    `Source file path: ${input.filepath}`,
+    'DOCUMENT_TEXT_BEGIN',
+    input.extractedDocumentText || '(No readable text extracted from the document.)',
+    'DOCUMENT_TEXT_END',
+  ].join('\n\n');
+};
+
+const parseOllamaResponseText = (payload: OllamaChatPayload): string => {
+  const message =
+    typeof payload.message?.content === 'string'
+      ? payload.message.content
+      : typeof payload.response === 'string'
+        ? payload.response
+        : '';
+  return message.trim();
+};
+
+const parseOpenAiResponseText = (payload: OpenAiChatCompletionPayload): string => {
+  const content = payload.choices?.[0]?.message?.content;
+  if (typeof content === 'string') return content.trim();
+  if (Array.isArray(content)) {
+    return content
+      .map((part: unknown): string => {
+        if (!part || typeof part !== 'object') return '';
+        const text = (part as { text?: unknown }).text;
+        return typeof text === 'string' ? text : '';
+      })
+      .join('')
+      .trim();
+  }
+  return '';
+};
+
+const parseAnthropicResponseText = (payload: AnthropicMessageResponse): string => {
+  return (payload.content ?? [])
+    .map((part): string => {
+      if (part?.type !== 'text') return '';
+      return typeof part.text === 'string' ? part.text : '';
+    })
+    .join('')
+    .trim();
+};
+
+const parseGeminiResponseText = (payload: GeminiResponse): string => {
+  return (payload.candidates?.[0]?.content?.parts ?? [])
+    .map((part): string => (typeof part.text === 'string' ? part.text : ''))
+    .join('')
+    .trim();
+};
+
+const runOllamaOcrRequest = async (input: {
   model: string;
   prompt: string;
+  images?: string[] | undefined;
+  filepath: string;
+  extractedDocumentText?: string | undefined;
 }): Promise<string> => {
-  const diskPath = resolveCaseResolverImageDiskPath(input.filepath);
-  const model = resolveOcrModel(input.model);
-  const prompt = resolveOcrPrompt(input.prompt);
-  const buffer = await fs.readFile(diskPath);
-  const base64Image = buffer.toString('base64');
+  const content = buildOcrPromptContent({
+    prompt: input.prompt,
+    filepath: input.filepath,
+    extractedDocumentText: input.extractedDocumentText,
+  });
 
   const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model,
+      model: input.model,
       stream: false,
       messages: [
         {
           role: 'user',
-          content: prompt,
-          images: [base64Image],
+          content,
+          ...(input.images && input.images.length > 0 ? { images: input.images } : {}),
         },
       ],
     }),
@@ -77,13 +282,260 @@ const runCaseResolverOcr = async (input: {
   }
 
   const payload = (await response.json()) as OllamaChatPayload;
-  const message =
-    typeof payload.message?.content === 'string'
-      ? payload.message.content
-      : typeof payload.response === 'string'
-        ? payload.response
-        : '';
-  return message.trim();
+  return parseOllamaResponseText(payload);
+};
+
+const runOpenAiOcrRequest = async (input: {
+  model: string;
+  prompt: string;
+  filepath: string;
+  base64Image?: string | undefined;
+  mimeType?: string | undefined;
+  extractedDocumentText?: string | undefined;
+}): Promise<string> => {
+  const apiKey = await resolveOpenAiApiKey();
+  const client = new OpenAI({ apiKey });
+
+  const content: string | ChatCompletionContentPart[] =
+    typeof input.base64Image === 'string' && input.base64Image.length > 0
+      ? [
+        {
+          type: 'text' as const,
+          text: input.prompt,
+        },
+        {
+          type: 'image_url' as const,
+          image_url: {
+            url: `data:${input.mimeType || 'image/jpeg'};base64,${input.base64Image}`,
+          },
+        },
+      ]
+      : buildOcrPromptContent({
+        prompt: input.prompt,
+        filepath: input.filepath,
+        extractedDocumentText: input.extractedDocumentText,
+      });
+
+  const completion = await client.chat.completions.create({
+    model: input.model,
+    messages: [
+      {
+        role: 'user',
+        content,
+      },
+    ],
+    max_tokens: 1500,
+  });
+  return parseOpenAiResponseText(completion as unknown as OpenAiChatCompletionPayload);
+};
+
+const runAnthropicOcrRequest = async (input: {
+  model: string;
+  prompt: string;
+  filepath: string;
+  base64Image?: string | undefined;
+  mimeType?: string | undefined;
+  extractedDocumentText?: string | undefined;
+}): Promise<string> => {
+  const apiKey = await resolveAnthropicApiKey();
+  const content = [
+    {
+      type: 'text',
+      text:
+        typeof input.base64Image === 'string'
+          ? input.prompt
+          : buildOcrPromptContent({
+            prompt: input.prompt,
+            filepath: input.filepath,
+            extractedDocumentText: input.extractedDocumentText,
+          }),
+    },
+    ...(typeof input.base64Image === 'string' && input.base64Image.length > 0
+      ? [
+        {
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: input.mimeType || 'image/jpeg',
+            data: input.base64Image,
+          },
+        },
+      ]
+      : []),
+  ];
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: input.model,
+      max_tokens: 1500,
+      messages: [
+        {
+          role: 'user',
+          content,
+        },
+      ],
+    }),
+  });
+  if (!response.ok) {
+    const responseBody = await response.text();
+    throw new Error(responseBody.trim() || `Anthropic OCR request failed (${response.status}).`);
+  }
+  const payload = (await response.json()) as AnthropicMessageResponse;
+  return parseAnthropicResponseText(payload);
+};
+
+const runGeminiOcrRequest = async (input: {
+  model: string;
+  prompt: string;
+  filepath: string;
+  base64Image?: string | undefined;
+  mimeType?: string | undefined;
+  extractedDocumentText?: string | undefined;
+}): Promise<string> => {
+  const apiKey = await resolveGeminiApiKey();
+  const parts = [
+    {
+      text:
+        typeof input.base64Image === 'string'
+          ? input.prompt
+          : buildOcrPromptContent({
+            prompt: input.prompt,
+            filepath: input.filepath,
+            extractedDocumentText: input.extractedDocumentText,
+          }),
+    },
+    ...(typeof input.base64Image === 'string' && input.base64Image.length > 0
+      ? [
+        {
+          inline_data: {
+            mime_type: input.mimeType || 'image/jpeg',
+            data: input.base64Image,
+          },
+        },
+      ]
+      : []),
+  ];
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+      input.model
+    )}:generateContent?key=${encodeURIComponent(apiKey)}`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts }],
+        generationConfig: { maxOutputTokens: 1500 },
+      }),
+    }
+  );
+  if (!response.ok) {
+    const responseBody = await response.text();
+    throw new Error(responseBody.trim() || `Gemini OCR request failed (${response.status}).`);
+  }
+  const payload = (await response.json()) as GeminiResponse;
+  return parseGeminiResponseText(payload);
+};
+
+const resolveOcrModel = (model: string): CaseResolverResolvedOcrModel => {
+  const resolved = resolveCaseResolverOcrModel(model);
+  if (resolved.model.trim()) return resolved;
+  throw new Error('OCR model is not configured.');
+};
+
+const extractPdfTextForOcr = async (diskPath: string): Promise<string> => {
+  const fileBuffer = await fs.readFile(diskPath);
+  const pdfParseModule = await import('pdf-parse');
+  const parsed = await pdfParseModule.default(fileBuffer);
+  const text = typeof parsed.text === 'string' ? parsed.text.trim() : '';
+  if (!text) return '';
+  if (text.length <= MAX_PDF_OCR_TEXT_CHARS) return text;
+  const truncatedChars = text.length - MAX_PDF_OCR_TEXT_CHARS;
+  return `${text.slice(0, MAX_PDF_OCR_TEXT_CHARS)}\n\n[TRUNCATED ${truncatedChars} chars]`;
+};
+
+const runCaseResolverOcr = async (input: {
+  filepath: string;
+  model: string;
+  prompt: string;
+}): Promise<string> => {
+  const resolvedPath = resolveCaseResolverOcrDiskPath(input.filepath);
+  const resolvedModel = resolveOcrModel(input.model);
+  const prompt = resolveOcrPrompt(input.prompt);
+  if (resolvedPath.kind === 'image') {
+    const buffer = await fs.readFile(resolvedPath.diskPath);
+    const base64Image = buffer.toString('base64');
+    const mimeType = resolveImageMimeType(resolvedPath.filepath);
+    if (resolvedModel.provider === 'openai') {
+      return runOpenAiOcrRequest({
+        model: resolvedModel.model,
+        prompt,
+        filepath: resolvedPath.filepath,
+        base64Image,
+        mimeType,
+      });
+    }
+    if (resolvedModel.provider === 'anthropic') {
+      return runAnthropicOcrRequest({
+        model: resolvedModel.model,
+        prompt,
+        filepath: resolvedPath.filepath,
+        base64Image,
+        mimeType,
+      });
+    }
+    if (resolvedModel.provider === 'gemini') {
+      return runGeminiOcrRequest({
+        model: resolvedModel.model,
+        prompt,
+        filepath: resolvedPath.filepath,
+        base64Image,
+        mimeType,
+      });
+    }
+    return runOllamaOcrRequest({
+      model: resolvedModel.model,
+      prompt,
+      filepath: resolvedPath.filepath,
+      images: [base64Image],
+    });
+  }
+
+  const extractedDocumentText = await extractPdfTextForOcr(resolvedPath.diskPath);
+  if (resolvedModel.provider === 'openai') {
+    return runOpenAiOcrRequest({
+      model: resolvedModel.model,
+      prompt,
+      filepath: resolvedPath.filepath,
+      extractedDocumentText,
+    });
+  }
+  if (resolvedModel.provider === 'anthropic') {
+    return runAnthropicOcrRequest({
+      model: resolvedModel.model,
+      prompt,
+      filepath: resolvedPath.filepath,
+      extractedDocumentText,
+    });
+  }
+  if (resolvedModel.provider === 'gemini') {
+    return runGeminiOcrRequest({
+      model: resolvedModel.model,
+      prompt,
+      filepath: resolvedPath.filepath,
+      extractedDocumentText,
+    });
+  }
+  return runOllamaOcrRequest({
+    model: resolvedModel.model,
+    prompt,
+    filepath: resolvedPath.filepath,
+    extractedDocumentText,
+  });
 };
 
 const queue = createManagedQueue<CaseResolverOcrQueueJobData>({

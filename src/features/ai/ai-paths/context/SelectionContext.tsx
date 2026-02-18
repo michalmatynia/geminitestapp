@@ -10,13 +10,17 @@ import {
 
 import type { AiNode } from '@/features/ai/ai-paths/lib';
 
+export type SelectionToolMode = 'pan' | 'select';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 export interface SelectionState {
   selectedNodeId: string | null;
+  selectedNodeIds: string[];
   selectedEdgeId: string | null;
+  selectionToolMode: SelectionToolMode;
   configOpen: boolean;
   nodeConfigDirty: boolean;
   nodeConfigDraft: AiNode | null;
@@ -25,7 +29,13 @@ export interface SelectionState {
 
 export interface SelectionActions {
   selectNode: (nodeId: string | null) => void;
+  setNodeSelection: (nodeIds: string[]) => void;
+  addNodeToSelection: (nodeId: string) => void;
+  removeNodeFromSelection: (nodeId: string) => void;
+  toggleNodeSelection: (nodeId: string) => void;
+  clearNodeSelection: () => void;
   selectEdge: (edgeId: string | null) => void;
+  setSelectionToolMode: (mode: SelectionToolMode) => void;
   setConfigOpen: (open: boolean) => void;
   setNodeConfigDirty: (dirty: boolean) => void;
   setNodeConfigDraft: (draft: AiNode | null) => void;
@@ -54,7 +64,12 @@ export function SelectionProvider({
   initialSelectedNodeId = null,
 }: SelectionProviderProps): React.ReactNode {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(initialSelectedNodeId);
+  const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>(
+    initialSelectedNodeId ? [initialSelectedNodeId] : []
+  );
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+  const [selectionToolMode, setSelectionToolModeState] =
+    useState<SelectionToolMode>('pan');
   const [configOpen, setConfigOpenState] = useState(false);
   const [nodeConfigDirty, setNodeConfigDirtyState] = useState(false);
   const [nodeConfigDraft, setNodeConfigDraftState] = useState<AiNode | null>(null);
@@ -64,25 +79,93 @@ export function SelectionProvider({
   const actions = useMemo<SelectionActions>(
     () => ({
       selectNode: (nodeId: string | null) => {
-        setSelectedNodeId(nodeId);
-        // When selecting a node, clear edge selection
-        if (nodeId !== null) {
+        const normalized = nodeId?.trim() ?? '';
+        if (normalized) {
+          setSelectedNodeId(normalized);
+          setSelectedNodeIds([normalized]);
+          setSelectedEdgeId(null);
+          return;
+        }
+        setSelectedNodeId(null);
+        setSelectedNodeIds([]);
+      },
+      setNodeSelection: (nodeIds: string[]) => {
+        const unique = Array.from(
+          new Set(
+            nodeIds
+              .map((value: string) => value.trim())
+              .filter((value: string): boolean => value.length > 0)
+          )
+        );
+        setSelectedNodeIds(unique);
+        setSelectedNodeId(unique[0] ?? null);
+        if (unique.length > 0) {
           setSelectedEdgeId(null);
         }
+      },
+      addNodeToSelection: (nodeId: string) => {
+        const normalized = nodeId.trim();
+        if (!normalized) return;
+        setSelectedNodeIds((prev: string[]) => {
+          if (prev.includes(normalized)) return prev;
+          return [...prev, normalized];
+        });
+        setSelectedNodeId((prev: string | null) => prev ?? normalized);
+        setSelectedEdgeId(null);
+      },
+      removeNodeFromSelection: (nodeId: string) => {
+        const normalized = nodeId.trim();
+        if (!normalized) return;
+        setSelectedNodeIds((prev: string[]) => {
+          const next = prev.filter((value: string) => value !== normalized);
+          setSelectedNodeId(
+            (prevSelectedNodeId: string | null): string | null =>
+              prevSelectedNodeId === normalized ? (next[0] ?? null) : prevSelectedNodeId
+          );
+          return next;
+        });
+      },
+      toggleNodeSelection: (nodeId: string) => {
+        const normalized = nodeId.trim();
+        if (!normalized) return;
+        setSelectedNodeIds((prev: string[]) => {
+          const exists = prev.includes(normalized);
+          const next = exists
+            ? prev.filter((value: string) => value !== normalized)
+            : [...prev, normalized];
+          setSelectedNodeId(
+            (prevSelectedNodeId: string | null): string | null => {
+              if (!exists) return normalized;
+              if (prevSelectedNodeId === normalized) return next[0] ?? null;
+              return prevSelectedNodeId;
+            }
+          );
+          if (next.length > 0) {
+            setSelectedEdgeId(null);
+          }
+          return next;
+        });
+      },
+      clearNodeSelection: () => {
+        setSelectedNodeId(null);
+        setSelectedNodeIds([]);
       },
       selectEdge: (edgeId: string | null) => {
         setSelectedEdgeId(edgeId);
         // When selecting an edge, clear node selection
         if (edgeId !== null) {
           setSelectedNodeId(null);
+          setSelectedNodeIds([]);
         }
       },
+      setSelectionToolMode: setSelectionToolModeState,
       setConfigOpen: setConfigOpenState,
       setNodeConfigDirty: setNodeConfigDirtyState,
       setNodeConfigDraft: setNodeConfigDraftState,
       setSimulationOpenNodeId: setSimulationOpenNodeIdState,
       clearSelection: () => {
         setSelectedNodeId(null);
+        setSelectedNodeIds([]);
         setSelectedEdgeId(null);
         setConfigOpenState(false);
         setNodeConfigDirtyState(false);
@@ -95,13 +178,24 @@ export function SelectionProvider({
   const state = useMemo<SelectionState>(
     () => ({
       selectedNodeId,
+      selectedNodeIds,
       selectedEdgeId,
+      selectionToolMode,
       configOpen,
       nodeConfigDirty,
       nodeConfigDraft,
       simulationOpenNodeId,
     }),
-    [selectedNodeId, selectedEdgeId, configOpen, nodeConfigDirty, nodeConfigDraft, simulationOpenNodeId]
+    [
+      selectedNodeId,
+      selectedNodeIds,
+      selectedEdgeId,
+      selectionToolMode,
+      configOpen,
+      nodeConfigDirty,
+      nodeConfigDraft,
+      simulationOpenNodeId,
+    ]
   );
 
   return (

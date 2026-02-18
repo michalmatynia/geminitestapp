@@ -1,4 +1,9 @@
-import type { ProductRecord, ProductWithImages } from '@/features/products/types';
+import type {
+  ProductParameterValue,
+  ProductRecord,
+  ProductWithImages,
+} from '@/features/products/types';
+import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 
 import type { WithId } from 'mongodb';
 
@@ -64,6 +69,58 @@ const resolveCategoryId = (doc: ProductDocument): string | null => {
   }
 
   return null;
+};
+
+const normalizeParameterValues = (input: unknown): ProductParameterValue[] => {
+  if (!Array.isArray(input)) return [];
+  const byParameterId = new Map<string, ProductParameterValue>();
+  input.forEach((entry: unknown) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
+    const record = entry as Record<string, unknown>;
+    const parameterId = decodeSimpleParameterStorageId(
+      toTrimmedString(record['parameterId']) ?? ''
+    );
+    if (!parameterId) return;
+    const value = typeof record['value'] === 'string' ? record['value'] : '';
+    const valuesByLanguageRaw = record['valuesByLanguage'];
+    const valuesByLanguage =
+      valuesByLanguageRaw &&
+      typeof valuesByLanguageRaw === 'object' &&
+      !Array.isArray(valuesByLanguageRaw)
+        ? Object.entries(valuesByLanguageRaw as Record<string, unknown>).reduce(
+            (acc: Record<string, string>, [languageCode, languageValue]) => {
+              const normalizedCode = toTrimmedString(languageCode)?.toLowerCase();
+              if (!normalizedCode || typeof languageValue !== 'string') return acc;
+              acc[normalizedCode] = languageValue;
+              return acc;
+            },
+            {}
+          )
+        : {};
+    const current = byParameterId.get(parameterId);
+    if (!current) {
+      byParameterId.set(parameterId, {
+        parameterId,
+        value,
+        ...(Object.keys(valuesByLanguage).length > 0
+          ? { valuesByLanguage }
+          : {}),
+      });
+      return;
+    }
+    const mergedValuesByLanguage = {
+      ...(current.valuesByLanguage ?? {}),
+      ...valuesByLanguage,
+    };
+    byParameterId.set(parameterId, {
+      parameterId,
+      value: current.value || value,
+      ...(Object.keys(mergedValuesByLanguage).length > 0
+        ? { valuesByLanguage: mergedValuesByLanguage }
+        : {}),
+    });
+  });
+  return Array.from(byParameterId.values());
 };
 
 const normalizeProducerRelations = (
@@ -212,7 +269,7 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     length: doc.length ?? null,
     published: doc.published ?? false,
     catalogId: doc.catalogId ?? '',
-    parameters: Array.isArray(doc.parameters) ? doc.parameters : [],
+    parameters: normalizeParameterValues(doc.parameters),
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
     noteIds,
@@ -275,7 +332,7 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
     length: doc.length ?? null,
     published: doc.published ?? false,
     catalogId: doc.catalogId ?? '',
-    parameters: Array.isArray(doc.parameters) ? doc.parameters : [],
+    parameters: normalizeParameterValues(doc.parameters),
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
     noteIds,

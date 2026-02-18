@@ -10,11 +10,7 @@ import { usePrompt } from '@/shared/hooks/ui/usePrompt';
 import {
   Button,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  SelectSimple,
 } from '@/shared/ui';
 
 import { sanitizeRichText } from './theme-utils';
@@ -175,17 +171,18 @@ export function MiniRichTextEditor({
       <div className='flex flex-wrap items-center gap-1 rounded border border-border/50 bg-gray-900/60 px-2 py-1'>
         {showFormatSelect && (
           <div className='mr-2'>
-            <Select value={formatValue} onValueChange={applyFormat}>
-              <SelectTrigger className='h-7 w-32 bg-gray-800/60 text-xs'>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='paragraph'>Paragraph</SelectItem>
-                <SelectItem value='heading-1'>Heading 1</SelectItem>
-                <SelectItem value='heading-2'>Heading 2</SelectItem>
-                <SelectItem value='heading-3'>Heading 3</SelectItem>
-              </SelectContent>
-            </Select>
+            <SelectSimple
+              size='xs'
+              value={formatValue}
+              onValueChange={applyFormat}
+              options={[
+                { value: 'paragraph', label: 'Paragraph' },
+                { value: 'heading-1', label: 'Heading 1' },
+                { value: 'heading-2', label: 'Heading 2' },
+                { value: 'heading-3', label: 'Heading 3' },
+              ]}
+              triggerClassName='h-7 w-32 bg-gray-800/60 text-xs'
+            />
           </div>
         )}
         <RichTextToolbarButton

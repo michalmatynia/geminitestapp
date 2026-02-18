@@ -1,7 +1,7 @@
 'use client';
 
 import type { ClusterPreset } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, Textarea } from '@/shared/ui';
+import { Button, Input, Label, Textarea, SimpleSettingsList } from '@/shared/ui';
 
 import { usePresetsState, usePresetsActions } from '../context';
 import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
@@ -107,52 +107,36 @@ export function ClusterPresetsPanel(): React.JSX.Element {
       </div>
       <div className='mt-4 space-y-2 text-xs text-gray-400'>
         <div className='text-[11px] uppercase text-gray-500'>Library</div>
-        {clusterPresets.length === 0 && (
-          <div className='rounded-md border border-border bg-card/50 p-3 text-[11px] text-gray-500'>
-            No presets yet. Save a bundle + template pair to reuse across apps.
-          </div>
-        )}
-        {clusterPresets.map((preset: ClusterPreset) => (
-          <div
-            key={preset.id}
-            className='rounded-md border border-border bg-card/50 p-3'
-          >
-            <div className='flex items-center justify-between gap-2'>
-              <div>
-                <div className='text-xs font-semibold text-white'>{preset.name}</div>
-                {preset.description && (
-                  <div className='text-[11px] text-gray-500'>{preset.description}</div>
-                )}
-              </div>
-              <div className='flex items-center gap-2'>
-                <Button
-                  type='button'
-                  className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
-                  onClick={() => loadPresetIntoDraft(preset)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  type='button'
-                  className='rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/10'
-                  onClick={() => handleApplyPreset(preset)}
-                >
-                  Apply
-                </Button>
-                <Button
-                  type='button'
-                  className='rounded-md border border-rose-500/40 px-2 py-1 text-[10px] text-rose-200 hover:bg-rose-500/10'
-                  onClick={() => handleDeletePreset(preset.id)}
-                >
-                  Delete
-                </Button>
-              </div>
+        
+        <SimpleSettingsList
+          items={clusterPresets.map((preset: ClusterPreset) => ({
+            id: preset.id,
+            title: preset.name,
+            description: preset.description,
+            subtitle: `Updated: ${new Date(preset.updatedAt).toLocaleString()}`,
+            original: preset
+          }))}
+          emptyMessage='No presets yet. Save a bundle + template pair to reuse across apps.'
+          renderActions={(item) => (
+            <div className='flex items-center gap-2'>
+              <Button
+                type='button'
+                className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
+                onClick={() => loadPresetIntoDraft(item.original)}
+              >
+                Edit
+              </Button>
+              <Button
+                type='button'
+                className='rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/10'
+                onClick={() => handleApplyPreset(item.original)}
+              >
+                Apply
+              </Button>
             </div>
-            <div className='mt-2 text-[10px] text-gray-500'>
-              Updated: {new Date(preset.updatedAt).toLocaleString()}
-            </div>
-          </div>
-        ))}
+          )}
+          onDelete={(item) => { handleDeletePreset(item.original.id); }}
+        />
         <Button
           type='button'
           className='w-full rounded-md border text-xs text-white hover:bg-muted/60'

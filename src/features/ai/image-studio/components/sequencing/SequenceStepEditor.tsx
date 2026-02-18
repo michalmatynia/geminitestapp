@@ -25,6 +25,10 @@ type SequenceStepEditorProps = {
   operation: ImageStudioSequenceOperation;
   step: ImageStudioSequenceStep;
   cropShapeOptions: Array<{ value: string; label: string }>;
+  cropShapeGeometryById: Record<string, {
+    bbox: { x: number; y: number; width: number; height: number } | null;
+    polygon: Array<{ x: number; y: number }> | null;
+  }>;
   updateStep: (
     stepId: string,
     updater: (step: ImageStudioSequenceStep) => ImageStudioSequenceStep,
@@ -36,6 +40,7 @@ export function SequenceStepEditor({
   operation,
   step,
   cropShapeOptions,
+  cropShapeGeometryById,
   updateStep,
 }: SequenceStepEditorProps): React.JSX.Element {
   return (
@@ -153,11 +158,17 @@ export function SequenceStepEditor({
               onValueChange={(value: string) => {
                 updateStep(stepId, (current) => {
                   const typed = current as ImageStudioSequenceCropStep;
+                  const selectedShapeId = value.trim() ? value : null;
+                  const geometry = selectedShapeId
+                    ? cropShapeGeometryById[selectedShapeId] ?? null
+                    : null;
                   return {
                     ...typed,
                     config: {
                       ...typed.config,
-                      selectedShapeId: value.trim() ? value : null,
+                      selectedShapeId,
+                      bbox: geometry?.bbox ?? null,
+                      polygon: geometry?.polygon ?? null,
                     },
                   };
                 });

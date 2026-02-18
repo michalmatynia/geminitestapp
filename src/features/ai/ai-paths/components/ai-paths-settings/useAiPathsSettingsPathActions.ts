@@ -94,6 +94,7 @@ export type UseAiPathsSettingsPathActionsReturn = {
   handleReset: () => void;
   handleCreatePath: () => void;
   handleCreateAiDescriptionPath: () => void;
+  handleDuplicatePath: (pathId?: string) => void;
   handleDeletePath: (pathId?: string) => Promise<void>;
   handleSwitchPath: (pathId: string) => void;
 };
@@ -131,6 +132,32 @@ export function useAiPathsSettingsPathActions({
   confirm,
   toast,
 }: UseAiPathsSettingsPathActionsInput): UseAiPathsSettingsPathActionsReturn {
+  const resolveDuplicatePathName = useCallback(
+    (sourceName: string): string => {
+      const baseName = sourceName.trim() || 'Untitled Path';
+      const names = new Set(
+        paths
+          .map((path: PathMeta): string => path.name?.trim() || '')
+          .filter((name: string): boolean => name.length > 0)
+          .map((name: string): string => name.toLowerCase()),
+      );
+      const firstCandidate = `${baseName} (Copy)`;
+      if (!names.has(firstCandidate.toLowerCase())) {
+        return firstCandidate;
+      }
+      let copyNumber = 2;
+      while (copyNumber <= 9999) {
+        const candidate = `${baseName} (Copy ${copyNumber})`;
+        if (!names.has(candidate.toLowerCase())) {
+          return candidate;
+        }
+        copyNumber += 1;
+      }
+      return `${baseName} (Copy ${Date.now().toString(36)})`;
+    },
+    [paths],
+  );
+
   const applyPathConfigState = useCallback(
     (config: PathConfig): void => {
       const normalized = normalizeNodes(config.nodes);
@@ -267,6 +294,77 @@ export function useAiPathsSettingsPathActions({
     toast('AI Description Path created.', { variant: 'success' });
   }, [applyPathConfigState, setActivePathId, setPathConfigs, setPaths, toast]);
 
+  const handleDuplicatePath = useCallback(
+    (pathId?: string): void => {
+      const sourceId = pathId ?? activePathId;
+      if (!sourceId) return;
+
+      const sourceConfig = pathConfigs[sourceId] ?? createDefaultPathConfig(sourceId);
+      const sourceMeta = paths.find((path: PathMeta): boolean => path.id === sourceId);
+      const duplicateId = createPathId();
+      const now = new Date().toISOString();
+      const duplicateName = resolveDuplicatePathName(
+        sourceMeta?.name || sourceConfig.name || `Path ${sourceId.slice(0, 6)}`
+      );
+      const duplicatedNodes = normalizeNodes(
+        JSON.parse(JSON.stringify(sourceConfig.nodes ?? [])) as AiNode[]
+      );
+      const duplicatedEdges = sanitizeEdges(
+        duplicatedNodes,
+        JSON.parse(JSON.stringify(sourceConfig.edges ?? [])) as Edge[]
+      );
+      const selectedNodeId = sourceConfig.uiState?.selectedNodeId ?? null;
+      const resolvedSelectedNodeId =
+        selectedNodeId &&
+        duplicatedNodes.some((node: AiNode): boolean => node.id === selectedNodeId)
+          ? selectedNodeId
+          : (duplicatedNodes[0]?.id ?? null);
+
+      const duplicateConfig: PathConfig = {
+        ...sourceConfig,
+        id: duplicateId,
+        name: duplicateName,
+        nodes: duplicatedNodes,
+        edges: duplicatedEdges,
+        updatedAt: now,
+        isLocked: false,
+        runtimeState: { inputs: {}, outputs: {} },
+        lastRunAt: null,
+        runCount: 0,
+        uiState: {
+          selectedNodeId: resolvedSelectedNodeId,
+          configOpen: false,
+        },
+      };
+      const duplicateMeta: PathMeta = {
+        id: duplicateId,
+        name: duplicateName,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      setPaths((prev: PathMeta[]): PathMeta[] => [...prev, duplicateMeta]);
+      setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
+        ...prev,
+        [duplicateId]: duplicateConfig,
+      }));
+      setActivePathId(duplicateId);
+      applyPathConfigState(duplicateConfig);
+      toast('Path duplicated.', { variant: 'success' });
+    },
+    [
+      activePathId,
+      applyPathConfigState,
+      pathConfigs,
+      paths,
+      resolveDuplicatePathName,
+      setActivePathId,
+      setPathConfigs,
+      setPaths,
+      toast,
+    ],
+  );
+
   const handleDeletePath = useCallback(
     async (pathId?: string): Promise<void> => {
       const targetId = pathId ?? activePathId;
@@ -388,6 +486,7 @@ export function useAiPathsSettingsPathActions({
     handleReset,
     handleCreatePath,
     handleCreateAiDescriptionPath,
+    handleDuplicatePath,
     handleDeletePath,
     handleSwitchPath,
   };

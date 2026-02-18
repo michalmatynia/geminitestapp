@@ -5,7 +5,7 @@ import {
   DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
   DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
 } from '@/features/ai/insights/settings';
-import { Checkbox, Input, Switch, Textarea, FormSection, FormField } from '@/shared/ui';
+import { Checkbox, Input, Switch, Textarea, FormSection, FormField, SimpleSettingsList } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 import { type AiBrainFeature, type AiBrainAssignment } from '../settings';
@@ -180,43 +180,45 @@ export function ReportsTab(): React.JSX.Element {
         </details>
       </FormSection>
 
-      <div className='grid gap-4 md:grid-cols-2'>
-        {REPORT_FEATURES.map((feature: FeatureConfig) => {
-          const overrideEnabled = overridesEnabled[feature.key];
-          const assignment = overrideEnabled
-            ? settings.assignments[feature.key] ?? effectiveAssignments[feature.key]
-            : effectiveAssignments[feature.key];
-
-          return (
-            <FormSection
-              key={feature.key}
-              title={feature.label}
-              description={feature.description}
-              className='p-4'
-              actions={
-                <label className='flex items-center gap-2 text-[11px] text-gray-400 cursor-pointer'>
-                  <Checkbox
-                    checked={overrideEnabled}
-                    onCheckedChange={(checked: boolean) => toggleOverride(feature.key, Boolean(checked))}
-                  />
-                  Override
-                </label>
-              }
-            >
-              <div className='mt-3'>
-                <AssignmentEditor
-                  assignment={assignment}
-                  onChange={(next: AiBrainAssignment) => handleOverrideChange(feature.key, next)}
-                  readOnly={!overrideEnabled}
-                />
-              </div>
-
-              {!overrideEnabled ? (
-                <div className='mt-2 text-[11px] text-gray-500'>Using global defaults.</div>
-              ) : null}
-            </FormSection>
-          );
-        })}
+      <div className='space-y-4'>
+        <div className='text-sm font-semibold text-white'>Feature Overrides</div>
+        <SimpleSettingsList
+          items={REPORT_FEATURES.map((feature: FeatureConfig) => {
+            const overrideEnabled = overridesEnabled[feature.key];
+            const assignment = overrideEnabled
+              ? settings.assignments[feature.key] ?? effectiveAssignments[feature.key]
+              : effectiveAssignments[feature.key];
+            
+            return {
+              id: feature.key,
+              title: feature.label,
+              description: feature.description,
+              original: { feature, overrideEnabled, assignment }
+            };
+          })}
+          columns={2}
+          renderActions={(item) => (
+            <label className='flex items-center gap-2 text-[11px] text-gray-400 cursor-pointer'>
+              <Checkbox
+                checked={item.original.overrideEnabled}
+                onCheckedChange={(checked: boolean) => toggleOverride(item.original.feature.key, Boolean(checked))}
+              />
+              Override
+            </label>
+          )}
+          renderCustomContent={(item) => (
+            <div className='space-y-2'>
+              <AssignmentEditor
+                assignment={item.original.assignment}
+                onChange={(next: AiBrainAssignment) => handleOverrideChange(item.original.feature.key, next)}
+                readOnly={!item.original.overrideEnabled}
+              />
+              {!item.original.overrideEnabled && (
+                <div className='text-[11px] text-gray-500'>Using global defaults.</div>
+              )}
+            </div>
+          )}
+        />
       </div>
     </div>
   );

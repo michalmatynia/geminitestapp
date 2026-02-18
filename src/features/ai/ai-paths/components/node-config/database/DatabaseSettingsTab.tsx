@@ -3,7 +3,7 @@
 import type { DatabaseConfig } from '@/features/ai/ai-paths/lib';
 import { DB_COLLECTION_OPTIONS } from '@/features/ai/ai-paths/lib';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { Input, Label, SelectSimple } from '@/shared/ui';
 
 import { useDatabaseConstructorContext } from './DatabaseConstructorContext';
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -22,7 +22,8 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
         <div className='space-y-4'>
           <div>
             <Label className='text-xs text-gray-400'>Write Mode</Label>
-            <Select
+            <SelectSimple
+              size='sm'
               value={databaseConfig.mode ?? 'replace'}
               onValueChange={(value: string): void =>
                 updateSelectedNodeConfig({
@@ -32,15 +33,12 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                   },
                 })
               }
-            >
-              <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-                <SelectValue placeholder='Select mode' />
-              </SelectTrigger>
-              <SelectContent className='border-border bg-gray-900'>
-                <SelectItem value='replace'>Replace</SelectItem>
-                <SelectItem value='append'>Append</SelectItem>
-              </SelectContent>
-            </Select>
+              options={[
+                { value: 'replace', label: 'Replace' },
+                { value: 'append', label: 'Append' },
+              ]}
+              triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+            />
           </div>
         </div>
       )}
@@ -49,47 +47,39 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
         <div className='space-y-4'>
           <div>
             <Label className='text-xs text-gray-400'>Collection Type</Label>
-            <Select
+            <SelectSimple
+              size='sm'
               value={databaseConfig.entityType ?? 'products'}
               onValueChange={(value: string): void =>
                 updateSelectedNodeConfig({
                   database: { ...databaseConfig, entityType: value },
                 })
               }
-            >
-              <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-                <SelectValue placeholder='Collection type' />
-              </SelectTrigger>
-              <SelectContent className='border-border bg-gray-900 max-h-60 overflow-y-auto'>
-                {DB_COLLECTION_OPTIONS.filter((opt: { value: string; label: string }): boolean => opt.value !== 'custom').map((option: { value: string; label: string }): React.JSX.Element => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={DB_COLLECTION_OPTIONS.filter((opt: { value: string; label: string }): boolean => opt.value !== 'custom').map((option: { value: string; label: string }) => ({
+                value: option.value,
+                label: option.label
+              }))}
+              placeholder='Collection type'
+              triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+            />
           </div>
           <div>
             <Label className='text-xs text-gray-400'>Payload Source</Label>
-            <Select
+            <SelectSimple
+              size='sm'
               value={writeSource}
               onValueChange={(value: string): void =>
                 updateSelectedNodeConfig({
                   database: { ...databaseConfig, writeSource: value },
                 })
               }
-            >
-              <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-                <SelectValue placeholder='Select payload input' />
-              </SelectTrigger>
-              <SelectContent className='border-border bg-gray-900'>
-                {availablePorts.map((port: string): React.JSX.Element => (
-                  <SelectItem key={port} value={port}>
-                    {formatPortLabel(port)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={availablePorts.map((port: string) => ({
+                value: port,
+                label: formatPortLabel(port)
+              }))}
+              placeholder='Select payload input'
+              triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+            />
             <p className='mt-2 text-[11px] text-gray-500'>
               The selected input should contain a JSON object. Bundle is recommended.
             </p>
@@ -110,7 +100,8 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
               placeholder='payload.subset'
             />
             {writeSource === 'bundle' && bundleKeys.size > 0 && (
-              <Select
+              <SelectSimple
+                size='xs'
                 value={databaseConfig.writeSourcePath ?? ''}
                 onValueChange={(value: string): void =>
                   updateSelectedNodeConfig({
@@ -120,18 +111,13 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                     },
                   })
                 }
-              >
-                <SelectTrigger className='mt-2 border-border bg-card/70 text-[10px] text-gray-200'>
-                  <SelectValue placeholder='Pick bundle key' />
-                </SelectTrigger>
-                <SelectContent className='border-border bg-gray-900'>
-                  {Array.from(bundleKeys).map((key: string): React.JSX.Element => (
-                    <SelectItem key={key} value={key}>
-                      {formatPortLabel(key)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={Array.from(bundleKeys).map((key: string) => ({
+                  value: key,
+                  label: formatPortLabel(key)
+                }))}
+                placeholder='Pick bundle key'
+                triggerClassName='mt-2 border-border bg-card/70 text-[10px] text-gray-200'
+              />
             )}
             <p className='mt-2 text-[11px] text-gray-500'>
               Optional path inside the payload to use as the request body.
@@ -144,25 +130,21 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
         <div className='space-y-4'>
           <div>
             <Label className='text-xs text-gray-400'>Collection Type</Label>
-            <Select
+            <SelectSimple
+              size='sm'
               value={databaseConfig.entityType ?? 'products'}
               onValueChange={(value: string): void =>
                 updateSelectedNodeConfig({
                   database: { ...databaseConfig, entityType: value },
                 })
               }
-            >
-              <SelectTrigger className='mt-2 w-full border-border bg-card/70 text-sm text-white'>
-                <SelectValue placeholder='Collection type' />
-              </SelectTrigger>
-              <SelectContent className='border-border bg-gray-900 max-h-60 overflow-y-auto'>
-                {DB_COLLECTION_OPTIONS.filter((opt: { value: string; label: string }): boolean => opt.value !== 'custom').map((option: { value: string; label: string }): React.JSX.Element => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={DB_COLLECTION_OPTIONS.filter((opt: { value: string; label: string }): boolean => opt.value !== 'custom').map((option: { value: string; label: string }) => ({
+                value: option.value,
+                label: option.label
+              }))}
+              placeholder='Collection type'
+              triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+            />
           </div>
         </div>
       )}

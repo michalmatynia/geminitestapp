@@ -6,6 +6,7 @@ import { ObjectId, type Document, type Filter } from 'mongodb';
 
 import { mongoImageFileRepository } from '@/features/files/server';
 import { mongoCatalogRepository } from '@/features/products/services/catalog-repository/mongo-catalog-repository';
+import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import {
   toProductBase,
   toProductResponse,
@@ -115,10 +116,11 @@ const normalizeProductParameterValues = (
     ) => {
       if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return acc;
       const record = raw as Record<string, unknown>;
-      const parameterId =
+      const parameterIdRaw =
         typeof record['parameterId'] === 'string'
           ? record['parameterId'].trim()
           : '';
+      const parameterId = decodeSimpleParameterStorageId(parameterIdRaw);
       if (!parameterId) return acc;
       const value =
         typeof record['value'] === 'string' ? record['value'] : '';

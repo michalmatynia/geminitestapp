@@ -1,9 +1,9 @@
 'use client';
 
-import { AlertTriangleIcon, CheckCircle2Icon, DatabaseIcon, Table2Icon, TerminalSquareIcon } from 'lucide-react';
+import { AlertTriangleIcon, DatabaseIcon, Table2Icon, TerminalSquareIcon } from 'lucide-react';
 import Link from 'next/link';
 
-import { Alert, Badge, FormSection, ListPanel, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
+import { Alert, Badge, FormSection, ListPanel, Tabs, TabsContent, TabsList, TabsTrigger, SimpleSettingsList } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { CrudPanel } from './CrudPanel';
@@ -74,47 +74,26 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
         ) : null
       }
       filters={
-        <div className='grid gap-3 lg:grid-cols-2'>
-          {DATABASE_OPTIONS.map((option) => {
-            const isActive = dbType === option.value;
-            return (
-              <button
-                key={option.value}
-                type='button'
-                aria-pressed={isActive}
-                onClick={(): void => setDbType(option.value)}
-                className={cn(
-                  'rounded-lg border p-4 text-left transition-all',
-                  isActive
-                    ? 'border-emerald-500/50 bg-emerald-500/10 shadow-[0_0_0_1px_rgba(16,185,129,0.2)]'
-                    : 'border-border/60 bg-card/30 hover:border-border hover:bg-card/40'
-                )}
-              >
-                <div className='flex items-start justify-between gap-3'>
-                  <div className='flex min-w-0 items-start gap-3'>
-                    <div className={cn(
-                      'mt-0.5 rounded-md border p-2',
-                      isActive ? 'border-emerald-400/40 bg-emerald-500/20' : 'border-white/10 bg-white/5'
-                    )}>
-                      <DatabaseIcon className={cn('size-4', isActive ? 'text-emerald-200' : 'text-gray-400')} />
-                    </div>
-                    <div className='min-w-0'>
-                      <p className={cn('text-sm font-semibold', isActive ? 'text-emerald-100' : 'text-gray-100')}>
-                        {option.label}
-                      </p>
-                      <p className='text-xs text-gray-400'>{option.description}</p>
-                    </div>
-                  </div>
-                  {isActive ? (
-                    <CheckCircle2Icon className='size-4 text-emerald-300' />
-                  ) : (
-                    <span className='text-[11px] text-gray-500'>Select</span>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+        <SimpleSettingsList
+          items={DATABASE_OPTIONS.map((option) => ({
+            id: option.value,
+            title: option.label,
+            description: option.description,
+            icon: (
+              <div className={cn(
+                'rounded-md border p-2',
+                dbType === option.value ? 'border-emerald-400/40 bg-emerald-500/20' : 'border-white/10 bg-white/5'
+              )}>
+                <DatabaseIcon className={cn('size-4', dbType === option.value ? 'text-emerald-200' : 'text-gray-400')} />
+              </div>
+            ),
+            original: option
+          }))}
+          selectedId={dbType}
+          onSelect={(item) => setDbType(item.original.value)}
+          columns={2}
+          padding='md'
+        />
       }
     >
       <Tabs defaultValue='sql' className='w-full'>

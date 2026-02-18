@@ -9,11 +9,7 @@ import { logClientError } from '@/features/observability';
 import { useUserPreferences } from '@/shared/hooks/useUserPreferences';
 import {
   Button,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  SelectSimple,
   useToast,
 } from '@/shared/ui';
 
@@ -515,23 +511,19 @@ export function PagePreviewPanel(): React.ReactNode {
                   Loading zone slugs…
                 </div>
               ) : zoneSlugValues.length > 1 ? (
-                <Select
+                <SelectSimple
+                  size='sm'
                   value={selectedPreviewSlug ?? ''}
                   onValueChange={(value: string): void =>
                     setUserPreviewSlug((prev: string | null) => (prev === value ? prev : value))
                   }
-                >
-                  <SelectTrigger className='h-8 w-[200px] text-xs'>
-                    <SelectValue placeholder='Preview slug' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {zoneSlugValues.map((slug: string) => (
-                      <SelectItem key={slug} value={slug}>
-                        /{slug}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={zoneSlugValues.map((slug: string) => ({
+                    value: slug,
+                    label: `/${slug}`
+                  }))}
+                  placeholder='Preview slug'
+                  triggerClassName='h-8 w-[200px] text-xs'
+                />
               ) : zoneSlugValues.length === 1 ? (
                 <div
                   className='rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-[10px] text-blue-200'

@@ -115,7 +115,7 @@ export function CanvasBoard({
     nodeDurations,
   } = useRuntimeState();
   const { fireTrigger } = useRuntimeActions();
-  const { selectedNodeId, selectedEdgeId } = useSelectionState();
+  const { selectedNodeId, selectedNodeIds, selectedEdgeId, selectionToolMode } = useSelectionState();
   const { selectEdge, setConfigOpen } = useSelectionActions();
   const {
     edgePaths,
@@ -126,7 +126,6 @@ export function CanvasBoard({
     handlePanMove,
     handlePanEnd,
     handleRemoveEdge,
-    handleDeleteSelectedNode,
     handleDisconnectPort,
     handleStartConnection,
     handleCompleteConnection,
@@ -137,8 +136,13 @@ export function CanvasBoard({
     zoomTo,
     fitToNodes,
     resetView,
+    selectionMarqueeRect,
     ConfirmationModal,
   } = useCanvasInteractions(confirmNodeSwitch ? { confirmNodeSwitch } : {});
+  const selectedNodeIdSet = React.useMemo(
+    (): Set<string> => new Set(selectedNodeIds),
+    [selectedNodeIds]
+  );
 
   // --- Local State & Refs ---
   const [hoveredConnectorKey, setHoveredConnectorKey] = React.useState<string | null>(null);
@@ -197,44 +201,6 @@ export function CanvasBoard({
     (nodeId: string, port: string): string => `${nodeId}:${port}`,
     []
   );
-  const canRemoveSelectedEdge = true; const canDeleteSelectedNode = true;
-
-  React.useEffect((): void | (() => void) => {
-    const isTypingTarget = (target: EventTarget | null): boolean => {
-      const element = target as HTMLElement | null;
-      if (!element) return false;
-      if (element.isContentEditable) return true;
-      const tag = element.tagName?.toLowerCase();
-      if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
-      return Boolean(element.closest('input, textarea, select, [contenteditable="true"]'));
-    };
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key !== 'Backspace' && event.key !== 'Delete') return;
-      if (isTypingTarget(event.target)) return;
-      if (selectedEdgeId && canRemoveSelectedEdge) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        handleRemoveEdge(selectedEdgeId);
-        return;
-      }
-      if (selectedNodeId && canDeleteSelectedNode) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        handleDeleteSelectedNode();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown, true);
-    return (): void => {
-      window.removeEventListener('keydown', handleKeyDown, true);
-    };
-  }, [
-    canDeleteSelectedNode,
-    canRemoveSelectedEdge,
-    handleDeleteSelectedNode,
-    handleRemoveEdge,
-    selectedEdgeId,
-    selectedNodeId,
-  ]);
 
   const getPortValue = React.useCallback(
     (direction: 'input' | 'output', nodeId: string, port: string): unknown => {
@@ -365,12 +331,17 @@ export function CanvasBoard({
     flowAnimationMs: FLOW_ANIMATION_MS,
     nodePulseMs: NODE_PULSE_MS,
   });
+  const canvasCursorClass = panState
+    ? 'cursor-grabbing'
+    : selectionToolMode === 'select'
+      ? 'cursor-crosshair'
+      : 'cursor-grab';
 
   return (
     <div
       ref={viewportRef}
       className={`relative min-h-[560px] rounded-lg border bg-card/70 backdrop-blur overflow-hidden ${
-        panState ? 'cursor-grabbing' : 'cursor-grab'
+        canvasCursorClass
       } ${viewportClassName ?? ''}`}
       style={flowStyle}
       onDrop={handleDrop}
@@ -421,6 +392,17 @@ export function CanvasBoard({
           </Button>
         </div>
       </div>
+      {selectionMarqueeRect ? (
+        <div
+          className='pointer-events-none absolute z-30 rounded-md border border-sky-300/80 bg-sky-500/15'
+          style={{
+            left: selectionMarqueeRect.x,
+            top: selectionMarqueeRect.y,
+            width: selectionMarqueeRect.width,
+            height: selectionMarqueeRect.height,
+          }}
+        />
+      ) : null}
       <div
         ref={canvasRef}
         className='absolute left-0 top-0'
@@ -465,8 +447,14 @@ export function CanvasBoard({
             </filter>
           </defs>
           {(edgePaths as EdgePath[]).map((edge: EdgePath): React.JSX.Element => {
-            const isSelected = selectedEdgeId === edge.id;
             const edgeMeta = edgeMetaMap.get(edge.id);
+            const isNodeSelectionEdge =
+              edgeMeta
+                ? selectedNodeIdSet.size > 0 &&
+                  selectedNodeIdSet.has(edgeMeta.from) &&
+                  selectedNodeIdSet.has(edgeMeta.to)
+                : false;
+            const isSelected = selectedEdgeId === edge.id || isNodeSelectionEdge;
             const isFlowing = activeEdgeIds.has(edge.id);
             const isManualConnector =
               edgeMeta?.fromPort === 'aiPrompt' || edgeMeta?.toPort === 'queryCallback';
@@ -511,7 +499,7 @@ export function CanvasBoard({
                 <path
                   d={edge.path}
                   className={edgeClass}
-                  strokeWidth={isSelected ? 2.5 : 1.6}
+                  strokeWidth={isSelected ? 2.7 : 1.6}
                   stroke='currentColor'
                   fill='none'
                   style={{ pointerEvents: 'none' }}
@@ -564,7 +552,8 @@ export function CanvasBoard({
         </svg>
 
         {nodes.map((node) => {
-          const isSelected = node.id === selectedNodeId;
+          const isSelected = selectedNodeIdSet.has(node.id);
+          const isPrimarySelected = node.id === selectedNodeId;
           const style = typeStyles[node.type] ?? typeStyles.template;
           const canUsePersistedStatusFallback = runtimeRunStatus !== 'idle';
           const statusFromRuntimeState = (runtimeState.outputs[node.id] as Record<string, unknown> | undefined)?.['status'];
@@ -659,9 +648,15 @@ export function CanvasBoard({
               }}
             >
               <div
-                className={`relative flex flex-col gap-2 rounded-xl border bg-card/80 p-3 pb-5 text-xs text-gray-200 shadow-lg backdrop-blur ${
+                className={`relative flex flex-col gap-2 rounded-xl border bg-card/80 p-2.5 pb-4 text-xs text-gray-200 shadow-lg backdrop-blur ${
                   style.border
-                } ${style.glow} ${isSelected ? 'ring-2 ring-white/20' : ''}`}
+                } ${style.glow} ${
+                  isPrimarySelected
+                    ? 'ring-2 ring-sky-200/60'
+                    : isSelected
+                      ? 'ring-1 ring-sky-200/40'
+                      : ''
+                }`}
                 style={{ minHeight: NODE_MIN_HEIGHT }}
               >
                 {isInputPulse || isOutputPulse ? (

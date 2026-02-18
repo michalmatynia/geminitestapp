@@ -17,6 +17,10 @@ type SequenceStackCardProps = {
   editableSequenceSteps: ImageStudioSequenceStep[];
   enabledRuntimeSteps: ImageStudioSequenceStep[];
   cropShapeOptions: Array<{ value: string; label: string }>;
+  cropShapeGeometryById: Record<string, {
+    bbox: { x: number; y: number; width: number; height: number } | null;
+    polygon: Array<{ x: number; y: number }> | null;
+  }>;
   mutateSteps: (updater: (steps: ImageStudioSequenceStep[]) => ImageStudioSequenceStep[]) => void;
 };
 
@@ -128,6 +132,7 @@ export function SequenceStackCard({
   editableSequenceSteps,
   enabledRuntimeSteps,
   cropShapeOptions,
+  cropShapeGeometryById,
   mutateSteps,
 }: SequenceStackCardProps): React.JSX.Element {
   const { toast } = useToast();
@@ -573,6 +578,7 @@ export function SequenceStackCard({
                   operation={operation}
                   step={step}
                   cropShapeOptions={cropShapeOptions}
+                  cropShapeGeometryById={cropShapeGeometryById}
                   updateStep={updateStep}
                 />
               ) : null}

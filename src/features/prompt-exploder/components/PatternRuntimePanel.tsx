@@ -6,18 +6,39 @@ import { getPromptValidationObservabilitySnapshot } from '@/features/prompt-core
 import { Button, FormSection, Input, Label, StatusToggle, SelectSimple } from '@/shared/ui';
 
 import { useBenchmarkState } from '../context/hooks/useBenchmark';
+import { useDocumentState } from '../context/hooks/useDocument';
 import { useSettingsState, useSettingsActions } from '../context/hooks/useSettings';
 import { promptExploderClampNumber } from '../helpers/formatting';
 import { getPromptExploderRuntimePatternCacheSnapshot } from '../parser';
-import { PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS } from '../validation-stack';
+import {
+  PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS,
+  promptExploderValidationStackFromBridgeSource,
+  promptExploderValidatorScopeFromStack,
+} from '../validation-stack';
 
 import type { PromptExploderLearnedTemplate } from '../types';
 
+const looksLikeCaseResolverPrompt = (value: string): boolean => {
+  const text = value.trim();
+  if (!text) return false;
+  let score = 0;
+  if (/(^|\n)\s*dotyczy\s*:/imu.test(text)) score += 2;
+  if (/(^|\n)\s*uzasadnienie\b/imu.test(text)) score += 2;
+  if (/(^|\n)\s*na\s+zakończenie\b/imu.test(text)) score += 1;
+  if (/\b\d{2}-\d{3}\s+[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]/u.test(text)) score += 1;
+  if (/(^|\n)\s*[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż][^\n]{1,50}\s+\d{1,2}[./-]\d{1,2}[./-]\d{4}\b/u.test(text)) {
+    score += 1;
+  }
+  return score >= 3;
+};
+
 export function PatternRuntimePanel(): React.JSX.Element {
   const [runtimeHealthTick, setRuntimeHealthTick] = React.useState(0);
+  const { promptText } = useDocumentState();
   const {
     runtimeValidationRules,
     activeValidationRuleStack,
+    validatorPatternLists,
     effectiveLearnedTemplates,
     runtimeLearnedTemplates,
     templateMergeThreshold,
@@ -101,6 +122,33 @@ export function PatternRuntimePanel(): React.JSX.Element {
       : runtimeHealth.status === 'degraded'
         ? 'text-amber-300'
         : 'text-rose-300';
+  const activeStackLabel = React.useMemo(
+    () =>
+      PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS.find(
+        (option) => option.value === activeValidationRuleStack
+      )?.label ?? activeValidationRuleStack,
+    [activeValidationRuleStack]
+  );
+  const isCaseResolverStack = React.useMemo(
+    () =>
+      promptExploderValidatorScopeFromStack(
+        activeValidationRuleStack,
+        validatorPatternLists
+      ) === 'case-resolver-prompt-exploder',
+    [activeValidationRuleStack, validatorPatternLists]
+  );
+  const caseResolverStack = React.useMemo(
+    () =>
+      promptExploderValidationStackFromBridgeSource(
+        'case-resolver',
+        validatorPatternLists
+      ),
+    [validatorPatternLists]
+  );
+  const shouldSuggestCaseResolverStack = React.useMemo(
+    () => looksLikeCaseResolverPrompt(promptText) && !isCaseResolverStack,
+    [isCaseResolverStack, promptText]
+  );
 
   return (
     <FormSection
@@ -109,41 +157,85 @@ export function PatternRuntimePanel(): React.JSX.Element {
       variant='subtle'
       className='p-4'
       actions={
-        <div className='text-xs text-gray-400'>
-          Active rules: <span className='text-gray-200'>{runtimeValidationRules.length}</span> ·
-          learned templates:{' '}
-          <span className='text-gray-200'>{effectiveLearnedTemplates.length}</span>
-          {' '}· runtime templates:{' '}
-          <span className='text-gray-200'>{runtimeLearnedTemplates.length}</span>
-          {' '}· profile:{' '}
-          <span className='text-gray-200'>{learningDraft.runtimeRuleProfile}</span>
-          {' '}· stack:{' '}
-          <span className='text-gray-200'>
-            {PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS.find(
-              (option) => option.value === activeValidationRuleStack
-            )?.label ?? activeValidationRuleStack}
+        <div className='flex flex-wrap items-center justify-end gap-2 text-xs'>
+          <span className='rounded border border-border/60 bg-card/30 px-2 py-1 text-gray-300'>
+            Rules <span className='text-gray-100'>{runtimeValidationRules.length}</span>
           </span>
-          {' '}· merge:{' '}
-          <span className='text-gray-200'>{templateMergeThreshold.toFixed(2)}</span>
-          {' '}· bench template upsert:{' '}
-          <span className='text-gray-200'>
-            {learningDraft.benchmarkSuggestionUpsertTemplates ? 'on' : 'off'}
+          <span className='rounded border border-border/60 bg-card/30 px-2 py-1 text-gray-300'>
+            Templates <span className='text-gray-100'>{runtimeLearnedTemplates.length}</span>
           </span>
-          {' '}· benchmark:{' '}
-          <span className='text-gray-200'>{benchmarkSuiteDraft}</span>
-          {' '}· low conf:{' '}
-          <span className='text-gray-200'>
-            {promptExploderClampNumber(benchmarkLowConfidenceThresholdDraft, 0.3, 0.9).toFixed(2)}
+          <span className='rounded border border-border/60 bg-card/30 px-2 py-1 text-gray-300'>
+            Health <span className={runtimeStatusClass}>{runtimeHealth.status}</span>
           </span>
-          {' '}· suggestion cap:{' '}
-          <span className='text-gray-200'>
-            {promptExploderClampNumber(Math.floor(benchmarkSuggestionLimitDraft), 1, 20)}
-          </span>
-          {' '}· runtime health:{' '}
-          <span className={runtimeStatusClass}>{runtimeHealth.status}</span>
         </div>
       }
     >
+      {shouldSuggestCaseResolverStack ? (
+        <div className='mt-3 flex flex-col gap-2 rounded border border-amber-500/40 bg-amber-500/10 p-3 text-xs sm:flex-row sm:items-center sm:justify-between'>
+          <div className='text-amber-100'>
+            This prompt looks like a Case Resolver document, but the active stack is{' '}
+            <span className='font-medium'>{activeStackLabel}</span>.
+          </div>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            className='border-amber-400/60 text-amber-100 hover:bg-amber-500/20'
+            onClick={() => {
+              setLearningDraft((previous) => ({
+                ...previous,
+                runtimeValidationRuleStack: caseResolverStack,
+              }));
+            }}
+          >
+            Switch to Case Resolver Stack
+          </Button>
+        </div>
+      ) : null}
+      <div className='mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4'>
+        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'>
+          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Validation Stack</div>
+          <div className='mt-1 text-gray-100 break-words'>{activeStackLabel}</div>
+        </div>
+        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'>
+          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Runtime Profile</div>
+          <div className='mt-1 text-gray-100'>{learningDraft.runtimeRuleProfile}</div>
+        </div>
+        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'>
+          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Learned Templates</div>
+          <div className='mt-1 text-gray-100'>{effectiveLearnedTemplates.length}</div>
+        </div>
+        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'>
+          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Runtime Templates</div>
+          <div className='mt-1 text-gray-100'>{runtimeLearnedTemplates.length}</div>
+        </div>
+        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'>
+          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Merge Threshold</div>
+          <div className='mt-1 text-gray-100'>{templateMergeThreshold.toFixed(2)}</div>
+        </div>
+        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'>
+          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Benchmark Suite</div>
+          <div className='mt-1 text-gray-100'>{benchmarkSuiteDraft}</div>
+        </div>
+        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'>
+          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Low Confidence</div>
+          <div className='mt-1 text-gray-100'>
+            {promptExploderClampNumber(benchmarkLowConfidenceThresholdDraft, 0.3, 0.9).toFixed(2)}
+          </div>
+        </div>
+        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'>
+          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Suggestion Cap</div>
+          <div className='mt-1 text-gray-100'>
+            {promptExploderClampNumber(Math.floor(benchmarkSuggestionLimitDraft), 1, 20)}
+          </div>
+        </div>
+        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs sm:col-span-2 xl:col-span-4'>
+          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Benchmark Template Upsert</div>
+          <div className='mt-1 text-gray-100'>
+            {learningDraft.benchmarkSuggestionUpsertTemplates ? 'on' : 'off'}
+          </div>
+        </div>
+      </div>
       <div className='mt-3 grid gap-2 md:grid-cols-9'>
         <div className='space-y-1'>
           <Label className='text-[11px] text-gray-400'>Validation Stack</Label>

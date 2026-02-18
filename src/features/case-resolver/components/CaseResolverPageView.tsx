@@ -1,4 +1,5 @@
 import { Copy, FileText } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import React, { useCallback } from 'react';
 
 import type {
@@ -18,6 +19,7 @@ import {
 } from '@/features/filemaker/settings';
 import {
   AppModal,
+  Badge,
   Button,
   Input,
   Label,
@@ -41,11 +43,14 @@ import {
   CaseResolverPageProvider,
 } from '../context/CaseResolverPageContext';
 import { useCaseResolverState } from '../hooks/useCaseResolverState';
+import { resolveCaseResolverOcrProviderLabel } from '../ocr-provider';
 
 import type {
   CaseResolverDocumentHistoryEntry,
   CaseResolverFileEditDraft,
+  CaseResolverFile,
   CaseResolverGraph,
+  CaseResolverIdentifier,
   CaseResolverRelationGraph,
 } from '../types';
 
@@ -80,7 +85,12 @@ type CaseResolverPageViewProps = {
   handleScanDraftDrop: (event: React.DragEvent<HTMLDivElement>) => void;
   handleScanDraftUploadInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handleTriggerScanDraftUpload: () => void;
+  handleDeleteScanDraftSlot: (slotId: string) => void;
   handleRunScanDraftOcr: () => void;
+  scanOcrModelOptions: SelectOption[];
+  handleScanDraftOcrModelChange: (value: string) => void;
+  handleScanDraftOcrPromptChange: (value: string) => void;
+  handleResetScanDraftOcrPrompt: () => void;
   updateEditingDocumentDraft: (patch: Partial<CaseResolverFileEditDraft>) => void;
   caseTagOptions: SelectOption[];
   caseIdentifierOptions: SelectOption[];
@@ -135,6 +145,7 @@ const formatHistoryTimestamp = (value: string): string => {
 };
 
 export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JSX.Element {
+  const router = useRouter();
   const {
     state,
     workspaceView,
@@ -155,7 +166,12 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     handleScanDraftDrop,
     handleScanDraftUploadInputChange,
     handleTriggerScanDraftUpload,
+    handleDeleteScanDraftSlot,
     handleRunScanDraftOcr,
+    scanOcrModelOptions,
+    handleScanDraftOcrModelChange,
+    handleScanDraftOcrPromptChange,
+    handleResetScanDraftOcrPrompt,
     updateEditingDocumentDraft,
     caseTagOptions,
     caseIdentifierOptions,
@@ -192,6 +208,8 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     selectedFileId,
     selectedAssetId,
     selectedFolderPath,
+    isWorkspaceDirty,
+    isWorkspaceSaving,
     folderPanelCollapsed,
     setFolderPanelCollapsed,
     setActiveMainView,
@@ -212,6 +230,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     handleRunScanFileOcr,
     handleUploadAssets,
     handleAttachAssetFile,
+    handleSaveWorkspace,
     handleDeleteFolder,
     handleOpenFileEditor,
     activeFile,
@@ -223,9 +242,76 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     isPromptExploderPartyProposalOpen,
     setIsPromptExploderPartyProposalOpen,
     isApplyingPromptExploderPartyProposal,
+    confirmAction,
     ConfirmationModal,
     PromptInputModal,
   } = state;
+  const scanOcrProviderLabel = React.useMemo((): string => {
+    if (editingDocumentDraft?.fileType !== 'scanfile') return 'Not set';
+    const model = editingDocumentDraft.scanOcrModel.trim();
+    if (!model) return 'Not set';
+    return resolveCaseResolverOcrProviderLabel(model);
+  }, [editingDocumentDraft?.fileType, editingDocumentDraft?.scanOcrModel]);
+  const activeCaseFile = React.useMemo((): CaseResolverFile | null => {
+    if (activeCaseId) {
+      const activeCase = workspace.files.find(
+        (file: CaseResolverFile): boolean =>
+          file.id === activeCaseId && file.fileType === 'case'
+      );
+      if (activeCase) return activeCase;
+    }
+    if (activeFile?.fileType === 'case') return activeFile;
+    if (activeFile?.parentCaseId) {
+      const parentCase = workspace.files.find(
+        (file: CaseResolverFile): boolean =>
+          file.id === activeFile.parentCaseId && file.fileType === 'case'
+      );
+      if (parentCase) return parentCase;
+    }
+    return null;
+  }, [activeCaseId, activeFile, workspace.files]);
+  const activeCaseIdentifierId = activeCaseFile?.caseIdentifierId ?? null;
+  const activeCaseIdentifierLabel = React.useMemo((): string | null => {
+    if (!activeCaseIdentifierId) return null;
+    const matchingIdentifier = caseResolverIdentifiers.find(
+      (identifier: CaseResolverIdentifier): boolean =>
+        identifier.id === activeCaseIdentifierId
+    );
+    return matchingIdentifier?.name ?? activeCaseIdentifierId;
+  }, [activeCaseIdentifierId, caseResolverIdentifiers]);
+  const handleFilterCasesBySignatureId = useCallback(
+    (caseIdentifierId: string): void => {
+      router.push(
+        `/admin/case-resolver/cases?caseIdentifierId=${encodeURIComponent(caseIdentifierId)}`
+      );
+    },
+    [router]
+  );
+  const headerDescription = React.useMemo((): React.ReactNode => {
+    if (!activeCaseFile) return 'Admin / Case Resolver';
+    if (!activeCaseIdentifierId || !activeCaseIdentifierLabel) {
+      return <span className='text-muted-foreground/80'>No signature ID</span>;
+    }
+    return (
+      <button
+        type='button'
+        className='rounded-full'
+        title='Show cases filtered by this signature ID'
+        onClick={(): void => {
+          handleFilterCasesBySignatureId(activeCaseIdentifierId);
+        }}
+      >
+        <Badge variant='outline' className='cursor-pointer hover:bg-muted/60'>
+          Signature ID: {activeCaseIdentifierLabel}
+        </Badge>
+      </button>
+    );
+  }, [
+    activeCaseFile,
+    activeCaseIdentifierId,
+    activeCaseIdentifierLabel,
+    handleFilterCasesBySignatureId,
+  ]);
 
   const handleCreateNodeFile = useCallback((): void => {
     handleCreateFile(null);
@@ -245,6 +331,68 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     setActiveMainView('workspace');
     handleOpenFileEditor(id);
   }, [handleOpenFileEditor, setActiveMainView]);
+  const fileEditorTitle = editingDocumentDraft?.fileType === 'scanfile'
+    ? 'Edit Scan'
+    : 'Edit Document';
+  const handleRequestCloseFileEditor = useCallback((): void => {
+    if (!editingDocumentDraft) return;
+    if (!isEditorDraftDirty) {
+      handleDiscardFileEditorDraft();
+      return;
+    }
+    confirmAction({
+      title: 'Unsaved Changes',
+      message: 'You have unsaved changes in this document. Keep editing or discard them?',
+      cancelText: 'Keep Editing',
+      confirmText: 'Discard Changes',
+      isDangerous: true,
+      onConfirm: handleDiscardFileEditorDraft,
+    });
+  }, [
+    confirmAction,
+    editingDocumentDraft,
+    handleDiscardFileEditorDraft,
+    isEditorDraftDirty,
+  ]);
+
+  React.useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
+      if (!isWorkspaceDirty && !isEditorDraftDirty) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return (): void => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isEditorDraftDirty, isWorkspaceDirty]);
+
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      const isSaveShortcut =
+        (event.metaKey || event.ctrlKey) &&
+        !event.altKey &&
+        !event.shiftKey &&
+        event.key.toLowerCase() === 's';
+      if (!isSaveShortcut) return;
+      event.preventDefault();
+      if (editingDocumentDraft) {
+        handleSaveFileEditor();
+        return;
+      }
+      if (isWorkspaceSaving) return;
+      handleSaveWorkspace();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return (): void => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [
+    editingDocumentDraft,
+    handleSaveFileEditor,
+    handleSaveWorkspace,
+    isWorkspaceSaving,
+  ]);
 
   // Main Render
   return (
@@ -256,10 +404,13 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
       selectedFileId,
       selectedAssetId,
       selectedFolderPath,
+      isWorkspaceDirty,
+      isWorkspaceSaving,
       activeFile,
       selectedAsset,
       panelCollapsed: folderPanelCollapsed,
       onPanelCollapsedChange: setFolderPanelCollapsed,
+      onSaveWorkspace: handleSaveWorkspace,
       onSelectFile: handleSelectFile,
       onSelectAsset: handleSelectAsset,
       onSelectFolder: handleSelectFolder,
@@ -303,8 +454,8 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
           
           <div className='flex flex-1 flex-col overflow-hidden p-6'>
             <PanelHeader
-              title='Case Resolver'
-              description='Admin / Case Resolver'
+              title={activeCaseFile?.name ?? 'Case Resolver'}
+              description={headerDescription}
               className='mb-6'
               actions={[
                 {
@@ -354,9 +505,36 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
         {/* All Modals */}
         <AppModal
           open={editingDocumentDraft !== null}
-          onOpenChange={(open) => { if (!open) handleSaveFileEditor(); }}
-          title={editingDocumentDraft?.fileType === 'scanfile' ? 'Edit Scan' : 'Edit Document'}
+          onOpenChange={(open) => { if (!open) handleRequestCloseFileEditor(); }}
+          title={fileEditorTitle}
           size='xl'
+          showClose={false}
+          header={(
+            <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
+              <div className='min-w-0'>
+                <div className='flex min-w-0 items-center gap-2'>
+                  <Button
+                    type='button'
+                    onClick={handleSaveFileEditor}
+                    className='min-w-[100px]'
+                  >
+                    Save Changes
+                  </Button>
+                  <h2 className='truncate text-2xl font-bold tracking-tight text-white'>{fileEditorTitle}</h2>
+                </div>
+              </div>
+              <div className='flex flex-wrap items-center justify-end gap-2'>
+                <Button
+                  type='button'
+                  onClick={handleRequestCloseFileEditor}
+                  variant='outline'
+                  className='min-w-[100px]'
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
         >
           {editingDocumentDraft && (
             <div className='space-y-4'>
@@ -386,13 +564,13 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                   <input
                     ref={scanDraftUploadInputRef}
                     type='file'
-                    accept='image/*'
+                    accept='image/*,application/pdf,.pdf'
                     multiple
                     className='hidden'
                     onChange={handleScanDraftUploadInputChange}
                   />
                   <div className='flex flex-wrap items-center gap-2'>
-                    <div className='text-xs font-medium text-gray-200'>Image Slots</div>
+                    <div className='text-xs font-medium text-gray-200'>Document Slots</div>
                     <div className='ml-auto flex items-center gap-2'>
                       <Button
                         type='button'
@@ -400,7 +578,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                         disabled={isUploadingScanDraftFiles}
                         className='h-8 rounded-md border border-border text-xs text-gray-100 hover:bg-muted/60 disabled:opacity-60'
                       >
-                        {isUploadingScanDraftFiles ? 'Uploading...' : 'Upload Images'}
+                        {isUploadingScanDraftFiles ? 'Uploading...' : 'Upload Files'}
                       </Button>
                       <Button
                         type='button'
@@ -416,42 +594,102 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                       </Button>
                     </div>
                   </div>
+                  <div className='mt-2 grid gap-2 md:grid-cols-[220px_minmax(0,1fr)_auto]'>
+                    <div className='space-y-1'>
+                      <div className='flex items-center justify-between gap-2'>
+                        <span className='text-[10px] font-medium uppercase tracking-wide text-gray-500'>
+                          OCR Model
+                        </span>
+                        <Badge variant='outline' className='px-1.5 py-0 text-[9px] uppercase tracking-wide'>
+                          {scanOcrProviderLabel}
+                        </Badge>
+                      </div>
+                      <SelectSimple
+                        value={editingDocumentDraft.scanOcrModel}
+                        onValueChange={handleScanDraftOcrModelChange}
+                        options={scanOcrModelOptions}
+                        placeholder='Select OCR model'
+                        triggerClassName='h-8 text-xs'
+                        size='sm'
+                      />
+                    </div>
+                    <Input
+                      value={editingDocumentDraft.scanOcrPrompt}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                        handleScanDraftOcrPromptChange(event.target.value);
+                      }}
+                      className='h-8 text-xs'
+                      placeholder='OCR prompt'
+                    />
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      className='h-8 px-2 text-[11px]'
+                      onClick={handleResetScanDraftOcrPrompt}
+                    >
+                      Reset
+                    </Button>
+                  </div>
                   <div className='mt-1 text-[11px] text-gray-500'>
-                    Drag and drop image files here, or use Upload Images.
+                    Drag and drop image or PDF files here, or use Upload Files.
                   </div>
                   <div className='mt-2 max-h-32 space-y-1 overflow-auto pr-1'>
                     {editingDocumentDraft.scanSlots.length === 0 ? (
                       <div className='rounded border border-dashed border-border/60 px-2 py-1.5 text-[11px] text-gray-500'>
-                        No images uploaded yet.
+                        No files uploaded yet.
                       </div>
                     ) : (
-                      editingDocumentDraft.scanSlots.map((slot) => (
-                        <div
-                          key={slot.id}
-                          className='flex items-center justify-between gap-2 rounded border border-border/60 bg-card/30 px-2 py-1.5 text-[11px]'
-                        >
-                          <div className='min-w-0'>
-                            <div className='truncate text-gray-200'>{slot.name || 'Untitled image'}</div>
-                            <div className='text-gray-500'>
-                              {uploadingScanSlotId === 'all' || uploadingScanSlotId === slot.id
-                                ? 'Processing OCR...'
-                                : slot.ocrText.trim().length > 0
-                                  ? 'OCR extracted'
-                                  : 'OCR pending'}
+                      editingDocumentDraft.scanSlots.map((slot) => {
+                        const statusLabel =
+                          uploadingScanSlotId === 'all' || uploadingScanSlotId === slot.id
+                            ? 'Processing OCR...'
+                            : slot.ocrError
+                              ? 'OCR failed'
+                              : slot.ocrText.trim().length > 0
+                                ? 'OCR extracted'
+                                : 'OCR pending';
+                        return (
+                          <div
+                            key={slot.id}
+                            className='flex items-center justify-between gap-2 rounded border border-border/60 bg-card/30 px-2 py-1.5 text-[11px]'
+                          >
+                            <div className='min-w-0'>
+                              <div className='truncate text-gray-200'>{slot.name || 'Untitled file'}</div>
+                              <div className='text-gray-500'>{statusLabel}</div>
+                              {slot.ocrError ? (
+                                <div className='truncate text-[10px] text-red-300' title={slot.ocrError}>
+                                  {slot.ocrError}
+                                </div>
+                              ) : null}
+                            </div>
+                            <div className='flex items-center gap-2'>
+                              {slot.filepath ? (
+                                <a
+                                  href={slot.filepath}
+                                  target='_blank'
+                                  rel='noreferrer'
+                                  className='text-cyan-200 hover:text-cyan-100'
+                                >
+                                  Open
+                                </a>
+                              ) : null}
+                              <Button
+                                type='button'
+                                variant='ghost'
+                                size='xs'
+                                disabled={isUploadingScanDraftFiles || uploadingScanSlotId !== null}
+                                className='h-6 px-2 text-[10px] text-red-300 hover:bg-red-500/10 hover:text-red-200'
+                                onClick={(): void => {
+                                  handleDeleteScanDraftSlot(slot.id);
+                                }}
+                              >
+                                Delete
+                              </Button>
                             </div>
                           </div>
-                          {slot.filepath ? (
-                            <a
-                              href={slot.filepath}
-                              target='_blank'
-                              rel='noreferrer'
-                              className='text-cyan-200 hover:text-cyan-100'
-                            >
-                              Open
-                            </a>
-                          ) : null}
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
                 </div>
@@ -747,10 +985,6 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
               )}
 
               <div className='flex justify-end gap-2'>
-                <Button variant='outline' onClick={handleDiscardFileEditorDraft}>Discard</Button>
-                <Button onClick={handleSaveFileEditor}>
-                  Save Changes
-                </Button>
                 <Button
                   type='button'
                   variant='ghost'

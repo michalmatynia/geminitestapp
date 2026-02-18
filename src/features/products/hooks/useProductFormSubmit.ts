@@ -18,6 +18,7 @@ import { delay } from '@/shared/utils';
 
 import { invalidateProductsAndCounts } from './productCache';
 import { useCreateProductMutation, useUpdateProductMutation } from './useProductData';
+import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 
 
 import type { BaseSyntheticEvent } from 'react';
@@ -148,7 +149,7 @@ function buildFormData(
         ) ||
         '';
       return {
-        parameterId: entry.parameterId?.trim(),
+        parameterId: decodeSimpleParameterStorageId(entry.parameterId ?? ''),
         value: directValue || fallbackLocalizedValue,
         ...(Object.keys(valuesByLanguage).length > 0
           ? { valuesByLanguage }

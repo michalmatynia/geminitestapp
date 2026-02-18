@@ -58,7 +58,7 @@ const MODE_OPTIONS: Array<{ value: AiTriggerButtonMode; label: string }> = [
 
 const DISPLAY_OPTIONS: Array<{ value: AiTriggerButtonDisplay; label: string }> = [
   { value: 'icon_label', label: 'Icon + label' },
-  { value: 'icon', label: 'Icon only' },
+  { value: 'icon', label: 'Icon only (name in tooltip)' },
 ];
 
 const normalizeDraft = (record?: AiTriggerButtonDto | null): TriggerButtonDraft => ({
@@ -430,7 +430,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       type: 'select',
       options: DISPLAY_OPTIONS,
       placeholder: 'Select display',
-      helperText: 'Icon only is best for headers.',
+      helperText: 'Set per button. Icon-only mode shows the button name in a hover tooltip.',
     },
     {
       key: 'mode',

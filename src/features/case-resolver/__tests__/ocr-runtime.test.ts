@@ -3,8 +3,10 @@ import path from 'path';
 import { describe, expect, it } from 'vitest';
 
 import {
+  isCaseResolverOcrFilepath,
   isCaseResolverImageFilepath,
   normalizeCaseResolverPublicFilepath,
+  resolveCaseResolverOcrDiskPath,
   resolveCaseResolverImageDiskPath,
 } from '@/features/case-resolver/server/ocr-runtime';
 
@@ -27,6 +29,18 @@ describe('case resolver OCR runtime path helpers', () => {
     expect(isCaseResolverImageFilepath('/uploads/notes/note.png')).toBe(false);
   });
 
+  it('accepts OCR paths for case resolver images and PDFs', () => {
+    expect(
+      isCaseResolverOcrFilepath('/uploads/case-resolver/images/scan.png')
+    ).toBe(true);
+    expect(
+      isCaseResolverOcrFilepath('/uploads/case-resolver/pdfs/scan.pdf')
+    ).toBe(true);
+    expect(
+      isCaseResolverOcrFilepath('/uploads/case-resolver/files/readme.txt')
+    ).toBe(false);
+  });
+
   it('resolves valid OCR file paths to disk and rejects invalid paths', () => {
     const diskPath = resolveCaseResolverImageDiskPath(
       '/uploads/case-resolver/images/scan.png'
@@ -42,12 +56,22 @@ describe('case resolver OCR runtime path helpers', () => {
       )
     );
 
-    expect(() =>
-      resolveCaseResolverImageDiskPath('/uploads/case-resolver/images/scan.pdf')
-    ).toThrow('Only image files are supported for OCR runtime.');
+    const pdfPath = resolveCaseResolverOcrDiskPath(
+      '/uploads/case-resolver/pdfs/scan.pdf'
+    );
+    expect(pdfPath.kind).toBe('pdf');
+    expect(pdfPath.diskPath).toBe(
+      path.resolve(
+        process.cwd(),
+        'public',
+        'uploads',
+        'case-resolver',
+        'pdfs',
+        'scan.pdf'
+      )
+    );
     expect(() =>
       resolveCaseResolverImageDiskPath('/uploads/notes/scan.png')
-    ).toThrow('Only Case Resolver uploaded images are supported.');
+    ).toThrow('Only Case Resolver uploaded files are supported.');
   });
 });
-

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import {
   buildCaseResolverCaptureProposalState,
@@ -62,6 +62,11 @@ export const useCaseResolverStatePromptExploderSync = ({
   setIsPromptExploderPartyProposalOpen,
   toast,
 }: UseCaseResolverStatePromptExploderSyncInput): void => {
+  const filemakerDatabaseRef = useRef(filemakerDatabase);
+  filemakerDatabaseRef.current = filemakerDatabase;
+  const caseResolverCaptureSettingsRef = useRef(caseResolverCaptureSettings);
+  caseResolverCaptureSettingsRef.current = caseResolverCaptureSettings;
+
   useEffect(() => {
     const payload = consumePromptExploderApplyPromptForCaseResolver();
     if (!payload?.prompt?.trim()) return;
@@ -72,8 +77,8 @@ export const useCaseResolverStatePromptExploderSync = ({
     const proposalState = buildCaseResolverCaptureProposalState(
       payload.caseResolverParties,
       targetFileId,
-      filemakerDatabase,
-      caseResolverCaptureSettings
+      filemakerDatabaseRef.current,
+      caseResolverCaptureSettingsRef.current
     );
     const nextExplodedContent = stripCapturedAddressLinesFromText(payload.prompt, proposalState);
     const extractedDocumentDate = extractCaseResolverDocumentDate(nextExplodedContent);
@@ -164,7 +169,7 @@ export const useCaseResolverStatePromptExploderSync = ({
     if (proposalState) {
       setPromptExploderPartyProposal(proposalState);
       setIsApplyingPromptExploderPartyProposal(false);
-      if (caseResolverCaptureSettings.autoOpenProposalModal) {
+      if (caseResolverCaptureSettingsRef.current.autoOpenProposalModal) {
         setIsPromptExploderPartyProposalOpen(true);
       }
     } else {
@@ -174,8 +179,6 @@ export const useCaseResolverStatePromptExploderSync = ({
     }
     toast('Exploded text returned to Case Resolver.', { variant: 'success' });
   }, [
-    caseResolverCaptureSettings,
-    filemakerDatabase,
     setEditingDocumentDraft,
     setIsApplyingPromptExploderPartyProposal,
     setIsPromptExploderPartyProposalOpen,

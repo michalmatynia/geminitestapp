@@ -25,6 +25,10 @@ import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
+import {
+  readPromptExploderDraftPayload,
+  type PromptExploderBridgeSource,
+} from '../bridge';
 import { isPromptValidationStrictStackMode } from '../feature-flags';
 import { promptExploderClampNumber } from '../helpers/formatting';
 import { isPromptExploderManagedRule } from '../helpers/segment-helpers';
@@ -52,6 +56,7 @@ import { parsePromptExploderSettings, PROMPT_EXPLODER_SETTINGS_KEY } from '../se
 import {
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
   normalizePromptExploderValidationRuleStack,
+  promptExploderValidationStackFromBridgeSource,
   type PromptExploderRuntimeValidationScope,
   type PromptExploderValidationRuleStack,
 } from '../validation-stack';
@@ -164,6 +169,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const [sessionLearnedTemplates, setSessionLearnedTemplates] = useState<PromptExploderLearnedTemplate[]>([]);
   const [hasUnsavedLearningDraft, setHasUnsavedLearningDraft] = useState(false);
   const [hasUnsavedParserTuningDrafts, setHasUnsavedParserTuningDrafts] = useState(false);
+  const [incomingBridgeSource, setIncomingBridgeSource] =
+    useState<PromptExploderBridgeSource | null>(null);
 
   const setLearningDraft = useCallback<React.Dispatch<React.SetStateAction<LearningDraft>>>(
     (value) => {
@@ -203,6 +210,21 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     () => isPromptValidationStrictStackMode(),
     []
   );
+  const shouldPreferCaseResolverValidationStack =
+    incomingBridgeSource === 'case-resolver';
+  const preferredValidatorScope =
+    shouldPreferCaseResolverValidationStack
+      ? 'case-resolver-prompt-exploder'
+      : 'prompt-exploder';
+
+  useEffect(() => {
+    const payload = readPromptExploderDraftPayload();
+    if (!payload || (payload.target && payload.target !== 'prompt-exploder')) {
+      setIncomingBridgeSource(null);
+      return;
+    }
+    setIncomingBridgeSource(payload.source);
+  }, []);
 
   const runtimeResolution = useMemo<{
     selection: PromptValidationOrchestrationResult;
@@ -221,6 +243,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
           maxTemplates: learningDraft.maxTemplates,
           sessionLearnedRules,
           sessionLearnedTemplates,
+          preferredValidatorScope,
           strictUnknownStack: strictStackMode,
         }),
         warning: null,
@@ -237,6 +260,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         maxTemplates: learningDraft.maxTemplates,
         sessionLearnedRules,
         sessionLearnedTemplates,
+        preferredValidatorScope,
         strictUnknownStack: false,
       });
       return {
@@ -252,6 +276,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     learningDraft.runtimeValidationRuleStack,
     promptExploderSettings,
     promptSettings,
+    preferredValidatorScope,
     sessionLearnedRules,
     sessionLearnedTemplates,
     strictStackMode,
@@ -380,6 +405,23 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     promptExploderSettings.learning.similarityThreshold,
     validatorPatternLists,
   ]);
+
+  useEffect(() => {
+    if (hasUnsavedLearningDraft) return;
+    if (incomingBridgeSource !== 'case-resolver') return;
+    const caseResolverStack = promptExploderValidationStackFromBridgeSource(
+      incomingBridgeSource,
+      validatorPatternLists
+    );
+    setLearningDraftState((current) => {
+      if (current.runtimeValidationRuleStack === caseResolverStack) return current;
+      return {
+        ...current,
+        runtimeValidationRuleStack: caseResolverStack,
+      };
+    });
+    setHasUnsavedLearningDraft(false);
+  }, [hasUnsavedLearningDraft, incomingBridgeSource, validatorPatternLists]);
 
   // ── Sync snapshot selection ────────────────────────────────────────────────
 

@@ -5,7 +5,7 @@ import React from 'react';
 
 import { ICON_LIBRARY_MAP } from '@/features/icons';
 import type { AiTriggerButtonLocation, AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
-import { Button, Switch } from '@/shared/ui';
+import { Button, Switch, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useTriggerButtons } from '../../hooks/useTriggerButtons';
@@ -55,14 +55,12 @@ export function TriggerButtonBar({
         
         if (button.mode === 'toggle') {
           const checked = Boolean(toggleMap[button.id]);
-          return (
+          const toggleControl = (
             <div
-              key={button.id}
               className={cn(
                 'relative flex items-center gap-2 overflow-hidden rounded-lg border border-border bg-card/40 px-2 py-1',
                 isRunning ? 'cursor-wait' : null
               )}
-              title={button.name}
             >
               {isRunning ? (
                 <span
@@ -89,6 +87,7 @@ export function TriggerButtonBar({
               <Switch
                 checked={checked}
                 disabled={isRunning}
+                aria-label={button.name}
                 className='relative z-10'
                 onCheckedChange={(nextChecked: boolean) => {
                   void handleTrigger(button, { mode: 'toggle', checked: nextChecked });
@@ -96,14 +95,23 @@ export function TriggerButtonBar({
               />
             </div>
           );
+
+          if (!showLabel) {
+            return (
+              <Tooltip key={button.id} content={button.name}>
+                {toggleControl}
+              </Tooltip>
+            );
+          }
+
+          return React.cloneElement(toggleControl, { key: button.id });
         }
 
-        return (
+        const clickControl = (
           <Button
-            key={button.id}
             variant='outline'
             size={showLabel ? 'xs' : 'icon'}
-            title={button.name}
+            aria-label={button.name}
             disabled={isRunning}
             onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
               void handleTrigger(button, { mode: 'click', event });
@@ -136,6 +144,16 @@ export function TriggerButtonBar({
             ) : null}
           </Button>
         );
+
+        if (!showLabel) {
+          return (
+            <Tooltip key={button.id} content={button.name}>
+              {clickControl}
+            </Tooltip>
+          );
+        }
+
+        return React.cloneElement(clickControl, { key: button.id });
       })}
     </div>
   );

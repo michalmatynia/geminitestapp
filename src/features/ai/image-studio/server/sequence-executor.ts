@@ -107,7 +107,14 @@ const ensureRenderableSlot = (
 
 const loadSourceBuffer = async (
   slot: ImageStudioSlotRecord
-): Promise<{ buffer: Buffer; mimeHint: string | null; width: number; height: number }> => {
+): Promise<{
+  buffer: Buffer;
+  mimeHint: string | null;
+  width: number;
+  height: number;
+  sourceOriginalOrientation: number | null;
+  sourceOrientationApplied: boolean;
+}> => {
   const sourcePath = resolveSlotImagePath(slot);
   if (!sourcePath) {
     throw new Error('Working slot has no source image path.');
@@ -133,18 +140,32 @@ const loadSourceBuffer = async (
     buffer = await fs.readFile(diskPath);
   }
 
-  const metadata = await sharp(buffer).metadata();
-  const width = metadata.width ?? 0;
-  const height = metadata.height ?? 0;
+  const sourceMetadata = await sharp(buffer).metadata().catch(() => null);
+  const sourceOriginalOrientation =
+    typeof sourceMetadata?.orientation === 'number' &&
+    Number.isFinite(sourceMetadata.orientation)
+      ? Math.floor(sourceMetadata.orientation)
+      : null;
+  const sourceOrientationApplied =
+    sourceOriginalOrientation !== null && sourceOriginalOrientation !== 1;
+
+  // Normalize to display orientation so crop geometry matches what users see in canvas/browser.
+  const oriented = await sharp(buffer)
+    .rotate()
+    .toBuffer({ resolveWithObject: true });
+  const width = oriented.info.width ?? 0;
+  const height = oriented.info.height ?? 0;
   if (!(width > 0 && height > 0)) {
     throw new Error('Source image dimensions are invalid.');
   }
 
   return {
-    buffer,
+    buffer: oriented.data,
     mimeHint,
     width,
     height,
+    sourceOriginalOrientation,
+    sourceOrientationApplied,
   };
 };
 
@@ -357,6 +378,26 @@ const resolveCropRect = async (
   const kind = step.config.kind;
   let rect: PixelRect;
 
+  if (
+    kind === 'selected_shape' &&
+    Array.isArray(step.config.polygon) &&
+    step.config.polygon.length >= 3
+  ) {
+    const xs = step.config.polygon.map((point) => Math.max(0, Math.min(1, point.x)) * sourceWidth);
+    const ys = step.config.polygon.map((point) => Math.max(0, Math.min(1, point.y)) * sourceHeight);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    rect = {
+      left: minX,
+      top: minY,
+      width: Math.max(1, maxX - minX),
+      height: Math.max(1, maxY - minY),
+    };
+    return withPadding(rect, step.config.paddingPercent, sourceWidth, sourceHeight);
+  }
+
   if ((kind === 'bbox' || kind === 'selected_shape') && step.config.bbox) {
     rect = {
       left: step.config.bbox.x * sourceWidth,
@@ -368,7 +409,7 @@ const resolveCropRect = async (
   }
 
   if (
-    (kind === 'polygon' || kind === 'selected_shape') &&
+    kind === 'polygon' &&
     Array.isArray(step.config.polygon) &&
     step.config.polygon.length >= 3
   ) {
@@ -609,6 +650,14 @@ const executeCropStep = async (params: {
       mode: params.step.config.kind,
       cropRect: rect,
       paddingPercent: params.step.config.paddingPercent,
+      sourceWidth: source.width,
+      sourceHeight: source.height,
+      sourceOriginalOrientation: source.sourceOriginalOrientation,
+      sourceOrientationApplied: source.sourceOrientationApplied,
+      selectedShapeId:
+        params.step.config.kind === 'selected_shape'
+          ? params.step.config.selectedShapeId ?? null
+          : null,
     },
   });
   ensureRenderableSlot(createdSlot, `crop:${params.step.id}`);

@@ -14,6 +14,7 @@ import {
   recordPromptValidationCounter,
   recordPromptValidationError,
   recordPromptValidationTiming,
+  type PromptValidationCounterName,
 } from '@/features/prompt-core/runtime-observability';
 import type {
   PromptValidationRule,
@@ -27,6 +28,7 @@ import {
 } from './parser';
 import {
   getPromptExploderScopedRules,
+  PROMPT_EXPLODER_PATTERN_PACK,
   PROMPT_EXPLODER_PATTERN_PACK_IDS,
 } from './pattern-pack';
 import { filterTemplatesForRuntime } from './runtime-refresh';
@@ -163,6 +165,57 @@ const selectRuntimeRules = (
     return effectiveRules.filter((rule) => PROMPT_EXPLODER_PATTERN_PACK_IDS.has(rule.id));
   }
   return effectiveRules;
+};
+
+const CASE_RESOLVER_HEADING_RULE_ID_RE = /^segment\.case_resolver\.heading\./i;
+
+const isCaseResolverRuleInScope = (rule: PromptValidationRule): boolean => {
+  const scopes = rule.appliesToScopes ?? [];
+  return (
+    scopes.length === 0 ||
+    scopes.includes('case_resolver_prompt_exploder') ||
+    scopes.includes('global')
+  );
+};
+
+const hasUsableCaseResolverHeadingRules = (
+  rules: PromptValidationRule[]
+): boolean =>
+  rules.some(
+    (rule) =>
+      rule.kind === 'regex' &&
+      rule.promptExploderTreatAsHeading === true &&
+      CASE_RESOLVER_HEADING_RULE_ID_RE.test(rule.id)
+  );
+
+const ensureCaseResolverRuntimeRules = (
+  runtimeRules: PromptValidationRule[],
+  scope: string
+): {
+  rules: PromptValidationRule[];
+  usedFallback: boolean;
+} => {
+  if (scope !== 'case_resolver_prompt_exploder') {
+    return { rules: runtimeRules, usedFallback: false };
+  }
+  if (hasUsableCaseResolverHeadingRules(runtimeRules)) {
+    return { rules: runtimeRules, usedFallback: false };
+  }
+
+  const nextRules = [...runtimeRules];
+  const existingRuleIds = new Set(nextRules.map((rule) => rule.id));
+  PROMPT_EXPLODER_PATTERN_PACK
+    .filter(isCaseResolverRuleInScope)
+    .forEach((rule) => {
+      if (existingRuleIds.has(rule.id)) return;
+      nextRules.push(rule);
+      existingRuleIds.add(rule.id);
+    });
+
+  return {
+    rules: nextRules,
+    usedFallback: true,
+  };
 };
 
 const mergeTemplatesById = (
@@ -432,6 +485,31 @@ export const resolvePromptValidationRuntime = (
       effectiveRules,
       args.runtimeRuleProfile
     );
+    const caseResolverRuntimeFallback = ensureCaseResolverRuntimeRules(
+      runtimeValidationRules,
+      stackResolution.scope
+    );
+    const nextRuntimeValidationRules = caseResolverRuntimeFallback.rules;
+    if (caseResolverRuntimeFallback.usedFallback) {
+      recordPromptValidationCounter('runtime_case_resolver_pack_fallback', 1, {
+        scope: stackResolution.scope,
+        stack: stackResolution.stack,
+      });
+    }
+    if (
+      stackResolution.scope === 'case_resolver_prompt_exploder' &&
+      !hasUsableCaseResolverHeadingRules(nextRuntimeValidationRules)
+    ) {
+      throw new PromptValidationRuntimeError(
+        'Case Resolver runtime is missing heading rules. Switch to Case Resolver stack or reinstall pattern pack.',
+        {
+          scope: stackResolution.scope,
+          stack: stackResolution.stack,
+          profile: args.runtimeRuleProfile,
+          correlationId,
+        }
+      );
+    }
 
     const effectiveLearnedTemplates = mergeTemplatesById(
       args.promptExploderSettings.learning.templates,
@@ -464,7 +542,7 @@ export const resolvePromptValidationRuntime = (
       identity,
       scopedRules,
       effectiveRules,
-      runtimeValidationRules,
+      runtimeValidationRules: nextRuntimeValidationRules,
       effectiveLearnedTemplates,
       runtimeLearnedTemplates,
     });
@@ -488,7 +566,7 @@ export const resolvePromptValidationRuntime = (
       const prewarm = Promise.resolve()
         .then(() => {
           prewarmPromptExploderRuntimePatterns({
-            rules: runtimeValidationRules,
+            rules: nextRuntimeValidationRules,
             scope: stackResolution.scope,
             runtimeCacheKey,
             correlationId,
@@ -511,7 +589,7 @@ export const resolvePromptValidationRuntime = (
       identity,
       scopedRules,
       effectiveRules,
-      runtimeValidationRules,
+      runtimeValidationRules: nextRuntimeValidationRules,
       effectiveLearnedTemplates,
       runtimeLearnedTemplates,
     };

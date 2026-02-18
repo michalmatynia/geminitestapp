@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Badge, Button } from '@/shared/ui';
+import { Input, Label, SelectSimple, Badge, Button } from '@/shared/ui';
 
 import { useCatalogModalContext } from './context/CatalogModalContext';
 
@@ -58,7 +58,7 @@ export function CatalogLanguagesSection(): React.JSX.Element {
                       </span>
                       <span>{label}</span>
                       {id === defaultLanguageId && (
-                        <Badge variant='success'>
+                        <Badge variant='success' className='text-[9px] h-4 px-1'>
                           Default
                         </Badge>
                       )}
@@ -118,25 +118,21 @@ export function CatalogLanguagesSection(): React.JSX.Element {
             <Label className='text-xs text-gray-400'>
               Default language
             </Label>
-            <Select
+            <SelectSimple
+              size='sm'
               value={defaultLanguageId}
               onValueChange={setDefaultLanguageId}
               disabled={selectedLanguageIds.length === 0}
-            >
-              <SelectTrigger className='w-full bg-gray-900 border-border text-xs text-white'>
-                <SelectValue placeholder='Select default language' />
-              </SelectTrigger>
-              <SelectContent>
-                {selectedLanguageIds.map((id) => {
-                  const lang = getLanguage(id);
-                  return (
-                    <SelectItem key={id} value={id}>
-                      {lang ? `${lang.name} (${lang.code})` : id}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+              placeholder='Select default language'
+              options={selectedLanguageIds.map((id) => {
+                const lang = getLanguage(id);
+                return {
+                  value: id,
+                  label: lang ? `${lang.name} (${lang.code})` : id
+                };
+              })}
+              triggerClassName='w-full bg-gray-900 border-border text-xs text-white h-9'
+            />
           </div>
         </div>
       )}

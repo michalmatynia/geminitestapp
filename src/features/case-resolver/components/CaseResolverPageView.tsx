@@ -1,5 +1,5 @@
 import { Copy, FileText } from 'lucide-react';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import type {
   CaseResolverCaptureProposalState,
@@ -226,6 +226,26 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     ConfirmationModal,
     PromptInputModal,
   } = state;
+
+  const handleCreateNodeFile = useCallback((): void => {
+    handleCreateFile(null);
+  }, [handleCreateFile]);
+
+  const handleCreateDocumentFromSearch = useCallback((): void => {
+    setActiveMainView('workspace');
+    handleCreateFile(null);
+  }, [handleCreateFile, setActiveMainView]);
+
+  const handleOpenFileFromSearch = useCallback((id: string): void => {
+    setActiveMainView('workspace');
+    handleSelectFile(id);
+  }, [handleSelectFile, setActiveMainView]);
+
+  const handleEditFileFromSearch = useCallback((id: string): void => {
+    setActiveMainView('workspace');
+    handleOpenFileEditor(id);
+  }, [handleOpenFileEditor, setActiveMainView]);
+
   // Main Render
   return (
     <CaseResolverPageProvider value={{
@@ -248,7 +268,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
       onDeleteFolder: handleDeleteFolder,
       onCreateScanFile: handleCreateScanFile,
       onCreateImageAsset: handleCreateImageAsset,
-      onCreateNodeFile: () => { handleCreateFile(null); }, // Simplified
+      onCreateNodeFile: handleCreateNodeFile,
       onUploadScanFiles: handleUploadScanFiles,
       onRunScanFileOcr: handleRunScanFileOcr,
       onUploadAssets: handleUploadAssets,
@@ -266,9 +286,9 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
       caseResolverTags,
       caseResolverIdentifiers,
       caseResolverCategories,
-      onCreateDocumentFromSearch: () => { setActiveMainView('workspace'); handleCreateFile(null); },
-      onOpenFileFromSearch: (id) => { setActiveMainView('workspace'); handleSelectFile(id); },
-      onEditFileFromSearch: (id) => { setActiveMainView('workspace'); handleOpenFileEditor(id); },
+      onCreateDocumentFromSearch: handleCreateDocumentFromSearch,
+      onOpenFileFromSearch: handleOpenFileFromSearch,
+      onEditFileFromSearch: handleEditFileFromSearch,
       onUpdateSelectedAsset: handleUpdateSelectedAsset,
       onGraphChange: handleGraphChange,
       onRelationGraphChange: handleRelationGraphChange,

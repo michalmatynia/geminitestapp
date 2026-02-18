@@ -244,7 +244,9 @@ export function CanvasSidebar(): React.JSX.Element {
               {selectedNode.type === 'trigger' && (
                 <div className='space-y-2'>
                   <Button
-                    className='w-full rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10'
+                    className='w-full'
+                    variant='success'
+                    size='sm'
                     type='button'
                     onClick={(event) => { void fireTrigger(selectedNode, event); }}
                   >
@@ -252,7 +254,9 @@ export function CanvasSidebar(): React.JSX.Element {
                   </Button>
                   {fireTriggerPersistent && (
                     <Button
-                      className='w-full rounded-md border border-sky-500/40 text-xs text-sky-200 hover:bg-sky-500/10'
+                      className='w-full'
+                      variant='info'
+                      size='sm'
                       type='button'
                       onClick={(event) => { void fireTriggerPersistent(selectedNode, event); }}
                     >
@@ -263,7 +267,9 @@ export function CanvasSidebar(): React.JSX.Element {
               )}
               {selectedNode.type === 'simulation' && (
                 <Button
-                  className='w-full rounded-md border border-cyan-500/40 text-xs text-cyan-200 hover:bg-cyan-500/10'
+                  className='w-full'
+                  variant='info'
+                  size='sm'
                   type='button'
                   onClick={() => setSimulationOpenNodeId(selectedNode.id)}
                 >
@@ -410,7 +416,8 @@ export function CanvasSidebar(): React.JSX.Element {
             {runStatus === 'running' || runStatus === 'stepping' ? (
               <>
                 <Button
-                  className='rounded-md border border-amber-500/40 text-xs text-amber-200 hover:bg-amber-500/10'
+                  variant='warning'
+                  size='sm'
                   type='button'
                   onClick={pauseRun}
                   disabled={!pauseRun}
@@ -418,7 +425,8 @@ export function CanvasSidebar(): React.JSX.Element {
                   Pause
                 </Button>
                 <Button
-                  className='rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10'
+                  variant='destructive'
+                  size='sm'
                   type='button'
                   onClick={cancelRun}
                   disabled={!cancelRun}
@@ -429,7 +437,8 @@ export function CanvasSidebar(): React.JSX.Element {
             ) : runStatus === 'paused' ? (
               <>
                 <Button
-                  className='rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10'
+                  variant='success'
+                  size='sm'
                   type='button'
                   onClick={resumeRun}
                   disabled={!resumeRun}
@@ -437,7 +446,8 @@ export function CanvasSidebar(): React.JSX.Element {
                   Resume
                 </Button>
                 <Button
-                  className='rounded-md border border-sky-500/40 text-xs text-sky-200 hover:bg-sky-500/10'
+                  variant='info'
+                  size='sm'
                   type='button'
                   onClick={() => stepRun?.(selectedNode?.type === 'trigger' ? selectedNode : undefined)}
                   disabled={!stepRun}
@@ -445,7 +455,9 @@ export function CanvasSidebar(): React.JSX.Element {
                   Step
                 </Button>
                 <Button
-                  className='col-span-2 rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10'
+                  className='col-span-2'
+                  variant='destructive'
+                  size='sm'
                   type='button'
                   onClick={cancelRun}
                   disabled={!cancelRun}
@@ -455,7 +467,9 @@ export function CanvasSidebar(): React.JSX.Element {
               </>
             ) : (
               <Button
-                className='col-span-2 rounded-md border border-sky-500/40 text-xs text-sky-200 hover:bg-sky-500/10'
+                className='col-span-2'
+                variant='info'
+                size='sm'
                 type='button'
                 onClick={() => stepRun?.(selectedNode?.type === 'trigger' ? selectedNode : undefined)}
                 disabled={!stepRun}
@@ -519,14 +533,18 @@ export function CanvasSidebar(): React.JSX.Element {
                 </div>
                 <div className='flex gap-2'>
                   <Button
-                    className='flex-1 rounded-md border border-border text-xs text-muted-foreground hover:bg-muted/50'
+                    className='flex-1'
+                    variant='outline'
+                    size='sm'
                     type='button'
                     onClick={() => selectEdge(null)}
                   >
                     Deselect
                   </Button>
                   <Button
-                    className='flex-1 rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10'
+                    className='flex-1'
+                    variant='destructive'
+                    size='sm'
                     type='button'
                     onClick={() => handleRemoveEdge(selectedEdgeId)}
                   >
@@ -539,7 +557,9 @@ export function CanvasSidebar(): React.JSX.Element {
             <div className='text-[11px] text-gray-500'>Click a wire to select it.</div>
           )}
           <Button
-            className='w-full rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10'
+            className='w-full'
+            variant='destructive'
+            size='sm'
             type='button'
             onClick={clearWires}
           >

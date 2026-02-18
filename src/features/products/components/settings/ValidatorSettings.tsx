@@ -1,7 +1,8 @@
 'use client';
 
-import { FormSection, StatusToggle, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
+import Link from 'next/link';
+
+import { FormSection, StatusToggle } from '@/shared/ui';
 
 import { useValidatorSettingsController } from './validator-settings/useValidatorSettingsController';
 import { ValidatorDefaultPanel } from './validator-settings/ValidatorDefaultPanel';
@@ -10,10 +11,7 @@ import {
   ValidatorDocsTooltipsProvider,
   useValidatorDocsTooltips,
 } from './validator-settings/ValidatorDocsTooltips';
-import { ValidatorDocumentationTab } from './validator-settings/ValidatorDocumentationTab';
 import { ValidatorInstanceBehaviorPanel } from './validator-settings/ValidatorInstanceBehaviorPanel';
-import { ValidatorPatternModal } from './validator-settings/ValidatorPatternModal';
-import { ValidatorPatternTablePanel } from './validator-settings/ValidatorPatternTablePanel';
 import { ValidatorSettingsProvider } from './validator-settings/ValidatorSettingsContext';
 
 /**
@@ -25,37 +23,32 @@ export function ValidatorSettings(): React.JSX.Element {
   return (
     <ValidatorDocsTooltipsProvider>
       <ValidatorSettingsProvider value={controller}>
-        <Tabs defaultValue='workspace' className='w-full space-y-4'>
-          <TabsList className='grid h-auto w-full grid-cols-2 gap-2 border border-border/60 bg-card/30 p-2'>
-            <TabsTrigger value='workspace' className='h-10'>Workspace</TabsTrigger>
-            <TabsTrigger value='docs' className='h-10'>Docs</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value='workspace' className='space-y-5'>
-            <ValidatorDocsTooltipsPanel />
-            <ValidatorDefaultPanel />
-            <ValidatorInstanceBehaviorPanel />
-            <ValidatorPatternTablePanel />
-
-            <ConfirmModal
-              isOpen={!!controller.patternToDelete}
-              onClose={() => controller.setPatternToDelete(null)}
-              onConfirm={controller.handleDelete}
-              title='Delete Pattern'
-              message={`Delete validator pattern "${controller.patternToDelete?.label}"? This cannot be undone.`}
-              confirmText='Delete'
-              isDangerous={true}
-            />
-
-            <ValidatorPatternModal />
-          </TabsContent>
-
-          <TabsContent value='docs'>
-            <ValidatorDocumentationTab />
-          </TabsContent>
-        </Tabs>
+        <div className='space-y-5'>
+          <ValidatorDocsTooltipsPanel />
+          <ValidatorDefaultPanel />
+          <ValidatorInstanceBehaviorPanel />
+          <ValidatorPatternListLinkPanel />
+        </div>
       </ValidatorSettingsProvider>
     </ValidatorDocsTooltipsProvider>
+  );
+}
+
+function ValidatorPatternListLinkPanel(): React.JSX.Element {
+  return (
+    <FormSection
+      title='Pattern Validations'
+      description='Regex patterns are managed in the dedicated validator list page.'
+      variant='subtle'
+      className='p-4'
+    >
+      <Link
+        href='/admin/validator'
+        className='inline-flex items-center rounded-md border border-border/70 bg-card/40 px-3 py-2 text-sm text-white transition-colors hover:bg-card/70'
+      >
+        Open Pattern Validations List
+      </Link>
+    </FormSection>
   );
 }
 

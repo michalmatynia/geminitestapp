@@ -52,7 +52,7 @@ export function CatalogsSettings(): React.JSX.Element {
               <div className='flex items-center gap-2'>
                 <span>{catalog.name}</span>
                 {catalog.isDefault && (
-                  <Badge variant='success' size='sm' className='text-[9px] h-4'>
+                  <Badge variant='success' className='text-[9px] h-4 px-1'>
                     Default
                   </Badge>
                 )}

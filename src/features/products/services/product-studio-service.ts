@@ -493,6 +493,7 @@ const importSourceProductImageToStudio = async (params: {
   projectId: string;
   imageSlotIndex: number;
   sequencing: ProductStudioSequencingConfig;
+  rotateBeforeSendDeg: 90 | null;
 }): Promise<{
   id: string;
   filepath: string;
@@ -520,16 +521,24 @@ const importSourceProductImageToStudio = async (params: {
   let uploadMimeType = mimeType;
   let uploadFilename = sourceFilename;
 
+  if (params.rotateBeforeSendDeg === 90) {
+    uploadBuffer = await sharp(uploadBuffer).rotate(90).toBuffer();
+    uploadFilename = appendFilenameSuffix(
+      uploadFilename,
+      '-rot90',
+    );
+  }
+
   if (
     params.sequencing.enabled &&
     params.sequencing.cropCenterBeforeGeneration
   ) {
-    const cropped = await buildCenteredCrop(buffer);
+    const cropped = await buildCenteredCrop(uploadBuffer);
     if (cropped) {
       uploadBuffer = cropped.buffer;
       uploadMimeType = 'image/png';
       uploadFilename = appendFilenameSuffix(
-        sourceFilename,
+        uploadFilename,
         '-center-crop',
         '.png',
       );
@@ -679,12 +688,14 @@ const buildSourceSlotMetadata = (params: {
   productId: string;
   imageSlotIndex: number;
   sourceImageFileId: string;
+  rotateBeforeSendDeg: 90 | null;
 }): Record<string, unknown> => ({
   role: 'import',
   source: 'product-studio',
   productId: params.productId,
   imageSlotIndex: params.imageSlotIndex,
   productImageFileId: params.sourceImageFileId,
+  rotateBeforeSendDeg: params.rotateBeforeSendDeg,
   updatedAt: new Date().toISOString(),
 });
 
@@ -840,6 +851,7 @@ export async function sendProductImageToStudio(params: {
   productId: string;
   imageSlotIndex: number;
   projectId?: string | null | undefined;
+  rotateBeforeSendDeg?: 90 | null | undefined;
   sequenceGenerationMode?: ProductStudioSequenceGenerationMode | null | undefined;
 }): Promise<ProductStudioSendResult> {
   const startedAtMs = Date.now();
@@ -875,6 +887,7 @@ export async function sendProductImageToStudio(params: {
     productId: resolved.product.id,
     projectId: resolved.projectId,
     sequencing,
+    rotateBeforeSendDeg: params.rotateBeforeSendDeg === 90 ? 90 : null,
   });
   importMs = Date.now() - importStartMs;
 
@@ -905,6 +918,7 @@ export async function sendProductImageToStudio(params: {
         productId: resolved.product.id,
         imageSlotIndex: resolved.imageSlotIndex,
         sourceImageFileId: sourceImage.id,
+        rotateBeforeSendDeg: params.rotateBeforeSendDeg === 90 ? 90 : null,
       }),
     });
   } else {
@@ -919,6 +933,7 @@ export async function sendProductImageToStudio(params: {
           productId: resolved.product.id,
           imageSlotIndex: resolved.imageSlotIndex,
           sourceImageFileId: sourceImage.id,
+          rotateBeforeSendDeg: params.rotateBeforeSendDeg === 90 ? 90 : null,
         }),
       },
     ]);

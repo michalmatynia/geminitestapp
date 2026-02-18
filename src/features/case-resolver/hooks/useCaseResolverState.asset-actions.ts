@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 import {
   deriveDocumentContentSync,
@@ -116,6 +116,9 @@ export const useCaseResolverStateAssetActions = ({
   setSelectedAssetId,
   treeSaveToast,
 }: UseCaseResolverStateAssetActionsInput): UseCaseResolverStateAssetActionsResult => {
+  const settingsStoreRef = useRef(settingsStore);
+  settingsStoreRef.current = settingsStore;
+
   const uploadSourceFileToCaseResolver = useCallback(
     async (sourceFile: File, targetFolderPath: string): Promise<CaseResolverUploadedFile> => {
       const uploadFormData = new FormData();
@@ -142,18 +145,18 @@ export const useCaseResolverStateAssetActions = ({
   const resolveRuntimeScanOcrSettings = useCallback(
     (): { model: string; prompt: string } => {
       const runtimeCaseResolverSettings = parseCaseResolverSettings(
-        settingsStore.get(CASE_RESOLVER_SETTINGS_KEY)
+        settingsStoreRef.current.get(CASE_RESOLVER_SETTINGS_KEY)
       );
       return {
         model:
           runtimeCaseResolverSettings.ocrModel.trim() ||
-          (settingsStore.get('openai_model') ?? '').trim(),
+          (settingsStoreRef.current.get('openai_model') ?? '').trim(),
         prompt:
           runtimeCaseResolverSettings.ocrPrompt.trim() ||
           DEFAULT_CASE_RESOLVER_OCR_PROMPT,
       };
     },
-    [settingsStore]
+    []
   );
 
   const enqueueImageOcrRuntimeJob = useCallback(
@@ -243,10 +246,10 @@ export const useCaseResolverStateAssetActions = ({
   const handleCreateScanFile = useCallback((targetFolderPath: string | null): void => {
     const folder = normalizeFolderPath(targetFolderPath ?? '');
     const runtimeCaseResolverSettings = parseCaseResolverSettings(
-      settingsStore.get(CASE_RESOLVER_SETTINGS_KEY)
+      settingsStoreRef.current.get(CASE_RESOLVER_SETTINGS_KEY)
     );
     const runtimeDefaultDocumentFormat = parseCaseResolverDefaultDocumentFormat(
-      settingsStore.get(CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY),
+      settingsStoreRef.current.get(CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY),
       runtimeCaseResolverSettings.defaultDocumentFormat
     );
     if (!activeCaseId) {
@@ -301,7 +304,6 @@ export const useCaseResolverStateAssetActions = ({
     defaultCategoryId,
     defaultTagId,
     requestedCaseStatus,
-    settingsStore,
     toast,
     treeSaveToast,
     updateWorkspace,

@@ -20,6 +20,12 @@ const buttonVariants = cva(
           'border-foreground/15 bg-transparent hover:bg-foreground/8',
         secondary:
           'bg-muted/30 hover:bg-muted/45',
+        success:
+          'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20',
+        warning:
+          'bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20',
+        info:
+          'bg-sky-500/10 text-sky-500 border-sky-500/20 hover:bg-sky-500/20',
         ghost: 'bg-transparent hover:bg-foreground/8',
         link: 'text-foreground/80 underline-offset-4 hover:underline hover:text-foreground',
       },

@@ -41,11 +41,11 @@ export function PriceGroupsSettings(): React.JSX.Element {
                 <div className='flex items-center gap-2'>
                   <span>{group.name}</span>
                   {group.isDefault && (
-                    <Badge variant='success' size='sm' className='text-[9px] h-4'>
+                    <Badge variant='success' className='text-[9px] h-4 px-1'>
                       Default
                     </Badge>
                   )}
-                  <Badge variant='neutral' size='sm' className='text-[9px] h-4 font-mono'>
+                  <Badge variant='neutral' className='text-[9px] h-4 px-1 font-mono'>
                     {group.groupId}
                   </Badge>
                 </div>

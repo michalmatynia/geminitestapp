@@ -161,6 +161,9 @@ describe('Product Studio API', () => {
       sequenceRunId: null,
       expectedOutputs: 1,
       dispatchMode: 'queued',
+      requestedSequenceMode: 'auto',
+      resolvedSequenceMode: 'auto',
+      executionRoute: 'studio_sequencer',
     });
 
     const response = await POST_SEND(

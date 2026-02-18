@@ -96,6 +96,8 @@ const CASE_RESOLVER_REQUESTED_FILE_REFRESH_INTERVAL_MS = 250;
  */
 export function useCaseResolverState() {
   const settingsStore = useSettingsStore();
+  const settingsStoreRef = useRef(settingsStore);
+  settingsStoreRef.current = settingsStore;
   const { toast } = useToast();
   const { isMenuCollapsed, setIsMenuCollapsed } = useAdminLayout();
   const searchParams = useSearchParams();
@@ -237,7 +239,7 @@ export function useCaseResolverState() {
         const persistedSerialized = JSON.stringify(persistedWorkspace);
         lastPersistedValueRef.current = persistedSerialized;
         lastPersistedRevisionRef.current = getCaseResolverWorkspaceRevision(persistedWorkspace);
-        settingsStore.refetch();
+        settingsStoreRef.current.refetch();
         if (queuedSerializedWorkspaceRef.current === nextSerialized) {
           queuedSerializedWorkspaceRef.current = null;
           queuedExpectedRevisionRef.current = null;
@@ -262,7 +264,7 @@ export function useCaseResolverState() {
         queuedMutationIdRef.current = null;
         pendingSaveToastRef.current = null;
         setWorkspace(serverWorkspace);
-        settingsStore.refetch();
+        settingsStoreRef.current.refetch();
         toast('Case Resolver workspace changed before save completed. Loaded latest server state.', {
           variant: 'warning',
         });
@@ -506,7 +508,7 @@ export function useCaseResolverState() {
         setActiveCaseId(recoveredCaseId);
         setRequestedCaseStatus('ready');
 
-        settingsStore.refetch();
+        settingsStoreRef.current.refetch();
         logCaseResolverWorkspaceEvent({
           source,
           action: 'create_context_recovered',
@@ -517,7 +519,7 @@ export function useCaseResolverState() {
         createContextRecoveryInFlightRef.current = false;
       }
     },
-    [requestedFileId, resolveCaseIdForWorkspace, settingsStore]
+    [requestedFileId, resolveCaseIdForWorkspace]
   );
 
   const createFolderForCase = useCallback(
@@ -654,10 +656,10 @@ export function useCaseResolverState() {
 
   const handleCreateFile = useCallback((targetFolderPath: string | null): void => {
     const runtimeCaseResolverSettings = parseCaseResolverSettings(
-      settingsStore.get(CASE_RESOLVER_SETTINGS_KEY)
+      settingsStoreRef.current.get(CASE_RESOLVER_SETTINGS_KEY)
     );
     const runtimeDefaultDocumentFormat = parseCaseResolverDefaultDocumentFormat(
-      settingsStore.get(CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY),
+      settingsStoreRef.current.get(CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY),
       runtimeCaseResolverSettings.defaultDocumentFormat
     );
     if (activeCaseId && canCreateInActiveCase) {
@@ -707,7 +709,6 @@ export function useCaseResolverState() {
     recoverCreateContextCaseId,
     requestedCaseStatus,
     requestedFileId,
-    settingsStore,
     setRequestedCaseStatus,
     toast,
   ]);

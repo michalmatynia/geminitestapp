@@ -8,6 +8,7 @@ import type { ApiHandlerContext } from '@/shared/types/api/api';
 const sendSchema = z.object({
   imageSlotIndex: z.number().int().min(0),
   projectId: z.string().trim().nullable().optional(),
+  rotateBeforeSendDeg: z.literal(90).nullable().optional(),
   sequenceGenerationMode: z
     .enum([
       'auto',
@@ -38,6 +39,7 @@ export async function POST_handler(
     productId,
     imageSlotIndex: parsed.data.imageSlotIndex,
     projectId: parsed.data.projectId ?? null,
+    rotateBeforeSendDeg: parsed.data.rotateBeforeSendDeg ?? null,
     sequenceGenerationMode: parsed.data.sequenceGenerationMode,
   });
 

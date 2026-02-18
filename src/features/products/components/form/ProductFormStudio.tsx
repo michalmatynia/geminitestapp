@@ -160,6 +160,7 @@ export default function ProductFormStudio(): React.JSX.Element {
   const [selectedVariantSlotId, setSelectedVariantSlotId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [accepting, setAccepting] = useState(false);
+  const [rotateBeforeSendDeg, setRotateBeforeSendDeg] = useState<90 | null>(null);
   const [auditEntries, setAuditEntries] = useState<ProductStudioAuditEntry[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditError, setAuditError] = useState<string | null>(null);
@@ -388,6 +389,7 @@ export default function ProductFormStudio(): React.JSX.Element {
         {
           imageSlotIndex: selectedImageIndex,
           projectId: studioProjectId,
+          rotateBeforeSendDeg,
         }
       );
 
@@ -516,6 +518,23 @@ export default function ProductFormStudio(): React.JSX.Element {
         <div className='flex flex-wrap items-center gap-2'>
           <Button size='xs'
             type='button'
+            variant='outline'
+            onClick={(): void => {
+              setRotateBeforeSendDeg((current) => (current === 90 ? null : 90));
+            }}
+            disabled={sending || accepting}
+            className={
+              rotateBeforeSendDeg === 90
+                ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20'
+                : ''
+            }
+            title='Rotate selected product image by 90° before sending to Image Studio'
+          >
+            Rotate +90°
+          </Button>
+
+          <Button size='xs'
+            type='button'
             onClick={(): void => {
               void handleSendToStudio();
             }}
@@ -575,6 +594,9 @@ export default function ProductFormStudio(): React.JSX.Element {
             size='sm'
             className='font-medium'
           />
+          {rotateBeforeSendDeg === 90 ? (
+            <StatusBadge status='Pre-send rotation: +90°' variant='info' size='sm' className='font-medium' />
+          ) : null}
         </div>
 
         {studioActionError ? (

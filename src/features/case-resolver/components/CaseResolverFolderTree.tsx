@@ -69,6 +69,9 @@ export function CaseResolverFolderTree(): React.JSX.Element {
   const requestedFileId = searchParams.get('fileId');
   const {
     workspace,
+    activeCaseId,
+    requestedCaseStatus,
+    canCreateInActiveCase,
     selectedFileId,
     selectedAssetId,
     selectedFolderPath,
@@ -216,6 +219,14 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     return fromCaseResolverFolderNodeId(selectedNode.parentId);
   }, [controller.nodes, controller.selectedNodeId, selectedFolderPath]);
   const selectedFolderForFolderCreate = selectedFolderPath;
+  const createContextTooltip = useMemo((): string | null => {
+    if (canCreateInActiveCase) return null;
+    if (requestedCaseStatus === 'loading') return 'Loading case context...';
+    if (requestedCaseStatus === 'missing') return 'Case context unavailable. Click to retry.';
+    if (!activeCaseId) return 'Select a case first.';
+    return 'Case context is not ready.';
+  }, [activeCaseId, canCreateInActiveCase, requestedCaseStatus]);
+  const disableCreateActions = !canCreateInActiveCase && requestedCaseStatus !== 'missing';
 
   const fileLockById = useMemo((): Map<string, boolean> => {
     return new Map(
@@ -355,7 +366,8 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                 size='sm'
                 variant='outline'
                 className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50'
-                title='Add folder'
+                title={createContextTooltip ?? 'Add folder'}
+                disabled={disableCreateActions}
               >
                 <FolderPlus className='size-4' />
               </Button>
@@ -367,7 +379,8 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                 size='sm'
                 variant='outline'
                 className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50'
-                title='Add case file'
+                title={createContextTooltip ?? 'Add case file'}
+                disabled={disableCreateActions}
               >
                 <FilePlus className='size-4' />
               </Button>
@@ -379,7 +392,8 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                 size='sm'
                 variant='outline'
                 className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50'
-                title='Create new image file'
+                title={createContextTooltip ?? 'Create new image file'}
+                disabled={disableCreateActions}
               >
                 <FileImage className='size-4' />
               </Button>
@@ -391,7 +405,8 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                 size='sm'
                 variant='outline'
                 className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50'
-                title='Add node file'
+                title={createContextTooltip ?? 'Add node file'}
+                disabled={disableCreateActions}
               >
                 <FileCode2 className='size-4' />
               </Button>
@@ -412,6 +427,11 @@ export function CaseResolverFolderTree(): React.JSX.Element {
             <RootIcon className='size-4' />
             <span>All Cases</span>
           </Button>
+          {createContextTooltip ? (
+            <div className='mt-1 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200'>
+              {createContextTooltip}
+            </div>
+          ) : null}
         </TreeHeader>
       )}
     >

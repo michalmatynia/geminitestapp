@@ -185,6 +185,9 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
 
   const {
     workspace,
+    activeCaseId,
+    requestedCaseStatus,
+    canCreateInActiveCase,
     selectedFileId,
     selectedAssetId,
     selectedFolderPath,
@@ -226,6 +229,9 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
   return (
     <CaseResolverPageProvider value={{
       workspace,
+      activeCaseId,
+      requestedCaseStatus,
+      canCreateInActiveCase,
       selectedFileId,
       selectedAssetId,
       selectedFolderPath,

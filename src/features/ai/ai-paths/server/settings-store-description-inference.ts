@@ -389,70 +389,25 @@ export const needsDescriptionInferenceLiteConfigUpgrade = (
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     if (!parsed || typeof parsed !== 'object') return true;
 
-    const version = typeof parsed['version'] === 'number' ? parsed['version'] : 0;
-    if (version < 3) return true;
-
     const nodes = Array.isArray(parsed['nodes'])
       ? (parsed['nodes'] as Array<Record<string, unknown>>)
       : [];
     if (nodes.length === 0) return true;
 
-    const triggerNode = nodes.find(
-      (node: Record<string, unknown>) => node?.['id'] === 'node-trigger-desc-lite'
-    );
-    if (!triggerNode) return true;
-    const triggerConfig =
-      triggerNode['config'] && typeof triggerNode['config'] === 'object'
-        ? (triggerNode['config'] as Record<string, unknown>)
-        : null;
-    const triggerEvent =
-      triggerConfig &&
-      triggerConfig['trigger'] &&
-      typeof triggerConfig['trigger'] === 'object'
-        ? (triggerConfig['trigger'] as Record<string, unknown>)['event']
-        : null;
-    if (triggerEvent !== DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID) return true;
-
-    const typeCounts = new Map<string, number>();
-    nodes.forEach((node: Record<string, unknown>) => {
-      const type = typeof node['type'] === 'string' ? node['type'] : '';
-      if (!type) return;
-      typeCounts.set(type, (typeCounts.get(type) ?? 0) + 1);
-    });
-
-    const hasDuplicateRole = Array.from(typeCounts.values()).some(
-      (count: number) => count > 1
-    );
-    if (hasDuplicateRole) return true;
-
-    const modelCount = typeCounts.get('model') ?? 0;
-    if (modelCount !== 1) return true;
-
-    const metadataFetchCount = typeCounts.get('http') ?? 0;
-    if (metadataFetchCount > 1) return true;
-
-    const hasDescriptionWriter = nodes.some((node: Record<string, unknown>) => {
-      if (node['type'] !== 'database') return false;
+    const hasMatchingTriggerEvent = nodes.some((node: Record<string, unknown>) => {
+      if (node['type'] !== 'trigger') return false;
       const config =
         node['config'] && typeof node['config'] === 'object'
           ? (node['config'] as Record<string, unknown>)
           : null;
-      const database =
-        config &&
-        config['database'] &&
-        typeof config['database'] === 'object'
-          ? (config['database'] as Record<string, unknown>)
+      const trigger =
+        config && config['trigger'] && typeof config['trigger'] === 'object'
+          ? (config['trigger'] as Record<string, unknown>)
           : null;
-      const mappings = Array.isArray(database?.['mappings'])
-        ? (database?.['mappings'] as Array<Record<string, unknown>>)
-        : [];
-      return mappings.some(
-        (mapping: Record<string, unknown>) =>
-          mapping['targetPath'] === 'description_en'
-      );
+      return trigger?.['event'] === DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID;
     });
 
-    return !hasDescriptionWriter;
+    return !hasMatchingTriggerEvent;
   } catch {
     return true;
   }

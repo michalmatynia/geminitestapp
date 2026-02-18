@@ -1,12 +1,17 @@
 import 'server-only';
 
+import fs from 'fs/promises';
+
 import { getImageFileRepository } from '@/features/files/server';
+import { getDiskPathFromPublicPath } from '@/features/files/utils/fileUploader';
 import type { Asset3DRecord } from '@/features/viewer3d/types';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { ImageFileRecord } from '@/shared/types/domain/files';
 
 import { removeImageStudioRunOutputs } from './run-repository';
 import { deleteImageStudioSlotLinksForSlot } from './slot-link-repository';
+
+import type { Collection } from 'mongodb';
 
 export type ImageStudioSlotDocument = {
   _id: string;
@@ -139,6 +144,78 @@ const asTrimmedString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const normalized = value.trim();
   return normalized.length > 0 ? normalized : null;
+};
+
+const normalizePublicUploadPath = (value: string | null | undefined): string | null => {
+  const raw = typeof value === 'string' ? value.trim() : '';
+  if (!raw) return null;
+
+  let normalized = raw.replace(/\\/g, '/');
+  if (/^https?:\/\//i.test(normalized)) {
+    try {
+      const parsed = new URL(normalized);
+      normalized = parsed.pathname;
+    } catch {
+      return null;
+    }
+  }
+
+  const publicIndex = normalized.indexOf('/public/');
+  if (publicIndex >= 0) {
+    normalized = normalized.slice(publicIndex + '/public'.length);
+  }
+  const uploadsIndex = normalized.indexOf('/uploads/');
+  if (uploadsIndex >= 0) {
+    normalized = normalized.slice(uploadsIndex);
+  } else if (normalized.startsWith('uploads/')) {
+    normalized = `/${normalized}`;
+  }
+  if (!normalized.startsWith('/')) {
+    normalized = `/${normalized}`;
+  }
+
+  return normalized.startsWith('/uploads/') ? normalized : null;
+};
+
+const deletePublicUploadFileBestEffort = async (filepath: string | null | undefined): Promise<void> => {
+  const normalized = normalizePublicUploadPath(filepath);
+  if (!normalized) return;
+  try {
+    const diskPath = getDiskPathFromPublicPath(normalized);
+    await fs.unlink(diskPath).catch((error: unknown) => {
+      if (error instanceof Error && (error as NodeJS.ErrnoException).code === 'ENOENT') {
+        return;
+      }
+      throw error;
+    });
+  } catch {
+    // Best-effort cleanup should not block slot deletion.
+  }
+};
+
+const removeImageFileIfOrphaned = async (params: {
+  collection: Collection<ImageStudioSlotDocument>;
+  fileId: string | null;
+  excludedSlotId: string;
+}): Promise<void> => {
+  const normalizedFileId = asTrimmedString(params.fileId);
+  if (!normalizedFileId) return;
+
+  const remainingReferences = await params.collection.countDocuments({
+    _id: { $ne: params.excludedSlotId },
+    $or: [
+      { imageFileId: normalizedFileId },
+      { screenshotFileId: normalizedFileId },
+    ],
+  });
+  if (remainingReferences > 0) return;
+
+  const repo = await getImageFileRepository();
+  const imageFileRecord = await repo.getImageFileById(normalizedFileId).catch(() => null);
+  if (imageFileRecord?.filepath) {
+    await deletePublicUploadFileBestEffort(imageFileRecord.filepath);
+  }
+  await repo.deleteImageFile(normalizedFileId).catch(() => null);
 };
 
 const resolveSlotIdAliases = (slotId: string): string[] => {
@@ -334,9 +411,33 @@ export async function deleteImageStudioSlot(slotId: string): Promise<boolean> {
   const existing = await collection.findOne({ _id: slotId });
   if (!existing) return false;
 
+  const normalizedImageFileId = asTrimmedString(existing.imageFileId);
+  const normalizedScreenshotFileId = asTrimmedString(existing.screenshotFileId);
+  const imageFileCandidates = new Set<string>();
+  if (normalizedImageFileId) {
+    imageFileCandidates.add(normalizedImageFileId);
+  }
+  if (normalizedScreenshotFileId) {
+    imageFileCandidates.add(normalizedScreenshotFileId);
+  }
+
   const result = await collection.deleteOne({ _id: slotId });
   const deleted = result.deletedCount > 0;
   if (deleted) {
+    await Promise.allSettled(
+      Array.from(imageFileCandidates).map(async (fileId: string) => {
+        await removeImageFileIfOrphaned({
+          collection,
+          fileId,
+          excludedSlotId: slotId,
+        });
+      }),
+    );
+
+    if (!normalizedImageFileId) {
+      await deletePublicUploadFileBestEffort(existing.imageUrl);
+    }
+
     await deleteImageStudioSlotLinksForSlot(slotId).catch(() => {});
 
     const metadata = asRecord(existing.metadata);

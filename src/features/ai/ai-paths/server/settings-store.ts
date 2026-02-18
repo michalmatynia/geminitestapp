@@ -640,7 +640,26 @@ const ensureParameterInferenceDefaults = async (
       createdAt: now,
       updatedAt: now,
     };
-    const nextButtons = [...parsedButtons];
+    const canonicalParameterButtonName =
+      PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME.trim().toLowerCase();
+    const seenParameterButtonIds = new Set<string>();
+    const nextButtons = parsedButtons.reduce(
+      (acc: TriggerButtonSettingRecord[], button: TriggerButtonSettingRecord) => {
+        const normalizedName =
+          typeof button['name'] === 'string' ? button['name'].trim().toLowerCase() : '';
+        if (
+          button.id !== PARAMETER_INFERENCE_TRIGGER_BUTTON_ID &&
+          normalizedName === canonicalParameterButtonName
+        ) {
+          return acc;
+        }
+        if (seenParameterButtonIds.has(button.id)) return acc;
+        seenParameterButtonIds.add(button.id);
+        acc.push(button);
+        return acc;
+      },
+      []
+    );
     const existingIndex = nextButtons.findIndex(
       (button: TriggerButtonSettingRecord): boolean =>
         button.id === PARAMETER_INFERENCE_TRIGGER_BUTTON_ID
@@ -702,7 +721,7 @@ const ensureParameterInferenceDefaults = async (
   );
 };
 
-const ensureDescriptionInferenceV2Defaults = async (
+const ensureDescriptionInferenceLiteDefaults = async (
   records: AiPathsSettingRecord[]
 ): Promise<AiPathsSettingRecord[]> => {
   const map = new Map<string, string>(
@@ -710,35 +729,35 @@ const ensureDescriptionInferenceV2Defaults = async (
   );
   const updates: AiPathsSettingRecord[] = [];
   const now = new Date().toISOString();
-  const pathConfigKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${DESCRIPTION_INFERENCE_V2_PATH_ID}`;
+  const pathConfigKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${DESCRIPTION_INFERENCE_LITE_PATH_ID}`;
 
   let pathConfigRaw = map.get(pathConfigKey);
   const parsedConfigMeta = pathConfigRaw
-    ? parsePathConfigMeta(DESCRIPTION_INFERENCE_V2_PATH_ID, pathConfigRaw)
+    ? parsePathConfigMeta(DESCRIPTION_INFERENCE_LITE_PATH_ID, pathConfigRaw)
     : null;
   if (
     !pathConfigRaw ||
     !parsedConfigMeta ||
-    needsDescriptionInferenceV2ConfigUpgrade(pathConfigRaw)
+    needsDescriptionInferenceLiteConfigUpgrade(pathConfigRaw)
   ) {
-    pathConfigRaw = buildDescriptionInferenceV2PathConfigValue(now);
+    pathConfigRaw = buildDescriptionInferenceLitePathConfigValue(now);
     map.set(pathConfigKey, pathConfigRaw);
     updates.push({ key: pathConfigKey, value: pathConfigRaw });
   }
 
   const currentMetas = parsePathMetas(map.get(AI_PATHS_INDEX_KEY));
   const descriptionPathMetaIndex = currentMetas.findIndex(
-    (meta: ParsedPathMeta): boolean => meta.id === DESCRIPTION_INFERENCE_V2_PATH_ID
+    (meta: ParsedPathMeta): boolean => meta.id === DESCRIPTION_INFERENCE_LITE_PATH_ID
   );
   if (descriptionPathMetaIndex === -1) {
     const fallbackMeta: ParsedPathMeta = {
-      id: DESCRIPTION_INFERENCE_V2_PATH_ID,
-      name: DESCRIPTION_INFERENCE_V2_PATH_NAME,
+      id: DESCRIPTION_INFERENCE_LITE_PATH_ID,
+      name: DESCRIPTION_INFERENCE_LITE_PATH_NAME,
       createdAt: now,
       updatedAt: now,
     };
     const configMeta = pathConfigRaw
-      ? parsePathConfigMeta(DESCRIPTION_INFERENCE_V2_PATH_ID, pathConfigRaw)
+      ? parsePathConfigMeta(DESCRIPTION_INFERENCE_LITE_PATH_ID, pathConfigRaw)
       : null;
     const nextMetas = [...currentMetas, configMeta ?? fallbackMeta].sort(
       (a: ParsedPathMeta, b: ParsedPathMeta) => b.updatedAt.localeCompare(a.updatedAt)
@@ -748,14 +767,11 @@ const ensureDescriptionInferenceV2Defaults = async (
     updates.push({ key: AI_PATHS_INDEX_KEY, value: indexValue });
   } else {
     const currentMeta = currentMetas[descriptionPathMetaIndex];
-    if (
-      currentMeta &&
-      (typeof currentMeta.name !== 'string' || currentMeta.name.trim().length === 0)
-    ) {
+    if (currentMeta && currentMeta.name.trim() !== DESCRIPTION_INFERENCE_LITE_PATH_NAME) {
       const nextMetas = [...currentMetas];
       nextMetas[descriptionPathMetaIndex] = {
         ...currentMeta,
-        name: DESCRIPTION_INFERENCE_V2_PATH_NAME,
+        name: DESCRIPTION_INFERENCE_LITE_PATH_NAME,
         updatedAt: now,
       };
       const indexValue = JSON.stringify(nextMetas);
@@ -764,12 +780,31 @@ const ensureDescriptionInferenceV2Defaults = async (
     }
   }
 
+  const legacyPathConfigKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${LEGACY_DESCRIPTION_INFERENCE_V2_PATH_ID}`;
+  const legacyPathConfigRaw = map.get(legacyPathConfigKey);
+  if (legacyPathConfigRaw) {
+    try {
+      const parsedLegacy = JSON.parse(legacyPathConfigRaw) as Record<string, unknown>;
+      if (parsedLegacy && typeof parsedLegacy === 'object' && parsedLegacy['isActive'] !== false) {
+        const nextLegacyRaw = JSON.stringify({
+          ...parsedLegacy,
+          isActive: false,
+          updatedAt: now,
+        });
+        map.set(legacyPathConfigKey, nextLegacyRaw);
+        updates.push({ key: legacyPathConfigKey, value: nextLegacyRaw });
+      }
+    } catch {
+      // Ignore invalid legacy path payloads.
+    }
+  }
+
   const parsedButtons = parseTriggerButtons(map.get(AI_PATHS_TRIGGER_BUTTONS_KEY));
   if (parsedButtons === null) {
     const triggerButtonsValue = JSON.stringify([
       {
-        id: DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID,
-        name: DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_NAME,
+        id: DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID,
+        name: DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_NAME,
         iconId: null,
         locations: ['product_modal'],
         mode: 'click',
@@ -785,8 +820,8 @@ const ensureDescriptionInferenceV2Defaults = async (
     });
   } else if (parsedButtons) {
     const seededButton: TriggerButtonSettingRecord = {
-      id: DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID,
-      name: DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_NAME,
+      id: DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID,
+      name: DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_NAME,
       iconId: null,
       locations: ['product_modal'],
       mode: 'click',
@@ -794,16 +829,36 @@ const ensureDescriptionInferenceV2Defaults = async (
       createdAt: now,
       updatedAt: now,
     };
-    const nextButtons = [...parsedButtons];
+    const canonicalDescriptionButtonName =
+      DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_NAME.trim().toLowerCase();
+    const seenButtonIds = new Set<string>();
+    const nextButtons = parsedButtons.reduce(
+      (acc: TriggerButtonSettingRecord[], button: TriggerButtonSettingRecord) => {
+        if (button.id === LEGACY_DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID) return acc;
+        const normalizedName =
+          typeof button['name'] === 'string' ? button['name'].trim().toLowerCase() : '';
+        if (
+          button.id !== DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID &&
+          normalizedName === canonicalDescriptionButtonName
+        ) {
+          return acc;
+        }
+        if (seenButtonIds.has(button.id)) return acc;
+        seenButtonIds.add(button.id);
+        acc.push(button);
+        return acc;
+      },
+      []
+    );
     const existingIndex = nextButtons.findIndex(
       (button: TriggerButtonSettingRecord): boolean =>
-        button.id === DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID
+        button.id === DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID
     );
     if (existingIndex >= 0) {
       const existingButton = nextButtons[existingIndex]!;
       nextButtons[existingIndex] = {
         ...existingButton,
-        name: DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_NAME,
+        name: DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_NAME,
         locations: Array.from(
           new Set([
             ...(Array.isArray(existingButton['locations'])
@@ -822,7 +877,7 @@ const ensureDescriptionInferenceV2Defaults = async (
 
     const descriptionIndex = nextButtons.findIndex(
       (button: TriggerButtonSettingRecord): boolean =>
-        button.id === DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID
+        button.id === DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID
     );
     if (descriptionIndex >= 0) {
       const [descriptionButton] = nextButtons.splice(descriptionIndex, 1);
@@ -1007,7 +1062,7 @@ const hasParameterInferenceDefaults = (records: AiPathsSettingRecord[]): boolean
   return locations.includes('product_modal');
 };
 
-const hasDescriptionInferenceV2Defaults = (
+const hasDescriptionInferenceLiteDefaults = (
   records: AiPathsSettingRecord[]
 ): boolean => {
   if (records.length === 0) return false;
@@ -1015,17 +1070,31 @@ const hasDescriptionInferenceV2Defaults = (
     records.map((entry: AiPathsSettingRecord): [string, string] => [entry.key, entry.value])
   );
   const configRaw = map.get(
-    `${AI_PATHS_CONFIG_KEY_PREFIX}${DESCRIPTION_INFERENCE_V2_PATH_ID}`
+    `${AI_PATHS_CONFIG_KEY_PREFIX}${DESCRIPTION_INFERENCE_LITE_PATH_ID}`
   );
-  if (needsDescriptionInferenceV2ConfigUpgrade(configRaw)) return false;
+  if (needsDescriptionInferenceLiteConfigUpgrade(configRaw)) return false;
   const configMeta = configRaw
-    ? parsePathConfigMeta(DESCRIPTION_INFERENCE_V2_PATH_ID, configRaw)
+    ? parsePathConfigMeta(DESCRIPTION_INFERENCE_LITE_PATH_ID, configRaw)
     : null;
   if (!configMeta) return false;
 
+  const legacyConfigRaw = map.get(
+    `${AI_PATHS_CONFIG_KEY_PREFIX}${LEGACY_DESCRIPTION_INFERENCE_V2_PATH_ID}`
+  );
+  if (legacyConfigRaw) {
+    try {
+      const parsedLegacy = JSON.parse(legacyConfigRaw) as Record<string, unknown>;
+      if (parsedLegacy && typeof parsedLegacy === 'object' && parsedLegacy['isActive'] !== false) {
+        return false;
+      }
+    } catch {
+      // ignore invalid legacy payloads
+    }
+  }
+
   const metas = parsePathMetas(map.get(AI_PATHS_INDEX_KEY));
   const descriptionMeta = metas.find(
-    (meta: ParsedPathMeta): boolean => meta.id === DESCRIPTION_INFERENCE_V2_PATH_ID
+    (meta: ParsedPathMeta): boolean => meta.id === DESCRIPTION_INFERENCE_LITE_PATH_ID
   );
   if (!descriptionMeta) return false;
 
@@ -1033,12 +1102,20 @@ const hasDescriptionInferenceV2Defaults = (
   if (buttons === null) return false;
   const descriptionButton = buttons.find(
     (button: TriggerButtonSettingRecord): boolean =>
-      button.id === DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID
+      button.id === DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID
   );
   if (!descriptionButton) return false;
+  if (
+    buttons.some(
+      (button: TriggerButtonSettingRecord): boolean =>
+        button.id === LEGACY_DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID
+    )
+  ) {
+    return false;
+  }
   const buttonName =
     typeof descriptionButton['name'] === 'string' ? (descriptionButton['name']).trim() : '';
-  if (buttonName !== DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_NAME) return false;
+  if (buttonName !== DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_NAME) return false;
   const locations = Array.isArray(descriptionButton['locations'])
     ? descriptionButton['locations']
     : [];
@@ -1047,7 +1124,7 @@ const hasDescriptionInferenceV2Defaults = (
 
 const hasAiPathsSeedDefaults = (records: AiPathsSettingRecord[]): boolean =>
   hasParameterInferenceDefaults(records) &&
-  hasDescriptionInferenceV2Defaults(records);
+  hasDescriptionInferenceLiteDefaults(records);
 
 export async function listAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
   assertMongoConfigured();
@@ -1058,7 +1135,7 @@ export async function listAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
   const compacted = await compactOversizedPathConfigs(settings);
   const consistent = await ensurePathIndexConsistency(compacted);
   const withParameterDefaults = await ensureParameterInferenceDefaults(consistent);
-  const ensuredDefaults = await ensureDescriptionInferenceV2Defaults(
+  const ensuredDefaults = await ensureDescriptionInferenceLiteDefaults(
     withParameterDefaults
   );
   setCachedAiPathsSettings(ensuredDefaults);

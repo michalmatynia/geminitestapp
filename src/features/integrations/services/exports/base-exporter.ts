@@ -473,7 +473,8 @@ export async function exportProductImagesToBase(
       ...productData,
     };
 
-    const response = await callBaseApi(token, 'updateInventoryProduct', apiParams);
+    // Base updates existing inventory products via addInventoryProduct when product_id is provided.
+    const response = await callBaseApi(token, 'addInventoryProduct', apiParams);
     const productIdValue = response['product_id'];
     const productId = (typeof productIdValue === 'string' || typeof productIdValue === 'number')
       ? String(productIdValue)

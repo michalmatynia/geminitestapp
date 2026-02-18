@@ -357,7 +357,7 @@ const resolveCropRect = async (
   const kind = step.config.kind;
   let rect: PixelRect;
 
-  if (kind === 'bbox' && step.config.bbox) {
+  if ((kind === 'bbox' || kind === 'selected_shape') && step.config.bbox) {
     rect = {
       left: step.config.bbox.x * sourceWidth,
       top: step.config.bbox.y * sourceHeight,
@@ -367,7 +367,11 @@ const resolveCropRect = async (
     return withPadding(rect, step.config.paddingPercent, sourceWidth, sourceHeight);
   }
 
-  if (kind === 'polygon' && Array.isArray(step.config.polygon) && step.config.polygon.length >= 3) {
+  if (
+    (kind === 'polygon' || kind === 'selected_shape') &&
+    Array.isArray(step.config.polygon) &&
+    step.config.polygon.length >= 3
+  ) {
     const xs = step.config.polygon.map((point) => Math.max(0, Math.min(1, point.x)) * sourceWidth);
     const ys = step.config.polygon.map((point) => Math.max(0, Math.min(1, point.y)) * sourceHeight);
     const minX = Math.min(...xs);
@@ -381,6 +385,10 @@ const resolveCropRect = async (
       height: Math.max(1, maxY - minY),
     };
     return withPadding(rect, step.config.paddingPercent, sourceWidth, sourceHeight);
+  }
+
+  if (kind === 'selected_shape') {
+    throw new Error('Selected-shape crop is missing shape geometry. Select a shape and try again.');
   }
 
   if (kind === 'alpha_object_bbox') {

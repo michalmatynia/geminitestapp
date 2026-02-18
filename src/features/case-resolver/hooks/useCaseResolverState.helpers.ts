@@ -337,6 +337,54 @@ export const collectCaseScopeIds = (
   return scopedCaseIds.size > 0 ? scopedCaseIds : null;
 };
 
+export type CaseResolverRequestedCaseStatus = 'loading' | 'ready' | 'missing';
+
+export const resolveCaseContainerIdForFileId = (
+  filesById: Map<string, CaseResolverFile>,
+  fileId: string | null
+): string | null => {
+  if (!fileId) return null;
+  const contextFile = filesById.get(fileId) ?? null;
+  if (!contextFile) return null;
+  if (contextFile.fileType === 'case') return contextFile.id;
+  if (!contextFile.parentCaseId) return null;
+  const parentFile = filesById.get(contextFile.parentCaseId) ?? null;
+  return parentFile?.fileType === 'case' ? parentFile.id : null;
+};
+
+export const resolveCaseResolverActiveCaseId = ({
+  requestedFileId,
+  requestedCaseContainerId,
+  selectedCaseContainerId,
+  files,
+}: {
+  requestedFileId: string | null;
+  requestedCaseContainerId: string | null;
+  selectedCaseContainerId: string | null;
+  files: CaseResolverFile[];
+}): string | null => {
+  if (requestedFileId) return requestedCaseContainerId;
+  if (selectedCaseContainerId) return selectedCaseContainerId;
+  return (
+    files.find((file: CaseResolverFile): boolean => file.fileType === 'case')?.id ??
+    null
+  );
+};
+
+export const isCaseResolverCreateContextReady = ({
+  activeCaseId,
+  requestedFileId,
+  requestedCaseStatus,
+}: {
+  activeCaseId: string | null;
+  requestedFileId: string | null;
+  requestedCaseStatus: CaseResolverRequestedCaseStatus;
+}): boolean => {
+  if (!activeCaseId) return false;
+  if (!requestedFileId) return true;
+  return requestedCaseStatus === 'ready';
+};
+
 const resolveUploadBucketForAssetKind = (
   kind: CaseResolverAssetKind
 ): 'images' | 'pdfs' | 'files' => {

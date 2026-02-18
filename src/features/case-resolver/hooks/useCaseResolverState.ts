@@ -66,8 +66,12 @@ import {
   clearStoredEditorDraft,
   collectCaseScopeIds,
   createUniqueCaseFileName,
+  isCaseResolverCreateContextReady,
   normalizeFolderRecords,
   readStoredEditorDraft,
+  resolveCaseContainerIdForFileId,
+  resolveCaseResolverActiveCaseId,
+  type CaseResolverRequestedCaseStatus,
   writeStoredEditorDraft,
 } from './useCaseResolverState.helpers';
 import { useCaseResolverStatePromptExploderSync } from './useCaseResolverState.prompt-exploder-sync';
@@ -84,6 +88,8 @@ import type {
 } from '../types';
 
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';
+const CASE_RESOLVER_REQUESTED_FILE_REFRESH_MAX_ATTEMPTS = 20;
+const CASE_RESOLVER_REQUESTED_FILE_REFRESH_INTERVAL_MS = 250;
 
 /**
  * Custom hook to manage the complex state and logic of the Case Resolver page.
@@ -174,6 +180,9 @@ export function useCaseResolverState() {
   const [selectedFileId, setSelectedFileId] = useState<string | null>(
     requestedFileId ?? initialWorkspaceState.activeFileId
   );
+  const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
+  const [requestedCaseStatus, setRequestedCaseStatus] =
+    useState<CaseResolverRequestedCaseStatus>(requestedFileId ? 'loading' : 'ready');
   const [selectedFolderPath, setSelectedFolderPath] = useState<string | null>(null);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [folderPanelCollapsed, setFolderPanelCollapsed] = useState(false);
@@ -202,6 +211,7 @@ export function useCaseResolverState() {
   const persistWorkspaceInFlightRef = useRef(false);
   const handledRequestedFileIdRef = useRef<string | null>(null);
   const requestedWorkspaceRefreshFileIdRef = useRef<string | null>(null);
+  const createContextRecoveryInFlightRef = useRef(false);
 
   const flushWorkspacePersist = useCallback((): void => {
     if (persistWorkspaceInFlightRef.current) return;
@@ -422,71 +432,225 @@ export function useCaseResolverState() {
     [workspace.files]
   );
 
+  const requestedCaseContainerId = useMemo(
+    (): string | null => resolveCaseContainerIdForFileId(filesById, requestedFileId),
+    [filesById, requestedFileId]
+  );
+
   const selectedCaseContainerId = useMemo((): string | null => {
     const contextFileId = selectedFileId ?? workspace.activeFileId;
-    if (!contextFileId) return null;
-    const contextFile = filesById.get(contextFileId) ?? null;
-    if (!contextFile) return null;
-    if (contextFile.fileType === 'case') return contextFile.id;
-    if (!contextFile.parentCaseId) return null;
-    const parentFile = filesById.get(contextFile.parentCaseId) ?? null;
-    return parentFile?.fileType === 'case' ? parentFile.id : null;
+    return resolveCaseContainerIdForFileId(filesById, contextFileId);
   }, [filesById, selectedFileId, workspace.activeFileId]);
 
-  const resolvedCaseContainerIdForCreate = useMemo((): string | null => {
-    if (selectedCaseContainerId) return selectedCaseContainerId;
+  const canCreateInActiveCase = useMemo(
+    (): boolean =>
+      isCaseResolverCreateContextReady({
+        activeCaseId,
+        requestedFileId,
+        requestedCaseStatus,
+      }),
+    [activeCaseId, requestedCaseStatus, requestedFileId]
+  );
 
-    if (requestedFileId) {
-      const requestedFile = filesById.get(requestedFileId) ?? null;
-      if (requestedFile?.fileType === 'case') return requestedFile.id;
-      if (requestedFile?.parentCaseId) {
-        const parentCase = filesById.get(requestedFile.parentCaseId) ?? null;
-        if (parentCase?.fileType === 'case') return parentCase.id;
+  const resolveCaseIdForWorkspace = useCallback(
+    (targetWorkspace: CaseResolverWorkspace): string | null => {
+      const targetFilesById = new Map(
+        targetWorkspace.files.map(
+          (file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file]
+        )
+      );
+      const targetRequestedCaseContainerId = resolveCaseContainerIdForFileId(
+        targetFilesById,
+        requestedFileId
+      );
+      const targetContextFileId = selectedFileId ?? targetWorkspace.activeFileId;
+      const targetSelectedCaseContainerId = resolveCaseContainerIdForFileId(
+        targetFilesById,
+        targetContextFileId
+      );
+      return resolveCaseResolverActiveCaseId({
+        requestedFileId,
+        requestedCaseContainerId: targetRequestedCaseContainerId,
+        selectedCaseContainerId: targetSelectedCaseContainerId,
+        files: targetWorkspace.files,
+      });
+    },
+    [requestedFileId, selectedFileId]
+  );
+
+  const recoverCreateContextCaseId = useCallback(
+    async (source: string): Promise<string | null> => {
+      if (createContextRecoveryInFlightRef.current) return null;
+      if (!requestedFileId) return null;
+
+      createContextRecoveryInFlightRef.current = true;
+      try {
+        const refreshedWorkspace = await fetchCaseResolverWorkspaceSnapshot(source);
+        if (!refreshedWorkspace) return null;
+        const recoveredCaseId = resolveCaseIdForWorkspace(refreshedWorkspace);
+        if (!recoveredCaseId) return null;
+
+        const refreshedSerialized = JSON.stringify(refreshedWorkspace);
+        lastPersistedValueRef.current = refreshedSerialized;
+        lastPersistedRevisionRef.current =
+          getCaseResolverWorkspaceRevision(refreshedWorkspace);
+        queuedSerializedWorkspaceRef.current = null;
+        queuedExpectedRevisionRef.current = null;
+        queuedMutationIdRef.current = null;
+        requestedWorkspaceRefreshFileIdRef.current = null;
+        handledRequestedFileIdRef.current = null;
+
+        setWorkspace(refreshedWorkspace);
+        setActiveCaseId(recoveredCaseId);
+        setRequestedCaseStatus('ready');
+
+        settingsStore.refetch();
+        logCaseResolverWorkspaceEvent({
+          source,
+          action: 'create_context_recovered',
+          workspaceRevision: getCaseResolverWorkspaceRevision(refreshedWorkspace),
+        });
+        return recoveredCaseId;
+      } finally {
+        createContextRecoveryInFlightRef.current = false;
       }
-    }
+    },
+    [requestedFileId, resolveCaseIdForWorkspace, settingsStore]
+  );
 
-    const firstCaseFile = workspace.files.find(
-      (file: CaseResolverFile): boolean => file.fileType === 'case'
+  const createFolderForCase = useCallback(
+    (ownerCaseId: string, targetFolderPath: string | null): void => {
+      updateWorkspace((current) => {
+        const normalizedTargetFolder = normalizeFolderPath(targetFolderPath ?? '');
+        const existingFoldersForOwner = normalizeFolderRecords(current.folderRecords)
+          .filter((record: CaseResolverFolderRecord): boolean => record.ownerCaseId === ownerCaseId)
+          .map((record: CaseResolverFolderRecord): string => record.path);
+        const nextPath = createUniqueFolderPath(existingFoldersForOwner, normalizedTargetFolder);
+        const currentFolderRecords = normalizeFolderRecords(current.folderRecords);
+        const ownedRecordExists = currentFolderRecords.some(
+          (record: CaseResolverFolderRecord): boolean =>
+            record.path === nextPath && (record.ownerCaseId ?? null) === ownerCaseId
+        );
+        if (ownedRecordExists) return current;
+        return {
+          ...current,
+          folders: normalizeFolderPaths([...current.folders, nextPath]),
+          folderRecords: appendOwnedFolderRecords({
+            records: current.folderRecords,
+            folderPath: nextPath,
+            ownerCaseId,
+          }),
+        };
+      }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+    },
+    [updateWorkspace]
+  );
+
+  const createDocumentForCase = useCallback(
+    ({
+      ownerCaseId,
+      targetFolderPath,
+      runtimeDefaultDocumentFormat,
+    }: {
+      ownerCaseId: string;
+      targetFolderPath: string | null;
+      runtimeDefaultDocumentFormat: 'markdown' | 'wysiwyg';
+    }): void => {
+      const folder = normalizeFolderPath(targetFolderPath ?? '');
+      updateWorkspace((current) => {
+        const name = createUniqueCaseFileName({
+          files: current.files,
+          folder,
+          baseName: 'New Document',
+        });
+        const file = createCaseResolverFile({
+          id: createId('case-file'),
+          fileType: 'document',
+          name,
+          folder,
+          parentCaseId: ownerCaseId,
+          editorType: runtimeDefaultDocumentFormat,
+          tagId: defaultTagId,
+          caseIdentifierId: defaultCaseIdentifierId,
+          categoryId: defaultCategoryId,
+        });
+
+        return {
+          ...current,
+          files: [...current.files, file],
+          folders: normalizeFolderPaths([...current.folders, folder]),
+          folderRecords: appendOwnedFolderRecords({
+            records: current.folderRecords,
+            folderPath: folder,
+            ownerCaseId,
+          }),
+        };
+      }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+    },
+    [defaultCaseIdentifierId, defaultCategoryId, defaultTagId, updateWorkspace]
+  );
+
+  useEffect(() => {
+    const nextActiveCaseId = resolveCaseResolverActiveCaseId({
+      requestedFileId,
+      requestedCaseContainerId,
+      selectedCaseContainerId,
+      files: workspace.files,
+    });
+    setActiveCaseId((current: string | null): string | null =>
+      current === nextActiveCaseId ? current : nextActiveCaseId
     );
-    return firstCaseFile?.id ?? null;
-  }, [filesById, requestedFileId, selectedCaseContainerId, workspace.files]);
+  }, [requestedCaseContainerId, requestedFileId, selectedCaseContainerId, workspace.files]);
 
   const selectedCaseScopeIds = useMemo(
-    (): Set<string> | null => collectCaseScopeIds(workspace.files, selectedCaseContainerId),
-    [selectedCaseContainerId, workspace.files]
+    (): Set<string> | null => collectCaseScopeIds(workspace.files, activeCaseId),
+    [activeCaseId, workspace.files]
   );
 
   const handleCreateFolder = useCallback((targetFolderPath: string | null): void => {
-    const ownerCaseId = selectedCaseContainerId ?? resolvedCaseContainerIdForCreate ?? null;
-    updateWorkspace((current) => {
-      const normalizedTargetFolder = normalizeFolderPath(targetFolderPath ?? '');
-      const existingFoldersForOwner =
-        ownerCaseId
-          ? normalizeFolderRecords(current.folderRecords)
-            .filter((record: CaseResolverFolderRecord): boolean => record.ownerCaseId === ownerCaseId)
-            .map((record: CaseResolverFolderRecord): string => record.path)
-          : current.folders;
-      const nextPath = createUniqueFolderPath(existingFoldersForOwner, normalizedTargetFolder);
-      const currentFolderRecords = normalizeFolderRecords(current.folderRecords);
-      const ownedRecordExists = currentFolderRecords.some(
-        (record: CaseResolverFolderRecord): boolean =>
-          record.path === nextPath && (record.ownerCaseId ?? null) === ownerCaseId
-      );
-      if (ownedRecordExists) return current;
-      return {
-        ...current,
-        folders: normalizeFolderPaths([...current.folders, nextPath]),
-        folderRecords: appendOwnedFolderRecords({
-          records: current.folderRecords,
-          folderPath: nextPath,
-          ownerCaseId,
-        }),
-      };
-    }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
-  }, [resolvedCaseContainerIdForCreate, selectedCaseContainerId, updateWorkspace]);
+    if (activeCaseId && canCreateInActiveCase) {
+      createFolderForCase(activeCaseId, targetFolderPath);
+      return;
+    }
+    if (requestedCaseStatus === 'loading' || createContextRecoveryInFlightRef.current) {
+      toast('Case context is still loading. Please wait.', { variant: 'warning' });
+      return;
+    }
+    if (requestedFileId) {
+      setRequestedCaseStatus('loading');
+      void (async (): Promise<void> => {
+        const recoveredCaseId = await recoverCreateContextCaseId('case_view_create_folder_recover');
+        if (recoveredCaseId) {
+          createFolderForCase(recoveredCaseId, targetFolderPath);
+          return;
+        }
+        setRequestedCaseStatus('missing');
+        logCaseResolverWorkspaceEvent({
+          source: 'case_view',
+          action: 'create_folder_blocked',
+          message: 'No active case context is available after refresh.',
+        });
+        toast('Cannot create folder without a selected case.', { variant: 'warning' });
+      })();
+      return;
+    }
+    logCaseResolverWorkspaceEvent({
+      source: 'case_view',
+      action: 'create_folder_blocked',
+      message: 'No active case context is available.',
+    });
+    toast('Cannot create folder without a selected case.', { variant: 'warning' });
+  }, [
+    activeCaseId,
+    canCreateInActiveCase,
+    createFolderForCase,
+    recoverCreateContextCaseId,
+    requestedCaseStatus,
+    requestedFileId,
+    toast,
+  ]);
 
   const handleCreateFile = useCallback((targetFolderPath: string | null): void => {
-    const folder = normalizeFolderPath(targetFolderPath ?? '');
     const runtimeCaseResolverSettings = parseCaseResolverSettings(
       settingsStore.get(CASE_RESOLVER_SETTINGS_KEY)
     );
@@ -494,79 +658,56 @@ export function useCaseResolverState() {
       settingsStore.get(CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY),
       runtimeCaseResolverSettings.defaultDocumentFormat
     );
-    let missingCaseContainer = false;
-    updateWorkspace((current) => {
-      const filesMap = new Map<string, CaseResolverFile>(
-        current.files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
-      );
-      const resolveContextCaseId = (): string | null => {
-        const contextCandidates = [
-          selectedFileId,
-          current.activeFileId,
-          requestedFileId,
-        ];
-        for (const candidateId of contextCandidates) {
-          if (!candidateId) continue;
-          const candidate = filesMap.get(candidateId) ?? null;
-          if (!candidate) continue;
-          if (candidate.fileType === 'case') return candidate.id;
-          if (!candidate.parentCaseId) continue;
-          const parent = filesMap.get(candidate.parentCaseId) ?? null;
-          if (parent?.fileType === 'case') return parent.id;
-        }
-        return current.files.find(
-          (file: CaseResolverFile): boolean => file.fileType === 'case'
-        )?.id ?? null;
-      };
-
-      const parentCaseId = resolveContextCaseId();
-      if (!parentCaseId) {
-        missingCaseContainer = true;
-        return current;
-      }
-
-      const name = createUniqueCaseFileName({
-        files: current.files,
-        folder,
-        baseName: 'New Document',
+    if (activeCaseId && canCreateInActiveCase) {
+      createDocumentForCase({
+        ownerCaseId: activeCaseId,
+        targetFolderPath,
+        runtimeDefaultDocumentFormat,
       });
-      const file = createCaseResolverFile({
-        id: createId('case-file'),
-        fileType: 'document',
-        name,
-        folder,
-        parentCaseId,
-        editorType: runtimeDefaultDocumentFormat,
-        tagId: defaultTagId,
-        caseIdentifierId: defaultCaseIdentifierId,
-        categoryId: defaultCategoryId,
-      });
-
-      return {
-        ...current,
-        files: [...current.files, file],
-        folders: normalizeFolderPaths([...current.folders, folder]),
-        folderRecords: appendOwnedFolderRecords({
-          records: current.folderRecords,
-          folderPath: folder,
-          ownerCaseId: parentCaseId,
-        }),
-      };
-    }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
-
-    if (missingCaseContainer) {
-      toast('Cannot create document without a selected case.', { variant: 'error' });
       return;
     }
+    if (requestedCaseStatus === 'loading' || createContextRecoveryInFlightRef.current) {
+      toast('Case context is still loading. Please wait.', { variant: 'warning' });
+      return;
+    }
+    if (requestedFileId) {
+      setRequestedCaseStatus('loading');
+      void (async (): Promise<void> => {
+        const recoveredCaseId = await recoverCreateContextCaseId('case_view_create_file_recover');
+        if (recoveredCaseId) {
+          createDocumentForCase({
+            ownerCaseId: recoveredCaseId,
+            targetFolderPath,
+            runtimeDefaultDocumentFormat,
+          });
+          return;
+        }
+        setRequestedCaseStatus('missing');
+        logCaseResolverWorkspaceEvent({
+          source: 'case_view',
+          action: 'create_file_blocked',
+          message: 'No active case context is available after refresh.',
+        });
+        toast('Cannot create document without a selected case.', { variant: 'warning' });
+      })();
+      return;
+    }
+    logCaseResolverWorkspaceEvent({
+      source: 'case_view',
+      action: 'create_file_blocked',
+      message: 'No active case context is available.',
+    });
+    toast('Cannot create document without a selected case.', { variant: 'warning' });
   }, [
-    defaultCaseIdentifierId,
-    defaultCategoryId,
-    defaultTagId,
+    activeCaseId,
+    canCreateInActiveCase,
+    createDocumentForCase,
+    recoverCreateContextCaseId,
+    requestedCaseStatus,
     requestedFileId,
-    selectedFileId,
     settingsStore,
+    setRequestedCaseStatus,
     toast,
-    updateWorkspace,
   ]);
 
   const {
@@ -585,13 +726,11 @@ export function useCaseResolverState() {
     setEditingDocumentDraft,
     setIsUploadingScanDraftFiles,
     setUploadingScanSlotId,
-    selectedFileId,
-    requestedFileId,
     defaultTagId,
     defaultCaseIdentifierId,
     defaultCategoryId,
-    selectedCaseContainerId,
-    resolvedCaseContainerIdForCreate,
+    activeCaseId,
+    requestedCaseStatus,
     setSelectedFileId,
     setSelectedFolderPath,
     setSelectedAssetId,
@@ -600,6 +739,7 @@ export function useCaseResolverState() {
 
   useEffect(() => {
     if (!requestedFileId) {
+      setRequestedCaseStatus('ready');
       requestedWorkspaceRefreshFileIdRef.current = null;
       return;
     }
@@ -607,43 +747,68 @@ export function useCaseResolverState() {
       (file: CaseResolverFile): boolean => file.id === requestedFileId
     );
     if (requestedFileExists) {
+      setRequestedCaseStatus('ready');
       requestedWorkspaceRefreshFileIdRef.current = null;
       return;
     }
+    setRequestedCaseStatus('loading');
     if (requestedWorkspaceRefreshFileIdRef.current === requestedFileId) return;
 
     requestedWorkspaceRefreshFileIdRef.current = requestedFileId;
     let isCancelled = false;
+    const wait = async (ms: number): Promise<void> =>
+      new Promise<void>((resolve) => {
+        window.setTimeout(resolve, ms);
+      });
     void (async (): Promise<void> => {
-      const refreshedWorkspace = await fetchCaseResolverWorkspaceSnapshot('case_view');
-      if (!refreshedWorkspace) return;
-      const refreshedHasRequestedFile = refreshedWorkspace.files.some(
-        (file: CaseResolverFile): boolean => file.id === requestedFileId
-      );
-      if (isCancelled) return;
-      if (!refreshedHasRequestedFile) {
-        requestedWorkspaceRefreshFileIdRef.current = null;
-        return;
+      for (
+        let attempt = 0;
+        attempt < CASE_RESOLVER_REQUESTED_FILE_REFRESH_MAX_ATTEMPTS;
+        attempt += 1
+      ) {
+        const refreshedWorkspace = await fetchCaseResolverWorkspaceSnapshot('case_view');
+        if (isCancelled) return;
+        if (refreshedWorkspace) {
+          const refreshedHasRequestedFile = refreshedWorkspace.files.some(
+            (file: CaseResolverFile): boolean => file.id === requestedFileId
+          );
+          if (refreshedHasRequestedFile) {
+            setRequestedCaseStatus('ready');
+            lastPersistedValueRef.current = JSON.stringify(refreshedWorkspace);
+            lastPersistedRevisionRef.current = getCaseResolverWorkspaceRevision(refreshedWorkspace);
+            queuedSerializedWorkspaceRef.current = null;
+            queuedExpectedRevisionRef.current = null;
+            queuedMutationIdRef.current = null;
+            setWorkspace(refreshedWorkspace);
+            handledRequestedFileIdRef.current = null;
+            logCaseResolverWorkspaceEvent({
+              source: 'case_view',
+              action: 'requested_file_refresh_applied',
+              workspaceRevision: getCaseResolverWorkspaceRevision(refreshedWorkspace),
+            });
+            return;
+          }
+        }
+        if (attempt === 0) {
+          settingsStore.refetch();
+        }
+        if (attempt < CASE_RESOLVER_REQUESTED_FILE_REFRESH_MAX_ATTEMPTS - 1) {
+          await wait(CASE_RESOLVER_REQUESTED_FILE_REFRESH_INTERVAL_MS);
+        }
       }
-
-      lastPersistedValueRef.current = JSON.stringify(refreshedWorkspace);
-      lastPersistedRevisionRef.current = getCaseResolverWorkspaceRevision(refreshedWorkspace);
-      queuedSerializedWorkspaceRef.current = null;
-      queuedExpectedRevisionRef.current = null;
-      queuedMutationIdRef.current = null;
-      setWorkspace(refreshedWorkspace);
-      handledRequestedFileIdRef.current = null;
+      requestedWorkspaceRefreshFileIdRef.current = null;
+      setRequestedCaseStatus('missing');
       logCaseResolverWorkspaceEvent({
         source: 'case_view',
-        action: 'requested_file_refresh_applied',
-        workspaceRevision: getCaseResolverWorkspaceRevision(refreshedWorkspace),
+        action: 'requested_file_refresh_missing',
+        message: `Requested file is unavailable after refresh attempts: ${requestedFileId}`,
       });
     })();
 
     return (): void => {
       isCancelled = true;
     };
-  }, [requestedFileId, workspace.files]);
+  }, [requestedFileId, settingsStore, workspace.files]);
 
   useEffect(() => {
     if (!requestedFileId) {
@@ -714,7 +879,7 @@ export function useCaseResolverState() {
     updateWorkspace,
     workspace,
     selectedCaseScopeIds,
-    selectedCaseContainerId,
+    selectedCaseContainerId: activeCaseId,
     setSelectedFileId,
     setSelectedAssetId,
     setSelectedFolderPath,
@@ -941,6 +1106,9 @@ export function useCaseResolverState() {
     isMenuCollapsed,
     setIsMenuCollapsed,
     requestedFileId,
+    activeCaseId,
+    requestedCaseStatus,
+    canCreateInActiveCase,
     shouldOpenEditorFromQuery,
     handleSelectFile,
     handleSelectAsset,

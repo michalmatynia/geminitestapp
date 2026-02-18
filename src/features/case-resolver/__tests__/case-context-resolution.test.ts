@@ -1,0 +1,83 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  isCaseResolverCreateContextReady,
+  resolveCaseContainerIdForFileId,
+  resolveCaseResolverActiveCaseId,
+} from '@/features/case-resolver/hooks/useCaseResolverState.helpers';
+import { createCaseResolverFile } from '@/features/case-resolver/settings';
+import type { CaseResolverFile } from '@/features/case-resolver/types';
+
+const buildFilesById = (files: CaseResolverFile[]): Map<string, CaseResolverFile> =>
+  new Map(files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file]));
+
+describe('case resolver case context resolution', () => {
+  it('resolves case container id for case and document file ids', () => {
+    const caseFile = createCaseResolverFile({
+      id: 'case-a',
+      fileType: 'case',
+      name: 'Case A',
+    });
+    const documentFile = createCaseResolverFile({
+      id: 'doc-a',
+      fileType: 'document',
+      name: 'Doc A',
+      parentCaseId: caseFile.id,
+    });
+    const files = [caseFile, documentFile];
+    const filesById = buildFilesById(files);
+
+    expect(resolveCaseContainerIdForFileId(filesById, caseFile.id)).toBe(caseFile.id);
+    expect(resolveCaseContainerIdForFileId(filesById, documentFile.id)).toBe(caseFile.id);
+  });
+
+  it('keeps active case null while requested case is still missing', () => {
+    const caseFile = createCaseResolverFile({
+      id: 'case-a',
+      fileType: 'case',
+      name: 'Case A',
+    });
+    const files = [caseFile];
+
+    const activeCaseId = resolveCaseResolverActiveCaseId({
+      requestedFileId: 'case-missing',
+      requestedCaseContainerId: null,
+      selectedCaseContainerId: caseFile.id,
+      files,
+    });
+
+    expect(activeCaseId).toBeNull();
+    expect(
+      isCaseResolverCreateContextReady({
+        activeCaseId,
+        requestedFileId: 'case-missing',
+        requestedCaseStatus: 'loading',
+      }),
+    ).toBe(false);
+  });
+
+  it('enables create context once requested case is available', () => {
+    const caseFile = createCaseResolverFile({
+      id: 'case-a',
+      fileType: 'case',
+      name: 'Case A',
+    });
+    const files = [caseFile];
+
+    const activeCaseId = resolveCaseResolverActiveCaseId({
+      requestedFileId: caseFile.id,
+      requestedCaseContainerId: caseFile.id,
+      selectedCaseContainerId: null,
+      files,
+    });
+
+    expect(activeCaseId).toBe(caseFile.id);
+    expect(
+      isCaseResolverCreateContextReady({
+        activeCaseId,
+        requestedFileId: caseFile.id,
+        requestedCaseStatus: 'ready',
+      }),
+    ).toBe(true);
+  });
+});

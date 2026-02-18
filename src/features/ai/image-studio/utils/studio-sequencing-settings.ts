@@ -17,6 +17,7 @@ export const IMAGE_STUDIO_SEQUENCE_CROP_KINDS = [
   'bbox',
   'polygon',
   'alpha_object_bbox',
+  'selected_shape',
 ] as const;
 
 export type ImageStudioSequenceCropKind =
@@ -78,6 +79,7 @@ export type ImageStudioSequenceCropStep = ImageStudioSequenceStepBase & {
   type: 'crop_center';
   config: {
     kind: ImageStudioSequenceCropKind;
+    selectedShapeId: string | null;
     aspectRatio: string | null;
     paddingPercent: number;
     bbox: ImageStudioSequenceCropRect | null;
@@ -330,6 +332,7 @@ const cloneStep = (step: ImageStudioSequenceStep): ImageStudioSequenceStep => {
       type: 'crop_center',
       config: {
         kind: step.config.kind,
+        selectedShapeId: step.config.selectedShapeId ?? null,
         aspectRatio: step.config.aspectRatio,
         paddingPercent: step.config.paddingPercent,
         bbox: step.config.bbox
@@ -407,6 +410,7 @@ const defaultSequenceStepByType = (
       type: 'crop_center',
       config: {
         kind: 'center_square',
+        selectedShapeId: null,
         aspectRatio: null,
         paddingPercent: 0,
         bbox: null,
@@ -477,6 +481,8 @@ const normalizeSequenceStep = (
     const kind = isCropKind(config?.['kind'])
       ? config?.['kind']
       : (fallback.type === 'crop_center' ? fallback.config.kind : 'center_square');
+    const selectedShapeId = asTrimmedString(config?.['selectedShapeId'])
+      ?? (fallback.type === 'crop_center' ? fallback.config.selectedShapeId : null);
     const aspectRatio = asTrimmedString(config?.['aspectRatio'])
       ?? (fallback.type === 'crop_center' ? fallback.config.aspectRatio : null);
     const paddingPercent = clampSequencePaddingPercent(
@@ -493,6 +499,7 @@ const normalizeSequenceStep = (
       type,
       config: {
         kind,
+        selectedShapeId,
         aspectRatio,
         paddingPercent,
         bbox,

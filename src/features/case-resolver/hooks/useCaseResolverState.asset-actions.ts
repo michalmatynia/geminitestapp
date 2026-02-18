@@ -73,13 +73,11 @@ type UseCaseResolverStateAssetActionsInput = {
   setEditingDocumentDraft: React.Dispatch<React.SetStateAction<CaseResolverFileEditDraft | null>>;
   setIsUploadingScanDraftFiles: React.Dispatch<React.SetStateAction<boolean>>;
   setUploadingScanSlotId: React.Dispatch<React.SetStateAction<string | null>>;
-  selectedFileId: string | null;
-  requestedFileId: string | null;
   defaultTagId: string | null;
   defaultCaseIdentifierId: string | null;
   defaultCategoryId: string | null;
-  selectedCaseContainerId: string | null;
-  resolvedCaseContainerIdForCreate: string | null;
+  activeCaseId: string | null;
+  requestedCaseStatus: 'loading' | 'ready' | 'missing';
   setSelectedFileId: React.Dispatch<React.SetStateAction<string | null>>;
   setSelectedFolderPath: React.Dispatch<React.SetStateAction<string | null>>;
   setSelectedAssetId: React.Dispatch<React.SetStateAction<string | null>>;
@@ -108,13 +106,11 @@ export const useCaseResolverStateAssetActions = ({
   setEditingDocumentDraft,
   setIsUploadingScanDraftFiles,
   setUploadingScanSlotId,
-  selectedFileId,
-  requestedFileId,
   defaultTagId,
   defaultCaseIdentifierId,
   defaultCategoryId,
-  selectedCaseContainerId,
-  resolvedCaseContainerIdForCreate,
+  activeCaseId,
+  requestedCaseStatus,
   setSelectedFileId,
   setSelectedFolderPath,
   setSelectedAssetId,
@@ -253,37 +249,18 @@ export const useCaseResolverStateAssetActions = ({
       settingsStore.get(CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY),
       runtimeCaseResolverSettings.defaultDocumentFormat
     );
-    let missingCaseContainer = false;
+    if (!activeCaseId) {
+      toast(
+        requestedCaseStatus === 'loading'
+          ? 'Case context is still loading. Please wait.'
+          : 'Cannot create image file without a selected case.',
+        { variant: 'warning' }
+      );
+      return;
+    }
     let createdImageFile = false;
 
     updateWorkspace((current) => {
-      const filesMap = new Map<string, CaseResolverFile>(
-        current.files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
-      );
-      const resolveContextCaseId = (): string | null => {
-        const contextCandidates = [
-          selectedFileId,
-          current.activeFileId,
-          requestedFileId,
-        ];
-        for (const candidateId of contextCandidates) {
-          if (!candidateId) continue;
-          const candidate = filesMap.get(candidateId) ?? null;
-          if (!candidate) continue;
-          if (candidate.fileType === 'case') return candidate.id;
-          if (!candidate.parentCaseId) continue;
-          const parent = filesMap.get(candidate.parentCaseId) ?? null;
-          if (parent?.fileType === 'case') return parent.id;
-        }
-        return current.files.find(
-          (file: CaseResolverFile): boolean => file.fileType === 'case'
-        )?.id ?? null;
-      };
-      const parentCaseId = resolveContextCaseId();
-      if (!parentCaseId) {
-        missingCaseContainer = true;
-        return current;
-      }
       const name = createUniqueCaseFileName({
         files: current.files,
         folder,
@@ -295,7 +272,7 @@ export const useCaseResolverStateAssetActions = ({
         fileType: 'scanfile',
         name,
         folder,
-        parentCaseId,
+        parentCaseId: activeCaseId,
         editorType: runtimeDefaultDocumentFormat,
         scanSlots: [],
         tagId: defaultTagId,
@@ -310,24 +287,20 @@ export const useCaseResolverStateAssetActions = ({
         folderRecords: appendOwnedFolderRecords({
           records: current.folderRecords,
           folderPath: folder,
-          ownerCaseId: parentCaseId,
+          ownerCaseId: activeCaseId,
         }),
       };
     }, { persistToast: treeSaveToast });
 
-    if (missingCaseContainer) {
-      toast('Cannot create image file without a selected case.', { variant: 'error' });
-      return;
-    }
     if (createdImageFile) {
       toast('New image file created.', { variant: 'success' });
     }
   }, [
+    activeCaseId,
     defaultCaseIdentifierId,
     defaultCategoryId,
     defaultTagId,
-    requestedFileId,
-    selectedFileId,
+    requestedCaseStatus,
     settingsStore,
     toast,
     treeSaveToast,
@@ -612,7 +585,16 @@ export const useCaseResolverStateAssetActions = ({
   const handleCreateImageAsset = useCallback((targetFolderPath: string | null): void => {
     const folder = normalizeFolderPath(targetFolderPath ?? '');
     const createdAssetId = createId('asset');
-    const ownerCaseId = selectedCaseContainerId ?? resolvedCaseContainerIdForCreate ?? null;
+    const ownerCaseId = activeCaseId;
+    if (!ownerCaseId) {
+      toast(
+        requestedCaseStatus === 'loading'
+          ? 'Case context is still loading. Please wait.'
+          : 'Cannot create image placeholder without a selected case.',
+        { variant: 'warning' }
+      );
+      return;
+    }
     updateWorkspace((current) => {
       const name = createPlaceholderAssetName({
         assets: current.assets,
@@ -637,7 +619,7 @@ export const useCaseResolverStateAssetActions = ({
       };
     }, { persistToast: treeSaveToast });
     toast('Image placeholder created. Upload the file when ready.', { variant: 'success' });
-  }, [resolvedCaseContainerIdForCreate, selectedCaseContainerId, toast, treeSaveToast, updateWorkspace]);
+  }, [activeCaseId, requestedCaseStatus, toast, treeSaveToast, updateWorkspace]);
 
   const handleUploadAssets = useCallback(
     async (

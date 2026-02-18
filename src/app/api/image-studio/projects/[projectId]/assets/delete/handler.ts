@@ -3,7 +3,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { removeImageStudioRunOutputs } from '@/features/ai/image-studio/server/run-repository';
@@ -11,6 +11,7 @@ import {
   deleteImageStudioSlotCascade,
   listImageStudioSlots,
 } from '@/features/ai/image-studio/server/slot-repository';
+import { deleteImageStudioVariant } from '@/features/ai/image-studio/server/variant-delete';
 import { getImageFileRepository } from '@/features/files/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -40,6 +41,22 @@ const asTrimmedLowerString = (value: unknown): string => {
   return value.trim().toLowerCase();
 };
 
+const isGenerationDerivedSlot = (metadata: unknown): boolean => {
+  const record = asRecord(metadata);
+  if (!record) return false;
+
+  const role = asTrimmedLowerString(record['role']);
+  if (role === 'generation') return true;
+
+  const relationType = asTrimmedLowerString(record['relationType']);
+  return (
+    relationType.startsWith('generation:') ||
+    relationType.startsWith('center:') ||
+    relationType.startsWith('crop:') ||
+    relationType.startsWith('upscale:')
+  );
+};
+
 const asTrimmedString = (value: unknown): string => {
   if (typeof value !== 'string') return '';
   return value.trim();
@@ -67,22 +84,6 @@ const resolveSlotIdAliases = (slotIdRaw: string): string[] => {
     candidates.add(`card:${unprefixed}`);
   }
   return Array.from(candidates);
-};
-
-const isGenerationDerivedSlot = (metadata: unknown): boolean => {
-  const record = asRecord(metadata);
-  if (!record) return false;
-
-  const role = asTrimmedLowerString(record['role']);
-  if (role === 'generation') return true;
-
-  const relationType = asTrimmedLowerString(record['relationType']);
-  return (
-    relationType.startsWith('generation:') ||
-    relationType.startsWith('center:') ||
-    relationType.startsWith('crop:') ||
-    relationType.startsWith('upscale:')
-  );
 };
 
 function normalizePublicPath(filepath: string | null | undefined): string | null {
@@ -217,6 +218,25 @@ export async function POST_handler(
   const parsed = deleteSchema.safeParse(body);
   if (!parsed.success) {
     throw badRequestError('Invalid payload', { errors: parsed.error.format() });
+  }
+
+  const shouldUseVariantDeleteFlow = Boolean(
+    parsed.data.slotId?.trim()
+      || parsed.data.generationRunId?.trim()
+      || parsed.data.sourceSlotId?.trim()
+      || parsed.data.generationOutputIndex !== undefined,
+  );
+  if (shouldUseVariantDeleteFlow) {
+    const result = await deleteImageStudioVariant({
+      projectId,
+      slotId: parsed.data.slotId ?? null,
+      assetId: parsed.data.id ?? null,
+      filepath: parsed.data.filepath ?? null,
+      generationRunId: parsed.data.generationRunId ?? null,
+      generationOutputIndex: parsed.data.generationOutputIndex ?? null,
+      sourceSlotId: parsed.data.sourceSlotId ?? null,
+    });
+    return NextResponse.json(result);
   }
 
   const assetId = parsed.data.id?.trim() ?? '';

@@ -259,6 +259,15 @@ export function RightSidebar(): React.JSX.Element {
   }, [isSelectToolActive, setCanvasSelectionEnabled, setTool]);
 
   const handleSelectShapeTool = useCallback((nextTool: VectorToolMode): void => {
+    const isTogglingActiveShapeToolOff = nextTool !== 'select' && tool === nextTool;
+    if (isTogglingActiveShapeToolOff) {
+      setTool('select');
+      if (canvasSelectionEnabled) {
+        setCanvasSelectionEnabled(false);
+      }
+      return;
+    }
+
     setTool(nextTool);
     if (nextTool === 'select') {
       setCanvasSelectionEnabled(true);
@@ -267,7 +276,7 @@ export function RightSidebar(): React.JSX.Element {
     if (canvasSelectionEnabled) {
       setCanvasSelectionEnabled(false);
     }
-  }, [canvasSelectionEnabled, setCanvasSelectionEnabled, setTool]);
+  }, [canvasSelectionEnabled, setCanvasSelectionEnabled, setTool, tool]);
 
   const applyActionHistorySnapshot = useCallback((snapshot: StudioActionHistorySnapshot): void => {
     setSelectedFolder(snapshot.selectedFolder);

@@ -1,5 +1,5 @@
 import { studioKeys } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
-import { api, ApiError } from '@/shared/lib/api-client';
+import { api } from '@/shared/lib/api-client';
 
 import { wait, type VariantThumbnailInfo } from './preview-utils';
 import { resolveVariantSlotIdForCenterPreview } from './variant-thumbnails';
@@ -51,9 +51,6 @@ type DeleteVariantFromCenterPreviewParams = {
   activeRunId: string | null;
   buildVariantDismissKeys: (variant: VariantThumbnailInfo) => string[];
   clearActiveRunError: () => void;
-  deleteSlotMutation: {
-    mutateAsync: (slotId: string) => Promise<unknown>;
-  };
   projectId: string | null;
   queryClient: QueryClient;
   rootVariantSourceSlotId: string | null;
@@ -62,6 +59,16 @@ type DeleteVariantFromCenterPreviewParams = {
   slots: ImageStudioSlotRecord[];
   toast: ToastFn;
   variant: VariantThumbnailInfo;
+};
+
+type DeleteVariantApiResponse = {
+  ok: boolean;
+  modeUsed: 'slot_cascade' | 'asset_only' | 'noop';
+  matchedSlotIds: string[];
+  deletedSlotIds: string[];
+  deletedFileIds: string[];
+  deletedFilepaths: string[];
+  warnings: string[];
 };
 
 const toTemporaryUpload = (variant: VariantThumbnailInfo): TemporaryUpload | null => {
@@ -143,36 +150,6 @@ const refreshGenerationQueries = (queryClient: QueryClient): void => {
   });
 };
 
-const deleteVariantAssetFallback = async (
-  activeRunId: string | null,
-  projectId: string | null,
-  rootVariantSourceSlotId: string | null,
-  variant: VariantThumbnailInfo,
-): Promise<void> => {
-  const output = variant.output;
-  if (!output || !projectId) return;
-  const runIdFromVariantId = variant.id.startsWith('run:')
-    ? variant.id.split(':')[1]?.trim() ?? ''
-    : '';
-  const generationRunId = runIdFromVariantId || activeRunId?.trim() || null;
-
-  try {
-    await api.post(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/delete`, {
-      id: output.id,
-      filepath: output.filepath,
-      slotId: variant.slotId ?? undefined,
-      generationRunId: generationRunId ?? undefined,
-      generationOutputIndex: Number.isFinite(variant.index) ? variant.index : undefined,
-      sourceSlotId: rootVariantSourceSlotId ?? undefined,
-    });
-  } catch (error: unknown) {
-    if (error instanceof ApiError && error.status === 404) {
-      return;
-    }
-    throw error;
-  }
-};
-
 export const loadVariantIntoCanvas = async ({
   activeRunId,
   projectId,
@@ -234,7 +211,6 @@ export const deleteVariantFromCenterPreview = async ({
   activeRunId,
   buildVariantDismissKeys,
   clearActiveRunError,
-  deleteSlotMutation,
   projectId,
   queryClient,
   rootVariantSourceSlotId,
@@ -245,58 +221,73 @@ export const deleteVariantFromCenterPreview = async ({
   variant,
 }: DeleteVariantFromCenterPreviewParams): Promise<void> => {
   try {
+    if (!projectId) {
+      toast('Select a project first.', { variant: 'info' });
+      return;
+    }
+
     const targetSlotId = await resolveVariantSlotIdWithRetries({
       activeRunId,
-      attempts: 4,
+      attempts: 6,
       projectId,
       queryClient,
       refreshSlots: async (): Promise<void> => {
         if (!projectId) return;
-        await queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
+        const response = await api.get<{ slots?: ImageStudioSlotRecord[] }>(
+          `/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`,
+          {
+            cache: 'no-store',
+            logError: false,
+          },
+        );
+        queryClient.setQueryData(studioKeys.slots(projectId), response);
       },
       rootVariantSourceSlotId,
       slots,
       variant,
     });
 
-    if (!targetSlotId) {
-      await deleteVariantAssetFallback(activeRunId, projectId, rootVariantSourceSlotId, variant);
-      dismissVariantFromUi(
-        buildVariantDismissKeys,
-        clearActiveRunError,
-        setDismissedVariantKeys,
-        setVariantTooltip,
-        variant,
-      );
+    const runIdFromVariantId = variant.id.startsWith('run:')
+      ? variant.id.split(':')[1]?.trim() ?? ''
+      : '';
+    const generationRunId = runIdFromVariantId || activeRunId?.trim() || null;
+    const response = await api.post<DeleteVariantApiResponse>(
+      `/api/image-studio/projects/${encodeURIComponent(projectId)}/variants/delete`,
+      {
+        slotId: targetSlotId ?? variant.slotId ?? undefined,
+        assetId: variant.output?.id ?? undefined,
+        filepath: variant.output?.filepath ?? variant.imageSrc ?? undefined,
+        generationRunId: generationRunId ?? undefined,
+        generationOutputIndex: Number.isFinite(variant.index) ? variant.index : undefined,
+        sourceSlotId: rootVariantSourceSlotId ?? undefined,
+      },
+    );
+
+    if (response.modeUsed === 'noop') {
+      const warning = response.warnings[0] || 'Variant delete did not remove any slot or file.';
+      toast(warning, { variant: 'info' });
       refreshGenerationQueries(queryClient);
       return;
     }
 
-    try {
-      await deleteSlotMutation.mutateAsync(targetSlotId);
-      dismissVariantFromUi(
-        buildVariantDismissKeys,
-        clearActiveRunError,
-        setDismissedVariantKeys,
-        setVariantTooltip,
-        variant,
-      );
-      refreshGenerationQueries(queryClient);
-    } catch (error: unknown) {
-      if (error instanceof ApiError && error.status === 404) {
-        await deleteVariantAssetFallback(activeRunId, projectId, rootVariantSourceSlotId, variant);
-        dismissVariantFromUi(
-          buildVariantDismissKeys,
-          clearActiveRunError,
-          setDismissedVariantKeys,
-          setVariantTooltip,
-          variant,
-        );
-        refreshGenerationQueries(queryClient);
-        return;
-      }
-      throw error;
+    if (response.modeUsed === 'asset_only') {
+      const warning = response.warnings[0] || 'Variant file was deleted without slot cascade.';
+      toast(warning, { variant: 'info' });
     }
+
+    if (response.modeUsed === 'slot_cascade') {
+      toast('Variant node and linked files deleted.', { variant: 'success' });
+    }
+
+    dismissVariantFromUi(
+      buildVariantDismissKeys,
+      clearActiveRunError,
+      setDismissedVariantKeys,
+      setVariantTooltip,
+      variant,
+    );
+    refreshGenerationQueries(queryClient);
+    await queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
   } catch (error: unknown) {
     toast(error instanceof Error ? error.message : 'Failed to delete variant.', { variant: 'error' });
   }

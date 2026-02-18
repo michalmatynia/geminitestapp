@@ -12,7 +12,10 @@ import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { Button, SelectSimple, Switch, useToast } from '@/shared/ui';
 
-import { collectSequenceMaskPolygons } from './right-sidebar/right-sidebar-utils';
+import {
+  collectSequenceMaskPolygons,
+  resolveSequenceStepsForRun,
+} from './right-sidebar/right-sidebar-utils';
 import { SequenceStackCard } from './sequencing/SequenceStackCard';
 import {
   PRESET_NAME_MAX_LENGTH,
@@ -258,6 +261,17 @@ export function SequencingPanel(): React.JSX.Element {
     if (frameBinding?.slotId !== normalizedWorkingSlotId) return null;
     return frameBinding.frame;
   }, [getPreviewCanvasImageFrame, workingSlot?.id, workingSlot?.imageFileId, workingSlot?.updatedAt]);
+  const cropShapeOptions = useMemo(
+    () =>
+      maskShapes.map((shape, index) => {
+        const label = shape.label?.trim() || shape.name.trim() || `Shape ${index + 1}`;
+        return {
+          value: shape.id,
+          label: shape.visible ? label : `${label} (hidden)`,
+        };
+      }),
+    [maskShapes],
+  );
   const normalizeStepsWithCurrentFallback = useCallback(
     (input: unknown): ImageStudioSequenceStep[] =>
       normalizeImageStudioSequenceSteps(input, {
@@ -824,6 +838,28 @@ export function SequencingPanel(): React.JSX.Element {
       return;
     }
 
+    const polygons = collectSequenceMaskPolygons(
+      maskShapes,
+      workingSlotImageWidth ?? 1,
+      workingSlotImageHeight ?? 1,
+      sequenceImageContentFrame
+    );
+    const { resolvedSteps, errors: stepResolutionErrors } = resolveSequenceStepsForRun(
+      enabledSteps,
+      {
+        maskShapes,
+        sourceWidth: workingSlotImageWidth ?? 1,
+        sourceHeight: workingSlotImageHeight ?? 1,
+        imageContentFrame: sequenceImageContentFrame,
+      },
+    );
+    if (stepResolutionErrors.length > 0) {
+      toast(stepResolutionErrors[0] ?? 'Selected-shape crop step is not fully configured.', {
+        variant: 'info',
+      });
+      return;
+    }
+
     try {
       setSequenceLog([]);
       setSequenceError(null);
@@ -833,13 +869,6 @@ export function SequencingPanel(): React.JSX.Element {
       setSlotSyncWarning(null);
       lastTerminalSnapshotRef.current = null;
       sourceSlotIdRef.current = workingSlot.id;
-
-      const polygons = collectSequenceMaskPolygons(
-        maskShapes,
-        workingSlotImageWidth ?? 1,
-        workingSlotImageHeight ?? 1,
-        sequenceImageContentFrame
-      );
 
       const result = await api.post<SequenceRunStartResponse>(
         '/api/image-studio/sequences/run',
@@ -858,7 +887,7 @@ export function SequencingPanel(): React.JSX.Element {
               }
               : null,
           studioSettings: studioSettings as unknown as Record<string, unknown>,
-          steps: enabledSteps,
+          steps: resolvedSteps,
           metadata: {
             source: 'sequencing-panel',
           },
@@ -1048,6 +1077,7 @@ export function SequencingPanel(): React.JSX.Element {
       <SequenceStackCard
         editableSequenceSteps={editableSequenceSteps}
         enabledRuntimeSteps={enabledRuntimeSteps}
+        cropShapeOptions={cropShapeOptions}
         mutateSteps={mutateSteps}
       />
 

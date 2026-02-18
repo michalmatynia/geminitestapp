@@ -34,8 +34,39 @@ export type HandleDatabaseStandardOperationInput = {
   ensureExistingParameterTemplateContext: (targetPath: string) => Promise<void>;
 };
 
-export async function handleDatabaseStandardOperation({
-  operation,
+type DatabaseStandardOperationHandler = (
+  args: HandleDatabaseStandardOperationInput
+) => Promise<RuntimePortValues>;
+
+const queryOperationHandler: DatabaseStandardOperationHandler = async ({
+  nodeInputs,
+  reportAiPathsError,
+  toast,
+  simulationEntityType,
+  simulationEntityId,
+  resolvedInputs,
+  queryConfig,
+  dryRun,
+  templateInputValue,
+  templateInputs,
+  templateContext,
+  aiPrompt,
+}) => await handleDatabaseQueryOperation({
+  nodeInputs,
+  reportAiPathsError,
+  toast,
+  simulationEntityType,
+  simulationEntityId,
+  resolvedInputs,
+  queryConfig,
+  dryRun,
+  templateInputValue,
+  templateInputs,
+  templateContext,
+  aiPrompt,
+});
+
+const updateOperationHandler: DatabaseStandardOperationHandler = async ({
   node,
   nodeInputs,
   prevOutputs,
@@ -49,82 +80,99 @@ export async function handleDatabaseStandardOperation({
   dbConfig,
   queryConfig,
   dryRun,
-  writeSourcePath,
-  templateInputValue,
   templateInputs,
-  templateContext,
   aiPrompt,
   ensureExistingParameterTemplateContext,
+}) => await handleDatabaseUpdateOperation({
+  node,
+  nodeInputs,
+  prevOutputs,
+  executed,
+  reportAiPathsError,
+  toast,
+  simulationEntityType,
+  simulationEntityId,
+  resolvedInputs,
+  nodeInputPorts,
+  dbConfig,
+  queryConfig,
+  dryRun,
+  templateInputs,
+  aiPrompt,
+  ensureExistingParameterTemplateContext,
+});
+
+const insertOperationHandler: DatabaseStandardOperationHandler = async ({
+  node,
+  nodeInputs,
+  executed,
+  reportAiPathsError,
+  toast,
+  dbConfig,
+  queryConfig,
+  dryRun,
+  writeSourcePath,
+  templateInputValue,
+  templateContext,
+  aiPrompt,
+}) => await handleDatabaseInsertOperation({
+  node,
+  nodeInputs,
+  executed,
+  reportAiPathsError,
+  toast,
+  dbConfig,
+  queryConfig,
+  dryRun,
+  writeSourcePath,
+  templateInputValue,
+  templateContext,
+  aiPrompt,
+});
+
+const deleteOperationHandler: DatabaseStandardOperationHandler = async ({
+  node,
+  nodeInputs,
+  executed,
+  reportAiPathsError,
+  toast,
+  simulationEntityType,
+  simulationEntityId,
+  dbConfig,
+  dryRun,
+  aiPrompt,
+}) => await handleDatabaseDeleteOperation({
+  node,
+  nodeInputs,
+  executed,
+  reportAiPathsError,
+  toast,
+  simulationEntityType,
+  simulationEntityId,
+  dbConfig,
+  dryRun,
+  aiPrompt,
+});
+
+const OPERATION_HANDLERS: Partial<Record<DatabaseOperation, DatabaseStandardOperationHandler>> = {
+  query: queryOperationHandler,
+  update: updateOperationHandler,
+  insert: insertOperationHandler,
+  delete: deleteOperationHandler,
+};
+
+export async function handleDatabaseStandardOperation({
+  operation,
+  aiPrompt,
+  ...rest
 }: HandleDatabaseStandardOperationInput): Promise<RuntimePortValues> {
-  if (operation === 'query') {
-    return await handleDatabaseQueryOperation({
-      nodeInputs,
-      reportAiPathsError,
-      toast,
-      simulationEntityType,
-      simulationEntityId,
-      resolvedInputs,
-      queryConfig,
-      dryRun,
-      templateInputValue,
-      templateInputs,
-      templateContext,
-      aiPrompt,
-    });
+  const operationHandler = OPERATION_HANDLERS[operation];
+  if (!operationHandler) {
+    return { aiPrompt };
   }
-
-  if (operation === 'update') {
-    return await handleDatabaseUpdateOperation({
-      node,
-      nodeInputs,
-      prevOutputs,
-      executed,
-      reportAiPathsError,
-      toast,
-      simulationEntityType,
-      simulationEntityId,
-      resolvedInputs,
-      nodeInputPorts,
-      dbConfig,
-      queryConfig,
-      dryRun,
-      templateInputs,
-      aiPrompt,
-      ensureExistingParameterTemplateContext,
-    });
-  }
-
-  if (operation === 'insert') {
-    return await handleDatabaseInsertOperation({
-      node,
-      nodeInputs,
-      executed,
-      reportAiPathsError,
-      toast,
-      dbConfig,
-      queryConfig,
-      dryRun,
-      writeSourcePath,
-      templateInputValue,
-      templateContext,
-      aiPrompt,
-    });
-  }
-
-  if (operation === 'delete') {
-    return await handleDatabaseDeleteOperation({
-      node,
-      nodeInputs,
-      executed,
-      reportAiPathsError,
-      toast,
-      simulationEntityType,
-      simulationEntityId,
-      dbConfig,
-      dryRun,
-      aiPrompt,
-    });
-  }
-
-  return { aiPrompt };
+  return await operationHandler({
+    operation,
+    aiPrompt,
+    ...rest,
+  });
 }

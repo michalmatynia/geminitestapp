@@ -24,6 +24,7 @@ type SequenceStepEditorProps = {
   stepId: string;
   operation: ImageStudioSequenceOperation;
   step: ImageStudioSequenceStep;
+  cropShapeOptions: Array<{ value: string; label: string }>;
   updateStep: (
     stepId: string,
     updater: (step: ImageStudioSequenceStep) => ImageStudioSequenceStep,
@@ -34,6 +35,7 @@ export function SequenceStepEditor({
   stepId,
   operation,
   step,
+  cropShapeOptions,
   updateStep,
 }: SequenceStepEditorProps): React.JSX.Element {
   return (
@@ -107,7 +109,7 @@ export function SequenceStepEditor({
       </div>
 
       {step.type === 'crop_center' ? (
-        <div className='grid grid-cols-1 gap-2 sm:grid-cols-3'>
+        <div className='grid grid-cols-1 gap-2 sm:grid-cols-4'>
           <SelectSimple
             size='sm'
             value={step.config.kind}
@@ -117,7 +119,8 @@ export function SequenceStepEditor({
                 value !== 'center_fit' &&
                 value !== 'bbox' &&
                 value !== 'polygon' &&
-                value !== 'alpha_object_bbox'
+                value !== 'alpha_object_bbox' &&
+                value !== 'selected_shape'
               ) {
                 return;
               }
@@ -138,10 +141,36 @@ export function SequenceStepEditor({
               { value: 'bbox', label: 'BBox' },
               { value: 'polygon', label: 'Polygon Bounds' },
               { value: 'alpha_object_bbox', label: 'Alpha Object Bounds' },
+              { value: 'selected_shape', label: 'Selected Shape' },
             ]}
             triggerClassName='h-8 text-xs'
             ariaLabel='Crop kind'
           />
+          {step.config.kind === 'selected_shape' ? (
+            <SelectSimple
+              size='sm'
+              value={step.config.selectedShapeId ?? undefined}
+              onValueChange={(value: string) => {
+                updateStep(stepId, (current) => {
+                  const typed = current as ImageStudioSequenceCropStep;
+                  return {
+                    ...typed,
+                    config: {
+                      ...typed.config,
+                      selectedShapeId: value.trim() ? value : null,
+                    },
+                  };
+                });
+              }}
+              options={cropShapeOptions}
+              placeholder='Select shape'
+              triggerClassName='h-8 text-xs'
+              ariaLabel='Crop selected shape'
+              disabled={cropShapeOptions.length === 0}
+            />
+          ) : (
+            <div className='h-8 rounded border border-transparent bg-transparent' />
+          )}
           <input
             type='text'
             value={step.config.aspectRatio ?? ''}

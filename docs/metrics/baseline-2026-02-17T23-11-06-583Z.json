@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-02-17T23:14:14.088Z",
+  "generatedAt": "2026-02-17T23:11:06.583Z",
   "source": {
-    "totalFiles": 2786,
-    "totalLines": 443266,
+    "totalFiles": 2782,
+    "totalLines": 442886,
     "useClientFiles": 903,
     "filesOver800": 86,
     "filesOver1000": 12,
@@ -13,15 +13,15 @@
     }
   },
   "api": {
-    "totalRoutes": 298,
-    "routesWithApiHandler": 277,
+    "totalRoutes": 297,
+    "routesWithApiHandler": 276,
     "delegatedServerRoutes": 21,
     "routesWithoutApiHandler": 0,
     "forceDynamicRoutes": 75,
-    "revalidateRoutes": 26,
+    "revalidateRoutes": 25,
     "routesWithCacheHeader": 0,
     "routesWithCacheOption": 20,
-    "routesWithExplicitCachePolicy": 298,
+    "routesWithExplicitCachePolicy": 297,
     "routesWithoutExplicitCachePolicy": 0,
     "topRouteHotspots": [
       {
@@ -108,7 +108,7 @@
   },
   "imports": {
     "appFeatureBarrelImports": 0,
-    "appFeatureDeepImports": 402,
+    "appFeatureDeepImports": 401,
     "sharedToFeaturesStaticImports": 0,
     "sharedToFeaturesDynamicImports": 15,
     "sharedToFeaturesTotalImports": 15
@@ -220,8 +220,8 @@
     "featureSizeByLines": [
       {
         "feature": "ai",
-        "files": 542,
-        "lines": 129707
+        "files": 540,
+        "lines": 129476
       },
       {
         "feature": "products",
@@ -406,12 +406,12 @@
         "lines": 1502
       },
       {
-        "path": "src/features/ai/ai-paths/server/settings-store.ts",
-        "lines": 1176
-      },
-      {
         "path": "src/features/ai/image-studio/components/SequencingPanel.tsx",
         "lines": 1148
+      },
+      {
+        "path": "src/features/ai/ai-paths/server/settings-store.ts",
+        "lines": 1128
       },
       {
         "path": "src/features/products/components/ProductImageManager.tsx",
@@ -454,10 +454,6 @@
         "lines": 995
       },
       {
-        "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts",
-        "lines": 992
-      },
-      {
         "path": "src/features/products/services/product-studio-service.ts",
         "lines": 990
       },
@@ -487,6 +483,10 @@
       },
       {
         "path": "src/app/api/integrations/[id]/connections/[connectionId]/test/handler.ts",
+        "lines": 979
+      },
+      {
+        "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts",
         "lines": 979
       },
       {

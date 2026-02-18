@@ -484,6 +484,8 @@ const DEFAULT_CASE_LIST_VIEW_DEFAULTS: CaseListViewDefaults = {
   searchScope: 'all',
   filtersCollapsedByDefault: true,
 };
+const CASE_RESOLVER_CASE_READY_MAX_ATTEMPTS = 20;
+const CASE_RESOLVER_CASE_READY_INTERVAL_MS = 250;
 
 const normalizeCaseListViewDefaults = (
   preferences: UserPreferences | undefined,
@@ -608,6 +610,66 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   );
   const [isCreatingCase, setIsCreatingCase] = useState(false);
   const createCaseMutationIdRef = useRef<string | null>(null);
+
+  const waitForCaseAvailability = useCallback(
+    async (
+      caseId: string,
+      options?: {
+        source?: string;
+        maxAttempts?: number;
+        intervalMs?: number;
+      },
+    ): Promise<boolean> => {
+      const source = options?.source ?? 'cases_page_case_sync';
+      const maxAttempts =
+        options?.maxAttempts ?? CASE_RESOLVER_CASE_READY_MAX_ATTEMPTS;
+      const intervalMs =
+        options?.intervalMs ?? CASE_RESOLVER_CASE_READY_INTERVAL_MS;
+      const wait = async (ms: number): Promise<void> =>
+        new Promise<void>((resolve) => {
+          window.setTimeout(resolve, ms);
+        });
+
+      for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+        const snapshot = await fetchCaseResolverWorkspaceSnapshot(source);
+        if (snapshot) {
+          const hasCase = snapshot.files.some(
+            (file: CaseResolverFile): boolean =>
+              file.id === caseId && file.fileType === 'case',
+          );
+          if (hasCase) {
+            const serialized = JSON.stringify(snapshot);
+            const revision = getCaseResolverWorkspaceRevision(snapshot);
+            lastPersistedWorkspaceValueRef.current = serialized;
+            lastPersistedWorkspaceRevisionRef.current = revision;
+            setWorkspace(snapshot);
+            settingsStore.refetch();
+            logCaseResolverWorkspaceEvent({
+              source,
+              action: 'case_availability_confirmed',
+              workspaceRevision: revision,
+            });
+            return true;
+          }
+        }
+
+        if (attempt === 0) {
+          settingsStore.refetch();
+        }
+        if (attempt < maxAttempts - 1) {
+          await wait(intervalMs);
+        }
+      }
+
+      logCaseResolverWorkspaceEvent({
+        source,
+        action: 'case_availability_missing',
+        message: `Case was not visible after sync attempts: ${caseId}`,
+      });
+      return false;
+    },
+    [settingsStore],
+  );
 
   const [caseDraft, setCaseDraft] = useState<Partial<CaseResolverFile>>({});
   const [isCreateCaseModalOpen, setIsCreateCaseModalOpen] = useState(false);
@@ -1690,6 +1752,15 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         mutationId,
         workspaceRevision: getCaseResolverWorkspaceRevision(nextWorkspace),
       });
+      const isCaseAvailable = await waitForCaseAvailability(file.id, {
+        source: 'cases_page_post_create_sync',
+      });
+      if (!isCaseAvailable) {
+        toast(
+          'Case created, but synchronization is still in progress. Opening it may take a moment.',
+          { variant: 'warning' },
+        );
+      }
       createCaseMutationIdRef.current = null;
       resetCreateCaseDraft();
       setIsCreateCaseModalOpen(false);
@@ -1707,6 +1778,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     persistWorkspace,
     resetCreateCaseDraft,
     toast,
+    waitForCaseAvailability,
     workspace,
   ]);
 
@@ -1988,10 +2060,25 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   );
 
   const handleViewCase = useCallback(
-    (fileId: string): void => {
+    async (fileId: string): Promise<void> => {
+      const isLocallyAvailable = workspace.files.some(
+        (file: CaseResolverFile): boolean =>
+          file.id === fileId && file.fileType === 'case',
+      );
+      const isSynced = await waitForCaseAvailability(fileId, {
+        source: 'cases_page_view_prepare',
+        maxAttempts: isLocallyAvailable ? 6 : CASE_RESOLVER_CASE_READY_MAX_ATTEMPTS,
+        intervalMs: CASE_RESOLVER_CASE_READY_INTERVAL_MS,
+      });
+      if (!isSynced && !isLocallyAvailable) {
+        toast('Case is still synchronizing. Please try again in a moment.', {
+          variant: 'warning',
+        });
+        return;
+      }
       router.push(`/admin/case-resolver?fileId=${encodeURIComponent(fileId)}`);
     },
-    [router],
+    [router, toast, waitForCaseAvailability, workspace.files],
   );
 
   const handleCopyCaseId = useCallback(
@@ -2300,7 +2387,9 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                         type='button'
                         variant='outline'
                         className='h-8 px-2'
-                        onClick={(): void => handleViewCase(file.id)}
+                        onClick={(): void => {
+                          void handleViewCase(file.id);
+                        }}
                       >
                         <Eye className='mr-1.5 size-3.5' />
                         View

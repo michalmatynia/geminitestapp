@@ -462,7 +462,8 @@ const syncSingleLinkedProduct = async (input: {
   }
 
   if (Object.keys(basePayload).length > 0) {
-    await callBaseApi(input.token, 'updateInventoryProduct', {
+    // Base updates existing inventory products via addInventoryProduct when product_id is provided.
+    await callBaseApi(input.token, 'addInventoryProduct', {
       inventory_id: input.inventoryId,
       product_id: baseProductId,
       ...basePayload,

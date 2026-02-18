@@ -190,10 +190,15 @@ export const ProductListHeader = memo(function ProductListHeader({
               <div className='flex w-full items-center justify-end gap-2 max-sm:flex-wrap'>
                 {selectorsAndTriggers}
               </div>
+              {filtersContent ? (
+                <div className='w-full'>
+                  {filtersContent}
+                </div>
+              ) : null}
             </div>
           </div>
 
-          <div className='hidden grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-3 lg:grid'>
+          <div className='hidden grid-cols-[minmax(0,1fr)_auto_minmax(0,1.5fr)] items-start gap-3 lg:grid'>
             <div className='min-w-0'>
               <h1 className='text-3xl font-bold tracking-tight text-white'>Products</h1>
               {headerBreadcrumb}
@@ -204,16 +209,17 @@ export const ProductListHeader = memo(function ProductListHeader({
               {paginationControl}
             </div>
 
-            <div className='flex w-full items-center justify-end gap-2 pt-1 lg:flex-nowrap'>
-              {selectorsAndTriggers}
+            <div className='flex w-full flex-col gap-3 pt-1'>
+              <div className='flex w-full items-center justify-end gap-2 lg:flex-nowrap'>
+                {selectorsAndTriggers}
+              </div>
+              {filtersContent ? (
+                <div className='w-full'>
+                  {filtersContent}
+                </div>
+              ) : null}
             </div>
           </div>
-
-          {filtersContent ? (
-            <div className='w-full lg:ml-auto lg:max-w-[42rem]'>
-              {filtersContent}
-            </div>
-          ) : null}
         </div>
       )}
     </div>

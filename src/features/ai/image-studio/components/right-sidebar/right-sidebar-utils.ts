@@ -1,6 +1,7 @@
 import type { VectorShape } from '@/features/vector-drawing';
 
 import {
+  normalizeShapeToPolygons,
   polygonsFromShapes,
   type ImageContentFrame,
   type MaskShapeForExport,
@@ -8,6 +9,10 @@ import {
 
 import type { ImageStudioSlotRecord } from '../../types';
 import type { RequestPreviewImage } from '../../utils/run-request-preview';
+import type {
+  ImageStudioSequenceCropStep,
+  ImageStudioSequenceStep,
+} from '../../utils/studio-settings';
 
 export const CHARS_PER_TOKEN_ESTIMATE = 4;
 export const ACTION_HISTORY_MAX_STEPS = 10;
@@ -75,6 +80,127 @@ export const collectSequenceMaskPolygons = (
   return polygonsFromShapes(eligibleShapes as MaskShapeForExport[], sourceWidth, sourceHeight, {
     imageContentFrame,
   });
+};
+
+const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
+
+const toCropRectFromPolygons = (
+  polygons: Array<Array<{ x: number; y: number }>>,
+): { x: number; y: number; width: number; height: number } | null => {
+  if (!Array.isArray(polygons) || polygons.length === 0) return null;
+  const points = polygons.flat();
+  if (points.length < 3) return null;
+
+  const xs = points
+    .map((point) => point.x)
+    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
+  const ys = points
+    .map((point) => point.y)
+    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
+  if (xs.length < 3 || ys.length < 3) return null;
+
+  const minX = clamp01(Math.min(...xs));
+  const maxX = clamp01(Math.max(...xs));
+  const minY = clamp01(Math.min(...ys));
+  const maxY = clamp01(Math.max(...ys));
+  if (!(maxX > minX && maxY > minY)) return null;
+
+  return {
+    x: Number(minX.toFixed(6)),
+    y: Number(minY.toFixed(6)),
+    width: Number(Math.max(0.0001, maxX - minX).toFixed(6)),
+    height: Number(Math.max(0.0001, maxY - minY).toFixed(6)),
+  };
+};
+
+const resolveSelectedShapeCropStep = (
+  step: ImageStudioSequenceCropStep,
+  params: {
+    maskShapes: VectorShape[];
+    sourceWidth: number;
+    sourceHeight: number;
+    imageContentFrame: ImageContentFrame | null;
+  },
+): { step: ImageStudioSequenceCropStep; error: string | null } => {
+  if (step.config.kind !== 'selected_shape') {
+    return { step, error: null };
+  }
+
+  const selectedShapeId = step.config.selectedShapeId?.trim() ?? '';
+  if (!selectedShapeId) {
+    return {
+      step,
+      error: `Crop step "${step.id}" uses Selected Shape, but no shape is selected.`,
+    };
+  }
+
+  const selectedShape = params.maskShapes.find((shape) => shape.id === selectedShapeId) ?? null;
+  if (!selectedShape || !selectedShape.visible) {
+    return {
+      step,
+      error: `Crop step "${step.id}" selected shape is missing or hidden.`,
+    };
+  }
+
+  const polygons = normalizeShapeToPolygons(
+    selectedShape as MaskShapeForExport,
+    params.sourceWidth,
+    params.sourceHeight,
+    {
+      imageContentFrame: params.imageContentFrame,
+    },
+  );
+  const cropRect = toCropRectFromPolygons(polygons);
+  if (!cropRect) {
+    return {
+      step,
+      error: `Crop step "${step.id}" selected shape has no usable crop geometry.`,
+    };
+  }
+
+  return {
+    step: {
+      ...step,
+      config: {
+        ...step.config,
+        // Resolve selected-shape crop to explicit bbox geometry for server execution.
+        kind: 'bbox',
+        bbox: cropRect,
+        polygon: null,
+      },
+    },
+    error: null,
+  };
+};
+
+export const resolveSequenceStepsForRun = (
+  steps: ImageStudioSequenceStep[],
+  params: {
+    maskShapes: VectorShape[];
+    sourceWidth: number;
+    sourceHeight: number;
+    imageContentFrame: ImageContentFrame | null;
+  },
+): {
+  resolvedSteps: ImageStudioSequenceStep[];
+  errors: string[];
+} => {
+  const errors: string[] = [];
+
+  const resolvedSteps = steps.map((step): ImageStudioSequenceStep => {
+    if (step.type !== 'crop_center') return step;
+    const resolved = resolveSelectedShapeCropStep(step, params);
+    if (resolved.error) {
+      errors.push(resolved.error);
+      return step;
+    }
+    return resolved.step;
+  });
+
+  return {
+    resolvedSteps,
+    errors,
+  };
 };
 
 export const estimatePromptTokens = (prompt: string): number => {

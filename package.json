@@ -18,6 +18,7 @@
     "cleanup:db-providers": "tsx scripts/cleanup/cleanup-db-provider-settings.ts",
     "cleanup:cms-blocks": "tsx scripts/db/drop-cms-blocks.ts",
     "cleanup:category-mapping-duplicates": "tsx scripts/cleanup/reconcile-category-mapping-duplicates.ts",
+    "cleanup:image-studio-orphan-variants": "tsx scripts/cleanup/reconcile-image-studio-orphan-variant-slots.ts",
     "check:api-error-sources": "tsx scripts/debug/check-api-error-sources.ts",
     "metrics:collect": "node scripts/architecture/collect-metrics.mjs",
     "metrics:guardrails": "node scripts/architecture/check-guardrails.mjs",

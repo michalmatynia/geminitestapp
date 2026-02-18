@@ -77,39 +77,35 @@ const extractTriggerButtonPathUsageMap = (
 ): Map<string, TriggerButtonPathUsage[]> => {
   const map = new Map<string, string>(settings.map((item) => [item.key, item.value]));
   const usageByButtonId = new Map<string, TriggerButtonPathUsage[]>();
+  const indexNameById = new Map<string, string>();
   const indexRaw = map.get(PATH_INDEX_KEY);
-  if (!indexRaw) return usageByButtonId;
-
-  let parsedIndex: unknown;
-  try {
-    parsedIndex = JSON.parse(indexRaw);
-  } catch {
-    return usageByButtonId;
+  if (indexRaw) {
+    try {
+      const parsedIndex = JSON.parse(indexRaw) as unknown;
+      if (Array.isArray(parsedIndex)) {
+        parsedIndex.forEach((entry: unknown) => {
+          if (!entry || typeof entry !== 'object') return;
+          const id = (entry as { id?: unknown }).id;
+          if (typeof id !== 'string' || id.trim().length === 0) return;
+          const nameRaw = (entry as { name?: unknown }).name;
+          const name =
+            typeof nameRaw === 'string' && nameRaw.trim().length > 0 ? nameRaw.trim() : '';
+          indexNameById.set(id, name);
+        });
+      }
+    } catch {
+      // Ignore malformed index; config scan below remains source of truth.
+    }
   }
-  if (!Array.isArray(parsedIndex)) return usageByButtonId;
 
-  const pathMetas = parsedIndex
-    .map((entry: unknown): { id: string; name: string } | null => {
-      if (!entry || typeof entry !== 'object') return null;
-      const id = (entry as { id?: unknown }).id;
-      if (typeof id !== 'string' || id.trim().length === 0) return null;
-      const name = (entry as { name?: unknown }).name;
-      return {
-        id,
-        name: typeof name === 'string' ? name.trim() : '',
-      };
-    })
-    .filter((entry: { id: string; name: string } | null): entry is { id: string; name: string } =>
-      Boolean(entry)
-    );
-
-  pathMetas.forEach((meta: { id: string; name: string }) => {
-    const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
-    if (!configRaw) return;
+  map.forEach((value: string, key: string) => {
+    if (!key.startsWith(PATH_CONFIG_PREFIX)) return;
+    const pathId = key.slice(PATH_CONFIG_PREFIX.length).trim();
+    if (!pathId) return;
 
     let parsedConfig: unknown;
     try {
-      parsedConfig = JSON.parse(configRaw);
+      parsedConfig = JSON.parse(value);
     } catch {
       return;
     }
@@ -120,7 +116,10 @@ const extractTriggerButtonPathUsageMap = (
       typeof configNameRaw === 'string' && configNameRaw.trim().length > 0
         ? configNameRaw.trim()
         : '';
-    const pathName = meta.name || configName || `Path ${meta.id.slice(0, 6)}`;
+    const pathName =
+      indexNameById.get(pathId)?.trim() ||
+      configName ||
+      `Path ${pathId.slice(0, 6)}`;
 
     const nodes = (parsedConfig as { nodes?: unknown }).nodes;
     if (!Array.isArray(nodes)) return;
@@ -144,8 +143,8 @@ const extractTriggerButtonPathUsageMap = (
 
     usedButtonIds.forEach((buttonId: string) => {
       const existing = usageByButtonId.get(buttonId) ?? [];
-      if (existing.some((entry: TriggerButtonPathUsage) => entry.id === meta.id)) return;
-      usageByButtonId.set(buttonId, [...existing, { id: meta.id, name: pathName }]);
+      if (existing.some((entry: TriggerButtonPathUsage) => entry.id === pathId)) return;
+      usageByButtonId.set(buttonId, [...existing, { id: pathId, name: pathName }]);
     });
   });
 

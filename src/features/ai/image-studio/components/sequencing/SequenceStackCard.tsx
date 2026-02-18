@@ -16,6 +16,7 @@ import {
 type SequenceStackCardProps = {
   editableSequenceSteps: ImageStudioSequenceStep[];
   enabledRuntimeSteps: ImageStudioSequenceStep[];
+  cropShapeOptions: Array<{ value: string; label: string }>;
   mutateSteps: (updater: (steps: ImageStudioSequenceStep[]) => ImageStudioSequenceStep[]) => void;
 };
 
@@ -51,6 +52,7 @@ const createStepForOperation = (
       timeoutMs: null,
       config: {
         kind: 'center_square',
+        selectedShapeId: null,
         aspectRatio: null,
         paddingPercent: 0,
         bbox: null,
@@ -125,6 +127,7 @@ const createStepForOperation = (
 export function SequenceStackCard({
   editableSequenceSteps,
   enabledRuntimeSteps,
+  cropShapeOptions,
   mutateSteps,
 }: SequenceStackCardProps): React.JSX.Element {
   const { toast } = useToast();
@@ -569,6 +572,7 @@ export function SequenceStackCard({
                   stepId={step.id}
                   operation={operation}
                   step={step}
+                  cropShapeOptions={cropShapeOptions}
                   updateStep={updateStep}
                 />
               ) : null}

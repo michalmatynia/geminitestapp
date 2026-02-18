@@ -20,6 +20,9 @@ type CaseResolverAssetPatch = Partial<
 
 export type CaseResolverPageContextValue = {
   workspace: CaseResolverWorkspace;
+  activeCaseId: string | null;
+  requestedCaseStatus: 'loading' | 'ready' | 'missing';
+  canCreateInActiveCase: boolean;
   selectedFileId: string | null;
   selectedAssetId: string | null;
   selectedFolderPath: string | null;

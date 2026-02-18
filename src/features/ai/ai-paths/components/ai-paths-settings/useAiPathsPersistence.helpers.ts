@@ -89,6 +89,56 @@ export const resolvePathSaveBlockedMessage = (
   return null;
 };
 
+export type PathNodeRoleLintResult = {
+  duplicateRoleTypes: Array<{ type: string; count: number }>;
+  modelCount: number;
+  httpCount: number;
+  errors: string[];
+  warnings: string[];
+};
+
+const formatNodeType = (type: string): string => type.replace(/_/g, ' ');
+
+export const lintPathNodeRoles = (nodes: AiNode[]): PathNodeRoleLintResult => {
+  const counts = new Map<string, number>();
+  nodes.forEach((node: AiNode) => {
+    const type = typeof node.type === 'string' ? node.type.trim() : '';
+    if (!type) return;
+    counts.set(type, (counts.get(type) ?? 0) + 1);
+  });
+
+  const duplicateRoleTypes = Array.from(counts.entries())
+    .filter(([, count]: [string, number]) => count > 1)
+    .map(([type, count]: [string, number]) => ({ type, count }))
+    .sort((a, b): number => a.type.localeCompare(b.type));
+
+  const errors = duplicateRoleTypes.map(
+    ({ type, count }) =>
+      `Path save blocked: duplicate node role "${formatNodeType(type)}" detected (${count}x).`
+  );
+  const modelCount = counts.get('model') ?? 0;
+  const httpCount = counts.get('http') ?? 0;
+  const warnings: string[] = [];
+  if (modelCount > 1) {
+    warnings.push(
+      `Path budget warning: ${modelCount} model nodes configured (recommended maximum: 1).`
+    );
+  }
+  if (httpCount > 1) {
+    warnings.push(
+      `Path budget warning: ${httpCount} HTTP nodes configured (recommended maximum: 1).`
+    );
+  }
+
+  return {
+    duplicateRoleTypes,
+    modelCount,
+    httpCount,
+    errors,
+    warnings,
+  };
+};
+
 export const normalizeLoadedPathName = (pathId: string, name: unknown): string => {
   const trimmed = typeof name === 'string' ? name.trim() : '';
   if (

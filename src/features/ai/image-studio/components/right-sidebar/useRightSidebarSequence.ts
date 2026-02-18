@@ -6,26 +6,23 @@ import { api } from '@/shared/lib/api-client';
 import {
   buildReferencePreviewImages,
   collectSequenceMaskPolygons,
+  resolveSequenceStepsForRun,
   type SequenceRequestPreview,
   type SequenceRunStartResponse,
 } from './right-sidebar-utils';
 import { resolvePromptPlaceholders } from '../../utils/run-request-preview';
 
 import type { ImageStudioSlotRecord } from '../../types';
+import type { ImageStudioSequenceStep } from '../../utils/studio-settings';
 
 type Toast = (
   message: string,
   options?: { variant?: 'success' | 'error' | 'warning' | 'info' }
 ) => void;
 
-type SequenceStep = {
-  type: string;
-  enabled: boolean;
-};
-
 type UseRightSidebarSequenceArgs = {
   compositeAssetIds: string[];
-  enabledSequenceRuntimeSteps: SequenceStep[];
+  enabledSequenceRuntimeSteps: ImageStudioSequenceStep[];
   maskFeather: number;
   maskInvert: boolean;
   maskShapes: VectorShape[];
@@ -117,6 +114,18 @@ export function useRightSidebarSequence({
       workingSlotImageHeight ?? 1,
       imageContentFrame
     );
+    const { resolvedSteps, errors: stepResolutionErrors } = resolveSequenceStepsForRun(
+      enabledSequenceRuntimeSteps,
+      {
+        maskShapes,
+        sourceWidth: workingSlotImageWidth ?? 1,
+        sourceHeight: workingSlotImageHeight ?? 1,
+        imageContentFrame,
+      },
+    );
+    if (stepResolutionErrors.length > 0) {
+      errors.push(...stepResolutionErrors);
+    }
     const mask =
       sequencePolygons.length > 0
         ? {
@@ -144,7 +153,7 @@ export function useRightSidebarSequence({
         resolvedPrompt: promptForSequence,
         maskShapeCount: sequencePolygons.length,
         images,
-        stepCount: enabledSequenceRuntimeSteps.length,
+        stepCount: resolvedSteps.length,
       };
     }
 
@@ -157,7 +166,7 @@ export function useRightSidebarSequence({
         referenceSlotIds: compositeAssetIds,
         mask,
         studioSettings: studioSettings as unknown as Record<string, unknown>,
-        steps: enabledSequenceRuntimeSteps,
+        steps: resolvedSteps,
         metadata: {
           source: 'right-sidebar-sequence-generate',
         },
@@ -166,7 +175,7 @@ export function useRightSidebarSequence({
       resolvedPrompt: promptForSequence,
       maskShapeCount: sequencePolygons.length,
       images,
-      stepCount: enabledSequenceRuntimeSteps.length,
+      stepCount: resolvedSteps.length,
     };
   }, [
     compositeAssetIds,
@@ -241,6 +250,22 @@ export function useRightSidebarSequence({
       workingSlotImageHeight ?? 1,
       imageContentFrame
     );
+    const { resolvedSteps, errors: stepResolutionErrors } = resolveSequenceStepsForRun(
+      enabledSequenceRuntimeSteps,
+      {
+        maskShapes,
+        sourceWidth: workingSlotImageWidth ?? 1,
+        sourceHeight: workingSlotImageHeight ?? 1,
+        imageContentFrame,
+      },
+    );
+    if (stepResolutionErrors.length > 0) {
+      toast(stepResolutionErrors[0] ?? 'Selected-shape crop step is not fully configured.', {
+        variant: 'info',
+      });
+      setSidebarTab('sequencing');
+      return;
+    }
     setSequenceRunBusy(true);
     void api.post<SequenceRunStartResponse>(
       '/api/image-studio/sequences/run',
@@ -259,7 +284,7 @@ export function useRightSidebarSequence({
             }
             : null,
         studioSettings: studioSettings as unknown as Record<string, unknown>,
-        steps: enabledSequenceRuntimeSteps,
+        steps: resolvedSteps,
         metadata: {
           source: 'right-sidebar-sequence-generate',
         },

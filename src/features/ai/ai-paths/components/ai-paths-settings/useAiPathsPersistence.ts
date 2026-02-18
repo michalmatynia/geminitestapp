@@ -51,6 +51,7 @@ import {
 } from '../AiPathsSettingsUtils';
 import {
   buildNodesForAutoSave as buildNodesForAutoSaveHelper,
+  lintPathNodeRoles,
   mergeNodeOverride,
   normalizeConfigForHash,
   normalizeHistoryRetentionOptionsMax,
@@ -749,28 +750,39 @@ export function useAiPathsPersistence({
       nodesOverride?: AiNode[],
       nameOverride?: string,
       edgesOverride?: Edge[]
-    ): PathConfig => ({
-      id: activePathId ?? 'default',
-      version: STORAGE_VERSION,
-      name: nameOverride ?? pathName,
-      description: pathDescription,
-      trigger: activeTrigger,
-      executionMode,
-      flowIntensity,
-      runMode,
-      nodes: nodesOverride ?? nodesRef.current,
-      edges: edgesOverride ?? edgesRef.current,
-      updatedAt,
-      isLocked: isPathLocked,
-      isActive: isPathActive,
-      parserSamples,
-      updaterSamples,
-      runtimeState,
-      lastRunAt,
-      uiState: {
-        selectedNodeId,
-      },
-    }),
+    ): PathConfig => {
+      const existingVersionRaw = activePathId
+        ? pathConfigsRef.current[activePathId]?.version
+        : undefined;
+      const existingVersion =
+        typeof existingVersionRaw === 'number' && Number.isFinite(existingVersionRaw)
+          ? Math.trunc(existingVersionRaw)
+          : STORAGE_VERSION;
+      const resolvedVersion = Math.max(STORAGE_VERSION, existingVersion);
+
+      return {
+        id: activePathId ?? 'default',
+        version: resolvedVersion,
+        name: nameOverride ?? pathName,
+        description: pathDescription,
+        trigger: activeTrigger,
+        executionMode,
+        flowIntensity,
+        runMode,
+        nodes: nodesOverride ?? nodesRef.current,
+        edges: edgesOverride ?? edgesRef.current,
+        updatedAt,
+        isLocked: isPathLocked,
+        isActive: isPathActive,
+        parserSamples,
+        updaterSamples,
+        runtimeState,
+        lastRunAt,
+        uiState: {
+          selectedNodeId,
+        },
+      };
+    },
     [
       activePathId,
       pathName,
@@ -817,6 +829,33 @@ export function useAiPathsPersistence({
         const nodesForSave = includeNodeConfig
           ? resolvedNodes
           : buildNodesForAutoSave(resolvedNodes);
+        const lintResult = lintPathNodeRoles(nodesForSave);
+        if (lintResult.errors.length > 0) {
+          const baselineNodes = pathConfigsRef.current[activePathId]?.nodes ?? [];
+          const baselineLint = lintPathNodeRoles(
+            Array.isArray(baselineNodes) ? baselineNodes : []
+          );
+          const baselineDuplicateCounts = new Map<string, number>(
+            baselineLint.duplicateRoleTypes.map(
+              (item: { type: string; count: number }): [string, number] => [item.type, item.count]
+            )
+          );
+          const hasNewDuplicateRoleViolation = lintResult.duplicateRoleTypes.some(
+            (item: { type: string; count: number }): boolean =>
+              item.count > (baselineDuplicateCounts.get(item.type) ?? 1)
+          );
+          if (hasNewDuplicateRoleViolation) {
+            if (!silent) {
+              toast(lintResult.errors.join(' '), { variant: 'error' });
+            }
+            return false;
+          }
+        }
+        if (!silent && lintResult.warnings.length > 0) {
+          lintResult.warnings.forEach((message: string): void => {
+            toast(message, { variant: 'info' });
+          });
+        }
         const config = buildActivePathConfig(
           updatedAt,
           nodesForSave,

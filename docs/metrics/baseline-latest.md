@@ -1,19 +1,19 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-17T23:08:37.554Z
+Generated at: 2026-02-17T23:14:14.088Z
 
 ## Snapshot
 
-- Source files: 2777
-- Source lines: 442238
+- Source files: 2786
+- Source lines: 443266
 - use client files: 903
 - Files >= 1000 LOC: 12
 - Files >= 1500 LOC: 5
 - Largest file: `src/features/database/services/database-sync.ts` (3352 LOC)
-- API routes: 297
+- API routes: 298
 - API delegated server routes: 21
 - API routes without apiHandler/delegation: 0
-- API explicit cache policy coverage: 297/297 (100.0%)
+- API explicit cache policy coverage: 298/298 (100.0%)
 - Cross-feature dependency pairs: 118
 - Shared -> features imports: 15
 - setInterval occurrences: 22
@@ -67,10 +67,10 @@ Generated at: 2026-02-17T23:08:37.554Z
 | `src/shared/ui/vector-canvas.tsx` | 2472 |
 | `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 1968 |
 | `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 1502 |
+| `src/features/ai/ai-paths/server/settings-store.ts` | 1176 |
 | `src/features/ai/image-studio/components/SequencingPanel.tsx` | 1148 |
-| `src/features/ai/ai-paths/server/settings-store.ts` | 1128 |
+| `src/features/products/components/ProductImageManager.tsx` | 1060 |
 | `src/features/foldertree/master/useMasterFolderTree.ts` | 1056 |
-| `src/features/products/components/ProductImageManager.tsx` | 1056 |
 | `src/features/case-resolver/__tests__/settings.test.ts` | 1016 |
 | `src/features/ai/image-studio/components/RightSidebar.tsx` | 1014 |
 | `src/features/ai/image-studio/components/StudioModals.tsx` | 1007 |
@@ -79,6 +79,6 @@ Generated at: 2026-02-17T23:08:37.554Z
 | `src/features/ai/ai-paths/components/canvas-board.tsx` | 996 |
 | `src/features/integrations/services/tradera-listing-service.ts` | 996 |
 | `src/features/ai/agent-runtime/tools/index.ts` | 995 |
+| `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts` | 992 |
 | `src/features/products/services/product-studio-service.ts` | 990 |
 | `src/features/prompt-exploder/pattern-pack-rules.ts` | 990 |
-| `src/features/ai/agent-runtime/planning/llm.ts` | 989 |

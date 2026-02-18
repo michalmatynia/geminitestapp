@@ -1,6 +1,6 @@
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-02-17T23:14:14.748Z
+Generated at: 2026-02-18T00:47:23.079Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -8,6 +8,7 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 | Route | LOC |
 | --- | ---: |
+| `src/app/api/chatbot/agent/[runId]/[action]/route.ts` | 89 |
 | `src/app/api/integrations/exports/base/[setting]/route.ts` | 86 |
 | `src/app/api/integrations/imports/base/[setting]/route.ts` | 70 |
 | `src/app/api/marketplace/[resource]/route.ts` | 38 |
@@ -27,7 +28,6 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | `src/app/api/products/simple-parameters/route.ts` | 21 |
 | `src/app/api/products/validator-settings/route.ts` | 21 |
 | `src/app/api/price-groups/route.ts` | 20 |
-| `src/app/api/products/parameters/[id]/route.ts` | 20 |
 
 ## Top App Pages by LOC
 
@@ -56,6 +56,7 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 ## Recommended First Runtime Profiling Targets
 
+- `src/app/api/chatbot/agent/[runId]/[action]/route.ts`
 - `src/app/api/integrations/exports/base/[setting]/route.ts`
 - `src/app/api/integrations/imports/base/[setting]/route.ts`
 - `src/app/api/marketplace/[resource]/route.ts`
@@ -65,4 +66,3 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 - `src/app/api/products/validator-patterns/route.ts`
 - `src/app/api/user/preferences/route.ts`
 - `src/app/api/integrations/imports/base/runs/route.ts`
-- `src/app/api/products/categories/[id]/route.ts`

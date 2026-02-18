@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { requireAiPathsAccess, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
 import {
   getAiPathsSetting,
+  requireAiPathsAccess,
+  requireAiPathsRunAccess,
   upsertAiPathsSetting,
-} from '@/features/ai/ai-paths/server/settings-store';
+} from '@/features/ai/ai-paths/server';
 import {
   aiTriggerButtonCreateSchema,
   parseAiTriggerButtonsRaw,

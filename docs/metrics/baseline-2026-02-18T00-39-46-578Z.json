@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-02-18T00:47:22.353Z",
+  "generatedAt": "2026-02-18T00:39:46.578Z",
   "source": {
-    "totalFiles": 2788,
-    "totalLines": 444968,
+    "totalFiles": 2786,
+    "totalLines": 444982,
     "useClientFiles": 901,
     "filesOver800": 85,
     "filesOver1000": 14,
@@ -13,20 +13,20 @@
     }
   },
   "api": {
-    "totalRoutes": 294,
-    "routesWithApiHandler": 279,
-    "delegatedServerRoutes": 15,
-    "routesWithoutApiHandler": 0,
-    "forceDynamicRoutes": 70,
+    "totalRoutes": 292,
+    "routesWithApiHandler": 278,
+    "delegatedServerRoutes": 13,
+    "routesWithoutApiHandler": 1,
+    "forceDynamicRoutes": 68,
     "revalidateRoutes": 26,
     "routesWithCacheHeader": 0,
     "routesWithCacheOption": 20,
-    "routesWithExplicitCachePolicy": 294,
+    "routesWithExplicitCachePolicy": 292,
     "routesWithoutExplicitCachePolicy": 0,
     "topRouteHotspots": [
       {
-        "path": "src/app/api/chatbot/agent/[runId]/[action]/route.ts",
-        "lines": 89
+        "path": "src/app/api/chatbot/agent/[runId]/[[...action]]/route.ts",
+        "lines": 119
       },
       {
         "path": "src/app/api/integrations/exports/base/[setting]/route.ts",
@@ -108,7 +108,7 @@
   },
   "imports": {
     "appFeatureBarrelImports": 0,
-    "appFeatureDeepImports": 376,
+    "appFeatureDeepImports": 374,
     "sharedToFeaturesStaticImports": 0,
     "sharedToFeaturesDynamicImports": 15,
     "sharedToFeaturesTotalImports": 15
@@ -241,7 +241,7 @@
       {
         "feature": "case-resolver",
         "files": 60,
-        "lines": 21767
+        "lines": 21761
       },
       {
         "feature": "prompt-exploder",
@@ -415,7 +415,7 @@
       },
       {
         "path": "src/features/case-resolver/hooks/useCaseResolverState.ts",
-        "lines": 1161
+        "lines": 1155
       },
       {
         "path": "src/features/products/components/ProductImageManager.tsx",

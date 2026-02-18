@@ -4,12 +4,12 @@ import { z } from 'zod';
 
 import { normalizeAuthEmail } from '@/features/auth/server';
 import { auth } from '@/features/auth/server';
-import { invalidateAuthAccessCache } from '@/features/auth/services/auth-access';
-import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
-import { invalidateAuthSecurityProfileCache } from '@/features/auth/services/auth-security-profile';
-import { invalidateUserPreferencesCache } from '@/features/auth/services/user-preferences-repository';
-import { AUTH_SETTINGS_KEYS, type AuthUserRoleMap } from '@/features/auth/utils/auth-management';
-import { logAuthEvent } from '@/features/auth/utils/auth-request-logger';
+import { invalidateAuthAccessCache } from '@/features/auth/server';
+import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/server';
+import { invalidateAuthSecurityProfileCache } from '@/features/auth/server';
+import { invalidateUserPreferencesCache } from '@/features/auth/server';
+import { AUTH_SETTINGS_KEYS, type AuthUserRoleMap } from '@/features/auth/server';
+import { logAuthEvent } from '@/features/auth/server';
 import type { AuthUserDto } from '@/shared/contracts/auth';
 import { authError, badRequestError, conflictError, forbiddenError, internalError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

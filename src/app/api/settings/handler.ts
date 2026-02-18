@@ -3,8 +3,8 @@ import { WithId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { upsertAiPathsSetting } from '@/features/ai/ai-paths/server/settings-store';
-import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
+import { upsertAiPathsSetting } from '@/features/ai/ai-paths/server';
+import { AUTH_SETTINGS_KEYS } from '@/features/auth/server';
 import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import { internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';

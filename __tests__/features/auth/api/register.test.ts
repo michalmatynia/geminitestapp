@@ -17,6 +17,7 @@ const { mockCollection, mockInsertOne, mockFindOne } = vi.hoisted(() => {
 // Mock server modules
 vi.mock('@/features/auth/server', () => ({
   getAuthDataProvider: vi.fn().mockResolvedValue('mongodb'),
+  requireAuthProvider: (provider: string) => provider,
   getAuthUserPageSettings: vi.fn().mockResolvedValue({
     allowSignup: true,
     requireEmailVerification: false,
@@ -24,6 +25,7 @@ vi.mock('@/features/auth/server', () => ({
   getAuthSecurityPolicy: vi.fn().mockResolvedValue({}),
   validatePasswordStrength: vi.fn().mockReturnValue({ ok: true, errors: [] }),
   normalizeAuthEmail: (email: string) => email.toLowerCase().trim(),
+  logAuthEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock DB provider to force MongoDB path for system logs

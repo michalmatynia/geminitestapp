@@ -211,6 +211,7 @@ export function useCaseResolverState() {
   const persistWorkspaceInFlightRef = useRef(false);
   const handledRequestedFileIdRef = useRef<string | null>(null);
   const requestedWorkspaceRefreshFileIdRef = useRef<string | null>(null);
+  const requestedWorkspaceMissingFileIdRef = useRef<string | null>(null);
   const createContextRecoveryInFlightRef = useRef(false);
 
   const flushWorkspacePersist = useCallback((): void => {
@@ -498,6 +499,7 @@ export function useCaseResolverState() {
         queuedExpectedRevisionRef.current = null;
         queuedMutationIdRef.current = null;
         requestedWorkspaceRefreshFileIdRef.current = null;
+        requestedWorkspaceMissingFileIdRef.current = null;
         handledRequestedFileIdRef.current = null;
 
         setWorkspace(refreshedWorkspace);
@@ -741,6 +743,7 @@ export function useCaseResolverState() {
     if (!requestedFileId) {
       setRequestedCaseStatus('ready');
       requestedWorkspaceRefreshFileIdRef.current = null;
+      requestedWorkspaceMissingFileIdRef.current = null;
       return;
     }
     const requestedFileExists = workspace.files.some(
@@ -749,10 +752,15 @@ export function useCaseResolverState() {
     if (requestedFileExists) {
       setRequestedCaseStatus('ready');
       requestedWorkspaceRefreshFileIdRef.current = null;
+      requestedWorkspaceMissingFileIdRef.current = null;
       return;
     }
-    setRequestedCaseStatus('loading');
+    if (requestedWorkspaceMissingFileIdRef.current === requestedFileId) {
+      setRequestedCaseStatus('missing');
+      return;
+    }
     if (requestedWorkspaceRefreshFileIdRef.current === requestedFileId) return;
+    setRequestedCaseStatus('loading');
 
     requestedWorkspaceRefreshFileIdRef.current = requestedFileId;
     let isCancelled = false;
@@ -773,6 +781,7 @@ export function useCaseResolverState() {
             (file: CaseResolverFile): boolean => file.id === requestedFileId
           );
           if (refreshedHasRequestedFile) {
+            requestedWorkspaceMissingFileIdRef.current = null;
             setRequestedCaseStatus('ready');
             lastPersistedValueRef.current = JSON.stringify(refreshedWorkspace);
             lastPersistedRevisionRef.current = getCaseResolverWorkspaceRevision(refreshedWorkspace);
@@ -789,14 +798,12 @@ export function useCaseResolverState() {
             return;
           }
         }
-        if (attempt === 0) {
-          settingsStore.refetch();
-        }
         if (attempt < CASE_RESOLVER_REQUESTED_FILE_REFRESH_MAX_ATTEMPTS - 1) {
           await wait(CASE_RESOLVER_REQUESTED_FILE_REFRESH_INTERVAL_MS);
         }
       }
-      requestedWorkspaceRefreshFileIdRef.current = null;
+      requestedWorkspaceRefreshFileIdRef.current = requestedFileId;
+      requestedWorkspaceMissingFileIdRef.current = requestedFileId;
       setRequestedCaseStatus('missing');
       logCaseResolverWorkspaceEvent({
         source: 'case_view',
@@ -807,8 +814,14 @@ export function useCaseResolverState() {
 
     return (): void => {
       isCancelled = true;
+      if (
+        requestedWorkspaceRefreshFileIdRef.current === requestedFileId &&
+        requestedWorkspaceMissingFileIdRef.current !== requestedFileId
+      ) {
+        requestedWorkspaceRefreshFileIdRef.current = null;
+      }
     };
-  }, [requestedFileId, settingsStore, workspace.files]);
+  }, [requestedFileId, workspace.files]);
 
   useEffect(() => {
     if (!requestedFileId) {

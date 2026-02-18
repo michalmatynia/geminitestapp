@@ -20,6 +20,7 @@ vi.mock('@/features/auth/server', () => ({
   recordLoginFailure: vi.fn(),
   getAuthUserPageSettings: vi.fn().mockResolvedValue({ requireEmailVerification: false }),
   createLoginChallenge: vi.fn(),
+  logAuthEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe('Auth Verify Credentials API', () => {

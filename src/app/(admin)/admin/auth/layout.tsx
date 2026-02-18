@@ -1,5 +1,3 @@
-'use client';
-
 import { AuthProvider } from '@/features/auth/public';
 
 export default function AuthAdminLayout({

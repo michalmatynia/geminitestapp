@@ -11,7 +11,7 @@ import {
 } from '@/features/auth/server';
 import { getAuthUserPageSettings } from '@/features/auth/server';
 import { createLoginChallenge } from '@/features/auth/server';
-import { logAuthEvent } from '@/features/auth/utils/auth-request-logger';
+import { logAuthEvent } from '@/features/auth/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 

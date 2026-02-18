@@ -1,8 +1,7 @@
 import { ChatbotAgentRun, AgentBrowserLog, AgentAuditLog } from '@prisma/client';
 import { NextRequest } from 'next/server';
 
-import { GET as getAudits } from '@/app/api/chatbot/agent/[runId]/audits/route';
-import { GET as getLogs } from '@/app/api/chatbot/agent/[runId]/logs/route';
+import { GET as getAgentAction } from '@/app/api/chatbot/agent/[runId]/[action]/route';
 import { GET as listRuns, POST as createRun } from '@/app/api/chatbot/agent/route';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -101,8 +100,8 @@ describe('Agent API', () => {
 
     vi.mocked(prisma.agentBrowserLog.findMany).mockResolvedValueOnce([log]);
 
-    const res = await getLogs(new NextRequest('http://localhost'), {
-      params: Promise.resolve({ runId: run.id }),
+    const res = await getAgentAction(new NextRequest('http://localhost'), {
+      params: Promise.resolve({ runId: run.id, action: 'logs' }),
     });
     const data = (await res.json()) as { logs: AgentBrowserLog[] };
 
@@ -127,8 +126,8 @@ describe('Agent API', () => {
 
     vi.mocked(prisma.agentAuditLog.findMany).mockResolvedValueOnce([audit]);
 
-    const res = await getAudits(new NextRequest('http://localhost'), {
-      params: Promise.resolve({ runId: run.id }),
+    const res = await getAgentAction(new NextRequest('http://localhost'), {
+      params: Promise.resolve({ runId: run.id, action: 'audits' }),
     });
     const data = (await res.json()) as { audits: AgentAuditLog[] };
 

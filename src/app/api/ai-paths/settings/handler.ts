@@ -6,7 +6,7 @@ import {
   listAiPathsSettings,
   upsertAiPathsSetting,
   upsertAiPathsSettingsBulk,
-} from '@/features/ai/ai-paths/server/settings-store';
+} from '@/features/ai/ai-paths/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 

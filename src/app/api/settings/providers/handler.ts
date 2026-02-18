@@ -1,8 +1,8 @@
 import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
-import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
+import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/server';
+import { AUTH_SETTINGS_KEYS } from '@/features/auth/server';
 import { getCmsDataProvider } from '@/features/cms/services/cms-provider';
 import { getIntegrationDataProvider } from '@/features/integrations/services/integration-provider';
 import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/features/products/constants';

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { handlers } from '@/features/auth/server';
-import { logAuthEvent } from '@/features/auth/utils/auth-request-logger';
+import { logAuthEvent } from '@/features/auth/server';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

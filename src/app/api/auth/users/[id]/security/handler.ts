@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { updateAuthSecurityProfile, getAuthSecurityProfile } from '@/features/auth/server';
 import { auth } from '@/features/auth/server';
-import { logAuthEvent } from '@/features/auth/utils/auth-request-logger';
+import { logAuthEvent } from '@/features/auth/server';
 import { internalError, authError, badRequestError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 

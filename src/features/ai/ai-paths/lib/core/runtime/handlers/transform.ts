@@ -156,7 +156,7 @@ export const handleParser: NodeHandler = ({
       }
       const extraOutputs = node.outputs.reduce<Record<string, unknown>>((acc: Record<string, unknown>, output: string): Record<string, unknown> => {
         if (output !== 'bundle' && parsed[output] !== undefined) {
-          acc[output] = (parsed as Record<string, unknown>)[output];
+          acc[output] = (parsed)[output];
         }
         return acc;
       }, {});
@@ -281,7 +281,7 @@ export const handleMutator: NodeHandler = ({ node, nodeInputs }: NodeHandlerCont
   const currentValue = getValueAtMappingPath(contextValue, targetPath);
   const rendered = renderTemplate(
     mutatorConfig.valueTemplate ?? '{{value}}',
-    { ...contextValue, ...(nodeInputs as Record<string, unknown>) } as Record<string, unknown>,
+    { ...contextValue, ...(nodeInputs) } as Record<string, unknown>,
     currentValue
   );
   const updated = cloneValue(contextValue);
@@ -562,7 +562,7 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
   const aiPrompt = aiPromptTemplate.trim()
     ? renderTemplate(
       aiPromptTemplate,
-        { ...(nodeInputs as Record<string, unknown>), text: textForPrompt, lines: items } as Record<string, unknown>,
+        { ...(nodeInputs), text: textForPrompt, lines: items } as Record<string, unknown>,
         textForPrompt
     )
     : '';

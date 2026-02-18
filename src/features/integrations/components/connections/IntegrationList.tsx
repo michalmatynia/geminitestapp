@@ -45,78 +45,67 @@ export function IntegrationList(): React.JSX.Element {
               <p className='mt-2 text-xl font-semibold'>Stardb Hub</p>
             </div>
             <div className='flex flex-wrap items-center justify-center gap-3'>
-              {integrationSlugs.includes('tradera') && (
-                <div className='flex items-center gap-2 rounded-full border border-sky-400/50 bg-sky-500/10 px-3 py-1.5 text-xs text-sky-200'>
-                  <StatusBadge status='Browser' variant='warning' size='sm' className='h-4 font-bold' />
-                  Tradera
-                  <Button
-                    type='button'
-                    onClick={() => {
-                      if (traderaDefinition) {
-                        void handleIntegrationClick(traderaDefinition);
-                      }
-                    }}
-                    className='rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20'
-                    aria-label='Manage Tradera settings'
-                  >
-                    <SettingsIcon className='size-3.5' />
-                  </Button>
-                </div>
-              )}
-              {integrationSlugs.includes('tradera-api') && (
-                <div className='flex items-center gap-2 rounded-full border border-cyan-400/50 bg-cyan-500/10 px-3 py-1.5 text-xs text-cyan-200'>
-                  <StatusBadge status='API' variant='info' size='sm' className='h-4 font-bold' />
-                  Tradera API
-                  <Button
-                    type='button'
-                    onClick={() => {
-                      if (traderaApiDefinition) {
-                        void handleIntegrationClick(traderaApiDefinition);
-                      }
-                    }}
-                    className='rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20'
-                    aria-label='Manage Tradera API settings'
-                  >
-                    <SettingsIcon className='size-3.5' />
-                  </Button>
-                </div>
-              )}
-              {integrationSlugs.includes('allegro') && (
-                <div className='flex items-center gap-2 rounded-full border border-amber-400/50 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-200'>
-                  <StatusBadge status='API' variant='info' size='sm' className='h-4 font-bold' />
-                  Allegro
-                  <Button
-                    type='button'
-                    onClick={() => {
-                      if (allegroDefinition) {
-                        void handleIntegrationClick(allegroDefinition);
-                      }
-                    }}
-                    className='rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20'
-                    aria-label='Manage Allegro settings'
-                  >
-                    <SettingsIcon className='size-3.5' />
-                  </Button>
-                </div>
-              )}
-              {integrationSlugs.includes('baselinker') && (
-                <div className='flex items-center gap-2 rounded-full border border-purple-400/50 bg-purple-500/10 px-3 py-1.5 text-xs text-purple-200'>
-                  <StatusBadge status='Platform' variant='processing' size='sm' className='h-4 font-bold' />
-                  Baselinker
-                  <Button
-                    type='button'
-                    onClick={() => {
-                      if (baselinkerDefinition) {
-                        void handleIntegrationClick(baselinkerDefinition);
-                      }
-                    }}
-                    className='rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20'
-                    aria-label='Manage Baselinker settings'
-                  >
-                    <SettingsIcon className='size-3.5' />
-                  </Button>
-                </div>
-              )}
+              {[
+                { 
+                  slug: 'tradera', 
+                  label: 'Tradera', 
+                  type: 'Browser', 
+                  variant: 'warning' as const, 
+                  color: 'sky',
+                  definition: traderaDefinition 
+                },
+                { 
+                  slug: 'tradera-api', 
+                  label: 'Tradera API', 
+                  type: 'API', 
+                  variant: 'info' as const, 
+                  color: 'cyan',
+                  definition: traderaApiDefinition 
+                },
+                { 
+                  slug: 'allegro', 
+                  label: 'Allegro', 
+                  type: 'API', 
+                  variant: 'info' as const, 
+                  color: 'amber',
+                  definition: allegroDefinition 
+                },
+                { 
+                  slug: 'baselinker', 
+                  label: 'Baselinker', 
+                  type: 'Platform', 
+                  variant: 'processing' as const, 
+                  color: 'purple',
+                  definition: baselinkerDefinition 
+                }
+              ].map((item) => {
+                if (!integrationSlugs.includes(item.slug)) return null;
+                const borderClass = {
+                  sky: 'border-sky-400/50 bg-sky-500/10 text-sky-200',
+                  cyan: 'border-cyan-400/50 bg-cyan-500/10 text-cyan-200',
+                  amber: 'border-amber-400/50 bg-amber-500/10 text-amber-200',
+                  purple: 'border-purple-400/50 bg-purple-500/10 text-purple-200',
+                }[item.color];
+
+                return (
+                  <div key={item.slug} className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs ${borderClass}`}>
+                    <StatusBadge status={item.type} variant={item.variant} size='sm' className='h-4 font-bold' />
+                    {item.label}
+                    <Button
+                      type='button'
+                      onClick={() => {
+                        if (item.definition) {
+                          void handleIntegrationClick(item.definition);
+                        }
+                      }}
+                      className='rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20'
+                      aria-label={`Manage ${item.label} settings`}
+                    >
+                      <SettingsIcon className='size-3.5' />
+                    </Button>
+                  </div>
+                );
+              })}
               {!hasIntegrations && (
                 <div className='text-xs text-gray-500'>
                   No integrations added yet.

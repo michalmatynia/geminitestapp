@@ -129,7 +129,7 @@ export async function handleDatabaseUpdateOperation({
     !forceCollectionUpdate && (entityType === 'product' || entityType === 'note');
   const idField = dbConfig.idField ?? 'entityId';
   const entityId = resolveEntityIdFromInputs(
-    resolvedInputs as RuntimePortValues,
+    resolvedInputs,
     idField,
     simulationEntityType,
     simulationEntityId,

@@ -11,7 +11,7 @@ import type { GsapAnimationConfig } from '@/features/gsap';
 import { logClientError } from '@/features/observability';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, SectionHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, Textarea, useToast, SidePanel, SelectSimple, ToggleRow } from '@/shared/ui';
+import { Button, SectionHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, Textarea, useToast, SidePanel, SelectSimple, ToggleRow, Tooltip } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { AnimationConfigPanel } from './AnimationConfigPanel';
@@ -273,11 +273,66 @@ export function ComponentSettingsPanel(): React.ReactNode {
             actionsClassName='justify-start'
             actions={(
               <div className='flex items-center gap-1'>
-                <Button type='button' size='icon' variant='ghost' onClick={() => dispatch({ type: 'TOGGLE_RIGHT_PANEL' })} className='h-6 w-6 p-0 text-gray-500 hover:text-gray-300' title='Hide right panel' aria-label='Hide right panel'><PanelRightClose className='size-3.5' /></Button>
-                <Button type='button' size='icon' variant='ghost' onClick={handleToggleInspector} className={`h-6 w-6 p-0 ${state.inspectorEnabled ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`} title='Toggle inspector' aria-label='Toggle inspector'><MousePointer2 className='size-3.5' /></Button>
-                <Button type='button' size='icon' variant='ghost' onClick={() => dispatch({ type: 'SET_PREVIEW_MODE', mode: 'desktop' })} className={`h-6 w-6 p-0 ${state.previewMode === 'desktop' ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`} title='Desktop preview' aria-label='Desktop preview'><Monitor className='size-3.5' /></Button>
-                <Button type='button' size='icon' variant='ghost' onClick={() => dispatch({ type: 'SET_PREVIEW_MODE', mode: 'mobile' })} className={`h-6 w-6 p-0 ${state.previewMode === 'mobile' ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`} title='Mobile preview' aria-label='Mobile preview'><Smartphone className='size-3.5' /></Button>
-                <Button type='button' size='icon' variant='ghost' onClick={() => updateInspectorSetting({ showEditorChrome: !inspectorSettings.showEditorChrome })} className={`h-6 w-6 p-0 ${inspectorSettings.showEditorChrome ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`} title='Toggle editor chrome' aria-label='Toggle editor chrome'><Paintbrush className='size-3.5' /></Button>
+                <Tooltip content='Hide right panel'>
+                  <Button
+                    type='button'
+                    size='icon'
+                    variant='ghost'
+                    onClick={() => dispatch({ type: 'TOGGLE_RIGHT_PANEL' })}
+                    className='h-6 w-6 p-0 text-gray-500 hover:text-gray-300'
+                    aria-label='Hide right panel'
+                  >
+                    <PanelRightClose className='size-3.5' />
+                  </Button>
+                </Tooltip>
+                <Tooltip content='Toggle inspector'>
+                  <Button
+                    type='button'
+                    size='icon'
+                    variant='ghost'
+                    onClick={handleToggleInspector}
+                    className={`h-6 w-6 p-0 ${state.inspectorEnabled ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`}
+                    aria-label='Toggle inspector'
+                  >
+                    <MousePointer2 className='size-3.5' />
+                  </Button>
+                </Tooltip>
+                <Tooltip content='Desktop preview'>
+                  <Button
+                    type='button'
+                    size='icon'
+                    variant='ghost'
+                    onClick={() => dispatch({ type: 'SET_PREVIEW_MODE', mode: 'desktop' })}
+                    className={`h-6 w-6 p-0 ${state.previewMode === 'desktop' ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`}
+                    aria-label='Desktop preview'
+                  >
+                    <Monitor className='size-3.5' />
+                  </Button>
+                </Tooltip>
+                <Tooltip content='Mobile preview'>
+                  <Button
+                    type='button'
+                    size='icon'
+                    variant='ghost'
+                    onClick={() => dispatch({ type: 'SET_PREVIEW_MODE', mode: 'mobile' })}
+                    className={`h-6 w-6 p-0 ${state.previewMode === 'mobile' ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`}
+                    aria-label='Mobile preview'
+                  >
+                    <Smartphone className='size-3.5' />
+                  </Button>
+                </Tooltip>
+                <Tooltip content='Toggle editor chrome'>
+                  <Button
+                    type='button'
+                    size='icon'
+                    variant='ghost'
+                    onClick={() => updateInspectorSetting({ showEditorChrome: !inspectorSettings.showEditorChrome })}
+                    className={`h-6 w-6 p-0 ${inspectorSettings.showEditorChrome ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`}
+                    aria-label='Toggle editor chrome'
+                  >
+                    <Paintbrush className='size-3.5' />
+                  </Button>
+                </Tooltip>
               </div>
             )}
           />

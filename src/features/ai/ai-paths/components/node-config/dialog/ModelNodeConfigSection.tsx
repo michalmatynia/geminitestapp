@@ -73,7 +73,7 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
     updateSelectedNodeConfig,
   ]);
 
-  if (!selectedNode || selectedNode.type !== 'model') return null;
+  if (selectedNode?.type !== 'model') return null;
 
   const mergedModelOptions =
     modelConfig.modelId && !modelOptions.includes(modelConfig.modelId)

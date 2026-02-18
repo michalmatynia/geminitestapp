@@ -48,12 +48,15 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
     () =>
       selectedNode ?? {
         id: '__missing-node__',
+        createdAt: new Date(0).toISOString(),
+        updatedAt: null,
         type: 'constant',
         title: 'Node',
         description: '',
         inputs: [],
         outputs: [],
         position: { x: 0, y: 0 },
+        data: {},
         config: {},
       },
     [selectedNode]
@@ -101,7 +104,7 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
       return;
     }
     setDraftNode((prev: AiNode | null) => {
-      if (!prev || prev.id !== selectedNode.id) {
+      if (prev?.id !== selectedNode.id) {
         return cloneNode(selectedNode);
       }
       return prev;

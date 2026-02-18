@@ -11,7 +11,7 @@ import {
   shouldIncludeImageUrl,
 } from './base-exporter-images';
 
-import type { ImageExportDiagnostics } from './base-exporter-images';
+import type { ImageExportLogger } from './base-exporter-images';
 
 // Base.com API field names that accept image data
 const IMAGE_TARGET_FIELDS = new Set([
@@ -670,7 +670,7 @@ const getProductValue = (
   product: ProductWithImages,
   sourceKey: string,
   imageBaseUrl?: string | null,
-  diagnostics?: ImageExportDiagnostics,
+  diagnostics?: ImageExportLogger,
   producerNameById?: ProducerNameLookup,
   producerExternalIdByInternalId?: ProducerExternalIdLookup,
   tagNameById?: TagNameLookup,
@@ -806,7 +806,7 @@ export function applyExportTemplateMappings(
   product: ProductWithImages,
   mappings: ExportTemplateMapping[],
   imageBaseUrl?: string | null,
-  imageDiagnostics?: ImageExportDiagnostics,
+  imageDiagnostics?: ImageExportLogger,
   producerNameById?: ProducerNameLookup,
   producerExternalIdByInternalId?: ProducerExternalIdLookup,
   tagNameById?: TagNameLookup,

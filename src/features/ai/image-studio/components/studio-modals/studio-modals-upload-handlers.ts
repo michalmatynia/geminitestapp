@@ -4,7 +4,6 @@ import { setImageStudioSlotImageLocked } from '../../utils/slot-image-lock';
 
 import type { EnvironmentReferenceDraftViewModel } from './slot-inline-edit-tab-types';
 import type { ImageStudioSlotRecord } from '../../types';
-import type { RefObject } from 'react';
 
 
 type Toast = (
@@ -56,7 +55,6 @@ type CreateUploadHandlersDeps = {
   driveImportMode: DriveImportMode;
   driveImportTargetId: string | null;
   importFromDriveMutation: ImportMutationLike;
-  localUploadInputRef: RefObject<HTMLInputElement | null>;
   localUploadMode: LocalUploadMode;
   localUploadTargetId: string | null;
   selectedFolder: string | null;
@@ -92,7 +90,7 @@ type CreateUploadHandlersDeps = {
 type UploadHandlers = {
   handleDriveSelection: (files: ImageFileSelection[]) => Promise<void>;
   handleCreateEmptySlot: () => Promise<void>;
-  handleLocalUpload: (filesList: FileList | null) => Promise<void>;
+  handleLocalUpload: (files: File[]) => Promise<void>;
 };
 
 const toAssetDraft = (
@@ -223,9 +221,8 @@ export const createUploadHandlers = (
     }
   };
 
-  const handleLocalUpload = async (filesList: FileList | null): Promise<void> => {
-    if (!filesList || filesList.length === 0) return;
-    const files = Array.from(filesList);
+  const handleLocalUpload = async (files: File[]): Promise<void> => {
+    if (files.length === 0) return;
     try {
       const previousTemporary = deps.temporaryObjectUpload;
       const result = await deps.uploadMutation.mutateAsync({
@@ -312,9 +309,6 @@ export const createUploadHandlers = (
     } catch (error: unknown) {
       deps.toast(error instanceof Error ? error.message : 'Upload failed', { variant: 'error' });
     } finally {
-      if (deps.localUploadInputRef.current) {
-        deps.localUploadInputRef.current.value = '';
-      }
       deps.setLocalUploadTargetId(null);
       deps.setLocalUploadMode('create');
     }

@@ -8,7 +8,7 @@ import {
   listExportTemplates,
   normalizeStockKey,
   type ImageBase64Mode,
-  type ImageExportDiagnostics,
+  type ImageExportLogger,
   type ImageTransformOptions,
 } from '@/features/integrations/server';
 import {
@@ -55,8 +55,8 @@ export const isBaseImageError = (message: string | undefined): boolean => {
 
 export const buildImageDiagnosticsLogger = (
   context: Record<string, unknown>
-): ImageExportDiagnostics => ({
-  log: (message, data) => {
+): ImageExportLogger => ({
+  log: (message: string, data?: Record<string, unknown>) => {
     void ErrorSystem.logWarning(`[export-to-base][images] ${message}`, {
       ...context,
       ...(data ?? {}),

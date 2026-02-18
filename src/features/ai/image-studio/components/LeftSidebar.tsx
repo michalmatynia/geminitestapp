@@ -15,6 +15,7 @@ import {
   SidePanel,
   Tooltip,
   useToast,
+  EmptyState,
 } from '@/shared/ui';
 
 import {
@@ -638,7 +639,12 @@ export function LeftSidebar(): React.JSX.Element {
             {maskShapes.length > 0 ? (
               <ShapeListPanel />
             ) : (
-              <div className='px-2 py-2 text-xs text-gray-500'>No shapes drawn yet.</div>
+              <EmptyState
+                title='No shapes drawn yet'
+                description='Use the mask tools above to draw polygons or lasso shapes on the canvas.'
+                variant='compact'
+                className='border-none bg-transparent py-4'
+              />
             )}
           </div>
         </div>

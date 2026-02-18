@@ -34,10 +34,6 @@ export function UserNav(): React.ReactNode {
 
   const queryPanelEnabled = parseEnabled(settingsStore.get('query_status_panel_enabled'), false);
   const queryPanelOpen = parseEnabled(settingsStore.get('query_status_panel_open'), false);
-  const caseResolverWorkspaceDebugEnabled = parseEnabled(
-    settingsStore.get('case_resolver_workspace_debug'),
-    false,
-  );
   const triggerId = 'admin-user-nav-trigger';
   const contentId = 'admin-user-nav-content';
 
@@ -129,27 +125,6 @@ export function UserNav(): React.ReactNode {
               Switch Panel Off
             </Button>
           </div>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className='flex flex-col items-stretch gap-2'
-          onSelect={(event: Event) => event.preventDefault()}
-        >
-          <div className='text-xs font-medium text-muted-foreground'>Case Resolver</div>
-          <ToggleRow
-            label='Workspace Debug'
-            checked={caseResolverWorkspaceDebugEnabled}
-            onCheckedChange={(checked: boolean): void =>
-              updateSettings.mutate([
-                {
-                  key: 'case_resolver_workspace_debug',
-                  value: checked ? 'true' : 'false',
-                },
-              ])
-            }
-            className='bg-transparent border-none p-0 hover:bg-transparent'
-            labelClassName='text-sm font-normal normal-case tracking-normal'
-          />
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <div className='flex items-center justify-between px-2 py-1.5'>

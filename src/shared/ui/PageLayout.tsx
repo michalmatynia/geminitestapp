@@ -6,7 +6,6 @@ import { cn } from '@/shared/utils';
 
 import { Button } from './button';
 import { SectionHeader } from './section-header';
-import { SectionPanel } from './section-panel';
 import { Tabs, TabsList, TabsTrigger } from './tabs';
 
 interface PageLayoutProps {
@@ -87,9 +86,9 @@ export function PageLayout({
       />
 
       {wrapInPanel ? (
-        <SectionPanel className={panelClassName}>
+        <div className={cn('rounded-lg border border-border bg-card p-6', panelClassName)}>
           {children}
-        </SectionPanel>
+        </div>
       ) : (
         children
       )}

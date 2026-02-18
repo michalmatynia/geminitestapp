@@ -1,6 +1,6 @@
 import { CopyIcon } from 'lucide-react';
 
-import { Button, Label, Textarea, Checkbox, Badge, SelectSimple, SectionPanel } from '@/shared/ui';
+import { Button, Label, Textarea, Checkbox, Badge, SelectSimple } from '@/shared/ui';
 
 
 interface PromptGenerationSectionProps {
@@ -81,13 +81,13 @@ export function PromptGenerationSection({
                 <CopyIcon className='size-3 mr-1'/>Copy
               </Button>
             </div>
-            <SectionPanel variant='subtle' className={`mt-1.5 p-4 text-sm text-gray-300 h-[${pathNumber === 1 ? '100px' : '132px'}] overflow-y-auto border border-border font-${pathNumber === 1 ? 'mono' : 'sans'}`}>
+            <div className={`mt-1.5 rounded-md border border-border/60 bg-card/40 p-4 text-sm text-gray-300 h-[${pathNumber === 1 ? '100px' : '132px'}] overflow-y-auto font-${pathNumber === 1 ? 'mono' : 'sans'}`}>
               {initialResultValue ? (
                 <div className='whitespace-pre-wrap'>{initialResultValue}</div>
               ) : (
                 <span className='text-gray-600 italic text-xs'>No result yet.</span>
               )}
-            </SectionPanel>
+            </div>
           </div>
         </div>
 
@@ -128,13 +128,13 @@ export function PromptGenerationSection({
                     <CopyIcon className='size-3 mr-1'/>Copy
                   </Button>
                 </div>
-                <SectionPanel variant='subtle' className={`mt-1.5 p-4 text-sm text-gray-300 h-[${pathNumber === 1 ? '100px' : '132px'}] overflow-y-auto border border-border font-${pathNumber === 1 ? 'mono' : 'sans'}`}>
+                <div className={`mt-1.5 rounded-md border border-border/60 bg-card/40 p-4 text-sm text-gray-300 h-[${pathNumber === 1 ? '100px' : '132px'}] overflow-y-auto font-${pathNumber === 1 ? 'mono' : 'sans'}`}>
                   {finalResultValue ? (
                     <div className='whitespace-pre-wrap'>{finalResultValue}</div>
                   ) : (
                     <span className='text-gray-600 italic text-xs'>No result yet.</span>
                   )}
-                </SectionPanel>
+                </div>
               </div>
             </div>
           )}

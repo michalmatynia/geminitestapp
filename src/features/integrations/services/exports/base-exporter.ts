@@ -18,7 +18,7 @@ import {
 
 import type {
   ImageBase64Mode,
-  ImageExportDiagnostics,
+  ImageExportLogger,
   ImageTransformOptions,
 } from './base-exporter-images';
 
@@ -29,10 +29,14 @@ export {
 } from './base-exporter-images';
 export type {
   ImageBase64Mode,
-  ImageExportDiagnostics,
+  ImageExportLogger,
   ImageTransformOptions,
-  ImageUrlDiagnostic,
 } from './base-exporter-images';
+import type { 
+  ImageExportDiagnosticsDto as ImageExportDiagnostics,
+  ImageUrlDiagnosticDto as ImageUrlDiagnostic 
+} from '@/shared/contracts/integrations';
+export type { ImageExportDiagnostics, ImageUrlDiagnostic };
 
 const IMAGE_EXPORT_ALIASES = new Set([
   'images_all',
@@ -241,7 +245,7 @@ export async function buildBaseProductData(
     tagNameById?: Record<string, string>;
     tagExternalIdByInternalId?: Record<string, string>;
     exportImagesAsBase64?: boolean | undefined;
-    imageDiagnostics?: ImageExportDiagnostics | undefined;
+    imageDiagnostics?: ImageExportLogger | undefined;
     imageBase64Mode?: ImageBase64Mode | undefined;
     imageTransform?: ImageTransformOptions | null;
     imagesOnly?: boolean;
@@ -403,7 +407,7 @@ export async function exportProductToBase(
     tagNameById?: Record<string, string>;
     tagExternalIdByInternalId?: Record<string, string>;
     exportImagesAsBase64?: boolean | undefined;
-    imageDiagnostics?: ImageExportDiagnostics | undefined;
+    imageDiagnostics?: ImageExportLogger | undefined;
     imageBase64Mode?: ImageBase64Mode | undefined;
     imageTransform?: ImageTransformOptions | null;
     imagesOnly?: boolean;
@@ -452,7 +456,7 @@ export async function exportProductImagesToBase(
   options?: {
     imageBaseUrl?: string | null;
     exportImagesAsBase64?: boolean | undefined;
-    imageDiagnostics?: ImageExportDiagnostics | undefined;
+    imageDiagnostics?: ImageExportLogger | undefined;
     imageBase64Mode?: ImageBase64Mode | undefined;
     imageTransform?: ImageTransformOptions | null;
   }

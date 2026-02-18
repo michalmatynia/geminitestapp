@@ -11,6 +11,7 @@ import {
   Label,
   SelectSimple,
   Textarea,
+  LoadingState,
 } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -27,7 +28,7 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
   const agentsQuery = useTeachingAgents();
 
-  if (!selectedNode || selectedNode.type !== 'learner_agent') return null;
+  if (selectedNode?.type !== 'learner_agent') return null;
 
   const agents = agentsQuery.data ?? [];
   const learnerConfig = selectedNode.config?.learnerAgent ?? DEFAULT_CONFIG;
@@ -78,7 +79,7 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
       />
 
       {agentsQuery.isLoading && (
-        <div className='text-[11px] text-gray-500'>Loading learner agents…</div>
+        <LoadingState message='Loading learner agents...' size='sm' className='py-2' />
       )}
       {agentsQuery.error && (
         <div className='rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100'>

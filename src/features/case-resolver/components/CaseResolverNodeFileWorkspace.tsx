@@ -19,9 +19,11 @@ import {
   palette,
   stableStringify,
   type AiNode,
+  type Edge,
   type NodeDefinition,
 } from '@/features/ai/ai-paths/lib';
-import { Button, useToast, Badge, Hint, SelectSimple } from '@/shared/ui';
+import { Button, useToast, Badge, Hint, SelectSimple, EmptyState } from '@/shared/ui';
+import { PanelHeader } from '@/shared/ui/templates/panels';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import {
@@ -93,16 +95,13 @@ function NodeFilePanel({ meta, file, onOpen }: NodeFilePanelProps): React.JSX.El
 
   return (
     <div className='flex w-72 flex-shrink-0 flex-col gap-3 overflow-y-auto rounded-lg border border-border/60 bg-card/40 p-4'>
-      {/* Header */}
-      <div className='flex items-start gap-2'>
-        <TypeIcon className='mt-0.5 size-4 flex-shrink-0 text-gray-400' />
-        <div className='min-w-0 flex-1'>
-          <p className='truncate text-sm font-semibold text-white'>{meta.fileName}</p>
-          <Badge variant='outline' className='mt-0.5 px-1.5 py-0 text-[10px]'>
-            {typeLabel}
-          </Badge>
-        </div>
-      </div>
+      <PanelHeader
+        title={meta.fileName}
+        subtitle={typeLabel}
+        icon={<TypeIcon className='size-4 text-gray-400' />}
+        refreshable={false}
+        compact
+      />
 
       {/* Content preview */}
       {file ? (
@@ -187,6 +186,27 @@ function CaseResolverNodeFileWorkspaceInner({
     (): NodeDefinition | null => palette.find((entry: NodeDefinition) => entry.type === 'prompt') ?? null,
     []
   );
+  const strictEdges = useMemo((): CaseResolverNodeFileSnapshot['edges'] => {
+    return edges
+      .map((edge: Edge): CaseResolverNodeFileSnapshot['edges'][number] | null => {
+        const from = edge.from ?? edge.source;
+        const to = edge.to ?? edge.target;
+        if (!from || !to) return null;
+        return {
+          id: edge.id,
+          from,
+          to,
+          ...(edge.label ? { label: edge.label } : {}),
+          ...(edge.fromPort ?? edge.sourceHandle
+            ? { fromPort: edge.fromPort ?? edge.sourceHandle ?? undefined }
+            : {}),
+          ...(edge.toPort ?? edge.targetHandle
+            ? { toPort: edge.toPort ?? edge.targetHandle ?? undefined }
+            : {}),
+        };
+      })
+      .filter((edge): edge is CaseResolverNodeFileSnapshot['edges'][number] => edge !== null);
+  }, [edges]);
 
   const lastEmittedHashRef = useRef<string>(
     stableStringify({
@@ -213,14 +233,14 @@ function CaseResolverNodeFileWorkspaceInner({
       kind: 'case_resolver_node_file_snapshot_v1',
       source: 'manual',
       nodes,
-      edges,
+      edges: strictEdges,
       nodeFileMeta: prunedMeta,
     };
     const hash = stableStringify(updated);
     if (hash === lastEmittedHashRef.current) return;
     lastEmittedHashRef.current = hash;
     onSnapshotChange(updated);
-  }, [edges, nodes, onSnapshotChange]);
+  }, [nodes, onSnapshotChange, strictEdges]);
 
   // Migrate legacy template-based linked-file nodes to prompt nodes so they expose
   // Case Resolver document ports (textfield/content/plainText).
@@ -472,12 +492,12 @@ function CaseResolverNodeFileWorkspaceInner({
       kind: 'case_resolver_node_file_snapshot_v1',
       source: 'manual',
       nodes,
-      edges,
+      edges: strictEdges,
       nodeFileMeta: nodeFileMetaRef.current,
     };
     onSnapshotChange(updated);
     toast('Canvas saved.', { variant: 'success' });
-  }, [edges, nodes, onSnapshotChange, toast]);
+  }, [nodes, onSnapshotChange, strictEdges, toast]);
 
   // Derived values for the side panel
   const selectedNodeMeta = selectedNodeId
@@ -577,16 +597,12 @@ function CaseResolverNodeFileWorkspaceInner({
           <CanvasBoard />
           {nodes.length === 0 ? (
             <div className='pointer-events-none absolute inset-0 flex items-center justify-center'>
-              <div className='flex flex-col items-center gap-3 rounded-xl border border-dashed border-border/50 bg-card/60 px-8 py-6 text-center backdrop-blur-sm'>
-                <FileCode2 className='size-8 text-gray-500' />
-                <div>
-                  <p className='text-sm font-medium text-gray-300'>Empty canvas</p>
-                  <p className='mt-1 text-xs text-gray-500'>
-                    Use the <span className='text-sky-300'>✦</span> button next to a file in the tree,
-                    or drag a file directly onto this canvas.
-                  </p>
-                </div>
-              </div>
+              <EmptyState
+                title='Empty canvas'
+                description='Use the ✦ button next to a file in the tree, or drag a file directly onto this canvas.'
+                icon={<FileCode2 className='size-12' />}
+                className='border-none bg-card/60 backdrop-blur-sm px-8 py-6'
+              />
             </div>
           ) : null}
         </div>
@@ -625,16 +641,39 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
 
   if (selectedAsset?.kind !== 'node_file') {
     return (
-      <div className='flex h-[420px] items-center justify-center rounded-lg border border-dashed border-border/60 bg-card/20 text-sm text-gray-400'>
-        Select a node file to open the canvas.
-      </div>
+      <EmptyState
+        title='No canvas selected'
+        description='Select a node file to open the canvas and start mapping.'
+        className='h-[420px] bg-card/20'
+      />
     );
   }
+
+  const initialNodes: AiNode[] = snapshot.nodes.map((node: CaseResolverNodeFileSnapshot['nodes'][number]): AiNode => {
+    const nodeRecord = node as Record<string, unknown>;
+    const createdAt =
+      (typeof nodeRecord['createdAt'] === 'string' ? nodeRecord['createdAt'] : undefined) ??
+      new Date().toISOString();
+    const updatedAt =
+      (typeof nodeRecord['updatedAt'] === 'string' ? nodeRecord['updatedAt'] : undefined) ??
+      createdAt;
+    const data = (
+      nodeRecord['data'] && typeof nodeRecord['data'] === 'object'
+        ? nodeRecord['data']
+        : {}
+    ) as Record<string, unknown>;
+    return {
+      ...node,
+      createdAt,
+      updatedAt,
+      data,
+    };
+  });
 
   return (
     <AiPathsProvider
       key={selectedAsset.id}
-      initialNodes={snapshot.nodes}
+      initialNodes={initialNodes}
       initialEdges={snapshot.edges}
       initialLoading={false}
       initialRuntimeState={{ inputs: {}, outputs: {}, history: {} }}

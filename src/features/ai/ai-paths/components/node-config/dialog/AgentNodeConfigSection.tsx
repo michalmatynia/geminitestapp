@@ -9,6 +9,7 @@ import {
   Label,
   SelectSimple,
   Textarea,
+  LoadingState,
 } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -25,7 +26,7 @@ export function AgentNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
   const personasQuery = useAgentPersonas();
 
-  if (!selectedNode || selectedNode.type !== 'agent') return null;
+  if (selectedNode?.type !== 'agent') return null;
 
   const personas = personasQuery.data ?? [];
   const agentConfig = selectedNode.config?.agent ?? DEFAULT_AGENT_CONFIG;
@@ -71,7 +72,7 @@ export function AgentNodeConfigSection(): React.JSX.Element | null {
         placeholder='Select persona'
       />
       {personasQuery.isLoading && (
-        <div className='text-[11px] text-gray-500'>Loading personas…</div>
+        <LoadingState message='Loading personas...' size='sm' className='py-2' />
       )}
       {personasQuery.error && (
         <div className='rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100'>

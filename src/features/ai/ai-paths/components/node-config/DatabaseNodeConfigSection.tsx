@@ -33,7 +33,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
   const state = useDatabaseNodeConfigState();
   const { selectedNode } = state;
 
-  if (!selectedNode || selectedNode.type !== 'database') return null;
+  if (selectedNode?.type !== 'database') return null;
 
   const actionCategoryOptions = React.useMemo(
     () => getProviderActionCategoryOptions(state.resolvedProvider),

@@ -3,7 +3,8 @@
 import { ExternalLink as ExternalLinkIcon, FileText, FolderOpen, Image as ImageIcon } from 'lucide-react';
 import React from 'react';
 
-import { Button, ExternalLink, Label, Textarea, useToast } from '@/shared/ui';
+import { Button, ExternalLink, Label, Textarea, useToast, FileUploadTrigger, EmptyState } from '@/shared/ui';
+import { PanelHeader } from '@/shared/ui/templates/panels';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 
@@ -32,21 +33,26 @@ export function CaseResolverFileViewer(): React.JSX.Element {
     onAttachAssetFile,
   } = useCaseResolverPageContext();
   const { toast } = useToast();
-  const imageUploadInputRef = React.useRef<HTMLInputElement | null>(null);
   const [isDragActive, setIsDragActive] = React.useState(false);
   const [isAttachingImage, setIsAttachingImage] = React.useState(false);
 
   if (!selectedAsset) {
     return (
-      <div className='flex h-[calc(100vh-120px)] flex-col rounded-lg border border-border/60 bg-card/35 p-6'>
-        <div className='mb-4 text-lg font-semibold text-white'>File Viewer</div>
-        <div className='rounded-lg border border-dashed border-border/60 bg-card/20 p-6 text-sm text-gray-400'>
-          {selectedFolderPath !== null
+      <div className='flex h-[calc(100vh-120px)] flex-col gap-4 rounded-lg border border-border/60 bg-card/35 p-4'>
+        <PanelHeader
+          title='File Viewer'
+          refreshable={false}
+        />
+        <EmptyState
+          title='No file selected'
+          description={selectedFolderPath !== null
             ? `Folder selected: ${selectedFolderPath || '(root)'}. Select a file to preview.`
             : activeFile
               ? `Case selected: ${activeFile.name}. Open a node file to enter canvas mode, or select another file to preview it here.`
               : 'Select a file from the tree to preview it here.'}
-        </div>
+          icon={<FolderOpen className='size-12' />}
+          className='flex-1 border-none bg-transparent'
+        />
       </div>
     );
   }
@@ -75,53 +81,23 @@ export function CaseResolverFileViewer(): React.JSX.Element {
     [onAttachAssetFile, selectedAsset, toast]
   );
 
-  const triggerImageUpload = React.useCallback((): void => {
-    if (isAttachingImage) return;
-    imageUploadInputRef.current?.click();
-  }, [isAttachingImage]);
-
-  const handleImageInputChange = React.useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>): void => {
-      const file = event.target.files?.[0] ?? null;
-      event.target.value = '';
-      if (!file) return;
-      void handleAttachImageFile(file);
-    },
-    [handleAttachImageFile]
-  );
-
-  const handleImageDrop = React.useCallback(
-    (event: React.DragEvent<HTMLDivElement>): void => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (isAttachingImage) return;
-      const file = event.dataTransfer.files?.[0] ?? null;
-      if (!file) {
-        setIsDragActive(false);
-        return;
-      }
-      void handleAttachImageFile(file);
-    },
-    [handleAttachImageFile, isAttachingImage]
-  );
-
   return (
     <div className='flex h-[calc(100vh-120px)] flex-col gap-4 rounded-lg border border-border/60 bg-card/35 p-4'>
-      <div className='rounded border border-border/60 bg-card/30 px-4 py-3'>
-        <div className='flex items-start justify-between gap-3'>
-          <div className='min-w-0'>
-            <div className='truncate text-sm font-semibold text-white'>{selectedAsset.name}</div>
-            <div className='text-xs text-gray-400'>{resolveAssetSubtitle(selectedAsset)}</div>
-          </div>
-          {selectedAsset.filepath ? (
-            <ExternalLink
-              href={selectedAsset.filepath}
-              className='rounded border border-border/60 px-2 py-1 text-[11px] text-gray-200 hover:bg-muted/40'
-            >
-              Open
-            </ExternalLink>
-          ) : null}
-        </div>
+      <PanelHeader
+        title={selectedAsset.name}
+        subtitle={resolveAssetSubtitle(selectedAsset)}
+        refreshable={false}
+        customActions={selectedAsset.filepath ? (
+          <ExternalLink
+            href={selectedAsset.filepath}
+            className='rounded border border-border/60 px-2 py-1 text-[11px] text-gray-200 hover:bg-muted/40'
+          >
+            Open
+          </ExternalLink>
+        ) : null}
+      />
+
+      <div className='mt-3 grid grid-cols-1 gap-2 text-xs text-gray-300 md:grid-cols-2'>
 
         <div className='mt-3 grid grid-cols-1 gap-2 text-xs text-gray-300 md:grid-cols-2'>
           <div className='flex items-center justify-between rounded border border-border/50 bg-card/20 px-2 py-1.5'>
@@ -158,65 +134,44 @@ export function CaseResolverFileViewer(): React.JSX.Element {
       <div className='min-h-0 flex-1 overflow-hidden rounded border border-border/60 bg-card/25'>
         {isImageAsset ? (
           <div className='h-full p-3'>
-            <input
-              ref={imageUploadInputRef}
-              type='file'
+            <FileUploadTrigger
               accept='image/*'
-              className='hidden'
-              onChange={handleImageInputChange}
-            />
-            <div
-              role='button'
-              tabIndex={0}
-              className={`relative flex h-full items-center justify-center overflow-hidden rounded border border-dashed p-3 transition ${
-                isDragActive
-                  ? 'border-blue-500 bg-blue-500/10'
-                  : 'border-border/70 bg-card/40 hover:bg-card/55'
-              } ${isAttachingImage ? 'pointer-events-none opacity-70' : 'cursor-pointer'}`}
-              onClick={triggerImageUpload}
-              onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  triggerImageUpload();
-                }
+              onFilesSelected={(files) => {
+                if (files[0]) void handleAttachImageFile(files[0]);
               }}
-              onDragEnter={(event: React.DragEvent<HTMLDivElement>): void => {
-                event.preventDefault();
-                setIsDragActive(true);
-              }}
-              onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
-                event.preventDefault();
-                event.dataTransfer.dropEffect = 'copy';
-                setIsDragActive(true);
-              }}
-              onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
-                event.preventDefault();
-                setIsDragActive(false);
-              }}
-              onDrop={handleImageDrop}
+              disabled={isAttachingImage}
+              asChild
             >
-              {showImagePreview ? (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={selectedAsset.filepath ?? ''}
-                    alt={selectedAsset.name}
-                    className='max-h-full max-w-full rounded object-contain'
-                  />
-                  <div className='absolute bottom-3 left-1/2 -translate-x-1/2 rounded bg-black/55 px-2 py-1 text-[11px] text-white'>
-                    {isAttachingImage ? 'Uploading image...' : 'Drop image to replace'}
+              <div
+                className={`relative flex h-full items-center justify-center overflow-hidden rounded border border-dashed p-3 transition ${
+                  isDragActive
+                    ? 'border-blue-500 bg-blue-500/10'
+                    : 'border-border/70 bg-card/40 hover:bg-card/55'
+                } ${isAttachingImage ? 'pointer-events-none opacity-70' : 'cursor-pointer'}`}
+              >
+                {showImagePreview ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={selectedAsset.filepath ?? ''}
+                      alt={selectedAsset.name}
+                      className='max-h-full max-w-full rounded object-contain'
+                    />
+                    <div className='absolute bottom-3 left-1/2 -translate-x-1/2 rounded bg-black/55 px-2 py-1 text-[11px] text-white'>
+                      {isAttachingImage ? 'Uploading image...' : 'Drop image to replace'}
+                    </div>
+                  </>
+                ) : (
+                  <div className='flex flex-col items-center gap-2 text-center'>
+                    <ImageIcon className='size-9 text-gray-400' />
+                    <div className='text-sm font-medium text-gray-200'>
+                      {isAttachingImage ? 'Uploading image...' : 'Drop image here'}
+                    </div>
+                    <div className='text-xs text-gray-400'>or click to browse files</div>
                   </div>
-                </>
-              ) : (
-                <div className='flex flex-col items-center gap-2 text-center'>
-                  <ImageIcon className='size-9 text-gray-400' />
-                  <div className='text-sm font-medium text-gray-200'>
-                    {isAttachingImage ? 'Uploading image...' : 'Drop image here'}
-                  </div>
-                  <div className='text-xs text-gray-400'>or click to browse files</div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            </FileUploadTrigger>
           </div>
         ) : null}
 

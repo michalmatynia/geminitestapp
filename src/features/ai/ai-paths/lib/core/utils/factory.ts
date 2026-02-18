@@ -60,7 +60,7 @@ export const createPathMeta = (config: PathConfig): PathMeta => {
 
 export const createAiDescriptionPath = (id: string): PathConfig => {
   const now = new Date().toISOString();
-  const nodes: AiNode[] = [
+  const rawNodes = [
     {
       id: 'node-context',
       type: 'context',
@@ -144,6 +144,14 @@ export const createAiDescriptionPath = (id: string): PathConfig => {
       },
     },
   ];
+  const nodes: AiNode[] = rawNodes.map(
+    (node): AiNode => ({
+      createdAt: now,
+      updatedAt: null,
+      data: {},
+      ...(node as Omit<AiNode, 'createdAt' | 'updatedAt' | 'data'>),
+    }),
+  ) as AiNode[];
 
   const edges: Edge[] = [
     {

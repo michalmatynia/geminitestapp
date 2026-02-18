@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, useToast, SectionHeader, FormSection, Badge } from '@/shared/ui';
+import { Button, useToast, SectionHeader, FormSection, Badge, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 
@@ -20,7 +20,7 @@ export function AdminFrontManagePage(): React.ReactNode {
   if (settingsQuery.isPending || !settingsQuery.data) {
     return (
       <div className='container mx-auto py-10'>
-        <div className='text-white'>Loading front page settings...</div>
+        <LoadingState message='Loading front page settings...' />
       </div>
     );
   }

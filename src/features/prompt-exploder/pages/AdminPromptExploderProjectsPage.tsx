@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Edit3, Plus, Trash2, Library } from 'lucide-react';
+import { ArrowLeft, Edit3, Plus, Trash2, Library, ExternalLink as ExternalLinkIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useMemo, useState, useCallback } from 'react';
 
@@ -14,7 +14,6 @@ import {
   useToast,
   DocumentationSection,
   EmptyState,
-  ExternalLink,
 } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -303,7 +302,7 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
                 handleOpenInExploder(project.id);
               }}
             >
-              <ExternalLink className='mr-1 size-3.5' />
+              <ExternalLinkIcon className='mr-1 size-3.5' />
               Open
             </Button>
             <Button

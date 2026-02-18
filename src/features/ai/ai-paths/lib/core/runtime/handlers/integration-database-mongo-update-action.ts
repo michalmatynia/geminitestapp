@@ -129,7 +129,7 @@ export async function handleDatabaseMongoUpdateAction({
     if (entityIdValue?.trim()) return entityIdValue;
 
     const fallbackEntityId: string = resolveEntityIdFromInputs(
-      resolvedInputs as RuntimePortValues,
+      resolvedInputs,
       dbConfig.idField ?? 'entityId',
       simulationEntityType,
       simulationEntityId,

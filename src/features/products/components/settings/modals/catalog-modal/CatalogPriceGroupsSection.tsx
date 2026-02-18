@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button, Label, SelectSimple } from '@/shared/ui';
+import { Button, Label, SelectSimple, Badge } from '@/shared/ui';
 
 import { useCatalogModalContext } from './context/CatalogModalContext';
 
@@ -27,15 +27,15 @@ export function CatalogPriceGroupsSection(): React.JSX.Element {
             {catalogPriceGroupIds.map((id) => {
               const group = priceGroups.find((g) => g.id === id);
               return (
-                <Button
+                <Badge
                   key={id}
                   variant='secondary'
-                  className='h-7 rounded-full px-3 text-xs'
+                  className='h-7 rounded-full px-3 text-xs cursor-pointer hover:bg-secondary/80'
                   onClick={() => togglePriceGroup(id)}
                 >
                   {group?.name ?? id}{' '}
                   <span className='ml-1 text-gray-500'>×</span>
-                </Button>
+                </Badge>
               );
             })}
           </div>

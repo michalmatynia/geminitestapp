@@ -79,7 +79,7 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
     updateSelectedNodeConfig,
   } = useAiPathConfig();
 
-  if (!selectedNode || selectedNode.type !== 'mapper') return null;
+  if (selectedNode?.type !== 'mapper') return null;
 
   const mapperConfig = selectedNode.config?.mapper ?? {
     outputs: selectedNode.outputs.length ? selectedNode.outputs : ['value'],

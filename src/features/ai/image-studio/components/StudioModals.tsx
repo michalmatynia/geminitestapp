@@ -136,7 +136,6 @@ export function StudioModals(): React.JSX.Element {
     width: number;
     height: number;
   } | null>(null);
-  const localUploadInputRef = useRef<HTMLInputElement | null>(null);
   const [localUploadMode, setLocalUploadMode] = useState<
     'create' | 'replace' | 'temporary-object' | 'environment'
   >('create');
@@ -157,6 +156,7 @@ export function StudioModals(): React.JSX.Element {
   const inlineSlotLinkSyncTimeoutRef = useRef<number | null>(null);
   const inlineSlotBase64SyncTimeoutRef = useRef<number | null>(null);
   const suppressNextInlineDraftPersistenceOpsRef = useRef<number>(0);
+  const localUploadInputRef = useRef<HTMLInputElement | null>(null);
 
   const productImagesExternalBaseUrl =
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
@@ -840,7 +840,6 @@ export function StudioModals(): React.JSX.Element {
         failures?: { error?: string }[];
       }>;
     },
-    localUploadInputRef,
     localUploadMode,
     localUploadTargetId,
     selectedFolder,
@@ -904,7 +903,8 @@ export function StudioModals(): React.JSX.Element {
   });
   const handleCreateEmptySlot = async (): Promise<void> => { setSlotCreateOpen(false); await handleCreateEmptySlotCore(); };
   const triggerLocalUpload = (mode: 'create' | 'replace' | 'temporary-object' | 'environment', targetId: string | null): void => {
-    setLocalUploadMode(mode); setLocalUploadTargetId(targetId);
+    setLocalUploadMode(mode);
+    setLocalUploadTargetId(targetId);
     window.setTimeout(() => localUploadInputRef.current?.click(), 0);
   };
   const {
@@ -931,7 +931,6 @@ export function StudioModals(): React.JSX.Element {
         handleCreateEmptySlot={handleCreateEmptySlot}
         handleDriveSelection={handleDriveSelection}
         handleLocalUpload={handleLocalUpload}
-        localUploadInputRef={localUploadInputRef}
         projectId={projectId ?? null}
         selectedSlot={selectedSlot}
         setDriveImportMode={setDriveImportMode}

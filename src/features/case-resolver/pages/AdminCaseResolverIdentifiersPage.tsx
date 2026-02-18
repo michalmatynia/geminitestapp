@@ -375,29 +375,16 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
                       color={caseIdentifier.color || '#f59e0b'}
                       dot
                     />
-                    <p className='mt-1 truncate text-[11px] text-gray-400'>
-                      {caseIdentifierPathById.get(caseIdentifier.id) ??
-                        caseIdentifier.name}
-                    </p>
+                    <PropertyRow label='Path' value={caseIdentifierPathById.get(caseIdentifier.id) ?? caseIdentifier.name} className='mt-1' />
                   </div>
-                  <div className='flex items-center gap-2'>
-                    <Button
-                      type='button'
-                      onClick={(): void => openEditModal(caseIdentifier)}
-                      className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700'
-                    >
+                  <ActionMenu ariaLabel={`Actions for identifier ${caseIdentifier.name}`}>
+                    <DropdownMenuItem onSelect={() => openEditModal(caseIdentifier)}>
                       Edit
-                    </Button>
-                    <Button
-                      type='button'
-                      onClick={(): void =>
-                        setCaseIdentifierToDelete(caseIdentifier)}
-                      className='rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600'
-                      title='Delete case identifier'
-                    >
-                      <Trash2 className='size-3' />
-                    </Button>
-                  </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className='text-destructive focus:text-destructive' onSelect={() => setCaseIdentifierToDelete(caseIdentifier)}>
+                      Delete
+                    </DropdownMenuItem>
+                  </ActionMenu>
                 </div>
               ))}
             </div>

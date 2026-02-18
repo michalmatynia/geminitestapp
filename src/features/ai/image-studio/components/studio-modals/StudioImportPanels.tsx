@@ -1,6 +1,8 @@
 import React from 'react';
+import { Upload } from 'lucide-react';
 
 import type { ImageFileSelection } from '@/shared/types/domain/files';
+import { Button, FileUploadTrigger } from '@/shared/ui';
 
 import { DriveImportModal } from '../modals/DriveImportModal';
 import { SlotCreateModal } from '../modals/SlotCreateModal';
@@ -15,8 +17,7 @@ type StudioImportPanelsProps = {
   driveImportTargetId: string | null;
   handleCreateEmptySlot: () => Promise<void>;
   handleDriveSelection: (files: ImageFileSelection[]) => Promise<void>;
-  handleLocalUpload: (filesList: FileList | null) => Promise<void>;
-  localUploadInputRef: React.RefObject<HTMLInputElement | null>;
+  handleLocalUpload: (files: File[]) => Promise<void>;
   projectId: string | null;
   selectedSlot: ImageStudioSlotRecord | null;
   setDriveImportMode: (mode: UploadMode) => void;
@@ -37,7 +38,6 @@ export function StudioImportPanels({
   handleCreateEmptySlot,
   handleDriveSelection,
   handleLocalUpload,
-  localUploadInputRef,
   projectId,
   selectedSlot,
   setDriveImportMode,
@@ -61,16 +61,6 @@ export function StudioImportPanels({
 
   return (
     <>
-      <input
-        ref={localUploadInputRef}
-        type='file'
-        accept='image/*'
-        multiple={false}
-        className='hidden'
-        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-          void handleLocalUpload(event.target.files);
-        }}
-      />
       <DriveImportModal
         isOpen={driveImportOpen}
         onClose={() => {
@@ -81,18 +71,38 @@ export function StudioImportPanels({
         onSuccess={() => {}}
         title={driveImportTitle}
         isUploading={uploadPending}
-        onLocalUploadTrigger={() => {
-          setLocalUploadMode(driveImportMode);
-          setLocalUploadTargetId(
-            driveImportMode === 'replace' || driveImportMode === 'environment'
-              ? (driveImportTargetId ?? selectedSlot?.id ?? null)
-              : null
-          );
-          window.setTimeout(() => localUploadInputRef.current?.click(), 0);
-        }}
         onSelectFile={(files) => {
           void handleDriveSelection(files);
         }}
+        localUploadTrigger={
+          <FileUploadTrigger
+            accept='image/*'
+            onFilesSelected={(files) => {
+              void handleLocalUpload(files);
+            }}
+            disabled={uploadPending}
+            asChild
+          >
+            <Button 
+              size='sm'
+              type='button'
+              variant='outline'
+              disabled={uploadPending}
+              className='gap-2'
+              onClick={() => {
+                setLocalUploadMode(driveImportMode);
+                setLocalUploadTargetId(
+                  driveImportMode === 'replace' || driveImportMode === 'environment'
+                    ? (driveImportTargetId ?? selectedSlot?.id ?? null)
+                    : null
+                );
+              }}
+            >
+              <Upload className='size-4' />
+              Upload From Computer
+            </Button>
+          </FileUploadTrigger>
+        }
       />
 
       <SlotCreateModal

@@ -1,10 +1,15 @@
-import type { AiTriggerButtonDto } from '../../dtos/ai-trigger-buttons';
+import type { 
+  AiTriggerButtonDto,
+  AiTriggerButtonLocation,
+  AiTriggerButtonMode,
+  AiTriggerButtonDisplay
+} from '../../contracts/ai-trigger-buttons';
 
 export type {
   AiTriggerButtonLocation,
   AiTriggerButtonMode,
   AiTriggerButtonDisplay
-} from '../../dtos/ai-trigger-buttons';
+};
 
 /**
  * @deprecated Use AiTriggerButtonDto from @/shared/contracts/ai-trigger-buttons instead

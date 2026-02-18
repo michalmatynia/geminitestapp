@@ -402,8 +402,10 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       ...(run.triggerEvent ? { triggerEvent: run.triggerEvent } : {}),
       ...(run.triggerContext ? { triggerContext: run.triggerContext } : {}),
       seedOutputs: runtimeState.outputs,
-      seedHashes: runtimeState.hashes ?? undefined,
-      seedHashTimestamps: runtimeState.hashTimestamps ?? undefined,
+      seedHashes: (runtimeState.hashes as Record<string, string> | undefined) ?? undefined,
+      seedHashTimestamps:
+        (runtimeState.hashTimestamps as Record<string, number> | undefined) ??
+        undefined,
       seedHistory: runtimeState.history ?? undefined,
       seedRunId: runtimeState.runId ?? undefined,
       seedRunStartedAt: runtimeState.runStartedAt ?? undefined,
@@ -516,7 +518,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           const safeInputs = toJsonSafe(nodeInputs) as RuntimePortValues;
           const safeOutputs = toJsonSafe(nextOutputs) as RuntimePortValues;
           accInputs[node.id] = safeInputs;
-          accOutputs[node.id] = { ...(safeOutputs as Record<string, unknown>), status: 'completed' } as RuntimePortValues;
+          accOutputs[node.id] = { ...(safeOutputs), status: 'completed' } as RuntimePortValues;
 
           if (cached) {
             if (iteration === 0) {

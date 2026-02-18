@@ -59,7 +59,7 @@ export async function handleDatabaseMongoAction({
   const actionCategory: DatabaseActionCategory = dbConfig.actionCategory ?? 'read';
   const action: DatabaseAction = dbConfig.action ?? 'find';
   const inputValue: unknown = templateInputValue;
-  const queryPayload = buildDbQueryPayload(templateContext as RuntimePortValues, queryConfig);
+  const queryPayload = buildDbQueryPayload(templateContext, queryConfig);
   const actionProvider =
     queryPayload['provider'] === 'mongodb' || queryPayload['provider'] === 'prisma'
       ? queryPayload['provider']

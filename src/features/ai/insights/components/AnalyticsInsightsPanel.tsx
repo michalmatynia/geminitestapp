@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { AiInsightRecord } from '@/shared/types';
-import { Button, FormSection } from '@/shared/ui';
+import { Button, FormSection, EmptyState, LoadingState } from '@/shared/ui';
 
 import { InsightCard } from './InsightCard';
 import { useInsights } from '../context/InsightsContext';
@@ -29,11 +29,16 @@ export function AnalyticsInsightsPanel(): React.JSX.Element {
     >
       <div className='mt-3 space-y-3'>
         {analyticsQuery.isLoading ? (
-          <div className='text-xs text-gray-400'>Loading insights…</div>
+          <LoadingState message='Loading insights...' size='sm' className='py-4' />
         ) : analyticsQuery.error ? (
           <div className='text-xs text-red-400'>{(analyticsQuery.error).message}</div>
         ) : (analyticsQuery.data?.insights?.length ?? 0) === 0 ? (
-          <div className='text-xs text-gray-500'>No insights yet.</div>
+          <EmptyState
+            title='No insights yet'
+            description='Run analytics analysis to identify traffic changes and anomalies.'
+            variant='compact'
+            className='py-8'
+          />
         ) : (
           analyticsQuery.data?.insights.map((insight: AiInsightRecord) => (
             <InsightCard key={insight.id} insight={insight} />

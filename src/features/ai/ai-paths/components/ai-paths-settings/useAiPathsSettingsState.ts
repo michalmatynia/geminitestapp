@@ -428,10 +428,9 @@ export function useAiPathsSettingsState({
   const [updaterSamples, setUpdaterSamples] = useState<
     Record<string, UpdaterSampleState>
   >({});
-  const [runtimeState, setRuntimeState] = useState<RuntimeState>({
-    inputs: {},
-    outputs: {},
-  });
+  const [runtimeState, setRuntimeState] = useState<RuntimeState>(
+    { inputs: {}, outputs: {} } as unknown as RuntimeState
+  );
   const [pathDebugSnapshots, setPathDebugSnapshots] = useState<
     Record<string, PathDebugSnapshot>
   >({});
@@ -446,7 +445,7 @@ export function useAiPathsSettingsState({
   const lastGraphModelPayload = useMemo(() => {
     for (let index = nodes.length - 1; index >= 0; index -= 1) {
       const node = nodes[index];
-      if (!node || node.type !== 'model') continue;
+      if (node?.type !== 'model') continue;
       const output = runtimeState.outputs[node.id] as
         | { debugPayload?: unknown }
         | undefined;
@@ -656,7 +655,7 @@ export function useAiPathsSettingsState({
       if (removedEdges.length === 0) return state;
       const remainingTargets = new Set<string>();
       remainingEdges.forEach((edge: Edge) => {
-        if (!edge.toPort) return;
+        if (!edge.to || !edge.toPort) return;
         remainingTargets.add(`${edge.to}:${edge.toPort}`);
       });
 
@@ -665,7 +664,7 @@ export function useAiPathsSettingsState({
       let changed = false;
 
       removedEdges.forEach((edge: Edge) => {
-        if (!edge.toPort) return;
+        if (!edge.to || !edge.toPort) return;
         const targetKey = `${edge.to}:${edge.toPort}`;
         if (remainingTargets.has(targetKey)) return;
         const nodeInputs = (nextInputs?.[edge.to] ?? {}) as Record<

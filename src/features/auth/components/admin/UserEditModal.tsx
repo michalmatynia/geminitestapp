@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { AuthUserSecurityProfile } from '@/features/auth/api/users';
-import { Checkbox, Label, StatusToggle, MetadataItem } from '@/shared/ui';
+import { Checkbox, Label, StatusToggle, MetadataItem, LoadingState } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import type { AuthUserSummary } from '../../types';
@@ -55,7 +55,7 @@ export function UserEditModal({
       render: () => (
         <div className='p-4 rounded-md border border-white/5 bg-white/5 space-y-4'>
           {loadingSecurity ? (
-            <div className='py-4 text-center text-xs text-gray-500 animate-pulse'>Fetching security profile...</div>
+            <LoadingState message='Fetching security profile...' className='py-4' size='sm' />
           ) : (
             <div className='space-y-4'>
               <div className='flex items-center gap-3'>

@@ -6,6 +6,21 @@ import { namedDtoSchema } from './base';
  * AI Trigger Button DTOs
  */
 
+export const aiTriggerButtonLocationEnum = z.enum([
+  'product_modal',
+  'product_list',
+  'note_modal',
+  'note_list',
+]);
+
+export type AiTriggerButtonLocation = z.infer<typeof aiTriggerButtonLocationEnum>;
+
+export const aiTriggerButtonModeEnum = z.enum(['click', 'toggle']);
+export type AiTriggerButtonMode = z.infer<typeof aiTriggerButtonModeEnum>;
+
+export const aiTriggerButtonDisplayEnum = z.enum(['icon', 'label', 'icon_label']);
+export type AiTriggerButtonDisplay = z.infer<typeof aiTriggerButtonDisplayEnum>;
+
 export const aiTriggerButtonSchema = namedDtoSchema.extend({
   pathId: z.string().optional(),
   icon: z.string().nullable().optional(),
@@ -17,9 +32,9 @@ export const aiTriggerButtonSchema = namedDtoSchema.extend({
   contextMapping: z.record(z.string(), z.string()).optional(),
   enabled: z.boolean().optional(),
   // New fields from usage
-  locations: z.array(z.string()).optional(),
-  mode: z.enum(['click', 'toggle']).optional(),
-  display: z.enum(['icon', 'label', 'icon_label']).optional(),
+  locations: z.array(aiTriggerButtonLocationEnum).optional(),
+  mode: aiTriggerButtonModeEnum.optional(),
+  display: aiTriggerButtonDisplayEnum.optional(),
 });
 
 export type AiTriggerButtonDto = z.infer<typeof aiTriggerButtonSchema>;

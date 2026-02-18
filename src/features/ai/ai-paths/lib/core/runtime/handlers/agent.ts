@@ -286,8 +286,8 @@ export const handleLearnerAgent: NodeHandler = async ({
   const payload = { agentId, messages };
   const payloadHash = hashRuntimeValue({ payload, runId, runStartedAt });
   const prevPayloadHash =
-    typeof (prevOutputs as Record<string, unknown>)['payloadHash'] === 'string'
-      ? ((prevOutputs as Record<string, unknown>)['payloadHash'] as string)
+    typeof (prevOutputs)['payloadHash'] === 'string'
+      ? ((prevOutputs)['payloadHash'])
       : '';
   if (prevPayloadHash && prevPayloadHash === payloadHash) {
     return prevOutputs;

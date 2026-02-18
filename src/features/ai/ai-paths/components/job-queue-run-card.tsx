@@ -14,6 +14,8 @@ import {
   Textarea,
   FormField,
   CollapsibleSection,
+  LoadingState,
+  EmptyState,
 } from '@/shared/ui';
 
 import {
@@ -215,7 +217,7 @@ export function JobQueueRunCard({
           ) : null}
 
           {!detail && !detailLoading ? (
-            <div className='text-[11px] text-gray-500'>Loading run details...</div>
+            <LoadingState message='Loading run details...' size='sm' className='py-4' />
           ) : null}
 
           {detail ? (
@@ -318,9 +320,12 @@ export function JobQueueRunCard({
                 className='border-border/70 bg-black/20'
               >
                 {nodes.length === 0 ? (
-                  <div className='mt-1 text-[11px] text-gray-500'>
-                    No nodes recorded for this run.
-                  </div>
+                  <EmptyState
+                    title='No nodes recorded'
+                    description='No node execution details were captured for this run.'
+                    variant='compact'
+                    className='border-none bg-transparent py-4'
+                  />
                 ) : (
                   <div className='mt-1 space-y-2'>
                     {nodes.map((node: AiPathRunNodeRecord) => (
@@ -383,7 +388,12 @@ export function JobQueueRunCard({
                 className='border-border/70 bg-black/20'
               >
                 {events.length === 0 ? (
-                  <div className='mt-1 text-[11px] text-gray-500'>No events.</div>
+                  <EmptyState
+                    title='No events'
+                    description='No runtime events were emitted during this execution.'
+                    variant='compact'
+                    className='border-none bg-transparent py-4'
+                  />
                 ) : (
                   <div className='mt-1 divide-y divide-border/70'>
                     {events.map((event: AiPathRunEventRecord) => (

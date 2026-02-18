@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Button, Input, Textarea, Label, Alert, SelectSimple, StatusBadge } from '@/shared/ui';
+import { Button, Input, Textarea, Label, Alert, SelectSimple, StatusBadge, Badge } from '@/shared/ui';
 
 export interface ApiPreset {
   label: string;
@@ -123,16 +123,14 @@ export function GenericApiConsole({
       {/* Presets */}
       <div className='mb-3 flex flex-wrap gap-2'>
         {presets.map((preset: ApiPreset) => (
-          <Button
+          <Badge
             key={preset.label}
-            type='button'
-            variant='outline'
-            size='xs'
-            className='h-7 rounded-full px-3 text-[11px]'
+            variant='neutral'
+            className='h-7 rounded-full px-3 text-[11px] cursor-pointer hover:bg-muted/80 hover:text-white'
             onClick={() => handlePresetClick(preset)}
           >
             {preset.label}
-          </Button>
+          </Badge>
         ))}
       </div>
 

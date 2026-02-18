@@ -12,8 +12,8 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from './dropdown-menu';
-import { Input } from './input';
 import { Label } from './label';
+import { SearchInput } from './search-input';
 
 export interface MultiSelectOption {
   value: string;
@@ -108,24 +108,16 @@ export function MultiSelect({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className='w-64' align='start'>
-          <div className='flex items-center border-b px-3 pb-2 pt-2'>
-            <Search className='mr-2 h-4 w-4 shrink-0 opacity-50' />
-            <Input
+          <div className='border-b px-2 py-2'>
+            <SearchInput
               placeholder={searchPlaceholder}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className='h-8 border-none bg-transparent p-0 focus-visible:ring-0'
+              onClear={() => setQuery('')}
+              variant='subtle'
+              size='xs'
+              className='h-8'
             />
-            {query && (
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={() => setQuery('')}
-                className='h-auto p-1'
-              >
-                <X className='h-4 w-4' />
-              </Button>
-            )}
           </div>
           <div className='max-h-64 overflow-y-auto p-1'>
             {loading ? (

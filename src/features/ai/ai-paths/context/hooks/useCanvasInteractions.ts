@@ -323,7 +323,7 @@ export function useCanvasInteractions(args?: {
       if (removedEdges.length === 0) return state;
       const remainingTargets = new Set<string>();
       remainingEdges.forEach((edge: Edge) => {
-        if (!edge.toPort) return;
+        if (!edge.to || !edge.toPort) return;
         remainingTargets.add(`${edge.to}:${edge.toPort}`);
       });
 
@@ -332,7 +332,7 @@ export function useCanvasInteractions(args?: {
       let changed = false;
 
       removedEdges.forEach((edge: Edge) => {
-        if (!edge.toPort) return;
+        if (!edge.to || !edge.toPort) return;
         const targetKey = `${edge.to}:${edge.toPort}`;
         if (remainingTargets.has(targetKey)) return;
         const nodeInputs = (nextInputs?.[edge.to] ?? {});
@@ -594,7 +594,12 @@ export function useCanvasInteractions(args?: {
       if (copiedNodes.length === 0) return null;
       const copiedEdges = edges.filter(
         (edge: Edge): boolean =>
-          selectedIdSet.has(edge.from) && selectedIdSet.has(edge.to)
+          Boolean(
+            edge.from &&
+            edge.to &&
+            selectedIdSet.has(edge.from) &&
+            selectedIdSet.has(edge.to)
+          )
       );
       const bounds = copiedNodes.reduce(
         (
@@ -665,11 +670,17 @@ export function useCanvasInteractions(args?: {
       const nodeIdSet = new Set(resolvedNodeIds);
       const removedEdges = edges.filter(
         (edge: Edge): boolean =>
-          nodeIdSet.has(edge.from) || nodeIdSet.has(edge.to)
+          Boolean(
+            (edge.from && nodeIdSet.has(edge.from)) ||
+            (edge.to && nodeIdSet.has(edge.to))
+          )
       );
       const remainingEdges = edges.filter(
         (edge: Edge): boolean =>
-          !nodeIdSet.has(edge.from) && !nodeIdSet.has(edge.to)
+          !(
+            (edge.from && nodeIdSet.has(edge.from)) ||
+            (edge.to && nodeIdSet.has(edge.to))
+          )
       );
       setNodes((prev: AiNode[]): AiNode[] =>
         prev.filter((node: AiNode): boolean => !nodeIdSet.has(node.id))
@@ -768,8 +779,11 @@ export function useCanvasInteractions(args?: {
       });
 
       const pastedEdges = payload.edges.reduce((acc: Edge[], edge: Edge) => {
-        const from = oldToNewNodeId.get(edge.from);
-        const to = oldToNewNodeId.get(edge.to);
+        const fromId = edge.from;
+        const toId = edge.to;
+        if (!fromId || !toId) return acc;
+        const from = oldToNewNodeId.get(fromId);
+        const to = oldToNewNodeId.get(toId);
         if (!from || !to) return acc;
         acc.push({
           ...cloneValue(edge),
@@ -2152,10 +2166,18 @@ export function useCanvasInteractions(args?: {
         }
         
         const removedEdges = edges.filter(
-          (e) => nodeIdSet.has(e.from) || nodeIdSet.has(e.to)
+          (e) =>
+            Boolean(
+              (e.from && nodeIdSet.has(e.from)) ||
+              (e.to && nodeIdSet.has(e.to))
+            )
         );
         const remainingEdges = edges.filter(
-          (e) => !nodeIdSet.has(e.from) && !nodeIdSet.has(e.to)
+          (e) =>
+            !(
+              (e.from && nodeIdSet.has(e.from)) ||
+              (e.to && nodeIdSet.has(e.to))
+            )
         );
         
         setEdges(remainingEdges);
@@ -2298,10 +2320,14 @@ export function useCanvasInteractions(args?: {
     const mergedConfig = payload.config ? { ...defaultConfig, ...payload.config } : defaultConfig;
     
     const newNodeId = `node-${Math.random().toString(36).slice(2, 10)}`;
+    const nowIso = new Date().toISOString();
     const newNode: AiNode = {
       ...payload,
       id: newNodeId,
+      createdAt: nowIso,
+      updatedAt: null,
       position: { x: nextX, y: nextY },
+      data: {},
       ...(mergedConfig ? { config: mergedConfig } : {}),
     };
 

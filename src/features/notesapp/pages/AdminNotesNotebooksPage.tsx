@@ -12,7 +12,7 @@ import { useNotebooks } from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
 import type { NotebookRecord } from '@/shared/types/domain/notes';
-import { Button, useToast, Input, PageLayout, FormSection, FormField, RefreshButton, LoadingState, ActionMenu, DropdownMenuItem, DropdownMenuSeparator, StatusBadge } from '@/shared/ui';
+import { Button, useToast, Input, PageLayout, FormSection, FormField, RefreshButton, LoadingState, ActionMenu, DropdownMenuItem, DropdownMenuSeparator, StatusBadge, EmptyState } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 export function AdminNotesNotebooksPage(): React.JSX.Element {
@@ -166,7 +166,11 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
           {loading ? (
             <LoadingState message='Loading notebooks...' className='py-8' />
           ) : notebooks.length === 0 ? (
-            <div className='text-sm text-gray-500'>No notebooks created yet.</div>
+            <EmptyState
+              title='No notebooks created yet'
+              description='Create your first notebook to start organizing your thoughts.'
+              variant='compact'
+            />
           ) : (
             <div className='grid gap-3 sm:grid-cols-2'>
               {notebooks.map((notebook: NotebookRecord) => {

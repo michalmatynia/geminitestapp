@@ -799,7 +799,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               folderStats.total === folderStats.locked
             );
             const hoverOnlyControlClass = isSelected
-              ? 'opacity-0 pointer-events-none'
+              ? 'opacity-100'
               : 'opacity-0 group-hover:opacity-100';
             const canToggle = isFolder && hasChildren;
             const Icon = (() => {

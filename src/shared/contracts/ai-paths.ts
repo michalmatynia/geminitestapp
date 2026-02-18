@@ -698,6 +698,15 @@ export type AiPathRunCreateInput = CreateAiPathRunDto;
 export type UpdateAiPathRunDto = Partial<CreateAiPathRunDto>;
 export type AiPathRunUpdateInput = UpdateAiPathRunDto;
 
+export const aiPathRunUpdateSchema = aiPathRunRecordSchema.partial().omit({
+  id: true,
+  userId: true,
+  pathId: true,
+  createdAt: true,
+});
+
+export type AiPathRunUpdateDto = z.infer<typeof aiPathRunUpdateSchema>;
+
 /**
  * AI Path Node Status
  */
@@ -751,6 +760,237 @@ export const aiPathRunEventSchema = dtoBaseSchema.extend({
 });
 
 export type AiPathRunEventDto = z.infer<typeof aiPathRunEventSchema>;
+
+export const aiPathRunNodeUpdateSchema = aiPathRunNodeSchema.partial().omit({
+  id: true,
+  runId: true,
+  nodeId: true,
+  createdAt: true,
+});
+
+export type AiPathRunNodeUpdateDto = z.infer<typeof aiPathRunNodeUpdateSchema>;
+
+export const aiPathRunEventCreateInputSchema = z.object({
+  runId: z.string(),
+  level: aiPathRunEventLevelSchema,
+  message: z.string(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+});
+
+export type AiPathRunEventCreateInputDto = z.infer<typeof aiPathRunEventCreateInputSchema>;
+
+/**
+ * AI Paths Composite & Domain DTOs
+ */
+
+export const edgeSchema = z.object({
+  id: z.string(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().nullable().optional(),
+  source: z.string().optional(),
+  target: z.string().optional(),
+  sourceHandle: z.string().nullable().optional(),
+  targetHandle: z.string().nullable().optional(),
+  type: z.string().optional(),
+  data: z.record(z.string(), z.unknown()).optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
+  fromPort: z.string().nullable().optional(),
+  toPort: z.string().nullable().optional(),
+  label: z.string().nullable().optional(),
+});
+
+export type EdgeDto = z.infer<typeof edgeSchema>;
+
+export const nodeDefinitionSchema = z.object({
+  type: aiNodeTypeSchema,
+  title: z.string(),
+  description: z.string(),
+  inputs: z.array(z.string()),
+  outputs: z.array(z.string()),
+  config: nodeConfigSchema.optional(),
+});
+
+export type NodeDefinitionDto = z.infer<typeof nodeDefinitionSchema>;
+
+export const runtimeHistoryLinkSchema = z.object({
+  nodeId: z.string(),
+  nodeType: z.string().nullable(),
+  nodeTitle: z.string().nullable(),
+  fromPort: z.string().nullable(),
+  toPort: z.string().nullable(),
+});
+
+export type RuntimeHistoryLinkDto = z.infer<typeof runtimeHistoryLinkSchema>;
+
+export const runtimeHistoryEntrySchema = z.object({
+  timestamp: z.string(),
+  runId: z.string().nullable().optional(),
+  runStartedAt: z.string().nullable().optional(),
+  pathId: z.string().nullable(),
+  pathName: z.string().nullable(),
+  nodeId: z.string(),
+  nodeType: z.string(),
+  nodeTitle: z.string().nullable(),
+  status: z.string(),
+  iteration: z.number(),
+  inputs: z.record(z.string(), z.unknown()),
+  outputs: z.record(z.string(), z.unknown()),
+  inputHash: z.string().nullable(),
+  skipReason: z.string().optional(),
+  error: z.string().optional(),
+  inputsFrom: z.array(runtimeHistoryLinkSchema),
+  outputsTo: z.array(runtimeHistoryLinkSchema),
+  delayMs: z.number().nullable(),
+  durationMs: z.number().nullable(),
+});
+
+export type RuntimeHistoryEntryDto = z.infer<typeof runtimeHistoryEntrySchema>;
+
+export const aiPathRuntimeAnalyticsSummarySchema = z.object({
+  from: z.string(),
+  to: z.string(),
+  range: z.string(),
+  storage: z.enum(['redis', 'disabled']),
+  runs: z.object({
+    total: z.number(),
+    queued: z.number(),
+    started: z.number(),
+    completed: z.number(),
+    failed: z.number(),
+    canceled: z.number(),
+    deadLettered: z.number(),
+    successRate: z.number(),
+    failureRate: z.number(),
+    deadLetterRate: z.number(),
+    avgDurationMs: z.number().nullable(),
+    p95DurationMs: z.number().nullable(),
+  }),
+  nodes: z.object({
+    started: z.number(),
+    completed: z.number(),
+    failed: z.number(),
+    queued: z.number(),
+    running: z.number(),
+    polling: z.number(),
+    cached: z.number(),
+    waitingCallback: z.number(),
+  }),
+  brain: z.object({
+    analyticsReports: z.number(),
+    logReports: z.number(),
+    totalReports: z.number(),
+    warningReports: z.number(),
+    errorReports: z.number(),
+  }),
+  generatedAt: z.string(),
+});
+
+export type AiPathRuntimeAnalyticsSummaryDto = z.infer<typeof aiPathRuntimeAnalyticsSummarySchema>;
+
+export const pathMetaSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type PathMetaDto = z.infer<typeof pathMetaSchema>;
+
+export const pathUiStateSchema = z.object({
+  selectedNodeId: z.string().nullable().optional(),
+  configOpen: z.boolean().optional(),
+});
+
+export type PathUiStateDto = z.infer<typeof pathUiStateSchema>;
+
+export const pathConfigSchema = z.object({
+  id: z.string(),
+  version: z.number(),
+  name: z.string(),
+  description: z.string(),
+  trigger: z.string(),
+  executionMode: z.string().optional(),
+  flowIntensity: z.string().optional(),
+  runMode: z.string().optional(),
+  nodes: z.array(aiNodeSchema),
+  edges: z.array(edgeSchema),
+  updatedAt: z.string(),
+  isLocked: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+  parserSamples: z.record(z.string(), z.any()).optional(),
+  updaterSamples: z.record(z.string(), z.any()).optional(),
+  runtimeState: z.any().optional(),
+  lastRunAt: z.string().nullable().optional(),
+  runCount: z.number().optional(),
+  uiState: pathUiStateSchema.optional(),
+});
+
+export type PathConfigDto = z.infer<typeof pathConfigSchema>;
+
+export const pathDebugEntrySchema = z.object({
+  nodeId: z.string(),
+  title: z.string().optional(),
+  debug: z.unknown(),
+});
+
+export type PathDebugEntryDto = z.infer<typeof pathDebugEntrySchema>;
+
+export const pathDebugSnapshotSchema = z.object({
+  pathId: z.string(),
+  runAt: z.string(),
+  entries: z.array(pathDebugEntrySchema),
+});
+
+export type PathDebugSnapshotDto = z.infer<typeof pathDebugSnapshotSchema>;
+
+export const clusterPresetSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  bundlePorts: z.array(z.string()),
+  template: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type ClusterPresetDto = z.infer<typeof clusterPresetSchema>;
+
+export const dbQueryPresetSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  queryTemplate: z.string(),
+  updateTemplate: z.string().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type DbQueryPresetDto = z.infer<typeof dbQueryPresetSchema>;
+
+export const dbNodePresetSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  config: databaseConfigSchema,
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type DbNodePresetDto = z.infer<typeof dbNodePresetSchema>;
+
+export const jsonPathEntrySchema = z.object({
+  path: z.string(),
+  type: z.enum(['object', 'array', 'value']),
+});
+
+export type JsonPathEntryDto = z.infer<typeof jsonPathEntrySchema>;
+
+export const connectionValidationSchema = z.object({
+  valid: z.boolean(),
+  message: z.string().optional(),
+});
+
+export type ConnectionValidationDto = z.infer<typeof connectionValidationSchema>;
 
 /**
  * AI Path Run List Options Contract

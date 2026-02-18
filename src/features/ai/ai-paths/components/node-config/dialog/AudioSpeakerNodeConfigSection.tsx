@@ -7,7 +7,7 @@ import { useAiPathConfig } from '../../AiPathConfigContext';
 
 export function AudioSpeakerNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
-  if (!selectedNode || selectedNode.type !== 'audio_speaker') return null;
+  if (selectedNode?.type !== 'audio_speaker') return null;
 
   const speakerConfig = selectedNode.config?.audioSpeaker ?? {
     enabled: true,

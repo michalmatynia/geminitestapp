@@ -15,7 +15,12 @@ import type {
   CmsPageSeoDto,
   CmsPageStatusDto,
   CmsPageSlugLinkDto,
-  CmsPageSummaryDto
+  CmsPageSummaryDto,
+  SettingsFieldOptionDto,
+  SettingsFieldDto,
+  SectionDefinitionDto,
+  BlockDefinitionDto,
+  PageComponentDto
 } from '../../dtos/cms';
 
 export type {
@@ -35,7 +40,12 @@ export type {
   CmsPageSeoDto,
   CmsPageStatusDto,
   CmsPageSlugLinkDto,
-  CmsPageSummaryDto
+  CmsPageSummaryDto,
+  SettingsFieldOptionDto,
+  SettingsFieldDto,
+  SectionDefinitionDto,
+  BlockDefinitionDto,
+  PageComponentDto
 };
 
 // ---------------------------------------------------------------------------
@@ -51,11 +61,7 @@ export type CmsThemeUpdateInput = UpdateCmsThemeDto;
 // ---------------------------------------------------------------------------
 export type PageStatus = CmsPageStatusDto;
 
-export interface PageComponent {
-  type: string;
-  order: number;
-  content: Record<string, unknown>;
-}
+export type PageComponent = PageComponentDto;
 
 export type PageSlugLink = CmsPageSlugLinkDto;
 
@@ -78,54 +84,10 @@ export type BlockInstance = CmsBlockInstanceDto;
 
 export type SectionInstance = CmsSectionInstanceDto;
 
-export interface SettingsFieldOption {
-  label: string;
-  value: string;
-}
+export type SettingsFieldOption = SettingsFieldOptionDto;
 
-export interface SettingsField {
-  key: string;
-  label: string;
-  type:
-    | 'text'
-    | 'select'
-    | 'radio'
-    | 'number'
-    | 'image'
-    | 'asset3d'
-    | 'color-scheme'
-    | 'range'
-    | 'color'
-    | 'font-family'
-    | 'font-weight'
-    | 'spacing'
-    | 'border'
-    | 'shadow'
-    | 'background'
-    | 'typography'
-    | 'link'
-    | 'alignment';
-  options?: SettingsFieldOption[];
-  defaultValue?: unknown;
-  min?: number;
-  max?: number;
-  disabled?: boolean;
-}
+export type SettingsField = SettingsFieldDto;
 
-export interface SectionDefinition {
-  type: string;
-  label: string;
-  icon: string;
-  defaultSettings: Record<string, unknown>;
-  settingsSchema: SettingsField[];
-  allowedBlockTypes: string[];
-}
+export type SectionDefinition = SectionDefinitionDto;
 
-export interface BlockDefinition {
-  type: string;
-  label: string;
-  icon: string;
-  defaultSettings: Record<string, unknown>;
-  settingsSchema: SettingsField[];
-  allowedBlockTypes?: string[];
-}
+export type BlockDefinition = BlockDefinitionDto;

@@ -30,7 +30,6 @@ import { useToast } from '@/shared/ui';
 
 import { buildPathLabelMap } from './admin-case-resolver-page-helpers';
 import { CaseResolverPageView } from '../components/CaseResolverPageView';
-import { CaseResolverWorkspaceDebugPanel } from '../components/CaseResolverWorkspaceDebugPanel';
 import { useCaseResolverState } from '../hooks/useCaseResolverState';
 import {
   createCaseResolverAssetFile,
@@ -38,6 +37,7 @@ import {
   normalizeFolderPaths,
 } from '../settings';
 import {
+  buildCombinedOcrText,
   buildDocumentPdfMarkup,
   createId,
   isPathWithinFolder,
@@ -59,7 +59,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const router = useRouter();
   const { toast } = useToast();
   const updateSetting = useUpdateSetting();
-  const workspaceDebugEnabled = process.env['NODE_ENV'] !== 'production';
   const [workspaceView, setWorkspaceView] = React.useState<'document' | 'relations'>('document');
   const {
     workspace,
@@ -632,13 +631,25 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const buildDraftPdfPreviewMarkup = useCallback((draft: CaseResolverFileEditDraft): string => {
     const resolvedMode = draft.editorType === 'wysiwyg' ? 'wysiwyg' : 'markdown';
+    const legacyDocumentContent =
+      typeof draft.documentContent === 'string' ? draft.documentContent : '';
+    const scanFallbackText =
+      draft.fileType === 'scanfile' ? buildCombinedOcrText(draft.scanSlots ?? []) : '';
+    const fallbackContent =
+      legacyDocumentContent.trim().length > 0 ? legacyDocumentContent : scanFallbackText;
+    const resolvePreferredContent = (
+      preferred: string | null | undefined
+    ): string =>
+      typeof preferred === 'string' && preferred.trim().length > 0
+        ? preferred
+        : fallbackContent;
     const canonical = deriveDocumentContentSync({
       mode: resolvedMode,
       value: resolvedMode === 'wysiwyg'
-        ? (draft.documentContentHtml ?? '')
-        : (draft.documentContentMarkdown ?? ''),
-      previousMarkdown: draft.documentContentMarkdown ?? '',
-      previousHtml: draft.documentContentHtml ?? '',
+        ? resolvePreferredContent(draft.documentContentHtml)
+        : resolvePreferredContent(draft.documentContentMarkdown),
+      previousMarkdown: resolvePreferredContent(draft.documentContentMarkdown),
+      previousHtml: resolvePreferredContent(draft.documentContentHtml),
     });
     const addresserLabel = draft.addresser
       ? resolveFilemakerPartyLabel(filemakerDatabase, draft.addresser) ?? 'Not selected'
@@ -700,16 +711,37 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const handlePreviewDraftPdf = useCallback((): void => {
     if (!editingDocumentDraft) return;
-    const markup = buildDraftPdfPreviewMarkup(editingDocumentDraft);
-    setDocumentPreviewHtml(markup);
-    setIsDocumentPreviewOpen(true);
-  }, [buildDraftPdfPreviewMarkup, editingDocumentDraft]);
+    try {
+      const markup = buildDraftPdfPreviewMarkup(editingDocumentDraft);
+      setDocumentPreviewHtml(markup);
+      setIsDocumentPreviewOpen(true);
+      if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+        window.setTimeout((): void => {
+          document
+            .querySelector<HTMLElement>('[data-case-resolver-document-preview]')
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 0);
+      }
+    } catch (error: unknown) {
+      toast(
+        error instanceof Error ? error.message : 'Failed to generate PDF preview.',
+        { variant: 'error' }
+      );
+    }
+  }, [buildDraftPdfPreviewMarkup, editingDocumentDraft, toast]);
 
   const handlePrintDraftDocument = useCallback((): void => {
     if (!editingDocumentDraft) return;
-    const markup = buildDraftPdfPreviewMarkup(editingDocumentDraft);
-    printDocumentMarkup(markup);
-  }, [buildDraftPdfPreviewMarkup, editingDocumentDraft, printDocumentMarkup]);
+    try {
+      const markup = buildDraftPdfPreviewMarkup(editingDocumentDraft);
+      printDocumentMarkup(markup);
+    } catch (error: unknown) {
+      toast(
+        error instanceof Error ? error.message : 'Failed to generate printable document.',
+        { variant: 'error' }
+      );
+    }
+  }, [buildDraftPdfPreviewMarkup, editingDocumentDraft, printDocumentMarkup, toast]);
 
   const handleCloseDocumentPreview = useCallback((): void => {
     setIsDocumentPreviewOpen(false);
@@ -1407,7 +1439,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         updatePromptExploderProposalReference={updatePromptExploderProposalReference}
         resolvePromptExploderMatchedPartyLabel={resolvePromptExploderMatchedPartyLabel}
       />
-      <CaseResolverWorkspaceDebugPanel enabled={workspaceDebugEnabled} />
     </>
   );
 }

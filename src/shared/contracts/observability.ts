@@ -112,3 +112,39 @@ export const createAlertSchema = alertSchema.omit({
 
 export type CreateAlertDto = z.infer<typeof createAlertSchema>;
 export type UpdateAlertDto = Partial<CreateAlertDto>;
+
+/**
+ * Error Diagnostics DTOs
+ */
+
+export const errorCategorySchema = z.enum([
+  'SYSTEM',
+  'USER',
+  'VALIDATION',
+  'EXTERNAL',
+  'AI',
+  'DATABASE',
+]);
+
+export type ErrorCategoryDto = z.infer<typeof errorCategorySchema>;
+
+export const suggestedActionSchema = z.object({
+  label: z.string(),
+  description: z.string(),
+  actionType: z.string(),
+  payload: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type SuggestedActionDto = z.infer<typeof suggestedActionSchema>;
+
+export const errorContextSchema = z.record(z.string(), z.unknown()).and(z.object({
+  service: z.string().nullable().optional(),
+  runId: z.string().nullable().optional(),
+  jobId: z.string().nullable().optional(),
+  productId: z.string().nullable().optional(),
+  errorId: z.string().nullable().optional(),
+  category: z.union([errorCategorySchema, z.string()]).nullable().optional(),
+  userMessage: z.string().nullable().optional(),
+}));
+
+export type ErrorContextDto = z.infer<typeof errorContextSchema>;

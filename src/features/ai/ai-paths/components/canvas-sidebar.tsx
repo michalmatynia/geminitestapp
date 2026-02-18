@@ -317,7 +317,7 @@ export function CanvasSidebar(): React.JSX.Element {
                 const incomingEdges = edges.filter((edge) => edge.to === selectedNode.id);
                 const inputPorts = incomingEdges
                   .map((edge) => edge.toPort)
-                  .filter((port: string | undefined): port is string => Boolean(port));
+                  .filter((port: string | null | undefined): port is string => Boolean(port));
                 const bundleKeys = new Set<string>();
                 incomingEdges.forEach((edge) => {
                   if (edge.toPort !== 'bundle') return;

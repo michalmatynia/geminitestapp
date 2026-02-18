@@ -1,41 +1,8 @@
-export const AppErrorCodes = {
-  // Client errors (4xx)
-  validation: 'VALIDATION_ERROR',
-  unauthorized: 'UNAUTHORIZED',
-  forbidden: 'FORBIDDEN',
-  notFound: 'NOT_FOUND',
-  conflict: 'CONFLICT',
-  badRequest: 'BAD_REQUEST',
-  rateLimited: 'RATE_LIMITED',
-  payloadTooLarge: 'PAYLOAD_TOO_LARGE',
-  unsupportedMediaType: 'UNSUPPORTED_MEDIA_TYPE',
-  unprocessableEntity: 'UNPROCESSABLE_ENTITY',
+import { AppErrorCodes as AppErrorCodesContract, type AppErrorCodeDto } from '../../contracts/base';
 
-  // Server errors (5xx)
-  internal: 'INTERNAL_ERROR',
-  externalService: 'EXTERNAL_SERVICE_ERROR',
-  serviceUnavailable: 'SERVICE_UNAVAILABLE',
-  timeout: 'TIMEOUT_ERROR',
-  databaseError: 'DATABASE_ERROR',
-  configurationError: 'CONFIGURATION_ERROR',
+export const AppErrorCodes = AppErrorCodesContract;
 
-  // Domain-specific errors
-  skuExists: 'SKU_EXISTS',
-  duplicateEntry: 'DUPLICATE_ENTRY',
-  invalidState: 'INVALID_STATE',
-  operationFailed: 'OPERATION_FAILED',
-  resourceLocked: 'RESOURCE_LOCKED',
-  quotaExceeded: 'QUOTA_EXCEEDED',
-
-  // Integration errors
-  integrationError: 'INTEGRATION_ERROR',
-  apiKeyInvalid: 'API_KEY_INVALID',
-  webhookFailed: 'WEBHOOK_FAILED',
-} as const;
-
-export type AppErrorCode =
-  | (typeof AppErrorCodes)[keyof typeof AppErrorCodes]
-  | (string & {});
+export type AppErrorCode = AppErrorCodeDto;
 
 export type AppErrorOptions = {
   code: AppErrorCode;

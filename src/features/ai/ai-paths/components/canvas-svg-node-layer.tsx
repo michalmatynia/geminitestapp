@@ -377,12 +377,20 @@ export function CanvasSvgNodeLayer({
         const showNodeAnimations =
           enableNodeAnimations &&
           (detailLevel !== 'skeleton' || isSelected || isPrimarySelected);
+        const handleNodeDoubleClick = (
+          event: React.MouseEvent<SVGGElement | SVGRectElement>
+        ): void => {
+          event.stopPropagation();
+          void onSelectNode(node.id);
+          onOpenNodeConfig();
+        };
 
         return (
           <g
             key={node.id}
             transform={`translate(${node.position.x} ${node.position.y})`}
             style={{ cursor: 'grab' }}
+            onDoubleClick={handleNodeDoubleClick}
           >
             {isBlockerProcessing ? (
               <rect
@@ -422,11 +430,6 @@ export function CanvasSvgNodeLayer({
                 void onSelectNode(node.id, {
                   toggle: event.shiftKey || event.metaKey || event.ctrlKey,
                 });
-              }}
-              onDoubleClick={(event: React.MouseEvent<SVGRectElement>) => {
-                event.stopPropagation();
-                void onSelectNode(node.id);
-                onOpenNodeConfig();
               }}
             />
 
@@ -533,6 +536,9 @@ export function CanvasSvgNodeLayer({
                 transform={`translate(10 ${NODE_MIN_HEIGHT - 26})`}
                 style={{ cursor: 'pointer' }}
                 onPointerDown={(event: React.PointerEvent<SVGGElement>) => {
+                  event.stopPropagation();
+                }}
+                onDoubleClick={(event: React.MouseEvent<SVGGElement>) => {
                   event.stopPropagation();
                 }}
                 onClick={(event: React.MouseEvent<SVGGElement>) => {

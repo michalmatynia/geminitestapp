@@ -23,7 +23,7 @@ export function TemplateNodeConfigSection(): React.JSX.Element | null {
     updateSelectedNodeConfig,
   } = useAiPathConfig();
 
-  if (!selectedNode || selectedNode.type !== 'template') return null;
+  if (selectedNode?.type !== 'template') return null;
 
   const templateConfig: TemplateConfig = selectedNode.config?.template ?? {
     template: '',
@@ -35,7 +35,7 @@ export function TemplateNodeConfigSection(): React.JSX.Element | null {
   const incomingEdges = edges.filter((edge: Edge) => edge.to === selectedNode.id);
   const inputPorts = incomingEdges
     .map((edge: Edge) => edge.toPort)
-    .filter((port: string | undefined): port is string => Boolean(port));
+    .filter((port: string | null | undefined): port is string => Boolean(port));
   const bundleKeys = new Set<string>();
   incomingEdges.forEach((edge: Edge) => {
     if (edge.toPort !== 'bundle') return;

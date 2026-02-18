@@ -1,7 +1,6 @@
 import type {
   DbQueryConfig,
   DatabaseConfig,
-  DatabaseOperation,
   PathConfig,
   RuntimeHistoryEntry,
   RuntimePortValues,
@@ -21,6 +20,8 @@ import {
   stableStringify,
 } from '@/features/ai/ai-paths/lib';
 import type { DbQueryPayload } from '@/features/ai/ai-paths/lib/api/client';
+
+type DatabaseOperation = 'query' | 'update' | 'insert' | 'delete';
 
 export const DEFAULT_DB_QUERY: DbQueryConfig = {
   provider: 'mongodb',
@@ -109,19 +110,21 @@ export const safeJsonStringify = (value: unknown): string => {
   }
 };
 
+const EMPTY_RUNTIME_STATE: RuntimeState = { inputs: {}, outputs: {} } as unknown as RuntimeState;
+
 export const parseRuntimeState = (value: unknown): RuntimeState => {
-  if (!value) return { inputs: {}, outputs: {} };
+  if (!value) return EMPTY_RUNTIME_STATE;
   if (typeof value === 'string') {
     const parsed = safeParseJson(value).value;
     if (parsed && typeof parsed === 'object') {
       return parsed as RuntimeState;
     }
-    return { inputs: {}, outputs: {} };
+    return EMPTY_RUNTIME_STATE;
   }
   if (typeof value === 'object') {
     return value as RuntimeState;
   }
-  return { inputs: {}, outputs: {} };
+  return EMPTY_RUNTIME_STATE;
 };
 
 export const buildPersistedRuntimeState = (
@@ -299,7 +302,7 @@ export const buildDbQueryPayload = (
   } else {
     const rendered = renderTemplate(
       queryConfig.queryTemplate ?? '{}',
-      nodeInputs as Record<string, unknown>,
+      nodeInputs,
       inputValue ?? ''
     );
     const parsed = parseJsonSafe(rendered);

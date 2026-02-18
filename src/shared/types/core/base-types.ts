@@ -1,11 +1,12 @@
 import { DtoBase, NamedDto, Localized, CreateDto, UpdateDto } from '../base';
+import type { StatusDto } from '../../contracts/base';
 
 export type { DtoBase, NamedDto, Localized, CreateDto, UpdateDto };
 
 import type { SettingRecordDto } from '../../dtos/settings';
 
 // Minimal types - single source of truth
-export type Status = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled' | 'canceled';
+export type Status = StatusDto;
 
 export type Entity = DtoBase;
 

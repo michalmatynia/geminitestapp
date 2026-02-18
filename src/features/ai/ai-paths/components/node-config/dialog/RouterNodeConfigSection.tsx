@@ -11,7 +11,7 @@ import { useAiPathConfig } from '../../AiPathConfigContext';
 export function RouterNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-  if (!selectedNode || selectedNode.type !== 'router') return null;
+  if (selectedNode?.type !== 'router') return null;
 
   const routerConfig = selectedNode.config?.router ?? {
     mode: 'valid',

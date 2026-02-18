@@ -71,7 +71,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
         const rawFromPort = edge.fromPort?.trim() || 'context';
         const fromPort = rawFromPort === 'simulation' ? 'context' : rawFromPort;
         const toPort = edge.toPort?.trim() || fromPort;
-        const value = (nodeOutputs as Record<string, unknown>)[fromPort];
+        const value = (nodeOutputs)[fromPort];
         if (value === undefined) return;
         nextInputs[edge.to] = {
           ...(nextInputs[edge.to] ?? {}),
@@ -89,7 +89,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
       normalizedNodes.some((node: AiNode): boolean => {
         if (node.type !== 'iterator') return false;
         if (node.config?.iterator?.autoContinue === false) return false;
-        const status = (rtState.outputs[node.id] as Record<string, unknown> | undefined)?.['status'];
+        const status = (rtState.outputs?.[node.id] as Record<string, unknown> | undefined)?.['status'];
         return status === 'advance_pending';
       }),
     [normalizedNodes]
@@ -191,7 +191,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     let directJobId: string | null = null;
 
     try {
-      const sourceOutputs = args.runtimeState.outputs[sourceNodeId] ?? {};
+      const sourceOutputs = args.runtimeState.outputs?.[sourceNodeId] ?? {};
       const payload = {
         prompt,
         model: modelConfig.modelId,
@@ -235,14 +235,14 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
       const resolvedRunStartedAt = startedAt;
 
       args.setRuntimeState((prev: RuntimeState): RuntimeState => {
-        const aiOutputs = (prev.outputs[aiNode.id] ?? {}) as Record<string, any>;
-        
+        const aiOutputs = (prev.outputs?.[aiNode.id] ?? {}) as Record<string, any>;
+
         return {
           ...prev,
           runId: resolvedRunId,
           runStartedAt: resolvedRunStartedAt,
           outputs: {
-            ...prev.outputs,
+            ...(prev.outputs ?? {}),
             [aiNode.id]: {
               ...aiOutputs,
               result,

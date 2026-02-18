@@ -8,12 +8,11 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { getLastUserAction } from '@/shared/utils/observability/user-action-tracker';
 
 import { Button } from './button';
-import { SectionPanel } from './section-panel';
 
 function QueryErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   return (
     <div className='flex min-h-[400px] w-full items-center justify-center p-8'>
-      <SectionPanel variant='subtle' className='flex max-w-lg flex-col items-center p-12 text-center'>
+      <div className='flex max-w-lg flex-col items-center rounded-lg border border-border/40 bg-muted/10 p-12 text-center'>
         <h2 className='text-xl font-bold text-red-500'>Something went wrong</h2>
         <p className='mt-2 mb-6 text-sm text-gray-400'>
           {(error as Error)?.message || 'An unexpected error occurred while loading data.'}
@@ -26,7 +25,7 @@ function QueryErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
           <RefreshCcw className='h-4 w-4' />
           Try again
         </Button>
-      </SectionPanel>
+      </div>
     </div>
   );
 }

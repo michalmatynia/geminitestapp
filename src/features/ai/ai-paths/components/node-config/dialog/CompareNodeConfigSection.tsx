@@ -22,7 +22,7 @@ const operatorOptions = [
 export function CompareNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-  if (!selectedNode || selectedNode.type !== 'compare') return null;
+  if (selectedNode?.type !== 'compare') return null;
 
   const compareConfig = selectedNode.config?.compare ?? {
     operator: 'eq',

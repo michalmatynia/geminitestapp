@@ -285,7 +285,7 @@ export async function postBaseImportParametersHandler(
 
   const integrationRepo = await getIntegrationRepository();
   const integrations = await integrationRepo.listIntegrations();
-  const baseIntegration = integrations.find((integration) =>
+  const baseIntegration = integrations.find((integration: (typeof integrations)[number]) =>
     BASE_INTEGRATION_SLUGS.has(
       (integration.slug ?? '').trim().toLowerCase()
     )
@@ -297,8 +297,8 @@ export async function postBaseImportParametersHandler(
   const connections = await integrationRepo.listConnections(baseIntegration.id);
   const normalizedConnectionId = data.connectionId?.trim();
   const connection = normalizedConnectionId
-    ? connections.find((entry) => entry.id === normalizedConnectionId)
-    : connections.find((entry) => entry.baseApiToken || entry.password);
+    ? connections.find((entry: (typeof connections)[number]) => entry.id === normalizedConnectionId)
+    : connections.find((entry: (typeof connections)[number]) => entry.baseApiToken || entry.password);
   if (!connection?.baseApiToken && !connection?.password) {
     throw badRequestError('No Base API token configured.');
   }

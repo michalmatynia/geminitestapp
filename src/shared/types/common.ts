@@ -1,18 +1,12 @@
+import type { StatusDto, JobStatusDto, DtoBase } from '../contracts/base';
+
 // Consolidated core types for the application
-export type Status = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled' | 'canceled';
+export type Status = StatusDto;
 
-export type JobStatus = Status;
+export type JobStatus = JobStatusDto;
 
-export interface BaseRecord {
-  id: string;
-  createdAt: string | Date;
-  updatedAt: string | Date;
-}
+export type BaseRecord = DtoBase;
 
 export type Entity = BaseRecord;
 
-export interface Dto {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-}
+export type Dto = DtoBase;

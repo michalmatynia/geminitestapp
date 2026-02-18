@@ -37,6 +37,7 @@ import {
   SearchInput,
   CollapsibleSection,
   MetadataItem,
+  LoadingState,
 } from '@/shared/ui';
 
 import { CrudPanel } from '../components/CrudPanel';
@@ -432,10 +433,7 @@ function DatabasePreviewContent(): React.JSX.Element {
       )}
 
       {isLoading ? (
-        <div className='py-20 text-center space-y-4'>
-          <div className='inline-block size-8 animate-spin rounded-full border-2 border-primary border-t-transparent' />
-          <p className='text-sm text-gray-500 animate-pulse'>Reconstructing database schema preview...</p>
-        </div>
+        <LoadingState message='Reconstructing database schema preview...' className='py-20' />
       ) : (
         <div className='space-y-6'>
           {/* ── Database Metrics ── */}
@@ -649,7 +647,7 @@ function DatabasePreviewPageInner(): React.JSX.Element {
 
 export default function DatabasePreviewPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className='p-12 text-center text-sm text-gray-500 animate-pulse'>Mounting database preview environment...</div>}>
+    <Suspense fallback={<LoadingState message='Mounting database preview environment...' className='py-12' />}>
       <DatabasePreviewPageInner />
     </Suspense>
   );

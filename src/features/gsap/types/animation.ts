@@ -2,207 +2,39 @@
 // GSAP animation configuration types
 // ---------------------------------------------------------------------------
 
-import type { VectorShape } from '@/shared/ui';
+import type { 
+  AnimationPresetDto,
+  AnimationEasingDto,
+  AnimationTriggerDto,
+  StaggerFromDto,
+  ParallaxPresetDto,
+  ParallaxAxisDto,
+  ParallaxPatternDto,
+  TextEffectDto,
+  DragAxisDto,
+  ObserverTypeDto,
+  VelocityEffectDto,
+  TimelineModeDto,
+  ScrollModeDto,
+  RevealStyleDto,
+  GsapAnimationConfigDto
+} from '@/shared/contracts/gsap';
 
-export type AnimationPreset =
-  | 'none'
-  | 'fadeIn'
-  | 'fadeInUp'
-  | 'fadeInDown'
-  | 'fadeOut'
-  | 'slideInLeft'
-  | 'slideInRight'
-  | 'slideInTop'
-  | 'slideInBottom'
-  | 'scaleUp'
-  | 'scaleDown'
-  | 'zoomIn'
-  | 'flipY'
-  | 'skew'
-  | 'blurIn'
-  | 'rotate'
-  | 'rotateX'
-  | 'rotateY'
-  | 'popZ'
-  | 'cardTilt'
-  | 'flip3D'
-  | 'cube'
-  | 'carousel'
-  | 'orbit'
-  | 'shake'
-  | 'wobble'
-  | 'wiggle'
-  | 'bounce'
-  | 'stagger';
-
-export type AnimationEasing =
-  | 'power1.out'
-  | 'power2.out'
-  | 'power3.out'
-  | 'power4.out'
-  | 'expo.out'
-  | 'circ.out'
-  | 'sine.inOut'
-  | 'elastic.out'
-  | 'elastic.out(1,0.3)'
-  | 'elastic.out(1,0.5)'
-  | 'bounce.out'
-  | 'back.out'
-  | 'back.out(1.7)'
-  | 'back.in(1.7)'
-  | 'custom';
-
-export type AnimationTrigger = 'load' | 'scroll';
-
-export type StaggerFrom = 'start' | 'center' | 'end' | 'edges' | 'random';
-
-export type ParallaxPreset = 'none' | 'soft' | 'medium' | 'strong' | 'depth';
-export type ParallaxAxis = 'y' | 'x';
-export type ParallaxPattern = 'uniform' | 'alternate' | 'increment' | 'layers' | 'random';
-
-export type TextEffect =
-  | 'none'
-  | 'splitChars'
-  | 'splitWords'
-  | 'splitLines'
-  | 'scramble'
-  | 'typing'
-  | 'countUp';
-
-export type DragAxis = 'x' | 'y' | 'x,y';
-export type ObserverType = 'wheel,touch' | 'wheel' | 'touch' | 'pointer' | 'wheel,touch,pointer';
-export type VelocityEffect = 'none' | 'skewX' | 'skewY' | 'rotation' | 'scale';
-
-export type TimelineMode =
-  | 'none'
-  | 'sequence'
-  | 'overlap'
-  | 'callResponse'
-  | 'cascade'
-  | 'wave'
-  | 'domino'
-  | 'ripple';
-
-export type ScrollMode = 'none' | 'reveal' | 'scrub' | 'pin' | 'story';
-
-export type RevealStyle = 'none' | 'clipUp' | 'clipDown' | 'clipLeft' | 'clipRight' | 'mask';
-
-export interface GsapAnimationConfig {
-  preset: AnimationPreset;
-  duration: number;
-  delay: number;
-  easing: AnimationEasing;
-  trigger: AnimationTrigger;
-  selector?: string;
-  staggerEach?: number;
-  staggerAmount?: number;
-  staggerFrom?: StaggerFrom;
-  parallaxPreset?: ParallaxPreset;
-  parallaxSelector?: string;
-  parallaxAxis?: ParallaxAxis;
-  parallaxOffset?: number;
-  parallaxScrub?: number;
-  parallaxStart?: string;
-  parallaxEnd?: string;
-  parallaxEase?: AnimationEasing;
-  parallaxPattern?: ParallaxPattern;
-  parallaxReverse?: boolean;
-  parallaxChildStep?: number;
-  parallaxLayerStrength?: number;
-  parallaxLayerScaleStep?: number;
-  parallaxRandomSeed?: number;
-  parallaxScaleFrom?: number;
-  parallaxScaleTo?: number;
-  parallaxRotateFrom?: number;
-  parallaxRotateTo?: number;
-  parallaxOpacityFrom?: number;
-  parallaxOpacityTo?: number;
-  parallaxBlurFrom?: number;
-  parallaxBlurTo?: number;
-  motionPathEnabled?: boolean;
-  motionPathPath?: string;
-  motionPathAlign?: boolean;
-  motionPathAutoRotate?: boolean;
-  motionPathRotateOffset?: number;
-  motionPathStart?: number;
-  motionPathEnd?: number;
-  motionPathFollow?: boolean;
-  motionPathSpacing?: number;
-  motionPathShapes?: VectorShape[];
-  svgDrawEnabled?: boolean;
-  svgDrawSelector?: string;
-  svgDrawFrom?: number;
-  svgDrawTo?: number;
-  svgDrawPath?: string;
-  svgDrawShapes?: VectorShape[];
-  svgMorphEnabled?: boolean;
-  svgMorphSelector?: string;
-  svgMorphTo?: string;
-  svgMorphShapes?: VectorShape[];
-  textEffect?: TextEffect;
-  textStagger?: number;
-  textScrambleChars?: string;
-  textTypingSpeed?: number;
-  textCursor?: boolean;
-  textCountFrom?: number | undefined;
-  textCountTo?: number | undefined;
-  textCountDecimals?: number;
-  visualFilterFrom?: string;
-  visualFilterTo?: string;
-  visualClipFrom?: string;
-  visualClipTo?: string;
-  visualRadiusFrom?: string;
-  visualRadiusTo?: string;
-  visualShadowFrom?: string;
-  visualShadowTo?: string;
-  visualBackgroundFrom?: string;
-  visualBackgroundTo?: string;
-  flipEnabled?: boolean;
-  flipSelector?: string;
-  flipScale?: boolean;
-  flipFade?: boolean;
-  draggableEnabled?: boolean;
-  draggableType?: DragAxis;
-  draggableBounds?: string;
-  draggableMomentum?: boolean;
-  draggableMomentumFactor?: number;
-  draggableSnap?: number;
-  draggableCarousel?: boolean;
-  draggableCarouselSelector?: string;
-  draggableCarouselSnap?: boolean;
-  observerEnabled?: boolean;
-  observerType?: ObserverType;
-  observerAxis?: DragAxis;
-  observerSpeed?: number;
-  velocityEffect?: VelocityEffect;
-  velocityStrength?: number;
-  velocityMax?: number;
-  magnetEnabled?: boolean;
-  magnetStrength?: number;
-  magnetRadius?: number;
-  magnetAxis?: DragAxis;
-  magnetReturn?: number;
-  timelineMode?: TimelineMode;
-  timelineGap?: number;
-  timelineOverlap?: number;
-  timelineResponseOffset?: number;
-  timelineStaggerEach?: number;
-  timelineWaveAmount?: number;
-  timelineRandomize?: boolean;
-  timelineLoop?: boolean;
-  timelineRepeat?: number;
-  timelineYoyo?: boolean;
-  timelineRepeatDelay?: number;
-  scrollMode?: ScrollMode;
-  scrollScrub?: number;
-  scrollPin?: boolean;
-  scrollSnap?: boolean;
-  scrollSnapDuration?: number;
-  scrollStart?: string;
-  scrollEnd?: string;
-  revealStyle?: RevealStyle;
-  customEase?: string;
-}
+export type AnimationPreset = AnimationPresetDto;
+export type AnimationEasing = AnimationEasingDto;
+export type AnimationTrigger = AnimationTriggerDto;
+export type StaggerFrom = StaggerFromDto;
+export type ParallaxPreset = ParallaxPresetDto;
+export type ParallaxAxis = ParallaxAxisDto;
+export type ParallaxPattern = ParallaxPatternDto;
+export type TextEffect = TextEffectDto;
+export type DragAxis = DragAxisDto;
+export type ObserverType = ObserverTypeDto;
+export type VelocityEffect = VelocityEffectDto;
+export type TimelineMode = TimelineModeDto;
+export type ScrollMode = ScrollModeDto;
+export type RevealStyle = RevealStyleDto;
+export type GsapAnimationConfig = GsapAnimationConfigDto;
 
 export const DEFAULT_ANIMATION_CONFIG: GsapAnimationConfig = {
   preset: 'none',

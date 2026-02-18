@@ -501,6 +501,7 @@ export function useAiPathsCanvasInteractions({
     });
     return edges
       .map((edge: Edge): { id: string; path: string; label?: string | undefined; arrow?: { x: number; y: number; angle: number } | undefined } | null => {
+        if (!edge.from || !edge.to) return null;
         const from = nodeMap.get(edge.from);
         const to = nodeMap.get(edge.to);
         if (!from || !to) return null;
@@ -535,7 +536,7 @@ export function useAiPathsCanvasInteractions({
         return {
           id: edge.id,
           path,
-          label: edge.label,
+          label: edge.label ?? undefined,
           arrow: { x: s.x, y: s.y, angle },
         };
       })
@@ -697,6 +698,9 @@ export function useAiPathsCanvasInteractions({
     const newNode: AiNode = {
       ...payload,
       id: createNodeId(),
+      createdAt: new Date().toISOString(),
+      updatedAt: null,
+      data: {},
       position: { x: nextX, y: nextY },
       ...(mergedConfig ? { config: mergedConfig } : {}),
     };

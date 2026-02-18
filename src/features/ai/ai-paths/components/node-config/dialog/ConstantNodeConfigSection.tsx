@@ -15,7 +15,7 @@ const valueTypeOptions = [
 export function ConstantNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-  if (!selectedNode || selectedNode.type !== 'constant') return null;
+  if (selectedNode?.type !== 'constant') return null;
 
   const constantConfig = selectedNode.config?.constant ?? {
     valueType: 'string',

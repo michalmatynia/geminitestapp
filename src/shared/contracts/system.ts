@@ -85,3 +85,64 @@ export const activityFiltersSchema = z.object({
 });
 
 export type ActivityFiltersDto = z.infer<typeof activityFiltersSchema>;
+
+/**
+ * System Logging DTOs
+ */
+
+export const logLevelSchema = z.enum(['info', 'warn', 'error', 'debug']);
+export type LogLevelDto = z.infer<typeof logLevelSchema>;
+
+export const systemLogInputSchema = z.object({
+  level: logLevelSchema,
+  category: z.string(),
+  message: z.string(),
+  context: z.record(z.string(), z.unknown()).optional(),
+  userId: z.string().optional(),
+});
+
+export type SystemLogInputDto = z.infer<typeof systemLogInputSchema>;
+
+export const listSystemLogsInputSchema = z.object({
+  level: logLevelSchema.optional(),
+  category: z.string().optional(),
+  userId: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  limit: z.number().optional(),
+  offset: z.number().optional(),
+});
+
+export type ListSystemLogsInputDto = z.infer<typeof listSystemLogsInputSchema>;
+
+export const listSystemLogsResultSchema = z.object({
+  logs: z.array(z.intersection(systemLogInputSchema, z.object({
+    id: z.string(),
+    timestamp: z.string(),
+  }))),
+  total: z.number(),
+});
+
+export type ListSystemLogsResultDto = z.infer<typeof listSystemLogsResultSchema>;
+
+/**
+ * System Database Migration DTOs
+ */
+
+export const appDbProviderSchema = z.enum(['prisma', 'mongodb']);
+export type AppDbProviderDto = z.infer<typeof appDbProviderSchema>;
+
+export const migrationDirectionSchema = z.enum(['prisma-to-mongo', 'mongo-to-prisma']);
+export type MigrationDirectionDto = z.infer<typeof migrationDirectionSchema>;
+
+export const migrationBatchResultSchema = z.object({
+  processed: z.number(),
+  successful: z.number(),
+  failed: z.number(),
+  errors: z.array(z.object({
+    id: z.string(),
+    error: z.string(),
+  })),
+});
+
+export type MigrationBatchResultDto = z.infer<typeof migrationBatchResultSchema>;

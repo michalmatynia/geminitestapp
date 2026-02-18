@@ -12,7 +12,7 @@ import { DetailModal } from '@/shared/ui/templates/modals';
 interface DriveImportModalProps extends ModalStateProps {
   title: string;
   isUploading: boolean;
-  onLocalUploadTrigger: () => void;
+  localUploadTrigger?: React.ReactNode;
   onSelectFile: (files: ImageFileSelection[]) => void;
 }
 
@@ -21,7 +21,7 @@ export function DriveImportModal({
   onClose,
   title,
   isUploading,
-  onLocalUploadTrigger,
+  localUploadTrigger,
   onSelectFile,
 }: DriveImportModalProps): React.JSX.Element | null {
   return (
@@ -31,17 +31,18 @@ export function DriveImportModal({
       title={title}
       size='xl'
       footer={
-        <Button 
-          size='sm'
-          type='button'
-          variant='outline'
-          onClick={onLocalUploadTrigger}
-          disabled={isUploading}
-          className='gap-2'
-        >
-          {isUploading ? <Loader2 className='size-4 animate-spin' /> : <Upload className='size-4' />}
-          Upload From Computer
-        </Button>
+        localUploadTrigger || (
+          <Button 
+            size='sm'
+            type='button'
+            variant='outline'
+            disabled={isUploading}
+            className='gap-2'
+          >
+            {isUploading ? <Loader2 className='size-4 animate-spin' /> : <Upload className='size-4' />}
+            Upload From Computer
+          </Button>
+        )
       }
     >
       <div className='space-y-4'>

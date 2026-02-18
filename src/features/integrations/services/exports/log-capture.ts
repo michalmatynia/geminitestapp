@@ -1,14 +1,6 @@
-/**
- * Log capture utility for detailed export operation logging
- * Intercepts console.log/warn/error to capture detailed export operation logs
- */
+import type { CapturedLogDto as CapturedLog } from '@/shared/contracts/integrations';
 
-export interface CapturedLog {
-  timestamp: string;
-  level: 'info' | 'warn' | 'error';
-  message: string;
-  context?: Record<string, unknown> | undefined;
-}
+export type { CapturedLog };
 
 export class LogCapture {
   private logs: CapturedLog[] = [];

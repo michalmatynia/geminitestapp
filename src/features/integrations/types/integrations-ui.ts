@@ -1,3 +1,10 @@
+import type {
+  TestStatusDto,
+  TestLogEntryDto,
+  TestConnectionResponseDto,
+  SessionCookieDto,
+} from '@/shared/contracts/integrations';
+
 export type Integration = {
   id: string;
   name: string;
@@ -53,34 +60,13 @@ export type IntegrationConnection = {
 };
 
 export const TEST_STATUSES = ['pending', 'ok', 'failed'] as const;
-export type TestStatus = (typeof TEST_STATUSES)[number];
+export type TestStatus = TestStatusDto;
 
-export type TestLogEntry = {
-  step: string;
-  status: TestStatus;
-  timestamp: string;
-  detail?: string;
-};
+export type TestLogEntry = TestLogEntryDto;
 
-export type TestConnectionResponse = {
-  error?: string;
-  errorId?: string;
-  integrationId?: string | null;
-  connectionId?: string | null;
-  steps?: unknown;
-  profile?: unknown;
-};
+export type TestConnectionResponse = TestConnectionResponseDto;
 
-export type SessionCookie = {
-  name?: string;
-  value?: string;
-  domain?: string;
-  path?: string;
-  expires?: number;
-  httpOnly?: boolean;
-  secure?: boolean;
-  sameSite?: string;
-};
+export type SessionCookie = SessionCookieDto;
 
 export const integrationDefinitions = [
   { name: 'Tradera', slug: 'tradera' },

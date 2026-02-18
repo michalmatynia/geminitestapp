@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 
 import type { Slug } from '@/features/cms/types';
 import type { EntityModalProps } from '@/shared/types/modal-props';
-import { FormModal, Checkbox, FormField, SearchInput } from '@/shared/ui';
+import { FormModal, Checkbox, FormField, SearchInput, LoadingState } from '@/shared/ui';
 
 interface AttachSlugModalProps extends EntityModalProps<Slug, Slug> {
   onAttach: (selectedIds: string[]) => Promise<void>;
@@ -117,9 +117,7 @@ export function AttachSlugModal({
 
           <div className='max-h-60 overflow-y-auto rounded-lg border border-border/60 bg-black/20 p-1 divide-y divide-white/5'>
             {loading ? (
-              <div className='py-8 text-center text-xs text-muted-foreground animate-pulse'>
-                Fetching global slug index...
-              </div>
+              <LoadingState message='Fetching global slug index...' className='py-8' size='sm' />
             ) : availableSlugs.length === 0 ? (
               <div className='py-8 text-center text-xs text-muted-foreground/60 italic'>
                 No unassigned routes found matching your criteria.

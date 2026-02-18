@@ -568,9 +568,24 @@ export function useAiPathsPersistence({
         setPathName(activeConfig.name);
         setPathDescription(activeConfig.description);
         setActiveTrigger(normalizeTriggerLabel(activeConfig.trigger));
-        setExecutionMode(activeConfig.executionMode ?? 'server');
-        setFlowIntensity(activeConfig.flowIntensity ?? 'medium');
-        setRunMode(activeConfig.runMode ?? 'block');
+        setExecutionMode(
+          activeConfig.executionMode === 'local' || activeConfig.executionMode === 'server'
+            ? activeConfig.executionMode
+            : 'server'
+        );
+        setFlowIntensity(
+          activeConfig.flowIntensity === 'off' ||
+            activeConfig.flowIntensity === 'low' ||
+            activeConfig.flowIntensity === 'medium' ||
+            activeConfig.flowIntensity === 'high'
+            ? activeConfig.flowIntensity
+            : 'medium'
+        );
+        setRunMode(
+          activeConfig.runMode === 'queue' || activeConfig.runMode === 'block'
+            ? activeConfig.runMode
+            : 'block'
+        );
         setParserSamples(activeConfig.parserSamples ?? {});
         setUpdaterSamples(activeConfig.updaterSamples ?? {});
         setRuntimeState(parseRuntimeState(activeConfig.runtimeState));

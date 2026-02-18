@@ -412,7 +412,7 @@ export const cancelPathRunWithRepository = async (
       await Promise.all([
         repo.createRunEvent({
           runId,
-          level: 'warning',
+          level: 'warn',
           message: 'Run canceled.',
           metadata: { runStartedAt: resolveRunStartedAt(updated) },
         }),

@@ -386,9 +386,15 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
           projection: '',
           single: false,
         };
+        const legacyDbQuery = (node.config as Record<string, unknown> | undefined)?.['dbQuery'];
         const queryConfig = {
           ...defaultQuery,
-          ...(node.config?.database?.query ?? node.config?.dbQuery ?? {}),
+          ...(
+            node.config?.database?.query ??
+            (legacyDbQuery && typeof legacyDbQuery === 'object'
+              ? (legacyDbQuery as Record<string, unknown>)
+              : {})
+          ),
         };
         const databaseConfig: DatabaseConfig = node.config?.database ?? { operation: 'query' };
         const mappings = 

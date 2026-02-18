@@ -36,7 +36,9 @@ export const handleNotification: NodeHandler = ({
   let promptSourceNode: AiNode | null = null;
   for (const edge of edges) {
     if (edge.to !== node.id || edge.toPort !== 'prompt') continue;
-    const fromNode = nodeById.get(edge.from);
+    const fromNodeId = edge.from;
+    if (!fromNodeId) continue;
+    const fromNode = nodeById.get(fromNodeId);
     if (fromNode?.type === 'prompt') {
       promptSourceNode = fromNode;
       break;
@@ -50,7 +52,7 @@ export const handleNotification: NodeHandler = ({
     const promptSourceInputs = allInputs[promptSourceNode.id] ?? {};
     if (hasUpstreamEdges) {
       const hasInputValue: boolean =
-        Object.values(promptSourceInputs as Record<string, unknown>).some(hasMeaningfulValue);
+        Object.values(promptSourceInputs).some(hasMeaningfulValue);
       if (!hasInputValue) {
         return prevOutputs;
       }

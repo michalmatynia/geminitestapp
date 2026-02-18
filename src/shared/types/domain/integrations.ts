@@ -1,9 +1,4 @@
 import type {
-  ImportExportTemplateDto,
-  ImportExportTemplateMappingDto,
-  ImportTemplateParameterImportDto,
-} from '../../contracts/data-import-export';
-import type {
   IntegrationDto,
   IntegrationConnectionDto,
   ProductListingDto,
@@ -13,7 +8,12 @@ import type {
   TemplateMappingDto,
   BaseInventoryDto,
   BaseWarehouseDto,
-  BaseCategoryDto
+  BaseCategoryDto,
+  IntegrationConnectionBasicDto,
+  IntegrationWithConnectionsDto,
+  ListingJobDto,
+  ProductJobDto,
+  ExportJobDetailDto
 } from '../../contracts/integrations';
 
 export type Integration = IntegrationDto;
@@ -25,46 +25,17 @@ export type BaseInventory = BaseInventoryDto;
 export type BaseWarehouse = BaseWarehouseDto;
 export type BaseCategory = BaseCategoryDto;
 
-export type ListingJob = ProductListingDto & {
-  integrationName: string;
-  integrationSlug: string;
-  connectionName: string;
-};
+export type ListingJob = ListingJobDto;
 
 export type ListingAttempt = NonNullable<ProductListingDto['exportHistory']>[number];
 
-export type ProductJob = {
-  productId: string;
-  productName: string;
-  productSku: string | null;
-  listings: ListingJob[];
-};
+export type ProductJob = ProductJobDto;
 
-export type ExportJobDetail = {
-  job: ProductJob;
-  listing: ListingJob;
-};
+export type ExportJobDetail = ExportJobDetailDto;
 
-export type IntegrationConnectionBasic = {
-  id: string;
-  name: string;
-  integrationId: string;
-  traderaDefaultTemplateId?: string | null;
-  traderaDefaultDurationHours?: number | null;
-  traderaAutoRelistEnabled?: boolean | null;
-  traderaAutoRelistLeadMinutes?: number | null;
-  traderaApiAppId?: number | null;
-  traderaApiPublicKey?: string | null;
-  traderaApiUserId?: number | null;
-  traderaApiSandbox?: boolean | null;
-};
+export type IntegrationConnectionBasic = IntegrationConnectionBasicDto;
 
-export type IntegrationWithConnections = {
-  id: string;
-  name: string;
-  slug: string;
-  connections: IntegrationConnectionBasic[];
-};
+export type IntegrationWithConnections = IntegrationWithConnectionsDto;
 
 export type IntegrationWithConnectionsBasic = IntegrationWithConnections;
 

@@ -8,6 +8,8 @@ import { compareGenerationParams } from '@/features/ai/image-studio/utils/versio
 const createSlot = (
   overrides: Partial<ImageStudioSlotRecord> & { id: string },
 ): ImageStudioSlotRecord => ({
+  createdAt: '',
+  updatedAt: null,
   projectId: 'project-1',
   name: overrides.id,
   folderPath: null,

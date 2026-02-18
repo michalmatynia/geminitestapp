@@ -1,71 +1,29 @@
-export type ProductStudioSequenceGenerationMode =
-  | 'studio_prompt_then_sequence'
-  | 'model_full_sequence'
-  | 'studio_native_sequencer_prior_generation'
-  | 'auto';
+import type {
+  ProductStudioSequenceGenerationModeDto,
+  ProductStudioExecutionRouteDto,
+  ProductStudioSequencingDiagnosticsScopeDto,
+  ProductStudioSequenceReadinessStateDto,
+  ProductStudioSequencingConfigDto,
+  ProductStudioSequencingDiagnosticsDto,
+  ProductStudioSequenceReadinessDto,
+} from '@/shared/contracts/products';
 
-export type ProductStudioExecutionRoute =
-  | 'studio_sequencer'
-  | 'studio_native_sequencer_prior_generation'
-  | 'ai_model_full_sequence'
-  | 'ai_direct_generation';
+export type ProductStudioSequenceGenerationMode = ProductStudioSequenceGenerationModeDto;
 
-export type ProductStudioSequencingDiagnosticsScope =
-  | 'project'
-  | 'global'
-  | 'default';
+export type ProductStudioExecutionRoute = ProductStudioExecutionRouteDto;
 
-export type ProductStudioSequenceReadinessState =
-  | 'ready'
-  | 'project_settings_missing'
-  | 'project_sequence_disabled'
-  | 'project_steps_empty'
-  | 'project_snapshot_stale';
+export type ProductStudioSequencingDiagnosticsScope = ProductStudioSequencingDiagnosticsScopeDto;
+
+export type ProductStudioSequenceReadinessState = ProductStudioSequenceReadinessStateDto;
 
 export const DEFAULT_PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE: ProductStudioSequenceGenerationMode =
   'auto';
 
-export type ProductStudioSequencingConfig = {
-  persistedEnabled: boolean;
-  enabled: boolean;
-  cropCenterBeforeGeneration: boolean;
-  upscaleOnAccept: boolean;
-  upscaleScale: number;
-  runViaSequence: boolean;
-  sequenceStepCount: number;
-  expectedOutputs: number;
-  snapshotHash: string | null;
-  snapshotSavedAt: string | null;
-  snapshotStepCount: number;
-  snapshotModelId: string | null;
-  currentSnapshotHash: string | null;
-  snapshotMatchesCurrent: boolean;
-  needsSaveDefaults: boolean;
-  needsSaveDefaultsReason: string | null;
-};
+export type ProductStudioSequencingConfig = ProductStudioSequencingConfigDto;
 
-export type ProductStudioSequencingDiagnostics = {
-  projectId: string | null;
-  projectSettingsKey: string | null;
-  selectedSettingsKey: string | null;
-  selectedScope: ProductStudioSequencingDiagnosticsScope;
-  hasProjectSettings: boolean;
-  hasGlobalSettings: boolean;
-  projectSequencingEnabled: boolean;
-  globalSequencingEnabled: boolean;
-  selectedSequencingEnabled: boolean;
-  selectedSnapshotHash: string | null;
-  selectedSnapshotSavedAt: string | null;
-  selectedSnapshotStepCount: number;
-  selectedSnapshotModelId: string | null;
-};
+export type ProductStudioSequencingDiagnostics = ProductStudioSequencingDiagnosticsDto;
 
-export type ProductStudioSequenceReadiness = {
-  ready: boolean;
-  requiresProjectSequence: boolean;
-  state: ProductStudioSequenceReadinessState;
-  message: string | null;
-};
+export type ProductStudioSequenceReadiness = ProductStudioSequenceReadinessDto;
 
 export const DEFAULT_PRODUCT_STUDIO_SEQUENCING: ProductStudioSequencingConfig = {
   persistedEnabled: false,

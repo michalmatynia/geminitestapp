@@ -3,6 +3,8 @@
 import { Link2, Network } from 'lucide-react';
 import React from 'react';
 
+import { StatusBadge } from '@/shared/ui';
+
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 
 import type { CaseResolverFile } from '../types';
@@ -362,9 +364,12 @@ export function CaseResolverRelationsWorkspace(): React.JSX.Element {
                     </div>
                   </div>
                   {node.isCurrent ? (
-                    <span className='rounded-full border border-blue-300/45 bg-blue-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-blue-200'>
-                      Current
-                    </span>
+                    <StatusBadge
+                      status='Current'
+                      variant='info'
+                      size='sm'
+                      className='border-blue-300/45 bg-blue-500/15 text-blue-200'
+                    />
                   ) : null}
                 </div>
 

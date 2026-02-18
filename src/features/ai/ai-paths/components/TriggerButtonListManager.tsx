@@ -127,7 +127,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
       header: 'Location',
       cell: ({ row }) => (
         <div className='flex flex-wrap gap-1'>
-          {row.original.locations.map((loc: string, idx: number) => (
+          {(row.original.locations ?? []).map((loc: string, idx: number) => (
             <StatusBadge key={idx} status={loc} variant='info' size='sm' className='font-bold' />
           ))}
         </div>
@@ -136,7 +136,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
     {
       accessorKey: 'mode',
       header: 'Mode',
-      cell: ({ row }) => <StatusBadge status={row.original.mode} variant='neutral' size='sm' />,
+      cell: ({ row }) => <StatusBadge status={row.original.mode ?? ''} variant='neutral' size='sm' />,
     },
     {
       id: 'display',

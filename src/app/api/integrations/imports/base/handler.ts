@@ -183,7 +183,7 @@ export async function postBaseImportsHandler(
   const data = ctx.body as z.infer<typeof requestSchema>;
   const integrationRepo = await getIntegrationRepository();
   const integrations = await integrationRepo.listIntegrations();
-  const baseIntegration = integrations.find((integration) =>
+  const baseIntegration = integrations.find((integration: (typeof integrations)[number]) =>
     BASE_INTEGRATION_SLUGS.has((integration.slug ?? '').trim().toLowerCase())
   );
   const baseIntegrationId = baseIntegration?.id ?? null;
@@ -243,7 +243,7 @@ export async function postBaseImportsHandler(
           baseIntegrationId
         );
         resolvedBaseConnection = connections.find(
-          (connection) => connection.baseApiToken || connection.password
+          (connection: (typeof connections)[number]) => connection.baseApiToken || connection.password
         ) ?? null;
         resolvedBaseConnectionId = resolvedBaseConnection?.id ?? null;
       }
@@ -325,9 +325,9 @@ export async function postBaseImportsHandler(
   if (data.action === 'list') {
     const catalogRepository = await getCatalogRepository();
     const catalogs = await catalogRepository.listCatalogs();
-    const defaultCatalog = catalogs.find((catalog) => catalog.isDefault);
+    const defaultCatalog = catalogs.find((catalog: (typeof catalogs)[number]) => catalog.isDefault);
     const targetCatalog = data.catalogId
-      ? catalogs.find((catalog) => catalog.id === data.catalogId) ?? defaultCatalog
+      ? catalogs.find((catalog: (typeof catalogs)[number]) => catalog.id === data.catalogId) ?? defaultCatalog
       : defaultCatalog;
     const { preferredCurrencies: listPreferredCurrencies } = await resolvePriceGroupContext(
       provider,
@@ -417,7 +417,7 @@ export async function postBaseImportsHandler(
             image: images[0] ?? null
           };
         })
-        .filter((item) => Boolean(item.baseProductId && item.sku));
+        .filter((item: MappedItem) => Boolean(item.baseProductId && item.sku));
 
     const fetchMappedItemsByIds = async (ids: string[]): Promise<MappedItem[]> => {
       if (ids.length === 0) return [];
@@ -457,7 +457,7 @@ export async function postBaseImportsHandler(
       const mappedList = await fetchMappedItemsByIds(
         pagedItems.map((item: { id: string; exists: boolean }) => item.id)
       );
-      const skuDuplicateCount = mappedList.filter((item) => item.skuExists).length;
+      const skuDuplicateCount = mappedList.filter((item: MappedItem) => item.skuExists).length;
 
       return NextResponse.json({
         products: mappedList,
@@ -477,7 +477,7 @@ export async function postBaseImportsHandler(
     const hasExactSkuMatch =
       normalizedSku.length > 0 &&
       mappedSearchScope.some(
-        (item) => (item.sku ?? '').toLowerCase() === normalizedSku
+        (item: MappedItem) => (item.sku ?? '').toLowerCase() === normalizedSku
       );
     const searchedList = mappedSearchScope.filter((item: MappedItem) => {
       const nameOk =
@@ -498,7 +498,7 @@ export async function postBaseImportsHandler(
     const startIndex = (normalizedPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
     const pagedSearchedList = searchedList.slice(startIndex, endIndex);
-    const skuDuplicateCount = pagedSearchedList.filter((item) => item.skuExists).length;
+    const skuDuplicateCount = pagedSearchedList.filter((item: MappedItem) => item.skuExists).length;
 
     return NextResponse.json({
       products: pagedSearchedList,

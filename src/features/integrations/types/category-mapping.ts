@@ -4,6 +4,11 @@ import type {
   ExternalCategoryWithChildrenDto,
   CategoryMappingDto as CategoryMappingDtoContract,
   CategoryMappingWithDetailsDto as CategoryMappingWithDetailsDtoContract,
+  BaseCategoryFromApiDto,
+  BaseCategoryDto as BaseCategoryDtoContract,
+  ExternalCategorySyncInputDto,
+  CategoryMappingCreateInputDto,
+  CategoryMappingUpdateInputDto,
 } from '@/shared/contracts/integrations';
 
 export type ExternalCategory = ExternalCategoryDto;
@@ -17,38 +22,13 @@ export type CategoryMappingWithDetails = Omit<CategoryMappingWithDetailsDtoContr
 };
 
 // Types for Base.com API responses
-export type BaseCategoryFromApi = {
-  category_id: number | string;
-  name: string;
-  parent_id: number | string | null;
-};
+export type BaseCategoryFromApi = BaseCategoryFromApiDto;
 
-export type BaseCategory = {
-  id: string;
-  name: string;
-  parentId: string | null;
-};
+export type BaseCategory = BaseCategoryDtoContract;
 
 // Input types for repository operations
-export type ExternalCategorySyncInput = {
-  connectionId: string;
-  externalId: string;
-  name: string;
-  parentExternalId: string | null;
-  path: string | null;
-  depth: number;
-  isLeaf: boolean;
-  metadata?: Record<string, unknown>;
-};
+export type ExternalCategorySyncInput = ExternalCategorySyncInputDto;
 
-export type CategoryMappingCreateInput = {
-  connectionId: string;
-  externalCategoryId: string;
-  internalCategoryId: string;
-  catalogId: string;
-};
+export type CategoryMappingCreateInput = CategoryMappingCreateInputDto;
 
-export type CategoryMappingUpdateInput = {
-  internalCategoryId?: string;
-  isActive?: boolean;
-};
+export type CategoryMappingUpdateInput = CategoryMappingUpdateInputDto;

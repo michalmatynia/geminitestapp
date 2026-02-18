@@ -1,7 +1,5 @@
 'use client';
 
-import { ArrowLeft, Save } from 'lucide-react';
-import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -18,6 +16,8 @@ import {
   SectionHeader,
   SelectSimple,
   useToast,
+  FormActions,
+  Breadcrumbs,
 } from '@/shared/ui';
 
 import {
@@ -187,13 +187,25 @@ export function AdminFilemakerOrganizationEditPage(): React.JSX.Element {
         <SectionHeader
           title='Edit Organization'
           description='The requested organization record could not be found.'
+          eyebrow={
+            <Breadcrumbs
+              items={[
+                { label: 'Admin', href: '/admin' },
+                { label: 'Filemaker', href: '/admin/filemaker' },
+                { label: 'Organizations', href: '/admin/filemaker/organizations' },
+                { label: 'Edit' }
+              ]}
+              className='mb-2'
+            />
+          }
           actions={(
-            <Button type='button' variant='outline' asChild>
-              <Link href='/admin/filemaker/organizations'>
-                <ArrowLeft className='mr-1.5 size-3.5' />
-                Back to Organizations
-              </Link>
-            </Button>
+            <FormActions
+              onCancel={(): void => {
+                router.push('/admin/filemaker/organizations');
+              }}
+              cancelText='Back to Organizations'
+              showSave={false}
+            />
           )}
         />
       </div>
@@ -205,25 +217,29 @@ export function AdminFilemakerOrganizationEditPage(): React.JSX.Element {
       <SectionHeader
         title='Edit Organization'
         description='Update an organization record used in Case Resolver document addressing.'
+        eyebrow={
+          <Breadcrumbs
+            items={[
+              { label: 'Admin', href: '/admin' },
+              { label: 'Filemaker', href: '/admin/filemaker' },
+              { label: 'Organizations', href: '/admin/filemaker/organizations' },
+              { label: 'Edit' }
+            ]}
+            className='mb-2'
+          />
+        }
         actions={(
-          <div className='flex flex-wrap items-center gap-2'>
-            <Button type='button' variant='outline' asChild>
-              <Link href='/admin/filemaker/organizations'>
-                <ArrowLeft className='mr-1.5 size-3.5' />
-                Back to Organizations
-              </Link>
-            </Button>
-            <Button
-              type='button'
-              onClick={(): void => {
-                void handleSave();
-              }}
-              disabled={updateSetting.isPending}
-            >
-              <Save className='mr-1.5 size-3.5' />
-              {updateSetting.isPending ? 'Saving...' : 'Save Organization'}
-            </Button>
-          </div>
+          <FormActions
+            onCancel={(): void => {
+              router.push('/admin/filemaker/organizations');
+            }}
+            cancelText='Back to Organizations'
+            onSave={(): void => {
+              void handleSave();
+            }}
+            saveText='Save Organization'
+            isSaving={updateSetting.isPending}
+          />
         )}
       />
 

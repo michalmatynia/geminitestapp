@@ -19,7 +19,7 @@ import {
 
 export const handleTemplate: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
   const templateConfig = node.config?.template ?? { template: '' };
-  const data = { ...(nodeInputs as Record<string, unknown>) };
+  const data = { ...(nodeInputs) };
   const currentValue = coerceInput(nodeInputs['value']) ?? '';
   const prompt = templateConfig.template
     ? renderTemplate(
@@ -91,11 +91,20 @@ export const handleModel: NodeHandler = async ({
   const promptInputs = coerceInputArray(nodeInputs['prompt']);
   const promptCandidates = edges
     .filter((edge: Edge) => edge.to === node.id && edge.toPort === 'prompt')
-    .map((edge: Edge): PromptCandidate => ({
-      edge,
-      fromNode: nodeById?.get(edge.from) ?? nodes.find((item: AiNode) => item.id === edge.from),
-      value: allOutputs[edge.from]?.[edge.fromPort ?? 'prompt'],
-    }))
+    .map((edge: Edge): PromptCandidate => {
+      const fromNodeId = edge.from;
+      const fromNode = fromNodeId
+        ? (nodeById?.get(fromNodeId) ?? nodes.find((item: AiNode) => item.id === fromNodeId))
+        : undefined;
+      const value = fromNodeId
+        ? allOutputs[fromNodeId]?.[edge.fromPort ?? 'prompt']
+        : undefined;
+      return {
+        edge,
+        fromNode,
+        value,
+      };
+    })
     .filter((entry: PromptCandidate): boolean => entry.fromNode?.type === 'prompt');
   const promptEdge = promptCandidates.find(
     (entry: PromptCandidate): boolean =>
@@ -161,7 +170,9 @@ export const handleModel: NodeHandler = async ({
   const hasPollConsumer = edges.some((edge: Edge): boolean => {
     if (edge.from !== node.id) return false;
     if (edge.fromPort && edge.fromPort !== 'jobId') return false;
-    const targetNode = nodeById?.get(edge.to) ?? nodes.find((item: AiNode) => item.id === edge.to);
+    const targetNodeId = edge.to;
+    if (!targetNodeId) return false;
+    const targetNode = nodeById?.get(targetNodeId) ?? nodes.find((item: AiNode) => item.id === targetNodeId);
     return targetNode?.type === 'poll';
   });
   const waitPreference = modelConfig.waitForResult;
@@ -181,11 +192,20 @@ export const handleModel: NodeHandler = async ({
   }
   const imageEdge = edges
     .filter((edge: Edge): boolean => edge.to === node.id && edge.toPort === 'images')
-    .map((edge: Edge): PromptCandidate => ({
-      edge,
-      fromNode: nodeById?.get(edge.from) ?? nodes.find((item: AiNode) => item.id === edge.from),
-      value: allOutputs[edge.from]?.[edge.fromPort ?? 'images'],
-    }))
+    .map((edge: Edge): PromptCandidate => {
+      const fromNodeId = edge.from;
+      const fromNode = fromNodeId
+        ? (nodeById?.get(fromNodeId) ?? nodes.find((item: AiNode) => item.id === fromNodeId))
+        : undefined;
+      const value = fromNodeId
+        ? allOutputs[fromNodeId]?.[edge.fromPort ?? 'images']
+        : undefined;
+      return {
+        edge,
+        fromNode,
+        value,
+      };
+    })
     .find(
       (entry: PromptCandidate): boolean =>
         entry.fromNode?.type === 'prompt' &&
@@ -227,8 +247,8 @@ export const handleModel: NodeHandler = async ({
   // don't enqueue again. This prevents accidental duplicate jobs when the graph is re-evaluated during polling
   // or iterator auto-continue.
   const prevJobId = typeof prevOutputs['jobId'] === 'string' ? (prevOutputs['jobId']).trim() : '';
-  const prevPayloadHash = typeof (prevOutputs as Record<string, unknown>)['payloadHash'] === 'string'
-    ? ((prevOutputs as Record<string, unknown>)['payloadHash'] as string)
+  const prevPayloadHash = typeof (prevOutputs)['payloadHash'] === 'string'
+    ? ((prevOutputs)['payloadHash'])
     : '';
   if (prevJobId && prevPayloadHash === payloadHash) {
     return { ...prevOutputs, payloadHash };

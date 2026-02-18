@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { getPromptValidationObservabilitySnapshot } from '@/features/prompt-core/runtime-observability';
-import { Button, FormSection, Input, Label, StatusToggle, SelectSimple } from '@/shared/ui';
+import { Button, FormSection, Input, Label, StatusToggle, SelectSimple, EmptyState } from '@/shared/ui';
 
 import { useBenchmarkState } from '../context/hooks/useBenchmark';
 import { useDocumentState } from '../context/hooks/useDocument';
@@ -541,7 +541,12 @@ export function PatternRuntimePanel(): React.JSX.Element {
           Learned Template Lifecycle
         </div>
         {effectiveLearnedTemplates.length === 0 ? (
-          <div className='text-xs text-gray-500'>No learned templates yet.</div>
+          <EmptyState
+            title='No learned templates'
+            description='Templates will appear here as they are discovered from your prompts.'
+            variant='compact'
+            className='border-none bg-transparent py-4'
+          />
         ) : (
           <div className='max-h-[220px] space-y-2 overflow-auto'>
             {effectiveLearnedTemplates.slice(0, 20).map((template) => (

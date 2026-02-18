@@ -158,7 +158,7 @@ export interface RuntimeActions {
 const INITIAL_RUNTIME_STATE: RuntimeState = {
   inputs: {},
   outputs: {},
-};
+} as RuntimeState;
 
 // Max number of runtime events to keep in state
 const MAX_RUNTIME_EVENTS = 300;

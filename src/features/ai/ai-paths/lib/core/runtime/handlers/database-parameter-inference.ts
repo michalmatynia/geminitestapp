@@ -258,7 +258,7 @@ export const resolveExistingParameterValueFromInputs = (
       candidates.push(resolveObjectPathValue(toRecord(record[key]), targetPath));
     });
   };
-  pushFromRecord(templateInputs as Record<string, unknown>);
+  pushFromRecord(templateInputs);
   pushFromRecord(coerceInput(templateInputs['context']));
   pushFromRecord(coerceInput(templateInputs['bundle']));
   pushFromRecord(coerceInput(templateInputs['value']));
@@ -401,7 +401,7 @@ export const resolveParameterIdsFromInputs = (inputs: RuntimePortValues): string
       collectFromParameters(nested['parameters']);
     });
   };
-  collectFromRecord(inputs as Record<string, unknown>);
+  collectFromRecord(inputs);
   collectFromRecord(coerceInput(inputs['context']));
   collectFromRecord(coerceInput(inputs['bundle']));
   collectFromRecord(coerceInput(inputs['value']));

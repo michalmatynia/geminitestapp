@@ -10,7 +10,7 @@ import { useAiPathConfig } from '../../AiPathConfigContext';
 export function MutatorNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-  if (!selectedNode || selectedNode.type !== 'mutator') return null;
+  if (selectedNode?.type !== 'mutator') return null;
 
   const mutatorConfig = selectedNode.config?.mutator ?? {
     path: 'entity.title',

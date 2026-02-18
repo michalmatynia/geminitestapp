@@ -1,5 +1,6 @@
-import type { AnimationPreset } from '@/features/gsap/types/animation';
 import { ANIMATION_PRESETS } from '@/features/gsap/types/animation';
+import type { MenuItemDto, MenuSettingsDto } from '@/shared/contracts/cms-menu';
+import type { AnimationPresetDto as AnimationPreset } from '@/shared/contracts/gsap';
 
 export const CMS_MENU_SETTINGS_KEY = 'cms_menu_settings.v1';
 export const CMS_MENU_SETTINGS_ZONE_PREFIX = `${CMS_MENU_SETTINGS_KEY}.zone.`;
@@ -9,78 +10,9 @@ export const getCmsMenuSettingsKey = (domainId?: string | null): string => {
   return `${CMS_MENU_SETTINGS_ZONE_PREFIX}${domainId}`;
 };
 
-export interface MenuItem {
-  id: string;
-  label: string;
-  url: string;
-  imageUrl: string;
-}
+export type MenuItem = MenuItemDto;
 
-export interface MenuSettings {
-  // Visibility
-  showMenu: boolean;
-  menuPlacement: 'top' | 'left' | 'right';
-  positionMode: 'sticky' | 'static';
-  collapsible: boolean;
-  collapsedByDefault: boolean;
-  sideWidth: number;
-  collapsedWidth: number;
-  // Layout
-  layoutStyle: string;
-  alignment: string;
-  maxWidth: number;
-  fullWidth: boolean;
-  menuColorSchemeId: string;
-  // Items
-  items: MenuItem[];
-  showItemImages: boolean;
-  itemImageSize: number;
-  // Typography
-  fontFamily: string;
-  fontSize: number;
-  fontWeight: string;
-  letterSpacing: number;
-  textTransform: string;
-  // Colors
-  backgroundColor: string;
-  textColor: string;
-  activeItemColor: string;
-  borderColor: string;
-  // Spacing
-  paddingTop: number;
-  paddingRight: number;
-  paddingBottom: number;
-  paddingLeft: number;
-  itemGap: number;
-  // Mobile
-  mobileBreakpoint: string;
-  mobileAnimation: string;
-  hamburgerColor: string;
-  mobileOverlay: boolean;
-  // Dropdown
-  dropdownBg: string;
-  dropdownTextColor: string;
-  dropdownRadius: number;
-  dropdownShadow: string;
-  dropdownMinWidth: number;
-  // Sticky
-  stickyEnabled: boolean;
-  stickyOffset: number;
-  shrinkOnScroll: boolean;
-  stickyBackground: string;
-  hideOnScroll: boolean;
-  showOnScrollUpAfterPx: number;
-  // Active
-  activeStyle: string;
-  activeColor: string;
-  // Hover
-  hoverStyle: string;
-  hoverColor: string;
-  transitionSpeed: number;
-  // Animations
-  menuEntryAnimation: AnimationPreset;
-  menuHoverAnimation: AnimationPreset;
-}
+export type MenuSettings = MenuSettingsDto;
 
 export const DEFAULT_MENU_SETTINGS: MenuSettings = {
   showMenu: true,
@@ -172,7 +104,10 @@ export const normalizeMenuSettings = (input?: Partial<MenuSettings> | null): Men
       : input?.stickyEnabled === false
         ? 'static'
         : DEFAULT_MENU_SETTINGS.positionMode;
+  merged.collapsible = typeof input?.showMenu === 'boolean' ? (input.collapsible ?? DEFAULT_MENU_SETTINGS.collapsible) : DEFAULT_MENU_SETTINGS.collapsible;
+  // Fixing the logic for collapsible
   merged.collapsible = typeof input?.collapsible === 'boolean' ? input.collapsible : DEFAULT_MENU_SETTINGS.collapsible;
+
   merged.collapsedByDefault =
     typeof input?.collapsedByDefault === 'boolean' ? input.collapsedByDefault : DEFAULT_MENU_SETTINGS.collapsedByDefault;
   merged.sideWidth = typeof input?.sideWidth === 'number' ? input.sideWidth : DEFAULT_MENU_SETTINGS.sideWidth;

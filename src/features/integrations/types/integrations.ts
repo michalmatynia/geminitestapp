@@ -17,147 +17,21 @@ export type {
   BaseCategoryDto as BaseCategory,
   ImageTransformOptionsDto,
   ImageRetryPresetDto as ImageRetryPreset,
+  ImageExportDiagnosticsDto as ImageExportDiagnostics,
+  ImageUrlDiagnosticDto as ImageUrlDiagnostic,
+  CapturedLogDto as CapturedLog,
+  BaseProductRecordDto as BaseProductRecord,
+  BaseApiRawResultDto as BaseApiRawResult,
+  ImportParameterCacheDto as ImportParameterCache,
 } from '@/shared/contracts/integrations';
 
 // Integration domain record types
-export type IntegrationRecord = {
-  id: string;
-  name: string;
-  slug: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-export type IntegrationConnectionRecord = {
-  id: string;
-  integrationId: string;
-  name: string;
-  username: string;
-  password: string;
-  playwrightStorageState?: string | null;
-  playwrightStorageStateUpdatedAt?: Date | null;
-  playwrightPersonaId?: string | null;
-  playwrightHeadless?: boolean | null;
-  playwrightSlowMo?: number | null;
-  playwrightTimeout?: number | null;
-  playwrightNavigationTimeout?: number | null;
-  playwrightHumanizeMouse?: boolean | null;
-  playwrightMouseJitter?: number | null;
-  playwrightClickDelayMin?: number | null;
-  playwrightClickDelayMax?: number | null;
-  playwrightInputDelayMin?: number | null;
-  playwrightInputDelayMax?: number | null;
-  playwrightActionDelayMin?: number | null;
-  playwrightActionDelayMax?: number | null;
-  playwrightProxyEnabled?: boolean | null;
-  playwrightProxyServer?: string | null;
-  playwrightProxyUsername?: string | null;
-  playwrightProxyPassword?: string | null;
-  playwrightEmulateDevice?: boolean | null;
-  playwrightDeviceName?: string | null;
-  allegroAccessToken?: string | null;
-  allegroRefreshToken?: string | null;
-  allegroTokenType?: string | null;
-  allegroScope?: string | null;
-  allegroExpiresAt?: Date | null;
-  allegroTokenUpdatedAt?: Date | null;
-  allegroUseSandbox?: boolean | null;
-  baseApiToken?: string | null;
-  baseTokenUpdatedAt?: Date | null;
-  baseLastInventoryId?: string | null;
-  traderaDefaultTemplateId?: string | null;
-  traderaDefaultDurationHours?: number | null;
-  traderaAutoRelistEnabled?: boolean | null;
-  traderaAutoRelistLeadMinutes?: number | null;
-  traderaApiAppId?: number | null;
-  traderaApiAppKey?: string | null;
-  traderaApiPublicKey?: string | null;
-  traderaApiUserId?: number | null;
-  traderaApiToken?: string | null;
-  traderaApiTokenUpdatedAt?: Date | null;
-  traderaApiSandbox?: boolean | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-export type IntegrationRepository = {
-  listIntegrations: () => Promise<IntegrationRecord[]>;
-  upsertIntegration: (input: { name: string; slug: string }) => Promise<IntegrationRecord>;
-  getIntegrationById: (id: string) => Promise<IntegrationRecord | null>;
-  listConnections: (integrationId: string) => Promise<IntegrationConnectionRecord[]>;
-  getConnectionById: (id: string) => Promise<IntegrationConnectionRecord | null>;
-  getConnectionByIdAndIntegration: (
-    id: string,
-    integrationId: string
-  ) => Promise<IntegrationConnectionRecord | null>;
-  createConnection: (
-    integrationId: string,
-    input: {
-      name: string;
-      username: string;
-      password: string;
-      traderaDefaultTemplateId?: string | null;
-      traderaDefaultDurationHours?: number;
-      traderaAutoRelistEnabled?: boolean;
-      traderaAutoRelistLeadMinutes?: number;
-      traderaApiAppId?: number | null;
-      traderaApiAppKey?: string | null;
-      traderaApiPublicKey?: string | null;
-      traderaApiUserId?: number | null;
-      traderaApiToken?: string | null;
-      traderaApiTokenUpdatedAt?: Date | null;
-      traderaApiSandbox?: boolean;
-    }
-  ) => Promise<IntegrationConnectionRecord>;
-  updateConnection: (
-    id: string,
-    input: Partial<IntegrationConnectionRecord>
-  ) => Promise<IntegrationConnectionRecord>;
-  deleteConnection: (id: string) => Promise<void>;
-};
-
-export interface CapturedLog {
-  level: 'info' | 'warn' | 'error' | 'debug';
-  message: string;
-  timestamp: string;
-  context?: Record<string, unknown>;
-}
-
-export type ImageExportDiagnostics = {
-  total: number;
-  successful: number;
-  failed: number;
-  skipped: number;
-  errors: Array<{
-    imageId: string;
-    error: string;
-  }>;
-};
 
 export type ImageBase64Mode = 'base-only' | 'full-data-uri';
 
 export type ImageTransformOptions = ImageTransformOptionsDto;
 
-export type ImageUrlDiagnostic = {
-  url: string;
-  status: 'valid' | 'invalid' | 'unreachable';
-  error?: string;
-};
-
 export type TemplateMapping = TemplateMappingDto;
-
-export type ImportParameterCache = {
-  key: string;
-  value: unknown;
-  expiresAt: number;
-};
-
-export type BaseProductRecord = Record<string, unknown>;
-
-export type BaseApiRawResult = {
-  status: string;
-  [key: string]: unknown;
-};
 
 export type ExternalCategoryRepository = {
   listCategories: (integrationId: string) => Promise<{ category_id: string; name: string; parent_id: string }[]>;

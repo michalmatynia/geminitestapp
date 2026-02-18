@@ -229,8 +229,11 @@ function computeEdgePaths(
 
   const edgePaths = edges
     .map((edge): EdgePath | null => {
-      const from = nodeMap.get(edge.from);
-      const to = nodeMap.get(edge.to);
+      const fromNodeId = edge.from;
+      const toNodeId = edge.to;
+      if (!fromNodeId || !toNodeId) return null;
+      const from = nodeMap.get(fromNodeId);
+      const to = nodeMap.get(toNodeId);
       if (!from || !to) return null;
 
       const fromPort = edge.fromPort ?? (from.outputs.length > 0 ? from.outputs[0] : undefined);
@@ -307,10 +310,10 @@ function computeEdgePaths(
       const nextEdgePath: EdgePath = {
         id: edge.id,
         path,
-        label: edge.label,
+        label: edge.label ?? undefined,
         arrow,
-        fromNodeId: edge.from,
-        toNodeId: edge.to,
+        fromNodeId,
+        toNodeId,
         bounds,
       };
       nextCache.set(edge.id, {

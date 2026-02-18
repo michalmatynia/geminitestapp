@@ -1,19 +1,17 @@
-export type BaseImportParameterImportMode = 'all' | 'mapped';
+import type {
+  BaseImportParameterImportModeDto,
+  BaseImportParameterLanguageScopeDto,
+  BaseImportParameterMatchByDto,
+  BaseImportParameterImportSettingsDto,
+} from '@/shared/contracts/integrations';
 
-export type BaseImportParameterLanguageScope =
-  | 'catalog_languages'
-  | 'default_only';
+export type BaseImportParameterImportMode = BaseImportParameterImportModeDto;
 
-export type BaseImportParameterMatchBy = 'base_id_then_name' | 'name_only';
+export type BaseImportParameterLanguageScope = BaseImportParameterLanguageScopeDto;
 
-export type BaseImportParameterImportSettings = {
-  enabled: boolean;
-  mode: BaseImportParameterImportMode;
-  languageScope: BaseImportParameterLanguageScope;
-  createMissingParameters: boolean;
-  overwriteExistingValues: boolean;
-  matchBy: BaseImportParameterMatchBy;
-};
+export type BaseImportParameterMatchBy = BaseImportParameterMatchByDto;
+
+export type BaseImportParameterImportSettings = BaseImportParameterImportSettingsDto;
 
 export const defaultBaseImportParameterImportSettings: BaseImportParameterImportSettings =
   {

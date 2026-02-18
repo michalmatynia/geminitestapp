@@ -4,7 +4,6 @@ import { useCallback, useRef } from 'react';
 
 import type {
   AiNode,
-  AiPathRunEventRecord,
   AiPathRunRecord,
   AiPathRuntimeEvent,
 } from '@/features/ai/ai-paths/lib';
@@ -33,7 +32,7 @@ interface ServerStreamMessage {
   runId?: string;
   runStartedAt?: string;
   iteration?: number;
-  events?: AiPathRunEventRecord[];
+  events?: unknown[];
   error?: string;
   finishedAt?: string;
   updatedAt?: string;
@@ -43,7 +42,7 @@ interface ServerStreamMessage {
 interface AiPathRunEventRecordExtended {
   id: string;
   runId?: string | null;
-  level: 'info' | 'warning' | 'error';
+  level?: 'info' | 'warn' | 'error' | 'debug' | undefined;
   message: string;
   nodeId?: string | null;
   status?: string | null;
@@ -117,7 +116,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
 
           if (data.type === 'run_events' && Array.isArray(data.events)) {
             const logEvents: AiPathRuntimeEvent[] = [];
-            data.events.forEach((rawItem: AiPathRunEventRecord): void => {
+            data.events.forEach((rawItem: unknown): void => {
               const item = rawItem as unknown as AiPathRunEventRecordExtended;
               const nodeId = item.nodeId;
               const runId = item.runId;

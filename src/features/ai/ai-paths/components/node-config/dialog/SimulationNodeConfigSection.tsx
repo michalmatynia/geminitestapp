@@ -8,7 +8,7 @@ import { useAiPathConfig } from '../../AiPathConfigContext';
 export function SimulationNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig, handleRunSimulation } = useAiPathConfig();
 
-  if (!selectedNode || selectedNode.type !== 'simulation') return null;
+  if (selectedNode?.type !== 'simulation') return null;
 
   const simulationConfig = selectedNode.config?.simulation ?? {
     productId: '',

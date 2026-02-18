@@ -4,7 +4,6 @@ import { cn } from '@/shared/utils';
 
 import { Label } from './label';
 import { SectionHeader } from './section-header';
-import { SectionPanel } from './section-panel';
 
 import type { ReactNode } from 'react';
 
@@ -33,8 +32,16 @@ export function FormSection({
   variant = 'subtle',
   id,
 }: FormSectionProps): React.JSX.Element {
+  const variantClasses = {
+    default: 'rounded-lg border border-border bg-card p-4',
+    compact: 'rounded-md border border-border bg-card p-3',
+    subtle: 'rounded-lg border border-border/60 bg-card/40 p-4',
+    'subtle-compact': 'rounded-md border border-border/60 bg-card/40 p-3',
+    glass: 'rounded-lg border border-white/10 bg-white/5 backdrop-blur-md p-4',
+  }[variant];
+
   return (
-    <SectionPanel id={id} variant={variant} className={cn('space-y-4', className)}>
+    <div id={id} className={cn('space-y-4', variantClasses, className)}>
       {(title || subtitle || description || actions) && (
         <SectionHeader
           title={title ?? ''}
@@ -50,7 +57,7 @@ export function FormSection({
           {children}
         </div>
       ) : null}
-    </SectionPanel>
+    </div>
   );
 }
 

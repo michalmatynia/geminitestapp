@@ -13,7 +13,7 @@ const validationModeOptions = [
 export function ValidatorNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-  if (!selectedNode || selectedNode.type !== 'validator') return null;
+  if (selectedNode?.type !== 'validator') return null;
 
   const validatorConfig = selectedNode.config?.validator ?? {
     requiredPaths: ['entity.id'],

@@ -43,7 +43,7 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
   const [showDiff, setShowDiff] = React.useState(true);
   const [diffOnlyChanges, setDiffOnlyChanges] = React.useState(true);
 
-  if (!selectedNode || selectedNode.type !== 'context') return null;
+  if (selectedNode?.type !== 'context') return null;
 
   const contextConfig = selectedNode.config?.context ?? {
     role: DEFAULT_CONTEXT_ROLE,

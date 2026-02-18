@@ -10,7 +10,7 @@ import { useAiPathConfig } from '../../AiPathConfigContext';
 export function DelayNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-  if (!selectedNode || selectedNode.type !== 'delay') return null;
+  if (selectedNode?.type !== 'delay') return null;
 
   const delayConfig = selectedNode.config?.delay ?? { ms: 300 };
 

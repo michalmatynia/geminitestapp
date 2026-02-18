@@ -1,48 +1,18 @@
-export type CssAnimationEffect =
-  | 'none'
-  | 'fade'
-  | 'fade-up'
-  | 'fade-down'
-  | 'fade-left'
-  | 'fade-right'
-  | 'slide-up'
-  | 'slide-down'
-  | 'slide-left'
-  | 'slide-right'
-  | 'zoom-in'
-  | 'zoom-out'
-  | 'flip-x'
-  | 'flip-y'
-  | 'rotate'
-  | 'blur'
-  | 'pop'
-  | 'pulse'
-  | 'float'
-  | 'shake'
-  | 'wobble'
-  | 'glow';
+import type {
+  CssAnimationEffectDto,
+  CssAnimationTriggerDto,
+  CssAnimationDirectionDto,
+  CssAnimationFillModeDto,
+  CssAnimationConfigDto,
+} from '@/shared/contracts/cms';
 
-export type CssAnimationTrigger = 'load' | 'hover' | 'inView';
-export type CssAnimationDirection = 'normal' | 'reverse' | 'alternate' | 'alternate-reverse';
-export type CssAnimationFillMode = 'none' | 'forwards' | 'backwards' | 'both';
+export type CssAnimationEffect = CssAnimationEffectDto;
 
-export interface CssAnimationConfig {
-  enabled?: boolean;
-  effect?: CssAnimationEffect;
-  trigger?: CssAnimationTrigger;
-  duration?: number;
-  delay?: number;
-  easing?: string;
-  iterations?: number;
-  loop?: boolean;
-  direction?: CssAnimationDirection;
-  fillMode?: CssAnimationFillMode;
-  distance?: number;
-  scale?: number;
-  rotate?: number;
-  blur?: number;
-  replayOnExit?: boolean;
-}
+export type CssAnimationTrigger = CssAnimationTriggerDto;
+export type CssAnimationDirection = CssAnimationDirectionDto;
+export type CssAnimationFillMode = CssAnimationFillModeDto;
+
+export type CssAnimationConfig = CssAnimationConfigDto;
 
 export const DEFAULT_CSS_ANIMATION_CONFIG: CssAnimationConfig = {
   enabled: false,

@@ -3,7 +3,7 @@
 import { Box, Eye, EyeOff, Trash2, Plus, GripVertical, type LucideIcon } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu, type TreeContextMenuItem } from '@/shared/ui';
+import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu, type TreeContextMenuItem, EmptyState } from '@/shared/ui';
 import { DRAG_KEYS, hasDragType, resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
 
 import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
@@ -434,7 +434,11 @@ export function SectionNodeItem({
                 />
               ))
             ) : (
-              <div className='py-2 text-xs text-gray-500'>No rows yet.</div>
+              <EmptyState
+                title='No rows yet'
+                variant='compact'
+                className='my-2 border-none bg-transparent py-2'
+              />
             )}
             {gridLayerEntries.length > 0 && (
               <div className='mt-2 space-y-1'>
@@ -525,7 +529,12 @@ export function SectionNodeItem({
                 )
               ))
             ) : (
-              <div className='py-2 text-xs text-gray-500'>No blocks yet. Drag blocks here or use the + button below.</div>
+              <EmptyState
+                title='No blocks yet'
+                description='Drag blocks here or use the + button below.'
+                variant='compact'
+                className='my-2 border-none bg-transparent py-2'
+              />
             )}
             <div className='mt-1'>
               <BlockPicker

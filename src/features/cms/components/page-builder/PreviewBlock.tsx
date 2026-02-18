@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
+import { Button } from '@/shared/ui';
 import {
   EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
 import type { CssAnimationConfig } from '@/features/cms/types/css-animations';
@@ -155,22 +156,26 @@ export function PreviewSection({
     if (!showEditorChrome || !isSectionSelected) return null;
     return (
       <div className='absolute right-3 top-3 z-10 flex items-center gap-1 rounded-full border border-border/40 bg-gray-900/80 px-1.5 py-1 text-xs text-gray-200 shadow-sm'>
-        <button
+        <Button
           type='button'
+          variant='ghost'
+          size='icon'
           onClick={(e: React.MouseEvent): void => { e.stopPropagation(); onToggleSectionVisibility?.(section.id, !isHidden); }}
-          className='rounded p-1 text-gray-300 hover:text-white hover:bg-white/10'
+          className='h-7 w-7 rounded p-1 text-gray-300 hover:text-white hover:bg-white/10'
           title={isHidden ? 'Show section' : 'Hide section'}
         >
           {isHidden ? <EyeOff className='size-3.5' /> : <Eye className='size-3.5' />}
-        </button>
-        <button
+        </Button>
+        <Button
           type='button'
+          variant='ghost'
+          size='icon'
           onClick={(e: React.MouseEvent): void => { e.stopPropagation(); onRemoveSection?.(section.id); }}
-          className='rounded p-1 text-gray-300 hover:text-red-200 hover:bg-red-500/20'
+          className='h-7 w-7 rounded p-1 text-gray-300 hover:text-red-200 hover:bg-red-500/20'
           title='Delete section'
         >
           <Trash2 className='size-3.5' />
-        </button>
+        </Button>
       </div>
     );
   };
@@ -430,7 +435,15 @@ function PreviewBlockItem({ block }: PreviewBlockItemProps): React.ReactNode {
           </BlockContextProvider>
         </div>
         {showEditorChrome && onOpenMedia && (
-          <button type='button' onClick={(e) => { e.stopPropagation(); onOpenMedia({ kind: 'block', sectionId: sectionId ?? '', blockId: block.id, columnId, parentBlockId, key: 'image' }); }} className='absolute right-2 top-2 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100'>Replace image</button>
+          <Button
+            type='button'
+            variant='outline'
+            size='xs'
+            onClick={(e) => { e.stopPropagation(); onOpenMedia({ kind: 'block', sectionId: sectionId ?? '', blockId: block.id, columnId, parentBlockId, key: 'image' }); }}
+            className='absolute right-2 top-2 z-10 rounded-full border border-border/40 bg-gray-900/70 px-2 py-1 text-[10px] text-gray-300 opacity-0 transition group-hover:opacity-100 hover:text-white hover:bg-gray-900/90'
+          >
+            Replace image
+          </Button>
         )}
       </div>,
     );

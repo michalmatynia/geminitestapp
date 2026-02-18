@@ -20,6 +20,7 @@ import {
   Badge,
   useToast,
   FormActions,
+  LoadingState,
 } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
@@ -31,7 +32,7 @@ export default function EditSlugPageLoader(): React.JSX.Element {
   const slugQuery = useCmsSlug(id, domainId);
 
   if (slugQuery.isLoading || !slugQuery.data) {
-    return <div className='p-12 text-center text-sm text-gray-500 animate-pulse'>Loading route configuration...</div>;
+    return <LoadingState message='Loading route configuration...' className='py-12' />;
   }
 
   return <EditSlugForm initialSlug={slugQuery.data} id={id} {...(domainId && { domainId })} />;

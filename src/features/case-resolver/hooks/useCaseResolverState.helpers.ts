@@ -12,6 +12,7 @@ import type {
   CaseResolverFile,
   CaseResolverFileEditDraft,
   CaseResolverFolderRecord,
+  CaseResolverWorkspace,
 } from '../types';
 
 const CASE_RESOLVER_EDITOR_DRAFT_STORAGE_PREFIX = 'case-resolver-editor-draft-v1';
@@ -539,6 +540,15 @@ export const isCaseResolverCreateContextReady = ({
   if (!requestedFileId) return true;
   return requestedCaseStatus === 'ready';
 };
+
+export const serializeWorkspaceForUnsavedChangesCheck = (
+  workspace: CaseResolverWorkspace
+): string =>
+  JSON.stringify({
+    ...workspace,
+    // Keep active selection changes from triggering global unsaved-change prompts.
+    activeFileId: null,
+  });
 
 const resolveUploadBucketForAssetKind = (
   kind: CaseResolverAssetKind

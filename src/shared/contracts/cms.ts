@@ -176,6 +176,15 @@ export type CmsSectionInstanceDto = z.infer<typeof cmsSectionInstanceSchema>;
 /**
  * CMS Page Contract
  */
+
+export const pageComponentSchema = z.object({
+  type: z.string(),
+  order: z.number(),
+  content: z.record(z.string(), z.unknown()),
+});
+
+export type PageComponentDto = z.infer<typeof pageComponentSchema>;
+
 export const cmsPageSchema = dtoBaseSchema.extend({
   name: z.string(),
   status: z.enum(['draft', 'published', 'scheduled']),
@@ -220,3 +229,157 @@ export const cmsDomainSettingsSchema = z.object({
 });
 
 export type CmsDomainSettingsDto = z.infer<typeof cmsDomainSettingsSchema>;
+
+/**
+ * CMS Event Effects Contract
+ */
+export const cmsHoverEffectSchema = z.enum(['none', 'lift', 'lift-3d', 'scale', 'glow']);
+export type CmsHoverEffectDto = z.infer<typeof cmsHoverEffectSchema>;
+
+export const cmsClickActionSchema = z.enum(['none', 'navigate', 'scroll']);
+export type CmsClickActionDto = z.infer<typeof cmsClickActionSchema>;
+
+export const cmsClickTargetSchema = z.enum(['_self', '_blank']);
+export type CmsClickTargetDto = z.infer<typeof cmsClickTargetSchema>;
+
+export const cmsScrollBehaviorSchema = z.enum(['smooth', 'auto']);
+export type CmsScrollBehaviorDto = z.infer<typeof cmsScrollBehaviorSchema>;
+
+export const cmsEventEffectsConfigSchema = z.object({
+  hoverEffect: cmsHoverEffectSchema,
+  hoverScale: z.number(),
+  clickAction: cmsClickActionSchema,
+  clickUrl: z.string(),
+  clickTarget: cmsClickTargetSchema,
+  clickScrollTarget: z.string(),
+  clickScrollBehavior: cmsScrollBehaviorSchema,
+});
+
+export type CmsEventEffectsConfigDto = z.infer<typeof cmsEventEffectsConfigSchema>;
+
+/**
+ * CMS CSS Animation Contract
+ */
+export const cssAnimationEffectSchema = z.enum([
+  'none',
+  'fade',
+  'fade-up',
+  'fade-down',
+  'fade-left',
+  'fade-right',
+  'slide-up',
+  'slide-down',
+  'slide-left',
+  'slide-right',
+  'zoom-in',
+  'zoom-out',
+  'flip-x',
+  'flip-y',
+  'rotate',
+  'blur',
+  'pop',
+  'pulse',
+  'float',
+  'shake',
+  'wobble',
+  'glow',
+]);
+export type CssAnimationEffectDto = z.infer<typeof cssAnimationEffectSchema>;
+
+export const cssAnimationTriggerSchema = z.enum(['load', 'hover', 'inView']);
+export type CssAnimationTriggerDto = z.infer<typeof cssAnimationTriggerSchema>;
+
+export const cssAnimationDirectionSchema = z.enum(['normal', 'reverse', 'alternate', 'alternate-reverse']);
+export type CssAnimationDirectionDto = z.infer<typeof cssAnimationDirectionSchema>;
+
+export const cssAnimationFillModeSchema = z.enum(['none', 'forwards', 'backwards', 'both']);
+export type CssAnimationFillModeDto = z.infer<typeof cssAnimationFillModeSchema>;
+
+export const cssAnimationConfigSchema = z.object({
+  enabled: z.boolean().optional(),
+  effect: cssAnimationEffectSchema.optional(),
+  trigger: cssAnimationTriggerSchema.optional(),
+  duration: z.number().optional(),
+  delay: z.number().optional(),
+  easing: z.string().optional(),
+  iterations: z.number().optional(),
+  loop: z.boolean().optional(),
+  direction: cssAnimationDirectionSchema.optional(),
+  fillMode: cssAnimationFillModeSchema.optional(),
+  distance: z.number().optional(),
+  scale: z.number().optional(),
+  rotate: z.number().optional(),
+  blur: z.number().optional(),
+  replayOnExit: z.boolean().optional(),
+});
+
+export type CssAnimationConfigDto = z.infer<typeof cssAnimationConfigSchema>;
+
+/**
+ * CMS Page Builder Definitions DTOs
+ */
+
+export const settingsFieldOptionSchema = z.object({
+  label: z.string(),
+  value: z.string(),
+});
+
+export type SettingsFieldOptionDto = z.infer<typeof settingsFieldOptionSchema>;
+
+export const settingsFieldTypeSchema = z.enum([
+  'text',
+  'select',
+  'radio',
+  'number',
+  'image',
+  'asset3d',
+  'color-scheme',
+  'range',
+  'color',
+  'font-family',
+  'font-weight',
+  'spacing',
+  'border',
+  'shadow',
+  'background',
+  'typography',
+  'link',
+  'alignment',
+]);
+
+export type SettingsFieldTypeDto = z.infer<typeof settingsFieldTypeSchema>;
+
+export const settingsFieldSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  type: settingsFieldTypeSchema,
+  options: z.array(settingsFieldOptionSchema).optional(),
+  defaultValue: z.unknown().optional(),
+  min: z.number().optional(),
+  max: z.number().optional(),
+  disabled: z.boolean().optional(),
+});
+
+export type SettingsFieldDto = z.infer<typeof settingsFieldSchema>;
+
+export const sectionDefinitionSchema = z.object({
+  type: z.string(),
+  label: z.string(),
+  icon: z.string(),
+  defaultSettings: z.record(z.string(), z.unknown()),
+  settingsSchema: z.array(settingsFieldSchema),
+  allowedBlockTypes: z.array(z.string()),
+});
+
+export type SectionDefinitionDto = z.infer<typeof sectionDefinitionSchema>;
+
+export const blockDefinitionSchema = z.object({
+  type: z.string(),
+  label: z.string(),
+  icon: z.string(),
+  defaultSettings: z.record(z.string(), z.unknown()),
+  settingsSchema: z.array(settingsFieldSchema),
+  allowedBlockTypes: z.array(z.string()).optional(),
+});
+
+export type BlockDefinitionDto = z.infer<typeof blockDefinitionSchema>;

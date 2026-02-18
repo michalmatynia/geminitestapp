@@ -277,8 +277,12 @@ export function useAiPathsPresets({
       return;
     }
     const base = getCanvasCenterPosition();
+    const now = new Date().toISOString();
     const bundleNode: AiNode = {
       id: `node-${Math.random().toString(36).slice(2, 8)}`,
+      createdAt: now,
+      updatedAt: null,
+      data: {},
       type: 'bundle',
       title: `${preset.name} Bundle`,
       description: preset.description || 'Cluster preset bundle.',
@@ -293,6 +297,9 @@ export function useAiPathsPresets({
     };
     const templateNode: AiNode = {
       id: `node-${Math.random().toString(36).slice(2, 8)}`,
+      createdAt: now,
+      updatedAt: null,
+      data: {},
       type: 'template',
       title: `${preset.name} Template`,
       description: 'Preset template prompt.',
@@ -390,7 +397,7 @@ export function useAiPathsPresets({
         .map((edge: Edge): AiNode | undefined =>
           nodes.find((node: AiNode): boolean => node.id === edge.from)
         )
-        .filter((node: AiNode | undefined): node is AiNode => Boolean(node && node.type === 'bundle'));
+        .filter((node: AiNode | undefined): node is AiNode => Boolean(node?.type === 'bundle'));
       return bundleNodes;
     };
 
@@ -402,7 +409,7 @@ export function useAiPathsPresets({
         .map((edge: Edge): AiNode | undefined =>
           nodes.find((node: AiNode): boolean => node.id === edge.to)
         )
-        .filter((node: AiNode | undefined): node is AiNode => Boolean(node && node.type === 'template'));
+        .filter((node: AiNode | undefined): node is AiNode => Boolean(node?.type === 'template'));
       return templateNodes;
     };
 

@@ -5,7 +5,7 @@ import React from 'react';
 
 import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
 import type { TagRecord, NoteWithRelations } from '@/shared/types/domain/notes';
-import { Button, Input, Label, Checkbox, SelectSimple } from '@/shared/ui';
+import { Button, Input, Label, Checkbox, SelectSimple, Badge } from '@/shared/ui';
 
 
 interface NoteMetadataProps {
@@ -124,25 +124,27 @@ export function NoteMetadata({
             const tag = availableTags.find((t: TagRecord) => t.id === tagId);
             if (!tag) return null;
             return (
-              <span
+              <Badge
                 key={tag.id}
-                className='inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-200 border border-blue-500/30'
+                variant='info'
+                className='gap-1 px-2 py-1 bg-blue-500/20 text-blue-200 border-blue-500/30 hover:bg-blue-500/30'
               >
-                <Button
-                  type='button'
+                <span
                   onClick={(): void => handleFilterByTag(tag.id)}
-                  className='hover:text-white'
+                  className='cursor-pointer hover:underline'
                 >
                   {tag.name}
-                </Button>
+                </span>
                 <Button
                   type='button'
+                  variant='ghost'
+                  size='sm'
                   onClick={(): void => handleRemoveTag(tag.id)}
-                  className='hover:text-white'
+                  className='h-auto w-auto p-0 hover:text-white hover:bg-transparent'
                 >
                   <X size={12} />
                 </Button>
-              </span>
+              </Badge>
             );
           })}
         </div>

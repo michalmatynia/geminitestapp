@@ -11,10 +11,12 @@ import { useRuntimeState, useRuntimeActions } from '../context';
 // Helpers
 // ---------------------------------------------------------------------------
 
-const LEVEL_OPTIONS: { value: AiPathRuntimeEventLevel | 'all'; label: string }[] = [
+type RuntimeEventLevelFilter = NonNullable<AiPathRuntimeEventLevel> | 'all';
+
+const LEVEL_OPTIONS: { value: RuntimeEventLevelFilter; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'info', label: 'Info' },
-  { value: 'warning', label: 'Warning' },
+  { value: 'warn', label: 'Warning' },
   { value: 'error', label: 'Error' },
 ];
 
@@ -40,7 +42,7 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
   const { clearRuntimeEvents } = useRuntimeActions();
 
   const [collapsed, setCollapsed] = useState(true);
-  const [levelFilter, setLevelFilter] = useState<AiPathRuntimeEventLevel | 'all'>('all');
+  const [levelFilter, setLevelFilter] = useState<RuntimeEventLevelFilter>('all');
   const scrollRef = useRef<HTMLDivElement>(null);
   const userScrolledUpRef = useRef(false);
 
@@ -84,7 +86,7 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
   );
 
   const warningCount = useMemo(
-    () => runtimeEvents.filter((e) => e.level === 'warning').length,
+    () => runtimeEvents.filter((e) => e.level === 'warn').length,
     [runtimeEvents],
   );
 
@@ -122,7 +124,7 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
             size='xs'
             value={levelFilter}
             onValueChange={(value) =>
-              setLevelFilter(value as AiPathRuntimeEventLevel | 'all')
+              setLevelFilter(value as RuntimeEventLevelFilter)
             }
             options={LEVEL_OPTIONS}
             triggerClassName='h-6 min-w-[70px] px-2 bg-transparent border-border/40 text-[10px]'
@@ -162,34 +164,37 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
               No events{levelFilter !== 'all' ? ` matching "${levelFilter}"` : ''}
             </div>
           ) : (
-            filteredEvents.map((event) => (
-              <div
-                key={event.id}
-                className='flex items-start gap-2 rounded px-2 py-1 text-[11px] hover:bg-card/70'
-              >
-                <span className='shrink-0 text-gray-500'>{formatTime(event.timestamp)}</span>
-                <StatusBadge 
-                  status='' 
-                  variant={event.level === 'error' ? 'error' : event.level === 'warning' ? 'warning' : 'neutral'} 
-                  size='sm' 
-                  hideLabel 
-                  className='mt-[5px] size-1.5 min-w-0 p-0 rounded-full' 
-                />
-                <StatusBadge 
-                  status={event.kind} 
-                  variant={event.kind.startsWith('run_') ? 'info' : event.kind.startsWith('node_') ? 'success' : 'neutral'} 
-                  size='sm' 
-                  className='h-4 px-1 font-mono' 
-                />
-                {event.source === 'server' && (
-                  <StatusBadge status='server' variant='processing' size='sm' className='h-4 px-1' />
-                )}
-                {event.nodeTitle && (
-                  <span className='shrink-0 text-gray-300'>[{event.nodeTitle}]</span>
-                )}
-                <span className='truncate text-gray-200'>{event.message}</span>
-              </div>
-            ))
+            filteredEvents.map((event) => {
+              const eventKind = event.kind ?? 'event';
+              return (
+                <div
+                  key={event.id}
+                  className='flex items-start gap-2 rounded px-2 py-1 text-[11px] hover:bg-card/70'
+                >
+                  <span className='shrink-0 text-gray-500'>{formatTime(event.timestamp)}</span>
+                  <StatusBadge 
+                    status='' 
+                    variant={event.level === 'error' ? 'error' : event.level === 'warn' ? 'warning' : 'neutral'} 
+                    size='sm' 
+                    hideLabel 
+                    className='mt-[5px] size-1.5 min-w-0 p-0 rounded-full' 
+                  />
+                  <StatusBadge 
+                    status={eventKind} 
+                    variant={eventKind.startsWith('run_') ? 'info' : eventKind.startsWith('node_') ? 'success' : 'neutral'} 
+                    size='sm' 
+                    className='h-4 px-1 font-mono' 
+                  />
+                  {event.source === 'server' && (
+                    <StatusBadge status='server' variant='processing' size='sm' className='h-4 px-1' />
+                  )}
+                  {event.nodeTitle && (
+                    <span className='shrink-0 text-gray-300'>[{event.nodeTitle}]</span>
+                  )}
+                  <span className='truncate text-gray-200'>{event.message}</span>
+                </div>
+              );
+            })
           )}
         </div>
       )}

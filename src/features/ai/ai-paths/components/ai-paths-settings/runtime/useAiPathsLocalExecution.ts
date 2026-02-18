@@ -271,6 +271,16 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
           const runStartedAt = args.currentRunStartedAtRef.current ?? state.runStartedAt ?? new Date().toISOString();
           args.currentRunIdRef.current = runId;
           args.currentRunStartedAtRef.current = runStartedAt;
+          const seedHashes = Object.fromEntries(
+            Object.entries((state.hashes ?? {}) as Record<string, unknown>).filter(
+              ([, value]) => typeof value === 'string'
+            )
+          ) as Record<string, string>;
+          const seedHashTimestamps = Object.fromEntries(
+            Object.entries((state.hashTimestamps ?? {}) as Record<string, unknown>).filter(
+              ([, value]) => typeof value === 'number' && Number.isFinite(value)
+            )
+          ) as Record<string, number>;
           if (!args.currentRunStartedAtMsRef.current) {
             const parsed = Date.parse(runStartedAt);
             args.currentRunStartedAtMsRef.current = Number.isNaN(parsed) ? Date.now() : parsed;
@@ -290,9 +300,13 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
             recordHistory: true,
             historyLimit: args.historyRetentionPasses,
             seedOutputs: state.outputs,
-            seedHashes: state.hashes ?? undefined,
-            seedHashTimestamps: state.hashTimestamps ?? undefined,
-            seedHistory: state.history ?? undefined,
+            seedHashes: Object.keys(seedHashes).length > 0 ? seedHashes : undefined,
+            seedHashTimestamps:
+              Object.keys(seedHashTimestamps).length > 0 ? seedHashTimestamps : undefined,
+            seedHistory:
+              state.history && typeof state.history === 'object' && !Array.isArray(state.history)
+                ? (state.history as Record<string, never[]>)
+                : undefined,
             seedRunId: state.runId ?? runId,
             seedRunStartedAt: state.runStartedAt ?? runStartedAt,
             onNodeStart: ({
@@ -316,18 +330,20 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
                 message: `Node ${node.title ?? node.id} started.`,
               });
               args.setRuntimeState((prev: RuntimeState): RuntimeState => {
+                const prevInputs = prev.inputs ?? {};
+                const prevOutputs = prev.outputs ?? {};
                 const next: RuntimeState = {
                   ...prev,
                   runId: callbackRunId,
                   runStartedAt: callbackRunStartedAt,
                   inputs: {
-                    ...prev.inputs,
+                    ...prevInputs,
                     [node.id]: nodeInputs,
                   },
                   outputs: {
-                    ...prev.outputs,
+                    ...prevOutputs,
                     [node.id]: {
-                      ...((prev.outputs[node.id] ?? {}) as Record<string, unknown>),
+                      ...((prevOutputs[node.id] ?? {}) as Record<string, unknown>),
                       status: 'running',
                     },
                   },
@@ -345,7 +361,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
               cached,
               iteration,
             }) => {
-              const rawStatus = (nextOutputs as Record<string, unknown>)?.['status'];
+              const rawStatus = (nextOutputs)?.['status'];
               const normalizedStatus =
                 args.normalizeNodeStatus(rawStatus) ?? (cached ? 'cached' : 'completed');
               args.setNodeStatus({
@@ -366,8 +382,8 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
               });
               args.setRuntimeState((prev: RuntimeState): RuntimeState => {
                 const nextOutput = {
-                  ...((prev.outputs[node.id] ?? {}) as Record<string, unknown>),
-                  ...(nextOutputs as Record<string, unknown>),
+                  ...((prev.outputs?.[node.id] ?? {}) as Record<string, unknown>),
+                  ...(nextOutputs),
                   status: normalizedStatus,
                 } as RuntimePortValues;
                 const next: RuntimeState = {
@@ -375,11 +391,11 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
                   runId: callbackRunId,
                   runStartedAt: callbackRunStartedAt,
                   inputs: {
-                    ...prev.inputs,
+                    ...(prev.inputs ?? {}),
                     [node.id]: nodeInputs,
                   },
                   outputs: {
-                    ...prev.outputs,
+                    ...(prev.outputs ?? {}),
                     [node.id]: nextOutput,
                   },
                 };
@@ -423,7 +439,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
                   outputs: {
                     ...prev.outputs,
                     [node.id]: {
-                      ...((prevOutputs ?? {}) as Record<string, unknown>),
+                      ...((prevOutputs ?? {})),
                       status: 'failed',
                       error: message,
                     },
@@ -644,15 +660,15 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       args.setRuntimeState((prev: RuntimeState): RuntimeState => {
         const seededInputs: Record<string, RuntimePortValues> = immediateInputs
           ? {
-            ...prev.inputs,
+            ...(prev.inputs ?? {}),
             [triggerNode.id]: {
-              ...(prev.inputs[triggerNode.id] ?? {}),
+              ...(prev.inputs?.[triggerNode.id] ?? {}),
               context: immediateInputs,
             },
           }
-          : { ...prev.inputs };
+          : { ...(prev.inputs ?? {}) };
         const nextOutputs = {
-          ...prev.outputs,
+          ...(prev.outputs ?? {}),
           [triggerNode.id]: immediateOutputs,
         };
         const nextInputs = args.seedImmediateDownstreamInputs(

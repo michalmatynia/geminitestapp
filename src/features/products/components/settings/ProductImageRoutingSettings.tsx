@@ -28,6 +28,9 @@ import {
   SelectSimple,
   SimpleSettingsList,
   useToast,
+  Separator,
+  FormActions,
+  Hint,
 } from '@/shared/ui';
 
 const dedupeRoutes = (routes: string[]): string[] => {
@@ -292,20 +295,18 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
               ariaLabel='Default Image Studio project'
             />
           </FormField>
-          <div className='flex flex-wrap items-center gap-2'>
-            <Button size='xs'
-              type='button'
-              variant='default'
-              onClick={handleSaveStudioProject}
-              disabled={
-                updateStudioProjectSetting.isPending ||
-                studioProjectsQuery.isLoading ||
-                !isStudioProjectDirty
-              }
-            >
-              {updateStudioProjectSetting.isPending ? 'Saving...' : 'Save Project Binding'}
-            </Button>
-            <Button size='xs'
+          <FormActions
+            onSave={handleSaveStudioProject}
+            saveText='Save Project Binding'
+            isDisabled={
+              updateStudioProjectSetting.isPending ||
+              studioProjectsQuery.isLoading ||
+              !isStudioProjectDirty
+            }
+            isSaving={updateStudioProjectSetting.isPending}
+            className='justify-start'
+          >
+            <Button size='sm'
               type='button'
               variant='outline'
               onClick={handleStartStudioConnection}
@@ -315,7 +316,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
                 ? 'Start Image Studio Connection'
                 : 'Open Image Studio Projects'}
             </Button>
-          </div>
+          </FormActions>
         </div>
       </FormSection>
 
@@ -365,24 +366,20 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
               ariaLabel='Product Studio sequence generation mode'
             />
           </FormField>
-          <div className='flex flex-wrap items-center gap-2'>
-            <Button size='xs'
-              type='button'
-              onClick={handleSaveSequenceGenerationMode}
-              disabled={
-                updateSequenceGenerationModeSetting.isPending ||
-                !isSequenceGenerationModeDirty
-              }
-            >
-              {updateSequenceGenerationModeSetting.isPending
-                ? 'Saving...'
-                : 'Save Sequence Mode'}
-            </Button>
-          </div>
+          <FormActions
+            onSave={handleSaveSequenceGenerationMode}
+            saveText='Save Sequence Mode'
+            isDisabled={
+              updateSequenceGenerationModeSetting.isPending ||
+              !isSequenceGenerationModeDirty
+            }
+            isSaving={updateSequenceGenerationModeSetting.isPending}
+            className='justify-start'
+          />
         </div>
       </FormSection>
 
-      <div className='h-px bg-border/60' />
+      <Separator className='bg-border/60' />
 
       <FormField
         label='Add Product Image Route'
@@ -445,8 +442,14 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
         </FormField>
       </div>
 
-      <div className='flex items-center gap-3'>
-        <Button size='xs'
+      <FormActions
+        onSave={handleSave}
+        saveText='Save'
+        isDisabled={updateSettingsBulk.isPending}
+        isSaving={updateSettingsBulk.isPending}
+        className='mt-6 justify-start'
+      >
+        <Button size='sm'
           type='button'
           variant='outline'
           onClick={handleUseLocalhost}
@@ -454,14 +457,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
         >
           Use localhost:3000
         </Button>
-        <Button size='xs'
-          type='button'
-          onClick={handleSave}
-          disabled={updateSettingsBulk.isPending}
-        >
-          {updateSettingsBulk.isPending ? 'Saving...' : 'Save'}
-        </Button>
-      </div>
+      </FormActions>
     </div>
   );
 }

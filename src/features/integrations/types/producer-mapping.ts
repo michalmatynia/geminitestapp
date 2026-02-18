@@ -2,6 +2,11 @@ import type {
   ExternalProducerDto,
   ProducerMappingDto as ProducerMappingDtoContract,
   ProducerMappingWithDetailsDto as ProducerMappingWithDetailsDtoContract,
+  BaseProducerFromApiDto,
+  BaseProducerDto as BaseProducerDtoContract,
+  ExternalProducerSyncInputDto,
+  ProducerMappingCreateInputDto,
+  ProducerMappingUpdateInputDto,
 } from '@/shared/contracts/integrations';
 import type { ProducerDto as Producer } from '@/shared/contracts/products';
 
@@ -13,32 +18,12 @@ export type ProducerMappingWithDetails = Omit<ProducerMappingWithDetailsDtoContr
   internalProducer: Producer;
 };
 
-export type BaseProducerFromApi = {
-  manufacturer_id?: number | string;
-  producer_id?: number | string;
-  id?: number | string;
-  name?: string;
-};
+export type BaseProducerFromApi = BaseProducerFromApiDto;
 
-export type BaseProducer = {
-  id: string;
-  name: string;
-};
+export type BaseProducer = BaseProducerDtoContract;
 
-export type ExternalProducerSyncInput = {
-  connectionId: string;
-  externalId: string;
-  name: string;
-  metadata?: Record<string, unknown>;
-};
+export type ExternalProducerSyncInput = ExternalProducerSyncInputDto;
 
-export type ProducerMappingCreateInput = {
-  connectionId: string;
-  externalProducerId: string;
-  internalProducerId: string;
-};
+export type ProducerMappingCreateInput = ProducerMappingCreateInputDto;
 
-export type ProducerMappingUpdateInput = {
-  externalProducerId?: string;
-  isActive?: boolean;
-};
+export type ProducerMappingUpdateInput = ProducerMappingUpdateInputDto;

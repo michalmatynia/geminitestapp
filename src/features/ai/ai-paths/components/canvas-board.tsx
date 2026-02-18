@@ -42,6 +42,7 @@ type CanvasRendererMode = 'legacy' | 'svg';
 type SvgDetailLevel = 'full' | 'compact' | 'skeleton';
 const RENDERER_MODE_STORAGE_KEY = 'ai-paths:canvas-renderer-mode';
 const EDGE_ROUTING_MODE_STORAGE_KEY = 'ai-paths:canvas-edge-routing-mode';
+const MINIMAP_VISIBILITY_STORAGE_KEY = 'ai-paths:canvas-minimap-visible';
 const SVG_CULL_PADDING = 260;
 const SVG_EDGE_CULL_PADDING = 160;
 const SVG_PERF_SAMPLE_WINDOW_MS = 1200;
@@ -197,6 +198,7 @@ export function CanvasBoard({
   const [hoveredConnectorKey, setHoveredConnectorKey] = React.useState<string | null>(null);
   const [pinnedConnectorKey, setPinnedConnectorKey] = React.useState<string | null>(null);
   const [rendererMode, setRendererMode] = React.useState<CanvasRendererMode>('svg');
+  const [showMinimap, setShowMinimap] = React.useState<boolean>(true);
   const [viewportSize, setViewportSize] = React.useState<{
     width: number;
     height: number;
@@ -224,6 +226,12 @@ export function CanvasBoard({
     if (storedRoutingMode === 'bezier' || storedRoutingMode === 'orthogonal') {
       setEdgeRoutingMode(storedRoutingMode);
     }
+    const storedMinimapVisibility = window.localStorage.getItem(
+      MINIMAP_VISIBILITY_STORAGE_KEY
+    );
+    if (storedMinimapVisibility === '0') {
+      setShowMinimap(false);
+    }
   }, []);
 
   React.useEffect(() => {
@@ -235,6 +243,14 @@ export function CanvasBoard({
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(EDGE_ROUTING_MODE_STORAGE_KEY, edgeRoutingMode);
   }, [edgeRoutingMode]);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(
+      MINIMAP_VISIBILITY_STORAGE_KEY,
+      showMinimap ? '1' : '0'
+    );
+  }, [showMinimap]);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -705,6 +721,8 @@ export function CanvasBoard({
           <Button
             className='h-7 w-7 rounded-full border text-xs text-white hover:bg-muted/60'
             type='button'
+            variant='ghost'
+            size='xs'
             onClick={() => zoomTo(view.scale - 0.1)}
           >
             -
@@ -715,6 +733,8 @@ export function CanvasBoard({
           <Button
             className='h-7 w-7 rounded-full border text-xs text-white hover:bg-muted/60'
             type='button'
+            variant='ghost'
+            size='xs'
             onClick={() => zoomTo(view.scale + 0.1)}
           >
             +
@@ -722,6 +742,8 @@ export function CanvasBoard({
           <Button
             className='h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60'
             type='button'
+            variant='ghost'
+            size='xs'
             onClick={fitToNodes}
           >
             Fit
@@ -729,6 +751,8 @@ export function CanvasBoard({
           <Button
             className='h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60 disabled:opacity-40 disabled:hover:bg-transparent'
             type='button'
+            variant='ghost'
+            size='xs'
             onClick={fitToSelection}
             disabled={!hasNodeSelection}
           >
@@ -737,16 +761,34 @@ export function CanvasBoard({
           <Button
             className='h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60'
             type='button'
+            variant='ghost'
+            size='xs'
             onClick={resetView}
           >
             Reset
           </Button>
+          {useSvgRenderer ? (
+            <Button
+              className={`h-7 rounded-full border px-2 text-[11px] ${
+                showMinimap ? 'border-sky-400/70 text-sky-200' : 'text-gray-300'
+              } hover:bg-muted/60`}
+              type='button'
+              variant='ghost'
+              size='xs'
+              aria-pressed={showMinimap}
+              onClick={() => setShowMinimap((current) => !current)}
+            >
+              Minimap
+            </Button>
+          ) : null}
           <div className='ml-2 flex items-center gap-1 rounded-full border border-border/60 bg-card/70 px-1 py-1'>
             <Button
               className={`h-6 rounded-full px-2 text-[10px] ${
                 useSvgRenderer ? 'border-sky-400/70 text-sky-200' : 'text-gray-300'
               }`}
               type='button'
+              variant='ghost'
+              size='xs'
               onClick={() => setRendererMode('svg')}
             >
               SVG
@@ -756,6 +798,8 @@ export function CanvasBoard({
                 !useSvgRenderer ? 'border-sky-400/70 text-sky-200' : 'text-gray-300'
               }`}
               type='button'
+              variant='ghost'
+              size='xs'
               onClick={() => setRendererMode('legacy')}
             >
               Legacy
@@ -769,6 +813,8 @@ export function CanvasBoard({
                   : 'text-gray-300'
               }`}
               type='button'
+              variant='ghost'
+              size='xs'
               onClick={() => setEdgeRoutingMode('bezier')}
             >
               Curve
@@ -780,6 +826,8 @@ export function CanvasBoard({
                   : 'text-gray-300'
               }`}
               type='button'
+              variant='ghost'
+              size='xs'
               onClick={() => setEdgeRoutingMode('orthogonal')}
             >
               Ortho
@@ -787,7 +835,7 @@ export function CanvasBoard({
           </div>
         </div>
       </div>
-      {useSvgRenderer ? (
+      {useSvgRenderer && showMinimap ? (
         <CanvasMinimap
           nodes={nodes}
           edgePaths={edgePaths}
@@ -865,7 +913,7 @@ export function CanvasBoard({
       >
         {lastDrop ? (
           <div
-            className='absolute'
+            className='absolute pointer-events-none'
             style={{
               width: 10,
               height: 10,
@@ -873,7 +921,7 @@ export function CanvasBoard({
             }}
           >
             <span className='absolute inset-0 rounded-full bg-sky-400/40 animate-ping' />
-            <span className='absolute inset-0 rounded-full border border-sky-300/70 bg-sky-500/60' />
+            <div className='absolute inset-0 rounded-full border border-sky-300/70 bg-sky-500/60 shadow-[0_0_8px_rgba(56,189,248,0.5)]' />
           </div>
         ) : null}
         <svg

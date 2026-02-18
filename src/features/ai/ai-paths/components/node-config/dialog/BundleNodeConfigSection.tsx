@@ -11,7 +11,7 @@ import { useAiPathConfig } from '../../AiPathConfigContext';
 export function BundleNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-  if (!selectedNode || selectedNode.type !== 'bundle') return null;
+  if (selectedNode?.type !== 'bundle') return null;
 
   const bundleConfig = selectedNode.config?.bundle ?? {
     includePorts: [],

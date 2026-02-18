@@ -273,6 +273,33 @@ export type UpdateProductDto = z.infer<typeof updateProductSchema>;
 export type ProductUpdateInput = UpdateProductDto;
 
 /**
+ * Product Domain Enums & DTOs
+ */
+
+export const productDbProviderSchema = z.enum(['prisma', 'mongodb']);
+export type ProductDbProviderDto = z.infer<typeof productDbProviderSchema>;
+
+export const productMigrationDirectionSchema = z.enum(['prisma-to-mongo', 'mongo-to-prisma']);
+export type ProductMigrationDirectionDto = z.infer<typeof productMigrationDirectionSchema>;
+
+export const syncDirectionSchema = z.enum(['to_base', 'from_base', 'bidirectional']);
+export type SyncDirectionDto = z.infer<typeof syncDirectionSchema>;
+
+export const priceGroupTypeSchema = z.enum(['standard', 'dependent']);
+export type PriceGroupTypeDto = z.infer<typeof priceGroupTypeSchema>;
+
+export const productMigrationBatchResultSchema = z.object({
+  direction: productMigrationDirectionSchema,
+  productsProcessed: z.number(),
+  productsUpserted: z.number(),
+  nextCursor: z.string().nullable(),
+  missingImageFileIds: z.array(z.string()),
+  missingCatalogIds: z.array(z.string()),
+});
+
+export type ProductMigrationBatchResultDto = z.infer<typeof productMigrationBatchResultSchema>;
+
+/**
  * Validation Contracts
  */
 export const productValidationTargetSchema = z.enum([
@@ -310,6 +337,7 @@ export const productValidationPatternSchema = dtoBaseSchema.extend({
   skipNoopReplacementProposal: z.boolean(),
   replacementValue: z.string().nullable(),
   replacementFields: z.array(z.string()),
+  replacementAppliesToScopes: z.array(productValidationInstanceScopeSchema).optional(),
   runtimeEnabled: z.boolean(),
   runtimeType: z.enum(['none', 'database_query', 'ai_prompt']),
   runtimeConfig: z.string().nullable(),
@@ -324,6 +352,8 @@ export const productValidationPatternSchema = dtoBaseSchema.extend({
   maxExecutions: z.number(),
   passOutputToNext: z.boolean(),
   launchEnabled: z.boolean(),
+  launchAppliesToScopes: z.array(productValidationInstanceScopeSchema).optional(),
+  launchScopeBehavior: z.enum(['gate', 'condition_only']).optional(),
   launchSourceMode: z.enum(['current_field', 'form_field', 'latest_product_field']),
   launchSourceField: z.string().nullable(),
   launchOperator: z.enum([
@@ -342,6 +372,7 @@ export const productValidationPatternSchema = dtoBaseSchema.extend({
   ]),
   launchValue: z.string().nullable(),
   launchFlags: z.string().nullable(),
+  appliesToScopes: z.array(productValidationInstanceScopeSchema).optional(),
 });
 
 export type ProductValidationPatternDto = z.infer<typeof productValidationPatternSchema>;
@@ -355,6 +386,17 @@ export const productValidatorSettingsSchema = z.object({
 });
 
 export type ProductValidatorSettingsDto = z.infer<typeof productValidatorSettingsSchema>;
+
+export const productValidatorConfigSchema = z.object({
+  enabledByDefault: z.boolean(),
+  instanceDenyBehavior: z.record(
+    productValidationInstanceScopeSchema,
+    productValidationDenyBehaviorSchema
+  ),
+  patterns: z.array(productValidationPatternSchema),
+});
+
+export type ProductValidatorConfigDto = z.infer<typeof productValidatorConfigSchema>;
 
 /**
  * Product Validation Replacement DTOs
@@ -429,6 +471,90 @@ export const dynamicReplacementRecipeSchema = z.object({
 });
 
 export type DynamicReplacementRecipeDto = z.infer<typeof dynamicReplacementRecipeSchema>;
+
+/**
+ * Product Studio Sequencing DTOs
+ */
+
+export const productStudioSequenceGenerationModeSchema = z.enum([
+  'studio_prompt_then_sequence',
+  'model_full_sequence',
+  'studio_native_sequencer_prior_generation',
+  'auto',
+]);
+
+export type ProductStudioSequenceGenerationModeDto = z.infer<typeof productStudioSequenceGenerationModeSchema>;
+
+export const productStudioExecutionRouteSchema = z.enum([
+  'studio_sequencer',
+  'studio_native_sequencer_prior_generation',
+  'ai_model_full_sequence',
+  'ai_direct_generation',
+]);
+
+export type ProductStudioExecutionRouteDto = z.infer<typeof productStudioExecutionRouteSchema>;
+
+export const productStudioSequencingDiagnosticsScopeSchema = z.enum(['project', 'global', 'default']);
+
+export type ProductStudioSequencingDiagnosticsScopeDto = z.infer<typeof productStudioSequencingDiagnosticsScopeSchema>;
+
+export const productStudioSequenceReadinessStateSchema = z.enum([
+  'ready',
+  'project_settings_missing',
+  'project_sequence_disabled',
+  'project_steps_empty',
+  'project_snapshot_stale',
+]);
+
+export type ProductStudioSequenceReadinessStateDto = z.infer<typeof productStudioSequenceReadinessStateSchema>;
+
+export const productStudioSequencingConfigSchema = z.object({
+  persistedEnabled: z.boolean(),
+  enabled: z.boolean(),
+  cropCenterBeforeGeneration: z.boolean(),
+  upscaleOnAccept: z.boolean(),
+  upscaleScale: z.number(),
+  runViaSequence: z.boolean(),
+  sequenceStepCount: z.number(),
+  expectedOutputs: z.number(),
+  snapshotHash: z.string().nullable(),
+  snapshotSavedAt: z.string().nullable(),
+  snapshotStepCount: z.number(),
+  snapshotModelId: z.string().nullable(),
+  currentSnapshotHash: z.string().nullable(),
+  snapshotMatchesCurrent: z.boolean(),
+  needsSaveDefaults: z.boolean(),
+  needsSaveDefaultsReason: z.string().nullable(),
+});
+
+export type ProductStudioSequencingConfigDto = z.infer<typeof productStudioSequencingConfigSchema>;
+
+export const productStudioSequencingDiagnosticsSchema = z.object({
+  projectId: z.string().nullable(),
+  projectSettingsKey: z.string().nullable(),
+  selectedSettingsKey: z.string().nullable(),
+  selectedScope: productStudioSequencingDiagnosticsScopeSchema,
+  hasProjectSettings: z.boolean(),
+  hasGlobalSettings: z.boolean(),
+  projectSequencingEnabled: z.boolean(),
+  globalSequencingEnabled: z.boolean(),
+  selectedSequencingEnabled: z.boolean(),
+  selectedSnapshotHash: z.string().nullable(),
+  selectedSnapshotSavedAt: z.string().nullable(),
+  selectedSnapshotStepCount: z.number(),
+  selectedSnapshotModelId: z.string().nullable(),
+});
+
+export type ProductStudioSequencingDiagnosticsDto = z.infer<typeof productStudioSequencingDiagnosticsSchema>;
+
+export const productStudioSequenceReadinessSchema = z.object({
+  ready: z.boolean(),
+  requiresProjectSequence: z.boolean(),
+  state: productStudioSequenceReadinessStateSchema,
+  message: z.string().nullable(),
+});
+
+export type ProductStudioSequenceReadinessDto = z.infer<typeof productStudioSequenceReadinessSchema>;
 
 /**
  * Product Draft Contracts

@@ -218,7 +218,7 @@ export const buildPromptOutput = (
     return extractImageUrls(bundleContext['images']);
   })();
   const normalizedNodeInputs: Record<string, unknown> = {
-    ...(nodeInputs as Record<string, unknown>),
+    ...(nodeInputs),
     ...(nodeInputs['images'] !== undefined ? { images: normalizedImagesInput } : {}),
     ...(nodeInputs['result'] !== undefined ? { result: normalizedResultInput } : {}),
     ...(nodeInputs['value'] !== undefined ? { value: normalizedValueInput } : {}),
@@ -402,7 +402,7 @@ export const buildDbQueryPayload = (
     const parsed = parseJsonSafe(
       renderJsonTemplate(
         raw,
-        nodeInputs as Record<string, unknown>,
+        nodeInputs,
         inputValue ?? ''
       )
     );
@@ -456,7 +456,7 @@ export const buildDbQueryPayload = (
     const parsed = parseJsonSafe(
       renderJsonTemplate(
         queryConfig.queryTemplate ?? '{}',
-        nodeInputs as Record<string, unknown>,
+        nodeInputs,
         inputValue ?? ''
       )
     );

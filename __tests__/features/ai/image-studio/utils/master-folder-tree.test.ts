@@ -16,6 +16,8 @@ const createSlot = (
   overrides: Partial<ImageStudioSlotRecord>
 ): ImageStudioSlotRecord => ({
   id: 'slot-1',
+  createdAt: '',
+  updatedAt: null,
   projectId: 'project-1',
   name: 'Slot',
   folderPath: null,
@@ -42,7 +44,7 @@ describe('image-studio master-folder-tree utils', () => {
           id: 'derived',
           name: 'Derived',
           folderPath: 'variants',
-          metadata: { sourceSlotId: 'base', role: 'variant' },
+          metadata: { sourceSlotId: 'base', role: 'variant' } as unknown as ImageStudioSlotRecord['metadata'],
         }),
       ],
       ['variants']
@@ -69,7 +71,7 @@ describe('image-studio master-folder-tree utils', () => {
           id: 'derived',
           name: 'Derived',
           folderPath: 'root/sub',
-          metadata: { sourceSlotId: 'base', role: 'version' },
+          metadata: { sourceSlotId: 'base', role: 'version' } as unknown as ImageStudioSlotRecord['metadata'],
         }),
       ],
       ['root/sub']

@@ -134,8 +134,10 @@ const sortEdgesBySourcePosition = (
   nodeById: Map<string, AiNode>
 ): Edge[] => {
   return [...edges].sort((left: Edge, right: Edge) => {
-    const leftNode = nodeById.get(left.from);
-    const rightNode = nodeById.get(right.from);
+    const leftFrom = left.from ?? left.source;
+    const rightFrom = right.from ?? right.source;
+    const leftNode = leftFrom ? nodeById.get(leftFrom) : undefined;
+    const rightNode = rightFrom ? nodeById.get(rightFrom) : undefined;
     if (leftNode && rightNode) {
       if (leftNode.position.y !== rightNode.position.y) {
         return leftNode.position.y - rightNode.position.y;
@@ -188,31 +190,36 @@ export const compileCaseResolverPrompt = (
   selectedNodeId: string | null
 ): CaseResolverCompileResult => {
   try {
+    const graphNodes = graph.nodes as unknown as AiNode[];
+    const graphEdges = graph.edges as unknown as Edge[];
     const nodeById = new Map<string, AiNode>(
-      graph.nodes.map((node: AiNode): [string, AiNode] => [node.id, node])
+      graphNodes.map((node: AiNode): [string, AiNode] => [node.id, node])
     );
     const outgoingByNode = new Map<string, Edge[]>();
     const incomingByNode = new Map<string, Edge[]>();
     const incomingCount = new Map<string, number>();
 
-    graph.nodes.forEach((node: AiNode) => {
+    graphNodes.forEach((node: AiNode) => {
       incomingCount.set(node.id, 0);
       outgoingByNode.set(node.id, []);
       incomingByNode.set(node.id, []);
     });
 
-    graph.edges.forEach((edge: Edge) => {
-      if (!nodeById.has(edge.from) || !nodeById.has(edge.to)) return;
-      const outgoing = outgoingByNode.get(edge.from) ?? [];
+    graphEdges.forEach((edge: Edge) => {
+      const from = edge.from ?? edge.source;
+      const to = edge.to ?? edge.target;
+      if (!from || !to) return;
+      if (!nodeById.has(from) || !nodeById.has(to)) return;
+      const outgoing = outgoingByNode.get(from) ?? [];
       outgoing.push(edge);
-      outgoingByNode.set(edge.from, outgoing);
-      const incoming = incomingByNode.get(edge.to) ?? [];
+      outgoingByNode.set(from, outgoing);
+      const incoming = incomingByNode.get(to) ?? [];
       incoming.push(edge);
-      incomingByNode.set(edge.to, incoming);
-      incomingCount.set(edge.to, (incomingCount.get(edge.to) ?? 0) + 1);
+      incomingByNode.set(to, incoming);
+      incomingCount.set(to, (incomingCount.get(to) ?? 0) + 1);
     });
 
-    const sortedNodeIds = sortNodeIdsByPosition(graph.nodes);
+    const sortedNodeIds = sortNodeIdsByPosition(graphNodes);
     const rootNodeIds = sortedNodeIds.filter((nodeId: string) => (incomingCount.get(nodeId) ?? 0) === 0);
 
     const startNodeIds =
@@ -231,8 +238,10 @@ export const compileCaseResolverPrompt = (
       visitOrder.push({ nodeId, incomingEdgeId });
 
       const outgoing = [...(outgoingByNode.get(nodeId) ?? [])].sort((left: Edge, right: Edge) => {
-        const leftNode = nodeById.get(left.to);
-        const rightNode = nodeById.get(right.to);
+        const leftTo = left.to ?? left.target;
+        const rightTo = right.to ?? right.target;
+        const leftNode = leftTo ? nodeById.get(leftTo) : undefined;
+        const rightNode = rightTo ? nodeById.get(rightTo) : undefined;
         if (!leftNode || !rightNode) return left.id.localeCompare(right.id);
         if (leftNode.position.y !== rightNode.position.y) {
           return leftNode.position.y - rightNode.position.y;
@@ -243,7 +252,11 @@ export const compileCaseResolverPrompt = (
         return left.id.localeCompare(right.id);
       });
 
-      outgoing.forEach((edge: Edge) => visit(edge.to, edge.id));
+      outgoing.forEach((edge: Edge) => {
+        const to = edge.to ?? edge.target;
+        if (!to) return;
+        visit(to, edge.id);
+      });
     };
 
     startNodeIds.forEach((nodeId: string) => visit(nodeId, null));

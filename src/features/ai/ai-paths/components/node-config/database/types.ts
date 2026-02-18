@@ -13,18 +13,37 @@ export type SqlQueryResult = SqlQueryResultDto;
 export type FieldSchema = {
   name: string;
   type: string;
-  nullable: boolean;
+  nullable?: boolean | null | undefined;
+  isRequired?: boolean | null | undefined;
+  isId?: boolean | null | undefined;
+  isUnique?: boolean | null | undefined;
+  hasDefault?: boolean | null | undefined;
+  relationTo?: string | null | undefined;
 };
 
 export type CollectionSchema = {
   name: string;
   fields: FieldSchema[];
-  provider?: string;
+  provider?: 'mongodb' | 'prisma' | undefined;
+  relations?: string[] | undefined;
+  documentCount?: number | undefined;
+};
+
+type ProviderSourceSchema = {
+  provider: 'mongodb' | 'prisma';
+  collections: CollectionSchema[];
 };
 
 export type SchemaData = {
   collections: CollectionSchema[];
-  provider: string;
+  provider: 'mongodb' | 'prisma' | 'multi';
+  sources?: Partial<Record<'mongodb' | 'prisma', ProviderSourceSchema | null | undefined>> | undefined;
+};
+
+export type DatabasePresetOption = {
+  id: string;
+  label: string;
+  description: string;
 };
 
 export interface DatabaseNodeConfig {
@@ -37,3 +56,9 @@ export interface DatabaseNodeConfig {
   document?: string;
   variableName?: string;
 }
+
+export type AiQuery = {
+  id: string;
+  query: string;
+  timestamp: string;
+};

@@ -8,6 +8,10 @@ import type {
   CatalogOptionDto,
   ImportListItemDto,
   ImportListStatsDto,
+  ExportParameterDocDto,
+  WarehouseDebugRawDto,
+  InventoryDebugRawDto,
+  DebugWarehousesDto,
 } from '@/shared/contracts/data-import-export';
 import type {
   ImageBase64Mode, 
@@ -44,34 +48,12 @@ export type Template = DomainImportExportTemplate;
 
 export type ImportTemplateParameterImport = DomainImportExportTemplateParameterImport;
 
-export type ExportParameterDoc = {
-  key: string;
-  description: string;
-};
+export type ExportParameterDoc = ExportParameterDocDto;
 
 export type ImportListStats = ImportListStatsDto;
 
-export type WarehouseDebugRaw = {
-  method: string;
-  statusCode: number;
-  ok: boolean;
-  error: string | null;
-  payload: unknown;
-};
+export type WarehouseDebugRaw = WarehouseDebugRawDto;
 
-export type InventoryDebugRaw = {
-  method: string;
-  statusCode: number;
-  ok: boolean;
-  error: string | null;
-  payload: unknown;
-};
+export type InventoryDebugRaw = InventoryDebugRawDto;
 
-export type DebugWarehouses = {
-  inventory?: WarehouseOption[];
-  all?: WarehouseOption[];
-  inventories?: InventoryOption[];
-  inventoryRaw?: WarehouseDebugRaw | null;
-  inventoriesRaw?: InventoryDebugRaw | null;
-  allRaw?: WarehouseDebugRaw | null;
-} | null;
+export type DebugWarehouses = DebugWarehousesDto;

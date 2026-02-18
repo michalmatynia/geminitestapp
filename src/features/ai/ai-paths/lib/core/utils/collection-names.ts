@@ -174,8 +174,8 @@ const migrateSchemaSnapshotCollections = (
     return canonical === collection.name ? collection : { ...collection, name: canonical };
   });
 
-  const sources = snapshot.sources
-    ? Object.fromEntries(
+  const sources: NonNullable<DatabaseConfig['schemaSnapshot']>['sources'] = snapshot.sources
+    ? (Object.fromEntries(
       Object.entries(snapshot.sources).map(([provider, source]) => {
         if (!source) return [provider, source];
         const sourceCollections = source.collections.map((collection) => {
@@ -193,7 +193,7 @@ const migrateSchemaSnapshotCollections = (
             : source,
         ];
       })
-    )
+    ) as NonNullable<DatabaseConfig['schemaSnapshot']>['sources'])
     : snapshot.sources;
 
   if (!changed) {
@@ -248,13 +248,17 @@ const migrateNodeCollections = (node: AiNode): { node: AiNode; changed: boolean 
   let changed = false;
   let nextConfig = { ...node.config };
 
-  const dbQueryResult = migrateDbQueryConfig(nextConfig.dbQuery);
+  const legacyDbQueryCandidate = (nextConfig as Record<string, unknown>)['dbQuery'];
+  const legacyDbQuery =
+    legacyDbQueryCandidate && typeof legacyDbQueryCandidate === 'object'
+      ? (legacyDbQueryCandidate as DbQueryConfig)
+      : undefined;
+  const dbQueryResult = migrateDbQueryConfig(legacyDbQuery);
   if (dbQueryResult.changed) {
     changed = true;
-    nextConfig = {
-      ...nextConfig,
-      dbQuery: dbQueryResult.query!,
-    };
+    const nextConfigWithLegacy = { ...nextConfig } as Record<string, unknown>;
+    nextConfigWithLegacy['dbQuery'] = dbQueryResult.query!;
+    nextConfig = nextConfigWithLegacy as typeof nextConfig;
   }
 
   const pollDbQueryResult = migrateDbQueryConfig(nextConfig.poll?.dbQuery);

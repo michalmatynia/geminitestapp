@@ -19,7 +19,7 @@ const operationOptions = [
 export function MathNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-  if (!selectedNode || selectedNode.type !== 'math') return null;
+  if (selectedNode?.type !== 'math') return null;
 
   const mathConfig = selectedNode.config?.math ?? {
     operation: 'add',

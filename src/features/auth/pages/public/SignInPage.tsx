@@ -8,7 +8,7 @@ import { useState, Suspense } from 'react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useVerifyCredentials } from '@/features/auth/hooks/useAuthQueries';
 import { logClientError } from '@/features/observability';
-import { Button, Input, Label, Alert, SectionHeader, LoadingState } from '@/shared/ui';
+import { Button, Input, Label, Alert, SectionHeader, LoadingState, Separator } from '@/shared/ui';
 
 function SignInPageLoader(): React.JSX.Element {
   const { userPageSettings, isLoading } = useAuth();
@@ -204,9 +204,9 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
         {allowSocialLogin ? (
           <div className='space-y-3'>
             <div className='flex items-center gap-3 text-xs text-gray-500'>
-              <span className='h-px flex-1 bg-gray-800' />
+              <Separator className='flex-1 bg-gray-800' />
               or
-              <span className='h-px flex-1 bg-gray-800' />
+              <Separator className='flex-1 bg-gray-800' />
             </div>
             <Button
               className='w-full rounded-md border px-3 py-2 text-sm font-semibold text-gray-200 hover:border-gray-500'

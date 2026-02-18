@@ -7,7 +7,7 @@ import { useAiPathConfig } from '../../AiPathConfigContext';
 
 export function AiDescriptionNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
-  if (!selectedNode || selectedNode.type !== 'ai_description') return null;
+  if (selectedNode?.type !== 'ai_description') return null;
 
   const descriptionConfig = selectedNode.config?.description ?? {
     visionOutputEnabled: true,

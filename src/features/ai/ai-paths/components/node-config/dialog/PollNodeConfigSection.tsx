@@ -23,7 +23,7 @@ import { useAiPathConfig } from '../../AiPathConfigContext';
 export function PollNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, edges, runtimeState, updateSelectedNodeConfig } = useAiPathConfig();
 
-  if (!selectedNode || selectedNode.type !== 'poll') return null;
+  if (selectedNode?.type !== 'poll') return null;
 
   const defaultQuery: DbQueryConfig = {
     provider: 'mongodb',
@@ -84,7 +84,9 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
     );
     const merged = matchingEdges.reduce<unknown>(
       (current: unknown, edge: Edge): unknown => {
-        const fromOutput = runtimeState.outputs[edge.from];
+        const fromNodeId = edge.from;
+        if (!fromNodeId) return current;
+        const fromOutput = runtimeState.outputs[fromNodeId];
         if (!fromOutput) return current;
         const fromPort = edge.fromPort;
         if (!fromPort) return current;

@@ -298,7 +298,7 @@ export async function postExportToBaseHandler(
     const primaryListingRepo = await getProductListingRepository();
     let listingRepo = primaryListingRepo;
     const integrations = await integrationRepo.listIntegrations();
-    const baseIntegration = integrations.find((i) =>
+    const baseIntegration = integrations.find((i: (typeof integrations)[number]) =>
       ['baselinker', 'base-com', 'base'].includes(i.slug)
     );
     const baseIntegrationId = baseIntegration?.id ?? connection.integrationId ?? null;

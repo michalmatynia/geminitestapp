@@ -53,7 +53,7 @@ const parseOptionalNumber = (value: string): number | undefined => {
 export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-  if (!selectedNode || selectedNode.type !== 'string_mutator') return null;
+  if (selectedNode?.type !== 'string_mutator') return null;
 
   const stringConfig = selectedNode.config?.stringMutator ?? { operations: [] };
   const operations = Array.isArray(stringConfig.operations)

@@ -29,7 +29,7 @@ export const handleHttp: NodeHandler = async ({
   };
   const resolvedUrl: string = renderTemplate(
     httpConfig.url ?? '',
-    nodeInputs as Record<string, unknown>,
+    nodeInputs,
     '',
   );
   if (!resolvedUrl) {
@@ -55,7 +55,7 @@ export const handleHttp: NodeHandler = async ({
     const renderedBody: string = httpConfig.bodyTemplate
       ? renderTemplate(
         httpConfig.bodyTemplate,
-        nodeInputs as Record<string, unknown>,
+        nodeInputs,
         '',
       )
       : '';

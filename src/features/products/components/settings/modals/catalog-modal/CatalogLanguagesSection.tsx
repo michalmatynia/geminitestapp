@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Input, Label, SelectSimple, Badge, Button } from '@/shared/ui';
+import { Label, SelectSimple, Badge, Button, SearchInput } from '@/shared/ui';
 
 import { useCatalogModalContext } from './context/CatalogModalContext';
 
@@ -30,10 +30,12 @@ export function CatalogLanguagesSection(): React.JSX.Element {
         <p className='text-xs text-red-400'>{languagesError}</p>
       ) : (
         <div className='space-y-4'>
-          <Input
+          <SearchInput
             placeholder='Search languages...'
             value={languageQuery}
             onChange={(e) => setLanguageQuery(e.target.value)}
+            onClear={() => setLanguageQuery('')}
+            size='sm'
           />
 
           <div className='space-y-1'>

@@ -376,7 +376,7 @@ export const buildDebugSnapshot = (args: {
   const entries = args.nodes
     .filter((node: AiNode): boolean => node.type === 'database')
     .map((node: AiNode): PathDebugEntry | null => {
-      const output = args.state.outputs[node.id] as
+      const output = args.state.outputs?.[node.id] as
         | { debugPayload?: unknown }
         | undefined;
       const debugPayload = output?.debugPayload;

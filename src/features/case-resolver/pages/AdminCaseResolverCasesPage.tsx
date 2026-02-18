@@ -40,7 +40,6 @@ import {
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-import { CaseResolverWorkspaceDebugPanel } from '../components/CaseResolverWorkspaceDebugPanel';
 import {
   CASE_RESOLVER_CATEGORIES_KEY,
   CASE_RESOLVER_IDENTIFIERS_KEY,
@@ -518,10 +517,6 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
-  const workspaceDebugEnabled = settingsStore.getBoolean(
-    'case_resolver_workspace_debug',
-    false,
-  );
   const caseListViewDefaults = useMemo(
     () => normalizeCaseListViewDefaults(preferencesQuery.data),
     [preferencesQuery.data],
@@ -2882,7 +2877,6 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           setConfirmation(null);
         }}
       />
-      <CaseResolverWorkspaceDebugPanel enabled={workspaceDebugEnabled} />
     </>
   );
 }

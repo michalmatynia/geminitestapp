@@ -14,7 +14,8 @@ import {
   ListPanel,
   PanelHeader,
   SearchInput,
-  EmptyState
+  EmptyState,
+  LoadingState
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -269,7 +270,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
 
 export default function ChatbotContextPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className='p-12 text-center text-sm text-gray-500 animate-pulse'>Mounting context environment...</div>}>
+    <Suspense fallback={<LoadingState message='Mounting context environment...' className='py-12' />}>
       <ChatbotContextPageInner />
     </Suspense>
   );

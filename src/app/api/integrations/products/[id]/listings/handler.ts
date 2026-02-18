@@ -39,7 +39,7 @@ type BaseListingLinkContext = {
 const resolveBaseListingLinkContext = async (): Promise<BaseListingLinkContext | null> => {
   const integrationRepo = await getIntegrationRepository();
   const integrations = await integrationRepo.listIntegrations();
-  const baseIntegration = integrations.find((integration) =>
+  const baseIntegration = integrations.find((integration: (typeof integrations)[number]) =>
     isBaseIntegrationSlug(integration.slug)
   );
   if (!baseIntegration) return null;
@@ -50,9 +50,9 @@ const resolveBaseListingLinkContext = async (): Promise<BaseListingLinkContext |
   const defaultConnectionId = (await getExportDefaultConnectionId())?.trim() || '';
   const preferredConnection =
     (defaultConnectionId
-      ? connections.find((connection) => connection.id === defaultConnectionId)
+      ? connections.find((connection: (typeof connections)[number]) => connection.id === defaultConnectionId)
       : null) ??
-    connections.find((connection) => Boolean(connection.baseApiToken || connection.password)) ??
+    connections.find((connection: (typeof connections)[number]) => Boolean(connection.baseApiToken || connection.password)) ??
     connections[0] ??
     null;
   if (!preferredConnection?.id) return null;
@@ -77,7 +77,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, pa
     }
     let listings = await listProductListingsByProductIdAcrossProviders(productId);
 
-    const hasBaseListing = listings.some((listing) =>
+    const hasBaseListing = listings.some((listing: (typeof listings)[number]) =>
       isBaseIntegrationSlug(listing.integration.slug)
     );
     if (!hasBaseListing) {
@@ -244,4 +244,3 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, pa
     );
   }
 }
-

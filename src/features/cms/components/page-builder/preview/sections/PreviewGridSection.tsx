@@ -3,6 +3,7 @@
 import { Trash2 } from 'lucide-react';
 import React from 'react';
 
+import { Separator } from '@/shared/ui';
 import {
   getSectionContainerClass,
   getSectionStyles,
@@ -194,7 +195,7 @@ export function PreviewGridSection({
               </div>
             ) : null
           ) : showEditorChrome && isEmptyGrid && hasZeroSpacing && !hasFixedHeights ? (
-            <div className='h-px w-full bg-border/40' />
+            <Separator className='bg-border/40' />
           ) : (
             <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
               <div className={`flex flex-col ${sectionGapClass}`} style={sectionGapStyle}>
@@ -262,7 +263,7 @@ export function PreviewGridSection({
                                 onRemoveRow(section.id, row.id);
                               }}
                               disabled={!canRemoveRow}
-                              className='rounded p-1 text-gray-300 hover:text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40'
+                              className='rounded p-1 text-gray-300 hover:text-red-200 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40 transition-colors'
                               title={canRemoveRow ? 'Remove row' : 'At least one row is required'}
                             >
                               <Trash2 className='size-3.5' />

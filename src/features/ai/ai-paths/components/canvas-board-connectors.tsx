@@ -124,8 +124,8 @@ const getConnectionMismatches = (
     if (arePortTypesCompatible(fromTypes, toTypes)) return [];
     return [
       {
-        fromNode: nodeById.get(edge.from) ?? null,
-        toNode: nodeById.get(edge.to) ?? null,
+        fromNode: edge.from ? (nodeById.get(edge.from) ?? null) : null,
+        toNode: edge.to ? (nodeById.get(edge.to) ?? null) : null,
         fromPort: edge.fromPort,
         toPort: edge.toPort,
         fromTypes,

@@ -8,7 +8,7 @@ import {
   useClearAiInsightsNotifications,
 } from '@/features/admin/hooks/useAiInsightsNotifications';
 import type { AiInsightNotification } from '@/shared/types';
-import { Button, StatusBadge, DocumentationSection, LoadingState } from '@/shared/ui';
+import { Button, StatusBadge, DocumentationSection, LoadingState, EmptyState } from '@/shared/ui';
 import { useToast } from '@/shared/ui';
 
 export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
@@ -67,7 +67,12 @@ export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
           ) : notificationsQuery.error ? (
             <div className='text-xs text-red-400'>{notificationsQuery.error.message}</div>
           ) : notifications.length === 0 ? (
-            <div className='text-xs text-gray-500'>No AI warnings yet.</div>
+            <EmptyState
+              title='No AI warnings yet'
+              description='Persistent AI insights outside system logs will appear here.'
+              variant='compact'
+              className='py-12'
+            />
           ) : (
             <div className='space-y-3 pb-16'>
               {notifications.map((notification: AiInsightNotification) => (

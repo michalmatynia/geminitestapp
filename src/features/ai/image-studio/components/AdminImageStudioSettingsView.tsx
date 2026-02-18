@@ -16,6 +16,7 @@ import {
   TabsList,
   TabsTrigger,
   Textarea,
+  ToggleRow,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -283,23 +284,19 @@ export function AdminImageStudioSettingsView(
             >
               <div className='space-y-4'>
                 <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-                  <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-sm text-gray-300 transition-colors hover:bg-card/50 cursor-pointer'>
-                    <input
-                      type='checkbox'
-                      className='h-4 w-4 rounded border-gray-300'
-                      checked={studioSettings.projectSequencing.enabled}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        setStudioSettings((prev: ImageStudioSettings) => ({
-                          ...prev,
-                          projectSequencing: {
-                            ...prev.projectSequencing,
-                            enabled: event.target.checked,
-                          },
-                        }))
-                      }
-                    />
-                    Enable Sequencing
-                  </label>
+                  <ToggleRow
+                    label='Enable Sequencing'
+                    checked={studioSettings.projectSequencing.enabled}
+                    onCheckedChange={(checked: boolean) =>
+                      setStudioSettings((prev: ImageStudioSettings) => ({
+                        ...prev,
+                        projectSequencing: {
+                          ...prev.projectSequencing,
+                          enabled: checked,
+                        },
+                      }))
+                    }
+                  />
                   
                   <FormField label='Trigger'>
                     <SelectSimple
@@ -404,20 +401,13 @@ export function AdminImageStudioSettingsView(
                             enabled ? 'border-primary/20 bg-primary/5' : 'opacity-60'
                           )}
                         >
-                          <label className='flex cursor-pointer items-center gap-3 py-1'>
-                            <input
-                              type='checkbox'
-                              className='h-4 w-4 rounded border-gray-300'
-                              checked={enabled}
-                              onChange={(e) => toggleProjectSequencingOperation(operation, e.target.checked)}
-                            />
-                            <div className='flex items-center gap-2'>
-                              <span className='text-sm font-medium text-gray-200'>{PROJECT_SEQUENCE_OPERATION_LABELS[operation]}</span>
-                              {enabled && (
-                                <StatusBadge status={`Step #${orderIndex + 1}`} variant='info' size='sm' className='font-bold h-5' />
-                              )}
-                            </div>
-                          </label>
+                          <ToggleRow
+                            label={PROJECT_SEQUENCE_OPERATION_LABELS[operation]}
+                            description={enabled ? <StatusBadge status={`Step #${orderIndex + 1}`} variant='info' size='sm' className='font-bold h-5' /> : undefined}
+                            checked={enabled}
+                            onCheckedChange={(checked) => toggleProjectSequencingOperation(operation, checked)}
+                            className='border-none bg-transparent p-0 hover:bg-transparent flex-1'
+                          />
                           <div className='flex items-center gap-1'>
                             <Button
                               size='xs'
@@ -505,33 +495,21 @@ export function AdminImageStudioSettingsView(
                 </div>
 
                 <div className='grid grid-cols-1 gap-3 sm:grid-cols-3 pt-2'>
-                  <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-xs text-gray-300 hover:bg-card/50 cursor-pointer'>
-                    <input
-                      type='checkbox'
-                      className='h-4 w-4 rounded'
-                      checked={studioSettings.promptExtraction.applyAutofix}
-                      onChange={(e) => setStudioSettings(p => ({ ...p, promptExtraction: { ...p.promptExtraction, applyAutofix: e.target.checked } }))}
-                    />
-                    Apply autofix
-                  </label>
-                  <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-xs text-gray-300 hover:bg-card/50 cursor-pointer'>
-                    <input
-                      type='checkbox'
-                      className='h-4 w-4 rounded'
-                      checked={studioSettings.promptExtraction.autoApplyFormattedPrompt}
-                      onChange={(e) => setStudioSettings(p => ({ ...p, promptExtraction: { ...p.promptExtraction, autoApplyFormattedPrompt: e.target.checked } }))}
-                    />
-                    Auto-apply format
-                  </label>
-                  <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-xs text-gray-300 hover:bg-card/50 cursor-pointer'>
-                    <input
-                      type='checkbox'
-                      className='h-4 w-4 rounded'
-                      checked={studioSettings.promptExtraction.showValidationSummary}
-                      onChange={(e) => setStudioSettings(p => ({ ...p, promptExtraction: { ...p.promptExtraction, showValidationSummary: e.target.checked } }))}
-                    />
-                    Show validation
-                  </label>
+                  <ToggleRow
+                    label='Apply autofix'
+                    checked={studioSettings.promptExtraction.applyAutofix}
+                    onCheckedChange={(checked) => setStudioSettings(p => ({ ...p, promptExtraction: { ...p.promptExtraction, applyAutofix: checked } }))}
+                  />
+                  <ToggleRow
+                    label='Auto-apply format'
+                    checked={studioSettings.promptExtraction.autoApplyFormattedPrompt}
+                    onCheckedChange={(checked) => setStudioSettings(p => ({ ...p, promptExtraction: { ...p.promptExtraction, autoApplyFormattedPrompt: checked } }))}
+                  />
+                  <ToggleRow
+                    label='Show validation'
+                    checked={studioSettings.promptExtraction.showValidationSummary}
+                    onCheckedChange={(checked) => setStudioSettings(p => ({ ...p, promptExtraction: { ...p.promptExtraction, showValidationSummary: checked } }))}
+                  />
                 </div>
               </div>
             </FormSection>
@@ -590,57 +568,48 @@ export function AdminImageStudioSettingsView(
               variant='subtle'
             >
               <div className='flex flex-wrap items-center gap-2'>
-                <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-xs text-gray-300 hover:bg-card/50 cursor-pointer w-fit'>
-                  <input
-                    type='checkbox'
-                    className='h-4 w-4 rounded'
-                    checked={studioSettings.helpTooltips.cropButtonsEnabled}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                      setStudioSettings((previous: ImageStudioSettings) => ({
-                        ...previous,
-                        helpTooltips: {
-                          ...previous.helpTooltips,
-                          cropButtonsEnabled: event.target.checked,
-                        },
-                      }))
-                    }
-                  />
-                  Enable Crop Tooltips
-                </label>
-                <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-xs text-gray-300 hover:bg-card/50 cursor-pointer w-fit'>
-                  <input
-                    type='checkbox'
-                    className='h-4 w-4 rounded'
-                    checked={studioSettings.helpTooltips.sequencerFieldsEnabled}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                      setStudioSettings((previous: ImageStudioSettings) => ({
-                        ...previous,
-                        helpTooltips: {
-                          ...previous.helpTooltips,
-                          sequencerFieldsEnabled: event.target.checked,
-                        },
-                      }))
-                    }
-                  />
-                  Enable Sequencer Field Tooltips
-                </label>
-                <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-xs text-gray-300 hover:bg-card/50 cursor-pointer w-fit'>
-                  <input
-                    type='checkbox'
-                    className='h-4 w-4 rounded'
-                    checked={studioSettings.helpTooltips.versionGraphButtonsEnabled}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                      setStudioSettings((previous: ImageStudioSettings) => ({
-                        ...previous,
-                        helpTooltips: {
-                          ...previous.helpTooltips,
-                          versionGraphButtonsEnabled: event.target.checked,
-                        },
-                      }))
-                    }
-                  />
-                  Enable Version Graph Button Tooltips
-                </label>
+                <ToggleRow
+                  label='Enable Crop Tooltips'
+                  checked={studioSettings.helpTooltips.cropButtonsEnabled}
+                  onCheckedChange={(checked) =>
+                    setStudioSettings((previous: ImageStudioSettings) => ({
+                      ...previous,
+                      helpTooltips: {
+                        ...previous.helpTooltips,
+                        cropButtonsEnabled: checked,
+                      },
+                    }))
+                  }
+                  className='w-fit'
+                />
+                <ToggleRow
+                  label='Enable Sequencer Field Tooltips'
+                  checked={studioSettings.helpTooltips.sequencerFieldsEnabled}
+                  onCheckedChange={(checked) =>
+                    setStudioSettings((previous: ImageStudioSettings) => ({
+                      ...previous,
+                      helpTooltips: {
+                        ...previous.helpTooltips,
+                        sequencerFieldsEnabled: checked,
+                      },
+                    }))
+                  }
+                  className='w-fit'
+                />
+                <ToggleRow
+                  label='Enable Version Graph Button Tooltips'
+                  checked={studioSettings.helpTooltips.versionGraphButtonsEnabled}
+                  onCheckedChange={(checked) =>
+                    setStudioSettings((previous: ImageStudioSettings) => ({
+                      ...previous,
+                      helpTooltips: {
+                        ...previous.helpTooltips,
+                        versionGraphButtonsEnabled: checked,
+                      },
+                    }))
+                  }
+                  className='w-fit'
+                />
               </div>
             </FormSection>
           </TabsContent>
@@ -876,15 +845,12 @@ export function AdminImageStudioSettingsView(
                   )}
 
                   {modelCapabilities.supportsStream && (
-                    <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-xs text-gray-300 hover:bg-card/50 cursor-pointer w-fit mt-2'>
-                      <input
-                        type='checkbox'
-                        className='h-4 w-4 rounded'
-                        checked={studioSettings.targetAi.openai.stream}
-                        onChange={(e) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, stream: e.target.checked } } }))}
-                      />
-                      Enable API Streaming
-                    </label>
+                    <ToggleRow
+                      label='Enable API Streaming'
+                      checked={studioSettings.targetAi.openai.stream}
+                      onCheckedChange={(checked) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, stream: checked } } }))}
+                      className='w-fit mt-2'
+                    />
                   )}
                 </div>
 
@@ -910,18 +876,13 @@ export function AdminImageStudioSettingsView(
               variant='subtle'
             >
               <div className='space-y-4'>
-                <div className='flex items-center justify-between'>
-                  <Label className='text-sm font-medium text-gray-200'>Validator Engine Status</Label>
-                  <label className='flex items-center gap-2 text-xs text-gray-300 hover:text-white cursor-pointer'>
-                    <input
-                      type='checkbox'
-                      className='h-4 w-4 rounded'
-                      checked={promptValidationEnabled}
-                      onChange={(e) => setPromptValidationEnabled(e.target.checked)}
-                    />
-                    Validator Enabled
-                  </label>
-                </div>
+                <ToggleRow
+                  label='Validator Engine Status'
+                  description='Control whether prompt validation is enforced.'
+                  checked={promptValidationEnabled}
+                  onCheckedChange={setPromptValidationEnabled}
+                  type='switch'
+                />
                 
                 <FormField label='Validation Rules (JSON)' description='Definition of heuristics and patterns to enforce in prompts.'>
                   <Textarea
@@ -965,15 +926,12 @@ export function AdminImageStudioSettingsView(
                   </FormField>
                 </div>
 
-                <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-xs text-gray-300 hover:bg-card/50 cursor-pointer w-fit'>
-                  <input
-                    type='checkbox'
-                    className='h-4 w-4 rounded'
-                    checked={backfillIncludeHeuristicGenerationLinks}
-                    onChange={(e) => setBackfillIncludeHeuristicGenerationLinks(e.target.checked)}
-                  />
-                  Include generation heuristic linking
-                </label>
+                <ToggleRow
+                  label='Include generation heuristic linking'
+                  checked={backfillIncludeHeuristicGenerationLinks}
+                  onCheckedChange={setBackfillIncludeHeuristicGenerationLinks}
+                  className='w-fit'
+                />
 
                 <div className='pt-2'>
                   <Button

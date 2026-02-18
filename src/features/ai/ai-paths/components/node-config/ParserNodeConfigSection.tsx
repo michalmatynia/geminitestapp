@@ -45,7 +45,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
   const [parserDraftNodeId, setParserDraftNodeId] = React.useState<string | null>(null);
   const parserDraftTimerRef = React.useRef<number | null>(null);
 
-  if (!selectedNode || selectedNode.type !== 'parser') return null;
+  if (selectedNode?.type !== 'parser') return null;
 
   const isParserNode = true;
 

@@ -61,9 +61,10 @@ export const formatCollectionLabel = (collection: CollectionSchema, includeProvi
 export const normalizeSchemaCollections = (schema: SchemaData | null): Array<CollectionSchema> => {
   if (!schema?.collections?.length) return [];
   if (schema.provider === 'multi') return schema.collections;
+  const provider: 'mongodb' | 'prisma' = schema.provider;
   return schema.collections.map((collection: CollectionSchema) => ({
     ...collection,
-    provider: schema.provider,
+    provider,
   }));
 };
 

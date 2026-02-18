@@ -218,3 +218,24 @@ export const createNoteFileSchema = noteFileSchema.omit({
 });
 
 export type CreateNoteFileDto = z.infer<typeof createNoteFileSchema>;
+
+/**
+ * Note Settings DTOs
+ */
+
+export const noteSettingsSchema = z.object({
+  sortBy: z.enum(['created', 'updated', 'name']),
+  sortOrder: z.enum(['asc', 'desc']),
+  showTimestamps: z.boolean(),
+  showBreadcrumbs: z.boolean(),
+  showRelatedNotes: z.boolean(),
+  searchScope: z.enum(['both', 'title', 'content']),
+  selectedFolderId: z.string().nullable(),
+  selectedNotebookId: z.string().nullable(),
+  viewMode: z.enum(['grid', 'list']),
+  gridDensity: z.union([z.literal(4), z.literal(8)]),
+  autoformatOnPaste: z.boolean(),
+  editorMode: z.enum(['markdown', 'wysiwyg', 'code']),
+});
+
+export type NoteSettingsDto = z.infer<typeof noteSettingsSchema>;

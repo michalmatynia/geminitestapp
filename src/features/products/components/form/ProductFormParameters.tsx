@@ -9,7 +9,6 @@ import type { Language } from '@/shared/types/domain/internationalization';
 import {
   Alert,
   Button,
-  Checkbox,
   FormSection,
   Input,
   Label,
@@ -20,6 +19,7 @@ import {
   TabsList,
   TabsTrigger,
   Textarea,
+  ToggleRow,
 } from '@/shared/ui';
 
 const getParameterLabel = (
@@ -324,74 +324,65 @@ export default function ProductFormParameters(): React.JSX.Element {
                             </RadioGroup>
                           </div>
                         ) : selectorType === 'checkbox' ? (
-                          <div className='rounded-md border border-border/50 bg-gray-900/50 p-3'>
-                            <label className='flex items-center gap-2'>
-                              <Checkbox
-                                checked={((): boolean => {
-                                  const currentValue = getLanguageValue(activeParameterLanguage.code).trim().toLowerCase();
-                                  const optionValue =
-                                    normalizedOptionLabels[0]?.trim().toLowerCase() ?? '';
-                                  return (
-                                    currentValue === 'true' ||
-                                    currentValue === '1' ||
-                                    currentValue === 'yes' ||
-                                    currentValue === 'on' ||
-                                    (optionValue ? currentValue === optionValue : false)
-                                  );
-                                })()}
-                                onCheckedChange={(checked: boolean | 'indeterminate'): void =>
-                                  handleLanguageValueChange(
-                                    activeParameterLanguage.code,
-                                    checked === true
-                                      ? normalizedOptionLabels[0] ?? 'true'
-                                      : ''
-                                  )
-                                }
-                                disabled={!entry.parameterId}
-                              />
-                              <span className='text-sm text-gray-200'>
-                                {normalizedOptionLabels[0] ?? 'Enabled'}
-                              </span>
-                            </label>
-                          </div>
+                          <ToggleRow
+                            label={normalizedOptionLabels[0] ?? 'Enabled'}
+                            checked={((): boolean => {
+                              const currentValue = getLanguageValue(activeParameterLanguage.code).trim().toLowerCase();
+                              const optionValue =
+                                normalizedOptionLabels[0]?.trim().toLowerCase() ?? '';
+                              return (
+                                currentValue === 'true' ||
+                                currentValue === '1' ||
+                                currentValue === 'yes' ||
+                                currentValue === 'on' ||
+                                (optionValue ? currentValue === optionValue : false)
+                              );
+                            })()}
+                            onCheckedChange={(checked: boolean): void =>
+                              handleLanguageValueChange(
+                                activeParameterLanguage.code,
+                                checked
+                                  ? normalizedOptionLabels[0] ?? 'true'
+                                  : ''
+                              )
+                            }
+                            disabled={!entry.parameterId}
+                            className='bg-gray-900/50'
+                          />
                         ) : selectorType === 'checklist' ? (
                           <div className='rounded-md border border-border/50 bg-gray-900/50 p-3'>
                             <div className='space-y-2'>
                               {checklistOptions.map((optionLabel: string) => {
                                 const optionKey = optionLabel.trim().toLowerCase();
-                                const checkboxId = `product-param-checklist-${index}-${activeParameterLanguage.code}-${optionKey}`;
                                 return (
-                                  <label key={optionLabel} htmlFor={checkboxId} className='flex items-center gap-2'>
-                                    <Checkbox
-                                      id={checkboxId}
-                                      checked={checklistValueKeys.has(optionKey)}
-                                      onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                                        const nextValues = checked === true
-                                          ? [...checklistValues, optionLabel]
-                                          : checklistValues.filter(
-                                            (value: string) =>
-                                              value.trim().toLowerCase() !== optionKey
-                                          );
-                                        handleLanguageValueChange(
-                                          activeParameterLanguage.code,
-                                          formatChecklistValues(
-                                            Array.from(
-                                              new Map<string, string>(
-                                                nextValues.map((value: string) => [
-                                                  value.trim().toLowerCase(),
-                                                  value,
-                                                ])
-                                              ).values()
-                                            )
-                                          )
+                                  <ToggleRow
+                                    key={optionLabel}
+                                    label={optionLabel}
+                                    checked={checklistValueKeys.has(optionKey)}
+                                    onCheckedChange={(checked: boolean): void => {
+                                      const nextValues = checked
+                                        ? [...checklistValues, optionLabel]
+                                        : checklistValues.filter(
+                                          (value: string) =>
+                                            value.trim().toLowerCase() !== optionKey
                                         );
-                                      }}
-                                      disabled={!entry.parameterId}
-                                    />
-                                    <span className='text-sm text-gray-200'>
-                                      {optionLabel}
-                                    </span>
-                                  </label>
+                                      handleLanguageValueChange(
+                                        activeParameterLanguage.code,
+                                        formatChecklistValues(
+                                          Array.from(
+                                            new Map<string, string>(
+                                              nextValues.map((value: string) => [
+                                                value.trim().toLowerCase(),
+                                                value,
+                                              ])
+                                            ).values()
+                                          )
+                                        )
+                                      );
+                                    }}
+                                    disabled={!entry.parameterId}
+                                    className='border-none bg-transparent p-0 hover:bg-transparent'
+                                  />
                                 );
                               })}
                             </div>

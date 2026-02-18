@@ -7,6 +7,7 @@ import type { VectorShape, VectorShapeRole } from '@/shared/types/domain/vector'
 import {
   Button,
   Input,
+  SelectSimple,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -166,12 +167,13 @@ export function ShapeListPanel({
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
                 onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
               >
-                <select
-                  className='h-5 w-[86px] rounded border border-border/60 bg-card/80 px-1 text-[10px] text-foreground'
+                <SelectSimple
+                  size='xs'
+                  className='w-[86px]'
+                  triggerClassName='h-5 px-1 text-[10px]'
                   value={shape.role ?? ''}
-                  aria-label='Shape role'
-                  onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
-                    const nextValue = event.target.value.trim();
+                  onValueChange={(value: string) => {
+                    const nextValue = value.trim();
                     if (!nextValue) {
                       handleUpdateShape(shape.id, { role: undefined });
                       return;
@@ -179,14 +181,14 @@ export function ShapeListPanel({
                     if (!isVectorShapeRole(nextValue)) return;
                     handleUpdateShape(shape.id, { role: nextValue });
                   }}
-                >
-                  <option value=''>Role</option>
-                  {ROLE_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: '', label: 'Role' },
+                    ...ROLE_OPTIONS.map((option) => ({
+                      value: option.value,
+                      label: option.label,
+                    })),
+                  ]}
+                />
               </div>
             )}
 

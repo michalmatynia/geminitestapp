@@ -1,40 +1,25 @@
-export type LogLevel = 'info' | 'warn' | 'error' | 'debug';
+import type {
+  LogLevelDto,
+  SystemLogInputDto,
+  ListSystemLogsInputDto,
+  ListSystemLogsResultDto,
+  AppDbProviderDto,
+  MigrationDirectionDto,
+  MigrationBatchResultDto,
+} from '../../contracts/system';
 
-export type SystemLogInput = {
-  level: LogLevel;
-  category: string;
-  message: string;
-  context?: Record<string, unknown>;
-  userId?: string;
-};
+export type LogLevel = LogLevelDto;
+
+export type SystemLogInput = SystemLogInputDto;
 
 export type CreateSystemLogInput = SystemLogInput;
 
-export type ListSystemLogsInput = {
-  level?: LogLevel;
-  category?: string;
-  userId?: string;
-  startDate?: Date;
-  endDate?: Date;
-  limit?: number;
-  offset?: number;
-};
+export type ListSystemLogsInput = ListSystemLogsInputDto;
 
-export type ListSystemLogsResult = {
-  logs: Array<SystemLogInput & { id: string; timestamp: Date }>;
-  total: number;
-};
+export type ListSystemLogsResult = ListSystemLogsResultDto;
 
-export type AppDbProvider = 'prisma' | 'mongodb';
+export type AppDbProvider = AppDbProviderDto;
 
-export type MigrationDirection = 'prisma-to-mongo' | 'mongo-to-prisma';
+export type MigrationDirection = MigrationDirectionDto;
 
-export type MigrationBatchResult = {
-  processed: number;
-  successful: number;
-  failed: number;
-  errors: Array<{
-    id: string;
-    error: string;
-  }>;
-};
+export type MigrationBatchResult = MigrationBatchResultDto;

@@ -1,6 +1,5 @@
 import type {
   DbQueryConfig,
-  RuntimePortValues,
 } from '@/shared/types/domain/ai-paths';
 import type { NodeHandlerContext } from '@/shared/types/domain/ai-paths-runtime';
 
@@ -50,7 +49,7 @@ export async function executeDatabaseInsert({
       executed.updater.add(node.id);
     } else if (forceCollectionInsert) {
       const queryPayload = buildDbQueryPayload(
-        templateContext as RuntimePortValues,
+        templateContext,
         queryConfig,
       );
       const collection =
@@ -119,7 +118,7 @@ export async function executeDatabaseInsert({
       }
     } else {
       const queryPayload = buildDbQueryPayload(
-        templateContext as RuntimePortValues,
+        templateContext,
         queryConfig,
       );
       const collection =

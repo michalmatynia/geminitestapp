@@ -9,7 +9,7 @@ import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelectio
 import { useCmsAllSlugs, useCmsPage, useCmsSlugs, useUpdatePage } from '@/features/cms/hooks/useCmsQueries';
 import type { Page, Slug } from '@/features/cms/types';
 import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
-import { Button, Checkbox, Input, SectionHeader, ToggleRow, FormSection, Badge, Alert, StatusBadge, LoadingState } from '@/shared/ui';
+import { Button, Checkbox, Input, SectionHeader, ToggleRow, FormSection, Badge, Alert, StatusBadge, LoadingState, FormActions, Breadcrumbs } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function EditPagePageLoader(): React.JSX.Element {
@@ -117,11 +117,29 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
         <SectionHeader 
           title={page.name} 
           description='Map content to URL routes and manage cross-zone availability.'
-          eyebrow='CMS · Editor'
+          eyebrow={
+            <Breadcrumbs
+              items={[
+                { label: 'Admin', href: '/admin' },
+                { label: 'CMS', href: '/admin/cms' },
+                { label: 'Pages', href: '/admin/cms/pages' },
+                { label: 'Edit' }
+              ]}
+              className='mb-2'
+            />
+          }
           actions={
-            <Button size='sm' onClick={(): void => { void handleSave(); }} disabled={updatePage.isPending}>
-              {updatePage.isPending ? 'Saving...' : 'Save Changes'}
-            </Button>
+            <FormActions
+              onCancel={(): void => {
+                router.push('/admin/cms/pages');
+              }}
+              cancelText='Back'
+              onSave={(): void => {
+                void handleSave();
+              }}
+              saveText='Save Changes'
+              isSaving={updatePage.isPending}
+            />
           }
         />
 

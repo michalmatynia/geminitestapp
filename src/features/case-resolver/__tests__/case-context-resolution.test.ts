@@ -5,6 +5,7 @@ import {
   resolveCaseScopedFolderTarget,
   resolveCaseContainerIdForFileId,
   resolveCaseResolverActiveCaseId,
+  serializeWorkspaceForUnsavedChangesCheck,
 } from '@/features/case-resolver/hooks/useCaseResolverState.helpers';
 import { createCaseResolverFile } from '@/features/case-resolver/settings';
 import type { CaseResolverFile } from '@/features/case-resolver/types';
@@ -106,5 +107,81 @@ describe('case resolver case context resolution', () => {
         ],
       }),
     ).toBe('');
+  });
+
+  it('ignores active file selection in unsaved-change fingerprint', () => {
+    const caseFile = createCaseResolverFile({
+      id: 'case-a',
+      fileType: 'case',
+      name: 'Case A',
+    });
+    const documentFile = createCaseResolverFile({
+      id: 'doc-a',
+      fileType: 'document',
+      name: 'Doc A',
+      parentCaseId: caseFile.id,
+    });
+    const baseWorkspace = {
+      version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
+      folders: [],
+      folderRecords: [],
+      folderTimestamps: {},
+      files: [caseFile, documentFile],
+      assets: [],
+      relationGraph: { nodes: [], edges: [] },
+      activeFileId: caseFile.id,
+    };
+    const selectedOtherFileWorkspace = {
+      ...baseWorkspace,
+      activeFileId: documentFile.id,
+    };
+
+    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace)).toBe(
+      serializeWorkspaceForUnsavedChangesCheck(selectedOtherFileWorkspace)
+    );
+  });
+
+  it('still detects real workspace changes in unsaved-change fingerprint', () => {
+    const caseFile = createCaseResolverFile({
+      id: 'case-a',
+      fileType: 'case',
+      name: 'Case A',
+    });
+    const documentFile = createCaseResolverFile({
+      id: 'doc-a',
+      fileType: 'document',
+      name: 'Doc A',
+      parentCaseId: caseFile.id,
+    });
+    const baseWorkspace = {
+      version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
+      folders: [],
+      folderRecords: [],
+      folderTimestamps: {},
+      files: [caseFile, documentFile],
+      assets: [],
+      relationGraph: { nodes: [], edges: [] },
+      activeFileId: caseFile.id,
+    };
+    const renamedDocumentWorkspace = {
+      ...baseWorkspace,
+      files: [
+        caseFile,
+        {
+          ...documentFile,
+          name: 'Doc A Updated',
+        },
+      ],
+    };
+
+    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace)).not.toBe(
+      serializeWorkspaceForUnsavedChangesCheck(renamedDocumentWorkspace)
+    );
   });
 });

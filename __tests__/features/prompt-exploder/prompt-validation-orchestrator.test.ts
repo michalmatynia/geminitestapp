@@ -204,7 +204,7 @@ describe('prompt validation orchestrator runtime', () => {
     explodePromptText({
       prompt: 'ALLOW',
       validationScope: runtimeA.identity.scope,
-      validationRules: runtimeA.runtimeValidationRules,
+      validationRules: runtimeA.runtimeValidationRules as unknown as PromptValidationRule[],
       runtimeCacheKey: runtimeA.identity.cacheKey,
     });
     const before = getPromptExploderRuntimePatternCacheSnapshot();

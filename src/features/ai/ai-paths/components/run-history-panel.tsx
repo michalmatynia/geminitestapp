@@ -9,6 +9,7 @@ import {
   SelectSimple,
   StatusBadge,
   Alert,
+  EmptyState,
 } from '@/shared/ui';
 
 import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
@@ -57,6 +58,7 @@ export function RunHistoryPanel(): React.JSX.Element {
     if (rawRunFilter === 'dead' || rawRunFilter === 'cancelled') return 'dead';
     return 'all';
   }, [rawRunFilter]);
+  const EmptyStateComponent = EmptyState;
 
   const setRunFilter = React.useCallback(
     (nextFilter: RunHistoryFilter): void => {
@@ -115,7 +117,12 @@ export function RunHistoryPanel(): React.JSX.Element {
         ))}
       </div>
       {filteredRunList.length === 0 ? (
-        <div className='text-[11px] text-gray-500'>No runs yet.</div>
+        <EmptyStateComponent
+          title='No runs yet'
+          description='Execute a path to see your run history and detailed node outputs.'
+          variant='compact'
+          className='py-8'
+        />
       ) : (
         <div className='space-y-2 text-xs text-gray-300'>
           {filteredRunList.slice(0, 6).map((run: AiPathRunRecord): React.JSX.Element => {

@@ -254,6 +254,12 @@ export function DocsTabPanel(): React.JSX.Element {
     'Path canvas state and palette group collapse state are persisted per-user.',
   ]);
   const showExecutionControls = shouldShow(['Execution Controls', executionControlsText]);
+  const showKeyboardShortcuts = shouldShow([
+    'Keyboard Shortcuts',
+    'Use Select tool to draw a selection rectangle.',
+    'Shift/Cmd/Ctrl+click toggles selection. Ctrl/Cmd+A selects all nodes.',
+    'Ctrl/Cmd+C copy, Ctrl/Cmd+X cut, Ctrl/Cmd+V paste, Ctrl/Cmd+D duplicate.',
+  ]);
   const showCoreFlow = shouldShow([
     'Core Flow',
     'Trigger → Context Filter: connect context',
@@ -318,6 +324,7 @@ export function DocsTabPanel(): React.JSX.Element {
     showSystemOverview ||
     showExecutionState ||
     showExecutionControls ||
+    showKeyboardShortcuts ||
     showCoreFlow ||
     showPortRules ||
     showContextPresets ||
@@ -428,6 +435,27 @@ export function DocsTabPanel(): React.JSX.Element {
             <li>
               <span className='text-white'>Run Mode (Block / Queue):</span> Block ignores new
               trigger clicks while a run is active; Queue enqueues them to run sequentially.
+            </li>
+          </ul>
+        </DocumentationSection>
+      ) : null}
+
+      {showKeyboardShortcuts ? (
+        <DocumentationSection title='Keyboard Shortcuts'>
+          <ul className='space-y-2'>
+            <li>Use Select tool to draw a selection rectangle.</li>
+            <li>
+              <span className='text-white'>Shift/Cmd/Ctrl+click</span> toggles selection.{' '}
+              <span className='text-white'>Ctrl/Cmd+A</span> selects all nodes.
+            </li>
+            <li>
+              <span className='text-white'>
+                Ctrl/Cmd+C
+              </span>{' '}
+              copy,{' '}
+              <span className='text-white'>Ctrl/Cmd+X</span> cut,{' '}
+              <span className='text-white'>Ctrl/Cmd+V</span> paste,{' '}
+              <span className='text-white'>Ctrl/Cmd+D</span> duplicate.
             </li>
           </ul>
         </DocumentationSection>

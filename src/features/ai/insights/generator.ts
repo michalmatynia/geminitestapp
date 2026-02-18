@@ -105,7 +105,7 @@ const sanitizeLogs = (logs: SystemLogRecord[]): Record<string, unknown>[] =>
     level: log.level,
     message: log.message,
     source: log.source,
-    createdAt: typeof log.createdAt === 'string' ? log.createdAt : log.createdAt.toISOString(),
+    createdAt: log.createdAt,
     path: log.path ?? null,
     method: log.method ?? null,
     statusCode: log.statusCode ?? null,

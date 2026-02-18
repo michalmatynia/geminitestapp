@@ -31,6 +31,7 @@ import {
   TabsTrigger,
   PanelHeader,
   EmptyState,
+  FileUploadTrigger,
 } from '@/shared/ui';
 import { sanitizeHtml } from '@/shared/utils';
 
@@ -165,13 +166,6 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     editorDetailsTab,
     setEditorDetailsTab,
     isScanDraftDropActive,
-    scanDraftUploadInputRef,
-    handleScanDraftDragEnter,
-    handleScanDraftDragOver,
-    handleScanDraftDragLeave,
-    handleScanDraftDrop,
-    handleScanDraftUploadInputChange,
-    handleTriggerScanDraftUpload,
     handleDeleteScanDraftSlot,
     handleRunScanDraftOcr,
     updateEditingDocumentDraft,
@@ -632,121 +626,121 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
           {editingDocumentDraft && (
             <div className='space-y-4'>
               {editingDocumentDraft.fileType === 'scanfile' ? (
-                <div
-                  className={`rounded border px-3 py-3 transition ${
-                    isScanDraftDropActive
-                      ? 'border-cyan-500/70 bg-cyan-500/10'
-                      : 'border-border/60 bg-card/30'
-                  }`}
-                  onDragEnter={handleScanDraftDragEnter}
-                  onDragOver={handleScanDraftDragOver}
-                  onDragLeave={handleScanDraftDragLeave}
-                  onDrop={handleScanDraftDrop}
+                <FileUploadTrigger
+                  accept='image/*,application/pdf,.pdf'
+                  onFilesSelected={(files) => handleUploadScanFiles(editingDocumentDraft.id, files)}
+                  disabled={isUploadingScanDraftFiles}
+                  multiple
+                  asChild
                 >
-                  <input
-                    ref={scanDraftUploadInputRef}
-                    type='file'
-                    accept='image/*,application/pdf,.pdf'
-                    multiple
-                    className='hidden'
-                    onChange={handleScanDraftUploadInputChange}
-                  />
-                  <div className='flex flex-wrap items-center gap-2'>
-                    <div className='text-xs font-medium text-gray-200'>Document Slots</div>
-                    <div className='ml-auto flex items-center gap-2'>
-                      <Button
-                        type='button'
-                        onClick={handleTriggerScanDraftUpload}
-                        disabled={isUploadingScanDraftFiles}
-                        className='h-8 rounded-md border border-border text-xs text-gray-100 hover:bg-muted/60 disabled:opacity-60'
-                      >
-                        {isUploadingScanDraftFiles ? 'Uploading...' : 'Upload Files'}
-                      </Button>
-                      <Button
-                        type='button'
-                        onClick={handleRunScanDraftOcr}
-                        disabled={
-                          (editingDocumentDraft.scanSlots ?? []).length === 0 ||
-                          isUploadingScanDraftFiles ||
-                          uploadingScanSlotId !== null
-                        }
-                        className='h-8 rounded-md border border-cyan-500/40 text-xs text-cyan-100 hover:bg-cyan-500/15 disabled:opacity-60'
-                      >
-                        {uploadingScanSlotId !== null ? 'Running OCR...' : 'Run OCR'}
-                      </Button>
+                  <div
+                    className={`rounded border px-3 py-3 transition ${
+                      isScanDraftDropActive
+                        ? 'border-cyan-500/70 bg-cyan-500/10'
+                        : 'border-border/60 bg-card/30'
+                    }`}
+                  >
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <div className='text-xs font-medium text-gray-200'>Document Slots</div>
+                      <div className='ml-auto flex items-center gap-2'>
+                        <Button
+                          type='button'
+                          disabled={isUploadingScanDraftFiles}
+                          className='h-8 rounded-md border border-border text-xs text-gray-100 hover:bg-muted/60 disabled:opacity-60'
+                        >
+                          {isUploadingScanDraftFiles ? 'Uploading...' : 'Upload Files'}
+                        </Button>
+                        <Button
+                          type='button'
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRunScanDraftOcr();
+                          }}
+                          disabled={
+                            (editingDocumentDraft.scanSlots ?? []).length === 0 ||
+                            isUploadingScanDraftFiles ||
+                            uploadingScanSlotId !== null
+                          }
+                          className='h-8 rounded-md border border-cyan-500/40 text-xs text-cyan-100 hover:bg-cyan-500/15 disabled:opacity-60'
+                        >
+                          {uploadingScanSlotId !== null ? 'Running OCR...' : 'Run OCR'}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className='mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-500'>
+                      <span>OCR model and prompt are controlled in Case Resolver Settings.</span>
+                      <Badge variant='outline' className='px-1.5 py-0 text-[9px] uppercase tracking-wide'>
+                        {scanOcrProviderLabel}
+                      </Badge>
+                      <span className='font-mono text-[10px] text-gray-400'>
+                        {configuredScanOcrModel || 'No OCR model configured'}
+                      </span>
+                    </div>
+                    <div className='mt-1 text-[11px] text-gray-500'>
+                      Drag and drop image or PDF files here, or use Upload Files.
+                    </div>
+                    <div className='mt-2 max-h-32 space-y-1 overflow-auto pr-1'>
+                      {(editingDocumentDraft.scanSlots ?? []).length === 0 ? (
+                        <div className='rounded border border-dashed border-border/60 px-2 py-1.5 text-[11px] text-gray-500'>
+                          No files uploaded yet.
+                        </div>
+                      ) : (
+                        (editingDocumentDraft.scanSlots ?? []).map((slot) => {
+                          const statusLabel =
+                            uploadingScanSlotId === 'all' || uploadingScanSlotId === slot.id
+                              ? 'Processing OCR...'
+                              : slot.ocrError
+                                ? 'OCR failed'
+                                : slot.ocrText.trim().length > 0
+                                  ? 'OCR extracted'
+                                  : 'OCR pending';
+                          return (
+                            <div
+                              key={slot.id}
+                              className='flex items-center justify-between gap-2 rounded border border-border/60 bg-card/30 px-2 py-1.5 text-[11px]'
+                            >
+                              <div className='min-w-0'>
+                                <div className='truncate text-gray-200'>{slot.name || 'Untitled file'}</div>
+                                <div className='text-gray-500'>{statusLabel}</div>
+                                {slot.ocrError ? (
+                                  <div className='truncate text-[10px] text-red-300' title={slot.ocrError}>
+                                    {slot.ocrError}
+                                  </div>
+                                ) : null}
+                              </div>
+                              <div className='flex items-center gap-2'>
+                                {slot.filepath ? (
+                                  <a
+                                    href={slot.filepath}
+                                    target='_blank'
+                                    rel='noreferrer'
+                                    className='text-cyan-200 hover:text-cyan-100'
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    Open
+                                  </a>
+                                ) : null}
+                                <Button
+                                  type='button'
+                                  variant='ghost'
+                                  size='xs'
+                                  disabled={isUploadingScanDraftFiles || uploadingScanSlotId !== null}
+                                  className='h-6 px-2 text-[10px] text-red-300 hover:bg-red-500/10 hover:text-red-200'
+                                  onClick={(e): void => {
+                                    e.stopPropagation();
+                                    handleDeleteScanDraftSlot(slot.id);
+                                  }}
+                                >
+                                  Delete
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
-                  <div className='mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-500'>
-                    <span>OCR model and prompt are controlled in Case Resolver Settings.</span>
-                    <Badge variant='outline' className='px-1.5 py-0 text-[9px] uppercase tracking-wide'>
-                      {scanOcrProviderLabel}
-                    </Badge>
-                    <span className='font-mono text-[10px] text-gray-400'>
-                      {configuredScanOcrModel || 'No OCR model configured'}
-                    </span>
-                  </div>
-                  <div className='mt-1 text-[11px] text-gray-500'>
-                    Drag and drop image or PDF files here, or use Upload Files.
-                  </div>
-                  <div className='mt-2 max-h-32 space-y-1 overflow-auto pr-1'>
-                    {(editingDocumentDraft.scanSlots ?? []).length === 0 ? (
-                      <div className='rounded border border-dashed border-border/60 px-2 py-1.5 text-[11px] text-gray-500'>
-                        No files uploaded yet.
-                      </div>
-                    ) : (
-                      (editingDocumentDraft.scanSlots ?? []).map((slot) => {
-                        const statusLabel =
-                          uploadingScanSlotId === 'all' || uploadingScanSlotId === slot.id
-                            ? 'Processing OCR...'
-                            : slot.ocrError
-                              ? 'OCR failed'
-                              : slot.ocrText.trim().length > 0
-                                ? 'OCR extracted'
-                                : 'OCR pending';
-                        return (
-                          <div
-                            key={slot.id}
-                            className='flex items-center justify-between gap-2 rounded border border-border/60 bg-card/30 px-2 py-1.5 text-[11px]'
-                          >
-                            <div className='min-w-0'>
-                              <div className='truncate text-gray-200'>{slot.name || 'Untitled file'}</div>
-                              <div className='text-gray-500'>{statusLabel}</div>
-                              {slot.ocrError ? (
-                                <div className='truncate text-[10px] text-red-300' title={slot.ocrError}>
-                                  {slot.ocrError}
-                                </div>
-                              ) : null}
-                            </div>
-                            <div className='flex items-center gap-2'>
-                              {slot.filepath ? (
-                                <a
-                                  href={slot.filepath}
-                                  target='_blank'
-                                  rel='noreferrer'
-                                  className='text-cyan-200 hover:text-cyan-100'
-                                >
-                                  Open
-                                </a>
-                              ) : null}
-                              <Button
-                                type='button'
-                                variant='ghost'
-                                size='xs'
-                                disabled={isUploadingScanDraftFiles || uploadingScanSlotId !== null}
-                                className='h-6 px-2 text-[10px] text-red-300 hover:bg-red-500/10 hover:text-red-200'
-                                onClick={(): void => {
-                                  handleDeleteScanDraftSlot(slot.id);
-                                }}
-                              >
-                                Delete
-                              </Button>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
+                </FileUploadTrigger>
               ) : null}
 
               <Tabs
@@ -1045,7 +1039,10 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
               )}
 
               {isDocumentPreviewOpen ? (
-                <div className='rounded border border-border/60 bg-card/25 p-3'>
+                <div
+                  data-case-resolver-document-preview
+                  className='rounded border border-border/60 bg-card/25 p-3'
+                >
                   <div className='mb-2 flex items-center justify-between gap-2'>
                     <div className='text-xs font-semibold uppercase tracking-[0.08em] text-gray-300'>
                       Document Preview (HTML)

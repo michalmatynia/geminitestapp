@@ -8,7 +8,6 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { getLastUserAction } from '@/shared/utils/observability/user-action-tracker';
 
 import { Button } from './button';
-import { SectionPanel } from './section-panel';
 
 function AppErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   const category = classifyError(error);
@@ -18,7 +17,7 @@ function AppErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
 
   return (
     <div className='flex min-h-[400px] w-full items-center justify-center p-6'>
-      <SectionPanel variant='subtle' className='flex max-w-2xl flex-col items-center p-12 text-center'>
+      <div className='flex max-w-2xl flex-col items-center rounded-lg border border-border/40 bg-muted/10 p-12 text-center'>
         <div className='mb-4 rounded-full bg-red-500/10 p-3 text-red-500'>
           <AlertCircle className='h-10 w-10' />
         </div>
@@ -61,7 +60,7 @@ function AppErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
             Reload page
           </Button>
         </div>
-      </SectionPanel>
+      </div>
     </div>
   );
 }

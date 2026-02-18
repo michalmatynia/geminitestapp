@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { AppModal } from '@/shared/ui';
+import { AppModal, EmptyState } from '@/shared/ui';
 
 import type { CaseResolverCompileResult } from '../composer';
 
@@ -38,7 +38,12 @@ export function CaseResolverLinkedPreviewModal({
               </div>
             ))
           ) : (
-            <div className='text-gray-500'>No linked segments yet.</div>
+            <EmptyState
+              title='No linked segments yet'
+              description='Compilation starts from the selected node. If no node is selected, it starts from graph roots.'
+              variant='compact'
+              className='py-6'
+            />
           )}
         </div>
 

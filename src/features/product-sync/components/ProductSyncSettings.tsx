@@ -31,12 +31,14 @@ import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import {
   Badge,
   Button,
-  Checkbox,
   Input,
-  Label,
   SelectSimple,
   useToast,
   SimpleSettingsList,
+  FormSection,
+  FormField,
+  ToggleRow,
+  FormActions,
 } from '@/shared/ui';
 
 type ProductSyncProfileDraft = {
@@ -361,12 +363,12 @@ export function ProductSyncSettings(): React.JSX.Element {
 
   return (
     <div className='space-y-6'>
-      <div className='rounded-md border border-border/60 bg-card/30 p-4'>
-        <h3 className='text-sm font-semibold text-white'>Profile</h3>
-        <p className='mt-1 text-xs text-gray-400'>
-          Configure scheduled field-level sync between your products and Base.com.
-        </p>
-
+      <FormSection
+        title='Profile'
+        description='Configure scheduled field-level sync between your products and Base.com.'
+        variant='subtle'
+        className='p-4'
+      >
         <div className='mt-4 grid gap-3 md:grid-cols-[240px_1fr]'>
           <div className='space-y-2 rounded-md border border-border/60 bg-card/40 p-2'>
             {profiles.map((profile: ProductSyncProfile) => (
@@ -397,8 +399,7 @@ export function ProductSyncSettings(): React.JSX.Element {
 
           <div className='space-y-4'>
             <div className='grid gap-3 md:grid-cols-2'>
-              <div>
-                <Label className='text-xs text-gray-400'>Name</Label>
+              <FormField label='Name'>
                 <Input
                   value={draft.name}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
@@ -407,11 +408,9 @@ export function ProductSyncSettings(): React.JSX.Element {
                       name: event.target.value,
                     }))
                   }
-                  className='mt-1'
                 />
-              </div>
-              <div>
-                <Label className='text-xs text-gray-400'>Base Connection</Label>
+              </FormField>
+              <FormField label='Base Connection'>
                 <SelectSimple
                   size='sm'
                   value={draft.connectionId || '__none__'}
@@ -428,14 +427,13 @@ export function ProductSyncSettings(): React.JSX.Element {
                       label: connection.name,
                     })),
                   ]}
-                  triggerClassName='mt-1 w-full'
+                  triggerClassName='w-full'
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className='grid gap-3 md:grid-cols-4'>
-              <div>
-                <Label className='text-xs text-gray-400'>Inventory ID</Label>
+              <FormField label='Inventory ID'>
                 <Input
                   value={draft.inventoryId}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
@@ -444,11 +442,9 @@ export function ProductSyncSettings(): React.JSX.Element {
                       inventoryId: event.target.value,
                     }))
                   }
-                  className='mt-1'
                 />
-              </div>
-              <div>
-                <Label className='text-xs text-gray-400'>Catalog Filter</Label>
+              </FormField>
+              <FormField label='Catalog Filter'>
                 <Input
                   value={draft.catalogId}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
@@ -458,11 +454,9 @@ export function ProductSyncSettings(): React.JSX.Element {
                     }))
                   }
                   placeholder='optional catalog ID'
-                  className='mt-1'
                 />
-              </div>
-              <div>
-                <Label className='text-xs text-gray-400'>Interval (minutes)</Label>
+              </FormField>
+              <FormField label='Interval (min)'>
                 <Input
                   type='number'
                   min={1}
@@ -477,11 +471,9 @@ export function ProductSyncSettings(): React.JSX.Element {
                       ),
                     }))
                   }
-                  className='mt-1'
                 />
-              </div>
-              <div>
-                <Label className='text-xs text-gray-400'>Batch Size</Label>
+              </FormField>
+              <FormField label='Batch Size'>
                 <Input
                   type='number'
                   min={1}
@@ -496,37 +488,28 @@ export function ProductSyncSettings(): React.JSX.Element {
                       ),
                     }))
                   }
-                  className='mt-1'
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className='flex items-center gap-2'>
-              <Checkbox
-                id='product-sync-enabled'
-                checked={draft.enabled}
-                onCheckedChange={(value: boolean | 'indeterminate'): void =>
-                  setDraft((prev: ProductSyncProfileDraft) => ({
-                    ...prev,
-                    enabled: Boolean(value),
-                  }))
-                }
-              />
-              <Label htmlFor='product-sync-enabled' className='text-sm text-gray-200'>
-                Enable scheduled synchronization
-              </Label>
-            </div>
+            <ToggleRow
+              label='Enable scheduled synchronization'
+              checked={draft.enabled}
+              onCheckedChange={(value: boolean) =>
+                setDraft((prev: ProductSyncProfileDraft) => ({
+                  ...prev,
+                  enabled: value,
+                }))
+              }
+              className='border-none bg-transparent hover:bg-transparent p-0'
+            />
 
-            <div className='flex flex-wrap items-center gap-2'>
-              <Button
-                type='button'
-                onClick={(): void => {
-                  void handleSave();
-                }}
-                disabled={isSaving}
-              >
-                {isSaving ? 'Saving...' : 'Save Profile'}
-              </Button>
+            <FormActions
+              onSave={handleSave}
+              saveText='Save Profile'
+              isSaving={isSaving}
+              className='justify-start'
+            >
               <Button
                 type='button'
                 variant='secondary'
@@ -560,25 +543,23 @@ export function ProductSyncSettings(): React.JSX.Element {
                 <Trash2 className='mr-2 size-3.5' />
                 Delete
               </Button>
-            </div>
+            </FormActions>
           </div>
         </div>
-      </div>
+      </FormSection>
 
-      <div className='rounded-md border border-border/60 bg-card/30 p-4'>
-        <div className='flex items-center justify-between'>
-          <div>
-            <h3 className='text-sm font-semibold text-white'>Field Rules</h3>
-            <p className='mt-1 text-xs text-gray-400'>
-              Choose which fields sync and the direction for each field.
-            </p>
-          </div>
-          <Button size='xs' type='button' variant='secondary' onClick={addRule}>
+      <FormSection
+        title='Field Rules'
+        description='Choose which fields sync and the direction for each field.'
+        variant='subtle'
+        className='p-4'
+        actions={
+          <Button size='sm' type='button' variant='outline' onClick={addRule}>
             <Plus className='mr-2 size-3.5' />
             Add Rule
           </Button>
-        </div>
-
+        }
+      >
         <div className='mt-3 space-y-2'>
           {draft.fieldRules.map((rule: ProductSyncFieldRule) => (
             <div
@@ -631,14 +612,14 @@ export function ProductSyncSettings(): React.JSX.Element {
             </div>
           ))}
         </div>
-      </div>
+      </FormSection>
 
-      <div className='rounded-md border border-border/60 bg-card/30 p-4'>
-        <h3 className='text-sm font-semibold text-white'>Synchronization History</h3>
-        <p className='mt-1 text-xs text-gray-400'>
-          Latest sync runs for the selected profile.
-        </p>
-
+      <FormSection
+        title='Synchronization History'
+        description='Latest sync runs for the selected profile.'
+        variant='subtle'
+        className='p-4'
+      >
         <div className='mt-3'>
           <SimpleSettingsList
             items={runs.map((run) => ({
@@ -661,7 +642,7 @@ export function ProductSyncSettings(): React.JSX.Element {
             emptyMessage='No sync runs yet.'
           />
         </div>
-      </div>
+      </FormSection>
       <ConfirmationModal />
     </div>
   );

@@ -7,7 +7,7 @@ import { Asset3DPreviewModal } from '@/features/viewer3d';
 import { useAssets3D, useAsset3DCategories, useAsset3DTags } from '@/features/viewer3d/hooks/useAsset3dQueries';
 import type { Asset3DListFilters, Asset3DRecord } from '@/features/viewer3d/types';
 import type { EntityModalProps } from '@/shared/types/modal-props';
-import { FilterPanel, Button, FormSection } from '@/shared/ui';
+import { FilterPanel, Button, FormSection, EmptyState } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 import type { FilterField } from '@/shared/ui/templates/panels';
 
@@ -108,7 +108,12 @@ export function Asset3DPickerModal({
               {assetsQuery.isLoading ? (
                 <div className='text-xs text-gray-400'>Loading assets...</div>
               ) : assets.length === 0 ? (
-                <div className='text-xs text-gray-400'>No 3D assets found.</div>
+                <EmptyState
+                  title='No 3D assets found'
+                  description='Try adjusting your filters or upload new assets in the 3D Viewer admin.'
+                  variant='compact'
+                  className='py-12'
+                />
               ) : (
                 <div className='space-y-2'>
                   {assets.map((asset: Asset3DRecord) => (

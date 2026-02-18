@@ -218,7 +218,7 @@ export function useAiPathsSettingsCleanupActions({
       confirmText: 'Clear Data',
       isDangerous: true,
       onConfirm: async () => {
-        const nextRuntimeState: RuntimeState = { inputs: {}, outputs: {} };
+        const nextRuntimeState: RuntimeState = { inputs: {}, outputs: {} } as unknown as RuntimeState;
         const updatedAt = new Date().toISOString();
         const config: PathConfig = {
           id: activePathId,

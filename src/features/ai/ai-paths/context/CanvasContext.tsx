@@ -11,6 +11,8 @@ import {
   type RefObject,
 } from 'react';
 
+import { clampScale } from '@/features/ai/ai-paths/lib';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -144,7 +146,7 @@ export function CanvasProvider({
       setView: setViewState,
       updateView: (update) => setViewState((prev) => ({ ...prev, ...update })),
       zoomTo: (targetScale) => {
-        setViewState((prev) => ({ ...prev, scale: Math.max(0.25, Math.min(2, targetScale)) }));
+        setViewState((prev) => ({ ...prev, scale: clampScale(targetScale) }));
       },
       resetView: () => setViewState(DEFAULT_VIEW),
 

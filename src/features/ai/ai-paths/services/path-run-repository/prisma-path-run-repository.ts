@@ -112,6 +112,7 @@ const mapEvent = (event: unknown): AiPathRunEventRecord => {
     message: String(e['message']),
     metadata: (e['metadata'] as AiPathRunEventRecord['metadata']) ?? null,
     createdAt: (e['createdAt'] as Date).toISOString(),
+    updatedAt: toIsoString(e['updatedAt'] as Date),
   };
 };
 

@@ -99,6 +99,25 @@ export const createCaseResolverCanvasDropHandlers = ({
   ) => void;
   showDocumentNodeInCanvas: (fileId: string, preferredNodeId?: string | null) => void;
 } => {
+  const toCaseResolverEdge = (
+    edge: Edge
+  ): CaseResolverGraph['edges'][number] | null => {
+    const from = edge.from ?? edge.source;
+    const to = edge.to ?? edge.target;
+    if (!from || !to) return null;
+    return {
+      id: edge.id,
+      from,
+      to,
+      ...(edge.label ? { label: edge.label } : {}),
+      ...(edge.fromPort ?? edge.sourceHandle ? { fromPort: edge.fromPort ?? edge.sourceHandle ?? undefined } : {}),
+      ...(edge.toPort ?? edge.targetHandle ? { toPort: edge.toPort ?? edge.targetHandle ?? undefined } : {}),
+    };
+  };
+  const existingEdges: CaseResolverGraph['edges'] = edges
+    .map(toCaseResolverEdge)
+    .filter((edge): edge is CaseResolverGraph['edges'][number] => edge !== null);
+
   const extractPdfText = async (filepath: string): Promise<string> => {
     try {
       const response = await fetch('/api/case-resolver/assets/extract-pdf', {
@@ -236,21 +255,21 @@ export const createCaseResolverCanvasDropHandlers = ({
         },
       });
 
-      const edgePdfToPrompt: Edge = {
+      const edgePdfToPrompt: CaseResolverGraph['edges'][number] = {
         id: createEdgeId(),
         from: pdfNodeId,
         to: extractionPromptId,
         fromPort: 'prompt',
         toPort: 'result',
       };
-      const edgePromptToModel: Edge = {
+      const edgePromptToModel: CaseResolverGraph['edges'][number] = {
         id: createEdgeId(),
         from: extractionPromptId,
         to: modelNodeId,
         fromPort: 'prompt',
         toPort: 'prompt',
       };
-      const edgeModelToOutput: Edge = {
+      const edgeModelToOutput: CaseResolverGraph['edges'][number] = {
         id: createEdgeId(),
         from: modelNodeId,
         to: outputNodeId,
@@ -269,7 +288,7 @@ export const createCaseResolverCanvasDropHandlers = ({
 
       onGraphChange({
         nodes: [...nodes, pdfNode, extractionPromptNode, modelNode, outputNode],
-        edges: [...edges, edgePdfToPrompt, edgePromptToModel, edgeModelToOutput],
+        edges: [...existingEdges, edgePdfToPrompt, edgePromptToModel, edgeModelToOutput],
         nodeMeta: {
           ...normalizedNodeMeta,
           [extractionPromptId]: {
@@ -428,7 +447,7 @@ export const createCaseResolverCanvasDropHandlers = ({
 
       onGraphChange({
         nodes: nextNodes,
-        edges,
+        edges: existingEdges,
         nodeMeta: nextNodeMeta,
         edgeMeta: normalizedEdgeMeta,
         pdfExtractionPresetId,
@@ -503,7 +522,7 @@ export const createCaseResolverCanvasDropHandlers = ({
 
     onGraphChange({
       nodes: nextNodes,
-      edges,
+      edges: existingEdges,
       nodeMeta: normalizedNodeMeta,
       edgeMeta: normalizedEdgeMeta,
       pdfExtractionPresetId,

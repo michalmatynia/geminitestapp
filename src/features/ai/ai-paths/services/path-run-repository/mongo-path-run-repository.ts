@@ -216,6 +216,7 @@ const toEventRecord = (doc: EventDocument): AiPathRunEventRecord => ({
   message: doc.message,
   metadata: doc.metadata ?? null,
   createdAt: toRequiredIsoString(doc.createdAt),
+  updatedAt: null,
 });
 
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

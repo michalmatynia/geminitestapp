@@ -43,14 +43,14 @@ export function useAiPathsRuntimeState() {
       kind: input.kind,
       level: input.level,
       message: input.message,
-      ...(input.runId !== undefined ? { runId: input.runId } : {}),
-      ...(input.runStartedAt !== undefined ? { runStartedAt: input.runStartedAt } : {}),
-      ...(input.nodeId !== undefined ? { nodeId: input.nodeId } : {}),
-      ...(input.nodeType !== undefined ? { nodeType: input.nodeType } : {}),
-      ...(input.nodeTitle !== undefined ? { nodeTitle: input.nodeTitle } : {}),
-      ...(input.status !== undefined ? { status: input.status } : {}),
+      ...(input.runId != null ? { runId: input.runId } : {}),
+      ...(input.runStartedAt != null ? { runStartedAt: input.runStartedAt } : {}),
+      ...(input.nodeId != null ? { nodeId: input.nodeId } : {}),
+      ...(input.nodeType != null ? { nodeType: input.nodeType } : {}),
+      ...(input.nodeTitle != null ? { nodeTitle: input.nodeTitle } : {}),
+      ...(input.status != null ? { status: input.status } : {}),
       ...(input.iteration !== undefined ? { iteration: input.iteration } : {}),
-      ...(input.metadata !== undefined ? { metadata: input.metadata } : {}),
+      ...(input.metadata != null ? { metadata: input.metadata } : {}),
     };
     setRuntimeEvents((prev: AiPathRuntimeEvent[]): AiPathRuntimeEvent[] => {
       const next = [...prev, event];
@@ -108,7 +108,7 @@ export function useAiPathsRuntimeState() {
       nodeType?: string | null | undefined;
       nodeTitle?: string | null | undefined;
       kind?: AiPathRuntimeEventKind | undefined;
-      level?: 'info' | 'warning' | 'error' | undefined;
+      level?: 'info' | 'warn' | 'error' | undefined;
       message?: string | undefined;
       metadata?: Record<string, unknown> | null | undefined;
     }): void => {
@@ -144,7 +144,7 @@ export function useAiPathsRuntimeState() {
         ...(input.nodeTitle !== undefined ? { nodeTitle: input.nodeTitle } : {}),
         status: normalizedStatus,
         ...(input.iteration !== undefined ? { iteration: input.iteration } : {}),
-        ...(input.metadata !== undefined ? { metadata: input.metadata } : {}),
+        ...(input.metadata != null ? { metadata: input.metadata } : {}),
       });
     },
     [normalizeNodeStatus, appendRuntimeEvent, formatStatusLabel]

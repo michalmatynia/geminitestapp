@@ -32,7 +32,8 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
     });
     return merged;
   }
-  return schema.collections.map((collection) => ({ ...collection, provider: schema.provider }));
+  const provider: 'mongodb' | 'prisma' = schema.provider;
+  return schema.collections.map((collection) => ({ ...collection, provider }));
 };
 
 const buildCollectionKey = (
@@ -162,16 +163,27 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
     [fetchedDbSchema]
   );
   const showProviderLabel = fetchedDbSchema?.provider === 'multi';
-  const availableProviders = React.useMemo(() => {
+  const availableProviders = React.useMemo<Array<'mongodb' | 'prisma'>>(() => {
     if (!fetchedDbSchema) return [] as Array<'mongodb' | 'prisma'>;
     if (fetchedDbSchema.provider === 'multi') {
       const providers = new Set<'mongodb' | 'prisma'>();
       schemaCollections.forEach((collection) => {
-        if (collection.provider) providers.add(collection.provider);
+        if (
+          collection.provider === 'mongodb' ||
+          collection.provider === 'prisma'
+        ) {
+          providers.add(collection.provider);
+        }
       });
       return Array.from(providers);
     }
-    return [fetchedDbSchema.provider];
+    if (
+      fetchedDbSchema.provider === 'mongodb' ||
+      fetchedDbSchema.provider === 'prisma'
+    ) {
+      return [fetchedDbSchema.provider];
+    }
+    return [] as Array<'mongodb' | 'prisma'>;
   }, [fetchedDbSchema, schemaCollections]);
 
   React.useEffect((): void => {

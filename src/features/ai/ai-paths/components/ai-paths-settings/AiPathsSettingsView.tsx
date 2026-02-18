@@ -13,13 +13,13 @@ import {
   SelectSimple,
   useToast,
   StatusBadge,
+  LoadingState,
   type StatusVariant,
 } from '@/shared/ui';
 
 import { useAiPathsSettingsOrchestrator } from './AiPathsSettingsOrchestratorContext';
 import { useAiPathsSettingsPageContext } from './AiPathsSettingsPageContext';
 import { useAiPathsErrorReporting } from './useAiPathsErrorReporting';
-import { usePathConfigHandlers } from './usePathConfigHandlers';
 import {
   useGraphActions,
   useGraphState,
@@ -42,11 +42,7 @@ import { RuntimeEventLogPanel } from '../runtime-event-log-panel';
 import { SimulationDialog } from '../simulation-dialog';
 import { DocsTabPanel, PathsTabPanel } from '../ui-panels';
 import {
-  FLOW_OPTIONS,
-  RUN_MODE_OPTIONS,
-  EXECUTION_OPTIONS,
   buildSwitchPathOptions,
-  buildHistoryRetentionOptions,
   formatDurationMs,
   formatPercent,
   formatStatusLabel,
@@ -87,8 +83,6 @@ export function AiPathsSettingsView(): React.JSX.Element {
     isPathLocked,
     isPathActive,
     executionMode,
-    flowIntensity,
-    runMode,
     nodes,
   } = useGraphState();
   const { setPathName, setPaths } = useGraphActions();
@@ -105,13 +99,6 @@ export function AiPathsSettingsView(): React.JSX.Element {
   // Utility — imported directly
   const { toast } = useToast();
 
-  // Domain: Path config — read from dedicated hook
-  const {
-    handleExecutionModeChange,
-    handleFlowIntensityChange,
-    handleRunModeChange,
-  } = usePathConfigHandlers();
-
   // Domain: Error reporting — read from dedicated hook
   const { persistLastError } = useAiPathsErrorReporting(activeTab);
 
@@ -120,9 +107,6 @@ export function AiPathsSettingsView(): React.JSX.Element {
     handleSwitchPath,
     handleTogglePathLock,
     handleTogglePathActive,
-    historyRetentionPasses,
-    historyRetentionOptionsMax,
-    handleHistoryRetentionChange,
     handleClearConnectorData,
     handleClearHistory,
     ConfirmationModal,
@@ -138,7 +122,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
           (autoSaveAt ? ' at ' + new Date(autoSaveAt).toLocaleTimeString() : '')
         : autoSaveStatus === 'error'
           ? 'Save failed'
-          : 'Manual save only';
+          : '';
   const autoSaveVariant: StatusVariant =
     autoSaveStatus === 'saved'
       ? 'success'
@@ -148,7 +132,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
           ? 'processing'
           : 'neutral';
 
-  const hasHistory = Object.keys(runtimeState.history ?? {}).length > 0;
+  const hasHistory = (runtimeState.events?.length ?? 0) > 0;
 
   const [isFocusModeInternal, setIsFocusModeInternal] = useState(false);
   const [isPathNameEditing, setIsPathNameEditing] = useState(false);
@@ -212,14 +196,6 @@ export function AiPathsSettingsView(): React.JSX.Element {
   const { setNodes } = useGraphActions();
   const { runSimulation } = useRuntimeActions();
 
-  const historyRetentionOptions = useMemo(
-    () =>
-      buildHistoryRetentionOptions(
-        historyRetentionPasses,
-        historyRetentionOptionsMax,
-      ),
-    [historyRetentionOptionsMax, historyRetentionPasses],
-  );
   const pathSwitchOptions = useMemo(
     () => buildSwitchPathOptions(sortPathMetas(paths)),
     [paths],
@@ -284,7 +260,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
   );
 
   if (loading) {
-    return <div className='text-sm text-gray-400'>Loading AI Paths...</div>;
+    return <LoadingState message='Loading AI Paths...' className='py-12' />;
   }
 
   return (
@@ -396,19 +372,13 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         className='font-medium'
                         title='Selected nodes count'
                       />
-                      <div className='text-[11px] text-gray-400'>
-                        {selectionToolMode === 'select'
-                          ? selectionScopeMode === 'wiring'
+                      {selectionToolMode === 'select' ? (
+                        <div className='text-[11px] text-gray-400'>
+                          {selectionScopeMode === 'wiring'
                             ? 'Drag to select connected subgraphs. Shift add, Alt subtract.'
-                            : 'Drag to select node portions only. Shift add, Alt subtract.'
-                          : 'Use Select tool to draw a selection rectangle.'}
-                      </div>
-                      <div className='text-[11px] text-gray-500'>
-                        Shift/Cmd/Ctrl+click toggles selection. Ctrl/Cmd+A selects all nodes.
-                      </div>
-                      <div className='text-[11px] text-gray-500'>
-                        Ctrl/Cmd+C copy, Ctrl/Cmd+X cut, Ctrl/Cmd+V paste, Ctrl/Cmd+D duplicate.
-                      </div>
+                            : 'Drag to select node portions only. Shift add, Alt subtract.'}
+                        </div>
+                      ) : null}
                       <Button
                         className='rounded-md border border-amber-500/40 text-sm text-amber-200 hover:bg-amber-500/10'
                         onClick={() => {
@@ -518,12 +488,14 @@ export function AiPathsSettingsView(): React.JSX.Element {
           {!isFocusMode && typeof document !== 'undefined' && activePathId
             ? createPortal(
               <div className='flex items-center justify-end gap-2'>
-                <StatusBadge
-                  status={autoSaveLabel}
-                  variant={autoSaveVariant}
-                  size='sm'
-                  className='font-medium'
-                />
+                {autoSaveLabel ? (
+                  <StatusBadge
+                    status={autoSaveLabel}
+                    variant={autoSaveVariant}
+                    size='sm'
+                    className='font-medium'
+                  />
+                ) : null}
                 {lastRunAt && (
                   <StatusBadge
                     status={
@@ -534,87 +506,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                     className='font-medium'
                   />
                 )}
-                <div className='flex flex-col items-end gap-1'>
-                  <Label className='text-[10px] uppercase text-gray-500'>
-                      Execution
-                  </Label>
-                  <SelectSimple
-                    size='sm'
-                    value={executionMode}
-                    onValueChange={(value: string): void => {
-                      if (value !== executionMode) {
-                        handleExecutionModeChange(
-                            value as 'local' | 'server',
-                        );
-                      }
-                    }}
-                    options={[...EXECUTION_OPTIONS]}
-                    className='w-[160px]'
-                    triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
-                    disabled={isPathLocked}
-                  />
-                </div>
-                <div className='flex flex-col items-end gap-1'>
-                  <Label className='text-[10px] uppercase text-gray-500'>
-                      Flow
-                  </Label>
-                  <SelectSimple
-                    size='sm'
-                    value={flowIntensity}
-                    onValueChange={(value: string): void => {
-                      if (value !== flowIntensity) {
-                        handleFlowIntensityChange(
-                            value as 'off' | 'low' | 'medium' | 'high',
-                        );
-                      }
-                    }}
-                    options={[...FLOW_OPTIONS]}
-                    className='w-[160px]'
-                    triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
-                    disabled={isPathLocked}
-                  />
-                </div>
-                <div className='flex flex-col items-end gap-1'>
-                  <Label className='text-[10px] uppercase text-gray-500'>
-                      Run Mode
-                  </Label>
-                  <SelectSimple
-                    size='sm'
-                    value={runMode}
-                    onValueChange={(value: string): void => {
-                      if (value !== runMode) {
-                        handleRunModeChange(value as 'block' | 'queue');
-                      }
-                    }}
-                    options={[...RUN_MODE_OPTIONS]}
-                    className='w-[160px]'
-                    triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
-                    disabled={isPathLocked}
-                  />
-                </div>
-                <div className='flex flex-col items-end gap-1'>
-                  <Label className='text-[10px] uppercase text-gray-500'>
-                      History
-                  </Label>
-                  <SelectSimple
-                    size='sm'
-                    value={String(historyRetentionPasses)}
-                    onValueChange={(value: string): void => {
-                      const parsed = Number.parseInt(value, 10);
-                      if (
-                        !Number.isFinite(parsed) ||
-                          parsed === historyRetentionPasses
-                      )
-                        return;
-                      void handleHistoryRetentionChange(parsed);
-                    }}
-                    options={historyRetentionOptions}
-                    className='w-[140px]'
-                    triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
-                    disabled={saving}
-                  />
-                </div>
-                <div className='flex flex-col items-end gap-1'>
+                <div className='flex items-center gap-2'>
                   {isPathNameEditing ? (
                     <input
                       type='text'
@@ -656,25 +548,20 @@ export function AiPathsSettingsView(): React.JSX.Element {
                       </span>
                     </button>
                   )}
-                  <div className='flex w-full flex-col items-end gap-1'>
-                    <Label className='text-[10px] uppercase text-gray-500'>
-                      Path Selector
-                    </Label>
-                    <SelectSimple
-                      size='sm'
-                      value={activePathId ?? undefined}
-                      onValueChange={(value: string): void => {
-                        if (value !== activePathId) {
-                          handleSwitchPath(value);
-                        }
-                      }}
-                      options={pathSwitchOptions}
-                      placeholder='Select path'
-                      className='w-[320px]'
-                      triggerClassName='h-8 border-border bg-card/60 px-3 text-xs text-white'
-                      disabled={pathSwitchOptions.length === 0}
-                    />
-                  </div>
+                  <SelectSimple
+                    size='sm'
+                    value={activePathId ?? undefined}
+                    onValueChange={(value: string): void => {
+                      if (value !== activePathId) {
+                        handleSwitchPath(value);
+                      }
+                    }}
+                    options={pathSwitchOptions}
+                    placeholder='Select path'
+                    className='w-[240px]'
+                    triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
+                    disabled={pathSwitchOptions.length === 0}
+                  />
                 </div>
               </div>,
               document.getElementById('ai-paths-name') ?? document.body,
@@ -883,28 +770,23 @@ export function AiPathsSettingsView(): React.JSX.Element {
                             {new Date(event.timestamp).toLocaleTimeString()}
                           </span>
                           <StatusBadge
-                            status={event.level}
+                            status={event.level ?? 'info'}
                             variant={
                               event.level === 'error'
                                 ? 'error'
-                                : event.level === 'warning'
+                                : event.level === 'warn'
                                   ? 'warning'
                                   : 'info'
                             }
                             size='sm'
                             className='font-bold'
                           />
-                          <span className='rounded-full border border-border/60 px-1.5 py-0.5 text-gray-400'>
-                            {event.source}
-                          </span>
-                          {event.status ? (
-                            <StatusBadge
-                              status={formatStatusLabel(event.status)}
-                              variant={statusToVariant(event.status)}
-                              size='sm'
-                              className='font-medium'
-                            />
-                          ) : null}
+                          <StatusBadge
+                            status={event.nodeType ?? event.type ?? 'event'}
+                            variant='neutral'
+                            size='sm'
+                            className='border-border/60 text-gray-400'
+                          />
                         </div>
                         <div className='mt-1 text-gray-200'>
                           {event.message}
@@ -999,84 +881,24 @@ export function AiPathsSettingsView(): React.JSX.Element {
             <Label className='text-[10px] uppercase text-gray-500'>
               Save Mode
             </Label>
-            <StatusBadge
-              status={autoSaveLabel}
-              variant={autoSaveVariant}
-              size='sm'
-              className='font-medium'
-            />
+            {autoSaveLabel ? (
+              <StatusBadge
+                status={autoSaveLabel}
+                variant={autoSaveVariant}
+                size='sm'
+                className='font-medium'
+              />
+            ) : null}
           </div>
           <div className='space-y-1'>
             <Label className='text-[10px] uppercase text-gray-500'>
               Execution
             </Label>
-            <SelectSimple
+            <StatusBadge
+              status={executionMode === 'local' ? 'Local runtime' : 'Server runtime'}
+              variant={executionMode === 'local' ? 'info' : 'active'}
               size='sm'
-              value={executionMode}
-              onValueChange={(value: string): void => {
-                if (value !== executionMode) {
-                  handleExecutionModeChange(value as 'local' | 'server');
-                }
-              }}
-              options={[...EXECUTION_OPTIONS]}
-              triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
-              disabled={isPathLocked}
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[10px] uppercase text-gray-500'>
-              Flow
-            </Label>
-            <SelectSimple
-              size='sm'
-              value={flowIntensity}
-              onValueChange={(value: string): void => {
-                if (value !== flowIntensity) {
-                  handleFlowIntensityChange(value as 'off' | 'low' | 'medium' | 'high');
-                }
-              }}
-              options={[...FLOW_OPTIONS]}
-              triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
-              disabled={isPathLocked}
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[10px] uppercase text-gray-500'>
-              Run Mode
-            </Label>
-            <SelectSimple
-              size='sm'
-              value={runMode}
-              onValueChange={(value: string): void => {
-                if (value !== runMode) {
-                  handleRunModeChange(value as 'block' | 'queue');
-                }
-              }}
-              options={[...RUN_MODE_OPTIONS]}
-              triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
-              disabled={isPathLocked}
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[10px] uppercase text-gray-500'>
-              History
-            </Label>
-            <SelectSimple
-              size='sm'
-              value={String(historyRetentionPasses)}
-              onValueChange={(value: string): void => {
-                const parsed = Number.parseInt(value, 10);
-                if (
-                  !Number.isFinite(parsed) ||
-                  parsed === historyRetentionPasses
-                ) {
-                  return;
-                }
-                void handleHistoryRetentionChange(parsed);
-              }}
-              options={historyRetentionOptions}
-              triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
-              disabled={saving}
+              className='font-medium'
             />
           </div>
         </div>

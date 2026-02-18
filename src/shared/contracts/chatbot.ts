@@ -368,6 +368,37 @@ export const chatbotTimelineEntrySchema = z.object({
 export type ChatbotTimelineEntryDto = z.infer<typeof chatbotTimelineEntrySchema>;
 
 /**
+ * Agent Settings Payload DTO
+ */
+
+export const agentSettingsPayloadSchema = z.object({
+  agentBrowser: z.string(),
+  runHeadless: z.boolean(),
+  ignoreRobotsTxt: z.boolean(),
+  requireHumanApproval: z.boolean(),
+  memoryValidationModel: z.string(),
+  plannerModel: z.string(),
+  selfCheckModel: z.string(),
+  extractionValidationModel: z.string(),
+  toolRouterModel: z.string(),
+  loopGuardModel: z.string(),
+  approvalGateModel: z.string(),
+  memorySummarizationModel: z.string(),
+  selectorInferenceModel: z.string(),
+  outputNormalizationModel: z.string(),
+  maxSteps: z.number(),
+  maxStepAttempts: z.number(),
+  maxReplanCalls: z.number(),
+  replanEverySteps: z.number(),
+  maxSelfChecks: z.number(),
+  loopGuardThreshold: z.number(),
+  loopBackoffBaseMs: z.number(),
+  loopBackoffMaxMs: z.number(),
+});
+
+export type AgentSettingsPayloadDto = z.infer<typeof agentSettingsPayloadSchema>;
+
+/**
  * Model Profile DTOs
  */
 export const modelProfileSchema = z.object({

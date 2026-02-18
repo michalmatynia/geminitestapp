@@ -16,7 +16,17 @@ import type {
   ProductCatalogDto,
   ProductTagRelationDto,
   ProductProducerRelationDto,
-  ProductParameterValueDto
+  ProductParameterValueDto,
+  ProductDbProviderDto,
+  ProductMigrationDirectionDto,
+  SyncDirectionDto,
+  PriceGroupTypeDto,
+  ProductValidatorConfigDto,
+  ProductValidatorSettingsDto,
+  ProductMigrationBatchResultDto,
+  ProducerDto,
+  ProductCurrencyDto,
+  ProductParameterDto,
 } from '../../contracts/products';
 
 export type {
@@ -37,41 +47,25 @@ export type {
   ProductParameterValueDto
 };
 
-export type ProductDbProvider = 'prisma' | 'mongodb';
-export type ProductMigrationDirection = 'prisma-to-mongo' | 'mongo-to-prisma';
-export type SyncDirection = 'to_base' | 'from_base' | 'bidirectional';
+export type ProductDbProvider = ProductDbProviderDto;
+export type ProductMigrationDirection = ProductMigrationDirectionDto;
+export type SyncDirection = SyncDirectionDto;
 
-export type PriceGroupType = 'standard' | 'dependent';
+export type PriceGroupType = PriceGroupTypeDto;
 export type ProductParameterSelectorType = ProductParameterSelectorTypeDto;
 
-export type ProductParameter = Entity & {
-  catalogId: string;
-  name_en: string;
-  name_pl: string | null;
-  name_de: string | null;
-  selectorType: ProductParameterSelectorType;
-  optionLabels: string[];
-};
+export type ProductParameter = ProductParameterDto;
 
 export type ProductParameterValue = ProductParameterValueDto;
 
-export type ProductSimpleParameter = Entity & {
-  catalogId: string;
-  name_en: string;
-  name_pl: string | null;
-  name_de: string | null;
-};
+export type ProductSimpleParameter = Omit<ProductParameterDto, 'selectorType' | 'optionLabels'>;
 
 export type ProductSimpleParameterValue = {
   parameterId: string;
   value?: string | null;
 };
 
-export type CurrencyRecord = Entity & {
-  code: string;
-  name: string;
-  symbol: string | null;
-};
+export type CurrencyRecord = ProductCurrencyDto;
 
 /**
  * Domain record for a price group.
@@ -139,10 +133,7 @@ export type ProductCategoryWithChildren = ProductCategory & {
  */
 export type ProductTag = ProductTagDto;
 
-export type Producer = Entity & {
-  name: string;
-  website: string | null;
-};
+export type Producer = ProducerDto;
 
 export type ProductValidationTarget =
   | 'name'
@@ -152,9 +143,7 @@ export type ProductValidationTarget =
   | 'stock'
   | 'category'
   | 'size_length'
-  | 'size_width'
-  | 'length'
-  | 'weight';
+  | 'size_width' | 'length' | 'weight';
 
 export type ProductValidationSeverity = 'error' | 'warning';
 export type ProductValidationDenyBehavior = 'ask_again' | 'mute_session';
@@ -235,16 +224,9 @@ export type ProductValidationPattern = Entity & {
   appliesToScopes?: ProductValidationInstanceScope[];
 };
 
-export type ProductValidatorConfig = {
-  enabledByDefault: boolean;
-  instanceDenyBehavior: ProductValidationInstanceDenyBehaviorMap;
-  patterns: ProductValidationPattern[];
-};
+export type ProductValidatorConfig = ProductValidatorConfigDto;
 
-export type ProductValidatorSettings = {
-  enabledByDefault: boolean;
-  instanceDenyBehavior: ProductValidationInstanceDenyBehaviorMap;
-};
+export type ProductValidatorSettings = ProductValidatorSettingsDto;
 
 export interface CreateProductDraftInput extends Partial<CreateProductDto> {
   sku: string;
@@ -257,13 +239,10 @@ export interface UpdateProductDraftInput extends Partial<UpdateProductDto> {
 export { type ProductAiJobType } from './jobs';
 export { type UserPreferences } from './user-preferences';
 
-export type IntegrationDbProvider = 'prisma' | 'mongodb';
+export type IntegrationDbProvider = IntegrationDbProviderDto;
+export const IntegrationDbProvider = {
+  PRISMA: 'prisma',
+  MONGODB: 'mongodb',
+} as const;
 
-export type ProductMigrationBatchResult = {
-  direction: ProductMigrationDirection;
-  productsProcessed: number;
-  productsUpserted: number;
-  nextCursor: string | null;
-  missingImageFileIds: string[];
-  missingCatalogIds: string[];
-};
+export type ProductMigrationBatchResult = ProductMigrationBatchResultDto;

@@ -27,6 +27,7 @@ import {
   DropdownMenuSeparator,
   Input,
   Alert,
+  FileUploadTrigger,
 } from '@/shared/ui';
 import { DRAG_KEYS, getFirstDragValue, parseDragIndex, setDragData } from '@/shared/utils/drag-drop';
 
@@ -131,7 +132,6 @@ export default function ProductImageManager({
   const [base64LoadingSlots, setBase64LoadingSlots] = useState<Record<number, boolean>>({});
   const [linkToFileLoadingSlots, setLinkToFileLoadingSlots] = useState<Record<number, boolean>>({});
   const currentSlotIndexRef = React.useRef<number | null>(null);
-  const fileInputRefs = React.useRef<Array<HTMLInputElement | null>>([]);
   const reportedImageErrorsRef = React.useRef<Set<string>>(new Set());
 
   // Drag and drop state
@@ -249,10 +249,6 @@ export default function ProductImageManager({
         slotIndex,
       });
     }
-  };
-
-  const openSlotFilePicker = (slotIndex: number): void => {
-    fileInputRefs.current[slotIndex]?.click();
   };
 
   const triggerFileManager = (index: number): void => {
@@ -705,9 +701,15 @@ export default function ProductImageManager({
               className='min-w-[160px]'
             >
               <div data-preserve-slot-selection='true'>
-                <DropdownMenuItem onClick={() => openSlotFilePicker(index)}>
-                  Upload image
-                </DropdownMenuItem>
+                <FileUploadTrigger
+                  accept='image/*'
+                  onFilesSelected={(files) => handleSlotFileUpload(index, files)}
+                  asChild
+                >
+                  <DropdownMenuItem>
+                    Upload image
+                  </DropdownMenuItem>
+                </FileUploadTrigger>
                 <DropdownMenuItem onClick={() => triggerFileManager(index)}>
                   Choose existing
                 </DropdownMenuItem>
@@ -761,122 +763,127 @@ export default function ProductImageManager({
           );
 
           const thumbnailFrame = (
-            <div
-              draggable={canReorder && hasUpload}
-              onDragStart={(e: React.DragEvent<HTMLDivElement>) => handleDragStart(e, index)}
-              onDragEnd={handleDragEnd}
-              onDragOver={(e: React.DragEvent<HTMLDivElement>) => handleDragOver(e, index)}
-              onDragLeave={handleDragLeave}
-              onDrop={(e: React.DragEvent<HTMLDivElement>) => handleDrop(e, index)}
-              className={`
-                relative flex ${isSingleMinimalSlot ? singleMinimalSlotFrameClass : 'h-24 w-24'} items-center justify-center rounded-md border-2 bg-gray-800
-                ${!isReordering ? 'transition-all' : ''}
-                ${hasUpload ? 'cursor-grab active:cursor-grabbing' : ''}
-                ${isDragging ? 'opacity-70 ring-2 ring-emerald-400/60 scale-[0.98] border-emerald-400/40' : 'border'}
-                ${isDragOver ? 'border-emerald-500 bg-emerald-500/10' : ''}
-              `}
+            <FileUploadTrigger
+              accept='image/*'
+              onFilesSelected={(files) => handleSlotFileUpload(index, files)}
+              disabled={imageLocked}
+              asChild
             >
-              <div className={`flex h-full w-full items-center justify-center ${isReordering ? 'pointer-events-none' : ''}`}>
-                {displayUrl ? (
-                  <>
-                    {hasUpload && showDragHandle ? (
-                      <div className='absolute left-0 top-0 z-10 flex h-6 w-6 items-center justify-center rounded-br-md bg-gray-900/80 text-gray-400'>
-                        <GripVertical className='h-3 w-3' />
-                      </div>
-                    ) : null}
-                    {isLocalPreviewUrl(displayUrl) ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={displayUrl}
-                        alt={`Product Image ${index + 1}`}
-                        className='h-full w-full rounded-md object-cover pointer-events-none'
-                        draggable={false}
-                        onDragStart={(event: React.DragEvent<HTMLImageElement>) => event.preventDefault()}
-                        onError={() => {
-                          const signature = `${index}:${displayUrl}`;
-                          if (reportedImageErrorsRef.current.has(signature)) return;
-                          reportedImageErrorsRef.current.add(signature);
-                          pushDebug({
-                            action: 'image-load',
-                            message: 'Failed to load preview',
-                            slotIndex: index,
-                          });
-                        }}
-                        onLoad={() => {
-                          const signature = `${index}:${displayUrl}`;
-                          reportedImageErrorsRef.current.delete(signature);
-                        }}
-                      />
-                    ) : (
-                      <NextImage
-                        src={displayUrl}
-                        alt={`Product Image ${index + 1}`}
-                        width={previewSize}
-                        height={previewSize}
-                        sizes={`${previewSize}px`}
-                        unoptimized
-                        className='h-full w-full rounded-md object-cover pointer-events-none'
-                        draggable={false}
-                        onDragStart={(event: React.DragEvent<HTMLImageElement>) => event.preventDefault()}
-                        onError={() => {
-                          const signature = `${index}:${displayUrl}`;
-                          if (reportedImageErrorsRef.current.has(signature)) return;
-                          reportedImageErrorsRef.current.add(signature);
-                          pushDebug({
-                            action: 'image-load',
-                            message: 'Failed to load preview',
-                            slotIndex: index,
-                          });
-                        }}
-                        onLoad={() => {
-                          const signature = `${index}:${displayUrl}`;
-                          reportedImageErrorsRef.current.delete(signature);
-                        }}
-                      />
-                    )}
-                    {displayUrl && !minimalUi && !imageLocked ? (
+              <div
+                draggable={canReorder && hasUpload}
+                onDragStart={(e: React.DragEvent<HTMLDivElement>) => handleDragStart(e, index)}
+                onDragEnd={handleDragEnd}
+                onDragOver={(e: React.DragEvent<HTMLDivElement>) => handleDragOver(e, index)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e: React.DragEvent<HTMLDivElement>) => handleDrop(e, index)}
+                className={`
+                  relative flex ${isSingleMinimalSlot ? singleMinimalSlotFrameClass : 'h-24 w-24'} items-center justify-center rounded-md border-2 bg-gray-800
+                  ${!isReordering ? 'transition-all' : ''}
+                  ${hasUpload ? 'cursor-grab active:cursor-grabbing' : ''}
+                  ${isDragging ? 'opacity-70 ring-2 ring-emerald-400/60 scale-[0.98] border-emerald-400/40' : 'border'}
+                  ${isDragOver ? 'border-emerald-500 bg-emerald-500/10' : ''}
+                `}
+              >
+                <div className={`flex h-full w-full items-center justify-center ${isReordering ? 'pointer-events-none' : ''}`}>
+                  {displayUrl ? (
+                    <>
+                      {hasUpload && showDragHandle ? (
+                        <div className='absolute left-0 top-0 z-10 flex h-6 w-6 items-center justify-center rounded-br-md bg-gray-900/80 text-gray-400'>
+                          <GripVertical className='h-3 w-3' />
+                        </div>
+                      ) : null}
+                      {isLocalPreviewUrl(displayUrl) ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={displayUrl}
+                          alt={`Product Image ${index + 1}`}
+                          className='h-full w-full rounded-md object-cover pointer-events-none'
+                          draggable={false}
+                          onDragStart={(event: React.DragEvent<HTMLImageElement>) => event.preventDefault()}
+                          onError={() => {
+                            const signature = `${index}:${displayUrl}`;
+                            if (reportedImageErrorsRef.current.has(signature)) return;
+                            reportedImageErrorsRef.current.add(signature);
+                            pushDebug({
+                              action: 'image-load',
+                              message: 'Failed to load preview',
+                              slotIndex: index,
+                            });
+                          }}
+                          onLoad={() => {
+                            const signature = `${index}:${displayUrl}`;
+                            reportedImageErrorsRef.current.delete(signature);
+                          }}
+                        />
+                      ) : (
+                        <NextImage
+                          src={displayUrl}
+                          alt={`Product Image ${index + 1}`}
+                          width={previewSize}
+                          height={previewSize}
+                          sizes={`${previewSize}px`}
+                          unoptimized
+                          className='h-full w-full rounded-md object-cover pointer-events-none'
+                          draggable={false}
+                          onDragStart={(event: React.DragEvent<HTMLImageElement>) => event.preventDefault()}
+                          onError={() => {
+                            const signature = `${index}:${displayUrl}`;
+                            if (reportedImageErrorsRef.current.has(signature)) return;
+                            reportedImageErrorsRef.current.add(signature);
+                            pushDebug({
+                              action: 'image-load',
+                              message: 'Failed to load preview',
+                              slotIndex: index,
+                            });
+                          }}
+                          onLoad={() => {
+                            const signature = `${index}:${displayUrl}`;
+                            reportedImageErrorsRef.current.delete(signature);
+                          }}
+                        />
+                      )}
+                      {displayUrl && !minimalUi && !imageLocked ? (
+                        <Button
+                          type='button'
+                          variant='destructive'
+                          size='icon'
+                          className='absolute right-0 top-0 h-6 w-6 rounded-full'
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            clearVisibleImage();
+                          }}
+                          aria-label={`Remove image from slot ${index + 1}`}
+                        >
+                          <XIcon className='h-4 w-4' />
+                        </Button>
+                      ) : null}
+                      {!minimalUi ? (
+                        <div className='absolute bottom-0 left-0 rounded-tr-md bg-gray-900/80 px-1.5 py-0.5 text-[10px] text-gray-400'>
+                          {index + 1}
+                        </div>
+                      ) : null}
+                    </>
+                  ) : (
+                    <div className='flex flex-col items-center justify-center text-gray-500'>
+                      <PlusIcon className='h-6 w-6' />
+                      <span className='text-xs'>Upload</span>
                       <Button
                         type='button'
-                        variant='destructive'
-                        size='icon'
-                        className='absolute right-0 top-0 h-6 w-6 rounded-full'
-                        onClick={clearVisibleImage}
-                        aria-label={`Remove image from slot ${index + 1}`}
+                        variant='ghost'
+                        className='text-xs'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          triggerFileManager(index);
+                        }}
+                        aria-label={`Choose existing image for slot ${index + 1}`}
                       >
-                        <XIcon className='h-4 w-4' />
+                        Choose Existing
                       </Button>
-                    ) : null}
-                    {!minimalUi ? (
-                      <div className='absolute bottom-0 left-0 rounded-tr-md bg-gray-900/80 px-1.5 py-0.5 text-[10px] text-gray-400'>
-                        {index + 1}
-                      </div>
-                    ) : null}
-                  </>
-                ) : (
-                  <div className='flex flex-col items-center justify-center text-gray-500'>
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      size='icon'
-                      aria-label={`Upload image to slot ${index + 1}`}
-                      onClick={() => openSlotFilePicker(index)}
-                    >
-                      <PlusIcon className='h-6 w-6' />
-                    </Button>
-                    <span className='text-xs'>Upload</span>
-                    <Button
-                      type='button'
-                      variant='ghost'
-                      className='text-xs'
-                      onClick={() => triggerFileManager(index)}
-                      aria-label={`Choose existing image for slot ${index + 1}`}
-                    >
-                      Choose Existing
-                    </Button>
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            </FileUploadTrigger>
           );
 
           // Use index as key to prevent re-mounting during drag/drop and updates
@@ -899,22 +906,6 @@ export default function ProductImageManager({
                   {slotLabel}
                 </div>
               ) : null}
-              <input
-                ref={(node: HTMLInputElement | null) => {
-                  fileInputRefs.current[index] = node;
-                }}
-                type='file'
-                accept='image/*'
-                multiple
-                className='hidden'
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                  const files = Array.from(event.target.files ?? []);
-                  handleSlotFileUpload(index, files);
-                  event.currentTarget.value = '';
-                }}
-                aria-hidden='true'
-                tabIndex={-1}
-              />
               {minimalUi ? (
                 <div className={`${isSingleMinimalSlot && minimalSingleSlotAlign === 'left' ? '' : 'mx-auto'} flex ${minimalLayoutWidthClass} items-start gap-2`}>
                   {thumbnailFrame}

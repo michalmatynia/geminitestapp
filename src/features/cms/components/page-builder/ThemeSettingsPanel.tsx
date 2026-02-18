@@ -427,9 +427,13 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
                   onFilesSelected={(files: File[]) => handleLogoSelect(files)}
                   asChild
                 >
-                  <button type='button' className='flex w-full items-center justify-center rounded border border-border/50 bg-gray-800/30 px-3 py-3 text-xs font-medium text-gray-300 hover:bg-muted/40'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    className='flex w-full items-center justify-center rounded border border-border/50 bg-gray-800/30 px-3 py-3 text-xs font-medium text-gray-300 hover:bg-muted/40'
+                  >
                     Image upload box
-                  </button>
+                  </Button>
                 </FileUploadTrigger>
                 <div className='flex items-center gap-2'>
                   <FileUploadButton size='sm' variant='outline' accept='image/*' onFilesSelected={(files: File[]) => handleLogoSelect(files)}>

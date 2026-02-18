@@ -166,9 +166,24 @@ export function useAiPathsSettingsPathActions({
       setPathName(config.name);
       setPathDescription(config.description);
       setActiveTrigger(normalizeTriggerLabel(config.trigger));
-      setExecutionMode(config.executionMode ?? 'server');
-      setFlowIntensity(config.flowIntensity ?? 'medium');
-      setRunMode(config.runMode ?? 'block');
+      setExecutionMode(
+        config.executionMode === 'local' || config.executionMode === 'server'
+          ? config.executionMode
+          : 'server'
+      );
+      setFlowIntensity(
+        config.flowIntensity === 'off' ||
+          config.flowIntensity === 'low' ||
+          config.flowIntensity === 'medium' ||
+          config.flowIntensity === 'high'
+          ? config.flowIntensity
+          : 'medium'
+      );
+      setRunMode(
+        config.runMode === 'queue' || config.runMode === 'block'
+          ? config.runMode
+          : 'block'
+      );
       setParserSamples(config.parserSamples ?? {});
       setUpdaterSamples(config.updaterSamples ?? {});
       setRuntimeState(parseRuntimeState(config.runtimeState));
@@ -251,7 +266,7 @@ export function useAiPathsSettingsPathActions({
       isActive: true,
       parserSamples: {},
       updaterSamples: {},
-      runtimeState: { inputs: {}, outputs: {} },
+      runtimeState: null,
       lastRunAt: null,
       runCount: 0,
       uiState: {
@@ -328,7 +343,7 @@ export function useAiPathsSettingsPathActions({
         edges: duplicatedEdges,
         updatedAt: now,
         isLocked: false,
-        runtimeState: { inputs: {}, outputs: {} },
+        runtimeState: null,
         lastRunAt: null,
         runCount: 0,
         uiState: {

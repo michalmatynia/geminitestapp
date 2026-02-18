@@ -3,6 +3,7 @@ import type {
   ProductListingExportEventDto,
   ProductListingRelistPolicyDto,
   ProductListingWithDetailsDto,
+  CreateProductListingDto,
 } from '@/shared/contracts/integrations';
 import type { 
   IntegrationConnectionBasic, 
@@ -26,22 +27,7 @@ export type {
   IntegrationWithConnectionsBasic,
 };
 
-export type CreateProductListingInput = {
-  productId: string;
-  integrationId: string;
-  connectionId: string;
-  status?: string;
-  externalListingId?: string | null;
-  inventoryId?: string | null;
-  expiresAt?: string | null;
-  nextRelistAt?: string | null;
-  relistPolicy?: ProductListingRelistPolicy | null;
-  relistAttempts?: number;
-  lastRelistedAt?: string | null;
-  lastStatusCheckAt?: string | null;
-  marketplaceData?: Record<string, unknown> | null;
-  failureReason?: string | null;
-};
+export type CreateProductListingInput = CreateProductListingDto;
 
 export type ProductListingRepository = {
   getListingsByProductId: (productId: string) => Promise<ProductListingWithDetails[]>;

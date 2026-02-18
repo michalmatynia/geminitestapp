@@ -10,7 +10,7 @@ import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { NoteWithRelations, RelatedNote } from '@/shared/types/domain/notes';
-import { Button, Input, FormSection } from '@/shared/ui';
+import { Button, Input, FormSection, EmptyState, LoadingState } from '@/shared/ui';
 
 type NotesLookupResult = RelatedNote[];
 
@@ -100,11 +100,16 @@ export default function ProductFormNoteLink(): React.JSX.Element {
 
         <div className='mt-2 space-y-2 max-h-[300px] overflow-y-auto pr-1'>
           {query.trim().length < 2 ? (
-            <div className='text-xs text-muted-foreground italic'>Start typing to search notes...</div>
+            <div className='text-xs text-muted-foreground italic py-4 text-center'>Start typing to search notes...</div>
           ) : searching ? (
-            <div className='text-xs text-muted-foreground animate-pulse'>Searching...</div>
+            <LoadingState message='Searching...' className='py-4' size='sm' />
           ) : searchResults.length === 0 ? (
-            <div className='text-xs text-muted-foreground italic'>No notes found.</div>
+            <EmptyState
+              title='No notes found'
+              description='No notes match your search criteria.'
+              variant='compact'
+              className='py-6'
+            />
           ) : (
             searchResults.slice(0, 10).map((note: NoteWithRelations) => {
               const isLinked = selectedNoteIds.includes(note.id);
@@ -170,12 +175,22 @@ export default function ProductFormNoteLink(): React.JSX.Element {
         </div>
 
         <div className='mt-2 space-y-2'>
-          {selectedNoteIds.length === 0 ? null : loadingLinked ? (
-            <div className='text-xs text-muted-foreground animate-pulse text-center py-4'>Loading linked notes...</div>
+          {selectedNoteIds.length === 0 ? (
+            <EmptyState
+              title='No notes linked yet'
+              description='Search and attach notes above to link them with this product.'
+              variant='compact'
+              className='py-8'
+            />
+          ) : loadingLinked ? (
+            <LoadingState message='Loading linked notes...' size='sm' className='py-8' />
           ) : orderedLinked.length === 0 ? (
-            <div className='text-xs text-muted-foreground italic text-center py-4'>
-              Linked note details are unavailable.
-            </div>
+            <EmptyState
+              title='Details unavailable'
+              description='Linked note details could not be loaded.'
+              variant='compact'
+              className='py-8'
+            />
           ) : (
             orderedLinked.map((note: RelatedNote) => (
               <div

@@ -173,6 +173,25 @@ export const productListingWithDetailsSchema = productListingSchema.extend({
 
 export type ProductListingWithDetailsDto = z.infer<typeof productListingWithDetailsSchema>;
 
+export const createProductListingSchema = z.object({
+  productId: z.string(),
+  integrationId: z.string(),
+  connectionId: z.string(),
+  status: z.string().optional(),
+  externalListingId: z.string().nullable().optional(),
+  inventoryId: z.string().nullable().optional(),
+  expiresAt: z.string().nullable().optional(),
+  nextRelistAt: z.string().nullable().optional(),
+  relistPolicy: productListingRelistPolicySchema.nullable().optional(),
+  relistAttempts: z.number().optional(),
+  lastRelistedAt: z.string().nullable().optional(),
+  lastStatusCheckAt: z.string().nullable().optional(),
+  marketplaceData: z.record(z.string(), z.unknown()).nullable().optional(),
+  failureReason: z.string().nullable().optional(),
+});
+
+export type CreateProductListingDto = z.infer<typeof createProductListingSchema>;
+
 /**
  * Category Mapping DTOs
  */
@@ -209,6 +228,51 @@ export const externalCategoryWithChildrenSchema: z.ZodType<ExternalCategoryWithC
   children: z.lazy(() => z.array(externalCategoryWithChildrenSchema)),
 });
 
+export const baseCategoryFromApiSchema = z.object({
+  category_id: z.union([z.number(), z.string()]),
+  name: z.string(),
+  parent_id: z.union([z.number(), z.string()]).nullable(),
+});
+
+export type BaseCategoryFromApiDto = z.infer<typeof baseCategoryFromApiSchema>;
+
+export const baseCategorySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  parentId: z.string().nullable(),
+});
+
+export type BaseCategoryDto = z.infer<typeof baseCategorySchema>;
+
+export const externalCategorySyncInputSchema = z.object({
+  connectionId: z.string(),
+  externalId: z.string(),
+  name: z.string(),
+  parentExternalId: z.string().nullable(),
+  path: z.string().nullable(),
+  depth: z.number(),
+  isLeaf: z.boolean(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type ExternalCategorySyncInputDto = z.infer<typeof externalCategorySyncInputSchema>;
+
+export const categoryMappingCreateInputSchema = z.object({
+  connectionId: z.string(),
+  externalCategoryId: z.string(),
+  internalCategoryId: z.string(),
+  catalogId: z.string(),
+});
+
+export type CategoryMappingCreateInputDto = z.infer<typeof categoryMappingCreateInputSchema>;
+
+export const categoryMappingUpdateInputSchema = z.object({
+  internalCategoryId: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export type CategoryMappingUpdateInputDto = z.infer<typeof categoryMappingUpdateInputSchema>;
+
 export const categoryMappingWithDetailsSchema = categoryMappingSchema.extend({
   externalCategory: externalCategorySchema,
   internalCategory: z.any(), // ProductCategoryDto
@@ -242,6 +306,37 @@ export const tagMappingWithDetailsSchema = tagMappingSchema.extend({
 
 export type TagMappingWithDetailsDto = z.infer<typeof tagMappingWithDetailsSchema>;
 
+export const baseTagSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
+export type BaseTagDto = z.infer<typeof baseTagSchema>;
+
+export const externalTagSyncInputSchema = z.object({
+  connectionId: z.string(),
+  externalId: z.string(),
+  name: z.string(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type ExternalTagSyncInputDto = z.infer<typeof externalTagSyncInputSchema>;
+
+export const tagMappingCreateInputSchema = z.object({
+  connectionId: z.string(),
+  externalTagId: z.string(),
+  internalTagId: z.string(),
+});
+
+export type TagMappingCreateInputDto = z.infer<typeof tagMappingCreateInputSchema>;
+
+export const tagMappingUpdateInputSchema = z.object({
+  externalTagId: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export type TagMappingUpdateInputDto = z.infer<typeof tagMappingUpdateInputSchema>;
+
 export const externalProducerSchema = dtoBaseSchema.extend({
   connectionId: z.string(),
   externalId: z.string(),
@@ -267,6 +362,46 @@ export const producerMappingWithDetailsSchema = producerMappingSchema.extend({
 });
 
 export type ProducerMappingWithDetailsDto = z.infer<typeof producerMappingWithDetailsSchema>;
+
+export const baseProducerFromApiSchema = z.object({
+  manufacturer_id: z.union([z.number(), z.string()]).optional(),
+  producer_id: z.union([z.number(), z.string()]).optional(),
+  id: z.union([z.number(), z.string()]).optional(),
+  name: z.string().optional(),
+});
+
+export type BaseProducerFromApiDto = z.infer<typeof baseProducerFromApiSchema>;
+
+export const baseProducerSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
+export type BaseProducerDto = z.infer<typeof baseProducerSchema>;
+
+export const externalProducerSyncInputSchema = z.object({
+  connectionId: z.string(),
+  externalId: z.string(),
+  name: z.string(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type ExternalProducerSyncInputDto = z.infer<typeof externalProducerSyncInputSchema>;
+
+export const producerMappingCreateInputSchema = z.object({
+  connectionId: z.string(),
+  externalProducerId: z.string(),
+  internalProducerId: z.string(),
+});
+
+export type ProducerMappingCreateInputDto = z.infer<typeof producerMappingCreateInputSchema>;
+
+export const producerMappingUpdateInputSchema = z.object({
+  externalProducerId: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
+
+export type ProducerMappingUpdateInputDto = z.infer<typeof producerMappingUpdateInputSchema>;
 
 /**
  * Template DTOs
@@ -316,14 +451,6 @@ export const baseWarehouseSchema = z.object({
 });
 
 export type BaseWarehouseDto = z.infer<typeof baseWarehouseSchema>;
-
-export const baseCategorySchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  parentId: z.string().nullable(),
-});
-
-export type BaseCategoryDto = z.infer<typeof baseCategorySchema>;
 
 export const fetchMarketplaceCategoriesRequestSchema = z.object({
   connectionId: z.string(),
@@ -558,3 +685,187 @@ export const baseParameterImportSummarySchema = z.object({
 });
 
 export type BaseParameterImportSummaryDto = z.infer<typeof baseParameterImportSummarySchema>;
+
+/**
+ * Integration Test DTOs
+ */
+
+export const testStatusSchema = z.enum(['pending', 'ok', 'failed']);
+export type TestStatusDto = z.infer<typeof testStatusSchema>;
+
+export const testLogEntrySchema = z.object({
+  step: z.string(),
+  status: testStatusSchema,
+  timestamp: z.string(),
+  detail: z.string().optional(),
+});
+
+export type TestLogEntryDto = z.infer<typeof testLogEntrySchema>;
+
+export const testConnectionResponseSchema = z.object({
+  error: z.string().optional(),
+  errorId: z.string().optional(),
+  integrationId: z.string().nullable().optional(),
+  connectionId: z.string().nullable().optional(),
+  steps: z.unknown().optional(),
+  profile: z.unknown().optional(),
+});
+
+export type TestConnectionResponseDto = z.infer<typeof testConnectionResponseSchema>;
+
+export const sessionCookieSchema = z.object({
+  name: z.string().optional(),
+  value: z.string().optional(),
+  domain: z.string().optional(),
+  path: z.string().optional(),
+  expires: z.number().optional(),
+  httpOnly: z.boolean().optional(),
+  secure: z.boolean().optional(),
+  sameSite: z.string().optional(),
+});
+
+export type SessionCookieDto = z.infer<typeof sessionCookieSchema>;
+
+/**
+ * Base.com Parameter Import Settings DTOs
+ */
+
+export const baseImportParameterImportModeSchema = z.enum(['all', 'mapped']);
+export type BaseImportParameterImportModeDto = z.infer<typeof baseImportParameterImportModeSchema>;
+
+export const baseImportParameterLanguageScopeSchema = z.enum(['catalog_languages', 'default_only']);
+export type BaseImportParameterLanguageScopeDto = z.infer<typeof baseImportParameterLanguageScopeSchema>;
+
+export const baseImportParameterMatchBySchema = z.enum(['base_id_then_name', 'name_only']);
+export type BaseImportParameterMatchByDto = z.infer<typeof baseImportParameterMatchBySchema>;
+
+export const baseImportParameterImportSettingsSchema = z.object({
+  enabled: z.boolean(),
+  mode: baseImportParameterImportModeSchema,
+  languageScope: baseImportParameterLanguageScopeSchema,
+  createMissingParameters: z.boolean(),
+  overwriteExistingValues: z.boolean(),
+  matchBy: baseImportParameterMatchBySchema,
+});
+
+export type BaseImportParameterImportSettingsDto = z.infer<typeof baseImportParameterImportSettingsSchema>;
+
+/**
+ * Image Export Diagnostics DTOs
+ */
+
+export const imageUrlDiagnosticSchema = z.object({
+  sourceType: z.enum(['slot', 'link', 'mapped', 'unknown']),
+  index: z.number(),
+  filepath: z.string().nullable(),
+  resolvedUrl: z.string().nullable(),
+  mimetype: z.string().nullable().optional(),
+  size: z.number().nullable().optional(),
+  supported: z.boolean(),
+  reason: z.string().optional(),
+  extension: z.string().nullable().optional(),
+  normalizedMime: z.string().nullable().optional(),
+  url: z.string().optional(), // For compatibility with simpler versions
+  status: z.enum(['valid', 'invalid', 'unreachable']).optional(), // For compatibility
+  error: z.string().optional(), // For compatibility
+});
+
+export type ImageUrlDiagnosticDto = z.infer<typeof imageUrlDiagnosticSchema>;
+
+export const imageExportDiagnosticsSchema = z.object({
+  total: z.number(),
+  successful: z.number(),
+  failed: z.number(),
+  skipped: z.number(),
+  errors: z.array(z.object({
+    imageId: z.string(),
+    error: z.string(),
+  })),
+});
+
+export type ImageExportDiagnosticsDto = z.infer<typeof imageExportDiagnosticsSchema>;
+
+/**
+ * Operation Logging DTOs
+ */
+
+export const capturedLogSchema = z.object({
+  timestamp: z.string(),
+  level: z.enum(['info', 'warn', 'error', 'debug']),
+  message: z.string(),
+  context: z.record(z.string(), z.unknown()).nullable().optional(),
+});
+
+export type CapturedLogDto = z.infer<typeof capturedLogSchema>;
+
+/**
+ * Integration Domain DTOs
+ */
+
+export const integrationConnectionBasicSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  integrationId: z.string(),
+  traderaDefaultTemplateId: z.string().nullable().optional(),
+  traderaDefaultDurationHours: z.number().nullable().optional(),
+  traderaAutoRelistEnabled: z.boolean().nullable().optional(),
+  traderaAutoRelistLeadMinutes: z.number().nullable().optional(),
+  traderaApiAppId: z.number().nullable().optional(),
+  traderaApiPublicKey: z.string().nullable().optional(),
+  traderaApiUserId: z.number().nullable().optional(),
+  traderaApiSandbox: z.boolean().nullable().optional(),
+});
+
+export type IntegrationConnectionBasicDto = z.infer<typeof integrationConnectionBasicSchema>;
+
+export const integrationWithConnectionsSchema = namedDtoSchema.extend({
+  slug: z.string(),
+  connections: z.array(integrationConnectionBasicSchema),
+});
+
+export type IntegrationWithConnectionsDto = z.infer<typeof integrationWithConnectionsSchema>;
+
+export const listingJobSchema = productListingSchema.extend({
+  integrationName: z.string(),
+  integrationSlug: z.string(),
+  connectionName: z.string(),
+});
+
+export type ListingJobDto = z.infer<typeof listingJobSchema>;
+
+export const productJobSchema = z.object({
+  productId: z.string(),
+  productName: z.string(),
+  productSku: z.string().nullable(),
+  listings: z.array(listingJobSchema),
+});
+
+export type ProductJobDto = z.infer<typeof productJobSchema>;
+
+export const exportJobDetailSchema = z.object({
+  job: productJobSchema,
+  listing: listingJobSchema,
+});
+
+export type ExportJobDetailDto = z.infer<typeof exportJobDetailSchema>;
+
+/**
+ * Base.com API DTOs
+ */
+
+export const baseProductRecordSchema = z.record(z.string(), z.unknown());
+export type BaseProductRecordDto = z.infer<typeof baseProductRecordSchema>;
+
+export const baseApiRawResultSchema = z.object({
+  status: z.string(),
+}).catchall(z.unknown());
+
+export type BaseApiRawResultDto = z.infer<typeof baseApiRawResultSchema>;
+
+export const importParameterCacheSchema = z.object({
+  key: z.string(),
+  value: z.unknown(),
+  expiresAt: z.number(),
+});
+
+export type ImportParameterCacheDto = z.infer<typeof importParameterCacheSchema>;

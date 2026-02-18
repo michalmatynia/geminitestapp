@@ -69,6 +69,7 @@ import {
   normalizeFolderRecords,
   resolveCaseScopedFolderTarget,
   readStoredEditorDraft,
+  serializeWorkspaceForUnsavedChangesCheck,
   resolveCaseContainerIdForFileId,
   resolveCaseResolverActiveCaseId,
   type CaseResolverRequestedCaseStatus,
@@ -470,7 +471,11 @@ export function useCaseResolverState() {
   );
 
   const isWorkspaceDirty = useMemo(
-    (): boolean => JSON.stringify(workspace) !== persistedWorkspaceSnapshot,
+    (): boolean =>
+      serializeWorkspaceForUnsavedChangesCheck(workspace) !==
+      serializeWorkspaceForUnsavedChangesCheck(
+        parseCaseResolverWorkspace(persistedWorkspaceSnapshot)
+      ),
     [persistedWorkspaceSnapshot, workspace]
   );
 
@@ -489,7 +494,7 @@ export function useCaseResolverState() {
   const handleSaveWorkspace = useCallback((): void => {
     const normalizedWorkspace = normalizeCaseResolverWorkspace(workspace);
     const serializedWorkspace = JSON.stringify(normalizedWorkspace);
-    if (serializedWorkspace === lastPersistedValueRef.current) {
+    if (!isWorkspaceDirty || serializedWorkspace === lastPersistedValueRef.current) {
       setIsWorkspaceSaving(false);
       setWorkspaceSaveStatus('saved');
       setWorkspaceSaveError(null);
@@ -512,7 +517,7 @@ export function useCaseResolverState() {
     setWorkspaceSaveStatus('saving');
     setWorkspaceSaveError(null);
     flushWorkspacePersist();
-  }, [flushWorkspacePersist, toast, workspace]);
+  }, [flushWorkspacePersist, isWorkspaceDirty, toast, workspace]);
 
   const handleSelectFile = useCallback((
     fileId: string,

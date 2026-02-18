@@ -131,12 +131,30 @@ const ensureDocumentPromptPorts = (
   documentSourceFileIdByNode: Record<string, string>
 ): AiNode[] =>
   nodes.map((node: AiNode): AiNode => {
-    if (node.type !== 'prompt') return node;
     const isTextNode =
       nodeMeta[node.id]?.role === 'text_note' || Boolean(documentSourceFileIdByNode[node.id]);
-    if (!isTextNode) return node;
-    const currentInputs = Array.isArray(node.inputs) ? node.inputs : [];
-    const currentOutputs = Array.isArray(node.outputs) ? node.outputs : [];
+    const normalizedNode: AiNode =
+      node.type === 'template' && isTextNode
+        ? {
+          ...node,
+          type: 'prompt',
+          config: {
+            ...(node.config ?? {}),
+            prompt: {
+              ...(node.config?.prompt ?? {}),
+              template:
+                typeof node.config?.prompt?.template === 'string'
+                  ? node.config.prompt.template
+                  : typeof node.config?.template?.template === 'string'
+                    ? node.config.template.template
+                    : '',
+            },
+          },
+        }
+        : node;
+    if (normalizedNode.type !== 'prompt' || !isTextNode) return normalizedNode;
+    const currentInputs = Array.isArray(normalizedNode.inputs) ? normalizedNode.inputs : [];
+    const currentOutputs = Array.isArray(normalizedNode.outputs) ? normalizedNode.outputs : [];
     const nextInputs = [...CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS];
     const nextOutputs = [...CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS];
     const sameInputs =
@@ -145,9 +163,9 @@ const ensureDocumentPromptPorts = (
     const sameOutputs =
       nextOutputs.length === currentOutputs.length &&
       nextOutputs.every((port: string, index: number): boolean => port === currentOutputs[index]);
-    if (sameInputs && sameOutputs) return node;
+    if (sameInputs && sameOutputs) return normalizedNode;
     return {
-      ...node,
+      ...normalizedNode,
       inputs: nextInputs,
       outputs: nextOutputs,
     };

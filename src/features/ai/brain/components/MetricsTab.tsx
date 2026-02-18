@@ -3,7 +3,7 @@
 import { Activity, Radar } from 'lucide-react';
 import React from 'react';
 
-import { Button, MetadataItem, StatusBadge, Alert, SectionHeader, FormSection } from '@/shared/ui';
+import { Button, MetadataItem, StatusBadge, Alert, SectionHeader, FormSection, EmptyState } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 
@@ -114,7 +114,12 @@ export function MetricsTab(): React.JSX.Element {
               </div>
             ))}
             {(analyticsSummaryQuery.data?.topPages?.length ?? 0) === 0 ? (
-              <div className='text-xs text-gray-500'>No analytics page data available.</div>
+              <EmptyState
+                title='No analytics data'
+                description='No pageview data recorded in the last 24 hours.'
+                variant='compact'
+                className='py-6 border-none bg-transparent'
+              />
             ) : null}
           </div>
         </div>
@@ -132,7 +137,12 @@ export function MetricsTab(): React.JSX.Element {
               </div>
             ))}
             {(logMetricsQuery.data?.topSources?.length ?? 0) === 0 ? (
-              <div className='text-xs text-gray-500'>No log source data available.</div>
+              <EmptyState
+                title='No error data'
+                description='No log errors recorded in the selected period.'
+                variant='compact'
+                className='py-6 border-none bg-transparent'
+              />
             ) : null}
           </div>
         </div>
@@ -150,7 +160,12 @@ export function MetricsTab(): React.JSX.Element {
                 <div className='text-xs text-gray-300'>{latestAnalyticsInsight.summary}</div>
               </div>
             ) : (
-              <div className='text-xs text-gray-500'>No analytics insights yet.</div>
+              <EmptyState
+                title='No insights yet'
+                description='Run analytics analysis to see AI insights.'
+                variant='compact'
+                className='py-4 border-none bg-transparent'
+              />
             )
           )}
         />
@@ -166,7 +181,12 @@ export function MetricsTab(): React.JSX.Element {
                 <div className='text-xs text-gray-300'>{latestLogsInsight.summary}</div>
               </div>
             ) : (
-              <div className='text-xs text-gray-500'>No log insights yet.</div>
+              <EmptyState
+                title='No insights yet'
+                description='Run log analysis to see AI insights.'
+                variant='compact'
+                className='py-4 border-none bg-transparent'
+              />
             )
           )}
         />

@@ -2,6 +2,10 @@ import type {
   ExternalTagDto,
   TagMappingDto as TagMappingDtoContract,
   TagMappingWithDetailsDto as TagMappingWithDetailsDtoContract,
+  BaseTagDto,
+  ExternalTagSyncInputDto,
+  TagMappingCreateInputDto,
+  TagMappingUpdateInputDto,
 } from '@/shared/contracts/integrations';
 import type { ProductTagDto as ProductTag } from '@/shared/contracts/products';
 
@@ -13,25 +17,10 @@ export type TagMappingWithDetails = Omit<TagMappingWithDetailsDtoContract, 'inte
   internalTag: ProductTag;
 };
 
-export type BaseTag = {
-  id: string;
-  name: string;
-};
+export type BaseTag = BaseTagDto;
 
-export type ExternalTagSyncInput = {
-  connectionId: string;
-  externalId: string;
-  name: string;
-  metadata?: Record<string, unknown>;
-};
+export type ExternalTagSyncInput = ExternalTagSyncInputDto;
 
-export type TagMappingCreateInput = {
-  connectionId: string;
-  externalTagId: string;
-  internalTagId: string;
-};
+export type TagMappingCreateInput = TagMappingCreateInputDto;
 
-export type TagMappingUpdateInput = {
-  externalTagId?: string;
-  isActive?: boolean;
-};
+export type TagMappingUpdateInput = TagMappingUpdateInputDto;

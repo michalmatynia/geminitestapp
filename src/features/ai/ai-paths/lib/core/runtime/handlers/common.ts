@@ -163,7 +163,7 @@ export const handleRouter: NodeHandler = ({ node, nodeInputs }: NodeHandlerConte
       }
     });
   }
-  return next as RuntimePortValues;
+  return next;
 };
 
 export const handleGate: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {

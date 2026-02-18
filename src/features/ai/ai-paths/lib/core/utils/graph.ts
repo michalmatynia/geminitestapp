@@ -161,9 +161,11 @@ export const inspectGraphIntegrity = (nodes: AiNode[], edges: Edge[]): GraphInte
     nodeStats.set(node.id, { incoming: 0, outgoing: 0 });
   });
   sanitized.forEach((edge: Edge) => {
-    const fromStats = nodeStats.get(edge.from);
+    const fromNodeId = edge.from;
+    const toNodeId = edge.to;
+    const fromStats = fromNodeId ? nodeStats.get(fromNodeId) : undefined;
     if (fromStats) fromStats.outgoing += 1;
-    const toStats = nodeStats.get(edge.to);
+    const toStats = toNodeId ? nodeStats.get(toNodeId) : undefined;
     if (toStats) toStats.incoming += 1;
   });
 

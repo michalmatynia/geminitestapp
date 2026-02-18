@@ -36,14 +36,14 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
     template: '',
   };
   const resolvedPrompt = React.useMemo((): string => {
-    if (!selectedNode || selectedNode.type !== 'prompt') return '';
+    if (selectedNode?.type !== 'prompt') return '';
     const config = selectedNode.config?.prompt ?? { template: '' };
     const inputs = runtimeState.inputs[selectedNode.id] ?? {};
     const { promptOutput } = buildPromptOutput(config, inputs);
     return promptOutput;
   }, [selectedNode?.type, selectedNode?.id, selectedNode?.config?.prompt, runtimeState.inputs]);
 
-  if (!selectedNode || selectedNode.type !== 'prompt') return null;
+  if (selectedNode?.type !== 'prompt') return null;
   const insertPromptPlaceholder = (placeholder: string): void => {
     const currentTemplate = promptConfig.template ?? '';
     const textArea = promptTemplateRef.current;
@@ -70,7 +70,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
   const incomingEdges = edges.filter((edge: Edge) => edge.to === selectedNode.id);
   const inputPorts = incomingEdges
     .map((edge: Edge) => edge.toPort)
-    .filter((port: string | undefined): port is string => Boolean(port));
+    .filter((port: string | null | undefined): port is string => Boolean(port));
   const bundleKeys = new Set<string>();
   incomingEdges.forEach((edge: Edge) => {
     if (edge.toPort !== 'bundle') return;

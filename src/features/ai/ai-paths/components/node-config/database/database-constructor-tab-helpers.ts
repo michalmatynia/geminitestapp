@@ -60,9 +60,10 @@ export const formatCollectionSchema = (collectionName: string, fields: FieldSche
 export const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema[] => {
   if (!schema?.collections?.length) return [];
   if (schema.provider === 'multi') return schema.collections;
+  const provider: 'mongodb' | 'prisma' = schema.provider;
   return schema.collections.map((collection: CollectionSchema) => ({
     ...collection,
-    provider: schema.provider,
+    provider,
   }));
 };
 

@@ -492,7 +492,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                           status={event.level}
                           variant={
                             event.level === 'error' ? 'error' : 
-                              event.level === 'warning' ? 'warning' : 'info'
+                              event.level === 'warn' ? 'warning' : 'info'
                           }
                           size='sm'
                           className='font-bold'

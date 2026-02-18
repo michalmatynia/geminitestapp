@@ -1,7 +1,6 @@
 import type {
   DatabaseConfig,
   DbQueryConfig,
-  RuntimePortValues,
 } from '@/shared/types/domain/ai-paths';
 import type { NodeHandlerContext } from '@/shared/types/domain/ai-paths-runtime';
 
@@ -41,7 +40,7 @@ const resolveCollectionUpdateContext = ({
   entityType,
 }: ResolveCollectionUpdateContextInput): ResolveCollectionUpdateContextResult => {
   const queryPayload = buildDbQueryPayload(
-    resolvedInputs as RuntimePortValues,
+    resolvedInputs,
     queryConfig,
   );
   const queryFromPayload =
@@ -108,7 +107,7 @@ export async function executeDatabaseUpdate({
 
   if (updateStrategy === 'many') {
     const queryPayload = buildDbQueryPayload(
-      resolvedInputs as RuntimePortValues,
+      resolvedInputs,
       queryConfig,
     );
     const query = queryPayload['query'] ?? {};

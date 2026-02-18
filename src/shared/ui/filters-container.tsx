@@ -7,7 +7,6 @@ import { cn } from '@/shared/utils';
 
 import { Button } from './button';
 import { SectionHeader } from './section-header';
-import { SectionPanel } from './section-panel';
 
 interface FiltersContainerProps {
   title?: string;
@@ -27,7 +26,7 @@ export function FiltersContainer({
   gridClassName,
 }: FiltersContainerProps) {
   return (
-    <SectionPanel className={cn('mb-4 space-y-3', className)}>
+    <div className={cn('mb-4 space-y-3 rounded-lg border border-border/60 bg-card/40 p-4', className)}>
       <SectionHeader
         title={title}
         size='xs'
@@ -49,6 +48,6 @@ export function FiltersContainer({
       <div className={cn('grid grid-cols-1 gap-3', gridClassName)}>
         {children}
       </div>
-    </SectionPanel>
+    </div>
   );
 }

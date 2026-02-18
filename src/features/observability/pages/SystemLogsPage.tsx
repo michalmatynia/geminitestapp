@@ -26,6 +26,8 @@ import {
   MetadataItem,
   Tooltip,
   CopyButton,
+  Hint,
+  PropertyRow,
   type StatusVariant
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -179,9 +181,11 @@ function LogDiagnostics(): React.JSX.Element {
       description='Mongo index consistency for observability collections.'
       actions={
         <div className='flex items-center gap-2'>
-          <span className='text-[10px] uppercase font-bold text-gray-600'>
-            {diagnosticsUpdatedAt ? `Updated ${formatTimestamp(diagnosticsUpdatedAt)}` : ''}
-          </span>
+          {diagnosticsUpdatedAt ? (
+            <Hint uppercase bold color='muted' size='xs'>
+              Updated {formatTimestamp(diagnosticsUpdatedAt)}
+            </Hint>
+          ) : null}
           <Button variant='outline' size='xs' onClick={() => void mongoDiagnosticsQuery.refetch()} disabled={mongoDiagnosticsQuery.isFetching}>
             Refresh
           </Button>
@@ -228,33 +232,36 @@ function LogMetrics(): React.JSX.Element {
       className='p-6'
     >
       {metricsQuery.isLoading ? (
-        <div className='py-8 text-center text-xs text-gray-500 animate-pulse uppercase tracking-widest'>Calculating metrics...</div>
+        <LoadingState message='Calculating metrics...' className='py-8' size='sm' />
       ) : metrics ? (
         <div className='grid gap-4 md:grid-cols-3 mt-4'>
           <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-            <p className='text-[10px] uppercase font-bold text-gray-500 mb-2'>Retention Period</p>
-            <div className='space-y-1 text-sm'>
-              <div className='flex justify-between'><span className='text-gray-400'>Total Logs</span><span className='text-white font-mono'>{metrics.total}</span></div>
-              <div className='flex justify-between'><span className='text-gray-400'>Last 24h</span><span className='text-white font-mono'>{metrics.last24Hours}</span></div>
-              <div className='flex justify-between'><span className='text-gray-400'>Last 7d</span><span className='text-white font-mono'>{metrics.last7Days}</span></div>
+            <Hint uppercase bold className='mb-2' color='muted'>Retention Period</Hint>
+            <div className='space-y-1'>
+              <PropertyRow label='Total Logs' value={metrics.total} mono valueClassName='text-white' variant='subtle' />
+              <PropertyRow label='Last 24h' value={metrics.last24Hours} mono valueClassName='text-white' variant='subtle' />
+              <PropertyRow label='Last 7d' value={metrics.last7Days} mono valueClassName='text-white' variant='subtle' />
             </div>
           </div>
           <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-            <p className='text-[10px] uppercase font-bold text-gray-500 mb-2'>Level Distribution</p>
-            <div className='space-y-1 text-sm'>
-              <div className='flex justify-between'><span className='text-rose-400'>Errors</span><span className='text-rose-300 font-mono'>{levels.error}</span></div>
-              <div className='flex justify-between'><span className='text-amber-400'>Warnings</span><span className='text-amber-300 font-mono'>{levels.warn}</span></div>
-              <div className='flex justify-between'><span className='text-sky-400'>Info</span><span className='text-sky-300 font-mono'>{levels.info}</span></div>
+            <Hint uppercase bold className='mb-2' color='muted'>Level Distribution</Hint>
+            <div className='space-y-1'>
+              <PropertyRow label='Errors' value={levels.error} mono labelClassName='text-rose-400' valueClassName='text-rose-300' variant='subtle' />
+              <PropertyRow label='Warnings' value={levels.warn} mono labelClassName='text-amber-400' valueClassName='text-amber-300' variant='subtle' />
+              <PropertyRow label='Info' value={levels.info} mono labelClassName='text-sky-400' valueClassName='text-sky-300' variant='subtle' />
             </div>
           </div>
           <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-            <p className='text-[10px] uppercase font-bold text-gray-500 mb-2'>Traffic Origins</p>
+            <Hint uppercase bold className='mb-2' color='muted'>Traffic Origins</Hint>
             <div className='max-h-[100px] overflow-y-auto pr-2 space-y-1'>
               {metrics.topSources.map((item) => (
-                <div key={item.source} className='flex items-center justify-between text-[11px] bg-white/5 px-2 py-1 rounded'>
-                  <StatusBadge status={item.source} variant='neutral' size='sm' className='font-mono h-4' />
-                  <span className='text-gray-500'>{item.count}</span>
-                </div>
+                <PropertyRow
+                  key={item.source}
+                  label={<StatusBadge status={item.source} variant='neutral' size='sm' className='font-mono h-4' />}
+                  value={item.count}
+                  className='bg-white/5 px-2 py-1 rounded'
+                  variant='subtle'
+                />
               ))}
             </div>
           </div>
@@ -288,7 +295,7 @@ function AiLogInterpreter(): React.JSX.Element {
     >
       <div className='mt-4 space-y-3'>
         {insightsQuery.isLoading ? (
-          <div className='py-4 text-center text-xs text-gray-500 animate-pulse'>Consulting AI models...</div>
+          <LoadingState message='Consulting AI models...' className='py-4' size='sm' />
         ) : insightsQuery.data?.insights?.length ? (
           insightsQuery.data.insights.map((insight: AiInsightRecord) => (
             <div key={insight.id} className='rounded-lg border border-border/60 bg-gray-950/40 p-4'>
@@ -457,7 +464,7 @@ function LogList(): React.JSX.Element {
                 <div className='grid gap-6 md:grid-cols-2'>
                   <div className='space-y-4'>
                     <div>
-                      <h4 className='text-[10px] uppercase font-bold text-gray-600 mb-2'>Identification</h4>
+                      <Hint uppercase bold color='muted' className='mb-2'>Identification</Hint>
                       <div className='grid grid-cols-2 gap-2'>
                         <MetadataItem
                           label='Request ID'
@@ -474,7 +481,7 @@ function LogList(): React.JSX.Element {
 
                     {log.stack && (
                       <div>
-                        <h4 className='text-[10px] uppercase font-bold text-gray-600 mb-2'>StackTrace</h4>
+                        <Hint uppercase bold color='muted' className='mb-2'>StackTrace</Hint>
                         <pre className='p-3 rounded-lg bg-gray-950 border border-white/5 font-mono text-[10px] text-rose-300/80 overflow-auto max-h-[300px] whitespace-pre-wrap'>
                           {log.stack}
                         </pre>
@@ -483,7 +490,7 @@ function LogList(): React.JSX.Element {
                   </div>
 
                   <div>
-                    <h4 className='text-[10px] uppercase font-bold text-gray-600 mb-2'>Payload Context</h4>
+                    <Hint uppercase bold color='muted' className='mb-2'>Payload Context</Hint>
                     <pre className='p-3 rounded-lg bg-gray-950 border border-white/5 font-mono text-[10px] text-sky-300/80 overflow-auto max-h-[400px]'>
                       {JSON.stringify(log.context || {}, null, 2)}
                     </pre>
@@ -668,8 +675,10 @@ function SystemLogsContent(): React.JSX.Element {
 
 export default function SystemLogsPage(): React.JSX.Element {
   return (
-    <SystemLogsProvider>
-      <SystemLogsContent />
-    </SystemLogsProvider>
+    <Suspense fallback={<LoadingState message='Mounting observation post...' className='h-screen' />}>
+      <SystemLogsProvider>
+        <SystemLogsContent />
+      </SystemLogsProvider>
+    </Suspense>
   );
 }

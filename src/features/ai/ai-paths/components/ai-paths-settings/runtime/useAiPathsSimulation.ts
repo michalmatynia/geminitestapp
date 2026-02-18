@@ -117,9 +117,9 @@ export function useAiPathsSimulation(args: SimulationArgs) {
       };
       args.setRuntimeState((prev: RuntimeState): RuntimeState => {
         const nextOutputs = {
-          ...prev.outputs,
+          ...(prev.outputs ?? {}),
           [simulationNode.id]: {
-            ...((prev.outputs[simulationNode.id] ?? {}) as Record<string, unknown>),
+            ...((prev.outputs?.[simulationNode.id] ?? {}) as Record<string, unknown>),
             ...simulationOutputs,
           },
         };
@@ -181,13 +181,13 @@ export function useAiPathsSimulation(args: SimulationArgs) {
         // BFS to find connected trigger
         const adjacency = new Map<string, Set<string>>();
         args.sanitizedEdges.forEach((edge: Edge) => {
-          if (!edge.from || !edge.to) return;
-          const fromSet = adjacency.get(edge.from) ?? new Set<string>();
-          fromSet.add(edge.to);
-          adjacency.set(edge.from, fromSet);
-          const toSet = adjacency.get(edge.to) ?? new Set<string>();
-          toSet.add(edge.from);
-          adjacency.set(edge.to, toSet);
+          if (!edge.source || !edge.target) return;
+          const fromSet = adjacency.get(edge.source) ?? new Set<string>();
+          fromSet.add(edge.target);
+          adjacency.set(edge.source, fromSet);
+          const toSet = adjacency.get(edge.target) ?? new Set<string>();
+          toSet.add(edge.source);
+          adjacency.set(edge.target, toSet);
         });
         const connected = new Set<string>();
         const queue = [simulationNode.id];

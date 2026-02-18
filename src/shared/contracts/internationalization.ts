@@ -90,3 +90,25 @@ export const createTranslationSchema = translationSchema.omit({
 
 export type CreateTranslationDto = z.infer<typeof createTranslationSchema>;
 export type UpdateTranslationDto = Partial<CreateTranslationDto>;
+
+/**
+ * Composite Internationalization DTOs
+ */
+
+export const countryWithCurrenciesSchema = countrySchema.extend({
+  currencies: z.array(z.object({
+    currencyId: z.string(),
+    currency: currencySchema,
+  })),
+});
+
+export type CountryWithCurrenciesDto = z.infer<typeof countryWithCurrenciesSchema>;
+
+export const languageWithCountriesSchema = languageSchema.extend({
+  countries: z.array(z.object({
+    countryId: z.string(),
+    country: countrySchema,
+  })),
+});
+
+export type LanguageWithCountriesDto = z.infer<typeof languageWithCountriesSchema>;

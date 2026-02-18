@@ -35,6 +35,17 @@ const createPromptNode = (id: string): AiNode => ({
   config: { prompt: { template: '' } },
 });
 
+const createTemplateNode = (id: string, template: string): AiNode => ({
+  id,
+  type: 'template',
+  title: id,
+  description: '',
+  inputs: ['input'],
+  outputs: ['output'],
+  position: { x: 0, y: 0 },
+  config: { template: { template } },
+});
+
 describe('case-resolver settings', () => {
   it('starts with an empty workspace and no placeholder files', () => {
     const workspace = parseCaseResolverWorkspace(null);
@@ -980,6 +991,47 @@ describe('case-resolver settings', () => {
     expect(genericNode?.outputs).not.toEqual(
       expect.arrayContaining(CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS)
     );
+  });
+
+  it('migrates legacy template document nodes to prompt nodes', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        workspaceRevision: 0,
+        lastMutationId: null,
+        lastMutationAt: null,
+        folders: [],
+        files: [
+          {
+            id: 'case-legacy-template',
+            name: 'Case Legacy Template',
+            folder: '',
+            graph: {
+              nodes: [createTemplateNode('legacy-doc-node', '<p>Legacy template text</p>')],
+              edges: [],
+              nodeMeta: {
+                'legacy-doc-node': {
+                  ...DEFAULT_CASE_RESOLVER_NODE_META,
+                  role: 'text_note',
+                  includeInOutput: true,
+                },
+              },
+              edgeMeta: {},
+            },
+          },
+        ],
+        assets: [],
+        activeFileId: 'case-legacy-template',
+      })
+    );
+
+    const graph = workspace.files[0]?.graph;
+    const legacyNode = graph?.nodes.find((node: AiNode): boolean => node.id === 'legacy-doc-node');
+
+    expect(legacyNode?.type).toBe('prompt');
+    expect(legacyNode?.config?.prompt?.template).toBe('<p>Legacy template text</p>');
+    expect(legacyNode?.inputs).toEqual(CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS);
+    expect(legacyNode?.outputs).toEqual(CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS);
   });
 
   it('drops stale document/nodefile graph mappings that reference missing files or assets', () => {

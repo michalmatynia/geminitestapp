@@ -2,7 +2,7 @@ import Link from 'next/link';
 import React, { useMemo } from 'react';
 
 import { useAppEmbeds } from '@/features/app-embeds/providers/AppEmbedsProvider';
-import { SimpleSettingsList, Checkbox } from '@/shared/ui';
+import { SimpleSettingsList, ToggleRow } from '@/shared/ui';
 
 import { APP_EMBED_OPTIONS } from '../lib/constants';
 
@@ -22,15 +22,14 @@ export function AppEmbedList(): React.ReactNode {
         const isEnabled = enabled.has(item.id);
         return (
           <div className='flex items-center gap-4'>
-            <label className='flex items-center gap-2 text-xs text-gray-300 cursor-pointer'>
-              <Checkbox
-                checked={isEnabled}
-                onCheckedChange={(checked: boolean | 'indeterminate') =>
-                  toggleOption(item.id, checked === true)
-                }
-              />
-              Enable
-            </label>
+            <ToggleRow
+              label='Enabled'
+              checked={isEnabled}
+              onCheckedChange={(checked: boolean) =>
+                toggleOption(item.id, checked)
+              }
+              className='border-none bg-transparent hover:bg-transparent p-0'
+            />
             <Link
               href={item.original.settingsRoute}
               className='text-xs text-blue-300 hover:text-blue-200'

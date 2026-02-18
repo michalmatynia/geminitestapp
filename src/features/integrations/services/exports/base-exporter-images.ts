@@ -32,7 +32,7 @@ export const resolveImageUrl = (
   return `${base}/${path}`;
 };
 
-export type ImageExportDiagnostics = {
+export type ImageExportLogger = {
   log: (message: string, data?: Record<string, unknown>) => void;
 };
 
@@ -44,18 +44,8 @@ export type ImageTransformOptions = {
   jpegQuality?: number;
 };
 
-export type ImageUrlDiagnostic = {
-  sourceType: 'slot' | 'link';
-  index: number;
-  filepath: string | null;
-  resolvedUrl: string | null;
-  mimetype?: string | null;
-  size?: number | null;
-  supported: boolean;
-  reason?: string | undefined;
-  extension?: string | null;
-  normalizedMime?: string | null;
-};
+import type { ImageUrlDiagnosticDto as ImageUrlDiagnostic } from '@/shared/contracts/integrations';
+export type { ImageUrlDiagnostic };
 
 const SUPPORTED_IMAGE_MIME_TYPES = new Set([
   'image/jpeg',
@@ -176,7 +166,7 @@ export const shouldIncludeImageUrl = (
   url: string,
   options?: {
     mimetype?: string | null;
-    diagnostics?: ImageExportDiagnostics | undefined;
+    diagnostics?: ImageExportLogger | undefined;
     sourceType?: 'slot' | 'link' | 'mapped' | 'unknown';
     index?: number;
     source?: string | null;
@@ -270,7 +260,7 @@ export const getImageSlotUrl = (
   index: number,
   mode: 'slot' | 'file' | 'link',
   imageBaseUrl?: string | null,
-  diagnostics?: ImageExportDiagnostics
+  diagnostics?: ImageExportLogger
 ): string | null => {
   if (index < 0) return null;
   if (mode !== 'link') {
@@ -312,7 +302,7 @@ export const getImageList = (
   product: ProductWithImages,
   mode: 'slot' | 'file' | 'link',
   imageBaseUrl?: string | null,
-  diagnostics?: ImageExportDiagnostics
+  diagnostics?: ImageExportLogger
 ): string[] => {
   if (mode === 'link') {
     return (product.imageLinks ?? [])
@@ -358,7 +348,7 @@ export const getImageList = (
 export const getAllImageUrls = (
   product: ProductWithImages,
   imageBaseUrl?: string | null,
-  diagnostics?: ImageExportDiagnostics
+  diagnostics?: ImageExportLogger
 ): string[] => {
   const slots = getImageList(product, 'slot', imageBaseUrl, diagnostics);
   const links = getImageList(product, 'link', imageBaseUrl, diagnostics);
@@ -387,7 +377,7 @@ const imageToBase64DataUri = async (
   filepath: string,
   options?: {
     contentTypeHint?: string | null;
-    diagnostics?: ImageExportDiagnostics | undefined;
+    diagnostics?: ImageExportLogger | undefined;
     sourceType?: 'slot' | 'link' | 'mapped' | 'unknown';
     index?: number;
     outputMode?: ImageBase64Mode | undefined;
@@ -651,7 +641,7 @@ const imageToBase64DataUri = async (
 export const getProductImagesAsBase64 = async (
   product: ProductWithImages,
   options?: {
-    diagnostics?: ImageExportDiagnostics | undefined;
+    diagnostics?: ImageExportLogger | undefined;
     outputMode?: ImageBase64Mode | undefined;
     transform?: ImageTransformOptions | null;
   }

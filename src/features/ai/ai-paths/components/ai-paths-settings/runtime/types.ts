@@ -3,7 +3,6 @@
 import type {
   AiNode,
   AiPathRuntimeEvent,
-  AiPathRuntimeEventKind,
   AiPathRuntimeNodeStatus,
   AiPathRuntimeNodeStatusMap,
   Edge,
@@ -57,9 +56,21 @@ export type ToastFn = (message: string, options?: Partial<{ variant: 'success' |
 
 export type QueuedRun = QueuedRunDto;
 
-export type RuntimeEventInput = Omit<AiPathRuntimeEvent, 'id' | 'timestamp'> & {
+export type RuntimeEventInput = {
   id?: string | undefined;
   timestamp?: string | undefined;
+  source: 'local' | 'server';
+  kind?: string | undefined;
+  level?: 'info' | 'warn' | 'error' | 'debug' | undefined;
+  message: string;
+  runId?: string | null | undefined;
+  runStartedAt?: string | null | undefined;
+  nodeId?: string | null | undefined;
+  nodeType?: string | null | undefined;
+  nodeTitle?: string | null | undefined;
+  status?: AiPathRuntimeNodeStatus | string | undefined;
+  iteration?: number | undefined;
+  metadata?: Record<string, unknown> | null | undefined;
 };
 
 export type SetNodeStatusInput = {
@@ -71,8 +82,8 @@ export type SetNodeStatusInput = {
   iteration?: number | undefined;
   nodeType?: string | null | undefined;
   nodeTitle?: string | null | undefined;
-  kind?: AiPathRuntimeEventKind | undefined;
-  level?: 'info' | 'warning' | 'error' | undefined;
+  kind?: string | undefined;
+  level?: 'info' | 'warn' | 'error' | undefined;
   message?: string | undefined;
   metadata?: Record<string, unknown> | null | undefined;
 };

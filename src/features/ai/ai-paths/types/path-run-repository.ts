@@ -14,10 +14,16 @@ export type {
   AiPathRunEventListOptionsDto,
   AiPathRunListOptionsDto,
   AiPathRunListResultDto,
+  AiPathRunUpdateDto,
+  AiPathRunNodeUpdateDto,
+  AiPathRunEventCreateInputDto,
 } from '@/shared/contracts/ai-paths';
 
 import type {
   AiPathRunCreateInput as AiPathRunCreateInputDto,
+  AiPathRunUpdateDto,
+  AiPathRunNodeUpdateDto,
+  AiPathRunEventCreateInputDto,
   AiPathRunListResultDto as AiPathRunListResultDtoAlias,
   AiPathRunListOptionsDto as AiPathRunListOptionsDtoAlias,
   AiPathRunEventListOptionsDto as AiPathRunEventListOptionsDtoAlias,
@@ -25,7 +31,6 @@ import type {
 import type {
   AiNode,
   AiPathNodeStatus,
-  AiPathRunEventLevel,
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
   AiPathRunRecord,
@@ -42,29 +47,17 @@ export type AiPathRunCreateInput = Omit<AiPathRunCreateInputDto, 'status'> & {
   runtimeState?: Record<string, unknown> | null | undefined;
 };
 
-export type AiPathRunUpdate = Partial<
-  Omit<
-    AiPathRunRecord,
-    'id' | 'userId' | 'pathId' | 'createdAt' | 'graph' | 'triggerContext'
-  >
-> & {
+export type AiPathRunUpdate = AiPathRunUpdateDto & {
   status?: AiPathRunStatus;
   triggerContext?: Record<string, unknown> | null;
   graph?: { nodes: AiNode[]; edges: Edge[] | unknown[] } | null;
 };
 
-export type AiPathRunNodeUpdate = Partial<
-  Omit<AiPathRunNodeRecord, 'id' | 'runId' | 'nodeId' | 'createdAt'>
-> & {
+export type AiPathRunNodeUpdate = AiPathRunNodeUpdateDto & {
   status?: AiPathNodeStatus;
 };
 
-export type AiPathRunEventCreateInput = {
-  runId: string;
-  level: AiPathRunEventLevel;
-  message: string;
-  metadata?: Record<string, unknown> | null;
-};
+export type AiPathRunEventCreateInput = AiPathRunEventCreateInputDto;
 
 export type AiPathRunEventListOptions = AiPathRunEventListOptionsDtoAlias;
 

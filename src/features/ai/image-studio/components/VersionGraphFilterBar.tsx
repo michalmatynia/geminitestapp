@@ -1,9 +1,9 @@
 'use client';
 
-import { Search, Shield, X } from 'lucide-react';
+import { Shield, X } from 'lucide-react';
 import React from 'react';
 
-import { Input } from '@/shared/ui';
+import { SearchInput } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useVersionGraphControlsContext } from './VersionGraphControlsContext';
@@ -50,17 +50,16 @@ export function VersionGraphFilterBar(): React.JSX.Element {
   return (
     <div className='border-b border-border/40 px-3 py-1.5'>
       <div className='flex items-center gap-1.5'>
-        <div className='relative flex-1'>
-          <Search className='absolute left-1.5 top-1/2 size-3 -translate-y-1/2 text-gray-500' />
-          <Input size='sm'
-            type='text'
-            value={filterQuery}
-            onChange={(e) => onSetFilterQuery(e.target.value)}
-            placeholder='Search nodes...'
-            title={versionGraphTooltipsEnabled ? tooltipContent.search : undefined}
-            className='h-6 w-full rounded border border-border/40 bg-transparent pl-5 pr-2 text-[10px] text-gray-300 placeholder:text-gray-600 focus:border-gray-500 focus:outline-none'
-          />
-        </div>
+        <SearchInput
+          value={filterQuery}
+          onChange={(e) => onSetFilterQuery(e.target.value)}
+          onClear={() => onSetFilterQuery('')}
+          placeholder='Search nodes...'
+          title={versionGraphTooltipsEnabled ? tooltipContent.search : undefined}
+          containerClassName='h-6 flex-1'
+          className='h-6 text-[10px] pl-5'
+          size='xs'
+        />
 
         {/* Type filter chips */}
         {(['base', 'generation', 'merge', 'composite'] as const).map((t) => (

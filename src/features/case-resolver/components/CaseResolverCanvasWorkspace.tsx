@@ -117,6 +117,28 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     () => ensureEdgeMeta(edges, graph.edgeMeta),
     [edges, graph.edgeMeta]
   );
+  const toStrictEdges = React.useCallback((inputEdges: Edge[]): CaseResolverGraph['edges'] => {
+    return inputEdges
+      .map((edge: Edge): CaseResolverGraph['edges'][number] | null => {
+        const from = edge.from ?? edge.source;
+        const to = edge.to ?? edge.target;
+        if (!from || !to) return null;
+        return {
+          id: edge.id,
+          from,
+          to,
+          ...(edge.label ? { label: edge.label } : {}),
+          ...(edge.fromPort ?? edge.sourceHandle
+            ? { fromPort: edge.fromPort ?? edge.sourceHandle ?? undefined }
+            : {}),
+          ...(edge.toPort ?? edge.targetHandle
+            ? { toPort: edge.toPort ?? edge.targetHandle ?? undefined }
+            : {}),
+        };
+      })
+      .filter((edge): edge is CaseResolverGraph['edges'][number] => edge !== null);
+  }, []);
+  const strictEdges = useMemo((): CaseResolverGraph['edges'] => toStrictEdges(edges), [edges, toStrictEdges]);
   const availableFilesById = useMemo(
     () =>
       new Map<string, CaseResolverFile>(
@@ -172,7 +194,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       compileCaseResolverPrompt(
         {
           nodes,
-          edges,
+          edges: strictEdges,
           nodeMeta: normalizedNodeMeta,
           edgeMeta: normalizedEdgeMeta,
           pdfExtractionPresetId,
@@ -183,7 +205,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
         selectedNodeId
       ),
     [
-      edges,
+      strictEdges,
       nodes,
       normalizedDocumentDropNodeId,
       normalizedDocumentFileLinksByNode,
@@ -207,7 +229,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   useEffect(() => {
     const nextGraph: CaseResolverGraph = {
       nodes,
-      edges,
+      edges: strictEdges,
       nodeMeta: normalizedNodeMeta,
       edgeMeta: normalizedEdgeMeta,
       pdfExtractionPresetId,
@@ -220,7 +242,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     lastEmittedHashRef.current = nextHash;
     onGraphChange(nextGraph);
   }, [
-    edges,
+    strictEdges,
     nodes,
     normalizedDocumentDropNodeId,
     normalizedDocumentFileLinksByNode,
@@ -346,7 +368,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
 
     onGraphChange({
       nodes: [...nodes, node],
-      edges,
+      edges: strictEdges,
       nodeMeta: nextNodeMeta,
       edgeMeta: normalizedEdgeMeta,
       pdfExtractionPresetId,
@@ -401,7 +423,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     };
     onGraphChange({
       nodes: nextNodes,
-      edges: nextEdges,
+      edges: toStrictEdges(nextEdges),
       nodeMeta: nextNodeMeta,
       edgeMeta: normalizedEdgeMeta,
       pdfExtractionPresetId,
@@ -423,7 +445,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     };
     onGraphChange({
       nodes,
-      edges,
+      edges: strictEdges,
       nodeMeta: normalizedNodeMeta,
       edgeMeta: nextEdgeMeta,
       pdfExtractionPresetId,
@@ -550,12 +572,12 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   };
 
   const selectedPromptMeta =
-    selectedNode && selectedNode.type === 'prompt'
+    selectedNode?.type === 'prompt'
       ? normalizedNodeMeta[selectedNode.id] ?? DEFAULT_CASE_RESOLVER_NODE_META
       : null;
 
   const selectedPromptSourceFileId =
-    selectedNode && selectedNode.type === 'prompt'
+    selectedNode?.type === 'prompt'
       ? normalizedDocumentSourceFileIdByNode[selectedNode.id] ?? null
       : null;
   const selectedPromptSourceFile = selectedPromptSourceFileId
@@ -725,7 +747,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
               onClick={() =>
                 onGraphChange({
                   nodes,
-                  edges,
+                  edges: strictEdges,
                   nodeMeta: normalizedNodeMeta,
                   edgeMeta: normalizedEdgeMeta,
                   pdfExtractionPresetId,
@@ -786,10 +808,31 @@ export function CaseResolverCanvasWorkspace(): React.JSX.Element {
     );
   }
 
+  const initialNodes: AiNode[] = activeFile.graph.nodes.map((node: CaseResolverGraph['nodes'][number]): AiNode => {
+    const nodeRecord = node as Record<string, unknown>;
+    const createdAt =
+      (typeof nodeRecord['createdAt'] === 'string' ? nodeRecord['createdAt'] : undefined) ??
+      new Date().toISOString();
+    const updatedAt =
+      (typeof nodeRecord['updatedAt'] === 'string' ? nodeRecord['updatedAt'] : undefined) ??
+      createdAt;
+    const data = (
+      nodeRecord['data'] && typeof nodeRecord['data'] === 'object'
+        ? nodeRecord['data']
+        : {}
+    ) as Record<string, unknown>;
+    return {
+      ...node,
+      createdAt,
+      updatedAt,
+      data,
+    };
+  });
+
   return (
     <AiPathsProvider
       key={activeFile.id}
-      initialNodes={activeFile.graph.nodes}
+      initialNodes={initialNodes}
       initialEdges={activeFile.graph.edges}
       initialLoading={false}
       initialRuntimeState={{

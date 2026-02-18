@@ -26,7 +26,8 @@ import type {
   AgentLoginCandidatesDto,
   ChatbotTimelineEntryDto,
   ModelProfileDto,
-  ModelTaskRuleDto
+  ModelTaskRuleDto,
+  AgentSettingsPayloadDto
 } from '../../dtos/chatbot';
 import type { ObjectId } from 'mongodb';
 
@@ -56,7 +57,8 @@ export type {
   AgentLoginCandidatesDto,
   ChatbotTimelineEntryDto,
   ModelProfileDto,
-  ModelTaskRuleDto
+  ModelTaskRuleDto,
+  AgentSettingsPayloadDto
 };
 
 export type ChatMessage = ChatMessageDto;
@@ -135,27 +137,4 @@ export type ModelProfile = ModelProfileDto;
 
 export type ModelTaskRule = ModelTaskRuleDto;
 
-export type AgentSettingsPayload = {
-  agentBrowser: string;
-  runHeadless: boolean;
-  ignoreRobotsTxt: boolean;
-  requireHumanApproval: boolean;
-  memoryValidationModel: string;
-  plannerModel: string;
-  selfCheckModel: string;
-  extractionValidationModel: string;
-  toolRouterModel: string;
-  loopGuardModel: string;
-  approvalGateModel: string;
-  memorySummarizationModel: string;
-  selectorInferenceModel: string;
-  outputNormalizationModel: string;
-  maxSteps: number;
-  maxStepAttempts: number;
-  maxReplanCalls: number;
-  replanEverySteps: number;
-  maxSelfChecks: number;
-  loopGuardThreshold: number;
-  loopBackoffBaseMs: number;
-  loopBackoffMaxMs: number;
-};
+export type AgentSettingsPayload = AgentSettingsPayloadDto;

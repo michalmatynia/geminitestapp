@@ -11,7 +11,7 @@ import { useAiPathConfig } from '../../AiPathConfigContext';
 export function GateNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-  if (!selectedNode || selectedNode.type !== 'gate') return null;
+  if (selectedNode?.type !== 'gate') return null;
 
   const gateConfig: GateConfig = selectedNode.config?.gate ?? {
     mode: 'block',

@@ -39,7 +39,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, pa
 
   const repo = await getIntegrationRepository();
   const connections = await repo.listConnections(integrationId);
-  const payload = connections.map((connection) => ({
+  const payload = connections.map((connection: (typeof connections)[number]) => ({
     id: connection.id,
     integrationId: connection.integrationId,
     name: connection.name,
@@ -205,4 +205,3 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, pa
     traderaApiTokenUpdatedAt: created.traderaApiTokenUpdatedAt ?? null,
   });
 }
-

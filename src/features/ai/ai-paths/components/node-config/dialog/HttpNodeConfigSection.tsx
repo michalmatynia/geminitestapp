@@ -22,7 +22,7 @@ const responseModeOptions = [
 export function HttpNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
-  if (!selectedNode || selectedNode.type !== 'http') return null;
+  if (selectedNode?.type !== 'http') return null;
 
   const httpConfig: HttpConfig = selectedNode.config?.http ?? {
     url: '',

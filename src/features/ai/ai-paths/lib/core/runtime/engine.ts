@@ -678,9 +678,9 @@ export async function evaluateGraph({
       const seedOut = seedOutputs[node.id];
       if (!seedOut) continue;
       const seedCtx =
-        typeof (seedOut as Record<string, unknown>)['context'] === 'object' &&
-        (seedOut as Record<string, unknown>)['context'] !== null
-          ? ((seedOut as Record<string, unknown>)['context'] as Record<string, unknown>)
+        typeof (seedOut)['context'] === 'object' &&
+        (seedOut)['context'] !== null
+          ? ((seedOut)['context'] as Record<string, unknown>)
           : null;
       const seedEnt =
         seedCtx?.['entity'] !== undefined &&
@@ -795,12 +795,14 @@ export async function evaluateGraph({
     const hasInputs = Object.keys(nodeInputs).length > 0;
     return incoming
       .map((edge: Edge): RuntimeHistoryLink | null => {
+        const fromNodeId = edge.from;
+        if (!fromNodeId) return null;
         const toPort = edge.toPort ?? null;
-        const isPresent = toPort ? (nodeInputs as Record<string, unknown>)[toPort] !== undefined : hasInputs;
+        const isPresent = toPort ? (nodeInputs)[toPort] !== undefined : hasInputs;
         if (!isPresent) return null;
-        const fromNode = nodeById.get(edge.from);
+        const fromNode = nodeById.get(fromNodeId);
         return {
-          nodeId: edge.from,
+          nodeId: fromNodeId,
           nodeType: fromNode?.type ?? null,
           nodeTitle: fromNode?.title ?? null,
           fromPort: edge.fromPort ?? null,
@@ -818,12 +820,14 @@ export async function evaluateGraph({
     const hasOutputs = Object.keys(nodeOutputs).length > 0;
     return outgoing
       .map((edge: Edge): RuntimeHistoryLink | null => {
+        const toNodeId = edge.to;
+        if (!toNodeId) return null;
         const fromPort = edge.fromPort ?? null;
-        const isPresent = fromPort ? (nodeOutputs as Record<string, unknown>)[fromPort] !== undefined : hasOutputs;
+        const isPresent = fromPort ? (nodeOutputs)[fromPort] !== undefined : hasOutputs;
         if (!isPresent) return null;
-        const toNode = nodeById.get(edge.to);
+        const toNode = nodeById.get(toNodeId);
         return {
-          nodeId: edge.to,
+          nodeId: toNodeId,
           nodeType: toNode?.type ?? null,
           nodeTitle: toNode?.title ?? null,
           fromPort,
@@ -838,14 +842,16 @@ export async function evaluateGraph({
     if (incoming.length === 0) return {};
     const collected: RuntimePortValues = {};
     incoming.forEach((edge: Edge) => {
-      const fromOutput = outputs[edge.from];
+      const fromNodeId = edge.from;
+      if (!fromNodeId) return;
+      const fromOutput = outputs[fromNodeId];
       if (!fromOutput || !edge.fromPort || !edge.toPort) return;
-      const value = (fromOutput as Record<string, unknown>)[edge.fromPort];
+      const value = (fromOutput)[edge.fromPort];
       if (value === undefined) return;
       const expectedTypes = getPortDataTypes(edge.toPort);
       if (!isValueCompatibleWithTypes(value, expectedTypes)) return;
-      const existing = (collected as Record<string, unknown>)[edge.toPort];
-      (collected as Record<string, unknown>)[edge.toPort] = appendInputValue(existing, value);
+      const existing = (collected)[edge.toPort];
+      (collected)[edge.toPort] = appendInputValue(existing, value);
     });
     return collected;
   };
@@ -868,7 +874,7 @@ export async function evaluateGraph({
       });
       if (connectedPorts.size === 0) return true;
       return Array.from(connectedPorts).every((port: string) =>
-        (rawInputs as Record<string, unknown>)[port] !== undefined
+        (rawInputs)[port] !== undefined
       );
     }
     const connectedPorts = new Set<string>();
@@ -880,13 +886,13 @@ export async function evaluateGraph({
     const operation = dbConfig.operation ?? 'query';
     const hasAnyValue = (ports: string[]): boolean =>
       ports.some((port: string) =>
-        hasMeaningfulValue(coerceInput((rawInputs as Record<string, unknown>)[port]))
+        hasMeaningfulValue(coerceInput((rawInputs)[port]))
       );
     const anyConnected = (ports: string[]): boolean =>
       ports.some((port: string) => connectedPorts.has(port));
     const allConnectedHaveValues = (ports: string[]): boolean =>
       ports.every((port: string) =>
-        !connectedPorts.has(port) || hasMeaningfulValue(coerceInput((rawInputs as Record<string, unknown>)[port]))
+        !connectedPorts.has(port) || hasMeaningfulValue(coerceInput((rawInputs)[port]))
       );
 
     if (operation === 'query') {
@@ -1230,7 +1236,7 @@ export async function evaluateGraph({
         if (nodeType !== 'trigger' && nodeType !== 'simulation' && nodeType !== 'context') {
           continue;
         }
-        applyRecord(output as Record<string, unknown>);
+        applyRecord(output);
         if (pickString(next['entityId']) && pickString(next['productId']) && pickString(next['entityType'])) {
           break;
         }
@@ -1282,9 +1288,9 @@ export async function evaluateGraph({
       const existingSeed = outputs[node.id];
       const existingContext =
         existingSeed &&
-        typeof (existingSeed as Record<string, unknown>)['context'] === 'object' &&
-        (existingSeed as Record<string, unknown>)['context'] !== null
-          ? ((existingSeed as Record<string, unknown>)['context'] as Record<string, unknown>)
+        typeof (existingSeed)['context'] === 'object' &&
+        (existingSeed)['context'] !== null
+          ? ((existingSeed)['context'] as Record<string, unknown>)
           : null;
       const seedEntity =
         existingContext?.['entity'] !== undefined &&
@@ -1948,8 +1954,10 @@ export async function evaluateGraphWithIteratorAutoContinue(options: EvaluateGra
       current = await evaluateGraph({
         ...baseOptions,
         seedOutputs: current.outputs,
-        seedHashes: current.hashes ?? undefined,
-        seedHashTimestamps: current.hashTimestamps ?? undefined,
+        seedHashes: (current.hashes as Record<string, string> | undefined) ?? undefined,
+        seedHashTimestamps:
+          (current.hashTimestamps as Record<string, number> | undefined) ??
+          undefined,
         seedHistory: current.history ?? undefined,
         seedRunId: current.runId ?? resolvedRunId,
         seedRunStartedAt: current.runStartedAt ?? resolvedRunStartedAt,

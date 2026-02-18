@@ -2,6 +2,8 @@
 
 import React from 'react';
 
+import { Alert, StatusBadge, PropertyRow } from '@/shared/ui';
+
 import { LearnedRuleList } from '../components/LearnedRuleList';
 import { PromptEngineFilters } from '../components/PromptEngineFilters';
 import { PromptEngineToolbar } from '../components/PromptEngineToolbar';
@@ -28,8 +30,6 @@ type AdminPromptEngineValidationPatternsPageProps = {
   lockedExploderSubTab?: ExploderPatternSubTab;
 };
 
-import { SectionPanel, Alert, StatusBadge, PropertyRow } from '@/shared/ui';
-
 function AdminPromptEngineValidationPatternsContent(): React.JSX.Element {
   const { promptEngineSettings, saveError, isUsingDefaults } = usePromptEngine();
 
@@ -37,7 +37,7 @@ function AdminPromptEngineValidationPatternsContent(): React.JSX.Element {
     <div className='space-y-4'>
       <PromptEngineToolbar />
 
-      <SectionPanel variant='subtle-compact' className='p-4'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <StatusBadge
             status={promptEngineSettings.promptValidation.enabled ? 'Validator enabled' : 'Validator disabled'}
@@ -49,7 +49,7 @@ function AdminPromptEngineValidationPatternsContent(): React.JSX.Element {
             variant='subtle'
           />
         </div>
-      </SectionPanel>
+      </div>
 
       {saveError ? (
         <Alert variant='error'>{saveError}</Alert>

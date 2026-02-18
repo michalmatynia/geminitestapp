@@ -34,7 +34,7 @@ export const handleDatabase: NodeHandler = async ({
   try {
     const resolvedInputs: Record<string, unknown> = resolveDatabaseInputs(
       {
-        nodeInputs: nodeInputs as Record<string, unknown>,
+        nodeInputs: nodeInputs,
         triggerContext,
         fallbackEntityId,
         simulationEntityType,

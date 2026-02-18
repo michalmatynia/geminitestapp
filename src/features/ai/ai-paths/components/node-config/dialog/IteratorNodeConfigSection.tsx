@@ -12,7 +12,7 @@ import { useAiPathConfig } from '../../AiPathConfigContext';
 export function IteratorNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, runtimeState, updateSelectedNodeConfig } = useAiPathConfig();
 
-  if (!selectedNode || selectedNode.type !== 'iterator') return null;
+  if (selectedNode?.type !== 'iterator') return null;
 
   const iteratorConfig: IteratorConfig = selectedNode.config?.iterator ?? {
     autoContinue: true,

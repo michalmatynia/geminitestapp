@@ -16,7 +16,7 @@ const waveformOptions = WAVEFORM_OPTIONS.map((w) => ({ value: w, label: w }));
 
 export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
-  if (!selectedNode || selectedNode.type !== 'audio_oscillator') return null;
+  if (selectedNode?.type !== 'audio_oscillator') return null;
 
   const oscillatorConfig = selectedNode.config?.audioOscillator ?? {
     waveform: 'sine' as AudioWaveform,

@@ -192,3 +192,41 @@ export const importListStatsSchema = z.object({
 });
 
 export type ImportListStatsDto = z.infer<typeof importListStatsSchema>;
+
+export const exportParameterDocSchema = z.object({
+  key: z.string(),
+  description: z.string(),
+});
+
+export type ExportParameterDocDto = z.infer<typeof exportParameterDocSchema>;
+
+export const warehouseDebugRawSchema = z.object({
+  method: z.string(),
+  statusCode: z.number(),
+  ok: z.boolean(),
+  error: z.string().nullable(),
+  payload: z.unknown(),
+});
+
+export type WarehouseDebugRawDto = z.infer<typeof warehouseDebugRawSchema>;
+
+export const inventoryDebugRawSchema = z.object({
+  method: z.string(),
+  statusCode: z.number(),
+  ok: z.boolean(),
+  error: z.string().nullable(),
+  payload: z.unknown(),
+});
+
+export type InventoryDebugRawDto = z.infer<typeof inventoryDebugRawSchema>;
+
+export const debugWarehousesSchema = z.object({
+  inventory: z.array(warehouseOptionSchema).optional(),
+  all: z.array(warehouseOptionSchema).optional(),
+  inventories: z.array(inventoryOptionSchema).optional(),
+  inventoryRaw: warehouseDebugRawSchema.nullable().optional(),
+  inventoriesRaw: inventoryDebugRawSchema.nullable().optional(),
+  allRaw: warehouseDebugRawSchema.nullable().optional(),
+}).nullable();
+
+export type DebugWarehousesDto = z.infer<typeof debugWarehousesSchema>;

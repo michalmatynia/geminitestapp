@@ -58,7 +58,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
     toast,
   } = useAiPathConfig();
 
-  if (!selectedNode || selectedNode.type !== 'regex') return null;
+  if (selectedNode?.type !== 'regex') return null;
 
   const isRegexNode = true;
 

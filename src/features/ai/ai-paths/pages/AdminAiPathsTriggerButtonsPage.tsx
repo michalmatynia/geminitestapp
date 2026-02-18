@@ -28,6 +28,7 @@ import { invalidateAiPathTriggerButtons } from '@/shared/lib/query-invalidation'
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   AppModal,
+  Badge,
   Button,
   Checkbox, 
   useToast,
@@ -67,7 +68,10 @@ const normalizeDraft = (record?: AiTriggerButtonDto | null): TriggerButtonDraft 
   iconId: record?.iconId ?? null,
   locations: record?.locations ?? ['product_modal'],
   mode: record?.mode ?? 'click',
-  display: record?.display ?? 'icon_label',
+  display:
+    record?.display === 'icon' || record?.display === 'icon_label'
+      ? record.display
+      : 'icon_label',
 });
 
 const BUILT_IN_TRIGGER_EVENTS = new Set<string>(['manual', 'scheduled_run']);
@@ -485,12 +489,13 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
             draftPathUsage.length > 0 ? (
               <div className='flex flex-wrap gap-1.5'>
                 {draftPathUsage.map((path: TriggerButtonPathUsage): React.JSX.Element => (
-                  <span
+                  <Badge
                     key={path.id}
-                    className='inline-flex items-center rounded-full border border-border bg-muted/30 px-2 py-0.5 text-[11px] text-gray-300'
+                    variant='neutral'
+                    className='border-border bg-muted/30 text-[11px] text-gray-300'
                   >
                     {path.name}
-                  </span>
+                  </Badge>
                 ))}
               </div>
             ) : (

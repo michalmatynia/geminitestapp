@@ -62,7 +62,7 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
     return Array.from(byId.values());
   }, [triggerButtonsQuery.data]);
 
-  if (!selectedNode || selectedNode.type !== 'trigger') return null;
+  if (selectedNode?.type !== 'trigger') return null;
 
   const triggerConfig = selectedNode.config?.trigger ?? {
     event: TRIGGER_EVENTS[0]?.id ?? 'manual',

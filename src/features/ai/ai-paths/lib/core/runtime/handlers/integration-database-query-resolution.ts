@@ -45,7 +45,7 @@ export function resolveDatabaseQuery({
   const callbackInput: unknown = coerceInput(nodeInputs['queryCallback']);
   const aiQueryInput: unknown = coerceInput(nodeInputs['aiQuery']);
   const resolvedEntityId: string | null = resolveEntityIdFromInputs(
-    resolvedInputs as RuntimePortValues,
+    resolvedInputs,
     undefined,
     simulationEntityType,
     simulationEntityId,

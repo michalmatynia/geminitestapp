@@ -22,7 +22,7 @@ export function ViewerNodeConfigSection(): React.JSX.Element | null {
     clearRuntimeForNode,
   } = useAiPathConfig();
 
-  if (!selectedNode || selectedNode.type !== 'viewer') return null;
+  if (selectedNode?.type !== 'viewer') return null;
 
   const viewerConfig = selectedNode.config?.viewer ?? {
     outputs: createViewerOutputs(selectedNode.inputs),
@@ -71,7 +71,9 @@ export function ViewerNodeConfigSection(): React.JSX.Element | null {
         (edge: Edge): boolean => edge.toPort === input || !edge.toPort
       );
       const merged = matchingEdges.reduce<unknown>((current: unknown, edge: Edge): unknown => {
-        const fromOutput = runtimeState.outputs[edge.from];
+        const fromNodeId = edge.from;
+        if (!fromNodeId) return current;
+        const fromOutput = runtimeState.outputs[fromNodeId];
         if (!fromOutput) return current;
         const fromPort = edge.fromPort;
         if (!fromPort) return current;

@@ -1,17 +1,17 @@
-export type CmsHoverEffect = 'none' | 'lift' | 'lift-3d' | 'scale' | 'glow';
+import type {
+  CmsHoverEffectDto,
+  CmsClickActionDto,
+  CmsClickTargetDto,
+  CmsScrollBehaviorDto,
+  CmsEventEffectsConfigDto,
+} from '@/shared/contracts/cms';
 
-export type CmsClickAction = 'none' | 'navigate' | 'scroll';
+export type CmsHoverEffect = CmsHoverEffectDto;
 
-export type CmsClickTarget = '_self' | '_blank';
+export type CmsClickAction = CmsClickActionDto;
 
-export type CmsScrollBehavior = 'smooth' | 'auto';
+export type CmsClickTarget = CmsClickTargetDto;
 
-export type CmsEventEffectsConfig = {
-  hoverEffect: CmsHoverEffect;
-  hoverScale: number;
-  clickAction: CmsClickAction;
-  clickUrl: string;
-  clickTarget: CmsClickTarget;
-  clickScrollTarget: string;
-  clickScrollBehavior: CmsScrollBehavior;
-};
+export type CmsScrollBehavior = CmsScrollBehaviorDto;
+
+export type CmsEventEffectsConfig = CmsEventEffectsConfigDto;

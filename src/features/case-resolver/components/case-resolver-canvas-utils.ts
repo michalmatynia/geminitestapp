@@ -25,6 +25,7 @@ export const buildNode = (
   id: string,
   title: string
 ): AiNode => {
+  const now = new Date().toISOString();
   const defaultConfig = getDefaultConfigForType(
     definition.type,
     definition.outputs,
@@ -40,8 +41,11 @@ export const buildNode = (
   return {
     ...definition,
     id,
+    createdAt: now,
+    updatedAt: now,
     title,
     position,
+    data: {},
     ...(mergedConfig ? { config: mergedConfig } : {}),
   };
 };
@@ -70,7 +74,7 @@ export const DOCUMENT_TEXTFIELD_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0
 export const DOCUMENT_CONTENT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'content';
 export const DOCUMENT_PLAIN_TEXT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
 
-const normalizeTextNodeInputPort = (value: string | undefined): string => {
+const normalizeTextNodeInputPort = (value: string | null | undefined): string => {
   if (
     value === DOCUMENT_TEXTFIELD_PORT ||
     value === DOCUMENT_CONTENT_PORT ||
@@ -81,7 +85,7 @@ const normalizeTextNodeInputPort = (value: string | undefined): string => {
   return DOCUMENT_CONTENT_PORT;
 };
 
-const normalizeTextNodeOutputPort = (value: string | undefined): string => {
+const normalizeTextNodeOutputPort = (value: string | null | undefined): string => {
   if (
     value === DOCUMENT_TEXTFIELD_PORT ||
     value === DOCUMENT_CONTENT_PORT ||

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { type ReactNode } from 'react';
+
 import { cn } from '@/shared/utils';
 
 interface HintProps {

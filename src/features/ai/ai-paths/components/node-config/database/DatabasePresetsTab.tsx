@@ -4,7 +4,7 @@ import { Eye } from 'lucide-react';
 import React from 'react';
 
 import type { DbQueryPreset } from '@/features/ai/ai-paths/lib';
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Label, Textarea } from '@/shared/ui';
+import { Button, AppModal, Input, Label, Textarea } from '@/shared/ui';
 
 import { useDatabasePresetsTabContext } from './DatabasePresetsTabContext';
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -155,40 +155,35 @@ export function DatabasePresetsTab(): React.JSX.Element {
         )}
       </div>
 
-      <Dialog
+      <AppModal
         open={Boolean(activePreset)}
         onOpenChange={(open: boolean): void => {
           if (!open) {
             setViewPresetId(null);
           }
         }}
+        title={activePreset?.name ?? 'Query Preset'}
+        size='md'
       >
-        <DialogContent className='max-w-2xl border border-border bg-card text-white'>
-          <DialogHeader>
-            <DialogTitle className='text-lg'>
-              {activePreset?.name ?? 'Query Preset'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className='space-y-3'>
-            <div className='space-y-1'>
-              <Label className='text-xs text-gray-400'>Filter Query</Label>
-              <Textarea
-                className='min-h-[120px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
-                value={activePreset?.queryTemplate ?? ''}
-                readOnly
-              />
-            </div>
-            <div className='space-y-1'>
-              <Label className='text-xs text-gray-400'>Update Document</Label>
-              <Textarea
-                className='min-h-[120px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
-                value={activePreset?.updateTemplate?.trim() ? activePreset.updateTemplate : '// Not set'}
-                readOnly
-              />
-            </div>
+        <div className='space-y-3'>
+          <div className='space-y-1'>
+            <Label className='text-xs text-gray-400'>Filter Query</Label>
+            <Textarea
+              className='min-h-[120px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
+              value={activePreset?.queryTemplate ?? ''}
+              readOnly
+            />
           </div>
-        </DialogContent>
-      </Dialog>
+          <div className='space-y-1'>
+            <Label className='text-xs text-gray-400'>Update Document</Label>
+            <Textarea
+              className='min-h-[120px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
+              value={activePreset?.updateTemplate?.trim() ? activePreset.updateTemplate : '// Not set'}
+              readOnly
+            />
+          </div>
+        </div>
+      </AppModal>
     </div>
   );
 }

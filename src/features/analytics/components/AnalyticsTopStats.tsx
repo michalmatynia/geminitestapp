@@ -1,6 +1,6 @@
 'use client';
 
-import { DataTable, SectionPanel } from '@/shared/ui';
+import { DataTable, FormSection } from '@/shared/ui';
 
 import { useAnalytics } from '../context/AnalyticsContext';
 

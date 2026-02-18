@@ -32,6 +32,34 @@ const staleRunningCleanupIntervalMs = parseEnvNumber(
   resolveAiPathsStaleRunningCleanupIntervalMs()
 );
 const staleRunningMaxAgeMs = resolveAiPathsStaleRunningMaxAgeMs();
+const runsListResponseCacheTtlMs = parseEnvNumber(
+  process.env['AI_PATHS_RUNS_LIST_CACHE_TTL_MS'],
+  2000
+);
+const runsListResponseCacheMaxEntries = parseEnvNumber(
+  process.env['AI_PATHS_RUNS_LIST_CACHE_MAX_ENTRIES'],
+  200
+);
+const runsListResponseCache = new Map<
+  string,
+  { expiresAt: number; payload: { runs: unknown[]; total: number } }
+>();
+
+const pruneRunsListResponseCache = (now: number): void => {
+  for (const [key, entry] of runsListResponseCache.entries()) {
+    if (entry.expiresAt <= now) {
+      runsListResponseCache.delete(key);
+    }
+  }
+  const overflow = runsListResponseCache.size - runsListResponseCacheMaxEntries;
+  if (overflow <= 0) return;
+  let removed = 0;
+  for (const key of runsListResponseCache.keys()) {
+    runsListResponseCache.delete(key);
+    removed += 1;
+    if (removed >= overflow) break;
+  }
+};
 
 const scheduleStaleRunningCleanup = (
   repo: Awaited<ReturnType<typeof getPathRunRepository>>
@@ -96,6 +124,29 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const repo = await getPathRunRepository();
   scheduleStaleRunningCleanup(repo);
   const hasGlobalRunAccess = canAccessGlobalAiPathRuns(access);
+  const cacheKey = JSON.stringify({
+    userScope: hasGlobalRunAccess ? 'global' : access.userId,
+    pathId: pathId ?? null,
+    query: query ?? null,
+    source: source ?? null,
+    sourceMode,
+    status: status ?? null,
+    limit: limit ?? null,
+    offset: offset ?? null,
+  });
+  const now = Date.now();
+  if (runsListResponseCacheTtlMs > 0) {
+    pruneRunsListResponseCache(now);
+    const cached = runsListResponseCache.get(cacheKey);
+    if (cached && cached.expiresAt > now) {
+      return NextResponse.json(cached.payload, {
+        headers: {
+          'Cache-Control': 'no-store',
+          'X-Ai-Poll-Guard': 'runs-cache-hit',
+        },
+      });
+    }
+  }
   const result = await repo.listRuns({
     ...(!hasGlobalRunAccess ? { userId: access.userId } : {}),
     ...(pathId ? { pathId } : {}),
@@ -105,9 +156,16 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     ...(limit !== undefined ? { limit } : {}),
     ...(offset !== undefined ? { offset } : {}),
   });
+  if (runsListResponseCacheTtlMs > 0) {
+    runsListResponseCache.set(cacheKey, {
+      expiresAt: now + runsListResponseCacheTtlMs,
+      payload: result as { runs: unknown[]; total: number },
+    });
+  }
   return NextResponse.json(result, {
     headers: {
       'Cache-Control': 'no-store',
+      'X-Ai-Poll-Guard': 'runs-fresh',
     },
   });
 }
@@ -150,4 +208,3 @@ export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext):
 
   return NextResponse.json({ deleted: result.count, scope });
 }
-

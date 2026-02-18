@@ -1,10 +1,10 @@
-import { Upload, X } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import React from 'react';
 
 import { logClientError } from '@/features/observability';
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/types/domain/files';
-import { Button, Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, useToast, FileUploadButton, type FileUploadHelpers } from '@/shared/ui';
+import { AppModal, useToast, FileUploadButton, type FileUploadHelpers } from '@/shared/ui';
 
 import { useUploadCmsMedia } from '../../hooks/useCmsQueries';
 
@@ -83,35 +83,34 @@ export function MediaLibraryPanel({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-w-5xl w-[calc(100vw-2rem)] max-h-[90vh] overflow-hidden flex flex-col'>
-        <DialogHeader className='flex flex-row items-center justify-between space-y-0'>
-          <DialogTitle>Media Library</DialogTitle>
-          <DialogClose asChild>
-            <Button variant='ghost' size='icon' aria-label='Close media library'>
-              <X className='size-4' />
-            </Button>
-          </DialogClose>
-        </DialogHeader>
-
-        <div className='flex items-center gap-3'>
-          <FileUploadButton
-            variant='outline'
-            size='sm'
-            accept='image/*'
-            multiple
-            disabled={uploadMutation.isPending}
-            onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => 
-              onFilesSelected ? onFilesSelected(files, helpers) : handleUpload(files, helpers)
-            }
-          >
-            <Upload className='mr-2 size-4' />
-            {uploadMutation.isPending ? 'Uploading...' : 'Upload images'}
-          </FileUploadButton>
-          <p className='text-xs text-gray-500'>Supported formats: images</p>
+    <AppModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title='Media Library'
+      size='xl'
+      padding='none'
+    >
+      <div className='flex flex-col h-full overflow-hidden'>
+        <div className='p-4 border-b border-border/40'>
+          <div className='flex items-center gap-3'>
+            <FileUploadButton
+              variant='outline'
+              size='sm'
+              accept='image/*'
+              multiple
+              disabled={uploadMutation.isPending}
+              onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => 
+                onFilesSelected ? onFilesSelected(files, helpers) : handleUpload(files, helpers)
+              }
+            >
+              <Upload className='mr-2 size-4' />
+              {uploadMutation.isPending ? 'Uploading...' : 'Upload images'}
+            </FileUploadButton>
+            <p className='text-xs text-gray-500'>Supported formats: images</p>
+          </div>
         </div>
 
-        <div className='mt-4 rounded border border-border/40 bg-gray-900 flex-1 overflow-auto'>
+        <div className='flex-1 overflow-auto bg-gray-950/20'>
           <FileManager
             onSelectFile={handleSelect}
             selectionMode={selectionMode}
@@ -122,7 +121,7 @@ export function MediaLibraryPanel({
             showTagSearch
           />
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </AppModal>
   );
 }

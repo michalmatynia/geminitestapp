@@ -1,7 +1,7 @@
 'use client';
 
 import type { AiInsightRecord } from '@/shared/types';
-import { Button, StatusBadge, DocumentationSection } from '@/shared/ui';
+import { Button, StatusBadge, DocumentationSection, Hint } from '@/shared/ui';
 
 import { useAnalytics } from '../context/AnalyticsContext';
 
@@ -27,11 +27,11 @@ export function AnalyticsAiInsights(): React.JSX.Element {
         </Button>
       </div>
       {insightsQuery.isLoading ? (
-        <p className='mt-3 text-xs text-gray-500'>Loading AI insights…</p>
+        <Hint className='mt-3'>Loading AI insights…</Hint>
       ) : insightsQuery.error ? (
-        <p className='mt-3 text-xs text-red-400'>{insightsQuery.error.message}</p>
+        <Hint variant='danger' className='mt-3'>{insightsQuery.error.message}</Hint>
       ) : (insightsQuery.data?.insights?.length ?? 0) === 0 ? (
-        <p className='mt-3 text-xs text-gray-500'>No insights yet.</p>
+        <Hint className='mt-3' italic>No insights yet.</Hint>
       ) : (
         <div className='mt-3 space-y-3'>
           {insightsQuery.data?.insights.map((insight: AiInsightRecord) => (

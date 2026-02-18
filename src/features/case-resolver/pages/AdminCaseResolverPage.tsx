@@ -33,11 +33,18 @@ import { CaseResolverPageView } from '../components/CaseResolverPageView';
 import { CaseResolverWorkspaceDebugPanel } from '../components/CaseResolverWorkspaceDebugPanel';
 import { useCaseResolverState } from '../hooks/useCaseResolverState';
 import {
+  createCaseResolverAssetFile,
   normalizeFolderPath,
+  normalizeFolderPaths,
 } from '../settings';
-import { buildDocumentPdfMarkup, isPathWithinFolder } from '../utils/caseResolverUtils';
+import {
+  buildDocumentPdfMarkup,
+  createId,
+  isPathWithinFolder,
+} from '../utils/caseResolverUtils';
 
 import type {
+  CaseResolverAssetFile,
   CaseResolverCategory,
   CaseResolverDocumentHistoryEntry,
   CaseResolverFileEditDraft,
@@ -115,6 +122,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const editorTextareaRef = React.useRef<HTMLTextAreaElement | null>(null);
   const scanDraftUploadInputRef = React.useRef<HTMLInputElement | null>(null);
   const [isScanDraftDropActive, setIsScanDraftDropActive] = React.useState(false);
+  const [isDocumentPreviewOpen, setIsDocumentPreviewOpen] = React.useState(false);
+  const [documentPreviewHtml, setDocumentPreviewHtml] = React.useState('');
   const initialDraftFingerprintRef = React.useRef<string | null>(null);
 
   const preserveWorkspaceView = useCallback(
@@ -122,6 +131,75 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       window.setTimeout((): void => {
         setWorkspaceView((current) => (current === view ? current : view));
       }, 0);
+    },
+    []
+  );
+
+  const createUniqueNodeFileAssetName = useCallback(
+    (
+      assets: CaseResolverAssetFile[],
+      folder: string,
+      baseName: string
+    ): string => {
+      const normalizedFolder = normalizeFolderPath(folder);
+      const normalizedBaseName = baseName.trim() || 'New Node File';
+      const namesInFolder = new Set(
+        assets
+          .filter((asset: CaseResolverAssetFile): boolean => asset.folder === normalizedFolder)
+          .map((asset: CaseResolverAssetFile): string => asset.name.trim().toLowerCase())
+      );
+      if (!namesInFolder.has(normalizedBaseName.toLowerCase())) return normalizedBaseName;
+      let index = 2;
+      while (index < 10_000) {
+        const candidate = `${normalizedBaseName} ${index}`;
+        if (!namesInFolder.has(candidate.toLowerCase())) {
+          return candidate;
+        }
+        index += 1;
+      }
+      return `${normalizedBaseName}-${createId('dup')}`;
+    },
+    []
+  );
+
+  const buildNodeFileSnapshotText = useCallback(
+    (input: {
+      graph: CaseResolverGraph;
+      nodeId: string;
+      sourceFileId: string | null;
+      sourceFileName: string | null;
+      sourceFolder: string | null;
+      activeCanvasFileId: string;
+    }): string => {
+      const targetNode =
+        input.graph.nodes.find((node) => node.id === input.nodeId) ?? null;
+      const connectedEdges = input.graph.edges
+        .filter((edge): boolean => edge.from === input.nodeId || edge.to === input.nodeId)
+        .sort((left, right) => left.id.localeCompare(right.id));
+      const relatedNodeIds = Array.from(
+        new Set(
+          connectedEdges.flatMap((edge): string[] => [edge.from, edge.to])
+        )
+      )
+        .filter((nodeId: string): boolean => nodeId !== input.nodeId)
+        .sort((left, right) => left.localeCompare(right));
+
+      return JSON.stringify(
+        {
+          kind: 'case_resolver_node_file_snapshot_v1',
+          activeCanvasFileId: input.activeCanvasFileId,
+          sourceFileId: input.sourceFileId,
+          sourceFileName: input.sourceFileName,
+          sourceFolder: input.sourceFolder,
+          nodeId: input.nodeId,
+          node: targetNode,
+          nodeMeta: input.graph.nodeMeta?.[input.nodeId] ?? null,
+          connectedEdges,
+          relatedNodeIds,
+        },
+        null,
+        2
+      );
     },
     []
   );
@@ -577,43 +655,77 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     });
   }, [filemakerDatabase]);
 
-  const openDraftPdfWindow = useCallback((markup: string): Window | null => {
-    if (typeof window === 'undefined') return null;
-    const previewWindow = window.open('', '_blank', 'noopener,noreferrer');
-    if (!previewWindow) {
-      toast('Unable to open PDF preview. Allow pop-ups for this site and try again.', {
-        variant: 'warning',
-      });
-      return null;
-    }
-    previewWindow.document.open();
-    previewWindow.document.write(markup);
-    previewWindow.document.close();
-    return previewWindow;
+  const printDocumentMarkup = useCallback((markup: string): void => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    const frame = document.createElement('iframe');
+    frame.setAttribute('aria-hidden', 'true');
+    frame.style.position = 'fixed';
+    frame.style.width = '0';
+    frame.style.height = '0';
+    frame.style.border = '0';
+    frame.style.opacity = '0';
+    frame.style.pointerEvents = 'none';
+
+    const cleanup = (): void => {
+      window.setTimeout((): void => {
+        if (frame.parentNode) {
+          frame.parentNode.removeChild(frame);
+        }
+      }, 300);
+    };
+
+    frame.onload = (): void => {
+      window.setTimeout((): void => {
+        const frameWindow = frame.contentWindow;
+        if (!frameWindow) {
+          toast('Failed to open the print dialog.', { variant: 'error' });
+          cleanup();
+          return;
+        }
+        try {
+          frameWindow.focus();
+          frameWindow.print();
+        } catch {
+          toast('Failed to open the print dialog.', { variant: 'error' });
+        }
+        cleanup();
+      }, 120);
+    };
+
+    document.body.appendChild(frame);
+    frame.srcdoc = markup;
   }, [toast]);
 
   const handlePreviewDraftPdf = useCallback((): void => {
     if (!editingDocumentDraft) return;
     const markup = buildDraftPdfPreviewMarkup(editingDocumentDraft);
-    const previewWindow = openDraftPdfWindow(markup);
-    if (!previewWindow) return;
-    previewWindow.focus();
-  }, [buildDraftPdfPreviewMarkup, editingDocumentDraft, openDraftPdfWindow]);
+    setDocumentPreviewHtml(markup);
+    setIsDocumentPreviewOpen(true);
+  }, [buildDraftPdfPreviewMarkup, editingDocumentDraft]);
 
   const handlePrintDraftDocument = useCallback((): void => {
     if (!editingDocumentDraft) return;
     const markup = buildDraftPdfPreviewMarkup(editingDocumentDraft);
-    const previewWindow = openDraftPdfWindow(markup);
-    if (!previewWindow) return;
-    window.setTimeout((): void => {
-      try {
-        previewWindow.focus();
-        previewWindow.print();
-      } catch {
-        toast('Failed to open the print dialog.', { variant: 'error' });
-      }
-    }, 180);
-  }, [buildDraftPdfPreviewMarkup, editingDocumentDraft, openDraftPdfWindow, toast]);
+    printDocumentMarkup(markup);
+  }, [buildDraftPdfPreviewMarkup, editingDocumentDraft, printDocumentMarkup]);
+
+  const handleCloseDocumentPreview = useCallback((): void => {
+    setIsDocumentPreviewOpen(false);
+  }, []);
+
+  const handlePrintDocumentPreview = useCallback((): void => {
+    if (!documentPreviewHtml.trim()) {
+      toast('No preview content to print.', { variant: 'warning' });
+      return;
+    }
+    printDocumentMarkup(documentPreviewHtml);
+  }, [documentPreviewHtml, printDocumentMarkup, toast]);
+
+  React.useEffect(() => {
+    if (editingDocumentDraft) return;
+    setIsDocumentPreviewOpen(false);
+    setDocumentPreviewHtml('');
+  }, [editingDocumentDraft]);
 
   const handleTriggerScanDraftUpload = useCallback((): void => {
     if (editingDocumentDraft?.fileType !== 'scanfile') return;
@@ -1003,25 +1115,168 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     (nextGraph: CaseResolverGraph): void => {
       updateWorkspace((current) => {
         if (!current.activeFileId) return current;
+        const activeFile = current.files.find((file) => file.id === current.activeFileId);
+        if (!activeFile) return current;
+
+        const activeGraph = activeFile.graph;
+        const previousSourceFileIdByNode = activeGraph.documentSourceFileIdByNode ?? {};
+        const nextSourceFileIdByNode = nextGraph.documentSourceFileIdByNode ?? {};
+        const nextNodeIds = new Set(
+          nextGraph.nodes
+            .map((node) => node.id)
+            .filter((nodeId: string): boolean => typeof nodeId === 'string' && nodeId.trim().length > 0)
+        );
+        const filesById = new Map(current.files.map((file) => [file.id, file]));
+        const existingNodeFileMap = activeGraph.nodeFileAssetIdByNode ?? {};
+        const nextNodeFileMap: Record<string, string> = {};
+        Object.entries(existingNodeFileMap).forEach(([nodeId, assetId]: [string, string]): void => {
+          const normalizedAssetId = typeof assetId === 'string' ? assetId.trim() : '';
+          if (!normalizedAssetId) return;
+          if (!nextNodeIds.has(nodeId)) return;
+          nextNodeFileMap[nodeId] = normalizedAssetId;
+        });
+
+        let nextAssets = current.assets;
+        let assetsChanged = false;
         const now = new Date().toISOString();
-        let changed = false;
-        const nextFiles = current.files.map((file) => {
-          if (file.id !== current.activeFileId) return file;
-          changed = true;
-          return {
-            ...file,
+
+        const createNodeFileAssetForNode = (nodeId: string, sourceFileId: string): void => {
+          if (nextNodeFileMap[nodeId]) return;
+          const sourceFile = filesById.get(sourceFileId) ?? null;
+          const normalizedFolder = normalizeFolderPath(sourceFile?.folder ?? activeFile.folder ?? '');
+          const baseName =
+            `${(sourceFile?.name ?? 'Document').trim() || 'Document'} Node File`;
+          const name = createUniqueNodeFileAssetName(nextAssets, normalizedFolder, baseName);
+          const createdAssetId = createId('asset');
+          const snapshot = buildNodeFileSnapshotText({
             graph: nextGraph,
+            nodeId,
+            sourceFileId,
+            sourceFileName: sourceFile?.name ?? null,
+            sourceFolder: sourceFile?.folder ?? null,
+            activeCanvasFileId: activeFile.id,
+          });
+          const createdAsset = createCaseResolverAssetFile({
+            id: createdAssetId,
+            name,
+            folder: normalizedFolder,
+            kind: 'node_file',
+            sourceFileId,
+            textContent: snapshot,
+            description: 'Auto-created from canvas document drop.',
+          });
+          nextAssets = [...nextAssets, createdAsset];
+          nextNodeFileMap[nodeId] = createdAssetId;
+          assetsChanged = true;
+        };
+
+        Object.entries(nextSourceFileIdByNode).forEach(([nodeId, sourceFileId]: [string, string]): void => {
+          if (!nextNodeIds.has(nodeId)) return;
+          const normalizedSourceFileId =
+            typeof sourceFileId === 'string' ? sourceFileId.trim() : '';
+          if (!normalizedSourceFileId) return;
+          const hadPreviousSource = Boolean(previousSourceFileIdByNode[nodeId]?.trim());
+          if (hadPreviousSource) return;
+          createNodeFileAssetForNode(nodeId, normalizedSourceFileId);
+        });
+
+        Object.entries({ ...nextNodeFileMap }).forEach(([nodeId, assetId]: [string, string]): void => {
+          if (!nextNodeIds.has(nodeId)) {
+            delete nextNodeFileMap[nodeId];
+            return;
+          }
+          const assetIndex = nextAssets.findIndex(
+            (asset: CaseResolverAssetFile): boolean =>
+              asset.id === assetId && asset.kind === 'node_file'
+          );
+          if (assetIndex < 0) {
+            delete nextNodeFileMap[nodeId];
+            return;
+          }
+
+          const currentAsset = nextAssets[assetIndex];
+          if (!currentAsset) {
+            delete nextNodeFileMap[nodeId];
+            return;
+          }
+          const mappedSourceFileId =
+            typeof nextSourceFileIdByNode[nodeId] === 'string' &&
+            nextSourceFileIdByNode[nodeId].trim().length > 0
+              ? nextSourceFileIdByNode[nodeId].trim()
+              : currentAsset.sourceFileId;
+          const sourceFile = mappedSourceFileId
+            ? filesById.get(mappedSourceFileId) ?? null
+            : null;
+          const snapshot = buildNodeFileSnapshotText({
+            graph: nextGraph,
+            nodeId,
+            sourceFileId: mappedSourceFileId ?? null,
+            sourceFileName: sourceFile?.name ?? null,
+            sourceFolder: sourceFile?.folder ?? null,
+            activeCanvasFileId: activeFile.id,
+          });
+          const shouldUpdateAsset =
+            currentAsset.textContent !== snapshot ||
+            (mappedSourceFileId ?? null) !== currentAsset.sourceFileId;
+          if (!shouldUpdateAsset) return;
+          const updatedAsset: CaseResolverAssetFile = {
+            ...currentAsset,
+            sourceFileId: mappedSourceFileId ?? null,
+            textContent: snapshot,
             updatedAt: now,
           };
+          nextAssets = [
+            ...nextAssets.slice(0, assetIndex),
+            updatedAsset,
+            ...nextAssets.slice(assetIndex + 1),
+          ];
+          assetsChanged = true;
         });
-        if (!changed) return current;
+
+        const nextNodeFileMapKeys = Object.keys(nextNodeFileMap);
+        const normalizedNodeFileMap =
+          nextNodeFileMapKeys.length > 0 ? nextNodeFileMap : undefined;
+        const currentComparableGraph = {
+          ...activeGraph,
+          ...(activeGraph.nodeFileAssetIdByNode &&
+          Object.keys(activeGraph.nodeFileAssetIdByNode).length > 0
+            ? { nodeFileAssetIdByNode: activeGraph.nodeFileAssetIdByNode }
+            : {}),
+        };
+        const nextComparableGraph = {
+          ...nextGraph,
+          ...(normalizedNodeFileMap ? { nodeFileAssetIdByNode: normalizedNodeFileMap } : {}),
+        };
+        const graphChanged =
+          stableStringify(currentComparableGraph) !== stableStringify(nextComparableGraph);
+
+        if (!graphChanged && !assetsChanged) return current;
+
+        const nextFiles = graphChanged
+          ? current.files.map((file) => {
+            if (file.id !== activeFile.id) return file;
+            return {
+              ...file,
+              graph: nextComparableGraph,
+              updatedAt: now,
+            };
+          })
+          : current.files;
+
         return {
           ...current,
           files: nextFiles,
+          assets: assetsChanged ? nextAssets : current.assets,
+          folders: assetsChanged
+            ? normalizeFolderPaths([
+              ...current.folders,
+              ...nextAssets.map((asset: CaseResolverAssetFile): string => asset.folder),
+            ])
+            : current.folders,
         };
       });
     },
-    [updateWorkspace]
+    [buildNodeFileSnapshotText, createUniqueNodeFileAssetName, updateWorkspace]
   );
 
   const handleRelationGraphChange = useCallback(
@@ -1084,6 +1339,10 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         handleCopyDraftFileId={handleCopyDraftFileId}
         handlePreviewDraftPdf={handlePreviewDraftPdf}
         handlePrintDraftDocument={handlePrintDraftDocument}
+        isDocumentPreviewOpen={isDocumentPreviewOpen}
+        documentPreviewHtml={documentPreviewHtml}
+        handleCloseDocumentPreview={handleCloseDocumentPreview}
+        handlePrintDocumentPreview={handlePrintDocumentPreview}
         promptExploderProposalDraft={promptExploderProposalDraft}
         captureProposalTargetFileName={captureProposalTargetFileName}
         handleClosePromptExploderProposalModal={handleClosePromptExploderProposalModal}

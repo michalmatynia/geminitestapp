@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
@@ -15,14 +14,16 @@ import type {
 import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
-  Button,
   FormField,
   FormSection,
   Input,
   SectionHeader,
   SelectSimple,
-  Switch,
   useToast,
+  FormActions,
+  ToggleRow,
+  Breadcrumbs,
+  Hint,
 } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
@@ -163,9 +164,14 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
         title='File Storage'
         description='Choose whether files are served from local uploads or FastComet storage.'
         eyebrow={
-          <Link href='/admin/settings' className='text-blue-300 hover:text-blue-200'>
-            ← Back to settings
-          </Link>
+          <Breadcrumbs
+            items={[
+              { label: 'Admin', href: '/admin' },
+              { label: 'Settings', href: '/admin/settings' },
+              { label: 'File Storage' }
+            ]}
+            className='mb-2'
+          />
         }
         className='mb-8'
       />
@@ -178,7 +184,6 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
         >
           <FormField
             label='Active provider'
-            description='Local keeps uploads in this app. FastComet writes new uploads to your external server.'
           >
             <SelectSimple
               size='sm'
@@ -189,18 +194,21 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
               options={sourceOptions}
               placeholder='Select file source'
             />
+            <Hint className='mt-1'>
+              Local keeps uploads in this app. FastComet writes new uploads to your external server.
+            </Hint>
           </FormField>
 
-          <div className='rounded-lg border border-border bg-muted/20 p-4 text-sm text-gray-300 space-y-1'>
-            <div className='flex justify-between'>
+          <div className='rounded-lg border border-border bg-muted/20 p-4 space-y-1'>
+            <div className='flex justify-between text-sm text-gray-300'>
               <span>Current mode</span>
               <span className='font-medium text-gray-100'>
                 {source === 'local' ? 'Local folder' : 'FastComet'}
               </span>
             </div>
-            <div className='text-xs text-gray-400'>
+            <Hint variant='muted'>
               Existing file records are not auto-migrated. This setting affects new uploads.
-            </div>
+            </Hint>
           </div>
         </FormSection>
 
@@ -210,10 +218,7 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
           className='p-6'
         >
           <div className='space-y-4'>
-            <FormField
-              label='Base URL'
-              description='Optional public base URL, e.g. https://files.your-domain.com.'
-            >
+            <FormField label='Base URL'>
               <Input
                 value={fastCometConfig.baseUrl}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
@@ -224,12 +229,12 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
                 }
                 placeholder='https://files.example.com'
               />
+              <Hint className='mt-1'>
+                Optional public base URL, e.g. https://files.your-domain.com.
+              </Hint>
             </FormField>
 
-            <FormField
-              label='Upload endpoint'
-              description='Server endpoint that receives multipart upload requests from this app.'
-            >
+            <FormField label='Upload endpoint'>
               <Input
                 value={fastCometConfig.uploadEndpoint}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
@@ -240,12 +245,12 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
                 }
                 placeholder='https://files.example.com/api/uploads'
               />
+              <Hint className='mt-1'>
+                Server endpoint that receives multipart upload requests from this app.
+              </Hint>
             </FormField>
 
-            <FormField
-              label='Delete endpoint'
-              description='Optional endpoint used to delete remote files when records are removed.'
-            >
+            <FormField label='Delete endpoint'>
               <Input
                 value={fastCometConfig.deleteEndpoint ?? ''}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
@@ -256,12 +261,12 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
                 }
                 placeholder='https://files.example.com/api/uploads/delete'
               />
+              <Hint className='mt-1'>
+                Optional endpoint used to delete remote files when records are removed.
+              </Hint>
             </FormField>
 
-            <FormField
-              label='Bearer token'
-              description='Optional token sent as Authorization: Bearer <token>.'
-            >
+            <FormField label='Bearer token'>
               <Input
                 type='password'
                 value={fastCometConfig.authToken ?? ''}
@@ -273,12 +278,12 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
                 }
                 placeholder='Optional API token'
               />
+              <Hint className='mt-1'>
+                Optional token sent as Authorization: Bearer &lt;token&gt;.
+              </Hint>
             </FormField>
 
-            <FormField
-              label='Request timeout (ms)'
-              description='Range: 1000 - 120000 ms.'
-            >
+            <FormField label='Request timeout (ms)'>
               <Input
                 type='number'
                 min={1_000}
@@ -291,26 +296,27 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
                   }))
                 }
               />
+              <Hint className='mt-1'>
+                Range: 1000 - 120000 ms.
+              </Hint>
             </FormField>
 
-            <FormField
-              label='Keep local mirror copy'
-              description='Recommended: preserves compatibility with server-side image operations.'
-            >
-              <div className='flex items-center justify-between rounded-lg border border-border bg-muted/20 px-3 py-2'>
-                <span className='text-sm text-gray-200'>
-                  Keep local copy in /public/uploads
-                </span>
-                <Switch
-                  checked={fastCometConfig.keepLocalCopy}
-                  onCheckedChange={(checked: boolean): void =>
-                    setFastCometConfig((prev: FastCometStorageConfig) => ({
-                      ...prev,
-                      keepLocalCopy: checked,
-                    }))
-                  }
-                />
-              </div>
+            <FormField label='Keep local mirror copy'>
+              <ToggleRow
+                label='Keep local copy in /public/uploads'
+                checked={fastCometConfig.keepLocalCopy}
+                onCheckedChange={(checked: boolean): void =>
+                  setFastCometConfig((prev: FastCometStorageConfig) => ({
+                    ...prev,
+                    keepLocalCopy: checked,
+                  }))
+                }
+                type='switch'
+                className='border-none bg-muted/20 px-3 py-2 hover:bg-muted/30'
+              />
+              <Hint className='mt-1'>
+                Recommended: preserves compatibility with server-side image operations.
+              </Hint>
             </FormField>
           </div>
         </FormSection>
@@ -322,29 +328,23 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
         </div>
       ) : null}
 
-      <div className='mt-8 flex items-center justify-end gap-3'>
-        <Button
-          variant='outline'
-          onClick={(): void => {
-            setSource(storedSource);
-            setFastCometConfig(storedFastCometConfig);
-          }}
-          disabled={!isDirty || updateSettingsBulk.isPending}
-        >
-          Reset
-        </Button>
-        <Button
-          onClick={saveSettings}
-          disabled={
-            !isDirty ||
-            updateSettingsBulk.isPending ||
-            isFastCometMisconfigured ||
-            settingsQuery.isLoading
-          }
-        >
-          {updateSettingsBulk.isPending ? 'Saving...' : 'Save Settings'}
-        </Button>
-      </div>
+      <FormActions
+        onCancel={(): void => {
+          setSource(storedSource);
+          setFastCometConfig(storedFastCometConfig);
+        }}
+        onSave={saveSettings}
+        saveText='Save Settings'
+        cancelText='Reset'
+        isDisabled={
+          !isDirty ||
+          updateSettingsBulk.isPending ||
+          isFastCometMisconfigured ||
+          settingsQuery.isLoading
+        }
+        isSaving={updateSettingsBulk.isPending}
+        className='mt-8'
+      />
     </div>
   );
 }

@@ -115,11 +115,13 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
           }
         >
           <TabsContent value='paths' className='space-y-4'>
-            <JobQueuePanel sourceFilter='ai_paths_ui' />
+            {activeTab === 'paths' ? <JobQueuePanel sourceFilter='ai_paths_ui' isActive /> : null}
           </TabsContent>
 
           <TabsContent value='paths-external' className='space-y-4'>
-            <JobQueuePanel sourceFilter='ai_paths_ui' sourceMode='exclude' />
+            {activeTab === 'paths-external' ? (
+              <JobQueuePanel sourceFilter='ai_paths_ui' sourceMode='exclude' isActive />
+            ) : null}
             <div id='export-jobs'>
               <ProductListingJobsPanel showBackToProducts={false} />
             </div>

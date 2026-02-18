@@ -108,6 +108,10 @@ type CaseResolverPageViewProps = {
   handleCopyDraftFileId: () => Promise<void>;
   handlePreviewDraftPdf: () => void;
   handlePrintDraftDocument: () => void;
+  isDocumentPreviewOpen: boolean;
+  documentPreviewHtml: string;
+  handleCloseDocumentPreview: () => void;
+  handlePrintDocumentPreview: () => void;
   promptExploderProposalDraft: CaseResolverCaptureProposalState | null;
   captureProposalTargetFileName: string | null;
   handleClosePromptExploderProposalModal: () => void;
@@ -188,6 +192,10 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     handleCopyDraftFileId,
     handlePreviewDraftPdf,
     handlePrintDraftDocument,
+    isDocumentPreviewOpen,
+    documentPreviewHtml,
+    handleCloseDocumentPreview,
+    handlePrintDocumentPreview,
     promptExploderProposalDraft,
     captureProposalTargetFileName,
     handleClosePromptExploderProposalModal,
@@ -225,6 +233,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     handleCreateFolder,
     handleCreateFile,
     handleCreateScanFile,
+    handleCreateNodeFile,
     handleCreateImageAsset,
     handleUploadScanFiles,
     handleRunScanFileOcr,
@@ -311,10 +320,6 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     activeCaseIdentifierLabel,
     handleFilterCasesBySignatureId,
   ]);
-
-  const handleCreateNodeFile = useCallback((): void => {
-    handleCreateFile(null);
-  }, [handleCreateFile]);
 
   const handleCreateDocumentFromSearch = useCallback((): void => {
     setActiveMainView('workspace');
@@ -611,17 +616,6 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
         >
           {editingDocumentDraft && (
             <div className='space-y-4'>
-              <div className='rounded border border-border/60 bg-card/30 p-3 text-xs text-gray-300'>
-                <div className='flex flex-wrap items-center justify-between gap-2'>
-                  <div className='font-mono text-[11px] text-gray-400'>
-                    File ID: {editingDocumentDraft.id}
-                  </div>
-                  <div className='text-[11px] text-gray-400'>
-                    Folder: {editingDocumentDraft.folder || '(root)'}
-                  </div>
-                </div>
-              </div>
-
               {editingDocumentDraft.fileType === 'scanfile' ? (
                 <div
                   className={`rounded border px-3 py-3 transition ${
@@ -1043,6 +1037,47 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                   editorContentClassName='[&_.ProseMirror]:!min-h-[300px]'
                 />
               )}
+
+              {isDocumentPreviewOpen ? (
+                <div className='rounded border border-border/60 bg-card/25 p-3'>
+                  <div className='mb-2 flex items-center justify-between gap-2'>
+                    <div className='text-xs font-semibold uppercase tracking-[0.08em] text-gray-300'>
+                      Document Preview (HTML)
+                    </div>
+                    <div className='flex items-center gap-2'>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        className='h-7 px-3 text-xs'
+                        onClick={handlePrintDocumentPreview}
+                      >
+                        Print
+                      </Button>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        className='h-7 px-3 text-xs'
+                        onClick={handleCloseDocumentPreview}
+                      >
+                        Hide Preview
+                      </Button>
+                    </div>
+                  </div>
+                  {documentPreviewHtml.trim().length > 0 ? (
+                    <iframe
+                      title='Document preview'
+                      srcDoc={documentPreviewHtml}
+                      className='h-[420px] w-full rounded border border-border/50 bg-white'
+                    />
+                  ) : (
+                    <div className='rounded border border-dashed border-border/50 px-3 py-8 text-center text-sm text-gray-400'>
+                      Preview is empty.
+                    </div>
+                  )}
+                </div>
+              ) : null}
 
               <div className='flex justify-end gap-2'>
                 <Button

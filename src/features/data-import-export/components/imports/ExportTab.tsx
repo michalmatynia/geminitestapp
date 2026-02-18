@@ -330,28 +330,24 @@ export function ExportTab(): React.JSX.Element {
         </div>
 
         <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-          <div className='flex flex-wrap items-center justify-between gap-3'>
-            <div>
-              <h3 className='text-sm font-semibold text-white'>
-                Image retry presets
-              </h3>
-              <p className='mt-1 text-xs text-gray-500'>
-                Used by Retry image export and Re-export images only actions.
-              </p>
-            </div>
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              onClick={handleResetImageRetryPresets}
-              disabled={!imageRetryPresetsLoaded}
-              className='border'
-            >
-              Reset defaults
-            </Button>
-          </div>
+          <SectionHeader
+            title='Image retry presets'
+            description='Used by Retry image export and Re-export images only actions.'
+            size='xs'
+            actions={
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={handleResetImageRetryPresets}
+                disabled={!imageRetryPresetsLoaded}
+              >
+                Reset defaults
+              </Button>
+            }
+          />
           {!imageRetryPresetsLoaded ? (
-            <p className='mt-3 text-xs text-gray-500'>Loading presets...</p>
+            <Hint className='mt-3'>Loading presets...</Hint>
           ) : (
             <div className='mt-3 space-y-3'>
               {imageRetryPresets.map((preset: ImageRetryPreset) => (
@@ -362,14 +358,11 @@ export function ExportTab(): React.JSX.Element {
                   <div className='text-xs font-semibold text-gray-200'>
                     {preset.name}
                   </div>
-                  <div className='mt-1 text-[11px] text-gray-500'>
+                  <Hint className='mt-1'>
                     {preset.description}
-                  </div>
+                  </Hint>
                   <div className='mt-2 grid gap-3 md:grid-cols-2'>
-                    <div>
-                      <Label className='text-[10px] text-gray-500'>
-                        Max dimension (px)
-                      </Label>
+                    <FormField label='Max dimension (px)'>
                       <Input
                         type='number'
                         min={1}
@@ -384,13 +377,10 @@ export function ExportTab(): React.JSX.Element {
                             height: raw ? Number(raw) : undefined,
                           });
                         }}
-                        className='mt-1 h-8'
+                        className='h-8'
                       />
-                    </div>
-                    <div>
-                      <Label className='text-[10px] text-gray-500'>
-                        JPEG quality
-                      </Label>
+                    </FormField>
+                    <FormField label='JPEG quality'>
                       <Input
                         type='number'
                         min={10}
@@ -405,24 +395,18 @@ export function ExportTab(): React.JSX.Element {
                             quality: raw ? Number(raw) : undefined,
                           });
                         }}
-                        className='mt-1 h-8'
+                        className='h-8'
                       />
-                    </div>
+                    </FormField>
                   </div>
-                  <div className='mt-2 flex items-center gap-2 text-[11px] text-gray-400'>
-                    <Checkbox
-                      checked={preset.transform?.forceJpeg ?? true}
-                      onCheckedChange={(
-                        checked: boolean | 'indeterminate',
-                      ): void =>
-                        updateImageRetryPreset(preset.id, {
-                          forceJpeg: Boolean(checked),
-                        })
-                      }
-                      className='h-3 w-3 rounded border bg-gray-900 text-emerald-500'
-                    />
-                    <span>Force JPEG conversion</span>
-                  </div>
+                  <ToggleRow
+                    label='Force JPEG conversion'
+                    checked={preset.transform?.forceJpeg ?? true}
+                    onCheckedChange={(checked: boolean) =>
+                      updateImageRetryPreset(preset.id, { forceJpeg: checked })
+                    }
+                    className='mt-2 border-none bg-transparent hover:bg-transparent p-0'
+                  />
                 </div>
               ))}
             </div>
@@ -433,25 +417,25 @@ export function ExportTab(): React.JSX.Element {
           title='Export Guidelines'
           className='border-blue-900/50 bg-blue-900/20'
         >
-          <ul className='space-y-1 text-xs text-blue-300/70'>
+          <ul className='list-disc space-y-1 pl-5 text-xs text-blue-300/70'>
             <li>
-              • Exports use templates to map internal product fields to Base.com
+              Exports use templates to map internal product fields to Base.com
               API parameters
             </li>
             <li>
-              • Without a template, default field mappings are used (SKU, Name,
+              Without a template, default field mappings are used (SKU, Name,
               Price, Stock, etc.)
             </li>
             <li>
-              • Import and export templates are managed separately in the
+              Import and export templates are managed separately in the
               Templates tab
             </li>
             <li>
-              • Export to Base.com from Product List → Integrations → List
+              Export to Base.com from Product List → Integrations → List
               Products → Select Base.com
             </li>
             <li>
-              • Track export jobs in the{' '}
+              Track export jobs in the{' '}
               <Link
                 href='/admin/ai-paths/queue?tab=paths-external#export-jobs'
                 className='text-blue-400 underline'
@@ -464,9 +448,11 @@ export function ExportTab(): React.JSX.Element {
         </DocumentationSection>
 
         <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-          <h3 className='text-sm font-semibold text-white mb-3'>
-            Quick Actions
-          </h3>
+          <SectionHeader
+            title='Quick Actions'
+            size='xs'
+            className='mb-3'
+          />
           <div className='flex flex-wrap gap-3'>
             <Button
               onClick={(): void => {
@@ -475,7 +461,6 @@ export function ExportTab(): React.JSX.Element {
               disabled={loadingInventories}
               variant='outline'
               size='sm'
-              className='border'
             >
               {loadingInventories ? 'Loading...' : 'Load Inventories'}
             </Button>
@@ -486,7 +471,6 @@ export function ExportTab(): React.JSX.Element {
               disabled={loadingWarehouses}
               variant='outline'
               size='sm'
-              className='border'
             >
               {loadingWarehouses ? 'Loading...' : 'Load Warehouses'}
             </Button>
@@ -497,23 +481,15 @@ export function ExportTab(): React.JSX.Element {
               disabled={loadingDebugWarehouses}
               variant='outline'
               size='sm'
-              className='border'
             >
               {loadingDebugWarehouses ? 'Debugging...' : 'Debug Warehouses'}
             </Button>
-            <div className='flex items-center gap-2 text-xs text-gray-400'>
-              <Checkbox
-                id='includeAllWarehouses'
-                checked={includeAllWarehouses}
-                onCheckedChange={(checked: boolean | 'indeterminate'): void =>
-                  setIncludeAllWarehouses(Boolean(checked))
-                }
-                className='h-3 w-3 rounded border bg-gray-900 text-emerald-500'
-              />
-              <Label htmlFor='includeAllWarehouses'>
-                Try loading global warehouses (if supported)
-              </Label>
-            </div>
+            <ToggleRow
+              label='Try loading global warehouses (if supported)'
+              checked={includeAllWarehouses}
+              onCheckedChange={setIncludeAllWarehouses}
+              className='border-none bg-transparent hover:bg-transparent p-0'
+            />
             <Button
               onClick={(): void => {
                 handleSaveExportSettings().catch(() => {});
@@ -524,12 +500,12 @@ export function ExportTab(): React.JSX.Element {
               {savingExportSettings ? 'Saving...' : 'Save Export Settings'}
             </Button>
             <Link href='/admin/ai-paths/queue?tab=paths-external#export-jobs'>
-              <Button variant='outline' size='sm' className='border'>
+              <Button variant='outline' size='sm'>
                 View Export Jobs
               </Button>
             </Link>
             <Link href='/admin/products'>
-              <Button variant='outline' size='sm' className='border'>
+              <Button variant='outline' size='sm'>
                 Go to Products
               </Button>
             </Link>
@@ -537,34 +513,30 @@ export function ExportTab(): React.JSX.Element {
         </div>
         {debugWarehouses ? (
           <div className='rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300'>
-            <div className='flex flex-wrap items-center justify-between gap-2'>
+            <div className='flex flex-wrap items-center justify-between gap-2 mb-2'>
               <span className='font-semibold text-gray-200'>
                 Warehouse debug (raw IDs)
               </span>
               <Button
                 type='button'
+                variant='ghost'
+                size='xs'
                 onClick={(): void => setDebugWarehouses(null)}
                 className='text-[11px] uppercase tracking-wide text-gray-500 hover:text-gray-200'
               >
                 Clear
               </Button>
             </div>
-            <div className='mt-2 space-y-2'>
+            <div className='mt-2 space-y-4'>
               <div>
-                <div className='text-[11px] uppercase tracking-wide text-gray-500'>
-                  Selected inventory raw response
-                </div>
+                <Hint uppercase className='mb-1'>Selected inventory raw response</Hint>
                 {debugWarehouses.inventoriesRaw ? (
-                  <div className='mt-1 space-y-1 text-[11px] text-gray-400'>
-                    <div>Method: {debugWarehouses.inventoriesRaw.method}</div>
-                    <div>
-                      Status: {debugWarehouses.inventoriesRaw.statusCode}
-                    </div>
-                    <div>
-                      Ok: {debugWarehouses.inventoriesRaw.ok ? 'true' : 'false'}
-                    </div>
+                  <div className='mt-1 space-y-1'>
+                    <PropertyRow label='Method' value={debugWarehouses.inventoriesRaw.method} />
+                    <PropertyRow label='Status' value={debugWarehouses.inventoriesRaw.statusCode} />
+                    <PropertyRow label='Ok' value={debugWarehouses.inventoriesRaw.ok ? 'true' : 'false'} />
                     {debugWarehouses.inventoriesRaw.error ? (
-                      <div>Error: {debugWarehouses.inventoriesRaw.error}</div>
+                      <PropertyRow label='Error' value={debugWarehouses.inventoriesRaw.error} valueClassName='text-red-400' />
                     ) : null}
                     {((): React.JSX.Element | null => {
                       const payload = debugWarehouses.inventoriesRaw
@@ -583,17 +555,17 @@ export function ExportTab(): React.JSX.Element {
                       });
                       if (!match) {
                         return (
-                          <div className='rounded border border-border bg-card/60 p-2 text-[10px] text-gray-300'>
+                          <div className='rounded border border-border bg-card/60 p-2 text-[10px] text-gray-300 mt-2'>
                             Selected inventory not found in response.
                           </div>
                         );
                       }
                       return (
-                        <div className='rounded border border-border bg-card/60 p-2 text-[10px] text-gray-300'>
-                          <div className='text-[11px] uppercase tracking-wide text-gray-500'>
+                        <div className='rounded border border-border bg-card/60 p-2 text-[10px] text-gray-300 mt-2'>
+                          <div className='text-[11px] uppercase tracking-wide text-gray-500 mb-1'>
                             Selected inventory details
                           </div>
-                          <pre className='mt-1 whitespace-pre-wrap'>
+                          <pre className='whitespace-pre-wrap font-mono'>
                             {JSON.stringify(match, null, 2)}
                           </pre>
                         </div>
@@ -601,25 +573,21 @@ export function ExportTab(): React.JSX.Element {
                     })()}
                   </div>
                 ) : (
-                  <div className='mt-1 text-gray-500'>No raw response.</div>
+                  <Hint italic>No raw response.</Hint>
                 )}
               </div>
               <div>
-                <div className='text-[11px] uppercase tracking-wide text-gray-500'>
-                  Inventory warehouses raw response
-                </div>
+                <Hint uppercase className='mb-1'>Inventory warehouses raw response</Hint>
                 {debugWarehouses.inventoryRaw ? (
-                  <div className='mt-1 space-y-1 text-[11px] text-gray-400'>
-                    <div>Inventory ID: {exportInventoryId || '—'}</div>
-                    <div>Method: {debugWarehouses.inventoryRaw.method}</div>
-                    <div>Status: {debugWarehouses.inventoryRaw.statusCode}</div>
-                    <div>
-                      Ok: {debugWarehouses.inventoryRaw.ok ? 'true' : 'false'}
-                    </div>
+                  <div className='mt-1 space-y-1'>
+                    <PropertyRow label='Inventory ID' value={exportInventoryId || '—'} />
+                    <PropertyRow label='Method' value={debugWarehouses.inventoryRaw.method} />
+                    <PropertyRow label='Status' value={debugWarehouses.inventoryRaw.statusCode} />
+                    <PropertyRow label='Ok' value={debugWarehouses.inventoryRaw.ok ? 'true' : 'false'} />
                     {debugWarehouses.inventoryRaw.error ? (
-                      <div>Error: {debugWarehouses.inventoryRaw.error}</div>
+                      <PropertyRow label='Error' value={debugWarehouses.inventoryRaw.error} valueClassName='text-red-400' />
                     ) : null}
-                    <pre className='mt-2 max-h-64 overflow-auto rounded border border-border bg-card p-2 text-[10px] text-gray-300'>
+                    <pre className='mt-2 max-h-64 overflow-auto rounded border border-border bg-card p-2 text-[10px] text-gray-300 font-mono'>
                       {debugWarehouses.inventoryRaw.payload
                         ? JSON.stringify(
                           debugWarehouses.inventoryRaw.payload,
@@ -630,7 +598,7 @@ export function ExportTab(): React.JSX.Element {
                     </pre>
                   </div>
                 ) : (
-                  <div className='mt-1 text-gray-500'>No raw response.</div>
+                  <Hint italic>No raw response.</Hint>
                 )}
               </div>
             </div>

@@ -846,6 +846,7 @@ export function useCaseResolverState() {
 
   const {
     handleCreateScanFile,
+    handleCreateNodeFile,
     handleUploadScanFiles,
     handleRunScanFileOcr,
     handleCreateImageAsset,
@@ -1288,6 +1289,7 @@ export function useCaseResolverState() {
     handleCreateFolder,
     handleCreateFile,
     handleCreateScanFile,
+    handleCreateNodeFile,
     handleCreateImageAsset,
     handleUploadScanFiles,
     handleRunScanFileOcr,

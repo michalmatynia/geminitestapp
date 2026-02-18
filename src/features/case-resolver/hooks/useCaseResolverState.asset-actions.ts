@@ -89,6 +89,7 @@ type UseCaseResolverStateAssetActionsInput = {
 
 type UseCaseResolverStateAssetActionsResult = {
   handleCreateScanFile: (targetFolderPath: string | null) => void;
+  handleCreateNodeFile: (targetFolderPath: string | null) => void;
   handleUploadScanFiles: (fileId: string, files: File[]) => Promise<void>;
   handleRunScanFileOcr: (fileId: string) => Promise<void>;
   handleCreateImageAsset: (targetFolderPath: string | null) => void;
@@ -676,6 +677,66 @@ export const useCaseResolverStateAssetActions = ({
     toast('Image placeholder created. Upload the file when ready.', { variant: 'success' });
   }, [activeCaseId, requestedCaseStatus, toast, treeSaveToast, updateWorkspace]);
 
+  const handleCreateNodeFile = useCallback((targetFolderPath: string | null): void => {
+    const ownerCaseId = activeCaseId;
+    if (!ownerCaseId) {
+      toast(
+        requestedCaseStatus === 'loading'
+          ? 'Case context is still loading. Please wait.'
+          : 'Cannot create node file without a selected case.',
+        { variant: 'warning' }
+      );
+      return;
+    }
+
+    let createdNodeFile = false;
+    updateWorkspace((current) => {
+      const folder = resolveCaseScopedFolderTarget({
+        targetFolderPath,
+        ownerCaseId,
+        folderRecords: current.folderRecords,
+      });
+      const name = createPlaceholderAssetName({
+        assets: current.assets,
+        folder,
+        baseName: 'New Node File',
+      });
+      const createdAsset = createCaseResolverAssetFile({
+        id: createId('asset'),
+        name,
+        folder,
+        kind: 'node_file',
+        sourceFileId: ownerCaseId,
+        textContent: JSON.stringify(
+          {
+            kind: 'case_resolver_node_file_snapshot_v1',
+            source: 'manual',
+            nodes: [],
+            edges: [],
+            nodeFileMeta: {},
+          },
+          null,
+          2
+        ),
+      });
+      createdNodeFile = true;
+      return {
+        ...current,
+        assets: [...current.assets, createdAsset],
+        folders: normalizeFolderPaths([...current.folders, folder]),
+        folderRecords: appendOwnedFolderRecords({
+          records: current.folderRecords,
+          folderPath: folder,
+          ownerCaseId,
+        }),
+      };
+    }, { persistToast: treeSaveToast });
+
+    if (createdNodeFile) {
+      toast('Node file created.', { variant: 'success' });
+    }
+  }, [activeCaseId, requestedCaseStatus, toast, treeSaveToast, updateWorkspace]);
+
   const handleUploadAssets = useCallback(
     async (
       files: File[],
@@ -834,6 +895,7 @@ export const useCaseResolverStateAssetActions = ({
 
   return {
     handleCreateScanFile,
+    handleCreateNodeFile,
     handleUploadScanFiles,
     handleRunScanFileOcr,
     handleCreateImageAsset,

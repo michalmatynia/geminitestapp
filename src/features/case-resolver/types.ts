@@ -91,6 +91,21 @@ export type CaseResolverGraph = {
   documentFileLinksByNode: Record<string, string[]>;
   documentDropNodeId: string | null;
   documentSourceFileIdByNode?: Record<string, string>;
+  nodeFileAssetIdByNode?: Record<string, string>;
+};
+
+export type CaseResolverNodeFileMeta = {
+  fileId: string;
+  fileType: 'document' | 'scanfile';
+  fileName: string;
+};
+
+export type CaseResolverNodeFileSnapshot = {
+  kind: 'case_resolver_node_file_snapshot_v1';
+  source: 'manual';
+  nodes: AiNode[];
+  edges: Edge[];
+  nodeFileMeta: Record<string, CaseResolverNodeFileMeta>;
 };
 
 export type CaseResolverRelationEntityType = 'case' | 'folder' | 'file' | 'custom';

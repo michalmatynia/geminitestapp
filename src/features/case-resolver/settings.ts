@@ -51,6 +51,7 @@ import {
   type CaseResolverFileType,
   type CaseResolverFolderRecord,
   type CaseResolverGraph,
+  type CaseResolverNodeFileSnapshot,
   type CaseResolverPartyReference,
   type CaseResolverScanSlot,
   type CaseResolverWorkspace,
@@ -666,6 +667,7 @@ export const createCaseResolverFile = (input: {
       documentFileLinksByNode: input.graph?.documentFileLinksByNode ?? {},
       documentDropNodeId: input.graph?.documentDropNodeId ?? null,
       documentSourceFileIdByNode: input.graph?.documentSourceFileIdByNode ?? {},
+      nodeFileAssetIdByNode: input.graph?.nodeFileAssetIdByNode ?? {},
     }),
   };
 };

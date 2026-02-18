@@ -13,8 +13,8 @@ import {
   Badge,
   Button,
   FormSection,
+  FormField,
   Input,
-  Label,
   SectionHeader,
   SelectSimple,
   useToast,
@@ -241,8 +241,7 @@ export function AdminFilemakerOrganizationEditPage(): React.JSX.Element {
 
       <FormSection title='Organization Details' className='space-y-4 p-4'>
         <div className='grid gap-3 md:grid-cols-2'>
-          <div className='space-y-2 md:col-span-2'>
-            <Label className='text-xs text-gray-400'>Organization Name</Label>
+          <FormField label='Organization Name' className='md:col-span-2'>
             <Input
               value={name}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -251,9 +250,8 @@ export function AdminFilemakerOrganizationEditPage(): React.JSX.Element {
               placeholder='Organization name'
               className='h-9'
             />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>Street</Label>
+          </FormField>
+          <FormField label='Street'>
             <Input
               value={street}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -262,9 +260,8 @@ export function AdminFilemakerOrganizationEditPage(): React.JSX.Element {
               placeholder='Street'
               className='h-9'
             />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>Street Number</Label>
+          </FormField>
+          <FormField label='Street Number'>
             <Input
               value={streetNumber}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -273,9 +270,8 @@ export function AdminFilemakerOrganizationEditPage(): React.JSX.Element {
               placeholder='Street number'
               className='h-9'
             />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>City</Label>
+          </FormField>
+          <FormField label='City'>
             <Input
               value={city}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -284,9 +280,8 @@ export function AdminFilemakerOrganizationEditPage(): React.JSX.Element {
               placeholder='City'
               className='h-9'
             />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>Postal Code</Label>
+          </FormField>
+          <FormField label='Postal Code'>
             <Input
               value={postalCode}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -295,9 +290,8 @@ export function AdminFilemakerOrganizationEditPage(): React.JSX.Element {
               placeholder='Postal code'
               className='h-9'
             />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>Country</Label>
+          </FormField>
+          <FormField label='Country'>
             <SelectSimple
               value={countryId}
               onValueChange={(value: string): void => {
@@ -310,7 +304,7 @@ export function AdminFilemakerOrganizationEditPage(): React.JSX.Element {
               size='sm'
               disabled={countriesQuery.isLoading || countriesQuery.isError}
             />
-          </div>
+          </FormField>
         </div>
       </FormSection>
 

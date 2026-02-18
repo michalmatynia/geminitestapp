@@ -5,7 +5,7 @@ import { ChangeEvent, ReactElement, useMemo } from 'react';
 import { playwrightDeviceOptions } from '@/features/playwright/constants/playwright';
 import { usePlaywrightSettings, PlaywrightSettingsProvider } from '@/features/playwright/context/PlaywrightSettingsContext';
 import type { PlaywrightSettings } from '@/features/playwright/types';
-import { Button, Input, Checkbox, SelectSimple, FormSection, FormField } from '@/shared/ui';
+import { Input, SelectSimple, FormSection, FormField, ToggleRow, Hint, FormActions } from '@/shared/ui';
 
 import { PlaywrightSettingsFormViewProvider, usePlaywrightSettingsFormView } from './context/PlaywrightSettingsFormViewContext';
 
@@ -30,23 +30,18 @@ const toNumber = (value: string, fallback: number): number => {
 function HeadlessModeSection(): ReactElement {
   const { settings, setSettings } = usePlaywrightSettings();
   return (
-    <FormSection variant='subtle-compact' className='p-3'>
-      <div className='flex items-center justify-between gap-4'>
-        <div>
-          <div className='text-sm text-gray-200'>Headless mode</div>
-          <div className='text-xs text-gray-500'>Hide the browser window during execution.</div>
-        </div>
-        <Checkbox
-          checked={settings.headless}
-          onCheckedChange={(checked: boolean | 'indeterminate'): void =>
-            setSettings((prev: PlaywrightSettings) => ({
-              ...prev,
-              headless: Boolean(checked),
-            }))
-          }
-        />
-      </div>
-    </FormSection>
+    <ToggleRow
+      label='Headless mode'
+      description='Hide the browser window during execution.'
+      checked={settings.headless}
+      onCheckedChange={(checked: boolean): void =>
+        setSettings((prev: PlaywrightSettings) => ({
+          ...prev,
+          headless: checked,
+        }))
+      }
+      type='switch'
+    />
   );
 }
 
@@ -54,21 +49,19 @@ function EmulationSection(): ReactElement {
   const { settings, setSettings } = usePlaywrightSettings();
   return (
     <FormSection variant='subtle-compact' className='p-3 space-y-3'>
-      <div className='flex items-center justify-between gap-4'>
-        <div>
-          <div className='text-sm text-gray-200'>Emulate Device</div>
-          <div className='text-xs text-gray-500'>Simulate a mobile device or specific browser.</div>
-        </div>
-        <Checkbox
-          checked={settings.emulateDevice}
-          onCheckedChange={(checked: boolean | 'indeterminate'): void =>
-            setSettings((prev: PlaywrightSettings) => ({
-              ...prev,
-              emulateDevice: Boolean(checked),
-            }))
-          }
-        />
-      </div>
+      <ToggleRow
+        label='Emulate Device'
+        description='Simulate a mobile device or specific browser.'
+        checked={settings.emulateDevice}
+        onCheckedChange={(checked: boolean): void =>
+          setSettings((prev: PlaywrightSettings) => ({
+            ...prev,
+            emulateDevice: checked,
+          }))
+        }
+        type='switch'
+        className='border-none bg-transparent p-0 hover:bg-transparent'
+      />
       {settings.emulateDevice && (
         <FormField label='Device'>
           <SelectSimple size='sm'
@@ -148,21 +141,19 @@ function HumanizeSection(): ReactElement {
   const { settings, setSettings } = usePlaywrightSettings();
   return (
     <FormSection variant='subtle-compact' className='p-3 space-y-3'>
-      <div className='flex items-center justify-between gap-4'>
-        <div>
-          <div className='text-sm text-gray-200'>Humanize Mouse</div>
-          <div className='text-xs text-gray-500'>Add jitter and randomized movement paths.</div>
-        </div>
-        <Checkbox
-          checked={settings.humanizeMouse}
-          onCheckedChange={(checked: boolean | 'indeterminate'): void =>
-            setSettings((prev: PlaywrightSettings) => ({
-              ...prev,
-              humanizeMouse: Boolean(checked),
-            }))
-          }
-        />
-      </div>
+      <ToggleRow
+        label='Humanize Mouse'
+        description='Add jitter and randomized movement paths.'
+        checked={settings.humanizeMouse}
+        onCheckedChange={(checked: boolean): void =>
+          setSettings((prev: PlaywrightSettings) => ({
+            ...prev,
+            humanizeMouse: checked,
+          }))
+        }
+        type='switch'
+        className='border-none bg-transparent p-0 hover:bg-transparent'
+      />
       {settings.humanizeMouse && (
         <FormField label='Mouse Jitter (pixels)'>
           <Input
@@ -238,21 +229,19 @@ function ProxySection(): ReactElement {
   const { settings, setSettings } = usePlaywrightSettings();
   return (
     <FormSection variant='subtle-compact' className='p-3 space-y-3'>
-      <div className='flex items-center justify-between gap-4'>
-        <div>
-          <div className='text-sm text-gray-200'>Proxy</div>
-          <div className='text-xs text-gray-500'>Route traffic through a proxy server.</div>
-        </div>
-        <Checkbox
-          checked={settings.proxyEnabled}
-          onCheckedChange={(checked: boolean | 'indeterminate'): void =>
-            setSettings((prev: PlaywrightSettings) => ({
-              ...prev,
-              proxyEnabled: Boolean(checked),
-            }))
-          }
-        />
-      </div>
+      <ToggleRow
+        label='Proxy'
+        description='Route traffic through a proxy server.'
+        checked={settings.proxyEnabled}
+        onCheckedChange={(checked: boolean): void =>
+          setSettings((prev: PlaywrightSettings) => ({
+            ...prev,
+            proxyEnabled: checked,
+          }))
+        }
+        type='switch'
+        className='border-none bg-transparent p-0 hover:bg-transparent'
+      />
       {settings.proxyEnabled && (
         <div className='space-y-3'>
           <FormField label='Proxy server'>
@@ -311,10 +300,9 @@ function AdvancedSettingsSection(): ReactElement {
           Expand advanced options
         </summary>
         <div className='mt-4 space-y-4'>
-          <FormField
-            label='Interaction delays (ms)'
-            description='Add random pauses between actions for human-like pacing.'
-          />
+          <FormField label='Interaction delays (ms)'>
+            <Hint variant='subtle'>Add random pauses between actions for human-like pacing.</Hint>
+          </FormField>
 
           <DelayInputs label='Click delay' minKey='clickDelayMin' maxKey='clickDelayMax' />
           <DelayInputs label='Input delay' minKey='inputDelayMin' maxKey='inputDelayMax' />
@@ -351,14 +339,11 @@ export function PlaywrightSettingsFormContent(): ReactElement {
         <AdvancedSettingsSection />
 
         {shouldShowSave && onSave ? (
-          <div className='flex justify-end'>
-            <Button
-              type='button'
-              onClick={onSave}
-            >
-              {saveLabel ?? 'Save Playwright Settings'}
-            </Button>
-          </div>
+          <FormActions
+            onSave={onSave}
+            saveText={saveLabel ?? 'Save Playwright Settings'}
+            className='pt-4'
+          />
         ) : null}
       </div>
     </FormSection>

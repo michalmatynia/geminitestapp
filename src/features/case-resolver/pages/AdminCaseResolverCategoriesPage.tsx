@@ -1,7 +1,6 @@
 'use client';
 
 import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, Folder, FolderOpen, Plus, Trash2 } from 'lucide-react';
-import Link from 'next/link';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
@@ -14,6 +13,7 @@ import {
   SectionHeader,
   Skeleton,
   useToast,
+  Breadcrumbs,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -331,20 +331,13 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
       <SectionHeader
         title='Case Resolver Categories'
         subtitle={(
-          <nav
-            aria-label='Breadcrumb'
-            className='mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-400'
-          >
-            <Link href='/admin' className='transition-colors hover:text-gray-200'>
-              Admin
-            </Link>
-            <span>/</span>
-            <Link href='/admin/case-resolver' className='transition-colors hover:text-gray-200'>
-              Case Resolver
-            </Link>
-            <span>/</span>
-            <span className='text-gray-300'>Categories</span>
-          </nav>
+          <Breadcrumbs
+            items={[
+              { label: 'Admin', href: '/admin' },
+              { label: 'Case Resolver', href: '/admin/case-resolver' },
+              { label: 'Categories' }
+            ]}
+          />
         )}
       />
 

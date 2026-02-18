@@ -107,6 +107,24 @@ const sanitizeDocumentSourceFileIdByNode = (
   return result;
 };
 
+const sanitizeNodeFileAssetIdByNode = (
+  source: unknown,
+  validNodeIds: Set<string>
+): Record<string, string> => {
+  if (!source || typeof source !== 'object' || Array.isArray(source)) {
+    return {};
+  }
+  const result: Record<string, string> = {};
+  Object.entries(source as Record<string, unknown>).forEach(([nodeId, rawAssetId]: [string, unknown]) => {
+    if (!validNodeIds.has(nodeId)) return;
+    if (typeof rawAssetId !== 'string') return;
+    const normalizedAssetId = rawAssetId.trim();
+    if (!normalizedAssetId) return;
+    result[nodeId] = normalizedAssetId;
+  });
+  return result;
+};
+
 const ensureDocumentPromptPorts = (
   nodes: AiNode[],
   nodeMeta: Record<string, CaseResolverNodeMeta>,
@@ -209,6 +227,10 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
     graphRecord['documentSourceFileIdByNode'],
     validNodeIds
   );
+  const nodeFileAssetIdByNode = sanitizeNodeFileAssetIdByNode(
+    graphRecord['nodeFileAssetIdByNode'],
+    validNodeIds
+  );
   const sanitizedNodeMeta = sanitizeNodeMeta(
     graphRecord['nodeMeta'] as Record<string, CaseResolverNodeMeta> | null | undefined
   );
@@ -243,6 +265,9 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
     documentFileLinksByNode,
     documentDropNodeId,
     documentSourceFileIdByNode,
+    ...(Object.keys(nodeFileAssetIdByNode).length > 0
+      ? { nodeFileAssetIdByNode }
+      : {}),
   };
 };
 

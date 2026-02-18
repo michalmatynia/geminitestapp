@@ -1,6 +1,7 @@
 'use client';
 
 import { Trash2 } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import React from 'react';
 
 import { runsApi } from '@/features/ai/ai-paths/lib';
@@ -46,6 +47,7 @@ type JobQueuePanelProps = {
   activePathId?: string | null;
   sourceFilter?: string | null;
   sourceMode?: 'include' | 'exclude';
+  isActive?: boolean;
 };
 
 type StreamMessageEvent = Event & { data: string };
@@ -54,8 +56,16 @@ const PAGE_SIZES = [10, 25, 50];
 const SEARCH_DEBOUNCE_MS = 300;
 const AUTO_REFRESH_ENABLED_KEY = 'ai-paths-job-queue-auto-refresh-enabled';
 const AUTO_REFRESH_INTERVAL_KEY = 'ai-paths-job-queue-auto-refresh-interval';
-const AUTO_REFRESH_INTERVAL_OPTIONS = [2000, 5000, 10000, 30000] as const;
-const DEFAULT_AUTO_REFRESH_INTERVAL = 5000;
+const AUTO_REFRESH_INTERVAL_OPTIONS = [5000, 10000, 30000, 60000] as const;
+const DEFAULT_AUTO_REFRESH_INTERVAL = 10000;
+const ACTIVE_RUN_REFRESH_MIN_MS = 5000;
+const IDLE_RUN_REFRESH_MIN_MS = 30000;
+const ACTIVE_QUEUE_STATUS_REFRESH_MIN_MS = 10000;
+const IDLE_QUEUE_STATUS_REFRESH_MIN_MS = 30000;
+const ACTIVE_RUN_STATUSES = new Set(['queued', 'running', 'paused']);
+const RUNS_REQUEST_COOLDOWN_MS = 2500;
+const QUEUE_STATUS_REQUEST_COOLDOWN_MS = 2500;
+const POLLING_JITTER_MS = 500;
 const QUEUE_LAG_THRESHOLD_KEY = 'ai_paths_queue_lag_threshold_ms';
 const STATUS_FILTERS = [
   { id: 'all', label: 'All' },
@@ -83,7 +93,9 @@ export function JobQueuePanel({
   activePathId,
   sourceFilter,
   sourceMode,
+  isActive = true,
 }: JobQueuePanelProps): React.JSX.Element {
+  const pathname = usePathname();
   const { toast } = useToast();
   const [pathFilter, setPathFilter] = React.useState(activePathId ?? '');
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -102,13 +114,41 @@ export function JobQueuePanel({
   const streamSourcesRef = React.useRef<Map<string, EventSource>>(new Map());
   const [pausedStreams, setPausedStreams] = React.useState<Set<string>>(new Set());
   // Keep first render deterministic (SSR == client hydration). Load persisted prefs after mount.
-  const [autoRefreshEnabled, setAutoRefreshEnabled] = React.useState(true);
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = React.useState(false);
   const [autoRefreshInterval, setAutoRefreshInterval] = React.useState(
     DEFAULT_AUTO_REFRESH_INTERVAL
   );
+  const [preferencesHydrated, setPreferencesHydrated] = React.useState(false);
   const [isDocumentVisible, setIsDocumentVisible] = React.useState(true);
+  const [isWindowFocused, setIsWindowFocused] = React.useState(true);
   const [clearScope, setClearScope] = React.useState<'terminal' | 'all' | null>(null);
   const [runToDelete, setRunToDelete] = React.useState<AiPathRunRecord | null>(null);
+  const runsRequestGuardRef = React.useRef<{
+    key: string | null;
+    inFlight: Promise<unknown> | null;
+    lastCompletedAt: number;
+    lastData: { runs: AiPathRunRecord[]; total: number } | null;
+    lastErrorMessage: string | null;
+  }>({
+    key: null,
+    inFlight: null,
+    lastCompletedAt: 0,
+    lastData: null,
+    lastErrorMessage: null,
+  });
+  const queueStatusRequestGuardRef = React.useRef<{
+    key: string | null;
+    inFlight: Promise<unknown> | null;
+    lastCompletedAt: number;
+    lastData: { status: QueueStatus } | null;
+    lastErrorMessage: string | null;
+  }>({
+    key: null,
+    inFlight: null,
+    lastCompletedAt: 0,
+    lastData: null,
+    lastErrorMessage: null,
+  });
   const aiPathsSettingsQuery = createListQueryV2<
     Array<{ key: string; value: string }>,
     Array<{ key: string; value: string }>
@@ -146,14 +186,17 @@ export function JobQueuePanel({
   }, [searchQuery]);
 
   React.useEffect(() => {
+    if (typeof window === 'undefined') return;
     const savedEnabled = window.localStorage.getItem(AUTO_REFRESH_ENABLED_KEY);
-    const nextEnabled = savedEnabled === 'false' ? false : true;
+    const nextEnabled =
+      savedEnabled === null ? false : savedEnabled === 'true';
     setAutoRefreshEnabled(nextEnabled);
 
     const savedInterval = window.localStorage.getItem(AUTO_REFRESH_INTERVAL_KEY);
     const parsed = savedInterval ? Number.parseInt(savedInterval, 10) : NaN;
     const nextInterval = normalizeAutoRefreshInterval(parsed);
     setAutoRefreshInterval(nextInterval);
+    setPreferencesHydrated(true);
   }, []);
 
   React.useEffect(() => {
@@ -170,18 +213,77 @@ export function JobQueuePanel({
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
+    const handleFocus = (): void => setIsWindowFocused(true);
+    const handleBlur = (): void => setIsWindowFocused(false);
+    setIsWindowFocused(typeof document === 'undefined' ? true : document.hasFocus());
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('blur', handleBlur);
+    return (): void => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!preferencesHydrated) return;
     window.localStorage.setItem(
       AUTO_REFRESH_ENABLED_KEY,
       autoRefreshEnabled ? 'true' : 'false'
     );
-  }, [autoRefreshEnabled]);
+  }, [autoRefreshEnabled, preferencesHydrated]);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (!preferencesHydrated) return;
     window.localStorage.setItem(AUTO_REFRESH_INTERVAL_KEY, String(autoRefreshInterval));
-  }, [autoRefreshInterval]);
+  }, [autoRefreshInterval, preferencesHydrated]);
 
-  const effectiveAutoRefreshEnabled = autoRefreshEnabled && isDocumentVisible;
+  const isQueueRoute = pathname?.startsWith('/admin/ai-paths/queue') ?? false;
+  const isPanelActive = isQueueRoute && isActive;
+  const effectiveAutoRefreshEnabled =
+    preferencesHydrated &&
+    autoRefreshEnabled &&
+    isDocumentVisible &&
+    isWindowFocused &&
+    isPanelActive;
+
+  const resolveRunsRefetchInterval = React.useCallback(
+    (query: unknown): number | false => {
+      if (!effectiveAutoRefreshEnabled) return false;
+      const runs =
+        (
+          query as {
+            state?: { data?: { runs?: AiPathRunRecord[] } };
+          }
+        ).state?.data?.runs ?? [];
+      const hasActiveRuns = runs.some((run: AiPathRunRecord) =>
+        ACTIVE_RUN_STATUSES.has(String(run.status ?? '').trim().toLowerCase())
+      );
+      const baseInterval = hasActiveRuns
+        ? Math.max(ACTIVE_RUN_REFRESH_MIN_MS, autoRefreshInterval)
+        : Math.max(IDLE_RUN_REFRESH_MIN_MS, autoRefreshInterval);
+      return baseInterval + Math.floor(Math.random() * POLLING_JITTER_MS);
+    },
+    [autoRefreshInterval, effectiveAutoRefreshEnabled]
+  );
+
+  const resolveQueueStatusRefetchInterval = React.useCallback(
+    (query: unknown): number | false => {
+      if (!effectiveAutoRefreshEnabled) return false;
+      const activeRuns =
+        (
+          query as {
+            state?: { data?: { status?: QueueStatus } };
+          }
+        ).state?.data?.status?.activeRuns ?? 0;
+      const baseInterval = activeRuns > 0
+        ? Math.max(ACTIVE_QUEUE_STATUS_REFRESH_MIN_MS, autoRefreshInterval)
+        : Math.max(IDLE_QUEUE_STATUS_REFRESH_MIN_MS, autoRefreshInterval);
+      return baseInterval + Math.floor(Math.random() * POLLING_JITTER_MS);
+    },
+    [autoRefreshInterval, effectiveAutoRefreshEnabled]
+  );
 
   React.useEffect(() => {
     setPage(1);
@@ -198,21 +300,74 @@ export function JobQueuePanel({
       pageSize,
     }),
     queryFn: async () => {
-      const response = await runsApi.list({
+      const requestOptions = {
         ...(normalizedPathFilter ? { pathId: normalizedPathFilter } : {}),
         ...(normalizedSourceFilter ? { source: normalizedSourceFilter } : {}),
-        ...(normalizedSourceFilter ? { sourceMode: sourceMode ?? 'include' } : {}),
+        ...(normalizedSourceFilter ? { sourceMode: sourceMode ?? 'include' as const } : {}),
         ...(normalizedQuery ? { query: normalizedQuery } : {}),
         ...(statusFilter !== 'all' ? { status: statusFilter } : {}),
         limit: pageSize,
         offset,
-      });
-      if (!response.ok) {
-        throw new Error(response.error || 'Failed to load job queue.');
+      };
+      const requestKey = JSON.stringify(requestOptions);
+      const now = Date.now();
+      const guard = runsRequestGuardRef.current;
+
+      if (guard.key === requestKey && guard.inFlight) {
+        const inflightResponse = (await guard.inFlight) as {
+          ok: boolean;
+          data?: unknown;
+          error?: string;
+        };
+        guard.lastCompletedAt = Date.now();
+        if (!inflightResponse.ok) {
+          guard.lastErrorMessage =
+            inflightResponse.error || 'Failed to load job queue.';
+          throw new Error(guard.lastErrorMessage);
+        }
+        const inflightData = inflightResponse.data as {
+          runs: AiPathRunRecord[];
+          total: number;
+        };
+        guard.lastData = inflightData;
+        guard.lastErrorMessage = null;
+        return inflightData;
       }
-      return response.data as { runs: AiPathRunRecord[]; total: number };
+
+      if (
+        guard.key === requestKey &&
+        now - guard.lastCompletedAt < RUNS_REQUEST_COOLDOWN_MS
+      ) {
+        if (guard.lastData) {
+          return guard.lastData;
+        }
+        if (guard.lastErrorMessage) {
+          throw new Error(guard.lastErrorMessage);
+        }
+      }
+
+      const requestPromise = runsApi.list(requestOptions);
+      guard.key = requestKey;
+      guard.inFlight = requestPromise;
+      try {
+        const response = await requestPromise;
+        guard.lastCompletedAt = Date.now();
+        if (!response.ok) {
+          guard.lastErrorMessage = response.error || 'Failed to load job queue.';
+          throw new Error(guard.lastErrorMessage);
+        }
+        const data = response.data as { runs: AiPathRunRecord[]; total: number };
+        guard.lastData = data;
+        guard.lastErrorMessage = null;
+        return data;
+      } finally {
+        if (guard.inFlight === requestPromise) {
+          guard.inFlight = null;
+        }
+      }
     },
-    refetchInterval: effectiveAutoRefreshEnabled ? autoRefreshInterval : false,
+    enabled: isPanelActive,
+    refetchInterval: resolveRunsRefetchInterval,
     meta: {
       source: 'ai.ai-paths.job-queue.runs',
       operation: 'list',
@@ -225,13 +380,62 @@ export function JobQueuePanel({
   const queueStatusQuery = createListQueryV2<{ status: QueueStatus }, { status: QueueStatus }>({
     queryKey: QUERY_KEYS.ai.aiPaths.queueStatus(),
     queryFn: async () => {
-      const response = await runsApi.queueStatus();
-      if (!response.ok) {
-        throw new Error(response.error || 'Failed to load queue status.');
+      const requestKey = 'queue-status';
+      const now = Date.now();
+      const guard = queueStatusRequestGuardRef.current;
+
+      if (guard.key === requestKey && guard.inFlight) {
+        const inflightResponse = (await guard.inFlight) as {
+          ok: boolean;
+          data?: unknown;
+          error?: string;
+        };
+        guard.lastCompletedAt = Date.now();
+        if (!inflightResponse.ok) {
+          guard.lastErrorMessage =
+            inflightResponse.error || 'Failed to load queue status.';
+          throw new Error(guard.lastErrorMessage);
+        }
+        const inflightData = inflightResponse.data as { status: QueueStatus };
+        guard.lastData = inflightData;
+        guard.lastErrorMessage = null;
+        return inflightData;
       }
-      return response.data as { status: QueueStatus };
+
+      if (
+        guard.key === requestKey &&
+        now - guard.lastCompletedAt < QUEUE_STATUS_REQUEST_COOLDOWN_MS
+      ) {
+        if (guard.lastData) {
+          return guard.lastData;
+        }
+        if (guard.lastErrorMessage) {
+          throw new Error(guard.lastErrorMessage);
+        }
+      }
+
+      const requestPromise = runsApi.queueStatus();
+      guard.key = requestKey;
+      guard.inFlight = requestPromise;
+      try {
+        const response = await requestPromise;
+        guard.lastCompletedAt = Date.now();
+        if (!response.ok) {
+          guard.lastErrorMessage = response.error || 'Failed to load queue status.';
+          throw new Error(guard.lastErrorMessage);
+        }
+        const data = response.data as { status: QueueStatus };
+        guard.lastData = data;
+        guard.lastErrorMessage = null;
+        return data;
+      } finally {
+        if (guard.inFlight === requestPromise) {
+          guard.inFlight = null;
+        }
+      }
     },
-    refetchInterval: effectiveAutoRefreshEnabled ? autoRefreshInterval : false,
+    enabled: isPanelActive,
+    refetchInterval: resolveQueueStatusRefetchInterval,
     meta: {
       source: 'ai.ai-paths.job-queue.status',
       operation: 'polling',
@@ -683,7 +887,7 @@ export function JobQueuePanel({
           {autoRefreshEnabled ? 'Auto-refresh on' : 'Auto-refresh off'}
         </Button>
         <div className='flex items-center gap-2'>
-          <Label className='text-[10px] uppercase text-gray-500'>Interval</Label>
+          <Label className='text-[10px] uppercase text-gray-500'>Base interval</Label>
           <SelectSimple
             size='xs'
             value={String(autoRefreshInterval)}

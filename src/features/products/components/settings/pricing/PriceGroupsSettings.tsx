@@ -56,7 +56,7 @@ export function PriceGroupsSettings(): React.JSX.Element {
             }))}
             isLoading={loadingGroups}
             onEdit={(item) => onEditPriceGroup(item.original)}
-            onDelete={(item) => void onDeletePriceGroup(item.original)}
+            onDelete={(item) => { void onDeletePriceGroup(item.original); }}
             emptyMessage='At least one price group is required. Add a price group to continue.'
           />
         </div>

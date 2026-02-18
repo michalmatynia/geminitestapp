@@ -63,7 +63,7 @@ export function CatalogsSettings(): React.JSX.Element {
           }))}
           isLoading={loadingCatalogs}
           onEdit={(item) => onEditCatalog(item.original)}
-          onDelete={(item) => void onDeleteCatalog(item.original)}
+          onDelete={(item) => { void onDeleteCatalog(item.original); }}
           emptyMessage='No catalogs yet.'
           renderCustomContent={(item) => (
             <>

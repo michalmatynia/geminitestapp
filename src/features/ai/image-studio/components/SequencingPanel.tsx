@@ -39,6 +39,7 @@ import {
   slotHasRenderableImage,
 } from '../utils/sequence-slot-resolution';
 import {
+  buildImageStudioSequenceSnapshot,
   normalizeImageStudioSequenceSteps,
   resolveImageStudioSequenceActiveSteps,
   type ImageStudioSequenceOperation,
@@ -1257,9 +1258,38 @@ export function SequencingPanel(): React.JSX.Element {
               size='xs'
               type='button'
               onClick={() => {
-                void saveStudioSettings({ silent: true })
-                  .then(() => {
-                    toast('Sequencing defaults saved.', { variant: 'success' });
+                const savedAt = new Date().toISOString();
+                let snapshotSettings: typeof studioSettings | null = null;
+                setStudioSettings((prev) => {
+                  const snapshot = buildImageStudioSequenceSnapshot(prev);
+                  const next = {
+                    ...prev,
+                    projectSequencing: {
+                      ...prev.projectSequencing,
+                      snapshotHash: snapshot.hash,
+                      snapshotSavedAt: savedAt,
+                      snapshotStepCount: snapshot.stepCount,
+                      snapshotModelId: snapshot.modelId,
+                    },
+                  };
+                  snapshotSettings = next;
+                  return next;
+                });
+
+                if (!snapshotSettings) return;
+
+                void saveStudioSettings({
+                  silent: true,
+                  settingsOverride: snapshotSettings,
+                  verifyPersisted: true,
+                })
+                  .then((result) => {
+                    const scopeLabel =
+                      result.scope === 'project' ? 'project' : 'global';
+                    toast(
+                      `Sequencing defaults saved (${scopeLabel}: ${result.key}, snapshot: ${result.persistedSnapshotHash ?? 'n/a'}).`,
+                      { variant: 'success' },
+                    );
                   })
                   .catch((error: unknown) => {
                     toast(

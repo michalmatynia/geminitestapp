@@ -140,6 +140,7 @@ export const useCaseResolverStatePromptExploderSync = ({
   caseResolverCaptureSettingsRef.current = caseResolverCaptureSettings;
   const unresolvedPayloadKeyRef = useRef<string | null>(null);
   const fallbackPayloadKeyRef = useRef<string | null>(null);
+  const appliedPayloadKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     const payload = readPromptExploderApplyPayload();
@@ -154,6 +155,10 @@ export const useCaseResolverStatePromptExploderSync = ({
       payload.caseResolverContext?.fileId ?? '',
       payload.prompt.slice(0, 64),
     ].join('|');
+    if (appliedPayloadKeyRef.current === payloadKey) {
+      consumePromptExploderApplyPromptForCaseResolver();
+      return;
+    }
     const targetResolution = resolveCaseResolverPromptExploderTarget({
       workspaceActiveFileId,
       workspaceFiles,
@@ -179,6 +184,7 @@ export const useCaseResolverStatePromptExploderSync = ({
 
     const payloadToApply = consumePromptExploderApplyPromptForCaseResolver();
     if (!payloadToApply?.prompt?.trim()) return;
+    appliedPayloadKeyRef.current = payloadKey;
     const targetFileId = targetResolution.targetFileId;
 
     const proposalState = buildCaseResolverCaptureProposalState(

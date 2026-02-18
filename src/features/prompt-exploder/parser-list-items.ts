@@ -268,28 +268,6 @@ const formatLogicalReferenceValue = (value: unknown): string => {
   }
 };
 
-const buildLogicalConditionsFromLegacyFields = (
-  item: PromptExploderListItem
-): PromptExploderLogicalCondition[] => {
-  const paramPath = (item.referencedParamPath ?? '').trim();
-  if (!paramPath) return [];
-  const fallbackComparator: PromptExploderLogicalComparator =
-    item.logicalOperator === 'unless' ? 'falsy' : 'truthy';
-  const comparator = item.referencedComparator ?? fallbackComparator;
-  return [
-    {
-      id: `${item.id}_legacy`,
-      paramPath,
-      comparator,
-      value:
-        comparator === 'truthy' || comparator === 'falsy'
-          ? null
-          : item.referencedValue ?? null,
-      joinWithPrevious: null,
-    },
-  ];
-};
-
 const resolveLogicalConditions = (
   item: PromptExploderListItem
 ): PromptExploderLogicalCondition[] => {
@@ -313,8 +291,7 @@ const resolveLogicalConditions = (
       } as PromptExploderLogicalCondition;
     })
     .filter((condition): condition is PromptExploderLogicalCondition => condition !== null);
-  if (fromItem.length > 0) return fromItem;
-  return buildLogicalConditionsFromLegacyFields(item);
+  return fromItem;
 };
 
 const formatLogicalConditionExpression = (
@@ -396,8 +373,6 @@ export const collectReferencedParamsFromItems = (items: PromptExploderListItem[]
         const path = (condition.paramPath ?? '').trim();
         if (path) out.add(path);
       });
-      const legacyPath = (item.referencedParamPath ?? '').trim();
-      if (legacyPath) out.add(legacyPath);
       if (item.children.length > 0) walk(item.children);
     });
   };

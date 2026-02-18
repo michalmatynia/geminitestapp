@@ -86,7 +86,6 @@ const fetchLiteSettings = async (): Promise<SettingRecord[]> => {
   const envProvider = process.env['APP_DB_PROVIDER']?.toLowerCase().trim();
   const provider =
     envProvider === 'mongodb' || envProvider === 'prisma' ? envProvider : await getAppDbProvider();
-  const hasMongo = Boolean(process.env['MONGODB_URI']);
 
   if (provider === 'mongodb') {
     return readMongoSettings(LITE_SETTINGS_KEYS);

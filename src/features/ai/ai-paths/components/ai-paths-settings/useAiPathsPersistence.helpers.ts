@@ -6,10 +6,6 @@ import {
   AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT,
 } from '@/features/ai/ai-paths/lib';
 
-const PARAMETER_INFERENCE_PATH_ID = 'path_syr8f4';
-const PARAMETER_INFERENCE_PATH_NAME = 'Parameter Inference';
-const LEGACY_PARAMETER_INFERENCE_PATH_NAME = 'Category Inference';
-
 const normalizeHistoryRetentionValue = (value: unknown, fallback: number): number => {
   const parsed =
     typeof value === 'number'
@@ -139,15 +135,8 @@ export const lintPathNodeRoles = (nodes: AiNode[]): PathNodeRoleLintResult => {
   };
 };
 
-export const normalizeLoadedPathName = (pathId: string, name: unknown): string => {
-  const trimmed = typeof name === 'string' ? name.trim() : '';
-  if (
-    pathId === PARAMETER_INFERENCE_PATH_ID &&
-    trimmed.toLowerCase() === LEGACY_PARAMETER_INFERENCE_PATH_NAME.toLowerCase()
-  ) {
-    return PARAMETER_INFERENCE_PATH_NAME;
-  }
-  return trimmed;
+export const normalizeLoadedPathName = (_pathId: string, name: unknown): string => {
+  return typeof name === 'string' ? name.trim() : '';
 };
 
 export const normalizeLoadedPathMetas = (metas: PathMeta[]): PathMeta[] => {

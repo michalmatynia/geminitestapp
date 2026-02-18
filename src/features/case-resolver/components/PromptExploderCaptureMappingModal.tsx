@@ -2,11 +2,10 @@ import React from 'react';
 
 import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture/proposals';
 import {
-  CASE_RESOLVER_CAPTURE_ACTION_OPTIONS,
   type CaseResolverCaptureAction,
 } from '@/features/case-resolver-capture/settings';
 import { encodeFilemakerPartyReference } from '@/features/filemaker/settings';
-import { AppModal, Button, Label, SelectSimple } from '@/shared/ui';
+import { AppModal, Badge, Button, Label, SelectSimple } from '@/shared/ui';
 
 type PromptExploderCaptureMappingModalProps = {
   open: boolean;
@@ -42,6 +41,32 @@ export function PromptExploderCaptureMappingModal({
   onUpdateReference,
   resolveMatchedPartyLabel,
 }: PromptExploderCaptureMappingModalProps): React.JSX.Element {
+  const resolveActionOptions = (
+    proposal: NonNullable<CaseResolverCaptureProposalState['addresser']>
+  ): Array<{ value: CaseResolverCaptureAction; label: string }> => {
+    if (proposal.matchKind === 'party' || proposal.matchKind === 'party_and_address') {
+      return [
+        { value: 'useMatched', label: 'Use matched Filemaker record' },
+        { value: 'keepText', label: 'Keep as text only' },
+        { value: 'ignore', label: 'Ignore this capture' },
+      ];
+    }
+    return [
+      { value: 'createInFilemaker', label: 'Add to Filemaker database' },
+      { value: 'keepText', label: 'Keep as text only' },
+      { value: 'ignore', label: 'Ignore this capture' },
+    ];
+  };
+
+  const resolveMatchBadgeLabel = (
+    proposal: NonNullable<CaseResolverCaptureProposalState['addresser']>
+  ): string => {
+    if (proposal.matchKind === 'party_and_address') return 'Matched in Filemaker';
+    if (proposal.matchKind === 'party') return 'Matched party';
+    if (proposal.matchKind === 'address') return 'Matched address only';
+    return proposal.hasAddressCandidate ? 'Address found, not matched' : 'No match';
+  };
+
   return (
     <AppModal
       open={open && draft !== null}
@@ -97,11 +122,21 @@ export function PromptExploderCaptureMappingModal({
             const matchedPartyLabel = proposal.existingReference
               ? resolveMatchedPartyLabel(proposal.existingReference)
               : 'None';
+            const actionOptions = resolveActionOptions(proposal);
+            const selectedAction = actionOptions.some((option) => option.value === proposal.action)
+              ? proposal.action
+              : actionOptions[0]?.value ?? 'ignore';
+            const shouldShowMatchedPartySelector = selectedAction === 'useMatched';
 
             return (
               <div key={role} className='space-y-3 rounded border border-border/60 bg-card/25 p-3'>
                 <div className='flex items-center justify-between gap-3'>
-                  <div className='text-sm font-semibold text-gray-100'>{roleLabel}</div>
+                  <div className='flex items-center gap-2'>
+                    <div className='text-sm font-semibold text-gray-100'>{roleLabel}</div>
+                    <Badge variant='outline' className='px-1.5 py-0 text-[10px]'>
+                      {resolveMatchBadgeLabel(proposal)}
+                    </Badge>
+                  </div>
                   <div className='text-[11px] text-gray-400'>
                     Source role: {proposal.sourceRole}
                   </div>
@@ -121,22 +156,23 @@ export function PromptExploderCaptureMappingModal({
                     <Label className='text-xs text-gray-400'>Action</Label>
                     <SelectSimple
                       size='sm'
-                      value={proposal.action}
+                      value={selectedAction}
                       onValueChange={(value: string): void => {
                         if (
-                          value === 'database' ||
-                          value === 'text' ||
+                          value === 'useMatched' ||
+                          value === 'createInFilemaker' ||
+                          value === 'keepText' ||
                           value === 'ignore'
                         ) {
                           onUpdateAction(role, value);
                         }
                       }}
-                      options={CASE_RESOLVER_CAPTURE_ACTION_OPTIONS}
+                      options={actionOptions}
                       triggerClassName='h-9'
                     />
                   </div>
 
-                  {proposal.action === 'database' ? (
+                  {shouldShowMatchedPartySelector ? (
                     <div className='space-y-2'>
                       <Label className='text-xs text-gray-400'>Database Party</Label>
                       <SelectSimple
@@ -162,6 +198,10 @@ export function PromptExploderCaptureMappingModal({
                 {proposal.existingAddressId ? (
                   <div className='text-[11px] text-gray-500'>
                     Matched address ID: {proposal.existingAddressId}
+                  </div>
+                ) : proposal.hasAddressCandidate ? (
+                  <div className='text-[11px] text-gray-500'>
+                    Address candidate detected (not matched in Filemaker).
                   </div>
                 ) : null}
               </div>

@@ -6,7 +6,7 @@ import { useToast } from '@/shared/ui';
 
 import {
   promptExploderCreateManualBindingId,
-  formatSubsectionLabel,
+  promptExploderFormatSubsectionLabel,
 } from '../helpers/segment-helpers';
 import {
   buildManualBindingFromDraft,
@@ -72,7 +72,7 @@ export function BindingsProvider({ children }: { children: React.ReactNode }): R
     segment.subsections.forEach((subsection) => {
       options.push({
         value: subsection.id,
-        label: formatSubsectionLabel(subsection),
+        label: promptExploderFormatSubsectionLabel(subsection),
       });
     });
     return options;
@@ -85,7 +85,7 @@ export function BindingsProvider({ children }: { children: React.ReactNode }): R
     segment.subsections.forEach((subsection) => {
       options.push({
         value: subsection.id,
-        label: formatSubsectionLabel(subsection),
+        label: promptExploderFormatSubsectionLabel(subsection),
       });
     });
     return options;
@@ -157,7 +157,7 @@ export function BindingsProvider({ children }: { children: React.ReactNode }): R
       segments: documentState.segments,
       draft: bindingDraft,
       createManualBindingId: promptExploderCreateManualBindingId,
-      formatSubsectionLabel,
+      formatSubsectionLabel: promptExploderFormatSubsectionLabel,
     });
     if (!builtBinding.ok) {
       toast(builtBinding.message, { variant: builtBinding.variant });

@@ -11,13 +11,10 @@ import {
   DESCRIPTION_INFERENCE_LITE_PATH_NAME,
   DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID,
   DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_NAME,
-  LEGACY_DESCRIPTION_INFERENCE_V2_PATH_ID,
-  LEGACY_DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID,
   needsDescriptionInferenceLiteConfigUpgrade,
 } from './settings-store-description-inference';
 import {
   buildParameterInferencePathConfigValue,
-  isLegacyParameterInferencePathName,
   needsParameterInferenceConfigUpgrade,
   PARAMETER_INFERENCE_PATH_ID,
   PARAMETER_INFERENCE_PATH_NAME,
@@ -541,30 +538,7 @@ const ensureParameterInferenceDefaults = async (
   const updates: AiPathsSettingRecord[] = [];
   const now = new Date().toISOString();
   const pathConfigKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${PARAMETER_INFERENCE_PATH_ID}`;
-
   let pathConfigRaw = map.get(pathConfigKey);
-
-  if (pathConfigRaw) {
-    try {
-      const parsedPathConfig = JSON.parse(pathConfigRaw) as Record<string, unknown>;
-      if (parsedPathConfig && typeof parsedPathConfig === 'object') {
-        const currentName = parsedPathConfig['name'];
-        if (isLegacyParameterInferencePathName(currentName)) {
-          const normalizedPathConfig = {
-            ...parsedPathConfig,
-            id: PARAMETER_INFERENCE_PATH_ID,
-            name: PARAMETER_INFERENCE_PATH_NAME,
-            updatedAt: now,
-          };
-          pathConfigRaw = JSON.stringify(normalizedPathConfig);
-          map.set(pathConfigKey, pathConfigRaw);
-          updates.push({ key: pathConfigKey, value: pathConfigRaw });
-        }
-      }
-    } catch {
-      // Invalid JSON will be replaced by canonical seeded config below.
-    }
-  }
 
   const parsedConfigMeta = pathConfigRaw
     ? parsePathConfigMeta(PARAMETER_INFERENCE_PATH_ID, pathConfigRaw)
@@ -597,7 +571,7 @@ const ensureParameterInferenceDefaults = async (
     updates.push({ key: AI_PATHS_INDEX_KEY, value: indexValue });
   } else {
     const currentMeta = currentMetas[parameterPathMetaIndex];
-    if (currentMeta && isLegacyParameterInferencePathName(currentMeta.name)) {
+    if (currentMeta && currentMeta.name.trim() !== PARAMETER_INFERENCE_PATH_NAME) {
       const nextMetas = [...currentMetas];
       nextMetas[parameterPathMetaIndex] = {
         ...currentMeta,
@@ -780,25 +754,6 @@ const ensureDescriptionInferenceLiteDefaults = async (
     }
   }
 
-  const legacyPathConfigKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${LEGACY_DESCRIPTION_INFERENCE_V2_PATH_ID}`;
-  const legacyPathConfigRaw = map.get(legacyPathConfigKey);
-  if (legacyPathConfigRaw) {
-    try {
-      const parsedLegacy = JSON.parse(legacyPathConfigRaw) as Record<string, unknown>;
-      if (parsedLegacy && typeof parsedLegacy === 'object' && parsedLegacy['isActive'] !== false) {
-        const nextLegacyRaw = JSON.stringify({
-          ...parsedLegacy,
-          isActive: false,
-          updatedAt: now,
-        });
-        map.set(legacyPathConfigKey, nextLegacyRaw);
-        updates.push({ key: legacyPathConfigKey, value: nextLegacyRaw });
-      }
-    } catch {
-      // Ignore invalid legacy path payloads.
-    }
-  }
-
   const parsedButtons = parseTriggerButtons(map.get(AI_PATHS_TRIGGER_BUTTONS_KEY));
   if (parsedButtons === null) {
     const triggerButtonsValue = JSON.stringify([
@@ -834,7 +789,6 @@ const ensureDescriptionInferenceLiteDefaults = async (
     const seenButtonIds = new Set<string>();
     const nextButtons = parsedButtons.reduce(
       (acc: TriggerButtonSettingRecord[], button: TriggerButtonSettingRecord) => {
-        if (button.id === LEGACY_DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID) return acc;
         const normalizedName =
           typeof button['name'] === 'string' ? button['name'].trim().toLowerCase() : '';
         if (
@@ -968,11 +922,7 @@ const normalizeExistingPathIndexValue = (
       configMeta?.name?.trim().length
         ? configMeta.name.trim()
         : meta.name.trim();
-    const normalizedName =
-      meta.id === PARAMETER_INFERENCE_PATH_ID &&
-      isLegacyParameterInferencePathName(candidateName)
-        ? PARAMETER_INFERENCE_PATH_NAME
-        : candidateName || `Path ${meta.id.slice(0, 6)}`;
+    const normalizedName = candidateName || `Path ${meta.id.slice(0, 6)}`;
     const normalizedMeta: ParsedPathMeta = {
       id: meta.id,
       name: normalizedName,
@@ -1037,14 +987,12 @@ const hasParameterInferenceDefaults = (records: AiPathsSettingRecord[]): boolean
     ? parsePathConfigMeta(PARAMETER_INFERENCE_PATH_ID, configRaw)
     : null;
   if (!configMeta) return false;
-  if (isLegacyParameterInferencePathName(configMeta.name)) return false;
 
   const metas = parsePathMetas(map.get(AI_PATHS_INDEX_KEY));
   const parameterMeta = metas.find(
     (meta: ParsedPathMeta): boolean => meta.id === PARAMETER_INFERENCE_PATH_ID
   );
   if (!parameterMeta) return false;
-  if (isLegacyParameterInferencePathName(parameterMeta.name)) return false;
 
   const buttons = parseTriggerButtons(map.get(AI_PATHS_TRIGGER_BUTTONS_KEY));
   if (buttons === null) return false;
@@ -1078,20 +1026,6 @@ const hasDescriptionInferenceLiteDefaults = (
     : null;
   if (!configMeta) return false;
 
-  const legacyConfigRaw = map.get(
-    `${AI_PATHS_CONFIG_KEY_PREFIX}${LEGACY_DESCRIPTION_INFERENCE_V2_PATH_ID}`
-  );
-  if (legacyConfigRaw) {
-    try {
-      const parsedLegacy = JSON.parse(legacyConfigRaw) as Record<string, unknown>;
-      if (parsedLegacy && typeof parsedLegacy === 'object' && parsedLegacy['isActive'] !== false) {
-        return false;
-      }
-    } catch {
-      // ignore invalid legacy payloads
-    }
-  }
-
   const metas = parsePathMetas(map.get(AI_PATHS_INDEX_KEY));
   const descriptionMeta = metas.find(
     (meta: ParsedPathMeta): boolean => meta.id === DESCRIPTION_INFERENCE_LITE_PATH_ID
@@ -1105,14 +1039,6 @@ const hasDescriptionInferenceLiteDefaults = (
       button.id === DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID
   );
   if (!descriptionButton) return false;
-  if (
-    buttons.some(
-      (button: TriggerButtonSettingRecord): boolean =>
-        button.id === LEGACY_DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID
-    )
-  ) {
-    return false;
-  }
   const buttonName =
     typeof descriptionButton['name'] === 'string' ? (descriptionButton['name']).trim() : '';
   if (buttonName !== DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_NAME) return false;

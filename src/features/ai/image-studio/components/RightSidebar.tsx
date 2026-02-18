@@ -57,10 +57,8 @@ import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState } from '../context/UiContext';
 import { supportsImageSequenceGeneration } from '../utils/image-models';
 import {
-  IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
   getImageStudioProjectSessionKey,
   saveImageStudioProjectSessionLocal,
-  serializeImageStudioActiveProject,
   serializeImageStudioProjectSession,
   type ImageStudioProjectSession,
 } from '../utils/project-session';
@@ -558,12 +556,6 @@ export function RightSidebar(): React.JSX.Element {
         key: projectSessionKey,
         value: serializedSession,
       });
-
-      // Keep active project in sync (legacy key) for reload consistency.
-      void updateSetting.mutateAsync({
-        key: IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
-        value: serializeImageStudioActiveProject(normalizedProjectId),
-      }).catch(() => {});
 
       toast(`Prompt saved to project "${normalizedProjectId}".`, { variant: 'success' });
     })()

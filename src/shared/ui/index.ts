@@ -59,6 +59,7 @@ export { default as MissingImagePlaceholder } from './missing-image-placeholder'
 
 export * from './FormActions';
 export * from './LoadingState';
+export * from './toggle-row';
 export * from './PageLayout';
 export * from './FormModal';
 export * from './form-section';

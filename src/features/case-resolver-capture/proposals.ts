@@ -18,12 +18,16 @@ import type {
   CaseResolverCaptureSettings,
 } from './settings';
 
+export type CaseResolverCaptureProposalMatchKind = 'none' | 'party' | 'address' | 'party_and_address';
+
 export type CaseResolverCaptureProposal = {
   role: CaseResolverCaptureRole;
   sourceRole: CaseResolverCaptureRole;
   candidate: PromptExploderCaseResolverPartyCandidate;
   existingReference: CaseResolverPartyReference | null;
   existingAddressId: string | null;
+  matchKind: CaseResolverCaptureProposalMatchKind;
+  hasAddressCandidate: boolean;
   action: CaseResolverCaptureAction;
 };
 
@@ -86,6 +90,38 @@ const buildCaseResolverCaptureProposal = (args: {
     })
     : null;
 
+  const hasAddressCandidate = Boolean(
+    (args.candidate.street ?? '').trim() ||
+    composeCandidateStreetNumber(args.candidate).trim() ||
+    (args.candidate.city ?? '').trim() ||
+    (args.candidate.postalCode ?? '').trim() ||
+    (args.candidate.country ?? '').trim()
+  );
+
+  const matchKind: CaseResolverCaptureProposalMatchKind = existingReference && existingAddressId
+    ? 'party_and_address'
+    : existingReference
+      ? 'party'
+      : existingAddressId
+        ? 'address'
+        : 'none';
+
+  const action: CaseResolverCaptureAction = (() => {
+    if (matchKind === 'party' || matchKind === 'party_and_address') {
+      return 'useMatched';
+    }
+    if (hasAddressCandidate || matchKind === 'address') {
+      return 'createInFilemaker';
+    }
+    if (args.mapping.defaultAction === 'createInFilemaker' || args.mapping.defaultAction === 'ignore') {
+      return args.mapping.defaultAction;
+    }
+    if (args.mapping.defaultAction === 'keepText') {
+      return 'keepText';
+    }
+    return 'keepText';
+  })();
+
   return {
     role: args.targetRole,
     sourceRole: args.sourceRole,
@@ -97,7 +133,9 @@ const buildCaseResolverCaptureProposal = (args: {
       }
       : null,
     existingAddressId,
-    action: args.mapping.defaultAction,
+    matchKind,
+    hasAddressCandidate,
+    action,
   };
 };
 
@@ -233,7 +271,7 @@ export const stripCapturedAddressLinesFromText = (
 
   const removalKeys = new Set<string>();
   [proposalState.addresser, proposalState.addressee].forEach((proposal) => {
-    if (!proposal || proposal.action === 'ignore') return;
+    if (!proposal || proposal.action === 'ignore' || proposal.action === 'keepText') return;
     collectCandidateAddressLines(proposal.candidate).forEach((line: string): void => {
       const key = normalizeCaptureTextLine(line);
       if (!key) return;

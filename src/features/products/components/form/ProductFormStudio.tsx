@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { clampSplitZoom } from '@/features/ai/image-studio/components/center-preview/preview-utils';
 import { SplitVariantPreview } from '@/features/ai/image-studio/components/center-preview/SplitVariantPreview';
 import { SplitViewControls } from '@/features/ai/image-studio/components/center-preview/SplitViewControls';
-import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import { studioKeys, useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import type { ImageStudioSlotRecord } from '@/features/ai/image-studio/types';
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import {
@@ -28,6 +28,32 @@ import { Button, FormField, FormSection, SelectSimple, useToast, StatusBadge, Al
 import { cn } from '@/shared/utils';
 
 type ProductStudioVariantsResponse = {
+  sequencing: {
+    persistedEnabled: boolean;
+    enabled: boolean;
+    runViaSequence: boolean;
+    sequenceStepCount: number;
+    snapshotSavedAt: string | null;
+    snapshotMatchesCurrent: boolean;
+    needsSaveDefaults: boolean;
+    needsSaveDefaultsReason: string | null;
+  };
+  sequencingDiagnostics: {
+    projectId: string | null;
+    projectSettingsKey: string | null;
+    selectedSettingsKey: string | null;
+    selectedScope: 'project' | 'global' | 'default';
+    hasProjectSettings: boolean;
+    hasGlobalSettings: boolean;
+    projectSequencingEnabled: boolean;
+    globalSequencingEnabled: boolean;
+    selectedSequencingEnabled: boolean;
+    selectedSnapshotHash: string | null;
+    selectedSnapshotSavedAt: string | null;
+    selectedSnapshotStepCount: number;
+    selectedSnapshotModelId: string | null;
+  };
+  sequenceGenerationMode: ProductStudioSequenceGenerationMode;
   projectId: string | null;
   sourceSlotId: string | null;
   sourceSlot: ImageStudioSlotRecord | null;
@@ -44,6 +70,7 @@ type ProductStudioSendResponse = {
   requestedSequenceMode: ProductStudioSequenceGenerationMode;
   resolvedSequenceMode: ProductStudioSequenceGenerationMode;
   executionRoute: ProductStudioExecutionRoute;
+  sequencingDiagnostics?: ProductStudioVariantsResponse['sequencingDiagnostics'];
   warnings?: string[];
 };
 
@@ -76,6 +103,18 @@ type ProductStudioAuditEntry = {
   dispatchMode: 'queued' | 'inline' | null;
   fallbackReason: string | null;
   warnings: string[];
+  sequenceSnapshotHash: string | null;
+  stepOrderUsed: string[];
+  resolvedCropRect: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null;
+  sourceImageSize: {
+    width: number;
+    height: number;
+  } | null;
   timings: {
     importMs: number | null;
     sourceSlotUpsertMs: number | null;
@@ -443,6 +482,48 @@ export default function ProductFormStudio(): React.JSX.Element {
   );
 
   const canCompareWithSource = Boolean(sourceImageSrc && variantImageSrc);
+  const selectedSequenceMode = variantsData?.sequenceGenerationMode ?? 'auto';
+  const sequencingDiagnostics = variantsData?.sequencingDiagnostics ?? null;
+  const modeRequiresProjectSequence =
+    selectedSequenceMode === 'studio_prompt_then_sequence' ||
+    selectedSequenceMode === 'studio_native_sequencer_prior_generation';
+  const sequenceReadinessMessage = useMemo((): string | null => {
+    const sequencing = variantsData?.sequencing;
+    const diagnostics = variantsData?.sequencingDiagnostics;
+    if (!sequencing) return null;
+    if (!modeRequiresProjectSequence) return null;
+    if (
+      diagnostics?.projectSettingsKey &&
+      diagnostics.selectedScope !== 'project'
+    ) {
+      return `Project settings for "${diagnostics.projectId ?? 'selected project'}" are not persisted yet. Product Studio is reading "${diagnostics.selectedSettingsKey ?? 'image_studio_settings'}" (${diagnostics.selectedScope} scope). Open Image Studio Sequencing and click "Save Defaults".`;
+    }
+    if (
+      diagnostics?.selectedScope === 'project' &&
+      !sequencing.persistedEnabled &&
+      diagnostics.globalSequencingEnabled
+    ) {
+      return `Project-scoped sequencing is disabled while global sequencing is enabled. Product Studio uses project-scoped settings. Enable Sequencing and click "Save Defaults" in the selected project.`;
+    }
+    if (!sequencing.persistedEnabled) {
+      return 'Project sequencing is disabled in persisted Image Studio settings. Enable Sequencing and click "Save Defaults" in Image Studio.';
+    }
+    if (sequencing.sequenceStepCount <= 0) {
+      return 'Project sequencing has no enabled steps. Add at least one step and click "Save Defaults".';
+    }
+    if (sequencing.needsSaveDefaults) {
+      return (
+        sequencing.needsSaveDefaultsReason ??
+        'Project sequence snapshot is outdated. Open Image Studio and click "Save Defaults".'
+      );
+    }
+    return null;
+  }, [
+    modeRequiresProjectSequence,
+    variantsData?.sequencing,
+    variantsData?.sequencingDiagnostics,
+  ]);
+  const blockSendForSequenceReadiness = Boolean(sequenceReadinessMessage);
 
   useEffect(() => {
     if (canCompareWithSource) return;
@@ -488,6 +569,9 @@ export default function ProductFormStudio(): React.JSX.Element {
           toast(warning, { variant: 'warning' });
         });
       }
+      await queryClient.invalidateQueries({
+        queryKey: studioKeys.slots(studioProjectId),
+      });
       await refreshVariants();
       await refreshAudit();
     } catch (error) {
@@ -706,10 +790,15 @@ export default function ProductFormStudio(): React.JSX.Element {
             disabled={
               sending ||
               accepting ||
+              blockSendForSequenceReadiness ||
               selectedImageIndex === null ||
               !selectedSourcePreview
             }
-            title='Send selected product image to Studio'
+            title={
+              blockSendForSequenceReadiness
+                ? sequenceReadinessMessage ?? 'Project sequencing is not ready.'
+                : 'Send selected product image to Studio'
+            }
           >
             {sending ? (
               <Loader2 className='mr-2 size-4 animate-spin' />
@@ -765,6 +854,64 @@ export default function ProductFormStudio(): React.JSX.Element {
           <Alert variant='error' className='mt-2 py-2 text-xs'>
             {studioActionError}
           </Alert>
+        ) : null}
+        {sequenceReadinessMessage ? (
+          <div className='mt-2 space-y-2'>
+            <Alert variant='warning' className='py-2 text-xs'>
+              {sequenceReadinessMessage}
+            </Alert>
+            <div className='flex flex-wrap items-center gap-2'>
+              <Button
+                size='xs'
+                type='button'
+                variant='outline'
+                onClick={(): void => {
+                  if (!studioProjectId) return;
+                  const target = `/admin/image-studio?projectId=${encodeURIComponent(studioProjectId)}`;
+                  window.location.href = target;
+                }}
+              >
+                Open Image Studio Sequencing
+              </Button>
+            </div>
+          </div>
+        ) : null}
+        {sequencingDiagnostics ? (
+          <div className='mt-2 rounded border border-border/60 bg-card/30 p-2 text-[11px] text-gray-300'>
+            <div className='font-medium text-gray-200'>Sequencing Status</div>
+            <div className='mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-gray-400'>
+              <span>scope: {sequencingDiagnostics.selectedScope}</span>
+              <span>
+                selected key: {sequencingDiagnostics.selectedSettingsKey ?? 'n/a'}
+              </span>
+              <span>
+                project key: {sequencingDiagnostics.projectSettingsKey ?? 'n/a'}
+              </span>
+            </div>
+            <div className='mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-gray-400'>
+              <span>
+                has project settings: {sequencingDiagnostics.hasProjectSettings ? 'yes' : 'no'}
+              </span>
+              <span>
+                has global settings: {sequencingDiagnostics.hasGlobalSettings ? 'yes' : 'no'}
+              </span>
+              <span>
+                selected enabled: {sequencingDiagnostics.selectedSequencingEnabled ? 'yes' : 'no'}
+              </span>
+              <span>
+                project enabled: {sequencingDiagnostics.projectSequencingEnabled ? 'yes' : 'no'}
+              </span>
+              <span>
+                global enabled: {sequencingDiagnostics.globalSequencingEnabled ? 'yes' : 'no'}
+              </span>
+            </div>
+            <div className='mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-gray-500'>
+              <span>snapshot: {sequencingDiagnostics.selectedSnapshotHash ?? 'n/a'}</span>
+              <span>saved at: {formatTimestamp(sequencingDiagnostics.selectedSnapshotSavedAt)}</span>
+              <span>steps: {sequencingDiagnostics.selectedSnapshotStepCount}</span>
+              <span>model: {sequencingDiagnostics.selectedSnapshotModelId ?? 'n/a'}</span>
+            </div>
+          </div>
         ) : null}
       </FormSection>
 
@@ -1069,6 +1216,25 @@ export default function ProductFormStudio(): React.JSX.Element {
                     <span>dispatch: {entry.timings.dispatchMs ?? 'n/a'}ms</span>
                     {entry.dispatchMode ? <span>queue: {entry.dispatchMode}</span> : null}
                   </div>
+                  <div className='mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-400'>
+                    <span>snapshot: {entry.sequenceSnapshotHash ?? 'n/a'}</span>
+                    {entry.stepOrderUsed.length > 0 ? (
+                      <span>steps: {entry.stepOrderUsed.join(' → ')}</span>
+                    ) : null}
+                    {entry.sourceImageSize ? (
+                      <span>
+                        source: {entry.sourceImageSize.width}x{entry.sourceImageSize.height}
+                      </span>
+                    ) : null}
+                  </div>
+                  {entry.resolvedCropRect ? (
+                    <div className='mt-1 text-[11px] text-gray-400'>
+                      crop rect: x {entry.resolvedCropRect.x.toFixed(4)}, y{' '}
+                      {entry.resolvedCropRect.y.toFixed(4)}, w{' '}
+                      {entry.resolvedCropRect.width.toFixed(4)}, h{' '}
+                      {entry.resolvedCropRect.height.toFixed(4)}
+                    </div>
+                  ) : null}
                   {entry.fallbackReason ? (
                     <div className='mt-1 text-[11px] text-amber-300'>fallback: {entry.fallbackReason}</div>
                   ) : null}

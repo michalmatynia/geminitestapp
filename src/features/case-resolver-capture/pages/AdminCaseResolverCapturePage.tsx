@@ -175,7 +175,6 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
         <div className='grid gap-3 md:grid-cols-2'>
           <FormField label='Capture Pipeline' id='capture-pipeline'>
             <SelectSimple
-              id='capture-pipeline'
               value={toBooleanOptionValue(draft.enabled)}
               onValueChange={(value: string): void => {
                 setDraft((current: CaseResolverCaptureSettings | null) =>
@@ -192,7 +191,6 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
           </FormField>
           <FormField label='Auto-open Proposal Modal' id='auto-open-modal'>
             <SelectSimple
-              id='auto-open-modal'
               value={toBooleanOptionValue(draft.autoOpenProposalModal)}
               onValueChange={(value: string): void => {
                 setDraft((current: CaseResolverCaptureSettings | null) =>
@@ -229,7 +227,6 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
             <div className='grid gap-3 md:grid-cols-2'>
               <FormField label='Role Mapping Enabled' id={`mapping-enabled-${role}`}>
                 <SelectSimple
-                  id={`mapping-enabled-${role}`}
                   value={toBooleanOptionValue(mapping.enabled)}
                   onValueChange={(value: string): void => {
                     updateRoleMapping(role, 'enabled', fromBooleanOptionValue(value));
@@ -239,7 +236,6 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
               </FormField>
               <FormField label='Target Case Role' id={`target-role-${role}`}>
                 <SelectSimple
-                  id={`target-role-${role}`}
                   value={mapping.targetRole}
                   onValueChange={(value: string): void => {
                     updateRoleMapping(
@@ -253,13 +249,16 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
               </FormField>
               <FormField label='Default Action' id={`default-action-${role}`}>
                 <SelectSimple
-                  id={`default-action-${role}`}
                   value={mapping.defaultAction}
                   onValueChange={(value: string): void => {
                     updateRoleMapping(
                       role,
                       'defaultAction',
-                      value === 'text' || value === 'ignore' ? value : 'database'
+                      value === 'createInFilemaker' ||
+                        value === 'keepText' ||
+                        value === 'ignore'
+                        ? value
+                        : 'useMatched'
                     );
                   }}
                   options={CASE_RESOLVER_CAPTURE_ACTION_OPTIONS}
@@ -267,7 +266,6 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
               </FormField>
               <FormField label='Auto-match Filemaker Party' id={`auto-match-party-${role}`}>
                 <SelectSimple
-                  id={`auto-match-party-${role}`}
                   value={toBooleanOptionValue(mapping.autoMatchPartyReference)}
                   onValueChange={(value: string): void => {
                     updateRoleMapping(role, 'autoMatchPartyReference', fromBooleanOptionValue(value));
@@ -277,7 +275,6 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
               </FormField>
               <FormField label='Auto-match Filemaker Address' id={`auto-match-address-${role}`} className='md:col-span-2'>
                 <SelectSimple
-                  id={`auto-match-address-${role}`}
                   value={toBooleanOptionValue(mapping.autoMatchAddress)}
                   onValueChange={(value: string): void => {
                     updateRoleMapping(role, 'autoMatchAddress', fromBooleanOptionValue(value));
@@ -292,10 +289,10 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
 
       <FormActions
         onCancel={handleReset}
-        onSave={handleSave}
+        onSave={() => { void handleSave(); }}
         cancelText='Reset to Defaults'
         saveText='Save Capture Settings'
-        cancelVariant='warning'
+        cancelVariant='outline'
         isSaving={updateSetting.isPending}
         isDisabled={saveDisabled}
       />

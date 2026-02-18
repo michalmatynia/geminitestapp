@@ -279,7 +279,7 @@ describe('case-resolver settings', () => {
     ]);
   });
 
-  it('assigns legacy folders to the only case when owner is missing', () => {
+  it('ignores legacy folder list without explicit folder records', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
@@ -301,9 +301,8 @@ describe('case-resolver settings', () => {
       })
     );
 
-    expect(workspace.folderRecords).toEqual([
-      { path: 'Legacy_Folder', ownerCaseId: 'case-only' },
-    ]);
+    expect(workspace.folderRecords).toEqual([]);
+    expect(workspace.folders).toEqual([]);
   });
 
   it('normalizes uploaded assets and infers asset kind', () => {
@@ -819,21 +818,24 @@ describe('case-resolver settings', () => {
     expect(parsedNull.confirmDeleteDocument).toBe(true);
 
     const parsedLegacyPlainValue = parseCaseResolverSettings('wysiwyg');
-    expect(parsedLegacyPlainValue.defaultDocumentFormat).toBe('wysiwyg');
+    expect(parsedLegacyPlainValue.defaultDocumentFormat).toBe('markdown');
 
     const parsedLegacyJsonString = parseCaseResolverSettings(JSON.stringify('wysiwyg'));
-    expect(parsedLegacyJsonString.defaultDocumentFormat).toBe('wysiwyg');
+    expect(parsedLegacyJsonString.defaultDocumentFormat).toBe('markdown');
 
     const parsedLegacyObjectKey = parseCaseResolverSettings(
       JSON.stringify({ editorType: 'wysiwyg' })
     );
-    expect(parsedLegacyObjectKey.defaultDocumentFormat).toBe('wysiwyg');
+    expect(parsedLegacyObjectKey.defaultDocumentFormat).toBe('markdown');
 
     expect(parseCaseResolverDefaultDocumentFormat('wysiwyg')).toBe('wysiwyg');
     expect(parseCaseResolverDefaultDocumentFormat(JSON.stringify('wysiwyg'))).toBe('wysiwyg');
     expect(
       parseCaseResolverDefaultDocumentFormat(JSON.stringify({ defaultDocumentFormat: 'wysiwyg' }))
     ).toBe('wysiwyg');
+    expect(
+      parseCaseResolverDefaultDocumentFormat(JSON.stringify({ editorType: 'wysiwyg' }))
+    ).toBe('markdown');
     expect(parseCaseResolverDefaultDocumentFormat('invalid-value')).toBe('markdown');
     expect(parseCaseResolverDefaultDocumentFormat('invalid-value', 'wysiwyg')).toBe('wysiwyg');
   });
@@ -1049,9 +1051,9 @@ describe('case-resolver settings', () => {
     const graph = workspace.files[0]?.graph;
     const edgeById = new Map((graph?.edges ?? []).map((edge) => [edge.id, edge]));
 
-    expect(edgeById.get('edge-in-prompt')?.toPort).toBe('textfield');
+    expect(edgeById.get('edge-in-prompt')?.toPort).toBe('content');
     expect(edgeById.get('edge-in-unknown')?.toPort).toBe('content');
     expect(edgeById.get('edge-out-result')?.fromPort).toBe('content');
-    expect(edgeById.get('edge-out-prompt')?.fromPort).toBe('textfield');
+    expect(edgeById.get('edge-out-prompt')?.fromPort).toBe('content');
   });
 });

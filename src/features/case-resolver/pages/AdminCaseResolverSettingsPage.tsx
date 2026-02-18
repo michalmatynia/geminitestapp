@@ -11,7 +11,8 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Badge, Button, FormSection, Input, Label, SectionHeader, SelectSimple, Textarea, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-import { resolveCaseResolverOcrProviderLabel } from '../ocr-provider';
+import { isLikelyCaseResolverOcrCapableModelId } from '../ocr-models';
+import { detectCaseResolverOcrProvider, resolveCaseResolverOcrProviderLabel } from '../ocr-provider';
 import {
   CASE_RESOLVER_CONFIRM_DELETE_OPTIONS,
   CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY,
@@ -22,8 +23,15 @@ import {
   type CaseResolverSettings,
 } from '../settings';
 
-type ChatbotModelListResponse = {
+type CaseResolverOcrModelsResponse = {
   models?: string[];
+  ollamaModels?: string[];
+  otherModels?: string[];
+  keySource?:
+    | 'image_studio_openai_api_key'
+    | 'openai_api_key'
+    | 'env_openai_api_key'
+    | 'none';
   warning?: {
     code?: string;
     message?: string;
@@ -34,9 +42,9 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap({ scope: 'light' });
   const updateSettingsBulk = useUpdateSettingsBulk();
-  const modelsQuery = createListQueryV2<ChatbotModelListResponse, ChatbotModelListResponse>({
-    queryKey: QUERY_KEYS.ai.chatbot.models(),
-    queryFn: ({ signal }) => api.get<ChatbotModelListResponse>('/api/chatbot', { signal }),
+  const modelsQuery = createListQueryV2<CaseResolverOcrModelsResponse, CaseResolverOcrModelsResponse>({
+    queryKey: QUERY_KEYS.ai.chatbot.caseResolverOcrModels(),
+    queryFn: ({ signal }) => api.get<CaseResolverOcrModelsResponse>('/api/case-resolver/ocr/models', { signal }),
     staleTime: 60_000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -44,9 +52,9 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
     meta: {
       source: 'case-resolver.settings.models-query',
       operation: 'list',
-      resource: 'ai.chatbot.models',
+      resource: 'case-resolver.ocr.models',
       domain: 'global',
-      tags: ['case-resolver', 'settings', 'chatbot-models'],
+      tags: ['case-resolver', 'settings', 'ocr-models'],
     },
   });
 
@@ -87,27 +95,47 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
   }, [hydrationSignature, loadedFrom, parsedSettings]);
 
   const modelOptions = useMemo(() => {
-    const options: Array<{ value: string; label: string; description: string }> = [];
+    const options: Array<{ value: string; label: string; description: string; group: string }> = [];
     const seen = new Set<string>();
-    const append = (values: string[], source: string): void => {
+    const resolveModelGroup = (modelId: string): string => (
+      detectCaseResolverOcrProvider(modelId) === 'ollama' ? 'Ollama models' : 'Other models'
+    );
+    const append = (values: string[], source: string, group?: string): void => {
       values.forEach((value: string) => {
         const trimmed = value.trim();
         if (!trimmed || seen.has(trimmed)) return;
+        if (!isLikelyCaseResolverOcrCapableModelId(trimmed)) return;
         seen.add(trimmed);
         options.push({
           value: trimmed,
           label: trimmed,
           description: source,
+          group: group ?? resolveModelGroup(trimmed),
         });
       });
     };
 
-    append(modelsQuery.data?.models ?? [], 'live discovery (Ollama + API providers)');
+    append(modelsQuery.data?.ollamaModels ?? [], 'local Ollama OCR models', 'Ollama models');
+    append(modelsQuery.data?.otherModels ?? [], 'OCR models from API providers', 'Other models');
     append([openaiModelFallback], 'system openai_model');
     append([draft?.ocrModel ?? ''], 'current OCR model');
 
     return options;
-  }, [draft?.ocrModel, modelsQuery.data?.models, openaiModelFallback]);
+  }, [draft?.ocrModel, modelsQuery.data?.ollamaModels, modelsQuery.data?.otherModels, openaiModelFallback]);
+
+  const ocrKeySourceLabel = useMemo((): string => {
+    switch (modelsQuery.data?.keySource) {
+      case 'image_studio_openai_api_key':
+        return 'Image Studio API key (image_studio_openai_api_key)';
+      case 'openai_api_key':
+        return 'openai_api_key setting';
+      case 'env_openai_api_key':
+        return 'OPENAI_API_KEY environment variable';
+      case 'none':
+      default:
+        return 'No OpenAI key detected';
+    }
+  }, [modelsQuery.data?.keySource]);
   const detectedOcrProviderLabel = useMemo((): string => {
     const model = draft?.ocrModel.trim() ?? '';
     if (!model) return 'Not set';
@@ -119,7 +147,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
     settingsQuery.isLoading ||
     updateSettingsBulk.isPending;
 
-  const modelSummary = `${modelsQuery.data?.models?.length ?? 0} discovered model(s) available`;
+  const modelSummary = `${modelOptions.length} OCR-capable model(s) available`;
   const headerBreadcrumb = (
     <nav
       aria-label='Breadcrumb'
@@ -215,7 +243,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
 
       <FormSection
         title='OCR Runtime'
-        description='Pick the model used for OCR extraction. The list includes discovered Ollama and configured API provider models.'
+        description='Pick the model used for OCR extraction. The dropdown is divided into Ollama models and Other models.'
         variant='subtle'
         className='p-4'
         actions={(
@@ -232,6 +260,12 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
               <Badge variant='outline' className='px-1.5 py-0 text-[9px] uppercase tracking-wide'>
                 {detectedOcrProviderLabel}
               </Badge>
+            </div>
+            <div className='text-[11px] text-gray-500'>
+              OpenAI OCR calls use the Image Studio API key first.
+            </div>
+            <div className='text-[11px] text-gray-500'>
+              Key source: {ocrKeySourceLabel}
             </div>
             <SelectSimple
               value={draft.ocrModel}
@@ -327,7 +361,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
               placeholder='Select default document format'
             />
             <div className='text-[11px] text-gray-500'>
-              Legacy documents continue to open using their stored format (for example WYSIWYG documents stay WYSIWYG).
+              Existing documents continue to open using their stored format (for example WYSIWYG documents stay WYSIWYG).
             </div>
           </div>
           <div className='space-y-1'>

@@ -406,6 +406,30 @@ export const uploadToConfiguredStorage = async (params: {
   };
 };
 
+export const uploadBufferToFastComet = async (params: {
+  buffer: Buffer;
+  filename: string;
+  mimetype: string;
+  publicPath: string;
+  category?: string | null;
+  projectId?: string | null;
+  folder?: string | null;
+  fastComet?: FastCometStorageConfig;
+}): Promise<string> => {
+  const config =
+    params.fastComet ?? (await getFileStorageSettings()).fastComet;
+  return await uploadToFastComet({
+    buffer: params.buffer,
+    filename: params.filename,
+    mimetype: params.mimetype,
+    publicPath: params.publicPath,
+    category: params.category ?? null,
+    projectId: params.projectId ?? null,
+    folder: params.folder ?? null,
+    fastComet: config,
+  });
+};
+
 export const deleteFromConfiguredStorage = async (params: {
   filepath: string;
   deleteLocalCopy: (publicPath: string | null) => Promise<void>;

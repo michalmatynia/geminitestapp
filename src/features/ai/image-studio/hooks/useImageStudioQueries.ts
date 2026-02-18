@@ -109,9 +109,11 @@ export function useStudioSlots(projectId: string): SingleQuery<StudioSlotsRespon
     queryFn,
     enabled: !!projectId,
     staleTime: 15_000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    // Slot data is frequently mutated outside Studio (e.g. Product Modal sends),
+    // so refresh on mount/focus to avoid stale folder-tree state.
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     meta: {
       source: 'imageStudio.hooks.useStudioSlots',
       operation: 'detail',

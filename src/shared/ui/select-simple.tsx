@@ -7,7 +7,9 @@ import { cn } from '@/shared/utils';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from './select';
@@ -17,6 +19,7 @@ export interface SelectSimpleOption {
   label: string;
   description?: string | undefined;
   disabled?: boolean | undefined;
+  group?: string | undefined;
 }
 
 interface SelectSimpleProps {
@@ -48,6 +51,30 @@ export function SelectSimple({
     () => options.filter((option) => option.value && option.value.trim() !== ''),
     [options]
   );
+  const groupedOptions = React.useMemo(() => {
+    const groups: Array<{ key: string; label: string | null; options: SelectSimpleOption[] }> = [];
+    const indexByKey = new Map<string, number>();
+    normalizedOptions.forEach((option) => {
+      const trimmedGroup = option.group?.trim() ?? '';
+      const groupKey = trimmedGroup || '__ungrouped__';
+      const existingIndex = indexByKey.get(groupKey);
+      if (existingIndex !== undefined) {
+        groups[existingIndex]?.options.push(option);
+        return;
+      }
+      indexByKey.set(groupKey, groups.length);
+      groups.push({
+        key: groupKey,
+        label: trimmedGroup || null,
+        options: [option],
+      });
+    });
+    const hasVisibleGroupLabels = groups.some((group) => group.label !== null);
+    return {
+      groups,
+      hasVisibleGroupLabels,
+    };
+  }, [normalizedOptions]);
   const hasValue = value !== undefined && normalizedOptions.some((option) => option.value === value);
   const safeValue = hasValue && typeof value === 'string' ? value : '';
 
@@ -70,21 +97,30 @@ export function SelectSimple({
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent className={cn('max-w-[min(34rem,calc(100vw-2rem))]', contentClassName)}>
-          {normalizedOptions.map((option) => (
-            <SelectItem
-              key={option.value}
-              value={option.value}
-              {...(option.disabled !== undefined ? { disabled: option.disabled } : {})}
-            >
-              <div className='flex min-w-0 flex-col'>
-                <span className='break-words leading-tight'>{option.label}</span>
-                {option.description && (
-                  <span className='mt-0.5 break-words text-[10px] leading-tight text-gray-500'>
-                    {option.description}
-                  </span>
-                )}
-              </div>
-            </SelectItem>
+          {groupedOptions.groups.map((group) => (
+            <SelectGroup key={group.key}>
+              {groupedOptions.hasVisibleGroupLabels && group.label ? (
+                <SelectLabel className='px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500'>
+                  {group.label}
+                </SelectLabel>
+              ) : null}
+              {group.options.map((option) => (
+                <SelectItem
+                  key={option.value}
+                  value={option.value}
+                  {...(option.disabled !== undefined ? { disabled: option.disabled } : {})}
+                >
+                  <div className='flex min-w-0 flex-col'>
+                    <span className='break-words leading-tight'>{option.label}</span>
+                    {option.description && (
+                      <span className='mt-0.5 break-words text-[10px] leading-tight text-gray-500'>
+                        {option.description}
+                      </span>
+                    )}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectGroup>
           ))}
         </SelectContent>
       </Select>

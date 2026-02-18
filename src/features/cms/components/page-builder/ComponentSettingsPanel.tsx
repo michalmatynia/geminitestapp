@@ -11,7 +11,7 @@ import type { GsapAnimationConfig } from '@/features/gsap';
 import { logClientError } from '@/features/observability';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, SectionHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, Checkbox, Textarea, useToast, SidePanel, SelectSimple } from '@/shared/ui';
+import { Button, SectionHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, Textarea, useToast, SidePanel, SelectSimple, ToggleRow } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { AnimationConfigPanel } from './AnimationConfigPanel';
@@ -285,15 +285,45 @@ export function ComponentSettingsPanel(): React.ReactNode {
       >
         {state.inspectorEnabled && (
           <div className='border-b border-border px-4 py-3'>
-            <div className='text-[10px] uppercase tracking-wider text-gray-400'>Inspector options</div>
-            <div className='mt-2 space-y-2 text-xs text-gray-300'>
-              <label className='flex items-center gap-2'><Checkbox checked={inspectorSettings.showTooltip} onCheckedChange={(v) => updateInspectorSetting({ showTooltip: v === true })} />Enable tooltip</label>
-              <div className='rounded border border-border/40 bg-gray-800/30 px-2 py-2 space-y-2'>
-                <label className='flex items-center gap-2'><Checkbox checked={inspectorSettings.showStyleSettings} onCheckedChange={(v) => updateInspectorSetting({ showStyleSettings: v === true })} />Style settings</label>
-                <label className='flex items-center gap-2'><Checkbox checked={inspectorSettings.showStructureInfo} onCheckedChange={(v) => updateInspectorSetting({ showStructureInfo: v === true })} />Structure info</label>
-                <label className='flex items-center gap-2'><Checkbox checked={inspectorSettings.showIdentifiers} onCheckedChange={(v) => updateInspectorSetting({ showIdentifiers: v === true })} />Identifiers</label>
-                <label className='flex items-center gap-2'><Checkbox checked={inspectorSettings.showVisibilityInfo} onCheckedChange={(v) => updateInspectorSetting({ showVisibilityInfo: v === true })} />Visibility info</label>
-                <label className='flex items-center gap-2'><Checkbox checked={inspectorSettings.showConnectionInfo} onCheckedChange={(v) => updateInspectorSetting({ showConnectionInfo: v === true })} />Connection info</label>
+            <div className='text-[10px] uppercase tracking-wider text-gray-400 mb-2'>Inspector options</div>
+            <div className='space-y-2'>
+              <ToggleRow
+                label='Enable tooltip'
+                checked={inspectorSettings.showTooltip}
+                onCheckedChange={(v) => updateInspectorSetting({ showTooltip: v })}
+                className='p-2'
+              />
+              <div className='rounded border border-border/40 bg-gray-800/30 p-2 space-y-1'>
+                <ToggleRow
+                  label='Style settings'
+                  checked={inspectorSettings.showStyleSettings}
+                  onCheckedChange={(v) => updateInspectorSetting({ showStyleSettings: v })}
+                  className='border-none bg-transparent p-1'
+                />
+                <ToggleRow
+                  label='Structure info'
+                  checked={inspectorSettings.showStructureInfo}
+                  onCheckedChange={(v) => updateInspectorSetting({ showStructureInfo: v })}
+                  className='border-none bg-transparent p-1'
+                />
+                <ToggleRow
+                  label='Identifiers'
+                  checked={inspectorSettings.showIdentifiers}
+                  onCheckedChange={(v) => updateInspectorSetting({ showIdentifiers: v })}
+                  className='border-none bg-transparent p-1'
+                />
+                <ToggleRow
+                  label='Visibility info'
+                  checked={inspectorSettings.showVisibilityInfo}
+                  onCheckedChange={(v) => updateInspectorSetting({ showVisibilityInfo: v })}
+                  className='border-none bg-transparent p-1'
+                />
+                <ToggleRow
+                  label='Connection info'
+                  checked={inspectorSettings.showConnectionInfo}
+                  onCheckedChange={(v) => updateInspectorSetting({ showConnectionInfo: v })}
+                  className='border-none bg-transparent p-1'
+                />
               </div>
             </div>
           </div>

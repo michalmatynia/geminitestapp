@@ -51,11 +51,11 @@ const readPrismaAuthProvider = async (): Promise<AuthDbProvider | null> => {
 const warnAuthProviderDrift = (
   appProvider: 'prisma' | 'mongodb',
   authProvider: AuthDbProvider,
-  source: 'mongo-setting' | 'prisma-setting' | 'route-map' | 'fallback'
+  source: 'mongo-setting' | 'prisma-setting' | 'route-map' | 'default'
 ): void => {
   if (appProvider === authProvider) return;
   // Explicit auth provider settings are intentional overrides in mixed-provider deployments.
-  if (source !== 'fallback') return;
+  if (source !== 'default') return;
   void ErrorSystem.logWarning(`Auth provider "${authProvider}" from ${source} differs from app provider "${appProvider}".`, {
     service: 'auth-provider',
     appProvider,
@@ -65,10 +65,7 @@ const warnAuthProviderDrift = (
 };
 
 const ensureAvailableAuthProvider = (
-  provider: AuthDbProvider,
-  options: {
-    source: 'mongo-setting' | 'prisma-setting' | 'route-map' | 'fallback';
-  }
+  provider: AuthDbProvider
 ): AuthDbProvider => {
   if (isPrimaryProviderConfigured(provider)) return provider;
 
@@ -84,16 +81,12 @@ export const getAuthDataProvider = async (): Promise<AuthDbProvider> => {
   const mongoSetting = await readMongoAuthProvider();
   if (mongoSetting) {
     warnAuthProviderDrift(appProvider, mongoSetting, 'mongo-setting');
-    return ensureAvailableAuthProvider(mongoSetting, {
-      source: 'mongo-setting',
-    });
+    return ensureAvailableAuthProvider(mongoSetting);
   }
   const prismaSetting = await readPrismaAuthProvider();
   if (prismaSetting) {
     warnAuthProviderDrift(appProvider, prismaSetting, 'prisma-setting');
-    return ensureAvailableAuthProvider(prismaSetting, {
-      source: 'prisma-setting',
-    });
+    return ensureAvailableAuthProvider(prismaSetting);
   }
 
   const routeProvider = await getDatabaseEngineServiceProvider('auth');
@@ -104,9 +97,7 @@ export const getAuthDataProvider = async (): Promise<AuthDbProvider> => {
       );
     }
     warnAuthProviderDrift(appProvider, routeProvider, 'route-map');
-    return ensureAvailableAuthProvider(routeProvider, {
-      source: 'route-map',
-    });
+    return ensureAvailableAuthProvider(routeProvider);
   }
 
   if (policy.requireExplicitServiceRouting) {
@@ -115,11 +106,9 @@ export const getAuthDataProvider = async (): Promise<AuthDbProvider> => {
     );
   }
 
-  const fallbackProvider: AuthDbProvider = appProvider;
-  warnAuthProviderDrift(appProvider, fallbackProvider, 'fallback');
-  return ensureAvailableAuthProvider(fallbackProvider, {
-    source: 'fallback',
-  });
+  const defaultProvider: AuthDbProvider = appProvider;
+  warnAuthProviderDrift(appProvider, defaultProvider, 'default');
+  return ensureAvailableAuthProvider(defaultProvider);
 };
 
 export const requireAuthProvider = (provider: AuthDbProvider): AuthDbProvider => {

@@ -10,10 +10,6 @@ import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { useProjectsState } from './ProjectsContext';
 import {
-  IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
-  parseImageStudioActiveProject,
-} from '../utils/project-session';
-import {
   IMAGE_STUDIO_SETTINGS_KEY,
   getImageStudioProjectSettingsKey,
   parseImageStudioSettings,
@@ -29,12 +25,21 @@ export interface SettingsState {
   settingsLoaded: boolean;
 }
 
+export type SaveStudioSettingsResult = {
+  key: string;
+  scope: 'project' | 'global';
+  verified: boolean;
+  persistedSequencingEnabled: boolean;
+  persistedSnapshotHash: string | null;
+};
+
 export interface SettingsActions {
   setStudioSettings: React.Dispatch<React.SetStateAction<ImageStudioSettings>>;
   saveStudioSettings: (options?: {
     silent?: boolean;
     settingsOverride?: ImageStudioSettings;
-  }) => Promise<void>;
+    verifyPersisted?: boolean;
+  }) => Promise<SaveStudioSettingsResult>;
   resetStudioSettings: () => void;
   handleRefreshSettings: () => void;
 }
@@ -66,10 +71,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     typeof userPreferencesQuery.data?.imageStudioLastProjectId === 'string'
       ? userPreferencesQuery.data.imageStudioLastProjectId.trim()
       : '';
-  const legacyActiveProjectId = parseImageStudioActiveProject(
-    heavyMap.get(IMAGE_STUDIO_ACTIVE_PROJECT_KEY)
-  );
-  const activeProjectId = liveProjectId || activeProjectIdFromPreferences || legacyActiveProjectId;
+  const activeProjectId = liveProjectId || activeProjectIdFromPreferences;
   const projectSettingsKey = getImageStudioProjectSettingsKey(activeProjectId);
   const studioProjectSettingsRaw =
     projectSettingsKey ? heavyMap.get(projectSettingsKey) : null;
@@ -219,17 +221,96 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const saveStudioSettings = useCallback(async (options?: {
     silent?: boolean;
     settingsOverride?: ImageStudioSettings;
+    verifyPersisted?: boolean;
   }) => {
     const targetKey = projectSettingsKey ?? IMAGE_STUDIO_SETTINGS_KEY;
+    const scope: 'project' | 'global' =
+      projectSettingsKey ? 'project' : 'global';
     const payload = options?.settingsOverride ?? studioSettings;
     await updateSetting.mutateAsync({
       key: targetKey,
       value: serializeSetting(payload),
     });
+    let result: SaveStudioSettingsResult = {
+      key: targetKey,
+      scope,
+      verified: false,
+      persistedSequencingEnabled: Boolean(payload.projectSequencing.enabled),
+      persistedSnapshotHash:
+        typeof payload.projectSequencing.snapshotHash === 'string' &&
+        payload.projectSequencing.snapshotHash.trim().length > 0
+          ? payload.projectSequencing.snapshotHash.trim()
+          : null,
+    };
+    if (options?.verifyPersisted) {
+      await settingsStore.refetch();
+      const refreshed = await heavySettings.refetch();
+      const persistedMap = refreshed.data ?? new Map<string, string>();
+      const persistedRaw = persistedMap.get(targetKey);
+      if (!persistedRaw || persistedRaw.trim().length === 0) {
+        throw new Error(
+          `Settings write completed but verification failed for "${targetKey}".`,
+        );
+      }
+      const persisted = parseImageStudioSettings(persistedRaw);
+      const expectedSnapshotHash =
+        typeof payload.projectSequencing.snapshotHash === 'string' &&
+        payload.projectSequencing.snapshotHash.trim().length > 0
+          ? payload.projectSequencing.snapshotHash.trim()
+          : null;
+      const persistedSnapshotHash =
+        typeof persisted.projectSequencing.snapshotHash === 'string' &&
+        persisted.projectSequencing.snapshotHash.trim().length > 0
+          ? persisted.projectSequencing.snapshotHash.trim()
+          : null;
+      const expectedStepCount = Number.isFinite(
+        payload.projectSequencing.snapshotStepCount,
+      )
+        ? Math.max(0, Math.floor(payload.projectSequencing.snapshotStepCount))
+        : 0;
+      const persistedStepCount = Number.isFinite(
+        persisted.projectSequencing.snapshotStepCount,
+      )
+        ? Math.max(0, Math.floor(persisted.projectSequencing.snapshotStepCount))
+        : 0;
+      const sequencingEnabledMatches =
+        Boolean(persisted.projectSequencing.enabled) ===
+        Boolean(payload.projectSequencing.enabled);
+      const snapshotHashMatches =
+        expectedSnapshotHash === null ||
+        expectedSnapshotHash === persistedSnapshotHash;
+      const snapshotStepCountMatches = expectedStepCount === persistedStepCount;
+      if (
+        !sequencingEnabledMatches ||
+        !snapshotHashMatches ||
+        !snapshotStepCountMatches
+      ) {
+        throw new Error(
+          `Settings write for "${targetKey}" could not be verified. Reload and retry.`,
+        );
+      }
+      result = {
+        key: targetKey,
+        scope,
+        verified: true,
+        persistedSequencingEnabled: Boolean(
+          persisted.projectSequencing.enabled,
+        ),
+        persistedSnapshotHash: persistedSnapshotHash,
+      };
+    }
     if (options?.silent === false) {
       toast('Settings saved.', { variant: 'success' });
     }
-  }, [projectSettingsKey, studioSettings, updateSetting, toast]);
+    return result;
+  }, [
+    heavySettings,
+    projectSettingsKey,
+    settingsStore,
+    studioSettings,
+    toast,
+    updateSetting,
+  ]);
 
   const resetStudioSettings = useCallback(() => {
     setStudioSettings(defaultImageStudioSettings);

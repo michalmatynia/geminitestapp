@@ -10,10 +10,16 @@ export type ProductStudioExecutionRoute =
   | 'ai_model_full_sequence'
   | 'ai_direct_generation';
 
+export type ProductStudioSequencingDiagnosticsScope =
+  | 'project'
+  | 'global'
+  | 'default';
+
 export const DEFAULT_PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE: ProductStudioSequenceGenerationMode =
   'auto';
 
 export type ProductStudioSequencingConfig = {
+  persistedEnabled: boolean;
   enabled: boolean;
   cropCenterBeforeGeneration: boolean;
   upscaleOnAccept: boolean;
@@ -21,9 +27,34 @@ export type ProductStudioSequencingConfig = {
   runViaSequence: boolean;
   sequenceStepCount: number;
   expectedOutputs: number;
+  snapshotHash: string | null;
+  snapshotSavedAt: string | null;
+  snapshotStepCount: number;
+  snapshotModelId: string | null;
+  currentSnapshotHash: string | null;
+  snapshotMatchesCurrent: boolean;
+  needsSaveDefaults: boolean;
+  needsSaveDefaultsReason: string | null;
+};
+
+export type ProductStudioSequencingDiagnostics = {
+  projectId: string | null;
+  projectSettingsKey: string | null;
+  selectedSettingsKey: string | null;
+  selectedScope: ProductStudioSequencingDiagnosticsScope;
+  hasProjectSettings: boolean;
+  hasGlobalSettings: boolean;
+  projectSequencingEnabled: boolean;
+  globalSequencingEnabled: boolean;
+  selectedSequencingEnabled: boolean;
+  selectedSnapshotHash: string | null;
+  selectedSnapshotSavedAt: string | null;
+  selectedSnapshotStepCount: number;
+  selectedSnapshotModelId: string | null;
 };
 
 export const DEFAULT_PRODUCT_STUDIO_SEQUENCING: ProductStudioSequencingConfig = {
+  persistedEnabled: false,
   enabled: false,
   cropCenterBeforeGeneration: true,
   upscaleOnAccept: true,
@@ -31,6 +62,30 @@ export const DEFAULT_PRODUCT_STUDIO_SEQUENCING: ProductStudioSequencingConfig = 
   runViaSequence: false,
   sequenceStepCount: 0,
   expectedOutputs: 1,
+  snapshotHash: null,
+  snapshotSavedAt: null,
+  snapshotStepCount: 0,
+  snapshotModelId: null,
+  currentSnapshotHash: null,
+  snapshotMatchesCurrent: false,
+  needsSaveDefaults: false,
+  needsSaveDefaultsReason: null,
+};
+
+export const DEFAULT_PRODUCT_STUDIO_SEQUENCING_DIAGNOSTICS: ProductStudioSequencingDiagnostics = {
+  projectId: null,
+  projectSettingsKey: null,
+  selectedSettingsKey: null,
+  selectedScope: 'default',
+  hasProjectSettings: false,
+  hasGlobalSettings: false,
+  projectSequencingEnabled: false,
+  globalSequencingEnabled: false,
+  selectedSequencingEnabled: false,
+  selectedSnapshotHash: null,
+  selectedSnapshotSavedAt: null,
+  selectedSnapshotStepCount: 0,
+  selectedSnapshotModelId: null,
 };
 
 const asObjectRecord = (value: unknown): Record<string, unknown> | null => {
@@ -102,7 +157,50 @@ export function normalizeProductStudioSequencing(
     expectedOutputs = Math.max(1, Math.min(10, Math.floor(rawExpectedOutputs)));
   }
 
+  const persistedEnabled =
+    typeof record['persistedEnabled'] === 'boolean'
+      ? record['persistedEnabled']
+      : enabled;
+
+  const snapshotHash =
+    typeof record['snapshotHash'] === 'string' && record['snapshotHash'].trim().length > 0
+      ? record['snapshotHash'].trim()
+      : null;
+  const snapshotSavedAt =
+    typeof record['snapshotSavedAt'] === 'string' &&
+      record['snapshotSavedAt'].trim().length > 0
+      ? record['snapshotSavedAt'].trim()
+      : null;
+  const snapshotStepCount =
+    typeof record['snapshotStepCount'] === 'number' && Number.isFinite(record['snapshotStepCount'])
+      ? Math.max(0, Math.floor(record['snapshotStepCount']))
+      : DEFAULT_PRODUCT_STUDIO_SEQUENCING.snapshotStepCount;
+  const snapshotModelId =
+    typeof record['snapshotModelId'] === 'string' &&
+      record['snapshotModelId'].trim().length > 0
+      ? record['snapshotModelId'].trim()
+      : null;
+  const currentSnapshotHash =
+    typeof record['currentSnapshotHash'] === 'string' &&
+      record['currentSnapshotHash'].trim().length > 0
+      ? record['currentSnapshotHash'].trim()
+      : null;
+  const snapshotMatchesCurrent =
+    typeof record['snapshotMatchesCurrent'] === 'boolean'
+      ? record['snapshotMatchesCurrent']
+      : DEFAULT_PRODUCT_STUDIO_SEQUENCING.snapshotMatchesCurrent;
+  const needsSaveDefaults =
+    typeof record['needsSaveDefaults'] === 'boolean'
+      ? record['needsSaveDefaults']
+      : DEFAULT_PRODUCT_STUDIO_SEQUENCING.needsSaveDefaults;
+  const needsSaveDefaultsReason =
+    typeof record['needsSaveDefaultsReason'] === 'string' &&
+      record['needsSaveDefaultsReason'].trim().length > 0
+      ? record['needsSaveDefaultsReason'].trim()
+      : null;
+
   return {
+    persistedEnabled,
     enabled,
     cropCenterBeforeGeneration,
     upscaleOnAccept,
@@ -110,5 +208,13 @@ export function normalizeProductStudioSequencing(
     runViaSequence,
     sequenceStepCount,
     expectedOutputs,
+    snapshotHash,
+    snapshotSavedAt,
+    snapshotStepCount,
+    snapshotModelId,
+    currentSnapshotHash,
+    snapshotMatchesCurrent,
+    needsSaveDefaults,
+    needsSaveDefaultsReason,
   };
 }

@@ -5,10 +5,6 @@ export const DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID =
 export const DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_NAME =
   'Infer Description Lite';
 
-export const LEGACY_DESCRIPTION_INFERENCE_V2_PATH_ID = 'path_descv2';
-export const LEGACY_DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID =
-  'f1e0b86f-524f-4ef8-b8b0-a7c37def7f54';
-
 export const buildDescriptionInferenceLitePathConfigValue = (
   timestamp: string
 ): string =>

@@ -901,24 +901,25 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                 filteredLibraryItems.map((entry: AdminNavNodeEntry) => {
                   const isAdded = customIds.has(entry.id);
                   return (
-                    <div key={entry.id} className='flex items-center justify-between gap-2 rounded-md border border-border/60 bg-card/30 px-3 py-2'>
-                      <div className='min-w-0'>
-                        <div className='truncate text-sm text-white'>{entry.label}</div>
-                        {entry.parents.length ? (
-                          <div className='truncate text-[11px] text-gray-500'>{entry.parents.join(' / ')}</div>
-                        ) : null}
-                        <div className='truncate text-[11px] text-gray-600'>{entry.href ?? 'Group'}</div>
-                      </div>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='sm'
-                        className='h-7 px-2 text-[11px]'
-                        disabled={isAdded}
-                        onClick={() => addBuiltInNode(entry)}
-                      >
-                        {isAdded ? 'Added' : 'Add'}
-                      </Button>
+                    <div key={entry.id} className='flex items-center justify-between gap-2 rounded-md border border-border/60 bg-card/30 p-3'>
+                      <SectionHeader
+                        title={entry.label}
+                        subtitle={`${entry.parents.join(' / ')}${entry.parents.length ? ' / ' : ''}${entry.href ?? 'Group'}`}
+                        size='xs'
+                        className='flex-1'
+                        actions={
+                          <Button
+                            type='button'
+                            variant='outline'
+                            size='sm'
+                            className='h-7 px-2 text-[11px]'
+                            disabled={isAdded}
+                            onClick={() => addBuiltInNode(entry)}
+                          >
+                            {isAdded ? 'Added' : 'Add'}
+                          </Button>
+                        }
+                      />
                     </div>
                   );
                 })

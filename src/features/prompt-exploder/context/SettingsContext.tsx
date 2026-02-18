@@ -33,7 +33,7 @@ import {
 } from '../bridge';
 import { isPromptValidationStrictStackMode } from '../feature-flags';
 import { promptExploderClampNumber } from '../helpers/formatting';
-import { isPromptExploderManagedRule } from '../helpers/segment-helpers';
+import { promptExploderIsPromptExploderManagedRule } from '../helpers/segment-helpers';
 import {
   applyPromptExploderParserTuningDrafts,
   buildPromptExploderParserTuningDrafts,
@@ -617,7 +617,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const handleCapturePatternSnapshot = useCallback(async () => {
     try {
       const scopedPromptRules = promptSettings.promptValidation.rules.filter((rule) => {
-        if (!isPromptExploderManagedRule(rule)) return false;
+        if (!promptExploderIsPromptExploderManagedRule(rule)) return false;
         const scopes = rule.appliesToScopes ?? [];
         return (
           scopes.length === 0 ||
@@ -684,7 +684,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       const restoredRules = mergeRestoredPromptExploderRules({
         existingRules: basePromptSettings.promptValidation.rules,
         restoredRules: parsed.rules,
-        isPromptExploderManagedRule,
+        isPromptExploderManagedRule: promptExploderIsPromptExploderManagedRule,
         scope: activeValidationScope,
       });
       const nextPromptSettings = {

@@ -146,15 +146,11 @@ const sanitizeTextNodeEdgePorts = (
 
   const normalizeInputPort = (value: string | undefined): string => {
     if (value === textfieldPort || value === contentPort || value === plainTextPort) return value;
-    if (value === 'prompt') return textfieldPort;
-    if (value === 'result') return contentPort;
     return contentPort;
   };
 
   const normalizeOutputPort = (value: string | undefined): string => {
     if (value === textfieldPort || value === contentPort || value === plainTextPort) return value;
-    if (value === 'prompt') return textfieldPort;
-    if (value === 'result') return contentPort;
     return contentPort;
   };
 

@@ -5,6 +5,7 @@ import path from 'path';
 
 import OpenAI from 'openai';
 
+import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/features/ai/image-studio/utils/studio-settings';
 import { detectCaseResolverOcrProvider, type CaseResolverOcrProvider } from '@/features/case-resolver/ocr-provider';
 import { resolveCaseResolverOcrDiskPath } from '@/features/case-resolver/server/ocr-runtime';
 import {
@@ -119,11 +120,11 @@ export const resolveCaseResolverOcrModel = (
 
 const resolveOpenAiApiKey = async (): Promise<string> => {
   const apiKey =
-    (await getSettingValue('openai_api_key'))?.trim() ||
-    process.env['OPENAI_API_KEY']?.trim() ||
-    '';
+    (await getSettingValue(IMAGE_STUDIO_OPENAI_API_KEY_KEY))?.trim() || '';
   if (!apiKey) {
-    throw new Error('OpenAI API key is missing for selected OCR model.');
+    throw new Error(
+      'OpenAI API key is missing for selected OCR model. Configure Image Studio API key (image_studio_openai_api_key).'
+    );
   }
   return apiKey;
 };
@@ -315,18 +316,33 @@ const runOpenAiOcrRequest = async (input: {
         filepath: input.filepath,
         extractedDocumentText: input.extractedDocumentText,
       });
+  const messages = [
+    {
+      role: 'user' as const,
+      content,
+    },
+  ];
 
-  const completion = await client.chat.completions.create({
-    model: input.model,
-    messages: [
-      {
-        role: 'user',
-        content,
-      },
-    ],
-    max_tokens: 1500,
-  });
-  return parseOpenAiResponseText(completion as unknown as OpenAiChatCompletionPayload);
+  try {
+    const completion = await client.chat.completions.create({
+      model: input.model,
+      messages,
+      max_completion_tokens: 1500,
+    });
+    return parseOpenAiResponseText(completion as unknown as OpenAiChatCompletionPayload);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : '';
+    // Backward compatibility for models/endpoints that still require max_tokens.
+    if (!/max_completion_tokens/i.test(errorMessage)) {
+      throw error;
+    }
+    const completion = await client.chat.completions.create({
+      model: input.model,
+      messages,
+      max_tokens: 1500,
+    });
+    return parseOpenAiResponseText(completion as unknown as OpenAiChatCompletionPayload);
+  }
 };
 
 const runAnthropicOcrRequest = async (input: {

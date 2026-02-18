@@ -7,7 +7,7 @@ import {
   TRADERA_SETTINGS_KEYS,
 } from '@/features/integrations/constants/tradera';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { Button, Checkbox, Input, FormSection, FormField, SectionHeader, useToast } from '@/shared/ui';
+import { Input, FormSection, FormField, SectionHeader, useToast, ToggleRow, FormActions } from '@/shared/ui';
 
 export default function TraderaSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -206,38 +206,26 @@ export default function TraderaSettingsPage(): React.JSX.Element {
             </FormField>
 
             <div className='grid gap-3 pt-2'>
-              <label className='flex items-center gap-3 p-3 rounded border border-white/5 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors'>
-                <Checkbox
-                  checked={autoRelistEnabled}
-                  onCheckedChange={(v) => setAutoRelistEnabled(Boolean(v))}
-                />
-                <div className='flex flex-col'>
-                  <span className='text-sm font-medium text-gray-200'>Enable Auto Relist</span>
-                  <span className='text-[10px] text-gray-500 uppercase'>Enabled by default for new listings</span>
-                </div>
-              </label>
+              <ToggleRow
+                label='Enable Auto Relist'
+                description='Enabled by default for new listings'
+                checked={autoRelistEnabled}
+                onCheckedChange={setAutoRelistEnabled}
+              />
 
-              <label className='flex items-center gap-3 p-3 rounded border border-white/5 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors'>
-                <Checkbox
-                  checked={schedulerEnabled}
-                  onCheckedChange={(v) => setSchedulerEnabled(Boolean(v))}
-                />
-                <div className='flex flex-col'>
-                  <span className='text-sm font-medium text-gray-200'>Enable Relist Scheduler</span>
-                  <span className='text-[10px] text-gray-500 uppercase'>Process background relist tasks</span>
-                </div>
-              </label>
+              <ToggleRow
+                label='Enable Relist Scheduler'
+                description='Process background relist tasks'
+                checked={schedulerEnabled}
+                onCheckedChange={setSchedulerEnabled}
+              />
 
-              <label className='flex items-center gap-3 p-3 rounded border border-white/5 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors'>
-                <Checkbox
-                  checked={allowSimulatedSuccess}
-                  onCheckedChange={(v) => setAllowSimulatedSuccess(Boolean(v))}
-                />
-                <div className='flex flex-col'>
-                  <span className='text-sm font-medium text-gray-200'>Simulated Success Fallback</span>
-                  <span className='text-[10px] text-gray-500 uppercase'>Bypass actual listing for profile tuning</span>
-                </div>
-              </label>
+              <ToggleRow
+                label='Simulated Success Fallback'
+                description='Bypass actual listing for profile tuning'
+                checked={allowSimulatedSuccess}
+                onCheckedChange={setAllowSimulatedSuccess}
+              />
             </div>
           </div>
         </FormSection>
@@ -262,16 +250,12 @@ export default function TraderaSettingsPage(): React.JSX.Element {
           </div>
         </FormSection>
 
-        <div className='flex justify-end pt-4'>
-          <Button
-            size='sm'
-            onClick={() => { void handleSave(); }}
-            disabled={saveMutation.isPending}
-            className='h-9 px-8'
-          >
-            {saveMutation.isPending ? 'Saving Configuration...' : 'Save Tradera Settings'}
-          </Button>
-        </div>
+        <FormActions
+          onSave={() => { void handleSave(); }}
+          saveText='Save Tradera Settings'
+          isSaving={saveMutation.isPending}
+          className='pt-4'
+        />
       </div>
     </div>
   );

@@ -20,6 +20,8 @@
     "cleanup:category-mapping-duplicates": "tsx scripts/cleanup/reconcile-category-mapping-duplicates.ts",
     "cleanup:image-studio-orphan-variants": "tsx scripts/cleanup/reconcile-image-studio-orphan-variant-slots.ts",
     "check:api-error-sources": "tsx scripts/debug/check-api-error-sources.ts",
+    "storage:configure:fastcomet": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/configure-fastcomet-storage.ts",
+    "storage:migrate:fastcomet": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/migrate-uploads-to-fastcomet.ts",
     "metrics:collect": "node scripts/architecture/collect-metrics.mjs",
     "metrics:guardrails": "node scripts/architecture/check-guardrails.mjs",
     "metrics:guardrails:update": "node scripts/architecture/check-guardrails.mjs --update-baseline",

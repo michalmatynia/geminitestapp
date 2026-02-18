@@ -2,14 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import type { PromptValidationRule } from '@/features/prompt-engine/settings';
 import {
-  createListItem,
-  addBlankListItem,
-  createSubsection,
-  createManualBindingId,
-  formatSubsectionLabel,
-  buildSegmentSampleText,
-  createApprovalDraftFromSegment,
-  isPromptExploderManagedRule,
+  promptExploderCreateListItem as createListItem,
+  promptExploderAddBlankListItem as addBlankListItem,
+  promptExploderCreateSubsection as createSubsection,
+  promptExploderCreateManualBindingId as createManualBindingId,
+  promptExploderFormatSubsectionLabel as formatSubsectionLabel,
+  promptExploderBuildSegmentSampleText as buildSegmentSampleText,
+  promptExploderCreateApprovalDraftFromSegment as createApprovalDraftFromSegment,
+  promptExploderIsPromptExploderManagedRule as isPromptExploderManagedRule,
 } from '@/features/prompt-exploder/helpers/segment-helpers';
 import type { PromptExploderSegment } from '@/features/prompt-exploder/types';
 

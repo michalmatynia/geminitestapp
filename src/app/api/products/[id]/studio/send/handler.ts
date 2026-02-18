@@ -19,15 +19,6 @@ const sendSchema = z.object({
     .optional(),
 });
 
-const LEGACY_NATIVE_SEQUENCE_DISABLED_ERROR =
-  'Native Image Studio sequence mode is selected, but project sequencing is disabled. Enable sequencing steps in Image Studio project settings.';
-
-const asErrorMessage = (error: unknown): string => {
-  if (error instanceof Error) return error.message;
-  if (typeof error === 'string') return error;
-  return '';
-};
-
 export async function POST_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
@@ -51,33 +42,10 @@ export async function POST_handler(
     rotateBeforeSendDeg: parsed.data.rotateBeforeSendDeg ?? null,
   } as const;
 
-  let result;
-  try {
-    result = await sendProductImageToStudio({
-      ...basePayload,
-      sequenceGenerationMode: parsed.data.sequenceGenerationMode,
-    });
-  } catch (error) {
-    const message = asErrorMessage(error);
-    if (!message.includes(LEGACY_NATIVE_SEQUENCE_DISABLED_ERROR)) {
-      throw error;
-    }
-
-    result = await sendProductImageToStudio({
-      ...basePayload,
-      sequenceGenerationMode: 'studio_prompt_then_sequence',
-    });
-    const existingWarnings = Array.isArray(result.warnings)
-      ? result.warnings
-      : [];
-    result = {
-      ...result,
-      warnings: [
-        ...existingWarnings,
-        'Retried with Prompt then Sequencer compatibility mode after a legacy sequencing guard blocked native mode.',
-      ],
-    };
-  }
+  const result = await sendProductImageToStudio({
+    ...basePayload,
+    sequenceGenerationMode: parsed.data.sequenceGenerationMode,
+  });
 
   return NextResponse.json(result);
 }

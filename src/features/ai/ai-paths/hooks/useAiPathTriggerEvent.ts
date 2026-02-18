@@ -46,19 +46,9 @@ type TriggerEventEntityType = 'product' | 'note' | 'custom';
 
 const AI_PATHS_SETTINGS_STALE_MS = 10_000;
 const USER_PREFERENCES_STALE_MS = 5 * 60_000;
-const PARAMETER_INFERENCE_PATH_ID = 'path_syr8f4';
-const PARAMETER_INFERENCE_PATH_NAME = 'Parameter Inference';
-const LEGACY_PARAMETER_INFERENCE_PATH_NAME = 'Category Inference';
 
-const normalizeLoadedPathName = (pathId: string, name: unknown): string => {
-  const trimmed = typeof name === 'string' ? name.trim() : '';
-  if (
-    pathId === PARAMETER_INFERENCE_PATH_ID &&
-    trimmed.toLowerCase() === LEGACY_PARAMETER_INFERENCE_PATH_NAME.toLowerCase()
-  ) {
-    return PARAMETER_INFERENCE_PATH_NAME;
-  }
-  return trimmed;
+const normalizeLoadedPathName = (_pathId: string, name: unknown): string => {
+  return typeof name === 'string' ? name.trim() : '';
 };
 
 const normalizeLoadedPathMetas = (metas: PathMeta[]): PathMeta[] => {

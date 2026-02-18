@@ -53,6 +53,16 @@ Added optional env vars in `.env.example`:
 - `FASTCOMET_STORAGE_KEEP_LOCAL_COPY`
 - `FASTCOMET_STORAGE_TIMEOUT_MS`
 
+### 7. Operational scripts
+- Configure storage settings:
+  - `npm run storage:configure:fastcomet -- --source=fastcomet --upload-endpoint=https://files.example.com/api/uploads --base-url=https://files.example.com --delete-endpoint=https://files.example.com/api/uploads/delete --auth-token=... --keep-local-copy=true --timeout-ms=20000`
+- Dry run migration:
+  - `npm run storage:migrate:fastcomet`
+- Apply migration and switch source:
+  - `npm run storage:migrate:fastcomet -- --write --set-source=fastcomet`
+- Limit migration scope:
+  - `npm run storage:migrate:fastcomet -- --write --only=image-files,note-files --limit=2000`
+
 ## FastComet Endpoint Contract (Scaffold)
 
 ### Upload endpoint

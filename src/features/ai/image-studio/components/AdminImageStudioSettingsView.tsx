@@ -30,7 +30,7 @@ type SelectOption = {
   label: string;
 };
 
-type StudioSettingsTab = 'pipeline' | 'prompt' | 'generation' | 'validation' | 'maintenance';
+type StudioSettingsTab = 'prompt' | 'generation' | 'maintenance';
 
 type ModelCapabilities = {
   supportsUser: boolean;
@@ -53,7 +53,7 @@ type AdminImageStudioSettingsViewProps = {
   setActiveSettingsTab: React.Dispatch<React.SetStateAction<StudioSettingsTab>>;
   handleRefresh: () => Promise<void>;
   resetStudioSettings: () => void;
-  saveStudioSettings: () => Promise<void>;
+  saveStudioSettings: () => Promise<unknown>;
   updateSetting: {
     isPending: boolean;
   };
@@ -268,11 +268,9 @@ export function AdminImageStudioSettingsView(
           onValueChange={(value: string) => setActiveSettingsTab(value as StudioSettingsTab)}
           className='w-full'
         >
-          <TabsList className='grid h-auto w-full grid-cols-2 gap-1 bg-muted/40 p-1 sm:grid-cols-5'>
-            <TabsTrigger value='pipeline'>Pipeline</TabsTrigger>
+          <TabsList className='grid h-auto w-full grid-cols-2 gap-1 bg-muted/40 p-1 sm:grid-cols-3'>
             <TabsTrigger value='prompt'>Prompt</TabsTrigger>
             <TabsTrigger value='generation'>Generation</TabsTrigger>
-            <TabsTrigger value='validation'>Validation</TabsTrigger>
             <TabsTrigger value='maintenance'>Maintenance</TabsTrigger>
           </TabsList>
 

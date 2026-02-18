@@ -490,11 +490,7 @@ export const parseCaseResolverDefaultDocumentFormat = (
     if (parsedDirect) return parsedDirect;
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
       const record = parsed as Record<string, unknown>;
-      const candidate =
-        record['defaultDocumentFormat'] ??
-        record['defaultDocumentEditorType'] ??
-        record['editorType'] ??
-        null;
+      const candidate = record['defaultDocumentFormat'] ?? null;
       const parsedFromObject = normalizeCaseResolverDefaultDocumentFormatValue(candidate);
       if (parsedFromObject) return parsedFromObject;
     }
@@ -504,16 +500,7 @@ export const parseCaseResolverDefaultDocumentFormat = (
 };
 
 const normalizeCaseResolverSettings = (input: unknown): CaseResolverSettings => {
-  if (typeof input === 'string') {
-    const defaultDocumentFormat = normalizeCaseResolverDefaultDocumentFormatValue(input);
-    if (defaultDocumentFormat) {
-      return {
-        ...DEFAULT_CASE_RESOLVER_SETTINGS,
-        defaultDocumentFormat,
-      };
-    }
-    return DEFAULT_CASE_RESOLVER_SETTINGS;
-  }
+  if (typeof input === 'string') return DEFAULT_CASE_RESOLVER_SETTINGS;
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return DEFAULT_CASE_RESOLVER_SETTINGS;
   }
@@ -525,11 +512,7 @@ const normalizeCaseResolverSettings = (input: unknown): CaseResolverSettings => 
   const rawFormatCandidate =
     typeof record['defaultDocumentFormat'] === 'string'
       ? record['defaultDocumentFormat']
-      : typeof record['defaultDocumentEditorType'] === 'string'
-        ? record['defaultDocumentEditorType']
-        : typeof record['editorType'] === 'string'
-          ? record['editorType']
-          : null;
+      : null;
   const defaultDocumentFormat =
     normalizeCaseResolverDefaultDocumentFormatValue(rawFormatCandidate) ??
     DEFAULT_CASE_RESOLVER_SETTINGS.defaultDocumentFormat;
@@ -543,13 +526,6 @@ const normalizeCaseResolverSettings = (input: unknown): CaseResolverSettings => 
 };
 
 export const parseCaseResolverSettings = (raw: string | null | undefined): CaseResolverSettings => {
-  const parsedDefaultDocumentFormat = normalizeCaseResolverDefaultDocumentFormatValue(raw);
-  if (parsedDefaultDocumentFormat) {
-    return {
-      ...DEFAULT_CASE_RESOLVER_SETTINGS,
-      defaultDocumentFormat: parsedDefaultDocumentFormat,
-    };
-  }
   return normalizeCaseResolverSettings(parseJsonSetting<unknown>(raw, DEFAULT_CASE_RESOLVER_SETTINGS));
 };
 
@@ -886,20 +862,17 @@ export const normalizeCaseResolverWorkspace = (
     })
     .filter((asset: CaseResolverAssetFile | null): asset is CaseResolverAssetFile => Boolean(asset));
 
-  const legacyFolders = Array.isArray(workspace.folders) ? workspace.folders : [];
   const sourceFolderRecords = parseCaseResolverFolderRecords(
     workspaceRecord['folderRecords'],
     validCaseIds
   );
   const folderRecords = buildCaseResolverFolderRecords({
     sourceRecords: sourceFolderRecords,
-    legacyFolders,
     files: normalizedFiles,
     assets,
     validCaseIds,
   });
   const folders = normalizeFolderPaths([
-    ...legacyFolders,
     ...folderRecords.map((record: CaseResolverFolderRecord): string => record.path),
     ...normalizedFiles.map((file: CaseResolverFile): string => file.folder),
     ...assets.map((asset: CaseResolverAssetFile): string => asset.folder),

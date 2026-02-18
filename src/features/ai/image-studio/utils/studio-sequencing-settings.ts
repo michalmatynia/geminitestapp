@@ -147,6 +147,10 @@ export type ImageStudioProjectSequencingSettings = {
   upscaleScale: number;
   upscaleTargetWidth: number;
   upscaleTargetHeight: number;
+  snapshotHash: string | null;
+  snapshotSavedAt: string | null;
+  snapshotStepCount: number;
+  snapshotModelId: string | null;
 };
 
 const IMAGE_STUDIO_SEQUENCE_DEFAULT_OPERATIONS: ImageStudioSequenceOperation[] = [

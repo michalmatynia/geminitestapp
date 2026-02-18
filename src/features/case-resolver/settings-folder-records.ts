@@ -93,52 +93,16 @@ const buildCaseResolverFileOwnerCaseIdByFileId = (
 
 export const buildCaseResolverFolderRecords = ({
   sourceRecords,
-  legacyFolders,
   files,
   assets,
   validCaseIds,
 }: {
   sourceRecords: CaseResolverFolderRecord[];
-  legacyFolders: string[];
   files: CaseResolverFile[];
   assets: CaseResolverAssetFile[];
   validCaseIds: Set<string>;
 }): CaseResolverFolderRecord[] => {
   const fileOwnerCaseIdByFileId = buildCaseResolverFileOwnerCaseIdByFileId(files, validCaseIds);
-  const sourceOwnersByPath = new Map<string, Set<string>>();
-  sourceRecords.forEach((record: CaseResolverFolderRecord): void => {
-    if (!record.ownerCaseId) return;
-    const currentOwners = sourceOwnersByPath.get(record.path) ?? new Set<string>();
-    currentOwners.add(record.ownerCaseId);
-    sourceOwnersByPath.set(record.path, currentOwners);
-  });
-
-  const contentOwnersByPath = new Map<string, Set<string>>();
-  const registerContentOwner = (path: string, ownerCaseId: string | null): void => {
-    const normalizedPath = normalizeFolderPath(path);
-    if (!normalizedPath || !ownerCaseId) return;
-    const expandedPaths = expandFolderPath(normalizedPath);
-    expandedPaths.forEach((expandedPath: string): void => {
-      const owners = contentOwnersByPath.get(expandedPath) ?? new Set<string>();
-      owners.add(ownerCaseId);
-      contentOwnersByPath.set(expandedPath, owners);
-    });
-  };
-
-  files.forEach((file: CaseResolverFile): void => {
-    if (file.fileType === 'case') return;
-    const ownerCaseId = fileOwnerCaseIdByFileId.get(file.id) ?? null;
-    registerContentOwner(file.folder, ownerCaseId);
-  });
-  assets.forEach((asset: CaseResolverAssetFile): void => {
-    const sourceFileId =
-      typeof asset.sourceFileId === 'string' && asset.sourceFileId.trim().length > 0
-        ? asset.sourceFileId.trim()
-        : null;
-    if (!sourceFileId) return;
-    const ownerCaseId = fileOwnerCaseIdByFileId.get(sourceFileId) ?? null;
-    registerContentOwner(asset.folder, ownerCaseId);
-  });
 
   const recordsByKey = new Map<string, CaseResolverFolderRecord>();
   const registerRecord = (path: string, ownerCaseId: string | null): void => {
@@ -156,25 +120,6 @@ export const buildCaseResolverFolderRecords = ({
 
   sourceRecords.forEach((record: CaseResolverFolderRecord): void => {
     registerRecord(record.path, record.ownerCaseId);
-  });
-
-  legacyFolders.forEach((folderPath: string): void => {
-    const normalizedPath = normalizeFolderPath(folderPath);
-    if (!normalizedPath) return;
-    const contentOwners = contentOwnersByPath.get(normalizedPath) ?? new Set<string>();
-    const sourceOwners = sourceOwnersByPath.get(normalizedPath) ?? new Set<string>();
-    const ownerCaseId =
-      contentOwners.size === 1
-        ? Array.from(contentOwners)[0] ?? null
-        : sourceOwners.size === 1
-          ? Array.from(sourceOwners)[0] ?? null
-          : validCaseIds.size === 1
-            ? Array.from(validCaseIds)[0] ?? null
-            : null;
-    if (!ownerCaseId && (contentOwners.size > 0 || sourceOwners.size > 0)) {
-      return;
-    }
-    registerRecord(normalizedPath, ownerCaseId);
   });
 
   files.forEach((file: CaseResolverFile): void => {

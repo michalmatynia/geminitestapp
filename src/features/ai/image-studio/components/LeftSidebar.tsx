@@ -30,10 +30,8 @@ import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 import { useUiState } from '../context/UiContext';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
 import {
-  IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
   getImageStudioProjectSessionKey,
   saveImageStudioProjectSessionLocal,
-  serializeImageStudioActiveProject,
   serializeImageStudioProjectSession,
   type ImageStudioProjectSession,
 } from '../utils/project-session';
@@ -358,12 +356,6 @@ export function LeftSidebar(): React.JSX.Element {
         key: projectSessionKey,
         value: serializedSession,
       });
-
-      // Persist active project as a best-effort write (primary project save already completed).
-      void updateSetting.mutateAsync({
-        key: IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
-        value: serializeImageStudioActiveProject(normalizedProjectId),
-      }).catch(() => {});
 
       toast(`Project "${normalizedProjectId}" saved.`, { variant: 'success' });
     })()

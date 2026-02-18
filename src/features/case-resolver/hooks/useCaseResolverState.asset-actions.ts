@@ -90,10 +90,7 @@ type UseCaseResolverStateAssetActionsInput = {
 type UseCaseResolverStateAssetActionsResult = {
   handleCreateScanFile: (targetFolderPath: string | null) => void;
   handleUploadScanFiles: (fileId: string, files: File[]) => Promise<void>;
-  handleRunScanFileOcr: (
-    fileId: string,
-    options?: { model?: string | null; prompt?: string | null }
-  ) => Promise<void>;
+  handleRunScanFileOcr: (fileId: string) => Promise<void>;
   handleCreateImageAsset: (targetFolderPath: string | null) => void;
   handleUploadAssets: (files: File[], targetFolderPath: string | null) => Promise<CaseResolverAssetFile[]>;
   handleAttachAssetFile: (
@@ -438,10 +435,7 @@ export const useCaseResolverStateAssetActions = ({
   );
 
   const handleRunScanFileOcr = useCallback(
-    async (
-      fileId: string,
-      options?: { model?: string | null; prompt?: string | null }
-    ): Promise<void> => {
+    async (fileId: string): Promise<void> => {
       const targetFile = workspace.files.find(
         (file: CaseResolverFile): boolean => file.id === fileId
       );
@@ -456,13 +450,6 @@ export const useCaseResolverStateAssetActions = ({
         draftScanSlots && draftScanSlots.length > 0
           ? draftScanSlots
           : targetFile.scanSlots;
-      const draftRuntimeSettings =
-        editingDocumentDraft?.id === fileId && editingDocumentDraft.fileType === 'scanfile'
-          ? {
-            model: editingDocumentDraft.scanOcrModel,
-            prompt: editingDocumentDraft.scanOcrPrompt,
-          }
-          : null;
 
       if (scanSlotsForOcr.length === 0) {
         toast('Upload at least one image or PDF to this file before running OCR.', {
@@ -475,16 +462,7 @@ export const useCaseResolverStateAssetActions = ({
       setUploadingScanSlotId('all');
 
       try {
-        const runtime = resolveRuntimeScanOcrSettings({
-          modelOverride:
-            options?.model ??
-            draftRuntimeSettings?.model ??
-            targetFile.scanOcrModel,
-          promptOverride:
-            options?.prompt ??
-            draftRuntimeSettings?.prompt ??
-            targetFile.scanOcrPrompt,
-        });
+        const runtime = resolveRuntimeScanOcrSettings();
         const nextSlots: CaseResolverScanSlot[] = [];
         const failedSlots: string[] = [];
         let successfulSlots = 0;

@@ -37,7 +37,7 @@ import {
   promptExploderClampNumber,
 } from '../helpers/formatting';
 import {
-  createApprovalDraftFromSegment,
+  promptExploderCreateApprovalDraftFromSegment,
 } from '../helpers/segment-helpers';
 import {
   ensureSegmentTitle,
@@ -120,7 +120,7 @@ export function usePromptExploderState() {
   const [snapshotDraftName, setSnapshotDraftName] = useState('');
   const [selectedSnapshotId, setSelectedSnapshotId] = useState('');
   const [approvalDraft, setApprovalDraft] = useState(
-    createApprovalDraftFromSegment(null)
+    promptExploderCreateApprovalDraftFromSegment(null)
   );
   const [bindingDraft, setBindingDraft] = useState<{
     type: 'depends_on' | 'mirrors' | 'extracts_to';

@@ -1,6 +1,5 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { IconSelector, ICON_LIBRARY, type IconLibraryItem } from '@/features/icons';
@@ -10,12 +9,12 @@ import {
   Button,
   Checkbox,
   Input,
-  Label,
   SectionHeader,
   Textarea,
   SelectSimple,
   useToast,
   FormField,
+  FormActions,
 } from '@/shared/ui';
 import {
   createDefaultFolderTreeProfilesV2,
@@ -318,7 +317,15 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
         className='mb-6'
       />
 
-      <div className='mb-4 flex flex-wrap items-center gap-2'>
+      <FormActions
+        onCancel={handleRevert}
+        onSave={() => { void handleSave(); }}
+        saveText='Save Profiles'
+        cancelText='Revert Changes'
+        isDisabled={!isDirty || updateSetting.isPending}
+        isSaving={updateSetting.isPending}
+        className='mb-4 flex-wrap justify-start'
+      >
         <Button
           type='button'
           variant='outline'
@@ -327,31 +334,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
         >
           Reset To Defaults
         </Button>
-        <Button
-          type='button'
-          variant='outline'
-          onClick={handleRevert}
-          disabled={!isDirty || updateSetting.isPending}
-        >
-          Revert Changes
-        </Button>
-        <Button
-          type='button'
-          onClick={() => {
-            void handleSave();
-          }}
-          disabled={!isDirty || updateSetting.isPending}
-        >
-          {updateSetting.isPending ? (
-            <>
-              <Loader2 className='mr-2 size-4 animate-spin' />
-              Saving...
-            </>
-          ) : (
-            'Save Profiles'
-          )}
-        </Button>
-      </div>
+      </FormActions>
 
       <div className='space-y-6'>
         {INSTANCE_META.map((meta) => {
@@ -369,10 +352,11 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
               id={`folder-tree-instance-${meta.id}`}
               className='scroll-mt-24 space-y-5 rounded-lg border border-border/60 bg-card/40 p-5'
             >
-              <div>
-                <h2 className='text-sm font-semibold text-white'>{meta.title}</h2>
-                <p className='mt-1 text-xs text-gray-400'>{meta.description}</p>
-              </div>
+              <SectionHeader
+                title={meta.title}
+                description={meta.description}
+                size='xs'
+              />
 
               <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
                 <FormField label='Placeholder Preset'>
@@ -603,8 +587,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
               </FormField>
 
               <div className='grid gap-4 xl:grid-cols-2'>
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-300'>Folder Closed Icon</Label>
+                <FormField label='Folder Closed Icon'>
                   <IconSelector
                     value={profile.icons.slots.folderClosed}
                     items={TREE_ICON_ITEMS}
@@ -623,10 +606,9 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                     columns={8}
                     showSearch={false}
                   />
-                </div>
+                </FormField>
 
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-300'>Folder Open Icon</Label>
+                <FormField label='Folder Open Icon'>
                   <IconSelector
                     value={profile.icons.slots.folderOpen}
                     items={TREE_ICON_ITEMS}
@@ -645,10 +627,9 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                     columns={8}
                     showSearch={false}
                   />
-                </div>
+                </FormField>
 
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-300'>File Icon</Label>
+                <FormField label='File Icon'>
                   <IconSelector
                     value={profile.icons.slots.file}
                     items={TREE_ICON_ITEMS}
@@ -667,13 +648,11 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                     columns={8}
                     showSearch={false}
                   />
-                </div>
+                </FormField>
 
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-300'>Root/Drag Icons</Label>
+                <FormField label='Root/Drag Icons'>
                   <div className='grid gap-3 sm:grid-cols-2'>
-                    <div className='space-y-1'>
-                      <Label className='text-[11px] text-gray-400'>Root</Label>
+                    <FormField label='Root' size='xs'>
                       <IconSelector
                         value={profile.icons.slots.root}
                         items={TREE_ICON_ITEMS}
@@ -692,9 +671,8 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                         columns={6}
                         showSearch={false}
                       />
-                    </div>
-                    <div className='space-y-1'>
-                      <Label className='text-[11px] text-gray-400'>Drag Handle</Label>
+                    </FormField>
+                    <FormField label='Drag Handle' size='xs'>
                       <IconSelector
                         value={profile.icons.slots.dragHandle}
                         items={TREE_ICON_ITEMS}
@@ -713,13 +691,12 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                         columns={6}
                         showSearch={false}
                       />
-                    </div>
+                    </FormField>
                   </div>
-                </div>
+                </FormField>
               </div>
 
-              <div className='space-y-2'>
-                <Label className='text-xs text-gray-300'>Kind-Specific Icons (kind=IconId, one per line)</Label>
+              <FormField label='Kind-Specific Icons (kind=IconId, one per line)'>
                 <Textarea
                   value={byKindToValue(profile.icons.byKind)}
                   onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
@@ -734,7 +711,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                   rows={4}
                   placeholder='note=FileText'
                 />
-              </div>
+              </FormField>
             </div>
           );
         })}

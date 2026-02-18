@@ -49,13 +49,6 @@ export const promptExploderFormatSubsectionLabel = (subsection: PromptExploderSu
   return title;
 };
 
-// Backward-compat aliases used by existing callers.
-export const createManualBindingId = promptExploderCreateManualBindingId;
-export const createListItem = promptExploderCreateListItem;
-export const addBlankListItem = promptExploderAddBlankListItem;
-export const createSubsection = promptExploderCreateSubsection;
-export const formatSubsectionLabel = promptExploderFormatSubsectionLabel;
-
 // ── Segment helpers ─────────────────────────────────────────────────────────
 
 export const promptExploderBuildSegmentSampleText = (segment: PromptExploderSegment): string => {
@@ -71,9 +64,6 @@ export const promptExploderBuildSegmentSampleText = (segment: PromptExploderSegm
   return segment.text.slice(0, 220);
 };
 
-// Backward-compat aliases used by existing callers.
-export const buildSegmentSampleText = promptExploderBuildSegmentSampleText;
-
 export const promptExploderBuildLearnedRulePattern = (segment: PromptExploderSegment): string => {
   const tokens = learningTokens(`${segment.title} ${promptExploderBuildSegmentSampleText(segment)}`);
   if (tokens.length === 0) {
@@ -83,9 +73,6 @@ export const promptExploderBuildLearnedRulePattern = (segment: PromptExploderSeg
   const anchors = tokens.slice(0, 4);
   return anchors.map((token) => `\\b${token}\\b`).join('[\\s\\S]{0,120}');
 };
-
-// Backward-compat aliases used by existing callers.
-export const buildLearnedRulePattern = promptExploderBuildLearnedRulePattern;
 
 export type ApprovalDraft = {
   ruleTitle: string;
@@ -128,9 +115,6 @@ export const promptExploderCreateApprovalDraftFromSegment = (
   };
 };
 
-// Backward-compat aliases used by existing callers.
-export const createApprovalDraftFromSegment = promptExploderCreateApprovalDraftFromSegment;
-
 // ── Rule detection ──────────────────────────────────────────────────────────
 
 export const promptExploderIsPromptExploderManagedRule = (rule: PromptValidationRule): boolean => {
@@ -143,6 +127,3 @@ export const promptExploderIsPromptExploderManagedRule = (rule: PromptValidation
   }
   return false;
 };
-
-// Backward-compat aliases used by existing callers.
-export const isPromptExploderManagedRule = promptExploderIsPromptExploderManagedRule;

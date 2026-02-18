@@ -87,10 +87,6 @@ type CaseResolverPageViewProps = {
   handleTriggerScanDraftUpload: () => void;
   handleDeleteScanDraftSlot: (slotId: string) => void;
   handleRunScanDraftOcr: () => void;
-  scanOcrModelOptions: SelectOption[];
-  handleScanDraftOcrModelChange: (value: string) => void;
-  handleScanDraftOcrPromptChange: (value: string) => void;
-  handleResetScanDraftOcrPrompt: () => void;
   updateEditingDocumentDraft: (patch: Partial<CaseResolverFileEditDraft>) => void;
   caseTagOptions: SelectOption[];
   caseIdentifierOptions: SelectOption[];
@@ -168,10 +164,6 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     handleTriggerScanDraftUpload,
     handleDeleteScanDraftSlot,
     handleRunScanDraftOcr,
-    scanOcrModelOptions,
-    handleScanDraftOcrModelChange,
-    handleScanDraftOcrPromptChange,
-    handleResetScanDraftOcrPrompt,
     updateEditingDocumentDraft,
     caseTagOptions,
     caseIdentifierOptions,
@@ -221,6 +213,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     caseResolverTags,
     caseResolverIdentifiers,
     caseResolverCategories,
+    caseResolverSettings,
     handleSelectFile,
     handleSelectAsset,
     handleSelectFolder,
@@ -248,12 +241,11 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     ConfirmationModal,
     PromptInputModal,
   } = state;
+  const configuredScanOcrModel = caseResolverSettings.ocrModel.trim();
   const scanOcrProviderLabel = React.useMemo((): string => {
-    if (editingDocumentDraft?.fileType !== 'scanfile') return 'Not set';
-    const model = editingDocumentDraft.scanOcrModel.trim();
-    if (!model) return 'Not set';
-    return resolveCaseResolverOcrProviderLabel(model);
-  }, [editingDocumentDraft?.fileType, editingDocumentDraft?.scanOcrModel]);
+    if (!configuredScanOcrModel) return 'Not set';
+    return resolveCaseResolverOcrProviderLabel(configuredScanOcrModel);
+  }, [configuredScanOcrModel]);
   const activeCaseFile = React.useMemo((): CaseResolverFile | null => {
     if (activeCaseId) {
       const activeCase = workspace.files.find(
@@ -649,42 +641,14 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                       </Button>
                     </div>
                   </div>
-                  <div className='mt-2 grid gap-2 md:grid-cols-[220px_minmax(0,1fr)_auto]'>
-                    <div className='space-y-1'>
-                      <div className='flex items-center justify-between gap-2'>
-                        <span className='text-[10px] font-medium uppercase tracking-wide text-gray-500'>
-                          OCR Model
-                        </span>
-                        <Badge variant='outline' className='px-1.5 py-0 text-[9px] uppercase tracking-wide'>
-                          {scanOcrProviderLabel}
-                        </Badge>
-                      </div>
-                      <SelectSimple
-                        value={editingDocumentDraft.scanOcrModel}
-                        onValueChange={handleScanDraftOcrModelChange}
-                        options={scanOcrModelOptions}
-                        placeholder='Select OCR model'
-                        triggerClassName='h-8 text-xs'
-                        size='sm'
-                      />
-                    </div>
-                    <Input
-                      value={editingDocumentDraft.scanOcrPrompt}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                        handleScanDraftOcrPromptChange(event.target.value);
-                      }}
-                      className='h-8 text-xs'
-                      placeholder='OCR prompt'
-                    />
-                    <Button
-                      type='button'
-                      variant='outline'
-                      size='sm'
-                      className='h-8 px-2 text-[11px]'
-                      onClick={handleResetScanDraftOcrPrompt}
-                    >
-                      Reset
-                    </Button>
+                  <div className='mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-500'>
+                    <span>OCR model and prompt are controlled in Case Resolver Settings.</span>
+                    <Badge variant='outline' className='px-1.5 py-0 text-[9px] uppercase tracking-wide'>
+                      {scanOcrProviderLabel}
+                    </Badge>
+                    <span className='font-mono text-[10px] text-gray-400'>
+                      {configuredScanOcrModel || 'No OCR model configured'}
+                    </span>
                   </div>
                   <div className='mt-1 text-[11px] text-gray-500'>
                     Drag and drop image or PDF files here, or use Upload Files.

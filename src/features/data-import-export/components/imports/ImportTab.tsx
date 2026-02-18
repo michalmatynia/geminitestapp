@@ -10,7 +10,7 @@ import type {
   InventoryOption,
   Template,
 } from '@/features/data-import-export/types/imports';
-import { Button, Input, Label, Checkbox, Pagination, SelectSimple, DataTable, Badge, SearchInput } from '@/shared/ui';
+import { Button, Label, Checkbox, Pagination, SelectSimple, DataTable, Badge, SearchInput, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -297,7 +297,11 @@ export function ImportTab(): React.JSX.Element {
           <span className={cn('font-mono text-[11px]', row.original.skuExists ? 'text-amber-400 font-bold' : 'text-gray-400')}>
             {row.original.sku || '—'}
           </span>
-          {row.original.skuExists && <span className='text-[10px] opacity-70' title='SKU already exists'>⚠</span>}
+          {row.original.skuExists && (
+            <Tooltip content='SKU already exists in the database'>
+              <span className='text-[10px] opacity-70 cursor-help'>⚠</span>
+            </Tooltip>
+          )}
         </div>
       ),
       size: 120,

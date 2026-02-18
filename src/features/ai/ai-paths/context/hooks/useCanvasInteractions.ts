@@ -172,6 +172,7 @@ export function useCanvasInteractions(args?: {
   const lastPointerCanvasPosRef = useRef<{ x: number; y: number } | null>(null);
   const rafIdRef = useRef<number | null>(null);
   const lockedToastAtRef = useRef<number>(0);
+  const hasCanvasKeyboardFocusRef = useRef(false);
   const [marqueeSelection, setMarqueeSelection] =
     useState<MarqueeSelectionState | null>(null);
 
@@ -323,6 +324,24 @@ export function useCanvasInteractions(args?: {
     if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
     return Boolean(element.closest('input, textarea, select, [contenteditable="true"]'));
   };
+
+  const isWithinCanvasScope = useCallback((target: EventTarget | null): boolean => {
+    if (!(target instanceof Node)) return false;
+    const viewportElement = viewportRef.current;
+    const canvasElement = canvasRef.current;
+    if (viewportElement?.contains(target)) return true;
+    if (canvasElement?.contains(target)) return true;
+    return false;
+  }, [canvasRef, viewportRef]);
+
+  const isPageRootTarget = useCallback((target: EventTarget | null): boolean => {
+    return (
+      target === window ||
+      target === document ||
+      target === document.body ||
+      target === document.documentElement
+    );
+  }, []);
 
   const resolveActiveNodeSelectionIds = useCallback((): string[] => {
     if (selectedNodeIds.length > 0) {
@@ -1510,6 +1529,12 @@ export function useCanvasInteractions(args?: {
   // Global keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
+      const targetWithinCanvas = isWithinCanvasScope(event.target);
+      const shouldHandleAsCanvasShortcut =
+        targetWithinCanvas ||
+        (hasCanvasKeyboardFocusRef.current && isPageRootTarget(event.target));
+      if (!shouldHandleAsCanvasShortcut) return;
+
       const modifier = event.metaKey || event.ctrlKey;
       if (modifier && event.key.toLowerCase() === 'c') {
         if (isTypingTarget(event.target)) return;
@@ -1570,6 +1595,8 @@ export function useCanvasInteractions(args?: {
     handleDuplicateSelection,
     handlePasteSelection,
     handleRemoveEdge,
+    isPageRootTarget,
+    isWithinCanvasScope,
     nodes,
     selectedEdgeId,
     selectedNodeId,
@@ -1580,6 +1607,8 @@ export function useCanvasInteractions(args?: {
   // Global pointer listeners for clearing state
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent): void => {
+      hasCanvasKeyboardFocusRef.current = isWithinCanvasScope(event.target);
+
       const target = event.target as HTMLElement | null;
       if (target?.closest('[data-port]')) return;
       if (target?.closest('path')) return;
@@ -1599,7 +1628,7 @@ export function useCanvasInteractions(args?: {
       window.removeEventListener('pointerdown', handlePointerDown);
       window.removeEventListener('pointerup', handlePointerUp);
     };
-  }, [endConnection, selectEdge]);
+  }, [endConnection, isWithinCanvasScope, selectEdge]);
 
   // Cleanup RAF
   useEffect(() => {

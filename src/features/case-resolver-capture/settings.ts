@@ -2,7 +2,11 @@ import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export const CASE_RESOLVER_CAPTURE_SETTINGS_KEY = 'case_resolver_capture_settings_v1';
 
-export type CaseResolverCaptureAction = 'database' | 'text' | 'ignore';
+export type CaseResolverCaptureAction =
+  | 'useMatched'
+  | 'createInFilemaker'
+  | 'keepText'
+  | 'ignore';
 export type CaseResolverCaptureRole = 'addresser' | 'addressee';
 
 export type CaseResolverCaptureRoleMapping = {
@@ -23,8 +27,9 @@ export const CASE_RESOLVER_CAPTURE_ACTION_OPTIONS: Array<{
   value: CaseResolverCaptureAction;
   label: string;
 }> = [
-  { value: 'database', label: 'Map to Filemaker' },
-  { value: 'text', label: 'Keep as Text' },
+  { value: 'useMatched', label: 'Use Matched Filemaker' },
+  { value: 'createInFilemaker', label: 'Create in Filemaker' },
+  { value: 'keepText', label: 'Keep as Text' },
   { value: 'ignore', label: 'Ignore' },
 ];
 
@@ -43,14 +48,14 @@ export const DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS: CaseResolverCaptureSettings
     addresser: {
       enabled: true,
       targetRole: 'addresser',
-      defaultAction: 'database',
+      defaultAction: 'useMatched',
       autoMatchPartyReference: true,
       autoMatchAddress: true,
     },
     addressee: {
       enabled: true,
       targetRole: 'addressee',
-      defaultAction: 'database',
+      defaultAction: 'useMatched',
       autoMatchPartyReference: true,
       autoMatchAddress: true,
     },
@@ -68,8 +73,17 @@ const normalizeCaptureAction = (
   value: unknown,
   fallback: CaseResolverCaptureAction
 ): CaseResolverCaptureAction => {
-  if (value === 'database' || value === 'text' || value === 'ignore') {
-    return value;
+  if (value === 'database' || value === 'useMatched') {
+    return 'useMatched';
+  }
+  if (value === 'create' || value === 'createInFilemaker') {
+    return 'createInFilemaker';
+  }
+  if (value === 'text' || value === 'keepText') {
+    return 'keepText';
+  }
+  if (value === 'ignore') {
+    return 'ignore';
   }
   return fallback;
 };

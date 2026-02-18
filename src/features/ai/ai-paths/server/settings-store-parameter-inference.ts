@@ -3,12 +3,6 @@ export const PARAMETER_INFERENCE_PATH_NAME = 'Parameter Inference';
 export const PARAMETER_INFERENCE_TRIGGER_BUTTON_ID = '0ef40981-7ac6-416e-9205-7200289f851c';
 export const PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME = 'Infer Parameters';
 
-const LEGACY_PARAMETER_INFERENCE_PATH_NAME = 'Category Inference';
-
-export const isLegacyParameterInferencePathName = (value: unknown): boolean =>
-  typeof value === 'string' &&
-  value.trim().toLowerCase() === LEGACY_PARAMETER_INFERENCE_PATH_NAME.toLowerCase();
-
 export const buildParameterInferencePathConfigValue = (timestamp: string): string =>
   JSON.stringify({
     id: PARAMETER_INFERENCE_PATH_ID,
@@ -323,9 +317,6 @@ export const needsParameterInferenceConfigUpgrade = (
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     if (!parsed || typeof parsed !== 'object') return true;
-
-    const currentName = parsed['name'];
-    if (isLegacyParameterInferencePathName(currentName)) return true;
 
     const nodes = Array.isArray(parsed['nodes'])
       ? (parsed['nodes'] as Array<Record<string, unknown>>)

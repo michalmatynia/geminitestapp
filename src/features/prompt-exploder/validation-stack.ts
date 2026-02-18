@@ -22,7 +22,6 @@ export type PromptExploderValidationRuleStackOption = {
 
 export type PromptExploderValidationStackResolutionReason =
   | 'exact_match'
-  | 'legacy_mapping'
   | 'default_scope'
   | 'scope_fallback'
   | 'invalid_stack';
@@ -39,8 +38,6 @@ export type PromptExploderValidationStackResolution = {
 const PROMPT_EXPLODER_VALIDATOR_SCOPE: ValidatorScope = 'prompt-exploder';
 const CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE: ValidatorScope =
   'case-resolver-prompt-exploder';
-const LEGACY_IMAGE_STUDIO_PROMPT_EXPLODER_STACK = 'image_studio_prompt_exploder';
-const LEGACY_CASE_RESOLVER_PROMPT_EXPLODER_STACK = 'case_resolver_prompt_exploder';
 
 export const DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK: PromptExploderValidationRuleStack =
   'prompt-exploder';
@@ -69,20 +66,6 @@ const toRuntimeScope = (
   validatorScope === CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE
     ? 'case_resolver_prompt_exploder'
     : 'prompt_exploder';
-
-const resolveScopeFromLegacyStack = (
-  stack: string
-): ValidatorScope => {
-  if (
-    stack === LEGACY_CASE_RESOLVER_PROMPT_EXPLODER_STACK ||
-    stack === 'case-resolver-prompt-exploder' ||
-    stack.includes('case_resolver') ||
-    stack.includes('case-resolver')
-  ) {
-    return CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE;
-  }
-  return PROMPT_EXPLODER_VALIDATOR_SCOPE;
-};
 
 const findFirstListByScope = (
   patternLists: ValidatorPatternList[],
@@ -171,22 +154,7 @@ export const resolvePromptExploderValidationStack = (args: {
     return resolveStackByScope(preferredScope, patternLists, 'default_scope');
   }
 
-  if (
-    normalizedStack === LEGACY_IMAGE_STUDIO_PROMPT_EXPLODER_STACK ||
-    normalizedStack === LEGACY_CASE_RESOLVER_PROMPT_EXPLODER_STACK
-  ) {
-    const mappedScope =
-      normalizedStack === LEGACY_CASE_RESOLVER_PROMPT_EXPLODER_STACK
-        ? CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE
-        : PROMPT_EXPLODER_VALIDATOR_SCOPE;
-    const resolved = resolveStackByScope(mappedScope, patternLists, 'legacy_mapping');
-    return {
-      ...resolved,
-      reason: 'legacy_mapping',
-    };
-  }
-
-  const inferredScope = resolveScopeFromLegacyStack(normalizedStack);
+  const inferredScope = preferredScope;
   if (args.strictUnknownStack) {
     throw new PromptValidationScopeResolutionError(
       `Unknown Prompt Exploder validation stack "${normalizedStack}".`,
@@ -196,7 +164,7 @@ export const resolvePromptExploderValidationStack = (args: {
       }
     );
   }
-  const fallback = resolveStackByScope(inferredScope, patternLists, 'invalid_stack');
+  const fallback = resolveStackByScope(preferredScope, patternLists, 'invalid_stack');
   return {
     ...fallback,
     usedFallback: true,

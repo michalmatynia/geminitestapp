@@ -113,7 +113,8 @@ describe('case-resolver-capture proposals', () => {
     );
 
     expect(state?.addresser?.sourceRole).toBe('addresser');
-    expect(state?.addresser?.action).toBe('database');
+    expect(state?.addresser?.action).toBe('useMatched');
+    expect(state?.addresser?.matchKind).toBe('party_and_address');
     expect(state?.addresser?.existingReference).toEqual({ kind: 'person', id: 'p-1' });
     expect(state?.addresser?.existingAddressId).toBe('addr-1');
     expect(state?.addressee).toBeNull();
@@ -126,7 +127,7 @@ describe('case-resolver-capture proposals', () => {
 
     const settings = createSettings();
     settings.roleMappings.addresser.targetRole = 'addressee';
-    settings.roleMappings.addresser.defaultAction = 'text';
+    settings.roleMappings.addresser.defaultAction = 'keepText';
     settings.roleMappings.addresser.autoMatchPartyReference = false;
     settings.roleMappings.addresser.autoMatchAddress = false;
 
@@ -140,7 +141,8 @@ describe('case-resolver-capture proposals', () => {
     expect(state?.addresser).toBeNull();
     expect(state?.addressee?.sourceRole).toBe('addresser');
     expect(state?.addressee?.role).toBe('addressee');
-    expect(state?.addressee?.action).toBe('text');
+    expect(state?.addressee?.action).toBe('createInFilemaker');
+    expect(state?.addressee?.matchKind).toBe('none');
     expect(state?.addressee?.existingReference).toBeNull();
     expect(state?.addressee?.existingAddressId).toBeNull();
   });
@@ -193,13 +195,11 @@ describe('case-resolver-capture proposals', () => {
     const payload: PromptExploderCaseResolverPartyBundle = {
       addresser: createAddresserCandidate(),
     };
-    const settings = createSettings();
-    settings.roleMappings.addresser.defaultAction = 'ignore';
     const state = buildCaseResolverCaptureProposalState(
       payload,
       'file-1',
       createDatabase(),
-      settings
+      createSettings()
     );
     const sourceText = [
       'Michał Matynia',
@@ -210,6 +210,86 @@ describe('case-resolver-capture proposals', () => {
       'Wniosek o ponowne rozpatrzenie sprawy',
     ].join('\n');
 
+    if (state?.addresser) {
+      state.addresser.action = 'ignore';
+    }
+    expect(stripCapturedAddressLinesFromText(sourceText, state)).toBe(sourceText);
+  });
+
+  it('prefers create-in-filemaker when address is captured but no match exists', () => {
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: {
+        ...createAddresserCandidate(),
+        displayName: 'Jan Kowalski',
+        firstName: 'Jan',
+        lastName: 'Kowalski',
+      },
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings()
+    );
+
+    expect(state?.addresser?.existingReference).toBeNull();
+    expect(state?.addresser?.action).toBe('createInFilemaker');
+    expect(state?.addresser?.hasAddressCandidate).toBe(true);
+  });
+
+  it('supports mixed matched and unmatched parties in a single proposal', () => {
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+      addressee: {
+        role: 'addressee',
+        displayName: 'Urzad Miasta',
+        rawText: 'Urzad Miasta\nNowa 7\n00-001 Warszawa\nPoland',
+        kind: 'organization',
+        organizationName: 'Urzad Miasta',
+        street: 'Nowa',
+        streetNumber: '7',
+        city: 'Warszawa',
+        postalCode: '00-001',
+        country: 'Poland',
+      },
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings()
+    );
+
+    expect(state?.addresser?.action).toBe('useMatched');
+    expect(state?.addresser?.existingReference).toEqual({ kind: 'person', id: 'p-1' });
+    expect(state?.addressee?.action).toBe('createInFilemaker');
+    expect(state?.addressee?.existingReference).toBeNull();
+  });
+
+  it('keeps exploded text unchanged when role action is keepText', () => {
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+    };
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings()
+    );
+    const sourceText = [
+      'Michał Matynia',
+      'Fioletowa 71/2',
+      '70-781 Szczecin',
+      'Poland',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+
+    if (state?.addresser) {
+      state.addresser.action = 'keepText';
+    }
     expect(stripCapturedAddressLinesFromText(sourceText, state)).toBe(sourceText);
   });
 });

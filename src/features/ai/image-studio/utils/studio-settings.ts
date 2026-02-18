@@ -9,6 +9,7 @@ import {
   normalizeImageStudioSequenceOperations,
   normalizeImageStudioSequencePresets,
   normalizeImageStudioSequenceSteps,
+  resolveImageStudioSequenceActiveSteps,
   type ImageStudioProjectSequencingSettings,
   type ImageStudioSequencePreset,
 } from './studio-sequencing-settings';
@@ -115,6 +116,22 @@ export type ImageStudioSettings = {
   };
 };
 
+export type ImageStudioSequenceSnapshot = {
+  hash: string;
+  stepCount: number;
+  modelId: string | null;
+};
+
+type ImageStudioSequenceSnapshotPayload = {
+  sequencingEnabled: boolean;
+  trigger: 'manual' | 'product_studio';
+  runtime: 'server';
+  activePresetId: string | null;
+  modelId: string | null;
+  defaultOutputCount: number | null;
+  steps: ReturnType<typeof resolveImageStudioSequenceActiveSteps>;
+};
+
 const defaultSequenceSteps = buildSequenceStepsFromOperations([
   'crop_center',
   'generate',
@@ -135,6 +152,10 @@ export const defaultImageStudioSettings: ImageStudioSettings = {
     upscaleScale: 2,
     upscaleTargetWidth: 2048,
     upscaleTargetHeight: 2048,
+    snapshotHash: null,
+    snapshotSavedAt: null,
+    snapshotStepCount: 0,
+    snapshotModelId: null,
   },
   promptExtraction: {
     mode: 'hybrid',
@@ -192,6 +213,81 @@ export const defaultImageStudioSettings: ImageStudioSettings = {
 const finiteNumberOrNull = z.number().finite().nullable().optional().default(null);
 const intOrNull = z.number().int().nullable().optional().default(null);
 const nonEmptyStringOrNull = z.string().trim().min(1).nullable().optional().default(null);
+
+const asTrimmedString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const asNonNegativeInteger = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
+  return Math.max(0, Math.floor(value));
+};
+
+const hashSequenceSnapshotPayload = (payload: string): string => {
+  let h1 = 0xdeadbeef ^ payload.length;
+  let h2 = 0x41c6ce57 ^ payload.length;
+
+  for (let index = 0; index < payload.length; index += 1) {
+    const charCode = payload.charCodeAt(index);
+    h1 = Math.imul(h1 ^ charCode, 2654435761);
+    h2 = Math.imul(h2 ^ charCode, 1597334677);
+  }
+
+  h1 =
+    Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^
+    Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 =
+    Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^
+    Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+
+  return [h1 >>> 0, h2 >>> 0, (h1 ^ h2) >>> 0]
+    .map((value) => value.toString(16).padStart(8, '0'))
+    .join('')
+    .slice(0, 20);
+};
+
+const buildImageStudioSequenceSnapshotPayload = (
+  settings: ImageStudioSettings,
+): ImageStudioSequenceSnapshotPayload => {
+  const activeSteps = resolveImageStudioSequenceActiveSteps(
+    settings.projectSequencing,
+  ).filter((step) => step.enabled);
+
+  const modelId = asTrimmedString(settings.targetAi.openai.model);
+  const defaultOutputCount =
+    typeof settings.targetAi.openai.image.n === 'number' &&
+    Number.isFinite(settings.targetAi.openai.image.n)
+      ? Math.max(1, Math.min(10, Math.floor(settings.targetAi.openai.image.n)))
+      : null;
+
+  return {
+    sequencingEnabled: Boolean(settings.projectSequencing.enabled),
+    trigger:
+      settings.projectSequencing.trigger === 'product_studio'
+        ? 'product_studio'
+        : 'manual',
+    runtime: 'server',
+    activePresetId: asTrimmedString(settings.projectSequencing.activePresetId),
+    modelId,
+    defaultOutputCount,
+    steps: activeSteps,
+  };
+};
+
+export function buildImageStudioSequenceSnapshot(
+  settings: ImageStudioSettings,
+): ImageStudioSequenceSnapshot {
+  const payload = buildImageStudioSequenceSnapshotPayload(settings);
+  const hash = hashSequenceSnapshotPayload(JSON.stringify(payload));
+
+  return {
+    hash,
+    stepCount: payload.steps.length,
+    modelId: payload.modelId,
+  };
+}
 
 const imageStudioSettingsSchema = z
   .object({
@@ -260,6 +356,33 @@ const imageStudioSettingsSchema = z
           .max(32_768)
           .optional()
           .default(defaultImageStudioSettings.projectSequencing.upscaleTargetHeight),
+        snapshotHash: z
+          .string()
+          .trim()
+          .min(1)
+          .nullable()
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.snapshotHash),
+        snapshotSavedAt: z
+          .string()
+          .trim()
+          .min(1)
+          .nullable()
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.snapshotSavedAt),
+        snapshotStepCount: z
+          .number()
+          .int()
+          .min(0)
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.snapshotStepCount),
+        snapshotModelId: z
+          .string()
+          .trim()
+          .min(1)
+          .nullable()
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.snapshotModelId),
       })
       .optional()
       .default(defaultImageStudioSettings.projectSequencing),
@@ -433,6 +556,19 @@ export function parseImageStudioSettings(raw: string | null | undefined): ImageS
       ? normalizedPresets.find((preset) => preset.id === activePresetId)?.steps ?? normalizedSteps
       : normalizedSteps;
 
+    const snapshotHash = asTrimmedString(
+      parsedSettings.projectSequencing.snapshotHash,
+    );
+    const snapshotSavedAt = asTrimmedString(
+      parsedSettings.projectSequencing.snapshotSavedAt,
+    );
+    const snapshotStepCount = asNonNegativeInteger(
+      parsedSettings.projectSequencing.snapshotStepCount,
+    );
+    const snapshotModelId = asTrimmedString(
+      parsedSettings.projectSequencing.snapshotModelId,
+    );
+
     const projectSequencing: ImageStudioProjectSequencingSettings = {
       enabled: parsedSettings.projectSequencing.enabled,
       trigger:
@@ -451,6 +587,10 @@ export function parseImageStudioSettings(raw: string | null | undefined): ImageS
       upscaleScale,
       upscaleTargetWidth,
       upscaleTargetHeight,
+      snapshotHash,
+      snapshotSavedAt,
+      snapshotStepCount,
+      snapshotModelId,
     };
 
     return {

@@ -7,7 +7,7 @@ import { Button, FormSection, Input, SelectSimple } from '@/shared/ui';
 
 import { useBindingsState, useBindingsActions } from '../context/hooks/useBindings';
 import { useDocumentState } from '../context/hooks/useDocument';
-import { formatSubsectionLabel } from '../helpers/segment-helpers';
+import { promptExploderFormatSubsectionLabel } from '../helpers/segment-helpers';
 
 import type { PromptExploderBindingType } from '../types';
 
@@ -25,7 +25,7 @@ export function BindingsPanel(): React.JSX.Element {
     if (!subsectionId) return segment.title;
     const subsection = segment.subsections.find((candidate) => candidate.id === subsectionId);
     if (!subsection) return segment.title;
-    return `${segment.title} · ${formatSubsectionLabel(subsection)}`;
+    return `${segment.title} · ${promptExploderFormatSubsectionLabel(subsection)}`;
   };
 
   return (

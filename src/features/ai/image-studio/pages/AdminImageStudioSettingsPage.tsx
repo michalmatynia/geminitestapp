@@ -21,10 +21,6 @@ import { useProjectsState } from '../context/ProjectsContext';
 import { useStudioImageModels } from '../hooks/useImageStudioQueries';
 import { getImageModelCapabilities, isGpt52ImageModel, uniqueSortedModelIds } from '../utils/image-models';
 import {
-  IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
-  parseImageStudioActiveProject,
-} from '../utils/project-session';
-import {
   defaultImageStudioSettings,
   type ImageStudioSequenceOperation,
   IMAGE_STUDIO_OPENAI_API_KEY_KEY,
@@ -63,7 +59,7 @@ type CardBackfillResponse = {
   result: CardBackfillResult;
 };
 
-type StudioSettingsTab = 'pipeline' | 'prompt' | 'generation' | 'validation' | 'maintenance';
+type StudioSettingsTab = 'prompt' | 'generation' | 'maintenance';
 
 export function AdminImageStudioSettingsPage(
   { embedded = false, onSaved }: { embedded?: boolean | undefined; onSaved?: (() => void) | undefined } = {}
@@ -77,7 +73,7 @@ export function AdminImageStudioSettingsPage(
   const { projectId: selectedProjectId } = useProjectsState();
 
   const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false);
-  const [activeSettingsTab, setActiveSettingsTab] = useState<StudioSettingsTab>('pipeline');
+  const [activeSettingsTab, setActiveSettingsTab] = useState<StudioSettingsTab>('prompt');
   const [studioSettings, setStudioSettings] = useState<ImageStudioSettings>(defaultImageStudioSettings);
   const [advancedOverridesText, setAdvancedOverridesText] = useState<string>(
     JSON.stringify(defaultImageStudioSettings.targetAi.openai.advanced_overrides ?? {}, null, 2)
@@ -112,10 +108,7 @@ export function AdminImageStudioSettingsPage(
     typeof userPreferencesQuery.data?.imageStudioLastProjectId === 'string'
       ? userPreferencesQuery.data.imageStudioLastProjectId.trim()
       : '';
-  const legacyActiveProjectId = parseImageStudioActiveProject(
-    heavyMap.get(IMAGE_STUDIO_ACTIVE_PROJECT_KEY)
-  );
-  const activeProjectId = liveProjectId || activeProjectIdFromPreferences || legacyActiveProjectId;
+  const activeProjectId = liveProjectId || activeProjectIdFromPreferences;
   const projectSettingsKey = getImageStudioProjectSettingsKey(activeProjectId);
   const globalStudioSettingsRaw = heavyMap.get(IMAGE_STUDIO_SETTINGS_KEY);
   const projectStudioSettingsRaw =
@@ -620,7 +613,7 @@ export function AdminImageStudioSettingsPage(
       { value: '__null__', label: 'Default' },
       ...modelCapabilities.backgroundOptions.map((option: string) => ({
         value: option,
-        label: option === 'white' ? 'white (legacy)' : option,
+        label: option,
       })),
     ]),
     [modelCapabilities.backgroundOptions]

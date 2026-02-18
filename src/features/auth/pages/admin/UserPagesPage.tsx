@@ -10,7 +10,7 @@ import {
 } from '@/features/auth/utils/auth-user-pages';
 import { logClientError } from '@/features/observability';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Label, Switch, useToast,  FormSection } from '@/shared/ui';
+import { useToast,  FormSection, ToggleRow, FormActions, LoadingState } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 export default function AuthUserPagesPage(): React.JSX.Element {
@@ -24,9 +24,7 @@ export default function AuthUserPagesPage(): React.JSX.Element {
   if (isLoading) {
     return (
       <div className='container mx-auto py-10'>
-        <div className='rounded-lg border border-border/60 bg-card/40 p-6 text-sm text-gray-400'>
-          Loading user page settings...
-        </div>
+        <LoadingState message='Loading user page settings...' />
       </div>
     );
   }
@@ -95,7 +93,7 @@ function AuthUserPagesForm({
         description='Toggle each flow on/off. Password strength rules live in Auth Settings.'
         className='p-6'
       >
-        <div className='space-y-4 mt-4'>
+        <div className='space-y-3 mt-4'>
           {(
             [
               ['allowSignup', 'Allow sign-up', 'Enable self-service user registration.'],
@@ -104,31 +102,25 @@ function AuthUserPagesForm({
               ['requireEmailVerification', 'Require email verification', 'Block access until email is verified.'],
             ] as const
           ).map(([key, title, description]: readonly [keyof AuthUserPageSettings, string, string]) => (
-            <div
+            <ToggleRow
               key={key}
-              className='flex items-center justify-between rounded-md border border-border bg-card/40 px-4 py-3'
-            >
-              <div>
-                <Label className='text-sm text-gray-200'>{title}</Label>
-                <div className='text-xs text-gray-500'>{description}</div>
-              </div>
-              <Switch
-                checked={settings[key]}
-                onCheckedChange={() => handleToggle(key)}
-              />
-            </div>
+              label={title}
+              description={description}
+              checked={settings[key]}
+              onCheckedChange={() => handleToggle(key)}
+              type='switch'
+            />
           ))}
         </div>
       </FormSection>
 
-      <div className='flex justify-end'>
-        <Button
-          onClick={() => void handleSave()}
-          disabled={!dirty || updateSetting.isPending}
-        >
-          {updateSetting.isPending ? 'Saving...' : 'Save settings'}
-        </Button>
-      </div>
+      <FormActions
+        onSave={() => { void handleSave(); }}
+        saveText='Save user page settings'
+        isDisabled={!dirty || updateSetting.isPending}
+        isSaving={updateSetting.isPending}
+        className='mt-6'
+      />
     </div>
   );
 }

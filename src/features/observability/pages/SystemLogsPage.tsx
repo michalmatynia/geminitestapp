@@ -24,6 +24,7 @@ import {
   Alert,
   ListPanel,
   MetadataItem,
+  Tooltip,
   type StatusVariant
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -355,7 +356,11 @@ function LogList(): React.JSX.Element {
       header: 'Event Message',
       cell: ({ row }) => (
         <div className='flex flex-col gap-1 max-w-[500px]'>
-          <span className='text-sm text-gray-200 font-medium truncate' title={row.original.message}>{row.original.message}</span>
+          <Tooltip content={row.original.message} className='w-full'>
+            <span className='text-sm text-gray-200 font-medium truncate block'>
+              {row.original.message}
+            </span>
+          </Tooltip>
           {(row.original.path || row.original.method) && (
             <div className='flex items-center gap-2'>
               <span className='text-[10px] text-gray-500 font-mono'>
@@ -380,16 +385,17 @@ function LogList(): React.JSX.Element {
       header: () => <div className='text-right'>Tools</div>,
       cell: ({ row }) => (
         <div className='flex justify-end gap-2'>
-          <Button
-            variant='ghost'
-            size='xs'
-            className='h-7 w-7 p-0'
-            onClick={() => interpretLogMutation.mutate(row.original.id)}
-            disabled={interpretLogMutation.isPending}
-            title='AI Interpretation'
-          >
-            <Eye className='size-3.5' />
-          </Button>
+          <Tooltip content='AI Interpretation'>
+            <Button
+              variant='ghost'
+              size='xs'
+              className='h-7 w-7 p-0'
+              onClick={() => interpretLogMutation.mutate(row.original.id)}
+              disabled={interpretLogMutation.isPending}
+            >
+              <Eye className='size-3.5' />
+            </Button>
+          </Tooltip>
         </div>
       ),
     },

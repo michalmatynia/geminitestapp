@@ -54,4 +54,7 @@ export type {
   CreateProductDraftDto as CreateProductDraftInput,
   UpdateProductDraftDto as UpdateProductDraftInput,
 } from './drafts';
-export type { ProductStudioSequencingConfig } from './product-studio';
+export type {
+  ProductStudioSequencingConfig,
+  ProductStudioSequencingDiagnostics,
+} from './product-studio';

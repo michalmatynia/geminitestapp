@@ -1,6 +1,5 @@
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
-export const IMAGE_STUDIO_ACTIVE_PROJECT_KEY = 'image_studio_active_project';
 export const IMAGE_STUDIO_ACTIVE_PROJECT_LOCAL_KEY = 'image_studio_active_project_local';
 export const IMAGE_STUDIO_PROJECT_SESSION_KEY_PREFIX = 'image_studio_project_session_';
 export const IMAGE_STUDIO_PROJECT_SESSION_LOCAL_KEY_PREFIX = 'image_studio_project_session_local_';
@@ -49,16 +48,6 @@ export function getImageStudioProjectSessionLocalKey(projectId: string): string 
   const normalized = normalizeImageStudioProjectId(projectId);
   if (!normalized) return null;
   return `${IMAGE_STUDIO_PROJECT_SESSION_LOCAL_KEY_PREFIX}${sanitizeStudioProjectId(normalized)}`;
-}
-
-export function serializeImageStudioActiveProject(projectId: string): string {
-  const normalized = normalizeImageStudioProjectId(projectId);
-  return serializeSetting(normalized || null);
-}
-
-export function parseImageStudioActiveProject(raw: string | null | undefined): string {
-  const parsed = parseJsonSetting<string | null>(raw, null);
-  return typeof parsed === 'string' ? parsed.trim() : '';
 }
 
 export function loadImageStudioActiveProjectLocal(): string {

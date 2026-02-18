@@ -13,8 +13,8 @@ import {
 } from '../helpers/drag-reorder';
 import { promptExploderClampNumber } from '../helpers/formatting';
 import {
-  buildSegmentSampleText,
-  createApprovalDraftFromSegment,
+  promptExploderBuildSegmentSampleText,
+  promptExploderCreateApprovalDraftFromSegment,
   type ApprovalDraft,
 } from '../helpers/segment-helpers';
 import { buildManualLearnedRegexRuleDraft } from '../rule-drafts';
@@ -135,12 +135,12 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
   const [draggingListItemIndex, setDraggingListItemIndex] = useState<number | null>(null);
   const [listItemDropTargetIndex, setListItemDropTargetIndex] = useState<number | null>(null);
   const [listItemDropPosition, setListItemDropPosition] = useState<'before' | 'after' | null>(null);
-  const [approvalDraft, setApprovalDraft] = useState(createApprovalDraftFromSegment(null));
+  const [approvalDraft, setApprovalDraft] = useState(promptExploderCreateApprovalDraftFromSegment(null));
 
   // ── Sync approval draft ────────────────────────────────────────────────────
 
   useEffect(() => {
-    setApprovalDraft(createApprovalDraftFromSegment(selectedSegment));
+    setApprovalDraft(promptExploderCreateApprovalDraftFromSegment(selectedSegment));
   }, [selectedSegment?.id]);
 
   // ── Sync drag state ────────────────────────────────────────────────────────
@@ -200,7 +200,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
         state: PromptExploderLearnedTemplate['state'];
         mergeEligible: boolean;
       }>;
-    const sourceText = `${selectedSegment.title} ${buildSegmentSampleText(selectedSegment)}`.trim();
+    const sourceText = `${selectedSegment.title} ${promptExploderBuildSegmentSampleText(selectedSegment)}`.trim();
     const normalizedSelectedTitle = normalizeLearningText(selectedSegment.title);
     return effectiveLearnedTemplates
       .map((template) => {
@@ -369,7 +369,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
     }
     try {
       const now = new Date().toISOString();
-      const segmentSampleText = buildSegmentSampleText(selectedSegment);
+      const segmentSampleText = promptExploderBuildSegmentSampleText(selectedSegment);
       const segmentLearningSource = `${selectedSegment.title} ${segmentSampleText}`.trim();
       const templateUpsert = upsertLearnedTemplate({
         templates: effectiveLearnedTemplates,

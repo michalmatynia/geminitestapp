@@ -75,32 +75,12 @@ function normalizeLogicalConditionList(
   });
 }
 
-function deriveLegacyLogicalConditions(
-  item: PromptExploderListItem
-): PromptExploderLogicalCondition[] {
-  const legacyPath = (item.referencedParamPath ?? '').trim();
-  if (!legacyPath) return [];
-  return [
-    createLogicalCondition({
-      id: `${item.id}_legacy`,
-      paramPath: legacyPath,
-      comparator:
-        item.referencedComparator ??
-        (item.logicalOperator === 'unless' ? 'falsy' : 'truthy'),
-      value: item.referencedValue ?? null,
-      joinWithPrevious: null,
-    }),
-  ];
-}
-
 function getEditableLogicalConditions(
   item: PromptExploderListItem
 ): PromptExploderLogicalCondition[] {
   if ((item.logicalConditions ?? []).length > 0) {
     return item.logicalConditions ?? [];
   }
-  const legacy = deriveLegacyLogicalConditions(item);
-  if (legacy.length > 0) return legacy;
   if (item.logicalOperator) {
     return [
       createLogicalCondition({
@@ -136,9 +116,7 @@ function normalizeListItemLogicalState(
   const sourcedConditions =
     override.logicalConditions !== undefined
       ? (override.logicalConditions ?? [])
-      : ((next.logicalConditions ?? []).length > 0
-        ? (next.logicalConditions ?? [])
-        : deriveLegacyLogicalConditions(next));
+      : (next.logicalConditions ?? []);
 
   const logicalConditions = normalizeLogicalConditionList(
     next,

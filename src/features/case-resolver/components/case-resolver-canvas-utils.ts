@@ -78,8 +78,6 @@ const normalizeTextNodeInputPort = (value: string | undefined): string => {
   ) {
     return value;
   }
-  if (value === 'prompt') return DOCUMENT_TEXTFIELD_PORT;
-  if (value === 'result') return DOCUMENT_CONTENT_PORT;
   return DOCUMENT_CONTENT_PORT;
 };
 
@@ -91,8 +89,6 @@ const normalizeTextNodeOutputPort = (value: string | undefined): string => {
   ) {
     return value;
   }
-  if (value === 'prompt') return DOCUMENT_TEXTFIELD_PORT;
-  if (value === 'result') return DOCUMENT_CONTENT_PORT;
   return DOCUMENT_CONTENT_PORT;
 };
 

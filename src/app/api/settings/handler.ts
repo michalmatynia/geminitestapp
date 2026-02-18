@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { upsertAiPathsSetting } from '@/features/ai/ai-paths/server';
-import { AUTH_SETTINGS_KEYS } from '@/features/auth/server';
 import {
   FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
   FILE_STORAGE_SOURCE_SETTING_KEY,
@@ -27,7 +26,6 @@ import {
   DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY,
 } from '@/shared/lib/db/database-engine-constants';
 import {
-  getDatabaseEnginePolicy,
   invalidateDatabaseEnginePolicyCache,
 } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -118,8 +116,6 @@ const ensureSettingsIndexes = async (): Promise<void> => {
   }
   await settingsIndexesEnsured;
 };
-const authSettingKeys: Set<string> = new Set(Object.values(AUTH_SETTINGS_KEYS));
-const isMongoPreferredSettingKey = (key: string) => authSettingKeys.has(key);
 const isHeavySettingKey = (key: string): boolean =>
   HEAVY_KEYS.has(key) || HEAVY_PREFIXES.some((prefix) => key.startsWith(prefix));
 const isAiPathsSettingKey = (key: string): boolean => key.startsWith(AI_PATHS_KEY_PREFIX);
@@ -132,23 +128,6 @@ const isPrismaMissingTableError = (
 ): error is Prisma.PrismaClientKnownRequestError =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
   (error.code === 'P2021' || error.code === 'P2022');
-
-const isAutomaticSettingsFallbackAllowed = async (): Promise<boolean> => {
-  const policy = await getDatabaseEnginePolicy();
-  return (
-    policy.allowAutomaticFallback &&
-    policy.allowAutomaticMigrations &&
-    !policy.strictProviderAvailability
-  );
-};
-
-const assertAutomaticSettingsFallbackAllowed = async (): Promise<void> => {
-  const allowed = await isAutomaticSettingsFallbackAllowed();
-  if (allowed) return;
-  throw internalError(
-    'Prisma settings table is missing and automatic fallback is disabled by Database Engine policy. Configure migrations manually in Workflow Database -> Database Engine.'
-  );
-};
 
 const readPrismaSettingsForScope = async (scope: SettingsScope): Promise<SettingRecord[]> => {
   if (!process.env['DATABASE_URL'] || !('setting' in prisma)) return [];
@@ -226,11 +205,8 @@ const readCurrentSettingValue = async (
   key: string,
   provider: 'prisma' | 'mongodb'
 ): Promise<string | null> => {
-  const hasMongo = Boolean(process.env['MONGODB_URI']);
-  const canUsePrisma = canUsePrismaSettings(provider);
-
   const readPrisma = async (): Promise<string | null> => {
-    if (!canUsePrisma) return null;
+    if (!canUsePrismaSettings(provider)) return null;
     try {
       const record = await prisma.setting.findUnique({
         where: { key },
@@ -244,7 +220,7 @@ const readCurrentSettingValue = async (
   };
 
   const readMongo = async (): Promise<string | null> => {
-    if (!hasMongo) return null;
+    if (!process.env['MONGODB_URI']) return null;
     await ensureSettingsIndexes();
     const mongo = await getMongoDb();
     const doc = await mongo
@@ -253,15 +229,7 @@ const readCurrentSettingValue = async (
     return typeof doc?.value === 'string' ? doc.value : null;
   };
 
-  if (provider === 'mongodb') {
-    const mongoValue = await readMongo();
-    if (mongoValue !== null) return mongoValue;
-    return await readPrisma();
-  }
-
-  const prismaValue = await readPrisma();
-  if (prismaValue !== null) return prismaValue;
-  return await readMongo();
+  return provider === 'mongodb' ? readMongo() : readPrisma();
 };
 
 const settingSchema = z.object({
@@ -437,70 +405,33 @@ const fetchAndCacheSettings = async (
   const totalStart = performance.now();
   const provider = await getAppDbProvider();
   if (timings) timings['provider'] = performance.now() - totalStart;
-  const hasMongo = Boolean(process.env['MONGODB_URI']);
-  const envProvider = process.env['APP_DB_PROVIDER']?.toLowerCase().trim();
-  const forcePrisma = envProvider === 'prisma';
-  const prismaSettings: SettingRecord[] = [];
-  let prismaMissing = false;
-  if (canUsePrismaSettings(provider)) {
+  let settings: SettingRecord[] = [];
+  if (provider === 'mongodb') {
+    const mongoStart = performance.now();
+    settings = await listMongoSettings(scope);
+    if (timings) timings['mongo'] = performance.now() - mongoStart;
+  } else {
+    if (!canUsePrismaSettings(provider)) {
+      throw internalError('Prisma settings store is unavailable. Configure DATABASE_URL.');
+    }
     const prismaStart = performance.now();
     try {
-      const settings = await prisma.setting.findMany({
+      settings = await prisma.setting.findMany({
         where: buildPrismaScopeWhere(scope),
         select: { key: true, value: true },
       });
-      prismaSettings.push(...applyScopeFilter(settings, scope));
+      settings = applyScopeFilter(settings, scope);
     } catch (error) {
       if (isPrismaMissingTableError(error)) {
-        await assertAutomaticSettingsFallbackAllowed();
-        prismaMissing = true;
-        await ErrorSystem.logWarning('[settings] Prisma settings table missing; falling back to Mongo.', {
-          service: 'api/settings',
-          code: error.code,
-        });      } else {
-        throw error;
+        throw internalError(
+          'Prisma settings table is missing. Run migrations manually in Workflow Database -> Database Engine.'
+        );
       }
+      throw error;
     } finally {
       if (timings) timings['prisma'] = performance.now() - prismaStart;
     }
   }
-  const shouldReadMongoSettings = hasMongo && (!forcePrisma || prismaMissing);
-  const mongoSettings = shouldReadMongoSettings
-    ? await (async (): Promise<SettingRecord[]> => {
-      const mongoStart = performance.now();
-      const settings = await listMongoSettings(scope);
-      if (timings) timings['mongo'] = performance.now() - mongoStart;
-      return settings;
-    })()
-    : [];
-  if (prismaMissing && !hasMongo) {
-    await logSystemEvent({
-      level: 'warn',
-      message: '[settings] Prisma settings table missing and no Mongo fallback.',
-    });
-    throw internalError(
-      'Prisma settings table is missing and MongoDB fallback is unavailable. Run migrations manually in Workflow Database -> Database Engine.'
-    );
-  }
-  const settingsMap = new Map<string, SettingRecord>();
-  if (provider === 'mongodb') {
-    mongoSettings.forEach((setting: SettingRecord) => {
-      settingsMap.set(setting.key, setting);
-    });
-  } else {
-    prismaSettings.forEach((setting: SettingRecord) => {
-      if (!authSettingKeys.has(setting.key) || !hasMongo) {
-        settingsMap.set(setting.key, setting);
-      }
-    });
-    mongoSettings.forEach((setting: SettingRecord) => {
-      const shouldOverride = prismaMissing || isMongoPreferredSettingKey(setting.key);
-      if (shouldOverride) {
-        settingsMap.set(setting.key, setting);
-      }
-    });
-  }
-  const settings = Array.from(settingsMap.values());
   if (shouldLog()) {
     await ErrorSystem.logInfo('[settings] fetched', {
       service: 'api/settings',
@@ -808,16 +739,12 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       }
     }
   }
-  const hasMongo = Boolean(process.env['MONGODB_URI']);
-  const shouldWriteMongo =
-    hasMongo &&
-    (provider === 'mongodb' || isMongoPreferredSettingKey(key) || !canUsePrismaSettings(provider));
-  const shouldWritePrisma =
-    canUsePrismaSettings(provider) && (!authSettingKeys.has(key) || !hasMongo);
   let prismaSetting: SettingRecord | null = null;
   let mongoSetting: SettingRecord | null = null;
-  let prismaMissing = false;
-  if (shouldWritePrisma) {
+  if (provider === 'prisma') {
+    if (!canUsePrismaSettings(provider)) {
+      throw internalError('Prisma settings store is unavailable. Configure DATABASE_URL.');
+    }
     try {
       prismaSetting = await prisma.setting.upsert({
         where: { key },
@@ -827,26 +754,19 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       });
     } catch (error) {
       if (isPrismaMissingTableError(error)) {
-        await assertAutomaticSettingsFallbackAllowed();
-        prismaMissing = true;
-        await ErrorSystem.logWarning('[settings] Prisma settings table missing; falling back to Mongo.', {
-          service: 'api/settings',
-          code: error.code,
-        });      } else {
-        throw error;
+        throw internalError(
+          'Prisma settings table is missing. Run migrations manually in Workflow Database -> Database Engine.'
+        );
       }
+      throw error;
     }
   }
-  const shouldWriteMongoFallback = shouldWriteMongo || (prismaMissing && hasMongo);
-  if (shouldWriteMongoFallback) {
+  if (provider === 'mongodb') {
     mongoSetting = await upsertMongoSetting(key, value);
   }
   const setting = prismaSetting ?? mongoSetting;
   if (!setting) {
-    const message = prismaMissing
-      ? 'Settings table is missing in Prisma. Run prisma db push or configure MongoDB.'
-      : 'No settings store configured';
-    throw internalError(message);
+    throw internalError('No settings store configured.');
   }
   if (setting.key === APP_DB_PROVIDER_SETTING_KEY) {
     invalidateAppDbProviderCache();

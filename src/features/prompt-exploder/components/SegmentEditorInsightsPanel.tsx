@@ -12,7 +12,7 @@ import {
 } from '@/shared/ui';
 
 import { promptExploderClampNumber } from '../helpers/formatting';
-import { createApprovalDraftFromSegment } from '../helpers/segment-helpers';
+import { promptExploderCreateApprovalDraftFromSegment } from '../helpers/segment-helpers';
 
 import type {
   SegmentEditorActions,
@@ -329,7 +329,7 @@ export function SegmentEditorInsightsPanel(args: {
               size='sm'
               onClick={() => {
                 setApprovalDraft(
-                  createApprovalDraftFromSegment(selectedSegment)
+                  promptExploderCreateApprovalDraftFromSegment(selectedSegment)
                 );
               }}
             >

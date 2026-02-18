@@ -204,6 +204,7 @@ export const QUERY_KEYS = {
       },
       models: () => [...QUERY_KEYS.ai.chatbot.all, 'models'] as const,
       ollamaModels: (baseUrl: string) => [...QUERY_KEYS.ai.chatbot.models(), 'ollama', baseUrl] as const,
+      caseResolverOcrModels: () => [...QUERY_KEYS.ai.chatbot.models(), 'case-resolver-ocr'] as const,
     },
     aiPaths: {
       all: ['ai', 'ai-paths'] as const,

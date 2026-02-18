@@ -38,6 +38,18 @@ export type ProductStudioRunAuditEntry = {
   dispatchMode: ImageStudioRunDispatchMode | null;
   fallbackReason: string | null;
   warnings: string[];
+  sequenceSnapshotHash: string | null;
+  stepOrderUsed: string[];
+  resolvedCropRect: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null;
+  sourceImageSize: {
+    width: number;
+    height: number;
+  } | null;
   timings: ProductStudioRunAuditTimings;
   errorMessage: string | null;
 };
@@ -69,6 +81,51 @@ const normalizeWarnings = (input: unknown): string[] => {
   return input
     .map((entry) => asTrimmedString(entry))
     .filter(Boolean);
+};
+
+const normalizeStepOrderUsed = (input: unknown): string[] => {
+  if (!Array.isArray(input)) return [];
+  return input
+    .map((entry) => asTrimmedString(entry))
+    .filter(Boolean)
+    .slice(0, 50);
+};
+
+const normalizeCropRect = (
+  input: unknown,
+): {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+} | null => {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
+  const record = input as Record<string, unknown>;
+  const x = toFiniteNumber(record['x']);
+  const y = toFiniteNumber(record['y']);
+  const width = toFiniteNumber(record['width']);
+  const height = toFiniteNumber(record['height']);
+  if (x === null || y === null || width === null || height === null) return null;
+  return {
+    x: Math.max(0, Math.min(1, Number(x.toFixed(6)))),
+    y: Math.max(0, Math.min(1, Number(y.toFixed(6)))),
+    width: Math.max(0, Math.min(1, Number(width.toFixed(6)))),
+    height: Math.max(0, Math.min(1, Number(height.toFixed(6)))),
+  };
+};
+
+const normalizeSourceImageSize = (
+  input: unknown,
+): { width: number; height: number } | null => {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
+  const record = input as Record<string, unknown>;
+  const width = toFiniteNumber(record['width']);
+  const height = toFiniteNumber(record['height']);
+  if (width === null || height === null) return null;
+  return {
+    width: Math.max(1, Math.floor(width)),
+    height: Math.max(1, Math.floor(height)),
+  };
 };
 
 const toAuditEntry = (doc: ProductStudioRunAuditDocument): ProductStudioRunAuditEntry | null => {
@@ -120,6 +177,10 @@ const toAuditEntry = (doc: ProductStudioRunAuditDocument): ProductStudioRunAudit
   const fallbackReason = asTrimmedString(doc.fallbackReason) || null;
   const errorMessage = asTrimmedString(doc.errorMessage) || null;
   const warnings = normalizeWarnings(doc.warnings);
+  const sequenceSnapshotHash = asTrimmedString(doc.sequenceSnapshotHash) || null;
+  const stepOrderUsed = normalizeStepOrderUsed(doc.stepOrderUsed);
+  const resolvedCropRect = normalizeCropRect(doc.resolvedCropRect);
+  const sourceImageSize = normalizeSourceImageSize(doc.sourceImageSize);
   const timingsRecord =
     doc.timings && typeof doc.timings === 'object' && !Array.isArray(doc.timings)
       ? (doc.timings as Record<string, unknown>)
@@ -149,6 +210,10 @@ const toAuditEntry = (doc: ProductStudioRunAuditDocument): ProductStudioRunAudit
     dispatchMode,
     fallbackReason,
     warnings,
+    sequenceSnapshotHash,
+    stepOrderUsed,
+    resolvedCropRect,
+    sourceImageSize,
     timings: {
       importMs: normalizeStage('importMs'),
       sourceSlotUpsertMs: normalizeStage('sourceSlotUpsertMs'),
@@ -198,6 +263,10 @@ export async function createProductStudioRunAudit(
     dispatchMode: input.dispatchMode ?? null,
     fallbackReason: asTrimmedString(input.fallbackReason) || null,
     warnings,
+    sequenceSnapshotHash: asTrimmedString(input.sequenceSnapshotHash) || null,
+    stepOrderUsed: normalizeStepOrderUsed(input.stepOrderUsed),
+    resolvedCropRect: normalizeCropRect(input.resolvedCropRect),
+    sourceImageSize: normalizeSourceImageSize(input.sourceImageSize),
     timings: {
       importMs:
         typeof timings.importMs === 'number' && Number.isFinite(timings.importMs)

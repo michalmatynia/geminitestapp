@@ -3,16 +3,22 @@ import 'server-only';
 import fs from 'fs/promises';
 import path from 'path';
 
-import { getDiskPathFromPublicPath } from '@/features/files/server';
+import {
+  deleteFileFromStorage,
+  getPublicPathFromStoredPath,
+} from '@/features/files/server';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
 const notesRoot = path.join(uploadsRoot, 'notes');
 
 export async function cleanupNoteFile(noteId: string, filepath: string): Promise<void> {
   try {
-    const diskPath = getDiskPathFromPublicPath(filepath);
-    await fs.unlink(diskPath).catch((): void => {});
+    await deleteFileFromStorage(filepath);
     const noteDir = path.join(notesRoot, noteId);
+    const normalizedPath = getPublicPathFromStoredPath(filepath);
+    if (normalizedPath && !normalizedPath.startsWith(`/uploads/notes/${noteId}/`)) {
+      return;
+    }
     try {
       const remaining = await fs.readdir(noteDir);
       if (remaining.length === 0) {

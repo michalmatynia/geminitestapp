@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Button, FormSection, Input, Label, Textarea, SelectSimple } from '@/shared/ui';
+import { Button, FormSection, Input, Textarea, SelectSimple, FormField, SectionHeader } from '@/shared/ui';
 
 import {
   DEFAULT_PROMPT_EXPLODER_BENCHMARK_CASES,
@@ -65,9 +65,9 @@ export function BenchmarkReportPanel(): React.JSX.Element {
     >
       <div className='space-y-3'>
         <div className='grid gap-2 md:grid-cols-5'>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Benchmark Suite</Label>
+          <FormField label='Benchmark Suite' id='benchmark-suite'>
             <SelectSimple size='sm'
+              id='benchmark-suite'
               value={benchmarkSuiteDraft}
               onValueChange={(value: string) => {
                 setBenchmarkSuiteDraft(value as PromptExploderBenchmarkSuite);
@@ -87,10 +87,10 @@ export function BenchmarkReportPanel(): React.JSX.Element {
                 },
               ]}
             />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Low-Confidence Threshold</Label>
+          </FormField>
+          <FormField label='Low-Confidence Threshold' id='low-confidence-threshold'>
             <Input
+              id='low-confidence-threshold'
               type='number'
               min={0.3}
               max={0.9}
@@ -102,10 +102,10 @@ export function BenchmarkReportPanel(): React.JSX.Element {
                 setBenchmarkLowConfidenceThresholdDraft(promptExploderClampNumber(value, 0.3, 0.9));
               }}
             />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Suggestion Limit / Case</Label>
+          </FormField>
+          <FormField label='Suggestion Limit / Case' id='suggestion-limit'>
             <Input
+              id='suggestion-limit'
               type='number'
               min={1}
               max={20}
@@ -121,15 +121,14 @@ export function BenchmarkReportPanel(): React.JSX.Element {
                 );
               }}
             />
-          </div>
+          </FormField>
           <div className='md:col-span-2 rounded border border-border/50 bg-card/20 p-2 text-[11px] text-gray-500'>
             Suite controls benchmark depth only. Runtime rules/templates still follow the
             selected Prompt Exploder runtime profile.
           </div>
         </div>
         {benchmarkSuiteDraft === 'custom' ? (
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Custom Benchmark Cases JSON</Label>
+          <FormField label='Custom Benchmark Cases JSON' id='custom-benchmark-cases'>
             <div className='grid gap-2 md:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto_auto]'>
               <Input
                 value={customCaseDraftId}
@@ -184,7 +183,8 @@ export function BenchmarkReportPanel(): React.JSX.Element {
               </Button>
             </div>
             <Textarea
-              className='min-h-[180px] font-mono text-[11px]'
+              id='custom-benchmark-cases'
+              className='mt-2 min-h-[180px] font-mono text-[11px]'
               value={customBenchmarkCasesDraft}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
                 setCustomBenchmarkCasesDraft(event.target.value);
@@ -192,13 +192,13 @@ export function BenchmarkReportPanel(): React.JSX.Element {
               placeholder='[{"id":"case_1","prompt":"...","expectedTypes":["sequence"],"minSegments":1}]'
             />
             <div
-              className={`text-[10px] ${parsedCustomBenchmarkCases.ok ? 'text-gray-500' : 'text-red-300'}`}
+              className={`mt-1 text-[10px] ${parsedCustomBenchmarkCases.ok ? 'text-gray-500' : 'text-red-300'}`}
             >
               {parsedCustomBenchmarkCases.ok
                 ? `Valid custom suite: ${parsedCustomBenchmarkCases.cases.length} case(s).`
                 : `Invalid custom suite: ${parsedCustomBenchmarkCases.error}`}
             </div>
-          </div>
+          </FormField>
         ) : null}
         {!benchmarkReport ? (
           <div className='text-xs text-gray-500'>Run benchmark to generate a report.</div>
@@ -262,48 +262,50 @@ export function BenchmarkReportPanel(): React.JSX.Element {
                 </div>
               ))}
             </div>
-            <div className='rounded border border-border/50 bg-card/20 p-2'>
-              <div className='mb-2 flex items-center justify-between gap-2'>
-                <div className='text-[11px] uppercase tracking-wide text-gray-400'>
-                  Suggested Patterns From Low-Confidence Segments
-                </div>
-                <div className='flex items-center gap-2'>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    size='sm'
-                    onClick={() => {
-                      void handleAddBenchmarkSuggestionRules(
-                        visibleBenchmarkSuggestions
-                      );
-                    }}
-                    disabled={
-                      isBusy ||
-                      visibleBenchmarkSuggestions.length === 0
-                    }
-                  >
-                    Add All Visible
-                  </Button>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    size='sm'
-                    onClick={handleDismissAllVisibleBenchmarkSuggestions}
-                    disabled={visibleBenchmarkSuggestions.length === 0}
-                  >
-                    Dismiss Visible
-                  </Button>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    size='sm'
-                    onClick={handleResetDismissedBenchmarkSuggestions}
-                    disabled={dismissedBenchmarkSuggestionIds.length === 0}
-                  >
-                    Reset Dismissed
-                  </Button>
-                </div>
-              </div>
+            <div className='rounded border border-border/50 bg-card/20 p-4'>
+              <SectionHeader
+                title='Suggested Patterns From Low-Confidence Segments'
+                size='xxs'
+                className='mb-3'
+                actions={
+                  <div className='flex items-center gap-2'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      onClick={() => {
+                        void handleAddBenchmarkSuggestionRules(
+                          visibleBenchmarkSuggestions
+                        );
+                      }}
+                      disabled={
+                        isBusy ||
+                        visibleBenchmarkSuggestions.length === 0
+                      }
+                    >
+                      Add All Visible
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      onClick={handleDismissAllVisibleBenchmarkSuggestions}
+                      disabled={visibleBenchmarkSuggestions.length === 0}
+                    >
+                      Dismiss Visible
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      onClick={handleResetDismissedBenchmarkSuggestions}
+                      disabled={dismissedBenchmarkSuggestionIds.length === 0}
+                    >
+                      Reset Dismissed
+                    </Button>
+                  </div>
+                }
+              />
               <div className='mb-2 text-[10px] text-gray-500'>
                 visible {visibleBenchmarkSuggestions.length} / total{' '}
                 {benchmarkSuggestions.length} · dismissed{' '}

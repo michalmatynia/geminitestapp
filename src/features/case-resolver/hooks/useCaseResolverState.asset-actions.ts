@@ -28,6 +28,7 @@ import {
   isLikelyImageFile,
   isLikelyScanInputFile,
   normalizeUploadedCaseResolverFile,
+  resolveCaseScopedFolderTarget,
   resolveUploadBaseFolder,
   sleep,
   type CaseResolverUploadedFile,
@@ -253,7 +254,6 @@ export const useCaseResolverStateAssetActions = ({
   );
 
   const handleCreateScanFile = useCallback((targetFolderPath: string | null): void => {
-    const folder = normalizeFolderPath(targetFolderPath ?? '');
     const runtimeCaseResolverSettings = parseCaseResolverSettings(
       settingsStoreRef.current.get(CASE_RESOLVER_SETTINGS_KEY)
     );
@@ -273,6 +273,11 @@ export const useCaseResolverStateAssetActions = ({
     let createdImageFile = false;
 
     updateWorkspace((current) => {
+      const folder = resolveCaseScopedFolderTarget({
+        targetFolderPath,
+        ownerCaseId: activeCaseId,
+        folderRecords: current.folderRecords,
+      });
       const name = createUniqueCaseFileName({
         files: current.files,
         folder,
@@ -651,7 +656,6 @@ export const useCaseResolverStateAssetActions = ({
   );
 
   const handleCreateImageAsset = useCallback((targetFolderPath: string | null): void => {
-    const folder = normalizeFolderPath(targetFolderPath ?? '');
     const createdAssetId = createId('asset');
     const ownerCaseId = activeCaseId;
     if (!ownerCaseId) {
@@ -664,6 +668,11 @@ export const useCaseResolverStateAssetActions = ({
       return;
     }
     updateWorkspace((current) => {
+      const folder = resolveCaseScopedFolderTarget({
+        targetFolderPath,
+        ownerCaseId,
+        folderRecords: current.folderRecords,
+      });
       const name = createPlaceholderAssetName({
         assets: current.assets,
         folder,

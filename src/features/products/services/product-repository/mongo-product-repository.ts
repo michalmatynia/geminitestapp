@@ -6,7 +6,6 @@ import { ObjectId, type Document, type Filter } from 'mongodb';
 
 import { mongoImageFileRepository } from '@/features/files/server';
 import { mongoCatalogRepository } from '@/features/products/services/catalog-repository/mongo-catalog-repository';
-import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import {
   toProductBase,
   toProductResponse,
@@ -20,6 +19,7 @@ import type {
   TransactionalProductRepository,
   UpdateProductInput,
 } from '@/features/products/types/services/product-repository';
+import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import { conflictError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { ImageFileRecord } from '@/shared/types/domain/files';

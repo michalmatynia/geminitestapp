@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   isCaseResolverCreateContextReady,
+  resolveCaseScopedFolderTarget,
   resolveCaseContainerIdForFileId,
   resolveCaseResolverActiveCaseId,
 } from '@/features/case-resolver/hooks/useCaseResolverState.helpers';
@@ -79,5 +80,31 @@ describe('case resolver case context resolution', () => {
         requestedCaseStatus: 'ready',
       }),
     ).toBe(true);
+  });
+
+  it('keeps folder target when it belongs to the active case', () => {
+    expect(
+      resolveCaseScopedFolderTarget({
+        targetFolderPath: 'case-a/folder',
+        ownerCaseId: 'case-a',
+        folderRecords: [
+          { path: 'case-a/folder', ownerCaseId: 'case-a' },
+          { path: 'case-b/folder', ownerCaseId: 'case-b' },
+        ],
+      }),
+    ).toBe('case-a/folder');
+  });
+
+  it('resets folder target to root when stale selection belongs to another case', () => {
+    expect(
+      resolveCaseScopedFolderTarget({
+        targetFolderPath: 'case-b/folder',
+        ownerCaseId: 'case-a',
+        folderRecords: [
+          { path: 'case-a/folder', ownerCaseId: 'case-a' },
+          { path: 'case-b/folder', ownerCaseId: 'case-b' },
+        ],
+      }),
+    ).toBe('');
   });
 });

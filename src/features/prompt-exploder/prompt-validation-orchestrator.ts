@@ -14,7 +14,6 @@ import {
   recordPromptValidationCounter,
   recordPromptValidationError,
   recordPromptValidationTiming,
-  type PromptValidationCounterName,
 } from '@/features/prompt-core/runtime-observability';
 import type {
   PromptValidationRule,

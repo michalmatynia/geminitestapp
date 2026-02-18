@@ -58,7 +58,7 @@ describe('Client Errors API', () => {
     expect(ErrorSystem.captureException).toHaveBeenCalled();
   });
 
-  it('should normalize legacy nested error payload shape', async () => {
+  it('should ignore legacy nested error payload shape', async () => {
     const req = new NextRequest('http://localhost/api/client-errors', {
       method: 'POST',
       body: JSON.stringify({
@@ -78,15 +78,12 @@ describe('Client Errors API', () => {
 
     expect(ErrorSystem.captureException).toHaveBeenCalledWith(
       expect.objectContaining({
-        message: 'Legacy validation failed',
-        name: 'ValidationError',
+        message: 'Unknown client error',
+        name: 'ClientError',
       }),
       expect.objectContaining({
         service: 'client-error-reporter',
-        extra: expect.objectContaining({
-          service: 'product-service',
-          action: 'validateProductCreate',
-        }),
+        extra: {},
       })
     );
   });

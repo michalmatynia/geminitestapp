@@ -4,6 +4,7 @@ import { useMemo, useState, useCallback } from 'react';
 
 import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY } from '@/shared/lib/db/database-engine-constants';
 import {
   PageLayout,
   Button,
@@ -30,8 +31,6 @@ import {
   useJsonBackups,
 } from '../hooks/useDatabaseQueries';
 
-const COLLECTION_PROVIDER_MAP_KEY = 'collection_provider_map';
-
 type CopyAction = {
   collection: string;
   direction: 'mongo_to_prisma' | 'prisma_to_mongo';
@@ -54,7 +53,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
 
   // Parse per-collection provider map from settings
   const providerMap = useMemo<Record<string, 'mongodb' | 'prisma'>>(() => {
-    const raw = settingsQuery.data?.get(COLLECTION_PROVIDER_MAP_KEY);
+    const raw = settingsQuery.data?.get(DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY);
     if (!raw) return {};
     try {
       return JSON.parse(raw) as Record<string, 'mongodb' | 'prisma'>;
@@ -123,7 +122,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
       }
 
       updateSetting.mutate(
-        { key: COLLECTION_PROVIDER_MAP_KEY, value: JSON.stringify(newMap) },
+        { key: DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY, value: JSON.stringify(newMap) },
         {
           onSuccess: () => toast('Provider assignment saved.', { variant: 'success' }),
           onError: (error: Error) => {

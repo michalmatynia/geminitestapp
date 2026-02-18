@@ -13,7 +13,12 @@ import 'server-only';
 import fs from 'fs/promises';
 import path from 'path';
 
-import { getDiskPathFromPublicPath, uploadFile } from '@/features/files/server';
+import {
+  deleteFileFromStorage,
+  getDiskPathFromPublicPath,
+  getPublicPathFromStoredPath,
+  uploadFile,
+} from '@/features/files/server';
 import { getImageFileRepository } from '@/features/files/server';
 import type { ImageFileRepository } from '@/features/files/types/services/image-file-repository';
 import { ErrorSystem, logActivity, ActivityTypes, logSystemEvent } from '@/features/observability/server';
@@ -41,7 +46,6 @@ import {
   validateProductUpdate,
 } from '@/features/products/validations';
 import { badRequestError } from '@/shared/errors/app-error';
-import { getDatabaseEnginePolicy } from '@/shared/lib/db/database-engine-policy';
 
 const resolveProductRepository = async (
   providerOverride?: ProductDbProvider
@@ -75,20 +79,6 @@ const shouldLogTiming = (): boolean => process.env['DEBUG_API_TIMING'] === 'true
 
 type ProductQueryTimings = Record<string, number | null | undefined>;
 
-const getFallbackProvider = (provider: ProductDbProvider): ProductDbProvider =>
-  provider === 'prisma' ? 'mongodb' : 'prisma';
-
-const isProviderAvailable = (provider: ProductDbProvider): boolean =>
-  provider === 'mongodb'
-    ? Boolean(process.env['MONGODB_URI'])
-    : Boolean(process.env['DATABASE_URL']);
-
-const shouldCompareFallbackProvider = async (): Promise<boolean> => {
-  const policy = await getDatabaseEnginePolicy();
-  if (!policy.allowAutomaticFallback) return false;
-  return process.env['PRODUCTS_COMPARE_FALLBACK_PROVIDER'] === 'true';
-};
-
 async function getProducts(
   filters: ProductFilters,
   options?: { timings?: ProductQueryTimings; provider?: ProductDbProvider }
@@ -106,58 +96,6 @@ async function getProducts(
       timings['repo'] = repoMs;
     }
     performanceMonitor.record('db.query', repoMs, { operation: 'getProducts', provider });
-
-    const fallbackProvider = getFallbackProvider(provider);
-    const compareFallbackProvider = await shouldCompareFallbackProvider();
-    if (compareFallbackProvider && isProviderAvailable(fallbackProvider)) {
-      const fallbackRepository = await resolveProductRepository(fallbackProvider);
-      const shouldCompareCounts =
-        products.length === 0 || Number(filters.page ?? 1) === 1;
-
-      let primaryCount = products.length;
-      let fallbackCount = 0;
-
-      if (shouldCompareCounts) {
-        const countStart = performance.now();
-        primaryCount = await productRepository.countProducts(filters);
-        fallbackCount = await fallbackRepository.countProducts(filters);
-        if (timings) {
-          timings['countCompare'] = performance.now() - countStart;
-        }
-      } else if (products.length === 0) {
-        fallbackCount = await fallbackRepository.countProducts(filters);
-      }
-
-      const shouldUseFallback =
-        (products.length === 0 && fallbackCount > 0) || fallbackCount > primaryCount;
-
-      if (shouldUseFallback) {
-        const fallbackStart = performance.now();
-        const fallbackProducts = await fallbackRepository.getProducts(filters);
-        const fallbackMs = performance.now() - fallbackStart;
-        if (timings) {
-          timings['repoFallback'] = fallbackMs;
-        }
-        performanceMonitor.record('db.query', fallbackMs, {
-          operation: 'getProducts.fallback',
-          provider: fallbackProvider,
-        });
-        products = fallbackProducts;
-        await logSystemEvent({
-          level: 'warn',
-          message:
-            '[products] Primary provider has fewer matching rows; using fallback provider.',
-          context: {
-            primaryProvider: provider,
-            fallbackProvider,
-            primaryCount,
-            fallbackCount,
-            returnedCount: fallbackProducts.length,
-            filters,
-          },
-        });
-      }
-    }
 
     const imagesStart = performance.now();
     
@@ -214,32 +152,7 @@ async function countProducts(filters: ProductFilters): Promise<number> {
   try {
     const provider = await getProductDataProvider();
     const productRepository = await resolveProductRepository(provider);
-    const count = await productRepository.countProducts(filters);
-
-    const fallbackProvider = getFallbackProvider(provider);
-    const compareFallbackProvider = await shouldCompareFallbackProvider();
-    if (!compareFallbackProvider || !isProviderAvailable(fallbackProvider)) {
-      return count;
-    }
-
-    const fallbackRepository = await resolveProductRepository(fallbackProvider);
-    const fallbackCount = await fallbackRepository.countProducts(filters);
-    if (fallbackCount > count) {
-      await logSystemEvent({
-        level: 'warn',
-        message:
-          '[products] Primary provider has fewer matching rows; using fallback provider count.',
-        context: {
-          primaryProvider: provider,
-          fallbackProvider,
-          primaryCount: count,
-          fallbackCount,
-          filters,
-        },
-      });
-      return fallbackCount;
-    }
-    return count;
+    return await productRepository.countProducts(filters);
   } catch (error) {
     await ErrorSystem.captureException(error, {
       service: 'productService',
@@ -258,20 +171,7 @@ async function getProductById(id: string): Promise<ProductWithImages | null> {
   try {
     const provider = await getProductDataProvider();
     const productRepository = await resolveProductRepository(provider);
-    const product = await productRepository.getProductById(id);
-    if (product) return product;
-
-    const policy = await getDatabaseEnginePolicy();
-    if (!policy.allowAutomaticFallback) {
-      return null;
-    }
-
-    const fallbackProvider = getFallbackProvider(provider);
-    if (!isProviderAvailable(fallbackProvider)) {
-      return null;
-    }
-    const fallbackRepository = await resolveProductRepository(fallbackProvider);
-    return fallbackRepository.getProductById(id);
+    return await productRepository.getProductById(id);
   } catch (error) {
     await ErrorSystem.captureException(error, {
       service: 'productService',
@@ -286,20 +186,7 @@ async function getProductBySku(sku: string): Promise<ProductWithImages | null> {
   try {
     const provider = await getProductDataProvider();
     const productRepository = await resolveProductRepository(provider);
-    let product = await productRepository.getProductBySku(sku);
-
-    if (!product) {
-      const policy = await getDatabaseEnginePolicy();
-      if (!policy.allowAutomaticFallback) {
-        return null;
-      }
-
-      const fallbackProvider = getFallbackProvider(provider);
-      if (isProviderAvailable(fallbackProvider)) {
-        const fallbackRepository = await resolveProductRepository(fallbackProvider);
-        product = await fallbackRepository.getProductBySku(sku);
-      }
-    }
+    const product = await productRepository.getProductBySku(sku);
 
     if (!product) return null;
     return getProductById(product.id);
@@ -651,27 +538,24 @@ async function unlinkImageFromProduct(
       const imageFile = await imageFileRepository.getImageFileById(imageFileId);
 
       if (imageFile) {
-        const isExternal = /^(https?:|data:)/i.test(imageFile.filepath);
-        if (!isExternal) {
-          try {
-            await fs.unlink(getDiskPathFromPublicPath(imageFile.filepath));
-          } catch (error: unknown) {
-            if (
-              error instanceof Error &&
-              (error as NodeJS.ErrnoException).code !== 'ENOENT'
-            ) {
-              await ErrorSystem.logWarning('Failed to unlink image file', {
-                filepath: imageFile.filepath,
-                error: error instanceof Error ? error.message : String(error)
-              });
-              // Continue to delete the DB record even if file unlink failed (orphaned file is better than broken DB link)
-            }
+        try {
+          await deleteFileFromStorage(imageFile.filepath);
+        } catch (error: unknown) {
+          if (
+            error instanceof Error &&
+            (error as NodeJS.ErrnoException).code !== 'ENOENT'
+          ) {
+            await ErrorSystem.logWarning('Failed to unlink image file', {
+              filepath: imageFile.filepath,
+              error: error instanceof Error ? error.message : String(error),
+            });
+            // Continue to delete the DB record even if file unlink failed (orphaned file is better than broken DB link)
           }
         }
 
         await imageFileRepository.deleteImageFile(imageFileId).catch(() => {});
 
-        if (!isExternal) {
+        try {
           const folderDiskPath = path.dirname(
             getDiskPathFromPublicPath(imageFile.filepath),
           );
@@ -697,6 +581,8 @@ async function unlinkImageFromProduct(
               }
             }
           }
+        } catch {
+          // ignore folder cleanup when path does not resolve to local uploads
         }
       }
     }
@@ -876,11 +762,15 @@ async function moveTempImageFilesToSku(
       await imageFileRepository.findImageFilesByIds(imageFileIds);
 
     for (const imageFile of imageFiles) {
-      if (!imageFile.filepath.startsWith(tempProductPathPrefix)) {
+      const normalizedPublicPath = getPublicPathFromStoredPath(imageFile.filepath);
+      if (!normalizedPublicPath?.startsWith(tempProductPathPrefix)) {
+        continue;
+      }
+      if (/^https?:\/\//i.test(imageFile.filepath)) {
         continue;
       }
 
-      const filename = imageFile.filepath.slice(tempProductPathPrefix.length);
+      const filename = normalizedPublicPath.slice(tempProductPathPrefix.length);
       const safeSku = sku.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
       const targetPublicDir = `/uploads/products/${safeSku}`;
       const targetPublicPath = `${targetPublicDir}/${filename}`;
@@ -929,7 +819,9 @@ async function moveLinkedTempImagesToSku(
     const imageFileIds =
       product?.images
         .filter((image: ProductImageRecord): boolean =>
-          (getProductImageFilepath(image) ?? '').startsWith(tempProductPathPrefix),
+          (getPublicPathFromStoredPath(getProductImageFilepath(image) ?? '') ?? '').startsWith(
+            tempProductPathPrefix,
+          ),
         )
         .map((image: ProductImageRecord): string => image.imageFileId) ?? [];
     if (imageFileIds.length > 0) {

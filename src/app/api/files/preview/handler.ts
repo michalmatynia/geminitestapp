@@ -1,10 +1,13 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'fs/promises';
 
 import mime from 'mime-types';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getImageFileRepository } from '@/features/files/server';
+import {
+  getDiskPathFromPublicPath,
+  getImageFileRepository,
+  isHttpFilepath,
+} from '@/features/files/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
@@ -22,24 +25,58 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     throw notFoundError('File not found');
   }
 
-  // Remove leading slash from the stored path to ensure correct joining
-  const relativePath = imageFile.filepath.startsWith('/')
-    ? imageFile.filepath.substring(1)
-    : imageFile.filepath;
-  const filePath = path.join(process.cwd(), 'public', relativePath);
-
-  if (!fs.existsSync(filePath)) {
-    throw notFoundError('File not found on disk', { path: relativePath });
+  let localPath: string | null = null;
+  try {
+    localPath = getDiskPathFromPublicPath(imageFile.filepath);
+  } catch {
+    localPath = null;
   }
 
-  const fileBuffer = fs.readFileSync(filePath);
-  const mimeType = mime.lookup(filePath) || 'application/octet-stream';
+  if (localPath) {
+    try {
+      const fileBuffer = await fs.readFile(localPath);
+      const mimeType = mime.lookup(localPath) || 'application/octet-stream';
 
-  return new NextResponse(fileBuffer, {
-    status: 200,
-    headers: {
-      'Content-Type': mimeType,
-      'Content-Length': fileBuffer.length.toString(),
-    },
+      return new NextResponse(fileBuffer, {
+        status: 200,
+        headers: {
+          'Content-Type': mimeType,
+          'Content-Length': fileBuffer.length.toString(),
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        (error as NodeJS.ErrnoException).code !== 'ENOENT'
+      ) {
+        throw error;
+      }
+    }
+  }
+
+  if (isHttpFilepath(imageFile.filepath)) {
+    const response = await fetch(imageFile.filepath, { cache: 'no-store' });
+    if (!response.ok) {
+      throw notFoundError('File not found on remote storage', {
+        path: imageFile.filepath,
+      });
+    }
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const contentType =
+      response.headers.get('content-type') ||
+      mime.lookup(imageFile.filepath) ||
+      'application/octet-stream';
+
+    return new NextResponse(buffer, {
+      status: 200,
+      headers: {
+        'Content-Type': contentType,
+        'Content-Length': buffer.length.toString(),
+      },
+    });
+  }
+
+  throw notFoundError('File not found on disk', {
+    path: imageFile.filepath,
   });
 }

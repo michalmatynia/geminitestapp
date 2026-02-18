@@ -90,8 +90,13 @@ export function AiPathsSettingsView(): React.JSX.Element {
   const { setPathName, setPaths } = useGraphActions();
 
   // Domain: Selection — read from context
-  const { nodeConfigDirty, selectedNodeIds, selectionToolMode } = useSelectionState();
-  const { setSelectionToolMode } = useSelectionActions();
+  const {
+    nodeConfigDirty,
+    selectedNodeIds,
+    selectionToolMode,
+    selectionScopeMode,
+  } = useSelectionState();
+  const { setSelectionToolMode, setSelectionScopeMode } = useSelectionActions();
 
   // Utility — imported directly
   const { toast } = useToast();
@@ -336,6 +341,34 @@ export function AiPathsSettingsView(): React.JSX.Element {
                           Select
                         </Button>
                       </div>
+                      {selectionToolMode === 'select' ? (
+                        <div className='flex items-center rounded-md border border-border/60 bg-card/40 p-0.5'>
+                          <Button
+                            type='button'
+                            className={`h-8 rounded-md px-2 text-xs ${
+                              selectionScopeMode === 'portion'
+                                ? 'bg-sky-500/20 text-sky-200'
+                                : 'text-gray-300 hover:bg-card/60'
+                            }`}
+                            onClick={() => setSelectionScopeMode('portion')}
+                            title='Select only nodes inside the rectangle'
+                          >
+                            Portion
+                          </Button>
+                          <Button
+                            type='button'
+                            className={`h-8 rounded-md px-2 text-xs ${
+                              selectionScopeMode === 'wiring'
+                                ? 'bg-sky-500/20 text-sky-200'
+                                : 'text-gray-300 hover:bg-card/60'
+                            }`}
+                            onClick={() => setSelectionScopeMode('wiring')}
+                            title='Expand marquee selection to connected wiring'
+                          >
+                            With Wiring
+                          </Button>
+                        </div>
+                      ) : null}
                       <StatusBadge
                         status={`Selected: ${selectedNodeIds.length}`}
                         variant='neutral'
@@ -345,11 +378,16 @@ export function AiPathsSettingsView(): React.JSX.Element {
                       />
                       <div className='text-[11px] text-gray-400'>
                         {selectionToolMode === 'select'
-                          ? 'Drag to select nodes. Shift add, Alt subtract.'
+                          ? selectionScopeMode === 'wiring'
+                            ? 'Drag to select connected subgraphs. Shift add, Alt subtract.'
+                            : 'Drag to select node portions only. Shift add, Alt subtract.'
                           : 'Use Select tool to draw a selection rectangle.'}
                       </div>
                       <div className='text-[11px] text-gray-500'>
-                        Ctrl/Cmd+C copy, Ctrl/Cmd+V paste
+                        Shift/Cmd/Ctrl+click toggles selection. Ctrl/Cmd+A selects all nodes.
+                      </div>
+                      <div className='text-[11px] text-gray-500'>
+                        Ctrl/Cmd+C copy, Ctrl/Cmd+X cut, Ctrl/Cmd+V paste, Ctrl/Cmd+D duplicate.
                       </div>
                       <Button
                         className='rounded-md border border-amber-500/40 text-sm text-amber-200 hover:bg-amber-500/10'

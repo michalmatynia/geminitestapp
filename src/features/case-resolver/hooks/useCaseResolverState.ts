@@ -41,7 +41,6 @@ import {
   parseCaseResolverSettings,
   parseCaseResolverTags,
   normalizeCaseResolverWorkspace,
-  normalizeFolderPath,
   normalizeFolderPaths,
   parseCaseResolverWorkspace,
 } from '../settings';
@@ -68,6 +67,7 @@ import {
   createUniqueCaseFileName,
   isCaseResolverCreateContextReady,
   normalizeFolderRecords,
+  resolveCaseScopedFolderTarget,
   readStoredEditorDraft,
   resolveCaseContainerIdForFileId,
   resolveCaseResolverActiveCaseId,
@@ -99,6 +99,8 @@ export function useCaseResolverState() {
   const settingsStoreRef = useRef(settingsStore);
   settingsStoreRef.current = settingsStore;
   const { toast } = useToast();
+  const { confirm, ConfirmationModal } = useConfirm();
+  const { PromptInputModal } = usePrompt();
   const { isMenuCollapsed, setIsMenuCollapsed } = useAdminLayout();
   const searchParams = useSearchParams();
   const requestedFileId = searchParams.get('fileId');
@@ -202,6 +204,10 @@ export function useCaseResolverState() {
     JSON.stringify(initialWorkspaceState)
   );
   const [isWorkspaceSaving, setIsWorkspaceSaving] = useState(false);
+  const [workspaceSaveStatus, setWorkspaceSaveStatus] = useState<
+    'idle' | 'dirty' | 'saving' | 'saved' | 'conflict' | 'error'
+  >('idle');
+  const [workspaceSaveError, setWorkspaceSaveError] = useState<string | null>(null);
 
   const defaultTagId = caseResolverTags[0]?.id ?? null;
   const defaultCaseIdentifierId = caseResolverIdentifiers[0]?.id ?? null;
@@ -239,6 +245,8 @@ export function useCaseResolverState() {
     const nextSerialized = queuedSerializedWorkspaceRef.current;
     if (!nextSerialized || nextSerialized === lastPersistedValueRef.current) {
       setIsWorkspaceSaving(false);
+      setWorkspaceSaveStatus('saved');
+      setWorkspaceSaveError(null);
       return;
     }
     const expectedRevision =
@@ -250,6 +258,9 @@ export function useCaseResolverState() {
 
     persistWorkspaceInFlightRef.current = true;
     setIsWorkspaceSaving(true);
+    setWorkspaceSaveStatus('saving');
+    setWorkspaceSaveError(null);
+    let shouldContinuePersistQueue = true;
     void persistCaseResolverWorkspaceSnapshot({
       workspace: parsedWorkspaceForPersist,
       expectedRevision,
@@ -262,6 +273,13 @@ export function useCaseResolverState() {
         lastPersistedValueRef.current = persistedSerialized;
         setPersistedWorkspaceSnapshot(persistedSerialized);
         lastPersistedRevisionRef.current = getCaseResolverWorkspaceRevision(persistedWorkspace);
+        logCaseResolverWorkspaceEvent({
+          source: 'case_view',
+          action: 'manual_save_success',
+          mutationId,
+          expectedRevision,
+          workspaceRevision: getCaseResolverWorkspaceRevision(persistedWorkspace),
+        });
         settingsStoreRef.current.refetch();
         if (queuedSerializedWorkspaceRef.current === nextSerialized) {
           queuedSerializedWorkspaceRef.current = null;
@@ -274,23 +292,61 @@ export function useCaseResolverState() {
           toast(pendingSaveToastRef.current, { variant: 'success' });
           pendingSaveToastRef.current = null;
         }
+        setWorkspaceSaveStatus('saved');
+        setWorkspaceSaveError(null);
         return;
       }
 
       if (result.conflict) {
+        shouldContinuePersistQueue = false;
         const serverWorkspace = result.workspace;
         const serverSerialized = JSON.stringify(serverWorkspace);
         lastPersistedValueRef.current = serverSerialized;
         setPersistedWorkspaceSnapshot(serverSerialized);
-        lastPersistedRevisionRef.current = getCaseResolverWorkspaceRevision(serverWorkspace);
-        queuedSerializedWorkspaceRef.current = null;
-        queuedExpectedRevisionRef.current = null;
-        queuedMutationIdRef.current = null;
+        const serverRevision = getCaseResolverWorkspaceRevision(serverWorkspace);
+        lastPersistedRevisionRef.current = serverRevision;
         pendingSaveToastRef.current = null;
-        setWorkspace(serverWorkspace);
-        settingsStoreRef.current.refetch();
-        toast('Case Resolver workspace changed before save completed. Loaded latest server state.', {
-          variant: 'warning',
+        logCaseResolverWorkspaceEvent({
+          source: 'case_view',
+          action: 'manual_save_conflict',
+          mutationId,
+          expectedRevision,
+          workspaceRevision: serverRevision,
+        });
+        setWorkspaceSaveStatus('conflict');
+        setWorkspaceSaveError(
+          'Server workspace changed while saving. Keep local changes and save again, or load server version.'
+        );
+        confirm({
+          title: 'Workspace Save Conflict',
+          message:
+            'Case Resolver workspace changed on the server while saving. Keep your local changes and save again, or load the server version.',
+          confirmText: 'Load Server Version',
+          cancelText: 'Keep Local Changes',
+          isDangerous: true,
+          onConfirm: () => {
+            queuedSerializedWorkspaceRef.current = null;
+            queuedExpectedRevisionRef.current = null;
+            queuedMutationIdRef.current = null;
+            setWorkspace(serverWorkspace);
+            setWorkspaceSaveStatus('saved');
+            setWorkspaceSaveError(null);
+            settingsStoreRef.current.refetch();
+            toast('Loaded latest server state after save conflict.', {
+              variant: 'warning',
+            });
+          },
+          onCancel: () => {
+            queuedSerializedWorkspaceRef.current = nextSerialized;
+            queuedExpectedRevisionRef.current = serverRevision;
+            setWorkspaceSaveStatus('dirty');
+            setWorkspaceSaveError(
+              'Local changes were kept. Save again to apply them on top of the latest server revision.'
+            );
+            toast('Kept local workspace changes. Save again to retry.', {
+              variant: 'info',
+            });
+          },
         });
         return;
       }
@@ -298,10 +354,22 @@ export function useCaseResolverState() {
       if (pendingSaveToastRef.current) {
         pendingSaveToastRef.current = null;
       }
-      toast(result.error || 'Failed to save Case Resolver workspace.', { variant: 'error' });
+      shouldContinuePersistQueue = false;
+      const errorMessage = result.error || 'Failed to save Case Resolver workspace.';
+      logCaseResolverWorkspaceEvent({
+        source: 'case_view',
+        action: 'manual_save_error',
+        mutationId,
+        expectedRevision,
+        message: errorMessage,
+      });
+      setWorkspaceSaveStatus('error');
+      setWorkspaceSaveError(errorMessage);
+      toast(errorMessage, { variant: 'error' });
     }).finally(() => {
       persistWorkspaceInFlightRef.current = false;
       if (
+        shouldContinuePersistQueue &&
         queuedSerializedWorkspaceRef.current &&
         queuedSerializedWorkspaceRef.current !== lastPersistedValueRef.current
       ) {
@@ -310,7 +378,7 @@ export function useCaseResolverState() {
       }
       setIsWorkspaceSaving(false);
     });
-  }, [toast]);
+  }, [confirm, toast]);
 
   // Sync with store
   useEffect(() => {
@@ -405,11 +473,25 @@ export function useCaseResolverState() {
     [persistedWorkspaceSnapshot, workspace]
   );
 
+  useEffect(() => {
+    if (isWorkspaceSaving) return;
+    if (isWorkspaceDirty) {
+      setWorkspaceSaveStatus((current) =>
+        current === 'conflict' || current === 'error' ? current : 'dirty'
+      );
+      return;
+    }
+    setWorkspaceSaveStatus('saved');
+    setWorkspaceSaveError(null);
+  }, [isWorkspaceDirty, isWorkspaceSaving]);
+
   const handleSaveWorkspace = useCallback((): void => {
     const normalizedWorkspace = normalizeCaseResolverWorkspace(workspace);
     const serializedWorkspace = JSON.stringify(normalizedWorkspace);
     if (serializedWorkspace === lastPersistedValueRef.current) {
       setIsWorkspaceSaving(false);
+      setWorkspaceSaveStatus('saved');
+      setWorkspaceSaveError(null);
       toast('No changes to save.', { variant: 'info' });
       return;
     }
@@ -426,11 +508,10 @@ export function useCaseResolverState() {
       pendingSaveToastRef.current = 'Case Resolver changes saved.';
     }
     setIsWorkspaceSaving(true);
+    setWorkspaceSaveStatus('saving');
+    setWorkspaceSaveError(null);
     flushWorkspacePersist();
   }, [flushWorkspacePersist, toast, workspace]);
-
-  const { confirm, ConfirmationModal } = useConfirm();
-  const { PromptInputModal } = usePrompt();
 
   const handleSelectFile = useCallback((fileId: string): void => {
     if (selectedFileId === fileId) {
@@ -559,7 +640,11 @@ export function useCaseResolverState() {
   const createFolderForCase = useCallback(
     (ownerCaseId: string, targetFolderPath: string | null): void => {
       updateWorkspace((current) => {
-        const normalizedTargetFolder = normalizeFolderPath(targetFolderPath ?? '');
+        const normalizedTargetFolder = resolveCaseScopedFolderTarget({
+          targetFolderPath,
+          ownerCaseId,
+          folderRecords: current.folderRecords,
+        });
         const existingFoldersForOwner = normalizeFolderRecords(current.folderRecords)
           .filter((record: CaseResolverFolderRecord): boolean => record.ownerCaseId === ownerCaseId)
           .map((record: CaseResolverFolderRecord): string => record.path);
@@ -594,8 +679,12 @@ export function useCaseResolverState() {
       targetFolderPath: string | null;
       runtimeDefaultDocumentFormat: 'markdown' | 'wysiwyg';
     }): void => {
-      const folder = normalizeFolderPath(targetFolderPath ?? '');
       updateWorkspace((current) => {
+        const folder = resolveCaseScopedFolderTarget({
+          targetFolderPath,
+          ownerCaseId,
+          folderRecords: current.folderRecords,
+        });
         const name = createUniqueCaseFileName({
           files: current.files,
           folder,
@@ -1109,6 +1198,7 @@ export function useCaseResolverState() {
 
   useCaseResolverStatePromptExploderSync({
     workspaceActiveFileId: workspace.activeFileId,
+    workspaceFiles: workspace.files,
     filemakerDatabase,
     caseResolverCaptureSettings,
     updateWorkspace,
@@ -1125,6 +1215,8 @@ export function useCaseResolverState() {
     updateWorkspace,
     isWorkspaceDirty,
     isWorkspaceSaving,
+    workspaceSaveStatus,
+    workspaceSaveError,
     handleSaveWorkspace,
     selectedFileId,
     setSelectedFileId,

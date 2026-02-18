@@ -40,6 +40,7 @@ import type {
 import {
   ProductImageSlot,
 } from '@/features/products/types/products-ui';
+import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import {
   productCreateSchema,
   productUpdateSchema,
@@ -50,7 +51,6 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 import type { Language } from '@/shared/types/domain/internationalization';
 import { useToast } from '@/shared/ui';
-import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 
 const PRODUCT_STUDIO_CONFIG_CACHE_TTL_MS = 30_000;
 

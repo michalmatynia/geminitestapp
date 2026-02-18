@@ -6,7 +6,6 @@ import {
   getInternationalizationProvider,
   type InternationalizationProvider,
 } from '@/features/internationalization/server';
-import { ErrorSystem } from '@/features/observability/server';
 import { conflictError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
@@ -30,52 +29,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   };
 
   const primaryProvider = await getInternationalizationProvider();
-  let currencies: unknown[] = [];
-  let primaryError: unknown = null;
-  try {
-    currencies = await readCurrencies(primaryProvider);
-  } catch (error: unknown) {
-    primaryError = error;
-    await ErrorSystem.logWarning('[currencies.GET] Failed to read primary provider.', {
-      service: 'currencies.GET',
-      error,
-      primaryProvider,
-    });
-  }
-
-  if (currencies.length === 0) {
-    const fallbackProvider: InternationalizationProvider =
-      primaryProvider === 'prisma' ? 'mongodb' : 'prisma';
-    const canReadFallback =
-      fallbackProvider === 'mongodb'
-        ? Boolean(process.env['MONGODB_URI'])
-        : Boolean(process.env['DATABASE_URL']);
-    if (canReadFallback) {
-      try {
-        const fallbackCurrencies = await readCurrencies(fallbackProvider);
-        if (fallbackCurrencies.length > 0) {
-          await ErrorSystem.logWarning('[currencies.GET] Primary provider returned empty result; using fallback provider.', {
-            service: 'currencies.GET',
-            primaryProvider,
-            fallbackProvider,
-            fallbackCount: fallbackCurrencies.length,
-          });
-          return NextResponse.json(fallbackCurrencies);
-        }
-      } catch (error: unknown) {
-        await ErrorSystem.logWarning('[currencies.GET] Failed to read fallback provider.', {
-          service: 'currencies.GET',
-          error,
-          primaryProvider,
-          fallbackProvider,
-        });
-      }
-    }
-  }
-
-  if (primaryError && currencies.length === 0) {
-    throw primaryError;
-  }
+  const currencies = await readCurrencies(primaryProvider);
 
   return NextResponse.json(currencies);
 }

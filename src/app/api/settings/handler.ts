@@ -5,6 +5,11 @@ import { z } from 'zod';
 
 import { upsertAiPathsSetting } from '@/features/ai/ai-paths/server';
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/server';
+import {
+  FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
+  FILE_STORAGE_SOURCE_SETTING_KEY,
+} from '@/features/files/constants/storage-settings';
+import { invalidateFileStorageSettingsCache } from '@/features/files/services/storage/file-storage-service';
 import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import { internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -525,6 +530,7 @@ export async function GET_handler(
     await ErrorSystem.logInfo('[settings] GET /api/settings', { service: 'api/settings' });
   }
   const scope = scopeOverride ?? normalizeScope(req.nextUrl.searchParams.get('scope'));
+  const forceFresh = req.nextUrl.searchParams.get('fresh') === '1';
   
   // Use no-store for settings to ensure freshness
   const SETTINGS_CACHE_CONTROL = 'no-store';
@@ -602,6 +608,35 @@ export async function GET_handler(
     attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0 });
     return response;
   };
+  if (forceFresh) {
+    const timings: Record<string, number | null | undefined> = {};
+    let data: SettingRecord[];
+    try {
+      data = await withSettingsScopeTimeout(
+        scope,
+        'fresh fetch',
+        fetchAndCacheSettings(scope, timings)
+      );
+    } catch (error) {
+      if (isSettingsTimeoutError(error)) {
+        return await buildTimeoutFallbackResponse(error.message);
+      }
+      throw error;
+    }
+    if (shouldLogTiming()) {
+      await ErrorSystem.logInfo('[settings] cache bypass', {
+        service: 'api/settings',
+        scope,
+        status: 'fresh',
+      });
+    }
+    const response = NextResponse.json(data, {
+      headers: { 'Cache-Control': SETTINGS_CACHE_CONTROL, 'X-Cache': 'fresh' },
+    });
+    await attachProviderHeader(response);
+    attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0, ...timings });
+    return response;
+  }
   const cached = getCachedSettings(scope);
   if (cached) {
     if (shouldLogTiming()) {
@@ -817,12 +852,17 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     invalidateAppDbProviderCache();
   }
   if (
+    setting.key === FILE_STORAGE_SOURCE_SETTING_KEY ||
+    setting.key === FASTCOMET_STORAGE_CONFIG_SETTING_KEY
+  ) {
+    invalidateFileStorageSettingsCache();
+  }
+  if (
     setting.key === DATABASE_ENGINE_POLICY_KEY ||
     setting.key === DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY ||
     setting.key === DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY ||
     setting.key === DATABASE_ENGINE_BACKUP_SCHEDULE_KEY ||
-    setting.key === DATABASE_ENGINE_OPERATION_CONTROLS_KEY ||
-    setting.key === 'collection_provider_map'
+    setting.key === DATABASE_ENGINE_OPERATION_CONTROLS_KEY
   ) {
     invalidateDatabaseEnginePolicyCache();
     invalidateCollectionProviderMapCache();

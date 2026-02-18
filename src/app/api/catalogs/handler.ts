@@ -31,53 +31,9 @@ const catalogSchema = z.object({
  */
 export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const provider = await getProductDataProvider();
-  let activeProvider = provider;
   let catalogs = await (await getCatalogRepository(provider)).listCatalogs();
 
-  if (catalogs.length === 0) {
-    const fallbackProvider = provider === 'prisma' ? 'mongodb' : 'prisma';
-    const canReadFallback =
-      fallbackProvider === 'mongodb'
-        ? Boolean(process.env['MONGODB_URI'])
-        : Boolean(process.env['DATABASE_URL']);
-
-    if (canReadFallback) {
-      try {
-        const fallbackCatalogs = await (await getCatalogRepository(fallbackProvider)).listCatalogs();
-        if (fallbackCatalogs.length > 0) {
-          activeProvider = fallbackProvider;
-          catalogs = fallbackCatalogs;
-          await logSystemEvent({
-            level: 'warn',
-            message: '[catalogs.GET] Primary provider returned empty result; using fallback provider.',
-            source: 'catalogs.GET',
-            request: req,
-            requestId: ctx.requestId,
-            context: {
-              primaryProvider: provider,
-              fallbackProvider,
-              fallbackCount: fallbackCatalogs.length,
-            },
-          });
-        }
-      } catch (error: unknown) {
-        await logSystemEvent({
-          level: 'warn',
-          message: '[catalogs.GET] Failed to read fallback provider.',
-          source: 'catalogs.GET',
-          request: req,
-          requestId: ctx.requestId,
-          error,
-          context: {
-            primaryProvider: provider,
-            fallbackProvider,
-          },
-        });
-      }
-    }
-  }
-
-  if (activeProvider === 'mongodb' && catalogs.length > 0) {
+  if (provider === 'mongodb' && catalogs.length > 0) {
     try {
       const mongo = await getMongoDb();
       const mongoLanguages = await mongo
@@ -154,7 +110,7 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
         error,
         request: req,
         requestId: ctx.requestId,
-        context: { provider: activeProvider },
+        context: { provider },
       });
     }
   }
@@ -223,4 +179,3 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   });
   return NextResponse.json(catalog);
 }
-

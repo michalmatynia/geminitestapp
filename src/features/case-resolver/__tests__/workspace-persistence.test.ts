@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CASE_RESOLVER_WORKSPACE_KEY, createDefaultCaseResolverWorkspace } from '@/features/case-resolver/settings';
 import {
+  fetchCaseResolverWorkspaceSnapshot,
   getCaseResolverWorkspaceRevision,
   persistCaseResolverWorkspaceSnapshot,
   stampCaseResolverWorkspaceMutation,
@@ -111,5 +112,29 @@ describe('case-resolver workspace persistence', () => {
       expect(result.idempotent).toBe(true);
       expect(result.workspace.lastMutationId).toBe('mutation-repeat');
     }
+  });
+
+  it('requests fresh settings snapshots for workspace recovery reads', async () => {
+    const workspace = createDefaultCaseResolverWorkspace();
+    const fetchMock = vi.fn().mockResolvedValue(
+      toJsonResponse(200, [
+        {
+          key: CASE_RESOLVER_WORKSPACE_KEY,
+          value: JSON.stringify(workspace),
+        },
+      ])
+    );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const result = await fetchCaseResolverWorkspaceSnapshot('test_source');
+
+    expect(result).not.toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('/api/settings?scope=light&fresh=1');
+    expect(options).toMatchObject({
+      method: 'GET',
+      cache: 'no-store',
+    });
   });
 });

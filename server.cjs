@@ -67,16 +67,6 @@ async function getLoggingTools() {
   return loggingToolsCache;
 }
 
-// Keep fast/default dev tooling unless explicitly opting into legacy polling watchers.
-if (dev && process.env.FORCE_LEGACY_DEV_WATCHERS === 'true') {
-  if (!process.env.WATCHPACK_POLLING) {
-    process.env.WATCHPACK_POLLING = 'true';
-  }
-  if (!process.env.CHOKIDAR_USEPOLLING) {
-    process.env.CHOKIDAR_USEPOLLING = '1';
-  }
-}
-
 const next = require('next');
 const app = next({ dev });
 const handle = app.getRequestHandler();

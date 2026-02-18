@@ -760,7 +760,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         const currentSerialized = JSON.stringify(current);
         if (latestSerialized === currentSerialized) return current;
         const currentRevision = getCaseResolverWorkspaceRevision(current);
-        if (latestRevision < currentRevision) return current;
+        if (latestRevision <= currentRevision) return current;
         lastPersistedWorkspaceValueRef.current = latestSerialized;
         lastPersistedWorkspaceRevisionRef.current = latestRevision;
         logCaseResolverWorkspaceEvent({

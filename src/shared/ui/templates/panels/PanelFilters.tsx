@@ -4,17 +4,10 @@ import { Search, X } from 'lucide-react';
 import React, { useState, useCallback, useEffect } from 'react';
 
 
-import { Button, Label } from '@/shared/ui';
+import { Button, Label, SelectSimple } from '@/shared/ui';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Input } from '@/shared/ui/input';
 import { MultiSelect } from '@/shared/ui/multi-select';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/ui/select';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { FilterField } from './types';
@@ -241,18 +234,15 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
       return (
         <div style={containerStyle} className='flex flex-col gap-1'>
           <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>{field.label}</Label>
-          <Select value={getSingleSelectValue(value)} onValueChange={(val) => onChange(val)}>
-            <SelectTrigger className='h-8' aria-label={field.label}>
-              <SelectValue placeholder={field.placeholder} />
-            </SelectTrigger>
-            <SelectContent>
-              {field.options?.map((option) => (
-                <SelectItem key={option.value} value={String(option.value)}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SelectSimple
+            size='sm'
+            value={getSingleSelectValue(value)}
+            onValueChange={(val) => onChange(val)}
+            options={options}
+            placeholder={field.placeholder}
+            triggerClassName='h-8'
+            ariaLabel={field.label}
+          />
         </div>
       );
     }

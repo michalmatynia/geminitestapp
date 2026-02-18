@@ -12,13 +12,13 @@ import type {
   ProductParameterValue,
 } from '@/features/products/types';
 import type { ProductImageSlot } from '@/features/products/types/products-ui';
+import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
 import { delay } from '@/shared/utils';
 
 import { invalidateProductsAndCounts } from './productCache';
 import { useCreateProductMutation, useUpdateProductMutation } from './useProductData';
-import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 
 
 import type { BaseSyntheticEvent } from 'react';

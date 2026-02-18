@@ -10,7 +10,7 @@ import type {
   InventoryOption,
   Template,
 } from '@/features/data-import-export/types/imports';
-import { Button, Input, Label, Checkbox, Pagination, SelectSimple, DataTable, Badge } from '@/shared/ui';
+import { Button, Input, Label, Checkbox, Pagination, SelectSimple, DataTable, Badge, SearchInput } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -594,23 +594,33 @@ export function ImportTab(): React.JSX.Element {
             </p>
           </div>
           <div className='flex flex-wrap items-center gap-2'>
-            <Input
+            <SearchInput
               value={importNameSearch}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                 setImportNameSearch(event.target.value);
                 setImportListPage(1);
               }}
+              onClear={() => {
+                setImportNameSearch('');
+                setImportListPage(1);
+              }}
               placeholder='Search name...'
-              className='h-8 w-48 border-border bg-gray-900 text-xs text-white placeholder:text-gray-500'
+              className='w-48'
+              size='sm'
             />
-            <Input
+            <SearchInput
               value={importSkuSearch}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                 setImportSkuSearch(event.target.value);
                 setImportListPage(1);
               }}
+              onClear={() => {
+                setImportSkuSearch('');
+                setImportListPage(1);
+              }}
               placeholder='Search SKU...'
-              className='h-8 w-40 border-border bg-gray-900 text-xs text-white placeholder:text-gray-500'
+              className='w-40'
+              size='sm'
             />
             <SelectSimple size='sm'
               value={uniqueOnly ? 'unique' : 'all'}

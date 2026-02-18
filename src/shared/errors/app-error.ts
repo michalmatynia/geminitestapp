@@ -43,10 +43,6 @@ export const AppErrorCodes = {
   apiKeyInvalid: 'API_KEY_INVALID',
   webhookFailed: 'WEBHOOK_FAILED',
   
-  // Legacy support
-  VALIDATION_ERROR: 'VALIDATION_ERROR',
-  NOT_FOUND: 'NOT_FOUND',
-  UNAUTHORIZED: 'UNAUTHORIZED',
 } as const;
 
 export class AppError extends Error {

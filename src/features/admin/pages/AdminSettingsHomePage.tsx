@@ -11,6 +11,7 @@ import {
   Type,
   Palette,
   Folder,
+  HardDrive,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -110,6 +111,15 @@ const settings: SettingsOption[] = [
     description: 'Schedule background sync and manage offline mutations.',
     color: 'blue',
     bgColor: 'bg-blue-500/10',
+  },
+  {
+    id: 'storage',
+    href: '/admin/settings/storage',
+    icon: HardDrive,
+    title: 'File Storage',
+    description: 'Switch file source between local uploads and FastComet.',
+    color: 'cyan',
+    bgColor: 'bg-cyan-500/10',
   },
 ];
 

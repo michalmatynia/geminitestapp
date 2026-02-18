@@ -1,9 +1,7 @@
-import fs from 'fs/promises';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getDiskPathFromPublicPath, getImageFileRepository } from '@/features/files/server';
+import { deleteFileFromStorage, getImageFileRepository } from '@/features/files/server';
 import { parseJsonBody } from '@/features/products/server';
 import { notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -26,16 +24,7 @@ export async function DELETE_handler(
     throw notFoundError('File not found');
   }
 
-  // Physical file deletion
-  if (imageFile) {
-    try {
-      await fs.unlink(getDiskPathFromPublicPath(imageFile.filepath));
-    } catch (error: unknown) {
-      if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
-        throw error;
-      }
-    }
-  }
+  await deleteFileFromStorage(imageFile.filepath);
 
   await imageFileRepository.deleteImageFile(id);
 

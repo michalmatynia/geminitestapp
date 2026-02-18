@@ -11,6 +11,7 @@ import {
 import type { AiNode } from '@/features/ai/ai-paths/lib';
 
 export type SelectionToolMode = 'pan' | 'select';
+export type SelectionScopeMode = 'portion' | 'wiring';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -21,6 +22,7 @@ export interface SelectionState {
   selectedNodeIds: string[];
   selectedEdgeId: string | null;
   selectionToolMode: SelectionToolMode;
+  selectionScopeMode: SelectionScopeMode;
   configOpen: boolean;
   nodeConfigDirty: boolean;
   nodeConfigDraft: AiNode | null;
@@ -36,6 +38,7 @@ export interface SelectionActions {
   clearNodeSelection: () => void;
   selectEdge: (edgeId: string | null) => void;
   setSelectionToolMode: (mode: SelectionToolMode) => void;
+  setSelectionScopeMode: (mode: SelectionScopeMode) => void;
   setConfigOpen: (open: boolean) => void;
   setNodeConfigDirty: (dirty: boolean) => void;
   setNodeConfigDraft: (draft: AiNode | null) => void;
@@ -70,6 +73,8 @@ export function SelectionProvider({
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [selectionToolMode, setSelectionToolModeState] =
     useState<SelectionToolMode>('pan');
+  const [selectionScopeMode, setSelectionScopeModeState] =
+    useState<SelectionScopeMode>('portion');
   const [configOpen, setConfigOpenState] = useState(false);
   const [nodeConfigDirty, setNodeConfigDirtyState] = useState(false);
   const [nodeConfigDraft, setNodeConfigDraftState] = useState<AiNode | null>(null);
@@ -159,6 +164,7 @@ export function SelectionProvider({
         }
       },
       setSelectionToolMode: setSelectionToolModeState,
+      setSelectionScopeMode: setSelectionScopeModeState,
       setConfigOpen: setConfigOpenState,
       setNodeConfigDirty: setNodeConfigDirtyState,
       setNodeConfigDraft: setNodeConfigDraftState,
@@ -181,6 +187,7 @@ export function SelectionProvider({
       selectedNodeIds,
       selectedEdgeId,
       selectionToolMode,
+      selectionScopeMode,
       configOpen,
       nodeConfigDirty,
       nodeConfigDraft,
@@ -191,6 +198,7 @@ export function SelectionProvider({
       selectedNodeIds,
       selectedEdgeId,
       selectionToolMode,
+      selectionScopeMode,
       configOpen,
       nodeConfigDirty,
       nodeConfigDraft,

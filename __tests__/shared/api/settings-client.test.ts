@@ -69,18 +69,17 @@ describe('settings-client cache guards', () => {
     );
   });
 
-  it('falls back to light scope settings when lite endpoint returns 404', async () => {
-    const settingsPayload = [{ key: 'theme', value: 'dark' }];
+  it('returns empty result when lite endpoint returns 404', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(new Response(null, { status: 404 }))
-      .mockResolvedValueOnce(buildResponse(settingsPayload));
+      .mockResolvedValue(buildResponse({ ok: true }))
+      .mockResolvedValueOnce(new Response(null, { status: 404 }));
     global.fetch = fetchMock;
 
     const { fetchLiteSettingsCached } = await import('@/shared/api/settings-client');
     const result = await fetchLiteSettingsCached();
 
-    expect(result).toEqual(settingsPayload);
+    expect(result).toEqual([]);
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
       '/api/settings/lite',
@@ -89,28 +88,23 @@ describe('settings-client cache guards', () => {
         credentials: 'include',
       })
     );
-    expect(fetchMock).toHaveBeenNthCalledWith(
-      2,
-      '/api/settings?scope=light',
-      expect.objectContaining({
-        cache: 'default',
-        credentials: 'include',
-      })
-    );
   });
 
-  it('uses no-store fallback request when bypassCache is true and lite endpoint is missing', async () => {
+  it('reuses lite cache when refresh fails', async () => {
     const settingsPayload = [{ key: 'theme', value: 'dark' }];
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(new Response(null, { status: 404 }))
-      .mockResolvedValueOnce(buildResponse(settingsPayload));
+      .mockResolvedValue(buildResponse({ ok: true }))
+      .mockResolvedValueOnce(buildResponse(settingsPayload))
+      .mockResolvedValueOnce(new Response(null, { status: 500 }));
     global.fetch = fetchMock;
 
     const { fetchLiteSettingsCached } = await import('@/shared/api/settings-client');
-    const result = await fetchLiteSettingsCached({ bypassCache: true });
+    const first = await fetchLiteSettingsCached({ bypassCache: true });
+    const second = await fetchLiteSettingsCached({ bypassCache: true });
 
-    expect(result).toEqual(settingsPayload);
+    expect(first).toEqual(settingsPayload);
+    expect(second).toEqual(settingsPayload);
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
       '/api/settings/lite',
@@ -121,7 +115,7 @@ describe('settings-client cache guards', () => {
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
-      '/api/settings?scope=light',
+      '/api/settings/lite',
       expect.objectContaining({
         cache: 'no-store',
         credentials: 'include',

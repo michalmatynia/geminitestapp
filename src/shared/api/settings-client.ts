@@ -171,11 +171,6 @@ async function fetchLiteSettingsFromApi(bypassCache: boolean): Promise<SettingRe
       credentials: 'include',
     });
 
-    if (res.status === 404) {
-      // Compatibility path for environments (notably tests/mocks) that only expose /api/settings.
-      return fetchSettingsFromApi(bypassCache, 'light');
-    }
-
     if (!res.ok) {
       throw new Error(`Failed to fetch lite settings (${res.status})`);
     }

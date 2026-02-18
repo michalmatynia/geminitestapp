@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { defaultPromptEngineSettings } from '@/features/prompt-engine/settings';
+import {
+  defaultPromptEngineSettings,
+  type PromptValidationRule,
+} from '@/features/prompt-engine/settings';
 import { explodePromptText } from '@/features/prompt-exploder/parser';
 import { getPromptExploderScopedRules } from '@/features/prompt-exploder/pattern-pack';
 
@@ -370,5 +373,68 @@ Z poważaniem,`;
     const uzasadnienieBody =
       uzasadnienieSegment?.raw || uzasadnienieSegment?.text || '';
     expect(uzasadnienieBody.startsWith('Uzasadnienie')).toBe(false);
+  });
+
+  it('applies structural fallback segmentation for case resolver prompts without runtime heading rules', () => {
+    const prompt = `Szczecin 25.01.2026
+Michał Matynia
+Fioletowa 71/2
+70-781 Szczecin
+Polska
+Inspektorat ZUS w Gryficach
+Dąbskiego 5
+72-300 Gryfice
+Wniosek o umorzenie zadłużenia lub korektę rozliczeń
+Dotyczy: postępowanie administracyjne ZUS O/Szczecin nr 390000/71/RKS3/2026/282
+Niniejszym wnoszę o umorzenie powstałego zadłużenia.
+Uzasadnienie
+Przez kilka lat nie nastąpiło skuteczne doręczenie informacji o zadłużeniu.
+Na zakończenie, na podstawie art. 73 § 1 KPA, wnoszę o dostęp do akt sprawy.
+Z poważaniem,`;
+
+    const fallbackOnlyHeadingRule: PromptValidationRule = {
+      kind: 'regex',
+      id: 'segment.case_resolver.heading.synthetic_fallback_only',
+      enabled: true,
+      severity: 'info',
+      title: 'Synthetic fallback heading',
+      description: null,
+      pattern: '^$a',
+      flags: 'i',
+      message: 'synthetic',
+      similar: [],
+      appliesToScopes: ['case_resolver_prompt_exploder'],
+      promptExploderTreatAsHeading: true,
+      promptExploderSegmentType: 'assigned_text',
+      promptExploderConfidenceBoost: 0,
+      promptExploderPriority: 0,
+    };
+
+    const document = explodePromptText({
+      prompt,
+      validationRules: [fallbackOnlyHeadingRule],
+      validationScope: 'case_resolver_prompt_exploder',
+    });
+
+    expect(document.segments.length).toBeGreaterThan(3);
+    const dotyczySegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes('Dotyczy: postępowanie administracyjne')
+    );
+    const bodySegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes('Niniejszym wnoszę o umorzenie')
+    );
+    const uzasadnienieSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes('Przez kilka lat nie nastąpiło skuteczne')
+    );
+    const closingSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes('Na zakończenie, na podstawie art. 73 § 1 KPA')
+    );
+    expect(dotyczySegment).toBeDefined();
+    expect(bodySegment).toBeDefined();
+    expect(uzasadnienieSegment).toBeDefined();
+    expect(closingSegment).toBeDefined();
+    expect(dotyczySegment?.id).not.toBe(bodySegment?.id);
+    expect(bodySegment?.id).not.toBe(uzasadnienieSegment?.id);
+    expect(uzasadnienieSegment?.id).not.toBe(closingSegment?.id);
   });
 });

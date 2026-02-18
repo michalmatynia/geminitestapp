@@ -174,6 +174,7 @@ const resolvePostProductionRoute = (
   const warnings: string[] = [];
   const modelSupportsFullSequence = supportsImageSequenceGeneration(input.modelId);
   const sequencerEnabled = input.sequencing.enabled && input.sequencing.runViaSequence;
+  const hasConfiguredSequenceSteps = input.sequencing.sequenceStepCount > 0;
 
   if (sequencerEnabled && PRODUCT_STUDIO_STRICT_SEQUENCE_MODE) {
     if (
@@ -193,6 +194,42 @@ const resolvePostProductionRoute = (
   }
 
   if (!sequencerEnabled) {
+    if (
+      hasConfiguredSequenceSteps &&
+      input.requestedMode === 'studio_native_sequencer_prior_generation'
+    ) {
+      warnings.push(
+        'Native Sequencer mode is selected. Running the configured Image Studio sequence stack even though sequencing toggle appears disabled in persisted project settings.',
+      );
+      warnings.push(
+        'Open Image Studio project settings and click "Save Defaults" in Sequencing to persist the enabled state.',
+      );
+      return {
+        executionRoute: 'studio_native_sequencer_prior_generation',
+        runKind: 'sequence',
+        resolvedMode: 'studio_native_sequencer_prior_generation',
+        warnings,
+      };
+    }
+
+    if (
+      hasConfiguredSequenceSteps &&
+      input.requestedMode === 'studio_prompt_then_sequence'
+    ) {
+      warnings.push(
+        'Prompt then Sequencer mode is selected. Running configured sequence steps despite persisted sequencing toggle being disabled.',
+      );
+      warnings.push(
+        'Open Image Studio project settings and click "Save Defaults" in Sequencing to persist the enabled state.',
+      );
+      return {
+        executionRoute: 'studio_sequencer',
+        runKind: 'sequence',
+        resolvedMode: 'studio_prompt_then_sequence',
+        warnings,
+      };
+    }
+
     return {
       executionRoute: 'ai_direct_generation',
       runKind: 'generation',
@@ -976,14 +1013,6 @@ export async function sendProductImageToStudio(params: {
   const requestedSequenceMode = normalizeProductStudioSequenceGenerationMode(
     params.sequenceGenerationMode ?? sequenceGenerationMode,
   );
-  if (
-    requestedSequenceMode === 'studio_native_sequencer_prior_generation' &&
-    (!sequencing.enabled || !sequencing.runViaSequence)
-  ) {
-    throw badRequestError(
-      'Native Image Studio sequence mode is selected, but project sequencing is disabled. Enable sequencing steps in Image Studio project settings.',
-    );
-  }
   const sourceImage = toProductImageFileSource(
     resolved.product.images[resolved.imageSlotIndex]?.imageFile,
   );

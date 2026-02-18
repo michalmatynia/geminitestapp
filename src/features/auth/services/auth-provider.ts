@@ -67,31 +67,13 @@ const warnAuthProviderDrift = (
 const ensureAvailableAuthProvider = (
   provider: AuthDbProvider,
   options: {
-    allowAutomaticFallback: boolean;
     source: 'mongo-setting' | 'prisma-setting' | 'route-map' | 'fallback';
   }
 ): AuthDbProvider => {
   if (isPrimaryProviderConfigured(provider)) return provider;
 
-  if (!options.allowAutomaticFallback) {
-    throw internalError(
-      `Auth provider "${provider}" is not configured in environment variables and automatic fallback is disabled by Database Engine policy.`
-    );
-  }
-
-  const fallback: AuthDbProvider = provider === 'prisma' ? 'mongodb' : 'prisma';
-  if (isPrimaryProviderConfigured(fallback)) {
-    void ErrorSystem.logWarning('[auth-provider] Requested provider unavailable; using fallback provider.', {
-      service: 'auth-provider',
-      requestedProvider: provider,
-      fallbackProvider: fallback,
-      source: options.source,
-    });
-    return fallback;
-  }
-
   throw internalError(
-    `Auth provider "${provider}" is unavailable and no fallback provider is configured.`
+    `Auth provider "${provider}" is not configured in environment variables.`
   );
 };
 
@@ -103,7 +85,6 @@ export const getAuthDataProvider = async (): Promise<AuthDbProvider> => {
   if (mongoSetting) {
     warnAuthProviderDrift(appProvider, mongoSetting, 'mongo-setting');
     return ensureAvailableAuthProvider(mongoSetting, {
-      allowAutomaticFallback: policy.allowAutomaticFallback,
       source: 'mongo-setting',
     });
   }
@@ -111,7 +92,6 @@ export const getAuthDataProvider = async (): Promise<AuthDbProvider> => {
   if (prismaSetting) {
     warnAuthProviderDrift(appProvider, prismaSetting, 'prisma-setting');
     return ensureAvailableAuthProvider(prismaSetting, {
-      allowAutomaticFallback: policy.allowAutomaticFallback,
       source: 'prisma-setting',
     });
   }
@@ -125,7 +105,6 @@ export const getAuthDataProvider = async (): Promise<AuthDbProvider> => {
     }
     warnAuthProviderDrift(appProvider, routeProvider, 'route-map');
     return ensureAvailableAuthProvider(routeProvider, {
-      allowAutomaticFallback: policy.allowAutomaticFallback,
       source: 'route-map',
     });
   }
@@ -139,7 +118,6 @@ export const getAuthDataProvider = async (): Promise<AuthDbProvider> => {
   const fallbackProvider: AuthDbProvider = appProvider;
   warnAuthProviderDrift(appProvider, fallbackProvider, 'fallback');
   return ensureAvailableAuthProvider(fallbackProvider, {
-    allowAutomaticFallback: policy.allowAutomaticFallback,
     source: 'fallback',
   });
 };

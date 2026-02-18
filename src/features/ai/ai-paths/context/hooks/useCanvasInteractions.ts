@@ -46,6 +46,10 @@ type SubgraphClipboardPayload = {
   bounds: { minX: number; minY: number; maxX: number; maxY: number };
 };
 
+type HandleSelectNodeOptions = {
+  toggle?: boolean;
+};
+
 const SUBGRAPH_CLIPBOARD_VERSION = 1 as const;
 const SUBGRAPH_CLIPBOARD_STORAGE_KEY = 'ai-paths:canvas-subgraph-clipboard:v1';
 const PASTE_OFFSET_STEP = 28;
@@ -139,11 +143,13 @@ export function useCanvasInteractions(args?: {
     selectedNodeIds,
     selectedEdgeId,
     selectionToolMode,
+    selectionScopeMode,
   } = useSelectionState();
   const {
     selectNode,
     setNodeSelection,
     selectEdge,
+    toggleNodeSelection,
   } = useSelectionActions();
 
   // Context: Runtime
@@ -158,6 +164,12 @@ export function useCanvasInteractions(args?: {
 
   // Refs for throttling and timers
   const pendingDragRef = useRef<{ nodeId: string; x: number; y: number } | null>(null);
+  const dragSelectionRef = useRef<{
+    basePositions: Map<string, { x: number; y: number }>;
+    anchorCanvasX: number;
+    anchorCanvasY: number;
+  } | null>(null);
+  const lastPointerCanvasPosRef = useRef<{ x: number; y: number } | null>(null);
   const rafIdRef = useRef<number | null>(null);
   const lockedToastAtRef = useRef<number>(0);
   const [marqueeSelection, setMarqueeSelection] =
@@ -276,6 +288,20 @@ export function useCanvasInteractions(args?: {
     updateView({ x: clamped.x, y: clamped.y, scale: clampedScale });
   }, [viewportRef, updateView]);
 
+  const updateLastPointerCanvasPosFromClient = useCallback(
+    (clientX: number, clientY: number): { x: number; y: number } | null => {
+      const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
+      if (!viewport) return null;
+      const next = {
+        x: (clientX - viewport.left - view.x) / view.scale,
+        y: (clientY - viewport.top - view.y) / view.scale,
+      };
+      lastPointerCanvasPosRef.current = next;
+      return next;
+    },
+    [view.scale, view.x, view.y, viewportRef]
+  );
+
   const getPortPosition = useCallback((
     node: AiNode,
     portName: string | undefined,
@@ -344,38 +370,200 @@ export function useCanvasInteractions(args?: {
       };
     }, [activePathId, edges, nodes, resolveActiveNodeSelectionIds]);
 
+  const writeClipboardPayload = useCallback(
+    async (payload: SubgraphClipboardPayload): Promise<void> => {
+      inMemorySubgraphClipboard = payload;
+      try {
+        window.localStorage.setItem(
+          SUBGRAPH_CLIPBOARD_STORAGE_KEY,
+          JSON.stringify(payload)
+        );
+      } catch {
+        // Ignore localStorage write failures.
+      }
+      const serialized = JSON.stringify(payload);
+      try {
+        if (
+          typeof navigator !== 'undefined' &&
+          navigator.clipboard &&
+          typeof navigator.clipboard.writeText === 'function'
+        ) {
+          await navigator.clipboard.writeText(serialized);
+        }
+      } catch {
+        // Clipboard API can be blocked in some contexts; in-memory clipboard still works.
+      }
+    },
+    []
+  );
+
+  const removeNodesAndConnectedEdges = useCallback(
+    (nodeIds: string[]): { removedNodeCount: number; removedEdgeCount: number } => {
+      const resolvedNodeIds = Array.from(
+        new Set(
+          nodeIds
+            .map((nodeId: string) => nodeId.trim())
+            .filter((nodeId: string): boolean => nodeId.length > 0)
+        )
+      );
+      if (resolvedNodeIds.length === 0) {
+        return { removedNodeCount: 0, removedEdgeCount: 0 };
+      }
+      const nodeIdSet = new Set(resolvedNodeIds);
+      const removedEdges = edges.filter(
+        (edge: Edge): boolean =>
+          nodeIdSet.has(edge.from) || nodeIdSet.has(edge.to)
+      );
+      const remainingEdges = edges.filter(
+        (edge: Edge): boolean =>
+          !nodeIdSet.has(edge.from) && !nodeIdSet.has(edge.to)
+      );
+      setNodes((prev: AiNode[]): AiNode[] =>
+        prev.filter((node: AiNode): boolean => !nodeIdSet.has(node.id))
+      );
+      setEdges(remainingEdges);
+      setRuntimeState((prev: RuntimeState): RuntimeState =>
+        pruneRuntimeInputsInternal(prev, removedEdges, remainingEdges)
+      );
+      const nextSelection = resolveActiveNodeSelectionIds().filter(
+        (nodeId: string): boolean => !nodeIdSet.has(nodeId)
+      );
+      setNodeSelection(nextSelection);
+      selectEdge(null);
+      return {
+        removedNodeCount: resolvedNodeIds.length,
+        removedEdgeCount: removedEdges.length,
+      };
+    },
+    [
+      edges,
+      pruneRuntimeInputsInternal,
+      resolveActiveNodeSelectionIds,
+      selectEdge,
+      setEdges,
+      setNodeSelection,
+      setNodes,
+      setRuntimeState,
+    ]
+  );
+
+  const pasteClipboardPayload = useCallback(
+    (
+      payload: SubgraphClipboardPayload
+    ): { pastedNodeCount: number; pastedEdgeCount: number } => {
+      if (payload.nodes.length === 0) {
+        return { pastedNodeCount: 0, pastedEdgeCount: 0 };
+      }
+      const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
+      const viewportCenterX = viewport ? viewport.width / 2 : 0;
+      const viewportCenterY = viewport ? viewport.height / 2 : 0;
+      const cursorAnchor = lastPointerCanvasPosRef.current;
+      const targetCanvasCenterX = cursorAnchor
+        ? cursorAnchor.x
+        : (viewportCenterX - view.x) / view.scale;
+      const targetCanvasCenterY = cursorAnchor
+        ? cursorAnchor.y
+        : (viewportCenterY - view.y) / view.scale;
+      const boundsWidth = Math.max(1, payload.bounds.maxX - payload.bounds.minX);
+      const boundsHeight = Math.max(1, payload.bounds.maxY - payload.bounds.minY);
+      const pasteOffset = pasteSequence * PASTE_OFFSET_STEP;
+      pasteSequence += 1;
+
+      const existingNodeIdSet = new Set(nodes.map((node: AiNode): string => node.id));
+      const existingEdgeIdSet = new Set(edges.map((edge: Edge): string => edge.id));
+      const oldToNewNodeId = new Map<string, string>();
+
+      const generateNodeId = (): string => {
+        let candidate = '';
+        do {
+          candidate = `node-${Math.random().toString(36).slice(2, 10)}`;
+        } while (existingNodeIdSet.has(candidate));
+        return candidate;
+      };
+
+      const generateEdgeId = (): string => {
+        let candidate = '';
+        do {
+          candidate = `edge-${Math.random().toString(36).slice(2, 10)}`;
+        } while (existingEdgeIdSet.has(candidate));
+        existingEdgeIdSet.add(candidate);
+        return candidate;
+      };
+
+      const offsetX = targetCanvasCenterX - boundsWidth / 2 + pasteOffset;
+      const offsetY = targetCanvasCenterY - boundsHeight / 2 + pasteOffset;
+
+      const pastedNodes = payload.nodes.map((node: AiNode): AiNode => {
+        const newNodeId = generateNodeId();
+        oldToNewNodeId.set(node.id, newNodeId);
+        existingNodeIdSet.add(newNodeId);
+        const relativeX = node.position.x - payload.bounds.minX;
+        const relativeY = node.position.y - payload.bounds.minY;
+        const nextX = Math.min(
+          Math.max(offsetX + relativeX, 16),
+          CANVAS_WIDTH - NODE_WIDTH - 16
+        );
+        const nextY = Math.min(
+          Math.max(offsetY + relativeY, 16),
+          CANVAS_HEIGHT - NODE_MIN_HEIGHT - 16
+        );
+        return {
+          ...cloneValue(node),
+          id: newNodeId,
+          position: { x: nextX, y: nextY },
+        };
+      });
+
+      const pastedEdges = payload.edges.reduce((acc: Edge[], edge: Edge) => {
+        const from = oldToNewNodeId.get(edge.from);
+        const to = oldToNewNodeId.get(edge.to);
+        if (!from || !to) return acc;
+        acc.push({
+          ...cloneValue(edge),
+          id: generateEdgeId(),
+          from,
+          to,
+        });
+        return acc;
+      }, []);
+
+      const nextNodes = [...nodes, ...pastedNodes];
+      const nextEdges = sanitizeEdges(nextNodes, [...edges, ...pastedEdges]);
+      setNodes(nextNodes);
+      setEdges(nextEdges);
+      setNodeSelection(pastedNodes.map((node: AiNode): string => node.id));
+      selectEdge(null);
+      return {
+        pastedNodeCount: pastedNodes.length,
+        pastedEdgeCount: pastedEdges.length,
+      };
+    },
+    [
+      edges,
+      nodes,
+      selectEdge,
+      setEdges,
+      setNodeSelection,
+      setNodes,
+      view.scale,
+      view.x,
+      view.y,
+      viewportRef,
+    ]
+  );
+
   const handleCopySelection = useCallback(async (): Promise<void> => {
     const payload = buildClipboardPayloadFromSelection();
     if (!payload) {
       toast('Select at least one node to copy.', { variant: 'info' });
       return;
     }
-    inMemorySubgraphClipboard = payload;
-    try {
-      window.localStorage.setItem(
-        SUBGRAPH_CLIPBOARD_STORAGE_KEY,
-        JSON.stringify(payload)
-      );
-    } catch {
-      // Ignore localStorage write failures.
-    }
-    const serialized = JSON.stringify(payload);
-    try {
-      if (
-        typeof navigator !== 'undefined' &&
-        navigator.clipboard &&
-        typeof navigator.clipboard.writeText === 'function'
-      ) {
-        await navigator.clipboard.writeText(serialized);
-      }
-    } catch {
-      // Clipboard API can be blocked in some contexts; in-memory clipboard still works.
-    }
+    await writeClipboardPayload(payload);
     toast(
       `Copied ${payload.nodes.length} node${payload.nodes.length === 1 ? '' : 's'} and ${payload.edges.length} wire${payload.edges.length === 1 ? '' : 's'}.`,
       { variant: 'success' }
     );
-  }, [buildClipboardPayloadFromSelection, toast]);
+  }, [buildClipboardPayloadFromSelection, toast, writeClipboardPayload]);
 
   const readClipboardPayload = useCallback(async (): Promise<SubgraphClipboardPayload | null> => {
     if (inMemorySubgraphClipboard) {
@@ -426,99 +614,68 @@ export function useCanvasInteractions(args?: {
       toast('Clipboard does not contain AI Path nodes.', { variant: 'info' });
       return;
     }
-    const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
-    const viewportCenterX = viewport ? viewport.width / 2 : 0;
-    const viewportCenterY = viewport ? viewport.height / 2 : 0;
-    const targetCanvasCenterX = (viewportCenterX - view.x) / view.scale;
-    const targetCanvasCenterY = (viewportCenterY - view.y) / view.scale;
-    const boundsWidth = Math.max(1, payload.bounds.maxX - payload.bounds.minX);
-    const boundsHeight = Math.max(1, payload.bounds.maxY - payload.bounds.minY);
-    const pasteOffset = pasteSequence * PASTE_OFFSET_STEP;
-    pasteSequence += 1;
-
-    const existingNodeIdSet = new Set(nodes.map((node: AiNode): string => node.id));
-    const existingEdgeIdSet = new Set(edges.map((edge: Edge): string => edge.id));
-    const oldToNewNodeId = new Map<string, string>();
-
-    const generateNodeId = (): string => {
-      let candidate = '';
-      do {
-        candidate = `node-${Math.random().toString(36).slice(2, 10)}`;
-      } while (existingNodeIdSet.has(candidate));
-      return candidate;
-    };
-
-    const generateEdgeId = (): string => {
-      let candidate = '';
-      do {
-        candidate = `edge-${Math.random().toString(36).slice(2, 10)}`;
-      } while (existingEdgeIdSet.has(candidate));
-      existingEdgeIdSet.add(candidate);
-      return candidate;
-    };
-
-    const offsetX = targetCanvasCenterX - boundsWidth / 2 + pasteOffset;
-    const offsetY = targetCanvasCenterY - boundsHeight / 2 + pasteOffset;
-
-    const pastedNodes = payload.nodes.map((node: AiNode): AiNode => {
-      const newNodeId = generateNodeId();
-      oldToNewNodeId.set(node.id, newNodeId);
-      existingNodeIdSet.add(newNodeId);
-      const relativeX = node.position.x - payload.bounds.minX;
-      const relativeY = node.position.y - payload.bounds.minY;
-      const nextX = Math.min(
-        Math.max(offsetX + relativeX, 16),
-        CANVAS_WIDTH - NODE_WIDTH - 16
-      );
-      const nextY = Math.min(
-        Math.max(offsetY + relativeY, 16),
-        CANVAS_HEIGHT - NODE_MIN_HEIGHT - 16
-      );
-      return {
-        ...cloneValue(node),
-        id: newNodeId,
-        position: { x: nextX, y: nextY },
-      };
-    });
-
-    const pastedEdges = payload.edges.reduce((acc: Edge[], edge: Edge) => {
-      const from = oldToNewNodeId.get(edge.from);
-      const to = oldToNewNodeId.get(edge.to);
-      if (!from || !to) return acc;
-      acc.push({
-        ...cloneValue(edge),
-        id: generateEdgeId(),
-        from,
-        to,
-      });
-      return acc;
-    }, []);
-
-    const nextNodes = [...nodes, ...pastedNodes];
-    const nextEdges = sanitizeEdges(nextNodes, [...edges, ...pastedEdges]);
-    setNodes(nextNodes);
-    setEdges(nextEdges);
-    setNodeSelection(pastedNodes.map((node: AiNode): string => node.id));
-    selectEdge(null);
+    const { pastedNodeCount, pastedEdgeCount } = pasteClipboardPayload(payload);
     toast(
-      `Pasted ${pastedNodes.length} node${pastedNodes.length === 1 ? '' : 's'} and ${pastedEdges.length} wire${pastedEdges.length === 1 ? '' : 's'}.`,
+      `Pasted ${pastedNodeCount} node${pastedNodeCount === 1 ? '' : 's'} and ${pastedEdgeCount} wire${pastedEdgeCount === 1 ? '' : 's'}.`,
       { variant: 'success' }
     );
   }, [
-    edges,
     isPathLocked,
-    nodes,
     notifyLocked,
+    pasteClipboardPayload,
     readClipboardPayload,
-    selectEdge,
-    setEdges,
-    setNodeSelection,
-    setNodes,
     toast,
-    view.scale,
-    view.x,
-    view.y,
-    viewportRef,
+  ]);
+
+  const handleCutSelection = useCallback(async (): Promise<void> => {
+    if (isPathLocked) {
+      notifyLocked();
+      return;
+    }
+    const payload = buildClipboardPayloadFromSelection();
+    if (!payload) {
+      toast('Select at least one node to cut.', { variant: 'info' });
+      return;
+    }
+    await writeClipboardPayload(payload);
+    const selectedIds = resolveActiveNodeSelectionIds();
+    const { removedNodeCount, removedEdgeCount } =
+      removeNodesAndConnectedEdges(selectedIds);
+    toast(
+      `Cut ${removedNodeCount} node${removedNodeCount === 1 ? '' : 's'} and ${removedEdgeCount} wire${removedEdgeCount === 1 ? '' : 's'}.`,
+      { variant: 'success' }
+    );
+  }, [
+    buildClipboardPayloadFromSelection,
+    isPathLocked,
+    notifyLocked,
+    removeNodesAndConnectedEdges,
+    resolveActiveNodeSelectionIds,
+    toast,
+    writeClipboardPayload,
+  ]);
+
+  const handleDuplicateSelection = useCallback((): void => {
+    if (isPathLocked) {
+      notifyLocked();
+      return;
+    }
+    const payload = buildClipboardPayloadFromSelection();
+    if (!payload) {
+      toast('Select at least one node to duplicate.', { variant: 'info' });
+      return;
+    }
+    const { pastedNodeCount, pastedEdgeCount } = pasteClipboardPayload(payload);
+    toast(
+      `Duplicated ${pastedNodeCount} node${pastedNodeCount === 1 ? '' : 's'} and ${pastedEdgeCount} wire${pastedEdgeCount === 1 ? '' : 's'}.`,
+      { variant: 'success' }
+    );
+  }, [
+    buildClipboardPayloadFromSelection,
+    isPathLocked,
+    notifyLocked,
+    pasteClipboardPayload,
+    toast,
   ]);
 
   const resolveNodesWithinMarquee = useCallback(
@@ -551,9 +708,49 @@ export function useCanvasInteractions(args?: {
     [nodes, view.scale, view.x, view.y]
   );
 
+  const resolveNodeSelectionByScope = useCallback(
+    (seedNodeIds: string[]): string[] => {
+      if (selectionScopeMode !== 'wiring' || seedNodeIds.length === 0) {
+        return seedNodeIds;
+      }
+      const seedSet = new Set(seedNodeIds);
+      const adjacency = new Map<string, Set<string>>();
+      edges.forEach((edge: Edge): void => {
+        const from = edge.from?.trim();
+        const to = edge.to?.trim();
+        if (!from || !to) return;
+        const fromNeighbors = adjacency.get(from) ?? new Set<string>();
+        fromNeighbors.add(to);
+        adjacency.set(from, fromNeighbors);
+        const toNeighbors = adjacency.get(to) ?? new Set<string>();
+        toNeighbors.add(from);
+        adjacency.set(to, toNeighbors);
+      });
+      const queue = [...seedSet];
+      const expanded = new Set(seedSet);
+      while (queue.length > 0) {
+        const current = queue.shift();
+        if (!current) continue;
+        const neighbors = adjacency.get(current);
+        if (!neighbors) continue;
+        neighbors.forEach((neighbor: string): void => {
+          if (expanded.has(neighbor)) return;
+          expanded.add(neighbor);
+          queue.push(neighbor);
+        });
+      }
+      return nodes
+        .filter((node: AiNode): boolean => expanded.has(node.id))
+        .map((node: AiNode): string => node.id);
+    },
+    [edges, nodes, selectionScopeMode]
+  );
+
   const applyMarqueeSelection = useCallback(
     (state: MarqueeSelectionState): void => {
-      const marqueeNodeIds = resolveNodesWithinMarquee(state);
+      const marqueeNodeIds = resolveNodeSelectionByScope(
+        resolveNodesWithinMarquee(state)
+      );
       const marqueeSet = new Set(marqueeNodeIds);
       const baseSet = new Set(state.baseNodeIds);
       const resolvedIds =
@@ -568,7 +765,7 @@ export function useCanvasInteractions(args?: {
       }
       setNodeSelection(resolvedIds);
     },
-    [resolveNodesWithinMarquee, setNodeSelection]
+    [resolveNodeSelectionByScope, resolveNodesWithinMarquee, setNodeSelection]
   );
 
   const selectionMarqueeRect = useMemo((): {
@@ -701,29 +898,95 @@ export function useCanvasInteractions(args?: {
     }
 
     setPointerCaptureSafe(target, pointerId);
-    const viewport = viewportRef.current?.getBoundingClientRect();
-    if (!viewport) return;
     const node = nodes.find((item) => item.id === nodeId);
     if (!node) return;
-    const canvasX = (clientX - viewport.left - view.x) / view.scale;
-    const canvasY = (clientY - viewport.top - view.y) / view.scale;
-    
+    const pointerCanvas = updateLastPointerCanvasPosFromClient(clientX, clientY);
+    if (!pointerCanvas) return;
+    const canvasX = pointerCanvas.x;
+    const canvasY = pointerCanvas.y;
+    const hasSelectionToggleModifier = event.shiftKey || event.metaKey || event.ctrlKey;
+    const isNodeSelected = selectedNodeIdSet.has(nodeId);
+    const shouldGroupDrag =
+      isNodeSelected && !hasSelectionToggleModifier && selectedNodeIdSet.size > 1;
+
+    if (!hasSelectionToggleModifier && !isNodeSelected) {
+      setNodeSelection([nodeId]);
+      selectEdge(null);
+    }
+
+    if (shouldGroupDrag) {
+      const basePositions = new Map<string, { x: number; y: number }>();
+      nodes.forEach((item: AiNode): void => {
+        if (!selectedNodeIdSet.has(item.id)) return;
+        basePositions.set(item.id, {
+          x: item.position.x,
+          y: item.position.y,
+        });
+      });
+      dragSelectionRef.current = {
+        basePositions,
+        anchorCanvasX: canvasX,
+        anchorCanvasY: canvasY,
+      };
+    } else {
+      dragSelectionRef.current = null;
+    }
+
     startDrag(nodeId, canvasX - node.position.x, canvasY - node.position.y);
-  }, [isPathLocked, nodes, view, viewportRef, startDrag, notifyLocked, confirmNodeSwitch]);
+  }, [
+    confirmNodeSwitch,
+    isPathLocked,
+    nodes,
+    notifyLocked,
+    selectEdge,
+    selectedNodeIdSet,
+    setNodeSelection,
+    startDrag,
+    updateLastPointerCanvasPosFromClient,
+  ]);
 
   const handlePointerMoveNode = useCallback((
     event: React.PointerEvent<HTMLDivElement>,
     nodeId: string
   ): void => {
     if (dragState?.nodeId !== nodeId) return;
-    const viewport = viewportRef.current?.getBoundingClientRect();
-    if (!viewport) return;
+    const pointerCanvas = updateLastPointerCanvasPosFromClient(
+      event.clientX,
+      event.clientY
+    );
+    if (!pointerCanvas) return;
+    const canvasX = pointerCanvas.x;
+    const canvasY = pointerCanvas.y;
+    const dragSelection = dragSelectionRef.current;
+    if (dragSelection && dragSelection.basePositions.size > 1) {
+      const deltaX = canvasX - dragSelection.anchorCanvasX;
+      const deltaY = canvasY - dragSelection.anchorCanvasY;
+      setNodes((prev: AiNode[]): AiNode[] =>
+        prev.map((item: AiNode): AiNode => {
+          const base = dragSelection.basePositions.get(item.id);
+          if (!base) return item;
+          const nextX = Math.min(
+            Math.max(base.x + deltaX, 16),
+            CANVAS_WIDTH - NODE_WIDTH - 16
+          );
+          const nextY = Math.min(
+            Math.max(base.y + deltaY, 16),
+            CANVAS_HEIGHT - NODE_MIN_HEIGHT - 16
+          );
+          return {
+            ...item,
+            position: { x: nextX, y: nextY },
+          };
+        })
+      );
+      return;
+    }
     const nextX = Math.min(
-      Math.max((event.clientX - viewport.left - view.x) / view.scale - dragState.offsetX, 16),
+      Math.max(canvasX - dragState.offsetX, 16),
       CANVAS_WIDTH - NODE_WIDTH - 16
     );
     const nextY = Math.min(
-      Math.max((event.clientY - viewport.top - view.y) / view.scale - dragState.offsetY, 16),
+      Math.max(canvasY - dragState.offsetY, 16),
       CANVAS_HEIGHT - NODE_MIN_HEIGHT - 16
     );
 
@@ -738,7 +1001,7 @@ export function useCanvasInteractions(args?: {
         rafIdRef.current = null;
       });
     }
-  }, [dragState, view, viewportRef, updateNode]);
+  }, [dragState, setNodes, updateLastPointerCanvasPosFromClient, updateNode]);
 
   const handlePointerUpNode = useCallback((
     event: React.PointerEvent<HTMLDivElement>,
@@ -758,10 +1021,12 @@ export function useCanvasInteractions(args?: {
       pendingDragRef.current = null;
     }
 
+    dragSelectionRef.current = null;
     endDrag();
   }, [dragState, endDrag, updateNode]);
 
   const handlePanStart = useCallback((event: React.PointerEvent<HTMLDivElement>): void => {
+    updateLastPointerCanvasPosFromClient(event.clientX, event.clientY);
     const canvasEl = canvasRef.current;
     const targetEl = event.target as Element | null;
     if (targetEl?.closest('path')) return;
@@ -813,10 +1078,12 @@ export function useCanvasInteractions(args?: {
     setNodeSelection,
     selectEdge,
     startPan,
+    updateLastPointerCanvasPosFromClient,
     viewportRef,
   ]);
 
   const handlePanMove = useCallback((event: React.PointerEvent<HTMLDivElement>): void => {
+    updateLastPointerCanvasPosFromClient(event.clientX, event.clientY);
     if (marqueeSelection) {
       const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
       if (!viewport) return;
@@ -850,6 +1117,7 @@ export function useCanvasInteractions(args?: {
     panState,
     setConnectingPos,
     updateView,
+    updateLastPointerCanvasPosFromClient,
     view,
     viewportRef,
   ]);
@@ -1106,18 +1374,54 @@ export function useCanvasInteractions(args?: {
     setRuntimeState,
   ]);
 
-  const handleSelectNode = useCallback(async (nodeId: string): Promise<void> => {
-    if (nodeId === selectedNodeId) return;
-    
-    if (confirmNodeSwitch) {
-      const result = confirmNodeSwitch(nodeId);
-      const confirmed = result instanceof Promise ? await result : result;
-      if (!confirmed) return;
-    }
-    
-    selectEdge(null);
-    selectNode(nodeId);
-  }, [selectedNodeId, selectNode, selectEdge, confirmNodeSwitch]);
+  const handleSelectNode = useCallback(
+    async (nodeId: string, options?: HandleSelectNodeOptions): Promise<void> => {
+      const shouldToggle = options?.toggle === true;
+
+      if (shouldToggle) {
+        const isAlreadySelected = selectedNodeIdSet.has(nodeId);
+        if (!isAlreadySelected && confirmNodeSwitch) {
+          const result = confirmNodeSwitch(nodeId);
+          const confirmed = result instanceof Promise ? await result : result;
+          if (!confirmed) return;
+        }
+        selectEdge(null);
+        toggleNodeSelection(nodeId);
+        return;
+      }
+
+      if (selectedNodeIdSet.has(nodeId) && selectedNodeIds.length > 1) {
+        setNodeSelection([
+          nodeId,
+          ...selectedNodeIds.filter((selectedId: string): boolean => selectedId !== nodeId),
+        ]);
+        selectEdge(null);
+        return;
+      }
+
+      if (selectedNodeId === nodeId && selectedNodeIds.length <= 1) return;
+
+      if (confirmNodeSwitch) {
+        const result = confirmNodeSwitch(nodeId);
+        const confirmed = result instanceof Promise ? await result : result;
+        if (!confirmed) return;
+      }
+
+      selectEdge(null);
+      selectNode(nodeId);
+    },
+    [
+      confirmNodeSwitch,
+      selectEdge,
+      selectNode,
+      selectedNodeId,
+      selectedNodeIdSet,
+      selectedNodeIds.length,
+      selectedNodeIds,
+      setNodeSelection,
+      toggleNodeSelection,
+    ]
+  );
 
   // ---------------------------------------------------------------------------
   // Drag & Drop Handlers
@@ -1176,6 +1480,7 @@ export function useCanvasInteractions(args?: {
     const localY = canvasRect
       ? (event.clientY - canvasRect.top) / view.scale
       : (event.clientY - viewport.top - view.y) / view.scale;
+    lastPointerCanvasPosRef.current = { x: localX, y: localY };
     
     const nextX = Math.min(Math.max(localX - NODE_WIDTH / 2, 16), CANVAS_WIDTH - NODE_WIDTH - 16);
     const nextY = Math.min(Math.max(localY - NODE_MIN_HEIGHT / 2, 16), CANVAS_HEIGHT - NODE_MIN_HEIGHT - 16);
@@ -1218,10 +1523,31 @@ export function useCanvasInteractions(args?: {
         void handlePasteSelection();
         return;
       }
+      if (modifier && event.key.toLowerCase() === 'x') {
+        if (isTypingTarget(event.target)) return;
+        event.preventDefault();
+        void handleCutSelection();
+        return;
+      }
+      if (modifier && event.key.toLowerCase() === 'd') {
+        if (isTypingTarget(event.target)) return;
+        event.preventDefault();
+        handleDuplicateSelection();
+        return;
+      }
+      if (modifier && event.key.toLowerCase() === 'a') {
+        if (isTypingTarget(event.target)) return;
+        event.preventDefault();
+        setNodeSelection(nodes.map((node: AiNode): string => node.id));
+        selectEdge(null);
+        return;
+      }
       if (event.key === 'Escape') {
         setMarqueeSelection(null);
         endConnection();
+        setNodeSelection([]);
         selectEdge(null);
+        return;
       }
       if (event.key === 'Backspace' || event.key === 'Delete') {
         if (isTypingTarget(event.target)) return;
@@ -1239,11 +1565,15 @@ export function useCanvasInteractions(args?: {
   }, [
     endConnection,
     handleCopySelection,
+    handleCutSelection,
     handleDeleteSelectedNode,
+    handleDuplicateSelection,
     handlePasteSelection,
     handleRemoveEdge,
+    nodes,
     selectedEdgeId,
     selectedNodeId,
+    setNodeSelection,
     selectEdge,
   ]);
 
@@ -1275,6 +1605,7 @@ export function useCanvasInteractions(args?: {
   useEffect(() => {
     return () => {
       if (rafIdRef.current !== null) cancelAnimationFrame(rafIdRef.current);
+      dragSelectionRef.current = null;
     };
   }, []);
 
@@ -1309,6 +1640,8 @@ export function useCanvasInteractions(args?: {
     handleDragOver,
     handleDrop,
     handleCopySelection,
+    handleCutSelection,
+    handleDuplicateSelection,
     handlePasteSelection,
     ConfirmationModal,
     // Actions

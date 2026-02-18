@@ -11,7 +11,7 @@ import { useSettingsState, useSettingsActions } from '../context/hooks/useSettin
 import { promptExploderClampNumber } from '../helpers/formatting';
 import { getPromptExploderRuntimePatternCacheSnapshot } from '../parser';
 import {
-  PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS,
+  buildPromptExploderValidationRuleStackOptions,
   promptExploderValidationStackFromBridgeSource,
   promptExploderValidatorScopeFromStack,
 } from '../validation-stack';
@@ -122,12 +122,16 @@ export function PatternRuntimePanel(): React.JSX.Element {
       : runtimeHealth.status === 'degraded'
         ? 'text-amber-300'
         : 'text-rose-300';
+  const validationStackOptions = React.useMemo(
+    () => buildPromptExploderValidationRuleStackOptions(validatorPatternLists),
+    [validatorPatternLists]
+  );
   const activeStackLabel = React.useMemo(
     () =>
-      PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS.find(
+      validationStackOptions.find(
         (option) => option.value === activeValidationRuleStack
       )?.label ?? activeValidationRuleStack,
-    [activeValidationRuleStack]
+    [activeValidationRuleStack, validationStackOptions]
   );
   const isCaseResolverStack = React.useMemo(
     () =>
@@ -236,8 +240,8 @@ export function PatternRuntimePanel(): React.JSX.Element {
           </div>
         </div>
       </div>
-      <div className='mt-3 grid gap-2 md:grid-cols-9'>
-        <div className='space-y-1'>
+      <div className='mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3'>
+        <div className='min-w-0 space-y-1'>
           <Label className='text-[11px] text-gray-400'>Validation Stack</Label>
           <SelectSimple
             size='sm'
@@ -248,13 +252,13 @@ export function PatternRuntimePanel(): React.JSX.Element {
                 runtimeValidationRuleStack: value,
               }));
             }}
-            options={PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS.map((option) => ({
+            options={validationStackOptions.map((option) => ({
               value: option.value,
               label: option.label,
             }))}
           />
         </div>
-        <div className='space-y-1'>
+        <div className='min-w-0 space-y-1'>
           <Label className='text-[11px] text-gray-400'>Runtime Rule Profile</Label>
           <SelectSimple size='sm'
             value={learningDraft.runtimeRuleProfile}
@@ -271,7 +275,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             ]}
           />
         </div>
-        <div className='space-y-1'>
+        <div className='min-w-0 space-y-1'>
           <Label className='text-[11px] text-gray-400'>Learning</Label>
           <div className='flex h-9 items-center rounded border border-border/60 bg-card/30 px-3'>
             <StatusToggle
@@ -285,7 +289,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             />
           </div>
         </div>
-        <div className='space-y-1'>
+        <div className='min-w-0 space-y-1'>
           <Label className='text-[11px] text-gray-400'>Similarity Threshold</Label>
           <Input
             type='number'
@@ -303,7 +307,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             }}
           />
         </div>
-        <div className='space-y-1'>
+        <div className='min-w-0 space-y-1'>
           <Label className='text-[11px] text-gray-400'>Template Merge Threshold</Label>
           <Input
             type='number'
@@ -321,7 +325,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             }}
           />
         </div>
-        <div className='space-y-1'>
+        <div className='min-w-0 space-y-1'>
           <Label className='text-[11px] text-gray-400'>Min Approvals For Match</Label>
           <Input
             type='number'
@@ -339,7 +343,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             }}
           />
         </div>
-        <div className='space-y-1'>
+        <div className='min-w-0 space-y-1'>
           <Label className='text-[11px] text-gray-400'>Runtime Template Cap</Label>
           <Input
             type='number'
@@ -357,7 +361,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             }}
           />
         </div>
-        <div className='space-y-1'>
+        <div className='min-w-0 space-y-1'>
           <Label className='text-[11px] text-gray-400'>Auto Activate Learned</Label>
           <div className='flex h-9 items-center rounded border border-border/60 bg-card/30 px-3'>
             <StatusToggle
@@ -371,7 +375,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             />
           </div>
         </div>
-        <div className='space-y-1'>
+        <div className='min-w-0 space-y-1'>
           <Label className='text-[11px] text-gray-400'>Benchmark Template Upsert</Label>
           <div className='flex h-9 items-center rounded border border-border/60 bg-card/30 px-3'>
             <StatusToggle
@@ -398,9 +402,28 @@ export function PatternRuntimePanel(): React.JSX.Element {
         >
           Save Learning Settings
         </Button>
-        <div className='text-xs text-gray-500'>
-          Current runtime: similarity {learningDraft.similarityThreshold.toFixed(2)}, merge {learningDraft.templateMergeThreshold.toFixed(2)}, min approvals {learningDraft.minApprovalsForMatching}, cap {learningDraft.maxTemplates}, auto-activate {learningDraft.autoActivateLearnedTemplates ? 'on' : 'off'}, benchmark template upsert {learningDraft.benchmarkSuggestionUpsertTemplates ? 'on' : 'off'}.
-          {' '}Benchmark suite {benchmarkSuiteDraft}
+        <div className='flex flex-wrap items-center gap-2 text-[11px] text-gray-400'>
+          <span className='rounded border border-border/60 bg-card/20 px-2 py-1'>
+            Similarity {learningDraft.similarityThreshold.toFixed(2)}
+          </span>
+          <span className='rounded border border-border/60 bg-card/20 px-2 py-1'>
+            Merge {learningDraft.templateMergeThreshold.toFixed(2)}
+          </span>
+          <span className='rounded border border-border/60 bg-card/20 px-2 py-1'>
+            Min approvals {learningDraft.minApprovalsForMatching}
+          </span>
+          <span className='rounded border border-border/60 bg-card/20 px-2 py-1'>
+            Template cap {learningDraft.maxTemplates}
+          </span>
+          <span className='rounded border border-border/60 bg-card/20 px-2 py-1'>
+            Auto activate {learningDraft.autoActivateLearnedTemplates ? 'on' : 'off'}
+          </span>
+          <span className='rounded border border-border/60 bg-card/20 px-2 py-1'>
+            Bench upsert {learningDraft.benchmarkSuggestionUpsertTemplates ? 'on' : 'off'}
+          </span>
+          <span className='rounded border border-border/60 bg-card/20 px-2 py-1'>
+            Suite {benchmarkSuiteDraft}
+          </span>
         </div>
       </div>
       <div className='mt-3 rounded border border-border/60 bg-card/20 p-3 text-xs text-gray-300'>

@@ -31,7 +31,10 @@ export interface SettingsState {
 
 export interface SettingsActions {
   setStudioSettings: React.Dispatch<React.SetStateAction<ImageStudioSettings>>;
-  saveStudioSettings: (options?: { silent?: boolean }) => Promise<void>;
+  saveStudioSettings: (options?: {
+    silent?: boolean;
+    settingsOverride?: ImageStudioSettings;
+  }) => Promise<void>;
   resetStudioSettings: () => void;
   handleRefreshSettings: () => void;
 }
@@ -213,11 +216,15 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     updateSetting,
   ]);
 
-  const saveStudioSettings = useCallback(async (options?: { silent?: boolean }) => {
+  const saveStudioSettings = useCallback(async (options?: {
+    silent?: boolean;
+    settingsOverride?: ImageStudioSettings;
+  }) => {
     const targetKey = projectSettingsKey ?? IMAGE_STUDIO_SETTINGS_KEY;
+    const payload = options?.settingsOverride ?? studioSettings;
     await updateSetting.mutateAsync({
       key: targetKey,
-      value: serializeSetting(studioSettings),
+      value: serializeSetting(payload),
     });
     if (options?.silent === false) {
       toast('Settings saved.', { variant: 'success' });

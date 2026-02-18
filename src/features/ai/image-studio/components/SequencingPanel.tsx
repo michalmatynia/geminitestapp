@@ -1203,6 +1203,34 @@ export function SequencingPanel(): React.JSX.Element {
     toast,
   ]);
 
+  const handleToggleSequencingEnabled = useCallback((checked: boolean): void => {
+    let nextSettingsSnapshot: typeof studioSettings | null = null;
+    setStudioSettings((prev) => {
+      const next = {
+        ...prev,
+        projectSequencing: {
+          ...prev.projectSequencing,
+          enabled: Boolean(checked),
+        },
+      };
+      nextSettingsSnapshot = next;
+      return next;
+    });
+
+    if (!nextSettingsSnapshot) return;
+    void saveStudioSettings({
+      silent: true,
+      settingsOverride: nextSettingsSnapshot,
+    }).catch((error: unknown) => {
+      toast(
+        error instanceof Error
+          ? error.message
+          : 'Failed to persist sequencing enabled state.',
+        { variant: 'error' },
+      );
+    });
+  }, [saveStudioSettings, setStudioSettings, toast]);
+
   return (
     <div className='flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-4 pt-2'>
       <StudioCard label='Sequencing Runtime' className='shrink-0'>
@@ -1211,15 +1239,7 @@ export function SequencingPanel(): React.JSX.Element {
             <label className='flex items-center gap-2 text-[11px] text-gray-200'>
               <Switch
                 checked={studioSettings.projectSequencing.enabled}
-                onCheckedChange={(checked: boolean) =>
-                  setStudioSettings((prev) => ({
-                    ...prev,
-                    projectSequencing: {
-                      ...prev.projectSequencing,
-                      enabled: Boolean(checked),
-                    },
-                  }))
-                }
+                onCheckedChange={handleToggleSequencingEnabled}
                 aria-label='Enable sequencing'
               />
               <span>Enable Sequencing</span>

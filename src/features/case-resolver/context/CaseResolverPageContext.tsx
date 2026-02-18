@@ -28,6 +28,8 @@ export type CaseResolverPageContextValue = {
   selectedFolderPath: string | null;
   isWorkspaceDirty: boolean;
   isWorkspaceSaving: boolean;
+  workspaceSaveStatus: 'idle' | 'dirty' | 'saving' | 'saved' | 'conflict' | 'error';
+  workspaceSaveError: string | null;
   panelCollapsed: boolean;
   onPanelCollapsedChange: (collapsed: boolean) => void;
   onSaveWorkspace: () => void;

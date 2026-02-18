@@ -78,6 +78,8 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     selectedFolderPath,
     isWorkspaceDirty,
     isWorkspaceSaving,
+    workspaceSaveStatus,
+    workspaceSaveError,
     panelCollapsed,
     onPanelCollapsedChange,
     onSaveWorkspace,
@@ -231,6 +233,22 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     return 'Case context is not ready.';
   }, [activeCaseId, canCreateInActiveCase, requestedCaseStatus]);
   const disableCreateActions = !canCreateInActiveCase && requestedCaseStatus !== 'missing';
+  const saveStatusLabel = useMemo((): string => {
+    if (workspaceSaveStatus === 'saving') return 'Saving...';
+    if (workspaceSaveStatus === 'dirty') return 'Unsaved changes';
+    if (workspaceSaveStatus === 'conflict') return 'Conflict';
+    if (workspaceSaveStatus === 'error') return 'Save failed';
+    if (workspaceSaveStatus === 'saved') return 'Saved';
+    return 'Idle';
+  }, [workspaceSaveStatus]);
+  const saveStatusClassName = useMemo((): string => {
+    if (workspaceSaveStatus === 'saving') return 'text-cyan-200';
+    if (workspaceSaveStatus === 'dirty') return 'text-amber-200';
+    if (workspaceSaveStatus === 'conflict') return 'text-rose-200';
+    if (workspaceSaveStatus === 'error') return 'text-rose-200';
+    if (workspaceSaveStatus === 'saved') return 'text-emerald-200';
+    return 'text-gray-400';
+  }, [workspaceSaveStatus]);
 
   const fileLockById = useMemo((): Map<string, boolean> => {
     return new Map(
@@ -459,6 +477,13 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               {createContextTooltip}
             </div>
           ) : null}
+          <div
+            className={`mt-1 rounded border border-border/60 bg-card/40 px-2 py-1 text-[11px] ${saveStatusClassName}`}
+            title={workspaceSaveError ?? 'Case Resolver workspace save status'}
+          >
+            {saveStatusLabel}
+            {workspaceSaveError ? ` · ${workspaceSaveError}` : ''}
+          </div>
         </TreeHeader>
       )}
     >

@@ -24,7 +24,15 @@ export function FileManagerGrid(): React.JSX.Element {
     const clean = (filepath || '').trim();
     if (!clean) return 'other';
     if (clean.startsWith('data:')) return 'base64';
-    if (/^https?:\/\//i.test(clean)) return 'link';
+    if (/^https?:\/\//i.test(clean)) {
+      try {
+        const url = new URL(clean);
+        if (url.pathname.includes('/uploads/')) return 'upload';
+      } catch {
+        return 'link';
+      }
+      return 'link';
+    }
     if (clean.includes('/uploads/') || clean.startsWith('/uploads/') || clean.startsWith('uploads/')) return 'upload';
     return 'other';
   }, []);

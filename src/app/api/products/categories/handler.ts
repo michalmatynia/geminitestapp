@@ -52,50 +52,8 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const repositoryStart = performance.now();
   const primaryProvider = await getProductDataProvider();
   const repository = await getCategoryRepository(primaryProvider);
-  let categories = await repository.listCategories({ catalogId });
+  const categories = await repository.listCategories({ catalogId });
   timings['repository'] = performance.now() - repositoryStart;
-
-  if (categories.length === 0) {
-    const fallbackProvider = primaryProvider === 'prisma' ? 'mongodb' : 'prisma';
-    const canReadFallback =
-      fallbackProvider === 'mongodb'
-        ? Boolean(process.env['MONGODB_URI'])
-        : Boolean(process.env['DATABASE_URL']);
-    if (canReadFallback) {
-      const fallbackStart = performance.now();
-      try {
-        const fallbackRepository = await getCategoryRepository(fallbackProvider);
-        const fallbackCategories = await fallbackRepository.listCategories({ catalogId });
-        timings['repositoryFallback'] = performance.now() - fallbackStart;
-        if (fallbackCategories.length > 0) {
-          categories = fallbackCategories;
-          await logSystemEvent({
-            level: 'warn',
-            message:
-              '[products.categories.GET] Primary provider returned empty result; using fallback provider.',
-            source: 'products.categories.GET',
-            request: req,
-            context: {
-              catalogId,
-              primaryProvider,
-              fallbackProvider,
-              fallbackCount: fallbackCategories.length,
-            },
-          });
-        }
-      } catch (error: unknown) {
-        timings['repositoryFallback'] = performance.now() - fallbackStart;
-        await logSystemEvent({
-          level: 'warn',
-          message: '[products.categories.GET] Failed to read fallback provider.',
-          source: 'products.categories.GET',
-          request: req,
-          error,
-          context: { catalogId, primaryProvider, fallbackProvider },
-        });
-      }
-    }
-  }
   
   timings['total'] = performance.now() - requestStart;
   if (shouldLogTiming()) {
@@ -147,4 +105,3 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
 
   return NextResponse.json(category, { status: 201 });
 }
-

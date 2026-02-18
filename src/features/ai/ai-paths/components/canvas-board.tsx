@@ -638,8 +638,10 @@ export function CanvasBoard({
               onPointerUp={(event) => {
                 handlePointerUpNode(event, node.id);
               }}
-              onClick={() => {
-                void handleSelectNode(node.id);
+              onClick={(event) => {
+                void handleSelectNode(node.id, {
+                  toggle: event.shiftKey || event.metaKey || event.ctrlKey,
+                });
               }}
               onDoubleClick={(event) => {
                 event.stopPropagation();
@@ -648,7 +650,7 @@ export function CanvasBoard({
               }}
             >
               <div
-                className={`relative flex flex-col gap-2 rounded-xl border bg-card/80 p-2.5 pb-4 text-xs text-gray-200 shadow-lg backdrop-blur ${
+                className={`relative flex flex-col gap-1.5 rounded-xl border bg-card/80 p-2 pb-3 text-[11px] text-gray-200 shadow-lg backdrop-blur ${
                   style.border
                 } ${style.glow} ${
                   isPrimarySelected
@@ -682,7 +684,7 @@ export function CanvasBoard({
                   </div>
                 ) : null}
                 <div
-                  className='pointer-events-none absolute bottom-1 right-2 w-[90%] break-all text-right text-[9px] font-mono text-gray-400/80'
+                  className='pointer-events-none absolute bottom-1 right-2 w-[90%] break-all text-right text-[8px] font-mono text-gray-400/80'
                 >
                   {node.id}
                 </div>

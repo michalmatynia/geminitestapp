@@ -10,6 +10,7 @@ import type {
   ProductRepository,
   UpdateProductInput,
 } from '@/features/products/types/services/product-repository';
+import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import { conflictError, internalError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
 import type { ImageFileRecord } from '@/shared/types/domain/files';
@@ -36,6 +37,60 @@ const normalizeImageFileIds = (imageFileIds: string[]): string[] => {
     unique.add(trimmed);
   }
   return Array.from(unique);
+};
+
+const normalizeProductParameterValues = (
+  input: unknown
+): ProductParameterValue[] => {
+  if (!Array.isArray(input)) return [];
+  const byParameterId = new Map<string, ProductParameterValue>();
+  input.forEach((entry: unknown) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
+    const record = entry as Record<string, unknown>;
+    const parameterId = decodeSimpleParameterStorageId(
+      typeof record['parameterId'] === 'string' ? record['parameterId'] : ''
+    );
+    if (!parameterId) return;
+    const value = typeof record['value'] === 'string' ? record['value'] : '';
+    const valuesByLanguageRaw = record['valuesByLanguage'];
+    const valuesByLanguage =
+      valuesByLanguageRaw &&
+      typeof valuesByLanguageRaw === 'object' &&
+      !Array.isArray(valuesByLanguageRaw)
+        ? Object.entries(valuesByLanguageRaw as Record<string, unknown>).reduce(
+          (acc: Record<string, string>, [languageCode, languageValue]) => {
+            const normalizedCode = languageCode.trim().toLowerCase();
+            if (!normalizedCode || typeof languageValue !== 'string') return acc;
+            acc[normalizedCode] = languageValue;
+            return acc;
+          },
+          {}
+        )
+        : {};
+    const current = byParameterId.get(parameterId);
+    if (!current) {
+      byParameterId.set(parameterId, {
+        parameterId,
+        value,
+        ...(Object.keys(valuesByLanguage).length > 0
+          ? { valuesByLanguage }
+          : {}),
+      });
+      return;
+    }
+    const mergedValuesByLanguage = {
+      ...(current.valuesByLanguage ?? {}),
+      ...valuesByLanguage,
+    };
+    byParameterId.set(parameterId, {
+      parameterId,
+      value: current.value || value,
+      ...(Object.keys(mergedValuesByLanguage).length > 0
+        ? { valuesByLanguage: mergedValuesByLanguage }
+        : {}),
+    });
+  });
+  return Array.from(byParameterId.values());
 };
 
 const BASE_INTEGRATION_SLUGS = ['baselinker', 'base-com', 'base'] as const;
@@ -276,7 +331,7 @@ const toProductRecord = (product: FullPrismaProduct): ProductWithImages => {
     length: product.length ?? null,
     published: (product.published as boolean | null | undefined) ?? true,
     catalogId: (product.catalogId as string | null | undefined) ?? catalogs[0]?.catalogId ?? '',
-    parameters: (product.parameters as unknown as ProductParameterValue[]) ?? [],
+    parameters: normalizeProductParameterValues(product.parameters),
     imageLinks: product.imageLinks ?? [],
     imageBase64s: [],
     noteIds: product.noteIds ?? [],
@@ -402,8 +457,18 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
     }
 
     const { categoryId: _cat, id, ...rest } = data;
+    const normalizedParameters =
+      rest.parameters !== undefined
+        ? normalizeProductParameterValues(rest.parameters)
+        : undefined;
     const cleanData = removeUndefined({
       ...rest,
+      ...(normalizedParameters !== undefined
+        ? {
+          parameters:
+              normalizedParameters as unknown as Prisma.InputJsonValue,
+        }
+        : {}),
       ...(id ? { id } : {}),
     }) as Prisma.ProductCreateInput;
 
@@ -430,7 +495,19 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
     if (!productExists) return null;
 
     const { categoryId: _cat, id: _id, ...rest } = data;
-    const cleanData = removeUndefined(rest) as Prisma.ProductUpdateInput;
+    const normalizedParameters =
+      rest.parameters !== undefined
+        ? normalizeProductParameterValues(rest.parameters)
+        : undefined;
+    const cleanData = removeUndefined({
+      ...rest,
+      ...(normalizedParameters !== undefined
+        ? {
+          parameters:
+              normalizedParameters as unknown as Prisma.InputJsonValue,
+        }
+        : {}),
+    }) as Prisma.ProductUpdateInput;
 
     const product = await tx.product.update({ 
       where: { id }, 
@@ -494,7 +571,9 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
         sizeWidth: product.sizeWidth,
         weight: product.weight,
         length: product.length,
-        parameters: (product.parameters as unknown as Prisma.InputJsonValue) || [],
+        parameters:
+          (normalizeProductParameterValues(product.parameters) as unknown as Prisma.InputJsonValue) ||
+          [],
         imageLinks: product.imageLinks || [],
         defaultPriceGroupId: product.defaultPriceGroupId ?? null,
         ean: product.ean ?? null,
@@ -727,8 +806,18 @@ export const prismaProductRepository: ProductRepository = {
     }
 
     const { categoryId: _cat, id, ...rest } = data;
+    const normalizedParameters =
+      rest.parameters !== undefined
+        ? normalizeProductParameterValues(rest.parameters)
+        : undefined;
     const cleanData = removeUndefined({
       ...rest,
+      ...(normalizedParameters !== undefined
+        ? {
+          parameters:
+              normalizedParameters as unknown as Prisma.InputJsonValue,
+        }
+        : {}),
       ...(id ? { id } : {}),
     }) as Prisma.ProductCreateInput;
 
@@ -755,7 +844,19 @@ export const prismaProductRepository: ProductRepository = {
     if (!productExists) return null;
 
     const { categoryId: _cat, id: _id, ...rest } = data;
-    const cleanData = removeUndefined(rest) as Prisma.ProductUpdateInput;
+    const normalizedParameters =
+      rest.parameters !== undefined
+        ? normalizeProductParameterValues(rest.parameters)
+        : undefined;
+    const cleanData = removeUndefined({
+      ...rest,
+      ...(normalizedParameters !== undefined
+        ? {
+          parameters:
+              normalizedParameters as unknown as Prisma.InputJsonValue,
+        }
+        : {}),
+    }) as Prisma.ProductUpdateInput;
 
     const product = await prisma.product.update({ 
       where: { id }, 
@@ -819,7 +920,9 @@ export const prismaProductRepository: ProductRepository = {
         sizeWidth: product.sizeWidth,
         weight: product.weight,
         length: product.length,
-        parameters: (product.parameters as unknown as Prisma.InputJsonValue) || [],
+        parameters:
+          (normalizeProductParameterValues(product.parameters) as unknown as Prisma.InputJsonValue) ||
+          [],
         imageLinks: product.imageLinks || [],
         defaultPriceGroupId: product.defaultPriceGroupId ?? null,
         ean: product.ean ?? null,

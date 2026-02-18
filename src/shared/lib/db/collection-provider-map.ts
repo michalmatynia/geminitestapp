@@ -11,8 +11,6 @@ import {
 } from './database-engine-constants';
 import { getDatabaseEnginePolicy } from './database-engine-policy';
 
-export const COLLECTION_PROVIDER_MAP_KEY = 'collection_provider_map';
-
 const CACHE_TTL_MS = 30_000;
 let mapCache: { value: Record<string, DatabaseEngineProvider>; ts: number } | null = null;
 let mapInflight: Promise<Record<string, DatabaseEngineProvider>> | null = null;
@@ -80,15 +78,9 @@ const readMapFromMongo = async (key: string): Promise<Record<string, DatabaseEng
 };
 
 const readCollectionRouteMap = async (): Promise<Record<string, DatabaseEngineProvider>> => {
-  // New key first.
   const prismaMap = await readMapFromPrisma(DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY);
   if (Object.keys(prismaMap).length > 0) return prismaMap;
-  const mongoMap = await readMapFromMongo(DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY);
-  if (Object.keys(mongoMap).length > 0) return mongoMap;
-  // Legacy key fallback for compatibility.
-  const legacyPrismaMap = await readMapFromPrisma(COLLECTION_PROVIDER_MAP_KEY);
-  if (Object.keys(legacyPrismaMap).length > 0) return legacyPrismaMap;
-  return readMapFromMongo(COLLECTION_PROVIDER_MAP_KEY);
+  return readMapFromMongo(DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY);
 };
 
 /** Returns the full per-collection routing map (supports prisma/mongodb/redis). */
@@ -111,7 +103,7 @@ export async function getCollectionRouteMap(): Promise<Record<string, DatabaseEn
   return value;
 }
 
-/** Returns the legacy primary-provider map only (prisma/mongodb). */
+/** Returns the primary-provider map only (prisma/mongodb). */
 export async function getCollectionProviderMap(): Promise<Record<string, AppDbProvider>> {
   const routeMap = await getCollectionRouteMap();
   const primaryMap: Record<string, AppDbProvider> = {};

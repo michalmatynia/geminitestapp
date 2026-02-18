@@ -414,3 +414,32 @@ export const resolveUploadBaseFolder = (folder: string, kind: CaseResolverAssetK
   }
   return normalizedFolder;
 };
+
+export const resolveCaseScopedFolderTarget = ({
+  targetFolderPath,
+  ownerCaseId,
+  folderRecords,
+}: {
+  targetFolderPath: string | null;
+  ownerCaseId: string;
+  folderRecords: CaseResolverFolderRecord[] | null | undefined;
+}): string => {
+  const normalizedTarget = normalizeFolderPath(targetFolderPath ?? '');
+  if (!normalizedTarget) return '';
+
+  const normalizedRecords = normalizeFolderRecords(folderRecords);
+  const ownerPaths = new Set<string>(
+    normalizedRecords
+      .filter((record: CaseResolverFolderRecord): boolean => record.ownerCaseId === ownerCaseId)
+      .map((record: CaseResolverFolderRecord): string => record.path)
+  );
+
+  // If the folder path already belongs to this case, keep it.
+  if (ownerPaths.has(normalizedTarget)) {
+    return normalizedTarget;
+  }
+
+  // If it does not belong to this case, reset to root to avoid leaking create actions
+  // into a folder selected in another case.
+  return '';
+};

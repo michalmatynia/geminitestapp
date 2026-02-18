@@ -23,7 +23,6 @@ import { hashRecoveryCode, verifyTotpToken } from '@/features/auth/services/totp
 import { decryptAuthSecret } from '@/features/auth/utils/auth-encryption';
 import { ActivityTypes, ErrorSystem, logActivity } from '@/features/observability/server';
 import { configurationError } from '@/shared/errors/app-error';
-import { getDatabaseEnginePolicy } from '@/shared/lib/db/database-engine-policy';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -277,7 +276,6 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
     }
     const configuredProvider = await getAuthDataProvider();
     const provider = requireAuthProvider(configuredProvider);
-    const enginePolicy = await getDatabaseEnginePolicy();
     let adapter: ReturnType<typeof PrismaAdapter> | ReturnType<typeof MongoDBAdapter> | undefined;
     try {
       adapter =
@@ -290,37 +288,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
         provider,
         error,
       });
-      if (!enginePolicy.allowAutomaticFallback) {
-        throw configurationError(
-          `[AUTH] Adapter initialization failed for "${provider}". Automatic fallback is disabled by Database Engine policy.`
-        );
-      }
-
-      await ErrorSystem.logWarning('[AUTH] Attempting adapter fallback.', {
-        service: 'auth',
-        provider,
-      });
-      if (provider === 'mongodb' && process.env['DATABASE_URL']) {
-        try {
-          adapter = PrismaAdapter(prisma);
-        } catch (fallbackError) {
-          await ErrorSystem.logWarning('[AUTH] Prisma adapter fallback failed.', {
-            service: 'auth',
-            provider: 'prisma',
-            error: fallbackError,
-          });
-        }
-      } else if (provider === 'prisma' && process.env['MONGODB_URI']) {
-        try {
-          adapter = MongoDBAdapter(getMongoClient(), { databaseName: process.env['MONGODB_DB'] ?? 'app' });
-        } catch (fallbackError) {
-          await ErrorSystem.logWarning('[AUTH] Mongo adapter fallback failed.', {
-            service: 'auth',
-            provider: 'mongodb',
-            error: fallbackError,
-          });
-        }
-      }
+      throw configurationError(`[AUTH] Adapter initialization failed for "${provider}".`);
     }
     if (authLoggingEnabled) {
       await ErrorSystem.logInfo(`[AUTH] Adapter configured for ${provider}.`, { service: 'auth', provider });

@@ -1,13 +1,13 @@
 import type { AiNode, DbQueryConfig, Edge, NodeType } from '@/shared/types/domain/ai-paths';
 
-export const NODE_WIDTH = 300;
-export const NODE_MIN_HEIGHT = 200;
+export const NODE_WIDTH = 260;
+export const NODE_MIN_HEIGHT = 184;
 export const CANVAS_WIDTH = 8800;
 export const CANVAS_HEIGHT = 5600;
 export const MIN_SCALE = 0.5;
 export const MAX_SCALE = 1.6;
 export const VIEW_MARGIN = 40;
-export const PORT_GAP = 22;
+export const PORT_GAP = 20;
 export const PORT_SIZE = 12;
 export const PORT_STACK_TOP = Math.round(NODE_MIN_HEIGHT * 0.3);
 export const DB_PROVIDER_PLACEHOLDERS = ['MongoDB', 'PostgreSQL', 'Prisma', 'Redis'];

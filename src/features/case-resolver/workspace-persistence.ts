@@ -159,7 +159,7 @@ export const fetchCaseResolverWorkspaceSnapshot = async (
   source: string
 ): Promise<CaseResolverWorkspace | null> => {
   try {
-    const response = await fetch('/api/settings?scope=light', {
+    const response = await fetch('/api/settings?scope=light&fresh=1', {
       method: 'GET',
       cache: 'no-store',
     });

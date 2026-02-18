@@ -398,6 +398,88 @@ const parseSegmentsRuleDriven = (
   return segments;
 };
 
+const CASE_RESOLVER_STRUCTURAL_BOUNDARY_RE =
+  /^(dotyczy\s*:|uzasadnienie\b|na\s+zakończenie\b|z\s+poważaniem\b|wniosek\b)/i;
+
+const looksLikeCaseResolverPrompt = (value: string): boolean => {
+  const text = value.trim();
+  if (!text) return false;
+  let score = 0;
+  if (/(^|\n)\s*dotyczy\s*:/imu.test(text)) score += 2;
+  if (/(^|\n)\s*uzasadnienie\b/imu.test(text)) score += 2;
+  if (/(^|\n)\s*na\s+zakończenie\b/imu.test(text)) score += 1;
+  if (/(^|\n)\s*z\s+poważaniem\b/imu.test(text)) score += 1;
+  if (/(^|\n)\s*wniosek\b/imu.test(text)) score += 1;
+  return score >= 3;
+};
+
+const splitCaseResolverFallbackBlocks = (
+  prompt: string,
+  runtime: PatternRuntime
+): string[][] => {
+  const paragraphChunks = normalizeMultiline(prompt)
+    .split(/\n{2,}/)
+    .map((chunk) => trimTrailingBlankLines(chunk))
+    .filter((chunk) => chunk.trim().length > 0);
+  const blocks: string[][] = [];
+
+  paragraphChunks.forEach((chunk) => {
+    const lines = chunk
+      .split('\n')
+      .map((line) => toLine(line))
+      .filter((line) => line.trim().length > 0);
+    if (lines.length === 0) return;
+    let blockStart = 0;
+    for (let index = 1; index < lines.length; index += 1) {
+      const line = lines[index] ?? '';
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      const hasHeadingRule = Boolean(selectHeadingRuleForLine(runtime, trimmed));
+      const previousTrimmed = (lines[index - 1] ?? '').trim();
+      const followsDotyczyLine =
+        /^dotyczy\s*:/i.test(previousTrimmed) &&
+        /^(niniejszym|wnoszę|uprzejmie|na\s+podstawie|przez|w\s+związku)/i.test(trimmed);
+      const isStructuralBoundary =
+        CASE_RESOLVER_STRUCTURAL_BOUNDARY_RE.test(trimmed) || followsDotyczyLine;
+      if (!hasHeadingRule && !isStructuralBoundary) continue;
+      const nextBlock = lines.slice(blockStart, index);
+      if (nextBlock.length > 0) {
+        blocks.push(nextBlock);
+      }
+      blockStart = index;
+    }
+    const tailBlock = lines.slice(blockStart);
+    if (tailBlock.length > 0) {
+      blocks.push(tailBlock);
+    }
+  });
+
+  return blocks;
+};
+
+const applyCaseResolverFallbackSegmentation = (
+  prompt: string,
+  runtime: PatternRuntime,
+  parsedSegments: PromptExploderSegment[]
+): PromptExploderSegment[] => {
+  if (parsedSegments.length > 2) return parsedSegments;
+  if (!looksLikeCaseResolverPrompt(prompt)) return parsedSegments;
+
+  const fallbackBlocks = splitCaseResolverFallbackBlocks(prompt, runtime);
+  if (fallbackBlocks.length <= parsedSegments.length) return parsedSegments;
+
+  return fallbackBlocks.map((blockLines) => {
+    const headingLine = toLine(blockLines[0] ?? '');
+    const headingRule = selectHeadingRuleForLine(runtime, headingLine);
+    return createRuleDrivenSegment({
+      runtime,
+      blockLines,
+      headingLine: headingRule ? headingLine : null,
+      headingRule: headingRule ?? null,
+    });
+  });
+};
+
 const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderSegment[] => {
   const lines = normalizeMultiline(prompt).split('\n');
   const cursor: ParseCursor = {
@@ -843,7 +925,11 @@ export function explodePromptText(args: {
   );
   const parsedSegments =
     validationScope === 'case_resolver_prompt_exploder'
-      ? parseSegmentsRuleDriven(prompt, runtime)
+      ? applyCaseResolverFallbackSegmentation(
+        prompt,
+        runtime,
+        parseSegmentsRuleDriven(prompt, runtime)
+      )
       : parseSegments(prompt, runtime);
   const segments = applyLearnedTemplateTypes(
     parsedSegments,

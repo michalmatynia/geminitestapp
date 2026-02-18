@@ -23,35 +23,17 @@ const clientErrorPayloadSchema = z.object({
   context: z.unknown().optional(),
 });
 
-const CLIENT_ERROR_TOP_LEVEL_KEYS = new Set([
-  'message',
-  'name',
-  'stack',
-  'url',
-  'timestamp',
-  'digest',
-  'userAgent',
-  'componentStack',
-  'context',
-  'error',
-]);
-
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 const normalizeClientErrorPayload = (rawBody: unknown): Record<string, unknown> => {
   if (!isRecord(rawBody)) return {};
 
-  const nestedError = isRecord(rawBody['error']) ? rawBody['error'] : null;
   const normalized: Record<string, unknown> = {};
 
   const pull = (key: string): void => {
     if (rawBody[key] !== undefined) {
       normalized[key] = rawBody[key];
-      return;
-    }
-    if (nestedError?.[key] !== undefined) {
-      normalized[key] = nestedError[key];
     }
   };
 
@@ -64,19 +46,6 @@ const normalizeClientErrorPayload = (rawBody: unknown): Record<string, unknown> 
   pull('userAgent');
   pull('componentStack');
   pull('context');
-
-  if (nestedError) {
-    const legacyExtras = Object.fromEntries(
-      Object.entries(nestedError).filter(([key]) => !CLIENT_ERROR_TOP_LEVEL_KEYS.has(key))
-    );
-    if (Object.keys(legacyExtras).length > 0) {
-      const existingContext = isRecord(normalized['context']) ? normalized['context'] : {};
-      normalized['context'] = {
-        ...existingContext,
-        ...legacyExtras,
-      };
-    }
-  }
 
   return normalized;
 };
@@ -172,4 +141,3 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   return NextResponse.json({ ok: true, success: true }, { status: 200 });
 }
-

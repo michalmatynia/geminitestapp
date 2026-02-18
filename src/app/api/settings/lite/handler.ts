@@ -2,11 +2,9 @@ import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { CLIENT_LOGGING_KEYS } from '@/features/observability/constants/client-logging';
-import { ErrorSystem } from '@/features/observability/server';
 import { APP_FONT_SET_SETTING_KEY } from '@/shared/constants/typography';
 import { internalError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
-import { getDatabaseEnginePolicy } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -44,18 +42,6 @@ const isPrismaMissingTableError = (
 ): error is Prisma.PrismaClientKnownRequestError =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
   (error.code === 'P2021' || error.code === 'P2022');
-
-const assertAutomaticSettingsFallbackAllowed = async (): Promise<void> => {
-  const policy = await getDatabaseEnginePolicy();
-  const allowed =
-    policy.allowAutomaticFallback &&
-    policy.allowAutomaticMigrations &&
-    !policy.strictProviderAvailability;
-  if (allowed) return;
-  throw internalError(
-    'Prisma settings table is missing and automatic fallback is disabled by Database Engine policy. Configure migrations manually in Workflow Database -> Database Engine.'
-  );
-};
 
 const readPrismaSettings = async (
   keys: string[]
@@ -110,18 +96,8 @@ const fetchLiteSettings = async (): Promise<SettingRecord[]> => {
     LITE_SETTINGS_KEYS
   );
   if (prismaMissing) {
-    await assertAutomaticSettingsFallbackAllowed();
-    if (hasMongo) {
-      await ErrorSystem.logWarning('[settings.lite] Prisma settings table missing; falling back to Mongo.', {
-        service: 'api/settings/lite'
-      });
-      return readMongoSettings(LITE_SETTINGS_KEYS);
-    }
-    await ErrorSystem.logWarning('[settings.lite] Prisma settings table missing and no Mongo fallback.', {
-      service: 'api/settings/lite'
-    });
     throw internalError(
-      'Prisma settings table is missing and MongoDB fallback is unavailable. Run migrations manually in Workflow Database -> Database Engine.'
+      'Prisma settings table is missing. Run migrations manually in Workflow Database -> Database Engine.'
     );
   }
   return prismaSettings;

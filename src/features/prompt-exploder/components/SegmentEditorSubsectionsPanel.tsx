@@ -6,8 +6,9 @@ import React from 'react';
 import {
   Button,
   Input,
-  Label,
   SelectSimple,
+  FormField,
+  SectionHeader,
 } from '@/shared/ui';
 
 import { PromptExploderHierarchyTreeProvider } from './PromptExploderHierarchyTreeContext';
@@ -66,80 +67,82 @@ export function SegmentEditorSubsectionsPanel(args: {
 
   return (
     <div className='space-y-3'>
-      <div className='flex items-center justify-between'>
-        <div className='text-[11px] uppercase tracking-wide text-gray-400'>
-          {segment.type === 'qa_matrix' ? 'QA Subsections' : 'Sequence Subsections'}
-        </div>
-        <Button
-          type='button'
-          variant='outline'
-          size='sm'
-          onClick={() => {
-            onUpdateSegment((current) => ({
-              ...current,
-              subsections: [...current.subsections, promptExploderCreateSubsection()],
-            }));
-          }}
-        >
-          <Plus className='mr-2 size-3.5' />
-          Add Subsection
-        </Button>
-      </div>
+      <SectionHeader
+        title={segment.type === 'qa_matrix' ? 'QA Subsections' : 'Sequence Subsections'}
+        size='xxs'
+        actions={
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            onClick={() => {
+              onUpdateSegment((current) => ({
+                ...current,
+                subsections: [...current.subsections, promptExploderCreateSubsection()],
+              }));
+            }}
+          >
+            <Plus className='mr-2 size-3.5' />
+            Add Subsection
+          </Button>
+        }
+      />
       {segment.subsections.length === 0 ? (
         <div className='text-xs text-gray-500'>No subsections detected.</div>
       ) : null}
       {segment.subsections.map((subsection, subsectionIndex) => (
-        <div key={subsection.id} className='space-y-2 rounded border border-border/50 bg-card/20 p-2'>
-          <div className='flex items-center justify-between'>
-            <div className='text-[11px] text-gray-400'>
-              Subsection {subsectionIndex + 1}
-            </div>
-            <div className='flex items-center gap-1'>
-              <Button
-                type='button'
-                variant='ghost'
-                size='icon'
-                disabled={subsectionIndex === 0}
-                onClick={() => {
-                  onUpdateSegment((current) => ({
-                    ...current,
-                    subsections: moveByDelta(current.subsections, subsectionIndex, -1),
-                  }));
-                }}
-              >
-                <ArrowUp className='size-3.5' />
-              </Button>
-              <Button
-                type='button'
-                variant='ghost'
-                size='icon'
-                disabled={subsectionIndex === segment.subsections.length - 1}
-                onClick={() => {
-                  onUpdateSegment((current) => ({
-                    ...current,
-                    subsections: moveByDelta(current.subsections, subsectionIndex, 1),
-                  }));
-                }}
-              >
-                <ArrowDown className='size-3.5' />
-              </Button>
-              <Button
-                type='button'
-                variant='ghost'
-                size='icon'
-                onClick={() => {
-                  onUpdateSegment((current) => ({
-                    ...current,
-                    subsections: current.subsections.filter(
-                      (_, index) => index !== subsectionIndex
-                    ),
-                  }));
-                }}
-              >
-                <Trash2 className='size-3.5' />
-              </Button>
-            </div>
-          </div>
+        <div key={subsection.id} className='space-y-2 rounded border border-border/50 bg-card/20 p-3'>
+          <SectionHeader
+            title={`Subsection ${subsectionIndex + 1}`}
+            size='xxs'
+            actions={
+              <div className='flex items-center gap-1'>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='icon'
+                  disabled={subsectionIndex === 0}
+                  onClick={() => {
+                    onUpdateSegment((current) => ({
+                      ...current,
+                      subsections: moveByDelta(current.subsections, subsectionIndex, -1),
+                    }));
+                  }}
+                >
+                  <ArrowUp className='size-3.5' />
+                </Button>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='icon'
+                  disabled={subsectionIndex === segment.subsections.length - 1}
+                  onClick={() => {
+                    onUpdateSegment((current) => ({
+                      ...current,
+                      subsections: moveByDelta(current.subsections, subsectionIndex, 1),
+                    }));
+                  }}
+                >
+                  <ArrowDown className='size-3.5' />
+                </Button>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='icon'
+                  onClick={() => {
+                    onUpdateSegment((current) => ({
+                      ...current,
+                      subsections: current.subsections.filter(
+                        (_, index) => index !== subsectionIndex
+                      ),
+                    }));
+                  }}
+                >
+                  <Trash2 className='size-3.5' />
+                </Button>
+              </div>
+            }
+          />
           <div className='grid gap-2 md:grid-cols-2'>
             <Input
               value={subsection.title}
@@ -263,8 +266,7 @@ export function SegmentEditorSubsectionsPanel(args: {
 
             return (
               <div className='grid gap-2 md:grid-cols-4'>
-                <div className='space-y-1'>
-                  <Label className='text-[10px] text-gray-500'>Operator</Label>
+                <FormField label='Operator'>
                   <SelectSimple size='sm'
                     value={operatorValue}
                     onValueChange={(next: string) => {
@@ -294,10 +296,9 @@ export function SegmentEditorSubsectionsPanel(args: {
                       label: option.label,
                     }))}
                   />
-                </div>
+                </FormField>
 
-                <div className='space-y-1'>
-                  <Label className='text-[10px] text-gray-500'>Referenced Param</Label>
+                <FormField label='Referenced Param'>
                   <SelectSimple size='sm'
                     value={paramPath}
                     onValueChange={(next: string) => {
@@ -311,10 +312,9 @@ export function SegmentEditorSubsectionsPanel(args: {
                         : [{ value: '', label: 'No parameters available' }]
                     }
                   />
-                </div>
+                </FormField>
 
-                <div className='space-y-1'>
-                  <Label className='text-[10px] text-gray-500'>Comparator</Label>
+                <FormField label='Comparator'>
                   <SelectSimple size='sm'
                     value={comparatorValue}
                     onValueChange={(next: string) => {
@@ -332,10 +332,9 @@ export function SegmentEditorSubsectionsPanel(args: {
                       label: option.label,
                     }))}
                   />
-                </div>
+                </FormField>
 
-                <div className='space-y-1'>
-                  <Label className='text-[10px] text-gray-500'>Value</Label>
+                <FormField label='Value'>
                   {needsValue ? (
                     selectedParamEntry?.spec?.kind === 'boolean' ? (
                       <SelectSimple size='sm'
@@ -365,7 +364,7 @@ export function SegmentEditorSubsectionsPanel(args: {
                       {paramPath ? 'Value not needed' : 'Select parameter'}
                     </div>
                   )}
-                </div>
+                </FormField>
               </div>
             );
           })()}

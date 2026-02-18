@@ -188,6 +188,73 @@ describe('Product Studio API', () => {
     );
   });
 
+  it('POST /api/products/[id]/studio/send retries legacy native-sequence disabled error', async () => {
+    vi.mocked(sendProductImageToStudio)
+      .mockRejectedValueOnce(
+        new Error(
+          'Native Image Studio sequence mode is selected, but project sequencing is disabled. Enable sequencing steps in Image Studio project settings.'
+        )
+      )
+      .mockResolvedValueOnce({
+        config: {
+          projectId: 'studio-a',
+          sourceSlotByImageIndex: { '0': 'slot-1' },
+          sourceSlotHistoryByImageIndex: {},
+          updatedAt: '2026-02-13T10:00:00.000Z',
+        },
+        sequencing: {
+          enabled: true,
+          cropCenterBeforeGeneration: true,
+          upscaleOnAccept: false,
+          upscaleScale: 1,
+          runViaSequence: true,
+          sequenceStepCount: 1,
+          expectedOutputs: 1,
+        },
+        projectId: 'studio-a',
+        imageSlotIndex: 0,
+        sourceSlot: {
+          id: 'slot-1',
+        } as any,
+        runId: 'run-2',
+        runStatus: 'queued',
+        runKind: 'sequence',
+        sequenceRunId: 'run-2',
+        expectedOutputs: 1,
+        dispatchMode: 'queued',
+        requestedSequenceMode: 'studio_prompt_then_sequence',
+        resolvedSequenceMode: 'studio_prompt_then_sequence',
+        executionRoute: 'studio_sequencer',
+      });
+
+    const response = await POST_SEND(
+      new NextRequest('http://localhost/api/products/prod-1/studio/send', {
+        method: 'POST',
+        body: JSON.stringify({ imageSlotIndex: 0, projectId: 'studio-a' }),
+      }),
+      { params: Promise.resolve({ id: 'prod-1' }) }
+    );
+
+    expect(response.status).toBe(200);
+    expect(sendProductImageToStudio).toHaveBeenCalledTimes(2);
+    expect(sendProductImageToStudio).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        sequenceGenerationMode: undefined,
+      }),
+    );
+    expect(sendProductImageToStudio).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        sequenceGenerationMode: 'studio_prompt_then_sequence',
+      }),
+    );
+
+    const payload = (await response.json()) as { warnings?: string[] };
+    expect(Array.isArray(payload.warnings)).toBe(true);
+    expect(payload.warnings?.some((entry) => entry.includes('compatibility mode'))).toBe(true);
+  });
+
   it('GET /api/products/[id]/studio/variants forwards request', async () => {
     vi.mocked(getProductStudioVariants).mockResolvedValue({
       config: {

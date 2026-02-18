@@ -1,5 +1,6 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
@@ -26,6 +27,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
+  PROMPT_EXPLODER_DRAFT_PROMPT_KEY,
   readPromptExploderDraftPayload,
   type PromptExploderBridgeSource,
 } from '../bridge';
@@ -145,10 +147,13 @@ const SettingsActionsContext = createContext<SettingsActions | null>(null);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   const settingsQuery = useSettingsMap({ scope: 'all' });
   const updateSetting = useUpdateSetting();
   const updateSettingsBulk = useUpdateSettingsBulk();
   const settingsMap = settingsQuery.data ?? new Map<string, string>();
+  const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
+  const isCaseResolverReturnTarget = returnTo.startsWith('/admin/case-resolver');
 
   const [learningDraft, setLearningDraftState] = useState<LearningDraft>({
     runtimeRuleProfile: 'all',
@@ -211,7 +216,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     []
   );
   const shouldPreferCaseResolverValidationStack =
-    incomingBridgeSource === 'case-resolver';
+    incomingBridgeSource === 'case-resolver' || isCaseResolverReturnTarget;
   const preferredValidatorScope =
     shouldPreferCaseResolverValidationStack
       ? 'case-resolver-prompt-exploder'
@@ -219,12 +224,36 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
 
   useEffect(() => {
     const payload = readPromptExploderDraftPayload();
-    if (!payload || (payload.target && payload.target !== 'prompt-exploder')) {
-      setIncomingBridgeSource(null);
+    if (payload && (!payload.target || payload.target === 'prompt-exploder')) {
+      setIncomingBridgeSource(payload.source);
       return;
     }
-    setIncomingBridgeSource(payload.source);
-  }, []);
+    if (isCaseResolverReturnTarget) {
+      setIncomingBridgeSource('case-resolver');
+      return;
+    }
+    setIncomingBridgeSource(null);
+  }, [isCaseResolverReturnTarget]);
+
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent): void => {
+      if (event.key !== PROMPT_EXPLODER_DRAFT_PROMPT_KEY) return;
+      const payload = readPromptExploderDraftPayload();
+      if (payload && (!payload.target || payload.target === 'prompt-exploder')) {
+        setIncomingBridgeSource(payload.source);
+        return;
+      }
+      if (isCaseResolverReturnTarget) {
+        setIncomingBridgeSource('case-resolver');
+        return;
+      }
+      setIncomingBridgeSource(null);
+    };
+    window.addEventListener('storage', handleStorage);
+    return (): void => {
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [isCaseResolverReturnTarget]);
 
   const runtimeResolution = useMemo<{
     selection: PromptValidationOrchestrationResult;
@@ -408,9 +437,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
 
   useEffect(() => {
     if (hasUnsavedLearningDraft) return;
-    if (incomingBridgeSource !== 'case-resolver') return;
+    if (!shouldPreferCaseResolverValidationStack) return;
     const caseResolverStack = promptExploderValidationStackFromBridgeSource(
-      incomingBridgeSource,
+      'case-resolver',
       validatorPatternLists
     );
     setLearningDraftState((current) => {
@@ -421,7 +450,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       };
     });
     setHasUnsavedLearningDraft(false);
-  }, [hasUnsavedLearningDraft, incomingBridgeSource, validatorPatternLists]);
+  }, [
+    hasUnsavedLearningDraft,
+    shouldPreferCaseResolverValidationStack,
+    validatorPatternLists,
+  ]);
 
   // ── Sync snapshot selection ────────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { getDiskPathFromPublicPath } from '@/features/files/server';
+import { deleteFileFromStorage, uploadToConfiguredStorage } from '@/features/files/server';
 import { ErrorSystem } from '@/features/observability/server';
 import { getAsset3DRepository } from '@/features/viewer3d/services/asset3d-repository';
 import type { Asset3DRecord } from '@/features/viewer3d/types';
@@ -35,19 +35,33 @@ export async function uploadAsset3D(
   const filename = `${Date.now()}-${path.basename(file.name)}`;
   const diskDir = assets3dRoot;
   const publicDir = '/uploads/assets3d';
-  const filepath = path.join(diskDir, filename);
+  const publicPath = `${publicDir}/${filename}`;
+  const localDiskPath = path.join(diskDir, filename);
+  let storedFilepath = publicPath;
 
   try {
-    await fs.mkdir(diskDir, { recursive: true });
-    await fs.writeFile(filepath, fileBuffer);
+    const storageResult = await uploadToConfiguredStorage({
+      buffer: fileBuffer,
+      filename,
+      mimetype: file.type || 'application/octet-stream',
+      publicPath,
+      category: 'assets3d',
+      projectId: null,
+      folder: null,
+      writeLocalCopy: async (): Promise<void> => {
+        await fs.mkdir(diskDir, { recursive: true });
+        await fs.writeFile(localDiskPath, fileBuffer);
+      },
+    });
+    storedFilepath = storageResult.filepath;
 
     const repository = getAsset3DRepository();
     const asset = await repository.createAsset3D({
       filename,
-      filepath: `${publicDir}/${filename}`,
+      filepath: storedFilepath,
       mimetype: file.type || 'application/octet-stream',
       size: file.size,
-      fileUrl: `/uploads/assets3d/${filename}`,
+      fileUrl: storedFilepath,
       thumbnailUrl: null,
       fileSize: file.size,
       format: (file.type || '').split('/').pop() || 'bin',
@@ -80,9 +94,7 @@ export async function deleteAsset3D(id: string): Promise<boolean> {
       return false;
     }
 
-    // Delete file from disk
-    const diskPath = getDiskPathFromPublicPath(asset.filepath);
-    await fs.unlink(diskPath).catch(() => {});
+    await deleteFileFromStorage(asset.filepath);
 
     // Delete from database
     await repository.deleteAsset3D(id);

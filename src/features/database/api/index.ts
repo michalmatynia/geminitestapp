@@ -14,6 +14,7 @@ import type {
 } from '@/shared/contracts/database';
 import type { AppProviderDiagnosticsDto as ProviderDiagnosticsResponse } from '@/shared/contracts/system';
 import { apiClient, ApiError } from '@/shared/lib/api-client';
+import { DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY } from '@/shared/lib/db/database-engine-constants';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 import type {
@@ -388,7 +389,7 @@ export const updateCollectionProviderMap = async (
     method: 'PUT',
     headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({
-      key: 'collection_provider_map',
+      key: DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY,
       value: JSON.stringify(map),
     }),
   });

@@ -10,16 +10,6 @@ import {
   isPrimaryProviderConfigured,
 } from './database-engine-policy';
 
-const logSystemEvent = async (params: { level: 'info' | 'warn' | 'error'; message: string; source: string; context?: Record<string, unknown> }): Promise<void> => {
-  try {
-    // eslint-disable-next-line import/no-restricted-paths
-    const mod = await import('@/features/observability/server') as { logSystemEvent: (input: unknown) => Promise<void> };
-    await mod.logSystemEvent(params);
-  } catch {
-    // ignore
-  }
-};
-
 export const APP_DB_PROVIDER_SETTING_KEY = 'app_db_provider';
 
 export type AppDbProvider = 'prisma' | 'mongodb';
@@ -101,7 +91,7 @@ export const getAppDbProvider = async (): Promise<AppDbProvider> => {
         'Database Engine route "app" cannot target Redis. Use Prisma or MongoDB.'
       );
     }
-    if (policy.strictProviderAvailability && !isPrimaryProviderConfigured(routeProvider)) {
+    if (!isPrimaryProviderConfigured(routeProvider)) {
       throw internalError(
         `Database Engine route "app" targets "${routeProvider}" but it is not configured in environment variables.`
       );
@@ -118,59 +108,22 @@ export const getAppDbProvider = async (): Promise<AppDbProvider> => {
   const setting = await getAppDbProviderSetting();
   if (setting === 'mongodb') {
     if (process.env['MONGODB_URI']) return 'mongodb';
-    if (!policy.allowAutomaticFallback || policy.strictProviderAvailability) {
-      throw internalError(
-        'App provider is set to MongoDB but MONGODB_URI is missing. Automatic fallback is disabled by Database Engine policy.'
-      );
-    }
-    void logSystemEvent({
-      level: 'warn',
-      message: 'MONGODB_URI missing; falling back to Prisma.',
-      source: 'app-db-provider'
-    });
-    if (process.env['DATABASE_URL']) return 'prisma';
     throw internalError(
-      'No available fallback provider. Configure DATABASE_URL or update Database Engine routing.'
+      'App provider is set to MongoDB but MONGODB_URI is missing.'
     );
   }
   if (setting === 'prisma') {
     if (process.env['DATABASE_URL']) return 'prisma';
-    if (policy.allowAutomaticFallback && process.env['MONGODB_URI']) {
-      void logSystemEvent({
-        level: 'warn',
-        message: 'DATABASE_URL missing; falling back to MongoDB.',
-        source: 'app-db-provider'
-      });
-      return 'mongodb';
-    }
-    if (!policy.allowAutomaticFallback || policy.strictProviderAvailability) {
-      throw internalError(
-        'App provider is set to Prisma but DATABASE_URL is missing. Automatic fallback is disabled by Database Engine policy.'
-      );
-    }
     throw internalError(
-      'DATABASE_URL missing; Prisma is selected but unavailable. Configure DATABASE_URL or set an explicit route in Database Engine.'
+      'App provider is set to Prisma but DATABASE_URL is missing.'
     );
   }
-
-  if (!policy.allowAutomaticFallback) {
-    throw internalError(
-      'No explicit app provider configured. Configure APP provider in Workflow Database -> Database Engine.'
-    );
-  }
-
-  // No explicit setting found — detect from available connections.
-  // Prefer Prisma when both are configured to avoid accidental MongoDB drift.
-  if (process.env['DATABASE_URL'] && process.env['MONGODB_URI']) {
-    void logSystemEvent({
-      level: 'warn',
-      message: 'Both DATABASE_URL and MONGODB_URI are set without explicit provider; defaulting to Prisma.',
-      source: 'app-db-provider'
-    });
-    return 'prisma';
-  }
+  if (process.env['DATABASE_URL'] && process.env['MONGODB_URI']) return 'prisma';
+  if (process.env['DATABASE_URL']) return 'prisma';
   if (process.env['MONGODB_URI']) return 'mongodb';
-  return 'prisma';
+  throw internalError(
+    'No database provider is configured. Set DATABASE_URL or MONGODB_URI.'
+  );
 };
 
 export const invalidateAppDbProviderCache = (): void => {

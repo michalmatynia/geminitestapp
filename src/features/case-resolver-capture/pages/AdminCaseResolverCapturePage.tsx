@@ -5,7 +5,7 @@ import Link from 'next/link';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, FormSection, Label, SectionHeader, SelectSimple, useToast } from '@/shared/ui';
+import { Button, FormSection, SectionHeader, SelectSimple, useToast, FormActions, FormField } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
@@ -173,9 +173,9 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
         className='p-4'
       >
         <div className='grid gap-3 md:grid-cols-2'>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Capture Pipeline</Label>
+          <FormField label='Capture Pipeline' id='capture-pipeline'>
             <SelectSimple
+              id='capture-pipeline'
               value={toBooleanOptionValue(draft.enabled)}
               onValueChange={(value: string): void => {
                 setDraft((current: CaseResolverCaptureSettings | null) =>
@@ -189,10 +189,10 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
               }}
               options={BOOLEAN_OPTIONS}
             />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Auto-open Proposal Modal</Label>
+          </FormField>
+          <FormField label='Auto-open Proposal Modal' id='auto-open-modal'>
             <SelectSimple
+              id='auto-open-modal'
               value={toBooleanOptionValue(draft.autoOpenProposalModal)}
               onValueChange={(value: string): void => {
                 setDraft((current: CaseResolverCaptureSettings | null) =>
@@ -206,7 +206,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
               }}
               options={BOOLEAN_OPTIONS}
             />
-          </div>
+          </FormField>
         </div>
       </FormSection>
 
@@ -227,19 +227,19 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
             )}
           >
             <div className='grid gap-3 md:grid-cols-2'>
-              <div className='space-y-1'>
-                <Label className='text-[11px] text-gray-400'>Role Mapping Enabled</Label>
+              <FormField label='Role Mapping Enabled' id={`mapping-enabled-${role}`}>
                 <SelectSimple
+                  id={`mapping-enabled-${role}`}
                   value={toBooleanOptionValue(mapping.enabled)}
                   onValueChange={(value: string): void => {
                     updateRoleMapping(role, 'enabled', fromBooleanOptionValue(value));
                   }}
                   options={BOOLEAN_OPTIONS}
                 />
-              </div>
-              <div className='space-y-1'>
-                <Label className='text-[11px] text-gray-400'>Target Case Role</Label>
+              </FormField>
+              <FormField label='Target Case Role' id={`target-role-${role}`}>
                 <SelectSimple
+                  id={`target-role-${role}`}
                   value={mapping.targetRole}
                   onValueChange={(value: string): void => {
                     updateRoleMapping(
@@ -250,10 +250,10 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
                   }}
                   options={CASE_RESOLVER_CAPTURE_TARGET_ROLE_OPTIONS}
                 />
-              </div>
-              <div className='space-y-1'>
-                <Label className='text-[11px] text-gray-400'>Default Action</Label>
+              </FormField>
+              <FormField label='Default Action' id={`default-action-${role}`}>
                 <SelectSimple
+                  id={`default-action-${role}`}
                   value={mapping.defaultAction}
                   onValueChange={(value: string): void => {
                     updateRoleMapping(
@@ -264,53 +264,41 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
                   }}
                   options={CASE_RESOLVER_CAPTURE_ACTION_OPTIONS}
                 />
-              </div>
-              <div className='space-y-1'>
-                <Label className='text-[11px] text-gray-400'>Auto-match Filemaker Party</Label>
+              </FormField>
+              <FormField label='Auto-match Filemaker Party' id={`auto-match-party-${role}`}>
                 <SelectSimple
+                  id={`auto-match-party-${role}`}
                   value={toBooleanOptionValue(mapping.autoMatchPartyReference)}
                   onValueChange={(value: string): void => {
                     updateRoleMapping(role, 'autoMatchPartyReference', fromBooleanOptionValue(value));
                   }}
                   options={BOOLEAN_OPTIONS}
                 />
-              </div>
-              <div className='space-y-1 md:col-span-2'>
-                <Label className='text-[11px] text-gray-400'>Auto-match Filemaker Address</Label>
+              </FormField>
+              <FormField label='Auto-match Filemaker Address' id={`auto-match-address-${role}`} className='md:col-span-2'>
                 <SelectSimple
+                  id={`auto-match-address-${role}`}
                   value={toBooleanOptionValue(mapping.autoMatchAddress)}
                   onValueChange={(value: string): void => {
                     updateRoleMapping(role, 'autoMatchAddress', fromBooleanOptionValue(value));
                   }}
                   options={BOOLEAN_OPTIONS}
                 />
-              </div>
+              </FormField>
             </div>
           </FormSection>
         );
       })}
 
-      <div className='flex items-center justify-between gap-3'>
-        <Button
-          type='button'
-          variant='outline'
-          onClick={handleReset}
-          disabled={updateSetting.isPending}
-          className='border-yellow-600 text-yellow-600 hover:bg-yellow-600/10'
-        >
-          Reset to Defaults
-        </Button>
-        <Button
-          type='button'
-          onClick={(): void => {
-            void handleSave();
-          }}
-          disabled={saveDisabled}
-          className='min-w-[130px]'
-        >
-          Save Capture Settings
-        </Button>
-      </div>
+      <FormActions
+        onCancel={handleReset}
+        onSave={handleSave}
+        cancelText='Reset to Defaults'
+        saveText='Save Capture Settings'
+        cancelVariant='warning'
+        isSaving={updateSetting.isPending}
+        isDisabled={saveDisabled}
+      />
     </div>
   );
 }

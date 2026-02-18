@@ -6,6 +6,11 @@ import path from 'path';
 
 import { createFileUploadEvent } from '@/features/files/services/file-upload-events';
 import { getImageFileRepository } from '@/features/files/services/image-file-repository';
+import {
+  deleteFromConfiguredStorage,
+  getPublicPathFromStoredPath,
+  uploadToConfiguredStorage,
+} from '@/features/files/services/storage/file-storage-service';
 import type { ImageFileRecord } from '@/features/files/types/services/image-file-repository';
 import { noteService } from '@/features/notesapp/server';
 import { ErrorSystem } from '@/features/observability/server';
@@ -51,7 +56,11 @@ function isAllowedFilenameExtension(filename: string): boolean {
 }
 
 export function getDiskPathFromPublicPath(publicPath: string): string {
-  const cleaned = publicPath.replace(/^\/+/, '');
+  const normalized = getPublicPathFromStoredPath(publicPath);
+  if (!normalized) {
+    throw new Error('Security Error: Invalid file path.');
+  }
+  const cleaned = normalized.replace(/^\/+/, '');
   const resolved = path.resolve(publicRoot, cleaned);
 
   if (!resolved.startsWith(publicRoot + path.sep) && resolved !== publicRoot) {
@@ -188,16 +197,32 @@ export async function uploadFile(
     projectId: options?.projectId,
     folder: options?.folder,
   });
-  const filepath = path.join(diskDir, filename);
+  const publicPath = `${publicDir}/${filename}`;
+  const localDiskPath = path.join(diskDir, filename);
+  let storedFilepath = publicPath;
+  let storageSource: 'local' | 'fastcomet' = 'local';
 
   try {
-    await fs.mkdir(diskDir, { recursive: true });
-    await fs.writeFile(filepath, fileBuffer);
+    const storageResult = await uploadToConfiguredStorage({
+      buffer: fileBuffer,
+      filename,
+      mimetype: file.type || 'application/octet-stream',
+      publicPath,
+      category: options?.category ?? null,
+      projectId: options?.projectId ?? null,
+      folder: options?.folder ?? null,
+      writeLocalCopy: async (): Promise<void> => {
+        await fs.mkdir(diskDir, { recursive: true });
+        await fs.writeFile(localDiskPath, fileBuffer);
+      },
+    });
+    storedFilepath = storageResult.filepath;
+    storageSource = storageResult.source;
 
     const imageFileRepository = await getImageFileRepository();
     const recordInput = {
       filename,
-      filepath: `${publicDir}/${filename}`,
+      filepath: storedFilepath,
       mimetype: file.type,
       size: file.size,
     };
@@ -212,6 +237,7 @@ export async function uploadFile(
       mimetype: recordInput.mimetype,
       size: recordInput.size,
       source: 'fileUploader.uploadFile',
+      meta: { storageSource },
     }).catch(() => {});
 
     return imageFile;
@@ -227,7 +253,9 @@ export async function uploadFile(
       size: file.size,
       source: 'fileUploader.uploadFile',
       errorMessage: error instanceof Error ? error.message : 'Upload failed',
-      meta: options?.allowOrphanRecord ? { orphanRecord: true } : null,
+      meta: options?.allowOrphanRecord
+        ? { orphanRecord: true, storageSource }
+        : { storageSource },
     }).catch(() => {});
     await ErrorSystem.captureException(error, {
       service: 'fileUploader',
@@ -240,7 +268,7 @@ export async function uploadFile(
       return {
         id: randomUUID(),
         filename,
-        filepath: `${publicDir}/${filename}`,
+        filepath: storedFilepath,
         mimetype: file.type,
         size: file.size,
         width: null,
@@ -270,17 +298,33 @@ export async function uploadNoteFile(
   const filename = `slot-${slotIndex}-${sanitizeFilename(file.name)}`;
   const diskDir = path.join(notesRoot, noteId);
   const publicDir = `/uploads/notes/${noteId}`;
-  const filepath = path.join(diskDir, filename);
+  const publicPath = `${publicDir}/${filename}`;
+  const localDiskPath = path.join(diskDir, filename);
+  let storedFilepath = publicPath;
+  let storageSource: 'local' | 'fastcomet' = 'local';
 
   try {
-    await fs.mkdir(diskDir, { recursive: true });
-    await fs.writeFile(filepath, fileBuffer);
+    const storageResult = await uploadToConfiguredStorage({
+      buffer: fileBuffer,
+      filename,
+      mimetype: file.type || 'application/octet-stream',
+      publicPath,
+      category: 'notes',
+      projectId: noteId,
+      folder: null,
+      writeLocalCopy: async (): Promise<void> => {
+        await fs.mkdir(diskDir, { recursive: true });
+        await fs.writeFile(localDiskPath, fileBuffer);
+      },
+    });
+    storedFilepath = storageResult.filepath;
+    storageSource = storageResult.source;
 
     const noteFile = await noteService.createNoteFile({
       noteId,
       slotIndex,
       filename,
-      filepath: `${publicDir}/${filename}`,
+      filepath: storedFilepath,
       mimetype: file.type,
       size: file.size,
     });
@@ -293,6 +337,7 @@ export async function uploadNoteFile(
       mimetype: file.type,
       size: file.size,
       source: 'fileUploader.uploadNoteFile',
+      meta: { storageSource },
     }).catch(() => {});
 
     return noteFile;
@@ -307,6 +352,7 @@ export async function uploadNoteFile(
       size: file.size,
       source: 'fileUploader.uploadNoteFile',
       errorMessage: error instanceof Error ? error.message : 'Upload failed',
+      meta: { storageSource },
     }).catch(() => {});
     await ErrorSystem.captureException(error, {
       service: 'fileUploader',
@@ -318,14 +364,28 @@ export async function uploadNoteFile(
   }
 }
 
+export async function deleteFileFromStorage(filepath: string): Promise<void> {
+  await deleteFromConfiguredStorage({
+    filepath,
+    deleteLocalCopy: async (publicPath: string | null): Promise<void> => {
+      if (!publicPath) return;
+      try {
+        const diskPath = getDiskPathFromPublicPath(publicPath);
+        await fs.unlink(diskPath).catch(() => {});
+      } catch {
+        // ignore invalid or non-local paths
+      }
+    },
+  });
+}
+
 export async function deleteNoteFile(
   noteId: string,
   slotIndex: number,
   filepath: string
 ): Promise<boolean> {
   try {
-    const diskPath = getDiskPathFromPublicPath(filepath);
-    await fs.unlink(diskPath).catch(() => {});
+    await deleteFileFromStorage(filepath);
     const noteDir = path.join(notesRoot, noteId);
     try {
       const remaining = await fs.readdir(noteDir);

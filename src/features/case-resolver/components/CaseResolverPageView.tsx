@@ -210,6 +210,8 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     selectedFolderPath,
     isWorkspaceDirty,
     isWorkspaceSaving,
+    workspaceSaveStatus,
+    workspaceSaveError,
     folderPanelCollapsed,
     setFolderPanelCollapsed,
     setActiveMainView,
@@ -354,10 +356,16 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     handleDiscardFileEditorDraft,
     isEditorDraftDirty,
   ]);
+  const hasUnsavedChanges = isWorkspaceDirty || isEditorDraftDirty;
+  const confirmLeaveWithUnsavedChanges = useCallback((): boolean => {
+    return window.confirm(
+      'You have unsaved Case Resolver changes. Leave this page without saving?'
+    );
+  }, []);
 
   React.useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
-      if (!isWorkspaceDirty && !isEditorDraftDirty) return;
+      if (!hasUnsavedChanges) return;
       event.preventDefault();
       event.returnValue = '';
     };
@@ -365,7 +373,52 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     return (): void => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [isEditorDraftDirty, isWorkspaceDirty]);
+  }, [hasUnsavedChanges]);
+
+  React.useEffect(() => {
+    const handleDocumentClick = (event: MouseEvent): void => {
+      if (!hasUnsavedChanges) return;
+      if (event.defaultPrevented) return;
+      if (event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+      const rawTarget = event.target;
+      if (!(rawTarget instanceof Element)) return;
+      const anchor = rawTarget.closest('a[href]');
+      if (!(anchor instanceof HTMLAnchorElement)) return;
+      const href = anchor.getAttribute('href')?.trim() ?? '';
+      if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+      const current = new URL(window.location.href);
+      const next = new URL(anchor.href, current.href);
+      if (current.origin !== next.origin) return;
+      if (
+        current.pathname === next.pathname &&
+        current.search === next.search &&
+        current.hash === next.hash
+      ) {
+        return;
+      }
+      const shouldLeave = confirmLeaveWithUnsavedChanges();
+      if (shouldLeave) return;
+      event.preventDefault();
+      event.stopPropagation();
+    };
+    document.addEventListener('click', handleDocumentClick, true);
+    return (): void => {
+      document.removeEventListener('click', handleDocumentClick, true);
+    };
+  }, [confirmLeaveWithUnsavedChanges, hasUnsavedChanges]);
+
+  React.useEffect(() => {
+    const handlePopState = (): void => {
+      if (!hasUnsavedChanges) return;
+      if (confirmLeaveWithUnsavedChanges()) return;
+      window.history.go(1);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return (): void => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [confirmLeaveWithUnsavedChanges, hasUnsavedChanges]);
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
@@ -406,6 +459,8 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
       selectedFolderPath,
       isWorkspaceDirty,
       isWorkspaceSaving,
+      workspaceSaveStatus,
+      workspaceSaveError,
       activeFile,
       selectedAsset,
       panelCollapsed: folderPanelCollapsed,

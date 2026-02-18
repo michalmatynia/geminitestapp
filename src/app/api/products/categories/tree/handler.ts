@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { logSystemEvent } from '@/features/observability/server';
 import { getCategoryRepository, getProductDataProvider } from '@/features/products/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -21,50 +20,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
   const primaryProvider = await getProductDataProvider();
   const repository = await getCategoryRepository(primaryProvider);
-  let tree = await repository.getCategoryTree(catalogId);
-
-  if (tree.length === 0) {
-    const fallbackProvider = primaryProvider === 'prisma' ? 'mongodb' : 'prisma';
-    const canReadFallback =
-      fallbackProvider === 'mongodb'
-        ? Boolean(process.env['MONGODB_URI'])
-        : Boolean(process.env['DATABASE_URL']);
-    if (canReadFallback) {
-      try {
-        const fallbackRepository = await getCategoryRepository(fallbackProvider);
-        const fallbackTree = await fallbackRepository.getCategoryTree(catalogId);
-        if (fallbackTree.length > 0) {
-          tree = fallbackTree;
-          await logSystemEvent({
-            level: 'warn',
-            message:
-              '[products.categories.tree.GET] Primary provider returned empty result; using fallback provider.',
-            source: 'products.categories.tree.GET',
-            request: req,
-            context: {
-              catalogId,
-              primaryProvider,
-              fallbackProvider,
-              fallbackCount: fallbackTree.length,
-            },
-          });
-        }
-      } catch (error: unknown) {
-        await logSystemEvent({
-          level: 'warn',
-          message: '[products.categories.tree.GET] Failed to read fallback provider.',
-          source: 'products.categories.tree.GET',
-          request: req,
-          error,
-          context: {
-            catalogId,
-            primaryProvider,
-            fallbackProvider,
-          },
-        });
-      }
-    }
-  }
+  const tree = await repository.getCategoryTree(catalogId);
   
   return NextResponse.json(tree);
 }

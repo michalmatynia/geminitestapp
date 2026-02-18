@@ -572,45 +572,45 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
               <div className='space-y-2'>
                 {favoritesList.map((entry: AdminNavLeaf | undefined, index: number) => (
                   <div key={entry?.id} className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-gray-900/40 p-3'>
-                    <div className='min-w-0'>
-                      <div className='truncate text-sm text-white'>{entry?.label}</div>
-                      {entry?.parents?.length ? (
-                        <div className='truncate text-[11px] text-gray-500'>
-                          {entry.parents.join(' / ')}
+                    <SectionHeader
+                      title={entry?.label}
+                      subtitle={entry?.parents?.length ? entry.parents.join(' / ') : undefined}
+                      size='xs'
+                      className='flex-1'
+                      actions={
+                        <div className='flex items-center gap-1'>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            size='sm'
+                            className='h-7 w-7 p-0'
+                            disabled={index === 0}
+                            onClick={() => entry?.id && moveFavorite(entry.id, 'up')}
+                          >
+                            <ArrowUp className='size-3' />
+                          </Button>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            size='sm'
+                            className='h-7 w-7 p-0'
+                            disabled={index === favoritesList.length - 1}
+                            onClick={() => entry?.id && moveFavorite(entry.id, 'down')}
+                          >
+                            <ArrowDown className='size-3' />
+                          </Button>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            size='sm'
+                            className='h-7 px-2 text-[11px]'
+                            onClick={() => entry?.id && handleToggleFavorite(entry.id, false)}
+                          >
+                            Remove
+                          </Button>
                         </div>
-                      ) : null}
-                    </div>
-                    <div className='flex items-center gap-1'>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='sm'
-                        className='h-7 w-7 p-0'
-                        disabled={index === 0}
-                        onClick={() => entry?.id && moveFavorite(entry.id, 'up')}
-                      >
-                        <ArrowUp className='size-3' />
-                      </Button>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='sm'
-                        className='h-7 w-7 p-0'
-                        disabled={index === favoritesList.length - 1}
-                        onClick={() => entry?.id && moveFavorite(entry.id, 'down')}
-                      >
-                        <ArrowDown className='size-3' />
-                      </Button>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='sm'
-                        className='h-7 px-2 text-[11px]'
-                        onClick={() => entry?.id && handleToggleFavorite(entry.id, false)}
-                      >
-                        Remove
-                      </Button>
-                    </div>
+                      }
+                    />
                   </div>
                 ))}
               </div>

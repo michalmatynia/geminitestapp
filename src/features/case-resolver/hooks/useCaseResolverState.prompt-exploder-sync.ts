@@ -9,7 +9,10 @@ import {
   deriveDocumentContentSync,
   toStorageDocumentValue,
 } from '@/features/document-editor/content-format';
-import { consumePromptExploderApplyPromptForCaseResolver } from '@/features/prompt-exploder/bridge';
+import {
+  consumePromptExploderApplyPromptForCaseResolver,
+  readPromptExploderApplyPayload,
+} from '@/features/prompt-exploder/bridge';
 
 import { extractCaseResolverDocumentDate } from '../settings';
 import { CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT } from './useCaseResolverState.helpers';
@@ -41,6 +44,7 @@ type CaseResolverCaptureSettings = Parameters<typeof buildCaseResolverCapturePro
 
 type UseCaseResolverStatePromptExploderSyncInput = {
   workspaceActiveFileId: string | null;
+  workspaceFiles: CaseResolverWorkspace['files'];
   filemakerDatabase: FilemakerDatabase;
   caseResolverCaptureSettings: CaseResolverCaptureSettings;
   updateWorkspace: UpdateWorkspaceFn;
@@ -51,8 +55,76 @@ type UseCaseResolverStatePromptExploderSyncInput = {
   toast: CaseResolverToast;
 };
 
+type CaseResolverPromptExploderTargetResolution =
+  | {
+    status: 'ready';
+    targetFileId: string;
+    usedActiveFallback: boolean;
+  }
+  | {
+    status: 'pending';
+    reason: 'waiting-for-files' | 'context-missing' | 'no-target';
+  };
+
+const normalizeCandidateId = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+export const resolveCaseResolverPromptExploderTarget = ({
+  workspaceActiveFileId,
+  workspaceFiles,
+  payloadContextFileId,
+}: {
+  workspaceActiveFileId: string | null;
+  workspaceFiles: CaseResolverWorkspace['files'];
+  payloadContextFileId: string | null;
+}): CaseResolverPromptExploderTargetResolution => {
+  const fileIdSet = new Set(
+    workspaceFiles
+      .map((file) => normalizeCandidateId(file.id))
+      .filter((id): id is string => id !== null)
+  );
+  const contextFileId = normalizeCandidateId(payloadContextFileId);
+  if (contextFileId && fileIdSet.has(contextFileId)) {
+    return {
+      status: 'ready',
+      targetFileId: contextFileId,
+      usedActiveFallback: false,
+    };
+  }
+
+  const activeFileId = normalizeCandidateId(workspaceActiveFileId);
+  if (activeFileId && fileIdSet.has(activeFileId)) {
+    return {
+      status: 'ready',
+      targetFileId: activeFileId,
+      usedActiveFallback: Boolean(contextFileId && contextFileId !== activeFileId),
+    };
+  }
+
+  if (fileIdSet.size === 0) {
+    return {
+      status: 'pending',
+      reason: 'waiting-for-files',
+    };
+  }
+  if (contextFileId && !fileIdSet.has(contextFileId)) {
+    return {
+      status: 'pending',
+      reason: 'context-missing',
+    };
+  }
+  return {
+    status: 'pending',
+    reason: 'no-target',
+  };
+};
+
 export const useCaseResolverStatePromptExploderSync = ({
   workspaceActiveFileId,
+  workspaceFiles,
   filemakerDatabase,
   caseResolverCaptureSettings,
   updateWorkspace,
@@ -66,21 +138,59 @@ export const useCaseResolverStatePromptExploderSync = ({
   filemakerDatabaseRef.current = filemakerDatabase;
   const caseResolverCaptureSettingsRef = useRef(caseResolverCaptureSettings);
   caseResolverCaptureSettingsRef.current = caseResolverCaptureSettings;
+  const unresolvedPayloadKeyRef = useRef<string | null>(null);
+  const fallbackPayloadKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const payload = consumePromptExploderApplyPromptForCaseResolver();
-    if (!payload?.prompt?.trim()) return;
+    const payload = readPromptExploderApplyPayload();
+    if (payload?.target !== 'case-resolver') return;
+    if (!payload.prompt?.trim()) {
+      consumePromptExploderApplyPromptForCaseResolver();
+      return;
+    }
 
-    const targetFileId = payload.caseResolverContext?.fileId ?? workspaceActiveFileId ?? null;
-    if (!targetFileId) return;
+    const payloadKey = [
+      payload.createdAt,
+      payload.caseResolverContext?.fileId ?? '',
+      payload.prompt.slice(0, 64),
+    ].join('|');
+    const targetResolution = resolveCaseResolverPromptExploderTarget({
+      workspaceActiveFileId,
+      workspaceFiles,
+      payloadContextFileId: payload.caseResolverContext?.fileId ?? null,
+    });
+    if (targetResolution.status !== 'ready') {
+      if (targetResolution.reason === 'waiting-for-files') return;
+      if (unresolvedPayloadKeyRef.current === payloadKey) return;
+      unresolvedPayloadKeyRef.current = payloadKey;
+      if (targetResolution.reason === 'context-missing') {
+        toast(
+          'Prompt Exploder output is pending. Source file is missing, so open/select a destination document to apply it.',
+          { variant: 'warning' }
+        );
+      } else {
+        toast('Prompt Exploder output is pending. Select a document to apply it.', {
+          variant: 'info',
+        });
+      }
+      return;
+    }
+    unresolvedPayloadKeyRef.current = null;
+
+    const payloadToApply = consumePromptExploderApplyPromptForCaseResolver();
+    if (!payloadToApply?.prompt?.trim()) return;
+    const targetFileId = targetResolution.targetFileId;
 
     const proposalState = buildCaseResolverCaptureProposalState(
-      payload.caseResolverParties,
+      payloadToApply.caseResolverParties,
       targetFileId,
       filemakerDatabaseRef.current,
       caseResolverCaptureSettingsRef.current
     );
-    const nextExplodedContent = stripCapturedAddressLinesFromText(payload.prompt, proposalState);
+    const nextExplodedContent = stripCapturedAddressLinesFromText(
+      payloadToApply.prompt,
+      proposalState
+    );
     const extractedDocumentDate = extractCaseResolverDocumentDate(nextExplodedContent);
     const now = new Date().toISOString();
     const canonicalExploded = deriveDocumentContentSync({
@@ -177,6 +287,16 @@ export const useCaseResolverStatePromptExploderSync = ({
       setIsPromptExploderPartyProposalOpen(false);
       setIsApplyingPromptExploderPartyProposal(false);
     }
+    if (targetResolution.usedActiveFallback) {
+      if (fallbackPayloadKeyRef.current !== payloadKey) {
+        fallbackPayloadKeyRef.current = payloadKey;
+        toast('Exploded text applied to the active document (source file was unavailable).', {
+          variant: 'warning',
+        });
+      }
+      return;
+    }
+    fallbackPayloadKeyRef.current = null;
     toast('Exploded text returned to Case Resolver.', { variant: 'success' });
   }, [
     setEditingDocumentDraft,
@@ -185,6 +305,7 @@ export const useCaseResolverStatePromptExploderSync = ({
     setPromptExploderPartyProposal,
     toast,
     workspaceActiveFileId,
+    workspaceFiles,
     updateWorkspace,
   ]);
 };

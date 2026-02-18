@@ -7,7 +7,6 @@ import type {
   ProductCategory,
   ProductTag,
   ProductParameter,
-  ProductSimpleParameter,
   PriceGroupWithDetails,
   ProductWithImages,
   Producer,
@@ -21,7 +20,6 @@ import {
   useCategories,
   useLanguages,
   useParameters,
-  useSimpleParameters,
   usePriceGroups,
   useProducers,
   useTags,
@@ -36,7 +34,6 @@ export {
   useDeleteProducerMutation,
   useLanguages,
   useParameters,
-  useSimpleParameters,
   usePriceGroups,
   useProducers,
   useSaveProducerMutation,
@@ -63,8 +60,6 @@ export interface ProductMetadataHookResult {
   toggleProducer: (producerId: string) => void;
   parameters: ProductParameter[];
   parametersLoading: boolean;
-  simpleParameters: ProductSimpleParameter[];
-  simpleParametersLoading: boolean;
   filteredLanguages: Language[];
   filteredPriceGroups: PriceGroupWithDetails[];
 }
@@ -266,7 +261,6 @@ export function useProductMetadata({
   const categoriesQuery = useCategories(primaryCatalogId);
   const tagsQuery = useTags(primaryCatalogId);
   const parametersQuery = useParameters(primaryCatalogId);
-  const simpleParametersQuery = useSimpleParameters(primaryCatalogId);
   const categories = categoriesQuery.data || [];
   const isSelectedCategoryInPrimaryCatalog = React.useMemo((): boolean => {
     if (!selectedCategoryId) return true;
@@ -442,8 +436,6 @@ export function useProductMetadata({
     toggleProducer,
     parameters: parametersQuery.data || [],
     parametersLoading: parametersQuery.isLoading,
-    simpleParameters: simpleParametersQuery.data || [],
-    simpleParametersLoading: simpleParametersQuery.isLoading,
     filteredLanguages,
     filteredPriceGroups,
   };

@@ -40,13 +40,11 @@ import {
   ProductCategory,
   ProductCategoryWithChildren,
   ProductParameter,
-  ProductSimpleParameter,
   ProductTag,
 } from '../types';
 import {
   useCatalogs as useMetadataCatalogs,
   useParameters as useMetadataParameters,
-  useSimpleParameters as useMetadataSimpleParameters,
   usePriceGroups as useMetadataPriceGroups,
   useTags as useMetadataTags,
 } from './useProductMetadataQueries';
@@ -83,12 +81,6 @@ export function useTags(catalogId: string | null): ListQuery<ProductTag> {
 
 export function useParameters(catalogId: string | null): ListQuery<ProductParameter> {
   return useMetadataParameters(catalogId ?? undefined);
-}
-
-export function useSimpleParameters(
-  catalogId: string | null
-): ListQuery<ProductSimpleParameter> {
-  return useMetadataSimpleParameters(catalogId ?? undefined);
 }
 
 export function useValidatorSettings(): SingleQuery<ProductValidatorSettings> {
@@ -392,67 +384,6 @@ export function useDeleteParameterMutation(): UpdateMutation<void, { id: string;
       domain: 'products',
       mutationKey,
       tags: ['products', 'settings', 'parameters', 'delete'],
-    },
-    onSuccess: (_data, variables) => {
-      void invalidateCatalogScopedData(queryClient, variables.catalogId);
-    },
-  });
-}
-
-export function useSaveSimpleParameterMutation(): SaveMutation<
-  ProductSimpleParameter,
-  { id: string | undefined; data: Partial<ProductSimpleParameter> }
-  > {
-  const queryClient = useQueryClient();
-  const mutationKey = productSettingsKeys.all;
-  return createMutationV2({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string | undefined;
-      data: Partial<ProductSimpleParameter>;
-    }) =>
-      id
-        ? api.updateSimpleParameter(id, data)
-        : api.createSimpleParameter(data),
-    mutationKey,
-    meta: {
-      source: 'products.hooks.useSaveSimpleParameterMutation',
-      operation: 'action',
-      resource: 'products.settings.simple-parameters',
-      domain: 'products',
-      mutationKey,
-      tags: ['products', 'settings', 'simple-parameters', 'save'],
-    },
-    onSuccess: (_data, variables) => {
-      const catalogId = variables.data.catalogId ?? null;
-      void invalidateCatalogScopedData(queryClient, catalogId);
-    },
-  });
-}
-
-export function useDeleteSimpleParameterMutation(): UpdateMutation<
-  void,
-  { id: string; catalogId: string | null }
-  > {
-  const queryClient = useQueryClient();
-  const mutationKey = productSettingsKeys.all;
-  return createDeleteMutationV2({
-    mutationFn: ({
-      id,
-    }: {
-      id: string;
-      catalogId: string | null;
-    }) => api.deleteSimpleParameter(id),
-    mutationKey,
-    meta: {
-      source: 'products.hooks.useDeleteSimpleParameterMutation',
-      operation: 'delete',
-      resource: 'products.settings.simple-parameters',
-      domain: 'products',
-      mutationKey,
-      tags: ['products', 'settings', 'simple-parameters', 'delete'],
     },
     onSuccess: (_data, variables) => {
       void invalidateCatalogScopedData(queryClient, variables.catalogId);

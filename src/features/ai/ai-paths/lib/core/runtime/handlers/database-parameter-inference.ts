@@ -280,8 +280,7 @@ export const mergeParameterInferenceUpdates = (args: {
   applied: boolean;
   meta?: Record<string, unknown>;
 } => {
-  // Runtime merge logic is designed for legacy custom-field `parameters` payloads.
-  // `simpleParameters` are merged server-side in the entity update endpoint.
+  // Runtime merge logic updates only the existing `parameters` payload.
   if (args.targetPath !== 'parameters') {
     return { updates: args.updates, applied: false };
   }

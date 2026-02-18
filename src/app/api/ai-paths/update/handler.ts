@@ -16,12 +16,7 @@ import { getProductRepository } from '@/features/products/server';
 import { getProductDataProvider } from '@/features/products/services/product-provider';
 import type {
   ProductParameterValue,
-  ProductSimpleParameterValue,
 } from '@/features/products/types';
-import {
-  mergeProductParameterValues,
-  splitProductParameterValues,
-} from '@/features/products/utils/parameter-partition';
 import { badRequestError, notFoundError, validationError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -78,13 +73,15 @@ const toTrimmedString = (value: unknown): string => {
   return value.trim();
 };
 
-const normalizeSimpleParameterUpdates = (
+const LEGACY_SIMPLE_PARAMETER_PREFIX = 'sp:';
+
+const normalizeLegacySimpleParameterUpdates = (
   value: unknown
-): ProductSimpleParameterValue[] => {
+): ProductParameterValue[] => {
   if (!Array.isArray(value)) return [];
   const seen = new Set<string>();
   return value.reduce(
-    (acc: ProductSimpleParameterValue[], entry: unknown) => {
+    (acc: ProductParameterValue[], entry: unknown) => {
       if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
         return acc;
       }
@@ -105,47 +102,78 @@ const normalizeSimpleParameterUpdates = (
   );
 };
 
-const mergeSimpleParameterInferenceWithExisting = (args: {
-  existingParameters: ProductParameterValue[] | null | undefined;
-  inferredSimpleParameters: ProductSimpleParameterValue[];
+const decodeLegacySimpleParameterId = (parameterId: string): string => {
+  const normalized = toTrimmedString(parameterId);
+  if (!normalized) return '';
+  if (!normalized.startsWith(LEGACY_SIMPLE_PARAMETER_PREFIX)) {
+    return normalized;
+  }
+  return normalized.slice(LEGACY_SIMPLE_PARAMETER_PREFIX.length).trim();
+};
+
+const normalizeExistingParameterValues = (
+  input: unknown
+): ProductParameterValue[] => {
+  if (!Array.isArray(input)) return [];
+  return input.reduce(
+    (acc: ProductParameterValue[], entry: unknown) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+        return acc;
+      }
+      const record = entry as Record<string, unknown>;
+      const parameterId = toTrimmedString(record['parameterId']);
+      if (!parameterId) return acc;
+      const value = typeof record['value'] === 'string' ? record['value'] : '';
+      const valuesByLanguage =
+        record['valuesByLanguage'] &&
+        typeof record['valuesByLanguage'] === 'object' &&
+        !Array.isArray(record['valuesByLanguage'])
+          ? (record['valuesByLanguage'] as Record<string, string>)
+          : undefined;
+      acc.push({
+        parameterId,
+        value,
+        ...(valuesByLanguage ? { valuesByLanguage } : {}),
+      });
+      return acc;
+    },
+    []
+  );
+};
+
+const mergeLegacySimpleParameterInferenceWithExisting = (args: {
+  existingParameters: ProductParameterValue[];
+  inferredSimpleParameters: ProductParameterValue[];
 }): ProductParameterValue[] => {
-  const existingSplit = splitProductParameterValues(args.existingParameters ?? []);
-  if (existingSplit.simpleParameterValues.length === 0) {
-    return mergeProductParameterValues({
-      customFieldValues: existingSplit.customFieldValues,
-      simpleParameterValues: [],
-    });
+  if (!Array.isArray(args.existingParameters) || args.existingParameters.length === 0) {
+    return [];
+  }
+  if (!Array.isArray(args.inferredSimpleParameters) || args.inferredSimpleParameters.length === 0) {
+    return args.existingParameters;
   }
 
-  const nextSimpleValues = existingSplit.simpleParameterValues.map(
-    (entry: ProductSimpleParameterValue): ProductSimpleParameterValue => ({
-      parameterId: entry.parameterId,
-      value: typeof entry.value === 'string' ? entry.value : '',
-    })
-  );
-  const existingIndexById = new Map<string, number>();
-  nextSimpleValues.forEach((entry: ProductSimpleParameterValue, index: number) => {
-    const id = toTrimmedString(entry.parameterId);
-    if (!id || existingIndexById.has(id)) return;
-    existingIndexById.set(id, index);
+  const inferredById = new Map<string, string>();
+  args.inferredSimpleParameters.forEach((entry: ProductParameterValue) => {
+    const decodedId = decodeLegacySimpleParameterId(entry.parameterId);
+    const inferredValue = toTrimmedString(entry.value);
+    if (!decodedId || !inferredValue || inferredById.has(decodedId)) return;
+    inferredById.set(decodedId, inferredValue);
   });
+  if (inferredById.size === 0) {
+    return args.existingParameters;
+  }
 
-  args.inferredSimpleParameters.forEach((entry: ProductSimpleParameterValue) => {
-    const parameterId = toTrimmedString(entry.parameterId);
-    if (!parameterId) return;
-    const existingIndex = existingIndexById.get(parameterId);
-    if (existingIndex === undefined) return;
-    const currentValue = toTrimmedString(nextSimpleValues[existingIndex]?.value);
-    if (currentValue) return;
-    nextSimpleValues[existingIndex] = {
-      parameterId,
-      value: toTrimmedString(entry.value),
+  return args.existingParameters.map((entry: ProductParameterValue) => {
+    const currentValue = toTrimmedString(entry.value);
+    if (currentValue) return entry;
+    const decodedId = decodeLegacySimpleParameterId(entry.parameterId);
+    if (!decodedId) return entry;
+    const inferredValue = inferredById.get(decodedId);
+    if (!inferredValue) return entry;
+    return {
+      ...entry,
+      value: inferredValue,
     };
-  });
-
-  return mergeProductParameterValues({
-    customFieldValues: existingSplit.customFieldValues,
-    simpleParameterValues: nextSimpleValues,
   });
 };
 
@@ -197,41 +225,32 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     if (mode === 'append' && !existing) {
       throw notFoundError('Product not found', { productId: entityId });
     }
-    const prepared =
+    const preparedRaw =
       mode === 'append' && existing
         ? applyAppendMode(normalizedUpdates, existing as unknown as Record<string, unknown>)
         : normalizedUpdates;
+    const prepared = { ...preparedRaw } as Record<string, unknown>;
+    if (prepared['parameters'] === undefined && prepared['simpleParameters'] !== undefined) {
+      const existingProduct =
+        existing ?? (await productRepository.getProductById(entityId as string));
+      if (!existingProduct) {
+        throw notFoundError('Product not found', { productId: entityId });
+      }
+      const inferredSimpleParameters = normalizeLegacySimpleParameterUpdates(
+        prepared['simpleParameters']
+      );
+      prepared['parameters'] = mergeLegacySimpleParameterInferenceWithExisting({
+        existingParameters: normalizeExistingParameterValues(existingProduct.parameters),
+        inferredSimpleParameters,
+      });
+    }
     const validated = productUpdateSchema.safeParse(prepared);
     if (!validated.success) {
       throw validationError('Invalid product update', {
         issues: validated.error.flatten(),
       });
     }
-    let updateData = removeUndefined(validated.data);
-    if (
-      updateData.simpleParameters !== undefined &&
-      updateData.parameters === undefined
-    ) {
-      const existingProduct =
-        existing ?? await productRepository.getProductById(entityId as string);
-      if (!existingProduct) {
-        throw notFoundError('Product not found', { productId: entityId });
-      }
-      const inferredSimpleParameters = normalizeSimpleParameterUpdates(
-        updateData.simpleParameters
-      );
-      const mergedParameters = mergeSimpleParameterInferenceWithExisting({
-        existingParameters: Array.isArray(existingProduct.parameters)
-          ? (existingProduct.parameters as ProductParameterValue[])
-          : [],
-        inferredSimpleParameters,
-      });
-      const { simpleParameters: _simpleParameters, ...rest } = updateData;
-      updateData = {
-        ...rest,
-        parameters: mergedParameters,
-      };
-    }
+    const updateData = removeUndefined(validated.data);
     if (Object.keys(updateData).length === 0) {
       throw badRequestError('No valid product fields to update');
     }

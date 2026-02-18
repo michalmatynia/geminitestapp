@@ -5,7 +5,7 @@ import {
   deleteImageStudioSlotCascade,
   updateImageStudioSlot,
 } from '@/features/ai/image-studio/server/slot-repository';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { badRequestError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const sanitizeFolderPath = (value: string): string => {
@@ -98,10 +98,13 @@ export async function DELETE_handler(
   let deletedSlotIds: string[] = [];
   for (const slotIdCandidate of slotIdCandidates) {
     const result = await deleteImageStudioSlotCascade(slotIdCandidate);
-    deleted = result.deleted;
+    deleted = result.deleted || result.deletedSlotIds.length > 0;
     deletedSlotIds = result.deletedSlotIds;
     if (deleted) break;
   }
-  if (!deleted) throw notFoundError('Slot not found');
+  // Idempotent delete: stale client trees can request a slot that has already been removed.
+  if (!deleted) {
+    return NextResponse.json({ ok: true, deletedSlotIds: [] });
+  }
   return NextResponse.json({ ok: true, deletedSlotIds });
 }

@@ -150,14 +150,14 @@ export async function buildMongoUpdatePlan({
     : [];
   if (!updateTemplate) {
     if (missingSourcePorts.length > 0 || unresolvedSourcePorts.length > 0) {
-      return prevOutputs;
+      return { output: prevOutputs };
     }
     if (Object.keys(updates).length === 0) {
-      return prevOutputs;
+      return { output: prevOutputs };
     }
   }
   if (missingTemplatePorts.length > 0) {
-    return prevOutputs;
+    return { output: prevOutputs };
   }
   const parsedUpdate: unknown = updateTemplate ? parseJsonTemplate(updateTemplate) : null;
   if (
@@ -167,10 +167,12 @@ export async function buildMongoUpdatePlan({
   ) {
     toast('Update template must be valid JSON.', { variant: 'error' });
     return {
-      result: null,
-      bundle: { error: 'Invalid update template' },
-      debugPayload,
-      aiPrompt,
+      output: {
+        result: null,
+        bundle: { error: 'Invalid update template' },
+        debugPayload,
+        aiPrompt,
+      }
     };
   }
   const updateDoc: unknown = parsedUpdate ?? updates;
@@ -180,10 +182,12 @@ export async function buildMongoUpdatePlan({
   ) {
     toast('Update document is missing or invalid.', { variant: 'error' });
     return {
-      result: null,
-      bundle: { error: 'Invalid update' },
-      debugPayload,
-      aiPrompt,
+      output: {
+        result: null,
+        bundle: { error: 'Invalid update' },
+        debugPayload,
+        aiPrompt,
+      }
     };
   }
   if (
@@ -193,10 +197,12 @@ export async function buildMongoUpdatePlan({
   ) {
     toast('Update document is empty.', { variant: 'error' });
     return {
-      result: null,
-      bundle: { error: 'Empty update' },
-      debugPayload,
-      aiPrompt,
+      output: {
+        result: null,
+        bundle: { error: 'Empty update' },
+        debugPayload,
+        aiPrompt,
+      }
     };
   }
 

@@ -6,15 +6,6 @@ import type { SettingRecordDto } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import {
-  buildParameterInferencePathConfigValue,
-  isLegacyParameterInferencePathName,
-  needsParameterInferenceConfigUpgrade,
-  PARAMETER_INFERENCE_PATH_ID,
-  PARAMETER_INFERENCE_PATH_NAME,
-  PARAMETER_INFERENCE_TRIGGER_BUTTON_ID,
-  PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME,
-} from './settings-store-parameter-inference';
-import {
   buildDescriptionInferenceLitePathConfigValue,
   DESCRIPTION_INFERENCE_LITE_PATH_ID,
   DESCRIPTION_INFERENCE_LITE_PATH_NAME,
@@ -24,6 +15,15 @@ import {
   LEGACY_DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID,
   needsDescriptionInferenceLiteConfigUpgrade,
 } from './settings-store-description-inference';
+import {
+  buildParameterInferencePathConfigValue,
+  isLegacyParameterInferencePathName,
+  needsParameterInferenceConfigUpgrade,
+  PARAMETER_INFERENCE_PATH_ID,
+  PARAMETER_INFERENCE_PATH_NAME,
+  PARAMETER_INFERENCE_TRIGGER_BUTTON_ID,
+  PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME,
+} from './settings-store-parameter-inference';
 
 export type AiPathsSettingRecord = SettingRecordDto;
 

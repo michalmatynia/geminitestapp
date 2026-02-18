@@ -287,7 +287,20 @@ export const deleteVariantFromCenterPreview = async ({
       variant,
     );
     refreshGenerationQueries(queryClient);
+    try {
+      const refreshed = await api.get<{ slots?: ImageStudioSlotRecord[] }>(
+        `/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`,
+        {
+          cache: 'no-store',
+          logError: false,
+        },
+      );
+      queryClient.setQueryData(studioKeys.slots(projectId), refreshed);
+    } catch {
+      // Best-effort cache refresh, fall back to invalidate/refetch below.
+    }
     await queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
+    await queryClient.refetchQueries({ queryKey: studioKeys.slots(projectId), type: 'active' });
   } catch (error: unknown) {
     toast(error instanceof Error ? error.message : 'Failed to delete variant.', { variant: 'error' });
   }

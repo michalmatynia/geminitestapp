@@ -40,7 +40,6 @@ import ProductFormImportInfo from './form/ProductFormImportInfo';
 import ProductFormNoteLink from './form/ProductFormNoteLink';
 import ProductFormOther from './form/ProductFormOther';
 import ProductFormParameters from './form/ProductFormParameters';
-import ProductFormSimpleParameters from './form/ProductFormSimpleParameters';
 import ProductFormStudio from './form/ProductFormStudio';
 
 interface ProductFormProps {
@@ -58,6 +57,7 @@ const PRODUCT_FORM_TAB_SET = new Set<string>(PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS
 const normalizeProductFormTab = (value: unknown): ProductDraftOpenFormTab => {
   if (typeof value !== 'string') return 'general';
   const trimmed = value.trim();
+  if (trimmed === 'custom-fields') return 'parameters';
   if (!PRODUCT_FORM_TAB_SET.has(trimmed)) return 'general';
   return trimmed as ProductDraftOpenFormTab;
 };
@@ -633,12 +633,11 @@ export default function ProductForm({
           className='w-full'
         >
           <TabsList
-            className='grid w-full grid-cols-4 md:grid-cols-9'
+            className='grid w-full grid-cols-4 md:grid-cols-8'
           >
             <TabsTrigger value='general'>General</TabsTrigger>
             <TabsTrigger value='other'>Other</TabsTrigger>
             <TabsTrigger value='parameters'>Parameters</TabsTrigger>
-            <TabsTrigger value='custom-fields'>Custom Fields</TabsTrigger>
             <TabsTrigger value='images'>Images</TabsTrigger>
             <TabsTrigger value='studio'>Studio</TabsTrigger>
             <TabsTrigger value='import-info'>Import Info</TabsTrigger>
@@ -656,9 +655,6 @@ export default function ProductForm({
             <ProductFormOther visibleFieldIssues={visibleFieldIssues} />
           </TabsContent>
           <TabsContent value='parameters' className='mt-4'>
-            <ProductFormSimpleParameters />
-          </TabsContent>
-          <TabsContent value='custom-fields' className='mt-4'>
             <ProductFormParameters />
           </TabsContent>
           <TabsContent value='images' className='mt-4'>

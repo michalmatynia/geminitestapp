@@ -7,8 +7,8 @@ import type {
   CatalogRecord,
   Producer,
   ProductCategoryDto,
+  ProductParameter,
   ProductParameterValue,
-  ProductSimpleParameter,
   ProductTag,
 } from '@/features/products/types';
 import type { ProductDraftOpenFormTab } from '@/features/products/types/drafts';
@@ -94,7 +94,7 @@ export interface DraftCreatorFormContextValue {
   setShowFileManager: (show: boolean) => void;
   handleMultiFileSelect: (files: ImageFileSelection[]) => void;
   imageManagerController: ProductImageManagerController;
-  parameters: ProductSimpleParameter[];
+  parameters: ProductParameter[];
   parametersLoading: boolean;
   parameterValues: ProductParameterValue[];
   addParameterValue: () => void;

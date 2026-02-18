@@ -52,6 +52,7 @@ type UseAiPathsSettingsModeActionsInput = {
   runtimeState: RuntimeState;
   lastRunAt: string | null;
   selectedNodeId: string | null;
+  pathConfigs: Record<string, PathConfig>;
   paths: PathMeta[];
   setPaths: React.Dispatch<React.SetStateAction<PathMeta[]>>;
   setPathConfigs: React.Dispatch<React.SetStateAction<Record<string, PathConfig>>>;
@@ -102,6 +103,7 @@ export function useAiPathsSettingsModeActions({
   runtimeState,
   lastRunAt,
   selectedNodeId,
+  pathConfigs,
   paths,
   setPaths,
   setPathConfigs,
@@ -244,6 +246,11 @@ export function useAiPathsSettingsModeActions({
       updaterSamples,
       runtimeState,
       lastRunAt,
+      runCount:
+        typeof pathConfigs[activePathId]?.runCount === 'number' &&
+        Number.isFinite(pathConfigs[activePathId]?.runCount)
+          ? Math.max(0, Math.trunc(pathConfigs[activePathId]?.runCount ?? 0))
+          : 0,
       uiState: {
         selectedNodeId,
       },
@@ -286,6 +293,7 @@ export function useAiPathsSettingsModeActions({
     parserSamples,
     pathDescription,
     pathName,
+    pathConfigs,
     paths,
     persistPathSettings,
     reportAiPathsError,
@@ -322,6 +330,11 @@ export function useAiPathsSettingsModeActions({
       updaterSamples,
       runtimeState,
       lastRunAt,
+      runCount:
+        typeof pathConfigs[activePathId]?.runCount === 'number' &&
+        Number.isFinite(pathConfigs[activePathId]?.runCount)
+          ? Math.max(0, Math.trunc(pathConfigs[activePathId]?.runCount ?? 0))
+          : 0,
       uiState: {
         selectedNodeId,
       },
@@ -364,6 +377,7 @@ export function useAiPathsSettingsModeActions({
     parserSamples,
     pathDescription,
     pathName,
+    pathConfigs,
     paths,
     persistPathSettings,
     reportAiPathsError,

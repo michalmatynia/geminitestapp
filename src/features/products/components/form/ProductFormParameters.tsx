@@ -142,8 +142,8 @@ export default function ProductFormParameters(): React.JSX.Element {
   return (
     <div className='space-y-6'>
       <FormSection
-        title='Custom Fields'
-        description='Choose custom fields and provide values for this product.'
+        title='Parameters'
+        description='Choose parameters and provide values for this product.'
       >
         <div className='mb-2 flex justify-end'>
           <Button
@@ -153,7 +153,7 @@ export default function ProductFormParameters(): React.JSX.Element {
             onClick={addParameterValue}
             disabled={parametersLoading || parameters.length === 0}
           >
-            Add custom field
+            Add parameter
           </Button>
         </div>
 
@@ -167,7 +167,7 @@ export default function ProductFormParameters(): React.JSX.Element {
           </div>
         ) : parameterValues.length === 0 ? (
           <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
-            Add your first custom field to start building values.
+            Add your first parameter to start building values.
           </div>
         ) : (
           <div className='space-y-3'>
@@ -278,7 +278,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                           value: param.id,
                           label: getParameterLabel(param, preferredLocale),
                         }))}
-                        placeholder='Select custom field'
+                        placeholder='Select parameter'
                         triggerClassName='h-9 bg-gray-900 border-border/50'
                       />
                     </div>
@@ -437,7 +437,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                   {needsOptions && normalizedOptionLabels.length === 0 && entry.parameterId ? (
                     <Alert variant='warning' className='py-2'>
                       <p className='text-xs'>
-                        This custom field has no option labels configured yet. Add labels in Product Settings.
+                        This parameter has no option labels configured yet. Add labels in Product Settings.
                       </p>
                     </Alert>
                   ) : null}

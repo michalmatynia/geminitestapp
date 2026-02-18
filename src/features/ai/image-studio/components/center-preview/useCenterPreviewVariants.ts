@@ -4,6 +4,7 @@ import { normalizeImagePath, type VariantThumbnailInfo } from './preview-utils';
 import { buildVariantThumbnails } from './variant-thumbnails';
 
 import type { GenerationLandingSlot } from '../../context/GenerationContext';
+import type { PendingSequenceThumbnailState } from '../../context/UiContext';
 import type { ImageStudioSlotRecord } from '../../types';
 import type { Dispatch, SetStateAction } from 'react';
 
@@ -13,6 +14,7 @@ type UseCenterPreviewVariantsArgs = {
   landingSlots: GenerationLandingSlot[];
   productImagesExternalBaseUrl: string;
   projectId: string | null;
+  pendingSequenceThumbnail: PendingSequenceThumbnailState | null;
   rootVariantSourceSlotId: string | null;
   slots: ImageStudioSlotRecord[];
   workingSlot: ImageStudioSlotRecord | null;
@@ -42,6 +44,7 @@ export function useCenterPreviewVariants({
   landingSlots,
   productImagesExternalBaseUrl,
   projectId,
+  pendingSequenceThumbnail,
   rootVariantSourceSlotId,
   slots,
   workingSlot,
@@ -123,24 +126,77 @@ export function useCenterPreviewVariants({
     []
   );
 
-  const variantThumbnails = useMemo(
-    () => buildVariantThumbnails({
+  const variantThumbnails = useMemo(() => {
+    const builtVariants = buildVariantThumbnails({
       activeRunId,
       activeRunSourceSlotId,
       landingSlots,
       productImagesExternalBaseUrl,
       rootVariantSourceSlotId,
       slots,
-    }),
-    [
-      activeRunId,
-      activeRunSourceSlotId,
-      landingSlots,
-      productImagesExternalBaseUrl,
-      rootVariantSourceSlotId,
-      slots,
-    ],
-  );
+    });
+
+    const pendingRunId = pendingSequenceThumbnail?.runId?.trim() ?? '';
+    if (!pendingRunId) return builtVariants;
+
+    const pendingSourceSlotId = pendingSequenceThumbnail?.sourceSlotId?.trim() ?? '';
+    const normalizedRootSourceSlotId = rootVariantSourceSlotId?.trim() ?? '';
+    if (
+      pendingSourceSlotId &&
+      normalizedRootSourceSlotId &&
+      pendingSourceSlotId !== normalizedRootSourceSlotId
+    ) {
+      return builtVariants;
+    }
+
+    const hasSyncedSequenceSlot = slots.some((slot) => {
+      if (!slot.metadata || typeof slot.metadata !== 'object' || Array.isArray(slot.metadata)) return false;
+      const metadata = slot.metadata;
+      const sequence = metadata['sequence'];
+      if (!sequence || typeof sequence !== 'object' || Array.isArray(sequence)) return false;
+      const runId = typeof (sequence as Record<string, unknown>)['runId'] === 'string'
+        ? ((sequence as Record<string, unknown>)['runId'] as string).trim()
+        : '';
+      return runId === pendingRunId;
+    });
+    if (hasSyncedSequenceSlot) return builtVariants;
+
+    const pendingVariantId = `sequence:pending:${pendingRunId}`;
+    if (builtVariants.some((variant) => variant.id === pendingVariantId)) return builtVariants;
+    const nextIndex =
+      builtVariants.length > 0
+        ? Math.max(...builtVariants.map((variant) => variant.index)) + 1
+        : 1;
+    const pendingVariant: VariantThumbnailInfo = {
+      id: pendingVariantId,
+      index: nextIndex,
+      status: 'pending',
+      imageSrc: null,
+      output: null,
+      slotId: null,
+      model: null,
+      timestamp: pendingSequenceThumbnail?.startedAt ?? null,
+      timestampLabel: 'Syncing...',
+      timestampSearchText: 'sequence syncing pending',
+      tokenCostUsd: null,
+      actualCostUsd: null,
+      costEstimated: false,
+    };
+
+    return [
+      pendingVariant,
+      ...builtVariants,
+    ];
+  },
+  [
+    activeRunId,
+    activeRunSourceSlotId,
+    landingSlots,
+    pendingSequenceThumbnail,
+    productImagesExternalBaseUrl,
+    rootVariantSourceSlotId,
+    slots,
+  ]);
 
   const visibleVariantThumbnails = useMemo(
     () =>

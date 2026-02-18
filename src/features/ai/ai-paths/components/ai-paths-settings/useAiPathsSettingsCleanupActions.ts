@@ -146,6 +146,11 @@ export function useAiPathsSettingsCleanupActions({
           updaterSamples,
           runtimeState: nextRuntimeState,
           lastRunAt,
+          runCount:
+            typeof pathConfigs[activePathId]?.runCount === 'number' &&
+            Number.isFinite(pathConfigs[activePathId]?.runCount)
+              ? Math.max(0, Math.trunc(pathConfigs[activePathId]?.runCount ?? 0))
+              : 0,
           uiState: {
             selectedNodeId,
             configOpen,
@@ -233,6 +238,11 @@ export function useAiPathsSettingsCleanupActions({
           updaterSamples,
           runtimeState: nextRuntimeState,
           lastRunAt,
+          runCount:
+            typeof pathConfigs[activePathId]?.runCount === 'number' &&
+            Number.isFinite(pathConfigs[activePathId]?.runCount)
+              ? Math.max(0, Math.trunc(pathConfigs[activePathId]?.runCount ?? 0))
+              : 0,
           uiState: {
             selectedNodeId,
             configOpen,
@@ -324,6 +334,11 @@ export function useAiPathsSettingsCleanupActions({
           updaterSamples,
           runtimeState: nextRuntimeState,
           lastRunAt,
+          runCount:
+            typeof pathConfigs[activePathId]?.runCount === 'number' &&
+            Number.isFinite(pathConfigs[activePathId]?.runCount)
+              ? Math.max(0, Math.trunc(pathConfigs[activePathId]?.runCount ?? 0))
+              : 0,
           uiState: {
             selectedNodeId,
             configOpen,
@@ -415,6 +430,11 @@ export function useAiPathsSettingsCleanupActions({
       updaterSamples,
       runtimeState: nextRuntimeState,
       lastRunAt,
+      runCount:
+        typeof pathConfigs[activePathId]?.runCount === 'number' &&
+        Number.isFinite(pathConfigs[activePathId]?.runCount)
+          ? Math.max(0, Math.trunc(pathConfigs[activePathId]?.runCount ?? 0))
+          : 0,
       uiState: {
         selectedNodeId,
         configOpen,

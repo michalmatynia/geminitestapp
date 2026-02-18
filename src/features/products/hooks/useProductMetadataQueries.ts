@@ -14,7 +14,6 @@ import type {
   ProductCategory,
   ProductCategoryWithChildren,
   ProductParameter,
-  ProductSimpleParameter,
   ProductTag,
 } from '@/features/products/types';
 import { api } from '@/shared/lib/api-client';
@@ -214,30 +213,6 @@ export function useParameters(catalogId?: string): ListQuery<ProductParameter> {
       domain: 'products',
       queryKey,
       tags: ['products', 'metadata', 'parameters'],
-    },
-  });
-}
-
-export function useSimpleParameters(
-  catalogId?: string
-): ListQuery<ProductSimpleParameter> {
-  const queryKey = productMetadataKeys.simpleParameters(catalogId ?? null);
-  return createListQueryV2({
-    queryKey,
-    queryFn: async (): Promise<ProductSimpleParameter[]> => {
-      if (!catalogId) return [];
-      return await api.get<ProductSimpleParameter[]>(
-        `/api/products/simple-parameters?catalogId=${encodeURIComponent(catalogId)}`
-      );
-    },
-    enabled: Boolean(catalogId),
-    meta: {
-      source: 'products.hooks.useSimpleParameters',
-      operation: 'list',
-      resource: 'products.metadata.simple-parameters',
-      domain: 'products',
-      queryKey,
-      tags: ['products', 'metadata', 'simple-parameters'],
     },
   });
 }

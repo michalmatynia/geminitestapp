@@ -1611,7 +1611,11 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     async (
       nextWorkspace: CaseResolverWorkspace,
       successMessage: string,
-      options?: { mutationId?: string; source?: string },
+      options?: {
+        mutationId?: string;
+        source?: string;
+        suppressConflictToast?: boolean;
+      },
     ): Promise<boolean> => {
       const normalized = normalizeCaseResolverWorkspace(nextWorkspace);
       const expectedRevision = lastPersistedWorkspaceRevisionRef.current;
@@ -1648,10 +1652,12 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           getCaseResolverWorkspaceRevision(serverWorkspace);
         setWorkspace(serverWorkspace);
         settingsStore.refetch();
-        toast(
-          'Case Resolver workspace changed before save completed. Latest server state has been loaded. Please retry.',
-          { variant: 'warning' },
-        );
+        if (!options?.suppressConflictToast) {
+          toast(
+            'Case Resolver workspace changed before save completed. Latest server state has been loaded. Please retry.',
+            { variant: 'warning' },
+          );
+        }
         return false;
       }
 
@@ -1919,121 +1925,161 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       }
 
       const runDelete = async (): Promise<void> => {
-        const latestWorkspaceSnapshot = await fetchCaseResolverWorkspaceSnapshot(
-          'cases_page_delete_prepare',
-        );
-        const localRevision = getCaseResolverWorkspaceRevision(workspace);
-        const latestRevision = latestWorkspaceSnapshot
-          ? getCaseResolverWorkspaceRevision(latestWorkspaceSnapshot)
-          : -1;
-        const baseWorkspace =
-          latestWorkspaceSnapshot && latestRevision > localRevision
-            ? latestWorkspaceSnapshot
-            : workspace;
-
-        if (baseWorkspace !== workspace) {
-          lastPersistedWorkspaceValueRef.current = JSON.stringify(baseWorkspace);
+        const syncLocalWorkspace = (nextWorkspace: CaseResolverWorkspace): void => {
+          lastPersistedWorkspaceValueRef.current = JSON.stringify(nextWorkspace);
           lastPersistedWorkspaceRevisionRef.current =
-            getCaseResolverWorkspaceRevision(baseWorkspace);
-          setWorkspace(baseWorkspace);
-        }
-
-        const targetInBase = baseWorkspace.files.find(
-          (file: CaseResolverFile): boolean => file.id === fileId,
-        );
-        if (!targetInBase) {
-          toast('Case no longer exists.', { variant: 'warning' });
-          return;
-        }
-        if (targetInBase.isLocked) {
-          toast('Case is locked. Unlock it in Case Resolver before removing.', {
-            variant: 'warning',
-          });
-          return;
-        }
-
-        const removedIds = new Set<string>([fileId]);
-        let expanded = true;
-        while (expanded) {
-          expanded = false;
-          baseWorkspace.files.forEach((file: CaseResolverFile): void => {
-            if (removedIds.has(file.id)) return;
-            if (!file.parentCaseId) return;
-            if (!removedIds.has(file.parentCaseId)) return;
-            removedIds.add(file.id);
-            expanded = true;
-          });
-        }
-
-        const now = new Date().toISOString();
-        const nextFiles = baseWorkspace.files
-          .filter((file: CaseResolverFile) => !removedIds.has(file.id))
-          .map((file: CaseResolverFile): CaseResolverFile => {
-            const nextReferenceCaseIds = file.referenceCaseIds.filter(
-              (referenceCaseId: string): boolean =>
-                !removedIds.has(referenceCaseId),
-            );
-            const referencesChanged =
-              nextReferenceCaseIds.length !== file.referenceCaseIds.length;
-            if (!referencesChanged) return file;
-            return {
-              ...file,
-              referenceCaseIds: nextReferenceCaseIds,
-              updatedAt: now,
-            };
-          });
-        const remainingFileIds = new Set<string>(
-          nextFiles.map((file: CaseResolverFile): string => file.id),
-        );
-        const nextAssets = baseWorkspace.assets.filter(
-          (asset: CaseResolverAssetFile): boolean =>
-            !asset.sourceFileId || remainingFileIds.has(asset.sourceFileId),
-        );
-        const nextFolderRecords = (baseWorkspace.folderRecords ?? []).filter(
-          (record: CaseResolverFolderRecord): boolean =>
-            !record.ownerCaseId || !removedIds.has(record.ownerCaseId),
-        );
-        const nextFolders = normalizeFolderPaths([
-          ...nextFolderRecords.map((record: CaseResolverFolderRecord): string => record.path),
-          ...nextFiles.map((file: CaseResolverFile): string => file.folder),
-          ...nextAssets
-            .filter(
-              (asset: CaseResolverAssetFile): boolean =>
-                Boolean(asset.sourceFileId && remainingFileIds.has(asset.sourceFileId)),
-            )
-            .map((asset: CaseResolverAssetFile): string => asset.folder),
-        ]);
-        const nextFolderTimestamps = Object.fromEntries(
-          Object.entries(baseWorkspace.folderTimestamps).filter(
-            ([path]: [string, unknown]): boolean => nextFolders.includes(path),
-          ),
-        );
-        const nextWorkspace: CaseResolverWorkspace = {
-          ...baseWorkspace,
-          folders: nextFolders,
-          folderRecords: nextFolderRecords.filter((record: CaseResolverFolderRecord): boolean =>
-            nextFolders.includes(record.path),
-          ),
-          folderTimestamps: nextFolderTimestamps,
-          files: nextFiles,
-          assets: nextAssets,
-          activeFileId:
-            baseWorkspace.activeFileId && removedIds.has(baseWorkspace.activeFileId)
-              ? (
-                nextFiles.find((file: CaseResolverFile): boolean => file.fileType === 'case')?.id ??
-                nextFiles[0]?.id ??
-                null
-              )
-              : baseWorkspace.activeFileId,
+            getCaseResolverWorkspaceRevision(nextWorkspace);
+          setWorkspace(nextWorkspace);
         };
 
-        const didPersist = await persistWorkspace(nextWorkspace, 'Case removed.', {
-          mutationId: createCaseResolverWorkspaceMutationId('case-delete'),
-          source: 'cases_page',
-        });
-        if (didPersist && editingCaseId === fileId) {
-          handleCancelEditCase();
+        const resolveLatestWorkspace = async (
+          fallback: CaseResolverWorkspace,
+          source: string,
+        ): Promise<CaseResolverWorkspace> => {
+          const latestWorkspaceSnapshot = await fetchCaseResolverWorkspaceSnapshot(source);
+          if (!latestWorkspaceSnapshot) return fallback;
+          const fallbackRevision = getCaseResolverWorkspaceRevision(fallback);
+          const latestRevision = getCaseResolverWorkspaceRevision(latestWorkspaceSnapshot);
+          return latestRevision > fallbackRevision ? latestWorkspaceSnapshot : fallback;
+        };
+
+        const buildDeletedWorkspace = (
+          baseWorkspace: CaseResolverWorkspace,
+        ): CaseResolverWorkspace => {
+          const removedIds = new Set<string>([fileId]);
+          let expanded = true;
+          while (expanded) {
+            expanded = false;
+            baseWorkspace.files.forEach((file: CaseResolverFile): void => {
+              if (removedIds.has(file.id)) return;
+              if (!file.parentCaseId) return;
+              if (!removedIds.has(file.parentCaseId)) return;
+              removedIds.add(file.id);
+              expanded = true;
+            });
+          }
+
+          const now = new Date().toISOString();
+          const nextFiles = baseWorkspace.files
+            .filter((file: CaseResolverFile) => !removedIds.has(file.id))
+            .map((file: CaseResolverFile): CaseResolverFile => {
+              const nextReferenceCaseIds = file.referenceCaseIds.filter(
+                (referenceCaseId: string): boolean => !removedIds.has(referenceCaseId),
+              );
+              const referencesChanged =
+                nextReferenceCaseIds.length !== file.referenceCaseIds.length;
+              if (!referencesChanged) return file;
+              return {
+                ...file,
+                referenceCaseIds: nextReferenceCaseIds,
+                updatedAt: now,
+              };
+            });
+          const remainingFileIds = new Set<string>(
+            nextFiles.map((file: CaseResolverFile): string => file.id),
+          );
+          const nextAssets = baseWorkspace.assets.filter(
+            (asset: CaseResolverAssetFile): boolean =>
+              !asset.sourceFileId || remainingFileIds.has(asset.sourceFileId),
+          );
+          const nextFolderRecords = (baseWorkspace.folderRecords ?? []).filter(
+            (record: CaseResolverFolderRecord): boolean =>
+              !record.ownerCaseId || !removedIds.has(record.ownerCaseId),
+          );
+          const nextFolders = normalizeFolderPaths([
+            ...nextFolderRecords.map(
+              (record: CaseResolverFolderRecord): string => record.path,
+            ),
+            ...nextFiles.map((file: CaseResolverFile): string => file.folder),
+            ...nextAssets
+              .filter(
+                (asset: CaseResolverAssetFile): boolean =>
+                  Boolean(asset.sourceFileId && remainingFileIds.has(asset.sourceFileId)),
+              )
+              .map((asset: CaseResolverAssetFile): string => asset.folder),
+          ]);
+          const nextFolderTimestamps = Object.fromEntries(
+            Object.entries(baseWorkspace.folderTimestamps).filter(
+              ([path]: [string, unknown]): boolean => nextFolders.includes(path),
+            ),
+          );
+          return {
+            ...baseWorkspace,
+            folders: nextFolders,
+            folderRecords: nextFolderRecords.filter(
+              (record: CaseResolverFolderRecord): boolean =>
+                nextFolders.includes(record.path),
+            ),
+            folderTimestamps: nextFolderTimestamps,
+            files: nextFiles,
+            assets: nextAssets,
+            activeFileId:
+              baseWorkspace.activeFileId && removedIds.has(baseWorkspace.activeFileId)
+                ? (
+                  nextFiles.find((file: CaseResolverFile): boolean => file.fileType === 'case')
+                    ?.id ??
+                  nextFiles[0]?.id ??
+                  null
+                )
+                : baseWorkspace.activeFileId,
+          };
+        };
+
+        let baseWorkspace = await resolveLatestWorkspace(
+          workspace,
+          'cases_page_delete_prepare',
+        );
+        if (baseWorkspace !== workspace) {
+          syncLocalWorkspace(baseWorkspace);
         }
+
+        const DELETE_ATTEMPTS = 3;
+        for (let attempt = 0; attempt < DELETE_ATTEMPTS; attempt += 1) {
+          const targetInBase = baseWorkspace.files.find(
+            (file: CaseResolverFile): boolean => file.id === fileId,
+          );
+          if (!targetInBase) {
+            if (editingCaseId === fileId) {
+              handleCancelEditCase();
+            }
+            toast('Case already removed.', { variant: 'success' });
+            return;
+          }
+          if (targetInBase.isLocked) {
+            toast('Case is locked. Unlock it in Case Resolver before removing.', {
+              variant: 'warning',
+            });
+            return;
+          }
+
+          const nextWorkspace = buildDeletedWorkspace(baseWorkspace);
+          const didPersist = await persistWorkspace(nextWorkspace, 'Case removed.', {
+            mutationId: createCaseResolverWorkspaceMutationId(
+              `case-delete-attempt-${attempt + 1}`,
+            ),
+            source: 'cases_page',
+            suppressConflictToast: true,
+          });
+          if (didPersist) {
+            if (editingCaseId === fileId) {
+              handleCancelEditCase();
+            }
+            return;
+          }
+
+          const refreshedWorkspace = await resolveLatestWorkspace(
+            baseWorkspace,
+            'cases_page_delete_retry',
+          );
+          if (refreshedWorkspace === baseWorkspace) break;
+          baseWorkspace = refreshedWorkspace;
+          syncLocalWorkspace(baseWorkspace);
+        }
+
+        toast(
+          'Failed to remove case because workspace changed while deleting. Please retry.',
+          { variant: 'warning' },
+        );
       };
 
       if (!caseResolverSettings.confirmDeleteDocument) {

@@ -157,14 +157,14 @@ export function ParametersSettings({
         data: payload,
       });
 
-      toast(editingParameter ? 'Custom field updated.' : 'Custom field created.', {
+      toast(editingParameter ? 'Parameter updated.' : 'Parameter created.', {
         variant: 'success',
       });
       setShowModal(false);
       onRefresh();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Failed to save custom field.';
+        error instanceof Error ? error.message : 'Failed to save parameter.';
       toast(message, { variant: 'error' });
     }
   };
@@ -177,11 +177,11 @@ export function ParametersSettings({
     if (!parameterToDelete) return;
     try {
       await deleteParameterMutation.mutateAsync({ id: parameterToDelete.id, catalogId: selectedCatalogId });
-      toast('Custom field deleted.', { variant: 'success' });
+      toast('Parameter deleted.', { variant: 'success' });
       onRefresh();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Failed to delete custom field.';
+        error instanceof Error ? error.message : 'Failed to delete parameter.';
       toast(message, { variant: 'error' });
     } finally {
       setParameterToDelete(null);
@@ -197,7 +197,7 @@ export function ParametersSettings({
     <div className='space-y-5'>
       <FormSection
         title='Select Catalog'
-        description='Custom fields are managed per catalog.'
+        description='Parameters are managed per catalog.'
         className='p-4'
       >
         <div className='mt-4 w-full max-w-xs'>
@@ -221,12 +221,12 @@ export function ParametersSettings({
               className='bg-white text-gray-900 hover:bg-gray-200'
             >
               <Plus className='mr-2 size-4' />
-              Add Custom Field
+              Add Parameter
             </Button>
           </div>
 
           <FormSection
-            title={`Custom Fields for "${selectedCatalog?.name}"`}
+            title={`Parameters for "${selectedCatalog?.name}"`}
             className='p-4'
           >
             <div className='mt-4'>
@@ -238,12 +238,12 @@ export function ParametersSettings({
                 </div>
               ) : parameters.length === 0 ? (
                 <EmptyState
-                  title='No custom fields yet'
-                  description='Create custom product fields and choose their selector type.'
+                  title='No parameters yet'
+                  description='Create product parameters and choose their selector type.'
                   action={
                     <Button onClick={openCreateModal} variant='outline'>
                       <Plus className='mr-2 size-4' />
-                      Create Your First Custom Field
+                      Create Your First Parameter
                     </Button>
                   }
                 />
@@ -283,7 +283,7 @@ export function ParametersSettings({
                           type='button'
                           onClick={(): void => { handleDelete(parameter); }}
                           className='rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600'
-                          title='Delete custom field'
+                          title='Delete parameter'
                         >
                           <Trash2 className='size-3' />
                         </Button>
@@ -300,7 +300,7 @@ export function ParametersSettings({
       {!selectedCatalogId && catalogs.length === 0 && (
         <EmptyState
           title='No catalogs found'
-          description='Please create a catalog first in the Catalogs section before adding custom fields.'
+          description='Please create a catalog first in the Catalogs section before adding parameters.'
         />
       )}
 
@@ -309,8 +309,8 @@ export function ParametersSettings({
         isOpen={!!parameterToDelete}
         onClose={() => setParameterToDelete(null)}
         onConfirm={handleConfirmDelete}
-        title='Delete Custom Field'
-        message={`Are you sure you want to delete custom field "${parameterToDelete?.name_en}"? This action cannot be undone.`}
+        title='Delete Parameter'
+        message={`Are you sure you want to delete parameter "${parameterToDelete?.name_en}"? This action cannot be undone.`}
         confirmText='Delete'
         isDangerous={true}
       />
@@ -319,7 +319,7 @@ export function ParametersSettings({
         <FormModal
           open={showModal}
           onClose={(): void => setShowModal(false)}
-          title={editingParameter ? 'Edit Custom Field' : 'Create Custom Field'}
+          title={editingParameter ? 'Edit Parameter' : 'Create Parameter'}
           onSave={(): void => { void handleSave(); }}
           isSaving={saveParameterMutation.isPending}
           size='md'

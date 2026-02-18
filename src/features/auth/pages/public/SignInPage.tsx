@@ -8,7 +8,7 @@ import { useState, Suspense } from 'react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useVerifyCredentials } from '@/features/auth/hooks/useAuthQueries';
 import { logClientError } from '@/features/observability';
-import { Button, Input, Label, Alert } from '@/shared/ui';
+import { Button, Input, Label, Alert, SectionHeader } from '@/shared/ui';
 
 function SignInPageLoader(): React.JSX.Element {
   const { userPageSettings, isLoading } = useAuth();
@@ -148,12 +148,10 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
   return (
     <div className='flex min-h-screen items-center justify-center bg-gray-900 px-4'>
       <div className='w-full max-w-md space-y-6 rounded-lg border border-border bg-card p-6 shadow-lg'>
-        <div>
-          <h1 className='text-2xl font-semibold text-white'>Sign in</h1>
-          <p className='mt-1 text-sm text-gray-400'>
-            Use your credentials or a provider.
-          </p>
-        </div>
+        <SectionHeader
+          title='Sign in'
+          description='Use your credentials or a provider.'
+        />
         {message ? (
           <Alert variant='error' className='p-3 text-xs'>
             {message}

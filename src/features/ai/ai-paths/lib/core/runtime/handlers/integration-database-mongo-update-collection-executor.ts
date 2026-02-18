@@ -76,12 +76,12 @@ export async function executeMongoCollectionUpdate({
   }
 
   const updateResult: ApiResponse<unknown> = await dbApi.action({
-    ...(queryPayload['provider'] ? { provider: queryPayload['provider'] } : {}),
+    ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
     action,
     collection,
     filter: nextResolvedFilter,
     update: updateDoc,
-    ...(idType !== undefined ? { idType: idType } : {}),
+    ...(idType !== undefined ? { idType: idType as string } : {}),
   });
   executed.updater.add(node.id);
   if (!updateResult.ok) {

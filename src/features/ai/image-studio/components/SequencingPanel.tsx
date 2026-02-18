@@ -102,6 +102,7 @@ type SequenceRunStartResponse = {
 const POLL_INTERVAL_MS = 1500;
 const SLOT_RESOLUTION_RETRY_MS = 220;
 const SLOT_RESOLUTION_ATTEMPTS = 10;
+const AUTO_SLOT_SYNC_RETRY_MS = 900;
 const ENABLE_SEQUENCE_SSE = process.env['NEXT_PUBLIC_IMAGE_STUDIO_SEQUENCE_SSE'] !== 'false';
 const ENABLE_ROBUST_SEQUENCE_SYNC =
   process.env['NEXT_PUBLIC_IMAGE_STUDIO_SEQUENCE_ROBUST_SYNC'] !== 'false';
@@ -194,7 +195,7 @@ export function SequencingPanel(): React.JSX.Element {
   const { maskShapes, maskInvert, maskFeather } = useMaskingState();
   const { studioSettings } = useSettingsState();
   const { setStudioSettings, saveStudioSettings } = useSettingsActions();
-  const { getPreviewCanvasImageFrame } = useUiActions();
+  const { getPreviewCanvasImageFrame, setPendingSequenceThumbnail } = useUiActions();
 
   const [activeSequenceRunId, setActiveSequenceRunId] = useState<string | null>(null);
   const [activeSequenceStatus, setActiveSequenceStatus] = useState<SequenceRunStatus | null>(null);
@@ -387,6 +388,7 @@ export function SequencingPanel(): React.JSX.Element {
         setDisplayState('running');
         setPendingTerminalSlotId(null);
         setSlotSyncWarning(null);
+        setPendingSequenceThumbnail(null);
       }
 
       const historyEvents = Array.isArray(run.historyEvents) ? run.historyEvents : [];
@@ -447,15 +449,18 @@ export function SequencingPanel(): React.JSX.Element {
           }
           setPendingTerminalSlotId(run.currentSlotId ?? null);
           setSlotSyncWarning(
-            'Sequence finished, but output card is still syncing. Keeping current canvas image.',
+            'Sequence finished. Output thumbnail is syncing.',
           );
-          toast(
-            'Sequence output is syncing. Current image stays visible until the new output card is ready.',
-            { variant: 'warning' },
-          );
+          setPendingSequenceThumbnail({
+            runId: run.id,
+            sourceSlotId: fallbackSourceSlotId || run.sourceSlotId || null,
+            status: 'syncing',
+            startedAt: new Date().toISOString(),
+          });
         } else {
           setPendingTerminalSlotId(null);
           setSlotSyncWarning(null);
+          setPendingSequenceThumbnail(null);
         }
       }
 
@@ -467,6 +472,9 @@ export function SequencingPanel(): React.JSX.Element {
       } else if (run.errorMessage) {
         toast(run.errorMessage, { variant: 'error' });
       }
+      if (run.status === 'failed' || run.status === 'cancelled') {
+        setPendingSequenceThumbnail(null);
+      }
     },
     [
       projectId,
@@ -476,6 +484,7 @@ export function SequencingPanel(): React.JSX.Element {
       setWorkingSlotId,
       stopPolling,
       stopStreaming,
+      setPendingSequenceThumbnail,
       toast,
     ],
   );
@@ -867,6 +876,7 @@ export function SequencingPanel(): React.JSX.Element {
       setDisplayState('running');
       setPendingTerminalSlotId(null);
       setSlotSyncWarning(null);
+      setPendingSequenceThumbnail(null);
       lastTerminalSnapshotRef.current = null;
       sourceSlotIdRef.current = workingSlot.id;
 
@@ -924,6 +934,7 @@ export function SequencingPanel(): React.JSX.Element {
     studioSettings,
     toast,
     workingSlot,
+    setPendingSequenceThumbnail,
   ]);
 
   const handleCancelSequence = useCallback(async (): Promise<void> => {
@@ -943,6 +954,43 @@ export function SequencingPanel(): React.JSX.Element {
     }
   }, [activeSequenceRunId, toast]);
 
+  useEffect(() => {
+    if (!activeSequenceRunId || !pendingTerminalSlotId) return;
+    let cancelled = false;
+
+    const tick = async (): Promise<void> => {
+      if (cancelled) return;
+      const snapshot = await fetchRunSnapshot(activeSequenceRunId);
+      if (!snapshot?.run || cancelled) return;
+      const resolved = await resolveTerminalSlotSelection({
+        run: snapshot.run,
+        hintedSlot: snapshot.currentSlot ?? null,
+      });
+      if (resolved && !cancelled) {
+        setPendingTerminalSlotId(null);
+        setSlotSyncWarning(null);
+        setDisplayState('terminal');
+        setPendingSequenceThumbnail(null);
+      }
+    };
+
+    const timer = setInterval(() => {
+      void tick();
+    }, AUTO_SLOT_SYNC_RETRY_MS);
+    void tick();
+
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [
+    activeSequenceRunId,
+    fetchRunSnapshot,
+    pendingTerminalSlotId,
+    resolveTerminalSlotSelection,
+    setPendingSequenceThumbnail,
+  ]);
+
   const handleRetryPendingSlotSync = useCallback(async (): Promise<void> => {
     if (!activeSequenceRunId || !pendingTerminalSlotId) return;
 
@@ -961,6 +1009,7 @@ export function SequencingPanel(): React.JSX.Element {
       setPendingTerminalSlotId(null);
       setSlotSyncWarning(null);
       setDisplayState('terminal');
+      setPendingSequenceThumbnail(null);
       toast('Sequence output synced to canvas.', { variant: 'success' });
       return;
     }
@@ -971,6 +1020,7 @@ export function SequencingPanel(): React.JSX.Element {
     fetchRunSnapshot,
     pendingTerminalSlotId,
     resolveTerminalSlotSelection,
+    setPendingSequenceThumbnail,
     toast,
   ]);
 

@@ -36,6 +36,13 @@ export interface CanvasImageOffset {
   y: number;
 }
 
+export interface PendingSequenceThumbnailState {
+  runId: string;
+  sourceSlotId: string | null;
+  status: 'syncing';
+  startedAt: string;
+}
+
 const DEFAULT_CANVAS_IMAGE_OFFSET: CanvasImageOffset = { x: 0, y: 0 };
 const normalizeCanvasImageOffset = (offset: CanvasImageOffset): CanvasImageOffset => ({
   x: Number.isFinite(offset.x) ? offset.x : 0,
@@ -52,6 +59,7 @@ export interface UiState {
   previewCanvasSize: PreviewCanvasSize;
   imageTransformMode: ImageTransformMode;
   canvasImageOffset: CanvasImageOffset;
+  pendingSequenceThumbnail: PendingSequenceThumbnailState | null;
 }
 
 export interface UiActions {
@@ -66,6 +74,7 @@ export interface UiActions {
   setImageTransformMode: (mode: ImageTransformMode) => void;
   setCanvasImageOffset: (offset: CanvasImageOffset) => void;
   resetCanvasImageOffset: () => void;
+  setPendingSequenceThumbnail: (value: PendingSequenceThumbnailState | null) => void;
   registerPreviewCanvasViewportCropResolver: (resolver: PreviewCanvasViewportCropResolver | null) => void;
   getPreviewCanvasViewportCrop: () => PreviewCanvasViewportCrop | null;
   registerPreviewCanvasImageFrameResolver: (resolver: PreviewCanvasImageFrameResolver | null) => void;
@@ -85,6 +94,7 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
   const [previewCanvasSize, setPreviewCanvasSize] = useState<PreviewCanvasSize>('regular');
   const [imageTransformMode, setImageTransformMode] = useState<ImageTransformMode>('none');
   const [canvasImageOffsetState, setCanvasImageOffsetState] = useState<CanvasImageOffset>(DEFAULT_CANVAS_IMAGE_OFFSET);
+  const [pendingSequenceThumbnail, setPendingSequenceThumbnail] = useState<PendingSequenceThumbnailState | null>(null);
   const previewCanvasViewportCropResolverRef = useRef<PreviewCanvasViewportCropResolver | null>(null);
   const previewCanvasImageFrameResolverRef = useRef<PreviewCanvasImageFrameResolver | null>(null);
 
@@ -99,6 +109,7 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
       previewCanvasSize,
       imageTransformMode,
       canvasImageOffset: canvasImageOffsetState,
+      pendingSequenceThumbnail,
     }),
     [
       centerGuidesEnabled,
@@ -110,6 +121,7 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
       maskPreviewEnabled,
       validatorEnabled,
       canvasImageOffsetState,
+      pendingSequenceThumbnail,
     ]
   );
 
@@ -139,6 +151,7 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
       resetCanvasImageOffset: (): void => {
         setCanvasImageOffsetState(DEFAULT_CANVAS_IMAGE_OFFSET);
       },
+      setPendingSequenceThumbnail,
       registerPreviewCanvasViewportCropResolver: (resolver: PreviewCanvasViewportCropResolver | null): void => {
         previewCanvasViewportCropResolverRef.current = resolver;
       },

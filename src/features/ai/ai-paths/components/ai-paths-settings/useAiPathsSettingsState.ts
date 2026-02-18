@@ -1160,6 +1160,7 @@ export function useAiPathsSettingsState({
     runtimeState,
     lastRunAt,
     selectedNodeId,
+    pathConfigs,
     paths,
     setPaths,
     setPathConfigs,

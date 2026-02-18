@@ -53,6 +53,9 @@ export const ProductImageCell = React.memo(function ProductImageCell({
     return <MissingImagePlaceholder className='size-16' />;
   }
 
+  const shouldOptimizeLocalImage = imageUrl.startsWith('/');
+  const useUnoptimized = !shouldOptimizeLocalImage;
+
   return (
     <div
       ref={containerRef}
@@ -67,7 +70,7 @@ export const ProductImageCell = React.memo(function ProductImageCell({
           alt={productName}
           fill
           sizes='64px'
-          unoptimized
+          unoptimized={useUnoptimized}
           className='rounded-md object-cover cursor-pointer transition-opacity hover:opacity-80'
         />
       </div>
@@ -105,7 +108,7 @@ export const ProductImageCell = React.memo(function ProductImageCell({
                 alt={productName}
                 fill
                 sizes={`${PREVIEW_SIZE}px`}
-                unoptimized
+                unoptimized={useUnoptimized}
                 className='rounded-lg object-cover'
                 priority
                 quality={90}

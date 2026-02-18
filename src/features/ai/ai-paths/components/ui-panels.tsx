@@ -24,12 +24,25 @@ export function PathsTabPanel({
   const { paths: graphPaths, pathConfigs } = useGraphState();
   
   const resolvedPathFlagsById = useMemo(() => {
-    const next: Record<string, { isLocked?: boolean; isActive?: boolean }> = {};
+    const next: Record<
+      string,
+      {
+        isLocked?: boolean;
+        isActive?: boolean;
+        lastRunAt?: string | null;
+        runCount?: number;
+      }
+    > = {};
     graphPaths.forEach((meta) => {
       const config = pathConfigs[meta.id];
       next[meta.id] = {
         isLocked: config?.isLocked ?? false,
         isActive: config?.isActive ?? true,
+        lastRunAt: config?.lastRunAt ?? null,
+        runCount:
+          typeof config?.runCount === 'number' && Number.isFinite(config.runCount)
+            ? Math.max(0, Math.trunc(config.runCount))
+            : 0,
       };
     });
     return next;
@@ -70,6 +83,28 @@ export function PathsTabPanel({
             {path.name?.trim() || `Path ${path.id.slice(0, 6)}`}
           </button>
         );
+      },
+    },
+    {
+      id: 'lastRunAt',
+      header: 'Last Run',
+      cell: ({ row }) => {
+        const path = row.original;
+        const value = resolvedPathFlagsById[path.id]?.lastRunAt;
+        return (
+          <span className='text-xs text-gray-400'>
+            {value ? new Date(value).toLocaleString() : '—'}
+          </span>
+        );
+      },
+    },
+    {
+      id: 'runCount',
+      header: 'Runs',
+      cell: ({ row }) => {
+        const path = row.original;
+        const value = resolvedPathFlagsById[path.id]?.runCount ?? 0;
+        return <span className='text-xs text-gray-300'>{value}</span>;
       },
     },
     {

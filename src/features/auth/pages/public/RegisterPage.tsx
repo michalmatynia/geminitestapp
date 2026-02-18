@@ -8,7 +8,7 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { useRegisterUser } from '@/features/auth/hooks/useAuthQueries';
 import { DEFAULT_AUTH_SECURITY_POLICY } from '@/features/auth/utils/auth-security';
 import { logClientError } from '@/features/observability';
-import { Button, Input, Label, Alert } from '@/shared/ui';
+import { Button, Input, Label, Alert, SectionHeader } from '@/shared/ui';
 
 export default function RegisterPage(): React.JSX.Element {
   const { userPageSettings, isLoading } = useAuth();
@@ -91,12 +91,10 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
   return (
     <div className='flex min-h-screen items-center justify-center bg-gray-900 px-4'>
       <div className='w-full max-w-md space-y-6 rounded-lg border border-border bg-card p-6 shadow-lg'>
-        <div>
-          <h1 className='text-2xl font-semibold text-white'>Create account</h1>
-          <p className='mt-1 text-sm text-gray-400'>
-            Create a new account with email and password.
-          </p>
-        </div>
+        <SectionHeader
+          title='Create account'
+          description='Create a new account with email and password.'
+        />
         {error ? (
           <Alert variant='error' className='p-3 text-xs'>
             {error}

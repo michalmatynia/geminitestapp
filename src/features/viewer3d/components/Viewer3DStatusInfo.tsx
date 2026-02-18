@@ -3,6 +3,8 @@
 import { Layers } from 'lucide-react';
 import React from 'react';
 
+import { StatusBadge } from '@/shared/ui';
+
 import { useViewer3D } from '../context/Viewer3DContext';
 
 export function Viewer3DStatusInfo(): React.JSX.Element {
@@ -26,29 +28,19 @@ export function Viewer3DStatusInfo(): React.JSX.Element {
       </div>
       <div className='flex items-center gap-2'>
         {enableBloom && (
-          <span className='px-2 py-0.5 text-xs bg-purple-500/20 text-purple-400 rounded'>
-            Bloom
-          </span>
+          <StatusBadge status='Bloom' variant='info' />
         )}
         {enablePixelation && (
-          <span className='px-2 py-0.5 text-xs bg-amber-500/20 text-amber-400 rounded'>
-            Pixel Art
-          </span>
+          <StatusBadge status='Pixel Art' variant='warning' />
         )}
         {enableOrderedDithering && (
-          <span className='px-2 py-0.5 text-xs bg-teal-500/20 text-teal-400 rounded'>
-            Ordered Dither
-          </span>
+          <StatusBadge status='Ordered Dither' variant='info' />
         )}
         {enableDithering && (
-          <span className='px-2 py-0.5 text-xs bg-gray-700 text-gray-400 rounded'>
-            Dithering
-          </span>
+          <StatusBadge status='Dithering' variant='neutral' />
         )}
         {enableShadows && (
-          <span className='px-2 py-0.5 text-xs bg-blue-500/20 text-blue-400 rounded'>
-            Shadows
-          </span>
+          <StatusBadge status='Shadows' variant='info' />
         )}
       </div>
     </div>

@@ -179,10 +179,15 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                       parserSamples: args.parserSamples,
                       updaterSamples: args.updaterSamples,
                       runtimeState: finalState,
-                      lastRunAt: finishedAt
+                      lastRunAt: finishedAt,
+                      runCount: 1,
                     })),
                     runtimeState: finalState,
                     lastRunAt: finishedAt,
+                    runCount: Math.max(
+                      1,
+                      Math.trunc((prev[args.activePathId!]?.runCount ?? 0) + 1),
+                    ),
                   },
                 }));
               }
@@ -203,6 +208,35 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
               timestamp: finishedAt,
               message: `Server run failed: ${data.error || 'Unknown error'}`,
             });
+            args.setLastRunAt(finishedAt);
+            if (args.activePathId) {
+              args.setPathConfigs((prev) => ({
+                ...prev,
+                [args.activePathId!]: {
+                  ...(prev[args.activePathId!] ?? buildActivePathConfig({
+                    activePathId: args.activePathId,
+                    pathName: args.pathName,
+                    pathDescription: args.pathDescription,
+                    activeTrigger: args.activeTrigger,
+                    executionMode: args.executionMode,
+                    runMode: args.runMode,
+                    nodes: args.normalizedNodes,
+                    edges: args.sanitizedEdges,
+                    updatedAt: finishedAt,
+                    parserSamples: args.parserSamples,
+                    updaterSamples: args.updaterSamples,
+                    runtimeState: args.runtimeStateRef.current,
+                    lastRunAt: finishedAt,
+                    runCount: 1,
+                  })),
+                  lastRunAt: finishedAt,
+                  runCount: Math.max(
+                    1,
+                    Math.trunc((prev[args.activePathId!]?.runCount ?? 0) + 1),
+                  ),
+                },
+              }));
+            }
             stopServerRunStream();
             args.settleTransientNodeStatuses('failed');
           }

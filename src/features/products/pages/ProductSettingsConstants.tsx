@@ -2,7 +2,6 @@ export const settingSections = [
   'Categories',
   'Tags',
   'Parameters',
-  'Custom Fields',
   'Price Groups',
   'Catalogs',
   'Sync Settings',

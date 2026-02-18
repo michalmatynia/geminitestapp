@@ -91,7 +91,7 @@ function ImportsPageContent(): React.JSX.Element {
             parameterId;
           return {
             value: `${PRODUCT_PARAMETER_TARGET_PREFIX}${parameterId}`,
-            label: `Custom Field: ${label}`,
+            label: `Parameter: ${label}`,
           };
         })
         .filter(
@@ -503,7 +503,7 @@ function ImportsPageContent(): React.JSX.Element {
                       </datalist>
                       <p className='text-xs text-gray-500 italic'>
                         Tip: For category mapping use source <code>category_id</code> and target <code>categoryId</code>.
-                        {' '}For custom product fields use target <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code>.
+                        {' '}For parameters use target <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code>.
                       </p>
                     </>
                   )}
@@ -516,9 +516,9 @@ function ImportsPageContent(): React.JSX.Element {
                           : 'No source fields loaded yet. Go to Imports tab, select connection + inventory to load schema.'}
                       {catalogId
                         ? customParameterTargetsQuery.isLoading
-                          ? ' Loading custom field targets...'
-                          : ` Custom field targets: ${customParameterTargetFields.length}.`
-                        : ' Select a catalog in Imports tab to load custom field targets.'}
+                          ? ' Loading parameter targets...'
+                          : ` Parameter targets: ${customParameterTargetFields.length}.`
+                        : ' Select a catalog in Imports tab to load parameter targets.'}
                     </p>
                   )}
                 </div>

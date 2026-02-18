@@ -89,10 +89,15 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
                 parserSamples: args.parserSamples,
                 updaterSamples: args.updaterSamples,
                 runtimeState: outcome.state,
-                lastRunAt: finishedAt
+                lastRunAt: finishedAt,
+                runCount: 1,
               })),
               runtimeState: outcome.state,
               lastRunAt: finishedAt,
+              runCount: Math.max(
+                1,
+                Math.trunc((prev[args.activePathId!]?.runCount ?? 0) + 1),
+              ),
             },
           }));
         }
@@ -152,10 +157,15 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
                   parserSamples: args.parserSamples,
                   updaterSamples: args.updaterSamples,
                   runtimeState: outcome.state,
-                  lastRunAt: finishedAt
+                  lastRunAt: finishedAt,
+                  runCount: 1,
                 })),
                 runtimeState: outcome.state,
                 lastRunAt: finishedAt,
+                runCount: Math.max(
+                  1,
+                  Math.trunc((prev[args.activePathId!]?.runCount ?? 0) + 1),
+                ),
               },
             }));
           }
@@ -188,6 +198,36 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
           message: 'Run cancelled.',
         });
         args.toast('Run cancelled.', { variant: 'info' });
+        args.setLastRunAt(finishedAt);
+        if (args.activePathId) {
+          args.setPathConfigs((prev: Record<string, PathConfig>) => ({
+            ...prev,
+            [args.activePathId!]: {
+              ...(prev[args.activePathId!] ?? buildActivePathConfig({
+                activePathId: args.activePathId,
+                pathName: args.pathName,
+                pathDescription: args.pathDescription,
+                activeTrigger: args.activeTrigger,
+                executionMode: args.executionMode,
+                runMode: args.runMode,
+                nodes: args.normalizedNodes,
+                edges: args.sanitizedEdges,
+                updatedAt: finishedAt,
+                parserSamples: args.parserSamples,
+                updaterSamples: args.updaterSamples,
+                runtimeState: outcome.state,
+                lastRunAt: finishedAt,
+                runCount: 1,
+              })),
+              runtimeState: outcome.state,
+              lastRunAt: finishedAt,
+              runCount: Math.max(
+                1,
+                Math.trunc((prev[args.activePathId!]?.runCount ?? 0) + 1),
+              ),
+            },
+          }));
+        }
         void appendLocalRun({
           pathId: args.activePathId ?? null,
           pathName: args.pathName ?? null,

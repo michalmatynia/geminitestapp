@@ -226,6 +226,7 @@ export function useAiPathsSettingsPathActions({
       updaterSamples: {},
       runtimeState: { inputs: {}, outputs: {} },
       lastRunAt: null,
+      runCount: 0,
       uiState: {
         selectedNodeId: null,
         configOpen: false,

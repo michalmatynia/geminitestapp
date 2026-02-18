@@ -47,11 +47,11 @@ export async function handleDatabaseMongoDeleteAction({
     };
   }
   const deleteResult: ApiResponse<unknown> = await dbApi.action({
-    ...(queryPayload['provider'] ? { provider: queryPayload['provider'] } : {}),
+    ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
     action,
     collection,
     filter,
-    ...(idType !== undefined ? { idType: idType } : {}),
+    ...(idType !== undefined ? { idType: idType as string } : {}),
   });
   executed.updater.add(node.id);
   if (!deleteResult.ok) {

@@ -28,7 +28,7 @@ export type HandleDatabaseMongoReadActionInput = {
   sort: unknown;
   limit: unknown;
   idType: unknown;
-  distinctField?: string;
+  distinctField?: string | undefined;
   queryPayload: Record<string, unknown>;
   queryConfig: DbQueryConfig;
   dryRun: boolean;
@@ -132,14 +132,14 @@ export async function handleDatabaseMongoReadAction({
     };
   }
   const readResult: ApiResponse<DbActionResult> = await dbApi.action<DbActionResult>({ 
-    ...(queryPayload['provider'] ? { provider: queryPayload['provider'] } : {}),
+    ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
     action,
     collection,
     filter,
-    ...(projection !== undefined ? { projection } : {}),
-    ...(sort !== undefined ? { sort } : {}),
-    ...(limit !== undefined ? { limit } : {}),
-    ...(idType !== undefined ? { idType } : {}),
+    ...(projection !== undefined ? { projection: projection as Record<string, unknown> } : {}),
+    ...(sort !== undefined ? { sort: sort as Record<string, unknown> } : {}),
+    ...(limit !== undefined ? { limit: limit as number } : {}),
+    ...(idType !== undefined ? { idType: idType as string } : {}),
     ...(action === 'distinct' && distinctField ? { distinctField } : {}),
   });
   if (!readResult.ok) {
@@ -168,14 +168,14 @@ export async function handleDatabaseMongoReadAction({
         id: { $in: parameterIds },
       };
       const fallbackReadResult: ApiResponse<DbActionResult> = await dbApi.action<DbActionResult>({
-        ...(queryPayload['provider'] ? { provider: queryPayload['provider'] } : {}),
+        ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
         action: 'find',
         collection,
         filter: fallbackFilter,
-        ...(projection !== undefined ? { projection } : {}),
-        ...(sort !== undefined ? { sort } : {}),
-        ...(limit !== undefined ? { limit } : {}),
-        ...(idType !== undefined ? { idType } : {}),
+        ...(projection !== undefined ? { projection: projection as Record<string, unknown> } : {}),
+        ...(sort !== undefined ? { sort: sort as Record<string, unknown> } : {}),
+        ...(limit !== undefined ? { limit: limit as number } : {}),
+        ...(idType !== undefined ? { idType: idType as string } : {}),
       });
       if (fallbackReadResult.ok) {
         const fallbackData: DbActionResult = fallbackReadResult.data;

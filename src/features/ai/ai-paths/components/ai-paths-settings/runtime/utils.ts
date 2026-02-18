@@ -122,6 +122,7 @@ export const buildActivePathConfig = (args: {
   updaterSamples: Record<string, UpdaterSampleState>;
   runtimeState: RuntimeState;
   lastRunAt: string | null;
+  runCount?: number;
 }): PathConfig => ({
   id: args.activePathId ?? 'default',
   version: STORAGE_VERSION,
@@ -137,6 +138,10 @@ export const buildActivePathConfig = (args: {
   updaterSamples: args.updaterSamples,
   runtimeState: args.runtimeState,
   lastRunAt: args.lastRunAt,
+  runCount:
+    typeof args.runCount === 'number' && Number.isFinite(args.runCount)
+      ? Math.max(0, Math.trunc(args.runCount))
+      : 0,
 });
 
 /**

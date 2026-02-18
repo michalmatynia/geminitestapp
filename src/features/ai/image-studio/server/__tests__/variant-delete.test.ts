@@ -128,4 +128,168 @@ describe('deleteImageStudioVariant', () => {
     expect(result.deletedFilepaths).toContain('/uploads/studio/proj-1/orphan.png');
     expect(deps.deleteImageFileById).toHaveBeenCalledWith('img-orphan');
   });
+
+  it('skips file-only fallback when variant-intent selectors are provided but slot is unresolved', async () => {
+    const deps = {
+      listSlots: vi.fn(async () => [] as ImageStudioSlotRecord[]),
+      deleteSlotCascade: vi.fn(async () => ({ deleted: false, deletedSlotIds: [] })),
+      removeRunOutputs: vi.fn(async () => 0),
+      getImageFileById: vi.fn(async () => ({
+        id: 'img-variant-intent',
+        filepath: '/uploads/studio/proj-1/variant-intent.png',
+      })),
+      deleteImageFileById: vi.fn(async () => undefined),
+      deleteDiskPath: vi.fn(async () => true),
+      logMetric: vi.fn(async () => undefined),
+    };
+
+    const result = await deleteImageStudioVariant(
+      {
+        projectId: 'proj-1',
+        generationRunId: 'run-intent',
+        generationOutputIndex: 1,
+        sourceSlotId: 'root-slot',
+        assetId: 'img-variant-intent',
+      },
+      deps,
+    );
+
+    expect(result.modeUsed).toBe('noop');
+    expect(result.deletedFileIds).toEqual([]);
+    expect(result.deletedFilepaths).toEqual([]);
+    expect(result.warnings.some((warning) => warning.includes('expects a slot/node match'))).toBe(true);
+    expect(deps.deleteImageFileById).not.toHaveBeenCalled();
+    expect(deps.deleteDiskPath).not.toHaveBeenCalled();
+  });
+
+  it('matches generation selectors from generationParams metadata fallback', async () => {
+    const matchedSlot = makeSlot({
+      id: 'slot-generation-params',
+      imageFileId: 'img-generation-params',
+      metadata: {
+        role: 'base',
+        generationParams: {
+          runId: 'run-from-generation-params',
+          outputIndex: 3,
+        },
+        sourceSlotIds: ['root-slot'],
+      },
+    });
+
+    const deps = {
+      listSlots: vi.fn(async () => [matchedSlot]),
+      deleteSlotCascade: vi.fn(async () => ({
+        deleted: true,
+        deletedSlotIds: ['slot-generation-params'],
+      })),
+      removeRunOutputs: vi.fn(async () => 0),
+      getImageFileById: vi.fn(async () => null),
+      deleteImageFileById: vi.fn(async () => undefined),
+      deleteDiskPath: vi.fn(async () => false),
+      logMetric: vi.fn(async () => undefined),
+    };
+
+    const result = await deleteImageStudioVariant(
+      {
+        projectId: 'proj-1',
+        generationRunId: 'run-from-generation-params',
+        generationOutputIndex: 3,
+        sourceSlotId: 'root-slot',
+      },
+      deps,
+    );
+
+    expect(result.modeUsed).toBe('slot_cascade');
+    expect(result.deletedSlotIds).toContain('slot-generation-params');
+    expect(deps.deleteSlotCascade).toHaveBeenCalledWith('slot-generation-params');
+  });
+
+  it('matches generation selectors from sequence metadata fallback', async () => {
+    const matchedSlot = makeSlot({
+      id: 'slot-sequence-meta',
+      imageFileId: 'img-sequence-meta',
+      metadata: {
+        role: 'generation',
+        relationType: 'sequence:output',
+        sourceSlotId: 'root-sequence',
+        sequence: {
+          runId: 'seq-run-1',
+          outputIndex: 2,
+        },
+      },
+    });
+
+    const deps = {
+      listSlots: vi.fn(async () => [matchedSlot]),
+      deleteSlotCascade: vi.fn(async () => ({
+        deleted: true,
+        deletedSlotIds: ['slot-sequence-meta'],
+      })),
+      removeRunOutputs: vi.fn(async () => 0),
+      getImageFileById: vi.fn(async () => null),
+      deleteImageFileById: vi.fn(async () => undefined),
+      deleteDiskPath: vi.fn(async () => false),
+      logMetric: vi.fn(async () => undefined),
+    };
+
+    const result = await deleteImageStudioVariant(
+      {
+        projectId: 'proj-1',
+        generationRunId: 'seq-run-1',
+        generationOutputIndex: 2,
+        sourceSlotId: 'root-sequence',
+      },
+      deps,
+    );
+
+    expect(result.modeUsed).toBe('slot_cascade');
+    expect(result.deletedSlotIds).toContain('slot-sequence-meta');
+    expect(deps.deleteSlotCascade).toHaveBeenCalledWith('slot-sequence-meta');
+  });
+
+  it('sweeps and deletes lingering generation slots after file cleanup race', async () => {
+    const lateSlot = makeSlot({
+      id: 'slot-late-materialized',
+      imageFileId: 'img-race',
+      imageUrl: '/uploads/studio/proj-1/race.png',
+      metadata: {
+        role: 'generation',
+        relationType: 'crop:output',
+      },
+    });
+
+    let listSlotsCallCount = 0;
+    const deps = {
+      listSlots: vi.fn(async () => {
+        listSlotsCallCount += 1;
+        if (listSlotsCallCount === 1) return [] as ImageStudioSlotRecord[];
+        return [lateSlot];
+      }),
+      deleteSlotCascade: vi.fn(async (slotId: string) => ({
+        deleted: slotId === 'slot-late-materialized',
+        deletedSlotIds: slotId === 'slot-late-materialized' ? ['slot-late-materialized'] : [],
+      })),
+      removeRunOutputs: vi.fn(async () => 1),
+      getImageFileById: vi.fn(async () => ({
+        id: 'img-race',
+        filepath: '/uploads/studio/proj-1/race.png',
+      })),
+      deleteImageFileById: vi.fn(async () => undefined),
+      deleteDiskPath: vi.fn(async () => true),
+      logMetric: vi.fn(async () => undefined),
+    };
+
+    const result = await deleteImageStudioVariant(
+      {
+        projectId: 'proj-1',
+        assetId: 'img-race',
+        filepath: '/uploads/studio/proj-1/race.png',
+      },
+      deps,
+    );
+
+    expect(result.modeUsed).toBe('slot_cascade');
+    expect(result.deletedSlotIds).toContain('slot-late-materialized');
+    expect(deps.deleteSlotCascade).toHaveBeenCalledWith('slot-late-materialized');
+  });
 });

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 
 import { useCsvImportMutation } from '@/features/data-import-export/hooks/useImportMutations';
-import { Button, useToast, FileUploadButton } from '@/shared/ui';
+import { Button, useToast, FileUploadButton, PanelHeader } from '@/shared/ui';
 
 const CSVImportPage = (): React.JSX.Element => {
   const { toast } = useToast();
@@ -33,8 +33,8 @@ const CSVImportPage = (): React.JSX.Element => {
   };
 
   return (
-    <div>
-      <h1 className='text-2xl font-bold mb-4'>Import Products from CSV</h1>
+    <div className='space-y-6'>
+      <PanelHeader title='Import Products from CSV' />
       <div className='flex w-full max-w-sm items-center space-x-2'>
         <FileUploadButton onFilesSelected={(files: File[]) => handleFileChange(files)} accept='.csv'>
           Choose CSV

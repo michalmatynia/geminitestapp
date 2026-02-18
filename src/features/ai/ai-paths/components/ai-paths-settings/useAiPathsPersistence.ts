@@ -459,15 +459,26 @@ export function useAiPathsPersistence({
                   name: resolvedName,
                 };
                 const migration = migratePathConfigCollections(mergedConfig);
-                settingsConfigs[meta.id] = migration.config;
+                const normalizedRunCountRaw = migration.config.runCount;
+                const normalizedRunCount =
+                  typeof normalizedRunCountRaw === 'number' &&
+                  Number.isFinite(normalizedRunCountRaw)
+                    ? Math.max(0, Math.trunc(normalizedRunCountRaw))
+                    : 0;
+                const normalizedConfig: PathConfig = {
+                  ...migration.config,
+                  runCount: normalizedRunCount,
+                };
+                settingsConfigs[meta.id] = normalizedConfig;
                 if (
                   migration.changed ||
+                  normalizedRunCountRaw !== normalizedRunCount ||
                   normalizeLoadedPathName(meta.id, parsedConfig.name) !==
                     resolvedName
                 ) {
                   migrationPayload.push({
                     key: `${PATH_CONFIG_PREFIX}${meta.id}`,
-                    value: JSON.stringify(migration.config),
+                    value: JSON.stringify(normalizedConfig),
                   });
                 }
               } catch {
@@ -722,6 +733,12 @@ export function useAiPathsPersistence({
         updaterSamples,
         runtimeState: buildPersistedRuntimeState(runtimeState, nodes),
         lastRunAt,
+        runCount:
+          activePathId &&
+          typeof pathConfigs[activePathId]?.runCount === 'number' &&
+          Number.isFinite(pathConfigs[activePathId]?.runCount)
+            ? Math.max(0, Math.trunc(pathConfigs[activePathId]?.runCount ?? 0))
+            : 0,
       }),
     [
       activePathId,
@@ -741,6 +758,7 @@ export function useAiPathsPersistence({
       updaterSamples,
       runtimeState,
       lastRunAt,
+      pathConfigs,
     ]
   );
 
@@ -778,6 +796,12 @@ export function useAiPathsPersistence({
         updaterSamples,
         runtimeState,
         lastRunAt,
+        runCount:
+          activePathId &&
+          typeof pathConfigsRef.current[activePathId]?.runCount === 'number' &&
+          Number.isFinite(pathConfigsRef.current[activePathId]?.runCount)
+            ? Math.max(0, Math.trunc(pathConfigsRef.current[activePathId]?.runCount ?? 0))
+            : 0,
         uiState: {
           selectedNodeId,
         },

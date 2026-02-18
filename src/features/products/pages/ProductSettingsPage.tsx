@@ -16,7 +16,6 @@ import { PriceGroupModal } from '@/features/products/components/settings/modals/
 import { PriceGroupsSettings } from '@/features/products/components/settings/pricing/PriceGroupsSettings';
 import { ProductImageRoutingSettings } from '@/features/products/components/settings/ProductImageRoutingSettings';
 import { ProductSettingsProvider } from '@/features/products/components/settings/ProductSettingsContext';
-import { SimpleParametersSettings } from '@/features/products/components/settings/SimpleParametersSettings';
 import { TagsSettings } from '@/features/products/components/settings/TagsSettings';
 import { ValidatorSettings } from '@/features/products/components/settings/ValidatorSettings';
 import {
@@ -26,7 +25,6 @@ import {
   useDeletePriceGroupMutation,
   useParameters,
   usePriceGroups,
-  useSimpleParameters,
   useTags,
   useUpdatePriceGroupMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
@@ -96,16 +94,10 @@ export function ProductSettingsPage(): React.JSX.Element {
 
   const [selectedCategoryCatalogId, setSelectedCategoryCatalogId] = useState<string | null>(null);
   const [selectedTagCatalogId, setSelectedTagCatalogId] = useState<string | null>(null);
-  const [selectedSimpleParameterCatalogId, setSelectedSimpleParameterCatalogId] = useState<string | null>(null);
   const [selectedParameterCatalogId, setSelectedParameterCatalogId] = useState<string | null>(null);
 
   const { data: productCategories = [], isLoading: loadingCategories, refetch: refetchCategories } = useCategories(selectedCategoryCatalogId);
   const { data: productTags = [], isLoading: loadingTags, refetch: refetchTags } = useTags(selectedTagCatalogId);
-  const {
-    data: productSimpleParameters = [],
-    isLoading: loadingSimpleParameters,
-    refetch: refetchSimpleParameters,
-  } = useSimpleParameters(selectedSimpleParameterCatalogId);
   const { data: productParameters = [], isLoading: loadingParameters, refetch: refetchParameters } = useParameters(selectedParameterCatalogId);
 
   // Mutations
@@ -127,10 +119,6 @@ export function ProductSettingsPage(): React.JSX.Element {
           const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
           if (def) setSelectedTagCatalogId(def.id);
         }
-        if (!selectedSimpleParameterCatalogId) {
-          const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
-          if (def) setSelectedSimpleParameterCatalogId(def.id);
-        }
         if (!selectedParameterCatalogId) {
           const def = catalogs.find((c: Catalog) => c.isDefault) || catalogs[0];
           if (def) setSelectedParameterCatalogId(def.id);
@@ -144,7 +132,6 @@ export function ProductSettingsPage(): React.JSX.Element {
     catalogs,
     selectedCategoryCatalogId,
     selectedTagCatalogId,
-    selectedSimpleParameterCatalogId,
     selectedParameterCatalogId,
   ]);
 
@@ -306,27 +293,17 @@ export function ProductSettingsPage(): React.JSX.Element {
             <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
               {activeSection === 'Categories' && <CategoriesSettings />}
               {activeSection === 'Tags' && <TagsSettings />}
-              {activeSection === 'Custom Fields' && (
+              {activeSection === 'Parameters' && (
                 <ParametersSettings
                   loading={loadingParameters}
                   parameters={productParameters}
                   catalogs={catalogs}
                   selectedCatalogId={selectedParameterCatalogId}
-                  onCatalogChange={(catalogId: string): void => setSelectedParameterCatalogId(catalogId)}
-                  onRefresh={(): void => { void refetchParameters(); }}
-                />
-              )}
-              {activeSection === 'Parameters' && (
-                <SimpleParametersSettings
-                  loading={loadingSimpleParameters}
-                  parameters={productSimpleParameters}
-                  catalogs={catalogs}
-                  selectedCatalogId={selectedSimpleParameterCatalogId}
                   onCatalogChange={(catalogId: string): void =>
-                    setSelectedSimpleParameterCatalogId(catalogId)
+                    setSelectedParameterCatalogId(catalogId)
                   }
                   onRefresh={(): void => {
-                    void refetchSimpleParameters();
+                    void refetchParameters();
                   }}
                 />
               )}

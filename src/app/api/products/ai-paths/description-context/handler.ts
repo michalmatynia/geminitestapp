@@ -4,25 +4,17 @@ import {
   getCategoryRepository,
   getParameterRepository,
 } from '@/features/products/server';
-import { listSimpleParameters } from '@/features/products/services/simple-parameter-service';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 import type {
   ProductCategory,
   ProductParameter,
-  ProductSimpleParameter,
 } from '@/shared/types/domain/products';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 type DescriptionContextPayload = {
   catalogId: string | null;
   categoryId: string | null;
   categoryName: string | null;
-  simpleParameters: Array<{
-    id: string;
-    name_en: string;
-    name_pl: string | null;
-    name_de: string | null;
-  }>;
-  customParameters: Array<{
+  parameters: Array<{
     id: string;
     name_en: string;
     name_pl: string | null;
@@ -47,8 +39,7 @@ const buildEmptyPayload = (
   catalogId,
   categoryId,
   categoryName: null,
-  simpleParameters: [],
-  customParameters: [],
+  parameters: [],
 });
 
 const normalizeOptionLabels = (input: unknown): string[] => {
@@ -97,15 +88,14 @@ export async function GET_handler(
   }
 
   const parameterRepository = await getParameterRepository();
-  const [simpleParameters, customParameters, categoryName] = await Promise.all([
-    listSimpleParameters({ catalogId }),
+  const [parameters, categoryName] = await Promise.all([
     parameterRepository.listParameters({ catalogId }),
     categoryId
       ? (async (): Promise<string | null> => {
-          const categoryRepository = await getCategoryRepository();
-          const categories = await categoryRepository.listCategories({ catalogId });
-          return resolveCategoryName(categories, categoryId);
-        })()
+        const categoryRepository = await getCategoryRepository();
+        const categories = await categoryRepository.listCategories({ catalogId });
+        return resolveCategoryName(categories, categoryId);
+      })()
       : Promise.resolve(null),
   ]);
 
@@ -113,16 +103,8 @@ export async function GET_handler(
     catalogId,
     categoryId: categoryId || null,
     categoryName,
-    simpleParameters: simpleParameters.map(
-      (parameter: ProductSimpleParameter): DescriptionContextPayload['simpleParameters'][number] => ({
-        id: parameter.id,
-        name_en: parameter.name_en,
-        name_pl: parameter.name_pl,
-        name_de: parameter.name_de,
-      })
-    ),
-    customParameters: customParameters.map(
-      (parameter: ProductParameter): DescriptionContextPayload['customParameters'][number] => ({
+    parameters: parameters.map(
+      (parameter: ProductParameter): DescriptionContextPayload['parameters'][number] => ({
         id: parameter.id,
         name_en: parameter.name_en,
         name_pl: parameter.name_pl,

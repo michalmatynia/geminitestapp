@@ -28,7 +28,6 @@ import {
 import { setProductStudioProject } from '@/features/products/services/product-studio-config';
 import type {
   ProductParameterValue,
-  ProductSimpleParameterValue,
   ProductWithImages,
   ProductImageRecord,
   ProductRecord,
@@ -37,7 +36,6 @@ import type {
   ProductFilters,
   ProductRepository,
 } from '@/features/products/types/services/product-repository';
-import { mergeProductParameterValues } from '@/features/products/utils/parameter-partition';
 import {
   validateProductCreate,
   validateProductUpdate,
@@ -61,21 +59,10 @@ const normalizeProductPayloadForStorage = <
   ): TData => {
   const payload = data as TData & {
     parameters?: ProductParameterValue[] | null;
-    simpleParameters?: ProductSimpleParameterValue[] | null;
   };
-  const mergedParameters = mergeProductParameterValues({
-    customFieldValues: Array.isArray(payload.parameters)
-      ? payload.parameters
-      : [],
-    simpleParameterValues: Array.isArray(payload.simpleParameters)
-      ? payload.simpleParameters
-      : [],
-  });
-
-  const { simpleParameters: _simpleParameters, ...rest } = payload;
   return {
-    ...(rest as TData),
-    parameters: mergedParameters,
+    ...(payload as TData),
+    parameters: Array.isArray(payload.parameters) ? payload.parameters : [],
   } as TData;
 };
 

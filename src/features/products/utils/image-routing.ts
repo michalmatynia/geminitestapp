@@ -14,6 +14,25 @@ export const normalizeProductImageExternalBaseUrl = (
   }
 };
 
+const isLoopbackHostname = (hostname: string): boolean => {
+  const normalized = hostname.replace(/^\[|\]$/g, '').toLowerCase();
+  return (
+    normalized === 'localhost' ||
+    normalized === '127.0.0.1' ||
+    normalized === '0.0.0.0' ||
+    normalized === '::1'
+  );
+};
+
+const isLoopbackBaseUrl = (baseUrl: string): boolean => {
+  if (!baseUrl) return false;
+  try {
+    return isLoopbackHostname(new URL(baseUrl).hostname);
+  } catch {
+    return false;
+  }
+};
+
 const joinPathToBase = (path: string, baseUrl: string): string => {
   const normalizedBase = normalizeProductImageExternalBaseUrl(baseUrl);
   if (!normalizedBase) return path;
@@ -38,8 +57,12 @@ export const resolveProductImageUrl = (
   }
 
   const normalizedBase = normalizeProductImageExternalBaseUrl(externalBaseUrl);
+  const baseIsLoopback = isLoopbackBaseUrl(normalizedBase);
 
   if (value.startsWith('/')) {
+    if (!normalizedBase || baseIsLoopback) {
+      return value;
+    }
     return joinPathToBase(value, normalizedBase);
   }
 
@@ -51,6 +74,15 @@ export const resolveProductImageUrl = (
         return value;
       }
       const path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      if (!normalizedBase) return value;
+
+      const sourceIsLoopback = isLoopbackHostname(parsed.hostname);
+
+      // Preserve external absolute URLs by default; only remap when the
+      // source is loopback and the configured base is a non-loopback host.
+      if (!sourceIsLoopback) return value;
+      if (baseIsLoopback) return path || value;
+
       return joinPathToBase(path, normalizedBase) || value;
     } catch {
       return value;
@@ -58,5 +90,8 @@ export const resolveProductImageUrl = (
   }
 
   const path = `/${value.replace(/^\/+/, '')}`;
+  if (!normalizedBase || baseIsLoopback) {
+    return path;
+  }
   return joinPathToBase(path, normalizedBase);
 };

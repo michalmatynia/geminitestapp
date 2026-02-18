@@ -144,11 +144,19 @@ const matchesVariantRunSelectors = (
 ): boolean => {
   const metadata = asRecord(slot.metadata);
   if (!metadata) return false;
-  const slotRunId = asTrimmedString(metadata['generationRunId']);
+  const generationParams = asRecord(metadata['generationParams']);
+  const sequence = asRecord(metadata['sequence']);
+  const slotRunId =
+    asTrimmedString(metadata['generationRunId']) ||
+    asTrimmedString(generationParams?.['runId']) ||
+    asTrimmedString(sequence?.['runId']);
   if (!slotRunId || slotRunId !== params.generationRunId) return false;
 
   if (params.generationOutputIndex !== null) {
-    const slotOutputIndex = asFiniteNumber(metadata['generationOutputIndex']);
+    const slotOutputIndex =
+      asFiniteNumber(metadata['generationOutputIndex']) ??
+      asFiniteNumber(generationParams?.['outputIndex']) ??
+      asFiniteNumber(sequence?.['outputIndex']);
     if (slotOutputIndex !== params.generationOutputIndex) return false;
   }
 
@@ -157,80 +165,23 @@ const matchesVariantRunSelectors = (
   return params.sourceSlotAliases.some((candidate) => slotSources.has(candidate));
 };
 
-const collectMatchingVariantSlots = (
-  slots: ImageStudioSlotRecord[],
-  input: {
-    slotAliases: string[];
-    assetId: string;
-    normalizedFilepath: string | null;
-    generationRunId: string;
-    generationOutputIndex: number | null;
-    sourceSlotAliases: string[];
-  },
-): ImageStudioSlotRecord[] => {
-  const matchesById = new Set<string>();
-
-  for (const slot of slots) {
-    const slotAliases = resolveSlotIdAliases(slot.id);
-    if (input.slotAliases.length > 0 && slotAliases.some((alias) => input.slotAliases.includes(alias))) {
-      matchesById.add(slot.id);
-      continue;
-    }
-
-    if (input.assetId) {
-      if (slot.imageFileId === input.assetId) {
-        matchesById.add(slot.id);
-        continue;
-      }
-      const metadata = asRecord(slot.metadata);
-      if (asTrimmedString(metadata?.['generationFileId']) === input.assetId) {
-        matchesById.add(slot.id);
-        continue;
-      }
-      const outputFile = asRecord(metadata?.['outputFile']);
-      if (asTrimmedString(outputFile?.['id']) === input.assetId) {
-        matchesById.add(slot.id);
-        continue;
-      }
-    }
-
-    if (input.normalizedFilepath) {
-      const slotImageFilePath = normalizePublicPath(slot.imageFile?.filepath);
-      if (slotImageFilePath && slotImageFilePath === input.normalizedFilepath) {
-        matchesById.add(slot.id);
-        continue;
-      }
-
-      const slotImageUrlPath = normalizePublicPath(slot.imageUrl);
-      if (slotImageUrlPath && slotImageUrlPath === input.normalizedFilepath) {
-        matchesById.add(slot.id);
-        continue;
-      }
-
-      const metadata = asRecord(slot.metadata);
-      const outputFile = asRecord(metadata?.['outputFile']);
-      const outputPath = normalizePublicPath(outputFile?.['filepath']);
-      if (outputPath && outputPath === input.normalizedFilepath) {
-        matchesById.add(slot.id);
-        continue;
-      }
-    }
-
-    if (input.generationRunId) {
-      if (
-        matchesVariantRunSelectors(slot, {
-          generationRunId: input.generationRunId,
-          generationOutputIndex: input.generationOutputIndex,
-          sourceSlotAliases: input.sourceSlotAliases,
-        })
-      ) {
-        matchesById.add(slot.id);
-      }
-    }
-  }
-
-  return slots.filter((slot) => matchesById.has(slot.id));
+const isGenerationDerivedSlotMetadata = (metadataRaw: unknown): boolean => {
+  const metadata = asRecord(metadataRaw);
+  if (!metadata) return false;
+  const role = asTrimmedString(metadata['role']).toLowerCase();
+  if (role === 'generation') return true;
+  const relationType = asTrimmedString(metadata['relationType']).toLowerCase();
+  return (
+    relationType.startsWith('generation:') ||
+    relationType.startsWith('center:') ||
+    relationType.startsWith('crop:') ||
+    relationType.startsWith('upscale:') ||
+    relationType.startsWith('sequence:')
+  );
 };
+
+const isGenerationDerivedSlot = (slot: ImageStudioSlotRecord): boolean =>
+  isGenerationDerivedSlotMetadata(slot.metadata);
 
 const buildFileSelectorsFromSlot = (slot: ImageStudioSlotRecord): {
   fileIds: string[];
@@ -256,10 +207,72 @@ const buildFileSelectorsFromSlot = (slot: ImageStudioSlotRecord): {
   const outputFilepath = normalizePublicPath(outputFile?.['filepath']);
   if (outputFilepath) filepaths.add(outputFilepath);
 
+  const sequence = asRecord(metadata?.['sequence']);
+  const sequenceOutputFileId =
+    asTrimmedString(sequence?.['outputFileId']) ||
+    asTrimmedString(asRecord(sequence?.['outputFile'])?.['id']);
+  if (sequenceOutputFileId) fileIds.add(sequenceOutputFileId);
+  const sequenceOutputPath =
+    normalizePublicPath(sequence?.['outputFilepath']) ||
+    normalizePublicPath(asRecord(sequence?.['outputFile'])?.['filepath']);
+  if (sequenceOutputPath) filepaths.add(sequenceOutputPath);
+
   return {
     fileIds: Array.from(fileIds),
     filepaths: Array.from(filepaths),
   };
+};
+
+const collectMatchingVariantSlots = (
+  slots: ImageStudioSlotRecord[],
+  input: {
+    slotAliases: string[];
+    assetId: string;
+    normalizedFilepath: string | null;
+    generationRunId: string;
+    generationOutputIndex: number | null;
+    sourceSlotAliases: string[];
+  },
+): ImageStudioSlotRecord[] => {
+  const matchesById = new Set<string>();
+
+  for (const slot of slots) {
+    const slotAliases = resolveSlotIdAliases(slot.id);
+    if (input.slotAliases.length > 0 && slotAliases.some((alias) => input.slotAliases.includes(alias))) {
+      matchesById.add(slot.id);
+      continue;
+    }
+
+    const slotFileSelectors = buildFileSelectorsFromSlot(slot);
+
+    if (input.assetId) {
+      if (slotFileSelectors.fileIds.includes(input.assetId)) {
+        matchesById.add(slot.id);
+        continue;
+      }
+    }
+
+    if (input.normalizedFilepath) {
+      if (slotFileSelectors.filepaths.includes(input.normalizedFilepath)) {
+        matchesById.add(slot.id);
+        continue;
+      }
+    }
+
+    if (input.generationRunId) {
+      if (
+        matchesVariantRunSelectors(slot, {
+          generationRunId: input.generationRunId,
+          generationOutputIndex: input.generationOutputIndex,
+          sourceSlotAliases: input.sourceSlotAliases,
+        })
+      ) {
+        matchesById.add(slot.id);
+      }
+    }
+  }
+
+  return slots.filter((slot) => matchesById.has(slot.id));
 };
 
 const defaultDeps: DeleteImageStudioVariantDeps = {
@@ -373,7 +386,18 @@ export async function deleteImageStudioVariant(
   const requestedOutputIndex = asFiniteNumber(input.generationOutputIndex);
   const requestedSourceAliases = resolveSlotIdAliases(input.sourceSlotId);
 
-  const slotAliases = resolveSlotIdAliases(requestedSlotId);
+  const slotAliasesSet = new Set<string>(resolveSlotIdAliases(requestedSlotId));
+  if (requestedAssetId.startsWith('slot:') || requestedAssetId.startsWith('card:')) {
+    resolveSlotIdAliases(requestedAssetId).forEach((alias) => {
+      slotAliasesSet.add(alias);
+    });
+  }
+  const slotAliases = Array.from(slotAliasesSet);
+  const variantIntentRequested =
+    slotAliases.length > 0 ||
+    requestedSourceAliases.length > 0 ||
+    Boolean(requestedRunId) ||
+    requestedOutputIndex !== null;
   const slots = await deps.listSlots(projectId);
   const matchedSlots = collectMatchingVariantSlots(slots, {
     slotAliases,
@@ -385,7 +409,7 @@ export async function deleteImageStudioVariant(
   });
 
   const warnings: string[] = [];
-  const matchedSlotIds = matchedSlots.map((slot) => slot.id);
+  const matchedSlotIdsSet = new Set<string>(matchedSlots.map((slot) => slot.id));
   const deletedSlotIdsSet = new Set<string>();
   const fileIdsFromMatchedSlots = new Set<string>();
   const filepathsFromMatchedSlots = new Set<string>();
@@ -396,7 +420,7 @@ export async function deleteImageStudioVariant(
     selectors.filepaths.forEach((filepath) => filepathsFromMatchedSlots.add(filepath));
   });
 
-  const cascadeTargets = new Set<string>(matchedSlotIds);
+  const cascadeTargets = new Set<string>(Array.from(matchedSlotIdsSet));
   if (cascadeTargets.size === 0 && slotAliases.length > 0) {
     slotAliases.forEach((candidate) => cascadeTargets.add(candidate));
   }
@@ -408,8 +432,8 @@ export async function deleteImageStudioVariant(
     }
   }
 
-  const deletedSlotIds = Array.from(deletedSlotIdsSet);
-  const stillReferencedMatchedSlots = matchedSlotIds.filter(
+  let deletedSlotIds = Array.from(deletedSlotIdsSet);
+  const stillReferencedMatchedSlots = Array.from(matchedSlotIdsSet).filter(
     (slotId) => !deletedSlotIdsSet.has(slotId),
   );
 
@@ -438,6 +462,11 @@ export async function deleteImageStudioVariant(
   }
 
   if (modeUsed === 'noop' && !hasResidualSlotReferences) {
+    if (variantIntentRequested) {
+      warnings.push(
+        'Skipped file-only fallback because variant deletion expects a slot/node match.',
+      );
+    } else {
     for (const fileId of Array.from(fileIdsToCleanup)) {
       const imageFile = await deps.getImageFileById(fileId);
       if (!imageFile) continue;
@@ -473,6 +502,51 @@ export async function deleteImageStudioVariant(
       modeUsed = 'asset_only';
       warnings.push('Variant file was removed without a slot cascade match.');
     }
+    }
+  }
+
+  const postDeleteFileIds = new Set<string>([...fileIdsToCleanup, ...deletedFileIds]);
+  const postDeleteFilepaths = new Set<string>([...filepathsToCleanup, ...deletedFilepaths]);
+  const canRunOrphanSweep =
+    postDeleteFileIds.size > 0 ||
+    postDeleteFilepaths.size > 0 ||
+    Boolean(requestedRunId);
+
+  if (canRunOrphanSweep) {
+    const refreshedSlots = await deps.listSlots(projectId);
+    const sweepCandidates = refreshedSlots.filter((slot) => {
+      if (deletedSlotIdsSet.has(slot.id)) return false;
+      if (!isGenerationDerivedSlot(slot)) return false;
+
+      const fileSelectors = buildFileSelectorsFromSlot(slot);
+      const fileMatch =
+        fileSelectors.fileIds.some((fileId) => postDeleteFileIds.has(fileId)) ||
+        fileSelectors.filepaths.some((filepath) => postDeleteFilepaths.has(filepath));
+
+      if (fileMatch) return true;
+      if (!requestedRunId) return false;
+      return matchesVariantRunSelectors(slot, {
+        generationRunId: requestedRunId,
+        generationOutputIndex: requestedOutputIndex,
+        sourceSlotAliases: requestedSourceAliases,
+      });
+    });
+
+    for (const slot of sweepCandidates) {
+      matchedSlotIdsSet.add(slot.id);
+      const result = await deps.deleteSlotCascade(slot.id);
+      if (result.deletedSlotIds.length > 0) {
+        result.deletedSlotIds.forEach((deletedSlotId) => deletedSlotIdsSet.add(deletedSlotId));
+      }
+    }
+
+    deletedSlotIds = Array.from(deletedSlotIdsSet);
+    if (deletedSlotIds.length > 0) {
+      modeUsed = 'slot_cascade';
+      if (sweepCandidates.length > 0) {
+        warnings.push('Recovered and removed lingering generation node references.');
+      }
+    }
   }
 
   const runOutputCleanupPairs = new Set<string>();
@@ -506,7 +580,7 @@ export async function deleteImageStudioVariant(
   const result: DeleteImageStudioVariantResult = {
     ok: true,
     modeUsed,
-    matchedSlotIds,
+    matchedSlotIds: Array.from(matchedSlotIdsSet),
     deletedSlotIds,
     deletedFileIds: Array.from(new Set(deletedFileIds)),
     deletedFilepaths: Array.from(new Set(deletedFilepaths)),

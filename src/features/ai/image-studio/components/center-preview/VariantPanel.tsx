@@ -14,7 +14,6 @@ type VariantPanelProps = {
   compareVariantIds: [string | null, string | null];
   deletePending: boolean;
   filteredVariantThumbnails: VariantThumbnailInfo[];
-  isRunInFlight: boolean;
   variantLoadingId: string | null;
   variantTimestampQuery: string;
   visibleVariantThumbnails: VariantThumbnailInfo[];
@@ -38,7 +37,6 @@ export function VariantPanel({
   compareVariantIds,
   deletePending,
   filteredVariantThumbnails,
-  isRunInFlight,
   variantLoadingId,
   variantTimestampQuery,
   visibleVariantThumbnails,
@@ -139,7 +137,7 @@ export function VariantPanel({
                       <div className='flex h-20 w-full items-center justify-center rounded border border-dashed border-border/70 text-[10px] text-gray-500'>
                         {variant.status === 'pending' ? (
                           <span className='inline-flex items-center gap-1'>
-                            {isRunInFlight ? <Loader2 className='size-3 animate-spin' /> : null}
+                            <Loader2 className='size-3 animate-spin' />
                             Waiting
                           </span>
                         ) : (

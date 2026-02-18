@@ -74,6 +74,7 @@ export function CenterPreview(): React.JSX.Element {
     previewCanvasSize,
     imageTransformMode,
     canvasImageOffset,
+    pendingSequenceThumbnail,
   } = useUiState();
   const {
     toggleFocusMode,
@@ -105,7 +106,6 @@ export function CenterPreview(): React.JSX.Element {
   const queryClient = useQueryClient();
   const {
     landingSlots,
-    isRunInFlight,
     activeRunError,
     activeRunId,
     activeRunSourceSlotId,
@@ -260,6 +260,7 @@ export function CenterPreview(): React.JSX.Element {
     activeRunId,
     activeRunSourceSlotId,
     landingSlots,
+    pendingSequenceThumbnail,
     productImagesExternalBaseUrl,
     projectId,
     rootVariantSourceSlotId,
@@ -851,7 +852,6 @@ export function CenterPreview(): React.JSX.Element {
               compareVariantIds={compareVariantIds}
               deletePending={deleteSlotMutation.isPending}
               filteredVariantThumbnails={filteredVariantThumbnails}
-              isRunInFlight={isRunInFlight}
               variantLoadingId={variantLoadingId}
               variantTimestampQuery={variantTimestampQuery}
               visibleVariantThumbnails={visibleVariantThumbnails}

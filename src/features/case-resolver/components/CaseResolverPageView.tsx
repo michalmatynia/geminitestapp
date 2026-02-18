@@ -1,5 +1,4 @@
 import { Copy, FileText } from 'lucide-react';
-import Link from 'next/link';
 import React from 'react';
 
 import type {
@@ -28,6 +27,8 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  PanelHeader,
+  EmptyState,
 } from '@/shared/ui';
 import { sanitizeHtml } from '@/shared/utils';
 
@@ -281,48 +282,35 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
           )}
           
           <div className='flex flex-1 flex-col overflow-hidden p-6'>
-            <div className='mb-6 flex items-center justify-between'>
-              <div>
-                <h1 className='text-2xl font-bold text-white'>Case Resolver</h1>
-                <nav
-                  aria-label='Breadcrumb'
-                  className='mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-400'
-                >
-                  <Link href='/admin' className='transition-colors hover:text-gray-200'>
-                    Admin
-                  </Link>
-                  <span>/</span>
-                  <span className='text-gray-300'>Case Resolver</span>
-                </nav>
-              </div>
-              <div className='flex gap-2'>
-                <Button
-                  variant={workspaceView === 'document' ? 'default' : 'outline'}
-                  size='sm'
-                  onClick={() => setWorkspaceView('document')}
-                >
-                  Document Canvas
-                </Button>
-                <Button
-                  variant={workspaceView === 'relations' ? 'default' : 'outline'}
-                  size='sm'
-                  onClick={() => setWorkspaceView('relations')}
-                >
-                  Relations Canvas
-                </Button>
-                <Button
-                  variant='default'
-                  size='sm'
-                  onClick={() => {
+            <PanelHeader
+              title='Case Resolver'
+              description='Admin / Case Resolver'
+              className='mb-6'
+              actions={[
+                {
+                  key: 'document',
+                  label: 'Document Canvas',
+                  variant: workspaceView === 'document' ? 'default' : 'outline',
+                  onClick: () => setWorkspaceView('document'),
+                },
+                {
+                  key: 'relations',
+                  label: 'Relations Canvas',
+                  variant: workspaceView === 'relations' ? 'default' : 'outline',
+                  onClick: () => setWorkspaceView('relations'),
+                },
+                {
+                  key: 'parties',
+                  label: 'Parties & References',
+                  variant: 'default',
+                  onClick: () => {
                     if (!activeFile) return;
                     handleOpenFileEditor(activeFile.id);
-                  }}
-                  disabled={Boolean(selectedAsset) || !activeFile || activeFile.fileType === 'case'}
-                >
-                  Parties & References
-                </Button>
-              </div>
-            </div>
+                  },
+                  disabled: Boolean(selectedAsset) || !activeFile || activeFile.fileType === 'case',
+                }
+              ]}
+            />
 
             {workspaceView === 'relations' ? (
               <CaseResolverRelationsWorkspace />
@@ -332,11 +320,12 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
               <CaseResolverCanvasWorkspace />
             ) : (
               <div className='flex flex-1 items-center justify-center rounded-lg border border-dashed border-border'>
-                <div className='text-center'>
-                  <FileText className='mx-auto mb-4 size-12 text-gray-600' />
-                  <h3 className='text-lg font-medium text-gray-300'>No case selected</h3>
-                  <p className='text-sm text-gray-500'>Select a file from the tree to begin.</p>
-                </div>
+                <EmptyState
+                  icon={<FileText className='size-12 text-gray-600' />}
+                  title='No case selected'
+                  description='Select a file from the tree to begin.'
+                  className='border-none p-0'
+                />
               </div>
             )}
           </div>

@@ -678,6 +678,7 @@ export type PathConfig = {
   updaterSamples?: Record<string, UpdaterSampleState> | undefined;
   runtimeState?: RuntimeState | string | null | undefined;
   lastRunAt?: string | null | undefined;
+  runCount?: number | undefined;
   uiState?: PathUiState | undefined;
 };
 

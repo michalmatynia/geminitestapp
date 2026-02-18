@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 
-import { SectionHeader } from '@/shared/ui';
+import { SectionHeader, Card } from '@/shared/ui';
 
 
 const cards = [
@@ -48,10 +48,11 @@ export default function AuthPage(): React.JSX.Element {
           <Link
             key={card.title}
             href={card.href}
-            className='rounded-md border border-border bg-gray-900 p-4 text-left transition hover:border hover:bg-muted/60'
           >
-            <h2 className='text-lg font-semibold text-white'>{card.title}</h2>
-            <p className='mt-1 text-sm text-gray-400'>{card.description}</p>
+            <Card className='h-full p-4 transition hover:bg-muted/60'>
+              <h2 className='text-lg font-semibold text-white'>{card.title}</h2>
+              <p className='mt-1 text-sm text-gray-400'>{card.description}</p>
+            </Card>
           </Link>
         ))}
       </div>

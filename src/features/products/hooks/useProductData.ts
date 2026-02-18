@@ -24,6 +24,7 @@ import { badRequestError, notFoundError, operationFailedError } from '@/shared/e
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api } from '@/shared/lib/api-client';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
+import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import type { DeleteResponse } from '@/shared/types/api/api';
 
 import {
@@ -126,20 +127,27 @@ export function useUpdateProductMutation(): UseMutationResult<
       originalSku?: string | null;
     }): Promise<ProductWithImages> => {
       if (data instanceof FormData) {
-        let targetId = id;
-        let response = await fetch(`/api/products/${targetId}`, {
+        const buildUpdateRequestInit = (formData: FormData): RequestInit => ({
           method: 'PUT',
-          body: data,
+          body: formData,
+          headers: withCsrfHeaders(),
+          credentials: 'same-origin',
         });
+
+        let targetId = id;
+        let response = await fetch(
+          `/api/products/${targetId}`,
+          buildUpdateRequestInit(data)
+        );
 
         if (response.status === 404) {
           const resolvedId = await resolveProductIdBySku(originalSku);
           if (resolvedId && resolvedId !== targetId) {
             targetId = resolvedId;
-            response = await fetch(`/api/products/${targetId}`, {
-              method: 'PUT',
-              body: data,
-            });
+            response = await fetch(
+              `/api/products/${targetId}`,
+              buildUpdateRequestInit(data)
+            );
           }
         }
 

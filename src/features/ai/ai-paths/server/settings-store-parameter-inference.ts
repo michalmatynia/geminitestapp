@@ -15,7 +15,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
     version: 3,
     name: PARAMETER_INFERENCE_PATH_NAME,
     description:
-      'Infer product simple parameter values from name and images, then update product parameters.',
+      'Infer product parameter values from name and images, then update product parameters.',
     trigger: 'Product Modal - Infer Parameters',
     executionMode: 'server',
     flowIntensity: 'medium',
@@ -69,7 +69,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
       {
         type: 'http',
         title: 'HTTP Fetch',
-        description: 'Load available simple parameters for product catalog.',
+        description: 'Load available parameters for product catalog.',
         inputs: [
           'context',
           'bundle',
@@ -84,7 +84,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         position: { x: 560, y: 110 },
         config: {
           http: {
-            url: '/api/products/simple-parameters?catalogId={{context.entity.catalogId}}',
+            url: '/api/products/parameters?catalogId={{context.entity.catalogId}}',
             method: 'GET',
             headers: '{}',
             bodyTemplate: '',
@@ -105,7 +105,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         config: {
           prompt: {
             template:
-              'Infer product PARAMETERS (not custom fields) in ENGLISH from the product data below.\n' +
+              'Infer product PARAMETERS in ENGLISH from the product data below.\n' +
               'Product name: "{{title}}"\n' +
               'Product description: "{{content_en}}"\n' +
               'Available parameters JSON: {{result}}\n\n' +
@@ -166,7 +166,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
       {
         type: 'database',
         title: 'Database Query',
-        description: 'Update product simple parameters with inferred values.',
+        description: 'Update product parameters with inferred values.',
         inputs: [
           'entityId',
           'entityType',
@@ -194,7 +194,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
             useMongoActions: true,
             actionCategory: 'update',
             action: 'updateOne',
-            mappings: [{ targetPath: 'simpleParameters', sourcePort: 'value' }],
+            mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
             query: {
               provider: 'auto',
               collection: 'products',
@@ -219,7 +219,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
             validationRuleIds: [],
             parameterInferenceGuard: {
               enabled: true,
-              targetPath: 'simpleParameters',
+              targetPath: 'parameters',
               definitionsPort: 'result',
               definitionsPath: '',
               enforceOptionLabels: false,
@@ -383,13 +383,13 @@ export const needsParameterInferenceConfigUpgrade = (
           updateDatabase['parameterInferenceGuard'] as Record<string, unknown>
         )['targetPath']
         : null;
-    if (guardTargetPath !== 'simpleParameters') return true;
+    if (guardTargetPath !== 'parameters') return true;
     const updateMappings = Array.isArray(updateDatabase?.['mappings'])
       ? (updateDatabase['mappings'] as Array<Record<string, unknown>>)
       : [];
     const writesSimpleParameters = updateMappings.some((mapping) => {
       if (!mapping || typeof mapping !== 'object') return false;
-      return mapping['targetPath'] === 'simpleParameters';
+      return mapping['targetPath'] === 'parameters';
     });
     if (!writesSimpleParameters) return true;
 
@@ -414,7 +414,7 @@ export const needsParameterInferenceConfigUpgrade = (
         : null;
     if (
       !queryUrl ||
-      !queryUrl.includes('/api/products/simple-parameters') ||
+      !queryUrl.includes('/api/products/parameters') ||
       !queryUrl.includes('catalogId=')
     ) {
       return true;

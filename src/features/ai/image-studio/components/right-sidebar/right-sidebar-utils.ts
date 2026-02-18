@@ -135,7 +135,7 @@ const resolveSelectedShapeCropStep = (
   }
 
   const selectedShape = params.maskShapes.find((shape) => shape.id === selectedShapeId) ?? null;
-  if (!selectedShape || !selectedShape.visible) {
+  if (!selectedShape?.visible) {
     return {
       step,
       error: `Crop step "${step.id}" selected shape is missing or hidden.`,

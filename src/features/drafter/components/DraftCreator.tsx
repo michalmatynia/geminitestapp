@@ -9,12 +9,12 @@ import { CreateProductDraftInput, UpdateProductDraftInput } from '@/features/pro
 import type {
   ProductCategoryDto,
   ProductTag,
-  ProductSimpleParameter,
+  ProductParameter,
   ProductParameterValue,
 } from '@/features/products';
 import {
   getCategoriesFlat,
-  getSimpleParameters,
+  getParameters,
   getTags,
 } from '@/features/products/api/settings';
 import { ProductImagesTabContent } from '@/features/products/components/form/ProductImagesTabContent';
@@ -138,15 +138,15 @@ export function DraftCreator({
 
   const parameterQueries = useQueries({
     queries: selectedCatalogIds.map((id: string) => ({
-      queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.simpleParameters(id)),
-      queryFn: () => getSimpleParameters(id),
+      queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.parameters(id)),
+      queryFn: () => getParameters(id),
     }))
   });
 
   const categories = useMemo(() => categoryQueries.flatMap((q) => (q.data as ProductCategoryDto[]) || []), [categoryQueries]);
   const tags = useMemo(() => tagQueries.flatMap((q) => (q.data as ProductTag[]) || []), [tagQueries]);
   const parameters = useMemo(
-    () => parameterQueries.flatMap((q) => (q.data as ProductSimpleParameter[]) || []),
+    () => parameterQueries.flatMap((q) => (q.data as ProductParameter[]) || []),
     [parameterQueries]
   );
   const parametersLoading = useMemo(() => parameterQueries.some((q) => q.isLoading), [parameterQueries]);

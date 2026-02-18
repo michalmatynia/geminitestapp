@@ -401,7 +401,7 @@ export const needsDescriptionInferenceLiteConfigUpgrade = (
           ? (node['config'] as Record<string, unknown>)
           : null;
       const trigger =
-        config && config['trigger'] && typeof config['trigger'] === 'object'
+        config?.['trigger'] && typeof config['trigger'] === 'object'
           ? (config['trigger'] as Record<string, unknown>)
           : null;
       return trigger?.['event'] === DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID;

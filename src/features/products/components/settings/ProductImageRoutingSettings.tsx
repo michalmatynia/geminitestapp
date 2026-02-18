@@ -334,7 +334,9 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
               onValueChange={(value: string) => {
                 if (
                   value !== 'studio_prompt_then_sequence' &&
-                  value !== 'model_full_sequence'
+                  value !== 'model_full_sequence' &&
+                  value !== 'studio_native_sequencer_prior_generation' &&
+                  value !== 'auto'
                 ) {
                   return;
                 }
@@ -342,8 +344,16 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
               }}
               options={[
                 {
+                  value: 'auto',
+                  label: 'Auto (Best Route)',
+                },
+                {
                   value: 'studio_prompt_then_sequence',
                   label: 'Prompt then Image Studio Sequencer',
+                },
+                {
+                  value: 'studio_native_sequencer_prior_generation',
+                  label: 'Native Sequencer (Prior Generation)',
                 },
                 {
                   value: 'model_full_sequence',

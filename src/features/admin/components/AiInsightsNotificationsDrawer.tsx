@@ -8,7 +8,7 @@ import {
   useClearAiInsightsNotifications,
 } from '@/features/admin/hooks/useAiInsightsNotifications';
 import type { AiInsightNotification } from '@/shared/types';
-import { Button, StatusBadge, DocumentationSection } from '@/shared/ui';
+import { Button, StatusBadge, DocumentationSection, LoadingState } from '@/shared/ui';
 import { useToast } from '@/shared/ui';
 
 export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
@@ -63,7 +63,7 @@ export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
         </div>
         <div className='h-full overflow-y-auto p-4'>
           {notificationsQuery.isLoading ? (
-            <div className='text-xs text-gray-400'>Loading...</div>
+            <LoadingState message='Fetching AI alerts...' size='sm' className='p-4' />
           ) : notificationsQuery.error ? (
             <div className='text-xs text-red-400'>{notificationsQuery.error.message}</div>
           ) : notifications.length === 0 ? (

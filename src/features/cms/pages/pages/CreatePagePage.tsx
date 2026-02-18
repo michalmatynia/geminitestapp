@@ -9,7 +9,7 @@ import { useCmsAllSlugs, useCmsSlugs, useCreatePage } from '@/features/cms/hooks
 import type { Slug } from '@/features/cms/types';
 import { cmsPageCreateSchema } from '@/features/cms/validations/api';
 import { logClientError } from '@/features/observability';
-import { Button, Input, SectionHeader, Checkbox, Switch, FormSection, FormField, Badge, Alert, StatusBadge } from '@/shared/ui';
+import { Input, SectionHeader, Checkbox, Switch, FormSection, FormField, Badge, Alert, StatusBadge, FormActions } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function CreatePagePage(): React.JSX.Element {
@@ -147,19 +147,12 @@ export default function CreatePagePage(): React.JSX.Element {
             </div>
           </FormSection>
 
-          <div className='flex justify-end gap-3 pt-4'>
-            <Button 
-              type='button' 
-              variant='outline' 
-              size='sm' 
-              onClick={() => router.back()}
-            >
-              Cancel
-            </Button>
-            <Button type='submit' size='sm' disabled={createPage.isPending}>
-              {createPage.isPending ? 'Creating...' : 'Create Page'}
-            </Button>
-          </div>
+          <FormActions
+            onCancel={() => router.back()}
+            saveText='Create Page'
+            isSaving={createPage.isPending}
+            className='pt-4'
+          />
         </div>
       </form>
     </div>

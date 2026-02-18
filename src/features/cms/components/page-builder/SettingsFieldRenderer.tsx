@@ -1,4 +1,4 @@
-import { Link2, Search, Palette } from 'lucide-react';
+import { Link2, Palette } from 'lucide-react';
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
 import type { ColorScheme } from '@/features/cms/types/theme-settings';
@@ -8,13 +8,9 @@ import {
   RadioGroup,
   RadioGroupItem,
   Button,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
   SelectSimple,
-  
+  AppModal,
+  SearchInput,
 } from '@/shared/ui';
 
 import {
@@ -805,48 +801,43 @@ function LinkField({ value, onChange }: { value: string; onChange: (v: string) =
         placeholder='URL or pick a slug...'
         className='h-8 text-xs'
       />
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button size='icon' variant='outline' className='h-8 w-8 shrink-0'>
-            <Link2 className='size-3.5' />
-          </Button>
-        </DialogTrigger>
-        <DialogContent className='sm:max-w-md'>
-          <DialogHeader>
-            <DialogTitle>Select Page Link</DialogTitle>
-          </DialogHeader>
-          <div className='space-y-4 py-4'>
-            <div className='relative'>
-              <Search className='absolute left-2.5 top-2.5 size-4 text-muted-foreground' />
-              <Input
-                placeholder='Search slugs...'
-                value={search}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-                className='pl-9'
-              />
-            </div>
-            <div className='max-h-[300px] overflow-y-auto space-y-1 rounded border p-1'>
-              {filteredSlugs.length === 0 ? (
-                <div className='p-4 text-center text-sm text-gray-500'>No slugs found</div>
-              ) : (
-                filteredSlugs.map((s) => (
-                  <Button
-                    key={s.id}
-                    variant='ghost'
-                    className='w-full justify-start text-left font-normal h-9'
-                    onClick={() => {
-                      onChange(`/${s.slug}`);
-                      setOpen(false);
-                    }}
-                  >
-                    /{s.slug}
-                  </Button>
-                ))
-              )}
-            </div>
+      <Button size='icon' variant='outline' className='h-8 w-8 shrink-0' onClick={() => setOpen(true)}>
+        <Link2 className='size-3.5' />
+      </Button>
+      <AppModal
+        open={open}
+        onClose={() => setOpen(false)}
+        title='Select Page Link'
+        size='sm'
+      >
+        <div className='space-y-4'>
+          <SearchInput
+            placeholder='Search slugs...'
+            value={search}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+            onClear={() => setSearch('')}
+          />
+          <div className='max-h-[300px] overflow-y-auto space-y-1 rounded border p-1'>
+            {filteredSlugs.length === 0 ? (
+              <div className='p-4 text-center text-sm text-gray-500'>No slugs found</div>
+            ) : (
+              filteredSlugs.map((s) => (
+                <Button
+                  key={s.id}
+                  variant='ghost'
+                  className='w-full justify-start text-left font-normal h-9'
+                  onClick={() => {
+                    onChange(`/${s.slug}`);
+                    setOpen(false);
+                  }}
+                >
+                  /{s.slug}
+                </Button>
+              ))
+            )}
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </AppModal>
     </div>
   );
 }

@@ -21,6 +21,9 @@ import {
 } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
+import { DocsTooltipEnhancer } from '../components/DocsTooltipEnhancer';
+import { PromptExploderDocsTooltipSwitch } from '../components/PromptExploderDocsTooltipSwitch';
+import { usePromptExploderDocsTooltips } from '../hooks/usePromptExploderDocsTooltips';
 import {
   parsePromptExploderSettings,
   PROMPT_EXPLODER_SETTINGS_KEY,
@@ -147,6 +150,8 @@ const normalizeModelValues = (values: unknown): string[] => {
 
 export function AdminPromptExploderSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
+  const { docsTooltipsEnabled, setDocsTooltipsEnabled } =
+    usePromptExploderDocsTooltips();
   const settingsQuery = useSettingsMap({ scope: 'heavy' });
   const updateSetting = useUpdateSetting();
   const chatbotModelsQuery = useChatbotModels({
@@ -531,18 +536,28 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
 
   if (!draft) {
     return (
-      <div className='container mx-auto py-6'>
+      <div
+        id='prompt-exploder-settings-docs-root'
+        className='container mx-auto py-6'
+      >
         <SectionHeader
           eyebrow='AI · Prompt Exploder'
           title='Prompt Exploder Settings'
           description='Loading settings...'
+        />
+        <DocsTooltipEnhancer
+          rootId='prompt-exploder-settings-docs-root'
+          enabled={docsTooltipsEnabled}
         />
       </div>
     );
   }
 
   return (
-    <div className='container mx-auto space-y-4 py-6'>
+    <div
+      id='prompt-exploder-settings-docs-root'
+      className='container mx-auto space-y-4 py-6'
+    >
       <SectionHeader
         eyebrow='AI · Prompt Exploder'
         title='Prompt Exploder Settings'
@@ -558,6 +573,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
                 void chatbotModelsQuery.refetch();
               }}
               disabled={settingsQuery.isLoading}
+              data-doc-id='settings_refresh'
             >
               <RefreshCcw className='mr-2 size-4' />
               Refresh
@@ -568,6 +584,10 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
                 Back to Prompt Exploder
               </Link>
             </Button>
+            <PromptExploderDocsTooltipSwitch
+              docsTooltipsEnabled={docsTooltipsEnabled}
+              onDocsTooltipsChange={setDocsTooltipsEnabled}
+            />
           </div>
         }
       />
@@ -646,6 +666,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
             void handleSave();
           }}
           disabled={saveDisabled}
+          data-doc-id='settings_save'
         >
           Save Prompt Exploder Settings
         </Button>
@@ -657,6 +678,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
             setDraft(toSettingsDraft(parsedSettings));
           }}
           disabled={updateSetting.isPending}
+          data-doc-id='settings_reset_unsaved'
         >
           Reset Unsaved Changes
         </Button>
@@ -668,6 +690,10 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
               : 'Live model discovery connected.'}
         </span>
       </div>
+      <DocsTooltipEnhancer
+        rootId='prompt-exploder-settings-docs-root'
+        enabled={docsTooltipsEnabled}
+      />
     </div>
   );
 }

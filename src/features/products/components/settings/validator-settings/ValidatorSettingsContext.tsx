@@ -8,6 +8,9 @@ import type { ValidatorSettingsController } from './useValidatorSettingsControll
 
 const ValidatorSettingsContext = React.createContext<ValidatorSettingsController | null>(null);
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#ui.validatorsettingsprovider
+ */
 export function ValidatorSettingsProvider({
   value,
   children,
@@ -22,6 +25,9 @@ export function ValidatorSettingsProvider({
   );
 }
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#ui.usevalidatorsettingscontext
+ */
 export function useValidatorSettingsContext(): ValidatorSettingsController {
   const context = React.useContext(ValidatorSettingsContext);
   if (!context) {

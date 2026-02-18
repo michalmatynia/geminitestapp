@@ -2,8 +2,12 @@
 
 import { FormSection, StatusToggle } from '@/shared/ui';
 
+import { ValidatorDocTooltip } from './ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#ui.validatordefaultpanel
+ */
 export function ValidatorDefaultPanel(): React.JSX.Element {
   const { enabledByDefault, settingsBusy, handleToggleDefault } = useValidatorSettingsContext();
   return (
@@ -13,13 +17,15 @@ export function ValidatorDefaultPanel(): React.JSX.Element {
       variant='subtle'
       className='p-4'
       actions={(
-        <StatusToggle
-          enabled={enabledByDefault}
-          disabled={settingsBusy}
-          onToggle={() => {
-            void handleToggleDefault();
-          }}
-        />
+        <ValidatorDocTooltip docId='validator.default.toggle'>
+          <StatusToggle
+            enabled={enabledByDefault}
+            disabled={settingsBusy}
+            onToggle={() => {
+              void handleToggleDefault();
+            }}
+          />
+        </ValidatorDocTooltip>
       )}
     />
   );

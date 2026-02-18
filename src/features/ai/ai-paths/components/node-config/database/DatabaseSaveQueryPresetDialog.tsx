@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Input, Label, Textarea, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/shared/ui';
+import { Button, Input, Textarea, AppModal, FormField } from '@/shared/ui';
 
 import { useDatabaseSaveQueryPresetDialogContext } from './DatabaseSaveQueryPresetDialogContext';
 
@@ -19,50 +19,48 @@ export function DatabaseSaveQueryPresetDialog(): React.JSX.Element {
     onSave,
   } = useDatabaseSaveQueryPresetDialogContext();
   return (
-    <Dialog open={open} onOpenChange={(open: boolean): void => onOpenChange(open)}>
-      <DialogContent className='max-w-md border border-border bg-card text-white'>
-        <DialogHeader>
-          <DialogTitle className='text-lg'>Save Query Preset</DialogTitle>
-          <DialogDescription className='text-sm text-gray-400'>
-            Name this query to reuse it in other database nodes.
-          </DialogDescription>
-        </DialogHeader>
-        <div className='space-y-3'>
-          <div>
-            <Label className='text-xs text-gray-400'>Preset name</Label>
-            <Input
-              className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
-              value={newQueryPresetName}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setNewQueryPresetName(event.target.value)}
-              placeholder='My query preset'
-            />
-          </div>
-          <div>
-            <Label className='text-xs text-gray-400'>Query preview</Label>
-            <Textarea
-              readOnly
-              className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-xs text-gray-200'
-              value={queryTemplateValue}
-            />
-          </div>
-        </div>
-        <DialogFooter className='mt-4 gap-2 sm:gap-2'>
+    <AppModal
+      open={open}
+      onOpenChange={onOpenChange}
+      title='Save Query Preset'
+      subtitle='Name this query to reuse it in other database nodes.'
+      size='sm'
+      footer={
+        <>
           <Button
             type='button'
-            className='rounded-md border text-xs text-white hover:bg-muted/60'
+            variant='outline'
             onClick={(): void => onCancel()}
           >
             Cancel
           </Button>
           <Button
             type='button'
-            className='rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10'
+            variant='default'
             onClick={(): void => onSave()}
           >
             Save preset
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </>
+      }
+    >
+      <div className='space-y-4'>
+        <FormField label='Preset name' id='preset-name'>
+          <Input
+            id='preset-name'
+            value={newQueryPresetName}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setNewQueryPresetName(event.target.value)}
+            placeholder='My query preset'
+          />
+        </FormField>
+        <FormField label='Query preview'>
+          <Textarea
+            readOnly
+            className='min-h-[120px] text-xs'
+            value={queryTemplateValue}
+          />
+        </FormField>
+      </div>
+    </AppModal>
   );
 }

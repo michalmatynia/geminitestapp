@@ -13,6 +13,7 @@ import {
   StatusToggle,
   Textarea,
   SelectSimple,
+  FormField,
 } from '@/shared/ui';
 
 import { PromptExploderHierarchyTreeProvider } from './PromptExploderHierarchyTreeContext';
@@ -219,8 +220,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
             ) : (
               <>
                 <div className='grid gap-3 md:grid-cols-2'>
-                  <div className='space-y-1'>
-                    <Label className='text-[11px] text-gray-400'>Type</Label>
+                  <FormField label='Type'>
                     <SelectSimple size='sm'
                       value={selectedSegment.type}
                       onValueChange={(value: string) => {
@@ -241,9 +241,8 @@ export function SegmentEditorPanel(): React.JSX.Element {
                         { value: 'qa_matrix', label: 'QA Matrix' },
                       ]}
                     />
-                  </div>
-                  <div className='space-y-1'>
-                    <Label className='text-[11px] text-gray-400'>Include In Output</Label>
+                  </FormField>
+                  <FormField label='Include In Output'>
                     <div className='flex h-9 items-center rounded border border-border/60 bg-card/30 px-3'>
                       <StatusToggle
                         enabled={selectedSegment.includeInOutput}
@@ -255,11 +254,10 @@ export function SegmentEditorPanel(): React.JSX.Element {
                         }}
                       />
                     </div>
-                  </div>
+                  </FormField>
                 </div>
 
-                <div className='space-y-1'>
-                  <Label className='text-[11px] text-gray-400'>Title</Label>
+                <FormField label='Title'>
                   <Input
                     value={selectedSegment.title}
                     onChange={(event) => {
@@ -269,11 +267,10 @@ export function SegmentEditorPanel(): React.JSX.Element {
                       }));
                     }}
                   />
-                </div>
+                </FormField>
 
                 {selectedSegment.type === 'metadata' ? (
-                  <div className='space-y-1'>
-                    <Label className='text-[11px] text-gray-400'>Metadata Mode</Label>
+                  <FormField label='Metadata Mode'>
                     <SelectSimple size='sm'
                       value={selectedSegment.includeInOutput ? 'include' : 'omit'}
                       onValueChange={(value: string) => {
@@ -287,7 +284,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                         { value: 'include', label: 'Include in reassembly' },
                       ]}
                     />
-                  </div>
+                  </FormField>
                 ) : null}
 
                 {/* ── Parameter block editor ──────────────────────────────── */}
@@ -321,8 +318,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                                 </div>
 
                                 <div className='grid gap-2 lg:grid-cols-[220px_minmax(0,1fr)]'>
-                                  <div className='space-y-1'>
-                                    <Label className='text-[10px] text-gray-500'>Selector</Label>
+                                  <FormField label='Selector' className='space-y-1'>
                                     <SelectSimple size='sm'
                                       value={entry.selector}
                                       onValueChange={(next: string) => {
@@ -338,10 +334,9 @@ export function SegmentEditorPanel(): React.JSX.Element {
                                             : promptExploderParamUiControlLabel(control),
                                       }))}
                                     />
-                                  </div>
+                                  </FormField>
 
-                                  <div className='space-y-1'>
-                                    <Label className='text-[10px] text-gray-500'>Value</Label>
+                                  <FormField label='Value' className='space-y-1'>
 
                                     {entry.recommendation.baseKind === 'boolean' &&
                                     typeof entry.value === 'boolean' &&
@@ -601,12 +596,11 @@ export function SegmentEditorPanel(): React.JSX.Element {
                                           }}
                                         />
                                       ) : null}
-                                  </div>
+                                  </FormField>
                                 </div>
 
                                 <div className='grid gap-2 md:grid-cols-2'>
-                                  <div className='space-y-1'>
-                                    <Label className='text-[10px] text-gray-500'>Comment</Label>
+                                  <FormField label='Comment' className='space-y-1'>
                                     <Input
                                       value={entry.comment}
                                       placeholder='Inline comment'
@@ -618,9 +612,8 @@ export function SegmentEditorPanel(): React.JSX.Element {
                                         );
                                       }}
                                     />
-                                  </div>
-                                  <div className='space-y-1'>
-                                    <Label className='text-[10px] text-gray-500'>Description</Label>
+                                  </FormField>
+                                  <FormField label='Description' className='space-y-1'>
                                     <Textarea
                                       className='min-h-[72px] text-[11px]'
                                       value={entry.description}
@@ -633,7 +626,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                                         );
                                       }}
                                     />
-                                  </div>
+                                  </FormField>
                                 </div>
 
                                 {entry.selector === 'auto' && entry.recommendation.reason ? (
@@ -656,8 +649,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                       )}
                     </div>
 
-                    <div className='space-y-2'>
-                      <Label className='text-[11px] text-gray-400'>Parameters Text</Label>
+                    <FormField label='Parameters Text'>
                       <Textarea
                         className='min-h-[220px] font-mono text-[12px]'
                         value={selectedSegment.paramsText || selectedSegment.text}
@@ -697,7 +689,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                           });
                         }}
                       />
-                    </div>
+                    </FormField>
                   </div>
                 ) : null}
 
@@ -705,9 +697,9 @@ export function SegmentEditorPanel(): React.JSX.Element {
                 {['list', 'referential_list', 'conditional_list'].includes(
                   selectedSegment.type
                 ) ? (
-                    <div className='space-y-2'>
-                      <div className='flex items-center justify-between'>
-                        <Label className='text-[11px] text-gray-400'>List Items</Label>
+                    <FormField
+                      label='List Items'
+                      actions={
                         <Button
                           type='button'
                           variant='outline'
@@ -722,7 +714,8 @@ export function SegmentEditorPanel(): React.JSX.Element {
                           <Plus className='mr-2 size-3.5' />
                         Add Item
                         </Button>
-                      </div>
+                      }
+                    >
                       {selectedSegment.listItems.length === 0 ? (
                         <div className='text-xs text-gray-500'>No list items detected.</div>
                       ) : null}
@@ -806,7 +799,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </FormField>
                   ) : null}
 
                 {/* ── Hierarchical list editor ─────────────────────────────── */}
@@ -847,8 +840,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
 
                 {/* ── Assigned text body ───────────────────────────────────── */}
                 {selectedSegment.type === 'assigned_text' ? (
-                  <div className='space-y-2'>
-                    <Label className='text-[11px] text-gray-400'>Body</Label>
+                  <FormField label='Body'>
                     <Textarea
                       className='min-h-[180px] font-mono text-[12px]'
                       value={selectedSegment.text}
@@ -859,7 +851,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                         }));
                       }}
                     />
-                  </div>
+                  </FormField>
                 ) : null}
 
                 {/* ── Matched rules + template + approval ─────────────────── */}

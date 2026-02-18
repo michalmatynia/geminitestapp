@@ -10,7 +10,17 @@ import {
   cmsSlugDomainsUpdateSchema,
   cmsSlugUpdateSchema,
 } from '@/features/cms/validations/api';
-import { Button, Input, Switch, SectionHeader, Checkbox, FormSection, FormField, Badge, useToast } from '@/shared/ui';
+import {
+  Input,
+  Switch,
+  SectionHeader,
+  Checkbox,
+  FormSection,
+  FormField,
+  Badge,
+  useToast,
+  FormActions,
+} from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function EditSlugPageLoader(): React.JSX.Element {
@@ -202,19 +212,12 @@ function EditSlugForm({
             </FormSection>
           )}
 
-          <div className='flex justify-end gap-3 pt-4'>
-            <Button 
-              type='button' 
-              variant='outline' 
-              size='sm' 
-              onClick={() => router.back()}
-            >
-              Cancel
-            </Button>
-            <Button type='submit' size='sm' disabled={updateSlug.isPending || updateSlugDomains.isPending}>
-              {updateSlug.isPending || updateSlugDomains.isPending ? 'Updating...' : 'Save Changes'}
-            </Button>
-          </div>
+          <FormActions
+            onCancel={() => router.back()}
+            saveText='Save Changes'
+            isSaving={updateSlug.isPending || updateSlugDomains.isPending}
+            className='pt-4'
+          />
         </div>
       </form>
     </div>

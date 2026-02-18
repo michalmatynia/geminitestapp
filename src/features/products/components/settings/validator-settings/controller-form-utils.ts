@@ -15,6 +15,9 @@ import { normalizeReplacementFields } from './helpers';
 
 import type { PatternFormData } from './types';
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#controller.buildformdatafrompattern
+ */
 export const buildFormDataFromPattern = (
   pattern: ProductValidationPattern
 ): PatternFormData => {

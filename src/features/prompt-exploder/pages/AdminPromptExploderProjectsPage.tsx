@@ -18,7 +18,10 @@ import {
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
+import { DocsTooltipEnhancer } from '../components/DocsTooltipEnhancer';
+import { PromptExploderDocsTooltipSwitch } from '../components/PromptExploderDocsTooltipSwitch';
 import { promptExploderFormatTimestamp } from '../helpers/formatting';
+import { usePromptExploderDocsTooltips } from '../hooks/usePromptExploderDocsTooltips';
 import {
   createPromptExploderLibraryItemId,
   parsePromptExploderLibrary,
@@ -43,6 +46,8 @@ const formatPromptPreview = (value: string): string => {
 export function AdminPromptExploderProjectsPage(): React.JSX.Element {
   const router = useRouter();
   const { toast } = useToast();
+  const { docsTooltipsEnabled, setDocsTooltipsEnabled } =
+    usePromptExploderDocsTooltips();
   const settingsQuery = useSettingsMap({ scope: 'all' });
   const updateSetting = useUpdateSetting();
 
@@ -332,7 +337,7 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
   ], [handleOpenInExploder, isBusy]);
 
   return (
-    <div className='container mx-auto space-y-6 py-10'>
+    <div id='prompt-exploder-projects-docs-root' className='container mx-auto space-y-6 py-10'>
       <PanelHeader
         title='Prompt Exploder Projects'
         description='Create, edit, delete, and open Prompt Exploder projects.'
@@ -354,6 +359,12 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
           }
         ]}
       />
+      <div className='flex justify-end'>
+        <PromptExploderDocsTooltipSwitch
+          docsTooltipsEnabled={docsTooltipsEnabled}
+          onDocsTooltipsChange={setDocsTooltipsEnabled}
+        />
+      </div>
 
       <ListPanel
         variant='default'
@@ -397,6 +408,10 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
         }
         confirmText='Delete'
         isDangerous={true}
+      />
+      <DocsTooltipEnhancer
+        rootId='prompt-exploder-projects-docs-root'
+        enabled={docsTooltipsEnabled}
       />
     </div>
   );

@@ -292,4 +292,89 @@ describe('deleteImageStudioVariant', () => {
     expect(result.deletedSlotIds).toContain('slot-late-materialized');
     expect(deps.deleteSlotCascade).toHaveBeenCalledWith('slot-late-materialized');
   });
+
+  it('falls back to single run+source candidate when output index is mismatched', async () => {
+    const matchedSlot = makeSlot({
+      id: 'slot-output-index-mismatch',
+      metadata: {
+        role: 'generation',
+        generationRunId: 'run-output-mismatch',
+        generationOutputIndex: 0,
+        sourceSlotId: 'root-output-mismatch',
+      },
+    });
+
+    const deps = {
+      listSlots: vi.fn(async () => [matchedSlot]),
+      deleteSlotCascade: vi.fn(async () => ({
+        deleted: true,
+        deletedSlotIds: ['slot-output-index-mismatch'],
+      })),
+      removeRunOutputs: vi.fn(async () => 0),
+      getImageFileById: vi.fn(async () => null),
+      deleteImageFileById: vi.fn(async () => undefined),
+      deleteDiskPath: vi.fn(async () => false),
+      logMetric: vi.fn(async () => undefined),
+    };
+
+    const result = await deleteImageStudioVariant(
+      {
+        projectId: 'proj-1',
+        generationRunId: 'run-output-mismatch',
+        generationOutputIndex: 1,
+        sourceSlotId: 'root-output-mismatch',
+      },
+      deps,
+    );
+
+    expect(result.modeUsed).toBe('slot_cascade');
+    expect(result.matchedSlotIds).toContain('slot-output-index-mismatch');
+    expect(result.deletedSlotIds).toContain('slot-output-index-mismatch');
+    expect(deps.deleteSlotCascade).toHaveBeenCalledWith('slot-output-index-mismatch');
+  });
+
+  it('sweeps and deletes late non-generation stub by matching file selectors', async () => {
+    const lateStubSlot = makeSlot({
+      id: 'slot-late-stub',
+      imageFileId: 'img-stub',
+      imageUrl: '/uploads/studio/proj-1/stub.png',
+      metadata: {
+        role: 'base',
+        relationType: 'cropoutput',
+      },
+    });
+
+    let listSlotsCallCount = 0;
+    const deps = {
+      listSlots: vi.fn(async () => {
+        listSlotsCallCount += 1;
+        if (listSlotsCallCount === 1) return [] as ImageStudioSlotRecord[];
+        return [lateStubSlot];
+      }),
+      deleteSlotCascade: vi.fn(async (slotId: string) => ({
+        deleted: slotId === 'slot-late-stub',
+        deletedSlotIds: slotId === 'slot-late-stub' ? ['slot-late-stub'] : [],
+      })),
+      removeRunOutputs: vi.fn(async () => 0),
+      getImageFileById: vi.fn(async () => null),
+      deleteImageFileById: vi.fn(async () => undefined),
+      deleteDiskPath: vi.fn(async () => false),
+      logMetric: vi.fn(async () => undefined),
+    };
+
+    const result = await deleteImageStudioVariant(
+      {
+        projectId: 'proj-1',
+        assetId: 'img-stub',
+        filepath: '/uploads/studio/proj-1/stub.png',
+        generationRunId: 'run-stub',
+        sourceSlotId: 'root-stub',
+      },
+      deps,
+    );
+
+    expect(result.modeUsed).toBe('slot_cascade');
+    expect(result.deletedSlotIds).toContain('slot-late-stub');
+    expect(deps.deleteSlotCascade).toHaveBeenCalledWith('slot-late-stub');
+  });
 });

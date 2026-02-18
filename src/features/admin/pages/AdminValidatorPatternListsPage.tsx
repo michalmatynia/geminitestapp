@@ -63,6 +63,9 @@ const formatUpdatedAt = (value: string): string => {
   return new Date(parsed).toLocaleString();
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#ui.adminvalidatorpatternlistspage
+ */
 export function AdminValidatorPatternListsPage(): React.JSX.Element {
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();

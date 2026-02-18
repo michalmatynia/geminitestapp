@@ -1,5 +1,7 @@
 # AI Paths Documentation
 
+Extended reference: `docs/AI_PATHS_EXTENDED_REFERENCE.md`
+
 ## Overview
 AI Paths provide a flexible framework for defining and executing sequences of AI-driven logic and actions within the application. They allow for the orchestration of various AI handlers to create complex workflows, ranging from data parsing and transformation to AI model interactions and database operations. AI Paths are designed to be configurable, extensible, and triggerable via different mechanisms, including user interface elements like Trigger Buttons.
 

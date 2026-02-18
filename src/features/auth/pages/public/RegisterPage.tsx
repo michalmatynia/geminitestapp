@@ -8,7 +8,7 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { useRegisterUser } from '@/features/auth/hooks/useAuthQueries';
 import { DEFAULT_AUTH_SECURITY_POLICY } from '@/features/auth/utils/auth-security';
 import { logClientError } from '@/features/observability';
-import { Button, Input, Label, Alert, SectionHeader } from '@/shared/ui';
+import { Button, Input, Label, Alert, SectionHeader, LoadingState } from '@/shared/ui';
 
 export default function RegisterPage(): React.JSX.Element {
   const { userPageSettings, isLoading } = useAuth();
@@ -16,7 +16,7 @@ export default function RegisterPage(): React.JSX.Element {
   if (isLoading) {
     return (
       <div className='flex min-h-screen items-center justify-center bg-gray-900 px-4'>
-        <div className='text-gray-400'>Loading...</div>
+        <LoadingState message='Loading...' />
       </div>
     );
   }

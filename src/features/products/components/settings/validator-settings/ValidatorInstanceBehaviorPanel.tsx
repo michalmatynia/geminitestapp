@@ -6,8 +6,12 @@ import type {
 import { FormSection, SelectSimple } from '@/shared/ui';
 
 import { INSTANCE_SCOPE_LABELS } from './constants';
+import { ValidatorDocTooltip } from './ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#ui.validatorinstancebehaviorpanel
+ */
 export function ValidatorInstanceBehaviorPanel(): React.JSX.Element {
   const {
     instanceDenyBehavior,
@@ -28,20 +32,22 @@ export function ValidatorInstanceBehaviorPanel(): React.JSX.Element {
               <p className='text-xs font-medium text-white'>{INSTANCE_SCOPE_LABELS[scope]}</p>
               <p className='mt-1 text-[11px] text-gray-400'>When a correction is denied</p>
               <div className='mt-2'>
-                <SelectSimple size='sm'
-                  value={instanceDenyBehavior[scope]}
-                  onValueChange={(value: string): void => {
-                    void handleInstanceBehaviorChange(
-                      scope,
-                      value === 'ask_again' ? 'ask_again' : 'mute_session'
-                    );
-                  }}
-                  options={[
-                    { value: 'mute_session', label: 'Stop For This Session' },
-                    { value: 'ask_again', label: 'Ask Again Next Validation' },
-                  ]}
-                  disabled={settingsBusy}
-                />
+                <ValidatorDocTooltip docId='validator.instance.behavior.select'>
+                  <SelectSimple size='sm'
+                    value={instanceDenyBehavior[scope]}
+                    onValueChange={(value: string): void => {
+                      void handleInstanceBehaviorChange(
+                        scope,
+                        value === 'ask_again' ? 'ask_again' : 'mute_session'
+                      );
+                    }}
+                    options={[
+                      { value: 'mute_session', label: 'Stop For This Session' },
+                      { value: 'ask_again', label: 'Ask Again Next Validation' },
+                    ]}
+                    disabled={settingsBusy}
+                  />
+                </ValidatorDocTooltip>
               </div>
             </div>
           )

@@ -1,14 +1,17 @@
 'use client';
 
 import React from 'react';
+import { useEffect, useState } from 'react';
 
-import { Button } from '@/shared/ui';
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
 
 import { BenchmarkReportPanel } from '../components/BenchmarkReportPanel';
 import { BindingsPanel } from '../components/BindingsPanel';
+import { DocsTooltipEnhancer } from '../components/DocsTooltipEnhancer';
 import { ExplosionMetricsPanel } from '../components/ExplosionMetricsPanel';
 import { ParserTuningSection } from '../components/ParserTuningSection';
 import { PatternRuntimePanel } from '../components/PatternRuntimePanel';
+import { PromptExploderDocsTab } from '../components/PromptExploderDocsTab';
 import { PromptExploderHeaderBar } from '../components/PromptExploderHeaderBar';
 import { PromptProjectsPanel } from '../components/PromptProjectsPanel';
 import { ReassembledPromptPanel } from '../components/ReassembledPromptPanel';
@@ -16,6 +19,7 @@ import { SegmentEditorPanel } from '../components/SegmentEditorPanel';
 import { SourcePromptPanel } from '../components/SourcePromptPanel';
 import { WarningsPanel } from '../components/WarningsPanel';
 import { PromptExploderProvider } from '../context';
+import { usePromptExploderDocsTooltips } from '../hooks/usePromptExploderDocsTooltips';
 
 type PromptExploderErrorBoundaryState = {
   hasError: boolean;
@@ -64,31 +68,64 @@ class PromptExploderErrorBoundary extends React.Component<
   }
 }
 
+const PROMPT_EXPLODER_ACTIVE_TAB_KEY = 'prompt_exploder:active_tab';
+
 export function AdminPromptExploderPage(): React.JSX.Element {
+  const { docsTooltipsEnabled, setDocsTooltipsEnabled } =
+    usePromptExploderDocsTooltips();
+  const [activeTab, setActiveTab] = useState<'workspace' | 'docs'>('workspace');
+
+  useEffect(() => {
+    const storedTab = window.localStorage.getItem(PROMPT_EXPLODER_ACTIVE_TAB_KEY);
+    if (storedTab === 'docs') setActiveTab('docs');
+  }, []);
+
+  const handleTabChange = (value: string): void => {
+    const nextTab = value === 'docs' ? 'docs' : 'workspace';
+    setActiveTab(nextTab);
+    window.localStorage.setItem(PROMPT_EXPLODER_ACTIVE_TAB_KEY, nextTab);
+  };
+
   return (
     <PromptExploderErrorBoundary>
       <PromptExploderProvider>
-        <div className='container mx-auto space-y-5 py-6'>
-          <PromptExploderHeaderBar />
+        <div id='prompt-exploder-docs-root' className='container mx-auto space-y-5 py-6'>
+          <PromptExploderHeaderBar
+            docsTooltipsEnabled={docsTooltipsEnabled}
+            onDocsTooltipsChange={setDocsTooltipsEnabled}
+          />
+          <Tabs value={activeTab} onValueChange={handleTabChange} className='w-full space-y-4'>
+            <TabsList className='grid h-auto w-full grid-cols-2 gap-2 border border-border/60 bg-card/30 p-2'>
+              <TabsTrigger value='workspace' className='h-10'>Workspace</TabsTrigger>
+              <TabsTrigger value='docs' className='h-10'>Docs</TabsTrigger>
+            </TabsList>
 
-          <div className='grid grid-cols-1 gap-4 2xl:grid-cols-[minmax(380px,0.85fr)_minmax(640px,1.15fr)]'>
-            <div className='space-y-4'>
-              <SourcePromptPanel />
-              <ExplosionMetricsPanel />
-              <WarningsPanel />
-              <PromptProjectsPanel />
-            </div>
-            <div className='space-y-4'>
-              <SegmentEditorPanel />
-              <BindingsPanel />
-              <ReassembledPromptPanel />
-            </div>
-          </div>
+            <TabsContent value='workspace' className='space-y-4'>
+              <div className='grid grid-cols-1 gap-4 2xl:grid-cols-[minmax(380px,0.85fr)_minmax(640px,1.15fr)]'>
+                <div className='space-y-4'>
+                  <SourcePromptPanel />
+                  <ExplosionMetricsPanel />
+                  <WarningsPanel />
+                  <PromptProjectsPanel />
+                </div>
+                <div className='space-y-4'>
+                  <SegmentEditorPanel />
+                  <BindingsPanel />
+                  <ReassembledPromptPanel />
+                </div>
+              </div>
 
-          <PatternRuntimePanel />
-          <ParserTuningSection />
-          <BenchmarkReportPanel />
+              <PatternRuntimePanel />
+              <ParserTuningSection />
+              <BenchmarkReportPanel />
+            </TabsContent>
+
+            <TabsContent value='docs'>
+              <PromptExploderDocsTab />
+            </TabsContent>
+          </Tabs>
         </div>
+        <DocsTooltipEnhancer rootId='prompt-exploder-docs-root' enabled={docsTooltipsEnabled} />
       </PromptExploderProvider>
     </PromptExploderErrorBoundary>
   );

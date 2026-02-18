@@ -6,9 +6,16 @@ import React from 'react';
 
 import { SectionHeader, Button } from '@/shared/ui';
 
+import { PromptExploderDocsTooltipSwitch } from './PromptExploderDocsTooltipSwitch';
 import { useDocumentActions } from '../context/hooks/useDocument';
 
-export function PromptExploderHeaderBar(): React.JSX.Element {
+export function PromptExploderHeaderBar({
+  docsTooltipsEnabled,
+  onDocsTooltipsChange,
+}: {
+  docsTooltipsEnabled: boolean;
+  onDocsTooltipsChange: (enabled: boolean) => void;
+}): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
@@ -25,6 +32,7 @@ export function PromptExploderHeaderBar(): React.JSX.Element {
           <Button size='xs'
             variant='outline'
             onClick={handleReloadFromStudio}
+            data-doc-id='reload_incoming_draft'
           >
             <RefreshCcw className='mr-2 size-4' />
             Reload Incoming Draft
@@ -34,6 +42,7 @@ export function PromptExploderHeaderBar(): React.JSX.Element {
             onClick={() => {
               router.push('/admin/prompt-exploder/settings');
             }}
+            data-doc-id='open_settings'
           >
             <Settings2 className='mr-2 size-4' />
             Settings
@@ -43,9 +52,14 @@ export function PromptExploderHeaderBar(): React.JSX.Element {
             onClick={() => {
               router.push(returnTo);
             }}
+            data-doc-id='back_to_source'
           >
             {returnTarget === 'case-resolver' ? 'Back to Case Resolver' : 'Back to Image Studio'}
           </Button>
+          <PromptExploderDocsTooltipSwitch
+            docsTooltipsEnabled={docsTooltipsEnabled}
+            onDocsTooltipsChange={onDocsTooltipsChange}
+          />
         </div>
       }
     />

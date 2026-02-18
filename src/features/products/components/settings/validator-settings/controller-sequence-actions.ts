@@ -64,6 +64,9 @@ type SequenceActionResult = {
   handleUngroup: (groupId: string) => Promise<void>;
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#controller.createsequenceactions
+ */
 export function createSequenceActions({
   patterns,
   orderedPatterns,

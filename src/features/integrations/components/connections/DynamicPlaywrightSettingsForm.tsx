@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { PlaywrightSettingsProvider } from '@/features/playwright/context/PlaywrightSettingsContext';
+import { LoadingState } from '@/shared/ui';
 
 export function DynamicPlaywrightSettingsForm(): React.JSX.Element {
   const { playwrightSettings, setPlaywrightSettings, handleSavePlaywrightSettings } = useIntegrationsContext();
@@ -16,7 +17,7 @@ export function DynamicPlaywrightSettingsForm(): React.JSX.Element {
   }, []);
 
   if (!Component) {
-    return <div className='p-4 text-gray-400'>Loading...</div>;
+    return <LoadingState message='Loading settings editor...' />;
   }
 
   return (

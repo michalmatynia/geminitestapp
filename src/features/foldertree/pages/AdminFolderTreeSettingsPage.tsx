@@ -15,6 +15,7 @@ import {
   Textarea,
   SelectSimple,
   useToast,
+  FormField,
 } from '@/shared/ui';
 import {
   createDefaultFolderTreeProfilesV2,
@@ -374,8 +375,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
               </div>
 
               <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-300'>Placeholder Preset</Label>
+                <FormField label='Placeholder Preset'>
                   <SelectSimple size='sm'
                     value={profile.placeholders.preset}
                     options={folderTreePlaceholderPresetOptions.map((option) => ({
@@ -392,10 +392,9 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                       }));
                     }}
                   />
-                </div>
+                </FormField>
 
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-300'>Placeholder Style</Label>
+                <FormField label='Placeholder Style'>
                   <SelectSimple size='sm'
                     value={profile.placeholders.style}
                     options={folderTreePlaceholderStyleValues.map((value) => ({
@@ -412,10 +411,9 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                       }));
                     }}
                   />
-                </div>
+                </FormField>
 
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-300'>Placeholder Emphasis</Label>
+                <FormField label='Placeholder Emphasis'>
                   <SelectSimple size='sm'
                     value={profile.placeholders.emphasis}
                     options={folderTreePlaceholderEmphasisValues.map((value) => ({
@@ -432,10 +430,9 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                       }));
                     }}
                   />
-                </div>
+                </FormField>
 
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-300'>Selection Behavior</Label>
+                <FormField label='Selection Behavior'>
                   <SelectSimple size='sm'
                     value={profile.interactions.selectionBehavior}
                     options={folderTreeSelectionBehaviorOptions}
@@ -449,7 +446,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                       }));
                     }}
                   />
-                </div>
+                </FormField>
 
                 <label className='flex items-start gap-2 rounded border border-border/50 p-3 text-xs text-gray-300'>
                   <Checkbox
@@ -469,8 +466,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
               </div>
 
               <div className='grid gap-4 md:grid-cols-2'>
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-300'>Root Drop Label</Label>
+                <FormField label='Root Drop Label'>
                   <Input
                     value={profile.placeholders.rootDropLabel}
                     onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -483,10 +479,9 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                       }));
                     }}
                   />
-                </div>
+                </FormField>
 
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-300'>Inline Drop Label</Label>
+                <FormField label='Inline Drop Label'>
                   <Input
                     value={profile.placeholders.inlineDropLabel}
                     onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -499,7 +494,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                       }));
                     }}
                   />
-                </div>
+                </FormField>
               </div>
 
               <div className='grid gap-4 md:grid-cols-2'>
@@ -553,8 +548,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
               </div>
 
               <div className='grid gap-4 md:grid-cols-2'>
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-300'>Allowed Folder Kinds</Label>
+                <FormField label='Allowed Folder Kinds'>
                   <Input
                     value={listToValue(folderKinds)}
                     onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -570,10 +564,9 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                     }}
                     placeholder={meta.folderHint}
                   />
-                </div>
+                </FormField>
 
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-300'>Allowed File Kinds</Label>
+                <FormField label='Allowed File Kinds'>
                   <Input
                     value={listToValue(fileKinds)}
                     onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -589,11 +582,10 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                     }}
                     placeholder={meta.fileHint}
                   />
-                </div>
+                </FormField>
               </div>
 
-              <div className='space-y-2'>
-                <Label className='text-xs text-gray-300'>Blocked Target Folder Kinds</Label>
+              <FormField label='Blocked Target Folder Kinds'>
                 <Textarea
                   value={listToValue(profile.nesting.blockedTargetKinds)}
                   onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
@@ -608,7 +600,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                   rows={2}
                   placeholder='Example: archive, locked'
                 />
-              </div>
+              </FormField>
 
               <div className='grid gap-4 xl:grid-cols-2'>
                 <div className='space-y-2'>

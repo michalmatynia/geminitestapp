@@ -1,9 +1,7 @@
-import { MoreVertical } from 'lucide-react';
-
 import { useInternationalizationContext } from '@/features/internationalization';
 import { Catalog } from '@/features/products/types';
 import type { Language } from '@/shared/types/domain/internationalization';
-import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Badge } from '@/shared/ui';
+import { Button, Badge, SimpleSettingsList } from '@/shared/ui';
 
 import { useProductSettingsContext } from '../ProductSettingsContext';
 
@@ -46,80 +44,49 @@ export function CatalogsSettings(): React.JSX.Element {
         </Button>
       </div>
       <div className='rounded-md border border-border bg-card/60 p-4'>
-        <p className='text-sm font-semibold text-white'>Existing Catalogs</p>
-        {loadingCatalogs ? (
-          <div className='mt-4 rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
-            Loading catalogs...
-          </div>
-        ) : catalogs.length === 0 ? (
-          <div className='mt-4 rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
-            No catalogs yet.
-          </div>
-        ) : (
-          <div className='mt-4 space-y-3'>
-            {catalogs.map((catalog: Catalog) => (
-              <div
-                key={catalog.id}
-                className='flex items-start justify-between gap-3 rounded-md border border-border bg-gray-900 px-3 py-2'
-              >
-                <div>
-                  <div className='flex items-center gap-2'>
-                    <p className='text-sm font-semibold text-white'>
-                      {catalog.name}
-                    </p>
-                    {catalog.isDefault ? (
-                      <Badge variant='success'>
-                        Default
-                      </Badge>
-                    ) : null}
-                  </div>
-                  <p className='text-xs text-gray-400'>
-                    {catalog.description || 'No description'}
-                  </p>
-                  {catalog.languageIds && catalog.languageIds.length > 0 ? (
-                    <div className='mt-2 flex flex-wrap gap-2 text-[11px] text-gray-300'>
-                      {resolveCatalogLanguageIds(catalog).map(
-                        (languageId: string, index: number) => (
-                          <Badge
-                            key={languageId}
-                            variant={normalizeLanguageId(catalog.defaultLanguageId) === languageId ? 'success' : 'neutral'}
-                          >
-                            {index + 1}. {getLanguageDisplay(languageId)}
-                            {normalizeLanguageId(catalog.defaultLanguageId) ===
-                              languageId && ' (Default)'}
-                          </Badge>
-                        )
-                      )}
-                    </div>
-                  ) : null}
-                </div>
-                <div className='flex gap-2'>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button className='p-1 hover:bg-muted/50 rounded-full text-gray-400 hover:text-white'>
-                        <MoreVertical className='h-4 w-4' />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      <DropdownMenuItem
-                        onClick={(): void => onEditCatalog(catalog)}
-                        className='cursor-pointer'
-                      >
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className='text-red-400 focus:text-red-400 cursor-pointer'
-                        onClick={(): void => onDeleteCatalog(catalog)}
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+        <p className='text-sm font-semibold text-white mb-4'>Existing Catalogs</p>
+        <SimpleSettingsList
+          items={catalogs.map((catalog: Catalog) => ({
+            id: catalog.id,
+            title: (
+              <div className='flex items-center gap-2'>
+                <span>{catalog.name}</span>
+                {catalog.isDefault && (
+                  <Badge variant='success' size='sm' className='text-[9px] h-4'>
+                    Default
+                  </Badge>
+                )}
               </div>
-            ))}
-          </div>
-        )}
+            ),
+            description: catalog.description || 'No description',
+            original: catalog
+          }))}
+          isLoading={loadingCatalogs}
+          onEdit={(item) => onEditCatalog(item.original)}
+          onDelete={(item) => void onDeleteCatalog(item.original)}
+          emptyMessage='No catalogs yet.'
+          renderCustomContent={(item) => (
+            <>
+              {item.original.languageIds && item.original.languageIds.length > 0 ? (
+                <div className='flex flex-wrap gap-2 text-[11px] text-gray-300'>
+                  {resolveCatalogLanguageIds(item.original).map(
+                    (languageId: string, index: number) => (
+                      <Badge
+                        key={languageId}
+                        variant={normalizeLanguageId(item.original.defaultLanguageId) === languageId ? 'success' : 'neutral'}
+                        className='text-[9px]'
+                      >
+                        {index + 1}. {getLanguageDisplay(languageId)}
+                        {normalizeLanguageId(item.original.defaultLanguageId) ===
+                          languageId && ' (Default)'}
+                      </Badge>
+                    )
+                  )}
+                </div>
+              ) : null}
+            </>
+          )}
+        />
       </div>
     </div>
   );

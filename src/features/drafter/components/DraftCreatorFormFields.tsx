@@ -13,7 +13,7 @@ import type {
   ProductParameterValue,
 } from '@/features/products/types';
 import { PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS, type ProductDraftOpenFormTab } from '@/features/products/types/drafts';
-import { Button, Input, Label, Textarea, SelectSimple } from '@/shared/ui';
+import { Button, Input, Label, Textarea, SelectSimple, FormField } from '@/shared/ui';
 
 import { useDraftCreatorFormContext } from './DraftCreatorFormContext';
 
@@ -65,20 +65,23 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
     <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
       <h3 className='text-sm font-semibold text-white'>Draft Information</h3>
 
-      <div className='space-y-2'>
-        <Label htmlFor='name'>
-          Draft Name <span className='text-red-500'>*</span>
-        </Label>
+      <FormField
+        label='Draft Name'
+        required
+        id='name'
+      >
         <Input
           id='name'
           value={name}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setName(e.target.value)}
           placeholder='e.g., Standard Product Template'
         />
-      </div>
+      </FormField>
 
-      <div className='space-y-2'>
-        <Label htmlFor='description'>Draft Description</Label>
+      <FormField
+        label='Draft Description'
+        id='description'
+      >
         <Textarea
           id='description'
           value={description}
@@ -86,10 +89,13 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
           placeholder='Describe what this draft is for...'
           rows={2}
         />
-      </div>
+      </FormField>
 
-      <div className='space-y-2'>
-        <Label htmlFor='openProductFormTab'>Open Product Form On Tab</Label>
+      <FormField
+        label='Open Product Form On Tab'
+        description='Used when creating a product via Create from Draft.'
+        id='openProductFormTab'
+      >
         <SelectSimple size='sm'
           options={PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS.map(
             (value: ProductDraftOpenFormTab) => ({
@@ -103,10 +109,7 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
           }
           placeholder='Select tab'
         />
-        <p className='text-xs text-gray-500'>
-          Used when creating a product via Create from Draft.
-        </p>
-      </div>
+      </FormField>
 
       <div className='space-y-2'>
         <Label>Validation Controls</Label>
@@ -269,17 +272,15 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
       <h3 className='text-sm font-semibold text-white'>Default Product Values</h3>
 
       <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-        <div className='space-y-2'>
-          <Label htmlFor='sku'>SKU</Label>
+        <FormField label='SKU' id='sku'>
           <Input
             id='sku'
             value={sku}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSku(e.target.value)}
             placeholder='Product SKU'
           />
-        </div>
-        <div className='space-y-2'>
-          <Label>Product Identifier</Label>
+        </FormField>
+        <FormField label='Product Identifier'>
           <div className='flex gap-2'>
             <SelectSimple size='sm'
               options={[
@@ -319,12 +320,11 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
               />
             ) : null}
           </div>
-        </div>
+        </FormField>
       </div>
 
       <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-        <div className='space-y-2'>
-          <Label htmlFor='weight'>Weight (kg)</Label>
+        <FormField label='Weight (kg)' id='weight'>
           <Input
             id='weight'
             type='number'
@@ -333,9 +333,8 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setWeight(e.target.value)}
             placeholder='0.00'
           />
-        </div>
-        <div className='space-y-2'>
-          <Label htmlFor='sizeLength'>Length (cm)</Label>
+        </FormField>
+        <FormField label='Length (cm)' id='sizeLength'>
           <Input
             id='sizeLength'
             type='number'
@@ -344,9 +343,8 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSizeLength(e.target.value)}
             placeholder='0.00'
           />
-        </div>
-        <div className='space-y-2'>
-          <Label htmlFor='sizeWidth'>Width (cm)</Label>
+        </FormField>
+        <FormField label='Width (cm)' id='sizeWidth'>
           <Input
             id='sizeWidth'
             type='number'
@@ -355,9 +353,8 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSizeWidth(e.target.value)}
             placeholder='0.00'
           />
-        </div>
-        <div className='space-y-2'>
-          <Label htmlFor='length'>Height (cm)</Label>
+        </FormField>
+        <FormField label='Height (cm)' id='length'>
           <Input
             id='length'
             type='number'
@@ -366,42 +363,38 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setLength(e.target.value)}
             placeholder='0.00'
           />
-        </div>
+        </FormField>
       </div>
 
       <div className='grid grid-cols-3 gap-4'>
-        <div className='space-y-2'>
-          <Label htmlFor='nameEn'>Name (English)</Label>
+        <FormField label='Name (English)' id='nameEn'>
           <Input
             id='nameEn'
             value={nameEn}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNameEn(e.target.value)}
             placeholder='Product name'
           />
-        </div>
-        <div className='space-y-2'>
-          <Label htmlFor='namePl'>Name (Polish)</Label>
+        </FormField>
+        <FormField label='Name (Polish)' id='namePl'>
           <Input
             id='namePl'
             value={namePl}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNamePl(e.target.value)}
             placeholder='Nazwa produktu'
           />
-        </div>
-        <div className='space-y-2'>
-          <Label htmlFor='nameDe'>Name (German)</Label>
+        </FormField>
+        <FormField label='Name (German)' id='nameDe'>
           <Input
             id='nameDe'
             value={nameDe}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNameDe(e.target.value)}
             placeholder='Produktname'
           />
-        </div>
+        </FormField>
       </div>
 
       <div className='grid grid-cols-3 gap-4'>
-        <div className='space-y-2'>
-          <Label htmlFor='descEn'>Description (English)</Label>
+        <FormField label='Description (English)' id='descEn'>
           <Textarea
             id='descEn'
             value={descEn}
@@ -409,9 +402,8 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
             placeholder='Product description'
             rows={3}
           />
-        </div>
-        <div className='space-y-2'>
-          <Label htmlFor='descPl'>Description (Polish)</Label>
+        </FormField>
+        <FormField label='Description (Polish)' id='descPl'>
           <Textarea
             id='descPl'
             value={descPl}
@@ -419,9 +411,8 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
             placeholder='Opis produktu'
             rows={3}
           />
-        </div>
-        <div className='space-y-2'>
-          <Label htmlFor='descDe'>Description (German)</Label>
+        </FormField>
+        <FormField label='Description (German)' id='descDe'>
           <Textarea
             id='descDe'
             value={descDe}
@@ -429,7 +420,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
             placeholder='Produktbeschreibung'
             rows={3}
           />
-        </div>
+        </FormField>
       </div>
     </div>
   );
@@ -454,8 +445,7 @@ export function DraftCreatorPricingSupplierSection(): React.JSX.Element {
       <h3 className='text-sm font-semibold text-white'>Pricing & Supplier Information</h3>
 
       <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-        <div className='space-y-2'>
-          <Label htmlFor='price'>Base Price</Label>
+        <FormField label='Base Price' id='price'>
           <Input
             id='price'
             type='number'
@@ -464,9 +454,8 @@ export function DraftCreatorPricingSupplierSection(): React.JSX.Element {
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setPrice(e.target.value)}
             placeholder='0.00'
           />
-        </div>
-        <div className='space-y-2'>
-          <Label htmlFor='stock'>Stock</Label>
+        </FormField>
+        <FormField label='Stock' id='stock'>
           <Input
             id='stock'
             type='number'
@@ -474,38 +463,35 @@ export function DraftCreatorPricingSupplierSection(): React.JSX.Element {
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setStock(e.target.value)}
             placeholder='0'
           />
-        </div>
+        </FormField>
       </div>
 
-      <div className='space-y-2'>
-        <Label htmlFor='supplierName'>Supplier Name</Label>
+      <FormField label='Supplier Name' id='supplierName'>
         <Input
           id='supplierName'
           value={supplierName}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSupplierName(e.target.value)}
           placeholder='Supplier name'
         />
-      </div>
+      </FormField>
 
-      <div className='space-y-2'>
-        <Label htmlFor='supplierLink'>Supplier Link</Label>
+      <FormField label='Supplier Link' id='supplierLink'>
         <Input
           id='supplierLink'
           value={supplierLink}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSupplierLink(e.target.value)}
           placeholder='https://...'
         />
-      </div>
+      </FormField>
 
-      <div className='space-y-2'>
-        <Label htmlFor='priceComment'>Price Comment</Label>
+      <FormField label='Price Comment' id='priceComment'>
         <Input
           id='priceComment'
           value={priceComment}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setPriceComment(e.target.value)}
           placeholder='Additional price information'
         />
-      </div>
+      </FormField>
     </div>
   );
 }
@@ -516,18 +502,18 @@ export function DraftCreatorImportInfoSection(): React.JSX.Element {
   return (
     <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
       <h3 className='text-sm font-semibold text-white'>Import Information</h3>
-      <div className='space-y-2'>
-        <Label htmlFor='baseProductId'>Base Product ID</Label>
+      <FormField
+        label='Base Product ID'
+        description='This ID is used for products imported from Base.com'
+        id='baseProductId'
+      >
         <Input
           id='baseProductId'
           value={baseProductId}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setBaseProductId(e.target.value)}
           placeholder='Imported from Base.com'
         />
-        <p className='text-xs text-gray-400'>
-          This ID is used for products imported from Base.com
-        </p>
-      </div>
+      </FormField>
     </div>
   );
 }

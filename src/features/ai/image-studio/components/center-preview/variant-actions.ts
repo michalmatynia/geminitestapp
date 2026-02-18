@@ -54,6 +54,8 @@ type DeleteVariantFromCenterPreviewParams = {
   projectId: string | null;
   queryClient: QueryClient;
   rootVariantSourceSlotId: string | null;
+  setSelectedSlotId: (slotId: string | null) => void;
+  setWorkingSlotId: (slotId: string | null) => void;
   setDismissedVariantKeys: React.Dispatch<React.SetStateAction<Set<string>>>;
   setVariantTooltip: React.Dispatch<React.SetStateAction<VariantTooltipState | null>>;
   slots: ImageStudioSlotRecord[];
@@ -150,6 +152,25 @@ const refreshGenerationQueries = (queryClient: QueryClient): void => {
   });
 };
 
+const collectSourceParentSlotIds = (slot: ImageStudioSlotRecord | null): string[] => {
+  if (!slot?.metadata || typeof slot.metadata !== 'object' || Array.isArray(slot.metadata)) return [];
+  const metadata = slot.metadata;
+  const ordered = new Set<string>();
+  const primarySource =
+    typeof metadata['sourceSlotId'] === 'string' ? metadata['sourceSlotId'].trim() : '';
+  if (primarySource) ordered.add(primarySource);
+  const sourceList = metadata['sourceSlotIds'];
+  if (Array.isArray(sourceList)) {
+    sourceList.forEach((value: unknown) => {
+      if (typeof value !== 'string') return;
+      const normalized = value.trim();
+      if (!normalized) return;
+      ordered.add(normalized);
+    });
+  }
+  return Array.from(ordered);
+};
+
 export const loadVariantIntoCanvas = async ({
   activeRunId,
   projectId,
@@ -214,6 +235,8 @@ export const deleteVariantFromCenterPreview = async ({
   projectId,
   queryClient,
   rootVariantSourceSlotId,
+  setSelectedSlotId,
+  setWorkingSlotId,
   setDismissedVariantKeys,
   setVariantTooltip,
   slots,
@@ -262,6 +285,35 @@ export const deleteVariantFromCenterPreview = async ({
         sourceSlotId: rootVariantSourceSlotId ?? undefined,
       },
     );
+    const slotById = new Map<string, ImageStudioSlotRecord>(
+      slots.map((slot): [string, ImageStudioSlotRecord] => [slot.id, slot]),
+    );
+    const deletedSlotIds = new Set(
+      response.deletedSlotIds
+        .filter((slotId): slotId is string => typeof slotId === 'string')
+        .map((slotId: string) => slotId.trim())
+        .filter(Boolean),
+    );
+    const focusSlotCandidates = new Set<string>();
+    const resolvedTargetSlotId = (targetSlotId ?? variant.slotId ?? '').trim();
+    const targetSlotRecord = resolvedTargetSlotId ? slotById.get(resolvedTargetSlotId) ?? null : null;
+    const deletedSlotRecords = Array.from(deletedSlotIds)
+      .map((slotId: string) => slotById.get(slotId) ?? null)
+      .filter((slot): slot is ImageStudioSlotRecord => Boolean(slot));
+    const possibleParentSources = [
+      targetSlotRecord,
+      ...deletedSlotRecords,
+    ];
+    possibleParentSources.forEach((slot) => {
+      collectSourceParentSlotIds(slot).forEach((parentId) => {
+        if (deletedSlotIds.has(parentId)) return;
+        focusSlotCandidates.add(parentId);
+      });
+    });
+    const normalizedRootSourceSlotId = rootVariantSourceSlotId?.trim() ?? '';
+    if (normalizedRootSourceSlotId && !deletedSlotIds.has(normalizedRootSourceSlotId)) {
+      focusSlotCandidates.add(normalizedRootSourceSlotId);
+    }
 
     if (response.modeUsed === 'noop') {
       const warning = response.warnings[0] || 'Variant delete did not remove any slot or file.';
@@ -296,6 +348,19 @@ export const deleteVariantFromCenterPreview = async ({
         },
       );
       queryClient.setQueryData(studioKeys.slots(projectId), refreshed);
+      const refreshedSlots = Array.isArray(refreshed?.slots) ? refreshed.slots : [];
+      const refreshedIdSet = new Set(
+        refreshedSlots
+          .map((slot) => slot.id?.trim() ?? '')
+          .filter(Boolean),
+      );
+      const nextFocusSlotId =
+        Array.from(focusSlotCandidates).find((candidateId) => refreshedIdSet.has(candidateId)) ??
+        null;
+      if (nextFocusSlotId) {
+        setWorkingSlotId(nextFocusSlotId);
+        setSelectedSlotId(nextFocusSlotId);
+      }
     } catch {
       // Best-effort cache refresh, fall back to invalidate/refetch below.
     }

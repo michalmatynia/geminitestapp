@@ -624,6 +624,8 @@ export function CenterPreview(): React.JSX.Element {
           projectId,
           queryClient,
           rootVariantSourceSlotId,
+          setSelectedSlotId,
+          setWorkingSlotId,
           setDismissedVariantKeys,
           setVariantTooltip,
           slots,

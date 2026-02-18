@@ -25,6 +25,8 @@
     "metrics:guardrails:update": "node scripts/architecture/check-guardrails.mjs --update-baseline",
     "metrics:hotspots": "node scripts/perf/route-hotspots.mjs",
     "metrics:all": "npm run metrics:collect && npm run metrics:hotspots && npm run metrics:guardrails",
+    "docs:validator:generate": "tsx scripts/docs/generate-validator-docs.ts",
+    "docs:validator:check": "tsx scripts/docs/check-validator-doc-coverage.ts",
     "check:factory-meta": "node scripts/query/check-factory-meta.cjs",
     "check:factory-meta:strict": "CHECK_FACTORY_META_STRICT_ALIAS=1 node scripts/query/check-factory-meta.cjs",
     "auth:indexes": "tsx scripts/db/ensure-auth-indexes.ts",

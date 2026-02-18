@@ -49,10 +49,14 @@ import {
   TARGET_APPLY_OPTIONS,
   TARGET_OPTIONS,
 } from './validator-pattern-modal-options';
+import { ValidatorDocTooltip } from './ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 
 import type { PatternFormData, ReplacementMode } from './types';
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#ui.validatorpatternmodal
+ */
 export function ValidatorPatternModal(): React.JSX.Element | null {
   const {
     showModal,
@@ -95,31 +99,33 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
 
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <FormField label='Target'>
-            <SelectSimple size='sm'
-              value={formData.target}
-              onValueChange={(value: string): void =>
-                setFormData((prev: PatternFormData) => {
-                  const nextTarget = value as PatternFormData['target'];
-                  const allowed = new Set<string>(getReplacementFieldsForTarget(nextTarget));
-                  const nextSourceOptions = getSourceFieldOptionsForTarget(nextTarget);
-                  const hasSourceField = nextSourceOptions.some(
-                    (option: { value: string }) => option.value === prev.sourceField
-                  );
-                  const hasLaunchSourceField = nextSourceOptions.some(
-                    (option: { value: string }) => option.value === prev.launchSourceField
-                  );
-                  return {
-                    ...prev,
-                    target: nextTarget,
-                    locale: isLocaleTarget(nextTarget) ? prev.locale : '',
-                    replacementFields: prev.replacementFields.filter((field: string) => allowed.has(field)),
-                    sourceField: hasSourceField ? prev.sourceField : '',
-                    launchSourceField: hasLaunchSourceField ? prev.launchSourceField : '',
-                  };
-                })
-              }
-              options={TARGET_OPTIONS}
-            />
+            <ValidatorDocTooltip docId='validator.modal.target'>
+              <SelectSimple size='sm'
+                value={formData.target}
+                onValueChange={(value: string): void =>
+                  setFormData((prev: PatternFormData) => {
+                    const nextTarget = value as PatternFormData['target'];
+                    const allowed = new Set<string>(getReplacementFieldsForTarget(nextTarget));
+                    const nextSourceOptions = getSourceFieldOptionsForTarget(nextTarget);
+                    const hasSourceField = nextSourceOptions.some(
+                      (option: { value: string }) => option.value === prev.sourceField
+                    );
+                    const hasLaunchSourceField = nextSourceOptions.some(
+                      (option: { value: string }) => option.value === prev.launchSourceField
+                    );
+                    return {
+                      ...prev,
+                      target: nextTarget,
+                      locale: isLocaleTarget(nextTarget) ? prev.locale : '',
+                      replacementFields: prev.replacementFields.filter((field: string) => allowed.has(field)),
+                      sourceField: hasSourceField ? prev.sourceField : '',
+                      launchSourceField: hasLaunchSourceField ? prev.launchSourceField : '',
+                    };
+                  })
+                }
+                options={TARGET_OPTIONS}
+              />
+            </ValidatorDocTooltip>
           </FormField>
 
           <FormField label='Locale Context'>
@@ -141,19 +147,21 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
           label='Apply In Forms'
           description='Controls where this validator pattern is active.'
         >
-          <MultiSelect
-            options={PATTERN_SCOPE_OPTIONS}
-            selected={normalizeProductValidationPatternScopes(formData.appliesToScopes)}
-            onChange={(values: string[]) =>
-              setFormData((prev: PatternFormData) => ({
-                ...prev,
-                appliesToScopes: normalizeProductValidationPatternScopes(values),
-              }))
-            }
-            placeholder='All forms'
-            searchPlaceholder='Search form scope...'
-            emptyMessage='No form scopes found.'
-          />
+          <ValidatorDocTooltip docId='validator.modal.applyScopes'>
+            <MultiSelect
+              options={PATTERN_SCOPE_OPTIONS}
+              selected={normalizeProductValidationPatternScopes(formData.appliesToScopes)}
+              onChange={(values: string[]) =>
+                setFormData((prev: PatternFormData) => ({
+                  ...prev,
+                  appliesToScopes: normalizeProductValidationPatternScopes(values),
+                }))
+              }
+              placeholder='All forms'
+              searchPlaceholder='Search form scope...'
+              emptyMessage='No form scopes found.'
+            />
+          </ValidatorDocTooltip>
         </FormField>
 
         <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
@@ -274,15 +282,17 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
           variant='subtle'
           className='border border-sky-500/25 bg-sky-500/5 p-3 space-y-4'
           actions={(
-            <StatusToggle
-              enabled={formData.launchEnabled}
-              onToggle={() =>
-                setFormData((prev: PatternFormData) => ({
-                  ...prev,
-                  launchEnabled: !prev.launchEnabled,
-                }))
-              }
-            />
+            <ValidatorDocTooltip docId='validator.modal.launch.toggle'>
+              <StatusToggle
+                enabled={formData.launchEnabled}
+                onToggle={() =>
+                  setFormData((prev: PatternFormData) => ({
+                    ...prev,
+                    launchEnabled: !prev.launchEnabled,
+                  }))
+                }
+              />
+            </ValidatorDocTooltip>
           )}
         >
           {formData.launchEnabled && (
@@ -291,25 +301,27 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                 label='Launch In Forms'
                 description='Context gate for this launch node (Draft/Create/Edit).'
               >
-                <MultiSelect
-                  options={PATTERN_SCOPE_OPTIONS}
-                  selected={normalizeProductValidationPatternLaunchScopes(
-                    formData.launchAppliesToScopes,
-                    formData.appliesToScopes
-                  )}
-                  onChange={(values: string[]) =>
-                    setFormData((prev: PatternFormData) => ({
-                      ...prev,
-                      launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
-                        values,
-                        prev.appliesToScopes
-                      ),
-                    }))
-                  }
-                  placeholder='Follow pattern scopes'
-                  searchPlaceholder='Search launch scope...'
-                  emptyMessage='No form scopes found.'
-                />
+                <ValidatorDocTooltip docId='validator.modal.launch.config'>
+                  <MultiSelect
+                    options={PATTERN_SCOPE_OPTIONS}
+                    selected={normalizeProductValidationPatternLaunchScopes(
+                      formData.launchAppliesToScopes,
+                      formData.appliesToScopes
+                    )}
+                    onChange={(values: string[]) =>
+                      setFormData((prev: PatternFormData) => ({
+                        ...prev,
+                        launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
+                          values,
+                          prev.appliesToScopes
+                        ),
+                      }))
+                    }
+                    placeholder='Follow pattern scopes'
+                    searchPlaceholder='Search launch scope...'
+                    emptyMessage='No form scopes found.'
+                  />
+                </ValidatorDocTooltip>
               </FormField>
 
               <FormField
@@ -413,22 +425,24 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
           variant='subtle'
           className='border border-fuchsia-500/25 bg-fuchsia-500/5 p-3 space-y-4'
           actions={(
-            <StatusToggle
-              enabled={formData.runtimeEnabled}
-              onToggle={() =>
-                setFormData((prev: PatternFormData) => {
-                  const nextEnabled = !prev.runtimeEnabled;
-                  return {
-                    ...prev,
-                    runtimeEnabled: nextEnabled,
-                    runtimeType:
-                      nextEnabled && prev.runtimeType === 'none'
-                        ? 'database_query'
-                        : prev.runtimeType,
-                  };
-                })
-              }
-            />
+            <ValidatorDocTooltip docId='validator.modal.runtime.toggle'>
+              <StatusToggle
+                enabled={formData.runtimeEnabled}
+                onToggle={() =>
+                  setFormData((prev: PatternFormData) => {
+                    const nextEnabled = !prev.runtimeEnabled;
+                    return {
+                      ...prev,
+                      runtimeEnabled: nextEnabled,
+                      runtimeType:
+                        nextEnabled && prev.runtimeType === 'none'
+                          ? 'database_query'
+                          : prev.runtimeType,
+                    };
+                  })
+                }
+              />
+            </ValidatorDocTooltip>
           )}
         >
           {formData.runtimeEnabled && (
@@ -446,21 +460,23 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                 />
               </FormField>
               <FormField label='Runtime Config (JSON)'>
-                <Textarea
-                  className='min-h-[160px] font-mono text-[11px]'
-                  value={formData.runtimeConfig}
-                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
-                    setFormData((prev: PatternFormData) => ({
-                      ...prev,
-                      runtimeConfig: event.target.value,
-                    }))
-                  }
-                  placeholder={
-                    formData.runtimeType === 'ai_prompt'
-                      ? '{\n  "systemPrompt": "You validate product data.",\n  "promptTemplate": "Check [fieldName]: [fieldValue]. Return JSON: {\\"match\\":boolean,\\"message\\":string,\\"replacementValue\\":string|null}",\n  "model": "gpt-4o-mini"\n}'
-                      : '{\n  "operation": "query",\n  "payload": {\n    "provider": "auto",\n    "collection": "products",\n    "single": false,\n    "limit": 1,\n    "query": { "sku": "[sku]" }\n  },\n  "resultPath": "count",\n  "operator": "gt",\n  "operand": 0,\n  "replacementPath": "items[0].price"\n}'
-                  }
-                />
+                <ValidatorDocTooltip docId='validator.modal.runtime.config'>
+                  <Textarea
+                    className='min-h-[160px] font-mono text-[11px]'
+                    value={formData.runtimeConfig}
+                    onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
+                      setFormData((prev: PatternFormData) => ({
+                        ...prev,
+                        runtimeConfig: event.target.value,
+                      }))
+                    }
+                    placeholder={
+                      formData.runtimeType === 'ai_prompt'
+                        ? '{\n  "systemPrompt": "You validate product data.",\n  "promptTemplate": "Check [fieldName]: [fieldValue]. Return JSON: {\\"match\\":boolean,\\"message\\":string,\\"replacementValue\\":string|null}",\n  "model": "gpt-4o-mini"\n}'
+                        : '{\n  "operation": "query",\n  "payload": {\n    "provider": "auto",\n    "collection": "products",\n    "single": false,\n    "limit": 1,\n    "query": { "sku": "[sku]" }\n  },\n  "resultPath": "count",\n  "operator": "gt",\n  "operand": 0,\n  "replacementPath": "items[0].price"\n}'
+                    }
+                  />
+                </ValidatorDocTooltip>
               </FormField>
             </div>
           )}
@@ -736,19 +752,21 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
           label='Replacer Fields'
           description='Leave empty to apply replacement globally on all matching fields.'
         >
-          <MultiSelect
-            options={replacementFieldOptions}
-            selected={formData.replacementFields}
-            onChange={(values: string[]) =>
-              setFormData((prev: PatternFormData) => ({
-                ...prev,
-                replacementFields: normalizeReplacementFields(values),
-              }))
-            }
-            placeholder='All matching fields (global)'
-            searchPlaceholder='Search fields...'
-            emptyMessage='No fields found.'
-          />
+          <ValidatorDocTooltip docId='validator.modal.replacement.toggle'>
+            <MultiSelect
+              options={replacementFieldOptions}
+              selected={formData.replacementFields}
+              onChange={(values: string[]) =>
+                setFormData((prev: PatternFormData) => ({
+                  ...prev,
+                  replacementFields: normalizeReplacementFields(values),
+                }))
+              }
+              placeholder='All matching fields (global)'
+              searchPlaceholder='Search fields...'
+              emptyMessage='No fields found.'
+            />
+          </ValidatorDocTooltip>
         </FormField>
 
         <FormField
@@ -778,14 +796,16 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
 
         <div className='grid grid-cols-1 gap-4 md:grid-cols-[1fr_140px_170px]'>
           <FormField label='Regex'>
-            <Input
-              className='h-9 font-mono'
-              value={formData.regex}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                setFormData((prev: PatternFormData) => ({ ...prev, regex: event.target.value }))
-              }
-              placeholder='\\s{2,}|\\*{2,}'
-            />
+            <ValidatorDocTooltip docId='validator.modal.regex'>
+              <Input
+                className='h-9 font-mono'
+                value={formData.regex}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  setFormData((prev: PatternFormData) => ({ ...prev, regex: event.target.value }))
+                }
+                placeholder='\\s{2,}|\\*{2,}'
+              />
+            </ValidatorDocTooltip>
           </FormField>
           <FormField label='Flags'>
             <Input
@@ -875,19 +895,21 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
 
           <div className='flex items-center justify-between rounded-md border border-border bg-gray-900/70 px-3 py-2'>
             <span className='text-xs text-gray-300'>Replacer enabled</span>
-            <StatusToggle
-              enabled={formData.replacementEnabled}
-              onToggle={() =>
-                setFormData((prev: PatternFormData) => {
-                  const nextReplacementEnabled = !prev.replacementEnabled;
-                  return {
-                    ...prev,
-                    replacementEnabled: nextReplacementEnabled,
-                    replacementAutoApply: nextReplacementEnabled ? prev.replacementAutoApply : false,
-                  };
-                })
-              }
-            />
+            <ValidatorDocTooltip docId='validator.modal.replacement.toggle'>
+              <StatusToggle
+                enabled={formData.replacementEnabled}
+                onToggle={() =>
+                  setFormData((prev: PatternFormData) => {
+                    const nextReplacementEnabled = !prev.replacementEnabled;
+                    return {
+                      ...prev,
+                      replacementEnabled: nextReplacementEnabled,
+                      replacementAutoApply: nextReplacementEnabled ? prev.replacementAutoApply : false,
+                    };
+                  })
+                }
+              />
+            </ValidatorDocTooltip>
           </div>
 
           <div className='flex items-center justify-between rounded-md border border-border bg-gray-900/70 px-3 py-2'>
@@ -897,16 +919,18 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                 OFF keeps it as a proposal only.
               </p>
             </div>
-            <StatusToggle
-              enabled={formData.replacementAutoApply}
-              disabled={!formData.replacementEnabled}
-              onToggle={() =>
-                setFormData((prev: PatternFormData) => ({
-                  ...prev,
-                  replacementAutoApply: !prev.replacementAutoApply,
-                }))
-              }
-            />
+            <ValidatorDocTooltip docId='validator.modal.replacement.autoApply'>
+              <StatusToggle
+                enabled={formData.replacementAutoApply}
+                disabled={!formData.replacementEnabled}
+                onToggle={() =>
+                  setFormData((prev: PatternFormData) => ({
+                    ...prev,
+                    replacementAutoApply: !prev.replacementAutoApply,
+                  }))
+                }
+              />
+            </ValidatorDocTooltip>
           </div>
 
           <div className='flex items-center justify-between rounded-md border border-border bg-gray-900/70 px-3 py-2'>
@@ -916,16 +940,18 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                 Hide replacement proposals when replacement equals current value.
               </p>
             </div>
-            <StatusToggle
-              enabled={formData.skipNoopReplacementProposal}
-              disabled={!formData.replacementEnabled}
-              onToggle={() =>
-                setFormData((prev: PatternFormData) => ({
-                  ...prev,
-                  skipNoopReplacementProposal: !prev.skipNoopReplacementProposal,
-                }))
-              }
-            />
+            <ValidatorDocTooltip docId='validator.modal.replacement.skipNoop'>
+              <StatusToggle
+                enabled={formData.skipNoopReplacementProposal}
+                disabled={!formData.replacementEnabled}
+                onToggle={() =>
+                  setFormData((prev: PatternFormData) => ({
+                    ...prev,
+                    skipNoopReplacementProposal: !prev.skipNoopReplacementProposal,
+                  }))
+                }
+              />
+            </ValidatorDocTooltip>
           </div>
         </div>
       </div>

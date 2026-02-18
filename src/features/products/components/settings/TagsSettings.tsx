@@ -1,12 +1,10 @@
-'use client';
-
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
 import { logClientError } from '@/features/observability';
 import { useSaveTagMutation, useDeleteTagMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { Catalog, ProductTag } from '@/features/products/types';
-import { useToast, Button, SelectSimple, Input, FormModal, EmptyState, Tag as UiTag, Skeleton, FormSection, FormField } from '@/shared/ui';
+import { useToast, Button, SelectSimple, Input, FormModal, EmptyState, Tag as UiTag, FormSection, FormField, SimpleSettingsList } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useProductSettingsContext } from './ProductSettingsContext';
@@ -158,58 +156,23 @@ export function TagsSettings(): React.JSX.Element {
             className='p-4'
           >
             <div className='mt-4'>
-              {loading ? (
-                <div className='space-y-2 p-4'>
-                  <Skeleton className='h-8 w-full' />
-                  <Skeleton className='h-8 w-full' />
-                  <Skeleton className='h-8 w-full' />
-                </div>
-              ) : tags.length === 0 ? (
-                <EmptyState
-                  title='No tags yet'
-                  description='Tags help you categorize products within a catalog.'
-                  action={
-                    <Button onClick={openCreateModal} variant='outline'>
-                      <Plus className='size-4 mr-2' />
-                      Create Your First Tag
-                    </Button>
-                  }
-                />
-              ) : (
-                <div className='space-y-2'>
-                  {tags.map((tag: ProductTag) => (
-                    <div
-                      key={tag.id}
-                      className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-gray-900/40 p-3'
-                    >
-                      <div className='flex items-center gap-3 min-w-0'>
-                        <UiTag
-                          label={tag.name}
-                          color={tag.color || '#38bdf8'}
-                          dot
-                        />
-                      </div>
-                      <div className='flex items-center gap-2'>
-                        <Button
-                          type='button'
-                          onClick={(): void => openEditModal(tag)}
-                          className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700'
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          type='button'
-                          onClick={(): void => handleDelete(tag)}
-                          className='rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600'
-                          title='Delete tag'
-                        >
-                          <Trash2 className='size-3' />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <SimpleSettingsList
+                items={tags.map((tag: ProductTag) => ({
+                  id: tag.id,
+                  title: (
+                    <UiTag
+                      label={tag.name}
+                      color={tag.color || '#38bdf8'}
+                      dot
+                    />
+                  ),
+                  original: tag
+                }))}
+                isLoading={loading}
+                onEdit={(item) => openEditModal(item.original)}
+                onDelete={(item) => handleDelete(item.original)}
+                emptyMessage='No tags yet. Tags help you categorize products within a catalog.'
+              />
             </div>
           </FormSection>
         </>

@@ -72,6 +72,9 @@ const DEFAULT_PATTERN_LIST_DEFS: Array<{
 
 const nowIso = (): string => new Date().toISOString();
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#scope.defaultvalidatorpatternlists
+ */
 export const defaultValidatorPatternLists = (): ValidatorPatternList[] => {
   const now = nowIso();
   return DEFAULT_PATTERN_LIST_DEFS.map((entry) => ({
@@ -85,6 +88,9 @@ export const defaultValidatorPatternLists = (): ValidatorPatternList[] => {
   }));
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#scope.parsevalidatorscope
+ */
 export const parseValidatorScope = (value: string | null): ValidatorScope =>
   value === 'image-studio'
     ? 'image-studio'
@@ -153,6 +159,9 @@ const ensureUniqueIds = (
   });
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#scope.normalizevalidatorpatternlists
+ */
 export const normalizeValidatorPatternLists = (
   value: ValidatorPatternList[]
 ): ValidatorPatternList[] => {
@@ -181,6 +190,9 @@ export const normalizeValidatorPatternLists = (
   return ensureUniqueIds(normalized);
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#scope.parsevalidatorpatternlists
+ */
 export const parseValidatorPatternLists = (
   value: string | null | undefined
 ): ValidatorPatternList[] => {

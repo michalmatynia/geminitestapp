@@ -9,7 +9,7 @@ import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelectio
 import { useCmsAllSlugs, useCmsPage, useCmsSlugs, useUpdatePage } from '@/features/cms/hooks/useCmsQueries';
 import type { Page, Slug } from '@/features/cms/types';
 import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
-import { Button, Checkbox, Input, SectionHeader, Switch, FormSection, Badge, Alert, StatusBadge } from '@/shared/ui';
+import { Button, Checkbox, Input, SectionHeader, Switch, FormSection, Badge, Alert, StatusBadge, LoadingState } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function EditPagePageLoader(): React.JSX.Element {
@@ -17,7 +17,7 @@ export default function EditPagePageLoader(): React.JSX.Element {
   const pageQuery = useCmsPage(id as string | undefined);
 
   if (pageQuery.isLoading || !pageQuery.data) {
-    return <div>Loading...</div>;
+    return <LoadingState message='Loading page content...' />;
   }
 
   return <EditPageContent key={pageQuery.data.id} initialPage={pageQuery.data} id={id as string} />;

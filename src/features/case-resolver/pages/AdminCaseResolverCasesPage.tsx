@@ -600,6 +600,9 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   }, [caseResolverCategories]);
   const defaultTagId = caseResolverTags[0]?.id ?? null;
   const defaultCategoryId = caseResolverCategories[0]?.id ?? null;
+  const settingsStoreRefetchRef = useRef(settingsStore.refetch);
+  settingsStoreRefetchRef.current = settingsStore.refetch;
+
   const [workspace, setWorkspace] =
     useState<CaseResolverWorkspace>(parsedWorkspace);
   const lastPersistedWorkspaceValueRef = useRef<string>(
@@ -643,7 +646,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
             lastPersistedWorkspaceValueRef.current = serialized;
             lastPersistedWorkspaceRevisionRef.current = revision;
             setWorkspace(snapshot);
-            settingsStore.refetch();
+            settingsStoreRefetchRef.current();
             logCaseResolverWorkspaceEvent({
               source,
               action: 'case_availability_confirmed',
@@ -654,7 +657,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         }
 
         if (attempt === 0) {
-          settingsStore.refetch();
+          settingsStoreRefetchRef.current();
         }
         if (attempt < maxAttempts - 1) {
           await wait(intervalMs);
@@ -668,7 +671,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       });
       return false;
     },
-    [settingsStore],
+    [],
   );
 
   const [caseDraft, setCaseDraft] = useState<Partial<CaseResolverFile>>({});
@@ -731,7 +734,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
 
   useEffect(() => {
     if (pathname !== '/admin/case-resolver/cases') return;
-    settingsStore.refetch();
+    settingsStoreRefetchRef.current();
     let isCancelled = false;
     void (async (): Promise<void> => {
       const latestWorkspace = await fetchCaseResolverWorkspaceSnapshot(
@@ -758,7 +761,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     return (): void => {
       isCancelled = true;
     };
-  }, [pathname, settingsStore]);
+  }, [pathname]);
 
   useEffect(() => {
     if (pathname !== '/admin/case-resolver/cases') return;
@@ -1366,31 +1369,6 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     );
   }, [caseResolverCategories]);
 
-  useEffect(() => {
-    const validCaseIds = new Set(
-      files.map((file: CaseResolverFile) => file.id),
-    );
-    setCaseDraft((prev) => {
-      const nextParentId =
-        prev.parentCaseId && validCaseIds.has(prev.parentCaseId)
-          ? prev.parentCaseId
-          : null;
-      const nextRefIds = (prev.referenceCaseIds || []).filter((id) =>
-        validCaseIds.has(id),
-      );
-      if (
-        nextParentId === prev.parentCaseId &&
-        nextRefIds.length === (prev.referenceCaseIds || []).length
-      )
-        return prev;
-      return {
-        ...prev,
-        parentCaseId: nextParentId,
-        referenceCaseIds: nextRefIds,
-      };
-    });
-  }, [files]);
-
   const resetCreateCaseDraft = useCallback(
     (parentCaseId: string | null = null): void => {
       setCaseDraft({
@@ -1640,7 +1618,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         lastPersistedWorkspaceRevisionRef.current =
           getCaseResolverWorkspaceRevision(persistedWorkspace);
         setWorkspace(persistedWorkspace);
-        settingsStore.refetch();
+        settingsStoreRefetchRef.current();
         toast(successMessage, { variant: 'success' });
         return true;
       }
@@ -1651,7 +1629,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         lastPersistedWorkspaceRevisionRef.current =
           getCaseResolverWorkspaceRevision(serverWorkspace);
         setWorkspace(serverWorkspace);
-        settingsStore.refetch();
+        settingsStoreRefetchRef.current();
         if (!options?.suppressConflictToast) {
           toast(
             'Case Resolver workspace changed before save completed. Latest server state has been loaded. Please retry.',

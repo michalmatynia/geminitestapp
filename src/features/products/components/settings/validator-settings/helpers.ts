@@ -102,6 +102,9 @@ const SOURCE_FIELD_OPTIONS = [
 
 const ALLOWED_REPLACEMENT_FIELDS = new Set<string>(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#helpers.normalizereplacementfields
+ */
 export const normalizeReplacementFields = (fields: string[] | null | undefined): string[] => {
   if (!Array.isArray(fields) || fields.length === 0) return [];
   const unique = new Set<string>();
@@ -112,12 +115,18 @@ export const normalizeReplacementFields = (fields: string[] | null | undefined):
   return [...unique];
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#helpers.formatreplacementfields
+ */
 export const formatReplacementFields = (fields: string[] | null | undefined): string => {
   const normalized = normalizeReplacementFields(fields);
   if (normalized.length === 0) return 'all matching fields';
   return normalized.map((field) => REPLACEMENT_FIELD_LABELS[field] ?? field).join(', ');
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#helpers.getreplacementfieldsfortarget
+ */
 export const getReplacementFieldsForTarget = (
   target: PatternFormData['target']
 ): string[] => {
@@ -139,9 +148,15 @@ export const getReplacementFieldsForTarget = (
   return ['sku'];
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#helpers.islocaletarget
+ */
 export const isLocaleTarget = (target: PatternFormData['target']): boolean =>
   target === 'name' || target === 'description';
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#helpers.islatestfieldmirrorpattern
+ */
 export const isLatestFieldMirrorPattern = (
   pattern: ProductValidationPattern,
   field: 'price' | 'stock'
@@ -157,6 +172,9 @@ export const isLatestFieldMirrorPattern = (
   );
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#helpers.isnamesecondsegmentdimensionpattern
+ */
 export const isNameSecondSegmentDimensionPattern = (
   pattern: ProductValidationPattern,
   target: 'size_length' | 'length'
@@ -172,12 +190,18 @@ export const isNameSecondSegmentDimensionPattern = (
   );
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#helpers.getsourcefieldoptionsfortarget
+ */
 export const getSourceFieldOptionsForTarget = (
   _target: PatternFormData['target']
 ): Array<{ value: string; label: string }> => {
   return SOURCE_FIELD_OPTIONS;
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#helpers.builddynamicrecipefromform
+ */
 export const buildDynamicRecipeFromForm = (
   formData: PatternFormData
 ): DynamicReplacementRecipe | null => {
@@ -222,6 +246,9 @@ export const buildDynamicRecipeFromForm = (
   };
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#helpers.buildlatestfieldrecipe
+ */
 export const buildLatestFieldRecipe = (field: 'price' | 'stock'): string =>
   encodeDynamicReplacementRecipe({
     version: 1,
@@ -246,6 +273,9 @@ export const buildLatestFieldRecipe = (field: 'price' | 'stock'): string =>
     targetApply: 'replace_whole_field',
   });
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#helpers.buildduplicatelabel
+ */
 export const buildDuplicateLabel = (label: string, existingLabels: Set<string>): string => {
   const trimmed = label.trim() || 'Pattern';
   const base = `${trimmed} (copy)`;
@@ -258,6 +288,9 @@ export const buildDuplicateLabel = (label: string, existingLabels: Set<string>):
   return candidate;
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#helpers.builduniquelabel
+ */
 export const buildUniqueLabel = (label: string, existingLabels: Set<string>): string => {
   const trimmed = label.trim() || 'Pattern';
   let candidate = trimmed;
@@ -269,6 +302,9 @@ export const buildUniqueLabel = (label: string, existingLabels: Set<string>): st
   return candidate;
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#helpers.getpatternsequence
+ */
 export const getPatternSequence = (pattern: ProductValidationPattern, fallbackIndex: number): number => {
   if (typeof pattern.sequence === 'number' && Number.isFinite(pattern.sequence)) {
     return Math.max(0, Math.floor(pattern.sequence));
@@ -276,11 +312,17 @@ export const getPatternSequence = (pattern: ProductValidationPattern, fallbackIn
   return (fallbackIndex + 1) * 10;
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#helpers.getsequencegroupid
+ */
 export const getSequenceGroupId = (pattern: ProductValidationPattern): string | null => {
   const value = pattern.sequenceGroupId?.trim();
   return value ? value : null;
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#helpers.sortpatternsbysequence
+ */
 export const sortPatternsBySequence = (
   patterns: ProductValidationPattern[]
 ): ProductValidationPattern[] =>
@@ -297,6 +339,9 @@ export const sortPatternsBySequence = (
     })
     .map((entry) => entry.pattern);
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#helpers.reorderpatterns
+ */
 export const reorderPatterns = (
   patterns: ProductValidationPattern[],
   draggedId: string,
@@ -320,16 +365,25 @@ export const reorderPatterns = (
   return next;
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#helpers.createsequencegroupid
+ */
 export const createSequenceGroupId = (): string => {
   const random = Math.random().toString(36).slice(2, 8);
   return `seq_${Date.now().toString(36)}_${random}`;
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#helpers.normalizesequencegroupdebouncems
+ */
 export const normalizeSequenceGroupDebounceMs = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
   return Math.min(30_000, Math.max(0, Math.floor(value)));
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#helpers.cancompileregex
+ */
 export const canCompileRegex = (pattern: string, flags: string): boolean => {
   try {
     void new RegExp(pattern, flags || undefined);
@@ -339,6 +393,9 @@ export const canCompileRegex = (pattern: string, flags: string): boolean => {
   }
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#helpers.buildsequencegroups
+ */
 export const buildSequenceGroups = (
   patterns: ProductValidationPattern[]
 ): Map<string, SequenceGroupView> => {

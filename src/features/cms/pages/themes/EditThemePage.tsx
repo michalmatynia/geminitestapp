@@ -15,7 +15,7 @@ import type {
 } from '@/features/cms/types';
 import { cmsThemeUpdateSchema } from '@/features/cms/validations/api';
 import { logClientError } from '@/features/observability';
-import { Button, Input, SectionHeader, FormSection, FormField } from '@/shared/ui';
+import { Input, SectionHeader, FormSection, FormField, FormActions } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.Element {
@@ -162,11 +162,13 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
           </FormField>
         </FormSection>
 
-        <div className='pt-4'>
-          <Button type='submit' size='lg' className='w-full md:w-auto min-w-[200px]' disabled={updateTheme.isPending || !name.trim()}>
-            {updateTheme.isPending ? 'Saving...' : 'Save Theme'}
-          </Button>
-        </div>
+        <FormActions
+          onCancel={() => router.push('/admin/cms/themes')}
+          saveText='Save Theme'
+          isSaving={updateTheme.isPending}
+          isDisabled={!name.trim()}
+          className='pt-4'
+        />
       </form>
     </div>
   );

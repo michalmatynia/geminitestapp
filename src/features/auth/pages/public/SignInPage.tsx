@@ -8,7 +8,7 @@ import { useState, Suspense } from 'react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useVerifyCredentials } from '@/features/auth/hooks/useAuthQueries';
 import { logClientError } from '@/features/observability';
-import { Button, Input, Label, Alert, SectionHeader } from '@/shared/ui';
+import { Button, Input, Label, Alert, SectionHeader, LoadingState } from '@/shared/ui';
 
 function SignInPageLoader(): React.JSX.Element {
   const { userPageSettings, isLoading } = useAuth();
@@ -16,33 +16,7 @@ function SignInPageLoader(): React.JSX.Element {
   if (isLoading) {
     return (
       <div className='flex min-h-screen items-center justify-center bg-gray-900 px-4'>
-        <div className='w-full max-w-md space-y-6 rounded-lg border border-border bg-card p-6 shadow-lg animate-pulse'>
-          <div className='space-y-2'>
-            <div className='h-6 w-32 rounded bg-gray-800' />
-            <div className='h-4 w-48 rounded bg-gray-800' />
-          </div>
-          <div className='space-y-4'>
-            <div className='space-y-2'>
-              <div className='h-3 w-16 rounded bg-gray-800' />
-              <div className='h-10 w-full rounded bg-gray-800' />
-            </div>
-            <div className='space-y-2'>
-              <div className='h-3 w-20 rounded bg-gray-800' />
-              <div className='h-10 w-full rounded bg-gray-800' />
-            </div>
-            <div className='h-10 w-full rounded bg-gray-800' />
-          </div>
-          <div className='space-y-3'>
-            <div className='flex items-center gap-3 text-xs text-gray-500'>
-              <span className='h-px flex-1 bg-gray-800' />
-              <span className='h-3 w-10 rounded bg-gray-800' />
-              <span className='h-px flex-1 bg-gray-800' />
-            </div>
-            <div className='h-9 w-full rounded bg-gray-800' />
-            <div className='h-9 w-full rounded bg-gray-800' />
-          </div>
-          <div className='h-3 w-40 rounded bg-gray-800' />
-        </div>
+        <LoadingState message='Loading authentication...' />
       </div>
     );
   }
@@ -263,7 +237,7 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
 
 export default function SignInPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<LoadingState message='Initializing...' />}>
       <SignInPageLoader />
     </Suspense>
   );

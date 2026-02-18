@@ -272,6 +272,29 @@ const collectMatchingVariantSlots = (
     }
   }
 
+  // Fallback: some UI flows can send 1-based output indexes while slot metadata stores 0-based
+  // (or vice-versa). If run+source resolves to exactly one slot, prefer that slot over noop.
+  if (
+    matchesById.size === 0 &&
+    input.generationRunId &&
+    input.sourceSlotAliases.length > 0 &&
+    input.generationOutputIndex !== null
+  ) {
+    const runSourceCandidates = slots.filter((slot) =>
+      matchesVariantRunSelectors(slot, {
+        generationRunId: input.generationRunId,
+        generationOutputIndex: null,
+        sourceSlotAliases: input.sourceSlotAliases,
+      }),
+    );
+    if (runSourceCandidates.length === 1) {
+      const fallbackSlotId = runSourceCandidates[0]?.id;
+      if (fallbackSlotId) {
+        matchesById.add(fallbackSlotId);
+      }
+    }
+  }
+
   return slots.filter((slot) => matchesById.has(slot.id));
 };
 
@@ -467,41 +490,41 @@ export async function deleteImageStudioVariant(
         'Skipped file-only fallback because variant deletion expects a slot/node match.',
       );
     } else {
-    for (const fileId of Array.from(fileIdsToCleanup)) {
-      const imageFile = await deps.getImageFileById(fileId);
-      if (!imageFile) continue;
-      const normalizedPath = normalizePublicPath(imageFile.filepath);
-      if (normalizedPath) {
-        await deps.deleteDiskPath(normalizedPath);
-        deletedFilepaths.push(normalizedPath);
+      for (const fileId of Array.from(fileIdsToCleanup)) {
+        const imageFile = await deps.getImageFileById(fileId);
+        if (!imageFile) continue;
+        const normalizedPath = normalizePublicPath(imageFile.filepath);
+        if (normalizedPath) {
+          await deps.deleteDiskPath(normalizedPath);
+          deletedFilepaths.push(normalizedPath);
+        }
+        await deps.deleteImageFileById(fileId);
+        deletedFileIds.push(fileId);
       }
-      await deps.deleteImageFileById(fileId);
-      deletedFileIds.push(fileId);
-    }
 
-    // disk:<path> payload fallback
-    if (requestedAssetId.startsWith('disk:')) {
-      const diskPath = normalizePublicPath(requestedAssetId.replace(/^disk:/, ''));
-      if (diskPath) {
-        const deleted = await deps.deleteDiskPath(diskPath);
-        if (deleted) {
-          deletedFilepaths.push(diskPath);
+      // disk:<path> payload fallback
+      if (requestedAssetId.startsWith('disk:')) {
+        const diskPath = normalizePublicPath(requestedAssetId.replace(/^disk:/, ''));
+        if (diskPath) {
+          const deleted = await deps.deleteDiskPath(diskPath);
+          if (deleted) {
+            deletedFilepaths.push(diskPath);
+          }
         }
       }
-    }
 
-    for (const filepath of Array.from(filepathsToCleanup)) {
-      if (deletedFilepaths.includes(filepath)) continue;
-      const deleted = await deps.deleteDiskPath(filepath);
-      if (deleted) {
-        deletedFilepaths.push(filepath);
+      for (const filepath of Array.from(filepathsToCleanup)) {
+        if (deletedFilepaths.includes(filepath)) continue;
+        const deleted = await deps.deleteDiskPath(filepath);
+        if (deleted) {
+          deletedFilepaths.push(filepath);
+        }
       }
-    }
 
-    if (deletedFileIds.length > 0 || deletedFilepaths.length > 0) {
-      modeUsed = 'asset_only';
-      warnings.push('Variant file was removed without a slot cascade match.');
-    }
+      if (deletedFileIds.length > 0 || deletedFilepaths.length > 0) {
+        modeUsed = 'asset_only';
+        warnings.push('Variant file was removed without a slot cascade match.');
+      }
     }
   }
 
@@ -516,7 +539,6 @@ export async function deleteImageStudioVariant(
     const refreshedSlots = await deps.listSlots(projectId);
     const sweepCandidates = refreshedSlots.filter((slot) => {
       if (deletedSlotIdsSet.has(slot.id)) return false;
-      if (!isGenerationDerivedSlot(slot)) return false;
 
       const fileSelectors = buildFileSelectorsFromSlot(slot);
       const fileMatch =
@@ -524,6 +546,7 @@ export async function deleteImageStudioVariant(
         fileSelectors.filepaths.some((filepath) => postDeleteFilepaths.has(filepath));
 
       if (fileMatch) return true;
+      if (!isGenerationDerivedSlot(slot)) return false;
       if (!requestedRunId) return false;
       return matchesVariantRunSelectors(slot, {
         generationRunId: requestedRunId,

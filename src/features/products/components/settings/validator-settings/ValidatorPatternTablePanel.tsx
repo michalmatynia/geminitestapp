@@ -29,10 +29,14 @@ import {
 } from '@/shared/ui';
 
 import { INSTANCE_SCOPE_LABELS } from './constants';
+import { ValidatorDocTooltip } from './ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 
 import type { SequenceGroupDraft } from './types';
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#ui.validatorpatterntablepanel
+ */
 export function ValidatorPatternTablePanel(): React.JSX.Element {
   const {
     summary,
@@ -116,50 +120,62 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
       className='p-4'
       actions={(
         <div className='flex flex-wrap items-center gap-2'>
-          <Button
-            onClick={onCreateSkuAutoIncrementSequence}
-            disabled={patternActionsPending}
-            variant='outline'
-            className='border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/10'
-          >
-            + SKU Auto Sequence
-          </Button>
-          <Button
-            onClick={onCreateLatestPriceStockSequence}
-            disabled={patternActionsPending}
-            variant='outline'
-            className='border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
-          >
-            + Latest Price & Stock
-          </Button>
-          <Button
-            onClick={onCreateNameLengthMirrorPattern}
-            disabled={patternActionsPending}
-            variant='outline'
-            className='border-teal-500/40 text-teal-200 hover:bg-teal-500/10'
-          >
-            + Name Segment to Length + Height
-          </Button>
-          <Button
-            onClick={onCreateNameCategoryMirrorPattern}
-            disabled={patternActionsPending}
-            variant='outline'
-            className='border-lime-500/40 text-lime-200 hover:bg-lime-500/10'
-          >
-            + Name Segment to Category
-          </Button>
-          <Button
-            onClick={onCreateNameMirrorPolishSequence}
-            disabled={patternActionsPending}
-            variant='outline'
-            className='border-indigo-500/40 text-indigo-200 hover:bg-indigo-500/10'
-          >
-            + Name EN to PL
-          </Button>
-          <Button onClick={openCreate} variant='default'>
-            <Plus className='mr-2 size-4' />
-            Add Pattern
-          </Button>
+          <ValidatorDocTooltip docId='validator.patterns.sequence.sku'>
+            <Button
+              onClick={onCreateSkuAutoIncrementSequence}
+              disabled={patternActionsPending}
+              variant='outline'
+              className='border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/10'
+            >
+              + SKU Auto Sequence
+            </Button>
+          </ValidatorDocTooltip>
+          <ValidatorDocTooltip docId='validator.patterns.sequence.latestPriceStock'>
+            <Button
+              onClick={onCreateLatestPriceStockSequence}
+              disabled={patternActionsPending}
+              variant='outline'
+              className='border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
+            >
+              + Latest Price & Stock
+            </Button>
+          </ValidatorDocTooltip>
+          <ValidatorDocTooltip docId='validator.patterns.sequence.nameDimensions'>
+            <Button
+              onClick={onCreateNameLengthMirrorPattern}
+              disabled={patternActionsPending}
+              variant='outline'
+              className='border-teal-500/40 text-teal-200 hover:bg-teal-500/10'
+            >
+              + Name Segment to Length + Height
+            </Button>
+          </ValidatorDocTooltip>
+          <ValidatorDocTooltip docId='validator.patterns.sequence.nameCategory'>
+            <Button
+              onClick={onCreateNameCategoryMirrorPattern}
+              disabled={patternActionsPending}
+              variant='outline'
+              className='border-lime-500/40 text-lime-200 hover:bg-lime-500/10'
+            >
+              + Name Segment to Category
+            </Button>
+          </ValidatorDocTooltip>
+          <ValidatorDocTooltip docId='validator.patterns.sequence.nameMirrorPl'>
+            <Button
+              onClick={onCreateNameMirrorPolishSequence}
+              disabled={patternActionsPending}
+              variant='outline'
+              className='border-indigo-500/40 text-indigo-200 hover:bg-indigo-500/10'
+            >
+              + Name EN to PL
+            </Button>
+          </ValidatorDocTooltip>
+          <ValidatorDocTooltip docId='validator.patterns.add'>
+            <Button onClick={openCreate} variant='default'>
+              <Plus className='mr-2 size-4' />
+              Add Pattern
+            </Button>
+          </ValidatorDocTooltip>
         </div>
       )}
     >
@@ -247,28 +263,32 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
                           />
                         </FormField>
                         <div className='flex items-end'>
-                          <Button
-                            type='button'
-                            disabled={patternActionsPending}
-                            variant='outline'
-                            size='sm'
-                            className='h-8'
-                            onClick={() => onSaveSequenceGroup(group.id)}
-                          >
-                            Save Group
-                          </Button>
+                          <ValidatorDocTooltip docId='validator.group.save'>
+                            <Button
+                              type='button'
+                              disabled={patternActionsPending}
+                              variant='outline'
+                              size='sm'
+                              className='h-8'
+                              onClick={() => onSaveSequenceGroup(group.id)}
+                            >
+                              Save Group
+                            </Button>
+                          </ValidatorDocTooltip>
                         </div>
                         <div className='flex items-end'>
-                          <Button
-                            type='button'
-                            disabled={patternActionsPending}
-                            variant='outline'
-                            size='sm'
-                            className='h-8 border-amber-500/40 text-amber-200 hover:bg-amber-500/10'
-                            onClick={() => onUngroup(group.id)}
-                          >
-                            Ungroup
-                          </Button>
+                          <ValidatorDocTooltip docId='validator.group.ungroup'>
+                            <Button
+                              type='button'
+                              disabled={patternActionsPending}
+                              variant='outline'
+                              size='sm'
+                              className='h-8 border-amber-500/40 text-amber-200 hover:bg-amber-500/10'
+                              onClick={() => onUngroup(group.id)}
+                            >
+                              Ungroup
+                            </Button>
+                          </ValidatorDocTooltip>
                         </div>
                       </div>
                     </FormSection>
@@ -307,27 +327,29 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
                       <div className='flex flex-wrap items-start justify-between gap-3'>
                         <div className='min-w-0 flex-1'>
                           <div className='flex flex-wrap items-center gap-2'>
-                            <button
-                              type='button'
-                              draggable={!patternActionsPending}
-                              onDragStart={(event: React.DragEvent<HTMLButtonElement>): void => {
-                                if (patternActionsPending) return;
-                                event.dataTransfer.effectAllowed = 'move';
-                                event.dataTransfer.setData('text/plain', pattern.id);
-                                setDraggedPatternId(pattern.id);
-                                setDragOverPatternId(null);
-                              }}
-                              onDragEnd={(): void => {
-                                setDraggedPatternId(null);
-                                setDragOverPatternId(null);
-                              }}
-                              className='cursor-grab rounded border border-slate-600/70 bg-slate-800/60 p-1 text-slate-300 hover:bg-slate-700/70 active:cursor-grabbing'
-                              title='Drag and drop onto another pattern to build a sequence group'
-                              aria-label='Drag and drop onto another pattern to build a sequence group'
-                              disabled={patternActionsPending}
-                            >
-                              <GripVertical className='size-3.5' />
-                            </button>
+                            <ValidatorDocTooltip docId='validator.pattern.drag'>
+                              <button
+                                type='button'
+                                draggable={!patternActionsPending}
+                                onDragStart={(event: React.DragEvent<HTMLButtonElement>): void => {
+                                  if (patternActionsPending) return;
+                                  event.dataTransfer.effectAllowed = 'move';
+                                  event.dataTransfer.setData('text/plain', pattern.id);
+                                  setDraggedPatternId(pattern.id);
+                                  setDragOverPatternId(null);
+                                }}
+                                onDragEnd={(): void => {
+                                  setDraggedPatternId(null);
+                                  setDragOverPatternId(null);
+                                }}
+                                className='cursor-grab rounded border border-slate-600/70 bg-slate-800/60 p-1 text-slate-300 hover:bg-slate-700/70 active:cursor-grabbing'
+                                title='Drag and drop onto another pattern to build a sequence group'
+                                aria-label='Drag and drop onto another pattern to build a sequence group'
+                                disabled={patternActionsPending}
+                              >
+                                <GripVertical className='size-3.5' />
+                              </button>
+                            </ValidatorDocTooltip>
                             <span className='truncate text-sm font-medium text-white'>{pattern.label}</span>
                             <StatusBadge status={pattern.target} variant='info' size='sm' className='font-medium' />
                             <StatusBadge
@@ -434,44 +456,52 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
                         </div>
 
                         <div className='flex items-center gap-2'>
-                          <StatusToggle
-                            enabled={pattern.enabled}
-                            disabled={updatePatternPending || reorderPending}
-                            onToggle={() => onTogglePattern(pattern)}
-                          />
-                          <Button
-                            type='button'
-                            onClick={() => onDuplicatePattern(pattern)}
-                            variant='outline'
-                            size='xs'
-                            title='Duplicate pattern'
-                            disabled={createPatternPending || reorderPending}
-                            className='h-7 w-7 p-0'
-                          >
-                            <Copy className='size-3' />
-                          </Button>
-                          <Button
-                            type='button'
-                            onClick={() => onEditPattern(pattern)}
-                            variant='outline'
-                            size='xs'
-                            title='Edit pattern'
-                            disabled={reorderPending}
-                            className='h-7 w-7 p-0'
-                          >
-                            <Pencil className='size-3' />
-                          </Button>
-                          <Button
-                            type='button'
-                            onClick={() => onDeletePattern(pattern)}
-                            variant='destructive'
-                            size='xs'
-                            title='Delete pattern'
-                            disabled={reorderPending}
-                            className='h-7 w-7 p-0'
-                          >
-                            <Trash2 className='size-3' />
-                          </Button>
+                          <ValidatorDocTooltip docId='validator.pattern.toggle'>
+                            <StatusToggle
+                              enabled={pattern.enabled}
+                              disabled={updatePatternPending || reorderPending}
+                              onToggle={() => onTogglePattern(pattern)}
+                            />
+                          </ValidatorDocTooltip>
+                          <ValidatorDocTooltip docId='validator.pattern.duplicate'>
+                            <Button
+                              type='button'
+                              onClick={() => onDuplicatePattern(pattern)}
+                              variant='outline'
+                              size='xs'
+                              title='Duplicate pattern'
+                              disabled={createPatternPending || reorderPending}
+                              className='h-7 w-7 p-0'
+                            >
+                              <Copy className='size-3' />
+                            </Button>
+                          </ValidatorDocTooltip>
+                          <ValidatorDocTooltip docId='validator.pattern.edit'>
+                            <Button
+                              type='button'
+                              onClick={() => onEditPattern(pattern)}
+                              variant='outline'
+                              size='xs'
+                              title='Edit pattern'
+                              disabled={reorderPending}
+                              className='h-7 w-7 p-0'
+                            >
+                              <Pencil className='size-3' />
+                            </Button>
+                          </ValidatorDocTooltip>
+                          <ValidatorDocTooltip docId='validator.pattern.delete'>
+                            <Button
+                              type='button'
+                              onClick={() => onDeletePattern(pattern)}
+                              variant='destructive'
+                              size='xs'
+                              title='Delete pattern'
+                              disabled={reorderPending}
+                              className='h-7 w-7 p-0'
+                            >
+                              <Trash2 className='size-3' />
+                            </Button>
+                          </ValidatorDocTooltip>
                         </div>
                       </div>
                     </FormSection>

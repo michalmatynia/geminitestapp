@@ -317,7 +317,7 @@ function AuthPermissionsForm({
               </div>
               <Button
                 onClick={handleAddPermission}
-                className='bg-blue-600 hover:bg-blue-700 text-white'
+                variant='default'
               >
                 Add Permission
               </Button>

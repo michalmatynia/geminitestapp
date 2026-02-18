@@ -1,0 +1,3 @@
+sku,path_variant,word_count,specificity_score_1_5,brand_tone_fit_1_5,factual_accuracy_1_5,conversion_readiness_1_5,needs_manual_edit_yes_no,notes
+EXAMPLE-001,v3-lite,62,2,3,4,2,yes,"Short and generic"
+EXAMPLE-001,v3-longform,182,4,4,4,4,no,"Good use-case paragraph and concrete benefits"

@@ -8,6 +8,14 @@ import type { ApiHandlerContext } from '@/shared/types/api/api';
 const sendSchema = z.object({
   imageSlotIndex: z.number().int().min(0),
   projectId: z.string().trim().nullable().optional(),
+  sequenceGenerationMode: z
+    .enum([
+      'auto',
+      'studio_prompt_then_sequence',
+      'model_full_sequence',
+      'studio_native_sequencer_prior_generation',
+    ])
+    .optional(),
 });
 
 export async function POST_handler(
@@ -30,6 +38,7 @@ export async function POST_handler(
     productId,
     imageSlotIndex: parsed.data.imageSlotIndex,
     projectId: parsed.data.projectId ?? null,
+    sequenceGenerationMode: parsed.data.sequenceGenerationMode,
   });
 
   return NextResponse.json(result);

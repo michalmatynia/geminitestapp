@@ -1,9 +1,17 @@
 export type ProductStudioSequenceGenerationMode =
   | 'studio_prompt_then_sequence'
-  | 'model_full_sequence';
+  | 'model_full_sequence'
+  | 'studio_native_sequencer_prior_generation'
+  | 'auto';
+
+export type ProductStudioExecutionRoute =
+  | 'studio_sequencer'
+  | 'studio_native_sequencer_prior_generation'
+  | 'ai_model_full_sequence'
+  | 'ai_direct_generation';
 
 export const DEFAULT_PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE: ProductStudioSequenceGenerationMode =
-  'studio_prompt_then_sequence';
+  'auto';
 
 export type ProductStudioSequencingConfig = {
   enabled: boolean;
@@ -43,6 +51,10 @@ export function normalizeProductStudioSequenceGenerationMode(
   }
   const normalized = input.trim();
   if (normalized === 'model_full_sequence') return 'model_full_sequence';
+  if (normalized === 'studio_native_sequencer_prior_generation') {
+    return 'studio_native_sequencer_prior_generation';
+  }
+  if (normalized === 'auto') return 'auto';
   if (normalized === 'studio_prompt_then_sequence') {
     return 'studio_prompt_then_sequence';
   }

@@ -53,16 +53,25 @@ type ResolvedReplacement = {
 
 const ALLOWED_REPLACEMENT_FIELDS = new Set<string>(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.normalizevalidationdebouncems
+ */
 export const normalizeValidationDebounceMs = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
   return Math.min(30_000, Math.max(0, Math.floor(value)));
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.normalizepostacceptbehavior
+ */
 export const normalizePostAcceptBehavior = (
   value: unknown
 ): ProductValidationPostAcceptBehavior =>
   value === 'stop_after_accept' ? 'stop_after_accept' : 'revalidate';
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.normalizepatternsequence
+ */
 export const normalizePatternSequence = (
   pattern: ProductValidationPattern,
   fallbackIndex: number
@@ -73,6 +82,9 @@ export const normalizePatternSequence = (
   return (fallbackIndex + 1) * 10;
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.normalizepatternchainmode
+ */
 export const normalizePatternChainMode = (
   pattern: ProductValidationPattern
 ): 'continue' | 'stop_on_match' | 'stop_on_replace' => {
@@ -82,6 +94,9 @@ export const normalizePatternChainMode = (
   return 'continue';
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.normalizepatternmaxexecutions
+ */
 export const normalizePatternMaxExecutions = (pattern: ProductValidationPattern): number => {
   if (typeof pattern.maxExecutions !== 'number' || !Number.isFinite(pattern.maxExecutions)) {
     return 1;
@@ -96,6 +111,9 @@ const getSequenceScopeKey = (pattern: ProductValidationPattern): string | null =
   return `${groupId}::${pattern.target}::${normalizedLocale}`;
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.buildsequencegroupcounts
+ */
 export const buildSequenceGroupCounts = (patterns: ProductValidationPattern[]): Map<string, number> => {
   const counts = new Map<string, number>();
   for (const pattern of patterns) {
@@ -107,6 +125,9 @@ export const buildSequenceGroupCounts = (patterns: ProductValidationPattern[]): 
   return counts;
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.ispatterninsequencegroup
+ */
 export const isPatternInSequenceGroup = (
   pattern: ProductValidationPattern,
   counts: Map<string, number>
@@ -116,6 +137,9 @@ export const isPatternInSequenceGroup = (
   return (counts.get(scopeKey) ?? 0) > 1;
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.sortvalidatorpatterns
+ */
 export const sortValidatorPatterns = (patterns: ProductValidationPattern[]): ProductValidationPattern[] =>
   patterns
     .map((pattern: ProductValidationPattern, index: number) => ({ pattern, index }))
@@ -130,6 +154,9 @@ export const sortValidatorPatterns = (patterns: ProductValidationPattern[]): Pro
     })
     .map((entry) => entry.pattern);
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.resolvefieldtargetandlocale
+ */
 export const resolveFieldTargetAndLocale = (
   fieldName: string
 ): { target: ProductValidationTarget | null; locale: string | null } => {
@@ -160,6 +187,9 @@ export const resolveFieldTargetAndLocale = (
   return { target, locale };
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.ispatternlocalematch
+ */
 export const isPatternLocaleMatch = (
   patternLocale: string | null,
   fieldLocale: string | null
@@ -169,6 +199,9 @@ export const isPatternLocaleMatch = (
   return patternLocale.toLowerCase() === fieldLocale.toLowerCase();
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.normalizereplacementfields
+ */
 export const normalizeReplacementFields = (fields: string[] | null | undefined): string[] => {
   if (!Array.isArray(fields) || fields.length === 0) return [];
   const unique = new Set<string>();
@@ -179,6 +212,9 @@ export const normalizeReplacementFields = (fields: string[] | null | undefined):
   return [...unique];
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.isreplacementallowedforfield
+ */
 export const isReplacementAllowedForField = (
   pattern: ProductValidationPattern,
   fieldName: string
@@ -188,6 +224,9 @@ export const isReplacementAllowedForField = (
   return replacementFields.includes(fieldName);
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.islatestpricestockmirrorpattern
+ */
 export const isLatestPriceStockMirrorPattern = (pattern: ProductValidationPattern): boolean => {
   if (pattern.target !== 'price' && pattern.target !== 'stock') return false;
   if (!pattern.replacementEnabled || !pattern.replacementValue) return false;
@@ -199,6 +238,9 @@ export const isLatestPriceStockMirrorPattern = (pattern: ProductValidationPatter
   );
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.isruntimepatternenabled
+ */
 export const isRuntimePatternEnabled = (pattern: ProductValidationPattern): boolean =>
   Boolean(pattern.runtimeEnabled && pattern.runtimeType !== 'none');
 
@@ -208,6 +250,9 @@ const toStringValue = (value: unknown): string | null => {
   return null;
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.resolvepatternlaunchsourcevalue
+ */
 export const resolvePatternLaunchSourceValue = ({
   pattern,
   fieldValue,
@@ -228,6 +273,9 @@ export const resolvePatternLaunchSourceValue = ({
   return toStringValue(latestProductValues?.[pattern.launchSourceField ?? '']) ?? '';
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.shouldlaunchpattern
+ */
 export const shouldLaunchPattern = ({
   pattern,
   validationScope,
@@ -271,6 +319,9 @@ export const shouldLaunchPattern = ({
   });
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.resolvepatternreplacementvalue
+ */
 export const resolvePatternReplacementValue = ({
   pattern,
   fieldValue,
@@ -306,6 +357,9 @@ export const resolvePatternReplacementValue = ({
   };
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.applyresolvedreplacement
+ */
 export const applyResolvedReplacement = ({
   value,
   pattern,
@@ -335,6 +389,9 @@ export const applyResolvedReplacement = ({
   }
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.derivediffsegment
+ */
 export const deriveDiffSegment = (
   before: string,
   after: string
@@ -412,6 +469,9 @@ const buildStaticPatternPlans = ({
   return byTarget;
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.buildfieldissues
+ */
 export const buildFieldIssues = ({
   values,
   patterns,
@@ -635,6 +695,9 @@ export const buildFieldIssues = ({
   return issues;
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.mergefieldissuemaps
+ */
 export const mergeFieldIssueMaps = (
   staticIssues: Record<string, FieldValidatorIssue[]>,
   runtimeIssues: Record<string, FieldValidatorIssue[]>
@@ -650,6 +713,9 @@ export const mergeFieldIssueMaps = (
   return merged;
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.areissuemapsequivalent
+ */
 export const areIssueMapsEquivalent = (
   left: Record<string, FieldValidatorIssue[]>,
   right: Record<string, FieldValidatorIssue[]>
@@ -689,6 +755,9 @@ export const areIssueMapsEquivalent = (
   return true;
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#core.getissuereplacementpreview
+ */
 export const getIssueReplacementPreview = (
   value: string,
   issue: FieldValidatorIssue

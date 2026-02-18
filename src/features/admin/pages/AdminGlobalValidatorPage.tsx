@@ -23,6 +23,9 @@ import {
   type ValidatorScope,
 } from './validator-scope';
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#ui.adminglobalvalidatorpage
+ */
 export function AdminGlobalValidatorPage(): React.JSX.Element {
   const searchParams = useSearchParams();
   const settingsQuery = useSettingsMap({ scope: 'light' });

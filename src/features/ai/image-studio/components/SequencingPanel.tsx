@@ -32,7 +32,7 @@ import { studioKeys } from '../hooks/useImageStudioQueries';
 import { resolvePromptPlaceholders } from '../utils/run-request-preview';
 import {
   resolveRenderableSlotById,
-  resolveStudioSlotIdCandidates,
+  slotHasRenderableImage,
 } from '../utils/sequence-slot-resolution';
 import {
   normalizeImageStudioSequenceSteps,
@@ -43,7 +43,7 @@ import {
   type ImageStudioSequenceUpscaleStep,
 } from '../utils/studio-settings';
 
-import type { StudioSlotsResponse } from '../types';
+import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
 
 type SequenceRunStatus =
   | 'queued'
@@ -185,7 +185,7 @@ export function SequencingPanel(): React.JSX.Element {
   const lastTerminalSnapshotRef = useRef<string | null>(null);
 
   const { projectId } = useProjectsState();
-  const { workingSlot, compositeAssetIds } = useSlotsState();
+  const { slots, workingSlot, compositeAssetIds } = useSlotsState();
   const {
     setWorkingSlotId,
     setSelectedSlotId,
@@ -316,41 +316,64 @@ export function SequencingPanel(): React.JSX.Element {
       const normalizedProjectId = projectId.trim();
       if (!normalizedProjectId) return false;
 
-      const slotIdCandidates = resolveStudioSlotIdCandidates(input.run.currentSlotId);
-      if (slotIdCandidates.length === 0) return false;
+      const resolveSequenceRenderableCandidate = (
+        candidateSlots: StudioSlotsResponse['slots'] | ImageStudioSlotRecord[],
+      ): ImageStudioSlotRecord | null => {
+        const slotsList = Array.isArray(candidateSlots) ? candidateSlots : [];
+        const explicitCandidates = [
+          input.run.currentSlotId,
+          input.hintedSlot?.id ?? null,
+          ...(Array.isArray(input.run.outputSlotIds) ? input.run.outputSlotIds : []),
+        ];
+        for (const candidateId of explicitCandidates) {
+          const resolved = resolveRenderableSlotById(slotsList, candidateId);
+          if (resolved) return resolved;
+        }
+
+        const byRunId = slotsList.find((slot) => {
+          if (!slotHasRenderableImage(slot)) return false;
+          if (!slot.metadata || typeof slot.metadata !== 'object' || Array.isArray(slot.metadata)) {
+            return false;
+          }
+          const sequence = slot.metadata['sequence'];
+          if (!sequence || typeof sequence !== 'object' || Array.isArray(sequence)) return false;
+          const runId = typeof (sequence as Record<string, unknown>)['runId'] === 'string'
+            ? ((sequence as Record<string, unknown>)['runId'] as string).trim()
+            : '';
+          return runId === input.run.id;
+        });
+        return byRunId ?? null;
+      };
 
       setSlotSelectionLocked(true);
       try {
         for (let attempt = 0; attempt < SLOT_RESOLUTION_ATTEMPTS; attempt += 1) {
-          await invalidateImageStudioSlots(queryClient, normalizedProjectId);
-          await queryClient.refetchQueries({
-            queryKey: studioKeys.slots(normalizedProjectId),
-            type: 'all',
-          });
+          let cachedSlots: ImageStudioSlotRecord[] = [];
+          try {
+            const fresh = await api.get<StudioSlotsResponse>(
+              `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots`,
+              { cache: 'no-store', logError: false },
+            );
+            queryClient.setQueryData(studioKeys.slots(normalizedProjectId), fresh);
+            cachedSlots = Array.isArray(fresh?.slots) ? fresh.slots : [];
+          } catch {
+            await invalidateImageStudioSlots(queryClient, normalizedProjectId);
+            await queryClient.refetchQueries({
+              queryKey: studioKeys.slots(normalizedProjectId),
+              type: 'all',
+            });
+            const cached = queryClient.getQueryData<StudioSlotsResponse>(
+              studioKeys.slots(normalizedProjectId),
+            );
+            cachedSlots = Array.isArray(cached?.slots) ? cached.slots : [];
+          }
 
-          const cached = queryClient.getQueryData<StudioSlotsResponse>(
-            studioKeys.slots(normalizedProjectId),
-          );
-          const cachedSlots = Array.isArray(cached?.slots) ? cached.slots : [];
-          const resolvedSlot = resolveRenderableSlotById(
-            cachedSlots,
-            input.run.currentSlotId,
-          );
+          const resolvedSlot = resolveSequenceRenderableCandidate(cachedSlots);
 
           if (resolvedSlot) {
             setWorkingSlotId(resolvedSlot.id);
             setSelectedSlotId(resolvedSlot.id);
             return true;
-          }
-
-          const hintedSlotId = input.hintedSlot?.id ?? null;
-          if (input.hintedSlot?.renderable && hintedSlotId) {
-            const hintedResolved = resolveRenderableSlotById(cachedSlots, hintedSlotId);
-            if (hintedResolved) {
-              setWorkingSlotId(hintedResolved.id);
-              setSelectedSlotId(hintedResolved.id);
-              return true;
-            }
           }
 
           if (attempt < SLOT_RESOLUTION_ATTEMPTS - 1) {
@@ -962,6 +985,20 @@ export function SequencingPanel(): React.JSX.Element {
       if (cancelled) return;
       const snapshot = await fetchRunSnapshot(activeSequenceRunId);
       if (!snapshot?.run || cancelled) return;
+      const normalizedProjectId = projectId.trim();
+      if (normalizedProjectId) {
+        try {
+          const fresh = await api.get<StudioSlotsResponse>(
+            `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots`,
+            { cache: 'no-store', logError: false },
+          );
+          if (!cancelled) {
+            queryClient.setQueryData(studioKeys.slots(normalizedProjectId), fresh);
+          }
+        } catch {
+          // Best effort; resolveTerminalSlotSelection has its own fallback refresh path.
+        }
+      }
       const resolved = await resolveTerminalSlotSelection({
         run: snapshot.run,
         hintedSlot: snapshot.currentSlot ?? null,
@@ -986,10 +1023,31 @@ export function SequencingPanel(): React.JSX.Element {
   }, [
     activeSequenceRunId,
     fetchRunSnapshot,
+    projectId,
     pendingTerminalSlotId,
+    queryClient,
     resolveTerminalSlotSelection,
     setPendingSequenceThumbnail,
   ]);
+
+  useEffect(() => {
+    const pendingRunId = activeSequenceRunId?.trim() ?? '';
+    if (!pendingTerminalSlotId || !pendingRunId) return;
+    const hasSyncedSlot = slots.some((slot) => {
+      if (!slot.metadata || typeof slot.metadata !== 'object' || Array.isArray(slot.metadata)) return false;
+      const sequence = slot.metadata['sequence'];
+      if (!sequence || typeof sequence !== 'object' || Array.isArray(sequence)) return false;
+      const runId = typeof (sequence as Record<string, unknown>)['runId'] === 'string'
+        ? ((sequence as Record<string, unknown>)['runId'] as string).trim()
+        : '';
+      return runId === pendingRunId;
+    });
+    if (!hasSyncedSlot) return;
+    setPendingTerminalSlotId(null);
+    setSlotSyncWarning(null);
+    setPendingSequenceThumbnail(null);
+    setDisplayState('terminal');
+  }, [activeSequenceRunId, pendingTerminalSlotId, setPendingSequenceThumbnail, slots]);
 
   const handleRetryPendingSlotSync = useCallback(async (): Promise<void> => {
     if (!activeSequenceRunId || !pendingTerminalSlotId) return;

@@ -6,7 +6,7 @@ import {
 } from '@/features/integrations/constants/slugs';
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { IntegrationConnection, TestLogEntry } from '@/features/integrations/types/integrations-ui';
-import { Button, Input,  StatusBadge, FormSection, FormField } from '@/shared/ui';
+import { Button, Input,  StatusBadge, FormSection, FormField, SimpleSettingsList } from '@/shared/ui';
 
 const NEW_CONNECTION_DRAFT_ID = '__new_connection__';
 
@@ -347,109 +347,102 @@ export function ConnectionManager(): React.JSX.Element {
       </FormSection>
 
       <FormSection title='Existing connection' className='p-4'>
-        {connections.length === 0 ? (
-          <p className='mt-3 text-sm text-gray-400'>No connections yet.</p>
-        ) : (
-          <div className='mt-3 space-y-3'>
-            {connections.map((connection: IntegrationConnection) => (
-              <div
-                key={connection.id}
-                className='flex items-center justify-between rounded-md border border-border/60 bg-card/30 p-3'
+        <SimpleSettingsList
+          items={connections.map((connection: IntegrationConnection) => ({
+            id: connection.id,
+            title: connection.name,
+            subtitle: connection.username,
+            description: editingConnectionId === connection.id ? (
+              <span className='text-[10px] uppercase tracking-wide text-emerald-300 font-bold'>Selected for editing</span>
+            ) : undefined,
+            original: connection
+          }))}
+          emptyMessage='No connections yet.'
+          renderActions={(item) => (
+            <div className='flex items-center gap-2'>
+              <Button
+                variant='outline'
+                size='xs'
+                className='h-7 text-[10px] uppercase font-bold text-gray-200 hover:text-white'
+                type='button'
+                onClick={(): void => {
+                  const connection = item.original;
+                  const preserveCurrentSecrets =
+                    editingConnectionId === connection.id;
+                  setEditingConnectionId(connection.id);
+                  setConnectionForm((prev) => ({
+                    name: connection.name,
+                    username: connection.username ?? '',
+                    password: preserveCurrentSecrets ? prev.password : '',
+                    traderaDefaultTemplateId:
+                      connection.traderaDefaultTemplateId ?? '',
+                    traderaDefaultDurationHours:
+                      connection.traderaDefaultDurationHours ?? 72,
+                    traderaAutoRelistEnabled:
+                      connection.traderaAutoRelistEnabled ?? true,
+                    traderaAutoRelistLeadMinutes:
+                      connection.traderaAutoRelistLeadMinutes ?? 180,
+                    traderaApiAppId:
+                      typeof connection.traderaApiAppId === 'number'
+                        ? String(connection.traderaApiAppId)
+                        : '',
+                    traderaApiAppKey: preserveCurrentSecrets
+                      ? prev.traderaApiAppKey
+                      : '',
+                    traderaApiPublicKey:
+                      connection.traderaApiPublicKey ?? '',
+                    traderaApiUserId:
+                      typeof connection.traderaApiUserId === 'number'
+                        ? String(connection.traderaApiUserId)
+                        : '',
+                    traderaApiToken: preserveCurrentSecrets
+                      ? prev.traderaApiToken
+                      : '',
+                    traderaApiSandbox:
+                      connection.traderaApiSandbox ?? false,
+                  }));
+                }}
               >
-                <div>
-                  <p className='text-sm font-semibold text-white'>
-                    {connection.name}
-                  </p>
-                  <p className='text-xs text-gray-400'>{connection.username}</p>
-                  {editingConnectionId === connection.id && (
-                    <p className='text-[10px] uppercase tracking-wide text-emerald-300'>Selected for editing</p>
-                  )}
-                </div>
-                <div className='flex items-center gap-3'>
-                  <Button
-                    className='text-xs text-gray-200 hover:text-white'
-                    type='button'
-                    onClick={(): void => {
-                      const preserveCurrentSecrets =
-                        editingConnectionId === connection.id;
-                      setEditingConnectionId(connection.id);
-                      setConnectionForm((prev) => ({
-                        name: connection.name,
-                        username: connection.username ?? '',
-                        password: preserveCurrentSecrets ? prev.password : '',
-                        traderaDefaultTemplateId:
-                          connection.traderaDefaultTemplateId ?? '',
-                        traderaDefaultDurationHours:
-                          connection.traderaDefaultDurationHours ?? 72,
-                        traderaAutoRelistEnabled:
-                          connection.traderaAutoRelistEnabled ?? true,
-                        traderaAutoRelistLeadMinutes:
-                          connection.traderaAutoRelistLeadMinutes ?? 180,
-                        traderaApiAppId:
-                          typeof connection.traderaApiAppId === 'number'
-                            ? String(connection.traderaApiAppId)
-                            : '',
-                        traderaApiAppKey: preserveCurrentSecrets
-                          ? prev.traderaApiAppKey
-                          : '',
-                        traderaApiPublicKey:
-                          connection.traderaApiPublicKey ?? '',
-                        traderaApiUserId:
-                          typeof connection.traderaApiUserId === 'number'
-                            ? String(connection.traderaApiUserId)
-                            : '',
-                        traderaApiToken: preserveCurrentSecrets
-                          ? prev.traderaApiToken
-                          : '',
-                        traderaApiSandbox:
-                          connection.traderaApiSandbox ?? false,
-                      }));
-                    }}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    className={`text-xs ${
-                      isBaselinker
-                        ? 'text-purple-300 hover:text-purple-200'
-                        : isAllegro
-                          ? 'text-amber-300 hover:text-amber-200'
-                          : 'text-sky-300 hover:text-sky-200'
-                    }`}
-                    type='button'
-                    onClick={(): void => {
-                      if (isBaselinker) void handleBaselinkerTest(connection);
-                      else if (isAllegro) void handleAllegroTest(connection);
-                      else void handleTestConnection(connection);
-                    }}
-                    disabled={isTesting}
-                  >
-                    {isTesting ? 'Testing...' : 'Test'}
-                  </Button>
-                  {isTraderaBrowser && (
-                    <Button
-                      className='text-xs text-emerald-300 hover:text-emerald-200'
-                      type='button'
-                      onClick={(): void => {
-                        void handleTraderaManualLogin(connection);
-                      }}
-                      disabled={isTesting}
-                    >
-                      {isTesting ? 'Starting...' : 'Login window'}
-                    </Button>
-                  )}
-                  <Button
-                    className='text-xs text-red-400 hover:text-red-300'
-                    type='button'
-                    onClick={(): void => handleDeleteConnection(connection)}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                Edit
+              </Button>
+              <Button
+                variant='outline'
+                size='xs'
+                className={`h-7 text-[10px] uppercase font-bold ${
+                  isBaselinker
+                    ? 'text-purple-300 hover:text-purple-200'
+                    : isAllegro
+                      ? 'text-amber-300 hover:text-amber-200'
+                      : 'text-sky-300 hover:text-sky-200'
+                }`}
+                type='button'
+                onClick={(): void => {
+                  if (isBaselinker) void handleBaselinkerTest(item.original);
+                  else if (isAllegro) void handleAllegroTest(item.original);
+                  else void handleTestConnection(item.original);
+                }}
+                disabled={isTesting}
+              >
+                {isTesting ? 'Testing...' : 'Test'}
+              </Button>
+              {isTraderaBrowser && (
+                <Button
+                  variant='outline'
+                  size='xs'
+                  className='h-7 text-[10px] uppercase font-bold text-emerald-300 hover:text-emerald-200'
+                  type='button'
+                  onClick={(): void => {
+                    void handleTraderaManualLogin(item.original);
+                  }}
+                  disabled={isTesting}
+                >
+                  {isTesting ? 'Starting...' : 'Login window'}
+                </Button>
+              )}
+            </div>
+          )}
+          onDelete={(item) => handleDeleteConnection(item.original)}
+        />
         {showPlaywright && (
           <FormSection
             title='Playwright live update'

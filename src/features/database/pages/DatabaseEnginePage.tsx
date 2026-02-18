@@ -27,7 +27,8 @@ import {
   TabsContent,
   SectionHeader,
   Alert,
-  MetadataItem
+  MetadataItem,
+  LoadingState,
 } from '@/shared/ui';
 
 import { DatabaseBackupsPanel } from '../components/DatabaseBackupsPanel';
@@ -347,7 +348,7 @@ function DatabaseEngineContent(): React.JSX.Element {
 
 export default function DatabaseEnginePage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className='p-12 text-center text-sm text-gray-500 animate-pulse'>Loading database engine...</div>}>
+    <Suspense fallback={<LoadingState message='Loading database engine...' />}>
       <DatabaseEngineContent />
     </Suspense>
   );

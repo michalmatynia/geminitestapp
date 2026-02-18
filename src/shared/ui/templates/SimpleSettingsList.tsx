@@ -1,0 +1,158 @@
+'use client';
+
+import { MoreVertical, Loader2 } from 'lucide-react';
+import React from 'react';
+
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger, 
+  Button,
+} from '@/shared/ui';
+import { cn } from '@/shared/utils';
+
+export interface SimpleSettingsListItem {
+  id: string;
+  title: React.ReactNode;
+  subtitle?: React.ReactNode;
+  icon?: React.ReactNode;
+  description?: React.ReactNode;
+}
+
+interface SimpleSettingsListProps<T extends SimpleSettingsListItem> {
+  items: T[];
+  isLoading?: boolean;
+  onEdit?: (item: T) => void;
+  onDelete?: (item: T) => void | Promise<void>;
+  emptyMessage?: string;
+  renderActions?: (item: T) => React.ReactNode;
+  renderExtraActions?: (item: T) => React.ReactNode;
+  renderCustomContent?: (item: T) => React.ReactNode;
+  className?: string;
+  itemClassName?: string;
+  columns?: 1 | 2 | 3;
+}
+
+/**
+ * SimpleSettingsList - A unified component for rendering simple lists in settings panels.
+ * Optimized for lists of currencies, countries, languages, etc.
+ */
+export function SimpleSettingsList<T extends SimpleSettingsListItem>({
+  items,
+  isLoading,
+  onEdit,
+  onDelete,
+  emptyMessage = 'No items found.',
+  renderActions,
+  renderExtraActions,
+  renderCustomContent,
+  className,
+  itemClassName,
+  columns = 1,
+}: SimpleSettingsListProps<T>): React.JSX.Element {
+  if (isLoading) {
+    return (
+      <div className='py-8 flex flex-col items-center justify-center gap-2 text-sm text-gray-400'>
+        <Loader2 className='size-5 animate-spin text-blue-500' />
+        <span>Loading...</span>
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className='py-8 text-center text-sm text-gray-500'>
+        {emptyMessage}
+      </div>
+    );
+  }
+
+  const gridCols = {
+    1: 'grid-cols-1',
+    2: 'grid-cols-1 sm:grid-cols-2',
+    3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
+  }[columns];
+
+  return (
+    <div className={cn('grid gap-4', gridCols, className)}>
+      {items.map((item) => (
+        <div
+          key={item.id}
+          className={cn(
+            'group flex flex-col justify-between rounded-lg border border-border bg-card/40 p-4 transition-colors hover:bg-card/60',
+            itemClassName
+          )}
+        >
+          <div className='flex items-start justify-between gap-3'>
+            <div className='flex items-start gap-3 min-w-0'>
+              {item.icon && (
+                <div className='mt-0.5 shrink-0'>
+                  {item.icon}
+                </div>
+              )}
+              <div className='min-w-0'>
+                <div className='flex items-center gap-2'>
+                  <span className='font-semibold text-white truncate'>
+                    {item.title}
+                  </span>
+                  {item.subtitle && (
+                    <span className='text-xs text-gray-400 truncate'>
+                      {item.subtitle}
+                    </span>
+                  )}
+                </div>
+                {item.description && (
+                  <p className='mt-1 text-xs text-gray-400 line-clamp-2'>
+                    {item.description}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className='flex items-center gap-2 shrink-0'>
+              {renderActions?.(item)}
+              
+              {(onEdit || onDelete || renderExtraActions) && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      className='-mr-2 size-8 text-gray-400 hover:text-white'
+                      type='button'
+                    >
+                      <MoreVertical className='size-4' />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align='end'>
+                    {renderExtraActions?.(item)}
+                    {onEdit && (
+                      <DropdownMenuItem onSelect={() => onEdit(item)}>
+                        Edit
+                      </DropdownMenuItem>
+                    )}
+                    {onDelete && (
+                      <DropdownMenuItem
+                        className='text-red-300 focus:text-red-300'
+                        onSelect={() => void onDelete(item)}
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          </div>
+
+          {renderCustomContent && (
+            <div className='mt-4'>
+              {renderCustomContent(item)}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}

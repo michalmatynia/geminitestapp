@@ -1,5 +1,9 @@
 # Prompt Exploder Master Plan
 
+Related docs:
+- `docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md`
+- `docs/PROMPT_EXPLODER_TOOLTIP_GUIDE.md`
+
 ## Scope
 Unify Prompt Exploder recognition, learning, governance, and operational quality into a single UI-driven workflow.
 

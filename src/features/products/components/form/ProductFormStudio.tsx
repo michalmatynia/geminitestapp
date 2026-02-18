@@ -17,6 +17,10 @@ import {
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import { invalidateProductsAndCounts } from '@/features/products/hooks/productCache';
 import type { ProductWithImages } from '@/features/products/types';
+import type {
+  ProductStudioExecutionRoute,
+  ProductStudioSequenceGenerationMode,
+} from '@/features/products/types/product-studio';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -37,11 +41,42 @@ type ProductStudioSendResponse = {
   dispatchMode: 'queued' | 'inline';
   runKind: 'generation' | 'sequence';
   sequenceRunId: string | null;
+  requestedSequenceMode: ProductStudioSequenceGenerationMode;
+  resolvedSequenceMode: ProductStudioSequenceGenerationMode;
+  executionRoute: ProductStudioExecutionRoute;
   warnings?: string[];
 };
 
 type ProductStudioAcceptResponse = {
   product: ProductWithImages;
+};
+
+type ProductStudioAuditEntry = {
+  id: string;
+  createdAt: string;
+  status: 'completed' | 'failed';
+  imageSlotIndex: number;
+  executionRoute: ProductStudioExecutionRoute;
+  requestedSequenceMode: ProductStudioSequenceGenerationMode;
+  resolvedSequenceMode: ProductStudioSequenceGenerationMode;
+  runKind: 'generation' | 'sequence';
+  runId: string | null;
+  sequenceRunId: string | null;
+  dispatchMode: 'queued' | 'inline' | null;
+  fallbackReason: string | null;
+  warnings: string[];
+  timings: {
+    importMs: number | null;
+    sourceSlotUpsertMs: number | null;
+    routeDecisionMs: number | null;
+    dispatchMs: number | null;
+    totalMs: number;
+  };
+  errorMessage: string | null;
+};
+
+type ProductStudioAuditResponse = {
+  entries: ProductStudioAuditEntry[];
 };
 
 type RunStatusResponse = {
@@ -125,6 +160,9 @@ export default function ProductFormStudio(): React.JSX.Element {
   const [selectedVariantSlotId, setSelectedVariantSlotId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [accepting, setAccepting] = useState(false);
+  const [auditEntries, setAuditEntries] = useState<ProductStudioAuditEntry[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditError, setAuditError] = useState<string | null>(null);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [activeRunKind, setActiveRunKind] = useState<'generation' | 'sequence' | null>(null);
   const [runStatus, setRunStatus] = useState<
@@ -221,6 +259,40 @@ export default function ProductFormStudio(): React.JSX.Element {
     void refreshVariants();
   }, [refreshVariants]);
 
+  const refreshAudit = useCallback(async (): Promise<void> => {
+    if (!product?.id || !studioProjectId || selectedImageIndex === null) {
+      setAuditEntries([]);
+      setAuditError(null);
+      return;
+    }
+
+    setAuditLoading(true);
+    setAuditError(null);
+    try {
+      const response = await api.get<ProductStudioAuditResponse>(
+        `/api/products/${encodeURIComponent(product.id)}/studio/audit`,
+        {
+          params: {
+            imageSlotIndex: selectedImageIndex,
+            limit: 40,
+          },
+          cache: 'no-store',
+          logError: false,
+        },
+      );
+      setAuditEntries(Array.isArray(response.entries) ? response.entries : []);
+    } catch (error) {
+      setAuditEntries([]);
+      setAuditError(error instanceof Error ? error.message : 'Failed to load run audit history.');
+    } finally {
+      setAuditLoading(false);
+    }
+  }, [product?.id, selectedImageIndex, studioProjectId]);
+
+  useEffect(() => {
+    void refreshAudit();
+  }, [refreshAudit]);
+
   useEffect(() => {
     if (!activeRunId || !activeRunKind || !product?.id || selectedImageIndex === null || !studioProjectId) {
       return;
@@ -258,6 +330,7 @@ export default function ProductFormStudio(): React.JSX.Element {
             setActiveRunId(null);
             setActiveRunKind(null);
             void refreshVariants();
+            void refreshAudit();
           }
         })
         .catch(() => {
@@ -272,7 +345,7 @@ export default function ProductFormStudio(): React.JSX.Element {
       cancelled = true;
       clearInterval(timer);
     };
-  }, [activeRunId, activeRunKind, product?.id, refreshVariants, selectedImageIndex, studioProjectId]);
+  }, [activeRunId, activeRunKind, product?.id, refreshAudit, refreshVariants, selectedImageIndex, studioProjectId]);
 
   const selectedSourcePreview = useMemo(() => {
     if (selectedImageIndex === null) return null;
@@ -324,7 +397,9 @@ export default function ProductFormStudio(): React.JSX.Element {
       toast(
         result.runKind === 'sequence'
           ? 'Sequence started in Studio runtime.'
-          : 'Image sent to Studio.',
+          : result.executionRoute === 'ai_model_full_sequence'
+            ? 'Image sent for model-native full sequence generation.'
+            : 'Image sent to Studio.',
         { variant: 'success' }
       );
       if (Array.isArray(result.warnings) && result.warnings.length > 0) {
@@ -335,6 +410,7 @@ export default function ProductFormStudio(): React.JSX.Element {
         });
       }
       await refreshVariants();
+      await refreshAudit();
     } catch (error) {
       const message =
         error instanceof Error
@@ -373,6 +449,7 @@ export default function ProductFormStudio(): React.JSX.Element {
         variant: 'success',
       });
       await refreshVariants();
+      await refreshAudit();
     } catch (error) {
       const message =
         error instanceof Error
@@ -716,6 +793,73 @@ export default function ProductFormStudio(): React.JSX.Element {
           <p className='text-sm text-gray-400'>
             Select a generated variant to open the preview canvas.
           </p>
+        )}
+      </FormSection>
+
+      <FormSection
+        title='Run History & Audit'
+        description='Route decisions, mode resolution, fallback reasons, and processing timings for Product Studio post-production runs.'
+      >
+        <div className='flex flex-wrap items-center gap-2'>
+          <Button size='xs'
+            type='button'
+            variant='outline'
+            onClick={(): void => {
+              void refreshAudit();
+            }}
+            disabled={auditLoading}
+          >
+            {auditLoading ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+            Refresh Audit
+          </Button>
+        </div>
+
+        {auditError ? (
+          <Alert variant='error' className='mt-2 py-2 text-xs'>
+            {auditError}
+          </Alert>
+        ) : null}
+
+        {auditLoading ? (
+          <div className='mt-2 flex items-center gap-2 text-sm text-gray-400'>
+            <Loader2 className='size-4 animate-spin' />
+            Loading run audit...
+          </div>
+        ) : auditEntries.length === 0 ? (
+          <p className='mt-2 text-sm text-gray-400'>No run audit entries yet for this image slot.</p>
+        ) : (
+          <div className='mt-2 space-y-2'>
+            {auditEntries.map((entry) => {
+              const createdAtLabel = formatTimestamp(entry.createdAt);
+              const statusClass =
+                entry.status === 'completed' ? 'text-emerald-300' : 'text-red-300';
+              return (
+                <div key={entry.id} className='rounded border border-border/60 bg-card/20 p-2 text-xs text-gray-300'>
+                  <div className='flex flex-wrap items-center gap-x-3 gap-y-1'>
+                    <span className='text-gray-400'>{createdAtLabel}</span>
+                    <span className={statusClass}>{entry.status.toUpperCase()}</span>
+                    <span>route: {entry.executionRoute}</span>
+                    <span>mode: {entry.requestedSequenceMode} → {entry.resolvedSequenceMode}</span>
+                    <span>run: {entry.runKind}</span>
+                  </div>
+                  <div className='mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-400'>
+                    <span>total: {entry.timings.totalMs}ms</span>
+                    <span>import: {entry.timings.importMs ?? 'n/a'}ms</span>
+                    <span>slot upsert: {entry.timings.sourceSlotUpsertMs ?? 'n/a'}ms</span>
+                    <span>route: {entry.timings.routeDecisionMs ?? 'n/a'}ms</span>
+                    <span>dispatch: {entry.timings.dispatchMs ?? 'n/a'}ms</span>
+                    {entry.dispatchMode ? <span>queue: {entry.dispatchMode}</span> : null}
+                  </div>
+                  {entry.fallbackReason ? (
+                    <div className='mt-1 text-[11px] text-amber-300'>fallback: {entry.fallbackReason}</div>
+                  ) : null}
+                  {entry.errorMessage ? (
+                    <div className='mt-1 text-[11px] text-red-300'>error: {entry.errorMessage}</div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
         )}
       </FormSection>
     </div>

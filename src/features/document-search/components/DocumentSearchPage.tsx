@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { ListPanel } from '@/shared/ui';
+import { ListPanel, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 type DocumentSearchPageProps = {
@@ -51,7 +51,7 @@ export function DocumentSearchPage({
     >
       {breadcrumb}
       {loading ? (
-        <div className='py-8 text-center text-sm text-gray-400'>Loading...</div>
+        <LoadingState message='Searching documents...' />
       ) : hasResults ? (
         children
       ) : (

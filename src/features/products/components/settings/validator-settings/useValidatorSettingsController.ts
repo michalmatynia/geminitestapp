@@ -127,6 +127,9 @@ export type ValidatorSettingsController = {
   normalizeReplacementFields: (fields: string[] | null | undefined) => string[];
 };
 
+/**
+ * Validator docs: see docs/validator/function-reference.md#controller.usevalidatorsettingscontroller
+ */
 export function useValidatorSettingsController(): ValidatorSettingsController {
   const { toast } = useToast();
   const queryClient = useQueryClient();

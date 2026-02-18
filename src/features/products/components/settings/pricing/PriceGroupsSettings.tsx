@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { PriceGroup } from '@/features/products/types';
-import { Badge, Button, FormSection, SelectSimple } from '@/shared/ui';
+import { Badge, Button, FormSection, SelectSimple, SimpleSettingsList } from '@/shared/ui';
 
 import { useProductSettingsContext } from '../ProductSettingsContext';
 
@@ -34,65 +34,31 @@ export function PriceGroupsSettings(): React.JSX.Element {
         className='p-6'
       >
         <div className='mt-4'>
-          {loadingGroups ? (
-            <div className='rounded-md border border-dashed border p-6 text-center text-gray-400'>
-              Loading price groups...
-            </div>
-          ) : priceGroups.length === 0 ? (
-            <div className='rounded-md border border-dashed border p-6 text-center text-gray-400'>
-              At least one price group is required. Add a price group to continue.
-            </div>
-          ) : (
-            <div className='space-y-3'>
-              {priceGroups.map((group: PriceGroup) => (
-                <div
-                  key={group.id}
-                  className='flex items-center justify-between rounded-md border border-border/40 bg-gray-900/40 p-4'
-                >
-                  <div>
-                    <div className='flex items-center gap-2 text-white'>
-                      <span className='font-semibold'>{group.name}</span>
-                      {group.isDefault && (
-                        <Badge variant='success'>
-                          Default
-                        </Badge>
-                      )}
-                      <Badge variant='neutral'>
-                        {group.groupId}
-                      </Badge>
-                    </div>
-                    <p className='text-sm text-gray-400 mt-1'>
-                      {group.currencyCode} · {group.groupType}
-                    </p>
-                  </div>
-                  <div className='flex items-center gap-3'>
-                    <span className='text-sm text-gray-500 hidden sm:inline'>
-                      {group.description || 'No description'}
-                    </span>
-                    <div className='flex gap-2'>
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        type='button'
-                        onClick={() => onEditPriceGroup(group)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        className='text-red-400 border-red-500/20 hover:bg-red-500/10'
-                        type='button'
-                        onClick={() => onDeletePriceGroup(group)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
+          <SimpleSettingsList
+            items={priceGroups.map((group: PriceGroup) => ({
+              id: group.id,
+              title: (
+                <div className='flex items-center gap-2'>
+                  <span>{group.name}</span>
+                  {group.isDefault && (
+                    <Badge variant='success' size='sm' className='text-[9px] h-4'>
+                      Default
+                    </Badge>
+                  )}
+                  <Badge variant='neutral' size='sm' className='text-[9px] h-4 font-mono'>
+                    {group.groupId}
+                  </Badge>
                 </div>
-              ))}
-            </div>
-          )}
+              ),
+              subtitle: `${group.currencyCode} · ${group.groupType}`,
+              description: group.description || 'No description',
+              original: group
+            }))}
+            isLoading={loadingGroups}
+            onEdit={(item) => onEditPriceGroup(item.original)}
+            onDelete={(item) => void onDeletePriceGroup(item.original)}
+            emptyMessage='At least one price group is required. Add a price group to continue.'
+          />
         </div>
       </FormSection>
 

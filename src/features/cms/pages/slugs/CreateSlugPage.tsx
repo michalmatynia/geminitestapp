@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useCreateSlug } from '@/features/cms/hooks/useCmsQueries';
 import { SLUG_REGEX } from '@/features/cms/validations/slug';
 import { logClientError } from '@/features/observability';
-import { Button, Input, SectionHeader, FormSection, FormField, useToast } from '@/shared/ui';
+import { Input, SectionHeader, FormSection, FormField, useToast, FormActions } from '@/shared/ui';
 
 export default function CreateSlugPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -67,19 +67,12 @@ export default function CreateSlugPage(): React.JSX.Element {
             />
           </FormField>
           
-          <div className='flex justify-end pt-4 gap-3'>
-            <Button 
-              type='button' 
-              variant='outline' 
-              size='sm' 
-              onClick={() => router.back()}
-            >
-              Cancel
-            </Button>
-            <Button type='submit' size='sm' disabled={createSlug.isPending}>
-              {createSlug.isPending ? 'Creating...' : 'Create Path'}
-            </Button>
-          </div>
+          <FormActions
+            onCancel={() => router.back()}
+            saveText='Create Path'
+            isSaving={createSlug.isPending}
+            className='pt-4'
+          />
         </FormSection>
       </form>
     </div>

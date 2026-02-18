@@ -51,6 +51,14 @@ export const IMAGE_STUDIO_SEQUENCE_STEP_RUNTIMES = ['server', 'client'] as const
 export type ImageStudioSequenceStepRuntime =
   (typeof IMAGE_STUDIO_SEQUENCE_STEP_RUNTIMES)[number];
 
+export const IMAGE_STUDIO_SEQUENCE_STEP_INPUT_SOURCES = [
+  'previous',
+  'source',
+] as const;
+
+export type ImageStudioSequenceStepInputSource =
+  (typeof IMAGE_STUDIO_SEQUENCE_STEP_INPUT_SOURCES)[number];
+
 export type ImageStudioSequencePoint = {
   x: number;
   y: number;
@@ -67,6 +75,7 @@ export type ImageStudioSequenceStepBase = {
   id: string;
   type: ImageStudioSequenceOperation;
   runtime: ImageStudioSequenceStepRuntime;
+  inputSource: ImageStudioSequenceStepInputSource;
   enabled: boolean;
   label: string | null;
   onFailure: ImageStudioSequenceFailureMode;
@@ -236,6 +245,14 @@ const isCropKind = (value: unknown): value is ImageStudioSequenceCropKind =>
 const isStepRuntime = (value: unknown): value is ImageStudioSequenceStepRuntime =>
   typeof value === 'string' && IMAGE_STUDIO_SEQUENCE_STEP_RUNTIMES.includes(value as ImageStudioSequenceStepRuntime);
 
+const isStepInputSource = (
+  value: unknown,
+): value is ImageStudioSequenceStepInputSource =>
+  typeof value === 'string' &&
+  IMAGE_STUDIO_SEQUENCE_STEP_INPUT_SOURCES.includes(
+    value as ImageStudioSequenceStepInputSource,
+  );
+
 const toStepId = (value: unknown, fallbackType: ImageStudioSequenceOperation, index: number): string => {
   const candidate = asTrimmedString(value);
   if (!candidate) return `step_${index + 1}_${fallbackType}`;
@@ -301,12 +318,19 @@ const normalizeSequenceBase = (
   const runtime: ImageStudioSequenceStepRuntime = isStepRuntime(runtimeRaw)
     ? runtimeRaw
     : fallback.runtime;
+  const inputSourceRaw = asTrimmedString(value?.['inputSource']);
+  const inputSource: ImageStudioSequenceStepInputSource = isStepInputSource(
+    inputSourceRaw,
+  )
+    ? inputSourceRaw
+    : fallback.inputSource;
 
   const timeoutRaw = asInteger(value?.['timeoutMs']);
 
   return {
     id: toStepId(value?.['id'], type, index),
     runtime,
+    inputSource,
     enabled: asBoolean(value?.['enabled'], fallback.enabled),
     label: asTrimmedString(value?.['label']) ?? null,
     onFailure,
@@ -322,6 +346,7 @@ const cloneStep = (step: ImageStudioSequenceStep): ImageStudioSequenceStep => {
   const base: Omit<ImageStudioSequenceStepBase, 'type'> = {
     id: step.id,
     runtime: step.runtime,
+    inputSource: step.inputSource,
     enabled: step.enabled,
     label: step.label,
     onFailure: step.onFailure,
@@ -400,6 +425,7 @@ const defaultSequenceStepByType = (
   const base: Omit<ImageStudioSequenceStepBase, 'type'> = {
     id: `step_${index + 1}_${type}`,
     runtime: 'server',
+    inputSource: 'previous',
     enabled: true,
     label: null,
     onFailure: 'stop',

@@ -22,7 +22,7 @@ import {
   Badge,
   Button,
   Input,
-  Label,
+  FormField,
   MultiSelect,
   SelectSimple,
   Tabs,
@@ -247,6 +247,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     handleOpenFileEditor,
     activeFile,
     selectedAsset,
+    setSelectedAssetId,
     handleUpdateSelectedAsset,
     handleSaveFileEditor,
     handleDiscardFileEditorDraft,
@@ -484,7 +485,10 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
       onDeleteFolder: handleDeleteFolder,
       onCreateScanFile: handleCreateScanFile,
       onCreateImageAsset: handleCreateImageAsset,
-      onCreateNodeFile: handleCreateNodeFile,
+      onCreateNodeFile: (targetFolderPath) => {
+        handleCreateNodeFile(targetFolderPath);
+        setWorkspaceView('document');
+      },
       onUploadScanFiles: handleUploadScanFiles,
       onRunScanFileOcr: handleRunScanFileOcr,
       onUploadAssets: handleUploadAssets,
@@ -528,7 +532,12 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                   key: 'document',
                   label: selectedAsset?.kind === 'node_file' ? 'Node Canvas' : 'Document Canvas',
                   variant: workspaceView === 'document' ? 'default' : 'outline',
-                  onClick: () => setWorkspaceView('document'),
+                  onClick: () => {
+                    if (selectedAsset?.kind === 'node_file') {
+                      setSelectedAssetId(null);
+                    }
+                    setWorkspaceView('document');
+                  },
                 },
                 {
                   key: 'relations',
@@ -657,7 +666,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                         type='button'
                         onClick={handleRunScanDraftOcr}
                         disabled={
-                          editingDocumentDraft.scanSlots.length === 0 ||
+                          (editingDocumentDraft.scanSlots ?? []).length === 0 ||
                           isUploadingScanDraftFiles ||
                           uploadingScanSlotId !== null
                         }
@@ -680,12 +689,12 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                     Drag and drop image or PDF files here, or use Upload Files.
                   </div>
                   <div className='mt-2 max-h-32 space-y-1 overflow-auto pr-1'>
-                    {editingDocumentDraft.scanSlots.length === 0 ? (
+                    {(editingDocumentDraft.scanSlots ?? []).length === 0 ? (
                       <div className='rounded border border-dashed border-border/60 px-2 py-1.5 text-[11px] text-gray-500'>
                         No files uploaded yet.
                       </div>
                     ) : (
-                      editingDocumentDraft.scanSlots.map((slot) => {
+                      (editingDocumentDraft.scanSlots ?? []).map((slot) => {
                         const statusLabel =
                           uploadingScanSlotId === 'all' || uploadingScanSlotId === slot.id
                             ? 'Processing OCR...'
@@ -757,18 +766,16 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
 
                 <TabsContent value='document' className='mt-0'>
                   <div className='grid gap-3 md:grid-cols-2'>
-                    <div className='space-y-2'>
-                      <Label className='text-xs text-gray-400'>Name</Label>
+                    <FormField label='Name'>
                       <Input
                         value={editingDocumentDraft.name}
                         onChange={(event) => {
                           updateEditingDocumentDraft({ name: event.target.value });
                         }}
                       />
-                    </div>
+                    </FormField>
 
-                    <div className='space-y-2'>
-                      <Label className='text-xs text-gray-400'>Document Date</Label>
+                    <FormField label='Document Date'>
                       <Input
                         type='date'
                         value={editingDocumentDraft.documentDate}
@@ -776,10 +783,9 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                           updateEditingDocumentDraft({ documentDate: event.target.value });
                         }}
                       />
-                    </div>
+                    </FormField>
 
-                    <div className='space-y-2'>
-                      <Label className='text-xs text-gray-400'>Addresser</Label>
+                    <FormField label='Addresser'>
                       <SelectSimple
                         size='sm'
                         value={encodeFilemakerPartyReference(editingDocumentDraft.addresser)}
@@ -792,10 +798,9 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                         placeholder='Select addresser'
                         triggerClassName='h-9'
                       />
-                    </div>
+                    </FormField>
 
-                    <div className='space-y-2'>
-                      <Label className='text-xs text-gray-400'>Addressee</Label>
+                    <FormField label='Addressee'>
                       <SelectSimple
                         size='sm'
                         value={encodeFilemakerPartyReference(editingDocumentDraft.addressee)}
@@ -808,20 +813,19 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                         placeholder='Select addressee'
                         triggerClassName='h-9'
                       />
-                    </div>
+                    </FormField>
 
                   </div>
                 </TabsContent>
 
                 <TabsContent value='metadata' className='mt-0'>
                   <div className='grid gap-3 md:grid-cols-2'>
-                    <div className='md:col-span-2'>
-                      <Label className='mb-2 block text-xs text-gray-400'>Reference Cases</Label>
+                    <FormField label='Reference Cases' className='md:col-span-2'>
                       <MultiSelect
                         options={caseReferenceOptions.filter(
                           (option) => option.value !== editingDocumentDraft.id
                         )}
-                        selected={editingDocumentDraft.referenceCaseIds.filter(
+                        selected={(editingDocumentDraft.referenceCaseIds ?? []).filter(
                           (referenceId: string) => referenceId !== editingDocumentDraft.id
                         )}
                         onChange={(values: string[]): void => {
@@ -836,10 +840,9 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                         emptyMessage='No cases available.'
                         className='w-full'
                       />
-                    </div>
+                    </FormField>
 
-                    <div className='space-y-2'>
-                      <Label className='text-xs text-gray-400'>Parent Case</Label>
+                    <FormField label='Parent Case'>
                       <SelectSimple
                         size='sm'
                         value={editingDocumentDraft.parentCaseId ?? '__none__'}
@@ -854,10 +857,9 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                         placeholder='Parent case'
                         triggerClassName='h-9'
                       />
-                    </div>
+                    </FormField>
 
-                    <div className='space-y-2'>
-                      <Label className='text-xs text-gray-400'>Tag</Label>
+                    <FormField label='Tag'>
                       <SelectSimple
                         size='sm'
                         value={editingDocumentDraft.tagId ?? '__none__'}
@@ -870,10 +872,9 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                         placeholder='Select tag'
                         triggerClassName='h-9'
                       />
-                    </div>
+                    </FormField>
 
-                    <div className='space-y-2'>
-                      <Label className='text-xs text-gray-400'>Case Identifier</Label>
+                    <FormField label='Case Identifier'>
                       <SelectSimple
                         size='sm'
                         value={editingDocumentDraft.caseIdentifierId ?? '__none__'}
@@ -886,10 +887,9 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                         placeholder='Select case identifier'
                         triggerClassName='h-9'
                       />
-                    </div>
+                    </FormField>
 
-                    <div className='space-y-2'>
-                      <Label className='text-xs text-gray-400'>Category</Label>
+                    <FormField label='Category'>
                       <SelectSimple
                         size='sm'
                         value={editingDocumentDraft.categoryId ?? '__none__'}
@@ -902,18 +902,18 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                         placeholder='Select category'
                         triggerClassName='h-9'
                       />
-                    </div>
+                    </FormField>
                   </div>
                 </TabsContent>
 
                 <TabsContent value='history' className='mt-0'>
-                  {editingDocumentDraft.documentHistory.length === 0 ? (
+                  {(editingDocumentDraft.documentHistory ?? []).length === 0 ? (
                     <div className='rounded border border-dashed border-border/60 px-3 py-3 text-xs text-gray-500'>
                       No saved versions yet. Once you save an overwrite, the previous text will appear here.
                     </div>
                   ) : (
                     <div className='space-y-2'>
-                      {editingDocumentDraft.documentHistory.map((entry: CaseResolverDocumentHistoryEntry) => (
+                      {(editingDocumentDraft.documentHistory ?? []).map((entry: CaseResolverDocumentHistoryEntry) => (
                         <div
                           key={entry.id}
                           className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'
@@ -956,9 +956,9 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                   Revision {editingDocumentDraft.baseDocumentContentVersion}
                   {isEditorDraftDirty ? ' · unsaved changes' : ' · saved'}
                 </span>
-                {editingDocumentDraft.documentConversionWarnings.length > 0 ? (
+                {(editingDocumentDraft.documentConversionWarnings ?? []).length > 0 ? (
                   <span className='text-amber-300'>
-                    {editingDocumentDraft.documentConversionWarnings[0]}
+                    {(editingDocumentDraft.documentConversionWarnings ?? [])[0]}
                   </span>
                 ) : null}
               </div>
@@ -1006,7 +1006,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                   {editingDocumentDraft.editorType === 'wysiwyg' ? (
                     <DocumentWysiwygEditor
                       key={`case-resolver-wysiwyg-${editorContentRevisionSeed}`}
-                      value={editingDocumentDraft.documentContentHtml}
+                      value={editingDocumentDraft.documentContentHtml ?? ''}
                       onChange={handleUpdateDraftDocumentContent}
                       allowFontFamily
                       allowTextAlign

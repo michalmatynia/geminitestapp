@@ -1,6 +1,6 @@
 'use client';
 
-import { DataTable, FormSection } from '@/shared/ui';
+import { DataTable, FormSection, Hint } from '@/shared/ui';
 
 import { useAnalytics } from '../context/AnalyticsContext';
 
@@ -17,7 +17,7 @@ function MiniTable(props: {
   emptyLabel: string;
 }): React.JSX.Element {
   if (props.rows.length === 0) {
-    return <p className='text-xs text-gray-500 py-4 text-center italic'>{props.emptyLabel}</p>;
+    return <Hint size='xs' italic className='py-4 text-center'>{props.emptyLabel}</Hint>;
   }
 
   return (

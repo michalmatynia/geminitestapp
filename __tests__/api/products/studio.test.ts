@@ -187,6 +187,7 @@ describe('Product Studio API', () => {
         state: 'project_sequence_disabled',
         message: 'Project sequencing is disabled.',
       },
+      sequenceStepPlan: [],
       projectId: 'studio-a',
       imageSlotIndex: 0,
       sourceSlot: {
@@ -292,6 +293,16 @@ describe('Product Studio API', () => {
         state: 'project_snapshot_stale',
         message: 'Save Defaults required.',
       },
+      sequenceStepPlan: [
+        {
+          index: 0,
+          stepId: 'step_crop',
+          stepType: 'crop_center',
+          inputSource: 'source',
+          resolvedInput: 'source',
+          producesOutput: true,
+        },
+      ],
       sequenceGenerationMode: 'studio_prompt_then_sequence',
       projectId: 'studio-a',
       sourceSlotId: 'slot-source',
@@ -379,6 +390,16 @@ describe('Product Studio API', () => {
         state: 'ready',
         message: null,
       },
+      sequenceStepPlan: [
+        {
+          index: 0,
+          stepId: 'step_crop',
+          stepType: 'crop_center',
+          inputSource: 'source',
+          resolvedInput: 'source',
+          producesOutput: true,
+        },
+      ],
       modelId: 'chatgpt-image-latest',
       warnings: [],
     });

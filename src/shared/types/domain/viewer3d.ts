@@ -1,6 +1,18 @@
-import type { Asset3dDto, Asset3dCategoryDto, Asset3dTagDto, Asset3dViewerConfigDto } from '../../contracts/viewer3d';
+import type { 
+  Asset3dDto, 
+  Asset3dCategoryDto, 
+  Asset3dTagDto, 
+  Asset3dViewerConfigDto,
+  Asset3dListFiltersDto
+} from '../../contracts/viewer3d';
 
-export type { Asset3dDto, Asset3dCategoryDto, Asset3dTagDto, Asset3dViewerConfigDto };
+export type { 
+  Asset3dDto, 
+  Asset3dCategoryDto, 
+  Asset3dTagDto, 
+  Asset3dViewerConfigDto,
+  Asset3dListFiltersDto
+};
 
 export type Asset3DRecord = Asset3dDto;
 
@@ -8,10 +20,4 @@ export type Asset3DCreateInput = Omit<Asset3dDto, 'id' | 'createdAt' | 'updatedA
 
 export type Asset3DUpdateInput = Partial<Asset3DCreateInput>;
 
-export type Asset3DListFilters = {
-  filename?: string | null;
-  categoryId?: string | null;
-  tags?: string[];
-  isPublic?: boolean;
-  search?: string | null;
-};
+export type Asset3DListFilters = Asset3dListFiltersDto;

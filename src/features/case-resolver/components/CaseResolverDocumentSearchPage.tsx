@@ -200,7 +200,7 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
       } else if (sortBy === 'created') {
         delta = new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
       } else {
-        delta = new Date(left.updatedAt).getTime() - new Date(right.updatedAt).getTime();
+        delta = new Date(left.updatedAt ?? '').getTime() - new Date(right.updatedAt ?? '').getTime();
       }
       return sortOrder === 'asc' ? delta : -delta;
     });

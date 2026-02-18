@@ -163,7 +163,7 @@ export const enforceAiPathsRunRateLimit = async (
     RUN_RATE_MAX > 0
       ? repo.listRuns({
         userId: access.userId,
-        createdAfter: new Date(now - windowMs),
+        createdAfter: new Date(now - windowMs).toISOString(),
         limit: 1,
         offset: 0,
       })

@@ -75,7 +75,7 @@ type RunDocument = {
   _id: string;
   id?: string;
   userId?: string | null;
-  pathId: string;
+  pathId: string | null;
   pathName?: string | null;
   status: string;
   triggerEvent?: string | null;
@@ -326,9 +326,9 @@ export const mongoPathRunRepository: AiPathRunRepository = {
       _id: id,
       id,
       userId: input.userId ?? null,
-      pathId: input.pathId,
+      pathId: input.pathId ?? null,
       pathName: input.pathName ?? null,
-      status: 'queued',
+      status: input.status ?? 'queued',
       triggerEvent: input.triggerEvent ?? null,
       triggerNodeId: input.triggerNodeId ?? null,
       triggerContext: input.triggerContext ?? null,
@@ -669,17 +669,11 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     await ensureIndexes();
     const db = await getMongoDb();
     const filter: Record<string, unknown> = { runId };
-    const sinceValue = options.since
-      ? options.since instanceof Date
-        ? options.since
-        : new Date(options.since)
-      : null;
+    const sinceValue = options.since ? new Date(options.since) : null;
     const since =
       sinceValue && !Number.isNaN(sinceValue.getTime()) ? sinceValue : null;
     const afterDateValue = options.after?.createdAt
-      ? options.after.createdAt instanceof Date
-        ? options.after.createdAt
-        : new Date(options.after.createdAt)
+      ? new Date(options.after.createdAt)
       : null;
     const afterDate =
       afterDateValue && !Number.isNaN(afterDateValue.getTime()) ? afterDateValue : null;

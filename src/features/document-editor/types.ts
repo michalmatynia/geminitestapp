@@ -1,3 +1,5 @@
-export type DocumentEditorMode = 'markdown' | 'wysiwyg' | 'code';
+import type { DocumentEditorModeDto, RichTextEditorVariantDto } from '@/shared/contracts/document-editor';
 
-export type RichTextEditorVariant = 'compact' | 'full';
+export type DocumentEditorMode = DocumentEditorModeDto;
+
+export type RichTextEditorVariant = RichTextEditorVariantDto;

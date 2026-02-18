@@ -13,7 +13,7 @@ import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AgentTeachingAgentRecord } from '@/shared/types/domain/agent-teaching';
 import type { ChatMessage } from '@/shared/types/domain/chatbot';
-import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, Textarea, SelectSimple, useToast, Badge } from '@/shared/ui';
+import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Textarea, SelectSimple, useToast, Badge, ToggleRow } from '@/shared/ui';
 
 import { useCmsDomainSelection } from '../../../hooks/useCmsDomainSelection';
 import { useCmsAllSlugs, useCmsSlugs, useUpdateSlug } from '../../../hooks/useCmsQueries';
@@ -652,11 +652,14 @@ function PageSettingsTab(): React.ReactNode {
           </div>
 
           <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>Menu</Label>
-            <div className='flex items-center justify-between rounded border border-border/40 bg-gray-900/40 px-3 py-2'>
-              <span className='text-xs text-gray-300'>Show global menu on this page</span>
-              <Switch checked={showMenuValue} onCheckedChange={handleMenuVisibilityChange} />
-            </div>
+            <ToggleRow
+              type='switch'
+              label='Global Menu'
+              description='Show the global navigation menu on this page.'
+              checked={showMenuValue}
+              onCheckedChange={handleMenuVisibilityChange}
+              className='border-none p-0 bg-transparent hover:bg-transparent'
+            />
           </div>
 
           <div className='space-y-2'>

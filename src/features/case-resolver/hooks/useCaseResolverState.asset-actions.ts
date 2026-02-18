@@ -689,7 +689,7 @@ export const useCaseResolverStateAssetActions = ({
       return;
     }
 
-    let createdNodeFile = false;
+    let createdAssetId: string | null = null;
     updateWorkspace((current) => {
       const folder = resolveCaseScopedFolderTarget({
         targetFolderPath,
@@ -701,8 +701,9 @@ export const useCaseResolverStateAssetActions = ({
         folder,
         baseName: 'New Node File',
       });
+      const newId = createId('asset');
       const createdAsset = createCaseResolverAssetFile({
-        id: createId('asset'),
+        id: newId,
         name,
         folder,
         kind: 'node_file',
@@ -719,7 +720,7 @@ export const useCaseResolverStateAssetActions = ({
           2
         ),
       });
-      createdNodeFile = true;
+      createdAssetId = newId;
       return {
         ...current,
         assets: [...current.assets, createdAsset],
@@ -732,10 +733,22 @@ export const useCaseResolverStateAssetActions = ({
       };
     }, { persistToast: treeSaveToast });
 
-    if (createdNodeFile) {
+    if (createdAssetId) {
+      setSelectedFileId(null);
+      setSelectedFolderPath(null);
+      setSelectedAssetId(createdAssetId);
       toast('Node file created.', { variant: 'success' });
     }
-  }, [activeCaseId, requestedCaseStatus, toast, treeSaveToast, updateWorkspace]);
+  }, [
+    activeCaseId,
+    requestedCaseStatus,
+    setSelectedAssetId,
+    setSelectedFileId,
+    setSelectedFolderPath,
+    toast,
+    treeSaveToast,
+    updateWorkspace,
+  ]);
 
   const handleUploadAssets = useCallback(
     async (

@@ -59,7 +59,7 @@ export const slotHasRenderableImage = (
 ): boolean => {
   if (!slot) return false;
   const fileId = slot.imageFileId?.trim() ?? '';
-  const filePath = slot.imageFile?.filepath?.trim() ?? '';
+  const filePath = slot.imageFile?.url?.trim() ?? '';
   const imageUrl = slot.imageUrl?.trim() ?? '';
   const imageBase64 = slot.imageBase64?.trim() ?? '';
   return Boolean(fileId || filePath || imageUrl || imageBase64);
@@ -248,7 +248,7 @@ export const resolveInlinePreviewSource = (
     };
   }
 
-  const filePath = selectedSlot?.imageFile?.filepath?.trim() ?? '';
+  const filePath = selectedSlot?.imageFile?.url?.trim() ?? '';
   if (filePath) {
     const resolved = resolveProductImageUrl(filePath, productImagesExternalBaseUrl) ?? filePath;
     return {
@@ -332,7 +332,7 @@ export const mapLinkedMaskSlots = (
       const variant = typeof metadata?.['variant'] === 'string' ? metadata['variant'] : 'unknown';
       const generationMode = typeof metadata?.['generationMode'] === 'string' ? metadata['generationMode'] : 'n/a';
       const inverted = Boolean(metadata?.['inverted']);
-      const rawFilepath = slot.imageFile?.filepath?.trim() || slot.imageUrl?.trim() || null;
+      const rawFilepath = slot.imageFile?.url?.trim() || slot.imageUrl?.trim() || null;
       const imageSrc = rawFilepath
         ? (resolveProductImageUrl(rawFilepath, productImagesExternalBaseUrl) ?? rawFilepath)
         : null;
@@ -414,7 +414,7 @@ export const mapSavedCompositeInputImages = (args: {
       if (!layerRecord) return null;
       const slotId = typeof layerRecord['slotId'] === 'string' ? layerRecord['slotId'].trim() : '';
       const layerSlot = slotId ? slots.find((slot) => slot.id === slotId) ?? null : null;
-      const rawFilepath = layerSlot?.imageFile?.filepath?.trim() || layerSlot?.imageUrl?.trim() || null;
+      const rawFilepath = layerSlot?.imageFile?.url?.trim() || layerSlot?.imageUrl?.trim() || null;
       const imageSrc = rawFilepath
         ? (resolveProductImageUrl(rawFilepath, productImagesExternalBaseUrl) ?? rawFilepath)
         : null;
@@ -450,7 +450,7 @@ export const mapActiveCompositeInputImages = (
   productImagesExternalBaseUrl: string
 ): CompositeTabImageViewModel[] =>
   compositeAssets.map((slot, index): CompositeTabImageViewModel => {
-    const rawFilepath = slot.imageFile?.filepath?.trim() || slot.imageUrl?.trim() || null;
+    const rawFilepath = slot.imageFile?.url?.trim() || slot.imageUrl?.trim() || null;
     const imageSrc = rawFilepath
       ? (resolveProductImageUrl(rawFilepath, productImagesExternalBaseUrl) ?? rawFilepath)
       : null;

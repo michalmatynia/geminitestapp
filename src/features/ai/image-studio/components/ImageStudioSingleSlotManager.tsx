@@ -42,7 +42,7 @@ type EnsureSlotFromUploadResponse = {
 
 function toManagedSlot(slot: ImageStudioSlotRecord | null): ProductImageSlot {
   if (!slot?.imageFileId) return null;
-  const previewPath = slot.imageFile?.filepath || slot.imageUrl || null;
+  const previewPath = slot.imageFile?.url || slot.imageUrl || null;
   if (!previewPath) return null;
   return {
     type: 'existing',
@@ -90,7 +90,7 @@ const resolveSlotIdCandidates = (rawId: string): string[] => {
 function slotHasRenderableImage(slot: ImageStudioSlotRecord | null | undefined): boolean {
   if (!slot) return false;
   const imageFileId = slot.imageFileId?.trim() ?? '';
-  const imageFilePath = slot.imageFile?.filepath?.trim() ?? '';
+  const imageFilePath = slot.imageFile?.url?.trim() ?? '';
   const rawImageUrl = slot.imageUrl?.trim() ?? '';
   const imageUrl =
     rawImageUrl && !isLikelyImageStudioErrorText(rawImageUrl)
@@ -249,7 +249,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
                 const slotImageFileId = slot.imageFileId?.trim() ?? '';
                 if (currentTemporaryUploadId && slotImageFileId === currentTemporaryUploadId) return true;
                 if (!normalizedTemporaryFilepath) return false;
-                const slotPath = (slot.imageFile?.filepath ?? slot.imageUrl ?? '').trim();
+                const slotPath = (slot.imageFile?.url ?? slot.imageUrl ?? '').trim();
                 return slotPath === normalizedTemporaryFilepath;
               });
               return matches[0] ?? null;
@@ -726,7 +726,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
             // ProductImageManager may still call setImageLinkAt/setImageBase64At during clear flow.
             suppressNextDraftPersistenceOpsRef.current = 2;
           } else {
-            setObjectImageLinkDraft(objectSlot.imageUrl ?? objectSlot.imageFile?.filepath ?? '');
+            setObjectImageLinkDraft(objectSlot.imageUrl ?? objectSlot.imageFile?.url ?? '');
             setObjectImageBase64Draft(objectSlot.imageBase64 ?? '');
           }
           if (projectId.trim()) {

@@ -15,6 +15,7 @@ type CopyButtonProps = {
   size?: 'sm' | 'icon' | 'default';
   timeout?: number;
   showText?: boolean;
+  disabled?: boolean | undefined;
 };
 
 export function CopyButton({
@@ -24,6 +25,7 @@ export function CopyButton({
   size = 'icon',
   timeout = 2000,
   showText = false,
+  disabled,
 }: CopyButtonProps): React.JSX.Element {
   const [isCopied, setIsCopied] = useState(false);
 
@@ -61,6 +63,7 @@ export function CopyButton({
       size={showText ? 'default' : size}
       onClick={(e: React.MouseEvent): void => { void handleCopy(e); }}
       className={className}
+      disabled={disabled}
       title={isCopied ? 'Copied!' : 'Copy to clipboard'}
     >
       {isCopied ? (

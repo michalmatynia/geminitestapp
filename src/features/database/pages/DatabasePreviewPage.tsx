@@ -35,6 +35,8 @@ import {
   StatusBadge,
   Alert,
   SearchInput,
+  CollapsibleSection,
+  LoadingState,
 } from '@/shared/ui';
 
 import { CrudPanel } from '../components/CrudPanel';
@@ -89,8 +91,10 @@ function TableDetailCard({
   );
 
   return (
-    <div className='rounded-md border border-border bg-card/60 overflow-hidden'>
-      <div className='flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors cursor-pointer' onClick={() => setExpanded(!expanded)}>
+    <CollapsibleSection
+      open={expanded}
+      onOpenChange={setExpanded}
+      title={(
         <div className='flex flex-1 items-center gap-3'>
           <TableIcon className='size-4 text-emerald-300' />
           <span className='text-sm font-semibold text-gray-200'>{detail.name}</span>
@@ -98,6 +102,8 @@ function TableDetailCard({
             {detail.rowEstimate.toLocaleString()} rows • {detail.sizeFormatted}
           </span>
         </div>
+      )}
+      actions={(
         <div className='flex items-center gap-2'>
           {onQueryTable && (
             <Button
@@ -127,53 +133,49 @@ function TableDetailCard({
               Manage
             </Button>
           )}
-          {expanded ? (
-            <ChevronDownIcon className='size-4 text-gray-400' />
-          ) : (
-            <ChevronRightIcon className='size-4 text-gray-400' />
-          )}
-        </div>
-      </div>
-
-      {expanded && (
-        <div className='border-t border-border bg-black/20'>
-          <Tabs defaultValue='columns' className='w-full'>
-            <div className='px-4 pt-2'>
-              <TabsList className='h-8 bg-transparent border-b border-white/5 w-full justify-start rounded-none'>
-                <TabsTrigger value='columns' className='text-[10px] uppercase tracking-wider'>
-                  Columns ({detail.columns.length})
-                </TabsTrigger>
-                <TabsTrigger value='indexes' className='text-[10px] uppercase tracking-wider'>
-                  Indexes ({detail.indexes.length})
-                </TabsTrigger>
-                <TabsTrigger value='foreignKeys' className='text-[10px] uppercase tracking-wider'>
-                  Foreign Keys ({detail.foreignKeys.length})
-                </TabsTrigger>
-                <TabsTrigger value='data' className='text-[10px] uppercase tracking-wider'>
-                  Preview {tableRow ? `(${tableRow.totalRows})` : ''}
-                </TabsTrigger>
-              </TabsList>
-            </div>
-
-            <TabsContent value='columns' className='mt-0'>
-              <ColumnsTab columns={detail.columns} />
-            </TabsContent>
-
-            <TabsContent value='indexes' className='mt-0'>
-              <IndexesTab indexes={detail.indexes} />
-            </TabsContent>
-
-            <TabsContent value='foreignKeys' className='mt-0'>
-              <ForeignKeysTab foreignKeys={detail.foreignKeys} />
-            </TabsContent>
-
-            <TabsContent value='data' className='mt-0'>
-              <DataTab tableRows={tableRow} />
-            </TabsContent>
-          </Tabs>
         </div>
       )}
-    </div>
+      variant='card'
+      className='bg-card/60'
+      headerClassName='px-4 py-3'
+    >
+      <div className='border-t border-border bg-black/20'>
+        <Tabs defaultValue='columns' className='w-full'>
+          <div className='px-4 pt-2'>
+            <TabsList className='h-8 bg-transparent border-b border-white/5 w-full justify-start rounded-none'>
+              <TabsTrigger value='columns' className='text-[10px] uppercase tracking-wider'>
+                Columns ({detail.columns.length})
+              </TabsTrigger>
+              <TabsTrigger value='indexes' className='text-[10px] uppercase tracking-wider'>
+                Indexes ({detail.indexes.length})
+              </TabsTrigger>
+              <TabsTrigger value='foreignKeys' className='text-[10px] uppercase tracking-wider'>
+                Foreign Keys ({detail.foreignKeys.length})
+              </TabsTrigger>
+              <TabsTrigger value='data' className='text-[10px] uppercase tracking-wider'>
+                Preview {tableRow ? `(${tableRow.totalRows})` : ''}
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value='columns' className='mt-0'>
+            <ColumnsTab columns={detail.columns} />
+          </TabsContent>
+
+          <TabsContent value='indexes' className='mt-0'>
+            <IndexesTab indexes={detail.indexes} />
+          </TabsContent>
+
+          <TabsContent value='foreignKeys' className='mt-0'>
+            <ForeignKeysTab foreignKeys={detail.foreignKeys} />
+          </TabsContent>
+
+          <TabsContent value='data' className='mt-0'>
+            <DataTab tableRows={tableRow} />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </CollapsibleSection>
   );
 }
 

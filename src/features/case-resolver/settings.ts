@@ -6,6 +6,7 @@ import {
 } from '@/features/document-editor/content-format';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
+import { sanitizeCaseResolverGraphNodeFileRelations } from './nodefile-relations';
 import {
   buildCaseResolverFolderRecords,
   parseCaseResolverFolderRecords,
@@ -55,8 +56,6 @@ import {
   type CaseResolverPartyReference,
   type CaseResolverScanSlot,
   type CaseResolverWorkspace,
-  type AiNode,
-  type Edge,
 } from './types';
 
 export const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v1';
@@ -784,7 +783,7 @@ export const normalizeCaseResolverWorkspace = (
       .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
       .map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
   );
-  const validCaseIds = new Set<string>(caseFilesById.keys());
+  const validReferenceCaseIds = new Set<string>(caseFilesById.keys());
   const normalizedFilesWithCaseRelations = normalizedFilesBase.map((file: CaseResolverFile): CaseResolverFile => {
     const parentCaseId = resolveSafeCaseParentId(
       file.id,
@@ -793,7 +792,7 @@ export const normalizeCaseResolverWorkspace = (
       caseFilesById
     );
     const referenceCaseIds = file.referenceCaseIds
-      .filter((referenceId: string): boolean => referenceId !== file.id && validCaseIds.has(referenceId));
+      .filter((referenceId: string): boolean => referenceId !== file.id && validReferenceCaseIds.has(referenceId));
     const uniqueReferenceCaseIds = Array.from(new Set(referenceCaseIds));
     return {
       ...file,
@@ -866,32 +865,50 @@ export const normalizeCaseResolverWorkspace = (
     })
     .filter((asset: CaseResolverAssetFile | null): asset is CaseResolverAssetFile => Boolean(asset));
 
+  const sanitizedFiles = normalizedFiles.map((file: CaseResolverFile): CaseResolverFile => {
+    const sanitizedGraph = sanitizeCaseResolverGraphNodeFileRelations({
+      graph: file.graph,
+      assets,
+      files: normalizedFiles,
+    });
+    if (sanitizedGraph === file.graph) return file;
+    return {
+      ...file,
+      graph: sanitizedGraph,
+    };
+  });
+  const validCaseIds = new Set<string>(
+    sanitizedFiles
+      .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
+      .map((file: CaseResolverFile): string => file.id)
+  );
+
   const sourceFolderRecords = parseCaseResolverFolderRecords(
     workspaceRecord['folderRecords'],
     validCaseIds
   );
   const folderRecords = buildCaseResolverFolderRecords({
     sourceRecords: sourceFolderRecords,
-    files: normalizedFiles,
+    files: sanitizedFiles,
     assets,
     validCaseIds,
   });
   const folders = normalizeFolderPaths([
     ...folderRecords.map((record: CaseResolverFolderRecord): string => record.path),
-    ...normalizedFiles.map((file: CaseResolverFile): string => file.folder),
+    ...sanitizedFiles.map((file: CaseResolverFile): string => file.folder),
     ...assets.map((asset: CaseResolverAssetFile): string => asset.folder),
   ]);
   const folderTimestamps = normalizeCaseResolverFolderTimestamps({
     source: workspaceRecord['folderTimestamps'],
     folders,
-    files: normalizedFiles,
+    files: sanitizedFiles,
     assets,
     fallbackTimestamp: now,
   });
   const relationGraph = buildCaseResolverRelationGraph({
     source: workspaceRecord['relationGraph'],
     folders,
-    files: normalizedFiles,
+    files: sanitizedFiles,
     assets,
   });
 
@@ -900,9 +917,9 @@ export const normalizeCaseResolverWorkspace = (
       ? workspace.activeFileId
       : null;
   const activeFileId =
-    activeCandidate && normalizedFiles.some((file: CaseResolverFile) => file.id === activeCandidate)
+    activeCandidate && sanitizedFiles.some((file: CaseResolverFile) => file.id === activeCandidate)
       ? activeCandidate
-      : normalizedFiles[0]?.id ?? null;
+      : sanitizedFiles[0]?.id ?? null;
 
   return {
     version: 2,
@@ -912,7 +929,7 @@ export const normalizeCaseResolverWorkspace = (
     folders,
     folderRecords,
     folderTimestamps,
-    files: normalizedFiles,
+    files: sanitizedFiles,
     assets,
     relationGraph,
     activeFileId,
@@ -958,17 +975,67 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
       (parsed as Record<string, unknown>)['kind'] === 'case_resolver_node_file_snapshot_v1'
     ) {
       const record = parsed as Record<string, unknown>;
+      const parsedNodes = (Array.isArray(record['nodes']) ? record['nodes'] : []) as CaseResolverNodeFileSnapshot['nodes'];
+      const parsedEdges = (Array.isArray(record['edges']) ? record['edges'] : []) as CaseResolverNodeFileSnapshot['edges'];
+      const parsedNodeFileMeta =
+        record['nodeFileMeta'] !== null &&
+        typeof record['nodeFileMeta'] === 'object' &&
+        !Array.isArray(record['nodeFileMeta'])
+          ? (record['nodeFileMeta'] as CaseResolverNodeFileSnapshot['nodeFileMeta'])
+          : {};
+      if (parsedNodes.length > 0 || parsedEdges.length > 0 || Object.keys(parsedNodeFileMeta).length > 0) {
+        return {
+          kind: 'case_resolver_node_file_snapshot_v1',
+          source: 'manual',
+          nodes: parsedNodes,
+          edges: parsedEdges,
+          nodeFileMeta: parsedNodeFileMeta,
+        };
+      }
+
+      const legacyNode = record['node'];
+      const legacyNodeId =
+        typeof record['nodeId'] === 'string' && record['nodeId'].trim().length > 0
+          ? record['nodeId'].trim()
+          : '';
+      const legacyNodes: CaseResolverNodeFileSnapshot['nodes'] =
+        legacyNode && typeof legacyNode === 'object' && !Array.isArray(legacyNode)
+          ? [legacyNode as CaseResolverNodeFileSnapshot['nodes'][number]]
+          : [];
+      const resolvedLegacyNodeId =
+        legacyNodeId ||
+        (
+          legacyNodes[0] &&
+          typeof legacyNodes[0].id === 'string' &&
+          legacyNodes[0].id.trim().length > 0
+            ? legacyNodes[0].id.trim()
+            : ''
+        );
+      const legacyEdges = (Array.isArray(record['connectedEdges']) ? record['connectedEdges'] : []) as CaseResolverNodeFileSnapshot['edges'];
+      const sourceFileId = sanitizeOptionalId(record['sourceFileId']);
+      const sourceFileName =
+        typeof record['sourceFileName'] === 'string' && record['sourceFileName'].trim().length > 0
+          ? record['sourceFileName'].trim()
+          : 'Linked document';
+      const sourceFileType =
+        (record['sourceFileType'] === 'scanfile' ? 'scanfile' : 'document');
+      const legacyNodeFileMeta =
+        sourceFileId && resolvedLegacyNodeId
+          ? {
+            [resolvedLegacyNodeId]: {
+              fileId: sourceFileId,
+              fileType: sourceFileType,
+              fileName: sourceFileName,
+            },
+          }
+          : {};
+
       return {
         kind: 'case_resolver_node_file_snapshot_v1',
         source: 'manual',
-        nodes: (Array.isArray(record['nodes']) ? record['nodes'] : []) as AiNode[],
-        edges: (Array.isArray(record['edges']) ? record['edges'] : []) as Edge[],
-        nodeFileMeta:
-          record['nodeFileMeta'] !== null &&
-          typeof record['nodeFileMeta'] === 'object' &&
-          !Array.isArray(record['nodeFileMeta'])
-            ? (record['nodeFileMeta'] as CaseResolverNodeFileSnapshot['nodeFileMeta'])
-            : {},
+        nodes: legacyNodes,
+        edges: legacyEdges,
+        nodeFileMeta: legacyNodeFileMeta,
       };
     }
   } catch {

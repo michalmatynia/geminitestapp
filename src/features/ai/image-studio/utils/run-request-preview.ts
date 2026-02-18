@@ -32,9 +32,28 @@ export type RunRequestPreview = {
   images: RequestPreviewImage[];
 };
 
+const DALLE_PROMPT_MAX_CHARS = 1000;
+
 const asRecord = (value: unknown): Record<string, unknown> | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   return value as Record<string, unknown>;
+};
+
+const countPromptCharacters = (value: string): number => Array.from(value).length;
+const isDalleModelId = (value: string): boolean => value.trim().toLowerCase().startsWith('dall-e');
+
+const readSlotImagePath = (slot: ImageStudioSlotRecord | null | undefined): string => {
+  const imageFileRecord = asRecord(slot?.imageFile);
+  const imageFilePath =
+    typeof imageFileRecord?.['filepath'] === 'string'
+      ? imageFileRecord['filepath'].trim()
+      : typeof imageFileRecord?.['path'] === 'string'
+        ? imageFileRecord['path'].trim()
+        : typeof imageFileRecord?.['url'] === 'string'
+          ? imageFileRecord['url'].trim()
+          : '';
+  if (imageFilePath) return imageFilePath;
+  return typeof slot?.imageUrl === 'string' ? slot.imageUrl.trim() : '';
 };
 
 const readEnvironmentReferenceAsset = (
@@ -112,12 +131,28 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
   if (!projectId.trim()) {
     errors.push('Select a project first.');
   }
-  const sourceFilepath = workingSlot?.imageFile?.filepath || workingSlot?.imageUrl || '';
+  const sourceFilepath = readSlotImagePath(workingSlot);
   const hasSourceAsset = Boolean(sourceFilepath);
 
   const resolvedPrompt = resolvePromptPlaceholders(promptText, paramsState).trim();
   if (!resolvedPrompt) {
     errors.push('Resolved prompt is empty.');
+  }
+  const selectedModel = studioSettings.targetAi.openai.model?.trim() ?? '';
+  if (selectedModel && isDalleModelId(selectedModel)) {
+    const resolvedPromptLength = countPromptCharacters(resolvedPrompt);
+    if (resolvedPromptLength > DALLE_PROMPT_MAX_CHARS) {
+      const controlPromptLength = countPromptCharacters(promptText.trim());
+      if (resolvedPromptLength !== controlPromptLength) {
+        errors.push(
+          `Selected model (${selectedModel}) allows max ${DALLE_PROMPT_MAX_CHARS} characters. Resolved prompt is ${resolvedPromptLength} chars while Control Prompt field is ${controlPromptLength} chars.`
+        );
+      } else {
+        errors.push(
+          `Selected model (${selectedModel}) allows max ${DALLE_PROMPT_MAX_CHARS} characters. Current prompt length is ${resolvedPromptLength} chars.`
+        );
+      }
+    }
   }
 
   const eligibleShapes = maskShapes.filter(
@@ -142,7 +177,7 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
   const referenceAssets: Array<{ filepath: string; id?: string }> = referenceSlots
     .map((slot: ImageStudioSlotRecord) => ({
       id: slot.id,
-      filepath: slot.imageFile?.filepath || slot.imageUrl || '',
+      filepath: readSlotImagePath(slot),
     }))
     .filter((asset) => Boolean(asset.filepath));
   const environmentReferenceAsset = hasSourceAsset ? readEnvironmentReferenceAsset(workingSlot) : null;
@@ -170,7 +205,7 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
     });
   }
   referenceSlots.forEach((slot) => {
-    const refPath = slot.imageFile?.filepath || slot.imageUrl || '';
+    const refPath = readSlotImagePath(slot);
     if (!refPath) return;
     images.push({
       kind: 'reference',

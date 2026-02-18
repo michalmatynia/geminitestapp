@@ -552,7 +552,7 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
   const handleAiMaskGeneration = useCallback(
     (mode?: MaskGenerationMode) => {
       const effectiveMode = mode ?? maskGenMode;
-      const filepath = workingSlot?.imageFile?.filepath;
+      const filepath = workingSlot?.imageFile?.url;
       if (!filepath) {
         toast('Select a working slot with an image first.', { variant: 'info' });
         return;

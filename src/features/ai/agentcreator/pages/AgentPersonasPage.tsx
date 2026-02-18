@@ -1,13 +1,11 @@
 'use client';
 
-import Link from 'next/link';
-
-import { AgentPersonaSettingsForm } from '@/features/ai/agentcreator/components/AgentPersonaSettingsForm';
 import { useAgentPersonas, useSaveAgentPersonasMutation } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
 import type { AgentPersona } from '@/features/ai/agentcreator/types';
 import { buildAgentPersonaSettings, createAgentPersonaId } from '@/features/ai/agentcreator/utils/personas';
+import { AgentPersonaSettingsForm } from '@/features/ai/agentcreator/components/AgentPersonaSettingsForm';
 import { logClientError } from '@/features/observability';
-import { ItemLibrary, useToast } from '@/shared/ui';
+import { ItemLibrary, useToast, Button } from '@/shared/ui';
 
 export function AgentPersonasPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -64,19 +62,19 @@ export function AgentPersonasPage(): React.JSX.Element {
   };
 
   return (
-    <ItemLibrary<AgentPersona>
+    <ItemLibrary<AgentPersona & { description: string | null }>
       title='Agent Personas'
       description='Assign models to each reasoning stage for autonomous agents and AI Paths.'
       entityName='Persona'
-      items={personas}
+      items={personas as (AgentPersona & { description: string | null })[]}
       isLoading={loading}
       isSaving={saving}
       onSave={handleSavePersona}
       onDelete={handleDeletePersona}
-      backLink={(
-        <Link href='/admin/agentcreator' className='text-blue-300 hover:text-blue-200'>
+      headerActions={(
+        <Button variant='outline' size='sm' onClick={() => window.location.assign('/admin/agentcreator')}>
           ← Back to agent creator
-        </Link>
+        </Button>
       )}
       buildDefaultItem={() => ({
         name: '',

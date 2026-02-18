@@ -22,11 +22,9 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 import {
   Button,
-  DropdownMenu,
-  DropdownMenuContent,
+  ActionMenu,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
   Input,
   Alert,
 } from '@/shared/ui';
@@ -699,18 +697,14 @@ export default function ProductImageManager({
           };
 
           const actionsMenu = (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  type='button'
-                  variant={minimalUi ? 'outline' : 'ghost'}
-                  size={minimalUi ? 'sm' : 'icon'}
-                  className={minimalUi ? 'h-6 w-full px-2 text-[10px]' : 'h-6 w-6'}
-                >
-                  {minimalUi ? 'Actions' : <MoreVertical className='h-3.5 w-3.5' />}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align='end' data-preserve-slot-selection='true'>
+            <ActionMenu
+              variant={minimalUi ? 'outline' : 'ghost'}
+              size={minimalUi ? 'sm' : 'icon'}
+              triggerClassName={minimalUi ? 'h-6 w-full px-2 text-[10px]' : 'h-6 w-6'}
+              trigger={minimalUi ? 'Actions' : <MoreVertical className='h-3.5 w-3.5' />}
+              className='min-w-[160px]'
+            >
+              <div data-preserve-slot-selection='true'>
                 <DropdownMenuItem onClick={() => openSlotFilePicker(index)}>
                   Upload image
                 </DropdownMenuItem>
@@ -762,8 +756,8 @@ export default function ProductImageManager({
                 >
                   Clear upload
                 </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </div>
+            </ActionMenu>
           );
 
           const thumbnailFrame = (
@@ -994,18 +988,13 @@ export default function ProductImageManager({
                       </span>
                     </div>
                     <div className='flex items-center gap-1'>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            type='button'
-                            variant='outline'
-                            size='sm'
-                            className='h-6 px-2 text-[10px]'
-                          >
-                            View: {modeLabel}
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end' data-preserve-slot-selection='true'>
+                      <ActionMenu
+                        variant='outline'
+                        size='sm'
+                        triggerClassName='h-6 px-2 text-[10px]'
+                        trigger={`View: ${modeLabel}`}
+                      >
+                        <div data-preserve-slot-selection='true'>
                           <DropdownMenuItem
                             disabled={!hasUpload}
                             onClick={() => setSlotViewMode('upload')}
@@ -1024,8 +1013,8 @@ export default function ProductImageManager({
                           >
                             Base64
                           </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        </div>
+                      </ActionMenu>
                       {actionsMenu}
                     </div>
                   </div>

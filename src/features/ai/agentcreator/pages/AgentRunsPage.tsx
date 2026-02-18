@@ -1,11 +1,10 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
 import React, { useState, useMemo, useCallback } from 'react';
 
 import type { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
-import { Button, SectionHeader } from '@/shared/ui';
+import { Button, SectionHeader, LoadingState, RefreshButton } from '@/shared/ui';
 
 import { AgentRunDetailModal } from '../components/AgentRunDetailModal';
 import { useAgentAudits, useAgentLogs, useAgentRuns, useAgentSnapshots } from '../hooks/useAgentRunsQueries';
@@ -49,29 +48,20 @@ export default function AgentRunsPage(): React.JSX.Element {
         description='Manage and monitor agent runs across the system.'
         actions={
           <div className='flex gap-2'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => {
+            <RefreshButton
+              onRefresh={() => {
                 void queryClient.invalidateQueries();
                 void refetchAgentRuns();
               }}
-              disabled={isAgentRunsFetching}
-            >
-              {isAgentRunsFetching ? (
-                <Loader2 className='mr-2 size-4 animate-spin' />
-              ) : null}
-              Refresh
-            </Button>
+              isRefreshing={isAgentRunsFetching}
+            />
           </div>
         }
       />
 
       <div className='mt-8'>
         {isAgentRunsLoading ? (
-          <div className='flex h-64 items-center justify-center'>
-            <Loader2 className='size-8 animate-spin text-gray-500' />
-          </div>
+          <LoadingState message='Loading agent runs...' className='h-64' />
         ) : (
           <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
             {agentRuns.map((job: AiPathRunRecord) => (

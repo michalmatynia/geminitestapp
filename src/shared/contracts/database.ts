@@ -3,6 +3,130 @@ import { z } from 'zod';
 
 import { dtoBaseSchema } from './base';
 
+
+export const databaseTypeSchema = z.enum(['postgresql', 'mongodb']);
+export type DatabaseTypeDto = z.infer<typeof databaseTypeSchema>;
+
+export const databasePreviewModeSchema = z.enum(['backup', 'current']);
+export type DatabasePreviewModeDto = z.infer<typeof databasePreviewModeSchema>;
+
+export const databasePreviewGroupSchema = z.object({
+  type: z.string(),
+  objects: z.array(z.string()),
+});
+export type DatabasePreviewGroupDto = z.infer<typeof databasePreviewGroupSchema>;
+
+export const databasePreviewTableSchema = z.object({
+  name: z.string(),
+  rowEstimate: z.number(),
+});
+export type DatabasePreviewTableDto = z.infer<typeof databasePreviewTableSchema>;
+
+export const databasePreviewRowSchema = z.object({
+  name: z.string(),
+  rows: z.array(z.record(z.string(), z.unknown())),
+  totalRows: z.number(),
+});
+export type DatabasePreviewRowDto = z.infer<typeof databasePreviewRowSchema>;
+
+export const databaseColumnInfoSchema = z.object({
+  name: z.string(),
+  type: z.string(),
+  nullable: z.boolean(),
+  defaultValue: z.string().nullable(),
+  isPrimaryKey: z.boolean(),
+});
+export type DatabaseColumnInfoDto = z.infer<typeof databaseColumnInfoSchema>;
+
+export const databaseIndexInfoSchema = z.object({
+  name: z.string(),
+  columns: z.array(z.string()),
+  isUnique: z.boolean(),
+  definition: z.string(),
+});
+export type DatabaseIndexInfoDto = z.infer<typeof databaseIndexInfoSchema>;
+
+export const databaseForeignKeyInfoSchema = z.object({
+  name: z.string(),
+  column: z.string(),
+  referencedTable: z.string(),
+  referencedColumn: z.string(),
+  onDelete: z.string(),
+  onUpdate: z.string(),
+});
+export type DatabaseForeignKeyInfoDto = z.infer<typeof databaseForeignKeyInfoSchema>;
+
+export const databaseEnumInfoSchema = z.object({
+  name: z.string(),
+  values: z.array(z.string()),
+});
+export type DatabaseEnumInfoDto = z.infer<typeof databaseEnumInfoSchema>;
+
+export const databaseTableDetailSchema = z.object({
+  name: z.string(),
+  columns: z.array(databaseColumnInfoSchema),
+  indexes: z.array(databaseIndexInfoSchema),
+  foreignKeys: z.array(databaseForeignKeyInfoSchema),
+  rowEstimate: z.number(),
+  sizeBytes: z.number(),
+  sizeFormatted: z.string(),
+});
+export type DatabaseTableDetailDto = z.infer<typeof databaseTableDetailSchema>;
+
+export const sqlQueryFieldSchema = z.object({
+  name: z.string(),
+  dataTypeID: z.number(),
+});
+export type SqlQueryFieldDto = z.infer<typeof sqlQueryFieldSchema>;
+
+export const sqlQueryResultSchema = z.object({
+  rows: z.array(z.record(z.string(), z.unknown())),
+  rowCount: z.number(),
+  fields: z.array(sqlQueryFieldSchema),
+  command: z.string(),
+  duration: z.number(),
+  error: z.string().optional(),
+});
+export type SqlQueryResultDto = z.infer<typeof sqlQueryResultSchema>;
+
+export const crudOperationSchema = z.enum(['insert', 'update', 'delete']);
+export type CrudOperationDto = z.infer<typeof crudOperationSchema>;
+
+export const crudRequestSchema = z.object({
+  table: z.string(),
+  operation: crudOperationSchema,
+  type: databaseTypeSchema,
+  data: z.record(z.string(), z.unknown()).optional(),
+  primaryKey: z.record(z.string(), z.unknown()).optional(),
+});
+export type CrudRequestDto = z.infer<typeof crudRequestSchema>;
+
+export const crudResultSchema = z.object({
+  success: z.boolean(),
+  rowCount: z.number(),
+  returning: z.array(z.record(z.string(), z.unknown())).optional(),
+  error: z.string().optional(),
+});
+export type CrudResultDto = z.infer<typeof crudResultSchema>;
+
+export const databasePreviewPayloadSchema = z.object({
+  content: z.string().optional(),
+  groups: z.array(databasePreviewGroupSchema).optional(),
+  tables: z.array(databasePreviewTableSchema).optional(),
+  tableRows: z.array(databasePreviewRowSchema).optional(),
+  tableDetails: z.array(databaseTableDetailSchema).optional(),
+  enums: z.array(databaseEnumInfoSchema).optional(),
+  databaseSize: z.string().optional(),
+  page: z.number().optional(),
+  pageSize: z.number().optional(),
+  error: z.string().optional(),
+  errorId: z.string().optional(),
+  stage: z.string().optional(),
+  backupName: z.string().optional(),
+  mode: z.string().optional(),
+});
+export type DatabasePreviewPayloadDto = z.infer<typeof databasePreviewPayloadSchema>;
+
 /**
  * Database Schema Introspection DTOs
  */

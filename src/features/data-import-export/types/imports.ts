@@ -3,13 +3,20 @@ import type {
   BaseImportStartResponse,
 } from '@/features/integrations/types/base-import-runs';
 import type {
+  InventoryOptionDto,
+  WarehouseOptionDto,
+  CatalogOptionDto,
+  ImportListItemDto,
+  ImportListStatsDto,
+} from '@/shared/contracts/data-import-export';
+import type {
   ImageBase64Mode, 
   ImageTransformOptions, 
   ImageRetryPreset,
   BaseInventory,
   ImportExportTemplate as DomainImportExportTemplate,
   ImportExportTemplateMapping as DomainImportExportTemplateMapping,
-  ImportTemplateParameterImport as DomainImportTemplateParameterImport,
+  ImportTemplateParameterImport as DomainImportExportTemplateParameterImport,
 } from '@/shared/types/domain/integrations';
 
 export type {
@@ -19,33 +26,13 @@ export type {
   BaseInventory,
 };
 
-export type InventoryOption = {
-  id: string;
-  name: string;
-};
+export type InventoryOption = InventoryOptionDto;
 
-export type WarehouseOption = {
-  id: string;
-  name: string;
-};
+export type WarehouseOption = WarehouseOptionDto;
 
-export type CatalogOption = {
-  id: string;
-  name: string;
-  isDefault: boolean;
-};
+export type CatalogOption = CatalogOptionDto;
 
-export type ImportListItem = {
-  baseProductId: string;
-  name: string;
-  sku: string;
-  exists: boolean;
-  skuExists: boolean;
-  image?: string | null;
-  price?: number;
-  stock?: number;
-  description?: string;
-};
+export type ImportListItem = ImportListItemDto;
 
 export type ImportResponse = BaseImportStartResponse;
 
@@ -55,23 +42,14 @@ export type TemplateMapping = DomainImportExportTemplateMapping;
 
 export type Template = DomainImportExportTemplate;
 
-export type ImportTemplateParameterImport = DomainImportTemplateParameterImport;
+export type ImportTemplateParameterImport = DomainImportExportTemplateParameterImport;
 
 export type ExportParameterDoc = {
   key: string;
   description: string;
 };
 
-export type ImportListStats = {
-  total: number;
-  filtered: number;
-  available?: number;
-  existing: number;
-  skuDuplicates?: number;
-  page?: number;
-  pageSize?: number;
-  totalPages?: number;
-};
+export type ImportListStats = ImportListStatsDto;
 
 export type WarehouseDebugRaw = {
   method: string;

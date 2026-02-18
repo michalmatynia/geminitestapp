@@ -41,6 +41,7 @@ describe('deleteImageStudioVariant', () => {
       removeRunOutputs: vi.fn(async () => 1),
       getImageFileById: vi.fn(async () => null),
       deleteImageFileById: vi.fn(async () => undefined),
+      countProductsByImageFileId: vi.fn(async () => 0),
       deleteDiskPath: vi.fn(async () => false),
       logMetric: vi.fn(async () => undefined),
     };
@@ -78,6 +79,7 @@ describe('deleteImageStudioVariant', () => {
       removeRunOutputs: vi.fn(async () => 0),
       getImageFileById: vi.fn(async () => ({ id: 'img-stuck', filepath: '/uploads/studio/proj-1/stuck.png' })),
       deleteImageFileById: vi.fn(async () => undefined),
+      countProductsByImageFileId: vi.fn(async () => 0),
       deleteDiskPath: vi.fn(async () => true),
       logMetric: vi.fn(async () => undefined),
     };
@@ -111,6 +113,7 @@ describe('deleteImageStudioVariant', () => {
         filepath: '/uploads/studio/proj-1/orphan.png',
       })),
       deleteImageFileById: vi.fn(async () => undefined),
+      countProductsByImageFileId: vi.fn(async () => 0),
       deleteDiskPath: vi.fn(async () => true),
       logMetric: vi.fn(async () => undefined),
     };
@@ -129,6 +132,41 @@ describe('deleteImageStudioVariant', () => {
     expect(deps.deleteImageFileById).toHaveBeenCalledWith('img-orphan');
   });
 
+  it('retains file when it is still referenced by Product Studio image slots', async () => {
+    const deps = {
+      listSlots: vi.fn(async () => [] as ImageStudioSlotRecord[]),
+      deleteSlotCascade: vi.fn(async () => ({ deleted: false, deletedSlotIds: [] })),
+      removeRunOutputs: vi.fn(async () => 0),
+      getImageFileById: vi.fn(async () => ({
+        id: 'img-product-ref',
+        filepath: '/uploads/studio/proj-1/referenced.png',
+      })),
+      deleteImageFileById: vi.fn(async () => undefined),
+      countProductsByImageFileId: vi.fn(async () => 2),
+      deleteDiskPath: vi.fn(async () => true),
+      logMetric: vi.fn(async () => undefined),
+    };
+
+    const result = await deleteImageStudioVariant(
+      {
+        projectId: 'proj-1',
+        assetId: 'img-product-ref',
+      },
+      deps,
+    );
+
+    expect(result.modeUsed).toBe('noop');
+    expect(result.deletedFileIds).toEqual([]);
+    expect(result.deletedFilepaths).toEqual([]);
+    expect(
+      result.warnings.some((warning) =>
+        warning.includes('still referenced by Product Studio image slots'),
+      ),
+    ).toBe(true);
+    expect(deps.deleteImageFileById).not.toHaveBeenCalled();
+    expect(deps.deleteDiskPath).not.toHaveBeenCalled();
+  });
+
   it('skips file-only fallback when variant-intent selectors are provided but slot is unresolved', async () => {
     const deps = {
       listSlots: vi.fn(async () => [] as ImageStudioSlotRecord[]),
@@ -139,6 +177,7 @@ describe('deleteImageStudioVariant', () => {
         filepath: '/uploads/studio/proj-1/variant-intent.png',
       })),
       deleteImageFileById: vi.fn(async () => undefined),
+      countProductsByImageFileId: vi.fn(async () => 0),
       deleteDiskPath: vi.fn(async () => true),
       logMetric: vi.fn(async () => undefined),
     };
@@ -185,6 +224,7 @@ describe('deleteImageStudioVariant', () => {
       removeRunOutputs: vi.fn(async () => 0),
       getImageFileById: vi.fn(async () => null),
       deleteImageFileById: vi.fn(async () => undefined),
+      countProductsByImageFileId: vi.fn(async () => 0),
       deleteDiskPath: vi.fn(async () => false),
       logMetric: vi.fn(async () => undefined),
     };
@@ -228,6 +268,7 @@ describe('deleteImageStudioVariant', () => {
       removeRunOutputs: vi.fn(async () => 0),
       getImageFileById: vi.fn(async () => null),
       deleteImageFileById: vi.fn(async () => undefined),
+      countProductsByImageFileId: vi.fn(async () => 0),
       deleteDiskPath: vi.fn(async () => false),
       logMetric: vi.fn(async () => undefined),
     };
@@ -275,6 +316,7 @@ describe('deleteImageStudioVariant', () => {
         filepath: '/uploads/studio/proj-1/race.png',
       })),
       deleteImageFileById: vi.fn(async () => undefined),
+      countProductsByImageFileId: vi.fn(async () => 0),
       deleteDiskPath: vi.fn(async () => true),
       logMetric: vi.fn(async () => undefined),
     };
@@ -313,6 +355,7 @@ describe('deleteImageStudioVariant', () => {
       removeRunOutputs: vi.fn(async () => 0),
       getImageFileById: vi.fn(async () => null),
       deleteImageFileById: vi.fn(async () => undefined),
+      countProductsByImageFileId: vi.fn(async () => 0),
       deleteDiskPath: vi.fn(async () => false),
       logMetric: vi.fn(async () => undefined),
     };
@@ -358,6 +401,7 @@ describe('deleteImageStudioVariant', () => {
       removeRunOutputs: vi.fn(async () => 0),
       getImageFileById: vi.fn(async () => null),
       deleteImageFileById: vi.fn(async () => undefined),
+      countProductsByImageFileId: vi.fn(async () => 0),
       deleteDiskPath: vi.fn(async () => false),
       logMetric: vi.fn(async () => undefined),
     };

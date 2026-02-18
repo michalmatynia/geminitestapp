@@ -1,12 +1,11 @@
 'use client';
 
-import { ExternalLink, FileCode2, FileText, Save, ScanLine } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { ExternalLink, FileCode2, FileText, Save, ScanLine, Sparkles } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
 import {
   AiPathsProvider,
-  useCanvasActions,
   useCanvasRefs,
   useCanvasState,
   useGraphActions,
@@ -22,13 +21,15 @@ import {
   type AiNode,
   type NodeDefinition,
 } from '@/features/ai/ai-paths/lib';
-import { Button, useToast, Badge } from '@/shared/ui';
+import { Button, useToast, Badge, Hint, SelectSimple } from '@/shared/ui';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import {
   CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT,
+  CASE_RESOLVER_SHOW_DOCUMENT_IN_CANVAS_EVENT,
   parseCaseResolverTreeDropPayload,
   type CaseResolverDropDocumentToCanvasDetail,
+  type CaseResolverShowDocumentInCanvasDetail,
 } from '../drag';
 import { parseNodeFileSnapshot, serializeNodeFileSnapshot } from '../settings';
 import {
@@ -37,7 +38,7 @@ import {
   type CaseResolverNodeFileSnapshot,
   type CaseResolverScanSlot,
 } from '../types';
-import { buildNode, clampCanvasPosition } from './case-resolver-canvas-utils';
+import { buildNode, clampCanvasPosition, resolvePromptConfig } from './case-resolver-canvas-utils';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -65,6 +66,8 @@ const resolveContentPreview = (file: CaseResolverFile): string => {
 // ─── inner component props ────────────────────────────────────────────────────
 
 type NodeFileWorkspaceInnerProps = {
+  assetId: string;
+  assetName: string;
   snapshot: CaseResolverNodeFileSnapshot;
   onSnapshotChange: (updated: CaseResolverNodeFileSnapshot) => void;
 };
@@ -104,7 +107,7 @@ function NodeFilePanel({ meta, file, onOpen }: NodeFilePanelProps): React.JSX.El
               {preview}
             </div>
           ) : (
-            <p className='text-[11px] text-gray-500 italic'>No text content yet.</p>
+            <Hint size='xs' italic className='text-[11px]'>No text content yet.</Hint>
           )}
         </div>
       ) : (
@@ -131,18 +134,20 @@ function NodeFilePanel({ meta, file, onOpen }: NodeFilePanelProps): React.JSX.El
 // ─── inner canvas component ───────────────────────────────────────────────────
 
 function CaseResolverNodeFileWorkspaceInner({
+  assetId,
+  assetName,
   snapshot,
   onSnapshotChange,
 }: NodeFileWorkspaceInnerProps): React.JSX.Element {
-  const { workspace, onSelectFile } = useCaseResolverPageContext();
+  const { workspace, onSelectFile, onSelectAsset } = useCaseResolverPageContext();
   const { viewportRef, canvasRef } = useCanvasRefs();
   const { view } = useCanvasState();
-  const { setView: _setView } = useCanvasActions();
   const { nodes, edges } = useGraphState();
   const { addNode } = useGraphActions();
   const { selectedNodeId } = useSelectionState();
   const { selectNode } = useSelectionActions();
   const { toast } = useToast();
+  const [newNodeType, setNewNodeType] = useState<'prompt' | 'model' | 'template' | 'database'>('prompt');
 
   // nodeFileMeta lives in a ref so changes don't trigger re-renders but are
   // always available synchronously when the save effect fires.
@@ -157,8 +162,31 @@ function CaseResolverNodeFileWorkspaceInner({
       ),
     [workspace.files]
   );
+  const nodeFileOptions = useMemo(
+    () =>
+      workspace.assets
+        .filter((asset): boolean => asset.kind === 'node_file')
+        .sort((left, right): number => {
+          const folderDelta = left.folder.localeCompare(right.folder);
+          if (folderDelta !== 0) return folderDelta;
+          return left.name.localeCompare(right.name);
+        })
+        .map((asset) => ({
+          value: asset.id,
+          label: asset.folder ? `${asset.name} (${asset.folder})` : asset.name,
+        })),
+    [workspace.assets]
+  );
 
-  const lastEmittedHashRef = useRef<string>('');
+  const lastEmittedHashRef = useRef<string>(
+    stableStringify({
+      kind: 'case_resolver_node_file_snapshot_v1',
+      source: 'manual',
+      nodes: snapshot.nodes,
+      edges: snapshot.edges,
+      nodeFileMeta: snapshot.nodeFileMeta,
+    })
+  );
 
   // Persist snapshot on every graph change, pruning orphaned nodeFileMeta entries.
   useEffect(() => {
@@ -238,6 +266,36 @@ function CaseResolverNodeFileWorkspaceInner({
     [addNode, filesById, selectNode, toast]
   );
 
+  const addExplanatoryNode = useCallback((): void => {
+    const promptDefinition = palette.find((entry: NodeDefinition) => entry.type === 'prompt');
+    if (!promptDefinition) return;
+
+    const nodeId = `node-${Math.random().toString(36).slice(2, 10)}`;
+    const node = buildNode(promptDefinition, placePosition, nodeId, 'Explanatory Note');
+    const promptConfig = resolvePromptConfig(node);
+    addNode({
+      ...node,
+      config: {
+        ...(node.config ?? {}),
+        prompt: {
+          ...promptConfig,
+          template: '',
+        },
+      },
+    });
+    selectNode(nodeId);
+    toast('Explanatory node added.', { variant: 'success' });
+  }, [addNode, placePosition, selectNode, toast]);
+
+  const addGenericNode = useCallback((): void => {
+    const definition = palette.find((entry: NodeDefinition) => entry.type === newNodeType);
+    if (!definition) return;
+    const nodeId = `node-${Math.random().toString(36).slice(2, 10)}`;
+    const node = buildNode(definition, placePosition, nodeId, definition.title);
+    addNode(node);
+    selectNode(nodeId);
+  }, [addNode, newNodeType, placePosition, selectNode]);
+
   // Listen for file drops emitted via the window event (from the folder tree button).
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -261,6 +319,56 @@ function CaseResolverNodeFileWorkspaceInner({
       );
     };
   }, [addFileReferenceNode, placePosition]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const listener = (event: Event): void => {
+      const customEvent = event as CustomEvent<CaseResolverShowDocumentInCanvasDetail>;
+      const detail = customEvent.detail;
+      if (!detail || typeof detail !== 'object') return;
+      const fileId = typeof detail.fileId === 'string' ? detail.fileId.trim() : '';
+      if (!fileId) return;
+
+      const relatedNodeFileAssetIds = Array.isArray(detail.relatedNodeFileAssetIds)
+        ? detail.relatedNodeFileAssetIds
+          .filter((entry: unknown): entry is string => typeof entry === 'string')
+          .map((entry: string): string => entry.trim())
+          .filter(Boolean)
+        : [];
+      if (relatedNodeFileAssetIds.length > 0 && !relatedNodeFileAssetIds.includes(assetId)) {
+        return;
+      }
+
+      const preferredNodeId =
+        typeof detail.nodeId === 'string' && detail.nodeId.trim().length > 0
+          ? detail.nodeId.trim()
+          : null;
+      if (preferredNodeId) {
+        const preferredMeta = nodeFileMetaRef.current[preferredNodeId] ?? null;
+        if (preferredMeta?.fileId === fileId) {
+          selectNode(preferredNodeId);
+          return;
+        }
+      }
+
+      const nodeIds = Object.entries(nodeFileMetaRef.current)
+        .filter(([, meta]): boolean => meta.fileId === fileId)
+        .map(([nodeId]: [string, CaseResolverNodeFileMeta]): string => nodeId);
+      if (nodeIds.length === 0) return;
+      selectNode(nodeIds[nodeIds.length - 1] ?? nodeIds[0]!);
+    };
+
+    window.addEventListener(
+      CASE_RESOLVER_SHOW_DOCUMENT_IN_CANVAS_EVENT,
+      listener as EventListener
+    );
+    return (): void => {
+      window.removeEventListener(
+        CASE_RESOLVER_SHOW_DOCUMENT_IN_CANVAS_EVENT,
+        listener as EventListener
+      );
+    };
+  }, [assetId, selectNode]);
 
   const handleCanvasDragOverCapture = (event: React.DragEvent<HTMLDivElement>): void => {
     const payload = parseCaseResolverTreeDropPayload(event.dataTransfer);
@@ -315,15 +423,69 @@ function CaseResolverNodeFileWorkspaceInner({
       <div className='flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0'>
         {/* Toolbar */}
         <div className='flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3'>
-          <FileCode2 className='size-4 flex-shrink-0 text-gray-500' />
-          <span className='text-xs text-gray-400'>
-            Drag documents or scan files from the tree onto the canvas to connect them.
-          </span>
+          <FileCode2 className='size-4 flex-shrink-0 text-violet-400' />
+          <span className='truncate text-sm font-medium text-gray-200'>{assetName}</span>
           {nodes.length > 0 ? (
             <Badge variant='outline' className='px-1.5 py-0 text-[10px]'>
               {nodes.length} node{nodes.length !== 1 ? 's' : ''}
             </Badge>
           ) : null}
+
+          <SelectSimple
+            size='sm'
+            value={assetId}
+            onValueChange={(value: string): void => {
+              const normalized = value.trim();
+              if (!normalized || normalized === assetId) return;
+              onSelectAsset(normalized);
+            }}
+            options={nodeFileOptions}
+            className='w-[260px]'
+            triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
+          />
+
+          <div className='mx-1 h-6 w-px bg-border/60' />
+
+          <Button
+            type='button'
+            onClick={addExplanatoryNode}
+            className='h-8 rounded-md border border-emerald-500/40 text-xs text-emerald-100 hover:bg-emerald-500/15'
+          >
+            <Sparkles className='mr-1 size-3.5' />
+            Explanatory Node
+          </Button>
+
+          <SelectSimple
+            size='sm'
+            value={newNodeType}
+            onValueChange={(value: string): void => {
+              if (
+                value === 'prompt' ||
+                value === 'model' ||
+                value === 'template' ||
+                value === 'database'
+              ) {
+                setNewNodeType(value);
+              }
+            }}
+            options={[
+              { value: 'prompt', label: 'Prompt Node' },
+              { value: 'model', label: 'Model Node' },
+              { value: 'template', label: 'Template Node' },
+              { value: 'database', label: 'Database Node' },
+            ]}
+            className='w-[170px]'
+            triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
+          />
+
+          <Button
+            type='button'
+            onClick={addGenericNode}
+            className='h-8 rounded-md border border-border text-xs text-gray-100 hover:bg-muted/60'
+          >
+            Add Node
+          </Button>
+
           <div className='ml-auto'>
             <Button
               type='button'
@@ -338,11 +500,25 @@ function CaseResolverNodeFileWorkspaceInner({
 
         {/* Canvas */}
         <div
-          className='min-h-0 flex-1'
+          className='relative min-h-0 flex-1'
           onDragOverCapture={handleCanvasDragOverCapture}
           onDropCapture={handleCanvasDropCapture}
         >
           <CanvasBoard />
+          {nodes.length === 0 ? (
+            <div className='pointer-events-none absolute inset-0 flex items-center justify-center'>
+              <div className='flex flex-col items-center gap-3 rounded-xl border border-dashed border-border/50 bg-card/60 px-8 py-6 text-center backdrop-blur-sm'>
+                <FileCode2 className='size-8 text-gray-500' />
+                <div>
+                  <p className='text-sm font-medium text-gray-300'>Empty canvas</p>
+                  <p className='mt-1 text-xs text-gray-500'>
+                    Use the <span className='text-sky-300'>✦</span> button next to a file in the tree,
+                    or drag a file directly onto this canvas.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -364,9 +540,9 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
   const { selectedAsset, onUpdateSelectedAsset } = useCaseResolverPageContext();
 
   // Re-parse only when the asset identity changes, not on every textContent save.
+   
   const snapshot = useMemo(
     () => parseNodeFileSnapshot(selectedAsset?.textContent ?? ''),
-     
     [selectedAsset?.id]
   );
 
@@ -394,6 +570,8 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
       initialRuntimeState={{ inputs: {}, outputs: {}, history: {} }}
     >
       <CaseResolverNodeFileWorkspaceInner
+        assetId={selectedAsset.id}
+        assetName={selectedAsset.name}
         snapshot={snapshot}
         onSnapshotChange={handleSnapshotChange}
       />

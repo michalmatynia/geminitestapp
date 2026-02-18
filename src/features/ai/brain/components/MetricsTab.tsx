@@ -1,10 +1,9 @@
 'use client';
 
 import { Activity, Radar } from 'lucide-react';
+import React from 'react';
 
-import { type AiInsightRecord } from '@/shared/types';
-import { Button } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { Button, MetadataItem, StatusBadge, Alert, SectionHeader, FormSection } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 
@@ -33,12 +32,6 @@ const formatPercent = (value: number | null | undefined): string => {
   return `${value.toFixed(1)}%`;
 };
 
-const getInsightStatusClass = (status: AiInsightRecord['status']): string => {
-  if (status === 'ok') return 'border-emerald-500/40 text-emerald-300';
-  if (status === 'warning') return 'border-amber-500/40 text-amber-300';
-  return 'border-rose-500/40 text-rose-300';
-};
-
 export function MetricsTab(): React.JSX.Element {
   const {
     analyticsSummaryQuery,
@@ -52,70 +45,59 @@ export function MetricsTab(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <div className='flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-card/40 p-4'>
-        <div>
-          <div className='text-sm font-semibold text-white'>Deep Metrics</div>
-          <div className='text-xs text-gray-400'>
-            Auto-refreshing telemetry from analytics, system logs, and AI insight runs.
-          </div>
-        </div>
-        <Button
-          variant='outline'
-          size='sm'
-          onClick={() => {
-            void analyticsSummaryQuery.refetch();
-            void logMetricsQuery.refetch();
-            void insightsQuery.refetch();
-            void runtimeAnalyticsQuery.refetch();
-          }}
-        >
-          Refresh now
-        </Button>
-      </div>
+      <SectionHeader
+        title='Deep Metrics'
+        description='Auto-refreshing telemetry from analytics, system logs, and AI insight runs.'
+        className='p-4'
+        actions={
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => {
+              void analyticsSummaryQuery.refetch();
+              void logMetricsQuery.refetch();
+              void insightsQuery.refetch();
+              void runtimeAnalyticsQuery.refetch();
+            }}
+          >
+            Refresh now
+          </Button>
+        }
+      />
 
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
-        <div className='rounded-lg border border-border/60 bg-card/30 p-3'>
-          <div className='text-[11px] uppercase text-gray-500'>Analytics Events (24h)</div>
-          <div className='mt-1 text-2xl font-semibold text-white'>
-            {formatNumber(analyticsSummaryQuery.data?.totals.events)}
-          </div>
-        </div>
-        <div className='rounded-lg border border-border/60 bg-card/30 p-3'>
-          <div className='text-[11px] uppercase text-gray-500'>Visitors (24h)</div>
-          <div className='mt-1 text-2xl font-semibold text-white'>
-            {formatNumber(analyticsSummaryQuery.data?.visitors)}
-          </div>
-        </div>
-        <div className='rounded-lg border border-border/60 bg-card/30 p-3'>
-          <div className='text-[11px] uppercase text-gray-500'>Error Logs (24h)</div>
-          <div className='mt-1 text-2xl font-semibold text-white'>
-            {formatNumber(logMetricsQuery.data?.last24Hours)}
-          </div>
-        </div>
-        <div className='rounded-lg border border-border/60 bg-card/30 p-3'>
-          <div className='text-[11px] uppercase text-gray-500'>Error Logs (7d)</div>
-          <div className='mt-1 text-2xl font-semibold text-white'>
-            {formatNumber(logMetricsQuery.data?.last7Days)}
-          </div>
-        </div>
-        <div className='rounded-lg border border-border/60 bg-card/30 p-3'>
-          <div className='text-[11px] uppercase text-gray-500'>Runtime Runs (24h)</div>
-          <div className='mt-1 text-2xl font-semibold text-white'>
-            {formatNumber(runtimeAnalyticsQuery.data?.runs.total)}
-          </div>
-          <div className='mt-1 text-[11px] text-gray-400'>
-            Success {formatPercent(runtimeAnalyticsQuery.data?.runs.successRate)}
-          </div>
-        </div>
-        <div className='rounded-lg border border-border/60 bg-card/30 p-3'>
-          <div className='text-[11px] uppercase text-gray-500'>Brain Reports (24h)</div>
-          <div className='mt-1 text-2xl font-semibold text-white'>
-            {formatNumber(runtimeAnalyticsQuery.data?.brain.totalReports)}
-          </div>
-          <div className='mt-1 text-[11px] text-gray-400'>
-            Warn {formatNumber(runtimeAnalyticsQuery.data?.brain.warningReports)} · Err {formatNumber(runtimeAnalyticsQuery.data?.brain.errorReports)}
-          </div>
-        </div>
+        <MetadataItem
+          label='Analytics Events (24h)'
+          value={formatNumber(analyticsSummaryQuery.data?.totals.events)}
+          valueClassName='text-2xl font-semibold text-white'
+        />
+        <MetadataItem
+          label='Visitors (24h)'
+          value={formatNumber(analyticsSummaryQuery.data?.visitors)}
+          valueClassName='text-2xl font-semibold text-white'
+        />
+        <MetadataItem
+          label='Error Logs (24h)'
+          value={formatNumber(logMetricsQuery.data?.last24Hours)}
+          valueClassName='text-2xl font-semibold text-white'
+        />
+        <MetadataItem
+          label='Error Logs (7d)'
+          value={formatNumber(logMetricsQuery.data?.last7Days)}
+          valueClassName='text-2xl font-semibold text-white'
+        />
+        <MetadataItem
+          label='Runtime Runs (24h)'
+          value={formatNumber(runtimeAnalyticsQuery.data?.runs.total)}
+          valueClassName='text-2xl font-semibold text-white'
+          hint={`Success ${formatPercent(runtimeAnalyticsQuery.data?.runs.successRate)}`}
+        />
+        <MetadataItem
+          label='Brain Reports (24h)'
+          value={formatNumber(runtimeAnalyticsQuery.data?.brain.totalReports)}
+          valueClassName='text-2xl font-semibold text-white'
+          hint={`Warn ${formatNumber(runtimeAnalyticsQuery.data?.brain.warningReports)} · Err ${formatNumber(runtimeAnalyticsQuery.data?.brain.errorReports)}`}
+        />
       </div>
 
       <div className='grid gap-4 lg:grid-cols-2'>
@@ -157,84 +139,74 @@ export function MetricsTab(): React.JSX.Element {
       </div>
 
       <div className='grid gap-4 lg:grid-cols-2'>
-        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-          <div className='text-sm font-semibold text-white'>Latest Analytics Insight</div>
-          {latestAnalyticsInsight ? (
-            <div className='mt-3 space-y-2'>
-              <div className={cn('inline-flex rounded border px-2 py-1 text-[11px] uppercase', getInsightStatusClass(latestAnalyticsInsight.status))}>
-                {latestAnalyticsInsight.status}
+        <MetadataItem
+          label='Latest Analytics Insight'
+          className='p-4'
+          hint={latestAnalyticsInsight ? formatDate(latestAnalyticsInsight.createdAt) : undefined}
+          value={(
+            latestAnalyticsInsight ? (
+              <div className='space-y-2'>
+                <StatusBadge status={latestAnalyticsInsight.status} />
+                <div className='text-xs text-gray-300'>{latestAnalyticsInsight.summary}</div>
               </div>
-              <div className='text-xs text-gray-300'>{latestAnalyticsInsight.summary}</div>
-              <div className='text-[11px] text-gray-500'>
-                {formatDate(latestAnalyticsInsight.createdAt)}
-              </div>
-            </div>
-          ) : (
-            <div className='mt-3 text-xs text-gray-500'>No analytics insights yet.</div>
+            ) : (
+              <div className='text-xs text-gray-500'>No analytics insights yet.</div>
+            )
           )}
-        </div>
+        />
 
-        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-          <div className='text-sm font-semibold text-white'>Latest Log Insight</div>
-          {latestLogsInsight ? (
-            <div className='mt-3 space-y-2'>
-              <div className={cn('inline-flex rounded border px-2 py-1 text-[11px] uppercase', getInsightStatusClass(latestLogsInsight.status))}>
-                {latestLogsInsight.status}
+        <MetadataItem
+          label='Latest Log Insight'
+          className='p-4'
+          hint={latestLogsInsight ? formatDate(latestLogsInsight.createdAt) : undefined}
+          value={(
+            latestLogsInsight ? (
+              <div className='space-y-2'>
+                <StatusBadge status={latestLogsInsight.status} />
+                <div className='text-xs text-gray-300'>{latestLogsInsight.summary}</div>
               </div>
-              <div className='text-xs text-gray-300'>{latestLogsInsight.summary}</div>
-              <div className='text-[11px] text-gray-500'>
-                {formatDate(latestLogsInsight.createdAt)}
-              </div>
-            </div>
-          ) : (
-            <div className='mt-3 text-xs text-gray-500'>No log insights yet.</div>
+            ) : (
+              <div className='text-xs text-gray-500'>No log insights yet.</div>
+            )
           )}
-        </div>
+        />
       </div>
 
-      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-        <div className='text-sm font-semibold text-white'>Runtime Analysis (Redis)</div>
-        <div className='mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-4'>
-          <div className='rounded border border-border/60 bg-card/60 p-3'>
-            <div className='text-[10px] uppercase text-gray-500'>Queued / Started</div>
-            <div className='mt-1 text-sm text-white'>
-              {formatNumber(runtimeAnalyticsQuery.data?.runs.queued)} / {formatNumber(runtimeAnalyticsQuery.data?.runs.started)}
-            </div>
-          </div>
-          <div className='rounded border border-border/60 bg-card/60 p-3'>
-            <div className='text-[10px] uppercase text-gray-500'>Completed / Failed</div>
-            <div className='mt-1 text-sm text-white'>
-              {formatNumber(runtimeAnalyticsQuery.data?.runs.completed)} / {formatNumber(runtimeAnalyticsQuery.data?.runs.failed)}
-            </div>
-          </div>
-          <div className='rounded border border-border/60 bg-card/60 p-3'>
-            <div className='text-[10px] uppercase text-gray-500'>Avg Runtime</div>
-            <div className='mt-1 text-sm text-white'>
-              {formatDurationMs(runtimeAnalyticsQuery.data?.runs.avgDurationMs)}
-            </div>
-          </div>
-          <div className='rounded border border-border/60 bg-card/60 p-3'>
-            <div className='text-[10px] uppercase text-gray-500'>p95 Runtime</div>
-            <div className='mt-1 text-sm text-white'>
-              {formatDurationMs(runtimeAnalyticsQuery.data?.runs.p95DurationMs)}
-            </div>
-          </div>
+      <FormSection
+        title='Runtime Analysis (Redis)'
+        className='p-4'
+      >
+        <div className='grid gap-3 md:grid-cols-2 lg:grid-cols-4'>
+          <MetadataItem
+            label='Queued / Started'
+            value={`${formatNumber(runtimeAnalyticsQuery.data?.runs.queued)} / ${formatNumber(runtimeAnalyticsQuery.data?.runs.started)}`}
+          />
+          <MetadataItem
+            label='Completed / Failed'
+            value={`${formatNumber(runtimeAnalyticsQuery.data?.runs.completed)} / ${formatNumber(runtimeAnalyticsQuery.data?.runs.failed)}`}
+          />
+          <MetadataItem
+            label='Avg Runtime'
+            value={formatDurationMs(runtimeAnalyticsQuery.data?.runs.avgDurationMs)}
+          />
+          <MetadataItem
+            label='p95 Runtime'
+            value={formatDurationMs(runtimeAnalyticsQuery.data?.runs.p95DurationMs)}
+          />
         </div>
         <div className='mt-3 text-[11px] text-gray-500'>
           Storage: {runtimeAnalyticsQuery.data?.storage ?? '—'} · Updated {runtimeAnalyticsQuery.data?.generatedAt ? formatDate(runtimeAnalyticsQuery.data.generatedAt) : '—'}
         </div>
-      </div>
+      </FormSection>
 
       {analyticsSummaryQuery.error || logMetricsQuery.error || insightsQuery.error || runtimeAnalyticsQuery.error ? (
-        <div className='rounded-lg border border-rose-500/40 bg-rose-500/10 p-4'>
-          <div className='text-sm text-rose-200'>
-            {(analyticsSummaryQuery.error)?.message ??
-              (logMetricsQuery.error)?.message ??
-              (insightsQuery.error)?.message ??
-              (runtimeAnalyticsQuery.error)?.message ??
-              'Failed to load metrics.'}
-          </div>
-        </div>
+        <Alert variant='error'>
+          {(analyticsSummaryQuery.error)?.message ??
+            (logMetricsQuery.error)?.message ??
+            (insightsQuery.error)?.message ??
+            (runtimeAnalyticsQuery.error)?.message ??
+            'Failed to load metrics.'}
+        </Alert>
       ) : null}
     </div>
   );

@@ -5,7 +5,7 @@ import React from 'react';
 
 import type { IteratorConfig } from '@/features/ai/ai-paths/lib';
 import { formatRuntimeValue } from '@/features/ai/ai-paths/lib';
-import { Input, Label, Switch, Textarea } from '@/shared/ui';
+import { Input, Textarea, ToggleRow, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -59,24 +59,22 @@ export function IteratorNodeConfigSection(): React.JSX.Element | null {
         </div>
 
         <div className='mt-3 grid grid-cols-1 gap-3 md:grid-cols-2'>
-          <div>
-            <Label className='text-xs text-gray-400'>Current Item (value)</Label>
+          <FormField label='Current Item (value)'>
             <Textarea
               className='mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white'
               value={value !== undefined ? formatRuntimeValue(value) : ''}
               readOnly
               placeholder='No item emitted yet.'
             />
-          </div>
-          <div>
-            <Label className='text-xs text-gray-400'>Callback Input</Label>
+          </FormField>
+          <FormField label='Callback Input'>
             <Textarea
               className='mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white'
               value={callbackValue !== undefined ? formatRuntimeValue(callbackValue) : ''}
               readOnly
               placeholder='Connect a downstream output to the callback input to advance.'
             />
-          </div>
+          </FormField>
         </div>
 
         <p className='mt-2 text-[11px] text-gray-500'>
@@ -89,40 +87,38 @@ export function IteratorNodeConfigSection(): React.JSX.Element | null {
 
       <div className='rounded-md border border-border bg-card/50 p-3'>
         <div className='text-[11px] text-gray-400'>Behavior</div>
-        <div className='mt-3 flex items-center justify-between'>
-          <div>
-            <div className='text-[11px] text-gray-200'>Auto-continue</div>
-            <div className='text-[11px] text-gray-500'>
-              When enabled, the UI/runtime will try to kick off the next item automatically.
-            </div>
-          </div>
-          <Switch
-            checked={iteratorConfig.autoContinue ?? true}
-            onCheckedChange={(checked: boolean) =>
-              updateSelectedNodeConfig({
-                iterator: { ...iteratorConfig, autoContinue: checked },
-              })
-            }
-          />
-        </div>
+        
+        <ToggleRow
+          label='Auto-continue'
+          description='When enabled, the UI/runtime will try to kick off the next item automatically.'
+          checked={iteratorConfig.autoContinue ?? true}
+          onCheckedChange={(checked: boolean) =>
+            updateSelectedNodeConfig({
+              iterator: { ...iteratorConfig, autoContinue: checked },
+            })
+          }
+          className='mt-3 bg-transparent border-none p-0 hover:bg-transparent'
+        />
+
         <div className='mt-3'>
-          <Label className='text-xs text-gray-400'>Max steps</Label>
-          <Input
-            className='mt-2 h-8 w-[140px] border-border bg-card/70 text-xs text-white'
-            value={String(iteratorConfig.maxSteps ?? 50)}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-              const next = Number.parseInt(event.target.value || '0', 10);
-              updateSelectedNodeConfig({
-                iterator: {
-                  ...iteratorConfig,
-                  maxSteps: Number.isFinite(next) ? Math.max(1, next) : 50,
-                },
-              });
-            }}
-          />
-          <p className='mt-2 text-[11px] text-gray-500'>
-            Safety cap for automatic continuation loops.
-          </p>
+          <FormField
+            label='Max steps'
+            description='Safety cap for automatic continuation loops.'
+          >
+            <Input
+              className='mt-2 h-8 w-[140px] border-border bg-card/70 text-xs text-white'
+              value={String(iteratorConfig.maxSteps ?? 50)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                const next = Number.parseInt(event.target.value || '0', 10);
+                updateSelectedNodeConfig({
+                  iterator: {
+                    ...iteratorConfig,
+                    maxSteps: Number.isFinite(next) ? Math.max(1, next) : 50,
+                  },
+                });
+              }}
+            />
+          </FormField>
         </div>
       </div>
     </div>

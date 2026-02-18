@@ -1,4 +1,4 @@
-import { Eye, Loader2, Play, SlidersHorizontal, Sparkles, Workflow } from 'lucide-react';
+import { Eye, Play, SlidersHorizontal, Sparkles, Workflow } from 'lucide-react';
 import React from 'react';
 
 import { Button, SelectSimple } from '@/shared/ui';
@@ -57,12 +57,9 @@ export function RightSidebarQuickActions({
               onClick={onRunGeneration}
               disabled={generationBusy || sequenceRunBusy}
               className='sm:min-w-[140px]'
+              loading={generationBusy}
             >
-              {generationBusy ? (
-                <Loader2 className='mr-2 size-4 animate-spin' />
-              ) : (
-                <Play className='mr-2 size-4' />
-              )}
+              {!generationBusy && <Play className='mr-2 size-4' />}
               {generationLabel}
             </Button>
             {modelSupportsSequenceGeneration ? (
@@ -73,13 +70,11 @@ export function RightSidebarQuickActions({
                 className='sm:min-w-[160px]'
                 title='Run enabled sequence steps in sequencer'
                 aria-label='Generate sequence'
+                loading={sequenceRunBusy}
+                loadingText='Starting...'
               >
-                {sequenceRunBusy ? (
-                  <Loader2 className='mr-2 size-4 animate-spin' />
-                ) : (
-                  <Workflow className='mr-2 size-4' />
-                )}
-                {sequenceRunBusy ? 'Starting...' : 'Generate Sequence'}
+                {!sequenceRunBusy && <Workflow className='mr-2 size-4' />}
+                Generate Sequence
               </Button>
             ) : null}
           </div>

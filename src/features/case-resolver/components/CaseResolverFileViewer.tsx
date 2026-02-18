@@ -1,9 +1,9 @@
 'use client';
 
-import { ExternalLink, FileText, FolderOpen, Image as ImageIcon } from 'lucide-react';
+import { ExternalLink as ExternalLinkIcon, FileText, FolderOpen, Image as ImageIcon } from 'lucide-react';
 import React from 'react';
 
-import { Button, Label, Textarea, useToast } from '@/shared/ui';
+import { Button, ExternalLink, Label, Textarea, useToast } from '@/shared/ui';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 
@@ -114,15 +114,12 @@ export function CaseResolverFileViewer(): React.JSX.Element {
             <div className='text-xs text-gray-400'>{resolveAssetSubtitle(selectedAsset)}</div>
           </div>
           {selectedAsset.filepath ? (
-            <a
+            <ExternalLink
               href={selectedAsset.filepath}
-              target='_blank'
-              rel='noreferrer'
-              className='inline-flex items-center gap-1 rounded border border-border/60 px-2 py-1 text-[11px] text-gray-200 hover:bg-muted/40'
+              className='rounded border border-border/60 px-2 py-1 text-[11px] text-gray-200 hover:bg-muted/40'
             >
               Open
-              <ExternalLink className='size-3.5' />
-            </a>
+            </ExternalLink>
           ) : null}
         </div>
 
@@ -243,16 +240,14 @@ export function CaseResolverFileViewer(): React.JSX.Element {
               Open the file in a new tab to inspect the full content.
             </div>
             {selectedAsset.filepath ? (
-              <a
+              <ExternalLink
                 href={selectedAsset.filepath}
-                target='_blank'
-                rel='noreferrer'
                 className='inline-flex items-center gap-1 rounded border border-border/60 px-2 py-1 text-xs text-gray-200 hover:bg-muted/40'
               >
                 <FolderOpen className='size-3.5' />
                 Open file
-                <ExternalLink className='size-3.5' />
-              </a>
+                <ExternalLinkIcon className='size-3.5' />
+              </ExternalLink>
             ) : (
               <Button type='button' disabled className='h-8 rounded border border-border/50 text-xs text-gray-500'>
                 File path unavailable

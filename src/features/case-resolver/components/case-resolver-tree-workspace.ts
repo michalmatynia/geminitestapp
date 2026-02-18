@@ -98,8 +98,20 @@ export const resolveCaseResolverTreeWorkspace = ({
   const scopedFileIds = new Set<string>(
     scopedFiles.map((file: CaseResolverFile): string => file.id)
   );
+  const scopedNodeFileAssetIds = new Set<string>();
+  scopedFiles.forEach((file: CaseResolverFile): void => {
+    const nodeFileAssetIdByNode = file.graph.nodeFileAssetIdByNode ?? {};
+    Object.values(nodeFileAssetIdByNode).forEach((assetId: string): void => {
+      const normalizedAssetId = typeof assetId === 'string' ? assetId.trim() : '';
+      if (!normalizedAssetId) return;
+      scopedNodeFileAssetIds.add(normalizedAssetId);
+    });
+  });
   const scopedAssets = workspace.assets.filter((asset): boolean =>
-    Boolean(asset.sourceFileId && scopedFileIds.has(asset.sourceFileId))
+    Boolean(
+      (asset.sourceFileId && scopedFileIds.has(asset.sourceFileId)) ||
+      (asset.kind === 'node_file' && scopedNodeFileAssetIds.has(asset.id))
+    )
   );
   const scopedFolderRecords = (workspace.folderRecords ?? []).filter(
     (record: CaseResolverFolderRecord): boolean =>

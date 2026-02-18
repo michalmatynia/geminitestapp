@@ -87,24 +87,36 @@ export async function PATCH_handler(
 }
 
 export async function DELETE_handler(
-  _req: NextRequest,
+  req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { slotId: string }
 ): Promise<Response> {
   const slotIdCandidates = resolveSlotIdCandidates(params.slotId ?? '');
   if (slotIdCandidates.length === 0) throw badRequestError('Slot id is required');
+  const debugRaw = req.nextUrl.searchParams.get('debug') ?? '';
+  const includeDebug = ['1', 'true', 'yes', 'on'].includes(debugRaw.toLowerCase());
 
   let deleted = false;
   let deletedSlotIds: string[] = [];
+  let lastTimings: unknown = null;
   for (const slotIdCandidate of slotIdCandidates) {
     const result = await deleteImageStudioSlotCascade(slotIdCandidate);
     deleted = result.deleted || result.deletedSlotIds.length > 0;
     deletedSlotIds = result.deletedSlotIds;
+    lastTimings = result.timingsMs;
     if (deleted) break;
   }
   // Idempotent delete: stale client trees can request a slot that has already been removed.
   if (!deleted) {
-    return NextResponse.json({ ok: true, deletedSlotIds: [] });
+    return NextResponse.json({
+      ok: true,
+      deletedSlotIds: [],
+      ...(includeDebug ? { timingsMs: lastTimings } : {}),
+    });
   }
-  return NextResponse.json({ ok: true, deletedSlotIds });
+  return NextResponse.json({
+    ok: true,
+    deletedSlotIds,
+    ...(includeDebug ? { timingsMs: lastTimings } : {}),
+  });
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui';
+import { MetadataItem } from '@/shared/ui';
 
 import { useAnalytics } from '../context/AnalyticsContext';
 
@@ -26,21 +26,13 @@ export function AnalyticsMetricsGrid(): React.JSX.Element {
   return (
     <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
       {metrics.map((metric) => (
-        <Card
+        <MetadataItem
           key={metric.label}
-          className='border-border/50 bg-gray-900/40'
-        >
-          <CardHeader className='p-4 pb-2'>
-            <CardTitle className='text-sm font-medium text-gray-300'>
-              {metric.label}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className='p-4 pt-0'>
-            <div className='text-2xl font-semibold text-white'>
-              {formatCount(metric.value)}
-            </div>
-          </CardContent>
-        </Card>
+          label={metric.label}
+          value={formatCount(metric.value)}
+          valueClassName='text-2xl font-semibold text-white mt-1'
+          className='p-4'
+        />
       ))}
     </div>
   );

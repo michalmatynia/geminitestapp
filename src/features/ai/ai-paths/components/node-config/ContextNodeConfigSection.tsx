@@ -11,8 +11,7 @@ import {
   safeStringify,
   toggleContextTarget,
 } from '@/features/ai/ai-paths/lib';
-import { logClientError } from '@/features/observability';
-import { Button, Input, Label, Textarea, SelectSimple } from '@/shared/ui';
+import { Button, Input, Textarea, SelectSimple, CopyButton, Label } from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
 
@@ -39,7 +38,7 @@ function sanitizePayload(value: unknown, hideLargeFields: boolean): unknown {
 }
 
 export function ContextNodeConfigSection(): React.JSX.Element | null {
-  const { selectedNode, runtimeState, updateSelectedNodeConfig, toast } = useAiPathConfig();
+  const { selectedNode, runtimeState, updateSelectedNodeConfig } = useAiPathConfig();
   const [hideLargeFields, setHideLargeFields] = React.useState(true);
   const [showDiff, setShowDiff] = React.useState(true);
   const [diffOnlyChanges, setDiffOnlyChanges] = React.useState(true);
@@ -143,24 +142,6 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
       ? diff.same.map((key: string) => `= ${key}`)
       : []),
   ];
-  const copyPayload = async (payload: unknown, label: string): Promise<void> => {
-    try {
-      await navigator.clipboard.writeText(stringifyPayload(payload));
-      toast(`${label} copied.`, { variant: 'success' });
-    } catch (error) {
-      toast('Failed to copy payload.', { variant: 'error' });
-      logClientError(error, { context: { source: 'ContextNodeConfigSection', action: 'copyPayload', label } });
-    }
-  };
-  const copyDiff = async (): Promise<void> => {
-    try {
-      await navigator.clipboard.writeText(diffLines.join('\n'));
-      toast('Diff copied.', { variant: 'success' });
-    } catch (error) {
-      toast('Failed to copy diff.', { variant: 'error' });
-      logClientError(error, { context: { source: 'ContextNodeConfigSection', action: 'copyDiff' } });
-    }
-  };
   const combinedPayload = {
     inputs: sanitizedInputs,
     outputs: sanitizedOutputs,
@@ -179,34 +160,46 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
         entity based on the settings below.
       </p>
       <div className='flex flex-wrap items-center gap-2'>
-        <Button
-          type='button'
-          className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70'
-          onClick={() => { void copyPayload(combinedPayload, 'Payload'); }}
-        >
-          Copy payload
-        </Button>
-        <Button
-          type='button'
-          className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70'
-          onClick={() => { void copyPayload(sanitizedInputs, 'Inputs'); }}
-        >
-          Copy inputs
-        </Button>
-        <Button
-          type='button'
-          className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70'
-          onClick={() => { void copyPayload(sanitizedOutputs, 'Outputs'); }}
-        >
-          Copy outputs
-        </Button>
-        <Button
-          type='button'
-          className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70'
-          onClick={() => { void copyDiff(); }}
-        >
-          Copy diff
-        </Button>
+        <div className='flex items-center gap-1'>
+          <span className='text-[10px] text-gray-500'>Payload:</span>
+          <CopyButton
+            value={stringifyPayload(combinedPayload)}
+            variant='outline'
+            size='sm'
+            showText
+            className='text-[10px]'
+          />
+        </div>
+        <div className='flex items-center gap-1'>
+          <span className='text-[10px] text-gray-500'>Inputs:</span>
+          <CopyButton
+            value={stringifyPayload(sanitizedInputs)}
+            variant='outline'
+            size='sm'
+            showText
+            className='text-[10px]'
+          />
+        </div>
+        <div className='flex items-center gap-1'>
+          <span className='text-[10px] text-gray-500'>Outputs:</span>
+          <CopyButton
+            value={stringifyPayload(sanitizedOutputs)}
+            variant='outline'
+            size='sm'
+            showText
+            className='text-[10px]'
+          />
+        </div>
+        <div className='flex items-center gap-1'>
+          <span className='text-[10px] text-gray-500'>Diff:</span>
+          <CopyButton
+            value={diffLines.join('\n')}
+            variant='outline'
+            size='sm'
+            showText
+            className='text-[10px]'
+          />
+        </div>
         <Button
           type='button'
           className={`rounded-md border px-2 py-1 text-[10px] ${

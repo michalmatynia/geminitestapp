@@ -17,11 +17,13 @@ import { VersionNodeDetailsModal } from './VersionNodeDetailsModal';
 import { VersionNodeMapCanvas, type VersionNodeMapCanvasRef } from './VersionNodeMapCanvas';
 import { VersionNodeMapProvider } from './VersionNodeMapContext';
 import { VersionNodeMapMinimap } from './VersionNodeMapMinimap';
+import { useSettingsState } from '../context/SettingsContext';
 import { useSlotsActions } from '../context/SlotsContext';
 import { useVersionGraphActions, useVersionGraphState } from '../context/VersionGraphContext';
 import { useVersionGraphShortcuts } from '../hooks/useVersionGraphShortcuts';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
 import { readMeta } from '../utils/metadata';
+import { getImageStudioDocTooltip } from '../utils/studio-docs';
 import { CONTENT_OFFSET_X, CONTENT_OFFSET_Y, exportSvgAsPng } from '../utils/version-graph';
 
 import type { ImageStudioSlotRecord } from '../types';
@@ -29,6 +31,7 @@ import type { ImageStudioSlotRecord } from '../types';
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function VersionNodeMapPanel(): React.JSX.Element {
+  const { studioSettings } = useSettingsState();
   const { switchToControls } = useRightSidebarContext();
   const {
     nodes,
@@ -98,6 +101,11 @@ export function VersionNodeMapPanel(): React.JSX.Element {
   const [detailsNodeId, setDetailsNodeId] = useState<string | null>(null);
   const [annotationDraft, setAnnotationDraft] = useState('');
   const annotationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const versionGraphTooltipsEnabled = studioSettings.helpTooltips.versionGraphButtonsEnabled;
+  const isolationClearTooltip = React.useMemo(
+    () => getImageStudioDocTooltip('version_graph_isolation_clear'),
+    []
+  );
 
   const selectedNode = selectedNodeId
     ? nodes.find((n) => n.id === selectedNodeId) ?? null
@@ -456,6 +464,7 @@ export function VersionNodeMapPanel(): React.JSX.Element {
             <button
               type='button'
               className='text-[10px] text-blue-400 hover:text-blue-300'
+              title={versionGraphTooltipsEnabled ? isolationClearTooltip : undefined}
               onClick={() => isolateBranch(null)}
             >
             Clear

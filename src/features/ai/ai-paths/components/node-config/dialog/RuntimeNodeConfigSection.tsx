@@ -1,7 +1,7 @@
 'use client';
 
 import type { NodeCacheMode } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, SelectSimple, Switch } from '@/shared/ui';
+import { Button, Input, SelectSimple, ToggleRow, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -23,8 +23,7 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-3 rounded-md border border-border bg-card/50 p-3'>
-      <div>
-        <Label className='text-xs text-gray-400'>Execution cache</Label>
+      <FormField label='Execution cache'>
         <SelectSimple size='sm'
           value={cacheMode}
           onValueChange={(value: string): void =>
@@ -42,10 +41,12 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
           placeholder='Cache mode'
           className='mt-2'
         />
-      </div>
+      </FormField>
       {cacheMode !== 'disabled' && (
-        <div>
-          <Label className='text-xs text-gray-400'>Cache TTL (seconds)</Label>
+        <FormField
+          label='Cache TTL (seconds)'
+          description='How long cached outputs stay valid. Leave empty for no expiry.'
+        >
           <Input
             type='number'
             min={0}
@@ -65,10 +66,7 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
             }}
             className='mt-1 w-full border-border bg-card/70 text-sm text-white'
           />
-          <p className='mt-1 text-[11px] text-gray-500'>
-            How long cached outputs stay valid. Leave empty for no expiry.
-          </p>
-        </div>
+        </FormField>
       )}
       {cacheMode !== 'disabled' && clearNodeCache && (
         <Button
@@ -86,25 +84,20 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
       <p className='text-[11px] text-gray-500'>
         Disable cache to always re-run nodes that must execute every time (HTTP, DB writes, AI, delays, notifications).
       </p>
-      <div className='mt-3 flex items-center justify-between gap-4'>
-        <div>
-          <div className='text-[11px] text-gray-200'>Require inputs</div>
-          <div className='text-[11px] text-gray-500'>
-            Wait for connected inputs to be present before execution.
-          </div>
-        </div>
-        <Switch
-          checked={waitForInputs}
-          onCheckedChange={(checked: boolean): void =>
-            updateSelectedNodeConfig({
-              runtime: {
-                ...runtimeConfig,
-                waitForInputs: checked,
-              },
-            })
-          }
-        />
-      </div>
+      <ToggleRow
+        label='Require inputs'
+        description='Wait for connected inputs to be present before execution.'
+        checked={waitForInputs}
+        onCheckedChange={(checked: boolean): void =>
+          updateSelectedNodeConfig({
+            runtime: {
+              ...runtimeConfig,
+              waitForInputs: checked,
+            },
+          })
+        }
+        className='mt-3 bg-transparent border-none p-0 hover:bg-transparent'
+      />
     </div>
   );
 }

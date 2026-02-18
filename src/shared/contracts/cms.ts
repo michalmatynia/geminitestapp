@@ -2,6 +2,27 @@ import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
 
+export const cmsPageStatusSchema = z.enum(['draft', 'published', 'scheduled']);
+export type CmsPageStatusDto = z.infer<typeof cmsPageStatusSchema>;
+
+export const cmsPageSlugLinkSchema = z.object({
+  slug: z.object({
+    id: z.string(),
+    slug: z.string(),
+  }),
+});
+
+export type CmsPageSlugLinkDto = z.infer<typeof cmsPageSlugLinkSchema>;
+
+export const cmsPageSummarySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  status: cmsPageStatusSchema,
+  slugs: z.array(cmsPageSlugLinkSchema),
+});
+
+export type CmsPageSummaryDto = z.infer<typeof cmsPageSummarySchema>;
+
 /**
  * CMS Theme Contract
  */

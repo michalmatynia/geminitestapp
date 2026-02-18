@@ -5,7 +5,7 @@ import { ChangeEvent, ReactElement, useMemo } from 'react';
 import { playwrightDeviceOptions } from '@/features/playwright/constants/playwright';
 import { usePlaywrightSettings, PlaywrightSettingsProvider } from '@/features/playwright/context/PlaywrightSettingsContext';
 import type { PlaywrightSettings } from '@/features/playwright/types';
-import { Input, SelectSimple, FormSection, FormField, ToggleRow, Hint, FormActions } from '@/shared/ui';
+import { Input, SelectSimple, FormSection, FormField, ToggleRow, Hint, FormActions, CollapsibleSection } from '@/shared/ui';
 
 import { PlaywrightSettingsFormViewProvider, usePlaywrightSettingsFormView } from './context/PlaywrightSettingsFormViewContext';
 
@@ -294,24 +294,23 @@ function ProxySection(): ReactElement {
 
 function AdvancedSettingsSection(): ReactElement {
   return (
-    <FormSection title='Advanced settings' variant='subtle' className='p-3'>
-      <details className='mt-2'>
-        <summary className='cursor-pointer text-sm font-semibold text-gray-200'>
-          Expand advanced options
-        </summary>
-        <div className='mt-4 space-y-4'>
-          <FormField label='Interaction delays (ms)'>
-            <Hint variant='subtle'>Add random pauses between actions for human-like pacing.</Hint>
-          </FormField>
+    <CollapsibleSection
+      title={<span className='text-sm font-semibold text-gray-200'>Advanced settings</span>}
+      variant='subtle'
+      className='mt-2'
+    >
+      <div className='mt-2 space-y-4'>
+        <FormField label='Interaction delays (ms)'>
+          <Hint variant='subtle'>Add random pauses between actions for human-like pacing.</Hint>
+        </FormField>
 
-          <DelayInputs label='Click delay' minKey='clickDelayMin' maxKey='clickDelayMax' />
-          <DelayInputs label='Input delay' minKey='inputDelayMin' maxKey='inputDelayMax' />
-          <DelayInputs label='Action delay' minKey='actionDelayMin' maxKey='actionDelayMax' />
-          
-          <ProxySection />
-        </div>
-      </details>
-    </FormSection>
+        <DelayInputs label='Click delay' minKey='clickDelayMin' maxKey='clickDelayMax' />
+        <DelayInputs label='Input delay' minKey='inputDelayMin' maxKey='inputDelayMax' />
+        <DelayInputs label='Action delay' minKey='actionDelayMin' maxKey='actionDelayMax' />
+        
+        <ProxySection />
+      </div>
+    </CollapsibleSection>
   );
 }
 

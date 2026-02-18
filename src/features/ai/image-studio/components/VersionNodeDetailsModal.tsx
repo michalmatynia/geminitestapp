@@ -179,8 +179,8 @@ export function VersionNodeDetailsModal({
     const imageFileRows = [
       { label: 'Image File ID', value: slot.imageFileId ?? 'n/a' },
       { label: 'Filename', value: slot.imageFile?.filename ?? asString(outputFile?.['filename']) ?? 'n/a' },
-      { label: 'Filepath', value: slot.imageFile?.filepath ?? slot.imageUrl ?? asString(outputFile?.['filepath']) ?? 'n/a' },
-      { label: 'Mime Type', value: slot.imageFile?.mimetype ?? asString(outputFile?.['mimetype']) ?? 'n/a' },
+      { label: 'Filepath', value: slot.imageFile?.url ?? slot.imageUrl ?? asString(outputFile?.['filepath']) ?? 'n/a' },
+      { label: 'Mime Type', value: slot.imageFile?.mimeType ?? asString(outputFile?.['mimetype']) ?? 'n/a' },
       {
         label: 'File Size',
         value: formatBytes(slot.imageFile?.size ?? asNumber(outputFile?.['size'])),

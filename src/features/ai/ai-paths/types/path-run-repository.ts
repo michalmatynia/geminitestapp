@@ -6,9 +6,22 @@ export type {
   AiPathRunDto,
   CreateAiPathDto,
   UpdateAiPathDto,
-  ExecuteAiPathDto
+  ExecuteAiPathDto,
+  AiPathRunStatusDto,
+  AiPathNodeStatusDto,
+  AiPathRunEventLevelDto,
+  AiPathRunEventDto,
+  AiPathRunEventListOptionsDto,
+  AiPathRunListOptionsDto,
+  AiPathRunListResultDto,
 } from '@/shared/contracts/ai-paths';
 
+import type {
+  AiPathRunCreateInput as AiPathRunCreateInputDto,
+  AiPathRunListResultDto as AiPathRunListResultDtoAlias,
+  AiPathRunListOptionsDto as AiPathRunListOptionsDtoAlias,
+  AiPathRunEventListOptionsDto as AiPathRunEventListOptionsDtoAlias,
+} from '@/shared/contracts/ai-paths';
 import type {
   AiNode,
   AiPathNodeStatus,
@@ -20,21 +33,13 @@ import type {
   Edge,
 } from '@/shared/types/domain/ai-paths';
 
-export type AiPathRunCreateInput = {
-  userId?: string | null;
-  pathId: string;
-  pathName?: string | null;
-  triggerEvent?: string | null;
-  triggerNodeId?: string | null;
-  triggerContext?: Record<string, unknown> | null;
-  graph?: { nodes: AiNode[]; edges: Edge[] | unknown[] } | null;
-  runtimeState?: Record<string, unknown> | null;
-  meta?: Record<string, unknown> | null;
-  entityId?: string | null;
-  entityType?: string | null;
-  maxAttempts?: number | null;
-  retryCount?: number | null;
-  nextRetryAt?: Date | string | null;
+
+// Extend the DTO with internal-only fields not exposed through the API contract.
+// `status` is optional here because repositories default to 'queued'.
+export type AiPathRunCreateInput = Omit<AiPathRunCreateInputDto, 'status'> & {
+  status?: AiPathRunCreateInputDto['status'] | undefined;
+  graph?: { nodes: AiNode[]; edges: Edge[] | unknown[] } | null | undefined;
+  runtimeState?: Record<string, unknown> | null | undefined;
 };
 
 export type AiPathRunUpdate = Partial<
@@ -61,34 +66,11 @@ export type AiPathRunEventCreateInput = {
   metadata?: Record<string, unknown> | null;
 };
 
-export type AiPathRunEventListOptions = {
-  since?: Date | string | null;
-  after?: {
-    createdAt: Date | string;
-    id: string;
-  } | null;
-  limit?: number;
-};
+export type AiPathRunEventListOptions = AiPathRunEventListOptionsDtoAlias;
 
-export type AiPathRunListOptions = {
-  userId?: string | null;
-  pathId?: string;
-  requestId?: string;
-  source?: string;
-  sourceMode?: 'include' | 'exclude';
-  status?: AiPathRunStatus;
-  statuses?: AiPathRunStatus[];
-  query?: string;
-  createdAfter?: Date | string | null;
-  createdBefore?: Date | string | null;
-  limit?: number;
-  offset?: number;
-};
+export type AiPathRunListOptions = AiPathRunListOptionsDtoAlias;
 
-export type AiPathRunListResult = {
-  runs: AiPathRunRecord[];
-  total: number;
-};
+export type AiPathRunListResult = AiPathRunListResultDtoAlias;
 
 export type AiPathRunRepository = {
   createRun(input: AiPathRunCreateInput): Promise<AiPathRunRecord>;

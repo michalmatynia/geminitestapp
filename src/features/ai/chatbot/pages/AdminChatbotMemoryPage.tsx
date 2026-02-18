@@ -63,10 +63,10 @@ export default function AgentMemoryPage(): React.JSX.Element {
       cell: ({ row }) => (
         <div className='flex flex-col gap-1'>
           <span className='font-medium text-white'>
-            {row.original.summary || row.original.value.slice(0, 100)}
+            {row.original.summary || row.original.content.slice(0, 100)}
           </span>
           <span className='text-[10px] text-gray-500 font-mono'>
-            Key: {row.original.memoryKey || row.original.key}
+            Key: {row.original.memoryKey}
           </span>
         </div>
       ),
@@ -186,7 +186,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
                   <div>
                     <h4 className='text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-2'>Full Content</h4>
                     <pre className='whitespace-pre-wrap rounded border border-border/60 bg-black/40 p-3 font-mono text-[11px] text-gray-300'>
-                      {row.original.content || row.original.value}
+                      {row.original.content}
                     </pre>
                   </div>
                   <div>

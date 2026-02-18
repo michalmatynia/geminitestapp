@@ -144,6 +144,56 @@ export async function deleteImageStudioSlotLinksForSlot(slotId: string): Promise
   return result.deletedCount ?? 0;
 }
 
+export async function deleteImageStudioSlotLinksForSlotIds(slotIds: string[]): Promise<number> {
+  await ensureIndexesOnce();
+  const normalizedSlotIds = Array.from(
+    new Set(
+      slotIds
+        .filter((value): value is string => typeof value === 'string')
+        .map((value: string) => value.trim())
+        .filter(Boolean)
+    )
+  );
+  if (normalizedSlotIds.length === 0) return 0;
+
+  const db = await getMongoDb();
+  const collection = db.collection<ImageStudioSlotLinkDocument>(COLLECTION);
+  const result = await collection.deleteMany({
+    $or: [
+      { sourceSlotId: { $in: normalizedSlotIds } },
+      { targetSlotId: { $in: normalizedSlotIds } },
+    ],
+  });
+  return result.deletedCount ?? 0;
+}
+
+export async function hasImageStudioSlotLinksForSources(
+  projectId: string,
+  sourceSlotIds: string[]
+): Promise<boolean> {
+  await ensureIndexesOnce();
+  const normalizedSources = Array.from(
+    new Set(
+      sourceSlotIds
+        .filter((value): value is string => typeof value === 'string')
+        .map((value: string) => value.trim())
+        .filter(Boolean)
+    )
+  );
+  if (normalizedSources.length === 0) return false;
+
+  const db = await getMongoDb();
+  const collection = db.collection<ImageStudioSlotLinkDocument>(COLLECTION);
+  const doc = await collection.findOne(
+    {
+      projectId,
+      sourceSlotId: { $in: normalizedSources },
+    },
+    { projection: { _id: 1 } }
+  );
+  return Boolean(doc);
+}
+
 export async function deleteImageStudioSlotLinksForProject(projectId: string): Promise<number> {
   await ensureIndexesOnce();
   const db = await getMongoDb();

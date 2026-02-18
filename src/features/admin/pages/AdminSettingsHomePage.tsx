@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-import { Card, Button, SectionHeader, FormSection } from '@/shared/ui';
+import { Card, CardHeader, CardTitle, CardDescription, Button, SectionHeader, FormSection } from '@/shared/ui';
 
 
 
@@ -168,28 +168,28 @@ export function AdminSettingsHomePage(): React.ReactNode {
 
           return (
             <Link key={setting.id} href={setting.href}>
-              <Card className={`group relative h-full cursor-pointer border-border bg-card p-6 transition-all duration-300 hover:border hover:bg-muted/50 ${colors.border}`}>
-                <div className='flex items-start gap-4'>
+              <Card className={`group relative h-full cursor-pointer border-border bg-card transition-all duration-300 hover:border hover:bg-muted/50 ${colors.border}`}>
+                <CardHeader className='flex flex-row items-start gap-4'>
                   {/* Icon */}
                   <div className={`flex size-12 flex-shrink-0 items-center justify-center rounded-lg ${setting.bgColor} transition-transform duration-300 group-hover:scale-110`}>
                     <Icon className={`size-6 ${colors.text}`} />
                   </div>
 
                   {/* Content */}
-                  <div className='min-w-0 flex-1'>
+                  <div className='min-w-0 flex-1 space-y-1.5'>
                     <div className='flex items-start justify-between gap-2'>
-                      <div>
-                        <h2 className='text-lg font-semibold text-white transition-colors group-hover:text-gray-100'>
+                      <div className='space-y-1'>
+                        <CardTitle className='text-lg font-semibold text-white transition-colors group-hover:text-gray-100'>
                           {setting.title}
-                        </h2>
-                        <p className='mt-1 text-sm text-gray-400 group-hover:text-gray-300'>
+                        </CardTitle>
+                        <CardDescription className='text-sm text-gray-400 group-hover:text-gray-300'>
                           {setting.description}
-                        </p>
+                        </CardDescription>
                       </div>
                       <ArrowRightIcon className='mt-1 size-4 flex-shrink-0 text-gray-600 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-gray-400' />
                     </div>
                   </div>
-                </div>
+                </CardHeader>
 
                 {/* Hover effect indicator */}
                 <div className='absolute inset-0 rounded-lg opacity-0 shadow-lg transition-opacity duration-300 group-hover:opacity-100 pointer-events-none' />

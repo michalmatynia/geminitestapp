@@ -189,6 +189,12 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
       for (let index = startIndex; index < steps.length; index += 1) {
         const step = steps[index]!;
         const stepRuntime = step.runtime === 'client' ? 'client' : 'server';
+        const stepInputSource = step.inputSource === 'source' ? 'source' : 'previous';
+        const preStepCurrentSlotId = currentSlotId;
+        const stepInputSlotId =
+          stepInputSource === 'source'
+            ? run.sourceSlotId
+            : preStepCurrentSlotId;
 
         const maybeCancelledRun = await maybeRefreshRun(run.id);
         if (!maybeCancelledRun) {
@@ -215,9 +221,11 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
                 stepId: step.id,
                 stepType: step.type,
                 stepRuntime,
+                stepInputSource,
+                stepInputSlotId,
                 stepIndex: index,
                 stepCount: steps.length,
-                currentSlotId,
+                preStepCurrentSlotId,
               },
             },
           ],
@@ -232,9 +240,11 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
             stepId: step.id,
             stepType: step.type,
             stepRuntime,
+            stepInputSource,
+            stepInputSlotId,
             stepIndex: index,
             stepCount: steps.length,
-            currentSlotId,
+            preStepCurrentSlotId,
           },
           ts: Date.now(),
         });
@@ -250,12 +260,15 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
               run,
               step,
               stepIndex: index,
-              currentSlotId,
+              inputSlotId: stepInputSlotId,
               runtimeMask,
               outputSlotIds,
             });
 
-            currentSlotId = result.nextSlotId;
+            currentSlotId =
+              result.producedSlotIds.length > 0
+                ? result.nextSlotId
+                : preStepCurrentSlotId;
             outputSlotIds = appendUniqueIds(outputSlotIds, result.producedSlotIds);
             runtimeMask = toMaskContext(result.runtimeMask);
 
@@ -275,9 +288,12 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
                     stepId: step.id,
                     stepType: step.type,
                     stepRuntime,
+                    stepInputSource,
+                    stepInputSlotId,
                     stepIndex: index,
                     stepCount: steps.length,
                     attempt,
+                    preStepCurrentSlotId,
                     currentSlotId,
                     producedSlotIds: result.producedSlotIds,
                     details: result.details,
@@ -295,9 +311,12 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
                 stepId: step.id,
                 stepType: step.type,
                 stepRuntime,
+                stepInputSource,
+                stepInputSlotId,
                 stepIndex: index,
                 stepCount: steps.length,
                 attempt,
+                preStepCurrentSlotId,
                 currentSlotId,
                 producedSlotIds: result.producedSlotIds,
                 details: result.details,
@@ -325,10 +344,13 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
                       stepId: step.id,
                       stepType: step.type,
                       stepRuntime,
+                      stepInputSource,
+                      stepInputSlotId,
                       stepIndex: index,
                       stepCount: steps.length,
                       attempt,
                       attempts,
+                      preStepCurrentSlotId,
                       waitMs,
                       reason: message,
                     },
@@ -345,10 +367,13 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
                   stepId: step.id,
                   stepType: step.type,
                   stepRuntime,
+                  stepInputSource,
+                  stepInputSlotId,
                   stepIndex: index,
                   stepCount: steps.length,
                   attempt,
                   attempts,
+                  preStepCurrentSlotId,
                   waitMs,
                   reason: message,
                 },
@@ -373,9 +398,13 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
                       stepId: step.id,
                       stepType: step.type,
                       stepRuntime,
+                      stepInputSource,
+                      stepInputSlotId,
                       stepIndex: index,
                       stepCount: steps.length,
                       onFailure: step.onFailure,
+                      preStepCurrentSlotId,
+                      currentSlotId: preStepCurrentSlotId,
                       reason: message,
                     },
                   },
@@ -391,9 +420,13 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
                   stepId: step.id,
                   stepType: step.type,
                   stepRuntime,
+                  stepInputSource,
+                  stepInputSlotId,
                   stepIndex: index,
                   stepCount: steps.length,
                   onFailure: step.onFailure,
+                  preStepCurrentSlotId,
+                  currentSlotId: preStepCurrentSlotId,
                   reason: message,
                 },
                 ts: Date.now(),

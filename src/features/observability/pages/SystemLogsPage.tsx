@@ -25,6 +25,7 @@ import {
   ListPanel,
   MetadataItem,
   Tooltip,
+  CopyButton,
   type StatusVariant
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -520,7 +521,6 @@ function SystemLogsContent(): React.JSX.Element {
     confirmAction,
     handleClearLogs,
     clearLogsMutation,
-    toast,
   } = useSystemLogsContext();
 
   const currentFilterValues: SystemLogFilterFormValues = {
@@ -579,36 +579,27 @@ function SystemLogsContent(): React.JSX.Element {
           >
             Settings
           </Button>
-          <Button
+          <CopyButton
+            value={typeof window !== 'undefined' ? window.location.href : ''}
             variant='outline'
-            size='xs'
+            size='sm'
             className='h-8'
-            onClick={(): void => {
-              if (typeof window === 'undefined') return;
-              void navigator.clipboard
-                .writeText(window.location.href)
-                .then(() => {
-                  toast('Telemetry session link copied', { variant: 'success' });
-                });
-            }}
+            showText
           >
             <Link2 className='size-3.5 mr-2' />
             Sync Link
-          </Button>
-          <Button
+          </CopyButton>
+          <CopyButton
+            value={logsJson}
             variant='outline'
-            size='xs'
+            size='sm'
             className='h-8'
             disabled={logs.length === 0}
-            onClick={(): void => {
-              void navigator.clipboard.writeText(logsJson).then(() => {
-                toast('JSON Exported to clipboard', { variant: 'success' });
-              });
-            }}
+            showText
           >
             <Copy className='size-3.5 mr-2' />
             Export
-          </Button>
+          </CopyButton>
           <Button
             variant='outline'
             size='xs'

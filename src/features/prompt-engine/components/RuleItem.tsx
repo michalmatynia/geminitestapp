@@ -6,16 +6,12 @@ import React from 'react';
 import {
   Button,
   Input,
-  Label,
   MultiSelect,
-  
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  SelectSimple,
   Textarea,
   Tooltip,
+  FormField,
+  CollapsibleSection,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -240,9 +236,9 @@ export function RuleItem({
       {rule ? (
         <div className='space-y-4'>
           <div className='grid gap-3 md:grid-cols-4'>
-            <div className='space-y-1 md:col-span-1'>
-              <Label className='text-[11px] text-slate-300'>Kind</Label>
-              <Select
+            <FormField label='Kind'>
+              <SelectSimple
+                size='sm'
                 value={rule.kind}
                 onValueChange={(value: string): void => {
                   const nextKind = normalizeRuleKind(value);
@@ -266,37 +262,28 @@ export function RuleItem({
                   const nextRule = nextRuleRecord as PromptValidationRule;
                   handleRuleTextChange(draft.uid, JSON.stringify(nextRule, null, 2));
                 }}
-              >
-                <SelectTrigger className='h-8'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='regex'>Regex</SelectItem>
-                  <SelectItem value='params_object'>Params Object</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className='space-y-1 md:col-span-1'>
-              <Label className='text-[11px] text-slate-300'>Severity</Label>
-              <Select
+                options={[
+                  { value: 'regex', label: 'Regex' },
+                  { value: 'params_object', label: 'Params Object' },
+                ]}
+              />
+            </FormField>
+            <FormField label='Severity'>
+              <SelectSimple
+                size='sm'
                 value={rule.severity}
                 onValueChange={(value: string): void => {
                   if (value !== 'error' && value !== 'warning' && value !== 'info') return;
                   patchRule({ severity: value });
                 }}
-              >
-                <SelectTrigger className='h-8'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='error'>Error</SelectItem>
-                  <SelectItem value='warning'>Warning</SelectItem>
-                  <SelectItem value='info'>Info</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className='space-y-1 md:col-span-2'>
-              <Label className='text-[11px] text-slate-300'>Rule ID</Label>
+                options={[
+                  { value: 'error', label: 'Error' },
+                  { value: 'warning', label: 'Warning' },
+                  { value: 'info', label: 'Info' },
+                ]}
+              />
+            </FormField>
+            <FormField label='Rule ID' className='md:col-span-2'>
               <Input
                 className='h-8'
                 value={rule.id}
@@ -304,9 +291,8 @@ export function RuleItem({
                   patchRule({ id: event.target.value });
                 }}
               />
-            </div>
-            <div className='space-y-1 md:col-span-2'>
-              <Label className='text-[11px] text-slate-300'>Title</Label>
+            </FormField>
+            <FormField label='Title' className='md:col-span-2'>
               <Input
                 className='h-8'
                 value={rule.title}
@@ -314,9 +300,8 @@ export function RuleItem({
                   patchRule({ title: event.target.value });
                 }}
               />
-            </div>
-            <div className='space-y-1 md:col-span-2'>
-              <Label className='text-[11px] text-slate-300'>Description</Label>
+            </FormField>
+            <FormField label='Description' className='md:col-span-2'>
               <Input
                 className='h-8'
                 value={rule.description ?? ''}
@@ -324,9 +309,8 @@ export function RuleItem({
                   patchRule({ description: event.target.value.trim() || null });
                 }}
               />
-            </div>
-            <div className='space-y-1 md:col-span-4'>
-              <Label className='text-[11px] text-slate-300'>Message</Label>
+            </FormField>
+            <FormField label='Message' className='md:col-span-4'>
               <Textarea
                 className='min-h-[72px] text-[12px]'
                 value={rule.message}
@@ -334,11 +318,10 @@ export function RuleItem({
                   patchRule({ message: event.target.value });
                 }}
               />
-            </div>
+            </FormField>
             {rule.kind === 'regex' ? (
               <>
-                <div className='space-y-1 md:col-span-3'>
-                  <Label className='text-[11px] text-slate-300'>Pattern</Label>
+                <FormField label='Pattern' className='md:col-span-3'>
                   <Input
                     className='h-8 font-mono'
                     value={rule.pattern}
@@ -346,9 +329,8 @@ export function RuleItem({
                       patchRule({ pattern: event.target.value });
                     }}
                   />
-                </div>
-                <div className='space-y-1 md:col-span-1'>
-                  <Label className='text-[11px] text-slate-300'>Flags</Label>
+                </FormField>
+                <FormField label='Flags'>
                   <Input
                     className='h-8 font-mono'
                     value={rule.flags}
@@ -356,7 +338,7 @@ export function RuleItem({
                       patchRule({ flags: event.target.value });
                     }}
                   />
-                </div>
+                </FormField>
               </>
             ) : null}
             {rule.kind === 'regex' && regexStatus && !regexStatus.ok ? (
@@ -364,8 +346,7 @@ export function RuleItem({
                 Regex error: {regexStatus.error}
               </div>
             ) : null}
-            <div className='space-y-1 md:col-span-4'>
-              <Label className='text-[11px] text-slate-300'>Validation Scopes</Label>
+            <FormField label='Validation Scopes' className='md:col-span-4'>
               <MultiSelect
                 options={SCOPE_OPTIONS}
                 selected={appliesToScopes}
@@ -378,12 +359,12 @@ export function RuleItem({
                 searchPlaceholder='Search scope...'
                 emptyMessage='No scope found.'
               />
-            </div>
+            </FormField>
             {hasPromptExploderScope ? (
               <>
-                <div className='space-y-1 md:col-span-2'>
-                  <Label className='text-[11px] text-slate-300'>Exploder Segment Type Hint</Label>
-                  <Select
+                <FormField label='Exploder Segment Type Hint' className='md:col-span-2'>
+                  <SelectSimple
+                    size='sm'
                     value={promptExploderSegmentType ?? 'none'}
                     onValueChange={(value: string): void => {
                       if (value === 'none') {
@@ -398,22 +379,13 @@ export function RuleItem({
                         promptExploderSegmentType: value as PromptExploderRuleSegmentType,
                       });
                     }}
-                  >
-                    <SelectTrigger className='h-8'>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='none'>No type override</SelectItem>
-                      {PROMPT_EXPLODER_SEGMENT_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className='space-y-1 md:col-span-1'>
-                  <Label className='text-[11px] text-slate-300'>Exploder Priority</Label>
+                    options={[
+                      { value: 'none', label: 'No type override' },
+                      ...PROMPT_EXPLODER_SEGMENT_OPTIONS,
+                    ]}
+                  />
+                </FormField>
+                <FormField label='Exploder Priority'>
                   <Input
                     type='number'
                     min={-50}
@@ -428,9 +400,8 @@ export function RuleItem({
                       });
                     }}
                   />
-                </div>
-                <div className='space-y-1 md:col-span-1'>
-                  <Label className='text-[11px] text-slate-300'>Exploder Confidence Boost</Label>
+                </FormField>
+                <FormField label='Exploder Confidence Boost'>
                   <Input
                     type='number'
                     min={0}
@@ -446,9 +417,8 @@ export function RuleItem({
                       });
                     }}
                   />
-                </div>
-                <div className='space-y-1 md:col-span-4'>
-                  <Label className='text-[11px] text-slate-300'>Exploder: Treat Match As Heading</Label>
+                </FormField>
+                <FormField label='Exploder: Treat Match As Heading' className='md:col-span-4'>
                   <button
                     type='button'
                     className={cn(
@@ -465,9 +435,12 @@ export function RuleItem({
                   >
                     {promptExploderTreatAsHeading ? 'ON' : 'OFF'}
                   </button>
-                </div>
-                <div className='space-y-1 md:col-span-4'>
-                  <Label className='text-[11px] text-slate-300'>Exploder Capture Target</Label>
+                </FormField>
+                <FormField
+                  label='Exploder Capture Target'
+                  description='Optional. If set, regex captures can populate Case Resolver fields (for example: case_resolver.addresser.street, case_resolver.addressee.organizationName, case_resolver.place_date.year).'
+                  className='md:col-span-4'
+                >
                   <Input
                     className='h-8 font-mono'
                     value={promptExploderCaptureTarget}
@@ -478,14 +451,8 @@ export function RuleItem({
                     }}
                     placeholder='case_resolver.addresser.firstName'
                   />
-                  <div className='text-[10px] text-slate-400'>
-                    Optional. If set, regex captures can populate Case Resolver fields (for example:
-                    `case_resolver.addresser.street`, `case_resolver.addressee.organizationName`,
-                    `case_resolver.place_date.year`).
-                  </div>
-                </div>
-                <div className='space-y-1 md:col-span-1'>
-                  <Label className='text-[11px] text-slate-300'>Capture Group</Label>
+                </FormField>
+                <FormField label='Capture Group'>
                   <Input
                     type='number'
                     min={0}
@@ -505,29 +472,25 @@ export function RuleItem({
                       });
                     }}
                   />
-                </div>
-                <div className='space-y-1 md:col-span-1'>
-                  <Label className='text-[11px] text-slate-300'>Capture Apply To</Label>
-                  <Select
+                </FormField>
+                <FormField label='Capture Apply To'>
+                  <SelectSimple
+                    size='sm'
                     value={promptExploderCaptureApplyTo}
                     onValueChange={(value: string): void => {
                       patchRule({
                         promptExploderCaptureApplyTo: value === 'line' ? 'line' : 'segment',
                       });
                     }}
-                  >
-                    <SelectTrigger className='h-8'>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='segment'>Whole segment</SelectItem>
-                      <SelectItem value='line'>Each line</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className='space-y-1 md:col-span-1'>
-                  <Label className='text-[11px] text-slate-300'>Capture Normalize</Label>
-                  <Select
+                    options={[
+                      { value: 'segment', label: 'Whole segment' },
+                      { value: 'line', label: 'Each line' },
+                    ]}
+                  />
+                </FormField>
+                <FormField label='Capture Normalize'>
+                  <SelectSimple
+                    size='sm'
                     value={promptExploderCaptureNormalize}
                     onValueChange={(value: string): void => {
                       if (
@@ -545,23 +508,18 @@ export function RuleItem({
                         promptExploderCaptureNormalize: value,
                       });
                     }}
-                  >
-                    <SelectTrigger className='h-8'>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='trim'>Trim</SelectItem>
-                      <SelectItem value='lower'>Lower</SelectItem>
-                      <SelectItem value='upper'>Upper</SelectItem>
-                      <SelectItem value='country'>Country Name</SelectItem>
-                      <SelectItem value='day'>Day</SelectItem>
-                      <SelectItem value='month'>Month</SelectItem>
-                      <SelectItem value='year'>Year</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className='space-y-1 md:col-span-1'>
-                  <Label className='text-[11px] text-slate-300'>Capture Overwrite</Label>
+                    options={[
+                      { value: 'trim', label: 'Trim' },
+                      { value: 'lower', label: 'Lower' },
+                      { value: 'upper', label: 'Upper' },
+                      { value: 'country', label: 'Country Name' },
+                      { value: 'day', label: 'Day' },
+                      { value: 'month', label: 'Month' },
+                      { value: 'year', label: 'Year' },
+                    ]}
+                  />
+                </FormField>
+                <FormField label='Capture Overwrite'>
                   <button
                     type='button'
                     className={cn(
@@ -578,14 +536,13 @@ export function RuleItem({
                   >
                     {promptExploderCaptureOverwrite ? 'ON' : 'OFF'}
                   </button>
-                </div>
+                </FormField>
               </>
             ) : null}
           </div>
 
           <div className='grid gap-2 rounded border border-border/40 bg-foreground/5 p-3 md:grid-cols-4'>
-            <div className='space-y-1'>
-              <Label className='text-[11px] text-slate-300'>Sequence</Label>
+            <FormField label='Sequence'>
               <Input
                 type='number'
                 min={0}
@@ -602,10 +559,10 @@ export function RuleItem({
                   patchRule({ sequence: Math.max(0, Math.floor(parsed)) });
                 }}
               />
-            </div>
-            <div className='space-y-1'>
-              <Label className='text-[11px] text-slate-300'>Chain Mode</Label>
-              <Select
+            </FormField>
+            <FormField label='Chain Mode'>
+              <SelectSimple
+                size='sm'
                 value={chainMode}
                 onValueChange={(value: string): void =>
                   patchRule({
@@ -615,19 +572,14 @@ export function RuleItem({
                         : 'continue',
                   })
                 }
-              >
-                <SelectTrigger className='h-8'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='continue'>Continue</SelectItem>
-                  <SelectItem value='stop_on_match'>Stop On Match</SelectItem>
-                  <SelectItem value='stop_on_replace'>Stop On Replace</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className='space-y-1'>
-              <Label className='text-[11px] text-slate-300'>Max Executions</Label>
+                options={[
+                  { value: 'continue', label: 'Continue' },
+                  { value: 'stop_on_match', label: 'Stop On Match' },
+                  { value: 'stop_on_replace', label: 'Stop On Replace' },
+                ]}
+              />
+            </FormField>
+            <FormField label='Max Executions'>
               <Input
                 type='number'
                 min={1}
@@ -642,9 +594,8 @@ export function RuleItem({
                   });
                 }}
               />
-            </div>
-            <div className='space-y-1'>
-              <Label className='text-[11px] text-slate-300'>Pass Output To Next</Label>
+            </FormField>
+            <FormField label='Pass Output To Next'>
               <button
                 type='button'
                 className={cn(
@@ -657,11 +608,10 @@ export function RuleItem({
               >
                 {passOutputToNext ? 'ON' : 'OFF'}
               </button>
-            </div>
+            </FormField>
 
             <div className='md:col-span-4 mt-1 grid gap-2 md:grid-cols-4'>
-              <div className='space-y-1'>
-                <Label className='text-[11px] text-slate-300'>Launch</Label>
+              <FormField label='Launch'>
                 <button
                   type='button'
                   className={cn(
@@ -674,28 +624,23 @@ export function RuleItem({
                 >
                   {launchEnabled ? 'ON' : 'OFF'}
                 </button>
-              </div>
-              <div className='space-y-1'>
-                <Label className='text-[11px] text-slate-300'>Launch Scope Behavior</Label>
-                <Select
+              </FormField>
+              <FormField label='Launch Scope Behavior'>
+                <SelectSimple
+                  size='sm'
                   value={launchScopeBehavior}
                   onValueChange={(value: string): void => {
                     patchRule({
                       launchScopeBehavior: value === 'bypass' ? 'bypass' : 'gate',
                     });
                   }}
-                >
-                  <SelectTrigger className='h-8'>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='gate'>Gate outside scope</SelectItem>
-                    <SelectItem value='bypass'>Bypass outside scope</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className='space-y-1 md:col-span-2'>
-                <Label className='text-[11px] text-slate-300'>Launch Scopes</Label>
+                  options={[
+                    { value: 'gate', label: 'Gate outside scope' },
+                    { value: 'bypass', label: 'Bypass outside scope' },
+                  ]}
+                />
+              </FormField>
+              <FormField label='Launch Scopes' className='md:col-span-2'>
                 <MultiSelect
                   options={SCOPE_OPTIONS}
                   selected={launchAppliesToScopes}
@@ -710,10 +655,10 @@ export function RuleItem({
                   searchPlaceholder='Search scope...'
                   emptyMessage='No scope found.'
                 />
-              </div>
-              <div className='space-y-1 md:col-span-2'>
-                <Label className='text-[11px] text-slate-300'>Launch Operator</Label>
-                <Select
+              </FormField>
+              <FormField label='Launch Operator' className='md:col-span-2'>
+                <SelectSimple
+                  size='sm'
                   value={launchOperator}
                   onValueChange={(value: string): void => {
                     const valid = LAUNCH_OPERATORS.some((op) => op.value === value);
@@ -723,21 +668,10 @@ export function RuleItem({
                         : 'contains',
                     });
                   }}
-                >
-                  <SelectTrigger className='h-8'>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LAUNCH_OPERATORS.map((op) => (
-                      <SelectItem key={op.value} value={op.value}>
-                        {op.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className='space-y-1'>
-                <Label className='text-[11px] text-slate-300'>Launch Flags</Label>
+                  options={LAUNCH_OPERATORS}
+                />
+              </FormField>
+              <FormField label='Launch Flags'>
                 <Input
                   className='h-8'
                   value={launchFlags}
@@ -746,9 +680,8 @@ export function RuleItem({
                   }
                   placeholder='mi'
                 />
-              </div>
-              <div className='space-y-1'>
-                <Label className='text-[11px] text-slate-300'>Launch Value</Label>
+              </FormField>
+              <FormField label='Launch Value'>
                 <Input
                   className='h-8'
                   value={launchValue}
@@ -757,7 +690,7 @@ export function RuleItem({
                   }
                   placeholder='contains/equals target'
                 />
-              </div>
+              </FormField>
             </div>
 
             {rule.sequenceGroupId ? (
@@ -842,8 +775,7 @@ export function RuleItem({
                 </div>
                 {op.kind === 'replace' ? (
                   <div className='grid gap-2 md:grid-cols-4'>
-                    <div className='space-y-1 md:col-span-2'>
-                      <Label className='text-[11px] text-slate-300'>Pattern</Label>
+                    <FormField label='Pattern' className='md:col-span-2'>
                       <Input
                         className='h-8 font-mono'
                         value={op.pattern}
@@ -854,9 +786,8 @@ export function RuleItem({
                           })
                         }
                       />
-                    </div>
-                    <div className='space-y-1 md:col-span-1'>
-                      <Label className='text-[11px] text-slate-300'>Flags</Label>
+                    </FormField>
+                    <FormField label='Flags'>
                       <Input
                         className='h-8 font-mono'
                         value={op.flags ?? ''}
@@ -867,9 +798,8 @@ export function RuleItem({
                           })
                         }
                       />
-                    </div>
-                    <div className='space-y-1 md:col-span-1'>
-                      <Label className='text-[11px] text-slate-300'>Replacement</Label>
+                    </FormField>
+                    <FormField label='Replacement'>
                       <Input
                         className='h-8'
                         value={op.replacement}
@@ -880,9 +810,8 @@ export function RuleItem({
                           })
                         }
                       />
-                    </div>
-                    <div className='space-y-1 md:col-span-4'>
-                      <Label className='text-[11px] text-slate-300'>Comment</Label>
+                    </FormField>
+                    <FormField label='Comment' className='md:col-span-4'>
                       <Input
                         className='h-8'
                         value={op.comment ?? ''}
@@ -893,11 +822,10 @@ export function RuleItem({
                           })
                         }
                       />
-                    </div>
+                    </FormField>
                   </div>
                 ) : (
-                  <div className='space-y-1'>
-                    <Label className='text-[11px] text-slate-300'>Comment</Label>
+                  <FormField label='Comment'>
                     <Input
                       className='h-8'
                       value={op.comment ?? ''}
@@ -908,7 +836,7 @@ export function RuleItem({
                         })
                       }
                     />
-                  </div>
+                  </FormField>
                 )}
               </div>
             ))}
@@ -931,11 +859,12 @@ export function RuleItem({
         </div>
       )}
 
-      <details className='rounded border border-border/40 bg-foreground/5 p-3'>
-        <summary className='cursor-pointer text-xs font-medium text-gray-200'>
-          Raw JSON editor
-        </summary>
-        <div className='mt-3 space-y-2'>
+      <CollapsibleSection
+        title={<span className='text-xs font-medium text-gray-200'>Raw JSON editor</span>}
+        variant='subtle'
+        className='mt-2'
+      >
+        <div className='mt-1 space-y-2'>
           <Textarea
             className='min-h-[180px] font-mono text-[12px]'
             value={draft.text}
@@ -947,7 +876,7 @@ export function RuleItem({
             <div className='text-xs text-red-300'>{draft.error}</div>
           ) : null}
         </div>
-      </details>
+      </CollapsibleSection>
     </div>
   );
 }

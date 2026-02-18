@@ -12,14 +12,11 @@ import type { ModalStateProps } from '@/shared/types/modal-props';
 import {
   Button,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  SelectSimple,
   Textarea,
   LoadingState,
   AppModal,
+  CollapsibleSection,
 } from '@/shared/ui';
 
 import { buildHistoryNodeOptions } from './run-history-utils';
@@ -179,23 +176,14 @@ export function RunDetailDialog({
             <div className='flex flex-wrap items-center gap-2'>
               <Label className='text-[10px] uppercase text-gray-500'>History</Label>
               {historyOptions.length > 1 ? (
-                <Select
-                  {...(selectedHistoryNodeId != null ? { value: selectedHistoryNodeId } : {})}
+                <SelectSimple
+                  size='sm'
+                  value={selectedHistoryNodeId ?? ''}
                   onValueChange={onHistoryNodeSelect}
-                >
-                  <SelectTrigger className='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'>
-                    <SelectValue placeholder='Select node' />
-                  </SelectTrigger>
-                  <SelectContent className='border-border bg-gray-900 text-white'>
-                    {historyOptions.map(
-                      (option: { id: string; label: string }): React.JSX.Element => (
-                        <SelectItem key={option.id} value={option.id}>
-                          {option.label}
-                        </SelectItem>
-                      )
-                    )}
-                  </SelectContent>
-                </Select>
+                  options={historyOptions.map(opt => ({ value: opt.id, label: opt.label }))}
+                  placeholder='Select node'
+                  triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
+                />
               ) : (
                 <div className='text-[11px] text-gray-400'>
                   {historyOptions[0]?.label ?? 'No nodes'}
@@ -215,10 +203,12 @@ export function RunDetailDialog({
               </div>
             )}
           </div>
-          <details className='rounded-md border border-border/70 bg-black/20 p-3'>
-            <summary className='cursor-pointer text-[11px] uppercase text-gray-400'>
-                Raw payloads
-            </summary>
+          <CollapsibleSection
+            title='Raw payloads'
+            variant='card'
+            titleClassName='text-[11px] uppercase text-gray-400'
+            className='bg-black/20'
+          >
             <div className='mt-3 space-y-3'>
               <div>
                 <Label className='text-[10px] uppercase text-gray-500'>Run</Label>
@@ -253,7 +243,7 @@ export function RunDetailDialog({
                 />
               </div>
             </div>
-          </details>
+          </CollapsibleSection>
         </div>
       ) : (
         <div className='text-sm text-gray-400'>No run selected.</div>

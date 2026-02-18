@@ -6,6 +6,7 @@ export * from './button';
 export * from './card';
 export * from './client-only';
 export * from './checkbox';
+export * from './collapsible';
 export * from './dialog';
 export * from './dropdown-menu';
 export * from './input';
@@ -60,6 +61,8 @@ export { default as MissingImagePlaceholder } from './missing-image-placeholder'
 export * from './FormActions';
 export * from './LoadingState';
 export * from './Hint';
+export * from './ActionMenu';
+export * from './ExternalLink';
 export * from './Breadcrumbs';
 export * from './PropertyRow';
 export * from './toggle-row';

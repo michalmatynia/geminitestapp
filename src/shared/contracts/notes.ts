@@ -1,13 +1,14 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
+import { documentEditorModeSchema, type DocumentEditorModeDto } from './document-editor';
 
 /**
  * Notes App DTOs
  */
 
-export const noteEditorTypeSchema = z.enum(['markdown', 'wysiwyg', 'code']);
-export type NoteEditorType = z.infer<typeof noteEditorTypeSchema>;
+export const noteEditorTypeSchema = documentEditorModeSchema;
+export type NoteEditorType = DocumentEditorModeDto;
 
 export const noteSchema = dtoBaseSchema.extend({
   title: z.string(),
@@ -178,3 +179,42 @@ export const createNoteThemeSchema = noteThemeSchema.omit({
 
 export type CreateNoteThemeDto = z.infer<typeof createNoteThemeSchema>;
 export type UpdateNoteThemeDto = Partial<CreateNoteThemeDto>;
+
+/**
+ * Note Filter and File DTOs
+ */
+
+export const noteFiltersSchema = z.object({
+  search: z.string().optional(),
+  searchScope: z.enum(['both', 'title', 'content']).optional(),
+  isPinned: z.boolean().optional(),
+  isArchived: z.boolean().optional(),
+  isFavorite: z.boolean().optional(),
+  tagIds: z.array(z.string()).optional(),
+  categoryIds: z.array(z.string()).optional(),
+  notebookId: z.string().nullable().optional(),
+  truncateContent: z.boolean().optional(),
+});
+
+export type NoteFiltersDto = z.infer<typeof noteFiltersSchema>;
+
+export const noteFileSchema = dtoBaseSchema.extend({
+  noteId: z.string(),
+  slotIndex: z.number(),
+  filename: z.string(),
+  filepath: z.string(),
+  mimetype: z.string(),
+  size: z.number(),
+  width: z.number().nullable(),
+  height: z.number().nullable(),
+});
+
+export type NoteFileDto = z.infer<typeof noteFileSchema>;
+
+export const createNoteFileSchema = noteFileSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CreateNoteFileDto = z.infer<typeof createNoteFileSchema>;

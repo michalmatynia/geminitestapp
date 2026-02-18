@@ -276,7 +276,7 @@ export const buildReferencePreviewImages = (
     .map((slotId: string) => slots.find((slot) => slot.id === slotId))
     .filter((slot): slot is ImageStudioSlotRecord => Boolean(slot))
     .flatMap((slot) => {
-      const filepath = slot.imageFile?.filepath || slot.imageUrl || '';
+      const filepath = slot.imageFile?.url || slot.imageUrl || '';
       if (!filepath) return [];
       return [{
         kind: 'reference' as const,

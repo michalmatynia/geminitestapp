@@ -23,7 +23,8 @@ import {
   PanelHeader,
   SearchInput,
   PanelPagination,
-  EmptyState
+  EmptyState,
+  MetadataItem,
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
@@ -308,49 +309,50 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                 </div>
               }
             >
-              <div className='grid gap-4 md:grid-cols-3 text-xs'>
-                <div className='space-y-1'>
-                  <div className='text-gray-500'>Run ID</div>
-                  <div className='font-mono text-gray-200'>{detail.run.id}</div>
-                </div>
-                <div className='space-y-1'>
-                  <div className='text-gray-500'>Status</div>
-                  <StatusBadge status={detail.run.status} />
-                </div>
-                <div className='space-y-1'>
-                  <div className='text-gray-500'>Path</div>
-                  <div className='text-gray-200'>{detail.run.pathName || 'Untitled'}</div>
-                  <div className='text-[10px] text-gray-500 font-mono'>{detail.run.pathId}</div>
-                </div>
-                <div className='space-y-1'>
-                  <div className='text-gray-500'>Entity</div>
-                  <div className='text-gray-200'>{detail.run.entityId || '—'}</div>
-                </div>
-                <div className='space-y-1'>
-                  <div className='text-gray-500'>Retries</div>
-                  <div className='text-gray-200'>{(detail.run.retryCount ?? 0)}/{detail.run.maxAttempts ?? 0}</div>
-                </div>
-                <div className='space-y-1'>
-                  <div className='text-gray-500'>Dead-lettered</div>
-                  <div className='text-gray-200'>{formatTimestamp(detail.run.deadLetteredAt ?? detail.run.updatedAt)}</div>
-                </div>
+              <div className='grid gap-4 md:grid-cols-3'>
+                <MetadataItem
+                  label='Run ID'
+                  value={detail.run.id}
+                  mono
+                />
+                <MetadataItem
+                  label='Status'
+                  value={<StatusBadge status={detail.run.status} />}
+                />
+                <MetadataItem
+                  label='Path'
+                  value={detail.run.pathName || 'Untitled'}
+                  hint={detail.run.pathId ?? undefined}
+                />
+                <MetadataItem
+                  label='Entity'
+                  value={detail.run.entityId}
+                />
+                <MetadataItem
+                  label='Retries'
+                  value={`${detail.run.retryCount ?? 0}/${detail.run.maxAttempts ?? 0}`}
+                />
+                <MetadataItem
+                  label='Dead-lettered'
+                  value={formatTimestamp(detail.run.deadLetteredAt ?? detail.run.updatedAt)}
+                />
                 
-                <div className='md:col-span-3 space-y-1'>
-                  <div className='text-gray-500'>Error Message</div>
-                  <Alert variant='error' className='px-2 py-2 text-xs'>
+                <div className='md:col-span-3 space-y-1.5'>
+                  <span className='text-[10px] uppercase text-gray-600 font-bold ml-1'>Error Message</span>
+                  <Alert variant='error' className='px-3 py-3 text-xs leading-relaxed'>
                     {detail.run.errorMessage || 'No error message provided.'}
                   </Alert>
                 </div>
 
                 {nodeStatusSummary && (
-                  <div className='md:col-span-3 space-y-2 mt-2'>
-                    <div className='flex justify-between text-[10px] text-gray-500 uppercase font-semibold'>
+                  <div className='md:col-span-3 space-y-2 mt-2 px-1'>
+                    <div className='flex justify-between text-[10px] text-gray-500 uppercase font-bold tracking-wider'>
                       <span>Progress: {nodeStatusSummary.completed}/{nodeStatusSummary.totalNodes} Nodes</span>
                       <span>{nodeStatusSummary.progress}%</span>
                     </div>
                     <div className='h-1.5 w-full overflow-hidden rounded-full bg-black/40'>
                       <div
-                        className='h-full rounded-full bg-emerald-500/60 transition-all duration-500'
+                        className='h-full rounded-full bg-emerald-500/60 transition-all duration-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]'
                         style={{ width: `${nodeStatusSummary.progress}%` }}
                       />
                     </div>

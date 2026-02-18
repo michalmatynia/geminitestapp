@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowUpDown, Download, MoreVertical } from 'lucide-react';
+import { ArrowUpDown, Download } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 import {
@@ -24,10 +24,8 @@ import {
   Badge,
   Button,
   Checkbox,
-  DropdownMenu,
-  DropdownMenuContent,
+  ActionMenu,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   useToast,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -370,49 +368,35 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
 
   return (
     <div className='flex justify-end'>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant='ghost'
-            size='icon'
-            className='size-8 text-muted-foreground hover:bg-muted/50 hover:text-white'
-            aria-label='Open row actions'
-            type='button'
-          >
-            <MoreVertical className='size-4' aria-hidden='true' />
-          </Button>
-        </DropdownMenuTrigger>
+      <ActionMenu ariaLabel='Open row actions'>
+        <DropdownMenuItem
+          onSelect={(event: Event): void => {
+            event.preventDefault();
+            onProductEditClick?.(product);
+          }}
+        >
+          Edit
+        </DropdownMenuItem>
 
-        <DropdownMenuContent align='end'>
-          <DropdownMenuItem
-            onSelect={(event: Event): void => {
-              event.preventDefault();
-              onProductEditClick?.(product);
-            }}
-          >
-            Edit
-          </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={(event: Event): void => {
+            event.preventDefault();
+            onDuplicateProduct?.(product);
+          }}
+        >
+          Duplicate
+        </DropdownMenuItem>
 
-          <DropdownMenuItem
-            onSelect={(event: Event): void => {
-              event.preventDefault();
-              onDuplicateProduct?.(product);
-            }}
-          >
-            Duplicate
-          </DropdownMenuItem>
-
-          <DropdownMenuItem
-            className='text-destructive focus:text-destructive'
-            onSelect={(event: Event): void => {
-              event.preventDefault();
-              onProductDeleteClick?.(product);
-            }}
-          >
-            Remove
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        <DropdownMenuItem
+          className='text-destructive focus:text-destructive'
+          onSelect={(event: Event): void => {
+            event.preventDefault();
+            onProductDeleteClick?.(product);
+          }}
+        >
+          Remove
+        </DropdownMenuItem>
+      </ActionMenu>
     </div>
   );
 };

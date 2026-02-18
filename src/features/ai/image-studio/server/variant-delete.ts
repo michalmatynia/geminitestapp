@@ -5,6 +5,7 @@ import fs from 'fs/promises';
 import { getImageFileRepository } from '@/features/files/server';
 import { getDiskPathFromPublicPath } from '@/features/files/utils/fileUploader';
 import { logSystemEvent } from '@/features/observability/server';
+import { getProductRepository } from '@/features/products/services/product-repository';
 
 import { removeImageStudioRunOutputs } from './run-repository';
 import {
@@ -46,6 +47,7 @@ type DeleteImageStudioVariantDeps = {
   }) => Promise<number>;
   getImageFileById: (id: string) => Promise<{ id: string; filepath: string } | null>;
   deleteImageFileById: (id: string) => Promise<void>;
+  countProductsByImageFileId: (id: string) => Promise<number>;
   deleteDiskPath: (publicPath: string) => Promise<boolean>;
   logMetric: (input: {
     level: 'info' | 'warn' | 'error';
@@ -315,6 +317,10 @@ const defaultDeps: DeleteImageStudioVariantDeps = {
     const repo = await getImageFileRepository();
     await repo.deleteImageFile(id);
   },
+  countProductsByImageFileId: async (id: string) => {
+    const productRepository = await getProductRepository();
+    return await productRepository.countProductsByImageFileId(id);
+  },
   deleteDiskPath: async (publicPath: string) => {
     const normalized = normalizePublicPath(publicPath);
     if (!normalized) return false;
@@ -493,6 +499,15 @@ export async function deleteImageStudioVariant(
       for (const fileId of Array.from(fileIdsToCleanup)) {
         const imageFile = await deps.getImageFileById(fileId);
         if (!imageFile) continue;
+        const productReferenceCount = await deps
+          .countProductsByImageFileId(fileId)
+          .catch(() => 1);
+        if (productReferenceCount > 0) {
+          warnings.push(
+            `Skipped file deletion for "${fileId}" because it is still referenced by Product Studio image slots.`,
+          );
+          continue;
+        }
         const normalizedPath = normalizePublicPath(imageFile.filepath);
         if (normalizedPath) {
           await deps.deleteDiskPath(normalizedPath);

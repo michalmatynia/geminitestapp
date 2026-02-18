@@ -44,7 +44,7 @@ export const slotHasRenderableImage = (
   const base64 = asTrimmedString(slot.imageBase64);
   if (base64) return true;
 
-  const filePath = asTrimmedString(slot.imageFile?.filepath);
+  const filePath = asTrimmedString(slot.imageFile?.url);
   if (filePath) return true;
 
   return Boolean(asTrimmedString(slot.imageUrl));

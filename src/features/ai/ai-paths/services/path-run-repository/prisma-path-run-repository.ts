@@ -244,9 +244,9 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     const run = await prismaAny.aiPathRun!.create({
       data: {
         userId: input.userId ?? null,
-        pathId: input.pathId,
+        pathId: input.pathId ?? null,
         pathName: input.pathName ?? null,
-        status: 'queued',
+        status: input.status ?? 'queued',
         triggerEvent: input.triggerEvent ?? null,
         triggerNodeId: input.triggerNodeId ?? null,
         triggerContext: input.triggerContext ?? null,
@@ -493,17 +493,11 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     options: AiPathRunEventListOptions = {}
   ): Promise<AiPathRunEventRecord[]> {
     ensureModels();
-    const sinceValue = options.since
-      ? options.since instanceof Date
-        ? options.since
-        : new Date(options.since)
-      : null;
+    const sinceValue = options.since ? new Date(options.since) : null;
     const since =
       sinceValue && !Number.isNaN(sinceValue.getTime()) ? sinceValue : null;
     const afterDateValue = options.after?.createdAt
-      ? options.after.createdAt instanceof Date
-        ? options.after.createdAt
-        : new Date(options.after.createdAt)
+      ? new Date(options.after.createdAt)
       : null;
     const afterDate =
       afterDateValue && !Number.isNaN(afterDateValue.getTime()) ? afterDateValue : null;

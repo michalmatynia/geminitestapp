@@ -28,7 +28,7 @@ export const chatbotSessionSettingsSchema = z.object({
 export type ChatbotSessionSettingsDto = z.infer<typeof chatbotSessionSettingsSchema>;
 
 export const chatbotSessionSchema = dtoBaseSchema.extend({
-  title: z.string(),
+  title: z.string().nullable(),
   userId: z.string().nullable(),
   messages: z.array(chatMessageSchema),
   messageCount: z.number(),
@@ -36,6 +36,15 @@ export const chatbotSessionSchema = dtoBaseSchema.extend({
 });
 
 export type ChatbotSessionDto = z.infer<typeof chatbotSessionSchema>;
+
+export const chatbotSessionListItemSchema = z.object({
+  id: z.string(),
+  title: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type ChatbotSessionListItemDto = z.infer<typeof chatbotSessionListItemSchema>;
 
 export const createChatSessionSchema = chatbotSessionSchema.omit({
   id: true,
@@ -52,9 +61,14 @@ export type ChatSessionUpdateInput = UpdateChatSessionDto;
  * Chatbot Memory Item Contract
  */
 export const chatbotMemoryItemSchema = dtoBaseSchema.extend({
-  key: z.string(),
-  value: z.string(),
-  type: z.string(),
+  memoryKey: z.string(),
+  runId: z.string().nullable(),
+  content: z.string(),
+  summary: z.string().nullable(),
+  tags: z.array(z.string()),
+  metadata: z.record(z.string(), z.unknown()).nullable(),
+  importance: z.number().nullable(),
+  lastAccessedAt: z.string().nullable(),
 });
 
 export type ChatbotMemoryItemDto = z.infer<typeof chatbotMemoryItemSchema>;
@@ -93,10 +107,9 @@ export type AgentBrowserLogDto = z.infer<typeof agentBrowserLogSchema>;
 /**
  * Chatbot Context Segment Contract
  */
-export const chatbotContextSegmentSchema = dtoBaseSchema.extend({
+export const chatbotContextSegmentSchema = z.object({
+  title: z.string(),
   content: z.string(),
-  type: z.string(),
-  priority: z.number(),
 });
 
 export type ChatbotContextSegmentDto = z.infer<typeof chatbotContextSegmentSchema>;
@@ -241,3 +254,137 @@ export const agentPlanStepSchema = dtoBaseSchema.extend({
 });
 
 export type AgentPlanStepDto = z.infer<typeof agentPlanStepSchema>;
+
+/**
+ * Agent Planning DTOs
+ */
+export const agentStepSchema = z.object({
+  id: z.string().optional(),
+  title: z.string(),
+  tool: z.string().nullable().optional(),
+  successCriteria: z.string().nullable().optional(),
+  expectedObservation: z.string().nullable().optional(),
+  status: z.string().optional(),
+  phase: z.string().nullable().optional(),
+});
+
+export type AgentStepDto = z.infer<typeof agentStepSchema>;
+
+export const agentSubgoalSchema = z.object({
+  id: z.string().optional(),
+  title: z.string(),
+  successCriteria: z.string().nullable().optional(),
+  steps: z.array(agentStepSchema).optional(),
+});
+
+export type AgentSubgoalDto = z.infer<typeof agentSubgoalSchema>;
+
+export const agentGoalSchema = z.object({
+  id: z.string().optional(),
+  title: z.string(),
+  successCriteria: z.string().nullable().optional(),
+  subgoals: z.array(agentSubgoalSchema).optional(),
+});
+
+export type AgentGoalDto = z.infer<typeof agentGoalSchema>;
+
+export const agentPlanHierarchySchema = z.object({
+  goals: z.array(agentGoalSchema).optional(),
+});
+
+export type AgentPlanHierarchyDto = z.infer<typeof agentPlanHierarchySchema>;
+
+export const agentPlanningMetaSchema = z.object({
+  type: z.string().optional(),
+  stepId: z.string().optional(),
+  failedStepId: z.string().optional(),
+  activeStepId: z.string().optional(),
+  reason: z.string().optional(),
+  branchSteps: z.array(agentStepSchema).optional(),
+  steps: z.array(agentStepSchema).optional(),
+  hierarchy: agentPlanHierarchySchema.optional(),
+  items: z.array(z.unknown()).optional(),
+  names: z.array(z.unknown()).optional(),
+  url: z.string().optional(),
+  extractionType: z.string().optional(),
+  summary: z.string().optional(),
+});
+
+export type AgentPlanningMetaDto = z.infer<typeof agentPlanningMetaSchema>;
+
+/**
+ * Agent Session Context DTOs
+ */
+export const agentSessionContextSchema = z.object({
+  cookies: z.array(z.object({
+    name: z.string(),
+    domain: z.string(),
+    valueLength: z.number(),
+  })).optional(),
+  storage: z.object({
+    localCount: z.number(),
+    sessionCount: z.number(),
+    localKeys: z.array(z.string()).optional(),
+  }).optional(),
+});
+
+export type AgentSessionContextDto = z.infer<typeof agentSessionContextSchema>;
+
+export const agentLoginCandidatesSchema = z.object({
+  inputs: z.array(z.object({
+    id: z.string().optional(),
+    name: z.string().optional(),
+    type: z.string().optional(),
+    score: z.number(),
+  })).optional(),
+  buttons: z.array(z.object({
+    id: z.string().optional(),
+    name: z.string().optional(),
+    text: z.string().optional(),
+    score: z.number(),
+  })).optional(),
+});
+
+export type AgentLoginCandidatesDto = z.infer<typeof agentLoginCandidatesSchema>;
+
+/**
+ * Timeline DTO
+ */
+export const chatbotTimelineEntrySchema = z.object({
+  id: z.string(),
+  source: z.enum(['audit', 'browser']),
+  level: z.string().nullable().optional(),
+  message: z.string(),
+  createdAt: z.string(),
+});
+
+export type ChatbotTimelineEntryDto = z.infer<typeof chatbotTimelineEntrySchema>;
+
+/**
+ * Model Profile DTOs
+ */
+export const modelProfileSchema = z.object({
+  name: z.string(),
+  normalized: z.string(),
+  size: z.number().nullable(),
+  isEmbedding: z.boolean(),
+  isRerank: z.boolean(),
+  isVision: z.boolean(),
+  isCode: z.boolean(),
+  isInstruct: z.boolean(),
+  isChat: z.boolean(),
+  isReasoning: z.boolean(),
+});
+
+export type ModelProfileDto = z.infer<typeof modelProfileSchema>;
+
+export const modelTaskRuleSchema = z.object({
+  targetSize: z.number().optional(),
+  preferLarge: z.boolean().optional(),
+  preferSmall: z.boolean().optional(),
+  minSize: z.number().optional(),
+  maxSize: z.number().optional(),
+  preferReasoning: z.boolean().optional(),
+});
+
+export type ModelTaskRuleDto = z.infer<typeof modelTaskRuleSchema>;

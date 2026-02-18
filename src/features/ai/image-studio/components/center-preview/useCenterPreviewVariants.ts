@@ -283,7 +283,7 @@ export function useCenterPreviewVariants({
     const workingSlotId = workingSlot.id?.trim() ?? '';
     const workingOutputId = workingSlot.imageFileId?.trim() ?? '';
     const workingImagePath = normalizeImagePath(
-      workingSlot.imageFile?.filepath ?? workingSlot.imageUrl ?? null
+      workingSlot.imageFile?.url ?? workingSlot.imageUrl ?? null
     );
 
     if (workingSlotId) {
@@ -307,7 +307,7 @@ export function useCenterPreviewVariants({
   }, [
     visibleVariantThumbnails,
     workingSlot,
-    workingSlot?.imageFile?.filepath,
+    workingSlot?.imageFile?.url,
     workingSlot?.imageFileId,
     workingSlot?.imageUrl,
   ]);

@@ -586,26 +586,62 @@ export function AdminImageStudioSettingsView(
 
             <FormSection
               title='Help Tooltips'
-              description='Enable or disable inline help for crop controls. Tooltip copy is sourced from Image Studio Docs.'
+              description='Enable or disable inline help for crop, sequencer, and version graph controls. Tooltip copy is sourced from Image Studio Docs.'
               variant='subtle'
             >
-              <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-xs text-gray-300 hover:bg-card/50 cursor-pointer w-fit'>
-                <input
-                  type='checkbox'
-                  className='h-4 w-4 rounded'
-                  checked={studioSettings.helpTooltips.cropButtonsEnabled}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    setStudioSettings((previous: ImageStudioSettings) => ({
-                      ...previous,
-                      helpTooltips: {
-                        ...previous.helpTooltips,
-                        cropButtonsEnabled: event.target.checked,
-                      },
-                    }))
-                  }
-                />
-                Enable Crop Tooltips
-              </label>
+              <div className='flex flex-wrap items-center gap-2'>
+                <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-xs text-gray-300 hover:bg-card/50 cursor-pointer w-fit'>
+                  <input
+                    type='checkbox'
+                    className='h-4 w-4 rounded'
+                    checked={studioSettings.helpTooltips.cropButtonsEnabled}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      setStudioSettings((previous: ImageStudioSettings) => ({
+                        ...previous,
+                        helpTooltips: {
+                          ...previous.helpTooltips,
+                          cropButtonsEnabled: event.target.checked,
+                        },
+                      }))
+                    }
+                  />
+                  Enable Crop Tooltips
+                </label>
+                <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-xs text-gray-300 hover:bg-card/50 cursor-pointer w-fit'>
+                  <input
+                    type='checkbox'
+                    className='h-4 w-4 rounded'
+                    checked={studioSettings.helpTooltips.sequencerFieldsEnabled}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      setStudioSettings((previous: ImageStudioSettings) => ({
+                        ...previous,
+                        helpTooltips: {
+                          ...previous.helpTooltips,
+                          sequencerFieldsEnabled: event.target.checked,
+                        },
+                      }))
+                    }
+                  />
+                  Enable Sequencer Field Tooltips
+                </label>
+                <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-xs text-gray-300 hover:bg-card/50 cursor-pointer w-fit'>
+                  <input
+                    type='checkbox'
+                    className='h-4 w-4 rounded'
+                    checked={studioSettings.helpTooltips.versionGraphButtonsEnabled}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      setStudioSettings((previous: ImageStudioSettings) => ({
+                        ...previous,
+                        helpTooltips: {
+                          ...previous.helpTooltips,
+                          versionGraphButtonsEnabled: event.target.checked,
+                        },
+                      }))
+                    }
+                  />
+                  Enable Version Graph Button Tooltips
+                </label>
+              </div>
             </FormSection>
           </TabsContent>
 

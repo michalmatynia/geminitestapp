@@ -251,6 +251,93 @@ const writeSetting = async (key: string, value: string): Promise<void> => {
   throw internalError('Failed to persist product studio config.');
 };
 
+const listPrismaProductStudioConfigs = async (): Promise<Array<{ key: string; value: string }>> => {
+  if (!canUsePrismaSettings()) return [];
+  try {
+    const rows = await prisma.setting.findMany({
+      where: {
+        key: {
+          startsWith: PRODUCT_STUDIO_CONFIG_KEY_PREFIX,
+        },
+      },
+      select: {
+        key: true,
+        value: true,
+      },
+    });
+    return rows
+      .filter((row): row is { key: string; value: string } =>
+        typeof row.key === 'string' &&
+        row.key.startsWith(PRODUCT_STUDIO_CONFIG_KEY_PREFIX) &&
+        typeof row.value === 'string'
+      );
+  } catch (error) {
+    if (isPrismaMissingTableError(error)) return [];
+    throw error;
+  }
+};
+
+const listMongoProductStudioConfigs = async (): Promise<Array<{ key: string; value: string }>> => {
+  if (!process.env['MONGODB_URI']) return [];
+  const mongo = await getMongoDb();
+  const rows = await mongo
+    .collection<SettingDocument>(SETTINGS_COLLECTION)
+    .find(
+      {
+        $or: [
+          { key: { $regex: `^${PRODUCT_STUDIO_CONFIG_KEY_PREFIX}` } },
+          { _id: { $regex: `^${PRODUCT_STUDIO_CONFIG_KEY_PREFIX}` } },
+        ],
+      },
+      {
+        projection: {
+          _id: 1,
+          key: 1,
+          value: 1,
+        },
+      },
+    )
+    .toArray();
+
+  return rows
+    .map((row) => {
+      const keyCandidate =
+        typeof row.key === 'string'
+          ? row.key
+          : typeof row._id === 'string'
+            ? row._id
+            : '';
+      const key = keyCandidate.trim();
+      if (!key.startsWith(PRODUCT_STUDIO_CONFIG_KEY_PREFIX)) return null;
+      if (typeof row.value !== 'string') return null;
+      return {
+        key,
+        value: row.value,
+      };
+    })
+    .filter((entry): entry is { key: string; value: string } => Boolean(entry));
+};
+
+const listProductStudioConfigSettings = async (): Promise<Array<{ key: string; value: string }>> => {
+  const provider = await getAppDbProvider();
+  const [mongoEntries, prismaEntries] = await Promise.all([
+    listMongoProductStudioConfigs().catch(() => []),
+    listPrismaProductStudioConfigs().catch(() => []),
+  ]);
+
+  const mergedByKey = new Map<string, string>();
+  const orderedEntries =
+    provider === 'mongodb'
+      ? [...mongoEntries, ...prismaEntries]
+      : [...prismaEntries, ...mongoEntries];
+  orderedEntries.forEach((entry) => {
+    if (mergedByKey.has(entry.key)) return;
+    mergedByKey.set(entry.key, entry.value);
+  });
+
+  return Array.from(mergedByKey.entries()).map(([key, value]) => ({ key, value }));
+};
+
 export async function getProductStudioConfig(
   productId: string
 ): Promise<ProductStudioConfig> {
@@ -342,4 +429,98 @@ export async function setProductStudioSourceSlot(
     sourceSlotByImageIndex: nextSourceMap,
     sourceSlotHistoryByImageIndex: nextSourceHistoryMap,
   });
+}
+
+export type ProductStudioSourceSlotPruneResult = {
+  projectId: string;
+  deletedSlotIds: string[];
+  touchedProducts: number;
+  updatedProducts: string[];
+};
+
+export async function pruneProductStudioSourceSlotsForProject(params: {
+  projectId: string;
+  deletedSlotIds: string[];
+}): Promise<ProductStudioSourceSlotPruneResult> {
+  const normalizedProjectId = normalizeProjectId(params.projectId);
+  if (!normalizedProjectId) {
+    return {
+      projectId: '',
+      deletedSlotIds: [],
+      touchedProducts: 0,
+      updatedProducts: [],
+    };
+  }
+
+  const deletedSlotIdSet = new Set(
+    (Array.isArray(params.deletedSlotIds) ? params.deletedSlotIds : [])
+      .filter((value): value is string => typeof value === 'string')
+      .map((value: string) => value.trim())
+      .filter(Boolean),
+  );
+  if (deletedSlotIdSet.size === 0) {
+    return {
+      projectId: normalizedProjectId,
+      deletedSlotIds: [],
+      touchedProducts: 0,
+      updatedProducts: [],
+    };
+  }
+
+  const settings = await listProductStudioConfigSettings();
+  const updatedProducts: string[] = [];
+
+  for (const setting of settings) {
+    const productId = setting.key.startsWith(PRODUCT_STUDIO_CONFIG_KEY_PREFIX)
+      ? setting.key.slice(PRODUCT_STUDIO_CONFIG_KEY_PREFIX.length)
+      : '';
+    if (!productId) continue;
+
+    const config = toConfig(setting.value);
+    if (normalizeProjectId(config.projectId) !== normalizedProjectId) continue;
+
+    let changed = false;
+    const nextSourceByIndex: Record<string, string> = {};
+    Object.entries(config.sourceSlotByImageIndex).forEach(([index, slotId]) => {
+      const normalizedSlotId = slotId.trim();
+      if (!normalizedSlotId || deletedSlotIdSet.has(normalizedSlotId)) {
+        changed = true;
+        return;
+      }
+      nextSourceByIndex[index] = normalizedSlotId;
+    });
+
+    const nextHistoryByIndex: Record<string, string[]> = {};
+    Object.entries(config.sourceSlotHistoryByImageIndex).forEach(([index, slotIds]) => {
+      const filtered = slotIds
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0 && !deletedSlotIdSet.has(value));
+      if (filtered.length !== slotIds.length) {
+        changed = true;
+      }
+      if (filtered.length > 0) {
+        nextHistoryByIndex[index] = filtered;
+      } else if (slotIds.length > 0) {
+        changed = true;
+      }
+    });
+
+    if (!changed) continue;
+
+    const nextConfig: ProductStudioConfig = {
+      ...config,
+      sourceSlotByImageIndex: nextSourceByIndex,
+      sourceSlotHistoryByImageIndex: nextHistoryByIndex,
+      updatedAt: new Date().toISOString(),
+    };
+    await writeSetting(setting.key, toStorageValue(nextConfig));
+    updatedProducts.push(productId);
+  }
+
+  return {
+    projectId: normalizedProjectId,
+    deletedSlotIds: Array.from(deletedSlotIdSet),
+    touchedProducts: updatedProducts.length,
+    updatedProducts,
+  };
 }

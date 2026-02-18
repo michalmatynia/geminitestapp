@@ -1,7 +1,7 @@
 'use client';
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator/hooks/useAgentCreatorSettings';
-import { Input, Checkbox, SelectSimple, FormSection, FormField } from '@/shared/ui';
+import { Input, SelectSimple, FormSection, FormField, ToggleRow } from '@/shared/ui';
 
 export function AgentCreatorSettingsSection(): React.ReactElement {
   const {
@@ -23,22 +23,14 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
 
     <FormSection title='Agent Settings' variant='subtle' className='p-4'>
 
-      <div className='flex items-center gap-4 mt-4'>
-
-        <label className='flex items-center gap-2 text-sm text-gray-300 cursor-pointer'>
-
-          <Checkbox
-
-            checked={agentModeEnabled}
-
-            onCheckedChange={(checked: boolean) => setAgentModeEnabled(Boolean(checked))}
-
-          />
-
-            Enable Agent Mode
-
-        </label>
-
+      <div className='mt-2'>
+        <ToggleRow
+          label='Enable Agent Mode'
+          description='Allow the chatbot to use automated browser agents.'
+          checked={agentModeEnabled}
+          onCheckedChange={setAgentModeEnabled}
+          type='switch'
+        />
       </div>
 
       {agentModeEnabled && (
@@ -87,62 +79,25 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
 
           </div>
 
-          <div className='flex flex-wrap items-center gap-4'>
-
-            <label className='flex items-center gap-2 text-sm text-gray-300 cursor-pointer'>
-
-              <Checkbox
-
-                checked={agentRunHeadless}
-
-                onCheckedChange={(checked: boolean) =>
-
-                  setAgentRunHeadless(Boolean(checked))
-
-                }
-
-              />
-
-                Run Headless
-
-            </label>
-
-            <label className='flex items-center gap-2 text-sm text-gray-300 cursor-pointer'>
-
-              <Checkbox
-
-                checked={agentIgnoreRobotsTxt}
-
-                onCheckedChange={(checked: boolean) =>
-
-                  setAgentIgnoreRobotsTxt(Boolean(checked))
-
-                }
-
-              />
-
-                Ignore robots.txt
-
-            </label>
-
-            <label className='flex items-center gap-2 text-sm text-gray-300 cursor-pointer'>
-
-              <Checkbox
-
-                checked={agentRequireHumanApproval}
-
-                onCheckedChange={(checked: boolean) =>
-
-                  setAgentRequireHumanApproval(Boolean(checked))
-
-                }
-
-              />
-
-                Require Approval
-
-            </label>
-
+          <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+            <ToggleRow
+              label='Run Headless'
+              description='Don&apos;t show browser window'
+              checked={agentRunHeadless}
+              onCheckedChange={setAgentRunHeadless}
+            />
+            <ToggleRow
+              label='Ignore robots.txt'
+              description='Bypass scraping restrictions'
+              checked={agentIgnoreRobotsTxt}
+              onCheckedChange={setAgentIgnoreRobotsTxt}
+            />
+            <ToggleRow
+              label='Require Approval'
+              description='Ask before critical actions'
+              checked={agentRequireHumanApproval}
+              onCheckedChange={setAgentRequireHumanApproval}
+            />
           </div>
 
         </div>

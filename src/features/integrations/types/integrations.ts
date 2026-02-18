@@ -1,4 +1,4 @@
-import type { TemplateMappingDto } from '@/shared/contracts/integrations';
+import type { TemplateMappingDto, ImageTransformOptionsDto, ImageRetryPresetDto } from '@/shared/contracts/integrations';
 
 // DTO type exports
 export type {
@@ -15,6 +15,8 @@ export type {
   BaseInventoryDto as BaseInventory,
   BaseWarehouseDto as BaseWarehouse,
   BaseCategoryDto as BaseCategory,
+  ImageTransformOptionsDto,
+  ImageRetryPresetDto as ImageRetryPreset,
 } from '@/shared/contracts/integrations';
 
 // Integration domain record types
@@ -134,12 +136,7 @@ export type ImageExportDiagnostics = {
 
 export type ImageBase64Mode = 'base-only' | 'full-data-uri';
 
-export type ImageTransformOptions = {
-  maxWidth?: number;
-  maxHeight?: number;
-  quality?: number;
-  format?: 'jpeg' | 'png' | 'webp';
-};
+export type ImageTransformOptions = ImageTransformOptionsDto;
 
 export type ImageUrlDiagnostic = {
   url: string;

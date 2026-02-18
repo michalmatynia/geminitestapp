@@ -7,10 +7,13 @@ import { Input } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useVersionGraphControlsContext } from './VersionGraphControlsContext';
+import { useSettingsState } from '../context/SettingsContext';
+import { getImageStudioDocTooltip } from '../utils/studio-docs';
 
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function VersionGraphFilterBar(): React.JSX.Element {
+  const { studioSettings } = useSettingsState();
   const {
     filterQuery,
     filterTypes,
@@ -23,6 +26,26 @@ export function VersionGraphFilterBar(): React.JSX.Element {
     onToggleLeafOnly,
     onClearFilters,
   } = useVersionGraphControlsContext();
+  const versionGraphTooltipsEnabled = studioSettings.helpTooltips.versionGraphButtonsEnabled;
+  const tooltipContent = React.useMemo(
+    () => ({
+      search: getImageStudioDocTooltip('version_graph_filter_search'),
+      base: getImageStudioDocTooltip('version_graph_filter_type_base'),
+      generation: getImageStudioDocTooltip('version_graph_filter_type_generation'),
+      merge: getImageStudioDocTooltip('version_graph_filter_type_merge'),
+      composite: getImageStudioDocTooltip('version_graph_filter_type_composite'),
+      maskCycle: getImageStudioDocTooltip('version_graph_filter_mask_cycle'),
+      leafToggle: getImageStudioDocTooltip('version_graph_filter_leaf_toggle'),
+      clear: getImageStudioDocTooltip('version_graph_filter_clear'),
+    }),
+    []
+  );
+  const resolveTypeTooltip = (type: 'base' | 'generation' | 'merge' | 'composite'): string => {
+    if (type === 'base') return tooltipContent.base;
+    if (type === 'generation') return tooltipContent.generation;
+    if (type === 'merge') return tooltipContent.merge;
+    return tooltipContent.composite;
+  };
 
   return (
     <div className='border-b border-border/40 px-3 py-1.5'>
@@ -34,6 +57,7 @@ export function VersionGraphFilterBar(): React.JSX.Element {
             value={filterQuery}
             onChange={(e) => onSetFilterQuery(e.target.value)}
             placeholder='Search nodes...'
+            title={versionGraphTooltipsEnabled ? tooltipContent.search : undefined}
             className='h-6 w-full rounded border border-border/40 bg-transparent pl-5 pr-2 text-[10px] text-gray-300 placeholder:text-gray-600 focus:border-gray-500 focus:outline-none'
           />
         </div>
@@ -55,7 +79,7 @@ export function VersionGraphFilterBar(): React.JSX.Element {
                       : 'bg-purple-500/20 text-purple-400'
                 : 'text-gray-500 hover:text-gray-400',
             )}
-            title={`Filter: ${t}`}
+            title={versionGraphTooltipsEnabled ? resolveTypeTooltip(t) : undefined}
             onClick={() => onToggleFilterType(t)}
           >
             {t === 'base' ? 'Base' : t === 'generation' ? 'Gen' : t === 'composite' ? 'Comp' : 'Merge'}
@@ -71,13 +95,7 @@ export function VersionGraphFilterBar(): React.JSX.Element {
               ? 'bg-purple-500/20 text-purple-400'
               : 'text-gray-500 hover:text-gray-400',
           )}
-          title={
-            filterHasMask === null
-              ? 'Filter: masks (any)'
-              : filterHasMask
-                ? 'Filter: has mask'
-                : 'Filter: no mask'
-          }
+          title={versionGraphTooltipsEnabled ? tooltipContent.maskCycle : undefined}
           onClick={() => {
             // Cycle: null → true → false → null
             if (filterHasMask === null) onSetFilterHasMask(true);
@@ -97,7 +115,7 @@ export function VersionGraphFilterBar(): React.JSX.Element {
               ? 'bg-yellow-500/20 text-yellow-400'
               : 'text-gray-500 hover:text-gray-400',
           )}
-          title={filterLeafOnly ? 'Show all nodes' : 'Show only leaf nodes (no children)'}
+          title={versionGraphTooltipsEnabled ? tooltipContent.leafToggle : undefined}
           onClick={onToggleLeafOnly}
         >
           Leaf
@@ -108,7 +126,7 @@ export function VersionGraphFilterBar(): React.JSX.Element {
           <button
             type='button'
             className='rounded px-1 py-0.5 text-[9px] text-gray-500 hover:text-gray-400'
-            title='Clear all filters'
+            title={versionGraphTooltipsEnabled ? tooltipContent.clear : undefined}
             onClick={onClearFilters}
           >
             <X className='size-3' />

@@ -259,8 +259,8 @@ export function StudioModals(): React.JSX.Element {
   );
 
   const inlinePreviewMimeType = useMemo(
-    () => resolveInlinePreviewMimeType(selectedSlot?.imageFile?.mimetype, slotBase64Draft),
-    [selectedSlot?.imageFile?.mimetype, slotBase64Draft]
+    () => resolveInlinePreviewMimeType(selectedSlot?.imageFile?.mimeType, slotBase64Draft),
+    [selectedSlot?.imageFile?.mimeType, slotBase64Draft]
   );
 
   const inlinePreviewDimensions = useMemo(
@@ -390,7 +390,7 @@ export function StudioModals(): React.JSX.Element {
 
   const managedInlineCardImageSlot = useMemo<ProductImageSlot>(() => {
     if (!selectedSlot?.imageFileId) return null;
-    const previewPath = selectedSlot.imageFile?.filepath?.trim() || selectedSlot.imageUrl?.trim() || '';
+    const previewPath = selectedSlot.imageFile?.url?.trim() || selectedSlot.imageUrl?.trim() || '';
     if (!previewPath) return null;
     return {
       type: 'existing',
@@ -401,7 +401,7 @@ export function StudioModals(): React.JSX.Element {
       previewUrl: previewPath,
       slotId: selectedSlot.id,
     };
-  }, [selectedSlot?.id, selectedSlot?.imageFile?.filepath, selectedSlot?.imageFileId, selectedSlot?.imageUrl]);
+  }, [selectedSlot?.id, selectedSlot?.imageFile?.url, selectedSlot?.imageFileId, selectedSlot?.imageUrl]);
 
   const scheduleInlineSlotLinkPersistence = useCallback(
     (slotId: string, nextValue: string): void => {
@@ -759,7 +759,7 @@ export function StudioModals(): React.JSX.Element {
     setEditCardTab('card');
     setSlotNameDraft(selectedSlot.name ?? '');
     setSlotFolderDraft(selectedSlot.folderPath ?? selectedFolder ?? '');
-    setSlotImageUrlDraft(selectedSlot.imageUrl ?? selectedSlot.imageFile?.filepath ?? '');
+    setSlotImageUrlDraft(selectedSlot.imageUrl ?? selectedSlot.imageFile?.url ?? '');
     setSlotBase64Draft(selectedSlot.imageBase64 ?? '');
     setEnvironmentReferenceDraft(readEnvironmentReferenceDraft(selectedSlot));
   }, [

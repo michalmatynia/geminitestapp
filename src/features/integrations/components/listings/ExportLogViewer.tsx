@@ -1,9 +1,9 @@
 'use client';
 
-import { ChevronDown, Copy, Check } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { useMemo } from 'react';
 
-import { Button, Alert } from '@/shared/ui';
+import { Alert, CopyButton, CollapsibleSection } from '@/shared/ui';
 
 interface ExportLog {
   timestamp: string;
@@ -23,7 +23,15 @@ export function ExportLogViewer({
   isOpen = true,
   onToggle,
 }: ExportLogViewerProps): React.JSX.Element | null {
-  const [copied, setCopied] = useState(false);
+  const logText = useMemo(() => logs
+    .map((log: ExportLog) => {
+      const contextStr = log.context
+        ? `\n    ${JSON.stringify(log.context, null, 2)}`
+        : '';
+      return `[${log.timestamp}] [${log.level.toUpperCase()}] ${log.message}${contextStr}`;
+    })
+    .join('\n'), [logs]);
+
   const imagePayloadSummary = useMemo(() => {
     const entries = logs
       .map((log: ExportLog) => log.context)
@@ -72,20 +80,6 @@ export function ExportLogViewer({
     };
   }, [logs]);
 
-  const handleCopy = (): void => {
-    const logText = logs
-      .map((log: ExportLog) => {
-        const contextStr = log.context
-          ? `\n    ${JSON.stringify(log.context, null, 2)}`
-          : '';
-        return `[${log.timestamp}] [${log.level.toUpperCase()}] ${log.message}${contextStr}`;
-      })
-      .join('\n');
-    void navigator.clipboard.writeText(logText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   if (logs.length === 0) {
     return null;
   }
@@ -104,114 +98,98 @@ export function ExportLogViewer({
   };
 
   return (
-    <div className='overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0'>
-      <div
-        role='button'
-        tabIndex={0}
-        aria-expanded={isOpen}
-        onClick={(): void => onToggle?.(!isOpen)}
-        onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            onToggle?.(!isOpen);
-          }
-        }}
-        className='flex w-full items-center justify-between px-4 py-3 hover:bg-muted/50/50 transition cursor-pointer'
-      >
+    <CollapsibleSection
+      open={isOpen}
+      onOpenChange={onToggle}
+      title={(
         <div className='flex items-center gap-2'>
-          <ChevronDown
-            size={16}
-            className={`transition-transform ${isOpen ? 'rotate-0' : '-rotate-90'}`}
-          />
           <span className='font-semibold text-sm text-gray-200'>
             Export Logs ({logs.length})
           </span>
         </div>
-        <Button
-          type='button'
+      )}
+      actions={(
+        <CopyButton
+          value={logText}
           variant='ghost'
           size='sm'
-          onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
-            e.stopPropagation();
-            handleCopy();
-          }}
-          className='text-xs'
-        >
-          {copied ? <Check size={14} /> : <Copy size={14} />}
-          {copied ? 'Copied' : 'Copy'}
-        </Button>
-      </div>
-
-      {isOpen && (
-        <div className='border-t border-border/60 px-4 py-3 bg-card/50 max-h-96 overflow-y-auto'>
-          {imagePayloadSummary && (
-            <div className='mb-3 rounded-md border border-border/60 bg-card/30 p-2 text-[11px] text-gray-300'>
-              <div className='text-[10px] uppercase tracking-wide text-gray-500'>
-                Image payload summary
-              </div>
-              <div className='mt-1 flex flex-wrap gap-3'>
-                <span>Images: {imagePayloadSummary.count}</span>
-                <span>
-                  Original: {formatBytes(imagePayloadSummary.totalOriginalBytes)}
-                </span>
-                <span>
-                  Output: {formatBytes(imagePayloadSummary.totalOutputBytes)}
-                </span>
-                <span>
-                  Base64: {formatBytes(imagePayloadSummary.totalBase64Length)}
-                </span>
-                {imagePayloadSummary.mode ? (
-                  <span>Mode: {imagePayloadSummary.mode}</span>
-                ) : null}
-                {imagePayloadSummary.format ? (
-                  <span>Format: {imagePayloadSummary.format}</span>
-                ) : null}
-                {imagePayloadSummary.convertedCount > 0 ? (
-                  <span>Converted: {imagePayloadSummary.convertedCount}</span>
-                ) : null}
-                {imagePayloadSummary.resizedCount > 0 ? (
-                  <span>Resized: {imagePayloadSummary.resizedCount}</span>
-                ) : null}
-              </div>
-            </div>
-          )}
-          <div className='space-y-2 font-mono text-xs'>
-            {logs.map((log: ExportLog, index: number) => {
-              const variant =
-                log.level === 'error'
-                  ? 'error'
-                  : log.level === 'warn'
-                    ? 'warning'
-                    : 'info';
-
-              return (
-                <Alert key={index} variant={variant} className='p-2 font-mono text-[11px] border-none bg-card/40'>
-                  <div className='flex justify-between items-start gap-2'>
-                    <div className='flex-1'>
-                      <div className='text-gray-500 opacity-70'>
-                        [{log.timestamp}] <span className='font-bold'>[{log.level.toUpperCase()}]</span>
-                      </div>
-                      <div className='mt-1 break-words whitespace-pre-wrap text-gray-200'>
-                        {log.message}
-                      </div>
-                      {log.context && (
-                        <details className='mt-2 text-gray-400 cursor-pointer opacity-80'>
-                          <summary className='hover:text-gray-300 transition'>
-                            Context Details
-                          </summary>
-                          <pre className='mt-2 p-2 bg-black/40 rounded text-[10px] overflow-x-auto text-gray-300'>
-                            {JSON.stringify(log.context, null, 2)}
-                          </pre>
-                        </details>
-                      )}
-                    </div>
-                  </div>
-                </Alert>
-              );
-            })}
-          </div>
-        </div>
+          showText
+        />
       )}
-    </div>
+      variant='card'
+      className='bg-card/40'
+      headerClassName='px-4 py-3'
+    >
+      <div className='border-t border-border/60 px-4 py-3 bg-card/50 max-h-96 overflow-y-auto'>
+        {imagePayloadSummary && (
+          <div className='mb-3 rounded-md border border-border/60 bg-card/30 p-2 text-[11px] text-gray-300'>
+            <div className='text-[10px] uppercase tracking-wide text-gray-500'>
+              Image payload summary
+            </div>
+            <div className='mt-1 flex flex-wrap gap-3'>
+              <span>Images: {imagePayloadSummary.count}</span>
+              <span>
+                Original: {formatBytes(imagePayloadSummary.totalOriginalBytes)}
+              </span>
+              <span>
+                Output: {formatBytes(imagePayloadSummary.totalOutputBytes)}
+              </span>
+              <span>
+                Base64: {formatBytes(imagePayloadSummary.totalBase64Length)}
+              </span>
+              {imagePayloadSummary.mode ? (
+                <span>Mode: {imagePayloadSummary.mode}</span>
+              ) : null}
+              {imagePayloadSummary.format ? (
+                <span>Format: {imagePayloadSummary.format}</span>
+              ) : null}
+              {imagePayloadSummary.convertedCount > 0 ? (
+                <span>Converted: {imagePayloadSummary.convertedCount}</span>
+              ) : null}
+              {imagePayloadSummary.resizedCount > 0 ? (
+                <span>Resized: {imagePayloadSummary.resizedCount}</span>
+              ) : null}
+            </div>
+          </div>
+        )}
+        <div className='space-y-2 font-mono text-xs'>
+          {logs.map((log: ExportLog, index: number) => {
+            const variant =
+              log.level === 'error'
+                ? 'error'
+                : log.level === 'warn'
+                  ? 'warning'
+                  : 'info';
+
+            return (
+              <Alert key={index} variant={variant} className='p-2 font-mono text-[11px] border-none bg-card/40'>
+                <div className='flex justify-between items-start gap-2'>
+                  <div className='flex-1'>
+                    <div className='text-gray-500 opacity-70'>
+                      [{log.timestamp}] <span className='font-bold'>[{log.level.toUpperCase()}]</span>
+                    </div>
+                    <div className='mt-1 break-words whitespace-pre-wrap text-gray-200'>
+                      {log.message}
+                    </div>
+                    {log.context && (
+                      <CollapsibleSection
+                        title={<span className='text-[10px] hover:text-gray-300 transition'>Context Details</span>}
+                        className='mt-2 p-0'
+                        triggerClassName='p-0 hover:bg-transparent'
+                        contentClassName='p-0'
+                      >
+                        <pre className='mt-2 p-2 bg-black/40 rounded text-[10px] overflow-x-auto text-gray-300'>
+                          {JSON.stringify(log.context, null, 2)}
+                        </pre>
+                      </CollapsibleSection>
+                    )}
+                  </div>
+                </div>
+              </Alert>
+            );
+          })}
+        </div>
+      </div>
+    </CollapsibleSection>
   );
 }

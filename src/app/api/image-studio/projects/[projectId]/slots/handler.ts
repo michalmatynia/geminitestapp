@@ -9,6 +9,9 @@ import {
 import { badRequestError, quotaExceededError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
+const MAX_PROJECT_SLOTS = 5000;
+const MAX_SLOTS_PER_REQUEST = 250;
+
 const sanitizeProjectId = (value: string): string =>
   value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
@@ -32,7 +35,7 @@ const slotSchema = z.object({
 });
 
 const createSchema = z.object({
-  count: z.number().int().min(1).max(100).optional(),
+  count: z.number().int().min(1).max(MAX_SLOTS_PER_REQUEST).optional(),
   slots: z.array(slotSchema).optional(),
 });
 
@@ -66,9 +69,9 @@ export async function POST_handler(
   const existingCount = await countImageStudioSlots(projectId);
   const incomingSlots = parsed.data.slots ?? [];
   const count = parsed.data.count ?? incomingSlots.length;
-  const maxCreate = Math.max(0, Math.min(100 - existingCount, count));
+  const maxCreate = Math.max(0, Math.min(MAX_PROJECT_SLOTS - existingCount, count));
   if (maxCreate <= 0) {
-    throw quotaExceededError('Slot limit reached');
+    throw quotaExceededError(`Slot limit reached (${MAX_PROJECT_SLOTS} cards per project).`);
   }
 
   const baseName = Date.now().toString();

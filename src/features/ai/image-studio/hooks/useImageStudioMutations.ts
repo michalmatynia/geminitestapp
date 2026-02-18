@@ -20,6 +20,9 @@ import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/ty
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
 
 const normalizeStudioSlotId = (rawId: string): string => rawId.trim();
+const DELETE_SLOT_TIMEOUT_MS = 120_000;
+const DELETE_VERIFY_ATTEMPTS = 40;
+const DELETE_VERIFY_INTERVAL_MS = 1_500;
 
 const resolveStudioSlotIdCandidates = (rawId: string): string[] => {
   const normalized = normalizeStudioSlotId(rawId);
@@ -37,6 +40,17 @@ const resolveStudioSlotIdCandidates = (rawId: string): string[] => {
     candidates.add(`card:${unprefixed}`);
   }
   return Array.from(candidates);
+};
+
+const wait = async (ms: number): Promise<void> =>
+  await new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+const isDeleteTimeoutError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+  const message = error.message.toLowerCase();
+  return message.includes('request timeout') || message.includes('timeout');
 };
 
 export interface RunStudioPayload {
@@ -369,28 +383,151 @@ export function useUpdateStudioSlot(projectId: string): UpdateMutation<ImageStud
 export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, string> {
   const queryClient = useQueryClient();
   const deletedIdsByRequestRef = useRef<Map<string, string[]>>(new Map());
+  const deleteTimingsByRequestRef = useRef<Map<string, unknown>>(new Map());
+  const timeoutFallbackIdsRef = useRef<Set<string>>(new Set());
+  const pendingDeleteCandidatesRef = useRef<Map<string, Set<string>>>(new Map());
+  const activeDeleteVerifierIdsRef = useRef<Set<string>>(new Set());
+  const slotsQueryKey = QUERY_KEYS.imageStudio.slots(projectId);
+
+  const applyOptimisticDeleteFilter = (candidateIds: Set<string>): void => {
+    if (candidateIds.size === 0) return;
+    queryClient.setQueryData<StudioSlotsResponse | undefined>(
+      slotsQueryKey,
+      (current: StudioSlotsResponse | undefined): StudioSlotsResponse | undefined => {
+        if (!current?.slots?.length) return current;
+        const nextSlots = current.slots.filter(
+          (slot: ImageStudioSlotRecord) => !candidateIds.has(normalizeStudioSlotId(slot.id)),
+        );
+        if (nextSlots.length === current.slots.length) return current;
+        return {
+          ...current,
+          slots: nextSlots,
+        };
+      },
+    );
+  };
+
+  const verifyPendingDelete = async (normalizedDeletedSlotId: string): Promise<void> => {
+    const normalizedProjectId = projectId.trim();
+    if (!normalizedProjectId) {
+      timeoutFallbackIdsRef.current.delete(normalizedDeletedSlotId);
+      pendingDeleteCandidatesRef.current.delete(normalizedDeletedSlotId);
+      return;
+    }
+    if (activeDeleteVerifierIdsRef.current.has(normalizedDeletedSlotId)) return;
+    activeDeleteVerifierIdsRef.current.add(normalizedDeletedSlotId);
+
+    const candidateIds = pendingDeleteCandidatesRef.current.get(normalizedDeletedSlotId)
+      ?? new Set(resolveStudioSlotIdCandidates(normalizedDeletedSlotId));
+
+    const cleanup = (): void => {
+      timeoutFallbackIdsRef.current.delete(normalizedDeletedSlotId);
+      pendingDeleteCandidatesRef.current.delete(normalizedDeletedSlotId);
+      activeDeleteVerifierIdsRef.current.delete(normalizedDeletedSlotId);
+      deleteTimingsByRequestRef.current.delete(normalizedDeletedSlotId);
+      deletedIdsByRequestRef.current.delete(normalizedDeletedSlotId);
+    };
+
+    try {
+      for (let attempt = 0; attempt < DELETE_VERIFY_ATTEMPTS; attempt += 1) {
+        applyOptimisticDeleteFilter(candidateIds);
+        try {
+          const response = await api.get<StudioSlotsResponse>(
+            `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots`,
+            {
+              cache: 'no-store',
+              logError: false,
+              timeout: 15_000,
+            }
+          );
+          queryClient.setQueryData<StudioSlotsResponse | undefined>(slotsQueryKey, response);
+        } catch {
+          // Continue polling even if one refresh attempt fails.
+        }
+
+        const current = queryClient.getQueryData<StudioSlotsResponse | undefined>(slotsQueryKey);
+        const remainingSlotIds = new Set(
+          (current?.slots ?? [])
+            .map((slot: ImageStudioSlotRecord) => normalizeStudioSlotId(slot.id))
+            .filter(Boolean)
+        );
+        const stillPresent = Array.from(candidateIds).some((candidateId: string) =>
+          remainingSlotIds.has(candidateId)
+        );
+        if (!stillPresent) {
+          cleanup();
+          void invalidateImageStudioSlots(queryClient, normalizedProjectId);
+          return;
+        }
+
+        applyOptimisticDeleteFilter(candidateIds);
+        await wait(DELETE_VERIFY_INTERVAL_MS);
+      }
+
+      cleanup();
+      void invalidateImageStudioSlots(queryClient, normalizedProjectId);
+      console.warn('[image-studio] delete verification timed out; slot still present after polling', {
+        projectId: normalizedProjectId,
+        slotId: normalizedDeletedSlotId,
+      });
+    } catch (error) {
+      cleanup();
+      void invalidateImageStudioSlots(queryClient, normalizedProjectId);
+      console.error('[image-studio] delete verification failed', {
+        projectId: normalizedProjectId,
+        slotId: normalizedDeletedSlotId,
+        error,
+      });
+    }
+  };
 
   return createDeleteMutationV2<void, string>({
     mutationFn: async (id: string) => {
       const slotId = normalizeStudioSlotId(id);
-      const response = await api.delete<{ deletedSlotIds?: string[] }>(
-        `/api/image-studio/slots/${encodeURIComponent(slotId)}`
-      );
-      const deletedSlotIds = Array.isArray(response?.deletedSlotIds)
-        ? response.deletedSlotIds
-          .filter((value: unknown): value is string => typeof value === 'string')
-          .map((value: string) => normalizeStudioSlotId(value))
-          .filter((value: string) => value.length > 0)
-        : [];
-      deletedIdsByRequestRef.current.set(slotId, deletedSlotIds);
+      if (
+        timeoutFallbackIdsRef.current.has(slotId) ||
+        activeDeleteVerifierIdsRef.current.has(slotId)
+      ) {
+        return;
+      }
+      try {
+        const response = await api.delete<{ deletedSlotIds?: string[]; timingsMs?: unknown }>(
+          `/api/image-studio/slots/${encodeURIComponent(slotId)}`,
+          {
+            timeout: DELETE_SLOT_TIMEOUT_MS,
+            ...(process.env['NODE_ENV'] !== 'production'
+              ? { params: { debug: '1' } }
+              : {}),
+          }
+        );
+        const deletedSlotIds = Array.isArray(response?.deletedSlotIds)
+          ? response.deletedSlotIds
+            .filter((value: unknown): value is string => typeof value === 'string')
+            .map((value: string) => normalizeStudioSlotId(value))
+            .filter((value: string) => value.length > 0)
+          : [];
+        deletedIdsByRequestRef.current.set(slotId, deletedSlotIds);
+        deleteTimingsByRequestRef.current.set(slotId, response?.timingsMs ?? null);
+      } catch (error) {
+        if (isDeleteTimeoutError(error)) {
+          timeoutFallbackIdsRef.current.add(slotId);
+          deletedIdsByRequestRef.current.set(slotId, []);
+          console.info('[image-studio] delete request timed out; keeping optimistic state and polling', {
+            projectId,
+            slotId,
+          });
+          return;
+        }
+        throw error;
+      }
     },
-    mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
+    mutationKey: slotsQueryKey,
     meta: {
       source: 'imageStudio.hooks.useDeleteStudioSlot',
       operation: 'delete',
       resource: 'image-studio.slots',
       domain: 'image_studio',
-      mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
+      mutationKey: slotsQueryKey,
       tags: ['image-studio', 'slots', 'delete'],
     },
     onMutate: async (deletedSlotRawId: string) => {
@@ -398,43 +535,41 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
       const deleteCandidates = new Set<string>(
         resolveStudioSlotIdCandidates(normalizedDeletedSlotId)
       );
+      pendingDeleteCandidatesRef.current.set(normalizedDeletedSlotId, deleteCandidates);
 
       const previousSlots = queryClient.getQueryData<StudioSlotsResponse | undefined>(
-        QUERY_KEYS.imageStudio.slots(projectId),
+        slotsQueryKey,
       );
 
-      queryClient.setQueryData<StudioSlotsResponse | undefined>(
-        QUERY_KEYS.imageStudio.slots(projectId),
-        (current: StudioSlotsResponse | undefined): StudioSlotsResponse | undefined => {
-          if (!current?.slots?.length) return current;
-          const nextSlots = current.slots.filter(
-            (slot: ImageStudioSlotRecord) => !deleteCandidates.has(slot.id),
-          );
-          if (nextSlots.length === current.slots.length) return current;
-          return {
-            ...current,
-            slots: nextSlots,
-          };
-        },
-      );
+      applyOptimisticDeleteFilter(deleteCandidates);
 
       return { previousSlots };
     },
-    onError: (_error: Error, deletedSlotRawId: string, _snapshot: unknown, context: unknown) => {
+    onError: (error: Error, deletedSlotRawId: string, _snapshot: unknown, context: unknown) => {
       const typedContext = context as { previousSlots?: StudioSlotsResponse } | undefined;
       const normalizedDeletedSlotId = normalizeStudioSlotId(deletedSlotRawId);
       deletedIdsByRequestRef.current.delete(normalizedDeletedSlotId);
+      deleteTimingsByRequestRef.current.delete(normalizedDeletedSlotId);
+      timeoutFallbackIdsRef.current.delete(normalizedDeletedSlotId);
+      pendingDeleteCandidatesRef.current.delete(normalizedDeletedSlotId);
+      activeDeleteVerifierIdsRef.current.delete(normalizedDeletedSlotId);
       if (typedContext?.previousSlots) {
         queryClient.setQueryData<StudioSlotsResponse | undefined>(
-          QUERY_KEYS.imageStudio.slots(projectId),
+          slotsQueryKey,
           typedContext.previousSlots,
         );
       }
+      console.error('[image-studio] delete card failed', {
+        projectId,
+        slotId: normalizedDeletedSlotId,
+        message: error.message,
+      });
     },
     onSuccess: (_result: void, deletedSlotRawId: string) => {
       const normalizedDeletedSlotId = normalizeStudioSlotId(deletedSlotRawId);
+      const isTimeoutFallback = timeoutFallbackIdsRef.current.has(normalizedDeletedSlotId);
+      const timings = deleteTimingsByRequestRef.current.get(normalizedDeletedSlotId);
       const deletedSlotIds = deletedIdsByRequestRef.current.get(normalizedDeletedSlotId) ?? [];
-      deletedIdsByRequestRef.current.delete(normalizedDeletedSlotId);
       const deletedSlotCandidates = new Set<string>();
       const baseDeletedIds = deletedSlotIds.length > 0 ? deletedSlotIds : [normalizedDeletedSlotId];
       baseDeletedIds.forEach((deletedSlotId: string) => {
@@ -442,23 +577,37 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
           deletedSlotCandidates.add(candidate);
         });
       });
+      if (deletedSlotCandidates.size === 0) {
+        resolveStudioSlotIdCandidates(normalizedDeletedSlotId).forEach((candidate: string) => {
+          deletedSlotCandidates.add(candidate);
+        });
+      }
+      pendingDeleteCandidatesRef.current.set(normalizedDeletedSlotId, deletedSlotCandidates);
+      if (timings) {
+        console.info('[image-studio] delete card cascade timings', {
+          projectId,
+          slotId: normalizedDeletedSlotId,
+          timingsMs: timings,
+        });
+      }
+      if (!isTimeoutFallback) {
+        deletedIdsByRequestRef.current.delete(normalizedDeletedSlotId);
+        deleteTimingsByRequestRef.current.delete(normalizedDeletedSlotId);
+        pendingDeleteCandidatesRef.current.delete(normalizedDeletedSlotId);
+      }
 
-      queryClient.setQueryData<StudioSlotsResponse | undefined>(
-        QUERY_KEYS.imageStudio.slots(projectId),
-        (current: StudioSlotsResponse | undefined): StudioSlotsResponse | undefined => {
-          if (!current?.slots?.length) return current;
-          const nextSlots = current.slots.filter(
-            (slot: ImageStudioSlotRecord) => !deletedSlotCandidates.has(slot.id),
-          );
-          if (nextSlots.length === current.slots.length) return current;
-          return {
-            ...current,
-            slots: nextSlots,
-          };
-        },
-      );
+      applyOptimisticDeleteFilter(deletedSlotCandidates);
     },
-    onSettled: () => {
+    onSettled: (_result: void | undefined, error: Error | null, deletedSlotRawId: string) => {
+      const normalizedDeletedSlotId = normalizeStudioSlotId(deletedSlotRawId);
+      if (error) {
+        void invalidateImageStudioSlots(queryClient, projectId);
+        return;
+      }
+      if (timeoutFallbackIdsRef.current.has(normalizedDeletedSlotId)) {
+        void verifyPendingDelete(normalizedDeletedSlotId);
+        return;
+      }
       void invalidateImageStudioSlots(queryClient, projectId);
     },
   });

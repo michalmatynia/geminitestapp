@@ -23,7 +23,6 @@ import {
   FormField,
   FormSection,
   Input,
-  Label,
   RadioGroup,
   RadioGroupItem,
   SelectSimple,
@@ -385,8 +384,10 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
 
       <div className='h-px bg-border/60' />
 
-      <div className='space-y-2'>
-        <Label htmlFor='productImageRoute'>Add Product Image Route</Label>
+      <FormField
+        label='Add Product Image Route'
+        description='Add multiple image routes and choose one default route used by Product List and modals.'
+      >
         <div className='flex items-center gap-2'>
           <Input
             id='productImageRoute'
@@ -409,41 +410,39 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
             Add
           </Button>
         </div>
-        <p className='text-xs text-gray-500'>
-          Add multiple image routes and choose one default route used by Product List and modals.
-        </p>
-      </div>
+      </FormField>
 
       <div className='space-y-2'>
-        <Label className='text-sm font-semibold text-white'>Available Routes</Label>
-        <RadioGroup
-          value={defaultRoute}
-          onValueChange={setDefaultRoute}
-          disabled={updateSettingsBulk.isPending}
-        >
-          <SimpleSettingsList
-            items={routes.map((route: string) => ({
-              id: route,
-              title: route,
-              icon: (
-                <RadioGroupItem value={route} id={`route-${route}`} className='mt-1' />
-              ),
-              original: route
-            }))}
-            renderActions={(item) => (
-              <Button size='xs'
-                type='button'
-                variant='ghost'
-                className='text-red-400 hover:text-red-300 hover:bg-red-500/10'
-                onClick={() => handleRemoveRoute(item.original)}
-                disabled={routes.length <= 1 || updateSettingsBulk.isPending}
-              >
-                Remove
-              </Button>
-            )}
-            emptyMessage='No routes available.'
-          />
-        </RadioGroup>
+        <FormField label='Available Routes'>
+          <RadioGroup
+            value={defaultRoute}
+            onValueChange={setDefaultRoute}
+            disabled={updateSettingsBulk.isPending}
+          >
+            <SimpleSettingsList
+              items={routes.map((route: string) => ({
+                id: route,
+                title: route,
+                icon: (
+                  <RadioGroupItem value={route} id={`route-${route}`} className='mt-1' />
+                ),
+                original: route
+              }))}
+              renderActions={(item) => (
+                <Button size='xs'
+                  type='button'
+                  variant='ghost'
+                  className='text-red-400 hover:text-red-300 hover:bg-red-500/10'
+                  onClick={() => handleRemoveRoute(item.original)}
+                  disabled={routes.length <= 1 || updateSettingsBulk.isPending}
+                >
+                  Remove
+                </Button>
+              )}
+              emptyMessage='No routes available.'
+            />
+          </RadioGroup>
+        </FormField>
       </div>
 
       <div className='flex items-center gap-3'>

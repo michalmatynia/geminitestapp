@@ -1,4 +1,3 @@
-import { Loader2 } from 'lucide-react';
 import React from 'react';
 
 import { Button, SelectSimple } from '@/shared/ui';
@@ -61,8 +60,8 @@ export function GenerationToolbarCenterSection({
           onClick={onCenterObject}
           disabled={!hasSourceImage || centerBusy}
           title='Create a centered linked variant from the active slot'
+          loading={centerBusy}
         >
-          {centerBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
           {centerBusyLabel}
         </Button>
         {centerBusy ? (

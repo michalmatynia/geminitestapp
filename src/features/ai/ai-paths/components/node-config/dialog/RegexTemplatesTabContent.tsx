@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type { RegexConfig, RegexTemplate } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, SelectSimple, Switch } from '@/shared/ui';
+import { Button, Input, SelectSimple, ToggleRow, FormField } from '@/shared/ui';
 
 type RegexTemplatesTabContentProps = {
   globalTemplates: RegexTemplate[];
@@ -47,16 +47,17 @@ export function RegexTemplatesTabContent({
               <div key={template.id} className='rounded-md border border-border bg-card/60 p-3 space-y-3'>
                 <div className='flex flex-wrap items-center justify-between gap-3'>
                   <div className='min-w-[220px] flex-1'>
-                    <Label className='text-[10px] text-gray-400'>Template Name</Label>
-                    <Input
-                      className='mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white'
-                      value={template.name}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                        onUpdateNodeTemplate(template.id, { name: event.target.value })
-                      }
-                    />
+                    <FormField label='Template Name'>
+                      <Input
+                        className='mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+                        value={template.name}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                          onUpdateNodeTemplate(template.id, { name: event.target.value })
+                        }
+                      />
+                    </FormField>
                   </div>
-                  <div className='flex gap-2'>
+                  <div className='flex gap-2 self-end'>
                     <Button
                       type='button'
                       className='h-8 rounded-md border border-emerald-600/50 bg-emerald-500/10 px-3 text-[11px] text-emerald-200 hover:bg-emerald-500/20'
@@ -75,8 +76,7 @@ export function RegexTemplatesTabContent({
                 </div>
 
                 <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
-                  <div>
-                    <Label className='text-[10px] text-gray-400'>Pattern</Label>
+                  <FormField label='Pattern'>
                     <Input
                       className='mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white'
                       value={template.pattern}
@@ -84,10 +84,9 @@ export function RegexTemplatesTabContent({
                         onUpdateNodeTemplate(template.id, { pattern: event.target.value })
                       }
                     />
-                  </div>
+                  </FormField>
                   <div className='grid grid-cols-2 gap-2'>
-                    <div>
-                      <Label className='text-[10px] text-gray-400'>Flags</Label>
+                    <FormField label='Flags'>
                       <Input
                         className='mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white'
                         value={template.flags ?? ''}
@@ -96,9 +95,8 @@ export function RegexTemplatesTabContent({
                         }
                         placeholder='gim'
                       />
-                    </div>
-                    <div>
-                      <Label className='text-[10px] text-gray-400'>Group By</Label>
+                    </FormField>
+                    <FormField label='Group By'>
                       <Input
                         className='mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white'
                         value={template.groupBy ?? 'match'}
@@ -106,13 +104,12 @@ export function RegexTemplatesTabContent({
                           onUpdateNodeTemplate(template.id, { groupBy: event.target.value })
                         }
                       />
-                    </div>
+                    </FormField>
                   </div>
                 </div>
 
                 <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
-                  <div>
-                    <Label className='text-[10px] text-gray-400'>Mode</Label>
+                  <FormField label='Mode'>
                     <SelectSimple size='sm'
                       value={template.mode ?? 'group'}
                       onValueChange={(value: string): void =>
@@ -127,9 +124,8 @@ export function RegexTemplatesTabContent({
                         { value: 'extract_json', label: 'Extract JSON/object' },
                       ]}
                     />
-                  </div>
-                  <div>
-                    <Label className='text-[10px] text-gray-400'>Match Mode</Label>
+                  </FormField>
+                  <FormField label='Match Mode'>
                     <SelectSimple size='sm'
                       value={template.matchMode ?? 'first'}
                       onValueChange={(value: string): void =>
@@ -144,9 +140,8 @@ export function RegexTemplatesTabContent({
                         { value: 'all', label: 'All matches' },
                       ]}
                     />
-                  </div>
-                  <div>
-                    <Label className='text-[10px] text-gray-400'>Output Mode</Label>
+                  </FormField>
+                  <FormField label='Output Mode'>
                     <SelectSimple size='sm'
                       value={template.outputMode ?? 'object'}
                       onValueChange={(value: string): void =>
@@ -160,40 +155,31 @@ export function RegexTemplatesTabContent({
                         { value: 'array', label: 'Array (Groups list)' },
                       ]}
                     />
-                  </div>
+                  </FormField>
                 </div>
 
                 <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
-                  <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2'>
-                    <div>
-                      <div className='text-[11px] text-gray-300'>Split lines</div>
-                      <div className='text-[11px] text-gray-500'>Treat each line as an input item.</div>
-                    </div>
-                    <Switch
-                      checked={template.splitLines ?? true}
-                      onCheckedChange={(checked: boolean) =>
-                        onUpdateNodeTemplate(template.id, { splitLines: checked })
-                      }
-                    />
-                  </div>
-                  <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2'>
-                    <div>
-                      <div className='text-[11px] text-gray-300'>Include unmatched</div>
-                      <div className='text-[11px] text-gray-500'>
-                        Keep non-matching inputs under a group key.
-                      </div>
-                    </div>
-                    <Switch
-                      checked={template.includeUnmatched ?? true}
-                      onCheckedChange={(checked: boolean) =>
-                        onUpdateNodeTemplate(template.id, { includeUnmatched: checked })
-                      }
-                    />
-                  </div>
+                  <ToggleRow
+                    label='Split lines'
+                    description='Treat each line as an input item.'
+                    checked={template.splitLines ?? true}
+                    onCheckedChange={(checked: boolean) =>
+                      onUpdateNodeTemplate(template.id, { splitLines: checked })
+                    }
+                    className='bg-card/50'
+                  />
+                  <ToggleRow
+                    label='Include unmatched'
+                    description='Keep non-matching inputs under a group key.'
+                    checked={template.includeUnmatched ?? true}
+                    onCheckedChange={(checked: boolean) =>
+                      onUpdateNodeTemplate(template.id, { includeUnmatched: checked })
+                    }
+                    className='bg-card/50'
+                  />
                 </div>
 
-                <div>
-                  <Label className='text-[10px] text-gray-400'>Unmatched Key</Label>
+                <FormField label='Unmatched Key'>
                   <Input
                     className='mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white'
                     value={template.unmatchedKey ?? '__unmatched__'}
@@ -201,7 +187,7 @@ export function RegexTemplatesTabContent({
                       onUpdateNodeTemplate(template.id, { unmatchedKey: event.target.value })
                     }
                   />
-                </div>
+                </FormField>
 
                 <div className='text-[10px] text-gray-500'>
                   Created: {template.createdAt ? new Date(template.createdAt).toLocaleString() : '—'}
@@ -232,16 +218,17 @@ export function RegexTemplatesTabContent({
               <div key={template.id} className='rounded-md border border-border bg-card/60 p-3 space-y-3'>
                 <div className='flex flex-wrap items-center justify-between gap-3'>
                   <div className='min-w-[220px] flex-1'>
-                    <Label className='text-[10px] text-gray-400'>Template Name</Label>
-                    <Input
-                      className='mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white'
-                      value={template.name}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                        onUpdateGlobalTemplate(template.id, { name: event.target.value })
-                      }
-                    />
+                    <FormField label='Template Name'>
+                      <Input
+                        className='mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+                        value={template.name}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                          onUpdateGlobalTemplate(template.id, { name: event.target.value })
+                        }
+                      />
+                    </FormField>
                   </div>
-                  <div className='flex gap-2'>
+                  <div className='flex gap-2 self-end'>
                     <Button
                       type='button'
                       className='h-8 rounded-md border border-emerald-600/50 bg-emerald-500/10 px-3 text-[11px] text-emerald-200 hover:bg-emerald-500/20'
@@ -260,8 +247,7 @@ export function RegexTemplatesTabContent({
                 </div>
 
                 <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
-                  <div>
-                    <Label className='text-[10px] text-gray-400'>Pattern</Label>
+                  <FormField label='Pattern'>
                     <Input
                       className='mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white'
                       value={template.pattern}
@@ -269,10 +255,9 @@ export function RegexTemplatesTabContent({
                         onUpdateGlobalTemplate(template.id, { pattern: event.target.value })
                       }
                     />
-                  </div>
+                  </FormField>
                   <div className='grid grid-cols-2 gap-2'>
-                    <div>
-                      <Label className='text-[10px] text-gray-400'>Flags</Label>
+                    <FormField label='Flags'>
                       <Input
                         className='mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white'
                         value={template.flags ?? ''}
@@ -281,9 +266,8 @@ export function RegexTemplatesTabContent({
                         }
                         placeholder='gim'
                       />
-                    </div>
-                    <div>
-                      <Label className='text-[10px] text-gray-400'>Group By</Label>
+                    </FormField>
+                    <FormField label='Group By'>
                       <Input
                         className='mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white'
                         value={template.groupBy ?? 'match'}
@@ -291,13 +275,12 @@ export function RegexTemplatesTabContent({
                           onUpdateGlobalTemplate(template.id, { groupBy: event.target.value })
                         }
                       />
-                    </div>
+                    </FormField>
                   </div>
                 </div>
 
                 <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
-                  <div>
-                    <Label className='text-[10px] text-gray-400'>Mode</Label>
+                  <FormField label='Mode'>
                     <SelectSimple size='sm'
                       value={template.mode ?? 'group'}
                       onValueChange={(value: string): void =>
@@ -312,9 +295,8 @@ export function RegexTemplatesTabContent({
                         { value: 'extract_json', label: 'Extract JSON/object' },
                       ]}
                     />
-                  </div>
-                  <div>
-                    <Label className='text-[10px] text-gray-400'>Match Mode</Label>
+                  </FormField>
+                  <FormField label='Match Mode'>
                     <SelectSimple size='sm'
                       value={template.matchMode ?? 'first'}
                       onValueChange={(value: string): void =>
@@ -329,9 +311,8 @@ export function RegexTemplatesTabContent({
                         { value: 'all', label: 'All matches' },
                       ]}
                     />
-                  </div>
-                  <div>
-                    <Label className='text-[10px] text-gray-400'>Output Mode</Label>
+                  </FormField>
+                  <FormField label='Output Mode'>
                     <SelectSimple size='sm'
                       value={template.outputMode ?? 'object'}
                       onValueChange={(value: string): void =>
@@ -345,40 +326,31 @@ export function RegexTemplatesTabContent({
                         { value: 'array', label: 'Array (Groups list)' },
                       ]}
                     />
-                  </div>
+                  </FormField>
                 </div>
 
                 <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
-                  <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2'>
-                    <div>
-                      <div className='text-[11px] text-gray-300'>Split lines</div>
-                      <div className='text-[11px] text-gray-500'>Treat each line as an input item.</div>
-                    </div>
-                    <Switch
-                      checked={template.splitLines ?? true}
-                      onCheckedChange={(checked: boolean) =>
-                        onUpdateGlobalTemplate(template.id, { splitLines: checked })
-                      }
-                    />
-                  </div>
-                  <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2'>
-                    <div>
-                      <div className='text-[11px] text-gray-300'>Include unmatched</div>
-                      <div className='text-[11px] text-gray-500'>
-                        Keep non-matching inputs under a group key.
-                      </div>
-                    </div>
-                    <Switch
-                      checked={template.includeUnmatched ?? true}
-                      onCheckedChange={(checked: boolean) =>
-                        onUpdateGlobalTemplate(template.id, { includeUnmatched: checked })
-                      }
-                    />
-                  </div>
+                  <ToggleRow
+                    label='Split lines'
+                    description='Treat each line as an input item.'
+                    checked={template.splitLines ?? true}
+                    onCheckedChange={(checked: boolean) =>
+                      onUpdateGlobalTemplate(template.id, { splitLines: checked })
+                    }
+                    className='bg-card/50'
+                  />
+                  <ToggleRow
+                    label='Include unmatched'
+                    description='Keep non-matching inputs under a group key.'
+                    checked={template.includeUnmatched ?? true}
+                    onCheckedChange={(checked: boolean) =>
+                      onUpdateGlobalTemplate(template.id, { includeUnmatched: checked })
+                    }
+                    className='bg-card/50'
+                  />
                 </div>
 
-                <div>
-                  <Label className='text-[10px] text-gray-400'>Unmatched Key</Label>
+                <FormField label='Unmatched Key'>
                   <Input
                     className='mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white'
                     value={template.unmatchedKey ?? '__unmatched__'}
@@ -386,7 +358,7 @@ export function RegexTemplatesTabContent({
                       onUpdateGlobalTemplate(template.id, { unmatchedKey: event.target.value })
                     }
                   />
-                </div>
+                </FormField>
 
                 <div className='text-[10px] text-gray-500'>
                   Created: {template.createdAt ? new Date(template.createdAt).toLocaleString() : '—'}

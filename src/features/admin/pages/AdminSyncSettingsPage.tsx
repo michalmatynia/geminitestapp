@@ -12,10 +12,10 @@ import {
   Button,
   Input,
   SectionHeader,
-  Switch,
   useToast,
   FormSection,
   FormField,
+  ToggleRow,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -133,9 +133,17 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
         <FormSection
           title='Sync Schedule'
           description='Toggle background synchronization and set the refresh interval.'
-          actions={<Switch checked={enabled} onCheckedChange={(val: boolean): void => setEnabled(val)} />}
           className='p-6'
         >
+          <ToggleRow
+            type='switch'
+            label='Enable Background Sync'
+            description='Allow the application to synchronize data in the background.'
+            checked={enabled}
+            onCheckedChange={setEnabled}
+            className='mb-4'
+          />
+
           <FormField
             label='Interval (seconds)'
             description='Between 10 seconds and 1 hour.'

@@ -5,7 +5,7 @@ import React from 'react';
 
 import { ICON_LIBRARY_MAP } from '@/features/icons';
 import type { AiTriggerButtonLocation, AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
-import { Button, Switch, Tooltip } from '@/shared/ui';
+import { Button, ToggleRow, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useTriggerButtons } from '../../hooks/useTriggerButtons';
@@ -56,9 +56,21 @@ export function TriggerButtonBar({
         if (button.mode === 'toggle') {
           const checked = Boolean(toggleMap[button.id]);
           const toggleControl = (
-            <div
+            <ToggleRow
+              key={button.id}
+              label={showLabel ? button.name : undefined}
+              icon={Icon ? (
+                <Icon className='size-4 text-gray-200' style={{ opacity: textOpacity }} />
+              ) : (
+                <Settings2 className='size-4 text-gray-500' style={{ opacity: textOpacity }} />
+              )}
+              checked={checked}
+              disabled={isRunning}
+              onCheckedChange={(nextChecked: boolean) => {
+                void handleTrigger(button, { mode: 'toggle', checked: nextChecked });
+              }}
               className={cn(
-                'relative flex items-center gap-2 overflow-hidden rounded-lg border border-border bg-card/40 px-2 py-1',
+                'relative overflow-hidden border-border bg-card/40 px-2 py-1',
                 isRunning ? 'cursor-wait' : null
               )}
             >
@@ -66,34 +78,10 @@ export function TriggerButtonBar({
                 <span
                   aria-hidden
                   className='pointer-events-none absolute inset-0 z-0 origin-left bg-emerald-500/10 transition-transform duration-200 ease-linear'
-                  style={{ transform: `scaleX(${Math.max(0.02, progress)})` }}
+                  style={{ transform: `scaleX(${Math.max(0.02, progress)})`, pointerEvents: 'none' }}
                 />
               ) : null}
-              <span className='relative z-10 inline-flex size-7 items-center justify-center rounded-md border border-border bg-card/60'>
-                {Icon ? (
-                  <Icon className='size-4 text-gray-200' style={{ opacity: textOpacity }} />
-                ) : (
-                  <Settings2 className='size-4 text-gray-500' style={{ opacity: textOpacity }} />
-                )}
-              </span>
-              {showLabel ? (
-                <span
-                  className='relative z-10 max-w-[180px] truncate text-xs text-gray-200 transition-opacity duration-200 ease-linear'
-                  style={{ opacity: textOpacity }}
-                >
-                  {button.name}
-                </span>
-              ) : null}
-              <Switch
-                checked={checked}
-                disabled={isRunning}
-                aria-label={button.name}
-                className='relative z-10'
-                onCheckedChange={(nextChecked: boolean) => {
-                  void handleTrigger(button, { mode: 'toggle', checked: nextChecked });
-                }}
-              />
-            </div>
+            </ToggleRow>
           );
 
           if (!showLabel) {
@@ -104,7 +92,7 @@ export function TriggerButtonBar({
             );
           }
 
-          return React.cloneElement(toggleControl, { key: button.id });
+          return toggleControl;
         }
 
         const clickControl = (

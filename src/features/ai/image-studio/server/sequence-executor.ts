@@ -918,7 +918,7 @@ export type ImageStudioSequenceStepExecutionContext = {
   run: ImageStudioSequenceRunRecord;
   step: ImageStudioSequenceStep;
   stepIndex: number;
-  currentSlotId: string;
+  inputSlotId: string;
   runtimeMask: ImageStudioSequenceMaskContext;
   outputSlotIds: string[];
 };
@@ -933,9 +933,9 @@ export type ImageStudioSequenceStepExecutionResult = {
 export async function executeImageStudioSequenceStep(
   context: ImageStudioSequenceStepExecutionContext,
 ): Promise<ImageStudioSequenceStepExecutionResult> {
-  const currentSlot = await getImageStudioSlotById(context.currentSlotId);
+  const currentSlot = await getImageStudioSlotById(context.inputSlotId);
   if (currentSlot?.projectId !== context.run.projectId) {
-    throw new Error('Current slot is missing or does not belong to the sequence project.');
+    throw new Error('Step input slot is missing or does not belong to the sequence project.');
   }
 
   if (context.step.type === 'crop_center') {

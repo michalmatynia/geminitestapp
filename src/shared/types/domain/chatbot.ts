@@ -16,7 +16,17 @@ import type {
   CreateChatbotMemoryItemDto,
   UpdateChatbotMemoryItemDto,
   AgentAuditLogDto,
-  AgentBrowserLogDto
+  AgentBrowserLogDto,
+  AgentStepDto,
+  AgentSubgoalDto,
+  AgentGoalDto,
+  AgentPlanHierarchyDto,
+  AgentPlanningMetaDto,
+  AgentSessionContextDto,
+  AgentLoginCandidatesDto,
+  ChatbotTimelineEntryDto,
+  ModelProfileDto,
+  ModelTaskRuleDto
 } from '../../dtos/chatbot';
 import type { ObjectId } from 'mongodb';
 
@@ -36,7 +46,17 @@ export type {
   CreateChatbotMemoryItemDto,
   UpdateChatbotMemoryItemDto,
   AgentAuditLogDto,
-  AgentBrowserLogDto
+  AgentBrowserLogDto,
+  AgentStepDto,
+  AgentSubgoalDto,
+  AgentGoalDto,
+  AgentPlanHierarchyDto,
+  AgentPlanningMetaDto,
+  AgentSessionContextDto,
+  AgentLoginCandidatesDto,
+  ChatbotTimelineEntryDto,
+  ModelProfileDto,
+  ModelTaskRuleDto
 };
 
 export type ChatMessage = ChatMessageDto;
@@ -51,7 +71,7 @@ export type UpdateSessionInput = UpdateChatSessionDto;
 
 export interface ChatSessionDocument {
   _id: ObjectId;
-  title: string;
+  title: string | null;
   messages: ChatMessage[];
   createdAt: Date;
   updatedAt: Date;
@@ -87,77 +107,19 @@ export type ChatbotSettingsPayload = CreateChatbotSettingsDto;
 export type AgentSnapshot = AgentSnapshotDto;
 export type AgentPlanStep = AgentPlanStepDto;
 
-export interface AgentStep {
-  id?: string;
-  title: string;
-  tool?: string | null;
-  successCriteria?: string | null;
-  expectedObservation?: string | null;
-  status?: string;
-  phase?: string | null;
-}
+export type AgentStep = AgentStepDto;
 
-export interface AgentSubgoal {
-  id?: string;
-  title: string;
-  successCriteria?: string | null;
-  steps?: AgentStep[];
-}
+export type AgentSubgoal = AgentSubgoalDto;
 
-export interface AgentGoal {
-  id?: string;
-  title: string;
-  successCriteria?: string | null;
-  subgoals?: AgentSubgoal[];
-}
+export type AgentGoal = AgentGoalDto;
 
-export interface AgentPlanHierarchy {
-  goals?: AgentGoal[];
-}
+export type AgentPlanHierarchy = AgentPlanHierarchyDto;
 
-export interface AgentPlanningMeta {
-  type?: string;
-  stepId?: string;
-  failedStepId?: string;
-  activeStepId?: string;
-  reason?: string;
-  branchSteps?: AgentStep[];
-  steps?: AgentStep[];
-  hierarchy?: AgentPlanHierarchy;
-  items?: unknown[];
-  names?: unknown[];
-  url?: string;
-  extractionType?: string;
-  summary?: string;
-}
+export type AgentPlanningMeta = AgentPlanningMetaDto;
 
-export interface AgentSessionContext {
-  cookies?: Array<{
-    name: string;
-    domain: string;
-    valueLength: number;
-  }>;
-  storage?: {
-    localCount: number;
-    sessionCount: number;
-    localKeys?: string[];
-  };
-}
+export type AgentSessionContext = AgentSessionContextDto;
 
-export interface AgentLoginCandidates {
-  inputs?: Array<{
-    id?: string;
-    name?: string;
-    type?: string;
-    score: number;
-  }>;
-  buttons?: Array<{
-    id?: string;
-    name?: string;
-    text?: string;
-    score: number;
-  }>;
-}
+export type AgentLoginCandidates = AgentLoginCandidatesDto;
 
 export type AgentAuditLog = Omit<AgentAuditLogDto, 'metadata'> & {
   metadata?: AgentPlanningMeta | null;
@@ -167,35 +129,11 @@ export type AgentBrowserLog = Omit<AgentBrowserLogDto, 'metadata'> & {
   metadata?: AgentSessionContext | AgentLoginCandidates | null;
 };
 
-export type TimelineEntry = {
-  id: string;
-  source: 'audit' | 'browser';
-  level?: string | null;
-  message: string;
-  createdAt: string;
-};
+export type TimelineEntry = ChatbotTimelineEntryDto;
 
-export type ModelProfile = {
-  name: string;
-  normalized: string;
-  size: number | null;
-  isEmbedding: boolean;
-  isRerank: boolean;
-  isVision: boolean;
-  isCode: boolean;
-  isInstruct: boolean;
-  isChat: boolean;
-  isReasoning: boolean;
-};
+export type ModelProfile = ModelProfileDto;
 
-export type ModelTaskRule = {
-  targetSize?: number;
-  preferLarge?: boolean;
-  preferSmall?: boolean;
-  minSize?: number;
-  maxSize?: number;
-  preferReasoning?: boolean;
-};
+export type ModelTaskRule = ModelTaskRuleDto;
 
 export type AgentSettingsPayload = {
   agentBrowser: string;

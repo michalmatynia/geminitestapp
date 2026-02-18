@@ -1,14 +1,6 @@
-import type { ActivityLogDto, CreateActivityLogDto } from '@/shared/contracts/system';
+import type { ActivityLogDto, CreateActivityLogDto, ActivityFiltersDto } from '@/shared/contracts/system';
 
-export type ActivityFilters = {
-  userId?: string;
-  type?: string;
-  entityId?: string;
-  entityType?: string;
-  search?: string;
-  limit?: number;
-  offset?: number;
-};
+export type ActivityFilters = ActivityFiltersDto;
 
 export type ActivityRepository = {
   listActivity(filters: ActivityFilters): Promise<ActivityLogDto[]>;

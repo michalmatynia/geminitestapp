@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Edit3, ExternalLink, Plus, Trash2, Library } from 'lucide-react';
+import { ArrowLeft, Edit3, ExternalLink as ExternalLinkIcon, Plus, Trash2, Library } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useMemo, useState, useCallback } from 'react';
 
@@ -14,6 +14,7 @@ import {
   useToast,
   DocumentationSection,
   EmptyState,
+  ExternalLink,
 } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';

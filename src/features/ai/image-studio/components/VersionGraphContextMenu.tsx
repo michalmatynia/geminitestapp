@@ -12,10 +12,13 @@ import {
 import React from 'react';
 
 import { useVersionGraphContextMenuContext } from './VersionGraphContextMenuContext';
+import { useSettingsState } from '../context/SettingsContext';
+import { getImageStudioDocTooltip } from '../utils/studio-docs';
 
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function VersionGraphContextMenu(): React.JSX.Element {
+  const { studioSettings } = useSettingsState();
   const {
     menu,
     node,
@@ -28,6 +31,18 @@ export function VersionGraphContextMenu(): React.JSX.Element {
     onCompareWith,
     onCopyId,
   } = useVersionGraphContextMenuContext();
+  const versionGraphTooltipsEnabled = studioSettings.helpTooltips.versionGraphButtonsEnabled;
+  const tooltipContent = React.useMemo(
+    () => ({
+      detachSubtree: getImageStudioDocTooltip('version_graph_context_detach_subtree'),
+      isolateNewCard: getImageStudioDocTooltip('version_graph_context_isolate_new_card'),
+      toggleCollapse: getImageStudioDocTooltip('version_graph_context_toggle_collapse'),
+      addToComposite: getImageStudioDocTooltip('version_graph_context_add_to_composite'),
+      compareWith: getImageStudioDocTooltip('version_graph_context_compare_with'),
+      copyId: getImageStudioDocTooltip('version_graph_context_copy_id'),
+    }),
+    []
+  );
 
   return (
     <>
@@ -39,6 +54,7 @@ export function VersionGraphContextMenu(): React.JSX.Element {
         <button
           type='button'
           className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-amber-300 hover:bg-accent'
+          title={versionGraphTooltipsEnabled ? tooltipContent.detachSubtree : undefined}
           onClick={() => {
             onDetachSubtree(menu.nodeId);
             onClose();
@@ -50,6 +66,7 @@ export function VersionGraphContextMenu(): React.JSX.Element {
         <button
           type='button'
           className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-gray-300 hover:bg-accent'
+          title={versionGraphTooltipsEnabled ? tooltipContent.isolateNewCard : undefined}
           onClick={() => {
             onIsolateBranch(menu.nodeId);
             onClose();
@@ -62,6 +79,7 @@ export function VersionGraphContextMenu(): React.JSX.Element {
           <button
             type='button'
             className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-gray-300 hover:bg-accent'
+            title={versionGraphTooltipsEnabled ? tooltipContent.toggleCollapse : undefined}
             onClick={() => {
               onToggleCollapse(menu.nodeId);
               onClose();
@@ -79,6 +97,7 @@ export function VersionGraphContextMenu(): React.JSX.Element {
         <button
           type='button'
           className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-teal-400 hover:bg-accent'
+          title={versionGraphTooltipsEnabled ? tooltipContent.addToComposite : undefined}
           onClick={() => {
             onAddToComposite(menu.nodeId);
             onClose();
@@ -90,6 +109,7 @@ export function VersionGraphContextMenu(): React.JSX.Element {
         <button
           type='button'
           className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-cyan-400 hover:bg-accent'
+          title={versionGraphTooltipsEnabled ? tooltipContent.compareWith : undefined}
           onClick={() => {
             onCompareWith(menu.nodeId);
             onClose();
@@ -102,6 +122,7 @@ export function VersionGraphContextMenu(): React.JSX.Element {
         <button
           type='button'
           className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-gray-300 hover:bg-accent'
+          title={versionGraphTooltipsEnabled ? tooltipContent.copyId : undefined}
           onClick={() => {
             onCopyId(menu.nodeId);
             onClose();

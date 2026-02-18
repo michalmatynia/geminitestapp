@@ -514,11 +514,24 @@ export function useCaseResolverState() {
     flushWorkspacePersist();
   }, [flushWorkspacePersist, toast, workspace]);
 
-  const handleSelectFile = useCallback((fileId: string): void => {
+  const handleSelectFile = useCallback((
+    fileId: string,
+    options?: { preserveSelectedAsset?: boolean }
+  ): void => {
+    const shouldPreserveSelectedAsset = Boolean(
+      options?.preserveSelectedAsset &&
+      selectedAssetId &&
+      workspace.assets.some(
+        (asset): boolean => asset.id === selectedAssetId && asset.kind === 'node_file'
+      )
+    );
+
     if (selectedFileId === fileId) {
       setSelectedFileId(null);
       setSelectedFolderPath(null);
-      setSelectedAssetId(null);
+      if (!shouldPreserveSelectedAsset) {
+        setSelectedAssetId(null);
+      }
       return;
     }
     setSelectedFileId(fileId);
@@ -531,8 +544,10 @@ export function useCaseResolverState() {
         }
     ));
     setSelectedFolderPath(null);
-    setSelectedAssetId(null);
-  }, [selectedFileId]);
+    if (!shouldPreserveSelectedAsset) {
+      setSelectedAssetId(null);
+    }
+  }, [selectedAssetId, selectedFileId, workspace.assets]);
 
   const handleSelectAsset = useCallback((assetId: string): void => {
     setSelectedFileId(null);

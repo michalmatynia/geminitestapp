@@ -17,6 +17,7 @@ type SequenceStackCardProps = {
   editableSequenceSteps: ImageStudioSequenceStep[];
   enabledRuntimeSteps: ImageStudioSequenceStep[];
   activeGenerationModel: string;
+  sequencerFieldTooltipsEnabled: boolean;
   cropShapeOptions: Array<{ value: string; label: string }>;
   cropShapeGeometryById: Record<string, {
     bbox: { x: number; y: number; width: number; height: number } | null;
@@ -49,6 +50,7 @@ const createStepForOperation = (
       id,
       type: 'crop_center',
       runtime: 'server',
+      inputSource: 'previous',
       enabled: false,
       label: null,
       onFailure: 'stop',
@@ -71,6 +73,7 @@ const createStepForOperation = (
       id,
       type: 'mask',
       runtime: 'server',
+      inputSource: 'previous',
       enabled: false,
       label: null,
       onFailure: 'stop',
@@ -93,6 +96,7 @@ const createStepForOperation = (
       id,
       type: 'upscale',
       runtime: 'server',
+      inputSource: 'previous',
       enabled: false,
       label: null,
       onFailure: 'stop',
@@ -113,6 +117,7 @@ const createStepForOperation = (
     id,
     type: operation,
     runtime: 'server',
+    inputSource: 'previous',
     enabled: false,
     label: null,
     onFailure: 'stop',
@@ -133,6 +138,7 @@ export function SequenceStackCard({
   editableSequenceSteps,
   enabledRuntimeSteps,
   activeGenerationModel,
+  sequencerFieldTooltipsEnabled,
   cropShapeOptions,
   cropShapeGeometryById,
   mutateSteps,
@@ -461,15 +467,17 @@ export function SequenceStackCard({
 
   return (
     <StudioCard label='Stack' className='shrink-0'>
-      <div className='space-y-2'>
-        <div className='rounded border border-border/50 bg-card/30 p-2'>
-          <div className='mb-2 flex items-center justify-between text-[11px] text-gray-400'>
-            <span>Step Catalog (drag or click to add at stack end)</span>
+      <div className='space-y-1.5'>
+        <div className='rounded border border-border/50 bg-card/30 p-[7px]'>
+          <div className='mb-1.5 flex items-center justify-between gap-2 text-[10px] text-gray-400'>
+            <span className='min-w-0 truncate' title='Step Catalog (drag or click to add at stack end)'>
+              Step Catalog (drag or click to add at stack end)
+            </span>
             <span>
               {editableSequenceSteps.length}/{IMAGE_STUDIO_SEQUENCE_MAX_STEPS}
             </span>
           </div>
-          <div className='flex flex-wrap gap-2'>
+          <div className='flex flex-wrap gap-1.5'>
             {IMAGE_STUDIO_SEQUENCE_OPERATIONS.map((operation) => {
               const enabled = enabledOperationSet.has(operation);
               return (
@@ -484,7 +492,7 @@ export function SequenceStackCard({
                     handleCatalogItemDragStart(event, operation);
                   }}
                   onDragEnd={clearDragState}
-                  className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[11px] transition-colors ${
+                  className={`inline-flex min-w-0 items-center gap-1 rounded border px-2 py-1 text-[10px] transition-colors ${
                     enabled
                       ? 'border-blue-400/60 bg-blue-500/10 text-blue-200'
                       : 'border-border/60 bg-card/40 text-gray-200 hover:text-gray-100'
@@ -499,7 +507,7 @@ export function SequenceStackCard({
             })}
           </div>
         </div>
-        <div className='text-[11px] text-gray-500'>
+        <div className='text-[10px] text-gray-500'>
           Drag step handles to reorder the stack.
         </div>
         {orderedRows.map(({ step, index }) => {
@@ -513,7 +521,7 @@ export function SequenceStackCard({
           return (
             <div
               key={step.id}
-              className='rounded border border-border/50 bg-card/40 px-2 py-2'
+              className='rounded border border-border/50 bg-card/40 px-2 py-[7px]'
               onDragOver={(event: React.DragEvent<HTMLDivElement>) => {
                 handleStackItemDragOver(event, step.id);
               }}
@@ -529,7 +537,7 @@ export function SequenceStackCard({
                 <div className='mb-2 h-0.5 rounded bg-blue-400/80' aria-hidden='true' />
               ) : null}
               <div className='flex items-center justify-between gap-2'>
-                <div className='flex items-center gap-2 text-[11px] text-gray-200'>
+                <div className='flex min-w-0 items-center gap-2 text-[10px] text-gray-200'>
                   <button
                     type='button'
                     draggable
@@ -543,7 +551,7 @@ export function SequenceStackCard({
                   >
                     <GripVertical className='size-3.5' />
                   </button>
-                  <label className='flex items-center gap-2 text-[11px] text-gray-200'>
+                  <label className='flex min-w-0 items-center gap-2 text-[10px] text-gray-200'>
                     <input
                       type='checkbox'
                       className='h-3.5 w-3.5'
@@ -552,13 +560,15 @@ export function SequenceStackCard({
                         toggleSequenceStep(step.id, event.target.checked)
                       }
                     />
-                    <span>{PROJECT_SEQUENCE_OPERATION_LABELS[operation]}</span>
+                    <span className='truncate' title={PROJECT_SEQUENCE_OPERATION_LABELS[operation]}>
+                      {PROJECT_SEQUENCE_OPERATION_LABELS[operation]}
+                    </span>
                     <span className='text-gray-500'>#{index + 1}</span>
                   </label>
                 </div>
                 <div className='flex items-center gap-2'>
                   {isDragSource ? (
-                    <span className='text-[10px] uppercase tracking-wide text-blue-300'>
+                    <span className='text-[9px] uppercase tracking-wide text-blue-300'>
                       Dragging
                     </span>
                   ) : null}
@@ -582,6 +592,7 @@ export function SequenceStackCard({
                   activeGenerationModel={activeGenerationModel}
                   cropShapeOptions={cropShapeOptions}
                   cropShapeGeometryById={cropShapeGeometryById}
+                  sequencerFieldTooltipsEnabled={sequencerFieldTooltipsEnabled}
                   updateStep={updateStep}
                 />
               ) : null}
@@ -593,7 +604,7 @@ export function SequenceStackCard({
           );
         })}
         <div
-          className={`rounded border border-dashed px-2 py-2 text-center text-[11px] ${
+          className={`rounded border border-dashed px-2 py-[7px] text-center text-[10px] ${
             hasActiveDrag
               ? 'border-blue-400/70 bg-blue-500/10 text-blue-200'
               : 'border-border/60 bg-card/20 text-gray-500'
@@ -603,7 +614,7 @@ export function SequenceStackCard({
         >
           Drop step here to append it to the end of stack.
         </div>
-        <div className='text-[11px] text-gray-500'>
+        <div className='text-[10px] text-gray-500'>
           {enabledRuntimeSteps.length > 0
             ? `Current stack: ${activeStackLabel}`
             : 'No enabled operations.'}

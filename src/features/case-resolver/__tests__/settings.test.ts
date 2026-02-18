@@ -14,6 +14,7 @@ import {
   parseCaseResolverDefaultDocumentFormat,
   parseCaseResolverIdentifiers,
   parseCaseResolverSettings,
+  parseNodeFileSnapshot,
   parseCaseResolverWorkspace,
   resolveCaseResolverUploadFolder,
 } from '@/features/case-resolver/settings';
@@ -979,6 +980,103 @@ describe('case-resolver settings', () => {
     expect(genericNode?.outputs).not.toEqual(
       expect.arrayContaining(CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS)
     );
+  });
+
+  it('drops stale document/nodefile graph mappings that reference missing files or assets', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        workspaceRevision: 0,
+        lastMutationId: null,
+        lastMutationAt: null,
+        folders: [],
+        files: [
+          {
+            id: 'case-node-map',
+            fileType: 'case',
+            name: 'Case Node Map',
+            folder: '',
+            graph: {
+              nodes: [],
+              edges: [],
+              nodeMeta: {},
+              edgeMeta: {},
+            },
+          },
+          {
+            id: 'doc-valid',
+            fileType: 'document',
+            name: 'Valid Document',
+            folder: '',
+            parentCaseId: 'case-node-map',
+            graph: {
+              nodes: [createPromptNode('node-valid'), createPromptNode('node-stale')],
+              edges: [],
+              nodeMeta: {},
+              edgeMeta: {},
+              documentSourceFileIdByNode: {
+                'node-valid': 'doc-valid',
+                'node-stale': 'doc-missing',
+              },
+              nodeFileAssetIdByNode: {
+                'node-valid': 'node-file-valid',
+                'node-stale': 'node-file-missing',
+              },
+            },
+          },
+        ],
+        assets: [
+          {
+            id: 'node-file-valid',
+            name: 'Node File',
+            folder: '',
+            kind: 'node_file',
+          },
+        ],
+        activeFileId: 'doc-valid',
+      })
+    );
+
+    const graph = workspace.files.find((file) => file.id === 'doc-valid')?.graph;
+    expect(graph?.documentSourceFileIdByNode).toEqual({
+      'node-valid': 'doc-valid',
+    });
+    expect(graph?.nodeFileAssetIdByNode).toEqual({
+      'node-valid': 'node-file-valid',
+    });
+  });
+
+  it('parses legacy node-file snapshots with single-node payload shape', () => {
+    const snapshot = parseNodeFileSnapshot(
+      JSON.stringify({
+        kind: 'case_resolver_node_file_snapshot_v1',
+        source: 'manual',
+        nodeId: 'legacy-node',
+        sourceFileId: 'doc-legacy',
+        sourceFileName: 'Legacy Document',
+        sourceFileType: 'scanfile',
+        node: createPromptNode('legacy-node'),
+        connectedEdges: [
+          {
+            id: 'edge-legacy',
+            from: 'legacy-node',
+            to: 'legacy-node',
+            fromPort: 'output',
+            toPort: 'input',
+          },
+        ],
+      })
+    );
+
+    expect(snapshot.nodes.map((node) => node.id)).toEqual(['legacy-node']);
+    expect(snapshot.edges.map((edge) => edge.id)).toEqual(['edge-legacy']);
+    expect(snapshot.nodeFileMeta).toEqual({
+      'legacy-node': {
+        fileId: 'doc-legacy',
+        fileType: 'scanfile',
+        fileName: 'Legacy Document',
+      },
+    });
   });
 
   it('normalizes text node edge ports to textfield/content only', () => {

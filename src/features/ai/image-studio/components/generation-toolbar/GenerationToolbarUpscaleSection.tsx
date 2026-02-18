@@ -1,4 +1,3 @@
-import { Loader2 } from 'lucide-react';
 import React from 'react';
 
 import { Button, SelectSimple } from '@/shared/ui';
@@ -141,8 +140,8 @@ export function GenerationToolbarUpscaleSection({
           onClick={onUpscale}
           disabled={!hasSourceImage || upscaleBusy}
           title='Create an upscaled linked variant from the active slot'
+          loading={upscaleBusy}
         >
-          {upscaleBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
           {upscaleBusyLabel}
         </Button>
         {upscaleBusy ? (

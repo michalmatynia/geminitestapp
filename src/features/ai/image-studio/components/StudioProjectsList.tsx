@@ -50,9 +50,10 @@ interface StudioProjectsListProps {
   onOpenProject?: (projectId: string) => void;
 }
 
-const formatProjectTimestamp = (value: string): string => {
+const formatProjectTimestamp = (value: string | null): string => {
+  if (!value) return 'n/a';
   const parsed = Date.parse(value);
-  if (!Number.isFinite(parsed)) return value || 'n/a';
+  if (!Number.isFinite(parsed)) return value;
   return new Date(parsed).toLocaleString();
 };
 

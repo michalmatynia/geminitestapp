@@ -135,3 +135,60 @@ export const createExportJobSchema = z.object({
 });
 
 export type CreateExportJobDto = z.infer<typeof createExportJobSchema>;
+
+/**
+ * Data Import/Export Options DTOs
+ */
+
+export const inventoryOptionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
+export type InventoryOptionDto = z.infer<typeof inventoryOptionSchema>;
+
+export const warehouseOptionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
+export type WarehouseOptionDto = z.infer<typeof warehouseOptionSchema>;
+
+export const catalogOptionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  isDefault: z.boolean(),
+});
+
+export type CatalogOptionDto = z.infer<typeof catalogOptionSchema>;
+
+/**
+ * Import List DTOs
+ */
+
+export const importListItemSchema = z.object({
+  baseProductId: z.string(),
+  name: z.string(),
+  sku: z.string(),
+  exists: z.boolean(),
+  skuExists: z.boolean(),
+  image: z.string().nullable().optional(),
+  price: z.number().optional(),
+  stock: z.number().optional(),
+  description: z.string().optional(),
+});
+
+export type ImportListItemDto = z.infer<typeof importListItemSchema>;
+
+export const importListStatsSchema = z.object({
+  total: z.number(),
+  filtered: z.number(),
+  available: z.number().optional(),
+  existing: z.number(),
+  skuDuplicates: z.number().optional(),
+  page: z.number().optional(),
+  pageSize: z.number().optional(),
+  totalPages: z.number().optional(),
+});
+
+export type ImportListStatsDto = z.infer<typeof importListStatsSchema>;

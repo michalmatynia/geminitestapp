@@ -23,21 +23,24 @@ import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useVersionGraphControlsContext } from './VersionGraphControlsContext';
+import { useSettingsState } from '../context/SettingsContext';
+import { getImageStudioDocTooltip, type ImageStudioDocKey } from '../utils/studio-docs';
 
 import type { LayoutMode } from '../utils/version-graph';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const LAYOUT_MODES: { mode: LayoutMode; label: string; Icon: typeof Network }[] = [
-  { mode: 'dag', label: 'DAG', Icon: Network },
-  { mode: 'timeline-h', label: 'H', Icon: ArrowRight },
-  { mode: 'timeline-v', label: 'V', Icon: ArrowDown },
+const LAYOUT_MODES: { mode: LayoutMode; label: string; Icon: typeof Network; docKey: ImageStudioDocKey }[] = [
+  { mode: 'dag', label: 'DAG', Icon: Network, docKey: 'version_graph_layout_dag' },
+  { mode: 'timeline-h', label: 'H', Icon: ArrowRight, docKey: 'version_graph_layout_timeline_h' },
+  { mode: 'timeline-v', label: 'V', Icon: ArrowDown, docKey: 'version_graph_layout_timeline_v' },
 ];
 const ZOOM_BUTTON_STEP = 0.07;
 
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function VersionGraphToolbar(): React.JSX.Element {
+  const { studioSettings } = useSettingsState();
   const {
     nodeCount,
     allNodeCount,
@@ -70,6 +73,27 @@ export function VersionGraphToolbar(): React.JSX.Element {
     exporting,
     onExportPng,
   } = useVersionGraphControlsContext();
+  const versionGraphTooltipsEnabled = studioSettings.helpTooltips.versionGraphButtonsEnabled;
+  const tooltipContent = React.useMemo(
+    () => ({
+      mergeModeToggle: getImageStudioDocTooltip('version_graph_merge_mode_toggle'),
+      mergeExecute: getImageStudioDocTooltip('version_graph_merge_execute'),
+      mergeClearSelection: getImageStudioDocTooltip('version_graph_merge_clear_selection'),
+      compositeModeToggle: getImageStudioDocTooltip('version_graph_composite_mode_toggle'),
+      compositeExecute: getImageStudioDocTooltip('version_graph_composite_execute'),
+      compositeClearSelection: getImageStudioDocTooltip('version_graph_composite_clear_selection'),
+      compareModeToggle: getImageStudioDocTooltip('version_graph_compare_mode_toggle'),
+      collapseAll: getImageStudioDocTooltip('version_graph_collapse_all'),
+      expandAll: getImageStudioDocTooltip('version_graph_expand_all'),
+      statsToggle: getImageStudioDocTooltip('version_graph_stats_toggle'),
+      minimapToggle: getImageStudioDocTooltip('version_graph_minimap_toggle'),
+      exportPng: getImageStudioDocTooltip('version_graph_export_png'),
+      zoomOut: getImageStudioDocTooltip('version_graph_zoom_out'),
+      zoomIn: getImageStudioDocTooltip('version_graph_zoom_in'),
+      fitToView: getImageStudioDocTooltip('version_graph_fit_to_view'),
+    }),
+    []
+  );
 
   return (
     <div className='flex items-center justify-between border-b border-border/40 px-3 py-1.5'>
@@ -83,7 +107,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
         <Button size='xs'
           variant={mergeMode ? 'default' : 'ghost'}
           className={cn('size-6', mergeMode && 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30')}
-          title={mergeMode ? 'Exit merge mode' : 'Enter merge mode'}
+          title={versionGraphTooltipsEnabled ? tooltipContent.mergeModeToggle : undefined}
           onClick={onToggleMergeMode}
         >
           <GitMerge className='size-3' />
@@ -95,6 +119,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
             variant='outline'
             className='h-6 border-orange-400/40 px-2 text-[10px] text-orange-400 hover:bg-orange-500/10'
             disabled={mergeBusy}
+            title={versionGraphTooltipsEnabled ? tooltipContent.mergeExecute : undefined}
             onClick={onExecuteMerge}
           >
             Merge ({mergeSelectedIds.length})
@@ -106,7 +131,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
           <Button size='xs'
             variant='ghost'
             className='size-6 text-gray-400'
-            title='Clear selection'
+            title={versionGraphTooltipsEnabled ? tooltipContent.mergeClearSelection : undefined}
             onClick={onClearMergeSelection}
           >
             <X className='size-3' />
@@ -117,7 +142,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
         <Button size='xs'
           variant={compositeMode ? 'default' : 'ghost'}
           className={cn('size-6', compositeMode && 'bg-teal-500/20 text-teal-400 hover:bg-teal-500/30')}
-          title={compositeMode ? 'Exit composite mode' : 'Enter composite mode'}
+          title={versionGraphTooltipsEnabled ? tooltipContent.compositeModeToggle : undefined}
           onClick={onToggleCompositeMode}
         >
           <Layers className='size-3' />
@@ -129,6 +154,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
             variant='outline'
             className='h-6 border-teal-400/40 px-2 text-[10px] text-teal-400 hover:bg-teal-500/10'
             disabled={compositeBusy}
+            title={versionGraphTooltipsEnabled ? tooltipContent.compositeExecute : undefined}
             onClick={onExecuteComposite}
           >
             Composite ({compositeSelectedIds.length})
@@ -140,7 +166,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
           <Button size='xs'
             variant='ghost'
             className='size-6 text-gray-400'
-            title='Clear selection'
+            title={versionGraphTooltipsEnabled ? tooltipContent.compositeClearSelection : undefined}
             onClick={onClearCompositeSelection}
           >
             <X className='size-3' />
@@ -151,7 +177,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
         <Button size='xs'
           variant={compareMode ? 'default' : 'ghost'}
           className={cn('size-6', compareMode && 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30')}
-          title={compareMode ? 'Exit compare mode' : 'Compare two nodes'}
+          title={versionGraphTooltipsEnabled ? tooltipContent.compareModeToggle : undefined}
           onClick={onToggleCompareMode}
         >
           <Columns2 className='size-3' />
@@ -165,7 +191,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
         <Button size='xs'
           variant='ghost'
           className='size-6'
-          title='Collapse all'
+          title={versionGraphTooltipsEnabled ? tooltipContent.collapseAll : undefined}
           onClick={onCollapseAll}
         >
           <ChevronUp className='size-3' />
@@ -173,7 +199,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
         <Button size='xs'
           variant='ghost'
           className='size-6'
-          title='Expand all'
+          title={versionGraphTooltipsEnabled ? tooltipContent.expandAll : undefined}
           onClick={onExpandAll}
         >
           <ChevronDown className='size-3' />
@@ -183,7 +209,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
         <Button size='xs'
           variant={showStats ? 'default' : 'ghost'}
           className={cn('size-6', showStats && 'bg-accent')}
-          title={showStats ? 'Hide stats' : 'Show stats'}
+          title={versionGraphTooltipsEnabled ? tooltipContent.statsToggle : undefined}
           onClick={onToggleStats}
         >
           <BarChart3 className='size-3' />
@@ -194,7 +220,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
           <Button size='xs'
             variant={showMinimap ? 'default' : 'ghost'}
             className={cn('size-6', showMinimap && 'bg-accent')}
-            title={showMinimap ? 'Hide minimap' : 'Show minimap'}
+            title={versionGraphTooltipsEnabled ? tooltipContent.minimapToggle : undefined}
             onClick={onToggleMinimap}
           >
             <Map className='size-3' />
@@ -205,7 +231,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
         <Button size='xs'
           variant='ghost'
           className='size-6'
-          title='Export as PNG'
+          title={versionGraphTooltipsEnabled ? tooltipContent.exportPng : undefined}
           disabled={exporting || nodeCount === 0}
           onClick={onExportPng}
         >
@@ -218,7 +244,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
 
         {/* Layout mode selector */}
         <div className='flex items-center rounded border border-border/40'>
-          {LAYOUT_MODES.map(({ mode, label, Icon }) => (
+          {LAYOUT_MODES.map(({ mode, label, Icon, docKey }) => (
             <button
               key={mode}
               type='button'
@@ -228,7 +254,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
                   ? 'bg-accent text-accent-foreground'
                   : 'text-gray-500 hover:text-gray-300',
               )}
-              title={`Layout: ${label}`}
+              title={versionGraphTooltipsEnabled ? getImageStudioDocTooltip(docKey) : undefined}
               onClick={() => onSetLayoutMode(mode)}
             >
               <Icon className='size-2.5' />
@@ -241,7 +267,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
         <Button size='xs'
           variant='ghost'
           className='size-6'
-          title='Zoom out'
+          title={versionGraphTooltipsEnabled ? tooltipContent.zoomOut : undefined}
           onClick={() => onSetZoom((z) => Math.max(0.25, z - ZOOM_BUTTON_STEP))}
         >
           <Minus className='size-3' />
@@ -252,7 +278,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
         <Button size='xs'
           variant='ghost'
           className='size-6'
-          title='Zoom in'
+          title={versionGraphTooltipsEnabled ? tooltipContent.zoomIn : undefined}
           onClick={() => onSetZoom((z) => Math.min(3, z + ZOOM_BUTTON_STEP))}
         >
           <Plus className='size-3' />
@@ -260,7 +286,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
         <Button size='xs'
           variant='ghost'
           className='size-6'
-          title='Fit to view'
+          title={versionGraphTooltipsEnabled ? tooltipContent.fitToView : undefined}
           onClick={onFitToView}
         >
           <Maximize2 className='size-3' />

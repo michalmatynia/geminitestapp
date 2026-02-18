@@ -140,9 +140,7 @@ export function SlotInlineEditCardTab({
           </div>
           <div className='sm:col-span-2'>
             <span className='text-gray-500'>Tags:</span>{' '}
-            {selectedSlot?.imageFile?.tags?.length
-              ? selectedSlot.imageFile.tags.join(', ')
-              : 'n/a'}
+            {'n/a'}
           </div>
           <div>
             <span className='text-gray-500'>Created:</span> {formatDateTime(selectedSlot?.imageFile?.createdAt)}

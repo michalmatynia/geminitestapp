@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { Button, MetadataItem, Hint, Alert } from '@/shared/ui';
+import { MetadataItem, Hint, Alert, CopyButton } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 interface TestResultModalProps extends Omit<ModalStateProps, 'onSuccess'> {
@@ -37,15 +37,12 @@ export function TestResultModal({
   const copyText = metaLines ? `${metaLines}\n\n${message}` : message;
 
   const footer = (
-    <Button
+    <CopyButton
+      value={copyText}
       variant='outline'
       size='sm'
-      onClick={() => {
-        void navigator.clipboard.writeText(copyText);
-      }}
-    >
-      Copy Payload
-    </Button>
+      showText
+    />
   );
 
   return (

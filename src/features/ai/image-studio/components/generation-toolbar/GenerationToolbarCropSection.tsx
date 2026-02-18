@@ -1,4 +1,3 @@
-import { Loader2 } from 'lucide-react';
 import React from 'react';
 
 import { Button, SelectSimple, Tooltip } from '@/shared/ui';
@@ -97,8 +96,8 @@ export function GenerationToolbarCropSection({
             onClick={onCrop}
             disabled={!hasSourceImage || cropBusy || !hasCropBoundary}
             title={cropTooltipsEnabled ? cropTooltipContent.crop : undefined}
+            loading={cropBusy}
           >
-            {cropBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
             {cropBusyLabel}
           </Button>
         )}

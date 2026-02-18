@@ -10,7 +10,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
-import { Button, SelectSimple, Switch, useToast } from '@/shared/ui';
+import { Button, SelectSimple, ToggleRow, useToast } from '@/shared/ui';
 
 import {
   normalizeShapeToPolygons,
@@ -1117,14 +1117,12 @@ export function SequencingPanel(): React.JSX.Element {
       <StudioCard label='Sequencing Runtime' className='shrink-0'>
         <div className='space-y-3'>
           <div className='flex flex-wrap items-center gap-3'>
-            <label className='flex items-center gap-2 text-[11px] text-gray-200'>
-              <Switch
-                checked={studioSettings.projectSequencing.enabled}
-                onCheckedChange={handleToggleSequencingEnabled}
-                aria-label='Enable sequencing'
-              />
-              <span>Enable Sequencing</span>
-            </label>
+            <ToggleRow
+              label='Enable Sequencing'
+              checked={studioSettings.projectSequencing.enabled}
+              onCheckedChange={handleToggleSequencingEnabled}
+              className='bg-transparent border-none p-0 hover:bg-transparent'
+            />
             <div className='text-[11px] text-gray-500'>
               Trigger: {studioSettings.projectSequencing.trigger}
             </div>
@@ -1132,7 +1130,6 @@ export function SequencingPanel(): React.JSX.Element {
               Runtime: {studioSettings.projectSequencing.runtime}
             </div>
           </div>
-
         </div>
       </StudioCard>
 
@@ -1144,18 +1141,18 @@ export function SequencingPanel(): React.JSX.Element {
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
               setPresetNameDraft(event.target.value.slice(0, PRESET_NAME_MAX_LENGTH))
             }
-            className='h-8 w-full rounded border border-border/60 bg-card/40 px-2 text-xs text-gray-100 outline-none'
+            className='h-7 w-full rounded border border-border/60 bg-card/40 px-2 text-[11px] text-gray-100 outline-none'
             placeholder='Preset name'
             aria-label='Sequence preset name'
           />
-          <div className='grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]'>
+          <div className='grid grid-cols-[repeat(auto-fit,minmax(136px,1fr))] gap-1.5'>
             <SelectSimple
               size='sm'
               value={selectedPresetId}
               onValueChange={(value: string) => setSelectedPresetId(value)}
               options={sequencePresetOptions}
               placeholder='Select sequence preset'
-              triggerClassName='h-8 text-xs'
+              triggerClassName='h-7 text-[11px]'
               ariaLabel='Sequence preset'
             />
             <Button
@@ -1186,6 +1183,7 @@ export function SequencingPanel(): React.JSX.Element {
         editableSequenceSteps={editableSequenceSteps}
         enabledRuntimeSteps={enabledRuntimeSteps}
         activeGenerationModel={activeGenerationModel}
+        sequencerFieldTooltipsEnabled={studioSettings.helpTooltips.sequencerFieldsEnabled}
         cropShapeOptions={cropShapeOptions}
         cropShapeGeometryById={cropShapeGeometryById}
         mutateSteps={mutateSteps}

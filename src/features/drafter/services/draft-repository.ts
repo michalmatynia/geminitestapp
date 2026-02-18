@@ -152,8 +152,8 @@ const listDrafts_Mongo = async (): Promise<ProductDraftDto[]> => {
     openProductFormTab: normalizeOpenProductFormTab(draft.openProductFormTab),
     imageLinks: Array.isArray(draft.imageLinks) ? draft.imageLinks : [],
     baseProductId: draft.baseProductId || null,
-    createdAt: draft.createdAt || new Date(),
-    updatedAt: draft.updatedAt || new Date(),
+    createdAt: (draft.createdAt || new Date()).toISOString(),
+    updatedAt: (draft.updatedAt || new Date()).toISOString(),
   }));
 };
 
@@ -203,8 +203,8 @@ const getDraft_Mongo = async (id: string): Promise<ProductDraftDto | null> => {
     openProductFormTab: normalizeOpenProductFormTab(draft.openProductFormTab),
     imageLinks: Array.isArray(draft.imageLinks) ? draft.imageLinks : [],
     baseProductId: draft.baseProductId || null,
-    createdAt: draft.createdAt || new Date(),
-    updatedAt: draft.updatedAt || new Date(),
+    createdAt: (draft.createdAt || new Date()).toISOString(),
+    updatedAt: (draft.updatedAt || new Date()).toISOString(),
   };
 };
 
@@ -295,8 +295,8 @@ const createDraft_Mongo = async (input: CreateProductDraftDto): Promise<ProductD
     openProductFormTab: normalizeOpenProductFormTab(draft.openProductFormTab),
     imageLinks: draft.imageLinks || [],
     baseProductId: input.baseProductId || null,
-    createdAt: now,
-    updatedAt: now,
+    createdAt: now.toISOString(),
+    updatedAt: now.toISOString(),
   };
 };
 
@@ -396,8 +396,8 @@ const updateDraft_Mongo = async (id: string, input: UpdateProductDraftDto): Prom
     openProductFormTab: normalizeOpenProductFormTab(doc.openProductFormTab),
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     baseProductId: doc.baseProductId || null,
-    createdAt: doc.createdAt || now,
-    updatedAt: now,
+    createdAt: (doc.createdAt || now).toISOString(),
+    updatedAt: now.toISOString(),
   };
 };
 
@@ -415,6 +415,8 @@ const listDrafts_Prisma = async (): Promise<ProductDraftDto[]> => {
 
   return drafts.map((draft: Prisma.ProductDraftGetPayload<Record<string, never>>) => ({
     ...draft,
+    createdAt: draft.createdAt.toISOString(),
+    updatedAt: draft.updatedAt.toISOString(),
     catalogIds: draft.catalogIds as string[],
     categoryId: typeof draft.categoryId === 'string' ? draft.categoryId : null,
     tagIds: draft.tagIds as string[],
@@ -438,6 +440,8 @@ const getDraft_Prisma = async (id: string): Promise<ProductDraftDto | null> => {
 
   return {
     ...draft,
+    createdAt: draft.createdAt.toISOString(),
+    updatedAt: draft.updatedAt.toISOString(),
     catalogIds: draft.catalogIds as string[],
     categoryId: typeof draft.categoryId === 'string' ? draft.categoryId : null,
     tagIds: draft.tagIds as string[],
@@ -493,6 +497,8 @@ const createDraft_Prisma = async (input: CreateProductDraftDto): Promise<Product
 
   return {
     ...draft,
+    createdAt: draft.createdAt.toISOString(),
+    updatedAt: draft.updatedAt.toISOString(),
     catalogIds: draft.catalogIds as string[],
     categoryId: typeof draft.categoryId === 'string' ? draft.categoryId : null,
     tagIds: draft.tagIds as string[],
@@ -529,6 +535,8 @@ const updateDraft_Prisma = async (id: string, input: UpdateProductDraftDto): Pro
 
     return {
       ...draft,
+      createdAt: draft.createdAt.toISOString(),
+      updatedAt: draft.updatedAt.toISOString(),
       catalogIds: draft.catalogIds as string[],
       categoryId: typeof draft.categoryId === 'string' ? draft.categoryId : null,
       tagIds: draft.tagIds as string[],

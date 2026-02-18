@@ -1,6 +1,5 @@
 'use client';
 
-import { Copy } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { Suspense, useCallback, useEffect, useState } from 'react';
 
@@ -12,8 +11,7 @@ import {
   TabsList,
   TabsTrigger,
   Tooltip,
-  Button,
-  useToast,
+  CopyButton,
 } from '@/shared/ui';
 
 import { AdminImageStudioPromptsPage } from './AdminImageStudioPromptsPage';
@@ -41,7 +39,6 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   const { projectId, projectsQuery } = useProjectsState();
   const { setProjectId } = useProjectsActions();
   const { selectedSlot } = useSlotsState();
-  const { toast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -114,23 +111,6 @@ function AdminImageStudioPageContent(): React.JSX.Element {
     router.replace(query ? `${pathname}?${query}` : pathname);
   }, [pathname, router, searchParams, setProjectId]);
 
-  const handleCopyActiveCardName = useCallback((): void => {
-    const cardLabel = selectedSlot?.name?.trim() || selectedSlot?.id || null;
-    if (!cardLabel) {
-      toast('Select a card first.', { variant: 'info' });
-      return;
-    }
-    if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
-      toast('Clipboard is not available in this browser.', { variant: 'error' });
-      return;
-    }
-    void navigator.clipboard.writeText(cardLabel).then(() => {
-      toast('Card name copied.', { variant: 'success' });
-    }).catch(() => {
-      toast('Failed to copy card name.', { variant: 'error' });
-    });
-  }, [selectedSlot?.id, selectedSlot?.name, toast]);
-
   return (
     <div className='mx-auto box-border flex h-[calc((100dvh-4rem)*1.035)] w-full min-h-0 min-w-0 max-w-none flex-col gap-2 overflow-hidden px-0.5 pb-0 pt-2'>
       <ClientOnly fallback={<div className='flex min-h-0 flex-1' />}>
@@ -175,18 +155,13 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                         : 'No active card selected. Pick a card from the tree.'}
                     </span>
                     <Tooltip content={selectedSlot ? 'Copy card name' : 'Select a card first'}>
-                      <Button
-                        type='button'
-                        size='xs'
+                      <CopyButton
+                        value={selectedSlot?.name?.trim() || selectedSlot?.id || ''}
                         variant='ghost'
+                        size='sm'
                         className='size-7 shrink-0'
-                        onClick={handleCopyActiveCardName}
                         disabled={!selectedSlot?.id}
-                        title='Copy card name'
-                        aria-label='Copy card name'
-                      >
-                        <Copy className='size-3.5' />
-                      </Button>
+                      />
                     </Tooltip>
                   </div>
                 </div>

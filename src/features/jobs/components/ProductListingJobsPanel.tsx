@@ -1,6 +1,5 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 import { JobsProvider, useJobsContext } from '@/features/jobs/context/JobsContext';
@@ -17,6 +16,7 @@ import {
   FormSection,
   Alert,
   MetadataItem,
+  LoadingState,
 } from '@/shared/ui';
 
 import { ProductListingJobsPanelViewProvider, useProductListingJobsPanelView } from './context/ProductListingJobsPanelViewContext';
@@ -190,9 +190,7 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
         footer={footer}
       >
         {isLoading ? (
-          <div className='flex items-center justify-center py-12'>
-            <Loader2 className='size-8 animate-spin text-gray-500' />
-          </div>
+          <LoadingState message='Loading jobs...' className='py-12' />
         ) : !error ? (
           <JobTable
             data={tableData}

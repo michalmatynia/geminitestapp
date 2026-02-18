@@ -28,6 +28,23 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, FormField, FormSection, SelectSimple, useToast, StatusBadge, Alert } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
+type ProductStudioSequenceStepPlanEntry = {
+  index: number;
+  stepId: string;
+  stepType: 'crop_center' | 'mask' | 'generate' | 'regenerate' | 'upscale';
+  inputSource: 'previous' | 'source';
+  resolvedInput: 'previous' | 'source';
+  producesOutput: boolean;
+};
+
+const STEP_TYPE_LABELS: Record<ProductStudioSequenceStepPlanEntry['stepType'], string> = {
+  crop_center: 'Crop',
+  mask: 'Mask',
+  generate: 'Generate',
+  regenerate: 'Regenerate',
+  upscale: 'Upscale',
+};
+
 type ProductStudioVariantsResponse = {
   sequencing: {
     persistedEnabled: boolean;
@@ -55,6 +72,7 @@ type ProductStudioVariantsResponse = {
     selectedSnapshotModelId: string | null;
   };
   sequenceReadiness: ProductStudioSequenceReadiness;
+  sequenceStepPlan: ProductStudioSequenceStepPlanEntry[];
   sequenceGenerationMode: ProductStudioSequenceGenerationMode;
   projectId: string | null;
   sourceSlotId: string | null;
@@ -74,6 +92,7 @@ type ProductStudioSendResponse = {
   executionRoute: ProductStudioExecutionRoute;
   sequenceReadiness?: ProductStudioSequenceReadiness;
   sequencingDiagnostics?: ProductStudioVariantsResponse['sequencingDiagnostics'];
+  sequenceStepPlan?: ProductStudioSequenceStepPlanEntry[];
   warnings?: string[];
 };
 
@@ -85,6 +104,7 @@ type ProductStudioPreflightResponse = {
   sequencing: ProductStudioVariantsResponse['sequencing'];
   sequencingDiagnostics: ProductStudioVariantsResponse['sequencingDiagnostics'];
   sequenceReadiness: ProductStudioSequenceReadiness;
+  sequenceStepPlan: ProductStudioSequenceStepPlanEntry[];
   warnings: string[];
 };
 
@@ -503,6 +523,7 @@ export default function ProductFormStudio(): React.JSX.Element {
   const selectedSequenceMode = variantsData?.sequenceGenerationMode ?? 'auto';
   const sequencingDiagnostics = variantsData?.sequencingDiagnostics ?? null;
   const sequenceReadiness = variantsData?.sequenceReadiness ?? null;
+  const sequenceStepPlan = variantsData?.sequenceStepPlan ?? [];
   const sequenceReadinessMessage = useMemo((): string | null => {
     if (!sequenceReadiness) return null;
     if (!sequenceReadiness.requiresProjectSequence) return null;
@@ -553,6 +574,7 @@ export default function ProductFormStudio(): React.JSX.Element {
               sequencing: preflight.sequencing,
               sequencingDiagnostics: preflight.sequencingDiagnostics,
               sequenceReadiness: preflight.sequenceReadiness,
+              sequenceStepPlan: preflight.sequenceStepPlan,
               sequenceGenerationMode: preflight.sequenceGenerationMode,
             }
             : prev,
@@ -588,6 +610,18 @@ export default function ProductFormStudio(): React.JSX.Element {
           toast(warning, { variant: 'warning' });
         });
       }
+      setVariantsData((prev) =>
+        prev
+          ? {
+            ...prev,
+            ...(result.sequenceReadiness ? { sequenceReadiness: result.sequenceReadiness } : {}),
+            ...(result.sequencingDiagnostics
+              ? { sequencingDiagnostics: result.sequencingDiagnostics }
+              : {}),
+            ...(result.sequenceStepPlan ? { sequenceStepPlan: result.sequenceStepPlan } : {}),
+          }
+          : prev,
+      );
       await queryClient.invalidateQueries({
         queryKey: studioKeys.slots(studioProjectId),
       });
@@ -935,6 +969,39 @@ export default function ProductFormStudio(): React.JSX.Element {
               <span>saved at: {formatTimestamp(sequencingDiagnostics.selectedSnapshotSavedAt)}</span>
               <span>steps: {sequencingDiagnostics.selectedSnapshotStepCount}</span>
               <span>model: {sequencingDiagnostics.selectedSnapshotModelId ?? 'n/a'}</span>
+            </div>
+            <div className='mt-2 rounded border border-border/50 bg-card/20 p-2 text-[11px]'>
+              <div className='font-medium text-gray-200'>Sequence Step Input Plan</div>
+              {sequenceStepPlan.length === 0 ? (
+                <div className='mt-1 text-gray-500'>No enabled sequence steps in this project.</div>
+              ) : (
+                <div className='mt-1 space-y-1 text-gray-300'>
+                  {sequenceStepPlan.map((entry) => {
+                    const fallbackToSource =
+                      entry.inputSource === 'previous' && entry.resolvedInput === 'source';
+                    return (
+                      <div key={entry.stepId} className='flex flex-wrap items-center gap-x-2 gap-y-1'>
+                        <span className='text-gray-500'>#{entry.index + 1}</span>
+                        <span>{STEP_TYPE_LABELS[entry.stepType]}</span>
+                        <span className='text-gray-500'>input:</span>
+                        <span>{entry.inputSource === 'source' ? 'source' : 'previous'}</span>
+                        <span className='text-gray-500'>resolved:</span>
+                        <span className={fallbackToSource ? 'text-amber-300' : 'text-gray-200'}>
+                          {entry.resolvedInput === 'source' ? 'source' : 'previous'}
+                        </span>
+                        <span className='text-gray-500'>
+                          {entry.producesOutput ? 'produces output' : 'no image output'}
+                        </span>
+                        {fallbackToSource ? (
+                          <span className='text-amber-300'>
+                            fallback: no prior output before this step
+                          </span>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         ) : null}

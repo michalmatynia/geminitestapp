@@ -29,6 +29,7 @@ import {
   Alert,
   MetadataItem,
   LoadingState,
+  ToggleRow,
 } from '@/shared/ui';
 
 import { DatabaseBackupsPanel } from '../components/DatabaseBackupsPanel';
@@ -201,75 +202,65 @@ function DatabaseEngineContent(): React.JSX.Element {
           <div className='grid gap-6 lg:grid-cols-3'>
             <FormSection title='Engine Policy' className='lg:col-span-2 p-6'>
               <div className='grid gap-4 md:grid-cols-2'>
-                <label className='flex items-center gap-3 p-3 rounded-md border border-white/5 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors'>
-                  <Checkbox 
-                    checked={policyDraft.requireExplicitServiceRouting} 
-                    onCheckedChange={(v: boolean | 'indeterminate') => {
-                      const isChecked = v === true;
-                      setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, requireExplicitServiceRouting: isChecked }));
-                    }}
-                  />
-                  <div className='flex flex-col'>
-                    <span className='text-sm font-medium text-gray-200'>Strict Service Routing</span>
-                    <span className='text-[10px] text-gray-500 uppercase'>Require explicit provider per service</span>
-                  </div>
-                </label>
-                <label className='flex items-center gap-3 p-3 rounded-md border border-white/5 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors'>
-                  <Checkbox 
-                    checked={policyDraft.requireExplicitCollectionRouting} 
-                    onCheckedChange={(v: boolean | 'indeterminate') => {
-                      const isChecked = v === true;
-                      setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, requireExplicitCollectionRouting: isChecked }));
-                    }}
-                  />
-                  <div className='flex flex-col'>
-                    <span className='text-sm font-medium text-gray-200'>Strict Collection Routing</span>
-                    <span className='text-[10px] text-gray-500 uppercase'>Require explicit provider per collection</span>
-                  </div>
-                </label>
-                <label className='flex items-center gap-3 p-3 rounded-md border border-white/5 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors'>
-                  <Checkbox 
-                    checked={policyDraft.allowAutomaticFallback} 
-                    onCheckedChange={(v: boolean | 'indeterminate') => {
-                      const isChecked = v === true;
-                      setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, allowAutomaticFallback: isChecked }));
-                    }}
-                  />
-                  <div className='flex flex-col'>
-                    <span className='text-sm font-medium text-gray-200'>Auto Fallback</span>
-                    <span className='text-[10px] text-gray-500 uppercase'>Switch providers on failure</span>
-                  </div>
-                </label>
-                <label className='flex items-center gap-3 p-3 rounded-md border border-white/5 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors'>
-                  <Checkbox 
-                    checked={policyDraft.strictProviderAvailability} 
-                    onCheckedChange={(v: boolean | 'indeterminate') => {
-                      const isChecked = v === true;
-                      setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, strictProviderAvailability: isChecked }));
-                    }}
-                  />
-                  <div className='flex flex-col'>
-                    <span className='text-sm font-medium text-gray-200'>Strict Availability</span>
-                    <span className='text-[10px] text-gray-500 uppercase'>Throw on unconfigured envs</span>
-                  </div>
-                </label>
+                <ToggleRow
+                  label='Strict Service Routing'
+                  description='Require explicit provider per service'
+                  checked={policyDraft.requireExplicitServiceRouting}
+                  onCheckedChange={(checked) => {
+                    setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, requireExplicitServiceRouting: checked }));
+                  }}
+                  className='bg-white/5 border-white/5'
+                />
+                <ToggleRow
+                  label='Strict Collection Routing'
+                  description='Require explicit provider per collection'
+                  checked={policyDraft.requireExplicitCollectionRouting}
+                  onCheckedChange={(checked) => {
+                    setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, requireExplicitCollectionRouting: checked }));
+                  }}
+                  className='bg-white/5 border-white/5'
+                />
+                <ToggleRow
+                  label='Auto Fallback'
+                  description='Switch providers on failure'
+                  checked={policyDraft.allowAutomaticFallback}
+                  onCheckedChange={(checked) => {
+                    setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, allowAutomaticFallback: checked }));
+                  }}
+                  className='bg-white/5 border-white/5'
+                />
+                <ToggleRow
+                  label='Strict Availability'
+                  description='Throw on unconfigured envs'
+                  checked={policyDraft.strictProviderAvailability}
+                  onCheckedChange={(checked) => {
+                    setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, strictProviderAvailability: checked }));
+                  }}
+                  className='bg-white/5 border-white/5'
+                />
               </div>
             </FormSection>
 
             <FormSection title='Resource Health' className='p-6'>
               <div className='space-y-3'>
-                <div className='flex items-center justify-between p-2 rounded bg-black/20 border border-white/5'>
-                  <span className='text-xs text-gray-400'>Prisma (SQL)</span>
-                  <StatusBadge status={engineStatus?.providers.prismaConfigured ? 'success' : 'error'} />
-                </div>
-                <div className='flex items-center justify-between p-2 rounded bg-black/20 border border-white/5'>
-                  <span className='text-xs text-gray-400'>MongoDB</span>
-                  <StatusBadge status={engineStatus?.providers.mongodbConfigured ? 'success' : 'error'} />
-                </div>
-                <div className='flex items-center justify-between p-2 rounded bg-black/20 border border-white/5'>
-                  <span className='text-xs text-gray-400'>Redis</span>
-                  <StatusBadge status={engineStatus?.providers.redisConfigured ? 'success' : 'error'} />
-                </div>
+                <MetadataItem
+                  variant='minimal'
+                  label='Prisma (SQL)'
+                  value={<StatusBadge status={engineStatus?.providers.prismaConfigured ? 'success' : 'error'} />}
+                  className='flex items-center justify-between'
+                />
+                <MetadataItem
+                  variant='minimal'
+                  label='MongoDB'
+                  value={<StatusBadge status={engineStatus?.providers.mongodbConfigured ? 'success' : 'error'} />}
+                  className='flex items-center justify-between'
+                />
+                <MetadataItem
+                  variant='minimal'
+                  label='Redis'
+                  value={<StatusBadge status={engineStatus?.providers.redisConfigured ? 'success' : 'error'} />}
+                  className='flex items-center justify-between'
+                />
               </div>
             </FormSection>
           </div>

@@ -21,6 +21,11 @@ export const STEP_RUNTIME_OPTIONS = [
   { value: 'client', label: 'Client' },
 ];
 
+export const STEP_INPUT_SOURCE_OPTIONS = [
+  { value: 'previous', label: 'Prev Output' },
+  { value: 'source', label: 'Source Image' },
+];
+
 export const PRESET_NAME_MAX_LENGTH = 72;
 
 export const PROJECT_SEQUENCE_OPERATION_LABELS: Record<ImageStudioSequenceOperation, string> = {

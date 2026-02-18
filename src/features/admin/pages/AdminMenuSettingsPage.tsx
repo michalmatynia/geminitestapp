@@ -40,16 +40,15 @@ import {
   Button, 
   Checkbox, 
   Input, 
-  Label, 
   SearchInput, 
-  Switch, 
   useToast, 
   SelectSimple, 
   FormSection, 
   FormField, 
   SectionHeader,
   StatusBadge,
-  PanelHeader
+  PanelHeader,
+  ToggleRow
 } from '@/shared/ui';
 import { cn, DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils';
 
@@ -700,15 +699,18 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
       <FormSection
         title='Menu Builder'
         description='Create hierarchies, reorder items, and add custom links.'
-        actions={(
-          <div className='flex items-center gap-2'>
-            <Label className='text-xs text-gray-400'>Use custom layout</Label>
-            <Switch checked={customEnabled} onCheckedChange={(checked: boolean) => setCustomEnabled(Boolean(checked))} />
-          </div>
-        )}
         className='mt-6 p-6'
         variant='subtle'
       >
+        <ToggleRow
+          type='switch'
+          label='Use custom layout'
+          description='Enable this to apply the custom menu structure defined below.'
+          checked={customEnabled}
+          onCheckedChange={(checked: boolean) => setCustomEnabled(checked)}
+          className='mb-6'
+        />
+
         {!customEnabled ? (
           <div className='mb-4 rounded-md border border-border/60 bg-card/40 px-3 py-2 text-xs text-gray-400'>
             Custom layout is disabled. Enable it to apply this menu structure.

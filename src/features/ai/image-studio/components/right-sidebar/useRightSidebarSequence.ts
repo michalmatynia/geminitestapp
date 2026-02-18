@@ -136,7 +136,7 @@ export function useRightSidebarSequence({
         : null;
 
     const images = buildReferencePreviewImages(slots, compositeAssetIds);
-    const sourceImagePath = workingSlot?.imageFile?.filepath || workingSlot?.imageUrl || '';
+    const sourceImagePath = workingSlot?.imageFile?.url || workingSlot?.imageUrl || '';
     if (sourceImagePath) {
       images.unshift({
         kind: 'base',

@@ -2,109 +2,57 @@ import type {
   DatabaseBackupFileDto,
   DatabaseBackupOperationResponseDto,
   DatabaseRestoreOperationResponseDto,
+  DatabaseTypeDto,
+  DatabasePreviewModeDto,
+  DatabasePreviewGroupDto,
+  DatabasePreviewTableDto,
+  DatabasePreviewRowDto,
+  DatabaseTableDetailDto,
+  DatabaseColumnInfoDto,
+  DatabaseIndexInfoDto,
+  DatabaseForeignKeyInfoDto,
+  DatabaseEnumInfoDto,
+  SqlQueryFieldDto,
+  SqlQueryResultDto,
+  CrudOperationDto,
+  CrudRequestDto,
+  CrudResultDto,
+  DatabasePreviewPayloadDto,
 } from '@/shared/contracts/database';
 
-export type DatabaseType = 'postgresql' | 'mongodb';
-export type DatabasePreviewMode = 'backup' | 'current';
+// Re-export shared DTOs as feature-specific types for backward compatibility
+export type DatabaseType = DatabaseTypeDto;
+export type DatabasePreviewMode = DatabasePreviewModeDto;
 
 // Database transport aliases mapped to shared DTOs.
 export type DatabaseInfo = DatabaseBackupFileDto;
 export type DatabaseBackupResponse = DatabaseBackupOperationResponseDto;
 export type DatabaseRestoreResponse = DatabaseRestoreOperationResponseDto;
 
-export type DatabasePreviewGroup = { type: string; objects: string[] };
-export type DatabasePreviewTable = { name: string; rowEstimate: number };
-export type DatabasePreviewRow = {
-  name: string;
-  rows: Record<string, unknown>[];
-  totalRows: number;
-};
+export type DatabasePreviewGroup = DatabasePreviewGroupDto;
+export type DatabasePreviewTable = DatabasePreviewTableDto;
+export type DatabasePreviewRow = DatabasePreviewRowDto;
 
-export type DatabaseColumnInfo = {
-  name: string;
-  type: string;
-  nullable: boolean;
-  defaultValue: string | null;
-  isPrimaryKey: boolean;
-};
+export type DatabaseColumnInfo = DatabaseColumnInfoDto;
 
-export type DatabaseIndexInfo = {
-  name: string;
-  columns: string[];
-  isUnique: boolean;
-  definition: string;
-};
+export type DatabaseIndexInfo = DatabaseIndexInfoDto;
 
-export type DatabaseForeignKeyInfo = {
-  name: string;
-  column: string;
-  referencedTable: string;
-  referencedColumn: string;
-  onDelete: string;
-  onUpdate: string;
-};
+export type DatabaseForeignKeyInfo = DatabaseForeignKeyInfoDto;
 
-export type DatabaseEnumInfo = {
-  name: string;
-  values: string[];
-};
+export type DatabaseEnumInfo = DatabaseEnumInfoDto;
 
-export type DatabaseTableDetail = {
-  name: string;
-  columns: DatabaseColumnInfo[];
-  indexes: DatabaseIndexInfo[];
-  foreignKeys: DatabaseForeignKeyInfo[];
-  rowEstimate: number;
-  sizeBytes: number;
-  sizeFormatted: string;
-};
+export type DatabaseTableDetail = DatabaseTableDetailDto;
 
 // ── SQL / CRUD operation types ──
 
-export type SqlQueryField = {
-  name: string;
-  dataTypeID: number;
-};
+export type SqlQueryField = SqlQueryFieldDto;
 
-export type SqlQueryResult = {
-  rows: Record<string, unknown>[];
-  rowCount: number;
-  fields: SqlQueryField[];
-  command: string;
-  duration: number;
-  error?: string;
-};
+export type SqlQueryResult = SqlQueryResultDto;
 
-export type CrudOperation = 'insert' | 'update' | 'delete';
+export type CrudOperation = CrudOperationDto;
 
-export type CrudRequest = {
-  table: string;
-  operation: CrudOperation;
-  type: DatabaseType;
-  data?: Record<string, unknown>;
-  primaryKey?: Record<string, unknown>;
-};
+export type CrudRequest = CrudRequestDto;
 
-export type CrudResult = {
-  success: boolean;
-  rowCount: number;
-  returning?: Record<string, unknown>[];
-  error?: string;
-};
+export type CrudResult = CrudResultDto;
 
-export type DatabasePreviewPayload = {
-  content?: string;
-  groups?: DatabasePreviewGroup[];
-  tables?: DatabasePreviewTable[];
-  tableRows?: DatabasePreviewRow[];
-  tableDetails?: DatabaseTableDetail[];
-  enums?: DatabaseEnumInfo[];
-  databaseSize?: string;
-  page?: number;
-  pageSize?: number;
-  error?: string;
-  errorId?: string;
-  stage?: string;
-  backupName?: string;
-  mode?: string;
-};
+export type DatabasePreviewPayload = DatabasePreviewPayloadDto;

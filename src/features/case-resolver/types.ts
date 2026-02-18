@@ -1,259 +1,97 @@
 import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
+import type {
+  CaseResolverNodeRoleDto,
+  CaseResolverQuoteModeDto,
+  CaseResolverJoinModeDto,
+  CaseResolverDocumentNodePortDto,
+  CaseResolverAssetKindDto,
+  CaseResolverFileTypeDto,
+  CaseResolverDocumentVersionDto,
+  CaseResolverEditorTypeDto,
+  CaseResolverDocumentFormatVersionDto,
+  CaseResolverPdfExtractionPresetIdDto,
+  CaseResolverPartyReferenceDto,
+  CaseResolverTagDto,
+  CaseResolverIdentifierDto,
+  CaseResolverCategoryDto,
+  CaseResolverScanSlotDto,
+  CaseResolverDocumentHistoryEntryDto,
+  CaseResolverNodeMetaDto,
+  CaseResolverEdgeMetaDto,
+  CaseResolverGraphDto,
+  CaseResolverNodeFileMetaDto,
+  CaseResolverNodeFileSnapshotDto,
+  CaseResolverRelationEntityTypeDto,
+  CaseResolverRelationFileKindDto,
+  CaseResolverRelationEdgeKindDto,
+  CaseResolverRelationNodeMetaDto,
+  CaseResolverRelationEdgeMetaDto,
+  CaseResolverRelationGraphDto,
+  CaseResolverFileDto,
+  CaseResolverAssetFileDto,
+  CaseResolverFolderTimestampDto,
+  CaseResolverFolderRecordDto,
+  CaseResolverWorkspaceDto,
+} from '@/shared/contracts/case-resolver';
 
 export type { AiNode, Edge };
 
-export type CaseResolverNodeRole = 'text_note' | 'explanatory' | 'ai_prompt';
-export type CaseResolverQuoteMode = 'none' | 'double' | 'single';
-export type CaseResolverJoinMode = 'newline' | 'tab' | 'space' | 'none';
-export type CaseResolverDocumentNodePort = 'textfield' | 'content' | 'plainText';
-export type CaseResolverAssetKind = 'node_file' | 'image' | 'pdf' | 'file';
-export type CaseResolverFileType = 'case' | 'document' | 'scanfile';
-export type CaseResolverDocumentVersion = 'original' | 'exploded';
-export type CaseResolverEditorType = 'markdown' | 'wysiwyg' | 'code';
+export type CaseResolverNodeRole = CaseResolverNodeRoleDto;
+export type CaseResolverQuoteMode = CaseResolverQuoteModeDto;
+export type CaseResolverJoinMode = CaseResolverJoinModeDto;
+export type CaseResolverDocumentNodePort = CaseResolverDocumentNodePortDto;
+export type CaseResolverAssetKind = CaseResolverAssetKindDto;
+export type CaseResolverFileType = CaseResolverFileTypeDto;
+export type CaseResolverDocumentVersion = CaseResolverDocumentVersionDto;
+export type CaseResolverEditorType = CaseResolverEditorTypeDto;
 export type CaseResolverDocumentFormatVersion = 1;
-export type CaseResolverPdfExtractionPresetId =
-  | 'plain_text'
-  | 'structured_sections'
-  | 'facts_entities';
-export type CaseResolverPartyReference = {
-  kind: 'person' | 'organization';
+export type CaseResolverPdfExtractionPresetId = CaseResolverPdfExtractionPresetIdDto;
+export type CaseResolverPartyReference = CaseResolverPartyReferenceDto;
+
+export type CaseResolverTag = CaseResolverTagDto;
+
+export type CaseResolverIdentifier = CaseResolverIdentifierDto;
+
+export type CaseResolverCategory = CaseResolverCategoryDto;
+
+export type CaseResolverScanSlot = CaseResolverScanSlotDto;
+
+export type CaseResolverDocumentHistoryEntry = CaseResolverDocumentHistoryEntryDto;
+
+export type CaseResolverNodeMeta = CaseResolverNodeMetaDto;
+
+export type CaseResolverEdgeMeta = CaseResolverEdgeMetaDto;
+
+export type CaseResolverGraph = CaseResolverGraphDto;
+
+export type CaseResolverNodeFileMeta = CaseResolverNodeFileMetaDto;
+
+export type CaseResolverNodeFileSnapshot = CaseResolverNodeFileSnapshotDto;
+
+export type CaseResolverRelationEntityType = CaseResolverRelationEntityTypeDto;
+export type CaseResolverRelationFileKind = CaseResolverRelationFileKindDto;
+export type CaseResolverRelationEdgeKind = CaseResolverRelationEdgeKindDto;
+
+export type CaseResolverRelationNodeMeta = CaseResolverRelationNodeMetaDto;
+
+export type CaseResolverRelationEdgeMeta = CaseResolverRelationEdgeMetaDto;
+
+export type CaseResolverRelationGraph = CaseResolverRelationGraphDto;
+
+export type CaseResolverFile = CaseResolverFileDto;
+
+export type CaseResolverFileEditDraft = Partial<CaseResolverFileDto> & {
   id: string;
-};
-
-export type CaseResolverTag = {
-  id: string;
-  name: string;
-  parentId: string | null;
-  color: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type CaseResolverIdentifier = {
-  id: string;
-  name: string;
-  parentId: string | null;
-  color: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type CaseResolverCategory = {
-  id: string;
-  name: string;
-  parentId: string | null;
-  sortOrder: number;
-  description: string;
-  color: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type CaseResolverScanSlot = {
-  id: string;
-  name: string;
-  filepath: string | null;
-  sourceFileId: string | null;
-  mimeType: string | null;
-  size: number | null;
-  ocrText: string;
-  ocrError: string | null;
-};
-
-export type CaseResolverDocumentHistoryEntry = {
-  id: string;
-  savedAt: string;
-  documentContentVersion: number;
-  activeDocumentVersion: CaseResolverDocumentVersion;
-  editorType: CaseResolverEditorType;
-  documentContent: string;
-  documentContentMarkdown: string;
-  documentContentHtml: string;
-  documentContentPlainText: string;
-};
-
-export type CaseResolverNodeMeta = {
-  role: CaseResolverNodeRole;
-  includeInOutput: boolean;
-  quoteMode: CaseResolverQuoteMode;
-  surroundPrefix: string;
-  surroundSuffix: string;
-};
-
-export type CaseResolverEdgeMeta = {
-  joinMode: CaseResolverJoinMode;
-};
-
-export type CaseResolverGraph = {
-  nodes: AiNode[];
-  edges: Edge[];
-  nodeMeta: Record<string, CaseResolverNodeMeta>;
-  edgeMeta: Record<string, CaseResolverEdgeMeta>;
-  pdfExtractionPresetId: CaseResolverPdfExtractionPresetId;
-  documentFileLinksByNode: Record<string, string[]>;
-  documentDropNodeId: string | null;
-  documentSourceFileIdByNode?: Record<string, string>;
-  nodeFileAssetIdByNode?: Record<string, string>;
-};
-
-export type CaseResolverNodeFileMeta = {
-  fileId: string;
-  fileType: 'document' | 'scanfile';
-  fileName: string;
-};
-
-export type CaseResolverNodeFileSnapshot = {
-  kind: 'case_resolver_node_file_snapshot_v1';
-  source: 'manual';
-  nodes: AiNode[];
-  edges: Edge[];
-  nodeFileMeta: Record<string, CaseResolverNodeFileMeta>;
-};
-
-export type CaseResolverRelationEntityType = 'case' | 'folder' | 'file' | 'custom';
-export type CaseResolverRelationFileKind = 'case_file' | 'asset_file';
-export type CaseResolverRelationEdgeKind =
-  | 'contains'
-  | 'located_in'
-  | 'parent_case'
-  | 'references'
-  | 'related'
-  | 'custom';
-
-export type CaseResolverRelationNodeMeta = {
-  entityType: CaseResolverRelationEntityType;
-  entityId: string;
-  label: string;
-  fileKind: CaseResolverRelationFileKind | null;
-  folderPath: string | null;
-  sourceFileId: string | null;
-  isStructural: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type CaseResolverRelationEdgeMeta = {
-  relationType: CaseResolverRelationEdgeKind;
-  label: string;
-  isStructural: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type CaseResolverRelationGraph = {
-  nodes: AiNode[];
-  edges: Edge[];
-  nodeMeta: Record<string, CaseResolverRelationNodeMeta>;
-  edgeMeta: Record<string, CaseResolverRelationEdgeMeta>;
-};
-
-export type CaseResolverFile = {
-  id: string;
-  fileType: CaseResolverFileType;
-  name: string;
-  folder: string;
-  parentCaseId: string | null;
-  referenceCaseIds: string[];
-  documentDate: string;
-  originalDocumentContent: string;
-  explodedDocumentContent: string;
-  activeDocumentVersion: CaseResolverDocumentVersion;
-  editorType: CaseResolverEditorType;
-  documentContentFormatVersion: CaseResolverDocumentFormatVersion;
-  documentContentVersion: number;
-  documentContent: string;
-  documentContentMarkdown: string;
-  documentContentHtml: string;
-  documentContentPlainText: string;
-  documentHistory: CaseResolverDocumentHistoryEntry[];
-  documentConversionWarnings: string[];
-  lastContentConversionAt: string;
-  scanSlots: CaseResolverScanSlot[];
-  scanOcrModel: string;
-  scanOcrPrompt: string;
-  isLocked: boolean;
-  graph: CaseResolverGraph;
-  addresser: CaseResolverPartyReference | null;
-  addressee: CaseResolverPartyReference | null;
-  tagId: string | null;
-  caseIdentifierId: string | null;
-  categoryId: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type CaseResolverFileEditDraft = {
-  id: string;
-  fileType: CaseResolverFileType;
-  name: string;
-  folder: string;
-  parentCaseId: string | null;
-  referenceCaseIds: string[];
-  createdAt: string;
-  updatedAt: string;
-  documentDate: string;
-  originalDocumentContent: string;
-  explodedDocumentContent: string;
-  activeDocumentVersion: CaseResolverDocumentVersion;
-  editorType: CaseResolverEditorType;
-  documentContentFormatVersion: CaseResolverDocumentFormatVersion;
-  documentContentVersion: number;
   baseDocumentContentVersion: number;
-  documentContent: string;
-  documentContentMarkdown: string;
-  documentContentHtml: string;
-  documentContentPlainText: string;
-  documentHistory: CaseResolverDocumentHistoryEntry[];
-  documentConversionWarnings: string[];
-  lastContentConversionAt: string;
-  scanSlots: CaseResolverScanSlot[];
-  scanOcrModel: string;
-  scanOcrPrompt: string;
-  addresser: CaseResolverPartyReference | null;
-  addressee: CaseResolverPartyReference | null;
-  tagId: string | null;
-  caseIdentifierId: string | null;
-  categoryId: string | null;
 };
 
-export type CaseResolverAssetFile = {
-  id: string;
-  name: string;
-  folder: string;
-  kind: CaseResolverAssetKind;
-  filepath: string | null;
-  sourceFileId: string | null;
-  mimeType: string | null;
-  size: number | null;
-  textContent: string;
-  description: string;
-  createdAt: string;
-  updatedAt: string;
-};
+export type CaseResolverAssetFile = CaseResolverAssetFileDto;
 
-export type CaseResolverFolderTimestamp = {
-  createdAt: string;
-  updatedAt: string;
-};
+export type CaseResolverFolderTimestamp = CaseResolverFolderTimestampDto;
 
-export type CaseResolverFolderRecord = {
-  path: string;
-  ownerCaseId: string | null;
-};
+export type CaseResolverFolderRecord = CaseResolverFolderRecordDto;
 
-export type CaseResolverWorkspace = {
-  version: 2;
-  workspaceRevision: number;
-  lastMutationId: string | null;
-  lastMutationAt: string | null;
-  folders: string[];
-  folderRecords?: CaseResolverFolderRecord[];
-  folderTimestamps: Record<string, CaseResolverFolderTimestamp>;
-  files: CaseResolverFile[];
-  assets: CaseResolverAssetFile[];
-  relationGraph: CaseResolverRelationGraph;
-  activeFileId: string | null;
-};
+export type CaseResolverWorkspace = CaseResolverWorkspaceDto;
 
 export const CASE_RESOLVER_NODE_ROLE_OPTIONS: Array<{
   value: CaseResolverNodeRole;

@@ -36,11 +36,7 @@ import {
 import { compileCaseResolverPrompt } from '../composer';
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import {
-  CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT,
-  CASE_RESOLVER_SHOW_DOCUMENT_IN_CANVAS_EVENT,
   parseCaseResolverTreeDropPayload,
-  type CaseResolverDropDocumentToCanvasDetail,
-  type CaseResolverShowDocumentInCanvasDetail,
 } from '../drag';
 import {
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
@@ -277,8 +273,6 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
 
   const {
     addDroppedAssetNode,
-    handleDroppedDocuments,
-    showDocumentNodeInCanvas,
   } = useMemo(() => createCaseResolverCanvasDropHandlers({
     addNode,
     addEdge,
@@ -316,64 +310,6 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     availableFilesById,
     toast,
   ]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const listener = (event: Event): void => {
-      const customEvent = event as CustomEvent<CaseResolverDropDocumentToCanvasDetail>;
-      const detail = customEvent.detail;
-      if (!detail || typeof detail !== 'object') return;
-      const fileId = typeof detail.fileId === 'string' ? detail.fileId.trim() : '';
-      if (!fileId) return;
-      handleDroppedDocuments(
-        [
-          {
-            id: fileId,
-            name: typeof detail.name === 'string' ? detail.name : 'Document',
-            folder: typeof detail.folder === 'string' ? detail.folder : '',
-          },
-        ],
-        placePosition
-      );
-    };
-
-    window.addEventListener(
-      CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT,
-      listener as EventListener
-    );
-    return (): void => {
-      window.removeEventListener(
-        CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT,
-        listener as EventListener
-      );
-    };
-  }, [handleDroppedDocuments, placePosition]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const listener = (event: Event): void => {
-      const customEvent = event as CustomEvent<CaseResolverShowDocumentInCanvasDetail>;
-      const detail = customEvent.detail;
-      if (!detail || typeof detail !== 'object') return;
-      const fileId = typeof detail.fileId === 'string' ? detail.fileId : '';
-      const preferredNodeId =
-        typeof detail.nodeId === 'string' && detail.nodeId.trim().length > 0
-          ? detail.nodeId
-          : undefined;
-      showDocumentNodeInCanvas(fileId, preferredNodeId);
-    };
-
-    window.addEventListener(
-      CASE_RESOLVER_SHOW_DOCUMENT_IN_CANVAS_EVENT,
-      listener as EventListener
-    );
-    return (): void => {
-      window.removeEventListener(
-        CASE_RESOLVER_SHOW_DOCUMENT_IN_CANVAS_EVENT,
-        listener as EventListener
-      );
-    };
-  }, [showDocumentNodeInCanvas]);
 
   const addPromptNode = (): void => {
     const promptDefinition = palette.find((entry: NodeDefinition) => entry.type === 'prompt');
@@ -512,7 +448,8 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   };
 
   const handleCanvasDragOverCapture = (event: React.DragEvent<HTMLDivElement>): void => {
-    const hasTreeAssetPayload = parseCaseResolverTreeDropPayload(event.dataTransfer) !== null;
+    const treePayload = parseCaseResolverTreeDropPayload(event.dataTransfer);
+    const hasTreeAssetPayload = treePayload?.entity === 'asset';
     const hasNativeFiles = Array.from(event.dataTransfer.types ?? []).includes('Files');
     if (!hasTreeAssetPayload && !hasNativeFiles) return;
     event.preventDefault();
@@ -531,16 +468,9 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     const dropPosition = resolveDropPosition(event);
 
     if (payload?.entity === 'file') {
-      handleDroppedDocuments(
-        [
-          {
-            id: payload.fileId,
-            name: payload.name,
-            folder: payload.folder,
-          },
-        ],
-        dropPosition
-      );
+      toast('Documents can only be added inside a node file canvas.', {
+        variant: 'warning',
+      });
       return;
     }
 

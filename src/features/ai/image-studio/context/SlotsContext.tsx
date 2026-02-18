@@ -58,81 +58,14 @@ function serializeSlotFoldersSetting(folders: string[]): string {
   return serializeSetting({ version: 1, folders: normalizeFolderPaths(folders) });
 }
 
-function readSlotMetadata(slot: ImageStudioSlotRecord): Record<string, unknown> | null {
-  if (!slot.metadata || typeof slot.metadata !== 'object' || Array.isArray(slot.metadata)) {
-    return null;
-  }
-  return slot.metadata;
-}
-
-function getSlotSourceIds(slot: ImageStudioSlotRecord): string[] {
-  const metadata = readSlotMetadata(slot);
-  if (!metadata) return [];
-
-  const sourceIds: string[] = [];
-  const sourceSlotId = metadata['sourceSlotId'];
-  if (typeof sourceSlotId === 'string' && sourceSlotId.trim()) {
-    sourceIds.push(sourceSlotId.trim());
-  }
-
-  const nestedSourceIds = metadata['sourceSlotIds'];
-  if (Array.isArray(nestedSourceIds)) {
-    nestedSourceIds.forEach((value: unknown) => {
-      if (typeof value !== 'string') return;
-      const normalized = value.trim();
-      if (!normalized) return;
-      sourceIds.push(normalized);
-    });
-  }
-
-  return sourceIds;
-}
-
-function collectSlotsToDeleteForFolder(
-  allSlots: ImageStudioSlotRecord[],
-  folderPath: string
-): ImageStudioSlotRecord[] {
-  const normalizedFolder = normalizeTreePath(folderPath);
-  if (!normalizedFolder) return [];
-
-  const slotsById = new Map<string, ImageStudioSlotRecord>(
-    allSlots.map((slot: ImageStudioSlotRecord) => [slot.id, slot])
-  );
-  const childIdsBySource = new Map<string, Set<string>>();
-
-  allSlots.forEach((slot: ImageStudioSlotRecord) => {
-    getSlotSourceIds(slot).forEach((sourceId: string) => {
-      const current = childIdsBySource.get(sourceId) ?? new Set<string>();
-      current.add(slot.id);
-      childIdsBySource.set(sourceId, current);
-    });
-  });
-
-  const deleteIds = new Set<string>();
-  const queue: string[] = [];
-  allSlots.forEach((slot: ImageStudioSlotRecord) => {
-    if (!isTreePathWithin(slot.folderPath ?? '', normalizedFolder)) return;
-    if (deleteIds.has(slot.id)) return;
-    deleteIds.add(slot.id);
-    queue.push(slot.id);
-  });
-
-  while (queue.length > 0) {
-    const sourceId = queue.shift();
-    if (!sourceId) continue;
-    const childIds = childIdsBySource.get(sourceId);
-    if (!childIds || childIds.size === 0) continue;
-    childIds.forEach((childId: string) => {
-      if (deleteIds.has(childId)) return;
-      deleteIds.add(childId);
-      queue.push(childId);
-    });
-  }
-
-  return Array.from(deleteIds)
-    .map((slotId: string) => slotsById.get(slotId))
-    .filter((slot: ImageStudioSlotRecord | undefined): slot is ImageStudioSlotRecord => Boolean(slot));
-}
+type DeleteFolderResponse = {
+  ok: true;
+  folder: string;
+  targetSlotCount: number;
+  deletedSlotIds: string[];
+  failedRootSlotIds: string[];
+  warnings: string[];
+};
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -595,6 +528,8 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   ]);
 
   const handleDeleteFolder = useCallback(async (folderPath: string) => {
+    if (!projectId) return;
+
     const source = normalizeTreePath(folderPath);
     if (!source) return;
 
@@ -607,60 +542,57 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     setVirtualFolders(nextFolders);
     void persistFolders(nextFolders);
 
-    const slotsToDelete = collectSlotsToDeleteForFolder(slots, source);
-    let deleteFailureMessage: string | null = null;
-    if (slotsToDelete.length > 0) {
-      const deletingSlotIds = new Set(slotsToDelete.map((slot: ImageStudioSlotRecord) => slot.id));
-      if (selectedSlotId && deletingSlotIds.has(selectedSlotId)) {
-        setSelectedSlotId(null);
-      }
-      if (workingSlotId && deletingSlotIds.has(workingSlotId)) {
-        setWorkingSlotId(null);
-      }
-
-      queryClient.setQueryData<StudioSlotsResponse>(slotsQueryKey, (current) => {
-        if (!current) return current;
-        return {
-          ...current,
-          slots: current.slots.filter((slot: ImageStudioSlotRecord) => !deletingSlotIds.has(slot.id)),
-        };
-      });
-
-      const failedDeleteIds: string[] = [];
-      for (const slot of slotsToDelete) {
-        try {
-          await deleteSlotMutation.mutateAsync(slot.id);
-        } catch {
-          failedDeleteIds.push(slot.id);
-        }
-      }
-
-      if (failedDeleteIds.length > 0) {
-        const noun = failedDeleteIds.length === 1 ? 'card' : 'cards';
-        deleteFailureMessage = `Failed to delete ${failedDeleteIds.length} ${noun} in folder "${source}".`;
-      }
-    }
-
     const normalizedSelectedFolder = normalizeTreePath(selectedFolder);
-    if (!deleteFailureMessage && normalizedSelectedFolder && isWithinSource(normalizedSelectedFolder)) {
+    if (normalizedSelectedFolder && isWithinSource(normalizedSelectedFolder)) {
       setSelectedFolderRaw('');
     }
 
-    void invalidateImageStudioSlots(queryClient, projectId);
-    if (deleteFailureMessage) {
-      throw new Error(deleteFailureMessage);
+    try {
+      const response = await api.delete<DeleteFolderResponse>(
+        `/api/image-studio/projects/${encodeURIComponent(projectId)}/folders`,
+        {
+          params: { folder: source },
+          timeout: 120_000,
+        }
+      );
+
+      const deletedSlotIds = new Set(
+        (response.deletedSlotIds ?? []).filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      );
+      if (deletedSlotIds.size > 0) {
+        queryClient.setQueryData<StudioSlotsResponse>(slotsQueryKey, (current) => {
+          if (!current) return current;
+          return {
+            ...current,
+            slots: current.slots.filter((slot: ImageStudioSlotRecord) => !deletedSlotIds.has(slot.id)),
+          };
+        });
+
+        if (selectedSlotId && deletedSlotIds.has(selectedSlotId)) {
+          setSelectedSlotId(null);
+        }
+        if (workingSlotId && deletedSlotIds.has(workingSlotId)) {
+          setWorkingSlotId(null);
+        }
+      }
+
+      if ((response.failedRootSlotIds ?? []).length > 0) {
+        const failedCount = response.failedRootSlotIds.length;
+        const noun = failedCount === 1 ? 'card' : 'cards';
+        throw new Error(`Failed to delete ${failedCount} ${noun} in folder "${source}".`);
+      }
+    } finally {
+      void invalidateImageStudioSlots(queryClient, projectId);
     }
   }, [
+    projectId,
     virtualFolders,
     persistFolders,
-    slots,
     selectedSlotId,
     workingSlotId,
     selectedFolder,
-    deleteSlotMutation,
     queryClient,
     slotsQueryKey,
-    projectId,
   ]);
 
   const createFolderMutation = createCreateMutationV2<string, string>({

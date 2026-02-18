@@ -14,7 +14,12 @@ import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptState } from '../context/PromptContext';
 import { useSettingsState } from '../context/SettingsContext';
 import { useSlotsState } from '../context/SlotsContext';
-import { IMAGE_STUDIO_CROP_DOC_KEYS, IMAGE_STUDIO_DOCS } from '../utils/studio-docs';
+import {
+  IMAGE_STUDIO_CROP_DOC_KEYS,
+  IMAGE_STUDIO_DOCS,
+  IMAGE_STUDIO_SEQUENCE_DOC_KEYS,
+  IMAGE_STUDIO_VERSION_GRAPH_DOC_KEYS,
+} from '../utils/studio-docs';
 import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '../utils/studio-settings';
 import { IMAGE_STUDIO_TREE_KEY_PREFIX, parseImageStudioFolderTree } from '../utils/studio-tree';
 import {
@@ -166,7 +171,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
         previewMode,
         compositeAssetCount: compositeAssets.length,
         activeImageSource:
-          workingSlot?.imageFile?.filepath ??
+          workingSlot?.imageFile?.url ??
           workingSlot?.imageUrl ??
           (workingSlot?.imageBase64 ? 'inline-base64' : null),
         uiState: {
@@ -255,7 +260,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
       visibleMaskShapeCount,
       workingSlot?.id,
       workingSlot?.imageBase64,
-      workingSlot?.imageFile?.filepath,
+      workingSlot?.imageFile?.url,
       workingSlot?.imageUrl,
       workingSlot?.name,
     ]
@@ -398,6 +403,18 @@ export function ImageStudioDocsContent(): React.JSX.Element {
         label: 'Crop button tooltips',
         description: 'Enables crop-control tooltips in Studio UI, sourced from Image Studio Docs.',
         value: metricValue(studioSettings.helpTooltips.cropButtonsEnabled),
+      },
+      {
+        path: 'helpTooltips.sequencerFieldsEnabled',
+        label: 'Sequencer field tooltips',
+        description: 'Enables sequencer field tooltips in Studio UI, sourced from Image Studio Docs.',
+        value: metricValue(studioSettings.helpTooltips.sequencerFieldsEnabled),
+      },
+      {
+        path: 'helpTooltips.versionGraphButtonsEnabled',
+        label: 'Version graph button tooltips',
+        description: 'Enables Version Graph button tooltips in Studio UI, sourced from Image Studio Docs.',
+        value: metricValue(studioSettings.helpTooltips.versionGraphButtonsEnabled),
       },
       {
         path: 'targetAi.provider',
@@ -594,11 +611,23 @@ export function ImageStudioDocsContent(): React.JSX.Element {
     .filter((entry) =>
       includeByQuery(['crop', 'tooltips', entry.title, entry.description, entry.key])
     );
+  const filteredSequenceFieldDocs = IMAGE_STUDIO_SEQUENCE_DOC_KEYS
+    .map((key) => IMAGE_STUDIO_DOCS[key])
+    .filter((entry) =>
+      includeByQuery(['sequencer', 'sequence', 'field', 'numeric', 'tooltips', entry.title, entry.description, entry.key])
+    );
+  const filteredVersionGraphDocs = IMAGE_STUDIO_VERSION_GRAPH_DOC_KEYS
+    .map((key) => IMAGE_STUDIO_DOCS[key])
+    .filter((entry) =>
+      includeByQuery(['version graph', 'graph', 'toolbar', 'filter', 'inspector', 'compare', 'context menu', 'tooltips', entry.title, entry.description, entry.key])
+    );
 
   const noResults =
     query.length > 0 &&
     filteredSettingsRows.length === 0 &&
     filteredCropControlDocs.length === 0 &&
+    filteredSequenceFieldDocs.length === 0 &&
+    filteredVersionGraphDocs.length === 0 &&
     !includeByQuery(['Image Studio Docs', 'runtime', 'snapshot', 'settings']);
 
   return (
@@ -675,6 +704,36 @@ export function ImageStudioDocsContent(): React.JSX.Element {
         </div>
       ) : null}
 
+      {filteredSequenceFieldDocs.length > 0 ? (
+        <div className='space-y-3 rounded-lg border border-border/60 bg-card/40 p-5'>
+          <h3 className='text-base font-semibold text-white'>Sequencer Field Reference</h3>
+          <div className='grid gap-2'>
+            {filteredSequenceFieldDocs.map((entry) => (
+              <div key={entry.key} className='rounded-md border border-border/60 bg-card/40 px-3 py-2'>
+                <div className='text-[11px] uppercase tracking-wide text-gray-500'>sequence.{entry.key}</div>
+                <div className='mt-1 text-sm text-gray-100'>{entry.title}</div>
+                <div className='mt-1 text-xs text-gray-400'>{entry.description}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {filteredVersionGraphDocs.length > 0 ? (
+        <div className='space-y-3 rounded-lg border border-border/60 bg-card/40 p-5'>
+          <h3 className='text-base font-semibold text-white'>Version Graph Controls Reference</h3>
+          <div className='grid gap-2'>
+            {filteredVersionGraphDocs.map((entry) => (
+              <div key={entry.key} className='rounded-md border border-border/60 bg-card/40 px-3 py-2'>
+                <div className='text-[11px] uppercase tracking-wide text-gray-500'>{entry.key}</div>
+                <div className='mt-1 text-sm text-gray-100'>{entry.title}</div>
+                <div className='mt-1 text-xs text-gray-400'>{entry.description}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {includeByQuery(['runtime snapshot', 'json', 'state']) ? (
         <div className='space-y-2 rounded-lg border border-border/60 bg-card/40 p-5'>
           <div className='flex items-center justify-between gap-2'>
@@ -717,6 +776,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
           <ul className='mt-2 list-disc space-y-1 pl-5 text-sm'>
             <li>Live runtime state for projects, slots, prompt, masks, and generation.</li>
             <li>All Image Studio settings from <code>image_studio_settings</code>.</li>
+            <li>Crop, sequencer, and version graph tooltip copy sourced from the Image Studio docs index.</li>
             <li>API key status, UI preset state, prompt validation rule summary, and folder-tree persistence.</li>
             <li>Raw JSON snapshots so you can audit exactly what the application is currently using.</li>
           </ul>

@@ -49,7 +49,7 @@ export function getImageStudioSlotImageSrc(
   const inlineBase64 = resolveWithExternalBase(slot.imageBase64, externalBaseUrl);
   if (inlineBase64) return inlineBase64;
 
-  const filePath = resolveWithExternalBase(slot.imageFile?.filepath ?? null, externalBaseUrl);
+  const filePath = resolveWithExternalBase(slot.imageFile?.url ?? null, externalBaseUrl);
   if (filePath) return filePath;
 
   return resolveWithExternalBase(slot.imageUrl, externalBaseUrl);

@@ -36,20 +36,24 @@ export const agentLogSchema = dtoBaseSchema.extend({
 
 export type AgentLogDto = z.infer<typeof agentLogSchema>;
 
-export const agentRunSchema = dtoBaseSchema.extend({
-  agentId: z.string(),
-  status: z.string(), // Generic status
-  input: z.record(z.string(), z.unknown()),
-  output: z.record(z.string(), z.unknown()).nullable(),
-  logs: z.array(agentLogSchema),
-  error: z.string().nullable(),
-  completedAt: z.string().nullable(),
+export const agentPersonaSettingsSchema = z.object({
+  executorModel: z.string().nullable(),
+  plannerModel: z.string().nullable(),
+  selfCheckModel: z.string().nullable(),
+  extractionValidationModel: z.string().nullable(),
+  toolRouterModel: z.string().nullable(),
+  memoryValidationModel: z.string().nullable(),
+  memorySummarizationModel: z.string().nullable(),
+  loopGuardModel: z.string().nullable(),
+  approvalGateModel: z.string().nullable(),
+  selectorInferenceModel: z.string().nullable(),
+  outputNormalizationModel: z.string().nullable(),
 });
 
-export type AgentRunDto = z.infer<typeof agentRunSchema>;
+export type AgentPersonaSettingsDto = z.infer<typeof agentPersonaSettingsSchema>;
 
 export const agentPersonaSchema = namedDtoSchema.extend({
-  settings: z.record(z.string(), z.unknown()),
+  settings: agentPersonaSettingsSchema,
 });
 
 export type AgentPersonaDto = z.infer<typeof agentPersonaSchema>;

@@ -11,7 +11,8 @@ import {
   FormSection,
   StatusBadge,
   SimpleSettingsList,
-  Badge
+  Badge,
+  Hint
 } from '@/shared/ui';
 
 export function InternationalizationSettings(): React.JSX.Element {
@@ -182,7 +183,7 @@ export function InternationalizationSettings(): React.JSX.Element {
                   </Badge>
                 ))
               ) : (
-                <span className='text-[10px] text-gray-500 italic'>No countries</span>
+                <Hint size='xxs' italic>No countries</Hint>
               )}
             </div>
           )}

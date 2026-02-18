@@ -5,7 +5,7 @@ import {
   type CaseResolverCaptureAction,
 } from '@/features/case-resolver-capture/settings';
 import { encodeFilemakerPartyReference } from '@/features/filemaker/settings';
-import { AppModal, Badge, Button, Label, SelectSimple } from '@/shared/ui';
+import { AppModal, Badge, Button, FormField, SelectSimple } from '@/shared/ui';
 
 type PromptExploderCaptureMappingModalProps = {
   open: boolean;
@@ -152,8 +152,7 @@ export function PromptExploderCaptureMappingModal({
                 </div>
 
                 <div className='grid gap-3 md:grid-cols-2'>
-                  <div className='space-y-2'>
-                    <Label className='text-xs text-gray-400'>Action</Label>
+                  <FormField label='Action'>
                     <SelectSimple
                       size='sm'
                       value={selectedAction}
@@ -170,11 +169,10 @@ export function PromptExploderCaptureMappingModal({
                       options={actionOptions}
                       triggerClassName='h-9'
                     />
-                  </div>
+                  </FormField>
 
                   {shouldShowMatchedPartySelector ? (
-                    <div className='space-y-2'>
-                      <Label className='text-xs text-gray-400'>Database Party</Label>
+                    <FormField label='Database Party'>
                       <SelectSimple
                         size='sm'
                         value={encodeFilemakerPartyReference(proposal.existingReference)}
@@ -184,14 +182,13 @@ export function PromptExploderCaptureMappingModal({
                         options={partyOptions}
                         triggerClassName='h-9'
                       />
-                    </div>
+                    </FormField>
                   ) : (
-                    <div className='space-y-2'>
-                      <Label className='text-xs text-gray-400'>Matched Party</Label>
+                    <FormField label='Matched Party'>
                       <div className='h-9 rounded border border-border/60 bg-card/30 px-3 py-2 text-xs text-gray-300'>
                         {matchedPartyLabel}
                       </div>
-                    </div>
+                    </FormField>
                   )}
                 </div>
 

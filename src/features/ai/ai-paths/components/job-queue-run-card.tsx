@@ -9,10 +9,11 @@ import type {
 import {
   Alert,
   Button,
-  Label,
   SelectSimple,
   StatusBadge,
   Textarea,
+  FormField,
+  CollapsibleSection,
 } from '@/shared/ui';
 
 import {
@@ -276,27 +277,29 @@ export function JobQueueRunCard({
                 </div>
               </div>
 
-              <details className='rounded-md border border-border/70 bg-black/20 p-3'>
-                <summary className='cursor-pointer text-[11px] uppercase text-gray-400'>
-                  Run history
-                </summary>
+              <CollapsibleSection
+                title={<span className='text-[11px] uppercase text-gray-400'>Run history</span>}
+                variant='subtle'
+                className='border-border/70 bg-black/20'
+              >
                 {historyOptions.length > 1 ? (
-                  <div className='mt-3 flex flex-wrap items-center gap-2'>
-                    <Label className='text-[10px] uppercase text-gray-500'>Node</Label>
-                    <SelectSimple
-                      size='sm'
-                      value={selectedHistoryNodeId || ''}
-                      onValueChange={onSelectHistoryNode}
-                      options={historyOptions.map((option: HistoryOption) => ({
-                        value: option.id,
-                        label: option.label,
-                      }))}
-                      placeholder='Select node'
-                      triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
-                    />
+                  <div className='mt-1 flex flex-wrap items-center gap-2'>
+                    <FormField label='Node' className='flex-1'>
+                      <SelectSimple
+                        size='sm'
+                        value={selectedHistoryNodeId || ''}
+                        onValueChange={onSelectHistoryNode}
+                        options={historyOptions.map((option: HistoryOption) => ({
+                          value: option.id,
+                          label: option.label,
+                        }))}
+                        placeholder='Select node'
+                        triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
+                      />
+                    </FormField>
                   </div>
                 ) : (
-                  <div className='mt-2 text-[11px] text-gray-500'>
+                  <div className='mt-1 text-[11px] text-gray-500'>
                     {historyOptions[0]?.label ?? 'No history nodes'}
                   </div>
                 )}
@@ -307,29 +310,33 @@ export function JobQueueRunCard({
                     showNodeLabel
                   />
                 </div>
-              </details>
+              </CollapsibleSection>
 
-              <details className='rounded-md border border-border/70 bg-black/20 p-3'>
-                <summary className='cursor-pointer text-[11px] uppercase text-gray-400'>
-                  Nodes ({nodes.length})
-                </summary>
+              <CollapsibleSection
+                title={<span className='text-[11px] uppercase text-gray-400'>Nodes ({nodes.length})</span>}
+                variant='subtle'
+                className='border-border/70 bg-black/20'
+              >
                 {nodes.length === 0 ? (
-                  <div className='mt-2 text-[11px] text-gray-500'>
+                  <div className='mt-1 text-[11px] text-gray-500'>
                     No nodes recorded for this run.
                   </div>
                 ) : (
-                  <div className='mt-3 space-y-2'>
+                  <div className='mt-1 space-y-2'>
                     {nodes.map((node: AiPathRunNodeRecord) => (
-                      <details
+                      <CollapsibleSection
                         key={node.id}
-                        className='rounded-md border border-border/60 bg-black/30 p-3'
+                        title={(
+                          <span className='text-[11px] text-gray-300'>
+                            {node.nodeTitle ?? node.nodeId}{' '}
+                            {node.nodeType ? `(${node.nodeType})` : ''}
+                            <span className='ml-2 text-gray-500'>{node.status}</span>
+                          </span>
+                        )}
+                        className='border-border/60 bg-black/30'
+                        variant='subtle'
                       >
-                        <summary className='cursor-pointer text-[11px] text-gray-300'>
-                          {node.nodeTitle ?? node.nodeId}{' '}
-                          {node.nodeType ? `(${node.nodeType})` : ''}
-                          <span className='ml-2 text-gray-500'>{node.status}</span>
-                        </summary>
-                        <div className='mt-2 grid gap-2 text-[11px] text-gray-400 sm:grid-cols-2 lg:grid-cols-3'>
+                        <div className='mt-1 grid gap-2 text-[11px] text-gray-400 sm:grid-cols-2 lg:grid-cols-3'>
                           <div>
                             <span className='uppercase text-gray-500'>Started</span>
                             <div className='text-white'>{formatDate(node.startedAt)}</div>
@@ -349,41 +356,36 @@ export function JobQueueRunCard({
                           </div>
                         ) : null}
                         <div className='mt-3 grid gap-3 lg:grid-cols-2'>
-                          <div>
-                            <Label className='text-[10px] uppercase text-gray-500'>
-                              Inputs
-                            </Label>
+                          <FormField label='Inputs'>
                             <Textarea
-                              className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
+                              className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                               readOnly
                               value={safePrettyJson(node.inputs)}
                             />
-                          </div>
-                          <div>
-                            <Label className='text-[10px] uppercase text-gray-500'>
-                              Outputs
-                            </Label>
+                          </FormField>
+                          <FormField label='Outputs'>
                             <Textarea
-                              className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
+                              className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                               readOnly
                               value={safePrettyJson(node.outputs)}
                             />
-                          </div>
+                          </FormField>
                         </div>
-                      </details>
+                      </CollapsibleSection>
                     ))}
                   </div>
                 )}
-              </details>
+              </CollapsibleSection>
 
-              <details className='rounded-md border border-border/70 bg-black/20 p-3'>
-                <summary className='cursor-pointer text-[11px] uppercase text-gray-400'>
-                  Events ({events.length})
-                </summary>
+              <CollapsibleSection
+                title={<span className='text-[11px] uppercase text-gray-400'>Events ({events.length})</span>}
+                variant='subtle'
+                className='border-border/70 bg-black/20'
+              >
                 {events.length === 0 ? (
-                  <div className='mt-2 text-[11px] text-gray-500'>No events.</div>
+                  <div className='mt-1 text-[11px] text-gray-500'>No events.</div>
                 ) : (
-                  <div className='mt-3 divide-y divide-border/70'>
+                  <div className='mt-1 divide-y divide-border/70'>
                     {events.map((event: AiPathRunEventRecord) => (
                       <div key={event.id} className='py-2'>
                         <div className='flex flex-wrap items-center gap-2 text-[11px] text-gray-400'>
@@ -402,82 +404,81 @@ export function JobQueueRunCard({
                     ))}
                   </div>
                 )}
-              </details>
+              </CollapsibleSection>
 
-              <details className='rounded-md border border-border/70 bg-black/20 p-3'>
-                <summary className='cursor-pointer text-[11px] uppercase text-gray-400'>
-                  Runtime state
-                </summary>
-                <div className='mt-3 grid gap-3 lg:grid-cols-2'>
-                  <div>
-                    <Label className='text-[10px] uppercase text-gray-500'>Inputs</Label>
+              <CollapsibleSection
+                title={<span className='text-[11px] uppercase text-gray-400'>Runtime state</span>}
+                variant='subtle'
+                className='border-border/70 bg-black/20'
+              >
+                <div className='mt-1 grid gap-3 lg:grid-cols-2'>
+                  <FormField label='Inputs'>
                     <Textarea
-                      className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
+                      className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                       readOnly
                       value={safePrettyJson(detailRun.runtimeState?.inputs)}
                     />
-                  </div>
-                  <div>
-                    <Label className='text-[10px] uppercase text-gray-500'>Outputs</Label>
+                  </FormField>
+                  <FormField label='Outputs'>
                     <Textarea
-                      className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
+                      className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                       readOnly
                       value={safePrettyJson(detailRun.runtimeState?.outputs)}
                     />
-                  </div>
+                  </FormField>
                 </div>
                 <div className='mt-3'>
-                  <Label className='text-[10px] uppercase text-gray-500'>Hashes</Label>
-                  <Textarea
-                    className='mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                    readOnly
-                    value={safePrettyJson(detailRun.runtimeState?.hashes)}
-                  />
+                  <FormField label='Hashes'>
+                    <Textarea
+                      className='mt-1 min-h-[80px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
+                      readOnly
+                      value={safePrettyJson(detailRun.runtimeState?.hashes)}
+                    />
+                  </FormField>
                 </div>
-              </details>
+              </CollapsibleSection>
 
-              <details className='rounded-md border border-border/70 bg-black/20 p-3'>
-                <summary className='cursor-pointer text-[11px] uppercase text-gray-400'>
-                  Graph snapshot
-                </summary>
+              <CollapsibleSection
+                title={<span className='text-[11px] uppercase text-gray-400'>Graph snapshot</span>}
+                variant='subtle'
+                className='border-border/70 bg-black/20'
+              >
                 <Textarea
-                  className='mt-2 min-h-[160px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
+                  className='mt-1 min-h-[160px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                   readOnly
                   value={safePrettyJson(detailRun.graph)}
                 />
-              </details>
+              </CollapsibleSection>
 
-              <details className='rounded-md border border-border/70 bg-black/20 p-3'>
-                <summary className='cursor-pointer text-[11px] uppercase text-gray-400'>
-                  Raw payloads
-                </summary>
-                <div className='mt-3 space-y-3'>
-                  <div>
-                    <Label className='text-[10px] uppercase text-gray-500'>Run</Label>
+              <CollapsibleSection
+                title={<span className='text-[11px] uppercase text-gray-400'>Raw payloads</span>}
+                variant='subtle'
+                className='border-border/70 bg-black/20'
+              >
+                <div className='mt-1 space-y-3'>
+                  <FormField label='Run'>
                     <Textarea
-                      className='mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
+                      className='mt-1 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                       readOnly
                       value={safePrettyJson(detailRun)}
                     />
-                  </div>
-                  <div>
-                    <Label className='text-[10px] uppercase text-gray-500'>Nodes</Label>
+                  </FormField>
+                  <FormField label='Nodes'>
                     <Textarea
-                      className='mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
+                      className='mt-1 min-h-[140px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                       readOnly
                       value={safePrettyJson(nodes)}
                     />
-                  </div>
-                  <div>
-                    <Label className='text-[10px] uppercase text-gray-500'>Events</Label>
+                  </FormField>
+                  <FormField label='Events'>
                     <Textarea
-                      className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
+                      className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                       readOnly
                       value={safePrettyJson(events)}
                     />
-                  </div>
+                  </FormField>
                 </div>
-              </details>
+              </CollapsibleSection>
             </>
           ) : null}
         </div>

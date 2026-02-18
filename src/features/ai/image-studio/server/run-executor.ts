@@ -49,7 +49,7 @@ const OPENAI_MAX_RETRIES = Math.min(
   parsePositiveInteger(process.env['IMAGE_STUDIO_OPENAI_MAX_RETRIES'], DEFAULT_OPENAI_MAX_RETRIES)
 );
 const IMAGE_STUDIO_ENABLE_OUTPUT_FORMAT = process.env['IMAGE_STUDIO_ENABLE_OUTPUT_FORMAT'] === 'true';
-const DALLE2_PROMPT_MAX_CHARS = 1000;
+const DALLE_PROMPT_MAX_CHARS = 1000;
 const UNKNOWN_PARAMETER_REGEX = /Unknown parameter:\s*['"]([^'"]+)['"]/i;
 const MODEL_MUST_BE_DALLE2_REGEX = /Value must be ['"]dall-e-2['"]/i;
 const MAX_UNKNOWN_PARAMETER_RETRIES = 6;
@@ -268,9 +268,14 @@ const toDalle2SizeLabel = (size: 256 | 512 | 1024): '256x256' | '512x512' | '102
   return '1024x1024';
 };
 
-const clampPromptForDalle2 = (prompt: string): string => {
-  if (prompt.length <= DALLE2_PROMPT_MAX_CHARS) return prompt;
-  return `${prompt.slice(0, DALLE2_PROMPT_MAX_CHARS - 3)}...`;
+const countPromptCharacters = (prompt: string): number => Array.from(prompt).length;
+
+const assertDallePromptWithinLimit = (prompt: string, modelId: string): void => {
+  const promptLength = countPromptCharacters(prompt);
+  if (promptLength <= DALLE_PROMPT_MAX_CHARS) return;
+  throw badRequestError(
+    `Invalid 'prompt': string too long for ${modelId}. Maximum ${DALLE_PROMPT_MAX_CHARS}, got ${promptLength}.`
+  );
 };
 
 function parseDataUrl(dataUrl: string): { buffer: Buffer; mime: string } | null {
@@ -634,6 +639,9 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
   }
   const modelName = (resolvedModel ?? '').toLowerCase();
   const modelCapabilities = getImageModelCapabilities(resolvedModel);
+  if (modelCapabilities.family === 'dall-e') {
+    assertDallePromptWithinLimit(request.prompt, resolvedModel);
+  }
   if (hasSourceAsset && modelName.includes('dall-e-2') && referencePaths.length > 0) {
     throw badRequestError('Multiple input images are only supported for GPT image models.');
   }
@@ -674,13 +682,13 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
     const imagePayload = imageFiles.length === 1 ? imageFiles[0]! : imageFiles;
     payload = {
       model: resolvedModel,
-      prompt: modelName.includes('dall-e-2') ? clampPromptForDalle2(request.prompt) : request.prompt,
+      prompt: request.prompt,
       image: imagePayload as unknown as OpenAI.Images.ImageEditParamsNonStreaming['image'],
     };
   } else {
     payload = {
       model: resolvedModel,
-      prompt: modelName.includes('dall-e-2') ? clampPromptForDalle2(request.prompt) : request.prompt,
+      prompt: request.prompt,
     };
   }
 
@@ -801,8 +809,10 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
         activeModel !== 'dall-e-2' &&
         MODEL_MUST_BE_DALLE2_REGEX.test(message)
       ) {
+        const fallbackPrompt = String(payloadRecord['prompt'] ?? request.prompt);
+        assertDallePromptWithinLimit(fallbackPrompt, 'dall-e-2');
         payloadRecord['model'] = 'dall-e-2';
-        payloadRecord['prompt'] = clampPromptForDalle2(String(payloadRecord['prompt'] ?? request.prompt));
+        payloadRecord['prompt'] = fallbackPrompt;
         if (requestMode === 'edit' && diskPath) {
           const fallbackImage = await toDalle2UploadableImageFile(diskPath);
           payloadRecord['image'] = fallbackImage.file;

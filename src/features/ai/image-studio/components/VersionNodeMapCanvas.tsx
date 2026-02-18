@@ -4,7 +4,9 @@ import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } 
 
 import { CompositeStackNode } from './CompositeStackNode';
 import { useVersionNodeMapContext } from './VersionNodeMapContext';
+import { useSettingsState } from '../context/SettingsContext';
 import { readMeta } from '../utils/metadata';
+import { getImageStudioDocTooltip } from '../utils/studio-docs';
 import { CONTENT_OFFSET_X, CONTENT_OFFSET_Y, NODE_HEIGHT, NODE_WIDTH, getCompositeNodeHeight } from '../utils/version-graph';
 
 import type { VersionNode } from '../context/VersionGraphContext';
@@ -167,6 +169,7 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
     _props,
     ref,
   ) {
+    const { studioSettings } = useSettingsState();
     const {
       nodes,
       edges,
@@ -194,6 +197,14 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
       zoom,
       onZoomChange,
     } = useVersionNodeMapContext();
+    const versionGraphTooltipsEnabled = studioSettings.helpTooltips.versionGraphButtonsEnabled;
+    const tooltipContent = React.useMemo(
+      () => ({
+        nodeToggleCollapse: getImageStudioDocTooltip('version_graph_node_toggle_collapse'),
+        nodeOpenDetails: getImageStudioDocTooltip('version_graph_node_open_details'),
+      }),
+      []
+    );
 
     const svgRef = useRef<SVGSVGElement>(null);
     const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -702,6 +713,7 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                           }}
                           className='cursor-pointer'
                         >
+                          {versionGraphTooltipsEnabled ? <title>{tooltipContent.nodeToggleCollapse}</title> : null}
                           <rect
                             x={NODE_WIDTH / 2 - 10}
                             y={NODE_HEIGHT - 4}
@@ -731,13 +743,14 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                     <g
                       className='cursor-pointer'
                       role='button'
-                      aria-label='Open node details'
+                      aria-label={versionGraphTooltipsEnabled ? tooltipContent.nodeOpenDetails : 'Open node details'}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         onOpenNodeDetails(node.id);
                       }}
                     >
+                      {versionGraphTooltipsEnabled ? <title>{tooltipContent.nodeOpenDetails}</title> : null}
                       <circle
                         cx={NODE_WIDTH - 8}
                         cy={4}

@@ -5,7 +5,7 @@ import {
   DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
   DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
 } from '@/features/ai/insights/settings';
-import { Checkbox, Input, Switch, Textarea, FormSection, FormField, SimpleSettingsList } from '@/shared/ui';
+import { Checkbox, Input, Textarea, FormSection, FormField, SimpleSettingsList, ToggleRow, CollapsibleSection } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 import { type AiBrainFeature, type AiBrainAssignment } from '../settings';
@@ -73,14 +73,15 @@ export function ReportsTab(): React.JSX.Element {
     <div className='space-y-4'>
       <FormSection title='Schedules' className='p-4'>
         <div className='mt-3 grid gap-4 md:grid-cols-3'>
-          <FormSection variant='subtle-compact' className='p-3 space-y-3'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <div className='text-xs text-gray-200'>Analytics insights schedule</div>
-                <div className='text-[11px] text-gray-500'>How often analytics reports run.</div>
-              </div>
-              <Switch checked={analyticsScheduleEnabled} onCheckedChange={setAnalyticsScheduleEnabled} />
-            </div>
+          <div className='space-y-3'>
+            <ToggleRow
+              type='switch'
+              label='Analytics insights schedule'
+              description='How often analytics reports run.'
+              checked={analyticsScheduleEnabled}
+              onCheckedChange={setAnalyticsScheduleEnabled}
+              className='border-none p-0 bg-transparent hover:bg-transparent'
+            />
             <FormField label='Minutes'>
               <Input
                 type='number'
@@ -89,16 +90,17 @@ export function ReportsTab(): React.JSX.Element {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAnalyticsScheduleMinutes(Number(e.target.value))}
               />
             </FormField>
-          </FormSection>
+          </div>
 
-          <FormSection variant='subtle-compact' className='p-3 space-y-3'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <div className='text-xs text-gray-200'>Runtime analytics schedule</div>
-                <div className='text-[11px] text-gray-500'>How often runtime AI reports run.</div>
-              </div>
-              <Switch checked={runtimeAnalyticsScheduleEnabled} onCheckedChange={setRuntimeAnalyticsScheduleEnabled} />
-            </div>
+          <div className='space-y-3'>
+            <ToggleRow
+              type='switch'
+              label='Runtime analytics schedule'
+              description='How often runtime AI reports run.'
+              checked={runtimeAnalyticsScheduleEnabled}
+              onCheckedChange={setRuntimeAnalyticsScheduleEnabled}
+              className='border-none p-0 bg-transparent hover:bg-transparent'
+            />
             <FormField label='Minutes'>
               <Input
                 type='number'
@@ -107,16 +109,17 @@ export function ReportsTab(): React.JSX.Element {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRuntimeAnalyticsScheduleMinutes(Number(e.target.value))}
               />
             </FormField>
-          </FormSection>
+          </div>
 
-          <FormSection variant='subtle-compact' className='p-3 space-y-3'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <div className='text-xs text-gray-200'>System log insights schedule</div>
-                <div className='text-[11px] text-gray-500'>How often log reports run.</div>
-              </div>
-              <Switch checked={logsScheduleEnabled} onCheckedChange={setLogsScheduleEnabled} />
-            </div>
+          <div className='space-y-3'>
+            <ToggleRow
+              type='switch'
+              label='System log insights schedule'
+              description='How often log reports run.'
+              checked={logsScheduleEnabled}
+              onCheckedChange={setLogsScheduleEnabled}
+              className='border-none p-0 bg-transparent hover:bg-transparent'
+            />
             <FormField label='Minutes'>
               <Input
                 type='number'
@@ -125,11 +128,14 @@ export function ReportsTab(): React.JSX.Element {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLogsScheduleMinutes(Number(e.target.value))}
               />
             </FormField>
-            <label className='flex items-center justify-between gap-2 text-xs text-gray-300'>
-              Auto-run on new errors
-              <Switch checked={logsAutoOnError} onCheckedChange={setLogsAutoOnError} />
-            </label>
-          </FormSection>
+            <ToggleRow
+              type='switch'
+              label='Auto-run on new errors'
+              checked={logsAutoOnError}
+              onCheckedChange={setLogsAutoOnError}
+              className='border-none p-0 bg-transparent hover:bg-transparent'
+            />
+          </div>
         </div>
       </FormSection>
 
@@ -164,8 +170,11 @@ export function ReportsTab(): React.JSX.Element {
       </FormSection>
 
       <FormSection title='Default prompts' variant='subtle' className='p-4'>
-        <details className='mt-2'>
-          <summary className='cursor-pointer text-xs text-gray-400'>Show defaults</summary>
+        <CollapsibleSection
+          title={<span className='text-xs text-gray-400'>Show default prompt templates</span>}
+          className='mt-2'
+          variant='subtle'
+        >
           <div className='mt-3 grid gap-3 md:grid-cols-3'>
             <pre className='whitespace-pre-wrap rounded-md border border-border/60 bg-gray-950/50 p-3 text-[11px] text-gray-300'>
               {DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT}
@@ -177,7 +186,7 @@ export function ReportsTab(): React.JSX.Element {
               {DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT}
             </pre>
           </div>
-        </details>
+        </CollapsibleSection>
       </FormSection>
 
       <div className='space-y-4'>

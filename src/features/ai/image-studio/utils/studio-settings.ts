@@ -84,6 +84,8 @@ export type ImageStudioSettings = {
   };
   helpTooltips: {
     cropButtonsEnabled: boolean;
+    sequencerFieldsEnabled: boolean;
+    versionGraphButtonsEnabled: boolean;
   };
   targetAi: {
     provider: 'openai';
@@ -178,6 +180,8 @@ export const defaultImageStudioSettings: ImageStudioSettings = {
   },
   helpTooltips: {
     cropButtonsEnabled: true,
+    sequencerFieldsEnabled: true,
+    versionGraphButtonsEnabled: true,
   },
   targetAi: {
     provider: 'openai',
@@ -438,6 +442,14 @@ const imageStudioSettingsSchema = z
           .boolean()
           .optional()
           .default(defaultImageStudioSettings.helpTooltips.cropButtonsEnabled),
+        sequencerFieldsEnabled: z
+          .boolean()
+          .optional()
+          .default(defaultImageStudioSettings.helpTooltips.sequencerFieldsEnabled),
+        versionGraphButtonsEnabled: z
+          .boolean()
+          .optional()
+          .default(defaultImageStudioSettings.helpTooltips.versionGraphButtonsEnabled),
       })
       .optional()
       .default(defaultImageStudioSettings.helpTooltips),

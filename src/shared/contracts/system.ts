@@ -73,3 +73,15 @@ export const createActivityLogSchema = z.object({
 });
 
 export type CreateActivityLogDto = z.infer<typeof createActivityLogSchema>;
+
+export const activityFiltersSchema = z.object({
+  userId: z.string().optional(),
+  type: z.string().optional(),
+  entityId: z.string().optional(),
+  entityType: z.string().optional(),
+  search: z.string().optional(),
+  limit: z.number().optional(),
+  offset: z.number().optional(),
+});
+
+export type ActivityFiltersDto = z.infer<typeof activityFiltersSchema>;

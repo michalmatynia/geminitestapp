@@ -6,16 +6,9 @@ import { useChatbotMemory } from '../hooks/useChatbotMemoryQueries';
 
 import type { ChatbotMemoryItem } from '../types';
 
-export interface ExtendedMemoryItem extends ChatbotMemoryItem {
-  memoryKey?: string;
-  summary?: string;
-  content?: string;
-  tags?: string[];
-  importance?: number;
-  runId?: string;
-  lastAccessedAt?: string;
-  metadata?: Record<string, unknown>;
-}
+// ChatbotMemoryItem already includes memoryKey, content, summary, tags, etc.
+// ExtendedMemoryItem just re-uses the base type as-is.
+export type ExtendedMemoryItem = ChatbotMemoryItem;
 
 export interface UseChatbotMemoryStateReturn {
   items: ExtendedMemoryItem[];

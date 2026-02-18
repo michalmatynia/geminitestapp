@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 
 import type { PathMeta } from '@/features/ai/ai-paths/lib';
 import { AI_PATHS_NODE_DOCS } from '@/features/ai/ai-paths/lib/core/docs/node-docs';
-import { Button, SearchInput, DataTable, DocumentationSection } from '@/shared/ui';
+import { Button, SearchInput, DataTable, DocumentationSection, CollapsibleSection } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useGraphState } from '../context';
@@ -597,16 +597,20 @@ export function DocsTabPanel(): React.JSX.Element {
 
           <div className='mt-4 space-y-3'>
             {filteredNodeDocs.map((doc: (typeof AI_PATHS_NODE_DOCS)[number]) => (
-              <details
+              <CollapsibleSection
                 key={doc.type}
-                className='rounded-md border border-border bg-card/50'
+                title={(
+                  <div className='flex flex-1 items-center justify-between gap-4'>
+                    <span className='font-semibold'>{doc.title}</span>
+                    <span className='rounded border border-border/60 bg-card/60 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-300'>
+                      {doc.type}
+                    </span>
+                  </div>
+                )}
+                variant='card'
+                className='bg-card/50'
+                headerClassName='px-4 py-3 text-sm text-white'
               >
-                <summary className='flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 text-sm text-white'>
-                  <span className='font-semibold'>{doc.title}</span>
-                  <span className='rounded border border-border/60 bg-card/60 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-300'>
-                    {doc.type}
-                  </span>
-                </summary>
                 <div className='border-t border-border/60 px-4 py-4'>
                   <p className='text-gray-400'>{doc.purpose}</p>
 
@@ -695,7 +699,7 @@ export function DocsTabPanel(): React.JSX.Element {
                     </div>
                   ) : null}
                 </div>
-              </details>
+              </CollapsibleSection>
             ))}
             {filteredNodeDocs.length === 0 ? (
               <div className='rounded-md border border-border bg-card/50 p-4 text-sm text-gray-400'>

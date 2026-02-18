@@ -12,7 +12,10 @@ import type {
   CmsThemeSpacing,
   CmsBlockInstanceDto,
   CmsSectionInstanceDto,
-  CmsPageSeoDto
+  CmsPageSeoDto,
+  CmsPageStatusDto,
+  CmsPageSlugLinkDto,
+  CmsPageSummaryDto
 } from '../../dtos/cms';
 
 export type {
@@ -29,7 +32,10 @@ export type {
   CmsThemeSpacing,
   CmsBlockInstanceDto,
   CmsSectionInstanceDto,
-  CmsPageSeoDto
+  CmsPageSeoDto,
+  CmsPageStatusDto,
+  CmsPageSlugLinkDto,
+  CmsPageSummaryDto
 };
 
 // ---------------------------------------------------------------------------
@@ -43,7 +49,7 @@ export type CmsThemeUpdateInput = UpdateCmsThemeDto;
 // ---------------------------------------------------------------------------
 // Pages & Core CMS
 // ---------------------------------------------------------------------------
-export type PageStatus = 'draft' | 'published' | 'scheduled';
+export type PageStatus = CmsPageStatusDto;
 
 export interface PageComponent {
   type: string;
@@ -51,21 +57,11 @@ export interface PageComponent {
   content: Record<string, unknown>;
 }
 
-export interface PageSlugLink {
-  slug: {
-    id: string;
-    slug: string;
-  };
-}
+export type PageSlugLink = CmsPageSlugLinkDto;
 
 export type PageSeoData = CmsPageSeoDto;
 
-export interface PageSummary {
-  id: string;
-  name: string;
-  status: PageStatus;
-  slugs: PageSlugLink[];
-}
+export type PageSummary = CmsPageSummaryDto;
 
 export type Page = CmsPageDto;
 

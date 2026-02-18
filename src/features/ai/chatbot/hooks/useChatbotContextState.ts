@@ -178,9 +178,9 @@ export function useChatbotContextState() {
         return;
       }
       const now = new Date().toISOString();
-      const nextItems: ContextItem[] = data.segments.map((segment) => ({
+      const nextItems: ContextItem[] = data.segments.map((segment, idx) => ({
         id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        title: `PDF Content ${segment.id}`,
+        title: segment.title || `PDF Content ${idx + 1}`,
         content: segment.content,
         tags: ['pdf'],
         source: 'pdf',

@@ -32,6 +32,26 @@ const buildWorkspaceFixture = (): CaseResolverWorkspace => {
     name: 'Document B',
     folder: 'new-folder',
     parentCaseId: 'case-b',
+    graph: {
+      nodes: [
+        {
+          id: 'node-b',
+          type: 'prompt',
+          title: 'Node B',
+          description: '',
+          inputs: ['input'],
+          outputs: ['output'],
+          position: { x: 0, y: 0 },
+          config: { prompt: { template: '' } },
+        },
+      ],
+      edges: [],
+      nodeMeta: {},
+      edgeMeta: {},
+      nodeFileAssetIdByNode: {
+        'node-b': 'asset-node-b',
+      },
+    },
   });
 
   return {
@@ -66,6 +86,16 @@ const buildWorkspaceFixture = (): CaseResolverWorkspace => {
         filepath: '/uploads/b.png',
         sourceFileId: 'doc-b',
       }),
+      createCaseResolverAssetFile({
+        id: 'asset-node-b',
+        name: 'Node File B',
+        folder: 'new-folder',
+        kind: 'node_file',
+        filepath: null,
+        sourceFileId: null,
+        textContent: '{}',
+        description: 'Node snapshot',
+      }),
     ],
     relationGraph: createEmptyCaseResolverRelationGraph(),
     activeFileId: 'case-a',
@@ -97,7 +127,7 @@ describe('resolveCaseResolverTreeWorkspace', () => {
     });
 
     expect(scoped.files.map((file) => file.id).sort()).toEqual(['case-b', 'doc-b']);
-    expect(scoped.assets.map((asset) => asset.id)).toEqual(['asset-b']);
+    expect(scoped.assets.map((asset) => asset.id).sort()).toEqual(['asset-b', 'asset-node-b']);
     expect(scoped.folders).toEqual(['new-folder']);
     expect(scoped.activeFileId).toBe('case-b');
   });

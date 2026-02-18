@@ -2,6 +2,43 @@ import { z } from 'zod';
 
 import { dtoBaseSchema } from './base';
 
+export const jobStatusSchema = z.enum([
+  'pending',
+  'running',
+  'completed',
+  'failed',
+  'canceled',
+  'success',
+  'listed',
+  'deleted',
+  'removed',
+  'processing',
+  'in_progress',
+  'queued',
+  'queued_relist',
+  'needs_login',
+  'auth_required',
+  'unknown',
+]);
+
+export type JobStatusDto = z.infer<typeof jobStatusSchema>;
+
+export const jobRowDataSchema = z.object({
+  id: z.string(),
+  type: z.string(),
+  status: jobStatusSchema,
+  entityName: z.string(),
+  entitySubText: z.string().optional(),
+  entityId: z.string().optional(),
+  productId: z.string().optional(),
+  createdAt: z.string(),
+  finishedAt: z.string().nullable().optional(),
+  errorMessage: z.string().nullable().optional(),
+  integrationName: z.string().optional(),
+});
+
+export type JobRowDataDto = z.infer<typeof jobRowDataSchema>;
+
 /**
  * Job DTOs
  */

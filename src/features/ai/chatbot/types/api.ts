@@ -1,25 +1,11 @@
-export type ChatbotSessionListItem = {
-  id: string;
-  title: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
+import type {
+  ChatbotSessionListItemDto,
+  ChatbotMemoryItemDto,
+  ChatbotContextSegmentDto
+} from '@/shared/contracts/chatbot';
 
-export type ChatbotMemoryItem = {
-  id: string;
-  memoryKey: string;
-  runId: string | null;
-  content: string;
-  summary: string | null;
-  tags: string[];
-  metadata: Record<string, unknown> | null;
-  importance: number | null;
-  lastAccessedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
+export type ChatbotSessionListItem = ChatbotSessionListItemDto;
 
-export type ChatbotContextSegment = {
-  title: string;
-  content: string;
-};
+export type ChatbotMemoryItem = ChatbotMemoryItemDto;
+
+export type ChatbotContextSegment = ChatbotContextSegmentDto;

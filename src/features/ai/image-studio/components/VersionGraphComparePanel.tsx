@@ -6,12 +6,24 @@ import React, { useMemo } from 'react';
 import { Button } from '@/shared/ui';
 
 import { useVersionGraphCompareContext } from './VersionGraphCompareContext';
+import { useSettingsState } from '../context/SettingsContext';
+import { getImageStudioDocTooltip } from '../utils/studio-docs';
 import { compareGenerationParams } from '../utils/version-graph-compare';
 
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function VersionGraphComparePanel(): React.JSX.Element {
+  const { studioSettings } = useSettingsState();
   const { compareNodes, getSlotImageSrc, onOpenDetails, onSwap, onExit } = useVersionGraphCompareContext();
+  const versionGraphTooltipsEnabled = studioSettings.helpTooltips.versionGraphButtonsEnabled;
+  const tooltipContent = useMemo(
+    () => ({
+      openDetails: getImageStudioDocTooltip('version_graph_compare_open_details'),
+      swap: getImageStudioDocTooltip('version_graph_compare_swap'),
+      exit: getImageStudioDocTooltip('version_graph_compare_exit'),
+    }),
+    []
+  );
 
   const paramRows = useMemo(
     () => compareGenerationParams(compareNodes[0].slot, compareNodes[1].slot),
@@ -30,7 +42,7 @@ export function VersionGraphComparePanel(): React.JSX.Element {
                 <button
                   type='button'
                   className='inline-flex h-5 w-5 items-center justify-center rounded border border-blue-400/40 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 hover:text-blue-200'
-                  title='Open full node/file details'
+                  title={versionGraphTooltipsEnabled ? tooltipContent.openDetails : undefined}
                   aria-label='Open full node/file details'
                   onClick={() => onOpenDetails(cNode.id)}
                 >
@@ -83,6 +95,7 @@ export function VersionGraphComparePanel(): React.JSX.Element {
         <Button size='xs'
           variant='outline'
           className='flex-1 text-[10px]'
+          title={versionGraphTooltipsEnabled ? tooltipContent.swap : undefined}
           onClick={onSwap}
         >
           Swap
@@ -90,6 +103,7 @@ export function VersionGraphComparePanel(): React.JSX.Element {
         <Button size='xs'
           variant='outline'
           className='flex-1 text-[10px]'
+          title={versionGraphTooltipsEnabled ? tooltipContent.exit : undefined}
           onClick={onExit}
         >
           Exit Compare

@@ -167,11 +167,16 @@ export const aiPathRunSchema = dtoBaseSchema.extend({
 
 export type AiPathRunDto = z.infer<typeof aiPathRunSchema>;
 
-export const createAiPathRunSchema = aiPathRunSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const createAiPathRunSchema = aiPathRunSchema
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+    status: true,
+  })
+  .extend({
+    status: aiPathRunStatusSchema.optional(),
+  });
 
 export type CreateAiPathRunDto = z.infer<typeof createAiPathRunSchema>;
 export type AiPathRunCreateInput = CreateAiPathRunDto;
@@ -215,6 +220,60 @@ export const aiPathRunNodeSchema = dtoBaseSchema.extend({
 });
 
 export type AiPathRunNodeDto = z.infer<typeof aiPathRunNodeSchema>;
+
+/**
+ * AI Path Run Event Contract
+ */
+export const aiPathRunEventLevelSchema = z.enum(['debug', 'info', 'warn', 'error', 'fatal']);
+export type AiPathRunEventLevelDto = z.infer<typeof aiPathRunEventLevelSchema>;
+
+export const aiPathRunEventSchema = dtoBaseSchema.extend({
+  runId: z.string(),
+  nodeId: z.string().nullable().optional(),
+  level: aiPathRunEventLevelSchema,
+  message: z.string(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+});
+
+export type AiPathRunEventDto = z.infer<typeof aiPathRunEventSchema>;
+
+/**
+ * AI Path Run List Options Contract
+ */
+export const aiPathRunEventListOptionsSchema = z.object({
+  since: z.string().nullable().optional(),
+  after: z.object({
+    createdAt: z.string(),
+    id: z.string(),
+  }).nullable().optional(),
+  limit: z.number().optional(),
+});
+
+export type AiPathRunEventListOptionsDto = z.infer<typeof aiPathRunEventListOptionsSchema>;
+
+export const aiPathRunListOptionsSchema = z.object({
+  userId: z.string().nullable().optional(),
+  pathId: z.string().optional(),
+  requestId: z.string().optional(),
+  source: z.string().optional(),
+  sourceMode: z.enum(['include', 'exclude']).optional(),
+  status: aiPathRunStatusSchema.optional(),
+  statuses: z.array(aiPathRunStatusSchema).optional(),
+  query: z.string().optional(),
+  createdAfter: z.string().nullable().optional(),
+  createdBefore: z.string().nullable().optional(),
+  limit: z.number().optional(),
+  offset: z.number().optional(),
+});
+
+export type AiPathRunListOptionsDto = z.infer<typeof aiPathRunListOptionsSchema>;
+
+export const aiPathRunListResultSchema = z.object({
+  runs: z.array(aiPathRunSchema),
+  total: z.number(),
+});
+
+export type AiPathRunListResultDto = z.infer<typeof aiPathRunListResultSchema>;
 
 /**
  * AI Path Presets Contracts

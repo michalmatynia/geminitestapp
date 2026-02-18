@@ -168,6 +168,18 @@ const buildLandingSlotsFromRun = (run: ImageStudioRunRecord): GenerationLandingS
 const cloneLandingSlots = (slots: GenerationLandingSlot[]): GenerationLandingSlot[] =>
   slots.map((slot) => ({ ...slot }));
 
+const markLandingSlotsAsFailed = (
+  slots: GenerationLandingSlot[],
+  runId: string,
+  expectedOutputs: number,
+): GenerationLandingSlot[] => {
+  const baseSlots = slots.length > 0 ? cloneLandingSlots(slots) : buildPendingLandingSlots(runId, expectedOutputs);
+  return baseSlots.map((slot) => ({
+    ...slot,
+    status: slot.output ? 'completed' : 'failed',
+  }));
+};
+
 const toGenerationRecordFromRun = (run: ImageStudioRunRecord): GenerationRecord | null => {
   const outputs = Array.isArray(run.outputs) ? run.outputs : [];
   if (outputs.length === 0) return null;
@@ -274,8 +286,6 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
       submittedSlotName: string;
       submittedSlotFolderPath: string;
       expectedOutputs: number;
-      baselineRunOutputs: ImageFileRecord[];
-      baselineLandingSlots: GenerationLandingSlot[];
     }): Promise<void> => {
       const token: PollToken = {
         runId: params.runId,
@@ -319,15 +329,8 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
             const message = run.errorMessage?.trim() || 'Generation completed but returned no images.';
             setActiveRunStatus('failed');
             setActiveRunError(message);
-            setRunOutputs(params.baselineRunOutputs);
-            setLandingSlots(
-              params.baselineLandingSlots.length > 0
-                ? cloneLandingSlots(params.baselineLandingSlots)
-                : buildPendingLandingSlots(run.id, expectedOutputs).map((slot) => ({
-                  ...slot,
-                  status: 'failed',
-                }))
-            );
+            setRunOutputs([]);
+            setLandingSlots(markLandingSlotsAsFailed([], run.id, expectedOutputs));
             settle();
             toast(message, { variant: 'error' });
             return true;
@@ -368,15 +371,13 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
         }
 
         if (run.status === 'failed') {
-          setRunOutputs(params.baselineRunOutputs);
-          setLandingSlots(() =>
-            params.baselineLandingSlots.length > 0
-              ? cloneLandingSlots(params.baselineLandingSlots)
-              : buildPendingLandingSlots(run.id, expectedOutputs).map((slot) => ({
-                ...slot,
-                status: 'failed',
-              }))
-          );
+          const failedOutputs = Array.isArray(run.outputs) ? run.outputs : [];
+          const failedLandingSlots = buildLandingSlotsFromRun({
+            ...run,
+            expectedOutputs,
+          });
+          setRunOutputs(failedOutputs);
+          setLandingSlots(markLandingSlotsAsFailed(failedLandingSlots, run.id, expectedOutputs));
           settle();
           toast(run.errorMessage || 'Generation failed.', { variant: 'error' });
           return true;
@@ -453,14 +454,9 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
       if (token.cancelled || token.settled || pollTokenRef.current !== token) return;
       setActiveRunStatus('failed');
       setActiveRunError('Generation callback timed out.');
-      setRunOutputs(params.baselineRunOutputs);
-      setLandingSlots(() =>
-        params.baselineLandingSlots.length > 0
-          ? cloneLandingSlots(params.baselineLandingSlots)
-          : buildPendingLandingSlots(params.runId, params.expectedOutputs).map((slot) => ({
-            ...slot,
-            status: 'failed',
-          }))
+      setRunOutputs([]);
+      setLandingSlots((previous) =>
+        markLandingSlotsAsFailed(previous, params.runId, params.expectedOutputs)
       );
       settle();
       toast('Generation callback timed out.', { variant: 'error' });
@@ -559,8 +555,6 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
             latestRun.id,
           submittedSlotFolderPath: '',
           expectedOutputs: normalizeExpectedOutputs(latestRun.expectedOutputs, 1),
-          baselineRunOutputs: Array.isArray(latestRun.outputs) ? latestRun.outputs : [],
-          baselineLandingSlots: buildLandingSlotsFromRun(latestRun),
         });
       } catch {
         // Keep current UI state on hydration failures.
@@ -610,8 +604,6 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
     const submittedMaskInvert = maskInvert;
     const submittedMaskFeather = maskFeather;
     const expectedOutputs = normalizeExpectedOutputs(studioSettings.targetAi.openai.image.n, 1);
-    const baselineRunOutputs = runOutputs;
-    const baselineLandingSlots = cloneLandingSlots(landingSlots);
 
     cancelCurrentPoll();
     setActiveRunError(null);
@@ -643,22 +635,13 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
           submittedSlotName,
           submittedSlotFolderPath,
           expectedOutputs: queuedExpected,
-          baselineRunOutputs,
-          baselineLandingSlots,
         });
       },
       onError: (error) => {
         setActiveRunStatus('failed');
         setActiveRunError(error.message || 'Generation failed.');
-        setRunOutputs(baselineRunOutputs);
-        setLandingSlots(
-          baselineLandingSlots.length > 0
-            ? cloneLandingSlots(baselineLandingSlots)
-            : buildPendingLandingSlots('pending', expectedOutputs).map((slot) => ({
-              ...slot,
-              status: 'failed',
-            }))
-        );
+        setRunOutputs([]);
+        setLandingSlots((previous) => markLandingSlotsAsFailed(previous, 'pending', expectedOutputs));
         toast(error.message || 'Generation failed.', { variant: 'error' });
       },
     });
@@ -672,8 +655,6 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
     maskInvert,
     maskFeather,
     studioSettings,
-    runOutputs,
-    landingSlots,
     workingSlot?.folderPath,
     runMutation,
     toast,

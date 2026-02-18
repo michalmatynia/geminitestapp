@@ -34,6 +34,16 @@ export type Asset3dCreateInput = CreateAsset3dDto;
 export type UpdateAsset3dDto = Partial<CreateAsset3dDto>;
 export type Asset3dUpdateInput = UpdateAsset3dDto;
 
+export const asset3dListFiltersSchema = z.object({
+  filename: z.string().nullable().optional(),
+  categoryId: z.string().nullable().optional(),
+  tags: z.array(z.string()).optional(),
+  isPublic: z.boolean().optional(),
+  search: z.string().nullable().optional(),
+});
+
+export type Asset3dListFiltersDto = z.infer<typeof asset3dListFiltersSchema>;
+
 // Browser-native File object
 export const uploadAsset3dSchema = z.object({
   name: z.string(),

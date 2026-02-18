@@ -6,11 +6,14 @@ import React from 'react';
 import { Button } from '@/shared/ui';
 
 import { useVersionGraphInspectorContext } from './VersionGraphInspectorContext';
+import { useSettingsState } from '../context/SettingsContext';
 import { readMeta } from '../utils/metadata';
+import { getImageStudioDocTooltip } from '../utils/studio-docs';
 
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function VersionGraphInspector(): React.JSX.Element {
+  const { studioSettings } = useSettingsState();
   const {
     selectedNode,
     compositeLoading,
@@ -26,6 +29,20 @@ export function VersionGraphInspector(): React.JSX.Element {
     onAnnotationChange,
     onAnnotationBlur,
   } = useVersionGraphInspectorContext();
+  const versionGraphTooltipsEnabled = studioSettings.helpTooltips.versionGraphButtonsEnabled;
+  const tooltipContent = React.useMemo(
+    () => ({
+      openDetails: getImageStudioDocTooltip('version_graph_inspector_open_details'),
+      flattenComposite: getImageStudioDocTooltip('version_graph_inspector_flatten_composite'),
+      refreshCompositePreview: getImageStudioDocTooltip('version_graph_inspector_refresh_composite_preview'),
+      goToParent: getImageStudioDocTooltip('version_graph_inspector_go_to_parent'),
+      focusNode: getImageStudioDocTooltip('version_graph_inspector_focus_node'),
+      isolateBranch: getImageStudioDocTooltip('version_graph_inspector_isolate_branch'),
+      copyNodeId: getImageStudioDocTooltip('version_graph_inspector_copy_node_id'),
+      detailsButton: getImageStudioDocTooltip('version_graph_inspector_details_button'),
+    }),
+    []
+  );
 
   if (!selectedNode) {
     return (
@@ -47,7 +64,7 @@ export function VersionGraphInspector(): React.JSX.Element {
               <button
                 type='button'
                 className='inline-flex h-5 w-5 items-center justify-center rounded border border-blue-400/40 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 hover:text-blue-200'
-                title='Open full node/file details'
+                title={versionGraphTooltipsEnabled ? tooltipContent.openDetails : undefined}
                 aria-label='Open full node/file details'
                 onClick={() => onOpenDetails(selectedNode.id)}
               >
@@ -121,6 +138,7 @@ export function VersionGraphInspector(): React.JSX.Element {
             <button
               type='button'
               className='text-[10px] text-blue-400 hover:underline'
+              title={versionGraphTooltipsEnabled ? tooltipContent.goToParent : undefined}
               onClick={() => onSelectNode(selectedNode.parentIds[0] ?? null)}
             >
               <MousePointer2 className='mr-0.5 inline size-2.5' />
@@ -136,6 +154,7 @@ export function VersionGraphInspector(): React.JSX.Element {
             variant='outline'
             className='flex-1 border-teal-400/40 text-xs text-teal-400 hover:bg-teal-500/10'
             disabled={compositeBusy || compositeLoading}
+            title={versionGraphTooltipsEnabled ? tooltipContent.flattenComposite : undefined}
             onClick={() => { onFlattenComposite(selectedNode.id); }}
           >
             <Layers className='mr-1.5 size-3' />
@@ -146,7 +165,7 @@ export function VersionGraphInspector(): React.JSX.Element {
           <Button size='xs'
             variant='ghost'
             className='size-7 text-teal-400'
-            title='Refresh composite preview'
+            title={versionGraphTooltipsEnabled ? tooltipContent.refreshCompositePreview : undefined}
             disabled={compositeBusy || compositeLoading}
             onClick={() => onRefreshCompositePreview(selectedNode.id)}
           >
@@ -180,7 +199,7 @@ export function VersionGraphInspector(): React.JSX.Element {
           <button
             type='button'
             className='flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] text-gray-500 hover:bg-accent hover:text-gray-300'
-            title='Center on this node'
+            title={versionGraphTooltipsEnabled ? tooltipContent.focusNode : undefined}
             onClick={() => onFocusNode(selectedNode.id)}
           >
             <Focus className='size-2.5' />
@@ -191,7 +210,7 @@ export function VersionGraphInspector(): React.JSX.Element {
           <button
             type='button'
             className='flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] text-gray-500 hover:bg-accent hover:text-gray-300'
-            title='Create a new card tree rooted at this node'
+            title={versionGraphTooltipsEnabled ? tooltipContent.isolateBranch : undefined}
             onClick={() => onIsolateBranch(selectedNode.id)}
           >
             <Crosshair className='size-2.5' />
@@ -201,7 +220,7 @@ export function VersionGraphInspector(): React.JSX.Element {
         <button
           type='button'
           className='flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] text-gray-500 hover:bg-accent hover:text-gray-300'
-          title='Copy node ID'
+          title={versionGraphTooltipsEnabled ? tooltipContent.copyNodeId : undefined}
           onClick={() => void navigator.clipboard.writeText(selectedNode.id)}
         >
           <Copy className='size-2.5' />
@@ -211,7 +230,7 @@ export function VersionGraphInspector(): React.JSX.Element {
           <button
             type='button'
             className='flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] text-blue-400 hover:bg-blue-500/10 hover:text-blue-300'
-            title='Open full node details'
+            title={versionGraphTooltipsEnabled ? tooltipContent.detailsButton : undefined}
             onClick={() => onOpenDetails(selectedNode.id)}
           >
             Details

@@ -4,17 +4,34 @@ import fs from 'fs/promises';
 
 import { getImageFileRepository } from '@/features/files/server';
 import { getDiskPathFromPublicPath } from '@/features/files/utils/fileUploader';
+import { getProductRepository } from '@/features/products/services/product-repository';
+import { pruneProductStudioSourceSlotsForProject } from '@/features/products/services/product-studio-config';
 import type { Asset3DRecord } from '@/features/viewer3d/types';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { ImageFileRecord } from '@/shared/types/domain/files';
 
 import { removeImageStudioRunOutputs } from './run-repository';
 import {
+  deleteImageStudioSlotLinksForSlotIds,
   deleteImageStudioSlotLinksForSlot,
+  hasImageStudioSlotLinksForSources,
   listImageStudioSlotLinks,
 } from './slot-link-repository';
 
 import type { Collection } from 'mongodb';
+
+type CascadeSlotDoc = Pick<ImageStudioSlotDocument, '_id' | 'metadata'>;
+
+export type DeleteImageStudioSlotCascadeTimingsMs = {
+  resolveRoot: number;
+  loadProjectDocs: number;
+  loadSlotLinks: number;
+  cascadeCollect: number;
+  slotDeletes: number;
+  linkCleanup: number;
+  productPrune: number;
+  total: number;
+};
 
 export type ImageStudioSlotDocument = {
   _id: string;
@@ -213,6 +230,16 @@ const removeImageFileIfOrphaned = async (params: {
   });
   if (remainingReferences > 0) return;
 
+  const productRepository = await getProductRepository().catch(() => null);
+  if (productRepository) {
+    const productReferences = await productRepository
+      .countProductsByImageFileId(normalizedFileId)
+      .catch(() => 1);
+    if (productReferences > 0) {
+      return;
+    }
+  }
+
   const repo = await getImageFileRepository();
   const imageFileRecord = await repo.getImageFileById(normalizedFileId).catch(() => null);
   if (imageFileRecord?.filepath) {
@@ -267,15 +294,15 @@ const getSourceSlotIdsFromMetadata = (metadata: Record<string, unknown> | null):
 
 const collectCascadeSlotIds = (
   rootSlotId: string,
-  docs: ImageStudioSlotDocument[],
+  docs: CascadeSlotDoc[],
   options?: {
     linkedChildIdsBySource?: Map<string, Set<string>>;
   }
 ): string[] => {
   if (docs.length === 0) return [];
 
-  const docsById = new Map<string, ImageStudioSlotDocument>(
-    docs.map((doc: ImageStudioSlotDocument) => [doc._id, doc])
+  const docsById = new Map<string, CascadeSlotDoc>(
+    docs.map((doc: CascadeSlotDoc) => [doc._id, doc])
   );
   const rootCandidates = resolveSlotIdAliases(rootSlotId).filter((candidate: string) =>
     docsById.has(candidate)
@@ -284,7 +311,7 @@ const collectCascadeSlotIds = (
   if (!resolvedRootSlotId) return [];
 
   const childIdsBySource = new Map<string, Set<string>>();
-  docs.forEach((doc: ImageStudioSlotDocument) => {
+  docs.forEach((doc: CascadeSlotDoc) => {
     if (!doc.metadata) return;
     const metadata = asRecord(doc.metadata);
     const sourceSlotIds = getSourceSlotIdsFromMetadata(metadata);
@@ -339,6 +366,30 @@ const isGenerationDerivedSlotMetadata = (metadata: Record<string, unknown> | nul
     relationType.startsWith('upscale:') ||
     relationType.startsWith('sequence:')
   );
+};
+
+const hasDirectDerivedSlotChildren = async (params: {
+  collection: Collection<ImageStudioSlotDocument>;
+  projectId: string;
+  rootSlotId: string;
+}): Promise<boolean> => {
+  const aliasSet = Array.from(new Set(resolveSlotIdAliases(params.rootSlotId)));
+  if (aliasSet.length === 0) return false;
+
+  const directChild = await params.collection.findOne(
+    {
+      projectId: params.projectId,
+      _id: { $ne: params.rootSlotId },
+      $or: [
+        { 'metadata.sourceSlotId': { $in: aliasSet } },
+        { 'metadata.sourceSlotIds': { $in: aliasSet } },
+      ],
+    },
+    { projection: { _id: 1 } }
+  );
+  if (directChild) return true;
+
+  return await hasImageStudioSlotLinksForSources(params.projectId, aliasSet).catch(() => false);
 };
 
 export async function listImageStudioSlots(projectId: string): Promise<ImageStudioSlotRecord[]> {
@@ -427,7 +478,12 @@ export async function updateImageStudioSlot(slotId: string, update: SlotUpdateIn
   return toRecord(doc, imageFileMap, screenshotMap);
 }
 
-export async function deleteImageStudioSlot(slotId: string): Promise<boolean> {
+export async function deleteImageStudioSlot(
+  slotId: string,
+  options?: {
+    skipLinkCleanup?: boolean;
+  }
+): Promise<boolean> {
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const collection = db.collection<ImageStudioSlotDocument>(COLLECTION);
@@ -461,7 +517,9 @@ export async function deleteImageStudioSlot(slotId: string): Promise<boolean> {
       await deletePublicUploadFileBestEffort(existing.imageUrl);
     }
 
-    await deleteImageStudioSlotLinksForSlot(slotId).catch(() => {});
+    if (!options?.skipLinkCleanup) {
+      await deleteImageStudioSlotLinksForSlot(slotId).catch(() => {});
+    }
 
     const metadata = asRecord(existing.metadata);
     if (isGenerationDerivedSlotMetadata(metadata)) {
@@ -497,41 +555,90 @@ export async function deleteImageStudioSlot(slotId: string): Promise<boolean> {
 export type DeleteImageStudioSlotCascadeResult = {
   deleted: boolean;
   deletedSlotIds: string[];
+  timingsMs?: DeleteImageStudioSlotCascadeTimingsMs;
 };
 
 export async function deleteImageStudioSlotCascade(
   slotId: string
 ): Promise<DeleteImageStudioSlotCascadeResult> {
+  const startedAtMs = Date.now();
+  const timingsMs: DeleteImageStudioSlotCascadeTimingsMs = {
+    resolveRoot: 0,
+    loadProjectDocs: 0,
+    loadSlotLinks: 0,
+    cascadeCollect: 0,
+    slotDeletes: 0,
+    linkCleanup: 0,
+    productPrune: 0,
+    total: 0,
+  };
+  const finalizeResult = (
+    result: Omit<DeleteImageStudioSlotCascadeResult, 'timingsMs'>
+  ): DeleteImageStudioSlotCascadeResult => {
+    timingsMs.total = Date.now() - startedAtMs;
+    return {
+      ...result,
+      timingsMs,
+    };
+  };
+
   await ensureIndexesOnce();
   const db = await getMongoDb();
   const collection = db.collection<ImageStudioSlotDocument>(COLLECTION);
 
   const slotIdCandidates = resolveSlotIdAliases(slotId);
   if (slotIdCandidates.length === 0) {
-    return { deleted: false, deletedSlotIds: [] };
+    return finalizeResult({ deleted: false, deletedSlotIds: [] });
   }
 
+  const resolveRootStartedAtMs = Date.now();
   const rootDocs = await collection
     .find({ _id: { $in: slotIdCandidates } })
     .toArray();
-  if (rootDocs.length === 0) return { deleted: false, deletedSlotIds: [] };
+  timingsMs.resolveRoot = Date.now() - resolveRootStartedAtMs;
+  if (rootDocs.length === 0) {
+    return finalizeResult({ deleted: false, deletedSlotIds: [] });
+  }
 
-  const projectDocCache = new Map<string, ImageStudioSlotDocument[]>();
+  const projectDocCache = new Map<string, CascadeSlotDoc[]>();
   const linkedChildIdsByProject = new Map<string, Map<string, Set<string>>>();
   const slotIdsToDeleteSet = new Set<string>();
   for (const rootDoc of rootDocs) {
     const projectId = rootDoc.projectId;
+
+    const hasDirectChildren = await hasDirectDerivedSlotChildren({
+      collection,
+      projectId,
+      rootSlotId: rootDoc._id,
+    });
+    if (!hasDirectChildren) {
+      slotIdsToDeleteSet.add(rootDoc._id);
+      continue;
+    }
+
     let projectDocs = projectDocCache.get(projectId);
     if (!projectDocs) {
+      const loadProjectDocsStartedAtMs = Date.now();
       projectDocs = await collection
-        .find({ projectId })
+        .find(
+          { projectId },
+          {
+            projection: {
+              _id: 1,
+              metadata: 1,
+            },
+          }
+        )
         .toArray();
+      timingsMs.loadProjectDocs += Date.now() - loadProjectDocsStartedAtMs;
       projectDocCache.set(projectId, projectDocs);
     }
     let linkedChildIdsBySource = linkedChildIdsByProject.get(projectId);
     if (!linkedChildIdsBySource) {
+      const loadLinksStartedAtMs = Date.now();
       linkedChildIdsBySource = new Map<string, Set<string>>();
       const links = await listImageStudioSlotLinks(projectId).catch(() => []);
+      timingsMs.loadSlotLinks += Date.now() - loadLinksStartedAtMs;
       links.forEach((link) => {
         const normalizedSource = asTrimmedString(link.sourceSlotId);
         const normalizedTarget = asTrimmedString(link.targetSlotId);
@@ -542,34 +649,90 @@ export async function deleteImageStudioSlotCascade(
       });
       linkedChildIdsByProject.set(projectId, linkedChildIdsBySource);
     }
+    const cascadeCollectStartedAtMs = Date.now();
     collectCascadeSlotIds(rootDoc._id, projectDocs, { linkedChildIdsBySource }).forEach((candidateSlotId: string) => {
       slotIdsToDeleteSet.add(candidateSlotId);
     });
+    timingsMs.cascadeCollect += Date.now() - cascadeCollectStartedAtMs;
   }
 
   const slotIdsToDelete = Array.from(slotIdsToDeleteSet);
   if (slotIdsToDelete.length === 0) {
-    return { deleted: false, deletedSlotIds: [] };
+    return finalizeResult({ deleted: false, deletedSlotIds: [] });
   }
 
+  const slotDeletesStartedAtMs = Date.now();
   const deletedSlotIds: string[] = [];
   for (const slotIdToDelete of slotIdsToDelete) {
-    const deleted = await deleteImageStudioSlot(slotIdToDelete);
+    const deleted = await deleteImageStudioSlot(slotIdToDelete, { skipLinkCleanup: true });
     if (deleted) {
       deletedSlotIds.push(slotIdToDelete);
     }
   }
+  timingsMs.slotDeletes = Date.now() - slotDeletesStartedAtMs;
+
+  if (deletedSlotIds.length > 0) {
+    const linkCleanupStartedAtMs = Date.now();
+    await deleteImageStudioSlotLinksForSlotIds(deletedSlotIds).catch(() => 0);
+    timingsMs.linkCleanup = Date.now() - linkCleanupStartedAtMs;
+  }
+
+  if (deletedSlotIds.length > 0) {
+    const slotProjectById = new Map<string, string>();
+    projectDocCache.forEach((docs: CascadeSlotDoc[], projectId: string) => {
+      docs.forEach((doc: CascadeSlotDoc) => {
+        slotProjectById.set(doc._id, projectId);
+      });
+    });
+    rootDocs.forEach((rootDoc: ImageStudioSlotDocument) => {
+      if (!slotProjectById.has(rootDoc._id)) {
+        slotProjectById.set(rootDoc._id, rootDoc.projectId);
+      }
+    });
+    const deletedByProject = new Map<string, string[]>();
+    deletedSlotIds.forEach((deletedSlotId: string) => {
+      const projectId = slotProjectById.get(deletedSlotId);
+      if (!projectId) return;
+      const bucket = deletedByProject.get(projectId) ?? [];
+      bucket.push(deletedSlotId);
+      deletedByProject.set(projectId, bucket);
+    });
+    if (deletedByProject.size > 0) {
+      const productPruneStartedAtMs = Date.now();
+      // Non-blocking prune to avoid client timeouts on large product config sets.
+      void Promise.allSettled(
+        Array.from(deletedByProject.entries()).map(async ([projectId, projectDeletedSlotIds]) => {
+          if (!projectDeletedSlotIds.length) return;
+          await pruneProductStudioSourceSlotsForProject({
+            projectId,
+            deletedSlotIds: projectDeletedSlotIds,
+          });
+        }),
+      );
+      timingsMs.productPrune = Date.now() - productPruneStartedAtMs;
+    }
+  }
 
   const rootSlotIdSet = new Set<string>(rootDocs.map((rootDoc: ImageStudioSlotDocument) => rootDoc._id));
-  return {
+  return finalizeResult({
     deleted: deletedSlotIds.some((deletedSlotId: string) => rootSlotIdSet.has(deletedSlotId)),
     deletedSlotIds,
-  };
+  });
 }
 
 export async function deleteImageStudioSlotsByProject(projectId: string): Promise<number> {
   await ensureIndexesOnce();
-  const db = await getMongoDb();
-  const result = await db.collection<ImageStudioSlotDocument>(COLLECTION).deleteMany({ projectId });
-  return result.deletedCount ?? 0;
+  const slots = await listImageStudioSlots(projectId);
+  if (slots.length === 0) return 0;
+
+  const deletedSlotIds = new Set<string>();
+  for (const slot of slots) {
+    if (deletedSlotIds.has(slot.id)) continue;
+    const result = await deleteImageStudioSlotCascade(slot.id);
+    (result.deletedSlotIds ?? []).forEach((deletedSlotId) => {
+      deletedSlotIds.add(deletedSlotId);
+    });
+  }
+
+  return deletedSlotIds.size;
 }

@@ -26,6 +26,8 @@ import { useGraphState, useGraphActions } from './useGraph';
 import { useRuntimeActions } from './useRuntime';
 import { useSelectionState, useSelectionActions } from './useSelection';
 
+import type { EdgeRoutingMode } from './useEdgePaths';
+
 type MarqueeMode = 'replace' | 'add' | 'subtract';
 
 type MarqueeSelectionState = {
@@ -50,9 +52,61 @@ type HandleSelectNodeOptions = {
   toggle?: boolean;
 };
 
+type TouchPointSample = {
+  x: number;
+  y: number;
+  time: number;
+};
+
+type TouchGestureState =
+  | {
+    mode: 'pinch';
+    pointerIds: [number, number];
+    startDistance: number;
+    startScale: number;
+    anchorCanvas: { x: number; y: number };
+  }
+  | {
+    mode: 'pan';
+    pointerId: number;
+    recentSamples: TouchPointSample[];
+  };
+
+type TouchLongPressSelectionState = {
+  pointerId: number;
+  startClientX: number;
+  startClientY: number;
+  startedAt: number;
+  indicatorViewportX: number;
+  indicatorViewportY: number;
+  mode: MarqueeMode;
+  baseNodeIds: string[];
+  timerId: number | null;
+};
+
+type TouchLongPressIndicatorState = {
+  x: number;
+  y: number;
+  progress: number;
+  phase: 'pending' | 'activated';
+};
+
 const SUBGRAPH_CLIPBOARD_VERSION = 1 as const;
 const SUBGRAPH_CLIPBOARD_STORAGE_KEY = 'ai-paths:canvas-subgraph-clipboard:v1';
 const PASTE_OFFSET_STEP = 28;
+const ZOOM_ANIMATION_DURATION_MS = 160;
+const WHEEL_ZOOM_SENSITIVITY = 0.0016;
+const WHEEL_ZOOM_EASING = 0.26;
+const WHEEL_ZOOM_STOP_THRESHOLD = 0.0009;
+const TOUCH_PINCH_MIN_DISTANCE = 8;
+const TOUCH_PAN_INERTIA_SAMPLE_WINDOW_MS = 140;
+const TOUCH_PAN_INERTIA_MIN_SPEED = 0.045;
+const TOUCH_PAN_INERTIA_STOP_SPEED = 0.015;
+const TOUCH_PAN_INERTIA_FRICTION_PER_FRAME = 0.9;
+const TOUCH_LONG_PRESS_SELECTION_DELAY_MS = 280;
+const TOUCH_LONG_PRESS_SELECTION_MOVE_TOLERANCE_PX = 10;
+const TOUCH_LONG_PRESS_ACTIVATED_VISIBLE_MS = 200;
+const TOUCH_LONG_PRESS_HAPTIC_MS = 12;
 
 let inMemorySubgraphClipboard: SubgraphClipboardPayload | null = null;
 let pasteSequence = 0;
@@ -112,9 +166,13 @@ const getMarqueeRect = (state: MarqueeSelectionState): {
  * from the context-aware logic.
  */
 export function useCanvasInteractions(args?: {
-  confirmNodeSwitch?: (nodeId: string) => boolean | Promise<boolean>;
+  confirmNodeSwitch?: ((nodeId: string) => boolean | Promise<boolean>) | undefined;
+  edgeRoutingMode?: EdgeRoutingMode | undefined;
 }) {
-  const { confirmNodeSwitch } = args ?? {};
+  const {
+    confirmNodeSwitch,
+    edgeRoutingMode = 'bezier',
+  } = args ?? {};
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
 
@@ -156,7 +214,7 @@ export function useCanvasInteractions(args?: {
   const { setRuntimeState } = useRuntimeActions();
 
   // Derived: Edge paths
-  const edgePaths = useEdgePaths();
+  const edgePaths = useEdgePaths(edgeRoutingMode);
   const selectedNodeIdSet = useMemo(
     (): Set<string> => new Set(selectedNodeIds),
     [selectedNodeIds]
@@ -171,13 +229,39 @@ export function useCanvasInteractions(args?: {
   } | null>(null);
   const lastPointerCanvasPosRef = useRef<{ x: number; y: number } | null>(null);
   const rafIdRef = useRef<number | null>(null);
+  const viewAnimationRafRef = useRef<number | null>(null);
+  const wheelZoomRafRef = useRef<number | null>(null);
+  const wheelZoomTargetRef = useRef<{
+    scale: number;
+    anchorClientPos: { x: number; y: number } | null;
+  } | null>(null);
+  const activeTouchPointersRef = useRef<Map<number, TouchPointSample>>(new Map());
+  const touchGestureRef = useRef<TouchGestureState | null>(null);
+  const touchLongPressSelectionRef = useRef<TouchLongPressSelectionState | null>(
+    null
+  );
+  const touchLongPressIndicatorRafRef = useRef<number | null>(null);
+  const touchLongPressIndicatorHideTimerRef = useRef<number | null>(null);
+  const panInertiaRafRef = useRef<number | null>(null);
+  const panInertiaVelocityRef = useRef<{
+    vx: number;
+    vy: number;
+    lastTs: number;
+  } | null>(null);
+  const latestViewRef = useRef(view);
   const lockedToastAtRef = useRef<number>(0);
   const hasCanvasKeyboardFocusRef = useRef(false);
   const [marqueeSelection, setMarqueeSelection] =
     useState<MarqueeSelectionState | null>(null);
+  const [touchLongPressIndicator, setTouchLongPressIndicator] =
+    useState<TouchLongPressIndicatorState | null>(null);
+
+  useEffect(() => {
+    latestViewRef.current = view;
+  }, [view]);
 
   const getPointerCaptureTarget = (
-    event: React.PointerEvent<HTMLElement>
+    event: React.PointerEvent<Element>
   ): (Element & {
     setPointerCapture?: (pointerId: number) => void;
     releasePointerCapture?: (pointerId: number) => void;
@@ -282,26 +366,176 @@ export function useCanvasInteractions(args?: {
     });
   }, [toast]);
 
+  const stopProgrammaticViewAnimation = useCallback((): void => {
+    if (viewAnimationRafRef.current !== null) {
+      cancelAnimationFrame(viewAnimationRafRef.current);
+      viewAnimationRafRef.current = null;
+    }
+  }, []);
+
+  const stopPanInertia = useCallback((): void => {
+    if (panInertiaRafRef.current !== null) {
+      cancelAnimationFrame(panInertiaRafRef.current);
+      panInertiaRafRef.current = null;
+    }
+    panInertiaVelocityRef.current = null;
+  }, []);
+
+  const resolveViewportPointFromClient = useCallback(
+    (clientX: number, clientY: number): { x: number; y: number } | null => {
+      const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
+      if (!viewport) return null;
+      return {
+        x: clientX - viewport.left,
+        y: clientY - viewport.top,
+      };
+    },
+    [viewportRef]
+  );
+
+  const clearTouchLongPressIndicator = useCallback((): void => {
+    if (touchLongPressIndicatorRafRef.current !== null) {
+      cancelAnimationFrame(touchLongPressIndicatorRafRef.current);
+      touchLongPressIndicatorRafRef.current = null;
+    }
+    if (touchLongPressIndicatorHideTimerRef.current !== null) {
+      window.clearTimeout(touchLongPressIndicatorHideTimerRef.current);
+      touchLongPressIndicatorHideTimerRef.current = null;
+    }
+    setTouchLongPressIndicator(null);
+  }, []);
+
+  const startTouchLongPressIndicatorLoop = useCallback((): void => {
+    if (touchLongPressIndicatorRafRef.current !== null) return;
+    const tick = (now: number): void => {
+      touchLongPressIndicatorRafRef.current = null;
+      const pending = touchLongPressSelectionRef.current;
+      if (pending?.timerId == null) return;
+      const progress = Math.max(
+        0,
+        Math.min(1, (now - pending.startedAt) / TOUCH_LONG_PRESS_SELECTION_DELAY_MS)
+      );
+      setTouchLongPressIndicator({
+        x: pending.indicatorViewportX,
+        y: pending.indicatorViewportY,
+        progress,
+        phase: 'pending',
+      });
+      touchLongPressIndicatorRafRef.current = requestAnimationFrame(tick);
+    };
+    touchLongPressIndicatorRafRef.current = requestAnimationFrame(tick);
+  }, []);
+
+  const triggerTouchLongPressActivatedFeedback = useCallback(
+    (x: number, y: number): void => {
+      if (
+        typeof navigator !== 'undefined' &&
+        typeof navigator.vibrate === 'function'
+      ) {
+        navigator.vibrate(TOUCH_LONG_PRESS_HAPTIC_MS);
+      }
+      if (touchLongPressIndicatorRafRef.current !== null) {
+        cancelAnimationFrame(touchLongPressIndicatorRafRef.current);
+        touchLongPressIndicatorRafRef.current = null;
+      }
+      setTouchLongPressIndicator({
+        x,
+        y,
+        progress: 1,
+        phase: 'activated',
+      });
+      if (touchLongPressIndicatorHideTimerRef.current !== null) {
+        window.clearTimeout(touchLongPressIndicatorHideTimerRef.current);
+      }
+      touchLongPressIndicatorHideTimerRef.current = window.setTimeout(() => {
+        touchLongPressIndicatorHideTimerRef.current = null;
+        setTouchLongPressIndicator(null);
+      }, TOUCH_LONG_PRESS_ACTIVATED_VISIBLE_MS);
+    },
+    []
+  );
+
+  const cancelTouchLongPressSelection = useCallback((): void => {
+    const pending = touchLongPressSelectionRef.current;
+    if (pending?.timerId != null) {
+      window.clearTimeout(pending.timerId);
+    }
+    touchLongPressSelectionRef.current = null;
+    clearTouchLongPressIndicator();
+  }, [clearTouchLongPressIndicator]);
+
+  const stopViewAnimation = useCallback((): void => {
+    stopProgrammaticViewAnimation();
+    if (wheelZoomRafRef.current !== null) {
+      cancelAnimationFrame(wheelZoomRafRef.current);
+      wheelZoomRafRef.current = null;
+    }
+    wheelZoomTargetRef.current = null;
+    cancelTouchLongPressSelection();
+    stopPanInertia();
+  }, [cancelTouchLongPressSelection, stopPanInertia, stopProgrammaticViewAnimation]);
+
   const setViewClamped = useCallback((next: { x: number; y: number; scale: number }): void => {
     const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
     const clampedScale = clampScale(next.scale);
     const clamped = clampTranslate(next.x, next.y, clampedScale, viewport);
-    updateView({ x: clamped.x, y: clamped.y, scale: clampedScale });
+    const resolved = { x: clamped.x, y: clamped.y, scale: clampedScale };
+    latestViewRef.current = resolved;
+    updateView(resolved);
   }, [viewportRef, updateView]);
 
   const updateLastPointerCanvasPosFromClient = useCallback(
     (clientX: number, clientY: number): { x: number; y: number } | null => {
       const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
       if (!viewport) return null;
+      const currentView = latestViewRef.current;
       const next = {
-        x: (clientX - viewport.left - view.x) / view.scale,
-        y: (clientY - viewport.top - view.y) / view.scale,
+        x: (clientX - viewport.left - currentView.x) / currentView.scale,
+        y: (clientY - viewport.top - currentView.y) / currentView.scale,
       };
       lastPointerCanvasPosRef.current = next;
       return next;
     },
-    [view.scale, view.x, view.y, viewportRef]
+    [viewportRef]
   );
+
+  const startPanInertia = useCallback((vx: number, vy: number): void => {
+    stopPanInertia();
+    const now = performance.now();
+    panInertiaVelocityRef.current = { vx, vy, lastTs: now };
+    const tick = (ts: number): void => {
+      const inertia = panInertiaVelocityRef.current;
+      if (!inertia) {
+        panInertiaRafRef.current = null;
+        return;
+      }
+      const dtMs = Math.max(1, ts - inertia.lastTs);
+      inertia.lastTs = ts;
+      const currentView = latestViewRef.current;
+      const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
+      const nextX = currentView.x + inertia.vx * dtMs;
+      const nextY = currentView.y + inertia.vy * dtMs;
+      const clamped = clampTranslate(nextX, nextY, currentView.scale, viewport);
+      setViewClamped({
+        x: clamped.x,
+        y: clamped.y,
+        scale: currentView.scale,
+      });
+      const friction = Math.pow(TOUCH_PAN_INERTIA_FRICTION_PER_FRAME, dtMs / 16.67);
+      inertia.vx *= friction;
+      inertia.vy *= friction;
+      const speed = Math.hypot(inertia.vx, inertia.vy);
+      const stalled =
+        Math.abs(clamped.x - nextX) < 0.001 &&
+        Math.abs(clamped.y - nextY) < 0.001;
+      if (speed < TOUCH_PAN_INERTIA_STOP_SPEED || stalled) {
+        stopPanInertia();
+        return;
+      }
+      panInertiaRafRef.current = requestAnimationFrame(tick);
+    };
+    panInertiaRafRef.current = requestAnimationFrame(tick);
+  }, [setViewClamped, stopPanInertia, viewportRef]);
 
   const getPortPosition = useCallback((
     node: AiNode,
@@ -803,31 +1037,147 @@ export function useCanvasInteractions(args?: {
     };
   }, [marqueeSelection]);
 
+  const beginMarqueeSelectionFromClient = useCallback(
+    (
+      clientX: number,
+      clientY: number,
+      mode: MarqueeMode,
+      baseNodeIds: string[]
+    ): boolean => {
+      const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
+      if (!viewport) return false;
+      const startX = clientX - viewport.left;
+      const startY = clientY - viewport.top;
+      if (mode === 'replace') {
+        setNodeSelection([]);
+      }
+      selectEdge(null);
+      setMarqueeSelection({
+        startX,
+        startY,
+        currentX: startX,
+        currentY: startY,
+        mode,
+        baseNodeIds,
+      });
+      return true;
+    },
+    [selectEdge, setNodeSelection, viewportRef]
+  );
+
   // ---------------------------------------------------------------------------
   // View Actions
   // ---------------------------------------------------------------------------
 
+  const getZoomTargetView = useCallback(
+    (
+      targetScale: number,
+      anchorClientPos?: { x: number; y: number } | null
+    ): { x: number; y: number; scale: number } => {
+      const currentView = latestViewRef.current;
+      const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
+      const nextScale = clampScale(targetScale);
+      if (!viewport) {
+        return {
+          x: currentView.x,
+          y: currentView.y,
+          scale: nextScale,
+        };
+      }
+      const anchorViewportX = anchorClientPos
+        ? anchorClientPos.x - viewport.left
+        : viewport.width / 2;
+      const anchorViewportY = anchorClientPos
+        ? anchorClientPos.y - viewport.top
+        : viewport.height / 2;
+      const canvasX = (anchorViewportX - currentView.x) / currentView.scale;
+      const canvasY = (anchorViewportY - currentView.y) / currentView.scale;
+      const nextX = anchorViewportX - canvasX * nextScale;
+      const nextY = anchorViewportY - canvasY * nextScale;
+      const clamped = clampTranslate(nextX, nextY, nextScale, viewport);
+      return {
+        x: clamped.x,
+        y: clamped.y,
+        scale: nextScale,
+      };
+    },
+    [viewportRef]
+  );
+
+  const startWheelZoomLoop = useCallback((): void => {
+    if (wheelZoomRafRef.current !== null) return;
+    const tick = (): void => {
+      wheelZoomRafRef.current = null;
+      const target = wheelZoomTargetRef.current;
+      if (!target) return;
+      const currentView = latestViewRef.current;
+      const remainingScale = target.scale - currentView.scale;
+      if (Math.abs(remainingScale) <= WHEEL_ZOOM_STOP_THRESHOLD) {
+        const finalView = getZoomTargetView(target.scale, target.anchorClientPos);
+        setViewClamped(finalView);
+        wheelZoomTargetRef.current = null;
+        return;
+      }
+      const steppedScale = currentView.scale + remainingScale * WHEEL_ZOOM_EASING;
+      const steppedView = getZoomTargetView(steppedScale, target.anchorClientPos);
+      setViewClamped(steppedView);
+      wheelZoomRafRef.current = requestAnimationFrame(tick);
+    };
+    wheelZoomRafRef.current = requestAnimationFrame(tick);
+  }, [getZoomTargetView, setViewClamped]);
+
+  const animateViewTo = useCallback(
+    (
+      target: { x: number; y: number; scale: number },
+      durationMs = ZOOM_ANIMATION_DURATION_MS
+    ): void => {
+      const fromView = latestViewRef.current;
+      const deltaX = target.x - fromView.x;
+      const deltaY = target.y - fromView.y;
+      const deltaScale = target.scale - fromView.scale;
+      const duration = Math.max(0, durationMs);
+      const isNegligibleMotion =
+        Math.abs(deltaX) < 0.1 &&
+        Math.abs(deltaY) < 0.1 &&
+        Math.abs(deltaScale) < 0.0008;
+      if (duration <= 0 || isNegligibleMotion) {
+        stopViewAnimation();
+        setViewClamped(target);
+        return;
+      }
+
+      stopViewAnimation();
+      const startedAt = performance.now();
+      const tick = (now: number): void => {
+        const progress = Math.min(1, (now - startedAt) / duration);
+        // Cubic ease-out feels responsive while avoiding abrupt stops.
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setViewClamped({
+          x: fromView.x + deltaX * eased,
+          y: fromView.y + deltaY * eased,
+          scale: fromView.scale + deltaScale * eased,
+        });
+        if (progress >= 1) {
+          viewAnimationRafRef.current = null;
+          return;
+        }
+        viewAnimationRafRef.current = requestAnimationFrame(tick);
+      };
+
+      viewAnimationRafRef.current = requestAnimationFrame(tick);
+    },
+    [setViewClamped, stopViewAnimation]
+  );
+
   const zoomTo = useCallback((targetScale: number): void => {
-    const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
-    if (!viewport) {
-      setViewClamped({ ...view, scale: targetScale });
-      return;
-    }
-    const centerX = viewport.width / 2;
-    const centerY = viewport.height / 2;
-    const nextScale = clampScale(targetScale);
-    const canvasX = (centerX - view.x) / view.scale;
-    const canvasY = (centerY - view.y) / view.scale;
-    const nextX = centerX - canvasX * nextScale;
-    const nextY = centerY - canvasY * nextScale;
-    const clamped = clampTranslate(nextX, nextY, nextScale, viewport);
-    updateView({ x: clamped.x, y: clamped.y, scale: nextScale });
-  }, [view, viewportRef, setViewClamped, updateView]);
+    const target = getZoomTargetView(targetScale);
+    animateViewTo(target, ZOOM_ANIMATION_DURATION_MS);
+  }, [animateViewTo, getZoomTargetView]);
 
   const fitToNodes = useCallback((): void => {
     const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
     if (!viewport || nodes.length === 0) {
-      setViewClamped({ x: VIEW_MARGIN, y: VIEW_MARGIN, scale: 1 });
+      animateViewTo({ x: VIEW_MARGIN, y: VIEW_MARGIN, scale: 1 });
       return;
     }
     const padding = 120;
@@ -861,12 +1211,137 @@ export function useCanvasInteractions(args?: {
     const nextX = viewport.width / 2 - centerX * nextScale;
     const nextY = viewport.height / 2 - centerY * nextScale;
     const clamped = clampTranslate(nextX, nextY, nextScale, viewport);
-    updateView({ x: clamped.x, y: clamped.y, scale: nextScale });
-  }, [nodes, viewportRef, setViewClamped, updateView]);
+    animateViewTo(
+      { x: clamped.x, y: clamped.y, scale: nextScale },
+      ZOOM_ANIMATION_DURATION_MS
+    );
+  }, [animateViewTo, nodes, viewportRef]);
+
+  const fitToSelection = useCallback((): void => {
+    const selectionIds = resolveActiveNodeSelectionIds();
+    if (selectionIds.length === 0) {
+      fitToNodes();
+      return;
+    }
+    const selectedIdSet = new Set(selectionIds);
+    const targetNodes = nodes.filter((node: AiNode): boolean => selectedIdSet.has(node.id));
+    if (targetNodes.length === 0) {
+      fitToNodes();
+      return;
+    }
+    const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
+    if (!viewport) return;
+    const padding = 96;
+    const bounds = targetNodes.reduce(
+      (
+        acc: { minX: number; minY: number; maxX: number; maxY: number },
+        node: AiNode
+      ) => {
+        const x1 = node.position.x;
+        const y1 = node.position.y;
+        const x2 = node.position.x + NODE_WIDTH;
+        const y2 = node.position.y + NODE_MIN_HEIGHT;
+        return {
+          minX: Math.min(acc.minX, x1),
+          minY: Math.min(acc.minY, y1),
+          maxX: Math.max(acc.maxX, x2),
+          maxY: Math.max(acc.maxY, y2),
+        };
+      },
+      {
+        minX: Number.POSITIVE_INFINITY,
+        minY: Number.POSITIVE_INFINITY,
+        maxX: Number.NEGATIVE_INFINITY,
+        maxY: Number.NEGATIVE_INFINITY,
+      }
+    );
+    const width = Math.max(1, bounds.maxX - bounds.minX + padding * 2);
+    const height = Math.max(1, bounds.maxY - bounds.minY + padding * 2);
+    const scaleX = viewport.width / width;
+    const scaleY = viewport.height / height;
+    const nextScale = clampScale(Math.min(scaleX, scaleY));
+    const centerX = bounds.minX + (bounds.maxX - bounds.minX) / 2;
+    const centerY = bounds.minY + (bounds.maxY - bounds.minY) / 2;
+    const nextX = viewport.width / 2 - centerX * nextScale;
+    const nextY = viewport.height / 2 - centerY * nextScale;
+    const clamped = clampTranslate(nextX, nextY, nextScale, viewport);
+    animateViewTo(
+      { x: clamped.x, y: clamped.y, scale: nextScale },
+      ZOOM_ANIMATION_DURATION_MS
+    );
+  }, [animateViewTo, fitToNodes, nodes, resolveActiveNodeSelectionIds, viewportRef]);
 
   const resetView = useCallback((): void => {
-    setViewClamped({ x: VIEW_MARGIN, y: VIEW_MARGIN, scale: 1 });
-  }, [setViewClamped]);
+    animateViewTo({ x: VIEW_MARGIN, y: VIEW_MARGIN, scale: 1 });
+  }, [animateViewTo]);
+
+  const centerOnCanvasPoint = useCallback((canvasX: number, canvasY: number): void => {
+    if (!Number.isFinite(canvasX) || !Number.isFinite(canvasY)) return;
+    const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
+    if (!viewport) return;
+    const currentView = latestViewRef.current;
+    const nextX = viewport.width / 2 - canvasX * currentView.scale;
+    const nextY = viewport.height / 2 - canvasY * currentView.scale;
+    const clamped = clampTranslate(nextX, nextY, currentView.scale, viewport);
+    animateViewTo(
+      { x: clamped.x, y: clamped.y, scale: currentView.scale },
+      ZOOM_ANIMATION_DURATION_MS
+    );
+  }, [animateViewTo, viewportRef]);
+
+  const applyWheelZoom = useCallback(
+    (deltaY: number, clientX: number, clientY: number): void => {
+      stopProgrammaticViewAnimation();
+      const baseScale = wheelZoomTargetRef.current?.scale ?? latestViewRef.current.scale;
+      const zoomFactor = Math.exp((-deltaY) * WHEEL_ZOOM_SENSITIVITY);
+      const targetScale = clampScale(baseScale * zoomFactor);
+      if (!Number.isFinite(targetScale)) return;
+      if (
+        Math.abs(targetScale - latestViewRef.current.scale) < WHEEL_ZOOM_STOP_THRESHOLD &&
+        (!wheelZoomTargetRef.current ||
+          Math.abs(targetScale - wheelZoomTargetRef.current.scale) <
+            WHEEL_ZOOM_STOP_THRESHOLD)
+      ) {
+        return;
+      }
+      wheelZoomTargetRef.current = {
+        scale: targetScale,
+        anchorClientPos: {
+          x: clientX,
+          y: clientY,
+        },
+      };
+      startWheelZoomLoop();
+      updateLastPointerCanvasPosFromClient(clientX, clientY);
+    },
+    [
+      startWheelZoomLoop,
+      stopProgrammaticViewAnimation,
+      updateLastPointerCanvasPosFromClient,
+    ]
+  );
+
+  const handleWheel = useCallback((event: React.WheelEvent<Element>): void => {
+    event.preventDefault();
+    event.stopPropagation();
+    applyWheelZoom(event.deltaY, event.clientX, event.clientY);
+  }, [applyWheelZoom]);
+
+  // Use a non-passive wheel listener so browser scroll is reliably suppressed
+  // while zooming the AI Paths canvas.
+  useEffect(() => {
+    const viewportElement = viewportRef.current;
+    if (!viewportElement) return;
+    const handleNativeWheel = (event: WheelEvent): void => {
+      event.preventDefault();
+      event.stopPropagation();
+      applyWheelZoom(event.deltaY, event.clientX, event.clientY);
+    };
+    viewportElement.addEventListener('wheel', handleNativeWheel, { passive: false });
+    return () => {
+      viewportElement.removeEventListener('wheel', handleNativeWheel);
+    };
+  }, [applyWheelZoom, viewportRef]);
 
   const ensureNodeVisible = useCallback((node: AiNode): void => {
     const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
@@ -891,14 +1366,101 @@ export function useCanvasInteractions(args?: {
     updateView({ x: clamped.x, y: clamped.y, scale: view.scale });
   }, [view, viewportRef, updateView]);
 
+  const startPinchGestureFromActivePointers = useCallback((): boolean => {
+    const activePointers = activeTouchPointersRef.current;
+    const pointerIds = Array.from(activePointers.keys());
+    if (pointerIds.length < 2) return false;
+    const firstId = pointerIds[0];
+    const secondId = pointerIds[1];
+    if (firstId == null || secondId == null) return false;
+    const first = activePointers.get(firstId);
+    const second = activePointers.get(secondId);
+    if (!first || !second) return false;
+    const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
+    if (!viewport) return false;
+    const centerClientX = (first.x + second.x) / 2;
+    const centerClientY = (first.y + second.y) / 2;
+    const centerViewportX = centerClientX - viewport.left;
+    const centerViewportY = centerClientY - viewport.top;
+    const currentView = latestViewRef.current;
+    const anchorCanvas = {
+      x: (centerViewportX - currentView.x) / currentView.scale,
+      y: (centerViewportY - currentView.y) / currentView.scale,
+    };
+    const distance = Math.hypot(second.x - first.x, second.y - first.y);
+    touchGestureRef.current = {
+      mode: 'pinch',
+      pointerIds: [firstId, secondId],
+      startDistance: Math.max(TOUCH_PINCH_MIN_DISTANCE, distance),
+      startScale: currentView.scale,
+      anchorCanvas,
+    };
+    return true;
+  }, [viewportRef]);
+
+  const appendTouchPanSample = useCallback(
+    (pointerId: number, x: number, y: number, time: number): void => {
+      const existing = touchGestureRef.current;
+      if (existing?.mode !== 'pan' || existing.pointerId !== pointerId) {
+        touchGestureRef.current = {
+          mode: 'pan',
+          pointerId,
+          recentSamples: [{ x, y, time }],
+        };
+        return;
+      }
+      const recentSamples = [...existing.recentSamples, { x, y, time }].filter(
+        (sample: TouchPointSample): boolean =>
+          time - sample.time <= TOUCH_PAN_INERTIA_SAMPLE_WINDOW_MS
+      );
+      touchGestureRef.current = {
+        mode: 'pan',
+        pointerId,
+        recentSamples,
+      };
+    },
+    []
+  );
+
+  const maybeStartTouchPanInertia = useCallback(
+    (pointerId: number): void => {
+      const gesture = touchGestureRef.current;
+      if (gesture?.mode !== 'pan' || gesture.pointerId !== pointerId) {
+        return;
+      }
+      const samples = gesture.recentSamples;
+      if (samples.length < 2) {
+        touchGestureRef.current = null;
+        return;
+      }
+      const first = samples[0];
+      const last = samples[samples.length - 1];
+      if (!first || !last) {
+        touchGestureRef.current = null;
+        return;
+      }
+      const dtMs = Math.max(1, last.time - first.time);
+      const vx = (last.x - first.x) / dtMs;
+      const vy = (last.y - first.y) / dtMs;
+      const speed = Math.hypot(vx, vy);
+      touchGestureRef.current = null;
+      if (!Number.isFinite(speed) || speed < TOUCH_PAN_INERTIA_MIN_SPEED) {
+        return;
+      }
+      startPanInertia(vx, vy);
+    },
+    [startPanInertia]
+  );
+
   // ---------------------------------------------------------------------------
   // Interaction Handlers
   // ---------------------------------------------------------------------------
 
   const handlePointerDownNode = useCallback(async (
-    event: React.PointerEvent<HTMLDivElement>,
+    event: React.PointerEvent<Element>,
     nodeId: string
   ): Promise<void> => {
+    stopViewAnimation();
     if (isPathLocked) {
       notifyLocked();
       return;
@@ -961,11 +1523,12 @@ export function useCanvasInteractions(args?: {
     selectedNodeIdSet,
     setNodeSelection,
     startDrag,
+    stopViewAnimation,
     updateLastPointerCanvasPosFromClient,
   ]);
 
   const handlePointerMoveNode = useCallback((
-    event: React.PointerEvent<HTMLDivElement>,
+    event: React.PointerEvent<Element>,
     nodeId: string
   ): void => {
     if (dragState?.nodeId !== nodeId) return;
@@ -1023,7 +1586,7 @@ export function useCanvasInteractions(args?: {
   }, [dragState, setNodes, updateLastPointerCanvasPosFromClient, updateNode]);
 
   const handlePointerUpNode = useCallback((
-    event: React.PointerEvent<HTMLDivElement>,
+    event: React.PointerEvent<Element>,
     nodeId: string
   ): void => {
     if (dragState?.nodeId !== nodeId) return;
@@ -1044,11 +1607,28 @@ export function useCanvasInteractions(args?: {
     endDrag();
   }, [dragState, endDrag, updateNode]);
 
-  const handlePanStart = useCallback((event: React.PointerEvent<HTMLDivElement>): void => {
+  const handlePanStart = useCallback((event: React.PointerEvent<Element>): void => {
+    stopViewAnimation();
     updateLastPointerCanvasPosFromClient(event.clientX, event.clientY);
+    if (event.pointerType === 'touch') {
+      activeTouchPointersRef.current.set(event.pointerId, {
+        x: event.clientX,
+        y: event.clientY,
+        time: performance.now(),
+      });
+      setPointerCaptureSafe(getPointerCaptureTarget(event), event.pointerId);
+      if (activeTouchPointersRef.current.size >= 2) {
+        cancelTouchLongPressSelection();
+        if (marqueeSelection) setMarqueeSelection(null);
+        if (panState) endPan();
+        endConnection();
+        startPinchGestureFromActivePointers();
+        return;
+      }
+    }
     const canvasEl = canvasRef.current;
     const targetEl = event.target as Element | null;
-    if (targetEl?.closest('path')) return;
+    if (event.pointerType !== 'touch' && targetEl?.closest('path')) return;
     if (
       event.target !== event.currentTarget &&
       event.target !== canvasEl &&
@@ -1061,48 +1641,190 @@ export function useCanvasInteractions(args?: {
       return;
     }
     if (selectionToolMode === 'select') {
-      const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
-      if (!viewport) return;
       const mode: MarqueeMode = event.altKey
         ? 'subtract'
         : event.shiftKey
           ? 'add'
           : 'replace';
-      const startX = event.clientX - viewport.left;
-      const startY = event.clientY - viewport.top;
       const baseNodeIds = mode === 'replace' ? [] : [...selectedNodeIdSet];
-      if (mode === 'replace') {
-        setNodeSelection([]);
+      if (event.pointerType === 'touch') {
+        cancelTouchLongPressSelection();
+        const pointerId = event.pointerId;
+        const startedAt = performance.now();
+        const indicatorPoint =
+          resolveViewportPointFromClient(event.clientX, event.clientY) ??
+          {
+            x: event.clientX,
+            y: event.clientY,
+          };
+        const pending: TouchLongPressSelectionState = {
+          pointerId,
+          startClientX: event.clientX,
+          startClientY: event.clientY,
+          startedAt,
+          indicatorViewportX: indicatorPoint.x,
+          indicatorViewportY: indicatorPoint.y,
+          mode,
+          baseNodeIds,
+          timerId: null,
+        };
+        setTouchLongPressIndicator({
+          x: indicatorPoint.x,
+          y: indicatorPoint.y,
+          progress: 0,
+          phase: 'pending',
+        });
+        startTouchLongPressIndicatorLoop();
+        const timerId = window.setTimeout(() => {
+          const currentPending = touchLongPressSelectionRef.current;
+          if (currentPending?.pointerId !== pointerId) return;
+          if (
+            activeTouchPointersRef.current.size !== 1 ||
+            touchGestureRef.current?.mode === 'pinch'
+          ) {
+            cancelTouchLongPressSelection();
+            return;
+          }
+          const currentPoint = activeTouchPointersRef.current.get(pointerId);
+          const clientX = currentPoint?.x ?? currentPending.startClientX;
+          const clientY = currentPoint?.y ?? currentPending.startClientY;
+          const movedDistance = Math.hypot(
+            clientX - currentPending.startClientX,
+            clientY - currentPending.startClientY
+          );
+          if (movedDistance > TOUCH_LONG_PRESS_SELECTION_MOVE_TOLERANCE_PX) {
+            cancelTouchLongPressSelection();
+            return;
+          }
+          const activated = beginMarqueeSelectionFromClient(
+            clientX,
+            clientY,
+            currentPending.mode,
+            currentPending.baseNodeIds
+          );
+          if (!activated) {
+            cancelTouchLongPressSelection();
+            return;
+          }
+          const activatedPoint =
+            resolveViewportPointFromClient(clientX, clientY) ??
+            { x: currentPending.indicatorViewportX, y: currentPending.indicatorViewportY };
+          triggerTouchLongPressActivatedFeedback(activatedPoint.x, activatedPoint.y);
+          touchLongPressSelectionRef.current = null;
+        }, TOUCH_LONG_PRESS_SELECTION_DELAY_MS);
+        touchLongPressSelectionRef.current = {
+          ...pending,
+          timerId,
+        };
+        return;
       }
-      selectEdge(null);
       setPointerCaptureSafe(getPointerCaptureTarget(event), event.pointerId);
-      setMarqueeSelection({
-        startX,
-        startY,
-        currentX: startX,
-        currentY: startY,
+      beginMarqueeSelectionFromClient(
+        event.clientX,
+        event.clientY,
         mode,
-        baseNodeIds,
-      });
+        baseNodeIds
+      );
       return;
     }
     setPointerCaptureSafe(getPointerCaptureTarget(event), event.pointerId);
     startPan(event.clientX, event.clientY);
+    if (event.pointerType === 'touch') {
+      appendTouchPanSample(
+        event.pointerId,
+        event.clientX,
+        event.clientY,
+        performance.now()
+      );
+    }
   }, [
+    beginMarqueeSelectionFromClient,
+    cancelTouchLongPressSelection,
+    appendTouchPanSample,
+    activeTouchPointersRef,
     canvasRef,
     connecting,
+    endPan,
     endConnection,
+    marqueeSelection,
+    panState,
     selectedNodeIdSet,
     selectionToolMode,
-    setNodeSelection,
-    selectEdge,
+    startPinchGestureFromActivePointers,
+    startTouchLongPressIndicatorLoop,
     startPan,
+    stopViewAnimation,
+    triggerTouchLongPressActivatedFeedback,
     updateLastPointerCanvasPosFromClient,
-    viewportRef,
+    resolveViewportPointFromClient,
   ]);
 
-  const handlePanMove = useCallback((event: React.PointerEvent<HTMLDivElement>): void => {
+  const handlePanMove = useCallback((event: React.PointerEvent<Element>): void => {
     updateLastPointerCanvasPosFromClient(event.clientX, event.clientY);
+    if (event.pointerType === 'touch') {
+      activeTouchPointersRef.current.set(event.pointerId, {
+        x: event.clientX,
+        y: event.clientY,
+        time: performance.now(),
+      });
+      const gesture = touchGestureRef.current;
+      if (gesture?.mode === 'pinch') {
+        const first = activeTouchPointersRef.current.get(gesture.pointerIds[0]);
+        const second = activeTouchPointersRef.current.get(gesture.pointerIds[1]);
+        if (!first || !second) return;
+        const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
+        if (!viewport) return;
+        const centerViewportX = (first.x + second.x) / 2 - viewport.left;
+        const centerViewportY = (first.y + second.y) / 2 - viewport.top;
+        const distance = Math.hypot(second.x - first.x, second.y - first.y);
+        const nextScale = clampScale(
+          gesture.startScale *
+            (Math.max(TOUCH_PINCH_MIN_DISTANCE, distance) / gesture.startDistance)
+        );
+        const nextX = centerViewportX - gesture.anchorCanvas.x * nextScale;
+        const nextY = centerViewportY - gesture.anchorCanvas.y * nextScale;
+        const clamped = clampTranslate(nextX, nextY, nextScale, viewport);
+        setViewClamped({
+          x: clamped.x,
+          y: clamped.y,
+          scale: nextScale,
+        });
+        return;
+      }
+      const pendingLongPress = touchLongPressSelectionRef.current;
+      if (pendingLongPress?.pointerId === event.pointerId) {
+        const indicatorPoint = resolveViewportPointFromClient(
+          event.clientX,
+          event.clientY
+        );
+        if (indicatorPoint) {
+          touchLongPressSelectionRef.current = {
+            ...pendingLongPress,
+            indicatorViewportX: indicatorPoint.x,
+            indicatorViewportY: indicatorPoint.y,
+          };
+        }
+        const movedDistance = Math.hypot(
+          event.clientX - pendingLongPress.startClientX,
+          event.clientY - pendingLongPress.startClientY
+        );
+        if (movedDistance > TOUCH_LONG_PRESS_SELECTION_MOVE_TOLERANCE_PX) {
+          cancelTouchLongPressSelection();
+          if (!panState) {
+            startPan(event.clientX, event.clientY);
+            appendTouchPanSample(
+              event.pointerId,
+              event.clientX,
+              event.clientY,
+              performance.now()
+            );
+            return;
+          }
+        } else {
+          return;
+        }
+      }
+    }
     if (marqueeSelection) {
       const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
       if (!viewport) return;
@@ -1129,32 +1851,100 @@ export function useCanvasInteractions(args?: {
     const nextY = panState.originY + (event.clientY - panState.startY);
     const clamped = clampTranslate(nextX, nextY, view.scale, viewport);
     updateView({ x: clamped.x, y: clamped.y });
+    if (event.pointerType === 'touch') {
+      appendTouchPanSample(
+        event.pointerId,
+        event.clientX,
+        event.clientY,
+        performance.now()
+      );
+    }
   }, [
+    activeTouchPointersRef,
     applyMarqueeSelection,
+    appendTouchPanSample,
+    cancelTouchLongPressSelection,
     connecting,
     marqueeSelection,
     panState,
+    setViewClamped,
     setConnectingPos,
+    startPan,
     updateView,
     updateLastPointerCanvasPosFromClient,
+    resolveViewportPointFromClient,
     view,
     viewportRef,
   ]);
 
-  const handlePanEnd = useCallback((event: React.PointerEvent<HTMLDivElement>): void => {
+  const handlePanEnd = useCallback((event: React.PointerEvent<Element>): void => {
+    if (event.pointerType === 'touch') {
+      activeTouchPointersRef.current.delete(event.pointerId);
+      const pendingLongPress = touchLongPressSelectionRef.current;
+      if (pendingLongPress?.pointerId === event.pointerId) {
+        cancelTouchLongPressSelection();
+      }
+      const gesture = touchGestureRef.current;
+      if (
+        gesture?.mode === 'pinch' &&
+        (gesture.pointerIds[0] === event.pointerId ||
+          gesture.pointerIds[1] === event.pointerId)
+      ) {
+        releasePointerCaptureSafe(getPointerCaptureTarget(event), event.pointerId);
+        if (activeTouchPointersRef.current.size >= 2) {
+          startPinchGestureFromActivePointers();
+          return;
+        }
+        const remainingEntries = Array.from(activeTouchPointersRef.current.entries());
+        if (remainingEntries.length === 1) {
+          const remainingEntry = remainingEntries[0];
+          if (!remainingEntry) return;
+          const [remainingPointerId, remainingPoint] = remainingEntry;
+          const sample: TouchPointSample = {
+            x: remainingPoint.x,
+            y: remainingPoint.y,
+            time: performance.now(),
+          };
+          touchGestureRef.current = {
+            mode: 'pan',
+            pointerId: remainingPointerId,
+            recentSamples: [sample],
+          };
+          startPan(remainingPoint.x, remainingPoint.y);
+          return;
+        }
+        touchGestureRef.current = null;
+      }
+    }
     if (marqueeSelection) {
       releasePointerCaptureSafe(getPointerCaptureTarget(event), event.pointerId);
       setMarqueeSelection(null);
       return;
     }
     if (panState) {
+      if (event.pointerType === 'touch') {
+        maybeStartTouchPanInertia(event.pointerId);
+      } else {
+        touchGestureRef.current = null;
+      }
       releasePointerCaptureSafe(getPointerCaptureTarget(event), event.pointerId);
       endPan();
     }
     if (connecting) {
       endConnection();
     }
-  }, [marqueeSelection, panState, connecting, endPan, endConnection]);
+  }, [
+    activeTouchPointersRef,
+    cancelTouchLongPressSelection,
+    connecting,
+    endConnection,
+    endPan,
+    marqueeSelection,
+    maybeStartTouchPanInertia,
+    panState,
+    startPan,
+    startPinchGestureFromActivePointers,
+  ]);
 
   // ---------------------------------------------------------------------------
   // Edge Handlers
@@ -1204,7 +1994,7 @@ export function useCanvasInteractions(args?: {
   }, [edges, isPathLocked, notifyLocked, setEdges, setRuntimeState, pruneRuntimeInputsInternal, selectedEdgeId, selectEdge]);
 
   const handleStartConnection = useCallback(async (
-    event: React.PointerEvent<HTMLButtonElement>,
+    event: React.PointerEvent<Element>,
     node: AiNode,
     port: string
   ): Promise<void> => {
@@ -1225,7 +2015,7 @@ export function useCanvasInteractions(args?: {
   }, [isPathLocked, getPortPosition, startConnection, notifyLocked, confirmNodeSwitch]);
 
   const handleCompleteConnection = useCallback((
-    event: React.PointerEvent<HTMLButtonElement>,
+    event: React.PointerEvent<Element>,
     node: AiNode,
     port: string
   ): void => {
@@ -1267,7 +2057,7 @@ export function useCanvasInteractions(args?: {
   }, [connecting, nodes, isPathLocked, endConnection, setEdges, toast, notifyLocked]);
 
   const handleReconnectInput = useCallback(async (
-    event: React.PointerEvent<HTMLButtonElement>,
+    event: React.PointerEvent<Element>,
     nodeId: string,
     port: string
   ): Promise<void> => {
@@ -1583,6 +2373,22 @@ export function useCanvasInteractions(args?: {
           event.preventDefault();
           handleDeleteSelectedNode();
         }
+        return;
+      }
+      if (!modifier && event.key.toLowerCase() === 'f') {
+        if (isTypingTarget(event.target)) return;
+        event.preventDefault();
+        if (event.shiftKey) {
+          fitToSelection();
+          return;
+        }
+        fitToNodes();
+        return;
+      }
+      if ((modifier && event.key === '0') || (!modifier && event.key.toLowerCase() === 'r')) {
+        if (isTypingTarget(event.target)) return;
+        event.preventDefault();
+        resetView();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -1595,9 +2401,12 @@ export function useCanvasInteractions(args?: {
     handleDuplicateSelection,
     handlePasteSelection,
     handleRemoveEdge,
+    fitToNodes,
+    fitToSelection,
     isPageRootTarget,
     isWithinCanvasScope,
     nodes,
+    resetView,
     selectedEdgeId,
     selectedNodeId,
     setNodeSelection,
@@ -1634,6 +2443,26 @@ export function useCanvasInteractions(args?: {
   useEffect(() => {
     return () => {
       if (rafIdRef.current !== null) cancelAnimationFrame(rafIdRef.current);
+      if (viewAnimationRafRef.current !== null) cancelAnimationFrame(viewAnimationRafRef.current);
+      if (wheelZoomRafRef.current !== null) cancelAnimationFrame(wheelZoomRafRef.current);
+      if (touchLongPressIndicatorRafRef.current !== null) {
+        cancelAnimationFrame(touchLongPressIndicatorRafRef.current);
+      }
+      if (panInertiaRafRef.current !== null) cancelAnimationFrame(panInertiaRafRef.current);
+      const pendingLongPress = touchLongPressSelectionRef.current;
+      if (pendingLongPress?.timerId != null) {
+        window.clearTimeout(pendingLongPress.timerId);
+      }
+      if (touchLongPressIndicatorHideTimerRef.current !== null) {
+        window.clearTimeout(touchLongPressIndicatorHideTimerRef.current);
+      }
+      wheelZoomTargetRef.current = null;
+      touchLongPressIndicatorRafRef.current = null;
+      touchLongPressIndicatorHideTimerRef.current = null;
+      panInertiaVelocityRef.current = null;
+      touchGestureRef.current = null;
+      touchLongPressSelectionRef.current = null;
+      activeTouchPointersRef.current.clear();
       dragSelectionRef.current = null;
     };
   }, []);
@@ -1649,6 +2478,7 @@ export function useCanvasInteractions(args?: {
     connecting,
     connectingPos,
     selectionMarqueeRect,
+    touchLongPressIndicator,
     lastDrop,
     edgePaths,
     // Handlers
@@ -1658,6 +2488,7 @@ export function useCanvasInteractions(args?: {
     handlePanStart,
     handlePanMove,
     handlePanEnd,
+    handleWheel,
     handleRemoveEdge,
     handleDisconnectPort,
     handleStartConnection,
@@ -1676,7 +2507,9 @@ export function useCanvasInteractions(args?: {
     // Actions
     zoomTo,
     fitToNodes,
+    fitToSelection,
     resetView,
+    centerOnCanvasPoint,
     ensureNodeVisible,
     pruneRuntimeInputs: pruneRuntimeInputsInternal,
   };

@@ -86,28 +86,28 @@ export default function AuthDashboardPage(): React.JSX.Element {
         <MetadataItem
           label='Total Users'
           hint='All accounts'
-          value={metrics.total}
+          value={String(metrics.total)}
           valueClassName='text-3xl font-semibold text-white'
           className='p-4'
         />
         <MetadataItem
           label='Verified Emails'
           hint='Email verified'
-          value={metrics.verified}
+          value={String(metrics.verified)}
           valueClassName='text-3xl font-semibold text-white'
           className='p-4'
         />
         <MetadataItem
           label='Unverified'
           hint='Pending verification'
-          value={metrics.unverified}
+          value={String(metrics.unverified)}
           valueClassName='text-3xl font-semibold text-white'
           className='p-4'
         />
         <MetadataItem
           label='Unassigned Roles'
           hint='No role assigned'
-          value={metrics.unassigned}
+          value={String(metrics.unassigned)}
           valueClassName='text-3xl font-semibold text-white'
           className='p-4'
         />
@@ -126,7 +126,7 @@ export default function AuthDashboardPage(): React.JSX.Element {
               key={role.id}
               label={role.name}
               hint={role.description ?? role.id}
-              value={metrics.roleCounts[role.id] ?? 0}
+              value={String(metrics.roleCounts[role.id] ?? 0)}
               valueClassName='text-2xl font-semibold text-white'
               className='p-4 bg-card/50'
             />

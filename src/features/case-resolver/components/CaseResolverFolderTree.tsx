@@ -30,7 +30,7 @@ import {
   type MasterFolderTreeProps,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
-import { Button, FolderTreePanel, TreeHeader, useToast } from '@/shared/ui';
+import { Button, FolderTreePanel, TreeHeader } from '@/shared/ui';
 import { DRAG_KEYS, resolveVerticalDropPosition, setDragData } from '@/shared/utils/drag-drop';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
@@ -51,6 +51,10 @@ import {
   toCaseResolverFileNodeId,
   toCaseResolverFolderNodeId,
 } from '../master-tree';
+import {
+  buildCaseResolverNodeFileRelationIndexFromAssets,
+  EMPTY_CASE_RESOLVER_NODE_FILE_RELATION_INDEX,
+} from '../nodefile-relations';
 import { resolveCaseResolverTreeWorkspace } from './case-resolver-tree-workspace';
 import {
   CASE_RESOLVER_PALETTE,
@@ -63,6 +67,28 @@ import {
 } from './CaseResolverFolderTree.helpers';
 
 import type { CaseResolverWorkspace } from '../types';
+
+const resolveFolderAncestorNodeIds = (folderPath: string): string[] => {
+  const normalizedFolder = folderPath.trim();
+  if (!normalizedFolder) return [];
+  const parts = normalizedFolder.split('/').filter(Boolean);
+  return parts.map((_: string, index: number): string =>
+    toCaseResolverFolderNodeId(parts.slice(0, index + 1).join('/'))
+  );
+};
+
+const areStringArraysEqual = (left: string[], right: string[]): boolean =>
+  left.length === right.length && left.every((value: string, index: number): boolean => value === right[index]);
+
+type PendingNodeCanvasAction = {
+  kind: 'drop' | 'show';
+  fileId: string;
+  name: string;
+  folder: string;
+  nodeId?: string | null;
+  relatedNodeFileAssetIds: string[];
+  targetNodeFileAssetId?: string | null;
+};
 
 export function CaseResolverFolderTree(): React.JSX.Element {
   const router = useRouter();
@@ -102,10 +128,10 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     onDeleteAsset,
     onToggleFileLock,
     onEditFile,
-    activeFile,
   } = useCaseResolverPageContext();
-  const { toast } = useToast();
   const [isRootExplicitlySelected, setIsRootExplicitlySelected] = useState(true);
+  const [highlightedNodeFileAssetIds, setHighlightedNodeFileAssetIds] = useState<string[]>([]);
+  const [pendingNodeCanvasAction, setPendingNodeCanvasAction] = useState<PendingNodeCanvasAction | null>(null);
   const dragHandleNodeIdRef = React.useRef<string | null>(null);
 
   useEffect((): (() => void) => {
@@ -286,21 +312,127 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     return stats;
   }, [treeWorkspace.files]);
 
-  const documentNodeIdsBySourceFileId = useMemo((): Map<string, string[]> => {
-    const byFileId = new Map<string, string[]>();
-    if (activeFile?.fileType !== 'document') return byFileId;
-    const activeNodeIds = new Set(activeFile.graph.nodes.map((node: { id: string }) => node.id));
-    const sourceByNode = activeFile.graph.documentSourceFileIdByNode ?? {};
-    Object.entries(sourceByNode).forEach(([nodeId, sourceFileId]: [string, string]) => {
-      if (!activeNodeIds.has(nodeId)) return;
-      const normalizedFileId = sourceFileId.trim();
-      if (!normalizedFileId) return;
-      const current = byFileId.get(normalizedFileId) ?? [];
-      current.push(nodeId);
-      byFileId.set(normalizedFileId, current);
+  const nodeFileRelations = useMemo(() => {
+    if (treeWorkspace.assets.length === 0) {
+      return EMPTY_CASE_RESOLVER_NODE_FILE_RELATION_INDEX;
+    }
+    return buildCaseResolverNodeFileRelationIndexFromAssets({
+      assets: treeWorkspace.assets,
     });
-    return byFileId;
-  }, [activeFile]);
+  }, [treeWorkspace.assets]);
+
+  const documentNodeIdsBySourceFileId = useMemo((): Map<string, string[]> => {
+    return new Map<string, string[]>(
+      Object.entries(nodeFileRelations.nodeIdsByDocumentFileId)
+    );
+  }, [nodeFileRelations.nodeIdsByDocumentFileId]);
+
+  const nodeFileAssetIdsBySourceFileId = useMemo((): Map<string, string[]> => {
+    return new Map<string, string[]>(
+      Object.entries(nodeFileRelations.nodeFileAssetIdsByDocumentFileId)
+    );
+  }, [nodeFileRelations.nodeFileAssetIdsByDocumentFileId]);
+
+  useEffect(() => {
+    if (!isNodeFileCanvasActive) return;
+    const nextHighlighted = selectedFileId
+      ? nodeFileAssetIdsBySourceFileId.get(selectedFileId) ?? []
+      : [];
+    if (areStringArraysEqual(highlightedNodeFileAssetIds, nextHighlighted)) return;
+    setHighlightedNodeFileAssetIds(nextHighlighted);
+  }, [
+    highlightedNodeFileAssetIds,
+    isNodeFileCanvasActive,
+    nodeFileAssetIdsBySourceFileId,
+    selectedFileId,
+  ]);
+
+  const highlightedNodeFileAssetIdSet = useMemo(
+    () => new Set<string>(highlightedNodeFileAssetIds),
+    [highlightedNodeFileAssetIds]
+  );
+
+  useEffect(() => {
+    if (isNodeFileCanvasActive) return;
+    if (highlightedNodeFileAssetIds.length === 0) return;
+    setHighlightedNodeFileAssetIds([]);
+  }, [highlightedNodeFileAssetIds.length, isNodeFileCanvasActive]);
+
+  useEffect(() => {
+    if (highlightedNodeFileAssetIds.length === 0) return;
+    const validNodeFileAssetIds = new Set<string>(
+      treeWorkspace.assets
+        .filter((asset): boolean => asset.kind === 'node_file')
+        .map((asset): string => asset.id)
+    );
+    const nextHighlighted = highlightedNodeFileAssetIds.filter((assetId: string): boolean =>
+      validNodeFileAssetIds.has(assetId)
+    );
+    if (nextHighlighted.length === highlightedNodeFileAssetIds.length) return;
+    setHighlightedNodeFileAssetIds(nextHighlighted);
+  }, [highlightedNodeFileAssetIds, treeWorkspace.assets]);
+
+  const highlightedFolderAncestorNodeIds = useMemo((): string[] => {
+    if (highlightedNodeFileAssetIds.length === 0) return [];
+    const highlighted = new Set<string>(highlightedNodeFileAssetIds);
+    const ancestorNodeIds = new Set<string>();
+    treeWorkspace.assets.forEach((asset): void => {
+      if (asset.kind !== 'node_file') return;
+      if (!highlighted.has(asset.id)) return;
+      resolveFolderAncestorNodeIds(asset.folder).forEach((folderNodeId: string): void => {
+        ancestorNodeIds.add(folderNodeId);
+      });
+    });
+    return Array.from(ancestorNodeIds);
+  }, [highlightedNodeFileAssetIds, treeWorkspace.assets]);
+
+  useEffect(() => {
+    if (highlightedFolderAncestorNodeIds.length === 0) return;
+    const nextExpandedNodeIds = new Set<string>(
+      Array.from(controller.expandedNodeIds).map((nodeId): string => String(nodeId))
+    );
+    let changed = false;
+    highlightedFolderAncestorNodeIds.forEach((folderNodeId: string): void => {
+      if (nextExpandedNodeIds.has(folderNodeId)) return;
+      nextExpandedNodeIds.add(folderNodeId);
+      changed = true;
+    });
+    if (!changed) return;
+    controller.setExpandedNodeIds(Array.from(nextExpandedNodeIds));
+  }, [controller, highlightedFolderAncestorNodeIds]);
+
+  useEffect(() => {
+    if (!pendingNodeCanvasAction) return;
+    if (!isNodeFileCanvasActive) return;
+    if (
+      pendingNodeCanvasAction.targetNodeFileAssetId &&
+      selectedAssetId !== pendingNodeCanvasAction.targetNodeFileAssetId
+    ) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout((): void => {
+      if (pendingNodeCanvasAction.kind === 'drop') {
+        emitCaseResolverDropDocumentToCanvas({
+          fileId: pendingNodeCanvasAction.fileId,
+          name: pendingNodeCanvasAction.name,
+          folder: pendingNodeCanvasAction.folder,
+        });
+      } else {
+        setHighlightedNodeFileAssetIds(pendingNodeCanvasAction.relatedNodeFileAssetIds);
+        emitCaseResolverShowDocumentInCanvas({
+          fileId: pendingNodeCanvasAction.fileId,
+          nodeId: pendingNodeCanvasAction.nodeId ?? null,
+          relatedNodeFileAssetIds: pendingNodeCanvasAction.relatedNodeFileAssetIds,
+        });
+      }
+      setPendingNodeCanvasAction(null);
+    }, 0);
+
+    return (): void => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [isNodeFileCanvasActive, pendingNodeCanvasAction, selectedAssetId]);
 
   const {
     RootIcon,
@@ -649,7 +781,13 @@ export function CaseResolverFolderTree(): React.JSX.Element {
             const linkedDocumentNodeIds = fileId
               ? documentNodeIdsBySourceFileId.get(fileId) ?? []
               : [];
+            const linkedNodeFileAssetIds = fileId
+              ? nodeFileAssetIdsBySourceFileId.get(fileId) ?? []
+              : [];
             const hasDocumentNodeInCanvas = linkedDocumentNodeIds.length > 0;
+            const isHighlightedNodeFile = Boolean(
+              assetId && highlightedNodeFileAssetIdSet.has(assetId)
+            );
             const isFileLocked = fileId ? fileLockById.get(fileId) === true : false;
             const isFolder = folderPath !== null;
             const folderStats = folderPath ? folderCaseFileStatsByPath.get(folderPath) ?? null : null;
@@ -685,15 +823,17 @@ export function CaseResolverFolderTree(): React.JSX.Element {
 
             const stateClassName = isSelected
               ? 'bg-blue-600 text-white'
-              : dropPosition === 'before'
-                ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-blue-500/60'
-                : dropPosition === 'after'
-                  ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-cyan-400/60'
-                  : isDragging
-                    ? 'opacity-50 text-gray-200'
-                    : isDropTarget
-                      ? 'bg-cyan-500/10 text-cyan-100'
-                      : 'text-gray-300 hover:bg-muted/50';
+              : isHighlightedNodeFile
+                ? 'bg-violet-500/15 text-violet-100 ring-1 ring-inset ring-violet-400/60'
+                : dropPosition === 'before'
+                  ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-blue-500/60'
+                  : dropPosition === 'after'
+                    ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-cyan-400/60'
+                    : isDragging
+                      ? 'opacity-50 text-gray-200'
+                      : isDropTarget
+                        ? 'bg-cyan-500/10 text-cyan-100'
+                        : 'text-gray-300 hover:bg-muted/50';
 
             return (
               <div
@@ -721,7 +861,9 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                   }
                   if (fileId) {
                     if (isSelected) return;
-                    onSelectFile(fileId);
+                    onSelectFile(fileId, {
+                      preserveSelectedAsset: isNodeFileCanvasActive,
+                    });
                     return;
                   }
                   if (assetId) {
@@ -744,7 +886,9 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                     }
                     if (fileId) {
                       if (isSelected) return;
-                      onSelectFile(fileId);
+                      onSelectFile(fileId, {
+                        preserveSelectedAsset: isNodeFileCanvasActive,
+                      });
                       return;
                     }
                     if (assetId) {
@@ -764,7 +908,9 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                   className={`size-3 shrink-0 ${
                     isCanvasCaseFile
                       ? 'text-sky-300/90 opacity-0 transition-opacity group-hover:opacity-100'
-                      : 'text-gray-500'
+                      : isNodeFileAsset
+                        ? 'text-violet-400/80 opacity-0 transition-opacity group-hover:opacity-100'
+                        : 'text-gray-500'
                   }`}
                 />
                 {canToggle ? (
@@ -913,32 +1059,47 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                           isNodeFileCanvasActive
                             ? 'Add file to node canvas'
                             : hasDocumentNodeInCanvas
-                              ? 'Show file in canvas'
-                              : 'Drop file onto canvas'
+                              ? 'Show file in node file canvas'
+                              : 'Add file to a node file canvas'
                         }
                         aria-label={
                           isNodeFileCanvasActive
                             ? 'Add file to node canvas'
                             : hasDocumentNodeInCanvas
-                              ? 'Show file in canvas'
-                              : 'Drop file onto canvas'
+                              ? 'Show file in node file canvas'
+                              : 'Add file to a node file canvas'
                         }
                         onClick={(event): void => {
                           event.preventDefault();
                           event.stopPropagation();
-                          if (!isNodeFileCanvasActive && activeFile?.fileType === 'case') {
-                            toast('Open a non-case file to manage canvas text nodes.', {
-                              variant: 'warning',
-                            });
-                            return;
-                          }
                           if (!isNodeFileCanvasActive && hasDocumentNodeInCanvas) {
-                            emitCaseResolverShowDocumentInCanvas({
+                            const targetNodeFileAssetId = linkedNodeFileAssetIds[0] ?? null;
+                            if (targetNodeFileAssetId) {
+                              onSelectAsset(targetNodeFileAssetId);
+                            }
+                            setPendingNodeCanvasAction({
+                              kind: 'show',
                               fileId,
+                              name: node.name,
+                              folder: parseString(node.metadata?.['folder']),
                               nodeId: linkedDocumentNodeIds[linkedDocumentNodeIds.length - 1] ?? null,
+                              relatedNodeFileAssetIds: linkedNodeFileAssetIds,
+                              targetNodeFileAssetId,
                             });
                             return;
                           }
+                          if (!isNodeFileCanvasActive) {
+                            onCreateNodeFile(parseString(node.metadata?.['folder']));
+                            setPendingNodeCanvasAction({
+                              kind: 'drop',
+                              fileId,
+                              name: node.name,
+                              folder: parseString(node.metadata?.['folder']),
+                              relatedNodeFileAssetIds: [],
+                            });
+                            return;
+                          }
+                          setHighlightedNodeFileAssetIds([]);
                           emitCaseResolverDropDocumentToCanvas({
                             fileId,
                             name: node.name,

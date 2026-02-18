@@ -77,6 +77,7 @@ type ProductStudioVariantsResult = {
   sequencing: ProductStudioSequencingConfig;
   sequencingDiagnostics: ProductStudioSequencingDiagnostics;
   sequenceReadiness: ProductStudioSequenceReadiness;
+  sequenceStepPlan: ProductStudioSequenceStepPlanEntry[];
   sequenceGenerationMode: ProductStudioSequenceGenerationMode;
   projectId: string | null;
   sourceSlotId: string | null;
@@ -89,6 +90,7 @@ export type ProductStudioSendResult = {
   sequencing: ProductStudioSequencingConfig;
   sequencingDiagnostics: ProductStudioSequencingDiagnostics;
   sequenceReadiness: ProductStudioSequenceReadiness;
+  sequenceStepPlan: ProductStudioSequenceStepPlanEntry[];
   projectId: string;
   imageSlotIndex: number;
   sourceSlot: ImageStudioSlotRecord;
@@ -108,6 +110,7 @@ export type ProductStudioSequencePreflightResult = {
   config: ProductStudioConfig;
   projectId: string;
   imageSlotIndex: number;
+  sequenceStepPlan: ProductStudioSequenceStepPlanEntry[];
   sequenceGenerationMode: ProductStudioSequenceGenerationMode;
   requestedSequenceMode: ProductStudioSequenceGenerationMode;
   resolvedSequenceMode: ProductStudioSequenceGenerationMode;
@@ -124,6 +127,15 @@ type ProductImageFileSource = {
   filepath: string;
   filename: string | null;
   mimetype: string | null;
+};
+
+type ProductStudioSequenceStepPlanEntry = {
+  index: number;
+  stepId: string;
+  stepType: ImageStudioSequenceStep['type'];
+  inputSource: 'previous' | 'source';
+  resolvedInput: 'previous' | 'source';
+  producesOutput: boolean;
 };
 
 const MIME_BY_EXTENSION: Record<string, string> = {
@@ -482,6 +494,58 @@ const validateProductStudioSequenceSteps = (
     });
   }
 };
+
+const stepProducesRenderableOutput = (
+  step: ImageStudioSequenceStep,
+): boolean => {
+  if (step.type === 'mask') {
+    return Boolean(step.config.persistMaskSlot);
+  }
+  return (
+    step.type === 'crop_center' ||
+    step.type === 'generate' ||
+    step.type === 'regenerate' ||
+    step.type === 'upscale'
+  );
+};
+
+const buildProductStudioSequenceStepPlan = (
+  steps: ImageStudioSequenceStep[],
+): ProductStudioSequenceStepPlanEntry[] => {
+  let hasProducedOutput = false;
+  return steps.map((step, index) => {
+    const inputSource = step.inputSource === 'source' ? 'source' : 'previous';
+    const resolvedInput =
+      inputSource === 'source' || hasProducedOutput ? inputSource : 'source';
+    const producesOutput = stepProducesRenderableOutput(step);
+    if (producesOutput) {
+      hasProducedOutput = true;
+    }
+    return {
+      index,
+      stepId: step.id,
+      stepType: step.type,
+      inputSource,
+      resolvedInput,
+      producesOutput,
+    };
+  });
+};
+
+const buildSequenceStepPlanWarnings = (
+  plan: ProductStudioSequenceStepPlanEntry[],
+): string[] =>
+  plan
+    .filter(
+      (entry) =>
+        entry.index > 0 &&
+        entry.inputSource === 'previous' &&
+        entry.resolvedInput === 'source',
+    )
+    .map(
+      (entry) =>
+        `Step ${entry.index + 1} (${entry.stepType}) is set to use previous output, but no prior step output exists yet. It will run on the source image.`,
+    );
 
 const buildSettingsSnapshotHash = (settings: Record<string, unknown>): string => {
   const payload = JSON.stringify(settings);
@@ -1005,11 +1069,16 @@ const resolveProductStudioSequencePreflight = async (params: {
 }): Promise<ProductStudioSequencePreflightResult> => {
   const resolved = await resolveProductAndStudioTarget(params);
   const {
+    parsedStudioSettings,
     sequencing,
     sequencingDiagnostics,
     sequenceGenerationMode,
     modelId,
   } = await resolveStudioSettingsBundle(resolved.projectId);
+  const activeSequenceSteps = resolveImageStudioSequenceActiveSteps(
+    parsedStudioSettings.projectSequencing,
+  ).filter((step) => step.enabled);
+  const sequenceStepPlan = buildProductStudioSequenceStepPlan(activeSequenceSteps);
   const requestedSequenceMode = normalizeProductStudioSequenceGenerationMode(
     params.sequenceGenerationMode ?? sequenceGenerationMode,
   );
@@ -1018,6 +1087,10 @@ const resolveProductStudioSequencePreflight = async (params: {
     requestedMode: requestedSequenceMode,
     modelId,
   });
+  const warnings = [
+    ...routeDecision.warnings,
+    ...buildSequenceStepPlanWarnings(sequenceStepPlan),
+  ];
   const sequenceReadiness = resolveSequenceReadiness({
     sequencing,
     sequencingDiagnostics,
@@ -1028,6 +1101,7 @@ const resolveProductStudioSequencePreflight = async (params: {
     config: resolved.config,
     projectId: resolved.projectId,
     imageSlotIndex: resolved.imageSlotIndex,
+    sequenceStepPlan,
     sequenceGenerationMode,
     requestedSequenceMode,
     resolvedSequenceMode: routeDecision.resolvedMode,
@@ -1036,7 +1110,7 @@ const resolveProductStudioSequencePreflight = async (params: {
     sequencingDiagnostics,
     sequenceReadiness,
     modelId,
-    warnings: [...routeDecision.warnings],
+    warnings,
   };
 };
 
@@ -1234,6 +1308,7 @@ export async function getProductStudioVariants(params: {
       sequencing: preflight.sequencing,
       sequencingDiagnostics: preflight.sequencingDiagnostics,
       sequenceReadiness: preflight.sequenceReadiness,
+      sequenceStepPlan: preflight.sequenceStepPlan,
       sequenceGenerationMode: preflight.sequenceGenerationMode,
       projectId: preflight.projectId,
       sourceSlotId: null,
@@ -1252,6 +1327,7 @@ export async function getProductStudioVariants(params: {
     sequencing: preflight.sequencing,
     sequencingDiagnostics: preflight.sequencingDiagnostics,
     sequenceReadiness: preflight.sequenceReadiness,
+    sequenceStepPlan: preflight.sequenceStepPlan,
     sequenceGenerationMode: preflight.sequenceGenerationMode,
     projectId: preflight.projectId,
     sourceSlotId: sourceSlot?.id ?? sourceSlotCandidates[0] ?? null,
@@ -1314,11 +1390,15 @@ export async function sendProductImageToStudio(params: {
     requestedMode: requestedSequenceMode,
     modelId,
   });
-  const warnings = [...routeDecision.warnings];
-  routeDecisionMs = Date.now() - routeDecisionStartMs;
   const resolvedActiveSteps = resolveImageStudioSequenceActiveSteps(
     parsedStudioSettings.projectSequencing,
   ).filter((step) => step.enabled);
+  const sequenceStepPlan = buildProductStudioSequenceStepPlan(resolvedActiveSteps);
+  const warnings = [
+    ...routeDecision.warnings,
+    ...buildSequenceStepPlanWarnings(sequenceStepPlan),
+  ];
+  routeDecisionMs = Date.now() - routeDecisionStartMs;
   const sequenceSnapshot = buildImageStudioSequenceSnapshot(
     parsedStudioSettings,
   );
@@ -1571,6 +1651,7 @@ export async function sendProductImageToStudio(params: {
       sequencing,
       sequencingDiagnostics,
       sequenceReadiness,
+      sequenceStepPlan,
       projectId: resolved.projectId,
       imageSlotIndex: resolved.imageSlotIndex,
       sourceSlot,
@@ -1726,6 +1807,7 @@ export async function sendProductImageToStudio(params: {
     sequencing,
     sequencingDiagnostics,
     sequenceReadiness,
+    sequenceStepPlan,
     projectId: resolved.projectId,
     imageSlotIndex: resolved.imageSlotIndex,
     sourceSlot,

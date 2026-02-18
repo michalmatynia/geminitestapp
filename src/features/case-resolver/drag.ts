@@ -16,6 +16,7 @@ export type CaseResolverDropDocumentToCanvasDetail = {
 export type CaseResolverShowDocumentInCanvasDetail = {
   fileId: string;
   nodeId?: string | null;
+  relatedNodeFileAssetIds?: string[];
 };
 
 export const emitCaseResolverDropDocumentToCanvas = (

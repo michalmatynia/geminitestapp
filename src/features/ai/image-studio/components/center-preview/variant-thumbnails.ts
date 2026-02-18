@@ -69,7 +69,7 @@ const toVariantOutput = (
 
 export const resolveSourceSlotIdFromGeneratedPath = (slot: ImageStudioSlotRecord | null): string | null => {
   if (!slot) return null;
-  const sourcePath = normalizeImagePath(slot.imageFile?.filepath ?? slot.imageUrl ?? null);
+  const sourcePath = normalizeImagePath(slot.imageFile?.url ?? slot.imageUrl ?? null);
   if (!sourcePath) return null;
   const match = sourcePath.match(GENERATED_SOURCE_PATH_REGEX);
   const sourceSlotId = match?.[1]?.trim() ?? '';
@@ -177,7 +177,7 @@ const buildVariantFromSlot = (
   const output = slotImageFile
     ? {
       id: slotImageFile.id,
-      filepath: slotImageFile.filepath,
+      filepath: slotImageFile.url,
       filename: slotImageFile.filename || slot.name || `Generated ${fallbackIndex}`,
       size: slotImageFile.size,
       width: slotImageFile.width,
@@ -273,7 +273,7 @@ export const buildVariantThumbnails = ({
           return true;
         }
         if (normalizedOutputPath) {
-          if (normalizeImagePath(slot.imageFile?.filepath) === normalizedOutputPath) {
+          if (normalizeImagePath(slot.imageFile?.url) === normalizedOutputPath) {
             return true;
           }
           if (normalizeImagePath(slot.imageUrl) === normalizedOutputPath) {
@@ -406,7 +406,7 @@ export const resolveVariantSlotIdForCenterPreview = ({
   const variantOutputPath = normalizeImagePath(variant.output?.filepath ?? variant.imageSrc);
   if (variantOutputPath) {
     const matchedByPath = candidateSlots.find((slot) => {
-      const imageFilePath = normalizeImagePath(slot.imageFile?.filepath);
+      const imageFilePath = normalizeImagePath(slot.imageFile?.url);
       if (imageFilePath && imageFilePath === variantOutputPath) return true;
       const imageUrlPath = normalizeImagePath(slot.imageUrl);
       return Boolean(imageUrlPath && imageUrlPath === variantOutputPath);

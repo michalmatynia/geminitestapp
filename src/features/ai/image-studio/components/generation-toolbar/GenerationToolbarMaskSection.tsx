@@ -1,4 +1,4 @@
-import { Loader2, Play } from 'lucide-react';
+import { Play } from 'lucide-react';
 import React from 'react';
 
 import { Button, SelectSimple, Switch } from '@/shared/ui';
@@ -75,12 +75,9 @@ export function GenerationToolbarMaskSection({
           onClick={onGenerateMask}
           disabled={!workingSlotPresent || maskGenerationBusy}
           className='sm:min-w-[160px]'
+          loading={maskGenerationBusy}
         >
-          {maskGenerationBusy ? (
-            <Loader2 className='mr-2 size-4 animate-spin' />
-          ) : (
-            <Play className='mr-2 size-4' />
-          )}
+          {!maskGenerationBusy && <Play className='mr-2 size-4' />}
           {maskGenerationLabel}
         </Button>
       </div>

@@ -254,7 +254,7 @@ export const resolveClientProcessingImageSrc = (
   const inlineBase64 = normalizeLocalImageSource(slot?.imageBase64 ?? null);
   if (inlineBase64) return inlineBase64;
 
-  const localFilepath = normalizeLocalImageSource(slot?.imageFile?.filepath ?? null);
+  const localFilepath = normalizeLocalImageSource(slot?.imageFile?.url ?? null);
   if (localFilepath) return localFilepath;
 
   const localUrl = normalizeLocalImageSource(slot?.imageUrl ?? null);

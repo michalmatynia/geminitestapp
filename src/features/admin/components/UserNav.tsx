@@ -17,7 +17,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  Switch,
+  ToggleRow,
   ThemeToggle as ThemeToggleComponent,
 } from '@/shared/ui';
 
@@ -91,25 +91,25 @@ export function UserNav(): React.ReactNode {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          className='flex flex-col items-start gap-2'
+          className='flex flex-col items-stretch gap-2'
           onSelect={(event: Event) => event.preventDefault()}
         >
           <div className='text-xs font-medium text-muted-foreground'>Query Panel</div>
-          <div className='flex w-full items-center justify-between gap-3'>
-            <span className='text-sm'>Enable Panel</span>
-            <Switch
-              checked={queryPanelEnabled}
-              onCheckedChange={(checked: boolean): void => setQueryPanelSetting('query_status_panel_enabled', checked)}
-            />
-          </div>
-          <div className='flex w-full items-center justify-between gap-3'>
-            <span className='text-sm'>Open Panel</span>
-            <Switch
-              checked={queryPanelOpen}
-              onCheckedChange={(checked: boolean): void => setQueryPanelSetting('query_status_panel_open', checked)}
-              disabled={!queryPanelEnabled}
-            />
-          </div>
+          <ToggleRow
+            label='Enable Panel'
+            checked={queryPanelEnabled}
+            onCheckedChange={(checked: boolean): void => setQueryPanelSetting('query_status_panel_enabled', checked)}
+            className='bg-transparent border-none p-0 hover:bg-transparent'
+            labelClassName='text-sm font-normal normal-case tracking-normal'
+          />
+          <ToggleRow
+            label='Open Panel'
+            checked={queryPanelOpen}
+            onCheckedChange={(checked: boolean): void => setQueryPanelSetting('query_status_panel_open', checked)}
+            disabled={!queryPanelEnabled}
+            className='bg-transparent border-none p-0 hover:bg-transparent'
+            labelClassName='text-sm font-normal normal-case tracking-normal'
+          />
           <div className='flex w-full justify-end'>
             <Button
               variant='outline'

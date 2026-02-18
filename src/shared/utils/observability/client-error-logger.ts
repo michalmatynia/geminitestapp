@@ -5,6 +5,7 @@ import {
   REDACTED_VALUE,
   truncateString,
 } from './client-redaction';
+import { isAbortLikeError } from './is-abort-like-error';
 import { getLastUserAction, initUserActionTracker } from './user-action-tracker';
 
 type ClientErrorContext = Record<string, unknown>;
@@ -122,6 +123,7 @@ export const logClientError = (
   }
 ): void => {
   if (typeof window === 'undefined') return;
+  if (isAbortLikeError(error)) return;
 
   // Prevent double logging of the same error instance
   if (isLoggableObject(error) && error.__logged) {

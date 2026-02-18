@@ -14,7 +14,7 @@ import {
   Pagination,
   SectionHeader,
   SelectSimple,
-  Switch,
+  ToggleRow,
   useToast,
 } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -402,21 +402,21 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
                 </div>
                 <div className='flex flex-wrap items-center justify-between gap-3 border-t border-border/50 pt-3'>
                   <div className='flex items-center gap-2'>
-                    <Switch
+                    <ToggleRow
+                      label={list.deletionLocked ? 'Deletion locked' : 'Deletion unlocked'}
                       checked={list.deletionLocked}
                       onCheckedChange={(checked: boolean): void => {
                         handleListChange(list.id, { deletionLocked: checked });
                       }}
+                      icon={list.deletionLocked ? (
+                        <Lock className='size-3.5 text-amber-300' />
+                      ) : (
+                        <Unlock className='size-3.5 text-emerald-300' />
+                      )}
+                      className='bg-transparent border-none p-0 hover:bg-transparent'
+                      labelClassName='text-xs text-gray-300 normal-case tracking-normal font-normal'
                     />
-                    {list.deletionLocked ? (
-                      <Lock className='size-3.5 text-amber-300' />
-                    ) : (
-                      <Unlock className='size-3.5 text-emerald-300' />
-                    )}
-                    <span className='text-xs text-gray-300'>
-                      {list.deletionLocked ? 'Deletion locked' : 'Deletion unlocked'}
-                    </span>
-                    <Badge variant='outline' className='text-[10px]'>
+                    <Badge variant='outline' className='text-[10px] ml-2'>
                       {VALIDATOR_SCOPE_LABELS[list.scope]}
                     </Badge>
                   </div>

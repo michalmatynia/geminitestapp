@@ -1,5 +1,16 @@
 import type { ImageStudioSlotRecord } from '../types';
 
+type SlotImageFileLike = {
+  url?: string | null | undefined;
+  filepath?: string | null | undefined;
+};
+
+type SlotWithImageLike = {
+  imageBase64?: string | null | undefined;
+  imageUrl?: string | null | undefined;
+  imageFile?: SlotImageFileLike | null | undefined;
+};
+
 const SLOT_ID_PREFIXES = ['slot:', 'card:'] as const;
 
 const asTrimmedString = (value: string | null | undefined): string | null => {
@@ -37,14 +48,14 @@ export const resolveStudioSlotIdCandidates = (
 };
 
 export const slotHasRenderableImage = (
-  slot: Pick<ImageStudioSlotRecord, 'imageBase64' | 'imageUrl' | 'imageFile'> | null | undefined,
+  slot: SlotWithImageLike | null | undefined,
 ): boolean => {
   if (!slot) return false;
 
   const base64 = asTrimmedString(slot.imageBase64);
   if (base64) return true;
 
-  const filePath = asTrimmedString(slot.imageFile?.url);
+  const filePath = asTrimmedString(slot.imageFile?.url ?? slot.imageFile?.filepath);
   if (filePath) return true;
 
   return Boolean(asTrimmedString(slot.imageUrl));

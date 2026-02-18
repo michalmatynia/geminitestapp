@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { useState, type ChangeEvent } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Input, Switch, useToast, SectionHeader, FormSection, FormField } from '@/shared/ui';
+import { Button, Input, ToggleRow, useToast, FormSection, FormField, PageLayout } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 export type TransientRecoverySettings = {
@@ -94,31 +94,29 @@ export function TransientRecoverySettingsForm({
   };
 
   return (
-    <div className='container mx-auto py-10 space-y-6'>
-      <SectionHeader
-        title='Transient Recovery'
-        description='Configure retry and circuit-breaker policies for transient failures.'
-        eyebrow={(
-          <Link href='/admin/settings' className='text-blue-300 hover:text-blue-200'>
-            ← Back to settings
-          </Link>
-        )}
-      />
-
+    <PageLayout
+      title='Transient Recovery'
+      description='Configure retry and circuit-breaker policies for transient failures.'
+      eyebrow={(
+        <Link href='/admin/settings' className='text-blue-300 hover:text-blue-200'>
+          ← Back to settings
+        </Link>
+      )}
+    >
       <FormSection
         title='Global Controls'
         description='Manage high-level activation of recovery policies.'
         actions={(
-          <div className='flex items-center gap-2'>
-            <span className='text-xs text-gray-400'>Global {settings.enabled ? 'Enabled' : 'Disabled'}</span>
-            <Switch
-              checked={settings.enabled}
-              onCheckedChange={(checked: boolean) => {
-                setSettings((prev: TransientRecoverySettings) => ({ ...prev, enabled: checked }));
-                setDirty(true);
-              }}
-            />
-          </div>
+          <ToggleRow
+            label={`Global ${settings.enabled ? 'Enabled' : 'Disabled'}`}
+            checked={settings.enabled}
+            onCheckedChange={(checked: boolean) => {
+              setSettings((prev: TransientRecoverySettings) => ({ ...prev, enabled: checked }));
+              setDirty(true);
+            }}
+            className='bg-transparent border-none p-0 hover:bg-transparent'
+            labelClassName='text-xs text-gray-400 normal-case tracking-normal font-normal'
+          />
         )}
         className='p-6'
       >
@@ -129,9 +127,10 @@ export function TransientRecoverySettingsForm({
             variant='subtle'
             className='p-4'
             actions={(
-              <Switch
+              <ToggleRow
                 checked={settings.retry.enabled}
                 onCheckedChange={(checked: boolean) => updateRetry('enabled', checked)}
+                className='bg-transparent border-none p-0 hover:bg-transparent'
               />
             )}
           >
@@ -203,9 +202,10 @@ export function TransientRecoverySettingsForm({
             variant='subtle'
             className='p-4'
             actions={(
-              <Switch
+              <ToggleRow
                 checked={settings.circuit.enabled}
                 onCheckedChange={(checked: boolean) => updateCircuit('enabled', checked)}
+                className='bg-transparent border-none p-0 hover:bg-transparent'
               />
             )}
           >
@@ -262,6 +262,6 @@ export function TransientRecoverySettingsForm({
           </Button>
         </div>
       </FormSection>
-    </div>
+    </PageLayout>
   );
 }

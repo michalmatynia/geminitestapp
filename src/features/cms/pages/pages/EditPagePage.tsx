@@ -9,7 +9,7 @@ import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelectio
 import { useCmsAllSlugs, useCmsPage, useCmsSlugs, useUpdatePage } from '@/features/cms/hooks/useCmsQueries';
 import type { Page, Slug } from '@/features/cms/types';
 import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
-import { Button, Checkbox, Input, SectionHeader, Switch, FormSection, Badge, Alert, StatusBadge, LoadingState } from '@/shared/ui';
+import { Button, Checkbox, Input, SectionHeader, ToggleRow, FormSection, Badge, Alert, StatusBadge, LoadingState } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function EditPagePageLoader(): React.JSX.Element {
@@ -140,14 +140,13 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
             title='Route Configuration' 
             description='Select which URL paths should resolve to this page.'
             actions={
-              <div className='flex items-center gap-2'>
-                <Switch
-                  id='slug-all-zones'
-                  checked={includeAllZones}
-                  onCheckedChange={setIncludeAllZones}
-                />
-                <label htmlFor='slug-all-zones' className='text-[10px] uppercase font-bold text-gray-500 cursor-pointer'>Show all zones</label>
-              </div>
+              <ToggleRow
+                label='Show all zones'
+                checked={includeAllZones}
+                onCheckedChange={setIncludeAllZones}
+                className='bg-transparent border-none p-0 hover:bg-transparent'
+                labelClassName='text-[10px] uppercase font-bold text-gray-500'
+              />
             }
             className='p-6'
           >

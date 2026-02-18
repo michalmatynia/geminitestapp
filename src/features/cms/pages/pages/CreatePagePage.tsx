@@ -90,14 +90,13 @@ export default function CreatePagePage(): React.JSX.Element {
             title='Route Mapping' 
             description='Select which URL paths should resolve to this page.'
             actions={
-              <div className='flex items-center gap-2'>
-                <Switch
-                  id='slug-all-zones'
-                  checked={includeAllZones}
-                  onCheckedChange={setIncludeAllZones}
-                />
-                <label htmlFor='slug-all-zones' className='text-[10px] uppercase font-bold text-gray-500 cursor-pointer'>Show all zones</label>
-              </div>
+              <ToggleRow
+                label='Show all zones'
+                checked={includeAllZones}
+                onCheckedChange={setIncludeAllZones}
+                className='bg-transparent border-none p-0 hover:bg-transparent'
+                labelClassName='text-[10px] uppercase font-bold text-gray-500'
+              />
             }
             className='p-6'
           >

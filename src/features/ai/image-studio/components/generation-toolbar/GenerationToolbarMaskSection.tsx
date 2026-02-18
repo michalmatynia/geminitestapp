@@ -1,7 +1,7 @@
 import { Play } from 'lucide-react';
 import React from 'react';
 
-import { Button, SelectSimple, Switch } from '@/shared/ui';
+import { Button, SelectSimple, ToggleRow } from '@/shared/ui';
 
 type SelectOption = {
   value: string;
@@ -104,24 +104,22 @@ export function GenerationToolbarMaskSection({
       </div>
 
       <div className='mt-2 flex flex-wrap items-center gap-2'>
-        <label className='flex items-center gap-2 rounded border border-border/60 bg-card/40 px-2 py-1 text-[11px] text-gray-300'>
-          <span>Mask Preview</span>
-          <Switch
-            checked={maskPreviewEnabled}
-            onCheckedChange={onMaskPreviewEnabledChange}
-            disabled={!workingSlotPresent || exportMaskCount === 0}
-            aria-label='Toggle mask preview'
-          />
-        </label>
-        <label className='flex items-center gap-2 rounded border border-border/60 bg-card/40 px-2 py-1 text-[11px] text-gray-300'>
-          <span>Invert</span>
-          <Switch
-            checked={maskInvert}
-            onCheckedChange={onMaskInvertChange}
-            disabled={!maskPreviewEnabled || exportMaskCount === 0}
-            aria-label='Toggle mask inversion'
-          />
-        </label>
+        <ToggleRow
+          label='Mask Preview'
+          checked={maskPreviewEnabled}
+          onCheckedChange={onMaskPreviewEnabledChange}
+          disabled={!workingSlotPresent || exportMaskCount === 0}
+          className='bg-card/40 border-border/60 px-2 py-1'
+          labelClassName='text-[11px] text-gray-300'
+        />
+        <ToggleRow
+          label='Invert'
+          checked={maskInvert}
+          onCheckedChange={onMaskInvertChange}
+          disabled={!maskPreviewEnabled || exportMaskCount === 0}
+          className='bg-card/40 border-border/60 px-2 py-1'
+          labelClassName='text-[11px] text-gray-300'
+        />
       </div>
     </div>
   );

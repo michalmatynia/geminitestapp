@@ -1,6 +1,7 @@
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { ErrorCategory, type SuggestedAction } from '@/shared/types/observability';
 import { logClientError, isLoggableObject } from '@/shared/utils/observability/client-error-logger';
+import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
 import { getTraceId } from '@/shared/utils/observability/trace';
 
 export type ApiClientOptions = {
@@ -154,6 +155,21 @@ export async function apiClient<T>(
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
+    }
+
+    if (isAbortLikeError(error, config.signal)) {
+      if (error instanceof Error) {
+        if (error.name !== 'AbortError') {
+          const abortError = new Error(error.message);
+          abortError.name = 'AbortError';
+          throw abortError;
+        }
+        throw error;
+      }
+
+      const abortError = new Error('Request aborted');
+      abortError.name = 'AbortError';
+      throw abortError;
     }
 
     const genericError = new Error(error instanceof Error ? error.message : 'Network Error');

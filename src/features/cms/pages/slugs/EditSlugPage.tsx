@@ -12,7 +12,7 @@ import {
 } from '@/features/cms/validations/api';
 import {
   Input,
-  Switch,
+  ToggleRow,
   SectionHeader,
   Checkbox,
   FormSection,
@@ -152,17 +152,13 @@ function EditSlugForm({
                 />
               </FormField>
 
-              <label className='flex items-center gap-3 p-3 rounded-md border border-white/5 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors'>
-                <Switch
-                  id='isDefault'
-                  checked={Boolean(slug.isDefault)}
-                  onCheckedChange={(checked) => setSlug({ ...slug, isDefault: checked })}
-                />
-                <div className='flex flex-col'>
-                  <span className='text-sm font-medium text-gray-200'>Set as Default</span>
-                  <span className='text-[10px] text-gray-500 uppercase'>Use this route if no path matches exactly</span>
-                </div>
-              </label>
+              <ToggleRow
+                label='Set as Default'
+                description='Use this route if no path matches exactly'
+                checked={Boolean(slug.isDefault)}
+                onCheckedChange={(checked) => setSlug({ ...slug, isDefault: checked })}
+                className='bg-white/5 border-white/5'
+              />
             </div>
           </FormSection>
 

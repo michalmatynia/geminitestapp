@@ -200,16 +200,40 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     }
   }, [convertSelectedToBase64, rowSelection, setRowSelection, toast]);
 
+  const selectedCount = useMemo(
+    () => Object.keys(rowSelection).filter((key) => rowSelection[key]).length,
+    [rowSelection]
+  );
+
+  const handleSelectPage = useCallback(() => {
+    const newSelection = { ...rowSelection };
+    data.forEach((item) => {
+      newSelection[item.id] = true;
+    });
+    setRowSelection(newSelection);
+  }, [data, rowSelection, setRowSelection]);
+
+  const handleDeselectPage = useCallback(() => {
+    const newSelection = { ...rowSelection };
+    data.forEach((item) => {
+      delete newSelection[item.id];
+    });
+    setRowSelection(newSelection);
+  }, [data, rowSelection, setRowSelection]);
+
   return (
     <SelectionBar
       data={data}
       getRowId={getRowId}
-      rowSelection={rowSelection}
-      setRowSelection={setRowSelection}
+      selectedCount={selectedCount}
+      onSelectPage={handleSelectPage}
+      onDeselectPage={handleDeselectPage}
+      onDeselectAll={() => setRowSelection({})}
       onSelectAllGlobal={onSelectAllGlobal}
       loadingGlobal={loadingGlobal}
       onDeleteSelected={onDeleteSelected}
       className='border-t pt-3'
+      label='Products'
       actions={
         <>
           <DropdownMenuItem

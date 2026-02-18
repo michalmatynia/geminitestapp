@@ -1,100 +1,41 @@
-export type ProductSyncAppField =
-  | 'stock'
-  | 'price'
-  | 'name_en'
-  | 'description_en'
-  | 'sku'
-  | 'ean'
-  | 'weight';
+import type {
+  ProductSyncAppFieldDto,
+  ProductSyncDirectionDto,
+  ProductSyncConflictPolicyDto,
+  ProductSyncFieldRuleDto,
+  ProductSyncProfileDto,
+  ProductSyncRunStatusDto,
+  ProductSyncRunTriggerDto,
+  ProductSyncRunStatsDto,
+  ProductSyncRunRecordDto,
+  ProductSyncRunItemStatusDto,
+  ProductSyncRunItemRecordDto,
+  ProductSyncRunDetailDto,
+} from '@/shared/contracts/product-sync';
 
-export type ProductSyncDirection = 'disabled' | 'base_to_app' | 'app_to_base';
+export type ProductSyncAppField = ProductSyncAppFieldDto;
 
-export type ProductSyncConflictPolicy = 'skip';
+export type ProductSyncDirection = ProductSyncDirectionDto;
 
-export type ProductSyncFieldRule = {
-  id: string;
-  appField: ProductSyncAppField;
-  baseField: string;
-  direction: ProductSyncDirection;
-};
+export type ProductSyncConflictPolicy = ProductSyncConflictPolicyDto;
 
-export type ProductSyncProfile = {
-  id: string;
-  name: string;
-  enabled: boolean;
-  connectionId: string;
-  inventoryId: string;
-  catalogId: string | null;
-  scheduleIntervalMinutes: number;
-  batchSize: number;
-  conflictPolicy: ProductSyncConflictPolicy;
-  fieldRules: ProductSyncFieldRule[];
-  lastRunAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
+export type ProductSyncFieldRule = ProductSyncFieldRuleDto;
 
-export type ProductSyncRunStatus =
-  | 'queued'
-  | 'running'
-  | 'completed'
-  | 'partial_success'
-  | 'failed';
+export type ProductSyncProfile = ProductSyncProfileDto;
 
-export type ProductSyncRunTrigger = 'manual' | 'scheduled' | 'relink';
+export type ProductSyncRunStatus = ProductSyncRunStatusDto;
 
-export type ProductSyncRunStats = {
-  total: number;
-  processed: number;
-  success: number;
-  skipped: number;
-  failed: number;
-  localUpdated: number;
-  baseUpdated: number;
-};
+export type ProductSyncRunTrigger = ProductSyncRunTriggerDto;
 
-export type ProductSyncRunRecord = {
-  id: string;
-  profileId: string;
-  profileName: string;
-  trigger: ProductSyncRunTrigger;
-  status: ProductSyncRunStatus;
-  queueJobId: string | null;
-  startedAt: string | null;
-  finishedAt: string | null;
-  summaryMessage: string | null;
-  errorMessage: string | null;
-  stats: ProductSyncRunStats;
-  createdAt: string;
-  updatedAt: string;
-};
+export type ProductSyncRunStats = ProductSyncRunStatsDto;
 
-export type ProductSyncRunItemStatus = 'success' | 'skipped' | 'failed';
+export type ProductSyncRunRecord = ProductSyncRunRecordDto;
 
-export type ProductSyncRunItemRecord = {
-  runId: string;
-  itemId: string;
-  productId: string;
-  baseProductId: string;
-  status: ProductSyncRunItemStatus;
-  localChanges: string[];
-  baseChanges: string[];
-  message: string | null;
-  errorMessage: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
+export type ProductSyncRunItemStatus = ProductSyncRunItemStatusDto;
 
-export type ProductSyncRunDetail = {
-  run: ProductSyncRunRecord;
-  items: ProductSyncRunItemRecord[];
-  pagination: {
-    page: number;
-    pageSize: number;
-    totalItems: number;
-    totalPages: number;
-  };
-};
+export type ProductSyncRunItemRecord = ProductSyncRunItemRecordDto;
+
+export type ProductSyncRunDetail = ProductSyncRunDetailDto;
 
 export const PRODUCT_SYNC_APP_FIELDS: ProductSyncAppField[] = [
   'stock',

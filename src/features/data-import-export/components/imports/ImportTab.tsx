@@ -10,7 +10,18 @@ import type {
   InventoryOption,
   Template,
 } from '@/features/data-import-export/types/imports';
-import { Button, Label, Checkbox, Pagination, SelectSimple, DataTable, Badge, SearchInput, Tooltip } from '@/shared/ui';
+import {
+  Button,
+  Label,
+  Checkbox,
+  Pagination,
+  SelectSimple,
+  DataTable,
+  Badge,
+  SearchInput,
+  Tooltip,
+  SelectionBar,
+} from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -668,12 +679,11 @@ export function ImportTab(): React.JSX.Element {
 
         {importListStats ? (
           <div className='mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400'>
-            <div>
+            <div className='flex-1'>
               Total: {importListStats.total} · Existing:{' '}
               {importListStats.existing} · Available:{' '}
               {importListStats.available ?? importListStats.filtered} · Matching:{' '}
-              {importListStats.filtered} · Showing: {importList.length} · Selected:{' '}
-              {selectedImportCount}
+              {importListStats.filtered} · Showing: {importList.length}
               {importListStats.skuDuplicates ? (
                 <span className='text-yellow-400'>
                   {' '}
@@ -681,25 +691,16 @@ export function ImportTab(): React.JSX.Element {
                 </span>
               ) : null}
             </div>
-            <div className='flex items-center gap-2'>
-              <Button
-                type='button'
-                variant='secondary'
-                className='h-7 px-2 text-xs'
-                onClick={handleSelectVisibleImports}
-                disabled={importList.length === 0}
-              >
-                Select page
-              </Button>
-              <Button
-                type='button'
-                variant='secondary'
-                className='h-7 px-2 text-xs'
-                onClick={handleDeselectAllImports}
-                disabled={selectedImportCount === 0}
-              >
-                Deselect all
-              </Button>
+            <div className='flex items-center gap-4'>
+              <SelectionBar
+                data={importList}
+                getRowId={(item) => item.baseProductId}
+                selectedCount={selectedImportCount}
+                onSelectPage={handleSelectVisibleImports}
+                onDeselectPage={() => toggleVisibleImportSelection(false)}
+                onDeselectAll={handleDeselectAllImports}
+                label='Import Items'
+              />
               <Pagination
                 page={importListPage}
                 totalPages={importListStats.totalPages ?? 1}

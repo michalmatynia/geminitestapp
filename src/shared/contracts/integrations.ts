@@ -236,3 +236,198 @@ export const bulkCategoryMappingRequestSchema = z.object({
 });
 
 export type BulkCategoryMappingRequestDto = z.infer<typeof bulkCategoryMappingRequestSchema>;
+
+/**
+ * Base.com Import DTOs
+ */
+
+export const baseImportRunStatusSchema = z.enum([
+  'queued',
+  'running',
+  'completed',
+  'partial_success',
+  'failed',
+  'canceled',
+]);
+export type BaseImportRunStatusDto = z.infer<typeof baseImportRunStatusSchema>;
+
+export const baseImportItemStatusSchema = z.enum([
+  'pending',
+  'processing',
+  'imported',
+  'updated',
+  'skipped',
+  'failed',
+]);
+export type BaseImportItemStatusDto = z.infer<typeof baseImportItemStatusSchema>;
+
+export const baseImportItemActionSchema = z.enum([
+  'pending',
+  'processing',
+  'imported',
+  'updated',
+  'skipped',
+  'failed',
+  'dry_run',
+]);
+export type BaseImportItemActionDto = z.infer<typeof baseImportItemActionSchema>;
+
+export const baseImportModeSchema = z.enum([
+  'create_only',
+  'upsert_on_base_id',
+  'upsert_on_sku',
+]);
+export type BaseImportModeDto = z.infer<typeof baseImportModeSchema>;
+
+export const baseImportErrorCodeSchema = z.enum([
+  'VALIDATION_ERROR',
+  'DUPLICATE_SKU',
+  'BASE_FETCH_ERROR',
+  'MISSING_BASE_ID',
+  'MISSING_SKU',
+  'MISSING_CONNECTION',
+  'MISSING_CATALOG',
+  'MISSING_PRICE_GROUP',
+  'UNEXPECTED_ERROR',
+  'LINKING_ERROR',
+  'CONFLICT',
+  'PRECHECK_FAILED',
+  'NOT_FOUND',
+  'CANCELED',
+  'RATE_LIMITED',
+  'TIMEOUT',
+  'NETWORK_ERROR',
+]);
+export type BaseImportErrorCodeDto = z.infer<typeof baseImportErrorCodeSchema>;
+
+export const baseImportErrorClassSchema = z.enum([
+  'transient',
+  'permanent',
+  'configuration',
+  'canceled',
+]);
+export type BaseImportErrorClassDto = z.infer<typeof baseImportErrorClassSchema>;
+
+export const baseImportParameterImportSummarySchema = z.object({
+  extracted: z.number(),
+  resolved: z.number(),
+  created: z.number(),
+  written: z.number(),
+});
+export type BaseImportParameterImportSummaryDto = z.infer<typeof baseImportParameterImportSummarySchema>;
+
+export const baseImportRunParameterImportSummarySchema = baseImportParameterImportSummarySchema.extend({
+  itemsApplied: z.number(),
+});
+export type BaseImportRunParameterImportSummaryDto = z.infer<typeof baseImportRunParameterImportSummarySchema>;
+
+export const baseImportRunStatsSchema = z.object({
+  total: z.number(),
+  pending: z.number(),
+  processing: z.number(),
+  imported: z.number(),
+  updated: z.number(),
+  skipped: z.number(),
+  failed: z.number(),
+  parameterImportSummary: baseImportRunParameterImportSummarySchema.optional(),
+});
+export type BaseImportRunStatsDto = z.infer<typeof baseImportRunStatsSchema>;
+
+export const baseImportRunParamsSchema = z.object({
+  connectionId: z.string().optional(),
+  inventoryId: z.string(),
+  catalogId: z.string(),
+  templateId: z.string().optional(),
+  limit: z.number().optional(),
+  imageMode: z.enum(['links', 'download']),
+  uniqueOnly: z.boolean(),
+  allowDuplicateSku: z.boolean(),
+  selectedIds: z.array(z.string()).optional(),
+  dryRun: z.boolean().optional(),
+  mode: baseImportModeSchema.optional(),
+  requestId: z.string().optional(),
+});
+export type BaseImportRunParamsDto = z.infer<typeof baseImportRunParamsSchema>;
+
+export const baseImportPreflightIssueSchema = z.object({
+  code: baseImportErrorCodeSchema,
+  message: z.string(),
+  severity: z.enum(['error', 'warning']),
+});
+export type BaseImportPreflightIssueDto = z.infer<typeof baseImportPreflightIssueSchema>;
+
+export const baseImportPreflightSchema = z.object({
+  ok: z.boolean(),
+  issues: z.array(baseImportPreflightIssueSchema),
+  checkedAt: z.string(),
+});
+export type BaseImportPreflightDto = z.infer<typeof baseImportPreflightSchema>;
+
+export const baseImportRunRecordSchema = z.object({
+  id: z.string(),
+  status: baseImportRunStatusSchema,
+  params: baseImportRunParamsSchema,
+  idempotencyKey: z.string().nullable().optional(),
+  queueJobId: z.string().nullable().optional(),
+  lockOwnerId: z.string().nullable().optional(),
+  lockToken: z.string().nullable().optional(),
+  lockExpiresAt: z.string().nullable().optional(),
+  lockHeartbeatAt: z.string().nullable().optional(),
+  cancellationRequestedAt: z.string().nullable().optional(),
+  canceledAt: z.string().nullable().optional(),
+  maxAttempts: z.number().optional(),
+  preflight: baseImportPreflightSchema,
+  stats: baseImportRunStatsSchema,
+  startedAt: z.string().nullable().optional(),
+  finishedAt: z.string().nullable().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  summaryMessage: z.string().nullable().optional(),
+});
+export type BaseImportRunRecordDto = z.infer<typeof baseImportRunRecordSchema>;
+
+export const baseImportItemRecordSchema = z.object({
+  runId: z.string(),
+  itemId: z.string(),
+  baseProductId: z.string().nullable().optional(),
+  sku: z.string().nullable().optional(),
+  status: baseImportItemStatusSchema,
+  attempt: z.number(),
+  idempotencyKey: z.string(),
+  action: baseImportItemActionSchema,
+  errorCode: baseImportErrorCodeSchema.nullable().optional(),
+  errorClass: baseImportErrorClassSchema.nullable().optional(),
+  errorMessage: z.string().nullable().optional(),
+  retryable: z.boolean().nullable().optional(),
+  nextRetryAt: z.string().nullable().optional(),
+  lastErrorAt: z.string().nullable().optional(),
+  importedProductId: z.string().nullable().optional(),
+  payloadSnapshot: z.record(z.string(), z.unknown()).nullable().optional(),
+  parameterImportSummary: baseImportParameterImportSummarySchema.nullable().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  startedAt: z.string().nullable().optional(),
+  finishedAt: z.string().nullable().optional(),
+});
+export type BaseImportItemRecordDto = z.infer<typeof baseImportItemRecordSchema>;
+
+export const baseImportStartResponseSchema = z.object({
+  runId: z.string(),
+  status: baseImportRunStatusSchema,
+  preflight: baseImportPreflightSchema,
+  queueJobId: z.string().nullable().optional(),
+  summaryMessage: z.string().nullable().optional(),
+});
+export type BaseImportStartResponseDto = z.infer<typeof baseImportStartResponseSchema>;
+
+export const baseImportRunDetailResponseSchema = z.object({
+  run: baseImportRunRecordSchema,
+  items: z.array(baseImportItemRecordSchema),
+  pagination: z.object({
+    page: z.number(),
+    pageSize: z.number(),
+    totalItems: z.number(),
+    totalPages: z.number(),
+  }).optional(),
+});
+export type BaseImportRunDetailResponseDto = z.infer<typeof baseImportRunDetailResponseSchema>;

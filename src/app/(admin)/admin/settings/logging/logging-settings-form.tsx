@@ -3,7 +3,7 @@ import { useState, type ChangeEvent } from 'react';
 
 import { CLIENT_LOGGING_KEYS } from '@/features/observability/public';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { Button, useToast, Textarea, SectionHeader, FormSection, FormField } from '@/shared/ui';
+import { Button, useToast, Textarea, FormSection, FormField, PageLayout } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 export function LoggingSettingsForm({
@@ -48,17 +48,15 @@ export function LoggingSettingsForm({
   };
 
   return (
-    <div className='container mx-auto py-10 space-y-6'>
-      <SectionHeader
-        title='Logging Settings'
-        description='Configure client logging context shared with error reports.'
-        eyebrow={(
-          <Link href='/admin/settings' className='text-blue-300 hover:text-blue-200'>
-            ← Back to settings
-          </Link>
-        )}
-      />
-
+    <PageLayout
+      title='Logging Settings'
+      description='Configure client logging context shared with error reports.'
+      eyebrow={(
+        <Link href='/admin/settings' className='text-blue-300 hover:text-blue-200'>
+          ← Back to settings
+        </Link>
+      )}
+    >
       <FormSection
         title='Client logging context'
         description='Provide feature flags and tags attached to client errors.'
@@ -105,6 +103,6 @@ export function LoggingSettingsForm({
           </Button>
         </div>
       </FormSection>
-    </div>
+    </PageLayout>
   );
 }

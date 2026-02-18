@@ -35,3 +35,5 @@ export * from '../contracts/document-editor';
 export * from '../contracts/filemaker';
 export * from '../contracts/vector';
 export * from '../contracts/analytics';
+export * from '../contracts/product-sync';
+export * from '../contracts/gsap';

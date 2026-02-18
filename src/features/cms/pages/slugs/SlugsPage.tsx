@@ -20,8 +20,7 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
   ListPanel,
-  Label,
-  Switch,
+  ToggleRow,
   EmptyState,
   PageLayout,
   SelectSimple,
@@ -169,17 +168,14 @@ export default function SlugsPage(): React.JSX.Element {
       }
       headerActions={
         <div className='flex items-center gap-3'>
-          <div className='flex items-center gap-2 rounded-lg border border-border/60 bg-black/20 px-3 py-1.5'>
-            <Switch
-              id='cms-domain-zoning'
-              checked={zoningToggleValue}
-              onCheckedChange={handleZoningToggle}
-              disabled={updateSetting.isPending}
-            />
-            <Label htmlFor='cms-domain-zoning' className='text-[10px] uppercase font-bold text-gray-500 cursor-pointer'>
-              Zoning
-            </Label>
-          </div>
+          <ToggleRow
+            label='Zoning'
+            checked={zoningToggleValue}
+            onCheckedChange={handleZoningToggle}
+            disabled={updateSetting.isPending}
+            className='bg-black/20 border-border/60 px-3 py-1.5'
+            labelClassName='text-[10px] uppercase font-bold text-gray-500'
+          />
           {zoningEnabled ? (
             <SelectSimple
               value={activeDomainId || ''}

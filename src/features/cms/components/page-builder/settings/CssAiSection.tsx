@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 
 import type { CustomCssAiProvider } from '@/features/cms/types/custom-css-ai';
-import { Button, Switch, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField } from '@/shared/ui';
+import { Button, ToggleRow, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField } from '@/shared/ui';
 
 import { useInspectorAi } from '../context/InspectorAiContext';
 import { buildDiffLines } from '../utils/ai-helpers';
@@ -153,15 +153,15 @@ function CssAiSection(): React.JSX.Element {
         
         <FormSection title='Context preview' variant='subtle' className='p-2 space-y-3'>
           <div className='flex flex-wrap items-center justify-between gap-2 mt-2'>
-            <div className='flex items-center gap-2'>
-              <Switch
-                checked={contextPreviewFull}
-                onCheckedChange={(value: boolean | 'indeterminate'): void =>
-                  setContextPreviewFull(value === true)
-                }
-              />
-              <span className='text-[11px] text-gray-300'>Full context</span>
-            </div>
+            <ToggleRow
+              label='Full context'
+              checked={contextPreviewFull}
+              onCheckedChange={(value: boolean) =>
+                setContextPreviewFull(value)
+              }
+              className='bg-transparent border-none p-0 hover:bg-transparent'
+              labelClassName='text-[11px] text-gray-300'
+            />
             <div className='flex gap-2'>
               <Button
                 type='button'
@@ -238,15 +238,15 @@ function CssAiSection(): React.JSX.Element {
         </FormSection>
 
         <div className='flex flex-wrap items-center justify-between gap-2'>
-          <div className='flex items-center gap-2'>
-            <Switch
-              checked={cssAiAutoApply}
-              onCheckedChange={(value: boolean | 'indeterminate'): void =>
-                setCssAiAutoApply(value === true)
-              }
-            />
-            <span className='text-xs text-gray-300'>Auto-apply on generate</span>
-          </div>
+          <ToggleRow
+            label='Auto-apply on generate'
+            checked={cssAiAutoApply}
+            onCheckedChange={(value: boolean) =>
+              setCssAiAutoApply(value)
+            }
+            className='bg-transparent border-none p-0 hover:bg-transparent'
+            labelClassName='text-xs text-gray-300'
+          />
           <Button
             type='button'
             size='sm'
@@ -267,15 +267,15 @@ function CssAiSection(): React.JSX.Element {
           )}
         </div>
         {cssAiAutoApply && (
-          <div className='flex items-center gap-2'>
-            <Switch
-              checked={cssAiAppend}
-              onCheckedChange={(value: boolean | 'indeterminate'): void =>
-                setCssAiAppend(value === true)
-              }
-            />
-            <span className='text-xs text-gray-300'>Append when auto-applying</span>
-          </div>
+          <ToggleRow
+            label='Append when auto-applying'
+            checked={cssAiAppend}
+            onCheckedChange={(value: boolean) =>
+              setCssAiAppend(value)
+            }
+            className='bg-transparent border-none p-0 hover:bg-transparent'
+            labelClassName='text-xs text-gray-300'
+          />
         )}
         {cssAiError && (
           <div className='text-xs text-red-400'>{cssAiError}</div>

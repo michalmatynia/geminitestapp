@@ -29,7 +29,7 @@ import {
   useUpdatePriceGroupMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
 import { Catalog, PriceGroup } from '@/features/products/types';
-import { Button, SectionHeader, useToast } from '@/shared/ui';
+import { Button, PageLayout, useToast } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import {
@@ -248,11 +248,9 @@ export function ProductSettingsPage(): React.JSX.Element {
 
   return (
     <InternationalizationProvider>
-      <div className='container mx-auto py-10'>
-        <SectionHeader
-          title='Product Settings'
-          className='mb-6'
-        />
+      <PageLayout
+        title='Product Settings'
+      >
         <div className='mb-4 rounded-lg border border-border/60 bg-card/30 p-4'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <div>

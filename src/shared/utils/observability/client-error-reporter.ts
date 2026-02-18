@@ -1,8 +1,11 @@
 'use client';
 
 import type { ErrorContext } from '@/shared/types/observability';
+import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
 
 export const reportClientError = async (error: unknown, context: ErrorContext = {}): Promise<void> => {
+  if (isAbortLikeError(error)) return;
+
   try {
     const errorPayload = {
       message: error instanceof Error ? error.message : String(error),

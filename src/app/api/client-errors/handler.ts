@@ -5,6 +5,7 @@ import { isSensitiveKey, REDACTED_VALUE, truncateString } from '@/features/obser
 import { ErrorSystem } from '@/features/observability/server';
 import type { ErrorContext } from '@/features/observability/services/error-system';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
+import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
 
 
 const MAX_CLIENT_ERROR_BODY_BYTES = 64_000;
@@ -114,8 +115,16 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   };
 
   const message = resolveStringField(payload.message, fallbackMessage, 2_000, 'Unknown client error');
+  const normalizedName = resolveStringField(payload.name, fallbackName, 120, 'ClientError');
+  if (isAbortLikeError({ name: normalizedName, message })) {
+    return NextResponse.json(
+      { ok: true, success: true, dropped: true, reason: 'aborted_request' },
+      { status: 200 }
+    );
+  }
+
   const normalizedError = new Error(message);
-  normalizedError.name = resolveStringField(payload.name, fallbackName, 120, 'ClientError');
+  normalizedError.name = normalizedName;
   if (typeof payload.stack === 'string' && payload.stack.trim().length > 0) {
     normalizedError.stack = payload.stack;
   } else if (typeof fallbackStack === 'string' && fallbackStack.trim().length > 0) {

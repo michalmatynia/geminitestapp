@@ -1,4 +1,3 @@
-import type { ProductValidationPattern } from '@/shared/types/domain/products';
 import type {
   DynamicReplacementSourceModeDto,
   DynamicReplacementMathOperationDto,
@@ -9,6 +8,7 @@ import type {
   DynamicReplacementLogicActionDto,
   DynamicReplacementRecipeDto,
 } from '@/shared/contracts/products';
+import type { ProductValidationPattern } from '@/shared/types/domain/products';
 
 export const DYNAMIC_REPLACEMENT_PREFIX = '__recipe__:';
 
@@ -130,7 +130,7 @@ const normalizeRecipe = (raw: unknown): DynamicReplacementRecipe | null => {
     source['sizeLength'] > 0
       ? Math.floor(source['sizeLength'])
       : null; // Wait, recipe schema used padLength? Checking previous file read.
-      // Re-reading: DynamicReplacementRecipe had padLength.
+  // Re-reading: DynamicReplacementRecipe had padLength.
   const padChar =
     typeof source['padChar'] === 'string' && source['padChar'].length > 0
       ? source['padChar'].charAt(0)

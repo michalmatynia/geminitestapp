@@ -1,13 +1,9 @@
 import type { AdminSettingsDto, UpdateAdminSettingsDto } from '@/shared/contracts/admin';
+import type { ChatbotSettingsRecordDto } from '@/shared/contracts/chatbot';
 import type { SettingRecordDto } from '@/shared/contracts/settings';
 
-import { Entity } from '../core/base-types';
-
-export type { AdminSettingsDto, UpdateAdminSettingsDto };
+export type { AdminSettingsDto, UpdateAdminSettingsDto, SettingRecordDto, ChatbotSettingsRecordDto };
 
 export type SystemSetting = SettingRecordDto;
 
-export type ChatbotSettingsRecord = Entity & {
-  key: string;
-  settings: Record<string, unknown>;
-};
+export type ChatbotSettingsRecord = ChatbotSettingsRecordDto;

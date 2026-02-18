@@ -43,6 +43,492 @@ export const aiNodeTypeSchema = z.enum([
 export type AiNodeTypeDto = z.infer<typeof aiNodeTypeSchema>;
 
 /**
+ * AI Path Node Config DTOs - Basic & Audio
+ */
+
+export const triggerConfigSchema = z.object({
+  event: z.string(),
+});
+
+export type TriggerConfigDto = z.infer<typeof triggerConfigSchema>;
+
+export const simulationConfigSchema = z.object({
+  productId: z.string(),
+  entityType: z.string().optional(),
+  entityId: z.string().optional(),
+});
+
+export type SimulationConfigDto = z.infer<typeof simulationConfigSchema>;
+
+export const viewerConfigSchema = z.object({
+  outputs: z.record(z.string(), z.string()),
+  showImagesAsJson: z.boolean().optional(),
+});
+
+export type ViewerConfigDto = z.infer<typeof viewerConfigSchema>;
+
+export const contextConfigSchema = z.object({
+  role: z.string(),
+  entityType: z.string().optional(),
+  entityIdSource: z.enum(['simulation', 'manual', 'context']).optional(),
+  entityId: z.string().optional(),
+  scopeMode: z.enum(['full', 'include', 'exclude']).optional(),
+  scopeTarget: z.enum(['entity', 'context']).optional(),
+  includePaths: z.array(z.string()).optional(),
+  excludePaths: z.array(z.string()).optional(),
+});
+
+export type ContextConfigDto = z.infer<typeof contextConfigSchema>;
+
+export const delayConfigSchema = z.object({
+  ms: z.number(),
+});
+
+export type DelayConfigDto = z.infer<typeof delayConfigSchema>;
+
+export const audioWaveformSchema = z.enum(['sine', 'square', 'sawtooth', 'triangle']);
+export type AudioWaveformDto = z.infer<typeof audioWaveformSchema>;
+
+export const audioOscillatorConfigSchema = z.object({
+  waveform: audioWaveformSchema,
+  frequencyHz: z.number(),
+  gain: z.number(),
+  durationMs: z.number(),
+});
+
+export type AudioOscillatorConfigDto = z.infer<typeof audioOscillatorConfigSchema>;
+
+export const audioSpeakerConfigSchema = z.object({
+  enabled: z.boolean(),
+  autoPlay: z.boolean(),
+  gain: z.number(),
+  stopPrevious: z.boolean(),
+});
+
+export type AudioSpeakerConfigDto = z.infer<typeof audioSpeakerConfigSchema>;
+
+export const descriptionConfigSchema = z.object({
+  visionOutputEnabled: z.boolean().optional(),
+  generationOutputEnabled: z.boolean().optional(),
+});
+
+export type DescriptionConfigDto = z.infer<typeof descriptionConfigSchema>;
+
+/**
+ * AI Path Node Config DTOs - Utilities
+ */
+
+export const mapperConfigSchema = z.object({
+  outputs: z.array(z.string()),
+  mappings: z.record(z.string(), z.string()),
+});
+
+export type MapperConfigDto = z.infer<typeof mapperConfigSchema>;
+
+export const mutatorConfigSchema = z.object({
+  path: z.string(),
+  valueTemplate: z.string(),
+  targetType: z.enum(['string', 'number', 'boolean', 'json']).optional(),
+});
+
+export type MutatorConfigDto = z.infer<typeof mutatorConfigSchema>;
+
+export const stringMutatorOperationSchema = z.discriminatedUnion('type', [
+  z.object({ id: z.string().optional(), type: z.literal('trim'), mode: z.enum(['both', 'start', 'end']).optional() }),
+  z.object({
+    id: z.string().optional(),
+    type: z.literal('replace'),
+    search: z.string(),
+    replace: z.string(),
+    matchMode: z.enum(['first', 'all']).optional(),
+    useRegex: z.boolean().optional(),
+    flags: z.string().optional(),
+  }),
+  z.object({
+    id: z.string().optional(),
+    type: z.literal('remove'),
+    search: z.string(),
+    matchMode: z.enum(['first', 'all']).optional(),
+    useRegex: z.boolean().optional(),
+    flags: z.string().optional(),
+  }),
+  z.object({ id: z.string().optional(), type: z.literal('case'), mode: z.enum(['upper', 'lower', 'title']) }),
+  z.object({ id: z.string().optional(), type: z.literal('append'), value: z.string(), position: z.enum(['prefix', 'suffix']).optional() }),
+  z.object({ id: z.string().optional(), type: z.literal('slice'), start: z.number().optional(), end: z.number().optional() }),
+]);
+
+export type StringMutatorOperationDto = z.infer<typeof stringMutatorOperationSchema>;
+
+export const stringMutatorConfigSchema = z.object({
+  operations: z.array(stringMutatorOperationSchema),
+});
+
+export type StringMutatorConfigDto = z.infer<typeof stringMutatorConfigSchema>;
+
+export const validatorConfigSchema = z.object({
+  requiredPaths: z.array(z.string()),
+  mode: z.enum(['all', 'any']),
+});
+
+export type ValidatorConfigDto = z.infer<typeof validatorConfigSchema>;
+
+export const constantConfigSchema = z.object({
+  valueType: z.enum(['string', 'number', 'boolean', 'json']),
+  value: z.string(),
+});
+
+export type ConstantConfigDto = z.infer<typeof constantConfigSchema>;
+
+export const mathConfigSchema = z.object({
+  operation: z.enum(['add', 'subtract', 'multiply', 'divide', 'round', 'ceil', 'floor']),
+  operand: z.number(),
+});
+
+export type MathConfigDto = z.infer<typeof mathConfigSchema>;
+
+export const templateConfigSchema = z.object({
+  template: z.string(),
+});
+
+export type TemplateConfigDto = z.infer<typeof templateConfigSchema>;
+
+export const bundleConfigSchema = z.object({
+  includePorts: z.array(z.string()).optional(),
+});
+
+export type BundleConfigDto = z.infer<typeof bundleConfigSchema>;
+
+export const gateConfigSchema = z.object({
+  mode: z.enum(['block', 'pass']),
+  failMessage: z.string().optional(),
+});
+
+export type GateConfigDto = z.infer<typeof gateConfigSchema>;
+
+export const compareConfigSchema = z.object({
+  operator: z.enum([
+    'eq',
+    'neq',
+    'gt',
+    'gte',
+    'lt',
+    'lte',
+    'contains',
+    'startsWith',
+    'endsWith',
+    'isEmpty',
+    'notEmpty',
+  ]),
+  compareTo: z.string(),
+  caseSensitive: z.boolean().optional(),
+  message: z.string().optional(),
+});
+
+export type CompareConfigDto = z.infer<typeof compareConfigSchema>;
+
+export const routerConfigSchema = z.object({
+  mode: z.enum(['valid', 'value']),
+  matchMode: z.enum(['truthy', 'falsy', 'equals', 'contains']),
+  compareTo: z.string(),
+});
+
+export type RouterConfigDto = z.infer<typeof routerConfigSchema>;
+
+/**
+ * AI Path Node Config DTOs - Complex
+ */
+
+export const regexModeSchema = z.enum(['group', 'extract', 'extract_json']);
+export const regexMatchModeSchema = z.enum(['first', 'first_overall', 'all']);
+export const regexGroupOutputModeSchema = z.enum(['object', 'array']);
+
+export const regexTemplateSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  pattern: z.string(),
+  flags: z.string().optional(),
+  mode: regexModeSchema.optional(),
+  matchMode: regexMatchModeSchema.optional(),
+  groupBy: z.string().optional(),
+  outputMode: regexGroupOutputModeSchema.optional(),
+  includeUnmatched: z.boolean().optional(),
+  unmatchedKey: z.string().optional(),
+  splitLines: z.boolean().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export type RegexTemplateDto = z.infer<typeof regexTemplateSchema>;
+
+export const regexConfigSchema = z.object({
+  pattern: z.string(),
+  flags: z.string().optional(),
+  mode: regexModeSchema.optional(),
+  matchMode: regexMatchModeSchema.optional(),
+  groupBy: z.string().optional(),
+  outputMode: regexGroupOutputModeSchema.optional(),
+  includeUnmatched: z.boolean().optional(),
+  unmatchedKey: z.string().optional(),
+  splitLines: z.boolean().optional(),
+  sampleText: z.string().optional(),
+  aiPrompt: z.string().optional(),
+  aiAutoRun: z.boolean().optional(),
+  activeVariant: z.enum(['manual', 'ai']).optional(),
+  manual: z.object({ pattern: z.string(), flags: z.string().optional(), groupBy: z.string().optional() }).optional(),
+  aiProposal: z.object({ pattern: z.string(), flags: z.string().optional(), groupBy: z.string().optional() }).optional(),
+  aiProposals: z.array(z.object({ pattern: z.string(), flags: z.string().optional(), groupBy: z.string().optional(), createdAt: z.string() })).optional(),
+  templates: z.array(regexTemplateSchema).optional(),
+});
+
+export type RegexConfigDto = z.infer<typeof regexConfigSchema>;
+
+export const iteratorConfigSchema = z.object({
+  autoContinue: z.boolean().optional(),
+  maxSteps: z.number().optional(),
+});
+
+export type IteratorConfigDto = z.infer<typeof iteratorConfigSchema>;
+
+export const httpConfigSchema = z.object({
+  url: z.string(),
+  method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']),
+  headers: z.string(),
+  bodyTemplate: z.string(),
+  responseMode: z.enum(['json', 'text', 'status']),
+  responsePath: z.string(),
+});
+
+export type HttpConfigDto = z.infer<typeof httpConfigSchema>;
+
+export const dbQueryConfigSchema = z.object({
+  provider: z.enum(['auto', 'mongodb', 'prisma']),
+  collection: z.string(),
+  mode: z.enum(['preset', 'custom']),
+  preset: z.enum(['by_id', 'by_productId', 'by_entityId', 'by_field']),
+  field: z.string(),
+  idType: z.enum(['string', 'objectId']),
+  queryTemplate: z.string(),
+  limit: z.number(),
+  sort: z.string(),
+  sortPresetId: z.string().optional(),
+  projection: z.string(),
+  projectionPresetId: z.string().optional(),
+  single: z.boolean(),
+});
+
+export type DbQueryConfigDto = z.infer<typeof dbQueryConfigSchema>;
+
+export const pollConfigSchema = z.object({
+  intervalMs: z.number(),
+  maxAttempts: z.number(),
+  mode: z.enum(['job', 'database']).optional(),
+  dbQuery: dbQueryConfigSchema.optional(),
+  successPath: z.string().optional(),
+  successOperator: z.enum(['truthy', 'equals', 'contains', 'notEquals']).optional(),
+  successValue: z.string().optional(),
+  resultPath: z.string().optional(),
+});
+
+export type PollConfigDto = z.infer<typeof pollConfigSchema>;
+
+export const dbSchemaConfigSchema = z.object({
+  provider: z.enum(['auto', 'mongodb', 'prisma', 'all']).optional(),
+  mode: z.enum(['all', 'selected']),
+  collections: z.array(z.string()),
+  includeFields: z.boolean(),
+  includeRelations: z.boolean(),
+  formatAs: z.enum(['json', 'text']),
+});
+
+export type DbSchemaConfigDto = z.infer<typeof dbSchemaConfigSchema>;
+
+export const dbSchemaSnapshotSchema = z.object({
+  provider: z.enum(['mongodb', 'prisma', 'multi']),
+  collections: z.array(z.object({
+    name: z.string(),
+    fields: z.array(z.object({ name: z.string(), type: z.string() })),
+    relations: z.array(z.string()).optional(),
+    provider: z.enum(['mongodb', 'prisma']).optional(),
+  })),
+  sources: z.record(z.enum(['mongodb', 'prisma']), z.object({
+    provider: z.enum(['mongodb', 'prisma']),
+    collections: z.array(z.object({
+      name: z.string(),
+      fields: z.array(z.object({ name: z.string(), type: z.string() })),
+      relations: z.array(z.string()).optional(),
+    })),
+  })).optional(),
+  syncedAt: z.string().optional(),
+});
+
+export type DbSchemaSnapshotDto = z.infer<typeof dbSchemaSnapshotSchema>;
+
+export const databaseConfigSchema = z.object({
+  operation: z.enum(['query', 'update', 'insert', 'delete']),
+  entityType: z.string().optional(),
+  idField: z.string().optional(),
+  mode: z.enum(['replace', 'append']).optional(),
+  updateStrategy: z.enum(['one', 'many']).optional(),
+  useMongoActions: z.boolean().optional(),
+  actionCategory: z.enum(['create', 'read', 'update', 'delete', 'aggregate']).optional(),
+  action: z.enum([
+    'insertOne',
+    'insertMany',
+    'find',
+    'findOne',
+    'countDocuments',
+    'distinct',
+    'aggregate',
+    'updateOne',
+    'updateMany',
+    'replaceOne',
+    'findOneAndUpdate',
+    'deleteOne',
+    'deleteMany',
+    'findOneAndDelete',
+  ]).optional(),
+  distinctField: z.string().optional(),
+  updateTemplate: z.string().optional(),
+  mappings: z.array(z.object({ targetPath: z.string(), sourcePort: z.string(), sourcePath: z.string().optional() })).optional(),
+  query: dbQueryConfigSchema.optional(),
+  writeSource: z.string().optional(),
+  writeSourcePath: z.string().optional(),
+  dryRun: z.boolean().optional(),
+  presetId: z.string().optional(),
+  skipEmpty: z.boolean().optional(),
+  trimStrings: z.boolean().optional(),
+  aiPrompt: z.string().optional(),
+  validationRuleIds: z.array(z.string()).optional(),
+  parameterInferenceGuard: z.object({
+    enabled: z.boolean().optional(),
+    targetPath: z.string().optional(),
+    definitionsPort: z.string().optional(),
+    definitionsPath: z.string().optional(),
+    enforceOptionLabels: z.boolean().optional(),
+    allowUnknownParameterIds: z.boolean().optional(),
+  }).optional(),
+  schemaSnapshot: dbSchemaSnapshotSchema.optional(),
+});
+
+export type DatabaseConfigDto = z.infer<typeof databaseConfigSchema>;
+
+export const parserConfigSchema = z.object({
+  mappings: z.record(z.string(), z.string()),
+  outputMode: z.enum(['individual', 'bundle']).optional(),
+  presetId: z.string().optional(),
+});
+
+export type ParserConfigDto = z.infer<typeof parserConfigSchema>;
+
+export const parserSampleStateSchema = z.object({
+  entityType: z.string(),
+  entityId: z.string(),
+  simulationId: z.string().optional(),
+  json: z.string(),
+  mappingMode: z.enum(['top', 'flatten']),
+  depth: z.number(),
+  keyStyle: z.enum(['path', 'leaf']),
+  includeContainers: z.boolean(),
+});
+
+export type ParserSampleStateDto = z.infer<typeof parserSampleStateSchema>;
+
+export const promptConfigSchema = z.object({
+  template: z.string(),
+});
+
+export type PromptConfigDto = z.infer<typeof promptConfigSchema>;
+
+export const modelConfigSchema = z.object({
+  modelId: z.string(),
+  temperature: z.number(),
+  maxTokens: z.number(),
+  vision: z.boolean(),
+  waitForResult: z.boolean().optional(),
+});
+
+export type ModelConfigDto = z.infer<typeof modelConfigSchema>;
+
+export const agentConfigSchema = z.object({
+  personaId: z.string().optional(),
+  promptTemplate: z.string().optional(),
+  waitForResult: z.boolean().optional(),
+});
+
+export type AgentConfigDto = z.infer<typeof agentConfigSchema>;
+
+export const learnerAgentConfigSchema = z.object({
+  agentId: z.string(),
+  promptTemplate: z.string().optional(),
+  includeSources: z.boolean().optional(),
+});
+
+export type LearnerAgentConfigDto = z.infer<typeof learnerAgentConfigSchema>;
+
+/**
+ * AI Path Node Config DTOs - Runtime & Wrapper
+ */
+
+export const nodeCacheModeSchema = z.enum(['auto', 'force', 'disabled']);
+export type NodeCacheModeDto = z.infer<typeof nodeCacheModeSchema>;
+
+export const nodeRuntimeConfigSchema = z.object({
+  cache: z.object({
+    mode: nodeCacheModeSchema.optional(),
+    ttlMs: z.number().optional(),
+  }).optional(),
+  waitForInputs: z.boolean().optional(),
+  timeoutMs: z.number().optional(),
+  retry: z.object({
+    attempts: z.number().optional(),
+    backoffMs: z.number().optional(),
+  }).optional(),
+});
+
+export type NodeRuntimeConfigDto = z.infer<typeof nodeRuntimeConfigSchema>;
+
+export const nodeConfigSchema = z.object({
+  trigger: triggerConfigSchema.optional(),
+  simulation: simulationConfigSchema.optional(),
+  audioOscillator: audioOscillatorConfigSchema.optional(),
+  audioSpeaker: audioSpeakerConfigSchema.optional(),
+  viewer: viewerConfigSchema.optional(),
+  context: contextConfigSchema.optional(),
+  regex: regexConfigSchema.optional(),
+  iterator: iteratorConfigSchema.optional(),
+  mapper: mapperConfigSchema.optional(),
+  mutator: mutatorConfigSchema.optional(),
+  stringMutator: stringMutatorConfigSchema.optional(),
+  validator: validatorConfigSchema.optional(),
+  constant: constantConfigSchema.optional(),
+  math: mathConfigSchema.optional(),
+  template: templateConfigSchema.optional(),
+  bundle: bundleConfigSchema.optional(),
+  gate: gateConfigSchema.optional(),
+  compare: compareConfigSchema.optional(),
+  router: routerConfigSchema.optional(),
+  delay: delayConfigSchema.optional(),
+  poll: pollConfigSchema.optional(),
+  http: httpConfigSchema.optional(),
+  db_schema: dbSchemaConfigSchema.optional(),
+  description: descriptionConfigSchema.optional(),
+  parser: parserConfigSchema.optional(),
+  prompt: promptConfigSchema.optional(),
+  model: modelConfigSchema.optional(),
+  agent: agentConfigSchema.optional(),
+  learnerAgent: learnerAgentConfigSchema.optional(),
+  database: databaseConfigSchema.optional(),
+  runtime: nodeRuntimeConfigSchema.optional(),
+  notes: z.object({
+    text: z.string().optional(),
+    color: z.string().optional(),
+    showOnCanvas: z.boolean().optional(),
+  }).optional(),
+});
+
+export type NodeConfigDto = z.infer<typeof nodeConfigSchema>;
+
+/**
  * AI Path Node Contract
  */
 export const aiNodeSchema = dtoBaseSchema.extend({
@@ -51,7 +537,7 @@ export const aiNodeSchema = dtoBaseSchema.extend({
   description: z.string(),
   position: z.object({ x: z.number(), y: z.number() }),
   data: z.record(z.string(), z.unknown()),
-  config: z.record(z.string(), z.unknown()),
+  config: nodeConfigSchema.optional(),
   inputs: z.array(z.string()),
   outputs: z.array(z.string()),
 });
@@ -166,6 +652,35 @@ export const aiPathRunSchema = dtoBaseSchema.extend({
 });
 
 export type AiPathRunDto = z.infer<typeof aiPathRunSchema>;
+
+/**
+ * AI Path Run Record Contract
+ */
+export const aiPathRunRecordSchema = aiPathRunSchema.extend({
+  recordingPath: z.string().nullable().optional(),
+  planState: z.record(z.string(), z.unknown()).nullable().optional(),
+  activeStepId: z.string().nullable().optional(),
+  checkpointedAt: z.string().nullable().optional(),
+  graph: z.object({
+    nodes: z.array(aiNodeSchema),
+    edges: z.array(aiEdgeSchema),
+  }).nullable().optional(),
+  runtimeState: z.any().nullable().optional(), // Avoid circular dependency with ai-paths-runtime
+  _count: z.object({
+    browserSnapshots: z.number().optional(),
+    browserLogs: z.number().optional(),
+  }).optional(),
+});
+
+export type AiPathRunRecordDto = z.infer<typeof aiPathRunRecordSchema>;
+
+export const aiPathRunDetailSchema = z.object({
+  run: aiPathRunRecordSchema,
+  nodes: z.array(z.any()), // aiPathRunNodeSchema - can't use it yet because it is defined below
+  events: z.array(z.any()), // aiPathRunEventSchema - defined below
+});
+
+export type AiPathRunDetailDto = z.infer<typeof aiPathRunDetailSchema>;
 
 export const createAiPathRunSchema = aiPathRunSchema
   .omit({
@@ -293,7 +808,7 @@ export const aiDbQueryPresetSchema = namedDtoSchema.extend({
 export type AiDbQueryPresetDto = z.infer<typeof aiDbQueryPresetSchema>;
 
 export const aiDbNodePresetSchema = namedDtoSchema.extend({
-  config: z.record(z.string(), z.unknown()),
+  config: databaseConfigSchema.optional(), // Simplified for now
 });
 
 export type AiDbNodePresetDto = z.infer<typeof aiDbNodePresetSchema>;

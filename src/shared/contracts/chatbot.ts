@@ -157,6 +157,13 @@ export const chatbotSettingsSchema = dtoBaseSchema.extend({
 
 export type ChatbotSettingsDto = z.infer<typeof chatbotSettingsSchema>;
 
+export const chatbotSettingsRecordSchema = dtoBaseSchema.extend({
+  key: z.string(),
+  settings: z.record(z.string(), z.unknown()),
+});
+
+export type ChatbotSettingsRecordDto = z.infer<typeof chatbotSettingsRecordSchema>;
+
 export const createChatbotSettingsSchema = chatbotSettingsSchema.omit({
   id: true,
   createdAt: true,

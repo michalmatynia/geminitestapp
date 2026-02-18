@@ -1,13 +1,13 @@
 'use client';
 
-import { Edit, Trash2, Palette } from 'lucide-react';
+import { Palette } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useMemo } from 'react';
 
 import { useCmsThemes, useDeleteTheme } from '@/features/cms/hooks/useCmsQueries';
 import type { CmsTheme } from '@/features/cms/types';
-import { Button, ListPanel, EmptyState, DataTable } from '@/shared/ui';
+import { Button, ListPanel, EmptyState, DataTable, ActionMenu, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -77,21 +77,27 @@ export default function ThemesPage(): React.ReactNode {
       id: 'actions',
       header: () => <div className='text-right'>Actions</div>,
       cell: ({ row }) => (
-        <div className='flex justify-end gap-2'>
-          <Link href={`/admin/cms/themes/${row.original.id}/edit`}>
-            <Button variant='ghost' size='xs' className='h-7 w-7 p-0' aria-label='Edit theme'>
-              <Edit className='size-3.5' />
-            </Button>
-          </Link>
-          <Button 
-            variant='ghost' 
-            size='xs' 
-            className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
-            onClick={() => setThemeToDelete(row.original.id)}
-            aria-label='Delete theme'
-          >
-            <Trash2 className='size-3.5' />
-          </Button>
+        <div className='flex justify-end'>
+          <ActionMenu ariaLabel={`Actions for theme ${row.original.name}`}>
+            <DropdownMenuItem
+              onSelect={(event: Event): void => {
+                event.preventDefault();
+                router.push(`/admin/cms/themes/${row.original.id}/edit`);
+              }}
+            >
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className='text-destructive focus:text-destructive'
+              onSelect={(event: Event): void => {
+                event.preventDefault();
+                setThemeToDelete(row.original.id);
+              }}
+            >
+              Delete
+            </DropdownMenuItem>
+          </ActionMenu>
         </div>
       ),
     },

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type { RegexConfig, RegexTemplate } from '@/features/ai/ai-paths/lib';
-import { Button, Input, SelectSimple, ToggleRow, FormField } from '@/shared/ui';
+import { Button, Input, SelectSimple, ToggleRow, FormField, Label } from '@/shared/ui';
 
 type RegexTemplatesTabContentProps = {
   globalTemplates: RegexTemplate[];

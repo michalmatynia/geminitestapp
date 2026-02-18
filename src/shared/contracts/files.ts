@@ -47,6 +47,37 @@ export const updateImageFileSchema = imageFileSchema.partial().omit({
 
 export type UpdateImageFileDto = z.infer<typeof updateImageFileSchema>;
 
+export const imageFileRecordSchema = dtoBaseSchema.extend({
+  filename: z.string(),
+  filepath: z.string(),
+  mimetype: z.string(),
+  size: z.number(),
+  width: z.number().nullable(),
+  height: z.number().nullable(),
+  tags: z.array(z.string()),
+  name: z.string().nullable().optional(),
+  categoryId: z.string().nullable().optional(),
+  isPublic: z.boolean().optional(),
+  description: z.string().nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+});
+
+export type ImageFileRecordDto = z.infer<typeof imageFileRecordSchema>;
+
+export const imageFileSelectionSchema = z.object({
+  id: z.string(),
+  filepath: z.string(),
+});
+
+export type ImageFileSelectionDto = z.infer<typeof imageFileSelectionSchema>;
+
+export const imageFileListFiltersSchema = z.object({
+  filename: z.string().nullable().optional(),
+  tags: z.array(z.string()).nullable().optional(),
+});
+
+export type ImageFileListFiltersDto = z.infer<typeof imageFileListFiltersSchema>;
+
 /**
  * Upload DTOs
  */

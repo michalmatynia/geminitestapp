@@ -2,34 +2,36 @@
 
 import { z } from 'zod';
 
-import type { BaseInventory } from '@/features/data-import-export';
-import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright/constants/playwright';
 import type { PlaywrightPersona } from '@/features/playwright/types';
 import { normalizePlaywrightPersonas } from '@/features/playwright/utils/personas';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
 import {
   importExportTemplateSchema,
-  type ImportExportTemplateDto
 } from '@/shared/contracts/data-import-export';
 import { 
   integrationSchema, 
   integrationConnectionSchema,
-  type IntegrationDto,
-  type IntegrationConnectionDto
 } from '@/shared/contracts/integrations';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { integrationKeys, playwrightKeys } from '@/shared/lib/query-key-exports';
+import type { 
+  Integration, 
+  IntegrationConnection, 
+  IntegrationWithConnections,
+  BaseInventory,
+  ImportExportTemplate
+} from '@/shared/types/domain/integrations';
 import type { ListQuery, SingleQuery } from '@/shared/types/query-result-types';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { getIntegrationConnectionsQueryKey } from './integrationCache';
 
-export function useIntegrations(): ListQuery<IntegrationDto> {
+export function useIntegrations(): ListQuery<Integration> {
   const queryKey = integrationKeys.all;
-  const queryFn = async (): Promise<IntegrationDto[]> => {
-    const data = await api.get<IntegrationDto[]>('/api/integrations');
+  const queryFn = async (): Promise<Integration[]> => {
+    const data = await api.get<Integration[]>('/api/integrations');
     return z.array(integrationSchema).parse(data);
   };
 
@@ -47,11 +49,11 @@ export function useIntegrations(): ListQuery<IntegrationDto> {
   });
 }
 
-export function useIntegrationConnections(integrationId?: string): ListQuery<IntegrationConnectionDto> {
+export function useIntegrationConnections(integrationId?: string): ListQuery<IntegrationConnection> {
   const queryKey = getIntegrationConnectionsQueryKey(integrationId);
-  const queryFn = async (): Promise<IntegrationConnectionDto[]> => {
+  const queryFn = async (): Promise<IntegrationConnection[]> => {
     if (!integrationId) return [];
-    const data = await api.get<IntegrationConnectionDto[]>(`/api/integrations/${integrationId}/connections`);
+    const data = await api.get<IntegrationConnection[]>(`/api/integrations/${integrationId}/connections`);
     return z.array(integrationConnectionSchema).parse(data);
   };
 
@@ -140,10 +142,10 @@ export function usePlaywrightPersonas(): ListQuery<PlaywrightPersona> {
   });
 }
 
-export function useExportTemplates(): ListQuery<ImportExportTemplateDto> {
+export function useExportTemplates(): ListQuery<ImportExportTemplate> {
   const queryKey = integrationKeys.exportTemplates();
-  const queryFn = async (): Promise<ImportExportTemplateDto[]> => {
-    const data = await api.get<ImportExportTemplateDto[]>('/api/integrations/export-templates');
+  const queryFn = async (): Promise<ImportExportTemplate[]> => {
+    const data = await api.get<ImportExportTemplate[]>('/api/integrations/export-templates');
     return z.array(importExportTemplateSchema).parse(data);
   };
 
@@ -253,8 +255,8 @@ export function useBaseInventories(connectionId: string, enabled: boolean = true
 
 export const getExportTemplatesQueryOptions = () => ({
   queryKey: integrationKeys.exportTemplates(),
-  queryFn: async (): Promise<ImportExportTemplateDto[]> => {
-    const data = await api.get<ImportExportTemplateDto[]>('/api/integrations/export-templates');
+  queryFn: async (): Promise<ImportExportTemplate[]> => {
+    const data = await api.get<ImportExportTemplate[]>('/api/integrations/export-templates');
     return z.array(importExportTemplateSchema).parse(data);
   },
   staleTime: 5 * 60 * 1000,

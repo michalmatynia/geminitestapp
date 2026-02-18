@@ -44,3 +44,29 @@ export const vectorShapeSchema = z.object({
 });
 
 export type VectorShapeDto = z.infer<typeof vectorShapeSchema>;
+
+/**
+ * Vector Layer Contract
+ */
+export const vectorLayerSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  visible: z.boolean(),
+  locked: z.boolean(),
+  shapes: z.array(vectorShapeSchema),
+  opacity: z.number().optional(),
+});
+
+export type VectorLayerDto = z.infer<typeof vectorLayerSchema>;
+
+/**
+ * Vector Drawing Contract
+ */
+export const vectorDrawingSchema = z.object({
+  width: z.number(),
+  height: z.number(),
+  layers: z.array(vectorLayerSchema),
+  activeLayerId: z.string().nullable(),
+});
+
+export type VectorDrawingDto = z.infer<typeof vectorDrawingSchema>;

@@ -798,6 +798,9 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               folderStats.total > 0 &&
               folderStats.total === folderStats.locked
             );
+            const hoverOnlyControlClass = isSelected
+              ? 'opacity-0 pointer-events-none'
+              : 'opacity-0 group-hover:opacity-100';
             const canToggle = isFolder && hasChildren;
             const Icon = (() => {
               if (isFolder) {
@@ -907,9 +910,9 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                   }}
                   className={`size-3 shrink-0 ${
                     isCanvasCaseFile
-                      ? 'text-sky-300/90 opacity-0 transition-opacity group-hover:opacity-100'
+                      ? `text-sky-300/90 transition-opacity ${hoverOnlyControlClass}`
                       : isNodeFileAsset
-                        ? 'text-violet-400/80 opacity-0 transition-opacity group-hover:opacity-100'
+                        ? `text-violet-400/80 transition-opacity ${hoverOnlyControlClass}`
                         : 'text-gray-500'
                   }`}
                 />
@@ -931,13 +934,19 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                     )}
                   </button>
                 ) : (
-                  <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
+                  <span
+                    className={`inline-flex size-4 items-center justify-center text-xs ${
+                      isCaseFile && isFileLocked
+                        ? 'text-amber-300 opacity-100'
+                        : 'opacity-40'
+                    }`}
+                    title={isCaseFile && isFileLocked ? 'Document is locked' : undefined}
+                  >
+                    •
+                  </span>
                 )}
                 <Icon className='size-4 shrink-0' />
                 {isFolder && isFolderLocked ? (
-                  <Lock className='size-3.5 shrink-0 text-amber-300' aria-hidden='true' />
-                ) : null}
-                {isCaseFile && isFileLocked ? (
                   <Lock className='size-3.5 shrink-0 text-amber-300' aria-hidden='true' />
                 ) : null}
                 <div className='min-w-0 flex flex-1 items-center gap-1'>
@@ -977,7 +986,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                         <button
                           type='button'
                           className={`inline-flex size-4 shrink-0 items-center justify-center rounded text-gray-300/80 transition hover:bg-muted/60 hover:text-white ${
-                            isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            hoverOnlyControlClass
                           }`}
                           title={isScanCaseFile ? 'Edit scan file' : 'Edit document'}
                           aria-label={isScanCaseFile ? 'Edit scan file' : 'Edit document'}
@@ -996,7 +1005,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                 {!isRenaming && isFolder && folderPath !== null ? (
                   <div
                     className={`flex shrink-0 items-center gap-1 transition ${
-                      isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      hoverOnlyControlClass
                     }`}
                   >
                     <button
@@ -1048,7 +1057,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                 {!isRenaming && isCaseFile && fileId ? (
                   <div
                     className={`flex shrink-0 items-center gap-1 transition ${
-                      isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      hoverOnlyControlClass
                     }`}
                   >
                     {isCanvasCaseFile ? (
@@ -1116,7 +1125,11 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                     ) : null}
                     <button
                       type='button'
-                      className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/60 text-gray-300 transition hover:bg-muted/60 hover:text-white'
+                      className={`inline-flex size-6 items-center justify-center rounded border transition ${
+                        isFileLocked
+                          ? 'border-amber-400/50 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25 hover:text-amber-100'
+                          : 'border-border/60 bg-card/60 text-gray-300 hover:bg-muted/60 hover:text-white'
+                      }`}
                       title={isFileLocked ? 'Unlock file' : 'Lock file'}
                       aria-label={isFileLocked ? 'Unlock file' : 'Lock file'}
                       onClick={(event): void => {
@@ -1126,9 +1139,9 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                       }}
                     >
                       {isFileLocked ? (
-                        <Unlock className='size-3.5' />
-                      ) : (
                         <Lock className='size-3.5' />
+                      ) : (
+                        <Unlock className='size-3.5' />
                       )}
                     </button>
                     <button
@@ -1150,7 +1163,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                 {!isRenaming && isNodeFileAsset && assetId ? (
                   <div
                     className={`flex shrink-0 items-center gap-1 transition ${
-                      isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      hoverOnlyControlClass
                     }`}
                   >
                     <button

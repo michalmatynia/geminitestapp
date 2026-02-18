@@ -86,7 +86,8 @@ const createId = (prefix: string): string => {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 };
 
-const formatCaseTimestamp = (value: string): string => {
+const formatCaseTimestamp = (value: string | null | undefined): string => {
+  if (!value) return '—';
   const parsed = Date.parse(value);
   if (Number.isNaN(parsed)) return 'Unknown';
   return `${new Date(parsed).toISOString().slice(0, 19).replace('T', ' ')} UTC`;
@@ -517,9 +518,10 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
-  const workspaceDebugEnabled =
-    process.env['NODE_ENV'] !== 'production' ||
-    settingsStore.getBoolean('case_resolver_workspace_debug', false);
+  const workspaceDebugEnabled = settingsStore.getBoolean(
+    'case_resolver_workspace_debug',
+    false,
+  );
   const caseListViewDefaults = useMemo(
     () => normalizeCaseListViewDefaults(preferencesQuery.data),
     [preferencesQuery.data],
@@ -1066,14 +1068,14 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         if (caseSortBy === 'name') {
           delta = left.name.localeCompare(right.name);
         } else if (caseSortBy === 'created') {
-          const leftCreatedAt = Date.parse(left.createdAt);
-          const rightCreatedAt = Date.parse(right.createdAt);
+          const leftCreatedAt = Date.parse(left.createdAt ?? '');
+          const rightCreatedAt = Date.parse(right.createdAt ?? '');
           delta =
             (Number.isNaN(leftCreatedAt) ? 0 : leftCreatedAt) -
             (Number.isNaN(rightCreatedAt) ? 0 : rightCreatedAt);
         } else {
-          const leftUpdatedAt = Date.parse(left.updatedAt);
-          const rightUpdatedAt = Date.parse(right.updatedAt);
+          const leftUpdatedAt = Date.parse(left.updatedAt ?? '');
+          const rightUpdatedAt = Date.parse(right.updatedAt ?? '');
           delta =
             (Number.isNaN(leftUpdatedAt) ? 0 : leftUpdatedAt) -
             (Number.isNaN(rightUpdatedAt) ? 0 : rightUpdatedAt);

@@ -9,7 +9,7 @@ import { useCreateTheme } from '@/features/cms/hooks/useCmsQueries';
 import type { CmsThemeColors, CmsThemeTypography, CmsThemeSpacing, CmsThemeCreateInput } from '@/features/cms/types';
 import { cmsThemeCreateSchema } from '@/features/cms/validations/api';
 import { logClientError } from '@/features/observability';
-import { Button, Input, SectionHeader, FormSection, FormField } from '@/shared/ui';
+import { Input, FormSection, FormField, PageLayout, Alert, FormActions, Breadcrumbs } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 const DEFAULT_COLORS: CmsThemeColors = {
@@ -75,13 +75,26 @@ export default function CreateThemePage(): React.ReactNode {
   const colorKeys = Object.keys(colors) as Array<keyof CmsThemeColors>;
 
   return (
-    <div className='container mx-auto max-w-2xl py-10'>
-      <SectionHeader title='Create Theme' className='mb-6' />
+    <PageLayout
+      title='Create Theme'
+      description='Design a new visual system for your storefront.'
+      eyebrow={
+        <Breadcrumbs
+          items={[
+            { label: 'Admin', href: '/admin' },
+            { label: 'CMS', href: '/admin/cms' },
+            { label: 'Themes', href: '/admin/cms/themes' },
+            { label: 'Create' }
+          ]}
+          className='mb-2'
+        />
+      }
+    >
       <form onSubmit={(e: React.FormEvent) => { void handleSubmit(e); }} className='space-y-8'>
         {error ? (
-          <div className='rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200'>
+          <Alert variant='error' className='mb-6'>
             {error}
-          </div>
+          </Alert>
         ) : null}
         <FormSection title='General' description='Basic identification for this theme.'>
           <FormField label='Theme Name' required id='theme-name'>
@@ -173,12 +186,14 @@ export default function CreateThemePage(): React.ReactNode {
           </FormField>
         </FormSection>
 
-        <div className='pt-4'>
-          <Button type='submit' size='lg' className='w-full md:w-auto min-w-[200px]' disabled={createTheme.isPending || !name.trim()}>
-            {createTheme.isPending ? 'Creating...' : 'Create Theme'}
-          </Button>
-        </div>
+        <FormActions
+          onCancel={() => router.push('/admin/cms/themes')}
+          saveText='Create Theme'
+          isSaving={createTheme.isPending}
+          isDisabled={!name.trim()}
+          className='pt-4'
+        />
       </form>
-    </div>
+    </PageLayout>
   );
 }

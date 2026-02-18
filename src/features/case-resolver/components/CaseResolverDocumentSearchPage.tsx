@@ -39,7 +39,8 @@ const stripHtml = (value: string): string =>
     .replace(/\s+/g, ' ')
     .trim();
 
-const toDateLabel = (value: string): string => {
+const toDateLabel = (value: string | null | undefined): string => {
+  if (!value) return 'Unknown';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'Unknown';
   return new Intl.DateTimeFormat(undefined, {

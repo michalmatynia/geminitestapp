@@ -1,27 +1,19 @@
+import type {
+  CaseResolverCaptureActionDto,
+  CaseResolverCaptureRoleDto,
+  CaseResolverCaptureRoleMappingDto,
+  CaseResolverCaptureSettingsDto,
+} from '@/shared/contracts/case-resolver';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export const CASE_RESOLVER_CAPTURE_SETTINGS_KEY = 'case_resolver_capture_settings_v1';
 
-export type CaseResolverCaptureAction =
-  | 'useMatched'
-  | 'createInFilemaker'
-  | 'keepText'
-  | 'ignore';
-export type CaseResolverCaptureRole = 'addresser' | 'addressee';
+export type CaseResolverCaptureAction = CaseResolverCaptureActionDto;
+export type CaseResolverCaptureRole = CaseResolverCaptureRoleDto;
 
-export type CaseResolverCaptureRoleMapping = {
-  enabled: boolean;
-  targetRole: CaseResolverCaptureRole;
-  defaultAction: CaseResolverCaptureAction;
-  autoMatchPartyReference: boolean;
-  autoMatchAddress: boolean;
-};
+export type CaseResolverCaptureRoleMapping = CaseResolverCaptureRoleMappingDto;
 
-export type CaseResolverCaptureSettings = {
-  enabled: boolean;
-  autoOpenProposalModal: boolean;
-  roleMappings: Record<CaseResolverCaptureRole, CaseResolverCaptureRoleMapping>;
-};
+export type CaseResolverCaptureSettings = CaseResolverCaptureSettingsDto;
 
 export const CASE_RESOLVER_CAPTURE_ACTION_OPTIONS: Array<{
   value: CaseResolverCaptureAction;

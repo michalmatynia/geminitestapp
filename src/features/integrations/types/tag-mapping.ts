@@ -1,28 +1,15 @@
-import type { ProductTag } from '@/features/products/types';
+import type {
+  ExternalTagDto,
+  TagMappingDto as TagMappingDtoContract,
+  TagMappingWithDetailsDto as TagMappingWithDetailsDtoContract,
+} from '@/shared/contracts/integrations';
+import type { ProductTagDto as ProductTag } from '@/shared/contracts/products';
 
-export type ExternalTag = {
-  id: string;
-  connectionId: string;
-  externalId: string;
-  name: string;
-  metadata: Record<string, unknown> | null;
-  fetchedAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-};
+export type ExternalTag = ExternalTagDto;
 
-export type TagMapping = {
-  id: string;
-  connectionId: string;
-  externalTagId: string;
-  internalTagId: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-};
+export type TagMapping = TagMappingDtoContract;
 
-export type TagMappingWithDetails = TagMapping & {
-  externalTag: ExternalTag;
+export type TagMappingWithDetails = Omit<TagMappingWithDetailsDtoContract, 'internalTag'> & {
   internalTag: ProductTag;
 };
 

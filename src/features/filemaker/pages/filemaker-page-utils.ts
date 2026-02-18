@@ -5,7 +5,8 @@ export const includeQuery = (values: string[], query: string): boolean => {
   return values.join(' ').toLowerCase().includes(query.toLowerCase());
 };
 
-export const formatTimestamp = (value: string): string => {
+export const formatTimestamp = (value: string | null | undefined): string => {
+  if (!value) return 'Unknown';
   const parsed = Date.parse(value);
   if (Number.isNaN(parsed)) return 'Unknown';
   return new Date(parsed).toLocaleString();

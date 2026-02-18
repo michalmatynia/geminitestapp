@@ -47,7 +47,7 @@ export async function POST_handler(
   await resolved.repository.updateListing(listingId, {
     nextRelistAt: null,
     failureReason: null,
-    lastStatusCheckAt: new Date(),
+    lastStatusCheckAt: new Date().toISOString(),
   });
 
   const enqueuedAt = new Date().toISOString();

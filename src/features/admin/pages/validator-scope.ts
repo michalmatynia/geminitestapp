@@ -1,18 +1,8 @@
-export type ValidatorScope =
-  | 'products'
-  | 'image-studio'
-  | 'prompt-exploder'
-  | 'case-resolver-prompt-exploder';
+import type { ValidatorScopeDto, ValidatorPatternListDto } from '@/shared/contracts/admin';
 
-export type ValidatorPatternList = {
-  id: string;
-  name: string;
-  description: string;
-  scope: ValidatorScope;
-  deletionLocked: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
+export type ValidatorScope = ValidatorScopeDto;
+
+export type ValidatorPatternList = ValidatorPatternListDto;
 
 export const VALIDATOR_PATTERN_LISTS_KEY = 'validator_pattern_lists';
 

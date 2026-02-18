@@ -1,44 +1,27 @@
 import { z } from 'zod';
 
+import type {
+  AiBrainProviderDto,
+  AiBrainFeatureDto,
+  AiBrainAssignmentDto,
+  AiBrainSettingsDto,
+  AiBrainProviderCatalogDto,
+} from '@/shared/contracts/ai-brain';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export const AI_BRAIN_SETTINGS_KEY = 'ai_brain_settings';
 export const AI_BRAIN_PROVIDER_CATALOG_KEY = 'ai_brain_provider_catalog';
 
-export type AiBrainProvider = 'model' | 'agent';
-export type AiBrainFeature =
-  | 'cms_builder'
-  | 'system_logs'
-  | 'error_logs'
-  | 'analytics'
-  | 'runtime_analytics'
-  | 'image_studio'
-  | 'ai_paths'
-  | 'prompt_engine';
+export type AiBrainProvider = AiBrainProviderDto;
+export type AiBrainFeature = AiBrainFeatureDto;
 
-export type AiBrainAssignment = {
-  enabled: boolean;
-  provider: AiBrainProvider;
-  modelId: string;
-  agentId: string;
-  temperature?: number | undefined;
-  maxTokens?: number | undefined;
-  notes?: string | null | undefined;
-};
+export type AiBrainAssignment = AiBrainAssignmentDto;
 
-export type AiBrainSettings = {
-  defaults: AiBrainAssignment;
+export type AiBrainSettings = Omit<AiBrainSettingsDto, 'assignments'> & {
   assignments: Partial<Record<AiBrainFeature, AiBrainAssignment>>;
 };
 
-export type AiBrainProviderCatalog = {
-  modelPresets: string[];
-  paidModels: string[];
-  ollamaModels: string[];
-  agentModels: string[];
-  deepthinkingAgents: string[];
-  playwrightPersonas: string[];
-};
+export type AiBrainProviderCatalog = AiBrainProviderCatalogDto;
 
 const numberField = (min: number, max: number): z.ZodType<number | undefined> =>
   z.preprocess(

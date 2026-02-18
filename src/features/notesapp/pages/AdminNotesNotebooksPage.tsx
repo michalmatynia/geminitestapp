@@ -1,6 +1,5 @@
 'use client';
 
-import { MoreVertical } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 
@@ -13,7 +12,7 @@ import { useNotebooks } from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
 import type { NotebookRecord } from '@/shared/types/domain/notes';
-import { Button, useToast, Input,  PageLayout, FormSection, FormField, RefreshButton, LoadingState } from '@/shared/ui';
+import { Button, useToast, Input, PageLayout, FormSection, FormField, RefreshButton, LoadingState, ActionMenu, DropdownMenuItem, DropdownMenuSeparator, StatusBadge } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 export function AdminNotesNotebooksPage(): React.JSX.Element {
@@ -24,7 +23,6 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
   const [name, setName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
-  const [menuNotebookId, setMenuNotebookId] = useState<string | null>(null);
   const [notebookToDelete, setNotebookToDelete] = useState<string | null>(null);
 
   const notebooksQuery = useNotebooks();
@@ -63,7 +61,6 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
   const handleEditStart = useCallback((notebook: NotebookRecord): void => {
     setEditingId(notebook.id);
     setEditingName(notebook.name);
-    setMenuNotebookId(null);
   }, []);
 
   const handleEditCancel = useCallback((): void => {
@@ -120,8 +117,6 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'AdminNotesNotebooksPage', action: 'duplicateNotebook', originalId: notebook.id } });
       toast('Failed to duplicate notebook', { variant: 'error' });
-    } finally {
-      setMenuNotebookId(null);
     }
   };
 
@@ -209,7 +204,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
                             {notebook.name}
                           </Button>
                           {isActive && (
-                            <span className='text-[11px] text-blue-300'>Active</span>
+                            <StatusBadge status='Active' variant='active' size='sm' className='font-bold ml-1' />
                           )}
                         </div>
                       )}
@@ -240,69 +235,34 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
                           </Button>
                         </>
                       ) : (
-                        <></>
-                      )}
-                      {!isEditing && (
-                        <div className='relative'>
-                          <Button
-                            type='button'
-                            onClick={(event: React.MouseEvent): void => {
-                              event.stopPropagation();
-                              setMenuNotebookId((prev: string | null): string | null =>
-                                prev === notebook.id ? null : notebook.id
-                              );
+                        <ActionMenu ariaLabel={`Notebook actions for ${notebook.name}`}>
+                          <DropdownMenuItem
+                            onSelect={(event: Event): void => {
+                              event.preventDefault();
+                              handleEditStart(notebook);
                             }}
-                            className='rounded p-1 text-gray-400 hover:bg-muted/50 hover:text-gray-200'
-                            aria-label={`Notebook actions for ${notebook.name}`}
                           >
-                            <MoreVertical size={16} />
-                          </Button>
-                          {menuNotebookId === notebook.id && (
-                            <>
-                              <div
-                                className='fixed inset-0 z-40'
-                                onClick={(): void => setMenuNotebookId(null)}
-                              />
-                              <div className='absolute right-0 top-full z-50 mt-2 w-44 rounded-md border bg-card p-1 shadow-lg'>
-                                <Button
-                                  type='button'
-                                  onClick={(event: React.MouseEvent): void => {
-                                    event.stopPropagation();
-                                    handleEditStart(notebook);
-                                    setMenuNotebookId(null);
-                                  }}
-                                  onClickCapture={(event: React.MouseEvent): void => event.stopPropagation()}
-                                  className='flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-muted/50'
-                                >
-                                  Rename
-                                </Button>
-                                <Button
-                                  type='button'
-                                  onClick={(event: React.MouseEvent): void => {
-                                    event.stopPropagation();
-                                    void handleDuplicate(notebook);
-                                  }}
-                                  onClickCapture={(event: React.MouseEvent): void => event.stopPropagation()}
-                                  className='flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-gray-200 hover:bg-muted/50'
-                                >
-                                  Duplicate
-                                </Button>
-                                <Button
-                                  type='button'
-                                  onClick={(event: React.MouseEvent): void => {
-                                    event.stopPropagation();
-                                    setNotebookToDelete(notebook.id);
-                                    setMenuNotebookId(null);
-                                  }}
-                                  onClickCapture={(event: React.MouseEvent): void => event.stopPropagation()}
-                                  className='flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-red-300 hover:bg-muted/50'
-                                >
-                                  Delete
-                                </Button>
-                              </div>
-                            </>
-                          )}
-                        </div>
+                            Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={(event: Event): void => {
+                              event.preventDefault();
+                              void handleDuplicate(notebook);
+                            }}
+                          >
+                            Duplicate
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className='text-destructive focus:text-destructive'
+                            onSelect={(event: Event): void => {
+                              event.preventDefault();
+                              setNotebookToDelete(notebook.id);
+                            }}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </ActionMenu>
                       )}
                     </div>
                   </div>

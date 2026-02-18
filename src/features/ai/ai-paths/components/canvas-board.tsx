@@ -610,6 +610,40 @@ export function CanvasBoard({
     svgPerf.slowFrameRatio,
     useSvgRenderer,
   ]);
+  const svgReduceEdgeEffects = React.useMemo((): boolean => {
+    if (!useSvgRenderer) return false;
+    if (svgDetailLevel === 'skeleton') return true;
+    if (renderedEdgePaths.length > 780) return true;
+    if (svgPerf.fps > 0 && svgPerf.fps < 40) return true;
+    if (svgPerf.slowFrameRatio > 0.42) return true;
+    return false;
+  }, [
+    renderedEdgePaths.length,
+    svgDetailLevel,
+    svgPerf.fps,
+    svgPerf.slowFrameRatio,
+    useSvgRenderer,
+  ]);
+  const svgEnableNodeAnimations = React.useMemo((): boolean => {
+    if (!useSvgRenderer) return true;
+    if (prefersReducedMotion) return false;
+    if (svgDetailLevel === 'skeleton') return false;
+    if (svgPerf.fps > 0 && svgPerf.fps < 38) return false;
+    if (svgPerf.slowFrameRatio > 0.45) return false;
+    return true;
+  }, [
+    prefersReducedMotion,
+    svgDetailLevel,
+    svgPerf.fps,
+    svgPerf.slowFrameRatio,
+    useSvgRenderer,
+  ]);
+  const svgConnectorHitTargetPx = React.useMemo((): number => {
+    if (!useSvgRenderer) return 14;
+    if (svgDetailLevel === 'skeleton') return 22;
+    if (view.scale < 0.72) return 18;
+    return 14;
+  }, [svgDetailLevel, useSvgRenderer, view.scale]);
   const svgCulledNodeCount = useSvgRenderer
     ? Math.max(0, nodes.length - svgVisibleNodeIdSet.size)
     : 0;
@@ -634,7 +668,7 @@ export function CanvasBoard({
   return (
     <div
       ref={viewportRef}
-      className={`relative min-h-[560px] rounded-lg border bg-card/70 backdrop-blur overflow-hidden overscroll-contain ${
+      className={`relative min-h-[672px] rounded-lg border bg-card/70 backdrop-blur overflow-hidden overscroll-contain ${
         canvasCursorClass
       } ${viewportClassName ?? ''}`}
       style={flowStyle}
@@ -821,8 +855,9 @@ export function CanvasBoard({
         style={{
           width: CANVAS_WIDTH,
           height: CANVAS_HEIGHT,
-          transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`,
+          transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})`,
           transformOrigin: '0 0',
+          willChange: useSvgRenderer ? 'transform' : undefined,
           backgroundImage:
             'radial-gradient(circle at 1px 1px, rgba(148,163,184,0.18) 1px, transparent 0)',
           backgroundSize: '24px 24px',
@@ -866,6 +901,7 @@ export function CanvasBoard({
             triggerConnected={triggerConnected}
             wireFlowEnabled={wireFlowEnabled}
             flowingIntensity={flowingIntensity}
+            reduceVisualEffects={svgReduceEdgeEffects}
             onRemoveEdge={handleRemoveEdge}
             onSelectEdge={(edgeId: string) => selectEdge(edgeId)}
           />
@@ -907,6 +943,8 @@ export function CanvasBoard({
               inputPulseNodes={inputPulseNodes}
               outputPulseNodes={outputPulseNodes}
               triggerConnected={triggerConnected}
+              enableNodeAnimations={svgEnableNodeAnimations}
+              connectorHitTargetPx={svgConnectorHitTargetPx}
               connecting={
                 connecting
                   ? { fromNodeId: connecting.fromNodeId, fromPort: connecting.fromPort }

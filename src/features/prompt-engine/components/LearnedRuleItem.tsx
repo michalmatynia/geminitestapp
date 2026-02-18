@@ -1,13 +1,15 @@
 'use client';
 
-import { Copy } from 'lucide-react';
 import React from 'react';
 
 import {
   Button,
-  
   Textarea,
-  Tooltip,
+  FormSection,
+  CopyButton,
+  Alert,
+  PropertyRow,
+  StatusBadge,
 } from '@/shared/ui';
 
 import { usePromptEngine, type RuleDraft } from '../context/PromptEngineContext';
@@ -19,48 +21,60 @@ const formatSeverityLabel = (severity: PromptValidationSeverity): string => {
   return 'Info';
 };
 
+const severityToVariant = (severity: PromptValidationSeverity) => {
+  if (severity === 'error') return 'error';
+  if (severity === 'warning') return 'warning';
+  return 'info';
+};
+
 type LearnedRuleItemProps = {
   draft: RuleDraft;
 };
 
 export function LearnedRuleItem({ draft }: LearnedRuleItemProps): React.JSX.Element {
-  const { handleLearnedRuleTextChange, handleRemoveLearnedRule, handleCopy } = usePromptEngine();
+  const { handleLearnedRuleTextChange, handleRemoveLearnedRule } = usePromptEngine();
   const rule = draft.parsed;
 
   return (
-    <div className='space-y-3 rounded-lg border border-border/60 bg-card/40 p-4'>
-      <div className='flex items-start justify-between gap-2'>
-        <div className='text-sm font-medium text-gray-100'>{rule?.title ?? 'Invalid rule'}</div>
+    <FormSection
+      title={rule?.title ?? 'Invalid rule'}
+      variant='subtle'
+      className='p-4'
+      actions={
         <div className='flex items-center gap-2'>
-          <Tooltip content='Copy JSON'>
-            <Button
-              type='button'
-              variant='ghost'
-              size='icon'
-              onClick={() => void handleCopy(draft.text, 'Rule')}
-            >
-              <Copy className='size-4' />
-            </Button>
-          </Tooltip>
+          <CopyButton
+            value={draft.text}
+            variant='ghost'
+            size='icon'
+          />
           <Button type='button' variant='outline' size='sm' onClick={() => handleRemoveLearnedRule(draft.uid)}>
             Remove
           </Button>
         </div>
+      }
+    >
+      <div className='space-y-3'>
+        <Textarea
+          className='min-h-[140px] font-mono text-[12px]'
+          value={draft.text}
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => handleLearnedRuleTextChange(draft.uid, event.target.value)}
+        />
+        {draft.error ? (
+          <Alert variant='error' className='text-xs'>{draft.error}</Alert>
+        ) : null}
+        {rule ? (
+          <div className='flex flex-wrap gap-4 items-center pt-1'>
+            <PropertyRow label='Severity'>
+              <StatusBadge
+                status={formatSeverityLabel(rule.severity)}
+                variant={severityToVariant(rule.severity)}
+                size='sm'
+              />
+            </PropertyRow>
+            <PropertyRow label='Enabled' value={rule.enabled ? 'Yes' : 'No'} />
+          </div>
+        ) : null}
       </div>
-      <Textarea
-        className='min-h-[140px] font-mono text-[12px]'
-        value={draft.text}
-        onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => handleLearnedRuleTextChange(draft.uid, event.target.value)}
-      />
-      {draft.error ? (
-        <div className='text-xs text-red-300'>{draft.error}</div>
-      ) : null}
-      {rule ? (
-        <div className='text-xs text-gray-400'>
-          <div>Severity: {formatSeverityLabel(rule.severity)}</div>
-          <div>Enabled: {rule.enabled ? 'Yes' : 'No'}</div>
-        </div>
-      ) : null}
-    </div>
+    </FormSection>
   );
 }

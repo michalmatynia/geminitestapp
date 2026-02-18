@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import type { AgentAuditLogRecord } from '@/features/ai/agent-runtime/types/agent';
 import { ErrorSystem } from '@/features/observability/server';
 import { internalError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
@@ -28,7 +27,7 @@ async function GET_handler(req: NextRequest,
     take,
   });
   const filtered = stepId
-    ? audits.filter((audit: AgentAuditLogRecord) => {
+    ? audits.filter((audit) => {
       const metadata = audit.metadata as
           | {
               stepId?: string;

@@ -137,7 +137,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
   try {
     await repo.updateListingStatus(listingId, 'running');
     await repo.appendExportHistory(listingId, {
-      exportedAt: new Date(),
+      exportedAt: new Date().toISOString(),
       status: 'running',
       inventoryId,
       externalListingId: listing.externalListingId,
@@ -176,7 +176,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
 
     await repo.updateListingStatus(listingId, 'removed');
     await repo.appendExportHistory(listingId, {
-      exportedAt: new Date(),
+      exportedAt: new Date().toISOString(),
       status: 'deleted',
       inventoryId,
       externalListingId: listing.externalListingId
@@ -218,7 +218,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
     await repo.updateListingStatus(listingId, 'failed').catch(() => undefined);
     await repo
       .appendExportHistory(listingId, {
-        exportedAt: new Date(),
+        exportedAt: new Date().toISOString(),
         status: 'failed',
         inventoryId,
         externalListingId: listing.externalListingId,
@@ -253,4 +253,3 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
     throw error;
   }
 }
-

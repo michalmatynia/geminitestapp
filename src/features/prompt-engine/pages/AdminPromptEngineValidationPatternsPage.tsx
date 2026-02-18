@@ -28,6 +28,8 @@ type AdminPromptEngineValidationPatternsPageProps = {
   lockedExploderSubTab?: ExploderPatternSubTab;
 };
 
+import { SectionPanel, Alert, StatusBadge, PropertyRow } from '@/shared/ui';
+
 function AdminPromptEngineValidationPatternsContent(): React.JSX.Element {
   const { promptEngineSettings, saveError, isUsingDefaults } = usePromptEngine();
 
@@ -35,29 +37,22 @@ function AdminPromptEngineValidationPatternsContent(): React.JSX.Element {
     <div className='space-y-4'>
       <PromptEngineToolbar />
 
-      <div className='rounded-lg border border-border/60 bg-card/30 p-4'>
+      <SectionPanel variant='subtle-compact' className='p-4'>
         <div className='flex flex-wrap items-center justify-between gap-2'>
-          <div className='text-sm text-gray-200'>
-            {promptEngineSettings.promptValidation.enabled ? (
-              <span className='rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-200'>
-                Validator enabled
-              </span>
-            ) : (
-              <span className='rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-200'>
-                Validator disabled
-              </span>
-            )}
-          </div>
-          <div className='text-[11px] text-gray-400'>
-            Source: {isUsingDefaults ? 'defaults' : 'saved settings'}
-          </div>
+          <StatusBadge
+            status={promptEngineSettings.promptValidation.enabled ? 'Validator enabled' : 'Validator disabled'}
+            variant={promptEngineSettings.promptValidation.enabled ? 'success' : 'warning'}
+          />
+          <PropertyRow
+            label='Source'
+            value={isUsingDefaults ? 'defaults' : 'saved settings'}
+            variant='subtle'
+          />
         </div>
-      </div>
+      </SectionPanel>
 
       {saveError ? (
-        <div className='rounded-lg border border-red-500/40 bg-red-500/10 p-4'>
-          <div className='text-xs text-red-200'>{saveError}</div>
-        </div>
+        <Alert variant='error'>{saveError}</Alert>
       ) : null}
 
       <PromptEngineFilters />

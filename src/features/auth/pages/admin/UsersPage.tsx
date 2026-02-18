@@ -3,8 +3,6 @@
 import { 
   UserPlusIcon, 
   ShieldAlertIcon, 
-  Trash2, 
-  Edit2, 
   ShieldCheck,
   Key,
   Users
@@ -12,7 +10,6 @@ import {
 import React, { useMemo, useState } from 'react';
 
 import { 
-  Button, 
   DataTable, 
   SelectSimple, 
   ListPanel, 
@@ -20,7 +17,10 @@ import {
   useToast,
   PanelHeader,
   SearchInput,
-  EmptyState
+  EmptyState,
+  ActionMenu,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -119,18 +119,27 @@ export default function AuthUsersPage(): React.JSX.Element {
       id: 'actions',
       header: () => <div className='text-right'>Tools</div>,
       cell: ({ row }: { row: { original: AuthUserSummary } }) => (
-        <div className='flex justify-end gap-2'>
-          <Button variant='ghost' size='xs' className='h-7 w-7 p-0' onClick={() => setEditingUser(row.original)}>
-            <Edit2 className='size-3.5' />
-          </Button>
-          <Button 
-            variant='ghost' 
-            size='xs' 
-            className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300' 
-            onClick={() => setUserToDelete(row.original)}
-          >
-            <Trash2 className='size-3.5' />
-          </Button>
+        <div className='flex justify-end'>
+          <ActionMenu ariaLabel={`Actions for user ${row.original.email}`}>
+            <DropdownMenuItem
+              onSelect={(event: Event): void => {
+                event.preventDefault();
+                setEditingUser(row.original);
+              }}
+            >
+              Edit Identity
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className='text-destructive focus:text-destructive'
+              onSelect={(event: Event): void => {
+                event.preventDefault();
+                setUserToDelete(row.original);
+              }}
+            >
+              Destroy Record
+            </DropdownMenuItem>
+          </ActionMenu>
         </div>
       ),
     },

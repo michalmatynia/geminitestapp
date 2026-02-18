@@ -2,8 +2,6 @@
 
 import React from 'react';
 
-import {  } from '@/shared/ui';
-
 import { FileUploadEventsProvider } from '../contexts/FileUploadEventsContext';
 import { FileUploadEventsPanelProvider } from './file-upload-events/context/FileUploadEventsPanelContext';
 import { FileUploadEventsFilters } from './file-upload-events/FileUploadEventsFilters';

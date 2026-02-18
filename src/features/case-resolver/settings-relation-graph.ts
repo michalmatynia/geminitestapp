@@ -667,8 +667,8 @@ export const buildCaseResolverRelationGraph = ({
   });
 
   return {
-    nodes: nextNodes,
-    edges: nextEdges,
+    nodes: nextNodes as unknown as CaseResolverRelationGraph['nodes'],
+    edges: nextEdges as unknown as CaseResolverRelationGraph['edges'],
     nodeMeta: nextNodeMeta,
     edgeMeta: nextEdgeMeta,
   };

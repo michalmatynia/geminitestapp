@@ -57,7 +57,8 @@ const canonicalizeLists = (lists: ValidatorPatternList[]): string =>
     }))
   );
 
-const formatUpdatedAt = (value: string): string => {
+const formatUpdatedAt = (value: string | null | undefined): string => {
+  if (!value) return 'Unknown';
   const parsed = Date.parse(value);
   if (Number.isNaN(parsed)) return 'Unknown';
   return new Date(parsed).toLocaleString();
@@ -423,7 +424,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
                   <div className='text-[11px] text-gray-500'>
                     {list.description.trim() ||
                       VALIDATOR_SCOPE_DESCRIPTIONS[list.scope]}
-                    {' '}| Updated: {formatUpdatedAt(list.updatedAt)}
+                    {' '}| Updated: {formatUpdatedAt(list.updatedAt ?? undefined)}
                   </div>
                 </div>
               </div>

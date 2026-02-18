@@ -283,3 +283,65 @@ export const caseResolverSettingsSchema = z.object({
   confirmDeleteDocument: z.boolean(),
 });
 export type CaseResolverSettingsDto = z.infer<typeof caseResolverSettingsSchema>;
+
+/**
+ * Case Resolver Capture DTOs
+ */
+
+export const caseResolverCaptureRoleSchema = z.enum(['addresser', 'addressee']);
+export type CaseResolverCaptureRoleDto = z.infer<typeof caseResolverCaptureRoleSchema>;
+
+export const caseResolverCaptureActionSchema = z.enum([
+  'ignore',
+  'keepText',
+  'useMatched',
+  'createInFilemaker',
+]);
+export type CaseResolverCaptureActionDto = z.infer<typeof caseResolverCaptureActionSchema>;
+
+export const caseResolverCaptureProposalMatchKindSchema = z.enum([
+  'none',
+  'party',
+  'address',
+  'party_and_address',
+]);
+export type CaseResolverCaptureProposalMatchKindDto = z.infer<typeof caseResolverCaptureProposalMatchKindSchema>;
+
+export const caseResolverCaptureProposalSchema = z.object({
+  role: caseResolverCaptureRoleSchema,
+  sourceRole: caseResolverCaptureRoleSchema,
+  candidate: z.any(), // PromptExploderCaseResolverPartyCandidate
+  existingReference: caseResolverPartyReferenceSchema.nullable(),
+  existingAddressId: z.string().nullable(),
+  matchKind: caseResolverCaptureProposalMatchKindSchema,
+  hasAddressCandidate: z.boolean(),
+  action: caseResolverCaptureActionSchema,
+});
+
+export type CaseResolverCaptureProposalDto = z.infer<typeof caseResolverCaptureProposalSchema>;
+
+export const caseResolverCaptureProposalStateSchema = z.object({
+  targetFileId: z.string(),
+  addresser: caseResolverCaptureProposalSchema.nullable(),
+  addressee: caseResolverCaptureProposalSchema.nullable(),
+});
+
+export type CaseResolverCaptureProposalStateDto = z.infer<typeof caseResolverCaptureProposalStateSchema>;
+
+export const caseResolverCaptureRoleMappingSchema = z.object({
+  enabled: z.boolean(),
+  targetRole: caseResolverCaptureRoleSchema,
+  defaultAction: caseResolverCaptureActionSchema,
+  autoMatchPartyReference: z.boolean(),
+  autoMatchAddress: z.boolean(),
+});
+
+export type CaseResolverCaptureRoleMappingDto = z.infer<typeof caseResolverCaptureRoleMappingSchema>;
+
+export const caseResolverCaptureSettingsSchema = z.object({
+  enabled: z.boolean(),
+  autoOpenProposalModal: z.boolean(),
+  roleMappings: z.record(caseResolverCaptureRoleSchema, caseResolverCaptureRoleMappingSchema),
+});
+
+export type CaseResolverCaptureSettingsDto = z.infer<typeof caseResolverCaptureSettingsSchema>;

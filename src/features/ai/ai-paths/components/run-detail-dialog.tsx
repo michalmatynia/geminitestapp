@@ -206,7 +206,7 @@ export function RunDetailDialog({
           <CollapsibleSection
             title='Raw payloads'
             variant='card'
-            titleClassName='text-[11px] uppercase text-gray-400'
+            triggerClassName='text-[11px] uppercase text-gray-400'
             className='bg-black/20'
           >
             <div className='mt-3 space-y-3'>

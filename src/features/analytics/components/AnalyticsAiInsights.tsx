@@ -1,7 +1,7 @@
 'use client';
 
 import type { AiInsightRecord } from '@/shared/types';
-import { Button, StatusBadge, DocumentationSection, Hint } from '@/shared/ui';
+import { Button, StatusBadge, DocumentationSection, Hint, FormSection } from '@/shared/ui';
 
 import { useAnalytics } from '../context/AnalyticsContext';
 
@@ -9,14 +9,11 @@ export function AnalyticsAiInsights(): React.JSX.Element {
   const { insightsQuery, runInsightMutation } = useAnalytics();
 
   return (
-    <div className='mb-6 rounded-lg border border-border/60 bg-card/40 p-4'>
-      <div className='flex flex-wrap items-center justify-between gap-3'>
-        <div>
-          <h2 className='text-sm font-semibold text-white'>AI Insights</h2>
-          <p className='text-xs text-gray-400'>
-            Automated overview of interactions and possible issues.
-          </p>
-        </div>
+    <FormSection
+      title='AI Insights'
+      description='Automated overview of interactions and possible issues.'
+      className='mb-6 p-4'
+      actions={
         <Button
           variant='outline'
           size='sm'
@@ -25,15 +22,16 @@ export function AnalyticsAiInsights(): React.JSX.Element {
         >
           {runInsightMutation.isPending ? 'Running...' : 'Run AI Insight'}
         </Button>
-      </div>
+      }
+    >
       {insightsQuery.isLoading ? (
-        <Hint className='mt-3'>Loading AI insights…</Hint>
+        <Hint className='mt-1'>Loading AI insights…</Hint>
       ) : insightsQuery.error ? (
-        <Hint variant='danger' className='mt-3'>{insightsQuery.error.message}</Hint>
+        <Hint variant='danger' className='mt-1'>{insightsQuery.error.message}</Hint>
       ) : (insightsQuery.data?.insights?.length ?? 0) === 0 ? (
-        <Hint className='mt-3' italic>No insights yet.</Hint>
+        <Hint className='mt-1' italic>No insights yet.</Hint>
       ) : (
-        <div className='mt-3 space-y-3'>
+        <div className='mt-1 space-y-3'>
           {insightsQuery.data?.insights.map((insight: AiInsightRecord) => (
             <div key={insight.id} className='rounded-md border border-border/60 bg-gray-950/40 p-3 text-xs text-gray-300'>
               <div className='flex items-center justify-between gap-2'>
@@ -56,6 +54,6 @@ export function AnalyticsAiInsights(): React.JSX.Element {
           ))}
         </div>
       )}
-    </div>
+    </FormSection>
   );
 }

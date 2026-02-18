@@ -11,23 +11,29 @@ import { Switch } from './switch';
 interface ToggleRowProps {
   label: ReactNode;
   description?: ReactNode;
+  icon?: ReactNode;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   type?: 'checkbox' | 'switch';
   disabled?: boolean;
   className?: string;
+  labelClassName?: string;
   id?: string;
+  children?: ReactNode;
 }
 
 export function ToggleRow({
   label,
   description,
+  icon,
   checked,
   onCheckedChange,
   type = 'checkbox',
   disabled = false,
   className,
+  labelClassName,
   id,
+  children,
 }: ToggleRowProps): React.JSX.Element {
   const generatedId = id || React.useId();
   
@@ -39,13 +45,17 @@ export function ToggleRow({
       disabled && 'opacity-50 pointer-events-none',
       className
     )}>
-      <div className='flex-1 space-y-0.5'>
-        <Label 
-          htmlFor={generatedId}
-          className='text-sm font-medium text-gray-200 cursor-pointer'
-        >
-          {label}
-        </Label>
+      {children}
+      <div className='relative z-10 flex-1 space-y-0.5'>
+        <div className='flex items-center gap-1.5'>
+          {icon ? <span className='shrink-0'>{icon}</span> : null}
+          <Label 
+            htmlFor={generatedId}
+            className={cn('text-sm font-medium text-gray-200 cursor-pointer', labelClassName)}
+          >
+            {label}
+          </Label>
+        </div>
         {description && (
           <p className='text-[11px] text-gray-500 leading-tight'>
             {description}

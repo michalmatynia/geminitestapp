@@ -37,3 +37,6 @@ export * from '../contracts/vector';
 export * from '../contracts/analytics';
 export * from '../contracts/product-sync';
 export * from '../contracts/gsap';
+export * from '../contracts/ai-brain';
+export * from '../contracts/ai-insights';
+export * from '../contracts/agent-runtime';

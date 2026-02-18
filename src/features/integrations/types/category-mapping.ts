@@ -1,37 +1,18 @@
 import type { ProductCategoryDto } from '@/features/products';
+import type {
+  ExternalCategoryDto,
+  ExternalCategoryWithChildrenDto,
+  CategoryMappingDto as CategoryMappingDtoContract,
+  CategoryMappingWithDetailsDto as CategoryMappingWithDetailsDtoContract,
+} from '@/shared/contracts/integrations';
 
-export type ExternalCategory = {
-  id: string;
-  connectionId: string;
-  externalId: string;
-  name: string;
-  parentExternalId: string | null;
-  path: string | null;
-  depth: number;
-  isLeaf: boolean;
-  metadata: Record<string, unknown> | null;
-  fetchedAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-};
+export type ExternalCategory = ExternalCategoryDto;
 
-export type ExternalCategoryWithChildren = ExternalCategory & {
-  children: ExternalCategoryWithChildren[];
-};
+export type ExternalCategoryWithChildren = ExternalCategoryWithChildrenDto;
 
-export type CategoryMapping = {
-  id: string;
-  connectionId: string;
-  externalCategoryId: string;
-  internalCategoryId: string;
-  catalogId: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-};
+export type CategoryMapping = CategoryMappingDtoContract;
 
-export type CategoryMappingWithDetails = CategoryMapping & {
-  externalCategory: ExternalCategory;
+export type CategoryMappingWithDetails = Omit<CategoryMappingWithDetailsDtoContract, 'internalCategory'> & {
   internalCategory: ProductCategoryDto;
 };
 

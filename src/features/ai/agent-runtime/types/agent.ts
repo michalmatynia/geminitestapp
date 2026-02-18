@@ -1,191 +1,59 @@
-export type AgentDecision = {
-  action: 'respond' | 'tool' | 'wait_human';
-  reason: string;
-  toolName?: string;
-};
+import type {
+  AgentDecisionDto,
+  PlanStepDto,
+  PlannerCritiqueDto,
+  PlannerAlternativeDto,
+  PlannerMetaDto,
+  AgentPlanSettingsDto,
+  AgentPlanPreferencesDto,
+  AgentCheckpointDto,
+  LoopSignalDto,
+  ApprovalRequestDto,
+  PlanHierarchyDto,
+  AgentToolRequestDto,
+  AgentToolResultDto,
+  AgentRunStatusTypeDto,
+  AgentAuditLogRecordDto,
+  AgentExecutionContextDto,
+} from '@/shared/contracts/agent-runtime';
 
-export type PlanStep = {
-  id: string;
-  title: string;
-  status: 'pending' | 'running' | 'completed' | 'failed';
-  tool?: 'playwright' | 'none';
-  expectedObservation?: string | null;
-  successCriteria?: string | null;
-  goalId?: string | null;
-  subgoalId?: string | null;
-  phase?: 'observe' | 'act' | 'verify' | 'recover' | null;
-  priority?: number | null;
-  dependsOn?: string[] | null;
-  attempts?: number;
-  maxAttempts?: number;
-  snapshotId?: string | null;
-  logCount?: number | null;
-};
+export type AgentDecision = AgentDecisionDto;
 
-export type PlannerCritique = {
-  assumptions?: string[];
-  risks?: string[];
-  unknowns?: string[];
-  safetyChecks?: string[];
-  questions?: string[];
-};
+export type PlanStep = PlanStepDto;
 
-export type PlannerAlternative = {
-  title: string;
-  rationale?: string | null;
-  steps: Array<{
-    title?: string;
-    tool?: string;
-    expectedObservation?: string;
-    successCriteria?: string;
-    phase?: string;
-    priority?: number;
-    dependsOn?: number[] | string[];
-  }>;
-};
+export type PlannerCritique = PlannerCritiqueDto;
 
-export type PlannerMeta = {
-  critique?: PlannerCritique | null;
-  alternatives?: PlannerAlternative[] | null;
-  safetyChecks?: string[];
-  questions?: string[];
-  taskType?: 'web_task' | 'extract_info';
-  summary?: string | null;
-  constraints?: string[];
-  successSignals?: string[];
-};
+export type PlannerAlternative = PlannerAlternativeDto;
 
-export type AgentPlanSettings = {
-  maxSteps: number;
-  maxStepAttempts: number;
-  maxReplanCalls: number;
-  replanEverySteps: number;
-  maxSelfChecks: number;
-  loopGuardThreshold: number;
-  loopBackoffBaseMs: number;
-  loopBackoffMaxMs: number;
-};
+export type PlannerMeta = PlannerMetaDto;
 
-export type AgentPlanPreferences = {
-  ignoreRobotsTxt?: boolean | undefined;
-  requireHumanApproval?: boolean | undefined;
-  memoryValidationModel?: string | undefined;
-  plannerModel?: string | undefined;
-  selfCheckModel?: string | undefined;
-  extractionValidationModel?: string | undefined;
-  toolRouterModel?: string | undefined;
-  loopGuardModel?: string | undefined;
-  approvalGateModel?: string | undefined;
-  memorySummarizationModel?: string | undefined;
-  selectorInferenceModel?: string | undefined;
-  outputNormalizationModel?: string | undefined;
-};
+export type AgentPlanSettings = AgentPlanSettingsDto;
 
-export type AgentCheckpoint = {
-  steps: PlanStep[];
-  activeStepId: string | null;
-  lastError?: string | null;
-  taskType?: PlannerMeta['taskType'] | null;
-  resumeRequestedAt?: string | null;
-  resumeProcessedAt?: string | null;
-  approvalRequestedStepId?: string | null;
-  approvalGrantedStepId?: string | null;
-  checkpointBrief?: string | null;
-  checkpointNextActions?: string[] | null;
-  checkpointRisks?: string[] | null;
-  checkpointStepId?: string | null;
-  checkpointCreatedAt?: string | null;
-  summaryCheckpoint?: number | null;
-  settings?: AgentPlanSettings | null;
-  preferences?: AgentPlanPreferences | null;
-  updatedAt: string;
-};
+export type AgentPlanPreferences = AgentPlanPreferencesDto;
 
-export type LoopSignal = {
-  reason: string;
-  pattern: string;
-  titles: string[];
-  urls: Array<string | null>;
-  statuses: Array<PlanStep['status']>;
-};
+export type AgentCheckpoint = AgentCheckpointDto;
 
-export type ApprovalRequest = {
-  id: string;
-  runId: string;
-  stepId: string;
-  action: string;
-  context?: Record<string, unknown>;
-  status: 'pending' | 'approved' | 'rejected';
+export type LoopSignal = LoopSignalDto;
+
+export type ApprovalRequest = Omit<ApprovalRequestDto, 'requestedAt' | 'decidedAt'> & {
   requestedAt: Date;
   decidedAt?: Date;
 };
 
 export type AuditLevel = 'info' | 'warning' | 'error';
 
-export type PlanHierarchy = {
-  goals: Array<{
-    id: string;
-    title: string;
-    description?: string;
-    subgoals: string[];
-  }>;
-  subgoals: Array<{
-    id: string;
-    title: string;
-    steps: string[];
-  }>;
-};
+export type PlanHierarchy = PlanHierarchyDto;
 
 export type MemoryScope = 'session' | 'longterm';
 
-export type AgentToolRequest = {
-  tool: string;
-  input: unknown;
-  runId: string;
-  stepId: string;
-};
+export type AgentToolRequest = AgentToolRequestDto;
 
-export type AgentToolResult = {
-  success: boolean;
-  output?: unknown;
-  error?: string;
-  observation?: string;
-};
+export type AgentToolResult = AgentToolResultDto;
 
-export type AgentRunStatusType = 'queued' | 'running' | 'waiting_human' | 'stopped' | 'failed' | 'completed';
+export type AgentRunStatusType = AgentRunStatusTypeDto;
 
-export type AgentAuditLogRecord = {
-  id: string;
-  runId: string | null;
-  level: string;
-  message: string;
-  metadata: unknown;
+export type AgentAuditLogRecord = Omit<AgentAuditLogRecordDto, 'createdAt'> & {
   createdAt: Date;
 };
 
-export interface AgentExecutionContext {
-  run: {
-    id: string;
-    prompt: string;
-    agentBrowser?: string | null;
-    runHeadless?: boolean | null;
-  };
-  memoryKey: string | null;
-  memoryContext: string[];
-  settings: AgentPlanSettings;
-  preferences: AgentPlanPreferences;
-  resolvedModel: string;
-  memoryValidationModel: string | null;
-  memorySummarizationModel: string;
-  plannerModel: string;
-  selfCheckModel: string;
-  loopGuardModel: string;
-  approvalGateModel: string | null;
-  browserContext: {
-    url?: string | null;
-    title?: string | null;
-    domTextSample?: string;
-    logs?: Array<{ level: string; message: string }>;
-    uiInventory?: unknown;
-  } | null;
-}
+export type AgentExecutionContext = AgentExecutionContextDto;

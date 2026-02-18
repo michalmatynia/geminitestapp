@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Edit3, ExternalLink as ExternalLinkIcon, Plus, Trash2, Library } from 'lucide-react';
+import { ArrowLeft, Edit3, Plus, Trash2, Library } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useMemo, useState, useCallback } from 'react';
 

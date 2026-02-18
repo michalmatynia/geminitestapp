@@ -3,7 +3,7 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import { Button, Input, Label, DocumentationSection } from '@/shared/ui';
+import { Button, Input, Label, DocumentationSection, EmptyState } from '@/shared/ui';
 
 import { RuleListDragProvider } from './context/RuleListDragContext';
 import { RuleItem } from './RuleItem';
@@ -196,11 +196,11 @@ export function RuleList(): React.JSX.Element {
     <RuleListDragProvider value={dragContextValue}>
       <div className='space-y-4'>
         {filteredDrafts.length === 0 ? (
-          <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
-            <div className='text-sm text-gray-400'>
-              No rules match this filter in the {activeTabLabel} list.
-            </div>
-          </div>
+          <EmptyState
+            title='No rules found'
+            description={`No rules match your filters in the ${activeTabLabel} list.`}
+            variant='compact'
+          />
         ) : null}
         {sequencingLocked ? (
           <DocumentationSection title='Sequencing Locked' className='bg-amber-500/10 border-amber-500/40 p-4'>

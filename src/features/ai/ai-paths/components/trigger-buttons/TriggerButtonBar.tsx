@@ -56,21 +56,9 @@ export function TriggerButtonBar({
         if (button.mode === 'toggle') {
           const checked = Boolean(toggleMap[button.id]);
           const toggleControl = (
-            <ToggleRow
-              key={button.id}
-              label={showLabel ? button.name : undefined}
-              icon={Icon ? (
-                <Icon className='size-4 text-gray-200' style={{ opacity: textOpacity }} />
-              ) : (
-                <Settings2 className='size-4 text-gray-500' style={{ opacity: textOpacity }} />
-              )}
-              checked={checked}
-              disabled={isRunning}
-              onCheckedChange={(nextChecked: boolean) => {
-                void handleTrigger(button, { mode: 'toggle', checked: nextChecked });
-              }}
+            <div
               className={cn(
-                'relative overflow-hidden border-border bg-card/40 px-2 py-1',
+                'relative overflow-hidden rounded-lg',
                 isRunning ? 'cursor-wait' : null
               )}
             >
@@ -81,7 +69,21 @@ export function TriggerButtonBar({
                   style={{ transform: `scaleX(${Math.max(0.02, progress)})`, pointerEvents: 'none' }}
                 />
               ) : null}
-            </ToggleRow>
+              <ToggleRow
+                label={showLabel ? button.name : ''}
+                icon={Icon ? (
+                  <Icon className='size-4 text-gray-200' style={{ opacity: textOpacity }} />
+                ) : (
+                  <Settings2 className='size-4 text-gray-500' style={{ opacity: textOpacity }} />
+                )}
+                checked={checked}
+                disabled={isRunning}
+                onCheckedChange={(nextChecked: boolean) => {
+                  void handleTrigger(button, { mode: 'toggle', checked: nextChecked });
+                }}
+                className='relative z-10 border-border bg-card/40 px-2 py-1'
+              />
+            </div>
           );
 
           if (!showLabel) {

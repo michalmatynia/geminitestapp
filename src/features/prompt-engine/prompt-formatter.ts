@@ -1,4 +1,12 @@
 import { recordPromptValidationTiming } from '@/features/prompt-core/runtime-observability';
+import type {
+  PromptAutofixOperationDto as PromptAutofixOperation,
+  PromptValidationRuleDto as PromptValidationRule,
+  PromptValidationSettingsDto as PromptValidationSettings,
+  PromptValidationSimilarDto as PromptValidationSimilarPattern,
+  PromptAppliedFixDto,
+  FormatPromptResultDto,
+} from '@/shared/contracts/prompt-engine';
 
 import {
   doesPromptRuleApplyToScope,
@@ -13,20 +21,10 @@ import {
   type PromptValidationExecutionContext,
 } from './prompt-validator';
 
-import type { PromptAutofixOperation, PromptValidationRule, PromptValidationSettings, PromptValidationSimilarPattern } from './settings';
 
-type AppliedFix = {
-  ruleId: string;
-  operationKind: PromptAutofixOperation['kind'];
-};
+type AppliedFix = PromptAppliedFixDto;
 
-export type FormatPromptResult = {
-  prompt: string;
-  changed: boolean;
-  applied: AppliedFix[];
-  issuesBefore: number;
-  issuesAfter: number;
-};
+export type FormatPromptResult = FormatPromptResultDto;
 
 export type FormatPromptOptions = {
   precomputedIssuesBefore?: PromptValidationIssue[] | undefined;

@@ -18,6 +18,7 @@ type CanvasSvgEdgeLayerProps = {
   triggerConnected: Set<string>;
   wireFlowEnabled: boolean;
   flowingIntensity: Exclude<PathFlowIntensity, 'off'>;
+  reduceVisualEffects?: boolean;
   onRemoveEdge: (edgeId: string) => void;
   onSelectEdge: (edgeId: string) => void;
 };
@@ -32,6 +33,7 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
   triggerConnected,
   wireFlowEnabled,
   flowingIntensity,
+  reduceVisualEffects = false,
   onRemoveEdge,
   onSelectEdge,
 }: CanvasSvgEdgeLayerProps): React.JSX.Element {
@@ -58,13 +60,19 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
           !isSchemaConnection &&
           triggerConnected.has(fromNodeId) &&
           triggerConnected.has(toNodeId);
-        const edgeClass = `transition-all duration-150 ${
-          isSelected
+        const edgeClass = reduceVisualEffects
+          ? isSelected
             ? 'text-sky-300'
             : isActivePath || isFlowing
-              ? 'text-sky-400/80 group-hover:text-sky-300/90'
-              : 'text-sky-400/55 group-hover:text-sky-300/80'
-        }`;
+              ? 'text-sky-400/80'
+              : 'text-sky-400/55'
+          : `transition-all duration-150 ${
+            isSelected
+              ? 'text-sky-300'
+              : isActivePath || isFlowing
+                ? 'text-sky-400/80 group-hover:text-sky-300/90'
+                : 'text-sky-400/55 group-hover:text-sky-300/80'
+          }`;
         const arrowSize = isSelected ? 9 : 8;
         const arrowWidth = isSelected ? 6 : 5;
         const arrowPath = `M 0 0 L -${arrowSize} ${arrowWidth / 2} L -${arrowSize} -${arrowWidth / 2} Z`;
@@ -113,10 +121,12 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
                   strokeLinejoin='round'
                   style={{ pointerEvents: 'none' }}
                 />
-                <SignalDots path={edge.path} intensity={flowingIntensity} />
+                {!reduceVisualEffects ? (
+                  <SignalDots path={edge.path} intensity={flowingIntensity} />
+                ) : null}
               </>
             ) : null}
-            {edge.arrow ? (
+            {edge.arrow && (!reduceVisualEffects || isSelected) ? (
               <path
                 d={arrowPath}
                 transform={`translate(${edge.arrow.x} ${edge.arrow.y}) rotate(${edge.arrow.angle})`}

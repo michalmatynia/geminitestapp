@@ -79,44 +79,46 @@ const buildStoredEditorDraftPatch = (
   const primaryContentPatch: Partial<CaseResolverFileEditDraft> =
     draft.editorType === 'wysiwyg'
       ? {
-        documentContentHtml: draft.documentContentHtml,
+        documentContentHtml: draft.documentContentHtml ?? '',
       }
       : {
-        documentContentMarkdown: draft.documentContentMarkdown,
+        documentContentMarkdown: draft.documentContentMarkdown ?? '',
       };
 
-  const patch: Partial<CaseResolverFileEditDraft> = {
-    name: draft.name,
-    folder: draft.folder,
-    parentCaseId: draft.parentCaseId,
-    referenceCaseIds: [...draft.referenceCaseIds],
-    updatedAt: draft.updatedAt,
-    documentDate: draft.documentDate,
-    activeDocumentVersion: draft.activeDocumentVersion,
-    editorType: draft.editorType,
-    documentContentFormatVersion: draft.documentContentFormatVersion,
-    documentContentVersion: draft.documentContentVersion,
-    documentConversionWarnings: [...draft.documentConversionWarnings],
-    lastContentConversionAt: draft.lastContentConversionAt,
-    scanOcrModel: draft.scanOcrModel,
-    scanOcrPrompt: draft.scanOcrPrompt,
-    addresser: draft.addresser,
-    addressee: draft.addressee,
-    tagId: draft.tagId,
-    caseIdentifierId: draft.caseIdentifierId,
-    categoryId: draft.categoryId,
-    // Persist scan slot topology only; OCR text can be very large and quickly exhaust quota.
-    scanSlots: draft.scanSlots.map((slot) => ({
-      ...slot,
-      ocrText: '',
-    })),
-  };
+  const patch = Object.fromEntries(
+    Object.entries({
+      name: draft.name,
+      folder: draft.folder,
+      parentCaseId: draft.parentCaseId,
+      referenceCaseIds: [...(draft.referenceCaseIds ?? [])],
+      updatedAt: draft.updatedAt,
+      documentDate: draft.documentDate,
+      activeDocumentVersion: draft.activeDocumentVersion,
+      editorType: draft.editorType,
+      documentContentFormatVersion: draft.documentContentFormatVersion,
+      documentContentVersion: draft.documentContentVersion,
+      documentConversionWarnings: [...(draft.documentConversionWarnings ?? [])],
+      lastContentConversionAt: draft.lastContentConversionAt,
+      scanOcrModel: draft.scanOcrModel,
+      scanOcrPrompt: draft.scanOcrPrompt,
+      addresser: draft.addresser,
+      addressee: draft.addressee,
+      tagId: draft.tagId,
+      caseIdentifierId: draft.caseIdentifierId,
+      categoryId: draft.categoryId,
+      // Persist scan slot topology only; OCR text can be very large and quickly exhaust quota.
+      scanSlots: (draft.scanSlots ?? []).map((slot) => ({
+        ...slot,
+        ocrText: '',
+      })),
+    }).filter(([, value]) => value !== undefined)
+  ) as Partial<CaseResolverFileEditDraft>;
   if (mode === 'minimal') return patch;
   return {
     ...patch,
     ...primaryContentPatch,
-    originalDocumentContent: draft.originalDocumentContent,
-    explodedDocumentContent: draft.explodedDocumentContent,
+    originalDocumentContent: draft.originalDocumentContent ?? '',
+    explodedDocumentContent: draft.explodedDocumentContent ?? '',
   };
 };
 

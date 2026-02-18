@@ -1,5 +1,5 @@
 'use client';
-import { Eye, Plus, Edit, Trash2 } from 'lucide-react';
+import { Eye, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
@@ -16,7 +16,11 @@ import {
   SelectSimple,
   DataTable,
   Badge,
-  SectionHeader
+  SectionHeader,
+  ActionMenu,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  Breadcrumbs,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -167,20 +171,35 @@ export default function PagesPage(): React.ReactNode {
       id: 'actions',
       header: () => <div className='text-right'>Actions</div>,
       cell: ({ row }) => (
-        <div className='flex justify-end gap-2'>
-          <Link href={`/admin/cms/builder?pageId=${row.original.id}`}>
-            <Button variant='ghost' size='xs' className='h-7 w-7 p-0'>
-              <Edit className='size-3.5' />
-            </Button>
-          </Link>
-          <Button 
-            variant='ghost' 
-            size='xs' 
-            className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
-            onClick={() => setPageToDelete(row.original)}
-          >
-            <Trash2 className='size-3.5' />
-          </Button>
+        <div className='flex justify-end'>
+          <ActionMenu ariaLabel={`Actions for page ${row.original.name}`}>
+            <DropdownMenuItem
+              onSelect={(event: Event): void => {
+                event.preventDefault();
+                router.push(`/admin/cms/builder?pageId=${row.original.id}`);
+              }}
+            >
+              Open in Builder
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={(event: Event): void => {
+                event.preventDefault();
+                router.push(`/admin/cms/pages/${row.original.id}/edit`);
+              }}
+            >
+              Edit Settings
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className='text-destructive focus:text-destructive'
+              onSelect={(event: Event): void => {
+                event.preventDefault();
+                setPageToDelete(row.original);
+              }}
+            >
+              Delete
+            </DropdownMenuItem>
+          </ActionMenu>
         </div>
       )
     }
@@ -191,6 +210,16 @@ export default function PagesPage(): React.ReactNode {
       <SectionHeader
         title='Content Pages'
         description='Manage layouts and routes for your marketplace domains.'
+        eyebrow={
+          <Breadcrumbs
+            items={[
+              { label: 'Admin', href: '/admin' },
+              { label: 'CMS', href: '/admin/cms' },
+              { label: 'Pages' }
+            ]}
+            className='mb-2'
+          />
+        }
         actions={
           <div className='flex gap-2'>
             <CmsDomainSelector />

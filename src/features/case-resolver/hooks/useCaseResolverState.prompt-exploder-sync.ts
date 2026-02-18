@@ -247,24 +247,36 @@ export const useCaseResolverStatePromptExploderSync = ({
 
     setEditingDocumentDraft((current) => {
       if (current?.id !== targetFileId) return current;
-      const nextVersion = current.documentContentVersion + 1;
+      const currentVersion = current.documentContentVersion ?? 0;
+      const nextVersion = currentVersion + 1;
+      const normalizedHistory = (current.documentHistory ?? []).map((entry) => ({
+        id: entry.id,
+        savedAt: entry.savedAt,
+        documentContentVersion: entry.documentContentVersion,
+        activeDocumentVersion: entry.activeDocumentVersion ?? 'original',
+        editorType: entry.editorType ?? 'wysiwyg',
+        documentContent: entry.documentContent ?? '',
+        documentContentMarkdown: entry.documentContentMarkdown ?? '',
+        documentContentHtml: entry.documentContentHtml ?? '',
+        documentContentPlainText: entry.documentContentPlainText ?? '',
+      }));
       const nextDocumentHistory = [
         {
           id: createId('case-doc-history'),
           savedAt: now,
-          documentContentVersion: current.documentContentVersion,
-          activeDocumentVersion: current.activeDocumentVersion,
-          editorType: current.editorType,
-          documentContent: current.documentContent,
-          documentContentMarkdown: current.documentContentMarkdown,
-          documentContentHtml: current.documentContentHtml,
-          documentContentPlainText: current.documentContentPlainText,
+          documentContentVersion: currentVersion,
+          activeDocumentVersion: current.activeDocumentVersion ?? 'original',
+          editorType: current.editorType ?? 'wysiwyg',
+          documentContent: current.documentContent ?? '',
+          documentContentMarkdown: current.documentContentMarkdown ?? '',
+          documentContentHtml: current.documentContentHtml ?? '',
+          documentContentPlainText: current.documentContentPlainText ?? '',
         },
-        ...current.documentHistory,
+        ...normalizedHistory,
       ].slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT);
       return {
         ...current,
-        originalDocumentContent: current.originalDocumentContent || current.documentContent,
+        originalDocumentContent: current.originalDocumentContent ?? current.documentContent ?? '',
         explodedDocumentContent: explodedStoredContent,
         activeDocumentVersion: 'exploded',
         editorType: canonicalExploded.mode,
@@ -278,7 +290,7 @@ export const useCaseResolverStatePromptExploderSync = ({
         documentHistory: nextDocumentHistory,
         documentConversionWarnings: canonicalExploded.warnings,
         lastContentConversionAt: now,
-        documentDate: extractedDocumentDate ?? current.documentDate,
+        documentDate: extractedDocumentDate ?? current.documentDate ?? '',
       };
     });
 

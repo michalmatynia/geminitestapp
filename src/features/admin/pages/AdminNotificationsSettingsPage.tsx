@@ -1,9 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import React, { useState } from 'react';
 
-import { Button, SelectSimple, useToast, useToastSettings, SectionHeader, FormSection, FormField } from '@/shared/ui';
+import { Button, SelectSimple, useToast, useToastSettings, SectionHeader, FormSection, FormField, Breadcrumbs, FormActions, Hint, PropertyRow } from '@/shared/ui';
 
 const positionOptions = [
   { value: 'top-right', label: 'Top Right', description: 'Corner top right' },
@@ -67,9 +66,14 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
         title='Notifications'
         description='Customize toast position, accent color, and preview behavior.'
         eyebrow={(
-          <Link href='/admin/settings' className='text-blue-300 hover:text-blue-200'>
-            ← Back to settings
-          </Link>
+          <Breadcrumbs
+            items={[
+              { label: 'Admin', href: '/admin' },
+              { label: 'Settings', href: '/admin/settings' },
+              { label: 'Notifications' }
+            ]}
+            className='mb-2'
+          />
         )}
         className='mb-8'
       />
@@ -136,20 +140,21 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
               </FormField>
 
               {/* Action Buttons */}
-              <div className='flex flex-wrap gap-3 border-t border-border pt-6'>
-                <Button onClick={handleSave} className='gap-2'>
-                  Save Settings
-                </Button>
-                <Button variant='outline' onClick={() => showPreview('success')}>
+              <FormActions
+                onSave={handleSave}
+                saveText='Save Settings'
+                className='border-t border-border pt-6 justify-start'
+              >
+                <Button variant='outline' onClick={() => showPreview('success')} size='sm'>
                   Preview Success
                 </Button>
-                <Button variant='outline' onClick={() => showPreview('info')}>
+                <Button variant='outline' onClick={() => showPreview('info')} size='sm'>
                   Preview Info
                 </Button>
-                <Button variant='outline' onClick={() => showPreview('error')}>
+                <Button variant='outline' onClick={() => showPreview('error')} size='sm'>
                   Preview Error
                 </Button>
-              </div>
+              </FormActions>
             </div>
           </FormSection>
         </div>
@@ -174,26 +179,26 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
 
             <FormSection variant='subtle-compact' className='mt-4 space-y-2 bg-gray-900 p-3'>
               <p className='text-xs font-medium text-gray-300'>Current Settings:</p>
-              <div className='space-y-1'>
-                <p className='flex items-center justify-between text-xs text-gray-400'>
-                  <span>Position:</span>
-                  <span className='font-mono text-gray-300 capitalize'>{position}</span>
-                </p>
-                <div className='flex items-center justify-between text-xs text-gray-400'>
-                  <span>Accent:</span>
-                  <span className='flex items-center gap-1'>
-                    <span className={`size-2 rounded-full ${accentColor}`} aria-hidden='true' />
-                    <span className='font-mono text-gray-300 capitalize'>{accent}</span>
-                  </span>
-                </div>
+              <div className='space-y-1.5'>
+                <PropertyRow
+                  label='Position'
+                  value={position}
+                  valueClassName='capitalize'
+                  mono
+                />
+                <PropertyRow
+                  label='Accent'
+                  icon={<span className={`size-2 rounded-full ${accentColor}`} aria-hidden='true' />}
+                  value={accent}
+                  valueClassName='capitalize'
+                  mono
+                />
               </div>
             </FormSection>
 
-            <div className='mt-4 rounded-md border border-blue-500/20 bg-blue-500/5 p-3'>
-              <p className='text-xs text-blue-200'>
-                💡 Click the preview buttons to see how notifications appear with your settings.
-              </p>
-            </div>
+            <Hint variant='info' className='mt-4 rounded-md border border-blue-500/20 bg-blue-500/5 p-3 italic' size='xs'>
+              💡 Click the preview buttons to see how notifications appear with your settings.
+            </Hint>
           </FormSection>
         </div>
       </div>

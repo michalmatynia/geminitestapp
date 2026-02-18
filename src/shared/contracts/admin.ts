@@ -135,3 +135,25 @@ export const adminNavLeafSchema = z.object({
 });
 
 export type AdminNavLeafDto = z.infer<typeof adminNavLeafSchema>;
+
+/**
+ * Admin Validator DTOs
+ */
+
+export const validatorScopeSchema = z.enum([
+  'products',
+  'image-studio',
+  'prompt-exploder',
+  'case-resolver-prompt-exploder',
+]);
+
+export type ValidatorScopeDto = z.infer<typeof validatorScopeSchema>;
+
+export const validatorPatternListSchema = dtoBaseSchema.extend({
+  name: z.string(),
+  description: z.string(),
+  scope: validatorScopeSchema,
+  deletionLocked: z.boolean(),
+});
+
+export type ValidatorPatternListDto = z.infer<typeof validatorPatternListSchema>;

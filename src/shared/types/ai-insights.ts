@@ -1,40 +1,20 @@
-export type AiInsightType = 'analytics' | 'runtime_analytics' | 'logs';
+import type {
+  AiInsightTypeDto,
+  AiInsightStatusDto,
+  AiInsightSourceDto,
+  AiInsightModelConfigDto,
+  AiInsightRecordDto,
+  AiInsightNotificationDto,
+} from '../contracts/ai-insights';
 
-export type AiInsightStatus = 'ok' | 'warning' | 'error';
+export type AiInsightType = AiInsightTypeDto;
 
-export type AiInsightSource = 'manual' | 'scheduled' | 'auto';
+export type AiInsightStatus = AiInsightStatusDto;
 
-export type AiInsightModelConfig = {
-  provider: 'model' | 'agent';
-  modelId?: string | null;
-  agentId?: string | null;
-};
+export type AiInsightSource = AiInsightSourceDto;
 
-export type AiInsightRecord = {
-  id: string;
-  type: AiInsightType;
-  status: AiInsightStatus;
-  summary: string;
-  warnings: string[];
-  recommendations?: string[];
-  context?: Record<string, unknown>;
-  createdAt: string;
-  source: AiInsightSource;
-  model: AiInsightModelConfig;
-  window?: {
-    from?: string;
-    to?: string;
-    scope?: string;
-  };
-};
+export type AiInsightModelConfig = AiInsightModelConfigDto;
 
-export type AiInsightNotification = {
-  id: string;
-  type: AiInsightType;
-  status: AiInsightStatus;
-  summary: string;
-  warnings: string[];
-  createdAt: string;
-  source: AiInsightSource;
-  model: AiInsightModelConfig;
-};
+export type AiInsightRecord = AiInsightRecordDto;
+
+export type AiInsightNotification = AiInsightNotificationDto;

@@ -11,7 +11,6 @@ import { Input } from './input';
 import { Label } from './label';
 import { ResourceCard } from './ResourceCard';
 import { SectionHeader } from './section-header';
-import { SectionPanel } from './section-panel';
 import { Textarea } from './textarea';
 
 
@@ -35,6 +34,7 @@ interface ItemLibraryProps<T extends LibraryItem> {
   buildDefaultItem: () => Partial<T>;
   entityName: string;
   backLink?: React.ReactNode;
+  headerActions?: React.ReactNode;
   isSaving?: boolean;
 }
 
@@ -50,6 +50,7 @@ export function ItemLibrary<T extends LibraryItem>({
   buildDefaultItem,
   entityName,
   backLink,
+  headerActions,
   isSaving = false,
 }: ItemLibraryProps<T>): React.JSX.Element {
   const [modalOpen, setModalOpen] = useState(false);
@@ -103,14 +104,17 @@ export function ItemLibrary<T extends LibraryItem>({
         description={description}
         eyebrow={backLink}
         actions={
-          <Button onClick={openCreate} className='gap-2'>
-            <Plus className='size-4' />
-            New {entityName}
-          </Button>
+          <div className='flex items-center gap-2'>
+            {headerActions}
+            <Button onClick={openCreate} className='gap-2'>
+              <Plus className='size-4' />
+              New {entityName}
+            </Button>
+          </div>
         }
       />
 
-      <SectionPanel className='p-4'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <div>
             <p className='text-sm font-semibold text-white'>{entityName} library</p>
@@ -122,7 +126,7 @@ export function ItemLibrary<T extends LibraryItem>({
             {isLoading ? 'Loading...' : `${items.length} ${entityName.toLowerCase()}(s)`}
           </div>
         </div>
-      </SectionPanel>
+      </div>
 
       {isLoading ? (
         <div className='rounded-md border border-dashed border-border p-12 text-center text-sm text-gray-400'>

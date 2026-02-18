@@ -1,3 +1,4 @@
+import type { ImageFileListFiltersDto } from '@/shared/contracts/files';
 import type { ImageFileRecord } from '@/shared/types/domain/files';
 
 export type { ImageFileRecord };
@@ -12,10 +13,7 @@ export type ImageFileCreateInput = {
   tags?: string[] | null;
 };
 
-export type ImageFileListFilters = {
-  filename?: string | null;
-  tags?: string[] | null;
-};
+export type ImageFileListFilters = ImageFileListFiltersDto;
 
 export type ImageFileRepository = {
   createImageFile(data: ImageFileCreateInput): Promise<ImageFileRecord>;

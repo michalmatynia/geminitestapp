@@ -115,7 +115,6 @@ export function TransientRecoverySettingsForm({
               setDirty(true);
             }}
             className='bg-transparent border-none p-0 hover:bg-transparent'
-            labelClassName='text-xs text-gray-400 normal-case tracking-normal font-normal'
           />
         )}
         className='p-6'
@@ -128,6 +127,7 @@ export function TransientRecoverySettingsForm({
             className='p-4'
             actions={(
               <ToggleRow
+                label='Retry enabled'
                 checked={settings.retry.enabled}
                 onCheckedChange={(checked: boolean) => updateRetry('enabled', checked)}
                 className='bg-transparent border-none p-0 hover:bg-transparent'
@@ -203,6 +203,7 @@ export function TransientRecoverySettingsForm({
             className='p-4'
             actions={(
               <ToggleRow
+                label='Circuit breaker enabled'
                 checked={settings.circuit.enabled}
                 onCheckedChange={(checked: boolean) => updateCircuit('enabled', checked)}
                 className='bg-transparent border-none p-0 hover:bg-transparent'

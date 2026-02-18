@@ -1,9 +1,9 @@
 'use client';
 
+import { AgentPersonaSettingsForm } from '@/features/ai/agentcreator/components/AgentPersonaSettingsForm';
 import { useAgentPersonas, useSaveAgentPersonasMutation } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
 import type { AgentPersona } from '@/features/ai/agentcreator/types';
 import { buildAgentPersonaSettings, createAgentPersonaId } from '@/features/ai/agentcreator/utils/personas';
-import { AgentPersonaSettingsForm } from '@/features/ai/agentcreator/components/AgentPersonaSettingsForm';
 import { logClientError } from '@/features/observability';
 import { ItemLibrary, useToast, Button } from '@/shared/ui';
 
@@ -99,7 +99,7 @@ export function AgentPersonasPage(): React.JSX.Element {
 
         return labels.map(([label, value]: [string, string | null | undefined]) => `${label}: ${value?.trim() || 'default'}`);
       }}
-      renderExtraFields={(draft: Partial<AgentPersona>, onChange: (updates: Partial<AgentPersona>) => void) => (
+      renderExtraFields={(draft, onChange) => (
         <AgentPersonaSettingsForm
           settings={draft.settings || buildAgentPersonaSettings()}
           onChange={(settings: AgentPersona['settings']) => onChange({ settings })}

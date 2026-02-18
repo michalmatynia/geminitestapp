@@ -1,18 +1,19 @@
 'use client';
 
-import { Edit2, Building2, Users, Database } from 'lucide-react';
+import { Building2, Users, Database } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { 
   Badge, 
-  Button, 
   DataTable, 
   ListPanel, 
   PanelHeader, 
   SearchInput,
-  EmptyState
+  EmptyState,
+  ActionMenu,
+  DropdownMenuItem,
 } from '@/shared/ui';
 
 import {
@@ -88,16 +89,17 @@ export function AdminFilemakerOrganizationsPage(): React.JSX.Element {
       id: 'actions',
       header: () => <div className='text-right'>Actions</div>,
       cell: ({ row }) => (
-        <div className='flex justify-end gap-2'>
-          <Button 
-            type='button' 
-            variant='outline' 
-            size='xs'
-            onClick={() => router.push(`/admin/filemaker/organizations/${encodeURIComponent(row.original.id)}`)}
-          >
-            <Edit2 className='mr-1.5 size-3.5' />
-            Edit
-          </Button>
+        <div className='flex justify-end'>
+          <ActionMenu ariaLabel={`Actions for organization ${row.original.name}`}>
+            <DropdownMenuItem
+              onSelect={(event: Event): void => {
+                event.preventDefault();
+                router.push(`/admin/filemaker/organizations/${encodeURIComponent(row.original.id)}`);
+              }}
+            >
+              Edit Details
+            </DropdownMenuItem>
+          </ActionMenu>
         </div>
       ),
     },

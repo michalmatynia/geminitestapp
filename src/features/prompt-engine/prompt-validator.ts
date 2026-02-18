@@ -1,40 +1,28 @@
 import { recordPromptValidationTiming } from '@/features/prompt-core/runtime-observability';
+import type {
+  PromptValidationScopeDto as PromptValidationScope,
+  PromptValidationRuleDto as PromptValidationRule,
+  PromptValidationSettingsDto as PromptValidationSettings,
+  PromptValidationSeverityDto as PromptValidationSeverity,
+  PromptValidationSimilarDto as PromptValidationSimilarPattern,
+  PromptValidationLaunchOperatorDto as PromptValidationLaunchOperator,
+  PromptValidationChainModeDto as PromptValidationChainMode,
+  PromptValidationSuggestionDto,
+  PromptValidationIssueDto,
+  PromptValidationExecutionContextDto,
+  PromptValidationPreparedRuntimeDto,
+} from '@/shared/contracts/prompt-engine';
 
 import { extractParamsFromPrompt } from './prompt-params';
 import { DEFAULT_PROMPT_VALIDATION_SCOPES } from './settings';
 
-import type {
-  PromptValidationScope,
-  PromptValidationRule,
-  PromptValidationSettings,
-  PromptValidationSeverity,
-  PromptValidationSimilarPattern,
-  PromptValidationLaunchOperator,
-  PromptValidationChainMode,
-} from './settings';
+export type PromptValidationSuggestion = PromptValidationSuggestionDto;
 
-export type PromptValidationSuggestion = {
-  suggestion: string;
-  found?: string;
-  comment?: string | null;
-};
+export type PromptValidationIssue = PromptValidationIssueDto;
 
-export type PromptValidationIssue = {
-  ruleId: string;
-  severity: PromptValidationSeverity;
-  title: string;
-  message: string;
-  suggestions: PromptValidationSuggestion[];
-};
+export type PromptValidationExecutionContext = PromptValidationExecutionContextDto;
 
-export type PromptValidationExecutionContext = {
-  scope?: PromptValidationScope | null;
-};
-
-export type PromptValidationPreparedRuntime = {
-  enabled: boolean;
-  context: PromptValidationExecutionContext;
-  orderedRules: PromptValidationRule[];
+export type PromptValidationPreparedRuntime = Omit<PromptValidationPreparedRuntimeDto, 'sequenceGroupCounts'> & {
   sequenceGroupCounts: Map<string, number>;
 };
 

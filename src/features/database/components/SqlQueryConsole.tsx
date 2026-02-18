@@ -9,7 +9,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
-import { Badge, Button, Textarea, SelectSimple, DataTable } from '@/shared/ui';
+import { Badge, Button, Textarea, SelectSimple, DataTable, Alert } from '@/shared/ui';
 
 import { useDatabase } from '../context/DatabaseContext';
 import { useSqlQueryMutation } from '../hooks/useDatabaseQueries';
@@ -218,9 +218,9 @@ export function SqlQueryConsole({
 
           {/* Error */}
           {result.error && (
-            <div className='rounded-md border border-red-500/30 bg-red-900/20 px-3 py-2 text-xs text-red-300 mb-3'>
+            <Alert variant='error' className='mb-3 py-2 text-xs'>
               {result.error}
-            </div>
+            </Alert>
           )}
 
           {/* Results table */}

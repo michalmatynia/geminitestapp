@@ -1,32 +1,21 @@
-import { Entity } from '../core/base-types';
-
 import type { 
   FileDto, 
   ImageFileDto, 
   UploadFileDto, 
-  UpdateFileDto 
-} from '../dtos';
+  UpdateFileDto,
+  ImageFileRecordDto,
+  ImageFileSelectionDto
+} from '../dtos/files';
 
 export type { 
   FileDto, 
   ImageFileDto, 
   UploadFileDto, 
-  UpdateFileDto 
+  UpdateFileDto,
+  ImageFileRecordDto,
+  ImageFileSelectionDto
 };
 
-export type ImageFileRecord = Entity & {
-  filename: string;
-  filepath: string;
-  mimetype: string;
-  size: number;
-  width: number | null;
-  height: number | null;
-  tags: string[];
-  name?: string | null;
-  categoryId?: string | null;
-  isPublic?: boolean;
-  description?: string | null;
-  metadata?: Record<string, unknown> | null;
-};
+export type ImageFileRecord = ImageFileRecordDto;
 
-export type ImageFileSelection = Pick<ImageFileRecord, 'id' | 'filepath'>;
+export type ImageFileSelection = ImageFileSelectionDto;

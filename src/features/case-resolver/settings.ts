@@ -1017,9 +1017,9 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
         typeof record['sourceFileName'] === 'string' && record['sourceFileName'].trim().length > 0
           ? record['sourceFileName'].trim()
           : 'Linked document';
-      const sourceFileType =
-        (record['sourceFileType'] === 'scanfile' ? 'scanfile' : 'document');
-      const legacyNodeFileMeta =
+      const sourceFileType: 'document' | 'scanfile' =
+        record['sourceFileType'] === 'scanfile' ? 'scanfile' : 'document';
+      const legacyNodeFileMeta: CaseResolverNodeFileSnapshot['nodeFileMeta'] =
         sourceFileId && resolvedLegacyNodeId
           ? {
             [resolvedLegacyNodeId]: {

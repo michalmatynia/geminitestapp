@@ -3,15 +3,11 @@
 import {
   Box,
   Upload,
-  Loader2,
   Grid,
   List,
   Filter,
   X,
-  RefreshCw,
-  Eye,
-  Edit,
-  Trash2
+  RefreshCw
 } from 'lucide-react';
 import React, { useMemo } from 'react';
 
@@ -27,7 +23,11 @@ import {
   EmptyState,
   StatusBadge,
   PanelHeader,
-  Badge
+  Badge,
+  ActionMenu,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  LoadingState,
 } from '@/shared/ui';
 
 import { Asset3DCard } from '../components/Asset3DCard';
@@ -135,26 +135,36 @@ export function Admin3DAssetsPage(): React.JSX.Element {
       id: 'actions',
       header: () => <div className='text-right'>Actions</div>,
       cell: ({ row }) => (
-        <div className='flex justify-end gap-2'>
-          <Button variant='ghost' size='xs' className='h-7 w-7 p-0' onClick={() => setPreviewAsset(row.original)}>
-            <Eye className='size-3.5' />
-          </Button>
-          <Button variant='ghost' size='xs' className='h-7 w-7 p-0' onClick={() => setEditAsset(row.original)}>
-            <Edit className='size-3.5' />
-          </Button>
-          <Button
-            variant='ghost'
-            size='xs'
-            className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
-            onClick={() => void handleDelete(row.original)}
-            disabled={isDeleting(row.original.id)}
-          >
-            {isDeleting(row.original.id) ? (
-              <Loader2 className='size-3.5 animate-spin' />
-            ) : (
-              <Trash2 className='size-3.5' />
-            )}
-          </Button>
+        <div className='flex justify-end'>
+          <ActionMenu ariaLabel={`Actions for asset ${row.original.name || row.original.filename}`}>
+            <DropdownMenuItem
+              onSelect={(event: Event): void => {
+                event.preventDefault();
+                setPreviewAsset(row.original);
+              }}
+            >
+              Preview
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={(event: Event): void => {
+                event.preventDefault();
+                setEditAsset(row.original);
+              }}
+            >
+              Edit Settings
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className='text-destructive focus:text-destructive'
+              onSelect={(event: Event): void => {
+                event.preventDefault();
+                void handleDelete(row.original);
+              }}
+              disabled={isDeleting(row.original.id)}
+            >
+              {isDeleting(row.original.id) ? 'Deleting...' : 'Delete'}
+            </DropdownMenuItem>
+          </ActionMenu>
         </div>
       ),
     },
@@ -314,9 +324,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
       )}
 
       {loading && (
-        <div className='flex items-center justify-center rounded-md border border-dashed border-border py-16 text-muted-foreground'>
-          <Loader2 className='h-7 w-7 animate-spin text-blue-400' />
-        </div>
+        <LoadingState message='Loading 3D assets...' className='rounded-md border border-dashed border-border py-16' />
       )}
 
       {!loading && assets.length === 0 && (

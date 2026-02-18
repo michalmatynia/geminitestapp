@@ -15,7 +15,7 @@ import type {
 } from '@/features/cms/types';
 import { cmsThemeUpdateSchema } from '@/features/cms/validations/api';
 import { logClientError } from '@/features/observability';
-import { Input, SectionHeader, FormSection, FormField, FormActions } from '@/shared/ui';
+import { Input, FormSection, FormField, FormActions, PageLayout, Alert, LoadingState } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.Element {
@@ -64,13 +64,15 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
   const colorKeys = Object.keys(colors) as Array<keyof CmsThemeColors>;
 
   return (
-    <div className='container mx-auto max-w-2xl py-10'>
-      <SectionHeader title='Edit Theme' className='mb-6' />
+    <PageLayout
+      title='Edit Theme'
+      description='Customize the visual design system for your storefront.'
+    >
       <form onSubmit={(e: React.FormEvent) => { void handleSubmit(e); }} className='space-y-8'>
         {error ? (
-          <div className='rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200'>
+          <Alert variant='error' className='mb-6'>
             {error}
-          </div>
+          </Alert>
         ) : null}
         <FormSection title='General' description='Basic identification for this theme.'>
           <FormField label='Theme Name' required id='theme-name'>
@@ -170,7 +172,7 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
           className='pt-4'
         />
       </form>
-    </div>
+    </PageLayout>
   );
 }
 
@@ -181,17 +183,19 @@ export default function EditThemePage(): React.JSX.Element {
 
   if (themeQuery.isLoading) {
     return (
-      <div className='container mx-auto py-10'>
-        <p className='text-gray-500 animate-pulse'>Loading theme...</p>
-      </div>
+      <PageLayout title='Edit Theme' description='Loading theme configuration...'>
+        <LoadingState message='Loading theme...' className='py-20' />
+      </PageLayout>
     );
   }
 
   if (!themeQuery.data) {
     return (
-      <div className='container mx-auto py-10'>
-        <p className='text-red-500'>Theme not found.</p>
-      </div>
+      <PageLayout title='Edit Theme' description='Theme not found.'>
+        <Alert variant='error' className='mt-10'>
+          Theme not found. It might have been deleted or the ID is invalid.
+        </Alert>
+      </PageLayout>
     );
   }
 

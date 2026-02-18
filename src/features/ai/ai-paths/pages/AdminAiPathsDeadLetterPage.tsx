@@ -25,6 +25,7 @@ import {
   PanelPagination,
   EmptyState,
   MetadataItem,
+  Badge,
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
@@ -346,9 +347,11 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
 
                 {nodeStatusSummary && (
                   <div className='md:col-span-3 space-y-2 mt-2 px-1'>
-                    <div className='flex justify-between text-[10px] text-gray-500 uppercase font-bold tracking-wider'>
+                    <div className='flex justify-between items-center text-[10px] text-gray-500 uppercase font-bold tracking-wider'>
                       <span>Progress: {nodeStatusSummary.completed}/{nodeStatusSummary.totalNodes} Nodes</span>
-                      <span>{nodeStatusSummary.progress}%</span>
+                      <Badge variant='outline' className='bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-1.5 py-0'>
+                        {nodeStatusSummary.progress}%
+                      </Badge>
                     </div>
                     <div className='h-1.5 w-full overflow-hidden rounded-full bg-black/40'>
                       <div

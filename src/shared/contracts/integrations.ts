@@ -128,6 +128,16 @@ export const productListingExportEventSchema = z.object({
 
 export type ProductListingExportEventDto = z.infer<typeof productListingExportEventSchema>;
 
+export const productListingRelistPolicySchema = z.object({
+  enabled: z.boolean().optional(),
+  leadMinutes: z.number().optional(),
+  maxAttempts: z.number().optional(),
+  durationHours: z.number().optional(),
+  templateId: z.string().nullable().optional(),
+});
+
+export type ProductListingRelistPolicyDto = z.infer<typeof productListingRelistPolicySchema>;
+
 export const productListingSchema = dtoBaseSchema.extend({
   productId: z.string(),
   integrationId: z.string(),
@@ -138,7 +148,7 @@ export const productListingSchema = dtoBaseSchema.extend({
   listedAt: z.string().nullable(),
   expiresAt: z.string().nullable(),
   nextRelistAt: z.string().nullable(),
-  relistPolicy: z.record(z.string(), z.unknown()).nullable().optional(),
+  relistPolicy: productListingRelistPolicySchema.nullable().optional(),
   relistAttempts: z.number().int().optional(),
   lastRelistedAt: z.string().nullable(),
   lastStatusCheckAt: z.string().nullable(),
@@ -148,6 +158,20 @@ export const productListingSchema = dtoBaseSchema.extend({
 });
 
 export type ProductListingDto = z.infer<typeof productListingSchema>;
+
+export const productListingWithDetailsSchema = productListingSchema.extend({
+  integration: z.object({
+    id: z.string(),
+    name: z.string(),
+    slug: z.string(),
+  }),
+  connection: z.object({
+    id: z.string(),
+    name: z.string(),
+  }),
+});
+
+export type ProductListingWithDetailsDto = z.infer<typeof productListingWithDetailsSchema>;
 
 /**
  * Category Mapping DTOs
@@ -162,6 +186,87 @@ export const categoryMappingSchema = dtoBaseSchema.extend({
 });
 
 export type CategoryMappingDto = z.infer<typeof categoryMappingSchema>;
+
+export const externalCategorySchema = dtoBaseSchema.extend({
+  connectionId: z.string(),
+  externalId: z.string(),
+  name: z.string(),
+  parentExternalId: z.string().nullable(),
+  path: z.string().nullable(),
+  depth: z.number(),
+  isLeaf: z.boolean(),
+  metadata: z.record(z.string(), z.unknown()).nullable(),
+  fetchedAt: z.string(),
+});
+
+export type ExternalCategoryDto = z.infer<typeof externalCategorySchema>;
+
+export interface ExternalCategoryWithChildrenDto extends ExternalCategoryDto {
+  children: ExternalCategoryWithChildrenDto[];
+}
+
+export const externalCategoryWithChildrenSchema: z.ZodType<ExternalCategoryWithChildrenDto> = externalCategorySchema.extend({
+  children: z.lazy(() => z.array(externalCategoryWithChildrenSchema)),
+});
+
+export const categoryMappingWithDetailsSchema = categoryMappingSchema.extend({
+  externalCategory: externalCategorySchema,
+  internalCategory: z.any(), // ProductCategoryDto
+});
+
+export type CategoryMappingWithDetailsDto = z.infer<typeof categoryMappingWithDetailsSchema>;
+
+export const externalTagSchema = dtoBaseSchema.extend({
+  connectionId: z.string(),
+  externalId: z.string(),
+  name: z.string(),
+  metadata: z.record(z.string(), z.unknown()).nullable(),
+  fetchedAt: z.string(),
+});
+
+export type ExternalTagDto = z.infer<typeof externalTagSchema>;
+
+export const tagMappingSchema = dtoBaseSchema.extend({
+  connectionId: z.string(),
+  externalTagId: z.string(),
+  internalTagId: z.string(),
+  isActive: z.boolean(),
+});
+
+export type TagMappingDto = z.infer<typeof tagMappingSchema>;
+
+export const tagMappingWithDetailsSchema = tagMappingSchema.extend({
+  externalTag: externalTagSchema,
+  internalTag: z.any(), // ProductTagDto
+});
+
+export type TagMappingWithDetailsDto = z.infer<typeof tagMappingWithDetailsSchema>;
+
+export const externalProducerSchema = dtoBaseSchema.extend({
+  connectionId: z.string(),
+  externalId: z.string(),
+  name: z.string(),
+  metadata: z.record(z.string(), z.unknown()).nullable(),
+  fetchedAt: z.string(),
+});
+
+export type ExternalProducerDto = z.infer<typeof externalProducerSchema>;
+
+export const producerMappingSchema = dtoBaseSchema.extend({
+  connectionId: z.string(),
+  externalProducerId: z.string(),
+  internalProducerId: z.string(),
+  isActive: z.boolean(),
+});
+
+export type ProducerMappingDto = z.infer<typeof producerMappingSchema>;
+
+export const producerMappingWithDetailsSchema = producerMappingSchema.extend({
+  externalProducer: externalProducerSchema,
+  internalProducer: z.any(), // ProducerDto
+});
+
+export type ProducerMappingWithDetailsDto = z.infer<typeof producerMappingWithDetailsSchema>;
 
 /**
  * Template DTOs

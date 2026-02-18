@@ -39,6 +39,8 @@ type SvgNodeLayerProps = {
   inputPulseNodes: Set<string>;
   outputPulseNodes: Set<string>;
   triggerConnected: Set<string>;
+  enableNodeAnimations?: boolean;
+  connectorHitTargetPx?: number;
   connecting: { fromNodeId: string; fromPort: string } | null;
   connectingFromNode: AiNode | null;
   hoveredConnectorKey: string | null;
@@ -218,6 +220,8 @@ export function CanvasSvgNodeLayer({
   inputPulseNodes,
   outputPulseNodes,
   triggerConnected,
+  enableNodeAnimations = true,
+  connectorHitTargetPx = 14,
   connecting,
   connectingFromNode,
   hoveredConnectorKey,
@@ -318,6 +322,10 @@ export function CanvasSvgNodeLayer({
   const showNodeId = detailLevel !== 'skeleton' && view.scale >= 0.64;
   const showRuntimeBadges = detailLevel !== 'skeleton' && view.scale >= 0.68;
   const showTriggerButton = detailLevel === 'full' && view.scale >= 0.96;
+  const connectorHitRadius = React.useMemo((): number => {
+    const scaled = connectorHitTargetPx / Math.max(0.001, view.scale);
+    return Math.max(PORT_SIZE / 2 + 1, scaled);
+  }, [connectorHitTargetPx, view.scale]);
 
   return (
     <>
@@ -367,7 +375,8 @@ export function CanvasSvgNodeLayer({
             ? `${node.title.slice(0, 23)}...`
             : node.title;
         const showNodeAnimations =
-          detailLevel !== 'skeleton' || isSelected || isPrimarySelected;
+          enableNodeAnimations &&
+          (detailLevel !== 'skeleton' || isSelected || isPrimarySelected);
 
         return (
           <g
@@ -613,10 +622,10 @@ export function CanvasSvgNodeLayer({
                     <circle
                       cx={-8}
                       cy={0}
-                      r={PORT_SIZE / 2 + 1}
-                      stroke={connectorStroke}
-                      strokeWidth={isPinned ? 2 : 1.2}
-                      fill={connectorFill}
+                      r={connectorHitRadius}
+                      stroke='transparent'
+                      strokeWidth={1}
+                      fill='transparent'
                       data-port='input'
                       style={{ cursor: 'pointer' }}
                       onPointerEnter={() => setHoveredConnectorKey(connectorKey)}
@@ -659,6 +668,16 @@ export function CanvasSvgNodeLayer({
                         )}
                       </title>
                     </circle>
+                    <circle
+                      cx={-8}
+                      cy={0}
+                      r={PORT_SIZE / 2 + 1}
+                      stroke={connectorStroke}
+                      strokeWidth={isPinned ? 2 : 1.2}
+                      fill={connectorFill}
+                      data-port='input'
+                      style={{ pointerEvents: 'none' }}
+                    />
                     {showPortLabels ? (
                       <text
                         x={10}
@@ -708,10 +727,10 @@ export function CanvasSvgNodeLayer({
                     <circle
                       cx={NODE_WIDTH + 8}
                       cy={0}
-                      r={PORT_SIZE / 2 + 1}
-                      stroke={connectorStroke}
-                      strokeWidth={isPinned ? 2 : 1.2}
-                      fill={connectorFill}
+                      r={connectorHitRadius}
+                      stroke='transparent'
+                      strokeWidth={1}
+                      fill='transparent'
                       data-port='output'
                       style={{ cursor: 'pointer' }}
                       onPointerEnter={() => setHoveredConnectorKey(connectorKey)}
@@ -746,6 +765,16 @@ export function CanvasSvgNodeLayer({
                         )}
                       </title>
                     </circle>
+                    <circle
+                      cx={NODE_WIDTH + 8}
+                      cy={0}
+                      r={PORT_SIZE / 2 + 1}
+                      stroke={connectorStroke}
+                      strokeWidth={isPinned ? 2 : 1.2}
+                      fill={connectorFill}
+                      data-port='output'
+                      style={{ pointerEvents: 'none' }}
+                    />
                     {hasMismatch ? (
                       <circle cx={NODE_WIDTH + 15} cy={-8} r={2} fill='#fb7185' />
                     ) : null}

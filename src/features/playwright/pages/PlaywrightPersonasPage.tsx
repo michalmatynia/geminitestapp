@@ -1,7 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-
 import { logClientError } from '@/features/observability';
 import { PlaywrightSettingsForm } from '@/features/playwright/components/PlaywrightSettingsForm';
 import { usePlaywrightPersonas, useSavePlaywrightPersonasMutation } from '@/features/playwright/hooks/usePlaywrightPersonas';
@@ -10,7 +8,7 @@ import type {
   PlaywrightSettings,
 } from '@/features/playwright/types';
 import { buildPlaywrightSettings, createPlaywrightPersonaId } from '@/features/playwright/utils/personas';
-import { ItemLibrary, useToast } from '@/shared/ui';
+import { ItemLibrary, useToast, Breadcrumbs } from '@/shared/ui';
 
 import type { SetStateAction } from 'react';
 
@@ -79,9 +77,14 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
       onSave={handleSavePersona}
       onDelete={handleDeletePersona}
       backLink={(
-        <Link href='/admin/settings' className='text-blue-300 hover:text-blue-200'>
-          ← Back to settings
-        </Link>
+        <Breadcrumbs
+          items={[
+            { label: 'Admin', href: '/admin' },
+            { label: 'Settings', href: '/admin/settings' },
+            { label: 'Personas' }
+          ]}
+          className='mb-2'
+        />
       )}
       buildDefaultItem={() => ({
         name: '',

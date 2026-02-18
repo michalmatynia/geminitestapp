@@ -7,7 +7,6 @@ import { NoteDetailView } from '@/features/notesapp/components/NoteDetailView';
 import { NoteListView } from '@/features/notesapp/components/NoteListView';
 import { NotesAppFolderTree } from '@/features/notesapp/components/NotesAppFolderTree';
 import { NotesAppProvider, useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
-import {  } from '@/shared/ui';
 
 function AdminNotesPageContent(): React.JSX.Element {
   const { isMenuCollapsed } = useAdminLayout();

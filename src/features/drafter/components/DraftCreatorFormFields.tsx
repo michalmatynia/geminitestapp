@@ -13,7 +13,7 @@ import type {
   ProductParameterValue,
 } from '@/features/products/types';
 import { PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS, type ProductDraftOpenFormTab } from '@/features/products/types/drafts';
-import { Button, Input, Label, Textarea, SelectSimple, FormField } from '@/shared/ui';
+import { Button, Input, Textarea, SelectSimple, FormField, FormSection } from '@/shared/ui';
 
 import { useDraftCreatorFormContext } from './DraftCreatorFormContext';
 
@@ -62,9 +62,7 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
   const SelectedIcon = icon ? ICON_LIBRARY_MAP[icon] : null;
 
   return (
-    <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-      <h3 className='text-sm font-semibold text-white'>Draft Information</h3>
-
+    <FormSection title='Draft Information' className='p-4'>
       <FormField
         label='Draft Name'
         required
@@ -111,49 +109,48 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
         />
       </FormField>
 
-      <div className='space-y-2'>
-        <Label>Validation Controls</Label>
-        <div className='rounded-md border border-border bg-gray-900/70 p-3'>
-          <p className='text-xs text-gray-400'>
-            `Validator` enables all validation rules. `Formatter` auto-applies only rules configured for formatter mode.
-          </p>
-          <div className='mt-3 flex flex-wrap items-center gap-2'>
+      <FormField
+        label='Validation Controls'
+        description='`Validator` enables all validation rules. `Formatter` auto-applies only rules configured for formatter mode.'
+      >
+        <div className='flex flex-wrap items-center gap-2'>
+          <Button
+            type='button'
+            onClick={(): void => {
+              const next = !validatorEnabled;
+              setValidatorEnabled(next);
+              if (!next) {
+                setFormatterEnabled(false);
+              }
+            }}
+            className={`h-8 rounded border px-2.5 text-[10px] font-semibold tracking-wide ${
+              validatorEnabled
+                ? 'border-cyan-500/60 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25'
+                : 'border-slate-500/40 bg-slate-500/10 text-slate-300 hover:bg-slate-500/20'
+            }`}
+          >
+            Validator {validatorEnabled ? 'ON' : 'OFF'}
+          </Button>
+          {validatorEnabled ? (
             <Button
               type='button'
-              onClick={(): void => {
-                const next = !validatorEnabled;
-                setValidatorEnabled(next);
-                if (!next) {
-                  setFormatterEnabled(false);
-                }
-              }}
-              className={`h-8 rounded border px-2.5 text-[10px] font-semibold tracking-wide ${
-                validatorEnabled
-                  ? 'border-cyan-500/60 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25'
+              onClick={(): void => setFormatterEnabled(!formatterEnabled)}
+              className={`h-7 rounded border px-2 text-[10px] font-semibold tracking-wide ${
+                formatterEnabled
+                  ? 'border-emerald-500/60 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/25'
                   : 'border-slate-500/40 bg-slate-500/10 text-slate-300 hover:bg-slate-500/20'
               }`}
             >
-              Validator {validatorEnabled ? 'ON' : 'OFF'}
+              Formatter {formatterEnabled ? 'ON' : 'OFF'}
             </Button>
-            {validatorEnabled ? (
-              <Button
-                type='button'
-                onClick={(): void => setFormatterEnabled(!formatterEnabled)}
-                className={`h-7 rounded border px-2 text-[10px] font-semibold tracking-wide ${
-                  formatterEnabled
-                    ? 'border-emerald-500/60 bg-emerald-500/15 text-emerald-100 hover:bg-emerald-500/25'
-                    : 'border-slate-500/40 bg-slate-500/10 text-slate-300 hover:bg-slate-500/20'
-                }`}
-              >
-                Formatter {formatterEnabled ? 'ON' : 'OFF'}
-              </Button>
-            ) : null}
-          </div>
+          ) : null}
         </div>
-      </div>
+      </FormField>
 
-      <div className='space-y-2'>
-        <Label>Icon</Label>
+      <FormField
+        label='Icon'
+        description='Icons are shown only after you click Choose Icon.'
+      >
         <div className='flex items-center gap-3 rounded-md border border-border bg-gray-900 px-3 py-2'>
           <div
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-gray-800 ${
@@ -186,9 +183,8 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
             ) : null}
           </div>
         </div>
-        <div className='grid grid-cols-1 gap-3 md:grid-cols-[12rem_minmax(0,1fr)]'>
-          <div className='space-y-2'>
-            <Label htmlFor='iconColorMode'>Icon Color</Label>
+        <div className='grid grid-cols-1 gap-3 md:grid-cols-[12rem_minmax(0,1fr)] mt-3'>
+          <FormField label='Icon Color' id='iconColorMode'>
             <SelectSimple size='sm'
               options={[
                 { value: 'theme', label: 'Match Theme' },
@@ -200,10 +196,9 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
               }
               placeholder='Select color mode'
             />
-          </div>
+          </FormField>
           {iconColorMode === 'custom' ? (
-            <div className='space-y-2'>
-              <Label htmlFor='iconColor'>Custom Icon Color</Label>
+            <FormField label='Custom Icon Color' id='iconColor'>
               <div className='flex items-center gap-2'>
                 <Input
                   id='iconColorPicker'
@@ -222,14 +217,11 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
                   className='font-mono uppercase'
                 />
               </div>
-            </div>
+            </FormField>
           ) : null}
         </div>
-        <p className='text-xs text-gray-500'>
-          Icons are shown only after you click Choose Icon.
-        </p>
-      </div>
-    </div>
+      </FormField>
+    </FormSection>
   );
 }
 
@@ -268,9 +260,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
   } = useDraftCreatorFormContext();
 
   return (
-    <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-      <h3 className='text-sm font-semibold text-white'>Default Product Values</h3>
-
+    <FormSection title='Default Product Values' className='p-4'>
       <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
         <FormField label='SKU' id='sku'>
           <Input
@@ -422,7 +412,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
           />
         </FormField>
       </div>
-    </div>
+    </FormSection>
   );
 }
 
@@ -441,9 +431,7 @@ export function DraftCreatorPricingSupplierSection(): React.JSX.Element {
   } = useDraftCreatorFormContext();
 
   return (
-    <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-      <h3 className='text-sm font-semibold text-white'>Pricing & Supplier Information</h3>
-
+    <FormSection title='Pricing & Supplier Information' className='p-4'>
       <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
         <FormField label='Base Price' id='price'>
           <Input
@@ -492,7 +480,7 @@ export function DraftCreatorPricingSupplierSection(): React.JSX.Element {
           placeholder='Additional price information'
         />
       </FormField>
-    </div>
+    </FormSection>
   );
 }
 
@@ -500,8 +488,7 @@ export function DraftCreatorImportInfoSection(): React.JSX.Element {
   const { baseProductId, setBaseProductId } = useDraftCreatorFormContext();
 
   return (
-    <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-      <h3 className='text-sm font-semibold text-white'>Import Information</h3>
+    <FormSection title='Import Information' className='p-4'>
       <FormField
         label='Base Product ID'
         description='This ID is used for products imported from Base.com'
@@ -514,7 +501,7 @@ export function DraftCreatorImportInfoSection(): React.JSX.Element {
           placeholder='Imported from Base.com'
         />
       </FormField>
-    </div>
+    </FormSection>
   );
 }
 
@@ -562,14 +549,12 @@ export function DraftCreatorDetailsTab(): React.JSX.Element {
         <DraftCreatorProductDefaultsSection />
         <DraftCreatorPricingSupplierSection />
 
-        <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-          <h3 className='text-sm font-semibold text-white'>Catalogs</h3>
+        <FormSection title='Catalogs' className='p-4'>
           <CatalogMultiSelectField />
-        </div>
+        </FormSection>
 
         {categories.length > 0 ? (
-          <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-            <h3 className='text-sm font-semibold text-white'>Categories</h3>
+          <FormSection title='Categories' className='p-4'>
             <CategorySingleSelectField
               disabled={selectedCatalogIds.length === 0}
               placeholder={
@@ -578,12 +563,11 @@ export function DraftCreatorDetailsTab(): React.JSX.Element {
                   : 'Select a catalog first'
               }
             />
-          </div>
+          </FormSection>
         ) : null}
 
         {tags.length > 0 ? (
-          <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
-            <h3 className='text-sm font-semibold text-white'>Tags</h3>
+          <FormSection title='Tags' className='p-4'>
             <TagMultiSelectField
               disabled={selectedCatalogIds.length === 0}
               placeholder={
@@ -592,22 +576,21 @@ export function DraftCreatorDetailsTab(): React.JSX.Element {
                   : 'Select a catalog first'
               }
             />
-          </div>
+          </FormSection>
         ) : null}
 
-        <div className='space-y-4 rounded-lg border border-border bg-card/50 p-4'>
+        <FormSection className='p-4'>
           <ProducerMultiSelectField />
-        </div>
+        </FormSection>
 
         {selectedCatalogIds.length > 0 ? (
-          <div className='rounded-lg border border-blue-900/50 bg-blue-950/20 p-4'>
-            <h3 className='mb-2 text-sm font-semibold text-blue-400'>Price Group Information</h3>
+          <FormSection title='Price Group Information' variant='subtle' className='bg-blue-950/20 border-blue-900/50 p-4'>
             <p className='text-sm text-blue-300/70'>
               Products created from this draft will automatically use the default price group from
               the selected catalog(s). Price groups are configured per catalog and cannot be manually
               overridden in drafts.
             </p>
-          </div>
+          </FormSection>
         ) : null}
 
         <DraftCreatorImportInfoSection />
@@ -639,14 +622,11 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
     parameter.name_en || parameter.name_pl || parameter.name_de || 'Unnamed parameter';
 
   return (
-    <div className='rounded-lg border border-border bg-card/50 p-4 space-y-4'>
-      <div className='flex items-center justify-between gap-3'>
-        <div>
-          <h3 className='text-sm font-semibold text-white'>Parameters</h3>
-          <p className='text-xs text-gray-400'>
-            Set default parameter values for products created from this draft.
-          </p>
-        </div>
+    <FormSection
+      title='Parameters'
+      description='Set default parameter values for products created from this draft.'
+      className='p-4'
+      actions={
         <Button
           type='button'
           variant='outline'
@@ -655,8 +635,8 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
         >
           Add parameter
         </Button>
-      </div>
-
+      }
+    >
       {parametersLoading ? (
         <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
           Loading parameters...
@@ -715,6 +695,6 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
           })}
         </div>
       )}
-    </div>
+    </FormSection>
   );
 }

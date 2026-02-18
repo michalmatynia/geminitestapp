@@ -1,6 +1,6 @@
 'use client';
 
-import { Edit, Link2, Unlink } from 'lucide-react';
+import { Link2 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState, useCallback } from 'react';
@@ -26,6 +26,9 @@ import {
   SelectSimple,
   DataTable,
   StatusBadge,
+  ActionMenu,
+  DropdownMenuItem,
+  Breadcrumbs,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -139,20 +142,26 @@ export default function SlugsPage(): React.JSX.Element {
       id: 'actions',
       header: () => <div className='text-right'>Actions</div>,
       cell: ({ row }) => (
-        <div className='flex justify-end gap-2'>
-          <Link href={buildDomainHref(`/admin/cms/slugs/${row.original.id}/edit`)}>
-            <Button variant='ghost' size='xs' className='h-7 w-7 p-0'>
-              <Edit className='size-3.5' />
-            </Button>
-          </Link>
-          <Button 
-            variant='ghost' 
-            size='xs' 
-            className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
-            onClick={() => handleDelete(row.original)}
-          >
-            <Unlink className='size-3.5' />
-          </Button>
+        <div className='flex justify-end'>
+          <ActionMenu ariaLabel={`Actions for slug /${row.original.slug}`}>
+            <DropdownMenuItem
+              onSelect={(event: Event): void => {
+                event.preventDefault();
+                router.push(buildDomainHref(`/admin/cms/slugs/${row.original.id}/edit`));
+              }}
+            >
+              Edit Settings
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className='text-destructive focus:text-destructive'
+              onSelect={(event: Event): void => {
+                event.preventDefault();
+                handleDelete(row.original);
+              }}
+            >
+              Detach from Zone
+            </DropdownMenuItem>
+          </ActionMenu>
         </div>
       )
     }
@@ -165,6 +174,16 @@ export default function SlugsPage(): React.JSX.Element {
         zoningEnabled
           ? 'Manage unique paths assigned to the active domain. These control how pages are resolved.'
           : 'Global route management. Domain zoning is currently disabled.'
+      }
+      eyebrow={
+        <Breadcrumbs
+          items={[
+            { label: 'Admin', href: '/admin' },
+            { label: 'CMS', href: '/admin/cms' },
+            { label: 'Slugs' }
+          ]}
+          className='mb-2'
+        />
       }
       headerActions={
         <div className='flex items-center gap-3'>

@@ -100,8 +100,8 @@ export const createFilemakerAddress = (input: {
   postalCode?: unknown;
   country?: unknown;
   countryId?: unknown;
-  createdAt?: string | undefined;
-  updatedAt?: string | undefined;
+  createdAt?: string | null | undefined;
+  updatedAt?: string | null | undefined;
 }): FilemakerAddress => {
   const now = new Date().toISOString();
   const address = normalizeAddressFields({
@@ -139,8 +139,8 @@ export const createFilemakerPerson = (input: {
   nip?: unknown;
   regon?: unknown;
   phoneNumbers?: unknown;
-  createdAt?: string | undefined;
-  updatedAt?: string | undefined;
+  createdAt?: string | null | undefined;
+  updatedAt?: string | null | undefined;
 }): FilemakerPerson => {
   const now = new Date().toISOString();
   const address = normalizeAddressFields({
@@ -180,8 +180,8 @@ export const createFilemakerOrganization = (input: {
   postalCode?: unknown;
   country?: unknown;
   countryId?: unknown;
-  createdAt?: string | undefined;
-  updatedAt?: string | undefined;
+  createdAt?: string | null | undefined;
+  updatedAt?: string | null | undefined;
 }): FilemakerOrganization => {
   const now = new Date().toISOString();
   const address = normalizeAddressFields({

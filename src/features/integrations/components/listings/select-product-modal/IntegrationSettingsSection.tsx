@@ -2,7 +2,7 @@ import React from 'react';
 
 import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
 import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/features/integrations/types/listings';
-import { FormField, FormSection, SelectSimple } from '@/shared/ui';
+import { FormField, FormSection, SelectSimple, Alert, LoadingState } from '@/shared/ui';
 
 import { BaseListingSettings } from '../BaseListingSettings';
 import { useSelectProductForListingModalContext } from './context/SelectProductForListingModalContext';
@@ -25,7 +25,7 @@ export function IntegrationSettingsSection(): React.JSX.Element {
     <div className='space-y-4'>
       <FormSection title='2. Integration Settings' variant='subtle' className='p-4 space-y-4'>
         {loadingIntegrations ? (
-          <p className='text-xs text-gray-500'>Loading integrations...</p>
+          <LoadingState message='Loading integrations...' size='sm' className='py-4' />
         ) : (
           <>
             <FormField label='Marketplace'>
@@ -61,9 +61,9 @@ export function IntegrationSettingsSection(): React.JSX.Element {
       </FormSection>
 
       {error && (
-        <div className='rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200'>
+        <Alert variant='error'>
           {error}
-        </div>
+        </Alert>
       )}
     </div>
   );

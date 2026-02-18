@@ -14,11 +14,14 @@ const CollapsibleContent = CollapsiblePrimitive.CollapsibleContent;
 
 interface CollapsibleSectionProps {
   title: React.ReactNode;
+  actions?: React.ReactNode;
   children: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   className?: string;
   triggerClassName?: string;
+  headerClassName?: string;
+  titleClassName?: string;
   contentClassName?: string;
   iconClassName?: string;
   variant?: 'default' | 'card' | 'subtle';
@@ -26,11 +29,14 @@ interface CollapsibleSectionProps {
 
 export function CollapsibleSection({
   title,
+  actions,
   children,
   open,
   onOpenChange,
   className,
   triggerClassName,
+  headerClassName,
+  titleClassName,
   contentClassName,
   iconClassName,
   variant = 'default',
@@ -54,10 +60,12 @@ export function CollapsibleSection({
       <CollapsibleTrigger
         className={cn(
           'flex w-full items-center justify-between gap-4 p-3 text-left transition-colors hover:bg-muted/20',
+          headerClassName,
           triggerClassName
         )}
       >
-        <div className='flex-1'>{title}</div>
+        <div className={cn('flex-1', titleClassName)}>{title}</div>
+        {actions ? <div className='shrink-0'>{actions}</div> : null}
         <ChevronDown
           className={cn(
             'size-4 shrink-0 text-muted-foreground transition-transform duration-200',

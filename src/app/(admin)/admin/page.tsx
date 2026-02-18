@@ -3,6 +3,7 @@ import { JSX, useState } from 'react';
 
 import { useSystemActivity } from '@/features/observability/hooks/useLogQueries';
 import { useHealthStatus } from '@/shared/hooks/useHealthStatus';
+import { PageLayout } from '@/shared/ui';
 
 import {
   QuickAccessPanel,
@@ -17,8 +18,10 @@ export default function AdminDashboard(): JSX.Element {
   const activity = activityData?.data ?? [];
 
   return (
-    <div className='container mx-auto py-10'>
-      <h1 className='text-3xl font-bold mb-6'>Dashboard</h1>
+    <PageLayout
+      title='Dashboard'
+      description='System overview and quick access to administrative tools.'
+    >
       <div className='space-y-4'>
         <QuickAccessPanel />
         <SystemHealthPanel
@@ -33,6 +36,6 @@ export default function AdminDashboard(): JSX.Element {
           activity={activity}
         />
       </div>
-    </div>
+    </PageLayout>
   );
 }

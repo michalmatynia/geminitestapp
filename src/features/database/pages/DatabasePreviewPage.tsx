@@ -36,7 +36,7 @@ import {
   Alert,
   SearchInput,
   CollapsibleSection,
-  LoadingState,
+  MetadataItem,
 } from '@/shared/ui';
 
 import { CrudPanel } from '../components/CrudPanel';
@@ -567,29 +567,17 @@ function DatabasePreviewContent(): React.JSX.Element {
           {/* ── SQL Console ── */}
           {dbType === 'postgresql' && (
             <div ref={consoleSectionRef} className='scroll-mt-6'>
-              <FormSection
+              <CollapsibleSection
                 title='SQL Query Console'
-                actions={
-                  <Button
-                    variant='ghost'
-                    size='xs'
-                    className='h-7 w-7 p-0'
-                    onClick={() => setShowConsole(!showConsole)}
-                  >
-                    {showConsole ? <ChevronDownIcon className='size-4' /> : <ChevronRightIcon className='size-4' />}
-                  </Button>
-                }
+                open={showConsole}
+                onOpenChange={setShowConsole}
                 className='p-6'
               >
-                {showConsole && (
-                  <div className='mt-4'>
-                    <SqlQueryConsole
-                      defaultDbType='postgresql'
-                      initialSql={consoleSql}
-                    />
-                  </div>
-                )}
-              </FormSection>
+                <SqlQueryConsole
+                  defaultDbType='postgresql'
+                  initialSql={consoleSql}
+                />
+              </CollapsibleSection>
             </div>
           )}
 

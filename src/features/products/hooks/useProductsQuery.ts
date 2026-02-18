@@ -99,34 +99,9 @@ export function useProductsWithCount(
     error: unknown;
     refetch: () => Promise<void>;
   } {
-
-  const { enabled = true } = options;
   const queryClient = useQueryClient();
-
-  const results = useQueries({
-    queries: [
-      {
-        queryKey: normalizeQueryKey(getProductListQueryKey(filters)),
-        queryFn: ({ signal }): Promise<ProductWithImages[]> => getProducts(filters, signal),
-        enabled,
-        staleTime: PRODUCTS_STALE_MS,
-        refetchOnMount: false,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-      },
-      {
-        queryKey: normalizeQueryKey(getProductCountQueryKey(filters)),
-        queryFn: ({ signal }): Promise<number> => countProducts(filters, signal),
-        enabled,
-        staleTime: PRODUCTS_STALE_MS,
-        refetchOnMount: false,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-      },
-    ],
-  });
-
-  const [productsQuery, countQuery] = results;
+  const productsQuery = useProducts(filters, options);
+  const countQuery = useProductsCount(filters, options);
 
   const refetch = useCallback(async (): Promise<void> => {
     await refetchProductsAndCounts(queryClient);

@@ -161,3 +161,102 @@ export const promptEngineSettingsSchema = z.object({
 });
 
 export type PromptEngineSettingsDto = z.infer<typeof promptEngineSettingsSchema>;
+
+/**
+ * Prompt Validation Runtime DTOs
+ */
+
+export const promptValidationRuntimeProfileSchema = z.enum(['all', 'pattern_pack', 'learned_only']);
+export type PromptValidationRuntimeProfileDto = z.infer<typeof promptValidationRuntimeProfileSchema>;
+
+export const promptValidationRuntimeIdentitySchema = z.object({
+  scope: z.string(), // PromptExploderRuntimeValidationScope
+  validatorScope: z.string(), // ValidatorScope
+  stack: z.any(), // PromptExploderValidationRuleStack
+  listVersion: z.string(),
+  settingsVersion: z.string(),
+  profile: promptValidationRuntimeProfileSchema,
+  cacheKey: z.string(),
+});
+
+export type PromptValidationRuntimeIdentityDto = z.infer<typeof promptValidationRuntimeIdentitySchema>;
+
+export const promptValidationRuntimeSelectionSchema = z.object({
+  identity: promptValidationRuntimeIdentitySchema,
+  scopedRules: z.array(promptValidationRuleSchema),
+  effectiveRules: z.array(promptValidationRuleSchema),
+  runtimeValidationRules: z.array(promptValidationRuleSchema),
+  effectiveLearnedTemplates: z.array(z.any()), // PromptExploderLearnedTemplate
+  runtimeLearnedTemplates: z.array(z.any()), // PromptExploderLearnedTemplate
+});
+
+export type PromptValidationRuntimeSelectionDto = z.infer<typeof promptValidationRuntimeSelectionSchema>;
+
+export const promptValidationStackResolutionSchema = z.object({
+  stack: z.any(), // PromptExploderValidationRuleStack
+  scope: z.string(), // PromptExploderRuntimeValidationScope
+  validatorScope: z.string(), // ValidatorScope
+  list: z.any().nullable(), // ValidatorPatternList
+  usedFallback: z.boolean(),
+  reason: z.enum(['exact_match', 'default_scope', 'scope_fallback', 'invalid_stack']),
+});
+
+export type PromptValidationStackResolutionDto = z.infer<typeof promptValidationStackResolutionSchema>;
+
+/**
+ * Prompt Validation Evaluation DTOs
+ */
+
+export const promptValidationSuggestionSchema = z.object({
+  suggestion: z.string(),
+  found: z.string().optional(),
+  comment: z.string().nullable().optional(),
+});
+
+export type PromptValidationSuggestionDto = z.infer<typeof promptValidationSuggestionSchema>;
+
+export const promptValidationIssueSchema = z.object({
+  ruleId: z.string(),
+  severity: promptValidationSeveritySchema,
+  title: z.string(),
+  message: z.string(),
+  suggestions: z.array(promptValidationSuggestionSchema),
+});
+
+export type PromptValidationIssueDto = z.infer<typeof promptValidationIssueSchema>;
+
+export const promptValidationExecutionContextSchema = z.object({
+  scope: promptValidationScopeSchema.nullable().optional(),
+});
+
+export type PromptValidationExecutionContextDto = z.infer<typeof promptValidationExecutionContextSchema>;
+
+export const promptValidationPreparedRuntimeSchema = z.object({
+  enabled: z.boolean(),
+  context: promptValidationExecutionContextSchema,
+  orderedRules: z.array(promptValidationRuleSchema),
+  sequenceGroupCounts: z.record(z.string(), z.number()),
+});
+
+export type PromptValidationPreparedRuntimeDto = z.infer<typeof promptValidationPreparedRuntimeSchema>;
+
+/**
+ * Prompt Formatter DTOs
+ */
+
+export const promptAppliedFixSchema = z.object({
+  ruleId: z.string(),
+  operationKind: promptAutofixOperationSchema.options[0].shape.kind.or(z.literal('replace')), // Simplified for compatibility
+});
+
+export type PromptAppliedFixDto = z.infer<typeof promptAppliedFixSchema>;
+
+export const formatPromptResultSchema = z.object({
+  prompt: z.string(),
+  changed: z.boolean(),
+  applied: z.array(promptAppliedFixSchema),
+  issuesBefore: z.number(),
+  issuesAfter: z.number(),
+});
+
+export type FormatPromptResultDto = z.infer<typeof formatPromptResultSchema>;

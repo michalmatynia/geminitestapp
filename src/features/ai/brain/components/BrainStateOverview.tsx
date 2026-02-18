@@ -1,7 +1,6 @@
 'use client';
 
 import { useSettingsMap } from '@/shared/hooks/use-settings';
-import {  } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 import { AI_BRAIN_SETTINGS_KEY } from '../settings';

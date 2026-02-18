@@ -46,7 +46,7 @@ export function useChatbotMemoryState(): UseChatbotMemoryStateReturn {
   }, [memoryKey, tag, query, limit]);
 
   const memoryQuery = useChatbotMemory(queryString);
-  const items = (memoryQuery.data ?? []) as ExtendedMemoryItem[];
+  const items = (memoryQuery.data ?? []);
 
   const toggleExpanded = useCallback((id: string) => {
     setExpanded((prev) => ({

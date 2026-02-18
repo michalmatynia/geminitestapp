@@ -1,44 +1,44 @@
 import Link from 'next/link';
 import { JSX } from 'react';
 
+import { PageLayout, Card, CardHeader, CardTitle, CardDescription } from '@/shared/ui';
+
 export default function AgentCreatorPage(): JSX.Element {
+  const cards = [
+    {
+      href: '/admin/agentcreator/teaching',
+      title: 'Learner Agents',
+      description: 'Build embedding collections and connect them to learner agents.',
+    },
+    {
+      href: '/admin/agentcreator/runs',
+      title: 'Agent Runs',
+      description: 'Monitor browser automation runs and inspect snapshots.',
+    },
+    {
+      href: '/admin/agentcreator/personas',
+      title: 'Agent Personas',
+      description: 'Define the reasoning stack for each agent model role.',
+    },
+  ];
+
   return (
-    <div className='container mx-auto py-10'>
-      <div className='rounded-lg bg-gray-950 p-6 shadow-lg'>
-        <h1 className='text-3xl font-bold text-white'>Agent Creator</h1>
-        <p className='mt-2 text-sm text-gray-400'>
-          Configure and monitor multi-step agent runs.
-        </p>
-        <div className='mt-6 grid gap-4 md:grid-cols-3'>
-          <Link
-            href='/admin/agentcreator/teaching'
-            className='rounded-md border border-gray-800 bg-gray-900 p-4 transition hover:border-gray-600'
-          >
-            <h2 className='text-lg font-semibold text-white'>Learner Agents</h2>
-            <p className='mt-1 text-sm text-gray-400'>
-              Build embedding collections and connect them to learner agents.
-            </p>
+    <PageLayout
+      title='Agent Creator'
+      description='Configure and monitor multi-step agent runs.'
+    >
+      <div className='grid gap-4 md:grid-cols-3'>
+        {cards.map((card) => (
+          <Link key={card.href} href={card.href}>
+            <Card className='h-full transition hover:border-gray-600 hover:bg-white/5'>
+              <CardHeader>
+                <CardTitle className='text-lg'>{card.title}</CardTitle>
+                <CardDescription>{card.description}</CardDescription>
+              </CardHeader>
+            </Card>
           </Link>
-          <Link
-            href='/admin/agentcreator/runs'
-            className='rounded-md border border-gray-800 bg-gray-900 p-4 transition hover:border-gray-600'
-          >
-            <h2 className='text-lg font-semibold text-white'>Agent Runs</h2>
-            <p className='mt-1 text-sm text-gray-400'>
-              Monitor browser automation runs and inspect snapshots.
-            </p>
-          </Link>
-          <Link
-            href='/admin/agentcreator/personas'
-            className='rounded-md border border-gray-800 bg-gray-900 p-4 transition hover:border-gray-600'
-          >
-            <h2 className='text-lg font-semibold text-white'>Agent Personas</h2>
-            <p className='mt-1 text-sm text-gray-400'>
-              Define the reasoning stack for each agent model role.
-            </p>
-          </Link>
-        </div>
+        ))}
       </div>
-    </div>
+    </PageLayout>
   );
 }

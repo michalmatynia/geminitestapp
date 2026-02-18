@@ -163,6 +163,11 @@ export function AdminFilemakerPage(): React.JSX.Element {
     const postalCode = personDraft.postalCode?.trim() || '';
     const countryId = personDraft.countryId?.trim() || '';
     const country = countryById.get(countryId)?.name ?? '';
+    const { updatedAt: draftUpdatedAt, ...personDraftWithoutUpdatedAt } = personDraft;
+    const normalizedPersonDraft = {
+      ...personDraftWithoutUpdatedAt,
+      ...(draftUpdatedAt ? { updatedAt: draftUpdatedAt } : {}),
+    };
 
     if (!firstName || !lastName || !hasAddressFields(street, streetNumber, city, postalCode, countryId)) {
       toast('Person requires first name, last name, street, street number, city, postal code, and country.', {
@@ -175,7 +180,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
       ? database.persons.map(p => p.id === editingPerson.id 
         ? createFilemakerPerson({
           ...p,
-          ...personDraft,
+          ...normalizedPersonDraft,
           firstName,
           lastName,
           country,
@@ -184,7 +189,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
         : p)
       : [...database.persons, createFilemakerPerson({
         id: createId('person'),
-        ...personDraft,
+        ...normalizedPersonDraft,
         firstName,
         lastName,
         country,
@@ -244,6 +249,11 @@ export function AdminFilemakerPage(): React.JSX.Element {
     const postalCode = orgDraft.postalCode?.trim() || '';
     const countryId = orgDraft.countryId?.trim() || '';
     const country = countryById.get(countryId)?.name ?? '';
+    const { updatedAt: orgDraftUpdatedAt, ...orgDraftWithoutUpdatedAt } = orgDraft;
+    const normalizedOrgDraft = {
+      ...orgDraftWithoutUpdatedAt,
+      ...(orgDraftUpdatedAt ? { updatedAt: orgDraftUpdatedAt } : {}),
+    };
 
     if (!name || !hasAddressFields(street, streetNumber, city, postalCode, countryId)) {
       toast('Organization requires name, street, street number, city, postal code, and country.', {
@@ -256,7 +266,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
       ? database.organizations.map(o => o.id === editingOrg.id
         ? createFilemakerOrganization({
           ...o,
-          ...orgDraft,
+          ...normalizedOrgDraft,
           name,
           country,
           updatedAt: new Date().toISOString()
@@ -264,7 +274,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
         : o)
       : [...database.organizations, createFilemakerOrganization({
         id: createId('organization'),
-        ...orgDraft,
+        ...normalizedOrgDraft,
         name,
         country,
       })];

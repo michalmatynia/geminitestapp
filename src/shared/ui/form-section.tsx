@@ -10,6 +10,7 @@ import type { ReactNode } from 'react';
 
 interface FormSectionProps {
   title?: ReactNode | undefined;
+  subtitle?: ReactNode | undefined;
   titleIcon?: ReactNode | undefined;
   description?: string | undefined;
   actions?: ReactNode | undefined;
@@ -22,6 +23,7 @@ interface FormSectionProps {
 
 export function FormSection({
   title,
+  subtitle,
   titleIcon,
   description,
   actions,
@@ -33,9 +35,10 @@ export function FormSection({
 }: FormSectionProps): React.JSX.Element {
   return (
     <SectionPanel id={id} variant={variant} className={cn('space-y-4', className)}>
-      {(title || description || actions) && (
+      {(title || subtitle || description || actions) && (
         <SectionHeader
           title={title ?? ''}
+          subtitle={subtitle}
           icon={titleIcon}
           description={description}
           actions={actions}

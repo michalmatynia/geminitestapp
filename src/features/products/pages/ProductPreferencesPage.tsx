@@ -8,7 +8,7 @@ import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries
 import { useUserPreferences, useUpdateUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import type { Catalog } from '@/features/products/types';
 import type { ProductListPreferences } from '@/features/products/types/products-ui';
-import { Button, SelectSimple, Input, useToast, SectionHeader, FormSection, FormField, LoadingState } from '@/shared/ui';
+import { Button, SelectSimple, Input, useToast, FormSection, FormField, LoadingState, PageLayout } from '@/shared/ui';
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {
   nameLocale: 'name_en',
@@ -76,22 +76,18 @@ export function ProductPreferencesPage(): React.JSX.Element {
   }
 
   return (
-    <div className='container mx-auto max-w-5xl py-10'>
-      <SectionHeader
-        title='Product Preferences'
-        size='md'
-        description='Manage your product list display and navigation preferences'
-        actions={
-          <Button
-            variant='outline'
-            onClick={() => router.push('/admin/products')}
-          >
-            Back to Products
-          </Button>
-        }
-        className='mb-6'
-      />
-
+    <PageLayout
+      title='Product Preferences'
+      description='Manage your product list display and navigation preferences'
+      headerActions={
+        <Button
+          variant='outline'
+          onClick={() => router.push('/admin/products')}
+        >
+          Back to Products
+        </Button>
+      }
+    >
       <div className='space-y-6'>
         <FormSection
           title='Product List Settings'
@@ -245,6 +241,6 @@ export function ProductPreferencesPage(): React.JSX.Element {
           </div>
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }

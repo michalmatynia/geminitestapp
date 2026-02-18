@@ -1,12 +1,11 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
 import { APP_FONT_SET_SETTING_KEY, APP_FONT_SETS, getAppFontSet, type AppFontSetId } from '@/shared/constants/typography';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, SectionHeader, SelectSimple, useToast, FormSection, FormField } from '@/shared/ui';
+import { SectionHeader, SelectSimple, useToast, FormSection, FormField, Breadcrumbs, FormActions, LoadingState, PropertyRow, Hint } from '@/shared/ui';
 
 export function AdminTypographySettingsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -41,7 +40,7 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
   };
 
   if (settingsQuery.isLoading || !settingsQuery.data) {
-    return <div className='p-10 text-center text-gray-400'>Loading settings...</div>;
+    return <LoadingState message='Loading typography settings...' />;
   }
 
   return (
@@ -50,9 +49,14 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
         title='Typography'
         description='Choose an app-wide font set. Fonts are served locally from public/fonts.'
         eyebrow={
-          <Link href='/admin/settings' className='text-blue-300 hover:text-blue-200'>
-            ← Back to settings
-          </Link>
+          <Breadcrumbs
+            items={[
+              { label: 'Admin', href: '/admin' },
+              { label: 'Settings', href: '/admin/settings' },
+              { label: 'Typography' }
+            ]}
+            className='mb-2'
+          />
         }
         className='mb-8'
       />
@@ -76,60 +80,47 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
               />
             </FormField>
 
-            <div className='flex flex-wrap gap-3 border-t border-border pt-6'>
-              <Button onClick={handleSave} disabled={!isDirty || updateSetting.isPending}>
-                {updateSetting.isPending ? 'Saving...' : 'Save Settings'}
-              </Button>
-              <Button variant='outline' onClick={() => setSelected(storedId)} disabled={!isDirty}>
-                Reset
-              </Button>
-            </div>
+            <FormActions
+              onSave={handleSave}
+              onCancel={() => setSelected(storedId)}
+              saveText='Save Settings'
+              cancelText='Reset'
+              isDisabled={!isDirty || updateSetting.isPending}
+              isSaving={updateSetting.isPending}
+              className='border-t border-border pt-6 justify-start'
+            />
           </FormSection>
         </div>
 
         <div>
           <FormSection title='Preview' className='sticky top-6 p-6 space-y-4'>
             <FormSection variant='subtle-compact' className='p-4'>
-              <div className='text-xs text-gray-400'>Headings</div>
-              <div className='mt-2 space-y-2'>
+              <Hint uppercase className='mb-2'>Headings</Hint>
+              <div className='space-y-2'>
                 <h3 className='text-xl font-semibold text-white'>Edit Product</h3>
                 <h4 className='text-base font-semibold text-white'>Product Settings</h4>
               </div>
             </FormSection>
 
             <FormSection variant='subtle-compact' className='p-4'>
-              <div className='text-xs text-gray-400'>Body</div>
-              <p className='mt-2 text-sm text-gray-200'>
+              <Hint uppercase className='mb-2'>Body</Hint>
+              <p className='text-sm text-gray-200'>
                 The quick brown fox jumps over the lazy dog. 0123456789.
               </p>
             </FormSection>
 
-            <FormSection variant='subtle-compact' className='p-4 text-xs text-gray-300'>
-              <div className='flex justify-between'>
-                <span>Selected</span>
-                <span className='font-mono text-gray-200'>{current.id}</span>
-              </div>
-              <div className='mt-2 space-y-1'>
-                <div className='flex justify-between gap-3'>
-                  <span className='text-gray-400'>Heading</span>
-                  <span className='truncate font-mono text-[10px] text-gray-200'>{current.heading}</span>
-                </div>
-                <div className='flex justify-between gap-3'>
-                  <span className='text-gray-400'>Body</span>
-                  <span className='truncate font-mono text-[10px] text-gray-200'>{current.body}</span>
-                </div>
-              </div>
+            <FormSection variant='subtle-compact' className='p-4 text-xs text-gray-300 space-y-2'>
+              <PropertyRow label='Selected' value={current.id} mono />
+              <PropertyRow label='Heading' value={current.heading} mono />
+              <PropertyRow label='Body' value={current.body} mono />
             </FormSection>
 
-            <div className='rounded-md border border-blue-500/20 bg-blue-500/5 p-3'>
-              <p className='text-xs text-blue-200'>
-                Tip: If a font file is missing, the app silently falls back to system fonts.
-              </p>
-            </div>
+            <Hint variant='info' className='rounded-md border border-blue-500/20 bg-blue-500/5 p-3 italic' size='xs'>
+              Tip: If a font file is missing, the app silently falls back to system fonts.
+            </Hint>
           </FormSection>
         </div>
       </div>
     </div>
   );
 }
-

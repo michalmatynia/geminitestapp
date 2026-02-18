@@ -1,28 +1,15 @@
-import type { Producer } from '@/features/products/types';
+import type {
+  ExternalProducerDto,
+  ProducerMappingDto as ProducerMappingDtoContract,
+  ProducerMappingWithDetailsDto as ProducerMappingWithDetailsDtoContract,
+} from '@/shared/contracts/integrations';
+import type { ProducerDto as Producer } from '@/shared/contracts/products';
 
-export type ExternalProducer = {
-  id: string;
-  connectionId: string;
-  externalId: string;
-  name: string;
-  metadata: Record<string, unknown> | null;
-  fetchedAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-};
+export type ExternalProducer = ExternalProducerDto;
 
-export type ProducerMapping = {
-  id: string;
-  connectionId: string;
-  externalProducerId: string;
-  internalProducerId: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-};
+export type ProducerMapping = ProducerMappingDtoContract;
 
-export type ProducerMappingWithDetails = ProducerMapping & {
-  externalProducer: ExternalProducer;
+export type ProducerMappingWithDetails = Omit<ProducerMappingWithDetailsDtoContract, 'internalProducer'> & {
   internalProducer: Producer;
 };
 

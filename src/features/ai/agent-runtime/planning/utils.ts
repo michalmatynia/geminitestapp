@@ -273,17 +273,14 @@ export function buildBranchStepsFromAlternatives(
   if (!alternatives?.length) return [];
   const specs = alternatives.flatMap((alt: PlannerAlternative) => {
     if (alt.steps?.length) {
-      return alt.steps.map((step: {
-        title?: string;
-        tool?: string;
-        expectedObservation?: string | null;
-        successCriteria?: string | null;
-        phase?: string | null;
-        priority?: number | null;
-        dependsOn?: number[] | string[] | null;
-      }) => ({
-        ...step,
+      return alt.steps.map((step) => ({
+        title: step.title?.trim() ?? '',
+        tool: step.tool ?? 'playwright',
+        expectedObservation: step.expectedObservation ?? null,
+        successCriteria: step.successCriteria ?? null,
         phase: step.phase ?? 'recover',
+        priority: typeof step.priority === 'number' ? step.priority : null,
+        dependsOn: step.dependsOn ?? null,
       }));
     }
     if (alt.title?.trim()) {

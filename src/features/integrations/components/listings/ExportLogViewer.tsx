@@ -1,6 +1,5 @@
 'use client';
 
-import { ChevronDown } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { Alert, CopyButton, CollapsibleSection } from '@/shared/ui';

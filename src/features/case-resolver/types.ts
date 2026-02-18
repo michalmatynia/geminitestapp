@@ -8,7 +8,6 @@ import type {
   CaseResolverFileTypeDto,
   CaseResolverDocumentVersionDto,
   CaseResolverEditorTypeDto,
-  CaseResolverDocumentFormatVersionDto,
   CaseResolverPdfExtractionPresetIdDto,
   CaseResolverPartyReferenceDto,
   CaseResolverTagDto,

@@ -362,7 +362,7 @@ export function ProductSettingsPage(): React.JSX.Element {
             setConfirmation(null);
           }}
         />
-      </div>
+      </PageLayout>
     </InternationalizationProvider>
   );
 }

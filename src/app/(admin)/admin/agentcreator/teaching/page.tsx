@@ -1,44 +1,44 @@
 import Link from 'next/link';
 import { JSX } from 'react';
 
+import { PageLayout, Card, CardHeader, CardTitle, CardDescription } from '@/shared/ui';
+
 export default function AgentTeachingLandingPage(): JSX.Element {
+  const cards = [
+    {
+      href: '/admin/agentcreator/teaching/agents',
+      title: 'Learner Agents',
+      description: 'Create agents and connect them to embedding collections.',
+    },
+    {
+      href: '/admin/agentcreator/teaching/collections',
+      title: 'Embedding School',
+      description: 'Store text + embedding vectors and manage documents.',
+    },
+    {
+      href: '/admin/agentcreator/teaching/chat',
+      title: 'Chat',
+      description: 'Chat with a learner agent and inspect retrieved sources.',
+    },
+  ];
+
   return (
-    <div className='container mx-auto py-10'>
-      <div className='rounded-lg bg-gray-950 p-6 shadow-lg'>
-        <h1 className='text-3xl font-bold text-white'>Learner Agents</h1>
-        <p className='mt-2 text-sm text-gray-400'>
-          Build knowledge bases (embeddings) and connect them to learner agents.
-        </p>
-        <div className='mt-6 grid gap-4 md:grid-cols-3'>
-          <Link
-            href='/admin/agentcreator/teaching/agents'
-            className='rounded-md border border-gray-800 bg-gray-900 p-4 transition hover:border-gray-600'
-          >
-            <h2 className='text-lg font-semibold text-white'>Learner Agents</h2>
-            <p className='mt-1 text-sm text-gray-400'>
-              Create agents and connect them to embedding collections.
-            </p>
+    <PageLayout
+      title='Learner Agents'
+      description='Build knowledge bases (embeddings) and connect them to learner agents.'
+    >
+      <div className='grid gap-4 md:grid-cols-3'>
+        {cards.map((card) => (
+          <Link key={card.href} href={card.href}>
+            <Card className='h-full transition hover:border-gray-600 hover:bg-white/5'>
+              <CardHeader>
+                <CardTitle className='text-lg'>{card.title}</CardTitle>
+                <CardDescription>{card.description}</CardDescription>
+              </CardHeader>
+            </Card>
           </Link>
-          <Link
-            href='/admin/agentcreator/teaching/collections'
-            className='rounded-md border border-gray-800 bg-gray-900 p-4 transition hover:border-gray-600'
-          >
-            <h2 className='text-lg font-semibold text-white'>Embedding School</h2>
-            <p className='mt-1 text-sm text-gray-400'>
-              Store text + embedding vectors and manage documents.
-            </p>
-          </Link>
-          <Link
-            href='/admin/agentcreator/teaching/chat'
-            className='rounded-md border border-gray-800 bg-gray-900 p-4 transition hover:border-gray-600'
-          >
-            <h2 className='text-lg font-semibold text-white'>Chat</h2>
-            <p className='mt-1 text-sm text-gray-400'>
-              Chat with a learner agent and inspect retrieved sources.
-            </p>
-          </Link>
-        </div>
+        ))}
       </div>
-    </div>
+    </PageLayout>
   );
 }

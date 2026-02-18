@@ -1059,13 +1059,16 @@ export function useCaseResolverState() {
     const recoveredDraft = readStoredEditorDraft(fileId);
     const canRecoverStoredDraft =
       recoveredDraft?.baseDocumentContentVersion === baseDraft.baseDocumentContentVersion;
-    const nextDraft = canRecoverStoredDraft
+    const nextDraft: CaseResolverFileEditDraft = canRecoverStoredDraft
       ? {
         ...baseDraft,
         ...recoveredDraft.draft,
-        documentHistory: baseDraft.documentHistory,
+        documentHistory: baseDraft.documentHistory ?? [],
       }
-      : baseDraft;
+      : {
+        ...baseDraft,
+        documentHistory: baseDraft.documentHistory ?? [],
+      };
     if (canRecoverStoredDraft) {
       toast('Recovered unsaved draft from local storage.', { variant: 'info' });
     } else if (recoveredDraft) {
@@ -1125,20 +1128,20 @@ export function useCaseResolverState() {
     const canonical = deriveDocumentContentSync({
       mode: resolvedMode,
       value: resolvedMode === 'wysiwyg'
-        ? editingDocumentDraft.documentContentHtml
-        : editingDocumentDraft.documentContentMarkdown,
-      previousHtml: editingDocumentDraft.documentContentHtml,
-      previousMarkdown: editingDocumentDraft.documentContentMarkdown,
+        ? (editingDocumentDraft.documentContentHtml ?? '')
+        : (editingDocumentDraft.documentContentMarkdown ?? ''),
+      previousHtml: editingDocumentDraft.documentContentHtml ?? '',
+      previousMarkdown: editingDocumentDraft.documentContentMarkdown ?? '',
     });
     const nextStoredContent = toStorageDocumentValue(canonical);
     const nextOriginalDocumentContent =
       editingDocumentDraft.activeDocumentVersion === 'original'
         ? nextStoredContent
-        : editingDocumentDraft.originalDocumentContent;
+        : (editingDocumentDraft.originalDocumentContent ?? '');
     const nextExplodedDocumentContent =
       editingDocumentDraft.activeDocumentVersion === 'exploded'
         ? nextStoredContent
-        : editingDocumentDraft.explodedDocumentContent;
+        : (editingDocumentDraft.explodedDocumentContent ?? '');
     const hasContentChanges =
       currentFile.activeDocumentVersion !== editingDocumentDraft.activeDocumentVersion ||
       currentFile.editorType !== canonical.mode ||

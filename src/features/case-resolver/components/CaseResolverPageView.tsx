@@ -1016,7 +1016,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                   ) : (
                     <MarkdownSplitEditor
                       key={`case-resolver-markdown-${editorContentRevisionSeed}`}
-                      value={editingDocumentDraft.documentContentMarkdown}
+                      value={editingDocumentDraft.documentContentMarkdown ?? ''}
                       onChange={handleUpdateDraftDocumentContent}
                       showPreview={showMarkdownPreview}
                       renderPreviewHtml={(value: string): string => ensureHtmlForPreview(value, 'markdown')}
@@ -1035,7 +1035,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
               ) : (
                 <DocumentWysiwygEditor
                   key={`case-resolver-wysiwyg-fallback-${editorContentRevisionSeed}`}
-                  value={editingDocumentDraft.documentContentHtml}
+                  value={editingDocumentDraft.documentContentHtml ?? ''}
                   onChange={handleUpdateDraftDocumentContent}
                   allowFontFamily
                   allowTextAlign

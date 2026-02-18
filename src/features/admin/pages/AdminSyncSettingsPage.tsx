@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
@@ -16,6 +15,11 @@ import {
   FormSection,
   FormField,
   ToggleRow,
+  Breadcrumbs,
+  FormActions,
+  MetadataItem,
+  PropertyRow,
+  Hint,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -112,9 +116,14 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
         title='Background Sync'
         description='Control background synchronization and manage the offline mutation queue.'
         eyebrow={
-          <Link href='/admin/settings' className='text-blue-300 hover:text-blue-200'>
-            ← Back to settings
-          </Link>
+          <Breadcrumbs
+            items={[
+              { label: 'Admin', href: '/admin' },
+              { label: 'Settings', href: '/admin/settings' },
+              { label: 'Background Sync' }
+            ]}
+            className='mb-2'
+          />
         }
         className='mb-8'
       />
@@ -146,7 +155,6 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
 
           <FormField
             label='Interval (seconds)'
-            description='Between 10 seconds and 1 hour.'
           >
             <Input
               id='sync-interval'
@@ -156,32 +164,35 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
               value={intervalSeconds}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setIntervalSeconds(Number(event.target.value))}
             />
+            <Hint className='mt-1'>Between 10 seconds and 1 hour.</Hint>
           </FormField>
 
-          <div className='flex flex-wrap items-center gap-3'>
-            <Button onClick={handleSave} disabled={!isDirty || updateSettingsBulk.isPending}>
-              {updateSettingsBulk.isPending ? 'Saving...' : 'Save Settings'}
-            </Button>
-            <Button variant='outline' onClick={handleForceSync}>
+          <FormActions
+            onSave={handleSave}
+            isDisabled={!isDirty || updateSettingsBulk.isPending}
+            isSaving={updateSettingsBulk.isPending}
+            saveText='Save Settings'
+            className='justify-start'
+          >
+            <Button variant='outline' onClick={handleForceSync} size='sm'>
               Run Sync Now
             </Button>
-          </div>
+          </FormActions>
 
-          <div className='rounded-lg border border-border bg-muted/20 p-4 text-sm text-gray-300 space-y-1'>
-            <div className='flex justify-between'>
-              <span>Status</span>
-              <span className={syncStatus.isOnline ? 'text-emerald-300' : 'text-rose-300'}>
-                {syncStatus.isOnline ? 'Online' : 'Offline'}
-              </span>
-            </div>
-            <div className='flex justify-between'>
-              <span>Last sync</span>
-              <span>{syncStatus.lastSync ? syncStatus.lastSync.toLocaleTimeString() : 'Never'}</span>
-            </div>
-            <div className='flex justify-between'>
-              <span>Active interval</span>
-              <span>{syncStatus.intervalSeconds}s</span>
-            </div>
+          <div className='rounded-lg border border-border bg-muted/20 p-4 space-y-2'>
+            <PropertyRow
+              label='Status'
+              value={syncStatus.isOnline ? 'Online' : 'Offline'}
+              valueClassName={syncStatus.isOnline ? 'text-emerald-300' : 'text-rose-300'}
+            />
+            <PropertyRow
+              label='Last sync'
+              value={syncStatus.lastSync ? syncStatus.lastSync.toLocaleTimeString() : 'Never'}
+            />
+            <PropertyRow
+              label='Active interval'
+              value={`${syncStatus.intervalSeconds}s`}
+            />
           </div>
         </FormSection>
 
@@ -190,21 +201,21 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
           description='Review queued mutations and clear or process them manually.'
           className='p-6'
         >
-          <div className='rounded-lg border border-border bg-muted/20 p-4 text-sm text-gray-300 space-y-1'>
-            <div className='flex justify-between'>
-              <span>Queued items</span>
-              <span>{offlineQueue.count}</span>
-            </div>
-          </div>
+          <MetadataItem
+            label='Queued items'
+            value={offlineQueue.count}
+            variant='minimal'
+            className='mb-4'
+          />
 
-          <div className='flex flex-wrap gap-3'>
-            <Button variant='outline' onClick={(): void => { void handleProcessQueue(); }}>
+          <div className='flex flex-wrap gap-3 mb-4'>
+            <Button variant='outline' size='sm' onClick={(): void => { void handleProcessQueue(); }}>
               Process Queue
             </Button>
-            <Button variant='outline' onClick={(): void => offlineQueue.refresh()}>
+            <Button variant='outline' size='sm' onClick={(): void => offlineQueue.refresh()}>
               Refresh
             </Button>
-            <Button variant='outline' className='text-red-200 hover:text-red-100' onClick={() => setIsClearQueueConfirmOpen(true)}>
+            <Button variant='outline' size='sm' className='text-red-200 hover:text-red-100' onClick={() => setIsClearQueueConfirmOpen(true)}>
               Clear Queue
             </Button>
           </div>

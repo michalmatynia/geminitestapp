@@ -3,30 +3,29 @@ import type {
   ValidatorScope,
 } from '@/features/admin/pages/validator-scope';
 import type {
-  PromptValidationRule,
-} from '@/features/prompt-engine/settings';
-import type { PromptExploderLearnedTemplate } from '@/features/prompt-exploder/types';
-import type {
   PromptExploderRuntimeValidationScope,
   PromptExploderValidationRuleStack,
 } from '@/features/prompt-exploder/validation-stack';
+import type {
+  PromptValidationRuleDto as PromptValidationRule,
+} from '@/shared/contracts/prompt-engine';
+import type {
+  PromptValidationRuntimeProfileDto,
+  PromptValidationRuntimeIdentityDto,
+  PromptValidationRuntimeSelectionDto,
+  PromptValidationStackResolutionDto,
+} from '@/shared/contracts/prompt-engine';
+import type { PromptExploderLearnedTemplate } from '@/shared/contracts/prompt-exploder';
 
-export type PromptValidationRuntimeProfile =
-  | 'all'
-  | 'pattern_pack'
-  | 'learned_only';
+export type PromptValidationRuntimeProfile = PromptValidationRuntimeProfileDto;
 
-export type PromptValidationRuntimeIdentity = {
+export type PromptValidationRuntimeIdentity = Omit<PromptValidationRuntimeIdentityDto, 'scope' | 'validatorScope' | 'stack'> & {
   scope: PromptExploderRuntimeValidationScope;
   validatorScope: ValidatorScope;
   stack: PromptExploderValidationRuleStack;
-  listVersion: string;
-  settingsVersion: string;
-  profile: PromptValidationRuntimeProfile;
-  cacheKey: string;
 };
 
-export type PromptValidationRuntimeSelection = {
+export type PromptValidationRuntimeSelection = Omit<PromptValidationRuntimeSelectionDto, 'identity' | 'effectiveLearnedTemplates' | 'runtimeLearnedTemplates' | 'scopedRules' | 'effectiveRules' | 'runtimeValidationRules'> & {
   identity: PromptValidationRuntimeIdentity;
   scopedRules: PromptValidationRule[];
   effectiveRules: PromptValidationRule[];
@@ -40,15 +39,9 @@ export type PromptValidationStackResolutionInput = {
   patternLists?: ValidatorPatternList[] | null | undefined;
 };
 
-export type PromptValidationStackResolution = {
+export type PromptValidationStackResolution = Omit<PromptValidationStackResolutionDto, 'stack' | 'scope' | 'validatorScope' | 'list'> & {
   stack: PromptExploderValidationRuleStack;
   scope: PromptExploderRuntimeValidationScope;
   validatorScope: ValidatorScope;
   list: ValidatorPatternList | null;
-  usedFallback: boolean;
-  reason:
-    | 'exact_match'
-    | 'default_scope'
-    | 'scope_fallback'
-    | 'invalid_stack';
 };

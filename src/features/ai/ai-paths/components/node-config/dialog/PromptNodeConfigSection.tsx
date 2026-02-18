@@ -8,7 +8,7 @@ import React from 'react';
 import type { AiNode, Edge, PromptConfig } from '@/features/ai/ai-paths/lib';
 import { buildPromptOutput, createParserMappings, formatRuntimeValue } from '@/features/ai/ai-paths/lib';
 import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import { Button, Label, Textarea } from '@/shared/ui';
+import { Button, Label, Textarea, Alert } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 import {
@@ -300,9 +300,8 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
         return (
           <div className='mt-4 space-y-2'>
             {aiNode ? (
-              <div className='rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2'>
+              <Alert variant='success' className='py-2'>
                 <div className='flex items-center gap-2'>
-                  <div className='h-2 w-2 rounded-full bg-emerald-400'></div>
                   <span className='text-[11px] text-emerald-100'>
                     Connected to AI Model:{' '}
                     <span className='font-medium text-emerald-200'>{aiModelId || 'Unknown'}</span>
@@ -311,7 +310,8 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
                 {onSendToAi && hasPromptContent && (
                   <Button
                     type='button'
-                    className='mt-2 rounded-md border border-sky-500/40 bg-sky-500/10 px-3 py-1.5 text-[11px] text-sky-200 hover:bg-sky-500/20 disabled:opacity-50'
+                    variant='outline'
+                    className='mt-2 h-7 px-3 text-[10px] text-sky-200 hover:bg-sky-500/20 disabled:opacity-50'
                     disabled={sendingToAi}
                     onClick={() => {
                       if (!onSendToAi) return;
@@ -325,16 +325,15 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
                     {sendingToAi ? 'Sending...' : 'Send to AI Model'}
                   </Button>
                 )}
-              </div>
+              </Alert>
             ) : (
-              <div className='rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2'>
+              <Alert variant='warning' className='py-2'>
                 <div className='flex items-center gap-2'>
-                  <div className='h-2 w-2 rounded-full bg-amber-400'></div>
                   <span className='text-[11px] text-amber-100'>
                     Not connected to AI Model
                   </span>
                 </div>
-              </div>
+              </Alert>
             )}
             <p className='text-[11px] text-gray-500'>
               Connect this node&apos;s <span className='text-gray-300'>prompt</span> output to an AI Model node to enable direct sending.
@@ -420,24 +419,24 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
               placeholder='No result received yet. Connect a node to the result input and run the graph.'
             />
             {!hasResult && resultSourceNode?.type === 'model' && resultSourceModelHasPoll && !resultSourceModelWaits && resultSourcePort === 'result' && (
-              <div className='mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100'>
+              <Alert variant='warning' className='mt-2 py-2 text-[11px]'>
                 This Prompt is connected to <span className='text-amber-200'>Model.result</span>, but that Model has a{' '}
                 <span className='text-amber-200'>Poll</span> connected and{' '}
                 <span className='text-amber-200'>Wait for result</span> is disabled, so the Model emits only{' '}
                 <span className='text-amber-200'>jobId</span>. Connect{' '}
                 <span className='text-amber-200'>Poll.result</span> instead, or enable{' '}
                 <span className='text-amber-200'>Wait for result</span> on the Model node.
-              </div>
+              </Alert>
             )}
             {!hasResult && resultSourceNode?.type === 'poll' && resultSourcePollStatus === 'polling' && (
-              <div className='mt-2 rounded-md border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-[11px] text-sky-100'>
+              <Alert variant='info' className='mt-2 py-2 text-[11px]'>
                 Poll is still running. The <span className='text-sky-200'>result</span> will populate when polling completes.
-              </div>
+              </Alert>
             )}
             {!hasResult && resultSourceNode?.type === 'poll' && resultSourcePollStatus === 'failed' && (
-              <div className='mt-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-[11px] text-red-100'>
+              <Alert variant='error' className='mt-2 py-2 text-[11px]'>
                 Poll failed. Check the Poll node output for an error, or verify the job/database query configuration.
-              </div>
+              </Alert>
             )}
             <p className='mt-1 text-[11px] text-gray-500'>
               Shows the value passed through the <span className='text-gray-300'>result</span> input port.

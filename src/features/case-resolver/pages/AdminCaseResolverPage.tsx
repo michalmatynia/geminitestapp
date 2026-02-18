@@ -211,10 +211,10 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     const canonical = deriveDocumentContentSync({
       mode: resolvedMode,
       value: resolvedMode === 'wysiwyg'
-        ? input.documentContentHtml
-        : input.documentContentMarkdown,
-      previousMarkdown: input.documentContentMarkdown,
-      previousHtml: input.documentContentHtml,
+        ? (input.documentContentHtml ?? '')
+        : (input.documentContentMarkdown ?? ''),
+      previousMarkdown: input.documentContentMarkdown ?? '',
+      previousHtml: input.documentContentHtml ?? '',
     });
     return stableStringify({
       id: input.id,
@@ -227,7 +227,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       documentDate: input.documentDate ?? null,
       addresser: input.addresser ?? null,
       addressee: input.addressee ?? null,
-      referenceCaseIds: [...input.referenceCaseIds].sort(),
+      referenceCaseIds: [...(input.referenceCaseIds ?? [])].sort(),
       parentCaseId: input.parentCaseId ?? null,
       tagId: input.tagId ?? null,
       caseIdentifierId: input.caseIdentifierId ?? null,
@@ -602,7 +602,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     if (!editingDocumentDraft) return;
     const promptSource = (
       editingDocumentDraft.documentContentMarkdown ||
-      editingDocumentDraft.documentContent
+      editingDocumentDraft.documentContent ||
+      ''
     ).trim();
     if (!promptSource) {
       toast('Add document content before opening Prompt Exploder.', { variant: 'warning' });
@@ -611,7 +612,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
     savePromptExploderDraftPromptFromCaseResolver(promptSource, {
       fileId: editingDocumentDraft.id,
-      fileName: editingDocumentDraft.name.trim() || editingDocumentDraft.id,
+      fileName: editingDocumentDraft.name?.trim() || editingDocumentDraft.id,
     });
     const returnTo = `/admin/case-resolver?openEditor=1&fileId=${encodeURIComponent(
       editingDocumentDraft.id
@@ -634,10 +635,10 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     const canonical = deriveDocumentContentSync({
       mode: resolvedMode,
       value: resolvedMode === 'wysiwyg'
-        ? draft.documentContentHtml
-        : draft.documentContentMarkdown,
-      previousMarkdown: draft.documentContentMarkdown,
-      previousHtml: draft.documentContentHtml,
+        ? (draft.documentContentHtml ?? '')
+        : (draft.documentContentMarkdown ?? ''),
+      previousMarkdown: draft.documentContentMarkdown ?? '',
+      previousHtml: draft.documentContentHtml ?? '',
     });
     const addresserLabel = draft.addresser
       ? resolveFilemakerPartyLabel(filemakerDatabase, draft.addresser) ?? 'Not selected'
@@ -646,10 +647,10 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       ? resolveFilemakerPartyLabel(filemakerDatabase, draft.addressee) ?? 'Not selected'
       : 'Not selected';
     return buildDocumentPdfMarkup({
-      documentDate: draft.documentDate,
+      documentDate: draft.documentDate ?? '',
       documentHash: draft.id,
-      createdAt: draft.createdAt,
-      updatedAt: draft.updatedAt,
+      createdAt: draft.createdAt ?? '',
+      updatedAt: draft.updatedAt ?? '',
       addresserLabel,
       addresseeLabel,
       documentContent: canonical.html,
@@ -762,7 +763,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       if (editingDocumentDraft?.fileType !== 'scanfile') return;
       if (isUploadingScanDraftFiles) return;
       const fileId = editingDocumentDraft.id;
-      const targetSlot = editingDocumentDraft.scanSlots.find((slot) => slot.id === slotId);
+      const targetSlot = (editingDocumentDraft.scanSlots ?? []).find((slot) => slot.id === slotId);
       if (!targetSlot) return;
 
       updateWorkspace(
@@ -771,8 +772,9 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           let changed = false;
           const nextFiles = current.files.map((file) => {
             if (file.id !== fileId || file.fileType !== 'scanfile') return file;
-            const nextSlots = file.scanSlots.filter((slot) => slot.id !== slotId);
-            if (nextSlots.length === file.scanSlots.length) return file;
+            const currentSlots = file.scanSlots ?? [];
+            const nextSlots = currentSlots.filter((slot) => slot.id !== slotId);
+            if (nextSlots.length === currentSlots.length) return file;
             changed = true;
             return {
               ...file,
@@ -790,8 +792,9 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       );
       setEditingDocumentDraft((current) => {
         if (current?.id !== fileId || current.fileType !== 'scanfile') return current;
-        const nextSlots = current.scanSlots.filter((slot) => slot.id !== slotId);
-        if (nextSlots.length === current.scanSlots.length) return current;
+        const currentSlots = current.scanSlots ?? [];
+        const nextSlots = currentSlots.filter((slot) => slot.id !== slotId);
+        if (nextSlots.length === currentSlots.length) return current;
         return {
           ...current,
           scanSlots: nextSlots,
@@ -919,10 +922,10 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       return;
     }
     applyDraftCanonicalContent({
-      mode: editingDocumentDraft.editorType,
+      mode: editingDocumentDraft.editorType ?? 'markdown',
       value: next,
       markdown: next,
-      html: editingDocumentDraft.documentContentHtml,
+      html: editingDocumentDraft.documentContentHtml ?? '',
     });
   }, [applyDraftCanonicalContent, editingDocumentDraft]);
 

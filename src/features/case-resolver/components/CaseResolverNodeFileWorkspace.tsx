@@ -38,7 +38,13 @@ import {
   type CaseResolverNodeFileSnapshot,
   type CaseResolverScanSlot,
 } from '../types';
-import { buildNode, clampCanvasPosition, resolvePromptConfig } from './case-resolver-canvas-utils';
+import {
+  buildNode,
+  buildPromptTemplateFromDroppedDocumentFile,
+  clampCanvasPosition,
+  ensureDocumentPromptPorts,
+  resolvePromptConfig,
+} from './case-resolver-canvas-utils';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -143,7 +149,7 @@ function CaseResolverNodeFileWorkspaceInner({
   const { viewportRef, canvasRef } = useCanvasRefs();
   const { view } = useCanvasState();
   const { nodes, edges } = useGraphState();
-  const { addNode } = useGraphActions();
+  const { addNode, setNodes } = useGraphActions();
   const { selectedNodeId } = useSelectionState();
   const { selectNode } = useSelectionActions();
   const { toast } = useToast();
@@ -176,6 +182,10 @@ function CaseResolverNodeFileWorkspaceInner({
           label: asset.folder ? `${asset.name} (${asset.folder})` : asset.name,
         })),
     [workspace.assets]
+  );
+  const promptDefinition = useMemo(
+    (): NodeDefinition | null => palette.find((entry: NodeDefinition) => entry.type === 'prompt') ?? null,
+    []
   );
 
   const lastEmittedHashRef = useRef<string>(
@@ -212,6 +222,53 @@ function CaseResolverNodeFileWorkspaceInner({
     onSnapshotChange(updated);
   }, [edges, nodes, onSnapshotChange]);
 
+  // Migrate legacy template-based linked-file nodes to prompt nodes so they expose
+  // Case Resolver document ports (textfield/content/plainText).
+  useEffect(() => {
+    if (!promptDefinition) return;
+    setNodes((previousNodes: AiNode[]): AiNode[] => {
+      let changed = false;
+      const nextNodes = previousNodes.map((node: AiNode): AiNode => {
+        const linkedMeta = nodeFileMetaRef.current[node.id];
+        if (!linkedMeta) {
+          return node;
+        }
+
+        const linkedFile = filesById.get(linkedMeta.fileId) ?? null;
+        const fallbackTemplate = linkedFile
+          ? buildPromptTemplateFromDroppedDocumentFile(linkedFile)
+          : `<p>Document: ${linkedMeta.fileName}</p>`;
+        const promptTemplate =
+          typeof node.config?.prompt?.template === 'string'
+            ? node.config.prompt.template
+            : typeof node.config?.template?.template === 'string'
+              ? node.config.template.template
+              : fallbackTemplate;
+
+        const promptBase: AiNode =
+          node.type === 'prompt'
+            ? node
+            : {
+              ...node,
+              type: 'prompt',
+            };
+        const normalizedPromptNode = ensureDocumentPromptPorts({
+          ...promptBase,
+          config: {
+            ...(promptBase.config ?? {}),
+            prompt: {
+              template: promptTemplate,
+            },
+          },
+        });
+        if (normalizedPromptNode === node) return node;
+        changed = true;
+        return normalizedPromptNode;
+      });
+      return changed ? nextNodes : previousNodes;
+    });
+  }, [filesById, promptDefinition, setNodes]);
+
   const placePosition = useMemo(() => {
     const index = nodes.length;
     return {
@@ -244,11 +301,24 @@ function CaseResolverNodeFileWorkspaceInner({
         return;
       }
 
-      const templateDef = palette.find((entry: NodeDefinition) => entry.type === 'template');
-      if (!templateDef) return;
+      if (!promptDefinition) {
+        toast('Prompt node definition is missing.', { variant: 'error' });
+        return;
+      }
 
       const nodeId = `node-${Math.random().toString(36).slice(2, 10)}`;
-      const node = buildNode(templateDef, position, nodeId, fileName);
+      const promptBase = buildNode(promptDefinition, position, nodeId, `Document: ${fileName}`);
+      const promptConfig = resolvePromptConfig(promptBase);
+      const node = ensureDocumentPromptPorts({
+        ...promptBase,
+        config: {
+          ...(promptBase.config ?? {}),
+          prompt: {
+            ...promptConfig,
+            template: buildPromptTemplateFromDroppedDocumentFile(file),
+          },
+        },
+      });
 
       nodeFileMetaRef.current = {
         ...nodeFileMetaRef.current,
@@ -263,7 +333,7 @@ function CaseResolverNodeFileWorkspaceInner({
       selectNode(nodeId);
       toast(`Added "${fileName}" to canvas.`, { variant: 'success' });
     },
-    [addNode, filesById, selectNode, toast]
+    [addNode, filesById, promptDefinition, selectNode, toast]
   );
 
   const addExplanatoryNode = useCallback((): void => {

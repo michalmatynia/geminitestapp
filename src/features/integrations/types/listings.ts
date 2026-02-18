@@ -1,3 +1,9 @@
+import type {
+  ProductListingDto,
+  ProductListingExportEventDto,
+  ProductListingRelistPolicyDto,
+  ProductListingWithDetailsDto,
+} from '@/shared/contracts/integrations';
 import type { 
   IntegrationConnectionBasic, 
   IntegrationWithConnections, 
@@ -6,61 +12,13 @@ import type {
 
 export type { ListingJob, ListingAttempt, ProductJob } from '@/shared/types/domain/listing-jobs';
 
-export type ProductListingRecord = {
-  id: string;
-  productId: string;
-  integrationId: string;
-  connectionId: string;
-  externalListingId: string | null;
-  inventoryId: string | null;
-  status: string;
-  listedAt: Date | null;
-  expiresAt: Date | null;
-  nextRelistAt: Date | null;
-  relistPolicy: ProductListingRelistPolicy | null;
-  relistAttempts: number;
-  lastRelistedAt: Date | null;
-  lastStatusCheckAt: Date | null;
-  marketplaceData: Record<string, unknown> | null;
-  failureReason: string | null;
-  exportHistory: ProductListingExportEvent[] | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
+export type ProductListingRecord = ProductListingDto;
 
-export type ProductListingExportEvent = {
-  exportedAt: Date;
-  status?: string | null;
-  inventoryId?: string | null;
-  templateId?: string | null;
-  warehouseId?: string | null;
-  externalListingId?: string | null;
-  expiresAt?: Date | null;
-  failureReason?: string | null;
-  relist?: boolean;
-  fields?: string[] | null;
-  requestId?: string | null;
-};
+export type ProductListingExportEvent = ProductListingExportEventDto;
 
-export type ProductListingRelistPolicy = {
-  enabled?: boolean;
-  leadMinutes?: number;
-  maxAttempts?: number;
-  durationHours?: number;
-  templateId?: string | null;
-};
+export type ProductListingRelistPolicy = ProductListingRelistPolicyDto;
 
-export type ProductListingWithDetails = ProductListingRecord & {
-  integration: {
-    id: string;
-    name: string;
-    slug: string;
-  };
-  connection: {
-    id: string;
-    name: string;
-  };
-};
+export type ProductListingWithDetails = ProductListingWithDetailsDto;
 
 export type {
   IntegrationConnectionBasic,
@@ -75,12 +33,12 @@ export type CreateProductListingInput = {
   status?: string;
   externalListingId?: string | null;
   inventoryId?: string | null;
-  expiresAt?: Date | null;
-  nextRelistAt?: Date | null;
+  expiresAt?: string | null;
+  nextRelistAt?: string | null;
   relistPolicy?: ProductListingRelistPolicy | null;
   relistAttempts?: number;
-  lastRelistedAt?: Date | null;
-  lastStatusCheckAt?: Date | null;
+  lastRelistedAt?: string | null;
+  lastStatusCheckAt?: string | null;
   marketplaceData?: Record<string, unknown> | null;
   failureReason?: string | null;
 };

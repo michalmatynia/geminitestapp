@@ -393,7 +393,7 @@ export const useCaseResolverStateAssetActions = ({
             didUpdate = true;
             return {
               ...file,
-              scanSlots: [...file.scanSlots, ...createdSlots],
+              scanSlots: [...(file.scanSlots ?? []), ...createdSlots],
               updatedAt: now,
             };
           });
@@ -411,7 +411,7 @@ export const useCaseResolverStateAssetActions = ({
           if (current?.id !== fileId || current?.fileType !== 'scanfile') return current;
           return {
             ...current,
-            scanSlots: [...current.scanSlots, ...createdSlots],
+            scanSlots: [...(current.scanSlots ?? []), ...createdSlots],
             updatedAt: new Date().toISOString(),
           };
         });
@@ -571,22 +571,22 @@ export const useCaseResolverStateAssetActions = ({
               value: mode === 'wysiwyg' ? ensureSafeDocumentHtml(mergedText) : mergedText,
             });
             const storedDocumentContent = toStorageDocumentValue(canonicalDocument);
-            const nextOriginalDocumentContent =
+            const nextOriginalDocumentContent: string =
               current.activeDocumentVersion === 'original'
                 ? storedDocumentContent
-                : current.originalDocumentContent;
-            const nextExplodedDocumentContent =
+                : (current.originalDocumentContent ?? '');
+            const nextExplodedDocumentContent: string =
               current.activeDocumentVersion === 'exploded'
                 ? storedDocumentContent
-                : current.explodedDocumentContent;
+                : (current.explodedDocumentContent ?? '');
             return {
               ...current,
               scanSlots: nextSlots,
               scanOcrModel: runtime.model,
               scanOcrPrompt: runtime.prompt,
               editorType: canonicalDocument.mode,
-              baseDocumentContentVersion: current.baseDocumentContentVersion + 1,
-              documentContentVersion: current.documentContentVersion + 1,
+              baseDocumentContentVersion: (current.baseDocumentContentVersion ?? 0) + 1,
+              documentContentVersion: (current.documentContentVersion ?? 0) + 1,
               documentContent: storedDocumentContent,
               documentContentMarkdown: canonicalDocument.markdown,
               documentContentHtml: canonicalDocument.html,

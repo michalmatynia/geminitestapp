@@ -865,7 +865,7 @@ export async function postExportToBaseHandler(
       if (listingId) {
         await listingRepo.updateListingStatus(listingId, 'failed');
         await listingRepo.appendExportHistory(listingId, {
-          exportedAt: new Date(),
+          exportedAt: new Date().toISOString(),
           status: 'failed',
           inventoryId: targetInventoryId,
           templateId: resolvedTemplateId ?? (requestedTemplateId || null),
@@ -892,7 +892,7 @@ export async function postExportToBaseHandler(
       }
       await listingRepo.updateListingStatus(listingId, 'active');
       await listingRepo.appendExportHistory(listingId, {
-        exportedAt: new Date(),
+        exportedAt: new Date().toISOString(),
         status: 'success',
         inventoryId: targetInventoryId,
         templateId: resolvedTemplateId ?? (requestedTemplateId || null),

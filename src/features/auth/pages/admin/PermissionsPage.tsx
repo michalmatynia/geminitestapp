@@ -230,12 +230,12 @@ function AuthPermissionsForm({
 
   return (
     <div className='container mx-auto max-w-5xl py-10 space-y-6'>
-      <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
+      <Card variant='glass' padding='lg'>
         <SectionHeader
           title='Permissions'
           description='Define roles and the permissions they include. Enforcement is handled by the application logic you wire up later.'
         />
-      </div>
+      </Card>
 
       <div className='grid gap-6 lg:grid-cols-2'>
         <Card className='bg-card border-border'>

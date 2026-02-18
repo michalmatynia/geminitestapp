@@ -15,7 +15,8 @@ import {
   PanelHeader,
   SearchInput,
   EmptyState,
-  LoadingState
+  LoadingState,
+  Hint
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -201,7 +202,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
 
             {uniqueTags.length > 0 && (
               <div className='flex flex-wrap items-center gap-2 pt-1 border-t border-white/5'>
-                <span className='text-[10px] uppercase font-bold text-gray-500 mr-1'>Quick Filter:</span>
+                <Hint uppercase variant='muted' className='mr-1 font-semibold'>Quick Filter:</Hint>
                 {uniqueTags.map((tag: string) => (
                   <Button
                     key={tag}

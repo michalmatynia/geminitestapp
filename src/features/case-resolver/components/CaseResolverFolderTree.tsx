@@ -335,15 +335,21 @@ export function CaseResolverFolderTree(): React.JSX.Element {
 
   useEffect(() => {
     if (!isNodeFileCanvasActive) return;
-    const nextHighlighted = selectedFileId
+    const activeNodeFileAssetId = selectedAssetId?.trim() ?? '';
+    const relatedNodeFileAssetIds = selectedFileId
       ? nodeFileAssetIdsBySourceFileId.get(selectedFileId) ?? []
       : [];
+    const nextHighlighted = [
+      ...(activeNodeFileAssetId ? [activeNodeFileAssetId] : []),
+      ...relatedNodeFileAssetIds.filter((assetId: string): boolean => assetId !== activeNodeFileAssetId),
+    ];
     if (areStringArraysEqual(highlightedNodeFileAssetIds, nextHighlighted)) return;
     setHighlightedNodeFileAssetIds(nextHighlighted);
   }, [
     highlightedNodeFileAssetIds,
     isNodeFileCanvasActive,
     nodeFileAssetIdsBySourceFileId,
+    selectedAssetId,
     selectedFileId,
   ]);
 

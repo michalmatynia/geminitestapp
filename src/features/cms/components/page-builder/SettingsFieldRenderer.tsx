@@ -11,6 +11,7 @@ import {
   SelectSimple,
   AppModal,
   SearchInput,
+  EmptyState,
 } from '@/shared/ui';
 
 import {
@@ -819,7 +820,12 @@ function LinkField({ value, onChange }: { value: string; onChange: (v: string) =
           />
           <div className='max-h-[300px] overflow-y-auto space-y-1 rounded border p-1'>
             {filteredSlugs.length === 0 ? (
-              <div className='p-4 text-center text-sm text-gray-500'>No slugs found</div>
+              <EmptyState
+                title='No slugs found'
+                description='No routes match your search criteria.'
+                variant='compact'
+                className='py-4'
+              />
             ) : (
               filteredSlugs.map((s) => (
                 <Button

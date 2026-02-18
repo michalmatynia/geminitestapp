@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-import { promptExploderSegmentTypeSchema, promptValidationRuleSchema } from './prompt-engine';
+import { validatorPatternListSchema, validatorScopeSchema } from './admin';
+import { promptExploderSegmentTypeSchema } from './prompt-engine';
 
 /**
  * Prompt Exploder DTOs
@@ -183,11 +184,39 @@ export type PromptExploderOperationModeDto = z.infer<typeof promptExploderOperat
 export const promptExploderAiProviderSchema = z.enum(['auto', 'ollama', 'openai', 'anthropic', 'gemini']);
 export type PromptExploderAiProviderDto = z.infer<typeof promptExploderAiProviderSchema>;
 
+export const promptExploderValidationRuleStackSchema = z.string();
+export type PromptExploderValidationRuleStackDto = string;
+
+export const promptExploderRuntimeValidationScopeSchema = z.enum([
+  'prompt_exploder',
+  'case_resolver_prompt_exploder',
+]);
+export type PromptExploderRuntimeValidationScopeDto = z.infer<typeof promptExploderRuntimeValidationScopeSchema>;
+
+export const promptExploderValidationStackResolutionReasonSchema = z.enum([
+  'exact_match',
+  'default_scope',
+  'scope_fallback',
+  'invalid_stack',
+]);
+export type PromptExploderValidationStackResolutionReasonDto = z.infer<typeof promptExploderValidationStackResolutionReasonSchema>;
+
+export const promptExploderValidationStackResolutionSchema = z.object({
+  stack: promptExploderValidationRuleStackSchema,
+  scope: promptExploderRuntimeValidationScopeSchema,
+  validatorScope: validatorScopeSchema,
+  list: validatorPatternListSchema.nullable(),
+  usedFallback: z.boolean(),
+  reason: promptExploderValidationStackResolutionReasonSchema,
+});
+
+export type PromptExploderValidationStackResolutionDto = z.infer<typeof promptExploderValidationStackResolutionSchema>;
+
 export const promptExploderSettingsSchema = z.object({
   version: z.literal(1),
   runtime: z.object({
     ruleProfile: z.enum(['all', 'pattern_pack', 'learned_only']),
-    validationRuleStack: z.any(), // Keeping as any for now due to complexity in validation-stack
+    validationRuleStack: promptExploderValidationRuleStackSchema,
     orchestratorEnabled: z.boolean(),
     benchmarkSuite: promptExploderBenchmarkSuiteSchema,
     benchmarkLowConfidenceThreshold: z.number(),

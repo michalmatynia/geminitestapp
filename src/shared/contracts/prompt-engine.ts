@@ -1,6 +1,12 @@
 import { z } from 'zod';
 
+import { validatorPatternListSchema, validatorScopeSchema } from './admin';
 import { dtoBaseSchema } from './base';
+import {
+  promptExploderLearnedTemplateSchema,
+  promptExploderRuntimeValidationScopeSchema,
+  promptExploderValidationRuleStackSchema,
+} from './prompt-exploder';
 
 /**
  * Prompt Validation DTOs
@@ -170,9 +176,9 @@ export const promptValidationRuntimeProfileSchema = z.enum(['all', 'pattern_pack
 export type PromptValidationRuntimeProfileDto = z.infer<typeof promptValidationRuntimeProfileSchema>;
 
 export const promptValidationRuntimeIdentitySchema = z.object({
-  scope: z.string(), // PromptExploderRuntimeValidationScope
-  validatorScope: z.string(), // ValidatorScope
-  stack: z.any(), // PromptExploderValidationRuleStack
+  scope: promptExploderRuntimeValidationScopeSchema,
+  validatorScope: validatorScopeSchema,
+  stack: promptExploderValidationRuleStackSchema,
   listVersion: z.string(),
   settingsVersion: z.string(),
   profile: promptValidationRuntimeProfileSchema,
@@ -186,17 +192,17 @@ export const promptValidationRuntimeSelectionSchema = z.object({
   scopedRules: z.array(promptValidationRuleSchema),
   effectiveRules: z.array(promptValidationRuleSchema),
   runtimeValidationRules: z.array(promptValidationRuleSchema),
-  effectiveLearnedTemplates: z.array(z.any()), // PromptExploderLearnedTemplate
-  runtimeLearnedTemplates: z.array(z.any()), // PromptExploderLearnedTemplate
+  effectiveLearnedTemplates: z.array(promptExploderLearnedTemplateSchema),
+  runtimeLearnedTemplates: z.array(promptExploderLearnedTemplateSchema),
 });
 
 export type PromptValidationRuntimeSelectionDto = z.infer<typeof promptValidationRuntimeSelectionSchema>;
 
 export const promptValidationStackResolutionSchema = z.object({
-  stack: z.any(), // PromptExploderValidationRuleStack
-  scope: z.string(), // PromptExploderRuntimeValidationScope
-  validatorScope: z.string(), // ValidatorScope
-  list: z.any().nullable(), // ValidatorPatternList
+  stack: promptExploderValidationRuleStackSchema,
+  scope: promptExploderRuntimeValidationScopeSchema,
+  validatorScope: validatorScopeSchema,
+  list: validatorPatternListSchema.nullable(),
   usedFallback: z.boolean(),
   reason: z.enum(['exact_match', 'default_scope', 'scope_fallback', 'invalid_stack']),
 });

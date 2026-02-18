@@ -1,7 +1,12 @@
 import type {
   DatabaseTypeDto,
   SqlQueryFieldDto,
-  SqlQueryResultDto
+  SqlQueryResultDto,
+  FieldInfoDto,
+  CollectionSchemaDto,
+  DatabasePresetOptionDto,
+  DatabaseNodeConfigDto,
+  AiQueryDto,
 } from '@/shared/contracts/database';
 
 export type DatabaseType = DatabaseTypeDto;
@@ -10,24 +15,9 @@ export type SqlQueryField = SqlQueryFieldDto;
 
 export type SqlQueryResult = SqlQueryResultDto;
 
-export type FieldSchema = {
-  name: string;
-  type: string;
-  nullable?: boolean | null | undefined;
-  isRequired?: boolean | null | undefined;
-  isId?: boolean | null | undefined;
-  isUnique?: boolean | null | undefined;
-  hasDefault?: boolean | null | undefined;
-  relationTo?: string | null | undefined;
-};
+export type FieldSchema = FieldInfoDto;
 
-export type CollectionSchema = {
-  name: string;
-  fields: FieldSchema[];
-  provider?: 'mongodb' | 'prisma' | undefined;
-  relations?: string[] | undefined;
-  documentCount?: number | undefined;
-};
+export type CollectionSchema = CollectionSchemaDto;
 
 type ProviderSourceSchema = {
   provider: 'mongodb' | 'prisma';
@@ -40,25 +30,8 @@ export type SchemaData = {
   sources?: Partial<Record<'mongodb' | 'prisma', ProviderSourceSchema | null | undefined>> | undefined;
 };
 
-export type DatabasePresetOption = {
-  id: string;
-  label: string;
-  description: string;
-};
+export type DatabasePresetOption = DatabasePresetOptionDto;
 
-export interface DatabaseNodeConfig {
-  type: DatabaseType;
-  operation: 'query' | 'insert' | 'update' | 'delete' | 'schema';
-  sql?: string;
-  collection?: string;
-  filter?: string;
-  update?: string;
-  document?: string;
-  variableName?: string;
-}
+export type DatabaseNodeConfig = DatabaseNodeConfigDto;
 
-export type AiQuery = {
-  id: string;
-  query: string;
-  timestamp: string;
-};
+export type AiQuery = AiQueryDto;

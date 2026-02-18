@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { AuthUserSecurityProfile } from '@/features/auth/api/users';
-import { Checkbox, Label, StatusToggle, MetadataItem, LoadingState } from '@/shared/ui';
+import { StatusToggle, MetadataItem, LoadingState, ToggleRow } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import type { AuthUserSummary } from '../../types';
@@ -58,16 +58,15 @@ export function UserEditModal({
             <LoadingState message='Fetching security profile...' className='py-4' size='sm' />
           ) : (
             <div className='space-y-4'>
-              <div className='flex items-center gap-3'>
-                <Checkbox 
-                  id='verified' 
-                  checked={Boolean(editingUser?.emailVerified)}
-                  onCheckedChange={(v) => {
-                    setEditingUser((prev: AuthUserSummary | null) => prev ? { ...prev, emailVerified: v ? new Date().toISOString() : null } : null);
-                  }}
-                />
-                <Label htmlFor='verified' className='text-xs font-medium cursor-pointer text-gray-300'>Manually verify email address</Label>
-              </div>
+              <ToggleRow
+                label='Manually verify email address'
+                checked={Boolean(editingUser?.emailVerified)}
+                onCheckedChange={(v) => {
+                  setEditingUser((prev: AuthUserSummary | null) => prev ? { ...prev, emailVerified: v ? new Date().toISOString() : null } : null);
+                }}
+                className='p-2 bg-transparent border-white/10'
+                type='checkbox'
+              />
               
               {canManageSecurity && (
                 <div className='grid gap-3 pt-2 border-t border-white/5'>

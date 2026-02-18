@@ -6,12 +6,16 @@ import {
 } from '@/features/admin/pages/validator-scope';
 import { PromptValidationScopeResolutionError } from '@/features/prompt-core/errors';
 import type { PromptValidationScope } from '@/features/prompt-engine/settings';
+import type {
+  PromptExploderValidationRuleStackDto,
+  PromptExploderRuntimeValidationScopeDto,
+  PromptExploderValidationStackResolutionReasonDto,
+  PromptExploderValidationStackResolutionDto,
+} from '@/shared/contracts/prompt-exploder';
 
-export type PromptExploderValidationRuleStack = string;
+export type PromptExploderValidationRuleStack = PromptExploderValidationRuleStackDto;
 
-export type PromptExploderRuntimeValidationScope =
-  | 'prompt_exploder'
-  | 'case_resolver_prompt_exploder';
+export type PromptExploderRuntimeValidationScope = PromptExploderRuntimeValidationScopeDto;
 
 export type PromptExploderValidationRuleStackOption = {
   value: PromptExploderValidationRuleStack;
@@ -20,20 +24,9 @@ export type PromptExploderValidationRuleStackOption = {
   scope: ValidatorScope;
 };
 
-export type PromptExploderValidationStackResolutionReason =
-  | 'exact_match'
-  | 'default_scope'
-  | 'scope_fallback'
-  | 'invalid_stack';
+export type PromptExploderValidationStackResolutionReason = PromptExploderValidationStackResolutionReasonDto;
 
-export type PromptExploderValidationStackResolution = {
-  stack: PromptExploderValidationRuleStack;
-  scope: PromptExploderRuntimeValidationScope;
-  validatorScope: ValidatorScope;
-  list: ValidatorPatternList | null;
-  usedFallback: boolean;
-  reason: PromptExploderValidationStackResolutionReason;
-};
+export type PromptExploderValidationStackResolution = PromptExploderValidationStackResolutionDto;
 
 const PROMPT_EXPLODER_VALIDATOR_SCOPE: ValidatorScope = 'prompt-exploder';
 const CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE: ValidatorScope =

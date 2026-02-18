@@ -16,6 +16,8 @@ interface FormModalProps {
   isSaveDisabled?: boolean;
   saveText?: string;
   cancelText?: string;
+  showSaveButton?: boolean;
+  showCancelButton?: boolean;
   formRef?: React.RefObject<HTMLFormElement | null>;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   variant?: 'default' | 'glass';
@@ -35,6 +37,8 @@ export function FormModal({
   isSaveDisabled = false,
   saveText = 'Save',
   cancelText = 'Cancel',
+  showSaveButton = true,
+  showCancelButton = true,
   formRef,
   size = 'md',
   variant = 'default',
@@ -69,21 +73,23 @@ export function FormModal({
     <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
       <div className='min-w-0'>
         <div className='flex min-w-0 items-center gap-2'>
-          {saveButton}
+          {showSaveButton ? saveButton : null}
           <h2 className='truncate text-2xl font-bold tracking-tight text-white'>{title}</h2>
         </div>
         {subtitle ? <p className='mt-1 text-sm text-gray-400'>{subtitle}</p> : null}
       </div>
       <div className='flex flex-wrap items-center justify-end gap-2'>
         {actions}
-        <Button
-          type='button'
-          onClick={onClose}
-          variant='outline'
-          className='min-w-[100px]'
-        >
-          {cancelText}
-        </Button>
+        {showCancelButton ? (
+          <Button
+            type='button'
+            onClick={onClose}
+            variant='outline'
+            className='min-w-[100px]'
+          >
+            {cancelText}
+          </Button>
+        ) : null}
       </div>
     </div>
   );

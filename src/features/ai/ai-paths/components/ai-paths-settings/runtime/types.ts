@@ -15,7 +15,7 @@ import type {
   RuntimePortValues,
   UpdaterSampleState,
 } from '@/features/ai/ai-paths/lib';
-import type { QueuedRunDto } from '@/shared/contracts/ai-paths-runtime';
+import type { QueuedRunDto, RunStatusDto, RuntimeEventInputDto, SetNodeStatusInputDto } from '@/shared/contracts/ai-paths-runtime';
 
 export const AI_PATHS_SESSION_STALE_MS = 30_000;
 export const AI_PATHS_ENTITY_STALE_MS = 10_000;
@@ -56,37 +56,9 @@ export type ToastFn = (message: string, options?: Partial<{ variant: 'success' |
 
 export type QueuedRun = QueuedRunDto;
 
-export type RuntimeEventInput = {
-  id?: string | undefined;
-  timestamp?: string | undefined;
-  source: 'local' | 'server';
-  kind?: string | undefined;
-  level?: 'info' | 'warn' | 'error' | 'debug' | undefined;
-  message: string;
-  runId?: string | null | undefined;
-  runStartedAt?: string | null | undefined;
-  nodeId?: string | null | undefined;
-  nodeType?: string | null | undefined;
-  nodeTitle?: string | null | undefined;
-  status?: AiPathRuntimeNodeStatus | string | undefined;
-  iteration?: number | undefined;
-  metadata?: Record<string, unknown> | null | undefined;
-};
+export type RuntimeEventInput = RuntimeEventInputDto;
 
-export type SetNodeStatusInput = {
-  nodeId: string;
-  status: AiPathRuntimeNodeStatus;
-  source: 'local' | 'server';
-  runId?: string | null | undefined;
-  runStartedAt?: string | null | undefined;
-  iteration?: number | undefined;
-  nodeType?: string | null | undefined;
-  nodeTitle?: string | null | undefined;
-  kind?: string | undefined;
-  level?: 'info' | 'warn' | 'error' | undefined;
-  message?: string | undefined;
-  metadata?: Record<string, unknown> | null | undefined;
-};
+export type SetNodeStatusInput = SetNodeStatusInputDto;
 
 export type UseAiPathsRuntimeArgs = {
   activePathId: string | null;
@@ -118,7 +90,7 @@ export type UseAiPathsRuntimeArgs = {
   ) => void;
 };
 
-export type RunStatus = 'idle' | 'running' | 'paused' | 'stepping';
+export type RunStatus = RunStatusDto;
 
 export type UseAiPathsRuntimeResult = {
   handleRunSimulation: (simulationNode: AiNode, triggerEvent?: string) => Promise<void>;

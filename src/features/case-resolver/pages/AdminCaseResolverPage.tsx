@@ -42,6 +42,9 @@ import {
   createId,
   isPathWithinFolder,
 } from '../utils/caseResolverUtils';
+import {
+  DEFAULT_CASE_RESOLVER_NODE_META,
+} from '../types';
 
 import type {
   CaseResolverAssetFile,
@@ -50,6 +53,7 @@ import type {
   CaseResolverFileEditDraft,
   CaseResolverGraph,
   CaseResolverIdentifier,
+  CaseResolverNodeMeta,
   CaseResolverRelationGraph,
   CaseResolverTag,
 } from '../types';
@@ -68,6 +72,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     setSelectedAssetId,
     setSelectedFolderPath,
     editingDocumentDraft,
+    editingDocumentNodeContext,
     setEditingDocumentDraft,
     isUploadingScanDraftFiles,
     caseResolverTags,
@@ -588,6 +593,99 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       );
     },
     [filemakerDatabase]
+  );
+
+  const normalizeNodeTextColor = useCallback((value: string | null | undefined): string => {
+    if (typeof value !== 'string') return '';
+    const normalized = value.trim();
+    if (!normalized) return '';
+    return /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(normalized) ? normalized : '';
+  }, []);
+
+  const editingDocumentNodeMeta = React.useMemo(() => {
+    if (!editingDocumentDraft || !editingDocumentNodeContext) return null;
+    const canvasFile = workspace.files.find(
+      (file) => file.id === editingDocumentNodeContext.canvasFileId
+    );
+    if (!canvasFile) return null;
+    const canvasNode = canvasFile.graph.nodes.find(
+      (node) => node.id === editingDocumentNodeContext.nodeId
+    );
+    if (!canvasNode) return null;
+    const rawNodeMeta =
+      canvasFile.graph.nodeMeta[editingDocumentNodeContext.nodeId] ??
+      DEFAULT_CASE_RESOLVER_NODE_META;
+    return {
+      ...DEFAULT_CASE_RESOLVER_NODE_META,
+      ...rawNodeMeta,
+      textColor: normalizeNodeTextColor(rawNodeMeta.textColor),
+      nodeId: editingDocumentNodeContext.nodeId,
+      nodeTitle: canvasNode.title.trim() || editingDocumentNodeContext.nodeId,
+      canvasFileId: canvasFile.id,
+      canvasFileName: canvasFile.name,
+    };
+  }, [
+    editingDocumentDraft,
+    editingDocumentNodeContext,
+    normalizeNodeTextColor,
+    workspace.files,
+  ]);
+
+  const updateEditingDocumentNodeMeta = useCallback(
+    (patch: Partial<CaseResolverNodeMeta>): void => {
+      if (!editingDocumentNodeContext) return;
+      const canvasFileId = editingDocumentNodeContext.canvasFileId;
+      const nodeId = editingDocumentNodeContext.nodeId;
+      updateWorkspace((current) => {
+        const canvasFileIndex = current.files.findIndex((file) => file.id === canvasFileId);
+        if (canvasFileIndex < 0) return current;
+        const canvasFile = current.files[canvasFileIndex];
+        if (!canvasFile) return current;
+        const hasNode = canvasFile.graph.nodes.some((node) => node.id === nodeId);
+        if (!hasNode) return current;
+
+        const rawNodeMeta =
+          canvasFile.graph.nodeMeta[nodeId] ?? DEFAULT_CASE_RESOLVER_NODE_META;
+        const currentNodeMeta: CaseResolverNodeMeta = {
+          ...DEFAULT_CASE_RESOLVER_NODE_META,
+          ...rawNodeMeta,
+          textColor: normalizeNodeTextColor(rawNodeMeta.textColor),
+        };
+        const normalizedPatch: Partial<CaseResolverNodeMeta> = {
+          ...patch,
+          ...(patch.textColor !== undefined
+            ? { textColor: normalizeNodeTextColor(patch.textColor) }
+            : {}),
+        };
+        const nextNodeMeta: CaseResolverNodeMeta = {
+          ...currentNodeMeta,
+          ...normalizedPatch,
+        };
+        if (stableStringify(nextNodeMeta) === stableStringify(currentNodeMeta)) {
+          return current;
+        }
+
+        const now = new Date().toISOString();
+        const nextCanvasFile = {
+          ...canvasFile,
+          graph: {
+            ...canvasFile.graph,
+            nodeMeta: {
+              ...canvasFile.graph.nodeMeta,
+              [nodeId]: nextNodeMeta,
+            },
+          },
+          updatedAt: now,
+        };
+        return {
+          ...current,
+          files: current.files.map((file, index) => (
+            index === canvasFileIndex ? nextCanvasFile : file
+          )),
+        };
+      });
+    },
+    [editingDocumentNodeContext, normalizeNodeTextColor, updateWorkspace]
   );
 
   const updateEditingDocumentDraft = useCallback(
@@ -1407,6 +1505,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         handleDeleteScanDraftSlot={handleDeleteScanDraftSlot}
         handleRunScanDraftOcr={handleRunScanDraftOcr}
         updateEditingDocumentDraft={updateEditingDocumentDraft}
+        editingDocumentNodeMeta={editingDocumentNodeMeta}
+        updateEditingDocumentNodeMeta={updateEditingDocumentNodeMeta}
         caseTagOptions={caseTagOptions}
         caseIdentifierOptions={caseIdentifierOptions}
         caseCategoryOptions={caseCategoryOptions}

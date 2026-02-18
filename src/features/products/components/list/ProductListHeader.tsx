@@ -15,7 +15,7 @@ import {
 } from '@/features/products/context/ProductListContext';
 import type { Catalog } from '@/features/products/types';
 import type { ProductDraftDto } from '@/features/products/types/drafts';
-import { Button, SelectSimple, Pagination } from '@/shared/ui';
+import { Button, SelectSimple, Pagination, Breadcrumbs } from '@/shared/ui';
 
 interface ProductListHeaderProps {
   showHeader?: boolean;
@@ -59,20 +59,14 @@ export const ProductListHeader = memo(function ProductListHeader({
   } = useProductListFiltersContext();
 
   const headerBreadcrumb = (
-    <nav
-      aria-label='Breadcrumb'
-      className='mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-400'
-    >
-      <Link href='/admin' className='transition-colors hover:text-gray-200'>
-        Admin
-      </Link>
-      <span>/</span>
-      <Link href='/admin/products' className='transition-colors hover:text-gray-200'>
-        Products
-      </Link>
-      <span>/</span>
-      <span className='text-gray-300'>Product List</span>
-    </nav>
+    <Breadcrumbs
+      items={[
+        { label: 'Admin', href: '/admin' },
+        { label: 'Products', href: '/admin/products' },
+        { label: 'Product List' },
+      ]}
+      className='mt-1'
+    />
   );
 
   const createActions = (

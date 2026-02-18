@@ -21,6 +21,7 @@ import {
   useToast,
   FormActions,
   LoadingState,
+  Hint,
 } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
@@ -171,7 +172,7 @@ function EditSlugForm({
             >
               <div className='space-y-3'>
                 <div className='flex justify-between items-center px-1'>
-                  <span className='text-[10px] uppercase font-bold text-gray-500'>Assigned Domains</span>
+                  <Hint uppercase variant='muted' className='font-semibold'>Assigned Domains</Hint>
                   <Badge variant='secondary' className='text-[9px]'>{selectedDomainIds.length} selected</Badge>
                 </div>
                 

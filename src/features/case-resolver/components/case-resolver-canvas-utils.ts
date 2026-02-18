@@ -307,17 +307,23 @@ export const renderPromptNodeTextPreview = (
   node: AiNode,
   nodeMeta: CaseResolverNodeMeta
 ): string => {
+  const normalizedNodeMeta: CaseResolverNodeMeta = {
+    ...DEFAULT_CASE_RESOLVER_NODE_META,
+    ...nodeMeta,
+  };
   const promptTemplate = node.config?.prompt?.template;
   const raw = typeof promptTemplate === 'string' ? promptTemplate : '';
   const plainText = stripHtmlToPlainText(raw);
   if (!plainText) return '';
   const quoted =
-    nodeMeta.quoteMode === 'double'
+    normalizedNodeMeta.quoteMode === 'double'
       ? `"${plainText}"`
-      : nodeMeta.quoteMode === 'single'
+      : normalizedNodeMeta.quoteMode === 'single'
         ? `'${plainText}'`
         : plainText;
-  return `${nodeMeta.surroundPrefix}${quoted}${nodeMeta.surroundSuffix}`;
+  return `${normalizedNodeMeta.surroundPrefix}${quoted}${normalizedNodeMeta.surroundSuffix}${
+    normalizedNodeMeta.appendTrailingNewline ? '\n' : ''
+  }`;
 };
 
 export const buildPromptTemplateFromDroppedDocumentFile = (file: CaseResolverFile): string => {

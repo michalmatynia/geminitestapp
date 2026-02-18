@@ -173,6 +173,9 @@ export const cmsSectionInstanceSchema = z.object({
 
 export type CmsSectionInstanceDto = z.infer<typeof cmsSectionInstanceSchema>;
 
+export const pageZoneSchema = z.enum(['header', 'template', 'footer']);
+export type PageZoneDto = z.infer<typeof pageZoneSchema>;
+
 /**
  * CMS Page Contract
  */

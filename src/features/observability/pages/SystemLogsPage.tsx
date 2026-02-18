@@ -28,7 +28,9 @@ import {
   CopyButton,
   Hint,
   PropertyRow,
-  type StatusVariant
+  Card,
+  type StatusVariant,
+  LoadingState
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -182,7 +184,7 @@ function LogDiagnostics(): React.JSX.Element {
       actions={
         <div className='flex items-center gap-2'>
           {diagnosticsUpdatedAt ? (
-            <Hint uppercase bold color='muted' size='xs'>
+            <Hint uppercase variant='muted' size='xs' className='font-semibold'>
               Updated {formatTimestamp(diagnosticsUpdatedAt)}
             </Hint>
           ) : null}
@@ -235,24 +237,24 @@ function LogMetrics(): React.JSX.Element {
         <LoadingState message='Calculating metrics...' className='py-8' size='sm' />
       ) : metrics ? (
         <div className='grid gap-4 md:grid-cols-3 mt-4'>
-          <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-            <Hint uppercase bold className='mb-2' color='muted'>Retention Period</Hint>
+          <Card variant='glass' padding='md'>
+            <Hint uppercase className='mb-2 font-semibold' variant='muted'>Retention Period</Hint>
             <div className='space-y-1'>
               <PropertyRow label='Total Logs' value={metrics.total} mono valueClassName='text-white' variant='subtle' />
               <PropertyRow label='Last 24h' value={metrics.last24Hours} mono valueClassName='text-white' variant='subtle' />
               <PropertyRow label='Last 7d' value={metrics.last7Days} mono valueClassName='text-white' variant='subtle' />
             </div>
-          </div>
-          <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-            <Hint uppercase bold className='mb-2' color='muted'>Level Distribution</Hint>
+          </Card>
+          <Card variant='glass' padding='md'>
+            <Hint uppercase className='mb-2 font-semibold' variant='muted'>Level Distribution</Hint>
             <div className='space-y-1'>
               <PropertyRow label='Errors' value={levels.error} mono labelClassName='text-rose-400' valueClassName='text-rose-300' variant='subtle' />
               <PropertyRow label='Warnings' value={levels.warn} mono labelClassName='text-amber-400' valueClassName='text-amber-300' variant='subtle' />
               <PropertyRow label='Info' value={levels.info} mono labelClassName='text-sky-400' valueClassName='text-sky-300' variant='subtle' />
             </div>
-          </div>
-          <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-            <Hint uppercase bold className='mb-2' color='muted'>Traffic Origins</Hint>
+          </Card>
+          <Card variant='glass' padding='md'>
+            <Hint uppercase className='mb-2 font-semibold' variant='muted'>Traffic Origins</Hint>
             <div className='max-h-[100px] overflow-y-auto pr-2 space-y-1'>
               {metrics.topSources.map((item) => (
                 <PropertyRow
@@ -264,7 +266,7 @@ function LogMetrics(): React.JSX.Element {
                 />
               ))}
             </div>
-          </div>
+          </Card>
         </div>
       ) : (
         <div className='py-8 text-center text-xs text-gray-600'>No metrics available for this filter set.</div>
@@ -298,7 +300,7 @@ function AiLogInterpreter(): React.JSX.Element {
           <LoadingState message='Consulting AI models...' className='py-4' size='sm' />
         ) : insightsQuery.data?.insights?.length ? (
           insightsQuery.data.insights.map((insight: AiInsightRecord) => (
-            <div key={insight.id} className='rounded-lg border border-border/60 bg-gray-950/40 p-4'>
+            <Card key={insight.id} variant='glass' padding='md' className='bg-gray-950/40'>
               <div className='flex items-center justify-between mb-3'>
                 <span className='text-[10px] font-mono text-gray-500 uppercase'>{formatTimestamp(insight.createdAt)}</span>
                 <StatusBadge status={insight.status} />
@@ -310,7 +312,7 @@ function AiLogInterpreter(): React.JSX.Element {
                   {insight.warnings.map((w, i) => <p key={i}>• {w}</p>)}
                 </Alert>
               )}
-            </div>
+            </Card>
           ))
         ) : (
           <div className='py-8 text-center text-xs text-gray-600 uppercase tracking-widest bg-black/20 rounded border border-white/5'>No intelligence reports available</div>
@@ -464,7 +466,7 @@ function LogList(): React.JSX.Element {
                 <div className='grid gap-6 md:grid-cols-2'>
                   <div className='space-y-4'>
                     <div>
-                      <Hint uppercase bold color='muted' className='mb-2'>Identification</Hint>
+                      <Hint uppercase variant='muted' className='mb-2 font-semibold'>Identification</Hint>
                       <div className='grid grid-cols-2 gap-2'>
                         <MetadataItem
                           label='Request ID'
@@ -481,7 +483,7 @@ function LogList(): React.JSX.Element {
 
                     {log.stack && (
                       <div>
-                        <Hint uppercase bold color='muted' className='mb-2'>StackTrace</Hint>
+                        <Hint uppercase variant='muted' className='mb-2 font-semibold'>StackTrace</Hint>
                         <pre className='p-3 rounded-lg bg-gray-950 border border-white/5 font-mono text-[10px] text-rose-300/80 overflow-auto max-h-[300px] whitespace-pre-wrap'>
                           {log.stack}
                         </pre>
@@ -490,7 +492,7 @@ function LogList(): React.JSX.Element {
                   </div>
 
                   <div>
-                    <Hint uppercase bold color='muted' className='mb-2'>Payload Context</Hint>
+                    <Hint uppercase variant='muted' className='mb-2 font-semibold'>Payload Context</Hint>
                     <pre className='p-3 rounded-lg bg-gray-950 border border-white/5 font-mono text-[10px] text-sky-300/80 overflow-auto max-h-[400px]'>
                       {JSON.stringify(log.context || {}, null, 2)}
                     </pre>
@@ -633,7 +635,7 @@ function SystemLogsContent(): React.JSX.Element {
           onClearPreset={handleResetFilters}
         />
 
-        <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
+        <Card variant='glass' padding='lg'>
           <div className='flex items-center gap-2 mb-6 text-xs font-bold uppercase text-gray-500'>
             <SearchIcon className='size-3.5' />
             Log Filters
@@ -658,7 +660,7 @@ function SystemLogsContent(): React.JSX.Element {
             )}
             gridClassName='md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6'
           />
-        </div>
+        </Card>
 
         <LogDiagnostics />
 

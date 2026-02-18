@@ -94,6 +94,8 @@ export const caseResolverNodeMetaSchema = z.object({
   quoteMode: caseResolverQuoteModeSchema,
   surroundPrefix: z.string(),
   surroundSuffix: z.string(),
+  appendTrailingNewline: z.boolean().optional(),
+  textColor: z.string().optional(),
 });
 export type CaseResolverNodeMetaDto = z.infer<typeof caseResolverNodeMetaSchema>;
 
@@ -235,6 +237,11 @@ export const caseResolverFileSchema = dtoBaseSchema.extend({
   categoryId: z.string().nullable(),
 });
 export type CaseResolverFileDto = z.infer<typeof caseResolverFileSchema>;
+
+export const caseResolverFileEditDraftSchema = caseResolverFileSchema.extend({
+  baseDocumentContentVersion: z.number(),
+});
+export type CaseResolverFileEditDraftDto = z.infer<typeof caseResolverFileEditDraftSchema>;
 
 export const caseResolverAssetFileSchema = dtoBaseSchema.extend({
   name: z.string(),

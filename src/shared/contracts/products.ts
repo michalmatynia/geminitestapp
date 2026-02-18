@@ -299,6 +299,17 @@ export const productMigrationBatchResultSchema = z.object({
 
 export type ProductMigrationBatchResultDto = z.infer<typeof productMigrationBatchResultSchema>;
 
+export const productListPreferencesSchema = z.object({
+  nameLocale: z.enum(['name_en', 'name_pl', 'name_de']),
+  catalogFilter: z.string(),
+  currencyCode: z.string().nullable(),
+  pageSize: z.number(),
+  thumbnailSource: z.enum(['file', 'link', 'base64']),
+  filtersCollapsedByDefault: z.boolean(),
+});
+
+export type ProductListPreferencesDto = z.infer<typeof productListPreferencesSchema>;
+
 /**
  * Validation Contracts
  */
@@ -316,12 +327,17 @@ export const productValidationTargetSchema = z.enum([
 ]);
 
 export const productValidationSeveritySchema = z.enum(['error', 'warning']);
+export type ProductValidationSeverityDto = z.infer<typeof productValidationSeveritySchema>;
+
 export const productValidationDenyBehaviorSchema = z.enum(['ask_again', 'mute_session']);
+export type ProductValidationDenyBehaviorDto = z.infer<typeof productValidationDenyBehaviorSchema>;
+
 export const productValidationInstanceScopeSchema = z.enum([
   'draft_template',
   'product_create',
   'product_edit',
 ]);
+export type ProductValidationInstanceScopeDto = z.infer<typeof productValidationInstanceScopeSchema>;
 
 export const productValidationPatternSchema = dtoBaseSchema.extend({
   label: z.string(),
@@ -375,7 +391,36 @@ export const productValidationPatternSchema = dtoBaseSchema.extend({
   appliesToScopes: z.array(productValidationInstanceScopeSchema).optional(),
 });
 
+export type ProductValidationTargetDto = z.infer<typeof productValidationTargetSchema>;
+export type ProductValidationRuntimeTypeDto = 'none' | 'database_query' | 'ai_prompt';
+export type ProductValidationPostAcceptBehaviorDto = 'revalidate' | 'stop_after_accept';
+export type ProductValidationChainModeDto = 'continue' | 'stop_on_match' | 'stop_on_replace';
+export type ProductValidationLaunchScopeBehaviorDto = 'gate' | 'condition_only';
+export type ProductValidationLaunchSourceModeDto = 'current_field' | 'form_field' | 'latest_product_field';
+export type ProductValidationLaunchOperatorDto =
+  | 'equals'
+  | 'not_equals'
+  | 'contains'
+  | 'starts_with'
+  | 'ends_with'
+  | 'regex'
+  | 'gt'
+  | 'gte'
+  | 'lt'
+  | 'lte'
+  | 'is_empty'
+  | 'is_not_empty';
+
 export type ProductValidationPatternDto = z.infer<typeof productValidationPatternSchema>;
+
+export const productValidationSequenceGroupSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  debounceMs: z.number(),
+  patternIds: z.array(z.string()),
+});
+
+export type ProductValidationSequenceGroupDto = z.infer<typeof productValidationSequenceGroupSchema>;
 
 export const productValidatorSettingsSchema = z.object({
   enabledByDefault: z.boolean(),

@@ -80,6 +80,7 @@ import { useCaseResolverStateSelectionActions } from './useCaseResolverState.sel
 
 import type {
   CaseResolverCategory,
+  CaseResolverEditorNodeContext,
   CaseResolverFile,
   CaseResolverFileEditDraft,
   CaseResolverFolderRecord,
@@ -91,6 +92,10 @@ import type {
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';
 const CASE_RESOLVER_REQUESTED_FILE_REFRESH_MAX_ATTEMPTS = 20;
 const CASE_RESOLVER_REQUESTED_FILE_REFRESH_INTERVAL_MS = 250;
+
+type CaseResolverOpenFileEditorOptions = {
+  nodeContext?: CaseResolverEditorNodeContext | null;
+};
 
 /**
  * Custom hook to manage the complex state and logic of the Case Resolver page.
@@ -195,6 +200,8 @@ export function useCaseResolverState() {
   const [isPreviewPageVisible, setIsPreviewPageVisible] = useState(false);
   const [isPartiesModalOpen, setIsPartiesModalOpen] = useState(false);
   const [editingDocumentDraft, setEditingDocumentDraft] = useState<CaseResolverFileEditDraft | null>(null);
+  const [editingDocumentNodeContext, setEditingDocumentNodeContext] =
+    useState<CaseResolverEditorNodeContext | null>(null);
   const [isUploadingScanDraftFiles, setIsUploadingScanDraftFiles] = useState(false);
   const [uploadingScanSlotId, setUploadingScanSlotId] = useState<string | null>(null);
 
@@ -523,12 +530,14 @@ export function useCaseResolverState() {
     fileId: string,
     options?: { preserveSelectedAsset?: boolean }
   ): void => {
-    const shouldPreserveSelectedAsset = Boolean(
-      options?.preserveSelectedAsset &&
+    const hasActiveNodeFileAsset = Boolean(
       selectedAssetId &&
       workspace.assets.some(
         (asset): boolean => asset.id === selectedAssetId && asset.kind === 'node_file'
       )
+    );
+    const shouldPreserveSelectedAsset = hasActiveNodeFileAsset || Boolean(
+      options?.preserveSelectedAsset && hasActiveNodeFileAsset
     );
 
     if (selectedFileId === fileId) {
@@ -1048,13 +1057,18 @@ export function useCaseResolverState() {
     treeSaveToast: CASE_RESOLVER_TREE_SAVE_TOAST,
   });
 
-  const handleOpenFileEditor = useCallback((fileId: string): void => {
+  const handleOpenFileEditor = useCallback((
+    fileId: string,
+    options?: CaseResolverOpenFileEditorOptions
+  ): void => {
     const target = workspace.files.find((file) => file.id === fileId);
     if (!target) {
+      setEditingDocumentNodeContext(null);
       toast('File not found.', { variant: 'warning' });
       return;
     }
     if (target.fileType === 'case') {
+      setEditingDocumentNodeContext(null);
       toast('Cases are edited in the Cases list. Select a document to edit.', {
         variant: 'info',
       });
@@ -1063,7 +1077,8 @@ export function useCaseResolverState() {
     const baseDraft = buildFileEditDraft(target);
     const recoveredDraft = readStoredEditorDraft(fileId);
     const canRecoverStoredDraft =
-      recoveredDraft?.baseDocumentContentVersion === baseDraft.baseDocumentContentVersion;
+      recoveredDraft !== null &&
+      recoveredDraft.baseDocumentContentVersion === baseDraft.baseDocumentContentVersion;
     const nextDraft: CaseResolverFileEditDraft = canRecoverStoredDraft
       ? {
         ...baseDraft,
@@ -1080,6 +1095,7 @@ export function useCaseResolverState() {
       clearStoredEditorDraft(fileId);
     }
     setEditingDocumentDraft(nextDraft);
+    setEditingDocumentNodeContext(options?.nodeContext ?? null);
     setSelectedFileId(fileId);
     setSelectedAssetId(null);
     setSelectedFolderPath(null);
@@ -1175,6 +1191,7 @@ export function useCaseResolverState() {
     if (!hasMeaningfulChanges) {
       clearStoredEditorDraft(editingDocumentDraft.id);
       setEditingDocumentDraft(null);
+      setEditingDocumentNodeContext(null);
       return;
     }
     const now = new Date().toISOString();
@@ -1222,6 +1239,7 @@ export function useCaseResolverState() {
     }), { persistToast: 'Document changes saved.' });
     clearStoredEditorDraft(editingDocumentDraft.id);
     setEditingDocumentDraft(null);
+    setEditingDocumentNodeContext(null);
   }, [editingDocumentDraft, toast, updateWorkspace, workspace.files]);
 
   const handleDiscardFileEditorDraft = useCallback((): void => {
@@ -1229,6 +1247,7 @@ export function useCaseResolverState() {
       clearStoredEditorDraft(editingDocumentDraft.id);
     }
     setEditingDocumentDraft(null);
+    setEditingDocumentNodeContext(null);
   }, [editingDocumentDraft]);
 
   useEffect(() => {
@@ -1288,6 +1307,7 @@ export function useCaseResolverState() {
     isPartiesModalOpen,
     setIsPartiesModalOpen,
     editingDocumentDraft,
+    editingDocumentNodeContext,
     setEditingDocumentDraft,
     isUploadingScanDraftFiles,
     setIsUploadingScanDraftFiles,

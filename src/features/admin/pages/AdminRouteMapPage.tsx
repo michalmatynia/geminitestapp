@@ -27,7 +27,8 @@ import {
   SearchInput, 
   PanelHeader,
   ListPanel,
-  EmptyState
+  EmptyState,
+  Hint,
 } from '@/shared/ui';
 
 type RouteMapEntry = FlattenedNavItem & {
@@ -229,9 +230,9 @@ export function AdminRouteMapPage(): React.JSX.Element {
           <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
             <div className='flex flex-col gap-1'>
               <div className='text-sm text-gray-200'>Routes indexed</div>
-              <div className='text-xs text-gray-400'>
+              <Hint variant='muted' size='xs'>
                 Showing {filtered.length} of {entries.length} routes
-              </div>
+              </Hint>
             </div>
             <div className='w-full max-w-sm'>
               <SearchInput
@@ -283,7 +284,7 @@ export function AdminRouteMapPage(): React.JSX.Element {
                         </Badge>
                       </div>
                       <p className='mt-2 text-xs text-gray-300 leading-relaxed'>{entry.description}</p>
-                      <div className='mt-2 text-[10px] text-gray-500 font-medium'>{entry.breadcrumb}</div>
+                      <Hint uppercase size='xs' variant='muted' className='mt-2 font-semibold'>{entry.breadcrumb}</Hint>
                     </Card>
                   ))}
                 </div>

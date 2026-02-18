@@ -27,6 +27,7 @@ type ConnectionTypeMismatch = {
 
 export type ConnectorInfo = {
   direction: 'input' | 'output';
+  nodeId: string;
   port: string;
   expectedTypes: PortDataType[];
   expectedLabel: string;
@@ -38,6 +39,8 @@ export type ConnectorInfo = {
   runtimeMismatch: boolean;
   connectionMismatches: ConnectionTypeMismatch[];
   hasMismatch: boolean;
+  nodeInputs: Record<string, unknown> | undefined;
+  nodeOutputs: Record<string, unknown> | undefined;
 };
 
 type BuildConnectorInfoInput = {
@@ -51,6 +54,12 @@ type BuildConnectorInfoInput = {
     nodeId: string,
     port: string
   ) => unknown;
+  getNodeRuntimeData: (
+    nodeId: string
+  ) => {
+    inputs: Record<string, unknown> | undefined;
+    outputs: Record<string, unknown> | undefined;
+  };
 };
 
 const formatConnectorValue = (value: unknown): string => {
@@ -142,7 +151,9 @@ export const buildConnectorInfo = ({
   edges,
   nodeById,
   getPortValue,
+  getNodeRuntimeData,
 }: BuildConnectorInfoInput): ConnectorInfo => {
+  const nodeRuntimeData = getNodeRuntimeData(nodeId);
   const expectedTypes = getPortDataTypes(port);
   const rawValue = getPortValue(direction, nodeId, port);
   const treatArrayAsHistory =
@@ -168,6 +179,7 @@ export const buildConnectorInfo = ({
   const hasMismatch = runtimeMismatch || connectionMismatches.length > 0;
   return {
     direction,
+    nodeId,
     port,
     expectedTypes,
     expectedLabel: formatPortDataTypes(expectedTypes),
@@ -179,6 +191,8 @@ export const buildConnectorInfo = ({
     runtimeMismatch,
     connectionMismatches,
     hasMismatch,
+    nodeInputs: nodeRuntimeData.inputs,
+    nodeOutputs: nodeRuntimeData.outputs,
   };
 };
 
@@ -237,6 +251,22 @@ export const renderConnectorTooltip = (info: ConnectorInfo): React.JSX.Element =
       <pre className='mt-1 max-h-56 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200'>
         {formatConnectorValue(info.value)}
       </pre>
+      <div className='mt-2 border-t border-white/10 pt-2'>
+        <div className='text-[10px] text-gray-400'>
+          Node input data:
+        </div>
+        <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap text-[10px] text-gray-300'>
+          {formatConnectorValue(info.nodeInputs)}
+        </pre>
+      </div>
+      <div className='mt-2 border-t border-white/10 pt-2'>
+        <div className='text-[10px] text-gray-400'>
+          Data passed through node (outputs):
+        </div>
+        <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap text-[10px] text-gray-300'>
+          {formatConnectorValue(info.nodeOutputs)}
+        </pre>
+      </div>
       <div className='text-[10px] text-gray-500'>
         Right-click to disconnect. Drag to reconnect.
       </div>

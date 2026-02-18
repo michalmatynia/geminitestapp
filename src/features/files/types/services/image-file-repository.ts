@@ -1,17 +1,9 @@
-import type { ImageFileListFiltersDto } from '@/shared/contracts/files';
+import type { ImageFileListFiltersDto, ImageFileCreateInputDto } from '@/shared/contracts/files';
 import type { ImageFileRecord } from '@/shared/types/domain/files';
 
 export type { ImageFileRecord };
 
-export type ImageFileCreateInput = {
-  filename: string;
-  filepath: string;
-  mimetype: string;
-  size: number;
-  width?: number | null;
-  height?: number | null;
-  tags?: string[] | null;
-};
+export type ImageFileCreateInput = ImageFileCreateInputDto;
 
 export type ImageFileListFilters = ImageFileListFiltersDto;
 

@@ -18,6 +18,7 @@ import {
   Alert,
   ListPanel,
   SimpleSettingsList,
+  Breadcrumbs,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { cn } from '@/shared/utils';

@@ -16,6 +16,14 @@ const sanitizeNodeMeta = (
   source: Record<string, CaseResolverNodeMeta> | null | undefined
 ): Record<string, CaseResolverNodeMeta> => {
   if (!source || typeof source !== 'object') return {};
+
+  const normalizeTextColor = (value: string | undefined): string | undefined => {
+    if (typeof value !== 'string') return undefined;
+    const normalized = value.trim();
+    if (!normalized) return '';
+    return /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(normalized) ? normalized : undefined;
+  };
+
   const next: Record<string, CaseResolverNodeMeta> = {};
   Object.entries(source).forEach(([nodeId, meta]: [string, CaseResolverNodeMeta]) => {
     if (!nodeId || !meta || typeof meta !== 'object') return;
@@ -27,6 +35,7 @@ const sanitizeNodeMeta = (
       meta.quoteMode === 'none' || meta.quoteMode === 'double' || meta.quoteMode === 'single'
         ? meta.quoteMode
         : DEFAULT_CASE_RESOLVER_NODE_META.quoteMode;
+    const textColor = normalizeTextColor(meta.textColor);
     next[nodeId] = {
       role,
       quoteMode,
@@ -42,6 +51,10 @@ const sanitizeNodeMeta = (
         typeof meta.surroundSuffix === 'string'
           ? meta.surroundSuffix
           : DEFAULT_CASE_RESOLVER_NODE_META.surroundSuffix,
+      ...(typeof meta.appendTrailingNewline === 'boolean'
+        ? { appendTrailingNewline: meta.appendTrailingNewline }
+        : {}),
+      ...(textColor !== undefined ? { textColor } : {}),
     };
   });
   return next;
@@ -180,12 +193,12 @@ const sanitizeTextNodeEdgePorts = (
   const contentPort = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'content';
   const plainTextPort = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
 
-  const normalizeInputPort = (value: string | undefined): string => {
+  const normalizeInputPort = (value: string | null | undefined): string => {
     if (value === textfieldPort || value === contentPort || value === plainTextPort) return value;
     return contentPort;
   };
 
-  const normalizeOutputPort = (value: string | undefined): string => {
+  const normalizeOutputPort = (value: string | null | undefined): string => {
     if (value === textfieldPort || value === contentPort || value === plainTextPort) return value;
     return contentPort;
   };
@@ -193,13 +206,15 @@ const sanitizeTextNodeEdgePorts = (
   return edges.map((edge: Edge): Edge => {
     let nextFromPort = edge.fromPort;
     let nextToPort = edge.toPort;
-    if (textNodeIds.has(edge.from)) {
+    const fromNodeId = edge.from ?? edge.source;
+    const toNodeId = edge.to ?? edge.target;
+    if (fromNodeId && textNodeIds.has(fromNodeId)) {
       const normalized = normalizeOutputPort(edge.fromPort);
       if (normalized !== edge.fromPort) {
         nextFromPort = normalized;
       }
     }
-    if (textNodeIds.has(edge.to)) {
+    if (toNodeId && textNodeIds.has(toNodeId)) {
       const normalized = normalizeInputPort(edge.toPort);
       if (normalized !== edge.toPort) {
         nextToPort = normalized;
@@ -264,6 +279,25 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
       .map((node: AiNode): string => node.id)
   );
   const sanitizedEdges = sanitizeTextNodeEdgePorts(edgesByNodeId, textNodeIds);
+  const strictEdges: CaseResolverGraph['edges'] = sanitizedEdges
+    .map((edge: Edge): CaseResolverGraph['edges'][number] | null => {
+      const from = edge.from ?? edge.source;
+      const to = edge.to ?? edge.target;
+      if (!from || !to) return null;
+      return {
+        id: edge.id,
+        from,
+        to,
+        ...(edge.label ? { label: edge.label } : {}),
+        ...(edge.fromPort ?? edge.sourceHandle
+          ? { fromPort: edge.fromPort ?? edge.sourceHandle ?? undefined }
+          : {}),
+        ...(edge.toPort ?? edge.targetHandle
+          ? { toPort: edge.toPort ?? edge.targetHandle ?? undefined }
+          : {}),
+      };
+    })
+    .filter((edge): edge is CaseResolverGraph['edges'][number] => edge !== null);
   const rawDocumentDropNodeId = graphRecord['documentDropNodeId'];
   const documentDropNodeId =
     typeof rawDocumentDropNodeId === 'string' &&
@@ -274,7 +308,7 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
 
   return {
     nodes,
-    edges: sanitizedEdges,
+    edges: strictEdges,
     nodeMeta: sanitizedNodeMeta,
     edgeMeta: sanitizeEdgeMeta(
       graphRecord['edgeMeta'] as Record<string, CaseResolverEdgeMeta> | null | undefined

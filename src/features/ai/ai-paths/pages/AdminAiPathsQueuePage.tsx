@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 
 import { FileUploadEventsPanel } from '@/features/files/components/FileUploadEventsPanel';
 import ProductListingJobsPanel from '@/features/jobs/components/ProductListingJobsPanel';
-import { Badge, Button, ListPanel, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
+import { Badge, Button, ListPanel, PanelHeader, Tabs, TabsContent, TabsList, TabsTrigger, Breadcrumbs } from '@/shared/ui';
 
 import { ImageStudioRunsQueuePanel } from '../components/ImageStudioRunsQueuePanel';
 import { JobQueuePanel } from '../components/job-queue-panel';
@@ -60,22 +60,18 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
       >
         <ListPanel
           header={
-            <div className='space-y-3'>
-              <div className='flex flex-wrap items-start justify-between gap-3'>
-                <div className='space-y-1'>
-                  <h1 className='text-3xl font-bold tracking-tight text-white'>Job Queue</h1>
-                  <nav aria-label='Breadcrumb' className='flex flex-wrap items-center gap-1 text-xs text-gray-400'>
-                    <Link href='/admin' className='transition-colors hover:text-gray-200'>
-                      Admin
-                    </Link>
-                    <span>/</span>
-                    <Link href='/admin/ai-paths/queue' className='transition-colors hover:text-gray-200'>
-                      AI Paths
-                    </Link>
-                    <span>/</span>
-                    <span className='text-gray-300'>{activeTabMeta.label}</span>
-                  </nav>
-                </div>
+            <PanelHeader
+              title='Job Queue'
+              description={
+                <Breadcrumbs
+                  items={[
+                    { label: 'Admin', href: '/admin' },
+                    { label: 'AI Paths', href: '/admin/ai-paths/queue' },
+                    { label: activeTabMeta.label },
+                  ]}
+                />
+              }
+              customActions={
                 <div className='flex flex-wrap items-center gap-2'>
                   <Badge variant='processing' className='gap-1.5'>
                     <ActiveTabIcon className='size-3.5' />
@@ -85,8 +81,8 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
                     {QUEUE_TABS.length} views
                   </Badge>
                 </div>
-              </div>
-            </div>
+              }
+            />
           }
           filters={
             <TabsList className='grid h-auto w-full grid-cols-2 gap-2 border border-border/60 bg-card/30 p-2 lg:grid-cols-4'>

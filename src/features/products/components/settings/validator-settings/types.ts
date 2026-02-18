@@ -14,6 +14,7 @@ import type {
   ProductValidationRuntimeType,
   ProductValidationTarget,
 } from '@/shared/types/domain/products';
+import type { ProductValidationSequenceGroupDto } from '@/shared/contracts/products';
 
 export type ReplacementMode = 'static' | 'dynamic';
 
@@ -22,12 +23,7 @@ export type SequenceGroupDraft = {
   debounceMs: string;
 };
 
-export type SequenceGroupView = {
-  id: string;
-  label: string;
-  debounceMs: number;
-  patternIds: string[];
-};
+export type SequenceGroupView = ProductValidationSequenceGroupDto;
 
 export type PatternFormData = {
   label: string;

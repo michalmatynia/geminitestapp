@@ -1,27 +1,24 @@
+import type {
+  MasterTreeNodeTypeDto,
+  MasterTreeTargetTypeDto,
+  MasterTreeDropPositionDto,
+  MasterTreeNodeDto,
+} from '@/shared/contracts/master-folder-tree';
+
 export const masterTreeNodeTypeValues = ['folder', 'file'] as const;
-export type MasterTreeNodeType = (typeof masterTreeNodeTypeValues)[number];
+export type MasterTreeNodeType = MasterTreeNodeTypeDto;
 
 export const masterTreeTargetTypeValues = ['folder', 'root'] as const;
-export type MasterTreeTargetType = (typeof masterTreeTargetTypeValues)[number];
+export type MasterTreeTargetType = MasterTreeTargetTypeDto;
 
 export const masterTreeDropPositionValues = ['inside', 'before', 'after'] as const;
-export type MasterTreeDropPosition = (typeof masterTreeDropPositionValues)[number];
+export type MasterTreeDropPosition = MasterTreeDropPositionDto;
 
 export type MasterTreeId = string;
 export type MasterTreeKind = string;
 export type MasterTreePath = string;
 
-export type MasterTreeNode = {
-  id: MasterTreeId;
-  type: MasterTreeNodeType;
-  kind: MasterTreeKind;
-  parentId: MasterTreeId | null;
-  name: string;
-  path: MasterTreePath;
-  sortOrder: number;
-  icon?: string | null | undefined;
-  metadata?: Record<string, unknown> | undefined;
-};
+export type MasterTreeNode = MasterTreeNodeDto;
 
 export const isMasterTreeNodeType = (value: unknown): value is MasterTreeNodeType =>
   typeof value === 'string' && (masterTreeNodeTypeValues as readonly string[]).includes(value);

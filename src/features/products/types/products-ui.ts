@@ -1,5 +1,6 @@
 import type { ManagedImageSlot } from '@/features/image-slots';
 import { ImageFileRecord } from '@/shared/types/domain/files';
+import type { ProductListPreferencesDto } from '@/shared/contracts/products';
 
 export type ProductImageSlot = ManagedImageSlot;
 
@@ -20,11 +21,4 @@ export type DebugInfo = {
   timestamp: string;
 };
 
-export type ProductListPreferences = {
-  nameLocale: 'name_en' | 'name_pl' | 'name_de';
-  catalogFilter: string;
-  currencyCode: string | null;
-  pageSize: number;
-  thumbnailSource: 'file' | 'link' | 'base64';
-  filtersCollapsedByDefault: boolean;
-};
+export type ProductListPreferences = ProductListPreferencesDto;

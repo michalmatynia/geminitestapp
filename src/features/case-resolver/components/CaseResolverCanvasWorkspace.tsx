@@ -31,6 +31,7 @@ import {
   Button,
   SelectSimple,
   useToast,
+  EmptyState,
 } from '@/shared/ui';
 
 import { compileCaseResolverPrompt } from '../composer';
@@ -102,12 +103,6 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const [isDropImporting, setIsDropImporting] = useState(false);
   const [isNodeInspectorOpen, setIsNodeInspectorOpen] = useState(false);
   const [isLinkedPreviewOpen, setIsLinkedPreviewOpen] = useState(false);
-
-  useEffect(() => {
-    if (!configOpen) return;
-    setIsNodeInspectorOpen(true);
-    setConfigOpen(false);
-  }, [configOpen, setConfigOpen]);
 
   const normalizedNodeMeta = useMemo(
     () => ensureNodeMeta(nodes, graph.nodeMeta),
@@ -584,6 +579,33 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     ? availableFilesById.get(selectedPromptSourceFileId) ?? null
     : null;
 
+  useEffect(() => {
+    if (!configOpen) return;
+    if (
+      selectedNode?.type === 'prompt' &&
+      selectedPromptSourceFile &&
+      activeFile
+    ) {
+      onEditFile(selectedPromptSourceFile.id, {
+        nodeContext: {
+          nodeId: selectedNode.id,
+          canvasFileId: activeFile.id,
+        },
+      });
+      setConfigOpen(false);
+      return;
+    }
+    setIsNodeInspectorOpen(true);
+    setConfigOpen(false);
+  }, [
+    activeFile,
+    configOpen,
+    onEditFile,
+    selectedNode,
+    selectedPromptSourceFile,
+    setConfigOpen,
+  ]);
+
   const selectedEdgeJoinMode = selectedEdge
     ? (normalizedEdgeMeta[selectedEdge.id] ?? DEFAULT_CASE_RESOLVER_EDGE_META).joinMode
     : DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
@@ -781,6 +803,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
         selectedNode={selectedNode}
         selectedPromptMeta={selectedPromptMeta}
         selectedPromptSourceFile={selectedPromptSourceFile}
+        selectedCanvasFileId={activeFile?.id ?? null}
         onEditFile={onEditFile}
         onUpdateSelectedNodeMeta={updateSelectedNodeMeta}
         selectedEdge={selectedEdge}
@@ -802,9 +825,11 @@ export function CaseResolverCanvasWorkspace(): React.JSX.Element {
 
   if (!activeFile) {
     return (
-      <div className='flex h-[420px] items-center justify-center rounded-lg border border-dashed border-border/60 bg-card/20 text-sm text-gray-400'>
-        Create a case file to start mapping nodes.
-      </div>
+      <EmptyState
+        title='Canvas Empty'
+        description='Create a case file to start mapping nodes.'
+        className='h-[420px]'
+      />
     );
   }
 

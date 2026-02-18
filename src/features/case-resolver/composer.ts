@@ -39,7 +39,10 @@ const resolveNodeMeta = (
   nodeId: string,
   nodeMeta: Record<string, CaseResolverNodeMeta>
 ): CaseResolverNodeMeta => {
-  return nodeMeta[nodeId] ?? DEFAULT_CASE_RESOLVER_NODE_META;
+  return {
+    ...DEFAULT_CASE_RESOLVER_NODE_META,
+    ...(nodeMeta[nodeId] ?? {}),
+  };
 };
 
 const resolveEdgeMeta = (
@@ -105,9 +108,18 @@ const resolveNodeText = (node: AiNode): string => {
 
 const wrapByQuoteMode = (value: string, meta: CaseResolverNodeMeta): string => {
   if (!value) return value;
+  const normalizedColor =
+    typeof meta.textColor === 'string' &&
+    /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(meta.textColor.trim())
+      ? meta.textColor.trim()
+      : '';
   const quotedValue =
     meta.quoteMode === 'double' ? `"${value}"` : meta.quoteMode === 'single' ? `'${value}'` : value;
-  return `${meta.surroundPrefix}${quotedValue}${meta.surroundSuffix}`;
+  const wrappedValue = `${meta.surroundPrefix}${quotedValue}${meta.surroundSuffix}${
+    meta.appendTrailingNewline ? '\n' : ''
+  }`;
+  if (!normalizedColor) return wrappedValue;
+  return `<span style="color: ${normalizedColor};">${wrappedValue}</span>`;
 };
 
 const sortNodeIdsByPosition = (nodes: AiNode[]): string[] =>
@@ -157,7 +169,7 @@ const sortEdgesBySourcePosition = (
 
 const resolveSourceOutputValue = (
   sourceOutputs: { textfield: string; content: string; plainText: string } | null | undefined,
-  fromPort: string | undefined,
+  fromPort: string | null | undefined,
   fallback: 'textfield' | 'content' | 'plainText'
 ): string => {
   if (!sourceOutputs) return '';
@@ -176,13 +188,13 @@ const resolveSourceOutputValue = (
   return fallback === 'textfield' ? sourceOutputs.textfield : sourceOutputs.content;
 };
 
-const isTextfieldInputPort = (port: string | undefined): boolean =>
+const isTextfieldInputPort = (port: string | null | undefined): boolean =>
   port === DOCUMENT_TEXTFIELD_PORT;
 
-const isContentInputPort = (port: string | undefined): boolean =>
+const isContentInputPort = (port: string | null | undefined): boolean =>
   port === DOCUMENT_CONTENT_PORT || !port;
 
-const isPlainTextInputPort = (port: string | undefined): boolean =>
+const isPlainTextInputPort = (port: string | null | undefined): boolean =>
   port === DOCUMENT_PLAIN_TEXT_PORT;
 
 export const compileCaseResolverPrompt = (
@@ -292,7 +304,9 @@ export const compileCaseResolverPrompt = (
                 ? isContentInputPort(edge.toPort)
                 : isPlainTextInputPort(edge.toPort);
           if (!acceptsEdge) return;
-          const sourceOutputs = outputsByNode[edge.from];
+          const edgeFromNodeId = edge.from ?? edge.source;
+          if (!edgeFromNodeId) return;
+          const sourceOutputs = outputsByNode[edgeFromNodeId];
           const rawSourceValue = resolveSourceOutputValue(sourceOutputs, edge.fromPort, type);
           const sourceValue =
             type === 'plainText' ? stripHtml(rawSourceValue) : rawSourceValue;
@@ -342,7 +356,11 @@ export const compileCaseResolverPrompt = (
         .map((entry): string => entry.nodeId)
         .filter((nodeId: string): boolean => {
           const outgoing = outgoingByNode.get(nodeId) ?? [];
-          return !outgoing.some((edge: Edge): boolean => visitedNodeIds.has(edge.to));
+          return !outgoing.some((edge: Edge): boolean => {
+            const edgeToNodeId = edge.to ?? edge.target;
+            if (!edgeToNodeId) return false;
+            return visitedNodeIds.has(edgeToNodeId);
+          });
         });
       const dedupedLeafOutputs: string[] = [];
       const seenLeafOutputs = new Set<string>();

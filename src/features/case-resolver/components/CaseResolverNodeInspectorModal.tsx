@@ -9,6 +9,7 @@ import {
   FormField,
   Input,
   SelectSimple,
+  EmptyState,
 } from '@/shared/ui';
 
 import {
@@ -16,6 +17,7 @@ import {
   CASE_RESOLVER_NODE_ROLE_OPTIONS,
   CASE_RESOLVER_QUOTE_MODE_OPTIONS,
   type CaseResolverEdgeMeta,
+  type CaseResolverEditorNodeContext,
   type CaseResolverFile,
   type CaseResolverNodeMeta,
 } from '../types';
@@ -26,7 +28,11 @@ type CaseResolverNodeInspectorModalProps = {
   selectedNode: AiNode | null;
   selectedPromptMeta: CaseResolverNodeMeta | null;
   selectedPromptSourceFile: CaseResolverFile | null;
-  onEditFile: (fileId: string) => void;
+  selectedCanvasFileId: string | null;
+  onEditFile: (
+    fileId: string,
+    options?: { nodeContext?: CaseResolverEditorNodeContext | null }
+  ) => void;
   onUpdateSelectedNodeMeta: (patch: Partial<CaseResolverNodeMeta>) => void;
   selectedEdge: Edge | null;
   selectedEdgeJoinMode: CaseResolverEdgeMeta['joinMode'];
@@ -39,6 +45,7 @@ export function CaseResolverNodeInspectorModal({
   selectedNode,
   selectedPromptMeta,
   selectedPromptSourceFile,
+  selectedCanvasFileId,
   onEditFile,
   onUpdateSelectedNodeMeta,
   selectedEdge,
@@ -79,7 +86,17 @@ export function CaseResolverNodeInspectorModal({
                       type='button'
                       className='h-8 rounded-md border border-sky-400/50 px-2 text-xs text-sky-100 hover:bg-sky-500/20'
                       onClick={(): void => {
-                        onEditFile(selectedPromptSourceFile.id);
+                        const nodeContext =
+                          selectedNode && selectedCanvasFileId
+                            ? {
+                              nodeId: selectedNode.id,
+                              canvasFileId: selectedCanvasFileId,
+                            }
+                            : null;
+                        onEditFile(
+                          selectedPromptSourceFile.id,
+                          nodeContext ? { nodeContext } : undefined
+                        );
                       }}
                     >
                       Open Edit Document
@@ -156,15 +173,21 @@ export function CaseResolverNodeInspectorModal({
                 </div>
               </>
             ) : (
-              <div className='rounded border border-dashed border-border/60 px-3 py-2 text-xs text-gray-500'>
-                Select a Prompt node to configure metadata.
-              </div>
+              <EmptyState
+                title='Prompt Metadata'
+                description='Select a Prompt node to configure metadata.'
+                variant='compact'
+                className='py-4'
+              />
             )}
           </>
         ) : (
-          <div className='rounded border border-dashed border-border/60 px-3 py-2 text-xs text-gray-500'>
-            Select a node on the map to edit it.
-          </div>
+          <EmptyState
+            title='No Node Selected'
+            description='Select a node on the map to edit it.'
+            variant='compact'
+            className='py-8'
+          />
         )}
 
         {selectedEdge ? (
@@ -193,9 +216,12 @@ export function CaseResolverNodeInspectorModal({
             </FormField>
           </div>
         ) : (
-          <div className='rounded border border-dashed border-border/60 px-3 py-2 text-xs text-gray-500'>
-            Select a connection to choose how linked node text joins (new line, tab, space, none).
-          </div>
+          <EmptyState
+            title='No Connection Selected'
+            description='Select a connection to choose how linked node text joins.'
+            variant='compact'
+            className='py-4'
+          />
         )}
       </div>
     </AppModal>

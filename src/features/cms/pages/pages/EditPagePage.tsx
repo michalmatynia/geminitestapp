@@ -9,7 +9,7 @@ import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelectio
 import { useCmsAllSlugs, useCmsPage, useCmsSlugs, useUpdatePage } from '@/features/cms/hooks/useCmsQueries';
 import type { Page, Slug } from '@/features/cms/types';
 import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
-import { Button, Checkbox, Input, SectionHeader, ToggleRow, FormSection, Badge, Alert, StatusBadge, LoadingState, FormActions, Breadcrumbs } from '@/shared/ui';
+import { Button, Checkbox, Input, SectionHeader, ToggleRow, FormSection, Badge, Alert, StatusBadge, LoadingState, FormActions, Breadcrumbs, Hint } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function EditPagePageLoader(): React.JSX.Element {
@@ -178,7 +178,7 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
               
               <div className='space-y-2'>
                 <div className='flex justify-between items-center px-1'>
-                  <span className='text-[10px] uppercase font-bold text-gray-500'>Available Slugs</span>
+                  <Hint uppercase variant='muted' className='font-semibold'>Available Slugs</Hint>
                   <Badge variant='secondary' className='text-[9px]'>{selectedSlugIds.length} selected</Badge>
                 </div>
 

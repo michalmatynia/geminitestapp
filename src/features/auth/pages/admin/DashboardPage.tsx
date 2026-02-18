@@ -7,7 +7,7 @@ import { useAuthUsers } from '@/features/auth/hooks/useAuthQueries';
 import type { AuthUserSummary } from '@/features/auth/types';
 import type { AuthRole } from '@/features/auth/utils/auth-management';
 import { logClientError } from '@/features/observability';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, useToast, SectionHeader, Alert, MetadataItem } from '@/shared/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, useToast, SectionHeader, Alert, MetadataItem, LoadingState } from '@/shared/ui';
 
 export default function AuthDashboardPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -66,21 +66,21 @@ export default function AuthDashboardPage(): React.JSX.Element {
   if (authUsersQuery.isPending || authLoading) {
     return (
       <div className='container mx-auto py-10'>
-        <div className='rounded-lg border border-border/60 bg-card/40 p-6 text-sm text-gray-400'>
-          Loading auth metrics...
-        </div>
+        <Card variant='glass' padding='lg' className='flex justify-center'>
+          <LoadingState message='Loading auth metrics...' />
+        </Card>
       </div>
     );
   }
 
   return (
     <div className='container mx-auto max-w-5xl py-10 space-y-6'>
-      <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
+      <Card variant='glass' padding='lg'>
         <SectionHeader
           title='Auth Dashboard'
           description={`Overview of user accounts and role assignments (provider: ${provider}).`}
         />
-      </div>
+      </Card>
 
       <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
         <MetadataItem

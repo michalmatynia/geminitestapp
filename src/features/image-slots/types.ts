@@ -1,19 +1,3 @@
-import type { ImageFileSelection } from '@/shared/types/domain/files';
+import type { ManagedImageSlotDto } from '@/shared/contracts/image-slots';
 
-export type ManagedImageSlot =
-  | {
-      type: 'file';
-      data: File;
-      previewUrl: string;
-      slotId: string;
-      originalIndex?: number | undefined;
-    }
-  | {
-      type: 'existing';
-      data: ImageFileSelection;
-      previewUrl: string;
-      slotId: string;
-      originalIndex?: number | undefined;
-    }
-  | null;
-
+export type ManagedImageSlot = ManagedImageSlotDto;

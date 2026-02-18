@@ -141,6 +141,30 @@ export const loopSignalSchema = z.object({
 
 export type LoopSignalDto = z.infer<typeof loopSignalSchema>;
 
+export const extractionPlanSchema = z.object({
+  target: z.string().nullable(),
+  fields: z.array(z.string()),
+  primarySelectors: z.array(z.string()),
+  fallbackSelectors: z.array(z.string()),
+  notes: z.string().nullable(),
+});
+
+export type ExtractionPlanDto = z.infer<typeof extractionPlanSchema>;
+
+export const failureRecoveryPlanSchema = z.object({
+  reason: z.string().nullable(),
+  selectors: z.array(z.string()),
+  listingUrls: z.array(z.string()),
+  clickSelector: z.string().nullable(),
+  loginUrl: z.string().nullable(),
+  usernameSelector: z.string().nullable(),
+  passwordSelector: z.string().nullable(),
+  submitSelector: z.string().nullable(),
+  notes: z.string().nullable(),
+});
+
+export type FailureRecoveryPlanDto = z.infer<typeof failureRecoveryPlanSchema>;
+
 export const approvalRequestSchema = z.object({
   id: z.string(),
   runId: z.string(),

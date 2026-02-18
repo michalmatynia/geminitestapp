@@ -14,10 +14,8 @@ import type { ProductListingWithDetails, ProductListingExportEvent } from '@/fea
 import {
   Button,
   Input,
-  DropdownMenu,
-  DropdownMenuContent,
+  ActionMenu,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   Label,
   StatusBadge,
 } from '@/shared/ui';
@@ -204,54 +202,45 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
               </Button>
             )}
             {!isTerminalBaseStatus && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    size='sm'
-                    disabled={
-                      exportingListing === listing.id ||
-                      !listing.externalListingId
-                    }
-                    className='border-sky-500/40 text-sky-200 hover:bg-sky-500/10'
-                  >
-                    Re-export images only
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align='start'
-                  className='bg-card border-border'
+              <ActionMenu
+                label='Re-export images only'
+                variant='outline'
+                size='sm'
+                disabled={
+                  exportingListing === listing.id ||
+                  !listing.externalListingId
+                }
+                className='border-sky-500/40 text-sky-200 hover:bg-sky-500/10'
+                align='start'
+              >
+                <DropdownMenuItem
+                  onSelect={(): void => { void handleExportImagesOnly(listing.id); }}
+                  className='text-gray-200 focus:bg-gray-800/70'
                 >
+                  <div className='flex flex-col'>
+                    <span className='text-sm'>No resize (base-only)</span>
+                    <span className='text-xs text-gray-400'>
+                      Re-send images without extra compression.
+                    </span>
+                  </div>
+                </DropdownMenuItem>
+                {imageRetryPresets.map((preset: ImageRetryPreset) => (
                   <DropdownMenuItem
-                    onSelect={(): void => { void handleExportImagesOnly(listing.id); }}
+                    key={preset.id}
+                    onSelect={(): void => {
+                      void handleExportImagesOnly(listing.id, preset);
+                    }}
                     className='text-gray-200 focus:bg-gray-800/70'
                   >
                     <div className='flex flex-col'>
-                      <span className='text-sm'>No resize (base-only)</span>
+                      <span className='text-sm'>{preset.label}</span>
                       <span className='text-xs text-gray-400'>
-                        Re-send images without extra compression.
+                        {preset.description}
                       </span>
                     </div>
                   </DropdownMenuItem>
-                  {imageRetryPresets.map((preset: ImageRetryPreset) => (
-                    <DropdownMenuItem
-                      key={preset.id}
-                      onSelect={(): void => {
-                        void handleExportImagesOnly(listing.id, preset);
-                      }}
-                      className='text-gray-200 focus:bg-gray-800/70'
-                    >
-                      <div className='flex flex-col'>
-                        <span className='text-sm'>{preset.label}</span>
-                        <span className='text-xs text-gray-400'>
-                          {preset.description}
-                        </span>
-                      </div>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                ))}
+              </ActionMenu>
             )}
             {!listing.inventoryId && (
               <div className='space-y-1 text-xs text-gray-400'>

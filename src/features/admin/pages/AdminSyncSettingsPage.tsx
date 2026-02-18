@@ -20,6 +20,7 @@ import {
   MetadataItem,
   PropertyRow,
   Hint,
+  EmptyState,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -222,7 +223,12 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
 
           <div className='max-h-60 space-y-2 overflow-y-auto rounded border border-border bg-muted/10 p-3 text-xs text-gray-300'>
             {offlineQueue.items.length === 0 ? (
-              <p className='text-center text-gray-500'>No queued mutations.</p>
+              <EmptyState
+                title='Queue Empty'
+                description='No pending synchronization mutations.'
+                variant='compact'
+                className='py-8'
+              />
             ) : (
               offlineQueue.items.map((item: OfflineQueueItem) => (
                 <div key={item.id} className='rounded border border-white/10 p-2'>

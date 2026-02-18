@@ -9,7 +9,7 @@ import { useCmsAllSlugs, useCmsSlugs, useCreatePage } from '@/features/cms/hooks
 import type { Slug } from '@/features/cms/types';
 import { cmsPageCreateSchema } from '@/features/cms/validations/api';
 import { logClientError } from '@/features/observability';
-import { Input, SectionHeader, Checkbox, ToggleRow, FormSection, FormField, Badge, Alert, StatusBadge, FormActions } from '@/shared/ui';
+import { Input, SectionHeader, Checkbox, ToggleRow, FormSection, FormField, Badge, Alert, StatusBadge, FormActions, Hint, Breadcrumbs } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function CreatePagePage(): React.JSX.Element {
@@ -62,7 +62,17 @@ export default function CreatePagePage(): React.JSX.Element {
       <SectionHeader 
         title='Create Page' 
         description='Provision a new content page and map it to URL routes.'
-        eyebrow='CMS · Page Management'
+        eyebrow={
+          <Breadcrumbs
+            items={[
+              { label: 'Admin', href: '/admin' },
+              { label: 'CMS', href: '/admin/cms' },
+              { label: 'Pages', href: '/admin/cms/pages' },
+              { label: 'Create' }
+            ]}
+            className='mb-2'
+          />
+        }
         actions={<CmsDomainSelector />}
       />
       
@@ -110,7 +120,7 @@ export default function CreatePagePage(): React.JSX.Element {
               
               <div className='space-y-2'>
                 <div className='flex justify-between items-center px-1'>
-                  <span className='text-[10px] uppercase font-bold text-gray-500'>Available Slugs</span>
+                  <Hint uppercase variant='muted' className='font-semibold'>Available Slugs</Hint>
                   <Badge variant='secondary' className='text-[9px]'>{slugIds.length} selected</Badge>
                 </div>
 

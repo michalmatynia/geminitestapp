@@ -4,7 +4,19 @@ import { useQueryClient } from '@tanstack/react-query';
 import React, { useState, useMemo, useCallback } from 'react';
 
 import type { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
-import { Button, SectionHeader, LoadingState, RefreshButton } from '@/shared/ui';
+import { 
+  Button, 
+  SectionHeader, 
+  LoadingState, 
+  RefreshButton, 
+  MetadataItem, 
+  PropertyRow, 
+  Hint, 
+  Breadcrumbs,
+  StatusBadge,
+  Badge,
+  Alert,
+} from '@/shared/ui';
 
 import { AgentRunDetailModal } from '../components/AgentRunDetailModal';
 import { useAgentAudits, useAgentLogs, useAgentRuns, useAgentSnapshots } from '../hooks/useAgentRunsQueries';
@@ -46,6 +58,16 @@ export default function AgentRunsPage(): React.JSX.Element {
       <SectionHeader
         title='Agent Runs'
         description='Manage and monitor agent runs across the system.'
+        eyebrow={
+          <Breadcrumbs
+            items={[
+              { label: 'Admin', href: '/admin' },
+              { label: 'Agent Creator', href: '/admin/agentcreator' },
+              { label: 'Runs' }
+            ]}
+            className='mb-2'
+          />
+        }
         actions={
           <div className='flex gap-2'>
             <RefreshButton
@@ -67,46 +89,49 @@ export default function AgentRunsPage(): React.JSX.Element {
             {agentRuns.map((job: AiPathRunRecord) => (
               <div
                 key={job.id}
-                className='flex flex-col gap-4 rounded-lg border border-border/60 bg-card/50 p-6'
+                className='flex flex-col gap-4 rounded-lg border border-border/60 bg-card/50 p-5 transition-colors hover:bg-card/60'
               >
                 <div className='flex items-start justify-between gap-4'>
-                  <div className='min-w-0 flex-1'>
-                    <p className='text-xs uppercase tracking-wide text-gray-500'>
-                      Agent run
-                    </p>
-                    <p className='text-sm text-white'>
-                      {job.status.toUpperCase()} ·{' '}
-                      {job.model || 'Default model'}
-                    </p>
-                    <p className='text-xs text-gray-500'>
-                      Created {new Date(job.createdAt).toLocaleString()}
-                    </p>
-                    <div className='mt-2 text-xs text-gray-400'>
-                      <p className='text-xs text-gray-300 line-clamp-2'>
-                        Prompt: {job.prompt}
-                      </p>
-                      <p className='text-[11px] text-gray-500'>
-                        Run ID: {job.id}
-                      </p>
-                      Snapshots: {job._count?.['browserSnapshots'] ?? 0} · Logs:{' '}
-                      {job._count?.['browserLogs'] ?? 0}
-                      {job.requiresHumanIntervention ? ' · needs input' : ''}
+                  <div className='min-w-0 flex-1 space-y-3'>
+                    <div className='flex items-center justify-between'>
+                      <Hint uppercase variant='muted' className='font-semibold'>Agent Run</Hint>
+                      <StatusBadge status={job.status} size='sm' className='h-5 uppercase font-bold' />
                     </div>
-                    {job.errorMessage ? (
-                      <p className='mt-1 text-xs text-red-300'>
-                        {job.errorMessage}
+
+                    <div className='space-y-1'>
+                      <PropertyRow label='Model' value={job.model || 'Default'} />
+                      <PropertyRow label='Created' value={new Date(job.createdAt).toLocaleString()} />
+                    </div>
+
+                    <div className='space-y-2 rounded border border-white/5 bg-black/20 p-2 text-xs'>
+                      <p className='text-gray-300 line-clamp-2 italic'>
+                        "{job.prompt}"
                       </p>
+                      <div className='flex flex-wrap gap-x-3 gap-y-1 border-t border-white/5 pt-2'>
+                        <MetadataItem label='Snapshots' value={job._count?.['browserSnapshots'] ?? 0} variant='minimal' />
+                        <MetadataItem label='Logs' value={job._count?.['browserLogs'] ?? 0} variant='minimal' />
+                        {job.requiresHumanIntervention && (
+                          <Badge variant='warning' className='h-4 px-1 text-[9px] uppercase'>Needs Input</Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {job.errorMessage ? (
+                      <Alert variant='error' className='px-2 py-1.5 text-[10px]'>
+                        {job.errorMessage}
+                      </Alert>
                     ) : null}
                   </div>
-                  <div className='flex items-center gap-2'>
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      onClick={() => setSelectedAgentRunId(job.id)}
-                    >
-                      View details
-                    </Button>
-                  </div>
+                </div>
+                <div className='flex items-center justify-between border-t border-white/5 pt-3'>
+                  <Hint className='text-[10px] font-mono' variant='muted'>ID: {job.id.slice(0, 8)}...</Hint>
+                  <Button
+                    variant='outline'
+                    size='xs'
+                    onClick={() => setSelectedAgentRunId(job.id)}
+                  >
+                    View details
+                  </Button>
                 </div>
               </div>
             ))}

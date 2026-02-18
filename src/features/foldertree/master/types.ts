@@ -10,30 +10,9 @@ import type {
   MasterTreeValidationIssue,
   MasterTreeViewNode,
 } from '@/shared/utils/master-folder-tree-engine';
+import type { MasterFolderTreePersistOperationDto } from '@/shared/contracts/master-folder-tree';
 
-export type MasterFolderTreePersistOperation =
-  | {
-      type: 'move';
-      nodeId: MasterTreeId;
-      targetParentId: MasterTreeId | null;
-      targetIndex?: number | undefined;
-    }
-  | {
-      type: 'reorder';
-      nodeId: MasterTreeId;
-      targetId: MasterTreeId;
-      position: Exclude<MasterTreeDropPosition, 'inside'>;
-    }
-  | {
-      type: 'rename';
-      nodeId: MasterTreeId;
-      name: string;
-    }
-  | {
-      type: 'replace_nodes';
-      nodes: MasterTreeNode[];
-      reason: 'undo' | 'refresh' | 'external_sync';
-    };
+export type MasterFolderTreePersistOperation = MasterFolderTreePersistOperationDto;
 
 export type MasterFolderTreePersistContext = {
   previousNodes: MasterTreeNode[];

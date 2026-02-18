@@ -19,6 +19,9 @@ export const imageTransformOptionsSchema = z.object({
 
 export type ImageTransformOptionsDto = z.infer<typeof imageTransformOptionsSchema>;
 
+export const imageBase64ModeSchema = z.enum(['base-only', 'full-data-uri']);
+export type ImageBase64ModeDto = z.infer<typeof imageBase64ModeSchema>;
+
 export const imageRetryPresetSchema = z.object({
   id: z.string(),
   name: z.string(),

@@ -1,4 +1,4 @@
-import type { TemplateMappingDto, ImageTransformOptionsDto, ImageRetryPresetDto } from '@/shared/contracts/integrations';
+import type { TemplateMappingDto, ImageTransformOptionsDto, ImageRetryPresetDto, ImageBase64ModeDto } from '@/shared/contracts/integrations';
 
 // DTO type exports
 export type {
@@ -27,7 +27,7 @@ export type {
 
 // Integration domain record types
 
-export type ImageBase64Mode = 'base-only' | 'full-data-uri';
+export type ImageBase64Mode = ImageBase64ModeDto;
 
 export type ImageTransformOptions = ImageTransformOptionsDto;
 

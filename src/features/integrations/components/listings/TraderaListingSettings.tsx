@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
-import { Checkbox, Input, Label, FormField } from '@/shared/ui';
+import { Input, FormField, ToggleRow } from '@/shared/ui';
 
 export function TraderaListingSettings(): React.JSX.Element {
   const {
@@ -51,19 +51,12 @@ export function TraderaListingSettings(): React.JSX.Element {
         />
       </FormField>
 
-      <div className='flex items-center gap-2 pt-1'>
-        <Checkbox
-          id='traderaAutoRelist'
-          checked={selectedTraderaAutoRelistEnabled}
-          onCheckedChange={(checked: boolean | 'indeterminate'): void =>
-            setSelectedTraderaAutoRelistEnabled(Boolean(checked))
-          }
-          className='h-4 w-4 rounded border bg-gray-900 text-blue-500'
-        />
-        <Label htmlFor='traderaAutoRelist' className='text-sm text-gray-300'>
-          Enable automatic relist on expiry
-        </Label>
-      </div>
+      <ToggleRow
+        checked={selectedTraderaAutoRelistEnabled}
+        onCheckedChange={setSelectedTraderaAutoRelistEnabled}
+        label='Enable automatic relist on expiry'
+        type='checkbox'
+      />
 
       <FormField 
         label='Relist Lead Time (Minutes)'

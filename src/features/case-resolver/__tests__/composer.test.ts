@@ -291,4 +291,40 @@ describe('case-resolver composer', () => {
       plainText: 'Alpha',
     });
   });
+
+  it('applies node-level trailing newline and text color wrappers', () => {
+    const graph: CaseResolverGraph = {
+      nodes: [
+        createPromptNode({ id: 'source', title: 'Source', template: 'Alpha', x: 0, y: 0 }),
+      ],
+      edges: [],
+      nodeMeta: {
+        source: {
+          role: 'text_note',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '',
+          surroundSuffix: '',
+          appendTrailingNewline: true,
+          textColor: '#ff0000',
+        },
+      },
+      edgeMeta: {},
+      pdfExtractionPresetId: 'plain_text',
+      documentFileLinksByNode: {},
+      documentDropNodeId: null,
+      documentSourceFileIdByNode: {
+        source: 'file-source',
+      },
+    };
+
+    const compiled = compileCaseResolverPrompt(graph, 'source');
+
+    expect(compiled.outputsByNode['source']).toEqual({
+      textfield: 'Alpha',
+      content: '<span style=\"color: #ff0000;\">Alpha\n</span>',
+      plainText: 'Alpha',
+    });
+    expect(compiled.prompt).toBe('<span style=\"color: #ff0000;\">Alpha\n</span>');
+  });
 });

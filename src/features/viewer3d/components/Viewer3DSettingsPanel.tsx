@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { Button, SelectSimple, Input, FormSection, FormField, Checkbox } from '@/shared/ui';
+import { Button, SelectSimple, Input, FormSection, FormField, Checkbox, Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useViewer3D, orderedDitheringPresets, type OrderedDitheringPresetKey } from '../context/Viewer3DContext';
@@ -80,53 +80,43 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
 
   return (
     <div className='w-full h-full flex flex-col'>
-      {/* Tabs */}
-      <div className='flex border-b border-gray-700'>
-        <Button
-          variant='ghost'
-          onClick={() => setActiveTab('environment')}
-          className={cn(
-            'flex-1 py-2 px-3 text-sm font-medium transition-colors rounded-none h-auto',
-            activeTab === 'environment'
-              ? 'text-white border-b-2 border-blue-500 bg-transparent'
-              : 'text-gray-400 hover:text-white'
-          )}
-        >
-          <Sun className='h-4 w-4 inline mr-1' />
-          Environment
-        </Button>
-        <Button
-          variant='ghost'
-          onClick={() => setActiveTab('effects')}
-          className={cn(
-            'flex-1 py-2 px-3 text-sm font-medium transition-colors rounded-none h-auto',
-            activeTab === 'effects'
-              ? 'text-white border-b-2 border-blue-500 bg-transparent'
-              : 'text-gray-400 hover:text-white'
-          )}
-        >
-          <Sparkles className='h-4 w-4 inline mr-1' />
-          Effects
-        </Button>
-        <Button
-          variant='ghost'
-          onClick={() => setActiveTab('view')}
-          className={cn(
-            'flex-1 py-2 px-3 text-sm font-medium transition-colors rounded-none h-auto',
-            activeTab === 'view'
-              ? 'text-white border-b-2 border-blue-500 bg-transparent'
-              : 'text-gray-400 hover:text-white'
-          )}
-        >
-          <Eye className='h-4 w-4 inline mr-1' />
-          View
-        </Button>
-      </div>
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as 'environment' | 'effects' | 'view')}
+        className='flex flex-col h-full'
+      >
+        <TabsList className='flex border-b border-gray-700 h-auto bg-transparent p-0 rounded-none'>
+          <TabsTrigger
+            value='environment'
+            className={cn(
+              'flex-1 py-2 px-3 text-sm font-medium transition-colors rounded-none h-auto data-[state=active]:bg-transparent data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 text-gray-400 hover:text-white border-b-2 border-transparent'
+            )}
+          >
+            <Sun className='h-4 w-4 inline mr-1' />
+            Environment
+          </TabsTrigger>
+          <TabsTrigger
+            value='effects'
+            className={cn(
+              'flex-1 py-2 px-3 text-sm font-medium transition-colors rounded-none h-auto data-[state=active]:bg-transparent data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 text-gray-400 hover:text-white border-b-2 border-transparent'
+            )}
+          >
+            <Sparkles className='h-4 w-4 inline mr-1' />
+            Effects
+          </TabsTrigger>
+          <TabsTrigger
+            value='view'
+            className={cn(
+              'flex-1 py-2 px-3 text-sm font-medium transition-colors rounded-none h-auto data-[state=active]:bg-transparent data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500 text-gray-400 hover:text-white border-b-2 border-transparent'
+            )}
+          >
+            <Eye className='h-4 w-4 inline mr-1' />
+            View
+          </TabsTrigger>
+        </TabsList>
 
-      <div className='p-4 space-y-4 overflow-y-auto flex-1'>
-        {/* Environment Tab */}
-        {activeTab === 'environment' && (
-          <div className='space-y-4'>
+        <div className='flex-1 overflow-y-auto'>
+          <TabsContent value='environment' className='p-4 space-y-4 mt-0'>
             {/* Environment Preset */}
             <FormField label='HDR Environment'>
               <SelectSimple size='sm'
@@ -200,35 +190,32 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
             {/* Shadows */}
             <FormSection title='Environment Options' variant='subtle' className='p-3 space-y-3'>
               <div className='space-y-2 mt-2'>
-                <label className='flex items-center gap-3 cursor-pointer'>
-                  <Checkbox
-                    checked={enableShadows}
-                    onCheckedChange={(checked: boolean | 'indeterminate') => setEnableShadows(Boolean(checked))}
-                  />
-                  <span className='text-sm text-gray-300'>Enable Shadows</span>
-                </label>
-                <label className='flex items-center gap-3 cursor-pointer'>
-                  <Checkbox
-                    checked={enableContactShadows}
-                    onCheckedChange={(checked: boolean | 'indeterminate') => setEnableContactShadows(Boolean(checked))}
-                  />
-                  <span className='text-sm text-gray-300'>Contact Shadows</span>
-                </label>
-                <label className='flex items-center gap-3 cursor-pointer'>
-                  <Checkbox
-                    checked={showGround}
-                    onCheckedChange={(checked: boolean | 'indeterminate') => setShowGround(Boolean(checked))}
-                  />
-                  <span className='text-sm text-gray-300'>Show Ground</span>
-                </label>
+                <ToggleRow
+                  label='Enable Shadows'
+                  checked={enableShadows}
+                  onCheckedChange={setEnableShadows}
+                  type='checkbox'
+                  className='bg-transparent border-none p-0 hover:bg-transparent'
+                />
+                <ToggleRow
+                  label='Contact Shadows'
+                  checked={enableContactShadows}
+                  onCheckedChange={setEnableContactShadows}
+                  type='checkbox'
+                  className='bg-transparent border-none p-0 hover:bg-transparent'
+                />
+                <ToggleRow
+                  label='Show Ground'
+                  checked={showGround}
+                  onCheckedChange={setShowGround}
+                  type='checkbox'
+                  className='bg-transparent border-none p-0 hover:bg-transparent'
+                />
               </div>
             </FormSection>
-          </div>
-        )}
+          </TabsContent>
 
-        {/* Effects Tab */}
-        {activeTab === 'effects' && (
-          <div className='space-y-4'>
+          <TabsContent value='effects' className='p-4 space-y-4 mt-0'>
             {/* Tone Mapping */}
             <FormSection
               title='ACES Tone Mapping'
@@ -278,10 +265,13 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
             </FormSection>
 
             {/* Vignette */}
-            <div className='flex items-center justify-between p-3 rounded-md border border-border/40 bg-gray-900/40'>
-              <span className='text-sm text-gray-300'>Vignette</span>
-              <Checkbox checked={enableVignette} onCheckedChange={(v) => setEnableVignette(Boolean(v))} />
-            </div>
+            <ToggleRow
+              label='Vignette'
+              checked={enableVignette}
+              onCheckedChange={setEnableVignette}
+              type='checkbox'
+              className='p-3 rounded-md border border-border/40 bg-gray-900/40'
+            />
 
             {/* Pixelation */}
             <FormSection
@@ -379,26 +369,26 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                     />
                   </FormField>
                   <div className='space-y-2'>
-                    <div className='flex items-center gap-3'>
-                      <Checkbox
-                        checked={orderedDitheringGrayscaleOnly}
-                        onCheckedChange={(v) => {
-                          setOrderedDitheringGrayscaleOnly(Boolean(v));
-                          setOrderedDitheringPreset('custom');
-                        }}
-                      />
-                      <span className='text-xs text-gray-300'>Grayscale only</span>
-                    </div>
-                    <div className='flex items-center gap-3'>
-                      <Checkbox
-                        checked={orderedDitheringInvertColor}
-                        onCheckedChange={(v) => {
-                          setOrderedDitheringInvertColor(Boolean(v));
-                          setOrderedDitheringPreset('custom');
-                        }}
-                      />
-                      <span className='text-xs text-gray-300'>Invert colors</span>
-                    </div>
+                    <ToggleRow
+                      label='Grayscale only'
+                      checked={orderedDitheringGrayscaleOnly}
+                      onCheckedChange={(v) => {
+                        setOrderedDitheringGrayscaleOnly(v);
+                        setOrderedDitheringPreset('custom');
+                      }}
+                      type='checkbox'
+                      className='bg-transparent border-none p-0 hover:bg-transparent'
+                    />
+                    <ToggleRow
+                      label='Invert colors'
+                      checked={orderedDitheringInvertColor}
+                      onCheckedChange={(v) => {
+                        setOrderedDitheringInvertColor(v);
+                        setOrderedDitheringPreset('custom');
+                      }}
+                      type='checkbox'
+                      className='bg-transparent border-none p-0 hover:bg-transparent'
+                    />
                   </div>
                 </div>
               )}
@@ -428,12 +418,9 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                 </div>
               )}
             </FormSection>
-          </div>
-        )}
+          </TabsContent>
 
-        {/* View Tab */}
-        {activeTab === 'view' && (
-          <div className='space-y-4'>
+          <TabsContent value='view' className='p-4 space-y-4 mt-0'>
             {/* Auto Rotate */}
             <FormSection
               title='Auto-rotate'
@@ -466,9 +453,9 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                 <p>• Scroll to zoom</p>
               </div>
             </FormSection>
-          </div>
-        )}
-      </div>
+          </TabsContent>
+        </div>
+      </Tabs>
     </div>
   );
 }

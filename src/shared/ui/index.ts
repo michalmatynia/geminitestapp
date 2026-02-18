@@ -73,6 +73,7 @@ export * from './form-section';
 export * from './ResourceCard';
 export * from './metadata-item';
 export * from './documentation-section';
+export * from './Drawer';
 export * from './SidePanel';
 export * from './DynamicFilters';
 export * from './templates/SettingsFormModal';

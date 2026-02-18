@@ -6,6 +6,7 @@ import type {
   CaseResolverAssetFile,
   CaseResolverAssetKind,
   CaseResolverCategory,
+  CaseResolverEditorNodeContext,
   CaseResolverFile,
   CaseResolverGraph,
   CaseResolverIdentifier,
@@ -66,7 +67,10 @@ export type CaseResolverPageContextValue = {
   onDeleteFile: (fileId: string) => void;
   onDeleteAsset: (assetId: string) => void;
   onToggleFileLock: (fileId: string) => void;
-  onEditFile: (fileId: string) => void;
+  onEditFile: (
+    fileId: string,
+    options?: { nodeContext?: CaseResolverEditorNodeContext | null }
+  ) => void;
   caseResolverTags: CaseResolverTag[];
   caseResolverIdentifiers: CaseResolverIdentifier[];
   caseResolverCategories: CaseResolverCategory[];

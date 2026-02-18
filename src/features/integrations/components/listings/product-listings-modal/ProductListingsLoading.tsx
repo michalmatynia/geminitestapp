@@ -2,8 +2,10 @@
 
 import React from 'react';
 
+import { LoadingState } from '@/shared/ui';
+
 export function ProductListingsLoading(): React.JSX.Element {
   return (
-    <p className='text-sm text-gray-400'>Loading listings...</p>
+    <LoadingState message='Loading listings...' className='py-8' />
   );
 }

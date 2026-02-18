@@ -79,6 +79,22 @@ export const imageFileListFiltersSchema = z.object({
 export type ImageFileListFiltersDto = z.infer<typeof imageFileListFiltersSchema>;
 
 /**
+ * Image File Operation DTOs
+ */
+
+export const imageFileCreateInputSchema = z.object({
+  filename: z.string(),
+  filepath: z.string(),
+  mimetype: z.string(),
+  size: z.number(),
+  width: z.number().nullable().optional(),
+  height: z.number().nullable().optional(),
+  tags: z.array(z.string()).nullable().optional(),
+});
+
+export type ImageFileCreateInputDto = z.infer<typeof imageFileCreateInputSchema>;
+
+/**
  * Upload DTOs
  */
 

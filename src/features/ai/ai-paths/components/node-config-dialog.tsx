@@ -8,20 +8,13 @@ import type {
 } from '@/features/ai/ai-paths/lib';
 import { stableStringify } from '@/features/ai/ai-paths/lib';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
   AppModal,
   Button,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
+  ConfirmModal,
 } from '@/shared/ui';
 
 import { AiPathConfigProviderWithContext, useAiPathConfig } from './AiPathConfigContext';
@@ -224,14 +217,41 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
           }
           requestClose();
         }}
-        title={
-          <div className='flex items-center gap-2'>
-            <span>Configure {selectedNodeSafe.title}</span>
-            {isScheduledTrigger ? (
-              <span className='rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[10px] uppercase text-amber-200'>
-                Scheduled
-              </span>
-            ) : null}
+        title={`Configure ${selectedNodeSafe.title}`}
+        showClose={false}
+        header={
+          <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
+            <div className='min-w-0'>
+              <div className='flex min-w-0 items-center gap-2'>
+                <Button
+                  type='button'
+                  size='sm'
+                  className='rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10 disabled:opacity-50'
+                  disabled={!hasUnsavedChanges || isPathLocked}
+                  onClick={handleUpdateNode}
+                >
+                  Update Node
+                </Button>
+                <h2 className='truncate text-2xl font-bold tracking-tight text-white'>
+                  Configure {selectedNodeSafe.title}
+                </h2>
+                {isScheduledTrigger ? (
+                  <span className='rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[10px] uppercase text-amber-200'>
+                    Scheduled
+                  </span>
+                ) : null}
+              </div>
+            </div>
+            <div className='flex flex-wrap items-center justify-end gap-2'>
+              <Button
+                type='button'
+                onClick={requestClose}
+                variant='outline'
+                className='min-w-[100px]'
+              >
+                Close
+              </Button>
+            </div>
           </div>
         }
         size='lg'
@@ -244,31 +264,11 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
               <TabsTrigger value='history'>History</TabsTrigger>
             </TabsList>
             <TabsContent value='settings'>
-              <div className='mb-4 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-card/60 px-3 py-2'>
+              <div className='mb-4 rounded-md border border-border bg-card/60 px-3 py-2'>
                 <div className='text-[11px] text-gray-400'>
                   {hasUnsavedChanges
                     ? 'Unsaved changes (manual update required).'
                     : 'Node settings are applied in canvas. Click "Save Path" to persist.'}
-                </div>
-                <div className='flex items-center gap-2'>
-                  <Button
-                    type='button'
-                    size='sm'
-                    className='rounded-md border border-muted-foreground/40 text-xs text-gray-300 hover:bg-muted/50 disabled:opacity-50'
-                    disabled={!hasUnsavedChanges}
-                    onClick={handleDiscardChanges}
-                  >
-                    Discard Changes
-                  </Button>
-                  <Button
-                    type='button'
-                    size='sm'
-                    className='rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10 disabled:opacity-50'
-                    disabled={!hasUnsavedChanges || isPathLocked}
-                    onClick={handleUpdateNode}
-                  >
-                    Update Node
-                  </Button>
                 </div>
               </div>
               <NodeConfigurationSections />
@@ -301,39 +301,24 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
           </Button>
         </div>
       </AppModal>
-      <AlertDialog open={closePromptOpen} onOpenChange={setClosePromptOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
-            <AlertDialogDescription>
-              You have unsaved changes for this node. Save before closing?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setClosePromptOpen(false)}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(event): void => {
-                event.preventDefault();
-                handleDiscardAndClose();
-              }}
-              className='bg-muted text-gray-200 hover:bg-muted/80'
-            >
-              Discard
-            </AlertDialogAction>
-            <AlertDialogAction
-              onClick={(event): void => {
-                event.preventDefault();
-                handleSaveAndClose();
-              }}
-              className='bg-emerald-600 text-white hover:bg-emerald-700'
-            >
-              Save & Close
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmModal
+        isOpen={closePromptOpen}
+        onClose={() => setClosePromptOpen(false)}
+        title='Unsaved Changes'
+        message='You have unsaved changes for this node. Save before closing?'
+        confirmText='Save & Close'
+        cancelText='Keep Editing'
+        onConfirm={handleSaveAndClose}
+        extraAction={
+          <Button
+            variant='ghost'
+            onClick={handleDiscardAndClose}
+            className='bg-muted text-gray-200 hover:bg-muted/80'
+          >
+            Discard
+          </Button>
+        }
+      />
     </>
   );
 }

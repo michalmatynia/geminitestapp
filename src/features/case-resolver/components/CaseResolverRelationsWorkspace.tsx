@@ -3,7 +3,7 @@
 import { Link2, Network } from 'lucide-react';
 import React from 'react';
 
-import { StatusBadge } from '@/shared/ui';
+import { StatusBadge, EmptyState } from '@/shared/ui';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 
@@ -271,13 +271,12 @@ export function CaseResolverRelationsWorkspace(): React.JSX.Element {
 
   if (caseFiles.length === 0) {
     return (
-      <div className='flex h-full items-center justify-center rounded-lg border border-dashed border-border/60 bg-card/15'>
-        <div className='text-center text-gray-400'>
-          <Network className='mx-auto mb-3 size-9 text-gray-500' />
-          <div className='text-sm font-medium text-gray-300'>No cases to visualize</div>
-          <div className='mt-1 text-xs text-gray-500'>Create a case to see relation segments.</div>
-        </div>
-      </div>
+      <EmptyState
+        title='No cases to visualize'
+        description='Create a case to see relation segments.'
+        icon={<Network className='mx-auto size-12 opacity-60' />}
+        className='h-full'
+      />
     );
   }
 

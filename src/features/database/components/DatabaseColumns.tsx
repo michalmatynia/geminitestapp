@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, DataTableSortableHeader } from '@/shared/ui';
+import { ActionMenu, Button, DataTableSortableHeader, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui';
 
 import type { DatabaseInfo } from '../types';
 import type { ColumnDef, Row } from '@tanstack/react-table';
@@ -60,39 +60,30 @@ export const getDatabaseColumns = (options?: {
     cell: ({ row }: { row: { original: DatabaseInfo } }): React.JSX.Element => {
       const backup = row.original;
       return (
-        <div className='flex space-x-2'>
-          {options?.onPreview && (
-            <Button
-              variant='secondary'
-              size='xs'
-              onClick={(): void => options.onPreview?.(backup.name)}
+        <div className='flex justify-end'>
+          <ActionMenu>
+            {options?.onPreview && (
+              <DropdownMenuItem onClick={() => options.onPreview?.(backup.name)}>
+                Preview
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem
+              disabled={Boolean(options?.disableRestore)}
+              title={options?.disableRestore ? options.restoreDisabledReason : undefined}
+              onClick={() => options?.onRestoreRequest?.(backup)}
             >
-              Preview
-            </Button>
-          )}
-
-          <Button
-            size='xs'
-            disabled={Boolean(options?.disableRestore)}
-            title={options?.disableRestore ? options.restoreDisabledReason : undefined}
-            onClick={(): void => {
-              options?.onRestoreRequest?.(backup);
-            }}
-          >
-            Restore
-          </Button>
-
-          <Button
-            variant='destructive'
-            size='xs'
-            disabled={Boolean(options?.disableDelete)}
-            title={options?.disableDelete ? options.deleteDisabledReason : undefined}
-            onClick={(): void => {
-              options?.onDeleteRequest?.(backup.name);
-            }}
-          >
-            Delete
-          </Button>
+              Restore
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className='text-destructive focus:text-destructive'
+              disabled={Boolean(options?.disableDelete)}
+              title={options?.disableDelete ? options.deleteDisabledReason : undefined}
+              onClick={() => options?.onDeleteRequest?.(backup.name)}
+            >
+              Delete
+            </DropdownMenuItem>
+          </ActionMenu>
         </div>
       );
     },

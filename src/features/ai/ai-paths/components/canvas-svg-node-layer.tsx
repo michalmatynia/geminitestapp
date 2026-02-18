@@ -12,12 +12,16 @@ import {
   NODE_MIN_HEIGHT,
   NODE_WIDTH,
   PORT_SIZE,
+  formatRuntimeValue,
   formatDurationMs,
   getPortOffsetY,
   validateConnection,
 } from '@/features/ai/ai-paths/lib';
 
-import { buildConnectorInfo } from './canvas-board-connectors';
+import {
+  buildConnectorInfo,
+  type ConnectorInfo,
+} from './canvas-board-connectors';
 import { formatPortLabel } from '../utils/ui-utils';
 
 type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping';
@@ -187,22 +191,32 @@ const statusPalette = (
   };
 };
 
-const buildConnectorTitle = (
-  direction: 'input' | 'output',
-  label: string,
-  expectedLabel: string,
-  actualType: string | null,
-  hasMismatch: boolean
-): string =>
-  [
-    `${direction === 'input' ? 'Input' : 'Output'}: ${label}`,
-    `Expected: ${expectedLabel}`,
-    actualType ? `Actual: ${actualType}` : null,
-    hasMismatch ? 'Type mismatch detected.' : null,
+const summarizeTitleValue = (value: unknown): string => {
+  if (value === undefined) return 'No data yet.';
+  const formatted = formatRuntimeValue(value)
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!formatted) return 'No data yet.';
+  return formatted.length > 220 ? `${formatted.slice(0, 220)}...` : formatted;
+};
+
+const buildConnectorTitle = (info: ConnectorInfo): string => {
+  const label = info.direction === 'input' ? 'Input' : 'Output';
+  return [
+    `${label}: ${formatPortLabel(info.port)}`,
+    `Expected: ${info.expectedLabel}`,
+    info.actualType ? `Actual: ${info.actualType}` : null,
+    info.hasMismatch ? 'Type mismatch detected.' : null,
+    '',
+    `Port value: ${summarizeTitleValue(info.value)}`,
+    `Node inputs: ${summarizeTitleValue(info.nodeInputs)}`,
+    `Node outputs: ${summarizeTitleValue(info.nodeOutputs)}`,
+    '',
     'Right-click to disconnect.',
   ]
-    .filter(Boolean)
+    .filter((line): line is string => line !== null)
     .join('\n');
+};
 
 export function CanvasSvgNodeLayer({
   nodes,
@@ -254,15 +268,26 @@ export function CanvasSvgNodeLayer({
     (direction: 'input' | 'output', nodeId: string, port: string): unknown => {
       const source = direction === 'input' ? runtimeState.inputs : runtimeState.outputs;
       const nodeValues = source?.[nodeId] ?? {};
-      const directValue = (nodeValues as Record<string, unknown>)[port];
+      const directValue = nodeValues[port];
       if (directValue !== undefined) return directValue;
       const history = runtimeState.history?.[nodeId];
       if (!Array.isArray(history) || history.length === 0) return directValue;
       const lastEntry = history[history.length - 1];
       const fallbackSource = direction === 'input' ? lastEntry?.inputs : lastEntry?.outputs;
-      return (fallbackSource as Record<string, unknown> | undefined)?.[port];
+      return fallbackSource?.[port];
     },
     [runtimeState.history, runtimeState.inputs, runtimeState.outputs]
+  );
+
+  const getNodeRuntimeData = React.useCallback(
+    (nodeId: string): {
+      inputs: Record<string, unknown> | undefined;
+      outputs: Record<string, unknown> | undefined;
+    } => ({
+      inputs: runtimeState.inputs[nodeId],
+      outputs: runtimeState.outputs[nodeId],
+    }),
+    [runtimeState.inputs, runtimeState.outputs]
   );
 
   const getConnectorInfo = React.useCallback(
@@ -274,8 +299,9 @@ export function CanvasSvgNodeLayer({
         edges,
         nodeById,
         getPortValue,
+        getNodeRuntimeData,
       }),
-    [edges, getPortValue, nodeById]
+    [edges, getNodeRuntimeData, getPortValue, nodeById]
   );
 
   const incomingEdgePortSet = React.useMemo((): Set<string> => {
@@ -336,11 +362,9 @@ export function CanvasSvgNodeLayer({
         const runtimeNodeStatusRaw =
           runtimeNodeStatuses?.[node.id] ??
           (runtimeRunStatus !== 'idle' &&
-          typeof (runtimeState.outputs[node.id] as Record<string, unknown> | undefined)?.['status'] ===
+          typeof runtimeState.outputs[node.id]?.['status'] ===
             'string'
-            ? ((runtimeState.outputs[node.id] as Record<string, unknown> | undefined)?.[
-              'status'
-            ] as string)
+            ? runtimeState.outputs[node.id]?.['status']
             : null);
         const runtimeNodeStatus =
           typeof runtimeNodeStatusRaw === 'string' && runtimeNodeStatusRaw.trim().length > 0
@@ -665,13 +689,7 @@ export function CanvasSvgNodeLayer({
                       }}
                     >
                       <title>
-                        {buildConnectorTitle(
-                          'input',
-                          formatPortLabel(input),
-                          connectorInfo.expectedLabel,
-                          connectorInfo.actualType,
-                          hasMismatch
-                        )}
+                        {buildConnectorTitle(connectorInfo)}
                       </title>
                     </circle>
                     <circle
@@ -762,13 +780,7 @@ export function CanvasSvgNodeLayer({
                       }}
                     >
                       <title>
-                        {buildConnectorTitle(
-                          'output',
-                          formatPortLabel(output),
-                          connectorInfo.expectedLabel,
-                          connectorInfo.actualType,
-                          hasMismatch
-                        )}
+                        {buildConnectorTitle(connectorInfo)}
                       </title>
                     </circle>
                     <circle

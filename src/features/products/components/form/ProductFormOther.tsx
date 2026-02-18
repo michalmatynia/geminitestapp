@@ -14,7 +14,7 @@ import {
   getIssueReplacementPreview,
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
-import { Button, Input, SelectSimple, FormSection, FormField, DataTable, StatusBadge, Alert } from '@/shared/ui';
+import { Button, Input, SelectSimple, FormSection, FormField, DataTable, StatusBadge, Alert, Label } from '@/shared/ui';
 
 import { ValidatorIssueHint } from './ProductFormGeneral';
 
@@ -225,7 +225,7 @@ export default function ProductFormOther({
 
           {selectedDefaultPriceGroupId && filteredPriceGroups.length > 0 && (
             <div className='md:col-span-2 space-y-2'>
-              <label className='text-[11px] font-medium uppercase tracking-wider text-gray-400'>Price Groups Overview</label>
+              <Label className='text-[11px] font-medium uppercase tracking-wider text-gray-400'>Price Groups Overview</Label>
               <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
                 <DataTable
                   columns={[

@@ -4,7 +4,7 @@ import { PlusIcon, SettingsIcon } from 'lucide-react';
 import Link from 'next/link';
 
 import { useIntegrationList } from '@/features/integrations/hooks/useIntegrationList';
-import { Button, ListPanel, StatusBadge } from '@/shared/ui';
+import { Button, ListPanel, StatusBadge, Badge, Card } from '@/shared/ui';
 
 
 export function IntegrationList(): React.JSX.Element {
@@ -31,19 +31,19 @@ export function IntegrationList(): React.JSX.Element {
         </Button>
       }
     >
-      <div className='relative overflow-hidden rounded-xl border border-border/60 bg-card/40 p-6'>
+      <Card variant='glass' padding='lg' className='relative overflow-hidden'>
         <div className='absolute -left-20 -top-20 size-64 rounded-full bg-emerald-500/10 blur-3xl' />
         <div className='absolute -bottom-24 right-10 size-72 rounded-full bg-sky-500/10 blur-3xl' />
         <div className='absolute -right-16 top-20 size-48 rounded-full bg-purple-500/10 blur-3xl' />
 
         <div className='relative mx-auto flex min-h-[420px] max-w-5xl items-center justify-center'>
           <div className='relative z-10 flex flex-col items-center gap-6'>
-            <div className='rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-6 py-5 text-center text-white shadow-lg'>
+            <Card variant='subtle' padding='lg' className='border-emerald-400/40 bg-emerald-500/10 text-center shadow-lg rounded-2xl'>
               <p className='text-xs uppercase tracking-[0.3em] text-emerald-200'>
                 Core
               </p>
-              <p className='mt-2 text-xl font-semibold'>Stardb Hub</p>
-            </div>
+              <p className='mt-2 text-xl font-semibold text-white'>Stardb Hub</p>
+            </Card>
             <div className='flex flex-wrap items-center justify-center gap-3'>
               {[
                 { 
@@ -51,7 +51,7 @@ export function IntegrationList(): React.JSX.Element {
                   label: 'Tradera', 
                   type: 'Browser', 
                   variant: 'warning' as const, 
-                  color: 'sky',
+                  color: 'info' as const,
                   definition: traderaDefinition 
                 },
                 { 
@@ -59,7 +59,7 @@ export function IntegrationList(): React.JSX.Element {
                   label: 'Tradera API', 
                   type: 'API', 
                   variant: 'info' as const, 
-                  color: 'cyan',
+                  color: 'info' as const,
                   definition: traderaApiDefinition 
                 },
                 { 
@@ -67,7 +67,7 @@ export function IntegrationList(): React.JSX.Element {
                   label: 'Allegro', 
                   type: 'API', 
                   variant: 'info' as const, 
-                  color: 'amber',
+                  color: 'warning' as const,
                   definition: allegroDefinition 
                 },
                 { 
@@ -75,22 +75,20 @@ export function IntegrationList(): React.JSX.Element {
                   label: 'Baselinker', 
                   type: 'Platform', 
                   variant: 'processing' as const, 
-                  color: 'purple',
+                  color: 'active' as const,
                   definition: baselinkerDefinition 
                 }
               ].map((item) => {
                 if (!integrationSlugs.includes(item.slug)) return null;
-                const borderClass = {
-                  sky: 'border-sky-400/50 bg-sky-500/10 text-sky-200',
-                  cyan: 'border-cyan-400/50 bg-cyan-500/10 text-cyan-200',
-                  amber: 'border-amber-400/50 bg-amber-500/10 text-amber-200',
-                  purple: 'border-purple-400/50 bg-purple-500/10 text-purple-200',
-                }[item.color];
 
                 return (
-                  <div key={item.slug} className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs ${borderClass}`}>
+                  <Badge
+                    key={item.slug}
+                    variant={item.color}
+                    className='flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-normal'
+                  >
                     <StatusBadge status={item.type} variant={item.variant} size='sm' className='h-4 font-bold' />
-                    {item.label}
+                    <span className='font-medium'>{item.label}</span>
                     <Button
                       type='button'
                       onClick={() => {
@@ -98,12 +96,12 @@ export function IntegrationList(): React.JSX.Element {
                           void handleIntegrationClick(item.definition);
                         }
                       }}
-                      className='rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20'
+                      className='h-6 w-6 rounded-full border border-white/20 bg-white/10 p-0 text-white hover:bg-white/20'
                       aria-label={`Manage ${item.label} settings`}
                     >
-                      <SettingsIcon className='size-3.5' />
+                      <SettingsIcon className='size-3' />
                     </Button>
-                  </div>
+                  </Badge>
                 );
               })}
               {!hasIntegrations && (
@@ -116,17 +114,17 @@ export function IntegrationList(): React.JSX.Element {
         </div>
 
         <div className='mt-6 grid gap-3 text-xs text-gray-500 md:grid-cols-3'>
-          <div className='rounded-md border border-border/40 bg-card/30 p-3 text-xs text-muted-foreground'>
+          <Card variant='subtle-compact' padding='sm' className='text-xs text-muted-foreground'>
             Connect marketplaces and automate listings.
-          </div>
-          <div className='rounded-md border border-border/40 bg-card/30 p-3 text-xs text-muted-foreground'>
+          </Card>
+          <Card variant='subtle-compact' padding='sm' className='text-xs text-muted-foreground'>
             Monitor sync status and data flow.
-          </div>
-          <div className='rounded-md border border-border/40 bg-card/30 p-3 text-xs text-muted-foreground'>
+          </Card>
+          <Card variant='subtle-compact' padding='sm' className='text-xs text-muted-foreground'>
             Add new nodes to expand your stack.
-          </div>
+          </Card>
         </div>
-      </div>
+      </Card>
     </ListPanel>
   );
 }

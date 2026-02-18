@@ -89,7 +89,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
       normalizedNodes.some((node: AiNode): boolean => {
         if (node.type !== 'iterator') return false;
         if (node.config?.iterator?.autoContinue === false) return false;
-        const status = (rtState.outputs?.[node.id] as Record<string, unknown> | undefined)?.['status'];
+        const status = rtState.outputs?.[node.id]?.['status'];
         return status === 'advance_pending';
       }),
     [normalizedNodes]
@@ -149,7 +149,8 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     runtimeStateRef.current = args.runtimeState;
   }, [args.runtimeState]);
 
-  // Cleanup effect
+  // Cleanup only on unmount. Depending on the whole `server` object causes
+  // cleanup to fire on normal rerenders, which aborts active local runs.
   useEffect(() => {
     return () => {
       server.stopServerRunStream();
@@ -157,7 +158,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
         abortControllerRef.current.abort();
       }
     };
-  }, [server]);
+  }, [server.stopServerRunStream]);
 
   // Additional High-level Handlers
   const handleFireTrigger = useCallback(

@@ -21,6 +21,7 @@ import {
   AppModal,
   Badge,
   Button,
+  Checkbox,
   Input,
   FormField,
   MultiSelect,
@@ -44,16 +45,20 @@ import { PromptExploderCaptureMappingModal } from './PromptExploderCaptureMappin
 import {
   CaseResolverPageProvider,
 } from '../context/CaseResolverPageContext';
+import { emitCaseResolverShowDocumentInCanvas } from '../drag';
 import { useCaseResolverState } from '../hooks/useCaseResolverState';
+import { buildCaseResolverNodeFileRelationIndexFromAssets } from '../nodefile-relations';
 import { resolveCaseResolverOcrProviderLabel } from '../ocr-provider';
 
-import type {
-  CaseResolverDocumentHistoryEntry,
-  CaseResolverFileEditDraft,
-  CaseResolverFile,
-  CaseResolverGraph,
-  CaseResolverIdentifier,
-  CaseResolverRelationGraph,
+import {
+  CASE_RESOLVER_QUOTE_MODE_OPTIONS,
+  type CaseResolverDocumentHistoryEntry,
+  type CaseResolverFileEditDraft,
+  type CaseResolverFile,
+  type CaseResolverGraph,
+  type CaseResolverIdentifier,
+  type CaseResolverNodeMeta,
+  type CaseResolverRelationGraph,
 } from '../types';
 
 const ENABLE_CASE_RESOLVER_MULTIFORMAT_EDITOR =
@@ -91,6 +96,13 @@ type CaseResolverPageViewProps = {
   handleDeleteScanDraftSlot: (slotId: string) => void;
   handleRunScanDraftOcr: () => void;
   updateEditingDocumentDraft: (patch: Partial<CaseResolverFileEditDraft>) => void;
+  editingDocumentNodeMeta: (CaseResolverNodeMeta & {
+    nodeId: string;
+    nodeTitle: string;
+    canvasFileId: string;
+    canvasFileName: string;
+  }) | null;
+  updateEditingDocumentNodeMeta: (patch: Partial<CaseResolverNodeMeta>) => void;
   caseTagOptions: SelectOption[];
   caseIdentifierOptions: SelectOption[];
   caseCategoryOptions: SelectOption[];
@@ -149,6 +161,8 @@ const formatHistoryTimestamp = (value: string): string => {
   }).format(parsed);
 };
 
+const CASE_RESOLVER_NODE_TEXT_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
 export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JSX.Element {
   const router = useRouter();
   const [showMarkdownPreview, setShowMarkdownPreview] = React.useState(true);
@@ -169,6 +183,8 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     handleDeleteScanDraftSlot,
     handleRunScanDraftOcr,
     updateEditingDocumentDraft,
+    editingDocumentNodeMeta,
+    updateEditingDocumentNodeMeta,
     caseTagOptions,
     caseIdentifierOptions,
     caseCategoryOptions,
@@ -318,6 +334,64 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     activeCaseIdentifierLabel,
     handleFilterCasesBySignatureId,
   ]);
+  const connectedNodeCanvasLinks = React.useMemo((): Array<{
+    assetId: string;
+    label: string;
+  }> => {
+    if (!editingDocumentDraft || editingDocumentDraft.fileType === 'case') {
+      return [];
+    }
+    const relationIndex = buildCaseResolverNodeFileRelationIndexFromAssets({
+      assets: workspace.assets,
+    });
+    const linkedAssetIds = relationIndex.nodeFileAssetIdsByDocumentFileId[editingDocumentDraft.id] ?? [];
+    return linkedAssetIds
+      .map((assetId: string) => workspace.assets.find((asset) => asset.id === assetId) ?? null)
+      .filter((asset): asset is NonNullable<typeof asset> => asset !== null && asset.kind === 'node_file')
+      .map((asset) => ({
+        assetId: asset.id,
+        label: asset.folder ? `${asset.name} (${asset.folder})` : asset.name,
+      }));
+  }, [editingDocumentDraft, workspace.assets]);
+  const handleOpenConnectedNodeCanvas = useCallback(
+    (assetId: string): void => {
+      const draftFileId = editingDocumentDraft?.id ?? null;
+      const openLinkedCanvas = (): void => {
+        handleDiscardFileEditorDraft();
+        setWorkspaceView('document');
+        handleSelectAsset(assetId);
+        if (!draftFileId) return;
+        window.setTimeout((): void => {
+          emitCaseResolverShowDocumentInCanvas({
+            fileId: draftFileId,
+            relatedNodeFileAssetIds: [assetId],
+          });
+        }, 0);
+      };
+
+      if (editingDocumentDraft && isEditorDraftDirty) {
+        confirmAction({
+          title: 'Unsaved Changes',
+          message: 'You have unsaved changes in this document. Keep editing or discard and open linked canvas?',
+          cancelText: 'Keep Editing',
+          confirmText: 'Discard + Open Canvas',
+          isDangerous: true,
+          onConfirm: openLinkedCanvas,
+        });
+        return;
+      }
+
+      openLinkedCanvas();
+    },
+    [
+      confirmAction,
+      editingDocumentDraft,
+      handleDiscardFileEditorDraft,
+      handleSelectAsset,
+      isEditorDraftDirty,
+      setWorkspaceView,
+    ]
+  );
 
   const handleCreateDocumentFromSearch = useCallback((): void => {
     setActiveMainView('workspace');
@@ -780,33 +854,170 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                     </FormField>
 
                     <FormField label='Addresser'>
-                      <SelectSimple
-                        size='sm'
-                        value={encodeFilemakerPartyReference(editingDocumentDraft.addresser)}
-                        onValueChange={(value: string): void => {
-                          updateEditingDocumentDraft({
-                            addresser: decodeFilemakerPartyReference(value),
-                          });
-                        }}
-                        options={partyOptions}
-                        placeholder='Select addresser'
-                        triggerClassName='h-9'
-                      />
+                      <div className='space-y-1'>
+                        <SelectSimple
+                          size='sm'
+                          value={encodeFilemakerPartyReference(editingDocumentDraft.addresser)}
+                          onValueChange={(value: string): void => {
+                            updateEditingDocumentDraft({
+                              addresser: decodeFilemakerPartyReference(value),
+                            });
+                          }}
+                          options={partyOptions}
+                          placeholder='Select addresser'
+                          triggerClassName='h-9'
+                        />
+                        <div className='flex justify-end'>
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='sm'
+                            className='h-6 px-2 text-[11px] text-gray-400 hover:text-gray-200'
+                            disabled={editingDocumentDraft.addresser === null}
+                            onClick={(): void => {
+                              updateEditingDocumentDraft({ addresser: null });
+                            }}
+                          >
+                            Clear
+                          </Button>
+                        </div>
+                      </div>
                     </FormField>
 
                     <FormField label='Addressee'>
-                      <SelectSimple
-                        size='sm'
-                        value={encodeFilemakerPartyReference(editingDocumentDraft.addressee)}
-                        onValueChange={(value: string): void => {
-                          updateEditingDocumentDraft({
-                            addressee: decodeFilemakerPartyReference(value),
-                          });
-                        }}
-                        options={partyOptions}
-                        placeholder='Select addressee'
-                        triggerClassName='h-9'
-                      />
+                      <div className='space-y-1'>
+                        <SelectSimple
+                          size='sm'
+                          value={encodeFilemakerPartyReference(editingDocumentDraft.addressee)}
+                          onValueChange={(value: string): void => {
+                            updateEditingDocumentDraft({
+                              addressee: decodeFilemakerPartyReference(value),
+                            });
+                          }}
+                          options={partyOptions}
+                          placeholder='Select addressee'
+                          triggerClassName='h-9'
+                        />
+                        <div className='flex justify-end'>
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='sm'
+                            className='h-6 px-2 text-[11px] text-gray-400 hover:text-gray-200'
+                            disabled={editingDocumentDraft.addressee === null}
+                            onClick={(): void => {
+                              updateEditingDocumentDraft({ addressee: null });
+                            }}
+                          >
+                            Clear
+                          </Button>
+                        </div>
+                      </div>
+                    </FormField>
+
+                    <FormField label='Connected Node Canvases' className='md:col-span-2'>
+                      {connectedNodeCanvasLinks.length === 0 ? (
+                        <div className='rounded border border-dashed border-border/60 px-3 py-2 text-xs text-gray-500'>
+                          Not connected to any node canvas yet. Add this document to a node canvas to link it.
+                        </div>
+                      ) : (
+                        <div className='flex flex-wrap gap-2'>
+                          {connectedNodeCanvasLinks.map((entry) => (
+                            <Button
+                              key={entry.assetId}
+                              type='button'
+                              variant='outline'
+                              size='sm'
+                              className='h-7 text-[11px]'
+                              onClick={(): void => {
+                                handleOpenConnectedNodeCanvas(entry.assetId);
+                              }}
+                            >
+                              {entry.label}
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+                    </FormField>
+
+                    <FormField label='Node Stream Settings' className='md:col-span-2'>
+                      {editingDocumentNodeMeta ? (
+                        <div className='space-y-3 rounded border border-border/60 bg-card/25 p-3'>
+                          <div className='text-[11px] text-gray-400'>
+                            Active node: <span className='text-gray-200'>{editingDocumentNodeMeta.nodeTitle}</span>{' '}
+                            in <span className='text-gray-200'>{editingDocumentNodeMeta.canvasFileName}</span>
+                          </div>
+                          <div className='grid gap-3 md:grid-cols-2'>
+                            <FormField label='Quotation Wrapper'>
+                              <SelectSimple
+                                size='sm'
+                                value={editingDocumentNodeMeta.quoteMode}
+                                onValueChange={(value: string): void => {
+                                  if (value === 'none' || value === 'double' || value === 'single') {
+                                    updateEditingDocumentNodeMeta({ quoteMode: value });
+                                  }
+                                }}
+                                options={CASE_RESOLVER_QUOTE_MODE_OPTIONS}
+                                triggerClassName='h-9'
+                              />
+                            </FormField>
+
+                            <div className='flex items-center justify-between rounded border border-border/60 bg-card/30 px-3 py-2'>
+                              <div className='text-xs text-gray-300'>Append new line at end</div>
+                              <Checkbox
+                                checked={editingDocumentNodeMeta.appendTrailingNewline === true}
+                                onCheckedChange={(checked: boolean): void => {
+                                  updateEditingDocumentNodeMeta({
+                                    appendTrailingNewline: checked,
+                                  });
+                                }}
+                              />
+                            </div>
+
+                            <FormField label='Text Color (Content Output)' className='md:col-span-2'>
+                              <div className='flex flex-wrap items-center gap-2'>
+                                <Input
+                                  type='color'
+                                  value={
+                                    CASE_RESOLVER_NODE_TEXT_COLOR_PATTERN.test(
+                                      editingDocumentNodeMeta.textColor ?? ''
+                                    )
+                                      ? editingDocumentNodeMeta.textColor
+                                      : '#ffffff'
+                                  }
+                                  onChange={(event): void => {
+                                    const nextColor = event.target.value.trim();
+                                    if (!CASE_RESOLVER_NODE_TEXT_COLOR_PATTERN.test(nextColor)) return;
+                                    updateEditingDocumentNodeMeta({ textColor: nextColor });
+                                  }}
+                                  className='h-9 w-14 p-1'
+                                />
+                                <Button
+                                  type='button'
+                                  variant='ghost'
+                                  size='sm'
+                                  className='h-7 px-2 text-[11px] text-gray-400 hover:text-gray-200'
+                                  disabled={!editingDocumentNodeMeta.textColor}
+                                  onClick={(): void => {
+                                    updateEditingDocumentNodeMeta({ textColor: '' });
+                                  }}
+                                >
+                                  Clear
+                                </Button>
+                                <span className='text-[11px] text-gray-500'>
+                                  {editingDocumentNodeMeta.textColor
+                                    ? `Using ${editingDocumentNodeMeta.textColor}`
+                                    : 'No color wrapper'}
+                                </span>
+                              </div>
+                            </FormField>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className='rounded border border-dashed border-border/60 px-3 py-2 text-xs text-gray-500'>
+                          Open this document from a canvas node to configure node-level stream formatting.
+                        </div>
+                      )}
                     </FormField>
 
                   </div>

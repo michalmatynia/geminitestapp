@@ -14,6 +14,7 @@ export interface ConfirmModalProps {
   message?: React.ReactNode;
   confirmText?: string;
   cancelText?: string;
+  extraAction?: React.ReactNode;
   loading?: boolean;
   isDangerous?: boolean;
   size?: 'sm' | 'md' | 'lg' | 'xl';
@@ -32,6 +33,7 @@ export function ConfirmModal({
   message,
   confirmText = 'Confirm',
   cancelText = 'Cancel',
+  extraAction,
   loading = false,
   isDangerous = false,
   size = 'sm',
@@ -56,6 +58,8 @@ export function ConfirmModal({
       showClose={false}
       footer={
         <div className='flex gap-2'>
+          {extraAction}
+          <div className='flex-1' />
           <Button
             onClick={onClose}
             variant='outline'

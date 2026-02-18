@@ -396,16 +396,27 @@ export function CanvasBoard({
     (direction: 'input' | 'output', nodeId: string, port: string): unknown => {
       const source = direction === 'input' ? runtimeState.inputs : runtimeState.outputs;
       const nodeValues = source?.[nodeId] ?? {};
-      const directValue = (nodeValues as Record<string, unknown>)[port];
+      const directValue = nodeValues[port];
       if (directValue !== undefined) return directValue;
       const history = runtimeState.history?.[nodeId];
       if (!Array.isArray(history) || history.length === 0) return directValue;
       const lastEntry = history[history.length - 1];
       const fallbackSource =
         direction === 'input' ? lastEntry?.inputs : lastEntry?.outputs;
-      return (fallbackSource as Record<string, unknown> | undefined)?.[port];
+      return fallbackSource?.[port];
     },
     [runtimeState]
+  );
+
+  const getNodeRuntimeData = React.useCallback(
+    (nodeId: string): {
+      inputs: Record<string, unknown> | undefined;
+      outputs: Record<string, unknown> | undefined;
+    } => ({
+      inputs: runtimeState.inputs[nodeId],
+      outputs: runtimeState.outputs[nodeId],
+    }),
+    [runtimeState.inputs, runtimeState.outputs]
   );
 
   const nodeById = React.useMemo(
@@ -422,8 +433,9 @@ export function CanvasBoard({
         edges,
         nodeById,
         getPortValue,
+        getNodeRuntimeData,
       }),
-    [edges, getPortValue, nodeById]
+    [edges, getNodeRuntimeData, getPortValue, nodeById]
   );
 
   const triggerConnected = React.useMemo((): Set<string> => {
@@ -943,6 +955,7 @@ export function CanvasBoard({
             edgePaths={renderedEdgePaths}
             edgeMetaMap={edgeMetaMap}
             nodeById={nodeById}
+            viewScale={view.scale}
             selectedEdgeId={selectedEdgeId}
             selectedNodeIdSet={selectedNodeIdSet}
             activeEdgeIds={activeEdgeIds}
@@ -1025,7 +1038,7 @@ export function CanvasBoard({
             const isPrimarySelected = node.id === selectedNodeId;
             const style = typeStyles[node.type] ?? typeStyles.template;
             const canUsePersistedStatusFallback = runtimeRunStatus !== 'idle';
-            const statusFromRuntimeState = (runtimeState.outputs[node.id] as Record<string, unknown> | undefined)?.['status'];
+            const statusFromRuntimeState = runtimeState.outputs[node.id]?.['status'];
             const runtimeNodeStatusRaw =
             runtimeNodeStatuses?.[node.id] ??
             (canUsePersistedStatusFallback && typeof statusFromRuntimeState === 'string'
@@ -1040,9 +1053,7 @@ export function CanvasBoard({
               : null;
             const iteratorOutput =
             node.type === 'iterator'
-              ? (runtimeState.outputs[node.id] as
-                  | Record<string, unknown>
-                  | undefined)
+              ? runtimeState.outputs[node.id]
               : undefined;
             const iteratorStatus = (iteratorOutput?.['status'] as string | undefined) ?? null;
             const iteratorIndex =

@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
-import { Button } from '@/shared/ui';
+import { Button, Pagination } from '@/shared/ui';
 
 import { useProjectsState } from '../context/ProjectsContext';
 import { studioKeys } from '../hooks/useImageStudioQueries';
@@ -292,29 +292,13 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
         <span>
           Showing {pageStart}-{pageEnd} of {total} runs
         </span>
-        <div className='flex items-center gap-2'>
-          <Button
-            type='button'
-            size='xs'
-            variant='outline'
-            onClick={() => setPage((current) => Math.max(1, current - 1))}
-            disabled={page <= 1 || runsQuery.isFetching}
-          >
-            Previous
-          </Button>
-          <span>
-            Page {page}/{totalPages}
-          </span>
-          <Button
-            type='button'
-            size='xs'
-            variant='outline'
-            onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-            disabled={page >= totalPages || runsQuery.isFetching}
-          >
-            Next
-          </Button>
-        </div>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          variant='compact'
+          showLabels={false}
+        />
       </div>
       {runs.map((run) => {
         const prompt = run.request?.prompt?.trim() ?? '';

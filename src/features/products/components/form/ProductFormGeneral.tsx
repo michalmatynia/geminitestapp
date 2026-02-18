@@ -29,7 +29,7 @@ import {
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
 import type { ProductValidationPattern } from '@/shared/types/domain/products';
-import { Button, Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField, Alert, Skeleton } from '@/shared/ui';
+import { Button, Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField, Alert, Skeleton, Hint } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 const buildIssueSnippet = (
@@ -141,9 +141,9 @@ export function ValidatorIssueHint({
       ) : null}
       {hasProposedChange ? (
         <div className='mt-2 rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-1.5'>
-          <p className='text-[10px] uppercase tracking-wide text-emerald-200/90'>
+          <Hint uppercase size='xxs' variant='info' className='text-emerald-200/90'>
             Proposed Result
-          </p>
+          </Hint>
           <p className='mt-1 break-all font-mono text-[11px] text-emerald-100'>
             {proposedValue}
           </p>
@@ -738,9 +738,13 @@ export default function ProductFormGeneral({
                     )}
                     {...register('weight', { valueAsNumber: true })}
                   />
-                  <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-500'>
+                  <Hint 
+                    uppercase 
+                    size='xxs' 
+                    className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-bold'
+                  >
                     KG
-                  </span>
+                  </Hint>
                 </div>
                 {validatorEnabled &&
                   fieldIssueList.map((issue: FieldValidatorIssue) => (
@@ -792,9 +796,13 @@ export default function ProductFormGeneral({
                     )}
                     {...register('sizeLength', { valueAsNumber: true })}
                   />
-                  <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-500'>
+                  <Hint 
+                    uppercase 
+                    size='xxs' 
+                    className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-bold'
+                  >
                     CM
-                  </span>
+                  </Hint>
                 </div>
                 {validatorEnabled &&
                   fieldIssueList.map((issue: FieldValidatorIssue) => (
@@ -846,9 +854,13 @@ export default function ProductFormGeneral({
                     )}
                     {...register('sizeWidth', { valueAsNumber: true })}
                   />
-                  <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-500'>
+                  <Hint 
+                    uppercase 
+                    size='xxs' 
+                    className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-bold'
+                  >
                     CM
-                  </span>
+                  </Hint>
                 </div>
                 {validatorEnabled &&
                   fieldIssueList.map((issue: FieldValidatorIssue) => (
@@ -900,9 +912,13 @@ export default function ProductFormGeneral({
                     )}
                     {...register('length', { valueAsNumber: true })}
                   />
-                  <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-500'>
+                  <Hint 
+                    uppercase 
+                    size='xxs' 
+                    className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-bold'
+                  >
                     CM
-                  </span>
+                  </Hint>
                 </div>
                 {validatorEnabled &&
                   fieldIssueList.map((issue: FieldValidatorIssue) => (

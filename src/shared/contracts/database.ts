@@ -220,6 +220,39 @@ export const browseResponseSchema = z.object({
 export type BrowseResponseDto = z.infer<typeof browseResponseSchema>;
 
 /**
+ * AI Query & Node Config DTOs
+ */
+
+export const aiQuerySchema = z.object({
+  id: z.string(),
+  query: z.string(),
+  timestamp: z.string(),
+});
+
+export type AiQueryDto = z.infer<typeof aiQuerySchema>;
+
+export const databasePresetOptionSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  description: z.string(),
+});
+
+export type DatabasePresetOptionDto = z.infer<typeof databasePresetOptionSchema>;
+
+export const databaseNodeConfigSchema = z.object({
+  type: databaseTypeSchema,
+  operation: z.enum(['query', 'insert', 'update', 'delete', 'schema']),
+  sql: z.string().optional(),
+  collection: z.string().optional(),
+  filter: z.string().optional(),
+  update: z.string().optional(),
+  document: z.string().optional(),
+  variableName: z.string().optional(),
+});
+
+export type DatabaseNodeConfigDto = z.infer<typeof databaseNodeConfigSchema>;
+
+/**
  * Database Backup/Restore DTOs
  */
 

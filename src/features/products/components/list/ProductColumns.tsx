@@ -27,6 +27,7 @@ import {
   ActionMenu,
   DropdownMenuItem,
   useToast,
+  Tooltip,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -527,16 +528,20 @@ export const getProductColumns = (
               {normalizedSku || 'No SKU'}
             </span>
             <span aria-hidden='true' className='text-gray-600'>|</span>
-            <span className='max-w-[14rem] truncate' title={categoryLabel}>
-              {categoryLabel}
-            </span>
-            {isImported && (
-              <span title='Imported product'>
-                <Download
-                  className='size-3 text-blue-400'
-                  aria-label='Imported product'
-                />
+            <Tooltip content={categoryLabel}>
+              <span className='max-w-[14rem] truncate'>
+                {categoryLabel}
               </span>
+            </Tooltip>
+            {isImported && (
+              <Tooltip content='Imported product'>
+                <span>
+                  <Download
+                    className='size-3 text-blue-400'
+                    aria-label='Imported product'
+                  />
+                </span>
+              </Tooltip>
             )}
             {isQueued && (
               <Badge variant='processing' className='ml-1'>
@@ -636,9 +641,11 @@ export const getProductColumns = (
             }}
           />
           {showCurrencyIndicator && displayPrice !== product.price && (
-            <span className='text-xs text-muted-foreground' title={`Converted: ${displayPrice?.toFixed(2)} ${actualCurrency}`}>
-              →{displayPrice?.toFixed(2)}
-            </span>
+            <Tooltip content={`Converted: ${displayPrice?.toFixed(2)} ${actualCurrency}`}>
+              <span className='text-xs text-muted-foreground'>
+                →{displayPrice?.toFixed(2)}
+              </span>
+            </Tooltip>
           )}
         </div>
       );

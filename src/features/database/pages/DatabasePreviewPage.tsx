@@ -38,6 +38,7 @@ import {
   CollapsibleSection,
   MetadataItem,
   LoadingState,
+  EmptyState,
 } from '@/shared/ui';
 
 import { CrudPanel } from '../components/CrudPanel';
@@ -335,7 +336,14 @@ function DataTab({
   }, [tableRows]);
 
   if (!tableRows || tableRows.rows.length === 0) {
-    return <p className='px-4 py-8 text-center text-xs text-gray-500 uppercase tracking-widest'>No row data available</p>;
+    return (
+      <EmptyState
+        title='No row data available'
+        description='This table appears to be empty.'
+        variant='compact'
+        className='py-8'
+      />
+    );
   }
 
   const startRow = (page - 1) * pageSize + 1;

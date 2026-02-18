@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 
 import type { AiNode, NodeDefinition } from '@/features/ai/ai-paths/lib';
-import { createParserMappings } from '@/features/ai/ai-paths/lib';
+import { createParserMappings, formatRuntimeValue } from '@/features/ai/ai-paths/lib';
 import { Button, Input, Label, Textarea, StatusBadge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -24,6 +24,20 @@ type PaletteGroup = {
   title: string;
   types: NodeDefinition['type'][];
   icon: string;
+};
+
+const readPortRuntimeValue = (
+  ports: Record<string, unknown> | undefined,
+  port?: string | null
+): unknown => {
+  if (!ports) return undefined;
+  const normalizedPort = typeof port === 'string' ? port.trim() : '';
+  if (normalizedPort && ports[normalizedPort] !== undefined) {
+    return ports[normalizedPort];
+  }
+  if (ports['context'] !== undefined) return ports['context'];
+  if (ports['value'] !== undefined) return ports['value'];
+  return undefined;
 };
 
 const DATA_PALETTE_GROUPS: PaletteGroup[] = [
@@ -62,7 +76,7 @@ export function CanvasSidebar(): React.JSX.Element {
   const orchestrator = useAiPathsSettingsOrchestrator();
   const { nodes, edges, executionMode } = useGraphState();
   const { savePathConfig } = usePersistenceActions();
-  const { runtimeRunStatus } = useRuntimeState();
+  const { runtimeRunStatus, runtimeState } = useRuntimeState();
   const {
     fireTrigger,
     fireTriggerPersistent,
@@ -489,6 +503,18 @@ export function CanvasSidebar(): React.JSX.Element {
             const selectedEdge = edges.find((edge) => edge.id === selectedEdgeId);
             const fromNode = selectedEdge ? nodes.find((n) => n.id === selectedEdge.from) : null;
             const toNode = selectedEdge ? nodes.find((n) => n.id === selectedEdge.to) : null;
+            const sourceOutputs = selectedEdge
+              ? (runtimeState.outputs[selectedEdge.from] as Record<string, unknown> | undefined)
+              : undefined;
+            const targetInputs = selectedEdge
+              ? (runtimeState.inputs[selectedEdge.to] as Record<string, unknown> | undefined)
+              : undefined;
+            const sourceValue = selectedEdge
+              ? readPortRuntimeValue(sourceOutputs, selectedEdge.fromPort)
+              : undefined;
+            const targetValue = selectedEdge
+              ? readPortRuntimeValue(targetInputs, selectedEdge.toPort)
+              : undefined;
             return selectedEdge ? (
               <div className='space-y-3 rounded-md border border-blue-500/30 bg-blue-500/5 p-3'>
                 <div className='text-xs font-medium text-blue-300'>Selected Wire</div>
@@ -529,6 +555,27 @@ export function CanvasSidebar(): React.JSX.Element {
                         {selectedEdge.toPort ?? 'default'}
                       </span>
                     </div>
+                  </div>
+                </div>
+                <div className='space-y-2 rounded border border-border/60 bg-card/40 p-2'>
+                  <div className='text-[10px] uppercase tracking-wide text-gray-500'>
+                    Connector Data
+                  </div>
+                  <div>
+                    <div className='text-[10px] text-amber-300'>
+                      Source ({selectedEdge.fromPort ?? 'default'})
+                    </div>
+                    <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap rounded border border-border/50 bg-black/30 px-2 py-1 text-[10px] text-gray-200'>
+                      {sourceValue === undefined ? 'No runtime output yet.' : formatRuntimeValue(sourceValue)}
+                    </pre>
+                  </div>
+                  <div>
+                    <div className='text-[10px] text-sky-300'>
+                      Target ({selectedEdge.toPort ?? 'default'})
+                    </div>
+                    <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap rounded border border-border/50 bg-black/30 px-2 py-1 text-[10px] text-gray-200'>
+                      {targetValue === undefined ? 'No runtime input yet.' : formatRuntimeValue(targetValue)}
+                    </pre>
                   </div>
                 </div>
                 <div className='flex gap-2'>

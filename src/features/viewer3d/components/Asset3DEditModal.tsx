@@ -10,6 +10,7 @@ import {
   Alert,
   FormSection,
   Tag,
+  MetadataItem,
 } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
@@ -82,17 +83,24 @@ export function Asset3DEditModal({
   const fields: SettingsField<AssetFormState>[] = [
     {
       key: 'name',
-      label: 'Metadata',
+      label: 'File Details',
       type: 'custom',
       render: () => (
-        <FormSection variant='subtle-compact' className='p-3 text-sm'>
-          <p className='text-gray-400'>
-            <span className='text-gray-500'>File:</span> <span className='text-white font-mono text-xs'>{asset.filename}</span>
-          </p>
-          <p className='text-gray-400 mt-1'>
-            <span className='text-gray-500'>Size:</span> {formatFileSize(asset.size)}
-          </p>
-        </FormSection>
+        <div className='grid grid-cols-2 gap-3'>
+          <MetadataItem
+            label='Filename'
+            value={asset.filename}
+            mono
+            variant='card'
+            className='p-3'
+          />
+          <MetadataItem
+            label='File Size'
+            value={formatFileSize(asset.size)}
+            variant='card'
+            className='p-3'
+          />
+        </div>
       )
     },
     {

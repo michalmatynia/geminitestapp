@@ -4,7 +4,7 @@ import React from 'react';
 
 import type { BaseInventory, Template } from '@/features/data-import-export/types/imports';
 import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
-import { SelectSimple, Checkbox, FormField, Label, Alert } from '@/shared/ui';
+import { SelectSimple, FormField, Alert, ToggleRow } from '@/shared/ui';
 
 export function BaseListingSettings(): React.JSX.Element {
   const {
@@ -65,20 +65,13 @@ export function BaseListingSettings(): React.JSX.Element {
         />
       </FormField>
 
-      <div className='flex items-center gap-2 pt-2'>
-        <Checkbox
-          id='allowDuplicateSku'
-          checked={allowDuplicateSku} 
-          onCheckedChange={(checked: boolean | 'indeterminate'): void => setAllowDuplicateSku(Boolean(checked))}
-          className='h-4 w-4 rounded border bg-gray-900 text-blue-500'
-        />
-        <Label htmlFor='allowDuplicateSku' className='text-sm text-gray-300'>
-          Allow duplicate SKUs
-        </Label>
-      </div>
-      <p className='text-xs text-gray-500'>
-        When unchecked, export will fail if the SKU already exists in the Base.com inventory.
-      </p>
+      <ToggleRow
+        checked={allowDuplicateSku}
+        onCheckedChange={setAllowDuplicateSku}
+        label='Allow duplicate SKUs'
+        description='When unchecked, export will fail if the SKU already exists in the Base.com inventory.'
+        type='checkbox'
+      />
     </div>
   );
 }

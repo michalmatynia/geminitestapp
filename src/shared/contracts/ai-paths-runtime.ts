@@ -47,6 +47,45 @@ export const aiPathRuntimeEventSchema = z.object({
 
 export type AiPathRuntimeEventDto = z.infer<typeof aiPathRuntimeEventSchema>;
 
+export const runStatusSchema = z.enum(['idle', 'running', 'paused', 'stepping']);
+export type RunStatusDto = z.infer<typeof runStatusSchema>;
+
+export const runtimeEventInputSchema = z.object({
+  id: z.string().optional(),
+  timestamp: z.string().optional(),
+  source: z.enum(['local', 'server']),
+  kind: z.string().optional(),
+  level: z.enum(['info', 'warn', 'error', 'debug']).optional(),
+  message: z.string(),
+  runId: z.string().nullable().optional(),
+  runStartedAt: z.string().nullable().optional(),
+  nodeId: z.string().nullable().optional(),
+  nodeType: z.string().nullable().optional(),
+  nodeTitle: z.string().nullable().optional(),
+  status: z.union([aiPathRuntimeNodeStatusSchema, z.string()]).optional(),
+  iteration: z.number().optional(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+});
+
+export type RuntimeEventInputDto = z.infer<typeof runtimeEventInputSchema>;
+
+export const setNodeStatusInputSchema = z.object({
+  nodeId: z.string(),
+  status: aiPathRuntimeNodeStatusSchema,
+  source: z.enum(['local', 'server']),
+  runId: z.string().nullable().optional(),
+  runStartedAt: z.string().nullable().optional(),
+  iteration: z.number().optional(),
+  nodeType: z.string().nullable().optional(),
+  nodeTitle: z.string().nullable().optional(),
+  kind: z.string().optional(),
+  level: z.enum(['info', 'warn', 'error', 'debug']).optional(),
+  message: z.string().optional(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+});
+
+export type SetNodeStatusInputDto = z.infer<typeof setNodeStatusInputSchema>;
+
 export const pathExecutionModeSchema = z.enum(['local', 'server']);
 export type PathExecutionModeDto = z.infer<typeof pathExecutionModeSchema>;
 
@@ -57,7 +96,7 @@ export const runtimePortValuesSchema = z.record(z.string(), z.unknown());
 export type RuntimePortValuesDto = z.infer<typeof runtimePortValuesSchema>;
 
 export const runtimeStateSchema = z.object({
-  status: z.enum(['idle', 'running', 'paused', 'stepping']),
+  status: runStatusSchema,
   nodeStatuses: aiPathRuntimeNodeStatusMapSchema,
   nodeOutputs: z.record(z.string(), runtimePortValuesSchema),
   variables: z.record(z.string(), z.unknown()),

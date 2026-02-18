@@ -7,15 +7,14 @@ import { createPortal } from 'react-dom';
 import { useAiPathRuntimeAnalytics } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
 import type { AiNode } from '@/features/ai/ai-paths/lib';
 import {
-  AppModal,
   Button,
-  Label,
   SelectSimple,
   useToast,
   StatusBadge,
   LoadingState,
   type StatusVariant,
 } from '@/shared/ui';
+import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useAiPathsSettingsOrchestrator } from './AiPathsSettingsOrchestratorContext';
 import { useAiPathsSettingsPageContext } from './AiPathsSettingsPageContext';
@@ -42,6 +41,10 @@ import { RuntimeEventLogPanel } from '../runtime-event-log-panel';
 import { SimulationDialog } from '../simulation-dialog';
 import { DocsTabPanel, PathsTabPanel } from '../ui-panels';
 import {
+  EXECUTION_OPTIONS,
+  FLOW_OPTIONS,
+  RUN_MODE_OPTIONS,
+  buildHistoryRetentionOptions,
   buildSwitchPathOptions,
   formatDurationMs,
   formatPercent,
@@ -51,6 +54,14 @@ import {
 } from './ai-paths-settings-view-utils';
 
 export function AiPathsSettingsView(): React.JSX.Element {
+  type PathSettingsFormState = {
+    saveMode: string;
+    execution: string;
+    flow: string;
+    runMode: string;
+    history: string;
+  };
+
   const {
     activeTab,
     renderActions,
@@ -83,6 +94,8 @@ export function AiPathsSettingsView(): React.JSX.Element {
     isPathLocked,
     isPathActive,
     executionMode,
+    flowIntensity,
+    runMode,
     nodes,
   } = useGraphState();
   const { setPathName, setPaths } = useGraphActions();
@@ -107,6 +120,12 @@ export function AiPathsSettingsView(): React.JSX.Element {
     handleSwitchPath,
     handleTogglePathLock,
     handleTogglePathActive,
+    handleExecutionModeChange,
+    handleFlowIntensityChange,
+    handleRunModeChange,
+    handleHistoryRetentionChange,
+    historyRetentionPasses,
+    historyRetentionOptionsMax,
     handleClearConnectorData,
     handleClearHistory,
     ConfirmationModal,
@@ -199,6 +218,14 @@ export function AiPathsSettingsView(): React.JSX.Element {
   const pathSwitchOptions = useMemo(
     () => buildSwitchPathOptions(sortPathMetas(paths)),
     [paths],
+  );
+  const historyRetentionOptions = useMemo(
+    () =>
+      buildHistoryRetentionOptions(
+        historyRetentionPasses,
+        historyRetentionOptionsMax,
+      ),
+    [historyRetentionOptionsMax, historyRetentionPasses],
   );
 
   const runtimeAnalyticsQuery = useAiPathRuntimeAnalytics(
@@ -869,40 +896,125 @@ export function AiPathsSettingsView(): React.JSX.Element {
             });
         }}
       />
-      <AppModal
+      <SettingsPanelBuilder<PathSettingsFormState>
         open={pathSettingsModalOpen}
         onClose={() => setPathSettingsModalOpen(false)}
         title='Paths Settings'
         subtitle='Configure persistence and runtime behavior for this path.'
         size='sm'
-      >
-        <div className='space-y-4'>
-          <div className='space-y-1'>
-            <Label className='text-[10px] uppercase text-gray-500'>
-              Save Mode
-            </Label>
-            {autoSaveLabel ? (
+        onSave={() => setPathSettingsModalOpen(false)}
+        cancelText='Close'
+        showSaveButton={false}
+        fields={[
+          {
+            key: 'saveMode',
+            label: 'Save Mode',
+            type: 'custom',
+            render: () => autoSaveLabel ? (
               <StatusBadge
                 status={autoSaveLabel}
                 variant={autoSaveVariant}
                 size='sm'
                 className='font-medium'
               />
-            ) : null}
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[10px] uppercase text-gray-500'>
-              Execution
-            </Label>
-            <StatusBadge
-              status={executionMode === 'local' ? 'Local runtime' : 'Server runtime'}
-              variant={executionMode === 'local' ? 'info' : 'active'}
-              size='sm'
-              className='font-medium'
-            />
-          </div>
-        </div>
-      </AppModal>
+            ) : <span className='text-xs text-muted-foreground'>No save status</span>
+          },
+          {
+            key: 'execution',
+            label: 'Execution',
+            type: 'custom',
+            render: () => (
+              <SelectSimple
+                size='sm'
+                value={executionMode}
+                onValueChange={(value: string): void => {
+                  if (value === executionMode) return;
+                  if (value === 'local' || value === 'server') {
+                    handleExecutionModeChange(value);
+                  }
+                }}
+                options={[...EXECUTION_OPTIONS]}
+                triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
+                disabled={isPathLocked}
+              />
+            )
+          },
+          {
+            key: 'flow',
+            label: 'Flow',
+            type: 'custom',
+            render: () => (
+              <SelectSimple
+                size='sm'
+                value={flowIntensity}
+                onValueChange={(value: string): void => {
+                  if (value === flowIntensity) return;
+                  if (
+                    value === 'off' ||
+                    value === 'low' ||
+                    value === 'medium' ||
+                    value === 'high'
+                  ) {
+                    handleFlowIntensityChange(value);
+                  }
+                }}
+                options={[...FLOW_OPTIONS]}
+                triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
+                disabled={isPathLocked}
+              />
+            )
+          },
+          {
+            key: 'runMode',
+            label: 'Run Mode',
+            type: 'custom',
+            render: () => (
+              <SelectSimple
+                size='sm'
+                value={runMode}
+                onValueChange={(value: string): void => {
+                  if (value === runMode) return;
+                  if (value === 'block' || value === 'queue') {
+                    handleRunModeChange(value);
+                  }
+                }}
+                options={[...RUN_MODE_OPTIONS]}
+                triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
+                disabled={isPathLocked}
+              />
+            )
+          },
+          {
+            key: 'history',
+            label: 'History Retention',
+            type: 'custom',
+            render: () => (
+              <SelectSimple
+                size='sm'
+                value={String(historyRetentionPasses)}
+                onValueChange={(value: string): void => {
+                  const parsed = Number.parseInt(value, 10);
+                  if (!Number.isFinite(parsed) || parsed === historyRetentionPasses) {
+                    return;
+                  }
+                  void handleHistoryRetentionChange(parsed);
+                }}
+                options={historyRetentionOptions}
+                triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
+                disabled={saving}
+              />
+            )
+          }
+        ]}
+        values={{
+          saveMode: autoSaveLabel,
+          execution: executionMode,
+          flow: flowIntensity,
+          runMode,
+          history: String(historyRetentionPasses),
+        }}
+        onChange={() => {}}
+      />
       <SimulationDialog
         isOpen={Boolean(simulationOpenNodeId)}
         onClose={() => setSimulationOpenNodeId(null)}

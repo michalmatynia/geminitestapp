@@ -14,6 +14,7 @@ import {
   type FileUploadHelpers,
   PageLayout,
   Alert,
+  Card,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -289,7 +290,7 @@ function DatabasesContent(): React.JSX.Element {
           Backups are disabled in production. Create or upload backups in a non-production environment.
         </Alert>
       )}
-      <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
+      <Card variant='glass' padding='lg'>
         <DataTable
           columns={getDatabaseColumns({
             onPreview: handlePreview,
@@ -300,7 +301,7 @@ function DatabasesContent(): React.JSX.Element {
           initialSorting={[{ id: 'lastModifiedAt', desc: true }]}
           sortingStorageKey={`stardb:database-backups:${activeTab}:sorting`}
         />
-      </div>
+      </Card>
     </PageLayout>
   );
 }

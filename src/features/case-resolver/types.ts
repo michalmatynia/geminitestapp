@@ -31,6 +31,7 @@ import type {
   CaseResolverFolderTimestampDto,
   CaseResolverFolderRecordDto,
   CaseResolverWorkspaceDto,
+  CaseResolverFileEditDraftDto,
 } from '@/shared/contracts/case-resolver';
 
 export type { AiNode, Edge };
@@ -79,10 +80,7 @@ export type CaseResolverRelationGraph = CaseResolverRelationGraphDto;
 
 export type CaseResolverFile = CaseResolverFileDto;
 
-export type CaseResolverFileEditDraft = Partial<CaseResolverFileDto> & {
-  id: string;
-  baseDocumentContentVersion: number;
-};
+export type CaseResolverFileEditDraft = CaseResolverFileEditDraftDto;
 
 export type CaseResolverAssetFile = CaseResolverAssetFileDto;
 
@@ -91,6 +89,11 @@ export type CaseResolverFolderTimestamp = CaseResolverFolderTimestampDto;
 export type CaseResolverFolderRecord = CaseResolverFolderRecordDto;
 
 export type CaseResolverWorkspace = CaseResolverWorkspaceDto;
+
+export type CaseResolverEditorNodeContext = {
+  canvasFileId: string;
+  nodeId: string;
+};
 
 export const CASE_RESOLVER_NODE_ROLE_OPTIONS: Array<{
   value: CaseResolverNodeRole;
@@ -210,6 +213,8 @@ export const DEFAULT_CASE_RESOLVER_NODE_META: CaseResolverNodeMeta = {
   quoteMode: 'none',
   surroundPrefix: '',
   surroundSuffix: '',
+  appendTrailingNewline: false,
+  textColor: '',
 };
 
 export const DEFAULT_CASE_RESOLVER_EDGE_META: CaseResolverEdgeMeta = {

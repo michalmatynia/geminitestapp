@@ -27,6 +27,17 @@ import type {
   ProducerDto,
   ProductCurrencyDto,
   ProductParameterDto,
+  ProductValidationTargetDto,
+  ProductValidationSeverityDto,
+  ProductValidationDenyBehaviorDto,
+  ProductValidationInstanceScopeDto,
+  ProductValidationPostAcceptBehaviorDto,
+  ProductValidationRuntimeTypeDto,
+  ProductValidationChainModeDto,
+  ProductValidationLaunchSourceModeDto,
+  ProductValidationLaunchOperatorDto,
+  ProductValidationLaunchScopeBehaviorDto,
+  ProductValidationPatternDto,
 } from '../../contracts/products';
 
 export type {
@@ -135,94 +146,26 @@ export type ProductTag = ProductTagDto;
 
 export type Producer = ProducerDto;
 
-export type ProductValidationTarget =
-  | 'name'
-  | 'description'
-  | 'sku'
-  | 'price'
-  | 'stock'
-  | 'category'
-  | 'size_length'
-  | 'size_width' | 'length' | 'weight';
+export type ProductValidationTarget = ProductValidationTargetDto;
 
-export type ProductValidationSeverity = 'error' | 'warning';
-export type ProductValidationDenyBehavior = 'ask_again' | 'mute_session';
+export type ProductValidationSeverity = ProductValidationSeverityDto;
+export type ProductValidationDenyBehavior = ProductValidationDenyBehaviorDto;
 export type ProductValidationPatternDenyBehaviorOverride =
   | ProductValidationDenyBehavior
   | null;
-export type ProductValidationInstanceScope =
-  | 'draft_template'
-  | 'product_create'
-  | 'product_edit';
+export type ProductValidationInstanceScope = ProductValidationInstanceScopeDto;
 export type ProductValidationInstanceDenyBehaviorMap = Record<
   ProductValidationInstanceScope,
   ProductValidationDenyBehavior
 >;
-export type ProductValidationPostAcceptBehavior =
-  | 'revalidate'
-  | 'stop_after_accept';
-export type ProductValidationRuntimeType =
-  | 'none'
-  | 'database_query'
-  | 'ai_prompt';
-export type ProductValidationChainMode = 'continue' | 'stop_on_match' | 'stop_on_replace';
-export type ProductValidationLaunchSourceMode =
-  | 'current_field'
-  | 'form_field'
-  | 'latest_product_field';
-export type ProductValidationLaunchOperator =
-  | 'equals'
-  | 'not_equals'
-  | 'contains'
-  | 'starts_with'
-  | 'ends_with'
-  | 'regex'
-  | 'gt'
-  | 'gte'
-  | 'lt'
-  | 'lte'
-  | 'is_empty'
-  | 'is_not_empty';
-export type ProductValidationLaunchScopeBehavior = 'gate' | 'condition_only';
+export type ProductValidationPostAcceptBehavior = ProductValidationPostAcceptBehaviorDto;
+export type ProductValidationRuntimeType = ProductValidationRuntimeTypeDto;
+export type ProductValidationChainMode = ProductValidationChainModeDto;
+export type ProductValidationLaunchSourceMode = ProductValidationLaunchSourceModeDto;
+export type ProductValidationLaunchOperator = ProductValidationLaunchOperatorDto;
+export type ProductValidationLaunchScopeBehavior = ProductValidationLaunchScopeBehaviorDto;
 
-export type ProductValidationPattern = Entity & {
-  label: string;
-  target: ProductValidationTarget;
-  locale: string | null;
-  regex: string;
-  flags: string | null;
-  message: string;
-  severity: ProductValidationSeverity;
-  enabled: boolean;
-  replacementEnabled: boolean;
-  replacementAutoApply: boolean;
-  skipNoopReplacementProposal: boolean;
-  replacementValue: string | null;
-  replacementFields: string[];
-  replacementAppliesToScopes?: ProductValidationInstanceScope[];
-  runtimeEnabled: boolean;
-  runtimeType: ProductValidationRuntimeType;
-  runtimeConfig: string | null;
-  postAcceptBehavior: ProductValidationPostAcceptBehavior;
-  denyBehaviorOverride: ProductValidationPatternDenyBehaviorOverride;
-  validationDebounceMs: number;
-  sequenceGroupId: string | null;
-  sequenceGroupLabel: string | null;
-  sequenceGroupDebounceMs: number;
-  sequence: number | null;
-  chainMode: ProductValidationChainMode;
-  maxExecutions: number;
-  passOutputToNext: boolean;
-  launchEnabled: boolean;
-  launchAppliesToScopes?: ProductValidationInstanceScope[];
-  launchScopeBehavior?: ProductValidationLaunchScopeBehavior;
-  launchSourceMode: ProductValidationLaunchSourceMode;
-  launchSourceField: string | null;
-  launchOperator: ProductValidationLaunchOperator;
-  launchValue: string | null;
-  launchFlags: string | null;
-  appliesToScopes?: ProductValidationInstanceScope[];
-};
+export type ProductValidationPattern = ProductValidationPatternDto;
 
 export type ProductValidatorConfig = ProductValidatorConfigDto;
 

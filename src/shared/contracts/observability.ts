@@ -48,6 +48,31 @@ export const systemLogRecordSchema = dtoBaseSchema.extend({
 
 export type SystemLogRecordDto = z.infer<typeof systemLogRecordSchema>;
 
+export const createSystemLogInputSchema = z.object({
+  level: systemLogLevelSchema.optional(),
+  message: z.string(),
+  source: z.string().nullable().optional(),
+  context: z.record(z.string(), z.unknown()).nullable().optional(),
+  stack: z.string().nullable().optional(),
+  path: z.string().nullable().optional(),
+  method: z.string().nullable().optional(),
+  statusCode: z.number().nullable().optional(),
+  requestId: z.string().nullable().optional(),
+  userId: z.string().nullable().optional(),
+  createdAt: z.string().optional(), // ISO string when sent as DTO
+});
+
+export type CreateSystemLogInputDto = z.infer<typeof createSystemLogInputSchema>;
+
+export const listSystemLogsResultSchema = z.object({
+  logs: z.array(systemLogRecordSchema),
+  total: z.number(),
+  page: z.number(),
+  pageSize: z.number(),
+});
+
+export type ListSystemLogsResultDto = z.infer<typeof listSystemLogsResultSchema>;
+
 export const systemLogMetricsSchema = z.object({
   total: z.number(),
   levels: z.record(systemLogLevelSchema, z.number()),

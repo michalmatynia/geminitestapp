@@ -1,44 +1,39 @@
 import type {
-  CollectionSchemaDto,
-  FieldInfoDto,
-  SchemaProviderDto,
+  DatabaseTypeDto,
+  SqlQueryFieldDto,
+  SqlQueryResultDto
 } from '@/shared/contracts/database';
-import type { DbSchemaSnapshot } from '@/shared/types/domain/ai-paths';
 
-export type FieldSchema = Pick<FieldInfoDto, 'name' | 'type'>;
+export type DatabaseType = DatabaseTypeDto;
 
-export type CollectionSchema = CollectionSchemaDto & {
-  provider?: SchemaProviderDto;
+export type SqlQueryField = SqlQueryFieldDto;
+
+export type SqlQueryResult = SqlQueryResultDto;
+
+export type FieldSchema = {
+  name: string;
+  type: string;
+  nullable: boolean;
 };
 
-type SchemaSnapshotMeta = Omit<DbSchemaSnapshot, 'provider' | 'collections' | 'sources'>;
+export type CollectionSchema = {
+  name: string;
+  fields: FieldSchema[];
+  provider?: string;
+};
 
-type SchemaSource = {
-  provider: SchemaProviderDto;
+export type SchemaData = {
   collections: CollectionSchema[];
+  provider: string;
 };
 
-type SingleProviderSchemaData = SchemaSnapshotMeta & {
-  provider: SchemaProviderDto;
-  collections: CollectionSchema[];
-};
-
-type MultiProviderSchemaData = SchemaSnapshotMeta & {
-  provider: 'multi';
-  collections: CollectionSchema[];
-  sources?: Partial<Record<SchemaProviderDto, SchemaSource>>;
-};
-
-export type SchemaData = SingleProviderSchemaData | MultiProviderSchemaData;
-
-export type AiQuery = {
-  id: string;
-  query: string;
-  timestamp: string;
-};
-
-export type DatabasePresetOption = {
-  id: string;
-  label: string;
-  description: string;
-};
+export interface DatabaseNodeConfig {
+  type: DatabaseType;
+  operation: 'query' | 'insert' | 'update' | 'delete' | 'schema';
+  sql?: string;
+  collection?: string;
+  filter?: string;
+  update?: string;
+  document?: string;
+  variableName?: string;
+}

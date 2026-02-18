@@ -211,3 +211,12 @@ export const cmsCssAiRequestSchema = z.object({
 });
 
 export type CmsCssAiRequestDto = z.infer<typeof cmsCssAiRequestSchema>;
+
+/**
+ * CMS Domain Settings Contract
+ */
+export const cmsDomainSettingsSchema = z.object({
+  zoningEnabled: z.boolean(),
+});
+
+export type CmsDomainSettingsDto = z.infer<typeof cmsDomainSettingsSchema>;

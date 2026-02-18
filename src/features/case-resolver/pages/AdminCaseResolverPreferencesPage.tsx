@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -9,7 +8,17 @@ import {
   useUserPreferences,
 } from '@/features/auth/hooks/useUserPreferences';
 import type { UserPreferences } from '@/shared/types/domain/user-preferences';
-import { Button, FormField, FormSection, SectionHeader, SelectSimple, useToast, LoadingState } from '@/shared/ui';
+import {
+  Button,
+  FormField,
+  FormSection,
+  SectionHeader,
+  SelectSimple,
+  useToast,
+  LoadingState,
+  Breadcrumbs,
+  FormActions,
+} from '@/shared/ui';
 
 type CaseResolverCaseListViewMode = 'hierarchy' | 'list';
 type CaseResolverCaseListSortBy = 'updated' | 'created' | 'name';
@@ -128,24 +137,18 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
     <div className='container mx-auto max-w-5xl space-y-6 py-10'>
       <SectionHeader
         title='Case Resolver Preferences'
-        size='md'
-        subtitle={(
-          <nav
-            aria-label='Breadcrumb'
-            className='mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-400'
-          >
-            <Link href='/admin' className='transition-colors hover:text-gray-200'>
-              Admin
-            </Link>
-            <span>/</span>
-            <Link href='/admin/case-resolver' className='transition-colors hover:text-gray-200'>
-              Case Resolver
-            </Link>
-            <span>/</span>
-            <span className='text-gray-300'>Preferences</span>
-          </nav>
-        )}
-        actions={(
+        description='Configure default view, sorting, and search behavior for Case Resolver cases.'
+        eyebrow={
+          <Breadcrumbs
+            items={[
+              { label: 'Admin', href: '/admin' },
+              { label: 'Case Resolver', href: '/admin/case-resolver' },
+              { label: 'Preferences' }
+            ]}
+            className='mb-2'
+          />
+        }
+        actions={
           <Button
             type='button'
             variant='outline'
@@ -155,7 +158,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
           >
             Back to Cases
           </Button>
-        )}
+        }
       />
 
       <FormSection title='Case List Defaults' className='p-6'>
@@ -269,40 +272,15 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
         </div>
       </FormSection>
 
-      <div className='flex items-center justify-between gap-3'>
-        <Button
-          type='button'
-          variant='outline'
-          onClick={(): void => {
-            void handleReset();
-          }}
-          disabled={updatePreferencesMutation.isPending}
-          className='border-yellow-600 text-yellow-600 hover:bg-yellow-600/10'
-        >
-          Reset to Defaults
-        </Button>
-        <div className='flex items-center gap-3'>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={(): void => {
-              router.push('/admin/case-resolver/cases');
-            }}
-            disabled={updatePreferencesMutation.isPending}
-          >
-            Cancel
-          </Button>
-          <Button
-            type='button'
-            onClick={(): void => {
-              void handleSave();
-            }}
-            disabled={updatePreferencesMutation.isPending}
-          >
-            {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Preferences'}
-          </Button>
-        </div>
-      </div>
+      <FormActions
+        onCancel={() => { void handleReset(); }}
+        cancelText='Reset to Defaults'
+        cancelVariant='warning'
+        onSave={() => { void handleSave(); }}
+        saveText='Save Preferences'
+        isSaving={updatePreferencesMutation.isPending}
+        className='justify-start'
+      />
     </div>
   );
 }

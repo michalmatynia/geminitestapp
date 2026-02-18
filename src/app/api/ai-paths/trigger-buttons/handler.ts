@@ -13,7 +13,6 @@ import {
 import { AppErrorCodes, badRequestError, isAppError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 
 const AI_PATHS_TRIGGER_BUTTONS_KEY = 'ai_paths_trigger_buttons';
 const readTriggerButtonsRaw = async (): Promise<string | null> =>
@@ -71,10 +70,10 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       ? crypto.randomUUID()
       : `trigger_${Math.random().toString(36).slice(2, 10)}`;
 
-  const record: AiTriggerButtonRecord = {
+  const record = {
     id,
     name: normalizedName,
-    iconId: iconId ? iconId.trim() : null,
+    icon: iconId ? iconId.trim() : null,
     locations,
     mode,
     display,

@@ -1,8 +1,8 @@
+import type { CmsDomainSettingsDto } from '@/shared/contracts/cms';
+
 export const CMS_DOMAIN_SETTINGS_KEY = 'cms_domain_settings.v1';
 
-export interface CmsDomainSettings {
-  zoningEnabled: boolean;
-}
+export type CmsDomainSettings = CmsDomainSettingsDto;
 
 export const DEFAULT_CMS_DOMAIN_SETTINGS: CmsDomainSettings = {
   zoningEnabled: true,

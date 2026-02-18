@@ -16,6 +16,7 @@ import type {
   RuntimePortValues,
   UpdaterSampleState,
 } from '@/features/ai/ai-paths/lib';
+import type { QueuedRunDto } from '@/shared/contracts/ai-paths-runtime';
 
 export const AI_PATHS_SESSION_STALE_MS = 30_000;
 export const AI_PATHS_ENTITY_STALE_MS = 10_000;
@@ -54,12 +55,7 @@ export const IDLE_REHYDRATION_BLOCKED_NODE_STATUSES = new Set<string>([
 
 export type ToastFn = (message: string, options?: Partial<{ variant: 'success' | 'error' | 'info' | 'warning'; duration: number }>) => void;
 
-export type QueuedRun = {
-  triggerNodeId: string;
-  pathId: string | null;
-  contextOverride?: Record<string, unknown> | null;
-  queuedAt: string;
-};
+export type QueuedRun = QueuedRunDto;
 
 export type RuntimeEventInput = Omit<AiPathRuntimeEvent, 'id' | 'timestamp'> & {
   id?: string | undefined;

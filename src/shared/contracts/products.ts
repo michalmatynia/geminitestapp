@@ -357,6 +357,80 @@ export const productValidatorSettingsSchema = z.object({
 export type ProductValidatorSettingsDto = z.infer<typeof productValidatorSettingsSchema>;
 
 /**
+ * Product Validation Replacement DTOs
+ */
+
+export const dynamicReplacementSourceModeSchema = z.enum([
+  'current_field',
+  'form_field',
+  'latest_product_field',
+]);
+export type DynamicReplacementSourceModeDto = z.infer<typeof dynamicReplacementSourceModeSchema>;
+
+export const dynamicReplacementMathOperationSchema = z.enum([
+  'none',
+  'add',
+  'subtract',
+  'multiply',
+  'divide',
+]);
+export type DynamicReplacementMathOperationDto = z.infer<typeof dynamicReplacementMathOperationSchema>;
+
+export const dynamicReplacementRoundModeSchema = z.enum(['none', 'round', 'floor', 'ceil']);
+export type DynamicReplacementRoundModeDto = z.infer<typeof dynamicReplacementRoundModeSchema>;
+
+export const dynamicReplacementResultAssemblySchema = z.enum(['segment_only', 'source_replace_match']);
+export type DynamicReplacementResultAssemblyDto = z.infer<typeof dynamicReplacementResultAssemblySchema>;
+
+export const dynamicReplacementTargetApplySchema = z.enum(['replace_whole_field', 'replace_matched_segment']);
+export type DynamicReplacementTargetApplyDto = z.infer<typeof dynamicReplacementTargetApplySchema>;
+
+export const dynamicReplacementLogicOperatorSchema = z.enum([
+  'none',
+  'equals',
+  'not_equals',
+  'contains',
+  'starts_with',
+  'ends_with',
+  'regex',
+  'gt',
+  'gte',
+  'lt',
+  'lte',
+  'is_empty',
+  'is_not_empty',
+]);
+export type DynamicReplacementLogicOperatorDto = z.infer<typeof dynamicReplacementLogicOperatorSchema>;
+
+export const dynamicReplacementLogicActionSchema = z.enum(['keep', 'set_value', 'clear', 'abort']);
+export type DynamicReplacementLogicActionDto = z.infer<typeof dynamicReplacementLogicActionSchema>;
+
+export const dynamicReplacementRecipeSchema = z.object({
+  version: z.literal(1),
+  sourceMode: dynamicReplacementSourceModeSchema,
+  sourceField: z.string().nullable().optional(),
+  sourceRegex: z.string().nullable().optional(),
+  sourceFlags: z.string().nullable().optional(),
+  sourceMatchGroup: z.number().nullable().optional(),
+  mathOperation: dynamicReplacementMathOperationSchema.optional(),
+  mathOperand: z.number().nullable().optional(),
+  roundMode: dynamicReplacementRoundModeSchema.optional(),
+  padLength: z.number().nullable().optional(),
+  padChar: z.string().nullable().optional(),
+  logicOperator: dynamicReplacementLogicOperatorSchema.optional(),
+  logicOperand: z.string().nullable().optional(),
+  logicFlags: z.string().nullable().optional(),
+  logicWhenTrueAction: dynamicReplacementLogicActionSchema.optional(),
+  logicWhenTrueValue: z.string().nullable().optional(),
+  logicWhenFalseAction: dynamicReplacementLogicActionSchema.optional(),
+  logicWhenFalseValue: z.string().nullable().optional(),
+  resultAssembly: dynamicReplacementResultAssemblySchema.optional(),
+  targetApply: dynamicReplacementTargetApplySchema.optional(),
+});
+
+export type DynamicReplacementRecipeDto = z.infer<typeof dynamicReplacementRecipeSchema>;
+
+/**
  * Product Draft Contracts
  */
 export const productDraftOpenFormTabSchema = z.enum([

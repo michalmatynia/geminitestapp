@@ -97,7 +97,7 @@ export interface AdminNavItemDto {
   children?: AdminNavItemDto[];
 }
 
-export const adminNavItemSchema = z.lazy(() =>
+export const adminNavItemSchema: z.ZodType<AdminNavItemDto> = z.lazy(() =>
   z.object({
     id: z.string(),
     label: z.string(),
@@ -107,7 +107,23 @@ export const adminNavItemSchema = z.lazy(() =>
     sectionColor: z.string().optional(),
     children: z.array(adminNavItemSchema).optional(),
   })
-) as z.ZodType<AdminNavItemDto>;
+);
+
+export interface AdminMenuColorOptionDto {
+  value: string;
+  label: string;
+  dot: string;
+  border: string;
+  text: string;
+}
+
+export const adminMenuColorOptionSchema = z.object({
+  value: z.string(),
+  label: z.string(),
+  dot: z.string(),
+  border: z.string(),
+  text: z.string(),
+});
 
 export interface AdminMenuCustomNodeDto {
   id: string;

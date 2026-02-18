@@ -1,22 +1,16 @@
 import type { BaseImportParameterImportSettings } from '@/features/integrations/types/base-import-parameter-import';
 import type { ProductParameterValue } from '@/features/products/types';
 import type { ParameterRepository } from '@/features/products/types/services/parameter-repository';
+import type {
+  ExtractedBaseParameterDto,
+  BaseParameterImportSummaryDto,
+} from '@/shared/contracts/integrations';
 
 import type { BaseProductRecord } from '../base-client';
 
-export type ExtractedBaseParameter = {
-  key: string;
-  baseParameterId: string | null;
-  namesByLanguage: Record<string, string>;
-  valuesByLanguage: Record<string, string>;
-};
+export type ExtractedBaseParameter = ExtractedBaseParameterDto;
 
-export type BaseParameterImportSummary = {
-  extracted: number;
-  resolved: number;
-  created: number;
-  written: number;
-};
+export type BaseParameterImportSummary = BaseParameterImportSummaryDto;
 
 export type ApplyBaseParameterImportInput = {
   record: BaseProductRecord;

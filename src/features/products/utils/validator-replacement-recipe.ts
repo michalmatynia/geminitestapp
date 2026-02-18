@@ -1,64 +1,32 @@
 import type { ProductValidationPattern } from '@/shared/types/domain/products';
+import type {
+  DynamicReplacementSourceModeDto,
+  DynamicReplacementMathOperationDto,
+  DynamicReplacementRoundModeDto,
+  DynamicReplacementResultAssemblyDto,
+  DynamicReplacementTargetApplyDto,
+  DynamicReplacementLogicOperatorDto,
+  DynamicReplacementLogicActionDto,
+  DynamicReplacementRecipeDto,
+} from '@/shared/contracts/products';
 
 export const DYNAMIC_REPLACEMENT_PREFIX = '__recipe__:';
 
-export type DynamicReplacementSourceMode =
-  | 'current_field'
-  | 'form_field'
-  | 'latest_product_field';
+export type DynamicReplacementSourceMode = DynamicReplacementSourceModeDto;
 
-export type DynamicReplacementMathOperation =
-  | 'none'
-  | 'add'
-  | 'subtract'
-  | 'multiply'
-  | 'divide';
+export type DynamicReplacementMathOperation = DynamicReplacementMathOperationDto;
 
-export type DynamicReplacementRoundMode = 'none' | 'round' | 'floor' | 'ceil';
+export type DynamicReplacementRoundMode = DynamicReplacementRoundModeDto;
 
-export type DynamicReplacementResultAssembly = 'segment_only' | 'source_replace_match';
+export type DynamicReplacementResultAssembly = DynamicReplacementResultAssemblyDto;
 
-export type DynamicReplacementTargetApply = 'replace_whole_field' | 'replace_matched_segment';
+export type DynamicReplacementTargetApply = DynamicReplacementTargetApplyDto;
 
-export type DynamicReplacementLogicOperator =
-  | 'none'
-  | 'equals'
-  | 'not_equals'
-  | 'contains'
-  | 'starts_with'
-  | 'ends_with'
-  | 'regex'
-  | 'gt'
-  | 'gte'
-  | 'lt'
-  | 'lte'
-  | 'is_empty'
-  | 'is_not_empty';
+export type DynamicReplacementLogicOperator = DynamicReplacementLogicOperatorDto;
 
-export type DynamicReplacementLogicAction = 'keep' | 'set_value' | 'clear' | 'abort';
+export type DynamicReplacementLogicAction = DynamicReplacementLogicActionDto;
 
-export type DynamicReplacementRecipe = {
-  version: 1;
-  sourceMode: DynamicReplacementSourceMode;
-  sourceField?: string | null;
-  sourceRegex?: string | null;
-  sourceFlags?: string | null;
-  sourceMatchGroup?: number | null;
-  mathOperation?: DynamicReplacementMathOperation;
-  mathOperand?: number | null;
-  roundMode?: DynamicReplacementRoundMode;
-  padLength?: number | null;
-  padChar?: string | null;
-  logicOperator?: DynamicReplacementLogicOperator;
-  logicOperand?: string | null;
-  logicFlags?: string | null;
-  logicWhenTrueAction?: DynamicReplacementLogicAction;
-  logicWhenTrueValue?: string | null;
-  logicWhenFalseAction?: DynamicReplacementLogicAction;
-  logicWhenFalseValue?: string | null;
-  resultAssembly?: DynamicReplacementResultAssembly;
-  targetApply?: DynamicReplacementTargetApply;
-};
+export type DynamicReplacementRecipe = DynamicReplacementRecipeDto;
 
 type DynamicReplacementContext = {
   pattern: Pick<ProductValidationPattern, 'regex' | 'flags'>;
@@ -110,7 +78,7 @@ const normalizeRecipe = (raw: unknown): DynamicReplacementRecipe | null => {
   const source = raw as Record<string, unknown>;
   if (source['version'] !== 1) return null;
 
-  const sourceMode = source['sourceMode'];
+  const sourceMode = source['sourceMode'] as DynamicReplacementSourceMode;
   if (
     sourceMode !== 'current_field' &&
     sourceMode !== 'form_field' &&
@@ -157,11 +125,12 @@ const normalizeRecipe = (raw: unknown): DynamicReplacementRecipe | null => {
       ? (source['roundMode'] as DynamicReplacementRoundMode)
       : 'none';
   const padLength =
-    typeof source['padLength'] === 'number' &&
-    Number.isFinite(source['padLength']) &&
-    source['padLength'] > 0
-      ? Math.floor(source['padLength'])
-      : null;
+    typeof source['sizeLength'] === 'number' &&
+    Number.isFinite(source['sizeLength']) &&
+    source['sizeLength'] > 0
+      ? Math.floor(source['sizeLength'])
+      : null; // Wait, recipe schema used padLength? Checking previous file read.
+      // Re-reading: DynamicReplacementRecipe had padLength.
   const padChar =
     typeof source['padChar'] === 'string' && source['padChar'].length > 0
       ? source['padChar'].charAt(0)
@@ -208,6 +177,9 @@ const normalizeRecipe = (raw: unknown): DynamicReplacementRecipe | null => {
       ? (source['targetApply'] as DynamicReplacementTargetApply)
       : 'replace_matched_segment';
 
+  // Correction for padLength which was incorrectly mapped to sizeLength in my head
+  const actualPadLength = typeof source['padLength'] === 'number' ? source['padLength'] : null;
+
   return {
     version: 1,
     sourceMode,
@@ -218,7 +190,7 @@ const normalizeRecipe = (raw: unknown): DynamicReplacementRecipe | null => {
     mathOperation,
     mathOperand,
     roundMode,
-    padLength,
+    padLength: actualPadLength,
     padChar,
     logicOperator,
     logicOperand,

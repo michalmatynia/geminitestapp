@@ -50,8 +50,8 @@ function mapToRecord(record: {
     internalCategoryId: record.internalCategoryId,
     catalogId: record.catalogId,
     isActive: record.isActive,
-    createdAt: record.createdAt,
-    updatedAt: record.updatedAt,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt?.toISOString() ?? null,
   };
 }
 
@@ -146,8 +146,8 @@ const mapMongoCategoryMappingToRecord = (record: MongoCategoryMappingDoc): Categ
   internalCategoryId: record.internalCategoryId,
   catalogId: record.catalogId,
   isActive: Boolean(record.isActive),
-  createdAt: record.createdAt,
-  updatedAt: record.updatedAt,
+  createdAt: record.createdAt.toISOString(),
+  updatedAt: record.updatedAt?.toISOString() ?? null,
 });
 
 const mapMongoExternalCategory = (

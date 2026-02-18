@@ -6,29 +6,31 @@ import * as React from 'react';
 
 import { cn } from '@/shared/utils';
 
+import { SectionHeader } from './section-header';
+
 const Collapsible = CollapsiblePrimitive.Root;
-
 const CollapsibleTrigger = CollapsiblePrimitive.CollapsibleTrigger;
-
 const CollapsibleContent = CollapsiblePrimitive.CollapsibleContent;
 
 interface CollapsibleSectionProps {
   title: React.ReactNode;
-  actions?: React.ReactNode | undefined;
+  description?: React.ReactNode;
+  actions?: React.ReactNode;
   children: React.ReactNode;
-  open?: boolean | undefined;
-  onOpenChange?: ((open: boolean) => void) | undefined;
-  className?: string | undefined;
-  triggerClassName?: string | undefined;
-  headerClassName?: string | undefined;
-  titleClassName?: string | undefined;
-  contentClassName?: string | undefined;
-  iconClassName?: string | undefined;
-  variant?: 'default' | 'card' | 'subtle' | undefined;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  className?: string;
+  triggerClassName?: string;
+  headerClassName?: string;
+  titleClassName?: string;
+  contentClassName?: string;
+  iconClassName?: string;
+  variant?: 'default' | 'card' | 'subtle';
 }
 
 export function CollapsibleSection({
   title,
+  description,
   actions,
   children,
   open,
@@ -64,8 +66,13 @@ export function CollapsibleSection({
           triggerClassName
         )}
       >
-        <div className={cn('flex-1', titleClassName)}>{title}</div>
-        {actions ? <div className='shrink-0'>{actions}</div> : null}
+        <SectionHeader
+          title={title}
+          description={description}
+          actions={actions}
+          className={cn('flex-1', titleClassName)}
+          size='xs'
+        />
         <ChevronDown
           className={cn(
             'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
@@ -85,5 +92,3 @@ export function CollapsibleSection({
     </Collapsible>
   );
 }
-
-export { Collapsible, CollapsibleTrigger, CollapsibleContent };

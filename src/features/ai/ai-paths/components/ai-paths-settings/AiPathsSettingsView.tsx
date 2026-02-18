@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import { useAiPathRuntimeAnalytics } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
 import type { AiNode } from '@/features/ai/ai-paths/lib';
 import {
+  AppModal,
   Button,
   Label,
   SelectSimple,
@@ -44,10 +45,12 @@ import {
   FLOW_OPTIONS,
   RUN_MODE_OPTIONS,
   EXECUTION_OPTIONS,
+  buildSwitchPathOptions,
   buildHistoryRetentionOptions,
   formatDurationMs,
   formatPercent,
   formatStatusLabel,
+  sortPathMetas,
   statusToVariant,
 } from './ai-paths-settings-view-utils';
 
@@ -79,6 +82,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
   // Domain: Graph — read from context (synced state only)
   const {
     activePathId,
+    paths,
     pathName,
     isPathLocked,
     isPathActive,
@@ -113,6 +117,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
 
   const {
     handleDeletePath,
+    handleSwitchPath,
     handleTogglePathLock,
     handleTogglePathActive,
     historyRetentionPasses,
@@ -194,6 +199,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
   const [runHistoryNodeId, setRunHistoryNodeId] = useState<string | null>(null);
 
   const [presetsModalOpen, setPresetsModalOpen] = useState(false);
+  const [pathSettingsModalOpen, setPathSettingsModalOpen] = useState(false);
 
   const [simulationOpenNodeId, setSimulationOpenNodeId] = useState<
     string | null
@@ -213,6 +219,10 @@ export function AiPathsSettingsView(): React.JSX.Element {
         historyRetentionOptionsMax,
       ),
     [historyRetentionOptionsMax, historyRetentionPasses],
+  );
+  const pathSwitchOptions = useMemo(
+    () => buildSwitchPathOptions(sortPathMetas(paths)),
+    [paths],
   );
 
   const runtimeAnalyticsQuery = useAiPathRuntimeAnalytics(
@@ -301,6 +311,16 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         disabled={saving}
                       >
                         {saving ? 'Saving...' : 'Save Path'}
+                      </Button>
+                      <Button
+                        type='button'
+                        className='rounded-md border border-border text-sm text-gray-200 hover:bg-card/60'
+                        onClick={() => {
+                          setPathSettingsModalOpen(true);
+                        }}
+                        disabled={!activePathId}
+                      >
+                        Paths Settings
                       </Button>
                       <Button
                         type='button'
@@ -594,7 +614,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                     disabled={saving}
                   />
                 </div>
-                <div className='flex items-center'>
+                <div className='flex flex-col items-end gap-1'>
                   {isPathNameEditing ? (
                     <input
                       type='text'
@@ -636,6 +656,25 @@ export function AiPathsSettingsView(): React.JSX.Element {
                       </span>
                     </button>
                   )}
+                  <div className='flex w-full flex-col items-end gap-1'>
+                    <Label className='text-[10px] uppercase text-gray-500'>
+                      Path Selector
+                    </Label>
+                    <SelectSimple
+                      size='sm'
+                      value={activePathId ?? undefined}
+                      onValueChange={(value: string): void => {
+                        if (value !== activePathId) {
+                          handleSwitchPath(value);
+                        }
+                      }}
+                      options={pathSwitchOptions}
+                      placeholder='Select path'
+                      className='w-[320px]'
+                      triggerClassName='h-8 border-border bg-card/60 px-3 text-xs text-white'
+                      disabled={pathSwitchOptions.length === 0}
+                    />
+                  </div>
                 </div>
               </div>,
               document.getElementById('ai-paths-name') ?? document.body,
@@ -948,6 +987,100 @@ export function AiPathsSettingsView(): React.JSX.Element {
             });
         }}
       />
+      <AppModal
+        open={pathSettingsModalOpen}
+        onClose={() => setPathSettingsModalOpen(false)}
+        title='Paths Settings'
+        subtitle='Configure persistence and runtime behavior for this path.'
+        size='sm'
+      >
+        <div className='space-y-4'>
+          <div className='space-y-1'>
+            <Label className='text-[10px] uppercase text-gray-500'>
+              Save Mode
+            </Label>
+            <StatusBadge
+              status={autoSaveLabel}
+              variant={autoSaveVariant}
+              size='sm'
+              className='font-medium'
+            />
+          </div>
+          <div className='space-y-1'>
+            <Label className='text-[10px] uppercase text-gray-500'>
+              Execution
+            </Label>
+            <SelectSimple
+              size='sm'
+              value={executionMode}
+              onValueChange={(value: string): void => {
+                if (value !== executionMode) {
+                  handleExecutionModeChange(value as 'local' | 'server');
+                }
+              }}
+              options={[...EXECUTION_OPTIONS]}
+              triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
+              disabled={isPathLocked}
+            />
+          </div>
+          <div className='space-y-1'>
+            <Label className='text-[10px] uppercase text-gray-500'>
+              Flow
+            </Label>
+            <SelectSimple
+              size='sm'
+              value={flowIntensity}
+              onValueChange={(value: string): void => {
+                if (value !== flowIntensity) {
+                  handleFlowIntensityChange(value as 'off' | 'low' | 'medium' | 'high');
+                }
+              }}
+              options={[...FLOW_OPTIONS]}
+              triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
+              disabled={isPathLocked}
+            />
+          </div>
+          <div className='space-y-1'>
+            <Label className='text-[10px] uppercase text-gray-500'>
+              Run Mode
+            </Label>
+            <SelectSimple
+              size='sm'
+              value={runMode}
+              onValueChange={(value: string): void => {
+                if (value !== runMode) {
+                  handleRunModeChange(value as 'block' | 'queue');
+                }
+              }}
+              options={[...RUN_MODE_OPTIONS]}
+              triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
+              disabled={isPathLocked}
+            />
+          </div>
+          <div className='space-y-1'>
+            <Label className='text-[10px] uppercase text-gray-500'>
+              History
+            </Label>
+            <SelectSimple
+              size='sm'
+              value={String(historyRetentionPasses)}
+              onValueChange={(value: string): void => {
+                const parsed = Number.parseInt(value, 10);
+                if (
+                  !Number.isFinite(parsed) ||
+                  parsed === historyRetentionPasses
+                ) {
+                  return;
+                }
+                void handleHistoryRetentionChange(parsed);
+              }}
+              options={historyRetentionOptions}
+              triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
+              disabled={saving}
+            />
+          </div>
+        </div>
+      </AppModal>
       <SimulationDialog
         isOpen={Boolean(simulationOpenNodeId)}
         onClose={() => setSimulationOpenNodeId(null)}

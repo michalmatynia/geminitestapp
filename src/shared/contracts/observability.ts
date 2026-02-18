@@ -28,6 +28,39 @@ export const logEntrySchema = dtoBaseSchema.extend({
 export type LogEntryDto = z.infer<typeof logEntrySchema>;
 
 /**
+ * System Log DTOs
+ */
+export const systemLogLevelSchema = z.enum(['info', 'warn', 'error']);
+export type SystemLogLevelDto = z.infer<typeof systemLogLevelSchema>;
+
+export const systemLogRecordSchema = dtoBaseSchema.extend({
+  level: systemLogLevelSchema,
+  message: z.string(),
+  source: z.string().nullable().optional(),
+  context: z.record(z.string(), z.unknown()).nullable().optional(),
+  stack: z.string().nullable().optional(),
+  path: z.string().nullable().optional(),
+  method: z.string().nullable().optional(),
+  statusCode: z.number().nullable().optional(),
+  requestId: z.string().nullable().optional(),
+  userId: z.string().nullable().optional(),
+});
+
+export type SystemLogRecordDto = z.infer<typeof systemLogRecordSchema>;
+
+export const systemLogMetricsSchema = z.object({
+  total: z.number(),
+  levels: z.record(systemLogLevelSchema, z.number()),
+  last24Hours: z.number(),
+  last7Days: z.number(),
+  topSources: z.array(z.object({ source: z.string(), count: z.number() })),
+  topPaths: z.array(z.object({ path: z.string(), count: z.number() })),
+  generatedAt: z.string(),
+});
+
+export type SystemLogMetricsDto = z.infer<typeof systemLogMetricsSchema>;
+
+/**
  * Trace & Span DTOs
  */
 export const spanLogSchema = z.object({

@@ -536,3 +536,25 @@ export const baseImportRunDetailResponseSchema = z.object({
   }).optional(),
 });
 export type BaseImportRunDetailResponseDto = z.infer<typeof baseImportRunDetailResponseSchema>;
+
+/**
+ * Base.com Parameter Import DTOs
+ */
+
+export const extractedBaseParameterSchema = z.object({
+  key: z.string(),
+  baseParameterId: z.string().nullable(),
+  namesByLanguage: z.record(z.string(), z.string()),
+  valuesByLanguage: z.record(z.string(), z.string()),
+});
+
+export type ExtractedBaseParameterDto = z.infer<typeof extractedBaseParameterSchema>;
+
+export const baseParameterImportSummarySchema = z.object({
+  extracted: z.number(),
+  resolved: z.number(),
+  created: z.number(),
+  written: z.number(),
+});
+
+export type BaseParameterImportSummaryDto = z.infer<typeof baseParameterImportSummarySchema>;

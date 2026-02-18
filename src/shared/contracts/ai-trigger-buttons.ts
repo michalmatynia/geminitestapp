@@ -3,39 +3,23 @@ import { z } from 'zod';
 import { namedDtoSchema } from './base';
 
 /**
- * Trigger button locations in the UI
+ * AI Trigger Button DTOs
  */
-export const aiTriggerButtonLocationSchema = z.enum([
-  'product_modal',
-  'product_list',
-  'note_modal',
-  'note_list',
-]);
 
-export type AiTriggerButtonLocation = z.infer<typeof aiTriggerButtonLocationSchema>;
-
-/**
- * Trigger button activation mode
- */
-export const aiTriggerButtonModeSchema = z.enum(['click', 'toggle']);
-
-export type AiTriggerButtonMode = z.infer<typeof aiTriggerButtonModeSchema>;
-
-/**
- * Trigger button display style
- */
-export const aiTriggerButtonDisplaySchema = z.enum(['icon', 'icon_label']);
-
-export type AiTriggerButtonDisplay = z.infer<typeof aiTriggerButtonDisplaySchema>;
-
-/**
- * AI Trigger Button Contract
- */
 export const aiTriggerButtonSchema = namedDtoSchema.extend({
-  iconId: z.string().nullable(),
-  locations: z.array(aiTriggerButtonLocationSchema),
-  mode: aiTriggerButtonModeSchema,
-  display: aiTriggerButtonDisplaySchema,
+  pathId: z.string().optional(),
+  icon: z.string().nullable().optional(),
+  iconId: z.string().nullable().optional(),
+  color: z.string().nullable().optional(),
+  style: z.enum(['button', 'icon']).optional(),
+  size: z.enum(['small', 'medium', 'large']).optional(),
+  position: z.enum(['top-left', 'top-right', 'bottom-left', 'bottom-right', 'inline']).optional(),
+  contextMapping: z.record(z.string(), z.string()).optional(),
+  enabled: z.boolean().optional(),
+  // New fields from usage
+  locations: z.array(z.string()).optional(),
+  mode: z.enum(['click', 'toggle']).optional(),
+  display: z.enum(['icon', 'label', 'icon_label']).optional(),
 });
 
 export type AiTriggerButtonDto = z.infer<typeof aiTriggerButtonSchema>;

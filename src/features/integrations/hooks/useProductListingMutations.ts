@@ -233,7 +233,7 @@ export function useDeleteFromBaseMutation(productId: string): UpdateMutation<
           listingQueryKey,
           previousListings.map((listing: ProductListingWithDetails): ProductListingWithDetails =>
             listing.id === listingId
-              ? { ...listing, status: 'running', updatedAt: now }
+              ? { ...listing, status: 'running', updatedAt: nowIso }
               : listing
           )
         );

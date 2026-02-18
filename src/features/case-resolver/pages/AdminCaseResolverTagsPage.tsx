@@ -1,7 +1,6 @@
 'use client';
 
-import { Plus, Trash2 } from 'lucide-react';
-import Link from 'next/link';
+import { Plus } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
@@ -15,6 +14,13 @@ import {
   Skeleton,
   Tag as UiTag,
   useToast,
+  Breadcrumbs,
+  FormActions,
+  ActionMenu,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  LoadingState,
+  PropertyRow,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -238,20 +244,13 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
       <SectionHeader
         title='Case Resolver Tags'
         subtitle={(
-          <nav
-            aria-label='Breadcrumb'
-            className='mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-400'
-          >
-            <Link href='/admin' className='transition-colors hover:text-gray-200'>
-              Admin
-            </Link>
-            <span>/</span>
-            <Link href='/admin/case-resolver' className='transition-colors hover:text-gray-200'>
-              Case Resolver
-            </Link>
-            <span>/</span>
-            <span className='text-gray-300'>Tags</span>
-          </nav>
+          <Breadcrumbs
+            items={[
+              { label: 'Admin', href: '/admin' },
+              { label: 'Case Resolver', href: '/admin/case-resolver' },
+              { label: 'Tags' }
+            ]}
+          />
         )}
       />
 
@@ -298,27 +297,16 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
                       color={tag.color || '#38bdf8'}
                       dot
                     />
-                    <p className='mt-1 truncate text-[11px] text-gray-400'>
-                      {tagPathById.get(tag.id) ?? tag.name}
-                    </p>
+                    <PropertyRow label='Path' value={tagPathById.get(tag.id) ?? tag.name} className='mt-1' />
                   </div>
-                  <div className='flex items-center gap-2'>
-                    <Button
-                      type='button'
-                      onClick={(): void => openEditModal(tag)}
-                      className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700'
-                    >
+                  <ActionMenu ariaLabel={`Actions for tag ${tag.name}`}>
+                    <DropdownMenuItem onSelect={() => openEditModal(tag)}>
                       Edit
-                    </Button>
-                    <Button
-                      type='button'
-                      onClick={(): void => setTagToDelete(tag)}
-                      className='rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600'
-                      title='Delete tag'
-                    >
-                      <Trash2 className='size-3' />
-                    </Button>
-                  </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className='text-destructive focus:text-destructive' onSelect={() => setTagToDelete(tag)}>
+                      Delete
+                    </DropdownMenuItem>
+                  </ActionMenu>
                 </div>
               ))}
             </div>

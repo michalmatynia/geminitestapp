@@ -23,7 +23,8 @@ import { useChatbotSessions } from '@/features/ai/chatbot/hooks/useChatbotQuerie
 import type { 
   AdminNavItemDto, 
   AdminMenuCustomNodeDto,
-  AdminNavLeafDto
+  AdminNavLeafDto,
+  AdminMenuColorOptionDto
 } from '@/shared/contracts/admin';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, SearchInput, Tooltip, TreeContextMenu, TreeHeader } from '@/shared/ui';
@@ -42,13 +43,7 @@ export type NavItem = Omit<AdminNavItemDto, 'children'> & {
   children?: NavItem[];
 };
 
-export type AdminMenuColorOption = {
-  value: string;
-  label: string;
-  dot: string;
-  border: string;
-  text: string;
-};
+export type AdminMenuColorOption = AdminMenuColorOptionDto;
 
 export const ADMIN_MENU_COLORS: AdminMenuColorOption[] = [
   { value: 'slate', label: 'Slate', dot: 'bg-slate-400', border: 'border-slate-400/60', text: 'text-slate-200' },

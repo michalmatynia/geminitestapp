@@ -327,6 +327,8 @@ export async function uploadNoteFile(
       filepath: storedFilepath,
       mimetype: file.type,
       size: file.size,
+      width: null,
+      height: null,
     });
     void createFileUploadEvent({
       status: 'success',

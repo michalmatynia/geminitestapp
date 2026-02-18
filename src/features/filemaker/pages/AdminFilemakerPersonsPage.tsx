@@ -1,13 +1,12 @@
 'use client';
 
-import { Edit2, Users, Database, Building2 } from 'lucide-react';
+import { Users, Database, Building2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { 
   Badge, 
-  Button, 
   DataTable, 
   ListPanel, 
   PanelHeader, 

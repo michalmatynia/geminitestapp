@@ -441,27 +441,42 @@ function DatabasePreviewContent(): React.JSX.Element {
           {/* ── Database Metrics ── */}
           <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-5'>
             {databaseSize && (
-              <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-                <p className='text-[10px] uppercase font-bold text-gray-500 mb-1'>Total Size</p>
-                <p className='text-lg font-semibold text-white'>{databaseSize}</p>
-              </div>
+              <MetadataItem
+                label='Total Size'
+                value={databaseSize}
+                variant='card'
+                valueClassName='text-lg font-semibold text-white mt-1'
+                className='p-4'
+              />
             )}
-            <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-              <p className='text-[10px] uppercase font-bold text-gray-500 mb-1'>Tables</p>
-              <p className='text-lg font-semibold text-white'>{tables.length}</p>
-            </div>
-            <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-              <p className='text-[10px] uppercase font-bold text-gray-500 mb-1'>Enums</p>
-              <p className='text-lg font-semibold text-white'>{enums.length}</p>
-            </div>
-            <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-              <p className='text-[10px] uppercase font-bold text-gray-500 mb-1'>Indexes</p>
-              <p className='text-lg font-semibold text-white'>{stats.totalIndexes}</p>
-            </div>
-            <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-              <p className='text-[10px] uppercase font-bold text-gray-500 mb-1'>Relations</p>
-              <p className='text-lg font-semibold text-white'>{stats.totalFks}</p>
-            </div>
+            <MetadataItem
+              label='Tables'
+              value={tables.length}
+              variant='card'
+              valueClassName='text-lg font-semibold text-white mt-1'
+              className='p-4'
+            />
+            <MetadataItem
+              label='Enums'
+              value={enums.length}
+              variant='card'
+              valueClassName='text-lg font-semibold text-white mt-1'
+              className='p-4'
+            />
+            <MetadataItem
+              label='Indexes'
+              value={stats.totalIndexes}
+              variant='card'
+              valueClassName='text-lg font-semibold text-white mt-1'
+              className='p-4'
+            />
+            <MetadataItem
+              label='Relations'
+              value={stats.totalFks}
+              variant='card'
+              valueClassName='text-lg font-semibold text-white mt-1'
+              className='p-4'
+            />
           </div>
 
           {/* ── Tables Section ── */}

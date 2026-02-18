@@ -6,6 +6,7 @@ export * from './button';
 export * from './card';
 export * from './client-only';
 export * from './checkbox';
+export * from './CollapsibleSection';
 export * from './collapsible';
 export * from './dialog';
 export * from './dropdown-menu';

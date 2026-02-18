@@ -16,6 +16,7 @@ import {
   FormField,
   Alert,
   LoadingState,
+  CollapsibleSection,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -271,10 +272,11 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
       </FormSection>
 
       {/* JSON Backup & Restore */}
-      <FormSection
+      <CollapsibleSection
         title='JSON Backup & Restore (Prisma)'
         description='Export all Prisma tables as JSON. No external tools (pg_dump) required.'
-        className='mt-6 p-6'
+        variant='default'
+        className='mt-6'
       >
         <div className='mt-4 flex flex-wrap items-end gap-4'>
           <Button
@@ -310,7 +312,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
         {jsonBackupsQuery.isLoading && (
           <LoadingState message='Loading backups...' className='mt-3' size='sm' />
         )}
-      </FormSection>
+      </CollapsibleSection>
     </PageLayout>
   );
 }

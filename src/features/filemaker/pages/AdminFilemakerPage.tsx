@@ -43,7 +43,8 @@ const createId = (prefix: string): string => {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 };
 
-const formatTimestamp = (value: string): string => {
+const formatTimestamp = (value: string | null | undefined): string => {
+  if (!value) return 'Unknown';
   const parsed = Date.parse(value);
   if (Number.isNaN(parsed)) return 'Unknown';
   return new Date(parsed).toLocaleString();
@@ -416,7 +417,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
                       Phones: {person.phoneNumbers.length > 0 ? person.phoneNumbers.join(', ') : 'n/a'}
                     </div>
                     <div className='text-[10px] text-gray-600'>
-                      Updated: {formatTimestamp(person.updatedAt)}
+                      Updated: {formatTimestamp(person.updatedAt ?? undefined)}
                     </div>
                   </div>
                   <div className='flex items-center gap-2'>
@@ -476,7 +477,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
                     <div className='text-sm font-semibold text-white'>{organization.name}</div>
                     <div className='text-xs text-gray-300'>{formatFilemakerAddress(organization)}</div>
                     <div className='text-[10px] text-gray-600'>
-                      Updated: {formatTimestamp(organization.updatedAt)}
+                      Updated: {formatTimestamp(organization.updatedAt ?? undefined)}
                     </div>
                   </div>
                   <div className='flex items-center gap-2'>

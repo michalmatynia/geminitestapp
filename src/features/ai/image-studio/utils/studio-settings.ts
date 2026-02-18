@@ -6,12 +6,13 @@ import {
   clampImageStudioUpscaleResolutionSide,
   clampImageStudioUpscaleScale,
   deriveOperationsFromSteps,
-  normalizeImageStudioSequenceOperations,
   normalizeImageStudioSequencePresets,
   normalizeImageStudioSequenceSteps,
   resolveImageStudioSequenceActiveSteps,
   type ImageStudioProjectSequencingSettings,
   type ImageStudioSequencePreset,
+  type ImageStudioSequenceStep,
+  type ImageStudioSequenceUpscaleStep,
 } from './studio-sequencing-settings';
 
 export * from './studio-sequencing-settings';
@@ -223,6 +224,24 @@ const asTrimmedString = (value: unknown): string | null => {
 const asNonNegativeInteger = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
   return Math.max(0, Math.floor(value));
+};
+
+const deriveUpscaleSummaryFromSteps = (steps: ImageStudioSequenceStep[]): {
+  strategy: 'scale' | 'target_resolution';
+  scale: number;
+  targetWidth: number;
+  targetHeight: number;
+} => {
+  const firstEnabledUpscale = steps.find(
+    (step): step is ImageStudioSequenceUpscaleStep =>
+      step.type === 'upscale' && step.enabled
+  );
+  return {
+    strategy: firstEnabledUpscale?.config.strategy ?? 'scale',
+    scale: firstEnabledUpscale?.config.scale ?? 2,
+    targetWidth: firstEnabledUpscale?.config.targetWidth ?? 2048,
+    targetHeight: firstEnabledUpscale?.config.targetHeight ?? 2048,
+  };
 };
 
 const hashSequenceSnapshotPayload = (payload: string): string => {
@@ -514,32 +533,8 @@ export function parseImageStudioSettings(raw: string | null | undefined): ImageS
       parsedSettings.targetAi.openai.model,
     );
 
-    const operations = normalizeImageStudioSequenceOperations(
-      parsedSettings.projectSequencing.operations
-    );
-    const upscaleStrategy =
-      parsedSettings.projectSequencing.upscaleStrategy === 'target_resolution'
-        ? 'target_resolution'
-        : 'scale';
-    const upscaleScale = clampImageStudioUpscaleScale(
-      parsedSettings.projectSequencing.upscaleScale
-    );
-    const upscaleTargetWidth = clampImageStudioUpscaleResolutionSide(
-      parsedSettings.projectSequencing.upscaleTargetWidth
-    );
-    const upscaleTargetHeight = clampImageStudioUpscaleResolutionSide(
-      parsedSettings.projectSequencing.upscaleTargetHeight
-    );
-
     const normalizedSteps = normalizeImageStudioSequenceSteps(
       parsedSettings.projectSequencing.steps,
-      {
-        fallbackOperations: operations,
-        upscaleStrategy,
-        upscaleScale,
-        upscaleTargetWidth,
-        upscaleTargetHeight,
-      },
     );
 
     const normalizedPresets = normalizeImageStudioSequencePresets(
@@ -555,6 +550,8 @@ export function parseImageStudioSettings(raw: string | null | undefined): ImageS
     const activeSteps = activePresetId
       ? normalizedPresets.find((preset) => preset.id === activePresetId)?.steps ?? normalizedSteps
       : normalizedSteps;
+    const operations = deriveOperationsFromSteps(activeSteps);
+    const upscaleSummary = deriveUpscaleSummaryFromSteps(activeSteps);
 
     const snapshotHash = asTrimmedString(
       parsedSettings.projectSequencing.snapshotHash,
@@ -583,10 +580,10 @@ export function parseImageStudioSettings(raw: string | null | undefined): ImageS
       steps: normalizedSteps,
       presets: normalizedPresets,
       activePresetId,
-      upscaleStrategy,
-      upscaleScale,
-      upscaleTargetWidth,
-      upscaleTargetHeight,
+      upscaleStrategy: upscaleSummary.strategy,
+      upscaleScale: clampImageStudioUpscaleScale(upscaleSummary.scale),
+      upscaleTargetWidth: clampImageStudioUpscaleResolutionSide(upscaleSummary.targetWidth),
+      upscaleTargetHeight: clampImageStudioUpscaleResolutionSide(upscaleSummary.targetHeight),
       snapshotHash,
       snapshotSavedAt,
       snapshotStepCount,

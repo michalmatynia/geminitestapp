@@ -48,9 +48,7 @@ export type PromptValidationStackResolution = {
   usedFallback: boolean;
   reason:
     | 'exact_match'
-    | 'legacy_mapping'
     | 'default_scope'
     | 'scope_fallback'
     | 'invalid_stack';
 };
-

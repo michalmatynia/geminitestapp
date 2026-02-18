@@ -6,6 +6,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST as POST_ACCEPT } from '@/app/api/products/[id]/studio/accept/route';
+import { GET as GET_PREFLIGHT } from '@/app/api/products/[id]/studio/preflight/route';
 import { GET as GET_STUDIO_CONFIG, PUT as PUT_STUDIO_CONFIG } from '@/app/api/products/[id]/studio/route';
 import { POST as POST_SEND } from '@/app/api/products/[id]/studio/send/route';
 import { GET as GET_VARIANTS } from '@/app/api/products/[id]/studio/variants/route';
@@ -15,6 +16,7 @@ import {
 } from '@/features/products/services/product-studio-config';
 import {
   acceptProductStudioVariant,
+  getProductStudioSequencePreflight,
   getProductStudioVariants,
   sendProductImageToStudio,
 } from '@/features/products/services/product-studio-service';
@@ -55,6 +57,7 @@ vi.mock('@/features/products/services/product-studio-config', () => ({
 
 vi.mock('@/features/products/services/product-studio-service', () => ({
   sendProductImageToStudio: vi.fn(),
+  getProductStudioSequencePreflight: vi.fn(),
   getProductStudioVariants: vi.fn(),
   acceptProductStudioVariant: vi.fn(),
 }));
@@ -178,6 +181,12 @@ describe('Product Studio API', () => {
         selectedSnapshotStepCount: 0,
         selectedSnapshotModelId: null,
       },
+      sequenceReadiness: {
+        ready: false,
+        requiresProjectSequence: true,
+        state: 'project_sequence_disabled',
+        message: 'Project sequencing is disabled.',
+      },
       projectId: 'studio-a',
       imageSlotIndex: 0,
       sourceSlot: {
@@ -277,6 +286,12 @@ describe('Product Studio API', () => {
         selectedSnapshotStepCount: 1,
         selectedSnapshotModelId: 'chatgpt-image-latest',
       },
+      sequenceReadiness: {
+        ready: false,
+        requiresProjectSequence: true,
+        state: 'project_snapshot_stale',
+        message: 'Save Defaults required.',
+      },
       sequenceGenerationMode: 'studio_prompt_then_sequence',
       projectId: 'studio-a',
       sourceSlotId: 'slot-source',
@@ -308,6 +323,79 @@ describe('Product Studio API', () => {
       productId: 'prod-1',
       imageSlotIndex: 1,
       projectId: 'studio-a',
+    });
+  });
+
+  it('GET /api/products/[id]/studio/preflight forwards request', async () => {
+    vi.mocked(getProductStudioSequencePreflight).mockResolvedValue({
+      config: {
+        projectId: 'studio-a',
+        sourceSlotByImageIndex: { '1': 'slot-source' },
+        sourceSlotHistoryByImageIndex: {},
+        updatedAt: '2026-02-13T10:00:00.000Z',
+      },
+      projectId: 'studio-a',
+      imageSlotIndex: 1,
+      sequenceGenerationMode: 'studio_prompt_then_sequence',
+      requestedSequenceMode: 'studio_prompt_then_sequence',
+      resolvedSequenceMode: 'studio_prompt_then_sequence',
+      executionRoute: 'studio_sequencer',
+      sequencing: {
+        persistedEnabled: true,
+        enabled: true,
+        cropCenterBeforeGeneration: true,
+        upscaleOnAccept: true,
+        upscaleScale: 2,
+        runViaSequence: true,
+        sequenceStepCount: 1,
+        expectedOutputs: 1,
+        snapshotHash: 'abc123',
+        snapshotSavedAt: '2026-02-13T10:00:00.000Z',
+        snapshotStepCount: 1,
+        snapshotModelId: 'chatgpt-image-latest',
+        currentSnapshotHash: 'abc123',
+        snapshotMatchesCurrent: true,
+        needsSaveDefaults: false,
+        needsSaveDefaultsReason: null,
+      },
+      sequencingDiagnostics: {
+        projectId: 'studio-a',
+        projectSettingsKey: 'image_studio_project_settings_studio-a',
+        selectedSettingsKey: 'image_studio_project_settings_studio-a',
+        selectedScope: 'project',
+        hasProjectSettings: true,
+        hasGlobalSettings: true,
+        projectSequencingEnabled: true,
+        globalSequencingEnabled: false,
+        selectedSequencingEnabled: true,
+        selectedSnapshotHash: 'abc123',
+        selectedSnapshotSavedAt: '2026-02-13T10:00:00.000Z',
+        selectedSnapshotStepCount: 1,
+        selectedSnapshotModelId: 'chatgpt-image-latest',
+      },
+      sequenceReadiness: {
+        ready: true,
+        requiresProjectSequence: true,
+        state: 'ready',
+        message: null,
+      },
+      modelId: 'chatgpt-image-latest',
+      warnings: [],
+    });
+
+    const response = await GET_PREFLIGHT(
+      new NextRequest(
+        'http://localhost/api/products/prod-1/studio/preflight?imageSlotIndex=1&projectId=studio-a&sequenceGenerationMode=studio_prompt_then_sequence'
+      ),
+      { params: Promise.resolve({ id: 'prod-1' }) }
+    );
+
+    expect(response.status).toBe(200);
+    expect(getProductStudioSequencePreflight).toHaveBeenCalledWith({
+      productId: 'prod-1',
+      imageSlotIndex: 1,
+      projectId: 'studio-a',
+      sequenceGenerationMode: 'studio_prompt_then_sequence',
     });
   });
 

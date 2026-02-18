@@ -24,8 +24,8 @@ export interface AiPathsErrorReporting {
 /**
  * Provides error-reporting helpers for the AI-Paths feature.
  *
- * Replaces `persistLastError` and `reportAiPathsError` from legacy
- * `useAiPathsSettingsState`. Reads graph metadata from GraphContext
+ * Replaces `persistLastError` and `reportAiPathsError` from the previous
+ * settings-state hook. Reads graph metadata from GraphContext
  * and sets the last-error via RuntimeActions.
  *
  * @param activeTab — the current tab, used for observability context

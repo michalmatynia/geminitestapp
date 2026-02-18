@@ -224,7 +224,10 @@ const createRuleDrivenSegment = (args: {
     'Section';
   const matchedRules = collectMatchedRules(args.runtime, raw);
   const matchedRuleIds = matchedRules.map((rule) => rule.id);
-  const keepEmptyTitle = shouldKeepEmptyTitleForCaseResolver(matchedRuleIds);
+  const keepEmptyTitle = shouldKeepEmptyTitleForCaseResolver(
+    matchedRuleIds,
+    title || headingTitle || raw
+  );
   const fallbackType = args.headingRule?.segmentTypeHint ?? 'assigned_text';
   const type = inferTypeFromRuleSequence(matchedRules, fallbackType);
   const contentLines = args.headingLine ? args.blockLines.slice(1) : args.blockLines;
@@ -996,7 +999,12 @@ export function updatePromptExploderDocument(
 }
 
 export function ensureSegmentTitle(segment: PromptExploderSegment): PromptExploderSegment {
-  if (shouldKeepEmptyTitleForCaseResolver(segment.matchedPatternIds ?? [])) {
+  if (
+    shouldKeepEmptyTitleForCaseResolver(
+      segment.matchedPatternIds ?? [],
+      segment.title || segment.raw || segment.text || ''
+    )
+  ) {
     if (segment.title.length === 0) return segment;
     return {
       ...segment,

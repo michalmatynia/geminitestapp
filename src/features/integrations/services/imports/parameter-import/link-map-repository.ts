@@ -132,19 +132,6 @@ const parseLinkMap = (raw: string | null): ParameterLinkMap => {
         }
 
         const topEntries = Object.entries(topLevelValue as Record<string, unknown>);
-        const isLegacyCatalogMap =
-          topEntries.length > 0 &&
-          topEntries.every(([, value]: [string, unknown]) =>
-            typeof value === 'string'
-          );
-
-        if (isLegacyCatalogMap) {
-          const legacyCatalogLinks = normalizeLinkEntries(topLevelValue);
-          if (Object.keys(legacyCatalogLinks).length === 0) return;
-          if (!normalized[DEFAULT_SCOPE_KEY]) normalized[DEFAULT_SCOPE_KEY] = {};
-          normalized[DEFAULT_SCOPE_KEY][normalizedTopLevelKey] = legacyCatalogLinks;
-          return;
-        }
 
         const scopeBucket: Record<string, Record<string, string>> = {};
         topEntries.forEach(([catalogId, catalogLinksRaw]: [string, unknown]) => {

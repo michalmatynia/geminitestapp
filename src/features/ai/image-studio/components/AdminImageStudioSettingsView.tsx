@@ -30,7 +30,7 @@ type SelectOption = {
   label: string;
 };
 
-type StudioSettingsTab = 'prompt' | 'generation' | 'maintenance';
+type StudioSettingsTab = 'prompt' | 'generation' | 'validation' | 'maintenance';
 
 type ModelCapabilities = {
   supportsUser: boolean;
@@ -268,9 +268,10 @@ export function AdminImageStudioSettingsView(
           onValueChange={(value: string) => setActiveSettingsTab(value as StudioSettingsTab)}
           className='w-full'
         >
-          <TabsList className='grid h-auto w-full grid-cols-2 gap-1 bg-muted/40 p-1 sm:grid-cols-3'>
+          <TabsList className='grid h-auto w-full grid-cols-2 gap-1 bg-muted/40 p-1 sm:grid-cols-4'>
             <TabsTrigger value='prompt'>Prompt</TabsTrigger>
             <TabsTrigger value='generation'>Generation</TabsTrigger>
+            <TabsTrigger value='validation'>Validation</TabsTrigger>
             <TabsTrigger value='maintenance'>Maintenance</TabsTrigger>
           </TabsList>
 

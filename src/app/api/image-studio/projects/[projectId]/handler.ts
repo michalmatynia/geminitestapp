@@ -7,9 +7,13 @@ import { z } from 'zod';
 import { deleteImageStudioRunsByProject } from '@/features/ai/image-studio/server/run-repository';
 import { deleteImageStudioSlotLinksForProject } from '@/features/ai/image-studio/server/slot-link-repository';
 import { deleteImageStudioSlotsByProject } from '@/features/ai/image-studio/server/slot-repository';
+import { getImageStudioProjectSettingsKey } from '@/features/ai/image-studio/utils/studio-settings';
 import { getImageFileRepository } from '@/features/files/server';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
+import { clearSettingsCache } from '@/shared/lib/settings-cache';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
@@ -21,6 +25,7 @@ const SLOT_COLLECTION = 'image_studio_slots';
 const RUN_COLLECTION = 'image_studio_runs';
 const SLOT_LINK_COLLECTION = 'image_studio_slot_links';
 const PROJECT_METADATA_FILENAME = '.image-studio-project.json';
+const SETTINGS_COLLECTION = 'settings';
 
 const sanitizeProjectId = (value: string): string =>
   value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
@@ -36,6 +41,130 @@ const toProjectIdCandidates = (rawProjectId: string): string[] =>
         .filter((value) => isSafeProjectIdCandidate(value))
     )
   );
+
+const toProjectSettingsKeys = (projectIds: string[]): string[] =>
+  Array.from(
+    new Set(
+      projectIds
+        .map((projectId) => getImageStudioProjectSettingsKey(projectId))
+        .filter((key): key is string => typeof key === 'string' && key.trim().length > 0),
+    ),
+  );
+
+const canUsePrismaSettings = (): boolean =>
+  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
+
+const readSettingByKey = async (
+  key: string,
+  provider: 'prisma' | 'mongodb',
+): Promise<string | null> => {
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) return null;
+    const mongo = await getMongoDb();
+    const doc = await mongo
+      .collection<{ key?: string; value?: string }>(SETTINGS_COLLECTION)
+      .findOne({ key }, { projection: { value: 1 } });
+    return typeof doc?.value === 'string' ? doc.value : null;
+  }
+  if (!canUsePrismaSettings()) return null;
+  const doc = await prisma.setting.findUnique({
+    where: { key },
+    select: { value: true },
+  });
+  return doc?.value ?? null;
+};
+
+const upsertSettingByKey = async (
+  key: string,
+  value: string,
+  provider: 'prisma' | 'mongodb',
+): Promise<void> => {
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) {
+      throw operationFailedError('Mongo settings store is unavailable.');
+    }
+    const mongo = await getMongoDb();
+    const now = new Date();
+    await mongo.collection(SETTINGS_COLLECTION).updateOne(
+      { key },
+      { $set: { value, updatedAt: now }, $setOnInsert: { createdAt: now } },
+      { upsert: true },
+    );
+    return;
+  }
+  if (!canUsePrismaSettings()) {
+    throw operationFailedError('Prisma settings store is unavailable.');
+  }
+  await prisma.setting.upsert({
+    where: { key },
+    update: { value },
+    create: { key, value },
+  });
+};
+
+const deleteSettingsByKeys = async (
+  keys: string[],
+  provider: 'prisma' | 'mongodb',
+): Promise<number> => {
+  if (keys.length === 0) return 0;
+  if (provider === 'mongodb') {
+    if (!process.env['MONGODB_URI']) return 0;
+    const mongo = await getMongoDb();
+    const result = await mongo
+      .collection(SETTINGS_COLLECTION)
+      .deleteMany({ key: { $in: keys } });
+    return result.deletedCount ?? 0;
+  }
+  if (!canUsePrismaSettings()) return 0;
+  const result = await prisma.setting.deleteMany({
+    where: { key: { in: keys } },
+  });
+  return result.count ?? 0;
+};
+
+const migrateProjectScopedSettings = async (params: {
+  fromProjectIds: string[];
+  toProjectId: string;
+}): Promise<{
+  migrated: boolean;
+  deletedLegacyKeys: number;
+  targetKey: string | null;
+}> => {
+  const provider = await getAppDbProvider();
+  const fromKeys = toProjectSettingsKeys(params.fromProjectIds);
+  const targetKey = getImageStudioProjectSettingsKey(params.toProjectId);
+  if (!targetKey) {
+    throw badRequestError('Invalid target project settings key.');
+  }
+
+  const targetExisting = await readSettingByKey(targetKey, provider);
+  if (targetExisting && targetExisting.trim().length > 0) {
+    throw badRequestError('Target project settings key already exists.');
+  }
+
+  let sourceValue: string | null = null;
+  for (const key of fromKeys) {
+    const value = await readSettingByKey(key, provider);
+    if (value && value.trim().length > 0) {
+      sourceValue = value;
+      break;
+    }
+  }
+
+  if (sourceValue) {
+    await upsertSettingByKey(targetKey, sourceValue, provider);
+  }
+  const deletedLegacyKeys = await deleteSettingsByKeys(fromKeys, provider);
+  if (sourceValue || deletedLegacyKeys > 0) {
+    clearSettingsCache();
+  }
+
+  return {
+    migrated: Boolean(sourceValue),
+    deletedLegacyKeys,
+    targetKey,
+  };
+};
 
 const resolveProjectDir = (candidate: string): string | null => {
   if (!candidate) return null;
@@ -393,6 +522,7 @@ export async function deleteImageStudioProjectHandler(
     slotLinksDeleted: 0,
     runsDeleted: 0,
     imageFileRecordsDeleted: 0,
+    settingsKeysDeleted: 0,
   };
 
   for (const candidate of candidates) {
@@ -402,6 +532,13 @@ export async function deleteImageStudioProjectHandler(
   }
 
   stats.imageFileRecordsDeleted = await deleteProjectImageFileRecords(candidates);
+  stats.settingsKeysDeleted = await deleteSettingsByKeys(
+    toProjectSettingsKeys(candidates),
+    await getAppDbProvider(),
+  );
+  if (stats.settingsKeysDeleted > 0) {
+    clearSettingsCache();
+  }
 
   for (const candidate of candidates) {
     const projectDir = resolveProjectDir(candidate);
@@ -495,6 +632,10 @@ export async function patchImageStudioProjectHandler(
   const updatedRuns = await migrateRunRecords(fromProjectIds, toProjectId);
   const updatedSlotLinks = await migrateSlotLinkRecords(fromProjectIds, toProjectId);
   const updatedImageFiles = await migrateImageFilePaths(fromProjectIds, toProjectId);
+  const settingsStats = await migrateProjectScopedSettings({
+    fromProjectIds,
+    toProjectId,
+  });
   const project = await upsertProjectSummary(toProjectId);
 
   return NextResponse.json({
@@ -510,6 +651,9 @@ export async function patchImageStudioProjectHandler(
       updatedRuns,
       updatedSlotLinks,
       updatedImageFiles,
+      migratedSettings: settingsStats.migrated,
+      deletedLegacySettingsKeys: settingsStats.deletedLegacyKeys,
+      settingsKey: settingsStats.targetKey,
     },
   });
 }

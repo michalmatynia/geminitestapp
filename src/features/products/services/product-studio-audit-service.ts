@@ -6,6 +6,7 @@ import type { ImageStudioRunDispatchMode } from '@/features/jobs/workers/imageSt
 import type {
   ProductStudioExecutionRoute,
   ProductStudioSequenceGenerationMode,
+  ProductStudioSequencingDiagnosticsScope,
 } from '@/features/products/types/product-studio';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
@@ -38,6 +39,10 @@ export type ProductStudioRunAuditEntry = {
   dispatchMode: ImageStudioRunDispatchMode | null;
   fallbackReason: string | null;
   warnings: string[];
+  settingsScope: ProductStudioSequencingDiagnosticsScope;
+  settingsKey: string | null;
+  projectSettingsKey: string | null;
+  settingsScopeValid: boolean;
   sequenceSnapshotHash: string | null;
   stepOrderUsed: string[];
   resolvedCropRect: {
@@ -177,6 +182,19 @@ const toAuditEntry = (doc: ProductStudioRunAuditDocument): ProductStudioRunAudit
   const fallbackReason = asTrimmedString(doc.fallbackReason) || null;
   const errorMessage = asTrimmedString(doc.errorMessage) || null;
   const warnings = normalizeWarnings(doc.warnings);
+  const settingsScopeRaw = asTrimmedString(doc.settingsScope);
+  const settingsScope: ProductStudioSequencingDiagnosticsScope =
+    settingsScopeRaw === 'project' ||
+    settingsScopeRaw === 'global' ||
+    settingsScopeRaw === 'default'
+      ? settingsScopeRaw
+      : 'default';
+  const settingsKey = asTrimmedString(doc.settingsKey) || null;
+  const projectSettingsKey = asTrimmedString(doc.projectSettingsKey) || null;
+  const settingsScopeValid =
+    typeof doc.settingsScopeValid === 'boolean'
+      ? doc.settingsScopeValid
+      : settingsScope === 'project';
   const sequenceSnapshotHash = asTrimmedString(doc.sequenceSnapshotHash) || null;
   const stepOrderUsed = normalizeStepOrderUsed(doc.stepOrderUsed);
   const resolvedCropRect = normalizeCropRect(doc.resolvedCropRect);
@@ -210,6 +228,10 @@ const toAuditEntry = (doc: ProductStudioRunAuditDocument): ProductStudioRunAudit
     dispatchMode,
     fallbackReason,
     warnings,
+    settingsScope,
+    settingsKey,
+    projectSettingsKey,
+    settingsScopeValid,
     sequenceSnapshotHash,
     stepOrderUsed,
     resolvedCropRect,
@@ -263,6 +285,18 @@ export async function createProductStudioRunAudit(
     dispatchMode: input.dispatchMode ?? null,
     fallbackReason: asTrimmedString(input.fallbackReason) || null,
     warnings,
+    settingsScope:
+      input.settingsScope === 'project' ||
+      input.settingsScope === 'global' ||
+      input.settingsScope === 'default'
+        ? input.settingsScope
+        : 'default',
+    settingsKey: asTrimmedString(input.settingsKey) || null,
+    projectSettingsKey: asTrimmedString(input.projectSettingsKey) || null,
+    settingsScopeValid:
+      typeof input.settingsScopeValid === 'boolean'
+        ? input.settingsScopeValid
+        : input.settingsScope === 'project',
     sequenceSnapshotHash: asTrimmedString(input.sequenceSnapshotHash) || null,
     stepOrderUsed: normalizeStepOrderUsed(input.stepOrderUsed),
     resolvedCropRect: normalizeCropRect(input.resolvedCropRect),

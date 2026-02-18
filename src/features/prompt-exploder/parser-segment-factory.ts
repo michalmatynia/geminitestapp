@@ -110,8 +110,11 @@ export const createPromptExploderSegment = (args: {
     0.99,
     confidenceBase + matchedPatternIds.length * 0.06 + confidenceBoost
   );
-  const keepEmptyTitle = shouldKeepEmptyTitleForCaseResolver(matchedPatternIds);
   const resolvedTitle = args.title.trim();
+  const keepEmptyTitle = shouldKeepEmptyTitleForCaseResolver(
+    matchedPatternIds,
+    resolvedTitle || normalizedRaw
+  );
 
   return {
     id: args.createSegmentId(),

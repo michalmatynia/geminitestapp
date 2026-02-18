@@ -209,17 +209,7 @@ export const parseValidatorPatternLists = (
         )
       );
     }
-
-    if (!parsed || typeof parsed !== 'object') {
-      return defaults;
-    }
-
-    const record = parsed as Record<string, unknown>;
-    const rawLists = Array.isArray(record['lists']) ? record['lists'] : [];
-    const nextLists = rawLists.map((entry: unknown, index: number) =>
-      normalizeListRecord(entry, defaults[index] ?? defaults[0]!)
-    );
-    return normalizeValidatorPatternLists(nextLists);
+    return defaults;
   } catch {
     return defaultValidatorPatternLists();
   }

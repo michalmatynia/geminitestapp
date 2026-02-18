@@ -219,6 +219,7 @@ export function useCaseResolverState() {
   const queuedSerializedWorkspaceRef = useRef<string | null>(null);
   const queuedExpectedRevisionRef = useRef<number | null>(null);
   const queuedMutationIdRef = useRef<string | null>(null);
+  const draftStorageWarningShownRef = useRef(false);
   const persistWorkspaceTimerRef = useRef<number | null>(null);
   const persistWorkspaceInFlightRef = useRef(false);
   const handledRequestedFileIdRef = useRef<string | null>(null);
@@ -521,10 +522,17 @@ export function useCaseResolverState() {
       return;
     }
     setSelectedFileId(fileId);
-    updateWorkspace((current) => ({ ...current, activeFileId: fileId }));
+    setWorkspace((current) => (
+      current.activeFileId === fileId
+        ? current
+        : {
+          ...current,
+          activeFileId: fileId,
+        }
+    ));
     setSelectedFolderPath(null);
     setSelectedAssetId(null);
-  }, [selectedFileId, updateWorkspace]);
+  }, [selectedFileId]);
 
   const handleSelectAsset = useCallback((assetId: string): void => {
     setSelectedFileId(null);
@@ -1051,8 +1059,15 @@ export function useCaseResolverState() {
     setSelectedFileId(fileId);
     setSelectedAssetId(null);
     setSelectedFolderPath(null);
-    updateWorkspace((current) => ({ ...current, activeFileId: fileId }));
-  }, [workspace.files, updateWorkspace, toast]);
+    setWorkspace((current) => (
+      current.activeFileId === fileId
+        ? current
+        : {
+          ...current,
+          activeFileId: fileId,
+        }
+    ));
+  }, [workspace.files, toast]);
 
   const {
     activeFile,
@@ -1075,18 +1090,22 @@ export function useCaseResolverState() {
       toast('Document no longer exists. Please refresh list.', { variant: 'warning' });
       return;
     }
-    if (currentFile.documentContentVersion !== editingDocumentDraft.baseDocumentContentVersion) {
-      toast('Document changed elsewhere. Reopen editor to merge latest version.', {
+    const hasVersionDrift =
+      currentFile.documentContentVersion !== editingDocumentDraft.baseDocumentContentVersion;
+    if (hasVersionDrift) {
+      toast('Document changed while editor was open. Saving on top of latest version.', {
         variant: 'warning',
       });
-      return;
     }
-    const resolvedMode = normalizeRawDocumentModeFromContent({
-      mode: editingDocumentDraft.editorType,
-      rawContent: editingDocumentDraft.documentContent,
-      rawMarkdown: editingDocumentDraft.documentContentMarkdown,
-      rawHtml: editingDocumentDraft.documentContentHtml,
-    });
+    const resolvedMode =
+      editingDocumentDraft.editorType === 'wysiwyg' || currentFile.editorType === 'wysiwyg'
+        ? 'wysiwyg'
+        : normalizeRawDocumentModeFromContent({
+          mode: editingDocumentDraft.editorType,
+          rawContent: editingDocumentDraft.documentContent,
+          rawMarkdown: editingDocumentDraft.documentContentMarkdown,
+          rawHtml: editingDocumentDraft.documentContentHtml,
+        });
     const canonical = deriveDocumentContentSync({
       mode: resolvedMode,
       value: resolvedMode === 'wysiwyg'
@@ -1191,10 +1210,22 @@ export function useCaseResolverState() {
   useEffect(() => {
     if (!editingDocumentDraft) return;
     const timer = window.setTimeout(() => {
-      writeStoredEditorDraft(editingDocumentDraft.id, editingDocumentDraft);
+      const writeResult = writeStoredEditorDraft(editingDocumentDraft.id, editingDocumentDraft);
+      if (writeResult.ok) {
+        draftStorageWarningShownRef.current = false;
+        return;
+      }
+      if (writeResult.reason !== 'quota' || draftStorageWarningShownRef.current) {
+        return;
+      }
+      draftStorageWarningShownRef.current = true;
+      toast(
+        'Browser storage is full, so local draft recovery is limited. Save manually to keep changes.',
+        { variant: 'warning' }
+      );
     }, 250);
     return (): void => window.clearTimeout(timer);
-  }, [editingDocumentDraft]);
+  }, [editingDocumentDraft, toast]);
 
   useCaseResolverStatePromptExploderSync({
     workspaceActiveFileId: workspace.activeFileId,

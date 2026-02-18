@@ -17,7 +17,6 @@ import {
 
 import {
   parseValidatorPatternLists,
-  parseValidatorScope,
   VALIDATOR_PATTERN_LISTS_KEY,
   VALIDATOR_SCOPE_DESCRIPTIONS,
   type ValidatorScope,
@@ -41,10 +40,7 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
       const matchedById = patternLists.find((list) => list.id === listParam);
       if (matchedById) return matchedById;
     }
-
-    const legacyScope = parseValidatorScope(searchParams.get('scope'));
-    const matchedList = patternLists.find((list) => list.scope === legacyScope);
-    return matchedList ?? patternLists[0] ?? null;
+    return patternLists[0] ?? null;
   }, [patternLists, searchParams]);
 
   const renderScopePanel = (

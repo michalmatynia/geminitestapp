@@ -59,7 +59,7 @@ type CardBackfillResponse = {
   result: CardBackfillResult;
 };
 
-type StudioSettingsTab = 'prompt' | 'generation' | 'maintenance';
+type StudioSettingsTab = 'prompt' | 'generation' | 'validation' | 'maintenance';
 
 export function AdminImageStudioSettingsPage(
   { embedded = false, onSaved }: { embedded?: boolean | undefined; onSaved?: (() => void) | undefined } = {}

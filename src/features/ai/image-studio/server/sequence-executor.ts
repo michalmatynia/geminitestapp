@@ -1022,10 +1022,6 @@ export function resolveSequenceStepsForExecution(
   if (Array.isArray(run.request.steps) && run.request.steps.length > 0) {
     return normalizeImageStudioSequenceSteps(run.request.steps, {
       fallbackOperations: run.request.steps.map((step) => step.type),
-      upscaleStrategy: parsedSettings.projectSequencing.upscaleStrategy,
-      upscaleScale: parsedSettings.projectSequencing.upscaleScale,
-      upscaleTargetWidth: parsedSettings.projectSequencing.upscaleTargetWidth,
-      upscaleTargetHeight: parsedSettings.projectSequencing.upscaleTargetHeight,
     });
   }
 

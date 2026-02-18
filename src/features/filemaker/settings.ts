@@ -46,33 +46,6 @@ type FilemakerAddressFields = {
   countryId: string;
 };
 
-const EMPTY_ADDRESS: FilemakerAddressFields = {
-  street: '',
-  streetNumber: '',
-  city: '',
-  postalCode: '',
-  country: '',
-  countryId: '',
-};
-
-const parseLegacyFullAddress = (value: unknown): FilemakerAddressFields => {
-  const legacyAddress = normalizeString(value);
-  if (!legacyAddress) return EMPTY_ADDRESS;
-  const parts = legacyAddress
-    .split(',')
-    .map((entry: string) => entry.trim())
-    .filter(Boolean);
-  if (parts.length === 0) return EMPTY_ADDRESS;
-  return {
-    street: parts[0] ?? '',
-    streetNumber: '',
-    city: parts[1] ?? '',
-    postalCode: parts[2] ?? '',
-    country: parts.slice(3).join(', ').trim(),
-    countryId: '',
-  };
-};
-
 const normalizeAddressFields = (value: {
   street?: unknown;
   streetNumber?: unknown;
@@ -80,16 +53,14 @@ const normalizeAddressFields = (value: {
   postalCode?: unknown;
   country?: unknown;
   countryId?: unknown;
-  fullAddress?: unknown;
 }): FilemakerAddressFields => {
-  const legacy = parseLegacyFullAddress(value.fullAddress);
   return {
-    street: normalizeString(value.street) || legacy.street,
-    streetNumber: normalizeString(value.streetNumber) || legacy.streetNumber,
-    city: normalizeString(value.city) || legacy.city,
-    postalCode: normalizeString(value.postalCode) || legacy.postalCode,
-    country: normalizeString(value.country) || legacy.country,
-    countryId: normalizeString(value.countryId) || legacy.countryId,
+    street: normalizeString(value.street),
+    streetNumber: normalizeString(value.streetNumber),
+    city: normalizeString(value.city),
+    postalCode: normalizeString(value.postalCode),
+    country: normalizeString(value.country),
+    countryId: normalizeString(value.countryId),
   };
 };
 
@@ -129,7 +100,6 @@ export const createFilemakerAddress = (input: {
   postalCode?: unknown;
   country?: unknown;
   countryId?: unknown;
-  fullAddress?: unknown;
   createdAt?: string | undefined;
   updatedAt?: string | undefined;
 }): FilemakerAddress => {
@@ -141,7 +111,6 @@ export const createFilemakerAddress = (input: {
     postalCode: input.postalCode,
     country: input.country,
     countryId: input.countryId,
-    fullAddress: input.fullAddress,
   });
   return {
     id: normalizeString(input.id),
@@ -167,7 +136,6 @@ export const createFilemakerPerson = (input: {
   postalCode?: unknown;
   country?: unknown;
   countryId?: unknown;
-  fullAddress?: unknown;
   nip?: unknown;
   regon?: unknown;
   phoneNumbers?: unknown;
@@ -182,7 +150,6 @@ export const createFilemakerPerson = (input: {
     postalCode: input.postalCode,
     country: input.country,
     countryId: input.countryId,
-    fullAddress: input.fullAddress,
   });
   return {
     id: normalizeString(input.id),
@@ -213,7 +180,6 @@ export const createFilemakerOrganization = (input: {
   postalCode?: unknown;
   country?: unknown;
   countryId?: unknown;
-  fullAddress?: unknown;
   createdAt?: string | undefined;
   updatedAt?: string | undefined;
 }): FilemakerOrganization => {
@@ -225,7 +191,6 @@ export const createFilemakerOrganization = (input: {
     postalCode: input.postalCode,
     country: input.country,
     countryId: input.countryId,
-    fullAddress: input.fullAddress,
   });
   return {
     id: normalizeString(input.id),
@@ -357,7 +322,6 @@ export const normalizeFilemakerDatabase = (
           postalCode: normalizeString(entry['postalCode']),
           country: normalizeString(entry['country']),
           countryId: normalizeString(entry['countryId']),
-          fullAddress: normalizeString(entry['fullAddress']),
           createdAt: normalizeString(entry['createdAt']) || undefined,
           updatedAt: normalizeString(entry['updatedAt']) || undefined,
         })
@@ -383,7 +347,6 @@ export const normalizeFilemakerDatabase = (
         postalCode: normalizeString(entry['postalCode']),
         country: normalizeString(entry['country']),
         countryId: normalizeString(entry['countryId']),
-        fullAddress: normalizeString(entry['fullAddress']),
         nip: normalizeString(entry['nip']),
         regon: normalizeString(entry['regon']),
         phoneNumbers: entry['phoneNumbers'],
@@ -412,7 +375,6 @@ export const normalizeFilemakerDatabase = (
         postalCode: normalizeString(entry['postalCode']),
         country: normalizeString(entry['country']),
         countryId: normalizeString(entry['countryId']),
-        fullAddress: normalizeString(entry['fullAddress']),
         createdAt: normalizeString(entry['createdAt']) || undefined,
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       });

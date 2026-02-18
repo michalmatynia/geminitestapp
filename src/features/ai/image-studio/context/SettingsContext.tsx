@@ -243,7 +243,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
           : null,
     };
     if (options?.verifyPersisted) {
-      await settingsStore.refetch();
+      settingsStore.refetch();
       const refreshed = await heavySettings.refetch();
       const persistedMap = refreshed.data ?? new Map<string, string>();
       const persistedRaw = persistedMap.get(targetKey);
@@ -325,7 +325,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     }
     setSettingsLoaded(false);
     settingsStore.refetch();
-    void heavySettings.refetch().catch(() => {});
+    heavySettings.refetch().catch(() => { /* ignore */ });
   }, [settingsStore, heavySettings]);
 
   const state = useMemo<SettingsState>(

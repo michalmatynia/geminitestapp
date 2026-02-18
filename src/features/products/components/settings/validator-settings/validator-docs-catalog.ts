@@ -554,7 +554,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     params: ['value: persisted setting string.'],
     returns: 'Normalized list array.',
     errors: ['JSON parse errors fallback to defaults.'],
-    edgeCases: ['Supports both legacy array payload and object payload with lists key.'],
+    edgeCases: ['Expects an array payload; non-array inputs fallback to defaults.'],
     example: 'parseValidatorPatternLists(rawSetting)',
   },
   {

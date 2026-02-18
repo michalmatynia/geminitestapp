@@ -62,7 +62,7 @@ describe('case-resolver settings', () => {
     expect(workspace.lastMutationAt).toBe('2026-02-17T17:00:00.000Z');
   });
 
-  it('removes legacy non-case files that are detached from a case container', () => {
+  it('removes detached non-case files that are outside a case container', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
@@ -81,9 +81,9 @@ describe('case-resolver settings', () => {
             graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
           },
           {
-            id: 'legacy-doc-root',
+            id: 'detached-doc-root',
             fileType: 'document',
-            name: 'Legacy Root Doc',
+            name: 'Detached Root Doc',
             folder: '',
             parentCaseId: null,
             referenceCaseIds: [],
@@ -91,7 +91,7 @@ describe('case-resolver settings', () => {
           },
         ],
         assets: [],
-        activeFileId: 'legacy-doc-root',
+        activeFileId: 'detached-doc-root',
       })
     );
 
@@ -279,7 +279,7 @@ describe('case-resolver settings', () => {
     ]);
   });
 
-  it('ignores legacy folder list without explicit folder records', () => {
+  it('ignores folder list without explicit folder records', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
@@ -612,9 +612,9 @@ describe('case-resolver settings', () => {
       relationGraph: {
         nodes: [
           {
-            id: 'custom-legacy',
-            type: 'legacy_unknown_type',
-            title: 'Legacy Custom',
+            id: 'custom-unknown',
+            type: 'unknown_custom_type',
+            title: 'Custom Node',
             description: '',
             inputs: ['in'],
             outputs: ['out'],
@@ -623,10 +623,10 @@ describe('case-resolver settings', () => {
         ],
         edges: [],
         nodeMeta: {
-          'custom-legacy': {
+          'custom-unknown': {
             entityType: 'custom',
-            entityId: 'custom-legacy',
-            label: 'Legacy Custom',
+            entityId: 'custom-unknown',
+            label: 'Custom Node',
             fileKind: null,
             folderPath: null,
             sourceFileId: null,
@@ -641,10 +641,10 @@ describe('case-resolver settings', () => {
     });
 
     const workspace = parseCaseResolverWorkspace(raw);
-    const legacyNode = workspace.relationGraph.nodes.find((node): boolean => node.id === 'custom-legacy');
+    const unknownNode = workspace.relationGraph.nodes.find((node): boolean => node.id === 'custom-unknown');
 
-    expect(legacyNode).toBeDefined();
-    expect(legacyNode?.type).toBe('template');
+    expect(unknownNode).toBeDefined();
+    expect(unknownNode?.type).toBe('template');
   });
 
   it('drops stale structural relation graph links and keeps valid custom ones', () => {

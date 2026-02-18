@@ -25,7 +25,7 @@ describe('case-resolver-capture settings', () => {
           addresser: {
             enabled: true,
             targetRole: 'addressee',
-            defaultAction: 'text',
+            defaultAction: 'keepText',
             autoMatchPartyReference: true,
             autoMatchAddress: false,
           },
@@ -58,7 +58,7 @@ describe('case-resolver-capture settings', () => {
     });
   });
 
-  it('normalizes legacy action values', () => {
+  it('rejects deprecated action aliases and falls back to defaults', () => {
     const parsed = parseCaseResolverCaptureSettings(
       JSON.stringify({
         roleMappings: {
@@ -72,8 +72,12 @@ describe('case-resolver-capture settings', () => {
       })
     );
 
-    expect(parsed.roleMappings.addresser.defaultAction).toBe('useMatched');
-    expect(parsed.roleMappings.addressee.defaultAction).toBe('keepText');
+    expect(parsed.roleMappings.addresser.defaultAction).toBe(
+      DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addresser.defaultAction
+    );
+    expect(parsed.roleMappings.addressee.defaultAction).toBe(
+      DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addressee.defaultAction
+    );
   });
 
   it('normalizes unsupported values back to safe defaults', () => {

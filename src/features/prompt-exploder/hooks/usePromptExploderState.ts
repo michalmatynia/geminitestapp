@@ -71,6 +71,7 @@ import {
   normalizePromptExploderValidationRuleStack,
   promptExploderValidationStackFromBridgeSource,
 } from '../validation-stack';
+import { extractCaseResolverBridgePayloadFromSegments } from '../utils/case-resolver-extraction';
 
 import type {
   PromptExploderBinding,
@@ -480,7 +481,13 @@ export function usePromptExploderState() {
     if (!documentState) return;
     const reassembled = reassemblePromptSegments(documentState.segments);
     if (returnTarget === 'case-resolver') {
-      savePromptExploderApplyPromptForCaseResolver(reassembled, incomingCaseResolverContext);
+      const payload = extractCaseResolverBridgePayloadFromSegments(documentState.segments);
+      savePromptExploderApplyPromptForCaseResolver(
+        reassembled,
+        incomingCaseResolverContext,
+        payload.parties,
+        payload.metadata
+      );
     } else {
       savePromptExploderApplyPrompt(reassembled);
     }

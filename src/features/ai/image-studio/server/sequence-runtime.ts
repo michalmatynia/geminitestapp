@@ -152,10 +152,6 @@ const resolveSequenceSteps = (params: {
     const fallbackOperations = fallbackSteps.map((step) => step.type);
     return normalizeImageStudioSequenceSteps(params.requestedSteps, {
       fallbackOperations,
-      upscaleStrategy: sequenceSettings.upscaleStrategy,
-      upscaleScale: sequenceSettings.upscaleScale,
-      upscaleTargetWidth: sequenceSettings.upscaleTargetWidth,
-      upscaleTargetHeight: sequenceSettings.upscaleTargetHeight,
     });
   }
 

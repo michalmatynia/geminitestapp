@@ -15,6 +15,13 @@ export type ProductStudioSequencingDiagnosticsScope =
   | 'global'
   | 'default';
 
+export type ProductStudioSequenceReadinessState =
+  | 'ready'
+  | 'project_settings_missing'
+  | 'project_sequence_disabled'
+  | 'project_steps_empty'
+  | 'project_snapshot_stale';
+
 export const DEFAULT_PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE: ProductStudioSequenceGenerationMode =
   'auto';
 
@@ -53,6 +60,13 @@ export type ProductStudioSequencingDiagnostics = {
   selectedSnapshotModelId: string | null;
 };
 
+export type ProductStudioSequenceReadiness = {
+  ready: boolean;
+  requiresProjectSequence: boolean;
+  state: ProductStudioSequenceReadinessState;
+  message: string | null;
+};
+
 export const DEFAULT_PRODUCT_STUDIO_SEQUENCING: ProductStudioSequencingConfig = {
   persistedEnabled: false,
   enabled: false,
@@ -86,6 +100,13 @@ export const DEFAULT_PRODUCT_STUDIO_SEQUENCING_DIAGNOSTICS: ProductStudioSequenc
   selectedSnapshotSavedAt: null,
   selectedSnapshotStepCount: 0,
   selectedSnapshotModelId: null,
+};
+
+export const DEFAULT_PRODUCT_STUDIO_SEQUENCE_READINESS: ProductStudioSequenceReadiness = {
+  ready: true,
+  requiresProjectSequence: false,
+  state: 'ready',
+  message: null,
 };
 
 const asObjectRecord = (value: unknown): Record<string, unknown> | null => {

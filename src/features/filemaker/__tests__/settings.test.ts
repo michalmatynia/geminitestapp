@@ -107,38 +107,38 @@ describe('filemaker settings', () => {
     expect(resolveFilemakerPartyLabel(database, { kind: 'organization', id: 'o-1' })).toBe('Beta Ltd');
   });
 
-  it('migrates legacy fullAddress into split address fields', () => {
+  it('ignores deprecated fullAddress payloads', () => {
     const database = parseFilemakerDatabase(
       JSON.stringify({
         version: 1,
         persons: [
           {
-            id: 'p-legacy',
-            firstName: 'Legacy',
+            id: 'p-deprecated',
+            firstName: 'Deprecated',
             lastName: 'Person',
             fullAddress: 'Main Street 1, Warsaw, 00-003, Poland',
           },
         ],
         organizations: [
           {
-            id: 'o-legacy',
-            name: 'Legacy Org',
+            id: 'o-deprecated',
+            name: 'Deprecated Org',
             fullAddress: 'Business Road 2, Gdynia, 81-001, Poland',
           },
         ],
       })
     );
 
-    expect(database.persons[0]?.street).toBe('Main Street 1');
+    expect(database.persons[0]?.street).toBe('');
     expect(database.persons[0]?.streetNumber).toBe('');
-    expect(database.persons[0]?.city).toBe('Warsaw');
-    expect(database.persons[0]?.postalCode).toBe('00-003');
-    expect(database.persons[0]?.country).toBe('Poland');
-    expect(database.organizations[0]?.street).toBe('Business Road 2');
+    expect(database.persons[0]?.city).toBe('');
+    expect(database.persons[0]?.postalCode).toBe('');
+    expect(database.persons[0]?.country).toBe('');
+    expect(database.organizations[0]?.street).toBe('');
     expect(database.organizations[0]?.streetNumber).toBe('');
-    expect(database.organizations[0]?.city).toBe('Gdynia');
-    expect(database.organizations[0]?.postalCode).toBe('81-001');
-    expect(database.organizations[0]?.country).toBe('Poland');
-    expect(database.addresses).toHaveLength(2);
+    expect(database.organizations[0]?.city).toBe('');
+    expect(database.organizations[0]?.postalCode).toBe('');
+    expect(database.organizations[0]?.country).toBe('');
+    expect(database.addresses).toHaveLength(0);
   });
 });

@@ -199,7 +199,7 @@ export function InspectorAiProvider({
   });
 
   const modelOptions = useMemo((): string[] => {
-    // Defensive: query cache may contain legacy non-array payloads.
+    // Defensive: query cache may contain malformed non-array payloads.
     const models = Array.isArray(modelsQuery.data) ? modelsQuery.data : [];
     const fromApi = models
       .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)

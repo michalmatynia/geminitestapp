@@ -24,7 +24,7 @@ export interface PathConfigHandlers {
  * Each handler checks the path-locked guard, sets the scalar state,
  * and updates the `pathConfigs` map in GraphContext.
  *
- * Replaces the equivalent handlers from legacy `useAiPathsSettingsState`.
+ * Replaces the equivalent handlers from the previous settings-state hook.
  */
 export function usePathConfigHandlers(): PathConfigHandlers {
   const { toast } = useToast();

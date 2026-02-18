@@ -41,6 +41,7 @@ import {
   leavePromptRuntimeScope,
   tryEnterPromptRuntimeScope,
 } from '../runtime-load-shedder';
+import { extractCaseResolverBridgePayloadFromSegments } from '../utils/case-resolver-extraction';
 import { useSettingsState } from './hooks/useSettings';
 
 import type {
@@ -543,9 +544,12 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     }
     const reassembled = reassemblePromptSegments(documentState.segments);
     if (returnTarget === 'case-resolver') {
+      const payload = extractCaseResolverBridgePayloadFromSegments(documentState.segments);
       savePromptExploderApplyPromptForCaseResolver(
         reassembled,
-        incomingCaseResolverContext
+        incomingCaseResolverContext,
+        payload.parties,
+        payload.metadata
       );
       toast('Reassembled prompt returned to Case Resolver.', { variant: 'success' });
     } else {

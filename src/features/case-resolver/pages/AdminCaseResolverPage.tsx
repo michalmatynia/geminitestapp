@@ -6,6 +6,7 @@ import React, { useCallback } from 'react';
 import {
   stableStringify,
 } from '@/features/ai/ai-paths/lib';
+import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver-capture/filemaker-upsert';
 import type {
   CaseResolverCaptureProposalState,
 } from '@/features/case-resolver-capture/proposals';
@@ -16,7 +17,6 @@ import {
   deriveDocumentContentSync,
   toStorageDocumentValue,
 } from '@/features/document-editor';
-import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver-capture/filemaker-upsert';
 import {
   FILEMAKER_DATABASE_KEY,
   buildFilemakerPartyOptions,
@@ -35,7 +35,7 @@ import { useCaseResolverState } from '../hooks/useCaseResolverState';
 import {
   normalizeFolderPath,
 } from '../settings';
-import { isPathWithinFolder } from '../utils/caseResolverUtils';
+import { buildDocumentPdfMarkup, isPathWithinFolder } from '../utils/caseResolverUtils';
 
 import type {
   CaseResolverCategory,
@@ -550,6 +550,71 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     }
   }, [editingDocumentDraft, toast]);
 
+  const buildDraftPdfPreviewMarkup = useCallback((draft: CaseResolverFileEditDraft): string => {
+    const resolvedMode = draft.editorType === 'wysiwyg' ? 'wysiwyg' : 'markdown';
+    const canonical = deriveDocumentContentSync({
+      mode: resolvedMode,
+      value: resolvedMode === 'wysiwyg'
+        ? draft.documentContentHtml
+        : draft.documentContentMarkdown,
+      previousMarkdown: draft.documentContentMarkdown,
+      previousHtml: draft.documentContentHtml,
+    });
+    const addresserLabel = draft.addresser
+      ? resolveFilemakerPartyLabel(filemakerDatabase, draft.addresser) ?? 'Not selected'
+      : 'Not selected';
+    const addresseeLabel = draft.addressee
+      ? resolveFilemakerPartyLabel(filemakerDatabase, draft.addressee) ?? 'Not selected'
+      : 'Not selected';
+    return buildDocumentPdfMarkup({
+      documentDate: draft.documentDate,
+      documentHash: draft.id,
+      createdAt: draft.createdAt,
+      updatedAt: draft.updatedAt,
+      addresserLabel,
+      addresseeLabel,
+      documentContent: canonical.html,
+    });
+  }, [filemakerDatabase]);
+
+  const openDraftPdfWindow = useCallback((markup: string): Window | null => {
+    if (typeof window === 'undefined') return null;
+    const previewWindow = window.open('', '_blank', 'noopener,noreferrer');
+    if (!previewWindow) {
+      toast('Unable to open PDF preview. Allow pop-ups for this site and try again.', {
+        variant: 'warning',
+      });
+      return null;
+    }
+    previewWindow.document.open();
+    previewWindow.document.write(markup);
+    previewWindow.document.close();
+    return previewWindow;
+  }, [toast]);
+
+  const handlePreviewDraftPdf = useCallback((): void => {
+    if (!editingDocumentDraft) return;
+    const markup = buildDraftPdfPreviewMarkup(editingDocumentDraft);
+    const previewWindow = openDraftPdfWindow(markup);
+    if (!previewWindow) return;
+    previewWindow.focus();
+  }, [buildDraftPdfPreviewMarkup, editingDocumentDraft, openDraftPdfWindow]);
+
+  const handlePrintDraftDocument = useCallback((): void => {
+    if (!editingDocumentDraft) return;
+    const markup = buildDraftPdfPreviewMarkup(editingDocumentDraft);
+    const previewWindow = openDraftPdfWindow(markup);
+    if (!previewWindow) return;
+    window.setTimeout((): void => {
+      try {
+        previewWindow.focus();
+        previewWindow.print();
+      } catch {
+        toast('Failed to open the print dialog.', { variant: 'error' });
+      }
+    }, 180);
+  }, [buildDraftPdfPreviewMarkup, editingDocumentDraft, openDraftPdfWindow, toast]);
+
   const handleTriggerScanDraftUpload = useCallback((): void => {
     if (editingDocumentDraft?.fileType !== 'scanfile') return;
     if (isUploadingScanDraftFiles) return;
@@ -701,6 +766,17 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           ? Array.from(new Set([...canonical.warnings, ...input.warnings]))
           : canonical.warnings;
         const nextStoredContent = toStorageDocumentValue(canonical);
+        const hasMeaningfulDraftChange =
+          current.editorType !== canonical.mode ||
+          current.documentContentFormatVersion !== 1 ||
+          current.documentContent !== nextStoredContent ||
+          current.documentContentMarkdown !== canonical.markdown ||
+          current.documentContentHtml !== canonical.html ||
+          current.documentContentPlainText !== canonical.plainText ||
+          JSON.stringify(current.documentConversionWarnings) !== JSON.stringify(mergedWarnings);
+        if (!hasMeaningfulDraftChange) {
+          return current;
+        }
         const now = new Date().toISOString();
         return {
           ...current,
@@ -1006,6 +1082,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         isDraggingSplitter={isDraggingSplitter}
         setIsDraggingSplitter={setIsDraggingSplitter}
         handleCopyDraftFileId={handleCopyDraftFileId}
+        handlePreviewDraftPdf={handlePreviewDraftPdf}
+        handlePrintDraftDocument={handlePrintDraftDocument}
         promptExploderProposalDraft={promptExploderProposalDraft}
         captureProposalTargetFileName={captureProposalTargetFileName}
         handleClosePromptExploderProposalModal={handleClosePromptExploderProposalModal}

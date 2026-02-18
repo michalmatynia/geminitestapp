@@ -54,6 +54,8 @@ const PAGE_SIZES = [10, 25, 50];
 const SEARCH_DEBOUNCE_MS = 300;
 const AUTO_REFRESH_ENABLED_KEY = 'ai-paths-job-queue-auto-refresh-enabled';
 const AUTO_REFRESH_INTERVAL_KEY = 'ai-paths-job-queue-auto-refresh-interval';
+const AUTO_REFRESH_INTERVAL_OPTIONS = [2000, 5000, 10000, 30000] as const;
+const DEFAULT_AUTO_REFRESH_INTERVAL = 5000;
 const QUEUE_LAG_THRESHOLD_KEY = 'ai_paths_queue_lag_threshold_ms';
 const STATUS_FILTERS = [
   { id: 'all', label: 'All' },
@@ -65,6 +67,17 @@ const STATUS_FILTERS = [
   { id: 'canceled', label: 'Canceled' },
   { id: 'dead_lettered', label: 'Dead-lettered' },
 ] as const;
+
+const normalizeAutoRefreshInterval = (value: number): number => {
+  if (!Number.isFinite(value) || value <= 0) return DEFAULT_AUTO_REFRESH_INTERVAL;
+  // Legacy value migration: older clients may have stored seconds.
+  const asMs = value < 1000 ? value * 1000 : value;
+  return AUTO_REFRESH_INTERVAL_OPTIONS.reduce(
+    (best: number, option: number): number =>
+      Math.abs(option - asMs) < Math.abs(best - asMs) ? option : best,
+    AUTO_REFRESH_INTERVAL_OPTIONS[0]
+  );
+};
 
 export function JobQueuePanel({
   activePathId,
@@ -90,7 +103,10 @@ export function JobQueuePanel({
   const [pausedStreams, setPausedStreams] = React.useState<Set<string>>(new Set());
   // Keep first render deterministic (SSR == client hydration). Load persisted prefs after mount.
   const [autoRefreshEnabled, setAutoRefreshEnabled] = React.useState(true);
-  const [autoRefreshInterval, setAutoRefreshInterval] = React.useState(5000);
+  const [autoRefreshInterval, setAutoRefreshInterval] = React.useState(
+    DEFAULT_AUTO_REFRESH_INTERVAL
+  );
+  const [isDocumentVisible, setIsDocumentVisible] = React.useState(true);
   const [clearScope, setClearScope] = React.useState<'terminal' | 'all' | null>(null);
   const [runToDelete, setRunToDelete] = React.useState<AiPathRunRecord | null>(null);
   const aiPathsSettingsQuery = createListQueryV2<
@@ -136,8 +152,20 @@ export function JobQueuePanel({
 
     const savedInterval = window.localStorage.getItem(AUTO_REFRESH_INTERVAL_KEY);
     const parsed = savedInterval ? Number.parseInt(savedInterval, 10) : NaN;
-    const nextInterval = Number.isFinite(parsed) && parsed > 0 ? parsed : 5000;
+    const nextInterval = normalizeAutoRefreshInterval(parsed);
     setAutoRefreshInterval(nextInterval);
+  }, []);
+
+  React.useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const handleVisibilityChange = (): void => {
+      setIsDocumentVisible(document.visibilityState === 'visible');
+    };
+    handleVisibilityChange();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return (): void => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   React.useEffect(() => {
@@ -152,6 +180,8 @@ export function JobQueuePanel({
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(AUTO_REFRESH_INTERVAL_KEY, String(autoRefreshInterval));
   }, [autoRefreshInterval]);
+
+  const effectiveAutoRefreshEnabled = autoRefreshEnabled && isDocumentVisible;
 
   React.useEffect(() => {
     setPage(1);
@@ -182,7 +212,7 @@ export function JobQueuePanel({
       }
       return response.data as { runs: AiPathRunRecord[]; total: number };
     },
-    refetchInterval: autoRefreshEnabled ? autoRefreshInterval : false,
+    refetchInterval: effectiveAutoRefreshEnabled ? autoRefreshInterval : false,
     meta: {
       source: 'ai.ai-paths.job-queue.runs',
       operation: 'list',
@@ -201,7 +231,7 @@ export function JobQueuePanel({
       }
       return response.data as { status: QueueStatus };
     },
-    refetchInterval: autoRefreshEnabled ? autoRefreshInterval : false,
+    refetchInterval: effectiveAutoRefreshEnabled ? autoRefreshInterval : false,
     meta: {
       source: 'ai.ai-paths.job-queue.status',
       operation: 'polling',
@@ -657,9 +687,13 @@ export function JobQueuePanel({
           <SelectSimple
             size='xs'
             value={String(autoRefreshInterval)}
-            onValueChange={(value: string) => setAutoRefreshInterval(Number.parseInt(value, 10))}
+            onValueChange={(value: string) =>
+              setAutoRefreshInterval(
+                normalizeAutoRefreshInterval(Number.parseInt(value, 10))
+              )
+            }
             disabled={!autoRefreshEnabled}
-            options={[2000, 5000, 10000, 30000].map((value: number) => ({
+            options={[...AUTO_REFRESH_INTERVAL_OPTIONS].map((value: number) => ({
               value: String(value),
               label: `${value / 1000}s`,
             }))}
@@ -689,7 +723,7 @@ export function JobQueuePanel({
         queueStatusFetching={queueStatusQuery.isFetching}
         queueHistory={queueHistory}
         lagThresholdMs={lagThresholdMs}
-        autoRefreshEnabled={autoRefreshEnabled}
+        autoRefreshEnabled={effectiveAutoRefreshEnabled}
         autoRefreshInterval={autoRefreshInterval}
         showMetricsPanel={showMetricsPanel}
         onToggleMetricsPanel={() => setShowMetricsPanel((prev: boolean) => !prev)}

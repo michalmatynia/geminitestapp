@@ -73,13 +73,13 @@ const normalizeCaptureAction = (
   value: unknown,
   fallback: CaseResolverCaptureAction
 ): CaseResolverCaptureAction => {
-  if (value === 'database' || value === 'useMatched') {
+  if (value === 'useMatched') {
     return 'useMatched';
   }
-  if (value === 'create' || value === 'createInFilemaker') {
+  if (value === 'createInFilemaker') {
     return 'createInFilemaker';
   }
-  if (value === 'text' || value === 'keepText') {
+  if (value === 'keepText') {
     return 'keepText';
   }
   if (value === 'ignore') {

@@ -30,23 +30,16 @@ const ASSET_LIST_STALE_TIME_MS = 60_000;
 const ASSET_METADATA_STALE_TIME_MS = 5 * 60 * 1000;
 const ASSET_DETAIL_STALE_TIME_MS = 2 * 60 * 1000;
 
-type LegacyAsset3DListFilters = Asset3DListFilters & {
-  category?: string | null | undefined;
-};
-
 function normalizeAsset3DListFilters(filters: Asset3DListFilters): Asset3DListFilters {
-  const candidate = filters as LegacyAsset3DListFilters;
-  const normalizedFilename = typeof candidate.filename === 'string' ? candidate.filename.trim() : '';
-  const normalizedCategory = typeof candidate.categoryId === 'string' && candidate.categoryId.trim().length > 0
-    ? candidate.categoryId.trim()
-    : typeof candidate.category === 'string'
-      ? candidate.category.trim()
-      : '';
-  const normalizedSearch = typeof candidate.search === 'string' ? candidate.search.trim() : '';
-  const normalizedTags = Array.isArray(candidate.tags)
+  const normalizedFilename = typeof filters.filename === 'string' ? filters.filename.trim() : '';
+  const normalizedCategory = typeof filters.categoryId === 'string' && filters.categoryId.trim().length > 0
+    ? filters.categoryId.trim()
+    : '';
+  const normalizedSearch = typeof filters.search === 'string' ? filters.search.trim() : '';
+  const normalizedTags = Array.isArray(filters.tags)
     ? Array.from(
       new Set(
-        candidate.tags
+        filters.tags
           .map((tag) => tag.trim())
           .filter((tag) => tag.length > 0)
       )
@@ -58,19 +51,17 @@ function normalizeAsset3DListFilters(filters: Asset3DListFilters): Asset3DListFi
     ...(normalizedCategory ? { categoryId: normalizedCategory } : {}),
     ...(normalizedSearch ? { search: normalizedSearch } : {}),
     ...(normalizedTags.length > 0 ? { tags: normalizedTags } : {}),
-    ...(typeof candidate.isPublic === 'boolean' ? { isPublic: candidate.isPublic } : {}),
+    ...(typeof filters.isPublic === 'boolean' ? { isPublic: filters.isPublic } : {}),
   };
 }
 
 
 export function useAssets3D(filters: Asset3DListFilters): ListQuery<Asset3DRecord> {
-  const legacyFilters = filters as LegacyAsset3DListFilters;
   const normalizedFilters = useMemo(
     () => normalizeAsset3DListFilters(filters),
     [
       filters.filename,
       filters.categoryId,
-      legacyFilters.category,
       filters.search,
       filters.isPublic,
       Array.isArray(filters.tags) ? filters.tags.join('|') : '',

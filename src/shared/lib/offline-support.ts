@@ -1,5 +1,5 @@
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
-import { QueryClient, type Query } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
 import { persistQueryClient, type PersistedClient } from '@tanstack/react-query-persist-client';
 
 import { QUERY_KEYS } from './query-keys';
@@ -23,9 +23,7 @@ export function setupOfflineSupport(queryClient: QueryClient): void {
               return rest;
             }
             return query;
-          })
-          // Drop any persisted queries with non-array keys (legacy v3 format)
-          .filter((query: Record<string, unknown>) => Array.isArray(query?.['queryKey']));
+          });
       }
       return parsed as unknown as PersistedClient;
     },
@@ -36,21 +34,12 @@ export function setupOfflineSupport(queryClient: QueryClient): void {
     persister,
     maxAge: 1000 * 60 * 60 * 24, // 24 hours
     dehydrateOptions: {
-      shouldDehydrateQuery: (query: Query) =>
-        Array.isArray(query.queryKey) && query.state.status === 'success',
+      shouldDehydrateQuery: (query) => query.state.status === 'success',
     },
   });
 
   void restorePromise
-    .then(() => {
-      const cache = queryClient.getQueryCache();
-      cache.getAll().forEach((query: Query) => {
-         
-        if (!Array.isArray(query.queryKey)) {
-          cache.remove(query);
-        }
-      });
-    })
+    .then(() => {})
     .catch(() => {
       // Ignore restore errors; queries will rehydrate on next successful persist.
     });

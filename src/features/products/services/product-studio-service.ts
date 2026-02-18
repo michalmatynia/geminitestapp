@@ -31,6 +31,7 @@ import { supportsImageSequenceGeneration } from '@/features/ai/image-studio/util
 import {
   IMAGE_STUDIO_SETTINGS_KEY,
   buildImageStudioSequenceSnapshot,
+  defaultImageStudioSettings,
   getImageStudioProjectSettingsKey,
   parseImageStudioSettings,
   resolveImageStudioSequenceActiveSteps,
@@ -57,11 +58,13 @@ import {
 import { productService } from '@/features/products/services/productService';
 import type { ProductWithImages } from '@/features/products/types';
 import {
+  DEFAULT_PRODUCT_STUDIO_SEQUENCE_READINESS,
   normalizeProductStudioSequenceGenerationMode,
   type ProductStudioExecutionRoute,
   type ProductStudioSequenceGenerationMode,
   type ProductStudioSequencingConfig,
   type ProductStudioSequencingDiagnostics,
+  type ProductStudioSequenceReadiness,
 } from '@/features/products/types/product-studio';
 import {
   badRequestError,
@@ -73,6 +76,7 @@ type ProductStudioVariantsResult = {
   config: ProductStudioConfig;
   sequencing: ProductStudioSequencingConfig;
   sequencingDiagnostics: ProductStudioSequencingDiagnostics;
+  sequenceReadiness: ProductStudioSequenceReadiness;
   sequenceGenerationMode: ProductStudioSequenceGenerationMode;
   projectId: string | null;
   sourceSlotId: string | null;
@@ -84,6 +88,7 @@ export type ProductStudioSendResult = {
   config: ProductStudioConfig;
   sequencing: ProductStudioSequencingConfig;
   sequencingDiagnostics: ProductStudioSequencingDiagnostics;
+  sequenceReadiness: ProductStudioSequenceReadiness;
   projectId: string;
   imageSlotIndex: number;
   sourceSlot: ImageStudioSlotRecord;
@@ -97,6 +102,21 @@ export type ProductStudioSendResult = {
   resolvedSequenceMode: ProductStudioSequenceGenerationMode;
   executionRoute: ProductStudioExecutionRoute;
   warnings?: string[];
+};
+
+export type ProductStudioSequencePreflightResult = {
+  config: ProductStudioConfig;
+  projectId: string;
+  imageSlotIndex: number;
+  sequenceGenerationMode: ProductStudioSequenceGenerationMode;
+  requestedSequenceMode: ProductStudioSequenceGenerationMode;
+  resolvedSequenceMode: ProductStudioSequenceGenerationMode;
+  executionRoute: ProductStudioExecutionRoute;
+  sequencing: ProductStudioSequencingConfig;
+  sequencingDiagnostics: ProductStudioSequencingDiagnostics;
+  sequenceReadiness: ProductStudioSequenceReadiness;
+  modelId: string;
+  warnings: string[];
 };
 
 type ProductImageFileSource = {
@@ -173,24 +193,21 @@ const buildSequencingDiagnostics = (params: {
   globalSettingsRaw: unknown;
   selectedSettings: ImageStudioSettings;
 }): ProductStudioSequencingDiagnostics => {
-  const hasProjectSettings = hasPersistedSettingValue(params.projectSettingsRaw);
-  const hasGlobalSettings = hasPersistedSettingValue(params.globalSettingsRaw);
-  const selectedScope = hasProjectSettings
-    ? 'project'
-    : hasGlobalSettings
-      ? 'global'
-      : 'default';
-  const selectedSettingsKey =
-    selectedScope === 'project'
-      ? params.projectSettingsKey
-      : selectedScope === 'global'
-        ? IMAGE_STUDIO_SETTINGS_KEY
-        : null;
-  const projectSettings = hasProjectSettings
-    ? parseImageStudioSettings(params.projectSettingsRaw)
+  const projectSettingsRaw = hasPersistedSettingValue(params.projectSettingsRaw)
+    ? params.projectSettingsRaw
     : null;
-  const globalSettings = hasGlobalSettings
-    ? parseImageStudioSettings(params.globalSettingsRaw)
+  const globalSettingsRaw = hasPersistedSettingValue(params.globalSettingsRaw)
+    ? params.globalSettingsRaw
+    : null;
+  const hasProjectSettings = projectSettingsRaw !== null;
+  const hasGlobalSettings = globalSettingsRaw !== null;
+  const selectedScope = hasProjectSettings ? 'project' : 'default';
+  const selectedSettingsKey = params.projectSettingsKey;
+  const projectSettings = projectSettingsRaw
+    ? parseImageStudioSettings(projectSettingsRaw)
+    : null;
+  const globalSettings = globalSettingsRaw
+    ? parseImageStudioSettings(globalSettingsRaw)
     : null;
 
   return {
@@ -215,9 +232,9 @@ const buildSequencingDiagnostics = (params: {
       params.selectedSettings.projectSequencing.snapshotStepCount,
     )
       ? Math.max(
-          0,
-          Math.floor(params.selectedSettings.projectSequencing.snapshotStepCount),
-        )
+        0,
+        Math.floor(params.selectedSettings.projectSequencing.snapshotStepCount),
+      )
       : 0,
     selectedSnapshotModelId: trimString(
       params.selectedSettings.projectSequencing.snapshotModelId,
@@ -244,11 +261,26 @@ const resolvePostProductionRoute = (
   const sequencerEnabled = input.sequencing.enabled && input.sequencing.runViaSequence;
   const hasConfiguredSequenceSteps = input.sequencing.sequenceStepCount > 0;
 
+  if (input.requestedMode === 'studio_prompt_then_sequence') {
+    return {
+      executionRoute: 'studio_sequencer',
+      runKind: 'sequence',
+      resolvedMode: 'studio_prompt_then_sequence',
+      warnings,
+    };
+  }
+
+  if (input.requestedMode === 'studio_native_sequencer_prior_generation') {
+    return {
+      executionRoute: 'studio_native_sequencer_prior_generation',
+      runKind: 'sequence',
+      resolvedMode: 'studio_native_sequencer_prior_generation',
+      warnings,
+    };
+  }
+
   if (sequencerEnabled && PRODUCT_STUDIO_STRICT_SEQUENCE_MODE) {
-    if (
-      input.requestedMode === 'model_full_sequence' ||
-      input.requestedMode === 'studio_native_sequencer_prior_generation'
-    ) {
+    if (input.requestedMode === 'model_full_sequence') {
       warnings.push(
         'Project sequencing is enabled, so Product Studio runs the Image Studio sequence exactly as configured.',
       );
@@ -293,10 +325,7 @@ const resolvePostProductionRoute = (
       };
     }
 
-    if (
-      input.requestedMode !== 'model_full_sequence' &&
-      hasConfiguredSequenceSteps
-    ) {
+    if (hasConfiguredSequenceSteps) {
       warnings.push(
         'Persisted project sequencing is disabled, so Product Studio cannot run project sequence steps until Image Studio Sequencing defaults are saved.',
       );
@@ -306,24 +335,6 @@ const resolvePostProductionRoute = (
       executionRoute: 'ai_direct_generation',
       runKind: 'generation',
       resolvedMode: input.requestedMode === 'auto' ? 'studio_prompt_then_sequence' : input.requestedMode,
-      warnings,
-    };
-  }
-
-  if (input.requestedMode === 'studio_prompt_then_sequence') {
-    return {
-      executionRoute: 'studio_sequencer',
-      runKind: 'sequence',
-      resolvedMode: 'studio_prompt_then_sequence',
-      warnings,
-    };
-  }
-
-  if (input.requestedMode === 'studio_native_sequencer_prior_generation') {
-    return {
-      executionRoute: 'studio_native_sequencer_prior_generation',
-      runKind: 'sequence',
-      resolvedMode: 'studio_native_sequencer_prior_generation',
       warnings,
     };
   }
@@ -489,29 +500,37 @@ const doesRequestedModeRequireProjectSequence = (
   mode === 'studio_prompt_then_sequence' ||
   mode === 'studio_native_sequencer_prior_generation';
 
-const resolveSequencingReadinessError = (params: {
+const resolveSequenceReadiness = (params: {
   sequencing: ProductStudioSequencingConfig;
   sequencingDiagnostics: ProductStudioSequencingDiagnostics;
   requestedMode: ProductStudioSequenceGenerationMode;
   route: ProductStudioExecutionRoute;
-}): string | null => {
-  const requiresSequence =
-    doesRequestedModeRequireProjectSequence(params.requestedMode) ||
-    isSequenceExecutionRoute(params.route);
-  if (!requiresSequence) return null;
-
+}): ProductStudioSequenceReadiness => {
   const projectIdLabel =
     params.sequencingDiagnostics.projectId ?? 'selected project';
   const projectSettingsKey =
     params.sequencingDiagnostics.projectSettingsKey ?? 'project settings key';
-  const selectedSettingsKey =
-    params.sequencingDiagnostics.selectedSettingsKey ?? IMAGE_STUDIO_SETTINGS_KEY;
 
   if (
     params.sequencingDiagnostics.projectSettingsKey &&
     params.sequencingDiagnostics.selectedScope !== 'project'
   ) {
-    return `Image Studio project settings for "${projectIdLabel}" are not persisted under "${projectSettingsKey}". Product Studio is currently reading "${selectedSettingsKey}" (${params.sequencingDiagnostics.selectedScope} scope). Open this project in Image Studio Sequencing and click "Save Defaults".`;
+    return {
+      ready: false,
+      requiresProjectSequence: true,
+      state: 'project_settings_missing',
+      message: `Project settings for "${projectIdLabel}" are not persisted under "${projectSettingsKey}". Open this project in Image Studio Sequencing and click "Save Defaults".`,
+    };
+  }
+
+  const requiresSequence =
+    doesRequestedModeRequireProjectSequence(params.requestedMode) ||
+    isSequenceExecutionRoute(params.route);
+  if (!requiresSequence) {
+    return {
+      ...DEFAULT_PRODUCT_STUDIO_SEQUENCE_READINESS,
+      requiresProjectSequence: false,
+    };
   }
 
   if (
@@ -519,29 +538,51 @@ const resolveSequencingReadinessError = (params: {
     !params.sequencing.persistedEnabled &&
     params.sequencingDiagnostics.globalSequencingEnabled
   ) {
-    return `Image Studio project sequencing is disabled in project-scoped settings (${projectSettingsKey}) while global settings are enabled. Product Studio always uses project-scoped settings for this route. Enable Sequencing and click "Save Defaults" in this project.`;
+    return {
+      ready: false,
+      requiresProjectSequence: true,
+      state: 'project_sequence_disabled',
+      message: `Project sequencing is disabled in "${projectSettingsKey}" while global sequencing is enabled. Product Studio always uses project-scoped settings. Enable Sequencing and click "Save Defaults" in this project.`,
+    };
   }
 
   if (!params.sequencing.persistedEnabled) {
-    return 'Image Studio project sequencing is disabled in persisted project settings. Enable Sequencing and click "Save Defaults" in Image Studio Sequencing.';
+    return {
+      ready: false,
+      requiresProjectSequence: true,
+      state: 'project_sequence_disabled',
+      message:
+        'Image Studio project sequencing is disabled in persisted project settings. Enable Sequencing and click "Save Defaults" in Image Studio Sequencing.',
+    };
   }
 
   if (params.sequencing.sequenceStepCount <= 0) {
-    return 'Image Studio project sequencing has no enabled steps. Configure at least one enabled step and click "Save Defaults".';
+    return {
+      ready: false,
+      requiresProjectSequence: true,
+      state: 'project_steps_empty',
+      message:
+        'Image Studio project sequencing has no enabled steps. Configure at least one enabled step and click "Save Defaults".',
+    };
   }
 
-  if (!params.sequencing.runViaSequence) {
-    return 'Image Studio project sequencing is not ready to run. Open the project Sequencing panel and click "Save Defaults".';
+  if (!params.sequencing.runViaSequence || params.sequencing.needsSaveDefaults) {
+    return {
+      ready: false,
+      requiresProjectSequence: true,
+      state: 'project_snapshot_stale',
+      message:
+        params.sequencing.needsSaveDefaultsReason ??
+        'Image Studio sequence configuration changed and is not saved. Click "Save Defaults" in Image Studio Sequencing.',
+    };
   }
 
-  if (params.sequencing.needsSaveDefaults) {
-    return (
-      params.sequencing.needsSaveDefaultsReason ??
-      'Image Studio sequence configuration changed and is not saved. Click "Save Defaults" in Image Studio Sequencing.'
-    );
-  }
-
-  return null;
+  return {
+    ready: true,
+    requiresProjectSequence: true,
+    state: 'ready',
+    message: null,
+  };
 };
 
 const clamp01 = (value: number): number => {
@@ -922,18 +963,19 @@ const resolveStudioSettingsBundle = async (
   modelId: string;
 }> => {
   const projectSettingsKey = getImageStudioProjectSettingsKey(projectId);
+  if (!projectSettingsKey) {
+    throw badRequestError('Invalid Image Studio project id for settings lookup.');
+  }
 
   const [projectSettingsRaw, globalSettingsRaw, sequenceGenerationModeRaw] = await Promise.all([
-    projectSettingsKey
-      ? getSettingValue(projectSettingsKey)
-      : Promise.resolve(null),
+    getSettingValue(projectSettingsKey),
     getSettingValue(IMAGE_STUDIO_SETTINGS_KEY),
     getSettingValue(PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY),
   ]);
 
-  const parsedSettings = parseImageStudioSettings(
-    projectSettingsRaw ?? globalSettingsRaw,
-  );
+  const parsedSettings = hasPersistedSettingValue(projectSettingsRaw)
+    ? parseImageStudioSettings(projectSettingsRaw)
+    : defaultImageStudioSettings;
   const sequencingDiagnostics = buildSequencingDiagnostics({
     projectId,
     projectSettingsKey,
@@ -952,6 +994,49 @@ const resolveStudioSettingsBundle = async (
     sequencingDiagnostics,
     sequenceGenerationMode,
     modelId,
+  };
+};
+
+const resolveProductStudioSequencePreflight = async (params: {
+  productId: string;
+  imageSlotIndex: number;
+  projectId?: string | null | undefined;
+  sequenceGenerationMode?: ProductStudioSequenceGenerationMode | null | undefined;
+}): Promise<ProductStudioSequencePreflightResult> => {
+  const resolved = await resolveProductAndStudioTarget(params);
+  const {
+    sequencing,
+    sequencingDiagnostics,
+    sequenceGenerationMode,
+    modelId,
+  } = await resolveStudioSettingsBundle(resolved.projectId);
+  const requestedSequenceMode = normalizeProductStudioSequenceGenerationMode(
+    params.sequenceGenerationMode ?? sequenceGenerationMode,
+  );
+  const routeDecision = resolvePostProductionRoute({
+    sequencing,
+    requestedMode: requestedSequenceMode,
+    modelId,
+  });
+  const sequenceReadiness = resolveSequenceReadiness({
+    sequencing,
+    sequencingDiagnostics,
+    requestedMode: requestedSequenceMode,
+    route: routeDecision.executionRoute,
+  });
+  return {
+    config: resolved.config,
+    projectId: resolved.projectId,
+    imageSlotIndex: resolved.imageSlotIndex,
+    sequenceGenerationMode,
+    requestedSequenceMode,
+    resolvedSequenceMode: routeDecision.resolvedMode,
+    executionRoute: routeDecision.executionRoute,
+    sequencing,
+    sequencingDiagnostics,
+    sequenceReadiness,
+    modelId,
+    warnings: [...routeDecision.warnings],
   };
 };
 
@@ -1120,19 +1205,19 @@ export async function getProductStudioVariants(params: {
   imageSlotIndex: number;
   projectId?: string | null | undefined;
 }): Promise<ProductStudioVariantsResult> {
-  const resolved = await resolveProductAndStudioTarget(params);
-  const {
-    sequencing,
-    sequencingDiagnostics,
-    sequenceGenerationMode,
-  } = await resolveStudioSettingsBundle(
-    resolved.projectId,
+  const preflight = await resolveProductStudioSequencePreflight({
+    productId: params.productId,
+    imageSlotIndex: params.imageSlotIndex,
+    projectId: params.projectId,
+  });
+  const sourceSlotId = resolveSourceSlotIdForIndex(
+    preflight.config,
+    preflight.imageSlotIndex,
   );
-  const sourceSlotId = resolveSourceSlotIdForIndex(resolved.config, resolved.imageSlotIndex);
   const sourceSlotHistory = Array.isArray(
-    resolved.config.sourceSlotHistoryByImageIndex[String(resolved.imageSlotIndex)],
+    preflight.config.sourceSlotHistoryByImageIndex[String(preflight.imageSlotIndex)],
   )
-    ? resolved.config.sourceSlotHistoryByImageIndex[String(resolved.imageSlotIndex)] ?? []
+    ? preflight.config.sourceSlotHistoryByImageIndex[String(preflight.imageSlotIndex)] ?? []
     : [];
   const sourceSlotCandidates = Array.from(
     new Set<string>(
@@ -1145,11 +1230,12 @@ export async function getProductStudioVariants(params: {
 
   if (sourceSlotCandidates.length === 0) {
     return {
-      config: resolved.config,
-      sequencing,
-      sequencingDiagnostics,
-      sequenceGenerationMode,
-      projectId: resolved.projectId,
+      config: preflight.config,
+      sequencing: preflight.sequencing,
+      sequencingDiagnostics: preflight.sequencingDiagnostics,
+      sequenceReadiness: preflight.sequenceReadiness,
+      sequenceGenerationMode: preflight.sequenceGenerationMode,
+      projectId: preflight.projectId,
       sourceSlotId: null,
       sourceSlot: null,
       variants: [],
@@ -1157,20 +1243,30 @@ export async function getProductStudioVariants(params: {
   }
 
   const { sourceSlot, variants } = await resolveGenerationVariants({
-    projectId: resolved.projectId,
+    projectId: preflight.projectId,
     sourceSlotIds: sourceSlotCandidates,
   });
 
   return {
-    config: resolved.config,
-    sequencing,
-    sequencingDiagnostics,
-    sequenceGenerationMode,
-    projectId: resolved.projectId,
+    config: preflight.config,
+    sequencing: preflight.sequencing,
+    sequencingDiagnostics: preflight.sequencingDiagnostics,
+    sequenceReadiness: preflight.sequenceReadiness,
+    sequenceGenerationMode: preflight.sequenceGenerationMode,
+    projectId: preflight.projectId,
     sourceSlotId: sourceSlot?.id ?? sourceSlotCandidates[0] ?? null,
     sourceSlot,
     variants,
   };
+}
+
+export async function getProductStudioSequencePreflight(params: {
+  productId: string;
+  imageSlotIndex: number;
+  projectId?: string | null | undefined;
+  sequenceGenerationMode?: ProductStudioSequenceGenerationMode | null | undefined;
+}): Promise<ProductStudioSequencePreflightResult> {
+  return await resolveProductStudioSequencePreflight(params);
 }
 
 export async function sendProductImageToStudio(params: {
@@ -1209,6 +1305,76 @@ export async function sendProductImageToStudio(params: {
     throw badRequestError(
       'Selected product image slot has no uploaded source image.',
     );
+  }
+
+  const generationPrompt = buildGenerationPrompt(resolved.product);
+  const routeDecisionStartMs = Date.now();
+  const routeDecision = resolvePostProductionRoute({
+    sequencing,
+    requestedMode: requestedSequenceMode,
+    modelId,
+  });
+  const warnings = [...routeDecision.warnings];
+  routeDecisionMs = Date.now() - routeDecisionStartMs;
+  const resolvedActiveSteps = resolveImageStudioSequenceActiveSteps(
+    parsedStudioSettings.projectSequencing,
+  ).filter((step) => step.enabled);
+  const sequenceSnapshot = buildImageStudioSequenceSnapshot(
+    parsedStudioSettings,
+  );
+  const auditSettingsContext = {
+    settingsScope: sequencingDiagnostics.selectedScope,
+    settingsKey: sequencingDiagnostics.selectedSettingsKey,
+    projectSettingsKey: sequencingDiagnostics.projectSettingsKey,
+    settingsScopeValid: sequencingDiagnostics.selectedScope === 'project',
+  } as const;
+  const sequenceReadiness = resolveSequenceReadiness({
+    sequencing,
+    sequencingDiagnostics,
+    requestedMode: requestedSequenceMode,
+    route: routeDecision.executionRoute,
+  });
+  if (!sequenceReadiness.ready) {
+    const readinessMessage =
+      sequenceReadiness.message ??
+      'Image Studio project sequencing is not ready.';
+    const fallbackReason = warnings[0] ?? null;
+    const runKind =
+      isSequenceExecutionRoute(routeDecision.executionRoute) ||
+      doesRequestedModeRequireProjectSequence(requestedSequenceMode)
+        ? 'sequence'
+        : routeDecision.runKind;
+    await createProductStudioRunAudit({
+      productId: resolved.product.id,
+      imageSlotIndex: resolved.imageSlotIndex,
+      projectId: resolved.projectId,
+      status: 'failed',
+      requestedSequenceMode,
+      resolvedSequenceMode: routeDecision.resolvedMode,
+      executionRoute: routeDecision.executionRoute,
+      runKind,
+      runId: null,
+      sequenceRunId: null,
+      dispatchMode: null,
+      fallbackReason,
+      warnings,
+      ...auditSettingsContext,
+      sequenceSnapshotHash: sequenceSnapshot.hash,
+      stepOrderUsed: resolvedActiveSteps.map((step) => step.type),
+      resolvedCropRect: resolveFirstSequenceCropRect(resolvedActiveSteps),
+      sourceImageSize: null,
+      timings: {
+        importMs,
+        sourceSlotUpsertMs,
+        routeDecisionMs,
+        dispatchMs,
+        totalMs: Date.now() - startedAtMs,
+      },
+      errorMessage: readinessMessage,
+    }).catch(() => {});
+    throw badRequestError(readinessMessage, {
+      sequenceReadinessState: sequenceReadiness.state,
+    });
   }
 
   const importStartMs = Date.now();
@@ -1255,69 +1421,10 @@ export async function sendProductImageToStudio(params: {
     sourceSlot.id,
   );
   sourceSlotUpsertMs = Date.now() - sourceUpsertStartMs;
-
-  const generationPrompt = buildGenerationPrompt(resolved.product);
-  const routeDecisionStartMs = Date.now();
-  const routeDecision = resolvePostProductionRoute({
-    sequencing,
-    requestedMode: requestedSequenceMode,
-    modelId,
-  });
-  const warnings = [...routeDecision.warnings];
-  routeDecisionMs = Date.now() - routeDecisionStartMs;
-  const resolvedActiveSteps = resolveImageStudioSequenceActiveSteps(
-    parsedStudioSettings.projectSequencing,
-  ).filter((step) => step.enabled);
-  const sequenceSnapshot = buildImageStudioSequenceSnapshot(
-    parsedStudioSettings,
-  );
   const sourceImageSize =
     imported.width && imported.height
       ? { width: imported.width, height: imported.height }
       : null;
-
-  const sequenceReadinessError = resolveSequencingReadinessError({
-    sequencing,
-    sequencingDiagnostics,
-    requestedMode: requestedSequenceMode,
-    route: routeDecision.executionRoute,
-  });
-  if (sequenceReadinessError) {
-    const fallbackReason = warnings[0] ?? null;
-    const runKind =
-      isSequenceExecutionRoute(routeDecision.executionRoute) ||
-      doesRequestedModeRequireProjectSequence(requestedSequenceMode)
-        ? 'sequence'
-        : routeDecision.runKind;
-    await createProductStudioRunAudit({
-      productId: resolved.product.id,
-      imageSlotIndex: resolved.imageSlotIndex,
-      projectId: resolved.projectId,
-      status: 'failed',
-      requestedSequenceMode,
-      resolvedSequenceMode: routeDecision.resolvedMode,
-      executionRoute: routeDecision.executionRoute,
-      runKind,
-      runId: null,
-      sequenceRunId: null,
-      dispatchMode: null,
-      fallbackReason,
-      warnings,
-      sequenceSnapshotHash: sequenceSnapshot.hash,
-      stepOrderUsed: resolvedActiveSteps.map((step) => step.type),
-      resolvedCropRect: resolveFirstSequenceCropRect(resolvedActiveSteps),
-      sourceImageSize,
-      timings: {
-        importMs,
-        sourceSlotUpsertMs,
-        routeDecisionMs,
-        dispatchMs,
-        totalMs: Date.now() - startedAtMs,
-      },
-      errorMessage: sequenceReadinessError,
-    }).catch(() => {});
-    throw badRequestError(sequenceReadinessError);
-  }
 
   if (
     routeDecision.executionRoute === 'studio_sequencer' ||
@@ -1350,6 +1457,7 @@ export async function sendProductImageToStudio(params: {
         dispatchMode: null,
         fallbackReason,
         warnings,
+        ...auditSettingsContext,
         sequenceSnapshotHash: sequenceSnapshot.hash,
         stepOrderUsed,
         resolvedCropRect,
@@ -1412,6 +1520,7 @@ export async function sendProductImageToStudio(params: {
         dispatchMode: null,
         fallbackReason,
         warnings,
+        ...auditSettingsContext,
         sequenceSnapshotHash: sequenceSnapshot.hash,
         stepOrderUsed,
         resolvedCropRect,
@@ -1442,6 +1551,7 @@ export async function sendProductImageToStudio(params: {
       dispatchMode: sequenceRun.dispatchMode,
       fallbackReason,
       warnings,
+      ...auditSettingsContext,
       sequenceSnapshotHash: sequenceSnapshot.hash,
       stepOrderUsed,
       resolvedCropRect,
@@ -1460,6 +1570,7 @@ export async function sendProductImageToStudio(params: {
       config,
       sequencing,
       sequencingDiagnostics,
+      sequenceReadiness,
       projectId: resolved.projectId,
       imageSlotIndex: resolved.imageSlotIndex,
       sourceSlot,
@@ -1550,6 +1661,7 @@ export async function sendProductImageToStudio(params: {
       dispatchMode: null,
       fallbackReason,
       warnings,
+      ...auditSettingsContext,
       sequenceSnapshotHash: sequenceSnapshot.hash,
       stepOrderUsed: sequenceStepTypes,
       resolvedCropRect: resolveFirstSequenceCropRect(resolvedActiveSteps),
@@ -1594,6 +1706,7 @@ export async function sendProductImageToStudio(params: {
     dispatchMode,
     fallbackReason,
     warnings,
+    ...auditSettingsContext,
     sequenceSnapshotHash: sequenceSnapshot.hash,
     stepOrderUsed: sequenceStepTypes,
     resolvedCropRect: resolveFirstSequenceCropRect(resolvedActiveSteps),
@@ -1612,6 +1725,7 @@ export async function sendProductImageToStudio(params: {
     config,
     sequencing,
     sequencingDiagnostics,
+    sequenceReadiness,
     projectId: resolved.projectId,
     imageSlotIndex: resolved.imageSlotIndex,
     sourceSlot,

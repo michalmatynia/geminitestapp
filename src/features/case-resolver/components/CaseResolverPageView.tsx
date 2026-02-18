@@ -106,6 +106,8 @@ type CaseResolverPageViewProps = {
   isDraggingSplitter: boolean;
   setIsDraggingSplitter: React.Dispatch<React.SetStateAction<boolean>>;
   handleCopyDraftFileId: () => Promise<void>;
+  handlePreviewDraftPdf: () => void;
+  handlePrintDraftDocument: () => void;
   promptExploderProposalDraft: CaseResolverCaptureProposalState | null;
   captureProposalTargetFileName: string | null;
   handleClosePromptExploderProposalModal: () => void;
@@ -142,6 +144,7 @@ const formatHistoryTimestamp = (value: string): string => {
 
 export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JSX.Element {
   const router = useRouter();
+  const [showMarkdownPreview, setShowMarkdownPreview] = React.useState(true);
   const {
     state,
     workspaceView,
@@ -183,6 +186,8 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     isDraggingSplitter,
     setIsDraggingSplitter,
     handleCopyDraftFileId,
+    handlePreviewDraftPdf,
+    handlePrintDraftDocument,
     promptExploderProposalDraft,
     captureProposalTargetFileName,
     handleClosePromptExploderProposalModal,
@@ -439,6 +444,11 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     isWorkspaceSaving,
   ]);
 
+  React.useEffect(() => {
+    if (editingDocumentDraft?.editorType !== 'markdown') return;
+    setShowMarkdownPreview(true);
+  }, [editingDocumentDraft?.id, editingDocumentDraft?.editorType]);
+
   // Main Render
   return (
     <CaseResolverPageProvider value={{
@@ -571,6 +581,22 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                 </div>
               </div>
               <div className='flex flex-wrap items-center justify-end gap-2'>
+                <Button
+                  type='button'
+                  onClick={handlePreviewDraftPdf}
+                  variant='outline'
+                  className='min-w-[110px]'
+                >
+                  Preview PDF
+                </Button>
+                <Button
+                  type='button'
+                  onClick={handlePrintDraftDocument}
+                  variant='outline'
+                  className='min-w-[84px]'
+                >
+                  Print
+                </Button>
                 <Button
                   type='button'
                   onClick={handleRequestCloseFileEditor}
@@ -960,6 +986,21 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                 </Button>
               </div>
 
+              {editingDocumentDraft.editorType === 'markdown' ? (
+                <div className='flex items-center justify-end gap-2'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    className='h-8'
+                    onClick={(): void => {
+                      setShowMarkdownPreview((current: boolean): boolean => !current);
+                    }}
+                  >
+                    {showMarkdownPreview ? 'Hide Preview' : 'Show Preview'}
+                  </Button>
+                </div>
+              ) : null}
+
               {ENABLE_CASE_RESOLVER_MULTIFORMAT_EDITOR ? (
                 <>
                   {editingDocumentDraft.editorType === 'wysiwyg' ? (
@@ -977,7 +1018,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                       key={`case-resolver-markdown-${editorContentRevisionSeed}`}
                       value={editingDocumentDraft.documentContentMarkdown}
                       onChange={handleUpdateDraftDocumentContent}
-                      showPreview
+                      showPreview={showMarkdownPreview}
                       renderPreviewHtml={(value: string): string => ensureHtmlForPreview(value, 'markdown')}
                       sanitizePreviewHtml={sanitizeHtml}
                       textareaRef={editorTextareaRef}

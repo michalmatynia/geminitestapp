@@ -18,7 +18,6 @@ import {
 
 import { AdminImageStudioPromptsPage } from './AdminImageStudioPromptsPage';
 import { AdminImageStudioSettingsPage } from './AdminImageStudioSettingsPage';
-import { AdminImageStudioValidationPatternsPage } from './AdminImageStudioValidationPatternsPage';
 import { ImageStudioDocsContent } from '../components/ImageStudioDocsContent';
 import { StudioMainContent } from '../components/StudioMainContent';
 import { StudioModals } from '../components/StudioModals';
@@ -30,7 +29,7 @@ import { useSettingsActions } from '../context/SettingsContext';
 import { useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState, type PreviewCanvasSize } from '../context/UiContext';
 
-type StudioTab = 'studio' | 'projects' | 'settings' | 'validation' | 'prompts' | 'docs';
+type StudioTab = 'studio' | 'projects' | 'settings' | 'prompts' | 'docs';
 const PREVIEW_CANVAS_SIZE_OPTIONS: Array<{ value: PreviewCanvasSize; label: string }> = [
   { value: 'regular', label: 'Regular' },
   { value: 'large', label: 'Large' },
@@ -57,7 +56,6 @@ function AdminImageStudioPageContent(): React.JSX.Element {
     const nextTab: StudioTab =
       rawTab === 'projects' ||
       rawTab === 'settings' ||
-      rawTab === 'validation' ||
       rawTab === 'prompts' ||
       rawTab === 'docs'
         ? rawTab
@@ -87,7 +85,6 @@ function AdminImageStudioPageContent(): React.JSX.Element {
     const nextTab: StudioTab =
       value === 'projects' ||
       value === 'settings' ||
-      value === 'validation' ||
       value === 'prompts' ||
       value === 'docs'
         ? value
@@ -150,7 +147,6 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                   <TabsTrigger value='studio'>Studio</TabsTrigger>
                   <TabsTrigger value='projects'>Projects</TabsTrigger>
                   <TabsTrigger value='settings'>Settings</TabsTrigger>
-                  <TabsTrigger value='validation'>Validation</TabsTrigger>
                   <TabsTrigger value='prompts'>Prompts</TabsTrigger>
                   <TabsTrigger value='docs'>Docs</TabsTrigger>
                 </TabsList>
@@ -211,13 +207,6 @@ function AdminImageStudioPageContent(): React.JSX.Element {
 
             <TabsContent value='settings' className='h-full m-0 overflow-y-auto p-4'>
               <AdminImageStudioSettingsPage
-                embedded
-                onSaved={handleRefreshSettings}
-              />
-            </TabsContent>
-
-            <TabsContent value='validation' className='h-full m-0 overflow-y-auto p-4'>
-              <AdminImageStudioValidationPatternsPage
                 embedded
                 onSaved={handleRefreshSettings}
               />

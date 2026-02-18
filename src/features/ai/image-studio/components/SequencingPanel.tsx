@@ -42,10 +42,8 @@ import {
   buildImageStudioSequenceSnapshot,
   normalizeImageStudioSequenceSteps,
   resolveImageStudioSequenceActiveSteps,
-  type ImageStudioSequenceOperation,
   type ImageStudioSequencePreset,
   type ImageStudioSequenceStep,
-  type ImageStudioSequenceUpscaleStep,
 } from '../utils/studio-settings';
 
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
@@ -128,34 +126,6 @@ const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 const serializeGeometryValue = (value: unknown): string =>
   JSON.stringify(value ?? null);
 
-const deriveLegacySequencingFields = (steps: ImageStudioSequenceStep[]): {
-  operations: ImageStudioSequenceOperation[];
-  upscaleStrategy: 'scale' | 'target_resolution';
-  upscaleScale: number;
-  upscaleTargetWidth: number;
-  upscaleTargetHeight: number;
-} => {
-  const operations: ImageStudioSequenceOperation[] = [];
-  for (const step of steps) {
-    if (!step.enabled) continue;
-    if (operations.includes(step.type)) continue;
-    operations.push(step.type);
-  }
-
-  const firstUpscale = steps.find(
-    (step): step is ImageStudioSequenceUpscaleStep =>
-      step.type === 'upscale' && step.enabled,
-  );
-
-  return {
-    operations,
-    upscaleStrategy: firstUpscale?.config.strategy ?? 'scale',
-    upscaleScale: firstUpscale?.config.scale ?? 2,
-    upscaleTargetWidth: firstUpscale?.config.targetWidth ?? 2048,
-    upscaleTargetHeight: firstUpscale?.config.targetHeight ?? 2048,
-  };
-};
-
 const normalizePresetIdFragment = (value: string): string =>
   value
     .trim()
@@ -219,21 +189,8 @@ export function SequencingPanel(): React.JSX.Element {
   const [slotSyncWarning, setSlotSyncWarning] = useState<string | null>(null);
 
   const editableSequenceSteps = useMemo(
-    () => normalizeImageStudioSequenceSteps(studioSettings.projectSequencing.steps, {
-      fallbackOperations: studioSettings.projectSequencing.operations,
-      upscaleStrategy: studioSettings.projectSequencing.upscaleStrategy,
-      upscaleScale: studioSettings.projectSequencing.upscaleScale,
-      upscaleTargetWidth: studioSettings.projectSequencing.upscaleTargetWidth,
-      upscaleTargetHeight: studioSettings.projectSequencing.upscaleTargetHeight,
-    }),
-    [
-      studioSettings.projectSequencing.steps,
-      studioSettings.projectSequencing.operations,
-      studioSettings.projectSequencing.upscaleStrategy,
-      studioSettings.projectSequencing.upscaleScale,
-      studioSettings.projectSequencing.upscaleTargetWidth,
-      studioSettings.projectSequencing.upscaleTargetHeight,
-    ],
+    () => normalizeImageStudioSequenceSteps(studioSettings.projectSequencing.steps),
+    [studioSettings.projectSequencing.steps],
   );
 
   const runtimeSequenceSteps = useMemo(
@@ -337,20 +294,8 @@ export function SequencingPanel(): React.JSX.Element {
   ]);
   const normalizeStepsWithCurrentFallback = useCallback(
     (input: unknown): ImageStudioSequenceStep[] =>
-      normalizeImageStudioSequenceSteps(input, {
-        fallbackOperations: studioSettings.projectSequencing.operations,
-        upscaleStrategy: studioSettings.projectSequencing.upscaleStrategy,
-        upscaleScale: studioSettings.projectSequencing.upscaleScale,
-        upscaleTargetWidth: studioSettings.projectSequencing.upscaleTargetWidth,
-        upscaleTargetHeight: studioSettings.projectSequencing.upscaleTargetHeight,
-      }),
-    [
-      studioSettings.projectSequencing.operations,
-      studioSettings.projectSequencing.upscaleStrategy,
-      studioSettings.projectSequencing.upscaleScale,
-      studioSettings.projectSequencing.upscaleTargetWidth,
-      studioSettings.projectSequencing.upscaleTargetHeight,
-    ],
+      normalizeImageStudioSequenceSteps(input),
+    [],
   );
 
   const isSequenceRunning =
@@ -762,22 +707,8 @@ export function SequencingPanel(): React.JSX.Element {
   const mutateSteps = useCallback(
     (updater: (steps: ImageStudioSequenceStep[]) => ImageStudioSequenceStep[]) => {
       setStudioSettings((prev) => {
-        const currentSteps = normalizeImageStudioSequenceSteps(prev.projectSequencing.steps, {
-          fallbackOperations: prev.projectSequencing.operations,
-          upscaleStrategy: prev.projectSequencing.upscaleStrategy,
-          upscaleScale: prev.projectSequencing.upscaleScale,
-          upscaleTargetWidth: prev.projectSequencing.upscaleTargetWidth,
-          upscaleTargetHeight: prev.projectSequencing.upscaleTargetHeight,
-        });
-        const updatedSteps = normalizeImageStudioSequenceSteps(updater(currentSteps), {
-          fallbackOperations: prev.projectSequencing.operations,
-          upscaleStrategy: prev.projectSequencing.upscaleStrategy,
-          upscaleScale: prev.projectSequencing.upscaleScale,
-          upscaleTargetWidth: prev.projectSequencing.upscaleTargetWidth,
-          upscaleTargetHeight: prev.projectSequencing.upscaleTargetHeight,
-        });
-
-        const legacy = deriveLegacySequencingFields(updatedSteps);
+        const currentSteps = normalizeImageStudioSequenceSteps(prev.projectSequencing.steps);
+        const updatedSteps = normalizeImageStudioSequenceSteps(updater(currentSteps));
 
         return {
           ...prev,
@@ -785,11 +716,6 @@ export function SequencingPanel(): React.JSX.Element {
             ...prev.projectSequencing,
             activePresetId: null,
             steps: updatedSteps,
-            operations: legacy.operations,
-            upscaleStrategy: legacy.upscaleStrategy,
-            upscaleScale: legacy.upscaleScale,
-            upscaleTargetWidth: legacy.upscaleTargetWidth,
-            upscaleTargetHeight: legacy.upscaleTargetHeight,
           },
         };
       });
@@ -799,13 +725,7 @@ export function SequencingPanel(): React.JSX.Element {
 
   useEffect(() => {
     setStudioSettings((prev) => {
-      const currentSteps = normalizeImageStudioSequenceSteps(prev.projectSequencing.steps, {
-        fallbackOperations: prev.projectSequencing.operations,
-        upscaleStrategy: prev.projectSequencing.upscaleStrategy,
-        upscaleScale: prev.projectSequencing.upscaleScale,
-        upscaleTargetWidth: prev.projectSequencing.upscaleTargetWidth,
-        upscaleTargetHeight: prev.projectSequencing.upscaleTargetHeight,
-      });
+      const currentSteps = normalizeImageStudioSequenceSteps(prev.projectSequencing.steps);
       let changed = false;
       const updatedSteps = currentSteps.map((step) => {
         if (step.type !== 'crop_center') return step;
@@ -832,14 +752,7 @@ export function SequencingPanel(): React.JSX.Element {
       });
       if (!changed) return prev;
 
-      const normalizedUpdatedSteps = normalizeImageStudioSequenceSteps(updatedSteps, {
-        fallbackOperations: prev.projectSequencing.operations,
-        upscaleStrategy: prev.projectSequencing.upscaleStrategy,
-        upscaleScale: prev.projectSequencing.upscaleScale,
-        upscaleTargetWidth: prev.projectSequencing.upscaleTargetWidth,
-        upscaleTargetHeight: prev.projectSequencing.upscaleTargetHeight,
-      });
-      const legacy = deriveLegacySequencingFields(normalizedUpdatedSteps);
+      const normalizedUpdatedSteps = normalizeImageStudioSequenceSteps(updatedSteps);
 
       return {
         ...prev,
@@ -847,11 +760,6 @@ export function SequencingPanel(): React.JSX.Element {
           ...prev.projectSequencing,
           activePresetId: null,
           steps: normalizedUpdatedSteps,
-          operations: legacy.operations,
-          upscaleStrategy: legacy.upscaleStrategy,
-          upscaleScale: legacy.upscaleScale,
-          upscaleTargetWidth: legacy.upscaleTargetWidth,
-          upscaleTargetHeight: legacy.upscaleTargetHeight,
         },
       };
     });
@@ -865,7 +773,6 @@ export function SequencingPanel(): React.JSX.Element {
     }
 
     const nextSteps = normalizeStepsWithCurrentFallback(editableSequenceSteps);
-    const legacy = deriveLegacySequencingFields(nextSteps);
     const normalizedName = name.slice(0, PRESET_NAME_MAX_LENGTH);
     const timestamp = new Date().toISOString();
     let nextPresetId = '';
@@ -913,11 +820,6 @@ export function SequencingPanel(): React.JSX.Element {
           ...prev.projectSequencing,
           activePresetId: nextPresetId,
           steps: nextSteps,
-          operations: legacy.operations,
-          upscaleStrategy: legacy.upscaleStrategy,
-          upscaleScale: legacy.upscaleScale,
-          upscaleTargetWidth: legacy.upscaleTargetWidth,
-          upscaleTargetHeight: legacy.upscaleTargetHeight,
           presets: nextPresets,
         },
       };
@@ -943,19 +845,12 @@ export function SequencingPanel(): React.JSX.Element {
     }
 
     const nextSteps = normalizeStepsWithCurrentFallback(selectedPreset.steps);
-    const legacy = deriveLegacySequencingFields(nextSteps);
-
     setStudioSettings((prev) => ({
       ...prev,
       projectSequencing: {
         ...prev.projectSequencing,
         activePresetId: selectedPreset.id,
         steps: nextSteps,
-        operations: legacy.operations,
-        upscaleStrategy: legacy.upscaleStrategy,
-        upscaleScale: legacy.upscaleScale,
-        upscaleTargetWidth: legacy.upscaleTargetWidth,
-        upscaleTargetHeight: legacy.upscaleTargetHeight,
       },
     }));
     setSelectedPresetId(selectedPreset.id);

@@ -4,6 +4,7 @@ import {
   findExistingFilemakerPartyReference,
   normalizeCaseResolverComparable,
 } from '@/features/case-resolver/party-matching';
+import type { CaseResolverPartyReference } from '@/features/case-resolver/types';
 import { createId } from '@/features/case-resolver/utils/caseResolverUtils';
 import {
   createFilemakerAddress,
@@ -12,7 +13,6 @@ import {
 } from '@/features/filemaker/settings';
 import type { FilemakerAddress, FilemakerDatabase } from '@/features/filemaker/types';
 import type { PromptExploderCaseResolverPartyCandidate } from '@/features/prompt-exploder/bridge';
-import type { CaseResolverPartyReference } from '@/features/case-resolver/types';
 
 export type UpsertFilemakerCaptureCandidateResult = {
   database: FilemakerDatabase;

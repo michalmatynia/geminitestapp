@@ -25,6 +25,8 @@ const CASE_RESOLVER_EMPTY_TITLE_PATTERN_IDS = new Set<string>([
   'segment.case_resolver.heading.body_statement',
   'segment.case_resolver.heading.closing_statement',
 ]);
+const CASE_RESOLVER_SUBJECT_OR_SECTION_PATTERN_ID =
+  'segment.case_resolver.heading.subject_or_section';
 
 const isPromptExploderSegmentType = (
   value: string | null | undefined
@@ -139,10 +141,24 @@ const inferTypeFromPatternIds = (
   return fallbackType;
 };
 
-export const shouldKeepEmptyTitleForCaseResolver = (matchedPatternIds: string[]): boolean => {
-  return matchedPatternIds.some((patternId) =>
-    CASE_RESOLVER_EMPTY_TITLE_PATTERN_IDS.has(patternId)
-  );
+export const shouldKeepEmptyTitleForCaseResolver = (
+  matchedPatternIds: string[],
+  sourceText = ''
+): boolean => {
+  if (
+    matchedPatternIds.some((patternId) =>
+      CASE_RESOLVER_EMPTY_TITLE_PATTERN_IDS.has(patternId)
+    )
+  ) {
+    return true;
+  }
+  if (!matchedPatternIds.includes(CASE_RESOLVER_SUBJECT_OR_SECTION_PATTERN_ID)) {
+    return false;
+  }
+
+  const normalizedSource = normalizedSimilarityText(sourceText);
+  if (!normalizedSource) return false;
+  return normalizedSource === 'wniosek' || normalizedSource.startsWith('wniosek ');
 };
 
 export const inferTypeFromRuleHints = (

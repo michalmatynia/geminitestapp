@@ -25,8 +25,7 @@ export type ContextDraft = ContextItem & {
 };
 
 const buildContextItems = (
-  rawItems?: string,
-  rawLegacy?: string
+  rawItems?: string
 ): ContextItem[] => {
   if (rawItems) {
     try {
@@ -37,17 +36,6 @@ const buildContextItems = (
     } catch {
       // ignore invalid payload
     }
-  }
-  if (rawLegacy?.trim()) {
-    return [
-      {
-        id: 'legacy-context',
-        title: 'Legacy context',
-        content: rawLegacy,
-        source: 'manual',
-        createdAt: new Date().toISOString(),
-      },
-    ];
   }
   return [];
 };
@@ -94,11 +82,8 @@ export function useChatbotContextState() {
     const storedActive = data.find(
       (item) => item.key === 'chatbot_global_context_active'
     );
-    const storedLegacy = data.find(
-      (item) => item.key === 'chatbot_global_context'
-    );
 
-    const items = buildContextItems(storedItems?.value, storedLegacy?.value);
+    const items = buildContextItems(storedItems?.value);
     const active = buildActiveIds(storedActive?.value, items);
     setContexts(items);
     setActiveIds(active);

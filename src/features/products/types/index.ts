@@ -57,4 +57,5 @@ export type {
 export type {
   ProductStudioSequencingConfig,
   ProductStudioSequencingDiagnostics,
+  ProductStudioSequenceReadiness,
 } from './product-studio';

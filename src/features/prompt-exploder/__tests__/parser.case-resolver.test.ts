@@ -112,7 +112,7 @@ describe('case resolver prompt exploder segmentation', () => {
     expect(placeDateSegment?.title).toBe('');
     expect(addresserSegment?.title).toBe('');
     expect(addresseeSegment?.title).toBe('');
-    expect(subjectSegment?.title).toMatch(/^Wniosek/i);
+    expect(subjectSegment?.title).toBe('');
   });
 
   it('keeps plain place/date line isolated from addresser block without comma suffix', () => {
@@ -169,7 +169,7 @@ describe('case resolver prompt exploder segmentation', () => {
     expect(placeDateSegment?.title).toBe('');
     expect(addresserSegment?.title).toBe('');
     expect(addresseeSegment?.title).toBe('');
-    expect(subjectSegment?.title).toMatch(/^Wniosek/i);
+    expect(subjectSegment?.title).toBe('');
   });
 
   it('splits Dotyczy subheading into its own segment and keeps the title empty', () => {
@@ -369,7 +369,13 @@ Z poważaniem,`;
     const uzasadnienieSegment = document.segments.find(
       (segment) => segment.title === 'Uzasadnienie'
     );
+    const wniosekSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes(
+        'Wniosek o umorzenie zadłużenia lub korektę rozliczeń oraz o zawieszenie postępowania administracyjnego'
+      )
+    );
     expect(uzasadnienieSegment).toBeDefined();
+    expect(wniosekSegment?.title).toBe('');
     const uzasadnienieBody =
       uzasadnienieSegment?.raw || uzasadnienieSegment?.text || '';
     expect(uzasadnienieBody.startsWith('Uzasadnienie')).toBe(false);

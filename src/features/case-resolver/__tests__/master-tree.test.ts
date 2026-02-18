@@ -57,7 +57,7 @@ describe('case-resolver master tree', () => {
     ]);
   });
 
-  it('hides legacy image placeholders without uploaded file paths', () => {
+  it('hides image placeholders without uploaded file paths', () => {
     const workspace: CaseResolverWorkspace = {
       version: 2,
       workspaceRevision: 0,

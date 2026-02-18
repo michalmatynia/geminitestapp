@@ -16,7 +16,19 @@ import {
 } from '@/features/data-import-export/utils/image-retry-presets';
 import type { IntegrationConnectionBasic } from '@/features/integrations';
 import { useCategoryMappingsByConnection } from '@/features/integrations/hooks/useMarketplaceQueries';
-import { Button, Input, Checkbox, Label, SelectSimple, DocumentationSection } from '@/shared/ui';
+import {
+  Button,
+  Input,
+  Checkbox,
+  Label,
+  SelectSimple,
+  DocumentationSection,
+  SectionHeader,
+  Hint,
+  FormField,
+  ToggleRow,
+  PropertyRow,
+} from '@/shared/ui';
 
 export function ExportTab(): React.JSX.Element {
   const CATEGORY_TEMPLATE_PRODUCT_FIELDS = new Set([

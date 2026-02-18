@@ -16,6 +16,7 @@ import {
 type SequenceStackCardProps = {
   editableSequenceSteps: ImageStudioSequenceStep[];
   enabledRuntimeSteps: ImageStudioSequenceStep[];
+  activeGenerationModel: string;
   cropShapeOptions: Array<{ value: string; label: string }>;
   cropShapeGeometryById: Record<string, {
     bbox: { x: number; y: number; width: number; height: number } | null;
@@ -131,6 +132,7 @@ const createStepForOperation = (
 export function SequenceStackCard({
   editableSequenceSteps,
   enabledRuntimeSteps,
+  activeGenerationModel,
   cropShapeOptions,
   cropShapeGeometryById,
   mutateSteps,
@@ -577,6 +579,7 @@ export function SequenceStackCard({
                   stepId={step.id}
                   operation={operation}
                   step={step}
+                  activeGenerationModel={activeGenerationModel}
                   cropShapeOptions={cropShapeOptions}
                   cropShapeGeometryById={cropShapeGeometryById}
                   updateStep={updateStep}

@@ -3,7 +3,7 @@
 import { AlertTriangleIcon, DatabaseIcon, Table2Icon, TerminalSquareIcon } from 'lucide-react';
 import Link from 'next/link';
 
-import { Alert, Badge, FormSection, ListPanel, Tabs, TabsContent, TabsList, TabsTrigger, SimpleSettingsList } from '@/shared/ui';
+import { Alert, Badge, EmptyState, FormSection, ListPanel, Tabs, TabsContent, TabsList, TabsTrigger, SimpleSettingsList } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { CrudPanel } from './CrudPanel';
@@ -121,13 +121,13 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
             </div>
           )}
           {!previewLoading && tableDetails.length === 0 && (
-            <div className='rounded-lg border border-border/60 bg-card/50 p-5'>
-              <p className='text-xs text-gray-500'>
-                {dbType === 'mongodb'
-                  ? 'Table metadata is not available for MongoDB. Use the SQL Console tab for MongoDB operations.'
-                  : 'No tables found in the database.'}
-              </p>
-            </div>
+            <EmptyState
+              title='No tables found'
+              description={dbType === 'mongodb'
+                ? 'Table metadata is not available for MongoDB. Use the SQL Console tab for MongoDB operations.'
+                : 'No tables found in the database.'}
+              icon={<Table2Icon className='size-12 opacity-20' />}
+            />
           )}
           {!previewLoading && tableDetails.length > 0 && <CrudPanel />}
         </TabsContent>

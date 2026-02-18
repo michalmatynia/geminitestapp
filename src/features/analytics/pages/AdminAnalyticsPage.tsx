@@ -1,6 +1,6 @@
 'use client';
 
-import { SectionPanel } from '@/shared/ui';
+import { FormSection } from '@/shared/ui';
 
 import { AnalyticsAiInsights } from '../components/AnalyticsAiInsights';
 import { AnalyticsDashboardHeader } from '../components/AnalyticsDashboardHeader';
@@ -17,10 +17,9 @@ function AnalyticsPageContent(): React.JSX.Element {
       <AnalyticsMetricsGrid />
       <AnalyticsTopStats />
 
-      <SectionPanel className='mt-6 p-4'>
-        <h2 className='mb-3 text-sm font-semibold text-white'>Recent Events</h2>
+      <FormSection title='Recent Events' className='mt-6'>
         <RecentEventsTable />
-      </SectionPanel>
+      </FormSection>
     </div>
   );
 }

@@ -4,7 +4,7 @@ import React from 'react';
 
 import type { Asset3DRecord } from '@/features/viewer3d/types';
 import type { EntityModalProps } from '@/shared/types/modal-props';
-import { StatusBadge } from '@/shared/ui';
+import { StatusBadge, MetadataItem, Badge, FormField } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 interface AssetPreviewModalProps extends EntityModalProps<Asset3DRecord> {}
@@ -26,64 +26,67 @@ export function AssetPreviewModal({
     >
       <div className='space-y-6'>
         <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-          <div className='space-y-1'>
-            <p className='text-[10px] uppercase font-bold text-gray-500'>Size</p>
-            <p className='text-sm text-gray-200'>{(previewAsset.size / 1024).toFixed(2)} KB</p>
-          </div>
-          <div className='space-y-1'>
-            <p className='text-[10px] uppercase font-bold text-gray-500'>MIME Type</p>
-            <p className='text-sm text-gray-200'>{previewAsset.mimetype}</p>
-          </div>
-          <div className='space-y-1'>
-            <p className='text-[10px] uppercase font-bold text-gray-500'>Visibility</p>
-            <StatusBadge 
-              status={previewAsset.isPublic ? 'Public' : 'Private'} 
-              variant={previewAsset.isPublic ? 'success' : 'neutral'}
-              size='sm'
-            />
-          </div>
-          <div className='space-y-1'>
-            <p className='text-[10px] uppercase font-bold text-gray-500'>Category</p>
-            <p className='text-sm text-gray-200'>{previewAsset.categoryId ?? '—'}</p>
-          </div>
-          <div className='space-y-1'>
-            <p className='text-[10px] uppercase font-bold text-gray-500'>Added</p>
-            <p className='text-xs text-gray-400'>{new Date(previewAsset.createdAt).toLocaleString()}</p>
-          </div>
-          <div className='space-y-1'>
-            <p className='text-[10px] uppercase font-bold text-gray-500'>Last Modified</p>
-            <p className='text-xs text-gray-400'>{previewAsset.updatedAt ? new Date(previewAsset.updatedAt).toLocaleString() : '—'}</p>
-          </div>
+          <MetadataItem
+            label='Size'
+            value={`${(previewAsset.size / 1024).toFixed(2)} KB`}
+          />
+          <MetadataItem
+            label='MIME Type'
+            value={previewAsset.mimetype}
+          />
+          <MetadataItem
+            label='Visibility'
+            value={(
+              <StatusBadge 
+                status={previewAsset.isPublic ? 'Public' : 'Private'} 
+                variant={previewAsset.isPublic ? 'success' : 'neutral'}
+                size='sm'
+              />
+            )}
+          />
+          <MetadataItem
+            label='Category'
+            value={previewAsset.categoryId ?? '—'}
+          />
+          <MetadataItem
+            label='Added'
+            value={new Date(previewAsset.createdAt).toLocaleString()}
+            valueClassName='text-xs text-gray-400'
+          />
+          <MetadataItem
+            label='Last Modified'
+            value={previewAsset.updatedAt ? new Date(previewAsset.updatedAt).toLocaleString() : '—'}
+            valueClassName='text-xs text-gray-400'
+          />
         </div>
 
         {(previewAsset.tags ?? []).length > 0 && (
-          <div className='space-y-2'>
-            <p className='text-[10px] uppercase font-bold text-gray-500'>Tags</p>
+          <FormField label='Tags'>
             <div className='flex flex-wrap gap-2'>
               {previewAsset.tags.map(tag => (
-                <StatusBadge key={tag} status={tag} variant='neutral' size='sm' />
+                <Badge key={tag} variant='secondary' className='text-[10px]'>
+                  {tag}
+                </Badge>
               ))}
             </div>
-          </div>
+          </FormField>
         )}
 
         {previewAsset.description && (
-          <div className='space-y-2'>
-            <p className='text-[10px] uppercase font-bold text-gray-500'>Description</p>
+          <FormField label='Description'>
             <div className='rounded-lg border border-border bg-card/30 p-4 text-sm text-gray-300 leading-relaxed'>
               {previewAsset.description}
             </div>
-          </div>
+          </FormField>
         )}
 
-        <div className='space-y-2'>
-          <p className='text-[10px] uppercase font-bold text-gray-500'>System Metadata</p>
+        <FormField label='System Metadata'>
           <div className='rounded-lg border border-border bg-gray-950 p-4'>
             <pre className='max-h-64 overflow-auto text-[11px] text-gray-400 font-mono leading-relaxed'>
               {JSON.stringify(previewAsset.metadata ?? {}, null, 2)}
             </pre>
           </div>
-        </div>
+        </FormField>
       </div>
     </DetailModal>
   );

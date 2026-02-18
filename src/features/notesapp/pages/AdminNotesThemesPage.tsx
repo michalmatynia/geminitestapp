@@ -8,7 +8,7 @@ import { useNotebooks, useNoteThemes } from '@/features/notesapp/api/useNoteQuer
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
 import type { ThemeRecord } from '@/shared/types/domain/notes';
-import { Button, useToast, Input, SectionHeader, FormSection, FormField, RefreshButton } from '@/shared/ui';
+import { Button, useToast, Input, SectionHeader, FormSection, FormField, RefreshButton, LoadingState } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 const defaultTheme: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -286,7 +286,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
           className='p-6'
         >
           {loading ? (
-            <p className='text-sm text-gray-400'>Loading themes...</p>
+            <LoadingState message='Loading themes...' className='py-8' />
           ) : themes.length === 0 ? (
             <p className='text-sm text-gray-400'>No themes created yet.</p>
           ) : (

@@ -132,7 +132,11 @@ function DatabaseEngineContent(): React.JSX.Element {
   ], []);
 
   if (isLoading) {
-    return <div className='p-12 text-center text-sm text-gray-500 animate-pulse'>Initializing database engine console...</div>;
+    return (
+      <div className='flex min-h-[400px] items-center justify-center'>
+        <LoadingState message='Initializing database engine console...' />
+      </div>
+    );
   }
 
   const activeViewLabel =

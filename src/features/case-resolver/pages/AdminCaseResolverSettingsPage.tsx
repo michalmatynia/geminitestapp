@@ -8,7 +8,7 @@ import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settin
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Badge, Button, FormSection, Input, Label, SectionHeader, SelectSimple, Textarea, useToast } from '@/shared/ui';
+import { Badge, Button, FormField, FormSection, Input, SectionHeader, SelectSimple, Textarea, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { isLikelyCaseResolverOcrCapableModelId } from '../ocr-models';
@@ -254,19 +254,15 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
         )}
       >
         <div className='grid gap-3 md:grid-cols-2'>
-          <div className='space-y-1'>
-            <div className='flex items-center justify-between gap-2'>
-              <Label className='text-[11px] text-gray-400'>OCR Model</Label>
+          <FormField
+            label='OCR Model'
+            actions={(
               <Badge variant='outline' className='px-1.5 py-0 text-[9px] uppercase tracking-wide'>
                 {detectedOcrProviderLabel}
               </Badge>
-            </div>
-            <div className='text-[11px] text-gray-500'>
-              OpenAI OCR calls use the Image Studio API key first.
-            </div>
-            <div className='text-[11px] text-gray-500'>
-              Key source: {ocrKeySourceLabel}
-            </div>
+            )}
+            description={`OpenAI OCR calls use the Image Studio API key first. Key source: ${ocrKeySourceLabel}`}
+          >
             <SelectSimple
               value={draft.ocrModel}
               onValueChange={(value: string): void => {
@@ -283,13 +279,16 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
               placeholder='Select OCR model'
             />
             {modelsQuery.data?.warning?.message ? (
-              <div className='text-[11px] text-amber-300'>
+              <div className='mt-1 text-[11px] text-amber-300'>
                 {modelsQuery.data.warning.message}
               </div>
             ) : null}
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Custom OCR Model ID</Label>
+          </FormField>
+
+          <FormField
+            label='Custom Model ID'
+            description='Use this field if your model is not shown in the discovered list.'
+          >
             <Input
               value={draft.ocrModel}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -306,12 +305,13 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
               placeholder='e.g. gpt-4o-mini or llama3.2-vision'
               className='h-9'
             />
-            <div className='text-[11px] text-gray-500'>
-              Use this field if your model is not shown in the discovered list.
-            </div>
-          </div>
-          <div className='space-y-1 md:col-span-2'>
-            <Label className='text-[11px] text-gray-400'>OCR Prompt Template</Label>
+          </FormField>
+
+          <FormField
+            label='OCR Prompt Template'
+            description='Edit the default OCR instruction sent with uploaded scan images.'
+            className='md:col-span-2'
+          >
             <Textarea
               value={draft.ocrPrompt}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
@@ -328,10 +328,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
               className='min-h-[88px] text-xs'
               placeholder='Instructions used for OCR extraction.'
             />
-            <div className='text-[11px] text-gray-500'>
-              Edit the default OCR instruction sent with uploaded scan images.
-            </div>
-          </div>
+          </FormField>
         </div>
       </FormSection>
 
@@ -342,8 +339,10 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
         className='p-4'
       >
         <div className='grid gap-3 md:grid-cols-2'>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Default Document Format</Label>
+          <FormField
+            label='Default Document Format'
+            description='Existing documents continue to open using their stored format (for example WYSIWYG documents stay WYSIWYG).'
+          >
             <SelectSimple
               value={draft.defaultDocumentFormat}
               onValueChange={(value: string): void => {
@@ -360,12 +359,11 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
               options={CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_OPTIONS}
               placeholder='Select default document format'
             />
-            <div className='text-[11px] text-gray-500'>
-              Existing documents continue to open using their stored format (for example WYSIWYG documents stay WYSIWYG).
-            </div>
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Confirm Document Delete</Label>
+          </FormField>
+          <FormField
+            label='Confirm Document Delete'
+            description='Applies when deleting documents from Case Resolver tree and Cases list.'
+          >
             <SelectSimple
               value={draft.confirmDeleteDocument ? 'on' : 'off'}
               onValueChange={(value: string): void => {
@@ -381,10 +379,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
               options={CASE_RESOLVER_CONFIRM_DELETE_OPTIONS}
               placeholder='Choose confirmation behavior'
             />
-            <div className='text-[11px] text-gray-500'>
-              Applies when deleting documents from Case Resolver tree and Cases list.
-            </div>
-          </div>
+          </FormField>
         </div>
       </FormSection>
 

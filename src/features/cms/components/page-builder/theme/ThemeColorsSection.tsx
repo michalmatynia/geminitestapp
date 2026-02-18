@@ -4,7 +4,7 @@ import { ArrowLeft, ChevronDown } from 'lucide-react';
 import React, { useCallback } from 'react';
 
 import type { ColorScheme, ThemeSettings } from '@/features/cms/types/theme-settings';
-import { Button } from '@/shared/ui';
+import { Button, Badge } from '@/shared/ui';
 
 import { useThemeColors } from './ThemeColorsContext';
 import { ColorField, TextField } from '../shared-fields';
@@ -105,9 +105,9 @@ export function ThemeColorsSection(): React.JSX.Element {
                         <span className='whitespace-normal break-words'>{scheme.name}</span>
                         <div className='flex items-center gap-2'>
                           {isActive && (
-                            <span className='rounded-full border border-blue-500/40 bg-blue-500/20 px-2 py-0.5 text-[10px] text-blue-200'>
+                            <Badge variant='outline' className='border-blue-500/40 bg-blue-500/20 px-2 py-0 text-[10px] text-blue-200'>
                               Active
-                            </span>
+                            </Badge>
                           )}
                           <Button
                             type='button'

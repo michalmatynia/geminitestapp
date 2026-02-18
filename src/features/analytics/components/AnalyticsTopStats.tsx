@@ -47,8 +47,7 @@ export function AnalyticsTopStats(): React.JSX.Element {
 
   return (
     <div className='mt-6 grid gap-6 lg:grid-cols-2'>
-      <SectionPanel className='p-4'>
-        <h2 className='mb-3 text-sm font-semibold text-white'>Top Pages</h2>
+      <FormSection title='Top Pages'>
         <MiniTable
           rows={(summary?.topPages ?? []).map((item: { path: string; count: number }) => ({
             key: item.path,
@@ -57,12 +56,9 @@ export function AnalyticsTopStats(): React.JSX.Element {
           }))}
           emptyLabel='No pageviews yet.'
         />
-      </SectionPanel>
+      </FormSection>
 
-      <SectionPanel className='p-4'>
-        <h2 className='mb-3 text-sm font-semibold text-white'>
-          Top Referrers
-        </h2>
+      <FormSection title='Top Referrers'>
         <MiniTable
           rows={(summary?.topReferrers ?? []).map((item: { referrer: string; count: number }) => ({
             key: item.referrer,
@@ -71,12 +67,9 @@ export function AnalyticsTopStats(): React.JSX.Element {
           }))}
           emptyLabel='No referrers yet.'
         />
-      </SectionPanel>
+      </FormSection>
 
-      <SectionPanel className='p-4'>
-        <h2 className='mb-3 text-sm font-semibold text-white'>
-          Top Languages
-        </h2>
+      <FormSection title='Top Languages'>
         <MiniTable
           rows={(summary?.topLanguages ?? []).map((item: { language: string; count: number }) => ({
             key: item.language,
@@ -85,12 +78,9 @@ export function AnalyticsTopStats(): React.JSX.Element {
           }))}
           emptyLabel='No language data yet.'
         />
-      </SectionPanel>
+      </FormSection>
 
-      <SectionPanel className='p-4'>
-        <h2 className='mb-3 text-sm font-semibold text-white'>
-          Top Countries
-        </h2>
+      <FormSection title='Top Countries'>
         <MiniTable
           rows={(summary?.topCountries ?? []).map((item: { country: string; count: number }) => ({
             key: item.country,
@@ -99,7 +89,7 @@ export function AnalyticsTopStats(): React.JSX.Element {
           }))}
           emptyLabel='No geo data yet.'
         />
-      </SectionPanel>
+      </FormSection>
     </div>
   );
 }

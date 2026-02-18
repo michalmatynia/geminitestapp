@@ -1,10 +1,9 @@
 'use client';
 
-import { Loader2, Check } from 'lucide-react';
 import React from 'react';
 
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { Button, StatusBadge } from '@/shared/ui';
+import { StatusBadge, MetadataItem, FormActions } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 // TODO: These types should be defined in a more central place
@@ -107,21 +106,13 @@ export function GenerationPreviewModal({
               <StatusBadge status='AI Generated' variant='processing' size='sm' className='font-bold' />
             )}
           </div>
-          <div className='flex gap-2'>
-            <Button variant='outline' onClick={onClose}>Close Preview</Button>
-            {selectedGenerationPreview && (
-              <Button
-                onClick={() => {
-                  void handleApplyLinkedVariantToCard(selectedGenerationPreview);
-                }}
-                disabled={slotUpdateBusy}
-                className='gap-2'
-              >
-                {slotUpdateBusy ? <Loader2 className='size-4 animate-spin' /> : <Check className='size-4' />}
-                Apply to Card
-              </Button>
-            )}
-          </div>
+          <FormActions
+            onCancel={onClose}
+            cancelText='Close Preview'
+            onSave={selectedGenerationPreview ? (): void => { void handleApplyLinkedVariantToCard(selectedGenerationPreview); } : undefined}
+            saveText='Apply to Card'
+            isSaving={slotUpdateBusy}
+          />
         </div>
       }
     >
@@ -133,25 +124,24 @@ export function GenerationPreviewModal({
         />
         
         {selectedGenerationPreview && (
-          <div className='grid grid-cols-2 md:grid-cols-4 gap-4 rounded-lg border border-border/40 bg-card/30 p-4'>
-            <div className='space-y-1'>
-              <p className='text-[10px] uppercase font-bold text-muted-foreground'>File Identifier</p>
-              <p className='text-xs font-mono text-gray-200 truncate' title={selectedGenerationPreview.output.id}>
-                {selectedGenerationPreview.output.id}
-              </p>
-            </div>
-            <div className='space-y-1'>
-              <p className='text-[10px] uppercase font-bold text-muted-foreground'>Dimensions</p>
-              <p className='text-xs font-medium text-gray-200'>{selectedGenerationModalDimensions}</p>
-            </div>
-            <div className='space-y-1'>
-              <p className='text-[10px] uppercase font-bold text-muted-foreground'>File Size</p>
-              <p className='text-xs font-medium text-gray-200'>{formatBytes(selectedGenerationPreview.output.size)}</p>
-            </div>
-            <div className='space-y-1'>
-              <p className='text-[10px] uppercase font-bold text-muted-foreground'>Generated On</p>
-              <p className='text-xs font-medium text-gray-200'>{formatLinkedVariantTimestamp(selectedGenerationPreview.runCreatedAt)}</p>
-            </div>
+          <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+            <MetadataItem
+              label='File Identifier'
+              value={selectedGenerationPreview.output.id}
+              mono
+            />
+            <MetadataItem
+              label='Dimensions'
+              value={selectedGenerationModalDimensions}
+            />
+            <MetadataItem
+              label='File Size'
+              value={formatBytes(selectedGenerationPreview.output.size)}
+            />
+            <MetadataItem
+              label='Generated On'
+              value={formatLinkedVariantTimestamp(selectedGenerationPreview.runCreatedAt)}
+            />
           </div>
         )}
       </div>

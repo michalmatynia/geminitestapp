@@ -126,7 +126,9 @@ export function GenericApiConsole({
           <Button
             key={preset.label}
             type='button'
-            className='rounded-full border px-3 py-1 text-[11px] text-gray-300 hover:border-gray-500'
+            variant='outline'
+            size='xs'
+            className='h-7 rounded-full px-3 text-[11px]'
             onClick={() => handlePresetClick(preset)}
           >
             {preset.label}
@@ -188,10 +190,10 @@ export function GenericApiConsole({
       {/* Send Button & Base URL */}
       <div className='mt-3 flex items-center gap-3'>
         <Button
-          className='rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-70'
           type='button'
           disabled={loading || !isConnected}
           onClick={onRequest}
+          size='sm'
         >
           {loading ? 'Sending...' : 'Send request'}
         </Button>

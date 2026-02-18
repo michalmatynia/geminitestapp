@@ -519,7 +519,7 @@ const resolveSequenceReadiness = (params: {
       ready: false,
       requiresProjectSequence: true,
       state: 'project_settings_missing',
-      message: `Project settings for "${projectIdLabel}" are not persisted under "${projectSettingsKey}". Open this project in Image Studio Sequencing and click "Save Defaults".`,
+      message: `Project settings for "${projectIdLabel}" are not persisted under "${projectSettingsKey}". Open this project in Image Studio and click "Save Project".`,
     };
   }
 
@@ -542,7 +542,7 @@ const resolveSequenceReadiness = (params: {
       ready: false,
       requiresProjectSequence: true,
       state: 'project_sequence_disabled',
-      message: `Project sequencing is disabled in "${projectSettingsKey}" while global sequencing is enabled. Product Studio always uses project-scoped settings. Enable Sequencing and click "Save Defaults" in this project.`,
+      message: `Project sequencing is disabled in "${projectSettingsKey}" while global sequencing is enabled. Product Studio always uses project-scoped settings. Enable Sequencing and click "Save Project" in this project.`,
     };
   }
 
@@ -552,7 +552,7 @@ const resolveSequenceReadiness = (params: {
       requiresProjectSequence: true,
       state: 'project_sequence_disabled',
       message:
-        'Image Studio project sequencing is disabled in persisted project settings. Enable Sequencing and click "Save Defaults" in Image Studio Sequencing.',
+        'Image Studio project sequencing is disabled in persisted project settings. Enable Sequencing and click "Save Project" in Image Studio.',
     };
   }
 
@@ -562,7 +562,7 @@ const resolveSequenceReadiness = (params: {
       requiresProjectSequence: true,
       state: 'project_steps_empty',
       message:
-        'Image Studio project sequencing has no enabled steps. Configure at least one enabled step and click "Save Defaults".',
+        'Image Studio project sequencing has no enabled steps. Configure at least one enabled step and click "Save Project".',
     };
   }
 
@@ -573,7 +573,7 @@ const resolveSequenceReadiness = (params: {
       state: 'project_snapshot_stale',
       message:
         params.sequencing.needsSaveDefaultsReason ??
-        'Image Studio sequence configuration changed and is not saved. Click "Save Defaults" in Image Studio Sequencing.',
+        'Image Studio sequence configuration changed and is not saved. Click "Save Project" in Image Studio.',
     };
   }
 
@@ -914,8 +914,8 @@ const resolveSequencingFromStudioSettings = (
   const needsSaveDefaultsReason = !needsSaveDefaults
     ? null
     : !savedSnapshotHash
-      ? 'Project sequence snapshot is not saved yet. In Image Studio Sequencing click "Save Defaults".'
-      : 'Project sequence snapshot is out of date. In Image Studio Sequencing click "Save Defaults" to persist the exact stack and crop geometry.';
+      ? 'Project sequence snapshot is not saved yet. In Image Studio click "Save Project".'
+      : 'Project sequence snapshot is out of date. In Image Studio click "Save Project" to persist the exact stack and crop geometry.';
   const expectedOutputs =
     firstGenerateStep?.type === 'generate' ||
     firstGenerateStep?.type === 'regenerate'

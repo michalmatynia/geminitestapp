@@ -99,6 +99,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     onDeleteFolder,
     onToggleFolderLock,
     onDeleteFile,
+    onDeleteAsset,
     onToggleFileLock,
     onEditFile,
     activeFile,
@@ -121,6 +122,15 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     (): CaseResolverWorkspace =>
       resolveCaseResolverTreeWorkspace({ selectedFileId, requestedFileId, workspace }),
     [requestedFileId, selectedFileId, workspace]
+  );
+
+  const isNodeFileCanvasActive = useMemo(
+    (): boolean =>
+      Boolean(selectedAssetId) &&
+      workspace.assets.some(
+        (asset) => asset.id === selectedAssetId && asset.kind === 'node_file'
+      ),
+    [selectedAssetId, workspace.assets]
   );
 
   const masterNodes = useMemo(
@@ -635,6 +645,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
             const isScanCaseFile =
               Boolean(fileId) && (node.kind === 'case_file_scan' || fileType === 'scanfile');
             const isCanvasCaseFile = Boolean(fileId) && isCaseFile;
+            const isNodeFileAsset = Boolean(assetId) && node.kind === 'node_file';
             const linkedDocumentNodeIds = fileId
               ? documentNodeIdsBySourceFileId.get(fileId) ?? []
               : [];
@@ -687,12 +698,18 @@ export function CaseResolverFolderTree(): React.JSX.Element {
             return (
               <div
                 className={`group flex items-center gap-1 rounded px-2 py-1.5 text-sm ${stateClassName} ${
-                  isCanvasCaseFile ? 'cursor-grab active:cursor-grabbing' : ''
+                  isCanvasCaseFile || isNodeFileAsset ? 'cursor-grab active:cursor-grabbing' : ''
                 }`}
                 style={{ paddingLeft: `${depth * 16 + 8}px` }}
                 role='button'
                 tabIndex={0}
-                title={isCanvasCaseFile ? 'Drag file to canvas' : node.name}
+                title={
+                  isNodeFileAsset
+                    ? 'Canvas file — click to open'
+                    : isCanvasCaseFile
+                      ? 'Drag file to canvas'
+                      : node.name
+                }
                 onClick={(): void => {
                   setIsRootExplicitlySelected(false);
                   if (!isSelected) {
@@ -892,18 +909,30 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                       <button
                         type='button'
                         className='inline-flex size-6 items-center justify-center rounded border border-sky-500/40 bg-sky-500/10 text-sky-200 transition hover:bg-sky-500/20 hover:text-sky-100'
-                        title={hasDocumentNodeInCanvas ? 'Show file in canvas' : 'Drop file onto canvas'}
-                        aria-label={hasDocumentNodeInCanvas ? 'Show file in canvas' : 'Drop file onto canvas'}
+                        title={
+                          isNodeFileCanvasActive
+                            ? 'Add file to node canvas'
+                            : hasDocumentNodeInCanvas
+                              ? 'Show file in canvas'
+                              : 'Drop file onto canvas'
+                        }
+                        aria-label={
+                          isNodeFileCanvasActive
+                            ? 'Add file to node canvas'
+                            : hasDocumentNodeInCanvas
+                              ? 'Show file in canvas'
+                              : 'Drop file onto canvas'
+                        }
                         onClick={(event): void => {
                           event.preventDefault();
                           event.stopPropagation();
-                          if (activeFile?.fileType === 'case') {
+                          if (!isNodeFileCanvasActive && activeFile?.fileType === 'case') {
                             toast('Open a non-case file to manage canvas text nodes.', {
                               variant: 'warning',
                             });
                             return;
                           }
-                          if (hasDocumentNodeInCanvas) {
+                          if (!isNodeFileCanvasActive && hasDocumentNodeInCanvas) {
                             emitCaseResolverShowDocumentInCanvas({
                               fileId,
                               nodeId: linkedDocumentNodeIds[linkedDocumentNodeIds.length - 1] ?? null,
@@ -917,7 +946,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                           });
                         }}
                       >
-                        {hasDocumentNodeInCanvas ? (
+                        {!isNodeFileCanvasActive && hasDocumentNodeInCanvas ? (
                           <Eye className='size-3.5' />
                         ) : (
                           <Sparkles className='size-3.5' />
@@ -951,6 +980,27 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                         event.preventDefault();
                         event.stopPropagation();
                         onDeleteFile(fileId);
+                      }}
+                    >
+                      <Trash2 className='size-3.5' />
+                    </button>
+                  </div>
+                ) : null}
+                {!isRenaming && isNodeFileAsset && assetId ? (
+                  <div
+                    className={`flex shrink-0 items-center gap-1 transition ${
+                      isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                    }`}
+                  >
+                    <button
+                      type='button'
+                      className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/60 text-red-300 transition hover:bg-red-500/20 hover:text-red-200'
+                      title='Remove node file'
+                      aria-label='Remove node file'
+                      onClick={(event): void => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onDeleteAsset(assetId);
                       }}
                     >
                       <Trash2 className='size-3.5' />

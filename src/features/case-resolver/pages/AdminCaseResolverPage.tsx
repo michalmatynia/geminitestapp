@@ -64,6 +64,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const {
     workspace,
     selectedFileId,
+    selectedAssetId,
     setSelectedFileId,
     setSelectedAssetId,
     setSelectedFolderPath,
@@ -1111,6 +1112,57 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     ]
   );
 
+  const handleDeleteAsset = useCallback(
+    (assetId: string): void => {
+      const target = workspace.assets.find((asset) => asset.id === assetId);
+      if (!target) return;
+
+      const viewBeforeDelete = workspaceView;
+      const runDelete = (): void => {
+        updateWorkspace(
+          (current) => {
+            const exists = current.assets.some((asset) => asset.id === assetId);
+            if (!exists) return current;
+            return {
+              ...current,
+              assets: current.assets.filter((asset) => asset.id !== assetId),
+            };
+          },
+          { persistToast: 'Asset removed.' }
+        );
+        if (selectedAssetId === assetId) {
+          setSelectedAssetId(null);
+          setSelectedFolderPath(null);
+        }
+        preserveWorkspaceView(viewBeforeDelete);
+      };
+
+      if (!caseResolverSettings.confirmDeleteDocument) {
+        runDelete();
+        return;
+      }
+
+      confirmAction({
+        title: 'Delete Asset?',
+        message: `Are you sure you want to delete "${target.name}"? This action cannot be undone.`,
+        confirmText: 'Delete Asset',
+        isDangerous: true,
+        onConfirm: runDelete,
+      });
+    },
+    [
+      caseResolverSettings.confirmDeleteDocument,
+      confirmAction,
+      preserveWorkspaceView,
+      selectedAssetId,
+      setSelectedAssetId,
+      setSelectedFolderPath,
+      updateWorkspace,
+      workspace.assets,
+      workspaceView,
+    ]
+  );
+
   const handleGraphChange = useCallback(
     (nextGraph: CaseResolverGraph): void => {
       updateWorkspace((current) => {
@@ -1304,6 +1356,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         handleToggleFolderLock={handleToggleFolderLock}
         handleToggleFileLock={handleToggleFileLock}
         handleDeleteFile={handleDeleteFile}
+        handleDeleteAsset={handleDeleteAsset}
         handleGraphChange={handleGraphChange}
         handleRelationGraphChange={handleRelationGraphChange}
         editorDetailsTab={editorDetailsTab}

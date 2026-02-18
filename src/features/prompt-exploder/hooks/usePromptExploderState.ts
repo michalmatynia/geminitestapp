@@ -65,13 +65,13 @@ import {
   parsePromptExploderSettings,
   PROMPT_EXPLODER_SETTINGS_KEY,
 } from '../settings';
+import { extractCaseResolverBridgePayloadFromSegments } from '../utils/case-resolver-extraction';
 import {
   buildPromptExploderValidationRuleStackOptions,
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
   normalizePromptExploderValidationRuleStack,
   promptExploderValidationStackFromBridgeSource,
 } from '../validation-stack';
-import { extractCaseResolverBridgePayloadFromSegments } from '../utils/case-resolver-extraction';
 
 import type {
   PromptExploderBinding,

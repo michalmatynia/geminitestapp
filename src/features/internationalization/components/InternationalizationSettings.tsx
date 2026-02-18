@@ -10,7 +10,8 @@ import {
   SearchInput,
   FormSection,
   StatusBadge,
-  SimpleSettingsList
+  SimpleSettingsList,
+  Badge
 } from '@/shared/ui';
 
 export function InternationalizationSettings(): React.JSX.Element {
@@ -168,16 +169,17 @@ export function InternationalizationSettings(): React.JSX.Element {
             <div className='flex flex-wrap gap-1.5'>
               {item.original.countries?.length ? (
                 item.original.countries.map((entry: { countryId: string; country: { name: string; code: string } }) => (
-                  <div
+                  <Badge
                     key={entry.countryId}
-                    className='flex items-center gap-1.5 rounded-full bg-muted/30 px-2 py-0.5 text-[10px] text-gray-300 border border-border/40'
+                    variant='outline'
+                    className='flex items-center gap-1.5 px-1.5 py-0 text-[10px] border-border/40 bg-muted/10'
                     title={entry.country.name}
                   >
-                    <span className='h-2.5 w-3.5 shrink-0 overflow-hidden rounded-sm border border-border/40'>
+                    <span className='h-2 w-3 shrink-0 overflow-hidden rounded-[1px] border border-white/10'>
                       {countryFlagMap[entry.country.code] ?? null}
                     </span>
                     <span className='truncate max-w-[60px]'>{entry.country.code}</span>
-                  </div>
+                  </Badge>
                 ))
               ) : (
                 <span className='text-[10px] text-gray-500 italic'>No countries</span>

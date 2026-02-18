@@ -13,7 +13,7 @@ import { useNotebooks } from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
 import type { NotebookRecord } from '@/shared/types/domain/notes';
-import { Button, useToast, Input,  PageLayout, FormSection, FormField, RefreshButton } from '@/shared/ui';
+import { Button, useToast, Input,  PageLayout, FormSection, FormField, RefreshButton, LoadingState } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 export function AdminNotesNotebooksPage(): React.JSX.Element {
@@ -125,8 +125,15 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
     }
   };
 
-  if (loading) return <div className='text-sm text-gray-400'>Loading notebooks...</div>;
-
+  if (loading) {
+    return (
+      <PageLayout title='Notebooks' description='Loading notebooks...'>
+        <div className='flex min-h-[400px] items-center justify-center'>
+          <LoadingState message='Loading notebooks...' />
+        </div>
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout
@@ -162,7 +169,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
           )}
         >
           {loading ? (
-            <div className='text-sm text-gray-400'>Loading notebooks...</div>
+            <LoadingState message='Loading notebooks...' className='py-8' />
           ) : notebooks.length === 0 ? (
             <div className='text-sm text-gray-500'>No notebooks created yet.</div>
           ) : (

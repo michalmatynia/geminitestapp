@@ -67,7 +67,6 @@ export function BenchmarkReportPanel(): React.JSX.Element {
         <div className='grid gap-2 md:grid-cols-5'>
           <FormField label='Benchmark Suite' id='benchmark-suite'>
             <SelectSimple size='sm'
-              id='benchmark-suite'
               value={benchmarkSuiteDraft}
               onValueChange={(value: string) => {
                 setBenchmarkSuiteDraft(value as PromptExploderBenchmarkSuite);

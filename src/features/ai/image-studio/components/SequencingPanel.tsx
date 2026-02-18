@@ -39,7 +39,6 @@ import {
   slotHasRenderableImage,
 } from '../utils/sequence-slot-resolution';
 import {
-  buildImageStudioSequenceSnapshot,
   normalizeImageStudioSequenceSteps,
   resolveImageStudioSequenceActiveSteps,
   type ImageStudioSequencePreset,
@@ -174,7 +173,7 @@ export function SequencingPanel(): React.JSX.Element {
   const { promptText, paramsState } = usePromptState();
   const { maskShapes, maskInvert, maskFeather } = useMaskingState();
   const { studioSettings } = useSettingsState();
-  const { setStudioSettings, saveStudioSettings } = useSettingsActions();
+  const { setStudioSettings } = useSettingsActions();
   const { getPreviewCanvasImageFrame, setPendingSequenceThumbnail } = useUiActions();
 
   const [activeSequenceRunId, setActiveSequenceRunId] = useState<string | null>(null);
@@ -214,6 +213,8 @@ export function SequencingPanel(): React.JSX.Element {
     () => runtimeSequenceSteps.filter((step) => step.enabled),
     [runtimeSequenceSteps],
   );
+  const activeGenerationModel =
+    studioSettings.targetAi.openai.model.trim() || 'Not configured';
   const workingSlotImageWidth = useMemo((): number | null => {
     const width = workingSlot?.imageFile?.width ?? null;
     return typeof width === 'number' && Number.isFinite(width) && width > 0 ? width : null;
@@ -1100,32 +1101,16 @@ export function SequencingPanel(): React.JSX.Element {
   ]);
 
   const handleToggleSequencingEnabled = useCallback((checked: boolean): void => {
-    let nextSettingsSnapshot: typeof studioSettings | null = null;
     setStudioSettings((prev) => {
-      const next = {
+      return {
         ...prev,
         projectSequencing: {
           ...prev.projectSequencing,
           enabled: Boolean(checked),
         },
       };
-      nextSettingsSnapshot = next;
-      return next;
     });
-
-    if (!nextSettingsSnapshot) return;
-    void saveStudioSettings({
-      silent: true,
-      settingsOverride: nextSettingsSnapshot,
-    }).catch((error: unknown) => {
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to persist sequencing enabled state.',
-        { variant: 'error' },
-      );
-    });
-  }, [saveStudioSettings, setStudioSettings, toast]);
+  }, [setStudioSettings]);
 
   return (
     <div className='flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-4 pt-2'>
@@ -1148,57 +1133,6 @@ export function SequencingPanel(): React.JSX.Element {
             </div>
           </div>
 
-          <div className='flex flex-wrap items-center gap-2'>
-            <Button
-              size='xs'
-              type='button'
-              onClick={() => {
-                const savedAt = new Date().toISOString();
-                let snapshotSettings: typeof studioSettings | null = null;
-                setStudioSettings((prev) => {
-                  const snapshot = buildImageStudioSequenceSnapshot(prev);
-                  const next = {
-                    ...prev,
-                    projectSequencing: {
-                      ...prev.projectSequencing,
-                      snapshotHash: snapshot.hash,
-                      snapshotSavedAt: savedAt,
-                      snapshotStepCount: snapshot.stepCount,
-                      snapshotModelId: snapshot.modelId,
-                    },
-                  };
-                  snapshotSettings = next;
-                  return next;
-                });
-
-                if (!snapshotSettings) return;
-
-                void saveStudioSettings({
-                  silent: true,
-                  settingsOverride: snapshotSettings,
-                  verifyPersisted: true,
-                })
-                  .then((result) => {
-                    const scopeLabel =
-                      result.scope === 'project' ? 'project' : 'global';
-                    toast(
-                      `Sequencing defaults saved (${scopeLabel}: ${result.key}, snapshot: ${result.persistedSnapshotHash ?? 'n/a'}).`,
-                      { variant: 'success' },
-                    );
-                  })
-                  .catch((error: unknown) => {
-                    toast(
-                      error instanceof Error
-                        ? error.message
-                        : 'Failed to save sequencing defaults.',
-                      { variant: 'error' },
-                    );
-                  });
-              }}
-            >
-              Save Defaults
-            </Button>
-          </div>
         </div>
       </StudioCard>
 
@@ -1251,6 +1185,7 @@ export function SequencingPanel(): React.JSX.Element {
       <SequenceStackCard
         editableSequenceSteps={editableSequenceSteps}
         enabledRuntimeSteps={enabledRuntimeSteps}
+        activeGenerationModel={activeGenerationModel}
         cropShapeOptions={cropShapeOptions}
         cropShapeGeometryById={cropShapeGeometryById}
         mutateSteps={mutateSteps}

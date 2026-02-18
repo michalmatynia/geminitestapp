@@ -15,6 +15,7 @@ import {
   SelectSimple,
   FormField,
   Alert,
+  LoadingState,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -243,7 +244,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
       >
         <div className='mt-4'>
           {schemaQuery.isLoading && (
-            <p className='py-8 text-center text-gray-400 text-sm'>Loading collections...</p>
+            <LoadingState message='Loading collections...' className='py-8' />
           )}
 
           {schemaQuery.isError && (
@@ -307,7 +308,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
         </div>
 
         {jsonBackupsQuery.isLoading && (
-          <p className='mt-3 text-xs text-gray-400'>Loading backups...</p>
+          <LoadingState message='Loading backups...' className='mt-3' size='sm' />
         )}
       </FormSection>
     </PageLayout>

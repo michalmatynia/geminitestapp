@@ -61,6 +61,7 @@ export type CaseResolverPageContextValue = {
   onDeleteFolder: (folderPath: string) => void;
   onToggleFolderLock: (folderPath: string) => void;
   onDeleteFile: (fileId: string) => void;
+  onDeleteAsset: (assetId: string) => void;
   onToggleFileLock: (fileId: string) => void;
   onEditFile: (fileId: string) => void;
   caseResolverTags: CaseResolverTag[];

@@ -24,6 +24,7 @@ import {
   Label,
   useToast,
   SectionHeader,
+  LoadingState,
 } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -44,10 +45,8 @@ export default function AuthPermissionsPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <div className='container mx-auto py-10'>
-        <div className='rounded-lg border border-border/60 bg-card/40 p-6 text-sm text-gray-400'>
-          Loading permission settings...
-        </div>
+      <div className='flex min-h-[400px] items-center justify-center'>
+        <LoadingState message='Loading permission settings...' />
       </div>
     );
   }

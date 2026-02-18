@@ -13,7 +13,7 @@ import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AgentTeachingAgentRecord } from '@/shared/types/domain/agent-teaching';
 import type { ChatMessage } from '@/shared/types/domain/chatbot';
-import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, Textarea, SelectSimple, useToast } from '@/shared/ui';
+import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, Textarea, SelectSimple, useToast, Badge } from '@/shared/ui';
 
 import { useCmsDomainSelection } from '../../../hooks/useCmsDomainSelection';
 import { useCmsAllSlugs, useCmsSlugs, useUpdateSlug } from '../../../hooks/useCmsQueries';
@@ -700,14 +700,14 @@ function PageSettingsTab(): React.ReactNode {
               </p>
               <div className='mt-2 flex flex-wrap gap-1.5'>
                 {crossZoneSlugs.map((slug: Slug) => (
-                  <button
+                  <Badge
                     key={slug.id}
-                    type='button'
+                    variant='outline'
+                    className='h-auto border-amber-500/40 bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200 cursor-pointer hover:bg-amber-500/30'
                     onClick={(): void => handleRemoveSlug(slug)}
-                    className='rounded-full border border-amber-500/40 bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200'
                   >
                     /{slug.slug} ×
-                  </button>
+                  </Badge>
                 ))}
               </div>
             </div>
@@ -730,9 +730,9 @@ function PageSettingsTab(): React.ReactNode {
                     >
                       <span className='text-gray-200'>/{slug.slug}</span>
                       {isHome ? (
-                        <span className='rounded-full border border-green-500/40 bg-green-500/10 px-2 py-0.5 text-[10px] text-green-300'>
+                        <Badge variant='success' className='h-auto border-green-500/40 bg-green-500/10 px-2 py-0.5 text-[10px] text-green-300'>
                           Home
-                        </span>
+                        </Badge>
                       ) : (
                         <Button
                           size='sm'

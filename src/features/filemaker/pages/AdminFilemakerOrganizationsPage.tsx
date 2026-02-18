@@ -11,7 +11,8 @@ import {
   DataTable, 
   ListPanel, 
   PanelHeader, 
-  SearchInput 
+  SearchInput,
+  EmptyState
 } from '@/shared/ui';
 
 import {
@@ -155,9 +156,10 @@ export function AdminFilemakerOrganizationsPage(): React.JSX.Element {
           data={organizations}
           isLoading={settingsStore.isLoading}
           emptyState={
-            <div className='py-12 text-center text-sm text-gray-500'>
-              {query ? 'No organizations found matching your search.' : 'No organizations found in database.'}
-            </div>
+            <EmptyState
+              title={query ? 'No organizations found' : 'No organizations found in database.'}
+              description={query ? 'Try adjusting your search terms.' : 'Add your first organization to the database.'}
+            />
           }
         />
       </ListPanel>

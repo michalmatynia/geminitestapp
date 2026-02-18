@@ -8,16 +8,16 @@ import { cn } from '@/shared/utils';
 import { Button } from './button';
 
 interface FormActionsProps {
-  onCancel?: () => void;
-  onSave?: () => void;
-  cancelText?: string;
-  saveText?: string;
-  isSaving?: boolean;
-  isDisabled?: boolean;
-  className?: string;
-  saveVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
-  cancelVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
-  children?: React.ReactNode;
+  onCancel?: (() => void) | undefined;
+  onSave?: (() => void) | undefined;
+  cancelText?: string | undefined;
+  saveText?: string | undefined;
+  isSaving?: boolean | undefined;
+  isDisabled?: boolean | undefined;
+  className?: string | undefined;
+  saveVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | undefined;
+  cancelVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | undefined;
+  children?: React.ReactNode | undefined;
 }
 
 export function FormActions({

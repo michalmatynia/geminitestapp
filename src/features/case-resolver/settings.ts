@@ -55,6 +55,8 @@ import {
   type CaseResolverPartyReference,
   type CaseResolverScanSlot,
   type CaseResolverWorkspace,
+  type AiNode,
+  type Edge,
 } from './types';
 
 export const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v1';
@@ -936,6 +938,47 @@ export const hasCaseResolverWorkspaceFilesArray = (
   } catch {
     return false;
   }
+};
+
+const EMPTY_NODE_FILE_SNAPSHOT: CaseResolverNodeFileSnapshot = {
+  kind: 'case_resolver_node_file_snapshot_v1',
+  source: 'manual',
+  nodes: [],
+  edges: [],
+  nodeFileMeta: {},
+};
+
+export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFileSnapshot => {
+  try {
+    const parsed = JSON.parse(textContent) as unknown;
+    if (
+      parsed !== null &&
+      typeof parsed === 'object' &&
+      !Array.isArray(parsed) &&
+      (parsed as Record<string, unknown>)['kind'] === 'case_resolver_node_file_snapshot_v1'
+    ) {
+      const record = parsed as Record<string, unknown>;
+      return {
+        kind: 'case_resolver_node_file_snapshot_v1',
+        source: 'manual',
+        nodes: (Array.isArray(record['nodes']) ? record['nodes'] : []) as AiNode[],
+        edges: (Array.isArray(record['edges']) ? record['edges'] : []) as Edge[],
+        nodeFileMeta:
+          record['nodeFileMeta'] !== null &&
+          typeof record['nodeFileMeta'] === 'object' &&
+          !Array.isArray(record['nodeFileMeta'])
+            ? (record['nodeFileMeta'] as CaseResolverNodeFileSnapshot['nodeFileMeta'])
+            : {},
+      };
+    }
+  } catch {
+    // fall through to empty snapshot
+  }
+  return { ...EMPTY_NODE_FILE_SNAPSHOT };
+};
+
+export const serializeNodeFileSnapshot = (snapshot: CaseResolverNodeFileSnapshot): string => {
+  return JSON.stringify(snapshot);
 };
 
 export const upsertFileGraph = (

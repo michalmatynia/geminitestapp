@@ -12,6 +12,7 @@ import {
   TabsTrigger,
   FormSection,
   SelectSimple,
+  EmptyState,
 } from '@/shared/ui';
 
 import { CrudPanel } from '../components/CrudPanel';
@@ -75,13 +76,12 @@ function DatabaseOperationsContent(): React.JSX.Element {
             </div>
           )}
           {!previewLoading && tableDetails.length === 0 && (
-            <div className='rounded-lg border border-border/60 bg-card/50 p-5'>
-              <p className='text-xs text-gray-500'>
-                {dbType === 'mongodb'
-                  ? 'Table metadata is not available for MongoDB. Use the SQL Console tab for MongoDB operations.'
-                  : 'No tables found in the database.'}
-              </p>
-            </div>
+            <EmptyState
+              title='No tables found'
+              description={dbType === 'mongodb'
+                ? 'Table metadata is not available for MongoDB. Use the SQL Console tab for MongoDB operations.'
+                : 'No tables found in the database.'}
+            />
           )}
           {!previewLoading && tableDetails.length > 0 && (
             <CrudPanel />

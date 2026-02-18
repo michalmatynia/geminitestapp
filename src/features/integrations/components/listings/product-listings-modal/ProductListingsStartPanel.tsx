@@ -7,7 +7,8 @@ import { useIntegrationSelection } from '@/features/integrations/components/list
 import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
 import {
   Button,
-  
+  Alert,
+  LoadingState,
   IntegrationSelector,
 } from '@/shared/ui';
 
@@ -23,18 +24,22 @@ export function ProductListingsStartPanel(): React.JSX.Element {
   } = useIntegrationSelection();
 
   if (loadingIntegrations) {
-    return <p className='text-sm text-gray-400'>Loading integrations...</p>;
+    return (
+      <div className='flex items-center justify-center py-8'>
+        <LoadingState message='Loading integrations...' size='sm' />
+      </div>
+    );
   }
 
   if (integrations.length === 0) {
     return (
-      <div className='rounded-lg border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200'>
+      <Alert variant='warning'>
         No connected integrations.{' '}
         <Link href='/admin/integrations' className='underline hover:text-yellow-100'>
           Set up an integration
         </Link>
         .
-      </div>
+      </Alert>
     );
   }
 

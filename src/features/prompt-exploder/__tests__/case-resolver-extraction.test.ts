@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import type { PromptExploderSegment } from '@/features/prompt-exploder/types';
 import { extractCaseResolverBridgePayloadFromSegments } from '@/features/prompt-exploder/utils/case-resolver-extraction';
 
-import type { PromptExploderSegment } from '@/features/prompt-exploder/types';
 
 const createSegment = (input: {
   id: string;

@@ -11,6 +11,7 @@ import {
   Button,
   SelectSimple,
   useToast,
+  Badge,
 } from '@/shared/ui';
 
 import { MediaLibraryPanel } from './MediaLibraryPanel';
@@ -507,9 +508,9 @@ export function PagePreviewPanel(): React.ReactNode {
               <CmsDomainSelector label='' triggerClassName='h-8 w-[200px]' />
               <PageSelectorBar variant='toolbar' />
               {slugsQuery.isLoading ? (
-                <div className='rounded-full border border-slate-500/40 bg-slate-500/10 px-3 py-1 text-[10px] text-slate-300'>
+                <Badge variant='outline' className='h-8 border-slate-500/40 bg-slate-500/10 px-3 py-1 text-[10px] text-slate-300'>
                   Loading zone slugs…
-                </div>
+                </Badge>
               ) : zoneSlugValues.length > 1 ? (
                 <SelectSimple
                   size='sm'
@@ -525,21 +526,22 @@ export function PagePreviewPanel(): React.ReactNode {
                   triggerClassName='h-8 w-[200px] text-xs'
                 />
               ) : zoneSlugValues.length === 1 ? (
-                <div
-                  className='rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-[10px] text-blue-200'
+                <Badge
+                  variant='outline'
+                  className='h-8 border-blue-500/30 bg-blue-500/10 px-3 py-1 text-[10px] text-blue-200'
                   title={previewTargetLabel}
                 >
                   Preview: /{zoneSlugValues[0]}
-                </div>
+                </Badge>
               ) : (
-                <div className='rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-[10px] text-red-200'>
+                <Badge variant='outline' className='h-8 border-red-500/40 bg-red-500/10 px-3 py-1 text-[10px] text-red-200'>
                   No slug in zone
-                </div>
+                </Badge>
               )}
               {outOfZoneSlugs.length > 0 && (
-                <div className='rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-[10px] text-amber-200'>
+                <Badge variant='outline' className='h-8 border-amber-500/40 bg-amber-500/10 px-3 py-1 text-[10px] text-amber-200'>
                   Cross-zone: {outOfZoneSlugs.map((slug: string) => `/${slug}`).join(', ')}
-                </div>
+                </Badge>
               )}
               <Button
                 onClick={(): void => { void handlePreview(); }}

@@ -26,7 +26,8 @@ import {
   FormField,
   EmptyState,
   StatusBadge,
-  PanelHeader
+  PanelHeader,
+  Badge
 } from '@/shared/ui';
 
 import { Asset3DCard } from '../components/Asset3DCard';
@@ -207,9 +208,12 @@ export function Admin3DAssetsPage(): React.JSX.Element {
             <Filter className='h-3.5 w-3.5' />
               Filters
             {hasActiveFilters && (
-              <span className='ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[9px] text-white font-bold'>
+              <Badge
+                variant='active'
+                className='ml-1 flex h-4 w-4 items-center justify-center p-0 text-[9px] font-bold'
+              >
                 {(selectedCategory ? 1 : 0) + selectedTags.length}
-              </span>
+              </Badge>
             )}
           </Button>
 

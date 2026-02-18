@@ -8,7 +8,7 @@ import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries
 import { useUserPreferences, useUpdateUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import type { Catalog } from '@/features/products/types';
 import type { ProductListPreferences } from '@/features/products/types/products-ui';
-import { Button, SelectSimple, Input, useToast, SectionHeader, FormSection, FormField } from '@/shared/ui';
+import { Button, SelectSimple, Input, useToast, SectionHeader, FormSection, FormField, LoadingState } from '@/shared/ui';
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {
   nameLocale: 'name_en',
@@ -69,10 +69,8 @@ export function ProductPreferencesPage(): React.JSX.Element {
 
   if (prefsLoading || catalogsQuery.isLoading) {
     return (
-      <div className='container mx-auto py-10'>
-        <div className='rounded-lg bg-card p-6 shadow-lg'>
-          <p className='text-sm text-gray-400'>Loading preferences...</p>
-        </div>
+      <div className='flex min-h-[400px] items-center justify-center'>
+        <LoadingState message='Loading preferences...' />
       </div>
     );
   }

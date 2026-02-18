@@ -83,58 +83,58 @@ export function CaseResolverNodeInspectorModal({
                       }}
                     >
                       Open Edit Document
-                                      </Button>
-                                    </div>
-                                  ) : null}
+                    </Button>
+                  </div>
+                ) : null}
                     
-                                  <FormField label='Node Role'>
-                                    <SelectSimple size='sm'
-                                      value={selectedPromptMeta.role}
-                                      onValueChange={(value: string): void => {
-                                        if (value === 'text_note' || value === 'explanatory' || value === 'ai_prompt') {
-                                          onUpdateSelectedNodeMeta({ role: value });
-                                        }
-                                      }}
-                                      options={CASE_RESOLVER_NODE_ROLE_OPTIONS}
-                                      triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
-                                    />
-                                  </FormField>
+                <FormField label='Node Role'>
+                  <SelectSimple size='sm'
+                    value={selectedPromptMeta.role}
+                    onValueChange={(value: string): void => {
+                      if (value === 'text_note' || value === 'explanatory' || value === 'ai_prompt') {
+                        onUpdateSelectedNodeMeta({ role: value });
+                      }
+                    }}
+                    options={CASE_RESOLVER_NODE_ROLE_OPTIONS}
+                    triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
+                  />
+                </FormField>
                     
-                                  <FormField label='Quotation Wrapper'>
-                                    <SelectSimple size='sm'
-                                      value={selectedPromptMeta.quoteMode}
-                                      onValueChange={(value: string): void => {
-                                        if (value === 'none' || value === 'double' || value === 'single') {
-                                          onUpdateSelectedNodeMeta({ quoteMode: value });
-                                        }
-                                      }}
-                                      options={CASE_RESOLVER_QUOTE_MODE_OPTIONS}
-                                      triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
-                                    />
-                                  </FormField>
+                <FormField label='Quotation Wrapper'>
+                  <SelectSimple size='sm'
+                    value={selectedPromptMeta.quoteMode}
+                    onValueChange={(value: string): void => {
+                      if (value === 'none' || value === 'double' || value === 'single') {
+                        onUpdateSelectedNodeMeta({ quoteMode: value });
+                      }
+                    }}
+                    options={CASE_RESOLVER_QUOTE_MODE_OPTIONS}
+                    triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
+                  />
+                </FormField>
                     
-                                  <div className='grid grid-cols-2 gap-2'>
-                                    <FormField label='Surround Prefix'>
-                                      <Input
-                                        value={selectedPromptMeta.surroundPrefix}
-                                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                                          onUpdateSelectedNodeMeta({ surroundPrefix: event.target.value });
-                                        }}
-                                        className='h-8 border-border bg-card/60 text-xs text-white'
-                                        placeholder='e.g. <<'
-                                      />
-                                    </FormField>
-                                    <FormField label='Surround Suffix'>
-                                      <Input
-                                        value={selectedPromptMeta.surroundSuffix}
-                                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                                          onUpdateSelectedNodeMeta({ surroundSuffix: event.target.value });
-                                        }}
-                                        className='h-8 border-border bg-card/60 text-xs text-white'
-                                        placeholder='e.g. >>'
-                                      />
-                                    </FormField>
-                                  </div>
+                <div className='grid grid-cols-2 gap-2'>
+                  <FormField label='Surround Prefix'>
+                    <Input
+                      value={selectedPromptMeta.surroundPrefix}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                        onUpdateSelectedNodeMeta({ surroundPrefix: event.target.value });
+                      }}
+                      className='h-8 border-border bg-card/60 text-xs text-white'
+                      placeholder='e.g. <<'
+                    />
+                  </FormField>
+                  <FormField label='Surround Suffix'>
+                    <Input
+                      value={selectedPromptMeta.surroundSuffix}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                        onUpdateSelectedNodeMeta({ surroundSuffix: event.target.value });
+                      }}
+                      className='h-8 border-border bg-card/60 text-xs text-white'
+                      placeholder='e.g. >>'
+                    />
+                  </FormField>
+                </div>
                 <div className='flex items-center justify-between rounded border border-border/60 bg-card/30 px-3 py-2'>
                   <div className='text-xs text-gray-300'>Include node in compiled output</div>
                   <Checkbox

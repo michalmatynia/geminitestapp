@@ -26,6 +26,7 @@ import { SlotTree } from './SlotTree';
 import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
 import { useProjectsActions, useProjectsState } from '../context/ProjectsContext';
 import { usePromptState } from '../context/PromptContext';
+import { useSettingsActions, useSettingsState } from '../context/SettingsContext';
 import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 import { useUiState } from '../context/UiContext';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
@@ -35,6 +36,7 @@ import {
   serializeImageStudioProjectSession,
   type ImageStudioProjectSession,
 } from '../utils/project-session';
+import { buildImageStudioSequenceSnapshot } from '../utils/studio-settings';
 
 const REVEAL_IN_TREE_EVENT = 'image-studio:reveal-in-tree';
 
@@ -42,6 +44,8 @@ export function LeftSidebar(): React.JSX.Element {
   const { projectId, projectsQuery } = useProjectsState();
   const { handleRenameProject } = useProjectsActions();
   const { isFocusMode } = useUiState();
+  const { studioSettings } = useSettingsState();
+  const { saveStudioSettings, setStudioSettings } = useSettingsActions();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { promptText, paramsState, paramSpecs, paramUiOverrides } = usePromptState();
@@ -336,6 +340,25 @@ export function LeftSidebar(): React.JSX.Element {
 
     setProjectSaveBusy(true);
     void (async (): Promise<void> => {
+      const savedAt = new Date().toISOString();
+      const sequenceSnapshot = buildImageStudioSequenceSnapshot(studioSettings);
+      const settingsPayload = {
+        ...studioSettings,
+        projectSequencing: {
+          ...studioSettings.projectSequencing,
+          snapshotHash: sequenceSnapshot.hash,
+          snapshotSavedAt: savedAt,
+          snapshotStepCount: sequenceSnapshot.stepCount,
+          snapshotModelId: sequenceSnapshot.modelId,
+        },
+      };
+
+      setStudioSettings(settingsPayload);
+      await saveStudioSettings({
+        silent: true,
+        settingsOverride: settingsPayload,
+      });
+
       let serializedSession: string;
       try {
         serializedSession = serializeImageStudioProjectSession(projectSession);

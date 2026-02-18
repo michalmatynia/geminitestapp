@@ -1,7 +1,7 @@
 'use client';
 
 import { toNumber } from '@/features/ai/ai-paths/lib';
-import { Input, Label, Switch } from '@/shared/ui';
+import { Input, ToggleRow, FormField, Hint } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -18,68 +18,57 @@ export function AudioSpeakerNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div className='flex items-center justify-between gap-4 rounded-md border border-border bg-card/60 px-3 py-2'>
-        <div>
-          <div className='text-xs font-medium text-gray-200'>Enabled</div>
-          <div className='text-[11px] text-gray-500'>Mute/unmute this speaker node.</div>
-        </div>
-        <Switch
-          checked={speakerConfig.enabled}
-          onCheckedChange={(checked: boolean): void =>
-            updateSelectedNodeConfig({
-              audioSpeaker: {
-                ...speakerConfig,
-                enabled: checked,
-              },
-            })
-          }
-        />
-      </div>
+      <ToggleRow
+        label='Enabled'
+        description='Mute/unmute this speaker node.'
+        checked={speakerConfig.enabled}
+        onCheckedChange={(checked: boolean): void =>
+          updateSelectedNodeConfig({
+            audioSpeaker: {
+              ...speakerConfig,
+              enabled: checked,
+            },
+          })
+        }
+        type='switch'
+      />
 
-      <div className='flex items-center justify-between gap-4 rounded-md border border-border bg-card/60 px-3 py-2'>
-        <div>
-          <div className='text-xs font-medium text-gray-200'>Auto Play</div>
-          <div className='text-[11px] text-gray-500'>Play immediately when a signal arrives.</div>
-        </div>
-        <Switch
-          checked={speakerConfig.autoPlay}
-          onCheckedChange={(checked: boolean): void =>
-            updateSelectedNodeConfig({
-              audioSpeaker: {
-                ...speakerConfig,
-                autoPlay: checked,
-              },
-            })
-          }
-        />
-      </div>
+      <ToggleRow
+        label='Auto Play'
+        description='Play immediately when a signal arrives.'
+        checked={speakerConfig.autoPlay}
+        onCheckedChange={(checked: boolean): void =>
+          updateSelectedNodeConfig({
+            audioSpeaker: {
+              ...speakerConfig,
+              autoPlay: checked,
+            },
+          })
+        }
+        type='switch'
+      />
 
-      <div className='flex items-center justify-between gap-4 rounded-md border border-border bg-card/60 px-3 py-2'>
-        <div>
-          <div className='text-xs font-medium text-gray-200'>Stop Previous Tone</div>
-          <div className='text-[11px] text-gray-500'>Keep mono output clean on repeated signals.</div>
-        </div>
-        <Switch
-          checked={speakerConfig.stopPrevious}
-          onCheckedChange={(checked: boolean): void =>
-            updateSelectedNodeConfig({
-              audioSpeaker: {
-                ...speakerConfig,
-                stopPrevious: checked,
-              },
-            })
-          }
-        />
-      </div>
+      <ToggleRow
+        label='Stop Previous Tone'
+        description='Keep mono output clean on repeated signals.'
+        checked={speakerConfig.stopPrevious}
+        onCheckedChange={(checked: boolean): void =>
+          updateSelectedNodeConfig({
+            audioSpeaker: {
+              ...speakerConfig,
+              stopPrevious: checked,
+            },
+          })
+        }
+        type='switch'
+      />
 
-      <div>
-        <Label className='text-xs text-gray-400'>Speaker Gain (0-1)</Label>
+      <FormField label='Speaker Gain (0-1)'>
         <Input
           type='number'
           min='0'
           max='1'
           step='0.01'
-          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
           value={speakerConfig.gain}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
@@ -90,11 +79,11 @@ export function AudioSpeakerNodeConfigSection(): React.JSX.Element | null {
             })
           }
         />
-      </div>
+      </FormField>
 
-      <p className='text-[11px] text-gray-500'>
+      <Hint italic>
         Web Audio playback is available in local execution mode. Some browsers require a user interaction first.
-      </p>
+      </Hint>
     </div>
   );
 }

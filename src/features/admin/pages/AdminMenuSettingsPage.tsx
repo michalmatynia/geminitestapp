@@ -47,6 +47,7 @@ import {
   SelectSimple, 
   FormSection, 
   FormField, 
+  SectionHeader,
   StatusBadge,
   PanelHeader
 } from '@/shared/ui';

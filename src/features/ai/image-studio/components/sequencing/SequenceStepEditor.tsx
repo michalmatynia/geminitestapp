@@ -24,6 +24,7 @@ type SequenceStepEditorProps = {
   stepId: string;
   operation: ImageStudioSequenceOperation;
   step: ImageStudioSequenceStep;
+  activeGenerationModel: string;
   cropShapeOptions: Array<{ value: string; label: string }>;
   cropShapeGeometryById: Record<string, {
     bbox: { x: number; y: number; width: number; height: number } | null;
@@ -39,28 +40,51 @@ export function SequenceStepEditor({
   stepId,
   operation,
   step,
+  activeGenerationModel,
   cropShapeOptions,
   cropShapeGeometryById,
   updateStep,
 }: SequenceStepEditorProps): React.JSX.Element {
+  const isGenerationStep =
+    step.type === 'generate' || step.type === 'regenerate';
+  const projectGenerationModel = activeGenerationModel.trim();
+  const generateStep = isGenerationStep ? step : null;
+  const modelOverride = generateStep?.config.modelOverride?.trim() ?? '';
+  const effectiveGenerationModel =
+    modelOverride || projectGenerationModel || 'Not configured';
+  const modelSourceDescription = modelOverride
+    ? 'Using step override model. Clear Model override to use the project model.'
+    : projectGenerationModel
+      ? 'Using project generation model.'
+      : 'Set project model or Model override.';
+
   return (
     <div className='mt-2 space-y-2 rounded border border-border/40 bg-foreground/5 p-2'>
       <div className='grid grid-cols-1 gap-2 sm:grid-cols-4'>
-        <SelectSimple
-          size='sm'
-          value={step.runtime}
-          onValueChange={(value: string) => {
-            if (value !== 'server' && value !== 'client') return;
-            const runtime: ImageStudioSequenceStepRuntime = value;
-            updateStep(stepId, (current) => ({
-              ...current,
-              runtime,
-            }));
-          }}
-          options={STEP_RUNTIME_OPTIONS}
-          triggerClassName='h-8 text-xs'
-          ariaLabel={`${operation} runtime`}
-        />
+        {isGenerationStep ? (
+          <div
+            className='flex h-8 items-center rounded border border-border/60 bg-card/30 px-2 text-xs text-gray-300'
+            aria-label={`${operation} runtime fixed`}
+          >
+            Runtime: Server (AI)
+          </div>
+        ) : (
+          <SelectSimple
+            size='sm'
+            value={step.runtime}
+            onValueChange={(value: string) => {
+              if (value !== 'server' && value !== 'client') return;
+              const runtime: ImageStudioSequenceStepRuntime = value;
+              updateStep(stepId, (current) => ({
+                ...current,
+                runtime,
+              }));
+            }}
+            options={STEP_RUNTIME_OPTIONS}
+            triggerClassName='h-8 text-xs'
+            ariaLabel={`${operation} runtime`}
+          />
+        )}
         <SelectSimple
           size='sm'
           value={step.onFailure}
@@ -325,6 +349,13 @@ export function SequenceStepEditor({
 
       {step.type === 'generate' || step.type === 'regenerate' ? (
         <div className='grid grid-cols-1 gap-2 sm:grid-cols-4'>
+          <div className='rounded border border-border/60 bg-card/30 px-2 py-2 sm:col-span-4'>
+            <div className='text-[10px] uppercase tracking-wide text-gray-500'>
+              Generation model in use
+            </div>
+            <div className='text-xs text-gray-100'>{effectiveGenerationModel}</div>
+            <div className='text-[10px] text-gray-500'>{modelSourceDescription}</div>
+          </div>
           <SelectSimple
             size='sm'
             value={step.config.promptMode}

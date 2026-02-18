@@ -29,7 +29,7 @@ import {
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
 import type { ProductValidationPattern } from '@/shared/types/domain/products';
-import { Button, Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField, Alert } from '@/shared/ui';
+import { Button, Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField, Alert, Skeleton } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 const buildIssueSnippet = (
@@ -424,23 +424,23 @@ export default function ProductFormGeneral({
       {hasCatalogs && !languagesReady && (
         <div className='space-y-4'>
           <div className='rounded-md border border-slate-500/30 bg-slate-500/5 px-4 py-3'>
-            <div className='h-4 w-40 animate-pulse rounded bg-slate-500/20' />
+            <Skeleton className='h-4 w-40 bg-slate-500/20' />
           </div>
           <div className='rounded-md border border-slate-500/30 bg-slate-500/5 px-4 py-3'>
             <div className='mb-3 flex gap-2'>
-              <div className='h-7 w-24 animate-pulse rounded bg-slate-500/20' />
-              <div className='h-7 w-24 animate-pulse rounded bg-slate-500/20' />
-              <div className='h-7 w-24 animate-pulse rounded bg-slate-500/20' />
+              <Skeleton className='h-7 w-24 bg-slate-500/20' />
+              <Skeleton className='h-7 w-24 bg-slate-500/20' />
+              <Skeleton className='h-7 w-24 bg-slate-500/20' />
             </div>
-            <div className='h-10 w-full animate-pulse rounded bg-slate-500/20' />
+            <Skeleton className='h-10 w-full bg-slate-500/20' />
           </div>
           <div className='rounded-md border border-slate-500/30 bg-slate-500/5 px-4 py-3'>
             <div className='mb-3 flex gap-2'>
-              <div className='h-7 w-28 animate-pulse rounded bg-slate-500/20' />
-              <div className='h-7 w-28 animate-pulse rounded bg-slate-500/20' />
-              <div className='h-7 w-28 animate-pulse rounded bg-slate-500/20' />
+              <Skeleton className='h-7 w-28 bg-slate-500/20' />
+              <Skeleton className='h-7 w-28 bg-slate-500/20' />
+              <Skeleton className='h-7 w-28 bg-slate-500/20' />
             </div>
-            <div className='h-24 w-full animate-pulse rounded bg-slate-500/20' />
+            <Skeleton className='h-24 w-full bg-slate-500/20' />
           </div>
         </div>
       )}

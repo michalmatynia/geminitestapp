@@ -7,7 +7,7 @@ import {
   useListingSettingsContext,
 } from '@/features/integrations/context/ListingSettingsContext';
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { FormModal } from '@/shared/ui';
+import { FormModal, Alert, LoadingState } from '@/shared/ui';
 
 import { BaseListingSettings } from './BaseListingSettings';
 import { ExportLogViewer } from './ExportLogViewer';
@@ -72,14 +72,17 @@ function MassListProductModalContent(): React.JSX.Element {
     >
       <div className='space-y-6'>
         {error && (
-          <div className='rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200'>
+          <Alert variant='error'>
             {error}
-          </div>
+          </Alert>
         )}
 
         {submitting && progress && (
-          <div className='space-y-2'>
-            <p className='text-sm text-gray-300'>Processing {progress.current} of {progress.total}...</p>
+          <div className='space-y-4'>
+            <div className='flex items-center justify-between gap-2'>
+              <p className='text-sm text-gray-300'>Processing {progress.current} of {progress.total}...</p>
+              <LoadingState size='sm' className='p-0' />
+            </div>
             <div className='h-2 w-full rounded-full bg-gray-800'>
               <div
                 className='h-full rounded-full bg-primary transition-all duration-300'
@@ -95,7 +98,7 @@ function MassListProductModalContent(): React.JSX.Element {
             <IntegrationAccountSummary />
 
             {loading ? (
-              <p className='text-sm text-gray-400'>Loading details...</p>
+              <LoadingState message='Loading details...' size='sm' className='py-4' />
             ) : (
               <>
                 {isBaseComIntegration && <BaseListingSettings />}

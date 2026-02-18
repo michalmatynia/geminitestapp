@@ -9,7 +9,7 @@ import {
   useUserPreferences,
 } from '@/features/auth/hooks/useUserPreferences';
 import type { UserPreferences } from '@/shared/types/domain/user-preferences';
-import { Button, FormField, FormSection, SectionHeader, SelectSimple, useToast } from '@/shared/ui';
+import { Button, FormField, FormSection, SectionHeader, SelectSimple, useToast, LoadingState } from '@/shared/ui';
 
 type CaseResolverCaseListViewMode = 'hierarchy' | 'list';
 type CaseResolverCaseListSortBy = 'updated' | 'created' | 'name';
@@ -118,10 +118,8 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
 
   if (preferencesQuery.isLoading && !preferencesQuery.data) {
     return (
-      <div className='container mx-auto py-10'>
-        <div className='rounded-lg bg-card p-6 shadow-lg'>
-          <p className='text-sm text-gray-400'>Loading preferences...</p>
-        </div>
+      <div className='flex min-h-[400px] items-center justify-center'>
+        <LoadingState message='Loading preferences...' />
       </div>
     );
   }

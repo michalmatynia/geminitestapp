@@ -1,5 +1,7 @@
 import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
 
+export type { AiNode, Edge };
+
 export type CaseResolverNodeRole = 'text_note' | 'explanatory' | 'ai_prompt';
 export type CaseResolverQuoteMode = 'none' | 'double' | 'single';
 export type CaseResolverJoinMode = 'newline' | 'tab' | 'space' | 'none';

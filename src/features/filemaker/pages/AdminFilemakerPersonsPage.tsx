@@ -11,7 +11,8 @@ import {
   DataTable, 
   ListPanel, 
   PanelHeader, 
-  SearchInput 
+  SearchInput,
+  EmptyState
 } from '@/shared/ui';
 
 import {
@@ -178,9 +179,10 @@ export function AdminFilemakerPersonsPage(): React.JSX.Element {
           data={persons}
           isLoading={settingsStore.isLoading}
           emptyState={
-            <div className='py-12 text-center text-sm text-gray-500'>
-              {query ? 'No persons found matching your search.' : 'No persons found in database.'}
-            </div>
+            <EmptyState
+              title={query ? 'No persons found' : 'No persons found in database.'}
+              description={query ? 'Try adjusting your search terms.' : 'Add your first person to the database.'}
+            />
           }
         />
       </ListPanel>

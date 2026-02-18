@@ -4,7 +4,7 @@ import React from 'react';
 
 import { AppEmbedList } from '@/features/app-embeds/components/AppEmbedList';
 import { AppEmbedsProvider, useAppEmbeds } from '@/features/app-embeds/providers/AppEmbedsProvider';
-import { Button, SectionHeader, FormSection } from '@/shared/ui';
+import { Button, SectionHeader, FormSection, LoadingState } from '@/shared/ui';
 
 
 
@@ -31,17 +31,11 @@ function AdminAppEmbedsContent(): React.ReactNode {
 
 
   if (isLoading) {
-
     return (
-
-      <div className='container mx-auto py-10 text-gray-400'>
-
-        Loading app embed settings...
-
+      <div className='flex min-h-[400px] items-center justify-center'>
+        <LoadingState message='Loading app embed settings...' />
       </div>
-
     );
-
   }
 
 

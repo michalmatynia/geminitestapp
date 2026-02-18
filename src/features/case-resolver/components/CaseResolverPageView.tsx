@@ -37,6 +37,7 @@ import { sanitizeHtml } from '@/shared/utils';
 import { CaseResolverCanvasWorkspace } from './CaseResolverCanvasWorkspace';
 import { CaseResolverFileViewer } from './CaseResolverFileViewer';
 import { CaseResolverFolderTree } from './CaseResolverFolderTree';
+import { CaseResolverNodeFileWorkspace } from './CaseResolverNodeFileWorkspace';
 import { CaseResolverRelationsWorkspace } from './CaseResolverRelationsWorkspace';
 import { PromptExploderCaptureMappingModal } from './PromptExploderCaptureMappingModal';
 import {
@@ -73,6 +74,7 @@ type CaseResolverPageViewProps = {
   handleToggleFolderLock: (folderPath: string) => void;
   handleToggleFileLock: (fileId: string) => void;
   handleDeleteFile: (fileId: string) => void;
+  handleDeleteAsset: (assetId: string) => void;
   handleGraphChange: (nextGraph: CaseResolverGraph) => void;
   handleRelationGraphChange: (nextGraph: CaseResolverRelationGraph) => void;
   editorDetailsTab: EditorDetailsTab;
@@ -157,6 +159,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     handleToggleFolderLock,
     handleToggleFileLock,
     handleDeleteFile,
+    handleDeleteAsset,
     handleGraphChange,
     handleRelationGraphChange,
     editorDetailsTab,
@@ -494,6 +497,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
       onRenameFolder: state.handleRenameFolder,
       onToggleFolderLock: handleToggleFolderLock,
       onDeleteFile: handleDeleteFile,
+      onDeleteAsset: handleDeleteAsset,
       onToggleFileLock: handleToggleFileLock,
       onEditFile: handleOpenFileEditor,
       caseResolverTags,
@@ -522,7 +526,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
               actions={[
                 {
                   key: 'document',
-                  label: 'Document Canvas',
+                  label: selectedAsset?.kind === 'node_file' ? 'Node Canvas' : 'Document Canvas',
                   variant: workspaceView === 'document' ? 'default' : 'outline',
                   onClick: () => setWorkspaceView('document'),
                 },
@@ -547,6 +551,8 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
 
             {workspaceView === 'relations' ? (
               <CaseResolverRelationsWorkspace />
+            ) : selectedAsset?.kind === 'node_file' ? (
+              <CaseResolverNodeFileWorkspace />
             ) : selectedAsset ? (
               <CaseResolverFileViewer />
             ) : activeFile ? (

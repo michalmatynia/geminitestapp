@@ -12,7 +12,7 @@ import {
   typeStyles,
   validateConnection,
 } from '@/features/ai/ai-paths/lib';
-import { Button, Tooltip } from '@/shared/ui';
+import { Button, Tooltip, Badge } from '@/shared/ui';
 
 import {
   useCanvasState,
@@ -889,19 +889,20 @@ export function CanvasBoard({
                   <span className='text-xs font-semibold text-white'>{node.title}</span>
                   <div className='flex items-center gap-1'>
                     {isScheduledTrigger ? (
-                      <span className='rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[9px] uppercase text-amber-200'>
+                      <Badge variant='outline' className='h-auto border-amber-400/60 bg-amber-500/15 px-2 py-0 text-[9px] text-amber-200 uppercase'>
                         Scheduled
-                      </span>
+                      </Badge>
                     ) : null}
-                    <span className='rounded-full border px-2 py-[1px] text-[10px] uppercase text-gray-400'>
+                    <Badge variant='outline' className='h-auto px-2 py-0 text-[10px] text-gray-400 uppercase'>
                       {node.type}
-                    </span>
+                    </Badge>
                   </div>
                 </div>
                 {runtimeNodeStatusLabel && (
                   <div className='inline-flex w-fit items-center gap-1'>
-                    <div
-                      className={`inline-flex items-center gap-1 rounded-full border px-2 py-[2px] text-[9px] uppercase tracking-wide ${runtimeStatusBadgeClassName(runtimeNodeStatus ?? '')}`}
+                    <Badge
+                      variant='outline'
+                      className={`h-auto flex items-center gap-1 px-2 py-0.5 text-[9px] uppercase tracking-wide ${runtimeStatusBadgeClassName(runtimeNodeStatus ?? '')}`}
                     >
                       {runtimeNodeStatus === 'cached' && (
                         <svg className='h-2.5 w-2.5 shrink-0' viewBox='0 0 16 16' fill='currentColor'>
@@ -909,7 +910,7 @@ export function CanvasBoard({
                         </svg>
                       )}
                       {runtimeNodeStatusLabel}
-                    </div>
+                    </Badge>
                     {nodeDurations[node.id] != null && (
                       <span className='text-[9px] text-gray-400'>
                         {formatDurationMs(nodeDurations[node.id] ?? null)}
@@ -918,8 +919,9 @@ export function CanvasBoard({
                   </div>
                 )}
                 {node.type === 'iterator' && (iteratorStatus || iteratorProgressLabel) ? (
-                  <div
-                    className={`inline-flex w-fit items-center gap-1 rounded-full border px-2 py-[2px] text-[9px] uppercase tracking-wide ${iteratorStatusClasses}`}
+                  <Badge
+                    variant='outline'
+                    className={`h-auto inline-flex w-fit items-center gap-1 px-2 py-0.5 text-[9px] uppercase tracking-wide ${iteratorStatusClasses}`}
                     title={
                       iteratorProgressLabel && iteratorStatus
                         ? `${iteratorProgressLabel} • ${iteratorStatus}`
@@ -928,18 +930,21 @@ export function CanvasBoard({
                   >
                     {iteratorProgressLabel ? <span>{iteratorProgressLabel}</span> : null}
                     {iteratorStatus ? <span>{iteratorStatus}</span> : null}
-                  </div>
+                  </Badge>
                 ) : null}
                 {isBlockerProcessing && (
-                  <div className='inline-flex w-fit items-center gap-1 rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-[2px] text-[9px] uppercase tracking-wide text-sky-200'>
+                  <Badge
+                    variant='outline'
+                    className='h-auto inline-flex w-fit items-center gap-1 border-sky-500/40 bg-sky-500/10 px-2 py-0.5 text-[9px] uppercase tracking-wide text-sky-200'
+                  >
                     Processing
                     <NodeProcessingDots active />
-                  </div>
+                  </Badge>
                 )}
                 {node.type === 'viewer' && !triggerConnected.has(node.id) && (
-                  <div className='rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[9px] text-amber-200'>
+                  <Badge variant='outline' className='h-auto border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[9px] text-amber-200'>
                     Not wired to a Trigger
-                  </div>
+                  </Badge>
                 )}
                 {node.type === 'trigger' && (
                   <Button
@@ -969,9 +974,9 @@ export function CanvasBoard({
                   </span>
                 )}
                 {node.type === 'viewer' && (
-                  <div className='rounded-md border border-border bg-card/60 px-2 py-1 text-[10px] text-gray-400'>
+                  <Badge variant='outline' className='h-auto border-border bg-card/60 px-2 py-1 text-[10px] text-gray-400'>
                     Open node to view results
-                  </div>
+                  </Badge>
                 )}
               </div>
               {showNote ? (

@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, useToast, SectionHeader, FormSection } from '@/shared/ui';
+import { Button, useToast, SectionHeader, FormSection, Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 
@@ -116,16 +116,17 @@ function AdminFrontManageContent({
                   <div className='text-base font-semibold'>{option.title}</div>
                   <div className='text-xs text-gray-400'>{option.description}</div>
                 </div>
-                <div
+                <Badge
+                  variant={selected === option.id ? 'active' : 'outline'}
                   className={cn(
-                    'rounded-full border px-2 py-1 text-[10px] uppercase tracking-wide',
+                    'h-auto px-2 py-0.5 text-[10px] uppercase tracking-wide',
                     selected === option.id
                       ? 'border-blue-500/60 text-blue-200'
-                      : 'border text-gray-400'
+                      : 'border-white/10 text-gray-400'
                   )}
                 >
                   {option.route}
-                </div>
+                </Badge>
               </Button>
             ))}
           </div>

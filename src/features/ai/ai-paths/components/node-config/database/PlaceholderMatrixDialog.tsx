@@ -155,5 +155,3 @@ export function PlaceholderMatrixDialog({
     </AppModal>
   );
 }
-  );
-}

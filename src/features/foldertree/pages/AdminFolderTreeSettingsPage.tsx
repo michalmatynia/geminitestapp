@@ -652,7 +652,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
 
                 <FormField label='Root/Drag Icons'>
                   <div className='grid gap-3 sm:grid-cols-2'>
-                    <FormField label='Root' size='xs'>
+                    <FormField label='Root'>
                       <IconSelector
                         value={profile.icons.slots.root}
                         items={TREE_ICON_ITEMS}
@@ -672,7 +672,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                         showSearch={false}
                       />
                     </FormField>
-                    <FormField label='Drag Handle' size='xs'>
+                    <FormField label='Drag Handle'>
                       <IconSelector
                         value={profile.icons.slots.dragHandle}
                         items={TREE_ICON_ITEMS}

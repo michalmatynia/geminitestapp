@@ -9,10 +9,10 @@ import { DetailModal } from '@/shared/ui/templates/modals';
 interface TestLogModalProps extends Omit<ModalStateProps, 'onSuccess'> {
   onSuccess?: () => void;
   selectedStep: {
-    step: string;
-    status: string;
-    timestamp: string;
-    detail?: string;
+    step: string | undefined;
+    status: string | undefined;
+    timestamp: string | undefined;
+    detail?: string | undefined;
   };
 }
 
@@ -28,14 +28,14 @@ export function TestLogModal({
       isOpen={isOpen}
       onClose={onClose}
       title='Execution Step Log'
-      subtitle={`Recorded at ${new Date(selectedStep.timestamp).toLocaleString()}`}
+      subtitle={`Recorded at ${selectedStep.timestamp ? new Date(selectedStep.timestamp).toLocaleString() : 'Unknown'}`}
       size='md'
     >
       <div className='space-y-4'>
         <div className='grid grid-cols-2 gap-4'>
           <MetadataItem
             label='Operation'
-            value={selectedStep.step}
+            value={selectedStep.step ?? 'Unknown'}
           />
           <MetadataItem
             label='Execution Status'

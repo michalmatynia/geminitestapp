@@ -9,7 +9,7 @@ import { useBindingsState, useBindingsActions } from '../context/hooks/useBindin
 import { useDocumentState } from '../context/hooks/useDocument';
 import { promptExploderFormatSubsectionLabel } from '../helpers/segment-helpers';
 
-import type { PromptExploderBindingType } from '../types';
+import type { PromptExploderBinding, PromptExploderBindingType, PromptExploderSubsection } from '../types';
 
 export function BindingsPanel(): React.JSX.Element {
   const { documentState, segmentOptions, segmentById } = useDocumentState();
@@ -23,7 +23,7 @@ export function BindingsPanel(): React.JSX.Element {
     const segment = segmentById.get(segmentId);
     if (!segment) return 'Unknown segment';
     if (!subsectionId) return segment.title;
-    const subsection = segment.subsections.find((candidate) => candidate.id === subsectionId);
+    const subsection = segment.subsections.find((candidate: PromptExploderSubsection) => candidate.id === subsectionId);
     if (!subsection) return segment.title;
     return `${segment.title} · ${promptExploderFormatSubsectionLabel(subsection)}`;
   };
@@ -142,7 +142,7 @@ export function BindingsPanel(): React.JSX.Element {
             <div className='text-xs text-gray-500'>No bindings detected.</div>
           ) : (
             <div className='max-h-[280px] space-y-2 overflow-auto'>
-              {documentState.bindings.map((binding) => (
+              {documentState.bindings.map((binding: PromptExploderBinding) => (
                 <div key={binding.id} className='rounded border border-border/50 bg-card/20 p-2 text-xs'>
                   <div className='flex items-center justify-between gap-2'>
                     <div className='flex items-center gap-2 text-gray-200'>

@@ -203,14 +203,14 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
             )}
             {!isTerminalBaseStatus && (
               <ActionMenu
-                label='Re-export images only'
+                trigger='Re-export images only'
                 variant='outline'
                 size='sm'
                 disabled={
                   exportingListing === listing.id ||
                   !listing.externalListingId
                 }
-                className='border-sky-500/40 text-sky-200 hover:bg-sky-500/10'
+                triggerClassName='border-sky-500/40 text-sky-200 hover:bg-sky-500/10 px-3 py-1.5 h-auto w-auto'
                 align='start'
               >
                 <DropdownMenuItem

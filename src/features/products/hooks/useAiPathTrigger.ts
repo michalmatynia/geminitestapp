@@ -168,7 +168,7 @@ async function persistRunResults(
   const debugEntries: PathDebugEntry[] = nodes
     .filter((node: AiNode) => node.type === 'database')
     .map((node: AiNode): PathDebugEntry | null => {
-      const output = runtimeState.outputs[node.id] as
+      const output = runtimeState.outputs?.[node.id] as
         | { debugPayload?: unknown }
         | undefined;
       const debugPayload = output?.debugPayload;

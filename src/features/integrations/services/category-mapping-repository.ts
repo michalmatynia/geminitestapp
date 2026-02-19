@@ -162,9 +162,9 @@ const mapMongoExternalCategory = (
   depth: record.depth ?? 0,
   isLeaf: Boolean(record.isLeaf),
   metadata: record.metadata ?? null,
-  fetchedAt: record.fetchedAt,
-  createdAt: record.createdAt,
-  updatedAt: record.updatedAt,
+  fetchedAt: record.fetchedAt.toISOString(),
+  createdAt: record.createdAt.toISOString(),
+  updatedAt: record.updatedAt.toISOString(),
 });
 
 const mapMongoInternalCategory = (
@@ -192,9 +192,9 @@ const createMissingExternalCategory = (
   depth: 0,
   isLeaf: true,
   metadata: null,
-  fetchedAt: mapping.updatedAt,
-  createdAt: mapping.createdAt,
-  updatedAt: mapping.updatedAt,
+  fetchedAt: mapping.updatedAt.toISOString(),
+  createdAt: mapping.createdAt.toISOString(),
+  updatedAt: mapping.updatedAt.toISOString(),
 });
 
 const createMissingInternalCategory = (
@@ -549,8 +549,8 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
               internalCategoryId: r.internalCategoryId,
               catalogId: r.catalogId,
               isActive: r.isActive,
-              createdAt: r.createdAt,
-              updatedAt: r.updatedAt,
+              createdAt: r.createdAt.toISOString(),
+              updatedAt: r.updatedAt.toISOString(),
               externalCategory: {
                 id: r.externalCategory.id,
                 connectionId: r.externalCategory.connectionId,
@@ -561,9 +561,9 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
                 depth: r.externalCategory.depth,
                 isLeaf: r.externalCategory.isLeaf,
                 metadata: r.externalCategory.metadata as Record<string, unknown> | null,
-                fetchedAt: r.externalCategory.fetchedAt,
-                createdAt: r.externalCategory.createdAt,
-                updatedAt: r.externalCategory.updatedAt,
+                fetchedAt: r.externalCategory.fetchedAt.toISOString(),
+                createdAt: r.externalCategory.createdAt.toISOString(),
+                updatedAt: r.externalCategory.updatedAt.toISOString(),
               },
               internalCategory: {
                 id: r.internalCategory.id,
@@ -630,9 +630,9 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
                 depth: doc.depth,
                 isLeaf: doc.isLeaf,
                 metadata: doc.metadata as Record<string, unknown> | null,
-                fetchedAt: doc.fetchedAt,
-                createdAt: doc.createdAt,
-                updatedAt: doc.updatedAt,
+                fetchedAt: doc.fetchedAt.toISOString(),
+                createdAt: doc.createdAt.toISOString(),
+                updatedAt: doc.updatedAt.toISOString(),
               };
               externalById.set(doc.id, mapped);
               externalByExternalId.set(doc.externalId, mapped);
@@ -707,8 +707,8 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
             internalCategoryId: mapping.internalCategoryId,
             catalogId: mapping.catalogId,
             isActive: Boolean(mapping.isActive),
-            createdAt: mapping.createdAt,
-            updatedAt: mapping.updatedAt,
+            createdAt: mapping.createdAt.toISOString(),
+            updatedAt: mapping.updatedAt.toISOString(),
             externalCategory: external,
             internalCategory: internal,
           } satisfies CategoryMappingWithDetails;
@@ -745,8 +745,8 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
         internalCategoryId: r.internalCategoryId,
         catalogId: r.catalogId,
         isActive: r.isActive,
-        createdAt: r.createdAt,
-        updatedAt: r.updatedAt,
+        createdAt: r.createdAt.toISOString(),
+        updatedAt: r.updatedAt.toISOString(),
         externalCategory: {
           id: r.externalCategory.id,
           connectionId: r.externalCategory.connectionId,
@@ -757,9 +757,9 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
           depth: r.externalCategory.depth,
           isLeaf: r.externalCategory.isLeaf,
           metadata: r.externalCategory.metadata as Record<string, unknown> | null,
-          fetchedAt: r.externalCategory.fetchedAt,
-          createdAt: r.externalCategory.createdAt,
-          updatedAt: r.externalCategory.updatedAt,
+          fetchedAt: r.externalCategory.fetchedAt.toISOString(),
+          createdAt: r.externalCategory.createdAt.toISOString(),
+          updatedAt: r.externalCategory.updatedAt.toISOString(),
         },
         internalCategory: {
           id: r.internalCategory.id,

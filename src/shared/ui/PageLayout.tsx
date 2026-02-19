@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from './tabs';
 
 interface PageLayoutProps {
   title: string;
-  description: string | undefined;
+  description?: string | undefined;
   eyebrow?: ReactNode;
   headerActions?: ReactNode;
   refresh?: {

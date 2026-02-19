@@ -2,7 +2,7 @@ import React from 'react';
 
 import type { ImageRetryPreset } from '@/features/data-import-export';
 import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
-import { Button, ActionMenu, DropdownMenuItem } from '@/shared/ui';
+import { ActionMenu, DropdownMenuItem } from '@/shared/ui';
 
 import { useImageRetryPresets } from '../useImageRetryPresets';
 import { useListProductModalFormContext } from './context/ListProductModalFormContext';
@@ -27,10 +27,10 @@ export function ListProductErrorPanel(): React.JSX.Element {
         {isBaseComIntegration && isImageExportError(error) ? (
           <div className='flex flex-wrap items-center gap-2'>
             <ActionMenu
-              label='Retry image export'
+              trigger='Retry image export'
               variant='secondary'
               size='sm'
-              className='bg-red-500/20 text-red-100 hover:bg-red-500/30'
+              triggerClassName='bg-red-500/20 text-red-100 hover:bg-red-500/30 px-3 py-1.5 h-auto w-auto'
               disabled={submitting}
               align='start'
             >

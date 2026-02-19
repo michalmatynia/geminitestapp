@@ -4,7 +4,6 @@ import { notebookCreateSchema } from '@/features/notesapp/public';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { NotebookCreateInput } from '@/shared/types/domain/notes';
 import { removeUndefined } from '@/shared/utils';
 
 /**

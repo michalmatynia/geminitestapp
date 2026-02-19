@@ -120,8 +120,8 @@ export const mapMongoProducerMappingToRecord = (
   externalProducerId: record.externalProducerId,
   internalProducerId: record.internalProducerId,
   isActive: Boolean(record.isActive),
-  createdAt: record.createdAt,
-  updatedAt: record.updatedAt,
+  createdAt: record.createdAt.toISOString(),
+  updatedAt: record.updatedAt.toISOString(),
 });
 
 const mapMongoExternalProducer = (
@@ -132,9 +132,9 @@ const mapMongoExternalProducer = (
   externalId: record.externalId,
   name: record.name,
   metadata: record.metadata ?? null,
-  fetchedAt: record.fetchedAt,
-  createdAt: record.createdAt,
-  updatedAt: record.updatedAt,
+  fetchedAt: record.fetchedAt.toISOString(),
+  createdAt: record.createdAt.toISOString(),
+  updatedAt: record.updatedAt.toISOString(),
 });
 
 const mapMongoInternalProducer = (
@@ -155,9 +155,9 @@ const createMissingExternalProducer = (
   externalId: mapping.externalProducerId,
   name: `[Missing external producer: ${mapping.externalProducerId}]`,
   metadata: null,
-  fetchedAt: mapping.updatedAt,
-  createdAt: mapping.createdAt,
-  updatedAt: mapping.updatedAt,
+  fetchedAt: mapping.updatedAt.toISOString(),
+  createdAt: mapping.createdAt.toISOString(),
+  updatedAt: mapping.updatedAt.toISOString(),
 });
 
 const createMissingInternalProducer = (

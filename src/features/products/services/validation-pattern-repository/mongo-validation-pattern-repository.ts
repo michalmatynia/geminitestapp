@@ -478,7 +478,9 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
     if (data.regex !== undefined) set.regex = data.regex;
     if (data.flags !== undefined) set.flags = data.flags ?? null;
     if (data.message !== undefined) set.message = data.message;
-    if (data.severity !== undefined) set.severity = data.severity;
+    if (data.severity !== undefined) {
+      set.severity = data.severity ?? 'error';
+    }
     if (data.enabled !== undefined) set.enabled = data.enabled;
     if (data.replacementEnabled !== undefined) set.replacementEnabled = data.replacementEnabled;
     if (data.replacementAutoApply !== undefined) set.replacementAutoApply = data.replacementAutoApply;

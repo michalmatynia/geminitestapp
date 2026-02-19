@@ -9,9 +9,9 @@ import {
 } from '@/shared/contracts/ai-trigger-buttons';
 import {
   Button,
-  DataTable,
   StatusBadge,
   Switch,
+  StandardDataTablePanel,
 } from '@/shared/ui';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -245,12 +245,11 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
   }
 
   return (
-    <div className='w-full rounded-md border border-border bg-gray-950/20'>
-      <DataTable
-        columns={columns}
-        data={localRows}
-        getRowId={(row) => row.id}
-      />
-    </div>
+    <StandardDataTablePanel
+      columns={columns}
+      data={localRows}
+      getRowId={(row) => row.id}
+      variant='flat'
+    />
   );
 };

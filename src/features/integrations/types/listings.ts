@@ -17,7 +17,7 @@ export type ProductListingRecord = ProductListingDto;
 
 export type ProductListingExportEvent = Omit<ProductListingExportEventDto, 'exportedAt' | 'expiresAt'> & {
   exportedAt: string | Date;
-  expiresAt?: string | Date | null;
+  expiresAt?: string | Date | null | undefined;
 };
 
 export type ProductListingRelistPolicy = ProductListingRelistPolicyDto;

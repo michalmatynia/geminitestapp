@@ -233,10 +233,11 @@ export const applyBaseParameterImport = async (
       const names = buildParameterNames(entry);
       if (names) {
         matched = await input.parameterRepository.createParameter({
+          name: names.name_en,
           catalogId: input.catalogId,
           name_en: names.name_en,
-          ...(names.name_pl !== undefined ? { name_pl: names.name_pl } : {}),
-          ...(names.name_de !== undefined ? { name_de: names.name_de } : {}),
+          name_pl: names.name_pl ?? null,
+          name_de: names.name_de ?? null,
         });
         byId.set(matched.id, matched);
         [matched.name_en, matched.name_pl, matched.name_de]

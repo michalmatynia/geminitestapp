@@ -291,7 +291,7 @@ export type ExtractParamsResultDto = z.infer<typeof extractParamsResultSchema>;
 
 export const promptAppliedFixSchema = z.object({
   ruleId: z.string(),
-  operationKind: promptAutofixOperationSchema.options[0].shape.kind.or(z.literal('replace')), // Simplified for compatibility
+  operationKind: z.enum(['replace', 'params_json']),
 });
 
 export type PromptAppliedFixDto = z.infer<typeof promptAppliedFixSchema>;

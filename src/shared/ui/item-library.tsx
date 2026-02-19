@@ -17,9 +17,9 @@ import { Textarea } from './textarea';
 export interface LibraryItem {
   id: string;
   name: string;
-  description?: string | null;
+  description?: string | null | undefined;
   createdAt: string | Date;
-  updatedAt?: string | Date | null;
+  updatedAt?: string | Date | null | undefined;
 }
 
 interface ItemLibraryProps<T extends LibraryItem> {

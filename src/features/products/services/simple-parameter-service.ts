@@ -82,6 +82,7 @@ const parseSimpleParameters = (value: string | null): ProductSimpleParameter[] =
 
       acc.push({
         id,
+        name: nameEn,
         catalogId,
         name_en: nameEn,
         name_pl: toNullableTrimmedString(record['name_pl']),
@@ -208,6 +209,7 @@ export async function createSimpleParameter(
       typeof globalThis.crypto.randomUUID === 'function'
         ? globalThis.crypto.randomUUID()
         : randomUUID(),
+    name: nameEn,
     catalogId,
     name_en: nameEn,
     name_pl: toNullableTrimmedString(input.name_pl),

@@ -13,7 +13,6 @@ import type {
   DynamicReplacementSourceMode,
 } from '@/features/products/utils/validator-replacement-recipe';
 import type {
-  ProductValidationDenyBehavior,
   ProductValidationLaunchOperator,
   ProductValidationRuntimeType,
 } from '@/shared/types/domain/products';

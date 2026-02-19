@@ -146,7 +146,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
         <div className='mt-3 grid gap-3 lg:grid-cols-[280px_minmax(0,1fr)]'>
           {/* ── Segment list sidebar ─────────────────────────────────────── */}
           <div className='max-h-[65vh] space-y-2 overflow-auto rounded border border-border/60 bg-card/20 p-2'>
-            {documentState.segments.map((segment) => {
+            {documentState.segments.map((segment: PromptExploderSegment) => {
               const isDropTarget = segmentDropTargetId === segment.id;
               const isDropBefore = isDropTarget && segmentDropPosition === 'before';
               const isDropAfter = isDropTarget && segmentDropPosition === 'after';
@@ -720,7 +720,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                         <div className='text-xs text-gray-500'>No list items detected.</div>
                       ) : null}
                       <div className='space-y-2'>
-                        {selectedSegment.listItems.map((item, index) => (
+                        {selectedSegment.listItems.map((item: PromptExploderListItem, index: number) => (
                           <div
                             key={item.id}
                             className={`relative rounded border border-border/50 bg-card/20 p-2 ${draggingListItemIndex === index ? 'opacity-60' : ''}`}

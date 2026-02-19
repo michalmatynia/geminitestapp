@@ -5,6 +5,8 @@ import { explodePromptText } from './parser';
 import type {
   PromptExploderLearnedTemplate,
   PromptExploderSegmentType,
+  PromptExploderSegment,
+  PromptExploderBenchmarkSuggestion,
 } from './types';
 import type { PromptExploderRuntimeValidationScope } from './validation-stack';
 
@@ -60,23 +62,6 @@ export type PromptExploderBenchmarkReport = {
   };
   cases: PromptExploderBenchmarkCaseReport[];
   aggregate: PromptExploderBenchmarkAggregate;
-};
-
-export type PromptExploderBenchmarkSuggestion = {
-  id: string;
-  caseId: string;
-  segmentId: string;
-  segmentTitle: string;
-  segmentType: PromptExploderSegmentType;
-  confidence: number;
-  sampleText: string;
-  matchedPatternIds: string[];
-  suggestedRuleTitle: string;
-  suggestedRulePattern: string;
-  suggestedSegmentType: PromptExploderSegmentType;
-  suggestedPriority: number;
-  suggestedConfidenceBoost: number;
-  suggestedTreatAsHeading: boolean;
 };
 
 export const EXTENDED_PROMPT_EXPLODER_BENCHMARK_CASES: PromptExploderBenchmarkCase[] = [
@@ -499,8 +484,8 @@ export function runPromptExploderBenchmark(args: {
       ...(args.similarityThreshold !== undefined ? { similarityThreshold: args.similarityThreshold } : {}),
     });
 
-    const predictedTypeSet = new Set(
-      document.segments.map((segment) => segment.type)
+    const predictedTypeSet = new Set<PromptExploderSegmentType>(
+      document.segments.map((segment: PromptExploderSegment) => segment.type)
     );
     const expectedTypeSet = new Set(benchmarkCase.expectedTypes);
     const matchedTypes = benchmarkCase.expectedTypes.filter((type) =>
@@ -516,17 +501,17 @@ export function runPromptExploderBenchmark(args: {
     const recall = safeDivide(matchedTypes.length, benchmarkCase.expectedTypes.length);
     const f1 = computeF1(precision, recall);
     const avgSegmentConfidence = safeDivide(
-      document.segments.reduce((sum, segment) => sum + segment.confidence, 0),
+      document.segments.reduce((sum: number, segment: PromptExploderSegment) => sum + segment.confidence, 0),
       document.segments.length
     );
     const lowConfidenceSegmentList = document.segments.filter(
-      (segment) => segment.confidence < lowConfidenceThreshold
+      (segment: PromptExploderSegment) => segment.confidence < lowConfidenceThreshold
     );
     const lowConfidenceSuggestions: PromptExploderBenchmarkSuggestion[] =
       [...lowConfidenceSegmentList]
         .sort((left, right) => left.confidence - right.confidence)
         .slice(0, suggestionLimit)
-        .map((segment, index) => {
+        .map((segment: PromptExploderSegment, index: number) => {
           const sampleText = buildSuggestionSampleText(segment);
           const suggestedRulePattern = buildSuggestedRulePattern(
             segment.title,

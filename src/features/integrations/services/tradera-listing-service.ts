@@ -42,9 +42,13 @@ import type { ProductListingRecord } from '@/features/integrations/types/listing
 import { ErrorSystem } from '@/features/observability/server';
 import { getProductRepository, getSettingValue } from '@/features/products/server';
 import type { 
-  TraderaListingJobInputDto as TraderaListingJobInput,
-  TraderaCategoryRecordDto as TraderaCategoryRecord 
+  TraderaListingJobInputDto,
+  TraderaCategoryRecordDto 
 } from '@/shared/contracts/integrations';
+
+export type TraderaListingJobInput = TraderaListingJobInputDto;
+export type TraderaCategoryRecord = TraderaCategoryRecordDto;
+
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';

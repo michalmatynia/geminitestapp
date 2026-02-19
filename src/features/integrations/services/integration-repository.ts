@@ -1,93 +1,55 @@
-import 'server-only';
+import { Prisma } from '@prisma/client';
+import { ObjectId, type WithId } from 'mongodb';
 
-import { randomUUID } from 'crypto';
-
-import { getIntegrationDataProvider } from '@/features/integrations/services/integration-provider';
-import type {
-  IntegrationRecord,
-  IntegrationConnectionRecord,
-  IntegrationRepository,
-} from '@/features/integrations/types/integrations';
-import { notFoundError } from '@/shared/errors/app-error';
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
-import type { Prisma } from '@prisma/client';
-import type { WithId } from 'mongodb';
+import { 
+  IntegrationRecord, 
+  IntegrationConnectionRecord, 
+  IntegrationRepository,
+  IntegrationWithConnections
+} from '../types/integrations';
 
-export type { IntegrationRecord, IntegrationConnectionRecord, IntegrationRepository };
+const INTEGRATION_COLLECTION = 'integrations';
+const INTEGRATION_CONNECTION_COLLECTION = 'integration_connections';
 
-const CONNECTION_DEFAULTS = {
-  playwrightHeadless: true,
-  playwrightSlowMo: 50,
-  playwrightTimeout: 15000,
-  playwrightNavigationTimeout: 30000,
-  playwrightHumanizeMouse: false,
-  playwrightMouseJitter: 6,
-  playwrightClickDelayMin: 30,
-  playwrightClickDelayMax: 120,
-  playwrightInputDelayMin: 20,
-  playwrightInputDelayMax: 120,
-  playwrightActionDelayMin: 200,
-  playwrightActionDelayMax: 900,
-  playwrightProxyEnabled: false,
-  playwrightProxyServer: null,
-  playwrightProxyUsername: null,
-  playwrightProxyPassword: null,
-  playwrightEmulateDevice: false,
-  playwrightDeviceName: 'Desktop Chrome',
-  playwrightPersonaId: null,
-  allegroUseSandbox: false,
-  traderaDefaultTemplateId: null,
-  traderaDefaultDurationHours: 72,
-  traderaAutoRelistEnabled: true,
-  traderaAutoRelistLeadMinutes: 180,
-  traderaApiAppId: null,
-  traderaApiAppKey: null,
-  traderaApiPublicKey: null,
-  traderaApiUserId: null,
-  traderaApiToken: null,
-  traderaApiTokenUpdatedAt: null,
-  traderaApiSandbox: false,
-} as const;
-
-const INTEGRATIONS_COLLECTION = 'integrations';
-const CONNECTIONS_COLLECTION = 'integration_connections';
-
+/**
+ * MongoDB Documents
+ */
 type IntegrationDocument = {
-  _id: string;
   name: string;
   slug: string;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt: Date | null;
 };
 
 type IntegrationConnectionDocument = {
-  _id: string;
   integrationId: string;
   name: string;
   username: string;
   password: string;
   playwrightStorageState?: string | null;
   playwrightStorageStateUpdatedAt?: Date | null;
-  playwrightHeadless?: boolean | null;
-  playwrightSlowMo?: number | null;
-  playwrightTimeout?: number | null;
-  playwrightNavigationTimeout?: number | null;
-  playwrightHumanizeMouse?: boolean | null;
-  playwrightMouseJitter?: number | null;
-  playwrightClickDelayMin?: number | null;
-  playwrightClickDelayMax?: number | null;
-  playwrightInputDelayMin?: number | null;
-  playwrightInputDelayMax?: number | null;
-  playwrightActionDelayMin?: number | null;
-  playwrightActionDelayMax?: number | null;
-  playwrightProxyEnabled?: boolean | null;
-  playwrightProxyServer?: string | null;
-  playwrightProxyUsername?: string | null;
+  playwrightHeadless?: boolean;
+  playwrightSlowMo?: number;
+  playwrightTimeout?: number;
+  playwrightNavigationTimeout?: number;
+  playwrightHumanizeMouse?: boolean;
+  playwrightMouseJitter?: number;
+  playwrightClickDelayMin?: number;
+  playwrightClickDelayMax?: number;
+  playwrightInputDelayMin?: number;
+  playwrightInputDelayMax?: number;
+  playwrightActionDelayMin?: number;
+  playwrightActionDelayMax?: number;
+  playwrightProxyEnabled?: boolean;
+  playwrightProxyServer?: string;
+  playwrightProxyUsername?: string;
   playwrightProxyPassword?: string | null;
-  playwrightEmulateDevice?: boolean | null;
-  playwrightDeviceName?: string | null;
+  playwrightEmulateDevice?: boolean;
+  playwrightDeviceName?: string;
   playwrightPersonaId?: string | null;
   allegroAccessToken?: string | null;
   allegroRefreshToken?: string | null;
@@ -95,406 +57,415 @@ type IntegrationConnectionDocument = {
   allegroScope?: string | null;
   allegroExpiresAt?: Date | null;
   allegroTokenUpdatedAt?: Date | null;
-  allegroUseSandbox?: boolean | null;
+  allegroUseSandbox?: boolean;
   baseApiToken?: string | null;
   baseTokenUpdatedAt?: Date | null;
   baseLastInventoryId?: string | null;
-  traderaDefaultTemplateId?: string | null;
-  traderaDefaultDurationHours?: number | null;
-  traderaAutoRelistEnabled?: boolean | null;
-  traderaAutoRelistLeadMinutes?: number | null;
-  traderaApiAppId?: number | null;
-  traderaApiAppKey?: string | null;
-  traderaApiPublicKey?: string | null;
-  traderaApiUserId?: number | null;
-  traderaApiToken?: string | null;
+  traderaDefaultTemplateId?: string;
+  traderaDefaultDurationHours?: number;
+  traderaAutoRelistEnabled?: boolean;
+  traderaAutoRelistLeadMinutes?: number;
+  traderaApiAppId?: number;
+  traderaApiAppKey?: string;
+  traderaApiPublicKey?: string;
+  traderaApiUserId?: number;
+  traderaApiToken?: string;
   traderaApiTokenUpdatedAt?: Date | null;
-  traderaApiSandbox?: boolean | null;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt: Date | null;
 };
 
-const toIntegrationRecord = (doc: WithId<IntegrationDocument>): IntegrationRecord => ({
-  id: doc._id.toString(),
+const CONNECTION_DEFAULTS = {
+  playwrightHeadless: true,
+  playwrightSlowMo: 0,
+  playwrightTimeout: 30000,
+  playwrightNavigationTimeout: 30000,
+  playwrightHumanizeMouse: true,
+  playwrightMouseJitter: 5,
+  playwrightClickDelayMin: 50,
+  playwrightClickDelayMax: 150,
+  playwrightInputDelayMin: 20,
+  playwrightInputDelayMax: 80,
+  playwrightActionDelayMin: 500,
+  playwrightActionDelayMax: 1500,
+  playwrightProxyEnabled: false,
+  playwrightProxyServer: '',
+  playwrightProxyUsername: '',
+  playwrightEmulateDevice: false,
+  playwrightDeviceName: 'Desktop Chrome',
+  playwrightPersonaId: null,
+  traderaDefaultTemplateId: '',
+  traderaDefaultDurationHours: 72,
+  traderaAutoRelistEnabled: true,
+  traderaAutoRelistLeadMinutes: 180,
+  traderaApiAppId: 0,
+  traderaApiAppKey: '',
+  traderaApiPublicKey: '',
+  traderaApiUserId: 0,
+  traderaApiToken: '',
+  traderaApiTokenUpdatedAt: null,
+};
+
+const toIntegrationRecord = (doc: WithId<IntegrationDocument> | Prisma.IntegrationGetPayload<Record<string, never>>): IntegrationRecord => ({
+  id: 'id' in doc ? doc.id : doc._id.toString(),
   name: doc.name,
   slug: doc.slug,
-  createdAt: doc.createdAt,
-  updatedAt: doc.updatedAt,
+  createdAt: doc.createdAt.toISOString(),
+  updatedAt: doc.updatedAt ? doc.updatedAt.toISOString() : null,
 });
 
 const toConnectionRecord = (
-  doc: WithId<IntegrationConnectionDocument>
-): IntegrationConnectionRecord => ({
-  id: doc._id.toString(),
-  integrationId: doc.integrationId,
-  name: doc.name,
-  username: doc.username,
-  password: doc.password,
-  playwrightStorageState: doc.playwrightStorageState ?? null,
-  playwrightStorageStateUpdatedAt: doc.playwrightStorageStateUpdatedAt ?? null,
-  playwrightHeadless: doc.playwrightHeadless ?? CONNECTION_DEFAULTS.playwrightHeadless,
-  playwrightSlowMo: doc.playwrightSlowMo ?? CONNECTION_DEFAULTS.playwrightSlowMo,
-  playwrightTimeout: doc.playwrightTimeout ?? CONNECTION_DEFAULTS.playwrightTimeout,
-  playwrightNavigationTimeout:
-    doc.playwrightNavigationTimeout ??
-    CONNECTION_DEFAULTS.playwrightNavigationTimeout,
-  playwrightHumanizeMouse:
-    doc.playwrightHumanizeMouse ?? CONNECTION_DEFAULTS.playwrightHumanizeMouse,
-  playwrightMouseJitter:
-    doc.playwrightMouseJitter ?? CONNECTION_DEFAULTS.playwrightMouseJitter,
-  playwrightClickDelayMin:
-    doc.playwrightClickDelayMin ?? CONNECTION_DEFAULTS.playwrightClickDelayMin,
-  playwrightClickDelayMax:
-    doc.playwrightClickDelayMax ?? CONNECTION_DEFAULTS.playwrightClickDelayMax,
-  playwrightInputDelayMin:
-    doc.playwrightInputDelayMin ?? CONNECTION_DEFAULTS.playwrightInputDelayMin,
-  playwrightInputDelayMax:
-    doc.playwrightInputDelayMax ?? CONNECTION_DEFAULTS.playwrightInputDelayMax,
-  playwrightActionDelayMin:
-    doc.playwrightActionDelayMin ?? CONNECTION_DEFAULTS.playwrightActionDelayMin,
-  playwrightActionDelayMax:
-    doc.playwrightActionDelayMax ?? CONNECTION_DEFAULTS.playwrightActionDelayMax,
-  playwrightProxyEnabled:
-    doc.playwrightProxyEnabled ?? CONNECTION_DEFAULTS.playwrightProxyEnabled,
-  playwrightProxyServer:
-    doc.playwrightProxyServer ?? CONNECTION_DEFAULTS.playwrightProxyServer,
-  playwrightProxyUsername:
-    doc.playwrightProxyUsername ?? CONNECTION_DEFAULTS.playwrightProxyUsername,
-  playwrightProxyPassword: doc.playwrightProxyPassword ?? null,
-  playwrightEmulateDevice:
-    doc.playwrightEmulateDevice ?? CONNECTION_DEFAULTS.playwrightEmulateDevice,
-  playwrightDeviceName:
-    doc.playwrightDeviceName ?? CONNECTION_DEFAULTS.playwrightDeviceName,
-  playwrightPersonaId:
-    doc.playwrightPersonaId ?? CONNECTION_DEFAULTS.playwrightPersonaId,
-  allegroAccessToken: doc.allegroAccessToken ?? null,
-  allegroRefreshToken: doc.allegroRefreshToken ?? null,
-  allegroTokenType: doc.allegroTokenType ?? null,
-  allegroScope: doc.allegroScope ?? null,
-  allegroExpiresAt: doc.allegroExpiresAt ?? null,
-  allegroTokenUpdatedAt: doc.allegroTokenUpdatedAt ?? null,
-  allegroUseSandbox: doc.allegroUseSandbox ?? false,
-  baseApiToken: doc.baseApiToken ?? null,
-  baseTokenUpdatedAt: doc.baseTokenUpdatedAt ?? null,
-  baseLastInventoryId: doc.baseLastInventoryId ?? null,
-  traderaDefaultTemplateId:
-    doc.traderaDefaultTemplateId ?? CONNECTION_DEFAULTS.traderaDefaultTemplateId,
-  traderaDefaultDurationHours:
-    doc.traderaDefaultDurationHours ??
-    CONNECTION_DEFAULTS.traderaDefaultDurationHours,
-  traderaAutoRelistEnabled:
-    doc.traderaAutoRelistEnabled ??
-    CONNECTION_DEFAULTS.traderaAutoRelistEnabled,
-  traderaAutoRelistLeadMinutes:
-    doc.traderaAutoRelistLeadMinutes ??
-    CONNECTION_DEFAULTS.traderaAutoRelistLeadMinutes,
-  traderaApiAppId: doc.traderaApiAppId ?? CONNECTION_DEFAULTS.traderaApiAppId,
-  traderaApiAppKey:
-    doc.traderaApiAppKey ?? CONNECTION_DEFAULTS.traderaApiAppKey,
-  traderaApiPublicKey:
-    doc.traderaApiPublicKey ?? CONNECTION_DEFAULTS.traderaApiPublicKey,
-  traderaApiUserId:
-    doc.traderaApiUserId ?? CONNECTION_DEFAULTS.traderaApiUserId,
-  traderaApiToken: doc.traderaApiToken ?? CONNECTION_DEFAULTS.traderaApiToken,
-  traderaApiTokenUpdatedAt:
-    doc.traderaApiTokenUpdatedAt ??
-    CONNECTION_DEFAULTS.traderaApiTokenUpdatedAt,
-  traderaApiSandbox:
-    doc.traderaApiSandbox ?? CONNECTION_DEFAULTS.traderaApiSandbox,
-  createdAt: doc.createdAt,
-  updatedAt: doc.updatedAt,
-});
-
-const prismaRepository: IntegrationRepository = {
-  listIntegrations: async (): Promise<IntegrationRecord[]> => {
-    const integrations = await prisma.integration.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    return integrations;
-  },
-  upsertIntegration: async (input: { name: string; slug: string }): Promise<IntegrationRecord> => {
-    const integration = await prisma.integration.upsert({
-      where: { slug: input.slug },
-      update: { name: input.name },
-      create: input,
-    });
-    return integration;
-  },
-  getIntegrationById: async (id: string): Promise<IntegrationRecord | null> => {
-    return prisma.integration.findUnique({ where: { id } });
-  },
-  listConnections: async (integrationId: string): Promise<IntegrationConnectionRecord[]> => {
-    return prisma.integrationConnection.findMany({
-      where: { integrationId },
-      orderBy: { createdAt: 'desc' },
-    });
-  },
-  getConnectionById: async (id: string): Promise<IntegrationConnectionRecord | null> => {
-    return prisma.integrationConnection.findUnique({ where: { id } });
-  },
-  getConnectionByIdAndIntegration: async (id: string, integrationId: string): Promise<IntegrationConnectionRecord | null> => {
-    return prisma.integrationConnection.findFirst({
-      where: { id, integrationId },
-    });
-  },
-  createConnection: async (
-    integrationId: string,
-    input: {
-      name: string;
-      username: string;
-      password: string;
-      traderaDefaultTemplateId?: string | null;
-      traderaDefaultDurationHours?: number;
-      traderaAutoRelistEnabled?: boolean;
-      traderaAutoRelistLeadMinutes?: number;
-      traderaApiAppId?: number | null;
-      traderaApiAppKey?: string | null;
-      traderaApiPublicKey?: string | null;
-      traderaApiUserId?: number | null;
-      traderaApiToken?: string | null;
-      traderaApiTokenUpdatedAt?: Date | null;
-      traderaApiSandbox?: boolean;
-    }
-  ): Promise<IntegrationConnectionRecord> => {
-    return prisma.integrationConnection.create({
-      data: {
-        integrationId,
-        name: input.name,
-        username: input.username,
-        password: input.password,
-        ...(typeof input.traderaDefaultTemplateId === 'string' ||
-        input.traderaDefaultTemplateId === null
-          ? { traderaDefaultTemplateId: input.traderaDefaultTemplateId ?? null }
-          : {}),
-        ...(typeof input.traderaDefaultDurationHours === 'number'
-          ? { traderaDefaultDurationHours: input.traderaDefaultDurationHours }
-          : {}),
-        ...(typeof input.traderaAutoRelistEnabled === 'boolean'
-          ? { traderaAutoRelistEnabled: input.traderaAutoRelistEnabled }
-          : {}),
-        ...(typeof input.traderaAutoRelistLeadMinutes === 'number'
-          ? { traderaAutoRelistLeadMinutes: input.traderaAutoRelistLeadMinutes }
-          : {}),
-        ...(typeof input.traderaApiAppId === 'number'
-          ? { traderaApiAppId: input.traderaApiAppId }
-          : {}),
-        ...(typeof input.traderaApiAppKey === 'string' ||
-        input.traderaApiAppKey === null
-          ? { traderaApiAppKey: input.traderaApiAppKey ?? null }
-          : {}),
-        ...(typeof input.traderaApiPublicKey === 'string' ||
-        input.traderaApiPublicKey === null
-          ? { traderaApiPublicKey: input.traderaApiPublicKey ?? null }
-          : {}),
-        ...(typeof input.traderaApiUserId === 'number'
-          ? { traderaApiUserId: input.traderaApiUserId }
-          : {}),
-        ...(typeof input.traderaApiToken === 'string' ||
-        input.traderaApiToken === null
-          ? { traderaApiToken: input.traderaApiToken ?? null }
-          : {}),
-        ...(input.traderaApiTokenUpdatedAt instanceof Date
-          ? { traderaApiTokenUpdatedAt: input.traderaApiTokenUpdatedAt }
-          : {}),
-        ...(typeof input.traderaApiSandbox === 'boolean'
-          ? { traderaApiSandbox: input.traderaApiSandbox }
-          : {}),
-      },
-    });
-  },
-  updateConnection: async (id: string, input: Partial<IntegrationConnectionRecord>): Promise<IntegrationConnectionRecord> => {
-    const {
-      id: _ignoredId,
-      integrationId: _ignoredIntegrationId,
-      createdAt: _ignoredCreatedAt,
-      updatedAt: _ignoredUpdatedAt,
-      ...rest
-    } = input;
-    return prisma.integrationConnection.update({
-      where: { id },
-      data: rest as Prisma.IntegrationConnectionUpdateInput,
-    });
-  },
-  deleteConnection: async (id: string): Promise<void> => {
-    await prisma.integrationConnection.delete({ where: { id } });
-  },
+  doc: WithId<IntegrationConnectionDocument> | Prisma.IntegrationConnectionGetPayload<Record<string, never>>
+): IntegrationConnectionRecord => {
+  const isPrisma = 'id' in doc;
+  return {
+    id: isPrisma ? doc.id : (doc as WithId<IntegrationConnectionDocument>)._id.toString(),
+    integrationId: doc.integrationId,
+    name: doc.name,
+    username: doc.username,
+    password: doc.password,
+    playwrightStorageState: doc.playwrightStorageState ?? null,
+    playwrightStorageStateUpdatedAt: doc.playwrightStorageStateUpdatedAt
+      ? doc.playwrightStorageStateUpdatedAt.toISOString()
+      : null,
+    playwrightHeadless:
+      doc.playwrightHeadless ?? CONNECTION_DEFAULTS.playwrightHeadless,
+    playwrightSlowMo:
+      doc.playwrightSlowMo ?? CONNECTION_DEFAULTS.playwrightSlowMo,
+    playwrightTimeout:
+      doc.playwrightTimeout ?? CONNECTION_DEFAULTS.playwrightTimeout,
+    playwrightNavigationTimeout:
+      doc.playwrightNavigationTimeout ??
+      CONNECTION_DEFAULTS.playwrightNavigationTimeout,
+    playwrightHumanizeMouse:
+      doc.playwrightHumanizeMouse ?? CONNECTION_DEFAULTS.playwrightHumanizeMouse,
+    playwrightMouseJitter:
+      doc.playwrightMouseJitter ?? CONNECTION_DEFAULTS.playwrightMouseJitter,
+    playwrightClickDelayMin:
+      doc.playwrightClickDelayMin ?? CONNECTION_DEFAULTS.playwrightClickDelayMin,
+    playwrightClickDelayMax:
+      doc.playwrightClickDelayMax ?? CONNECTION_DEFAULTS.playwrightClickDelayMax,
+    playwrightInputDelayMin:
+      doc.playwrightInputDelayMin ?? CONNECTION_DEFAULTS.playwrightInputDelayMin,
+    playwrightInputDelayMax:
+      doc.playwrightInputDelayMax ?? CONNECTION_DEFAULTS.playwrightInputDelayMax,
+    playwrightActionDelayMin:
+      doc.playwrightActionDelayMin ?? CONNECTION_DEFAULTS.playwrightActionDelayMin,
+    playwrightActionDelayMax:
+      doc.playwrightActionDelayMax ?? CONNECTION_DEFAULTS.playwrightActionDelayMax,
+    playwrightProxyEnabled:
+      doc.playwrightProxyEnabled ?? CONNECTION_DEFAULTS.playwrightProxyEnabled,
+    playwrightProxyServer:
+      doc.playwrightProxyServer ?? CONNECTION_DEFAULTS.playwrightProxyServer,
+    playwrightProxyUsername:
+      doc.playwrightProxyUsername ?? CONNECTION_DEFAULTS.playwrightProxyUsername,
+    playwrightProxyPassword: doc.playwrightProxyPassword ?? null,
+    playwrightEmulateDevice:
+      doc.playwrightEmulateDevice ?? CONNECTION_DEFAULTS.playwrightEmulateDevice,
+    playwrightDeviceName:
+      doc.playwrightDeviceName ?? CONNECTION_DEFAULTS.playwrightDeviceName,
+    playwrightPersonaId:
+      doc.playwrightPersonaId ?? CONNECTION_DEFAULTS.playwrightPersonaId,
+    allegroAccessToken: doc.allegroAccessToken ?? null,
+    allegroRefreshToken: doc.allegroRefreshToken ?? null,
+    allegroTokenType: doc.allegroTokenType ?? null,
+    allegroScope: doc.allegroScope ?? null,
+    allegroExpiresAt: doc.allegroExpiresAt
+      ? doc.allegroExpiresAt.toISOString()
+      : null,
+    allegroTokenUpdatedAt: doc.allegroTokenUpdatedAt
+      ? doc.allegroTokenUpdatedAt.toISOString()
+      : null,
+    allegroUseSandbox: doc.allegroUseSandbox ?? false,
+    baseApiToken: doc.baseApiToken ?? null,
+    baseTokenUpdatedAt: doc.baseTokenUpdatedAt
+      ? doc.baseTokenUpdatedAt.toISOString()
+      : null,
+    baseLastInventoryId: doc.baseLastInventoryId ?? null,
+    traderaDefaultTemplateId:
+      doc.traderaDefaultTemplateId ?? CONNECTION_DEFAULTS.traderaDefaultTemplateId,
+    traderaDefaultDurationHours:
+      doc.traderaDefaultDurationHours ??
+      CONNECTION_DEFAULTS.traderaDefaultDurationHours,
+    traderaAutoRelistEnabled:
+      doc.traderaAutoRelistEnabled ??
+      CONNECTION_DEFAULTS.traderaAutoRelistEnabled,
+    traderaAutoRelistLeadMinutes:
+      doc.traderaAutoRelistLeadMinutes ??
+      CONNECTION_DEFAULTS.traderaAutoRelistLeadMinutes,
+    traderaApiAppId: doc.traderaApiAppId ?? CONNECTION_DEFAULTS.traderaApiAppId,
+    traderaApiAppKey:
+      doc.traderaApiAppKey ?? CONNECTION_DEFAULTS.traderaApiAppKey,
+    traderaApiPublicKey:
+      doc.traderaApiPublicKey ?? CONNECTION_DEFAULTS.traderaApiPublicKey,
+    traderaApiUserId:
+      doc.traderaApiUserId ?? CONNECTION_DEFAULTS.traderaApiUserId,
+    traderaApiToken: doc.traderaApiToken ?? CONNECTION_DEFAULTS.traderaApiToken,
+    traderaApiTokenUpdatedAt: doc.traderaApiTokenUpdatedAt
+      ? doc.traderaApiTokenUpdatedAt.toISOString()
+      : null,
+    createdAt: doc.createdAt.toISOString(),
+    updatedAt: doc.updatedAt ? doc.updatedAt.toISOString() : null,
+  };
 };
 
-const mongoRepository: IntegrationRepository = {
-  listIntegrations: async (): Promise<IntegrationRecord[]> => {
-    const db = await getMongoDb();
-    const docs = await db
-      .collection<IntegrationDocument>(INTEGRATIONS_COLLECTION)
-      .find({})
-      .sort({ createdAt: -1 })
-      .toArray();
-    return docs.map(toIntegrationRecord);
-  },
-  upsertIntegration: async (input: { name: string; slug: string }): Promise<IntegrationRecord> => {
-    const db = await getMongoDb();
-    const now = new Date();
-    const existing = await db
-      .collection<IntegrationDocument>(INTEGRATIONS_COLLECTION)
-      .findOne({ slug: input.slug });
+export async function getIntegrationRepository(): Promise<IntegrationRepository> {
+  const provider = await getAppDbProvider();
+  if (provider === 'mongodb') {
+    return getMongoIntegrationRepository();
+  }
+  return getPrismaIntegrationRepository();
+}
 
-    if (existing) {
-      await db.collection<IntegrationDocument>(INTEGRATIONS_COLLECTION).updateOne(
-        { _id: existing._id },
-        { $set: { name: input.name, updatedAt: now } }
-      );
+export async function getIntegrationsWithConnections(): Promise<IntegrationWithConnections[]> {
+  const repo = await getIntegrationRepository();
+  const integrations = await repo.listIntegrations();
+  
+  return Promise.all(
+    integrations.map(async (integration) => {
+      const connections = await repo.listConnections(integration.id);
       return {
-        id: existing._id.toString(),
-        name: input.name,
-        slug: existing.slug,
-        createdAt: existing.createdAt,
+        ...integration,
+        connections,
+      } as IntegrationWithConnections;
+    })
+  );
+}
+
+export function getPrismaIntegrationRepository(): IntegrationRepository {
+  return {
+    async listIntegrations(): Promise<IntegrationRecord[]> {
+      const docs = await prisma.integration.findMany({
+        orderBy: { name: 'asc' },
+      });
+      return docs.map(toIntegrationRecord);
+    },
+
+    async upsertIntegration(input: {
+      name: string;
+      slug: string;
+    }): Promise<IntegrationRecord> {
+      const doc = await prisma.integration.upsert({
+        where: { slug: input.slug },
+        update: { name: input.name },
+        create: { name: input.name, slug: input.slug },
+      });
+      return toIntegrationRecord(doc);
+    },
+
+    async getIntegrationById(id: string): Promise<IntegrationRecord | null> {
+      const doc = await prisma.integration.findUnique({
+        where: { id },
+      });
+      return doc ? toIntegrationRecord(doc) : null;
+    },
+
+    async listConnections(
+      integrationId: string
+    ): Promise<IntegrationConnectionRecord[]> {
+      const docs = await prisma.integrationConnection.findMany({
+        where: { integrationId },
+        orderBy: { name: 'asc' },
+      });
+      return docs.map(toConnectionRecord);
+    },
+
+    async getConnectionById(
+      id: string
+    ): Promise<IntegrationConnectionRecord | null> {
+      const doc = await prisma.integrationConnection.findUnique({
+        where: { id },
+      });
+      return doc ? toConnectionRecord(doc) : null;
+    },
+
+    async getConnectionByIdAndIntegration(
+      id: string,
+      integrationId: string
+    ): Promise<IntegrationConnectionRecord | null> {
+      const doc = await prisma.integrationConnection.findFirst({
+        where: { id, integrationId },
+      });
+      return doc ? toConnectionRecord(doc) : null;
+    },
+
+    async createConnection(
+      integrationId: string,
+      input: Record<string, unknown>
+    ): Promise<IntegrationConnectionRecord> {
+      const data: Prisma.IntegrationConnectionCreateInput = {
+        integration: { connect: { id: integrationId } },
+        name: String(input['name'] || 'New Connection'),
+        username: String(input['username'] || ''),
+        password: String(input['password'] || ''),
+        ...input,
+      } as any;
+      const doc = await prisma.integrationConnection.create({ data });
+      return toConnectionRecord(doc);
+    },
+
+    async updateConnection(
+      id: string,
+      input: Partial<IntegrationConnectionRecord>
+    ): Promise<IntegrationConnectionRecord> {
+      const updateData: Record<string, unknown> = { ...input };
+      delete updateData['id'];
+      delete updateData['createdAt'];
+      
+      const doc = await prisma.integrationConnection.update({
+        where: { id },
+        data: updateData as any,
+      });
+      return toConnectionRecord(doc);
+    },
+
+    async deleteConnection(id: string): Promise<void> {
+      await prisma.integrationConnection.delete({ where: { id } });
+    },
+  };
+}
+
+export function getMongoIntegrationRepository(): IntegrationRepository {
+  return {
+    async listIntegrations(): Promise<IntegrationRecord[]> {
+      const db = await getMongoDb();
+      const docs = await db
+        .collection<IntegrationDocument>(INTEGRATION_COLLECTION)
+        .find()
+        .sort({ name: 1 })
+        .toArray();
+      return docs.map(toIntegrationRecord);
+    },
+
+    async upsertIntegration(input: {
+      name: string;
+      slug: string;
+    }): Promise<IntegrationRecord> {
+      const db = await getMongoDb();
+      const now = new Date();
+      const res = await db
+        .collection<IntegrationDocument>(INTEGRATION_COLLECTION)
+        .findOneAndUpdate(
+          { slug: input.slug },
+          {
+            $set: { name: input.name, updatedAt: now },
+            $setOnInsert: { createdAt: now },
+          },
+          { upsert: true, returnDocument: 'after' }
+        );
+      if (!res) throw new Error('Failed to upsert integration');
+      return toIntegrationRecord(res);
+    },
+
+    async getIntegrationById(id: string): Promise<IntegrationRecord | null> {
+      if (!ObjectId.isValid(id)) return null;
+      const db = await getMongoDb();
+      const doc = await db
+        .collection<IntegrationDocument>(INTEGRATION_COLLECTION)
+        .findOne({ _id: new ObjectId(id) });
+      return doc ? toIntegrationRecord(doc) : null;
+    },
+
+    async listConnections(
+      integrationId: string
+    ): Promise<IntegrationConnectionRecord[]> {
+      const db = await getMongoDb();
+      const docs = await db
+        .collection<IntegrationConnectionDocument>(
+          INTEGRATION_CONNECTION_COLLECTION
+        )
+        .find({ integrationId })
+        .sort({ name: 1 })
+        .toArray();
+      return docs.map(toConnectionRecord);
+    },
+
+    async getConnectionById(
+      id: string
+    ): Promise<IntegrationConnectionRecord | null> {
+      if (!ObjectId.isValid(id)) return null;
+      const db = await getMongoDb();
+      const doc = await db
+        .collection<IntegrationConnectionDocument>(
+          INTEGRATION_CONNECTION_COLLECTION
+        )
+        .findOne({ _id: new ObjectId(id) });
+      return doc ? toConnectionRecord(doc) : null;
+    },
+
+    async getConnectionByIdAndIntegration(
+      id: string,
+      integrationId: string
+    ): Promise<IntegrationConnectionRecord | null> {
+      if (!ObjectId.isValid(id)) return null;
+      const db = await getMongoDb();
+      const doc = await db
+        .collection<IntegrationConnectionDocument>(
+          INTEGRATION_CONNECTION_COLLECTION
+        )
+        .findOne({ _id: new ObjectId(id), integrationId });
+      return doc ? toConnectionRecord(doc) : null;
+    },
+
+    async createConnection(
+      integrationId: string,
+      input: Record<string, unknown>
+    ): Promise<IntegrationConnectionRecord> {
+      const db = await getMongoDb();
+      const now = new Date();
+      const doc: IntegrationConnectionDocument = {
+        integrationId,
+        name: String(input['name'] || 'New Connection'),
+        username: String(input['username'] || ''),
+        password: String(input['password'] || ''),
+        ...input,
+        createdAt: now,
         updatedAt: now,
       };
-    }
+      const res = await db
+        .collection<IntegrationConnectionDocument>(
+          INTEGRATION_CONNECTION_COLLECTION
+        )
+        .insertOne(doc);
+      return toConnectionRecord({ ...doc, _id: res.insertedId });
+    },
 
-    const id = randomUUID();
-    const doc: IntegrationDocument = {
-      _id: id,
-      name: input.name,
-      slug: input.slug,
-      createdAt: now,
-      updatedAt: now,
-    };
-    await db.collection<IntegrationDocument>(INTEGRATIONS_COLLECTION).insertOne(doc);
-    return toIntegrationRecord(doc as WithId<IntegrationDocument>);
-  },
-  getIntegrationById: async (id: string): Promise<IntegrationRecord | null> => {
-    const db = await getMongoDb();
-    const doc = await db
-      .collection<IntegrationDocument>(INTEGRATIONS_COLLECTION)
-      .findOne({ _id: id });
-    return doc ? toIntegrationRecord(doc) : null;
-  },
-  listConnections: async (integrationId: string): Promise<IntegrationConnectionRecord[]> => {
-    const db = await getMongoDb();
-    const docs = await db
-      .collection<IntegrationConnectionDocument>(CONNECTIONS_COLLECTION)
-      .find({ integrationId })
-      .sort({ createdAt: -1 })
-      .toArray();
-    return docs.map(toConnectionRecord);
-  },
-  getConnectionById: async (id: string): Promise<IntegrationConnectionRecord | null> => {
-    const db = await getMongoDb();
-    const doc = await db
-      .collection<IntegrationConnectionDocument>(CONNECTIONS_COLLECTION)
-      .findOne({ _id: id });
-    return doc ? toConnectionRecord(doc) : null;
-  },
-  getConnectionByIdAndIntegration: async (id: string, integrationId: string): Promise<IntegrationConnectionRecord | null> => {
-    const db = await getMongoDb();
-    const doc = await db
-      .collection<IntegrationConnectionDocument>(CONNECTIONS_COLLECTION)
-      .findOne({ _id: id, integrationId });
-    return doc ? toConnectionRecord(doc) : null;
-  },
-  createConnection: async (
-    integrationId: string,
-    input: {
-      name: string;
-      username: string;
-      password: string;
-      traderaDefaultTemplateId?: string | null;
-      traderaDefaultDurationHours?: number;
-      traderaAutoRelistEnabled?: boolean;
-      traderaAutoRelistLeadMinutes?: number;
-      traderaApiAppId?: number | null;
-      traderaApiAppKey?: string | null;
-      traderaApiPublicKey?: string | null;
-      traderaApiUserId?: number | null;
-      traderaApiToken?: string | null;
-      traderaApiTokenUpdatedAt?: Date | null;
-      traderaApiSandbox?: boolean;
-    }
-  ): Promise<IntegrationConnectionRecord> => {
-    const db = await getMongoDb();
-    const now = new Date();
-    const id = randomUUID();
-    const doc: IntegrationConnectionDocument = {
-      _id: id,
-      integrationId,
-      name: input.name,
-      username: input.username,
-      password: input.password,
-      ...CONNECTION_DEFAULTS,
-      ...(typeof input.traderaDefaultTemplateId === 'string' ||
-      input.traderaDefaultTemplateId === null
-        ? { traderaDefaultTemplateId: input.traderaDefaultTemplateId ?? null }
-        : {}),
-      ...(typeof input.traderaDefaultDurationHours === 'number'
-        ? { traderaDefaultDurationHours: input.traderaDefaultDurationHours }
-        : {}),
-      ...(typeof input.traderaAutoRelistEnabled === 'boolean'
-        ? { traderaAutoRelistEnabled: input.traderaAutoRelistEnabled }
-        : {}),
-      ...(typeof input.traderaAutoRelistLeadMinutes === 'number'
-        ? { traderaAutoRelistLeadMinutes: input.traderaAutoRelistLeadMinutes }
-        : {}),
-      ...(typeof input.traderaApiAppId === 'number'
-        ? { traderaApiAppId: input.traderaApiAppId }
-        : {}),
-      ...(typeof input.traderaApiAppKey === 'string' ||
-      input.traderaApiAppKey === null
-        ? { traderaApiAppKey: input.traderaApiAppKey ?? null }
-        : {}),
-      ...(typeof input.traderaApiPublicKey === 'string' ||
-      input.traderaApiPublicKey === null
-        ? { traderaApiPublicKey: input.traderaApiPublicKey ?? null }
-        : {}),
-      ...(typeof input.traderaApiUserId === 'number'
-        ? { traderaApiUserId: input.traderaApiUserId }
-        : {}),
-      ...(typeof input.traderaApiToken === 'string' ||
-      input.traderaApiToken === null
-        ? { traderaApiToken: input.traderaApiToken ?? null }
-        : {}),
-      ...(input.traderaApiTokenUpdatedAt instanceof Date
-        ? { traderaApiTokenUpdatedAt: input.traderaApiTokenUpdatedAt }
-        : {}),
-      ...(typeof input.traderaApiSandbox === 'boolean'
-        ? { traderaApiSandbox: input.traderaApiSandbox }
-        : {}),
-      createdAt: now,
-      updatedAt: now,
-    };
-    await db
-      .collection<IntegrationConnectionDocument>(CONNECTIONS_COLLECTION)
-      .insertOne(doc);
-    return toConnectionRecord(doc as WithId<IntegrationConnectionDocument>);
-  },
-  updateConnection: async (id: string, input: Partial<IntegrationConnectionRecord>): Promise<IntegrationConnectionRecord> => {
-    const db = await getMongoDb();
-    const now = new Date();
-    const { id: _ignoredId, integrationId: _ignoredIntegrationId, ...rest } =
-      input;
-    const update: Partial<IntegrationConnectionDocument> = {
-      ...rest,
-      updatedAt: now,
-    };
-    await db
-      .collection<IntegrationConnectionDocument>(CONNECTIONS_COLLECTION)
-      .updateOne({ _id: id }, { $set: update });
-    const updated = await db
-      .collection<IntegrationConnectionDocument>(CONNECTIONS_COLLECTION)
-      .findOne({ _id: id });
-    if (!updated) {
-      throw notFoundError('Connection not found', { id });
-    }
-    return toConnectionRecord(updated);
-  },
-  deleteConnection: async (id: string): Promise<void> => {
-    const db = await getMongoDb();
-    await db
-      .collection<IntegrationConnectionDocument>(CONNECTIONS_COLLECTION)
-      .deleteOne({ _id: id });
-  },
-};
+    async updateConnection(
+      id: string,
+      input: Partial<IntegrationConnectionRecord>
+    ): Promise<IntegrationConnectionRecord> {
+      if (!ObjectId.isValid(id)) throw new Error('Invalid connection ID');
+      const db = await getMongoDb();
+      const now = new Date();
+      const updateData: Record<string, unknown> = {
+        ...input,
+        updatedAt: now,
+      };
+      delete updateData['id'];
+      delete updateData['_id'];
+      delete updateData['createdAt'];
 
-export const getIntegrationRepository = async (): Promise<IntegrationRepository> => {
-  const provider = await getIntegrationDataProvider();
-  return provider === 'mongodb' ? mongoRepository : prismaRepository;
-};
+      const res = await db
+        .collection<IntegrationConnectionDocument>(
+          INTEGRATION_CONNECTION_COLLECTION
+        )
+        .findOneAndUpdate(
+          { _id: new ObjectId(id) },
+          { $set: updateData },
+          { returnDocument: 'after' }
+        );
+      if (!res) throw new Error('Connection not found');
+      return toConnectionRecord(res);
+    },
+
+    async deleteConnection(id: string): Promise<void> {
+      if (!ObjectId.isValid(id)) return;
+      const db = await getMongoDb();
+      await db
+        .collection<IntegrationConnectionDocument>(
+          INTEGRATION_CONNECTION_COLLECTION
+        )
+        .deleteOne({ _id: new ObjectId(id) });
+    },
+  };
+}

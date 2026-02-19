@@ -1,12 +1,19 @@
 import type { 
   TemplateMappingDto, 
   ImageTransformOptionsDto, 
-  ImageRetryPresetDto, 
   ImageBase64ModeDto,
   IntegrationDto,
-  IntegrationConnectionDto,
-  ProductListingDto
+  IntegrationConnectionDto
 } from '@/shared/contracts/integrations';
+import type { 
+  IntegrationWithConnections,
+  IntegrationWithConnectionsBasic 
+} from '@/shared/types/domain/integrations';
+
+export type {
+  IntegrationWithConnections,
+  IntegrationWithConnectionsBasic,
+};
 
 // DTO type exports
 export type {
@@ -51,16 +58,6 @@ export type IntegrationConnectionRecord = Omit<IntegrationConnectionDto, 'create
   updatedAt: string | Date | null;
   playwrightStorageStateUpdatedAt?: string | Date | null;
   traderaApiTokenUpdatedAt?: string | Date | null;
-};
-
-export type ProductListingRecord = Omit<ProductListingDto, 'createdAt' | 'updatedAt' | 'listedAt' | 'expiresAt' | 'nextRelistAt' | 'lastRelistedAt' | 'lastStatusCheckAt'> & {
-  createdAt: string | Date;
-  updatedAt: string | Date;
-  listedAt?: string | Date | null;
-  expiresAt?: string | Date | null;
-  nextRelistAt?: string | Date | null;
-  lastRelistedAt?: string | Date | null;
-  lastStatusCheckAt?: string | Date | null;
 };
 
 export type IntegrationRepository = {

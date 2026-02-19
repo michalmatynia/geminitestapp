@@ -167,8 +167,7 @@ const buildPayload = (log: SystemLogRecord, critical: boolean): Record<string, u
   statusCode: log.statusCode ?? null,
   requestId: log.requestId ?? null,
   userId: log.userId ?? null,
-  createdAt:
-    log.createdAt instanceof Date ? log.createdAt.toISOString() : log.createdAt,
+  createdAt: log.createdAt,
   context: log.context ?? null,
   stack: log.stack ?? null,
   environment: process.env['NODE_ENV'] ?? 'development',

@@ -6,9 +6,9 @@ import { Alert, CopyButton, CollapsibleSection } from '@/shared/ui';
 
 interface ExportLog {
   timestamp: string;
-  level: 'info' | 'warn' | 'error';
+  level: 'info' | 'warn' | 'error' | 'debug';
   message: string;
-  context?: Record<string, unknown> | undefined;
+  context?: Record<string, unknown> | null | undefined;
 }
 
 interface ExportLogViewerProps {
@@ -34,7 +34,7 @@ export function ExportLogViewer({
   const imagePayloadSummary = useMemo(() => {
     const entries = logs
       .map((log: ExportLog) => log.context)
-      .filter((context: Record<string, unknown> | undefined): context is Record<string, unknown> => !!context)
+      .filter((context: Record<string, unknown> | null | undefined): context is Record<string, unknown> => !!context)
       .filter((context: Record<string, unknown>) => typeof context['outputBytes'] === 'number' || typeof context['originalBytes'] === 'number' || typeof context['base64Length'] === 'number');
     if (entries.length === 0) return null;
     const sum = (key: 'outputBytes' | 'originalBytes' | 'base64Length'): number =>

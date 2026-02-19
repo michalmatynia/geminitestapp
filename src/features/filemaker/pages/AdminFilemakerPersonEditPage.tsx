@@ -9,7 +9,6 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { CountryOption } from '@/shared/types/domain/internationalization';
 import {
   Badge,
-  Button,
   FormSection,
   FormField,
   Input,
@@ -217,7 +216,6 @@ export function AdminFilemakerPersonEditPage(): React.JSX.Element {
                 router.push('/admin/filemaker/persons');
               }}
               cancelText='Back to Persons'
-              showSave={false}
             />
           )}
         />

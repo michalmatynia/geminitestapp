@@ -85,7 +85,9 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   allegroExpiresAt: z.string().nullable().optional(),
   allegroTokenUpdatedAt: z.string().nullable().optional(),
   allegroUseSandbox: z.boolean().optional(),
+  hasAllegroAccessToken: z.boolean().optional(),
   baseApiToken: z.string().nullable().optional(),
+  hasBaseApiToken: z.boolean().optional(),
   baseTokenUpdatedAt: z.string().nullable().optional(),
   baseLastInventoryId: z.string().nullable().optional(),
   traderaDefaultTemplateId: z.string().nullable().optional(),
@@ -194,6 +196,7 @@ export const createProductListingSchema = z.object({
   lastStatusCheckAt: z.string().nullable().optional(),
   marketplaceData: z.record(z.string(), z.unknown()).nullable().optional(),
   failureReason: z.string().nullable().optional(),
+  exportHistory: z.array(productListingExportEventSchema).nullable().optional(),
 });
 
 export type CreateProductListingDto = z.infer<typeof createProductListingSchema>;
@@ -454,6 +457,7 @@ export const baseWarehouseSchema = z.object({
   id: z.string(),
   name: z.string(),
   is_default: z.boolean(),
+  typedId: z.string().optional(),
 });
 
 export type BaseWarehouseDto = z.infer<typeof baseWarehouseSchema>;

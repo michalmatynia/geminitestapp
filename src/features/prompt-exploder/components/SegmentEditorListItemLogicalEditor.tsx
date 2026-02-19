@@ -35,9 +35,15 @@ type LogicalParamOption = {
 
 type LogicalParamEntry = {
   spec?: {
-    kind?: string | null;
-    enumOptions?: string[] | null;
-  } | null;
+    path?: string | undefined;
+    kind?: string | null | undefined;
+    enumOptions?: string[] | null | undefined;
+    hint?: string | undefined;
+    min?: number | undefined;
+    max?: number | undefined;
+    step?: number | undefined;
+    integer?: boolean | undefined;
+  } | null | undefined;
 };
 
 function normalizeLogicalConditionList(

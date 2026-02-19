@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { randomUUID } from 'crypto';
+
 import {
   getExportDefaultConnectionId,
   getIntegrationRepository,
@@ -618,6 +620,7 @@ export const processProductSyncRun = async (
             }
 
             const item: ProductSyncRunItemRecord = {
+              id: randomUUID(),
               runId,
               itemId: String(itemCounter).padStart(8, '0'),
               productId: product.id,
@@ -638,6 +641,7 @@ export const processProductSyncRun = async (
             stats.failed += 1;
 
             const item: ProductSyncRunItemRecord = {
+              id: randomUUID(),
               runId,
               itemId: String(itemCounter).padStart(8, '0'),
               productId: product.id,

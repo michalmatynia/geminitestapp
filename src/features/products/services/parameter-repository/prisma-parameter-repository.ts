@@ -45,6 +45,7 @@ const normalizeOptionLabels = (input: unknown): string[] => {
 
 const toParameterDomain = (param: PrismaProductParameter): ProductParameter => ({
   id: param.id,
+  name: param.name_en,
   name_en: param.name_en,
   name_pl: param.name_pl ?? null,
   name_de: param.name_de ?? null,

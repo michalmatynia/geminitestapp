@@ -11,16 +11,15 @@ import { useCmsPages, useCmsSlugs, useDeletePage } from '@/features/cms/hooks/us
 import type { PageStatus, PageSummary, PageSlugLink, Slug } from '@/features/cms/types';
 import {
   Button,
-  ListPanel,
   StatusBadge,
   SelectSimple,
-  DataTable,
   Badge,
   SectionHeader,
   ActionMenu,
   DropdownMenuItem,
   DropdownMenuSeparator,
   Breadcrumbs,
+  StandardDataTablePanel,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -205,58 +204,58 @@ export default function PagesPage(): React.ReactNode {
     }
   ], [domainSlugSet, previewSelections, activeDomain]);
 
+  const header = (
+    <SectionHeader
+      title='Content Pages'
+      description='Manage layouts and routes for your marketplace domains.'
+      eyebrow={
+        <Breadcrumbs
+          items={[
+            { label: 'Admin', href: '/admin' },
+            { label: 'CMS', href: '/admin/cms' },
+            { label: 'Pages' }
+          ]}
+          className='mb-2'
+        />
+      }
+      actions={
+        <div className='flex gap-2'>
+          <CmsDomainSelector />
+          <Button size='xs' className='h-8' onClick={handleCreatePage}>
+            <Plus className='size-3.5 mr-2' />
+            Create Page
+          </Button>
+        </div>
+      }
+    />
+  );
+
+  const filters = (
+    <div className='flex gap-2'>
+      {STATUS_FILTERS.map((filter) => (
+        <Button
+          key={filter.value}
+          size='xs'
+          variant={statusFilter === filter.value ? 'default' : 'outline'}
+          onClick={() => setStatusFilter(filter.value)}
+          className='h-7 rounded-full px-3'
+        >
+          {filter.label}
+        </Button>
+      ))}
+    </div>
+  );
+
   return (
     <div className='mx-auto w-full max-w-none py-10 space-y-6'>
-      <SectionHeader
-        title='Content Pages'
-        description='Manage layouts and routes for your marketplace domains.'
-        eyebrow={
-          <Breadcrumbs
-            items={[
-              { label: 'Admin', href: '/admin' },
-              { label: 'CMS', href: '/admin/cms' },
-              { label: 'Pages' }
-            ]}
-            className='mb-2'
-          />
-        }
-        actions={
-          <div className='flex gap-2'>
-            <CmsDomainSelector />
-            <Button size='xs' className='h-8' onClick={handleCreatePage}>
-              <Plus className='size-3.5 mr-2' />
-              Create Page
-            </Button>
-          </div>
-        }
-      />
-
-      <ListPanel
+      <StandardDataTablePanel
+        header={header}
+        filters={filters}
         variant='flat'
-        filters={
-          <div className='flex gap-2'>
-            {STATUS_FILTERS.map((filter) => (
-              <Button
-                key={filter.value}
-                size='xs'
-                variant={statusFilter === filter.value ? 'default' : 'outline'}
-                onClick={() => setStatusFilter(filter.value)}
-                className='h-7 rounded-full px-3'
-              >
-                {filter.label}
-              </Button>
-            ))}
-          </div>
-        }
-      >
-        <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
-          <DataTable
-            columns={columns}
-            data={filteredPages}
-            isLoading={pagesQuery.isLoading}
-          />
-        </div>
-      </ListPanel>
+        columns={columns}
+        data={filteredPages}
+        isLoading={pagesQuery.isLoading}
+      />
 
       <ConfirmModal
         isOpen={!!pageToDelete}

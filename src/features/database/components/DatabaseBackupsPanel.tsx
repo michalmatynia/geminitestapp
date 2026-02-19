@@ -11,13 +11,12 @@ import {
 import {
   Badge,
   Button,
-  DataTable,
   FileUploadButton,
   type FileUploadHelpers,
   Alert,
-  ListPanel,
   SimpleSettingsList,
   Breadcrumbs,
+  StandardDataTablePanel,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { cn } from '@/shared/utils';
@@ -87,143 +86,144 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
     BACKUP_DATABASE_OPTIONS[0]!;
   const backupCountLabel = `${data.length.toLocaleString()} backup${data.length === 1 ? '' : 's'}`;
 
-  return (
-    <div className='space-y-6'>
-      <ListPanel
-        title='Backup Center'
-        description='Create, upload, preview, restore, and delete backups with clear source selection.'
-        header={
-          <div className='space-y-3'>
-            <div className='flex flex-wrap items-start justify-between gap-3'>
-              <div className='space-y-1'>
-                <h2 className='text-2xl font-bold tracking-tight text-white'>Backup Center</h2>
-                <Breadcrumbs
-                  items={[
-                    { label: 'Admin', href: '/admin' },
-                    { label: 'Databases', href: '/admin/databases/engine' },
-                    { label: 'Backups' },
-                  ]}
-                />
-              </div>
-              <div className='flex flex-wrap items-center gap-2'>
-                <Badge variant='active' className='gap-1.5'>
-                  <ServerIcon className='size-3.5' />
-                  {selectedDatabase.label}
-                </Badge>
-                <Badge variant='outline' className='border-white/10 text-gray-300'>
-                  {backupCountLabel}
-                </Badge>
-              </div>
-            </div>
-          </div>
-        }
-        alerts={
-          <>
-            {isProd && (
-              <Alert variant='warning'>
-                Backups are disabled in production. Create or upload backups in a non-production environment.
-              </Alert>
-            )}
-
-            {(!backupRunNowAllowed || !backupMaintenanceAllowed) && (
-              <Alert variant='warning'>
-                Some backup actions are disabled by Database Engine manual operation controls.
-              </Alert>
-            )}
-          </>
-        }
-        filters={
-          <div className='space-y-3'>
-            <SimpleSettingsList
-              items={BACKUP_DATABASE_OPTIONS.map((option) => ({
-                id: option.value,
-                title: option.label,
-                description: option.description,
-                icon: (
-                  <div className={cn(
-                    'rounded-md border p-2',
-                    activeTab === option.value ? 'border-emerald-400/40 bg-emerald-500/20' : 'border-white/10 bg-white/5'
-                  )}>
-                    <DatabaseIcon className={cn('size-4', activeTab === option.value ? 'text-emerald-200' : 'text-gray-400')} />
-                  </div>
-                ),
-                subtitle: `Expected format: ${option.extension}`,
-                original: option
-              }))}
-              selectedId={activeTab}
-              onSelect={(item) => setActiveTab(item.original.value)}
-              columns={2}
-              padding='md'
-            />
-
-            <div className='rounded-lg border border-border/60 bg-card/20 px-3 py-2 text-xs text-gray-300'>
-              Active source: <span className='font-semibold text-white'>{selectedDatabase.label}</span>
-            </div>
-          </div>
-        }
-        actions={
-          <div className='flex flex-wrap items-center gap-2'>
-            <Button
-              size='sm'
-              disabled={isProd || !backupRunNowAllowed}
-              title={
-                isProd
-                  ? 'Disabled in production'
-                  : !backupRunNowAllowed
-                    ? 'Disabled by Database Engine operation controls'
-                    : undefined
-              }
-              onClick={(): void => {
-                void handleBackup();
-              }}
-            >
-              <PlusIcon className='mr-2 size-3.5' />
-              Create Backup
-            </Button>
-            <FileUploadButton
-              size='sm'
-              variant='outline'
-              onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => handleUpload(files, helpers)}
-              accept={activeTab === 'postgresql' ? '.dump' : '.archive'}
-              disabled={isProd || !backupMaintenanceAllowed}
-              title={
-                isProd
-                  ? 'Disabled in production'
-                  : !backupMaintenanceAllowed
-                    ? 'Disabled by Database Engine operation controls'
-                    : undefined
-              }
-            >
-              <UploadIcon className='mr-2 size-3.5' />
-              Upload Backup
-            </FileUploadButton>
-            <Button size='sm' variant='secondary' onClick={handlePreviewCurrent}>
-              <EyeIcon className='mr-2 size-3.5' />
-              Preview Current DB
-            </Button>
-          </div>
-        }
-      >
-        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-          <DataTable
-            columns={getDatabaseColumns({
-              onPreview: handlePreview,
-              onRestoreRequest: handleRestoreRequest,
-              onDeleteRequest: (name: string): void => {
-                handleDeleteRequest(name);
-              },
-              disableRestore: !backupMaintenanceAllowed,
-              disableDelete: !backupMaintenanceAllowed,
-              restoreDisabledReason: 'Disabled by Database Engine operation controls',
-              deleteDisabledReason: 'Disabled by Database Engine operation controls',
-            })}
-            data={data}
-            initialSorting={[{ id: 'lastModifiedAt', desc: true }]}
-            sortingStorageKey={`stardb:database-backups:${activeTab}:sorting`}
-            isLoading={isLoading}
+  const header = (
+    <div className='space-y-3'>
+      <div className='flex flex-wrap items-start justify-between gap-3'>
+        <div className='space-y-1'>
+          <h2 className='text-2xl font-bold tracking-tight text-white'>Backup Center</h2>
+          <Breadcrumbs
+            items={[
+              { label: 'Admin', href: '/admin' },
+              { label: 'Databases', href: '/admin/databases/engine' },
+              { label: 'Backups' },
+            ]}
           />
         </div>
-      </ListPanel>
+        <div className='flex flex-wrap items-center gap-2'>
+          <Badge variant='active' className='gap-1.5'>
+            <ServerIcon className='size-3.5' />
+            {selectedDatabase.label}
+          </Badge>
+          <Badge variant='outline' className='border-white/10 text-gray-300'>
+            {backupCountLabel}
+          </Badge>
+        </div>
+      </div>
+    </div>
+  );
+
+  const alerts = (
+    <>
+      {isProd && (
+        <Alert variant='warning'>
+          Backups are disabled in production. Create or upload backups in a non-production environment.
+        </Alert>
+      )}
+
+      {(!backupRunNowAllowed || !backupMaintenanceAllowed) && (
+        <Alert variant='warning'>
+          Some backup actions are disabled by Database Engine manual operation controls.
+        </Alert>
+      )}
+    </>
+  );
+
+  const filters = (
+    <div className='space-y-3'>
+      <SimpleSettingsList
+        items={BACKUP_DATABASE_OPTIONS.map((option) => ({
+          id: option.value,
+          title: option.label,
+          description: option.description,
+          icon: (
+            <div className={cn(
+              'rounded-md border p-2',
+              activeTab === option.value ? 'border-emerald-400/40 bg-emerald-500/20' : 'border-white/10 bg-white/5'
+            )}>
+              <DatabaseIcon className={cn('size-4', activeTab === option.value ? 'text-emerald-200' : 'text-gray-400')} />
+            </div>
+          ),
+          subtitle: `Expected format: ${option.extension}`,
+          original: option
+        }))}
+        selectedId={activeTab}
+        onSelect={(item) => setActiveTab(item.original.value)}
+        columns={2}
+        padding='md'
+      />
+
+      <div className='rounded-lg border border-border/60 bg-card/20 px-3 py-2 text-xs text-gray-300'>
+        Active source: <span className='font-semibold text-white'>{selectedDatabase.label}</span>
+      </div>
+    </div>
+  );
+
+  const actions = (
+    <div className='flex flex-wrap items-center gap-2'>
+      <Button
+        size='sm'
+        disabled={isProd || !backupRunNowAllowed}
+        title={
+          isProd
+            ? 'Disabled in production'
+            : !backupRunNowAllowed
+              ? 'Disabled by Database Engine operation controls'
+              : undefined
+        }
+        onClick={(): void => {
+          void handleBackup();
+        }}
+      >
+        <PlusIcon className='mr-2 size-3.5' />
+        Create Backup
+      </Button>
+      <FileUploadButton
+        size='sm'
+        variant='outline'
+        onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => handleUpload(files, helpers)}
+        accept={activeTab === 'postgresql' ? '.dump' : '.archive'}
+        disabled={isProd || !backupMaintenanceAllowed}
+        title={
+          isProd
+            ? 'Disabled in production'
+            : !backupMaintenanceAllowed
+              ? 'Disabled by Database Engine operation controls'
+              : undefined
+        }
+      >
+        <UploadIcon className='mr-2 size-3.5' />
+        Upload Backup
+      </FileUploadButton>
+      <Button size='sm' variant='secondary' onClick={handlePreviewCurrent}>
+        <EyeIcon className='mr-2 size-3.5' />
+        Preview Current DB
+      </Button>
+    </div>
+  );
+
+  return (
+    <div className='space-y-6'>
+      <StandardDataTablePanel
+        header={header}
+        alerts={alerts}
+        filters={filters}
+        actions={actions}
+        columns={getDatabaseColumns({
+          onPreview: handlePreview,
+          onRestoreRequest: handleRestoreRequest,
+          onDeleteRequest: (name: string): void => {
+            handleDeleteRequest(name);
+          },
+          disableRestore: !backupMaintenanceAllowed,
+          disableDelete: !backupMaintenanceAllowed,
+          restoreDisabledReason: 'Disabled by Database Engine operation controls',
+          deleteDisabledReason: 'Disabled by Database Engine operation controls',
+        })}
+        data={data}
+        isLoading={isLoading}
+        maxHeight='60vh'
+        stickyHeader
+      />
 
       {isLogModalOpen && <LogModal isOpen={true} content={logModalContent} onClose={closeLogModal} />}
 

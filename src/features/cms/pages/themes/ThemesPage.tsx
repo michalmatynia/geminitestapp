@@ -7,7 +7,7 @@ import React, { useMemo } from 'react';
 
 import { useCmsThemes, useDeleteTheme } from '@/features/cms/hooks/useCmsQueries';
 import type { CmsTheme } from '@/features/cms/types';
-import { Button, ListPanel, EmptyState, DataTable, ActionMenu, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui';
+import { Button, EmptyState, ActionMenu, DropdownMenuItem, DropdownMenuSeparator, StandardDataTablePanel } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -105,7 +105,7 @@ export default function ThemesPage(): React.ReactNode {
 
   return (
     <div className='mx-auto w-full max-w-none py-10 space-y-6'>
-      <ListPanel
+      <StandardDataTablePanel
         title='Design Themes'
         description='Manage color palettes, typography and component style presets for your domains.'
         headerActions={
@@ -115,8 +115,9 @@ export default function ThemesPage(): React.ReactNode {
           </Button>
         }
         isLoading={themesQuery.isLoading}
-      >
-        {themes.length === 0 && !themesQuery.isLoading ? (
+        columns={columns}
+        data={themes}
+        emptyState={
           <EmptyState
             title='No themes defined'
             description='Themes allow you to maintain a consistent visual language across your storefront.'
@@ -126,15 +127,8 @@ export default function ThemesPage(): React.ReactNode {
               </Button>
             }
           />
-        ) : (
-          <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
-            <DataTable
-              columns={columns}
-              data={themes}
-            />
-          </div>
-        )}
-      </ListPanel>
+        }
+      />
 
       <ConfirmModal
         isOpen={Boolean(themeToDelete)}

@@ -98,9 +98,9 @@ const toRecord = (doc: ExternalCategoryDoc): ExternalCategory => ({
   depth: doc.depth,
   isLeaf: doc.isLeaf,
   metadata: doc.metadata as Record<string, unknown> | null,
-  fetchedAt: doc.fetchedAt,
-  createdAt: doc.createdAt,
-  updatedAt: doc.updatedAt,
+  fetchedAt: doc.fetchedAt.toISOString(),
+  createdAt: doc.createdAt.toISOString(),
+  updatedAt: doc.updatedAt.toISOString(),
 });
 
 type MongoExternalCategoryDoc = {
@@ -155,9 +155,9 @@ const toMongoRecord = (doc: MongoExternalCategoryDoc): ExternalCategory => ({
   depth: doc.depth ?? 0,
   isLeaf: Boolean(doc.isLeaf),
   metadata: doc.metadata ?? null,
-  fetchedAt: doc.fetchedAt,
-  createdAt: doc.createdAt,
-  updatedAt: doc.updatedAt,
+  fetchedAt: doc.fetchedAt.toISOString(),
+  createdAt: doc.createdAt.toISOString(),
+  updatedAt: doc.updatedAt.toISOString(),
 });
 
 const buildMongoIdFilter = (id: string): Filter<MongoExternalCategoryDoc> => {

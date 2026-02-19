@@ -406,7 +406,7 @@ export function PromptEngineProvider({
       const updates = new Map<string, RulePatch>();
       const appendUpdate = (uid: string, patch: RulePatch): void => {
         const current = updates.get(uid) ?? {};
-        updates.set(uid, { ...current, ...patch });
+        updates.set(uid, { ...current, ...patch } as RulePatch);
       };
 
       for (const [index, draft] of reordered.entries()) {

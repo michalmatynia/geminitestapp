@@ -83,7 +83,7 @@ export type NoteRelationWithSource = NoteRelationRecord & {
 export type NoteWithRelations = NoteWithRelationsDto;
   
 export type CategoryWithChildren = NoteCategoryRecordWithChildrenDto & {
-    notes: NoteRecord[];
+    notes?: NoteRecord[] | undefined;
   };
   
 export type NoteCreateInput = CreateNoteDto;

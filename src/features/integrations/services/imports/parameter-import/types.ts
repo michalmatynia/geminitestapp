@@ -1,5 +1,4 @@
 import type { BaseImportParameterImportSettings } from '@/features/integrations/types/base-import-parameter-import';
-import type { ProductParameterValue } from '@/features/products/types';
 import type { ParameterRepository } from '@/features/products/types/services/parameter-repository';
 import type {
   ExtractedBaseParameterDto,
@@ -7,8 +6,6 @@ import type {
   ApplyBaseParameterImportResultDto,
   ApplyBaseParameterImportInputDto,
 } from '@/shared/contracts/integrations';
-
-import type { BaseProductRecord } from '../base-client';
 
 export type ExtractedBaseParameter = ExtractedBaseParameterDto;
 

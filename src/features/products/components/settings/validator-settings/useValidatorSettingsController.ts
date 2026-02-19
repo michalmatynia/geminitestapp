@@ -680,12 +680,7 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
         const currentUpdatedAt = patternById.get(id)?.updatedAt;
         const nextUpdate: ReorderValidationPatternUpdatePayload = {
           id,
-          expectedUpdatedAt:
-            typeof currentUpdatedAt === 'string'
-              ? currentUpdatedAt
-              : currentUpdatedAt instanceof Date
-                ? currentUpdatedAt.toISOString()
-                : null,
+          expectedUpdatedAt: currentUpdatedAt ?? null,
         };
         if (typeof data.sequence === 'number' && Number.isFinite(data.sequence)) {
           nextUpdate.sequence = Math.max(0, Math.floor(data.sequence));

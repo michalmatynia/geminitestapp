@@ -28,9 +28,9 @@ const toRecord = (doc: ExternalProducerDoc): ExternalProducer => ({
   externalId: doc.externalId,
   name: doc.name,
   metadata: doc.metadata as Record<string, unknown> | null,
-  fetchedAt: doc.fetchedAt,
-  createdAt: doc.createdAt,
-  updatedAt: doc.updatedAt,
+  fetchedAt: doc.fetchedAt.toISOString(),
+  createdAt: doc.createdAt.toISOString(),
+  updatedAt: doc.updatedAt.toISOString(),
 });
 
 type MongoExternalProducerDoc = {
@@ -80,9 +80,9 @@ const toMongoRecord = (doc: MongoExternalProducerDoc): ExternalProducer => ({
   externalId: doc.externalId,
   name: doc.name,
   metadata: doc.metadata ?? null,
-  fetchedAt: doc.fetchedAt,
-  createdAt: doc.createdAt,
-  updatedAt: doc.updatedAt,
+  fetchedAt: doc.fetchedAt.toISOString(),
+  createdAt: doc.createdAt.toISOString(),
+  updatedAt: doc.updatedAt.toISOString(),
 });
 
 const buildMongoIdFilter = (id: string): Filter<MongoExternalProducerDoc> => {

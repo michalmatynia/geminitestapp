@@ -30,7 +30,6 @@ import {
   useToast,
   Separator,
   FormActions,
-  Hint,
 } from '@/shared/ui';
 
 const dedupeRoutes = (routes: string[]): string[] => {

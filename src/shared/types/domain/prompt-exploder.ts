@@ -16,6 +16,7 @@ import type {
   PromptExploderPatternSnapshotDto,
   PromptExploderBenchmarkSuiteDto,
   PromptExploderBenchmarkCaseConfigDto,
+  PromptExploderBenchmarkSuggestionDto,
   PromptExploderOperationModeDto,
   PromptExploderAiProviderDto,
   PromptExploderSettingsDto,
@@ -44,6 +45,7 @@ export type {
   PromptExploderPatternSnapshotDto,
   PromptExploderBenchmarkSuiteDto,
   PromptExploderBenchmarkCaseConfigDto,
+  PromptExploderBenchmarkSuggestionDto,
   PromptExploderOperationModeDto,
   PromptExploderAiProviderDto,
   PromptExploderSettingsDto,
@@ -88,6 +90,8 @@ export type PromptExploderPatternSnapshot = PromptExploderPatternSnapshotDto;
 export type PromptExploderBenchmarkSuite = PromptExploderBenchmarkSuiteDto;
 
 export type PromptExploderBenchmarkCaseConfig = PromptExploderBenchmarkCaseConfigDto;
+
+export type PromptExploderBenchmarkSuggestion = PromptExploderBenchmarkSuggestionDto;
 
 export type PromptExploderOperationMode = PromptExploderOperationModeDto;
 

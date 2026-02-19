@@ -15,7 +15,6 @@ import {
   runPromptExploderBenchmark,
   type PromptExploderBenchmarkCase,
   type PromptExploderBenchmarkReport,
-  type PromptExploderBenchmarkSuggestion,
 } from '../benchmark';
 import { applyBenchmarkSuggestions } from '../benchmark-apply';
 import { prepareBenchmarkSuggestionsForApply } from '../benchmark-suggestions';
@@ -36,7 +35,11 @@ import { PROMPT_EXPLODER_SETTINGS_KEY } from '../settings';
 import { useDocumentState, useDocumentActions } from './hooks/useDocument';
 import { useSettingsState, useSettingsActions } from './hooks/useSettings';
 
-import type { PromptExploderBenchmarkSuite, PromptExploderSegment } from '../types';
+import type {
+  PromptExploderBenchmarkSuggestion,
+  PromptExploderBenchmarkSuite,
+  PromptExploderSegment,
+} from '../types';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -200,7 +203,7 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
     const defaultCaseId = defaultCustomBenchmarkCaseIdFromPrompt(prompt);
     const caseId = customCaseDraftId.trim() || defaultCaseId;
     const expectedTypes = (documentState?.segments.length
-      ? [...new Set(documentState.segments.map((segment) => segment.type))]
+      ? [...new Set(documentState.segments.map((segment: PromptExploderSegment) => segment.type))]
       : ['assigned_text']) as PromptExploderSegment['type'][];
     const minSegments = Math.max(1, documentState?.segments.length ?? 1);
     const parsed = parseCustomBenchmarkCasesDraft(customBenchmarkCasesDraft);

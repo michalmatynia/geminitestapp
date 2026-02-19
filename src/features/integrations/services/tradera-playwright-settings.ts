@@ -101,7 +101,7 @@ export const resolveConnectionPlaywrightSettings = async (
       : '',
     emulateDevice:
       connection.playwrightEmulateDevice ?? defaultPlaywrightSettings.emulateDevice,
-    deviceName: connection.playwrightDeviceName ?? defaultPlaywrightSettings.deviceName,
+    deviceName: connection.playwrightDeviceName ?? defaultPlaywrightSettings.deviceName ?? 'Desktop Chrome',
   };
 
   const personaId = connection.playwrightPersonaId?.trim();

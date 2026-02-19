@@ -51,7 +51,7 @@ export async function tick(): Promise<void> {
     try {
       await runRepository.createRunEvent({
         runId,
-        level,
+        level: level === 'warning' ? 'warn' : level,
         message,
       });
     } catch {

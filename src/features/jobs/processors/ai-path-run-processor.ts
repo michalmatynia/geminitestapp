@@ -192,7 +192,7 @@ export const processRun = async (run: AiPathRunRecord): Promise<ProcessRunResult
       }
       await repo.createRunEvent({
         runId: run.id,
-        level: 'warning',
+        level: 'warn',
         message: `Run failed. Retrying in ${Math.round(delayMs / 1000)}s.`,
         metadata: { retryCount, nextRetryAt: nextRetryAt.toISOString() },
       });

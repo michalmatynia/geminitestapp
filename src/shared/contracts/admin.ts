@@ -90,11 +90,11 @@ export type UpdateAdminSettingsDto = Partial<CreateAdminSettingsDto>;
 export interface AdminNavItemDto {
   id: string;
   label: string;
-  href?: string;
-  exact?: boolean;
-  keywords?: string[];
-  sectionColor?: string;
-  children?: AdminNavItemDto[];
+  href?: string | undefined;
+  exact?: boolean | undefined;
+  keywords?: string[] | undefined;
+  sectionColor?: string | undefined;
+  children?: AdminNavItemDto[] | undefined;
 }
 
 export const adminNavItemSchema: z.ZodType<AdminNavItemDto> = z.lazy(() =>
@@ -127,9 +127,9 @@ export const adminMenuColorOptionSchema = z.object({
 
 export interface AdminMenuCustomNodeDto {
   id: string;
-  label?: string;
-  href?: string;
-  children?: AdminMenuCustomNodeDto[];
+  label?: string | undefined;
+  href?: string | undefined;
+  children?: AdminMenuCustomNodeDto[] | undefined;
 }
 
 export const adminMenuCustomNodeSchema = z.lazy(() =>

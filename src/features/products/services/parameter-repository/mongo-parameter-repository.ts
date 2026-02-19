@@ -63,6 +63,7 @@ const normalizeOptionLabels = (input: unknown): string[] => {
 
 const toParameterDomain = (doc: ProductParameterDoc): ProductParameter => ({
   id: doc._id.toString(),
+  name: doc.name_en,
   name_en: doc.name_en,
   name_pl: doc.name_pl ?? null,
   name_de: doc.name_de ?? null,

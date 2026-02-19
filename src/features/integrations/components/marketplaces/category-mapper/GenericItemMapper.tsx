@@ -5,7 +5,7 @@ import { useEffect, useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 import { logClientError } from '@/features/observability';
-import { Button, SectionHeader, DataTable, SelectSimple } from '@/shared/ui';
+import { Button, SelectSimple, StandardDataTablePanel } from '@/shared/ui';
 import { useToast } from '@/shared/ui/toast';
 
 import { usePendingExternalMappings } from './usePendingExternalMappings';
@@ -214,12 +214,28 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
     externalOptions
   ]);
 
+  const alerts = (
+    <div className='flex gap-6 text-sm mb-4'>
+      <div className='text-gray-400'>
+        Total: <span className='text-white'>{stats.total}</span>
+      </div>
+      <div className='text-gray-400'>
+        Mapped: <span className='text-emerald-400'>{stats.mapped}</span>
+      </div>
+      {stats.pending > 0 && (
+        <div className='text-gray-400'>
+          Unsaved changes: <span className='text-yellow-400'>{stats.pending}</span>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className='space-y-4 border-t border-border/60 pt-6'>
-      <SectionHeader
+      <StandardDataTablePanel
         title={title}
         description={`Connection: ${connectionName}`}
-        actions={
+        headerActions={
           <div className='flex items-center gap-3'>
             <Button
               variant='outline'
@@ -240,36 +256,19 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
             </Button>
           </div>
         }
+        alerts={alerts}
+        columns={columns}
+        data={sortedInternalItems}
+        isLoading={loading}
+        getRowId={(row) => getInternalId(row)}
+        maxHeight='60vh'
+        stickyHeader
+        getRowClassName={(row: any) => {
+          const hasPendingChange = pendingMappings.size > 0 && pendingMappings.has(getInternalId(row.original));
+          return hasPendingChange ? 'bg-amber-500/5 hover:bg-amber-500/10' : '';
+        }}
+        variant='flat'
       />
-
-      <div className='flex gap-6 text-sm'>
-        <div className='text-gray-400'>
-          Total: <span className='text-white'>{stats.total}</span>
-        </div>
-        <div className='text-gray-400'>
-          Mapped: <span className='text-emerald-400'>{stats.mapped}</span>
-        </div>
-        {stats.pending > 0 && (
-          <div className='text-gray-400'>
-            Unsaved changes: <span className='text-yellow-400'>{stats.pending}</span>
-          </div>
-        )}
-      </div>
-
-      <div className='rounded-md border border-border bg-gray-950/20'>
-        <DataTable
-          columns={columns}
-          data={sortedInternalItems}
-          isLoading={loading}
-          getRowId={(row) => getInternalId(row)}
-          maxHeight='60vh'
-          stickyHeader
-          getRowClassName={(row: { original: TInternal }) => {
-            const hasPendingChange = pendingMappings.size > 0 && pendingMappings.has(getInternalId(row.original));
-            return hasPendingChange ? 'bg-amber-500/5 hover:bg-amber-500/10' : '';
-          }}
-        />
-      </div>
     </div>
   );
 }

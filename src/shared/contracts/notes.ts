@@ -145,10 +145,10 @@ export const noteCategoryWithChildrenSchema: z.ZodType<NoteCategoryWithChildrenD
  */
 export interface NoteCategoryRecordWithChildrenDto extends NoteCategoryDto {
   children: NoteCategoryRecordWithChildrenDto[];
-  notes?: NoteDto[];
+  notes?: NoteDto[] | undefined;
   _count?: {
     notes: number;
-  };
+  } | undefined;
 }
 
 export const noteCategoryRecordWithChildrenSchema: z.ZodType<NoteCategoryRecordWithChildrenDto> = noteCategorySchema.extend({

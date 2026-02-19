@@ -8,7 +8,6 @@ import type {
   BaseImportParameterImportSummary,
   BaseImportItemStatus,
   BaseImportMode,
-  BaseImportPreflightIssue,
   BaseImportRunParams,
   BaseImportRunStatus,
 } from '@/features/integrations/types/base-import-runs';

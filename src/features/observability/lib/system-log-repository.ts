@@ -26,19 +26,20 @@ const toMongoId = (id: string): ObjectId | string => {
 const SYSTEM_LOGS_COLLECTION = 'system_logs';
 
 type MongoSystemLogDoc = {
-  _id?: string | ObjectId;
-  id?: string;
-  level?: string;
-  message?: string;
-  source?: string | null;
-  context?: Record<string, unknown> | null;
-  stack?: string | null;
-  path?: string | null;
-  method?: string | null;
-  statusCode?: number | null;
-  requestId?: string | null;
-  userId?: string | null;
-  createdAt?: Date;
+  _id?: string | ObjectId | undefined;
+  id?: string | undefined;
+  level?: string | undefined;
+  message?: string | undefined;
+  source?: string | null | undefined;
+  context?: Record<string, unknown> | null | undefined;
+  stack?: string | null | undefined;
+  path?: string | null | undefined;
+  method?: string | null | undefined;
+  statusCode?: number | null | undefined;
+  requestId?: string | null | undefined;
+  userId?: string | null | undefined;
+  createdAt?: Date | undefined;
+  updatedAt?: Date | null | undefined;
 };
 
 const isMissingPrismaTable = (error: unknown): boolean =>
@@ -48,9 +49,11 @@ const isMissingPrismaTable = (error: unknown): boolean =>
 const normalizeLogRecord = (record: SystemLogRecord): SystemLogRecord => ({
   ...record,
   createdAt:
-    record.createdAt instanceof Date
-      ? record.createdAt
-      : new Date(record.createdAt),
+    (record.createdAt as any) instanceof Date
+      ? (record.createdAt as unknown as Date).toISOString()
+      : typeof record.createdAt === 'string'
+        ? record.createdAt
+        : new Date(record.createdAt).toISOString(),
 });
 
 const toSystemLogRecord = (doc: MongoSystemLogDoc): SystemLogRecord => ({
@@ -65,7 +68,8 @@ const toSystemLogRecord = (doc: MongoSystemLogDoc): SystemLogRecord => ({
   statusCode: doc.statusCode ?? null,
   requestId: doc.requestId ?? null,
   userId: doc.userId ?? null,
-  createdAt: doc.createdAt ?? new Date(),
+  createdAt: (doc.createdAt ?? new Date()).toISOString(),
+  updatedAt: null,
 });
 
 const buildPrismaWhere = (
@@ -251,7 +255,7 @@ const getMongoSystemLogMetrics = async (
       last7Days: 0,
       topSources: [],
       topPaths: [],
-      generatedAt: now,
+      generatedAt: now.toISOString(),
     };
   }
 
@@ -286,7 +290,7 @@ const getMongoSystemLogMetrics = async (
     last7Days,
     topSources,
     topPaths,
-    generatedAt: now,
+    generatedAt: now.toISOString(),
   };
 };
 
@@ -294,7 +298,7 @@ export async function createSystemLog(
   input: CreateSystemLogInput,
 ): Promise<SystemLogRecord> {
   const provider = await getAppDbProvider();
-  const payload = {
+  const payload: SystemLogRecord = {
     id: randomUUID(),
     level: input.level ?? 'error',
     message: input.message,
@@ -306,7 +310,8 @@ export async function createSystemLog(
     statusCode: input.statusCode ?? null,
     requestId: input.requestId ?? null,
     userId: input.userId ?? null,
-    createdAt: input.createdAt ?? new Date(),
+    createdAt: (input.createdAt ?? new Date()).toISOString(),
+    updatedAt: null,
   };
 
   if (provider === 'mongodb') {
@@ -316,7 +321,9 @@ export async function createSystemLog(
       .insertOne({
         _id: toMongoId(payload.id),
         ...payload,
-      });
+        createdAt: new Date(payload.createdAt),
+        updatedAt: payload.updatedAt ? new Date(payload.updatedAt) : null,
+      } as any);
     return normalizeLogRecord(payload);
   }
 
@@ -357,8 +364,9 @@ export async function createSystemLog(
       ...created,
       level: created.level as SystemLogLevel,
       context: (created.context as Record<string, unknown> | null) ?? null,
-      createdAt: created.createdAt,
-    } as SystemLogRecord);
+      createdAt: created.createdAt.toISOString(),
+      updatedAt: (created as any).updatedAt?.toISOString() ?? null,
+    } as any);
   } catch (error) {
     if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {
       const mongo = await getMongoDb();
@@ -367,27 +375,14 @@ export async function createSystemLog(
         .insertOne({
           _id: toMongoId(payload.id),
           ...payload,
-        });
-      return normalizeLogRecord(payload as SystemLogRecord);
+          createdAt: new Date(payload.createdAt),
+          updatedAt: payload.updatedAt ? new Date(payload.updatedAt) : null,
+        } as any);
+      return normalizeLogRecord(payload as any);
     }
     throw error;
   }
 }
-
-type PrismaSystemLog = {
-  id: string;
-  level: string;
-  message: string;
-  source: string | null;
-  context: Prisma.JsonValue | null;
-  stack: string | null;
-  path: string | null;
-  method: string | null;
-  statusCode: number | null;
-  requestId: string | null;
-  userId: string | null;
-  createdAt: Date;
-};
 
 export async function listSystemLogs(
   input: ListSystemLogsInput,
@@ -428,13 +423,15 @@ export async function listSystemLogs(
       }),
     ]);
 
-    const logs = (rows as unknown as PrismaSystemLog[]).map(
-      (row: PrismaSystemLog) =>
+    const logs = (rows as any[]).map(
+      (row: any) =>
         normalizeLogRecord({
           ...row,
           level: row.level as SystemLogLevel,
           context: (row.context as Record<string, unknown> | null) ?? null,
-        } as SystemLogRecord),
+          createdAt: row.createdAt.toISOString(),
+          updatedAt: row.updatedAt?.toISOString() ?? null,
+        } as any),
     );
 
     return { logs, total, page, pageSize };
@@ -481,7 +478,9 @@ export async function getSystemLogById(id: string): Promise<SystemLogRecord | nu
       ...row,
       level: row.level as SystemLogLevel,
       context: (row.context as Record<string, unknown> | null) ?? null,
-    } as SystemLogRecord);
+      createdAt: row.createdAt.toISOString(),
+      updatedAt: (row as any).updatedAt?.toISOString() ?? null,
+    } as any);
   } catch (error) {
     if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {
       const mongo = await getMongoDb();
@@ -593,7 +592,7 @@ export async function getSystemLogMetrics(
       last7Days,
       topSources,
       topPaths,
-      generatedAt: now,
+      generatedAt: now.toISOString(),
     };
   } catch (error) {
     if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {

@@ -15,7 +15,7 @@ import {
 } from '../manual-bindings';
 import { useDocumentState, useDocumentActions } from './hooks/useDocument';
 
-import type { PromptExploderBindingType } from '../types';
+import type { PromptExploderBindingType, PromptExploderSubsection } from '../types';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -69,7 +69,7 @@ export function BindingsProvider({ children }: { children: React.ReactNode }): R
     const segment = segmentById.get(bindingDraft.fromSegmentId);
     const options = [{ value: '', label: 'Whole segment' }];
     if (!segment) return options;
-    segment.subsections.forEach((subsection) => {
+    segment.subsections.forEach((subsection: PromptExploderSubsection) => {
       options.push({
         value: subsection.id,
         label: promptExploderFormatSubsectionLabel(subsection),
@@ -82,7 +82,7 @@ export function BindingsProvider({ children }: { children: React.ReactNode }): R
     const segment = segmentById.get(bindingDraft.toSegmentId);
     const options = [{ value: '', label: 'Whole segment' }];
     if (!segment) return options;
-    segment.subsections.forEach((subsection) => {
+    segment.subsections.forEach((subsection: PromptExploderSubsection) => {
       options.push({
         value: subsection.id,
         label: promptExploderFormatSubsectionLabel(subsection),

@@ -399,7 +399,6 @@ export const productWithImagesSchema = productSchema
   .extend({
     images: z.array(productImageRecordSchema),
     catalogs: z.array(productCatalogRecordSchema),
-    categoryId: z.string().nullable().optional(),
     tags: z.array(productTagRelationSchema).optional(),
     producers: z.array(productProducerRelationSchema).optional(),
   });
@@ -897,4 +896,8 @@ export const createProductDraftSchema = productDraftSchema.omit({
 });
 
 export type CreateProductDraftDto = z.infer<typeof createProductDraftSchema>;
+
+export const updateProductDraftSchema = createProductDraftSchema.partial();
+
 export type UpdateProductDraftDto = Partial<CreateProductDraftDto>;
+

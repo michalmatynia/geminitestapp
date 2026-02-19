@@ -4,12 +4,12 @@ import {
 } from '@/shared/errors/error-classifier';
 import {
   ERROR_CATEGORY,
-  type ErrorCategory as ErrorCategoryType,
+  type ErrorCategory,
   type ErrorContext,
 } from '@/shared/types/observability';
 
-export const ErrorCategory = ERROR_CATEGORY;
-export type { ErrorCategoryType as ErrorCategory, ErrorContext };
+export const ErrorCategories = ERROR_CATEGORY;
+export type { ErrorCategory, ErrorContext };
 
 /**
  * Centralized error handling system.
@@ -158,10 +158,10 @@ export const ErrorSystem = {
     const message = error instanceof Error ? error.message : String(error);
     const stack = error instanceof Error ? error.stack : undefined;
     const contextCategory = context.category;
-    const category: ErrorCategoryType =
+    const category: ErrorCategory =
       typeof contextCategory === 'string' &&
-      (Object.values(ErrorCategory) as string[]).includes(contextCategory)
-        ? (contextCategory as ErrorCategoryType)
+      (Object.values(ErrorCategories) as string[]).includes(contextCategory)
+        ? (contextCategory as ErrorCategory)
         : classifySharedError(error);
     
     return {

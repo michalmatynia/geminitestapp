@@ -1,7 +1,7 @@
 'use client';
 
 import { ColumnDef, ExpandedState, Updater } from '@tanstack/react-table';
-import { ChevronDown, ChevronRight, Download, RefreshCw, Save } from 'lucide-react';
+import { ChevronDown, ChevronRight, Download, RefreshCw, Save, Check } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
@@ -209,11 +209,11 @@ export function CategoryMapperTable(): React.JSX.Element {
         </div>
       }
       filters={(
-        <div className='space-y-4'>
+        <div className='mb-2'>
           <CategoryMapperCatalogSelector />
-          <CategoryMapperStats />
         </div>
       )}
+      alerts={<CategoryMapperStats />}
       isLoading={isLoading}
       variant='flat'
       columns={columns}

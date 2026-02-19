@@ -11,42 +11,42 @@ import type { ColumnDef, ExpandedState, OnChangeFn, Row } from '@tanstack/react-
 
 export interface StandardDataTablePanelProps<TData> {
   // ListPanel props
-  title?: string;
-  description?: string;
-  headerActions?: React.ReactNode;
-  header?: React.ReactNode;
+  title?: string | undefined;
+  description?: string | undefined;
+  headerActions?: React.ReactNode | undefined;
+  header?: React.ReactNode | undefined;
   refresh?: {
     onRefresh: () => void;
     isRefreshing: boolean;
-  };
-  alerts?: React.ReactNode;
-  filters?: React.ReactNode;
-  actions?: React.ReactNode;
-  footer?: React.ReactNode;
-  className?: string;
-  contentClassName?: string;
-  variant?: 'default' | 'flat';
+  } | undefined;
+  alerts?: React.ReactNode | undefined;
+  filters?: React.ReactNode | undefined;
+  actions?: React.ReactNode | undefined;
+  footer?: React.ReactNode | undefined;
+  className?: string | undefined;
+  contentClassName?: string | undefined;
+  variant?: 'default' | 'flat' | undefined;
   
   // DataTable props
   columns: ColumnDef<TData, any>[];
   data: TData[];
-  isLoading?: boolean;
-  loadingMessage?: string;
-  emptyState?: React.ReactNode;
-  getRowId?: (row: TData) => string | number;
+  isLoading?: boolean | undefined;
+  loadingMessage?: string | undefined;
+  emptyState?: React.ReactNode | undefined;
+  getRowId?: (row: TData) => string | number | undefined;
   getRowClassName?: (row: Row<TData>) => string | undefined;
-  maxHeight?: string | number;
-  stickyHeader?: boolean;
-  expanded?: ExpandedState;
-  onExpandedChange?: OnChangeFn<ExpandedState>;
-  renderRowDetails?: (props: { row: Row<TData> }) => React.ReactNode;
+  maxHeight?: string | number | undefined;
+  stickyHeader?: boolean | undefined;
+  expanded?: ExpandedState | undefined;
+  onExpandedChange?: OnChangeFn<ExpandedState> | undefined;
+  renderRowDetails?: (props: { row: Row<TData> }) => React.ReactNode | undefined;
   
   /**
    * Whether to use the full ListPanel loading state (centered spinner) 
    * or the DataTable inline loading state (skeleton/spinner in table).
    * Defaults to 'panel' for true isLoading.
    */
-  loadingVariant?: 'panel' | 'table';
+  loadingVariant?: 'panel' | 'table' | undefined;
 }
 
 /**

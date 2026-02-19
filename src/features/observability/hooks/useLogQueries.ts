@@ -26,7 +26,7 @@ export function useSystemLogs(filters: LogFilters): SingleQuery<SystemLogsRespon
         params: {
           page: filters.page,
           pageSize: filters.pageSize,
-          level: filters.level !== 'all' ? filters.level : undefined,
+          level: filters.level || undefined,
           query: filters.query?.trim() || undefined,
           source: filters.source?.trim() || undefined,
           method: filters.method?.trim() || undefined,
@@ -77,7 +77,7 @@ export function useSystemLogMetrics(filters: Omit<LogFilters, 'page' | 'pageSize
     queryFn: () => 
       api.get<SystemLogMetricsResponse>('/api/system/logs/metrics', {
         params: {
-          level: filters.level !== 'all' ? filters.level : undefined,
+          level: filters.level || undefined,
           query: filters.query?.trim() || undefined,
           source: filters.source?.trim() || undefined,
           method: filters.method?.trim() || undefined,

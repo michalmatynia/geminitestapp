@@ -32,9 +32,9 @@ export type {
 
 export type CurrencyOption = CurrencyDto;
 
-export type CountryOption = CountryDto;
+export type CountryOption = CountryWithCurrenciesDto;
 
-export type Language = LanguageDto;
+export type Language = LanguageWithCountriesDto;
 
 // Full record types with timestamps for API responses
 

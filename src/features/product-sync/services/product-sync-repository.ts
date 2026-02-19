@@ -279,9 +279,11 @@ const readProfiles = async (): Promise<ProductSyncProfile[]> => {
   return items
     .map((entry: unknown) => normalizeProfile(entry))
     .filter((entry: ProductSyncProfile | null): entry is ProductSyncProfile => Boolean(entry))
-    .sort((a: ProductSyncProfile, b: ProductSyncProfile) =>
-      b.updatedAt.localeCompare(a.updatedAt)
-    );
+    .sort((a: ProductSyncProfile, b: ProductSyncProfile) => {
+      const bDate = b.updatedAt ?? '';
+      const aDate = a.updatedAt ?? '';
+      return bDate.localeCompare(aDate);
+    });
 };
 
 const writeProfiles = async (profiles: ProductSyncProfile[]): Promise<void> => {

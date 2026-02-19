@@ -203,7 +203,6 @@ export function AdminFilemakerOrganizationEditPage(): React.JSX.Element {
                 router.push('/admin/filemaker/organizations');
               }}
               cancelText='Back to Organizations'
-              showSave={false}
             />
           )}
         />

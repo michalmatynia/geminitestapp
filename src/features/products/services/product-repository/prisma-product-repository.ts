@@ -337,7 +337,7 @@ const toProductRecord = (product: FullPrismaProduct): ProductWithImages => {
     noteIds: product.noteIds ?? [],
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),
-    categoryId: resolveCategoryId(product),
+    categoryId: resolveCategoryId(product) ?? null,
     tags: product.tags?.map(t => ({ 
       productId: t.productId,
       tagId: t.tagId,

@@ -16,6 +16,7 @@ type CopyButtonProps = {
   timeout?: number;
   showText?: boolean;
   disabled?: boolean | undefined;
+  children?: React.ReactNode;
 };
 
 export function CopyButton({
@@ -26,6 +27,7 @@ export function CopyButton({
   timeout = 2000,
   showText = false,
   disabled,
+  children,
 }: CopyButtonProps): React.JSX.Element {
   const [isCopied, setIsCopied] = useState(false);
 
@@ -66,12 +68,16 @@ export function CopyButton({
       disabled={disabled}
       title={isCopied ? 'Copied!' : 'Copy to clipboard'}
     >
-      {isCopied ? (
-        <Check className={showText ? 'mr-2 h-4 w-4' : 'h-4 w-4'} />
-      ) : (
-        <Copy className={showText ? 'mr-2 h-4 w-4' : 'h-4 w-4'} />
+      {children ?? (
+        <>
+          {isCopied ? (
+            <Check className={showText ? 'mr-2 h-4 w-4' : 'h-4 w-4'} />
+          ) : (
+            <Copy className={showText ? 'mr-2 h-4 w-4' : 'h-4 w-4'} />
+          )}
+          {showText && (isCopied ? 'Copied' : 'Copy')}
+        </>
       )}
-      {showText && (isCopied ? 'Copied' : 'Copy')}
     </Button>
   );
 }

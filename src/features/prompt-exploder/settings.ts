@@ -1,5 +1,3 @@
-import { z } from 'zod';
-
 import {
   promptExploderSettingsSchema,
 } from '@/shared/contracts/prompt-exploder';

@@ -48,8 +48,8 @@ function mapToRecord(record: {
     externalTagId: record.externalTagId,
     internalTagId: record.internalTagId,
     isActive: record.isActive,
-    createdAt: record.createdAt,
-    updatedAt: record.updatedAt,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
   };
 }
 
@@ -66,17 +66,17 @@ const toDetails = (record: EnrichedTagMapping): TagMappingWithDetails => ({
   externalTagId: record.externalTagId,
   internalTagId: record.internalTagId,
   isActive: record.isActive,
-  createdAt: record.createdAt,
-  updatedAt: record.updatedAt,
+  createdAt: record.createdAt.toISOString(),
+  updatedAt: record.updatedAt.toISOString(),
   externalTag: {
     id: record.externalTag.id,
     connectionId: record.externalTag.connectionId,
     externalId: record.externalTag.externalId,
     name: record.externalTag.name,
     metadata: record.externalTag.metadata as Record<string, unknown> | null,
-    fetchedAt: record.externalTag.fetchedAt,
-    createdAt: record.externalTag.createdAt,
-    updatedAt: record.externalTag.updatedAt,
+    fetchedAt: record.externalTag.fetchedAt.toISOString(),
+    createdAt: record.externalTag.createdAt.toISOString(),
+    updatedAt: record.externalTag.updatedAt.toISOString(),
   },
   internalTag: {
     id: record.internalTag.id,

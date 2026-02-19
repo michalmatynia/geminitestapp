@@ -59,7 +59,7 @@ export const integrationService: IntegrationRepository = {
     repoCall('getConnectionByIdAndIntegration', id, integrationId),
   createConnection: async (
     integrationId: string,
-    input: { name: string; username: string; password: string }
+    input: Record<string, unknown>
   ): Promise<IntegrationConnectionRecord> => {
     const result = await repoCall('createConnection', integrationId, input);
     void logActivity({

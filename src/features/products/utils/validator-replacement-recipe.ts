@@ -124,13 +124,6 @@ const normalizeRecipe = (raw: unknown): DynamicReplacementRecipe | null => {
     ROUND_OPS.has(source['roundMode'] as DynamicReplacementRoundMode)
       ? (source['roundMode'] as DynamicReplacementRoundMode)
       : 'none';
-  const padLength =
-    typeof source['sizeLength'] === 'number' &&
-    Number.isFinite(source['sizeLength']) &&
-    source['sizeLength'] > 0
-      ? Math.floor(source['sizeLength'])
-      : null; // Wait, recipe schema used padLength? Checking previous file read.
-  // Re-reading: DynamicReplacementRecipe had padLength.
   const padChar =
     typeof source['padChar'] === 'string' && source['padChar'].length > 0
       ? source['padChar'].charAt(0)

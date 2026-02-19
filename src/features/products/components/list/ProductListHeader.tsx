@@ -4,7 +4,6 @@ import {
   PlusIcon,
   Package,
 } from 'lucide-react';
-import Link from 'next/link';
 import { memo, type ReactNode } from 'react';
 
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';

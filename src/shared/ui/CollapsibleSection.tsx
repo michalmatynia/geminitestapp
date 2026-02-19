@@ -17,15 +17,15 @@ interface CollapsibleSectionProps {
   description?: React.ReactNode;
   actions?: React.ReactNode;
   children: React.ReactNode;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  className?: string;
-  triggerClassName?: string;
-  headerClassName?: string;
-  titleClassName?: string;
-  contentClassName?: string;
-  iconClassName?: string;
-  variant?: 'default' | 'card' | 'subtle';
+  open?: boolean | undefined;
+  onOpenChange?: ((open: boolean) => void) | undefined;
+  className?: string | undefined;
+  triggerClassName?: string | undefined;
+  headerClassName?: string | undefined;
+  titleClassName?: string | undefined;
+  contentClassName?: string | undefined;
+  iconClassName?: string | undefined;
+  variant?: 'default' | 'card' | 'subtle' | undefined;
 }
 
 export function CollapsibleSection({

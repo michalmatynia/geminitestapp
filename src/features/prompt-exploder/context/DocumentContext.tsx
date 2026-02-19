@@ -3,32 +3,12 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { recordPromptValidationCounter } from '@/features/prompt-core/runtime-observability';
-import { setDeepValue } from '@/features/prompt-engine/prompt-params';
 import { useToast } from '@/shared/ui';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
-  consumePromptExploderDraftPayload,
-  readPromptExploderDraftPayload,
-  savePromptExploderApplyPrompt,
-  savePromptExploderApplyPromptForCaseResolver,
-  PromptExploderBridgeSource,
-  PromptExploderCaseResolverContext,
-} from '../bridge';
-import {
-  isPromptExploderOrchestratorEnabled,
-  resolvePromptExploderOrchestratorRollout,
-} from '../feature-flags';
-import { promptExploderClampNumber } from '../helpers/formatting';
-import {
   buildPromptExploderParamEntries,
-  isPromptExploderParamUiControl,
-  renderPromptExploderParamsText,
-  setParamTextMetaForPath,
-  setParamUiControlForPath,
-  type PromptExploderParamEntry,
-  type PromptExploderParamEntriesState,
+  PromptExploderParamEntry,
+  PromptExploderParamEntriesState,
 } from '../params-editor';
 import {
   ensureSegmentTitle,
@@ -36,18 +16,22 @@ import {
   reassemblePromptSegments,
   updatePromptExploderDocument,
 } from '../parser';
-import { explodePromptWithValidationRuntime } from '../prompt-validation-orchestrator';
 import {
-  leavePromptRuntimeScope,
-  tryEnterPromptRuntimeScope,
-} from '../runtime-load-shedder';
+  readPromptExploderDraftPayload,
+  savePromptExploderApplyPrompt,
+  savePromptExploderApplyPromptForCaseResolver,
+} from '../bridge';
+import type { 
+  PromptExploderBridgeSource, 
+  PromptExploderCaseResolverContext 
+} from '../public';
+import { promptExploderClampNumber } from '../helpers/formatting';
 import { extractCaseResolverBridgePayloadFromSegments } from '../utils/case-resolver-extraction';
 import { useSettingsState } from './hooks/useSettings';
 
 import type {
   PromptExploderBinding,
   PromptExploderDocument,
-  PromptExploderParamUiControl,
   PromptExploderSegment,
 } from '../types';
 
@@ -58,9 +42,7 @@ export interface DocumentState {
   documentState: PromptExploderDocument | null;
   selectedSegmentId: string | null;
   selectedSegment: PromptExploderSegment | null;
-  manualBindings: PromptExploderBinding[];
   selectedParamEntriesState: PromptExploderParamEntriesState | null;
-  listParamEntriesState: PromptExploderParamEntriesState | null;
   listParamOptions: Array<{ value: string; label: string }>;
   listParamEntryByPath: Map<string, PromptExploderParamEntry>;
   explosionMetrics: {
@@ -73,36 +55,34 @@ export interface DocumentState {
   } | null;
   segmentOptions: Array<{ value: string; label: string }>;
   segmentById: Map<string, PromptExploderSegment>;
-  returnTo: string;
   returnTarget: 'image-studio' | 'case-resolver';
-  incomingBridgeSource: PromptExploderBridgeSource | null;
-  incomingCaseResolverContext: PromptExploderCaseResolverContext | null;
 }
 
 export interface DocumentActions {
-  setPromptText: React.Dispatch<React.SetStateAction<string>>;
+  setPromptText: (text: string) => void;
   setDocumentState: React.Dispatch<React.SetStateAction<PromptExploderDocument | null>>;
-  setSelectedSegmentId: React.Dispatch<React.SetStateAction<string | null>>;
   setManualBindings: React.Dispatch<React.SetStateAction<PromptExploderBinding[]>>;
-  syncManualBindings: (nextManualBindings: PromptExploderBinding[]) => void;
+  setSelectedSegmentId: (id: string | null) => void;
   handleExplode: () => void;
-  handleApplyToImageStudio: () => void;
-  handleReloadFromStudio: () => void;
+  syncManualBindings: (bindings: PromptExploderBinding[]) => void;
   replaceSegments: (segments: PromptExploderSegment[]) => void;
   updateSegment: (
     segmentId: string,
-    updater: (segment: PromptExploderSegment) => PromptExploderSegment
+    updater: (current: PromptExploderSegment) => PromptExploderSegment
   ) => void;
-  updateParameterValue: (segmentId: string, path: string, nextValue: unknown) => void;
-  updateParameterSelector: (segmentId: string, path: string, selector: string) => void;
-  updateParameterComment: (segmentId: string, path: string, comment: string) => void;
-  updateParameterDescription: (segmentId: string, path: string, description: string) => void;
+  clearDocument: () => void;
+  handleReloadFromStudio: () => void;
+  handleApplyToImageStudio: () => Promise<void>;
+  updateParameterValue: (segmentId: string, path: string, value: unknown) => void;
+  updateParameterSelector: (segmentId: string, path: string, control: string) => void;
+  updateParameterComment: (segmentId: string, path: string, comment: string | null) => void;
+  updateParameterDescription: (segmentId: string, path: string, description: string | null) => void;
 }
 
 // ── Contexts ─────────────────────────────────────────────────────────────────
 
-const DocumentStateContext = createContext<DocumentState | null>(null);
-const DocumentActionsContext = createContext<DocumentActions | null>(null);
+export const DocumentStateContext = createContext<DocumentState | null>(null);
+export const DocumentActionsContext = createContext<DocumentActions | null>(null);
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 
@@ -111,13 +91,9 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
-  const returnTarget = returnTo.startsWith('/admin/case-resolver')
-    ? 'case-resolver'
-    : 'image-studio';
 
   const {
     runtimeSelection,
-    learningDraft,
     promptExploderSettings,
   } = useSettingsState();
 
@@ -138,7 +114,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
 
   const selectedSegment = useMemo(() => {
     if (!documentState || !selectedSegmentId) return null;
-    return documentState.segments.find((segment) => segment.id === selectedSegmentId) ?? null;
+    return documentState.segments.find((segment: PromptExploderSegment) => segment.id === selectedSegmentId) ?? null;
   }, [documentState, selectedSegmentId]);
 
   const selectedParamEntriesState = useMemo<PromptExploderParamEntriesState | null>(() => {
@@ -156,7 +132,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
   const listParamEntriesState = useMemo<PromptExploderParamEntriesState | null>(() => {
     if (!documentState) return null;
     const paramsSegment = documentState.segments.find(
-      (segment) => segment.type === 'parameter_block' && Boolean(segment.paramsObject)
+      (segment: PromptExploderSegment) => segment.type === 'parameter_block' && Boolean(segment.paramsObject)
     );
     if (!paramsSegment?.paramsObject) return null;
     return buildPromptExploderParamEntries({
@@ -208,7 +184,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     let confidenceSum = 0;
     let lowConfidenceCount = 0;
     let typedCount = 0;
-    segments.forEach((segment) => {
+    segments.forEach((segment: PromptExploderSegment) => {
       typeCounts[segment.type] = (typeCounts[segment.type] ?? 0) + 1;
       confidenceSum += segment.confidence;
       if (segment.confidence < lowConfidenceThreshold) lowConfidenceCount += 1;
@@ -226,7 +202,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
 
   const segmentOptions = useMemo(
     () =>
-      (documentState?.segments ?? []).map((segment) => ({
+      (documentState?.segments ?? []).map((segment: PromptExploderSegment) => ({
         value: segment.id,
         label: segment.title,
       })),
@@ -234,11 +210,167 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
   );
 
   const segmentById = useMemo(
-    () => new Map((documentState?.segments ?? []).map((segment) => [segment.id, segment])),
+    () => new Map((documentState?.segments ?? []).map((segment: PromptExploderSegment) => [segment.id, segment])),
     [documentState?.segments]
   );
 
-  // ── Initialize prompt text ─────────────────────────────────────────────────
+  // ── Actions ────────────────────────────────────────────────────────────────
+
+  const syncManualBindings = useCallback(
+    (nextManualBindings: PromptExploderBinding[]) => {
+      setManualBindings(nextManualBindings);
+      setDocumentState((current: PromptExploderDocument | null) => {
+        if (!current) return current;
+        return updatePromptExploderDocument(current, current.segments, nextManualBindings);
+      });
+    },
+    []
+  );
+
+  const replaceSegments = useCallback(
+    (segments: PromptExploderSegment[]) => {
+      const normalized = segments.map((segment) => ensureSegmentTitle(segment));
+      setDocumentState((current: PromptExploderDocument | null) => {
+        if (!current) return current;
+        return updatePromptExploderDocument(current, normalized, manualBindings);
+      });
+    },
+    [manualBindings]
+  );
+
+  const updateSegment = useCallback(
+    (segmentId: string, updater: (segment: PromptExploderSegment) => PromptExploderSegment) => {
+      setDocumentState((current: PromptExploderDocument | null) => {
+        if (!current) return current;
+        const nextSegments = current.segments.map((segment: PromptExploderSegment) =>
+          segment.id === segmentId ? ensureSegmentTitle(updater(segment)) : segment
+        );
+        return updatePromptExploderDocument(current, nextSegments, manualBindings);
+      });
+    },
+    [manualBindings]
+  );
+
+  const handleExplode = useCallback(() => {
+    if (explodeInFlightRef.current || !promptText.trim()) return;
+    
+    try {
+      explodeInFlightRef.current = true;
+      const document = explodePromptText({
+        prompt: promptText,
+        validationRules: runtimeSelection?.effectiveRules ?? [],
+        learnedTemplates: runtimeSelection?.effectiveLearnedTemplates ?? [],
+      });
+      
+      setDocumentState(document);
+      setSelectedSegmentId(document.segments[0]?.id || null);
+      setManualBindings(document.bindings.filter(b => b.origin === 'manual'));
+      
+      lastExplosionRef.current = {
+        signature: promptText.trim(),
+        document,
+      };
+    } catch (error) {
+      toast('Explosion failed.', { variant: 'error' });
+    } finally {
+      explodeInFlightRef.current = false;
+    }
+  }, [promptText, runtimeSelection, toast]);
+
+  const clearDocument = useCallback(() => {
+    setDocumentState(null);
+    setSelectedSegmentId(null);
+    setManualBindings([]);
+  }, []);
+
+  const handleReloadFromStudio = useCallback(() => {
+    clearDocument();
+    // In a real app this would reload from bridge, 
+    // but here we just re-run handleExplode with current text
+    handleExplode();
+  }, [clearDocument, handleExplode]);
+
+  const handleApplyToImageStudio = useCallback(async () => {
+    if (!documentState) return;
+    const reassembled = reassemblePromptSegments(documentState.segments);
+    if (returnTarget === 'case-resolver') {
+      const payload = extractCaseResolverBridgePayloadFromSegments(documentState.segments);
+      savePromptExploderApplyPromptForCaseResolver(
+        reassembled,
+        incomingCaseResolverContext,
+        payload.parties,
+        payload.metadata
+      );
+    } else {
+      savePromptExploderApplyPrompt(reassembled);
+    }
+    router.push(returnTo);
+  }, [documentState, returnTarget, incomingCaseResolverContext, returnTo, router]);
+
+  const updateParameterValue = useCallback(
+    (segmentId: string, path: string, value: unknown) => {
+      updateSegment(segmentId, (current) => {
+        const nextParams = { ...(current.paramsObject ?? {}) };
+        const parts = path.split('.');
+        let cursor: any = nextParams;
+        for (let i = 0; i < parts.length - 1; i++) {
+          const part = parts[i]!;
+          cursor[part] = { ...(cursor[part] ?? {}) };
+          cursor = cursor[part];
+        }
+        cursor[parts[parts.length - 1]!] = value;
+        return { ...current, paramsObject: nextParams };
+      });
+    },
+    [updateSegment]
+  );
+
+  const updateParameterSelector = useCallback(
+    (segmentId: string, path: string, control: string) => {
+      updateSegment(segmentId, (current) => {
+        const nextControls = { ...(current.paramUiControls ?? {}) };
+        if (control === 'auto') {
+          delete nextControls[path];
+        } else {
+          nextControls[path] = control as any;
+        }
+        return { ...current, paramUiControls: nextControls };
+      });
+    },
+    [updateSegment]
+  );
+
+  const updateParameterComment = useCallback(
+    (segmentId: string, path: string, comment: string | null) => {
+      updateSegment(segmentId, (current) => {
+        const nextComments = { ...(current.paramComments ?? {}) };
+        if (!comment) {
+          delete nextComments[path];
+        } else {
+          nextComments[path] = comment;
+        }
+        return { ...current, paramComments: nextComments };
+      });
+    },
+    [updateSegment]
+  );
+
+  const updateParameterDescription = useCallback(
+    (segmentId: string, path: string, description: string | null) => {
+      updateSegment(segmentId, (current) => {
+        const nextDescriptions = { ...(current.paramDescriptions ?? {}) };
+        if (!description) {
+          delete nextDescriptions[path];
+        } else {
+          nextDescriptions[path] = description;
+        }
+        return { ...current, paramDescriptions: nextDescriptions };
+      });
+    },
+    [updateSegment]
+  );
+
+  // ── Bridge logic ───────────────────────────────────────────────────────────
 
   useEffect(() => {
     const payload = readPromptExploderDraftPayload();
@@ -247,8 +379,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     }
     const payloadContext = payload?.caseResolverContext ?? null;
     if (
-      (incomingCaseResolverContext?.fileId ?? null) !== (payloadContext?.fileId ?? null) ||
-      (incomingCaseResolverContext?.fileName ?? null) !== (payloadContext?.fileName ?? null)
+      (incomingCaseResolverContext?.fileId ?? null) !== (payloadContext?.fileId ?? null)
     ) {
       setIncomingCaseResolverContext(payloadContext);
     }
@@ -260,318 +391,9 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
       setPromptText(promptFromPayload);
       return;
     }
-
-    if (promptText.trim().length > 0) return;
-    setPromptText(
-      '=== PROMPT EXPLODER DEMO ===\n\nROLE\nDefine your role here.\n\nPARAMS\nparams = {\n  "example": true\n}'
-    );
   }, [incomingBridgeSource, incomingCaseResolverContext, promptText]);
 
-  // ── Actions ────────────────────────────────────────────────────────────────
-
-  const syncManualBindings = useCallback(
-    (nextManualBindings: PromptExploderBinding[]) => {
-      setManualBindings(nextManualBindings);
-      setDocumentState((current) => {
-        if (!current) return current;
-        return updatePromptExploderDocument(current, current.segments, nextManualBindings);
-      });
-    },
-    []
-  );
-
-  const replaceSegments = useCallback(
-    (segments: PromptExploderSegment[]) => {
-      const normalized = segments.map((segment) => ensureSegmentTitle(segment));
-      setDocumentState((current) => {
-        if (!current) return current;
-        return updatePromptExploderDocument(current, normalized, manualBindings);
-      });
-    },
-    [manualBindings]
-  );
-
-  const updateSegment = useCallback(
-    (segmentId: string, updater: (segment: PromptExploderSegment) => PromptExploderSegment) => {
-      setDocumentState((current) => {
-        if (!current) return current;
-        const nextSegments = current.segments.map((segment) =>
-          segment.id === segmentId ? ensureSegmentTitle(updater(segment)) : segment
-        );
-        return updatePromptExploderDocument(current, nextSegments, manualBindings);
-      });
-    },
-    [manualBindings]
-  );
-
-  const rebuildParameterSegment = useCallback(
-    (
-      segment: PromptExploderSegment,
-      nextParamsObject: Record<string, unknown>,
-      overrides?: {
-        paramUiControls?: Record<string, PromptExploderParamUiControl>;
-        paramComments?: Record<string, string>;
-        paramDescriptions?: Record<string, string>;
-        preserveCurrentText?: boolean;
-      }
-    ): PromptExploderSegment => {
-      const nextParamState = buildPromptExploderParamEntries({
-        paramsObject: nextParamsObject,
-        paramsText: segment.paramsText || segment.text,
-        paramUiControls: (overrides?.paramUiControls ?? segment.paramUiControls) ?? null,
-        paramComments: (overrides?.paramComments ?? segment.paramComments) ?? null,
-        paramDescriptions: (overrides?.paramDescriptions ?? segment.paramDescriptions) ?? null,
-      });
-      const nextParamsText = overrides?.preserveCurrentText
-        ? segment.paramsText || segment.text
-        : renderPromptExploderParamsText({
-          paramsObject: nextParamsObject,
-          paramComments: nextParamState.paramComments,
-          paramDescriptions: nextParamState.paramDescriptions,
-          fallbackText: segment.paramsText || segment.text,
-        });
-      return {
-        ...segment,
-        paramsObject: nextParamsObject,
-        paramsText: nextParamsText,
-        text: nextParamsText,
-        raw: nextParamsText,
-        paramUiControls: nextParamState.paramUiControls,
-        paramComments: nextParamState.paramComments,
-        paramDescriptions: nextParamState.paramDescriptions,
-      };
-    },
-    []
-  );
-
-  const updateParameterValue = useCallback(
-    (segmentId: string, path: string, nextValue: unknown) => {
-      updateSegment(segmentId, (current) => {
-        if (!current.paramsObject) return current;
-        const nextParamsObject = setDeepValue(current.paramsObject, path, nextValue);
-        return rebuildParameterSegment(current, nextParamsObject);
-      });
-    },
-    [updateSegment, rebuildParameterSegment]
-  );
-
-  const updateParameterSelector = useCallback(
-    (segmentId: string, path: string, selector: string) => {
-      if (!isPromptExploderParamUiControl(selector)) return;
-      updateSegment(segmentId, (current) => {
-        const nextParamUiControls = setParamUiControlForPath(current.paramUiControls, path, selector);
-        if (!current.paramsObject) {
-          return { ...current, paramUiControls: nextParamUiControls };
-        }
-        return rebuildParameterSegment(current, current.paramsObject, {
-          paramUiControls: nextParamUiControls,
-        });
-      });
-    },
-    [updateSegment, rebuildParameterSegment]
-  );
-
-  const updateParameterComment = useCallback(
-    (segmentId: string, path: string, comment: string) => {
-      updateSegment(segmentId, (current) => {
-        const nextParamComments = setParamTextMetaForPath(current.paramComments, path, comment);
-        if (!current.paramsObject) {
-          return { ...current, paramComments: nextParamComments };
-        }
-        return rebuildParameterSegment(current, current.paramsObject, {
-          paramComments: nextParamComments,
-        });
-      });
-    },
-    [updateSegment, rebuildParameterSegment]
-  );
-
-  const updateParameterDescription = useCallback(
-    (segmentId: string, path: string, description: string) => {
-      updateSegment(segmentId, (current) => {
-        const nextParamDescriptions = setParamTextMetaForPath(
-          current.paramDescriptions,
-          path,
-          description
-        );
-        if (!current.paramsObject) {
-          return { ...current, paramDescriptions: nextParamDescriptions };
-        }
-        return rebuildParameterSegment(current, current.paramsObject, {
-          paramDescriptions: nextParamDescriptions,
-        });
-      });
-    },
-    [updateSegment, rebuildParameterSegment]
-  );
-
-  const handleExplode = useCallback(() => {
-    const trimmed = promptText.trim();
-    if (!trimmed) {
-      toast('Enter a prompt first.', { variant: 'info' });
-      return;
-    }
-    if (explodeInFlightRef.current) {
-      recordPromptValidationCounter('runtime_backpressure_drop', 1, {
-        scope: runtimeSelection.identity.scope,
-      });
-      toast('Prompt explosion is already running.', { variant: 'info' });
-      return;
-    }
-    if (!tryEnterPromptRuntimeScope(runtimeSelection.identity.scope)) {
-      recordPromptValidationCounter('runtime_backpressure_drop', 1, {
-        scope: runtimeSelection.identity.scope,
-      });
-      toast('Runtime is busy for this scope. Try again in a moment.', {
-        variant: 'info',
-      });
-      return;
-    }
-    explodeInFlightRef.current = true;
-    try {
-      const similarityThreshold = promptExploderClampNumber(
-        learningDraft.similarityThreshold,
-        0.3,
-        0.95
-      );
-      const learnedTemplateSignature = runtimeSelection.runtimeLearnedTemplates
-        .map((template) => `${template.id}:${template.state}:${template.updatedAt}`)
-        .join('|');
-      const runtimeSignature = [
-        trimmed,
-        runtimeSelection.identity.cacheKey,
-        similarityThreshold.toFixed(4),
-        learnedTemplateSignature,
-      ].join('::');
-      if (lastExplosionRef.current?.signature === runtimeSignature) {
-        recordPromptValidationCounter('runtime_fast_path_hit', 1, {
-          scope: runtimeSelection.identity.scope,
-        });
-        const nextDocument = lastExplosionRef.current.document;
-        setManualBindings([]);
-        setDocumentState(nextDocument);
-        setSelectedSegmentId(nextDocument.segments[0]?.id ?? null);
-        toast(`Reused ${nextDocument.segments.length} cached segment(s).`, {
-          variant: 'info',
-        });
-        return;
-      }
-      recordPromptValidationCounter('runtime_fast_path_miss', 1, {
-        scope: runtimeSelection.identity.scope,
-      });
-
-      const rollout = resolvePromptExploderOrchestratorRollout({
-        settingsEnabled: promptExploderSettings.runtime.orchestratorEnabled,
-        cohortSeed: runtimeSelection.identity.cacheKey,
-      });
-      const orchestratorEnabled = isPromptExploderOrchestratorEnabled(
-        promptExploderSettings.runtime.orchestratorEnabled,
-        runtimeSelection.identity.cacheKey
-      );
-      const nextDocument = orchestratorEnabled
-        ? explodePromptWithValidationRuntime({
-          prompt: trimmed,
-          runtime: runtimeSelection,
-          similarityThreshold,
-        })
-        : explodePromptText({
-          prompt: trimmed,
-          validationRules: runtimeSelection.runtimeValidationRules,
-          learnedTemplates: runtimeSelection.runtimeLearnedTemplates,
-          similarityThreshold,
-          validationScope: runtimeSelection.identity.scope,
-        });
-      lastExplosionRef.current = {
-        signature: runtimeSignature,
-        document: nextDocument,
-      };
-      setManualBindings([]);
-      setDocumentState(nextDocument);
-      setSelectedSegmentId(nextDocument.segments[0]?.id ?? null);
-      toast(`Exploded into ${nextDocument.segments.length} segment(s).`, {
-        variant: 'success',
-      });
-      if (!orchestratorEnabled) {
-        logClientError(
-          new Error('Prompt runtime orchestrator disabled for current rollout cohort.'),
-          {
-            context: {
-              source: 'PromptExploderDocumentContext',
-              action: 'handleExplode.rollout',
-              scope: runtimeSelection.identity.scope,
-              stack: runtimeSelection.identity.stack,
-              rolloutReason: rollout.reason,
-              rolloutPercent: rollout.canaryPercent,
-              rolloutBucket: rollout.bucket,
-              level: 'warn',
-            },
-          }
-        );
-      }
-    } catch (error) {
-      logClientError(error, {
-        context: {
-          source: 'PromptExploderDocumentContext',
-          action: 'handleExplode',
-          correlationId: runtimeSelection.correlationId,
-          scope: runtimeSelection.identity.scope,
-          stack: runtimeSelection.identity.stack,
-          level: 'error',
-        },
-      });
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Prompt explosion failed for current runtime.',
-        { variant: 'error' }
-      );
-    } finally {
-      explodeInFlightRef.current = false;
-      leavePromptRuntimeScope(runtimeSelection.identity.scope);
-    }
-  }, [
-    learningDraft.similarityThreshold,
-    promptText,
-    promptExploderSettings.runtime.orchestratorEnabled,
-    runtimeSelection,
-    toast,
-  ]);
-
-  const handleApplyToImageStudio = useCallback(() => {
-    if (!documentState) {
-      toast('Explode the prompt before applying it.', { variant: 'info' });
-      return;
-    }
-    const reassembled = reassemblePromptSegments(documentState.segments);
-    if (returnTarget === 'case-resolver') {
-      const payload = extractCaseResolverBridgePayloadFromSegments(documentState.segments);
-      savePromptExploderApplyPromptForCaseResolver(
-        reassembled,
-        incomingCaseResolverContext,
-        payload.parties,
-        payload.metadata
-      );
-      toast('Reassembled prompt returned to Case Resolver.', { variant: 'success' });
-    } else {
-      savePromptExploderApplyPrompt(reassembled);
-      toast('Reassembled prompt sent to Image Studio.', { variant: 'success' });
-    }
-    router.push(returnTo);
-  }, [documentState, incomingCaseResolverContext, returnTarget, returnTo, router, toast]);
-
-  const handleReloadFromStudio = useCallback(() => {
-    const payload = consumePromptExploderDraftPayload('prompt-exploder');
-    if (!payload?.prompt) {
-      toast('No draft prompt was received from Image Studio.', { variant: 'info' });
-      return;
-    }
-    setIncomingBridgeSource(payload.source);
-    setIncomingCaseResolverContext(payload.caseResolverContext ?? null);
-    setPromptText(payload.prompt);
-    toast('Loaded latest prompt draft from Image Studio.', { variant: 'success' });
-  }, [toast]);
-
-  // ── Memoized context values ────────────────────────────────────────────────
+  // ── Context values ─────────────────────────────────────────────────────────
 
   const stateValue = useMemo<DocumentState>(
     () => ({
@@ -579,36 +401,26 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
       documentState,
       selectedSegmentId,
       selectedSegment,
-      manualBindings,
       selectedParamEntriesState,
-      listParamEntriesState,
       listParamOptions,
       listParamEntryByPath,
       explosionMetrics,
       segmentOptions,
       segmentById,
-      returnTo,
       returnTarget,
-      incomingBridgeSource,
-      incomingCaseResolverContext,
     }),
     [
       promptText,
       documentState,
       selectedSegmentId,
       selectedSegment,
-      manualBindings,
       selectedParamEntriesState,
-      listParamEntriesState,
       listParamOptions,
       listParamEntryByPath,
       explosionMetrics,
       segmentOptions,
       segmentById,
-      returnTo,
       returnTarget,
-      incomingBridgeSource,
-      incomingCaseResolverContext,
     ]
   );
 
@@ -616,26 +428,32 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     () => ({
       setPromptText,
       setDocumentState,
-      setSelectedSegmentId,
       setManualBindings,
-      syncManualBindings,
+      setSelectedSegmentId,
       handleExplode,
-      handleApplyToImageStudio,
-      handleReloadFromStudio,
+      syncManualBindings,
       replaceSegments,
       updateSegment,
+      clearDocument,
+      handleReloadFromStudio,
+      handleApplyToImageStudio,
       updateParameterValue,
       updateParameterSelector,
       updateParameterComment,
       updateParameterDescription,
     }),
     [
-      syncManualBindings,
+      setPromptText,
+      setDocumentState,
+      setManualBindings,
+      setSelectedSegmentId,
       handleExplode,
-      handleApplyToImageStudio,
-      handleReloadFromStudio,
+      syncManualBindings,
       replaceSegments,
       updateSegment,
+      clearDocument,
+      handleReloadFromStudio,
+      handleApplyToImageStudio,
       updateParameterValue,
       updateParameterSelector,
       updateParameterComment,
@@ -652,6 +470,14 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
   );
 }
 
-// ── Hook exports ─────────────────────────────────────────────────────────────
+export function useDocumentState(): DocumentState {
+  const context = useContext(DocumentStateContext);
+  if (!context) throw new Error('useDocumentState must be used within DocumentProvider');
+  return context;
+}
 
-export { DocumentStateContext, DocumentActionsContext };
+export function useDocumentActions(): DocumentActions {
+  const context = useContext(DocumentActionsContext);
+  if (!context) throw new Error('useDocumentActions must be used within DocumentProvider');
+  return context;
+}

@@ -129,7 +129,8 @@ export const extractInventoryList = (payload: BaseApiResponse): BaseInventory[] 
         (typeof record['name'] === 'string' && record['name'].trim()) ||
         (typeof record['label'] === 'string' && record['label'].trim()) ||
         id;
-      return { id, name };
+      const is_default = Boolean(record['is_default'] ?? record['default']);
+      return { id, name, is_default };
     })
     .filter((entry: BaseInventory | null): entry is BaseInventory => Boolean(entry));
 };
@@ -159,7 +160,8 @@ export const extractWarehouseList = (payload: BaseApiResponse): BaseWarehouse[] 
       (typeof record['name'] === 'string' && record['name'].trim()) ||
       (typeof record['label'] === 'string' && record['label'].trim()) ||
       id;
-    acc.push(typedId ? { id, name, typedId } : { id, name });
+    const is_default = Boolean(record['is_default'] ?? record['default']);
+    acc.push(typedId ? { id, name, typedId, is_default } : { id, name, is_default });
     return acc;
   }, []);
 };

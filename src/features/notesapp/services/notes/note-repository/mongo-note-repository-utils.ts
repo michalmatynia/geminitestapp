@@ -138,6 +138,9 @@ export const buildTree = (
     note.categories.forEach((nc: NoteCategoryEmbedded): void => {
       const category = categoryMap[nc.categoryId];
       if (category) {
+        if (!category.notes) {
+          category.notes = [];
+        }
         category.notes.push(note);
       }
     });

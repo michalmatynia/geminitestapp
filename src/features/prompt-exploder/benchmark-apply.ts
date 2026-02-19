@@ -7,8 +7,8 @@ import { upsertLearnedTemplate } from './template-learning';
 
 import type {
   PromptExploderBenchmarkSuggestion,
-} from './benchmark';
-import type { PromptExploderLearnedTemplate } from './types';
+  PromptExploderLearnedTemplate,
+} from './types';
 
 const toSlug = (value: string): string =>
   value

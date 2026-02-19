@@ -89,8 +89,8 @@ type SystemLogsContextValue = {
   diagnostics: MongoCollectionIndexStatus[];
   diagnosticsUpdatedAt: string | null;
   logInterpretations: Record<string, AiInsightRecord>;
-  logsQuery: UseQueryResult<{ logs?: SystemLogRecord[]; total?: number; page?: number; pageSize?: number }, Error>;
-  metricsQuery: UseQueryResult<{ metrics?: SystemLogMetrics }, Error>;
+  logsQuery: UseQueryResult<{ logs?: SystemLogRecord[] | undefined; total?: number | undefined; page?: number | undefined; pageSize?: number | undefined }, Error>;
+  metricsQuery: UseQueryResult<{ metrics?: SystemLogMetrics | undefined }, Error>;
   mongoDiagnosticsQuery: UseQueryResult<unknown, Error>;
   insightsQuery: UseQueryResult<{ insights: AiInsightRecord[] }, Error>;
   runInsightMutation: UseMutationResult<{ insight: AiInsightRecord }, Error, void>;
@@ -194,7 +194,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     () => ({
       page,
       pageSize,
-      level,
+      level: level === 'all' ? null : level,
       query,
       source,
       method,
@@ -211,7 +211,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
 
   const metricsFilters = useMemo(
     () => ({
-      level,
+      level: level === 'all' ? null : level,
       query,
       source,
       method,

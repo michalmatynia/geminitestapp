@@ -21,7 +21,7 @@ export function WarningsPanel(): React.JSX.Element {
       ) : (
         <DocumentationSection title='Issues' className='bg-amber-500/5 border-amber-500/20 p-3'>
           <ul className='list-disc pl-5 text-xs text-amber-200'>
-            {documentState.warnings.map((warning) => (
+            {documentState.warnings.map((warning: string) => (
               <li key={warning}>{warning}</li>
             ))}
           </ul>

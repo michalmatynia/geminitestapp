@@ -39,6 +39,25 @@ export const authUserAccessSchema = dtoBaseSchema.extend({
 
 export type AuthUserAccessDto = z.infer<typeof authUserAccessSchema>;
 
+export const authPermissionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+});
+
+export type AuthPermissionDto = z.infer<typeof authPermissionSchema>;
+
+export const authRoleSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  permissions: z.array(z.string()),
+  deniedPermissions: z.array(z.string()).optional(),
+  level: z.number().optional(),
+});
+
+export type AuthRoleDto = z.infer<typeof authRoleSchema>;
+
 export const authUserAccessDetailSchema = z.object({
   roleId: z.string(),
   permissions: z.array(z.string()),
@@ -154,25 +173,6 @@ export const authSecurityPolicySchema = z.object({
 });
 
 export type AuthSecurityPolicyDto = z.infer<typeof authSecurityPolicySchema>;
-
-export const authPermissionSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string().optional(),
-});
-
-export type AuthPermissionDto = z.infer<typeof authPermissionSchema>;
-
-export const authRoleSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string().optional(),
-  permissions: z.array(z.string()),
-  deniedPermissions: z.array(z.string()).optional(),
-  level: z.number().optional(),
-});
-
-export type AuthRoleDto = z.infer<typeof authRoleSchema>;
 
 export const loginSchema = z.object({
   email: z.string(),

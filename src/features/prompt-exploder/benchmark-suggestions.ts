@@ -1,4 +1,4 @@
-import type { PromptExploderBenchmarkSuggestion } from './benchmark';
+import type { PromptExploderBenchmarkSuggestion } from './types';
 
 export type BenchmarkSuggestionPreparation = {
   uniqueSuggestions: PromptExploderBenchmarkSuggestion[];

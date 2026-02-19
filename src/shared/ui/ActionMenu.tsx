@@ -20,6 +20,7 @@ interface ActionMenuProps {
   ariaLabel?: string;
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   size?: 'default' | 'sm' | 'lg' | 'icon' | 'xs';
+  disabled?: boolean;
 }
 
 export function ActionMenu({
@@ -31,6 +32,7 @@ export function ActionMenu({
   ariaLabel = 'Open actions menu',
   variant = 'ghost',
   size = 'icon',
+  disabled = false,
 }: ActionMenuProps): React.JSX.Element {
   return (
     <DropdownMenu>
@@ -38,6 +40,7 @@ export function ActionMenu({
         <Button
           variant={variant}
           size={size}
+          disabled={disabled}
           className={cn(
             'p-0 text-muted-foreground hover:bg-muted/50 hover:text-white',
             size === 'icon' && 'h-8 w-8',

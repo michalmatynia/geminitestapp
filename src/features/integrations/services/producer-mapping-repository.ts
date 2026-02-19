@@ -63,8 +63,8 @@ function mapToRecord(record: {
     externalProducerId: record.externalProducerId,
     internalProducerId: record.internalProducerId,
     isActive: record.isActive,
-    createdAt: record.createdAt,
-    updatedAt: record.updatedAt,
+    createdAt: record.createdAt.toISOString(),
+    updatedAt: record.updatedAt.toISOString(),
   };
 }
 
@@ -81,17 +81,17 @@ const toDetails = (record: EnrichedProducerMapping): ProducerMappingWithDetails 
   externalProducerId: record.externalProducerId,
   internalProducerId: record.internalProducerId,
   isActive: record.isActive,
-  createdAt: record.createdAt,
-  updatedAt: record.updatedAt,
+  createdAt: record.createdAt.toISOString(),
+  updatedAt: record.updatedAt.toISOString(),
   externalProducer: {
     id: record.externalProducer.id,
     connectionId: record.externalProducer.connectionId,
     externalId: record.externalProducer.externalId,
     name: record.externalProducer.name,
     metadata: record.externalProducer.metadata as Record<string, unknown> | null,
-    fetchedAt: record.externalProducer.fetchedAt,
-    createdAt: record.externalProducer.createdAt,
-    updatedAt: record.externalProducer.updatedAt,
+    fetchedAt: record.externalProducer.fetchedAt.toISOString(),
+    createdAt: record.externalProducer.createdAt.toISOString(),
+    updatedAt: record.externalProducer.updatedAt.toISOString(),
   },
   internalProducer: {
     id: record.internalProducer.id,

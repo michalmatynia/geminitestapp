@@ -188,6 +188,7 @@ export interface StateBridgeGraphProps {
   executionMode?: PathExecutionMode | undefined;
   flowIntensity?: PathFlowIntensity | undefined;
   runMode?: PathRunMode | undefined;
+  strictFlowMode?: boolean | undefined;
   paths?: PathMeta[] | undefined;
   pathConfigs?: Record<string, PathConfig> | undefined;
 }
@@ -208,6 +209,7 @@ export function useStateBridgeGraph({
   executionMode,
   flowIntensity,
   runMode,
+  strictFlowMode,
   paths,
   pathConfigs,
 }: StateBridgeGraphProps): void {
@@ -308,6 +310,12 @@ export function useStateBridgeGraph({
       actions.setRunMode(runMode);
     }
   }, [runMode, actions]);
+
+  useEffect(() => {
+    if (strictFlowMode !== undefined) {
+      actions.setStrictFlowMode(strictFlowMode);
+    }
+  }, [strictFlowMode, actions]);
 
   useEffect(() => {
     if (paths !== undefined) {
@@ -657,6 +665,7 @@ export interface StateBridgeAllProps {
   executionMode?: PathExecutionMode | undefined;
   flowIntensity?: PathFlowIntensity | undefined;
   runMode?: PathRunMode | undefined;
+  strictFlowMode?: boolean | undefined;
   paths?: PathMeta[] | undefined;
   pathConfigs?: Record<string, PathConfig> | undefined;
   // Runtime
@@ -738,6 +747,7 @@ export function useStateBridgeAll(props: StateBridgeAllProps): void {
     executionMode: props.executionMode,
     flowIntensity: props.flowIntensity,
     runMode: props.runMode,
+    strictFlowMode: props.strictFlowMode,
     paths: props.paths,
     pathConfigs: props.pathConfigs,
   });

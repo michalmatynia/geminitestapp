@@ -167,12 +167,25 @@ export const masterFolderTreePersistContextSchema = z.object({
 
 export type MasterFolderTreePersistContextDto = z.infer<typeof masterFolderTreePersistContextSchema>;
 
+export const masterFolderTreeActionOkSchema = z.object({
+  ok: z.literal(true),
+});
+
+export type MasterFolderTreeActionOkDto = z.infer<typeof masterFolderTreeActionOkSchema>;
+
 export const masterFolderTreeActionFailSchema = z.object({
   ok: z.literal(false),
   code: z.string(),
 });
 
 export type MasterFolderTreeActionFailDto = z.infer<typeof masterFolderTreeActionFailSchema>;
+
+export const masterFolderTreeActionResultSchema = z.discriminatedUnion('ok', [
+  masterFolderTreeActionOkSchema,
+  masterFolderTreeActionFailSchema,
+]);
+
+export type MasterFolderTreeActionResultDto = z.infer<typeof masterFolderTreeActionResultSchema>;
 
 export const useMasterFolderTreeOptionsSchema = z.object({
   initialNodes: z.array(masterTreeNodeSchema),

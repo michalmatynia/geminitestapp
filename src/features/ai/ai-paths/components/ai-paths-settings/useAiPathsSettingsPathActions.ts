@@ -60,6 +60,7 @@ type UseAiPathsSettingsPathActionsInput = {
   setExecutionMode: React.Dispatch<React.SetStateAction<PathExecutionMode>>;
   setFlowIntensity: React.Dispatch<React.SetStateAction<PathFlowIntensity>>;
   setRunMode: React.Dispatch<React.SetStateAction<PathRunMode>>;
+  setStrictFlowMode: React.Dispatch<React.SetStateAction<boolean>>;
   setParserSamples: React.Dispatch<
     React.SetStateAction<Record<string, ParserSampleState>>
   >;
@@ -115,6 +116,7 @@ export function useAiPathsSettingsPathActions({
   setExecutionMode,
   setFlowIntensity,
   setRunMode,
+  setStrictFlowMode,
   setParserSamples,
   setUpdaterSamples,
   setRuntimeState,

@@ -99,6 +99,7 @@ function AiPathsSettingsInner(): React.JSX.Element {
     executionMode: state.executionMode,
     flowIntensity: state.flowIntensity,
     runMode: state.runMode,
+    strictFlowMode: state.strictFlowMode,
     paths: state.paths,
     pathConfigs: state.pathConfigs,
     // Runtime

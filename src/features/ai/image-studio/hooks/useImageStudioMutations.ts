@@ -76,6 +76,9 @@ export interface RunStudioPayload {
       paddingPercent?: number | undefined;
       paddingXPercent?: number | undefined;
       paddingYPercent?: number | undefined;
+      fillMissingCanvasWhite?: boolean | undefined;
+      targetCanvasWidth?: number | undefined;
+      targetCanvasHeight?: number | undefined;
       whiteThreshold?: number | undefined;
       chromaThreshold?: number | undefined;
       detection?: 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel' | undefined;
@@ -127,6 +130,9 @@ export interface ImageStudioRunRequestRecord {
       paddingPercent?: number;
       paddingXPercent?: number;
       paddingYPercent?: number;
+      fillMissingCanvasWhite?: boolean;
+      targetCanvasWidth?: number;
+      targetCanvasHeight?: number;
       whiteThreshold?: number;
       chromaThreshold?: number;
       detection?: 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel';

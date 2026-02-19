@@ -47,6 +47,7 @@ export interface GraphState {
   executionMode: PathExecutionMode;
   flowIntensity: PathFlowIntensity;
   runMode: PathRunMode;
+  strictFlowMode: boolean;
 
   // Path flags
   isPathLocked: boolean;
@@ -79,6 +80,7 @@ export interface GraphActions {
   setExecutionMode: (mode: PathExecutionMode) => void;
   setFlowIntensity: (intensity: PathFlowIntensity) => void;
   setRunMode: (mode: PathRunMode) => void;
+  setStrictFlowMode: (enabled: boolean) => void;
 
   // Path flags
   setIsPathLocked: (locked: boolean) => void;
@@ -96,6 +98,7 @@ export interface GraphActions {
     executionMode?: PathExecutionMode | undefined;
     flowIntensity?: PathFlowIntensity | undefined;
     runMode?: PathRunMode | undefined;
+    strictFlowMode?: boolean | undefined;
     isPathLocked?: boolean | undefined;
     isPathActive?: boolean | undefined;
   }) => void;
@@ -112,6 +115,7 @@ const DEFAULT_TRIGGER = 'Product Modal - Context Filter';
 const DEFAULT_EXECUTION_MODE: PathExecutionMode = 'server';
 const DEFAULT_FLOW_INTENSITY: PathFlowIntensity = 'medium';
 const DEFAULT_RUN_MODE: PathRunMode = 'manual';
+const DEFAULT_STRICT_FLOW_MODE = true;
 
 // ---------------------------------------------------------------------------
 // Contexts (split for re-render optimization)
@@ -157,6 +161,7 @@ export function GraphProvider({
   const [executionMode, setExecutionModeInternal] = useState<PathExecutionMode>(DEFAULT_EXECUTION_MODE);
   const [flowIntensity, setFlowIntensityInternal] = useState<PathFlowIntensity>(DEFAULT_FLOW_INTENSITY);
   const [runMode, setRunModeInternal] = useState<PathRunMode>(DEFAULT_RUN_MODE);
+  const [strictFlowMode, setStrictFlowModeInternal] = useState<boolean>(DEFAULT_STRICT_FLOW_MODE);
 
   // Path flags
   const [isPathLocked, setIsPathLockedInternal] = useState(false);
@@ -210,6 +215,7 @@ export function GraphProvider({
     executionMode?: PathExecutionMode | undefined;
     flowIntensity?: PathFlowIntensity | undefined;
     runMode?: PathRunMode | undefined;
+    strictFlowMode?: boolean | undefined;
     isPathLocked?: boolean | undefined;
     isPathActive?: boolean | undefined;
   }) => {
@@ -223,6 +229,7 @@ export function GraphProvider({
     if (data.executionMode !== undefined) setExecutionModeInternal(data.executionMode);
     if (data.flowIntensity !== undefined) setFlowIntensityInternal(data.flowIntensity);
     if (data.runMode !== undefined) setRunModeInternal(data.runMode);
+    if (data.strictFlowMode !== undefined) setStrictFlowModeInternal(data.strictFlowMode);
     if (data.isPathLocked !== undefined) setIsPathLockedInternal(data.isPathLocked);
     if (data.isPathActive !== undefined) setIsPathActiveInternal(data.isPathActive);
   }, []);
@@ -235,6 +242,7 @@ export function GraphProvider({
     setActiveTriggerInternal(DEFAULT_TRIGGER);
     setExecutionModeInternal(DEFAULT_EXECUTION_MODE);
     setFlowIntensityInternal(DEFAULT_FLOW_INTENSITY);
+    setStrictFlowModeInternal(DEFAULT_STRICT_FLOW_MODE);
     setIsPathLockedInternal(false);
     setIsPathActiveInternal(true);
   }, []);
@@ -267,6 +275,7 @@ export function GraphProvider({
       setExecutionMode: setExecutionModeInternal,
       setFlowIntensity: setFlowIntensityInternal,
       setRunMode: setRunModeInternal,
+      setStrictFlowMode: setStrictFlowModeInternal,
 
       // Path flags
       setIsPathLocked: setIsPathLockedInternal,
@@ -294,6 +303,7 @@ export function GraphProvider({
       executionMode,
       flowIntensity,
       runMode,
+      strictFlowMode,
       isPathLocked,
       isPathActive,
     }),
@@ -309,6 +319,7 @@ export function GraphProvider({
       executionMode,
       flowIntensity,
       runMode,
+      strictFlowMode,
       isPathLocked,
       isPathActive,
     ]

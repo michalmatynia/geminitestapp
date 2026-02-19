@@ -5,6 +5,8 @@ import type {
   MasterFolderTreeErrorDto,
   MasterFolderTreePersistContextDto,
   MasterFolderTreeActionFailDto,
+  MasterFolderTreeActionResultDto,
+  MasterFolderTreeActionOkDto,
   UseMasterFolderTreeOptionsDto,
 } from '@/shared/contracts/master-folder-tree';
 import type { FolderTreeProfileV2 } from '@/shared/utils/folder-tree-profiles-v2';
@@ -40,17 +42,18 @@ export type MasterFolderTreeDragState = MasterFolderTreeDragStateDto;
 
 export type MasterFolderTreeUndoEntry = MasterFolderTreeUndoEntryDto;
 
+export type MasterFolderTreeUndoLogEntry = {
+  label: string;
+  createdAt: number;
+};
+
 export type MasterFolderTreeError = MasterFolderTreeErrorDto;
 
-export type MasterFolderTreeActionOk = {
-  ok: true;
-};
+export type MasterFolderTreeActionOk = MasterFolderTreeActionOkDto;
 
 export type MasterFolderTreeActionFail = MasterFolderTreeActionFailDto;
 
-export type MasterFolderTreeActionResult =
-  | MasterFolderTreeActionOk
-  | MasterFolderTreeActionFail;
+export type MasterFolderTreeActionResult = MasterFolderTreeActionResultDto;
 
 export type UseMasterFolderTreeOptions = UseMasterFolderTreeOptionsDto & {
   profile?: FolderTreeProfileV2 | undefined;
@@ -68,7 +71,7 @@ export type MasterFolderTreeController = {
   renameDraft: string;
   dragState: MasterFolderTreeDragState | null;
   canUndo: boolean;
-  undoHistory: Array<{ label: string; createdAt: number }>;
+  undoHistory: MasterFolderTreeUndoLogEntry[];
   isApplying: boolean;
   lastError: MasterFolderTreeError | null;
   canDropNode: (
@@ -116,6 +119,13 @@ export type MasterFolderTreeController = {
   undo: () => Promise<MasterFolderTreeActionResult>;
   clearError: () => void;
 };
+
+export const toMasterFolderTreeActionFail = (
+  code: MasterTreeDropRejectionReason | string
+): MasterFolderTreeActionFail => ({
+  ok: false,
+  code,
+});
 
 export const toMasterFolderTreeActionFail = (
   code: MasterTreeDropRejectionReason | string

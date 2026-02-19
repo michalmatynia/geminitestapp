@@ -92,6 +92,7 @@ export function useAiPathsPersistence({
   executionMode,
   flowIntensity,
   runMode,
+  strictFlowMode,
   selectedNodeId,
   runtimeState,
   updaterSamples,
@@ -121,6 +122,7 @@ export function useAiPathsPersistence({
   setExecutionMode,
   setFlowIntensity,
   setRunMode,
+  setStrictFlowMode,
   setHistoryRetentionPasses,
   setHistoryRetentionOptionsMax,
   setPathName,
@@ -490,14 +492,18 @@ export function useAiPathsPersistence({
                   Number.isFinite(normalizedRunCountRaw)
                     ? Math.max(0, Math.trunc(normalizedRunCountRaw))
                     : 0;
+                const normalizedStrictFlowMode =
+                  migration.config.strictFlowMode !== false;
                 const normalizedConfig: PathConfig = {
                   ...migration.config,
                   runCount: normalizedRunCount,
+                  strictFlowMode: normalizedStrictFlowMode,
                 };
                 settingsConfigs[meta.id] = normalizedConfig;
                 if (
                   migration.changed ||
                   normalizedRunCountRaw !== normalizedRunCount ||
+                  migration.config.strictFlowMode !== normalizedStrictFlowMode ||
                   normalizeLoadedPathName(meta.id, parsedConfig.name) !==
                     resolvedName
                 ) {
@@ -613,6 +619,7 @@ export function useAiPathsPersistence({
               ? 'automatic'
               : 'manual'
         );
+        setStrictFlowMode(activeConfig.strictFlowMode !== false);
         setParserSamples(activeConfig.parserSamples ?? {});
         setUpdaterSamples(activeConfig.updaterSamples ?? {});
         setRuntimeState(parseRuntimeState(activeConfig.runtimeState));
@@ -772,6 +779,7 @@ export function useAiPathsPersistence({
         executionMode,
         flowIntensity,
         runMode,
+        strictFlowMode,
         isLocked: isPathLocked,
         isActive: isPathActive,
         uiState: {
@@ -800,6 +808,7 @@ export function useAiPathsPersistence({
       executionMode,
       flowIntensity,
       runMode,
+      strictFlowMode,
       isPathLocked,
       isPathActive,
       selectedNodeId,
@@ -839,6 +848,7 @@ export function useAiPathsPersistence({
         executionMode,
         flowIntensity,
         runMode,
+        strictFlowMode,
         nodes: nodesOverride ?? nodesRef.current,
         edges: edgesOverride ?? edgesRef.current,
         updatedAt,
@@ -867,6 +877,7 @@ export function useAiPathsPersistence({
       executionMode,
       flowIntensity,
       runMode,
+      strictFlowMode,
       isPathLocked,
       isPathActive,
       parserSamples,

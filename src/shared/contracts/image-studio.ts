@@ -190,6 +190,8 @@ export const IMAGE_STUDIO_CENTER_LAYOUT_MAX_WHITE_THRESHOLD = 80;
 export const IMAGE_STUDIO_CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD = 10;
 export const IMAGE_STUDIO_CENTER_LAYOUT_MIN_CHROMA_THRESHOLD = 0;
 export const IMAGE_STUDIO_CENTER_LAYOUT_MAX_CHROMA_THRESHOLD = 80;
+export const IMAGE_STUDIO_CENTER_LAYOUT_MIN_TARGET_CANVAS_SIDE_PX = 1;
+export const IMAGE_STUDIO_CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE_PX = 32_768;
 
 export const IMAGE_STUDIO_CENTER_ERROR_CODES = {
   INVALID_PAYLOAD: 'IMAGE_STUDIO_CENTER_INVALID_PAYLOAD',
@@ -251,6 +253,19 @@ export const imageStudioCenterLayoutConfigSchema = z.object({
     .finite()
     .min(IMAGE_STUDIO_CENTER_LAYOUT_MIN_PADDING_PERCENT)
     .max(IMAGE_STUDIO_CENTER_LAYOUT_MAX_PADDING_PERCENT)
+    .optional(),
+  fillMissingCanvasWhite: z.boolean().optional(),
+  targetCanvasWidth: z
+    .number()
+    .int()
+    .min(IMAGE_STUDIO_CENTER_LAYOUT_MIN_TARGET_CANVAS_SIDE_PX)
+    .max(IMAGE_STUDIO_CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE_PX)
+    .optional(),
+  targetCanvasHeight: z
+    .number()
+    .int()
+    .min(IMAGE_STUDIO_CENTER_LAYOUT_MIN_TARGET_CANVAS_SIDE_PX)
+    .max(IMAGE_STUDIO_CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE_PX)
     .optional(),
   whiteThreshold: z
     .number()

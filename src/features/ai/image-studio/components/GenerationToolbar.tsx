@@ -70,6 +70,9 @@ type CenterActionResponse = {
     paddingPercent?: number;
     paddingXPercent?: number;
     paddingYPercent?: number;
+    fillMissingCanvasWhite?: boolean;
+    targetCanvasWidth?: number;
+    targetCanvasHeight?: number;
     whiteThreshold?: number;
     chromaThreshold?: number;
     detectionUsed?: 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel' | null;
@@ -130,7 +133,7 @@ export function GenerationToolbar(): React.JSX.Element {
     getPreviewCanvasViewportCrop,
     getPreviewCanvasImageFrame,
   } = useUiActions();
-  const { projectId } = useProjectsState();
+  const { projectId, projectsQuery } = useProjectsState();
   const { workingSlot } = useSlotsState();
   const { setSelectedSlotId, setWorkingSlotId } = useSlotsActions();
   const settingsStore = useSettingsStore();
@@ -168,6 +171,7 @@ export function GenerationToolbar(): React.JSX.Element {
     String(CENTER_LAYOUT_DEFAULT_PADDING_PERCENT)
   );
   const [centerLayoutSplitAxes, setCenterLayoutSplitAxes] = useState(false);
+  const [centerLayoutFillMissingCanvasWhite, setCenterLayoutFillMissingCanvasWhite] = useState(false);
   const [upscaleScale, setUpscaleScale] = useState('2');
   const [upscaleTargetWidth, setUpscaleTargetWidth] = useState('');
   const [upscaleTargetHeight, setUpscaleTargetHeight] = useState('');
@@ -226,6 +230,27 @@ export function GenerationToolbar(): React.JSX.Element {
     () => resolveClientProcessingImageSrc(workingSlot, workingSlotImageSrc),
     [workingSlot, workingSlotImageSrc]
   );
+  const activeProject = useMemo(
+    () =>
+      (projectsQuery.data ?? []).find((project) => project.id === projectId) ??
+      null,
+    [projectId, projectsQuery.data]
+  );
+  const projectCanvasSize = useMemo((): { width: number; height: number } | null => {
+    const width =
+      typeof activeProject?.canvasWidthPx === 'number' &&
+      Number.isFinite(activeProject.canvasWidthPx)
+        ? Math.floor(activeProject.canvasWidthPx)
+        : null;
+    const height =
+      typeof activeProject?.canvasHeightPx === 'number' &&
+      Number.isFinite(activeProject.canvasHeightPx)
+        ? Math.floor(activeProject.canvasHeightPx)
+        : null;
+    if (width === null || height === null) return null;
+    if (width < 64 || width > 32_768 || height < 64 || height > 32_768) return null;
+    return { width, height };
+  }, [activeProject?.canvasHeightPx, activeProject?.canvasWidthPx]);
 
   const cropDiagnosticsRef = useRef<CropRectResolutionDiagnostics | null>(null);
 
@@ -545,6 +570,7 @@ export function GenerationToolbar(): React.JSX.Element {
   const centerLayoutPaddingYPercent = useMemo(() => {
     return normalizeCenterPaddingPercent(centerLayoutPaddingY);
   }, [centerLayoutPaddingY]);
+  const centerLayoutResolvedFillMissingCanvasWhite = centerLayoutFillMissingCanvasWhite && Boolean(projectCanvasSize);
   const centerLayoutPayload = centerIsObjectLayoutMode
     ? {
       paddingPercent: centerLayoutSplitAxes
@@ -554,6 +580,13 @@ export function GenerationToolbar(): React.JSX.Element {
         ? {
           paddingXPercent: centerLayoutPaddingXPercent,
           paddingYPercent: centerLayoutPaddingYPercent,
+        }
+        : {}),
+      fillMissingCanvasWhite: centerLayoutResolvedFillMissingCanvasWhite,
+      ...(centerLayoutResolvedFillMissingCanvasWhite && projectCanvasSize
+        ? {
+          targetCanvasWidth: projectCanvasSize.width,
+          targetCanvasHeight: projectCanvasSize.height,
         }
         : {}),
       detection: 'auto' as const,

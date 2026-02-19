@@ -115,11 +115,13 @@ export interface UseAiPathsSettingsStateReturn {
   executionMode: PathExecutionMode;
   flowIntensity: PathFlowIntensity;
   runMode: PathRunMode;
+  strictFlowMode: boolean;
   historyRetentionPasses: number;
   historyRetentionOptionsMax: number;
   handleExecutionModeChange: (mode: PathExecutionMode) => void;
   handleFlowIntensityChange: (intensity: PathFlowIntensity) => void;
   handleRunModeChange: (mode: PathRunMode) => void;
+  handleStrictFlowModeChange: (enabled: boolean) => void;
   handleHistoryRetentionChange: (passes: number) => Promise<void>;
   triggers: string[];
   isPathLocked: boolean;
@@ -417,6 +419,7 @@ export function useAiPathsSettingsState({
   const [flowIntensity, setFlowIntensity] =
     useState<PathFlowIntensity>('medium');
   const [runMode, setRunMode] = useState<PathRunMode>('manual');
+  const [strictFlowMode, setStrictFlowMode] = useState<boolean>(true);
   const [historyRetentionPasses, setHistoryRetentionPasses] = useState<number>(
     AI_PATHS_HISTORY_RETENTION_DEFAULT,
   );
@@ -855,6 +858,7 @@ export function useAiPathsSettingsState({
     pathName,
     paths,
     runMode,
+    strictFlowMode,
     selectedNodeId,
     runtimeState,
     updaterSamples,
@@ -886,6 +890,7 @@ export function useAiPathsSettingsState({
     setExecutionMode,
     setFlowIntensity,
     setRunMode,
+    setStrictFlowMode,
     setHistoryRetentionPasses,
     setHistoryRetentionOptionsMax,
     setPathName,
@@ -948,6 +953,7 @@ export function useAiPathsSettingsState({
     activeTrigger,
     executionMode,
     runMode,
+    strictFlowMode,
     historyRetentionPasses,
     isPathActive,
     edges,
@@ -987,6 +993,7 @@ export function useAiPathsSettingsState({
     executionMode,
     flowIntensity,
     runMode,
+    strictFlowMode,
     isPathActive,
     parserSamples,
     updaterSamples,
@@ -1129,6 +1136,7 @@ export function useAiPathsSettingsState({
     handleExecutionModeChange,
     handleFlowIntensityChange,
     handleRunModeChange,
+    handleStrictFlowModeChange,
     handleHistoryRetentionChange,
     handleTogglePathLock,
     handleTogglePathActive,
@@ -1145,6 +1153,8 @@ export function useAiPathsSettingsState({
     setFlowIntensity,
     runMode,
     setRunMode,
+    strictFlowMode,
+    setStrictFlowMode,
     historyRetentionPasses,
     setHistoryRetentionPasses,
     nodes,
@@ -1189,6 +1199,7 @@ export function useAiPathsSettingsState({
     setExecutionMode,
     setFlowIntensity,
     setRunMode,
+    setStrictFlowMode,
     setParserSamples,
     setUpdaterSamples,
     setRuntimeState,
@@ -1332,11 +1343,13 @@ export function useAiPathsSettingsState({
     executionMode,
     flowIntensity,
     runMode,
+    strictFlowMode,
     historyRetentionPasses,
     historyRetentionOptionsMax,
     handleExecutionModeChange,
     handleFlowIntensityChange,
     handleRunModeChange,
+    handleStrictFlowModeChange,
     handleHistoryRetentionChange,
     triggers,
     isPathLocked,

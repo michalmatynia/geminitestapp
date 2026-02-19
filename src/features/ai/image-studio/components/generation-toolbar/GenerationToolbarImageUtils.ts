@@ -50,6 +50,9 @@ export type CenterLayoutConfig = {
   paddingPercent?: number;
   paddingXPercent?: number;
   paddingYPercent?: number;
+  fillMissingCanvasWhite?: boolean;
+  targetCanvasWidth?: number;
+  targetCanvasHeight?: number;
   whiteThreshold?: number;
   chromaThreshold?: number;
   detection?: CenterDetectionMode;
@@ -65,6 +68,9 @@ export type CenterLayoutResult = {
     paddingPercent: number;
     paddingXPercent: number;
     paddingYPercent: number;
+    fillMissingCanvasWhite: boolean;
+    targetCanvasWidth: number | null;
+    targetCanvasHeight: number | null;
     whiteThreshold: number;
     chromaThreshold: number;
     detection: CenterDetectionMode;
@@ -80,6 +86,8 @@ const CENTER_LAYOUT_MAX_WHITE_THRESHOLD = 80;
 const CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD = 10;
 const CENTER_LAYOUT_MIN_CHROMA_THRESHOLD = 0;
 const CENTER_LAYOUT_MAX_CHROMA_THRESHOLD = 80;
+const CENTER_LAYOUT_MIN_TARGET_CANVAS_SIDE = 1;
+const CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE = 32_768;
 const WHITE_BACKGROUND_BORDER_TARGET_SAMPLES = 4_096;
 const WHITE_BACKGROUND_BORDER_MIN_SAMPLES = 48;
 const WHITE_FOREGROUND_HIT_RATIO = 0.03;
@@ -170,6 +178,18 @@ const clampNumber = (
   return Math.max(min, Math.min(max, numeric));
 };
 
+const normalizeTargetCanvasSide = (value: number | null | undefined): number | null => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  const normalized = Math.floor(value);
+  if (
+    normalized < CENTER_LAYOUT_MIN_TARGET_CANVAS_SIDE ||
+    normalized > CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE
+  ) {
+    return null;
+  }
+  return normalized;
+};
+
 export const normalizeCenterLayoutConfig = (
   layout: CenterLayoutConfig | null | undefined
 ): Required<CenterLayoutConfig> => {
@@ -200,11 +220,17 @@ export const normalizeCenterLayoutConfig = (
     typeof layout?.paddingPercent === 'number' && Number.isFinite(layout.paddingPercent)
       ? explicitPaddingPercent
       : (paddingXPercent + paddingYPercent) / 2;
+  const fillMissingCanvasWhite = layout?.fillMissingCanvasWhite === true;
+  const targetCanvasWidth = normalizeTargetCanvasSide(layout?.targetCanvasWidth);
+  const targetCanvasHeight = normalizeTargetCanvasSide(layout?.targetCanvasHeight);
 
   return {
     paddingPercent: Number(resolvedPaddingPercent.toFixed(2)),
     paddingXPercent: Number(paddingXPercent.toFixed(2)),
     paddingYPercent: Number(paddingYPercent.toFixed(2)),
+    fillMissingCanvasWhite,
+    targetCanvasWidth,
+    targetCanvasHeight,
     whiteThreshold: Math.floor(
       clampNumber(
         layout?.whiteThreshold,
@@ -1089,26 +1115,32 @@ export const layoutCanvasImageObject = async (
   }
 
   const bounds = objectBoundsResult.bounds;
+  const outputWidth = normalizedLayout.fillMissingCanvasWhite
+    ? Math.max(sourceWidth, normalizedLayout.targetCanvasWidth ?? sourceWidth)
+    : sourceWidth;
+  const outputHeight = normalizedLayout.fillMissingCanvasWhite
+    ? Math.max(sourceHeight, normalizedLayout.targetCanvasHeight ?? sourceHeight)
+    : sourceHeight;
   const paddingXRatio = Math.max(0, Math.min(0.49, normalizedLayout.paddingXPercent / 100));
   const paddingYRatio = Math.max(0, Math.min(0.49, normalizedLayout.paddingYPercent / 100));
-  const maxObjectWidth = Math.max(1, Math.round(sourceWidth * (1 - paddingXRatio * 2)));
-  const maxObjectHeight = Math.max(1, Math.round(sourceHeight * (1 - paddingYRatio * 2)));
+  const maxObjectWidth = Math.max(1, Math.round(outputWidth * (1 - paddingXRatio * 2)));
+  const maxObjectHeight = Math.max(1, Math.round(outputHeight * (1 - paddingYRatio * 2)));
   const scale = Math.max(0.0001, Math.min(maxObjectWidth / bounds.width, maxObjectHeight / bounds.height));
-  const targetWidth = Math.max(1, Math.min(sourceWidth, Math.round(bounds.width * scale)));
-  const targetHeight = Math.max(1, Math.min(sourceHeight, Math.round(bounds.height * scale)));
-  const targetLeft = Math.max(0, Math.round((sourceWidth - targetWidth) / 2));
-  const targetTop = Math.max(0, Math.round((sourceHeight - targetHeight) / 2));
+  const targetWidth = Math.max(1, Math.min(outputWidth, Math.round(bounds.width * scale)));
+  const targetHeight = Math.max(1, Math.min(outputHeight, Math.round(bounds.height * scale)));
+  const targetLeft = Math.max(0, Math.round((outputWidth - targetWidth) / 2));
+  const targetTop = Math.max(0, Math.round((outputHeight - targetHeight) / 2));
 
   const outputCanvas = document.createElement('canvas');
-  outputCanvas.width = sourceWidth;
-  outputCanvas.height = sourceHeight;
+  outputCanvas.width = outputWidth;
+  outputCanvas.height = outputHeight;
   const outputContext = outputCanvas.getContext('2d');
   if (!outputContext) {
     throw new Error('Canvas context is unavailable.');
   }
 
   outputContext.fillStyle = '#ffffff';
-  outputContext.fillRect(0, 0, sourceWidth, sourceHeight);
+  outputContext.fillRect(0, 0, outputWidth, outputHeight);
   outputContext.drawImage(
     sourceCanvas,
     bounds.left,

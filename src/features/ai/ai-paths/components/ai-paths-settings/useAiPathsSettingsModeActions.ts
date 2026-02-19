@@ -41,6 +41,8 @@ type UseAiPathsSettingsModeActionsInput = {
   setFlowIntensity: React.Dispatch<React.SetStateAction<PathFlowIntensity>>;
   runMode: PathRunMode;
   setRunMode: React.Dispatch<React.SetStateAction<PathRunMode>>;
+  strictFlowMode: boolean;
+  setStrictFlowMode: React.Dispatch<React.SetStateAction<boolean>>;
   historyRetentionPasses: number;
   setHistoryRetentionPasses: React.Dispatch<React.SetStateAction<number>>;
   nodes: AiNode[];
@@ -74,6 +76,7 @@ export type UseAiPathsSettingsModeActionsReturn = {
   handleExecutionModeChange: (mode: PathExecutionMode) => void;
   handleFlowIntensityChange: (intensity: PathFlowIntensity) => void;
   handleRunModeChange: (mode: PathRunMode) => void;
+  handleStrictFlowModeChange: (enabled: boolean) => void;
   handleHistoryRetentionChange: (passes: number) => Promise<void>;
   handleTogglePathLock: () => void;
   handleTogglePathActive: () => void;
@@ -92,6 +95,8 @@ export function useAiPathsSettingsModeActions({
   setFlowIntensity,
   runMode,
   setRunMode,
+  strictFlowMode,
+  setStrictFlowMode,
   historyRetentionPasses,
   setHistoryRetentionPasses,
   nodes,
@@ -181,6 +186,29 @@ export function useAiPathsSettingsModeActions({
     [activePathId, isPathLocked, setRunMode, setPathConfigs, toast],
   );
 
+  const handleStrictFlowModeChange = useCallback(
+    (enabled: boolean): void => {
+      if (!activePathId) {
+        setStrictFlowMode(enabled);
+        return;
+      }
+      if (isPathLocked) {
+        toast('This path is locked. Unlock it to change strict flow mode.', {
+          variant: 'info',
+        });
+        return;
+      }
+      setStrictFlowMode(enabled);
+      setPathConfigs(
+        (prev: Record<string, PathConfig>): Record<string, PathConfig> => {
+          const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
+          return { ...prev, [activePathId]: { ...base, strictFlowMode: enabled } };
+        },
+      );
+    },
+    [activePathId, isPathLocked, setPathConfigs, setStrictFlowMode, toast],
+  );
+
   const normalizeHistoryRetentionPasses = useCallback((value: number): number => {
     if (!Number.isFinite(value)) return AI_PATHS_HISTORY_RETENTION_DEFAULT;
     const normalized = Math.trunc(value);
@@ -237,6 +265,7 @@ export function useAiPathsSettingsModeActions({
       executionMode,
       flowIntensity,
       runMode,
+      strictFlowMode,
       nodes,
       edges,
       updatedAt,
@@ -298,6 +327,7 @@ export function useAiPathsSettingsModeActions({
     persistPathSettings,
     reportAiPathsError,
     runMode,
+    strictFlowMode,
     runtimeState,
     selectedNodeId,
     setIsPathLocked,
@@ -321,6 +351,7 @@ export function useAiPathsSettingsModeActions({
       executionMode,
       flowIntensity,
       runMode,
+      strictFlowMode,
       nodes,
       edges,
       updatedAt,
@@ -382,6 +413,7 @@ export function useAiPathsSettingsModeActions({
     persistPathSettings,
     reportAiPathsError,
     runMode,
+    strictFlowMode,
     runtimeState,
     selectedNodeId,
     setIsPathActive,
@@ -395,6 +427,7 @@ export function useAiPathsSettingsModeActions({
     handleExecutionModeChange,
     handleFlowIntensityChange,
     handleRunModeChange,
+    handleStrictFlowModeChange,
     handleHistoryRetentionChange,
     handleTogglePathLock,
     handleTogglePathActive,

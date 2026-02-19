@@ -1,8 +1,8 @@
-import type { PromptExploderBenchmarkSuggestion } from '@/features/prompt-exploder/types';
 import {
   dedupeBenchmarkSuggestionsById,
   prepareBenchmarkSuggestionsForApply,
 } from '@/features/prompt-exploder/benchmark-suggestions';
+import type { PromptExploderBenchmarkSuggestion } from '@/features/prompt-exploder/types';
 
 const buildSuggestion = (
   id: string,

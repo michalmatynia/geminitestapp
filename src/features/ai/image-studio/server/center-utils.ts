@@ -9,9 +9,11 @@ import {
   IMAGE_STUDIO_CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD,
   IMAGE_STUDIO_CENTER_LAYOUT_MAX_CHROMA_THRESHOLD,
   IMAGE_STUDIO_CENTER_LAYOUT_MAX_PADDING_PERCENT,
+  IMAGE_STUDIO_CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE_PX,
   IMAGE_STUDIO_CENTER_LAYOUT_MAX_WHITE_THRESHOLD,
   IMAGE_STUDIO_CENTER_LAYOUT_MIN_CHROMA_THRESHOLD,
   IMAGE_STUDIO_CENTER_LAYOUT_MIN_PADDING_PERCENT,
+  IMAGE_STUDIO_CENTER_LAYOUT_MIN_TARGET_CANVAS_SIDE_PX,
   IMAGE_STUDIO_CENTER_LAYOUT_MIN_WHITE_THRESHOLD,
   IMAGE_STUDIO_CENTER_MAX_OUTPUT_PIXELS,
   IMAGE_STUDIO_CENTER_MAX_SOURCE_PIXELS,
@@ -44,6 +46,9 @@ type NormalizedCenterLayoutConfig = {
   paddingPercent: number;
   paddingXPercent: number;
   paddingYPercent: number;
+  fillMissingCanvasWhite: boolean;
+  targetCanvasWidth: number | null;
+  targetCanvasHeight: number | null;
   whiteThreshold: number;
   chromaThreshold: number;
   detection: ImageStudioCenterDetectionMode;
@@ -73,6 +78,18 @@ const clampNumber = (
 ): number => {
   const numeric = typeof value === 'number' && Number.isFinite(value) ? value : fallback;
   return Math.max(min, Math.min(max, numeric));
+};
+
+const normalizeTargetCanvasSide = (value: number | null | undefined): number | null => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  const normalized = Math.floor(value);
+  if (
+    normalized < IMAGE_STUDIO_CENTER_LAYOUT_MIN_TARGET_CANVAS_SIDE_PX ||
+    normalized > IMAGE_STUDIO_CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE_PX
+  ) {
+    return null;
+  }
+  return normalized;
 };
 
 export const normalizeCenterLayoutConfig = (
@@ -105,11 +122,17 @@ export const normalizeCenterLayoutConfig = (
     typeof layout?.paddingPercent === 'number' && Number.isFinite(layout.paddingPercent)
       ? explicitPaddingPercent
       : (paddingXPercent + paddingYPercent) / 2;
+  const fillMissingCanvasWhite = layout?.fillMissingCanvasWhite === true;
+  const targetCanvasWidth = normalizeTargetCanvasSide(layout?.targetCanvasWidth);
+  const targetCanvasHeight = normalizeTargetCanvasSide(layout?.targetCanvasHeight);
 
   return {
     paddingPercent: Number(resolvedPaddingPercent.toFixed(2)),
     paddingXPercent: Number(paddingXPercent.toFixed(2)),
     paddingYPercent: Number(paddingYPercent.toFixed(2)),
+    fillMissingCanvasWhite,
+    targetCanvasWidth,
+    targetCanvasHeight,
     whiteThreshold: Math.floor(
       clampNumber(
         layout?.whiteThreshold,
@@ -594,6 +617,12 @@ export async function centerAndScaleObjectByLayout(
     throw new Error('No visible object pixels were detected to center.');
   }
   const sourceObjectBounds = objectBoundsResult.bounds;
+  const outputWidth = normalizedLayout.fillMissingCanvasWhite
+    ? Math.max(width, normalizedLayout.targetCanvasWidth ?? width)
+    : width;
+  const outputHeight = normalizedLayout.fillMissingCanvasWhite
+    ? Math.max(height, normalizedLayout.targetCanvasHeight ?? height)
+    : height;
   const paddingXRatio = Math.max(
     0,
     Math.min(0.49, normalizedLayout.paddingXPercent / 100)
@@ -602,16 +631,16 @@ export async function centerAndScaleObjectByLayout(
     0,
     Math.min(0.49, normalizedLayout.paddingYPercent / 100)
   );
-  const maxObjectWidth = Math.max(1, Math.round(width * (1 - paddingXRatio * 2)));
-  const maxObjectHeight = Math.max(1, Math.round(height * (1 - paddingYRatio * 2)));
+  const maxObjectWidth = Math.max(1, Math.round(outputWidth * (1 - paddingXRatio * 2)));
+  const maxObjectHeight = Math.max(1, Math.round(outputHeight * (1 - paddingYRatio * 2)));
   const scale = Math.max(
     0.0001,
     Math.min(maxObjectWidth / sourceObjectBounds.width, maxObjectHeight / sourceObjectBounds.height)
   );
-  const targetWidth = Math.max(1, Math.min(width, Math.round(sourceObjectBounds.width * scale)));
-  const targetHeight = Math.max(1, Math.min(height, Math.round(sourceObjectBounds.height * scale)));
-  const targetLeft = Math.max(0, Math.round((width - targetWidth) / 2));
-  const targetTop = Math.max(0, Math.round((height - targetHeight) / 2));
+  const targetWidth = Math.max(1, Math.min(outputWidth, Math.round(sourceObjectBounds.width * scale)));
+  const targetHeight = Math.max(1, Math.min(outputHeight, Math.round(sourceObjectBounds.height * scale)));
+  const targetLeft = Math.max(0, Math.round((outputWidth - targetWidth) / 2));
+  const targetTop = Math.max(0, Math.round((outputHeight - targetHeight) / 2));
   const targetObjectBounds: ImageStudioCenterObjectBounds = {
     left: targetLeft,
     top: targetTop,
@@ -636,8 +665,8 @@ export async function centerAndScaleObjectByLayout(
 
   const outputBuffer = await sharp({
     create: {
-      width,
-      height,
+      width: outputWidth,
+      height: outputHeight,
       channels: 4,
       background: { r: 255, g: 255, b: 255, alpha: 1 },
     },
@@ -648,8 +677,8 @@ export async function centerAndScaleObjectByLayout(
 
   return {
     outputBuffer,
-    width,
-    height,
+    width: outputWidth,
+    height: outputHeight,
     sourceObjectBounds,
     targetObjectBounds,
     scale: Number(scale.toFixed(6)),

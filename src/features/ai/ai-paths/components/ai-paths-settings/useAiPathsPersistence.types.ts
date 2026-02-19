@@ -52,6 +52,7 @@ export type UseAiPathsPersistenceArgs = {
   executionMode: PathExecutionMode;
   flowIntensity: PathFlowIntensity;
   runMode: PathRunMode;
+  strictFlowMode: boolean;
   selectedNodeId: string | null;
   runtimeState: RuntimeState;
   updaterSamples: Record<string, UpdaterSampleState>;
@@ -89,6 +90,7 @@ export type UseAiPathsPersistenceArgs = {
   setExecutionMode: (value: PathExecutionMode) => void;
   setFlowIntensity: (value: PathFlowIntensity) => void;
   setRunMode: (value: PathRunMode) => void;
+  setStrictFlowMode: (value: boolean) => void;
   setHistoryRetentionPasses: (value: number) => void;
   setHistoryRetentionOptionsMax: (value: number) => void;
   setPathName: (value: string) => void;

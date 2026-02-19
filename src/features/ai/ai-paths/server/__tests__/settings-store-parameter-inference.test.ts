@@ -139,7 +139,7 @@ describe('parameter inference seed config', () => {
     const dbConfig = (((queryNode['config'] as Record<string, unknown>)['database'] ??
       {}) as Record<string, unknown>);
     const queryConfig = (((dbConfig['query'] as Record<string, unknown>) ??
-      {}) as Record<string, unknown>);
+      {}));
     queryNode['config'] = {
       ...(queryNode['config'] as Record<string, unknown>),
       database: {
@@ -164,7 +164,7 @@ describe('parameter inference seed config', () => {
     const dbConfig = (((updateNode['config'] as Record<string, unknown>)['database'] ??
       {}) as Record<string, unknown>);
     const queryConfig = (((dbConfig['query'] as Record<string, unknown>) ??
-      {}) as Record<string, unknown>);
+      {}));
     updateNode['config'] = {
       ...(updateNode['config'] as Record<string, unknown>),
       database: {

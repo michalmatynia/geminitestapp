@@ -6,6 +6,7 @@ import { normalizeLearningText } from './template-learning';
 import type {
   PromptExploderDocument,
   PromptExploderLearnedTemplate,
+  PromptExploderSegment,
 } from './types';
 import type { PromptExploderRuntimeValidationScope } from './validation-stack';
 
@@ -110,7 +111,7 @@ export const resolveSegmentIdAfterReexplode = (args: {
   if (args.strategy.kind === 'match_title') {
     const targetTitle = args.strategy.title;
     const matched = args.document.segments.find(
-      (segment) =>
+      (segment: PromptExploderSegment) =>
         normalizeLearningText(segment.title) ===
         normalizeLearningText(targetTitle)
     );
@@ -122,7 +123,7 @@ export const resolveSegmentIdAfterReexplode = (args: {
       return args.document.segments[0]?.id ?? null;
     }
     return args.document.segments.some(
-      (segment) => segment.id === previousId
+      (segment: PromptExploderSegment) => segment.id === previousId
     )
       ? previousId
       : args.document.segments[0]?.id ?? null;

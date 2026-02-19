@@ -83,11 +83,11 @@ export const createPromptExploderSegment = (args: {
   const matchedPatternIds = matchedRules.map((rule) => rule.id);
   const matchedPatternLabels = matchedRules
     .map((rule) => rule.label.trim())
-    .filter((label): label is string => label.length > 0);
+    .filter((label: string): label is string => label.length > 0);
   const matchedSequenceLabels = [...new Set(
     matchedRules
       .map((rule) => rule.sequenceGroupLabel?.trim() ?? '')
-      .filter((label): label is string => label.length > 0)
+      .filter((label: string): label is string => label.length > 0)
   )];
   const hintedType = inferTypeFromRuleHints(matchedRules, inferredType);
   const type = args.lockType ? inferredType : hintedType;
@@ -210,7 +210,7 @@ export const renderPromptExploderSegment = (segment: PromptExploderSegment): str
       if (segment.condition?.trim()) {
         lines.push(segment.condition.trim());
       }
-      segment.subsections.forEach((subsection, index) => {
+      segment.subsections.forEach((subsection: PromptExploderSubsection, index: number) => {
         if (index > 0 || lines.length > 0) {
           lines.push('');
         }
@@ -224,7 +224,7 @@ export const renderPromptExploderSegment = (segment: PromptExploderSegment): str
     case 'qa_matrix':
       appendTitle();
       if (segment.subsections.length > 0) {
-        segment.subsections.forEach((subsection, index) => {
+        segment.subsections.forEach((subsection: PromptExploderSubsection, index: number) => {
           if (index > 0 || lines.length > 0) {
             lines.push('');
           }

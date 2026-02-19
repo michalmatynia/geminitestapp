@@ -2,6 +2,7 @@ import type {
   PromptExploderBinding,
   PromptExploderListItem,
   PromptExploderSegment,
+  PromptExploderSubsection,
 } from './types';
 
 const REFERENCE_CODE_RE = /\b(P\d+|RL\d+|QA(?:_R)?\d+)\b/g;
@@ -61,9 +62,9 @@ const buildBindingCodeTargets = (
     });
   };
 
-  segments.forEach((segment) => {
+  segments.forEach((segment: PromptExploderSegment) => {
     register(segment.code, segment.id, null, segment.title);
-    segment.subsections.forEach((subsection) => {
+    segment.subsections.forEach((subsection: PromptExploderSubsection) => {
       register(subsection.code, segment.id, subsection.id, subsection.title);
     });
   });
@@ -76,9 +77,9 @@ const normalizeManualBindings = (
   segments: PromptExploderSegment[]
 ): PromptExploderBinding[] => {
   if (!bindings.length) return [];
-  const segmentById = new Map(segments.map((segment) => [segment.id, segment]));
+  const segmentById = new Map(segments.map((segment: PromptExploderSegment) => [segment.id, segment]));
   return bindings
-    .filter((binding) => {
+    .filter((binding: PromptExploderBinding) => {
       const fromSegment = segmentById.get(binding.fromSegmentId);
       const toSegment = segmentById.get(binding.toSegmentId);
       if (!fromSegment || !toSegment) return false;
@@ -86,19 +87,19 @@ const normalizeManualBindings = (
       const toSubsectionId = binding.toSubsectionId ?? null;
       if (
         fromSubsectionId &&
-        !fromSegment.subsections.some((subsection) => subsection.id === fromSubsectionId)
+        !fromSegment.subsections.some((subsection: PromptExploderSubsection) => subsection.id === fromSubsectionId)
       ) {
         return false;
       }
       if (
         toSubsectionId &&
-        !toSegment.subsections.some((subsection) => subsection.id === toSubsectionId)
+        !toSegment.subsections.some((subsection: PromptExploderSubsection) => subsection.id === toSubsectionId)
       ) {
         return false;
       }
       return true;
     })
-    .map((binding) => ({
+    .map((binding: PromptExploderBinding) => ({
       ...binding,
       fromSubsectionId: binding.fromSubsectionId ?? null,
       toSubsectionId: binding.toSubsectionId ?? null,
@@ -126,11 +127,11 @@ const detectAutoBindings = ({
   const isKnownParamPath = (candidate: string): boolean =>
     paramPaths.some((path) => path === candidate || path.endsWith(`.${candidate}`));
 
-  segments.forEach((segment) => {
+  segments.forEach((segment: PromptExploderSegment) => {
     const rendered = renderSegment(segment);
     const sourceLabel = segment.title;
 
-    extractReferenceCodes(rendered).forEach((code) => {
+    extractReferenceCodes(rendered).forEach((code: string) => {
       const target = codeTargets.get(code.toUpperCase());
       if (!target) return;
       if (target.segmentId === segment.id) return;
@@ -157,18 +158,18 @@ const detectAutoBindings = ({
       if (!paramPath || !isKnownParamPath(paramPath)) continue;
       referencedParams.add(paramPath);
     }
-    collectReferencedParamsFromItems(segment.listItems).forEach((paramPath) => {
+    collectReferencedParamsFromItems(segment.listItems).forEach((paramPath: string) => {
       if (!isKnownParamPath(paramPath)) return;
       referencedParams.add(paramPath);
     });
-    segment.subsections.forEach((subsection) => {
-      collectReferencedParamsFromItems(subsection.items).forEach((paramPath) => {
+    segment.subsections.forEach((subsection: PromptExploderSubsection) => {
+      collectReferencedParamsFromItems(subsection.items).forEach((paramPath: string) => {
         if (!isKnownParamPath(paramPath)) return;
         referencedParams.add(paramPath);
       });
     });
 
-    referencedParams.forEach((paramPath) => {
+    referencedParams.forEach((paramPath: string) => {
       bindings.push({
         id: createBindingId(),
         type: 'uses_param',
@@ -210,7 +211,7 @@ const hashBindingKey = (value: string): string => {
 
 const dedupeBindings = (bindings: PromptExploderBinding[]): PromptExploderBinding[] => {
   const deduped = new Map<string, PromptExploderBinding>();
-  bindings.forEach((binding) => {
+  bindings.forEach((binding: PromptExploderBinding) => {
     const key = bindingDedupeKey(binding);
     const existing = deduped.get(key);
     if (!existing) {

@@ -20,7 +20,8 @@ const normalizeRuleScopes = (
   if (Array.isArray(scopes) && scopes.length > 0) {
     return [...new Set(scopes)] as PromptValidationScope[];
   }
-  return [fallbackScope];
+  const activeRuleScope = fallbackScope === 'case-resolver-prompt-exploder' ? 'case_resolver_prompt_exploder' : 'prompt_exploder';
+  return [activeRuleScope as any] as PromptValidationScope[];
 };
 
 export const includesScope = (
@@ -28,7 +29,8 @@ export const includesScope = (
   scope: PromptExploderRuntimeValidationScope
 ): boolean => {
   if (!Array.isArray(scopes) || scopes.length === 0) return true;
-  return scopes.includes(scope) || scopes.includes('global');
+  const activeRuleScope = scope === 'case-resolver-prompt-exploder' ? 'case_resolver_prompt_exploder' : 'prompt_exploder';
+  return scopes.includes(activeRuleScope as any) || scopes.includes('global');
 };
 
 export const remapExploderScopesForTarget = (
@@ -40,16 +42,18 @@ export const remapExploderScopesForTarget = (
     return normalizedScopes;
   }
 
+  const activeRuleScope = targetScope === 'case-resolver-prompt-exploder' ? 'case_resolver_prompt_exploder' : 'prompt_exploder';
+
   const remapped = normalizedScopes.map((scope) => {
     if (scope === 'prompt_exploder' || scope === 'case_resolver_prompt_exploder') {
-      return targetScope;
+      return activeRuleScope as any;
     }
     return scope;
   });
 
   const deduped = [...new Set(remapped)];
-  if (!deduped.includes(targetScope) && !deduped.includes('global')) {
-    deduped.push(targetScope);
+  if (!deduped.includes(activeRuleScope as any) && !deduped.includes('global')) {
+    deduped.push(activeRuleScope as any);
   }
   return deduped;
 };

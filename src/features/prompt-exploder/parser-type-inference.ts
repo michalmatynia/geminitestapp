@@ -1,6 +1,7 @@
 import type { RuntimeRegexRule } from './parser-runtime-patterns';
 import type {
   PromptExploderLearnedTemplate,
+  PromptExploderListItem,
   PromptExploderSegment,
   PromptExploderSegmentType,
 } from './types';
@@ -63,7 +64,7 @@ const jaccardSimilarity = (left: string, right: string): number => {
   if (leftSet.size === 0 && rightSet.size === 0) return 1;
   if (leftSet.size === 0 || rightSet.size === 0) return 0;
   let intersection = 0;
-  leftSet.forEach((token) => {
+  leftSet.forEach((token: string) => {
     if (rightSet.has(token)) intersection += 1;
   });
   const union = leftSet.size + rightSet.size - intersection;
@@ -88,7 +89,7 @@ const diceSimilarity = (left: string, right: string): number => {
   if (leftBigrams.size === 0 && rightBigrams.size === 0) return 1;
   if (leftBigrams.size === 0 || rightBigrams.size === 0) return 0;
   let overlap = 0;
-  leftBigrams.forEach((token) => {
+  leftBigrams.forEach((token: string) => {
     if (rightBigrams.has(token)) overlap += 1;
   });
   return (2 * overlap) / (leftBigrams.size + rightBigrams.size);
@@ -99,12 +100,12 @@ const anchorCoverageScore = (
   anchorTokens: string[]
 ): number => {
   const anchors = anchorTokens
-    .map((token) => normalizedSimilarityText(token))
+    .map((token: string) => normalizedSimilarityText(token))
     .filter(Boolean);
   if (anchors.length === 0) return 0;
   const normalized = normalizedSimilarityText(segmentText);
   let hits = 0;
-  anchors.forEach((token) => {
+  anchors.forEach((token: string) => {
     if (normalized.includes(token)) hits += 1;
   });
   return hits / anchors.length;
@@ -113,14 +114,14 @@ const anchorCoverageScore = (
 const segmentSimilaritySource = (segment: PromptExploderSegment): string => {
   const lines: string[] = [segment.title];
   if (segment.listItems.length > 0) {
-    lines.push(segment.listItems.slice(0, 3).map((item) => item.text).join(' '));
+    lines.push(segment.listItems.slice(0, 3).map((item: PromptExploderListItem) => item.text).join(' '));
   }
   if (segment.subsections.length > 0) {
     const subsection = segment.subsections[0];
     if (subsection) {
       lines.push(subsection.title);
       if (subsection.items.length > 0) {
-        lines.push(subsection.items.slice(0, 2).map((item) => item.text).join(' '));
+        lines.push(subsection.items.slice(0, 2).map((item: PromptExploderListItem) => item.text).join(' '));
       }
     }
   }
@@ -237,7 +238,7 @@ export const inferTypeFromLearnedTemplates = (
   let bestTemplate: PromptExploderLearnedTemplate | null = null;
   let bestScore = 0;
 
-  templates.forEach((template) => {
+  templates.forEach((template: PromptExploderLearnedTemplate) => {
     const titleScore = Math.max(
       diceSimilarity(sourceText, template.normalizedTitle || template.title),
       jaccardSimilarity(sourceText, template.normalizedTitle || template.title)

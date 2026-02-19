@@ -927,7 +927,7 @@ export function explodePromptText(args: {
     }
   );
   const parsedSegments =
-    validationScope === 'case_resolver_prompt_exploder'
+    validationScope === 'case-resolver-prompt-exploder'
       ? applyCaseResolverFallbackSegmentation(
         prompt,
         runtime,
@@ -946,7 +946,7 @@ export function explodePromptText(args: {
     warnings.push('No segments were detected.');
   }
 
-  if (validationScope === 'prompt_exploder') {
+  if (validationScope === 'prompt-exploder') {
     if (!segments.some((segment) => segment.type === 'parameter_block')) {
       warnings.push('No PARAMS block was detected.');
     }

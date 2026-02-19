@@ -34,11 +34,16 @@ export function ensurePromptExploderPatternPack(
   const baseSettings = settings?.promptValidation
     ? settings
     : defaultPromptEngineSettings;
-  const targetScope = options?.scope ?? 'prompt_exploder';
+  const targetScope = options?.scope ?? 'prompt-exploder';
 
   const nextRules = [...baseSettings.promptValidation.rules];
   const addedRuleIds: string[] = [];
   const updatedRuleIds: string[] = [];
+
+  const activeRuleScope =
+    targetScope === 'case-resolver-prompt-exploder'
+      ? 'case_resolver_prompt_exploder'
+      : 'prompt_exploder';
 
   PROMPT_EXPLODER_PATTERN_PACK.forEach((packRule) => {
     const packScopes = remapExploderScopesForTarget(packRule.appliesToScopes, targetScope);
@@ -61,18 +66,18 @@ export function ensurePromptExploderPatternPack(
       return;
     }
 
-    const existingScopes = existing.appliesToScopes ?? [];
-    const missingPromptExploderScope = !existingScopes.includes(targetScope);
-    const existingLaunchScopes = existing.launchAppliesToScopes ?? [];
+    const existingScopes = (existing.appliesToScopes || []) as string[];
+    const missingPromptExploderScope = !existingScopes.includes(activeRuleScope);
+    const existingLaunchScopes = (existing.launchAppliesToScopes || []) as string[];
     const missingPromptExploderLaunchScope =
-      !existingLaunchScopes.includes(targetScope);
+      !existingLaunchScopes.includes(activeRuleScope);
     const merged: PromptValidationRule = {
       ...existing,
       appliesToScopes: (missingPromptExploderScope
-        ? [...new Set([...existingScopes, targetScope])]
+        ? [...new Set([...existingScopes, activeRuleScope])]
         : existing.appliesToScopes) as PromptValidationScope[],
       launchAppliesToScopes: (missingPromptExploderLaunchScope
-        ? [...new Set([...existingLaunchScopes, targetScope])]
+        ? [...new Set([...existingLaunchScopes, activeRuleScope])]
         : existing.launchAppliesToScopes) as PromptValidationScope[],
       promptExploderSegmentType:
         existing.promptExploderSegmentType ??
@@ -157,15 +162,24 @@ export function ensurePromptExploderPatternPack(
 
 export function getPromptExploderScopedRules(
   settings: PromptEngineSettings,
-  scope: PromptExploderRuntimeValidationScope = 'prompt_exploder'
+  scope: PromptExploderRuntimeValidationScope = 'prompt-exploder'
 ): PromptValidationRule[] {
   const mergedRules = [
     ...settings.promptValidation.rules,
     ...(settings.promptValidation.learnedRules ?? []),
   ];
+  const activeRuleScope =
+    scope === 'case-resolver-prompt-exploder'
+      ? 'case_resolver_prompt_exploder'
+      : 'prompt_exploder';
+
   const scopedRules = mergedRules.filter((rule) => {
-    const scopes = rule.appliesToScopes ?? [];
-    return scopes.length === 0 || scopes.includes(scope) || scopes.includes('global');
+    const scopes = (rule.appliesToScopes || []) as string[];
+    return (
+      scopes.length === 0 ||
+      scopes.includes(activeRuleScope) ||
+      scopes.includes('global')
+    );
   });
   const nextRules = [...scopedRules];
   const existingRuleIds = new Set(nextRules.map((rule) => rule.id));

@@ -6,7 +6,7 @@ export const PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME = 'Infer Parameters';
 export const buildParameterInferencePathConfigValue = (timestamp: string): string =>
   JSON.stringify({
     id: PARAMETER_INFERENCE_PATH_ID,
-    version: 5,
+    version: 6,
     name: PARAMETER_INFERENCE_PATH_NAME,
     description:
       'Infer product parameter values from name and images, then update product parameters.',
@@ -219,6 +219,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
             actionCategory: 'update',
             action: 'updateOne',
             mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
+            updatePayloadMode: 'custom',
             query: {
               provider: 'auto',
               collection: 'products',
@@ -236,7 +237,12 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
             writeSourcePath: '',
             dryRun: false,
             distinctField: '',
-            updateTemplate: '',
+            updateTemplate:
+              '{\n' +
+              '  "$set": {\n' +
+              '    "parameters": {{value}}\n' +
+              '  }\n' +
+              '}',
             skipEmpty: true,
             trimStrings: false,
             aiPrompt: '',
@@ -413,6 +419,51 @@ export const needsParameterInferenceConfigUpgrade = (
       return mapping['targetPath'] === 'parameters';
     });
     if (!writesSimpleParameters) return true;
+    const updatePayloadMode =
+      typeof updateDatabase?.['updatePayloadMode'] === 'string'
+        ? updateDatabase['updatePayloadMode']
+        : null;
+    if (updatePayloadMode !== 'custom') return true;
+    const updateQueryConfig =
+      updateDatabase &&
+      typeof updateDatabase['query'] === 'object' &&
+      updateDatabase['query'] !== null
+        ? (updateDatabase['query'] as Record<string, unknown>)
+        : null;
+    const updateQueryCollection =
+      updateQueryConfig && typeof updateQueryConfig['collection'] === 'string'
+        ? updateQueryConfig['collection'].trim().toLowerCase()
+        : '';
+    if (updateQueryCollection !== 'products') return true;
+    const updateQueryMode =
+      updateQueryConfig && typeof updateQueryConfig['mode'] === 'string'
+        ? updateQueryConfig['mode']
+        : null;
+    if (updateQueryMode !== 'custom') return true;
+    const updateQueryTemplate =
+      updateQueryConfig &&
+      typeof updateQueryConfig['queryTemplate'] === 'string'
+        ? updateQueryConfig['queryTemplate'].trim()
+        : '';
+    if (!updateQueryTemplate) return true;
+    if (
+      !updateQueryTemplate.includes('"id"') ||
+      !updateQueryTemplate.includes('{{entityId}}')
+    ) {
+      return true;
+    }
+    const updateTemplate =
+      typeof updateDatabase?.['updateTemplate'] === 'string'
+        ? updateDatabase['updateTemplate'].trim()
+        : '';
+    if (!updateTemplate) return true;
+    if (
+      !updateTemplate.includes('"$set"') ||
+      !updateTemplate.includes('"parameters"') ||
+      !updateTemplate.includes('{{value}}')
+    ) {
+      return true;
+    }
 
     const queryNode = nodes.find((node) => node?.['id'] === 'node-query-params');
     const queryType = queryNode?.['type'];
@@ -435,14 +486,19 @@ export const needsParameterInferenceConfigUpgrade = (
       queryDatabase['query'] !== null
         ? (queryDatabase['query'] as Record<string, unknown>)
         : null;
+    const queryMode =
+      queryConfig && typeof queryConfig['mode'] === 'string'
+        ? queryConfig['mode']
+        : null;
+    if (queryMode !== 'custom') return true;
     const queryCollection =
       queryConfig && typeof queryConfig['collection'] === 'string'
-        ? queryConfig['collection']
+        ? queryConfig['collection'].trim().toLowerCase()
         : null;
     if (queryCollection !== 'product_parameters') return true;
     const queryTemplate =
       queryConfig && typeof queryConfig['queryTemplate'] === 'string'
-        ? queryConfig['queryTemplate']
+        ? queryConfig['queryTemplate'].trim()
         : null;
     if (
       !queryTemplate ||

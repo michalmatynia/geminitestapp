@@ -23,6 +23,9 @@ const csp = [
 const nextConfig = {
   reactStrictMode: true,
   devIndicators: false,
+  // Keep dev artifacts separate from production builds to avoid lock/cache races
+  // when `next build` and `next dev` are triggered in parallel.
+  distDir: process.env.NEXT_DIST_DIR || (isDev ? '.next-dev' : '.next'),
   compress: true, // Ensure gzip compression is enabled
   output: "standalone", // Docker-friendly build output
   outputFileTracingRoot: __dirname,

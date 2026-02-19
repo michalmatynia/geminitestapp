@@ -38,12 +38,17 @@ export const removePatternSnapshotById = (
 
 export const ensurePromptExploderScopeOnRules = (
   rules: PromptValidationRule[],
-  scope: PromptExploderRuntimeValidationScope = 'prompt_exploder'
+  scope: PromptExploderRuntimeValidationScope = 'prompt-exploder'
 ): PromptValidationRule[] => {
+  const activeRuleScope =
+    scope === 'case-resolver-prompt-exploder'
+      ? 'case_resolver_prompt_exploder'
+      : 'prompt_exploder';
+
   return rules.map((rule) => ({
     ...rule,
     appliesToScopes: [
-      ...new Set([...(rule.appliesToScopes ?? []), scope]),
+      ...new Set([...(rule.appliesToScopes ?? []), activeRuleScope as any]),
     ] as PromptValidationScope[],
   }));
 };
@@ -54,11 +59,12 @@ export const mergeRestoredPromptExploderRules = (args: {
   isPromptExploderManagedRule: (rule: PromptValidationRule) => boolean;
   scope?: PromptExploderRuntimeValidationScope;
 }): PromptValidationRule[] => {
-  const scope = args.scope ?? 'prompt_exploder';
+  const scope = args.scope ?? 'prompt-exploder';
   const shouldReplaceManagedRule = (rule: PromptValidationRule): boolean => {
     if (!args.isPromptExploderManagedRule(rule)) return false;
     const scopes = rule.appliesToScopes ?? [];
-    return scopes.length === 0 || scopes.includes(scope) || scopes.includes('global');
+    const activeRuleScope = scope === 'case-resolver-prompt-exploder' ? 'case_resolver_prompt_exploder' : 'prompt_exploder';
+    return scopes.length === 0 || scopes.includes(activeRuleScope as any) || scopes.includes('global');
   };
   const keptRules = args.existingRules.filter(
     (rule) => !shouldReplaceManagedRule(rule)

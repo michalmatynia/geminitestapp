@@ -175,10 +175,10 @@ export async function buildMongoUpdatePlan({
       }
     };
   }
-  const updateDoc: unknown = parsedUpdate ?? updates;
+  const updateDocCandidate: unknown = parsedUpdate ?? updates;
   if (
-    !updateDoc ||
-  (typeof updateDoc !== 'object' && !Array.isArray(updateDoc))
+    !updateDocCandidate ||
+  (typeof updateDocCandidate !== 'object' && !Array.isArray(updateDocCandidate))
   ) {
     toast('Update document is missing or invalid.', { variant: 'error' });
     return {
@@ -190,6 +190,37 @@ export async function buildMongoUpdatePlan({
       }
     };
   }
+  let updateDoc: unknown = updateDocCandidate;
+  if (
+    dbConfig.parameterInferenceGuard?.enabled &&
+    updates[parameterTargetPath] !== undefined &&
+    updateDoc &&
+    typeof updateDoc === 'object' &&
+    !Array.isArray(updateDoc)
+  ) {
+    const updateDocRecord = updateDoc as Record<string, unknown>;
+    const updateSet =
+      updateDocRecord['$set'] &&
+      typeof updateDocRecord['$set'] === 'object' &&
+      !Array.isArray(updateDocRecord['$set'])
+        ? (updateDocRecord['$set'] as Record<string, unknown>)
+        : null;
+    if (updateSet && Object.prototype.hasOwnProperty.call(updateSet, parameterTargetPath)) {
+      updateDoc = {
+        ...updateDocRecord,
+        $set: {
+          ...updateSet,
+          [parameterTargetPath]: updates[parameterTargetPath],
+        },
+      };
+    } else if (Object.prototype.hasOwnProperty.call(updateDocRecord, parameterTargetPath)) {
+      updateDoc = {
+        ...updateDocRecord,
+        [parameterTargetPath]: updates[parameterTargetPath],
+      };
+    }
+  }
+
   if (
     !Array.isArray(updateDoc) &&
   typeof updateDoc === 'object' &&
@@ -205,6 +236,7 @@ export async function buildMongoUpdatePlan({
       }
     };
   }
+  debugPayload['updateDoc'] = updateDoc;
 
   return {
     plan: {

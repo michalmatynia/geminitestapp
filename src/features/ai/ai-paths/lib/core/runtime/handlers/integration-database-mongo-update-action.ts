@@ -147,10 +147,14 @@ export async function handleDatabaseMongoUpdateAction({
 
   const normalizedCollection: string = collection.trim().toLowerCase();
   const normalizedEntityType: string = (dbConfig.entityType ?? '').trim().toLowerCase();
+  const updatePayloadMode = dbConfig.updatePayloadMode ?? 'mapping';
+  const isCustomPayloadMode = updatePayloadMode === 'custom';
   const isProductCollection: boolean =
     normalizedCollection === 'product' || normalizedCollection === 'products';
   const shouldUseEntityUpdate: boolean =
-    action === 'updateOne' && (isProductCollection || normalizedEntityType === 'product');
+    action === 'updateOne' &&
+    !isCustomPayloadMode &&
+    (isProductCollection || normalizedEntityType === 'product');
 
   if (shouldUseEntityUpdate) {
     return await executeMongoEntityUpdate({

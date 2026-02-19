@@ -62,6 +62,26 @@ describe('parameter inference seed config', () => {
     ).toBe(true);
   });
 
+  it('seeds update node with custom update doc by simulation/entity id', () => {
+    const config = buildConfig();
+    const nodes = Array.isArray(config.nodes) ? config.nodes : [];
+    const updateNode = nodes.find((node) => node?.['id'] === 'node-update-params');
+    expect(updateNode?.['type']).toBe('database');
+
+    const dbConfig = (((updateNode?.['config'] as Record<string, unknown> | undefined)?.[
+      'database'
+    ] as Record<string, unknown> | undefined));
+    const queryConfig = ((dbConfig?.['query'] as Record<string, unknown> | undefined));
+
+    expect(dbConfig?.['updatePayloadMode']).toBe('custom');
+    expect(queryConfig?.['queryTemplate']).toEqual(
+      expect.stringContaining('"id": "{{entityId}}"')
+    );
+    expect(dbConfig?.['updateTemplate']).toEqual(
+      expect.stringContaining('"parameters": {{value}}')
+    );
+  });
+
   it('marks seeded config as up-to-date', () => {
     const raw = buildParameterInferencePathConfigValue('2026-02-19T00:00:00.000Z');
     expect(needsParameterInferenceConfigUpgrade(raw)).toBe(false);
@@ -82,6 +102,77 @@ describe('parameter inference seed config', () => {
         bodyTemplate: '',
         responseMode: 'json',
         responsePath: '',
+      },
+    };
+
+    const raw = JSON.stringify(config);
+    expect(needsParameterInferenceConfigUpgrade(raw)).toBe(true);
+  });
+
+  it('marks mapping-mode updater configs for upgrade', () => {
+    const config = buildConfig();
+    const nodes = Array.isArray(config.nodes) ? config.nodes : [];
+    const updateNode = nodes.find((node) => node?.['id'] === 'node-update-params');
+    if (!updateNode) throw new Error('Expected node-update-params');
+
+    const dbConfig = (((updateNode['config'] as Record<string, unknown>)['database'] ??
+      {}) as Record<string, unknown>);
+    updateNode['config'] = {
+      ...(updateNode['config'] as Record<string, unknown>),
+      database: {
+        ...dbConfig,
+        updatePayloadMode: 'mapping',
+        updateTemplate: '',
+      },
+    };
+
+    const raw = JSON.stringify(config);
+    expect(needsParameterInferenceConfigUpgrade(raw)).toBe(true);
+  });
+
+  it('marks configs with removed definition query template for upgrade', () => {
+    const config = buildConfig();
+    const nodes = Array.isArray(config.nodes) ? config.nodes : [];
+    const queryNode = nodes.find((node) => node?.['id'] === 'node-query-params');
+    if (!queryNode) throw new Error('Expected node-query-params');
+
+    const dbConfig = (((queryNode['config'] as Record<string, unknown>)['database'] ??
+      {}) as Record<string, unknown>);
+    const queryConfig = (((dbConfig['query'] as Record<string, unknown>) ??
+      {}) as Record<string, unknown>);
+    queryNode['config'] = {
+      ...(queryNode['config'] as Record<string, unknown>),
+      database: {
+        ...dbConfig,
+        query: {
+          ...queryConfig,
+          queryTemplate: '',
+        },
+      },
+    };
+
+    const raw = JSON.stringify(config);
+    expect(needsParameterInferenceConfigUpgrade(raw)).toBe(true);
+  });
+
+  it('marks configs with removed updater filter query template for upgrade', () => {
+    const config = buildConfig();
+    const nodes = Array.isArray(config.nodes) ? config.nodes : [];
+    const updateNode = nodes.find((node) => node?.['id'] === 'node-update-params');
+    if (!updateNode) throw new Error('Expected node-update-params');
+
+    const dbConfig = (((updateNode['config'] as Record<string, unknown>)['database'] ??
+      {}) as Record<string, unknown>);
+    const queryConfig = (((dbConfig['query'] as Record<string, unknown>) ??
+      {}) as Record<string, unknown>);
+    updateNode['config'] = {
+      ...(updateNode['config'] as Record<string, unknown>),
+      database: {
+        ...dbConfig,
+        query: {
+          ...queryConfig,
+          queryTemplate: '',
+        },
       },
     };
 

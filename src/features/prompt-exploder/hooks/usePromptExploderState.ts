@@ -278,11 +278,11 @@ export function usePromptExploderState() {
 
   const selectedSegment = useMemo(() => {
     if (!documentState || !selectedSegmentId) return null;
-    return documentState.segments.find((segment) => segment.id === selectedSegmentId) ?? null;
+    return documentState.segments.find((segment: PromptExploderSegment) => segment.id === selectedSegmentId) ?? null;
   }, [documentState, selectedSegmentId]);
 
   const segmentById = useMemo(() => {
-    return new Map((documentState?.segments ?? []).map((segment) => [segment.id, segment]));
+    return new Map<string, PromptExploderSegment>((documentState?.segments ?? []).map((segment: PromptExploderSegment) => [segment.id, segment]));
   }, [documentState?.segments]);
 
   // Handle auto-settings sync

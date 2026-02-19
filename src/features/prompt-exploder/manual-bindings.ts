@@ -29,8 +29,8 @@ export const resolveManualBindingSegmentIds = (args: {
 
   const firstId = args.segments[0]?.id ?? '';
   const secondId = args.segments[1]?.id ?? firstId;
-  const hasFrom = args.segments.some((segment) => segment.id === args.fromSegmentId);
-  const hasTo = args.segments.some((segment) => segment.id === args.toSegmentId);
+  const hasFrom = args.segments.some((segment: PromptExploderSegment) => segment.id === args.fromSegmentId);
+  const hasTo = args.segments.some((segment: PromptExploderSegment) => segment.id === args.toSegmentId);
 
   return {
     fromSegmentId: hasFrom ? args.fromSegmentId : firstId,
@@ -50,13 +50,13 @@ export const resolveManualBindingSubsectionIds = (args: {
   const fromSubsectionValid = Boolean(
     !args.fromSubsectionId ||
       fromSegment?.subsections.some(
-        (subsection) => subsection.id === args.fromSubsectionId
+        (subsection: PromptExploderSubsection) => subsection.id === args.fromSubsectionId
       )
   );
   const toSubsectionValid = Boolean(
     !args.toSubsectionId ||
       toSegment?.subsections.some(
-        (subsection) => subsection.id === args.toSubsectionId
+        (subsection: PromptExploderSubsection) => subsection.id === args.toSubsectionId
       )
   );
 
@@ -85,7 +85,7 @@ const findSubsectionById = (
   segment: PromptExploderSegment,
   subsectionId: string
 ): PromptExploderSubsection | null => {
-  return segment.subsections.find((subsection) => subsection.id === subsectionId) ?? null;
+  return segment.subsections.find((subsection: PromptExploderSubsection) => subsection.id === subsectionId) ?? null;
 };
 
 export const buildManualBindingFromDraft = (args: {
@@ -95,10 +95,10 @@ export const buildManualBindingFromDraft = (args: {
   formatSubsectionLabel: (subsection: PromptExploderSubsection) => string;
 }): ManualBindingBuildResult => {
   const fromSegment = args.segments.find(
-    (segment) => segment.id === args.draft.fromSegmentId
+    (segment: PromptExploderSegment) => segment.id === args.draft.fromSegmentId
   );
   const toSegment = args.segments.find(
-    (segment) => segment.id === args.draft.toSegmentId
+    (segment: PromptExploderSegment) => segment.id === args.draft.toSegmentId
   );
 
   if (!fromSegment || !toSegment) {

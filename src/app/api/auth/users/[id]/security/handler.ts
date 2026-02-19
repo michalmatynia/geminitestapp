@@ -68,10 +68,10 @@ export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, pa
 
   const profile = await updateAuthSecurityProfile(id, {
     ...(typeof updates.disabled === 'boolean'
-      ? { disabledAt: updates.disabled ? now : null }
+      ? { disabledAt: updates.disabled ? now.toISOString() : null }
       : {}),
     ...(typeof updates.banned === 'boolean'
-      ? { bannedAt: updates.banned ? now : null }
+      ? { bannedAt: updates.banned ? now.toISOString() : null }
       : {}),
     ...(allowedIps ? { allowedIps } : {}),
     ...(updates.disableMfa

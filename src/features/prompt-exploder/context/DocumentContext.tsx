@@ -25,7 +25,6 @@ import {
   PromptExploderParamEntriesState,
 } from '../params-editor';
 import {
-  ensureSegmentTitle,
   explodePromptText,
   reassemblePromptSegments,
   updatePromptExploderDocument,
@@ -120,6 +119,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
   const [incomingCaseResolverContext, setIncomingCaseResolverContext] =
     useState<PromptExploderCaseResolverContext | null>(null);
   const explodeInFlightRef = useRef(false);
+  const lastHydratedDraftPayloadKeyRef = useRef<string | null>(null);
   const lastExplosionRef = useRef<{
     signature: string;
     document: PromptExploderDocument;
@@ -246,10 +246,9 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
 
   const replaceSegments = useCallback(
     (segments: PromptExploderSegment[]) => {
-      const normalized = segments.map((segment) => ensureSegmentTitle(segment));
       setDocumentState((current: PromptExploderDocument | null) => {
         if (!current) return current;
-        return updatePromptExploderDocument(current, normalized, manualBindings);
+        return updatePromptExploderDocument(current, segments, manualBindings);
       });
     },
     [manualBindings]
@@ -260,7 +259,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
       setDocumentState((current: PromptExploderDocument | null) => {
         if (!current) return current;
         const nextSegments = current.segments.map((segment: PromptExploderSegment) =>
-          segment.id === segmentId ? ensureSegmentTitle(updater(segment)) : segment
+          segment.id === segmentId ? updater(segment) : segment
         );
         return updatePromptExploderDocument(current, nextSegments, manualBindings);
       });
@@ -555,11 +554,25 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
       payload && (!payload.target || payload.target === 'prompt-exploder')
         ? payload.prompt
         : null;
-    if (promptFromPayload && !promptText.trim()) {
+    const payloadKey = payload
+      ? [
+        payload.createdAt,
+        payload.source ?? '',
+        payload.target ?? '',
+        payload.caseResolverContext?.fileId ?? '',
+      ].join('|')
+      : null;
+    if (
+      promptFromPayload &&
+      payloadKey &&
+      lastHydratedDraftPayloadKeyRef.current !== payloadKey
+    ) {
+      lastHydratedDraftPayloadKeyRef.current = payloadKey;
+      clearDocument();
       setPromptText(promptFromPayload);
       return;
     }
-  }, [incomingBridgeSource, incomingCaseResolverContext, promptText]);
+  }, [clearDocument, incomingBridgeSource, incomingCaseResolverContext]);
 
   // ── Context values ─────────────────────────────────────────────────────────
 

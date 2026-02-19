@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { categoryCreateSchema } from '@/features/notesapp/public';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
+import type { CreateNoteCategoryDto as CategoryCreateInput } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { CategoryCreateInput } from '@/shared/types/domain/notes';
 import { removeUndefined } from '@/shared/utils';
 
 /**

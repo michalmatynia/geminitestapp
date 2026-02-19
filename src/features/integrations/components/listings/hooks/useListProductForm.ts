@@ -1,6 +1,5 @@
 import { useState } from 'react';
 
-import type { ImageTransformOptionsDto as ImageTransformOptions, ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
 import {
   useExportToBaseMutation,
   useCreateListingMutation,
@@ -9,6 +8,7 @@ import {
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import { listProductFormSchema } from '@/features/integrations/validations/listing-forms';
 import { logClientError } from '@/features/observability';
+import type { ImageTransformOptionsDto as ImageTransformOptions, ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
 import { useToast } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 

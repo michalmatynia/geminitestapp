@@ -102,6 +102,7 @@ export function useAiPathsRunHistory({
     const latestEventTimestamp = runDetail.events?.length
       ? runDetail.events.reduce<string | null>(
         (max: string | null, event: AiPathRunEventRecord) => {
+          if (!event.createdAt) return max;
           const time = new Date(event.createdAt).getTime();
           if (!Number.isFinite(time)) return max;
           if (!max) return new Date(time).toISOString();
@@ -130,8 +131,8 @@ export function useAiPathsRunHistory({
           }
         });
         merged.sort((a: AiPathRunEventRecord, b: AiPathRunEventRecord) => {
-          const aTime = new Date(a.createdAt).getTime();
-          const bTime = new Date(b.createdAt).getTime();
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
           return aTime - bTime;
         });
         return { ...prev, events: merged };
@@ -214,7 +215,9 @@ export function useAiPathsRunHistory({
     return { counts, total, completed, progress };
   }, [runDetail]);
 
-  const runDetailHistory = runDetail?.run?.runtimeState?.history;
+  const runDetailHistory = (
+    runDetail?.run?.runtimeState as { history?: Record<string, RuntimeHistoryEntry[]> } | undefined
+  )?.history;
   const runDetailHistoryOptions = useMemo(
     () =>
       buildHistoryNodeOptions(

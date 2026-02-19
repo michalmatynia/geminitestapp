@@ -186,4 +186,96 @@ describe('buildBaseProductData producer mapping', () => {
 
     expect(payload['custom_material_pl']).toBe('Wood');
   });
+
+  it('normalizes parameter-prefixed source fields to Base parameter keys', async () => {
+    const product = createProduct();
+    product.parameters = [
+      {
+        parameterId: 'param-color',
+        value: 'Red',
+      },
+    ];
+
+    const payload = await buildBaseProductData(product, [
+      {
+        sourceKey: 'parameter:param-color',
+        targetField: 'parameter:param-color',
+      },
+    ]);
+
+    expect(payload['param-color']).toBe('Red');
+  });
+
+  it('normalizes language-scoped parameter-prefixed source fields to Base keys', async () => {
+    const product = createProduct();
+    product.parameters = [
+      {
+        parameterId: 'param-material',
+        value: '',
+        valuesByLanguage: {
+          en: 'Wood',
+          de: 'Holz',
+        },
+      },
+    ];
+
+    const payload = await buildBaseProductData(product, [
+      {
+        sourceKey: 'parameter:param-material|de',
+        targetField: 'parameter:param-material|de',
+      },
+    ]);
+
+    expect(payload['param-material|de']).toBe('Holz');
+  });
+
+  it('maps text_fields.features parameter targets to nested text_fields payload', async () => {
+    const product = createProduct();
+    product.parameters = [
+      {
+        parameterId: 'param-material',
+        value: 'Wood',
+      },
+    ];
+
+    const payload = await buildBaseProductData(product, [
+      {
+        sourceKey: 'text_fields.features.Material',
+        targetField: 'parameter:param-material',
+      },
+    ]);
+
+    expect(payload['text_fields']).toMatchObject({
+      features: {
+        Material: 'Wood',
+      },
+    });
+  });
+
+  it('maps localized text_fields.features parameter targets to nested text_fields payload', async () => {
+    const product = createProduct();
+    product.parameters = [
+      {
+        parameterId: 'param-material',
+        value: '',
+        valuesByLanguage: {
+          en: 'Wood',
+          de: 'Holz',
+        },
+      },
+    ];
+
+    const payload = await buildBaseProductData(product, [
+      {
+        sourceKey: 'text_fields.features|de.Material',
+        targetField: 'parameter:param-material|de',
+      },
+    ]);
+
+    expect(payload['text_fields']).toMatchObject({
+      'features|de': {
+        Material: 'Holz',
+      },
+    });
+  });
 });

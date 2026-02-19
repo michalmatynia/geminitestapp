@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { noteCreateSchema } from '@/features/notesapp/public';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
+import type { NoteFiltersDto as NoteFilters } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { NoteFilters } from '@/shared/types/domain/notes';
 
 /**
  * GET /api/notes

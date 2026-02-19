@@ -8,9 +8,9 @@ import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
 } from '@/features/data-import-export';
-import type { ImageRetryPresetDto as ImageRetryPreset, TemplateDto as DomainImportExportTemplate, TemplateMappingDto as DomainImportExportTemplateMapping } from '@/shared/contracts/integrations';
 import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import { getProductDataProvider } from '@/features/products/server';
+import type { ImageRetryPresetDto as ImageRetryPreset, TemplateDto as DomainImportExportTemplate, TemplateMappingDto as DomainImportExportTemplateMapping } from '@/shared/contracts/integrations';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -493,8 +493,10 @@ export const createExportTemplate = async (input: {
   const template: Template = {
     id: randomUUID(),
     name: input.name,
+    provider: 'base',
     description: input.description ?? null,
     mappings: input.mappings ?? [],
+    config: {},
     exportImagesAsBase64: input.exportImagesAsBase64 ?? false,
     createdAt: now,
     updatedAt: now,

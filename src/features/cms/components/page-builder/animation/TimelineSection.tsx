@@ -14,11 +14,11 @@ import {
   REVEAL_STYLES,
 } from '@/features/gsap';
 import {
-  Checkbox,
-  Input,
   SelectSimple,
   FormSection,
   FormField,
+  ToggleRow,
+  Input,
 } from '@/shared/ui';
 
 import { useAnimationConfigContext } from './AnimationConfigContext';
@@ -107,15 +107,15 @@ export function TimelineSection(): React.ReactNode {
   );
 
   const handleTimelineRandomizeChange = useCallback(
-    (checked: boolean | 'indeterminate') => {
-      onChange({ ...config, timelineRandomize: checked === true });
+    (checked: boolean) => {
+      onChange({ ...config, timelineRandomize: checked });
     },
     [config, onChange]
   );
 
   const handleTimelineLoopChange = useCallback(
-    (checked: boolean | 'indeterminate') => {
-      onChange({ ...config, timelineLoop: checked === true });
+    (checked: boolean) => {
+      onChange({ ...config, timelineLoop: checked });
     },
     [config, onChange]
   );
@@ -131,8 +131,8 @@ export function TimelineSection(): React.ReactNode {
   );
 
   const handleTimelineYoyoChange = useCallback(
-    (checked: boolean | 'indeterminate') => {
-      onChange({ ...config, timelineYoyo: checked === true });
+    (checked: boolean) => {
+      onChange({ ...config, timelineYoyo: checked });
     },
     [config, onChange]
   );
@@ -165,15 +165,15 @@ export function TimelineSection(): React.ReactNode {
   );
 
   const handleScrollPinChange = useCallback(
-    (checked: boolean | 'indeterminate') => {
-      onChange({ ...config, scrollPin: checked === true });
+    (checked: boolean) => {
+      onChange({ ...config, scrollPin: checked });
     },
     [config, onChange]
   );
 
   const handleScrollSnapChange = useCallback(
-    (checked: boolean | 'indeterminate') => {
-      onChange({ ...config, scrollSnap: checked === true });
+    (checked: boolean) => {
+      onChange({ ...config, scrollSnap: checked });
     },
     [config, onChange]
   );
@@ -295,19 +295,25 @@ export function TimelineSection(): React.ReactNode {
               </FormField>
             )}
 
-            <div className='flex flex-wrap items-center gap-4'>
-              <label className='flex items-center gap-2 text-xs text-gray-300 cursor-pointer'>
-                <Checkbox checked={timelineRandomizeValue} onCheckedChange={handleTimelineRandomizeChange} />
-                Random order
-              </label>
-              <label className='flex items-center gap-2 text-xs text-gray-300 cursor-pointer'>
-                <Checkbox checked={timelineLoopValue} onCheckedChange={handleTimelineLoopChange} />
-                Loop
-              </label>
-              <label className='flex items-center gap-2 text-xs text-gray-300 cursor-pointer'>
-                <Checkbox checked={timelineYoyoValue} onCheckedChange={handleTimelineYoyoChange} />
-                Yoyo
-              </label>
+            <div className='grid gap-2'>
+              <ToggleRow
+                label='Random order'
+                checked={timelineRandomizeValue}
+                onCheckedChange={handleTimelineRandomizeChange}
+                className='border-none p-0 bg-transparent hover:bg-transparent'
+              />
+              <ToggleRow
+                label='Loop'
+                checked={timelineLoopValue}
+                onCheckedChange={handleTimelineLoopChange}
+                className='border-none p-0 bg-transparent hover:bg-transparent'
+              />
+              <ToggleRow
+                label='Yoyo'
+                checked={timelineYoyoValue}
+                onCheckedChange={handleTimelineYoyoChange}
+                className='border-none p-0 bg-transparent hover:bg-transparent'
+              />
             </div>
 
             {timelineLoopValue && (
@@ -399,21 +405,22 @@ export function TimelineSection(): React.ReactNode {
                       className='h-9'
                     />
                   </FormField>
-                  <div className='flex items-center gap-2 mb-2'>
-                    <Checkbox
-                      checked={scrollModeValue === 'pin' || scrollModeValue === 'story' ? true : scrollPinValue}
-                      onCheckedChange={handleScrollPinChange}
-                      disabled={scrollModeValue === 'pin' || scrollModeValue === 'story'}
-                    />
-                    <span className='text-xs text-gray-300'>Pin section</span>
-                  </div>
+                  <ToggleRow
+                    label='Pin section'
+                    checked={scrollModeValue === 'pin' || scrollModeValue === 'story' ? true : scrollPinValue}
+                    onCheckedChange={handleScrollPinChange}
+                    disabled={scrollModeValue === 'pin' || scrollModeValue === 'story'}
+                    className='border-none p-0 bg-transparent hover:bg-transparent mb-2'
+                  />
                 </div>
 
                 <div className='grid gap-3 sm:grid-cols-2 items-end'>
-                  <div className='flex items-center gap-2 mb-2'>
-                    <Checkbox checked={scrollSnapValue} onCheckedChange={handleScrollSnapChange} />
-                    <span className='text-xs text-gray-300'>Scroll snap to steps</span>
-                  </div>
+                  <ToggleRow
+                    label='Scroll snap'
+                    checked={scrollSnapValue}
+                    onCheckedChange={handleScrollSnapChange}
+                    className='border-none p-0 bg-transparent hover:bg-transparent mb-2'
+                  />
                   <FormField label='Snap duration'>
                     <Input
                       type='number'

@@ -7,6 +7,7 @@ import OpenAI from 'openai';
 
 import { getImageFileRepository } from '@/features/files/server';
 import { ErrorSystem } from '@/features/observability/server';
+import type { ImageFileRecordDto as ImageFileRecord } from '@/shared/contracts/files';
 import {
   badRequestError,
   configurationError,
@@ -15,7 +16,6 @@ import {
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ImageFileRecord } from '@/shared/types/domain/files';
 
 import type { ProductFormData } from '../types/forms';
 import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';

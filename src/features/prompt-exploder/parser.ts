@@ -898,7 +898,7 @@ export function updatePromptExploderDocument(
 ): PromptExploderDocument {
   const hasSameSegmentsReference = segments === document.segments;
   const bindings = buildBindings(segments, manualBindings);
-  const warnings = [...document.warnings];
+  const warnings = [...(document.warnings ?? [])];
   const reassembledPrompt = hasSameSegmentsReference
     ? document.reassembledPrompt
     : reassemblePromptSegments(segments);

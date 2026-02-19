@@ -327,6 +327,26 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
     updateConfig,
   ]);
 
+  const handleOpenValidatorPatterns = React.useCallback((): void => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams();
+    if (selectedNode?.id) {
+      params.set('focusNodeId', selectedNode.id);
+    }
+    if (selectedNode?.type) {
+      params.set('focusNodeType', selectedNode.type);
+    }
+    const normalizedStackId = config.stackId.trim();
+    if (normalizedStackId) {
+      params.set('stackId', normalizedStackId);
+    }
+    const query = params.toString();
+    const destination = query
+      ? `/admin/ai-paths/validation?${query}`
+      : '/admin/ai-paths/validation';
+    window.open(destination, '_blank', 'noopener,noreferrer');
+  }, [config.stackId, selectedNode?.id, selectedNode?.type]);
+
   const totalRuleCount =
     (config.rules?.length ?? 0) +
     (config.includeLearnedRules ? config.learnedRules?.length ?? 0 : 0);
@@ -387,9 +407,24 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
               className='mt-2'
             />
           </div>
-          <Button type='button' variant='outline' size='sm' onClick={syncRulesFromGlobalStack}>
-            Sync Rules From Global Stack
-          </Button>
+          <div className='flex flex-wrap items-center gap-2'>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={syncRulesFromGlobalStack}
+            >
+              Sync Rules From Global Stack
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={handleOpenValidatorPatterns}
+            >
+              Open AI-Paths Node Validator
+            </Button>
+          </div>
           <p className='text-[11px] text-gray-500'>
             Runtime uses synced rule snapshots. Click sync after editing global validation patterns.
           </p>
@@ -427,6 +462,14 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
               }}
             >
               Add Regex Rule
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={handleOpenValidatorPatterns}
+            >
+              Open AI-Paths Node Validator
             </Button>
           </div>
         </div>

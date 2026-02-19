@@ -2,13 +2,13 @@ import 'server-only';
 
 import { Prisma } from '@prisma/client';
 
-import prisma from '@/shared/lib/db/prisma';
 import type {
   NoteCategoryDto as CategoryRecord,
   NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
   CreateNoteCategoryDto as CategoryCreateInput,
   UpdateNoteCategoryDto as CategoryUpdateInput,
 } from '@/shared/contracts/notes';
+import prisma from '@/shared/lib/db/prisma';
 
 import { getOrCreateDefaultNotebook } from './notebook-impl';
 

@@ -233,6 +233,14 @@ const renderProductTable = (
   return contextValue;
 };
 
+const clickFirstOneClickExport = async (): Promise<void> => {
+  const user = userEvent.setup();
+  const quickExportButtons = await screen.findAllByLabelText(
+    'One-click export to Base.com'
+  );
+  await user.click(quickExportButtons[0]!);
+};
+
 describe('Admin Products List UI', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -259,6 +267,7 @@ describe('Admin Products List UI', () => {
       http.get('/api/products/validator-config', () => HttpResponse.json([])),
       http.get('/api/integrations/with-connections', () => HttpResponse.json([])),
       http.get('/api/integrations/exports/base/default-connection', () => HttpResponse.json({ connectionId: null })),
+      http.get('/api/integrations/products/:id/listings', () => HttpResponse.json([])),
       http.get('/api/ai-paths/trigger-buttons', () => HttpResponse.json([])),
       http.post('/api/query-telemetry', () => HttpResponse.json({ ok: true })),
       http.post('/api/client-errors', () => HttpResponse.json({ success: true }))
@@ -315,6 +324,112 @@ describe('Admin Products List UI', () => {
       const skuInput = document.getElementById('sku') as HTMLInputElement;
       expect(skuInput).toBeInTheDocument();
       expect(skuInput.value).toBe('ABC123');
+    });
+  });
+
+  it('shows notification and blocks OneClick export when inventory is not configured', async () => {
+    let exportCalls = 0;
+    server.use(
+      http.get('/api/integrations/exports/base/default-connection', () =>
+        HttpResponse.json({ connectionId: 'base-conn-1' })
+      ),
+      http.get('/api/integrations/exports/base/default-inventory', () =>
+        HttpResponse.json({ inventoryId: null })
+      ),
+      http.post('/api/integrations/products/:id/export-to-base', () => {
+        exportCalls += 1;
+        return HttpResponse.json({ success: true });
+      })
+    );
+
+    renderProductTable();
+    await clickFirstOneClickExport();
+
+    expect(
+      await screen.findByText(
+        'Specific Base.com inventory is not configured. Open Export Settings and set inventory.'
+      )
+    ).toBeInTheDocument();
+    expect(exportCalls).toBe(0);
+  });
+
+  it('shows notification and blocks OneClick export when configured inventory is not available for connection', async () => {
+    let exportCalls = 0;
+    server.use(
+      http.get('/api/integrations/exports/base/default-connection', () =>
+        HttpResponse.json({ connectionId: 'base-conn-1' })
+      ),
+      http.get('/api/integrations/exports/base/default-inventory', () =>
+        HttpResponse.json({ inventoryId: 'inv-missing' })
+      ),
+      http.post('/api/integrations/imports/base', async () =>
+        HttpResponse.json({
+          inventories: [{ inventory_id: 'inv-1', name: 'Inventory 1' }],
+        })
+      ),
+      http.post('/api/integrations/products/:id/export-to-base', () => {
+        exportCalls += 1;
+        return HttpResponse.json({ success: true });
+      })
+    );
+
+    renderProductTable();
+    await clickFirstOneClickExport();
+
+    expect(
+      await screen.findByText(
+        'Configured Base.com inventory is not available for this connection. Open Export Settings and select a valid inventory.'
+      )
+    ).toBeInTheDocument();
+    expect(exportCalls).toBe(0);
+  });
+
+  it('uses scoped active template with explicit connection and inventory for OneClick export', async () => {
+    let capturedTemplateScope: { connectionId: string; inventoryId: string } | null =
+      null;
+    let exportPayload: Record<string, unknown> | null = null;
+
+    server.use(
+      http.get('/api/integrations/exports/base/default-connection', () =>
+        HttpResponse.json({ connectionId: 'base-conn-1' })
+      ),
+      http.get('/api/integrations/exports/base/default-inventory', () =>
+        HttpResponse.json({ inventoryId: 'inv-1' })
+      ),
+      http.post('/api/integrations/imports/base', async () =>
+        HttpResponse.json({
+          inventories: [{ inventory_id: 'inv-1', name: 'Inventory 1' }],
+        })
+      ),
+      http.get('/api/integrations/exports/base/active-template', ({ request }) => {
+        const url = new URL(request.url);
+        capturedTemplateScope = {
+          connectionId: url.searchParams.get('connectionId') ?? '',
+          inventoryId: url.searchParams.get('inventoryId') ?? '',
+        };
+        return HttpResponse.json({ templateId: 'tpl-1' });
+      }),
+      http.post('/api/integrations/products/:id/export-to-base', async ({ request }) => {
+        exportPayload = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ success: true });
+      }),
+      http.get('/api/integrations/products/:id/listings', () => HttpResponse.json([]))
+    );
+
+    renderProductTable();
+    await clickFirstOneClickExport();
+
+    await waitFor(() => {
+      expect(exportPayload).not.toBeNull();
+    });
+    expect(capturedTemplateScope).toEqual({
+      connectionId: 'base-conn-1',
+      inventoryId: 'inv-1',
+    });
+    expect(exportPayload).toMatchObject({
+      connectionId: 'base-conn-1',
+      inventoryId: 'inv-1',
+      templateId: 'tpl-1',
     });
   });
 });

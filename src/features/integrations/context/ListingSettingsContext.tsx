@@ -9,9 +9,9 @@ import React, {
   useState,
 } from 'react';
 
-import type { BaseInventoryDto as BaseInventory, TemplateDto as Template } from '@/shared/contracts/integrations';
 import { DEFAULT_TRADERA_SYSTEM_SETTINGS } from '@/features/integrations/constants/tradera';
-import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
+import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/features/integrations/types/integrations';
+import type { BaseInventoryDto as BaseInventory, TemplateDto as Template } from '@/shared/contracts/integrations';
 import { internalError } from '@/shared/errors/app-error';
 
 import { useBaseComSettings } from '../components/listings/hooks/useBaseComSettings';
@@ -95,7 +95,7 @@ export function ListingSettingsProvider({
     }
     return (
       selection.selectedIntegration.connections.find(
-        (connection) => connection.id === selection.selectedConnectionId
+        (connection: IntegrationConnectionBasic) => connection.id === selection.selectedConnectionId
       ) ?? null
     );
   }, [

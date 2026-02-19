@@ -82,7 +82,7 @@ function buildFormData(
 
   imageSlots.forEach((slot: ProductImageSlot | null): void => {
     if (slot?.type === 'file') {
-      formData.append('images', slot.data);
+      formData.append('images', slot.data as Blob);
     } else if (slot?.type === 'existing') {
       formData.append('imageFileIds', slot.data.id);
     }

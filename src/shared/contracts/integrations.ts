@@ -417,7 +417,7 @@ export type ProducerMappingUpdateInputDto = z.infer<typeof producerMappingUpdate
  */
 
 export const templateMappingSchema = z.object({
-  sourceField: z.string(),
+  sourceKey: z.string(),
   targetField: z.string(),
   transform: z.string().optional(),
 });
@@ -426,8 +426,10 @@ export type TemplateMappingDto = z.infer<typeof templateMappingSchema>;
 
 export const templateSchema = namedDtoSchema.extend({
   provider: z.string(),
-  mapping: z.array(templateMappingSchema),
+  mappings: z.array(templateMappingSchema),
   config: z.record(z.string(), z.unknown()),
+  description: z.string().nullable().optional(),
+  exportImagesAsBase64: z.boolean().optional(),
 });
 
 export type TemplateDto = z.infer<typeof templateSchema>;

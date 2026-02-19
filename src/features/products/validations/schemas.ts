@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-import { commonListQuerySchema } from '@/shared/validations/api-schemas';
 import {
   productCreateInputSchema as productCreateSchema,
   productUpdateInputSchema as productUpdateSchema,

@@ -204,11 +204,6 @@ function ImportsPageContent(): React.JSX.Element {
       importSourceFieldOptions.forEach((key: string) => {
         allKeys.add(key);
       });
-      customParameterTargetFields.forEach(
-        (field: { value: string; label: string }) => {
-          allKeys.add(field.value);
-        }
-      );
 
       return Array.from(allKeys)
         .map((value: string) => ({
@@ -612,10 +607,34 @@ function ImportsPageContent(): React.JSX.Element {
                         </div>
                         {templateScope === 'export' ? (
                           (() => {
+                            const sourceValue = m.sourceKey.trim();
+                            const sourceUsesParameterPrefix = sourceValue
+                              .toLowerCase()
+                              .startsWith(PRODUCT_PARAMETER_TARGET_PREFIX);
                             const targetValue = m.targetField.trim();
                             const hasParameterPrefix = targetValue
                               .toLowerCase()
                               .startsWith(PRODUCT_PARAMETER_TARGET_PREFIX);
+                            if (!hasParameterPrefix && !sourceUsesParameterPrefix) {
+                              return null;
+                            }
+
+                            if (sourceUsesParameterPrefix) {
+                              const parsedSourceParameter = parseParameterTarget(sourceValue);
+                              if (parsedSourceParameter) {
+                                const baseFieldKey = parsedSourceParameter.languageCode
+                                  ? `${parsedSourceParameter.parameterId}|${parsedSourceParameter.languageCode}`
+                                  : parsedSourceParameter.parameterId;
+                                return (
+                                  <p className='text-[11px] text-amber-300'>
+                                    Source uses <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code>{' '}
+                                    notation. Export normalizes it to Base field key{' '}
+                                    <code>{baseFieldKey}</code>.
+                                  </p>
+                                );
+                              }
+                            }
+
                             if (!hasParameterPrefix) return null;
 
                             const parsedParameterTarget = parseParameterTarget(
@@ -679,7 +698,7 @@ function ImportsPageContent(): React.JSX.Element {
                       </datalist>
                       <p className='text-xs text-gray-500 italic'>
                         Tip: For category mapping use source <code>category_id</code> and target <code>categoryId</code>.
-                        {' '}For parameters use target <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code> or{' '}
+                        {' '}For parameters set Base field key in <code>Source</code> and use target <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code> or{' '}
                         <code>{PRODUCT_PARAMETER_TARGET_TRANSLATED_PATTERN}</code>.
                         {' '}Available source keys: {exportSourceFieldOptions.length}.
                       </p>

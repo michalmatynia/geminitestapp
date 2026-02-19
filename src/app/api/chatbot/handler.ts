@@ -6,13 +6,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 import { logSystemError, logSystemEvent } from '@/features/observability/server';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
+import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import {
   badRequestError,
   externalServiceError,
   internalError,
 } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { ChatMessage } from '@/shared/types/domain/chatbot';
 
 const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env['OLLAMA_MODEL'];

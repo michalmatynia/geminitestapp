@@ -36,6 +36,12 @@ const schedulerStatusPayload = {
   timestamp: '2026-02-10T10:00:00.000Z',
   schedulerEnabled: true,
   lastCheckedAt: '2026-02-10T09:59:00.000Z',
+  queue: {
+    running: true,
+    healthy: true,
+    processing: false,
+  },
+  repeatEveryMs: 60000,
   targets: {
     mongodb: {
       enabled: true,

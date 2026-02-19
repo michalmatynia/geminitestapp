@@ -10,7 +10,11 @@ import { useSettingsState } from '../context/hooks/useSettings';
 export function SourcePromptPanel(): React.JSX.Element {
   const { promptText, documentState, returnTarget } = useDocumentState();
   const { setPromptText, handleExplode, handleApplyToImageStudio } = useDocumentActions();
-  const { runtimeGuardrailIssue } = useSettingsState();
+  const { runtimeGuardrailIssue, promptExploderSettings } = useSettingsState();
+  const caseResolverCaptureModeLabel =
+    promptExploderSettings.runtime.caseResolverCaptureMode === 'rules_with_heuristics'
+      ? 'Rules + Heuristics'
+      : 'Rules Only';
 
   return (
     <FormSection
@@ -46,6 +50,11 @@ export function SourcePromptPanel(): React.JSX.Element {
         {runtimeGuardrailIssue ? (
           <div className='rounded border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-100'>
             {runtimeGuardrailIssue}
+          </div>
+        ) : null}
+        {returnTarget === 'case-resolver' ? (
+          <div className='rounded border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-100'>
+            Case Resolver capture mode: {caseResolverCaptureModeLabel}
           </div>
         ) : null}
         <Textarea

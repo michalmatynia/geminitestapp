@@ -12,8 +12,8 @@ export type LocalizedDto = z.infer<typeof localizedSchema>;
 
 export const dtoBaseSchema = z.object({
   id: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string().nullable(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().nullable().optional(),
 });
 export type DtoBase = z.infer<typeof dtoBaseSchema>;
 

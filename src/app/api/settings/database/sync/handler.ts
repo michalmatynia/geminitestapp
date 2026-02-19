@@ -5,11 +5,11 @@ import { auth } from '@/features/auth/server';
 import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
 import { enqueueProductAiJob, processSingleJob, startProductAiJobQueue } from '@/features/jobs/server';
 import { ActivityTypes, logActivity, logSystemError } from '@/features/observability/server';
+import type { ProductAiJobTypeDto as ProductAiJobType } from '@/shared/contracts/jobs';
 import { authError, forbiddenError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getDatabaseEnginePolicy } from '@/shared/lib/db/database-engine-policy';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { ProductAiJobType } from '@/shared/types/domain/jobs';
 import { logger } from '@/shared/utils/logger';
 
 const syncSchema = z.object({

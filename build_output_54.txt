@@ -1,0 +1,38 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 237ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · optimizePackageImports
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 23.8s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/ai/agentcreator/pages/AgentPersonasPage.tsx:66:18
+Type error: Type '{ id: string; name: string; settings: { executorModel: string | null; plannerModel: string | null; selfCheckModel: string | null; extractionValidationModel: string | null; toolRouterModel: string | null; ... 5 more ...; outputNormalizationModel: string | null; }; createdAt?: string | undefined; updatedAt?: string | ...' does not satisfy the constraint 'LibraryItem'.
+  Types of property 'createdAt' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string | Date | null'.
+      Type 'undefined' is not assignable to type 'string | Date | null'.
+
+[0m [90m 64 |[39m
+ [90m 65 |[39m   [36mreturn[39m (
+[31m[1m>[22m[39m[90m 66 |[39m     [33m<[39m[33mItemLibrary[39m[33m<[39m[33mAgentPersona[39m [33m&[39m { description[33m:[39m string [33m|[39m [36mnull[39m }[33m>[39m
+ [90m    |[39m                  [31m[1m^[22m[39m
+ [90m 67 |[39m       title[33m=[39m[32m'Agent Personas'[39m
+ [90m 68 |[39m       description[33m=[39m[32m'Assign models to each reasoning stage for autonomous agents and AI Paths.'[39m
+ [90m 69 |[39m       entityName[33m=[39m[32m'Persona'[39m[0m
+Next.js build worker exited with code: 1 and signal: null

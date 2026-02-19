@@ -142,8 +142,8 @@ export const runtimeStateSchema = z.object({
   // Backward-compat fields retained for legacy local execution paths.
   runId: z.string().nullable().optional(),
   runStartedAt: z.string().nullable().optional(),
-  inputs: z.record(z.string(), runtimePortValuesSchema).optional(),
-  outputs: z.record(z.string(), runtimePortValuesSchema).optional(),
+  inputs: z.record(z.string(), runtimePortValuesSchema),
+  outputs: z.record(z.string(), runtimePortValuesSchema),
   history: z.record(z.string(), z.array(z.record(z.string(), z.unknown()))).optional(),
   hashes: z.record(z.string(), z.string()).optional(),
   hashTimestamps: z.record(z.string(), z.number()).optional(),

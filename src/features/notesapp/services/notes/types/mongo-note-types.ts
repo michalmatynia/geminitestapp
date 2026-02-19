@@ -1,4 +1,3 @@
-import { MongoDocument } from '@/shared/types/core/base-types';
 import type { 
   NoteTagDto as TagRecord, 
   NoteCategoryDto as CategoryRecord, 
@@ -12,6 +11,7 @@ import type {
   RelatedNoteDto as RelatedNote,
   NoteDto as NoteRecord
 } from '@/shared/contracts/notes';
+import { MongoDocument } from '@/shared/types/core/base-types';
 
 type NoteRelationWithTarget = NoteRelationDto & {
   targetNote?: RelatedNote | undefined;

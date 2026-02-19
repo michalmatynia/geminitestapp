@@ -3,10 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { parseJsonBody } from '@/features/products/server';
+import type { ChatbotSettingsRecordDto as ChatbotSettingsRecord } from '@/shared/contracts/chatbot';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { ChatbotSettingsRecord } from '@/shared/types/domain/settings';
 import { logger } from '@/shared/utils/logger';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';

@@ -1022,9 +1022,11 @@ export function SegmentEditorPanel(): React.JSX.Element {
                         }
                       }}
                       onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
+                        const nextText = event.target.value;
                         updateSegment(selectedSegment.id, (current) => ({
                           ...current,
-                          text: event.target.value,
+                          text: nextText,
+                          raw: nextText,
                         }));
                       }}
                     />

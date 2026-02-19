@@ -7,7 +7,6 @@ import type { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
 import { 
   Button, 
   SectionHeader, 
-  LoadingState, 
   RefreshButton, 
   MetadataItem, 
   PropertyRow, 
@@ -110,7 +109,7 @@ export default function AgentRunsPage(): React.JSX.Element {
 
                   <div className='space-y-1'>
                     <PropertyRow label='Model' value={job.model || 'Default'} />
-                    <PropertyRow label='Created' value={new Date(job.createdAt).toLocaleString()} />
+                    <PropertyRow label='Created' value={job.createdAt ? new Date(job.createdAt).toLocaleString() : '—'} />
                   </div>
 
                   <div className='space-y-2 rounded border border-white/5 bg-black/20 p-2 text-xs'>

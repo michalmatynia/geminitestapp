@@ -36,7 +36,7 @@ export const LogModal = ({
           fontSize: '0.875rem',
         }}
       >
-        {content}
+        {content || ''}
       </SyntaxHighlighter>
     </ContentDisplayModal>
   );

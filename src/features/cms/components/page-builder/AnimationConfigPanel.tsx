@@ -1,74 +1,34 @@
 'use client';
 
-import { 
-  History, 
-  Zap, 
-  Settings2, 
-  Play, 
-  Layers, 
-  Cpu, 
-  Monitor, 
-  Smartphone, 
-  Clock, 
-  MousePointer2, 
-  ArrowDownCircle, 
-  Eye,
-  Type,
-  Layout,
-  Maximize,
-  Sparkles,
-  Search,
-  CheckCircle2,
-  AlertCircle
-} from 'lucide-react';
-import React, { useState, useMemo } from 'react';
+import { Zap } from 'lucide-react';
+import React from 'react';
 
-import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import type { 
+  GsapAnimationConfig,
+  AnimationPreset,
+  AnimationEasing,
+  AnimationTrigger
+} from '@/features/gsap/types/animation';
 import { 
-  Button, 
-  useToast, 
+  ANIMATION_PRESETS, 
+  ANIMATION_EASINGS,
+  DEFAULT_ANIMATION_CONFIG
+} from '@/features/gsap/types/animation';
+import { 
   Input, 
   Label, 
-  Slider, 
-  Switch, 
   SelectSimple,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-  ScrollArea,
-  Separator,
   RadioGroup,
   RadioGroupItem,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-  Badge,
-  FormSection,
   FormField,
   SectionHeader,
   ToggleRow
 } from '@/shared/ui';
-import type { GsapAnimationConfig } from '@/features/gsap/types/animation';
-import { 
-  ANIMATION_PRESETS, 
-  ANIMATION_EASINGS,
-  PARALLAX_PRESETS,
-  PARALLAX_PATTERNS,
-  TIMELINE_MODES,
-  SCROLL_MODES,
-  REVEAL_STYLES,
-  TEXT_EFFECTS,
-  DRAG_AXES,
-  OBSERVER_TYPES,
-  VELOCITY_EFFECTS,
-  DEFAULT_ANIMATION_CONFIG
-} from '@/features/gsap/types/animation';
 
-import { AnimationConfigProvider } from './animation/AnimationConfigContext';
-import { TimelineSection } from './animation/TimelineSection';
-import { ParallaxSection } from './animation/ParallaxSection';
 import { AdvancedSection } from './animation/AdvancedSection';
+import { AnimationConfigProvider } from './animation/AnimationConfigContext';
+import { ParallaxSection } from './animation/ParallaxSection';
+import { TimelineSection } from './animation/TimelineSection';
 import { VisualEffectsSection } from './animation/VisualEffectsSection';
 
 interface AnimationConfigPanelProps {
@@ -111,7 +71,7 @@ export function AnimationConfigPanel({
             <SelectSimple
               options={ANIMATION_PRESETS}
               value={config.preset}
-              onValueChange={(val) => onChange({ preset: val as any })}
+              onValueChange={(val) => onChange({ preset: val as AnimationPreset })}
             />
           </FormField>
 
@@ -142,14 +102,14 @@ export function AnimationConfigPanel({
             <SelectSimple
               options={ANIMATION_EASINGS}
               value={config.easing}
-              onValueChange={(val) => onChange({ easing: val as any })}
+              onValueChange={(val) => onChange({ easing: val as AnimationEasing })}
             />
           </FormField>
 
           <FormField label='Trigger' description='When should the animation start?'>
             <RadioGroup
               value={config.trigger}
-              onValueChange={(val) => onChange({ trigger: val as any })}
+              onValueChange={(val) => onChange({ trigger: val as AnimationTrigger })}
               className='grid grid-cols-1 gap-2 mt-2'
             >
               <div className='flex items-center gap-2'>

@@ -6,12 +6,12 @@ import {
   encodeDynamicReplacementRecipe,
   parseDynamicReplacementRecipe,
 } from '@/features/products/utils/validator-replacement-recipe';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
 import type {
-  ProductValidationInstanceScope,
-  ProductValidationPattern,
-  ProductValidationTarget,
-} from '@/shared/types/domain/products';
+  ProductValidationInstanceScopeDto as ProductValidationInstanceScope,
+  ProductValidationPatternDto as ProductValidationPattern,
+  ProductValidationTargetDto as ProductValidationTarget,
+} from '@/shared/contracts/products';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 type TemplateTarget = Extract<ProductValidationTarget, 'size_length' | 'length'>;
 

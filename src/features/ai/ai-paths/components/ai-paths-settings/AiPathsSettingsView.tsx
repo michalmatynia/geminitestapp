@@ -703,6 +703,64 @@ export function AiPathsSettingsView(): React.JSX.Element {
     }
   };
 
+  const selectedNodeForValidator = useMemo(
+    (): AiNode | null =>
+      selectedNodeIds.length > 0
+        ? nodes.find((node: AiNode): boolean => node.id === selectedNodeIds[0]) ?? null
+        : null,
+    [nodes, selectedNodeIds],
+  );
+
+  const handleOpenNodeValidator = (): void => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams();
+    if (activePathId) {
+      params.set('pathId', activePathId);
+    }
+    if (selectedNodeForValidator?.id) {
+      params.set('focusNodeId', selectedNodeForValidator.id);
+    }
+    if (selectedNodeForValidator?.type) {
+      params.set('focusNodeType', selectedNodeForValidator.type);
+    }
+    const query = params.toString();
+    const destination = query
+      ? `/admin/ai-paths/validation?${query}`
+      : '/admin/ai-paths/validation';
+    window.open(destination, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleRunNodeValidationCheck = (): void => {
+    if (normalizedAiPathsValidation.enabled === false) {
+      toast('Enable node validation first.', { variant: 'info' });
+      return;
+    }
+    if (validationPreflightReport.blocked) {
+      const primaryFinding = validationPreflightReport.findings[0];
+      toast(
+        primaryFinding
+          ? `Node validation blocked: ${primaryFinding.ruleTitle}.`
+          : `Node validation blocked (score ${validationPreflightReport.score}).`,
+        { variant: 'error' },
+      );
+      return;
+    }
+    if (validationPreflightReport.shouldWarn) {
+      const primaryFinding = validationPreflightReport.findings[0];
+      toast(
+        primaryFinding
+          ? `Node validation warning: ${primaryFinding.ruleTitle}.`
+          : `Node validation warning (score ${validationPreflightReport.score}).`,
+        { variant: 'warning' },
+      );
+      return;
+    }
+    toast(
+      `Node validation passed (score ${validationPreflightReport.score}, failed rules ${validationPreflightReport.failedRules}).`,
+      { variant: 'success' },
+    );
+  };
+
   if (loading) {
     return <LoadingState message='Loading AI Paths...' className='py-12' />;
   }
@@ -771,6 +829,64 @@ export function AiPathsSettingsView(): React.JSX.Element {
                           ? 'Enable Node Validation'
                           : 'Node Validation Enabled'}
                       </Button>
+                      <Button
+                        type='button'
+                        className='rounded-md border border-sky-500/40 text-sm text-sky-200 hover:bg-sky-500/10'
+                        onClick={handleRunNodeValidationCheck}
+                        disabled={
+                          !activePathId || normalizedAiPathsValidation.enabled === false
+                        }
+                        title='Run node validation check now'
+                      >
+                        Validate Nodes
+                      </Button>
+                      <Button
+                        type='button'
+                        className='rounded-md border border-indigo-500/40 text-sm text-indigo-200 hover:bg-indigo-500/10'
+                        onClick={handleOpenNodeValidator}
+                        disabled={!activePathId}
+                        title='Open AI-Paths Node Validator patterns and sequences'
+                      >
+                        Node Validator
+                      </Button>
+                      <StatusBadge
+                        status={
+                          normalizedAiPathsValidation.enabled === false
+                            ? 'Validation: off'
+                            : validationPreflightReport.blocked
+                              ? 'Validation: blocked'
+                              : validationPreflightReport.shouldWarn
+                                ? 'Validation: warning'
+                                : 'Validation: ready'
+                        }
+                        variant={
+                          normalizedAiPathsValidation.enabled === false
+                            ? 'neutral'
+                            : validationPreflightReport.blocked
+                              ? 'error'
+                              : validationPreflightReport.shouldWarn
+                                ? 'warning'
+                                : 'success'
+                        }
+                        size='sm'
+                        className='font-medium'
+                      />
+                      <StatusBadge
+                        status={`Validation score: ${validationPreflightReport.score}`}
+                        variant='neutral'
+                        size='sm'
+                        className='font-medium'
+                      />
+                      <StatusBadge
+                        status={`Failed rules: ${validationPreflightReport.failedRules}`}
+                        variant={
+                          validationPreflightReport.failedRules > 0
+                            ? 'warning'
+                            : 'success'
+                        }
+                        size='sm'
+                        className='font-medium'
+                      />
                       <Button
                         type='button'
                         className='rounded-md border border-border text-sm text-gray-300 hover:bg-card/60'

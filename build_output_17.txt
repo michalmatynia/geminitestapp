@@ -1,0 +1,35 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 215ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · optimizePackageImports
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 21.8s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/ai/ai-paths/components/job-queue-panel.tsx:18:3
+Type error: 'Input' is declared but its value is never read.
+
+[0m [90m 16 |[39m   [33mButton[39m[33m,[39m
+ [90m 17 |[39m   [33mConfirmModal[39m[33m,[39m
+[31m[1m>[22m[39m[90m 18 |[39m   [33mInput[39m[33m,[39m
+ [90m    |[39m   [31m[1m^[22m[39m
+ [90m 19 |[39m   [33mLabel[39m[33m,[39m
+ [90m 20 |[39m   [33mSelectSimple[39m[33m,[39m
+ [90m 21 |[39m   useToast[33m,[39m[0m
+Next.js build worker exited with code: 1 and signal: null

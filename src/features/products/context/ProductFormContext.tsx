@@ -46,11 +46,11 @@ import {
   productCreateSchema,
   productUpdateSchema,
 } from '@/features/products/validations/schemas';
+import type { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
+import type { LanguageDto as Language } from '@/shared/contracts/internationalization';
 import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import type { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
-import type { LanguageDto as Language } from '@/shared/contracts/internationalization';
 import { useToast } from '@/shared/ui';
 
 const PRODUCT_STUDIO_CONFIG_CACHE_TTL_MS = 30_000;

@@ -1,9 +1,9 @@
 import 'server-only';
 
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
+import type { AuthSecurityProfileDto as AuthSecurityProfile } from '@/shared/contracts/auth';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { AuthSecurityProfileDto as AuthSecurityProfile } from '@/shared/contracts/auth';
 
 export type { AuthSecurityProfile };
 

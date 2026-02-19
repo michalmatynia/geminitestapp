@@ -2,8 +2,6 @@ import 'server-only';
 
 import type { NoteRepository } from '@/features/notesapp/services/notes/types/note-repository';
 import { ErrorSystem, logActivity, ActivityTypes } from '@/features/observability/server';
-import { configurationError } from '@/shared/errors/app-error';
-import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import type { 
   NoteWithRelationsDto as NoteWithRelations, 
   RelatedNoteDto as RelatedNote, 
@@ -27,6 +25,8 @@ import type {
   CreateNoteFileDto as NoteFileCreateInput, 
   NoteRelationDto
 } from '@/shared/contracts/notes';
+import { configurationError } from '@/shared/errors/app-error';
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 
 import { cleanupNoteFile } from './file-cleanup';
 

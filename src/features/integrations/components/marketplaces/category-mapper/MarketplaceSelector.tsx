@@ -5,7 +5,7 @@ import Link from 'next/link';
 import React, { useMemo } from 'react';
 
 import { useCategoryMapperPageContext } from '@/features/integrations/context/CategoryMapperPageContext';
-import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
+import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/features/integrations/types/integrations';
 import { EmptyState, Skeleton } from '@/shared/ui';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
 import type { PickerOption, PickerGroup } from '@/shared/ui/templates/pickers/types';
@@ -18,7 +18,7 @@ export function MarketplaceSelector(): React.JSX.Element {
       integrations.map((integration: IntegrationWithConnections) => ({
         label: integration.name,
         icon: <Store className='h-3 w-3' />,
-        options: integration.connections.map((connection) => ({
+        options: integration.connections.map((connection: IntegrationConnectionBasic) => ({
           key: connection.id,
           label: connection.name,
           description: `From ${integration.name}`,

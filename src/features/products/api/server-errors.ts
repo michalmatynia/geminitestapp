@@ -10,10 +10,10 @@ import { ApiErrorBuilder, ErrorStatusCodes, createVersionedErrorResponse } from 
 const extractRequestDiagnostics = <T extends unknown[]>(
   args: T
 ): {
-  requestId?: string;
-  method?: string;
-  route?: string;
-  queryKeys?: string[];
+  requestId?: string | undefined;
+  method?: string | undefined;
+  route?: string | undefined;
+  queryKeys?: string[] | undefined;
 } => {
   const request = args[0];
   if (!(request instanceof NextRequest)) return {};

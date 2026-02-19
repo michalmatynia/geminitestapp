@@ -3,7 +3,6 @@
 import { Trash2 } from 'lucide-react';
 import React from 'react';
 
-import type { ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
 import { useImageRetryPresets } from '@/features/integrations/components/listings/useImageRetryPresets';
 import {
   isTraderaBrowserIntegrationSlug,
@@ -11,6 +10,7 @@ import {
 } from '@/features/integrations/constants/slugs';
 import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
 import type { ProductListingWithDetails, ProductListingExportEvent } from '@/features/integrations/types/listings';
+import type { ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
 import {
   Button,
   Input,
@@ -66,7 +66,6 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
   const normalizedListingStatus = (listing.status ?? '').trim().toLowerCase();
   const isSuccessStatus = ['active', 'success', 'completed', 'listed', 'ok'].includes(normalizedListingStatus);
   const isExportRunningStatus = ['running', 'processing', 'in_progress', 'pending', 'queued'].includes(normalizedListingStatus);
-  const isTerminalBaseStatus = ['removed', 'deleted', 'archived'].includes(normalizedListingStatus);
   const canRetryExport = isBaseListing && !isExportRunningStatus;
   const traderaFailureReason = (listing.failureReason ?? '').trim().toLowerCase();
   const traderaNeedsManualLogin =
@@ -201,47 +200,45 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
                 {isSuccessStatus ? 'Re-export product' : 'Export again'}
               </Button>
             )}
-            {!isTerminalBaseStatus && (
-              <ActionMenu
-                trigger='Re-export images only'
-                variant='outline'
-                size='sm'
-                disabled={
-                  exportingListing === listing.id ||
-                  !listing.externalListingId
-                }
-                triggerClassName='border-sky-500/40 text-sky-200 hover:bg-sky-500/10 px-3 py-1.5 h-auto w-auto'
-                align='start'
+            <ActionMenu
+              trigger='Re-export images only'
+              variant='outline'
+              size='sm'
+              disabled={
+                exportingListing === listing.id ||
+                !listing.externalListingId
+              }
+              triggerClassName='border-sky-500/40 text-sky-200 hover:bg-sky-500/10 px-3 py-1.5 h-auto w-auto'
+              align='start'
+            >
+              <DropdownMenuItem
+                onSelect={(): void => { void handleExportImagesOnly(listing.id); }}
+                className='text-gray-200 focus:bg-gray-800/70'
               >
+                <div className='flex flex-col'>
+                  <span className='text-sm'>No resize (base-only)</span>
+                  <span className='text-xs text-gray-400'>
+                    Re-send images without extra compression.
+                  </span>
+                </div>
+              </DropdownMenuItem>
+              {imageRetryPresets.map((preset: ImageRetryPreset) => (
                 <DropdownMenuItem
-                  onSelect={(): void => { void handleExportImagesOnly(listing.id); }}
+                  key={preset.id}
+                  onSelect={(): void => {
+                    void handleExportImagesOnly(listing.id, preset);
+                  }}
                   className='text-gray-200 focus:bg-gray-800/70'
                 >
                   <div className='flex flex-col'>
-                    <span className='text-sm'>No resize (base-only)</span>
+                    <span className='text-sm'>{preset.label}</span>
                     <span className='text-xs text-gray-400'>
-                      Re-send images without extra compression.
+                      {preset.description}
                     </span>
                   </div>
                 </DropdownMenuItem>
-                {imageRetryPresets.map((preset: ImageRetryPreset) => (
-                  <DropdownMenuItem
-                    key={preset.id}
-                    onSelect={(): void => {
-                      void handleExportImagesOnly(listing.id, preset);
-                    }}
-                    className='text-gray-200 focus:bg-gray-800/70'
-                  >
-                    <div className='flex flex-col'>
-                      <span className='text-sm'>{preset.label}</span>
-                      <span className='text-xs text-gray-400'>
-                        {preset.description}
-                      </span>
-                    </div>
-                  </DropdownMenuItem>
-                ))}
-              </ActionMenu>
-            )}
+              ))}
+            </ActionMenu>
             {!listing.inventoryId && (
               <div className='space-y-1 text-xs text-gray-400'>
                 <Label htmlFor={`inventory-${listing.id}`}>
@@ -271,18 +268,16 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
                 </Button>
               </div>
             )}
-            {!isTerminalBaseStatus && (
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                onClick={(): void => setListingToDelete(listing.id)}
-                disabled={deletingFromBase === listing.id}
-                className='border-red-500/40 text-red-300 hover:bg-red-500/10'
-              >
-                Delete from Base.com
-              </Button>
-            )}
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={(): void => setListingToDelete(listing.id)}
+              disabled={deletingFromBase === listing.id || !listing.externalListingId}
+              className='border-red-500/40 text-red-300 hover:bg-red-500/10'
+            >
+              Delete from Base.com
+            </Button>
           </>
         )}
         {isTraderaListing && (

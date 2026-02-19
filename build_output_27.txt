@@ -1,0 +1,35 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 208ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · optimizePackageImports
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 26.6s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsCanvasInteractions.ts:365:20
+Type error: 'node.position' is possibly 'undefined'.
+
+[0m [90m 363 |[39m     [36mconst[39m bounds [33m=[39m items[33m.[39mreduce(
+ [90m 364 |[39m       (acc[33m:[39m { minX[33m:[39m number[33m;[39m minY[33m:[39m number[33m;[39m maxX[33m:[39m number[33m;[39m maxY[33m:[39m number }[33m,[39m node[33m:[39m [33mAiNode[39m) [33m=>[39m {
+[31m[1m>[22m[39m[90m 365 |[39m         [36mconst[39m x1 [33m=[39m node[33m.[39mposition[33m.[39mx[33m;[39m
+ [90m     |[39m                    [31m[1m^[22m[39m
+ [90m 366 |[39m         [36mconst[39m y1 [33m=[39m node[33m.[39mposition[33m.[39my[33m;[39m
+ [90m 367 |[39m         [36mconst[39m x2 [33m=[39m node[33m.[39mposition[33m.[39mx [33m+[39m [33mNODE_WIDTH[39m[33m;[39m
+ [90m 368 |[39m         [36mconst[39m y2 [33m=[39m node[33m.[39mposition[33m.[39my [33m+[39m [33mNODE_MIN_HEIGHT[39m[33m;[39m[0m
+Next.js build worker exited with code: 1 and signal: null

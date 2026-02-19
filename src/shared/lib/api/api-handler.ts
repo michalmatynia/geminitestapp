@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto';
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import type { SystemLogLevelDto as SystemLogLevel } from '@/shared/contracts/observability';
 import { badRequestError, forbiddenError, methodNotAllowedError, payloadTooLargeError, validationError } from '@/shared/errors/app-error';
 import { resolveError } from '@/shared/errors/resolve-error';
 import { enforceRateLimit } from '@/shared/lib/api/rate-limit';
@@ -20,7 +21,6 @@ import type {
   ApiRouteHandler,
   ApiRouteHandlerWithParams,
 } from '@/shared/types/api/api';
-import type { SystemLogLevel } from '@/shared/types/domain/system-logs';
 import { logger } from '@/shared/utils/logger';
 
 import type { ZodSchema } from 'zod';

@@ -1,5 +1,5 @@
-import { api } from '@/shared/lib/api-client';
 import type { AnalyticsScopeDto as AnalyticsScope, AnalyticsSummaryDto } from '@/shared/contracts/analytics';
+import { api } from '@/shared/lib/api-client';
 
 export type AnalyticsRange = '24h' | '7d' | '30d';
 

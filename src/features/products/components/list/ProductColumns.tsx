@@ -138,7 +138,6 @@ const CircleIconButton = ({
 const INTEGRATION_SELECTION_STALE_TIME_MS = 5 * 60 * 1000;
 const INTEGRATION_SELECTION_GC_TIME_MS = 30 * 60 * 1000;
 const defaultExportInventoryQueryKey = QUERY_KEYS.integrations.defaultExportInventory();
-const activeExportTemplateQueryKey = QUERY_KEYS.integrations.activeExportTemplate();
 const oneClickExportInFlight = new Set<string>();
 
 const SUCCESS_STATUSES = new Set(['active', 'success', 'completed', 'listed', 'ok']);
@@ -230,7 +229,7 @@ const BaseQuickExportButton = ({
       let inventoryId = '';
       let templateId = '';
       try {
-        const [preferredConnection, defaultInventory, activeTemplate] = await Promise.all([
+        const [preferredConnection, defaultInventory] = await Promise.all([
           queryClient.fetchQuery({
             queryKey: integrationSelectionQueryKeys.defaultConnection,
             queryFn: fetchPreferredBaseConnection,
@@ -243,16 +242,59 @@ const BaseQuickExportButton = ({
             staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
             gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
           }),
-          queryClient.fetchQuery({
-            queryKey: activeExportTemplateQueryKey,
-            queryFn: () => api.get<{ templateId?: string | null }>('/api/integrations/exports/base/active-template'),
-            staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
-            gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
-          }),
         ]);
         connectionId = preferredConnection?.connectionId?.trim() || '';
         inventoryId = defaultInventory?.inventoryId?.trim() || '';
-        templateId = activeTemplate?.templateId?.trim() || '';
+        if (!connectionId) {
+          toast('Set a default Base.com connection first.', { variant: 'error' });
+          return;
+        }
+        if (!inventoryId) {
+          toast(
+            'Specific Base.com inventory is not configured. Open Export Settings and set inventory.',
+            { variant: 'error' }
+          );
+          return;
+        }
+
+        const inventoriesResponse = await api.post<{
+          inventories?: Array<{ inventory_id?: string | number; id?: string | number }>;
+        }>('/api/integrations/imports/base', {
+          action: 'inventories',
+          connectionId,
+        });
+        const availableInventoryIds = new Set(
+          (Array.isArray(inventoriesResponse.inventories)
+            ? inventoriesResponse.inventories
+            : []
+          )
+            .map((entry) => {
+              const rawId = entry.inventory_id ?? entry.id;
+              if (typeof rawId === 'string') return rawId.trim();
+              if (typeof rawId === 'number' && Number.isFinite(rawId)) {
+                return String(rawId);
+              }
+              return '';
+            })
+            .filter((value) => value.length > 0)
+        );
+        if (
+          availableInventoryIds.size > 0 &&
+          !availableInventoryIds.has(inventoryId)
+        ) {
+          toast(
+            'Configured Base.com inventory is not available for this connection. Open Export Settings and select a valid inventory.',
+            { variant: 'error' }
+          );
+          return;
+        }
+
+        if (connectionId && inventoryId) {
+          const scopedTemplate = await api.get<{ templateId?: string | null }>(
+            `/api/integrations/exports/base/active-template?connectionId=${encodeURIComponent(connectionId)}&inventoryId=${encodeURIComponent(inventoryId)}`
+          );
+          templateId = scopedTemplate?.templateId?.trim() || '';
+        }
       } catch {
         toast('Failed to load Base.com export defaults.', { variant: 'error' });
         return;
@@ -264,7 +306,10 @@ const BaseQuickExportButton = ({
       }
 
       if (!inventoryId) {
-        toast('Set a default Base.com inventory first.', { variant: 'error' });
+        toast(
+          'Specific Base.com inventory is not configured. Open Export Settings and set inventory.',
+          { variant: 'error' }
+        );
         return;
       }
 

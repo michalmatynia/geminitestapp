@@ -53,7 +53,7 @@ const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOp
     dbType,
     direction,
     source,
-    createdAt: new Date(job['createdAt']).toISOString(),
+    createdAt: new Date((job['createdAt'] as string) || Date.now()).toISOString(),
     updatedAt:
       typeof job['updatedAt'] === 'string' && (job['updatedAt']).length > 0
         ? new Date(job['updatedAt']).toISOString()

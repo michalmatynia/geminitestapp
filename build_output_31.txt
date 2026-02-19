@@ -1,0 +1,35 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 234ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · optimizePackageImports
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 34.5s
+  Running TypeScript ...
+Failed to compile.
+
+./src/app/api/integrations/products/[id]/export-to-base/helpers.ts:233:34
+Type error: Type 'string' is not assignable to type 'ParsedMappedParameterRef'.
+
+[0m [90m 231 |[39m   value[33m:[39m unknown
+ [90m 232 |[39m )[33m:[39m [33mParsedMappedParameterRef[39m [33m|[39m [36mnull[39m [33m=>[39m {
+[31m[1m>[22m[39m[90m 233 |[39m   [36mif[39m ([36mtypeof[39m value [33m!==[39m [32m'string'[39m) [36mreturn[39m [32m''[39m[33m;[39m
+ [90m     |[39m                                  [31m[1m^[22m[39m
+ [90m 234 |[39m   [36mconst[39m trimmed [33m=[39m value[33m.[39mtrim()[33m;[39m
+ [90m 235 |[39m   [36mif[39m ([33m![39mtrimmed) [36mreturn[39m [36mnull[39m[33m;[39m
+ [90m 236 |[39m   [36mif[39m ([0m
+Next.js build worker exited with code: 1 and signal: null

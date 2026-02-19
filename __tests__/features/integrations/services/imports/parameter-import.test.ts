@@ -10,6 +10,7 @@ const createInMemoryParameterRepository = (): ParameterRepository => {
   const items: Array<{
     id: string;
     catalogId: string;
+    name: string;
     name_en: string;
     name_pl: string | null;
     name_de: string | null;
@@ -42,6 +43,7 @@ const createInMemoryParameterRepository = (): ParameterRepository => {
       const created = {
         id: `p-${counter++}`,
         catalogId: data.catalogId,
+        name: data.name,
         name_en: data.name_en,
         name_pl: data.name_pl ?? null,
         name_de: data.name_de ?? null,
@@ -63,6 +65,7 @@ const createInMemoryParameterRepository = (): ParameterRepository => {
       const existing = items[index]!;
       const updated = {
         ...existing,
+        ...(data.name !== undefined ? { name: data.name } : {}),
         ...(data.name_en !== undefined ? { name_en: data.name_en } : {}),
         ...(data.name_pl !== undefined ? { name_pl: data.name_pl ?? null } : {}),
         ...(data.name_de !== undefined ? { name_de: data.name_de ?? null } : {}),
@@ -161,6 +164,7 @@ describe('parameter import feature', () => {
     const repository = createInMemoryParameterRepository();
     const created = await repository.createParameter({
       catalogId: 'catalog-1',
+      name: 'Material',
       name_en: 'Material',
     });
 

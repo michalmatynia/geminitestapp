@@ -8,12 +8,12 @@ import { getRuntimeAnalyticsSummary, recordRuntimeRunStarted } from '@/features/
 import { processRun, processStaleRunRecovery } from '@/features/jobs/processors/ai-path-run-processor';
 import { getAiInsightsQueueStatus } from '@/features/jobs/workers/aiInsightsQueue';
 import { logSystemEvent } from '@/features/observability/server';
-import { createManagedQueue, getRedisConnection } from '@/shared/lib/queue';
 import type {
   AiPathRunQueueSloStatusDto as AiPathRunQueueSloStatus,
   QueueSloThresholdsDto as QueueSloThresholds,
   SloLevelDto as SloLevel,
 } from '@/shared/contracts/ai-paths-runtime';
+import { createManagedQueue, getRedisConnection } from '@/shared/lib/queue';
 
 const DEFAULT_CONCURRENCY = Number(process.env['AI_PATHS_RUN_CONCURRENCY'] ?? '1');
 const AI_PATH_RUN_QUEUE_NAME = 'ai-path-run';

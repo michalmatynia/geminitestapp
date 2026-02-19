@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import type { ProductParameter, ProductParameterValue } from '@/features/products/types';
-import type { Language } from '@/shared/types/domain/internationalization';
+import type { LanguageDto as Language } from '@/shared/contracts/internationalization';
 import {
   Alert,
   Button,

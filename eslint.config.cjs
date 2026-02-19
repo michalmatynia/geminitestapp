@@ -12,6 +12,7 @@ module.exports = tseslint.config(
     ignores: [
       'node_modules/',
       '.next/',
+      '.next-dev/',
       'dist/',
       'public/',
       'build/',
@@ -240,7 +241,7 @@ module.exports = tseslint.config(
   },
   {
     // Configuration for test files
-    files: ['__tests__/**/*.{js,jsx,ts,tsx}'],
+    files: ['**/__tests__/**/*.{js,jsx,ts,tsx}', 'e2e/**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
       globals: {
         ...require('globals').jest, // Assuming Jest/Vitest for tests

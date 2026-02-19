@@ -10,7 +10,7 @@ import { useToast } from '@/shared/ui/toast';
 
 import { usePendingExternalMappings } from './usePendingExternalMappings';
 
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, Row } from '@tanstack/react-table';
 
 export interface GenericItemMapperConfig<TInternal, TExternal, TMapping> {
   // UI Labels
@@ -265,7 +265,7 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
             className='py-8'
           />
         }
-        getRowClassName={(row: any) => {
+        getRowClassName={(row: Row<TInternal>) => {
           const hasPendingChange = pendingMappings.size > 0 && pendingMappings.has(getInternalId(row.original));
           return hasPendingChange ? 'bg-amber-500/5 hover:bg-amber-500/10' : '';
         }}

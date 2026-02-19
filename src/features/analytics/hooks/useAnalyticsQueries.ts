@@ -3,14 +3,14 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import { fetchAnalyticsSummary, type AnalyticsRange } from '@/features/analytics/api';
+import type { AiInsightRecordDto as AiInsightRecord } from '@/shared/contracts/ai-insights';
+import type { AnalyticsScopeDto as AnalyticsScope, AnalyticsSummaryDto } from '@/shared/contracts/analytics';
 import { api } from '@/shared/lib/api-client';
 import {
   createSingleQueryV2,
   createCreateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { analyticsKeys } from '@/shared/lib/query-key-exports';
-import type { AiInsightRecordDto as AiInsightRecord } from '@/shared/contracts/ai-insights';
-import type { AnalyticsScopeDto as AnalyticsScope, AnalyticsSummaryDto } from '@/shared/contracts/analytics';
 import type { SingleQuery, MutationResult } from '@/shared/types/query-result-types';
 
 export { analyticsKeys };

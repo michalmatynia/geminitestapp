@@ -28,13 +28,13 @@ import {
   shouldLaunchPattern,
 } from '@/features/products/validation-engine/core';
 import { parseRuntimeConfigForEvaluation } from '@/features/products/validations/validator-runtime-config';
+import type {
+  ProductValidationPatternDto as ProductValidationPattern,
+  ProductValidationPostAcceptBehaviorDto as ProductValidationPostAcceptBehavior,
+  ProductValidationSeverityDto as ProductValidationSeverity,
+} from '@/shared/contracts/products';
 import { badRequestError, configurationError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type {
-  ProductValidationPattern,
-  ProductValidationPostAcceptBehavior,
-  ProductValidationSeverity,
-} from '@/shared/types/domain/products';
 
 const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] ?? 'http://localhost:11434';
 

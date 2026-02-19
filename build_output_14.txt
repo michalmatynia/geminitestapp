@@ -1,0 +1,36 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 214ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · optimizePackageImports
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 24.9s
+  Running TypeScript ...
+Failed to compile.
+
+./src/app/api/integrations/products/[id]/export-to-base/handler.ts:255:7
+Type error: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+
+[0m [90m 253 |[39m       imagesOnly[33m,[39m
+ [90m 254 |[39m       productId[33m,[39m
+[31m[1m>[22m[39m[90m 255 |[39m       resolvedInventoryId[33m,[39m
+ [90m     |[39m       [31m[1m^[22m[39m
+ [90m 256 |[39m       product[33m:[39m normalizedProductForExport[33m,[39m
+ [90m 257 |[39m     })[33m;[39m
+ [90m 258 |[39m     [36mconst[39m mappings [33m=[39m preparedExportContext[33m.[39mmappings[33m;[39m[0m
+Next.js build worker exited with code: 1 and signal: null

@@ -230,8 +230,8 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   const projects = projectRecords
     .filter((entry): entry is ImageStudioProjectRecord => Boolean(entry))
     .sort((left, right) => {
-      const rightCreated = Date.parse(right.createdAt);
-      const leftCreated = Date.parse(left.createdAt);
+      const rightCreated = Date.parse(right.createdAt || '');
+      const leftCreated = Date.parse(left.createdAt || '');
       if (Number.isFinite(rightCreated) && Number.isFinite(leftCreated) && rightCreated !== leftCreated) {
         return rightCreated - leftCreated;
       }

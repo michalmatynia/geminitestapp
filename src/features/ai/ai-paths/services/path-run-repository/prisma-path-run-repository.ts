@@ -65,7 +65,7 @@ const mapRun = (run: unknown): AiPathRunRecord => {
     triggerNodeId: (r['triggerNodeId'] as string) ?? null,
     triggerContext: (r['triggerContext'] as AiPathRunRecord['triggerContext']) ?? undefined,
     graph: (r['graph'] as AiPathRunRecord['graph']) ?? undefined,
-    runtimeState: (r['runtimeState'] as AiPathRunRecord['runtimeState']) ?? undefined,
+    runtimeState: (r['runtimeState']) ?? undefined,
     meta: (r['meta'] as AiPathRunRecord['meta']) ?? undefined,
     context: undefined,
     result: undefined,

@@ -1,6 +1,6 @@
+import type { ImageFileRecordDto as ImageFileRecord } from '@/shared/contracts/files';
 import type { ManagedImageSlotDto as ManagedImageSlot } from '@/shared/contracts/image-slots';
 import type { ProductListPreferencesDto } from '@/shared/contracts/products';
-import type { ImageFileRecordDto as ImageFileRecord } from '@/shared/contracts/files';
 
 export type ProductImageSlot = ManagedImageSlot;
 

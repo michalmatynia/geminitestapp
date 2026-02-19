@@ -4,6 +4,7 @@ import type {
   ChatbotModelsResponseDto, 
   InsightsSnapshotDto 
 } from '@/shared/contracts/ai-brain';
+import type { SystemLogMetricsDto as SystemLogMetrics } from '@/shared/contracts/observability';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { brainKeys } from '@/shared/lib/query-key-exports';
@@ -11,7 +12,6 @@ import type {
   AiInsightRecord, 
   AiPathRuntimeAnalyticsSummary, 
   AnalyticsSummaryDto, 
-  SystemLogMetrics 
 } from '@/shared/types';
 import type { SingleQuery } from '@/shared/types/query-result-types';
 

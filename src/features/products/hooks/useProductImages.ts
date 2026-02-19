@@ -11,10 +11,10 @@ import {
 import { logClientError } from '@/features/observability';
 import type { ProductWithImages, ProductImageRecord } from '@/features/products/types';
 import type { ProductImageSlot } from '@/features/products/types/products-ui';
+import type { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
 import { api } from '@/shared/lib/api-client';
 import { createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { ImageFileSelection } from '@/shared/types/domain/files';
 import { logger } from '@/shared/utils/logger';
 
 import { invalidateProducts } from './productCache';

@@ -2,95 +2,6 @@
 
 import { Trash2 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import React from 'react';
-
-import { runsApi } from '@/features/ai/ai-paths/lib';
-import type {
-  AiPathRunEventRecord,
-  AiPathRunRecord,
-} from '@/features/ai/ai-paths/lib';
-import { fetchAiPathsSettingsCached } from '@/features/ai/ai-paths/lib/settings-store-client';
-import { createDeleteMutationV2, createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import {
-  Button,
-  ConfirmModal,
-  Input,
-  Label,
-  SelectSimple,
-  useToast,
-  Pagination,
-} from '@/shared/ui';
-
-import { JobQueueOverview } from './job-queue-overview';
-import {
-  getLatestEventTimestamp,
-  getPanelDescription,
-  getPanelLabel,
-  isRunningStatus,
-  normalizeRunDetail,
-  normalizeRunEvents,
-  normalizeRunNodes,
-  resolveRunExecutionKind,
-  resolveRunOrigin,
-  resolveRunSource,
-  resolveRunSourceDebug,
-  type QueueHistoryEntry,
-  type QueueStatus,
-  type RunDetail,
-  type StreamConnectionStatus,
-} from './job-queue-panel-utils';
-import { JobQueueRunCard } from './job-queue-run-card';
-import { buildHistoryNodeOptions } from './run-history-utils';
-
-type JobQueuePanelProps = {
-  activePathId?: string | null;
-  sourceFilter?: string | null;
-  sourceMode?: 'include' | 'exclude';
-  isActive?: boolean;
-};
-
-type StreamMessageEvent = Event & { data: string };
-
-const PAGE_SIZES = [10, 25, 50];
-const SEARCH_DEBOUNCE_MS = 300;
-const AUTO_REFRESH_ENABLED_KEY = 'ai-paths-job-queue-auto-refresh-enabled';
-const AUTO_REFRESH_INTERVAL_KEY = 'ai-paths-job-queue-auto-refresh-interval';
-const AUTO_REFRESH_INTERVAL_OPTIONS = [5000, 10000, 30000, 60000] as const;
-const DEFAULT_AUTO_REFRESH_INTERVAL = 10000;
-const ACTIVE_RUN_REFRESH_MIN_MS = 5000;
-const IDLE_RUN_REFRESH_MIN_MS = 30000;
-const ACTIVE_QUEUE_STATUS_REFRESH_MIN_MS = 10000;
-const IDLE_QUEUE_STATUS_REFRESH_MIN_MS = 30000;
-const ACTIVE_RUN_STATUSES = new Set(['queued', 'running', 'paused']);
-const RUNS_REQUEST_COOLDOWN_MS = 2500;
-const QUEUE_STATUS_REQUEST_COOLDOWN_MS = 2500;
-const POLLING_JITTER_MS = 500;
-const QUEUE_LAG_THRESHOLD_KEY = 'ai_paths_queue_lag_threshold_ms';
-const STATUS_FILTERS = [
-  { id: 'all', label: 'All' },
-  { id: 'queued', label: 'Queued' },
-  { id: 'running', label: 'Running' },
-  { id: 'paused', label: 'Paused' },
-  { id: 'completed', label: 'Completed' },
-  { id: 'failed', label: 'Failed' },
-  { id: 'canceled', label: 'Canceled' },
-  { id: 'dead_lettered', label: 'Dead-lettered' },
-] as const;
-
-const normalizeAutoRefreshInterval = (value: number): number => {
-  if (!Number.isFinite(value) || value <= 0) return DEFAULT_AUTO_REFRESH_INTERVAL;
-  // Legacy value migration: older clients may have stored seconds.
-  const asMs = value < 1000 ? value * 1000 : value;
-  return AUTO_REFRESH_INTERVAL_OPTIONS.reduce(
-    (best: number, option: number): number =>
-      Math.abs(option - asMs) < Math.abs(best - asMs) ? option : best,
-    AUTO_REFRESH_INTERVAL_OPTIONS[0]
-  );
-};
-
-import { Trash2 } from 'lucide-react';
-import { usePathname } from 'next/navigation';
 import React, { useMemo } from 'react';
 
 import { runsApi } from '@/features/ai/ai-paths/lib';
@@ -104,7 +15,6 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   Button,
   ConfirmModal,
-  Input,
   Label,
   SelectSimple,
   useToast,
@@ -824,7 +734,7 @@ export function JobQueuePanel({
         streamSourcesRef.current.delete(runId);
       });
     });
-  }, [expandedRunIds, pausedStreams, runDetails]);
+  }, [expandedRunIds, pausedStreams, runDetails, streamStatuses]);
           
   const loadRunDetail = React.useCallback(async (runId: string): Promise<void> => {
     setRunDetailErrors((prev: Record<string, string>) => {
@@ -1120,7 +1030,7 @@ export function JobQueuePanel({
             const runSourceDebug = resolveRunSourceDebug(detailRun);
             const nodes = normalizeRunNodes(detail?.nodes);
             const events = normalizeRunEvents(detail?.events);
-            const history = detailRun.runtimeState?.history ?? undefined;
+            const history = (detailRun.runtimeState as { history?: Record<string, RuntimeHistoryEntry[]> } | undefined)?.history;
             const historyOptions = buildHistoryNodeOptions(
               history,
               nodes,

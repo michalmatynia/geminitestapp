@@ -13,6 +13,7 @@ import React, { useMemo } from 'react';
 
 import {
   Button,
+  DataTable,
   StandardDataTablePanel,
   SelectSimple,
   SearchInput,
@@ -26,7 +27,6 @@ import {
   ActionMenu,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  LoadingState,
 } from '@/shared/ui';
 
 import { Asset3DCard } from '../components/Asset3DCard';

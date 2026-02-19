@@ -12,7 +12,7 @@ import {
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator';
 import type {
   ChatMessageDto as ChatMessage,
-  ChatbotSettingsDto as ChatbotSettingsPayload,
+  CreateChatbotSettingsDto as ChatbotSettingsPayload,
   ChatbotDebugStateDto as ChatbotDebugState,
   ChatbotSessionDto as ChatSession,
 } from '@/shared/contracts/chatbot';

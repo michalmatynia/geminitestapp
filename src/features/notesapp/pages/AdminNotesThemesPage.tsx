@@ -8,7 +8,7 @@ import { useNotebooks, useNoteThemes } from '@/features/notesapp/api/useNoteQuer
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
 import type { NoteThemeDto as ThemeRecord } from '@/shared/contracts/notes';
-import { Button, useToast, Input, PageLayout, FormSection, FormField, RefreshButton, LoadingState, ListPanel } from '@/shared/ui';
+import { Button, useToast, Input, PageLayout, FormSection, FormField, ListPanel } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 const defaultTheme: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> = {

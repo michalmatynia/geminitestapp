@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getParameterRepository } from '@/features/products/server';
+import type { ProductParameterDto as ProductParameter } from '@/shared/contracts/products';
 import { badRequestError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { ProductParameter } from '@/shared/types/domain/products';
 import type { CatalogIdQuery } from '@/shared/validations/product-metadata-api-schemas';
 
 type PublicProductParameter = {

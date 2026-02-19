@@ -1,3 +1,8 @@
+import type {
+  CaseResolverCompiledSegmentDto,
+  CaseResolverCompileResultDto,
+} from '@/shared/contracts/case-resolver';
+
 import {
   type AiNode,
   type Edge,
@@ -9,10 +14,6 @@ import {
   type CaseResolverJoinMode,
   type CaseResolverNodeMeta,
 } from './types';
-import type {
-  CaseResolverCompiledSegmentDto,
-  CaseResolverCompileResultDto,
-} from '@/shared/contracts/case-resolver';
 
 export type CaseResolverCompiledSegment = CaseResolverCompiledSegmentDto;
 

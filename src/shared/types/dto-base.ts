@@ -1,7 +1,6 @@
 import type {
   DtoBase as DtoBaseContract,
   NamedDto as NamedDtoContract,
-  LocalizedDto,
   ApiErrorDto,
   ApiResponseDto,
   ListResponseDto,

@@ -130,7 +130,7 @@ export function ProductModals(): React.JSX.Element {
             onSuccess={onMassListSuccess}
             integrationId={massListIntegration.integrationId}
             connectionId={massListIntegration.connectionId}
-            productIds={massListProductIds}
+            item={massListProductIds}
             onClose={onCloseMassList}
           />
         )}

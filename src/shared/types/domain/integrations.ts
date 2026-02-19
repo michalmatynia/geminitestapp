@@ -8,6 +8,7 @@ import type {
   IntegrationConnectionDto,
   ProductListingDto,
   ImageTransformOptionsDto,
+  ImageBase64ModeDto,
   ImageRetryPresetDto,
   TemplateDto,
   TemplateMappingDto,

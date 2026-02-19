@@ -107,16 +107,19 @@ export const stampCaseResolverWorkspaceMutation = (
     baseRevision: number;
     mutationId: string;
     timestamp?: string;
+    normalizeWorkspace?: boolean;
   }
 ): CaseResolverWorkspace => {
-  const normalized = normalizeCaseResolverWorkspace(workspace);
+  const baseWorkspace = input.normalizeWorkspace === false
+    ? workspace
+    : normalizeCaseResolverWorkspace(workspace);
   const baseRevision =
     typeof input.baseRevision === 'number' && Number.isFinite(input.baseRevision)
       ? Math.max(0, Math.floor(input.baseRevision))
       : 0;
-  const nextRevision = Math.max(getCaseResolverWorkspaceRevision(normalized), baseRevision + 1);
+  const nextRevision = Math.max(getCaseResolverWorkspaceRevision(baseWorkspace), baseRevision + 1);
   return {
-    ...normalized,
+    ...baseWorkspace,
     workspaceRevision: nextRevision,
     lastMutationId: input.mutationId.trim() || null,
     lastMutationAt: (input.timestamp ?? new Date().toISOString()).trim(),

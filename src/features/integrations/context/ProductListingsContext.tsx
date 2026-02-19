@@ -2,10 +2,6 @@
 
 import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
 
-import type {
-  ImageRetryPresetDto as ImageRetryPreset,
-  ImageTransformOptionsDto as ImageTransformOptions,
-} from '@/shared/contracts/integrations';
 import { useProductListings } from '@/features/integrations/hooks/useListingQueries';
 import {
   useDeleteFromBaseMutation,
@@ -19,6 +15,10 @@ import {
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import type { ProductListingWithDetails } from '@/features/integrations/types/listings';
 import { logClientError } from '@/features/observability';
+import type {
+  ImageRetryPresetDto as ImageRetryPreset,
+  ImageTransformOptionsDto as ImageTransformOptions,
+} from '@/shared/contracts/integrations';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';

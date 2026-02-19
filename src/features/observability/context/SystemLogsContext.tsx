@@ -9,11 +9,12 @@ import { useSystemLogs, useSystemLogMetrics, useMongoDiagnostics, useLogInsights
 import { readSystemLogUrlState, writeSystemLogUrlState } from '@/features/observability/lib/system-log-filter-url-state';
 import { logClientError } from '@/features/observability/utils/client-error-logger';
 import type { 
-  MongoCollectionIndexStatusDto as MongoCollectionIndexStatus
+  MongoCollectionIndexStatusDto as MongoCollectionIndexStatus,
+  SystemLogLevelDto as SystemLogLevel
 } from '@/shared/contracts/observability';
 import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import type { SystemLogMetrics, SystemLogRecord, SystemLogLevel, AiInsightRecord } from '@/shared/types';
+import type { SystemLogMetrics, SystemLogRecord, AiInsightRecord } from '@/shared/types';
 import { useToast, type FilterField } from '@/shared/ui';
 
 const levelOptions: Array<{ value: SystemLogLevel | 'all'; label: string }> = [

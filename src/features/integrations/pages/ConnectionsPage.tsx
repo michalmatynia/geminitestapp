@@ -5,9 +5,9 @@ import { Suspense } from 'react';
 import { IntegrationList } from '@/features/integrations/components/connections/IntegrationList';
 import { IntegrationModal } from '@/features/integrations/components/connections/IntegrationModal';
 import { IntegrationsProvider, useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import { LoadingState } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 
-import { LoadingState } from '@/shared/ui';
 
 function IntegrationsContent(): React.JSX.Element {
   const {

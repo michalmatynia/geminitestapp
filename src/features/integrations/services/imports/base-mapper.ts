@@ -1,6 +1,8 @@
+import { randomUUID } from 'crypto';
+
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
 import type { TemplateMappingDto as TemplateMapping } from '@/shared/contracts/integrations';
-import type { CreateProductDto as ProductCreateInput } from '@/shared/contracts/products';
+import type { ProductCreateInputDto as ProductCreateInput } from '@/shared/contracts/products';
 
 const toTrimmedString = (value: unknown): string | null => {
   if (typeof value === 'string') {
@@ -754,7 +756,14 @@ export function mapBaseProduct(
     imageLinks: getImageUrlsForAll(record),
   };
 
-  applyTemplateMappings(record, mapped, mappings);
+  const finalSku = (sku || '').trim() || `BASE-${baseProductId || randomUUID()}`;
 
-  return mapped;
+  const result: ProductCreateInput = {
+    ...mapped,
+    sku: finalSku,
+  };
+
+  applyTemplateMappings(record, result, mappings);
+
+  return result;
 }

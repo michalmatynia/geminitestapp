@@ -17,7 +17,7 @@ const titleSizes: Record<SectionHeaderSize, string> = {
 type SectionHeaderProps = {
   title: ReactNode;
   subtitle?: ReactNode | undefined;
-  description?: string | undefined;
+  description?: ReactNode | undefined;
   actions?: ReactNode | undefined;
   refresh?: {
     onRefresh: () => void;
@@ -89,9 +89,15 @@ export function SectionHeader({
           )
         ) : null}
         {description ? (
-          <p className={cn('text-sm text-gray-400', descriptionClassName)}>
-            {description}
-          </p>
+          typeof description === 'string' ? (
+            <p className={cn('text-sm text-gray-400', descriptionClassName)}>
+              {description}
+            </p>
+          ) : (
+            <div className={cn('text-sm text-gray-400', descriptionClassName)}>
+              {description}
+            </div>
+          )
         ) : null}
       </div>
       {(actions || refresh) && (

@@ -35,7 +35,6 @@ export * from './domain/admin';
 export * from './domain/drafter';
 export * from './domain/gsap';
 export * from './domain/playwright';
-export * from './domain/data-import-export';
 export * from './domain/foldertree';
 export * from './domain/agent-runtime';
 export * from './domain/agents';
@@ -48,6 +47,11 @@ export * from './domain/filemaker';
 export * from './domain/image-slots';
 export * from './domain/image-studio';
 export * from './domain/master-folder-tree';
+export * from './domain/system-logs';
+export * from './domain/system';
+export * from './domain/vector';
+export * from './domain/ai-trigger-buttons';
+export * from './domain/data-import-export';
 
 // API types
 export type {
@@ -59,7 +63,6 @@ export type {
   JsonParseResult,
   ParseJsonOptions
 } from './api/api';
-export * from './domain/system-logs';
 export * from './domain/listing-jobs';
 export * from './domain/jobs';
 
@@ -70,9 +73,6 @@ export * from './domain/chatbot';
 export * from './domain/agent-teaching';
 export * from './domain/analytics';
 export * from './ai-insights';
-
-// System types
-export * from './domain/system';
 
 // Product types (detailed exports)
 export {

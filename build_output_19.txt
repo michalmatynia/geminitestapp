@@ -1,0 +1,37 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 275ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · optimizePackageImports
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 58s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/ai/ai-paths/lib/core/validation-engine/defaults.ts:423:5
+Type error: Type '{ [k: string]: unknown; }' is not assignable to type 'Record<string, string>'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'string'.
+
+[0m [90m 421 |[39m     blockThreshold[33m,[39m
+ [90m 422 |[39m     baseScore[33m,[39m
+[31m[1m>[22m[39m[90m 423 |[39m     collectionMap[33m,[39m
+ [90m     |[39m     [31m[1m^[22m[39m
+ [90m 424 |[39m     docsSources[33m,[39m
+ [90m 425 |[39m     rules[33m,[39m
+ [90m 426 |[39m     lastEvaluatedAt[33m:[39m[0m
+Next.js build worker exited with code: 1 and signal: null

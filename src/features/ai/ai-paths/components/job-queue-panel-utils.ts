@@ -146,7 +146,7 @@ export const getLatestEventTimestamp = (
 ): string | null => {
   let max = 0;
   events.forEach((event: AiPathRunEventRecord) => {
-    const time = new Date(event.createdAt).getTime();
+    const time = new Date(event.createdAt || Date.now()).getTime();
     if (Number.isFinite(time) && time > max) {
       max = time;
     }

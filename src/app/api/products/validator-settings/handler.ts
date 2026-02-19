@@ -3,8 +3,8 @@ import { z } from 'zod';
 
 import { getValidationPatternRepository } from '@/features/products/server';
 import { normalizeProductValidationInstanceDenyBehaviorMap } from '@/features/products/utils/validator-instance-behavior';
+import type { ProductValidationInstanceDenyBehaviorMapDto as ProductValidationInstanceDenyBehaviorMap } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { ProductValidationInstanceDenyBehaviorMap } from '@/shared/types/domain/products';
 
 const instanceDenyBehaviorSchema = z.object({
   draft_template: z.enum(['ask_again', 'mute_session']),

@@ -321,9 +321,9 @@ describe('case-resolver composer', () => {
 
     expect(compiled.outputsByNode['source']).toEqual({
       textfield: 'Alpha',
-      content: '<span style=\"color: #ff0000;\">Alpha\n</span>',
+      content: '<span style="color: #ff0000;">Alpha\n</span>',
       plainText: 'Alpha',
     });
-    expect(compiled.prompt).toBe('<span style=\"color: #ff0000;\">Alpha\n</span>');
+    expect(compiled.prompt).toBe('<span style="color: #ff0000;">Alpha\n</span>');
   });
 });

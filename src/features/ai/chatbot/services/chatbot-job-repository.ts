@@ -2,11 +2,11 @@ import 'server-only';
 
 import { ObjectId } from 'mongodb';
 
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
   ChatbotJobDto as ChatbotJob,
   ChatbotJobPayloadDto as ChatbotJobPayload,
 } from '@/shared/contracts/chatbot';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 const COLLECTION_NAME = 'chatbot_jobs';
 

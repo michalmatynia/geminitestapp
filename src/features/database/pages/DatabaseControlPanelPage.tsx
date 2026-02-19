@@ -213,7 +213,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
       {logModalContent !== null && (
         <LogModal
           isOpen={true}
-          content={logModalContent}
+          item={logModalContent}
           onClose={(): void => setLogModalContent(null)}
         />
       )}

@@ -1,7 +1,6 @@
 import { useQueries } from '@tanstack/react-query';
 import { useEffect, useState, useMemo, useRef, type Dispatch, type SetStateAction } from 'react';
 
-import type { TemplateDto as Template, BaseInventoryDto as BaseInventory } from '@/shared/contracts/integrations';
 import {
   useUpdatePreferredTemplate,
   useUpdatePreferredInventory,
@@ -12,6 +11,7 @@ import {
   getDefaultExportInventoryQueryOptions,
   getBaseInventoriesQueryOptions,
 } from '@/features/integrations/hooks/useIntegrationQueries';
+import type { TemplateDto as Template, BaseInventoryDto as BaseInventory } from '@/shared/contracts/integrations';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 
 // Why: Base.com has complex, interconnected setup:

@@ -44,8 +44,35 @@ const IMAGE_EXPORT_ALIASES = new Set([
   'image_links_all',
 ]);
 
+const PRODUCT_PARAMETER_MAPPING_PREFIX = 'parameter:';
+
+const normalizeParameterPrefixedBaseField = (value: string): string => {
+  const trimmed = value.trim();
+  if (!trimmed) return trimmed;
+  if (
+    !trimmed
+      .toLowerCase()
+      .startsWith(PRODUCT_PARAMETER_MAPPING_PREFIX)
+  ) {
+    return trimmed;
+  }
+
+  const payload = trimmed.slice(PRODUCT_PARAMETER_MAPPING_PREFIX.length).trim();
+  if (!payload) return trimmed;
+
+  const languageDelimiterIndex = payload.indexOf('|');
+  if (languageDelimiterIndex < 0) {
+    return payload;
+  }
+
+  const parameterId = payload.slice(0, languageDelimiterIndex).trim();
+  if (!parameterId) return trimmed;
+  const languageCode = payload.slice(languageDelimiterIndex + 1).trim();
+  return languageCode ? `${parameterId}|${languageCode}` : parameterId;
+};
+
 const normalizeExportTargetField = (targetField: string): string => {
-  const trimmed = targetField.trim();
+  const trimmed = normalizeParameterPrefixedBaseField(targetField);
   const normalized = trimmed.toLowerCase();
   if (IMAGE_EXPORT_ALIASES.has(normalized)) {
     return 'images';
@@ -120,13 +147,42 @@ const mergeTextFields = (
   baseData: BaseProductRecord,
   templateData: Record<string, unknown>
 ): void => {
-  const nextTextFields: Record<string, string> = {};
+  const nextTextFields: Record<string, unknown> = {};
+
+  const setNestedValue = (
+    target: Record<string, unknown>,
+    path: string,
+    value: string
+  ): void => {
+    const parts = path
+      .split('.')
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0);
+    if (parts.length === 0) return;
+
+    if (parts.length === 1) {
+      target[parts[0] as string] = value;
+      return;
+    }
+
+    let cursor = target;
+    for (let index = 0; index < parts.length - 1; index += 1) {
+      const segment = parts[index] as string;
+      const existing = cursor[segment];
+      if (!existing || typeof existing !== 'object' || Array.isArray(existing)) {
+        cursor[segment] = {};
+      }
+      cursor = cursor[segment] as Record<string, unknown>;
+    }
+    const leaf = parts[parts.length - 1] as string;
+    cursor[leaf] = value;
+  };
 
   const pushValue = (key: string, value: unknown): void => {
     if (value === null || value === undefined) return;
     const stringValue = toStringValue(value);
     if (!stringValue) return;
-    nextTextFields[key] = stringValue;
+    setNestedValue(nextTextFields, key, stringValue);
   };
 
   if (
@@ -171,7 +227,7 @@ const mergeTextFields = (
 
   const baseTextFields =
     baseData['text_fields'] && typeof baseData['text_fields'] === 'object'
-      ? (baseData['text_fields'] as Record<string, string>)
+      ? (baseData['text_fields'] as Record<string, unknown>)
       : {};
 
   baseData['text_fields'] = {

@@ -1,6 +1,6 @@
 'use client';
 
-import { Trash2, Tags, Plus } from 'lucide-react';
+import { Trash2, Plus } from 'lucide-react';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 
 import { useCreateNoteTag, useDeleteNoteTag, useUpdateNoteTag } from '@/features/notesapp/api/useNoteMutations';

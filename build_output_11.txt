@@ -1,0 +1,38 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 203ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · optimizePackageImports
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 22.5s
+  Running TypeScript ...
+Failed to compile.
+
+./src/app/api/integrations/imports/base/handler.ts:382:17
+Type error: Type '{ name: Record<string, string | null>; length: number | null; description: Record<string, string | null>; categoryId: string | null; catalogId: string; defaultPriceGroupId: string | null; ... 27 more ...; noteIds?: string[] | undefined; }' is not assignable to type '{ sku: string; id?: string | null | undefined; baseProductId?: string | null | undefined; defaultPriceGroupId?: string | null | undefined; ean?: string | null | undefined; gtin?: string | null | undefined; ... 19 more ...; parameters?: { ...; }[] | undefined; }'.
+  Types of property 'sku' are incompatible.
+    Type 'string | null' is not assignable to type 'string'.
+      Type 'null' is not assignable to type 'string'.
+
+[0m [90m 380 |[39m       records
+ [90m 381 |[39m         [33m.[39mmap((record[33m:[39m [33mBaseProductRecord[39m) [33m=>[39m {
+[31m[1m>[22m[39m[90m 382 |[39m           [36mconst[39m mapped[33m:[39m [33mProductCreateInput[39m [33m=[39m mapBaseProduct(record[33m,[39m [][33m,[39m {
+ [90m     |[39m                 [31m[1m^[22m[39m
+ [90m 383 |[39m             preferredPriceCurrencies[33m:[39m listPreferredCurrencies[33m,[39m
+ [90m 384 |[39m           })[33m;[39m
+ [90m 385 |[39m           [36mconst[39m images [33m=[39m extractBaseImageUrls(record)[33m;[39m[0m
+Next.js build worker exited with code: 1 and signal: null

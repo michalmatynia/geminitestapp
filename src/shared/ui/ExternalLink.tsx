@@ -59,7 +59,7 @@ export function ExternalLink({
   }
 
   return (
-    <Link href={href} className={finalClassName} onClick={onClick}>
+    <Link href={href} className={finalClassName} {...(onClick ? { onClick } : {})}>
       {content}
     </Link>
   );

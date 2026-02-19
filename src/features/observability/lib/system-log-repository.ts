@@ -6,17 +6,26 @@ import { randomUUID } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { ObjectId, type Filter } from 'mongodb';
 
+import type {
+  SystemLogLevelDto as SystemLogLevel,
+  SystemLogMetricsDto as SystemLogMetrics,
+  SystemLogRecordDto as SystemLogRecord,
+  CreateSystemLogInputDto,
+  ListSystemLogsInputDto,
+  ListSystemLogsResultDto as ListSystemLogsResult,
+} from '@/shared/contracts/observability';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type {
-  SystemLogLevel,
-  SystemLogMetrics,
-  SystemLogRecord,
-  CreateSystemLogInput,
-  ListSystemLogsInput,
-  ListSystemLogsResult,
-} from '@/shared/types/domain/system-logs';
+
+type CreateSystemLogInput = Omit<CreateSystemLogInputDto, 'createdAt'> & {
+  createdAt?: Date;
+};
+
+type ListSystemLogsInput = Omit<ListSystemLogsInputDto, 'from' | 'to'> & {
+  from?: Date | null;
+  to?: Date | null;
+};
 
 const toMongoId = (id: string): ObjectId | string => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
@@ -50,7 +59,7 @@ const isMissingPrismaTable = (error: unknown): boolean =>
 const normalizeLogRecord = (record: SystemLogRecord): SystemLogRecord => ({
   ...record,
   createdAt:
-    (record.createdAt as any) instanceof Date
+    (record.createdAt as unknown) instanceof Date
       ? (record.createdAt as unknown as Date).toISOString()
       : typeof record.createdAt === 'string'
         ? record.createdAt
@@ -358,10 +367,10 @@ export async function createSystemLog(
         ...payload,
         createdAt: new Date(payload.createdAt),
         updatedAt: payload.updatedAt ? new Date(payload.updatedAt) : null,
-      } as any);
+      } as OptionalId<MongoSystemLogDoc>);
     return normalizeLogRecord(payload);
   }
-
+    
   try {
     const created = await prisma.systemLog.create({
       data: {
@@ -397,15 +406,14 @@ export async function createSystemLog(
         createdAt: payload.createdAt,
       },
     });
-
+    
     return normalizeLogRecord({
       ...created,
       level: created.level as SystemLogLevel,
       context: (created.context as Record<string, unknown> | null) ?? null,
       createdAt: created.createdAt.toISOString(),
-      updatedAt: (created as any).updatedAt?.toISOString() ?? null,
-    } as any);
-  } catch (error) {
+      updatedAt: null,
+    } as SystemLogRecord);  } catch (error) {
     if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {
       const mongo = await getMongoDb();
       await mongo
@@ -415,20 +423,20 @@ export async function createSystemLog(
           ...payload,
           createdAt: new Date(payload.createdAt),
           updatedAt: payload.updatedAt ? new Date(payload.updatedAt) : null,
-        } as any);
-      return normalizeLogRecord(payload as any);
+        } as OptionalId<MongoSystemLogDoc>);
+      return normalizeLogRecord(payload);
     }
     throw error;
   }
 }
-
+        
 export async function listSystemLogs(
   input: ListSystemLogsInput,
 ): Promise<ListSystemLogsResult> {
   const provider = await getAppDbProvider();
   const page = Math.max(1, input.page ?? 1);
   const pageSize = Math.min(200, Math.max(1, input.pageSize ?? 50));
-
+        
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
     const filter = buildMongoFilter(input);
@@ -447,9 +455,9 @@ export async function listSystemLogs(
     );
     return { logs, total, page, pageSize };
   }
-
+        
   const where = buildPrismaWhere(input);
-
+        
   try {
     const [total, rows] = await Promise.all([
       prisma.systemLog.count({ where }),
@@ -460,22 +468,22 @@ export async function listSystemLogs(
         take: pageSize,
       }),
     ]);
-
-    const logs = (rows as any[]).map(
-      (row: any) =>
+        
+    const logs = (rows as Prisma.SystemLog[]).map(
+      (row: Prisma.SystemLog) =>
         normalizeLogRecord({
           ...row,
           level: row.level as SystemLogLevel,
           category:
-            typeof row.category === 'string' && row.category.trim().length > 0
-              ? row.category
-              : (row.context?.['category'] as string | undefined) ?? null,
+                        typeof row.category === 'string' && row.category.trim().length > 0
+                          ? row.category
+                          : (row.context as Record<string, unknown> | null)?.['category'] as string | undefined ?? null,
           context: (row.context as Record<string, unknown> | null) ?? null,
           createdAt: row.createdAt.toISOString(),
-          updatedAt: row.updatedAt?.toISOString() ?? null,
+          updatedAt: null,
         }),
     );
-
+        
     return { logs, total, page, pageSize };
   } catch (error) {
     if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {
@@ -499,7 +507,7 @@ export async function listSystemLogs(
     throw error;
   }
 }
-
+        
 export async function getSystemLogById(id: string): Promise<SystemLogRecord | null> {
   const provider = await getAppDbProvider();
   if (provider === 'mongodb') {
@@ -510,7 +518,7 @@ export async function getSystemLogById(id: string): Promise<SystemLogRecord | nu
     if (!doc) return null;
     return normalizeLogRecord(toSystemLogRecord(doc));
   }
-
+        
   try {
     const row = await prisma.systemLog.findUnique({
       where: { id },
@@ -520,14 +528,13 @@ export async function getSystemLogById(id: string): Promise<SystemLogRecord | nu
       ...row,
       level: row.level as SystemLogLevel,
       category:
-        typeof row.category === 'string' && row.category.trim().length > 0
-          ? row.category
-          : (row.context?.['category'] as string | undefined) ?? null,
+                    typeof row.category === 'string' && row.category.trim().length > 0
+                      ? row.category
+                      : (row.context as Record<string, unknown> | null)?.['category'] as string | undefined ?? null,
       context: (row.context as Record<string, unknown> | null) ?? null,
       createdAt: row.createdAt.toISOString(),
-      updatedAt: (row as any).updatedAt?.toISOString() ?? null,
-    } as any);
-  } catch (error) {
+      updatedAt: null,
+    } as SystemLogRecord);  } catch (error) {
     if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {
       const mongo = await getMongoDb();
       const doc = await mongo

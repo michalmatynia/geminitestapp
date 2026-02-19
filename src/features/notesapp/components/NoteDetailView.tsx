@@ -12,6 +12,10 @@ import type {
   NoteRelationDto 
 } from '@/shared/contracts/notes';
 import { Button, useToast } from '@/shared/ui';
+import { sanitizeHtml } from '@/shared/utils';
+
+import { NoteForm } from './NoteForm';
+import { buildBreadcrumbPath, renderMarkdownToHtml } from '../utils';
 
 type NoteRelationWithTarget = NoteRelationDto & {
   targetNote?: RelatedNote | undefined;
@@ -20,10 +24,6 @@ type NoteRelationWithTarget = NoteRelationDto & {
 type NoteRelationWithSource = NoteRelationDto & {
   sourceNote?: RelatedNote | undefined;
 };
-import { sanitizeHtml } from '@/shared/utils';
-
-import { NoteForm } from './NoteForm';
-import { buildBreadcrumbPath, renderMarkdownToHtml } from '../utils';
 
 export function NoteDetailView(): React.JSX.Element | null {
   const {

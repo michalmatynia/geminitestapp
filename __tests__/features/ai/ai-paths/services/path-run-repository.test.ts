@@ -203,7 +203,7 @@ describe('AiPathRunRepository', () => {
     const changed = await repo.listRunNodesSince(
       run.id,
       {
-        updatedAt: cursorNode.updatedAt ?? cursorNode.createdAt,
+        updatedAt: cursorNode.updatedAt ?? cursorNode.createdAt ?? new Date().toISOString(),
         nodeId: cursorNode.nodeId,
       },
       { limit: 50 }

@@ -15,8 +15,6 @@ import type {
   ThemeDocument,
 } from '@/features/notesapp/services/notes/types/mongo-note-types';
 import type { NoteRepository } from '@/features/notesapp/services/notes/types/note-repository';
-import { notFoundError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
   NoteWithRelationsDto as NoteRecord,
   NoteFiltersDto as NoteFilters,
@@ -38,6 +36,8 @@ import type {
   CreateNoteThemeDto as ThemeCreateInput,
   UpdateNoteThemeDto as ThemeUpdateInput,
 } from '@/shared/contracts/notes';
+import { notFoundError } from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import {
   buildIncomingRelationsMap,

@@ -1,15 +1,15 @@
 import { integrationDefinitions } from '@/features/integrations/types/integrations-ui';
 import type { 
-  PlaywrightPersonaDto as PlaywrightPersona, 
-  PlaywrightSettingsDto as PlaywrightSettings 
-} from '@/shared/contracts/playwright';
-import type { 
   IntegrationDto as Integration, 
   IntegrationConnectionDto as IntegrationConnection, 
   SessionCookieDto as SessionCookie, 
   TestLogEntryDto as TestLogEntry,
   SessionPayloadDto
 } from '@/shared/contracts/integrations';
+import type { 
+  PlaywrightPersonaDto as PlaywrightPersona, 
+  PlaywrightSettingsDto as PlaywrightSettings 
+} from '@/shared/contracts/playwright';
 
 import type { Dispatch, SetStateAction } from 'react';
 

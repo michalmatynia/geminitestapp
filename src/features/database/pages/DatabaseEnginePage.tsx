@@ -127,7 +127,7 @@ function DatabaseEngineContent(): React.JSX.Element {
     {
       accessorKey: 'createdAt',
       header: 'Created',
-      cell: ({ row }) => <span className='text-[10px] text-gray-500'>{new Date(row.original.createdAt).toLocaleString()}</span>,
+      cell: ({ row }) => <span className='text-[10px] text-gray-500'>{row.original.createdAt ? new Date(row.original.createdAt).toLocaleString() : '—'}</span>,
     },
   ], []);
 

@@ -8,8 +8,7 @@ export const findFolderById = (
   foldersToScan: CategoryWithChildren[],
   id: string
 ): CategoryWithChildren | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return findTreeNodeById(foldersToScan as any, id);
+  return findTreeNodeById<CategoryWithChildren>(foldersToScan, id);
 };
 
 export const findFolderParentId = (
@@ -17,6 +16,5 @@ export const findFolderParentId = (
   id: string,
   parentId: string | null = null
 ): string | null => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return findTreeNodeParentId(foldersToScan as any, id, parentId);
+  return findTreeNodeParentId<CategoryWithChildren>(foldersToScan, id, parentId);
 };

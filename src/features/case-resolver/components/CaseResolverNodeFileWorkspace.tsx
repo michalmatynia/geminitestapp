@@ -19,7 +19,6 @@ import {
   palette,
   stableStringify,
 } from '@/features/ai/ai-paths/lib';
-import { type AiNode, type Edge, type NodeDefinition } from '../types';
 import { Button, useToast, Badge, Hint, SelectSimple, EmptyState } from '@/shared/ui';
 import { PanelHeader } from '@/shared/ui/templates/panels';
 
@@ -32,6 +31,7 @@ import {
   type CaseResolverShowDocumentInCanvasDetail,
 } from '../drag';
 import { parseNodeFileSnapshot, serializeNodeFileSnapshot } from '../settings';
+import { type AiNode, type Edge, type NodeDefinition } from '../types';
 import {
   type CaseResolverFile,
   type CaseResolverNodeFileMeta,

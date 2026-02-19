@@ -1,0 +1,37 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 223ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · optimizePackageImports
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 26.6s
+  Running TypeScript ...
+Failed to compile.
+
+./src/app/api/integrations/export-templates/[id]/handler.ts:52:5
+Type error: Type '{ sourceKey: string; targetField: string; }[] | undefined' is not assignable to type '{ sourceField: string; targetField: string; transform?: string | undefined; }[] | undefined'.
+  Type '{ sourceKey: string; targetField: string; }[]' is not assignable to type '{ sourceField: string; targetField: string; transform?: string | undefined; }[]'.
+    Property 'sourceField' is missing in type '{ sourceKey: string; targetField: string; }' but required in type '{ sourceField: string; targetField: string; transform?: string | undefined; }'.
+
+[0m [90m 50 |[39m     name[33m:[39m data[33m.[39mname[33m,[39m
+ [90m 51 |[39m     description[33m:[39m data[33m.[39mdescription[33m,[39m
+[31m[1m>[22m[39m[90m 52 |[39m     mappings[33m:[39m data[33m.[39mmappings[33m,[39m
+ [90m    |[39m     [31m[1m^[22m[39m
+ [90m 53 |[39m     exportImagesAsBase64[33m:[39m data[33m.[39mexportImagesAsBase64
+ [90m 54 |[39m   })[33m;[39m
+ [90m 55 |[39m   [36mif[39m ([33m![39mtemplate) {[0m
+Next.js build worker exited with code: 1 and signal: null

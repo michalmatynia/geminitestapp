@@ -109,6 +109,52 @@ const underlineMark = Mark.create({
 
 const TEXT_ALIGN_OPTIONS: TextAlignOption[] = ['left', 'center', 'right', 'justify'];
 
+const inlineTextAlignMark = Mark.create({
+  name: 'inlineTextAlignStyle',
+  inclusive: false,
+  parseHTML() {
+    return [
+      { tag: 'span[data-inline-text-align]' },
+      {
+        style: 'text-align',
+      },
+    ];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['span', mergeAttributes(HTMLAttributes), 0];
+  },
+  addAttributes() {
+    return {
+      textAlign: {
+        default: null,
+        parseHTML: (element: HTMLElement) => {
+          const datasetValue = element.getAttribute('data-inline-text-align')?.trim().toLowerCase();
+          if (datasetValue && TEXT_ALIGN_OPTIONS.includes(datasetValue as TextAlignOption)) {
+            return datasetValue;
+          }
+          const styleValue = element.style.textAlign?.trim().toLowerCase();
+          if (styleValue && TEXT_ALIGN_OPTIONS.includes(styleValue as TextAlignOption)) {
+            return styleValue;
+          }
+          return null;
+        },
+        renderHTML: (attributes: Record<string, unknown>) => {
+          const textAlign = typeof attributes['textAlign'] === 'string'
+            ? attributes['textAlign'].trim().toLowerCase()
+            : '';
+          if (!TEXT_ALIGN_OPTIONS.includes(textAlign as TextAlignOption) || textAlign === 'left') {
+            return {};
+          }
+          return {
+            'data-inline-text-align': textAlign,
+            style: `display: inline-block; width: 100%; text-align: ${textAlign};`,
+          };
+        },
+      },
+    };
+  },
+});
+
 const textAlignExtension = Extension.create({
   name: 'textAlign',
   addGlobalAttributes() {
@@ -286,6 +332,7 @@ export function RichTextEditor({
 
     if (allowTextAlign) {
       activeExtensions.push(textAlignExtension);
+      activeExtensions.push(inlineTextAlignMark);
     }
 
     if (allowImage) {
@@ -394,6 +441,34 @@ export function RichTextEditor({
     const { from, to, empty } = editor.state.selection;
     if (empty) return;
 
+    let hasAlignableBlock = false;
+    let hasPartiallySelectedBlock = false;
+    editor.state.doc.nodesBetween(from, to, (node, position): void => {
+      if (node.type.name !== 'paragraph' && node.type.name !== 'heading') return;
+      const contentStart = position + 1;
+      const contentEnd = position + node.nodeSize - 1;
+      const intersectsSelection = to > contentStart && from < contentEnd;
+      if (!intersectsSelection) return;
+      hasAlignableBlock = true;
+      if (from > contentStart || to < contentEnd) {
+        hasPartiallySelectedBlock = true;
+      }
+    });
+
+    if (hasAlignableBlock && hasPartiallySelectedBlock) {
+      if (nextValue === 'left') {
+        editor.chain().focus().unsetMark('inlineTextAlignStyle').run();
+        return;
+      }
+      editor
+        .chain()
+        .focus()
+        .unsetMark('inlineTextAlignStyle')
+        .setMark('inlineTextAlignStyle', { textAlign: nextValue })
+        .run();
+      return;
+    }
+
     const transaction = editor.state.tr;
     let changed = false;
     editor.state.doc.nodesBetween(from, to, (node, position): void => {
@@ -415,6 +490,7 @@ export function RichTextEditor({
   const isTextAlignActive = useCallback((alignment: TextAlignOption): boolean => {
     if (!allowTextAlign || !editor) return false;
     return (
+      editor.isActive('inlineTextAlignStyle', { textAlign: alignment }) ||
       editor.isActive('paragraph', { textAlign: alignment }) ||
       editor.isActive('heading', { textAlign: alignment })
     );

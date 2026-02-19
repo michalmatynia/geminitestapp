@@ -444,6 +444,7 @@ export const productUpdateInputSchema = productCreateInputSchema.partial().exten
 });
 
 export type ProductUpdateInputDto = z.infer<typeof productUpdateInputSchema>;
+export type ProductUpdateInput = ProductUpdateInputDto;
 
 export const createProductSchema = productSchema.omit({
   id: true,
@@ -452,12 +453,10 @@ export const createProductSchema = productSchema.omit({
 });
 
 export type CreateProductDto = z.infer<typeof createProductSchema>;
-export type ProductCreateInput = CreateProductDto;
 
 export const updateProductSchema = createProductSchema.partial();
 
 export type UpdateProductDto = z.infer<typeof updateProductSchema>;
-export type ProductUpdateInput = UpdateProductDto;
 
 /**
  * Product Domain Enums & DTOs
@@ -702,6 +701,7 @@ export const productValidatorSettingsSchema = z.object({
   ),
 });
 
+export type ProductValidationInstanceDenyBehaviorMapDto = z.infer<typeof productValidatorSettingsSchema>['instanceDenyBehavior'];
 export type ProductValidatorSettingsDto = z.infer<typeof productValidatorSettingsSchema>;
 
 export const productValidatorConfigSchema = z.object({

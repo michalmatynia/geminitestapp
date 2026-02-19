@@ -126,7 +126,7 @@ export function RunHistoryPanel(): React.JSX.Element {
       ) : (
         <div className='space-y-2 text-xs text-gray-300'>
           {filteredRunList.slice(0, 6).map((run: AiPathRunRecord): React.JSX.Element => {
-            const runHistory = (run.runtimeState?.history ?? undefined);
+            const runHistory = (run.runtimeState as { history?: Record<string, RuntimeHistoryEntry[]> } | undefined)?.history;
             const runHistoryOptions = buildHistoryNodeOptions(
               runHistory,
               null,

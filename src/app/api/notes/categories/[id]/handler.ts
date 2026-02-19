@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { categoryUpdateSchema } from '@/features/notesapp/public';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
+import type { UpdateNoteCategoryDto as CategoryUpdateInput } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { CategoryUpdateInput } from '@/shared/types/domain/notes';
 import { removeUndefined } from '@/shared/utils';
 
 /**

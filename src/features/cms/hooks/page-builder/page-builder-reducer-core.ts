@@ -30,6 +30,7 @@ import type {
   SectionInstance,
   BlockInstance,
   PageZone,
+  InspectorSettings,
 } from '../../types/page-builder';
 
 export function reducePageBuilderStateCore(
@@ -759,7 +760,9 @@ export function reducePageBuilderStateCore(
         ...state,
         inspectorSettings: {
           ...state.inspectorSettings,
-          ...action.settings,
+          ...(Object.fromEntries(
+            Object.entries(action.settings).filter(([_, v]) => v !== undefined)
+          ) as Partial<InspectorSettings>),
         },
       };
 

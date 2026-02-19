@@ -6,10 +6,10 @@ import { z } from 'zod';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 import { logSystemEvent } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
+import type { ChatbotSessionDto as ChatSession, UpdateChatSessionDto as UpdateSessionInput } from '@/shared/contracts/chatbot';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { ChatSession, UpdateSessionInput } from '@/shared/types/domain/chatbot';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 

@@ -193,7 +193,7 @@ export const schemaDataSchema = z.object({
     })
   ),
   provider: z.union([schemaProviderSchema, z.literal('multi')]),
-  sources: z.record(schemaProviderSchema, schemaResponseSchema.nullable()).partial().optional(),
+  sources: z.record(schemaProviderSchema, schemaResponseSchema.nullable()).optional(),
 });
 
 export type SchemaDataDto = z.infer<typeof schemaDataSchema>;

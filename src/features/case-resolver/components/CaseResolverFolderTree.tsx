@@ -22,7 +22,6 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { type NodeDefinition } from '../types';
 import {
   applyInternalMasterTreeDrop,
   isInternalMasterTreeNode,
@@ -55,6 +54,7 @@ import {
   buildCaseResolverNodeFileRelationIndexFromAssets,
   EMPTY_CASE_RESOLVER_NODE_FILE_RELATION_INDEX,
 } from '../nodefile-relations';
+import { type NodeDefinition } from '../types';
 import { resolveCaseResolverTreeWorkspace } from './case-resolver-tree-workspace';
 import {
   CASE_RESOLVER_PALETTE,

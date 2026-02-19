@@ -1714,7 +1714,7 @@ export async function sendProductImageToStudio(params: {
   try {
     const dispatchStartMs = Date.now();
     startImageStudioRunQueue();
-    dispatchMode = await enqueueImageStudioRunJob(run.id);
+    dispatchMode = (await enqueueImageStudioRunJob(run.id)) as ImageStudioRunDispatchMode;
     dispatchMs = Date.now() - dispatchStartMs;
   } catch (error) {
     const errorMessage =

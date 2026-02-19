@@ -741,6 +741,47 @@ export function CanvasBoard({
     if (isSvgRenderer && flowEnabled) return 'adaptive-off';
     return 'off';
   })();
+  const canvasInfoItems = React.useMemo((): string[] => {
+    const items = [
+      `Nodes: ${nodes.length}`,
+      `Edges: ${edges.length}`,
+      lastDrop
+        ? `Last drop: ${Math.round(lastDrop.x)}, ${Math.round(lastDrop.y)}`
+        : null,
+      `View: ${Math.round(view.x)}, ${Math.round(view.y)} @ ${Math.round(view.scale * 100)}%`,
+      `Renderer: ${isSvgRenderer ? 'SVG' : 'Legacy'}`,
+      isSvgRenderer
+        ? `Visible: ${svgVisibleNodeIdSet.size} nodes / ${renderedEdgePaths.length} wires`
+        : null,
+      isSvgRenderer
+        ? `Culled: ${svgCulledNodeCount} nodes / ${svgCulledEdgeCount} wires`
+        : null,
+      isSvgRenderer ? `Detail: ${svgDetailLevel}` : null,
+      isSvgRenderer && svgPerf.fps > 0
+        ? `FPS: ${svgPerf.fps} (${svgPerf.avgFrameMs.toFixed(1)}ms)`
+        : null,
+      `Routing: ${edgeRoutingMode}`,
+      `Flow: ${flowModeLabel}`,
+    ];
+    return items.filter((item): item is string => Boolean(item));
+  }, [
+    edgeRoutingMode,
+    edges.length,
+    flowModeLabel,
+    isSvgRenderer,
+    lastDrop,
+    nodes.length,
+    renderedEdgePaths.length,
+    svgCulledEdgeCount,
+    svgCulledNodeCount,
+    svgDetailLevel,
+    svgPerf.avgFrameMs,
+    svgPerf.fps,
+    svgVisibleNodeIdSet.size,
+    view.scale,
+    view.x,
+    view.y,
+  ]);
   const touchLongPressProgressDegrees = touchLongPressIndicator
     ? Math.round(Math.max(0, Math.min(1, touchLongPressIndicator.progress)) * 360)
     : 0;
@@ -766,28 +807,21 @@ export function CanvasBoard({
       onPointerLeave={handlePanEnd}
       onPointerCancel={handlePanEnd}
     >
-      <div className='absolute bottom-3 left-3 z-10 rounded-md border border-border/60 bg-card/30 p-2 text-[11px] text-gray-400'>
-        Nodes: {nodes.length}
-        {` • Edges: ${edges.length}`}
-        {lastDrop ? ` • Last drop: ${Math.round(lastDrop.x)}, ${Math.round(lastDrop.y)}` : ''}
-        {` • View: ${Math.round(view.x)}, ${Math.round(view.y)} @ ${Math.round(view.scale * 100)}%`}
-        {` • Renderer: ${isSvgRenderer ? 'SVG' : 'Legacy'}`}
-        {isSvgRenderer
-          ? ` • Visible: ${svgVisibleNodeIdSet.size} nodes / ${renderedEdgePaths.length} wires`
-          : ''}
-        {isSvgRenderer
-          ? ` • Culled: ${svgCulledNodeCount} nodes / ${svgCulledEdgeCount} wires`
-          : ''}
-        {isSvgRenderer ? ` • Detail: ${svgDetailLevel}` : ''}
-        {isSvgRenderer && svgPerf.fps > 0
-          ? ` • FPS: ${svgPerf.fps} (${svgPerf.avgFrameMs.toFixed(1)}ms)`
-          : ''}
-        {` • Routing: ${edgeRoutingMode}`}
-        {` • Flow: ${flowModeLabel}`}
+      <div className='absolute bottom-3 left-3 z-10 max-w-[min(58vw,56rem)] rounded-md border border-border/60 bg-card/35 p-2 text-[11px] text-gray-400'>
+        <div className='flex flex-wrap gap-1'>
+          {canvasInfoItems.map((item, index) => (
+            <span
+              key={`${index}:${item}`}
+              className='rounded border border-border/50 bg-card/50 px-1.5 py-0.5 text-[10px] leading-4 text-gray-300'
+            >
+              {item}
+            </span>
+          ))}
+        </div>
       </div>
-      <div className='absolute bottom-4 right-4 z-10 rounded-md border border-border/60 bg-card/30 p-2 text-xs text-gray-300'>
+      <div className='absolute bottom-3 right-3 z-10 max-w-[min(92vw,48rem)] rounded-md border border-border/60 bg-card/30 p-2 text-xs text-gray-300'>
         <div className='mb-2 text-[11px] uppercase text-gray-500'>View Controls</div>
-        <div className='flex items-center gap-2'>
+        <div className='flex flex-wrap items-center justify-end gap-2'>
           <Button
             className='h-7 w-7 rounded-full border text-xs text-white hover:bg-muted/60'
             type='button'

@@ -1,11 +1,4 @@
 import type {
-  DynamicReplacementLogicAction,
-  DynamicReplacementLogicOperator,
-  DynamicReplacementMathOperation,
-  DynamicReplacementRoundMode,
-  DynamicReplacementSourceMode,
-} from '@/features/products/utils/validator-replacement-recipe';
-import type {
   ProductReplacementModeDto,
   ProductValidationPatternFormDataDto,
   ProductValidationSequenceGroupDraftDto,

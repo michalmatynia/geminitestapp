@@ -16,10 +16,10 @@ import {
 } from '@/features/products/context/ProductFormContext';
 import { DebugInfo, ProductImageSlot } from '@/features/products/types/products-ui';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
+import type { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
 import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import type { ImageFileSelection } from '@/shared/types/domain/files';
 import {
   Button,
   ActionMenu,
@@ -332,7 +332,7 @@ export default function ProductImageManager({
       if (!dataUrl && linkValue.trim().startsWith('data:')) {
         dataUrl = linkValue.trim();
       } else if (!dataUrl && slot?.type === 'file') {
-        dataUrl = await fileToDataUrl(slot.data);
+        dataUrl = await fileToDataUrl(slot.data as File);
       } else if (!dataUrl && displayUrl) {
         const res = await fetch(displayUrl);
         if (!res.ok) throw new Error('Failed to fetch image');

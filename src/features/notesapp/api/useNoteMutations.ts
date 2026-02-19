@@ -2,14 +2,6 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import { api } from '@/shared/lib/api-client';
-import {
-  createCreateMutationV2,
-  createDeleteMutationV2,
-  createUpdateMutationV2,
-} from '@/shared/lib/query-factories-v2';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { DeleteResponse } from '@/shared/types/api/api';
 import type {
   NoteWithRelationsDto as NoteWithRelations,
   CreateNoteDto as NoteCreateInput,
@@ -27,6 +19,14 @@ import type {
   CreateNoteThemeDto as ThemeCreateInput,
   UpdateNoteThemeDto as ThemeUpdateInput,
 } from '@/shared/contracts/notes';
+import { api } from '@/shared/lib/api-client';
+import {
+  createCreateMutationV2,
+  createDeleteMutationV2,
+  createUpdateMutationV2,
+} from '@/shared/lib/query-factories-v2';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { DeleteResponse } from '@/shared/types/api/api';
 import type { 
   CreateMutation, 
   UpdateMutation, 

@@ -412,7 +412,7 @@ const ensurePartyDraft = (
   if (existing) return existing;
   const next: CaseResolverPartyDraft = {
     role,
-    rawText: normalizeText(segment.raw || segment.text || '') || undefined,
+    rawText: normalizeText(segment.raw || segment.text || '') || '',
     sourceSegmentId: segment.id,
     sourceSegmentTitle: resolveSegmentDisplayLabel(segment),
     sourcePatternLabels: normalizeSegmentLabels(segment.matchedPatternLabels),

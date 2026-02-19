@@ -8,7 +8,6 @@ import {
   decryptSecret,
   exportProductImagesToBase,
   exportProductToBase,
-  getExportDefaultInventoryId,
   getExportWarehouseId,
   getIntegrationRepository,
   getProductListingRepository,
@@ -91,8 +90,12 @@ export async function postExportToBaseHandler(
     const imageBaseUrl = forwardedHost
       ? `${forwardedProto}://${forwardedHost}`
       : new URL(_req.url).origin;
-    const defaultInventoryId = await getExportDefaultInventoryId();
-    const resolvedInventoryId = defaultInventoryId || data.inventoryId;
+    const resolvedInventoryId = data.inventoryId?.trim() ?? '';
+    if (!resolvedInventoryId) {
+      throw badRequestError(
+        'Inventory ID is required for Base.com export. Default inventory fallback is disabled.'
+      );
+    }
     const normalizedRequestId = requestId?.trim() ?? '';
     if (normalizedRequestId) {
       clearExpiredExportRequestLocks();
@@ -173,7 +176,6 @@ export async function postExportToBaseHandler(
       connectionId: data.connectionId,
       inventoryId: resolvedInventoryId,
       requestedInventoryId: data.inventoryId,
-      defaultInventoryId,
       templateId: data.templateId || 'none',
       imagesOnly
     });
@@ -251,8 +253,8 @@ export async function postExportToBaseHandler(
     const preparedExportContext = await prepareBaseExportMappingsAndProduct({
       data,
       imagesOnly,
-      productId,
-      resolvedInventoryId,
+      productId: productId,
+      resolvedInventoryId: resolvedInventoryId,
       product: normalizedProductForExport,
     });
     const mappings = preparedExportContext.mappings;

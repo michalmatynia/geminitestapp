@@ -2,9 +2,10 @@ import { Brain, Sparkles } from 'lucide-react';
 
 import { palette } from '@/features/ai/ai-paths/lib';
 
+import { type NodeDefinition } from '../types';
+
 import type React from 'react';
 
-import { type NodeDefinition } from '../types';
 
 export type PaletteEntry = {
   id: string;

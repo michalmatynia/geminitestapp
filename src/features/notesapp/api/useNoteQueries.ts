@@ -13,9 +13,6 @@ import {
   noteCategoryWithChildrenSchema,
   relatedNoteSchema
 } from '@/shared/contracts/notes';
-import { api } from '@/shared/lib/api-client';
-import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
-import { noteKeys } from '@/shared/lib/query-key-exports';
 import type { 
   NotebookDto as NotebookRecord, 
   NoteCategoryDto as CategoryRecord, 
@@ -24,6 +21,9 @@ import type {
   NoteThemeDto as ThemeRecord,
   RelatedNoteDto as RelatedNote
 } from '@/shared/contracts/notes';
+import { api } from '@/shared/lib/api-client';
+import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { noteKeys } from '@/shared/lib/query-key-exports';
 import type { ListQuery, SingleQuery } from '@/shared/types/query-result-types';
 
 const NOTES_STALE_MS = 10_000;

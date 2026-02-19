@@ -4,7 +4,6 @@ import type {
   ProductListingRelistPolicyDto,
   ProductListingWithDetailsDto,
   CreateProductListingDto,
-  IntegrationWithConnectionsDto,
   ListingJobDto,
   ProductJobDto,
 } from '@/shared/contracts/integrations';
@@ -20,13 +19,11 @@ export type ProductListingExportEvent = Omit<ProductListingExportEventDto, 'expo
   expiresAt?: string | Date | null | undefined;
 };
 
+export type { IntegrationWithConnections, IntegrationWithConnectionsBasic } from './integrations';
+
 export type ProductListingRelistPolicy = ProductListingRelistPolicyDto;
 
 export type ProductListingWithDetails = ProductListingWithDetailsDto;
-
-export type IntegrationConnectionBasic = IntegrationWithConnectionsDto;
-export type IntegrationWithConnections = IntegrationWithConnectionsDto;
-export type IntegrationWithConnectionsBasic = IntegrationWithConnectionsDto;
 
 export type CreateProductListingInput = Omit<CreateProductListingDto, 'listedAt' | 'expiresAt' | 'nextRelistAt' | 'lastRelistedAt' | 'lastStatusCheckAt'> & {
   listedAt?: string | Date | null;

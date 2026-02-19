@@ -72,6 +72,19 @@ export const noteRelationSchema = z.object({
 
 export type NoteRelationDto = z.infer<typeof noteRelationSchema>;
 
+export const noteFileSchema = dtoBaseSchema.extend({
+  noteId: z.string(),
+  slotIndex: z.number(),
+  filename: z.string(),
+  filepath: z.string(),
+  mimetype: z.string(),
+  size: z.number(),
+  width: z.number().nullable(),
+  height: z.number().nullable(),
+});
+
+export type NoteFileDto = z.infer<typeof noteFileSchema>;
+
 export const noteWithRelationsSchema = noteSchema.extend({
   tags: z.array(noteTagRelationSchema.extend({
     tag: z.lazy(() => noteTagSchema)
@@ -82,7 +95,7 @@ export const noteWithRelationsSchema = noteSchema.extend({
   relations: z.array(relatedNoteSchema).optional(),
   relationsFrom: z.array(noteRelationSchema).optional(),
   relationsTo: z.array(noteRelationSchema).optional(),
-  files: z.array(z.any()).optional(),
+  files: z.array(noteFileSchema).optional(),
 });
 
 export type NoteWithRelationsDto = z.infer<typeof noteWithRelationsSchema>;
@@ -241,19 +254,6 @@ export const noteFiltersSchema = z.object({
 });
 
 export type NoteFiltersDto = z.infer<typeof noteFiltersSchema>;
-
-export const noteFileSchema = dtoBaseSchema.extend({
-  noteId: z.string(),
-  slotIndex: z.number(),
-  filename: z.string(),
-  filepath: z.string(),
-  mimetype: z.string(),
-  size: z.number(),
-  width: z.number().nullable(),
-  height: z.number().nullable(),
-});
-
-export type NoteFileDto = z.infer<typeof noteFileSchema>;
 
 export const createNoteFileSchema = noteFileSchema.omit({
   id: true,

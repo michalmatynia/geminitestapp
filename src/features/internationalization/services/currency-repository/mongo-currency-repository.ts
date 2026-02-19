@@ -2,10 +2,11 @@
 import { ObjectId, type Document, type AnyBulkWriteOperation, type UpdateFilter } from 'mongodb';
 
 import { defaultCurrencies } from '@/features/internationalization/server';
-import type { CurrencyRepository } from '../../types/services/currency-repository';
 import { notFoundError, internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { CurrencyRecord } from '@/shared/types/domain/internationalization';
+
+import type { CurrencyRepository } from '../../types/services/currency-repository';
 
 const COLLECTION = 'currencies';
 

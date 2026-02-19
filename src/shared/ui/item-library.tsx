@@ -18,7 +18,7 @@ export interface LibraryItem {
   id: string;
   name: string;
   description?: string | null | undefined;
-  createdAt: string | Date;
+  createdAt?: string | Date | null | undefined;
   updatedAt?: string | Date | null | undefined;
 }
 

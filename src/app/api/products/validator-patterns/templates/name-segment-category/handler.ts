@@ -4,8 +4,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getValidationPatternRepository } from '@/features/products/server';
 import { invalidateValidationPatternRuntimeCache } from '@/features/products/services/validation-pattern-runtime-cache';
+import type { 
+  ProductValidationInstanceScopeDto as ProductValidationInstanceScope, 
+  ProductValidationPatternDto as ProductValidationPattern 
+} from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { ProductValidationInstanceScope, ProductValidationPattern } from '@/shared/types/domain/products';
 
 const TEMPLATE_SCOPES: ProductValidationInstanceScope[] = [
   'draft_template',

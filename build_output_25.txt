@@ -1,0 +1,35 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 224ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · optimizePackageImports
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 29.5s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/ai/chatbot/hooks/useChatbotLogic.ts:205:11
+Type error: Type '{ model: string; temperature: number; maxTokens: number; systemPrompt: string; enableMemory: boolean; enableContext: boolean; webSearchEnabled: boolean; useGlobalContext: boolean; useLocalContext: boolean; ... 25 more ...; loopBackoffMaxMs: number; }' is missing the following properties from type '{ id: string; createdAt: string; updatedAt: string | null; model: string; temperature: number; maxTokens: number; systemPrompt: string; enableMemory: boolean; enableContext: boolean; webSearchEnabled: boolean; ... 27 more ...; playwrightPersonaId?: string | ... 1 more ... | undefined; }': id, createdAt, updatedAt
+
+[0m [90m 203 |[39m
+ [90m 204 |[39m   [36mconst[39m currentSettings [33m=[39m useMemo[33m<[39m[33mChatbotSettingsPayload[39m[33m>[39m(
+[31m[1m>[22m[39m[90m 205 |[39m     () [33m=>[39m ({
+ [90m     |[39m           [31m[1m^[22m[39m
+ [90m 206 |[39m       model[33m,[39m
+ [90m 207 |[39m       temperature[33m:[39m [33mDEFAULT_CHATBOT_SETTINGS[39m[33m.[39mtemperature[33m,[39m
+ [90m 208 |[39m       maxTokens[33m:[39m [33mDEFAULT_CHATBOT_SETTINGS[39m[33m.[39mmaxTokens[33m,[39m[0m
+Next.js build worker exited with code: 1 and signal: null

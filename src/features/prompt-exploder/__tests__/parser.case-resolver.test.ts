@@ -25,12 +25,12 @@ describe('case resolver prompt exploder segmentation', () => {
 
     const rules = getPromptExploderScopedRules(
       defaultPromptEngineSettings,
-      'case_resolver_prompt_exploder'
+      'case-resolver-prompt-exploder'
     );
     const document = explodePromptText({
       prompt,
       validationRules: rules,
-      validationScope: 'case_resolver_prompt_exploder',
+      validationScope: 'case-resolver-prompt-exploder',
     });
 
     const segmentBodies = document.segments.map((segment) => segment.raw || segment.text);
@@ -132,12 +132,12 @@ describe('case resolver prompt exploder segmentation', () => {
 
     const rules = getPromptExploderScopedRules(
       defaultPromptEngineSettings,
-      'case_resolver_prompt_exploder'
+      'case-resolver-prompt-exploder'
     );
     const document = explodePromptText({
       prompt,
       validationRules: rules,
-      validationScope: 'case_resolver_prompt_exploder',
+      validationScope: 'case-resolver-prompt-exploder',
     });
 
     const placeDateSegment = document.segments.find((segment) =>
@@ -182,12 +182,12 @@ describe('case resolver prompt exploder segmentation', () => {
 
     const rules = getPromptExploderScopedRules(
       defaultPromptEngineSettings,
-      'case_resolver_prompt_exploder'
+      'case-resolver-prompt-exploder'
     );
     const document = explodePromptText({
       prompt,
       validationRules: rules,
-      validationScope: 'case_resolver_prompt_exploder',
+      validationScope: 'case-resolver-prompt-exploder',
     });
 
     const dotyczySegment = document.segments.find((segment) =>
@@ -229,12 +229,12 @@ describe('case resolver prompt exploder segmentation', () => {
 
     const rules = getPromptExploderScopedRules(
       defaultPromptEngineSettings,
-      'case_resolver_prompt_exploder'
+      'case-resolver-prompt-exploder'
     );
     const document = explodePromptText({
       prompt,
       validationRules: rules,
-      validationScope: 'case_resolver_prompt_exploder',
+      validationScope: 'case-resolver-prompt-exploder',
     });
 
     const uzasadnienieSegment = document.segments.find((segment) =>
@@ -257,12 +257,12 @@ describe('case resolver prompt exploder segmentation', () => {
 
     const rules = getPromptExploderScopedRules(
       defaultPromptEngineSettings,
-      'case_resolver_prompt_exploder'
+      'case-resolver-prompt-exploder'
     );
     const document = explodePromptText({
       prompt,
       validationRules: rules,
-      validationScope: 'case_resolver_prompt_exploder',
+      validationScope: 'case-resolver-prompt-exploder',
     });
 
     const closingSegment = document.segments.find((segment) =>
@@ -312,12 +312,12 @@ Z poważaniem,`;
 
     const rules = getPromptExploderScopedRules(
       defaultPromptEngineSettings,
-      'case_resolver_prompt_exploder'
+      'case-resolver-prompt-exploder'
     );
     const document = explodePromptText({
       prompt,
       validationRules: rules,
-      validationScope: 'case_resolver_prompt_exploder',
+      validationScope: 'case-resolver-prompt-exploder',
     });
 
     expect(document.segments.length).toBeGreaterThan(5);
@@ -409,7 +409,7 @@ Z poważaniem,`;
       flags: 'i',
       message: 'synthetic',
       similar: [],
-      appliesToScopes: ['case_resolver_prompt_exploder'],
+      appliesToScopes: ['case-resolver-prompt-exploder'],
       promptExploderTreatAsHeading: true,
       promptExploderSegmentType: 'assigned_text',
       promptExploderConfidenceBoost: 0,
@@ -419,7 +419,7 @@ Z poważaniem,`;
     const document = explodePromptText({
       prompt,
       validationRules: [fallbackOnlyHeadingRule],
-      validationScope: 'case_resolver_prompt_exploder',
+      validationScope: 'case-resolver-prompt-exploder',
     });
 
     expect(document.segments).toHaveLength(1);

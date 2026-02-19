@@ -13,6 +13,9 @@ import type {
   NoteRelationDto,
 } from '@/shared/contracts/notes';
 import { BreadcrumbScroller, Button, CopyButton, Tag, Badge } from '@/shared/ui';
+import { cn, setNoteDragData, sanitizeHtml } from '@/shared/utils';
+
+import { buildBreadcrumbPath, darkenColor, renderMarkdownToHtml } from '../utils';
 
 type NoteRelationWithTarget = NoteRelationDto & {
   targetNote?: RelatedNote | undefined;
@@ -21,11 +24,6 @@ type NoteRelationWithTarget = NoteRelationDto & {
 type NoteRelationWithSource = NoteRelationDto & {
   sourceNote?: RelatedNote | undefined;
 };
-import { cn, setNoteDragData, sanitizeHtml } from '@/shared/utils';
-
-
-
-import { buildBreadcrumbPath, darkenColor, renderMarkdownToHtml } from '../utils';
 
 // Hardcoded dark mode fallback theme - consistent with page styling
 const FALLBACK_THEME: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt' | 'name' | 'notebookId'> = {

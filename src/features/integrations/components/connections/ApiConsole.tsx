@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Button, Input, Textarea, Label, Alert, SelectSimple, StatusBadge } from '@/shared/ui';
+import { Button, Input, Textarea, Alert, SelectSimple, StatusBadge, FormField } from '@/shared/ui';
 
 export interface ApiPreset {
   label: string;
@@ -97,55 +97,52 @@ export function ApiConsole({
         </Alert>
       )}
       <div className={setPath ? 'grid gap-3 md:grid-cols-[120px_1fr]' : ''}>
-        <div>
-          <Label className='text-xs text-gray-400'>Method</Label>
+        <FormField label='Method'>
           {methodType === 'select' ? (
-            <div className='mt-2'>
-              <SelectSimple
-                options={methodOptions}
-                value={method}
-                onValueChange={setMethod}
-                placeholder='Method'
-                size='sm'
-              />
-            </div>
+            <SelectSimple
+              options={methodOptions}
+              value={method}
+              onValueChange={setMethod}
+              placeholder='Method'
+              size='sm'
+            />
           ) : (
             <Input
-              className='mt-2'
               size='sm'
               value={method}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMethod(e.target.value)}
             />
           )}
-        </div>
+        </FormField>
         {setPath && (
-          <div>
-            <Label className='text-xs text-gray-400'>Endpoint path</Label>
+          <FormField label='Endpoint path'>
             <Input
-              className='mt-2'
               size='sm'
               value={path || ''}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPath(e.target.value)}
             />
-          </div>
+          </FormField>
         )}
       </div>
       <div className='mt-3'>
-        <Label className='text-xs text-gray-400'>{bodyOrParamsLabel}</Label>
-        <Textarea
-          className='mt-2 h-32 font-mono'
-          size='sm'
-          value={bodyOrParams}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setBodyOrParams(e.target.value)}
-        />
+        <FormField label={bodyOrParamsLabel}>
+          <Textarea
+            className='h-32 font-mono'
+            size='sm'
+            value={bodyOrParams}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setBodyOrParams(e.target.value)}
+          />
+        </FormField>
       </div>      <div className='mt-3 flex items-center gap-3'>
         <Button
           variant='default'
           type='button'
-          disabled={loading || !isConnected}
+          disabled={!isConnected}
+          loading={loading}
+          loadingText='Sending...'
           onClick={onRequest}
         >
-          {loading ? 'Sending...' : 'Send request'}
+          Send request
         </Button>
         {baseUrl && (
           <span className='text-xs text-gray-500'>

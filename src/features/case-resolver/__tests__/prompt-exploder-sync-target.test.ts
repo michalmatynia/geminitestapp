@@ -128,6 +128,8 @@ describe('case resolver prompt exploder manual apply flow', () => {
     expect(result.applied).toBe(true);
     if (result.applied) {
       expect(result.workspaceChanged).toBe(true);
+      expect(result.diagnostics.resolutionStrategy).toBe('requested_id');
+      expect(result.diagnostics.proposalBuilt).toBe(false);
     }
 
     const updatedDocument = harness.getWorkspace().files.find((file) => file.id === 'doc-1');
@@ -150,9 +152,57 @@ describe('case resolver prompt exploder manual apply flow', () => {
 
     expect(result.applied).toBe(false);
     if (!result.applied) {
-      expect(result.reason).toBe('target_file_missing');
+      expect(result.reason).toBe('target_file_missing_precheck');
+      expect(result.diagnostics.resolutionStrategy).toBe('unresolved');
     }
     expect(readPendingCaseResolverPromptExploderPayload()?.prompt).toBe('Exploded output body');
+  });
+
+  it('does not rely on synchronous updateWorkspace execution to resolve target diagnostics', () => {
+    const documentFile = createCaseResolverFile({
+      id: 'doc-1',
+      fileType: 'document',
+      name: 'Document',
+    });
+    let workspace: CaseResolverWorkspace = {
+      ...parseCaseResolverWorkspace(null),
+      files: [documentFile],
+      activeFileId: documentFile.id,
+    };
+    let queuedUpdater: ((current: CaseResolverWorkspace) => CaseResolverWorkspace) | null = null;
+    const updateWorkspace = (
+      updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace
+    ): void => {
+      queuedUpdater = updater;
+    };
+    const setEditingDocumentDraft: Dispatch<SetStateAction<CaseResolverFileEditDraft | null>> = () => {};
+
+    savePromptExploderApplyPromptForCaseResolver('Deferred mutation payload', {
+      fileId: 'doc-1',
+      fileName: 'Document',
+    });
+    const result = applyPendingPromptExploderPayloadToCaseResolver({
+      targetFileId: 'doc-1',
+      workspaceFiles: workspace.files,
+      updateWorkspace,
+      setEditingDocumentDraft,
+      filemakerDatabase: parseFilemakerDatabase(null),
+      caseResolverCaptureSettings: parseCaseResolverCaptureSettings(null),
+    });
+
+    expect(result.applied).toBe(true);
+    if (result.applied) {
+      expect(result.diagnostics.precheckResolutionStrategy).toBe('requested_id');
+      expect(result.diagnostics.mutationResolutionStrategy).toBe('requested_id');
+    }
+    expect(queuedUpdater).not.toBeNull();
+    if (queuedUpdater) {
+      const applyQueuedUpdater: (current: CaseResolverWorkspace) => CaseResolverWorkspace =
+        queuedUpdater;
+      workspace = applyQueuedUpdater(workspace);
+    }
+    const updatedDocument = workspace.files.find((file) => file.id === 'doc-1');
+    expect(updatedDocument?.documentContentPlainText).toContain('Deferred mutation payload');
   });
 
   it('discards pending payload explicitly', () => {
@@ -198,6 +248,9 @@ describe('case resolver prompt exploder manual apply flow', () => {
     });
 
     expect(result.applied).toBe(true);
+    if (result.applied) {
+      expect(result.diagnostics.resolutionStrategy).toBe('requested_id');
+    }
     const updatedDocument = workspace.files.find((file) => file.id === '  doc-spaced  ');
     expect(updatedDocument?.documentContentPlainText).toContain('Normalized payload');
   });
@@ -222,19 +275,16 @@ describe('case resolver prompt exploder manual apply flow', () => {
     });
 
     expect(result.applied).toBe(true);
+    if (result.applied) {
+      expect(result.diagnostics.resolutionStrategy).toBe('payload_context_id');
+    }
     const updatedDocument = harness.getWorkspace().files.find((file) => file.id === 'doc-1');
     expect(updatedDocument?.documentContentPlainText).toContain('Context fallback payload');
   });
 
   it('accepts target file names when selector token is not a file id', () => {
     const harness = createWorkspaceHarness();
-    savePromptExploderApplyPromptForCaseResolver(
-      'Name fallback payload',
-      {
-        fileId: 'doc-1',
-        fileName: 'Document',
-      }
-    );
+    savePromptExploderApplyPromptForCaseResolver('Name fallback payload', null);
 
     const result = applyPendingPromptExploderPayloadToCaseResolver({
       targetFileId: 'Document',
@@ -246,6 +296,9 @@ describe('case resolver prompt exploder manual apply flow', () => {
     });
 
     expect(result.applied).toBe(true);
+    if (result.applied) {
+      expect(result.diagnostics.resolutionStrategy).toBe('requested_name');
+    }
     const updatedDocument = harness.getWorkspace().files.find((file) => file.id === 'doc-1');
     expect(updatedDocument?.documentContentPlainText).toContain('Name fallback payload');
   });

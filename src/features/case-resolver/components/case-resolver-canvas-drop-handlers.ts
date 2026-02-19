@@ -1,6 +1,6 @@
-import { type AiNode, type Edge, type NodeDefinition } from '../types';
 import { palette } from '@/features/ai/ai-paths/lib';
 
+import { type AiNode, type Edge, type NodeDefinition } from '../types';
 import {
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,

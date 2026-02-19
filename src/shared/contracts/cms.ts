@@ -197,6 +197,22 @@ export const pageBuilderHistoryDtoSchema = z.object({
 
 export type PageBuilderHistoryDto = z.infer<typeof pageBuilderHistoryDtoSchema>;
 
+/**
+ * CMS Inspector Settings DTO
+ */
+
+export const cmsInspectorSettingsSchema = z.object({
+  showTooltip: z.boolean(),
+  showStyleSettings: z.boolean(),
+  showStructureInfo: z.boolean(),
+  showIdentifiers: z.boolean(),
+  showVisibilityInfo: z.boolean(),
+  showConnectionInfo: z.boolean(),
+  showEditorChrome: z.boolean(),
+});
+
+export type CmsInspectorSettingsDto = z.infer<typeof cmsInspectorSettingsSchema>;
+
 export const pageBuilderStateSchema = z.object({
   pages: z.array(cmsPageSummarySchema),
   currentPage: z.lazy(() => cmsPageSchema).nullable(),
@@ -505,20 +521,4 @@ export const blockDefinitionSchema = z.object({
 });
 
 export type BlockDefinitionDto = z.infer<typeof blockDefinitionSchema>;
-
-/**
- * CMS Inspector Settings DTO
- */
-
-export const cmsInspectorSettingsSchema = z.object({
-  showTooltip: z.boolean(),
-  showStyleSettings: z.boolean(),
-  showStructureInfo: z.boolean(),
-  showIdentifiers: z.boolean(),
-  showVisibilityInfo: z.boolean(),
-  showConnectionInfo: z.boolean(),
-  showEditorChrome: z.boolean(),
-});
-
-export type CmsInspectorSettingsDto = z.infer<typeof cmsInspectorSettingsSchema>;
 

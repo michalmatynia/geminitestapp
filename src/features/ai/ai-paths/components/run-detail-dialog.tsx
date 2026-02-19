@@ -61,7 +61,9 @@ export function RunDetailDialog({
     return { counts, total, completed, progress };
   }, [runDetail]);
 
-  const runDetailHistory = runDetail?.run?.runtimeState?.history;
+  const runDetailHistory = (
+    runDetail?.run?.runtimeState as { history?: Record<string, RuntimeHistoryEntry[]> } | undefined
+  )?.history;
 
   const historyOptions = useMemo(
     () =>

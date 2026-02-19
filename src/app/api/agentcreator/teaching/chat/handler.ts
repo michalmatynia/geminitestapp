@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { runTeachingChat } from '@/features/ai/agentcreator/teaching/server/chat';
+import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { ChatMessage } from '@/shared/types/domain/chatbot';
 
 const chatMessageSchema = z.object({
   role: z.enum(['user', 'assistant', 'system']),

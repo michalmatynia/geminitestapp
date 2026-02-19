@@ -11,11 +11,11 @@ import {
 } from '@/features/internationalization/server';
 import { getInternationalizationProvider } from '@/features/internationalization/services/internationalization-provider';
 import { parseJsonBody } from '@/features/products/server';
+import type { CountryWithCurrenciesDto as CountryWithCurrencies } from '@/shared/contracts/internationalization';
 import { conflictError, internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { CountryWithCurrencies } from '@/shared/types/domain/internationalization';
 
 import type { CountryCode } from '@prisma/client';
 import type { Prisma } from '@prisma/client';

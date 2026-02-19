@@ -441,7 +441,7 @@ const evaluateRuleForNode = (args: {
       : checks.every((value: boolean): boolean => value);
   const failedConditions = rule.conditions
     .filter(
-      (condition: AiPathsValidationCondition, index: number): boolean =>
+      (_condition: AiPathsValidationCondition, index: number): boolean =>
         !checks[index],
     )
     .map((condition: AiPathsValidationCondition): string => condition.id);

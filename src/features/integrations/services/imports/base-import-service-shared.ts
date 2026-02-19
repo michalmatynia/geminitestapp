@@ -11,15 +11,15 @@ import type {
   BaseImportRunParams,
   BaseImportRunStatus,
 } from '@/features/integrations/types/base-import-runs';
-import type { ProductDto as ProductRecord, CreateProductDto as ProductCreateInput } from '@/shared/contracts/products';
-
-export const BASE_DETAILS_BATCH_SIZE = 100;
-export const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 import type {
   PriceGroupLookupDto,
   BaseImportRunParamsDto,
   BaseConnectionContextDto,
 } from '@/shared/contracts/integrations';
+import type { ProductDto as ProductRecord, CreateProductDto as ProductCreateInput } from '@/shared/contracts/products';
+
+export const BASE_DETAILS_BATCH_SIZE = 100;
+export const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 export const MAX_IMAGES_PER_PRODUCT = 15;
 
 const DEFAULT_BASE_IMPORT_MAX_ATTEMPTS = 3;

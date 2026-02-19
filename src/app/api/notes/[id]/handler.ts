@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { noteUpdateSchema } from '@/features/notesapp/public';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
+import type { UpdateNoteDto as NoteUpdateInput } from '@/shared/contracts/notes';
 import { notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { NoteUpdateInput } from '@/shared/types/domain/notes';
 import { removeUndefined } from '@/shared/utils';
 
 /**

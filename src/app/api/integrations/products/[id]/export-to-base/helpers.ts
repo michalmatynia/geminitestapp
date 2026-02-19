@@ -17,7 +17,11 @@ import {
   getTagMappingRepository,
 } from '@/features/integrations/server';
 import { ErrorSystem } from '@/features/observability/server';
-import { getProducerRepository, getTagRepository } from '@/features/products/server';
+import {
+  getParameterRepository,
+  getProducerRepository,
+  getTagRepository
+} from '@/features/products/server';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export const exportSchema = z.object({
@@ -211,23 +215,284 @@ type BaseExportProductLike = {
 };
 
 const PRODUCT_PARAMETER_MAPPING_PREFIX = 'parameter:';
+const PARAMETER_EXPORT_FEATURES_PREFIX = 'text_fields.features';
+
+type ParsedMappedParameterRef = {
+  parameterId: string;
+  languageCode: string | null;
+};
 
 export const parseMappedParameterId = (value: unknown): string => {
-  if (typeof value !== 'string') return '';
+  const parsed = parseMappedParameterRef(value);
+  return parsed?.parameterId ?? '';
+};
+
+const parseMappedParameterRef = (
+  value: unknown
+): ParsedMappedParameterRef | null => {
+  if (typeof value !== 'string') return null;
   const trimmed = value.trim();
-  if (!trimmed) return '';
+  if (!trimmed) return null;
   if (
     !trimmed
       .toLowerCase()
       .startsWith(PRODUCT_PARAMETER_MAPPING_PREFIX)
   ) {
-    return '';
+    return null;
   }
   const mappedValue = trimmed.slice(PRODUCT_PARAMETER_MAPPING_PREFIX.length).trim();
-  if (!mappedValue) return '';
+  if (!mappedValue) return null;
   const languageDelimiterIndex = mappedValue.indexOf('|');
-  if (languageDelimiterIndex < 0) return mappedValue;
-  return mappedValue.slice(0, languageDelimiterIndex).trim();
+  if (languageDelimiterIndex < 0) {
+    return {
+      parameterId: mappedValue,
+      languageCode: null,
+    };
+  }
+  const parameterId = mappedValue.slice(0, languageDelimiterIndex).trim();
+  if (!parameterId) return null;
+  const rawLanguageCode = mappedValue.slice(languageDelimiterIndex + 1).trim();
+  return {
+    parameterId,
+    languageCode: rawLanguageCode ? rawLanguageCode.toLowerCase() : null,
+  };
+};
+
+const normalizeLanguageCode = (value: unknown): string | null => {
+  const normalized = toTrimmedString(value).toLowerCase().replace('_', '-');
+  if (!normalized) return null;
+  const match = normalized.match(/[a-z]{2}/);
+  return match?.[0] ?? null;
+};
+
+const resolveProductDefaultLanguage = (
+  product: BaseExportProductLike
+): string | null => {
+  const catalogs = Array.isArray(product.catalogs) ? product.catalogs : [];
+  for (const catalogEntry of catalogs) {
+    if (!catalogEntry || typeof catalogEntry !== 'object') continue;
+    const record = catalogEntry as Record<string, unknown>;
+    const directLanguage = normalizeLanguageCode(record['defaultLanguageId']);
+    if (directLanguage) return directLanguage;
+    const catalog = record['catalog'];
+    if (!catalog || typeof catalog !== 'object') continue;
+    const nestedLanguage = normalizeLanguageCode(
+      (catalog as Record<string, unknown>)['defaultLanguageId']
+    );
+    if (nestedLanguage) return nestedLanguage;
+  }
+  return null;
+};
+
+const collectParameterLanguages = (
+  product: BaseExportProductLike,
+  parameterId: string
+): string[] => {
+  const normalizedParameterId = parameterId.trim().toLowerCase();
+  if (!normalizedParameterId) return [];
+  const entries = Array.isArray(product.parameters) ? product.parameters : [];
+  const languages = new Set<string>();
+  entries.forEach((entry) => {
+    const entryId = toTrimmedString(entry?.parameterId).toLowerCase();
+    if (!entryId || entryId !== normalizedParameterId) return;
+    const valuesByLanguage =
+      entry.valuesByLanguage &&
+      typeof entry.valuesByLanguage === 'object' &&
+      !Array.isArray(entry.valuesByLanguage)
+        ? (entry.valuesByLanguage)
+        : null;
+    if (!valuesByLanguage) return;
+    Object.entries(valuesByLanguage).forEach(([key, value]) => {
+      if (!toTrimmedString(value)) return;
+      const normalizedLanguage = normalizeLanguageCode(key);
+      if (!normalizedLanguage) return;
+      languages.add(normalizedLanguage);
+    });
+  });
+  return Array.from(languages);
+};
+
+const resolveParameterName = ({
+  parameterId,
+  languageCode,
+  defaultLanguageCode,
+  parameterById,
+}: {
+  parameterId: string;
+  languageCode: string | null;
+  defaultLanguageCode: string | null;
+  parameterById: Map<string, { name_en?: string | null; name_pl?: string | null; name_de?: string | null }>;
+}): string => {
+  const parameterRecord = parameterById.get(parameterId.toLowerCase()) ?? null;
+  const pickName = (code: string | null): string => {
+    if (!parameterRecord || !code) return '';
+    if (code === 'en') return toTrimmedString(parameterRecord.name_en);
+    if (code === 'pl') return toTrimmedString(parameterRecord.name_pl);
+    if (code === 'de') return toTrimmedString(parameterRecord.name_de);
+    return '';
+  };
+
+  const candidates = [
+    languageCode,
+    defaultLanguageCode,
+    'en',
+    'pl',
+    'de',
+  ];
+  for (const candidate of candidates) {
+    const resolved = pickName(candidate);
+    if (resolved) return resolved;
+  }
+
+  if (parameterRecord) {
+    const fallback =
+      toTrimmedString(parameterRecord.name_en) ||
+      toTrimmedString(parameterRecord.name_pl) ||
+      toTrimmedString(parameterRecord.name_de);
+    if (fallback) return fallback;
+  }
+
+  return parameterId;
+};
+
+const dedupeMappings = (mappings: BaseFieldMapping[]): BaseFieldMapping[] => {
+  const seen = new Set<string>();
+  const result: BaseFieldMapping[] = [];
+  mappings.forEach((mapping) => {
+    const sourceKey = toTrimmedString(mapping.sourceKey);
+    const targetField = toTrimmedString(mapping.targetField);
+    if (!sourceKey || !targetField) return;
+    const dedupeKey = `${sourceKey}=>${targetField}`;
+    if (seen.has(dedupeKey)) return;
+    seen.add(dedupeKey);
+    result.push({ sourceKey, targetField });
+  });
+  return result;
+};
+
+const remapLegacyParameterSourceMappings = async <TProduct extends BaseExportProductLike>({
+  productId,
+  product,
+  mappings,
+}: {
+  productId: string;
+  product: TProduct;
+  mappings: BaseFieldMapping[];
+}): Promise<BaseFieldMapping[]> => {
+  const legacyMappings = mappings
+    .map((mapping: BaseFieldMapping) => ({
+      mapping,
+      parsed: parseMappedParameterRef(mapping.sourceKey),
+    }))
+    .filter(
+      (entry): entry is { mapping: BaseFieldMapping; parsed: ParsedMappedParameterRef } =>
+        entry.parsed !== null
+    );
+  if (legacyMappings.length === 0) return mappings;
+
+  const parameterIds = Array.from(
+    new Set(
+      legacyMappings.map((entry) => entry.parsed.parameterId.toLowerCase())
+    )
+  );
+  const parameterRepository = await getParameterRepository();
+  const parameterRecords = await Promise.all(
+    parameterIds.map(async (parameterId) => {
+      try {
+        return await parameterRepository.getParameterById(parameterId);
+      } catch {
+        return null;
+      }
+    })
+  );
+  const parameterById = new Map<
+    string,
+    { name_en?: string | null; name_pl?: string | null; name_de?: string | null }
+  >();
+  parameterRecords.forEach((parameterRecord) => {
+    if (!parameterRecord) return;
+    const id = toTrimmedString(parameterRecord.id).toLowerCase();
+    if (!id) return;
+    parameterById.set(id, {
+      name_en: parameterRecord.name_en,
+      name_pl: parameterRecord.name_pl,
+      name_de: parameterRecord.name_de,
+    });
+  });
+  const defaultLanguageCode = resolveProductDefaultLanguage(product) ?? 'en';
+  const remapped: BaseFieldMapping[] = [];
+
+  mappings.forEach((mapping: BaseFieldMapping) => {
+    const parsed = parseMappedParameterRef(mapping.sourceKey);
+    if (!parsed) {
+      remapped.push(mapping);
+      return;
+    }
+
+    const normalizedParameterId = parsed.parameterId.toLowerCase();
+    const primaryLanguage = parsed.languageCode
+      ? normalizeLanguageCode(parsed.languageCode)
+      : null;
+    const parameterName = resolveParameterName({
+      parameterId: normalizedParameterId,
+      languageCode: primaryLanguage,
+      defaultLanguageCode,
+      parameterById,
+    });
+
+    if (primaryLanguage) {
+      remapped.push({
+        sourceKey: `${PARAMETER_EXPORT_FEATURES_PREFIX}|${primaryLanguage}.${parameterName}`,
+        targetField: mapping.targetField,
+      });
+      return;
+    }
+
+    remapped.push({
+      sourceKey: `${PARAMETER_EXPORT_FEATURES_PREFIX}.${parameterName}`,
+      targetField: mapping.targetField,
+    });
+
+    const parameterLanguages = new Set(
+      collectParameterLanguages(
+        product,
+        normalizedParameterId
+      )
+    );
+    if (defaultLanguageCode) {
+      parameterLanguages.add(defaultLanguageCode);
+    }
+    // Always emit an explicit English variant to support bilingual exports
+    // even when EN lives in the direct parameter value field.
+    parameterLanguages.add('en');
+
+    parameterLanguages.forEach((languageCode) => {
+      const normalizedLanguageCode = normalizeLanguageCode(languageCode);
+      if (!normalizedLanguageCode) return;
+      const localizedName = resolveParameterName({
+        parameterId: normalizedParameterId,
+        languageCode: normalizedLanguageCode,
+        defaultLanguageCode,
+        parameterById,
+      });
+      remapped.push({
+        sourceKey: `${PARAMETER_EXPORT_FEATURES_PREFIX}|${normalizedLanguageCode}.${localizedName}`,
+        targetField: `${PRODUCT_PARAMETER_MAPPING_PREFIX}${normalizedParameterId}|${normalizedLanguageCode}`,
+      });
+    });
+  });
+
+  const dedupedMappings = dedupeMappings(remapped);
+  await ErrorSystem.logInfo(
+    '[export-to-base] Normalized legacy parameter source mappings',
+    {
+      productId,
+      legacyMappingCount: legacyMappings.length,
+      mappingCountBefore: mappings.length,
+      mappingCountAfter: dedupedMappings.length,
+    }
+  );
+  return dedupedMappings;
 };
 
 const hasMappedParameterValue = (
@@ -406,6 +671,11 @@ export const prepareBaseExportMappingsAndProduct = async <
           exportImagesAsBase64?: unknown;
         };
         mappings = toBaseFieldMappings(templateRecord.mappings);
+        mappings = await remapLegacyParameterSourceMappings({
+          productId,
+          product,
+          mappings,
+        });
         resolvedTemplateId = template.id;
         const templateExportImagesAsBase64 =
           typeof templateRecord.exportImagesAsBase64 === 'boolean'

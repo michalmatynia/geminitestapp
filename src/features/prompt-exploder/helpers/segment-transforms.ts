@@ -29,7 +29,7 @@ const createBlankSegment = (
   return {
     id: createSegmentId(),
     type: template?.type ?? 'assigned_text',
-    title: 'New Segment',
+    title: '',
     includeInOutput: template?.includeInOutput ?? true,
     text: normalizedText,
     raw: normalizedText,
@@ -170,7 +170,7 @@ export const promptExploderSplitSegmentByRange = (args: {
     paramsText: target.type === 'parameter_block' ? remaining : target.paramsText,
   };
   const nextSplit = createBlankSegment(target, extracted);
-  nextSplit.title = target.title.trim().length > 0 ? `${target.title} (Split)` : 'Split Segment';
+  nextSplit.title = target.title.trim().length > 0 ? `${target.title} (Split)` : '';
 
   const nextSegments = [...segments];
   nextSegments[targetIndex] = nextCurrent;
@@ -226,4 +226,3 @@ export const promptExploderMergeSegment = (args: {
     selectedSegmentId: mergedSegment.id,
   };
 };
-

@@ -6,7 +6,6 @@ import React from 'react';
 import { cn } from '@/shared/utils';
 
 import { ActionMenu } from './ActionMenu';
-import { Button } from './button';
 import {
   DropdownMenuItem,
   DropdownMenuLabel,

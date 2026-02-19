@@ -2,6 +2,13 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
+import type { 
+  AgentTeachingAgentDto as AgentTeachingAgentRecord, 
+  AgentTeachingCollectionDto as AgentTeachingEmbeddingCollectionRecord, 
+  AgentTeachingDocumentDto as AgentTeachingEmbeddingDocumentListItem, 
+  AgentTeachingChatSourceDto as AgentTeachingChatSource 
+} from '@/shared/contracts/agent-teaching';
+import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import {
   createDeleteMutationV2,
   createListQueryV2,
@@ -10,8 +17,6 @@ import {
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { agentTeachingKeys } from '@/shared/lib/query-key-exports';
-import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem, AgentTeachingChatSource } from '@/shared/types/domain/agent-teaching';
-import type { ChatMessage } from '@/shared/types/domain/chatbot';
 import type { 
   ListQuery, 
   SingleQuery, 

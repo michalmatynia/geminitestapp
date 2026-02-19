@@ -14,6 +14,7 @@ export const promptExploderRuntimeValidationScopeSchema = z.enum([
   'image-studio',
   'prompt-exploder',
   'case-resolver-prompt-exploder',
+  'case_resolver_prompt_exploder',
 ]);
 export type PromptExploderRuntimeValidationScopeDto = z.infer<
   typeof promptExploderRuntimeValidationScopeSchema

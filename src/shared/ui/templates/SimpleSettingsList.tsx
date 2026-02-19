@@ -4,7 +4,6 @@ import React from 'react';
 
 import { 
   DropdownMenuItem, 
-  Button,
   LoadingState,
   EmptyState,
   ActionMenu,
@@ -133,7 +132,6 @@ export function SimpleSettingsList<T extends SimpleSettingsListItem>({
                 {(onEdit || onDelete || renderExtraActions) && (
                   <ActionMenu
                     triggerClassName='-mr-2 size-8 text-gray-400 hover:text-white'
-                    onClick={(e) => e.stopPropagation()}
                   >
                     {renderExtraActions?.(item)}
                     {onEdit && (

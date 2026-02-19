@@ -2,10 +2,10 @@
 
 import React from 'react';
 
-import type { ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
 import { useImageRetryPresets } from '@/features/integrations/components/listings/useImageRetryPresets';
 import { isImageExportError } from '@/features/integrations/components/listings/utils';
 import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
+import type { ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
 import { ImageRetryDropdown, Alert } from '@/shared/ui';
 
 export function ProductListingsError(): React.JSX.Element {

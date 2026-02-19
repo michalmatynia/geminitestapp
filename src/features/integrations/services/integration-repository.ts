@@ -306,7 +306,7 @@ export function getPrismaIntegrationRepository(): IntegrationRepository {
         username: String(input['username'] || ''),
         password: String(input['password'] || ''),
         ...input,
-      } as any;
+      } as unknown as Prisma.IntegrationConnectionCreateInput;
       const doc = await prisma.integrationConnection.create({ data });
       return toConnectionRecord(doc);
     },
@@ -321,7 +321,7 @@ export function getPrismaIntegrationRepository(): IntegrationRepository {
       
       const doc = await prisma.integrationConnection.update({
         where: { id },
-        data: updateData as any,
+        data: updateData as unknown as Prisma.IntegrationConnectionUpdateInput,
       });
       return toConnectionRecord(doc);
     },
@@ -361,7 +361,7 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
           { upsert: true, returnDocument: 'after' }
         );
       if (!res) throw new Error('Failed to upsert integration');
-      return toIntegrationRecord(res);
+      return toIntegrationRecord(res as WithId<IntegrationDocument>);
     },
 
     async getIntegrationById(id: string): Promise<IntegrationRecord | null> {
@@ -369,7 +369,7 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
       const doc = await db
         .collection<IntegrationDocument>(INTEGRATION_COLLECTION)
         .findOne({ _id: toMongoDocumentId(id) });
-      return doc ? toIntegrationRecord(doc) : null;
+      return doc ? toIntegrationRecord(doc as WithId<IntegrationDocument>) : null;
     },
 
     async listConnections(
@@ -383,7 +383,7 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
         .find({ integrationId })
         .sort({ name: 1 })
         .toArray();
-      return docs.map(toConnectionRecord);
+      return docs.map(doc => toConnectionRecord(doc as WithId<IntegrationConnectionDocument>));
     },
 
     async getConnectionById(
@@ -395,7 +395,7 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
           INTEGRATION_CONNECTION_COLLECTION
         )
         .findOne({ _id: toMongoDocumentId(id) });
-      return doc ? toConnectionRecord(doc) : null;
+      return doc ? toConnectionRecord(doc as WithId<IntegrationConnectionDocument>) : null;
     },
 
     async getConnectionByIdAndIntegration(
@@ -408,7 +408,7 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
           INTEGRATION_CONNECTION_COLLECTION
         )
         .findOne({ _id: toMongoDocumentId(id), integrationId });
-      return doc ? toConnectionRecord(doc) : null;
+      return doc ? toConnectionRecord(doc as WithId<IntegrationConnectionDocument>) : null;
     },
 
     async createConnection(
@@ -431,7 +431,7 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
           INTEGRATION_CONNECTION_COLLECTION
         )
         .insertOne(doc);
-      return toConnectionRecord({ ...doc, _id: res.insertedId });
+      return toConnectionRecord({ ...doc, _id: res.insertedId } as WithId<IntegrationConnectionDocument>);
     },
 
     async updateConnection(
@@ -453,12 +453,12 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
           INTEGRATION_CONNECTION_COLLECTION
         )
         .findOneAndUpdate(
-          { _id: toMongoDocumentId(id) },
+          { _id: toMongoDocumentId(id) as any },
           { $set: updateData },
           { returnDocument: 'after' }
         );
       if (!res) throw new Error('Connection not found');
-      return toConnectionRecord(res);
+      return toConnectionRecord(res as WithId<IntegrationConnectionDocument>);
     },
 
     async deleteConnection(id: string): Promise<void> {

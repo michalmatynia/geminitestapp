@@ -179,17 +179,19 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
 
 
-  const handleAnimationChange = useCallback((config: GsapAnimationConfig): void => {
+  const handleAnimationChange = useCallback((updates: Partial<GsapAnimationConfig>): void => {
+    const config = { ...currentAnimationConfig, ...updates };
     if (selectedSection && !selectedBlock && !selectedColumn) handleSectionSettingChange('gsapAnimation', config);
     else if (selectedColumn) handleColumnSettingChange('gsapAnimation', config);
     else if (selectedBlock) handleBlockSettingChange('gsapAnimation', config);
-  }, [selectedSection, selectedBlock, selectedColumn, handleSectionSettingChange, handleColumnSettingChange, handleBlockSettingChange]);
+  }, [currentAnimationConfig, selectedSection, selectedBlock, selectedColumn, handleSectionSettingChange, handleColumnSettingChange, handleBlockSettingChange]);
 
-  const handleCssAnimationChange = useCallback((config: CssAnimationConfig): void => {
+  const handleCssAnimationChange = useCallback((updates: Partial<CssAnimationConfig>): void => {
+    const config = { ...(currentCssAnimationConfig ?? {}), ...updates };
     if (selectedSection && !selectedBlock && !selectedColumn) handleSectionSettingChange('cssAnimation', config);
     else if (selectedColumn) handleColumnSettingChange('cssAnimation', config);
     else if (selectedBlock) handleBlockSettingChange('cssAnimation', config);
-  }, [selectedSection, selectedBlock, selectedColumn, handleSectionSettingChange, handleColumnSettingChange, handleBlockSettingChange]);
+  }, [currentCssAnimationConfig, selectedSection, selectedBlock, selectedColumn, handleSectionSettingChange, handleColumnSettingChange, handleBlockSettingChange]);
 
   const handleSaveSectionTemplate = useCallback(async (): Promise<void> => {
     if (!selectedSection) return;
@@ -466,7 +468,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                 </div>
               ) : null}
             </TabsContent>
-            <TabsContent value='animation' className='flex-1 overflow-y-auto p-4 mt-0'><AnimationConfigPanel value={currentAnimationConfig} onChange={handleAnimationChange} /></TabsContent>
+            <TabsContent value='animation' className='flex-1 overflow-y-auto p-4 mt-0'><AnimationConfigPanel config={currentAnimationConfig} onChange={handleAnimationChange} /></TabsContent>
             <TabsContent value='cssAnimation' className='flex-1 overflow-y-auto p-4 mt-0'><CssAnimationConfigPanel value={currentCssAnimationConfig ?? {}} onChange={handleCssAnimationChange} /></TabsContent>
             <TabsContent value='ai' className='flex-1 overflow-y-auto p-4 mt-0'><ContentAiSection /></TabsContent>
             {showCustomCssTab && (

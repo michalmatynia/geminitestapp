@@ -30,18 +30,6 @@ import {
   type FetchNotesParams,
 } from '@/features/notesapp/api/useNoteQueries';
 import type { UseNoteDataProps } from '@/features/notesapp/types/notes-hooks';
-import { useDebounce } from '@/shared/hooks/ui/use-debounce';
-import { api, ApiError } from '@/shared/lib/api-client';
-import {
-  createCreateMutationV2,
-  createDeleteMutationV2,
-  createUpdateMutationV2,
-} from '@/shared/lib/query-factories-v2';
-import {
-  invalidateNoteDetail,
-} from '@/shared/lib/query-invalidation';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { DeleteResponse } from '@/shared/types/api/api';
 import type {
   NoteWithRelationsDto as NoteWithRelations,
   NoteFiltersDto as NoteFilters,
@@ -62,6 +50,18 @@ import type {
   NoteFileDto as NoteFileRecord,
   NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
 } from '@/shared/contracts/notes';
+import { useDebounce } from '@/shared/hooks/ui/use-debounce';
+import { api, ApiError } from '@/shared/lib/api-client';
+import {
+  createCreateMutationV2,
+  createDeleteMutationV2,
+  createUpdateMutationV2,
+} from '@/shared/lib/query-factories-v2';
+import {
+  invalidateNoteDetail,
+} from '@/shared/lib/query-invalidation';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { DeleteResponse } from '@/shared/types/api/api';
 
 // --- Queries ---
 

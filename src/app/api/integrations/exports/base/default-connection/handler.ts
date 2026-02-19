@@ -22,8 +22,8 @@ const normalizeOptionalId = (value: string | null | undefined): string | null =>
 };
 
 const hasBaseCredentials = (connection: {
-  baseApiToken?: string | null;
-  password?: string | null;
+  baseApiToken?: string | null | undefined;
+  password?: string | null | undefined;
 }): boolean => {
   const token = connection.baseApiToken?.trim();
   if (token) return true;

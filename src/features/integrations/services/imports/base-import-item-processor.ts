@@ -37,17 +37,17 @@ import type {
 import { getProducerRepository } from '@/features/products/services/producer-repository';
 import { getProductRepository } from '@/features/products/services/product-repository';
 import { getTagRepository } from '@/features/products/services/tag-repository';
+import type { ParameterRepository } from '@/features/products/types/services/parameter-repository';
+import {
+  validateProductCreate,
+  validateProductUpdate,
+} from '@/features/products/validations';
 import type {
   ProductDto as ProductRecord,
   ProductWithImagesDto as ProductWithImages,
   CreateProductDto as ProductCreateInput,
   UpdateProductDto as ProductUpdateInput,
 } from '@/shared/contracts/products';
-import type { ParameterRepository } from '@/features/products/types/services/parameter-repository';
-import {
-  validateProductCreate,
-  validateProductUpdate,
-} from '@/features/products/validations';
 
 export const resolveProducerAndTagLookups = async (
   connectionId: string
@@ -698,7 +698,7 @@ export const importSingleItem = async (input: {
   const createData: ProductCreateInput = {
     ...mapped,
     sku: skuForCreate,
-    baseProductId: mappedBaseProductId ?? undefined,
+    baseProductId: mappedBaseProductId ?? null,
     defaultPriceGroupId: input.defaultPriceGroupId,
     imageLinks: imageUrls,
   };

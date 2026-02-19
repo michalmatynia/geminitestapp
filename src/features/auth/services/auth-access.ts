@@ -11,10 +11,10 @@ import {
   type AuthRole,
   type AuthUserRoleMap,
 } from '@/features/auth/utils/auth-management';
+import type { AuthUserAccessDetailDto as AuthUserAccess } from '@/shared/contracts/auth';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { MongoSettingRecord } from '@/shared/types/core/base-types';
-import type { AuthUserAccessDetailDto as AuthUserAccess } from '@/shared/contracts/auth';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 

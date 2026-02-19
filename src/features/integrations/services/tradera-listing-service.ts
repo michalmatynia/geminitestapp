@@ -45,13 +45,12 @@ import type {
   TraderaListingJobInputDto,
   TraderaCategoryRecordDto 
 } from '@/shared/contracts/integrations';
-
-export type TraderaListingJobInput = TraderaListingJobInputDto;
-export type TraderaCategoryRecord = TraderaCategoryRecordDto;
-
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+
+export type TraderaListingJobInput = TraderaListingJobInputDto;
+export type TraderaCategoryRecord = TraderaCategoryRecordDto;
 
 type TraderaListingResult = {
   externalListingId: string;

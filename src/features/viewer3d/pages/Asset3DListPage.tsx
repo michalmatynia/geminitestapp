@@ -10,6 +10,7 @@ import React, { useMemo } from 'react';
 
 import {
   Button,
+  DataTable,
   StandardDataTablePanel,
   SelectSimple,
   SearchInput,

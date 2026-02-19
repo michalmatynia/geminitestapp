@@ -1,0 +1,35 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 215ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · optimizePackageImports
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 23.2s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/ai/agentcreator/pages/AgentRunsPage.tsx:10:3
+Type error: 'LoadingState' is declared but its value is never read.
+
+[0m [90m  8 |[39m   [33mButton[39m[33m,[39m 
+ [90m  9 |[39m   [33mSectionHeader[39m[33m,[39m 
+[31m[1m>[22m[39m[90m 10 |[39m   [33mLoadingState[39m[33m,[39m 
+ [90m    |[39m   [31m[1m^[22m[39m
+ [90m 11 |[39m   [33mRefreshButton[39m[33m,[39m 
+ [90m 12 |[39m   [33mMetadataItem[39m[33m,[39m 
+ [90m 13 |[39m   [33mPropertyRow[39m[33m,[39m [0m
+Next.js build worker exited with code: 1 and signal: null

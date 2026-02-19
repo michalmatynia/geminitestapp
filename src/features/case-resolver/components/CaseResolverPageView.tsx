@@ -290,6 +290,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     handleApplyPendingPromptExploderPayload,
     handleDiscardPendingPromptExploderPayload,
     promptExploderPartyProposal,
+    promptExploderApplyDiagnostics,
     isPromptExploderPartyProposalOpen,
     setIsPromptExploderPartyProposalOpen,
     isApplyingPromptExploderPartyProposal,
@@ -1452,6 +1453,72 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                   </div>
                 ) : null}
               </div>
+              {promptExploderApplyDiagnostics ? (
+                <div className='rounded border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-[11px] text-cyan-100'>
+                  <div className='font-medium tracking-wide text-cyan-50'>
+                    Prompt Exploder Transfer Diagnostics
+                  </div>
+                  <div className='mt-1 grid gap-1 sm:grid-cols-2'>
+                    <div>
+                      <span className='text-cyan-200'>Status:</span>{' '}
+                      {promptExploderApplyDiagnostics.status}
+                      {promptExploderApplyDiagnostics.reason
+                        ? ` (${promptExploderApplyDiagnostics.reason})`
+                        : ''}
+                    </div>
+                    <div>
+                      <span className='text-cyan-200'>Target Resolution:</span>{' '}
+                      {promptExploderApplyDiagnostics.resolutionStrategy}
+                    </div>
+                    <div>
+                      <span className='text-cyan-200'>Apply Attempt:</span>{' '}
+                      {promptExploderApplyDiagnostics.applyAttemptId}
+                    </div>
+                    <div>
+                      <span className='text-cyan-200'>Precheck Resolution:</span>{' '}
+                      {promptExploderApplyDiagnostics.precheckResolutionStrategy}
+                    </div>
+                    <div>
+                      <span className='text-cyan-200'>Requested Target:</span>{' '}
+                      {promptExploderApplyDiagnostics.requestedTargetFileId ?? '(none)'}
+                    </div>
+                    <div>
+                      <span className='text-cyan-200'>Fallback Target:</span>{' '}
+                      {promptExploderApplyDiagnostics.fallbackTargetFileId ?? '(none)'}
+                    </div>
+                    <div>
+                      <span className='text-cyan-200'>Resolved Target:</span>{' '}
+                      {promptExploderApplyDiagnostics.resolvedTargetFileId ?? '(unresolved)'}
+                    </div>
+                    <div>
+                      <span className='text-cyan-200'>Mutation Resolution:</span>{' '}
+                      {promptExploderApplyDiagnostics.mutationResolutionStrategy}
+                    </div>
+                    <div>
+                      <span className='text-cyan-200'>File Count (Precheck/Mutation):</span>{' '}
+                      {promptExploderApplyDiagnostics.precheckWorkspaceFileCount}
+                      {' / '}
+                      {promptExploderApplyDiagnostics.mutationWorkspaceFileCount}
+                    </div>
+                    <div>
+                      <span className='text-cyan-200'>Payload Parties:</span>{' '}
+                      {promptExploderApplyDiagnostics.hasPartiesPayload ? 'yes' : 'no'}
+                    </div>
+                    <div>
+                      <span className='text-cyan-200'>Payload Date:</span>{' '}
+                      {promptExploderApplyDiagnostics.hasMetadataPayload ? 'yes' : 'no'}
+                    </div>
+                    <div>
+                      <span className='text-cyan-200'>Capture Enabled:</span>{' '}
+                      {promptExploderApplyDiagnostics.captureSettingsEnabled ? 'yes' : 'no'}
+                    </div>
+                    <div>
+                      <span className='text-cyan-200'>Proposal Built:</span>{' '}
+                      {promptExploderApplyDiagnostics.proposalBuilt ? 'yes' : 'no'}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
 
               <div className='flex flex-wrap justify-end gap-2'>
                 {promptExploderPartyProposal?.targetFileId === editingDocumentDraft.id ? (
@@ -1498,7 +1565,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                     disabled={!canApplyPendingPromptOutput || isApplyingPromptExploderPartyProposal}
                     onClick={(): void => {
                       if (!pendingPromptApplyTargetFileId) return;
-                      handleApplyPendingPromptExploderPayload(pendingPromptApplyTargetFileId);
+                      void handleApplyPendingPromptExploderPayload(pendingPromptApplyTargetFileId);
                     }}
                   >
                     {isApplyingPromptExploderPartyProposal

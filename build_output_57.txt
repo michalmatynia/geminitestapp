@@ -1,0 +1,41 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 206ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · optimizePackageImports
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 38.6s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/ai/ai-paths/components/job-queue-panel-utils.ts:149:27
+Type error: No overload matches this call.
+  Overload 1 of 4, '(value: string | number | Date): Date', gave the following error.
+    Argument of type 'string | undefined' is not assignable to parameter of type 'string | number | Date'.
+      Type 'undefined' is not assignable to type 'string | number | Date'.
+  Overload 2 of 4, '(value: string | number): Date', gave the following error.
+    Argument of type 'string | undefined' is not assignable to parameter of type 'string | number'.
+      Type 'undefined' is not assignable to type 'string | number'.
+
+[0m [90m 147 |[39m   [36mlet[39m max [33m=[39m [35m0[39m[33m;[39m
+ [90m 148 |[39m   events[33m.[39mforEach((event[33m:[39m [33mAiPathRunEventRecord[39m) [33m=>[39m {
+[31m[1m>[22m[39m[90m 149 |[39m     [36mconst[39m time [33m=[39m [36mnew[39m [33mDate[39m(event[33m.[39mcreatedAt)[33m.[39mgetTime()[33m;[39m
+ [90m     |[39m                           [31m[1m^[22m[39m
+ [90m 150 |[39m     [36mif[39m ([33mNumber[39m[33m.[39misFinite(time) [33m&&[39m time [33m>[39m max) {
+ [90m 151 |[39m       max [33m=[39m time[33m;[39m
+ [90m 152 |[39m     }[0m
+Next.js build worker exited with code: 1 and signal: null

@@ -1,4 +1,3 @@
-import type { ProductCategoryDto } from '@/shared/contracts/products';
 import type {
   ExternalCategoryDto,
   ExternalCategoryWithChildrenDto,
@@ -10,6 +9,7 @@ import type {
   CategoryMappingCreateInputDto,
   CategoryMappingUpdateInputDto,
 } from '@/shared/contracts/integrations';
+import type { ProductCategoryDto } from '@/shared/contracts/products';
 
 export type ExternalCategory = ExternalCategoryDto;
 

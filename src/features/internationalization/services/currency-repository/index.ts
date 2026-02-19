@@ -1,6 +1,5 @@
 import 'server-only';
 
-import type { CurrencyRepository } from '../../types/services/currency-repository';
 
 import {
   getInternationalizationProvider,
@@ -8,6 +7,8 @@ import {
 } from '../internationalization-provider';
 import { mongoCurrencyRepository } from './mongo-currency-repository';
 import { prismaCurrencyRepository } from './prisma-currency-repository';
+
+import type { CurrencyRepository } from '../../types/services/currency-repository';
 
 export const getCurrencyRepository = async (
   providerOverride?: InternationalizationProvider

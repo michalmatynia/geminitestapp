@@ -1,9 +1,10 @@
 import { Prisma as _Prisma, type Currency, CurrencyCode } from '@prisma/client';
 
 import { defaultCurrencies } from '@/features/internationalization/server';
-import type { CurrencyRepository } from '../../types/services/currency-repository';
 import prisma from '@/shared/lib/db/prisma';
 import type { CurrencyRecord } from '@/shared/types/domain/internationalization';
+
+import type { CurrencyRepository } from '../../types/services/currency-repository';
 
 const toCurrencyDomain = (currency: Currency): CurrencyRecord => ({
   id: currency.id,

@@ -14,8 +14,6 @@ import { useNoteOperations } from '@/features/notesapp/hooks/useNoteOperations';
 import { useNoteTheme } from '@/features/notesapp/hooks/useNoteTheme';
 import type { UndoAction } from '@/features/notesapp/types/notes-hooks';
 import type { NoteSettings } from '@/features/notesapp/types/notes-settings';
-import { internalError } from '@/shared/errors/app-error';
-import { api } from '@/shared/lib/api-client';
 import type { 
   NoteWithRelationsDto as NoteWithRelations, 
   NoteTagDto as TagRecord, 
@@ -25,7 +23,11 @@ import type {
   NoteRelationDto,
   RelatedNoteDto as RelatedNote
 } from '@/shared/contracts/notes';
+import { internalError } from '@/shared/errors/app-error';
+import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
+import { ConfirmModal, PromptModal } from '@/shared/ui/templates/modals';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type NoteRelationWithSource = NoteRelationDto & {
   sourceNote?: RelatedNote | undefined;
@@ -34,8 +36,6 @@ type NoteRelationWithSource = NoteRelationDto & {
 type NoteRelationWithTarget = NoteRelationDto & {
   targetNote?: RelatedNote | undefined;
 };
-import { ConfirmModal, PromptModal } from '@/shared/ui/templates/modals';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type NoteTagWithDetails = NoteTagRecord & { tag: TagRecord };
 

@@ -2,13 +2,13 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
+import type { ChatMessageDto as ChatMessage, ChatbotSettingsDto as ChatbotSettingsPayload, ChatbotSessionDto as ChatSession } from '@/shared/contracts/chatbot';
 import { createCreateMutationV2, createDeleteMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
   invalidateChatbotSession,
   invalidateChatbotSessions,
   invalidateSettingsScope,
 } from '@/shared/lib/query-invalidation';
-import type { ChatMessageDto as ChatMessage, ChatbotSettingsDto as ChatbotSettingsPayload, ChatbotSessionDto as ChatSession } from '@/shared/contracts/chatbot';
 import type { CreateMutation, UpdateMutation } from '@/shared/types/query-result-types';
 
 import {

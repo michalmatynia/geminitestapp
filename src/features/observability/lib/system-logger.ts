@@ -1,4 +1,4 @@
-import type { SystemLogLevel, SystemLogRecord } from '@/shared/types/domain/system-logs';
+import type { SystemLogLevelDto as SystemLogLevel, SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 
 import {
   isSensitiveKey,

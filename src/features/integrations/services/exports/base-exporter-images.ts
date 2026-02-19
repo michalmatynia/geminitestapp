@@ -6,6 +6,7 @@ import path from 'path';
 import sharp from 'sharp';
 
 import { getDiskPathFromPublicPath } from '@/features/files/server';
+import type { ImageUrlDiagnosticDto as ImageUrlDiagnostic } from '@/shared/contracts/integrations';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 
 const IMAGE_BASE_URL =
@@ -44,7 +45,6 @@ export type ImageTransformOptions = {
   jpegQuality?: number;
 };
 
-import type { ImageUrlDiagnosticDto as ImageUrlDiagnostic } from '@/shared/contracts/integrations';
 export type { ImageUrlDiagnostic };
 
 const SUPPORTED_IMAGE_MIME_TYPES = new Set([

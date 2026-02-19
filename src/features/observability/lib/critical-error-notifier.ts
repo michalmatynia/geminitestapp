@@ -3,13 +3,13 @@ import 'server-only';
 
 import { createHash } from 'crypto';
 
+import type {
+  SystemLogLevelDto as SystemLogLevel,
+  SystemLogRecordDto as SystemLogRecord,
+} from '@/shared/contracts/observability';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type {
-  SystemLogLevel,
-  SystemLogRecord,
-} from '@/shared/types/domain/system-logs';
 
 import { ErrorSystem } from '../services/error-system';
 import { withTransientRecovery } from './transient-recovery/with-recovery';

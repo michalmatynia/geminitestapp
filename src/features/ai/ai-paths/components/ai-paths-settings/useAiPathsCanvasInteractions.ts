@@ -362,10 +362,11 @@ export function useAiPathsCanvasInteractions({
     const padding = 120;
     const bounds = items.reduce(
       (acc: { minX: number; minY: number; maxX: number; maxY: number }, node: AiNode) => {
-        const x1 = node.position.x;
-        const y1 = node.position.y;
-        const x2 = node.position.x + NODE_WIDTH;
-        const y2 = node.position.y + NODE_MIN_HEIGHT;
+        const pos = node.position ?? { x: 0, y: 0 };
+        const x1 = pos.x;
+        const y1 = pos.y;
+        const x2 = pos.x + NODE_WIDTH;
+        const y2 = pos.y + NODE_MIN_HEIGHT;
         return {
           minX: Math.min(acc.minX, x1),
           minY: Math.min(acc.minY, y1),
@@ -404,8 +405,9 @@ export function useAiPathsCanvasInteractions({
   const ensureNodeVisible = (node: AiNode): void => {
     const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
     if (!viewport) return;
-    const nodeLeft = node.position.x * view.scale + view.x;
-    const nodeTop = node.position.y * view.scale + view.y;
+    const pos = node.position ?? { x: 0, y: 0 };
+    const nodeLeft = pos.x * view.scale + view.x;
+    const nodeTop = pos.y * view.scale + view.y;
     const nodeRight = nodeLeft + NODE_WIDTH * view.scale;
     const nodeBottom = nodeTop + NODE_MIN_HEIGHT * view.scale;
     let nextX = view.x;
@@ -432,8 +434,9 @@ export function useAiPathsCanvasInteractions({
     const ports = side === 'input' ? node.inputs : node.outputs;
     const index = portName ? ports.indexOf(portName) : -1;
     const safeIndex = index >= 0 ? index : Math.max(0, Math.floor(ports.length / 2));
-    const x = node.position.x + (side === 'output' ? NODE_WIDTH : 0);
-    const y = node.position.y + getPortOffsetY(safeIndex, ports.length);
+    const pos = node.position ?? { x: 0, y: 0 };
+    const x = pos.x + (side === 'output' ? NODE_WIDTH : 0);
+    const y = pos.y + getPortOffsetY(safeIndex, ports.length);
     return { x, y };
   }, []);
 

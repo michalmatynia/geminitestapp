@@ -217,7 +217,7 @@ export function DraftCreator({
       }
 
       try {
-        const dataUrl = await fileToDataUrl(slot.data);
+        const dataUrl = await fileToDataUrl(slot.data as File);
         if (dataUrl) serialized.push(dataUrl);
       } catch (error) {
         logClientError(error, {

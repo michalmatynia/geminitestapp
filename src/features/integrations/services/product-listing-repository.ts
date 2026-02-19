@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 
 import { Prisma } from '@prisma/client';
-import { ObjectId } from 'mongodb';
+import { ObjectId, type Filter, type UpdateFilter, type Document } from 'mongodb';
 
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -28,16 +28,17 @@ type ProductListingDocument = {
   externalListingId: string | null;
   inventoryId: string | null;
   status: string;
-  listedAt?: Date | null;
-  expiresAt?: Date | null;
-  nextRelistAt?: Date | null;
-  relistPolicy?: Record<string, unknown> | null;
-  relistAttempts?: number;
-  lastRelistedAt?: Date | null;
-  lastStatusCheckAt?: Date | null;
-  marketplaceData?: Record<string, unknown> | null;
-  failureReason?: string | null;
-  exportHistory?: ProductListingExportEvent[] | null;
+  listedAt?: Date | null | undefined;
+  expiresAt?: Date | null | undefined;
+  nextDueAt?: Date | null | undefined;
+  nextRelistAt?: Date | null | undefined;
+  relistPolicy?: Record<string, unknown> | null | undefined;
+  relistAttempts?: number | undefined;
+  lastRelistedAt?: Date | null | undefined;
+  lastStatusCheckAt?: Date | null | undefined;
+  marketplaceData?: Record<string, unknown> | null | undefined;
+  failureReason?: string | null | undefined;
+  exportHistory?: ProductListingExportEvent[] | null | undefined;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -152,7 +153,7 @@ const prismaRepository: ProductListingRepository = {
   getListingById: async (id: string): Promise<ProductListingRecord | null> => {
     const listing = await prisma.productListing.findUnique({ where: { id } });
     if (!listing) return null;
-    return toListingRecord({ ...listing, _id: listing.id } as any);
+    return toListingRecord({ ...listing, _id: listing.id } as unknown as ProductListingDocument);
   },
 
   createListing: async (input: CreateProductListingInput): Promise<ProductListingWithDetails> => {
@@ -228,10 +229,9 @@ const prismaRepository: ProductListingRepository = {
         ...(input.exportHistory !== undefined
           ? { exportHistory: toPrismaNullableJson(input.exportHistory) }
           : {}),
-      } as any,
+      } as unknown as Prisma.ProductListingUpdateInput,
     });
   },
-
   updateListingInventoryId: async (id: string, inventoryId: string | null): Promise<void> => {
     await prisma.productListing.update({
       where: { id },
@@ -294,33 +294,33 @@ const mongoRepository: ProductListingRepository = {
 
     const integrations = await db
       .collection('integrations')
-      .find({ _id: { $in: integrationIds.map((id) => (ObjectId.isValid(id) ? new ObjectId(id) : id)) } as any })
+      .find({ _id: { $in: integrationIds.map((id) => (ObjectId.isValid(id) ? new ObjectId(id) : id)) } as unknown as Filter<Document> })
       .toArray();
-
+    
     const connections = await db
       .collection('integration_connections')
-      .find({ _id: { $in: connectionIds.map((id) => (ObjectId.isValid(id) ? new ObjectId(id) : id)) } as any })
-      .toArray();
-
+      .find({ _id: { $in: connectionIds.map((id) => (ObjectId.isValid(id) ? new ObjectId(id) : id)) } as unknown as Filter<Document> })
+      .toArray();    
     const integrationMap = new Map(integrations.map((i) => [i._id.toString(), i]));
     const connectionMap = new Map(connections.map((c) => [c._id.toString(), c]));
-
+    
     return docs.map((doc) => {
-      const integration = integrationMap.get(doc.integrationId) as Record<string, any> | undefined;
-      const connection = connectionMap.get(doc.connectionId) as Record<string, any> | undefined;
+      const integration = integrationMap.get(doc.integrationId);
+      const connection = connectionMap.get(doc.connectionId);
       return {
         ...toListingRecord(doc),
         integration: {
           id: integration?.['_id']?.toString() ?? doc.integrationId,
-          name: integration?.['name'] ?? 'Unknown',
-          slug: integration?.['slug'] ?? 'unknown',
+          name: String(integration?.['name'] ?? 'Unknown'),
+          slug: String(integration?.['slug'] ?? 'unknown'),
         },
         connection: {
           id: connection?.['_id']?.toString() ?? doc.connectionId,
-          name: connection?.['name'] ?? 'Unknown',
+          name: String(connection?.['name'] ?? 'Unknown'),
         },
       };
     });
+    
   },
 
   getListingById: async (id: string): Promise<ProductListingRecord | null> => {
@@ -346,11 +346,11 @@ const mongoRepository: ProductListingRepository = {
       listedAt: input.listedAt instanceof Date ? input.listedAt : input.listedAt ? new Date(input.listedAt) : null,
       expiresAt: input.expiresAt instanceof Date ? input.expiresAt : input.expiresAt ? new Date(input.expiresAt) : null,
       nextRelistAt: input.nextRelistAt instanceof Date ? input.nextRelistAt : input.nextRelistAt ? new Date(input.nextRelistAt) : null,
-      relistPolicy: (input.relistPolicy ?? null) as any,
+      relistPolicy: (input.relistPolicy ?? null) as unknown as ProductListingDocument['relistPolicy'],
       relistAttempts: input.relistAttempts ?? 0,
       lastRelistedAt: input.lastRelistedAt instanceof Date ? input.lastRelistedAt : input.lastRelistedAt ? new Date(input.lastRelistedAt) : null,
       lastStatusCheckAt: input.lastStatusCheckAt instanceof Date ? input.lastStatusCheckAt : input.lastStatusCheckAt ? new Date(input.lastStatusCheckAt) : null,
-      marketplaceData: (input.marketplaceData ?? null) as any,
+      marketplaceData: (input.marketplaceData ?? null) as unknown as ProductListingDocument['marketplaceData'],
       failureReason: input.failureReason ?? null,
       exportHistory: input.exportHistory ?? [],
       createdAt: now,
@@ -359,41 +359,40 @@ const mongoRepository: ProductListingRepository = {
     await db.collection<ProductListingDocument>(LISTING_COLLECTION).insertOne(doc);
     return mongoRepository.getListingsByProductId(input.productId).then((list) => list.find((l) => l.id === id)!);
   },
-
+      
   updateListingExternalId: async (id: string, externalListingId: string | null): Promise<void> => {
     const db = await getMongoDb();
     await db
       .collection<ProductListingDocument>(LISTING_COLLECTION)
       .updateOne({ _id: id }, { $set: { externalListingId, updatedAt: new Date() } });
   },
-
+      
   updateListingStatus: async (id: string, status: string): Promise<void> => {
     const db = await getMongoDb();
     await db
       .collection<ProductListingDocument>(LISTING_COLLECTION)
       .updateOne({ _id: id }, { $set: { status, updatedAt: new Date() } });
   },
-
+      
   updateListing: async (id: string, input: Partial<CreateProductListingInput>): Promise<void> => {
     const db = await getMongoDb();
-    const updateData: any = { ...input, updatedAt: new Date() };
-    delete updateData.id;
-    delete updateData.productId;
-    delete updateData.integrationId;
-    delete updateData.connectionId;
-    
+    const updateData: Record<string, unknown> = { ...input, updatedAt: new Date() };
+    delete updateData['id'];
+    delete updateData['productId'];
+    delete updateData['integrationId'];
+    delete updateData['connectionId'];
+                
     // Map dates
-    if (input.listedAt) updateData.listedAt = new Date(input.listedAt);
-    if (input.expiresAt) updateData.expiresAt = new Date(input.expiresAt);
-    if (input.nextRelistAt) updateData.nextRelistAt = new Date(input.nextRelistAt);
-    if (input.lastRelistedAt) updateData.lastRelistedAt = new Date(input.lastRelistedAt);
-    if (input.lastStatusCheckAt) updateData.lastStatusCheckAt = new Date(input.lastStatusCheckAt);
-
+    if (input.listedAt) updateData['listedAt'] = new Date(input.listedAt);
+    if (input.expiresAt) updateData['expiresAt'] = new Date(input.expiresAt);
+    if (input.nextRelistAt) updateData['nextRelistAt'] = new Date(input.nextRelistAt);
+    if (input.lastRelistedAt) updateData['lastRelistedAt'] = new Date(input.lastRelistedAt);
+    if (input.lastStatusCheckAt) updateData['lastStatusCheckAt'] = new Date(input.lastStatusCheckAt);
+      
     await db
       .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .updateOne({ _id: id }, { $set: updateData });
+      .updateOne({ _id: id }, { $set: updateData as unknown as UpdateFilter<ProductListingDocument> });
   },
-
   updateListingInventoryId: async (id: string, inventoryId: string | null): Promise<void> => {
     const db = await getMongoDb();
     await db
@@ -414,10 +413,9 @@ const mongoRepository: ProductListingRepository = {
           },
         },
         $set: { updatedAt: new Date() },
-      } as any
+      } as unknown as UpdateFilter<ProductListingDocument>
     );
   },
-
   deleteListing: async (id: string): Promise<void> => {
     const db = await getMongoDb();
     await db.collection<ProductListingDocument>(LISTING_COLLECTION).deleteOne({ _id: id });

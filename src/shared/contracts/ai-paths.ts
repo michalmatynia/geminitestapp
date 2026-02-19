@@ -613,7 +613,7 @@ export const aiNodeSchema = dtoBaseSchema.extend({
   title: z.string(),
   description: z.string(),
   position: z.object({ x: z.number(), y: z.number() }),
-  data: z.record(z.string(), z.unknown()),
+  data: z.record(z.string(), z.unknown()).optional(),
   config: nodeConfigSchema.optional(),
   inputs: z.array(z.string()),
   outputs: z.array(z.string()),
@@ -742,7 +742,7 @@ export const aiPathRunRecordSchema = aiPathRunSchema.extend({
     nodes: z.array(aiNodeSchema),
     edges: z.array(aiEdgeSchema),
   }).nullable().optional(),
-  runtimeState: z.any().nullable().optional(), // Avoid circular dependency with ai-paths-runtime
+  runtimeState: z.unknown().nullable().optional(), // Avoid circular dependency with ai-paths-runtime
   _count: z.object({
     browserSnapshots: z.number().optional(),
     browserLogs: z.number().optional(),
@@ -932,6 +932,9 @@ export const runtimeHistoryEntrySchema = z.object({
 });
 
 export type RuntimeHistoryEntryDto = z.infer<typeof runtimeHistoryEntrySchema>;
+
+export const aiPathRuntimeAnalyticsRangeSchema = z.enum(['1h', '24h', '7d', '30d']);
+export type AiPathRuntimeAnalyticsRangeDto = z.infer<typeof aiPathRuntimeAnalyticsRangeSchema>;
 
 export const aiPathRuntimeAnalyticsSummarySchema = z.object({
   from: z.string(),

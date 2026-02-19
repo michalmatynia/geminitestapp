@@ -1,13 +1,13 @@
 import 'server-only';
 
 import { logSystemEvent } from '@/features/observability/server';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
-  AgentTeachingAgentRecord,
-  AgentTeachingEmbeddingCollectionRecord,
-  AgentTeachingEmbeddingDocumentListItem,
-  AgentTeachingEmbeddingDocumentMetadata,
-} from '@/shared/types/domain/agent-teaching';
+  AgentTeachingAgentDto as AgentTeachingAgentRecord,
+  AgentTeachingCollectionDto as AgentTeachingEmbeddingCollectionRecord,
+  AgentTeachingDocumentDto as AgentTeachingEmbeddingDocumentListItem,
+  AgentTeachingDocumentMetadataDto as AgentTeachingEmbeddingDocumentMetadata,
+} from '@/shared/contracts/agent-teaching';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 const AGENTS_COLLECTION = 'agent_teaching_agents';
 const COLLECTIONS_COLLECTION = 'agent_teaching_collections';

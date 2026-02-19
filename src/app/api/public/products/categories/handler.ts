@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getCategoryRepository, getProductDataProvider } from '@/features/products/server';
+import type { ProductCategoryDto as ProductCategory } from '@/shared/contracts/products';
 import { badRequestError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { ProductCategory } from '@/shared/types/domain/products';
 import type { CatalogIdQuery } from '@/shared/validations/product-metadata-api-schemas';
 
 type PublicProductCategory = {

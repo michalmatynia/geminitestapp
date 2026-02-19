@@ -4,7 +4,6 @@ import type {
   ProductFiltersParsed,
   ProductUpdateInput,
 } from '../../validations';
-
 import type { Prisma } from '@prisma/client';
 
 export type ProductFilters = Partial<ProductFiltersParsed>;

@@ -54,7 +54,7 @@ export const sortPromptExploderLibraryItemsByUpdated = (
   [...items].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
 
 export const clonePromptExploderDocument = (
-  document: PromptExploderDocument | null
+  document: PromptExploderDocument | null | undefined
 ): PromptExploderDocument | null => {
   if (!document) return null;
   try {

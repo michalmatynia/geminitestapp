@@ -1,11 +1,11 @@
 'use client';
 
-import type { ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
 import {
   ListingSettingsProvider,
   useListingSettingsContext,
 } from '@/features/integrations/context/ListingSettingsContext';
 import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
+import type { ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import type { EntityModalProps } from '@/shared/types/modal-props';
 import { FormModal } from '@/shared/ui';

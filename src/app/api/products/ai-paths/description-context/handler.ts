@@ -4,11 +4,11 @@ import {
   getCategoryRepository,
   getParameterRepository,
 } from '@/features/products/server';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
 import type {
-  ProductCategory,
-  ProductParameter,
-} from '@/shared/types/domain/products';
+  ProductCategoryDto as ProductCategory,
+  ProductParameterDto as ProductParameter,
+} from '@/shared/contracts/products';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
 import type { DescriptionContextQuery } from '@/shared/validations/product-metadata-api-schemas';
 
 type DescriptionContextCategory = {

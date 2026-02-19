@@ -1,7 +1,4 @@
-import type { AiNodeDto as AiNode, AiEdgeDto as Edge, NodeDefinitionDto as NodeDefinition } from '@/shared/contracts/ai-paths';
-import type {
-  PromptExploderCaseResolverPartyCandidateDto as PromptExploderCaseResolverPartyCandidate,
-} from '@/shared/contracts/prompt-exploder';
+import type { AiNodeDto as AiNode, EdgeDto as Edge, NodeDefinitionDto as NodeDefinition } from '@/shared/contracts/ai-paths';
 import type {
   CaseResolverNodeRoleDto as CaseResolverNodeRole,
   CaseResolverQuoteModeDto as CaseResolverQuoteMode,
@@ -38,6 +35,9 @@ import type {
   CaseResolverEditorNodeContextDto as CaseResolverEditorNodeContext,
   CaseResolverPdfExtractionPresetDto as CaseResolverPdfExtractionPreset,
 } from '@/shared/contracts/case-resolver';
+import type {
+  PromptExploderCaseResolverPartyCandidateDto as PromptExploderCaseResolverPartyCandidate,
+} from '@/shared/contracts/prompt-exploder';
 
 export type { AiNode, Edge, NodeDefinition, PromptExploderCaseResolverPartyCandidate };
 

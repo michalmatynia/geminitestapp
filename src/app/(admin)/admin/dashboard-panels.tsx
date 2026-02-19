@@ -77,8 +77,7 @@ export function RecentActivityPanel({
               <div key={log.id} className='flex flex-col gap-1 border-b border-gray-800 pb-2 last:border-0'>
                 <div className='flex justify-between items-start'>
                   <span className='text-sm font-medium text-blue-400'>{log.type}</span>
-                  <span className='text-xs text-gray-500'>{new Date(log.createdAt).toLocaleString()}</span>
-                </div>
+                  <span className='text-xs text-gray-500'>{log.createdAt ? new Date(log.createdAt).toLocaleString() : ''}</span>                </div>
                 <p className='text-sm text-gray-300'>{log.description}</p>
               </div>
             ))}

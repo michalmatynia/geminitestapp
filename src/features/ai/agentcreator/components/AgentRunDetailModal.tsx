@@ -9,7 +9,7 @@ import type {
   AgentSnapshot,
 } from '@/shared/types/domain/chatbot';
 import type { EntityModalProps } from '@/shared/types/modal-props';
-import { Tabs, TabsList, TabsTrigger, TabsContent, StatusBadge } from '@/shared/ui';
+import { Tabs, TabsList, TabsTrigger, TabsContent, StatusBadge, LogList } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 export interface AgentRunDetailModalProps extends EntityModalProps<AiPathRunRecord> {
@@ -68,17 +68,16 @@ export function AgentRunDetailModal({
         </TabsContent>
 
         <TabsContent value='logs' className='space-y-2 pt-4'>
-          <div className='max-h-96 overflow-y-auto space-y-2 rounded-lg border border-border/60 bg-black/35 p-2'>
-            {agentBrowserLogs.length === 0 ? (
-              <p className='text-xs text-gray-500 p-2'>No logs available.</p>
-            ) : (
-              agentBrowserLogs.map((log, i) => (
-                <div key={i} className='text-[10px] font-mono text-gray-300 border-b border-border/30 pb-1'>
-                  <span className='text-gray-500'>[{new Date(log.createdAt).toLocaleTimeString()}]</span> {log.message}
-                </div>
-              ))
-            )}
-          </div>
+          <LogList 
+            logs={agentBrowserLogs.map((log, i) => ({
+              id: String(i),
+              timestamp: log.createdAt || new Date().toISOString(),
+              level: 'info',
+              message: log.message,
+            }))}
+            maxHeight='500px'
+            className='rounded-lg border border-border/60 bg-black/35 p-2'
+          />
         </TabsContent>
 
         <TabsContent value='preview' className='pt-4'>

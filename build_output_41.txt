@@ -1,0 +1,35 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 216ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · optimizePackageImports
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 22.1s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/ai/agentcreator/pages/AgentPersonasPage.tsx:20:9
+Type error: 'handleSavePersona' is declared but its value is never read.
+
+[0m [90m 18 |[39m   [36mvoid[39m _usage[33m;[39m
+ [90m 19 |[39m
+[31m[1m>[22m[39m[90m 20 |[39m   [36mconst[39m handleSavePersona [33m=[39m [36masync[39m (draft[33m:[39m [33mPartial[39m[33m<[39m[33mAgentPersona[39m[33m>[39m)[33m:[39m [33mPromise[39m[33m<[39m[36mvoid[39m[33m>[39m [33m=>[39m {
+ [90m    |[39m         [31m[1m^[22m[39m
+ [90m 21 |[39m     [36mconst[39m name [33m=[39m draft[33m.[39mname[33m?[39m[33m.[39mtrim()[33m;[39m
+ [90m 22 |[39m     [36mif[39m ([33m![39mname) {
+ [90m 23 |[39m       toast([32m'Persona name is required.'[39m[33m,[39m { variant[33m:[39m [32m'error'[39m })[33m;[39m[0m
+Next.js build worker exited with code: 1 and signal: null

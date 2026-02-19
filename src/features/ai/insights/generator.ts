@@ -12,13 +12,13 @@ import { getBrainAssignmentForFeature } from '@/features/ai/brain/server';
 import { listAnalyticsEvents, getAnalyticsSummary } from '@/features/analytics/server';
 import { ErrorSystem } from '@/features/observability/server';
 import { listSystemLogs, getSystemLogMetrics } from '@/features/observability/server';
+import type { AiInsightRecordDto as AiInsightRecord, AiInsightSourceDto as AiInsightSource, AiInsightStatusDto as AiInsightStatus, AiInsightTypeDto as AiInsightType } from '@/shared/contracts/ai-insights';
+import type { AiPathRuntimeAnalyticsRangeDto as AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
+import type { AnalyticsEventDto, AnalyticsSummaryDto } from '@/shared/contracts/analytics';
+import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
+import type { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { AnalyticsEventDto, AnalyticsSummaryDto } from '@/shared/types';
-import type { AiInsightRecord, AiInsightSource, AiInsightStatus, AiInsightType } from '@/shared/types/ai-insights';
-import type { AiPathRuntimeAnalyticsRange } from '@/shared/types/domain/ai-paths';
-import type { ChatMessage } from '@/shared/types/domain/chatbot';
-import { SystemLogRecord } from '@/shared/types/domain/system-logs';
 
 import { appendAiInsight, appendAiInsightNotification, setAiInsightsMeta } from './repository';
 import {

@@ -3,43 +3,6 @@
 import { Trash2 } from 'lucide-react';
 import React from 'react';
 
-import { Button, DataTable } from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
-
-import { useLocalRuns, type LocalRunsScope } from '../hooks/useLocalRuns';
-import { useLocalRunsTableProps } from '../hooks/useLocalRunsTableProps';
-
-const formatDate = (value?: string | null): string => {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
-  return date.toLocaleString();
-};
-
-const formatDuration = (value?: number | null): string => {
-  if (value === null || value === undefined || Number.isNaN(value)) return '-';
-  if (value < 1000) return `${Math.max(0, Math.round(value))}ms`;
-  const seconds = Math.round(value / 1000);
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remaining = seconds % 60;
-  return `${minutes}m ${remaining}s`;
-};
-
-type LocalRunsPanelProps = {
-  sourceFilter?: string | null | undefined;
-  sourceMode?: 'include' | 'exclude' | undefined;
-};
-
-const getPanelLabel = (sourceFilter?: string | null | undefined, sourceMode?: 'include' | 'exclude' | undefined): string => {
-  if (sourceFilter === 'ai_paths_ui' && sourceMode === 'exclude') return 'External Local Runs';
-  if (sourceFilter === 'ai_paths_ui') return 'Local Runs';
-  return 'Local Runs';
-};
-
-import { Trash2 } from 'lucide-react';
-import React from 'react';
-
 import { Button, DataTable, ListPanel, MetadataItem } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -162,35 +125,5 @@ export function LocalRunsPanel({
         loading={isUpdating}
       />
     </ListPanel>
-  );
-}
-
-
-      <div className='overflow-hidden rounded-md border border-border/60 bg-card/40'>
-        <DataTable {...tableProps} />
-      </div>
-
-      <ConfirmModal
-        isOpen={clearScope === 'terminal'}
-        onClose={() => setClearScope(null)}
-        onConfirm={() => clearRuns('terminal')}
-        title='Clear finished local runs'
-        message='Delete completed local run history for this tab.'
-        confirmText='Clear Finished'
-        isDangerous={true}
-        loading={isUpdating}
-      />
-
-      <ConfirmModal
-        isOpen={clearScope === 'all'}
-        onClose={() => setClearScope(null)}
-        onConfirm={() => clearRuns('all')}
-        title='Clear all local runs'
-        message='Delete all local run records for this tab.'
-        confirmText='Clear All'
-        isDangerous={true}
-        loading={isUpdating}
-      />
-    </div>
   );
 }

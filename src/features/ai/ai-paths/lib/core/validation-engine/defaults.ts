@@ -382,7 +382,7 @@ export const normalizeAiPathsValidationConfig = (
 
   const collectionMap =
     source.collectionMap && typeof source.collectionMap === 'object'
-      ? Object.fromEntries(
+      ? (Object.fromEntries(
         Object.entries(source.collectionMap as Record<string, unknown>).filter(
           ([key, val]: [string, unknown]): boolean =>
             typeof key === 'string' &&
@@ -390,7 +390,7 @@ export const normalizeAiPathsValidationConfig = (
               typeof val === 'string' &&
               val.trim().length > 0,
         ),
-      )
+      ) as Record<string, string>)
       : { ...DEFAULT_AI_PATHS_ENTITY_COLLECTION_MAP };
 
   const sanitizedRules =

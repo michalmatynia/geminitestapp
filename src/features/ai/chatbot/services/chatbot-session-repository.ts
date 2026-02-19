@@ -2,13 +2,13 @@ import 'server-only';
 
 import { ObjectId } from 'mongodb';
 
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
   ChatbotSessionDto as ChatSession,
   CreateChatSessionDto as CreateSessionInput,
   UpdateChatSessionDto as UpdateSessionInput,
   ChatMessageDto as ChatMessage,
 } from '@/shared/contracts/chatbot';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 const COLLECTION_NAME = 'chatbot_sessions';
 

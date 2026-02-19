@@ -44,7 +44,7 @@ describe('prompt exploder segment transforms', () => {
     expect(result.segments[0]?.id).toBe('a');
     expect(result.segments[2]?.id).toBe('b');
     expect(result.selectedSegmentId).toBe(result.segments[1]?.id);
-    expect(result.segments[1]?.title).toBe('New Segment');
+    expect(result.segments[1]?.title).toBe('');
   });
 
   it('removes a segment and keeps at least one placeholder segment', () => {
@@ -75,6 +75,20 @@ describe('prompt exploder segment transforms', () => {
     expect(result.segments[1]?.text).toBe('Amazing');
     expect(result.segments[1]?.title).toContain('Split');
     expect(result.selectedSegmentId).toBe(result.segments[1]?.id);
+  });
+
+  it('keeps split title empty when source title is empty', () => {
+    const source = buildSegment('a', 'Hello Amazing World', '');
+    const result = promptExploderSplitSegmentByRange({
+      segments: [source],
+      segmentId: 'a',
+      selectionStart: 6,
+      selectionEnd: 13,
+    });
+
+    expect(result.segments).toHaveLength(2);
+    expect(result.segments[1]?.text).toBe('Amazing');
+    expect(result.segments[1]?.title).toBe('');
   });
 
   it('merges current segment with previous segment', () => {

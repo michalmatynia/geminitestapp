@@ -3,14 +3,14 @@ import { useCallback } from 'react';
 
 import type { UseNoteOperationsProps } from '@/features/notesapp/types/notes-hooks';
 import type { UndoAction } from '@/features/notesapp/types/notes-hooks';
-import { ApiError } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { 
   NoteWithRelationsDto as NoteWithRelations, 
   NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
   NoteRelationDto,
   RelatedNoteDto as RelatedNote
 } from '@/shared/contracts/notes';
+import { ApiError } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { findTreeNodeById, findTreeNodeParentId } from '@/shared/utils/tree-operations';
 

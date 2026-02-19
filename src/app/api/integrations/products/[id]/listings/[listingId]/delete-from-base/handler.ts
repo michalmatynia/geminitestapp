@@ -11,6 +11,8 @@ import { parseJsonBody } from '@/features/products/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
+import { resolveDeleteInventoryId } from './helpers';
+
 const deleteSchema = z.object({
   inventoryId: z.string().min(1).optional()
 });
@@ -39,37 +41,10 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
     return parsed.response;
   }
   const data = parsed.data;
-
-  // Try to find inventoryId from multiple sources (in order of priority):
-  // 1. Request body (explicit override)
-  // 2. Listing's stored inventoryId
-  // 3. Export history (most recent entry with inventoryId)
-  // 4. Connection's baseLastInventoryId (fallback)
-  let inventoryId =
-    data.inventoryId ||
-    listing.inventoryId ||
-    listing.exportHistory
-      ?.slice()
-      .reverse()
-      .find((event) => event.inventoryId)?.inventoryId ||
-    null;
-
-  // If still no inventoryId, try to get it from the connection's baseLastInventoryId
-  if (!inventoryId) {
-    const integrationRepo = await getIntegrationRepository();
-    const connectionForInventory = await integrationRepo.getConnectionById(
-      listing.connectionId
-    );
-    if (connectionForInventory?.baseLastInventoryId) {
-      inventoryId = connectionForInventory.baseLastInventoryId;
-    }
-  }
-
-  if (!inventoryId) {
-    throw badRequestError(
-      'Missing inventoryId for Base.com deletion. Please set an inventory ID in the connection settings or provide one manually.'
-    );
-  }
+  const inventoryId = resolveDeleteInventoryId(
+    data.inventoryId,
+    listing.inventoryId
+  );
 
   if (!listing.externalListingId) {
     throw badRequestError('Missing Base.com product id for deletion.');
@@ -125,15 +100,6 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
     // Keep deletion flow resilient if runtime-run logging fails.
   }
 
-  const isMissingBaseProduct = (error: unknown): boolean => {
-    if (!(error instanceof Error)) return false;
-    const message = error.message.toLowerCase();
-    return (
-      message.includes('invalid product identifier') ||
-      message.includes('product does not exist')
-    );
-  };
-
   try {
     await repo.updateListingStatus(listingId, 'running');
     await repo.appendExportHistory(listingId, {
@@ -166,13 +132,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
       });
     }
 
-    try {
-      await deleteBaseProduct(token, inventoryId, listing.externalListingId);
-    } catch (error) {
-      if (!isMissingBaseProduct(error)) {
-        throw error;
-      }
-    }
+    await deleteBaseProduct(token, inventoryId, listing.externalListingId);
 
     await repo.updateListingStatus(listingId, 'removed');
     await repo.appendExportHistory(listingId, {

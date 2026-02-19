@@ -234,6 +234,7 @@ type CaseResolverWorkspaceMutationOptions = {
   persistToast?: string;
   mutationId?: string;
   source?: string;
+  skipNormalization?: boolean;
 };
 
 type CaseResolverWorkspaceUpdater = (
@@ -253,6 +254,7 @@ export const applyCaseResolverFileMutationAndRebaseDraft = ({
   source,
   persistToast,
   activateFile = false,
+  skipNormalization = false,
 }: {
   fileId: string;
   updateWorkspace: CaseResolverWorkspaceUpdater;
@@ -261,6 +263,7 @@ export const applyCaseResolverFileMutationAndRebaseDraft = ({
   source: string;
   persistToast?: string;
   activateFile?: boolean;
+  skipNormalization?: boolean;
 }): {
   fileFound: boolean;
   changed: boolean;
@@ -273,6 +276,7 @@ export const applyCaseResolverFileMutationAndRebaseDraft = ({
   const mutationOptions: CaseResolverWorkspaceMutationOptions = {
     source,
     ...(persistToast ? { persistToast } : {}),
+    ...(skipNormalization ? { skipNormalization: true } : {}),
   };
 
   updateWorkspace((current) => {

@@ -7,7 +7,7 @@ import React, { useCallback } from 'react';
 import { MarkdownToolbarActionsProvider } from '@/features/notesapp/context/MarkdownToolbarActionsContext';
 import { useNoteFormContext, NoteFormProvider } from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFormProps } from '@/features/notesapp/types/notes-ui';
-import { Button, Label, Input, FormField } from '@/shared/ui';
+import { Button, Input, FormField } from '@/shared/ui';
 
 import { FileAttachments } from './editor/FileAttachments';
 import { MarkdownEditor } from './editor/MarkdownEditor';

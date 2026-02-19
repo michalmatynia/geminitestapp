@@ -225,7 +225,7 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
         stickyHeader
       />
 
-      {isLogModalOpen && <LogModal isOpen={true} content={logModalContent} onClose={closeLogModal} />}
+      {isLogModalOpen && <LogModal isOpen={true} item={logModalContent} onClose={closeLogModal} />}
 
       {isRestoreModalOpen && selectedBackupForRestore && (
         <RestoreModal

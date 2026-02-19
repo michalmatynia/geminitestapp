@@ -1,8 +1,13 @@
 'use client';
 
+import type {
+  AgentTeachingAgentDto as AgentTeachingAgentRecord,
+  AgentTeachingCollectionDto as AgentTeachingEmbeddingCollectionRecord,
+  AgentTeachingDocumentDto as AgentTeachingEmbeddingDocumentListItem,
+  AgentTeachingChatSourceDto as AgentTeachingChatSource,
+} from '@/shared/contracts/agent-teaching';
+import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import { api } from '@/shared/lib/api-client';
-import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem, AgentTeachingChatSource } from '@/shared/types/domain/agent-teaching';
-import type { ChatMessage } from '@/shared/types/domain/chatbot';
 
 /**
  * List all teaching agents

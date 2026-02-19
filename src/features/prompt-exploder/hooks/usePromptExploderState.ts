@@ -40,7 +40,6 @@ import {
   promptExploderCreateApprovalDraftFromSegment,
 } from '../helpers/segment-helpers';
 import {
-  ensureSegmentTitle,
   explodePromptText,
   reassemblePromptSegments,
   updatePromptExploderDocument,
@@ -474,7 +473,7 @@ export function usePromptExploderState() {
     setDocumentState((current: PromptExploderDocument | null) => {
       if (!current) return current;
       const nextSegments = current.segments.map((segment: PromptExploderSegment) =>
-        segment.id === segmentId ? ensureSegmentTitle(updater(segment)) : segment
+        segment.id === segmentId ? updater(segment) : segment
       );
       return updatePromptExploderDocument(current, nextSegments, manualBindings);
     });

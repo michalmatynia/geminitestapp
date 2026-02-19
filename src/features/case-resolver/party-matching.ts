@@ -1,6 +1,6 @@
-import type { PromptExploderCaseResolverPartyCandidate } from './types';
 import type { CountryOption } from '@/shared/types/domain/internationalization';
 
+import type { PromptExploderCaseResolverPartyCandidate } from './types';
 import type { FilemakerAddress, FilemakerDatabase } from '../filemaker/types';
 
 export type MatchedCaseResolverPartyReference = {

@@ -179,8 +179,8 @@ const toRunRecord = (doc: RunDocument): AiPathRunRecord => ({
   triggerEvent: doc.triggerEvent ?? null,
   triggerNodeId: doc.triggerNodeId ?? null,
   triggerContext: doc.triggerContext ?? undefined,
-  graph: (doc.graph as AiPathRunRecord['graph']) ?? null,
-  runtimeState: (doc.runtimeState as AiPathRunRecord['runtimeState']) ?? null,
+  graph: (doc.graph as unknown as AiPathRunRecord['graph']) ?? null,
+  runtimeState: (doc.runtimeState as unknown) ?? null,
   meta: doc.meta ?? null,
   context: undefined, // Or map if present in doc
   result: undefined, // Or map if present in doc

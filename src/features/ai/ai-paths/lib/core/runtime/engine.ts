@@ -1969,9 +1969,9 @@ export async function evaluateGraphWithIteratorAutoContinue(options: EvaluateGra
       current = await evaluateGraph({
         ...baseOptions,
         seedOutputs: current.outputs,
-        seedHashes: (current.hashes as Record<string, string> | undefined) ?? undefined,
+        seedHashes: (current.hashes) ?? undefined,
         seedHashTimestamps:
-          (current.hashTimestamps as Record<string, number> | undefined) ??
+          (current.hashTimestamps) ??
           undefined,
         seedHistory: current.history as Record<string, RuntimeHistoryEntry[]> | undefined,
         seedRunId: current.runId ?? resolvedRunId,

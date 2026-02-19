@@ -1,6 +1,6 @@
+import { recommendParamUiControl, type ParamUiControl } from '../../utils/param-ui';
 import { flattenParams, type ParamSpec } from '../../utils/prompt-params';
 
-import { recommendParamUiControl, type ParamUiControl } from '../../utils/param-ui';
 
 export type { ParamUiControl };
 

@@ -2,6 +2,10 @@ import 'server-only';
 
 import { enqueueProductAiJob } from '@/features/jobs/services/productAiService';
 import { ErrorSystem } from '@/features/observability/server';
+import type {
+  DatabaseEngineBackupSchedulerTickResultDto,
+  DatabaseEngineBackupSchedulerStatusDto,
+} from '@/shared/contracts/database';
 import { configurationError } from '@/shared/errors/app-error';
 import {
   DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
@@ -15,10 +19,6 @@ import {
 } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type {
-  DatabaseEngineBackupSchedulerTickResultDto,
-  DatabaseEngineBackupSchedulerStatusDto,
-} from '@/shared/contracts/database';
 
 type TargetEvaluation = {
   dueNow: boolean;

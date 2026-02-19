@@ -27,6 +27,6 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   if (!parsed.ok) {
     return parsed.response;
   }
-  const notebook = await noteService.createNotebook(removeUndefined(parsed.data) as NotebookCreateInput);
+  const notebook = await noteService.createNotebook(removeUndefined(parsed.data));
   return NextResponse.json(notebook, { status: 201 });
 }

@@ -236,15 +236,16 @@ app.prepare().then(async () => {
       res.end(guardResult.message);
       return;
     }
-    if (parsedUrl.pathname === '/') {
-      app.render(req, res, '/').catch((error) => {
-        ErrorSystem.captureException(error, { source: 'server', context: { action: 'root-render-failed' } });
+    Promise.resolve(handle(req, res, parsedUrl)).catch((error) => {
+      ErrorSystem.captureException(error, {
+        source: 'server',
+        context: { action: 'request-handler-failed', pathname: parsedUrl.pathname },
+      });
+      if (!res.headersSent) {
         res.statusCode = 500;
         res.end('Internal Server Error');
-      });
-      return;
-    }
-    handle(req, res);
+      }
+    });
   });
 
   const isExpectedMissingCleanupModuleError = (error) => {

@@ -1,10 +1,10 @@
 'use client';
 
+import type { UnifiedCollectionDto } from '@/shared/contracts/database';
 import { Button, StatusBadge, DataTableSortableHeader, SelectSimple } from '@/shared/ui';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-import type { UnifiedCollectionDto } from '@/shared/contracts/database';
 
 export type UnifiedCollectionRow = UnifiedCollectionDto;
 

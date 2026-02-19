@@ -1,4 +1,3 @@
-import { flattenParams, inferParamSpecs, type ParamSpec } from '../../utils/prompt-params';
 import { api } from '@/shared/lib/api-client';
 
 
@@ -11,6 +10,7 @@ import {
   type UiExtractorSuggestion,
 } from './prompt-extract-utils';
 import { isParamUiControl, type ParamUiControl } from '../../utils/param-ui';
+import { flattenParams, inferParamSpecs, type ParamSpec } from '../../utils/prompt-params';
 
 import type { Dispatch, SetStateAction } from 'react';
 

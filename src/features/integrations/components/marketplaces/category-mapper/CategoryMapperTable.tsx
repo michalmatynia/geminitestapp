@@ -1,12 +1,12 @@
 'use client';
 
 import { ColumnDef, ExpandedState, Updater } from '@tanstack/react-table';
-import { ChevronDown, ChevronRight, Check, Download, RefreshCw, Save } from 'lucide-react';
+import { ChevronDown, ChevronRight, Download, RefreshCw, Save } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 import type { ExternalCategory } from '@/features/integrations/types/category-mapping';
-import { Button, DataTable, ListPanel, SelectSimple } from '@/shared/ui';
+import { Button, SelectSimple, StandardDataTablePanel } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { CategoryMapperCatalogSelector } from './CategoryMapperCatalogSelector';

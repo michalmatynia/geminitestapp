@@ -1,3 +1,12 @@
+import type {
+  MasterFolderTreePersistOperationDto,
+  MasterFolderTreeDragStateDto,
+  MasterFolderTreeUndoEntryDto,
+  MasterFolderTreeErrorDto,
+  MasterFolderTreePersistContextDto,
+  MasterFolderTreeActionFailDto,
+  UseMasterFolderTreeOptionsDto,
+} from '@/shared/contracts/master-folder-tree';
 import type { FolderTreeProfileV2 } from '@/shared/utils/folder-tree-profiles-v2';
 import type {
   MasterTreeDropPosition,
@@ -10,15 +19,6 @@ import type {
   MasterTreeValidationIssue,
   MasterTreeViewNode,
 } from '@/shared/utils/master-folder-tree-engine';
-import type {
-  MasterFolderTreePersistOperationDto,
-  MasterFolderTreeDragStateDto,
-  MasterFolderTreeUndoEntryDto,
-  MasterFolderTreeErrorDto,
-  MasterFolderTreePersistContextDto,
-  MasterFolderTreeActionFailDto,
-  UseMasterFolderTreeOptionsDto,
-} from '@/shared/contracts/master-folder-tree';
 
 export type MasterFolderTreePersistOperation = MasterFolderTreePersistOperationDto;
 

@@ -168,12 +168,12 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
         state.resolvedProvider === 'mongodb'
           ? formatAndFixMongoQuery(targetValue)
           : (() => {
-              try {
-                return JSON.stringify(JSON.parse(targetValue), null, 2);
-              } catch {
-                return targetValue;
-              }
-            })();
+            try {
+              return JSON.stringify(JSON.parse(targetValue), null, 2);
+            } catch {
+              return targetValue;
+            }
+          })();
       if (editingFilterOnly) {
         state.updateQueryConfig({ queryTemplate: formatted });
       } else if (state.isUpdateAction) {
@@ -227,57 +227,57 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
       <DatabaseQueryInputControlsContextProvider value={queryInputControlsValue}>
         <DatabaseConstructorContextProvider value={constructorValue}>
           <div className='space-y-4'>
-          <div className='flex flex-wrap items-center justify-between gap-2'>
-            <h3 className='text-sm font-medium text-white'>
+            <div className='flex flex-wrap items-center justify-between gap-2'>
+              <h3 className='text-sm font-medium text-white'>
               Database Node: {resolveNodeLabel(selectedNode.type, (selectedNode.config?.database as { label?: string } | undefined)?.label)}
-            </h3>
-          </div>
+              </h3>
+            </div>
 
-          <Tabs
-            value={state.databaseTab}
-            onValueChange={(value: string) => state.setDatabaseTab(value as 'settings' | 'constructor' | 'presets')}
-            className='space-y-4'
-          >
-            <TabsList className='justify-start border border-border bg-card/60'>
-              <TabsTrigger value='settings'>Query</TabsTrigger>
-              <TabsTrigger value='constructor'>Constructor</TabsTrigger>
-              <TabsTrigger value='presets'>Presets</TabsTrigger>
-            </TabsList>
+            <Tabs
+              value={state.databaseTab}
+              onValueChange={(value: string) => state.setDatabaseTab(value as 'settings' | 'constructor' | 'presets')}
+              className='space-y-4'
+            >
+              <TabsList className='justify-start border border-border bg-card/60'>
+                <TabsTrigger value='settings'>Query</TabsTrigger>
+                <TabsTrigger value='constructor'>Constructor</TabsTrigger>
+                <TabsTrigger value='presets'>Presets</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value='settings' className='space-y-4'>
-              <DatabaseSettingsTab />
-            </TabsContent>
+              <TabsContent value='settings' className='space-y-4'>
+                <DatabaseSettingsTab />
+              </TabsContent>
 
-            <TabsContent value='constructor' className='space-y-3'>
-              <DatabaseConstructorTab />
-              {state.queryValidatorEnabled ? <DatabaseQueryValidatorPanel /> : null}
-            </TabsContent>
+              <TabsContent value='constructor' className='space-y-3'>
+                <DatabaseConstructorTab />
+                {state.queryValidatorEnabled ? <DatabaseQueryValidatorPanel /> : null}
+              </TabsContent>
 
-            <TabsContent value='presets'>
-              <DatabasePresetsTabContextProvider value={{
-                builtInPresets: state.presetOptions,
-                onApplyBuiltInPreset: state.applyDatabasePreset,
-                onRenameQueryPreset: state.handleRenameQueryPreset,
-                onDeleteQueryPreset: state.handleDeleteQueryPresetById,
-              }}>
-                <DatabasePresetsTab />
-              </DatabasePresetsTabContextProvider>
-            </TabsContent>
-          </Tabs>
+              <TabsContent value='presets'>
+                <DatabasePresetsTabContextProvider value={{
+                  builtInPresets: state.presetOptions,
+                  onApplyBuiltInPreset: state.applyDatabasePreset,
+                  onRenameQueryPreset: state.handleRenameQueryPreset,
+                  onDeleteQueryPreset: state.handleDeleteQueryPresetById,
+                }}>
+                  <DatabasePresetsTab />
+                </DatabasePresetsTabContextProvider>
+              </TabsContent>
+            </Tabs>
 
-          <DatabaseSaveQueryPresetDialogContextProvider value={{
-            open: state.saveQueryPresetModalOpen,
-            onOpenChange: (open) => { if (!open) state.closeSaveQueryPresetModal(); },
-            newQueryPresetName: state.newQueryPresetName,
-            setNewQueryPresetName: state.setNewQueryPresetName,
-            queryTemplateValue: state.queryTemplateValue,
-            onCancel: state.closeSaveQueryPresetModal,
-            onSave: () => { void state.handleSaveQueryPreset(); },
-          }}>
-            <DatabaseSaveQueryPresetDialog />
-          </DatabaseSaveQueryPresetDialogContextProvider>
+            <DatabaseSaveQueryPresetDialogContextProvider value={{
+              open: state.saveQueryPresetModalOpen,
+              onOpenChange: (open) => { if (!open) state.closeSaveQueryPresetModal(); },
+              newQueryPresetName: state.newQueryPresetName,
+              setNewQueryPresetName: state.setNewQueryPresetName,
+              queryTemplateValue: state.queryTemplateValue,
+              onCancel: state.closeSaveQueryPresetModal,
+              onSave: () => { void state.handleSaveQueryPreset(); },
+            }}>
+              <DatabaseSaveQueryPresetDialog />
+            </DatabaseSaveQueryPresetDialogContextProvider>
           
-          <state.ConfirmationModal />
+            <state.ConfirmationModal />
           </div>
         </DatabaseConstructorContextProvider>
       </DatabaseQueryInputControlsContextProvider>

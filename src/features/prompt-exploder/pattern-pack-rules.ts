@@ -51,7 +51,7 @@ export const remapExploderScopesForTarget = (
   if (!deduped.includes(targetScope) && !deduped.includes('global')) {
     deduped.push(targetScope);
   }
-  return deduped as PromptValidationScope[];
+  return deduped;
 };
 
 const createRegexRule = (rule: {

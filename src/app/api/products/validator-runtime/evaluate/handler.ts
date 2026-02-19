@@ -652,7 +652,7 @@ const evaluateAiRuntime = async ({
           : null;
   const severity =
     parsed?.['severity'] === 'error' || parsed?.['severity'] === 'warning'
-      ? (parsed['severity'] as ProductValidationSeverity)
+      ? (parsed['severity'])
       : null;
 
   return {

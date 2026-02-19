@@ -249,7 +249,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
   const rawFilter = coerceQuery(query);
   const requestSort = sort as Record<string, unknown> | undefined;
-  const requestProjection = projection as Record<string, unknown> | undefined;
+  const requestProjection = projection;
   const canAttemptSafeAutoFallback = isSafeAutoFallbackCandidate({
     ...(requestedProvider !== undefined ? { requestedProvider } : {}),
     query: rawFilter,

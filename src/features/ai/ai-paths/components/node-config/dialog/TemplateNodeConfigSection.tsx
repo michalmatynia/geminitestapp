@@ -66,7 +66,7 @@ export function TemplateNodeConfigSection(): React.JSX.Element | null {
       });
     }
   });
-  const runtimeInputs = (runtimeState.inputs?.[selectedNode.id] ?? {}) as Record<string, unknown>;
+  const runtimeInputs = (runtimeState.inputs?.[selectedNode.id] ?? {});
   const placeholderGroups: PlaceholderGroup[] = React.useMemo(() => {
     const groups: PlaceholderGroup[] = [];
     const uniqueDirect = Array.from(new Set(inputPorts));

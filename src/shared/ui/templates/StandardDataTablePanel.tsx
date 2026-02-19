@@ -33,7 +33,7 @@ export interface StandardDataTablePanelProps<TData> {
   isLoading?: boolean;
   loadingMessage?: string;
   emptyState?: React.ReactNode;
-  getRowId?: (row: TData) => string;
+  getRowId?: (row: TData) => string | number;
   getRowClassName?: (row: Row<TData>) => string | undefined;
   maxHeight?: string | number;
   stickyHeader?: boolean;
@@ -86,34 +86,34 @@ export function StandardDataTablePanel<TData>({
 
   return (
     <ListPanel
-      title={title}
-      description={description}
-      headerActions={headerActions}
-      header={header}
-      refresh={refresh}
-      alerts={alerts}
-      filters={filters}
-      actions={actions}
-      footer={footer}
-      className={className}
+      {...(title !== undefined ? { title } : {})}
+      {...(description !== undefined ? { description } : {})}
+      {...(headerActions !== undefined ? { headerActions } : {})}
+      {...(header !== undefined ? { header } : {})}
+      {...(refresh !== undefined ? { refresh } : {})}
+      {...(alerts !== undefined ? { alerts } : {})}
+      {...(filters !== undefined ? { filters } : {})}
+      {...(actions !== undefined ? { actions } : {})}
+      {...(footer !== undefined ? { footer } : {})}
+      {...(className !== undefined ? { className } : {})}
       contentClassName={cn('min-w-0', contentClassName)}
-      variant={variant}
+      {...(variant !== undefined ? { variant } : {})}
       isLoading={showPanelLoading}
-      loadingMessage={loadingMessage}
-      emptyState={emptyState}
+      {...(loadingMessage !== undefined ? { loadingMessage } : {})}
+      {...(emptyState !== undefined ? { emptyState } : {})}
     >
       <DataTable
         columns={columns}
         data={data}
         isLoading={showTableLoading}
-        emptyState={emptyState}
-        getRowId={getRowId}
-        getRowClassName={getRowClassName}
-        maxHeight={maxHeight}
-        stickyHeader={stickyHeader}
-        expanded={expanded}
-        onExpandedChange={onExpandedChange}
-        renderRowDetails={renderRowDetails}
+        {...(emptyState !== undefined ? { emptyState } : {})}
+        {...(getRowId !== undefined ? { getRowId: getRowId as (row: TData) => string | number } : {})}
+        {...(getRowClassName !== undefined ? { getRowClassName } : {})}
+        {...(maxHeight !== undefined ? { maxHeight } : {})}
+        {...(stickyHeader !== undefined ? { stickyHeader } : {})}
+        {...(expanded !== undefined ? { expanded } : {})}
+        {...(onExpandedChange !== undefined ? { onExpandedChange } : {})}
+        {...(renderRowDetails !== undefined ? { renderRowDetails } : {})}
       />
     </ListPanel>
   );

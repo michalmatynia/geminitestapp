@@ -1,4 +1,9 @@
 import type {
+  ClipboardDataDto,
+  PageBuilderSnapshotDto,
+  PageBuilderHistoryDto,
+} from '@/shared/contracts/cms';
+import type {
   PageSummary,
   Page,
   PageStatus,
@@ -11,11 +16,6 @@ import type {
   BlockInstance,
   SectionInstance
 } from '@/shared/types/domain/cms';
-import type {
-  ClipboardDataDto,
-  PageBuilderSnapshotDto,
-  PageBuilderHistoryDto,
-} from '@/shared/contracts/cms';
 
 export type {
   PageSummary,

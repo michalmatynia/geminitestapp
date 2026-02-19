@@ -151,7 +151,7 @@ export const createAiDescriptionPath = (id: string): PathConfig => {
       data: {},
       ...(node as Omit<AiNode, 'createdAt' | 'updatedAt' | 'data'>),
     }),
-  ) as AiNode[];
+  );
 
   const edges: Edge[] = [
     {

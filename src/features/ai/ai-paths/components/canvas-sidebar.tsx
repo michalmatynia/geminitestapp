@@ -506,10 +506,10 @@ export function CanvasSidebar(): React.JSX.Element {
             const fromNode = fromNodeId ? nodes.find((n) => n.id === fromNodeId) : null;
             const toNode = toNodeId ? nodes.find((n) => n.id === toNodeId) : null;
             const sourceOutputs = fromNodeId
-              ? (runtimeState.outputs?.[fromNodeId] as Record<string, unknown> | undefined)
+              ? (runtimeState.outputs?.[fromNodeId])
               : undefined;
             const targetInputs = toNodeId
-              ? (runtimeState.inputs?.[toNodeId] as Record<string, unknown> | undefined)
+              ? (runtimeState.inputs?.[toNodeId])
               : undefined;
             const sourceValue = selectedEdge
               ? readPortRuntimeValue(sourceOutputs, selectedEdge.fromPort)

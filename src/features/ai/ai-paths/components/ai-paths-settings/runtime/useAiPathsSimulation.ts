@@ -119,7 +119,7 @@ export function useAiPathsSimulation(args: SimulationArgs) {
         const nextOutputs = {
           ...(prev.outputs ?? {}),
           [simulationNode.id]: {
-            ...((prev.outputs?.[simulationNode.id] ?? {}) as Record<string, unknown>),
+            ...((prev.outputs?.[simulationNode.id] ?? {})),
             ...simulationOutputs,
           },
         };

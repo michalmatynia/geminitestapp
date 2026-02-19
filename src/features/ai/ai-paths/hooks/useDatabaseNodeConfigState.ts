@@ -550,7 +550,7 @@ export function useDatabaseNodeConfigState() {
   // Sync logic
   useEffect(() => {
     if (!isDatabaseSelected || !selectedNodeId) return;
-    const runtimeInputs = (runtimeState.inputs?.[selectedNodeId] ?? {}) as Record<string, unknown>;
+    const runtimeInputs = (runtimeState.inputs?.[selectedNodeId] ?? {});
     const detectedId = (runtimeInputs['entityId'] as string || runtimeInputs['productId'] as string || runtimeInputs['value'] as string)?.trim?.();
     if (!detectedId) return;
 

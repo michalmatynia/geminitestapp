@@ -3,7 +3,6 @@
 import { Trash2 } from 'lucide-react';
 import React from 'react';
 
-import { Separator } from '@/shared/ui';
 import {
   getSectionContainerClass,
   getSectionStyles,
@@ -34,6 +33,7 @@ import {
   buildScopedCustomCss,
   getCustomCssSelector,
 } from '@/features/cms/utils/custom-css';
+import { Separator } from '@/shared/ui';
 
 interface PreviewGridSectionProps {
   section: SectionInstance;

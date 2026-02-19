@@ -446,9 +446,9 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       ...(run.triggerEvent ? { triggerEvent: run.triggerEvent } : {}),
       ...(run.triggerContext ? { triggerContext: run.triggerContext } : {}),
       seedOutputs: runtimeState.outputs,
-      seedHashes: (runtimeState.hashes as Record<string, string> | undefined) ?? undefined,
+      seedHashes: (runtimeState.hashes) ?? undefined,
       seedHashTimestamps:
-        (runtimeState.hashTimestamps as Record<string, number> | undefined) ??
+        (runtimeState.hashTimestamps) ??
         undefined,
       seedHistory: runtimeState.history as Record<string, RuntimeHistoryEntry[]> | undefined,
       seedRunId: runtimeState.runId ?? undefined,

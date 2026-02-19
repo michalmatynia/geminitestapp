@@ -45,8 +45,8 @@ export function DatabaseAiPromptConnectionStatus({
   const hasValidConnection = aiNode && callbackEdges.length > 0;
 
   const callbackValue =
-    (runtimeState.inputs?.[selectedNodeId] as Record<string, unknown> | undefined)?.['queryCallback'] ??
-    (runtimeState.outputs?.[selectedNodeId] as Record<string, unknown> | undefined)?.['queryCallback'];
+    (runtimeState.inputs?.[selectedNodeId])?.['queryCallback'] ??
+    (runtimeState.outputs?.[selectedNodeId])?.['queryCallback'];
   const hasAiResponse = typeof callbackValue === 'string' && callbackValue.trim().length > 0;
 
   return (

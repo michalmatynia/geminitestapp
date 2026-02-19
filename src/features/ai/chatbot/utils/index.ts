@@ -230,11 +230,11 @@ export const buildAgentResultMessage = (
     if (items.length > 0) {
       const url: string | null = 
         typeof extractionAudit.metadata?.['url'] === 'string'
-          ? (extractionAudit.metadata['url'] as string)
+          ? (extractionAudit.metadata['url'])
           : null;
       const extractionType: string | null = 
         typeof extractionAudit.metadata?.['extractionType'] === 'string'
-          ? (extractionAudit.metadata['extractionType'] as string)
+          ? (extractionAudit.metadata['extractionType'])
           : null;
       const label: string = 
         extractionType === 'emails'
@@ -253,7 +253,7 @@ export const buildAgentResultMessage = (
   if (emptyAudit) {
     const url: string | null = 
       typeof emptyAudit.metadata?.['url'] === 'string'
-        ? (emptyAudit.metadata['url'] as string)
+        ? (emptyAudit.metadata['url'])
         : null;
     return `No information extracted${url ? ` from ${url}` : ''}.`;
   }
@@ -292,7 +292,7 @@ export const buildAgentResumeSummaryMessage = (audits: AgentAuditLog[]): string 
   }
   const summary: string = 
     typeof resumeAudit.metadata?.['summary'] === 'string'
-      ? (resumeAudit.metadata['summary'] as string).trim()
+      ? (resumeAudit.metadata['summary']).trim()
       : '';
   if (!summary) return null;
   return `Resume summary:\n${summary}`;
@@ -403,7 +403,7 @@ export const getLatestAdaptiveTrigger = (audits: AgentAuditLog[]): {
       return {
         id: audit.id,
         createdAt: audit.createdAt,
-        reason: typeof metadata?.['reason'] === 'string' ? (metadata['reason'] as string) : null,
+        reason: typeof metadata?.['reason'] === 'string' ? (metadata['reason']) : null,
         label,
       };
     })

@@ -1,5 +1,5 @@
-import type { CurrencyRecord } from '@/shared/types/domain/internationalization';
 import type { CreateCurrencyDto, UpdateCurrencyDto } from '@/shared/contracts/internationalization';
+import type { CurrencyRecord } from '@/shared/types/domain/internationalization';
 
 export type CurrencyRepository = {
   listCurrencies(): Promise<CurrencyRecord[]>;

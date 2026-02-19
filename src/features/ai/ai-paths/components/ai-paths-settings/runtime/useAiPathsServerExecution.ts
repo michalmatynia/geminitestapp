@@ -117,7 +117,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           if (data.type === 'run_events' && Array.isArray(data.events)) {
             const logEvents: AiPathRuntimeEvent[] = [];
             data.events.forEach((rawItem: unknown): void => {
-              const item = rawItem as unknown as AiPathRunEventRecordExtended;
+              const item = rawItem as AiPathRunEventRecordExtended;
               const nodeId = item.nodeId;
               const runId = item.runId;
               const status = args.normalizeNodeStatus(item.status);

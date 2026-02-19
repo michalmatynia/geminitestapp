@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
-import { Button } from '@/shared/ui';
 import {
   EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
 import type { CssAnimationConfig } from '@/features/cms/types/css-animations';
@@ -16,6 +15,7 @@ import {
   getCustomCssSelector,
 } from '@/features/cms/utils/custom-css';
 import type { GsapAnimationConfig } from '@/features/gsap';
+import { Button } from '@/shared/ui';
 
 import { CssAnimationWrapper } from '../frontend/CssAnimationWrapper';
 import { GsapAnimationWrapper } from '../frontend/GsapAnimationWrapper';

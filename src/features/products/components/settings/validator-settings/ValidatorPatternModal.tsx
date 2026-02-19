@@ -871,7 +871,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                 ...prev,
                 denyBehaviorOverride:
                   value === 'ask_again' || value === 'mute_session'
-                    ? (value as ProductValidationDenyBehavior)
+                    ? (value)
                     : 'inherit',
               }))
             }

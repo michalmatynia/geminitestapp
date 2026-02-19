@@ -8,15 +8,15 @@ import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
 import type { ProductImageSlot } from '@/features/products/types/products-ui';
-import {
-  flattenParams,
-  type ParamSpec,
-} from '../utils/prompt-params';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 
+import {
+  flattenParams,
+  type ParamSpec,
+} from '../utils/prompt-params';
 import {
   buildPromptDiffLines,
   type PromptDiffLine,

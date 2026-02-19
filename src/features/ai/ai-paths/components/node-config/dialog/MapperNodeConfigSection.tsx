@@ -93,7 +93,7 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
       ? selectedNode.outputs
       : ['value'];
   const runtimeInputs = runtimeState.inputs?.[selectedNode.id] ?? {};
-  const mapperSources = buildMapperSources(runtimeInputs as Record<string, unknown>);
+  const mapperSources = buildMapperSources(runtimeInputs);
   const contextInput = getMapperContextValue(mapperSources);
   const preview = contextInput !== null && contextInput !== undefined
     ? buildLivePreview(mapperSources, outputs, mapperConfig.mappings)

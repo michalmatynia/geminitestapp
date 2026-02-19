@@ -1,5 +1,5 @@
-import React from 'react';
 import { Upload } from 'lucide-react';
+import React from 'react';
 
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 import { Button, FileUploadTrigger } from '@/shared/ui';

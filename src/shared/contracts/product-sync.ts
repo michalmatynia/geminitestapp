@@ -17,8 +17,24 @@ export const productSyncAppFieldSchema = z.enum([
 ]);
 export type ProductSyncAppFieldDto = z.infer<typeof productSyncAppFieldSchema>;
 
+export const PRODUCT_SYNC_APP_FIELDS: ProductSyncAppFieldDto[] = [
+  'stock',
+  'price',
+  'name_en',
+  'description_en',
+  'sku',
+  'ean',
+  'weight',
+];
+
 export const productSyncDirectionSchema = z.enum(['disabled', 'base_to_app', 'app_to_base']);
 export type ProductSyncDirectionDto = z.infer<typeof productSyncDirectionSchema>;
+
+export const PRODUCT_SYNC_DIRECTION_OPTIONS: ProductSyncDirectionDto[] = [
+  'disabled',
+  'base_to_app',
+  'app_to_base',
+];
 
 export const productSyncConflictPolicySchema = z.enum(['skip']);
 export type ProductSyncConflictPolicyDto = z.infer<typeof productSyncConflictPolicySchema>;
@@ -30,6 +46,44 @@ export const productSyncFieldRuleSchema = z.object({
   direction: productSyncDirectionSchema,
 });
 export type ProductSyncFieldRuleDto = z.infer<typeof productSyncFieldRuleSchema>;
+
+export const DEFAULT_PRODUCT_SYNC_FIELD_RULES: Array<Omit<ProductSyncFieldRuleDto, 'id'>> = [
+  {
+    appField: 'stock',
+    baseField: 'stock',
+    direction: 'base_to_app',
+  },
+  {
+    appField: 'name_en',
+    baseField: 'text_fields.name',
+    direction: 'app_to_base',
+  },
+  {
+    appField: 'description_en',
+    baseField: 'text_fields.description',
+    direction: 'app_to_base',
+  },
+  {
+    appField: 'price',
+    baseField: 'prices.0',
+    direction: 'disabled',
+  },
+  {
+    appField: 'sku',
+    baseField: 'sku',
+    direction: 'disabled',
+  },
+  {
+    appField: 'ean',
+    baseField: 'ean',
+    direction: 'disabled',
+  },
+  {
+    appField: 'weight',
+    baseField: 'weight',
+    direction: 'disabled',
+  },
+];
 
 export const productSyncProfileSchema = namedDtoSchema.extend({
   enabled: z.boolean(),

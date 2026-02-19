@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
+import { PROMPT_EXPLODER_PATTERN_PACK } from '@/features/prompt-exploder/pattern-pack';
 import type { PromptExploderSegment } from '@/features/prompt-exploder/types';
-import { extractCaseResolverBridgePayloadFromSegments } from '@/features/prompt-exploder/utils/case-resolver-extraction';
+import {
+  buildCaseResolverSegmentCaptureRules,
+  extractCaseResolverBridgePayloadFromSegments,
+} from '@/features/prompt-exploder/utils/case-resolver-extraction';
 
 
 const createSegment = (input: {
@@ -33,6 +37,11 @@ const createSegment = (input: {
 });
 
 describe('case resolver extraction bridge payload', () => {
+  const captureRules = buildCaseResolverSegmentCaptureRules(
+    PROMPT_EXPLODER_PATTERN_PACK,
+    'case_resolver_prompt_exploder'
+  );
+
   it('extracts parties and place/date metadata from case resolver segments', () => {
     const segments: PromptExploderSegment[] = [
       createSegment({
@@ -78,7 +87,10 @@ describe('case resolver extraction bridge payload', () => {
       }),
     ];
 
-    const payload = extractCaseResolverBridgePayloadFromSegments(segments);
+    const payload = extractCaseResolverBridgePayloadFromSegments(segments, {
+      captureRules,
+      mode: 'rules_only',
+    });
 
     expect(payload.parties?.addresser?.displayName).toBe('Michał Matynia');
     expect(payload.parties?.addresser?.kind).toBe('person');
@@ -111,7 +123,7 @@ describe('case resolver extraction bridge payload', () => {
     });
   });
 
-  it('falls back to line heuristics when pattern ids are unavailable', () => {
+  it('does not apply hidden extraction when explicit capture rules are missing', () => {
     const segments: PromptExploderSegment[] = [
       createSegment({
         id: 'heuristic-place-date',
@@ -127,7 +139,35 @@ describe('case resolver extraction bridge payload', () => {
       }),
     ];
 
-    const payload = extractCaseResolverBridgePayloadFromSegments(segments);
+    const payload = extractCaseResolverBridgePayloadFromSegments(segments, {
+      captureRules: [],
+      mode: 'rules_only',
+    });
+
+    expect(payload.parties).toBeUndefined();
+    expect(payload.metadata).toBeUndefined();
+  });
+
+  it('allows optional heuristic fallback only when explicitly enabled', () => {
+    const segments: PromptExploderSegment[] = [
+      createSegment({
+        id: 'heuristic-place-date',
+        raw: 'Szczecin 25.01.2026',
+      }),
+      createSegment({
+        id: 'heuristic-addresser',
+        raw: 'Michał Matynia\nFioletowa 71/2\n70-781 Szczecin\nPolska',
+      }),
+      createSegment({
+        id: 'heuristic-addressee',
+        raw: 'Inspektorat ZUS w Gryficach\nDąbskiego 5\n72-300 Gryfice',
+      }),
+    ];
+
+    const payload = extractCaseResolverBridgePayloadFromSegments(segments, {
+      captureRules: [],
+      mode: 'rules_with_heuristics',
+    });
 
     expect(payload.parties?.addresser?.displayName).toBe('Michał Matynia');
     expect(payload.parties?.addressee?.displayName).toBe('Inspektorat ZUS w Gryficach');

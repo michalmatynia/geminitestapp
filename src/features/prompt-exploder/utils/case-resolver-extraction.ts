@@ -1,6 +1,7 @@
 'use client';
 
 import type { PromptValidationRule } from '@/features/prompt-engine/settings';
+import { readRegexCaptureGroup } from '@/features/prompt-exploder/helpers/capture';
 
 import type {
   PromptExploderCaseResolverMetadata,
@@ -66,6 +67,10 @@ export type CaseResolverSegmentCaptureRule = {
   overwrite: boolean;
   sequence: number;
 };
+
+export type PromptExploderCaseResolverExtractionMode =
+  | 'rules_only'
+  | 'rules_with_heuristics';
 
 // --- Utilities ---
 
@@ -350,8 +355,322 @@ const resolvePlaceDateMetadata = (
   };
 };
 
+type CaseResolverPartyDraft = Partial<PromptExploderCaseResolverPartyCandidate> & {
+  role: PromptExploderCaseResolverPartyRole;
+  sourceSegmentId?: string;
+  sourceSegmentTitle?: string;
+  sourcePatternLabels?: string[];
+  sourceSequenceLabels?: string[];
+};
+
+type CaseResolverRuleExtractionDraft = {
+  parties: Partial<Record<PromptExploderCaseResolverPartyRole, CaseResolverPartyDraft>>;
+  metadata: PromptExploderCaseResolverMetadata;
+};
+
+const inferSegmentRoleHint = (
+  segment: PromptExploderSegment
+): PromptExploderCaseResolverPartyRole | null => {
+  if (
+    hasPatternId(segment, 'segment.case_resolver.heading.addresser_person') ||
+    hasPatternPrefix(segment, 'segment.case_resolver.extract.addresser.')
+  ) {
+    return 'addresser';
+  }
+  if (
+    hasPatternId(segment, 'segment.case_resolver.heading.addressee_organization') ||
+    hasPatternPrefix(segment, 'segment.case_resolver.extract.addressee.')
+  ) {
+    return 'addressee';
+  }
+  return null;
+};
+
+const normalizeCapturedValue = (
+  value: string,
+  normalize: CaseResolverSegmentCaptureRule['normalize']
+): string => {
+  const base = normalizeText(value);
+  if (!base) return '';
+  if (normalize === 'lower') return base.toLowerCase();
+  if (normalize === 'upper') return base.toUpperCase();
+  if (normalize === 'country') return normalizeCountryName(base);
+  if (normalize === 'day' || normalize === 'month') return padNumberValue(base);
+  if (normalize === 'year') {
+    if (base.length === 2) return `20${base}`;
+    return base;
+  }
+  return base;
+};
+
+const ensurePartyDraft = (
+  draft: CaseResolverRuleExtractionDraft,
+  role: PromptExploderCaseResolverPartyRole,
+  segment: PromptExploderSegment
+): CaseResolverPartyDraft => {
+  const existing = draft.parties[role];
+  if (existing) return existing;
+  const next: CaseResolverPartyDraft = {
+    role,
+    rawText: normalizeText(segment.raw || segment.text || '') || undefined,
+    sourceSegmentId: segment.id,
+    sourceSegmentTitle: resolveSegmentDisplayLabel(segment),
+    sourcePatternLabels: normalizeSegmentLabels(segment.matchedPatternLabels),
+    sourceSequenceLabels: normalizeSegmentLabels(segment.matchedSequenceLabels),
+  };
+  draft.parties[role] = next;
+  return next;
+};
+
+const setPartyField = (
+  party: CaseResolverPartyDraft,
+  field: CaseResolverCaptureField,
+  value: string,
+  overwrite: boolean
+): void => {
+  const assign = <K extends keyof CaseResolverPartyDraft>(
+    key: K,
+    nextValue: CaseResolverPartyDraft[K]
+  ): void => {
+    const current = party[key];
+    if (!overwrite && typeof current === 'string' && current.trim().length > 0) return;
+    party[key] = nextValue;
+  };
+
+  if (field === 'kind') {
+    const normalized = value === 'organization' ? 'organization' : value === 'person' ? 'person' : null;
+    if (!normalized) return;
+    assign('kind', normalized);
+    return;
+  }
+  if (field === 'displayName' || field === 'name') {
+    assign('displayName', value);
+    return;
+  }
+  if (field === 'organizationName' || field === 'companyName') {
+    assign('organizationName', value);
+    return;
+  }
+  if (field === 'firstName') {
+    assign('firstName', value);
+    return;
+  }
+  if (field === 'middleName') {
+    assign('middleName', value);
+    return;
+  }
+  if (field === 'lastName') {
+    assign('lastName', value);
+    return;
+  }
+  if (field === 'street') {
+    assign('street', value);
+    return;
+  }
+  if (field === 'streetNumber') {
+    assign('streetNumber', value);
+    return;
+  }
+  if (field === 'houseNumber') {
+    assign('houseNumber', value);
+    return;
+  }
+  if (field === 'city') {
+    assign('city', value);
+    return;
+  }
+  if (field === 'postalCode') {
+    assign('postalCode', value);
+    return;
+  }
+  if (field === 'country') {
+    assign('country', value);
+  }
+};
+
+const setMetadataField = (
+  metadata: PromptExploderCaseResolverMetadata,
+  field: CaseResolverCaptureField,
+  value: string,
+  overwrite: boolean,
+  segment: PromptExploderSegment
+): void => {
+  const current = metadata.placeDate ?? {
+    sourceSegmentId: segment.id,
+    sourceSegmentTitle: resolveSegmentDisplayLabel(segment),
+    sourcePatternLabels: normalizeSegmentLabels(segment.matchedPatternLabels),
+    sourceSequenceLabels: normalizeSegmentLabels(segment.matchedSequenceLabels),
+  };
+  const assign = (key: 'city' | 'day' | 'month' | 'year', nextValue: string): void => {
+    const existing = current[key];
+    if (!overwrite && typeof existing === 'string' && existing.trim().length > 0) return;
+    current[key] = nextValue || undefined;
+  };
+
+  if (field === 'city') assign('city', value);
+  if (field === 'day') assign('day', value);
+  if (field === 'month') assign('month', value);
+  if (field === 'year') assign('year', value);
+  metadata.placeDate = current;
+};
+
+const applyCaptureRulesToSegments = (args: {
+  segments: PromptExploderSegment[];
+  captureRules: CaseResolverSegmentCaptureRule[];
+}): CaseResolverRuleExtractionDraft => {
+  const draft: CaseResolverRuleExtractionDraft = {
+    parties: {},
+    metadata: {},
+  };
+  if (args.captureRules.length === 0) return draft;
+
+  args.segments.forEach((segment: PromptExploderSegment): void => {
+    const roleHint = inferSegmentRoleHint(segment);
+    const sourceText = segment.raw || segment.text || '';
+    const sourceLines = splitSegmentLines(segment);
+
+    args.captureRules.forEach((rule: CaseResolverSegmentCaptureRule): void => {
+      if (
+        (rule.role === 'addresser' || rule.role === 'addressee') &&
+        roleHint &&
+        roleHint !== rule.role
+      ) {
+        return;
+      }
+      const captureSources = rule.applyTo === 'line' ? sourceLines : [sourceText];
+      if (captureSources.length === 0) return;
+      const regex = new RegExp(rule.regex.source, rule.regex.flags);
+
+      for (const captureSource of captureSources) {
+        const match = regex.exec(captureSource);
+        if (!match) continue;
+        const rawCapture = readRegexCaptureGroup(match, rule.group);
+        const normalizedCapture = normalizeCapturedValue(rawCapture, rule.normalize);
+        if (!normalizedCapture) continue;
+
+        if (rule.role === 'place_date') {
+          setMetadataField(
+            draft.metadata,
+            rule.field,
+            normalizedCapture,
+            rule.overwrite,
+            segment
+          );
+          break;
+        }
+
+        const targetRoles: PromptExploderCaseResolverPartyRole[] =
+          rule.role === 'party'
+            ? roleHint
+              ? [roleHint]
+              : []
+            : [rule.role];
+        if (targetRoles.length === 0) continue;
+
+        targetRoles.forEach((role: PromptExploderCaseResolverPartyRole): void => {
+          const partyDraft = ensurePartyDraft(draft, role, segment);
+          setPartyField(partyDraft, rule.field, normalizedCapture, rule.overwrite);
+        });
+        break;
+      }
+    });
+  });
+
+  return draft;
+};
+
+const toPartyCandidateFromDraft = (
+  draft: CaseResolverPartyDraft | null | undefined
+): PromptExploderCaseResolverPartyCandidate | null => {
+  if (!draft) return null;
+  const firstName = normalizeText(draft.firstName ?? '');
+  const middleName = normalizeText(draft.middleName ?? '');
+  const lastName = normalizeText(draft.lastName ?? '');
+  const organizationName = normalizeText(draft.organizationName ?? '');
+  const explicitDisplayName = normalizeText(draft.displayName ?? '');
+  const nameFromParts = [firstName, middleName, lastName].filter(Boolean).join(' ');
+  const displayName = explicitDisplayName || organizationName || nameFromParts;
+  const rawText = normalizeText(draft.rawText ?? '');
+  if (!displayName && !rawText) return null;
+
+  const candidate: PromptExploderCaseResolverPartyCandidate = {
+    role: draft.role,
+    displayName: displayName || rawText,
+    rawText: rawText || displayName,
+    sourceSegmentId: draft.sourceSegmentId,
+    sourceSegmentTitle: draft.sourceSegmentTitle,
+    sourcePatternLabels: draft.sourcePatternLabels,
+    sourceSequenceLabels: draft.sourceSequenceLabels,
+  };
+  if (firstName) candidate.firstName = firstName;
+  if (middleName) candidate.middleName = middleName;
+  if (lastName) candidate.lastName = lastName;
+  if (organizationName) candidate.organizationName = organizationName;
+  if (draft.street) candidate.street = draft.street;
+  if (draft.streetNumber) candidate.streetNumber = draft.streetNumber;
+  if (draft.houseNumber) candidate.houseNumber = draft.houseNumber;
+  if (draft.city) candidate.city = draft.city;
+  if (draft.postalCode) candidate.postalCode = draft.postalCode;
+  if (draft.country) candidate.country = draft.country;
+  if (draft.kind === 'person' || draft.kind === 'organization') {
+    candidate.kind = draft.kind;
+  } else if (organizationName) {
+    candidate.kind = 'organization';
+  } else if (firstName || lastName) {
+    candidate.kind = 'person';
+  }
+
+  return candidate;
+};
+
+const mergePartyCandidates = (
+  primary: PromptExploderCaseResolverPartyCandidate | null,
+  fallback: PromptExploderCaseResolverPartyCandidate | null
+): PromptExploderCaseResolverPartyCandidate | null => {
+  if (!primary) return fallback;
+  if (!fallback) return primary;
+  return {
+    ...fallback,
+    ...primary,
+    role: primary.role,
+    sourcePatternLabels:
+      primary.sourcePatternLabels && primary.sourcePatternLabels.length > 0
+        ? primary.sourcePatternLabels
+        : fallback.sourcePatternLabels,
+    sourceSequenceLabels:
+      primary.sourceSequenceLabels && primary.sourceSequenceLabels.length > 0
+        ? primary.sourceSequenceLabels
+        : fallback.sourceSequenceLabels,
+  };
+};
+
+const mergeMetadata = (
+  primary: PromptExploderCaseResolverMetadata | null,
+  fallback: PromptExploderCaseResolverMetadata | null
+): PromptExploderCaseResolverMetadata | null => {
+  if (!primary) return fallback;
+  if (!fallback) return primary;
+  const mergedPlaceDate = {
+    ...(fallback.placeDate ?? {}),
+    ...(primary.placeDate ?? {}),
+  };
+  if (
+    !mergedPlaceDate.city &&
+    !mergedPlaceDate.day &&
+    !mergedPlaceDate.month &&
+    !mergedPlaceDate.year
+  ) {
+    return null;
+  }
+  return { placeDate: mergedPlaceDate };
+};
+
 export const extractCaseResolverBridgePayloadFromSegments = (
-  segments: PromptExploderSegment[] | null | undefined
+  segments: PromptExploderSegment[] | null | undefined,
+  options?: {
+    captureRules?: CaseResolverSegmentCaptureRule[] | null | undefined;
+    mode?: PromptExploderCaseResolverExtractionMode | null | undefined;
+  }
 ): {
   parties?: PromptExploderCaseResolverPartyBundle;
   metadata?: PromptExploderCaseResolverMetadata;
@@ -360,17 +679,48 @@ export const extractCaseResolverBridgePayloadFromSegments = (
     return {};
   }
 
-  const usedSegmentIds = new Set<string>();
-  const addresserSegment = resolvePartySegment(segments, 'addresser', usedSegmentIds);
-  const addresseeSegment = resolvePartySegment(segments, 'addressee', usedSegmentIds);
+  const mode: PromptExploderCaseResolverExtractionMode =
+    options?.mode === 'rules_with_heuristics' ? 'rules_with_heuristics' : 'rules_only';
+  const captureRules = (options?.captureRules ?? []).slice();
+  const ruleDraft = applyCaptureRulesToSegments({
+    segments,
+    captureRules,
+  });
 
-  const addresser = addresserSegment
-    ? buildPartyCandidateFromSegment(addresserSegment, 'addresser')
+  const ruleAddresser = toPartyCandidateFromDraft(ruleDraft.parties.addresser ?? null);
+  const ruleAddressee = toPartyCandidateFromDraft(ruleDraft.parties.addressee ?? null);
+  const ruleMetadata = ruleDraft.metadata.placeDate ? ruleDraft.metadata : null;
+
+  const shouldUseHeuristics = mode === 'rules_with_heuristics';
+  const heuristicPayload = shouldUseHeuristics
+    ? (() => {
+      const usedSegmentIds = new Set<string>();
+      const addresserSegment = resolvePartySegment(segments, 'addresser', usedSegmentIds);
+      const addresseeSegment = resolvePartySegment(segments, 'addressee', usedSegmentIds);
+      return {
+        addresser: addresserSegment
+          ? buildPartyCandidateFromSegment(addresserSegment, 'addresser')
+          : null,
+        addressee: addresseeSegment
+          ? buildPartyCandidateFromSegment(addresseeSegment, 'addressee')
+          : null,
+        metadata: resolvePlaceDateMetadata(segments),
+      };
+    })()
     : null;
-  const addressee = addresseeSegment
-    ? buildPartyCandidateFromSegment(addresseeSegment, 'addressee')
-    : null;
-  const metadata = resolvePlaceDateMetadata(segments);
+
+  const addresser = mergePartyCandidates(
+    ruleAddresser,
+    heuristicPayload?.addresser ?? null
+  );
+  const addressee = mergePartyCandidates(
+    ruleAddressee,
+    heuristicPayload?.addressee ?? null
+  );
+  const metadata = mergeMetadata(
+    ruleMetadata,
+    heuristicPayload?.metadata ?? null
+  );
 
   const parties: PromptExploderCaseResolverPartyBundle | undefined =
     addresser || addressee

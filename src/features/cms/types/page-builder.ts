@@ -2,6 +2,7 @@ import type {
   ClipboardDataDto,
   PageBuilderSnapshotDto,
   PageBuilderHistoryDto,
+  CmsInspectorSettingsDto,
 } from '@/shared/contracts/cms';
 import type {
   PageSummary,
@@ -41,15 +42,7 @@ export type PageBuilderSnapshot = PageBuilderSnapshotDto;
 
 export type PageBuilderHistory = PageBuilderHistoryDto;
 
-export interface InspectorSettings {
-  showTooltip: boolean;
-  showStyleSettings: boolean;
-  showStructureInfo: boolean;
-  showIdentifiers: boolean;
-  showVisibilityInfo: boolean;
-  showConnectionInfo: boolean;
-  showEditorChrome: boolean;
-}
+export type InspectorSettings = CmsInspectorSettingsDto;
 
 export const DEFAULT_INSPECTOR_SETTINGS: InspectorSettings = {
   showTooltip: true,

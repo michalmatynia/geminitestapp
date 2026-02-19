@@ -15,9 +15,8 @@ import {
   SearchInput, 
   FormSection, 
   FormField, 
-  ListPanel,
+  StandardDataTablePanel,
   PanelHeader,
-  DataTable,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -254,7 +253,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
           </div>
         </FormSection>
 
-        <ListPanel
+        <StandardDataTablePanel
           filters={
             <div className='max-w-md'>
               <SearchInput
@@ -266,18 +265,15 @@ export function AdminNotesTagsPage(): React.JSX.Element {
               />
             </div>
           }
-        >
-          <DataTable
-            columns={columns}
-            data={filteredTags}
-            isLoading={loading}
-            emptyState={
-              <div className='py-12 text-center text-sm text-gray-500'>
-                {searchQuery ? 'No tags found matching your search.' : 'No tags created yet.'}
-              </div>
-            }
-          />
-        </ListPanel>
+          columns={columns}
+          data={filteredTags}
+          isLoading={loading}
+          emptyState={
+            <div className='py-12 text-center text-sm text-gray-500'>
+              {searchQuery ? 'No tags found matching your search.' : 'No tags created yet.'}
+            </div>
+          }
+        />
       </div>
 
       <ConfirmModal

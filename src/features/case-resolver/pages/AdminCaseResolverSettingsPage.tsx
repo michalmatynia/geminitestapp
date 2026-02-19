@@ -17,6 +17,7 @@ import {
   CASE_RESOLVER_CONFIRM_DELETE_OPTIONS,
   CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY,
   CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_OPTIONS,
+  CASE_RESOLVER_PARTY_SEARCH_KIND_OPTIONS,
   CASE_RESOLVER_SETTINGS_KEY,
   parseCaseResolverDefaultDocumentFormat,
   parseCaseResolverSettings,
@@ -166,6 +167,8 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
       ocrPrompt: draft.ocrPrompt.trim(),
       defaultDocumentFormat: 'wysiwyg',
       confirmDeleteDocument: draft.confirmDeleteDocument !== false,
+      defaultAddresserPartyKind: draft.defaultAddresserPartyKind,
+      defaultAddresseePartyKind: draft.defaultAddresseePartyKind,
     };
 
     try {
@@ -373,6 +376,48 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
               }}
               options={CASE_RESOLVER_CONFIRM_DELETE_OPTIONS}
               placeholder='Choose confirmation behavior'
+            />
+          </FormField>
+          <FormField
+            label='Default Addresser Lookup'
+            description='Choose whether addresser dropdown starts in Persons or Organizations mode.'
+          >
+            <SelectSimple
+              value={draft.defaultAddresserPartyKind}
+              onValueChange={(value: string): void => {
+                if (value !== 'person' && value !== 'organization') return;
+                setDraft((previous: CaseResolverSettings | null) =>
+                  previous
+                    ? {
+                      ...previous,
+                      defaultAddresserPartyKind: value,
+                    }
+                    : previous
+                );
+              }}
+              options={CASE_RESOLVER_PARTY_SEARCH_KIND_OPTIONS}
+              placeholder='Choose default addresser lookup'
+            />
+          </FormField>
+          <FormField
+            label='Default Addressee Lookup'
+            description='Choose whether addressee dropdown starts in Persons or Organizations mode.'
+          >
+            <SelectSimple
+              value={draft.defaultAddresseePartyKind}
+              onValueChange={(value: string): void => {
+                if (value !== 'person' && value !== 'organization') return;
+                setDraft((previous: CaseResolverSettings | null) =>
+                  previous
+                    ? {
+                      ...previous,
+                      defaultAddresseePartyKind: value,
+                    }
+                    : previous
+                );
+              }}
+              options={CASE_RESOLVER_PARTY_SEARCH_KIND_OPTIONS}
+              placeholder='Choose default addressee lookup'
             />
           </FormField>
         </div>

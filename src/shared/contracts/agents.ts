@@ -58,6 +58,15 @@ export const agentPersonaSchema = namedDtoSchema.extend({
 
 export type AgentPersonaDto = z.infer<typeof agentPersonaSchema>;
 
+export const createAgentPersonaSchema = agentPersonaSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CreateAgentPersonaDto = z.infer<typeof createAgentPersonaSchema>;
+export type UpdateAgentPersonaDto = Partial<CreateAgentPersonaDto>;
+
 export const executeAgentSchema = z.object({
   agentId: z.string(),
   input: z.record(z.string(), z.unknown()),

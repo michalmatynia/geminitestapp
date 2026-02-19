@@ -6,10 +6,9 @@ export type {
   AuthSecurityPolicyDto as AuthSecurityPolicy,
   AuthPermissionDto as AuthPermission,
   AuthRoleDto as AuthRole,
+  AuthUserRoleMapDto as AuthUserRoleMap,
   CreateUserDto,
   UpdateUserDto,
   LoginDto,
   RegisterDto
 } from '@/shared/contracts/auth';
-
-export type AuthUserRoleMap = Record<string, string>;

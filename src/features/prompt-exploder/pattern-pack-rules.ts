@@ -13,36 +13,45 @@ import type { PromptExploderRuntimeValidationScope } from './validation-stack';
 const PROMPT_EXPLODER_SCOPE = ['prompt_exploder'] as const;
 const CASE_RESOLVER_PROMPT_EXPLODER_SCOPE = ['case_resolver_prompt_exploder'] as const;
 
+const isCaseResolverExploderScope = (scope: string | null | undefined): boolean =>
+  scope === 'case-resolver-prompt-exploder' || scope === 'case_resolver_prompt_exploder';
+
 const normalizeRuleScopes = (
   scopes: readonly PromptValidationScope[] | null | undefined,
-  fallbackScope: PromptExploderRuntimeValidationScope
+  fallbackScope: PromptExploderRuntimeValidationScope | 'case_resolver_prompt_exploder'
 ): PromptValidationScope[] => {
   if (Array.isArray(scopes) && scopes.length > 0) {
     return [...new Set(scopes)] as PromptValidationScope[];
   }
-  const activeRuleScope = fallbackScope === 'case-resolver-prompt-exploder' ? 'case_resolver_prompt_exploder' : 'prompt_exploder';
+  const activeRuleScope = isCaseResolverExploderScope(fallbackScope)
+    ? 'case_resolver_prompt_exploder'
+    : 'prompt_exploder';
   return [activeRuleScope as any] as PromptValidationScope[];
 };
 
 export const includesScope = (
   scopes: readonly PromptValidationScope[] | null | undefined,
-  scope: PromptExploderRuntimeValidationScope
+  scope: PromptExploderRuntimeValidationScope | 'case_resolver_prompt_exploder'
 ): boolean => {
   if (!Array.isArray(scopes) || scopes.length === 0) return true;
-  const activeRuleScope = scope === 'case-resolver-prompt-exploder' ? 'case_resolver_prompt_exploder' : 'prompt_exploder';
+  const activeRuleScope = isCaseResolverExploderScope(scope)
+    ? 'case_resolver_prompt_exploder'
+    : 'prompt_exploder';
   return scopes.includes(activeRuleScope as any) || scopes.includes('global');
 };
 
 export const remapExploderScopesForTarget = (
   scopes: readonly PromptValidationScope[] | null | undefined,
-  targetScope: PromptExploderRuntimeValidationScope
+  targetScope: PromptExploderRuntimeValidationScope | 'case_resolver_prompt_exploder'
 ): PromptValidationScope[] => {
   const normalizedScopes = normalizeRuleScopes(scopes, targetScope);
   if (includesScope(normalizedScopes, targetScope)) {
     return normalizedScopes;
   }
 
-  const activeRuleScope = targetScope === 'case-resolver-prompt-exploder' ? 'case_resolver_prompt_exploder' : 'prompt_exploder';
+  const activeRuleScope = isCaseResolverExploderScope(targetScope)
+    ? 'case_resolver_prompt_exploder'
+    : 'prompt_exploder';
 
   const remapped = normalizedScopes.map((scope) => {
     if (scope === 'prompt_exploder' || scope === 'case_resolver_prompt_exploder') {

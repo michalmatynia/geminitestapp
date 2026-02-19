@@ -11,10 +11,10 @@ import {
   IMAGE_STUDIO_UPSCALE_MAX_SCALE,
   imageStudioUpscaleRequestSchema,
   type ImageStudioUpscaleErrorCode,
-  type ImageStudioUpscaleMode,
-  type ImageStudioUpscaleRequest,
-  type ImageStudioUpscaleStrategy,
-  type ImageStudioUpscaleSmoothingQuality,
+  type ImageStudioUpscaleModeDto as ImageStudioUpscaleMode,
+  type ImageStudioUpscaleRequestDto as ImageStudioUpscaleRequest,
+  type ImageStudioUpscaleStrategyDto as ImageStudioUpscaleStrategy,
+  type ImageStudioUpscaleSmoothingQualityDto as ImageStudioUpscaleSmoothingQuality,
 } from '@/features/ai/image-studio/contracts/upscale';
 import {
   getImageStudioSlotLinkBySourceAndRelation,

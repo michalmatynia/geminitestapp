@@ -381,7 +381,7 @@ Z poważaniem,`;
     expect(uzasadnienieBody.startsWith('Uzasadnienie')).toBe(false);
   });
 
-  it('applies structural fallback segmentation for case resolver prompts without runtime heading rules', () => {
+  it('does not apply hidden structural fallback segmentation without matching heading rules', () => {
     const prompt = `Szczecin 25.01.2026
 Michał Matynia
 Fioletowa 71/2
@@ -422,25 +422,14 @@ Z poważaniem,`;
       validationScope: 'case_resolver_prompt_exploder',
     });
 
-    expect(document.segments.length).toBeGreaterThan(3);
-    const dotyczySegment = document.segments.find((segment) =>
-      (segment.raw || segment.text).includes('Dotyczy: postępowanie administracyjne')
-    );
-    const bodySegment = document.segments.find((segment) =>
-      (segment.raw || segment.text).includes('Niniejszym wnoszę o umorzenie')
-    );
-    const uzasadnienieSegment = document.segments.find((segment) =>
-      (segment.raw || segment.text).includes('Przez kilka lat nie nastąpiło skuteczne')
-    );
-    const closingSegment = document.segments.find((segment) =>
-      (segment.raw || segment.text).includes('Na zakończenie, na podstawie art. 73 § 1 KPA')
-    );
-    expect(dotyczySegment).toBeDefined();
-    expect(bodySegment).toBeDefined();
-    expect(uzasadnienieSegment).toBeDefined();
-    expect(closingSegment).toBeDefined();
-    expect(dotyczySegment?.id).not.toBe(bodySegment?.id);
-    expect(bodySegment?.id).not.toBe(uzasadnienieSegment?.id);
-    expect(uzasadnienieSegment?.id).not.toBe(closingSegment?.id);
+    expect(document.segments).toHaveLength(1);
+    const mergedSegment = document.segments[0];
+    expect(mergedSegment).toBeDefined();
+    expect(mergedSegment?.matchedSequenceLabels).not.toContain('Case Resolver Structure');
+    const mergedText = mergedSegment?.raw || mergedSegment?.text || '';
+    expect(mergedText).toContain('Dotyczy: postępowanie administracyjne');
+    expect(mergedText).toContain('Niniejszym wnoszę o umorzenie');
+    expect(mergedText).toContain('Przez kilka lat nie nastąpiło skuteczne');
+    expect(mergedText).toContain('Na zakończenie, na podstawie art. 73 § 1 KPA');
   });
 });

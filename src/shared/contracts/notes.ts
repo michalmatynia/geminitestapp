@@ -137,7 +137,7 @@ export interface NoteCategoryWithChildrenDto extends NoteCategoryDto {
 }
 
 export const noteCategoryWithChildrenSchema: z.ZodType<NoteCategoryWithChildrenDto> = noteCategorySchema.extend({
-  children: z.lazy(() => z.array(noteCategoryWithChildrenSchema)),
+  children: z.array(z.lazy(() => noteCategoryWithChildrenSchema)),
 });
 
 /**
@@ -152,7 +152,7 @@ export interface NoteCategoryRecordWithChildrenDto extends NoteCategoryDto {
 }
 
 export const noteCategoryRecordWithChildrenSchema: z.ZodType<NoteCategoryRecordWithChildrenDto> = noteCategorySchema.extend({
-  children: z.lazy(() => z.array(noteCategoryRecordWithChildrenSchema)),
+  children: z.array(z.lazy(() => noteCategoryRecordWithChildrenSchema)),
   notes: z.array(noteSchema).optional(),
   _count: z.object({
     notes: z.number(),

@@ -10,9 +10,8 @@ import {
 import React, { useMemo, useState } from 'react';
 
 import { 
-  DataTable, 
+  StandardDataTablePanel, 
   SelectSimple, 
-  ListPanel, 
   StatusBadge,
   useToast,
   PanelHeader,
@@ -191,8 +190,11 @@ export default function AuthUsersPage(): React.JSX.Element {
         ]}
       />
 
-      <ListPanel
+      <StandardDataTablePanel
         variant='default'
+        columns={columns}
+        data={filteredUsers}
+        isLoading={isLoading}
         filters={
           <div className='flex items-center gap-4'>
             <div className='flex-1 max-w-sm'>
@@ -209,19 +211,13 @@ export default function AuthUsersPage(): React.JSX.Element {
             )}
           </div>
         }
-      >
-        <DataTable
-          columns={columns}
-          data={filteredUsers}
-          isLoading={isLoading}
-          emptyState={
-            <EmptyState
-              title={search ? 'No users found' : 'Directory empty'}
-              description={search ? 'Try adjusting your search terms.' : 'No users have been provisioned in the current directory.'}
-            />
-          }
-        />
-      </ListPanel>
+        emptyState={
+          <EmptyState
+            title={search ? 'No users found' : 'Directory empty'}
+            description={search ? 'Try adjusting your search terms.' : 'No users have been provisioned in the current directory.'}
+          />
+        }
+      />
 
       <UserEditModal
         isOpen={Boolean(editingUser)}

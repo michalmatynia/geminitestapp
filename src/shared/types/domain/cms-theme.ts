@@ -1,25 +1,17 @@
 import type {
-  CmsThemeDto,
-  CreateCmsThemeDto,
-  UpdateCmsThemeDto,
-  CmsThemeColorsDto,
-  CmsThemeTypographyDto,
-  CmsThemeSpacingDto,
+  ColorSchemeColorsDto,
+  ColorSchemeDto,
+  ThemeSettingsDto,
 } from '../../contracts/cms-theme';
 
 export type {
-  CmsThemeDto,
-  CreateCmsThemeDto,
-  UpdateCmsThemeDto,
-  CmsThemeColorsDto,
-  CmsThemeTypographyDto,
-  CmsThemeSpacingDto,
+  ColorSchemeColorsDto,
+  ColorSchemeDto,
+  ThemeSettingsDto,
 };
 
-export type CmsTheme = CmsThemeDto;
+export type ColorSchemeColors = ColorSchemeColorsDto;
 
-export type CmsThemeColors = CmsThemeColorsDto;
+export type ColorScheme = ColorSchemeDto;
 
-export type CmsThemeTypography = CmsThemeTypographyDto;
-
-export type CmsThemeSpacing = CmsThemeSpacingDto;
+export type ThemeSettings = ThemeSettingsDto;

@@ -20,9 +20,35 @@ describe('imageStudioCenterRequestSchema', () => {
     expect(parsed.success).toBe(true);
   });
 
+  it('accepts an object layouting payload with layout config', () => {
+    const parsed = imageStudioCenterRequestSchema.safeParse({
+      mode: 'server_object_layout_v1',
+      requestId: 'center_request_layout_1234',
+      layout: {
+        paddingPercent: 12.5,
+        paddingXPercent: 10,
+        paddingYPercent: 15,
+        whiteThreshold: 20,
+        chromaThreshold: 9,
+        detection: 'white_bg_first_colored_pixel',
+      },
+    });
+    expect(parsed.success).toBe(true);
+  });
+
   it('rejects unknown centering mode', () => {
     const parsed = imageStudioCenterRequestSchema.safeParse({
       mode: 'server_bbox',
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it('rejects invalid layout padding', () => {
+    const parsed = imageStudioCenterRequestSchema.safeParse({
+      mode: 'server_object_layout_v1',
+      layout: {
+        paddingXPercent: 75,
+      },
     });
     expect(parsed.success).toBe(false);
   });

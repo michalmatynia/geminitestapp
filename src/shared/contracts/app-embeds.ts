@@ -5,8 +5,11 @@ import { namedDtoSchema } from './base';
 /**
  * App Embed Contract
  */
+export const appEmbedTypeSchema = z.enum(['iframe', 'widget', 'script']);
+export type AppEmbedTypeDto = z.infer<typeof appEmbedTypeSchema>;
+
 export const appEmbedSchema = namedDtoSchema.extend({
-  type: z.enum(['iframe', 'widget', 'script']),
+  type: appEmbedTypeSchema,
   config: z.record(z.string(), z.unknown()),
   embedCode: z.string(),
   enabled: z.boolean(),

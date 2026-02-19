@@ -7,9 +7,6 @@ import { z } from 'zod';
 export const statusSchema = z.enum(['pending', 'running', 'completed', 'failed', 'cancelled', 'canceled']);
 export type StatusDto = z.infer<typeof statusSchema>;
 
-export const jobStatusSchema = statusSchema;
-export type JobStatusDto = StatusDto;
-
 export const localizedSchema = z.record(z.string(), z.string().nullable());
 export type LocalizedDto = z.infer<typeof localizedSchema>;
 

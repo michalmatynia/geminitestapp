@@ -87,24 +87,24 @@ export const activityFiltersSchema = z.object({
 export type ActivityFiltersDto = z.infer<typeof activityFiltersSchema>;
 
 /**
- * System Logging DTOs
+ * System Logging DTOs (Legacy/Simplified)
  */
 
-export const logLevelSchema = z.enum(['info', 'warn', 'error', 'debug']);
-export type LogLevelDto = z.infer<typeof logLevelSchema>;
+export const legacyLogLevelSchema = z.enum(['info', 'warn', 'error', 'debug']);
+export type LegacyLogLevelDto = z.infer<typeof legacyLogLevelSchema>;
 
-export const systemLogInputSchema = z.object({
-  level: logLevelSchema,
+export const legacySystemLogInputSchema = z.object({
+  level: legacyLogLevelSchema,
   category: z.string(),
   message: z.string(),
   context: z.record(z.string(), z.unknown()).optional(),
   userId: z.string().optional(),
 });
 
-export type SystemLogInputDto = z.infer<typeof systemLogInputSchema>;
+export type LegacySystemLogInputDto = z.infer<typeof legacySystemLogInputSchema>;
 
-export const listSystemLogsInputSchema = z.object({
-  level: logLevelSchema.optional(),
+export const legacyListSystemLogsInputSchema = z.object({
+  level: legacyLogLevelSchema.optional(),
   category: z.string().optional(),
   userId: z.string().optional(),
   startDate: z.string().optional(),
@@ -113,17 +113,17 @@ export const listSystemLogsInputSchema = z.object({
   offset: z.number().optional(),
 });
 
-export type ListSystemLogsInputDto = z.infer<typeof listSystemLogsInputSchema>;
+export type LegacyListSystemLogsInputDto = z.infer<typeof legacyListSystemLogsInputSchema>;
 
-export const listSystemLogsResultSchema = z.object({
-  logs: z.array(z.intersection(systemLogInputSchema, z.object({
+export const legacyListSystemLogsResultSchema = z.object({
+  logs: z.array(z.intersection(legacySystemLogInputSchema, z.object({
     id: z.string(),
     timestamp: z.string(),
   }))),
   total: z.number(),
 });
 
-export type ListSystemLogsResultDto = z.infer<typeof listSystemLogsResultSchema>;
+export type LegacyListSystemLogsResultDto = z.infer<typeof legacyListSystemLogsResultSchema>;
 
 /**
  * System Database Migration DTOs

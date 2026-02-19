@@ -1,8 +1,4 @@
 import type {
-  BaseImportRunDetailResponse,
-  BaseImportStartResponse,
-} from '@/features/integrations/types/base-import-runs';
-import type {
   InventoryOptionDto,
   WarehouseOptionDto,
   CatalogOptionDto,
@@ -12,23 +8,23 @@ import type {
   WarehouseDebugRawDto,
   InventoryDebugRawDto,
   DebugWarehousesDto,
+  ImportExportTemplateDto,
+  ImportExportTemplateMappingDto,
+  ImportTemplateParameterImportDto,
 } from '@/shared/contracts/data-import-export';
 import type {
-  ImageBase64Mode, 
-  ImageTransformOptions, 
-  ImageRetryPreset,
-  BaseInventory,
-  ImportExportTemplate as DomainImportExportTemplate,
-  ImportExportTemplateMapping as DomainImportExportTemplateMapping,
-  ImportTemplateParameterImport as DomainImportExportTemplateParameterImport,
-} from '@/shared/types/domain/integrations';
+  BaseImportRunDetailResponseDto,
+  BaseImportStartResponseDto,
+  ImageBase64ModeDto,
+  ImageTransformOptionsDto,
+  ImageRetryPresetDto,
+  BaseInventoryDto,
+} from '@/shared/contracts/integrations';
 
-export type {
-  ImageBase64Mode,
-  ImageTransformOptions,
-  ImageRetryPreset,
-  BaseInventory,
-};
+export type ImageBase64Mode = ImageBase64ModeDto;
+export type ImageTransformOptions = ImageTransformOptionsDto;
+export type ImageRetryPreset = ImageRetryPresetDto;
+export type BaseInventory = BaseInventoryDto;
 
 export type InventoryOption = InventoryOptionDto;
 
@@ -38,15 +34,15 @@ export type CatalogOption = CatalogOptionDto;
 
 export type ImportListItem = ImportListItemDto;
 
-export type ImportResponse = BaseImportStartResponse;
+export type ImportResponse = BaseImportStartResponseDto;
 
-export type ImportRunDetail = BaseImportRunDetailResponse;
+export type ImportRunDetail = BaseImportRunDetailResponseDto;
 
-export type TemplateMapping = DomainImportExportTemplateMapping;
+export type TemplateMapping = ImportExportTemplateMappingDto;
 
-export type Template = DomainImportExportTemplate;
+export type Template = ImportExportTemplateDto;
 
-export type ImportTemplateParameterImport = DomainImportExportTemplateParameterImport;
+export type ImportTemplateParameterImport = ImportTemplateParameterImportDto;
 
 export type ExportParameterDoc = ExportParameterDocDto;
 

@@ -28,7 +28,7 @@ export const masterTreeNodeSchema = z.object({
 export type MasterTreeNodeDto = z.infer<typeof masterTreeNodeSchema>;
 
 export const masterTreeViewNodeSchema: z.ZodType<MasterTreeViewNodeDto> = masterTreeNodeSchema.extend({
-  children: z.lazy(() => z.array(masterTreeViewNodeSchema)),
+  children: z.array(z.lazy(() => masterTreeViewNodeSchema)),
 });
 
 export type MasterTreeViewNodeDto = MasterTreeNodeDto & {

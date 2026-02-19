@@ -52,6 +52,19 @@ export const aiBrainSettingsSchema = z.object({
 });
 
 export type AiBrainSettingsDto = z.infer<typeof aiBrainSettingsSchema>;
+export type UpdateAiBrainSettingsDto = Partial<AiBrainSettingsDto>;
+
+export const aiBrainMemorySchema = z.object({
+  id: z.string(),
+  key: z.string(),
+  value: z.unknown(),
+  createdAt: z.string(),
+  updatedAt: z.string().nullable(),
+});
+
+export type AiBrainMemoryDto = z.infer<typeof aiBrainMemorySchema>;
+export type CreateAiBrainMemoryDto = Omit<AiBrainMemoryDto, 'id' | 'createdAt' | 'updatedAt'>;
+export type UpdateAiBrainMemoryDto = Partial<CreateAiBrainMemoryDto>;
 
 const providerListSchema = z.array(z.string().trim().min(1)).default([]);
 

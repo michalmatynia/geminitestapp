@@ -1,29 +1,25 @@
 import type {
   ImageStudioProjectDto,
-  CreateImageStudioProjectDto,
-  UpdateImageStudioProjectDto,
-  ImageStudioAssetDto,
-  CreateImageStudioAssetDto,
-  UpdateImageStudioAssetDto,
-  ImageStudioCanvasStateDto,
-  ImageStudioSettingsDto,
+  ImageStudioSlotDto,
+  SlotGenerationMetadataDto,
+  CompositeLayerConfigDto,
+  StudioProjectsResponseDto,
+  StudioSlotsResponseDto,
 } from '../../contracts/image-studio';
 
 export type {
   ImageStudioProjectDto,
-  CreateImageStudioProjectDto,
-  UpdateImageStudioProjectDto,
-  ImageStudioAssetDto,
-  CreateImageStudioAssetDto,
-  UpdateImageStudioAssetDto,
-  ImageStudioCanvasStateDto,
-  ImageStudioSettingsDto,
+  ImageStudioSlotDto,
+  SlotGenerationMetadataDto,
+  CompositeLayerConfigDto,
+  StudioProjectsResponseDto,
+  StudioSlotsResponseDto,
 };
 
 export type ImageStudioProject = ImageStudioProjectDto;
 
-export type ImageStudioAsset = ImageStudioAssetDto;
+export type ImageStudioSlot = ImageStudioSlotDto;
 
-export type ImageStudioCanvasState = ImageStudioCanvasStateDto;
+export type SlotGenerationMetadata = SlotGenerationMetadataDto;
 
-export type ImageStudioSettings = ImageStudioSettingsDto;
+export type CompositeLayerConfig = CompositeLayerConfigDto;

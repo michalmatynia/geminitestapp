@@ -27,6 +27,7 @@ import {
   dataUrlToUploadBlob,
   isCenterAbortError,
   isClientCenterCrossOriginError,
+  layoutCanvasImageObject,
   loadImageElement,
   polygonsFromShapes,
   renderMaskDataUrlFromPolygons,
@@ -53,7 +54,11 @@ type MaskAttachMode = 'client_canvas_polygon' | 'server_polygon';
 type UpscaleMode = 'client_canvas' | 'server_sharp';
 type UpscaleStrategy = 'scale' | 'target_resolution';
 type CropMode = 'client_bbox' | 'server_bbox';
-type CenterMode = 'client_alpha_bbox' | 'server_alpha_bbox';
+type CenterMode =
+  | 'client_alpha_bbox'
+  | 'server_alpha_bbox'
+  | 'client_object_layout_v1'
+  | 'server_object_layout_v1';
 
 type CenterActionResponse = {
   slot?: ImageStudioSlotRecord;
@@ -61,6 +66,15 @@ type CenterActionResponse = {
   effectiveMode?: CenterMode;
   sourceObjectBounds?: { left: number; top: number; width: number; height: number } | null;
   targetObjectBounds?: { left: number; top: number; width: number; height: number } | null;
+  layout?: {
+    paddingPercent?: number;
+    paddingXPercent?: number;
+    paddingYPercent?: number;
+    whiteThreshold?: number;
+    chromaThreshold?: number;
+    detectionUsed?: 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel' | null;
+    scale?: number | null;
+  } | null;
   requestId?: string | null;
   deduplicated?: boolean;
 };
@@ -93,6 +107,19 @@ const UPSCALE_REQUEST_TIMEOUT_MS = 60_000;
 const UPSCALE_MAX_OUTPUT_SIDE = 32_768;
 const CROP_REQUEST_TIMEOUT_MS = 60_000;
 const CENTER_REQUEST_TIMEOUT_MS = 60_000;
+const CENTER_LAYOUT_MIN_PADDING_PERCENT = 0;
+const CENTER_LAYOUT_MAX_PADDING_PERCENT = 40;
+const CENTER_LAYOUT_DEFAULT_PADDING_PERCENT = 8;
+const sanitizeCenterPaddingInput = (value: string): string =>
+  value.replace(/[^0-9.]/g, '');
+const normalizeCenterPaddingPercent = (value: string): number => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return CENTER_LAYOUT_DEFAULT_PADDING_PERCENT;
+  return Math.max(
+    CENTER_LAYOUT_MIN_PADDING_PERCENT,
+    Math.min(CENTER_LAYOUT_MAX_PADDING_PERCENT, Number(parsed.toFixed(2)))
+  );
+};
 
 export function GenerationToolbar(): React.JSX.Element {
   const { maskPreviewEnabled, centerGuidesEnabled } = useUiState();
@@ -131,6 +158,16 @@ export function GenerationToolbar(): React.JSX.Element {
   const [upscaleStrategy, setUpscaleStrategy] = useState<UpscaleStrategy>('scale');
   const [cropMode, setCropMode] = useState<CropMode>('client_bbox');
   const [centerMode, setCenterMode] = useState<CenterMode>('client_alpha_bbox');
+  const [centerLayoutPadding, setCenterLayoutPadding] = useState<string>(
+    String(CENTER_LAYOUT_DEFAULT_PADDING_PERCENT)
+  );
+  const [centerLayoutPaddingX, setCenterLayoutPaddingX] = useState<string>(
+    String(CENTER_LAYOUT_DEFAULT_PADDING_PERCENT)
+  );
+  const [centerLayoutPaddingY, setCenterLayoutPaddingY] = useState<string>(
+    String(CENTER_LAYOUT_DEFAULT_PADDING_PERCENT)
+  );
+  const [centerLayoutSplitAxes, setCenterLayoutSplitAxes] = useState(false);
   const [upscaleScale, setUpscaleScale] = useState('2');
   const [upscaleTargetWidth, setUpscaleTargetWidth] = useState('');
   const [upscaleTargetHeight, setUpscaleTargetHeight] = useState('');
@@ -497,6 +534,32 @@ export function GenerationToolbar(): React.JSX.Element {
     }
   };
 
+  const centerIsObjectLayoutMode =
+    centerMode === 'client_object_layout_v1' || centerMode === 'server_object_layout_v1';
+  const centerLayoutPaddingPercent = useMemo(() => {
+    return normalizeCenterPaddingPercent(centerLayoutPadding);
+  }, [centerLayoutPadding]);
+  const centerLayoutPaddingXPercent = useMemo(() => {
+    return normalizeCenterPaddingPercent(centerLayoutPaddingX);
+  }, [centerLayoutPaddingX]);
+  const centerLayoutPaddingYPercent = useMemo(() => {
+    return normalizeCenterPaddingPercent(centerLayoutPaddingY);
+  }, [centerLayoutPaddingY]);
+  const centerLayoutPayload = centerIsObjectLayoutMode
+    ? {
+      paddingPercent: centerLayoutSplitAxes
+        ? Number(((centerLayoutPaddingXPercent + centerLayoutPaddingYPercent) / 2).toFixed(2))
+        : centerLayoutPaddingPercent,
+      ...(centerLayoutSplitAxes
+        ? {
+          paddingXPercent: centerLayoutPaddingXPercent,
+          paddingYPercent: centerLayoutPaddingYPercent,
+        }
+        : {}),
+      detection: 'auto' as const,
+    }
+    : undefined;
+
   const handleCenterObject = async (): Promise<void> => {
     if (!workingSlot?.id) {
       toast('No active source slot selected.', { variant: 'info' });
@@ -506,8 +569,10 @@ export function GenerationToolbar(): React.JSX.Element {
       toast('Select a slot image before centering.', { variant: 'info' });
       return;
     }
-    if (centerMode === 'client_alpha_bbox' && !clientProcessingImageSrc) {
-      toast('No client image source is available for centering.', { variant: 'info' });
+    const isClientCenterMode =
+      centerMode === 'client_alpha_bbox' || centerMode === 'client_object_layout_v1';
+    if (isClientCenterMode && !clientProcessingImageSrc) {
+      toast('No client image source is available for centering/layouting.', { variant: 'info' });
       return;
     }
     if (centerRequestInFlightRef.current) {
@@ -523,19 +588,26 @@ export function GenerationToolbar(): React.JSX.Element {
     try {
       let response: CenterActionResponse;
       let resolvedMode: CenterMode = centerMode;
-      if (centerMode === 'client_alpha_bbox') {
+      if (isClientCenterMode) {
         const sourceForClientCenter = clientProcessingImageSrc || workingSlotImageSrc;
         if (!sourceForClientCenter) {
-          throw new Error('No client image source is available for centering.');
+          throw new Error('No client image source is available for centering/layouting.');
         }
         try {
           setCenterStatus('preparing');
-          const centeredDataUrl = await centerCanvasImageObject(sourceForClientCenter);
+          const centeredDataUrl =
+            centerMode === 'client_object_layout_v1'
+              ? (await layoutCanvasImageObject(sourceForClientCenter, centerLayoutPayload)).dataUrl
+              : await centerCanvasImageObject(sourceForClientCenter);
           let uploadBlob: Blob;
           try {
             uploadBlob = await dataUrlToUploadBlob(centeredDataUrl);
           } catch {
-            throw new Error('Failed to prepare client centered image for upload.');
+            throw new Error(
+              centerMode === 'client_object_layout_v1'
+                ? 'Failed to prepare client layout output for upload.'
+                : 'Failed to prepare client centered image for upload.'
+            );
           }
 
           setCenterStatus('uploading');
@@ -544,6 +616,14 @@ export function GenerationToolbar(): React.JSX.Element {
               const formData = new FormData();
               formData.append('mode', centerMode);
               formData.append('requestId', centerRequestId);
+              if (centerLayoutPayload) {
+                formData.append(
+                  'center',
+                  JSON.stringify({
+                    layout: centerLayoutPayload,
+                  })
+                );
+              }
               formData.append('image', uploadBlob, `center-client-${Date.now()}.png`);
               return api.post<CenterActionResponse>(
                 `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
@@ -564,13 +644,18 @@ export function GenerationToolbar(): React.JSX.Element {
             throw error;
           }
           setCenterStatus('processing');
+          const fallbackMode: CenterMode =
+            centerMode === 'client_object_layout_v1'
+              ? 'server_object_layout_v1'
+              : 'server_alpha_bbox';
           response = await withCenterRetry(
             () =>
               api.post<CenterActionResponse>(
                 `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
                 {
-                  mode: 'server_alpha_bbox',
+                  mode: fallbackMode,
                   requestId: centerRequestId,
+                  ...(centerLayoutPayload ? { layout: centerLayoutPayload } : {}),
                 },
                 {
                   signal: abortController.signal,
@@ -582,10 +667,13 @@ export function GenerationToolbar(): React.JSX.Element {
               ),
             abortController.signal
           );
-          resolvedMode = 'server_alpha_bbox';
-          toast('Client centering was blocked by cross-origin restrictions; used server centering instead.', {
-            variant: 'info',
-          });
+          resolvedMode = fallbackMode;
+          toast(
+            centerMode === 'client_object_layout_v1'
+              ? 'Client object layouting was blocked by cross-origin restrictions; used server layouting instead.'
+              : 'Client centering was blocked by cross-origin restrictions; used server centering instead.',
+            { variant: 'info' }
+          );
         }
       } else {
         setCenterStatus('processing');
@@ -596,6 +684,7 @@ export function GenerationToolbar(): React.JSX.Element {
               {
                 mode: centerMode,
                 requestId: centerRequestId,
+                ...(centerLayoutPayload ? { layout: centerLayoutPayload } : {}),
               },
               {
                 signal: abortController.signal,
@@ -630,9 +719,18 @@ export function GenerationToolbar(): React.JSX.Element {
         setWorkingSlotId(response.slot.id);
       }
 
-      const createdLabel = response.slot?.name?.trim() || 'Centered variant';
+      const createdLabel = response.slot?.name?.trim() || (
+        centerIsObjectLayoutMode ? 'Object layout variant' : 'Centered variant'
+      );
       const effectiveMode = response.effectiveMode ?? resolvedMode;
-      const modeLabel = effectiveMode === 'client_alpha_bbox' ? 'Client' : 'Server';
+      const modeLabel =
+        effectiveMode === 'client_alpha_bbox'
+          ? 'Client center'
+          : effectiveMode === 'server_alpha_bbox'
+            ? 'Server center'
+            : effectiveMode === 'client_object_layout_v1'
+              ? 'Client layout'
+              : 'Server layout';
       const sourceBounds = response.sourceObjectBounds ?? null;
       const targetBounds = response.targetObjectBounds ?? null;
       const centerShiftedObject = Boolean(
@@ -646,16 +744,28 @@ export function GenerationToolbar(): React.JSX.Element {
         )
       );
       if (centerShiftedObject) {
-        toast(`Created ${createdLabel} (${modeLabel} center).`, { variant: 'success' });
+        toast(`Created ${createdLabel} (${modeLabel}).`, { variant: 'success' });
       } else {
-        toast(`${createdLabel} created, but the object was already centered in-frame.`, { variant: 'info' });
+        toast(
+          centerIsObjectLayoutMode
+            ? `${createdLabel} created, but the object was already well-positioned with current padding.`
+            : `${createdLabel} created, but the object was already centered in-frame.`,
+          { variant: 'info' }
+        );
       }
     } catch (error) {
       if (isCenterAbortError(error)) {
-        toast('Centering canceled.', { variant: 'info' });
+        toast(centerIsObjectLayoutMode ? 'Object layouting canceled.' : 'Centering canceled.', { variant: 'info' });
         return;
       }
-      toast(error instanceof Error ? error.message : 'Failed to center image object.', { variant: 'error' });
+      toast(
+        error instanceof Error
+          ? error.message
+          : centerIsObjectLayoutMode
+            ? 'Failed to layout image object.'
+            : 'Failed to center image object.',
+        { variant: 'error' }
+      );
     } finally {
       centerRequestInFlightRef.current = false;
       centerAbortControllerRef.current = null;
@@ -709,22 +819,22 @@ export function GenerationToolbar(): React.JSX.Element {
     }
   }, [cropBusy, cropStatus]);
   const centerBusyLabel = useMemo(() => {
-    if (!centerBusy) return 'Center Object';
+    if (!centerBusy) return centerIsObjectLayoutMode ? 'Object Layouting' : 'Center Object';
     switch (centerStatus) {
       case 'resolving':
-        return 'Center: Resolving';
+        return centerIsObjectLayoutMode ? 'Layout: Resolving' : 'Center: Resolving';
       case 'preparing':
-        return 'Center: Preparing';
+        return centerIsObjectLayoutMode ? 'Layout: Preparing' : 'Center: Preparing';
       case 'uploading':
-        return 'Center: Uploading';
+        return centerIsObjectLayoutMode ? 'Layout: Uploading' : 'Center: Uploading';
       case 'processing':
-        return 'Center: Processing';
+        return centerIsObjectLayoutMode ? 'Layout: Processing' : 'Center: Processing';
       case 'persisting':
-        return 'Center: Persisting';
+        return centerIsObjectLayoutMode ? 'Layout: Persisting' : 'Center: Persisting';
       default:
-        return 'Center Object';
+        return centerIsObjectLayoutMode ? 'Object Layouting' : 'Center Object';
     }
-  }, [centerBusy, centerStatus]);
+  }, [centerBusy, centerIsObjectLayoutMode, centerStatus]);
 
   const quickSwitchModels = useMemo(
     () =>
@@ -783,6 +893,8 @@ export function GenerationToolbar(): React.JSX.Element {
     () => ([
       { value: 'client_alpha_bbox', label: 'Center Client: Canvas' },
       { value: 'server_alpha_bbox', label: 'Center Server: Sharp' },
+      { value: 'client_object_layout_v1', label: 'Object Layouting Client (Experimental)' },
+      { value: 'server_object_layout_v1', label: 'Object Layouting Server (Experimental)' },
     ]),
     []
   );
@@ -949,15 +1061,54 @@ export function GenerationToolbar(): React.JSX.Element {
         centerBusy={centerBusy}
         centerBusyLabel={centerBusyLabel}
         centerGuidesEnabled={centerGuidesEnabled}
+        centerLayoutEnabled={centerIsObjectLayoutMode}
+        centerLayoutPadding={centerLayoutPadding}
+        centerLayoutPaddingX={centerLayoutPaddingX}
+        centerLayoutPaddingY={centerLayoutPaddingY}
+        centerLayoutSplitAxes={centerLayoutSplitAxes}
         centerMode={centerMode}
         centerModeOptions={centerModeOptions}
         hasSourceImage={hasSourceImage}
         onCancelCenter={handleCancelCenter}
+        onCenterLayoutPaddingChange={(value: string) => {
+          const normalized = sanitizeCenterPaddingInput(value);
+          setCenterLayoutPadding(normalized);
+          if (!centerLayoutSplitAxes) {
+            setCenterLayoutPaddingX(normalized);
+            setCenterLayoutPaddingY(normalized);
+          }
+        }}
+        onCenterLayoutPaddingXChange={(value: string) => {
+          const normalized = sanitizeCenterPaddingInput(value);
+          setCenterLayoutPaddingX(normalized);
+        }}
+        onCenterLayoutPaddingYChange={(value: string) => {
+          const normalized = sanitizeCenterPaddingInput(value);
+          setCenterLayoutPaddingY(normalized);
+        }}
         onCenterModeChange={(value: string) => {
           setCenterMode(value as CenterMode);
         }}
         onCenterObject={() => {
           void handleCenterObject();
+        }}
+        onToggleCenterLayoutSplitAxes={() => {
+          setCenterLayoutSplitAxes((previous) => {
+            const next = !previous;
+            if (next) {
+              const normalized = sanitizeCenterPaddingInput(centerLayoutPadding);
+              setCenterLayoutPaddingX(normalized);
+              setCenterLayoutPaddingY(normalized);
+            } else {
+              const mergedPadding = String(
+                Number(((centerLayoutPaddingXPercent + centerLayoutPaddingYPercent) / 2).toFixed(2))
+              );
+              setCenterLayoutPadding(mergedPadding);
+              setCenterLayoutPaddingX(mergedPadding);
+              setCenterLayoutPaddingY(mergedPadding);
+            }
+            return next;
+          });
         }}
         onToggleCenterGuides={() => {
           setCenterGuidesEnabled(!centerGuidesEnabled);

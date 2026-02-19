@@ -105,7 +105,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
               </TabsList>
 
               <TabsContent value='workspace' className='space-y-4'>
-                <div className='grid grid-cols-1 gap-4 2xl:grid-cols-[minmax(380px,0.85fr)_minmax(640px,1.15fr)]'>
+                <div className='grid grid-cols-1 gap-4 xl:grid-cols-[minmax(380px,0.85fr)_minmax(640px,1.15fr)]'>
                   <div className='space-y-4'>
                     <SourcePromptPanel />
                     <ExplosionMetricsPanel />

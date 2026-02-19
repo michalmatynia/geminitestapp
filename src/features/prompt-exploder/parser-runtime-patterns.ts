@@ -94,9 +94,14 @@ export type PatternRuntime = {
 };
 
 export const normalizeRuntimeValidationScope = (
-  scope: PromptExploderRuntimeValidationScope | null | undefined
+  scope:
+    | PromptExploderRuntimeValidationScope
+    | 'case_resolver_prompt_exploder'
+    | null
+    | undefined
 ): PromptExploderRuntimeValidationScope =>
-  scope === 'case-resolver-prompt-exploder'
+  scope === 'case-resolver-prompt-exploder' ||
+    scope === 'case_resolver_prompt_exploder'
     ? 'case-resolver-prompt-exploder'
     : 'prompt-exploder';
 

@@ -28,7 +28,7 @@ export interface ProductCategoryWithChildrenDto extends ProductCategoryDto {
 
 export const productCategoryWithChildrenSchema: z.ZodType<ProductCategoryWithChildrenDto> =
   productCategorySchema.extend({
-    children: z.lazy(() => z.array(productCategoryWithChildrenSchema)),
+    children: z.array(z.lazy(() => productCategoryWithChildrenSchema)),
   });
 
 export const createProductCategorySchema = productCategorySchema.omit({
@@ -748,6 +748,74 @@ export const dynamicReplacementRecipeSchema = z.object({
 });
 
 export type DynamicReplacementRecipeDto = z.infer<typeof dynamicReplacementRecipeSchema>;
+
+export const productReplacementModeSchema = z.enum(['static', 'dynamic']);
+export type ProductReplacementModeDto = z.infer<typeof productReplacementModeSchema>;
+
+export const productValidationSequenceGroupDraftSchema = z.object({
+  label: z.string(),
+  debounceMs: z.string(),
+});
+
+export type ProductValidationSequenceGroupDraftDto = z.infer<typeof productValidationSequenceGroupDraftSchema>;
+
+export const productValidationPatternFormDataSchema = z.object({
+  label: z.string(),
+  target: productValidationTargetSchema,
+  locale: z.string(),
+  regex: z.string(),
+  flags: z.string(),
+  message: z.string(),
+  severity: productValidationSeveritySchema,
+  enabled: z.boolean(),
+  replacementEnabled: z.boolean(),
+  replacementAutoApply: z.boolean(),
+  skipNoopReplacementProposal: z.boolean(),
+  replacementValue: z.string(),
+  replacementFields: z.array(z.string()),
+  replacementAppliesToScopes: z.array(productValidationInstanceScopeSchema),
+  postAcceptBehavior: z.enum(['revalidate', 'stop_after_accept']),
+  denyBehaviorOverride: z.enum(['inherit', 'ask_again', 'mute_session']),
+  validationDebounceMs: z.string(),
+  replacementMode: productReplacementModeSchema,
+  sourceMode: dynamicReplacementSourceModeSchema,
+  sourceField: z.string(),
+  sourceRegex: z.string(),
+  sourceFlags: z.string(),
+  sourceMatchGroup: z.string(),
+  launchEnabled: z.boolean(),
+  launchAppliesToScopes: z.array(productValidationInstanceScopeSchema),
+  launchScopeBehavior: z.enum(['gate', 'condition_only']),
+  launchSourceMode: dynamicReplacementSourceModeSchema,
+  launchSourceField: z.string(),
+  launchOperator: dynamicReplacementLogicOperatorSchema,
+  launchValue: z.string(),
+  launchFlags: z.string(),
+  mathOperation: dynamicReplacementMathOperationSchema,
+  mathOperand: z.string(),
+  roundMode: dynamicReplacementRoundModeSchema,
+  padLength: z.string(),
+  padChar: z.string(),
+  logicOperator: dynamicReplacementLogicOperatorSchema,
+  logicOperand: z.string(),
+  logicFlags: z.string(),
+  logicWhenTrueAction: dynamicReplacementLogicActionSchema,
+  logicWhenTrueValue: z.string(),
+  logicWhenFalseAction: dynamicReplacementLogicActionSchema,
+  logicWhenFalseValue: z.string(),
+  resultAssembly: dynamicReplacementResultAssemblySchema,
+  targetApply: dynamicReplacementTargetApplySchema,
+  sequence: z.string(),
+  chainMode: z.enum(['continue', 'stop_on_match', 'stop_on_replace']),
+  maxExecutions: z.string(),
+  passOutputToNext: z.boolean(),
+  runtimeEnabled: z.boolean(),
+  runtimeType: z.enum(['none', 'database_query', 'ai_prompt']),
+  runtimeConfig: z.string(),
+  appliesToScopes: z.array(productValidationInstanceScopeSchema),
+});
+
+export type ProductValidationPatternFormDataDto = z.infer<typeof productValidationPatternFormDataSchema>;
 
 /**
  * Product Studio Sequencing DTOs

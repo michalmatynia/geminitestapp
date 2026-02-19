@@ -5,10 +5,12 @@ import React from 'react';
 import { Button, FormSection, Textarea } from '@/shared/ui';
 
 import { useDocumentState, useDocumentActions } from '../context/hooks/useDocument';
+import { useSettingsState } from '../context/hooks/useSettings';
 
 export function SourcePromptPanel(): React.JSX.Element {
   const { promptText, documentState, returnTarget } = useDocumentState();
   const { setPromptText, handleExplode, handleApplyToImageStudio } = useDocumentActions();
+  const { runtimeGuardrailIssue } = useSettingsState();
 
   return (
     <FormSection
@@ -18,13 +20,19 @@ export function SourcePromptPanel(): React.JSX.Element {
       className='p-4'
       actions={
         <div className='flex items-center gap-2'>
-          <Button type='button' onClick={handleExplode}>
+          <Button
+            type='button'
+            onClick={handleExplode}
+            disabled={Boolean(runtimeGuardrailIssue)}
+          >
             Explode Prompt
           </Button>
           <Button
             type='button'
             variant='outline'
-            onClick={handleApplyToImageStudio}
+            onClick={() => {
+              void handleApplyToImageStudio();
+            }}
             disabled={!documentState}
           >
             {returnTarget === 'case-resolver'
@@ -35,6 +43,11 @@ export function SourcePromptPanel(): React.JSX.Element {
       }
     >
       <div className='mt-3 space-y-2'>
+        {runtimeGuardrailIssue ? (
+          <div className='rounded border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-100'>
+            {runtimeGuardrailIssue}
+          </div>
+        ) : null}
         <Textarea
           className='min-h-[280px] font-mono text-[12px]'
           value={promptText}

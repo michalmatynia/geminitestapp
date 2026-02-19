@@ -357,6 +357,20 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
           options: validationPatternStackOptions,
         },
         {
+          key: 'allowValidationStackFallback',
+          label: 'Allow Validation Stack Fallback',
+          type: 'switch',
+        },
+        {
+          key: 'caseResolverCaptureMode',
+          label: 'Case Resolver Capture Mode',
+          type: 'select',
+          options: [
+            { value: 'rules_only', label: 'Rules Only (UI capture rules)' },
+            { value: 'rules_with_heuristics', label: 'Rules + Heuristics' },
+          ],
+        },
+        {
           key: 'ruleProfile',
           label: 'Runtime Rule Profile',
           type: 'select',

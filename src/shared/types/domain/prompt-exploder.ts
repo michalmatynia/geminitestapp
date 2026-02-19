@@ -19,6 +19,7 @@ import type {
   PromptExploderBenchmarkSuggestionDto,
   PromptExploderOperationModeDto,
   PromptExploderAiProviderDto,
+  PromptExploderCaseResolverCaptureModeDto,
   PromptExploderSettingsDto,
   PromptExploderPatternRuleMapDto,
   PromptExploderValidationRuleStackDto,
@@ -48,6 +49,7 @@ export type {
   PromptExploderBenchmarkSuggestionDto,
   PromptExploderOperationModeDto,
   PromptExploderAiProviderDto,
+  PromptExploderCaseResolverCaptureModeDto,
   PromptExploderSettingsDto,
   PromptExploderPatternRuleMapDto,
   PromptExploderValidationRuleStackDto,
@@ -96,6 +98,8 @@ export type PromptExploderBenchmarkSuggestion = PromptExploderBenchmarkSuggestio
 export type PromptExploderOperationMode = PromptExploderOperationModeDto;
 
 export type PromptExploderAiProvider = PromptExploderAiProviderDto;
+
+export type PromptExploderCaseResolverCaptureMode = PromptExploderCaseResolverCaptureModeDto;
 
 export type PromptExploderValidationRuleStack = PromptExploderValidationRuleStackDto;
 

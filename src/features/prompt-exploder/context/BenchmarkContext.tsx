@@ -2,7 +2,7 @@
 
 import React, { createContext, useCallback, useMemo, useState } from 'react';
 
-import { defaultPromptEngineSettings, PROMPT_ENGINE_SETTINGS_KEY } from '@/features/prompt-engine/settings';
+import { PROMPT_ENGINE_SETTINGS_KEY } from '@/features/prompt-engine/settings';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -280,9 +280,7 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
         return;
       }
       try {
-        const basePromptSettings = promptSettings.promptValidation
-          ? promptSettings
-          : defaultPromptEngineSettings;
+        const basePromptSettings = promptSettings;
         const shouldUpsertTemplates = learningDraft.benchmarkSuggestionUpsertTemplates;
         const benchmarkApply = applyBenchmarkSuggestions({
           suggestions: validSuggestions,

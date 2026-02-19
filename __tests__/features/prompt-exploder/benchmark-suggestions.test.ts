@@ -1,4 +1,4 @@
-import type { PromptExploderBenchmarkSuggestion } from '@/features/prompt-exploder/benchmark';
+import type { PromptExploderBenchmarkSuggestion } from '@/features/prompt-exploder/types';
 import {
   dedupeBenchmarkSuggestionsById,
   prepareBenchmarkSuggestionsForApply,

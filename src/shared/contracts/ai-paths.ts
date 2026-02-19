@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
+import {
+  promptValidationRuleSchema,
+  promptValidationScopeSchema,
+} from './prompt-engine';
 
 /**
  * AI Path Node Types
@@ -18,6 +22,7 @@ export const aiNodeTypeSchema = z.enum([
   'mutator',
   'string_mutator',
   'validator',
+  'validation_pattern',
   'constant',
   'math',
   'template',
@@ -171,6 +176,70 @@ export const validatorConfigSchema = z.object({
 });
 
 export type ValidatorConfigDto = z.infer<typeof validatorConfigSchema>;
+
+export const validationPatternSourceSchema = z.enum([
+  'global_stack',
+  'path_local',
+]);
+export type ValidationPatternSourceDto = z.infer<
+  typeof validationPatternSourceSchema
+>;
+
+export const validationPatternRuntimeModeSchema = z.enum([
+  'validate_only',
+  'validate_and_autofix',
+]);
+export type ValidationPatternRuntimeModeDto = z.infer<
+  typeof validationPatternRuntimeModeSchema
+>;
+
+export const validationPatternFailPolicySchema = z.enum([
+  'block_on_error',
+  'report_only',
+]);
+export type ValidationPatternFailPolicyDto = z.infer<
+  typeof validationPatternFailPolicySchema
+>;
+
+export const validationPatternInputPortSchema = z.enum([
+  'auto',
+  'value',
+  'prompt',
+  'result',
+  'context',
+]);
+export type ValidationPatternInputPortDto = z.infer<
+  typeof validationPatternInputPortSchema
+>;
+
+export const validationPatternOutputPortSchema = z.enum([
+  'value',
+  'result',
+]);
+export type ValidationPatternOutputPortDto = z.infer<
+  typeof validationPatternOutputPortSchema
+>;
+
+export const validationPatternConfigSchema = z.object({
+  source: validationPatternSourceSchema,
+  stackId: z.string().optional(),
+  scope: promptValidationScopeSchema.optional(),
+  includeLearnedRules: z.boolean().optional(),
+  runtimeMode: validationPatternRuntimeModeSchema,
+  failPolicy: validationPatternFailPolicySchema,
+  inputPort: validationPatternInputPortSchema,
+  outputPort: validationPatternOutputPortSchema,
+  maxAutofixPasses: z.number().optional(),
+  includeRuleIds: z.array(z.string()).optional(),
+  localListName: z.string().optional(),
+  localListDescription: z.string().optional(),
+  rules: z.array(promptValidationRuleSchema).optional(),
+  learnedRules: z.array(promptValidationRuleSchema).optional(),
+});
+
+export type ValidationPatternConfigDto = z.infer<
+  typeof validationPatternConfigSchema
+>;
 
 export const constantConfigSchema = z.object({
   valueType: z.enum(['string', 'number', 'boolean', 'json']),
@@ -434,6 +503,12 @@ export const parserSampleStateSchema = z.object({
 
 export type ParserSampleStateDto = z.infer<typeof parserSampleStateSchema>;
 
+export const updaterSampleStateSchema = parserSampleStateSchema.extend({
+  targetPath: z.string().optional(),
+});
+
+export type UpdaterSampleStateDto = z.infer<typeof updaterSampleStateSchema>;
+
 export const promptConfigSchema = z.object({
   template: z.string(),
 });
@@ -501,6 +576,7 @@ export const nodeConfigSchema = z.object({
   mutator: mutatorConfigSchema.optional(),
   stringMutator: stringMutatorConfigSchema.optional(),
   validator: validatorConfigSchema.optional(),
+  validationPattern: validationPatternConfigSchema.optional(),
   constant: constantConfigSchema.optional(),
   math: mathConfigSchema.optional(),
   template: templateConfigSchema.optional(),
@@ -923,6 +999,7 @@ export const pathConfigSchema = z.object({
   executionMode: z.string().optional(),
   flowIntensity: z.string().optional(),
   runMode: z.string().optional(),
+  strictFlowMode: z.boolean().optional(),
   nodes: z.array(aiNodeSchema),
   edges: z.array(edgeSchema),
   updatedAt: z.string(),

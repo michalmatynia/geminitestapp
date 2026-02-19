@@ -32,6 +32,7 @@ import type {
   StringMutatorConfigDto,
   StringMutatorOperationDto,
   ValidatorConfigDto,
+  ValidationPatternConfigDto,
   ConstantConfigDto,
   MathConfigDto,
   TemplateConfigDto,
@@ -168,6 +169,8 @@ export type StringMutatorConfig = StringMutatorConfigDto;
 export type StringMutatorOperation = StringMutatorOperationDto;
 
 export type ValidatorConfig = ValidatorConfigDto;
+
+export type ValidationPatternConfig = ValidationPatternConfigDto;
 
 export type ConstantConfig = ConstantConfigDto;
 

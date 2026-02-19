@@ -1,66 +1,30 @@
+import type {
+  PromptExploderBridgePayloadDto as PromptExploderBridgePayload,
+  PromptExploderBridgeSourceDto as PromptExploderBridgeSource,
+  PromptExploderBridgeTargetDto as PromptExploderBridgeTarget,
+  PromptExploderCaseResolverContextDto as PromptExploderCaseResolverContext,
+  PromptExploderCaseResolverMetadataDto as PromptExploderCaseResolverMetadata,
+  PromptExploderCaseResolverPartyBundleDto as PromptExploderCaseResolverPartyBundle,
+  PromptExploderCaseResolverPartyCandidateDto as PromptExploderCaseResolverPartyCandidate,
+  PromptExploderCaseResolverPartyKindDto as PromptExploderCaseResolverPartyKind,
+  PromptExploderCaseResolverPartyRoleDto as PromptExploderCaseResolverPartyRole,
+  PromptExploderCaseResolverPlaceDateDto as PromptExploderCaseResolverPlaceDate,
+} from '@/shared/contracts/prompt-exploder';
+
 export const PROMPT_EXPLODER_DRAFT_PROMPT_KEY = 'prompt_exploder:draft_prompt';
 export const PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY = 'prompt_exploder:apply_to_studio_prompt';
 
-export type PromptExploderBridgeSource = 'image-studio' | 'prompt-exploder' | 'case-resolver';
-export type PromptExploderBridgeTarget = 'prompt-exploder' | 'image-studio' | 'case-resolver';
-
-export type PromptExploderCaseResolverContext = {
-  fileId: string;
-  fileName: string;
-};
-
-export type PromptExploderCaseResolverPartyRole = 'addresser' | 'addressee';
-export type PromptExploderCaseResolverPartyKind = 'person' | 'organization';
-
-export type PromptExploderCaseResolverPartyCandidate = {
-  role: PromptExploderCaseResolverPartyRole;
-  displayName: string;
-  rawText: string;
-  kind?: PromptExploderCaseResolverPartyKind | undefined;
-  firstName?: string | undefined;
-  middleName?: string | undefined;
-  lastName?: string | undefined;
-  organizationName?: string | undefined;
-  street?: string | undefined;
-  streetNumber?: string | undefined;
-  houseNumber?: string | undefined;
-  city?: string | undefined;
-  postalCode?: string | undefined;
-  country?: string | undefined;
-  sourceSegmentId?: string | undefined;
-  sourceSegmentTitle?: string | undefined;
-  sourcePatternLabels?: string[] | undefined;
-  sourceSequenceLabels?: string[] | undefined;
-};
-
-export type PromptExploderCaseResolverPartyBundle = {
-  addresser?: PromptExploderCaseResolverPartyCandidate | undefined;
-  addressee?: PromptExploderCaseResolverPartyCandidate | undefined;
-};
-
-export type PromptExploderCaseResolverPlaceDate = {
-  city?: string | undefined;
-  day?: string | undefined;
-  month?: string | undefined;
-  year?: string | undefined;
-  sourceSegmentId?: string | undefined;
-  sourceSegmentTitle?: string | undefined;
-  sourcePatternLabels?: string[] | undefined;
-  sourceSequenceLabels?: string[] | undefined;
-};
-
-export type PromptExploderCaseResolverMetadata = {
-  placeDate?: PromptExploderCaseResolverPlaceDate | undefined;
-};
-
-export type PromptExploderBridgePayload = {
-  prompt: string;
-  source: PromptExploderBridgeSource;
-  target?: PromptExploderBridgeTarget | undefined;
-  caseResolverContext?: PromptExploderCaseResolverContext | undefined;
-  caseResolverParties?: PromptExploderCaseResolverPartyBundle | undefined;
-  caseResolverMetadata?: PromptExploderCaseResolverMetadata | undefined;
-  createdAt: string;
+export type {
+  PromptExploderBridgePayload,
+  PromptExploderBridgeSource,
+  PromptExploderBridgeTarget,
+  PromptExploderCaseResolverContext,
+  PromptExploderCaseResolverMetadata,
+  PromptExploderCaseResolverPartyBundle,
+  PromptExploderCaseResolverPartyCandidate,
+  PromptExploderCaseResolverPartyKind,
+  PromptExploderCaseResolverPartyRole,
+  PromptExploderCaseResolverPlaceDate,
 };
 
 const hasWindow = (): boolean => typeof window !== 'undefined';

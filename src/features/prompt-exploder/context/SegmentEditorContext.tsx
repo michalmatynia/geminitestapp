@@ -411,9 +411,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
         treatAsHeading: approvalDraft.ruleTreatAsHeading,
       });
 
-      const basePromptSettings = promptSettings.promptValidation
-        ? promptSettings
-        : (await import('@/features/prompt-engine/settings')).defaultPromptEngineSettings;
+      const basePromptSettings = promptSettings;
       const learnedRules = basePromptSettings.promptValidation.learnedRules ?? [];
       const learnedRuleUpsert = upsertRegexLearnedRule({
         rules: learnedRules,

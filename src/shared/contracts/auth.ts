@@ -58,6 +58,9 @@ export const authRoleSchema = z.object({
 
 export type AuthRoleDto = z.infer<typeof authRoleSchema>;
 
+export const authUserRoleMapSchema = z.record(z.string(), z.string());
+export type AuthUserRoleMapDto = z.infer<typeof authUserRoleMapSchema>;
+
 export const authUserAccessDetailSchema = z.object({
   roleId: z.string(),
   permissions: z.array(z.string()),

@@ -65,7 +65,10 @@ import {
   parsePromptExploderSettings,
   PROMPT_EXPLODER_SETTINGS_KEY,
 } from '../settings';
-import { extractCaseResolverBridgePayloadFromSegments } from '../utils/case-resolver-extraction';
+import {
+  buildCaseResolverSegmentCaptureRules,
+  extractCaseResolverBridgePayloadFromSegments,
+} from '../utils/case-resolver-extraction';
 import {
   buildPromptExploderValidationRuleStackOptions,
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
@@ -481,7 +484,14 @@ export function usePromptExploderState() {
     if (!documentState) return;
     const reassembled = reassemblePromptSegments(documentState.segments);
     if (returnTarget === 'case-resolver') {
-      const payload = extractCaseResolverBridgePayloadFromSegments(documentState.segments);
+      const captureRules = buildCaseResolverSegmentCaptureRules(
+        runtimeValidationRules,
+        activeValidationScope
+      );
+      const payload = extractCaseResolverBridgePayloadFromSegments(documentState.segments, {
+        captureRules,
+        mode: promptExploderSettings.runtime.caseResolverCaptureMode,
+      });
       savePromptExploderApplyPromptForCaseResolver(
         reassembled,
         incomingCaseResolverContext,

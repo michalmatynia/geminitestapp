@@ -78,12 +78,15 @@ export const DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT =
   'Extract text from the uploaded document';
 
 export type CaseResolverSettings = CaseResolverSettingsDto;
+export type CaseResolverPartySearchKind = CaseResolverSettings['defaultAddresserPartyKind'];
 
 export const DEFAULT_CASE_RESOLVER_SETTINGS: CaseResolverSettings = {
   ocrModel: '',
   ocrPrompt: DEFAULT_CASE_RESOLVER_OCR_PROMPT,
   defaultDocumentFormat: 'wysiwyg',
   confirmDeleteDocument: true,
+  defaultAddresserPartyKind: 'person',
+  defaultAddresseePartyKind: 'organization',
 };
 
 export const CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_OPTIONS: Array<{
@@ -112,6 +115,23 @@ export const CASE_RESOLVER_CONFIRM_DELETE_OPTIONS: Array<{
     value: 'off',
     label: 'Off',
     description: 'Delete documents immediately without confirmation.',
+  },
+];
+
+export const CASE_RESOLVER_PARTY_SEARCH_KIND_OPTIONS: Array<{
+  value: CaseResolverPartySearchKind;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'person',
+    label: 'Persons',
+    description: 'Search and suggest only people.',
+  },
+  {
+    value: 'organization',
+    label: 'Organizations',
+    description: 'Search and suggest only organizations.',
   },
 ];
 
@@ -467,6 +487,17 @@ const normalizeCaseResolverDefaultDocumentFormatValue = (
   return null;
 };
 
+const normalizeCaseResolverPartySearchKindValue = (
+  input: unknown
+): CaseResolverPartySearchKind | null => {
+  if (typeof input !== 'string') return null;
+  const normalized = input.trim().toLowerCase();
+  if (normalized === 'person' || normalized === 'organization') {
+    return normalized;
+  }
+  return null;
+};
+
 export const parseCaseResolverDefaultDocumentFormat = (
   raw: string | null | undefined,
   fallback: CaseResolverDefaultDocumentFormat = DEFAULT_CASE_RESOLVER_SETTINGS.defaultDocumentFormat
@@ -507,11 +538,19 @@ const normalizeCaseResolverSettings = (input: unknown): CaseResolverSettings => 
     normalizeCaseResolverDefaultDocumentFormatValue(rawFormatCandidate) ??
     DEFAULT_CASE_RESOLVER_SETTINGS.defaultDocumentFormat;
   const confirmDeleteDocument = record['confirmDeleteDocument'] !== false;
+  const defaultAddresserPartyKind =
+    normalizeCaseResolverPartySearchKindValue(record['defaultAddresserPartyKind']) ??
+    DEFAULT_CASE_RESOLVER_SETTINGS.defaultAddresserPartyKind;
+  const defaultAddresseePartyKind =
+    normalizeCaseResolverPartySearchKindValue(record['defaultAddresseePartyKind']) ??
+    DEFAULT_CASE_RESOLVER_SETTINGS.defaultAddresseePartyKind;
   return {
     ocrModel,
     ocrPrompt: ocrPrompt || DEFAULT_CASE_RESOLVER_SETTINGS.ocrPrompt,
     defaultDocumentFormat,
     confirmDeleteDocument,
+    defaultAddresserPartyKind,
+    defaultAddresseePartyKind,
   };
 };
 

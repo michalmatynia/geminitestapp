@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  normalizeCenterLayoutConfig,
   polygonsFromShapes,
   resolveCropRectFromShapesWithDiagnostics,
   type ImageContentFrame,
@@ -95,5 +96,33 @@ describe('GenerationToolbarImageUtils coordinate mapping', () => {
     expect(polygons[0]?.[0]?.y ?? 0).toBeCloseTo(0.3, 5);
     expect(polygons[0]?.[2]?.x ?? 0).toBeCloseTo(0.875, 5);
   });
-});
 
+  it('normalizes object layout config defaults and clamps', () => {
+    expect(normalizeCenterLayoutConfig(null)).toEqual({
+      paddingPercent: 8,
+      paddingXPercent: 8,
+      paddingYPercent: 8,
+      whiteThreshold: 16,
+      chromaThreshold: 10,
+      detection: 'auto',
+    });
+
+    expect(
+      normalizeCenterLayoutConfig({
+        paddingPercent: 200,
+        paddingXPercent: 6,
+        paddingYPercent: 14,
+        whiteThreshold: 0,
+        chromaThreshold: 900,
+        detection: 'white_bg_first_colored_pixel',
+      })
+    ).toEqual({
+      paddingPercent: 40,
+      paddingXPercent: 6,
+      paddingYPercent: 14,
+      whiteThreshold: 1,
+      chromaThreshold: 80,
+      detection: 'white_bg_first_colored_pixel',
+    });
+  });
+});

@@ -1,33 +1,33 @@
 import type {
+  PlaywrightSettingsDto,
   PlaywrightPersonaDto,
   CreatePlaywrightPersonaDto,
   UpdatePlaywrightPersonaDto,
-  PlaywrightBrowserDto,
-  PlaywrightProjectDto,
-  CreatePlaywrightProjectDto,
-  UpdatePlaywrightProjectDto,
-  PlaywrightRunDto,
-  CreatePlaywrightRunDto,
-  UpdatePlaywrightRunDto,
+  PlaywrightTestDto,
+  CreatePlaywrightTestDto,
+  UpdatePlaywrightTestDto,
+  PlaywrightTestRunDto,
+  CreatePlaywrightTestRunDto,
+  UpdatePlaywrightTestRunDto,
 } from '../../contracts/playwright';
 
 export type {
+  PlaywrightSettingsDto,
   PlaywrightPersonaDto,
   CreatePlaywrightPersonaDto,
   UpdatePlaywrightPersonaDto,
-  PlaywrightBrowserDto,
-  PlaywrightProjectDto,
-  CreatePlaywrightProjectDto,
-  UpdatePlaywrightProjectDto,
-  PlaywrightRunDto,
-  CreatePlaywrightRunDto,
-  UpdatePlaywrightRunDto,
+  PlaywrightTestDto,
+  CreatePlaywrightTestDto,
+  UpdatePlaywrightTestDto,
+  PlaywrightTestRunDto,
+  CreatePlaywrightTestRunDto,
+  UpdatePlaywrightTestRunDto,
 };
+
+export type PlaywrightSettings = PlaywrightSettingsDto;
 
 export type PlaywrightPersona = PlaywrightPersonaDto;
 
-export type PlaywrightBrowser = PlaywrightBrowserDto;
+export type PlaywrightTest = PlaywrightTestDto;
 
-export type PlaywrightProject = PlaywrightProjectDto;
-
-export type PlaywrightRun = PlaywrightRunDto;
+export type PlaywrightTestRun = PlaywrightTestRunDto;

@@ -1,5 +1,5 @@
 import type { PromptValidationRule } from '@/features/prompt-engine/settings';
-import type { PromptExploderBenchmarkSuggestion } from '@/features/prompt-exploder/benchmark';
+import type { PromptExploderBenchmarkSuggestion } from '@/features/prompt-exploder/types';
 import { applyBenchmarkSuggestions } from '@/features/prompt-exploder/benchmark-apply';
 import { benchmarkSuggestionRuleId } from '@/features/prompt-exploder/benchmark-suggestions';
 import type { PromptExploderLearnedTemplate } from '@/features/prompt-exploder/types';

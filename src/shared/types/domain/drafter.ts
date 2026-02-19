@@ -1,27 +1,15 @@
 import type {
-  DrafterSettingsDto,
-  UpdateDrafterSettingsDto,
-  DrafterProjectDto,
-  CreateDrafterProjectDto,
-  UpdateDrafterProjectDto,
-  DrafterDraftDto,
-  CreateDrafterDraftDto,
-  UpdateDrafterDraftDto,
+  DraftDto,
+  CreateDraftDto,
+  UpdateDraftDto,
+  PublishDraftDto,
 } from '../../contracts/drafter';
 
 export type {
-  DrafterSettingsDto,
-  UpdateDrafterSettingsDto,
-  DrafterProjectDto,
-  CreateDrafterProjectDto,
-  UpdateDrafterProjectDto,
-  DrafterDraftDto,
-  CreateDrafterDraftDto,
-  UpdateDrafterDraftDto,
+  DraftDto,
+  CreateDraftDto,
+  UpdateDraftDto,
+  PublishDraftDto,
 };
 
-export type DrafterSettings = DrafterSettingsDto;
-
-export type DrafterProject = DrafterProjectDto;
-
-export type DrafterDraft = DrafterDraftDto;
+export type DrafterDraft = DraftDto;

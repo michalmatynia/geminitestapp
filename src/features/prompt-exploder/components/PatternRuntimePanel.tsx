@@ -43,6 +43,8 @@ export function PatternRuntimePanel(): React.JSX.Element {
     runtimeLearnedTemplates,
     templateMergeThreshold,
     learningDraft,
+    promptExploderSettings,
+    runtimeGuardrailIssue,
     snapshotDraftName,
     selectedSnapshotId,
     availableSnapshots,
@@ -196,6 +198,11 @@ export function PatternRuntimePanel(): React.JSX.Element {
           </Button>
         </div>
       ) : null}
+      {runtimeGuardrailIssue ? (
+        <div className='mt-3 rounded border border-rose-500/40 bg-rose-500/10 p-3 text-xs text-rose-100'>
+          {runtimeGuardrailIssue}
+        </div>
+      ) : null}
       <div className='mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4'>
         <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'>
           <div className='text-[10px] uppercase tracking-wide text-gray-500'>Validation Stack</div>
@@ -237,6 +244,22 @@ export function PatternRuntimePanel(): React.JSX.Element {
           <div className='text-[10px] uppercase tracking-wide text-gray-500'>Benchmark Template Upsert</div>
           <div className='mt-1 text-gray-100'>
             {learningDraft.benchmarkSuggestionUpsertTemplates ? 'on' : 'off'}
+          </div>
+        </div>
+        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs sm:col-span-2 xl:col-span-4'>
+          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Fallback Policy</div>
+          <div className='mt-1 text-gray-100'>
+            {promptExploderSettings.runtime.allowValidationStackFallback
+              ? 'validation stack fallback enabled'
+              : 'validation stack fallback blocked'}
+          </div>
+        </div>
+        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs sm:col-span-2 xl:col-span-4'>
+          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Case Resolver Capture Mode</div>
+          <div className='mt-1 text-gray-100'>
+            {promptExploderSettings.runtime.caseResolverCaptureMode === 'rules_only'
+              ? 'rules only (UI-defined capture rules)'
+              : 'rules with heuristics (legacy fallback enabled)'}
           </div>
         </div>
       </div>

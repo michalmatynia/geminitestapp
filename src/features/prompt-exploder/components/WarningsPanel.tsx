@@ -16,7 +16,7 @@ export function WarningsPanel(): React.JSX.Element {
       variant='subtle'
       className='p-4'
     >
-      {!documentState || documentState.warnings.length === 0 ? (
+      {!documentState?.warnings || documentState.warnings.length === 0 ? (
         <div className='text-xs text-gray-500'>No warnings.</div>
       ) : (
         <DocumentationSection title='Issues' className='bg-amber-500/5 border-amber-500/20 p-3'>

@@ -19,6 +19,7 @@ import type {
   PromptExploderBenchmarkSuggestion,
   PromptExploderOperationMode,
   PromptExploderAiProvider,
+  PromptExploderCaseResolverCaptureMode,
   PromptExploderSettings,
   PromptExploderPatternRuleMap,
 } from '@/shared/types/domain/prompt-exploder';
@@ -45,5 +46,6 @@ export type {
   PromptExploderBenchmarkSuggestion,
   PromptExploderOperationMode,
   PromptExploderAiProvider,
+  PromptExploderCaseResolverCaptureMode,
   PromptExploderSettings,
 };

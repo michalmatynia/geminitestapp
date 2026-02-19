@@ -44,11 +44,63 @@ export type CropRectResolutionDiagnostics = {
   usedImageContentFrameMapping: boolean;
 };
 
+export type CenterDetectionMode = 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel';
+
+export type CenterLayoutConfig = {
+  paddingPercent?: number;
+  paddingXPercent?: number;
+  paddingYPercent?: number;
+  whiteThreshold?: number;
+  chromaThreshold?: number;
+  detection?: CenterDetectionMode;
+};
+
+export type CenterLayoutResult = {
+  dataUrl: string;
+  sourceObjectBounds: { left: number; top: number; width: number; height: number };
+  targetObjectBounds: { left: number; top: number; width: number; height: number };
+  detectionUsed: Exclude<CenterDetectionMode, 'auto'>;
+  scale: number;
+  layout: {
+    paddingPercent: number;
+    paddingXPercent: number;
+    paddingYPercent: number;
+    whiteThreshold: number;
+    chromaThreshold: number;
+    detection: CenterDetectionMode;
+  };
+};
+
+const CENTER_LAYOUT_DEFAULT_PADDING_PERCENT = 8;
+const CENTER_LAYOUT_MIN_PADDING_PERCENT = 0;
+const CENTER_LAYOUT_MAX_PADDING_PERCENT = 40;
+const CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD = 16;
+const CENTER_LAYOUT_MIN_WHITE_THRESHOLD = 1;
+const CENTER_LAYOUT_MAX_WHITE_THRESHOLD = 80;
+const CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD = 10;
+const CENTER_LAYOUT_MIN_CHROMA_THRESHOLD = 0;
+const CENTER_LAYOUT_MAX_CHROMA_THRESHOLD = 80;
+const WHITE_BACKGROUND_BORDER_TARGET_SAMPLES = 4_096;
+const WHITE_BACKGROUND_BORDER_MIN_SAMPLES = 48;
+const WHITE_FOREGROUND_HIT_RATIO = 0.03;
+const WHITE_FOREGROUND_MIN_DIMENSION_RATIO = 0.001;
+const WHITE_FOREGROUND_STRICT_RUN_LENGTH = 2;
+
 type ShapeBounds = {
   minX: number;
   maxX: number;
   minY: number;
   maxY: number;
+};
+
+type WhiteBackgroundModel = {
+  r: number;
+  g: number;
+  b: number;
+  chroma: number;
+  whiteThreshold: number;
+  chromaThreshold: number;
+  chromaDeltaThreshold: number;
 };
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
@@ -106,6 +158,71 @@ const toNormalizedUnit = (value: number, sourceSize: number): number | null => {
   if (value >= 0 && value <= 1) return clamp01(value);
   if (!(sourceSize > 0)) return null;
   return clamp01(value / sourceSize);
+};
+
+const clampNumber = (
+  value: number | null | undefined,
+  min: number,
+  max: number,
+  fallback: number
+): number => {
+  const numeric = typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+  return Math.max(min, Math.min(max, numeric));
+};
+
+export const normalizeCenterLayoutConfig = (
+  layout: CenterLayoutConfig | null | undefined
+): Required<CenterLayoutConfig> => {
+  const detectionRaw = layout?.detection;
+  const detection: CenterDetectionMode =
+    detectionRaw === 'alpha_bbox' || detectionRaw === 'white_bg_first_colored_pixel'
+      ? detectionRaw
+      : 'auto';
+  const explicitPaddingPercent = clampNumber(
+    layout?.paddingPercent,
+    CENTER_LAYOUT_MIN_PADDING_PERCENT,
+    CENTER_LAYOUT_MAX_PADDING_PERCENT,
+    CENTER_LAYOUT_DEFAULT_PADDING_PERCENT
+  );
+  const paddingXPercent = clampNumber(
+    layout?.paddingXPercent,
+    CENTER_LAYOUT_MIN_PADDING_PERCENT,
+    CENTER_LAYOUT_MAX_PADDING_PERCENT,
+    explicitPaddingPercent
+  );
+  const paddingYPercent = clampNumber(
+    layout?.paddingYPercent,
+    CENTER_LAYOUT_MIN_PADDING_PERCENT,
+    CENTER_LAYOUT_MAX_PADDING_PERCENT,
+    explicitPaddingPercent
+  );
+  const resolvedPaddingPercent =
+    typeof layout?.paddingPercent === 'number' && Number.isFinite(layout.paddingPercent)
+      ? explicitPaddingPercent
+      : (paddingXPercent + paddingYPercent) / 2;
+
+  return {
+    paddingPercent: Number(resolvedPaddingPercent.toFixed(2)),
+    paddingXPercent: Number(paddingXPercent.toFixed(2)),
+    paddingYPercent: Number(paddingYPercent.toFixed(2)),
+    whiteThreshold: Math.floor(
+      clampNumber(
+        layout?.whiteThreshold,
+        CENTER_LAYOUT_MIN_WHITE_THRESHOLD,
+        CENTER_LAYOUT_MAX_WHITE_THRESHOLD,
+        CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD
+      )
+    ),
+    chromaThreshold: Math.floor(
+      clampNumber(
+        layout?.chromaThreshold,
+        CENTER_LAYOUT_MIN_CHROMA_THRESHOLD,
+        CENTER_LAYOUT_MAX_CHROMA_THRESHOLD,
+        CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD
+      )
+    ),
+    detection,
+  };
 };
 
 export const normalizeShapeToPolygons = (
@@ -588,6 +705,293 @@ const resolveAlphaObjectBounds = (
   };
 };
 
+const computeMedian = (values: number[]): number => {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const midpoint = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 0) {
+    const left = sorted[midpoint - 1] ?? sorted[midpoint] ?? 0;
+    const right = sorted[midpoint] ?? left;
+    return (left + right) / 2;
+  }
+  return sorted[midpoint] ?? 0;
+};
+
+const resolveWhiteBackgroundModel = (
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+  whiteThreshold: number,
+  chromaThreshold: number
+): WhiteBackgroundModel => {
+  const samplesR: number[] = [];
+  const samplesG: number[] = [];
+  const samplesB: number[] = [];
+  const chromaSamples: number[] = [];
+  const perimeter = Math.max(1, (width * 2) + (Math.max(0, height - 2) * 2));
+  const step = Math.max(1, Math.floor(perimeter / WHITE_BACKGROUND_BORDER_TARGET_SAMPLES));
+  let cursor = 0;
+
+  const maybePushBorderSample = (x: number, y: number): void => {
+    if (cursor % step !== 0) {
+      cursor += 1;
+      return;
+    }
+    cursor += 1;
+    const offset = ((y * width) + x) * 4;
+    const a = data[offset + 3] ?? 0;
+    if (a <= 8) return;
+    const r = data[offset] ?? 0;
+    const g = data[offset + 1] ?? 0;
+    const b = data[offset + 2] ?? 0;
+    samplesR.push(r);
+    samplesG.push(g);
+    samplesB.push(b);
+    chromaSamples.push(Math.max(r, g, b) - Math.min(r, g, b));
+  };
+
+  for (let x = 0; x < width; x += 1) {
+    maybePushBorderSample(x, 0);
+  }
+  for (let y = 1; y < Math.max(1, height - 1); y += 1) {
+    maybePushBorderSample(Math.max(0, width - 1), y);
+  }
+  if (height > 1) {
+    for (let x = Math.max(0, width - 1); x >= 0; x -= 1) {
+      maybePushBorderSample(x, height - 1);
+    }
+  }
+  if (width > 1) {
+    for (let y = Math.max(0, height - 2); y >= 1; y -= 1) {
+      maybePushBorderSample(0, y);
+    }
+  }
+
+  if (samplesR.length < WHITE_BACKGROUND_BORDER_MIN_SAMPLES) {
+    return {
+      r: 255,
+      g: 255,
+      b: 255,
+      chroma: 0,
+      whiteThreshold,
+      chromaThreshold,
+      chromaDeltaThreshold: chromaThreshold,
+    };
+  }
+
+  const backgroundR = computeMedian(samplesR);
+  const backgroundG = computeMedian(samplesG);
+  const backgroundB = computeMedian(samplesB);
+  const backgroundChroma = computeMedian(chromaSamples);
+  const distanceSamples = samplesR.map((sampleR, index) => {
+    const sampleG = samplesG[index] ?? backgroundG;
+    const sampleB = samplesB[index] ?? backgroundB;
+    return Math.max(
+      Math.abs(sampleR - backgroundR),
+      Math.abs(sampleG - backgroundG),
+      Math.abs(sampleB - backgroundB)
+    );
+  });
+  const chromaDeltaSamples = chromaSamples.map((sample) => Math.abs(sample - backgroundChroma));
+  const distanceMedian = computeMedian(distanceSamples);
+  const chromaDeltaMedian = computeMedian(chromaDeltaSamples);
+
+  return {
+    r: backgroundR,
+    g: backgroundG,
+    b: backgroundB,
+    chroma: backgroundChroma,
+    whiteThreshold: Math.min(255, Math.max(whiteThreshold, Math.ceil(distanceMedian * 3 + 2))),
+    chromaThreshold: Math.min(
+      255,
+      Math.max(chromaThreshold, Math.ceil(backgroundChroma + chromaDeltaMedian * 3 + 2))
+    ),
+    chromaDeltaThreshold: Math.min(255, Math.max(chromaThreshold, Math.ceil(chromaDeltaMedian * 3 + 2))),
+  };
+};
+
+const isWhiteBackgroundForegroundPixel = (
+  r: number,
+  g: number,
+  b: number,
+  a: number,
+  model: WhiteBackgroundModel
+): boolean => {
+  if (a <= 8) return false;
+  const distanceFromBackground = Math.max(
+    Math.abs(r - model.r),
+    Math.abs(g - model.g),
+    Math.abs(b - model.b)
+  );
+  const chroma = Math.max(r, g, b) - Math.min(r, g, b);
+  const chromaDelta = Math.abs(chroma - model.chroma);
+  return (
+    distanceFromBackground > model.whiteThreshold ||
+    chroma > model.chromaThreshold ||
+    chromaDelta > model.chromaDeltaThreshold
+  );
+};
+
+const findLeadingHitIndex = (
+  hits: Uint32Array,
+  minHits: number,
+  minRunLength: number
+): number => {
+  let runLength = 0;
+  for (let index = 0; index < hits.length; index += 1) {
+    if ((hits[index] ?? 0) >= minHits) {
+      runLength += 1;
+      if (runLength >= minRunLength) {
+        return index - runLength + 1;
+      }
+    } else {
+      runLength = 0;
+    }
+  }
+  return -1;
+};
+
+const findTrailingHitIndex = (
+  hits: Uint32Array,
+  minHits: number,
+  minRunLength: number
+): number => {
+  let runLength = 0;
+  for (let index = hits.length - 1; index >= 0; index -= 1) {
+    if ((hits[index] ?? 0) >= minHits) {
+      runLength += 1;
+      if (runLength >= minRunLength) {
+        return index + runLength - 1;
+      }
+    } else {
+      runLength = 0;
+    }
+  }
+  return -1;
+};
+
+const resolveLineBounds = (
+  hits: Uint32Array,
+  perpendicularSize: number
+): { start: number; end: number } | null => {
+  const maxHit = hits.reduce((max, value) => Math.max(max, value), 0);
+  if (maxHit <= 0) return null;
+  const strictMinHits = Math.max(
+    1,
+    Math.max(
+      Math.ceil(maxHit * WHITE_FOREGROUND_HIT_RATIO),
+      Math.ceil(perpendicularSize * WHITE_FOREGROUND_MIN_DIMENSION_RATIO)
+    )
+  );
+  const strictMinRunLength = hits.length >= 12 ? WHITE_FOREGROUND_STRICT_RUN_LENGTH : 1;
+  let start = findLeadingHitIndex(hits, strictMinHits, strictMinRunLength);
+  let end = findTrailingHitIndex(hits, strictMinHits, strictMinRunLength);
+  if (start < 0 || end < start) {
+    start = findLeadingHitIndex(hits, 1, 1);
+    end = findTrailingHitIndex(hits, 1, 1);
+  }
+  if (start < 0 || end < start) return null;
+  return { start, end };
+};
+
+const resolveWhiteForegroundObjectBounds = (
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+  whiteThreshold: number,
+  chromaThreshold: number
+): { left: number; top: number; width: number; height: number } | null => {
+  const backgroundModel = resolveWhiteBackgroundModel(
+    data,
+    width,
+    height,
+    whiteThreshold,
+    chromaThreshold
+  );
+  const columnHits = new Uint32Array(width);
+  const rowHits = new Uint32Array(height);
+  let foregroundCount = 0;
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const offset = ((y * width) + x) * 4;
+      const r = data[offset] ?? 0;
+      const g = data[offset + 1] ?? 0;
+      const b = data[offset + 2] ?? 0;
+      const a = data[offset + 3] ?? 0;
+      if (!isWhiteBackgroundForegroundPixel(r, g, b, a, backgroundModel)) continue;
+      columnHits[x] += 1;
+      rowHits[y] += 1;
+      foregroundCount += 1;
+    }
+  }
+
+  if (foregroundCount <= 0) return null;
+  const horizontalBounds = resolveLineBounds(columnHits, height);
+  const verticalBounds = resolveLineBounds(rowHits, width);
+  if (!horizontalBounds || !verticalBounds) return null;
+
+  const left = Math.max(0, horizontalBounds.start);
+  const right = Math.min(width - 1, horizontalBounds.end);
+  const top = Math.max(0, verticalBounds.start);
+  const bottom = Math.min(height - 1, verticalBounds.end);
+  if (right < left || bottom < top) return null;
+
+  return {
+    left,
+    top,
+    width: Math.max(1, right - left + 1),
+    height: Math.max(1, bottom - top + 1),
+  };
+};
+
+const resolveObjectBoundsForLayout = (
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+  layout: Required<CenterLayoutConfig>
+): { bounds: { left: number; top: number; width: number; height: number }; detectionUsed: Exclude<CenterDetectionMode, 'auto'> } | null => {
+  if (layout.detection === 'alpha_bbox') {
+    const alpha = resolveAlphaObjectBounds(data, width, height);
+    return alpha ? { bounds: alpha, detectionUsed: 'alpha_bbox' } : null;
+  }
+  if (layout.detection === 'white_bg_first_colored_pixel') {
+    const white = resolveWhiteForegroundObjectBounds(
+      data,
+      width,
+      height,
+      layout.whiteThreshold,
+      layout.chromaThreshold
+    );
+    return white ? { bounds: white, detectionUsed: 'white_bg_first_colored_pixel' } : null;
+  }
+
+  const white = resolveWhiteForegroundObjectBounds(
+    data,
+    width,
+    height,
+    layout.whiteThreshold,
+    layout.chromaThreshold
+  );
+  const alpha = resolveAlphaObjectBounds(data, width, height);
+
+  if (white && alpha) {
+    const whiteArea = white.width * white.height;
+    const alphaArea = alpha.width * alpha.height;
+    if (whiteArea <= alphaArea * 0.995) {
+      return { bounds: white, detectionUsed: 'white_bg_first_colored_pixel' };
+    }
+    return { bounds: alpha, detectionUsed: 'alpha_bbox' };
+  }
+  if (white) {
+    return { bounds: white, detectionUsed: 'white_bg_first_colored_pixel' };
+  }
+  if (alpha) {
+    return { bounds: alpha, detectionUsed: 'alpha_bbox' };
+  }
+  return null;
+};
+
 export const centerCanvasImageObject = async (src: string): Promise<string> => {
   const image = await loadImageElement(src, { crossOrigin: 'anonymous' });
   const sourceWidth = image.naturalWidth || image.width;
@@ -644,6 +1048,99 @@ export const centerCanvasImageObject = async (src: string): Promise<string> => {
   } catch {
     throw new Error('Client centering failed while exporting image. Use "Center Server: Sharp".');
   }
+};
+
+export const layoutCanvasImageObject = async (
+  src: string,
+  layoutConfig?: CenterLayoutConfig | null
+): Promise<CenterLayoutResult> => {
+  const image = await loadImageElement(src, { crossOrigin: 'anonymous' });
+  const sourceWidth = image.naturalWidth || image.width;
+  const sourceHeight = image.naturalHeight || image.height;
+  if (!(sourceWidth > 0 && sourceHeight > 0)) {
+    throw new Error('Source image dimensions are invalid.');
+  }
+
+  const sourceCanvas = document.createElement('canvas');
+  sourceCanvas.width = sourceWidth;
+  sourceCanvas.height = sourceHeight;
+  const sourceContext = sourceCanvas.getContext('2d', { willReadFrequently: true });
+  if (!sourceContext) {
+    throw new Error('Canvas context is unavailable.');
+  }
+  sourceContext.drawImage(image, 0, 0, sourceWidth, sourceHeight);
+
+  let imageData: ImageData;
+  try {
+    imageData = sourceContext.getImageData(0, 0, sourceWidth, sourceHeight);
+  } catch {
+    throw new Error('Client layouting failed due to cross-origin restrictions. Use "Object Layout Server".');
+  }
+
+  const normalizedLayout = normalizeCenterLayoutConfig(layoutConfig);
+  const objectBoundsResult = resolveObjectBoundsForLayout(
+    imageData.data,
+    sourceWidth,
+    sourceHeight,
+    normalizedLayout
+  );
+  if (!objectBoundsResult) {
+    throw new Error('No visible object pixels were detected to layout.');
+  }
+
+  const bounds = objectBoundsResult.bounds;
+  const paddingXRatio = Math.max(0, Math.min(0.49, normalizedLayout.paddingXPercent / 100));
+  const paddingYRatio = Math.max(0, Math.min(0.49, normalizedLayout.paddingYPercent / 100));
+  const maxObjectWidth = Math.max(1, Math.round(sourceWidth * (1 - paddingXRatio * 2)));
+  const maxObjectHeight = Math.max(1, Math.round(sourceHeight * (1 - paddingYRatio * 2)));
+  const scale = Math.max(0.0001, Math.min(maxObjectWidth / bounds.width, maxObjectHeight / bounds.height));
+  const targetWidth = Math.max(1, Math.min(sourceWidth, Math.round(bounds.width * scale)));
+  const targetHeight = Math.max(1, Math.min(sourceHeight, Math.round(bounds.height * scale)));
+  const targetLeft = Math.max(0, Math.round((sourceWidth - targetWidth) / 2));
+  const targetTop = Math.max(0, Math.round((sourceHeight - targetHeight) / 2));
+
+  const outputCanvas = document.createElement('canvas');
+  outputCanvas.width = sourceWidth;
+  outputCanvas.height = sourceHeight;
+  const outputContext = outputCanvas.getContext('2d');
+  if (!outputContext) {
+    throw new Error('Canvas context is unavailable.');
+  }
+
+  outputContext.fillStyle = '#ffffff';
+  outputContext.fillRect(0, 0, sourceWidth, sourceHeight);
+  outputContext.drawImage(
+    sourceCanvas,
+    bounds.left,
+    bounds.top,
+    bounds.width,
+    bounds.height,
+    targetLeft,
+    targetTop,
+    targetWidth,
+    targetHeight
+  );
+
+  let dataUrl: string;
+  try {
+    dataUrl = outputCanvas.toDataURL('image/png');
+  } catch {
+    throw new Error('Client layouting failed while exporting image. Use "Object Layout Server".');
+  }
+
+  return {
+    dataUrl,
+    sourceObjectBounds: bounds,
+    targetObjectBounds: {
+      left: targetLeft,
+      top: targetTop,
+      width: targetWidth,
+      height: targetHeight,
+    },
+    detectionUsed: objectBoundsResult.detectionUsed,
+    scale: Number(scale.toFixed(6)),
+    layout: normalizedLayout,
+  };
 };
 
 const resolveBounds = (

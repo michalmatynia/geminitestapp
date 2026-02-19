@@ -18,6 +18,8 @@ export const defaultPromptExploderSettings: PromptExploderSettings = {
   runtime: {
     ruleProfile: 'all',
     validationRuleStack: DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
+    allowValidationStackFallback: false,
+    caseResolverCaptureMode: 'rules_only',
     orchestratorEnabled: true,
     benchmarkSuite: 'default',
     benchmarkLowConfidenceThreshold: 0.55,
@@ -59,6 +61,10 @@ export function parsePromptExploderSettings(rawValue: string | null | undefined)
         validationRuleStack: normalizePromptExploderValidationRuleStack(
           result.data.runtime.validationRuleStack
         ),
+        allowValidationStackFallback:
+          result.data.runtime.allowValidationStackFallback ?? false,
+        caseResolverCaptureMode:
+          result.data.runtime.caseResolverCaptureMode ?? 'rules_only',
       },
       learning: {
         ...result.data.learning,

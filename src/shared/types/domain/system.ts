@@ -1,8 +1,8 @@
 import type {
-  LogLevelDto,
-  SystemLogInputDto,
-  ListSystemLogsInputDto,
-  ListSystemLogsResultDto,
+  LegacyLogLevelDto as LogLevelDto,
+  LegacySystemLogInputDto as SystemLogInputDto,
+  LegacyListSystemLogsInputDto as ListSystemLogsInputDto,
+  LegacyListSystemLogsResultDto as ListSystemLogsResultDto,
   AppDbProviderDto,
   MigrationDirectionDto,
   MigrationBatchResultDto,

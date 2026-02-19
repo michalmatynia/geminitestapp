@@ -1,13 +1,15 @@
 import type {
-  MasterFolderTreeNodeDto,
-  MasterFolderTreeStatsDto,
+  MasterTreeNodeDto,
+  MasterTreeViewNodeDto,
+  MasterTreeBuildResultDto,
 } from '../../contracts/master-folder-tree';
 
 export type {
-  MasterFolderTreeNodeDto,
-  MasterFolderTreeStatsDto,
+  MasterTreeNodeDto as MasterFolderTreeNodeDto,
+  MasterTreeViewNodeDto,
+  MasterTreeBuildResultDto,
 };
 
-export type MasterFolderTreeNode = MasterFolderTreeNodeDto;
+export type MasterFolderTreeNode = MasterTreeNodeDto;
 
-export type MasterFolderTreeStats = MasterFolderTreeStatsDto;
+export type MasterFolderTreeViewNode = MasterTreeViewNodeDto;

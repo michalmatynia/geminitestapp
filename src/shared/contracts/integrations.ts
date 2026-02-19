@@ -234,7 +234,7 @@ export interface ExternalCategoryWithChildrenDto extends ExternalCategoryDto {
 }
 
 export const externalCategoryWithChildrenSchema: z.ZodType<ExternalCategoryWithChildrenDto> = externalCategorySchema.extend({
-  children: z.lazy(() => z.array(externalCategoryWithChildrenSchema)),
+  children: z.array(z.lazy(() => externalCategoryWithChildrenSchema)),
 });
 
 export const baseCategoryFromApiSchema = z.object({

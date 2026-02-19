@@ -3,7 +3,9 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
+import { recordPromptValidationCounter } from '@/features/prompt-core/runtime-observability';
 import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
   readPromptExploderDraftPayload,
@@ -12,6 +14,10 @@ import {
   type PromptExploderBridgeSource,
   type PromptExploderCaseResolverContext,
 } from '../bridge';
+import {
+  isPromptExploderOrchestratorEnabled,
+  resolvePromptExploderOrchestratorRollout,
+} from '../feature-flags';
 import { promptExploderClampNumber } from '../helpers/formatting';
 import {
   buildPromptExploderParamEntries,
@@ -24,12 +30,21 @@ import {
   reassemblePromptSegments,
   updatePromptExploderDocument,
 } from '../parser';
-import { extractCaseResolverBridgePayloadFromSegments } from '../utils/case-resolver-extraction';
+import { explodePromptWithValidationRuntime } from '../prompt-validation-orchestrator';
+import {
+  leavePromptRuntimeScope,
+  tryEnterPromptRuntimeScope,
+} from '../runtime-load-shedder';
+import {
+  buildCaseResolverSegmentCaptureRules,
+  extractCaseResolverBridgePayloadFromSegments,
+} from '../utils/case-resolver-extraction';
 import { useSettingsState } from './hooks/useSettings';
 
 import type {
   PromptExploderBinding,
   PromptExploderDocument,
+  PromptExploderParamUiControl,
   PromptExploderSegment,
 } from '../types';
 
@@ -93,6 +108,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
 
   const {
     runtimeSelection,
+    runtimeGuardrailIssue,
     promptExploderSettings,
   } = useSettingsState();
 
@@ -253,30 +269,135 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
   );
 
   const handleExplode = useCallback(() => {
-    if (explodeInFlightRef.current || !promptText.trim()) return;
-    
-    try {
-      explodeInFlightRef.current = true;
-      const document = explodePromptText({
-        prompt: promptText,
-        validationRules: runtimeSelection?.effectiveRules ?? [],
-        learnedTemplates: runtimeSelection?.effectiveLearnedTemplates ?? [],
+    const trimmed = promptText.trim();
+    if (!trimmed) {
+      toast('Enter a prompt first.', { variant: 'info' });
+      return;
+    }
+    if (runtimeGuardrailIssue) {
+      toast(runtimeGuardrailIssue, { variant: 'error' });
+      return;
+    }
+    if (explodeInFlightRef.current) {
+      recordPromptValidationCounter('runtime_backpressure_drop', 1, {
+        scope: runtimeSelection.identity.scope,
       });
-      
-      setDocumentState(document);
-      setSelectedSegmentId(document.segments[0]?.id || null);
-      setManualBindings(document.bindings.filter((b: PromptExploderBinding) => b.origin === 'manual'));
-      
+      toast('Prompt explosion is already running.', { variant: 'info' });
+      return;
+    }
+    if (!tryEnterPromptRuntimeScope(runtimeSelection.identity.scope)) {
+      recordPromptValidationCounter('runtime_backpressure_drop', 1, {
+        scope: runtimeSelection.identity.scope,
+      });
+      toast('Runtime is busy for this scope. Try again in a moment.', {
+        variant: 'info',
+      });
+      return;
+    }
+    explodeInFlightRef.current = true;
+
+    try {
+      const similarityThreshold = promptExploderClampNumber(
+        promptExploderSettings.learning.similarityThreshold,
+        0.3,
+        0.95
+      );
+      const learnedTemplateSignature = runtimeSelection.runtimeLearnedTemplates
+        .map((template) => `${template.id}:${template.state}:${template.updatedAt}`)
+        .join('|');
+      const runtimeSignature = [
+        trimmed,
+        runtimeSelection.identity.cacheKey,
+        similarityThreshold.toFixed(4),
+        learnedTemplateSignature,
+      ].join('::');
+      if (lastExplosionRef.current?.signature === runtimeSignature) {
+        recordPromptValidationCounter('runtime_fast_path_hit', 1, {
+          scope: runtimeSelection.identity.scope,
+        });
+        const nextDocument = lastExplosionRef.current.document;
+        setManualBindings([]);
+        setDocumentState(nextDocument);
+        setSelectedSegmentId(nextDocument.segments[0]?.id ?? null);
+        toast(`Reused ${nextDocument.segments.length} cached segment(s).`, {
+          variant: 'info',
+        });
+        return;
+      }
+      recordPromptValidationCounter('runtime_fast_path_miss', 1, {
+        scope: runtimeSelection.identity.scope,
+      });
+
+      const rollout = resolvePromptExploderOrchestratorRollout({
+        settingsEnabled: promptExploderSettings.runtime.orchestratorEnabled,
+        cohortSeed: runtimeSelection.identity.cacheKey,
+      });
+      const orchestratorEnabled = isPromptExploderOrchestratorEnabled(
+        promptExploderSettings.runtime.orchestratorEnabled,
+        runtimeSelection.identity.cacheKey
+      );
+      const nextDocument = orchestratorEnabled
+        ? explodePromptWithValidationRuntime({
+          prompt: trimmed,
+          runtime: runtimeSelection,
+          similarityThreshold,
+        })
+        : explodePromptText({
+          prompt: trimmed,
+          validationRules: runtimeSelection.runtimeValidationRules,
+          learnedTemplates: runtimeSelection.runtimeLearnedTemplates,
+          similarityThreshold,
+          validationScope: runtimeSelection.identity.scope,
+          runtimeCacheKey: runtimeSelection.identity.cacheKey,
+          correlationId: runtimeSelection.correlationId,
+        });
       lastExplosionRef.current = {
-        signature: promptText.trim(),
-        document,
+        signature: runtimeSignature,
+        document: nextDocument,
       };
+
+      setManualBindings([]);
+      setDocumentState(nextDocument);
+      setSelectedSegmentId(nextDocument.segments[0]?.id ?? null);
+      toast(`Exploded into ${nextDocument.segments.length} segment(s).`, {
+        variant: 'success',
+      });
+      if (!orchestratorEnabled) {
+        logClientError(
+          new Error('Prompt runtime orchestrator disabled for current rollout cohort.'),
+          {
+            context: {
+              source: 'DocumentProvider',
+              action: 'handleExplode.rollout',
+              scope: runtimeSelection.identity.scope,
+              stack: runtimeSelection.identity.stack,
+              rolloutReason: rollout.reason,
+              rolloutPercent: rollout.canaryPercent,
+              rolloutBucket: rollout.bucket,
+              level: 'warn',
+            },
+          }
+        );
+      }
     } catch (error) {
-      toast('Explosion failed.', { variant: 'error' });
+      logClientError(error, {
+        context: {
+          source: 'DocumentProvider',
+          action: 'handleExplode',
+          correlationId: runtimeSelection.correlationId,
+          scope: runtimeSelection.identity.scope,
+          stack: runtimeSelection.identity.stack,
+          level: 'error',
+        },
+      });
+      toast(error instanceof Error ? error.message : 'Explosion failed.', {
+        variant: 'error',
+      });
     } finally {
       explodeInFlightRef.current = false;
+      leavePromptRuntimeScope(runtimeSelection.identity.scope);
     }
-  }, [promptText, runtimeSelection, toast]);
+  }, [promptText, promptExploderSettings, runtimeGuardrailIssue, runtimeSelection, toast]);
 
   const clearDocument = useCallback(() => {
     setDocumentState(null);
@@ -295,7 +416,14 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     if (!documentState) return;
     const reassembled = reassemblePromptSegments(documentState.segments);
     if (returnTarget === 'case-resolver') {
-      const payload = extractCaseResolverBridgePayloadFromSegments(documentState.segments);
+      const captureRules = buildCaseResolverSegmentCaptureRules(
+        runtimeSelection.runtimeValidationRules,
+        runtimeSelection.identity.scope
+      );
+      const payload = extractCaseResolverBridgePayloadFromSegments(documentState.segments, {
+        captureRules,
+        mode: promptExploderSettings.runtime.caseResolverCaptureMode,
+      });
       savePromptExploderApplyPromptForCaseResolver(
         reassembled,
         incomingCaseResolverContext,
@@ -306,18 +434,34 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
       savePromptExploderApplyPrompt(reassembled);
     }
     router.push(returnTo);
-  }, [documentState, returnTarget, incomingCaseResolverContext, returnTo, router]);
+  }, [
+    documentState,
+    incomingCaseResolverContext,
+    promptExploderSettings.runtime.caseResolverCaptureMode,
+    returnTarget,
+    returnTo,
+    router,
+    runtimeSelection.identity.scope,
+    runtimeSelection.runtimeValidationRules,
+  ]);
 
   const updateParameterValue = useCallback(
     (segmentId: string, path: string, value: unknown) => {
       updateSegment(segmentId, (current) => {
         const nextParams = { ...(current.paramsObject ?? {}) };
         const parts = path.split('.');
-        let cursor: any = nextParams;
+        let cursor: Record<string, unknown> = nextParams;
         for (let i = 0; i < parts.length - 1; i++) {
           const part = parts[i]!;
-          cursor[part] = { ...(cursor[part] ?? {}) };
-          cursor = cursor[part];
+          const existing = cursor[part];
+          if (!existing || typeof existing !== 'object' || Array.isArray(existing)) {
+            cursor[part] = {};
+          }
+          const nextCursor = cursor[part];
+          if (!nextCursor || typeof nextCursor !== 'object' || Array.isArray(nextCursor)) {
+            return { ...current, paramsObject: nextParams };
+          }
+          cursor = nextCursor as Record<string, unknown>;
         }
         cursor[parts[parts.length - 1]!] = value;
         return { ...current, paramsObject: nextParams };
@@ -333,7 +477,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
         if (control === 'auto') {
           delete nextControls[path];
         } else {
-          nextControls[path] = control as any;
+          nextControls[path] = control as PromptExploderParamUiControl;
         }
         return { ...current, paramUiControls: nextControls };
       });

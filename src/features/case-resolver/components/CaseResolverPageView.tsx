@@ -26,6 +26,7 @@ import {
   Input,
   FormField,
   MultiSelect,
+  SearchInput,
   SelectSimple,
   Tabs,
   TabsContent,
@@ -67,10 +68,29 @@ const ENABLE_CASE_RESOLVER_MULTIFORMAT_EDITOR =
 type SelectOption = {
   value: string;
   label: string;
+  description?: string | undefined;
 };
 
 type WorkspaceView = 'document' | 'relations';
 type EditorDetailsTab = 'document' | 'relations' | 'metadata' | 'revisions';
+type PartySearchKind = 'person' | 'organization';
+
+const CASE_RESOLVER_PARTY_SEARCH_KIND_OPTIONS: Array<{
+  value: PartySearchKind;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'person',
+    label: 'Persons',
+    description: 'Search within persons',
+  },
+  {
+    value: 'organization',
+    label: 'Organizations',
+    description: 'Search within organizations',
+  },
+];
 
 type CaseResolverPageViewProps = {
   state: ReturnType<typeof useCaseResolverState>;
@@ -166,6 +186,12 @@ const CASE_RESOLVER_NODE_TEXT_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6
 export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JSX.Element {
   const router = useRouter();
   const [showMarkdownPreview, setShowMarkdownPreview] = React.useState(true);
+  const [addresserPartySearchKind, setAddresserPartySearchKind] =
+    React.useState<PartySearchKind>('person');
+  const [addresseePartySearchKind, setAddresseePartySearchKind] =
+    React.useState<PartySearchKind>('organization');
+  const [addresserPartyQuery, setAddresserPartyQuery] = React.useState('');
+  const [addresseePartyQuery, setAddresseePartyQuery] = React.useState('');
   const {
     state,
     workspaceView,
@@ -267,6 +293,101 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     ConfirmationModal,
     PromptInputModal,
   } = state;
+  React.useEffect(() => {
+    const fallbackAddresserKind =
+      caseResolverSettings.defaultAddresserPartyKind === 'organization'
+        ? 'organization'
+        : 'person';
+    const fallbackAddresseeKind =
+      caseResolverSettings.defaultAddresseePartyKind === 'person'
+        ? 'person'
+        : 'organization';
+    const resolvedAddresserKind = editingDocumentDraft?.addresser?.kind ?? fallbackAddresserKind;
+    const resolvedAddresseeKind = editingDocumentDraft?.addressee?.kind ?? fallbackAddresseeKind;
+
+    setAddresserPartySearchKind(
+      resolvedAddresserKind === 'organization' ? 'organization' : 'person'
+    );
+    setAddresseePartySearchKind(
+      resolvedAddresseeKind === 'person' ? 'person' : 'organization'
+    );
+    setAddresserPartyQuery('');
+    setAddresseePartyQuery('');
+  }, [
+    caseResolverSettings.defaultAddresseePartyKind,
+    caseResolverSettings.defaultAddresserPartyKind,
+    editingDocumentDraft?.addressee?.kind,
+    editingDocumentDraft?.addresser?.kind,
+    editingDocumentDraft?.id,
+  ]);
+
+  const filterPartyOptions = useCallback(
+    (
+      kind: PartySearchKind,
+      query: string,
+      selectedReference: ReturnType<typeof decodeFilemakerPartyReference>
+    ): SelectOption[] => {
+      const normalizedQuery = query.trim().toLowerCase();
+      const selectedValue = encodeFilemakerPartyReference(selectedReference);
+
+      const filtered = partyOptions.filter((option): boolean => {
+        if (option.value === 'none') {
+          if (!normalizedQuery) return true;
+          return 'none'.includes(normalizedQuery);
+        }
+        const optionReference = decodeFilemakerPartyReference(option.value);
+        if (!optionReference) return false;
+        const isSelected = option.value === selectedValue;
+        if (optionReference.kind !== kind && !isSelected) return false;
+        if (!normalizedQuery) return true;
+        const searchSource = `${option.label} ${option.description ?? ''}`.toLowerCase();
+        return searchSource.includes(normalizedQuery);
+      });
+
+      if (
+        selectedValue &&
+        selectedValue !== 'none' &&
+        !filtered.some((option) => option.value === selectedValue)
+      ) {
+        const selectedOption = partyOptions.find((option) => option.value === selectedValue);
+        if (selectedOption) {
+          return [selectedOption, ...filtered];
+        }
+      }
+      return filtered;
+    },
+    [partyOptions]
+  );
+
+  const addresserPartyOptions = React.useMemo(
+    () =>
+      filterPartyOptions(
+        addresserPartySearchKind,
+        addresserPartyQuery,
+        editingDocumentDraft?.addresser ?? null
+      ),
+    [
+      addresserPartyQuery,
+      addresserPartySearchKind,
+      editingDocumentDraft?.addresser,
+      filterPartyOptions,
+    ]
+  );
+  const addresseePartyOptions = React.useMemo(
+    () =>
+      filterPartyOptions(
+        addresseePartySearchKind,
+        addresseePartyQuery,
+        editingDocumentDraft?.addressee ?? null
+      ),
+    [
+      addresseePartyQuery,
+      addresseePartySearchKind,
+      editingDocumentDraft?.addressee,
+      filterPartyOptions,
+    ]
+  );
+
   const configuredScanOcrModel = caseResolverSettings.ocrModel.trim();
   const scanOcrProviderLabel = React.useMemo((): string => {
     if (!configuredScanOcrModel) return 'Not set';
@@ -647,7 +768,13 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                   <Button
                     type='button'
                     onClick={handleSaveFileEditor}
-                    className='min-w-[100px]'
+                    size='sm'
+                    disabled={!isEditorDraftDirty}
+                    className={`min-w-[100px] rounded-md border text-xs transition-colors ${
+                      isEditorDraftDirty
+                        ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
+                        : 'border-border/60 text-gray-500 hover:bg-transparent'
+                    }`}
                   >
                     Save Changes
                   </Button>
@@ -856,16 +983,45 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                     </FormField>
 
                     <FormField label='Addresser'>
-                      <div className='space-y-1'>
+                      <div className='space-y-2'>
+                        <div className='grid gap-2 md:grid-cols-[170px_minmax(0,1fr)]'>
+                          <SelectSimple
+                            size='sm'
+                            value={addresserPartySearchKind}
+                            onValueChange={(value: string): void => {
+                              if (value !== 'person' && value !== 'organization') return;
+                              setAddresserPartySearchKind(value);
+                            }}
+                            options={CASE_RESOLVER_PARTY_SEARCH_KIND_OPTIONS}
+                            placeholder='Lookup scope'
+                            triggerClassName='h-9'
+                          />
+                          <SearchInput
+                            value={addresserPartyQuery}
+                            onChange={(event): void => {
+                              setAddresserPartyQuery(event.target.value);
+                            }}
+                            onClear={(): void => {
+                              setAddresserPartyQuery('');
+                            }}
+                            placeholder='Search addresser'
+                            size='sm'
+                            className='h-9'
+                          />
+                        </div>
                         <SelectSimple
                           size='sm'
                           value={encodeFilemakerPartyReference(editingDocumentDraft.addresser)}
                           onValueChange={(value: string): void => {
+                            const nextReference = decodeFilemakerPartyReference(value);
+                            if (nextReference?.kind) {
+                              setAddresserPartySearchKind(nextReference.kind);
+                            }
                             updateEditingDocumentDraft({
-                              addresser: decodeFilemakerPartyReference(value),
+                              addresser: nextReference,
                             });
                           }}
-                          options={partyOptions}
+                          options={addresserPartyOptions}
                           placeholder='Select addresser'
                           triggerClassName='h-9'
                         />
@@ -887,16 +1043,45 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                     </FormField>
 
                     <FormField label='Addressee'>
-                      <div className='space-y-1'>
+                      <div className='space-y-2'>
+                        <div className='grid gap-2 md:grid-cols-[170px_minmax(0,1fr)]'>
+                          <SelectSimple
+                            size='sm'
+                            value={addresseePartySearchKind}
+                            onValueChange={(value: string): void => {
+                              if (value !== 'person' && value !== 'organization') return;
+                              setAddresseePartySearchKind(value);
+                            }}
+                            options={CASE_RESOLVER_PARTY_SEARCH_KIND_OPTIONS}
+                            placeholder='Lookup scope'
+                            triggerClassName='h-9'
+                          />
+                          <SearchInput
+                            value={addresseePartyQuery}
+                            onChange={(event): void => {
+                              setAddresseePartyQuery(event.target.value);
+                            }}
+                            onClear={(): void => {
+                              setAddresseePartyQuery('');
+                            }}
+                            placeholder='Search addressee'
+                            size='sm'
+                            className='h-9'
+                          />
+                        </div>
                         <SelectSimple
                           size='sm'
                           value={encodeFilemakerPartyReference(editingDocumentDraft.addressee)}
                           onValueChange={(value: string): void => {
+                            const nextReference = decodeFilemakerPartyReference(value);
+                            if (nextReference?.kind) {
+                              setAddresseePartySearchKind(nextReference.kind);
+                            }
                             updateEditingDocumentDraft({
-                              addressee: decodeFilemakerPartyReference(value),
+                              addressee: nextReference,
                             });
                           }}
-                          options={partyOptions}
+                          options={addresseePartyOptions}
                           placeholder='Select addressee'
                           triggerClassName='h-9'
                         />

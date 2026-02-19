@@ -1,10 +1,18 @@
 import { z } from 'zod';
 
-import { dtoBaseSchema } from './base';
+import { dtoBaseSchema, type DtoBase } from './base';
+
+import type {
+  ProductValidationPatternDto,
+  CreateProductValidationPatternDto,
+  UpdateProductValidationPatternDto,
+  ProductValidatorSettingsDto,
+} from './products';
 
 /**
  * Admin Activity DTOs
  */
+// ... (rest of the file)
 
 export const adminActivitySchema = dtoBaseSchema.extend({
   type: z.string(),
@@ -173,3 +181,11 @@ export const validatorPatternListSchema = dtoBaseSchema.extend({
 });
 
 export type ValidatorPatternListDto = z.infer<typeof validatorPatternListSchema>;
+
+export type ValidatorPatternDto = ProductValidationPatternDto;
+export type CreateValidatorPatternDto = CreateProductValidationPatternDto;
+export type UpdateValidatorPatternDto = UpdateProductValidationPatternDto;
+export type ValidatorSettingsDto = ProductValidatorSettingsDto;
+export type UpdateValidatorSettingsDto = Partial<ProductValidatorSettingsDto>;
+export type CreateValidatorPatternListDto = Omit<ValidatorPatternListDto, keyof DtoBase>;
+export type UpdateValidatorPatternListDto = Partial<CreateValidatorPatternListDto>;

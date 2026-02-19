@@ -810,24 +810,32 @@ describe('case-resolver settings', () => {
         ocrPrompt: '  Extract everything exactly as plain text.  ',
         defaultDocumentFormat: 'wysiwyg',
         confirmDeleteDocument: false,
+        defaultAddresserPartyKind: 'organization',
+        defaultAddresseePartyKind: 'person',
       })
     );
     expect(parsedWithValues.ocrModel).toBe('llama3.2-vision');
     expect(parsedWithValues.ocrPrompt).toBe('Extract everything exactly as plain text.');
     expect(parsedWithValues.defaultDocumentFormat).toBe('wysiwyg');
     expect(parsedWithValues.confirmDeleteDocument).toBe(false);
+    expect(parsedWithValues.defaultAddresserPartyKind).toBe('organization');
+    expect(parsedWithValues.defaultAddresseePartyKind).toBe('person');
 
     const parsedDefaults = parseCaseResolverSettings(JSON.stringify({}));
     expect(parsedDefaults.ocrModel).toBe('');
     expect(parsedDefaults.ocrPrompt).toBe(DEFAULT_CASE_RESOLVER_OCR_PROMPT);
     expect(parsedDefaults.defaultDocumentFormat).toBe('wysiwyg');
     expect(parsedDefaults.confirmDeleteDocument).toBe(true);
+    expect(parsedDefaults.defaultAddresserPartyKind).toBe('person');
+    expect(parsedDefaults.defaultAddresseePartyKind).toBe('organization');
 
     const parsedNull = parseCaseResolverSettings(null);
     expect(parsedNull.ocrModel).toBe('');
     expect(parsedNull.ocrPrompt).toBe(DEFAULT_CASE_RESOLVER_OCR_PROMPT);
     expect(parsedNull.defaultDocumentFormat).toBe('wysiwyg');
     expect(parsedNull.confirmDeleteDocument).toBe(true);
+    expect(parsedNull.defaultAddresserPartyKind).toBe('person');
+    expect(parsedNull.defaultAddresseePartyKind).toBe('organization');
 
     const parsedLegacyPlainValue = parseCaseResolverSettings('wysiwyg');
     expect(parsedLegacyPlainValue.defaultDocumentFormat).toBe('wysiwyg');

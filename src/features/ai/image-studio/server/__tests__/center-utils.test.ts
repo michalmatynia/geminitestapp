@@ -4,9 +4,12 @@ import { describe, expect, it } from 'vitest';
 import {
   buildCenterFingerprint,
   buildCenterFingerprintRelationType,
+  buildCenterLayoutSignature,
   buildCenterRequestRelationType,
+  centerAndScaleObjectByLayout,
   centerObjectByAlpha,
   normalizeCenterBoundsForFingerprint,
+  normalizeCenterLayoutConfig,
   validateCenterOutputDimensions,
   validateCenterSourceDimensions,
 } from '@/features/ai/image-studio/server/center-utils';
@@ -44,6 +47,21 @@ describe('center-utils', () => {
     expect(buildCenterFingerprintRelationType(clientFingerprint)).toMatch(/^center:output:[a-f0-9]{20}$/);
   });
 
+  it('produces distinct fingerprints for alpha-center and object-layout pipelines', () => {
+    const sourceSignature = 'slot-2|project-2|file-2';
+    const alphaFingerprint = buildCenterFingerprint({
+      sourceSignature,
+      mode: 'server_alpha_bbox',
+    });
+    const objectLayoutFingerprint = buildCenterFingerprint({
+      sourceSignature,
+      mode: 'server_object_layout_v1',
+      layoutSignature: buildCenterLayoutSignature({ paddingPercent: 8 }),
+    });
+
+    expect(alphaFingerprint).not.toBe(objectLayoutFingerprint);
+  });
+
   it('uses request id relation hashing for idempotency links', () => {
     const relation = buildCenterRequestRelationType('center_req_123456789');
     expect(relation).toMatch(/^center:request:[a-f0-9]{20}$/);
@@ -54,6 +72,22 @@ describe('center-utils', () => {
     expect(validateCenterSourceDimensions(0, 2048).ok).toBe(false);
     expect(validateCenterOutputDimensions(4096, 4096)).toBe(true);
     expect(validateCenterOutputDimensions(20000, 20000)).toBe(false);
+  });
+
+  it('normalizes layout config with optional axis padding overrides', () => {
+    expect(
+      normalizeCenterLayoutConfig({
+        paddingPercent: 12,
+        paddingXPercent: 18.5,
+      })
+    ).toEqual({
+      paddingPercent: 12,
+      paddingXPercent: 18.5,
+      paddingYPercent: 12,
+      whiteThreshold: 16,
+      chromaThreshold: 10,
+      detection: 'auto',
+    });
   });
 
   it('centers alpha-bounded object inside transparent canvas', async () => {
@@ -93,5 +127,62 @@ describe('center-utils', () => {
     const outputMeta = await sharp(centered.outputBuffer).metadata();
     expect(outputMeta.width).toBe(10);
     expect(outputMeta.height).toBe(10);
+  });
+
+  it('layouts white-background object with padding and center scaling', async () => {
+    const source = await sharp({
+      create: {
+        width: 24,
+        height: 24,
+        channels: 4,
+        background: { r: 250, g: 250, b: 250, alpha: 1 },
+      },
+    })
+      .composite([
+        {
+          input: await sharp({
+            create: {
+              width: 6,
+              height: 6,
+              channels: 4,
+              background: { r: 255, g: 0, b: 0, alpha: 1 },
+            },
+          })
+            .png()
+            .toBuffer(),
+          left: 2,
+          top: 3,
+        },
+        {
+          // Stray noise on border should not become the object bound.
+          input: await sharp({
+            create: {
+              width: 1,
+              height: 1,
+              channels: 4,
+              background: { r: 180, g: 180, b: 180, alpha: 1 },
+            },
+          })
+            .png()
+            .toBuffer(),
+          left: 0,
+          top: 23,
+        },
+      ])
+      .png()
+      .toBuffer();
+
+    const laidOut = await centerAndScaleObjectByLayout(source, {
+      paddingXPercent: 20,
+      paddingYPercent: 10,
+      detection: 'white_bg_first_colored_pixel',
+    });
+    expect(laidOut.width).toBe(24);
+    expect(laidOut.height).toBe(24);
+    expect(laidOut.detectionUsed).toBe('white_bg_first_colored_pixel');
+    expect(laidOut.sourceObjectBounds).toEqual({ left: 2, top: 3, width: 6, height: 6 });
+    expect(laidOut.targetObjectBounds.left).toBeGreaterThan(0);
+    expect(laidOut.targetObjectBounds.top).toBeGreaterThan(0);
+    expect(laidOut.scale).toBeGreaterThan(1);
   });
 });

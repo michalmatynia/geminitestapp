@@ -27,7 +27,6 @@ import {
 } from './parser';
 import {
   getPromptExploderScopedRules,
-  PROMPT_EXPLODER_PATTERN_PACK,
   PROMPT_EXPLODER_PATTERN_PACK_IDS,
 } from './pattern-pack';
 import { filterTemplatesForRuntime } from './runtime-refresh';
@@ -168,14 +167,8 @@ const selectRuntimeRules = (
 
 const CASE_RESOLVER_HEADING_RULE_ID_RE = /^segment\.case_resolver\.heading\./i;
 
-const isCaseResolverRuleInScope = (rule: PromptValidationRule): boolean => {
-  const scopes = rule.appliesToScopes ?? [];
-  return (
-    scopes.length === 0 ||
-    scopes.includes('case_resolver_prompt_exploder') ||
-    scopes.includes('global')
-  );
-};
+const isCaseResolverRuntimeScope = (scope: string | null | undefined): boolean =>
+  scope === 'case-resolver-prompt-exploder' || scope === 'case_resolver_prompt_exploder';
 
 const hasUsableCaseResolverHeadingRules = (
   rules: PromptValidationRule[]
@@ -187,35 +180,6 @@ const hasUsableCaseResolverHeadingRules = (
       CASE_RESOLVER_HEADING_RULE_ID_RE.test(rule.id)
   );
 
-const ensureCaseResolverRuntimeRules = (
-  runtimeRules: PromptValidationRule[],
-  scope: string
-): {
-  rules: PromptValidationRule[];
-  usedFallback: boolean;
-} => {
-  if (scope !== 'case_resolver_prompt_exploder') {
-    return { rules: runtimeRules, usedFallback: false };
-  }
-  if (hasUsableCaseResolverHeadingRules(runtimeRules)) {
-    return { rules: runtimeRules, usedFallback: false };
-  }
-
-  const nextRules = [...runtimeRules];
-  const existingRuleIds = new Set(nextRules.map((rule) => rule.id));
-  PROMPT_EXPLODER_PATTERN_PACK
-    .filter(isCaseResolverRuleInScope)
-    .forEach((rule) => {
-      if (existingRuleIds.has(rule.id)) return;
-      nextRules.push(rule);
-      existingRuleIds.add(rule.id);
-    });
-
-  return {
-    rules: nextRules,
-    usedFallback: true,
-  };
-};
 
 const mergeTemplatesById = (
   persistedTemplates: PromptExploderLearnedTemplate[],
@@ -484,20 +448,9 @@ export const resolvePromptValidationRuntime = (
       effectiveRules,
       args.runtimeRuleProfile
     );
-    const caseResolverRuntimeFallback = ensureCaseResolverRuntimeRules(
-      runtimeValidationRules,
-      stackResolution.scope
-    );
-    const nextRuntimeValidationRules = caseResolverRuntimeFallback.rules;
-    if (caseResolverRuntimeFallback.usedFallback) {
-      recordPromptValidationCounter('runtime_case_resolver_pack_fallback', 1, {
-        scope: stackResolution.scope,
-        stack: stackResolution.stack,
-      });
-    }
     if (
-      stackResolution.scope === 'case_resolver_prompt_exploder' &&
-      !hasUsableCaseResolverHeadingRules(nextRuntimeValidationRules)
+      isCaseResolverRuntimeScope(stackResolution.scope) &&
+      !hasUsableCaseResolverHeadingRules(runtimeValidationRules)
     ) {
       throw new PromptValidationRuntimeError(
         'Case Resolver runtime is missing heading rules. Switch to Case Resolver stack or reinstall pattern pack.',
@@ -541,7 +494,7 @@ export const resolvePromptValidationRuntime = (
       identity,
       scopedRules,
       effectiveRules,
-      runtimeValidationRules: nextRuntimeValidationRules,
+      runtimeValidationRules,
       effectiveLearnedTemplates,
       runtimeLearnedTemplates,
     });
@@ -565,7 +518,7 @@ export const resolvePromptValidationRuntime = (
       const prewarm = Promise.resolve()
         .then(() => {
           prewarmPromptExploderRuntimePatterns({
-            rules: nextRuntimeValidationRules,
+            rules: runtimeValidationRules,
             scope: stackResolution.scope,
             runtimeCacheKey,
             correlationId,
@@ -588,7 +541,7 @@ export const resolvePromptValidationRuntime = (
       identity,
       scopedRules,
       effectiveRules,
-      runtimeValidationRules: nextRuntimeValidationRules,
+      runtimeValidationRules,
       effectiveLearnedTemplates,
       runtimeLearnedTemplates,
     };

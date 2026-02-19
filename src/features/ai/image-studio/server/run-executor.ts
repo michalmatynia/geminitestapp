@@ -9,12 +9,16 @@ import sharp from 'sharp';
 import { z } from 'zod';
 
 import {
+  imageStudioCenterLayoutConfigSchema,
   imageStudioCenterModeSchema,
+  type ImageStudioCenterDetectionMode,
   type ImageStudioCenterMode,
   type ImageStudioCenterObjectBounds,
 } from '@/features/ai/image-studio/contracts/center';
 import {
+  centerAndScaleObjectByLayout,
   centerObjectByAlpha,
+  normalizeCenterLayoutConfig,
   validateCenterOutputDimensions,
   validateCenterSourceDimensions,
 } from '@/features/ai/image-studio/server/center-utils';
@@ -84,6 +88,7 @@ export const imageStudioRunMaskSchema = z.union([
 const imageStudioRunCenterSchema = z.object({
   mode: imageStudioCenterModeSchema.default('server_alpha_bbox'),
   dataUrl: z.string().trim().min(1).optional(),
+  layout: imageStudioCenterLayoutConfigSchema.optional(),
 });
 
 export const imageStudioRunRequestSchema = z.object({
@@ -138,6 +143,15 @@ type ImageStudioCenterExecutionMeta = {
   inputImageCount: 1;
   sourceObjectBounds: ImageStudioCenterObjectBounds | null;
   targetObjectBounds: ImageStudioCenterObjectBounds | null;
+  layout: {
+    paddingPercent: number;
+    paddingXPercent: number;
+    paddingYPercent: number;
+    whiteThreshold: number;
+    chromaThreshold: number;
+    detectionUsed: ImageStudioCenterDetectionMode | null;
+    scale: number | null;
+  } | null;
 };
 
 export type ImageStudioRunExecutionMeta =
@@ -434,16 +448,18 @@ async function executeCenterOperation(params: {
   diskPath: string;
 }): Promise<ImageStudioRunExecutionResult> {
   const centerMode = params.request.center?.mode ?? 'server_alpha_bbox';
+  const normalizedLayout = normalizeCenterLayoutConfig(params.request.center?.layout);
 
   let outputBuffer: Buffer;
   let outputMime = 'image/png';
   let sourceObjectBounds: ImageStudioCenterObjectBounds | null = null;
   let targetObjectBounds: ImageStudioCenterObjectBounds | null = null;
+  let layoutMeta: ImageStudioCenterExecutionMeta['layout'] = null;
 
-  if (centerMode === 'client_alpha_bbox') {
+  if (centerMode === 'client_alpha_bbox' || centerMode === 'client_object_layout_v1') {
     const parsedDataUrl = parseDataUrl(params.request.center?.dataUrl ?? '');
     if (!parsedDataUrl) {
-      throw badRequestError('Client centering requires a valid dataUrl payload.');
+      throw badRequestError('Client centering/layouting requires a valid dataUrl payload.');
     }
     outputBuffer = parsedDataUrl.buffer;
     outputMime = parsedDataUrl.mime;
@@ -455,6 +471,18 @@ async function executeCenterOperation(params: {
     }
     if (!validateCenterOutputDimensions(width, height)) {
       throw badRequestError('Centered output exceeds center processing limits.');
+    }
+
+    if (centerMode === 'client_object_layout_v1') {
+      layoutMeta = {
+        paddingPercent: normalizedLayout.paddingPercent,
+        paddingXPercent: normalizedLayout.paddingXPercent,
+        paddingYPercent: normalizedLayout.paddingYPercent,
+        whiteThreshold: normalizedLayout.whiteThreshold,
+        chromaThreshold: normalizedLayout.chromaThreshold,
+        detectionUsed: null,
+        scale: null,
+      };
     }
   } else {
     const sourceBuffer = await fs.readFile(params.diskPath).catch(() => {
@@ -474,28 +502,62 @@ async function executeCenterOperation(params: {
         height: sourceHeight,
       });
     }
-    let centered: Awaited<ReturnType<typeof centerObjectByAlpha>>;
-    try {
-      centered = await centerObjectByAlpha(sourceBuffer);
-    } catch (error) {
-      if (error instanceof Error && /No visible object pixels were detected to center/i.test(error.message)) {
-        throw badRequestError('No visible object pixels were detected to center.');
+    if (centerMode === 'server_object_layout_v1') {
+      let centered: Awaited<ReturnType<typeof centerAndScaleObjectByLayout>>;
+      try {
+        centered = await centerAndScaleObjectByLayout(sourceBuffer, params.request.center?.layout);
+      } catch (error) {
+        if (error instanceof Error && /No visible object pixels were detected to center/i.test(error.message)) {
+          throw badRequestError('No visible object pixels were detected to center.');
+        }
+        if (error instanceof Error && /dimensions are invalid/i.test(error.message)) {
+          throw badRequestError('Source image dimensions are invalid.');
+        }
+        throw error;
       }
-      if (error instanceof Error && /dimensions are invalid/i.test(error.message)) {
-        throw badRequestError('Source image dimensions are invalid.');
+      if (!validateCenterOutputDimensions(centered.width, centered.height)) {
+        throw badRequestError('Centered output exceeds center processing limits.', {
+          width: centered.width,
+          height: centered.height,
+        });
       }
-      throw error;
+      outputBuffer = centered.outputBuffer;
+      outputMime = 'image/png';
+      sourceObjectBounds = centered.sourceObjectBounds;
+      targetObjectBounds = centered.targetObjectBounds;
+      layoutMeta = {
+        paddingPercent: normalizedLayout.paddingPercent,
+        paddingXPercent: normalizedLayout.paddingXPercent,
+        paddingYPercent: normalizedLayout.paddingYPercent,
+        whiteThreshold: normalizedLayout.whiteThreshold,
+        chromaThreshold: normalizedLayout.chromaThreshold,
+        detectionUsed: centered.detectionUsed,
+        scale: centered.scale,
+      };
+    } else {
+      let centered: Awaited<ReturnType<typeof centerObjectByAlpha>>;
+      try {
+        centered = await centerObjectByAlpha(sourceBuffer);
+      } catch (error) {
+        if (error instanceof Error && /No visible object pixels were detected to center/i.test(error.message)) {
+          throw badRequestError('No visible object pixels were detected to center.');
+        }
+        if (error instanceof Error && /dimensions are invalid/i.test(error.message)) {
+          throw badRequestError('Source image dimensions are invalid.');
+        }
+        throw error;
+      }
+      if (!validateCenterOutputDimensions(centered.width, centered.height)) {
+        throw badRequestError('Centered output exceeds center processing limits.', {
+          width: centered.width,
+          height: centered.height,
+        });
+      }
+      outputBuffer = centered.outputBuffer;
+      outputMime = 'image/png';
+      sourceObjectBounds = centered.sourceObjectBounds;
+      targetObjectBounds = centered.targetObjectBounds;
     }
-    if (!validateCenterOutputDimensions(centered.width, centered.height)) {
-      throw badRequestError('Centered output exceeds center processing limits.', {
-        width: centered.width,
-        height: centered.height,
-      });
-    }
-    outputBuffer = centered.outputBuffer;
-    outputMime = 'image/png';
-    sourceObjectBounds = centered.sourceObjectBounds;
-    targetObjectBounds = centered.targetObjectBounds;
   }
 
   const normalizedOutput = await resolveCenterOutputFormat(outputBuffer, outputMime);
@@ -517,6 +579,7 @@ async function executeCenterOperation(params: {
       inputImageCount: 1,
       sourceObjectBounds,
       targetObjectBounds,
+      layout: layoutMeta,
     },
   };
 }

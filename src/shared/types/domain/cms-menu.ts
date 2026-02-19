@@ -1,17 +1,13 @@
 import type {
-  CmsMenuDto,
-  CreateCmsMenuDto,
-  UpdateCmsMenuDto,
-  CmsMenuItemDto,
+  MenuSettingsDto,
+  MenuItemDto,
 } from '../../contracts/cms-menu';
 
 export type {
-  CmsMenuDto,
-  CreateCmsMenuDto,
-  UpdateCmsMenuDto,
-  CmsMenuItemDto,
+  MenuSettingsDto,
+  MenuItemDto,
 };
 
-export type CmsMenu = CmsMenuDto;
+export type CmsMenu = MenuSettingsDto;
 
-export type CmsMenuItem = CmsMenuItemDto;
+export type CmsMenuItem = MenuItemDto;

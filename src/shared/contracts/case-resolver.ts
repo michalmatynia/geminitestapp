@@ -288,6 +288,8 @@ export const caseResolverSettingsSchema = z.object({
   ocrPrompt: z.string(),
   defaultDocumentFormat: z.enum(['markdown', 'wysiwyg']),
   confirmDeleteDocument: z.boolean(),
+  defaultAddresserPartyKind: z.enum(['person', 'organization']),
+  defaultAddresseePartyKind: z.enum(['person', 'organization']),
 });
 export type CaseResolverSettingsDto = z.infer<typeof caseResolverSettingsSchema>;
 

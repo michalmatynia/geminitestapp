@@ -47,8 +47,6 @@ export const promptValidationLaunchOperatorSchema = z.enum([
 ]);
 export type PromptValidationLaunchOperatorDto = z.infer<typeof promptValidationLaunchOperatorSchema>;
 
-export type PromptExploderSegmentTypeDto = z.infer<typeof promptExploderSegmentTypeSchema>;
-
 export const promptExploderCaptureApplyToSchema = z.enum(['segment', 'line']);
 export type PromptExploderCaptureApplyToDto = z.infer<typeof promptExploderCaptureApplyToSchema>;
 
@@ -199,6 +197,13 @@ export const promptValidationStackResolutionSchema = z.object({
 });
 
 export type PromptValidationStackResolutionDto = z.infer<typeof promptValidationStackResolutionSchema>;
+
+export const promptValidationStackResolutionInputSchema = z.object({
+  stack: promptExploderValidationRuleStackSchema.nullable().optional(),
+  patternLists: z.array(validatorPatternListSchema).nullable().optional(),
+});
+
+export type PromptValidationStackResolutionInputDto = z.infer<typeof promptValidationStackResolutionInputSchema>;
 
 /**
  * Prompt Validation Evaluation DTOs

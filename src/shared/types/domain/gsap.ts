@@ -1,21 +1,21 @@
 import type {
-  GsapAnimationTypeDto,
-  GsapAnimationTriggerDto,
-  GsapAnimationEaseDto,
+  AnimationPresetDto,
+  AnimationTriggerDto,
+  AnimationEasingDto,
   GsapAnimationConfigDto,
 } from '../../contracts/gsap';
 
 export type {
-  GsapAnimationTypeDto,
-  GsapAnimationTriggerDto,
-  GsapAnimationEaseDto,
+  AnimationPresetDto as GsapAnimationTypeDto,
+  AnimationTriggerDto as GsapAnimationTriggerDto,
+  AnimationEasingDto as GsapAnimationEaseDto,
   GsapAnimationConfigDto,
 };
 
-export type GsapAnimationType = GsapAnimationTypeDto;
+export type GsapAnimationType = AnimationPresetDto;
 
-export type GsapAnimationTrigger = GsapAnimationTriggerDto;
+export type GsapAnimationTrigger = AnimationTriggerDto;
 
-export type GsapAnimationEase = GsapAnimationEaseDto;
+export type GsapAnimationEase = AnimationEasingDto;
 
 export type GsapAnimationConfig = GsapAnimationConfigDto;

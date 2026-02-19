@@ -25,10 +25,13 @@ export const PROMPT_EXPLODER_PATTERN_PACK_IDS = new Set(
   PROMPT_EXPLODER_PATTERN_PACK.map((rule) => rule.id)
 );
 
+const isCaseResolverExploderScope = (scope: string | null | undefined): boolean =>
+  scope === 'case-resolver-prompt-exploder' || scope === 'case_resolver_prompt_exploder';
+
 export function ensurePromptExploderPatternPack(
   settings: PromptEngineSettings,
   options?: {
-    scope?: PromptExploderRuntimeValidationScope;
+    scope?: PromptExploderRuntimeValidationScope | 'case_resolver_prompt_exploder';
   }
 ): PromptExploderPatternPackResult {
   const baseSettings = settings?.promptValidation
@@ -41,7 +44,7 @@ export function ensurePromptExploderPatternPack(
   const updatedRuleIds: string[] = [];
 
   const activeRuleScope =
-    targetScope === 'case-resolver-prompt-exploder'
+    isCaseResolverExploderScope(targetScope)
       ? 'case_resolver_prompt_exploder'
       : 'prompt_exploder';
 
@@ -162,14 +165,14 @@ export function ensurePromptExploderPatternPack(
 
 export function getPromptExploderScopedRules(
   settings: PromptEngineSettings,
-  scope: PromptExploderRuntimeValidationScope = 'prompt-exploder'
+  scope: PromptExploderRuntimeValidationScope | 'case_resolver_prompt_exploder' = 'prompt-exploder'
 ): PromptValidationRule[] {
   const mergedRules = [
     ...settings.promptValidation.rules,
     ...(settings.promptValidation.learnedRules ?? []),
   ];
   const activeRuleScope =
-    scope === 'case-resolver-prompt-exploder'
+    isCaseResolverExploderScope(scope)
       ? 'case_resolver_prompt_exploder'
       : 'prompt_exploder';
 

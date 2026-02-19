@@ -66,8 +66,20 @@ export interface RunStudioPayload {
     feather?: number | undefined;
   } | null | undefined;
   center?: {
-    mode: 'client_alpha_bbox' | 'server_alpha_bbox';
+    mode:
+      | 'client_alpha_bbox'
+      | 'server_alpha_bbox'
+      | 'client_object_layout_v1'
+      | 'server_object_layout_v1';
     dataUrl?: string | undefined;
+    layout?: {
+      paddingPercent?: number | undefined;
+      paddingXPercent?: number | undefined;
+      paddingYPercent?: number | undefined;
+      whiteThreshold?: number | undefined;
+      chromaThreshold?: number | undefined;
+      detection?: 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel' | undefined;
+    } | undefined;
   } | undefined;
   studioSettings?: Record<string, unknown> | undefined;
 }
@@ -105,8 +117,20 @@ export interface ImageStudioRunRequestRecord {
     }
     | null;
   center?: {
-    mode?: 'client_alpha_bbox' | 'server_alpha_bbox';
+    mode?:
+      | 'client_alpha_bbox'
+      | 'server_alpha_bbox'
+      | 'client_object_layout_v1'
+      | 'server_object_layout_v1';
     dataUrl?: string;
+    layout?: {
+      paddingPercent?: number;
+      paddingXPercent?: number;
+      paddingYPercent?: number;
+      whiteThreshold?: number;
+      chromaThreshold?: number;
+      detection?: 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel';
+    };
   };
   studioSettings?: Record<string, unknown>;
 }

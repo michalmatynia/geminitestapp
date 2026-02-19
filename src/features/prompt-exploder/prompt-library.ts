@@ -1,66 +1,24 @@
-import { z } from 'zod';
-
 import type {
-  PromptExploderBinding,
-  PromptExploderDocument,
-} from './types';
+  PromptExploderBindingDto as PromptExploderBinding,
+  PromptExploderDocumentDto as PromptExploderDocument,
+  PromptExploderLibraryItemDto as PromptExploderLibraryItem,
+  PromptExploderLibraryStateDto as PromptExploderLibraryState,
+} from '@/shared/contracts/prompt-exploder';
+import {
+  promptExploderLibraryStateSchema,
+} from '@/shared/contracts/prompt-exploder';
 
 export const PROMPT_EXPLODER_LIBRARY_KEY = 'image_studio_prompt_exploder_library';
 
-export type PromptExploderLibraryItem = {
-  id: string;
-  name: string;
-  prompt: string;
-  document: PromptExploderDocument | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type PromptExploderLibraryState = {
-  version: 1;
-  items: PromptExploderLibraryItem[];
+export type {
+  PromptExploderLibraryItem,
+  PromptExploderLibraryState,
 };
 
 export const defaultPromptExploderLibraryState: PromptExploderLibraryState = {
   version: 1,
   items: [],
 };
-
-const libraryItemSchema = z.object({
-  id: z.string().trim().min(1),
-  name: z.string().trim().min(1),
-  prompt: z.string().trim().min(1),
-  document: z.unknown().nullable().optional().default(null),
-  createdAt: z.string().trim().min(1),
-  updatedAt: z.string().trim().min(1),
-});
-
-const promptExploderLibrarySchema = z.object({
-  version: z.literal(1),
-  items: z.array(libraryItemSchema).default([]),
-});
-
-const isPromptExploderDocument = (value: unknown): value is PromptExploderDocument => {
-  if (!value || typeof value !== 'object') return false;
-  const record = value as Record<string, unknown>;
-  return (
-    record['version'] === 1 &&
-    typeof record['sourcePrompt'] === 'string' &&
-    Array.isArray(record['segments']) &&
-    Array.isArray(record['bindings']) &&
-    Array.isArray(record['warnings']) &&
-    typeof record['reassembledPrompt'] === 'string'
-  );
-};
-
-const toLibraryItem = (raw: z.infer<typeof libraryItemSchema>): PromptExploderLibraryItem => ({
-  id: raw.id,
-  name: raw.name,
-  prompt: raw.prompt,
-  document: isPromptExploderDocument(raw.document) ? raw.document : null,
-  createdAt: raw.createdAt,
-  updatedAt: raw.updatedAt,
-});
 
 export const parsePromptExploderLibrary = (
   rawValue: string | null | undefined
@@ -69,12 +27,9 @@ export const parsePromptExploderLibrary = (
 
   try {
     const parsed: unknown = JSON.parse(rawValue);
-    const result = promptExploderLibrarySchema.safeParse(parsed);
+    const result = promptExploderLibraryStateSchema.safeParse(parsed);
     if (!result.success) return defaultPromptExploderLibraryState;
-    return {
-      version: 1,
-      items: result.data.items.map(toLibraryItem),
-    };
+    return result.data;
   } catch {
     return defaultPromptExploderLibraryState;
   }
@@ -169,8 +124,8 @@ export const hydratePromptExploderLibraryDocument = (
   };
 };
 
-export const getManualBindingsFromDocument = (
+export function getManualBindingsFromDocument(
   document: PromptExploderDocument | null
-): PromptExploderBinding[] => {
-  return (document?.bindings ?? []).filter((binding) => binding.origin === 'manual');
-};
+): PromptExploderBinding[] {
+  return (document?.bindings ?? []).filter((binding: PromptExploderBinding) => binding.origin === 'manual');
+}

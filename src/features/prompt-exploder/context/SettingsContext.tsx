@@ -10,7 +10,6 @@ import {
 } from '@/features/admin/pages/validator-scope';
 import { getPromptValidationObservabilitySnapshot } from '@/features/prompt-core/runtime-observability';
 import {
-  defaultPromptEngineSettings,
   parsePromptEngineSettings,
   parsePromptValidationRules,
   PROMPT_ENGINE_SETTINGS_KEY,
@@ -54,6 +53,7 @@ import {
   resolvePromptValidationRuntime,
   type PromptValidationOrchestrationResult,
 } from '../prompt-validation-orchestrator';
+import { getPromptExploderRuntimeGuardrailIssue } from '../runtime-guardrails';
 import { parsePromptExploderSettings, PROMPT_EXPLODER_SETTINGS_KEY } from '../settings';
 import {
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
@@ -90,6 +90,7 @@ export interface SettingsState {
   activeValidationScope: PromptExploderRuntimeValidationScope;
   activeValidationRuleStack: PromptExploderValidationRuleStack;
   runtimeSelection: PromptValidationOrchestrationResult;
+  runtimeGuardrailIssue: string | null;
   scopedRules: PromptValidationRule[];
   effectiveRules: PromptValidationRule[];
   runtimeValidationRules: PromptValidationRule[];
@@ -258,27 +259,35 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const runtimeResolution = useMemo<{
     selection: PromptValidationOrchestrationResult;
     warning: Error | null;
+    guardrailIssue: string | null;
   }>(() => {
+    const allowValidationStackFallback =
+      promptExploderSettings.runtime.allowValidationStackFallback;
     try {
+      const selection = resolvePromptValidationRuntime({
+        promptSettings,
+        promptExploderSettings,
+        validatorPatternLists,
+        runtimeRuleProfile: learningDraft.runtimeRuleProfile,
+        runtimeValidationRuleStack: learningDraft.runtimeValidationRuleStack,
+        learningEnabled: learningDraft.enabled,
+        minApprovalsForMatching: learningDraft.minApprovalsForMatching,
+        maxTemplates: learningDraft.maxTemplates,
+        sessionLearnedRules,
+        sessionLearnedTemplates,
+        preferredValidatorScope,
+        strictUnknownStack: strictStackMode,
+      });
       return {
-        selection: resolvePromptValidationRuntime({
-          promptSettings,
-          promptExploderSettings,
-          validatorPatternLists,
-          runtimeRuleProfile: learningDraft.runtimeRuleProfile,
-          runtimeValidationRuleStack: learningDraft.runtimeValidationRuleStack,
-          learningEnabled: learningDraft.enabled,
-          minApprovalsForMatching: learningDraft.minApprovalsForMatching,
-          maxTemplates: learningDraft.maxTemplates,
-          sessionLearnedRules,
-          sessionLearnedTemplates,
-          preferredValidatorScope,
-          strictUnknownStack: strictStackMode,
-        }),
+        selection,
         warning: null,
+        guardrailIssue: getPromptExploderRuntimeGuardrailIssue({
+          runtimeSelection: selection,
+          allowValidationStackFallback,
+        }),
       };
     } catch (error) {
-      const fallback = resolvePromptValidationRuntime({
+      const selection = resolvePromptValidationRuntime({
         promptSettings,
         promptExploderSettings,
         validatorPatternLists,
@@ -292,9 +301,15 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         preferredValidatorScope,
         strictUnknownStack: false,
       });
+      const warning = error instanceof Error ? error : new Error(String(error));
       return {
-        selection: fallback,
-        warning: error instanceof Error ? error : new Error(String(error)),
+        selection,
+        warning,
+        guardrailIssue:
+          getPromptExploderRuntimeGuardrailIssue({
+            runtimeSelection: selection,
+            allowValidationStackFallback,
+          }) ?? warning.message,
       };
     }
   }, [
@@ -313,19 +328,28 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   ]);
 
   useEffect(() => {
-    if (!runtimeResolution.warning) return;
-    logClientError(runtimeResolution.warning, {
-      context: {
-        source: 'PromptExploderSettingsContext',
-        action: 'resolvePromptValidationRuntime',
-        stack: learningDraft.runtimeValidationRuleStack,
-        correlationId: runtimeResolution.selection.correlationId,
-        level: 'warn',
-      },
-    });
-    toast(runtimeResolution.warning.message, { variant: 'warning' });
+    if (!runtimeResolution.warning && !runtimeResolution.guardrailIssue) return;
+    const warning = runtimeResolution.warning;
+    if (warning) {
+      logClientError(warning, {
+        context: {
+          source: 'PromptExploderSettingsContext',
+          action: 'resolvePromptValidationRuntime',
+          stack: learningDraft.runtimeValidationRuleStack,
+          correlationId: runtimeResolution.selection.correlationId,
+          level: 'warn',
+        },
+      });
+    }
+    const message = runtimeResolution.guardrailIssue ?? warning?.message ?? '';
+    if (message.trim()) {
+      toast(message, {
+        variant: runtimeResolution.guardrailIssue ? 'error' : 'warning',
+      });
+    }
   }, [
     learningDraft.runtimeValidationRuleStack,
+    runtimeResolution.guardrailIssue,
     runtimeResolution.selection.correlationId,
     runtimeResolution.warning,
     toast,
@@ -365,6 +389,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const effectiveLearnedTemplates = runtimeSelection.effectiveLearnedTemplates;
   const runtimeLearnedTemplates = runtimeSelection.runtimeLearnedTemplates;
   const activeValidationRuleStack = runtimeSelection.identity.stack;
+  const runtimeGuardrailIssue = runtimeResolution.guardrailIssue;
 
   const parserTuningBaseDrafts = useMemo(
     () =>
@@ -683,9 +708,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       return;
     }
     try {
-      const basePromptSettings = promptSettings.promptValidation
-        ? promptSettings
-        : defaultPromptEngineSettings;
+      const basePromptSettings = promptSettings;
       const restoredRules = mergeRestoredPromptExploderRules({
         existingRules: basePromptSettings.promptValidation.rules,
         restoredRules: parsed.rules,
@@ -834,6 +857,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       activeValidationScope,
       activeValidationRuleStack,
       runtimeSelection,
+      runtimeGuardrailIssue,
       scopedRules,
       effectiveRules,
       runtimeValidationRules,
@@ -861,6 +885,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       activeValidationScope,
       activeValidationRuleStack,
       runtimeSelection,
+      runtimeGuardrailIssue,
       scopedRules,
       effectiveRules,
       runtimeValidationRules,

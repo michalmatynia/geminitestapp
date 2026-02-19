@@ -129,6 +129,55 @@ export const promptExploderParamUiOverridesSchema = z.object({
 
 export type PromptExploderParamUiOverridesDto = z.infer<typeof promptExploderParamUiOverridesSchema>;
 
+export const promptExploderBindingSchema = z.object({
+  id: z.string(),
+  type: promptExploderBindingTypeSchema,
+  fromSegmentId: z.string(),
+  toSegmentId: z.string(),
+  fromSubsectionId: z.string().nullable().optional(),
+  toSubsectionId: z.string().nullable().optional(),
+  sourceLabel: z.string(),
+  targetLabel: z.string(),
+  origin: promptExploderBindingOriginSchema,
+});
+
+export type PromptExploderBindingDto = z.infer<typeof promptExploderBindingSchema>;
+
+export const promptExploderSegmentSchema = z.object({
+  id: z.string(),
+  type: promptExploderSegmentTypeSchema,
+  title: z.string(),
+  includeInOutput: z.boolean(),
+  text: z.string(),
+  raw: z.string(),
+  code: z.string().nullable(),
+  condition: z.string().nullable(),
+  listItems: z.array(promptExploderListItemSchema).optional().default([]),
+  subsections: z.array(promptExploderSubsectionSchema).optional().default([]),
+  paramsText: z.string().optional().default(''),
+  paramsObject: z.record(z.string(), z.unknown()).nullable().optional(),
+  paramUiControls: z.record(z.string(), promptExploderParamUiControlSchema).optional().default({}),
+  paramComments: z.record(z.string(), z.string()).optional().default({}),
+  paramDescriptions: z.record(z.string(), z.string()).optional().default({}),
+  matchedPatternIds: z.array(z.string()).optional().default([]),
+  matchedPatternLabels: z.array(z.string()).optional().default([]),
+  matchedSequenceLabels: z.array(z.string()).optional().default([]),
+  confidence: z.number(),
+});
+
+export type PromptExploderSegmentDto = z.infer<typeof promptExploderSegmentSchema>;
+
+export const promptExploderDocumentSchema = z.object({
+  version: z.number().optional(),
+  sourcePrompt: z.string().optional(),
+  segments: z.array(promptExploderSegmentSchema),
+  bindings: z.array(promptExploderBindingSchema),
+  reassembledPrompt: z.string().optional(),
+  warnings: z.array(z.string()).optional(),
+});
+
+export type PromptExploderDocumentDto = z.infer<typeof promptExploderDocumentSchema>;
+
 export const promptExploderLearnedTemplateSchema = z.object({
   id: z.string(),
   segmentType: promptExploderSegmentTypeSchema,
@@ -188,11 +237,50 @@ export type PromptExploderOperationModeDto = z.infer<typeof promptExploderOperat
 export const promptExploderAiProviderSchema = z.enum(['auto', 'ollama', 'openai', 'anthropic', 'gemini']);
 export type PromptExploderAiProviderDto = z.infer<typeof promptExploderAiProviderSchema>;
 
+export const promptExploderBenchmarkSuiteSchema = z.enum(['default', 'extended', 'custom']);
+export type PromptExploderBenchmarkSuiteDto = z.infer<typeof promptExploderBenchmarkSuiteSchema>;
+
+export const promptExploderCaseResolverCaptureModeSchema = z.enum([
+  'rules_only',
+  'rules_with_heuristics',
+]);
+export type PromptExploderCaseResolverCaptureModeDto = z.infer<
+  typeof promptExploderCaseResolverCaptureModeSchema
+>;
+
+export type PromptExploderPatternRuleMapDto = Record<string, string[]>;
+
+export const promptExploderValidationStackResolutionReasonSchema = z.enum([
+  'exact_match',
+  'default_scope',
+  'scope_fallback',
+  'invalid_stack',
+]);
+export type PromptExploderValidationStackResolutionReasonDto = z.infer<
+  typeof promptExploderValidationStackResolutionReasonSchema
+>;
+
+export const promptExploderValidationStackResolutionSchema = z.object({
+  stack: promptExploderValidationRuleStackSchema,
+  scope: promptExploderRuntimeValidationScopeSchema,
+  validatorScope: validatorScopeSchema,
+  list: validatorPatternListSchema.nullable(),
+  usedFallback: z.boolean(),
+  reason: promptExploderValidationStackResolutionReasonSchema,
+});
+export type PromptExploderValidationStackResolutionDto = z.infer<
+  typeof promptExploderValidationStackResolutionSchema
+>;
+
 export const promptExploderSettingsSchema = z.object({
   version: z.literal(1),
   runtime: z.object({
     ruleProfile: z.enum(['all', 'pattern_pack', 'learned_only']),
     validationRuleStack: z.string(),
+    allowValidationStackFallback: z.boolean().default(false),
+    caseResolverCaptureMode: promptExploderCaseResolverCaptureModeSchema.default(
+      'rules_only'
+    ),
     orchestratorEnabled: z.boolean(),
     benchmarkSuite: z.enum(['default', 'extended', 'custom']),
     benchmarkLowConfidenceThreshold: z.number(),
@@ -221,3 +309,125 @@ export const promptExploderSettingsSchema = z.object({
 });
 
 export type PromptExploderSettingsDto = z.infer<typeof promptExploderSettingsSchema>;
+
+/**
+ * Prompt Exploder Library DTOs
+ */
+
+export const promptExploderLibraryItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  prompt: z.string(),
+  document: promptExploderDocumentSchema.nullable().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type PromptExploderLibraryItemDto = z.infer<typeof promptExploderLibraryItemSchema>;
+
+export const promptExploderLibraryStateSchema = z.object({
+  version: z.literal(1),
+  items: z.array(promptExploderLibraryItemSchema),
+});
+
+export type PromptExploderLibraryStateDto = z.infer<typeof promptExploderLibraryStateSchema>;
+
+/**
+ * Prompt Exploder Bridge DTOs
+ */
+
+export const promptExploderBridgeSourceSchema = z.enum([
+  'image-studio',
+  'prompt-exploder',
+  'case-resolver',
+]);
+export type PromptExploderBridgeSourceDto = z.infer<typeof promptExploderBridgeSourceSchema>;
+
+export const promptExploderBridgeTargetSchema = z.enum([
+  'prompt-exploder',
+  'image-studio',
+  'case-resolver',
+]);
+export type PromptExploderBridgeTargetDto = z.infer<typeof promptExploderBridgeTargetSchema>;
+
+export const promptExploderCaseResolverContextSchema = z.object({
+  fileId: z.string(),
+  fileName: z.string(),
+});
+export type PromptExploderCaseResolverContextDto = z.infer<
+  typeof promptExploderCaseResolverContextSchema
+>;
+
+export const promptExploderCaseResolverPartyRoleSchema = z.enum(['addresser', 'addressee']);
+export type PromptExploderCaseResolverPartyRoleDto = z.infer<
+  typeof promptExploderCaseResolverPartyRoleSchema
+>;
+
+export const promptExploderCaseResolverPartyKindSchema = z.enum(['person', 'organization']);
+export type PromptExploderCaseResolverPartyKindDto = z.infer<
+  typeof promptExploderCaseResolverPartyKindSchema
+>;
+
+export const promptExploderCaseResolverPartyCandidateSchema = z.object({
+  role: promptExploderCaseResolverPartyRoleSchema,
+  displayName: z.string(),
+  rawText: z.string(),
+  kind: promptExploderCaseResolverPartyKindSchema.optional(),
+  firstName: z.string().optional(),
+  middleName: z.string().optional(),
+  lastName: z.string().optional(),
+  organizationName: z.string().optional(),
+  street: z.string().optional(),
+  streetNumber: z.string().optional(),
+  houseNumber: z.string().optional(),
+  city: z.string().optional(),
+  postalCode: z.string().optional(),
+  country: z.string().optional(),
+  sourceSegmentId: z.string().optional(),
+  sourceSegmentTitle: z.string().optional(),
+  sourcePatternLabels: z.array(z.string()).optional(),
+  sourceSequenceLabels: z.array(z.string()).optional(),
+});
+export type PromptExploderCaseResolverPartyCandidateDto = z.infer<
+  typeof promptExploderCaseResolverPartyCandidateSchema
+>;
+
+export const promptExploderCaseResolverPartyBundleSchema = z.object({
+  addresser: promptExploderCaseResolverPartyCandidateSchema.optional(),
+  addressee: promptExploderCaseResolverPartyCandidateSchema.optional(),
+});
+export type PromptExploderCaseResolverPartyBundleDto = z.infer<
+  typeof promptExploderCaseResolverPartyBundleSchema
+>;
+
+export const promptExploderCaseResolverPlaceDateSchema = z.object({
+  city: z.string().optional(),
+  day: z.string().optional(),
+  month: z.string().optional(),
+  year: z.string().optional(),
+  sourceSegmentId: z.string().optional(),
+  sourceSegmentTitle: z.string().optional(),
+  sourcePatternLabels: z.array(z.string()).optional(),
+  sourceSequenceLabels: z.array(z.string()).optional(),
+});
+export type PromptExploderCaseResolverPlaceDateDto = z.infer<
+  typeof promptExploderCaseResolverPlaceDateSchema
+>;
+
+export const promptExploderCaseResolverMetadataSchema = z.object({
+  placeDate: promptExploderCaseResolverPlaceDateSchema.optional(),
+});
+export type PromptExploderCaseResolverMetadataDto = z.infer<
+  typeof promptExploderCaseResolverMetadataSchema
+>;
+
+export const promptExploderBridgePayloadSchema = z.object({
+  prompt: z.string(),
+  source: promptExploderBridgeSourceSchema,
+  target: promptExploderBridgeTargetSchema.optional(),
+  caseResolverContext: promptExploderCaseResolverContextSchema.optional(),
+  caseResolverParties: promptExploderCaseResolverPartyBundleSchema.optional(),
+  caseResolverMetadata: promptExploderCaseResolverMetadataSchema.optional(),
+  createdAt: z.string(),
+});
+export type PromptExploderBridgePayloadDto = z.infer<typeof promptExploderBridgePayloadSchema>;

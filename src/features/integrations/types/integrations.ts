@@ -70,7 +70,7 @@ export type IntegrationRepository = {
   listConnections: (integrationId: string) => Promise<IntegrationConnectionRecord[]>;
   getConnectionById: (id: string) => Promise<IntegrationConnectionRecord | null>;
   getConnectionByIdAndIntegration: (id: string, integrationId: string) => Promise<IntegrationConnectionRecord | null>;
-  createConnection: (integrationId: string, input: any) => Promise<IntegrationConnectionRecord>;
+  createConnection: (integrationId: string, input: Record<string, unknown>) => Promise<IntegrationConnectionRecord>;
   updateConnection: (id: string, input: Partial<IntegrationConnectionRecord>) => Promise<IntegrationConnectionRecord>;
   deleteConnection: (id: string) => Promise<void>;
 };

@@ -1,12 +1,16 @@
-export type ExtractParamsResult =
-  | {
-      ok: true;
-      params: Record<string, unknown>;
-      objectStart: number;
-      objectEnd: number;
-      rawObjectText: string;
-    }
-  | { ok: false; error: string };
+import type { 
+  ExtractParamsResultDto,
+  ParamSpecDto,
+  ParamSpecKindDto,
+  ParamIssueDto,
+  ParamIssueSeverityDto
+} from '@/shared/contracts/prompt-engine';
+
+export type ExtractParamsResult = ExtractParamsResultDto;
+export type ParamSpec = ParamSpecDto;
+export type ParamSpecKind = ParamSpecKindDto;
+export type ParamIssue = ParamIssueDto;
+export type ParamIssueSeverity = ParamIssueSeverityDto;
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -471,19 +475,6 @@ export function setDeepValue(
   return root;
 }
 
-export type ParamSpecKind = 'boolean' | 'number' | 'string' | 'enum' | 'rgb' | 'tuple2' | 'json';
-
-export type ParamSpec = {
-  path: string;
-  kind: ParamSpecKind;
-  hint?: string;
-  enumOptions?: string[];
-  min?: number;
-  max?: number;
-  step?: number;
-  integer?: boolean;
-};
-
 type NumericConstraint = { min?: number; max?: number };
 
 function splitLineCodeAndLineComment(line: string): { code: string; comment: string | null } {
@@ -752,15 +743,6 @@ export function inferParamSpecs(params: Record<string, unknown>, rawObjectText: 
 
   return specs;
 }
-
-export type ParamIssueSeverity = 'error' | 'warning';
-
-export type ParamIssue = {
-  path: string;
-  severity: ParamIssueSeverity;
-  message: string;
-  code?: string;
-};
 
 function getDeepValue(root: Record<string, unknown>, path: string): unknown {
   const parts = path.split('.').filter(Boolean);

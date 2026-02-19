@@ -76,6 +76,7 @@ export * from './documentation-section';
 export * from './Drawer';
 export * from './SidePanel';
 export * from './DynamicFilters';
+export * from './templates/StandardDataTablePanel';
 export * from './templates/SettingsFormModal';
 export * from './templates/FilterPanel';
 export * from './templates/SimpleSettingsList';

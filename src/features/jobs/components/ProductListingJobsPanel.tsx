@@ -6,7 +6,6 @@ import { JobsProvider, useJobsContext } from '@/features/jobs/context/JobsContex
 import { useProductListingJobsProps } from '@/features/jobs/hooks/useProductListingJobsProps';
 import {
   Button,
-  ListPanel,
   SectionHeader,
   StatusBadge,
   Pagination,
@@ -16,7 +15,6 @@ import {
   FormSection,
   Alert,
   MetadataItem,
-  LoadingState,
 } from '@/shared/ui';
 
 import { ProductListingJobsPanelViewProvider, useProductListingJobsPanelView } from './context/ProductListingJobsPanelViewContext';
@@ -183,21 +181,14 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
 
   return (
     <>
-      <ListPanel
+      <JobTable
+        data={tableData}
+        isLoading={isLoading}
         header={header}
         alerts={alerts}
         filters={filters}
         footer={footer}
-      >
-        {isLoading ? (
-          <LoadingState message='Loading jobs...' className='py-12' />
-        ) : !error ? (
-          <JobTable
-            data={tableData}
-            isLoading={isLoading}
-          />
-        ) : null}
-      </ListPanel>
+      />
       <ExportJobDetailModal
         isOpen={Boolean(selectedListing)}
         onClose={() => setSelectedListing(null)}

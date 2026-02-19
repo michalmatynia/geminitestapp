@@ -182,10 +182,10 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       if (!result.ok) throw new Error(result.error);
       return Array.isArray(result.data) ? result.data : [];
     },
-    staleTime: 5 * 60_000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    staleTime: 30_000,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     meta: {
       source: 'ai.ai-paths.pages.trigger-buttons.list',
       operation: 'list',
@@ -216,7 +216,18 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       domain: 'global',
       tags: ['ai-paths', 'trigger-buttons'],
     },
-    onSuccess: async (): Promise<void> => {
+    onSuccess: async (created: AiTriggerButtonDto): Promise<void> => {
+      queryClient.setQueryData(
+        QUERY_KEYS.ai.aiPaths.triggerButtons(),
+        (current: AiTriggerButtonDto[] | undefined): AiTriggerButtonDto[] => {
+          const items = Array.isArray(current) ? current : [];
+          const existingIndex = items.findIndex((item: AiTriggerButtonDto) => item.id === created.id);
+          if (existingIndex === -1) return [...items, created];
+          const next = items.slice();
+          next[existingIndex] = created;
+          return next;
+        }
+      );
       await invalidateAiPathTriggerButtons(queryClient);
       toast('Trigger button created.', { variant: 'success' });
       setEditorOpen(false);
@@ -260,7 +271,18 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       domain: 'global',
       tags: ['ai-paths', 'trigger-buttons'],
     },
-    onSuccess: async (): Promise<void> => {
+    onSuccess: async (updated: AiTriggerButtonDto): Promise<void> => {
+      queryClient.setQueryData(
+        QUERY_KEYS.ai.aiPaths.triggerButtons(),
+        (current: AiTriggerButtonDto[] | undefined): AiTriggerButtonDto[] => {
+          const items = Array.isArray(current) ? current : [];
+          const existingIndex = items.findIndex((item: AiTriggerButtonDto) => item.id === updated.id);
+          if (existingIndex === -1) return [...items, updated];
+          const next = items.slice();
+          next[existingIndex] = updated;
+          return next;
+        }
+      );
       await invalidateAiPathTriggerButtons(queryClient);
       toast('Trigger button updated.', { variant: 'success' });
       setEditorOpen(false);
@@ -285,7 +307,14 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       domain: 'global',
       tags: ['ai-paths', 'trigger-buttons'],
     },
-    onSuccess: async (): Promise<void> => {
+    onSuccess: async (_data: void, deletedId: string): Promise<void> => {
+      queryClient.setQueryData(
+        QUERY_KEYS.ai.aiPaths.triggerButtons(),
+        (current: AiTriggerButtonDto[] | undefined): AiTriggerButtonDto[] =>
+          Array.isArray(current)
+            ? current.filter((item: AiTriggerButtonDto): boolean => item.id !== deletedId)
+            : []
+      );
       await invalidateAiPathTriggerButtons(queryClient);
       toast('Trigger button deleted.', { variant: 'success' });
       setButtonToDelete(null);

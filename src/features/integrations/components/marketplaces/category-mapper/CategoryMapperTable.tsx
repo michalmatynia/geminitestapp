@@ -181,7 +181,7 @@ export function CategoryMapperTable(): React.JSX.Element {
   }
 
   return (
-    <ListPanel
+    <StandardDataTablePanel
       title='Marketplace Categories'
       description={`Connection: ${connectionName}`}
       headerActions={
@@ -216,19 +216,13 @@ export function CategoryMapperTable(): React.JSX.Element {
       )}
       isLoading={isLoading}
       variant='flat'
-    >
-      <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
-        <DataTable
-          columns={columns}
-          data={data}
-          expanded={expanded}
-          onExpandedChange={onExpandedChange}
-          getRowId={(row) => row.id}
-          isLoading={isLoading}
-          maxHeight='60vh'
-          stickyHeader
-        />
-      </div>
-    </ListPanel>
+      columns={columns}
+      data={data}
+      expanded={expanded}
+      onExpandedChange={onExpandedChange}
+      getRowId={(row) => row.id}
+      maxHeight='60vh'
+      stickyHeader
+    />
   );
 }

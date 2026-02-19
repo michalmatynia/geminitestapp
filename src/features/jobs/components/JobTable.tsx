@@ -6,7 +6,7 @@ import Link from 'next/link';
 import React, { useMemo } from 'react';
 
 import { useJobsContext } from '@/features/jobs/context/JobsContext';
-import { DataTable, StatusBadge } from '@/shared/ui';
+import { StandardDataTablePanel, StatusBadge } from '@/shared/ui';
 import { Button } from '@/shared/ui';
 
 import { type JobRowData } from '../types';
@@ -21,6 +21,12 @@ interface JobTableProps {
   onDelete?: (jobId: string) => void;
   isCancelling?: (jobId: string) => boolean;
   isDeleting?: (jobId: string) => boolean;
+  
+  // Panel props
+  header?: React.ReactNode;
+  alerts?: React.ReactNode;
+  filters?: React.ReactNode;
+  footer?: React.ReactNode;
 }
 
 const getStatusIcon = (status: string): React.JSX.Element => {
@@ -59,6 +65,10 @@ export function JobTable({
   onDelete,
   isCancelling: isCancellingProp,
   isDeleting,
+  header,
+  alerts,
+  filters,
+  footer,
 }: JobTableProps): React.JSX.Element {
   const { 
     setSelectedListing, 
@@ -213,10 +223,14 @@ export function JobTable({
   );
 
   return (
-    <DataTable
+    <StandardDataTablePanel
       columns={columns}
       data={data}
-      {...(isLoading !== undefined ? { isLoading } : {})}
+      isLoading={isLoading}
+      header={header}
+      alerts={alerts}
+      filters={filters}
+      footer={footer}
     />
   );
 }

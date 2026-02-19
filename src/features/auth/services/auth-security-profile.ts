@@ -5,6 +5,8 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import type { AuthSecurityProfile } from '@/shared/types/domain/auth';
 
+export type { AuthSecurityProfile };
+
 type MongoProfileDoc = {
   _id: string;
   userId: string;

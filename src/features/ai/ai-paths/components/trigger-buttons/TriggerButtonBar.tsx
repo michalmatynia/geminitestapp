@@ -57,6 +57,7 @@ export function TriggerButtonBar({
           const checked = Boolean(toggleMap[button.id]);
           const toggleControl = (
             <div
+              key={button.id}
               className={cn(
                 'relative overflow-hidden rounded-lg',
                 isRunning ? 'cursor-wait' : null
@@ -99,6 +100,7 @@ export function TriggerButtonBar({
 
         const clickControl = (
           <Button
+            key={button.id}
             variant='outline'
             size={showLabel ? 'xs' : 'icon'}
             aria-label={button.name}
@@ -143,7 +145,7 @@ export function TriggerButtonBar({
           );
         }
 
-        return React.cloneElement(clickControl, { key: button.id });
+        return clickControl;
       })}
     </div>
   );

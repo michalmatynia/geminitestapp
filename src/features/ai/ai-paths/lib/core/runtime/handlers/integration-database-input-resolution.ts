@@ -18,6 +18,47 @@ export function resolveDatabaseInputs({
     typeof value === 'string' && (value).trim().length > 0
       ? (value).trim()
       : undefined;
+  const pickCatalogIdFromCatalogs = (value: unknown): string | undefined => {
+    if (!Array.isArray(value)) return undefined;
+    for (const entry of value) {
+      const fromString = pickString(entry);
+      if (fromString) return fromString;
+      if (!entry || typeof entry !== 'object') continue;
+      const record = entry as Record<string, unknown>;
+      const nestedCatalog =
+        pickString(record['catalogId']) ??
+        pickString(record['id']) ??
+        pickString(record['_id']) ??
+        (record['catalog'] && typeof record['catalog'] === 'object'
+          ? pickString((record['catalog'] as Record<string, unknown>)['catalogId']) ??
+            pickString((record['catalog'] as Record<string, unknown>)['id']) ??
+            pickString((record['catalog'] as Record<string, unknown>)['_id'])
+          : undefined);
+      if (nestedCatalog) return nestedCatalog;
+    }
+    return undefined;
+  };
+  const pickCatalogId = (
+    record: Record<string, unknown> | null | undefined,
+  ): string | undefined => {
+    if (!record || typeof record !== 'object') return undefined;
+    return (
+      pickString(record['catalogId']) ??
+      pickCatalogIdFromCatalogs(record['catalogs']) ??
+      (record['entity'] && typeof record['entity'] === 'object'
+        ? pickCatalogId(record['entity'] as Record<string, unknown>)
+        : undefined) ??
+      (record['entityJson'] && typeof record['entityJson'] === 'object'
+        ? pickCatalogId(record['entityJson'] as Record<string, unknown>)
+        : undefined) ??
+      (record['product'] && typeof record['product'] === 'object'
+        ? pickCatalogId(record['product'] as Record<string, unknown>)
+        : undefined) ??
+      (record['bundle'] && typeof record['bundle'] === 'object'
+        ? pickCatalogId(record['bundle'] as Record<string, unknown>)
+        : undefined)
+    );
+  };
   const pickFromContext = (
     ctx: Record<string, unknown> | null | undefined,
   ): void => {
@@ -33,10 +74,14 @@ export function resolveDatabaseInputs({
       pickString(ctx['id']) ??
       pickString(ctx['_id']);
     const entityType: string | undefined = pickString(ctx['entityType']);
+    const catalogId: string | undefined = pickCatalogId(ctx);
     if (next['entityId'] === undefined && entityId) next['entityId'] = entityId;
     if (next['productId'] === undefined && productId) next['productId'] = productId;
     if (next['entityType'] === undefined && entityType) {
       next['entityType'] = entityType;
+    }
+    if (next['catalogId'] === undefined && catalogId) {
+      next['catalogId'] = catalogId;
     }
   };
   const applyFromObject = (record: Record<string, unknown>): void => {
@@ -51,10 +96,14 @@ export function resolveDatabaseInputs({
       pickString(record['id']) ??
       pickString(record['_id']);
     const entityType: string | undefined = pickString(record['entityType']);
+    const catalogId: string | undefined = pickCatalogId(record);
     if (next['entityId'] === undefined && entityId) next['entityId'] = entityId;
     if (next['productId'] === undefined && productId) next['productId'] = productId;
     if (next['entityType'] === undefined && entityType) {
       next['entityType'] = entityType;
+    }
+    if (next['catalogId'] === undefined && catalogId) {
+      next['catalogId'] = catalogId;
     }
   };
   const contextValue: unknown = coerceInput(nodeInputs['context']);

@@ -68,6 +68,115 @@ const normalizeRuntimeEntityType = (value: string | null | undefined): string =>
   return normalized;
 };
 
+const resolveCatalogIdFromCatalogs = (value: unknown): string | null => {
+  if (!Array.isArray(value)) return null;
+  for (const entry of value) {
+    const fromString = normalizeNonEmptyString(entry);
+    if (fromString) return fromString;
+    const record = toRecord(entry);
+    if (!record) continue;
+    const nested =
+      normalizeNonEmptyString(record['catalogId']) ??
+      normalizeNonEmptyString(record['id']) ??
+      normalizeNonEmptyString(record['_id']) ??
+      (record['catalog'] && typeof record['catalog'] === 'object'
+        ? normalizeNonEmptyString(
+          (record['catalog'] as Record<string, unknown>)['catalogId']
+        ) ??
+          normalizeNonEmptyString(
+            (record['catalog'] as Record<string, unknown>)['id']
+          ) ??
+          normalizeNonEmptyString(
+            (record['catalog'] as Record<string, unknown>)['_id']
+          )
+        : null);
+    if (nested) return nested;
+  }
+  return null;
+};
+
+const resolveCatalogIdFromRecord = (
+  record: Record<string, unknown> | null
+): string | null => {
+  if (!record) return null;
+  return (
+    normalizeNonEmptyString(record['catalogId']) ??
+    resolveCatalogIdFromCatalogs(record['catalogs']) ??
+    (record['entity'] && typeof record['entity'] === 'object'
+      ? resolveCatalogIdFromRecord(record['entity'] as Record<string, unknown>)
+      : null) ??
+    (record['entityJson'] && typeof record['entityJson'] === 'object'
+      ? resolveCatalogIdFromRecord(record['entityJson'] as Record<string, unknown>)
+      : null) ??
+    (record['product'] && typeof record['product'] === 'object'
+      ? resolveCatalogIdFromRecord(record['product'] as Record<string, unknown>)
+      : null) ??
+    (record['bundle'] && typeof record['bundle'] === 'object'
+      ? resolveCatalogIdFromRecord(record['bundle'] as Record<string, unknown>)
+      : null)
+  );
+};
+
+const resolveCatalogIdFromTemplateInputs = (
+  templateInputs: RuntimePortValues
+): string | null => {
+  const direct =
+    normalizeNonEmptyString(templateInputs['catalogId']) ??
+    resolveCatalogIdFromRecord(toRecord(templateInputs));
+  if (direct) return direct;
+
+  const nestedKeys = ['context', 'bundle', 'value', 'result'];
+  for (const key of nestedKeys) {
+    const nested = resolveCatalogIdFromRecord(toRecord(coerceInput(templateInputs[key])));
+    if (nested) return nested;
+  }
+  return null;
+};
+
+const withCatalogId = (value: unknown, catalogId: string): unknown => {
+  const record = toRecord(value);
+  if (!record) return value;
+  if (normalizeNonEmptyString(record['catalogId'])) return record;
+  return { ...record, catalogId };
+};
+
+const applyCatalogIdAliases = ({
+  catalogId,
+  templateInputs,
+  templateContext,
+}: {
+  catalogId: string;
+  templateInputs: RuntimePortValues;
+  templateContext: Record<string, unknown>;
+}): void => {
+  if (templateInputs['catalogId'] === undefined) {
+    templateInputs['catalogId'] = catalogId;
+  }
+  templateContext['catalogId'] = catalogId;
+
+  const contextRecord = toRecord(templateInputs['context']);
+  if (contextRecord) {
+    const nextContext: Record<string, unknown> = {
+      ...contextRecord,
+      catalogId:
+        normalizeNonEmptyString(contextRecord['catalogId']) ??
+        catalogId,
+      entity: withCatalogId(contextRecord['entity'], catalogId),
+      entityJson: withCatalogId(contextRecord['entityJson'], catalogId),
+      product: withCatalogId(contextRecord['product'], catalogId),
+    };
+    templateInputs['context'] = nextContext;
+    templateContext['context'] = nextContext;
+  }
+
+  const bundleRecord = toRecord(templateInputs['bundle']);
+  if (bundleRecord && !normalizeNonEmptyString(bundleRecord['catalogId'])) {
+    const nextBundle = { ...bundleRecord, catalogId };
+    templateInputs['bundle'] = nextBundle;
+    templateContext['bundle'] = nextBundle;
+  }
+};
+
 export type PrepareDatabaseTemplateContextInput = {
   resolvedInputs: Record<string, unknown>;
   dbConfig: DatabaseConfig;
@@ -128,6 +237,16 @@ export function prepareDatabaseTemplateContext({
     ...templateInputs,
     ...placeholderContext,
   };
+  const syncCatalogId = (): void => {
+    const catalogId = resolveCatalogIdFromTemplateInputs(templateInputs);
+    if (!catalogId) return;
+    applyCatalogIdAliases({
+      catalogId,
+      templateInputs,
+      templateContext,
+    });
+  };
+  syncCatalogId();
 
   const ensureExistingParameterTemplateContext = async (
     targetPath: string
@@ -198,6 +317,7 @@ export function prepareDatabaseTemplateContext({
     templateContext['entityId'] = templateInputs['entityId'];
     templateContext['productId'] = templateInputs['productId'];
     templateContext['entityType'] = templateInputs['entityType'];
+    syncCatalogId();
   };
 
   const aiPrompt: string = aiPromptTemplate.trim()

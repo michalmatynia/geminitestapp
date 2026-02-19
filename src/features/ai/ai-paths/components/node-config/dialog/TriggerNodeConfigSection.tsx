@@ -29,12 +29,11 @@ const useTriggerButtonsQuery = (): UseQueryResult<AiTriggerButtonRecord[], Error
       return Array.isArray(result.data) ? result.data : [];
     },
     ...(hasCachedButtons ? { initialData: cachedButtons } : {}),
-    // Modal should reuse already-fetched trigger buttons whenever possible.
-    enabled: !hasCachedButtons,
+    // Use cached data immediately, but always validate freshness on mount.
     staleTime: 5 * 60_000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     meta: {
       source: 'ai.ai-paths.node-config.trigger-buttons',
       operation: 'list',
@@ -48,6 +47,7 @@ const useTriggerButtonsQuery = (): UseQueryResult<AiTriggerButtonRecord[], Error
 export function TriggerNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
   const triggerButtonsQuery = useTriggerButtonsQuery();
+  const selectedTriggerEvent = selectedNode?.config?.trigger?.event?.trim() ?? '';
 
   const triggerEventOptions = useMemo(() => {
     const byId = new Map<string, { id: string; label: string }>();
@@ -56,11 +56,12 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
     });
     (triggerButtonsQuery.data ?? []).forEach((button: AiTriggerButtonRecord) => {
       if (!button?.id) return;
+      if (button.enabled === false && button.id !== selectedTriggerEvent) return;
       if (byId.has(button.id)) return;
       byId.set(button.id, { id: button.id, label: button.name });
     });
     return Array.from(byId.values());
-  }, [triggerButtonsQuery.data]);
+  }, [selectedTriggerEvent, triggerButtonsQuery.data]);
 
   if (selectedNode?.type !== 'trigger') return null;
 

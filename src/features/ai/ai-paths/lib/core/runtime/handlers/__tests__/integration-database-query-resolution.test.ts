@@ -155,4 +155,47 @@ describe('resolveDatabaseQuery guardrails', () => {
     });
     expect(result.querySource).toBe('input');
   });
+
+  it('does not treat JSON array syntax in templates as missing input ports', () => {
+    const toast = vi.fn();
+
+    const result = resolveDatabaseQuery({
+      nodeInputs: {},
+      toast,
+      simulationEntityType: null,
+      simulationEntityId: null,
+      resolvedInputs: {},
+      queryConfig: {
+        ...baseQueryConfig,
+        collection: 'product_parameters',
+        queryTemplate:
+          '{\n' +
+          '  "$or": [\n' +
+          '    { "catalogId": "{{context.entity.catalogId}}" },\n' +
+          '    { "catalogId": "{{context.entity.catalogs[0].catalogId}}" }\n' +
+          '  ]\n' +
+          '}',
+      },
+      templateInputValue: '',
+      templateContext: {
+        context: {
+          entity: {
+            catalogId: 'catalog-1',
+            catalogs: [{ catalogId: 'catalog-1' }],
+          },
+        },
+      },
+      aiPrompt: 'test',
+    });
+
+    expect('output' in result).toBe(false);
+    if ('output' in result) {
+      throw new Error('Expected parsed query result.');
+    }
+
+    expect(result.query).toEqual({
+      $or: [{ catalogId: 'catalog-1' }, { catalogId: 'catalog-1' }],
+    });
+    expect(result.querySource).toBe('customTemplate');
+  });
 });

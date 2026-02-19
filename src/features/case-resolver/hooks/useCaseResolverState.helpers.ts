@@ -1,4 +1,15 @@
 import {
+  stableStringify,
+} from '@/features/ai/ai-paths/lib';
+import {
+  deriveDocumentContentSync,
+  ensureHtmlForPreview,
+  ensureSafeDocumentHtml,
+  toStorageDocumentValue,
+} from '@/features/document-editor/content-format';
+
+import {
+  createCaseResolverFile,
   expandFolderPath,
   inferCaseResolverAssetKind,
   normalizeFolderPath,
@@ -20,6 +31,17 @@ const CASE_RESOLVER_EDITOR_DRAFT_STORAGE_PREFIX = 'case-resolver-editor-draft-v1
 export const CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT = 120;
 export const CASE_RESOLVER_OCR_JOB_POLL_INTERVAL_MS = 900;
 export const CASE_RESOLVER_OCR_JOB_TIMEOUT_MS = 120_000;
+
+export type CaseResolverDraftCanonicalState = {
+  mode: 'wysiwyg';
+  storedContent: string;
+  markdown: string;
+  html: string;
+  plainText: string;
+  warnings: string[];
+  originalDocumentContent: string;
+  explodedDocumentContent: string;
+};
 
 type StoredCaseResolverEditorDraft = {
   fileId: string;
@@ -44,6 +66,281 @@ export type CaseResolverUploadedFile = {
 
 const buildEditorDraftStorageKey = (fileId: string): string =>
   `${CASE_RESOLVER_EDITOR_DRAFT_STORAGE_PREFIX}:${fileId}`;
+
+const normalizeComparableReferenceCaseIds = (
+  value: string[] | null | undefined
+): string[] => [...(value ?? [])].sort();
+
+const normalizeComparableWarnings = (
+  value: string[] | null | undefined
+): string[] => [...(value ?? [])];
+
+type CaseResolverComparableDocumentSnapshot = {
+  id: string;
+  name: string;
+  folder: string;
+  parentCaseId: string | null;
+  referenceCaseIds: string[];
+  documentDate: string;
+  tagId: string | null;
+  caseIdentifierId: string | null;
+  categoryId: string | null;
+  scanOcrModel: string;
+  scanOcrPrompt: string;
+  addresser: CaseResolverFileEditDraft['addresser'];
+  addressee: CaseResolverFileEditDraft['addressee'];
+  activeDocumentVersion: CaseResolverFileEditDraft['activeDocumentVersion'];
+  editorType: CaseResolverFileEditDraft['editorType'];
+  documentContentFormatVersion: 1;
+  documentContent: string;
+  documentContentMarkdown: string;
+  documentContentHtml: string;
+  documentContentPlainText: string;
+  documentConversionWarnings: string[];
+  originalDocumentContent: string;
+  explodedDocumentContent: string;
+};
+
+export const buildCaseResolverDraftCanonicalState = (
+  draft: CaseResolverFileEditDraft
+): CaseResolverDraftCanonicalState => {
+  const resolvedHtmlContent = (() => {
+    if (
+      typeof draft.documentContentHtml === 'string' &&
+      draft.documentContentHtml.trim().length > 0
+    ) {
+      return draft.documentContentHtml;
+    }
+    if (
+      typeof draft.documentContentMarkdown === 'string' &&
+      draft.documentContentMarkdown.trim().length > 0
+    ) {
+      return ensureHtmlForPreview(draft.documentContentMarkdown, 'markdown');
+    }
+    return ensureSafeDocumentHtml(draft.documentContent ?? '');
+  })();
+  const canonical = deriveDocumentContentSync({
+    mode: 'wysiwyg',
+    value: resolvedHtmlContent,
+    previousHtml: resolvedHtmlContent,
+    previousMarkdown: draft.documentContentMarkdown ?? '',
+  });
+  const storedContent = toStorageDocumentValue(canonical);
+  const originalDocumentContent =
+    draft.activeDocumentVersion === 'original'
+      ? storedContent
+      : (draft.originalDocumentContent ?? '');
+  const explodedDocumentContent =
+    draft.activeDocumentVersion === 'exploded'
+      ? storedContent
+      : (draft.explodedDocumentContent ?? '');
+  return {
+    mode: 'wysiwyg',
+    storedContent,
+    markdown: canonical.markdown,
+    html: canonical.html,
+    plainText: canonical.plainText,
+    warnings: [...canonical.warnings],
+    originalDocumentContent,
+    explodedDocumentContent,
+  };
+};
+
+const buildCaseResolverFileComparableSnapshot = (
+  file: CaseResolverFile
+): CaseResolverComparableDocumentSnapshot => ({
+  id: file.id,
+  name: file.name,
+  folder: file.folder,
+  parentCaseId: file.parentCaseId,
+  referenceCaseIds: normalizeComparableReferenceCaseIds(file.referenceCaseIds),
+  documentDate: file.documentDate,
+  tagId: file.tagId,
+  caseIdentifierId: file.caseIdentifierId,
+  categoryId: file.categoryId,
+  scanOcrModel: file.scanOcrModel,
+  scanOcrPrompt: file.scanOcrPrompt,
+  addresser: file.addresser,
+  addressee: file.addressee,
+  activeDocumentVersion: file.activeDocumentVersion,
+  editorType: file.editorType,
+  documentContentFormatVersion: 1,
+  documentContent: file.documentContent,
+  documentContentMarkdown: file.documentContentMarkdown,
+  documentContentHtml: file.documentContentHtml,
+  documentContentPlainText: file.documentContentPlainText,
+  documentConversionWarnings: normalizeComparableWarnings(file.documentConversionWarnings),
+  originalDocumentContent: file.originalDocumentContent,
+  explodedDocumentContent: file.explodedDocumentContent,
+});
+
+const buildCaseResolverDraftComparableSnapshot = (
+  draft: CaseResolverFileEditDraft,
+  canonicalState: CaseResolverDraftCanonicalState
+): CaseResolverComparableDocumentSnapshot => ({
+  id: draft.id,
+  name: draft.name,
+  folder: draft.folder,
+  parentCaseId: draft.parentCaseId,
+  referenceCaseIds: normalizeComparableReferenceCaseIds(draft.referenceCaseIds),
+  documentDate: draft.documentDate,
+  tagId: draft.tagId,
+  caseIdentifierId: draft.caseIdentifierId,
+  categoryId: draft.categoryId,
+  scanOcrModel: draft.scanOcrModel,
+  scanOcrPrompt: draft.scanOcrPrompt,
+  addresser: draft.addresser,
+  addressee: draft.addressee,
+  activeDocumentVersion: draft.activeDocumentVersion,
+  editorType: canonicalState.mode,
+  documentContentFormatVersion: 1,
+  documentContent: canonicalState.storedContent,
+  documentContentMarkdown: canonicalState.markdown,
+  documentContentHtml: canonicalState.html,
+  documentContentPlainText: canonicalState.plainText,
+  documentConversionWarnings: normalizeComparableWarnings(canonicalState.warnings),
+  originalDocumentContent: canonicalState.originalDocumentContent,
+  explodedDocumentContent: canonicalState.explodedDocumentContent,
+});
+
+export const buildCaseResolverFileComparableFingerprint = (
+  file: CaseResolverFile
+): string => stableStringify(buildCaseResolverFileComparableSnapshot(file));
+
+export const buildCaseResolverDraftComparableFingerprint = (
+  draft: CaseResolverFileEditDraft,
+  canonicalState?: CaseResolverDraftCanonicalState
+): string =>
+  stableStringify(
+    buildCaseResolverDraftComparableSnapshot(
+      draft,
+      canonicalState ?? buildCaseResolverDraftCanonicalState(draft)
+    )
+  );
+
+export const hasCaseResolverDraftMeaningfulChanges = ({
+  draft,
+  file,
+  canonicalState,
+}: {
+  draft: CaseResolverFileEditDraft;
+  file: CaseResolverFile;
+  canonicalState?: CaseResolverDraftCanonicalState;
+}): boolean =>
+  buildCaseResolverDraftComparableFingerprint(draft, canonicalState) !==
+  buildCaseResolverFileComparableFingerprint(file);
+
+type CaseResolverWorkspaceMutationOptions = {
+  persistToast?: string;
+  mutationId?: string;
+  source?: string;
+};
+
+type CaseResolverWorkspaceUpdater = (
+  updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
+  options?: CaseResolverWorkspaceMutationOptions
+) => void;
+
+type CaseResolverEditingDraftUpdater = (
+  updater: (current: CaseResolverFileEditDraft | null) => CaseResolverFileEditDraft | null
+) => void;
+
+export const applyCaseResolverFileMutationAndRebaseDraft = ({
+  fileId,
+  updateWorkspace,
+  setEditingDocumentDraft,
+  mutate,
+  source,
+  persistToast,
+  activateFile = false,
+}: {
+  fileId: string;
+  updateWorkspace: CaseResolverWorkspaceUpdater;
+  setEditingDocumentDraft: CaseResolverEditingDraftUpdater;
+  mutate: (file: CaseResolverFile) => Partial<CaseResolverFile> | null;
+  source: string;
+  persistToast?: string;
+  activateFile?: boolean;
+}): {
+  fileFound: boolean;
+  changed: boolean;
+  nextFile: CaseResolverFile | null;
+} => {
+  let fileFound = false;
+  let changed = false;
+  let nextFile: CaseResolverFile | null = null;
+
+  const mutationOptions: CaseResolverWorkspaceMutationOptions = {
+    source,
+    ...(persistToast ? { persistToast } : {}),
+  };
+
+  updateWorkspace((current) => {
+    let localFileFound = false;
+    let localChanged = false;
+    let localNextFile: CaseResolverFile | null = null;
+    const nextFiles = current.files.map((file) => {
+      if (file.id !== fileId) return file;
+      localFileFound = true;
+      const patch = mutate(file);
+      if (!patch) return file;
+      const normalizedNextFile = createCaseResolverFile({
+        ...file,
+        ...patch,
+        createdAt:
+          typeof patch.createdAt === 'string' ? patch.createdAt : file.createdAt,
+        updatedAt:
+          typeof patch.updatedAt === 'string'
+            ? patch.updatedAt
+            : (typeof file.updatedAt === 'string' ? file.updatedAt : file.createdAt),
+      });
+      if (
+        buildCaseResolverFileComparableFingerprint(file) ===
+        buildCaseResolverFileComparableFingerprint(normalizedNextFile)
+      ) {
+        return file;
+      }
+      localChanged = true;
+      localNextFile = normalizedNextFile;
+      return normalizedNextFile;
+    });
+
+    fileFound = localFileFound;
+    changed = localChanged;
+    nextFile = localNextFile;
+
+    if (!localFileFound) return current;
+    const nextActiveFileId =
+      activateFile && current.activeFileId !== fileId ? fileId : current.activeFileId;
+    const activeFileChanged = nextActiveFileId !== current.activeFileId;
+    if (!localChanged && !activeFileChanged) return current;
+    return {
+      ...current,
+      activeFileId: nextActiveFileId,
+      files: localChanged ? nextFiles : current.files,
+    };
+  }, mutationOptions);
+
+  const nextFileSnapshot = nextFile;
+  if (nextFileSnapshot) {
+    setEditingDocumentDraft((current) => {
+      if (current?.id !== fileId) return current;
+      const rebasedDraft = {
+        ...(nextFileSnapshot as CaseResolverFile),
+        baseDocumentContentVersion: (nextFileSnapshot as CaseResolverFile).documentContentVersion,
+      } as CaseResolverFileEditDraft;
+      return {
+        ...rebasedDraft,
+      };
+    });
+  }
+
+  return {
+    fileFound,
+    changed,
+    nextFile,
+  };
+};
 
 export const readStoredEditorDraft = (fileId: string): StoredCaseResolverEditorDraft | null => {
   if (typeof window === 'undefined') return null;

@@ -6,6 +6,7 @@ import {
   badRequestError,
   configurationError,
   internalError,
+  isAppError,
 } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
@@ -52,12 +53,21 @@ const normalizeHtml = (value: unknown): string => {
 
 const sanitizePdfFilename = (value: unknown): string => {
   const base = typeof value === 'string' ? value.trim() : '';
+  const withoutControlChars = Array.from(base)
+    .filter((char) => char.charCodeAt(0) >= 32)
+    .join('');
   const withoutExtension = base.replace(/\.pdf$/i, '');
+  const withoutExtensionNoControl = withoutControlChars.replace(/\.pdf$/i, '');
   const normalized = withoutExtension
-    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, ' ')
+    .replace(/[<>:"/\\|?*]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-  const safeBase = normalized.slice(0, 120) || 'case-resolver-document';
+  const normalizedNoControl = withoutExtensionNoControl
+    .replace(/[<>:"/\\|?*]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const resolved = normalizedNoControl || normalized;
+  const safeBase = resolved.slice(0, 120) || 'case-resolver-document';
   return `${safeBase}.pdf`;
 };
 
@@ -92,7 +102,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       preferCSSPageSize: true,
     });
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
@@ -101,7 +111,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       },
     });
   } catch (error: unknown) {
-    if (error instanceof Error && error.name === 'AppError') {
+    if (isAppError(error)) {
       throw error;
     }
     throw internalError(

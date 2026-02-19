@@ -188,13 +188,16 @@ export function extractMissingTemplatePorts(
   templateInputs: RuntimePortValues,
 ): string[] {
   const missing: Set<string> = new Set<string>();
-  const tokenRegex: RegExp = /{{\s*([^}]+)\s*}}|\[\s*([^\]]+)\s*\]/g;
+  // Keep this token parser aligned with renderTemplate to avoid treating
+  // JSON array syntax as unresolved placeholder input.
+  const tokenRegex: RegExp = /{{\s*([^}]+)\s*}}|\[\s*([A-Za-z0-9_.$:-]+)\s*\]/g;
   let match: RegExpExecArray | null = tokenRegex.exec(template);
 
   while (match) {
     const token: string = (match[1] ?? match[2] ?? '').trim();
     if (token) {
-      const rootPort: string = token.split('.')[0]?.trim() ?? '';
+      const rootPortCandidate: string = token.split('.')[0]?.trim() ?? '';
+      const rootPort: string = rootPortCandidate.replace(/\[[^\]]*\]/g, '').trim();
       if (
         rootPort &&
         rootPort !== 'value' &&

@@ -6,7 +6,7 @@ export const PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME = 'Infer Parameters';
 export const buildParameterInferencePathConfigValue = (timestamp: string): string =>
   JSON.stringify({
     id: PARAMETER_INFERENCE_PATH_ID,
-    version: 3,
+    version: 5,
     name: PARAMETER_INFERENCE_PATH_NAME,
     description:
       'Infer product parameter values from name and images, then update product parameters.',
@@ -61,29 +61,58 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         },
       },
       {
-        type: 'http',
-        title: 'HTTP Fetch',
-        description: 'Load available parameters for product catalog.',
+        type: 'database',
+        title: 'Database Query',
+        description:
+          'Load available parameters for product catalog (with fallback by product parameter IDs).',
         inputs: [
-          'context',
-          'bundle',
-          'prompt',
-          'result',
-          'value',
           'entityId',
           'entityType',
+          'productId',
+          'context',
+          'query',
+          'value',
+          'bundle',
+          'result',
+          'content_en',
+          'queryCallback',
+          'schema',
+          'aiQuery',
         ],
-        outputs: ['value', 'bundle'],
+        outputs: ['result', 'bundle', 'aiPrompt'],
         id: 'node-query-params',
         position: { x: 560, y: 110 },
         config: {
-          http: {
-            url: '/api/products/parameters?catalogId={{context.entity.catalogId}}',
-            method: 'GET',
-            headers: '{}',
-            bodyTemplate: '',
-            responseMode: 'json',
-            responsePath: '',
+          database: {
+            operation: 'query',
+            entityType: 'product',
+            idField: 'entityId',
+            mode: 'replace',
+            query: {
+              provider: 'auto',
+              collection: 'product_parameters',
+              mode: 'custom',
+              preset: 'by_id',
+              field: 'id',
+              idType: 'string',
+              queryTemplate:
+                '{\n' +
+                '  "catalogId": "{{catalogId}}"\n' +
+                '}',
+              limit: 200,
+              sort: '',
+              projection: '',
+              single: false,
+            },
+            writeSource: 'bundle',
+            writeSourcePath: '',
+            dryRun: false,
+            distinctField: '',
+            updateTemplate: '',
+            skipEmpty: true,
+            trimStrings: false,
+            aiPrompt: '',
+            validationRuleIds: [],
           },
           runtime: { waitForInputs: true },
         },
@@ -102,14 +131,15 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
               'Infer product PARAMETERS in ENGLISH from the product data below.\n' +
               'Product name: "{{title}}"\n' +
               'Product description: "{{content_en}}"\n' +
-              'Available parameters JSON: {{result}}\n\n' +
+              'Available parameters JSON (objects with id/label/selectorType/options): {{result}}\n\n' +
               'Rules:\n' +
               '1. Return ONLY valid JSON array.\n' +
               '2. Output schema per item: {"parameterId":"<id>","value":"<english value>"}.\n' +
-              '3. Use only parameterId values that exist in the provided parameter list.\n' +
-              '4. Skip parameters you cannot infer confidently.\n' +
-              '5. No markdown, no explanations, no code fences.\n' +
-              '6. If nothing can be inferred, return [].',
+              '3. parameterId MUST exactly match an "id" from Available parameters JSON.\n' +
+              '4. Never invent semantic IDs like "size", "material", "color".\n' +
+              '5. Skip parameters you cannot infer confidently.\n' +
+              '6. No markdown, no explanations, no code fences.\n' +
+              '7. If nothing can be inferred, return [].',
           },
         },
       },
@@ -250,7 +280,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         id: 'edge-params-04',
         from: 'node-query-params',
         to: 'node-prompt-params',
-        fromPort: 'value',
+        fromPort: 'result',
         toPort: 'result',
       },
       {
@@ -299,7 +329,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         id: 'edge-params-11',
         from: 'node-query-params',
         to: 'node-update-params',
-        fromPort: 'value',
+        fromPort: 'result',
         toPort: 'result',
       },
     ],
@@ -386,27 +416,38 @@ export const needsParameterInferenceConfigUpgrade = (
 
     const queryNode = nodes.find((node) => node?.['id'] === 'node-query-params');
     const queryType = queryNode?.['type'];
-    if (queryType !== 'http') return true;
-    const queryHttp =
+    if (queryType !== 'database') return true;
+    const queryDatabase =
       queryNode &&
       typeof queryNode === 'object' &&
       queryNode['config'] &&
       typeof queryNode['config'] === 'object' &&
-      (queryNode['config'] as Record<string, unknown>)['http'] &&
-      typeof (queryNode['config'] as Record<string, unknown>)['http'] ===
+      (queryNode['config'] as Record<string, unknown>)['database'] &&
+      typeof (queryNode['config'] as Record<string, unknown>)['database'] ===
         'object'
         ? ((queryNode['config'] as Record<string, unknown>)[
-          'http'
+          'database'
         ] as Record<string, unknown>)
         : null;
-    const queryUrl =
-      queryHttp && typeof queryHttp['url'] === 'string'
-        ? queryHttp['url']
+    const queryConfig =
+      queryDatabase &&
+      typeof queryDatabase['query'] === 'object' &&
+      queryDatabase['query'] !== null
+        ? (queryDatabase['query'] as Record<string, unknown>)
+        : null;
+    const queryCollection =
+      queryConfig && typeof queryConfig['collection'] === 'string'
+        ? queryConfig['collection']
+        : null;
+    if (queryCollection !== 'product_parameters') return true;
+    const queryTemplate =
+      queryConfig && typeof queryConfig['queryTemplate'] === 'string'
+        ? queryConfig['queryTemplate']
         : null;
     if (
-      !queryUrl ||
-      !queryUrl.includes('/api/products/parameters') ||
-      !queryUrl.includes('catalogId=')
+      !queryTemplate ||
+      !queryTemplate.includes('catalogId') ||
+      !queryTemplate.includes('{{catalogId}}')
     ) {
       return true;
     }
@@ -414,16 +455,27 @@ export const needsParameterInferenceConfigUpgrade = (
     const edges = Array.isArray(parsed['edges'])
       ? (parsed['edges'] as Array<Record<string, unknown>>)
       : [];
-    const hasDefinitionsEdge = edges.some((edge) => {
+    const hasDefinitionsEdgeToUpdater = edges.some((edge) => {
       if (!edge || typeof edge !== 'object') return false;
       return (
         edge['from'] === 'node-query-params' &&
         edge['to'] === 'node-update-params' &&
-        edge['fromPort'] === 'value' &&
+        edge['fromPort'] === 'result' &&
         edge['toPort'] === 'result'
       );
     });
-    return !hasDefinitionsEdge;
+    if (!hasDefinitionsEdgeToUpdater) return true;
+
+    const hasDefinitionsEdgeToPrompt = edges.some((edge) => {
+      if (!edge || typeof edge !== 'object') return false;
+      return (
+        edge['from'] === 'node-query-params' &&
+        edge['to'] === 'node-prompt-params' &&
+        edge['fromPort'] === 'result' &&
+        edge['toPort'] === 'result'
+      );
+    });
+    return !hasDefinitionsEdgeToPrompt;
   } catch {
     return true;
   }

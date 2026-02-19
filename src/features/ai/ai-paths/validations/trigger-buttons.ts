@@ -12,20 +12,64 @@ export const aiTriggerButtonLocationSchema = z.enum([
 export const aiTriggerButtonModeSchema = z.enum(['click', 'toggle']);
 export const aiTriggerButtonDisplaySchema = z.enum(['icon', 'icon_label']);
 
+const coerceOptionalBoolean = (value: unknown): boolean | undefined => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') {
+    if (value === 1) return true;
+    if (value === 0) return false;
+    return undefined;
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true' || normalized === '1') return true;
+    if (normalized === 'false' || normalized === '0') return false;
+  }
+  return undefined;
+};
+
+const normalizeDisplayForRead = (value: unknown): 'icon' | 'icon_label' | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'icon') return 'icon';
+  if (normalized === 'icon_label' || normalized === 'label') return 'icon_label';
+  return undefined;
+};
+
+const normalizeModeForRead = (value: unknown): 'click' | 'toggle' | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'click' || normalized === 'toggle') return normalized;
+  return undefined;
+};
+
+const normalizeLocationsForRead = (value: unknown): Array<'product_modal' | 'product_list' | 'note_modal' | 'note_list'> | undefined => {
+  const source = Array.isArray(value)
+    ? value
+    : typeof value === 'string'
+      ? [value]
+      : [];
+  const seen = new Set<'product_modal' | 'product_list' | 'note_modal' | 'note_list'>();
+  source.forEach((entry: unknown) => {
+    if (typeof entry !== 'string') return;
+    const normalized = entry.trim();
+    const parsed = aiTriggerButtonLocationSchema.safeParse(normalized);
+    if (!parsed.success) return;
+    seen.add(parsed.data);
+  });
+  return seen.size > 0 ? Array.from(seen) : undefined;
+};
+
 export const aiTriggerButtonRecordSchema = z.object({
   id: z.string().trim().min(1),
   name: z.string().trim().min(1),
   icon: z.string().trim().min(1).nullable().optional(),
   iconId: z.string().trim().min(1).nullable().optional(),
-  enabled: z.boolean().optional(),
+  enabled: z.preprocess(coerceOptionalBoolean, z.boolean().optional()),
   locations: z
-    .preprocess(
-      (value) => (typeof value === 'string' ? [value] : value),
-      z.array(aiTriggerButtonLocationSchema)
-    )
+    .preprocess(normalizeLocationsForRead, z.array(aiTriggerButtonLocationSchema))
     .optional(),
-  mode: aiTriggerButtonModeSchema.optional(),
-  display: aiTriggerButtonDisplaySchema.optional(),
+  mode: z.preprocess(normalizeModeForRead, aiTriggerButtonModeSchema).optional(),
+  display: z.preprocess(normalizeDisplayForRead, aiTriggerButtonDisplaySchema).optional(),
   createdAt: z
     .preprocess((value) => (value instanceof Date ? value.toISOString() : value), z.string().min(1))
     .optional(),

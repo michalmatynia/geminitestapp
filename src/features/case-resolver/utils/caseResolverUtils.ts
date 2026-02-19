@@ -155,30 +155,64 @@ const escapeHtml = (value: string): string =>
 
 export const toLocalDateLabel = (value: string): string => {
   const normalized = value.trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
-    return 'Not specified';
+  if (!normalized) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    const [year, month, day] = normalized.split('-');
+    if (year && month && day) {
+      return `${day}.${month}.${year}`;
+    }
   }
-  const parsed = new Date(`${normalized}T00:00:00`);
+  const parsed = new Date(normalized);
   if (Number.isNaN(parsed.getTime())) {
-    return normalized;
+    return '';
   }
-  return parsed.toLocaleDateString();
+  const day = String(parsed.getDate()).padStart(2, '0');
+  const month = String(parsed.getMonth() + 1).padStart(2, '0');
+  const year = parsed.getFullYear();
+  return `${day}.${month}.${year}`;
 };
 
 export const buildDocumentPdfMarkup = ({
   documentDate,
+  documentPlace,
   addresserLabel,
   addresseeLabel,
   documentContent,
 }: {
   documentDate: string;
+  documentPlace?: string | null;
   addresserLabel: string;
   addresseeLabel: string;
   documentContent: string;
 }): string => {
   const normalizedDocumentDate = toLocalDateLabel(documentDate);
-  const normalizedAddresser = addresserLabel.trim() || 'Not selected';
-  const normalizedAddressee = addresseeLabel.trim() || 'Not selected';
+  const normalizedDocumentPlace = (documentPlace ?? '').trim();
+  const normalizedDocumentPlaceDate = [normalizedDocumentPlace, normalizedDocumentDate]
+    .filter((value): value is string => value.length > 0)
+    .join(' ');
+  const normalizedAddresser = addresserLabel.trim();
+  const normalizedAddressee = addresseeLabel.trim();
+  const hasAddresser = normalizedAddresser.length > 0;
+  const hasAddressee = normalizedAddressee.length > 0;
+  const documentPlaceDateHtml = normalizedDocumentPlaceDate
+    ? `<div class="document-date">${escapeHtml(normalizedDocumentPlaceDate)}</div>`
+    : '';
+  const addresserHtml = hasAddresser
+    ? `<article class="meta-card">
+          <div class="meta-value">${escapeHtml(normalizedAddresser)}</div>
+        </article>`
+    : '';
+  const addresseeHtml = hasAddressee
+    ? `<article class="meta-card meta-card-right">
+          <div class="meta-value">${escapeHtml(normalizedAddressee)}</div>
+        </article>`
+    : '';
+  const metaSectionHtml = hasAddresser || hasAddressee
+    ? `<section class="meta">
+        ${addresserHtml}
+        ${addresseeHtml}
+      </section>`
+    : '';
 
   return `<!doctype html>
 <html lang="en">
@@ -228,6 +262,7 @@ export const buildDocumentPdfMarkup = ({
         display: flex;
         justify-content: flex-end;
         margin-bottom: 14px;
+        min-height: 16px;
       }
 
       .document-date {
@@ -239,16 +274,14 @@ export const buildDocumentPdfMarkup = ({
         padding: 0;
       }
 
-      .meta-label {
-        color: #6b7280;
-        font-size: 10px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
+      .meta-card-right {
+        margin-left: auto;
+        text-align: right;
       }
 
       .meta-value {
         margin-top: 4px;
-        font-size: 12px;
+        font-size: 14.4px;
         line-height: 1.4;
         color: #111827;
         white-space: pre-line;
@@ -320,18 +353,9 @@ export const buildDocumentPdfMarkup = ({
   <body>
     <main class="sheet">
       <header class="document-header">
-        <div class="document-date">Date: ${escapeHtml(normalizedDocumentDate)}</div>
+        ${documentPlaceDateHtml}
       </header>
-      <section class="meta">
-        <article class="meta-card">
-          <div class="meta-label">Addresser</div>
-          <div class="meta-value">${escapeHtml(normalizedAddresser)}</div>
-        </article>
-        <article class="meta-card">
-          <div class="meta-label">Addressee</div>
-          <div class="meta-value">${escapeHtml(normalizedAddressee)}</div>
-        </article>
-      </section>
+      ${metaSectionHtml}
       <section class="content">${documentContent}</section>
     </main>
   </body>

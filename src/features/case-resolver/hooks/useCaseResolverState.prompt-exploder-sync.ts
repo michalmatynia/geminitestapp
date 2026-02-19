@@ -13,7 +13,11 @@ import {
   consumePromptExploderApplyPromptForCaseResolver,
   readPromptExploderApplyPayload,
 } from '@/features/prompt-exploder/bridge';
-import { CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT } from './useCaseResolverState.helpers';
+
+import {
+  applyCaseResolverFileMutationAndRebaseDraft,
+  CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
+} from './useCaseResolverState.helpers';
 import { createId } from '../utils/caseResolverUtils';
 
 import type {
@@ -203,11 +207,13 @@ export const useCaseResolverStatePromptExploderSync = ({
     });
     const explodedStoredContent = toStorageDocumentValue(canonicalExploded);
 
-    updateWorkspace((current) => ({
-      ...current,
-      activeFileId: targetFileId,
-      files: current.files.map((file) => {
-        if (file.id !== targetFileId) return file;
+    const mutationResult = applyCaseResolverFileMutationAndRebaseDraft({
+      fileId: targetFileId,
+      updateWorkspace,
+      setEditingDocumentDraft,
+      source: 'prompt_exploder_apply',
+      activateFile: true,
+      mutate: (file) => {
         const nextDocumentHistory = [
           {
             id: createId('case-doc-history'),
@@ -223,7 +229,6 @@ export const useCaseResolverStatePromptExploderSync = ({
           ...file.documentHistory,
         ].slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT);
         return {
-          ...file,
           originalDocumentContent: file.originalDocumentContent ?? file.documentContent,
           explodedDocumentContent: explodedStoredContent,
           activeDocumentVersion: 'exploded',
@@ -239,56 +244,14 @@ export const useCaseResolverStatePromptExploderSync = ({
           lastContentConversionAt: now,
           updatedAt: now,
         };
-      }),
-    }));
-
-    setEditingDocumentDraft((current) => {
-      if (current?.id !== targetFileId) return current;
-      const currentVersion = current.documentContentVersion ?? 0;
-      const nextVersion = currentVersion + 1;
-      const normalizedHistory = (current.documentHistory ?? []).map((entry) => ({
-        id: entry.id,
-        savedAt: entry.savedAt,
-        documentContentVersion: entry.documentContentVersion,
-        activeDocumentVersion: entry.activeDocumentVersion ?? 'original',
-        editorType: entry.editorType ?? 'wysiwyg',
-        documentContent: entry.documentContent ?? '',
-        documentContentMarkdown: entry.documentContentMarkdown ?? '',
-        documentContentHtml: entry.documentContentHtml ?? '',
-        documentContentPlainText: entry.documentContentPlainText ?? '',
-      }));
-      const nextDocumentHistory = [
-        {
-          id: createId('case-doc-history'),
-          savedAt: now,
-          documentContentVersion: currentVersion,
-          activeDocumentVersion: current.activeDocumentVersion ?? 'original',
-          editorType: current.editorType ?? 'wysiwyg',
-          documentContent: current.documentContent ?? '',
-          documentContentMarkdown: current.documentContentMarkdown ?? '',
-          documentContentHtml: current.documentContentHtml ?? '',
-          documentContentPlainText: current.documentContentPlainText ?? '',
-        },
-        ...normalizedHistory,
-      ].slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT);
-      return {
-        ...current,
-        originalDocumentContent: current.originalDocumentContent ?? current.documentContent ?? '',
-        explodedDocumentContent: explodedStoredContent,
-        activeDocumentVersion: 'exploded',
-        editorType: canonicalExploded.mode,
-        documentContentFormatVersion: 1,
-        documentContentVersion: nextVersion,
-        baseDocumentContentVersion: nextVersion,
-        documentContent: explodedStoredContent,
-        documentContentMarkdown: canonicalExploded.markdown,
-        documentContentHtml: canonicalExploded.html,
-        documentContentPlainText: canonicalExploded.plainText,
-        documentHistory: nextDocumentHistory,
-        documentConversionWarnings: canonicalExploded.warnings,
-        lastContentConversionAt: now,
-      };
+      },
     });
+    if (!mutationResult.fileFound) {
+      toast('Prompt Exploder output could not be applied because target file was not found.', {
+        variant: 'warning',
+      });
+      return;
+    }
 
     if (proposalState) {
       setPromptExploderPartyProposal(proposalState);

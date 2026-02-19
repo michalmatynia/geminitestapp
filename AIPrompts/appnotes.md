@@ -1,6 +1,7 @@
-Hide Convert all to Base into Actions
-When I create Product from Draft, I get Failed to create
-When I create from draft I should be able to choose the first tab selected
+
+In Image Studio
+I want to be be able to centre based on white pixel to non white pixel ratio.
+
 
 
 retrieve app notes from old Prisma backups, I need prisma viewer to find notes somewhere

@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  useQueries,
   useQueryClient,
 } from '@tanstack/react-query';
 import { useCallback } from 'react';
@@ -11,13 +10,10 @@ import { getProducts, countProducts } from '@/features/products/api/products';
 import type { ProductWithImages } from '@/features/products/types';
 import { productSchema } from '@/shared/contracts/products';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
-import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ListQuery, SingleQuery } from '@/shared/types/query-result-types';
 
 import {
-  getProductCountQueryKey,
-  getProductListQueryKey,
   refetchProductsAndCounts,
 } from './productCache';
 
@@ -54,6 +50,7 @@ export function useProducts(filters: UseProductsFilters, options?: UseProductsOp
     queryKey,
     queryFn,
     staleTime: PRODUCTS_STALE_MS,
+    refetchOnMount: 'always',
     enabled: options?.enabled ?? true,
     meta: {
       source: 'products.hooks.useProducts',
@@ -76,6 +73,7 @@ export function useProductsCount(filters: UseProductsFilters, options?: UseProdu
     queryKey,
     queryFn,
     staleTime: PRODUCTS_STALE_MS,
+    refetchOnMount: 'always',
     enabled: options?.enabled ?? true,
     meta: {
       source: 'products.hooks.useProductsCount',

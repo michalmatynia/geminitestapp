@@ -25,6 +25,7 @@ export function CaseResolverRichTextEditor({
       appearance={appearance}
       allowFontFamily
       allowTextAlign
+      enableAdvancedTools
     />
   );
 }

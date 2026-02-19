@@ -15,6 +15,7 @@ export interface DocumentWysiwygEditorProps {
   appearance?: DocumentWysiwygEditorAppearance | undefined;
   allowFontFamily?: boolean | undefined;
   allowTextAlign?: boolean | undefined;
+  enableAdvancedTools?: boolean | undefined;
   loadingLabel?: string | undefined;
   toolbarClassName?: string | undefined;
   surfaceClassName?: string | undefined;
@@ -28,6 +29,7 @@ export function DocumentWysiwygEditor({
   appearance = 'default',
   allowFontFamily = false,
   allowTextAlign = false,
+  enableAdvancedTools = false,
   loadingLabel = 'Loading editor...',
   toolbarClassName,
   surfaceClassName,
@@ -47,6 +49,7 @@ export function DocumentWysiwygEditor({
       allowTaskList
       allowFontFamily={allowFontFamily}
       allowTextAlign={allowTextAlign}
+      enableAdvancedTools={enableAdvancedTools}
       loadingLabel={loadingLabel}
       toolbarClassName={cn('border-slate-300 bg-slate-50', toolbarClassName)}
       surfaceClassName={cn(

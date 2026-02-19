@@ -64,6 +64,10 @@ export function useAiPathsTriggerButtonsQuery(): SingleQuery<AiTriggerButtonReco
     queryKey,
     queryFn: () => api.get<AiTriggerButtonRecord[]>('/api/ai-paths/trigger-buttons'),
     id: 'trigger-buttons',
+    staleTime: 30_000,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     meta: {
       source: 'aiPaths.hooks.useAiPathsTriggerButtonsQuery',
       operation: 'detail',

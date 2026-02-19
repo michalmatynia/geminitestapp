@@ -31,9 +31,9 @@ import {
   getProductCountQueryKey,
   getProductListQueryKey,
   getProductDetailQueryKey,
-  invalidateProductsAndCounts,
   productsAllQueryKey,
   productsCountsQueryKey,
+  refetchProductsAndCounts,
 } from './productCache';
 
 // --- Queries ---
@@ -336,7 +336,7 @@ export function useProductData({
         queryFn: ({ signal }: { signal?: AbortSignal }): Promise<ProductWithImages[]> => getProducts(filters, signal),
         enabled: preferencesLoaded,
         staleTime: 10_000,
-        refetchOnMount: false,
+        refetchOnMount: 'always',
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
       },
@@ -345,7 +345,7 @@ export function useProductData({
         queryFn: ({ signal }: { signal?: AbortSignal }): Promise<number> => countProducts(filters, signal),
         enabled: preferencesLoaded,
         staleTime: 10_000,
-        refetchOnMount: false,
+        refetchOnMount: 'always',
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
       },
@@ -373,7 +373,7 @@ export function useProductData({
   }, [page, totalPages]);
 
   const refresh = useCallback(() => {
-    void invalidateProductsAndCounts(queryClient);
+    void refetchProductsAndCounts(queryClient);
   }, [queryClient]);
 
   // Invalidate when refreshTrigger changes

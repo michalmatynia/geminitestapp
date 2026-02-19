@@ -8,12 +8,11 @@ import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   Button,
   ConfirmModal,
-  DataTable,
-  ListPanel,
   PanelHeader,
   useToast,
   DocumentationSection,
   EmptyState,
+  StandardDataTablePanel,
 } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -366,21 +365,18 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
         />
       </div>
 
-      <ListPanel
+      <StandardDataTablePanel
         variant='default'
-      >
-        <DataTable
-          columns={columns}
-          data={projects}
-          isLoading={settingsQuery.isLoading}
-          emptyState={
-            <EmptyState
-              title='No projects found'
-              description='Create your first Prompt Exploder project to get started.'
-            />
-          }
-        />
-      </ListPanel>
+        columns={columns}
+        data={projects}
+        isLoading={settingsQuery.isLoading}
+        emptyState={
+          <EmptyState
+            title='No projects found'
+            description='Create your first Prompt Exploder project to get started.'
+          />
+        }
+      />
 
       <SettingsPanelBuilder
         open={isEditorOpen}

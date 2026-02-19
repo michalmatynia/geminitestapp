@@ -27,7 +27,6 @@ import {
   FILEMAKER_DATABASE_KEY,
   buildFilemakerPartyOptions,
   decodeFilemakerPartyReference,
-  formatFilemakerAddress,
   normalizeFilemakerDatabase,
   resolveFilemakerPartyLabel,
 } from '@/features/filemaker/settings';
@@ -38,6 +37,10 @@ import { useToast } from '@/shared/ui';
 import { buildPathLabelMap } from './admin-case-resolver-page-helpers';
 import { CaseResolverPageView } from '../components/CaseResolverPageView';
 import { useCaseResolverState } from '../hooks/useCaseResolverState';
+import {
+  applyCaseResolverFileMutationAndRebaseDraft,
+  hasCaseResolverDraftMeaningfulChanges,
+} from '../hooks/useCaseResolverState.helpers';
 import {
   createCaseResolverAssetFile,
   normalizeFolderPath,
@@ -139,11 +142,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const editorTextareaRef = React.useRef<HTMLTextAreaElement | null>(null);
   const scanDraftUploadInputRef = React.useRef<HTMLInputElement | null>(null);
   const [isScanDraftDropActive, setIsScanDraftDropActive] = React.useState(false);
-  const initialDraftFingerprintRef = React.useRef<string | null>(null);
-  const trackedDraftBaseVersionRef = React.useRef<{
-    fileId: string;
-    baseDocumentContentVersion: number;
-  } | null>(null);
 
   const preserveWorkspaceView = useCallback(
     (view: 'document' | 'relations'): void => {
@@ -223,94 +221,22 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     []
   );
 
-  const buildDraftFingerprint = useCallback((input: typeof editingDocumentDraft): string => {
-    if (!input) return '';
-    const resolvedMode = 'wysiwyg';
-    const resolvedHtmlContent = (() => {
-      if (typeof input.documentContentHtml === 'string' && input.documentContentHtml.trim().length > 0) {
-        return input.documentContentHtml;
-      }
-      if (
-        typeof input.documentContentMarkdown === 'string' &&
-        input.documentContentMarkdown.trim().length > 0
-      ) {
-        return ensureHtmlForPreview(input.documentContentMarkdown, 'markdown');
-      }
-      return ensureSafeDocumentHtml(input.documentContent ?? '');
-    })();
-    const canonical = deriveDocumentContentSync({
-      mode: resolvedMode,
-      value: resolvedHtmlContent,
-      previousMarkdown: input.documentContentMarkdown ?? '',
-      previousHtml: resolvedHtmlContent,
-    });
-    return stableStringify({
-      id: input.id,
-      name: input.name,
-      activeDocumentVersion: input.activeDocumentVersion,
-      editorType: canonical.mode,
-      documentContent: toStorageDocumentValue(canonical),
-      documentContentMarkdown: canonical.markdown,
-      documentContentHtml: canonical.html,
-      documentDate: input.documentDate ?? null,
-      addresser: input.addresser ?? null,
-      addressee: input.addressee ?? null,
-      referenceCaseIds: [...(input.referenceCaseIds ?? [])].sort(),
-      parentCaseId: input.parentCaseId ?? null,
-      tagId: input.tagId ?? null,
-      caseIdentifierId: input.caseIdentifierId ?? null,
-      categoryId: input.categoryId ?? null,
-    });
-  }, []);
-
   React.useEffect(() => {
-    if (!editingDocumentDraft) {
-      initialDraftFingerprintRef.current = null;
-      trackedDraftBaseVersionRef.current = null;
-      return;
-    }
-    initialDraftFingerprintRef.current = buildDraftFingerprint(editingDocumentDraft);
-    trackedDraftBaseVersionRef.current = {
-      fileId: editingDocumentDraft.id,
-      baseDocumentContentVersion: editingDocumentDraft.baseDocumentContentVersion,
-    };
+    if (!editingDocumentDraft) return;
     setEditorWidth(null);
     setEditorDetailsTab('document');
     setEditorContentRevisionSeed((value) => value + 1);
-  }, [buildDraftFingerprint, editingDocumentDraft?.id]);
-
-  React.useEffect(() => {
-    if (!editingDocumentDraft) {
-      trackedDraftBaseVersionRef.current = null;
-      return;
-    }
-    const tracked = trackedDraftBaseVersionRef.current;
-    if (tracked?.fileId !== editingDocumentDraft.id) {
-      trackedDraftBaseVersionRef.current = {
-        fileId: editingDocumentDraft.id,
-        baseDocumentContentVersion: editingDocumentDraft.baseDocumentContentVersion,
-      };
-      return;
-    }
-    if (tracked.baseDocumentContentVersion === editingDocumentDraft.baseDocumentContentVersion) {
-      return;
-    }
-    initialDraftFingerprintRef.current = buildDraftFingerprint(editingDocumentDraft);
-    trackedDraftBaseVersionRef.current = {
-      fileId: editingDocumentDraft.id,
-      baseDocumentContentVersion: editingDocumentDraft.baseDocumentContentVersion,
-    };
-  }, [
-    buildDraftFingerprint,
-    editingDocumentDraft?.id,
-    editingDocumentDraft?.baseDocumentContentVersion,
-  ]);
+  }, [editingDocumentDraft?.id]);
 
   const isEditorDraftDirty = React.useMemo(() => {
     if (!editingDocumentDraft) return false;
-    if (!initialDraftFingerprintRef.current) return false;
-    return buildDraftFingerprint(editingDocumentDraft) !== initialDraftFingerprintRef.current;
-  }, [buildDraftFingerprint, editingDocumentDraft]);
+    const currentFile = workspace.files.find((file) => file.id === editingDocumentDraft.id);
+    if (!currentFile) return false;
+    return hasCaseResolverDraftMeaningfulChanges({
+      draft: editingDocumentDraft,
+      file: currentFile,
+    });
+  }, [editingDocumentDraft, workspace.files]);
 
   const caseTagPathById = React.useMemo(
     () => buildPathLabelMap(caseResolverTags),
@@ -720,10 +646,21 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
         if (shouldPersistPatch) {
           const now = new Date().toISOString();
-          updateWorkspace((current) => ({
-            ...current,
-            files: current.files.map((file) => {
-              if (file.id !== targetFileId) return file;
+          const mutationResult = applyCaseResolverFileMutationAndRebaseDraft({
+            fileId: targetFileId,
+            updateWorkspace,
+            setEditingDocumentDraft,
+            source: 'capture_mapping_apply',
+            persistToast: 'Capture mapping applied.',
+            mutate: (file) => {
+              const fileShouldPatchDocumentDate =
+                acceptedDateValue !== null && file.documentDate !== acceptedDateValue;
+              const fileShouldPersistPatch =
+                shouldPatchAddresser ||
+                shouldPatchAddressee ||
+                fileShouldPatchDocumentDate ||
+                hasExplodedCleanup;
+              if (!fileShouldPersistPatch) return null;
               const nextContentVersion = file.documentContentVersion + 1;
               const nextDocumentHistory = hasExplodedCleanup
                 ? [
@@ -742,10 +679,9 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                 ].slice(0, 120)
                 : file.documentHistory;
               return {
-                ...file,
                 ...(shouldPatchAddresser ? { addresser: rolePatches.addresser ?? null } : {}),
                 ...(shouldPatchAddressee ? { addressee: rolePatches.addressee ?? null } : {}),
-                ...(shouldPatchDocumentDate ? { documentDate: acceptedDateValue ?? '' } : {}),
+                ...(fileShouldPatchDocumentDate ? { documentDate: acceptedDateValue ?? '' } : {}),
                 ...(hasExplodedCleanup && cleanedExplodedCanonical && cleanedExplodedStored
                   ? {
                     explodedDocumentContent: cleanedExplodedStored,
@@ -767,65 +703,14 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                 documentContentVersion: nextContentVersion,
                 updatedAt: now,
               };
-            }),
-          }), { persistToast: 'Capture mapping applied.' });
-          setEditingDocumentDraft((current) => {
-            if (current?.id !== targetFileId) return current;
-            const nextContentVersion = (current.documentContentVersion ?? 0) + 1;
-            const normalizedHistory = (current.documentHistory ?? []).map((entry) => ({
-              id: entry.id,
-              savedAt: entry.savedAt,
-              documentContentVersion: entry.documentContentVersion,
-              activeDocumentVersion: entry.activeDocumentVersion ?? 'original',
-              editorType: entry.editorType ?? 'wysiwyg',
-              documentContent: entry.documentContent ?? '',
-              documentContentMarkdown: entry.documentContentMarkdown ?? '',
-              documentContentHtml: entry.documentContentHtml ?? '',
-              documentContentPlainText: entry.documentContentPlainText ?? '',
-            }));
-            const nextDocumentHistory = hasExplodedCleanup
-              ? [
-                {
-                  id: createId('case-doc-history'),
-                  savedAt: now,
-                  documentContentVersion: current.documentContentVersion ?? 0,
-                  activeDocumentVersion: current.activeDocumentVersion ?? 'original',
-                  editorType: current.editorType ?? 'wysiwyg',
-                  documentContent: current.documentContent ?? '',
-                  documentContentMarkdown: current.documentContentMarkdown ?? '',
-                  documentContentHtml: current.documentContentHtml ?? '',
-                  documentContentPlainText: current.documentContentPlainText ?? '',
-                },
-                ...normalizedHistory,
-              ].slice(0, 120)
-              : normalizedHistory;
-            return {
-              ...current,
-              ...(shouldPatchAddresser ? { addresser: rolePatches.addresser ?? null } : {}),
-              ...(shouldPatchAddressee ? { addressee: rolePatches.addressee ?? null } : {}),
-              ...(shouldPatchDocumentDate ? { documentDate: acceptedDateValue ?? '' } : {}),
-              ...(hasExplodedCleanup && cleanedExplodedCanonical && cleanedExplodedStored
-                ? {
-                  explodedDocumentContent: cleanedExplodedStored,
-                  ...(current.activeDocumentVersion === 'exploded'
-                    ? {
-                      editorType: cleanedExplodedCanonical.mode,
-                      documentContentFormatVersion: 1,
-                      documentContent: cleanedExplodedStored,
-                      documentContentMarkdown: cleanedExplodedCanonical.markdown,
-                      documentContentHtml: cleanedExplodedCanonical.html,
-                      documentContentPlainText: cleanedExplodedCanonical.plainText,
-                      documentConversionWarnings: cleanedExplodedCanonical.warnings,
-                      lastContentConversionAt: now,
-                    }
-                    : {}),
-                  documentHistory: nextDocumentHistory,
-                }
-                : {}),
-              documentContentVersion: nextContentVersion,
-              baseDocumentContentVersion: nextContentVersion,
-            };
+            },
           });
+          if (!mutationResult.fileFound) {
+            toast('Target file for capture mapping is no longer available.', {
+              variant: 'warning',
+            });
+            return;
+          }
         }
 
         setPromptExploderPartyProposal(nextProposalState);
@@ -1021,34 +906,68 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   }, [editingDocumentDraft, toast]);
 
   const sanitizeDocumentExportBaseName = useCallback((value: string): string => {
+    const withoutControlChars = Array.from(value)
+      .filter((char) => char.charCodeAt(0) >= 32)
+      .join('');
     const normalized = value
       .trim()
-      .replace(/[<>:"/\\|?*\u0000-\u001f]/g, ' ')
+      .replace(/[<>:"/\\|?*]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
-    if (!normalized) return 'Case Resolver Document';
-    return normalized.slice(0, 120);
+    const normalizedWithoutControl = withoutControlChars
+      .trim()
+      .replace(/[<>:"/\\|?*]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const resolved = normalizedWithoutControl || normalized;
+    if (!resolved) return 'Case Resolver Document';
+    return resolved.slice(0, 120);
   }, []);
 
   const resolvePartyPdfLabel = useCallback(
     (
       reference: CaseResolverFileEditDraft['addresser'] | CaseResolverFileEditDraft['addressee']
-    ): string => {
-      if (!reference) return 'Not selected';
+    ): { label: string; city: string } => {
+      if (!reference) return { label: '', city: '' };
+      const buildMultilineAddress = (input: {
+        street: string;
+        streetNumber: string;
+        postalCode: string;
+        city: string;
+        country: string;
+      }): { lines: string[]; city: string } => {
+        const normalizedCity = input.city.trim();
+        const streetLine = [input.street.trim(), input.streetNumber.trim()]
+          .filter(Boolean)
+          .join(' ');
+        const cityLine = [input.postalCode.trim(), normalizedCity].filter(Boolean).join(' ');
+        const countryLine = input.country.trim();
+        const lines = [streetLine, cityLine, countryLine].filter((line): line is string => line.length > 0);
+        return {
+          lines,
+          city: normalizedCity,
+        };
+      };
       if (reference.kind === 'person') {
         const person = filemakerDatabase.persons.find((entry) => entry.id === reference.id);
-        if (!person) return 'Not selected';
+        if (!person) return { label: '', city: '' };
         const name = `${person.firstName} ${person.lastName}`.trim() || person.id;
-        const address = formatFilemakerAddress(person);
-        return [name, address].filter(Boolean).join('\n');
+        const address = buildMultilineAddress(person);
+        return {
+          label: [name, ...address.lines].filter(Boolean).join('\n'),
+          city: address.city,
+        };
       }
       const organization = filemakerDatabase.organizations.find(
         (entry) => entry.id === reference.id
       );
-      if (!organization) return 'Not selected';
+      if (!organization) return { label: '', city: '' };
       const name = organization.name.trim() || organization.id;
-      const address = formatFilemakerAddress(organization);
-      return [name, address].filter(Boolean).join('\n');
+      const address = buildMultilineAddress(organization);
+      return {
+        label: [name, ...address.lines].filter(Boolean).join('\n'),
+        city: address.city,
+      };
     },
     [filemakerDatabase]
   );
@@ -1081,12 +1000,13 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       previousMarkdown: resolvePreferredContent(draft.documentContentMarkdown),
       previousHtml: resolvePreferredContent(draft.documentContentHtml),
     });
-    const addresserLabel = resolvePartyPdfLabel(draft.addresser);
-    const addresseeLabel = resolvePartyPdfLabel(draft.addressee);
+    const addresser = resolvePartyPdfLabel(draft.addresser);
+    const addressee = resolvePartyPdfLabel(draft.addressee);
     return buildDocumentPdfMarkup({
       documentDate: draft.documentDate ?? '',
-      addresserLabel,
-      addresseeLabel,
+      documentPlace: addresser.city || addressee.city,
+      addresserLabel: addresser.label,
+      addresseeLabel: addressee.label,
       documentContent: canonical.html,
     });
   }, [resolvePartyPdfLabel]);

@@ -12,12 +12,12 @@ import {
   Button,
   Input,
   Pagination,
-  DataTable,
   FormModal,
   SelectSimple,
   FormField,
   StatusBadge,
   Alert,
+  StandardDataTablePanel,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -206,53 +206,8 @@ export function CrudPanel(props: {
     return [actionCol, ...dataCols];
   }, [columns, rows, setEditingRow, setDeletingRow]);
 
-  const errorMessage = mutationError ?? (rowsQuery.isError ? rowsQuery.error.message : null);
-
-  return (
-    <div className='space-y-4'>
-      <div className='flex flex-wrap items-center gap-3 bg-card/30 p-3 rounded-lg border border-border/60'>
-        <SelectSimple 
-          size='sm'
-          value={selectedTable}
-          onValueChange={(v) => {
-            setSelectedTable(v);
-            setPage(1);
-            setMutationError(null);
-            setSuccessMessage(null);
-          }}
-          options={tableDetails.map((t) => ({
-            value: t.name,
-            label: `${t.name} (~${t.rowEstimate} rows)`,
-          }))}
-          placeholder='Select a table to manage...'
-          triggerClassName='h-8 min-w-[240px] text-xs'
-        />
-
-        {selectedTable && (
-          <>
-            <div className='h-4 w-px bg-border/60 mx-1' />
-            <Button
-              variant='outline'
-              size='xs'
-              onClick={fetchRows}
-              disabled={rowsQuery.isFetching}
-              className='h-8'
-            >
-              <RefreshCwIcon className={`size-3.5 mr-2 ${rowsQuery.isFetching ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <Button
-              size='xs'
-              onClick={() => setShowAddModal(true)}
-              className='h-8'
-            >
-              <PlusIcon className='size-3.5 mr-2' />
-              Add Row
-            </Button>
-          </>
-        )}
-      </div>
-
+  const alerts = (
+    <>
       {errorMessage && (
         <Alert variant='error' className='px-3 py-2 text-xs'>
           {errorMessage}
@@ -263,37 +218,98 @@ export function CrudPanel(props: {
           {successMessage}
         </Alert>
       )}
+    </>
+  );
+
+  const filters = (
+    <div className='flex flex-wrap items-center gap-3'>
+      <SelectSimple 
+        size='sm'
+        value={selectedTable}
+        onValueChange={(v) => {
+          setSelectedTable(v);
+          setPage(1);
+          setMutationError(null);
+          setSuccessMessage(null);
+        }}
+        options={tableDetails.map((t) => ({
+          value: t.name,
+          label: `${t.name} (~${t.rowEstimate} rows)`,
+        }))}
+        placeholder='Select a table to manage...'
+        triggerClassName='h-8 min-w-[240px] text-xs'
+      />
 
       {selectedTable && (
-        <div className='rounded-lg border border-border/60 bg-card/40 overflow-hidden'>
-          <DataTable
-            columns={columnDefs}
-            data={rows}
-            isLoading={isLoadingRows}
-            maxHeight='50vh'
-            stickyHeader
-          />
+        <>
+          <div className='h-4 w-px bg-border/60 mx-1' />
+          <Button
+            variant='outline'
+            size='xs'
+            onClick={fetchRows}
+            disabled={rowsQuery.isFetching}
+            className='h-8'
+          >
+            <RefreshCwIcon className={`size-3.5 mr-2 ${rowsQuery.isFetching ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button
+            size='xs'
+            onClick={() => setShowAddModal(true)}
+            className='h-8'
+          >
+            <PlusIcon className='size-3.5 mr-2' />
+            Add Row
+          </Button>
+        </>
+      )}
+    </div>
+  );
 
-          {!isLoadingRows && rows.length > 0 && (
-            <div className='flex items-center justify-between border-t border-border px-4 py-2 bg-card/20'>
-              <span className='text-xs text-gray-500 font-mono'>
-                {totalRows.toLocaleString()} total rows
-              </span>
-              <Pagination
-                page={page}
-                totalPages={maxPage}
-                onPageChange={setPage}
-                pageSize={pageSize}
-                onPageSizeChange={(size) => {
-                  setPage(1);
-                  setPageSize(size);
-                }}
-                pageSizeOptions={[10, 20, 50, 100]}
-                showPageSize
-                variant='compact'
-              />
-            </div>
-          )}
+  const footer = selectedTable && !isLoadingRows && rows.length > 0 ? (
+    <div className='flex items-center justify-between border-t border-border px-4 py-2 bg-card/20'>
+      <span className='text-xs text-gray-500 font-mono'>
+        {totalRows.toLocaleString()} total rows
+      </span>
+      <Pagination
+        page={page}
+        totalPages={maxPage}
+        onPageChange={setPage}
+        pageSize={pageSize}
+        onPageSizeChange={(size) => {
+          setPage(1);
+          setPageSize(size);
+        }}
+        pageSizeOptions={[10, 20, 50, 100]}
+        showPageSize
+        variant='compact'
+      />
+    </div>
+  ) : null;
+
+  return (
+    <div className='space-y-4'>
+      {selectedTable ? (
+        <StandardDataTablePanel
+          columns={columnDefs}
+          data={rows}
+          isLoading={isLoadingRows}
+          maxHeight='50vh'
+          stickyHeader
+          alerts={alerts}
+          filters={filters}
+          footer={footer}
+          variant='flat'
+        />
+      ) : (
+        <div className='space-y-4'>
+          <div className='flex flex-wrap items-center gap-3 bg-card/30 p-3 rounded-lg border border-border/60'>
+            {filters}
+          </div>
+          {alerts}
+          <div className='flex flex-col items-center justify-center py-20 bg-card/40 rounded-lg border border-dashed border-border/60'>
+            <p className='text-sm text-muted-foreground'>Please select a table from the list above to view and manage its data.</p>
+          </div>
         </div>
       )}
 

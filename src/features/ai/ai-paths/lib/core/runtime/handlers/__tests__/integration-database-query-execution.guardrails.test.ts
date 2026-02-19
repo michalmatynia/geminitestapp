@@ -90,4 +90,79 @@ describe('executeDatabaseQuery guardrail metadata', () => {
       })
     );
   });
+
+  it('uses parameter-id fallback when catalog query is empty', async () => {
+    dbQueryMock
+      .mockResolvedValueOnce({
+        ok: true,
+        data: {
+          items: [],
+          count: 0,
+          provider: 'mongodb',
+        },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        data: {
+          items: [{ id: 'param-1', label: 'Color' }],
+          count: 1,
+          provider: 'mongodb',
+        },
+      });
+
+    const result = await executeDatabaseQuery({
+      reportAiPathsError: vi.fn(),
+      toast: vi.fn(),
+      queryConfig: {
+        provider: 'auto',
+        collection: 'product_parameters',
+        mode: 'custom',
+        preset: 'by_id',
+        field: 'id',
+        idType: 'string',
+        queryTemplate: '{"catalogId":"{{context.entity.catalogId}}"}',
+        limit: 20,
+        sort: '',
+        projection: '',
+        single: false,
+      },
+      query: { catalogId: '' },
+      querySource: 'customTemplate',
+      dryRun: false,
+      templateInputs: {
+        context: {
+          entity: {
+            catalogId: '',
+            parameters: [{ parameterId: 'param-1' }],
+          },
+        },
+      },
+      aiPrompt: 'test',
+    });
+
+    expect(dbQueryMock).toHaveBeenCalledTimes(2);
+    expect(dbQueryMock).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        collection: 'product_parameters',
+        query: { id: { $in: ['param-1'] } },
+      })
+    );
+    expect(result.result).toEqual([{ id: 'param-1', label: 'Color' }]);
+    expect(result.bundle).toEqual(
+      expect.objectContaining({
+        querySource: 'customTemplate',
+        query: { id: { $in: ['param-1'] } },
+      })
+    );
+    const bundle = result.bundle as Record<string, unknown>;
+    const fallback = bundle['fallback'] as Record<string, unknown> | undefined;
+    expect(fallback).toEqual(
+      expect.objectContaining({
+        used: true,
+        reason: 'catalogId_missing',
+        by: 'product_parameter_ids',
+      })
+    );
+  });
 });

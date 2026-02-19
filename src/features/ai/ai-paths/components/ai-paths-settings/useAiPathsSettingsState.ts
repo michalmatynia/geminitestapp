@@ -477,10 +477,10 @@ export function useAiPathsSettingsState({
       if (!result.ok) return [];
       return Array.isArray(result.data) ? result.data : [];
     },
-    staleTime: 5 * 60_000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    staleTime: 30_000,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     meta: {
       source: 'ai.ai-paths.settings.trigger-buttons',
       operation: 'list',
@@ -491,7 +491,9 @@ export function useAiPathsSettingsState({
   });
 
   const paletteWithTriggerButtons = useMemo<NodeDefinition[]>(() => {
-    const buttons = triggerButtonsQuery.data ?? [];
+    const buttons = (triggerButtonsQuery.data ?? []).filter(
+      (button: AiTriggerButtonRecord): boolean => button.enabled !== false
+    );
     if (buttons.length === 0) return palette;
 
     const usedTitles = new Set<string>(
@@ -667,10 +669,7 @@ export function useAiPathsSettingsState({
         if (!edge.to || !edge.toPort) return;
         const targetKey = `${edge.to}:${edge.toPort}`;
         if (remainingTargets.has(targetKey)) return;
-        const nodeInputs = (nextInputs?.[edge.to] ?? {}) as Record<
-          string,
-          unknown
-        >;
+        const nodeInputs = nextInputs?.[edge.to] ?? {};
         if (!(edge.toPort in nodeInputs)) return;
         if (!changed) {
           nextInputs = { ...existingInputs };
@@ -679,12 +678,9 @@ export function useAiPathsSettingsState({
         const nextNodeInputs = { ...nodeInputs };
         delete nextNodeInputs[edge.toPort];
         if (Object.keys(nextNodeInputs).length === 0) {
-          delete (nextInputs as Record<string, Record<string, unknown>>)[
-            edge.to
-          ];
+          delete nextInputs[edge.to];
         } else {
-          (nextInputs as Record<string, Record<string, unknown>>)[edge.to] =
-            nextNodeInputs;
+          nextInputs[edge.to] = nextNodeInputs;
         }
       });
 

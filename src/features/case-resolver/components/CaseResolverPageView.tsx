@@ -50,7 +50,6 @@ import { emitCaseResolverShowDocumentInCanvas } from '../drag';
 import { useCaseResolverState } from '../hooks/useCaseResolverState';
 import { buildCaseResolverNodeFileRelationIndexFromAssets } from '../nodefile-relations';
 import { resolveCaseResolverOcrProviderLabel } from '../ocr-provider';
-
 import {
   CASE_RESOLVER_QUOTE_MODE_OPTIONS,
   type CaseResolverDocumentHistoryEntry,
@@ -1236,6 +1235,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                       onChange={handleUpdateDraftDocumentContent}
                       allowFontFamily
                       allowTextAlign
+                      enableAdvancedTools
                       surfaceClassName='min-h-[300px]'
                       editorContentClassName='[&_.ProseMirror]:!min-h-[300px]'
                     />
@@ -1265,6 +1265,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                   onChange={handleUpdateDraftDocumentContent}
                   allowFontFamily
                   allowTextAlign
+                  enableAdvancedTools
                   surfaceClassName='min-h-[300px]'
                   editorContentClassName='[&_.ProseMirror]:!min-h-[300px]'
                 />

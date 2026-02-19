@@ -75,4 +75,46 @@ describe('trigger button validation', () => {
 
     expect(parsed[0]?.iconId).toBe('sparkles');
   });
+
+  it('normalizes legacy display=label into icon_label', () => {
+    const parsed = parseAiTriggerButtonsRaw(
+      JSON.stringify([
+        {
+          id: 'btn-legacy-display',
+          name: 'Legacy Display',
+          display: 'label',
+        },
+      ])
+    );
+
+    expect(parsed[0]?.display).toBe('icon_label');
+  });
+
+  it('parses string enabled values without dropping the record', () => {
+    const parsed = parseAiTriggerButtonsRaw(
+      JSON.stringify([
+        {
+          id: 'btn-enabled-string',
+          name: 'Enabled String',
+          enabled: 'false',
+        },
+      ])
+    );
+
+    expect(parsed[0]?.enabled).toBe(false);
+  });
+
+  it('filters invalid locations and keeps valid ones', () => {
+    const parsed = parseAiTriggerButtonsRaw(
+      JSON.stringify([
+        {
+          id: 'btn-locations',
+          name: 'Locations',
+          locations: ['product_modal', 'invalid_location', 'product_modal'],
+        },
+      ])
+    );
+
+    expect(parsed[0]?.locations).toEqual(['product_modal']);
+  });
 });

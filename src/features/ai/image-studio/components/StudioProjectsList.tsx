@@ -20,10 +20,9 @@ import {
   Badge,
   Button,
   Input,
-  DataTable,
-  ListPanel,
   SearchInput,
   useToast,
+  StandardDataTablePanel,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -714,7 +713,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
         </Button>
       </div>
 
-      <ListPanel
+      <StandardDataTablePanel
         filters={
           <div className='flex flex-wrap items-center gap-2'>
             <SearchInput
@@ -735,21 +734,18 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
             </div>
           </div>
         }
-      >
-        <DataTable
-          columns={columns}
-          data={filteredProjects}
-          isLoading={projectsQuery.isLoading}
-          emptyState={
-            <div className='flex flex-col items-center justify-center py-12 text-center'>
-              <p className='text-sm text-gray-500'>
-                {projectSearch ? 'No projects found matching your search.' : 'No projects found. Create one above!'}
-              </p>
-            </div>
-          }
-          getRowClassName={(row) => (row.original.id === projectId ? 'bg-primary/5' : '')}
-        />
-      </ListPanel>
+        columns={columns}
+        data={filteredProjects}
+        isLoading={projectsQuery.isLoading}
+        emptyState={
+          <div className='flex flex-col items-center justify-center py-12 text-center'>
+            <p className='text-sm text-gray-500'>
+              {projectSearch ? 'No projects found matching your search.' : 'No projects found. Create one above!'}
+            </p>
+          </div>
+        }
+        getRowClassName={(row) => (row.original.id === projectId ? 'bg-primary/5' : '')}
+      />
       <ConfirmationModal />
     </div>
   );

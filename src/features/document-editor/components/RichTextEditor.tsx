@@ -12,12 +12,14 @@ import TaskList from '@tiptap/extension-task-list';
 import { EditorContent, useEditor, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import {
+  AlignCenter,
   AlignJustify,
   AlignLeft,
   AlignRight,
   Bold,
   CheckSquare,
   Code,
+  Eraser,
   Heading1,
   Heading2,
   Heading3,
@@ -27,9 +29,11 @@ import {
   List,
   ListOrdered,
   Minus,
+  Pilcrow,
   Quote,
   Redo,
   Strikethrough,
+  Underline,
   Table as TableIcon,
   Undo,
 } from 'lucide-react';
@@ -42,7 +46,7 @@ import { cn } from '@/shared/utils';
 import type { RichTextEditorVariant } from '../types';
 
 type HeadingLevel = 1 | 2 | 3;
-type TextAlignOption = 'left' | 'right' | 'justify';
+type TextAlignOption = 'left' | 'center' | 'right' | 'justify';
 type RichTextEditorFontOption = { value: string; label: string };
 
 const defaultFontFamilyOptions: RichTextEditorFontOption[] = [
@@ -84,7 +88,26 @@ const fontFamilyMark = Mark.create({
   },
 });
 
-const TEXT_ALIGN_OPTIONS: TextAlignOption[] = ['left', 'right', 'justify'];
+const underlineMark = Mark.create({
+  name: 'underlineStyle',
+  parseHTML() {
+    return [
+      { tag: 'u' },
+      {
+        style: 'text-decoration',
+        getAttrs: (value: string | Record<string, unknown>): false | null => {
+          if (typeof value !== 'string') return false;
+          return value.toLowerCase().includes('underline') ? null : false;
+        },
+      },
+    ];
+  },
+  renderHTML() {
+    return ['u', 0];
+  },
+});
+
+const TEXT_ALIGN_OPTIONS: TextAlignOption[] = ['left', 'center', 'right', 'justify'];
 
 const textAlignExtension = Extension.create({
   name: 'textAlign',
@@ -128,6 +151,7 @@ export interface RichTextEditorProps {
   allowTaskList?: boolean | undefined;
   allowFontFamily?: boolean | undefined;
   allowTextAlign?: boolean | undefined;
+  enableAdvancedTools?: boolean | undefined;
   fontFamilyOptions?: RichTextEditorFontOption[] | undefined;
   loadingLabel?: string | undefined;
   containerClassName?: string | undefined;
@@ -212,6 +236,7 @@ export function RichTextEditor({
   allowTaskList = false,
   allowFontFamily = false,
   allowTextAlign = false,
+  enableAdvancedTools = false,
   fontFamilyOptions,
   loadingLabel = 'Loading editor...',
   containerClassName,
@@ -252,6 +277,7 @@ export function RichTextEditor({
           class: 'text-blue-300 underline hover:text-blue-200',
         },
       }),
+      underlineMark,
     ];
 
     if (allowFontFamily) {
@@ -452,6 +478,14 @@ export function RichTextEditor({
           <Italic className='size-4' />
         </ToolbarButton>
         <ToolbarButton
+          title='Underline'
+          onClick={() => editor.chain().focus().toggleMark('underlineStyle').run()}
+          isActive={editor.isActive('underlineStyle')}
+          variant={variant}
+        >
+          <Underline className='size-4' />
+        </ToolbarButton>
+        <ToolbarButton
           title='Strikethrough'
           onClick={() => editor.chain().focus().toggleStrike().run()}
           isActive={editor.isActive('strike')}
@@ -476,6 +510,16 @@ export function RichTextEditor({
             variant={variant}
           >
             <Heading1 className='size-4' />
+          </ToolbarButton>
+        ) : null}
+        {enableAdvancedTools ? (
+          <ToolbarButton
+            title='Paragraph'
+            onClick={() => editor.chain().focus().setParagraph().run()}
+            isActive={editor.isActive('paragraph')}
+            variant={variant}
+          >
+            <Pilcrow className='size-4' />
           </ToolbarButton>
         ) : null}
         {normalizedHeadingLevels.includes(2) ? (
@@ -623,6 +667,14 @@ export function RichTextEditor({
               <AlignRight className='size-4' />
             </ToolbarButton>
             <ToolbarButton
+              title='Align center'
+              onClick={() => setTextAlign('center')}
+              isActive={isTextAlignActive('center')}
+              variant={variant}
+            >
+              <AlignCenter className='size-4' />
+            </ToolbarButton>
+            <ToolbarButton
               title='Justify'
               onClick={() => setTextAlign('justify')}
               isActive={isTextAlignActive('justify')}
@@ -631,6 +683,15 @@ export function RichTextEditor({
               <AlignJustify className='size-4' />
             </ToolbarButton>
           </>
+        ) : null}
+        {enableAdvancedTools ? (
+          <ToolbarButton
+            title='Clear formatting'
+            onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
+            variant={variant}
+          >
+            <Eraser className='size-4' />
+          </ToolbarButton>
         ) : null}
       </div>
 

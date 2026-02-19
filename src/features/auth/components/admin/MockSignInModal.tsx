@@ -55,7 +55,7 @@ export function MockSignInModal({
       subtitle='Test authentication against the live identity provider without affecting your current session.'
       saveText='Verify Credentials'
       fields={fields}
-      values={values}
+      values={values ?? { email: '', password: '' }}
       onChange={handleChange}
       onSave={async () => onSave()}
       isSaving={isSaving}

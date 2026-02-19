@@ -131,10 +131,10 @@ export const invalidateUserPreferencesCache = (userId?: string): void => {
 const toUserPreferences = (doc: UserPreferencesDocument): UserPreferencesRecord => ({
   id: String(doc._id),
   userId: doc.userId,
-  productListNameLocale: doc.productListNameLocale,
-  productListCatalogFilter: doc.productListCatalogFilter,
+  productListNameLocale: doc.productListNameLocale ?? 'name_en',
+  productListCatalogFilter: doc.productListCatalogFilter ?? 'all',
   productListCurrencyCode: doc.productListCurrencyCode,
-  productListPageSize: doc.productListPageSize,
+  productListPageSize: doc.productListPageSize ?? 12,
   productListThumbnailSource: doc.productListThumbnailSource ?? 'file',
   productListFiltersCollapsedByDefault: doc.productListFiltersCollapsedByDefault ?? false,
   productListDraftIconColorMode: doc.productListDraftIconColorMode ?? 'theme',
@@ -159,8 +159,8 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferencesRecord 
   cmsThemeLogoUrl: doc.cmsThemeLogoUrl ?? null,
   cmsPreviewEnabled: doc.cmsPreviewEnabled ?? null,
   cmsSlideshowPauseOnHoverInEditor: doc.cmsSlideshowPauseOnHoverInEditor ?? false,
-  createdAt: doc.createdAt,
-  updatedAt: doc.updatedAt,
+  createdAt: doc.createdAt.toISOString(),
+  updatedAt: doc.updatedAt.toISOString(),
 });
 
 const defaultPreferences = (

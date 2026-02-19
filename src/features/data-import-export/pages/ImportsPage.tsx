@@ -121,17 +121,66 @@ function ImportsPageContent(): React.JSX.Element {
       ),
     [importSourceFields]
   );
+  const parameterSourceLabelByValue = React.useMemo((): Map<string, string> => {
+    const map = new Map<string, string>();
+    customParameterTargetFields.forEach((field: { value: string; label: string }) => {
+      const normalizedValue = field.value.trim().toLowerCase();
+      if (!normalizedValue) return;
+      map.set(normalizedValue, field.label);
+    });
+    return map;
+  }, [customParameterTargetFields]);
+  const getExportSourceFieldLabel = React.useCallback(
+    (sourceKey: string): string => {
+      const normalizedSourceKey = sourceKey.trim();
+      if (!normalizedSourceKey) return sourceKey;
+
+      const knownParameterLabel = parameterSourceLabelByValue.get(
+        normalizedSourceKey.toLowerCase()
+      );
+      if (knownParameterLabel) return knownParameterLabel;
+
+      if (
+        normalizedSourceKey
+          .toLowerCase()
+          .startsWith(PRODUCT_PARAMETER_TARGET_PREFIX)
+      ) {
+        const parameterId = normalizedSourceKey
+          .slice(PRODUCT_PARAMETER_TARGET_PREFIX.length)
+          .trim();
+        return parameterId ? `Parameter: ${parameterId}` : 'Parameter';
+      }
+
+      return normalizedSourceKey;
+    },
+    [parameterSourceLabelByValue]
+  );
   const exportSourceFieldOptions = React.useMemo(
-    (): string[] => {
+    (): Array<{ value: string; label: string }> => {
       const allKeys = new Set<string>(EXPORT_PARAMETER_KEYS);
       importSourceFieldOptions.forEach((key: string) => {
         allKeys.add(key);
       });
-      return Array.from(allKeys).sort((a: string, b: string): number =>
-        a.localeCompare(b)
+      customParameterTargetFields.forEach(
+        (field: { value: string; label: string }) => {
+          allKeys.add(field.value);
+        }
       );
+
+      return Array.from(allKeys)
+        .map((value: string) => ({
+          value,
+          label: getExportSourceFieldLabel(value),
+        }))
+        .sort((a, b): number =>
+          a.label.localeCompare(b.label) || a.value.localeCompare(b.value)
+        );
     },
-    [importSourceFieldOptions]
+    [
+      customParameterTargetFields,
+      getExportSourceFieldLabel,
+      importSourceFieldOptions,
+    ]
   );
   const validParameterTargetValues = React.useMemo(
     (): Set<string> =>
@@ -545,9 +594,20 @@ function ImportsPageContent(): React.JSX.Element {
                   {templateScope === 'export' && (
                     <>
                       <datalist id='export-source-field-options'>
-                        {exportSourceFieldOptions.map((field: string) => (
-                          <option key={field} value={field} />
-                        ))}
+                        {exportSourceFieldOptions.map((option: {
+                          value: string;
+                          label: string;
+                        }) => {
+                          return (
+                            <option
+                              key={option.value}
+                              value={option.value}
+                              label={option.label}
+                            >
+                              {option.label}
+                            </option>
+                          );
+                        })}
                       </datalist>
                       <p className='text-xs text-gray-500 italic'>
                         Tip: For category mapping use source <code>category_id</code> and target <code>categoryId</code>.

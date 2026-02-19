@@ -188,6 +188,7 @@ export function useAiPathsSettingsPathActions({
             ? 'automatic'
             : 'manual'
       );
+      setStrictFlowMode(config.strictFlowMode !== false);
       setParserSamples(config.parserSamples ?? {});
       setUpdaterSamples(config.updaterSamples ?? {});
       setRuntimeState(parseRuntimeState(config.runtimeState));
@@ -219,6 +220,7 @@ export function useAiPathsSettingsPathActions({
       setPathDescription,
       setPathName,
       setRunMode,
+      setStrictFlowMode,
       setRuntimeState,
       setSelectedNodeId,
       setUpdaterSamples,

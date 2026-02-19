@@ -1099,6 +1099,8 @@ export function GenerationToolbar(): React.JSX.Element {
         centerLayoutPaddingX={centerLayoutPaddingX}
         centerLayoutPaddingY={centerLayoutPaddingY}
         centerLayoutSplitAxes={centerLayoutSplitAxes}
+        centerLayoutFillMissingCanvasWhite={centerLayoutFillMissingCanvasWhite}
+        centerLayoutProjectCanvasSize={projectCanvasSize}
         centerMode={centerMode}
         centerModeOptions={centerModeOptions}
         hasSourceImage={hasSourceImage}
@@ -1118,6 +1120,9 @@ export function GenerationToolbar(): React.JSX.Element {
         onCenterLayoutPaddingYChange={(value: string) => {
           const normalized = sanitizeCenterPaddingInput(value);
           setCenterLayoutPaddingY(normalized);
+        }}
+        onCenterLayoutFillMissingCanvasWhiteChange={(checked: boolean) => {
+          setCenterLayoutFillMissingCanvasWhite(checked);
         }}
         onCenterModeChange={(value: string) => {
           setCenterMode(value as CenterMode);

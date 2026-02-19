@@ -171,9 +171,11 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
         if (isMongo) {
           existing.existsInMongo = true;
           existing.mongoDocumentCount = collection.documentCount ?? null;
+          existing.mongoFieldCount = collection.fields.length;
         } else {
           existing.existsInPrisma = true;
           existing.prismaRowCount = collection.documentCount ?? null;
+          existing.prismaFieldCount = collection.fields.length;
         }
       } else {
         byName.set(collection.name, {
@@ -182,6 +184,9 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
           existsInPrisma: !isMongo,
           mongoDocumentCount: isMongo ? collection.documentCount ?? null : null,
           prismaRowCount: isMongo ? null : collection.documentCount ?? null,
+          mongoFieldCount: isMongo ? collection.fields.length : null,
+          prismaFieldCount: isMongo ? null : collection.fields.length,
+          assignedProvider: 'auto',
         });
       }
     });

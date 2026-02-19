@@ -9,7 +9,6 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { CountryOption } from '@/shared/types/domain/internationalization';
 import {
   Badge,
-  Button,
   FormSection,
   FormField,
   Input,

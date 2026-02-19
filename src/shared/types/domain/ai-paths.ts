@@ -59,6 +59,13 @@ import type {
   PathMetaDto,
   PathUiStateDto,
   PathConfigDto,
+  AiPathsValidationSeverityDto,
+  AiPathsValidationModuleDto,
+  AiPathsValidationOperatorDto,
+  AiPathsValidationConditionDto,
+  AiPathsValidationRuleDto,
+  AiPathsValidationPolicyDto,
+  AiPathsValidationConfigDto,
   PathDebugEntryDto,
   PathDebugSnapshotDto,
   ClusterPresetDto,
@@ -245,6 +252,20 @@ export type PathUiState = PathUiStateDto;
 export type PathFlowIntensity = 'off' | 'low' | 'medium' | 'high';
 
 export type PathConfig = PathConfigDto;
+
+export type AiPathsValidationSeverity = AiPathsValidationSeverityDto;
+
+export type AiPathsValidationModule = AiPathsValidationModuleDto;
+
+export type AiPathsValidationOperator = AiPathsValidationOperatorDto;
+
+export type AiPathsValidationCondition = AiPathsValidationConditionDto;
+
+export type AiPathsValidationRule = AiPathsValidationRuleDto;
+
+export type AiPathsValidationPolicy = AiPathsValidationPolicyDto;
+
+export type AiPathsValidationConfig = AiPathsValidationConfigDto;
 
 export type PathDebugEntry = PathDebugEntryDto;
 

@@ -8,8 +8,7 @@ import {
   ProfilerOnRenderCallback,
 } from 'react';
 
-import type { Catalog, PriceGroupWithDetails, ProductWithImages } from '@/features/products/types';
-import type { ProductDraftDto } from '@/features/products/types/drafts';
+import type { Catalog, PriceGroupWithDetails, ProductWithImages, ProductDraftDto } from '../types';
 import { internalError } from '@/shared/errors/app-error';
 
 import type { ColumnDef, RowSelectionState, OnChangeFn } from '@tanstack/react-table';

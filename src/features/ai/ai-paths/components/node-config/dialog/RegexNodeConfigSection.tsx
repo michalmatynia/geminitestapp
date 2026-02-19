@@ -15,6 +15,8 @@ import {
   fetchAiPathsSettingsCached,
   updateAiPathsSetting,
 } from '@/features/ai/ai-paths/lib/settings-store-client';
+import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
+import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
@@ -100,6 +102,23 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
   const [selectedSnippetIndex, setSelectedSnippetIndex] = React.useState<number>(-1);
   const lastInjectedResponseRef = React.useRef<string>('');
   const hasAiProposal = Boolean(regexConfig.aiProposal?.pattern?.trim());
+  const placeholderTooltips = React.useMemo(
+    () => ({
+      text: getDocumentationTooltip(
+        DOCUMENTATION_MODULE_IDS.aiPaths,
+        'regex_placeholder_text'
+      ) ?? 'Resolved sample text (from Preview Sample / runtime)',
+      lines: getDocumentationTooltip(
+        DOCUMENTATION_MODULE_IDS.aiPaths,
+        'regex_placeholder_lines'
+      ) ?? 'Resolved sample items array (lines)',
+      value: getDocumentationTooltip(
+        DOCUMENTATION_MODULE_IDS.aiPaths,
+        'regex_placeholder_value'
+      ) ?? 'Alias for current value (same as sample text)',
+    }),
+    []
+  );
   const activeVariant = regexConfig.activeVariant ?? 'manual';
   const aiProposals = React.useMemo(() => regexConfig.aiProposals ?? [], [regexConfig.aiProposals]);
   const regexTemplates = React.useMemo(() => regexConfig.templates ?? [], [regexConfig.templates]);
@@ -889,13 +908,13 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
 
         <div className='flex flex-wrap items-center gap-2 text-[11px] text-gray-400'>
           <span>Placeholders:</span>
-          <Tooltip content='Resolved sample text (from Preview Sample / runtime)' side='bottom'>
+          <Tooltip content={placeholderTooltips.text} side='bottom'>
             <span className='rounded-full border px-2 py-0.5 text-[10px] text-gray-200'>{'{{text}}'}</span>
           </Tooltip>
-          <Tooltip content='Resolved sample items array (lines)' side='bottom'>
+          <Tooltip content={placeholderTooltips.lines} side='bottom'>
             <span className='rounded-full border px-2 py-0.5 text-[10px] text-gray-200'>{'{{lines}}'}</span>
           </Tooltip>
-          <Tooltip content='Alias for current value (same as sample text)' side='bottom'>
+          <Tooltip content={placeholderTooltips.value} side='bottom'>
             <span className='rounded-full border px-2 py-0.5 text-[10px] text-gray-200'>{'{{value}}'}</span>
           </Tooltip>
         </div>

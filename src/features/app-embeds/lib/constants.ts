@@ -1,4 +1,6 @@
-export type AppEmbedId = 'chatbot' | 'ai-paths' | 'notes' | 'products';
+import type { AppEmbedIdDto } from '@/shared/contracts/app-embeds';
+
+export type AppEmbedId = AppEmbedIdDto;
 
 export const APP_EMBED_SETTING_KEY = 'cms_app_embeds';
 

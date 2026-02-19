@@ -8,10 +8,13 @@ import {
 
 const MAX_CONTEXT_SIZE = 12000;
 const MAX_VALUE_LENGTH = 4000;
+const MAX_STACK_LENGTH = 20000;
+const MAX_CAUSE_DEPTH = 5;
 
 type CreateSystemLogFn = (input: {
   level: SystemLogLevel;
   message: string;
+  category?: string | null;
   source?: string | null;
   context?: Record<string, unknown> | null;
   stack?: string | null;
@@ -89,25 +92,185 @@ const sanitizeValue = (value: unknown): Record<string, unknown> | null => {
   }
 };
 
-export const normalizeErrorInfo = (
-  error: unknown,
-): {
+type ErrorCauseEntry = {
+  message: string;
+  name?: string;
+  code?: string;
+  stack?: string | null;
+  raw?: Record<string, unknown> | null;
+};
+
+type NormalizedErrorInfo = {
   message: string;
   stack?: string | undefined | null;
   name?: string;
+  code?: string;
+  httpStatus?: number;
+  expected?: boolean;
+  critical?: boolean;
+  retryable?: boolean;
+  retryAfterMs?: number;
+  meta?: Record<string, unknown> | null;
+  causeChain?: ErrorCauseEntry[];
   raw?: Record<string, unknown> | null;
-} => {
-  if (error instanceof Error) {
+};
+
+const readString = (value: unknown, maxLength: number = MAX_VALUE_LENGTH): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return truncateString(trimmed, maxLength);
+};
+
+const readBoolean = (value: unknown): boolean | undefined => {
+  return typeof value === 'boolean' ? value : undefined;
+};
+
+const readNumber = (value: unknown): number | undefined => {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+};
+
+const readCode = (value: unknown): string | undefined => {
+  if (!value || typeof value !== 'object') return undefined;
+  const candidate = (value as { code?: unknown }).code;
+  if (typeof candidate === 'number' && Number.isFinite(candidate)) {
+    return String(candidate);
+  }
+  return readString(candidate, 120);
+};
+
+const normalizeStack = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return truncateString(trimmed, MAX_STACK_LENGTH);
+};
+
+const readCause = (value: unknown): unknown => {
+  if (!value || typeof value !== 'object') return undefined;
+  return (value as { cause?: unknown }).cause;
+};
+
+const normalizeCauseEntry = (cause: unknown): ErrorCauseEntry => {
+  if (cause instanceof Error) {
+    const code = readCode(cause);
+    const stack = normalizeStack(cause.stack);
+    const normalizedName = readString(cause.name, 120);
     return {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
+      message: truncateString(cause.message || 'Unknown cause', MAX_VALUE_LENGTH),
+      ...(normalizedName ? { name: normalizedName } : {}),
+      ...(code ? { code } : {}),
+      ...(stack ? { stack } : {}),
     };
   }
-  if (typeof error === 'string') {
-    return { message: error };
+
+  if (typeof cause === 'string') {
+    return { message: truncateString(cause, MAX_VALUE_LENGTH) };
   }
-  return { message: 'Unknown error', raw: sanitizeValue(error) };
+
+  const message =
+    (cause && typeof cause === 'object' ? readString((cause as Record<string, unknown>)['message']) : undefined) ??
+    'Unknown cause';
+  const name =
+    cause && typeof cause === 'object'
+      ? readString((cause as Record<string, unknown>)['name'], 120)
+      : undefined;
+  const code = readCode(cause);
+  const stack =
+    cause && typeof cause === 'object'
+      ? normalizeStack((cause as Record<string, unknown>)['stack'])
+      : undefined;
+  const raw = sanitizeValue(cause);
+
+  return {
+    message,
+    ...(name ? { name } : {}),
+    ...(code ? { code } : {}),
+    ...(stack ? { stack } : {}),
+    ...(raw ? { raw } : {}),
+  };
+};
+
+const buildCauseChain = (error: unknown): ErrorCauseEntry[] | undefined => {
+  const chain: ErrorCauseEntry[] = [];
+  const seen = new WeakSet<object>();
+  let currentCause = readCause(error);
+
+  while (currentCause !== undefined && currentCause !== null && chain.length < MAX_CAUSE_DEPTH) {
+    if (typeof currentCause === 'object' && currentCause !== null) {
+      if (seen.has(currentCause)) {
+        chain.push({ message: 'Circular cause reference' });
+        break;
+      }
+      seen.add(currentCause);
+    }
+    chain.push(normalizeCauseEntry(currentCause));
+    currentCause = readCause(currentCause);
+  }
+
+  return chain.length > 0 ? chain : undefined;
+};
+
+export const normalizeErrorInfo = (
+  error: unknown,
+): NormalizedErrorInfo => {
+  if (error instanceof Error) {
+    const code = readCode(error);
+    const httpStatus =
+      readNumber((error as { httpStatus?: unknown }).httpStatus) ??
+      readNumber((error as { status?: unknown }).status);
+    const expected = readBoolean((error as { expected?: unknown }).expected);
+    const critical = readBoolean((error as { critical?: unknown }).critical);
+    const retryable = readBoolean((error as { retryable?: unknown }).retryable);
+    const retryAfterMs = readNumber((error as { retryAfterMs?: unknown }).retryAfterMs);
+    const meta = sanitizeValue((error as { meta?: unknown }).meta);
+    const causeChain = buildCauseChain(error);
+    const stack = normalizeStack(error.stack);
+    const normalizedName = readString(error.name, 120);
+
+    return {
+      message: truncateString(error.message || 'Unknown error', MAX_VALUE_LENGTH),
+      ...(stack ? { stack } : {}),
+      ...(normalizedName ? { name: normalizedName } : {}),
+      ...(code ? { code } : {}),
+      ...(httpStatus !== undefined ? { httpStatus } : {}),
+      ...(expected !== undefined ? { expected } : {}),
+      ...(critical !== undefined ? { critical } : {}),
+      ...(retryable !== undefined ? { retryable } : {}),
+      ...(retryAfterMs !== undefined ? { retryAfterMs } : {}),
+      ...(meta ? { meta } : {}),
+      ...(causeChain ? { causeChain } : {}),
+    };
+  }
+
+  if (typeof error === 'string') {
+    return { message: truncateString(error, MAX_VALUE_LENGTH) };
+  }
+
+  const message =
+    error && typeof error === 'object'
+      ? readString((error as Record<string, unknown>)['message'])
+      : undefined;
+  const name =
+    error && typeof error === 'object'
+      ? readString((error as Record<string, unknown>)['name'], 120)
+      : undefined;
+  const code = readCode(error);
+  const stack =
+    error && typeof error === 'object'
+      ? normalizeStack((error as Record<string, unknown>)['stack'])
+      : undefined;
+  const raw = sanitizeValue(error);
+  const causeChain = buildCauseChain(error);
+
+  return {
+    message: message ?? 'Unknown error',
+    ...(name ? { name } : {}),
+    ...(code ? { code } : {}),
+    ...(stack ? { stack } : {}),
+    ...(causeChain ? { causeChain } : {}),
+    ...(raw ? { raw } : {}),
+  };
 };
 
 const extractRequestInfo = (
@@ -135,6 +298,7 @@ export const buildErrorFingerprint = (input: {
     message?: string;
     stack?: string | undefined | null;
     name?: string;
+    code?: string;
   } | null;
 }): string => {
   let raw = '';
@@ -144,6 +308,7 @@ export const buildErrorFingerprint = (input: {
   raw += String(input.statusCode ?? '');
   if (input.errorInfo) {
     raw += String(input.errorInfo.name ?? '');
+    raw += String(input.errorInfo.code ?? '');
     raw += String(input.errorInfo.message ?? '');
     const stack = input.errorInfo.stack ?? '';
     const normalizedStack = stack
@@ -193,7 +358,11 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
     const requestInfo = extractRequestInfo(input.request);
 
     // Auto-classify error if it exists and category is missing
-    let category = input.context?.['category'];
+    const explicitCategory =
+      typeof input.context?.['category'] === 'string'
+        ? input.context['category']
+        : undefined;
+    let category = explicitCategory;
     if (!category && input.error) {
       try {
         const { classifyError } = await import('@/shared/errors/error-classifier');
@@ -202,6 +371,19 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
         // Fallback if import fails
       }
     }
+
+    const errorCode =
+      (typeof input.context?.['errorCode'] === 'string'
+        ? input.context['errorCode']
+        : undefined) ?? errorInfo?.code;
+    const errorName =
+      (typeof input.context?.['errorName'] === 'string'
+        ? input.context['errorName']
+        : undefined) ?? errorInfo?.name;
+    const service =
+      typeof input.context?.['service'] === 'string'
+        ? input.context['service']
+        : undefined;
 
     const fingerprint =
       input.level === 'error' || input.level === 'warn' || errorInfo
@@ -217,6 +399,9 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
       ...(input.context ?? {}),
       ...(category ? { category } : {}),
       ...(errorInfo ? { error: errorInfo } : {}),
+      ...(errorCode ? { errorCode } : {}),
+      ...(errorName ? { errorName } : {}),
+      ...(service ? { service } : {}),
       ...(fingerprint ? { fingerprint } : {}),
     };
 
@@ -252,6 +437,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
         const created: SystemLogRecord = await createSystemLog({
           level: input.level ?? 'info',
           message: input.message,
+          category: category ?? null,
           source: input.source ?? null,
           context: sanitizeValue(context),
           stack: errorInfo?.stack ?? null,

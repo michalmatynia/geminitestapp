@@ -32,6 +32,7 @@ const listSchema = z.object({
 const createSchema = z.object({
   level: levelSchema.optional(),
   message: z.string().min(1),
+  category: z.string().trim().optional(),
   source: z.string().trim().optional(),
   context: z.record(z.string(), z['unknown']()).optional(),
   stack: z.string().optional(),
@@ -103,6 +104,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   const created = await createSystemLog({
     level: data.level ?? undefined,
     message: data.message,
+    category: data.category ?? null,
     source: data.source ?? undefined,
     context: data.context ?? null,
     stack: data.stack ?? null,

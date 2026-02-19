@@ -2,11 +2,10 @@
 
 import React from 'react';
 
-import type { ModalStateProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
-interface RenamePathModalProps extends ModalStateProps {
-  draftName: string;
+interface RenamePathModalProps extends EntityModalProps<{ name: string }> {
   setDraftName: (value: string) => void;
   onSave: () => void;
 }
@@ -28,11 +27,11 @@ const FIELDS: SettingsField<RenameFormState>[] = [
 export function RenamePathModal({
   isOpen,
   onClose,
-  draftName,
+  item,
   setDraftName,
   onSave,
 }: RenamePathModalProps): React.JSX.Element | null {
-  const values: RenameFormState = { name: draftName };
+  const values: RenameFormState = { name: item?.name ?? '' };
   
   const handleChange = (vals: Partial<RenameFormState>) => {
     if (vals.name !== undefined) {

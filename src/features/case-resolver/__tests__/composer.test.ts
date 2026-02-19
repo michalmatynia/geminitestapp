@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
 import { compileCaseResolverPrompt } from '@/features/case-resolver/composer';
-import type { CaseResolverGraph } from '@/features/case-resolver/types';
+import type { AiNode, Edge, CaseResolverGraph } from '@/features/case-resolver/types';
 
 const createPromptNode = (input: {
   id: string;

@@ -371,6 +371,11 @@ module.exports = tseslint.config(
           selector: "Property[key.name='mutationKey'] > ArrayExpression",
           message: 'Use QUERY_KEYS key factories instead of inline mutation key arrays.',
         },
+        {
+          selector: "JSXOpeningElement[name.name='Tooltip'] > JSXAttribute[name.name='content'][value.type='Literal']",
+          message:
+            'Hardcoded Tooltip content is not allowed. Source tooltip copy via the documentation + tooltip-engine integration.',
+        },
       ],
     },
   },
@@ -402,31 +407,6 @@ module.exports = tseslint.config(
     rules: {
       // Allow dynamic key composition in query utility helpers.
       'no-restricted-syntax': 'off',
-    },
-  },
-  {
-    files: [
-      'src/features/ai/image-studio/**/*.{ts,tsx}',
-      'src/features/prompt-exploder/**/*.{ts,tsx}',
-      'src/features/products/components/settings/validator-settings/**/*.{ts,tsx}',
-    ],
-    rules: {
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: "Property[key.name='queryKey'] > ArrayExpression",
-          message: 'Use QUERY_KEYS key factories instead of inline query key arrays.',
-        },
-        {
-          selector: "Property[key.name='mutationKey'] > ArrayExpression",
-          message: 'Use QUERY_KEYS key factories instead of inline mutation key arrays.',
-        },
-        {
-          selector: "JSXOpeningElement[name.name='Tooltip'] > JSXAttribute[name.name='content'][value.type='Literal']",
-          message:
-            'Hardcoded Tooltip content is not allowed in docs-enabled modules. Source tooltip copy via the documentation + tooltip-engine integration.',
-        },
-      ],
     },
   },
   {

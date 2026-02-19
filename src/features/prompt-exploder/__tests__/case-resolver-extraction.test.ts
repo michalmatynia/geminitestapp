@@ -42,6 +42,18 @@ describe('case resolver extraction bridge payload', () => {
     'case_resolver_prompt_exploder'
   );
 
+  it('matches capture rules for dashed and underscored case resolver scopes', () => {
+    const dashedScopeRules = buildCaseResolverSegmentCaptureRules(
+      PROMPT_EXPLODER_PATTERN_PACK,
+      'case-resolver-prompt-exploder'
+    );
+
+    expect(dashedScopeRules.length).toBeGreaterThan(0);
+    expect(dashedScopeRules.map((rule) => rule.id)).toEqual(
+      captureRules.map((rule) => rule.id)
+    );
+  });
+
   it('extracts parties and place/date metadata from case resolver segments', () => {
     const segments: PromptExploderSegment[] = [
       createSegment({

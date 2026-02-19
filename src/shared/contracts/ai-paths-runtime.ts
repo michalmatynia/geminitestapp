@@ -129,3 +129,83 @@ export const queuedRunSchema = z.object({
 });
 
 export type QueuedRunDto = z.infer<typeof queuedRunSchema>;
+
+export const aiPathRuntimeProfileEventSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('run'),
+    phase: z.enum(['start', 'end']),
+    runId: z.string(),
+    runStartedAt: z.string(),
+    nodeCount: z.number(),
+    edgeCount: z.number(),
+    durationMs: z.number().optional(),
+    iterationCount: z.number().optional(),
+  }),
+  z.object({
+    type: z.literal('iteration'),
+    runId: z.string(),
+    runStartedAt: z.string(),
+    iteration: z.number(),
+    durationMs: z.number(),
+    changed: z.boolean(),
+  }),
+  z.object({
+    type: z.literal('node'),
+    runId: z.string(),
+    runStartedAt: z.string(),
+    nodeId: z.string(),
+    nodeType: z.string(),
+    iteration: z.number(),
+    status: z.enum(['executed', 'cached', 'skipped', 'error']),
+    durationMs: z.number(),
+    hashMs: z.number().optional(),
+    reason: z.string().optional(),
+  }),
+]);
+
+export type AiPathRuntimeProfileEventDto = z.infer<typeof aiPathRuntimeProfileEventSchema>;
+
+export const runtimeProfileNodeStatsSchema = z.object({
+  nodeId: z.string(),
+  nodeType: z.string(),
+  count: z.number(),
+  totalMs: z.number(),
+  maxMs: z.number(),
+  cachedCount: z.number(),
+  skippedCount: z.number(),
+  errorCount: z.number(),
+  hashCount: z.number(),
+  hashTotalMs: z.number(),
+  hashMaxMs: z.number(),
+});
+
+export type RuntimeProfileNodeStatsDto = z.infer<typeof runtimeProfileNodeStatsSchema>;
+
+export const runtimeProfileSummarySchema = z.object({
+  runId: z.string(),
+  durationMs: z.number(),
+  iterationCount: z.number(),
+  nodeCount: z.number(),
+  edgeCount: z.number(),
+  nodes: z.array(
+    runtimeProfileNodeStatsSchema.extend({
+      avgMs: z.number(),
+      hashAvgMs: z.number(),
+    })
+  ),
+  hottestNodes: z.array(
+    runtimeProfileNodeStatsSchema.extend({
+      avgMs: z.number(),
+      hashAvgMs: z.number(),
+    })
+  ),
+});
+
+export type RuntimeProfileSummaryDto = z.infer<typeof runtimeProfileSummarySchema>;
+
+export const runtimeProfileOptionsSchema = z.object({
+  onEvent: z.function().args(aiPathRuntimeProfileEventSchema).returns(z.void()).optional(),
+  onSummary: z.function().args(runtimeProfileSummarySchema).returns(z.void()).optional(),
+});
+
+export type RuntimeProfileOptionsDto = z.infer<typeof runtimeProfileOptionsSchema>;

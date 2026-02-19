@@ -2,7 +2,7 @@ export type {
   CmsThemeColors,
   CmsThemeTypography,
   CmsThemeSpacing,
-  CmsTheme,
-  CmsThemeCreateInput,
-  CmsThemeUpdateInput
-} from '@/shared/types/domain/cms';
+  CmsThemeDto as CmsTheme,
+  CreateCmsThemeDto as CmsThemeCreateInput,
+  UpdateCmsThemeDto as CmsThemeUpdateInput
+} from '@/shared/contracts/cms';

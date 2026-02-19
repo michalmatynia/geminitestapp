@@ -192,7 +192,10 @@ const normalizeTargetCanvasSide = (value: number | null | undefined): number | n
 
 export const normalizeCenterLayoutConfig = (
   layout: CenterLayoutConfig | null | undefined
-): Required<CenterLayoutConfig> => {
+): Omit<Required<CenterLayoutConfig>, 'targetCanvasWidth' | 'targetCanvasHeight'> & {
+  targetCanvasWidth: number | null;
+  targetCanvasHeight: number | null;
+} => {
   const detectionRaw = layout?.detection;
   const detection: CenterDetectionMode =
     detectionRaw === 'alpha_bbox' || detectionRaw === 'white_bg_first_colored_pixel'
@@ -250,6 +253,8 @@ export const normalizeCenterLayoutConfig = (
     detection,
   };
 };
+
+type NormalizedCenterLayoutConfig = ReturnType<typeof normalizeCenterLayoutConfig>;
 
 export const normalizeShapeToPolygons = (
   shape: {
@@ -946,8 +951,8 @@ const resolveWhiteForegroundObjectBounds = (
       const b = data[offset + 2] ?? 0;
       const a = data[offset + 3] ?? 0;
       if (!isWhiteBackgroundForegroundPixel(r, g, b, a, backgroundModel)) continue;
-      columnHits[x] += 1;
-      rowHits[y] += 1;
+      columnHits[x] = (columnHits[x] ?? 0) + 1;
+      rowHits[y] = (rowHits[y] ?? 0) + 1;
       foregroundCount += 1;
     }
   }
@@ -975,7 +980,7 @@ const resolveObjectBoundsForLayout = (
   data: Uint8ClampedArray,
   width: number,
   height: number,
-  layout: Required<CenterLayoutConfig>
+  layout: NormalizedCenterLayoutConfig
 ): { bounds: { left: number; top: number; width: number; height: number }; detectionUsed: Exclude<CenterDetectionMode, 'auto'> } | null => {
   if (layout.detection === 'alpha_bbox') {
     const alpha = resolveAlphaObjectBounds(data, width, height);

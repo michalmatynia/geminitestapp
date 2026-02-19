@@ -59,14 +59,16 @@ export const handleContext: NodeHandler = async ({
   };
 };
 
-export const handleParser: NodeHandler = ({
+export const handleParser: NodeHandler = async ({
   node,
   nodeInputs,
+  fetchEntityCached,
+  simulationEntityType,
   resolvedEntity,
   fallbackEntityId,
   strictFlowMode = true,
   reportAiPathsError,
-}: NodeHandlerContext): RuntimePortValues => {
+}: NodeHandlerContext): Promise<RuntimePortValues> => {
   try {
     const contextInput = coerceInput(nodeInputs['context']);
     const contextEntity =
@@ -81,13 +83,51 @@ export const handleParser: NodeHandler = ({
             | Record<string, unknown>
             | undefined)
         : undefined;
-    const source =
+    let source =
       (coerceInput(nodeInputs['entityJson']) as Record<string, unknown> | undefined) ??
       contextEntity ??
       (!strictFlowMode
         ? (resolvedEntity as Record<string, unknown> | undefined) ??
           (fallbackEntityId ? buildFallbackEntity(fallbackEntityId) : undefined)
         : undefined);
+
+    // In strict mode, hydration by explicit context identity is allowed (not a hidden fallback).
+    if (!source && contextInput && typeof contextInput === 'object') {
+      const contextRecord = contextInput as Record<string, unknown>;
+      const contextEntityId =
+        typeof contextRecord['entityId'] === 'string' &&
+        contextRecord['entityId'].trim().length > 0
+          ? contextRecord['entityId'].trim()
+          : typeof contextRecord['productId'] === 'string' &&
+              contextRecord['productId'].trim().length > 0
+            ? contextRecord['productId'].trim()
+            : null;
+      const contextEntityType =
+        typeof contextRecord['entityType'] === 'string' &&
+        contextRecord['entityType'].trim().length > 0
+          ? contextRecord['entityType'].trim()
+          : simulationEntityType;
+      if (contextEntityId && contextEntityType) {
+        try {
+          const hydrated = await fetchEntityCached(contextEntityType, contextEntityId);
+          if (hydrated && typeof hydrated === 'object') {
+            source = hydrated;
+          }
+        } catch (error) {
+          reportAiPathsError(
+            error,
+            {
+              service: 'ai-paths-runtime',
+              nodeId: node.id,
+              nodeType: node.type,
+              contextEntityId,
+              contextEntityType,
+            },
+            `Parser context hydration failed for ${contextEntityType}:${contextEntityId}`,
+          );
+        }
+      }
+    }
 
     if (!source) {
       return {};
@@ -618,6 +658,7 @@ export const handleValidationPattern: NodeHandler = ({
       1,
       Math.min(
         10,
+        typeof config.maxAutofixPasses === 'number' &&
         Number.isFinite(config.maxAutofixPasses)
           ? Math.trunc(config.maxAutofixPasses)
           : 1

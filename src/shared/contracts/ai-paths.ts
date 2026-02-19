@@ -990,6 +990,111 @@ export const pathUiStateSchema = z.object({
 
 export type PathUiStateDto = z.infer<typeof pathUiStateSchema>;
 
+export const aiPathsValidationSeveritySchema = z.enum(['error', 'warning', 'info']);
+export type AiPathsValidationSeverityDto = z.infer<
+  typeof aiPathsValidationSeveritySchema
+>;
+
+export const aiPathsValidationModuleSchema = z.enum([
+  'graph',
+  'trigger',
+  'simulation',
+  'context',
+  'parser',
+  'database',
+  'model',
+  'poll',
+  'router',
+  'gate',
+  'validation_pattern',
+  'custom',
+]);
+export type AiPathsValidationModuleDto = z.infer<
+  typeof aiPathsValidationModuleSchema
+>;
+
+export const aiPathsValidationOperatorSchema = z.enum([
+  'exists',
+  'non_empty',
+  'equals',
+  'in',
+  'matches_regex',
+  'wired_from',
+  'wired_to',
+  'has_incoming_port',
+  'has_outgoing_port',
+  'jsonpath_exists',
+  'jsonpath_equals',
+  'collection_exists',
+  'entity_collection_resolves',
+]);
+export type AiPathsValidationOperatorDto = z.infer<
+  typeof aiPathsValidationOperatorSchema
+>;
+
+export const aiPathsValidationConditionSchema = z.object({
+  id: z.string(),
+  operator: aiPathsValidationOperatorSchema,
+  field: z.string().optional(),
+  valuePath: z.string().optional(),
+  expected: z.unknown().optional(),
+  list: z.array(z.string()).optional(),
+  flags: z.string().optional(),
+  port: z.string().optional(),
+  fromPort: z.string().optional(),
+  toPort: z.string().optional(),
+  fromNodeType: z.string().optional(),
+  toNodeType: z.string().optional(),
+  sourceNodeId: z.string().optional(),
+  targetNodeId: z.string().optional(),
+  collectionMapKey: z.string().optional(),
+  negate: z.boolean().optional(),
+});
+export type AiPathsValidationConditionDto = z.infer<
+  typeof aiPathsValidationConditionSchema
+>;
+
+export const aiPathsValidationRuleSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+  enabled: z.boolean(),
+  severity: aiPathsValidationSeveritySchema,
+  module: aiPathsValidationModuleSchema,
+  appliesToNodeTypes: z.array(z.string()).optional(),
+  sequence: z.number().optional(),
+  conditionMode: z.enum(['all', 'any']).optional(),
+  conditions: z.array(aiPathsValidationConditionSchema).min(1),
+  weight: z.number().optional(),
+  forceProbabilityIfFailed: z.number().optional(),
+  recommendation: z.string().optional(),
+  docsBindings: z.array(z.string()).optional(),
+});
+export type AiPathsValidationRuleDto = z.infer<typeof aiPathsValidationRuleSchema>;
+
+export const aiPathsValidationPolicySchema = z.enum([
+  'report_only',
+  'warn_below_threshold',
+  'block_below_threshold',
+]);
+export type AiPathsValidationPolicyDto = z.infer<
+  typeof aiPathsValidationPolicySchema
+>;
+
+export const aiPathsValidationConfigSchema = z.object({
+  enabled: z.boolean().optional(),
+  policy: aiPathsValidationPolicySchema.optional(),
+  warnThreshold: z.number().optional(),
+  blockThreshold: z.number().optional(),
+  baseScore: z.number().optional(),
+  collectionMap: z.record(z.string(), z.string()).optional(),
+  docsSources: z.array(z.string()).optional(),
+  rules: z.array(aiPathsValidationRuleSchema).optional(),
+});
+export type AiPathsValidationConfigDto = z.infer<
+  typeof aiPathsValidationConfigSchema
+>;
+
 export const pathConfigSchema = z.object({
   id: z.string(),
   version: z.number(),
@@ -1010,6 +1115,7 @@ export const pathConfigSchema = z.object({
   runtimeState: z.any().optional(),
   lastRunAt: z.string().nullable().optional(),
   runCount: z.number().optional(),
+  aiPathsValidation: aiPathsValidationConfigSchema.optional(),
   uiState: pathUiStateSchema.optional(),
 });
 

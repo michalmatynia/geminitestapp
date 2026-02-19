@@ -7,26 +7,25 @@ export type {
   CreateCmsPageDto as CreatePageDto,
   UpdateCmsPageDto as UpdatePageDto,
   CreateCmsThemeDto as CreateThemeDto,
-  UpdateCmsThemeDto as UpdateThemeDto
+  UpdateCmsThemeDto as UpdateThemeDto,
+  
+  // From domain aliases
+  CmsPageStatusDto as PageStatus,
+  PageComponentDto as PageComponent,
+  CmsPageSlugLinkDto as PageSlugLink,
+  CmsPageSeoDto as PageSeoData,
+  CmsPageSummaryDto as PageSummary,
+  CmsPageDto as Page,
+  CmsSlugDto as Slug,
+  CmsDomainDto as CmsDomain,
+  SectionDefinitionDto as SectionDefinition,
+  BlockDefinitionDto as BlockDefinition,
+  SettingsFieldDto as SettingsField,
+  SettingsFieldOptionDto as SettingsFieldOption,
+  PageZoneDto as PageZone,
+  CmsBlockInstanceDto as BlockInstance,
+  CmsSectionInstanceDto as SectionInstance
 } from '@/shared/contracts/cms';
-
-export type {
-  PageStatus,
-  PageComponent,
-  PageSlugLink,
-  PageSeoData,
-  PageSummary,
-  Page,
-  Slug,
-  CmsDomain,
-  SectionDefinition,
-  BlockDefinition,
-  SettingsField,
-  SettingsFieldOption,
-  PageZone,
-  BlockInstance,
-  SectionInstance
-} from '@/shared/types/domain/cms';
 
 export * from './page-builder';
 export * from './event-effects';

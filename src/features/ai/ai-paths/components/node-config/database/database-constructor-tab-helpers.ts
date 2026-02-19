@@ -59,10 +59,21 @@ export const formatCollectionSchema = (collectionName: string, fields: FieldSche
 
 export const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema[] => {
   if (!schema?.collections?.length) return [];
-  if (schema.provider === 'multi') return schema.collections;
+
+  const stripUndefinedProvider = (
+    collection: SchemaData['collections'][number]
+  ): CollectionSchema => {
+    const { provider, ...rest } = collection;
+    return provider ? { ...rest, provider } : rest;
+  };
+
+  if (schema.provider === 'multi') {
+    return schema.collections.map((collection) => stripUndefinedProvider(collection));
+  }
+
   const provider: 'mongodb' | 'prisma' = schema.provider;
-  return schema.collections.map((collection: CollectionSchema) => ({
-    ...collection,
+  return schema.collections.map((collection) => ({
+    ...stripUndefinedProvider(collection),
     provider,
   }));
 };

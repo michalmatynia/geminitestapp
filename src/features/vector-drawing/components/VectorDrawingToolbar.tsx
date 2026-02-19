@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
+import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
+import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import { Button, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -68,6 +70,15 @@ const MIN_TOOLS: ToolOption[] = [
   { key: 'polygon', label: 'Pen', icon: <Pentagon className='size-4' /> },
 ];
 
+const VECTOR_TOOL_DOC_IDS: Record<VectorToolMode, string> = {
+  select: 'vector_toolbar_tool_select',
+  polygon: 'vector_toolbar_tool_polygon',
+  lasso: 'vector_toolbar_tool_lasso',
+  rect: 'vector_toolbar_tool_rect',
+  ellipse: 'vector_toolbar_tool_ellipse',
+  brush: 'vector_toolbar_tool_brush',
+};
+
 export function VectorDrawingToolbar({
   tool: propTool,
   onSelectTool: propOnSelectTool,
@@ -117,6 +128,8 @@ export function VectorDrawingToolbar({
     ? baseToolOptions
     : baseToolOptions.filter((option) => option.key !== 'select');
   const hasActions = Boolean(onUndo || onRedo || onClose || onDetach || onClear || onSmooth || onSimplify);
+  const resolveTooltip = (docId: string, fallback: string): string =>
+    getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.vectorDrawing, docId) ?? fallback;
 
   return (
     <div
@@ -126,7 +139,10 @@ export function VectorDrawingToolbar({
       )}
     >
       {toolOptions.map((option: ToolOption) => (
-        <Tooltip key={option.key} content={option.label}>
+        <Tooltip
+          key={option.key}
+          content={resolveTooltip(VECTOR_TOOL_DOC_IDS[option.key], option.label)}
+        >
           <Button
             type='button'
             variant={tool === option.key ? 'default' : 'outline'}
@@ -145,7 +161,9 @@ export function VectorDrawingToolbar({
       ))}
       {hasActions ? <div className='mx-1 h-6 w-px bg-border' /> : null}
       {onUndo ? (
-        <Tooltip content='Undo (Ctrl+Z)'>
+        <Tooltip
+          content={resolveTooltip('vector_toolbar_action_undo', 'Undo (Ctrl+Z)')}
+        >
           <Button
             type='button'
             variant='outline'
@@ -158,7 +176,9 @@ export function VectorDrawingToolbar({
         </Tooltip>
       ) : null}
       {onRedo ? (
-        <Tooltip content='Redo (Ctrl+Shift+Z)'>
+        <Tooltip
+          content={resolveTooltip('vector_toolbar_action_redo', 'Redo (Ctrl+Shift+Z)')}
+        >
           <Button
             type='button'
             variant='outline'
@@ -171,7 +191,9 @@ export function VectorDrawingToolbar({
         </Tooltip>
       ) : null}
       {onClose ? (
-        <Tooltip content='Close polygon'>
+        <Tooltip
+          content={resolveTooltip('vector_toolbar_action_close_polygon', 'Close polygon')}
+        >
           <Button
             type='button'
             variant='outline'
@@ -184,7 +206,9 @@ export function VectorDrawingToolbar({
         </Tooltip>
       ) : null}
       {onDetach ? (
-        <Tooltip content='Detach polygon'>
+        <Tooltip
+          content={resolveTooltip('vector_toolbar_action_detach_polygon', 'Detach polygon')}
+        >
           <Button
             type='button'
             variant='outline'
@@ -197,7 +221,9 @@ export function VectorDrawingToolbar({
         </Tooltip>
       ) : null}
       {onClear ? (
-        <Tooltip content='Clear shapes'>
+        <Tooltip
+          content={resolveTooltip('vector_toolbar_action_clear_shapes', 'Clear shapes')}
+        >
           <Button
             type='button'
             variant='outline'
@@ -210,7 +236,9 @@ export function VectorDrawingToolbar({
         </Tooltip>
       ) : null}
       {onSmooth ? (
-        <Tooltip content='Smooth path'>
+        <Tooltip
+          content={resolveTooltip('vector_toolbar_action_smooth_path', 'Smooth path')}
+        >
           <Button
             type='button'
             variant='outline'
@@ -223,7 +251,9 @@ export function VectorDrawingToolbar({
         </Tooltip>
       ) : null}
       {onSimplify ? (
-        <Tooltip content='Simplify path'>
+        <Tooltip
+          content={resolveTooltip('vector_toolbar_action_simplify_path', 'Simplify path')}
+        >
           <Button
             type='button'
             variant='outline'

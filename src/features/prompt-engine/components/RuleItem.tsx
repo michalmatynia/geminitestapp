@@ -3,6 +3,8 @@
 import { Copy, GripVertical } from 'lucide-react';
 import React from 'react';
 
+import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
+import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import {
   Button,
   Input,
@@ -118,6 +120,10 @@ export function RuleItem({
     rule?.promptExploderCaptureNormalize === 'year'
       ? rule.promptExploderCaptureNormalize
       : 'trim';
+  const copyJsonTooltip = getDocumentationTooltip(
+    DOCUMENTATION_MODULE_IDS.promptEngine,
+    'rule_item_copy_json'
+  ) ?? 'Copy JSON';
   const promptExploderCaptureOverwrite = rule?.promptExploderCaptureOverwrite ?? false;
   const hasPromptExploderScope = appliesToScopes.some(
     (scope) => scope === 'prompt_exploder' || scope === 'global'
@@ -214,7 +220,7 @@ export function RuleItem({
           </span>
         </div>
         <div className='flex items-center gap-2'>
-          <Tooltip content='Copy JSON'>
+          <Tooltip content={copyJsonTooltip}>
             <Button
               type='button'
               variant='ghost'

@@ -4,7 +4,7 @@ import path from 'path';
 import { deleteFileFromStorage, uploadToConfiguredStorage } from '@/features/files/server';
 import { ErrorSystem } from '@/features/observability/server';
 import { getAsset3DRepository } from '@/features/viewer3d/services/asset3d-repository';
-import type { Asset3DRecord } from '@/features/viewer3d/types';
+import type { Asset3DRecord } from '../types';
 import { badRequestError } from '@/shared/errors/app-error';
 
 import { isValid3DAsset, validate3DFileAsync } from './validateAsset3d';

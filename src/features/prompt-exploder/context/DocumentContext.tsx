@@ -420,6 +420,15 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
         runtimeSelection.runtimeValidationRules,
         runtimeSelection.identity.scope
       );
+      if (
+        promptExploderSettings.runtime.caseResolverCaptureMode === 'rules_only' &&
+        captureRules.length === 0
+      ) {
+        toast(
+          'No Case Resolver capture rules are active for this validation scope. Configure capture rules before applying.',
+          { variant: 'warning' }
+        );
+      }
       const payload = extractCaseResolverBridgePayloadFromSegments(documentState.segments, {
         captureRules,
         mode: promptExploderSettings.runtime.caseResolverCaptureMode,
@@ -443,6 +452,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     router,
     runtimeSelection.identity.scope,
     runtimeSelection.runtimeValidationRules,
+    toast,
   ]);
 
   const updateParameterValue = useCallback(

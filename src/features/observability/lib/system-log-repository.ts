@@ -30,6 +30,7 @@ type MongoSystemLogDoc = {
   id?: string | undefined;
   level?: string | undefined;
   message?: string | undefined;
+  category?: string | null | undefined;
   source?: string | null | undefined;
   context?: Record<string, unknown> | null | undefined;
   stack?: string | null | undefined;
@@ -60,6 +61,10 @@ const toSystemLogRecord = (doc: MongoSystemLogDoc): SystemLogRecord => ({
   id: String(doc.id ?? doc._id ?? ''),
   level: (doc.level as SystemLogLevel) ?? 'error',
   message: doc.message ?? '',
+  category:
+    typeof doc.category === 'string' && doc.category.trim().length > 0
+      ? doc.category
+      : (doc.context?.['category'] as string | undefined) ?? null,
   source: doc.source ?? null,
   context: doc.context ?? null,
   stack: doc.stack ?? null,
@@ -105,10 +110,15 @@ const buildPrismaWhere = (
   }
   if (input.category) {
     filters.push({
-      context: {
-        path: ['category'],
-        equals: input.category,
-      },
+      OR: [
+        { category: { equals: input.category, mode: 'insensitive' } },
+        {
+          context: {
+            path: ['category'],
+            equals: input.category,
+          },
+        },
+      ],
     });
   }
   if (input.query) {
@@ -152,6 +162,7 @@ const buildMongoFilter = (
 ): Filter<MongoSystemLogDoc> => {
   const filter: Filter<MongoSystemLogDoc> = {};
   const dynamicFilter = filter as Filter<MongoSystemLogDoc> & Record<string, unknown>;
+  const andFilters: Array<Record<string, unknown>> = [];
   if (input.level) {
     filter.level = input.level;
   }
@@ -174,22 +185,37 @@ const buildMongoFilter = (
     dynamicFilter['context.fingerprint'] = input.fingerprint;
   }
   if (input.category) {
-    dynamicFilter['context.category'] = input.category;
+    andFilters.push({
+      $or: [
+        {
+          category: {
+            $regex: `^${escapeRegex(input.category)}$`,
+            $options: 'i',
+          },
+        },
+        { 'context.category': input.category },
+      ],
+    });
   }
   if (input.query) {
-    filter.$or = [
-      { message: { $regex: escapeRegex(input.query), $options: 'i' } },
-      { source: { $regex: escapeRegex(input.query), $options: 'i' } },
-      { path: { $regex: escapeRegex(input.query), $options: 'i' } },
-      { requestId: { $regex: escapeRegex(input.query), $options: 'i' } },
-      { userId: { $regex: escapeRegex(input.query), $options: 'i' } },
-    ];
+    andFilters.push({
+      $or: [
+        { message: { $regex: escapeRegex(input.query), $options: 'i' } },
+        { source: { $regex: escapeRegex(input.query), $options: 'i' } },
+        { path: { $regex: escapeRegex(input.query), $options: 'i' } },
+        { requestId: { $regex: escapeRegex(input.query), $options: 'i' } },
+        { userId: { $regex: escapeRegex(input.query), $options: 'i' } },
+      ],
+    });
   }
   if (input.from || input.to) {
     filter.createdAt = {
       ...(input.from ? { $gte: input.from } : {}),
       ...(input.to ? { $lte: input.to } : {}),
     };
+  }
+  if (andFilters.length > 0) {
+    dynamicFilter['$and'] = andFilters;
   }
   return filter;
 };
@@ -298,10 +324,19 @@ export async function createSystemLog(
   input: CreateSystemLogInput,
 ): Promise<SystemLogRecord> {
   const provider = await getAppDbProvider();
+  const contextCategory =
+    typeof input.context?.['category'] === 'string'
+      ? input.context['category']
+      : null;
+  const category =
+    typeof input.category === 'string' && input.category.trim().length > 0
+      ? input.category.trim()
+      : contextCategory;
   const payload: SystemLogRecord = {
     id: randomUUID(),
     level: input.level ?? 'error',
     message: input.message,
+    category,
     source: input.source ?? null,
     context: input.context ?? null,
     stack: input.stack ?? null,
@@ -332,6 +367,9 @@ export async function createSystemLog(
       data: {
         level: payload.level,
         message: payload.message,
+        ...(payload.category !== null && payload.category !== undefined
+          ? { category: payload.category }
+          : {}),
         ...(payload.source !== null && payload.source !== undefined
           ? { source: payload.source }
           : {}),
@@ -428,6 +466,10 @@ export async function listSystemLogs(
         normalizeLogRecord({
           ...row,
           level: row.level as SystemLogLevel,
+          category:
+            typeof row.category === 'string' && row.category.trim().length > 0
+              ? row.category
+              : (row.context?.['category'] as string | undefined) ?? null,
           context: (row.context as Record<string, unknown> | null) ?? null,
           createdAt: row.createdAt.toISOString(),
           updatedAt: row.updatedAt?.toISOString() ?? null,
@@ -477,6 +519,10 @@ export async function getSystemLogById(id: string): Promise<SystemLogRecord | nu
     return normalizeLogRecord({
       ...row,
       level: row.level as SystemLogLevel,
+      category:
+        typeof row.category === 'string' && row.category.trim().length > 0
+          ? row.category
+          : (row.context?.['category'] as string | undefined) ?? null,
       context: (row.context as Record<string, unknown> | null) ?? null,
       createdAt: row.createdAt.toISOString(),
       updatedAt: (row as any).updatedAt?.toISOString() ?? null,

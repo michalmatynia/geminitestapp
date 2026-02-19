@@ -4,9 +4,10 @@ import { Profiler, memo, useMemo } from 'react';
 
 import { useProductListTableContext } from '@/features/products/context/ProductListContext';
 import { useProductsTableProps } from '@/features/products/hooks/useProductsTableProps';
-import { StandardDataTablePanel, Button, Alert } from '@/shared/ui';
-import { PromptModal } from '@/shared/ui/templates/modals';
 import type { ProductWithImages } from '@/features/products/types';
+import { Alert, Button, StandardDataTablePanel } from '@/shared/ui';
+import { PromptModal } from '@/shared/ui/templates/modals';
+
 import type { Row } from '@tanstack/react-table';
 
 const ProductListHeader = dynamic(
@@ -75,23 +76,25 @@ export const ProductListPanel = memo(function ProductListPanel() {
 
   return (
     <Profiler id='ProductsTable' onRender={handleProductsTableRender}>
-      <StandardDataTablePanel
-        header={<ProductListHeader filtersContent={<ProductFilters />} />}
-        alerts={alerts}
-        actions={
-          <ProductSelectionActions />
-        }
-        columns={tableProps.columns}
-        data={tableProps.data}
-        isLoading={tableProps.isLoading}
-        getRowId={tableProps.getRowId}
-        getRowClassName={tableProps.getRowClassName as (row: Row<ProductWithImages>) => string | undefined}
-        rowSelection={tableProps.rowSelection}
-        onRowSelectionChange={tableProps.onRowSelectionChange}
-        skeletonRows={tableProps.skeletonRows}
-        maxHeight={tableProps.maxHeight}
-        stickyHeader={tableProps.stickyHeader}
-      >
+      <>
+        <StandardDataTablePanel
+          header={<ProductListHeader filtersContent={<ProductFilters />} />}
+          alerts={alerts}
+          actions={
+            <ProductSelectionActions />
+          }
+          columns={tableProps.columns}
+          data={tableProps.data}
+          isLoading={tableProps.isLoading}
+          getRowId={tableProps.getRowId}
+          getRowClassName={tableProps.getRowClassName as (row: Row<ProductWithImages>) => string | undefined}
+          rowSelection={tableProps.rowSelection}
+          onRowSelectionChange={tableProps.onRowSelectionChange}
+          skeletonRows={tableProps.skeletonRows}
+          maxHeight={tableProps.maxHeight}
+          stickyHeader={tableProps.stickyHeader}
+        />
+
         <PromptModal
           open={isPromptOpen}
           onClose={() => setIsPromptOpen(false)}
@@ -101,7 +104,7 @@ export const ProductListPanel = memo(function ProductListPanel() {
           placeholder='e.g. ABC-123'
           required
         />
-      </StandardDataTablePanel>
+      </>
     </Profiler>
   );
 });

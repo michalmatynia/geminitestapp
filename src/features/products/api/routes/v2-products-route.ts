@@ -2,7 +2,6 @@ import 'server-only';
 
 import { NextRequest } from 'next/server';
 
-import { ErrorSystem } from '@/features/observability/server';
 import { withApiVersioning, createVersionedResponse, StandardErrors, withErrorHandling } from '@/features/products/api/server';
 import type { ApiVersion } from '@/features/products/api/server';
 import { CachedProductService } from '@/features/products/performance';
@@ -13,22 +12,15 @@ import { productService } from '@/features/products/services/productService';
 async function productsHandler(req: NextRequest, version: ApiVersion): Promise<Response> {
   const { searchParams } = new URL(req.url);
 
-  try {
-    switch (req.method) {
-      case 'GET':
-        return await handleGetProducts(req, version, searchParams);
-      case 'POST':
-        return await handleCreateProduct(req, version);
-      default:
-        return StandardErrors.invalidRequest(`Method ${req.method} not allowed`)
-          .withMeta(version, '/api/products', req.method)
-          .toResponse(405);
-    }
-  } catch (error) {
-    void ErrorSystem.captureException(error, { service: 'api-v2/products', version });
-    return StandardErrors.serverError()
-      .withMeta(version, '/api/products', req.method)
-      .toResponse(500);
+  switch (req.method) {
+    case 'GET':
+      return await handleGetProducts(req, version, searchParams);
+    case 'POST':
+      return await handleCreateProduct(req, version);
+    default:
+      return StandardErrors.invalidRequest(`Method ${req.method} not allowed`)
+        .withMeta(version, '/api/products', req.method)
+        .toResponse(405);
   }
 }
 
@@ -37,35 +29,29 @@ async function handleGetProducts(_req: NextRequest, version: ApiVersion, searchP
   const page = parseInt(searchParams.get('page') || '1');
   const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100);
 
-  try {
-    const products = await productService.getProducts({
-      ...filters,
-      page,
-      pageSize: limit,
-    });
+  const products = await productService.getProducts({
+    ...filters,
+    page,
+    pageSize: limit,
+  });
 
-    if (!products || products.length === 0) {
-      return StandardErrors.notFound('Products')
-        .withMeta(version, '/api/products', 'GET')
-        .toResponse(404);
-    }
-
-    const responseData = {
-      products,
-      pagination: {
-        page,
-        limit,
-        total: products.length,
-        hasNext: products.length === limit,
-      },
-    };
-
-    return createVersionedResponse(responseData, version);
-  } catch (_error) {
-    return StandardErrors.serverError()
+  if (!products || products.length === 0) {
+    return StandardErrors.notFound('Products')
       .withMeta(version, '/api/products', 'GET')
-      .toResponse(500);
+      .toResponse(404);
   }
+
+  const responseData = {
+    products,
+    pagination: {
+      page,
+      limit,
+      total: products.length,
+      hasNext: products.length === limit,
+    },
+  };
+
+  return createVersionedResponse(responseData, version);
 }
 
 async function handleCreateProduct(req: NextRequest, version: ApiVersion): Promise<Response> {
@@ -112,10 +98,7 @@ async function handleCreateProduct(req: NextRequest, version: ApiVersion): Promi
         .withMeta(version, '/api/products', 'POST')
         .toResponse(400);
     }
-
-    return StandardErrors.serverError()
-      .withMeta(version, '/api/products', 'POST')
-      .toResponse(500);
+    throw error;
   }
 }
 

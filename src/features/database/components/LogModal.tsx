@@ -3,24 +3,22 @@
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-import type { ModalStateProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { ContentDisplayModal } from '@/shared/ui/templates';
 
-interface LogModalProps extends ModalStateProps {
-  content: string;
+interface LogModalProps extends EntityModalProps<string> {
   title?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
-  onSuccess?: () => void;
 }
 
 export const LogModal = ({ 
   isOpen, 
   onClose, 
-  content, 
+  item: content, 
   title = 'Operation Log',
   size = 'md',
 }: LogModalProps): React.JSX.Element | null => {
-  if (!isOpen) return null;
+  if (!isOpen || content === undefined) return null;
 
   return (
     <ContentDisplayModal

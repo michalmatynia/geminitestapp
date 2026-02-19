@@ -421,6 +421,8 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
 }
 
 const DEFAULT_GET_CACHE_CONTROL = 'private, max-age=60, stale-while-revalidate=300';
+const MAX_QUERY_KEYS = 20;
+const MAX_BODY_KEYS = 20;
 
 function applyDefaultCacheHeaders(
   response: Response,
@@ -440,6 +442,37 @@ function applyDefaultCacheHeaders(
   response.headers.set('Cache-Control', 'no-store');
 }
 
+const getQueryKeys = (request: NextRequest): string[] => {
+  try {
+    return Array.from(new URL(request.url).searchParams.keys()).slice(0, MAX_QUERY_KEYS);
+  } catch {
+    return [];
+  }
+};
+
+const summarizeBodyShape = (value: unknown): Record<string, unknown> => {
+  if (value === null) return { type: 'null' };
+  if (value === undefined) return { type: 'undefined' };
+  if (Array.isArray(value)) {
+    return { type: 'array', length: value.length };
+  }
+  if (typeof value === 'string') {
+    return { type: 'string', length: value.length };
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return { type: typeof value };
+  }
+  if (typeof value === 'object') {
+    const keys = Object.keys(value as Record<string, unknown>);
+    return {
+      type: 'object',
+      keyCount: keys.length,
+      keys: keys.slice(0, MAX_BODY_KEYS),
+    };
+  }
+  return { type: typeof value };
+};
+
 /**
  * Creates an error response with timing information and logging.
  */
@@ -455,6 +488,16 @@ async function createErrorResponseWithTiming(
 
   const level: SystemLogLevel = resolved.expected ? 'warn' : 'error';
   const durationMs = context.getElapsedMs();
+  const routePath = (() => {
+    try {
+      return new URL(request.url).pathname;
+    } catch {
+      return null;
+    }
+  })();
+  const queryKeys = getQueryKeys(request);
+  const bodyShape =
+    context.body !== undefined ? summarizeBodyShape(context.body) : null;
 
   // Log the error with full context
   void logSystemEvent({
@@ -470,6 +513,14 @@ async function createErrorResponseWithTiming(
       code: resolved.code,
       category: resolved.category,
       durationMs,
+      source: options.source,
+      route: routePath,
+      method: request.method,
+      expected: resolved.expected,
+      critical: resolved.critical,
+      retryable: resolved.retryable,
+      ...(bodyShape ? { bodyShape } : {}),
+      ...(queryKeys.length > 0 ? { queryKeys } : {}),
       ...(resolved.meta ? { meta: resolved.meta } : {}),
     },
   });

@@ -1,4 +1,4 @@
-import type { Asset3DRepository } from '@/features/viewer3d/types';
+import type { Asset3DRepository } from '../../types';
 
 import { prismaAsset3DRepository } from './prisma-asset3d-repository';
 

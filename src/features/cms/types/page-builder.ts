@@ -5,20 +5,18 @@ import type {
   CmsInspectorSettingsDto,
   PageBuilderStateDto,
   PageBuilderActionDto,
+  CmsPageSummaryDto as PageSummary,
+  CmsPageDto as Page,
+  CmsPageStatusDto as PageStatus,
+  CmsPageSeoDto as PageSeoData,
+  SettingsFieldOptionDto as SettingsFieldOption,
+  SettingsFieldDto as SettingsField,
+  SectionDefinitionDto as SectionDefinition,
+  BlockDefinitionDto as BlockDefinition,
+  PageZoneDto as PageZone,
+  CmsBlockInstanceDto as BlockInstance,
+  CmsSectionInstanceDto as SectionInstance
 } from '@/shared/contracts/cms';
-import type {
-  PageSummary,
-  Page,
-  PageStatus,
-  PageSeoData,
-  SettingsFieldOption,
-  SettingsField,
-  SectionDefinition,
-  BlockDefinition,
-  PageZone,
-  BlockInstance,
-  SectionInstance
-} from '@/shared/types/domain/cms';
 
 export type {
   PageSummary,

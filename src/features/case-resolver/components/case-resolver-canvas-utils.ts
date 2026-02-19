@@ -98,19 +98,30 @@ const normalizeTextNodeOutputPort = (value: string | null | undefined): string =
 
 export const normalizeEdgesForTextNode = (edges: Edge[], nodeId: string): Edge[] =>
   edges.map((edge: Edge): Edge => {
-    let nextFromPort = edge.fromPort;
-    let nextToPort = edge.toPort;
-    if (edge.from === nodeId) {
-      nextFromPort = normalizeTextNodeOutputPort(edge.fromPort);
+    const legacyEdge = edge as Edge & {
+      from?: string;
+      to?: string;
+      fromPort?: string;
+      toPort?: string;
+    };
+    const from = legacyEdge.from ?? edge.source;
+    const to = legacyEdge.to ?? edge.target;
+    const currentFromPort = legacyEdge.fromPort ?? edge.sourceHandle;
+    const currentToPort = legacyEdge.toPort ?? edge.targetHandle;
+
+    let nextFromPort = currentFromPort;
+    let nextToPort = currentToPort;
+    if (from === nodeId) {
+      nextFromPort = normalizeTextNodeOutputPort(currentFromPort);
     }
-    if (edge.to === nodeId) {
-      nextToPort = normalizeTextNodeInputPort(edge.toPort);
+    if (to === nodeId) {
+      nextToPort = normalizeTextNodeInputPort(currentToPort);
     }
-    if (nextFromPort === edge.fromPort && nextToPort === edge.toPort) return edge;
+    if (nextFromPort === currentFromPort && nextToPort === currentToPort) return edge;
     return {
       ...edge,
-      fromPort: nextFromPort,
-      toPort: nextToPort,
+      sourceHandle: nextFromPort,
+      targetHandle: nextToPort,
     };
   });
 
@@ -141,10 +152,10 @@ export const ensureNodeMeta = (
 };
 
 export const ensureEdgeMeta = (
-  edges: Edge[],
+  edges: Array<{ id: string }>,
   existing: Record<string, CaseResolverEdgeMeta>
 ): Record<string, CaseResolverEdgeMeta> => {
-  const edgeIds = new Set(edges.map((edge: Edge) => edge.id));
+  const edgeIds = new Set(edges.map((edge) => edge.id));
   const next: Record<string, CaseResolverEdgeMeta> = {};
 
   Object.entries(existing).forEach(([edgeId, meta]: [string, CaseResolverEdgeMeta]) => {
@@ -152,7 +163,7 @@ export const ensureEdgeMeta = (
     next[edgeId] = meta;
   });
 
-  edges.forEach((edge: Edge) => {
+  edges.forEach((edge) => {
     if (!next[edge.id]) {
       next[edge.id] = { ...DEFAULT_CASE_RESOLVER_EDGE_META };
     }

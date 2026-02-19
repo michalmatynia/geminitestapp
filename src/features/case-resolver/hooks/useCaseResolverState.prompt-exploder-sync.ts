@@ -12,6 +12,7 @@ import {
 import {
   consumePromptExploderApplyPromptForCaseResolver,
   readPromptExploderApplyPayload,
+  type PromptExploderBridgePayload,
 } from '@/features/prompt-exploder/bridge';
 
 import {
@@ -74,6 +75,26 @@ const normalizeCandidateId = (value: string | null | undefined): string | null =
   return normalized.length > 0 ? normalized : null;
 };
 
+const buildPromptExploderPayloadKey = (
+  payload: PromptExploderBridgePayload
+): string => [
+  payload.createdAt,
+  payload.caseResolverContext?.fileId ?? '',
+  payload.prompt.slice(0, 64),
+].join('|');
+
+const buildNormalizedFileIdMap = (
+  workspaceFiles: CaseResolverWorkspace['files']
+): Map<string, string> => {
+  const fileIdByNormalizedId = new Map<string, string>();
+  workspaceFiles.forEach((file) => {
+    const normalizedFileId = normalizeCandidateId(file.id);
+    if (!normalizedFileId || fileIdByNormalizedId.has(normalizedFileId)) return;
+    fileIdByNormalizedId.set(normalizedFileId, file.id);
+  });
+  return fileIdByNormalizedId;
+};
+
 export const resolveCaseResolverPromptExploderTarget = ({
   workspaceActiveFileId,
   workspaceFiles,
@@ -83,36 +104,32 @@ export const resolveCaseResolverPromptExploderTarget = ({
   workspaceFiles: CaseResolverWorkspace['files'];
   payloadContextFileId: string | null;
 }): CaseResolverPromptExploderTargetResolution => {
-  const fileIdSet = new Set(
-    workspaceFiles
-      .map((file) => normalizeCandidateId(file.id))
-      .filter((id): id is string => id !== null)
-  );
+  const fileIdByNormalizedId = buildNormalizedFileIdMap(workspaceFiles);
   const contextFileId = normalizeCandidateId(payloadContextFileId);
-  if (contextFileId && fileIdSet.has(contextFileId)) {
+  if (contextFileId && fileIdByNormalizedId.has(contextFileId)) {
     return {
       status: 'ready',
-      targetFileId: contextFileId,
+      targetFileId: fileIdByNormalizedId.get(contextFileId) ?? contextFileId,
       usedActiveFallback: false,
     };
   }
 
   const activeFileId = normalizeCandidateId(workspaceActiveFileId);
-  if (activeFileId && fileIdSet.has(activeFileId)) {
+  if (activeFileId && fileIdByNormalizedId.has(activeFileId)) {
     return {
       status: 'ready',
-      targetFileId: activeFileId,
+      targetFileId: fileIdByNormalizedId.get(activeFileId) ?? activeFileId,
       usedActiveFallback: Boolean(contextFileId && contextFileId !== activeFileId),
     };
   }
 
-  if (fileIdSet.size === 0) {
+  if (fileIdByNormalizedId.size === 0) {
     return {
       status: 'pending',
       reason: 'waiting-for-files',
     };
   }
-  if (contextFileId && !fileIdSet.has(contextFileId)) {
+  if (contextFileId && !fileIdByNormalizedId.has(contextFileId)) {
     return {
       status: 'pending',
       reason: 'context-missing',
@@ -122,6 +139,41 @@ export const resolveCaseResolverPromptExploderTarget = ({
     status: 'pending',
     reason: 'no-target',
   };
+};
+
+export const resolveCaseResolverPromptExploderFallbackTarget = ({
+  workspaceActiveFileId,
+  workspaceFiles,
+  excludedFileId,
+}: {
+  workspaceActiveFileId: string | null;
+  workspaceFiles: CaseResolverWorkspace['files'];
+  excludedFileId: string;
+}): string | null => {
+  const fileIdByNormalizedId = buildNormalizedFileIdMap(workspaceFiles);
+  const excludedNormalizedFileId = normalizeCandidateId(excludedFileId);
+
+  const activeFileId = normalizeCandidateId(workspaceActiveFileId);
+  if (
+    activeFileId &&
+    activeFileId !== excludedNormalizedFileId &&
+    fileIdByNormalizedId.has(activeFileId)
+  ) {
+    return fileIdByNormalizedId.get(activeFileId) ?? null;
+  }
+
+  const firstDocumentLikeFile = workspaceFiles.find((file) => {
+    const normalizedId = normalizeCandidateId(file.id);
+    if (!normalizedId || normalizedId === excludedNormalizedFileId) return false;
+    return file.fileType === 'document' || file.fileType === 'scanfile';
+  });
+  if (firstDocumentLikeFile) return firstDocumentLikeFile.id;
+
+  const firstDifferentFile = workspaceFiles.find((file) => {
+    const normalizedId = normalizeCandidateId(file.id);
+    return Boolean(normalizedId && normalizedId !== excludedNormalizedFileId);
+  });
+  return firstDifferentFile?.id ?? null;
 };
 
 export const useCaseResolverStatePromptExploderSync = ({
@@ -143,6 +195,7 @@ export const useCaseResolverStatePromptExploderSync = ({
   const unresolvedPayloadKeyRef = useRef<string | null>(null);
   const fallbackPayloadKeyRef = useRef<string | null>(null);
   const appliedPayloadKeyRef = useRef<string | null>(null);
+  const missingTargetPayloadKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     const payload = readPromptExploderApplyPayload();
@@ -152,11 +205,7 @@ export const useCaseResolverStatePromptExploderSync = ({
       return;
     }
 
-    const payloadKey = [
-      payload.createdAt,
-      payload.caseResolverContext?.fileId ?? '',
-      payload.prompt.slice(0, 64),
-    ].join('|');
+    const payloadKey = buildPromptExploderPayloadKey(payload);
     if (appliedPayloadKeyRef.current === payloadKey) {
       consumePromptExploderApplyPromptForCaseResolver();
       return;
@@ -184,21 +233,8 @@ export const useCaseResolverStatePromptExploderSync = ({
     }
     unresolvedPayloadKeyRef.current = null;
 
-    const payloadToApply = consumePromptExploderApplyPromptForCaseResolver();
-    if (!payloadToApply?.prompt?.trim()) return;
-    appliedPayloadKeyRef.current = payloadKey;
+    const payloadToApply = payload;
     const targetFileId = targetResolution.targetFileId;
-
-    const proposalState = buildCaseResolverCaptureProposalState(
-      payloadToApply.caseResolverParties,
-      targetFileId,
-      filemakerDatabaseRef.current,
-      caseResolverCaptureSettingsRef.current,
-      {
-        metadata: payloadToApply.caseResolverMetadata,
-        sourceText: payloadToApply.prompt,
-      }
-    );
     const nextExplodedContent = payloadToApply.prompt;
     const now = new Date().toISOString();
     const canonicalExploded = deriveDocumentContentSync({
@@ -207,51 +243,95 @@ export const useCaseResolverStatePromptExploderSync = ({
     });
     const explodedStoredContent = toStorageDocumentValue(canonicalExploded);
 
-    const mutationResult = applyCaseResolverFileMutationAndRebaseDraft({
-      fileId: targetFileId,
-      updateWorkspace,
-      setEditingDocumentDraft,
-      source: 'prompt_exploder_apply',
-      activateFile: true,
-      mutate: (file) => {
-        const nextDocumentHistory = [
-          {
-            id: createId('case-doc-history'),
-            savedAt: now,
-            documentContentVersion: file.documentContentVersion,
-            activeDocumentVersion: file.activeDocumentVersion,
-            editorType: file.editorType,
-            documentContent: file.documentContent,
-            documentContentMarkdown: file.documentContentMarkdown,
-            documentContentHtml: file.documentContentHtml,
-            documentContentPlainText: file.documentContentPlainText,
-          },
-          ...file.documentHistory,
-        ].slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT);
-        return {
-          originalDocumentContent: file.originalDocumentContent ?? file.documentContent,
-          explodedDocumentContent: explodedStoredContent,
-          activeDocumentVersion: 'exploded',
-          editorType: canonicalExploded.mode,
-          documentContentFormatVersion: 1,
-          documentContentVersion: file.documentContentVersion + 1,
-          documentContent: explodedStoredContent,
-          documentContentMarkdown: canonicalExploded.markdown,
-          documentContentHtml: canonicalExploded.html,
-          documentContentPlainText: canonicalExploded.plainText,
-          documentHistory: nextDocumentHistory,
-          documentConversionWarnings: canonicalExploded.warnings,
-          lastContentConversionAt: now,
-          updatedAt: now,
-        };
-      },
-    });
-    if (!mutationResult.fileFound) {
-      toast('Prompt Exploder output could not be applied because target file was not found.', {
-        variant: 'warning',
+    const applyExplodedContentToFile = (fileId: string) =>
+      applyCaseResolverFileMutationAndRebaseDraft({
+        fileId,
+        updateWorkspace,
+        setEditingDocumentDraft,
+        source: 'prompt_exploder_apply',
+        activateFile: true,
+        mutate: (file) => {
+          const nextDocumentHistory = [
+            {
+              id: createId('case-doc-history'),
+              savedAt: now,
+              documentContentVersion: file.documentContentVersion,
+              activeDocumentVersion: file.activeDocumentVersion,
+              editorType: file.editorType,
+              documentContent: file.documentContent,
+              documentContentMarkdown: file.documentContentMarkdown,
+              documentContentHtml: file.documentContentHtml,
+              documentContentPlainText: file.documentContentPlainText,
+            },
+            ...file.documentHistory,
+          ].slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT);
+          return {
+            originalDocumentContent: file.originalDocumentContent ?? file.documentContent,
+            explodedDocumentContent: explodedStoredContent,
+            activeDocumentVersion: 'exploded',
+            editorType: canonicalExploded.mode,
+            documentContentFormatVersion: 1,
+            documentContentVersion: file.documentContentVersion + 1,
+            documentContent: explodedStoredContent,
+            documentContentMarkdown: canonicalExploded.markdown,
+            documentContentHtml: canonicalExploded.html,
+            documentContentPlainText: canonicalExploded.plainText,
+            documentHistory: nextDocumentHistory,
+            documentConversionWarnings: canonicalExploded.warnings,
+            lastContentConversionAt: now,
+            updatedAt: now,
+          };
+        },
       });
+
+    let appliedTargetFileId = targetFileId;
+    let usedMutationFallback = false;
+    let mutationResult = applyExplodedContentToFile(appliedTargetFileId);
+    if (!mutationResult.fileFound) {
+      const fallbackTargetFileId = resolveCaseResolverPromptExploderFallbackTarget({
+        workspaceActiveFileId,
+        workspaceFiles,
+        excludedFileId: appliedTargetFileId,
+      });
+      if (fallbackTargetFileId) {
+        const fallbackMutationResult = applyExplodedContentToFile(fallbackTargetFileId);
+        if (fallbackMutationResult.fileFound) {
+          mutationResult = fallbackMutationResult;
+          appliedTargetFileId = fallbackTargetFileId;
+          usedMutationFallback = true;
+        }
+      }
+    }
+    if (!mutationResult.fileFound) {
+      if (missingTargetPayloadKeyRef.current !== payloadKey) {
+        missingTargetPayloadKeyRef.current = payloadKey;
+        toast('Prompt Exploder output could not be applied because target file was not found.', {
+          variant: 'warning',
+        });
+      }
       return;
     }
+    missingTargetPayloadKeyRef.current = null;
+
+    const proposalState = buildCaseResolverCaptureProposalState(
+      payloadToApply.caseResolverParties,
+      appliedTargetFileId,
+      filemakerDatabaseRef.current,
+      caseResolverCaptureSettingsRef.current,
+      {
+        metadata: payloadToApply.caseResolverMetadata,
+        sourceText: payloadToApply.prompt,
+      }
+    );
+
+    const latestPayload = readPromptExploderApplyPayload();
+    if (
+      latestPayload?.target === 'case-resolver' &&
+      buildPromptExploderPayloadKey(latestPayload) === payloadKey
+    ) {
+      consumePromptExploderApplyPromptForCaseResolver();
+    }
+    appliedPayloadKeyRef.current = payloadKey;
 
     if (proposalState) {
       setPromptExploderPartyProposal(proposalState);
@@ -264,12 +344,18 @@ export const useCaseResolverStatePromptExploderSync = ({
       setIsPromptExploderPartyProposalOpen(false);
       setIsApplyingPromptExploderPartyProposal(false);
     }
-    if (targetResolution.usedActiveFallback) {
+    if (targetResolution.usedActiveFallback || usedMutationFallback) {
       if (fallbackPayloadKeyRef.current !== payloadKey) {
         fallbackPayloadKeyRef.current = payloadKey;
-        toast('Exploded text applied to the active document (source file was unavailable).', {
-          variant: 'warning',
-        });
+        if (targetResolution.usedActiveFallback) {
+          toast('Exploded text applied to the active document (source file was unavailable).', {
+            variant: 'warning',
+          });
+        } else {
+          toast('Exploded text applied to a fallback document (original target became unavailable).', {
+            variant: 'warning',
+          });
+        }
       }
       return;
     }

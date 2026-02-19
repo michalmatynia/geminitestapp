@@ -442,6 +442,10 @@ export const DB_QUERY_PRESETS_KEY = 'ai_paths_db_query_presets';
 export const DB_NODE_PRESETS_KEY = 'ai_paths_db_node_presets';
 export const AI_PATHS_UI_STATE_KEY = 'ai_paths_ui_state';
 export const AI_PATHS_LOCAL_RUNS_KEY = 'ai_paths_local_runs';
+export const AI_PATHS_VALIDATION_PROFILES_KEY = 'ai_paths_validation_profiles';
+export const AI_PATHS_VALIDATION_DOCS_SOURCES_KEY = 'ai_paths_validation_docs_sources';
+export const AI_PATHS_VALIDATION_ENTITY_COLLECTION_MAP_KEY =
+  'ai_paths_validation_entity_collection_map';
 export const AI_PATHS_HISTORY_RETENTION_KEY = 'ai_paths_history_retention_passes';
 export const AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY =
   'ai_paths_history_retention_options_max';

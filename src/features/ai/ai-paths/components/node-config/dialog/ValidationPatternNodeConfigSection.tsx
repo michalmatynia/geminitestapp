@@ -176,7 +176,9 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
 
   if (selectedNode?.type !== 'validation_pattern') return null;
 
-  const persistedConfig = selectedNode.config?.validationPattern ?? {};
+  const persistedConfig: Partial<ValidationPatternConfigDraft> =
+    (selectedNode.config?.validationPattern as Partial<ValidationPatternConfigDraft> | undefined) ??
+    {};
   const config: ValidationPatternConfigDraft = {
     source: persistedConfig.source ?? DEFAULT_CONFIG.source,
     stackId: persistedConfig.stackId ?? DEFAULT_CONFIG.stackId,

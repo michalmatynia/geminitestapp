@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { CurrencyRepository } from '@/features/internationalization/types/services/currency-repository';
+import type { CurrencyRepository } from '../../types/services/currency-repository';
 
 import {
   getInternationalizationProvider,

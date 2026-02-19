@@ -398,7 +398,7 @@ export function CanvasSvgNodeLayer({
         const palette = resolveNodePalette(node.type);
         const runtimeNodeStatusRaw =
           runtimeNodeStatuses?.[node.id] ??
-          (runtimeRunStatus !== 'idle' &&
+          (runtimeRunStatus === 'idle' &&
           typeof runtimeState.outputs?.[node.id]?.['status'] ===
             'string'
             ? runtimeState.outputs?.[node.id]?.['status']

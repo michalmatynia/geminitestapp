@@ -6,6 +6,11 @@ import type {
   RuntimePortValues,
   RuntimeState,
 } from '@/shared/types/domain/ai-paths';
+import type {
+  AiPathRuntimeProfileEventDto,
+  RuntimeProfileNodeStatsDto,
+  RuntimeProfileSummaryDto,
+} from '@/shared/contracts/ai-paths-runtime';
 
 import { DEFAULT_DB_QUERY } from '../constants';
 import {
@@ -64,71 +69,11 @@ import { buildDbQueryPayload, extractImageUrls } from './utils';
 
 type ToastFn = (message: string, options?: Partial<{ variant: 'success' | 'error' | 'info'; duration: number }>) => void;
 
-export type RuntimeProfileEvent =
-  | {
-    type: 'run';
-    phase: 'start' | 'end';
-    runId: string;
-    runStartedAt: string;
-    nodeCount: number;
-    edgeCount: number;
-    durationMs?: number;
-    iterationCount?: number;
-  }
-  | {
-    type: 'iteration';
-    runId: string;
-    runStartedAt: string;
-    iteration: number;
-    durationMs: number;
-    changed: boolean;
-  }
-  | {
-    type: 'node';
-    runId: string;
-    runStartedAt: string;
-    nodeId: string;
-    nodeType: string;
-    iteration: number;
-    status: 'executed' | 'cached' | 'skipped' | 'error';
-    durationMs: number;
-    hashMs?: number | undefined;
-    reason?: string | undefined;
-  };
+export type RuntimeProfileEvent = AiPathRuntimeProfileEventDto;
 
-export type RuntimeProfileNodeStats = {
-  nodeId: string;
-  nodeType: string;
-  count: number;
-  totalMs: number;
-  maxMs: number;
-  cachedCount: number;
-  skippedCount: number;
-  errorCount: number;
-  hashCount: number;
-  hashTotalMs: number;
-  hashMaxMs: number;
-};
+export type RuntimeProfileNodeStats = RuntimeProfileNodeStatsDto;
 
-export type RuntimeProfileSummary = {
-  runId: string;
-  durationMs: number;
-  iterationCount: number;
-  nodeCount: number;
-  edgeCount: number;
-  nodes: Array<
-  RuntimeProfileNodeStats & {
-    avgMs: number;
-    hashAvgMs: number;
-  }
-  >;
-  hottestNodes: Array<
-  RuntimeProfileNodeStats & {
-    avgMs: number;
-    hashAvgMs: number;
-  }
-  >;
-};
+export type RuntimeProfileSummary = RuntimeProfileSummaryDto;
 
 export type RuntimeProfileOptions = {
   onEvent?: (event: RuntimeProfileEvent) => void;
@@ -1460,7 +1405,8 @@ export async function evaluateGraph({
 
       const cacheMode = node.config?.runtime?.cache?.mode ?? 'auto';
       const isWriteNode = isDatabaseWriteNode(node);
-      const isCacheable = cacheMode !== 'disabled' && !isWriteNode;
+      const isEventNode = node.type === 'trigger';
+      const isCacheable = cacheMode !== 'disabled' && !isWriteNode && !isEventNode;
       if (!isCacheable && inputHashes.has(node.id)) {
         inputHashes.delete(node.id);
         hashTimestamps.delete(node.id);

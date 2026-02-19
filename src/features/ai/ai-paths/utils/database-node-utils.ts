@@ -60,10 +60,19 @@ export const formatCollectionLabel = (collection: CollectionSchema, includeProvi
 
 export const normalizeSchemaCollections = (schema: SchemaData | null): Array<CollectionSchema> => {
   if (!schema?.collections?.length) return [];
-  if (schema.provider === 'multi') return schema.collections;
+
+  const stripUndefinedProvider = (
+    collection: SchemaData['collections'][number]
+  ): CollectionSchema => {
+    const { provider, ...rest } = collection;
+    return provider ? { ...rest, provider } : rest;
+  };
+
+  if (schema.provider === 'multi') return schema.collections.map((collection) => stripUndefinedProvider(collection));
+
   const provider: 'mongodb' | 'prisma' = schema.provider;
-  return schema.collections.map((collection: CollectionSchema) => ({
-    ...collection,
+  return schema.collections.map((collection) => ({
+    ...stripUndefinedProvider(collection),
     provider,
   }));
 };
@@ -134,11 +143,15 @@ export const toDbSchemaSnapshot = (
   schema: SchemaData,
   syncedAt: string
 ): DbSchemaSnapshot => {
+  const normalizedCollections = normalizeSchemaCollections(schema);
+
   if (schema.provider === 'multi') {
-    const sources = schema.sources
-      ? Object.entries(schema.sources).reduce((acc, [provider, source]) => {
+    const schemaSources = schema['sources'];
+    const sources = schemaSources
+      ? (['mongodb', 'prisma'] as const).reduce((acc, provider) => {
+        const source = schemaSources[provider];
         if (!source) return acc;
-        acc[provider as 'mongodb' | 'prisma'] = {
+        acc[provider] = {
           provider: source.provider,
           collections: source.collections.map(toDbSchemaSnapshotSourceCollection),
         };
@@ -148,7 +161,7 @@ export const toDbSchemaSnapshot = (
 
     return {
       provider: 'multi',
-      collections: schema.collections.map(toDbSchemaSnapshotCollection),
+      collections: normalizedCollections.map(toDbSchemaSnapshotCollection),
       ...(sources ? { sources } : {}),
       syncedAt,
     };
@@ -156,7 +169,7 @@ export const toDbSchemaSnapshot = (
 
   return {
     provider: schema.provider,
-    collections: schema.collections.map(toDbSchemaSnapshotCollection),
+    collections: normalizedCollections.map(toDbSchemaSnapshotCollection),
     syncedAt,
   };
 };

@@ -161,6 +161,9 @@ const buildPayload = (log: SystemLogRecord, critical: boolean): Record<string, u
   critical,
   level: log.level,
   message: log.message,
+  category:
+    log.category ??
+    (typeof log.context?.['category'] === 'string' ? log.context['category'] : null),
   source: log.source ?? null,
   path: log.path ?? null,
   method: log.method ?? null,

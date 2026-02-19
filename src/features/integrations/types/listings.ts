@@ -4,14 +4,14 @@ import type {
   ProductListingRelistPolicyDto,
   ProductListingWithDetailsDto,
   CreateProductListingDto,
+  IntegrationWithConnectionsDto,
+  ListingJobDto,
+  ProductJobDto,
 } from '@/shared/contracts/integrations';
-import type { 
-  IntegrationConnectionBasic, 
-  IntegrationWithConnections, 
-  IntegrationWithConnectionsBasic 
-} from '@/shared/types/domain/integrations';
 
-export type { ListingJob, ListingAttempt, ProductJob } from '@/shared/types/domain/listing-jobs';
+export type ListingJob = ListingJobDto;
+export type ListingAttempt = NonNullable<ProductListingDto['exportHistory']>[number];
+export type ProductJob = ProductJobDto;
 
 export type ProductListingRecord = ProductListingDto;
 
@@ -24,11 +24,9 @@ export type ProductListingRelistPolicy = ProductListingRelistPolicyDto;
 
 export type ProductListingWithDetails = ProductListingWithDetailsDto;
 
-export type {
-  IntegrationConnectionBasic,
-  IntegrationWithConnections,
-  IntegrationWithConnectionsBasic,
-};
+export type IntegrationConnectionBasic = IntegrationWithConnectionsDto;
+export type IntegrationWithConnections = IntegrationWithConnectionsDto;
+export type IntegrationWithConnectionsBasic = IntegrationWithConnectionsDto;
 
 export type CreateProductListingInput = Omit<CreateProductListingDto, 'listedAt' | 'expiresAt' | 'nextRelistAt' | 'lastRelistedAt' | 'lastStatusCheckAt'> & {
   listedAt?: string | Date | null;

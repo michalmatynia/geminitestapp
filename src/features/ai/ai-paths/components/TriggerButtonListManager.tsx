@@ -1,6 +1,6 @@
 'use client';
 
-import { GripVertical, Trash2, Edit } from 'lucide-react';
+import { GripVertical, Trash2, Edit, RefreshCw } from 'lucide-react';
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 
 import { ICON_LIBRARY_MAP } from '@/features/icons';
@@ -250,6 +250,12 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
       data={localRows}
       getRowId={(row) => row.id}
       variant='flat'
+      footer={
+        <div className='flex items-center gap-2 text-[11px] text-muted-foreground bg-muted/20 p-2 rounded'>
+          <RefreshCw className='size-3' />
+          Drag the handle on the left to reorder. The same order is used in modals and lists.
+        </div>
+      }
     />
   );
 };

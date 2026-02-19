@@ -1102,7 +1102,7 @@ export function CanvasBoard({
             const isSelected = selectedNodeIdSet.has(node.id);
             const isPrimarySelected = node.id === selectedNodeId;
             const style = typeStyles[node.type] ?? typeStyles.template;
-            const canUsePersistedStatusFallback = runtimeRunStatus !== 'idle';
+            const canUsePersistedStatusFallback = runtimeRunStatus === 'idle';
             const statusFromRuntimeState = runtimeState.outputs?.[node.id]?.['status'];
             const runtimeNodeStatusRaw =
             runtimeNodeStatuses?.[node.id] ??

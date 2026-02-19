@@ -9,29 +9,34 @@ export type {
   CreateProductCategoryDto as CreateCategoryDto,
   UpdateProductCategoryDto as UpdateCategoryDto,
   ProductCategoryDto,
-  ProductCategoryDto as ProductCategory
+  ProductCategoryDto as ProductCategory,
+  
+  // From domain aliases
+  PriceGroupTypeDto as PriceGroupType,
+  ProductDbProviderDto as ProductDbProvider,
+  ProductMigrationDirectionDto as ProductMigrationDirection,
+  ProductParameterDto as ProductParameter,
+  ProductParameterValueDto as ProductParameterValue,
+  ProductSimpleParameterDto as ProductSimpleParameter,
+  ProductSimpleParameterValueDto as ProductSimpleParameterValue,
+  ProductMigrationBatchResultDto as ProductMigrationBatchResult,
+  SyncDirectionDto as SyncDirection,
+  IntegrationDbProviderDto as IntegrationDbProvider,
+  ProducerDto as Producer,
+  ProductValidationPatternDto as ProductValidationPattern,
+  ProductValidationTargetDto as ProductValidationTarget,
+  ProductValidationSeverityDto as ProductValidationSeverity,
+  ProductValidatorConfigDto as ProductValidatorConfig,
+  ProductCategoryWithChildrenDto as ProductCategoryWithChildren,
 } from '@/shared/contracts/products';
 
 export type {
-  PriceGroupType,
-  ProductDbProvider,
-  ProductMigrationDirection,
-  ProductParameter,
-  ProductParameterValue,
-  ProductSimpleParameter,
-  ProductSimpleParameterValue,
-  ProductAiJobType,
-  ProductMigrationBatchResult,
-  SyncDirection,
-  IntegrationDbProvider,
-  UserPreferences,
-  Producer,
-  ProductValidationPattern,
-  ProductValidationTarget,
-  ProductValidationSeverity,
-  ProductValidatorConfig,
-  ProductCategoryWithChildren,
-} from '@/shared/types/domain/products';
+  ProductAiJobTypeDto as ProductAiJobType,
+} from '@/shared/contracts/jobs';
+
+export type {
+  UserPreferencesDto as UserPreferences,
+} from '@/shared/contracts/auth';
 
 export type {
   CatalogRecord,

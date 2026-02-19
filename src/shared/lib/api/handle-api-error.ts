@@ -64,6 +64,31 @@ type ApiErrorOptions = {
   requestId?: string | undefined;
 };
 
+const MAX_QUERY_KEYS = 20;
+
+const extractRequestDiagnostics = (
+  request: Request | undefined,
+): {
+  route?: string;
+  method?: string;
+  queryKeys?: string[];
+} => {
+  if (!request) return {};
+  try {
+    const url = new URL(request.url);
+    const queryKeys = Array.from(url.searchParams.keys()).slice(0, MAX_QUERY_KEYS);
+    return {
+      route: url.pathname,
+      method: request.method,
+      ...(queryKeys.length > 0 ? { queryKeys } : {}),
+    };
+  } catch {
+    return {
+      method: request.method,
+    };
+  }
+};
+
 /**
  * Creates a standardized error response with logging.
  *
@@ -97,6 +122,7 @@ export const createErrorResponse = async (
 
   // Determine log level based on error type
   const level = resolved.critical ? 'error' : resolved.expected ? 'warn' : 'error';
+  const requestDiagnostics = extractRequestDiagnostics(options?.request);
 
   // Log the error
   void logSystemEvent({
@@ -113,6 +139,8 @@ export const createErrorResponse = async (
       category: resolved.category,
       critical: resolved.critical,
       retryable: resolved.retryable,
+      expected: resolved.expected,
+      ...requestDiagnostics,
       ...(resolved.retryAfterMs ? { retryAfterMs: resolved.retryAfterMs } : {}),
       ...(resolved.meta ? { meta: resolved.meta } : {}),
     },

@@ -5,9 +5,16 @@ import { z } from 'zod';
  */
 
 export const documentationModuleIdsSchema = z.enum([
+  'ai-paths',
+  'cms',
+  'data-import-export',
   'image-studio',
+  'observability',
+  'products',
+  'prompt-engine',
   'prompt-exploder',
   'validator',
+  'vector-drawing',
 ]);
 
 export type DocumentationModuleIdDto = z.infer<typeof documentationModuleIdsSchema> | (string & {});

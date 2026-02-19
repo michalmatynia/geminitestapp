@@ -25,10 +25,8 @@ import {
   stableStringify,
   EMPTY_RUNTIME_STATE,
 } from '@/features/ai/ai-paths/lib';
-import { type AiNode, type Edge, type NodeDefinition } from '../types';
 import {
   Button,
-  SelectSimple,
   useToast,
   EmptyState,
 } from '@/shared/ui';
@@ -44,12 +42,15 @@ import {
   DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID,
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
+  type AiNode,
+  type Edge,
   type CaseResolverEdgeMeta,
   type CaseResolverAssetFile,
   type CaseResolverFile,
   type CaseResolverGraph,
   type CaseResolverNodeMeta,
   type CaseResolverPdfExtractionPresetId,
+  type NodeDefinition,
 } from '../types';
 import {
   createCaseResolverCanvasDropHandlers,
@@ -181,6 +182,16 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
         ? edges.find((edge: Edge) => edge.id === selectedEdgeId) ?? null
         : null,
     [edges, selectedEdgeId]
+  );
+
+  const nodeTypeOptions = useMemo(
+    () => [
+      { value: 'prompt', label: 'Prompt Node' },
+      { value: 'model', label: 'Model Node' },
+      { value: 'template', label: 'Template Node' },
+      { value: 'database', label: 'Database Node' },
+    ] as const,
+    []
   );
 
   const compiled = useMemo(
@@ -684,27 +695,30 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
 
           <div className='mx-1 h-6 w-px bg-border/60' />
 
-          <SelectSimple size='sm'
-            value={newNodeType}
-            onValueChange={(value: string): void => {
-              if (
-                value === 'prompt' ||
-                value === 'model' ||
-                value === 'template' ||
-                value === 'database'
-              ) {
-                setNewNodeType(value);
-              }
-            }}
-            options={[
-              { value: 'prompt', label: 'Prompt Node' },
-              { value: 'model', label: 'Model Node' },
-              { value: 'template', label: 'Template Node' },
-              { value: 'database', label: 'Database Node' },
-            ]}
-            className='w-[170px]'
-            triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
-          />
+          <div className='w-[170px]'>
+            <select
+              value={newNodeType}
+              onChange={(event): void => {
+                const value = event.target.value;
+                if (
+                  value === 'prompt' ||
+                  value === 'model' ||
+                  value === 'template' ||
+                  value === 'database'
+                ) {
+                  setNewNodeType(value);
+                }
+              }}
+              className='h-8 w-full rounded-md border border-border bg-card/60 px-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-ring/40'
+              aria-label='Node type'
+            >
+              {nodeTypeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <Button
             type='button'
             onClick={addGenericNode}
@@ -715,21 +729,29 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
 
           <div className='mx-1 h-6 w-px bg-border/60' />
 
-          <SelectSimple size='sm'
-            value={pdfExtractionPresetId}
-            onValueChange={(value: string): void => {
-              if (
-                value === 'plain_text' ||
-                value === 'structured_sections' ||
-                value === 'facts_entities'
-              ) {
-                setPdfExtractionPresetId(value);
-              }
-            }}
-            options={CASE_RESOLVER_PDF_EXTRACTION_PRESETS}
-            className='w-[220px]'
-            triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
-          />
+          <div className='w-[220px]'>
+            <select
+              value={pdfExtractionPresetId}
+              onChange={(event): void => {
+                const value = event.target.value;
+                if (
+                  value === 'plain_text' ||
+                  value === 'structured_sections' ||
+                  value === 'facts_entities'
+                ) {
+                  setPdfExtractionPresetId(value);
+                }
+              }}
+              className='h-8 w-full rounded-md border border-border bg-card/60 px-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-ring/40'
+              aria-label='PDF extraction preset'
+            >
+              {CASE_RESOLVER_PDF_EXTRACTION_PRESETS.map((preset) => (
+                <option key={preset.value} value={preset.value}>
+                  {preset.label}
+                </option>
+              ))}
+            </select>
+          </div>
           {isDropImporting ? (
             <span className='text-[11px] text-gray-400'>Importing dropped files...</span>
           ) : null}

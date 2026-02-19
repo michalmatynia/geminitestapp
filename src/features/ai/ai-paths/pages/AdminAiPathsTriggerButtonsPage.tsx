@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
-import { MousePointer2, Plus, RefreshCw } from 'lucide-react';
+import { MousePointer2, Plus } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useAiPathsSettingsQuery } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
@@ -33,7 +33,6 @@ import {
   Checkbox, 
   useToast,
   PanelHeader,
-  ListPanel,
   ConfirmModal,
 } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
@@ -625,20 +624,14 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         ]}
       />
 
-      <ListPanel>
-        <TriggerButtonListManager
-          data={rows}
-          onEdit={(record: AiTriggerButtonRecord): void => { handleEdit(record); }}
-          onDelete={(id: string): void => { handleDeleteRequest(id); }}
-          onOrderChange={(ids: string[]): void => { handleOrderChange(ids); }}
-          onToggleVisibility={handleToggleVisibility}
-          isLoading={triggerButtonsQuery.isLoading}
-        />
-        <div className='mt-4 flex items-center gap-2 text-[11px] text-muted-foreground bg-muted/20 p-2 rounded'>
-          <RefreshCw className='size-3' />
-          Drag the handle on the left to reorder. The same order is used in modals and lists.
-        </div>
-      </ListPanel>
+      <TriggerButtonListManager
+        data={rows}
+        onEdit={(record: AiTriggerButtonRecord): void => { handleEdit(record); }}
+        onDelete={(id: string): void => { handleDeleteRequest(id); }}
+        onOrderChange={(ids: string[]): void => { handleOrderChange(ids); }}
+        onToggleVisibility={handleToggleVisibility}
+        isLoading={triggerButtonsQuery.isLoading}
+      />
 
       <SettingsPanelBuilder
         open={editorOpen}

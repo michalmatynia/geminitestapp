@@ -5,6 +5,11 @@ import type {
   ApiErrorDto,
   ApiResponseDto,
   ListResponseDto,
+  CreateDto as CreateDtoContract,
+  UpdateDto as UpdateDtoContract,
+  SavePayloadDto,
+  CreatePayloadDto,
+  UpdatePayloadDto,
 } from '../contracts/base';
 
 /**
@@ -26,12 +31,12 @@ export type NamedDto = NamedDtoContract;
 /**
  * Utility type for creating a new entity (omits base fields)
  */
-export type CreateDto<T extends DtoBase> = Omit<T, keyof DtoBase>;
+export type CreateDto<T extends DtoBase> = CreateDtoContract<T>;
 
 /**
  * Utility type for updating an existing entity
  */
-export type UpdateDto<T extends DtoBase> = Partial<CreateDto<T>>;
+export type UpdateDto<T extends DtoBase> = UpdateDtoContract<T>;
 
 /**
  * Standard paginated list response
@@ -41,23 +46,17 @@ export type ListResponse<T> = ListResponseDto<T>;
 /**
  * Payload for save operations (create or update)
  */
-export interface SavePayload<T extends DtoBase> {
-  id?: string;
-  data: Partial<CreateDto<T>>;
-}
+export type SavePayload<T extends DtoBase> = SavePayloadDto<T>;
 
 /**
  * Payload for create operations
  */
-export type CreatePayload<T extends DtoBase> = CreateDto<T>;
+export type CreatePayload<T extends DtoBase> = CreatePayloadDto<T>;
 
 /**
  * Payload for update operations
  */
-export interface UpdatePayload<T extends DtoBase> {
-  id: string;
-  data: Partial<CreateDto<T>>;
-}
+export type UpdatePayload<T extends DtoBase> = UpdatePayloadDto<T>;
 
 /**
  * Standard API response wrapper

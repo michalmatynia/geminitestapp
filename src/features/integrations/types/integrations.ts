@@ -3,17 +3,9 @@ import type {
   ImageTransformOptionsDto, 
   ImageBase64ModeDto,
   IntegrationDto,
-  IntegrationConnectionDto
+  IntegrationConnectionDto,
+  IntegrationWithConnectionsDto
 } from '@/shared/contracts/integrations';
-import type { 
-  IntegrationWithConnections,
-  IntegrationWithConnectionsBasic 
-} from '@/shared/types/domain/integrations';
-
-export type {
-  IntegrationWithConnections,
-  IntegrationWithConnectionsBasic,
-};
 
 // DTO type exports
 export type {
@@ -39,6 +31,9 @@ export type {
   BaseApiRawResultDto as BaseApiRawResult,
   ImportParameterCacheDto as ImportParameterCache,
 } from '@/shared/contracts/integrations';
+
+export type IntegrationWithConnections = IntegrationWithConnectionsDto;
+export type IntegrationWithConnectionsBasic = IntegrationWithConnectionsDto;
 
 // Integration domain record types
 

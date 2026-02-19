@@ -36,6 +36,7 @@ export type SystemLogLevelDto = z.infer<typeof systemLogLevelSchema>;
 export const systemLogRecordSchema = dtoBaseSchema.extend({
   level: systemLogLevelSchema,
   message: z.string(),
+  category: z.string().nullable().optional(),
   source: z.string().nullable().optional(),
   context: z.record(z.string(), z.unknown()).nullable().optional(),
   stack: z.string().nullable().optional(),
@@ -51,6 +52,7 @@ export type SystemLogRecordDto = z.infer<typeof systemLogRecordSchema>;
 export const createSystemLogInputSchema = z.object({
   level: systemLogLevelSchema.optional(),
   message: z.string(),
+  category: z.string().nullable().optional(),
   source: z.string().nullable().optional(),
   context: z.record(z.string(), z.unknown()).nullable().optional(),
   stack: z.string().nullable().optional(),

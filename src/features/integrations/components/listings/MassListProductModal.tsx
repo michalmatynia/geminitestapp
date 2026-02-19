@@ -6,7 +6,7 @@ import {
   ListingSettingsProvider,
   useListingSettingsContext,
 } from '@/features/integrations/context/ListingSettingsContext';
-import type { ModalStateProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { FormModal, Alert, LoadingState } from '@/shared/ui';
 
 import { BaseListingSettings } from './BaseListingSettings';
@@ -15,8 +15,7 @@ import { useMassListForm } from './hooks/useMassListForm';
 import { IntegrationAccountSummary } from './IntegrationAccountSummary';
 import { MassListProductModalViewProvider, useMassListProductModalViewContext } from './mass-list-modal/context/MassListProductModalViewContext';
 
-interface MassListProductModalProps extends ModalStateProps {
-  productIds: string[];
+interface MassListProductModalProps extends EntityModalProps<string[]> {
   integrationId: string;
   connectionId: string;
 }
@@ -126,12 +125,12 @@ export function MassListProductModal(props: MassListProductModalProps): React.JS
     isOpen,
     integrationId,
     connectionId,
-    productIds,
+    item: productIds,
     onClose,
     onSuccess,
   } = props;
 
-  if (!isOpen) return null;
+  if (!productIds || !isOpen) return null;
 
   return (
     <ListingSettingsProvider

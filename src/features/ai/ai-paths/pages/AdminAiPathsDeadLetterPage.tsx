@@ -13,6 +13,7 @@ import {
   Button, 
   Checkbox, 
   SelectSimple, 
+  DataTable,
   StandardDataTablePanel, 
   ConfirmModal,
   FormField,

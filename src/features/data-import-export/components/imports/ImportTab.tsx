@@ -10,6 +10,8 @@ import type {
   InventoryOption,
   Template,
 } from '@/features/data-import-export/types/imports';
+import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
+import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import {
   Button,
   Pagination,
@@ -118,6 +120,10 @@ export function ImportTab(): React.JSX.Element {
     },
     [setSelectedImportIds, visibleImportIds]
   );
+  const skuExistsTooltip = getDocumentationTooltip(
+    DOCUMENTATION_MODULE_IDS.dataImportExport,
+    'import_sku_exists_warning'
+  ) ?? 'SKU already exists in the database';
   const handleSelectVisibleImports = useCallback((): void => {
     toggleVisibleImportSelection(true);
   }, [toggleVisibleImportSelection]);
@@ -313,7 +319,7 @@ export function ImportTab(): React.JSX.Element {
             {row.original.sku || '—'}
           </span>
           {row.original.skuExists && (
-            <Tooltip content='SKU already exists in the database'>
+            <Tooltip content={skuExistsTooltip}>
               <span className='text-[10px] opacity-70 cursor-help'>⚠</span>
             </Tooltip>
           )}
@@ -348,6 +354,7 @@ export function ImportTab(): React.JSX.Element {
     allVisibleImportsSelected,
     selectedImportIds,
     setSelectedImportIds,
+    skuExistsTooltip,
     someVisibleImportsSelected,
     toggleVisibleImportSelection,
   ]);

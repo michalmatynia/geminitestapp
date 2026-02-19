@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ArrowUpDown, Download } from 'lucide-react';
 import { useRef, useState } from 'react';
 
+import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
 import {
   fetchPreferredBaseConnection,
   integrationSelectionQueryKeys,
@@ -17,6 +18,7 @@ import { getProductDetailQueryKey, productsListsQueryKey } from '@/features/prod
 import type { ProductWithImages } from '@/features/products/types';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import { calculatePriceForCurrency, normalizeCurrencyCode } from '@/features/products/utils/priceCalculation';
+import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import { api } from '@/shared/lib/api-client';
 import { invalidateProductListings } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -534,7 +536,14 @@ export const getProductColumns = (
               </span>
             </Tooltip>
             {isImported && (
-              <Tooltip content='Imported product'>
+              <Tooltip
+                content={
+                  getDocumentationTooltip(
+                    DOCUMENTATION_MODULE_IDS.products,
+                    'product_imported_badge'
+                  ) ?? 'Imported product'
+                }
+              >
                 <span>
                   <Download
                     className='size-3 text-blue-400'

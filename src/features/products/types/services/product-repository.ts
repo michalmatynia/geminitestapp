@@ -1,9 +1,9 @@
-import type { ProductWithImages, ProductRecord } from '@/features/products/types';
+import type { ProductWithImages, ProductRecord } from '../../types';
 import type {
   ProductCreateInput,
   ProductFiltersParsed,
   ProductUpdateInput,
-} from '@/features/products/validations';
+} from '../../validations';
 
 import type { Prisma } from '@prisma/client';
 

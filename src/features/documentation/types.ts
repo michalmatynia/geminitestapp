@@ -5,9 +5,16 @@ import type {
 } from '@/shared/contracts/documentation';
 
 export const DOCUMENTATION_MODULE_IDS = {
+  aiPaths: 'ai-paths',
+  cms: 'cms',
+  dataImportExport: 'data-import-export',
   imageStudio: 'image-studio',
+  observability: 'observability',
+  products: 'products',
+  promptEngine: 'prompt-engine',
   promptExploder: 'prompt-exploder',
   validator: 'validator',
+  vectorDrawing: 'vector-drawing',
 } as const;
 
 export type BuiltInDocumentationModuleId =

@@ -7,8 +7,10 @@ import { APP_EMBED_SETTING_KEY, type AppEmbedId, APP_EMBED_OPTIONS } from '@/fea
 import type { CssAnimationConfig } from '@/features/cms/types/css-animations';
 import type { CustomCssAiConfig } from '@/features/cms/types/custom-css-ai';
 import { DEFAULT_CUSTOM_CSS_AI_CONFIG } from '@/features/cms/types/custom-css-ai';
+import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
 import type { GsapAnimationConfig } from '@/features/gsap';
 import { logClientError } from '@/features/observability';
+import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, SectionHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, Textarea, useToast, SidePanel, SelectSimple, ToggleRow, Tooltip } from '@/shared/ui';
@@ -239,6 +241,31 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
   const selectedLabel = useMemo(() => selectedSection ? (sectionDef?.label ?? selectedSection.type) : (selectedColumn ? 'Column' : (selectedBlock ? (blockDef?.label ?? selectedBlock.type) : '')), [selectedSection, selectedColumn, selectedBlock, sectionDef, blockDef]);
   const selectedTitle = useMemo(() => selectedSection ? `Section: ${selectedLabel}` : (selectedBlock ? `Block: ${selectedLabel}` : (selectedColumn ? 'Column' : 'Settings')), [selectedSection, selectedBlock, selectedColumn, selectedLabel]);
+  const headerTooltips = useMemo(
+    () => ({
+      hideRightPanel: getDocumentationTooltip(
+        DOCUMENTATION_MODULE_IDS.cms,
+        'component_settings_hide_right_panel'
+      ) ?? 'Hide right panel',
+      toggleInspector: getDocumentationTooltip(
+        DOCUMENTATION_MODULE_IDS.cms,
+        'component_settings_toggle_inspector'
+      ) ?? 'Toggle inspector',
+      desktopPreview: getDocumentationTooltip(
+        DOCUMENTATION_MODULE_IDS.cms,
+        'component_settings_desktop_preview'
+      ) ?? 'Desktop preview',
+      mobilePreview: getDocumentationTooltip(
+        DOCUMENTATION_MODULE_IDS.cms,
+        'component_settings_mobile_preview'
+      ) ?? 'Mobile preview',
+      toggleEditorChrome: getDocumentationTooltip(
+        DOCUMENTATION_MODULE_IDS.cms,
+        'component_settings_toggle_editor_chrome'
+      ) ?? 'Toggle editor chrome',
+    }),
+    []
+  );
 
   const contentAiAllowedKeys = useMemo((): string[] => {
     const schema = selectedSection ? sectionDef?.settingsSchema : (selectedColumn ? columnDef?.settingsSchema : (selectedBlock ? blockDef?.settingsSchema : null));
@@ -273,7 +300,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
             actionsClassName='justify-start'
             actions={(
               <div className='flex items-center gap-1'>
-                <Tooltip content='Hide right panel'>
+                <Tooltip content={headerTooltips.hideRightPanel}>
                   <Button
                     type='button'
                     size='icon'
@@ -285,7 +312,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                     <PanelRightClose className='size-3.5' />
                   </Button>
                 </Tooltip>
-                <Tooltip content='Toggle inspector'>
+                <Tooltip content={headerTooltips.toggleInspector}>
                   <Button
                     type='button'
                     size='icon'
@@ -297,7 +324,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                     <MousePointer2 className='size-3.5' />
                   </Button>
                 </Tooltip>
-                <Tooltip content='Desktop preview'>
+                <Tooltip content={headerTooltips.desktopPreview}>
                   <Button
                     type='button'
                     size='icon'
@@ -309,7 +336,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                     <Monitor className='size-3.5' />
                   </Button>
                 </Tooltip>
-                <Tooltip content='Mobile preview'>
+                <Tooltip content={headerTooltips.mobilePreview}>
                   <Button
                     type='button'
                     size='icon'
@@ -321,7 +348,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                     <Smartphone className='size-3.5' />
                   </Button>
                 </Tooltip>
-                <Tooltip content='Toggle editor chrome'>
+                <Tooltip content={headerTooltips.toggleEditorChrome}>
                   <Button
                     type='button'
                     size='icon'

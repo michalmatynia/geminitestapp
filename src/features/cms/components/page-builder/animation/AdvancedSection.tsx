@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback } from 'react';
 
+import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
 import type {
   TextEffect,
   DragAxis,
@@ -17,6 +18,7 @@ import {
   DRAG_AXES,
   VELOCITY_EFFECTS,
 } from '@/features/gsap';
+import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import {
   Button,
   Checkbox,
@@ -38,6 +40,14 @@ const EMPTY_SHAPES: VectorShape[] = [];
 
 export function AdvancedSection(): React.ReactNode {
   const { config, onChange, openVectorOverlay } = useAnimationConfigContext();
+  const drawPathTooltip = getDocumentationTooltip(
+    DOCUMENTATION_MODULE_IDS.cms,
+    'animation_draw_path_canvas'
+  ) ?? 'Draw path on canvas';
+  const clearPathTooltip = getDocumentationTooltip(
+    DOCUMENTATION_MODULE_IDS.cms,
+    'animation_clear_path_canvas'
+  ) ?? 'Clear path';
   const motionPathEnabledValue = config.motionPathEnabled ?? DEFAULT_ANIMATION_CONFIG.motionPathEnabled ?? false;
   const motionPathPathValue = config.motionPathPath ?? DEFAULT_ANIMATION_CONFIG.motionPathPath ?? '';
   const motionPathAlignValue = config.motionPathAlign ?? DEFAULT_ANIMATION_CONFIG.motionPathAlign ?? true;
@@ -455,7 +465,7 @@ export function AdvancedSection(): React.ReactNode {
                   placeholder='SVG path data or selector (#path)'
                   className='flex-1 text-xs font-mono h-9'
                 />
-                <Tooltip content='Draw path on canvas'>
+                <Tooltip content={drawPathTooltip}>
                   <Button
                     type='button'
                     size='icon'
@@ -466,7 +476,7 @@ export function AdvancedSection(): React.ReactNode {
                     <PenLine className='size-4' />
                   </Button>
                 </Tooltip>
-                <Tooltip content='Clear path'>
+                <Tooltip content={clearPathTooltip}>
                   <Button
                     type='button'
                     size='icon'
@@ -579,12 +589,12 @@ export function AdvancedSection(): React.ReactNode {
                     placeholder='Draw or paste SVG path'
                     className='flex-1 text-xs font-mono h-9'
                   />
-                  <Tooltip content='Draw path on canvas'>
+                  <Tooltip content={drawPathTooltip}>
                     <Button type='button' size='icon' variant='outline' onClick={handleSvgDrawCanvas} className='h-9 w-9'>
                       <PenLine className='size-4' />
                     </Button>
                   </Tooltip>
-                  <Tooltip content='Clear path'>
+                  <Tooltip content={clearPathTooltip}>
                     <Button
                       type='button'
                       size='icon'
@@ -647,12 +657,12 @@ export function AdvancedSection(): React.ReactNode {
                     placeholder='Target path data or selector (#path)'
                     className='flex-1 text-xs font-mono h-9'
                   />
-                  <Tooltip content='Draw path on canvas'>
+                  <Tooltip content={drawPathTooltip}>
                     <Button type='button' size='icon' variant='outline' onClick={handleSvgMorphDraw} className='h-9 w-9'>
                       <PenLine className='size-4' />
                     </Button>
                   </Tooltip>
-                  <Tooltip content='Clear path'>
+                  <Tooltip content={clearPathTooltip}>
                     <Button
                       type='button'
                       size='icon'

@@ -115,3 +115,34 @@ export type ListResponseDto<T> = {
   totalPages?: number;
   hasMore?: boolean;
 };
+
+/**
+ * Utility type for creating a new entity (omits base fields)
+ */
+export type CreateDto<T extends DtoBase> = Omit<T, keyof DtoBase>;
+
+/**
+ * Utility type for updating an existing entity
+ */
+export type UpdateDto<T extends DtoBase> = Partial<CreateDto<T>>;
+
+/**
+ * Payload for save operations (create or update)
+ */
+export interface SavePayloadDto<T extends DtoBase> {
+  id?: string;
+  data: Partial<CreateDto<T>>;
+}
+
+/**
+ * Payload for create operations
+ */
+export type CreatePayloadDto<T extends DtoBase> = CreateDto<T>;
+
+/**
+ * Payload for update operations
+ */
+export interface UpdatePayloadDto<T extends DtoBase> {
+  id: string;
+  data: Partial<CreateDto<T>>;
+}

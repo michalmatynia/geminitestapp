@@ -102,18 +102,40 @@ export const createCaseResolverCanvasDropHandlers = ({
   const toCaseResolverEdge = (
     edge: Edge
   ): CaseResolverGraph['edges'][number] | null => {
-    const from = edge.from ?? edge.source;
-    const to = edge.to ?? edge.target;
+    const legacyEdge = edge as Edge & {
+      from?: string;
+      to?: string;
+      fromPort?: string;
+      toPort?: string;
+      label?: string;
+    };
+    const from = legacyEdge.from ?? edge.source;
+    const to = legacyEdge.to ?? edge.target;
     if (!from || !to) return null;
     return {
       id: edge.id,
       from,
       to,
-      ...(edge.label ? { label: edge.label } : {}),
-      ...(edge.fromPort ?? edge.sourceHandle ? { fromPort: edge.fromPort ?? edge.sourceHandle ?? undefined } : {}),
-      ...(edge.toPort ?? edge.targetHandle ? { toPort: edge.toPort ?? edge.targetHandle ?? undefined } : {}),
+      ...(legacyEdge.label ? { label: legacyEdge.label } : {}),
+      ...(legacyEdge.fromPort ?? edge.sourceHandle
+        ? { fromPort: legacyEdge.fromPort ?? edge.sourceHandle ?? undefined }
+        : {}),
+      ...(legacyEdge.toPort ?? edge.targetHandle
+        ? { toPort: legacyEdge.toPort ?? edge.targetHandle ?? undefined }
+        : {}),
     };
   };
+  const toCanvasEdge = (edge: CaseResolverGraph['edges'][number]): Edge => ({
+    id: edge.id,
+    createdAt: new Date().toISOString(),
+    updatedAt: null,
+    source: edge.from,
+    target: edge.to,
+    type: 'default',
+    data: {},
+    ...(edge.fromPort ? { sourceHandle: edge.fromPort } : {}),
+    ...(edge.toPort ? { targetHandle: edge.toPort } : {}),
+  });
   const existingEdges: CaseResolverGraph['edges'] = edges
     .map(toCaseResolverEdge)
     .filter((edge): edge is CaseResolverGraph['edges'][number] => edge !== null);
@@ -281,9 +303,9 @@ export const createCaseResolverCanvasDropHandlers = ({
       addNode(extractionPromptNode);
       addNode(modelNode);
       addNode(outputNode);
-      addEdge(edgePdfToPrompt);
-      addEdge(edgePromptToModel);
-      addEdge(edgeModelToOutput);
+      addEdge(toCanvasEdge(edgePdfToPrompt));
+      addEdge(toCanvasEdge(edgePromptToModel));
+      addEdge(toCanvasEdge(edgeModelToOutput));
       selectNode(outputNodeId);
 
       onGraphChange({

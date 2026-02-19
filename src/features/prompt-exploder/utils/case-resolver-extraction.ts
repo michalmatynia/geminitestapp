@@ -740,6 +740,12 @@ export const buildCaseResolverSegmentCaptureRules = (
   rules: PromptValidationRule[],
   validationScope: string
 ): CaseResolverSegmentCaptureRule[] => {
+  const normalizeScopeToken = (value: string): string =>
+    normalizeText(value)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+
   const mapField = (fieldPath: string): CaseResolverCaptureField | null => {
     const normalized = fieldPath.trim();
     if (!normalized) return null;
@@ -774,7 +780,10 @@ export const buildCaseResolverSegmentCaptureRules = (
 
   const resolvesScope = (rule: PromptValidationRule): boolean => {
     if (!rule.appliesToScopes || rule.appliesToScopes.length === 0) return true;
-    return rule.appliesToScopes.some((scope) => scope === validationScope);
+    const normalizedValidationScope = normalizeScopeToken(validationScope);
+    return rule.appliesToScopes.some(
+      (scope) => normalizeScopeToken(scope) === normalizedValidationScope
+    );
   };
 
   return rules

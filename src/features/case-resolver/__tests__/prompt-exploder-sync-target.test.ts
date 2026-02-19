@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  resolveCaseResolverPromptExploderFallbackTarget,
   resolveCaseResolverPromptExploderTarget,
 } from '@/features/case-resolver/hooks/useCaseResolverState.prompt-exploder-sync';
 import { createCaseResolverFile } from '@/features/case-resolver/settings';
@@ -103,5 +104,46 @@ describe('case resolver prompt exploder target resolution', () => {
       targetFileId: alternateFile.id,
       usedActiveFallback: false,
     });
+  });
+
+  it('returns the stored workspace id when context id matches only after normalization', () => {
+    const spacedIdDocument = createCaseResolverFile({
+      id: '  doc-spaced  ',
+      fileType: 'document',
+      name: 'Document With Spaced Id',
+      parentCaseId: 'case-1',
+    });
+
+    expect(
+      resolveCaseResolverPromptExploderTarget({
+        workspaceActiveFileId: null,
+        workspaceFiles: [caseFile, spacedIdDocument],
+        payloadContextFileId: 'doc-spaced',
+      })
+    ).toEqual({
+      status: 'ready',
+      targetFileId: '  doc-spaced  ',
+      usedActiveFallback: false,
+    });
+  });
+
+  it('prefers active file as fallback target when original target is unavailable', () => {
+    expect(
+      resolveCaseResolverPromptExploderFallbackTarget({
+        workspaceActiveFileId: alternateFile.id,
+        workspaceFiles: [caseFile, documentFile, alternateFile],
+        excludedFileId: documentFile.id,
+      })
+    ).toBe(alternateFile.id);
+  });
+
+  it('falls back to another document-like file when active fallback is unavailable', () => {
+    expect(
+      resolveCaseResolverPromptExploderFallbackTarget({
+        workspaceActiveFileId: documentFile.id,
+        workspaceFiles: [caseFile, documentFile, alternateFile],
+        excludedFileId: documentFile.id,
+      })
+    ).toBe(alternateFile.id);
   });
 });

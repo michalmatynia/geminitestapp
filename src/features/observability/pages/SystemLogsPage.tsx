@@ -3,6 +3,7 @@
 import { AlertTriangle, Copy, Link2, Monitor, Server, Shield, Trash2, SearchIcon, Eye } from 'lucide-react';
 import React, { Suspense, useMemo } from 'react';
 
+import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
 import { SystemLogsProvider, useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
 import {
   SYSTEM_LOG_FILTER_DEFAULTS,
@@ -12,6 +13,7 @@ import {
   type LogTriagePreset,
   type SystemLogFilterFormValues,
 } from '@/features/observability/lib/log-triage-presets';
+import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import { 
   MongoIndexInfoDto as MongoIndexInfo,
   MongoCollectionIndexStatusDto as MongoCollectionIndexStatus
@@ -19,6 +21,7 @@ import {
 import type { SystemLogRecord, AiInsightRecord } from '@/shared/types';
 import { 
   Button, 
+  DataTable,
   DynamicFilters, 
   StandardDataTablePanel, 
   Pagination, 
@@ -43,6 +46,17 @@ const formatTimestamp = (value: Date | string): string => {
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
   return date.toLocaleString();
+};
+
+const readContextString = (log: SystemLogRecord, key: string): string | null => {
+  const value = log.context?.[key];
+  return typeof value === 'string' && value.trim().length > 0 ? value : null;
+};
+
+const getLogCategory = (log: SystemLogRecord): string | null => {
+  return typeof log.category === 'string' && log.category.trim().length > 0
+    ? log.category
+    : readContextString(log, 'category');
 };
 
 const triagePresetIcons: Record<LogTriagePreset['id'], React.ComponentType<{ className?: string }>> = {
@@ -336,6 +350,10 @@ function LogList(): React.JSX.Element {
     interpretLogMutation,
     logInterpretations,
   } = useSystemLogsContext();
+  const aiInterpretationTooltip = getDocumentationTooltip(
+    DOCUMENTATION_MODULE_IDS.observability,
+    'system_logs_ai_interpretation'
+  ) ?? 'AI Interpretation';
 
   const columns = useMemo<ColumnDef<SystemLogRecord>[]>(() => [
     {
@@ -398,7 +416,7 @@ function LogList(): React.JSX.Element {
       header: () => <div className='text-right'>Tools</div>,
       cell: ({ row }) => (
         <div className='flex justify-end gap-2'>
-          <Tooltip content='AI Interpretation'>
+          <Tooltip content={aiInterpretationTooltip}>
             <Button
               variant='ghost'
               size='xs'
@@ -412,7 +430,7 @@ function LogList(): React.JSX.Element {
         </div>
       ),
     },
-  ], [interpretLogMutation]);
+  ], [aiInterpretationTooltip, interpretLogMutation]);
 
   return (
     <StandardDataTablePanel
@@ -436,6 +454,11 @@ function LogList(): React.JSX.Element {
       stickyHeader
       renderRowDetails={({ row }: { row: { original: SystemLogRecord } }) => {
         const log = row.original;
+        const category = getLogCategory(log);
+        const fingerprint = readContextString(log, 'fingerprint');
+        const errorCode = readContextString(log, 'errorCode') ?? readContextString(log, 'code');
+        const errorName = readContextString(log, 'errorName') ?? readContextString(log, 'name');
+        const errorId = readContextString(log, 'errorId');
         const interpretation = logInterpretations[log.id];
         return (
           <div className='p-6 bg-black/40 space-y-6 border-t border-white/5'>
@@ -467,6 +490,29 @@ function LogList(): React.JSX.Element {
                     <MetadataItem
                       label='User ID'
                       value={log.userId}
+                      mono
+                    />
+                    <MetadataItem
+                      label='Error ID'
+                      value={errorId}
+                      mono
+                    />
+                    <MetadataItem
+                      label='Category'
+                      value={category}
+                    />
+                    <MetadataItem
+                      label='Error Code'
+                      value={errorCode}
+                      mono
+                    />
+                    <MetadataItem
+                      label='Error Name'
+                      value={errorName}
+                    />
+                    <MetadataItem
+                      label='Fingerprint'
+                      value={fingerprint}
                       mono
                     />
                   </div>

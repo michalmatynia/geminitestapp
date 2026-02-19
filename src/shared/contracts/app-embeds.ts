@@ -8,6 +8,9 @@ import { namedDtoSchema } from './base';
 export const appEmbedTypeSchema = z.enum(['iframe', 'widget', 'script']);
 export type AppEmbedTypeDto = z.infer<typeof appEmbedTypeSchema>;
 
+export const appEmbedIdSchema = z.enum(['chatbot', 'ai-paths', 'notes', 'products']);
+export type AppEmbedIdDto = z.infer<typeof appEmbedIdSchema>;
+
 export const appEmbedSchema = namedDtoSchema.extend({
   type: appEmbedTypeSchema,
   config: z.record(z.string(), z.unknown()),

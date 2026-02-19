@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { fetchAssets3D, fetchCategories, fetchTags, reindexAssets3DFromDisk } from '@/features/viewer3d/api';
-import type { Asset3DListFilters, Asset3DRecord } from '@/features/viewer3d/types';
+import type { Asset3DListFilters, Asset3DRecord } from '../types';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,

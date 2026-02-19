@@ -20,20 +20,34 @@ import type { CollectionSchema, SchemaData } from './database/types';
 
 const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema[] => {
   if (!schema) return [];
+
+  const stripUndefinedProvider = (
+    collection: SchemaData['collections'][number]
+  ): CollectionSchema => {
+    const { provider, ...rest } = collection;
+    return provider ? { ...rest, provider } : rest;
+  };
+
   if (schema.provider === 'multi') {
-    if (schema.collections?.length) return schema.collections;
+    if (schema.collections?.length) return schema.collections.map((collection) => stripUndefinedProvider(collection));
     const merged: CollectionSchema[] = [];
     (['mongodb', 'prisma'] as const).forEach((provider) => {
-      const source = schema.sources?.[provider];
+      const source = schema['sources']?.[provider] as
+        | { collections?: SchemaData['collections'] }
+        | null
+        | undefined;
       if (!source?.collections?.length) return;
-      source.collections.forEach((collection) => {
-        merged.push({ ...collection, provider });
+      source.collections.forEach((collection: SchemaData['collections'][number]) => {
+        merged.push({ ...stripUndefinedProvider(collection), provider });
       });
     });
     return merged;
   }
   const provider: 'mongodb' | 'prisma' = schema.provider;
-  return schema.collections.map((collection) => ({ ...collection, provider }));
+  return schema.collections.map((collection) => ({
+    ...stripUndefinedProvider(collection),
+    provider,
+  }));
 };
 
 const buildCollectionKey = (

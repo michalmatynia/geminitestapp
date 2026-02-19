@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { notifyCriticalError } from '@/features/observability/lib/critical-error-notifier';
 import { createSystemLog } from '@/features/observability/lib/system-log-repository';
 import { logSystemEvent, logSystemError } from '@/features/observability/lib/system-logger';
+import { AppError, AppErrorCodes } from '@/shared/errors/app-error';
 
 vi.mock('@/features/observability/lib/system-log-repository', () => ({
   createSystemLog: vi.fn().mockResolvedValue({ id: 'log-1', level: 'info', message: 'Logged' }),
@@ -16,6 +17,11 @@ vi.mock('@/features/observability/lib/critical-error-notifier', () => ({
 }));
 
 describe('system-logger', () => {
+  const waitForAsyncLog = async (): Promise<void> => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -27,6 +33,7 @@ describe('system-logger', () => {
       source: 'test',
       context: { foo: 'bar' },
     });
+    await waitForAsyncLog();
 
     expect(createSystemLog).toHaveBeenCalledWith(expect.objectContaining({
       level: 'info',
@@ -42,6 +49,7 @@ describe('system-logger', () => {
       message: 'An error occurred',
       error,
     });
+    await waitForAsyncLog();
 
     expect(createSystemLog).toHaveBeenCalledWith(expect.objectContaining({
       level: 'error',
@@ -56,6 +64,44 @@ describe('system-logger', () => {
     }));
   });
 
+  it('should preserve AppError metadata and cause chain', async () => {
+    const rootCause = new Error('Database timeout');
+    const appError = new AppError('Invalid payload', {
+      code: AppErrorCodes.validation,
+      httpStatus: 400,
+      expected: true,
+      retryable: false,
+      cause: rootCause,
+      meta: { field: 'sku' },
+    });
+
+    await logSystemError({
+      message: 'Validation failed',
+      source: 'products.v2',
+      error: appError,
+    });
+    await waitForAsyncLog();
+
+    expect(createSystemLog).toHaveBeenCalledWith(expect.objectContaining({
+      level: 'error',
+      category: expect.any(String),
+      context: expect.objectContaining({
+        category: expect.any(String),
+        errorCode: AppErrorCodes.validation,
+        errorName: 'AppError',
+        error: expect.objectContaining({
+          code: AppErrorCodes.validation,
+          httpStatus: 400,
+          expected: true,
+          meta: expect.objectContaining({ field: 'sku' }),
+          causeChain: expect.arrayContaining([
+            expect.objectContaining({ message: 'Database timeout' }),
+          ]),
+        }),
+      }),
+    }));
+  });
+
   it('should notify for critical errors', async () => {
     const logResult = { id: 'log-critical', level: 'error', message: 'Critical!' };
     (createSystemLog as any).mockResolvedValue(logResult);
@@ -65,6 +111,7 @@ describe('system-logger', () => {
       message: 'Critical!',
       critical: true,
     });
+    await waitForAsyncLog();
 
     expect(notifyCriticalError).toHaveBeenCalledWith(logResult, true);
   });
@@ -79,6 +126,7 @@ describe('system-logger', () => {
       message: 'Request log',
       request: req,
     });
+    await waitForAsyncLog();
 
     expect(createSystemLog).toHaveBeenCalledWith(expect.objectContaining({
       path: '/api/test',

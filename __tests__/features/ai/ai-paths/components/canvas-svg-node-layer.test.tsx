@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { CanvasSvgNodeLayer } from '@/features/ai/ai-paths/components/canvas-svg-node-layer';
@@ -204,5 +204,41 @@ describe('CanvasSvgNodeLayer', () => {
       bundle: { collection: 'products' },
       status: 'completed',
     });
+  });
+
+  it('does not fallback to stale output status while run is active', () => {
+    const runtimeState: RuntimeState = {
+      inputs: {},
+      outputs: {
+        'node-db-1': {
+          status: 'cached',
+        },
+      },
+      history: {},
+    };
+    const props = baseProps(runtimeState);
+    const { rerender } = render(
+      <svg>
+        <CanvasSvgNodeLayer
+          {...props}
+          runtimeRunStatus='running'
+          runtimeNodeStatuses={{}}
+        />
+      </svg>
+    );
+
+    expect(screen.queryByText('Cached')).toBeNull();
+
+    rerender(
+      <svg>
+        <CanvasSvgNodeLayer
+          {...props}
+          runtimeRunStatus='idle'
+          runtimeNodeStatuses={{}}
+        />
+      </svg>
+    );
+
+    expect(screen.getByText('Cached')).toBeDefined();
   });
 });

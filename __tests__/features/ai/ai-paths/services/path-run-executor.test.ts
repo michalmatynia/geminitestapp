@@ -6,7 +6,7 @@ import {
 import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executor';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import prisma from '@/shared/lib/db/prisma';
-import type { AiNode, Edge } from '@/shared/types/domain/ai-paths';
+import type { AiNode } from '@/shared/types/domain/ai-paths';
 
 // Mock evaluateGraphWithIteratorAutoContinue to avoid real runtime complexity
 vi.mock('@/features/ai/ai-paths/lib', async () => {

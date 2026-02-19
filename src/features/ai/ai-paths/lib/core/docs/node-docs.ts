@@ -353,6 +353,74 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
     },
     ...COMMON_RUNTIME_FIELDS,
   ],
+  validation_pattern: [
+    {
+      path: 'validationPattern.source',
+      description:
+        'Rule source: global_stack uses synced validator-stack rules, path_local uses node-local rules.',
+      defaultValue: 'global_stack',
+    },
+    {
+      path: 'validationPattern.stackId',
+      description:
+        'Selected global validation stack/list ID used when source=global_stack.',
+    },
+    {
+      path: 'validationPattern.scope',
+      description:
+        'Prompt validation scope used while evaluating rules (for scope-gated rules).',
+      defaultValue: 'global',
+    },
+    {
+      path: 'validationPattern.runtimeMode',
+      description:
+        'validate_only runs checks; validate_and_autofix also applies rule autofix operations.',
+      defaultValue: 'validate_only',
+    },
+    {
+      path: 'validationPattern.failPolicy',
+      description:
+        'block_on_error sets valid=false when error issues exist; report_only always emits valid=true.',
+      defaultValue: 'block_on_error',
+    },
+    {
+      path: 'validationPattern.inputPort',
+      description:
+        'Preferred input source (auto/value/prompt/result/context).',
+      defaultValue: 'auto',
+    },
+    {
+      path: 'validationPattern.outputPort',
+      description:
+        'Primary output target for normalized text.',
+      defaultValue: 'value',
+    },
+    {
+      path: 'validationPattern.maxAutofixPasses',
+      description:
+        'Maximum autofix refinement passes when runtimeMode is validate_and_autofix.',
+      defaultValue: '1',
+    },
+    {
+      path: 'validationPattern.includeRuleIds',
+      description:
+        'Optional allowlist of rule IDs to execute.',
+      defaultValue: '[]',
+    },
+    {
+      path: 'validationPattern.rules',
+      description:
+        'Active rule set used during runtime (global snapshot or path-local list).',
+      defaultValue: '[]',
+    },
+    {
+      path: 'validationPattern.learnedRules',
+      description:
+        'Optional learned-rule list merged into runtime validation.',
+      defaultValue: '[]',
+    },
+    ...COMMON_RUNTIME_FIELDS,
+  ],
   constant: [
     {
       path: 'constant.valueType',
@@ -825,6 +893,7 @@ const ALL_NODE_TYPES: NodeType[] = [
   'mutator',
   'string_mutator',
   'validator',
+  'validation_pattern',
   'constant',
   'math',
   'template',

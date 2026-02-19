@@ -115,6 +115,7 @@ export const buildActivePathConfig = (args: {
   activeTrigger: string;
   executionMode: PathExecutionMode;
   runMode: PathRunMode;
+  strictFlowMode?: boolean;
   nodes: AiNode[];
   edges: Edge[];
   updatedAt: string;
@@ -131,6 +132,7 @@ export const buildActivePathConfig = (args: {
   trigger: args.activeTrigger,
   executionMode: args.executionMode,
   runMode: args.runMode,
+  strictFlowMode: args.strictFlowMode ?? true,
   nodes: args.nodes,
   edges: args.edges,
   updatedAt: args.updatedAt,

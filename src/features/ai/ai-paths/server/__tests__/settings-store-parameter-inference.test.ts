@@ -179,4 +179,27 @@ describe('parameter inference seed config', () => {
     const raw = JSON.stringify(config);
     expect(needsParameterInferenceConfigUpgrade(raw)).toBe(true);
   });
+
+  it('marks configs without strict multi-value prompt formatting rules for upgrade', () => {
+    const config = buildConfig();
+    const nodes = Array.isArray(config.nodes) ? config.nodes : [];
+    const promptNode = nodes.find((node) => node?.['id'] === 'node-prompt-params');
+    if (!promptNode) throw new Error('Expected node-prompt-params');
+
+    const promptConfig = (((promptNode['config'] as Record<string, unknown>)['prompt'] ??
+      {}) as Record<string, unknown>);
+    promptNode['config'] = {
+      ...(promptNode['config'] as Record<string, unknown>),
+      prompt: {
+        ...promptConfig,
+        template: String(promptConfig['template'] ?? '').replace(
+          /8\.[\s\S]*$/m,
+          ''
+        ),
+      },
+    };
+
+    const raw = JSON.stringify(config);
+    expect(needsParameterInferenceConfigUpgrade(raw)).toBe(true);
+  });
 });

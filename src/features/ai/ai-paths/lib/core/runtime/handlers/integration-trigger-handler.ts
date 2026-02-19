@@ -16,6 +16,7 @@ export const handleTrigger: NodeHandler = async ({
   activePathId,
   resolvedEntity,
   fallbackEntityId,
+  strictFlowMode,
   now,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (triggerNodeId && node.id !== triggerNodeId) {
@@ -76,13 +77,15 @@ export const handleTrigger: NodeHandler = async ({
     timestamp: now,
     entity:
       hydratedEntity ??
-      (() => {
-        try {
-          return buildFallbackEntity((effectiveEntityId ?? fallbackEntityId) as string);
-        } catch {
-          return { id: effectiveEntityId ?? fallbackEntityId };
-        }
-      })(),
+      (strictFlowMode
+        ? null
+        : (() => {
+          try {
+            return buildFallbackEntity((effectiveEntityId ?? fallbackEntityId) as string);
+          } catch {
+            return { id: effectiveEntityId ?? fallbackEntityId };
+          }
+        })()),
   };
   if (hydratedEntity && typeof resolvedContext['entityJson'] === 'undefined') {
     resolvedContext['entityJson'] = hydratedEntity;

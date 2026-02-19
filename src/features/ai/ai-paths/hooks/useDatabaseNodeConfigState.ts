@@ -441,7 +441,9 @@ export function useDatabaseNodeConfigState() {
     entityType: databaseConfig.entityType ?? 'product',
     entityId: '',
     json: '',
+    mappingMode: 'top' as const,
     depth: 2,
+    keyStyle: 'path' as const,
     includeContainers: false,
   }, [updaterSamples, selectedNodeId, databaseConfig.entityType]);
 

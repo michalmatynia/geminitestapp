@@ -13,9 +13,8 @@ import {
   Button, 
   Checkbox, 
   SelectSimple, 
-  DataTable, 
+  StandardDataTablePanel, 
   ConfirmModal,
-  ListPanel,
   FormField,
   FormSection,
   StatusBadge,
@@ -195,7 +194,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
         onRefresh={refetch}
       />
 
-      <ListPanel
+      <StandardDataTablePanel
         filters={(
           <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
             <FormField label='Path ID'>
@@ -262,22 +261,16 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
             pageSizeOptions={PAGE_SIZES}
           />
         }
-      >
-        <div className='rounded-md border border-border bg-gray-900/20'>
-          <DataTable
-            columns={columns}
-            data={runs}
-            isLoading={loading}
-            initialSorting={[{ id: 'deadLetteredAt', desc: true }]}
-            emptyState={
-              <EmptyState
-                title='Queue empty'
-                description={pathId || searchQuery ? 'No dead-letter runs match your search.' : 'All runs are processing correctly (or none have failed yet).'}
-              />
-            }
+        columns={columns}
+        data={runs}
+        isLoading={loading}
+        emptyState={
+          <EmptyState
+            title='Queue empty'
+            description={pathId || searchQuery ? 'No dead-letter runs match your search.' : 'All runs are processing correctly (or none have failed yet).'}
           />
-        </div>
-      </ListPanel>
+        }
+      />
 
       <DetailModal
         isOpen={detailOpen}

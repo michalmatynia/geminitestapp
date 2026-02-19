@@ -6,7 +6,7 @@ export const PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME = 'Infer Parameters';
 export const buildParameterInferencePathConfigValue = (timestamp: string): string =>
   JSON.stringify({
     id: PARAMETER_INFERENCE_PATH_ID,
-    version: 6,
+    version: 7,
     name: PARAMETER_INFERENCE_PATH_NAME,
     description:
       'Infer product parameter values from name and images, then update product parameters.',
@@ -139,7 +139,9 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
               '4. Never invent semantic IDs like "size", "material", "color".\n' +
               '5. Skip parameters you cannot infer confidently.\n' +
               '6. No markdown, no explanations, no code fences.\n' +
-              '7. If nothing can be inferred, return [].',
+              '7. If nothing can be inferred, return [].\n' +
+              '8. For any multi-value parameter, return ONE string joined with "|" and no spaces around "|", e.g. "Black|Red|Blue".\n' +
+              '9. Capitalize value tokens in Title Case (e.g. "Black", "Stainless Steel").',
           },
         },
       },
@@ -504,6 +506,29 @@ export const needsParameterInferenceConfigUpgrade = (
       !queryTemplate ||
       !queryTemplate.includes('catalogId') ||
       !queryTemplate.includes('{{catalogId}}')
+    ) {
+      return true;
+    }
+
+    const promptNode = nodes.find((node) => node?.['id'] === 'node-prompt-params');
+    const promptTemplate =
+      promptNode &&
+      typeof promptNode === 'object' &&
+      promptNode['config'] &&
+      typeof promptNode['config'] === 'object' &&
+      (promptNode['config'] as Record<string, unknown>)['prompt'] &&
+      typeof (promptNode['config'] as Record<string, unknown>)['prompt'] ===
+        'object'
+        ? (
+          (promptNode['config'] as Record<string, unknown>)[
+            'prompt'
+          ] as Record<string, unknown>
+        )['template']
+        : null;
+    if (
+      typeof promptTemplate !== 'string' ||
+      !promptTemplate.includes('"Black|Red|Blue"') ||
+      !promptTemplate.includes('Title Case')
     ) {
       return true;
     }

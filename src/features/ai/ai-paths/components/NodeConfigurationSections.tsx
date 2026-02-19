@@ -32,6 +32,7 @@ import { StringMutatorNodeConfigSection } from './node-config/dialog/StringMutat
 import { TemplateNodeConfigSection } from './node-config/dialog/TemplateNodeConfigSection';
 import { TriggerNodeConfigSection } from './node-config/dialog/TriggerNodeConfigSection';
 import { UnsupportedNodeConfigNotice } from './node-config/dialog/UnsupportedNodeConfigNotice';
+import { ValidationPatternNodeConfigSection } from './node-config/dialog/ValidationPatternNodeConfigSection';
 import { ValidatorNodeConfigSection } from './node-config/dialog/ValidatorNodeConfigSection';
 import { ViewerNodeConfigSection } from './node-config/dialog/ViewerNodeConfigSection';
 import { ParserNodeConfigSection } from './node-config/ParserNodeConfigSection';
@@ -54,6 +55,7 @@ export function NodeConfigurationSections(): React.JSX.Element | null {
       <MutatorNodeConfigSection />
       <StringMutatorNodeConfigSection />
       <ValidatorNodeConfigSection />
+      <ValidationPatternNodeConfigSection />
       <ConstantNodeConfigSection />
       <MathNodeConfigSection />
       <TemplateNodeConfigSection />

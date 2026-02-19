@@ -31,6 +31,7 @@ export type ExecuteDatabaseQueryInput = {
   dryRun: boolean;
   templateInputs: RuntimePortValues;
   aiPrompt: string;
+  allowParameterDefinitionFallback?: boolean;
 };
 
 export async function executeDatabaseQuery({
@@ -42,6 +43,7 @@ export async function executeDatabaseQuery({
   dryRun,
   templateInputs,
   aiPrompt,
+  allowParameterDefinitionFallback = true,
 }: ExecuteDatabaseQueryInput): Promise<RuntimePortValues> {
   const projection: Record<string, unknown> | undefined = parseJsonSafe(queryConfig.projection ?? '') as
     | Record<string, unknown>
@@ -134,6 +136,7 @@ export async function executeDatabaseQuery({
   let fallbackMeta: Record<string, unknown> | undefined;
 
   if (
+    allowParameterDefinitionFallback &&
     shouldRunParameterDefinitionFallback({
       collection: queryConfig.collection,
       query,

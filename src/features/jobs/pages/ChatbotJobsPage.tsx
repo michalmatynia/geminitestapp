@@ -11,8 +11,7 @@ import {
 } from '@/features/jobs/context/JobsContext';
 import { 
   Button, 
-  DataTable, 
-  ListPanel, 
+  StandardDataTablePanel, 
   PanelHeader, 
   SearchInput, 
   StatusBadge,
@@ -178,7 +177,7 @@ function ChatbotJobsPageContent(): React.JSX.Element {
         ]}
       />
 
-      <ListPanel
+      <StandardDataTablePanel
         filters={
           <div className='max-w-md'>
             <SearchInput
@@ -190,20 +189,17 @@ function ChatbotJobsPageContent(): React.JSX.Element {
             />
           </div>
         }
-      >
-        <DataTable
-          columns={columns}
-          data={filteredJobs}
-          isLoading={isLoading}
-          emptyState={
-            <EmptyState
-              title='No jobs found'
-              description={query ? 'Try adjusting your search filters.' : 'Chatbot jobs track background processing of AI messages.'}
-              icon={<Bot className='size-12 opacity-20' />}
-            />
-          }
-        />
-      </ListPanel>
+        columns={columns}
+        data={filteredJobs}
+        isLoading={isLoading}
+        emptyState={
+          <EmptyState
+            title='No jobs found'
+            description={query ? 'Try adjusting your search filters.' : 'Chatbot jobs track background processing of AI messages.'}
+            icon={<Bot className='size-12 opacity-20' />}
+          />
+        }
+      />
     </div>
   );
 }

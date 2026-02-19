@@ -3,16 +3,15 @@ import type {
   LegacyPaginatedResponseDto,
 } from '@/shared/contracts/http';
 
-import type { BaseRecord } from './common';
 import type { DtoBase, NamedDto, ApiResponse } from './dto-base';
 
 /**
  * Base interface for all entities in the system
  */
-export interface BaseEntity extends BaseRecord {
+export interface BaseEntity {
   id: string;
   createdAt: string | Date;
-  updatedAt: string | Date;
+  updatedAt: string | Date | null;
 }
 
 /**

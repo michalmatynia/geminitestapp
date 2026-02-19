@@ -28,7 +28,7 @@ export const DOCS_OVERVIEW_SNIPPET = [
   '- Trigger: start signal + triggerName + context/meta payloads.',
   '- Simulation: mock trigger data to test paths without live events.',
   '- Context / Parser: select an entity and shape it into structured fields.',
-  '- Mapper / Mutator / Template / Math / Compare / Gate / Router / Validator: transform, validate, and branch.',
+  '- Mapper / Mutator / Template / Math / Compare / Gate / Router / Validator / Validation Pattern: transform, validate, and branch.',
   '- Prompt / Model: build prompts and run LLM or vision tasks (inline or async).',
   '- Poll: wait on async jobs or database conditions.',
   '- Database / DB Schema: query or update storage, optionally using presets.',

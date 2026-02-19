@@ -32,6 +32,7 @@ export type HandleDatabaseStandardOperationInput = {
   templateContext: Record<string, unknown>;
   aiPrompt: string;
   ensureExistingParameterTemplateContext: (targetPath: string) => Promise<void>;
+  strictFlowMode: boolean;
 };
 
 type DatabaseStandardOperationHandler = (
@@ -51,6 +52,7 @@ const queryOperationHandler: DatabaseStandardOperationHandler = async ({
   templateInputs,
   templateContext,
   aiPrompt,
+  strictFlowMode,
 }) => await handleDatabaseQueryOperation({
   nodeInputs,
   reportAiPathsError,
@@ -64,6 +66,7 @@ const queryOperationHandler: DatabaseStandardOperationHandler = async ({
   templateInputs,
   templateContext,
   aiPrompt,
+  strictFlowMode,
 });
 
 const updateOperationHandler: DatabaseStandardOperationHandler = async ({

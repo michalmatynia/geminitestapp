@@ -7,8 +7,7 @@ import React, { useDeferredValue, useMemo, useState } from 'react';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { 
   Badge, 
-  DataTable, 
-  ListPanel, 
+  StandardDataTablePanel, 
   PanelHeader, 
   SearchInput,
   EmptyState,
@@ -151,7 +150,7 @@ export function AdminFilemakerPersonsPage(): React.JSX.Element {
         ]}
       />
 
-      <ListPanel
+      <StandardDataTablePanel
         filters={
           <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
             <div className='flex items-center gap-2'>
@@ -175,19 +174,16 @@ export function AdminFilemakerPersonsPage(): React.JSX.Element {
             </div>
           </div>
         }
-      >
-        <DataTable
-          columns={columns}
-          data={persons}
-          isLoading={settingsStore.isLoading}
-          emptyState={
-            <EmptyState
-              title={query ? 'No persons found' : 'No persons found in database.'}
-              description={query ? 'Try adjusting your search terms.' : 'Add your first person to the database.'}
-            />
-          }
-        />
-      </ListPanel>
+        columns={columns}
+        data={persons}
+        isLoading={settingsStore.isLoading}
+        emptyState={
+          <EmptyState
+            title={query ? 'No persons found' : 'No persons found in database.'}
+            description={query ? 'Try adjusting your search terms.' : 'Add your first person to the database.'}
+          />
+        }
+      />
     </div>
   );
 }

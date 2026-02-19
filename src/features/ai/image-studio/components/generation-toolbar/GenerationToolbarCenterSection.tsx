@@ -50,6 +50,8 @@ export function GenerationToolbarCenterSection({
   onToggleCenterLayoutSplitAxes,
   onToggleCenterGuides,
 }: GenerationToolbarCenterSectionProps): React.JSX.Element {
+  const sliderValue = centerLayoutPadding.trim() === '' ? '0' : centerLayoutPadding;
+
   return (
     <div className='rounded border border-border/60 bg-card/40 p-3'>
       <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Center</div>
@@ -80,7 +82,7 @@ export function GenerationToolbarCenterSection({
                 min={0}
                 max={40}
                 step={0.5}
-                value={centerLayoutPadding}
+                value={sliderValue}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                   onCenterLayoutPaddingChange(event.target.value);
                 }}

@@ -14,10 +14,9 @@ import { logClientError } from '@/features/observability';
 import {
   Button,
   Input,
-  ListPanel,
+  StandardDataTablePanel,
   useToast,
   SelectSimple,
-  DataTable,
   StatusBadge,
   SectionHeader,
   FormField,
@@ -196,15 +195,12 @@ export default function ZonesPage(): React.JSX.Element {
         </form>
       </FormSection>
 
-      <ListPanel variant='flat'>
-        <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
-          <DataTable
-            columns={columns}
-            data={domains}
-            isLoading={domainsQuery.isLoading}
-          />
-        </div>
-      </ListPanel>
+      <StandardDataTablePanel
+        variant='flat'
+        columns={columns}
+        data={domains}
+        isLoading={domainsQuery.isLoading}
+      />
 
       <ConfirmModal
         isOpen={Boolean(zoneToDelete)}

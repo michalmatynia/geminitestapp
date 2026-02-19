@@ -1011,20 +1011,10 @@ export function CanvasBoard({
           height={CANVAS_HEIGHT}
           style={{ pointerEvents: 'auto' }}
         >
-          <defs>
-            <filter id='signal-dot-glow' x='-50%' y='-50%' width='200%' height='200%'>
-              <feGaussianBlur stdDeviation='2' result='blur' />
-              <feMerge>
-                <feMergeNode in='blur' />
-                <feMergeNode in='SourceGraphic' />
-              </feMerge>
-            </filter>
-          </defs>
           <CanvasSvgEdgeLayer
             edgePaths={renderedEdgePaths}
             edgeMetaMap={edgeMetaMap}
             nodeById={nodeById}
-            viewScale={view.scale}
             selectedEdgeId={selectedEdgeId}
             selectedNodeIdSet={selectedNodeIdSet}
             activeEdgeIds={activeEdgeIds}

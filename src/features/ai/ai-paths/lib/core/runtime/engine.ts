@@ -51,6 +51,7 @@ import {
   handlePoll,
   handlePrompt,
   handleRegex,
+  handleValidationPattern,
   handleIterator,
   handleRouter,
   handleLearnerAgent,
@@ -191,6 +192,7 @@ export type EvaluateGraphOptions = {
   triggerNodeId?: string | undefined;
   triggerEvent?: string | undefined;
   triggerContext?: Record<string, unknown> | null | undefined;
+  strictFlowMode?: boolean | undefined;
   deferPoll?: boolean | undefined;
   skipAiJobs?: boolean | undefined;
   seedOutputs?: Record<string, RuntimePortValues> | undefined;
@@ -431,6 +433,7 @@ const HANDLERS: Record<string, NodeHandler> = {
   mutator: handleMutator,
   string_mutator: handleStringMutator,
   validator: handleValidator,
+  validation_pattern: handleValidationPattern,
   constant: handleConstant,
   math: handleMath,
   compare: handleCompare,
@@ -465,6 +468,7 @@ export async function evaluateGraph({
   triggerNodeId,
   triggerEvent,
   triggerContext,
+  strictFlowMode = true,
   deferPoll,
   skipAiJobs,
   seedOutputs,
@@ -1213,37 +1217,39 @@ export async function evaluateGraph({
     applyRecord(coerceInput(next['meta']));
     applyRecord(coerceInput(next['bundle']));
 
-    if (!pickString(next['entityId'])) {
-      next['entityId'] =
-        pickString(triggerContext?.['entityId']) ??
-        pickString(triggerContext?.['productId']) ??
-        fallbackEntityId ??
-        undefined;
-    }
-    if (!pickString(next['productId'])) {
-      next['productId'] =
-        pickString(triggerContext?.['productId']) ??
-        pickString(triggerContext?.['entityId']) ??
-        pickString(next['entityId']) ??
-        undefined;
-    }
-    if (!pickString(next['entityType'])) {
-      next['entityType'] =
-        pickString(triggerContext?.['entityType']) ??
-        simulationEntityType ??
-        undefined;
-    }
+    if (!strictFlowMode) {
+      if (!pickString(next['entityId'])) {
+        next['entityId'] =
+          pickString(triggerContext?.['entityId']) ??
+          pickString(triggerContext?.['productId']) ??
+          fallbackEntityId ??
+          undefined;
+      }
+      if (!pickString(next['productId'])) {
+        next['productId'] =
+          pickString(triggerContext?.['productId']) ??
+          pickString(triggerContext?.['entityId']) ??
+          pickString(next['entityId']) ??
+          undefined;
+      }
+      if (!pickString(next['entityType'])) {
+        next['entityType'] =
+          pickString(triggerContext?.['entityType']) ??
+          simulationEntityType ??
+          undefined;
+      }
 
-    if (!pickString(next['entityId']) || !pickString(next['productId']) || !pickString(next['entityType'])) {
-      for (const [nodeId, output] of Object.entries(outputs)) {
-        if (!output || typeof output !== 'object') continue;
-        const nodeType = nodeById.get(nodeId)?.type;
-        if (nodeType !== 'trigger' && nodeType !== 'simulation' && nodeType !== 'context') {
-          continue;
-        }
-        applyRecord(output);
-        if (pickString(next['entityId']) && pickString(next['productId']) && pickString(next['entityType'])) {
-          break;
+      if (!pickString(next['entityId']) || !pickString(next['productId']) || !pickString(next['entityType'])) {
+        for (const [nodeId, output] of Object.entries(outputs)) {
+          if (!output || typeof output !== 'object') continue;
+          const nodeType = nodeById.get(nodeId)?.type;
+          if (nodeType !== 'trigger' && nodeType !== 'simulation' && nodeType !== 'context') {
+            continue;
+          }
+          applyRecord(output);
+          if (pickString(next['entityId']) && pickString(next['productId']) && pickString(next['entityType'])) {
+            break;
+          }
         }
       }
     }
@@ -1251,7 +1257,7 @@ export async function evaluateGraph({
     const resolvedEntityId = pickString(next['entityId']);
     const resolvedEntityType = pickString(next['entityType']);
 
-    if (!resolvedEntityId && resolvedEntity && typeof resolvedEntity === 'object') {
+    if (!strictFlowMode && !resolvedEntityId && resolvedEntity && typeof resolvedEntity === 'object') {
       const fallbackId =
         pickString(resolvedEntity['id']) ??
         pickString(resolvedEntity['_id']);
@@ -1259,13 +1265,13 @@ export async function evaluateGraph({
         next['entityId'] = fallbackId;
       }
     }
-    if (!pickString(next['productId']) && pickString(next['entityId'])) {
+    if (!strictFlowMode && !pickString(next['productId']) && pickString(next['entityId'])) {
       next['productId'] = pickString(next['entityId']);
     }
-    if (!resolvedEntityType && simulationEntityType) {
+    if (!strictFlowMode && !resolvedEntityType && simulationEntityType) {
       next['entityType'] = simulationEntityType;
     }
-    if (!hasExplicitValue(next['value'])) {
+    if (!strictFlowMode && !hasExplicitValue(next['value'])) {
       const fallbackValue =
         pickString(next['entityId']) ??
         pickString(next['productId']);
@@ -1630,6 +1636,7 @@ export async function evaluateGraph({
                     simulationEntityId,
                     resolvedEntity,
                     fallbackEntityId,
+                    strictFlowMode,
                     executed,
                   })
                 ),

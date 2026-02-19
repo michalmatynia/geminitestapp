@@ -8,7 +8,7 @@ import type { AgentTeachingChatSource, AgentTeachingEmbeddingDocumentListItem } 
 import { 
   Button, 
   Input, 
-  DataTable, 
+  StandardDataTablePanel, 
   Textarea, 
   FormSection, 
   FormField,
@@ -16,7 +16,6 @@ import {
   ConfirmModal,
   Alert,
   PanelHeader,
-  ListPanel
 } from '@/shared/ui';
 
 import { useAgentTeachingQueriesCollectionDetailState } from '../hooks/useAgentTeachingQueriesCollectionDetailState';
@@ -244,13 +243,11 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
         </FormSection>
       </div>
 
-      <ListPanel>
-        <DataTable
-          columns={columns}
-          data={docs}
-          isLoading={isLoading}
-        />
-      </ListPanel>
+      <StandardDataTablePanel
+        columns={columns}
+        data={docs}
+        isLoading={isLoading}
+      />
 
       <ConfirmModal
         isOpen={!!docToDelete}

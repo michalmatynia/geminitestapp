@@ -15,8 +15,7 @@ import {
   Button, 
   EmptyState, 
   useToast,
-  DataTable,
-  ListPanel,
+  StandardDataTablePanel,
   PanelHeader,
   SearchInput,
 } from '@/shared/ui';
@@ -184,7 +183,7 @@ export function AdminProductProducersPage(): React.JSX.Element {
         ]}
       />
 
-      <ListPanel
+      <StandardDataTablePanel
         filters={
           <div className='max-w-sm'>
             <SearchInput
@@ -196,25 +195,22 @@ export function AdminProductProducersPage(): React.JSX.Element {
             />
           </div>
         }
-      >
-        <DataTable
-          columns={columns}
-          data={filtered}
-          isLoading={loading}
-          emptyState={
-            <EmptyState
-              title='No producers'
-              description={query ? 'No producers match your search.' : 'Create a producer to attach it to products.'}
-              action={!query ? (
-                <Button onClick={openCreate} variant='outline'>
-                  <Plus className='size-4 mr-2' />
-                  Create Producer
-                </Button>
-              ) : undefined}
-            />
-          }
-        />
-      </ListPanel>
+        columns={columns}
+        data={filtered}
+        isLoading={loading}
+        emptyState={
+          <EmptyState
+            title='No producers'
+            description={query ? 'No producers match your search.' : 'Create a producer to attach it to products.'}
+            action={!query ? (
+              <Button onClick={openCreate} variant='outline'>
+                <Plus className='size-4 mr-2' />
+                Create Producer
+              </Button>
+            ) : undefined}
+          />
+        }
+      />
 
       <SettingsPanelBuilder
         open={open}

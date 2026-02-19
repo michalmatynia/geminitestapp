@@ -293,6 +293,8 @@ const createRunOutputSlotMetadata = (params: {
               centerMeta?.operation === 'center_object' ? centerMeta.sourceObjectBounds : null,
           targetObjectBounds:
               centerMeta?.operation === 'center_object' ? centerMeta.targetObjectBounds : null,
+          layout:
+              centerMeta?.operation === 'center_object' ? centerMeta.layout ?? null : null,
           timestamp: params.finishedAt,
         },
       }

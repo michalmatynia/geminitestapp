@@ -117,6 +117,7 @@ const loadStudioProjectId = async (productId: string): Promise<string | null> =>
 export interface ProductFormContextType {
   register: UseFormRegister<ProductFormData>;
   handleSubmit: (e?: BaseSyntheticEvent) => Promise<void>;
+  hasUnsavedChanges: boolean;
   errors: FieldErrors<ProductFormData>;
   setValue: UseFormSetValue<ProductFormData>;
   getValues: UseFormGetValues<ProductFormData>;
@@ -246,7 +247,7 @@ export function ProductFormProvider({
   });
   const {
     register,
-    formState: { errors },
+    formState: { errors, isDirty },
     setValue,
     getValues,
   } = methods;
@@ -511,6 +512,7 @@ export function ProductFormProvider({
         value={{
           register,
           handleSubmit: submitHandler,
+          hasUnsavedChanges: isDirty,
           errors,
           setValue,
           getValues,

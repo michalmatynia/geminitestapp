@@ -46,7 +46,7 @@ const DATA_PALETTE_GROUPS: PaletteGroup[] = [
   { title: 'Context + Parsing', types: ['context', 'parser'], icon: '📦' },
   {
     title: 'Transforms',
-    types: ['mapper', 'mutator', 'string_mutator', 'validator', 'regex', 'iterator'],
+    types: ['mapper', 'mutator', 'string_mutator', 'validator', 'validation_pattern', 'regex', 'iterator'],
     icon: '🧭',
   },
   {
@@ -115,9 +115,42 @@ export function CanvasSidebar(): React.JSX.Element {
           ? 'Stepping'
           : 'Idle';
   const [paletteMode, setPaletteMode] = useState<PaletteMode>('data');
+  const [paletteSearch, setPaletteSearch] = useState('');
+  const normalizedPaletteSearch = paletteSearch.trim().toLowerCase();
+  const isPaletteSearchActive = normalizedPaletteSearch.length > 0;
   const activePaletteGroups = useMemo(
     (): PaletteGroup[] => (paletteMode === 'sound' ? SOUND_PALETTE_GROUPS : DATA_PALETTE_GROUPS),
     [paletteMode]
+  );
+  const filteredPaletteGroups = useMemo(
+    (): Array<{ group: PaletteGroup; items: NodeDefinition[] }> =>
+      activePaletteGroups
+        .map((group: PaletteGroup): { group: PaletteGroup; items: NodeDefinition[] } => {
+          const items = palette.filter((node: NodeDefinition): boolean => {
+            if (!group.types.includes(node.type)) return false;
+            if (!isPaletteSearchActive) return true;
+            const title = node.title.toLowerCase();
+            const type = node.type.toLowerCase();
+            const description = node.description.toLowerCase();
+            return (
+              title.includes(normalizedPaletteSearch) ||
+              type.includes(normalizedPaletteSearch) ||
+              description.includes(normalizedPaletteSearch)
+            );
+          });
+          return { group, items };
+        })
+        .filter((entry: { group: PaletteGroup; items: NodeDefinition[] }): boolean => entry.items.length > 0),
+    [activePaletteGroups, isPaletteSearchActive, normalizedPaletteSearch, palette]
+  );
+  const totalFilteredPaletteItems = useMemo(
+    (): number =>
+      filteredPaletteGroups.reduce(
+        (total: number, entry: { group: PaletteGroup; items: NodeDefinition[] }): number =>
+          total + entry.items.length,
+        0
+      ),
+    [filteredPaletteGroups]
   );
 
   return (
@@ -160,79 +193,102 @@ export function CanvasSidebar(): React.JSX.Element {
             />
           </button>
         </div>
+        <div className='mb-3'>
+          <Input
+            value={paletteSearch}
+            onChange={(event) => setPaletteSearch(event.target.value)}
+            placeholder='Search nodes...'
+            aria-label='Search node palette'
+            className='h-8 w-full rounded-md border bg-card/70 px-3 text-xs text-white placeholder:text-gray-500'
+          />
+          {isPaletteSearchActive ? (
+            <p className='mt-1 text-[10px] text-gray-500'>
+              {totalFilteredPaletteItems > 0
+                ? `${totalFilteredPaletteItems} matching node${totalFilteredPaletteItems === 1 ? '' : 's'}`
+                : 'No matching nodes'}
+            </p>
+          ) : null}
+        </div>
         {paletteCollapsed ? (
           <div className='rounded-md border border-dashed border-border/60 px-3 py-2 text-[11px] text-gray-500'>
             Palette collapsed. Expand to add nodes.
           </div>
         ) : (
           <div className='max-h-[520px] space-y-1 overflow-y-auto pr-1'>
-            {activePaletteGroups.map((group) => {
-              const items = palette.filter((node) => group.types.includes(node.type));
-              if (items.length === 0) return null;
-              const isExpanded = expandedPaletteGroups.has(group.title);
-              return (
-                <div key={group.title} className='rounded-md border border-border/60'>
-                  <button
-                    type='button'
-                    onClick={() => togglePaletteGroup(group.title)}
-                    className='flex w-full items-center justify-between px-3 py-2 text-left transition hover:bg-muted/40'
-                  >
-                    <div className='flex items-center gap-2'>
-                      <span className='text-sm'>{group.icon}</span>
-                      <span className='text-[11px] font-medium uppercase tracking-wide text-gray-300'>
-                        {group.title}
-                      </span>
-                      <span className='rounded-full bg-muted/60 px-1.5 py-0.5 text-[10px] text-gray-400'>
-                        {items.length}
-                      </span>
-                    </div>
-                    <svg
-                      className={`h-4 w-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                      fill='none'
-                      viewBox='0 0 24 24'
-                      stroke='currentColor'
+            {filteredPaletteGroups.length === 0 ? (
+              <div className='rounded-md border border-dashed border-border/60 px-3 py-2 text-[11px] text-gray-500'>
+                No nodes match your search.
+              </div>
+            ) : (
+              filteredPaletteGroups.map(({ group, items }) => {
+                const isExpanded = isPaletteSearchActive || expandedPaletteGroups.has(group.title);
+                return (
+                  <div key={group.title} className='rounded-md border border-border/60'>
+                    <button
+                      type='button'
+                      onClick={() => {
+                        if (isPaletteSearchActive) return;
+                        togglePaletteGroup(group.title);
+                      }}
+                      className='flex w-full items-center justify-between px-3 py-2 text-left transition hover:bg-muted/40'
                     >
-                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
-                    </svg>
-                  </button>
-                  {isExpanded && (
-                    <div className='space-y-2 px-3 pb-3'>
-                      {items.map((node) => (
-                        <div
-                          key={node.title}
-                          draggable
-                          onDragStart={(event) => handleDragStart(event, node)}
-                          className='cursor-grab rounded-md border border-border/60 bg-card/30 p-2 text-xs text-gray-300 transition hover:border-border/80 hover:bg-muted/50 active:cursor-grabbing'
-                        >
-                          {((): React.JSX.Element => {
-                            const isScheduledTrigger =
+                      <div className='flex items-center gap-2'>
+                        <span className='text-sm'>{group.icon}</span>
+                        <span className='text-[11px] font-medium uppercase tracking-wide text-gray-300'>
+                          {group.title}
+                        </span>
+                        <span className='rounded-full bg-muted/60 px-1.5 py-0.5 text-[10px] text-gray-400'>
+                          {items.length}
+                        </span>
+                      </div>
+                      <svg
+                        className={`h-4 w-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                        fill='none'
+                        viewBox='0 0 24 24'
+                        stroke='currentColor'
+                      >
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                      </svg>
+                    </button>
+                    {isExpanded && (
+                      <div className='space-y-2 px-3 pb-3'>
+                        {items.map((node) => (
+                          <div
+                            key={node.title}
+                            draggable
+                            onDragStart={(event) => handleDragStart(event, node)}
+                            className='cursor-grab rounded-md border border-border/60 bg-card/30 p-2 text-xs text-gray-300 transition hover:border-border/80 hover:bg-muted/50 active:cursor-grabbing'
+                          >
+                            {((): React.JSX.Element => {
+                              const isScheduledTrigger =
                               node.type === 'trigger' && node.config?.trigger?.event === 'scheduled_run';
-                            return (
-                              <div className='flex items-center justify-between gap-2'>
-                                <span className='text-xs font-semibold text-white'>
-                                  {node.title}
-                                </span>
-                                <div className='flex items-center gap-1'>
-                                  {isScheduledTrigger ? (
-                                    <StatusBadge status='Scheduled' variant='warning' size='sm' className='font-bold h-4 px-1.5' />
-                                  ) : null}
-                                  <span className='text-[10px] uppercase text-gray-500'>
-                                    {node.type}
+                              return (
+                                <div className='flex items-center justify-between gap-2'>
+                                  <span className='text-xs font-semibold text-white'>
+                                    {node.title}
                                   </span>
+                                  <div className='flex items-center gap-1'>
+                                    {isScheduledTrigger ? (
+                                      <StatusBadge status='Scheduled' variant='warning' size='sm' className='font-bold h-4 px-1.5' />
+                                    ) : null}
+                                    <span className='text-[10px] uppercase text-gray-500'>
+                                      {node.type}
+                                    </span>
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          })()}
-                          <p className='mt-1 text-[11px] text-gray-400'>
-                            {node.description}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                              );
+                            })()}
+                            <p className='mt-1 text-[11px] text-gray-400'>
+                              {node.description}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
           </div>
         )}
       </div>

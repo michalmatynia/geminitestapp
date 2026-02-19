@@ -135,6 +135,7 @@ const PROCESSING_NODE_TYPES = new Set<string>([
   'string_mutator',
   'template',
   'validator',
+  'validation_pattern',
   'regex',
   'math',
   'compare',

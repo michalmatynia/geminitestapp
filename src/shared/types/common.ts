@@ -1,4 +1,5 @@
-import type { StatusDto, JobStatusDto, DtoBase } from '../contracts/base';
+import { JobStatusDto } from '../contracts/jobs';
+import type { StatusDto, DtoBase } from '../contracts/base';
 
 // Consolidated core types for the application
 export type Status = StatusDto;

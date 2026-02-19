@@ -7,6 +7,7 @@ import type {
   PromptValidationRuntimeIdentityDto,
   PromptValidationRuntimeSelectionDto,
   PromptValidationStackResolutionDto,
+  PromptValidationStackResolutionInputDto,
 } from '@/shared/contracts/prompt-engine';
 import type {
   PromptExploderLearnedTemplateDto,
@@ -26,9 +27,6 @@ export type PromptValidationRuntimeIdentity = PromptValidationRuntimeIdentityDto
 
 export type PromptValidationRuntimeSelection = PromptValidationRuntimeSelectionDto;
 
-export type PromptValidationStackResolutionInput = {
-  stack: PromptExploderValidationRuleStack | null | undefined;
-  patternLists?: ValidatorPatternList[] | null | undefined;
-};
+export type PromptValidationStackResolutionInput = PromptValidationStackResolutionInputDto;
 
 export type PromptValidationStackResolution = PromptValidationStackResolutionDto;

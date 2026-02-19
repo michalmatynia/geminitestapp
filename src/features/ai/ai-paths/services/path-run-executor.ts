@@ -404,6 +404,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   const metaHistoryLimit = parseHistoryRetentionPasses(
     (run.meta as Record<string, unknown> | null)?.['historyRetentionPasses']
   );
+  const strictFlowMode =
+    (run.meta as Record<string, unknown> | null)?.['strictFlowMode'] !== false;
   const resolvedHistoryLimit =
     metaHistoryLimit ?? envHistoryLimit ?? AI_PATHS_HISTORY_RETENTION_DEFAULT;
   const nodeRecords = await repo.listRunNodes(run.id);
@@ -445,6 +447,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       ...(triggerNodeId ? { triggerNodeId } : {}),
       ...(run.triggerEvent ? { triggerEvent: run.triggerEvent } : {}),
       ...(run.triggerContext ? { triggerContext: run.triggerContext } : {}),
+      strictFlowMode,
       seedOutputs: runtimeState.outputs,
       seedHashes: (runtimeState.hashes) ?? undefined,
       seedHashTimestamps:

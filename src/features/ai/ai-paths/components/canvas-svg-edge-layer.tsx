@@ -12,7 +12,6 @@ type CanvasSvgEdgeLayerProps = {
   edgePaths: EdgePath[];
   edgeMetaMap: Map<string, Edge>;
   nodeById: Map<string, AiNode>;
-  viewScale: number;
   selectedEdgeId: string | null;
   selectedNodeIdSet: Set<string>;
   activeEdgeIds: Set<string>;
@@ -28,7 +27,6 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
   edgePaths,
   edgeMetaMap,
   nodeById,
-  viewScale,
   selectedEdgeId,
   selectedNodeIdSet,
   activeEdgeIds,
@@ -128,7 +126,6 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
                     key={`dots-${edge.id}-${edge.path}`}
                     path={edge.path}
                     intensity={flowingIntensity}
-                    viewScale={viewScale}
                   />
                 ) : null}
               </>

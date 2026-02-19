@@ -20,13 +20,12 @@ import type { SystemLogRecord, AiInsightRecord } from '@/shared/types';
 import { 
   Button, 
   DynamicFilters, 
-  DataTable, 
+  StandardDataTablePanel, 
   Pagination, 
   StatusBadge, 
   PageLayout, 
   FormSection,
   Alert,
-  ListPanel,
   MetadataItem,
   Tooltip,
   CopyButton,
@@ -416,7 +415,7 @@ function LogList(): React.JSX.Element {
   ], [interpretLogMutation]);
 
   return (
-    <ListPanel
+    <StandardDataTablePanel
       title='Event Stream'
       headerActions={
         <span className='text-xs text-gray-600 font-bold self-center'>{total} Total Events</span>
@@ -431,83 +430,69 @@ function LogList(): React.JSX.Element {
       }
       isLoading={logsQuery.isLoading}
       variant='flat'
-    >
-      <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
-        <DataTable
+      columns={columns}
+      data={logs}
+      maxHeight='60vh'
+      stickyHeader
+      renderRowDetails={({ row }: { row: { original: SystemLogRecord } }) => {
+        const log = row.original;
+        const interpretation = logInterpretations[log.id];
+        return (
+          <div className='p-6 bg-black/40 space-y-6 border-t border-white/5'>
+            {interpretation && (
+              <Alert variant='success' className='p-4'>
+                <div className='flex items-center gap-2 font-bold text-[10px] uppercase mb-2'>
+                  <Monitor className='size-3' />
+                  AI Interpretation Output
+                </div>
+                <p className='text-sm text-gray-200 leading-relaxed'>{interpretation.summary}</p>
+                {interpretation.warnings?.length ? (
+                  <ul className='mt-3 space-y-1 border-t border-emerald-500/10 pt-2'>
+                    {interpretation.warnings.map((w, i) => <li key={i} className='text-[11px] opacity-80'>• {w}</li>)}
+                  </ul>
+                ) : null}
+              </Alert>
+            )}
 
-          columns={columns}
-
-          data={logs}
-
-          isLoading={logsQuery.isLoading}
-
-          maxHeight='60vh'
-
-          stickyHeader
-
-          renderRowDetails={({ row }: { row: { original: SystemLogRecord } }) => {
-
-      
-            const log = row.original;
-            const interpretation = logInterpretations[log.id];
-            return (
-              <div className='p-6 bg-black/40 space-y-6 border-t border-white/5'>
-                {interpretation && (
-                  <Alert variant='success' className='p-4'>
-                    <div className='flex items-center gap-2 font-bold text-[10px] uppercase mb-2'>
-                      <Monitor className='size-3' />
-                      AI Interpretation Output
-                    </div>
-                    <p className='text-sm text-gray-200 leading-relaxed'>{interpretation.summary}</p>
-                    {interpretation.warnings?.length ? (
-                      <ul className='mt-3 space-y-1 border-t border-emerald-500/10 pt-2'>
-                        {interpretation.warnings.map((w, i) => <li key={i} className='text-[11px] opacity-80'>• {w}</li>)}
-                      </ul>
-                    ) : null}
-                  </Alert>
-                )}
-
-                <div className='grid gap-6 md:grid-cols-2'>
-                  <div className='space-y-4'>
-                    <div>
-                      <Hint uppercase variant='muted' className='mb-2 font-semibold'>Identification</Hint>
-                      <div className='grid grid-cols-2 gap-2'>
-                        <MetadataItem
-                          label='Request ID'
-                          value={log.requestId}
-                          mono
-                        />
-                        <MetadataItem
-                          label='User ID'
-                          value={log.userId}
-                          mono
-                        />
-                      </div>
-                    </div>
-
-                    {log.stack && (
-                      <div>
-                        <Hint uppercase variant='muted' className='mb-2 font-semibold'>StackTrace</Hint>
-                        <pre className='p-3 rounded-lg bg-gray-950 border border-white/5 font-mono text-[10px] text-rose-300/80 overflow-auto max-h-[300px] whitespace-pre-wrap'>
-                          {log.stack}
-                        </pre>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <Hint uppercase variant='muted' className='mb-2 font-semibold'>Payload Context</Hint>
-                    <pre className='p-3 rounded-lg bg-gray-950 border border-white/5 font-mono text-[10px] text-sky-300/80 overflow-auto max-h-[400px]'>
-                      {JSON.stringify(log.context || {}, null, 2)}
-                    </pre>
+            <div className='grid gap-6 md:grid-cols-2'>
+              <div className='space-y-4'>
+                <div>
+                  <Hint uppercase variant='muted' className='mb-2 font-semibold'>Identification</Hint>
+                  <div className='grid grid-cols-2 gap-2'>
+                    <MetadataItem
+                      label='Request ID'
+                      value={log.requestId}
+                      mono
+                    />
+                    <MetadataItem
+                      label='User ID'
+                      value={log.userId}
+                      mono
+                    />
                   </div>
                 </div>
+
+                {log.stack && (
+                  <div>
+                    <Hint uppercase variant='muted' className='mb-2 font-semibold'>StackTrace</Hint>
+                    <pre className='p-3 rounded-lg bg-gray-950 border border-white/5 font-mono text-[10px] text-rose-300/80 overflow-auto max-h-[300px] whitespace-pre-wrap'>
+                      {log.stack}
+                    </pre>
+                  </div>
+                )}
               </div>
-            );
-          }}
-        />
-      </div>
-    </ListPanel>
+
+              <div>
+                <Hint uppercase variant='muted' className='mb-2 font-semibold'>Payload Context</Hint>
+                <pre className='p-3 rounded-lg bg-gray-950 border border-white/5 font-mono text-[10px] text-sky-300/80 overflow-auto max-h-[400px]'>
+                  {JSON.stringify(log.context || {}, null, 2)}
+                </pre>
+              </div>
+            </div>
+          </div>
+        );
+      }}
+    />
   );
 }
 

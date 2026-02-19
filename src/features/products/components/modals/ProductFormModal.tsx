@@ -26,7 +26,16 @@ function ProductFormModalInner({
   submitButtonText,
   validationInstanceScopeOverride,
 }: ProductFormModalProps): React.JSX.Element {
-  const { showFileManager, handleMultiFileSelect, handleSubmit, uploading, getValues, product, draft } =
+  const {
+    showFileManager,
+    handleMultiFileSelect,
+    handleSubmit,
+    uploading,
+    getValues,
+    product,
+    draft,
+    hasUnsavedChanges,
+  } =
     useProductFormContext();
   const formInstanceKey = product?.id?.trim() || draft?.id?.trim() || 'product-create';
 
@@ -50,12 +59,13 @@ function ProductFormModalInner({
   );
 
   return (
-    <FormModal 
+    <FormModal
       open={isOpen}
       onClose={onClose}
       title={title}
       onSave={() => { void handleSubmit(); }}
       isSaving={uploading}
+      hasUnsavedChanges={hasUnsavedChanges}
       saveText={submitButtonText}
       cancelText='Close'
       size='xl'

@@ -297,13 +297,15 @@ export function useAiPathsSettingsSamples({
         }
         return;
       }
-      setUpdaterSamples((prev: Record<string, UpdaterSampleState>) => ({
+      setUpdaterSamples((prev: Record<string, UpdaterSampleState>): Record<string, UpdaterSampleState> => ({
         ...prev,
         [nodeId]: {
           entityType,
           entityId,
           json: JSON.stringify(sample, null, 2),
+          mappingMode: prev[nodeId]?.mappingMode ?? 'top',
           depth: prev[nodeId]?.depth ?? 2,
+          keyStyle: prev[nodeId]?.keyStyle ?? 'path',
           includeContainers: prev[nodeId]?.includeContainers ?? false,
         },
       }));

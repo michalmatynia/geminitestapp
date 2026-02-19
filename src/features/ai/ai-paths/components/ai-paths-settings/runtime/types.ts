@@ -67,6 +67,7 @@ export type UseAiPathsRuntimeArgs = {
   activeTrigger: string;
   executionMode: PathExecutionMode;
   runMode: PathRunMode;
+  strictFlowMode: boolean;
   historyRetentionPasses: number;
   edges: Edge[];
   nodes: AiNode[];

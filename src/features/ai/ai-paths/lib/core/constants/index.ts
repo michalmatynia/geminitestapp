@@ -37,6 +37,7 @@ export const CACHEABLE_NODE_TYPES: NodeType[] = [
   'mutator',
   'string_mutator',
   'validator',
+  'validation_pattern',
   'viewer',
 ];
 export const CACHEABLE_NODE_TYPE_SET = new Set<NodeType>(CACHEABLE_NODE_TYPES);
@@ -127,6 +128,15 @@ export const REGEX_INPUT_PORTS = ['value', 'prompt', 'regexCallback'];
 export const REGEX_OUTPUT_PORTS = ['grouped', 'matches', 'value', 'aiPrompt'];
 export const STRING_MUTATOR_INPUT_PORTS = ['value', 'prompt', 'result'];
 export const STRING_MUTATOR_OUTPUT_PORTS = ['value'];
+export const VALIDATION_PATTERN_INPUT_PORTS = ['value', 'prompt', 'result', 'context'];
+export const VALIDATION_PATTERN_OUTPUT_PORTS = [
+  'value',
+  'result',
+  'context',
+  'valid',
+  'errors',
+  'bundle',
+];
 export const ITERATOR_INPUT_PORTS = ['value', 'callback'];
 export const ITERATOR_OUTPUT_PORTS = ['value', 'index', 'total', 'done', 'status'];
 export const DEFAULT_DB_QUERY: DbQueryConfig = {
@@ -541,6 +551,7 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     'mapper',
     'mutator',
     'validator',
+    'validation_pattern',
     'bundle',
     'template',
     'router',
@@ -558,6 +569,7 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     'mapper',
     'mutator',
     'validator',
+    'validation_pattern',
     'bundle',
     'template',
     'router',
@@ -579,6 +591,7 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     'mapper',
     'mutator',
     'validator',
+    'validation_pattern',
     'bundle',
     'template',
     'router',
@@ -592,6 +605,7 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     'regex',
     'mutator',
     'validator',
+    'validation_pattern',
     'viewer',
     'ai_description',
     'description_updater',
@@ -607,6 +621,7 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
   ],
   mutator: [
     'validator',
+    'validation_pattern',
     'viewer',
     'prompt',
     'iterator',
@@ -635,6 +650,23 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     'notification',
   ],
   validator: [
+    'validation_pattern',
+    'viewer',
+    'prompt',
+    'iterator',
+    'regex',
+    'ai_description',
+    'description_updater',
+    'gate',
+    'bundle',
+    'template',
+    'router',
+    'delay',
+    'poll',
+    'database',
+  ],
+  validation_pattern: [
+    'validator',
     'viewer',
     'prompt',
     'iterator',
@@ -654,14 +686,14 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
   audio_speaker: ['viewer', 'bundle', 'delay', 'notification'],
   constant: ['math', 'template', 'viewer', 'bundle', 'compare', 'router', 'delay', 'poll', 'http', 'database', 'audio_oscillator', 'audio_speaker'],
   compare: ['gate', 'router', 'viewer', 'bundle', 'template', 'poll', 'database'],
-  gate: ['validator', 'viewer', 'prompt', 'ai_description', 'description_updater', 'bundle', 'template', 'router', 'delay', 'poll', 'audio_oscillator', 'audio_speaker'],
+  gate: ['validator', 'validation_pattern', 'viewer', 'prompt', 'ai_description', 'description_updater', 'bundle', 'template', 'router', 'delay', 'poll', 'audio_oscillator', 'audio_speaker'],
   router: ['viewer', 'bundle', 'template', 'prompt', 'model', 'agent', 'learner_agent', 'delay', 'poll', 'database', 'audio_oscillator', 'audio_speaker'],
   regex: ['viewer', 'bundle', 'template', 'prompt', 'model', 'agent', 'learner_agent', 'delay', 'poll', 'database'],
   iterator: ['viewer', 'bundle', 'template', 'prompt', 'model', 'agent', 'learner_agent', 'delay', 'poll', 'database', 'notification'],
-  delay: ['viewer', 'bundle', 'template', 'prompt', 'model', 'agent', 'learner_agent', 'validator', 'gate', 'poll', 'database', 'audio_oscillator', 'audio_speaker'],
+  delay: ['viewer', 'bundle', 'template', 'prompt', 'model', 'agent', 'learner_agent', 'validator', 'validation_pattern', 'gate', 'poll', 'database', 'audio_oscillator', 'audio_speaker'],
   poll: ['viewer', 'notification', 'bundle', 'template', 'prompt', 'model', 'agent', 'learner_agent', 'delay', 'database'],
   http: ['viewer', 'bundle', 'template', 'prompt', 'math', 'compare', 'poll', 'database'],
-  database: ['viewer', 'bundle', 'template', 'prompt', 'mapper', 'validator', 'iterator', 'poll', 'notification', 'model', 'agent', 'learner_agent'],
+  database: ['viewer', 'bundle', 'template', 'prompt', 'mapper', 'validator', 'validation_pattern', 'iterator', 'poll', 'notification', 'model', 'agent', 'learner_agent'],
   db_schema: ['prompt', 'template', 'model', 'agent', 'learner_agent', 'bundle', 'viewer', 'database'],
   bundle: ['viewer', 'template', 'prompt', 'poll', 'database'],
   template: ['model', 'agent', 'learner_agent', 'viewer', 'bundle', 'prompt', 'poll', 'database', 'iterator'],
@@ -688,6 +720,7 @@ export const typeStyles: Record<NodeType, { border: string; glow: string }> = {
   mutator: { border: 'border-teal-500/40', glow: 'shadow-teal-500/20' },
   string_mutator: { border: 'border-cyan-500/40', glow: 'shadow-cyan-500/20' },
   validator: { border: 'border-orange-500/40', glow: 'shadow-orange-500/20' },
+  validation_pattern: { border: 'border-amber-500/40', glow: 'shadow-amber-500/20' },
   constant: { border: 'border-slate-400/40', glow: 'shadow-slate-500/20' },
   math: { border: 'border-yellow-500/40', glow: 'shadow-yellow-500/20' },
   gate: { border: 'border-red-500/40', glow: 'shadow-red-500/20' },

@@ -390,11 +390,26 @@ export function RichTextEditor({
 
   const setTextAlign = useCallback((nextValue: TextAlignOption): void => {
     if (!allowTextAlign || !editor) return;
-    if (editor.isActive('heading')) {
-      editor.chain().focus().updateAttributes('heading', { textAlign: nextValue }).run();
-      return;
-    }
-    editor.chain().focus().updateAttributes('paragraph', { textAlign: nextValue }).run();
+    editor.chain().focus().run();
+    const { from, to, empty } = editor.state.selection;
+    if (empty) return;
+
+    const transaction = editor.state.tr;
+    let changed = false;
+    editor.state.doc.nodesBetween(from, to, (node, position): void => {
+      if (node.type.name !== 'paragraph' && node.type.name !== 'heading') return;
+      const currentAlign = typeof node.attrs['textAlign'] === 'string'
+        ? node.attrs['textAlign']
+        : 'left';
+      if (currentAlign === nextValue) return;
+      changed = true;
+      transaction.setNodeMarkup(position, undefined, {
+        ...node.attrs,
+        textAlign: nextValue,
+      });
+    });
+    if (!changed) return;
+    editor.view.dispatch(transaction.scrollIntoView());
   }, [allowTextAlign, editor]);
 
   const isTextAlignActive = useCallback((alignment: TextAlignOption): boolean => {

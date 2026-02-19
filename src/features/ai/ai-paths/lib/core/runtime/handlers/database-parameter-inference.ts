@@ -19,10 +19,54 @@ const SELECTOR_TYPES_REQUIRING_OPTIONS = new Set<string>([
   'checklist',
 ]);
 
+const MULTI_VALUE_DELIMITER = '|';
+
+const normalizeValueTokenCase = (value: string): string => {
+  const compact = value.replace(/\s+/g, ' ').trim();
+  if (!compact) return '';
+
+  const hasLowerCaseLetters = compact !== compact.toLocaleUpperCase();
+  const hasUpperCaseLetters = compact !== compact.toLocaleLowerCase();
+  if (hasLowerCaseLetters && hasUpperCaseLetters) {
+    return compact;
+  }
+
+  return compact.replace(/\p{L}[\p{L}\p{M}]*/gu, (token: string): string => {
+    if (token.length <= 3 && token === token.toLocaleUpperCase()) {
+      return token;
+    }
+    const letters = Array.from(token);
+    const first = letters[0] ?? '';
+    const rest = letters.slice(1).join('');
+    return `${first.toLocaleUpperCase()}${rest.toLocaleLowerCase()}`;
+  });
+};
+
+const normalizeMultiValueDelimiter = (value: string): string => {
+  const trimmed = value.trim();
+  if (!trimmed) return trimmed;
+  const tokens = trimmed
+    .split(/\s*\|\s*|\s*;\s*|\s*\r?\n+\s*|\s*,\s*/)
+    .map((entry: string) => normalizeValueTokenCase(entry))
+    .filter(Boolean);
+  if (tokens.length <= 1) {
+    return tokens[0] ?? normalizeValueTokenCase(trimmed);
+  }
+  const seen = new Set<string>();
+  const canonicalTokens: string[] = [];
+  tokens.forEach((entry: string) => {
+    const key = entry.toLocaleLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    canonicalTokens.push(entry);
+  });
+  return canonicalTokens.join(MULTI_VALUE_DELIMITER);
+};
+
 const parseChecklistValues = (value: string): string[] => {
   const seen = new Set<string>();
   return value
-    .split(/[,;\n]/)
+    .split(/[|,;\n]/)
     .map((entry: string) => entry.trim())
     .filter((entry: string) => {
       if (!entry) return false;
@@ -38,9 +82,10 @@ const resolveChecklistValue = (raw: unknown): string | null => {
     .map((entry: unknown): string | null => normalizeNonEmptyString(entry))
     .filter((entry: string | null): entry is string => Boolean(entry));
   if (arrayLike.length > 0) {
-    return arrayLike.join(', ');
+    return normalizeMultiValueDelimiter(arrayLike.join(MULTI_VALUE_DELIMITER));
   }
-  return resolveParameterValue(raw);
+  const resolved = resolveParameterValue(raw);
+  return resolved ? normalizeMultiValueDelimiter(resolved) : null;
 };
 
 export class ParameterInferenceGateError extends Error {
@@ -565,7 +610,7 @@ export const applyParameterInferenceGuard = (args: {
           seen.add(key);
           canonicalEntries.push(canonical);
         }
-        value = canonicalEntries.join(', ');
+        value = canonicalEntries.join(MULTI_VALUE_DELIMITER);
       } else {
         const canonical = lookup.get(value.trim().toLowerCase());
         if (!canonical) {
@@ -576,6 +621,7 @@ export const applyParameterInferenceGuard = (args: {
       }
     }
 
+    value = normalizeMultiValueDelimiter(value);
     accepted.push({ parameterId, value });
     acceptedIds.add(parameterId);
   });

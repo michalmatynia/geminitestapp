@@ -20,6 +20,7 @@ export type HandleDatabaseQueryOperationInput = {
   templateInputs: RuntimePortValues;
   templateContext: Record<string, unknown>;
   aiPrompt: string;
+  strictFlowMode: boolean;
 };
 
 export async function handleDatabaseQueryOperation({
@@ -35,6 +36,7 @@ export async function handleDatabaseQueryOperation({
   templateInputs,
   templateContext,
   aiPrompt,
+  strictFlowMode,
 }: HandleDatabaseQueryOperationInput): Promise<RuntimePortValues> {
   const resolution = resolveDatabaseQuery({
     nodeInputs,
@@ -61,5 +63,6 @@ export async function handleDatabaseQueryOperation({
     dryRun,
     templateInputs,
     aiPrompt,
+    allowParameterDefinitionFallback: !strictFlowMode,
   });
 }

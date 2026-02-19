@@ -8,10 +8,9 @@ import {
   Tag, 
   FileUploadTrigger, 
   type FileUploadHelpers, 
-  DataTable, 
+  StandardDataTablePanel, 
   StatusToggle,
   useToast,
-  ListPanel,
   PanelHeader,
   SearchInput,
   EmptyState,
@@ -169,7 +168,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
         ]}
       />
 
-      <ListPanel
+      <StandardDataTablePanel
         filters={
           <div className='space-y-4'>
             <div className='flex flex-wrap items-center gap-3'>
@@ -236,22 +235,17 @@ function ChatbotContextPageInner(): React.JSX.Element {
             )}
           </div>
         }
-      >
-        <div className='rounded-md border border-border bg-gray-900/20'>
-          <DataTable
-            columns={columns}
-            data={filteredContexts}
-            isLoading={loading}
-            emptyState={
-              <EmptyState
-                title='No contexts found'
-                description={tagQuery || tagFilters.length > 0 ? 'Try adjusting your filters.' : 'Global contexts provide instructions to the AI.'}
-                icon={<MessageSquareQuote className='size-12 opacity-20' />}
-              />
-            }
+        columns={columns}
+        data={filteredContexts}
+        isLoading={loading}
+        emptyState={
+          <EmptyState
+            title='No contexts found'
+            description={tagQuery || tagFilters.length > 0 ? 'Try adjusting your filters.' : 'Global contexts provide instructions to the AI.'}
+            icon={<MessageSquareQuote className='size-12 opacity-20' />}
           />
-        </div>
-      </ListPanel>
+        }
+      />
 
       <ChatbotContextModal
         isOpen={isModalOpen}

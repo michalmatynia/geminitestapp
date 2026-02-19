@@ -271,7 +271,7 @@ export function DocsTabPanel(): React.JSX.Element {
     'Trigger context input only accepts context from Simulation.',
     'Simulation trigger input only accepts trigger from Trigger.',
     'Multiple wires into the same input are collected as arrays.',
-    'Gate expects valid from a Validator node.',
+    'Gate expects valid from a Validator or Validation Pattern node.',
   ]);
   const showContextPresets = shouldShow([
     'Context Presets',
@@ -496,7 +496,7 @@ export function DocsTabPanel(): React.JSX.Element {
               <li>Trigger context input only accepts context from Simulation.</li>
               <li>Simulation trigger input only accepts trigger from Trigger.</li>
               <li>Multiple wires into the same input are collected as arrays.</li>
-              <li>Gate expects valid from a Validator node.</li>
+              <li>Gate expects valid from a Validator or Validation Pattern node.</li>
             </ul>
           </DocumentationSection>
         ) : null}

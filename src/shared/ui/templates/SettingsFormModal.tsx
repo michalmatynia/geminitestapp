@@ -1,14 +1,12 @@
 'use client';
 
-import React from 'react';
+import type { ModalStateProps } from '@/shared/types/modal-props';
+import type { ReactNode } from 'react';
 
 import { FormModal } from '../FormModal';
 
-import type { ReactNode } from 'react';
-
-export interface SettingsFormModalProps {
+export interface SettingsFormModalProps extends Omit<ModalStateProps, 'isOpen'> {
   open: boolean;
-  onClose: () => void;
   onSave: () => Promise<void>;
   title: string;
   subtitle?: string;

@@ -1,6 +1,7 @@
 'use client';
 
 import type { ModalStateProps } from '@/shared/types/modal-props';
+import { cn } from '@/shared/utils';
 
 import { AppModal } from './app-modal';
 import { Button } from './button';
@@ -17,6 +18,7 @@ interface FormModalProps extends Partial<ModalStateProps> {
   onSave: () => void;
   isSaving?: boolean;
   isSaveDisabled?: boolean;
+  hasUnsavedChanges?: boolean;
   saveText?: string;
   cancelText?: string;
   showSaveButton?: boolean;
@@ -39,6 +41,7 @@ export function FormModal({
   onSave,
   isSaving = false,
   isSaveDisabled = false,
+  hasUnsavedChanges,
   saveText = 'Save',
   cancelText = 'Cancel',
   showSaveButton = true,
@@ -52,23 +55,32 @@ export function FormModal({
 }: FormModalProps): React.JSX.Element | null {
   const isCurrentlyOpen = isOpen ?? open;
   if (!isCurrentlyOpen) return null;
+  const shouldHighlightSave = hasUnsavedChanges ?? !isSaveDisabled;
+  const isSaveButtonDisabled =
+    isSaving || isSaveDisabled || hasUnsavedChanges === false;
+  const saveButtonClassName = cn(
+    'min-w-[100px] rounded-md border text-xs transition-colors',
+    shouldHighlightSave
+      ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
+      : 'border-border/60 text-gray-500 hover:bg-transparent'
+  );
 
   const saveButton = formRef ? (
     <Button
       type='button'
       onClick={() => formRef.current?.requestSubmit()}
-      disabled={isSaving || isSaveDisabled}
-      variant='default'
-      className='min-w-[100px]'
+      disabled={isSaveButtonDisabled}
+      size='sm'
+      className={saveButtonClassName}
     >
       {isSaving ? 'Saving...' : saveText}
     </Button>
   ) : (
     <Button
       onClick={onSave}
-      disabled={isSaving || isSaveDisabled}
-      variant='default'
-      className='min-w-[100px]'
+      disabled={isSaveButtonDisabled}
+      size='sm'
+      className={saveButtonClassName}
     >
       {isSaving ? 'Saving...' : saveText}
     </Button>
@@ -101,7 +113,7 @@ export function FormModal({
 
   return (
     <AppModal
-      open={open}
+      open={isCurrentlyOpen}
       onOpenChange={onClose}
       title={title}
       subtitle={subtitle}

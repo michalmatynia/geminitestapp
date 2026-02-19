@@ -6,7 +6,6 @@ import {
   PromptValidationScopeDto,
   PromptValidationLaunchScopeBehaviorDto,
   PromptValidationLaunchOperatorDto,
-  PromptExploderSegmentTypeDto,
   PromptExploderCaptureApplyToDto,
   PromptExploderCaptureNormalizeDto,
   PromptValidationSimilarDto,
@@ -18,6 +17,7 @@ import {
   promptEngineSettingsSchema,
   promptValidationRuleSchema,
 } from '@/shared/contracts/prompt-engine';
+import { PromptExploderSegmentTypeDto } from '@/shared/contracts/prompt-exploder';
 
 export const PROMPT_ENGINE_SETTINGS_KEY = 'prompt_engine_settings';
 

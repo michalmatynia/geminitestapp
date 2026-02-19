@@ -185,6 +185,7 @@ export type PrepareDatabaseTemplateContextInput = {
   fallbackEntityId: string | null;
   fetchEntityCached: NodeHandlerContext['fetchEntityCached'];
   schemaData: SchemaResponse | null;
+  strictFlowMode?: boolean;
 };
 
 export type PrepareDatabaseTemplateContextResult = {
@@ -203,6 +204,7 @@ export function prepareDatabaseTemplateContext({
   fallbackEntityId,
   fetchEntityCached,
   schemaData,
+  strictFlowMode = true,
 }: PrepareDatabaseTemplateContextInput): PrepareDatabaseTemplateContextResult {
   const templateInputValue: unknown =
     coerceInput(resolvedInputs['value']) ?? coerceInput(resolvedInputs['jobId']);
@@ -265,7 +267,7 @@ export function prepareDatabaseTemplateContext({
       normalizeNonEmptyString(templateInputs['productId']) ??
       normalizeNonEmptyString(resolvedInputs['entityId']) ??
       normalizeNonEmptyString(resolvedInputs['productId']) ??
-      normalizeNonEmptyString(fallbackEntityId) ??
+      (!strictFlowMode ? normalizeNonEmptyString(fallbackEntityId) : null) ??
       null;
     if (!entityId) {
       return;

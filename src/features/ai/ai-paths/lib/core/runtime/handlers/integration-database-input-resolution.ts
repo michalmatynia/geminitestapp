@@ -5,6 +5,7 @@ export type ResolveDatabaseInputsInput = {
   triggerContext: unknown;
   fallbackEntityId: string | null;
   simulationEntityType: string | null;
+  strictFlowMode?: boolean;
 };
 
 export function resolveDatabaseInputs({
@@ -12,6 +13,7 @@ export function resolveDatabaseInputs({
   triggerContext,
   fallbackEntityId,
   simulationEntityType,
+  strictFlowMode = true,
 }: ResolveDatabaseInputsInput): Record<string, unknown> {
   const next: Record<string, unknown> = { ...nodeInputs };
   const pickString = (value: unknown): string | undefined =>
@@ -118,22 +120,24 @@ export function resolveDatabaseInputs({
   if (bundleValue && typeof bundleValue === 'object') {
     applyFromObject(bundleValue as Record<string, unknown>);
   }
-  pickFromContext(triggerContext as Record<string, unknown>);
-  if (next['entityId'] === undefined && fallbackEntityId) {
-    next['entityId'] = fallbackEntityId;
-  }
-  if (next['productId'] === undefined && next['entityId']) {
-    next['productId'] = next['entityId'];
-  }
-  if (next['entityType'] === undefined && simulationEntityType) {
-    next['entityType'] = simulationEntityType;
-  }
-  if (next['value'] === undefined) {
-    const fallbackValue =
-      (typeof next['entityId'] === 'string' && (next['entityId']).trim() ? next['entityId'] : undefined) ??
-      (typeof next['productId'] === 'string' && (next['productId']).trim() ? next['productId'] : undefined);
-    if (fallbackValue) {
-      next['value'] = fallbackValue;
+  if (!strictFlowMode) {
+    pickFromContext(triggerContext as Record<string, unknown>);
+    if (next['entityId'] === undefined && fallbackEntityId) {
+      next['entityId'] = fallbackEntityId;
+    }
+    if (next['productId'] === undefined && next['entityId']) {
+      next['productId'] = next['entityId'];
+    }
+    if (next['entityType'] === undefined && simulationEntityType) {
+      next['entityType'] = simulationEntityType;
+    }
+    if (next['value'] === undefined) {
+      const fallbackValue =
+        (typeof next['entityId'] === 'string' && (next['entityId']).trim() ? next['entityId'] : undefined) ??
+        (typeof next['productId'] === 'string' && (next['productId']).trim() ? next['productId'] : undefined);
+      if (fallbackValue) {
+        next['value'] = fallbackValue;
+      }
     }
   }
   return next;

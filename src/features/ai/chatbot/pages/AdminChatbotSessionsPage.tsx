@@ -8,11 +8,10 @@ import {
   Button, 
   Input, 
   Checkbox, 
-  ListPanel, 
+  StandardDataTablePanel, 
   SectionHeader, 
   EmptyState, 
   SearchInput, 
-  DataTable
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -172,7 +171,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
         className='mb-6'
       />
 
-      <ListPanel
+      <StandardDataTablePanel
         variant='flat'
         alerts={error ? <p className='text-sm text-rose-400'>{error}</p> : null}
         filters={(
@@ -216,8 +215,10 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
             </div>
           </div>
         )}
-      >
-        {filteredSessions.length === 0 && !loading ? (
+        columns={columns}
+        data={filteredSessions}
+        isLoading={loading}
+        emptyState={
           <EmptyState
             title='No sessions found'
             description={searchQuery ? 'Try adjusting your filters.' : 'Start a new chat to see it here.'}
@@ -227,16 +228,8 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
               </Link>
             ) : undefined}
           />
-        ) : (
-          <div className='rounded-md border border-border bg-gray-900/20'>
-            <DataTable
-              columns={columns}
-              data={filteredSessions}
-              isLoading={loading}
-            />
-          </div>
-        )}
-      </ListPanel>
+        }
+      />
 
       <ConfirmModal
         isOpen={!!sessionToDelete}

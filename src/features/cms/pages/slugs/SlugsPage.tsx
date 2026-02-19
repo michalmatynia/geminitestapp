@@ -19,12 +19,11 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
-  ListPanel,
+  StandardDataTablePanel,
   ToggleRow,
   EmptyState,
   PageLayout,
   SelectSimple,
-  DataTable,
   StatusBadge,
   ActionMenu,
   DropdownMenuItem,
@@ -223,8 +222,12 @@ export default function SlugsPage(): React.JSX.Element {
         </div>
       }
     >
-      <ListPanel variant='flat'>
-        {slugs.length === 0 ? (
+      <StandardDataTablePanel
+        variant='flat'
+        columns={columns}
+        data={slugs}
+        isLoading={slugsQuery.isLoading}
+        emptyState={
           <EmptyState
             title='No routes defined'
             description='This domain currently has no assigned slugs. Pages will not be reachable until a route is mapped.'
@@ -241,16 +244,8 @@ export default function SlugsPage(): React.JSX.Element {
               </div>
             }
           />
-        ) : (
-          <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
-            <DataTable
-              columns={columns}
-              data={slugs}
-              isLoading={slugsQuery.isLoading}
-            />
-          </div>
-        )}
-      </ListPanel>
+        }
+      />
 
       <AttachSlugModal
         isOpen={attachOpen}

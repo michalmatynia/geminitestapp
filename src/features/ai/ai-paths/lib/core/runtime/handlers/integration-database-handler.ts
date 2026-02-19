@@ -30,6 +30,7 @@ export const handleDatabase: NodeHandler = async ({
   simulationEntityId,
   triggerContext,
   fallbackEntityId,
+  strictFlowMode,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   try {
     const resolvedInputs: Record<string, unknown> = resolveDatabaseInputs(
@@ -38,6 +39,7 @@ export const handleDatabase: NodeHandler = async ({
         triggerContext,
         fallbackEntityId,
         simulationEntityType,
+        strictFlowMode,
       }
     );
     const nodeInputPorts: string[] = Array.isArray(node.inputs) ? node.inputs : [];
@@ -100,6 +102,7 @@ export const handleDatabase: NodeHandler = async ({
       fallbackEntityId,
       fetchEntityCached,
       schemaData,
+      strictFlowMode,
     });
 
     if (useMongoActions) {
@@ -122,6 +125,7 @@ export const handleDatabase: NodeHandler = async ({
         templateContext,
         aiPrompt,
         ensureExistingParameterTemplateContext,
+        strictFlowMode,
       });
       if (mongoActionResult) {
         return mongoActionResult;
@@ -149,6 +153,7 @@ export const handleDatabase: NodeHandler = async ({
       templateContext,
       aiPrompt,
       ensureExistingParameterTemplateContext,
+      strictFlowMode,
     });
   } catch (error) {
     if (error instanceof ParameterInferenceGateError) {

@@ -15,6 +15,7 @@ const SUPPORTED_NODE_TYPES = new Set<AiNode['type']>([
   'mutator',
   'string_mutator',
   'validator',
+  'validation_pattern',
   'constant',
   'math',
   'template',

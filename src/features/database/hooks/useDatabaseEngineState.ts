@@ -178,7 +178,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
           existing.prismaFieldCount = collection.fields.length;
         }
       } else {
-        byName.set(collection.name, {
+        const newRow: DatabaseCollectionRow = {
           name: collection.name,
           existsInMongo: isMongo,
           existsInPrisma: !isMongo,
@@ -187,7 +187,8 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
           mongoFieldCount: isMongo ? collection.fields.length : null,
           prismaFieldCount: isMongo ? null : collection.fields.length,
           assignedProvider: 'auto',
-        });
+        };
+        byName.set(collection.name, newRow);
       }
     });
     return Array.from(byName.values()).sort((a, b) => a.name.localeCompare(b.name));

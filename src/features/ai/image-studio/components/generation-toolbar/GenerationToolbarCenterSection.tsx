@@ -16,10 +16,13 @@ type GenerationToolbarCenterSectionProps = {
   centerLayoutPaddingX: string;
   centerLayoutPaddingY: string;
   centerLayoutSplitAxes: boolean;
+  centerLayoutFillMissingCanvasWhite: boolean;
+  centerLayoutProjectCanvasSize: { width: number; height: number } | null;
   centerMode: string;
   centerModeOptions: SelectOption[];
   hasSourceImage: boolean;
   onCancelCenter: () => void;
+  onCenterLayoutFillMissingCanvasWhiteChange: (checked: boolean) => void;
   onCenterLayoutPaddingChange: (value: string) => void;
   onCenterLayoutPaddingXChange: (value: string) => void;
   onCenterLayoutPaddingYChange: (value: string) => void;
@@ -38,10 +41,13 @@ export function GenerationToolbarCenterSection({
   centerLayoutPaddingX,
   centerLayoutPaddingY,
   centerLayoutSplitAxes,
+  centerLayoutFillMissingCanvasWhite,
+  centerLayoutProjectCanvasSize,
   centerMode,
   centerModeOptions,
   hasSourceImage,
   onCancelCenter,
+  onCenterLayoutFillMissingCanvasWhiteChange,
   onCenterLayoutPaddingChange,
   onCenterLayoutPaddingXChange,
   onCenterLayoutPaddingYChange,
@@ -152,6 +158,24 @@ export function GenerationToolbarCenterSection({
               </div>
             </div>
           ) : null}
+          <label className='flex items-center gap-2 text-[11px] text-gray-300'>
+            <input
+              type='checkbox'
+              checked={centerLayoutFillMissingCanvasWhite}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                onCenterLayoutFillMissingCanvasWhiteChange(Boolean(event.target.checked));
+              }}
+              disabled={!centerLayoutProjectCanvasSize}
+              className='h-3.5 w-3.5 rounded border border-border/60 bg-card/40 accent-gray-200'
+              aria-label='Fill missing canvas area with white background'
+            />
+            <span>
+              Fill missing canvas with white
+              {centerLayoutProjectCanvasSize
+                ? ` (${centerLayoutProjectCanvasSize.width}x${centerLayoutProjectCanvasSize.height})`
+                : ' (project canvas size unavailable)'}
+            </span>
+          </label>
         </div>
       ) : null}
       <div className='mt-2 flex flex-wrap items-center gap-2'>

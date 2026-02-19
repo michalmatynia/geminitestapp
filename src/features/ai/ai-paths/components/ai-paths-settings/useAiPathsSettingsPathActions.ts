@@ -265,6 +265,7 @@ export function useAiPathsSettingsPathActions({
       executionMode: 'server',
       flowIntensity: 'medium',
       runMode: 'manual',
+      strictFlowMode: true,
       nodes: [],
       edges: [],
       updatedAt: now,

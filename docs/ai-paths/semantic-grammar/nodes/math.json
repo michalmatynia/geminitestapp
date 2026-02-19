@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "math",
   "title": "Math",
   "purpose": "Apply numeric transformation to a value.",
@@ -52,5 +53,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "9da335c327d81a23f10a890a37c7dbcdd8463900afbc4a8279ecd094b6bf9b0e"
 }

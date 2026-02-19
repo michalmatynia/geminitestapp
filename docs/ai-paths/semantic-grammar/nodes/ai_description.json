@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "ai_description",
   "title": "AI Description Generator",
   "purpose": "Runs the AI Description pipeline to produce description_en.",
@@ -56,5 +57,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "b931649ba589813fb9e772a179003b8960426e919e9ae553692507278d3c5097"
 }

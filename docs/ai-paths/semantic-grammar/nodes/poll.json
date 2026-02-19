@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "poll",
   "title": "Poll Job",
   "purpose": "Poll an AI job or database query until it completes.",
@@ -149,5 +150,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "6bed270f19afc27bb4ee9f42723aaae11c297d22ea4980626e95719cf8c6f293"
 }

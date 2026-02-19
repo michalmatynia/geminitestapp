@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "db_schema",
   "title": "Database Schema",
   "purpose": "Provides live database structure as context for AI.",
@@ -70,5 +71,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "9ce34ef49b7709e8e6c0008cde0260ba925c9100a3019a342166590eb2d4cd81"
 }

@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "audio_oscillator",
   "title": "Audio Oscillator",
   "purpose": "Generate a waveform signal (sine/square/triangle/sawtooth).",
@@ -94,5 +95,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "aeaa5ceb04391b2376ccefc657bbcba7781f08922f210e82f3569b2b16314956"
 }

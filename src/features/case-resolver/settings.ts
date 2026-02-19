@@ -592,8 +592,8 @@ export const createCaseResolverFile = (input: {
   tagId?: string | null | undefined;
   caseIdentifierId?: string | null | undefined;
   categoryId?: string | null | undefined;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt?: string | undefined;
+  updatedAt?: string | undefined;
 }): CaseResolverFile => {
   const now = new Date().toISOString();
   const createdAt = normalizeTimestamp(input.createdAt, now);

@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "iterator",
   "title": "Iterator",
   "purpose": "Iterate over an array and emit one item at a time (advance on callback).",
@@ -74,5 +75,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "5f7cf778405cc759dbde169b966b504eda46c86cefc9ea0fb2125bab01e74fdd"
 }

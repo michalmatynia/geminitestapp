@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "agent",
   "title": "Reasoning Agent",
   "purpose": "Run a multi-step agent persona over the prompt.",
@@ -85,5 +86,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "c4f89d1364ac8557ddd3e33bb60df57e49c513d0c192fd39a0fc3eebdc8ef422"
 }

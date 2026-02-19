@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "trigger",
   "title": "Trigger: Scheduled Run",
   "purpose": "Runs on a server schedule or cron.",
@@ -67,5 +68,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "3abc69836bcb192e2a1e6aa3a7c3a33aee7ef8db5ebc689a27036903b576d1e3"
 }

@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "audio_speaker",
   "title": "Audio Speaker (Mono)",
   "purpose": "Play incoming audio signals in local runtime.",
@@ -90,5 +91,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "1d5c93c395f1d7c0ec4c8abb0d28abc7842f36613e52255c7dc6b0b6abaf2321"
 }

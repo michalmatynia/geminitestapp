@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "parser",
   "title": "JSON Parser",
   "purpose": "Extract fields into outputs or a single bundle.",
@@ -64,5 +65,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "40b4d56d51ee3d3433bbd68043b97490a57bed8beaf03406f62d0010a8993d1e"
 }

@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "learner_agent",
   "title": "Learner Agent",
   "purpose": "Answer using connected embedding collections (RAG).",
@@ -99,5 +100,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "6e2b2011d84b2904b5bcd9781a8fc71750ef2bbaf9cfc3ad4154f126d71997b8"
 }

@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "router",
   "title": "Router",
   "purpose": "Route payloads based on a condition.",
@@ -81,5 +82,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "9ef7e3acda01fcedf0a2581da7a5330add9bdc3047e9948cbeeca0d6efbfb7d2"
 }

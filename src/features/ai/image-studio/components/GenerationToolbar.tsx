@@ -29,6 +29,7 @@ import {
   isClientCenterCrossOriginError,
   layoutCanvasImageObject,
   loadImageElement,
+  mapImageCropRectToCanvasRect,
   polygonsFromShapes,
   renderMaskDataUrlFromPolygons,
   resolveCropRectFromShapesWithDiagnostics,
@@ -555,6 +556,21 @@ export function GenerationToolbar(): React.JSX.Element {
 
     try {
       cropDiagnosticsRef.current = null;
+      const cropCanvasContext = await resolveWorkingCropCanvasContext();
+      if (cropCanvasContext) {
+        const sourceDimensions = await resolveWorkingSourceDimensions();
+        const canvasCropRect = mapImageCropRectToCanvasRect(
+          previewCrop.cropRect,
+          sourceDimensions.width,
+          sourceDimensions.height,
+          cropCanvasContext
+        );
+        if (canvasCropRect) {
+          await handleCrop(canvasCropRect, { includeCanvasContext: true });
+          return;
+        }
+      }
+
       await handleCrop(previewCrop.cropRect, { includeCanvasContext: false });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to prepare crop from preview view.', { variant: 'error' });

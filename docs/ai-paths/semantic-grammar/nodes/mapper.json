@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "mapper",
   "title": "JSON Mapper",
   "purpose": "Map context to custom outputs.",
@@ -60,5 +61,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "020683330a43b053a365a8ad52778562aa39bf7a0ec9fdf23bf5b5364211316c"
 }

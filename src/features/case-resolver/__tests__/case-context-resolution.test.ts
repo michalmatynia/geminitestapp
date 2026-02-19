@@ -122,7 +122,7 @@ describe('case resolver case context resolution', () => {
       parentCaseId: caseFile.id,
     });
     const baseWorkspace = {
-      version: 2,
+      version: 2 as const,
       workspaceRevision: 0,
       lastMutationId: null,
       lastMutationAt: null,
@@ -157,7 +157,7 @@ describe('case resolver case context resolution', () => {
       parentCaseId: caseFile.id,
     });
     const baseWorkspace = {
-      version: 2,
+      version: 2 as const,
       workspaceRevision: 1,
       lastMutationId: 'mutation-a',
       lastMutationAt: '2026-02-19T00:00:00.000Z',
@@ -196,7 +196,7 @@ describe('case resolver case context resolution', () => {
       updatedAt: '2026-02-19T00:01:00.000Z',
     };
     const baseWorkspace = {
-      version: 2,
+      version: 2 as const,
       workspaceRevision: 1,
       lastMutationId: null,
       lastMutationAt: null,
@@ -237,7 +237,7 @@ describe('case resolver case context resolution', () => {
       parentCaseId: caseFile.id,
     });
     const baseWorkspace = {
-      version: 2,
+      version: 2 as const,
       workspaceRevision: 0,
       lastMutationId: null,
       lastMutationAt: null,

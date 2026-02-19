@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "notification",
   "title": "Toast Notification",
   "purpose": "Display an instant toast from incoming results.",
@@ -56,5 +57,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "d28f08a8f8045477cef378e496178c489d131067ec79c89b1288ada283e03fae"
 }

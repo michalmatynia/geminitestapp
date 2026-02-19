@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "viewer",
   "title": "Result Viewer",
   "purpose": "Preview outputs connected from other nodes.",
@@ -116,5 +117,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "3c7eab09a12e259cfeb2c3fcf0fd0eb6c9ba7dc44701629d355d24afd46ab328"
 }

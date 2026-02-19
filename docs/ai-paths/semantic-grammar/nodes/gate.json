@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "gate",
   "title": "Gate",
   "purpose": "Allow context through when valid is true.",
@@ -59,5 +60,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "a55ef2c56acbcda8db15ebfd789c22fa9f8285fe5e615132684c16fd4e9fff1b"
 }

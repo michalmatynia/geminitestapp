@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "simulation",
   "title": "Simulation: Entity Modal",
   "purpose": "Simulate a modal action by Entity ID.",
@@ -62,5 +63,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "97707b90712e96ce6e1f8603c121f3ec124269a26f100e18e25f359d0336461d"
 }

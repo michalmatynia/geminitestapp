@@ -39,12 +39,17 @@ For every docs wiring line (`A.port -> B.port`), infer both directions:
 
 ### 5. Semantic grammar graph integrity
 
-From semantic node catalog + grammar requirements, infer graph-level checks:
+From semantic node catalog + grammar requirements (including per-node hashes), infer graph-level checks:
 
 - `node_types_known`
 - `node_ids_unique`
 - `edge_ids_unique`
 - `node_positions_finite`
+
+Additional semantic-catalog guardrails:
+
+- detect and report semantic node hash collisions in docs snapshot warnings
+- track hash-aware node catalog provenance for inference auditing
 
 ### 6. Tooltip-catalog prompt guidance
 

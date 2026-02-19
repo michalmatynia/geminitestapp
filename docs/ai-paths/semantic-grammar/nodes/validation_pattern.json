@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "validation_pattern",
   "title": "Validation Pattern",
   "purpose": "Run ordered validation patterns from a stack or a path-local rule list.",
@@ -148,5 +149,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "e599c96a6105b4245fd3b44575ed9f082bda0d234eba61f322d41f75e2c397ca"
 }

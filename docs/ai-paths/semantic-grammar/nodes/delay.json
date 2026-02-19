@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "delay",
   "title": "Delay",
   "purpose": "Delay signals to sequence flows.",
@@ -63,5 +64,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "c7975b9909b39589c4c4f1432d2f3f7e660647c9425d63004f12ee0ac937a6b6"
 }

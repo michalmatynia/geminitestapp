@@ -376,9 +376,16 @@ const semanticNodeIndexRowSchema = z.object({
   nodeType: z.string().trim().min(1),
   title: z.string().trim().min(1),
   file: z.string().trim().min(1),
+  nodeHash: z.string().trim().regex(/^[a-f0-9]{64}$/i),
+  nodeHashAlgorithm: z.literal('sha256'),
   inputCount: z.number().int().optional(),
   outputCount: z.number().int().optional(),
   configFieldCount: z.number().int().optional(),
+  runtimeFieldCount: z.number().int().optional(),
+  criticalFieldCount: z.number().int().optional(),
+  hasDefaultConfig: z.boolean().optional(),
+  defaultConfigKeyCount: z.number().int().optional(),
+  purposeSummary: z.string().optional(),
 });
 
 const tooltipCatalogEntrySchema = z.object({
@@ -1096,6 +1103,19 @@ const buildSemanticNodesCatalogSourcePayload = async (args: {
 
     const rows = result.data;
     const allowedNodeTypes = uniqueStringList(rows.map((row) => row.nodeType));
+    const nodeHashSet = new Set<string>();
+    const nodeTypesByHash = new Map<string, string>();
+    rows.forEach((row) => {
+      nodeHashSet.add(row.nodeHash);
+      const existingType = nodeTypesByHash.get(row.nodeHash);
+      if (existingType && existingType !== row.nodeType) {
+        warnings.push(
+          `${source.path}: semantic node hash collision between "${existingType}" and "${row.nodeType}".`,
+        );
+        return;
+      }
+      nodeTypesByHash.set(row.nodeHash, row.nodeType);
+    });
     const hash = hashText(JSON.stringify(rows));
     const docsBinding = source.path;
 
@@ -1106,7 +1126,7 @@ const buildSemanticNodesCatalogSourcePayload = async (args: {
         module: 'graph',
         severity: 'error',
         description:
-          'All node types in graph should resolve to known semantic catalog node definitions.',
+          `All node types in graph should resolve to known semantic catalog node definitions (catalog node hashes: ${nodeHashSet.size}).`,
         recommendation:
           'Replace unknown node types with supported node types listed in semantic grammar docs.',
         sequenceHint: 15,

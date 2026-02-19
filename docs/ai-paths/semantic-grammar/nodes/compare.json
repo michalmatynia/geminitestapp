@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "compare",
   "title": "Compare",
   "purpose": "Compare a value and emit valid/errors.",
@@ -65,5 +66,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "e465758b77820951d77a63d3a6606347f2e0a2e8337c156ed46a51352c342ad0"
 }

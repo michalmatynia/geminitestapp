@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  mapImageCropRectToCanvasRect,
   normalizeCenterLayoutConfig,
   polygonsFromShapes,
   resolveCropRectFromShapesWithDiagnostics,
@@ -104,6 +105,56 @@ describe('GenerationToolbarImageUtils coordinate mapping', () => {
     expect(polygons[0]?.[0]?.x ?? 0).toBeCloseTo(0.125, 5);
     expect(polygons[0]?.[0]?.y ?? 0).toBeCloseTo(0.3, 5);
     expect(polygons[0]?.[2]?.x ?? 0).toBeCloseTo(0.875, 5);
+  });
+
+  it('maps image-space crop rectangles into canvas-space frame coordinates', () => {
+    const mapped = mapImageCropRectToCanvasRect(
+      { x: 100, y: 50, width: 400, height: 250 },
+      1000,
+      500,
+      {
+        canvasWidth: 800,
+        canvasHeight: 800,
+        imageFrame: {
+          x: 0.1,
+          y: 0.2,
+          width: 0.5,
+          height: 0.25,
+        },
+      }
+    );
+
+    expect(mapped).toEqual({
+      x: 120,
+      y: 180,
+      width: 160,
+      height: 100,
+    });
+  });
+
+  it('clips mapped canvas-space crop rectangles to the canvas bounds', () => {
+    const mapped = mapImageCropRectToCanvasRect(
+      { x: 0, y: 0, width: 300, height: 400 },
+      1000,
+      1000,
+      {
+        canvasWidth: 1000,
+        canvasHeight: 1000,
+        imageFrame: {
+          x: -0.2,
+          y: 0,
+          width: 1,
+          height: 1,
+        },
+      }
+    );
+
+    expect(mapped).toEqual({
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 400,
+    });
   });
 
   it('normalizes object layout config defaults and clamps', () => {

@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "prompt",
   "title": "Prompt",
   "purpose": "Formats text with placeholders.",
@@ -57,5 +58,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "9b049d6d986596fd7f28c45834fcc67e37ee803645c5a208a39f0a1d128d22ed"
 }

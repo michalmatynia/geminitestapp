@@ -30,13 +30,16 @@ const createEdge = (input: {
   to: string;
   fromPort?: string;
   toPort?: string;
-}): Edge => ({
-  id: input.id,
-  from: input.from,
-  to: input.to,
-  fromPort: input.fromPort,
-  toPort: input.toPort,
-});
+}): Edge =>
+  ({
+    id: input.id,
+    from: input.from,
+    to: input.to,
+    fromPort: input.fromPort,
+    toPort: input.toPort,
+    source: input.from,
+    target: input.to,
+  }) as Edge;
 
 describe('case-resolver composer', () => {
   it('compiles linked nodes from selected node and applies join/operator rules', () => {

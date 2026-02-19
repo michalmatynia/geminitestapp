@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "api_advanced",
   "title": "API Operation (Advanced)",
   "purpose": "Advanced API node with auth, retries, pagination, and error routing.",
@@ -142,5 +143,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "69f3bde2c13c1b27ec39583ca125716647c33685897bc8ead8c5f2879a15178f"
 }

@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "model",
   "title": "Model",
   "purpose": "Runs a selected model.",
@@ -71,5 +72,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "10b82d8debfae435ca227a48b0bf661e1aca278188352ff6dfca2ba773ddb8a0"
 }

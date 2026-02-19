@@ -586,6 +586,71 @@ export const withUpscaleRetry = async <T,>(
   }
 };
 
+export const mapImageCropRectToCanvasRect = (
+  cropRect: CropRect,
+  sourceWidth: number,
+  sourceHeight: number,
+  canvasContext: CropCanvasContext
+): CropRect | null => {
+  if (
+    !Number.isFinite(cropRect.x) ||
+    !Number.isFinite(cropRect.y) ||
+    !Number.isFinite(cropRect.width) ||
+    !Number.isFinite(cropRect.height) ||
+    !(cropRect.width > 0 && cropRect.height > 0)
+  ) {
+    return null;
+  }
+  if (!(Number.isFinite(sourceWidth) && Number.isFinite(sourceHeight) && sourceWidth > 0 && sourceHeight > 0)) {
+    return null;
+  }
+
+  const canvasWidth = Math.floor(canvasContext.canvasWidth);
+  const canvasHeight = Math.floor(canvasContext.canvasHeight);
+  if (!(canvasWidth > 0 && canvasHeight > 0)) return null;
+
+  const frame = canvasContext.imageFrame;
+  if (
+    !Number.isFinite(frame.x) ||
+    !Number.isFinite(frame.y) ||
+    !Number.isFinite(frame.width) ||
+    !Number.isFinite(frame.height) ||
+    !(frame.width > 0 && frame.height > 0)
+  ) {
+    return null;
+  }
+
+  const frameLeft = Math.round(frame.x * canvasWidth);
+  const frameTop = Math.round(frame.y * canvasHeight);
+  const frameWidth = Math.max(1, Math.round(frame.width * canvasWidth));
+  const frameHeight = Math.max(1, Math.round(frame.height * canvasHeight));
+
+  const normalizedLeft = clamp01(cropRect.x / sourceWidth);
+  const normalizedTop = clamp01(cropRect.y / sourceHeight);
+  const normalizedRight = clamp01((cropRect.x + cropRect.width) / sourceWidth);
+  const normalizedBottom = clamp01((cropRect.y + cropRect.height) / sourceHeight);
+  if (!(normalizedRight > normalizedLeft && normalizedBottom > normalizedTop)) {
+    return null;
+  }
+
+  const mappedLeft = frameLeft + Math.floor(normalizedLeft * frameWidth);
+  const mappedTop = frameTop + Math.floor(normalizedTop * frameHeight);
+  const mappedRight = frameLeft + Math.ceil(normalizedRight * frameWidth);
+  const mappedBottom = frameTop + Math.ceil(normalizedBottom * frameHeight);
+
+  const clampedLeft = Math.max(0, Math.min(mappedLeft, canvasWidth - 1));
+  const clampedTop = Math.max(0, Math.min(mappedTop, canvasHeight - 1));
+  const clampedRight = Math.max(clampedLeft + 1, Math.min(mappedRight, canvasWidth));
+  const clampedBottom = Math.max(clampedTop + 1, Math.min(mappedBottom, canvasHeight));
+
+  return {
+    x: clampedLeft,
+    y: clampedTop,
+    width: Math.max(1, clampedRight - clampedLeft),
+    height: Math.max(1, clampedBottom - clampedTop),
+  };
+};
+
 export const cropCanvasImage = async (
   src: string,
   cropRect: CropRect,

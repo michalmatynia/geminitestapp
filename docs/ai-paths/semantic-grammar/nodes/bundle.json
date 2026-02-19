@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "bundle",
   "title": "Bundle",
   "purpose": "Cluster inputs into a single bundle output.",
@@ -71,5 +72,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "ea14e4d3016ccec5a80fe54af1e4e8e846bef139585d14d802078e67788dfc0e"
 }

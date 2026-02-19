@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "template",
   "title": "Template",
   "purpose": "Create prompts from template strings.",
@@ -69,5 +70,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "c894cfe662ffd60f6495b253f87137c9f8d0f9eaa4d29b84cae161e0b480d36b"
 }

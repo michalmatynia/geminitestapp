@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "constant",
   "title": "Constant",
   "purpose": "Emit a constant value as a signal.",
@@ -48,5 +49,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "87cb270cb7e4e7858b1de8682c17c019cbbb2991afae5a5685fd1c415422bb7c"
 }

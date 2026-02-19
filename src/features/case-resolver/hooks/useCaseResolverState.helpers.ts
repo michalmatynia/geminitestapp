@@ -495,7 +495,7 @@ export const applyCaseResolverFileMutationAndRebaseDraft = ({
       ) {
         return current;
       }
-      const rebasedBase = createCaseResolverFile(nextSnapshot);
+      const rebasedBase = nextSnapshot;
       const rebasedDraft: CaseResolverFileEditDraft = {
         ...rebasedBase,
         baseDocumentContentVersion: rebasedBase.documentContentVersion,

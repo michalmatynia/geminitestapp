@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "database",
   "title": "Database Query",
   "purpose": "Query, update, insert, or delete records.",
@@ -231,5 +232,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "86fe54f51916db858e1eae7e818d4d1fd6557745efd0b6d0497af99be853716a"
 }

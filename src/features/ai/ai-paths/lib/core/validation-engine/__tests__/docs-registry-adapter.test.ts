@@ -38,6 +38,7 @@ describe('docs registry adapter', () => {
 
   it('builds snapshot from manifest-driven sources with deterministic ids', async () => {
     const snapshot = await buildAiPathsValidationDocsSnapshot();
+    expect(snapshot.warnings).toEqual([]);
     const sourceIds = snapshot.sources.map((source) => source.id);
     expect(sourceIds).toContain('core-patterns');
     expect(sourceIds).toContain('simulation-patterns');

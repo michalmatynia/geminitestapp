@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "string_mutator",
   "title": "String Mutator",
   "purpose": "Transform text with chained string operations.",
@@ -77,5 +78,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "848dcae30b83cd2ead1f9da5d3c642e3c76b90909fa516c71ca0ef095a198652"
 }

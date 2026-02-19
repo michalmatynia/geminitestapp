@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "context",
   "title": "Context Filter",
   "purpose": "Filter incoming context payloads into scoped entity data.",
@@ -87,5 +88,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "601940c8afc6994432b68e1fcb6a203b5b34d5247c6356b08e285ab2fad7d6ee"
 }

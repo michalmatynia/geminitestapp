@@ -87,3 +87,26 @@ Centralized Node Validator rules can be inferred from semantic grammar documenta
 - required node config readiness
 
 See `docs/ai-paths/node-validator-semantic-grammar-patterns.md`.
+
+## Per-node type hash catalog
+
+Semantic grammar node docs include deterministic hash metadata to make docs-driven inference traceable:
+
+- each node file in `docs/ai-paths/semantic-grammar/nodes/<nodeType>.json` includes:
+- `nodeHashAlgorithm` (`sha256`)
+- `nodeHash` (hash of normalized node doc payload)
+- `docs/ai-paths/semantic-grammar/nodes/index.json` includes the same per-node hash and compact metadata.
+
+Index metadata fields include:
+
+- `nodeHash`, `nodeHashAlgorithm`
+- `inputCount`, `outputCount`, `configFieldCount`
+- `runtimeFieldCount`, `criticalFieldCount`
+- `hasDefaultConfig`, `defaultConfigKeyCount`
+- `purposeSummary`
+
+This enables centralized validator inference to:
+
+- detect node-doc drift per node type
+- identify hash collisions/mismatches as docs warnings
+- audit exactly which node documentation version candidate rules came from

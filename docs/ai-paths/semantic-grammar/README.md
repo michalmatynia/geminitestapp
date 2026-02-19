@@ -7,12 +7,14 @@ It captures:
 - explicit edge wiring (`fromNodeId`, `fromPort`, `toNodeId`, `toPort`)
 - execution/validation metadata
 - provenance for cross-system copy/paste
+- deterministic per-node-type hashes for traceable docs inference
 
 Main references:
 
 - Spec: `docs/ai-paths/semantic-grammar/spec-v1.md`
 - JSON Schema: `docs/ai-paths/semantic-grammar/schema/canvas-grammar.v1.json`
 - Per-node JSON scaffolds: `docs/ai-paths/semantic-grammar/nodes/`
+- Node hash index: `docs/ai-paths/semantic-grammar/nodes/index.json` (`nodeHash`, `nodeHashAlgorithm`)
 
 Code contracts:
 

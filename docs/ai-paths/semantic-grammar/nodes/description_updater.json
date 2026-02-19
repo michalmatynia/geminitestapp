@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "description_updater",
   "title": "Description Updater (Deprecated)",
   "purpose": "Writes description_en back to the product.",
@@ -46,5 +47,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "2032d304ca08ffdee0bf70d214a4a3945066eded008da4f958a534ca0ba586f0"
 }

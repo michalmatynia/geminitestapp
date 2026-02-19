@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "mutator",
   "title": "Mutator",
   "purpose": "Mutate context values with templates.",
@@ -50,5 +51,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "d88f2b708a7ae6217db6acec6ad473b8f40a35b917fb89e87a3e1fa0528fd31e"
 }

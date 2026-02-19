@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "http",
   "title": "HTTP Fetch",
   "purpose": "Call external APIs with templated inputs.",
@@ -86,5 +87,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "44c5751795c7b3cd1725f65c055cf0a3a7744cee6f3afaa57220a16870422940"
 }

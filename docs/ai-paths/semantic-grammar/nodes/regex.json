@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "regex",
   "title": "Regex Grouper",
   "purpose": "Group strings with regex or extract matched fragments.",
@@ -139,5 +140,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "d0583ae56728de97269462932f310e12dd01956d086b9e3447b8a285e93f544e"
 }

@@ -1,5 +1,6 @@
 {
   "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
   "nodeType": "validator",
   "title": "Validator",
   "purpose": "Validate required fields.",
@@ -56,5 +57,7 @@
       "incoming": [],
       "outgoing": []
     }
-  }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "7c7a056aa81a91e0e131c1f7fab215a992cdcfb659f8b1b2f91b731825c8c0cc"
 }

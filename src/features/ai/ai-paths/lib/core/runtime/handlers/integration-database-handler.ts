@@ -30,7 +30,7 @@ export const handleDatabase: NodeHandler = async ({
   simulationEntityId,
   triggerContext,
   fallbackEntityId,
-  strictFlowMode,
+  strictFlowMode = true,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   try {
     const resolvedInputs: Record<string, unknown> = resolveDatabaseInputs(

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import type { AiNode } from '@/features/ai/ai-paths/lib';
 import {
   CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP,
   DEFAULT_CASE_RESOLVER_OCR_PROMPT,
@@ -22,6 +21,7 @@ import {
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
   DEFAULT_CASE_RESOLVER_NODE_META,
+  type AiNode,
 } from '@/features/case-resolver/types';
 
 const createPromptNode = (id: string): AiNode => ({

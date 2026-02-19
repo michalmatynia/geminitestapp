@@ -211,7 +211,10 @@ export default function ProductFormOther({
             description={isPriceGroupAutoAssigned ? 'Auto-assigned from catalog' : undefined}
           >
             <SelectSimple size='sm'
-              onValueChange={(value: string) => setValue('defaultPriceGroupId', value)}
+              onValueChange={(value: string) => setValue('defaultPriceGroupId', value, {
+                shouldDirty: true,
+                shouldTouch: true,
+              })}
               value={selectedDefaultPriceGroupId || ''}
               disabled={isPriceGroupAutoAssigned}
               options={filteredPriceGroups.map((group: PriceGroupWithDetails) => ({

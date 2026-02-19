@@ -22,7 +22,7 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import type { NodeDefinition } from '@/features/ai/ai-paths/lib';
+import { type NodeDefinition } from '../types';
 import {
   applyInternalMasterTreeDrop,
   isInternalMasterTreeNode,

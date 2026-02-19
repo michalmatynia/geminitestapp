@@ -8,15 +8,15 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { 
   Badge, 
   Button, 
-  DataTable, 
-  ListPanel, 
+  StandardDataTablePanel, 
   PanelHeader, 
   SearchInput,
   Tabs,
   TabsList,
   TabsTrigger,
   TabsContent,
-  EmptyState
+  EmptyState,
+  DataTable
 } from '@/shared/ui';
 
 import {
@@ -205,7 +205,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
         ]}
       />
 
-      <ListPanel
+      <StandardDataTablePanel
         filters={
           <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
             <div className='flex items-center gap-2'>
@@ -226,6 +226,8 @@ export function AdminFilemakerListPage(): React.JSX.Element {
             </div>
           </div>
         }
+        columns={[]}
+        data={[]}
       >
         <Tabs defaultValue='persons' className='w-full'>
           <TabsList className='mb-4'>
@@ -267,7 +269,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
             />
           </TabsContent>
         </Tabs>
-      </ListPanel>
+      </StandardDataTablePanel>
     </div>
   );
 }

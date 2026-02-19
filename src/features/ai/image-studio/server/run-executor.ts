@@ -147,6 +147,9 @@ type ImageStudioCenterExecutionMeta = {
     paddingPercent: number;
     paddingXPercent: number;
     paddingYPercent: number;
+    fillMissingCanvasWhite: boolean;
+    targetCanvasWidth: number | null;
+    targetCanvasHeight: number | null;
     whiteThreshold: number;
     chromaThreshold: number;
     detectionUsed: ImageStudioCenterDetectionMode | null;
@@ -478,6 +481,9 @@ async function executeCenterOperation(params: {
         paddingPercent: normalizedLayout.paddingPercent,
         paddingXPercent: normalizedLayout.paddingXPercent,
         paddingYPercent: normalizedLayout.paddingYPercent,
+        fillMissingCanvasWhite: normalizedLayout.fillMissingCanvasWhite,
+        targetCanvasWidth: normalizedLayout.targetCanvasWidth,
+        targetCanvasHeight: normalizedLayout.targetCanvasHeight,
         whiteThreshold: normalizedLayout.whiteThreshold,
         chromaThreshold: normalizedLayout.chromaThreshold,
         detectionUsed: null,
@@ -529,6 +535,9 @@ async function executeCenterOperation(params: {
         paddingPercent: normalizedLayout.paddingPercent,
         paddingXPercent: normalizedLayout.paddingXPercent,
         paddingYPercent: normalizedLayout.paddingYPercent,
+        fillMissingCanvasWhite: normalizedLayout.fillMissingCanvasWhite,
+        targetCanvasWidth: normalizedLayout.targetCanvasWidth,
+        targetCanvasHeight: normalizedLayout.targetCanvasHeight,
         whiteThreshold: normalizedLayout.whiteThreshold,
         chromaThreshold: normalizedLayout.chromaThreshold,
         detectionUsed: centered.detectionUsed,

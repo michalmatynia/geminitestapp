@@ -26,6 +26,7 @@ import { useProjectsActions, useProjectsState } from '../context/ProjectsContext
 import { useSettingsActions } from '../context/SettingsContext';
 import { useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState, type PreviewCanvasSize } from '../context/UiContext';
+import { getImageStudioDocTooltip } from '../utils/studio-docs';
 
 type StudioTab = 'studio' | 'projects' | 'settings' | 'prompts' | 'docs';
 const PREVIEW_CANVAS_SIZE_OPTIONS: Array<{ value: PreviewCanvasSize; label: string }> = [
@@ -47,6 +48,8 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   const { setPreviewCanvasSize } = useUiActions();
   const { setIsMenuHidden } = useAdminLayout();
   const hideTopBar = activeTab === 'studio' && isFocusMode;
+  const copyCardNameTooltip = getImageStudioDocTooltip('sidebar_copy_card_name');
+  const selectCardFirstTooltip = getImageStudioDocTooltip('sidebar_select_card_first');
 
   useEffect(() => {
     const rawTab = searchParams?.get('tab');
@@ -154,7 +157,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                         ? selectedSlot.name || selectedSlot.id
                         : 'No active card selected. Pick a card from the tree.'}
                     </span>
-                    <Tooltip content={selectedSlot ? 'Copy card name' : 'Select a card first'}>
+                    <Tooltip content={selectedSlot ? copyCardNameTooltip : selectCardFirstTooltip}>
                       <CopyButton
                         value={selectedSlot?.name?.trim() || selectedSlot?.id || ''}
                         variant='ghost'

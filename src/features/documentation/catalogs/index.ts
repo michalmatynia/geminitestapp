@@ -1,0 +1,23 @@
+import {
+  IMAGE_STUDIO_DOCUMENTATION_CATALOG,
+} from './image-studio';
+import {
+  PROMPT_EXPLODER_DOCUMENTATION_CATALOG,
+} from './prompt-exploder';
+import {
+  VALIDATOR_DOCUMENTATION_CATALOG,
+} from './validator';
+
+import type { DocumentationEntry } from '../types';
+
+export const DOCUMENTATION_CATALOG: DocumentationEntry[] = [
+  ...IMAGE_STUDIO_DOCUMENTATION_CATALOG,
+  ...PROMPT_EXPLODER_DOCUMENTATION_CATALOG,
+  ...VALIDATOR_DOCUMENTATION_CATALOG,
+];
+
+export {
+  IMAGE_STUDIO_DOCUMENTATION_CATALOG,
+  PROMPT_EXPLODER_DOCUMENTATION_CATALOG,
+  VALIDATOR_DOCUMENTATION_CATALOG,
+};

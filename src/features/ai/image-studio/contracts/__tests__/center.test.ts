@@ -28,6 +28,9 @@ describe('imageStudioCenterRequestSchema', () => {
         paddingPercent: 12.5,
         paddingXPercent: 10,
         paddingYPercent: 15,
+        fillMissingCanvasWhite: true,
+        targetCanvasWidth: 2048,
+        targetCanvasHeight: 2048,
         whiteThreshold: 20,
         chromaThreshold: 9,
         detection: 'white_bg_first_colored_pixel',
@@ -48,6 +51,17 @@ describe('imageStudioCenterRequestSchema', () => {
       mode: 'server_object_layout_v1',
       layout: {
         paddingXPercent: 75,
+      },
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it('rejects invalid target canvas dimensions', () => {
+    const parsed = imageStudioCenterRequestSchema.safeParse({
+      mode: 'server_object_layout_v1',
+      layout: {
+        fillMissingCanvasWhite: true,
+        targetCanvasWidth: 50_000,
       },
     });
     expect(parsed.success).toBe(false);

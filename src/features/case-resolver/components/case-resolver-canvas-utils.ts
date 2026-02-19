@@ -4,9 +4,6 @@ import {
   NODE_MIN_HEIGHT,
   NODE_WIDTH,
   getDefaultConfigForType,
-  type AiNode,
-  type Edge,
-  type NodeDefinition,
 } from '@/features/ai/ai-paths/lib';
 
 import {
@@ -14,6 +11,9 @@ import {
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
+  type AiNode,
+  type Edge,
+  type NodeDefinition,
   type CaseResolverEdgeMeta,
   type CaseResolverFile,
   type CaseResolverNodeMeta,

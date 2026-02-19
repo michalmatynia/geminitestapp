@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 
 import { useAiPathRuntimeAnalytics } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
 import type { AiNode } from '@/features/ai/ai-paths/lib';
+import { inspectPathDependencies } from '@/features/ai/ai-paths/lib';
 import {
   Button,
   SelectSimple,
@@ -59,6 +60,8 @@ export function AiPathsSettingsView(): React.JSX.Element {
     execution: string;
     flow: string;
     runMode: string;
+    strictFlowMode: string;
+    dependencyReport: string;
     history: string;
   };
 
@@ -96,7 +99,9 @@ export function AiPathsSettingsView(): React.JSX.Element {
     executionMode,
     flowIntensity,
     runMode,
+    strictFlowMode,
     nodes,
+    edges,
   } = useGraphState();
   const { setPathName, setPaths } = useGraphActions();
 
@@ -123,6 +128,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
     handleExecutionModeChange,
     handleFlowIntensityChange,
     handleRunModeChange,
+    handleStrictFlowModeChange,
     handleHistoryRetentionChange,
     historyRetentionPasses,
     historyRetentionOptionsMax,
@@ -284,6 +290,11 @@ export function AiPathsSettingsView(): React.JSX.Element {
   const runtimeLogEvents = useMemo(
     () => runtimeEvents.slice(Math.max(0, runtimeEvents.length - 80)).reverse(),
     [runtimeEvents],
+  );
+
+  const dependencyReport = useMemo(
+    () => inspectPathDependencies(nodes, edges),
+    [nodes, edges],
   );
 
   if (loading) {
@@ -987,6 +998,82 @@ export function AiPathsSettingsView(): React.JSX.Element {
             )
           },
           {
+            key: 'strictFlowMode',
+            label: 'Strict Flow',
+            type: 'custom',
+            render: () => (
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between gap-2'>
+                  <StatusBadge
+                    status={strictFlowMode ? 'Strict mode: on' : 'Strict mode: off'}
+                    variant={strictFlowMode ? 'success' : 'warning'}
+                    size='sm'
+                    className='font-medium'
+                  />
+                  <Button
+                    type='button'
+                    className='h-8 rounded-md border border-border px-2 text-[11px] text-gray-200 hover:bg-card/70'
+                    onClick={() => {
+                      handleStrictFlowModeChange(!strictFlowMode);
+                    }}
+                    disabled={isPathLocked}
+                  >
+                    {strictFlowMode ? 'Disable' : 'Enable'}
+                  </Button>
+                </div>
+                <div className='text-[11px] text-gray-400'>
+                  When enabled, runtime blocks implicit fallback inputs and uses only wired/contextual data.
+                </div>
+              </div>
+            )
+          },
+          {
+            key: 'dependencyReport',
+            label: 'Dependency Inspector',
+            type: 'custom',
+            render: () => (
+              <div className='space-y-2'>
+                <div className='flex flex-wrap items-center gap-2 text-[11px]'>
+                  <StatusBadge
+                    status={`Warnings: ${dependencyReport.warnings}`}
+                    variant={dependencyReport.warnings > 0 ? 'warning' : 'neutral'}
+                    size='sm'
+                  />
+                  <StatusBadge
+                    status={`Errors: ${dependencyReport.errors}`}
+                    variant={dependencyReport.errors > 0 ? 'error' : 'neutral'}
+                    size='sm'
+                  />
+                  <StatusBadge
+                    status={dependencyReport.strictReady ? 'Strict-ready' : 'Action needed'}
+                    variant={dependencyReport.strictReady ? 'success' : 'warning'}
+                    size='sm'
+                  />
+                </div>
+                {dependencyReport.risks.length > 0 ? (
+                  <div className='max-h-[200px] space-y-1 overflow-y-auto rounded-md border border-border/60 bg-card/40 p-2'>
+                    {dependencyReport.risks.map((risk) => (
+                      <div
+                        key={risk.id}
+                        className='rounded-md border border-border/50 bg-card/60 px-2 py-1.5 text-[11px]'
+                      >
+                        <div className='font-medium text-gray-100'>
+                          {risk.nodeTitle} · {risk.category}
+                        </div>
+                        <div className='mt-0.5 text-gray-400'>{risk.message}</div>
+                        <div className='mt-0.5 text-gray-300'>Fix: {risk.recommendation}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className='text-[11px] text-emerald-200'>
+                    No hidden-dependency risks detected for current wiring.
+                  </div>
+                )}
+              </div>
+            )
+          },
+          {
             key: 'history',
             label: 'History Retention',
             type: 'custom',
@@ -1013,6 +1100,8 @@ export function AiPathsSettingsView(): React.JSX.Element {
           execution: executionMode,
           flow: flowIntensity,
           runMode,
+          strictFlowMode: strictFlowMode ? 'on' : 'off',
+          dependencyReport: dependencyReport.strictReady ? 'strict-ready' : 'issues',
           history: String(historyRetentionPasses),
         }}
         onChange={() => {}}

@@ -17,6 +17,7 @@ import { useSlotsState } from '../context/SlotsContext';
 import {
   IMAGE_STUDIO_CROP_DOC_KEYS,
   IMAGE_STUDIO_DOCS,
+  IMAGE_STUDIO_OBJECT_LAYOUT_DOC_KEYS,
   IMAGE_STUDIO_SEQUENCE_DOC_KEYS,
   IMAGE_STUDIO_VERSION_GRAPH_DOC_KEYS,
 } from '../utils/studio-docs';
@@ -400,8 +401,8 @@ export function ImageStudioDocsContent(): React.JSX.Element {
       },
       {
         path: 'helpTooltips.cropButtonsEnabled',
-        label: 'Crop button tooltips',
-        description: 'Enables crop-control tooltips in Studio UI, sourced from Image Studio Docs.',
+        label: 'Crop/Object Layout button tooltips',
+        description: 'Enables crop and object-layout control tooltips in Studio UI, sourced from Image Studio Docs.',
         value: metricValue(studioSettings.helpTooltips.cropButtonsEnabled),
       },
       {
@@ -616,6 +617,11 @@ export function ImageStudioDocsContent(): React.JSX.Element {
     .filter((entry) =>
       includeByQuery(['sequencer', 'sequence', 'field', 'numeric', 'tooltips', entry.title, entry.description, entry.key])
     );
+  const filteredObjectLayoutDocs = IMAGE_STUDIO_OBJECT_LAYOUT_DOC_KEYS
+    .map((key) => IMAGE_STUDIO_DOCS[key])
+    .filter((entry) =>
+      includeByQuery(['object layout', 'center', 'padding', 'white background', 'tooltips', entry.title, entry.description, entry.key])
+    );
   const filteredVersionGraphDocs = IMAGE_STUDIO_VERSION_GRAPH_DOC_KEYS
     .map((key) => IMAGE_STUDIO_DOCS[key])
     .filter((entry) =>
@@ -627,6 +633,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
     filteredSettingsRows.length === 0 &&
     filteredCropControlDocs.length === 0 &&
     filteredSequenceFieldDocs.length === 0 &&
+    filteredObjectLayoutDocs.length === 0 &&
     filteredVersionGraphDocs.length === 0 &&
     !includeByQuery(['Image Studio Docs', 'runtime', 'snapshot', 'settings']);
 
@@ -719,6 +726,21 @@ export function ImageStudioDocsContent(): React.JSX.Element {
         </div>
       ) : null}
 
+      {filteredObjectLayoutDocs.length > 0 ? (
+        <div className='space-y-3 rounded-lg border border-border/60 bg-card/40 p-5'>
+          <h3 className='text-base font-semibold text-white'>Object Layout Controls Reference</h3>
+          <div className='grid gap-2'>
+            {filteredObjectLayoutDocs.map((entry) => (
+              <div key={entry.key} className='rounded-md border border-border/60 bg-card/40 px-3 py-2'>
+                <div className='text-[11px] uppercase tracking-wide text-gray-500'>object_layout.{entry.key}</div>
+                <div className='mt-1 text-sm text-gray-100'>{entry.title}</div>
+                <div className='mt-1 text-xs text-gray-400'>{entry.description}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {filteredVersionGraphDocs.length > 0 ? (
         <div className='space-y-3 rounded-lg border border-border/60 bg-card/40 p-5'>
           <h3 className='text-base font-semibold text-white'>Version Graph Controls Reference</h3>
@@ -776,7 +798,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
           <ul className='mt-2 list-disc space-y-1 pl-5 text-sm'>
             <li>Live runtime state for projects, slots, prompt, masks, and generation.</li>
             <li>All Image Studio settings from <code>image_studio_settings</code>.</li>
-            <li>Crop, sequencer, and version graph tooltip copy sourced from the Image Studio docs index.</li>
+            <li>Crop, object layout, sequencer, and version graph tooltip copy sourced from the Image Studio docs index.</li>
             <li>API key status, UI preset state, prompt validation rule summary, and folder-tree persistence.</li>
             <li>Raw JSON snapshots so you can audit exactly what the application is currently using.</li>
           </ul>

@@ -126,10 +126,3 @@ export const toMasterFolderTreeActionFail = (
   ok: false,
   code,
 });
-
-export const toMasterFolderTreeActionFail = (
-  code: MasterTreeDropRejectionReason | string
-): MasterFolderTreeActionFail => ({
-  ok: false,
-  code,
-});

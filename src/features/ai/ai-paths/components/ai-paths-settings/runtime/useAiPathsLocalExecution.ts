@@ -14,6 +14,7 @@ import {
   TRIGGER_EVENTS,
   appendLocalRun,
   evaluateGraph,
+  inspectPathDependencies,
   GraphExecutionError,
   GraphExecutionCancelled,
 } from '@/features/ai/ai-paths/lib';
@@ -584,6 +585,50 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
     if (!args.isPathActive) {
       args.toast('This path is deactivated. Activate it to run.', { variant: 'info' });
       return;
+    }
+    if (args.strictFlowMode) {
+      const dependencyReport = inspectPathDependencies(args.normalizedNodes, args.sanitizedEdges);
+      if (dependencyReport.errors > 0) {
+        const timestamp = new Date().toISOString();
+        const blockedMessage = `Strict flow blocked run: ${dependencyReport.errors} dependency error(s) detected.`;
+        args.appendRuntimeEvent({
+          source: 'local',
+          kind: 'run_blocked',
+          level: 'warn',
+          timestamp,
+          message: blockedMessage,
+          nodeId: triggerNode.id,
+          nodeType: triggerNode.type,
+          nodeTitle: triggerNode.title ?? null,
+          metadata: {
+            strictFlowMode: true,
+            dependencyErrors: dependencyReport.errors,
+            dependencyWarnings: dependencyReport.warnings,
+            blockedRiskIds: dependencyReport.risks
+              .filter((risk): boolean => risk.severity === 'error')
+              .map((risk) => risk.id),
+          },
+        });
+        args.setNodeStatus({
+          nodeId: triggerNode.id,
+          status: 'blocked',
+          source: 'local',
+          nodeType: triggerNode.type,
+          nodeTitle: triggerNode.title ?? null,
+          kind: 'node_status',
+          level: 'warn',
+          message: blockedMessage,
+          metadata: {
+            strictFlowMode: true,
+            dependencyErrors: dependencyReport.errors,
+          },
+        });
+        args.toast(
+          'Strict flow blocked run. Fix Dependency Inspector errors in Path Settings.',
+          { variant: 'error' },
+        );
+        return;
+      }
     }
     if (args.serverRunActiveRef.current) {
       args.stopServerRunStream();

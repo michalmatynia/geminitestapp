@@ -186,6 +186,18 @@ export type MultiSchemaResponseDto = z.infer<typeof multiSchemaResponseSchema>;
 export const schemaResponsePayloadSchema = z.union([schemaResponseSchema, multiSchemaResponseSchema]);
 export type SchemaResponsePayloadDto = z.infer<typeof schemaResponsePayloadSchema>;
 
+export const schemaDataSchema = z.object({
+  collections: z.array(
+    collectionSchemaSchema.extend({
+      provider: schemaProviderSchema.optional(),
+    })
+  ),
+  provider: z.union([schemaProviderSchema, z.literal('multi')]),
+  sources: z.record(schemaProviderSchema, schemaResponseSchema.nullable()).partial().optional(),
+});
+
+export type SchemaDataDto = z.infer<typeof schemaDataSchema>;
+
 /**
  * Database Browsing DTOs
  */

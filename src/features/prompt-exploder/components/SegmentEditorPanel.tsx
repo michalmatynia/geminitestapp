@@ -6,6 +6,7 @@ import React from 'react';
 import { extractParamsFromPrompt } from '@/features/prompt-engine/prompt-params';
 import {
   Button,
+  ActionMenu,
   EmptyState,
   FormSection,
   Input,
@@ -14,6 +15,8 @@ import {
   Textarea,
   SelectSimple,
   FormField,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
 } from '@/shared/ui';
 
 import { PromptExploderHierarchyTreeProvider } from './PromptExploderHierarchyTreeContext';
@@ -57,6 +60,16 @@ function updateListItemAt(
     itemIndex === index ? updater(item) : item
   );
 }
+
+const promptExploderSupportsSegmentTextSplit = (
+  segment: PromptExploderSegment | null
+): boolean =>
+  Boolean(
+    segment &&
+      (segment.type === 'assigned_text' ||
+        segment.type === 'metadata' ||
+        segment.type === 'parameter_block')
+  );
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -104,6 +117,11 @@ export function SegmentEditorPanel(): React.JSX.Element {
     handleListItemDragEnd,
     handleListItemDragOver,
     handleListItemDrop,
+    addSegmentRelative,
+    removeSegment,
+    splitSegment,
+    mergeSegmentWithPrevious,
+    mergeSegmentWithNext,
     handleApproveSelectedSegmentPattern,
   } = useSegmentEditorActions();
 
@@ -130,6 +148,15 @@ export function SegmentEditorPanel(): React.JSX.Element {
     />
   );
 
+  const selectedSegmentIndex = selectedSegmentId
+    ? documentState?.segments.findIndex((segment) => segment.id === selectedSegmentId) ?? -1
+    : -1;
+  const canMergeSelectedWithPrevious = selectedSegmentIndex > 0;
+  const canMergeSelectedWithNext =
+    selectedSegmentIndex >= 0 &&
+    selectedSegmentIndex < (documentState?.segments.length ?? 0) - 1;
+  const canSplitSelectedSegment = promptExploderSupportsSegmentTextSplit(selectedSegment);
+
   return (
     <FormSection
       title='Segments'
@@ -146,10 +173,11 @@ export function SegmentEditorPanel(): React.JSX.Element {
         <div className='mt-3 grid gap-3 lg:grid-cols-[280px_minmax(0,1fr)]'>
           {/* ── Segment list sidebar ─────────────────────────────────────── */}
           <div className='max-h-[65vh] space-y-2 overflow-auto rounded border border-border/60 bg-card/20 p-2'>
-            {documentState.segments.map((segment: PromptExploderSegment) => {
+            {documentState.segments.map((segment: PromptExploderSegment, segmentIndex: number) => {
               const isDropTarget = segmentDropTargetId === segment.id;
               const isDropBefore = isDropTarget && segmentDropPosition === 'before';
               const isDropAfter = isDropTarget && segmentDropPosition === 'after';
+              const canSplitSegment = promptExploderSupportsSegmentTextSplit(segment);
               return (
                 <div
                   key={segment.id}
@@ -200,9 +228,65 @@ export function SegmentEditorPanel(): React.JSX.Element {
                       </button>
                       <span className='truncate font-medium'>{segment.title}</span>
                     </div>
-                    <span className='rounded border border-border/50 bg-card/50 px-1 py-0.5 text-[10px] uppercase'>
-                      {segment.type.replaceAll('_', ' ')}
-                    </span>
+                    <div className='flex items-center gap-1'>
+                      <span className='rounded border border-border/50 bg-card/50 px-1 py-0.5 text-[10px] uppercase'>
+                        {segment.type.replaceAll('_', ' ')}
+                      </span>
+                      <ActionMenu
+                        align='end'
+                        ariaLabel='Segment actions'
+                        triggerClassName='h-6 w-6 text-gray-400 hover:text-gray-100'
+                      >
+                        <DropdownMenuItem
+                          onSelect={() => {
+                            addSegmentRelative(segment.id, 'before');
+                          }}
+                        >
+                          Add Segment Above
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() => {
+                            addSegmentRelative(segment.id, 'after');
+                          }}
+                        >
+                          Add Segment Below
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          disabled={!canSplitSegment}
+                          onSelect={() => {
+                            splitSegment(segment.id, segment.text.length, segment.text.length);
+                          }}
+                        >
+                          Split at End
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          disabled={segmentIndex === 0}
+                          onSelect={() => {
+                            mergeSegmentWithPrevious(segment.id);
+                          }}
+                        >
+                          Merge with Previous
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          disabled={segmentIndex === documentState.segments.length - 1}
+                          onSelect={() => {
+                            mergeSegmentWithNext(segment.id);
+                          }}
+                        >
+                          Merge with Next
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className='text-red-300 focus:text-red-200'
+                          onSelect={() => {
+                            removeSegment(segment.id);
+                          }}
+                        >
+                          Remove Segment
+                        </DropdownMenuItem>
+                      </ActionMenu>
+                    </div>
                   </div>
                   <div className='mt-1 flex items-center justify-between text-[10px] text-gray-500'>
                     <span>Confidence {(segment.confidence * 100).toFixed(0)}%</span>
@@ -219,6 +303,80 @@ export function SegmentEditorPanel(): React.JSX.Element {
               <div className='text-sm text-gray-500'>Select a segment to edit.</div>
             ) : (
               <>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={() => {
+                      addSegmentRelative(selectedSegment.id, 'before');
+                    }}
+                  >
+                    Add Above
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={() => {
+                      addSegmentRelative(selectedSegment.id, 'after');
+                    }}
+                  >
+                    Add Below
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    disabled={!canSplitSelectedSegment}
+                    onClick={() => {
+                      splitSegment(
+                        selectedSegment.id,
+                        selectedSegment.text.length,
+                        selectedSegment.text.length
+                      );
+                    }}
+                  >
+                    Split at End
+                    <span className='ml-2 text-[10px] text-gray-400'>Ctrl+Enter</span>
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    disabled={!canMergeSelectedWithPrevious}
+                    onClick={() => {
+                      mergeSegmentWithPrevious(selectedSegment.id);
+                    }}
+                  >
+                    Merge Prev
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    disabled={!canMergeSelectedWithNext}
+                    onClick={() => {
+                      mergeSegmentWithNext(selectedSegment.id);
+                    }}
+                  >
+                    Merge Next
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='destructive'
+                    size='sm'
+                    onClick={() => {
+                      removeSegment(selectedSegment.id);
+                    }}
+                  >
+                    Remove
+                    <span className='ml-2 text-[10px] text-red-100/80'>
+                      Ctrl+Shift+Backspace
+                    </span>
+                  </Button>
+                </div>
+
                 <div className='grid gap-3 md:grid-cols-2'>
                   <FormField label='Type'>
                     <SelectSimple size='sm'
@@ -844,6 +1002,25 @@ export function SegmentEditorPanel(): React.JSX.Element {
                     <Textarea
                       className='min-h-[180px] font-mono text-[12px]'
                       value={selectedSegment.text}
+                      onKeyDown={(event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                        const isModifier = event.metaKey || event.ctrlKey;
+                        if (
+                          isModifier &&
+                          event.shiftKey &&
+                          event.key === 'Backspace'
+                        ) {
+                          event.preventDefault();
+                          removeSegment(selectedSegment.id);
+                          return;
+                        }
+                        if (isModifier && event.key === 'Enter') {
+                          event.preventDefault();
+                          const element = event.currentTarget;
+                          const start = element.selectionStart ?? 0;
+                          const end = element.selectionEnd ?? start;
+                          splitSegment(selectedSegment.id, start, end);
+                        }
+                      }}
                       onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
                         updateSegment(selectedSegment.id, (current) => ({
                           ...current,

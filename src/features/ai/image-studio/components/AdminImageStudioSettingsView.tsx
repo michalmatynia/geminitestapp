@@ -564,12 +564,12 @@ export function AdminImageStudioSettingsView(
 
             <FormSection
               title='Help Tooltips'
-              description='Enable or disable inline help for crop, sequencer, and version graph controls. Tooltip copy is sourced from Image Studio Docs.'
+              description='Enable or disable inline help for crop/object layout, sequencer, and version graph controls. Tooltip copy is sourced from Image Studio Docs.'
               variant='subtle'
             >
               <div className='flex flex-wrap items-center gap-2'>
                 <ToggleRow
-                  label='Enable Crop Tooltips'
+                  label='Enable Crop/Object Layout Tooltips'
                   checked={studioSettings.helpTooltips.cropButtonsEnabled}
                   onCheckedChange={(checked) =>
                     setStudioSettings((previous: ImageStudioSettings) => ({

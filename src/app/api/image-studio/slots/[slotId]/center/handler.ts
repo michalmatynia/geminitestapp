@@ -63,6 +63,9 @@ type CenterProcessingResult = {
     paddingPercent: number;
     paddingXPercent: number;
     paddingYPercent: number;
+    fillMissingCanvasWhite: boolean;
+    targetCanvasWidth: number | null;
+    targetCanvasHeight: number | null;
     whiteThreshold: number;
     chromaThreshold: number;
     detectionUsed: ImageStudioCenterDetectionMode | null;
@@ -313,6 +316,9 @@ const readCenterMetadataFromSlot = (
       const paddingPercentRaw = layoutRaw['paddingPercent'];
       const paddingXPercentRaw = layoutRaw['paddingXPercent'];
       const paddingYPercentRaw = layoutRaw['paddingYPercent'];
+      const fillMissingCanvasWhiteRaw = layoutRaw['fillMissingCanvasWhite'];
+      const targetCanvasWidthRaw = layoutRaw['targetCanvasWidth'];
+      const targetCanvasHeightRaw = layoutRaw['targetCanvasHeight'];
       const whiteThresholdRaw = layoutRaw['whiteThreshold'];
       const chromaThresholdRaw = layoutRaw['chromaThreshold'];
       const detectionUsedRaw = layoutRaw['detectionUsed'];
@@ -330,6 +336,15 @@ const readCenterMetadataFromSlot = (
       })();
       const paddingXPercent = Number.isFinite(paddingXFromRaw) ? paddingXFromRaw : paddingPercent;
       const paddingYPercent = Number.isFinite(paddingYFromRaw) ? paddingYFromRaw : paddingPercent;
+      const fillMissingCanvasWhite = fillMissingCanvasWhiteRaw === true;
+      const targetCanvasWidth =
+        typeof targetCanvasWidthRaw === 'number' && Number.isFinite(targetCanvasWidthRaw)
+          ? Math.floor(targetCanvasWidthRaw)
+          : null;
+      const targetCanvasHeight =
+        typeof targetCanvasHeightRaw === 'number' && Number.isFinite(targetCanvasHeightRaw)
+          ? Math.floor(targetCanvasHeightRaw)
+          : null;
       const whiteThreshold = typeof whiteThresholdRaw === 'number' ? whiteThresholdRaw : NaN;
       const chromaThreshold = typeof chromaThresholdRaw === 'number' ? chromaThresholdRaw : NaN;
       const detectionUsed =
@@ -352,6 +367,9 @@ const readCenterMetadataFromSlot = (
         paddingPercent,
         paddingXPercent,
         paddingYPercent,
+        fillMissingCanvasWhite,
+        targetCanvasWidth,
+        targetCanvasHeight,
         whiteThreshold,
         chromaThreshold,
         detectionUsed,
@@ -451,6 +469,9 @@ async function processCenterPayload(input: {
           paddingPercent: normalizedLayout.paddingPercent,
           paddingXPercent: normalizedLayout.paddingXPercent,
           paddingYPercent: normalizedLayout.paddingYPercent,
+          fillMissingCanvasWhite: normalizedLayout.fillMissingCanvasWhite,
+          targetCanvasWidth: normalizedLayout.targetCanvasWidth,
+          targetCanvasHeight: normalizedLayout.targetCanvasHeight,
           whiteThreshold: normalizedLayout.whiteThreshold,
           chromaThreshold: normalizedLayout.chromaThreshold,
           detectionUsed: centered.detectionUsed,
@@ -537,6 +558,9 @@ async function processCenterPayload(input: {
           paddingPercent: normalizedLayout.paddingPercent,
           paddingXPercent: normalizedLayout.paddingXPercent,
           paddingYPercent: normalizedLayout.paddingYPercent,
+          fillMissingCanvasWhite: normalizedLayout.fillMissingCanvasWhite,
+          targetCanvasWidth: normalizedLayout.targetCanvasWidth,
+          targetCanvasHeight: normalizedLayout.targetCanvasHeight,
           whiteThreshold: normalizedLayout.whiteThreshold,
           chromaThreshold: normalizedLayout.chromaThreshold,
           detectionUsed: null,
@@ -579,6 +603,9 @@ async function processCenterPayload(input: {
         paddingPercent: normalizedLayout.paddingPercent,
         paddingXPercent: normalizedLayout.paddingXPercent,
         paddingYPercent: normalizedLayout.paddingYPercent,
+        fillMissingCanvasWhite: normalizedLayout.fillMissingCanvasWhite,
+        targetCanvasWidth: normalizedLayout.targetCanvasWidth,
+        targetCanvasHeight: normalizedLayout.targetCanvasHeight,
         whiteThreshold: normalizedLayout.whiteThreshold,
         chromaThreshold: normalizedLayout.chromaThreshold,
         detectionUsed: null,

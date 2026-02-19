@@ -34,6 +34,7 @@ export type HandleDatabaseMongoActionInput = {
   templateContext: Record<string, unknown>;
   aiPrompt: string;
   ensureExistingParameterTemplateContext: (targetPath: string) => Promise<void>;
+  strictFlowMode?: boolean;
 };
 
 export async function handleDatabaseMongoAction({

@@ -303,6 +303,7 @@ export function useAiPathTrigger(): {
           meta: {
             source: 'product_panel',
             triggerLabel: 'Path Generate Description',
+            strictFlowMode: selectedConfig.strictFlowMode !== false,
           },
         });
         if (!enqueueResult.ok) {
@@ -336,6 +337,7 @@ export function useAiPathTrigger(): {
         triggerNodeId: triggerNode.id,
         triggerEvent,
         triggerContext,
+        strictFlowMode: selectedConfig.strictFlowMode !== false,
         deferPoll: false,
         fetchEntityByType: async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
           if (entityType !== 'product') return null;

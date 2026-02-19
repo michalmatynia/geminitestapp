@@ -7,6 +7,7 @@ import ProductForm from '@/features/products/components/ProductForm';
 import { ProductFormProvider, useProductFormContext } from '@/features/products/context/ProductFormContext';
 import type { ProductWithImages } from '@/features/products/types';
 import { Button } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
   ssr: false,
@@ -32,17 +33,29 @@ function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>): React.JSX.Element 
 }
 
 function EditProductForm(): React.JSX.Element {
-  const { showFileManager, handleMultiFileSelect, uploading, handleSubmit } = useProductFormContext();
+  const {
+    showFileManager,
+    handleMultiFileSelect,
+    uploading,
+    handleSubmit,
+    hasUnsavedChanges,
+  } = useProductFormContext();
   const router = useRouter();
+  const isSaveDisabled = uploading || !hasUnsavedChanges;
 
   return (
     <div className='rounded-lg bg-card p-6 shadow-lg'>
       <div className='mb-6 flex items-center gap-4 border-b border-border pb-4'>
         <Button
           onClick={(e: React.FormEvent | React.MouseEvent) => { void handleSubmit(e); }}
-          disabled={uploading}
-          aria-disabled={uploading}
-          className='min-w-[100px] text-foreground'
+          disabled={isSaveDisabled}
+          aria-disabled={isSaveDisabled}
+          className={cn(
+            'min-w-[100px] transition-colors',
+            hasUnsavedChanges
+              ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
+              : 'border-border/60 text-gray-500 hover:bg-transparent'
+          )}
         >
           {uploading ? 'Saving...' : 'Update'}
         </Button>

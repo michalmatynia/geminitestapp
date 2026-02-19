@@ -7,6 +7,8 @@ import type {
   DatabasePresetOptionDto,
   DatabaseNodeConfigDto,
   AiQueryDto,
+  SchemaDataDto,
+  SchemaProviderDto,
 } from '@/shared/contracts/database';
 
 export type DatabaseType = DatabaseTypeDto;
@@ -18,19 +20,10 @@ export type SqlQueryResult = SqlQueryResultDto;
 export type FieldSchema = FieldInfoDto;
 
 export type CollectionSchema = CollectionSchemaDto & {
-  provider?: 'mongodb' | 'prisma';
+  provider?: SchemaProviderDto;
 };
 
-type ProviderSourceSchema = {
-  provider: 'mongodb' | 'prisma';
-  collections: CollectionSchema[];
-};
-
-export type SchemaData = {
-  collections: CollectionSchema[];
-  provider: 'mongodb' | 'prisma' | 'multi';
-  sources?: Partial<Record<'mongodb' | 'prisma', ProviderSourceSchema | null | undefined>> | undefined;
-};
+export type SchemaData = SchemaDataDto;
 
 export type DatabasePresetOption = DatabasePresetOptionDto;
 

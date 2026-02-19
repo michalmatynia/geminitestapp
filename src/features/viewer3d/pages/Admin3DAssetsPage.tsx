@@ -13,8 +13,7 @@ import React, { useMemo } from 'react';
 
 import {
   Button,
-  ListPanel,
-  DataTable,
+  StandardDataTablePanel,
   SelectSimple,
   SearchInput,
   Alert,
@@ -178,7 +177,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
   ) : null;
 
   return (
-    <ListPanel
+    <StandardDataTablePanel
       header={
         <PanelHeader
           title='3D Asset Manager'
@@ -255,6 +254,9 @@ export function Admin3DAssetsPage(): React.JSX.Element {
         </div>
       }
       footer={stats}
+      columns={columns}
+      data={assets}
+      isLoading={loading}
     >
       {showFilters && (
         <FormSection 
@@ -321,10 +323,6 @@ export function Admin3DAssetsPage(): React.JSX.Element {
             />
           </div>
         </FormSection>
-      )}
-
-      {loading && (
-        <LoadingState message='Loading 3D assets...' className='rounded-md border border-dashed border-border py-16' />
       )}
 
       {!loading && assets.length === 0 && (
@@ -398,6 +396,6 @@ export function Admin3DAssetsPage(): React.JSX.Element {
       )}
 
       <ConfirmationModal />
-    </ListPanel>
+    </StandardDataTablePanel>
   );
 }

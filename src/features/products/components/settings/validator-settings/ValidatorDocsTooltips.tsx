@@ -2,12 +2,16 @@
 
 import React from 'react';
 
-import { Tooltip } from '@/shared/ui';
-
 import {
-  VALIDATOR_UI_DOC_BY_ID,
-  type ValidatorUiDoc,
-} from './validator-docs-catalog';
+  DOCUMENTATION_MODULE_IDS,
+  getDocumentationEntry,
+} from '@/features/documentation';
+import {
+  DocumentationTooltip,
+  useDocsTooltipsSetting,
+} from '@/features/tooltip-engine';
+
+import type { ValidatorUiDoc } from './validator-docs-catalog';
 
 type ValidatorDocsTooltipContextValue = {
   enabled: boolean;
@@ -16,6 +20,7 @@ type ValidatorDocsTooltipContextValue = {
 };
 
 const STORAGE_KEY = 'validator_docs_tooltips_enabled';
+const MODULE_ID = DOCUMENTATION_MODULE_IDS.validator;
 
 const ValidatorDocsTooltipContext = React.createContext<ValidatorDocsTooltipContextValue | null>(
   null
@@ -26,28 +31,23 @@ export function ValidatorDocsTooltipsProvider({
 }: {
   children: React.ReactNode;
 }): React.JSX.Element {
-  const [enabled, setEnabled] = React.useState(false);
-
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    setEnabled(raw === '1');
-  }, []);
-
-  const updateEnabled = React.useCallback((value: boolean): void => {
-    setEnabled(value);
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(STORAGE_KEY, value ? '1' : '0');
-    }
-  }, []);
+  const { enabled, setEnabled } = useDocsTooltipsSetting(STORAGE_KEY, false);
 
   const getDoc = React.useCallback((id: string): ValidatorUiDoc | null => {
-    return VALIDATOR_UI_DOC_BY_ID.get(id) ?? null;
+    const entry = getDocumentationEntry(MODULE_ID, id);
+    if (!entry) return null;
+
+    return {
+      id: entry.id,
+      title: entry.title,
+      description: entry.summary,
+      relatedFunctions: entry.aliases,
+    };
   }, []);
 
   return (
     <ValidatorDocsTooltipContext.Provider
-      value={{ enabled, setEnabled: updateEnabled, getDoc }}
+      value={{ enabled, setEnabled, getDoc }}
     >
       {children}
     </ValidatorDocsTooltipContext.Provider>
@@ -69,18 +69,17 @@ export function ValidatorDocTooltip({
   docId: string;
   children: React.ReactNode;
 }): React.JSX.Element {
-  const { enabled, getDoc } = useValidatorDocsTooltips();
-  const doc = getDoc(docId);
-
-  if (!enabled || !doc) {
-    return <>{children}</>;
-  }
-
-  const content = [doc.title, doc.description].join('\n');
+  const { enabled } = useValidatorDocsTooltips();
 
   return (
-    <Tooltip content={content} side='top' maxWidth='360px'>
-      <span className='inline-flex'>{children}</span>
-    </Tooltip>
+    <DocumentationTooltip
+      moduleId={MODULE_ID}
+      docId={docId}
+      enabled={enabled}
+      side='top'
+      maxWidth='360px'
+    >
+      {children}
+    </DocumentationTooltip>
   );
 }

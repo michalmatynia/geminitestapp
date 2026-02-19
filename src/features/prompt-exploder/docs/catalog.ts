@@ -1,11 +1,10 @@
 'use client';
 
 import {
-  PROMPT_EXPLODER_TOOLTIP_CATALOG,
-  type PromptExploderTooltipDocEntry,
-} from '../../../../docs/prompt-exploder/tooltip-catalog';
+  PROMPT_EXPLODER_DOC_CATALOG,
+  type PromptExploderDocEntry,
+} from '@/features/documentation';
 
-export type PromptExploderDocEntry = PromptExploderTooltipDocEntry;
+export type { PromptExploderDocEntry };
 
-export const PROMPT_EXPLODER_DOC_CATALOG: PromptExploderDocEntry[] =
-  PROMPT_EXPLODER_TOOLTIP_CATALOG;
+export { PROMPT_EXPLODER_DOC_CATALOG };

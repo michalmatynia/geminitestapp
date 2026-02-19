@@ -8,3 +8,4 @@ export * from './template';
 export * from './port-types';
 export * from './provider-actions';
 export * from './collection-names';
+export * from './dependency-inspector';

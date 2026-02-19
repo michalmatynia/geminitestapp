@@ -18,10 +18,8 @@ import {
   NODE_WIDTH,
   palette,
   stableStringify,
-  type AiNode,
-  type Edge,
-  type NodeDefinition,
 } from '@/features/ai/ai-paths/lib';
+import { type AiNode, type Edge, type NodeDefinition } from '../types';
 import { Button, useToast, Badge, Hint, SelectSimple, EmptyState } from '@/shared/ui';
 import { PanelHeader } from '@/shared/ui/templates/panels';
 

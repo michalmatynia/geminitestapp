@@ -1,7 +1,6 @@
 import { Split } from 'lucide-react';
 import React from 'react';
 
-import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
 import {
   AppModal,
   Button,
@@ -16,6 +15,8 @@ import {
   CASE_RESOLVER_JOIN_MODE_OPTIONS,
   CASE_RESOLVER_NODE_ROLE_OPTIONS,
   CASE_RESOLVER_QUOTE_MODE_OPTIONS,
+  type AiNode,
+  type Edge,
   type CaseResolverEdgeMeta,
   type CaseResolverEditorNodeContext,
   type CaseResolverFile,

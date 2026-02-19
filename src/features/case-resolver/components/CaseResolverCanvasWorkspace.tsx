@@ -24,10 +24,8 @@ import {
   palette,
   stableStringify,
   EMPTY_RUNTIME_STATE,
-  type AiNode,
-  type Edge,
-  type NodeDefinition,
 } from '@/features/ai/ai-paths/lib';
+import { type AiNode, type Edge, type NodeDefinition } from '../types';
 import {
   Button,
   SelectSimple,

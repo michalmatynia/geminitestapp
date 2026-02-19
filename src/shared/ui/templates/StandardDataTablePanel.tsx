@@ -37,6 +37,9 @@ export interface StandardDataTablePanelProps<TData> {
   getRowClassName?: (row: Row<TData>) => string | undefined;
   maxHeight?: string | number | undefined;
   stickyHeader?: boolean | undefined;
+  rowSelection?: import('@tanstack/react-table').RowSelectionState | undefined;
+  onRowSelectionChange?: import('@tanstack/react-table').OnChangeFn<import('@tanstack/react-table').RowSelectionState> | undefined;
+  skeletonRows?: React.ReactNode | undefined;
   expanded?: ExpandedState | undefined;
   onExpandedChange?: OnChangeFn<ExpandedState> | undefined;
   renderRowDetails?: (props: { row: Row<TData> }) => React.ReactNode | undefined;
@@ -47,6 +50,12 @@ export interface StandardDataTablePanelProps<TData> {
    * Defaults to 'panel' for true isLoading.
    */
   loadingVariant?: 'panel' | 'table' | undefined;
+
+  /**
+   * Optional custom content to render instead of the default DataTable.
+   * If provided, columns and data props are still accepted but the table won't render.
+   */
+  children?: React.ReactNode | undefined;
 }
 
 /**
@@ -76,10 +85,14 @@ export function StandardDataTablePanel<TData>({
   getRowClassName,
   maxHeight,
   stickyHeader,
+  rowSelection,
+  onRowSelectionChange,
+  skeletonRows,
   expanded,
   onExpandedChange,
   renderRowDetails,
   loadingVariant = 'panel',
+  children,
 }: StandardDataTablePanelProps<TData>): React.JSX.Element {
   const showPanelLoading = isLoading && loadingVariant === 'panel';
   const showTableLoading = isLoading && loadingVariant === 'table';
@@ -102,19 +115,26 @@ export function StandardDataTablePanel<TData>({
       {...(loadingMessage !== undefined ? { loadingMessage } : {})}
       {...(emptyState !== undefined ? { emptyState } : {})}
     >
-      <DataTable
-        columns={columns}
-        data={data}
-        isLoading={showTableLoading}
-        {...(emptyState !== undefined ? { emptyState } : {})}
-        {...(getRowId !== undefined ? { getRowId: getRowId as (row: TData) => string | number } : {})}
-        {...(getRowClassName !== undefined ? { getRowClassName } : {})}
-        {...(maxHeight !== undefined ? { maxHeight } : {})}
-        {...(stickyHeader !== undefined ? { stickyHeader } : {})}
-        {...(expanded !== undefined ? { expanded } : {})}
-        {...(onExpandedChange !== undefined ? { onExpandedChange } : {})}
-        {...(renderRowDetails !== undefined ? { renderRowDetails } : {})}
-      />
+      {children !== undefined ? (
+        children
+      ) : (
+        <DataTable
+          columns={columns}
+          data={data}
+          isLoading={showTableLoading}
+          {...(emptyState !== undefined ? { emptyState } : {})}
+          {...(getRowId !== undefined ? { getRowId: getRowId as (row: TData) => string | number } : {})}
+          {...(getRowClassName !== undefined ? { getRowClassName } : {})}
+          {...(maxHeight !== undefined ? { maxHeight } : {})}
+          {...(stickyHeader !== undefined ? { stickyHeader } : {})}
+          {...(rowSelection !== undefined ? { rowSelection } : {})}
+          {...(onRowSelectionChange !== undefined ? { onRowSelectionChange } : {})}
+          {...(skeletonRows !== undefined ? { skeletonRows } : {})}
+          {...(expanded !== undefined ? { expanded } : {})}
+          {...(onExpandedChange !== undefined ? { onExpandedChange } : {})}
+          {...(renderRowDetails !== undefined ? { renderRowDetails } : {})}
+        />
+      )}
     </ListPanel>
   );
 }

@@ -1,4 +1,4 @@
-import type { ManagedImageSlot } from '@/features/image-slots';
+import type { ManagedImageSlotDto as ManagedImageSlot } from '@/shared/contracts/image-slots';
 import type { ProductListPreferencesDto } from '@/shared/contracts/products';
 import { ImageFileRecord } from '@/shared/types/domain/files';
 

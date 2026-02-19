@@ -38,7 +38,7 @@ export type NodeHandlerContext = {
   simulationEntityId: string | null;
   resolvedEntity: Record<string, unknown> | null;
   fallbackEntityId: string | null;
-  strictFlowMode: boolean;
+  strictFlowMode?: boolean | undefined;
 
   // Execution tracking sets (mutable)
   executed: {

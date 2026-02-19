@@ -1,34 +1,29 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import {
+  readDocsTooltipsEnabled,
+  useDocsTooltipsSetting,
+} from '@/features/tooltip-engine';
 
 export const PROMPT_EXPLODER_DOCS_TOOLTIP_KEY =
   'prompt_exploder:docs_tooltips_enabled';
 
-export const readPromptExploderDocsTooltipsEnabled = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  return window.localStorage.getItem(PROMPT_EXPLODER_DOCS_TOOLTIP_KEY) === '1';
-};
+export const readPromptExploderDocsTooltipsEnabled = (): boolean =>
+  readDocsTooltipsEnabled(PROMPT_EXPLODER_DOCS_TOOLTIP_KEY, false);
 
-export function usePromptExploderDocsTooltips(): {
+type PromptExploderDocsTooltipsState = {
   docsTooltipsEnabled: boolean;
   setDocsTooltipsEnabled: (enabled: boolean) => void;
-  } {
-  const [docsTooltipsEnabled, setDocsTooltipsEnabledState] = useState(false);
+};
 
-  useEffect(() => {
-    setDocsTooltipsEnabledState(readPromptExploderDocsTooltipsEnabled());
-  }, []);
+export function usePromptExploderDocsTooltips(): PromptExploderDocsTooltipsState {
+  const { enabled, setEnabled } = useDocsTooltipsSetting(
+    PROMPT_EXPLODER_DOCS_TOOLTIP_KEY,
+    false
+  );
 
-  const setDocsTooltipsEnabled = (enabled: boolean): void => {
-    setDocsTooltipsEnabledState(enabled);
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(
-        PROMPT_EXPLODER_DOCS_TOOLTIP_KEY,
-        enabled ? '1' : '0'
-      );
-    }
+  return {
+    docsTooltipsEnabled: enabled,
+    setDocsTooltipsEnabled: setEnabled,
   };
-
-  return { docsTooltipsEnabled, setDocsTooltipsEnabled };
 }

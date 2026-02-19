@@ -38,6 +38,7 @@ export const createMockContext = (overrides: Partial<NodeHandlerContext> = {}): 
     simulationEntityId: null,
     resolvedEntity: null,
     fallbackEntityId: null,
+    strictFlowMode: true,
     executed: {
       notification: new Set(),
       updater: new Set(),

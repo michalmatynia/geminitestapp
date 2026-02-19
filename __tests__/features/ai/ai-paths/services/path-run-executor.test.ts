@@ -139,4 +139,62 @@ describe('PathRunExecutor', () => {
     const updatedRun = await repo.findRunById(run.id);
     expect(updatedRun.status).toBe('failed');
   });
+
+  it('should block strict runs when dependency inspector reports errors', async () => {
+    const riskyNodes: AiNode[] = [
+      {
+        id: 'db-1',
+        type: 'database',
+        title: 'Database',
+        description: '',
+        position: { x: 0, y: 0 },
+        inputs: ['entityId', 'productId', 'value'],
+        outputs: ['result'],
+        config: {
+          runtime: { waitForInputs: true },
+          database: {
+            operation: 'update',
+            entityType: 'product',
+            idField: 'entityId',
+            mode: 'replace',
+            mappings: [],
+            query: {
+              provider: 'auto',
+              collection: 'products',
+              mode: 'preset',
+              preset: 'by_id',
+              field: 'id',
+              idType: 'string',
+              queryTemplate: '{"id":"{{entityId}}"}',
+              limit: 1,
+              sort: '',
+              projection: '',
+              single: true,
+            },
+          },
+        },
+      },
+    ];
+
+    const run = await repo.createRun({
+      pathId: 'test',
+      graph: { nodes: riskyNodes, edges: [] },
+      meta: { strictFlowMode: true },
+    } as any);
+    await repo.createRunNodes(run.id, riskyNodes);
+
+    await expect(executePathRun(run)).rejects.toThrow('Strict flow blocked run');
+    expect(evaluateGraphWithIteratorAutoContinue).not.toHaveBeenCalled();
+
+    const updatedRun = await repo.findRunById(run.id);
+    expect(updatedRun.status).toBe('failed');
+    expect(updatedRun.errorMessage).toContain('Strict flow blocked run');
+
+    const events = await repo.listRunEvents(run.id);
+    expect(
+      events.some((event: any) =>
+        event.message === 'Run blocked by strict flow dependency validation.',
+      ),
+    ).toBe(true);
+  });
 });

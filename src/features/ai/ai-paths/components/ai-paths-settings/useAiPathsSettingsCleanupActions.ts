@@ -45,6 +45,7 @@ type UseAiPathsSettingsCleanupActionsInput = {
   executionMode: PathExecutionMode;
   flowIntensity: PathFlowIntensity;
   runMode: PathRunMode;
+  strictFlowMode: boolean;
   isPathActive: boolean;
   parserSamples: Record<string, ParserSampleState>;
   updaterSamples: Record<string, UpdaterSampleState>;
@@ -94,6 +95,7 @@ export function useAiPathsSettingsCleanupActions({
   executionMode,
   flowIntensity,
   runMode,
+  strictFlowMode,
   isPathActive,
   parserSamples,
   updaterSamples,
@@ -137,6 +139,7 @@ export function useAiPathsSettingsCleanupActions({
           executionMode,
           flowIntensity,
           runMode,
+          strictFlowMode,
           nodes,
           edges: [],
           updatedAt,
@@ -193,6 +196,7 @@ export function useAiPathsSettingsCleanupActions({
     pruneRuntimeInputs,
     reportAiPathsError,
     runMode,
+    strictFlowMode,
     selectedNodeId,
     setPathConfigs,
     setEdges,
@@ -229,6 +233,7 @@ export function useAiPathsSettingsCleanupActions({
           executionMode,
           flowIntensity,
           runMode,
+          strictFlowMode,
           nodes,
           edges,
           updatedAt,
@@ -286,6 +291,7 @@ export function useAiPathsSettingsCleanupActions({
     persistPathSettings,
     reportAiPathsError,
     runMode,
+    strictFlowMode,
     selectedNodeId,
     setPathConfigs,
     setRuntimeState,
@@ -325,6 +331,7 @@ export function useAiPathsSettingsCleanupActions({
           executionMode,
           flowIntensity,
           runMode,
+          strictFlowMode,
           nodes,
           edges,
           updatedAt,
@@ -382,6 +389,7 @@ export function useAiPathsSettingsCleanupActions({
     persistPathSettings,
     reportAiPathsError,
     runMode,
+    strictFlowMode,
     runtimeState,
     selectedNodeId,
     setPathConfigs,
@@ -421,6 +429,7 @@ export function useAiPathsSettingsCleanupActions({
       executionMode,
       flowIntensity,
       runMode,
+      strictFlowMode,
       nodes,
       edges,
       updatedAt,
@@ -473,6 +482,7 @@ export function useAiPathsSettingsCleanupActions({
     persistPathSettings,
     reportAiPathsError,
     runMode,
+    strictFlowMode,
     runtimeState,
     selectedNodeId,
     setPathConfigs,

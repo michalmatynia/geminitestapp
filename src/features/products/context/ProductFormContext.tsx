@@ -5,6 +5,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   BaseSyntheticEvent,
@@ -113,6 +114,111 @@ const loadStudioProjectId = async (productId: string): Promise<string | null> =>
   productStudioConfigInFlight.set(productId, request);
   return request;
 };
+
+type ComparableParameterValue = {
+  parameterId: string;
+  value: string;
+  valuesByLanguage?: Record<string, string>;
+};
+
+type NonFormComparableState = {
+  selectedCatalogIds: string[];
+  selectedCategoryId: string | null;
+  selectedTagIds: string[];
+  selectedProducerIds: string[];
+  selectedNoteIds: string[];
+  parameterValues: ComparableParameterValue[];
+  imageSlots: string[];
+  imageLinks: string[];
+  imageBase64s: string[];
+};
+
+const normalizeComparableString = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  return value.trim();
+};
+
+const normalizeComparableStringList = (values: ReadonlyArray<unknown>): string[] => {
+  const unique = new Set<string>();
+  values.forEach((value: unknown) => {
+    const normalized = normalizeComparableString(value);
+    if (!normalized) return;
+    unique.add(normalized);
+  });
+  return Array.from(unique);
+};
+
+const normalizeComparableNullableString = (value: unknown): string | null => {
+  const normalized = normalizeComparableString(value);
+  return normalized || null;
+};
+
+const normalizeComparableParameterValues = (
+  input: ProductParameterValue[]
+): ComparableParameterValue[] => {
+  return input
+    .map((entry: ProductParameterValue): ComparableParameterValue => {
+      const valuesByLanguage =
+        entry.valuesByLanguage &&
+        typeof entry.valuesByLanguage === 'object' &&
+        !Array.isArray(entry.valuesByLanguage)
+          ? Object.entries(entry.valuesByLanguage)
+            .reduce((acc: Record<string, string>, [lang, value]: [string, unknown]) => {
+              const normalizedLang = normalizeComparableString(lang).toLowerCase();
+              const normalizedValue = normalizeComparableString(value);
+              if (!normalizedLang || !normalizedValue) return acc;
+              acc[normalizedLang] = normalizedValue;
+              return acc;
+            }, {} as Record<string, string>)
+          : {};
+      const directValue = normalizeComparableString(entry.value);
+      const fallbackLocalizedValue =
+        valuesByLanguage['default'] ||
+        valuesByLanguage['en'] ||
+        valuesByLanguage['pl'] ||
+        valuesByLanguage['de'] ||
+        Object.values(valuesByLanguage).find((value: string): boolean => value.length > 0) ||
+        '';
+      const normalizedParameterId = decodeSimpleParameterStorageId(
+        normalizeComparableString(entry.parameterId)
+      );
+      return {
+        parameterId: normalizedParameterId || '',
+        value: directValue || fallbackLocalizedValue,
+        ...(Object.keys(valuesByLanguage).length > 0
+          ? { valuesByLanguage }
+          : {}),
+      };
+    })
+    .filter((entry: ComparableParameterValue): boolean => entry.parameterId.length > 0);
+};
+
+const toComparableImageSlot = (slot: ProductImageSlot | null): string => {
+  if (!slot) return '';
+  if (slot.type === 'existing') {
+    return `existing:${normalizeComparableString(slot.data.id)}`;
+  }
+  const fileRecord =
+    slot.data && typeof slot.data === 'object'
+      ? (slot.data as Record<string, unknown>)
+      : {};
+  const sizeValue = fileRecord['size'];
+  const lastModifiedValue = fileRecord['lastModified'];
+  return [
+    'file',
+    normalizeComparableString(fileRecord['name']),
+    typeof sizeValue === 'number' && Number.isFinite(sizeValue)
+      ? String(sizeValue)
+      : '0',
+    normalizeComparableString(fileRecord['type']),
+    typeof lastModifiedValue === 'number' && Number.isFinite(lastModifiedValue)
+      ? String(lastModifiedValue)
+      : '0',
+  ].join(':');
+};
+
+const serializeComparableState = (value: NonFormComparableState): string =>
+  JSON.stringify(value);
 
 export interface ProductFormContextType {
   register: UseFormRegister<ProductFormData>;
@@ -250,6 +356,7 @@ export function ProductFormProvider({
     formState: { errors, isDirty },
     setValue,
     getValues,
+    reset,
   } = methods;
 
   const [generationError, setGenerationError] = useState<string | null>(null);
@@ -421,9 +528,18 @@ export function ProductFormProvider({
     () => (Array.isArray(product?.noteIds) ? product.noteIds : [])
   );
 
+  const nonFormDirtyTrackingLockedRef = useRef<boolean>(false);
+  const lastEntityIdentityRef = useRef<string>('');
+  const lastUploadSuccessRef = useRef<boolean>(false);
+
+  const markNonFormInteraction = (): void => {
+    nonFormDirtyTrackingLockedRef.current = true;
+  };
+
   const toggleNote = (noteId: string): void => {
     const id = noteId.trim();
     if (!id) return;
+    markNonFormInteraction();
     setSelectedNoteIds((prev: string[]) =>
       prev.includes(id) ? prev.filter((n: string) => n !== id) : [...prev, id]
     );
@@ -432,6 +548,7 @@ export function ProductFormProvider({
   const removeNote = (noteId: string): void => {
     const id = noteId.trim();
     if (!id) return;
+    markNonFormInteraction();
     setSelectedNoteIds((prev: string[]) => prev.filter((n: string) => n !== id));
   };
 
@@ -482,6 +599,176 @@ export function ProductFormProvider({
     () => normalizeParameterValues(product?.parameters ?? draft?.parameters ?? [])
   );
 
+  const trackedToggleCatalog = (catalogId: string): void => {
+    markNonFormInteraction();
+    toggleCatalog(catalogId);
+  };
+
+  const trackedSetCategoryId = (categoryId: string | null): void => {
+    markNonFormInteraction();
+    setCategoryId(categoryId);
+  };
+
+  const trackedToggleTag = (tagId: string): void => {
+    markNonFormInteraction();
+    toggleTag(tagId);
+  };
+
+  const trackedToggleProducer = (producerId: string): void => {
+    markNonFormInteraction();
+    toggleProducer(producerId);
+  };
+
+  const trackedHandleSlotImageChange = (file: File | null, index: number): void => {
+    markNonFormInteraction();
+    handleSlotImageChange(file, index);
+  };
+
+  const trackedHandleSlotFileSelect = (
+    file: ImageFileSelection | null,
+    index: number
+  ): void => {
+    markNonFormInteraction();
+    handleSlotFileSelect(file, index);
+  };
+
+  const trackedHandleSlotDisconnectImage = async (index: number): Promise<void> => {
+    markNonFormInteraction();
+    await handleSlotDisconnectImage(index);
+  };
+
+  const trackedHandleMultiImageChange = (files: File[]): void => {
+    markNonFormInteraction();
+    handleMultiImageChange(files);
+  };
+
+  const trackedHandleMultiFileSelect = (files: ImageFileSelection[]): void => {
+    markNonFormInteraction();
+    handleMultiFileSelect(files);
+  };
+
+  const trackedSwapImageSlots = (fromIndex: number, toIndex: number): void => {
+    markNonFormInteraction();
+    swapImageSlots(fromIndex, toIndex);
+  };
+
+  const trackedSetImageLinkAt = (index: number, value: string): void => {
+    markNonFormInteraction();
+    setImageLinkAt(index, value);
+  };
+
+  const trackedSetImageBase64At = (index: number, value: string): void => {
+    markNonFormInteraction();
+    setImageBase64At(index, value);
+  };
+
+  const addParameterValue = (): void => {
+    markNonFormInteraction();
+    setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => [
+      ...prev,
+      { parameterId: '', value: '' },
+    ]);
+  };
+
+  const updateParameterId = (index: number, parameterId: string): void => {
+    markNonFormInteraction();
+    setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => {
+      const next = [...prev];
+      if (!next[index]) return prev;
+      next[index] = { ...next[index], parameterId };
+      return next;
+    });
+  };
+
+  const updateParameterValue = (index: number, value: string): void => {
+    markNonFormInteraction();
+    setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => {
+      const next = [...prev];
+      if (!next[index]) return prev;
+      next[index] = { ...next[index], value };
+      return next;
+    });
+  };
+
+  const updateParameterValueByLanguage = (
+    index: number,
+    languageCode: string,
+    value: string
+  ): void => {
+    markNonFormInteraction();
+    setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => {
+      const next = [...prev];
+      if (!next[index]) return prev;
+      const normalizedLang = languageCode.trim().toLowerCase();
+      if (!normalizedLang) return prev;
+      const current = next[index];
+      const currentValues =
+        current.valuesByLanguage &&
+        typeof current.valuesByLanguage === 'object' &&
+        !Array.isArray(current.valuesByLanguage)
+          ? { ...current.valuesByLanguage }
+          : {};
+      currentValues[normalizedLang] = value;
+      next[index] = {
+        ...current,
+        valuesByLanguage: currentValues,
+      };
+      return next;
+    });
+  };
+
+  const removeParameterValue = (index: number): void => {
+    markNonFormInteraction();
+    setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] =>
+      prev.filter((_: ProductParameterValue, i: number): boolean => i !== index)
+    );
+  };
+
+  const nonFormComparableKey = useMemo(() => {
+    const comparableState: NonFormComparableState = {
+      selectedCatalogIds: normalizeComparableStringList(selectedCatalogIds),
+      selectedCategoryId: normalizeComparableNullableString(selectedCategoryId),
+      selectedTagIds: normalizeComparableStringList(selectedTagIds),
+      selectedProducerIds: normalizeComparableStringList(selectedProducerIds),
+      selectedNoteIds: normalizeComparableStringList(selectedNoteIds),
+      parameterValues: normalizeComparableParameterValues(parameterValues),
+      imageSlots: imageSlots.map(toComparableImageSlot),
+      imageLinks: imageLinks.map((value: string) => normalizeComparableString(value)),
+      imageBase64s: imageBase64s.map((value: string) => normalizeComparableString(value)),
+    };
+    return serializeComparableState(comparableState);
+  }, [
+    imageBase64s,
+    imageLinks,
+    imageSlots,
+    parameterValues,
+    selectedCatalogIds,
+    selectedCategoryId,
+    selectedNoteIds,
+    selectedProducerIds,
+    selectedTagIds,
+  ]);
+
+  const [nonFormBaselineKey, setNonFormBaselineKey] = useState<string>(
+    nonFormComparableKey
+  );
+
+  const entityIdentity = `${product?.id?.trim() ?? ''}:${draft?.id?.trim() ?? ''}`;
+
+  useEffect(() => {
+    if (lastEntityIdentityRef.current === entityIdentity) return;
+    lastEntityIdentityRef.current = entityIdentity;
+    nonFormDirtyTrackingLockedRef.current = false;
+    setNonFormBaselineKey(nonFormComparableKey);
+  }, [entityIdentity, nonFormComparableKey]);
+
+  useEffect(() => {
+    if (nonFormDirtyTrackingLockedRef.current) return;
+    setNonFormBaselineKey((previous: string) =>
+      previous === nonFormComparableKey ? previous : nonFormComparableKey
+    );
+  }, [nonFormComparableKey]);
+
   const {
     handleSubmit: submitHandler,
     uploading,
@@ -506,13 +793,26 @@ export function ProductFormProvider({
     onEditSave,
   });
 
+  useEffect(() => {
+    const becameSuccessful = uploadSuccess && !lastUploadSuccessRef.current;
+    lastUploadSuccessRef.current = uploadSuccess;
+    if (!becameSuccessful) return;
+
+    reset(getValues());
+    nonFormDirtyTrackingLockedRef.current = false;
+    setNonFormBaselineKey(nonFormComparableKey);
+  }, [getValues, nonFormComparableKey, reset, uploadSuccess]);
+
+  const hasNonFormUnsavedChanges = nonFormComparableKey !== nonFormBaselineKey;
+  const hasUnsavedChanges = isDirty || hasNonFormUnsavedChanges;
+
   return (
     <FormProvider {...methods}>
       <ProductFormContext.Provider
         value={{
           register,
           handleSubmit: submitHandler,
-          hasUnsavedChanges: isDirty,
+          hasUnsavedChanges,
           errors,
           setValue,
           getValues,
@@ -524,80 +824,43 @@ export function ProductFormProvider({
           uploadSuccess,
           showFileManager,
           setShowFileManager,
-          handleSlotImageChange,
-          handleSlotFileSelect,
-          handleSlotDisconnectImage,
-          handleMultiImageChange,
-          handleMultiFileSelect,
-          swapImageSlots,
-          setImageLinkAt,
-          setImageBase64At,
+          handleSlotImageChange: trackedHandleSlotImageChange,
+          handleSlotFileSelect: trackedHandleSlotFileSelect,
+          handleSlotDisconnectImage: trackedHandleSlotDisconnectImage,
+          handleMultiImageChange: trackedHandleMultiImageChange,
+          handleMultiFileSelect: trackedHandleMultiFileSelect,
+          swapImageSlots: trackedSwapImageSlots,
+          setImageLinkAt: trackedSetImageLinkAt,
+          setImageBase64At: trackedSetImageBase64At,
           setImagesReordering,
           catalogs,
           catalogsLoading,
           catalogsError,
           selectedCatalogIds,
-          toggleCatalog,
+          toggleCatalog: trackedToggleCatalog,
           categories,
           categoriesLoading,
           selectedCategoryId,
-          setCategoryId,
+          setCategoryId: trackedSetCategoryId,
           tags,
           tagsLoading,
           selectedTagIds,
-          toggleTag,
+          toggleTag: trackedToggleTag,
           producers,
           producersLoading,
           selectedProducerIds,
-          toggleProducer,
+          toggleProducer: trackedToggleProducer,
           selectedNoteIds,
           toggleNote,
           removeNote,
           parameters,
           parametersLoading,
           parameterValues,
-          addParameterValue: (): void =>
-            setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => [...prev, { parameterId: '', value: '' }]),
-          updateParameterId: (index: number, parameterId: string): void =>
-            setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => {
-              const next = [...prev];
-              if (!next[index]) return prev;
-              next[index] = { ...next[index], parameterId };
-              return next;
-            }),
-          updateParameterValue: (index: number, value: string): void =>
-            setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => {
-              const next = [...prev];
-              if (!next[index]) return prev;
-              next[index] = { ...next[index], value };
-              return next;
-            }),
-          updateParameterValueByLanguage: (
-            index: number,
-            languageCode: string,
-            value: string
-          ): void =>
-            setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => {
-              const next = [...prev];
-              if (!next[index]) return prev;
-              const normalizedLang = languageCode.trim().toLowerCase();
-              if (!normalizedLang) return prev;
-              const current = next[index];
-              const currentValues =
-                current.valuesByLanguage &&
-                typeof current.valuesByLanguage === 'object' &&
-                !Array.isArray(current.valuesByLanguage)
-                  ? { ...current.valuesByLanguage }
-                  : {};
-              currentValues[normalizedLang] = value;
-              next[index] = {
-                ...current,
-                valuesByLanguage: currentValues,
-              };
-              return next;
-            }),
-          removeParameterValue: (index: number): void =>
-            setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => prev.filter((_: ProductParameterValue, i: number): boolean => i !== index)),
+          addParameterValue,
+          updateParameterId,
+          updateParameterValue,
+          updateParameterValueByLanguage,
+          removeParameterValue,
           filteredLanguages,
           filteredPriceGroups,
           generationError,

@@ -68,6 +68,7 @@ const buildContext = (
     simulationEntityId: null,
     resolvedEntity: null,
     fallbackEntityId: null,
+    strictFlowMode: true,
     executed: {
       notification: new Set<string>(),
       updater: new Set<string>(),
@@ -247,4 +248,3 @@ describe('handleValidationPattern', () => {
     );
   });
 });
-

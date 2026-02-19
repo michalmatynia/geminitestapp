@@ -993,6 +993,7 @@ export function useAiPathsSettingsState({
     executionMode,
     flowIntensity,
     runMode,
+    strictFlowMode,
     isPathActive,
     parserSamples,
     updaterSamples,

@@ -14,6 +14,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
     executionMode: 'server',
     flowIntensity: 'medium',
     runMode: 'block',
+    strictFlowMode: true,
     nodes: [
       {
         type: 'trigger',

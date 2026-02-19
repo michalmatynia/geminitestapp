@@ -16,7 +16,7 @@ export const handleTrigger: NodeHandler = async ({
   activePathId,
   resolvedEntity,
   fallbackEntityId,
-  strictFlowMode,
+  strictFlowMode = true,
   now,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (triggerNodeId && node.id !== triggerNodeId) {

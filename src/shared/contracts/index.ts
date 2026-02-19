@@ -19,6 +19,7 @@ export * from './cms';
 export * from './data-import-export';
 export * from './database';
 export * from './document-editor';
+export * from './documentation';
 export * from './drafter';
 export * from './filemaker';
 export * from './files';

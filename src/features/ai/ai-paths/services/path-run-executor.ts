@@ -5,6 +5,7 @@ import {
   AI_PATHS_HISTORY_RETENTION_MAX,
   AI_PATHS_HISTORY_RETENTION_MIN,
   evaluateGraphWithIteratorAutoContinue,
+  inspectPathDependencies,
 } from '@/features/ai/ai-paths/lib';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
@@ -437,6 +438,31 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   const toast = (): void => {};
 
   try {
+    if (strictFlowMode) {
+      const dependencyReport = inspectPathDependencies(nodes, edges);
+      if (dependencyReport.errors > 0) {
+        await repo.createRunEvent({
+          runId: run.id,
+          level: 'error',
+          message: 'Run blocked by strict flow dependency validation.',
+          metadata: {
+            strictFlowMode: true,
+            dependencyErrors: dependencyReport.errors,
+            dependencyWarnings: dependencyReport.warnings,
+            blockedRiskIds: dependencyReport.risks
+              .filter((risk): boolean => risk.severity === 'error')
+              .map((risk) => risk.id),
+            blockedNodeIds: dependencyReport.risks
+              .filter((risk): boolean => risk.severity === 'error')
+              .map((risk) => risk.nodeId),
+          },
+        });
+        throw new Error(
+          `Strict flow blocked run: ${dependencyReport.errors} dependency error(s) detected.`,
+        );
+      }
+    }
+
     const resultState = await evaluateGraphWithIteratorAutoContinue({
       nodes,
       edges,

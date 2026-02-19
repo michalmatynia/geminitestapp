@@ -18,6 +18,7 @@ export const buildDescriptionInferenceLitePathConfigValue = (
     executionMode: 'server',
     flowIntensity: 'medium',
     runMode: 'block',
+    strictFlowMode: true,
     nodes: [
       {
         type: 'trigger',

@@ -1,4 +1,4 @@
-import type { AiNode, Edge, NodeDefinition } from '@/features/ai/ai-paths/lib';
+import { type AiNode, type Edge, type NodeDefinition } from '../types';
 import { palette } from '@/features/ai/ai-paths/lib';
 
 import {

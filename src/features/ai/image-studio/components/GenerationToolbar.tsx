@@ -956,6 +956,16 @@ export function GenerationToolbar(): React.JSX.Element {
     }),
     []
   );
+  const centerTooltipContent = useMemo(
+    () => ({
+      mode: getImageStudioDocTooltip('object_layout_mode'),
+      padding: getImageStudioDocTooltip('object_layout_padding'),
+      paddingAxes: getImageStudioDocTooltip('object_layout_padding_axes'),
+      fillMissingCanvasWhite: getImageStudioDocTooltip('object_layout_fill_missing_canvas_white'),
+      apply: getImageStudioDocTooltip('object_layout_apply'),
+    }),
+    []
+  );
   const generationModel = studioSettings.targetAi.openai.model;
   const generationImageCount = String(studioSettings.targetAi.openai.image.n ?? 1);
 
@@ -1101,6 +1111,8 @@ export function GenerationToolbar(): React.JSX.Element {
         centerLayoutSplitAxes={centerLayoutSplitAxes}
         centerLayoutFillMissingCanvasWhite={centerLayoutFillMissingCanvasWhite}
         centerLayoutProjectCanvasSize={projectCanvasSize}
+        centerTooltipContent={centerTooltipContent}
+        centerTooltipsEnabled={cropTooltipsEnabled}
         centerMode={centerMode}
         centerModeOptions={centerModeOptions}
         hasSourceImage={hasSourceImage}

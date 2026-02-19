@@ -10,8 +10,7 @@ import React, { useMemo } from 'react';
 
 import {
   Button,
-  ListPanel,
-  DataTable,
+  StandardDataTablePanel,
   SelectSimple,
   SearchInput,
   Alert,
@@ -134,7 +133,7 @@ export function Asset3DListPage(): React.JSX.Element {
   ) : null;
 
   return (
-    <ListPanel
+    <StandardDataTablePanel
       header={
         <PanelHeader
           title='3D Asset Library'
@@ -214,6 +213,9 @@ export function Asset3DListPage(): React.JSX.Element {
         </div>
       }
       footer={stats}
+      columns={columns}
+      data={assets}
+      isLoading={loading}
     >
       {loading && (
         <div className='flex items-center justify-center rounded-md border border-dashed border-border py-16 text-muted-foreground'>
@@ -298,6 +300,6 @@ export function Asset3DListPage(): React.JSX.Element {
           item={previewAsset}
         />
       )}
-    </ListPanel>
+    </StandardDataTablePanel>
   );
 }

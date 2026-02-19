@@ -17,6 +17,12 @@ import {
   promptExploderCreateApprovalDraftFromSegment,
   type ApprovalDraft,
 } from '../helpers/segment-helpers';
+import {
+  promptExploderInsertSegmentRelative,
+  promptExploderMergeSegment,
+  promptExploderRemoveSegmentById,
+  promptExploderSplitSegmentByRange,
+} from '../helpers/segment-transforms';
 import { buildManualLearnedRegexRuleDraft } from '../rule-drafts';
 import { upsertRegexLearnedRule } from '../rule-learning';
 import {
@@ -86,6 +92,11 @@ export interface SegmentEditorActions {
   handleListItemDragEnd: () => void;
   handleListItemDragOver: (event: React.DragEvent, targetIndex: number) => void;
   handleListItemDrop: (event: React.DragEvent, targetIndex: number) => void;
+  addSegmentRelative: (segmentId: string, position: 'before' | 'after') => void;
+  removeSegment: (segmentId: string) => void;
+  splitSegment: (segmentId: string, selectionStart: number, selectionEnd: number) => void;
+  mergeSegmentWithPrevious: (segmentId: string) => void;
+  mergeSegmentWithNext: (segmentId: string) => void;
   handleApproveSelectedSegmentPattern: () => Promise<void>;
 }
 
@@ -348,6 +359,102 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
     [draggingListItemIndex, selectedSegment, updateSegment]
   );
 
+  const applySegmentEditResult = useCallback(
+    (result: { segments: PromptExploderSegment[]; selectedSegmentId: string | null }) => {
+      replaceSegments(result.segments);
+      setSelectedSegmentId(result.selectedSegmentId);
+    },
+    [replaceSegments, setSelectedSegmentId]
+  );
+
+  const addSegmentRelative = useCallback(
+    (segmentId: string, position: 'before' | 'after') => {
+      if (!documentState) return;
+      const targetSegment =
+        documentState.segments.find((segment: PromptExploderSegment) => segment.id === segmentId) ??
+        null;
+      const result = promptExploderInsertSegmentRelative({
+        segments: documentState.segments,
+        targetSegmentId: segmentId,
+        position,
+        template: targetSegment,
+      });
+      applySegmentEditResult(result);
+      toast('Segment added.', { variant: 'success' });
+    },
+    [applySegmentEditResult, documentState, toast]
+  );
+
+  const removeSegment = useCallback(
+    (segmentId: string) => {
+      if (!documentState) return;
+      const result = promptExploderRemoveSegmentById({
+        segments: documentState.segments,
+        segmentId,
+      });
+      applySegmentEditResult(result);
+      toast('Segment removed.', { variant: 'success' });
+    },
+    [applySegmentEditResult, documentState, toast]
+  );
+
+  const splitSegment = useCallback(
+    (segmentId: string, selectionStart: number, selectionEnd: number) => {
+      if (!documentState) return;
+      const result = promptExploderSplitSegmentByRange({
+        segments: documentState.segments,
+        segmentId,
+        selectionStart,
+        selectionEnd,
+      });
+      if (result.segments === documentState.segments) {
+        toast('Select text (or place caret) in a text segment before splitting.', {
+          variant: 'info',
+        });
+        return;
+      }
+      applySegmentEditResult(result);
+      toast('Segment split.', { variant: 'success' });
+    },
+    [applySegmentEditResult, documentState, toast]
+  );
+
+  const mergeSegmentWithPrevious = useCallback(
+    (segmentId: string) => {
+      if (!documentState) return;
+      const result = promptExploderMergeSegment({
+        segments: documentState.segments,
+        segmentId,
+        direction: 'previous',
+      });
+      if (result.segments === documentState.segments) {
+        toast('No previous segment to merge with.', { variant: 'info' });
+        return;
+      }
+      applySegmentEditResult(result);
+      toast('Merged with previous segment.', { variant: 'success' });
+    },
+    [applySegmentEditResult, documentState, toast]
+  );
+
+  const mergeSegmentWithNext = useCallback(
+    (segmentId: string) => {
+      if (!documentState) return;
+      const result = promptExploderMergeSegment({
+        segments: documentState.segments,
+        segmentId,
+        direction: 'next',
+      });
+      if (result.segments === documentState.segments) {
+        toast('No next segment to merge with.', { variant: 'info' });
+        return;
+      }
+      applySegmentEditResult(result);
+      toast('Merged with next segment.', { variant: 'success' });
+    },
+    [applySegmentEditResult, documentState, toast]
+  );
+
   const handleApproveSelectedSegmentPattern = useCallback(async () => {
     if (!selectedSegment) {
       toast('Select a segment before approving a pattern.', { variant: 'info' });
@@ -576,6 +683,11 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
       handleListItemDragEnd,
       handleListItemDragOver,
       handleListItemDrop,
+      addSegmentRelative,
+      removeSegment,
+      splitSegment,
+      mergeSegmentWithPrevious,
+      mergeSegmentWithNext,
       handleApproveSelectedSegmentPattern,
     }),
     [
@@ -587,6 +699,11 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
       handleListItemDragEnd,
       handleListItemDragOver,
       handleListItemDrop,
+      addSegmentRelative,
+      removeSegment,
+      splitSegment,
+      mergeSegmentWithPrevious,
+      mergeSegmentWithNext,
       handleApproveSelectedSegmentPattern,
     ]
   );

@@ -1,10 +1,6 @@
-import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
-import type {
-  CaseResolverCompiledSegmentDto,
-  CaseResolverCompileResultDto,
-} from '@/shared/contracts/case-resolver';
-
 import {
+  type AiNode,
+  type Edge,
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
@@ -13,6 +9,10 @@ import {
   type CaseResolverJoinMode,
   type CaseResolverNodeMeta,
 } from './types';
+import type {
+  CaseResolverCompiledSegmentDto,
+  CaseResolverCompileResultDto,
+} from '@/shared/contracts/case-resolver';
 
 export type CaseResolverCompiledSegment = CaseResolverCompiledSegmentDto;
 

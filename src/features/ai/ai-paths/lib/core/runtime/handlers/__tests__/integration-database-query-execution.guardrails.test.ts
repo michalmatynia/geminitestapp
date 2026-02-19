@@ -165,4 +165,58 @@ describe('executeDatabaseQuery guardrail metadata', () => {
       })
     );
   });
+
+  it('does not run parameter-id fallback when disabled by strict flow mode', async () => {
+    dbQueryMock.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        items: [],
+        count: 0,
+        provider: 'mongodb',
+      },
+    });
+
+    const result = await executeDatabaseQuery({
+      reportAiPathsError: vi.fn(),
+      toast: vi.fn(),
+      queryConfig: {
+        provider: 'auto',
+        collection: 'product_parameters',
+        mode: 'custom',
+        preset: 'by_id',
+        field: 'id',
+        idType: 'string',
+        queryTemplate: '{"catalogId":"{{context.entity.catalogId}}"}',
+        limit: 20,
+        sort: '',
+        projection: '',
+        single: false,
+      },
+      query: { catalogId: '' },
+      querySource: 'customTemplate',
+      dryRun: false,
+      templateInputs: {
+        context: {
+          entity: {
+            catalogId: '',
+            parameters: [{ parameterId: 'param-1' }],
+          },
+        },
+      },
+      aiPrompt: 'test',
+      allowParameterDefinitionFallback: false,
+    });
+
+    expect(dbQueryMock).toHaveBeenCalledTimes(1);
+    expect(result.result).toEqual([]);
+    expect(result.bundle).toEqual(
+      expect.objectContaining({
+        querySource: 'customTemplate',
+        query: { catalogId: '' },
+        count: 0,
+      })
+    );
+    const bundle = result.bundle as Record<string, unknown>;
+    expect(bundle['fallback']).toBeUndefined();
+  });
 });

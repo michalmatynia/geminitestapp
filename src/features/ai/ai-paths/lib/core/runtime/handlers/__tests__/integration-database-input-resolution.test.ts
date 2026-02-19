@@ -52,4 +52,42 @@ describe('resolveDatabaseInputs catalogId resolution', () => {
 
     expect(resolved.catalogId).toBe('explicit-catalog');
   });
+
+  it('does not inject trigger fallback identifiers in strict mode', () => {
+    const resolved = resolveDatabaseInputs({
+      nodeInputs: {},
+      triggerContext: {
+        entityId: 'trigger-entity',
+        productId: 'trigger-product',
+        entityType: 'product',
+      },
+      fallbackEntityId: 'fallback-entity',
+      simulationEntityType: 'product',
+      strictFlowMode: true,
+    });
+
+    expect(resolved.entityId).toBeUndefined();
+    expect(resolved.productId).toBeUndefined();
+    expect(resolved.entityType).toBeUndefined();
+    expect(resolved.value).toBeUndefined();
+  });
+
+  it('can still use fallback identifiers when strict mode is disabled', () => {
+    const resolved = resolveDatabaseInputs({
+      nodeInputs: {},
+      triggerContext: {
+        entityId: 'trigger-entity',
+        productId: 'trigger-product',
+        entityType: 'product',
+      },
+      fallbackEntityId: 'fallback-entity',
+      simulationEntityType: 'product',
+      strictFlowMode: false,
+    });
+
+    expect(resolved.entityId).toBe('trigger-entity');
+    expect(resolved.productId).toBe('trigger-product');
+    expect(resolved.entityType).toBe('product');
+    expect(resolved.value).toBe('trigger-entity');
+  });
 });

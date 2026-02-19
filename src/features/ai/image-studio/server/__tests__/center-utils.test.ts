@@ -79,11 +79,17 @@ describe('center-utils', () => {
       normalizeCenterLayoutConfig({
         paddingPercent: 12,
         paddingXPercent: 18.5,
+        fillMissingCanvasWhite: true,
+        targetCanvasWidth: 1200,
+        targetCanvasHeight: 1800,
       })
     ).toEqual({
       paddingPercent: 12,
       paddingXPercent: 18.5,
       paddingYPercent: 12,
+      fillMissingCanvasWhite: true,
+      targetCanvasWidth: 1200,
+      targetCanvasHeight: 1800,
       whiteThreshold: 16,
       chromaThreshold: 10,
       detection: 'auto',
@@ -184,5 +190,51 @@ describe('center-utils', () => {
     expect(laidOut.targetObjectBounds.left).toBeGreaterThan(0);
     expect(laidOut.targetObjectBounds.top).toBeGreaterThan(0);
     expect(laidOut.scale).toBeGreaterThan(1);
+  });
+
+  it('fills missing area with white when target canvas is larger than source', async () => {
+    const source = await sharp({
+      create: {
+        width: 20,
+        height: 20,
+        channels: 4,
+        background: { r: 255, g: 255, b: 255, alpha: 1 },
+      },
+    })
+      .composite([
+        {
+          input: await sharp({
+            create: {
+              width: 6,
+              height: 6,
+              channels: 4,
+              background: { r: 255, g: 0, b: 0, alpha: 1 },
+            },
+          })
+            .png()
+            .toBuffer(),
+          left: 1,
+          top: 1,
+        },
+      ])
+      .png()
+      .toBuffer();
+
+    const laidOut = await centerAndScaleObjectByLayout(source, {
+      paddingPercent: 10,
+      detection: 'white_bg_first_colored_pixel',
+      fillMissingCanvasWhite: true,
+      targetCanvasWidth: 40,
+      targetCanvasHeight: 30,
+    });
+
+    expect(laidOut.width).toBe(40);
+    expect(laidOut.height).toBe(30);
+    expect(laidOut.targetObjectBounds.left).toBeGreaterThanOrEqual(0);
+    expect(laidOut.targetObjectBounds.top).toBeGreaterThanOrEqual(0);
+
+    const outputMeta = await sharp(laidOut.outputBuffer).metadata();
+    expect(outputMeta.width).toBe(40);
+    expect(outputMeta.height).toBe(30);
   });
 });

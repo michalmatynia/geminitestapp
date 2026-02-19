@@ -1,11 +1,11 @@
-import { type AiNode, type Edge } from '@/features/ai/ai-paths/lib';
-
 import {
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
   DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID,
+  type AiNode,
+  type Edge,
   type CaseResolverEdgeMeta,
   type CaseResolverGraph,
   type CaseResolverNodeMeta,

@@ -37,6 +37,7 @@ import {
   serializeImageStudioProjectSession,
   type ImageStudioProjectSession,
 } from '../utils/project-session';
+import { getImageStudioDocTooltip } from '../utils/studio-docs';
 import { buildImageStudioSequenceSnapshot } from '../utils/studio-settings';
 
 const REVEAL_IN_TREE_EVENT = 'image-studio:reveal-in-tree';
@@ -114,6 +115,18 @@ export function LeftSidebar(): React.JSX.Element {
     return activeProjectName || normalizedProjectId;
   }, [projectId, projectsQuery.data]);
   const visibleProjectNameFieldValue = projectRenameEditing ? projectNameDraft : activeProjectNameFieldValue;
+  const docsTooltips = useMemo(
+    () => ({
+      selectCardFirst: getImageStudioDocTooltip('sidebar_select_card_first'),
+      editCard: getImageStudioDocTooltip('sidebar_edit_card'),
+      duplicateCard: getImageStudioDocTooltip('sidebar_duplicate_card'),
+      loadToCanvas: getImageStudioDocTooltip('sidebar_load_to_canvas'),
+      decanvas: getImageStudioDocTooltip('sidebar_decanvas'),
+      newCard: getImageStudioDocTooltip('sidebar_new_card'),
+      newFolder: getImageStudioDocTooltip('sidebar_new_folder'),
+    }),
+    []
+  );
 
   const cloneSettingValue = <T,>(value: T): T => {
     const seen = new WeakSet<object>();
@@ -549,11 +562,11 @@ export function LeftSidebar(): React.JSX.Element {
             ) : null}
           </div>
           <div className='flex shrink-0 flex-col items-center gap-2 self-start'>
-            <Tooltip content={selectedSlot ? 'Edit card' : 'Select card to edit'}>
+            <Tooltip content={selectedSlot ? docsTooltips.editCard : docsTooltips.selectCardFirst}>
               <Button size='xs'
                 type='button'
                 variant='outline'
-                title='Edit card'
+                title={selectedSlot ? docsTooltips.editCard : docsTooltips.selectCardFirst}
                 onClick={() => setSlotInlineEditOpen(true)}
                 disabled={!selectedSlot}
                 aria-label='Edit card'
@@ -561,11 +574,11 @@ export function LeftSidebar(): React.JSX.Element {
                 <Settings2 className='size-4' />
               </Button>
             </Tooltip>
-            <Tooltip content={selectedSlot ? 'Duplicate card' : 'Select card to duplicate'}>
+            <Tooltip content={selectedSlot ? docsTooltips.duplicateCard : docsTooltips.selectCardFirst}>
               <Button size='xs'
                 type='button'
                 variant='outline'
-                title='Duplicate card'
+                title={selectedSlot ? docsTooltips.duplicateCard : docsTooltips.selectCardFirst}
                 onClick={handleDuplicateSelectedCard}
                 disabled={!selectedSlot || duplicateCardBusy}
                 aria-label='Duplicate card'
@@ -575,11 +588,11 @@ export function LeftSidebar(): React.JSX.Element {
             </Tooltip>
           </div>
           <div className='flex shrink-0 flex-col items-center gap-2 self-start'>
-            <Tooltip content='Load to canvas'>
+            <Tooltip content={docsTooltips.loadToCanvas}>
               <Button size='xs'
                 type='button'
                 variant='outline'
-                title='Load to canvas'
+                title={docsTooltips.loadToCanvas}
                 onClick={handleLoadToCanvas}
                 disabled={loadToCanvasBusy || !canLoadToCanvas}
                 aria-label='Load to canvas'
@@ -587,11 +600,11 @@ export function LeftSidebar(): React.JSX.Element {
                 <ImagePlus className='size-4' />
               </Button>
             </Tooltip>
-            <Tooltip content='De-canvas'>
+            <Tooltip content={docsTooltips.decanvas}>
               <Button size='xs'
                 type='button'
                 variant='outline'
-                title='De-canvas'
+                title={docsTooltips.decanvas}
                 onClick={handleDeCanvas}
                 disabled={!workingSlot}
                 aria-label='De-canvas'
@@ -599,11 +612,11 @@ export function LeftSidebar(): React.JSX.Element {
                 <ImageOff className='size-4' />
               </Button>
             </Tooltip>
-            <Tooltip content='New Card'>
+            <Tooltip content={docsTooltips.newCard}>
               <Button size='xs'
                 type='button'
                 variant='outline'
-                title='New Card'
+                title={docsTooltips.newCard}
                 onClick={handleCreateCardFromLoadedImage}
                 disabled={!projectId}
                 aria-label='New Card'
@@ -611,11 +624,11 @@ export function LeftSidebar(): React.JSX.Element {
                 <Plus className='size-4' />
               </Button>
             </Tooltip>
-            <Tooltip content='New folder'>
+            <Tooltip content={docsTooltips.newFolder}>
               <Button size='xs'
                 type='button'
                 variant='outline'
-                title='New folder'
+                title={docsTooltips.newFolder}
                 onClick={handleCreateFolder}
                 disabled={!projectId || createFolderMutation.isPending}
                 aria-label='New folder'

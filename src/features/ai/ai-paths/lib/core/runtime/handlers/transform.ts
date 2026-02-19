@@ -64,7 +64,7 @@ export const handleParser: NodeHandler = ({
   nodeInputs,
   resolvedEntity,
   fallbackEntityId,
-  strictFlowMode,
+  strictFlowMode = true,
   reportAiPathsError,
 }: NodeHandlerContext): RuntimePortValues => {
   try {

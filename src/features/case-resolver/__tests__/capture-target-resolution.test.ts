@@ -97,6 +97,7 @@ describe('case resolver capture target resolution', () => {
     expect(result.ok).toBe(false);
     expect(result.stage).toBe('mutation');
     expect(result.fileFound).toBe(false);
+    expect(result.resolvedTargetFileId).toBe(documentFile.id);
     expect(workspace.files).toHaveLength(0);
   });
 });

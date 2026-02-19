@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { Suspense, useCallback, useEffect, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import {
@@ -13,6 +13,7 @@ import {
   Tooltip,
   CopyButton,
   LoadingState,
+  Button,
 } from '@/shared/ui';
 
 import { AdminImageStudioPromptsPage } from './AdminImageStudioPromptsPage';
@@ -25,7 +26,7 @@ import { ToggleButtonGroup } from '../components/ToggleButtonGroup';
 import { ImageStudioProvider } from '../context/ImageStudioProvider';
 import { useProjectsActions, useProjectsState } from '../context/ProjectsContext';
 import { useSettingsActions } from '../context/SettingsContext';
-import { useSlotsState } from '../context/SlotsContext';
+import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState, type PreviewCanvasSize } from '../context/UiContext';
 import { getImageStudioDocTooltip } from '../utils/studio-docs';
 
@@ -36,11 +37,19 @@ const PREVIEW_CANVAS_SIZE_OPTIONS: Array<{ value: PreviewCanvasSize; label: stri
   { value: 'xlarge', label: 'XLarge' },
 ];
 
+const normalizeReturnToPath = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  if (!normalized.startsWith('/admin/products')) return null;
+  return normalized;
+};
+
 function AdminImageStudioPageContent(): React.JSX.Element {
   const { handleRefreshSettings } = useSettingsActions();
   const { projectId, projectsQuery } = useProjectsState();
   const { setProjectId } = useProjectsActions();
-  const { selectedSlot } = useSlotsState();
+  const { selectedSlot, slots, slotsQuery } = useSlotsState();
+  const { setSelectedSlotId, setWorkingSlotId } = useSlotsActions();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -49,6 +58,9 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   const { setPreviewCanvasSize } = useUiActions();
   const { setIsMenuHidden } = useAdminLayout();
   const hideTopBar = activeTab === 'studio' && isFocusMode;
+  const requestedSlotId = searchParams?.get('slotId')?.trim() ?? '';
+  const returnToPath = normalizeReturnToPath(searchParams?.get('returnTo'));
+  const slotHydrationKeyRef = useRef<string | null>(null);
   const copyCardNameTooltip = getImageStudioDocTooltip('sidebar_copy_card_name');
   const selectCardFirstTooltip = getImageStudioDocTooltip('sidebar_select_card_first');
 
@@ -74,6 +86,30 @@ function AdminImageStudioPageContent(): React.JSX.Element {
     if (availableProjects.length > 0 && !availableProjects.some((project) => project.id === requestedProjectId)) return;
     setProjectId(requestedProjectId);
   }, [projectId, projectsQuery.data, projectsQuery.isLoading, searchParams, setProjectId]);
+
+  useEffect(() => {
+    if (!projectId || !requestedSlotId) {
+      slotHydrationKeyRef.current = null;
+      return;
+    }
+
+    const hydrationKey = `${projectId}:${requestedSlotId}`;
+    if (slotHydrationKeyRef.current === hydrationKey) return;
+    if (slotsQuery.isLoading || slotsQuery.isFetching || slots.length === 0) return;
+    if (!slots.some((slot) => slot.id === requestedSlotId)) return;
+
+    setSelectedSlotId(requestedSlotId);
+    setWorkingSlotId(requestedSlotId);
+    slotHydrationKeyRef.current = hydrationKey;
+  }, [
+    projectId,
+    requestedSlotId,
+    setSelectedSlotId,
+    setWorkingSlotId,
+    slots,
+    slotsQuery.isFetching,
+    slotsQuery.isLoading,
+  ]);
 
   useEffect(() => {
     setIsMenuHidden(hideTopBar);
@@ -115,6 +151,22 @@ function AdminImageStudioPageContent(): React.JSX.Element {
     router.replace(query ? `${pathname}?${query}` : pathname);
   }, [pathname, router, searchParams, setProjectId]);
 
+  const handleReturnToProductStudio = useCallback((): void => {
+    if (!returnToPath) return;
+
+    const target = new URL(returnToPath, window.location.origin);
+    if (projectId) {
+      target.searchParams.set('studioProjectId', projectId);
+    }
+    const activeSlotId = selectedSlot?.id?.trim() ?? '';
+    if (activeSlotId) {
+      target.searchParams.set('studioVariantSlotId', activeSlotId);
+    } else {
+      target.searchParams.delete('studioVariantSlotId');
+    }
+    router.push(`${target.pathname}${target.search}`);
+  }, [projectId, returnToPath, router, selectedSlot?.id]);
+
   return (
     <div className='mx-auto box-border flex h-[calc((100dvh-4rem)*1.035)] w-full min-h-0 min-w-0 max-w-none flex-col gap-2 overflow-hidden px-0.5 pb-0 pt-2'>
       <ClientOnly fallback={<LoadingState className='flex min-h-0 flex-1' />}>
@@ -134,6 +186,17 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                   <TabsTrigger value='prompts'>Prompts</TabsTrigger>
                   <TabsTrigger value='docs'>Docs</TabsTrigger>
                 </TabsList>
+                {activeTab === 'studio' && returnToPath ? (
+                  <Button
+                    type='button'
+                    size='xs'
+                    variant='outline'
+                    className='h-7'
+                    onClick={handleReturnToProductStudio}
+                  >
+                    Back To Product Studio
+                  </Button>
+                ) : null}
                 <div className='ml-auto flex min-w-0 flex-col items-end gap-1 text-right'>
                   <div className='flex min-w-0 items-center justify-end gap-2'>
                     {activeTab === 'studio' ? (

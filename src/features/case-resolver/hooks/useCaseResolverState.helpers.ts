@@ -466,7 +466,9 @@ export const applyCaseResolverFileMutationAndRebaseDraft = ({
     fileFound = localFileFound;
     changed = localChanged;
     nextFile = localNextFile;
-    resolvedTargetFileId = matchedFileId;
+    if (matchedFileId) {
+      resolvedTargetFileId = matchedFileId;
+    }
 
     if (!localFileFound) return current;
     const activeTargetFileId = matchedFileId ?? fileId;
@@ -513,7 +515,7 @@ export const applyCaseResolverFileMutationAndRebaseDraft = ({
       fileFound: false,
       changed: false,
       nextFile: null,
-      resolvedTargetFileId: null,
+      resolvedTargetFileId,
     };
   }
 

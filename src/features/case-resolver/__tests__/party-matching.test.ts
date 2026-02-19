@@ -163,6 +163,7 @@ describe('case resolver party matching', () => {
         name: 'Poland',
         code: 'PL',
         enabled: true,
+        currencies: [],
         createdAt: NOW,
         updatedAt: NOW,
       },

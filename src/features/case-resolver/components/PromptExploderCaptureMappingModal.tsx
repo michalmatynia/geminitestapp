@@ -38,6 +38,7 @@ type PromptExploderCaptureMappingModalProps = {
     targetFileId: string | null;
     resolvedTargetFileId: string | null;
     workspaceRevision: number;
+    attempts: number;
     at: string;
   } | null;
 };
@@ -147,7 +148,7 @@ export function PromptExploderCaptureMappingModal({
                 {diagnostics.message}
               </div>
               <div className='mt-0.5 text-gray-400'>
-                target: {diagnostics.targetFileId ?? '(none)'} · resolved: {diagnostics.resolvedTargetFileId ?? '(none)'} · rev: {diagnostics.workspaceRevision}
+                target: {diagnostics.targetFileId ?? '(none)'} · resolved: {diagnostics.resolvedTargetFileId ?? '(none)'} · rev: {diagnostics.workspaceRevision} · attempts: {diagnostics.attempts}
               </div>
             </div>
           ) : null}

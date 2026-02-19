@@ -226,7 +226,8 @@ export function useCaseResolverState() {
 
   const [promptExploderPartyProposal, setPromptExploderPartyProposal] = useState<CaseResolverCaptureProposalState | null>(null);
   const [isPromptExploderPartyProposalOpen, setIsPromptExploderPartyProposalOpen] = useState(false);
-  const [isApplyingPromptExploderPartyProposal, setIsApplyingPromptExploderPartyProposal] = useState(false);
+  const [isApplyingPromptExploderPartyProposal, setIsApplyingPromptExploderPartyProposalState] =
+    useState(false);
   const [promptExploderPayloadRefreshVersion, setPromptExploderPayloadRefreshVersion] = useState(0);
   const [promptExploderApplyDiagnostics, setPromptExploderApplyDiagnostics] =
     useState<PromptExploderApplyUiDiagnostics | null>(null);
@@ -261,6 +262,9 @@ export function useCaseResolverState() {
   const requestedWorkspaceRefreshFileIdRef = useRef<string | null>(null);
   const requestedWorkspaceMissingFileIdRef = useRef<string | null>(null);
   const createContextRecoveryInFlightRef = useRef(false);
+  const isApplyingPromptExploderPartyProposalRef = useRef(
+    isApplyingPromptExploderPartyProposal
+  );
   const setRequestedCaseStatusSafe = useCallback(
     (nextStatus: CaseResolverRequestedCaseStatus): void => {
       if (requestedCaseStatusRef.current === nextStatus) return;
@@ -269,10 +273,27 @@ export function useCaseResolverState() {
     },
     []
   );
+  const setIsApplyingPromptExploderPartyProposal = useCallback(
+    (value: boolean | ((current: boolean) => boolean)): void => {
+      setIsApplyingPromptExploderPartyProposalState((current) => {
+        const nextValue =
+          typeof value === 'function'
+            ? (value as (current: boolean) => boolean)(current)
+            : value;
+        isApplyingPromptExploderPartyProposalRef.current = nextValue;
+        return nextValue;
+      });
+    },
+    []
+  );
 
   useEffect(() => {
     requestedCaseStatusRef.current = requestedCaseStatus;
   }, [requestedCaseStatus]);
+
+  useEffect(() => {
+    isApplyingPromptExploderPartyProposalRef.current = isApplyingPromptExploderPartyProposal;
+  }, [isApplyingPromptExploderPartyProposal]);
 
   useEffect(() => {
     workspaceRef.current = workspace;
@@ -435,7 +456,7 @@ export function useCaseResolverState() {
   // Sync with store
   useEffect(() => {
     if (!canHydrateWorkspaceFromStore) return;
-    if (isApplyingPromptExploderPartyProposal) return;
+    if (isApplyingPromptExploderPartyProposalRef.current) return;
     const incomingSerialized = JSON.stringify(parsedWorkspace);
     const incomingRevision = getCaseResolverWorkspaceRevision(parsedWorkspace);
     setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {

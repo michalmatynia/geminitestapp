@@ -67,7 +67,8 @@ try {
 const indexRowsByType = new Map<string, Record<string, unknown>>();
 const duplicateIndexTypes: string[] = [];
 for (const row of parsedIndex) {
-  const nodeType = typeof row?.nodeType === 'string' ? row.nodeType.trim() : '';
+  const rowNodeType = row?.['nodeType'];
+  const nodeType = typeof rowNodeType === 'string' ? rowNodeType.trim() : '';
   if (!nodeType) continue;
   if (indexRowsByType.has(nodeType)) {
     duplicateIndexTypes.push(nodeType);
@@ -123,19 +124,22 @@ for (const nodeType of Array.from(expectedTypes).sort()) {
     continue;
   }
 
+  const declaredNodeTypeRaw = parsedDoc?.['nodeType'];
   const declaredNodeType =
-    typeof parsedDoc.nodeType === 'string' ? parsedDoc.nodeType.trim() : '';
+    typeof declaredNodeTypeRaw === 'string' ? declaredNodeTypeRaw.trim() : '';
   if (declaredNodeType !== nodeType) {
     hashValidationErrors.push(
       `${path.relative(workspaceRoot, filePath)}: nodeType mismatch (expected "${nodeType}", got "${declaredNodeType || 'missing'}").`,
     );
   }
 
+  const nodeHashRaw = parsedDoc?.['nodeHash'];
   const nodeHash =
-    typeof parsedDoc.nodeHash === 'string' ? parsedDoc.nodeHash.trim() : '';
+    typeof nodeHashRaw === 'string' ? nodeHashRaw.trim() : '';
+  const nodeHashAlgorithmRaw = parsedDoc?.['nodeHashAlgorithm'];
   const nodeHashAlgorithm =
-    typeof parsedDoc.nodeHashAlgorithm === 'string'
-      ? parsedDoc.nodeHashAlgorithm.trim()
+    typeof nodeHashAlgorithmRaw === 'string'
+      ? nodeHashAlgorithmRaw.trim()
       : '';
   if (!/^[a-f0-9]{64}$/i.test(nodeHash)) {
     hashValidationErrors.push(
@@ -151,8 +155,8 @@ for (const nodeType of Array.from(expectedTypes).sort()) {
   }
 
   const payloadForHash = { ...parsedDoc };
-  delete payloadForHash.nodeHash;
-  delete payloadForHash.nodeHashAlgorithm;
+  delete payloadForHash['nodeHash'];
+  delete payloadForHash['nodeHashAlgorithm'];
   const computedHash = computeNodeHash(payloadForHash);
   if (computedHash !== nodeHash) {
     hashValidationErrors.push(
@@ -170,10 +174,12 @@ for (const nodeType of Array.from(expectedTypes).sort()) {
   }
 
   const indexRow = indexRowsByType.get(nodeType);
-  const indexHash = typeof indexRow?.nodeHash === 'string' ? indexRow.nodeHash.trim() : '';
+  const indexRowHash = indexRow?.['nodeHash'];
+  const indexHash = typeof indexRowHash === 'string' ? indexRowHash.trim() : '';
+  const indexRowAlgorithm = indexRow?.['nodeHashAlgorithm'];
   const indexAlgorithm =
-    typeof indexRow?.nodeHashAlgorithm === 'string'
-      ? indexRow.nodeHashAlgorithm.trim()
+    typeof indexRowAlgorithm === 'string'
+      ? indexRowAlgorithm.trim()
       : '';
   if (indexHash !== nodeHash) {
     hashValidationErrors.push(

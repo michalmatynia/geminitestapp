@@ -239,16 +239,16 @@ export function useValidatorSettingsController() {
 
       if (editingPattern) {
         await updatePattern.mutateAsync({ id: editingPattern.id, data: payload });
-        toast({ title: 'Pattern updated.', variant: 'default' });
+        toast('Pattern updated.', { variant: 'success' });
       } else {
         await createPattern.mutateAsync(payload as CreateProductValidationPatternDto);
-        toast({ title: 'Pattern created.', variant: 'default' });
-      }      setShowModal(false);
+        toast('Pattern created.', { variant: 'success' });
+      }
+      setShowModal(false);
     } catch (error) {
       logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'savePattern', editingId: editingPattern?.id } });
-      toast({
-        title: error instanceof Error ? error.message : 'Failed to save pattern.',
-        variant: 'destructive',
+      toast(error instanceof Error ? error.message : 'Failed to save pattern.', {
+        variant: 'error',
       });
     }
   };

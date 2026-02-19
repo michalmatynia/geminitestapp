@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueries, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useDraftQueries, draftKeys } from '@/features/drafter/hooks/useDraftQueries';
@@ -63,6 +63,14 @@ import type { ProductListContextType } from '../context/ProductListContext';
 import type { Row } from '@tanstack/react-table';
 
 type RowSelectionState = Record<string, boolean>;
+const PRODUCT_EDITOR_QUERY_KEYS = [
+  'openProductId',
+  'openProductTab',
+  'studioImageSlotIndex',
+  'studioVariantSlotId',
+  'studioProjectId',
+  'studioSourceSlotId',
+] as const;
 
 export function useProductListState(): ProductListContextType & {
   isDebugOpen: boolean;
@@ -75,7 +83,10 @@ export function useProductListState(): ProductListContextType & {
   handleConfirmSingleDelete: () => Promise<void>;
   bulkDeletePending: boolean;
   } {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const openProductIdFromQuery = searchParams.get('openProductId')?.trim() ?? '';
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -90,6 +101,7 @@ export function useProductListState(): ProductListContextType & {
   const [productToDelete, setProductToDelete] = useState<ProductWithImages | null>(null);
   const previousQueuedProductIdsRef = useRef<Set<string> | null>(null);
   const previousListingBadgeStatusesRef = useRef<Map<string, string> | null>(null);
+  const openingProductFromQueryRef = useRef<string | null>(null);
   const jobHighlightTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const queryClient = useQueryClient();
 
@@ -370,6 +382,50 @@ export function useProductListState(): ProductListContextType & {
   }, [queryClient, setActionError, setEditingProduct, toast]);
 
   useEffect(() => {
+    if (!openProductIdFromQuery) {
+      openingProductFromQueryRef.current = null;
+      return;
+    }
+    if (editingProduct?.id === openProductIdFromQuery) return;
+    if (openingProductFromQueryRef.current === openProductIdFromQuery) return;
+    openingProductFromQueryRef.current = openProductIdFromQuery;
+
+    setActionError(null);
+    void queryClient
+      .fetchQuery({
+        queryKey: normalizeQueryKey(getProductDetailQueryKey(openProductIdFromQuery)),
+        queryFn: ({ signal }) =>
+          api.get<ProductWithImages>(`/api/products/${encodeURIComponent(openProductIdFromQuery)}`, {
+            signal,
+            cache: 'no-store',
+            logError: false,
+          }),
+        staleTime: EDIT_PRODUCT_DETAIL_STALE_TIME_MS,
+      })
+      .then((freshProduct: ProductWithImages) => {
+        setEditingProduct(freshProduct);
+      })
+      .catch((error: unknown) => {
+        if (error instanceof ApiError && error.status === 404) {
+          toast('This product no longer exists. Refreshing the list.', { variant: 'warning' });
+          setRefreshTrigger((prev: number) => prev + 1);
+          return;
+        }
+        toast(
+          error instanceof Error ? error.message : 'Failed to open product editor.',
+          { variant: 'error' }
+        );
+      });
+  }, [
+    editingProduct?.id,
+    openProductIdFromQuery,
+    queryClient,
+    setActionError,
+    setEditingProduct,
+    toast,
+  ]);
+
+  useEffect(() => {
     if (!editingProduct?.id) return;
     if (!editingProductDetailQuery.error) return;
     const error = editingProductDetailQuery.error;
@@ -482,7 +538,23 @@ export function useProductListState(): ProductListContextType & {
     setActionError(null);
   }, [setActionError]);
 
-  const handleCloseEdit = useCallback(() => setEditingProduct(null), [setEditingProduct]);
+  const clearProductEditorQueryParams = useCallback((): void => {
+    const params = new URLSearchParams(searchParams.toString());
+    let changed = false;
+    PRODUCT_EDITOR_QUERY_KEYS.forEach((key) => {
+      if (!params.has(key)) return;
+      params.delete(key);
+      changed = true;
+    });
+    if (!changed) return;
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [pathname, router, searchParams]);
+
+  const handleCloseEdit = useCallback(() => {
+    setEditingProduct(null);
+    clearProductEditorQueryParams();
+  }, [clearProductEditorQueryParams, setEditingProduct]);
 
   const handleCloseIntegrations = useCallback(() => {
     setIntegrationsProduct(null);

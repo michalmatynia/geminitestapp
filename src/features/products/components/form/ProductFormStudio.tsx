@@ -1,8 +1,9 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { Check, Loader2, Monitor, RotateCcw, RotateCw, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ExternalLink, Check, Loader2, Monitor, RotateCcw, RotateCw, Trash2 } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { clampSplitZoom } from '@/features/ai/image-studio/components/center-preview/preview-utils';
 import { SplitVariantPreview } from '@/features/ai/image-studio/components/center-preview/SplitVariantPreview';
@@ -94,6 +95,12 @@ type ProductStudioSendResponse = {
   sequencingDiagnostics?: ProductStudioVariantsResponse['sequencingDiagnostics'];
   sequenceStepPlan?: ProductStudioSequenceStepPlanEntry[];
   warnings?: string[];
+};
+
+type ProductStudioLinkResponse = {
+  projectId: string;
+  imageSlotIndex: number;
+  sourceSlot: ImageStudioSlotRecord;
 };
 
 type ProductStudioPreflightResponse = {
@@ -236,6 +243,7 @@ export default function ProductFormStudio(): React.JSX.Element {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
   const settingsStore = useSettingsStore();
   const productImagesExternalBaseUrl =
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
@@ -246,6 +254,7 @@ export default function ProductFormStudio(): React.JSX.Element {
   const [variantsLoading, setVariantsLoading] = useState(false);
   const [studioActionError, setStudioActionError] = useState<string | null>(null);
   const [selectedVariantSlotId, setSelectedVariantSlotId] = useState<string | null>(null);
+  const [openingInImageStudio, setOpeningInImageStudio] = useState(false);
   const [sending, setSending] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [rotatingDirection, setRotatingDirection] = useState<'left' | 'right' | null>(null);
@@ -264,6 +273,11 @@ export default function ProductFormStudio(): React.JSX.Element {
   const [splitVariantView, setSplitVariantView] = useState(false);
   const [leftSplitZoom, setLeftSplitZoom] = useState(SPLIT_ZOOM_RESET);
   const [rightSplitZoom, setRightSplitZoom] = useState(SPLIT_ZOOM_RESET);
+  const hydratedImageSlotKeyRef = useRef<string | null>(null);
+  const hydratedVariantSlotKeyRef = useRef<string | null>(null);
+  const requestedStudioProjectId = searchParams?.get('studioProjectId')?.trim() ?? '';
+  const requestedImageSlotIndex = searchParams?.get('studioImageSlotIndex')?.trim() ?? '';
+  const requestedVariantSlotId = searchParams?.get('studioVariantSlotId')?.trim() ?? '';
 
   const imageSlotPreviews = useMemo((): ProductImageSlotPreview[] => {
     return imageSlots
@@ -299,6 +313,31 @@ export default function ProductFormStudio(): React.JSX.Element {
 
     setSelectedImageIndex(imageSlotPreviews[0]?.index ?? null);
   }, [imageSlotPreviews, selectedImageIndex]);
+
+  useEffect(() => {
+    hydratedImageSlotKeyRef.current = null;
+    hydratedVariantSlotKeyRef.current = null;
+  }, [product?.id]);
+
+  useEffect(() => {
+    if (!requestedStudioProjectId || requestedStudioProjectId === studioProjectId) return;
+    setStudioProjectId(requestedStudioProjectId);
+  }, [requestedStudioProjectId, setStudioProjectId, studioProjectId]);
+
+  useEffect(() => {
+    const normalizedProductId = product?.id?.trim() ?? '';
+    if (!normalizedProductId) return;
+    if (!requestedImageSlotIndex) return;
+
+    const requestedIndex = Number.parseInt(requestedImageSlotIndex, 10);
+    if (!Number.isFinite(requestedIndex)) return;
+    if (!imageSlotPreviews.some((preview) => preview.index === requestedIndex)) return;
+
+    const hydrationKey = `${normalizedProductId}:${requestedIndex}`;
+    if (hydratedImageSlotKeyRef.current === hydrationKey) return;
+    hydratedImageSlotKeyRef.current = hydrationKey;
+    setSelectedImageIndex(requestedIndex);
+  }, [imageSlotPreviews, product?.id, requestedImageSlotIndex]);
 
   useEffect(() => {
     setSingleVariantView('variant');
@@ -352,6 +391,35 @@ export default function ProductFormStudio(): React.JSX.Element {
   useEffect(() => {
     void refreshVariants();
   }, [refreshVariants]);
+
+  useEffect(() => {
+    if (!product?.id || !studioProjectId || selectedImageIndex === null) {
+      return;
+    }
+
+    const refresh = (): void => {
+      void refreshVariants();
+    };
+
+    const intervalId = window.setInterval(refresh, 12_000);
+    const handleFocus = (): void => {
+      refresh();
+    };
+    const handleVisibilityChange = (): void => {
+      if (document.visibilityState === 'visible') {
+        refresh();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [product?.id, refreshVariants, selectedImageIndex, studioProjectId]);
 
   const refreshAudit = useCallback(async (): Promise<void> => {
     if (!product?.id || !studioProjectId || selectedImageIndex === null) {
@@ -494,6 +562,18 @@ export default function ProductFormStudio(): React.JSX.Element {
   }, [imageSlotPreviews, selectedImageIndex]);
 
   const variants = variantsData?.variants ?? [];
+  useEffect(() => {
+    const normalizedProductId = product?.id?.trim() ?? '';
+    if (!normalizedProductId) return;
+    if (!requestedVariantSlotId) return;
+    if (selectedImageIndex === null) return;
+    if (!variants.some((slot) => slot.id === requestedVariantSlotId)) return;
+
+    const hydrationKey = `${normalizedProductId}:${selectedImageIndex}:${requestedVariantSlotId}`;
+    if (hydratedVariantSlotKeyRef.current === hydrationKey) return;
+    hydratedVariantSlotKeyRef.current = hydrationKey;
+    setSelectedVariantSlotId(requestedVariantSlotId);
+  }, [product?.id, requestedVariantSlotId, selectedImageIndex, variants]);
   const activeRunBaselineVariantIdSet = useMemo(
     () => new Set(activeRunBaselineVariantIds),
     [activeRunBaselineVariantIds],
@@ -637,6 +717,56 @@ export default function ProductFormStudio(): React.JSX.Element {
       toast(message, { variant: 'error' });
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleOpenInImageStudio = async (): Promise<void> => {
+    if (!product?.id || !studioProjectId || selectedImageIndex === null) return;
+
+    setOpeningInImageStudio(true);
+    setStudioActionError(null);
+
+    try {
+      const response = await api.post<ProductStudioLinkResponse>(
+        `/api/products/${encodeURIComponent(product.id)}/studio/link`,
+        {
+          imageSlotIndex: selectedImageIndex,
+          projectId: studioProjectId,
+        }
+      );
+      const sourceSlotId = response.sourceSlot?.id?.trim() ?? '';
+      if (!sourceSlotId) {
+        throw new Error('Failed to locate source slot for Image Studio.');
+      }
+
+      await queryClient.invalidateQueries({
+        queryKey: studioKeys.slots(studioProjectId),
+      });
+
+      const currentLocation = new URL(window.location.href);
+      currentLocation.searchParams.set('openProductId', product.id);
+      currentLocation.searchParams.set('openProductTab', 'studio');
+      currentLocation.searchParams.set('studioImageSlotIndex', String(selectedImageIndex));
+      currentLocation.searchParams.set('studioProjectId', studioProjectId);
+      currentLocation.searchParams.set('studioSourceSlotId', sourceSlotId);
+      currentLocation.searchParams.delete('studioVariantSlotId');
+      const returnToPath = `${currentLocation.pathname}${currentLocation.search}`;
+
+      const targetLocation = new URL('/admin/image-studio', window.location.origin);
+      targetLocation.searchParams.set('projectId', response.projectId);
+      targetLocation.searchParams.set('slotId', sourceSlotId);
+      targetLocation.searchParams.set('returnTo', returnToPath);
+
+      window.location.href = `${targetLocation.pathname}${targetLocation.search}`;
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to open Image Studio.';
+      setStudioActionError(message);
+      toast(message, { variant: 'error' });
+    } finally {
+      setOpeningInImageStudio(false);
     }
   };
 
@@ -837,10 +967,34 @@ export default function ProductFormStudio(): React.JSX.Element {
 
           <Button size='xs'
             type='button'
+            variant='outline'
+            onClick={(): void => {
+              void handleOpenInImageStudio();
+            }}
+            disabled={
+              openingInImageStudio ||
+              sending ||
+              accepting ||
+              selectedImageIndex === null ||
+              !selectedSourcePreview
+            }
+            title='Open selected image in Image Studio without running generation'
+          >
+            {openingInImageStudio ? (
+              <Loader2 className='mr-2 size-4 animate-spin' />
+            ) : (
+              <ExternalLink className='mr-2 size-4' />
+            )}
+            {openingInImageStudio ? 'Opening...' : 'Open In Image Studio'}
+          </Button>
+
+          <Button size='xs'
+            type='button'
             onClick={(): void => {
               void handleSendToStudio();
             }}
             disabled={
+              openingInImageStudio ||
               sending ||
               accepting ||
               blockSendForSequenceReadiness ||
@@ -866,7 +1020,7 @@ export default function ProductFormStudio(): React.JSX.Element {
             onClick={(): void => {
               void handleAcceptVariant();
             }}
-            disabled={!selectedVariant || accepting || sending}
+            disabled={!selectedVariant || accepting || sending || openingInImageStudio}
             variant='outline'
             className='border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
           >

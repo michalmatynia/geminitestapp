@@ -6,6 +6,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST as POST_ACCEPT } from '@/app/api/products/[id]/studio/accept/route';
+import { POST as POST_LINK } from '@/app/api/products/[id]/studio/link/route';
 import { GET as GET_PREFLIGHT } from '@/app/api/products/[id]/studio/preflight/route';
 import { GET as GET_STUDIO_CONFIG, PUT as PUT_STUDIO_CONFIG } from '@/app/api/products/[id]/studio/route';
 import { POST as POST_SEND } from '@/app/api/products/[id]/studio/send/route';
@@ -18,6 +19,7 @@ import {
   acceptProductStudioVariant,
   getProductStudioSequencePreflight,
   getProductStudioVariants,
+  linkProductImageToStudio,
   sendProductImageToStudio,
 } from '@/features/products/services/product-studio-service';
 import { productService } from '@/features/products/services/productService';
@@ -57,6 +59,7 @@ vi.mock('@/features/products/services/product-studio-config', () => ({
 
 vi.mock('@/features/products/services/product-studio-service', () => ({
   sendProductImageToStudio: vi.fn(),
+  linkProductImageToStudio: vi.fn(),
   getProductStudioSequencePreflight: vi.fn(),
   getProductStudioVariants: vi.fn(),
   acceptProductStudioVariant: vi.fn(),
@@ -244,6 +247,38 @@ describe('Product Studio API', () => {
     ).rejects.toThrow('Save Defaults');
 
     expect(sendProductImageToStudio).toHaveBeenCalledTimes(1);
+  });
+
+  it('POST /api/products/[id]/studio/link forwards request', async () => {
+    vi.mocked(linkProductImageToStudio).mockResolvedValue({
+      config: {
+        projectId: 'studio-a',
+        sourceSlotByImageIndex: { '0': 'slot-source' },
+        sourceSlotHistoryByImageIndex: {},
+        updatedAt: '2026-02-13T10:00:00.000Z',
+      },
+      projectId: 'studio-a',
+      imageSlotIndex: 0,
+      sourceSlot: {
+        id: 'slot-source',
+      } as any,
+    });
+
+    const response = await POST_LINK(
+      new NextRequest('http://localhost/api/products/prod-1/studio/link', {
+        method: 'POST',
+        body: JSON.stringify({ imageSlotIndex: 0, projectId: 'studio-a' }),
+      }),
+      { params: Promise.resolve({ id: 'prod-1' }) }
+    );
+
+    expect(response.status).toBe(200);
+    expect(linkProductImageToStudio).toHaveBeenCalledWith({
+      productId: 'prod-1',
+      imageSlotIndex: 0,
+      projectId: 'studio-a',
+      rotateBeforeSendDeg: null,
+    });
   });
 
   it('GET /api/products/[id]/studio/variants forwards request', async () => {

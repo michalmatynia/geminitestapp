@@ -173,6 +173,7 @@ type CaseResolverPageViewProps = {
     targetFileId: string | null;
     resolvedTargetFileId: string | null;
     workspaceRevision: number;
+    attempts: number;
     at: string;
   } | null;
 };

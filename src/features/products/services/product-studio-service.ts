@@ -85,6 +85,13 @@ type ProductStudioVariantsResult = {
   variants: ImageStudioSlotRecord[];
 };
 
+export type ProductStudioLinkResult = {
+  config: ProductStudioConfig;
+  projectId: string;
+  imageSlotIndex: number;
+  sourceSlot: ImageStudioSlotRecord;
+};
+
 export type ProductStudioSendResult = {
   config: ProductStudioConfig;
   sequencing: ProductStudioSequencingConfig;
@@ -136,6 +143,17 @@ type ProductStudioSequenceStepPlanEntry = {
   inputSource: 'previous' | 'source';
   resolvedInput: 'previous' | 'source';
   producesOutput: boolean;
+};
+
+type UpsertProductStudioSourceSlotResult = {
+  sourceSlot: ImageStudioSlotRecord;
+  config: ProductStudioConfig;
+  sourceImageSize: {
+    width: number;
+    height: number;
+  } | null;
+  importMs: number;
+  sourceSlotUpsertMs: number;
 };
 
 const MIME_BY_EXTENSION: Record<string, string> = {
@@ -1274,6 +1292,72 @@ const resolveProductAndStudioTarget = async (params: {
   };
 };
 
+const upsertProductStudioSourceSlot = async (params: {
+  product: ProductWithImages;
+  projectId: string;
+  imageSlotIndex: number;
+  sourceImage: ProductImageFileSource;
+  rotateBeforeSendDeg: 90 | null;
+  productFolderSegment: string;
+}): Promise<UpsertProductStudioSourceSlotResult> => {
+  const importStartedAt = Date.now();
+  const imported = await importSourceProductImageToStudio({
+    imageFile: params.sourceImage,
+    imageSlotIndex: params.imageSlotIndex,
+    productId: params.product.id,
+    projectId: params.projectId,
+    rotateBeforeSendDeg: params.rotateBeforeSendDeg,
+    productFolderSegment: params.productFolderSegment,
+  });
+  const importMs = Date.now() - importStartedAt;
+
+  const slotName = `${pickProductName(params.product)} • Slot ${params.imageSlotIndex + 1}`;
+  const folderPath = `products/${params.productFolderSegment}`;
+
+  const sourceSlotUpsertStartedAt = Date.now();
+  const created = await createImageStudioSlots(params.projectId, [
+    {
+      name: slotName,
+      folderPath,
+      imageFileId: imported.id,
+      imageUrl: imported.filepath,
+      imageBase64: null,
+      metadata: buildSourceSlotMetadata({
+        productId: params.product.id,
+        imageSlotIndex: params.imageSlotIndex,
+        sourceImageFileId: params.sourceImage.id,
+        rotateBeforeSendDeg: params.rotateBeforeSendDeg,
+      }),
+    },
+  ]);
+  const sourceSlot = created[0] ?? null;
+
+  if (!sourceSlot) {
+    throw operationFailedError(
+      'Failed to create or update the Studio source card.',
+    );
+  }
+
+  const config = await setProductStudioSourceSlot(
+    params.product.id,
+    params.imageSlotIndex,
+    sourceSlot.id,
+  );
+  const sourceSlotUpsertMs = Date.now() - sourceSlotUpsertStartedAt;
+  const sourceImageSize =
+    imported.width && imported.height
+      ? { width: imported.width, height: imported.height }
+      : null;
+
+  return {
+    sourceSlot,
+    config,
+    sourceImageSize,
+    importMs,
+    sourceSlotUpsertMs,
+  };
+};
+
 export async function getProductStudioVariants(params: {
   productId: string;
   imageSlotIndex: number;
@@ -1343,6 +1427,44 @@ export async function getProductStudioSequencePreflight(params: {
   sequenceGenerationMode?: ProductStudioSequenceGenerationMode | null | undefined;
 }): Promise<ProductStudioSequencePreflightResult> {
   return await resolveProductStudioSequencePreflight(params);
+}
+
+export async function linkProductImageToStudio(params: {
+  productId: string;
+  imageSlotIndex: number;
+  projectId?: string | null | undefined;
+  rotateBeforeSendDeg?: 90 | null | undefined;
+}): Promise<ProductStudioLinkResult> {
+  const resolved = await resolveProductAndStudioTarget(params);
+  const sourceImage = toProductImageFileSource(
+    resolved.product.images[resolved.imageSlotIndex]?.imageFile,
+  );
+  const skuFolderSegment =
+    sanitizeSkuSegment(trimString(resolved.product.sku)) ??
+    sanitizeSkuSegment(trimString(resolved.product.id)) ??
+    resolved.product.id;
+
+  if (!sourceImage) {
+    throw badRequestError(
+      'Selected product image slot has no uploaded source image.',
+    );
+  }
+
+  const sourceSlotResult = await upsertProductStudioSourceSlot({
+    product: resolved.product,
+    projectId: resolved.projectId,
+    imageSlotIndex: resolved.imageSlotIndex,
+    sourceImage,
+    rotateBeforeSendDeg: params.rotateBeforeSendDeg === 90 ? 90 : null,
+    productFolderSegment: skuFolderSegment,
+  });
+
+  return {
+    config: sourceSlotResult.config,
+    projectId: resolved.projectId,
+    imageSlotIndex: resolved.imageSlotIndex,
+    sourceSlot: sourceSlotResult.sourceSlot,
+  };
 }
 
 export async function sendProductImageToStudio(params: {
@@ -1457,54 +1579,20 @@ export async function sendProductImageToStudio(params: {
     });
   }
 
-  const importStartMs = Date.now();
-  const imported = await importSourceProductImageToStudio({
-    imageFile: sourceImage,
-    imageSlotIndex: resolved.imageSlotIndex,
-    productId: resolved.product.id,
+  const folderPath = `products/${skuFolderSegment}`;
+  const sourceSlotResult = await upsertProductStudioSourceSlot({
+    product: resolved.product,
     projectId: resolved.projectId,
+    imageSlotIndex: resolved.imageSlotIndex,
+    sourceImage,
     rotateBeforeSendDeg: params.rotateBeforeSendDeg === 90 ? 90 : null,
     productFolderSegment: skuFolderSegment,
   });
-  importMs = Date.now() - importStartMs;
-
-  const slotName = `${pickProductName(resolved.product)} • Slot ${resolved.imageSlotIndex + 1}`;
-  const folderPath = `products/${skuFolderSegment}`;
-
-  const sourceUpsertStartMs = Date.now();
-  const created = await createImageStudioSlots(resolved.projectId, [
-    {
-      name: slotName,
-      folderPath,
-      imageFileId: imported.id,
-      imageUrl: imported.filepath,
-      imageBase64: null,
-      metadata: buildSourceSlotMetadata({
-        productId: resolved.product.id,
-        imageSlotIndex: resolved.imageSlotIndex,
-        sourceImageFileId: sourceImage.id,
-        rotateBeforeSendDeg: params.rotateBeforeSendDeg === 90 ? 90 : null,
-      }),
-    },
-  ]);
-  const sourceSlot = created[0] ?? null;
-
-  if (!sourceSlot) {
-    throw operationFailedError(
-      'Failed to create or update the Studio source card.',
-    );
-  }
-
-  const config = await setProductStudioSourceSlot(
-    resolved.product.id,
-    resolved.imageSlotIndex,
-    sourceSlot.id,
-  );
-  sourceSlotUpsertMs = Date.now() - sourceUpsertStartMs;
-  const sourceImageSize =
-    imported.width && imported.height
-      ? { width: imported.width, height: imported.height }
-      : null;
+  importMs = sourceSlotResult.importMs;
+  sourceSlotUpsertMs = sourceSlotResult.sourceSlotUpsertMs;
+  const sourceSlot = sourceSlotResult.sourceSlot;
+  const config = sourceSlotResult.config;
+  const sourceImageSize = sourceSlotResult.sourceImageSize;
 
   if (
     routeDecision.executionRoute === 'studio_sequencer' ||
@@ -1676,15 +1764,21 @@ export async function sendProductImageToStudio(params: {
         sequenceStepTypes,
       })
       : generationPrompt;
+  const sourceSlotFilepath =
+    trimString(sourceSlot.imageFile?.filepath) ??
+    trimString(sourceSlot.imageUrl);
+  if (!sourceSlotFilepath) {
+    throw operationFailedError(
+      'Studio source card is missing an image filepath.',
+      { sourceSlotId: sourceSlot.id },
+    );
+  }
 
   const runRequestCandidate: ImageStudioRunRequest = {
     projectId: resolved.projectId,
     asset: {
       id: sourceSlot.id,
-      filepath:
-        trimString(sourceSlot.imageFile?.filepath) ??
-        trimString(sourceSlot.imageUrl) ??
-        imported.filepath,
+      filepath: sourceSlotFilepath,
     },
     prompt: effectivePrompt,
     studioSettings,

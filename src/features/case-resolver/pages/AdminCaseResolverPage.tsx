@@ -87,6 +87,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     targetFileId: string | null;
     resolvedTargetFileId: string | null;
     workspaceRevision: number;
+    attempts: number;
     at: string;
   } | null>(null);
   const captureApplyInFlightRef = React.useRef(false);
@@ -483,6 +484,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             targetFileId: requestedTargetFileId,
             resolvedTargetFileId: null,
             workspaceRevision: precheckRevision,
+            attempts: 1,
             at: new Date().toISOString(),
           });
           logCaseResolverWorkspaceEvent({
@@ -727,75 +729,123 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           shouldPatchAddressee ||
           shouldPatchDocumentDate ||
           hasExplodedCleanup;
+        let captureApplyAttempts = 1;
 
         if (shouldPersistPatch) {
           const now = new Date().toISOString();
-          let mutationResult!: ReturnType<typeof applyCaseResolverFileMutationAndRebaseDraft>;
-          flushSync(() => {
-            mutationResult = applyCaseResolverFileMutationAndRebaseDraft({
-              fileId: targetFileId,
-              updateWorkspace,
-              setEditingDocumentDraft,
-              fallbackFileOnMissing: null,
-              allowFallbackOnMissing: false,
-              precheckWorkspaceFiles: workspaceRef.current.files,
-              source: 'capture_mapping_apply',
-              persistToast: 'Capture mapping applied.',
-              skipNormalization: true,
-              mutate: (file) => {
-                const fileShouldPatchDocumentDate =
-                  acceptedDateValue !== null && file.documentDate !== acceptedDateValue;
-                const fileShouldPersistPatch =
-                  shouldPatchAddresser ||
-                  shouldPatchAddressee ||
-                  fileShouldPatchDocumentDate ||
-                  hasExplodedCleanup;
-                if (!fileShouldPersistPatch) return null;
-                const nextContentVersion = file.documentContentVersion + 1;
-                const nextDocumentHistory = hasExplodedCleanup
-                  ? [
-                    {
-                      id: createId('case-doc-history'),
-                      savedAt: now,
-                      documentContentVersion: file.documentContentVersion,
-                      activeDocumentVersion: file.activeDocumentVersion,
-                      editorType: file.editorType,
-                      documentContent: file.documentContent,
-                      documentContentMarkdown: file.documentContentMarkdown,
-                      documentContentHtml: file.documentContentHtml,
-                      documentContentPlainText: file.documentContentPlainText,
-                    },
-                    ...file.documentHistory,
-                  ].slice(0, 120)
-                  : file.documentHistory;
-                return {
-                  ...(shouldPatchAddresser ? { addresser: rolePatches.addresser ?? null } : {}),
-                  ...(shouldPatchAddressee ? { addressee: rolePatches.addressee ?? null } : {}),
-                  ...(fileShouldPatchDocumentDate ? { documentDate: acceptedDateValue ?? '' } : {}),
-                  ...(hasExplodedCleanup && cleanedExplodedCanonical && cleanedExplodedStored
-                    ? {
-                      explodedDocumentContent: cleanedExplodedStored,
-                      ...(file.activeDocumentVersion === 'exploded'
-                        ? {
-                          editorType: cleanedExplodedCanonical.mode,
-                          documentContentFormatVersion: 1,
-                          documentContent: cleanedExplodedStored,
-                          documentContentMarkdown: cleanedExplodedCanonical.markdown,
-                          documentContentHtml: cleanedExplodedCanonical.html,
-                          documentContentPlainText: cleanedExplodedCanonical.plainText,
-                          documentConversionWarnings: cleanedExplodedCanonical.warnings,
-                          lastContentConversionAt: now,
-                        }
-                        : {}),
-                      documentHistory: nextDocumentHistory,
-                    }
-                    : {}),
-                  documentContentVersion: nextContentVersion,
-                  updatedAt: now,
-                };
-              },
+          const runCaptureMutation = ({
+            mutationTargetFileId,
+            mutationSource,
+            mutationPrecheckFiles,
+          }: {
+            mutationTargetFileId: string;
+            mutationSource: string;
+            mutationPrecheckFiles: typeof workspace.files;
+          }): ReturnType<typeof applyCaseResolverFileMutationAndRebaseDraft> => {
+            let mutationResult!: ReturnType<typeof applyCaseResolverFileMutationAndRebaseDraft>;
+            flushSync(() => {
+              mutationResult = applyCaseResolverFileMutationAndRebaseDraft({
+                fileId: mutationTargetFileId,
+                updateWorkspace,
+                setEditingDocumentDraft,
+                fallbackFileOnMissing: null,
+                allowFallbackOnMissing: false,
+                precheckWorkspaceFiles: mutationPrecheckFiles,
+                source: mutationSource,
+                persistToast: 'Capture mapping applied.',
+                skipNormalization: true,
+                mutate: (file) => {
+                  const fileShouldPatchDocumentDate =
+                    acceptedDateValue !== null && file.documentDate !== acceptedDateValue;
+                  const fileShouldPersistPatch =
+                    shouldPatchAddresser ||
+                    shouldPatchAddressee ||
+                    fileShouldPatchDocumentDate ||
+                    hasExplodedCleanup;
+                  if (!fileShouldPersistPatch) return null;
+                  const nextContentVersion = file.documentContentVersion + 1;
+                  const nextDocumentHistory = hasExplodedCleanup
+                    ? [
+                      {
+                        id: createId('case-doc-history'),
+                        savedAt: now,
+                        documentContentVersion: file.documentContentVersion,
+                        activeDocumentVersion: file.activeDocumentVersion,
+                        editorType: file.editorType,
+                        documentContent: file.documentContent,
+                        documentContentMarkdown: file.documentContentMarkdown,
+                        documentContentHtml: file.documentContentHtml,
+                        documentContentPlainText: file.documentContentPlainText,
+                      },
+                      ...file.documentHistory,
+                    ].slice(0, 120)
+                    : file.documentHistory;
+                  return {
+                    ...(shouldPatchAddresser ? { addresser: rolePatches.addresser ?? null } : {}),
+                    ...(shouldPatchAddressee ? { addressee: rolePatches.addressee ?? null } : {}),
+                    ...(fileShouldPatchDocumentDate ? { documentDate: acceptedDateValue ?? '' } : {}),
+                    ...(hasExplodedCleanup && cleanedExplodedCanonical && cleanedExplodedStored
+                      ? {
+                        explodedDocumentContent: cleanedExplodedStored,
+                        ...(file.activeDocumentVersion === 'exploded'
+                          ? {
+                            editorType: cleanedExplodedCanonical.mode,
+                            documentContentFormatVersion: 1,
+                            documentContent: cleanedExplodedStored,
+                            documentContentMarkdown: cleanedExplodedCanonical.markdown,
+                            documentContentHtml: cleanedExplodedCanonical.html,
+                            documentContentPlainText: cleanedExplodedCanonical.plainText,
+                            documentConversionWarnings: cleanedExplodedCanonical.warnings,
+                            lastContentConversionAt: now,
+                          }
+                          : {}),
+                        documentHistory: nextDocumentHistory,
+                      }
+                      : {}),
+                    documentContentVersion: nextContentVersion,
+                    updatedAt: now,
+                  };
+                },
+              });
             });
+            return mutationResult;
+          };
+
+          let mutationTargetFileId = targetFileId;
+          let mutationResult = runCaptureMutation({
+            mutationTargetFileId,
+            mutationSource: 'capture_mapping_apply',
+            mutationPrecheckFiles: workspaceRef.current.files,
           });
+
+          if (!mutationResult.ok && mutationResult.stage === 'mutation') {
+            const retryWorkspaceSnapshot = workspaceRef.current;
+            const retryTargetResolution = resolveCaptureTargetFile({
+              workspaceFiles: retryWorkspaceSnapshot.files,
+              proposalTargetFileId: mutationTargetFileId,
+              contextFileId: promptExploderPartyProposal?.targetFileId ?? null,
+              editingDraftFileId: editingDocumentDraft?.id ?? null,
+            });
+            if (retryTargetResolution.file) {
+              captureApplyAttempts = 2;
+              mutationTargetFileId = retryTargetResolution.file.id;
+              logCaseResolverWorkspaceEvent({
+                source: 'capture_mapping_apply',
+                action: 'capture_target_missing_mutation_retrying',
+                message: JSON.stringify({
+                  targetFileId,
+                  retryTargetFileId: mutationTargetFileId,
+                  workspaceRevision: getCaseResolverWorkspaceRevision(retryWorkspaceSnapshot),
+                }),
+              });
+              mutationResult = runCaptureMutation({
+                mutationTargetFileId,
+                mutationSource: 'capture_mapping_apply_retry',
+                mutationPrecheckFiles: retryWorkspaceSnapshot.files,
+              });
+            }
+          }
+
           if (!mutationResult.ok) {
             const failureStage = mutationResult.stage ?? 'mutation';
             const workspaceRevision = getCaseResolverWorkspaceRevision(workspaceRef.current);
@@ -810,6 +860,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               targetFileId,
               resolvedTargetFileId: mutationResult.resolvedTargetFileId,
               workspaceRevision,
+              attempts: captureApplyAttempts,
               at: new Date().toISOString(),
             });
             logCaseResolverWorkspaceEvent({
@@ -822,12 +873,17 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                 proposalTargetFileId: promptExploderProposalDraft.targetFileId,
                 mutationResult,
                 workspaceRevision,
+                attempts: captureApplyAttempts,
               }),
             });
             toast(
               failureStage === 'precheck'
                 ? 'Capture mapping failed: target file missing (precheck).'
-                : 'Capture mapping failed: target file missing during apply.',
+                : (
+                  captureApplyAttempts > 1
+                    ? 'Capture mapping failed: target file missing during apply (after retry).'
+                    : 'Capture mapping failed: target file missing during apply.'
+                ),
               {
                 variant: 'warning',
               }
@@ -842,6 +898,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               targetFileId,
               resolvedTargetFileId: mutationResult.resolvedTargetFileId,
               workspaceRevision: getCaseResolverWorkspaceRevision(workspaceRef.current),
+              attempts: captureApplyAttempts,
               at: new Date().toISOString(),
             });
             toast('Capture mapping failed: target file missing during draft rebase.', {
@@ -860,6 +917,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           targetFileId,
           resolvedTargetFileId: targetFileId,
           workspaceRevision: getCaseResolverWorkspaceRevision(workspaceRef.current),
+          attempts: captureApplyAttempts,
           at: new Date().toISOString(),
         });
 

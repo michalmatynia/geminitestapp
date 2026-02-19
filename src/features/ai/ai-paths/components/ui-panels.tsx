@@ -30,6 +30,150 @@ type PathsTabPanelProps = {
   onPathOpen?: ((id: string) => void) | undefined;
 };
 
+type AiPathsNodeDocEntry = (typeof AI_PATHS_NODE_DOCS)[number];
+
+const DOCS_COPY_SYSTEM_OVERVIEW_LINES = [
+  'Graphs run from a Trigger node and propagate data through connected ports.',
+  'Ports are strict and type-safe by name: result -> result, images -> images.',
+  'Multiple wires into the same input are collected as arrays; the runtime resolves the first value for single-input nodes.',
+  'Image data travels as image URLs (not raw files), and the Model node converts URLs to base64 when calling the model.',
+];
+
+const DOCS_COPY_EXECUTION_STATE_LINES = [
+  'Trigger fires the graph evaluation.',
+  'Model, Database, HTTP, Delay run at most once per graph run.',
+  'Runtime outputs are stored per node.',
+  'Path canvas state and palette group collapse state are persisted per-user.',
+];
+
+const DOCS_COPY_KEYBOARD_SHORTCUTS_LINES = [
+  'Use Select tool to draw a selection rectangle.',
+  'Shift/Cmd/Ctrl+click toggles selection. Ctrl/Cmd+A selects all nodes.',
+  'Ctrl/Cmd+C copy, Ctrl/Cmd+X cut, Ctrl/Cmd+V paste, Ctrl/Cmd+D duplicate.',
+];
+
+const DOCS_COPY_PORT_RULES_LINES = [
+  'Ports must match exactly (e.g. result -> result).',
+  'Context Filter accepts context input or can fetch context if left unconnected.',
+  'Viewer is terminal (no outputs).',
+  'Trigger context input only accepts context from Simulation.',
+  'Simulation trigger input only accepts trigger from Trigger.',
+  'Multiple wires into the same input are collected as arrays.',
+  'Gate expects valid from a Validator or Validation Pattern node.',
+];
+
+const DOCS_COPY_TROUBLESHOOTING_LINES = [
+  'No result in Viewer: check port names match (e.g. result -> result).',
+  'Model node does nothing: ensure Prompt output is connected and non-empty.',
+  'Poll node stuck: confirm a jobId is wired in AI Job mode, or query config is correct in Database mode.',
+  'Database update missing entityId: wire Parser.productId or entityId into Database.entityId.',
+  'Images not detected: images must be URL strings.',
+  'Connection rejected: ports must match exactly and node types must be compatible.',
+];
+
+const buildNodeDocClipboardSection = (
+  doc: AiPathsNodeDocEntry,
+  nodeJsonSnippetByType: Record<string, string>,
+): string => {
+  const lines: string[] = [
+    `## Node: ${doc.title} (${doc.type})`,
+    '',
+    `Purpose: ${doc.purpose}`,
+    '',
+    `Inputs: ${doc.inputs.length ? doc.inputs.join(', ') : 'None'}`,
+    `Outputs: ${doc.outputs.length ? doc.outputs.join(', ') : 'None'}`,
+    '',
+    '### Configuration',
+  ];
+  if (doc.config.length === 0) {
+    lines.push('- None documented.');
+  } else {
+    doc.config.forEach((field) => {
+      lines.push(
+        `- ${field.path}: ${field.description}${field.defaultValue !== undefined ? ` (default: ${field.defaultValue})` : ''}`,
+      );
+    });
+  }
+  if (doc.notes?.length) {
+    lines.push('', '### Notes');
+    doc.notes.forEach((note) => {
+      lines.push(`- ${note}`);
+    });
+  }
+  lines.push('', '### JSON Snippet', '```json', nodeJsonSnippetByType[doc.type] ?? '{}', '```');
+  return lines.join('\n');
+};
+
+const buildFullDocumentationClipboardText = (args: {
+  docsOverviewSnippet: string;
+  docsWiringSnippet: string;
+  docsDescriptionSnippet: string;
+  docsJobsSnippet: string;
+  executionControlsText: string[];
+  nodeJsonSnippetByType: Record<string, string>;
+}): string => {
+  const {
+    docsOverviewSnippet,
+    docsWiringSnippet,
+    docsDescriptionSnippet,
+    docsJobsSnippet,
+    executionControlsText,
+    nodeJsonSnippetByType,
+  } = args;
+
+  const sections: string[] = [
+    '# AI Paths Documentation',
+    '',
+    '## How AI Paths Works',
+    '```text',
+    docsOverviewSnippet,
+    '```',
+    '',
+    '## System Overview',
+    ...DOCS_COPY_SYSTEM_OVERVIEW_LINES.map((line) => `- ${line}`),
+    '',
+    '## Execution & State',
+    ...DOCS_COPY_EXECUTION_STATE_LINES.map((line) => `- ${line}`),
+    '',
+    '## Execution Controls',
+    ...executionControlsText.map((line) => `- ${line}`),
+    '',
+    '## Keyboard Shortcuts',
+    ...DOCS_COPY_KEYBOARD_SHORTCUTS_LINES.map((line) => `- ${line}`),
+    '',
+    '## Port Rules',
+    ...DOCS_COPY_PORT_RULES_LINES.map((line) => `- ${line}`),
+    '',
+    '## Quick Wiring',
+    '```text',
+    docsWiringSnippet,
+    '```',
+    '',
+    '## AI Description Wiring',
+    '```text',
+    docsDescriptionSnippet,
+    '```',
+    '',
+    '## AI Job Wiring',
+    '```text',
+    docsJobsSnippet,
+    '```',
+    '',
+    '## Troubleshooting',
+    ...DOCS_COPY_TROUBLESHOOTING_LINES.map((line) => `- ${line}`),
+    '',
+    '# Node Documentation',
+    '',
+  ];
+
+  const nodeSections = AI_PATHS_NODE_DOCS
+    .map((doc) => buildNodeDocClipboardSection(doc, nodeJsonSnippetByType))
+    .join('\n\n');
+  sections.push(nodeSections);
+  sections.push('');
+  return sections.join('\n');
+};
+
 export function PathsTabPanel({
   onPathOpen,
 }: PathsTabPanelProps): React.JSX.Element {
@@ -270,6 +414,25 @@ export function DocsTabPanel(): React.JSX.Element {
     }
   };
 
+  const handleCopyAllDocumentation = async (): Promise<void> => {
+    const fullDocumentation = buildFullDocumentationClipboardText({
+      docsOverviewSnippet: resolvedDocsOverviewSnippet,
+      docsWiringSnippet: resolvedDocsWiringSnippet,
+      docsDescriptionSnippet: resolvedDocsDescriptionSnippet,
+      docsJobsSnippet: resolvedDocsJobsSnippet,
+      executionControlsText,
+      nodeJsonSnippetByType,
+    });
+    try {
+      await navigator.clipboard.writeText(fullDocumentation);
+      toast('Full AI Paths documentation copied (including JSON snippets).', {
+        variant: 'success',
+      });
+    } catch {
+      toast('Failed to copy full AI Paths documentation.', { variant: 'error' });
+    }
+  };
+
   const showHowItWorks = shouldShow(['How AI Paths Works', overviewLines]);
   const showSystemOverview = shouldShow([
     'System Overview',
@@ -374,6 +537,16 @@ export function DocsTabPanel(): React.JSX.Element {
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div className='text-sm text-gray-400'>Search AI Paths documentation</div>
         <div className='flex items-center gap-2'>
+          <Button
+            type='button'
+            className='rounded-md border text-xs text-white hover:bg-muted/60'
+            onClick={() => {
+              void handleCopyAllDocumentation();
+            }}
+            title='Copy all AI Paths docs sections including JSON snippets'
+          >
+            Copy Full Documentation
+          </Button>
           <SearchInput
             value={docsQuery}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDocsQuery(event.target.value)}

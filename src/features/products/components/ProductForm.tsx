@@ -287,8 +287,13 @@ export default function ProductForm({
   }, [searchParams]);
 
   useEffect(() => {
+    const requestedTab = searchParams.get('openProductTab');
+    if (requestedTab && requestedTab.trim().length > 0) {
+      setActiveTab(normalizeProductFormTab(requestedTab));
+      return;
+    }
     setActiveTab(normalizeProductFormTab(draft?.openProductFormTab));
-  }, [draft?.id, draft?.openProductFormTab]);
+  }, [draft?.id, draft?.openProductFormTab, searchParams]);
 
   useEffect(() => {
     if (draft) {

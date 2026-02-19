@@ -3,8 +3,8 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { Prisma } from '@prisma/client';
-import { ObjectId, type Filter } from 'mongodb';
+import { Prisma, type SystemLog } from '@prisma/client';
+import { ObjectId, type Filter, type UpdateFilter, type Document, type OptionalId } from 'mongodb';
 
 import type {
   SystemLogLevelDto as SystemLogLevel,
@@ -468,22 +468,21 @@ export async function listSystemLogs(
         take: pageSize,
       }),
     ]);
-        
-    const logs = (rows as Prisma.SystemLog[]).map(
-      (row: Prisma.SystemLog) =>
+    
+    const logs = (rows).map(
+      (row: SystemLog) =>
         normalizeLogRecord({
           ...row,
           level: row.level as SystemLogLevel,
           category:
-                        typeof row.category === 'string' && row.category.trim().length > 0
-                          ? row.category
-                          : (row.context as Record<string, unknown> | null)?.['category'] as string | undefined ?? null,
+                    typeof row.category === 'string' && row.category.trim().length > 0
+                      ? row.category
+                      : (row.context as Record<string, unknown> | null)?.['category'] as string | undefined ?? null,
           context: (row.context as Record<string, unknown> | null) ?? null,
           createdAt: row.createdAt.toISOString(),
           updatedAt: null,
         }),
-    );
-        
+    );        
     return { logs, total, page, pageSize };
   } catch (error) {
     if (isMissingPrismaTable(error) && process.env['MONGODB_URI']) {

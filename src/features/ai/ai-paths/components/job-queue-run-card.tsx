@@ -426,15 +426,13 @@ export function JobQueueRunCard({
                     <Textarea
                       className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                       readOnly
-                      value={safePrettyJson((detailRun.runtimeState as Record<string, unknown>)?.inputs)}
-                    />
+                                             value={safePrettyJson((detailRun.runtimeState as Record<string, unknown>)?.[ 'inputs' ])}                    />
                   </FormField>
                   <FormField label='Outputs'>
                     <Textarea
                       className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                       readOnly
-                      value={safePrettyJson((detailRun.runtimeState as Record<string, unknown>)?.outputs)}
-                    />
+                                             value={safePrettyJson((detailRun.runtimeState as Record<string, unknown>)?.[ 'outputs' ])}                    />
                   </FormField>
                 </div>
                 <div className='mt-3'>
@@ -442,8 +440,7 @@ export function JobQueueRunCard({
                     <Textarea
                       className='mt-1 min-h-[80px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                       readOnly
-                      value={safePrettyJson((detailRun.runtimeState as Record<string, unknown>)?.hashes)}
-                    />
+                                             value={safePrettyJson((detailRun.runtimeState as Record<string, unknown>)?.[ 'hashes' ])}                    />
                   </FormField>
                 </div>
               </CollapsibleSection>

@@ -1,6 +1,7 @@
 'use client';
 
 import { Copy, GripVertical, Pencil, Plus, Trash2 } from 'lucide-react';
+import React from 'react';
 
 import {
   normalizeProductValidationPatternDenyBehaviorOverride,
@@ -58,8 +59,8 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
     getSequenceGroupId,
     formatReplacementFields,
     openCreate,
-    handleCreateSkuAutoIncrementSequence,
-    handleCreateLatestPriceStockSequence,
+    onCreateSkuAutoIncrementSequence,
+    onCreateLatestPriceStockSequence,
     handleCreateNameLengthMirrorPattern,
     handleCreateNameCategoryMirrorPattern,
     handleCreateNameMirrorPolishSequence,
@@ -72,19 +73,19 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
     setPatternToDelete,
   } = useValidatorSettingsContext();
 
-  const onCreateSkuAutoIncrementSequence = (): void => {
-    void handleCreateSkuAutoIncrementSequence();
+  const handleCreateSkuAutoIncrement = (): void => {
+    void onCreateSkuAutoIncrementSequence();
   };
-  const onCreateLatestPriceStockSequence = (): void => {
-    void handleCreateLatestPriceStockSequence();
+  const handleCreateLatestPriceStock = (): void => {
+    void onCreateLatestPriceStockSequence();
   };
-  const onCreateNameLengthMirrorPattern = (): void => {
+  const handleCreateNameLengthMirror = (): void => {
     void handleCreateNameLengthMirrorPattern();
   };
-  const onCreateNameCategoryMirrorPattern = (): void => {
+  const handleCreateNameCategoryMirror = (): void => {
     void handleCreateNameCategoryMirrorPattern();
   };
-  const onCreateNameMirrorPolishSequence = (): void => {
+  const handleCreateNameMirrorPolish = (): void => {
     void handleCreateNameMirrorPolishSequence();
   };
   const onSaveSequenceGroup = (groupId: string): void => {
@@ -103,7 +104,7 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
     void handleTogglePattern(pattern);
   };
   const onDuplicatePattern = (pattern: ProductValidationPattern): void => {
-    void handleDuplicatePattern(pattern);
+    handleDuplicatePattern(pattern);
   };
   const onEditPattern = (pattern: ProductValidationPattern): void => {
     openEdit(pattern);
@@ -122,7 +123,7 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
         <div className='flex flex-wrap items-center gap-2'>
           <ValidatorDocTooltip docId='validator.patterns.sequence.sku'>
             <Button
-              onClick={onCreateSkuAutoIncrementSequence}
+              onClick={handleCreateSkuAutoIncrement}
               disabled={patternActionsPending}
               variant='outline'
               className='border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/10'
@@ -132,7 +133,7 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
           </ValidatorDocTooltip>
           <ValidatorDocTooltip docId='validator.patterns.sequence.latestPriceStock'>
             <Button
-              onClick={onCreateLatestPriceStockSequence}
+              onClick={handleCreateLatestPriceStock}
               disabled={patternActionsPending}
               variant='outline'
               className='border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
@@ -142,7 +143,7 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
           </ValidatorDocTooltip>
           <ValidatorDocTooltip docId='validator.patterns.sequence.nameDimensions'>
             <Button
-              onClick={onCreateNameLengthMirrorPattern}
+              onClick={handleCreateNameLengthMirror}
               disabled={patternActionsPending}
               variant='outline'
               className='border-teal-500/40 text-teal-200 hover:bg-teal-500/10'
@@ -152,7 +153,7 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
           </ValidatorDocTooltip>
           <ValidatorDocTooltip docId='validator.patterns.sequence.nameCategory'>
             <Button
-              onClick={onCreateNameCategoryMirrorPattern}
+              onClick={handleCreateNameCategoryMirror}
               disabled={patternActionsPending}
               variant='outline'
               className='border-lime-500/40 text-lime-200 hover:bg-lime-500/10'
@@ -162,7 +163,7 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
           </ValidatorDocTooltip>
           <ValidatorDocTooltip docId='validator.patterns.sequence.nameMirrorPl'>
             <Button
-              onClick={onCreateNameMirrorPolishSequence}
+              onClick={handleCreateNameMirrorPolish}
               disabled={patternActionsPending}
               variant='outline'
               className='border-indigo-500/40 text-indigo-200 hover:bg-indigo-500/10'
@@ -171,7 +172,7 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
             </Button>
           </ValidatorDocTooltip>
           <ValidatorDocTooltip docId='validator.patterns.add'>
-            <Button onClick={openCreate} variant='default'>
+            <Button onClick={() => openCreate()} variant='default'>
               <Plus className='mr-2 size-4' />
               Add Pattern
             </Button>
@@ -189,7 +190,7 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
             title='No validator patterns'
             description='Create your first regex rule to validate product names, descriptions, and SKU.'
             action={
-              <Button onClick={openCreate} variant='outline'>
+              <Button onClick={() => openCreate()} variant='outline'>
                 <Plus className='mr-2 size-4' />
                 Create Pattern
               </Button>

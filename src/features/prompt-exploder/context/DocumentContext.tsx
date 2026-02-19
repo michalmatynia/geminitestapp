@@ -435,7 +435,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
       });
       if (transferPayload.usedFallback) {
         toast(
-          'Rules-only extraction did not find captures. Applied heuristics fallback for this transfer.',
+          'Rules-only extraction had missing capture fields. Applied heuristics fallback for this transfer.',
           { variant: 'warning' }
         );
       }
@@ -560,6 +560,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
         payload.source ?? '',
         payload.target ?? '',
         payload.caseResolverContext?.fileId ?? '',
+        String(payload.prompt.length),
       ].join('|')
       : null;
     if (

@@ -16,7 +16,7 @@ export type RunDetail = {
 export const getLatestEventTimestamp = (events: AiPathRunEventRecord[]): string | null => {
   let max = 0;
   events.forEach((event: AiPathRunEventRecord) => {
-    const time = new Date(event.createdAt).getTime();
+    const time = new Date(event.createdAt || 0).getTime();
     if (Number.isFinite(time) && time > max) {
       max = time;
     }

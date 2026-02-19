@@ -361,15 +361,15 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
           { upsert: true, returnDocument: 'after' }
         );
       if (!res) throw new Error('Failed to upsert integration');
-      return toIntegrationRecord(res as WithId<IntegrationDocument>);
+      return toIntegrationRecord(res as any);
     },
 
     async getIntegrationById(id: string): Promise<IntegrationRecord | null> {
       const db = await getMongoDb();
       const doc = await db
         .collection<IntegrationDocument>(INTEGRATION_COLLECTION)
-        .findOne({ _id: toMongoDocumentId(id) });
-      return doc ? toIntegrationRecord(doc as WithId<IntegrationDocument>) : null;
+        .findOne({ _id: toMongoDocumentId(id) as any });
+      return doc ? toIntegrationRecord(doc as any) : null;
     },
 
     async listConnections(
@@ -383,7 +383,7 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
         .find({ integrationId })
         .sort({ name: 1 })
         .toArray();
-      return docs.map(doc => toConnectionRecord(doc as WithId<IntegrationConnectionDocument>));
+      return docs.map(doc => toConnectionRecord(doc));
     },
 
     async getConnectionById(
@@ -394,8 +394,8 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
         .collection<IntegrationConnectionDocument>(
           INTEGRATION_CONNECTION_COLLECTION
         )
-        .findOne({ _id: toMongoDocumentId(id) });
-      return doc ? toConnectionRecord(doc as WithId<IntegrationConnectionDocument>) : null;
+        .findOne({ _id: toMongoDocumentId(id) as any });
+      return doc ? toConnectionRecord(doc as any) : null;
     },
 
     async getConnectionByIdAndIntegration(
@@ -407,8 +407,8 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
         .collection<IntegrationConnectionDocument>(
           INTEGRATION_CONNECTION_COLLECTION
         )
-        .findOne({ _id: toMongoDocumentId(id), integrationId });
-      return doc ? toConnectionRecord(doc as WithId<IntegrationConnectionDocument>) : null;
+        .findOne({ _id: toMongoDocumentId(id) as any, integrationId });
+      return doc ? toConnectionRecord(doc as any) : null;
     },
 
     async createConnection(
@@ -431,7 +431,7 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
           INTEGRATION_CONNECTION_COLLECTION
         )
         .insertOne(doc);
-      return toConnectionRecord({ ...doc, _id: res.insertedId } as WithId<IntegrationConnectionDocument>);
+      return toConnectionRecord({ ...doc, _id: res.insertedId } as any);
     },
 
     async updateConnection(
@@ -458,7 +458,7 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
           { returnDocument: 'after' }
         );
       if (!res) throw new Error('Connection not found');
-      return toConnectionRecord(res as WithId<IntegrationConnectionDocument>);
+      return toConnectionRecord(res);
     },
 
     async deleteConnection(id: string): Promise<void> {
@@ -467,7 +467,7 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
         .collection<IntegrationConnectionDocument>(
           INTEGRATION_CONNECTION_COLLECTION
         )
-        .deleteOne({ _id: toMongoDocumentId(id) });
+        .deleteOne({ _id: toMongoDocumentId(id) as any });
     },
   };
 }

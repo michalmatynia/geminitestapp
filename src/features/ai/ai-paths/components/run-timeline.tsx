@@ -191,7 +191,7 @@ export function RunTimeline({
   const sortedEvents = React.useMemo(
     (): AiPathRunEventRecord[] =>
       [...events].sort(
-        (a: AiPathRunEventRecord, b: AiPathRunEventRecord): number => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        (a: AiPathRunEventRecord, b: AiPathRunEventRecord): number => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
       ),
     [events]
   );
@@ -641,7 +641,7 @@ export function RunTimeline({
                   return (
                     <div key={event.id} className='p-3'>
                       <div className='flex flex-wrap items-center gap-2 text-xs text-gray-400'>
-                        <span>{new Date(event.createdAt).toLocaleString()}</span>
+                        <span>{event.createdAt ? new Date(event.createdAt).toLocaleString() : '-'}</span>
                         <StatusBadge
                           status={event.level}
                           variant={levelToVariant(event.level)}

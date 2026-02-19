@@ -313,17 +313,17 @@ export const buildToolTimeline = (
       source: 'audit' as const,
       level: null,
       message: audit.message,
-      createdAt: audit.createdAt,
+      createdAt: audit.createdAt || new Date().toISOString(),
     }));
   const logEntries: TimelineEntry[] = logs.map((log: AgentBrowserLog): TimelineEntry => ({
     id: `browser-${log.id}`,
     source: 'browser' as const,
     level: log.level,
     message: log.message,
-    createdAt: log.createdAt,
+    createdAt: log.createdAt || new Date().toISOString(),
   }));
   return [...auditEntries, ...logEntries].sort(
-    (a: TimelineEntry, b: TimelineEntry): number => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    (a: TimelineEntry, b: TimelineEntry): number => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
   );
 };
 

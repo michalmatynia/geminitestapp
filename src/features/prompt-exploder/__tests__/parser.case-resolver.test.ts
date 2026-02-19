@@ -172,6 +172,45 @@ describe('case resolver prompt exploder segmentation', () => {
     expect(subjectSegment?.title).toBe('');
   });
 
+  it('keeps placeholder place/date heading title empty for "city, dnia [DD.MM.YYYY]" format', () => {
+    const prompt = [
+      '<p>Szczecin, dnia [DD.MM.2026]</p>',
+      '<p>Michał Matynia</p>',
+      '<p>Fioletowa 71/2</p>',
+      '<p>70-781 Szczecin</p>',
+      '<p>Polska</p>',
+      '<p>Inspektorat ZUS w Gryficach</p>',
+      '<p>Dąbskiego 5</p>',
+      '<p>72-300 Gryfice</p>',
+      '<p>Dotyczy: postępowanie administracyjne ZUS O/Szczecin nr 390000/71/RKS3/2026/282</p>',
+    ].join('');
+
+    const rules = getPromptExploderScopedRules(
+      defaultPromptEngineSettings,
+      'case-resolver-prompt-exploder'
+    );
+    const document = explodePromptText({
+      prompt,
+      validationRules: rules,
+      validationScope: 'case-resolver-prompt-exploder',
+    });
+
+    const placeDateSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes('Szczecin, dnia [DD.MM.2026]')
+    );
+    const addresserSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes('Michał Matynia')
+    );
+
+    expect(placeDateSegment).toBeDefined();
+    expect(addresserSegment).toBeDefined();
+    expect(placeDateSegment?.id).not.toBe(addresserSegment?.id);
+    expect(placeDateSegment?.matchedPatternLabels).toContain(
+      'Case Resolver Heading: Place + Date'
+    );
+    expect(placeDateSegment?.title).toBe('');
+  });
+
   it('splits Dotyczy subheading into its own segment and keeps the title empty', () => {
     const prompt = [
       '<p><strong>Wniosek o umorzenie zadłużenia</strong></p>',

@@ -9,6 +9,7 @@ import type { CustomCssAiConfig } from '@/features/cms/types/custom-css-ai';
 import { DEFAULT_CUSTOM_CSS_AI_CONFIG } from '@/features/cms/types/custom-css-ai';
 import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
 import type { GsapAnimationConfig } from '@/features/gsap';
+import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
 import { logClientError } from '@/features/observability';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -177,7 +178,8 @@ export function ComponentSettingsPanel(): React.ReactNode {
 
   const handleRemoveRow = useCallback(() => isRowBlock && selectedParentSection && selectedBlock && dispatch({ type: 'REMOVE_GRID_ROW', sectionId: selectedParentSection.id, rowId: selectedBlock.id }), [isRowBlock, selectedParentSection, selectedBlock, dispatch]);
 
-
+  const currentAnimationConfig = useMemo(() => (selectedSection?.settings['gsapAnimation'] ?? selectedColumn?.settings['gsapAnimation'] ?? selectedBlock?.settings['gsapAnimation'] ?? DEFAULT_ANIMATION_CONFIG) as GsapAnimationConfig, [selectedSection, selectedColumn, selectedBlock]);
+  const currentCssAnimationConfig = useMemo(() => (selectedSection?.settings['cssAnimation'] ?? selectedColumn?.settings['cssAnimation'] ?? selectedBlock?.settings['cssAnimation']) as CssAnimationConfig | undefined, [selectedSection, selectedColumn, selectedBlock]);
 
   const handleAnimationChange = useCallback((updates: Partial<GsapAnimationConfig>): void => {
     const config = { ...currentAnimationConfig, ...updates };
@@ -237,9 +239,6 @@ export function ComponentSettingsPanel(): React.ReactNode {
     const next = !state.inspectorEnabled; dispatch({ type: 'TOGGLE_INSPECTOR' });
     if (next) setActiveTab('connections'); else if (activeTab === 'connections') setActiveTab('settings');
   }, [activeTab, dispatch, state.inspectorEnabled]);
-
-  const currentAnimationConfig = useMemo(() => (selectedSection?.settings['gsapAnimation'] ?? selectedColumn?.settings['gsapAnimation'] ?? selectedBlock?.settings['gsapAnimation']) as GsapAnimationConfig | undefined, [selectedSection, selectedColumn, selectedBlock]);
-  const currentCssAnimationConfig = useMemo(() => (selectedSection?.settings['cssAnimation'] ?? selectedColumn?.settings['cssAnimation'] ?? selectedBlock?.settings['cssAnimation']) as CssAnimationConfig | undefined, [selectedSection, selectedColumn, selectedBlock]);
 
   const selectedLabel = useMemo(() => selectedSection ? (sectionDef?.label ?? selectedSection.type) : (selectedColumn ? 'Column' : (selectedBlock ? (blockDef?.label ?? selectedBlock.type) : '')), [selectedSection, selectedColumn, selectedBlock, sectionDef, blockDef]);
   const selectedTitle = useMemo(() => selectedSection ? `Section: ${selectedLabel}` : (selectedBlock ? `Block: ${selectedLabel}` : (selectedColumn ? 'Column' : 'Settings')), [selectedSection, selectedBlock, selectedColumn, selectedLabel]);

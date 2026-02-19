@@ -2,7 +2,10 @@
 
 import React from 'react';
 
-import type { AiPathRunRecord } from '@/features/ai/ai-paths/lib';
+import type { 
+  AiPathRunRecord,
+  RuntimeHistoryEntry,
+} from '@/features/ai/ai-paths/lib';
 import {
   Button,
   Label,
@@ -158,7 +161,7 @@ export function RunHistoryPanel(): React.JSX.Element {
                       </div>
                     ) : null}
                     <div className='mt-1 text-[11px] text-gray-400'>
-                      {new Date(run.createdAt).toLocaleString()}
+                      {run.createdAt ? new Date(run.createdAt).toLocaleString() : '-'}
                     </div>
                     {typeof run.retryCount === 'number' &&
                       typeof run.maxAttempts === 'number' && (

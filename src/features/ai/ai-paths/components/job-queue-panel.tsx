@@ -8,6 +8,7 @@ import { runsApi } from '@/features/ai/ai-paths/lib';
 import type {
   AiPathRunEventRecord,
   AiPathRunRecord,
+  RuntimeHistoryEntry,
 } from '@/features/ai/ai-paths/lib';
 import { fetchAiPathsSettingsCached } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { createDeleteMutationV2, createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -669,8 +670,8 @@ export function JobQueuePanel({
             }
           });
           merged.sort((a: AiPathRunEventRecord, b: AiPathRunEventRecord) => {
-            const aTime = new Date(a.createdAt).getTime();
-            const bTime = new Date(b.createdAt).getTime();
+            const aTime = new Date(a.createdAt || 0).getTime();
+            const bTime = new Date(b.createdAt || 0).getTime();
             return aTime - bTime;
           });
           return { ...prev, [runId]: { ...current, events: merged } };

@@ -503,7 +503,7 @@ export function usePromptExploderState() {
       });
       if (transferPayload.usedFallback) {
         toast(
-          'Rules-only extraction did not find captures. Applied heuristics fallback for this transfer.',
+          'Rules-only extraction had missing capture fields. Applied heuristics fallback for this transfer.',
           { variant: 'warning' }
         );
       }

@@ -1,5 +1,5 @@
 import { DEFAULT_AGENT_SETTINGS } from '@/features/ai/agentcreator';
-import type { ChatbotSettingsDto as ChatbotSettingsPayload } from '@/shared/contracts/chatbot';
+import type { CreateChatbotSettingsDto as ChatbotSettingsPayload } from '@/shared/contracts/chatbot';
 
 export const CHATBOT_SETTINGS_KEY = 'default';
 export const CHATBOT_SETTINGS_STORAGE_KEY = 'chatbot.settings.v1';

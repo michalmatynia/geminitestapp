@@ -7,7 +7,7 @@ import type { VectorShape } from '@/shared/ui';
 
 import type { VectorOverlayResult } from '../../../hooks/usePageBuilderContext';
 
-type OpenVectorOverlay = (options: {
+export type OpenVectorOverlay = (options: {
   title: string;
   description: string;
   initialShapes: VectorShape[];

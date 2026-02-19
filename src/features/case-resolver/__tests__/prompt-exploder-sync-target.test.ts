@@ -282,6 +282,51 @@ describe('case resolver prompt exploder manual apply flow', () => {
     expect(updatedDocument?.documentContentPlainText).toContain('Context fallback payload');
   });
 
+  it('applies payload by recovering the target from the open editing draft when workspace snapshot misses it', () => {
+    const documentFile = createCaseResolverFile({
+      id: 'doc-recover',
+      fileType: 'document',
+      name: 'Recovered Document',
+      documentContent: 'Original draft body',
+    });
+    const editingDocumentDraft: CaseResolverFileEditDraft = {
+      ...documentFile,
+      baseDocumentContentVersion: documentFile.documentContentVersion,
+    };
+    let workspace: CaseResolverWorkspace = {
+      ...parseCaseResolverWorkspace(null),
+      files: [],
+      activeFileId: null,
+    };
+    const updateWorkspace = (
+      updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace
+    ): void => {
+      workspace = updater(workspace);
+    };
+    const setEditingDocumentDraft: Dispatch<SetStateAction<CaseResolverFileEditDraft | null>> = () => {};
+
+    savePromptExploderApplyPromptForCaseResolver('Recovered payload body', {
+      fileId: 'doc-recover',
+      fileName: 'Recovered Document',
+    });
+    const result = applyPendingPromptExploderPayloadToCaseResolver({
+      targetFileId: 'doc-recover',
+      editingDocumentDraft,
+      workspaceFiles: workspace.files,
+      updateWorkspace,
+      setEditingDocumentDraft,
+      filemakerDatabase: parseFilemakerDatabase(null),
+      caseResolverCaptureSettings: parseCaseResolverCaptureSettings(null),
+    });
+
+    expect(result.applied).toBe(true);
+    if (result.applied) {
+      expect(result.diagnostics.resolutionStrategy).toBe('fallback_id');
+    }
+    const updatedDocument = workspace.files.find((file) => file.id === 'doc-recover');
+    expect(updatedDocument?.documentContentPlainText).toContain('Recovered payload body');
+  });
+
   it('accepts target file names when selector token is not a file id', () => {
     const harness = createWorkspaceHarness();
     savePromptExploderApplyPromptForCaseResolver('Name fallback payload', null);

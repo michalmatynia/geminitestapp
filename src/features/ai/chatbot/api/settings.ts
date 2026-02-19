@@ -1,4 +1,7 @@
-import type { ChatbotSettingsDto as ChatbotSettingsPayload } from '@/shared/contracts/chatbot';
+import type { 
+  ChatbotSettingsDto,
+  CreateChatbotSettingsDto as ChatbotSettingsPayload 
+} from '@/shared/contracts/chatbot';
 
 import { fetchWithTimeout, readErrorResponse, requestJson } from './client';
 
@@ -19,7 +22,7 @@ export const saveChatbotSettings = async (
   key: string,
   settings: ChatbotSettingsPayload,
   timeoutMs: number = 5000
-): Promise<{ settings?: { settings?: ChatbotSettingsPayload } }> => {
+): Promise<{ settings?: { settings?: ChatbotSettingsDto } }> => {
   const res = await fetchWithTimeout(
     '/api/chatbot/settings',
     {
@@ -33,7 +36,7 @@ export const saveChatbotSettings = async (
     const error = await readErrorResponse(res);
     throw new Error(error.message);
   }
-  return (await res.json()) as { settings?: { settings?: ChatbotSettingsPayload } };
+  return (await res.json()) as { settings?: { settings?: ChatbotSettingsDto } };
 };
 
 export const fetchSettings = async (): Promise<SettingRecord[]> =>

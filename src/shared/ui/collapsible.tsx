@@ -1,10 +1,7 @@
 'use client';
 
 import * as CollapsiblePrimitive from '@radix-ui/react-collapsible';
-import { ChevronDown } from 'lucide-react';
 import * as React from 'react';
-
-import { cn } from '@/shared/utils';
 
 const Collapsible = CollapsiblePrimitive.Root;
 

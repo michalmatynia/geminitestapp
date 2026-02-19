@@ -123,7 +123,7 @@ export function RunDetailDialog({
             </div>
             <div>
               <span className='text-[10px] uppercase text-gray-500'>Created</span>
-              <div>{new Date(runDetail.run.createdAt).toLocaleString()}</div>
+              <div>{runDetail.run.createdAt ? new Date(runDetail.run.createdAt).toLocaleString() : '-'}</div>
             </div>
             <div>
               <span className='text-[10px] uppercase text-gray-500'>Started</span>

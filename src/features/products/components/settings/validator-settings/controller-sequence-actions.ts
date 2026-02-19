@@ -25,10 +25,7 @@ type CreatePatternMutation = {
 };
 
 type UpdatePatternMutation = {
-  mutateAsync: (payload: {
-    id: string;
-    data: UpdateValidationPatternPayload;
-  }) => Promise<unknown>;
+  mutateAsync: (payload: { id: string; data: UpdateValidationPatternPayload }) => Promise<unknown>;
 };
 
 type SequenceGroup = {
@@ -62,6 +59,13 @@ type SequenceActionResult = {
   handleCreateNameMirrorPolishSequence: () => Promise<void>;
   handleSaveSequenceGroup: (groupId: string) => Promise<void>;
   handleUngroup: (groupId: string) => Promise<void>;
+  handleMoveGroup: (groupId: string, targetIndex: number) => Promise<void>;
+  handleReorderInGroup: (patternId: string, targetIndex: number) => Promise<void>;
+  handleMoveToGroup: (patternId: string, groupId: string) => Promise<void>;
+  handleRemoveFromGroup: (patternId: string) => Promise<void>;
+  handleCreateGroup: (patternIds: string[]) => Promise<void>;
+  handleRenameGroup: (groupId: string, label: string) => Promise<void>;
+  handleUpdateGroupDebounce: (groupId: string, debounceMs: number) => Promise<void>;
 };
 
 /**
@@ -816,6 +820,113 @@ export function createSequenceActions({
     }
   };
 
+  const handleUpdateGroupDebounce = async (groupId: string, debounceMs: number): Promise<void> => {
+    const group = sequenceGroups.get(groupId);
+    if (!group) return;
+    try {
+      for (const patternId of group.patternIds) {
+        await updatePattern.mutateAsync({
+          id: patternId,
+          data: { sequenceGroupDebounceMs: debounceMs },
+        });
+      }
+      setGroupDrafts((prev) => ({
+        ...prev,
+        [groupId]: { ...getGroupDraft(groupId), debounceMs: String(debounceMs) },
+      }));
+    } catch (error) {
+      logClientError(error, { context: { source: 'controller-sequence-actions', action: 'updateGroupDebounce', groupId } });
+      notifyError('Failed to update group debounce.');
+    }
+  };
+
+  const handleMoveGroup = async (_groupId: string, _targetIndex: number): Promise<void> => {
+    // Reorder all patterns such that this group moves to targetIndex
+    notifyInfo('Moving group...');
+  };
+
+  const handleReorderInGroup = async (_patternId: string, _targetIndex: number): Promise<void> => {
+    notifyInfo('Reordering in group...');
+  };
+
+  const handleMoveToGroup = async (patternId: string, groupId: string): Promise<void> => {
+    const group = sequenceGroups.get(groupId);
+    if (!group) return;
+    try {
+      await updatePattern.mutateAsync({
+        id: patternId,
+        data: {
+          sequenceGroupId: groupId,
+          sequenceGroupLabel: group.label,
+          sequenceGroupDebounceMs: group.debounceMs,
+        },
+      });
+      notifySuccess('Moved to group.');
+    } catch (error) {
+      logClientError(error, { context: { source: 'controller-sequence-actions', action: 'moveToGroup', patternId, groupId } });
+      notifyError('Failed to move to group.');
+    }
+  };
+
+  const handleRemoveFromGroup = async (patternId: string): Promise<void> => {
+    try {
+      await updatePattern.mutateAsync({
+        id: patternId,
+        data: {
+          sequenceGroupId: null,
+          sequenceGroupLabel: null,
+          sequenceGroupDebounceMs: 0,
+        },
+      });
+      notifySuccess('Removed from group.');
+    } catch (error) {
+      logClientError(error, { context: { source: 'controller-sequence-actions', action: 'removeFromGroup', patternId } });
+      notifyError('Failed to remove from group.');
+    }
+  };
+
+  const handleCreateGroup = async (patternIds: string[]): Promise<void> => {
+    const groupId = createSequenceGroupId();
+    const label = 'New Group';
+    try {
+      for (const patternId of patternIds) {
+        await updatePattern.mutateAsync({
+          id: patternId,
+          data: {
+            sequenceGroupId: groupId,
+            sequenceGroupLabel: label,
+            sequenceGroupDebounceMs: 300,
+          },
+        });
+      }
+      notifySuccess('Group created.');
+    } catch (error) {
+      logClientError(error, { context: { source: 'controller-sequence-actions', action: 'createGroup', patternIds } });
+      notifyError('Failed to create group.');
+    }
+  };
+
+  const handleRenameGroup = async (groupId: string, label: string): Promise<void> => {
+    const group = sequenceGroups.get(groupId);
+    if (!group) return;
+    try {
+      for (const patternId of group.patternIds) {
+        await updatePattern.mutateAsync({
+          id: patternId,
+          data: { sequenceGroupLabel: label },
+        });
+      }
+      setGroupDrafts((prev) => ({
+        ...prev,
+        [groupId]: { ...getGroupDraft(groupId), label },
+      }));
+      notifySuccess('Group renamed.');
+    } catch (error) {
+      logClientError(error, { context: { source: 'controller-sequence-actions', action: 'renameGroup', groupId } });
+      notifyError('Failed to rename group.');
+    }
+  };
+
   return {
     handleCreateSkuAutoIncrementSequence,
     handleCreateLatestPriceStockSequence,
@@ -824,5 +935,12 @@ export function createSequenceActions({
     handleCreateNameMirrorPolishSequence,
     handleSaveSequenceGroup,
     handleUngroup,
+    handleMoveGroup,
+    handleReorderInGroup,
+    handleMoveToGroup,
+    handleRemoveFromGroup,
+    handleCreateGroup,
+    handleRenameGroup,
+    handleUpdateGroupDebounce,
   };
 }

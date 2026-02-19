@@ -363,7 +363,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     description:
       'Detects a location-and-date heading line used in legal letters (for example: "Szczecin 25.01.2026").',
     pattern:
-      '^\\s*[\\p{L}][\\p{L}\\s\\-.\'’]{1,60}?(?:,)?\\s+\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}(?:\\s*r\\.?\\s*)?$',
+      '^\\s*[\\p{L}][\\p{L}\\s\\-.\'’]{1,60}?(?:,)?(?:\\s+dnia)?\\s+(?:\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}|\\[(?:\\d{1,2}|DD)[./-](?:\\d{1,2}|MM)[./-](?:\\d{2,4}|YYYY|RRRR)\\])(?:\\s*r\\.?\\s*)?$',
     flags: 'imu',
     message: 'Place and date heading detected.',
     sequence: 35,

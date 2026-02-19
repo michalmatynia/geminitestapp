@@ -233,6 +233,16 @@ const findWorkspaceFileByNormalizedId = (
   );
 };
 
+const normalizedIdsMatch = (
+  left: string | null | undefined,
+  right: string | null | undefined
+): boolean => {
+  const normalizedLeft = normalizeCandidateId(left);
+  const normalizedRight = normalizeCandidateId(right);
+  if (!normalizedLeft || !normalizedRight) return false;
+  return normalizedLeft === normalizedRight;
+};
+
 const normalizePayloadCreatedAt = (value: string | null | undefined): string =>
   normalizeCandidateId(value) ?? 'missing-created-at';
 
@@ -273,6 +283,7 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
   payload,
   targetFileId,
   fallbackTargetFileId,
+  editingDocumentDraft,
   workspaceFiles,
   updateWorkspace,
   setEditingDocumentDraft,
@@ -282,6 +293,7 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
   payload?: CaseResolverPromptExploderPendingPayload | null;
   targetFileId: string;
   fallbackTargetFileId?: string | null;
+  editingDocumentDraft?: CaseResolverFileEditDraft | null;
   workspaceFiles: CaseResolverWorkspace['files'];
   updateWorkspace: UpdateWorkspaceFn;
   setEditingDocumentDraft: SetEditingDocumentDraftFn;
@@ -410,8 +422,25 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
     });
   };
 
+  const fallbackDraftFile = editingDocumentDraft
+    ? createCaseResolverFile(editingDocumentDraft)
+    : null;
+  const fallbackDraftMatchesTarget = Boolean(
+    fallbackDraftFile &&
+    (
+      normalizedIdsMatch(fallbackDraftFile.id, precheckTargetResolution.resolvedTargetFileId) ||
+      normalizedIdsMatch(fallbackDraftFile.id, requestedTargetFileId) ||
+      normalizedIdsMatch(fallbackDraftFile.id, payloadContextFileId) ||
+      normalizedIdsMatch(fallbackDraftFile.id, normalizedFallbackTargetFileId)
+    )
+  );
+
   let mutationResolvedTargetFileId = precheckTargetResolution.resolvedTargetFileId;
-  const mutationResolutionStrategy = precheckTargetResolution.resolutionStrategy;
+  let mutationResolutionStrategy = precheckTargetResolution.resolutionStrategy;
+  if (!mutationResolvedTargetFileId && fallbackDraftMatchesTarget && fallbackDraftFile) {
+    mutationResolvedTargetFileId = fallbackDraftFile.id;
+    mutationResolutionStrategy = 'fallback_id';
+  }
   const mutationWorkspaceFileCount = workspaceFiles.length;
 
   if (!mutationResolvedTargetFileId) {
@@ -434,7 +463,8 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
     workspaceFiles.find(
       (file: CaseResolverFile): boolean => file.id === mutationResolvedTargetFileId
     ) ??
-    findWorkspaceFileByNormalizedId(workspaceFiles, mutationResolvedTargetFileId);
+    findWorkspaceFileByNormalizedId(workspaceFiles, mutationResolvedTargetFileId) ??
+    (fallbackDraftMatchesTarget ? fallbackDraftFile : null);
 
   if (!mutationSourceFile) {
     return {
@@ -455,9 +485,15 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
   mutationResolvedTargetFileId = mutationSourceFile.id;
 
   const mutationNextFile = buildExplodedFile(mutationSourceFile);
-  const mutationChanged =
+  const mutationChangedFromSnapshot =
     buildCaseResolverFileComparableFingerprint(mutationSourceFile) !==
     buildCaseResolverFileComparableFingerprint(mutationNextFile);
+  let liveMutationResolvedTargetFileId: string | null = null;
+  let liveMutationResolutionStrategy: CaseResolverPromptExploderApplyTargetResolutionStrategy = 'unresolved';
+  let liveMutationWorkspaceFileCount = mutationWorkspaceFileCount;
+  let liveMutationSourceFile: CaseResolverFile | null = null;
+  let liveMutationNextFile: CaseResolverFile | null = null;
+  let liveMutationChanged = false;
 
   updateWorkspace((current) => {
     const liveResolution = resolvePromptExploderApplyTargetFileId({
@@ -466,24 +502,57 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
       fallbackTargetFileId: normalizedFallbackTargetFileId,
       workspaceFiles: current.files,
     });
-    if (!liveResolution.resolvedTargetFileId) {
+    let liveTargetFileId = liveResolution.resolvedTargetFileId;
+    let liveResolutionStrategy = liveResolution.resolutionStrategy;
+    if (!liveTargetFileId && fallbackDraftMatchesTarget && fallbackDraftFile) {
+      liveTargetFileId = fallbackDraftFile.id;
+      liveResolutionStrategy = 'fallback_id';
+    }
+    liveMutationWorkspaceFileCount = current.files.length;
+    liveMutationResolutionStrategy = liveResolutionStrategy;
+    liveMutationResolvedTargetFileId = liveTargetFileId;
+    if (!liveTargetFileId) {
       return current;
     }
 
-    const liveTargetFileId = liveResolution.resolvedTargetFileId;
-    let fileChanged = false;
-    const nextFiles = current.files.map((file: CaseResolverFile): CaseResolverFile => {
-      if (file.id !== liveTargetFileId) return file;
-      const candidate = buildExplodedFile(file);
-      if (
-        buildCaseResolverFileComparableFingerprint(file) ===
+    const existingTarget =
+      current.files.find((file: CaseResolverFile): boolean => file.id === liveTargetFileId) ??
+      findWorkspaceFileByNormalizedId(current.files, liveTargetFileId);
+    const sourceForMutation = existingTarget ??
+      (fallbackDraftMatchesTarget && fallbackDraftFile
+        ? fallbackDraftFile
+        : null);
+    if (!sourceForMutation) {
+      liveMutationResolvedTargetFileId = null;
+      liveMutationResolutionStrategy = 'unresolved';
+      return current;
+    }
+    liveMutationSourceFile = sourceForMutation;
+    const candidate = buildExplodedFile(sourceForMutation);
+    liveMutationNextFile = candidate;
+
+    const existingTargetId = existingTarget?.id ?? null;
+    const fileChangedFromExisting = existingTarget
+      ? (
+        buildCaseResolverFileComparableFingerprint(existingTarget) !==
         buildCaseResolverFileComparableFingerprint(candidate)
-      ) {
-        return file;
+      )
+      : true;
+    liveMutationChanged = fileChangedFromExisting;
+
+    let fileChanged = false;
+    let nextFiles = current.files;
+    if (existingTargetId) {
+      if (fileChangedFromExisting) {
+        nextFiles = current.files.map((file: CaseResolverFile): CaseResolverFile => (
+          file.id === existingTargetId ? candidate : file
+        ));
+        fileChanged = true;
       }
+    } else {
+      nextFiles = [...current.files, candidate];
       fileChanged = true;
-      return candidate;
-    });
+    }
 
     const nextActiveFileId =
       current.activeFileId === liveTargetFileId
@@ -504,17 +573,43 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
     skipNormalization: true,
   });
 
-  setEditingDocumentDraft((current) => {
-    if (current?.id !== mutationResolvedTargetFileId) return current;
+  const effectiveMutationSourceFile = liveMutationSourceFile ?? mutationSourceFile;
+  const effectiveMutationNextFile = liveMutationNextFile ?? mutationNextFile;
+  const effectiveMutationResolvedTargetFileId =
+    liveMutationResolvedTargetFileId ?? mutationResolvedTargetFileId;
+  const effectiveMutationResolutionStrategy =
+    liveMutationResolvedTargetFileId
+      ? liveMutationResolutionStrategy
+      : mutationResolutionStrategy;
+  const effectiveMutationWorkspaceFileCount = liveMutationWorkspaceFileCount;
+
+  if (!effectiveMutationResolvedTargetFileId || !effectiveMutationSourceFile || !effectiveMutationNextFile) {
     return {
-      ...mutationNextFile,
-      baseDocumentContentVersion: mutationNextFile.documentContentVersion,
+      applied: false,
+      payload: payloadToApply,
+      proposalState: null,
+      reason: 'target_file_missing_mutation_snapshot',
+      diagnostics: buildDiagnostics({
+        mutationResolvedTargetFileId: null,
+        mutationResolutionStrategy: 'unresolved',
+        mutationWorkspaceFileCount: effectiveMutationWorkspaceFileCount,
+        resolvedTargetFileId: null,
+        resolutionStrategy: 'unresolved',
+      }),
+    };
+  }
+
+  setEditingDocumentDraft((current) => {
+    if (current?.id !== effectiveMutationResolvedTargetFileId) return current;
+    return {
+      ...effectiveMutationNextFile,
+      baseDocumentContentVersion: effectiveMutationNextFile.documentContentVersion,
     };
   });
 
   const proposalState = buildCaseResolverCaptureProposalState(
     payloadToApply.caseResolverParties,
-    mutationNextFile.id,
+    effectiveMutationNextFile.id,
     filemakerDatabase,
     caseResolverCaptureSettings,
     {
@@ -540,13 +635,15 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
     applied: true,
     payload: payloadToApply,
     proposalState,
-    workspaceChanged: mutationChanged,
+    workspaceChanged: liveMutationResolvedTargetFileId
+      ? liveMutationChanged
+      : mutationChangedFromSnapshot,
     diagnostics: buildDiagnostics({
-      mutationResolvedTargetFileId,
-      mutationResolutionStrategy,
-      mutationWorkspaceFileCount,
-      resolvedTargetFileId: mutationResolvedTargetFileId,
-      resolutionStrategy: mutationResolutionStrategy,
+      mutationResolvedTargetFileId: effectiveMutationResolvedTargetFileId,
+      mutationResolutionStrategy: effectiveMutationResolutionStrategy,
+      mutationWorkspaceFileCount: effectiveMutationWorkspaceFileCount,
+      resolvedTargetFileId: effectiveMutationResolvedTargetFileId,
+      resolutionStrategy: effectiveMutationResolutionStrategy,
       proposalBuilt: Boolean(proposalState),
     }),
   };

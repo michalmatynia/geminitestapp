@@ -670,6 +670,7 @@ export function useCaseResolverState() {
           payload,
           targetFileId: candidateTargetFileId,
           fallbackTargetFileId,
+          editingDocumentDraft,
           workspaceFiles: workspaceFilesSnapshot,
           updateWorkspace,
           setEditingDocumentDraft,
@@ -827,7 +828,7 @@ export function useCaseResolverState() {
     },
     [
       caseResolverCaptureSettings,
-      editingDocumentDraft?.id,
+      editingDocumentDraft,
       filemakerDatabase,
       pendingPromptExploderPayload,
       refreshPendingPromptExploderPayload,

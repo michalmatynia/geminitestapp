@@ -4,6 +4,7 @@ import { PROMPT_EXPLODER_PATTERN_PACK } from '@/features/prompt-exploder/pattern
 import type { PromptExploderSegment } from '@/features/prompt-exploder/types';
 import {
   buildCaseResolverSegmentCaptureRules,
+  type CaseResolverSegmentCaptureRule,
   extractCaseResolverBridgePayloadFromSegments,
   resolveCaseResolverBridgePayloadForTransfer,
 } from '@/features/prompt-exploder/utils/case-resolver-extraction';
@@ -190,6 +191,32 @@ describe('case resolver extraction bridge payload', () => {
     expect(payload.metadata?.placeDate?.year).toBe('2026');
   });
 
+  it('detects ZUS addressee organizations in heuristics mode', () => {
+    const segments: PromptExploderSegment[] = [
+      createSegment({
+        id: 'heuristic-addresser-zus',
+        raw: 'Michał Matynia\nFioletowa 71/2\n70-781 Szczecin\nPolska',
+      }),
+      createSegment({
+        id: 'heuristic-addressee-zus',
+        raw: 'Zakład Ubezpieczeń Społecznych\nOddział w Szczecinie\nMatejki 22\n70-530 Szczecin',
+      }),
+    ];
+
+    const payload = extractCaseResolverBridgePayloadFromSegments(segments, {
+      captureRules: [],
+      mode: 'rules_with_heuristics',
+    });
+
+    expect(payload.parties?.addressee?.displayName).toBe('Zakład Ubezpieczeń Społecznych');
+    expect(payload.parties?.addressee?.organizationName).toBe('Zakład Ubezpieczeń Społecznych');
+    expect(payload.parties?.addressee?.kind).toBe('organization');
+    expect(payload.parties?.addressee?.street).toBe('Matejki');
+    expect(payload.parties?.addressee?.streetNumber).toBe('22');
+    expect(payload.parties?.addressee?.postalCode).toBe('70-530');
+    expect(payload.parties?.addressee?.city).toBe('Szczecin');
+  });
+
   it('uses visible transfer fallback when rules-only mode has no captures', () => {
     const segments: PromptExploderSegment[] = [
       createSegment({
@@ -219,6 +246,46 @@ describe('case resolver extraction bridge payload', () => {
     expect(result.payload.parties?.addresser?.displayName).toBe('Michał Matynia');
     expect(result.payload.parties?.addressee?.displayName).toBe('Inspektorat ZUS w Gryficach');
     expect(result.payload.metadata?.placeDate?.city).toBe('Szczecin');
+  });
+
+  it('uses visible transfer fallback when rules-only mode has partial captures', () => {
+    const addresserOnlyRules: CaseResolverSegmentCaptureRule[] = [
+      {
+        id: 'capture.addresser.display_name',
+        label: 'Capture addresser display name',
+        role: 'addresser',
+        field: 'displayName',
+        regex: /^(Michał Matynia)$/imu,
+        applyTo: 'line',
+        group: 1,
+        normalize: 'trim',
+        overwrite: true,
+        sequence: 1,
+      },
+    ];
+    const segments: PromptExploderSegment[] = [
+      createSegment({
+        id: 'partial-addresser',
+        raw: 'Michał Matynia\nFioletowa 71/2\n70-781 Szczecin\nPolska',
+      }),
+      createSegment({
+        id: 'partial-addressee',
+        raw: 'Inspektorat ZUS w Gryficach\nDąbskiego 5\n72-300 Gryfice',
+      }),
+    ];
+
+    const result = resolveCaseResolverBridgePayloadForTransfer({
+      segments,
+      captureRules: addresserOnlyRules,
+      mode: 'rules_only',
+    });
+
+    expect(result.requestedMode).toBe('rules_only');
+    expect(result.effectiveMode).toBe('rules_with_heuristics');
+    expect(result.usedFallback).toBe(true);
+    expect(result.hasCaptureData).toBe(true);
+    expect(result.payload.parties?.addresser?.displayName).toBe('Michał Matynia');
+    expect(result.payload.parties?.addressee?.displayName).toBe('Inspektorat ZUS w Gryficach');
   });
 
   it('reports no transfer captures when both rule and fallback extraction fail', () => {

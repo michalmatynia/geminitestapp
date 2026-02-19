@@ -433,11 +433,25 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     void (async (): Promise<void> => {
       setIsApplyingPromptExploderPartyProposal(true);
       try {
-        const targetFileId = promptExploderProposalDraft.targetFileId;
+        const requestedTargetFileId = promptExploderProposalDraft.targetFileId;
+        const normalizedRequestedTargetFileId = requestedTargetFileId.trim();
+        const resolvedTargetFile =
+          workspace.files.find((file) => file.id === requestedTargetFileId) ??
+          workspace.files.find((file) => file.id.trim() === normalizedRequestedTargetFileId) ??
+          (editingDocumentDraft
+            ? workspace.files.find((file) => file.id === editingDocumentDraft.id) ?? null
+            : null);
+        if (!resolvedTargetFile) {
+          toast('Target file for capture mapping is no longer available.', {
+            variant: 'warning',
+          });
+          return;
+        }
+        const targetFileId = resolvedTargetFile.id;
         let nextDatabase = filemakerDatabase;
         let shouldPersistFilemakerDatabase = false;
         let nextProposalState: CaseResolverCaptureProposalState = {
-          targetFileId: promptExploderProposalDraft.targetFileId,
+          targetFileId,
           addresser: promptExploderProposalDraft.addresser
             ? {
               ...promptExploderProposalDraft.addresser,
@@ -545,13 +559,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
         const shouldPatchAddresser = rolePatches.addresser !== undefined;
         const shouldPatchAddressee = rolePatches.addressee !== undefined;
-        const targetFile = workspace.files.find((file) => file.id === targetFileId) ?? null;
-        if (!targetFile) {
-          toast('Target file for capture mapping is no longer available.', {
-            variant: 'warning',
-          });
-          return;
-        }
+        const targetFile = resolvedTargetFile;
 
         const dateProposal = nextProposalState.documentDate;
         const shouldAcceptDate =
@@ -674,6 +682,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             setEditingDocumentDraft,
             source: 'capture_mapping_apply',
             persistToast: 'Capture mapping applied.',
+            skipNormalization: true,
             mutate: (file) => {
               const fileShouldPatchDocumentDate =
                 acceptedDateValue !== null && file.documentDate !== acceptedDateValue;

@@ -195,8 +195,8 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
           }
         });
         merged.sort((a: AiPathRunEventRecord, b: AiPathRunEventRecord) => {
-          const aTime = new Date(a.createdAt).getTime();
-          const bTime = new Date(b.createdAt).getTime();
+          const aTime = new Date(a.createdAt || 0).getTime();
+          const bTime = new Date(b.createdAt || 0).getTime();
           return aTime - bTime;
         });
         return { ...prev, events: merged };

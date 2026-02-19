@@ -22,7 +22,7 @@ export function ValidatorDefaultPanel(): React.JSX.Element {
             enabled={enabledByDefault}
             disabled={settingsBusy}
             onToggle={() => {
-              void handleToggleDefault();
+              void handleToggleDefault(!enabledByDefault);
             }}
           />
         </ValidatorDocTooltip>

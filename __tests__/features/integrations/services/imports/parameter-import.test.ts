@@ -166,6 +166,8 @@ describe('parameter import feature', () => {
       catalogId: 'catalog-1',
       name: 'Material',
       name_en: 'Material',
+      name_pl: null,
+      name_de: null,
     });
 
     const result = await applyBaseParameterImport({

@@ -23,7 +23,7 @@ export const PLACE_DATE_CAPTURE_RE =
 export const STREET_NUMBER_RE =
   /^(?:(?:ul\.?|al\.?|os\.?|pl\.?|aleja)\s+)?([\p{L}][\p{L}\s'’.-]{1,80}?)\s+(\d+[A-Za-z]?)(?:\s*\/\s*([0-9A-Za-z-]+))?$/u;
 export const ORGANIZATION_HINT_RE =
-  /\b(sp\.|s\.a\.|sa|llc|inc|corp|company|inspektorat|urzad|urząd|organ|fundacja|stowarzyszenie|office|department|instytut)\b/i;
+  /\b(sp\.|s\.a\.|sa|llc|inc|corp|company|inspektorat|urzad|urząd|organ|fundacja|stowarzyszenie|office|department|instytut|zakład|zaklad|zus|oddział|oddzial)\b/i;
 
 export const COUNTRY_NORMALIZATION_MAP: Record<string, string> = {
   polska: 'Poland',
@@ -757,22 +757,54 @@ export const resolveCaseResolverBridgePayloadForTransfer = (args: {
     captureRules: args.captureRules,
     mode: requestedMode,
   });
-  const initialHasCaptureData = Boolean(initialPayload.parties || initialPayload.metadata);
+  const initialAddresser = initialPayload.parties?.addresser;
+  const initialAddressee = initialPayload.parties?.addressee;
+  const initialMetadata = initialPayload.metadata;
+  const initialHasCaptureData = Boolean(initialAddresser || initialAddressee || initialMetadata);
 
-  if (requestedMode === 'rules_only' && !initialHasCaptureData) {
-    const fallbackPayload = extractCaseResolverBridgePayloadFromSegments(args.segments, {
-      captureRules: args.captureRules,
-      mode: 'rules_with_heuristics',
-    });
-    const fallbackHasCaptureData = Boolean(fallbackPayload.parties || fallbackPayload.metadata);
-    if (fallbackHasCaptureData) {
-      return {
-        payload: fallbackPayload,
-        requestedMode,
-        effectiveMode: 'rules_with_heuristics',
-        usedFallback: true,
-        hasCaptureData: true,
-      };
+  if (requestedMode === 'rules_only') {
+    const isMissingAddresser = !initialAddresser;
+    const isMissingAddressee = !initialAddressee;
+    const isMissingMetadata = !initialMetadata;
+    const needsFallback = isMissingAddresser || isMissingAddressee || isMissingMetadata;
+
+    if (needsFallback) {
+      const fallbackPayload = extractCaseResolverBridgePayloadFromSegments(args.segments, {
+        captureRules: args.captureRules,
+        mode: 'rules_with_heuristics',
+      });
+      const fallbackAddresser = fallbackPayload.parties?.addresser;
+      const fallbackAddressee = fallbackPayload.parties?.addressee;
+      const fallbackMetadata = fallbackPayload.metadata;
+
+      const usedFallbackForAddresser = isMissingAddresser && Boolean(fallbackAddresser);
+      const usedFallbackForAddressee = isMissingAddressee && Boolean(fallbackAddressee);
+      const usedFallbackForMetadata = isMissingMetadata && Boolean(fallbackMetadata);
+      const usedFallback =
+        usedFallbackForAddresser || usedFallbackForAddressee || usedFallbackForMetadata;
+
+      if (usedFallback) {
+        const mergedAddresser = initialAddresser ?? fallbackAddresser;
+        const mergedAddressee = initialAddressee ?? fallbackAddressee;
+        const mergedMetadata = initialMetadata ?? fallbackMetadata;
+        const mergedParties =
+          mergedAddresser || mergedAddressee
+            ? {
+              ...(mergedAddresser ? { addresser: mergedAddresser } : {}),
+              ...(mergedAddressee ? { addressee: mergedAddressee } : {}),
+            }
+            : undefined;
+        return {
+          payload: {
+            ...(mergedParties ? { parties: mergedParties } : {}),
+            ...(mergedMetadata ? { metadata: mergedMetadata } : {}),
+          },
+          requestedMode,
+          effectiveMode: 'rules_with_heuristics',
+          usedFallback: true,
+          hasCaptureData: Boolean(mergedParties || mergedMetadata),
+        };
+      }
     }
   }
 

@@ -27,6 +27,7 @@ import {
 
 import { AdvancedSection } from './animation/AdvancedSection';
 import { AnimationConfigProvider } from './animation/AnimationConfigContext';
+import type { OpenVectorOverlay } from './animation/AnimationConfigContext';
 import { ParallaxSection } from './animation/ParallaxSection';
 import { TimelineSection } from './animation/TimelineSection';
 import { VisualEffectsSection } from './animation/VisualEffectsSection';
@@ -34,7 +35,7 @@ import { VisualEffectsSection } from './animation/VisualEffectsSection';
 interface AnimationConfigPanelProps {
   config: GsapAnimationConfig;
   onChange: (updates: Partial<GsapAnimationConfig>) => void;
-  openVectorOverlay?: (path: string, onSelect: (value: string) => void) => void;
+  openVectorOverlay?: OpenVectorOverlay;
 }
 
 export function AnimationConfigPanel({
@@ -133,7 +134,11 @@ export function AnimationConfigPanel({
             </RadioGroup>
           </FormField>
 
-          <AnimationConfigProvider value={{ config, onChange, openVectorOverlay }}>
+          <AnimationConfigProvider value={{ 
+            config, 
+            onChange, 
+            openVectorOverlay: openVectorOverlay ?? (() => {}) 
+          }}>
             <TimelineSection />
             <ParallaxSection />
             <AdvancedSection />

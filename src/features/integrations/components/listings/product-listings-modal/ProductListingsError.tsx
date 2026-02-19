@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { ImageRetryPreset } from '@/features/data-import-export';
+import type { ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
 import { useImageRetryPresets } from '@/features/integrations/components/listings/useImageRetryPresets';
 import { isImageExportError } from '@/features/integrations/components/listings/utils';
 import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';

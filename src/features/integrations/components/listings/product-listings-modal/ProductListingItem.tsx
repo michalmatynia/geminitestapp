@@ -3,7 +3,7 @@
 import { Trash2 } from 'lucide-react';
 import React from 'react';
 
-import type { ImageRetryPreset } from '@/features/data-import-export';
+import type { ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
 import { useImageRetryPresets } from '@/features/integrations/components/listings/useImageRetryPresets';
 import {
   isTraderaBrowserIntegrationSlug,

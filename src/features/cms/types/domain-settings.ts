@@ -1,6 +1,7 @@
 import type { CmsDomainSettingsDto } from '@/shared/contracts/cms';
+import { CMS_DOMAIN_SETTINGS_KEY as SETTING_KEY } from '@/shared/contracts/cms';
 
-export const CMS_DOMAIN_SETTINGS_KEY = 'cms_domain_settings.v1';
+export const CMS_DOMAIN_SETTINGS_KEY = SETTING_KEY;
 
 export type CmsDomainSettings = CmsDomainSettingsDto;
 

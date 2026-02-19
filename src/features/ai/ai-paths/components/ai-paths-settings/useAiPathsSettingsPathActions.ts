@@ -7,6 +7,7 @@ import type {
   PathConfig,
   PathExecutionMode,
   PathFlowIntensity,
+  AiPathsValidationConfig,
   PathMeta,
   PathRunMode,
   RuntimeState,
@@ -17,10 +18,12 @@ import {
   PATH_DEBUG_PREFIX,
   PATH_INDEX_KEY,
   STORAGE_VERSION,
+  DEFAULT_AI_PATHS_VALIDATION_CONFIG,
   createAiDescriptionPath,
   createDefaultPathConfig,
   createPathId,
   createPathMeta,
+  normalizeAiPathsValidationConfig,
   normalizeNodes,
   sanitizeEdges,
   triggers,
@@ -61,6 +64,9 @@ type UseAiPathsSettingsPathActionsInput = {
   setFlowIntensity: React.Dispatch<React.SetStateAction<PathFlowIntensity>>;
   setRunMode: React.Dispatch<React.SetStateAction<PathRunMode>>;
   setStrictFlowMode: React.Dispatch<React.SetStateAction<boolean>>;
+  setAiPathsValidation: React.Dispatch<
+    React.SetStateAction<AiPathsValidationConfig>
+  >;
   setParserSamples: React.Dispatch<
     React.SetStateAction<Record<string, ParserSampleState>>
   >;
@@ -117,6 +123,7 @@ export function useAiPathsSettingsPathActions({
   setFlowIntensity,
   setRunMode,
   setStrictFlowMode,
+  setAiPathsValidation,
   setParserSamples,
   setUpdaterSamples,
   setRuntimeState,
@@ -189,6 +196,9 @@ export function useAiPathsSettingsPathActions({
             : 'manual'
       );
       setStrictFlowMode(config.strictFlowMode !== false);
+      setAiPathsValidation(
+        normalizeAiPathsValidationConfig(config.aiPathsValidation)
+      );
       setParserSamples(config.parserSamples ?? {});
       setUpdaterSamples(config.updaterSamples ?? {});
       setRuntimeState(parseRuntimeState(config.runtimeState));
@@ -221,6 +231,7 @@ export function useAiPathsSettingsPathActions({
       setPathName,
       setRunMode,
       setStrictFlowMode,
+      setAiPathsValidation,
       setRuntimeState,
       setSelectedNodeId,
       setUpdaterSamples,
@@ -266,6 +277,9 @@ export function useAiPathsSettingsPathActions({
       flowIntensity: 'medium',
       runMode: 'manual',
       strictFlowMode: true,
+      aiPathsValidation: normalizeAiPathsValidationConfig(
+        DEFAULT_AI_PATHS_VALIDATION_CONFIG
+      ),
       nodes: [],
       edges: [],
       updatedAt: now,

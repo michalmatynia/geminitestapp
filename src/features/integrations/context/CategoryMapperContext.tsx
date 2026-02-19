@@ -9,7 +9,7 @@ import type { ExternalCategory, CategoryMappingWithDetails } from '@/features/in
 import { logClientError } from '@/features/observability';
 import { useProductCategories } from '@/features/products/hooks/useCategoryQueries';
 import { useCatalogs } from '@/features/products/hooks/useProductMetadataQueries';
-import type { Catalog, ProductCategoryDto } from '@/features/products/types';
+import type { CatalogDto as Catalog, ProductCategoryDto } from '@/shared/contracts/products';
 import { useToast } from '@/shared/ui';
 
 interface InternalCategoryOption {

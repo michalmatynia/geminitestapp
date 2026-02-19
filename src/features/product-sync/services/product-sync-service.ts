@@ -29,8 +29,10 @@ import type {
   ProductSyncRunStatus,
 } from '@/features/product-sync/types/product-sync';
 import { getProductRepository } from '@/features/products/server';
-import type { ProductWithImages } from '@/features/products/types';
-import type { ProductUpdateInput } from '@/features/products/validations';
+import type {
+  ProductWithImagesDto as ProductWithImages,
+  ProductUpdateInput,
+} from '@/shared/contracts/products';
 
 const BASE_INTEGRATION_SLUGS = new Set(['base', 'base-com', 'baselinker']);
 const BASE_DETAILS_BATCH_SIZE = 100;

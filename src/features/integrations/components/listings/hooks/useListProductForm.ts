@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import type { ImageTransformOptions, ImageRetryPreset } from '@/features/data-import-export';
+import type { ImageTransformOptionsDto as ImageTransformOptions, ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
 import {
   useExportToBaseMutation,
   useCreateListingMutation,

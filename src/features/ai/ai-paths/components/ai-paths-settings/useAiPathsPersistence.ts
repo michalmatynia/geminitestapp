@@ -30,6 +30,7 @@ import {
   normalizeNodes,
   migrateDatabaseConfigCollections,
   migratePathConfigCollections,
+  normalizeAiPathsValidationConfig,
   safeParseJson,
   stableStringify,
   sanitizeEdges,
@@ -93,6 +94,7 @@ export function useAiPathsPersistence({
   flowIntensity,
   runMode,
   strictFlowMode,
+  aiPathsValidation,
   selectedNodeId,
   runtimeState,
   updaterSamples,
@@ -123,6 +125,7 @@ export function useAiPathsPersistence({
   setFlowIntensity,
   setRunMode,
   setStrictFlowMode,
+  setAiPathsValidation,
   setHistoryRetentionPasses,
   setHistoryRetentionOptionsMax,
   setPathName,
@@ -494,16 +497,22 @@ export function useAiPathsPersistence({
                     : 0;
                 const normalizedStrictFlowMode =
                   migration.config.strictFlowMode !== false;
+                const normalizedAiPathsValidation = normalizeAiPathsValidationConfig(
+                  migration.config.aiPathsValidation
+                );
                 const normalizedConfig: PathConfig = {
                   ...migration.config,
                   runCount: normalizedRunCount,
                   strictFlowMode: normalizedStrictFlowMode,
+                  aiPathsValidation: normalizedAiPathsValidation,
                 };
                 settingsConfigs[meta.id] = normalizedConfig;
                 if (
                   migration.changed ||
                   normalizedRunCountRaw !== normalizedRunCount ||
                   migration.config.strictFlowMode !== normalizedStrictFlowMode ||
+                  stableStringify(migration.config.aiPathsValidation ?? null) !==
+                    stableStringify(normalizedAiPathsValidation) ||
                   normalizeLoadedPathName(meta.id, parsedConfig.name) !==
                     resolvedName
                 ) {
@@ -620,6 +629,9 @@ export function useAiPathsPersistence({
               : 'manual'
         );
         setStrictFlowMode(activeConfig.strictFlowMode !== false);
+        setAiPathsValidation(
+          normalizeAiPathsValidationConfig(activeConfig.aiPathsValidation)
+        );
         setParserSamples(activeConfig.parserSamples ?? {});
         setUpdaterSamples(activeConfig.updaterSamples ?? {});
         setRuntimeState(parseRuntimeState(activeConfig.runtimeState));
@@ -667,6 +679,7 @@ export function useAiPathsPersistence({
     setLoading,
     setHistoryRetentionPasses,
     setHistoryRetentionOptionsMax,
+    setAiPathsValidation,
   ]);
 
   useEffect((): void | (() => void) => {
@@ -780,6 +793,7 @@ export function useAiPathsPersistence({
         flowIntensity,
         runMode,
         strictFlowMode,
+        aiPathsValidation,
         isLocked: isPathLocked,
         isActive: isPathActive,
         uiState: {
@@ -809,6 +823,7 @@ export function useAiPathsPersistence({
       flowIntensity,
       runMode,
       strictFlowMode,
+      aiPathsValidation,
       isPathLocked,
       isPathActive,
       selectedNodeId,
@@ -849,6 +864,7 @@ export function useAiPathsPersistence({
         flowIntensity,
         runMode,
         strictFlowMode,
+        aiPathsValidation,
         nodes: nodesOverride ?? nodesRef.current,
         edges: edgesOverride ?? edgesRef.current,
         updatedAt,
@@ -878,6 +894,7 @@ export function useAiPathsPersistence({
       flowIntensity,
       runMode,
       strictFlowMode,
+      aiPathsValidation,
       isPathLocked,
       isPathActive,
       parserSamples,

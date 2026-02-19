@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
-import type { Catalog } from '@/features/products/types';
+import type { CatalogDto as Catalog } from '@/shared/contracts/products';
 import { Label } from '@/shared/ui';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
 import type { PickerGroup, PickerOption } from '@/shared/ui/templates/pickers/types';

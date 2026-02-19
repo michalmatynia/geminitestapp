@@ -1,6 +1,6 @@
 'use client';
 
-import type { ImageRetryPreset } from '@/features/data-import-export';
+import type { ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
 import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,

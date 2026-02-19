@@ -8,6 +8,7 @@ import type {
   PathConfig,
   PathExecutionMode,
   PathFlowIntensity,
+  AiPathsValidationConfig,
   PathRunMode,
   PathDebugSnapshot,
   PathMeta,
@@ -53,6 +54,7 @@ export type UseAiPathsPersistenceArgs = {
   flowIntensity: PathFlowIntensity;
   runMode: PathRunMode;
   strictFlowMode: boolean;
+  aiPathsValidation: AiPathsValidationConfig;
   selectedNodeId: string | null;
   runtimeState: RuntimeState;
   updaterSamples: Record<string, UpdaterSampleState>;
@@ -91,6 +93,7 @@ export type UseAiPathsPersistenceArgs = {
   setFlowIntensity: (value: PathFlowIntensity) => void;
   setRunMode: (value: PathRunMode) => void;
   setStrictFlowMode: (value: boolean) => void;
+  setAiPathsValidation: (value: AiPathsValidationConfig) => void;
   setHistoryRetentionPasses: (value: number) => void;
   setHistoryRetentionOptionsMax: (value: number) => void;
   setPathName: (value: string) => void;

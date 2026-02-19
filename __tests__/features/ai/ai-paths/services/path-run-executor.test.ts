@@ -52,7 +52,8 @@ describe('PathRunExecutor', () => {
 
     const run = await repo.createRun({
       pathId: 'test',
-      graph: { nodes: mockNodes, edges: mockEdges }
+      graph: { nodes: mockNodes, edges: mockEdges },
+      meta: { aiPathsValidation: { enabled: false } },
     });
     await repo.createRunNodes(run.id, mockNodes);
 
@@ -104,7 +105,8 @@ describe('PathRunExecutor', () => {
 
     const run = await repo.createRun({
       pathId: 'test',
-      graph: { nodes: mockNodes, edges: mockEdges }
+      graph: { nodes: mockNodes, edges: mockEdges },
+      meta: { aiPathsValidation: { enabled: false } },
     });
     await repo.createRunNodes(run.id, mockNodes);
 
@@ -126,7 +128,8 @@ describe('PathRunExecutor', () => {
 
     const run = await repo.createRun({
       pathId: 'test',
-      graph: { nodes: mockNodes, edges: mockEdges }
+      graph: { nodes: mockNodes, edges: mockEdges },
+      meta: { aiPathsValidation: { enabled: false } },
     });
     await repo.createRunNodes(run.id, mockNodes);
 
@@ -179,7 +182,10 @@ describe('PathRunExecutor', () => {
     const run = await repo.createRun({
       pathId: 'test',
       graph: { nodes: riskyNodes, edges: [] },
-      meta: { strictFlowMode: true },
+      meta: {
+        strictFlowMode: true,
+        aiPathsValidation: { enabled: false },
+      },
     } as any);
     await repo.createRunNodes(run.id, riskyNodes);
 
@@ -194,6 +200,36 @@ describe('PathRunExecutor', () => {
     expect(
       events.some((event: any) =>
         event.message === 'Run blocked by strict flow dependency validation.',
+      ),
+    ).toBe(true);
+  });
+
+  it('should block run when AI Paths validation preflight policy fails', async () => {
+    const run = await repo.createRun({
+      pathId: 'test',
+      graph: { nodes: mockNodes, edges: mockEdges },
+      meta: {
+        strictFlowMode: false,
+        aiPathsValidation: {
+          enabled: true,
+          blockThreshold: 80,
+        },
+      },
+    } as any);
+    await repo.createRunNodes(run.id, mockNodes);
+
+    await expect(executePathRun(run)).rejects.toThrow('Validation blocked run');
+    expect(evaluateGraphWithIteratorAutoContinue).not.toHaveBeenCalled();
+
+    const updatedRun = await repo.findRunById(run.id);
+    expect(updatedRun.status).toBe('failed');
+    expect(updatedRun.errorMessage).toContain('Validation blocked run');
+
+    const events = await repo.listRunEvents(run.id);
+    expect(
+      events.some(
+        (event: any) =>
+          event.message === 'Run blocked by AI Paths validation preflight.',
       ),
     ).toBe(true);
   });

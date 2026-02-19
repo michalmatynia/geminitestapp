@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { ProductWithImages } from '@/features/products/types';
+import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 
 type ProductListingsModalViewContextValue = {
   product: ProductWithImages;

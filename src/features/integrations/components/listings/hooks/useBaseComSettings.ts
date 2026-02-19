@@ -1,7 +1,7 @@
 import { useQueries } from '@tanstack/react-query';
 import { useEffect, useState, useMemo, useRef, type Dispatch, type SetStateAction } from 'react';
 
-import type { Template, BaseInventory } from '@/features/data-import-export';
+import type { TemplateDto as Template, BaseInventoryDto as BaseInventory } from '@/shared/contracts/integrations';
 import {
   useUpdatePreferredTemplate,
   useUpdatePreferredInventory,

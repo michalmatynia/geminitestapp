@@ -100,12 +100,24 @@ const buildCoreRules = (): AiPathsValidationRule[] => [
     module: 'database',
     appliesToNodeTypes: ['database'],
     sequence: 40,
-    conditionMode: 'all',
+    conditionMode: 'any',
     conditions: [
+      {
+        id: 'database-op-is-not-write',
+        operator: 'in',
+        field: 'config.database.operation',
+        list: ['update', 'delete'],
+        negate: true,
+      },
       {
         id: 'database-write-has-incoming-id-port',
         operator: 'has_incoming_port',
         port: 'entityId',
+      },
+      {
+        id: 'database-write-has-incoming-product-id-port',
+        operator: 'has_incoming_port',
+        port: 'productId',
       },
     ],
     weight: 40,
@@ -174,12 +186,14 @@ export const normalizeAiPathsValidationConfig = (
   const collectionMap =
     source.collectionMap && typeof source.collectionMap === 'object'
       ? Object.fromEntries(
-          Object.entries(source.collectionMap).filter(
-            ([key, val]: [string, string]): boolean =>
-              typeof key === 'string' && key.trim().length > 0 &&
-              typeof val === 'string' && val.trim().length > 0
-          )
+        Object.entries(source.collectionMap).filter(
+          ([key, val]: [string, string]): boolean =>
+            typeof key === 'string' &&
+            key.trim().length > 0 &&
+            typeof val === 'string' &&
+            val.trim().length > 0,
         )
+      )
       : { ...DEFAULT_AI_PATHS_ENTITY_COLLECTION_MAP };
 
   const rules =

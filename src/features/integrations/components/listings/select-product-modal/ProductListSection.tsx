@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { ProductWithImages } from '@/features/products/types';
+import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import { FormSection, SearchInput } from '@/shared/ui';
 
 import { useSelectProductForListingModalContext } from './context/SelectProductForListingModalContext';

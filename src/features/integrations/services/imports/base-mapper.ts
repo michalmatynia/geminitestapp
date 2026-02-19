@@ -1,6 +1,6 @@
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
-import type { ProductCreateInput } from '@/features/products/validations/schemas';
-import type { ImportExportTemplateMapping as TemplateMapping } from '@/shared/types/domain/integrations';
+import type { TemplateMappingDto as TemplateMapping } from '@/shared/contracts/integrations';
+import type { CreateProductDto as ProductCreateInput } from '@/shared/contracts/products';
 
 const toTrimmedString = (value: unknown): string | null => {
   if (typeof value === 'string') {

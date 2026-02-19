@@ -8,7 +8,7 @@ import { clampSplitZoom } from '@/features/ai/image-studio/components/center-pre
 import { SplitVariantPreview } from '@/features/ai/image-studio/components/center-preview/SplitVariantPreview';
 import { SplitViewControls } from '@/features/ai/image-studio/components/center-preview/SplitViewControls';
 import { studioKeys, useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
-import type { ImageStudioSlotRecord } from '@/features/ai/image-studio/types';
+import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
@@ -16,7 +16,7 @@ import {
 } from '@/features/products/constants';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import { invalidateProductsAndCounts } from '@/features/products/hooks/productCache';
-import type { ProductWithImages } from '@/features/products/types';
+import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import type {
   ProductStudioExecutionRoute,
   ProductStudioSequenceGenerationMode,

@@ -181,6 +181,49 @@ describe('case resolver case context resolution', () => {
     );
   });
 
+  it('normalizes object key ordering in unsaved-change fingerprint', () => {
+    const caseFile = createCaseResolverFile({
+      id: 'case-a',
+      fileType: 'case',
+      name: 'Case A',
+    });
+    const folderTimestampA = {
+      createdAt: '2026-02-19T00:00:00.000Z',
+      updatedAt: '2026-02-19T00:00:00.000Z',
+    };
+    const folderTimestampB = {
+      createdAt: '2026-02-19T00:01:00.000Z',
+      updatedAt: '2026-02-19T00:01:00.000Z',
+    };
+    const baseWorkspace = {
+      version: 2,
+      workspaceRevision: 1,
+      lastMutationId: null,
+      lastMutationAt: null,
+      folders: ['a', 'b'],
+      folderRecords: [],
+      folderTimestamps: {
+        b: folderTimestampB,
+        a: folderTimestampA,
+      },
+      files: [caseFile],
+      assets: [],
+      relationGraph: { nodes: [], edges: [] },
+      activeFileId: caseFile.id,
+    };
+    const reorderedWorkspace = {
+      ...baseWorkspace,
+      folderTimestamps: {
+        a: folderTimestampA,
+        b: folderTimestampB,
+      },
+    };
+
+    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace)).toBe(
+      serializeWorkspaceForUnsavedChangesCheck(reorderedWorkspace)
+    );
+  });
+
   it('still detects real workspace changes in unsaved-change fingerprint', () => {
     const caseFile = createCaseResolverFile({
       id: 'case-a',

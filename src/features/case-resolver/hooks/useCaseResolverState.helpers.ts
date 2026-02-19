@@ -841,7 +841,7 @@ export const isCaseResolverCreateContextReady = ({
 export const serializeWorkspaceForUnsavedChangesCheck = (
   workspace: CaseResolverWorkspace
 ): string =>
-  JSON.stringify({
+  stableStringify({
     ...workspace,
     // Revision metadata is persistence bookkeeping, not user-facing edits.
     workspaceRevision: 0,

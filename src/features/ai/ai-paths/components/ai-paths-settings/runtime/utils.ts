@@ -8,6 +8,7 @@ import type {
   PathDebugEntry,
   PathDebugSnapshot,
   PathExecutionMode,
+  AiPathsValidationConfig,
   PathRunMode,
   ParserSampleState,
   RuntimeState,
@@ -116,6 +117,7 @@ export const buildActivePathConfig = (args: {
   executionMode: PathExecutionMode;
   runMode: PathRunMode;
   strictFlowMode?: boolean;
+  aiPathsValidation?: AiPathsValidationConfig | undefined;
   nodes: AiNode[];
   edges: Edge[];
   updatedAt: string;
@@ -133,6 +135,7 @@ export const buildActivePathConfig = (args: {
   executionMode: args.executionMode,
   runMode: args.runMode,
   strictFlowMode: args.strictFlowMode ?? true,
+  aiPathsValidation: args.aiPathsValidation,
   nodes: args.nodes,
   edges: args.edges,
   updatedAt: args.updatedAt,

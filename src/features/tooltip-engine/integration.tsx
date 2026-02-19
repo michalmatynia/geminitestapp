@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { DocumentationModuleId } from '@/features/documentation';
+import type { DocumentationModuleIdDto as DocumentationModuleId } from '@/shared/contracts/documentation';
 
 import { useDocsTooltipsSetting } from './docs-tooltip-settings';
 import { DocumentationTooltip } from './DocumentationTooltip';

@@ -1,12 +1,16 @@
 'use client';
 
 import { Eye, EyeOff } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useAiPathRuntimeAnalytics } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
-import type { AiNode } from '@/features/ai/ai-paths/lib';
-import { inspectPathDependencies } from '@/features/ai/ai-paths/lib';
+import type { AiNode, AiPathsValidationConfig } from '@/features/ai/ai-paths/lib';
+import {
+  evaluateAiPathsValidationPreflight,
+  inspectPathDependencies,
+  normalizeAiPathsValidationConfig,
+} from '@/features/ai/ai-paths/lib';
 import {
   Button,
   SelectSimple,
@@ -61,6 +65,13 @@ export function AiPathsSettingsView(): React.JSX.Element {
     flow: string;
     runMode: string;
     strictFlowMode: string;
+    validationEngine: string;
+    validationPolicy: string;
+    validationThresholds: string;
+    validationDocs: string;
+    validationCollectionMap: string;
+    validationRules: string;
+    validationPreview: string;
     dependencyReport: string;
     history: string;
   };
@@ -129,6 +140,9 @@ export function AiPathsSettingsView(): React.JSX.Element {
     handleFlowIntensityChange,
     handleRunModeChange,
     handleStrictFlowModeChange,
+    aiPathsValidation,
+    setAiPathsValidation,
+    updateAiPathsValidation,
     handleHistoryRetentionChange,
     historyRetentionPasses,
     historyRetentionOptionsMax,
@@ -209,6 +223,14 @@ export function AiPathsSettingsView(): React.JSX.Element {
 
   const [presetsModalOpen, setPresetsModalOpen] = useState(false);
   const [pathSettingsModalOpen, setPathSettingsModalOpen] = useState(false);
+  const normalizedAiPathsValidation = useMemo<AiPathsValidationConfig>(
+    () => normalizeAiPathsValidationConfig(aiPathsValidation),
+    [aiPathsValidation],
+  );
+  const [validationDocsDraft, setValidationDocsDraft] = useState('');
+  const [validationCollectionMapDraft, setValidationCollectionMapDraft] =
+    useState('');
+  const [validationRulesDraft, setValidationRulesDraft] = useState('');
 
   const [simulationOpenNodeId, setSimulationOpenNodeId] = useState<
     string | null
@@ -238,6 +260,22 @@ export function AiPathsSettingsView(): React.JSX.Element {
     '24h',
     activeTab === 'canvas',
   );
+
+  useEffect((): void => {
+    if (!pathSettingsModalOpen) return;
+    setValidationDocsDraft(
+      (normalizedAiPathsValidation.docsSources ?? []).join('\n'),
+    );
+    const serializedCollectionMap = Object.entries(
+      normalizedAiPathsValidation.collectionMap ?? {},
+    )
+      .map(([entity, collection]: [string, string]) => `${entity}:${collection}`)
+      .join('\n');
+    setValidationCollectionMapDraft(serializedCollectionMap);
+    setValidationRulesDraft(
+      JSON.stringify(normalizedAiPathsValidation.rules ?? [], null, 2),
+    );
+  }, [normalizedAiPathsValidation, pathSettingsModalOpen]);
 
   const nodeTitleById = useMemo((): Map<string, string> => {
     const map = new Map<string, string>();
@@ -295,6 +333,15 @@ export function AiPathsSettingsView(): React.JSX.Element {
   const dependencyReport = useMemo(
     () => inspectPathDependencies(nodes, edges),
     [nodes, edges],
+  );
+  const validationPreflightReport = useMemo(
+    () =>
+      evaluateAiPathsValidationPreflight({
+        nodes,
+        edges,
+        config: normalizedAiPathsValidation,
+      }),
+    [nodes, edges, normalizedAiPathsValidation],
   );
 
   if (loading) {
@@ -912,7 +959,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
         onClose={() => setPathSettingsModalOpen(false)}
         title='Paths Settings'
         subtitle='Configure persistence and runtime behavior for this path.'
-        size='sm'
+        size='lg'
         onSave={async () => {
           setPathSettingsModalOpen(false);
         }}
@@ -1028,6 +1075,310 @@ export function AiPathsSettingsView(): React.JSX.Element {
             )
           },
           {
+            key: 'validationEngine',
+            label: 'Validation Engine',
+            type: 'custom',
+            render: () => (
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between gap-2'>
+                  <StatusBadge
+                    status={
+                      normalizedAiPathsValidation.enabled !== false
+                        ? 'Validation engine: on'
+                        : 'Validation engine: off'
+                    }
+                    variant={
+                      normalizedAiPathsValidation.enabled !== false
+                        ? 'success'
+                        : 'warning'
+                    }
+                    size='sm'
+                    className='font-medium'
+                  />
+                  <Button
+                    type='button'
+                    className='h-8 rounded-md border border-border px-2 text-[11px] text-gray-200 hover:bg-card/70'
+                    onClick={() => {
+                      updateAiPathsValidation({
+                        enabled: normalizedAiPathsValidation.enabled === false,
+                      });
+                    }}
+                    disabled={isPathLocked}
+                  >
+                    {normalizedAiPathsValidation.enabled !== false
+                      ? 'Disable'
+                      : 'Enable'}
+                  </Button>
+                </div>
+                <div className='text-[11px] text-gray-400'>
+                  UI-defined preflight validation runs before execution and can block low-confidence paths.
+                </div>
+              </div>
+            )
+          },
+          {
+            key: 'validationPolicy',
+            label: 'Validation Policy',
+            type: 'custom',
+            render: () => (
+              <SelectSimple
+                size='sm'
+                value={normalizedAiPathsValidation.policy ?? 'block_below_threshold'}
+                onValueChange={(value: string): void => {
+                  if (
+                    value === 'report_only' ||
+                    value === 'warn_below_threshold' ||
+                    value === 'block_below_threshold'
+                  ) {
+                    updateAiPathsValidation({ policy: value });
+                  }
+                }}
+                options={[
+                  { label: 'Block below threshold', value: 'block_below_threshold' },
+                  { label: 'Warn below threshold', value: 'warn_below_threshold' },
+                  { label: 'Report only', value: 'report_only' },
+                ]}
+                triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
+                disabled={isPathLocked}
+              />
+            )
+          },
+          {
+            key: 'validationThresholds',
+            label: 'Validation Thresholds',
+            type: 'custom',
+            render: () => (
+              <div className='grid grid-cols-2 gap-2'>
+                <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                  Warn threshold
+                  <input
+                    type='number'
+                    min={0}
+                    max={100}
+                    value={normalizedAiPathsValidation.warnThreshold ?? 70}
+                    onChange={(event) => {
+                      const parsed = Number.parseInt(event.target.value, 10);
+                      if (Number.isFinite(parsed)) {
+                        updateAiPathsValidation({ warnThreshold: parsed });
+                      }
+                    }}
+                    className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                    disabled={isPathLocked}
+                  />
+                </label>
+                <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                  Block threshold
+                  <input
+                    type='number'
+                    min={0}
+                    max={100}
+                    value={normalizedAiPathsValidation.blockThreshold ?? 50}
+                    onChange={(event) => {
+                      const parsed = Number.parseInt(event.target.value, 10);
+                      if (Number.isFinite(parsed)) {
+                        updateAiPathsValidation({ blockThreshold: parsed });
+                      }
+                    }}
+                    className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                    disabled={isPathLocked}
+                  />
+                </label>
+              </div>
+            )
+          },
+          {
+            key: 'validationDocs',
+            label: 'Validation Docs Sources',
+            type: 'custom',
+            render: () => (
+              <div className='space-y-2'>
+                <textarea
+                  value={validationDocsDraft}
+                  onChange={(event) => setValidationDocsDraft(event.target.value)}
+                  placeholder='One docs source per line'
+                  className='min-h-[92px] w-full rounded-md border border-border bg-card/60 p-2 text-xs text-white'
+                  disabled={isPathLocked}
+                />
+                <div className='flex justify-end'>
+                  <Button
+                    type='button'
+                    className='h-8 rounded-md border border-border px-2 text-[11px] text-gray-200 hover:bg-card/70'
+                    onClick={() => {
+                      const docsSources = validationDocsDraft
+                        .split('\n')
+                        .map((value) => value.trim())
+                        .filter((value) => value.length > 0);
+                      updateAiPathsValidation({ docsSources });
+                    }}
+                    disabled={isPathLocked}
+                  >
+                    Apply Docs Sources
+                  </Button>
+                </div>
+              </div>
+            )
+          },
+          {
+            key: 'validationCollectionMap',
+            label: 'Entity Collection Map',
+            type: 'custom',
+            render: () => (
+              <div className='space-y-2'>
+                <textarea
+                  value={validationCollectionMapDraft}
+                  onChange={(event) =>
+                    setValidationCollectionMapDraft(event.target.value)
+                  }
+                  placeholder='entityType:collection'
+                  className='min-h-[92px] w-full rounded-md border border-border bg-card/60 p-2 text-xs text-white'
+                  disabled={isPathLocked}
+                />
+                <div className='flex justify-end'>
+                  <Button
+                    type='button'
+                    className='h-8 rounded-md border border-border px-2 text-[11px] text-gray-200 hover:bg-card/70'
+                    onClick={() => {
+                      const collectionMap = validationCollectionMapDraft
+                        .split('\n')
+                        .map((line) => line.trim())
+                        .filter((line) => line.length > 0)
+                        .reduce<Record<string, string>>((acc, line) => {
+                          const [entity, ...collectionParts] = line.split(':');
+                          const key = entity?.trim() ?? '';
+                          const value = collectionParts.join(':').trim();
+                          if (!key || !value) return acc;
+                          acc[key] = value;
+                          return acc;
+                        }, {});
+                      updateAiPathsValidation({ collectionMap });
+                    }}
+                    disabled={isPathLocked}
+                  >
+                    Apply Collection Map
+                  </Button>
+                </div>
+              </div>
+            )
+          },
+          {
+            key: 'validationRules',
+            label: 'Validation Rules (JSON)',
+            type: 'custom',
+            render: () => (
+              <div className='space-y-2'>
+                <textarea
+                  value={validationRulesDraft}
+                  onChange={(event) => setValidationRulesDraft(event.target.value)}
+                  placeholder='[ { "id": "rule.id", ... } ]'
+                  className='min-h-[160px] w-full rounded-md border border-border bg-card/60 p-2 text-xs text-white'
+                  disabled={isPathLocked}
+                />
+                <div className='flex justify-end'>
+                  <Button
+                    type='button'
+                    className='h-8 rounded-md border border-border px-2 text-[11px] text-gray-200 hover:bg-card/70'
+                    onClick={() => {
+                      try {
+                        const parsed = JSON.parse(validationRulesDraft) as unknown;
+                        if (!Array.isArray(parsed)) {
+                          toast('Validation rules JSON must be an array.', {
+                            variant: 'error',
+                          });
+                          return;
+                        }
+                        setAiPathsValidation((previous: AiPathsValidationConfig) =>
+                          normalizeAiPathsValidationConfig({
+                            ...previous,
+                            rules: parsed as AiPathsValidationConfig['rules'],
+                          }),
+                        );
+                      } catch {
+                        toast('Invalid validation rules JSON.', {
+                          variant: 'error',
+                        });
+                      }
+                    }}
+                    disabled={isPathLocked}
+                  >
+                    Apply Rules JSON
+                  </Button>
+                </div>
+              </div>
+            )
+          },
+          {
+            key: 'validationPreview',
+            label: 'Validation Preview',
+            type: 'custom',
+            render: () => (
+              <div className='space-y-2'>
+                <div className='flex flex-wrap items-center gap-2 text-[11px]'>
+                  <StatusBadge
+                    status={`Score: ${validationPreflightReport.score}`}
+                    variant={
+                      validationPreflightReport.blocked
+                        ? 'error'
+                        : validationPreflightReport.shouldWarn
+                          ? 'warning'
+                          : 'success'
+                    }
+                    size='sm'
+                  />
+                  <StatusBadge
+                    status={`Rules failed: ${validationPreflightReport.failedRules}`}
+                    variant={
+                      validationPreflightReport.failedRules > 0 ? 'warning' : 'neutral'
+                    }
+                    size='sm'
+                  />
+                  <StatusBadge
+                    status={
+                      validationPreflightReport.blocked
+                        ? 'Blocked'
+                        : validationPreflightReport.shouldWarn
+                          ? 'Warn'
+                          : 'Ready'
+                    }
+                    variant={
+                      validationPreflightReport.blocked
+                        ? 'error'
+                        : validationPreflightReport.shouldWarn
+                          ? 'warning'
+                          : 'success'
+                    }
+                    size='sm'
+                  />
+                </div>
+                {validationPreflightReport.findings.length > 0 ? (
+                  <div className='max-h-[180px] space-y-1 overflow-y-auto rounded-md border border-border/60 bg-card/40 p-2'>
+                    {validationPreflightReport.findings
+                      .slice(0, 10)
+                      .map((finding) => (
+                        <div
+                          key={finding.id}
+                          className='rounded-md border border-border/50 bg-card/60 px-2 py-1.5 text-[11px]'
+                        >
+                          <div className='font-medium text-gray-100'>
+                            {finding.ruleTitle}
+                          </div>
+                          <div className='mt-0.5 text-gray-400'>{finding.message}</div>
+                          {finding.recommendation ? (
+                            <div className='mt-0.5 text-gray-300'>
+                              Fix: {finding.recommendation}
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <div className='text-[11px] text-emerald-200'>
+                    Validation preflight reports no findings for the current graph.
+                  </div>
+                )}
+              </div>
+            )
+          },
+          {
             key: 'dependencyReport',
             label: 'Dependency Inspector',
             type: 'custom',
@@ -1101,6 +1452,23 @@ export function AiPathsSettingsView(): React.JSX.Element {
           flow: flowIntensity,
           runMode,
           strictFlowMode: strictFlowMode ? 'on' : 'off',
+          validationEngine:
+            normalizedAiPathsValidation.enabled !== false ? 'on' : 'off',
+          validationPolicy:
+            normalizedAiPathsValidation.policy ?? 'block_below_threshold',
+          validationThresholds: `${normalizedAiPathsValidation.warnThreshold ?? 70}/${normalizedAiPathsValidation.blockThreshold ?? 50}`,
+          validationDocs: String(
+            normalizedAiPathsValidation.docsSources?.length ?? 0,
+          ),
+          validationCollectionMap: String(
+            Object.keys(normalizedAiPathsValidation.collectionMap ?? {}).length,
+          ),
+          validationRules: String(normalizedAiPathsValidation.rules?.length ?? 0),
+          validationPreview: validationPreflightReport.blocked
+            ? 'blocked'
+            : validationPreflightReport.shouldWarn
+              ? 'warn'
+              : 'ready',
           dependencyReport: dependencyReport.strictReady ? 'strict-ready' : 'issues',
           history: String(historyRetentionPasses),
         }}

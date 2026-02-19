@@ -93,9 +93,14 @@ export const chatbotModelsResponseSchema = z.object({
 
 export type ChatbotModelsResponseDto = z.infer<typeof chatbotModelsResponseSchema>;
 
-export const insightsSnapshotSchema = z.object({
-  analytics: z.array(aiInsightRecordSchema),
-  logs: z.array(aiInsightRecordSchema),
+const insightsSnapshotSchema = z.object({
+  analytics: z.array(aiInsightRecordSchema).default([]),
+  logs: z.array(aiInsightRecordSchema).default([]),
 });
 
+export const InsightsSnapshotDtoSchema = insightsSnapshotSchema;
+
 export type InsightsSnapshotDto = z.infer<typeof insightsSnapshotSchema>;
+
+export const AI_BRAIN_SETTINGS_KEY = 'ai_brain_settings';
+export const AI_BRAIN_PROVIDER_CATALOG_KEY = 'ai_brain_provider_catalog';

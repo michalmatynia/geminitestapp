@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { ImageRetryPreset } from '@/features/data-import-export';
+import type { ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
 import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
 import { ActionMenu, DropdownMenuItem } from '@/shared/ui';
 

@@ -401,6 +401,9 @@ export const imageStudioProjectSchema = dtoBaseSchema.extend({
 
 export type ImageStudioProjectDto = z.infer<typeof imageStudioProjectSchema>;
 
+export const imageStudioRunDispatchModeSchema = z.enum(['queued', 'inline']);
+export type ImageStudioRunDispatchModeDto = z.infer<typeof imageStudioRunDispatchModeSchema>;
+
 export const studioProjectsResponseSchema = z.object({
   projects: z.array(imageStudioProjectSchema),
 });

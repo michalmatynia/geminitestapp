@@ -6,6 +6,7 @@ import type {
   AiPathRuntimeNodeStatus,
   AiPathRuntimeNodeStatusMap,
   Edge,
+  AiPathsValidationConfig,
   ParserSampleState,
   PathConfig,
   PathDebugSnapshot,
@@ -68,6 +69,7 @@ export type UseAiPathsRuntimeArgs = {
   executionMode: PathExecutionMode;
   runMode: PathRunMode;
   strictFlowMode: boolean;
+  aiPathsValidation: AiPathsValidationConfig;
   historyRetentionPasses: number;
   edges: Edge[];
   nodes: AiNode[];

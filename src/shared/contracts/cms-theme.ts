@@ -289,3 +289,5 @@ export const themeSettingsSchema = z.object({
 });
 
 export type ThemeSettingsDto = z.infer<typeof themeSettingsSchema>;
+
+export const CMS_THEME_SETTINGS_KEY = 'cms_theme_settings.v1';

@@ -2,32 +2,34 @@
 
 import React, { useEffect, useState } from 'react';
 
-import type { ModalStateProps } from '@/shared/types/modal-props';
+import type { ProductDraftDto } from '@/features/products/types/drafts';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { FormModal, Button } from '@/shared/ui';
 
 import { DraftCreator } from './DraftCreator';
 
-interface DraftCreatorModalProps extends ModalStateProps {
-  editingDraftId: string | null;
+export interface DraftCreatorModalProps extends EntityModalProps<ProductDraftDto, string> {
   formRef: React.RefObject<HTMLFormElement | null>;
 }
 
 export function DraftCreatorModal({
   isOpen,
   onClose,
-  editingDraftId,
+  item: editingDraft,
   formRef,
 }: DraftCreatorModalProps): React.JSX.Element | null {
   const [isDraftActive, setIsDraftActive] = useState<boolean>(true);
 
   useEffect((): void => {
-    if (isOpen && !editingDraftId) {
+    if (isOpen && !editingDraft) {
       setIsDraftActive(true);
+    } else if (isOpen && editingDraft && typeof editingDraft !== 'string') {
+      setIsDraftActive(editingDraft.active ?? true);
     }
-  }, [isOpen, editingDraftId]);
+  }, [isOpen, editingDraft]);
 
-  const title = editingDraftId ? 'Edit Draft' : 'Create Draft';
-  const submitText = editingDraftId ? 'Update Draft' : 'Create Draft';
+  const title = editingDraft ? 'Edit Draft' : 'Create Draft';
+  const submitText = editingDraft ? 'Update Draft' : 'Create Draft';
 
   const actions = (
     <div className='flex items-center gap-2 rounded-md border border-border/60 bg-muted/30 px-3 py-1 mr-2'>

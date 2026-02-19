@@ -1,5 +1,8 @@
 import { integrationDefinitions } from '@/features/integrations/types/integrations-ui';
-import type { PlaywrightPersona, PlaywrightSettings } from '@/features/playwright';
+import type { 
+  PlaywrightPersonaDto as PlaywrightPersona, 
+  PlaywrightSettingsDto as PlaywrightSettings 
+} from '@/shared/contracts/playwright';
 import type { 
   IntegrationDto as Integration, 
   IntegrationConnectionDto as IntegrationConnection, 

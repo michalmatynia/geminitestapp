@@ -1,0 +1,127 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  evaluateAiPathsValidationPreflight,
+  normalizeAiPathsValidationConfig,
+} from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge } from '@/shared/types/domain/ai-paths';
+
+const createNode = (overrides: Partial<AiNode>): AiNode =>
+  ({
+    id: 'node-1',
+    type: 'constant',
+    title: 'Node',
+    description: '',
+    position: { x: 0, y: 0 },
+    inputs: [],
+    outputs: ['value'],
+    ...overrides,
+  }) as AiNode;
+
+describe('AI Paths validation engine', () => {
+  it('skips node-scoped rules when matching node type is not present', () => {
+    const nodes: AiNode[] = [createNode({ type: 'trigger' as AiNode['type'] })];
+    const edges: Edge[] = [];
+    const config = normalizeAiPathsValidationConfig({
+      enabled: true,
+      policy: 'block_below_threshold',
+      baseScore: 100,
+      blockThreshold: 50,
+      rules: [
+        {
+          id: 'simulation.requires.id',
+          title: 'Simulation needs ID',
+          enabled: true,
+          severity: 'error',
+          module: 'simulation',
+          appliesToNodeTypes: ['simulation'],
+          conditionMode: 'all',
+          conditions: [
+            {
+              id: 'simulation-entity-id',
+              operator: 'non_empty',
+              field: 'config.simulation.entityId',
+            },
+          ],
+          weight: 40,
+        },
+      ],
+    });
+
+    const report = evaluateAiPathsValidationPreflight({ nodes, edges, config });
+    expect(report.failedRules).toBe(0);
+    expect(report.findings).toHaveLength(0);
+    expect(report.score).toBe(100);
+    expect(report.blocked).toBe(false);
+  });
+
+  it('blocks run when graph policy score drops below threshold', () => {
+    const nodes: AiNode[] = [createNode({ type: 'constant' })];
+    const edges: Edge[] = [];
+    const config = normalizeAiPathsValidationConfig({
+      enabled: true,
+      policy: 'block_below_threshold',
+      baseScore: 100,
+      blockThreshold: 90,
+      rules: [
+        {
+          id: 'graph.requires_trigger',
+          title: 'Path has trigger',
+          enabled: true,
+          severity: 'error',
+          module: 'graph',
+          conditionMode: 'all',
+          conditions: [
+            {
+              id: 'trigger-count',
+              operator: 'jsonpath_equals',
+              valuePath: 'counts.byType.trigger',
+              expected: 1,
+            },
+          ],
+          weight: 50,
+        },
+      ],
+    });
+
+    const report = evaluateAiPathsValidationPreflight({ nodes, edges, config });
+    expect(report.failedRules).toBe(1);
+    expect(report.score).toBe(50);
+    expect(report.blocked).toBe(true);
+  });
+
+  it('emits warning signal when policy is warn_below_threshold', () => {
+    const nodes: AiNode[] = [createNode({ type: 'constant' })];
+    const edges: Edge[] = [];
+    const config = normalizeAiPathsValidationConfig({
+      enabled: true,
+      policy: 'warn_below_threshold',
+      baseScore: 100,
+      warnThreshold: 95,
+      rules: [
+        {
+          id: 'graph.requires_trigger',
+          title: 'Path has trigger',
+          enabled: true,
+          severity: 'warning',
+          module: 'graph',
+          conditionMode: 'all',
+          conditions: [
+            {
+              id: 'trigger-count',
+              operator: 'jsonpath_equals',
+              valuePath: 'counts.byType.trigger',
+              expected: 1,
+            },
+          ],
+          weight: 10,
+        },
+      ],
+    });
+
+    const report = evaluateAiPathsValidationPreflight({ nodes, edges, config });
+    expect(report.blocked).toBe(false);
+    expect(report.shouldWarn).toBe(true);
+    expect(report.findings).toHaveLength(1);
+  });
+});

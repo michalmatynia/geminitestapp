@@ -1,9 +1,13 @@
 import { ANIMATION_PRESETS } from '@/features/gsap/types/animation';
 import type { MenuItemDto, MenuSettingsDto } from '@/shared/contracts/cms-menu';
+import {
+  CMS_MENU_SETTINGS_KEY as SETTINGS_KEY,
+  CMS_MENU_SETTINGS_ZONE_PREFIX as ZONE_PREFIX,
+} from '@/shared/contracts/cms-menu';
 import type { AnimationPresetDto as AnimationPreset } from '@/shared/contracts/gsap';
 
-export const CMS_MENU_SETTINGS_KEY = 'cms_menu_settings.v1';
-export const CMS_MENU_SETTINGS_ZONE_PREFIX = `${CMS_MENU_SETTINGS_KEY}.zone.`;
+export const CMS_MENU_SETTINGS_KEY = SETTINGS_KEY;
+export const CMS_MENU_SETTINGS_ZONE_PREFIX = ZONE_PREFIX;
 
 export const getCmsMenuSettingsKey = (domainId?: string | null): string => {
   if (!domainId) return CMS_MENU_SETTINGS_KEY;

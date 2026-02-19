@@ -17,7 +17,9 @@ import {
   TRIGGER_EVENTS,
   appendLocalRun,
   entityApi,
+  evaluateAiPathsValidationPreflight,
   evaluateGraphWithIteratorAutoContinue,
+  normalizeAiPathsValidationConfig,
   runsApi,
 } from '@/features/ai/ai-paths/lib';
 import {
@@ -571,6 +573,29 @@ export function useAiPathTriggerEvent(): {
 
       reportProgress({ status: 'running', progress: 0 });
 
+      const validationConfig = normalizeAiPathsValidationConfig(
+        selectedConfig.aiPathsValidation
+      );
+      const validationReport = evaluateAiPathsValidationPreflight({
+        nodes,
+        edges,
+        config: validationConfig,
+      });
+      if (validationReport.enabled && validationReport.blocked) {
+        reportProgress({ status: 'error', progress: 0 });
+        toast(
+          `Validation blocked run (score ${validationReport.score}). Fix Path Settings validation findings.`,
+          { variant: 'error' }
+        );
+        return;
+      }
+      if (validationReport.enabled && validationReport.shouldWarn) {
+        toast(
+          `Validation warning: score ${validationReport.score} with ${validationReport.failedRules} failed rule(s).`,
+          { variant: 'warning' }
+        );
+      }
+
       const persistRunSnapshot = async (runAt: string): Promise<void> => {
         try {
           const nextUiState = {
@@ -710,6 +735,8 @@ export function useAiPathTriggerEvent(): {
           triggerLabel: args.triggerLabel ?? null,
           historyRetentionPasses,
           strictFlowMode: selectedConfig.strictFlowMode !== false,
+          aiPathsValidation: validationConfig,
+          validationPreflight: validationReport,
           ...(args.source ? { sourceInfo: args.source } : {}),
           ...(args.extras ?? {}),
         },

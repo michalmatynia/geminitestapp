@@ -65,7 +65,7 @@ const normalizePathToken = (value: string): string =>
     .replace(/^\$\[/, '[');
 
 const resolvePathValue = (input: unknown, path: string | undefined): unknown => {
-  if (!path || !path.trim()) return input;
+  if (!path?.trim()) return input;
   const normalizedPath = normalizePathToken(path);
   if (!normalizedPath) return input;
 
@@ -130,19 +130,6 @@ const normalizeEntityType = (value: unknown): string => {
   if (normalized === 'products') return 'product';
   if (normalized === 'notes') return 'note';
   return normalized;
-};
-
-const getNodeValue = (
-  node: AiNode,
-  graphContext: Record<string, unknown>,
-  condition: AiPathsValidationCondition
-): unknown => {
-  const path = condition.valuePath ?? condition.field;
-  if (!path) return undefined;
-  if ((condition.module ?? '').trim().toLowerCase() === 'graph') {
-    return resolvePathValue(graphContext, path);
-  }
-  return resolvePathValue(node, path);
 };
 
 const edgeToNodeId = (edge: Edge): string | null => {
@@ -297,7 +284,7 @@ const evaluateCondition = (args: {
           if (condition.sourceNodeId && sourceId !== condition.sourceNodeId) return false;
           if (condition.fromNodeType) {
             const sourceNode = nodesById.get(sourceId);
-            if (!sourceNode || sourceNode.type !== condition.fromNodeType) return false;
+            if (sourceNode?.type !== condition.fromNodeType) return false;
           }
           return true;
         });
@@ -313,7 +300,7 @@ const evaluateCondition = (args: {
           if (condition.targetNodeId && targetId !== condition.targetNodeId) return false;
           if (condition.toNodeType) {
             const targetNode = nodesById.get(targetId);
-            if (!targetNode || targetNode.type !== condition.toNodeType) return false;
+            if (targetNode?.type !== condition.toNodeType) return false;
           }
           return true;
         });
@@ -492,8 +479,7 @@ export const evaluateAiPathsValidationPreflight = ({
 
     const matchingNodes = nodes.filter((node: AiNode): boolean => matchesRuleNode(rule, node));
     if (matchingNodes.length === 0) {
-      // Evaluate once against null so misconfigured rules can still fail visibly.
-      evaluateAndCollectFinding(rule, null);
+      // Node-scoped rule with no matching nodes is treated as not-applicable.
       return;
     }
     matchingNodes.forEach((node: AiNode): void => {

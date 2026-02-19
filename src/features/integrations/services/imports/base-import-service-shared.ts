@@ -11,8 +11,7 @@ import type {
   BaseImportRunParams,
   BaseImportRunStatus,
 } from '@/features/integrations/types/base-import-runs';
-import type { ProductRecord } from '@/features/products/types';
-import type { ProductCreateInput } from '@/features/products/validations/schemas';
+import type { ProductDto as ProductRecord, CreateProductDto as ProductCreateInput } from '@/shared/contracts/products';
 
 export const BASE_DETAILS_BATCH_SIZE = 100;
 export const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);

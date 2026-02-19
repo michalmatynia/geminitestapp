@@ -21,6 +21,11 @@ import {
   PARAMETER_INFERENCE_TRIGGER_BUTTON_ID,
   PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME,
 } from './settings-store-parameter-inference';
+import {
+  needsTranslationEnPlConfigUpgrade,
+  TRANSLATION_EN_PL_PATH_ID,
+  upgradeTranslationEnPlConfig,
+} from './settings-store-translation-en-pl';
 
 export type AiPathsSettingRecord = SettingRecordDto;
 
@@ -869,6 +874,37 @@ const ensureDescriptionInferenceLiteDefaults = async (
   );
 };
 
+const ensureTranslationEnPlDefaults = async (
+  records: AiPathsSettingRecord[]
+): Promise<AiPathsSettingRecord[]> => {
+  if (records.length === 0) return records;
+  const map = new Map<string, string>(
+    records.map(
+      (entry: AiPathsSettingRecord): [string, string] => [entry.key, entry.value]
+    )
+  );
+  const updates: AiPathsSettingRecord[] = [];
+  const key = `${AI_PATHS_CONFIG_KEY_PREFIX}${TRANSLATION_EN_PL_PATH_ID}`;
+  const raw = map.get(key);
+  if (!raw || !needsTranslationEnPlConfigUpgrade(raw)) {
+    return records;
+  }
+
+  const upgraded = upgradeTranslationEnPlConfig(raw);
+  if (!upgraded || upgraded === raw) {
+    return records;
+  }
+  map.set(key, upgraded);
+  updates.push({ key, value: upgraded });
+  await upsertMongoAiPathsSettingsBatch(updates);
+  return Array.from(map.entries()).map(
+    ([nextKey, nextValue]): AiPathsSettingRecord => ({
+      key: nextKey,
+      value: nextValue,
+    })
+  );
+};
+
 const repairPathIndexFromConfigs = (records: Map<string, string>): string | null => {
   const existingIndexRaw = records.get(AI_PATHS_INDEX_KEY);
   const existingIndex = parsePathMetas(existingIndexRaw);
@@ -1046,9 +1082,22 @@ const hasDescriptionInferenceLiteDefaults = (
   return locations.includes('product_modal');
 };
 
+const hasTranslationEnPlDefaults = (records: AiPathsSettingRecord[]): boolean => {
+  if (records.length === 0) return false;
+  const map = new Map<string, string>(
+    records.map(
+      (entry: AiPathsSettingRecord): [string, string] => [entry.key, entry.value]
+    )
+  );
+  const raw = map.get(`${AI_PATHS_CONFIG_KEY_PREFIX}${TRANSLATION_EN_PL_PATH_ID}`);
+  if (!raw) return true;
+  return !needsTranslationEnPlConfigUpgrade(raw);
+};
+
 const hasAiPathsSeedDefaults = (records: AiPathsSettingRecord[]): boolean =>
   hasParameterInferenceDefaults(records) &&
-  hasDescriptionInferenceLiteDefaults(records);
+  hasDescriptionInferenceLiteDefaults(records) &&
+  hasTranslationEnPlDefaults(records);
 
 export async function listAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
   assertMongoConfigured();
@@ -1059,8 +1108,11 @@ export async function listAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
   const compacted = await compactOversizedPathConfigs(settings);
   const consistent = await ensurePathIndexConsistency(compacted);
   const withParameterDefaults = await ensureParameterInferenceDefaults(consistent);
-  const ensuredDefaults = await ensureDescriptionInferenceLiteDefaults(
+  const withDescriptionDefaults = await ensureDescriptionInferenceLiteDefaults(
     withParameterDefaults
+  );
+  const ensuredDefaults = await ensureTranslationEnPlDefaults(
+    withDescriptionDefaults
   );
   setCachedAiPathsSettings(ensuredDefaults);
   return ensuredDefaults;

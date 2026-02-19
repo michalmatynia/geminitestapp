@@ -1,4 +1,4 @@
-import type { ProductCategoryDto } from '@/features/products';
+import type { ProductCategoryDto } from '@/shared/contracts/products';
 import type {
   ExternalCategoryDto,
   ExternalCategoryWithChildrenDto,

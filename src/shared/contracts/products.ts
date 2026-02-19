@@ -405,6 +405,46 @@ export const productWithImagesSchema = productSchema
 
 export type ProductWithImagesDto = z.infer<typeof productWithImagesSchema>;
 
+/**
+ * Product Input Contracts (Modular/API)
+ */
+export const productCreateInputSchema = z.object({
+  id: z.string().nullable().optional(),
+  baseProductId: z.string().nullable().optional(),
+  defaultPriceGroupId: z.string().nullable().optional(),
+  sku: z.string().min(1, 'SKU is required for new products'),
+  ean: z.string().nullable().optional(),
+  gtin: z.string().nullable().optional(),
+  asin: z.string().nullable().optional(),
+  name_en: z.string().nullable().optional(),
+  name_pl: z.string().nullable().optional(),
+  name_de: z.string().nullable().optional(),
+  description_en: z.string().nullable().optional(),
+  description_pl: z.string().nullable().optional(),
+  description_de: z.string().nullable().optional(),
+  price: z.number().int().min(0).optional(),
+  supplierName: z.string().nullable().optional(),
+  supplierLink: z.string().nullable().optional(),
+  priceComment: z.string().nullable().optional(),
+  stock: z.number().int().min(0).optional(),
+  sizeLength: z.number().int().min(0).optional(),
+  sizeWidth: z.number().int().min(0).optional(),
+  weight: z.number().int().min(0).optional(),
+  length: z.number().int().min(0).optional(),
+  categoryId: z.string().nullable().optional(),
+  imageLinks: z.array(z.string()).optional(),
+  imageBase64s: z.array(z.string()).optional(),
+  parameters: z.array(productParameterValueSchema).optional(),
+});
+
+export type ProductCreateInputDto = z.infer<typeof productCreateInputSchema>;
+
+export const productUpdateInputSchema = productCreateInputSchema.partial().extend({
+  sku: z.string().optional(),
+});
+
+export type ProductUpdateInputDto = z.infer<typeof productUpdateInputSchema>;
+
 export const createProductSchema = productSchema.omit({
   id: true,
   createdAt: true,

@@ -82,3 +82,6 @@ export const menuSettingsSchema = z.object({
 });
 
 export type MenuSettingsDto = z.infer<typeof menuSettingsSchema>;
+
+export const CMS_MENU_SETTINGS_KEY = 'cms_menu_settings.v1';
+export const CMS_MENU_SETTINGS_ZONE_PREFIX = 'cms_menu_settings.v1.zone.';

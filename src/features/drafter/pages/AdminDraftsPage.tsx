@@ -30,7 +30,7 @@ function AdminDraftsPageContent(): React.JSX.Element {
         isOpen={isCreatorOpen}
         onClose={closeCreator}
         onSuccess={() => {}}
-        editingDraftId={editingDraftId}
+        item={editingDraftId}
         formRef={formRef}
       />
     </div>

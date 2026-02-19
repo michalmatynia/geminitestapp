@@ -25,6 +25,7 @@ import {
 } from '@/features/ai/image-studio/utils/generation-cost';
 import { parseImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
+import type { ImageStudioRunDispatchModeDto as ImageStudioRunDispatchMode } from '@/shared/contracts/image-studio';
 import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';
 import { publishRunEvent } from '@/shared/lib/redis-pubsub';
 
@@ -33,8 +34,6 @@ const LOG_SOURCE = 'image-studio-run-queue';
 type ImageStudioRunJobData = {
   runId: string;
 };
-
-export type ImageStudioRunDispatchMode = 'queued' | 'inline';
 
 type GenerationSourceContext = {
   sourceSlotIds: string[];

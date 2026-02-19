@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import {
+  evaluateAiPathsValidationPreflight,
+  normalizeAiPathsValidationConfig,
+} from '@/features/ai/ai-paths/lib';
 import { enforceAiPathsRunRateLimit, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
 import { enqueuePathRun } from '@/features/ai/ai-paths/services/path-run-service';
 import { startAiPathRunQueue } from '@/features/jobs/server';
@@ -55,12 +59,41 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     throw badRequestError('Nodes and edges are required to enqueue a run.');
   }
 
+  const normalizedNodes = nodes as AiNode[];
+  const normalizedEdges = edges as Edge[];
+  const metaRecord =
+    normalizedMeta && typeof normalizedMeta === 'object'
+      ? (normalizedMeta as Record<string, unknown>)
+      : {};
+  const validationConfig = normalizeAiPathsValidationConfig(
+    (metaRecord['aiPathsValidation'] as Record<string, unknown> | undefined) ??
+      undefined
+  );
+  const validationReport = evaluateAiPathsValidationPreflight({
+    nodes: normalizedNodes,
+    edges: normalizedEdges,
+    config: validationConfig,
+  });
+  if (validationReport.enabled && validationReport.blocked) {
+    const finding = validationReport.findings[0];
+    throw badRequestError(
+      finding
+        ? `Validation blocked run: ${finding.ruleTitle}.`
+        : `Validation blocked run: score ${validationReport.score} below threshold ${validationReport.blockThreshold}.`
+    );
+  }
+  normalizedMeta = {
+    ...metaRecord,
+    aiPathsValidation: validationConfig,
+    validationPreflight: validationReport,
+  };
+
   const run = await enqueuePathRun({
     userId: access.userId,
     pathId: rest.pathId,
     pathName: rest.pathName ?? null,
-    nodes: nodes as AiNode[],
-    edges: edges as Edge[],
+    nodes: normalizedNodes,
+    edges: normalizedEdges,
     ...(rest.triggerEvent ? { triggerEvent: rest.triggerEvent } : {}),
     ...(rest.triggerNodeId ? { triggerNodeId: rest.triggerNodeId } : {}),
     triggerContext: rest.triggerContext ?? null,

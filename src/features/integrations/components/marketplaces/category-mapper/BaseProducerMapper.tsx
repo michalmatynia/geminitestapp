@@ -12,7 +12,7 @@ import {
   useProducerMappings,
 } from '@/features/integrations/hooks/useMarketplaceQueries';
 import { useProducers } from '@/features/products/hooks/useProductMetadataQueries';
-import type { Producer } from '@/features/products/types';
+import type { ProducerDto as Producer } from '@/shared/contracts/products';
 
 import { GenericItemMapper, type GenericItemMapperConfig } from './GenericItemMapper';
 

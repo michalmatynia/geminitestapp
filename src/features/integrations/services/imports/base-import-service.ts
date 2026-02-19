@@ -62,7 +62,7 @@ import { getCatalogRepository } from '@/features/products/services/catalog-repos
 import { getParameterRepository } from '@/features/products/services/parameter-repository';
 import { getProductDataProvider } from '@/features/products/services/product-provider';
 import { getProductRepository } from '@/features/products/services/product-repository';
-import type { ProductWithImages } from '@/features/products/types';
+import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 export type { StartBaseImportRunInput };

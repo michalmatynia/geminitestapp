@@ -9,6 +9,10 @@ import {
   initialNodes,
   triggers,
 } from '../constants';
+import {
+  DEFAULT_AI_PATHS_VALIDATION_CONFIG,
+  normalizeAiPathsValidationConfig,
+} from '../validation-engine';
 
 export const createPathId = (): string =>
   `path_${Math.random().toString(36).slice(2, 8)}`;
@@ -28,6 +32,9 @@ export const createDefaultPathConfig = (id: string): PathConfig => {
     flowIntensity: 'medium',
     runMode: 'block',
     strictFlowMode: true,
+    aiPathsValidation: normalizeAiPathsValidationConfig(
+      DEFAULT_AI_PATHS_VALIDATION_CONFIG
+    ),
     nodes: initialNodes,
     edges: initialEdges,
     updatedAt: now,
@@ -216,6 +223,9 @@ export const createAiDescriptionPath = (id: string): PathConfig => {
     flowIntensity: 'medium',
     runMode: 'block',
     strictFlowMode: true,
+    aiPathsValidation: normalizeAiPathsValidationConfig(
+      DEFAULT_AI_PATHS_VALIDATION_CONFIG
+    ),
     nodes,
     edges,
     updatedAt: now,

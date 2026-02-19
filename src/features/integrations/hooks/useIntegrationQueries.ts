@@ -3,7 +3,6 @@
 import { z } from 'zod';
 
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright/constants/playwright';
-import type { PlaywrightPersona } from '@/features/playwright/types';
 import { normalizePlaywrightPersonas } from '@/features/playwright/utils/personas';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
 import {
@@ -13,6 +12,7 @@ import {
   integrationSchema, 
   integrationConnectionSchema,
 } from '@/shared/contracts/integrations';
+import type { PlaywrightPersonaDto as PlaywrightPersona } from '@/shared/contracts/playwright';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { integrationKeys, playwrightKeys } from '@/shared/lib/query-key-exports';

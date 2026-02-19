@@ -252,6 +252,15 @@ export const errorCategorySchema = z.enum([
 
 export type ErrorCategoryDto = z.infer<typeof errorCategorySchema>;
 
+export const ERROR_CATEGORY = {
+  SYSTEM: 'SYSTEM',
+  USER: 'USER',
+  VALIDATION: 'VALIDATION',
+  EXTERNAL: 'EXTERNAL',
+  AI: 'AI',
+  DATABASE: 'DATABASE',
+} as const;
+
 export const suggestedActionSchema = z.object({
   label: z.string(),
   description: z.string(),

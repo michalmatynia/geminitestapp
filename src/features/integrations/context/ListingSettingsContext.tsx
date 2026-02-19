@@ -9,7 +9,7 @@ import React, {
   useState,
 } from 'react';
 
-import type { BaseInventory, Template } from '@/features/data-import-export/types/imports';
+import type { BaseInventoryDto as BaseInventory, TemplateDto as Template } from '@/shared/contracts/integrations';
 import { DEFAULT_TRADERA_SYSTEM_SETTINGS } from '@/features/integrations/constants/tradera';
 import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
 import { internalError } from '@/shared/errors/app-error';

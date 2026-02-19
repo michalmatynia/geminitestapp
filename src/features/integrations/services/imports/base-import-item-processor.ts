@@ -37,16 +37,17 @@ import type {
 import { getProducerRepository } from '@/features/products/services/producer-repository';
 import { getProductRepository } from '@/features/products/services/product-repository';
 import { getTagRepository } from '@/features/products/services/tag-repository';
-import type { ProductRecord, ProductWithImages } from '@/features/products/types';
+import type {
+  ProductDto as ProductRecord,
+  ProductWithImagesDto as ProductWithImages,
+  CreateProductDto as ProductCreateInput,
+  UpdateProductDto as ProductUpdateInput,
+} from '@/shared/contracts/products';
 import type { ParameterRepository } from '@/features/products/types/services/parameter-repository';
 import {
   validateProductCreate,
   validateProductUpdate,
 } from '@/features/products/validations';
-import type {
-  ProductCreateInput,
-  ProductUpdateInput,
-} from '@/features/products/validations/schemas';
 
 export const resolveProducerAndTagLookups = async (
   connectionId: string

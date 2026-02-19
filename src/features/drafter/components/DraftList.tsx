@@ -11,7 +11,7 @@ import { useDraftQueries, useDeleteDraft } from '@/features/drafter/hooks/useDra
 import { ICON_LIBRARY_MAP } from '@/features/icons';
 import { logClientError } from '@/features/observability';
 import type { ProductDraftDto } from '@/features/products/types/drafts';
-import { Button, ListPanel, useToast, SimpleSettingsList } from '@/shared/ui';
+import { Button, ListPanel, useToast, SimpleSettingsList, StatusBadge } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 
 import { useDrafterContext } from '../context/DrafterContext';
@@ -78,25 +78,12 @@ export function DraftList(): React.JSX.Element {
                 {draft.name}
               </h3>
               {draft.active !== undefined && (
-                <span
-                  className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${
-                    draft.active
-                      ? 'bg-emerald-500/10 text-emerald-500'
-                      : 'bg-gray-500/10 text-gray-500'
-                  }`}
-                >
-                  {draft.active ? (
-                    <>
-                      <CheckIcon className='h-3 w-3' />
-                      Active
-                    </>
-                  ) : (
-                    <>
-                      <XIcon className='h-3 w-3' />
-                      Inactive
-                    </>
-                  )}
-                </span>
+                <StatusBadge 
+                  status={draft.active ? 'Active' : 'Inactive'} 
+                  variant={draft.active ? 'active' : 'neutral'} 
+                  size='sm'
+                  className='font-bold'
+                />
               )}
             </div>
           ),

@@ -3,6 +3,7 @@ import type {
   ColorSchemeDto,
   ThemeSettingsDto,
 } from '@/shared/contracts/cms-theme';
+import { CMS_THEME_SETTINGS_KEY as SETTING_KEY } from '@/shared/contracts/cms-theme';
 
 export type ColorSchemeColors = ColorSchemeColorsDto;
 
@@ -10,7 +11,7 @@ export type ColorScheme = ColorSchemeDto;
 
 export type ThemeSettings = ThemeSettingsDto;
 
-export const CMS_THEME_SETTINGS_KEY = 'cms_theme_settings.v1';
+export const CMS_THEME_SETTINGS_KEY = SETTING_KEY;
 
 export const DEFAULT_THEME: ThemeSettings = {
   primaryColor: '#3b82f6',

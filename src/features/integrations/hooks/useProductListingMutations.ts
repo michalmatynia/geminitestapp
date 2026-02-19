@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import type { ImageTransformOptions } from '@/features/data-import-export';
+import type { ImageTransformOptionsDto as ImageTransformOptions } from '@/shared/contracts/integrations';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import type { ProductListingWithDetails } from '@/features/integrations/types/listings';
 import { invalidateProducts } from '@/features/products/hooks/productCache';

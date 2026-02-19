@@ -1082,11 +1082,13 @@ export type AiPathsValidationPolicyDto = z.infer<
 >;
 
 export const aiPathsValidationConfigSchema = z.object({
+  schemaVersion: z.number().int().positive().optional(),
   enabled: z.boolean().optional(),
   policy: aiPathsValidationPolicySchema.optional(),
   warnThreshold: z.number().optional(),
   blockThreshold: z.number().optional(),
   baseScore: z.number().optional(),
+  lastEvaluatedAt: z.string().nullable().optional(),
   collectionMap: z.record(z.string(), z.string()).optional(),
   docsSources: z.array(z.string()).optional(),
   rules: z.array(aiPathsValidationRuleSchema).optional(),

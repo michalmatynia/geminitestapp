@@ -7,6 +7,7 @@ import type {
   PathConfig,
   PathExecutionMode,
   PathFlowIntensity,
+  AiPathsValidationConfig,
   PathMeta,
   PathRunMode,
   RuntimeState,
@@ -46,6 +47,7 @@ type UseAiPathsSettingsCleanupActionsInput = {
   flowIntensity: PathFlowIntensity;
   runMode: PathRunMode;
   strictFlowMode: boolean;
+  aiPathsValidation: AiPathsValidationConfig;
   isPathActive: boolean;
   parserSamples: Record<string, ParserSampleState>;
   updaterSamples: Record<string, UpdaterSampleState>;
@@ -96,6 +98,7 @@ export function useAiPathsSettingsCleanupActions({
   flowIntensity,
   runMode,
   strictFlowMode,
+  aiPathsValidation,
   isPathActive,
   parserSamples,
   updaterSamples,
@@ -140,6 +143,7 @@ export function useAiPathsSettingsCleanupActions({
           flowIntensity,
           runMode,
           strictFlowMode,
+          aiPathsValidation,
           nodes,
           edges: [],
           updatedAt,
@@ -197,6 +201,7 @@ export function useAiPathsSettingsCleanupActions({
     reportAiPathsError,
     runMode,
     strictFlowMode,
+    aiPathsValidation,
     selectedNodeId,
     setPathConfigs,
     setEdges,
@@ -234,6 +239,7 @@ export function useAiPathsSettingsCleanupActions({
           flowIntensity,
           runMode,
           strictFlowMode,
+          aiPathsValidation,
           nodes,
           edges,
           updatedAt,
@@ -292,6 +298,7 @@ export function useAiPathsSettingsCleanupActions({
     reportAiPathsError,
     runMode,
     strictFlowMode,
+    aiPathsValidation,
     selectedNodeId,
     setPathConfigs,
     setRuntimeState,
@@ -332,6 +339,7 @@ export function useAiPathsSettingsCleanupActions({
           flowIntensity,
           runMode,
           strictFlowMode,
+          aiPathsValidation,
           nodes,
           edges,
           updatedAt,
@@ -390,6 +398,7 @@ export function useAiPathsSettingsCleanupActions({
     reportAiPathsError,
     runMode,
     strictFlowMode,
+    aiPathsValidation,
     runtimeState,
     selectedNodeId,
     setPathConfigs,
@@ -430,6 +439,7 @@ export function useAiPathsSettingsCleanupActions({
       flowIntensity,
       runMode,
       strictFlowMode,
+      aiPathsValidation,
       nodes,
       edges,
       updatedAt,
@@ -483,6 +493,7 @@ export function useAiPathsSettingsCleanupActions({
     reportAiPathsError,
     runMode,
     strictFlowMode,
+    aiPathsValidation,
     runtimeState,
     selectedNodeId,
     setPathConfigs,

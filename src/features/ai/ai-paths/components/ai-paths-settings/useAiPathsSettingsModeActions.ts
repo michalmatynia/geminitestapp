@@ -7,6 +7,7 @@ import type {
   PathConfig,
   PathExecutionMode,
   PathFlowIntensity,
+  AiPathsValidationConfig,
   PathMeta,
   PathRunMode,
   RuntimeState,
@@ -43,6 +44,7 @@ type UseAiPathsSettingsModeActionsInput = {
   setRunMode: React.Dispatch<React.SetStateAction<PathRunMode>>;
   strictFlowMode: boolean;
   setStrictFlowMode: React.Dispatch<React.SetStateAction<boolean>>;
+  aiPathsValidation: AiPathsValidationConfig;
   historyRetentionPasses: number;
   setHistoryRetentionPasses: React.Dispatch<React.SetStateAction<number>>;
   nodes: AiNode[];
@@ -97,6 +99,7 @@ export function useAiPathsSettingsModeActions({
   setRunMode,
   strictFlowMode,
   setStrictFlowMode,
+  aiPathsValidation,
   historyRetentionPasses,
   setHistoryRetentionPasses,
   nodes,
@@ -266,6 +269,7 @@ export function useAiPathsSettingsModeActions({
       flowIntensity,
       runMode,
       strictFlowMode,
+      aiPathsValidation,
       nodes,
       edges,
       updatedAt,
@@ -328,6 +332,7 @@ export function useAiPathsSettingsModeActions({
     reportAiPathsError,
     runMode,
     strictFlowMode,
+    aiPathsValidation,
     runtimeState,
     selectedNodeId,
     setIsPathLocked,
@@ -352,6 +357,7 @@ export function useAiPathsSettingsModeActions({
       flowIntensity,
       runMode,
       strictFlowMode,
+      aiPathsValidation,
       nodes,
       edges,
       updatedAt,
@@ -414,6 +420,7 @@ export function useAiPathsSettingsModeActions({
     reportAiPathsError,
     runMode,
     strictFlowMode,
+    aiPathsValidation,
     runtimeState,
     selectedNodeId,
     setIsPathActive,

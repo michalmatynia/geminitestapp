@@ -49,7 +49,7 @@ import {
 import { normalizeSteps } from '@/features/integrations/utils/connections';
 import { logClientError } from '@/features/observability';
 import { defaultPlaywrightSettings } from '@/features/playwright';
-import type { PlaywrightPersona } from '@/features/playwright';
+import type { PlaywrightPersonaDto as PlaywrightPersona } from '@/shared/contracts/playwright';
 import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
 

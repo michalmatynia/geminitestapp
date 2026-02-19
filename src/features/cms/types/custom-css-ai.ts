@@ -1,11 +1,11 @@
-export type CustomCssAiProvider = 'model' | 'agent';
+import type {
+  CmsCssAiProviderDto,
+  CmsCssAiConfigDto,
+} from '@/shared/contracts/cms';
 
-export interface CustomCssAiConfig {
-  provider?: CustomCssAiProvider;
-  modelId?: string;
-  agentId?: string;
-  prompt?: string;
-}
+export type CustomCssAiProvider = CmsCssAiProviderDto;
+
+export type CustomCssAiConfig = CmsCssAiConfigDto;
 
 export const DEFAULT_CUSTOM_CSS_AI_CONFIG: CustomCssAiConfig = {
   provider: 'model',

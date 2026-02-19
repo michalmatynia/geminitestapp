@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { Asset3DRecord } from '@/features/viewer3d/types';
-import { Tabs, TabsContent, TabsList, TabsTrigger, Button } from '@/shared/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger, Button, Tag } from '@/shared/ui';
 
 import { FileManagerGrid } from './FileManagerGrid';
 import { useFileManager } from '../../contexts/FileManagerContext';
@@ -45,9 +45,7 @@ export function FileManagerContent(): React.JSX.Element {
               {(asset.tags ?? []).length > 0 && (
                 <div className='mt-2 flex flex-wrap gap-1'>
                   {asset.tags.slice(0, 4).map((tag: string) => (
-                    <span key={tag} className='rounded-full bg-gray-800/70 px-2 py-0.5 text-[10px] text-gray-400'>
-                      #{tag}
-                    </span>
+                    <Tag key={tag} label={`#${tag}`} size='xs' className='text-[10px]' />
                   ))}
                 </div>
               )}

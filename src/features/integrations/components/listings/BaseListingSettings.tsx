@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { BaseInventory, Template } from '@/features/data-import-export/types/imports';
+import type { BaseInventoryDto as BaseInventory, TemplateDto as Template } from '@/shared/contracts/integrations';
 import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
 import { SelectSimple, FormField, Alert, ToggleRow } from '@/shared/ui';
 

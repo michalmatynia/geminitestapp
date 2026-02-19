@@ -2,6 +2,7 @@ import React from 'react';
 
 import type { ListingAttempt, ListingJob, ProductJob } from '@/shared/types/domain/listing-jobs';
 import type { EntityModalProps } from '@/shared/types/modal-props';
+import { StatusBadge } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 export interface ExportJobDetailItem {
@@ -41,12 +42,12 @@ export function ExportJobDetailModal({
           <h3 className='text-sm font-medium text-white mb-4'>Listing Information</h3>
           <div className='grid grid-cols-2 gap-y-4'>
             <div>
-              <p className='text-gray-500'>External ID</p>
+              <p className='text-gray-500 mb-1'>External ID</p>
               <p className='text-gray-200 font-mono'>{listing.externalListingId || 'n/a'}</p>
             </div>
             <div>
-              <p className='text-gray-500'>Status</p>
-              <p className='text-gray-200'>{selectedStatus}</p>
+              <p className='text-gray-500 mb-1'>Status</p>
+              <StatusBadge status={selectedStatus} />
             </div>
             <div>
               <p className='text-gray-500'>Source</p>

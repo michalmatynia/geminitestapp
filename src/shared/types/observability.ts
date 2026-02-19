@@ -3,16 +3,10 @@ import type {
   SuggestedActionDto,
   ErrorContextDto,
 } from '../contracts/observability';
+import { ERROR_CATEGORY as ERROR_CATEGORY_DTO } from '../contracts/observability';
 
 export type ErrorCategory = ErrorCategoryDto;
-export const ERROR_CATEGORY = {
-  SYSTEM: 'SYSTEM',
-  USER: 'USER',
-  VALIDATION: 'VALIDATION',
-  EXTERNAL: 'EXTERNAL',
-  AI: 'AI',
-  DATABASE: 'DATABASE',
-} as const;
+export const ERROR_CATEGORY = ERROR_CATEGORY_DTO;
 
 export type SuggestedAction = SuggestedActionDto;
 

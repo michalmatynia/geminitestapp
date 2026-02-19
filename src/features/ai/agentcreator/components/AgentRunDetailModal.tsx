@@ -9,7 +9,7 @@ import type {
   AgentSnapshot,
 } from '@/shared/types/domain/chatbot';
 import type { EntityModalProps } from '@/shared/types/modal-props';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
+import { Tabs, TabsList, TabsTrigger, TabsContent, StatusBadge } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 export interface AgentRunDetailModalProps extends EntityModalProps<AiPathRunRecord> {
@@ -52,8 +52,8 @@ export function AgentRunDetailModal({
             <h3 className='text-sm font-medium text-white mb-2'>Run Information</h3>
             <div className='grid grid-cols-2 gap-4 text-xs'>
               <div>
-                <p className='text-gray-500'>Status</p>
-                <p className='text-gray-200'>{selectedAgentRun.status}</p>
+                <p className='text-gray-500 mb-1'>Status</p>
+                <StatusBadge status={selectedAgentRun.status} />
               </div>
               <div>
                 <p className='text-gray-500'>Model</p>

@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback } from 'react';
 import { Dispatch, SetStateAction } from 'react';
 
-import type { ProductWithImages } from '@/features/products';
+import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateListingBadges } from '@/shared/lib/query-invalidation';

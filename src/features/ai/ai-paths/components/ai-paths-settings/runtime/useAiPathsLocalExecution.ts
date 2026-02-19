@@ -13,6 +13,7 @@ import {
   PATH_DEBUG_PREFIX,
   TRIGGER_EVENTS,
   appendLocalRun,
+  evaluateAiPathsValidationPreflight,
   evaluateGraph,
   inspectPathDependencies,
   GraphExecutionError,
@@ -140,6 +141,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
                 executionMode: args.executionMode,
                 runMode: args.runMode,
                 strictFlowMode: args.strictFlowMode,
+                aiPathsValidation: args.aiPathsValidation,
                 nodes: args.normalizedNodes,
                 edges: args.sanitizedEdges,
                 updatedAt: finishedAt,
@@ -209,6 +211,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
                   executionMode: args.executionMode,
                   runMode: args.runMode,
                   strictFlowMode: args.strictFlowMode,
+                  aiPathsValidation: args.aiPathsValidation,
                   nodes: args.normalizedNodes,
                   edges: args.sanitizedEdges,
                   updatedAt: finishedAt,
@@ -269,6 +272,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
                 executionMode: args.executionMode,
                 runMode: args.runMode,
                 strictFlowMode: args.strictFlowMode,
+                aiPathsValidation: args.aiPathsValidation,
                 nodes: args.normalizedNodes,
                 edges: args.sanitizedEdges,
                 updatedAt: finishedAt,
@@ -585,6 +589,87 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
     if (!args.isPathActive) {
       args.toast('This path is deactivated. Activate it to run.', { variant: 'info' });
       return;
+    }
+    const validationReport = evaluateAiPathsValidationPreflight({
+      nodes: args.normalizedNodes,
+      edges: args.sanitizedEdges,
+      config: args.aiPathsValidation,
+    });
+    if (validationReport.enabled && validationReport.blocked) {
+      const timestamp = new Date().toISOString();
+      const primaryFinding = validationReport.findings[0];
+      const blockedMessage = primaryFinding
+        ? `Validation blocked run: ${primaryFinding.ruleTitle}.`
+        : `Validation blocked run: score ${validationReport.score} below threshold ${validationReport.blockThreshold}.`;
+      args.appendRuntimeEvent({
+        source: 'local',
+        kind: 'run_blocked',
+        level: 'warn',
+        timestamp,
+        message: blockedMessage,
+        nodeId: triggerNode.id,
+        nodeType: triggerNode.type,
+        nodeTitle: triggerNode.title ?? null,
+        metadata: {
+          validation: {
+            score: validationReport.score,
+            policy: validationReport.policy,
+            warnThreshold: validationReport.warnThreshold,
+            blockThreshold: validationReport.blockThreshold,
+            failedRules: validationReport.failedRules,
+            findings: validationReport.findings.slice(0, 5).map((finding) => ({
+              ruleId: finding.ruleId,
+              ruleTitle: finding.ruleTitle,
+              severity: finding.severity,
+              message: finding.message,
+            })),
+          },
+        },
+      });
+      args.setNodeStatus({
+        nodeId: triggerNode.id,
+        status: 'blocked',
+        source: 'local',
+        nodeType: triggerNode.type,
+        nodeTitle: triggerNode.title ?? null,
+        kind: 'node_status',
+        level: 'warn',
+        message: blockedMessage,
+        metadata: {
+          validationBlocked: true,
+          validationScore: validationReport.score,
+          validationBlockThreshold: validationReport.blockThreshold,
+          failedRules: validationReport.failedRules,
+        },
+      });
+      args.toast(
+        `Validation blocked run (score ${validationReport.score}). Fix validation findings in Path Settings.`,
+        { variant: 'error' },
+      );
+      return;
+    }
+    if (validationReport.enabled && validationReport.shouldWarn) {
+      const warningMessage = `Validation warning: score ${validationReport.score} with ${validationReport.failedRules} failed rule(s).`;
+      args.appendRuntimeEvent({
+        source: 'local',
+        kind: 'run_warning',
+        level: 'warn',
+        timestamp: new Date().toISOString(),
+        message: warningMessage,
+        nodeId: triggerNode.id,
+        nodeType: triggerNode.type,
+        nodeTitle: triggerNode.title ?? null,
+        metadata: {
+          validation: {
+            score: validationReport.score,
+            policy: validationReport.policy,
+            warnThreshold: validationReport.warnThreshold,
+            blockThreshold: validationReport.blockThreshold,
+            failedRules: validationReport.failedRules,
+          },
+        },
+      });
+      args.toast(warningMessage, { variant: 'warning' });
     }
     if (args.strictFlowMode) {
       const dependencyReport = inspectPathDependencies(args.normalizedNodes, args.sanitizedEdges);

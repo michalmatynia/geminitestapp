@@ -4,8 +4,10 @@ import {
   AI_PATHS_HISTORY_RETENTION_DEFAULT,
   AI_PATHS_HISTORY_RETENTION_MAX,
   AI_PATHS_HISTORY_RETENTION_MIN,
+  evaluateAiPathsValidationPreflight,
   evaluateGraphWithIteratorAutoContinue,
   inspectPathDependencies,
+  normalizeAiPathsValidationConfig,
 } from '@/features/ai/ai-paths/lib';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
@@ -438,6 +440,55 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   const toast = (): void => {};
 
   try {
+    const validationReport = evaluateAiPathsValidationPreflight({
+      nodes,
+      edges,
+      config: normalizeAiPathsValidationConfig(
+        (
+          run.meta as Record<string, unknown> | null
+        )?.['aiPathsValidation'] as Record<string, unknown> | undefined
+      ),
+    });
+    if (validationReport.enabled && validationReport.blocked) {
+      await repo.createRunEvent({
+        runId: run.id,
+        level: 'error',
+        message: 'Run blocked by AI Paths validation preflight.',
+        metadata: {
+          validation: {
+            score: validationReport.score,
+            policy: validationReport.policy,
+            warnThreshold: validationReport.warnThreshold,
+            blockThreshold: validationReport.blockThreshold,
+            failedRules: validationReport.failedRules,
+            findings: validationReport.findings.slice(0, 8),
+          },
+          runStartedAt,
+        },
+      });
+      throw new Error(
+        `Validation blocked run: score ${validationReport.score} below threshold ${validationReport.blockThreshold}.`
+      );
+    }
+    if (validationReport.enabled && validationReport.shouldWarn) {
+      await repo.createRunEvent({
+        runId: run.id,
+        level: 'warn',
+        message: `Validation warning: score ${validationReport.score} with ${validationReport.failedRules} failed rule(s).`,
+        metadata: {
+          validation: {
+            score: validationReport.score,
+            policy: validationReport.policy,
+            warnThreshold: validationReport.warnThreshold,
+            blockThreshold: validationReport.blockThreshold,
+            failedRules: validationReport.failedRules,
+            findings: validationReport.findings.slice(0, 5),
+          },
+          runStartedAt,
+        },
+      });
+    }
+
     if (strictFlowMode) {
       const dependencyReport = inspectPathDependencies(nodes, edges);
       if (dependencyReport.errors > 0) {

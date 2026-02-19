@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 
-import type { ProductWithImages } from '@/features/products/types';
+import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 
 type SelectProductForListingModalContextValue = {

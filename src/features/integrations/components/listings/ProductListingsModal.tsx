@@ -9,7 +9,7 @@ import {
 } from '@/features/integrations/constants/slugs';
 import { ProductListingsProvider, useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
 import type { ProductListingWithDetails } from '@/features/integrations/types/listings';
-import type { ProductWithImages } from '@/features/products/types';
+import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import type { EntityModalProps } from '@/shared/types/modal-props';
 import { DetailModal } from '@/shared/ui/templates/modals';
 

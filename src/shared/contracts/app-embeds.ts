@@ -28,3 +28,5 @@ export const createAppEmbedSchema = appEmbedSchema.omit({
 
 export type CreateAppEmbedDto = z.infer<typeof createAppEmbedSchema>;
 export type UpdateAppEmbedDto = Partial<CreateAppEmbedDto>;
+
+export const APP_EMBED_SETTING_KEY = 'cms_app_embeds';

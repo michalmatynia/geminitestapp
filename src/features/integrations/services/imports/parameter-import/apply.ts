@@ -1,5 +1,4 @@
-import type { ProductParameter } from '@/features/products/types';
-import type { ProductParameterValue } from '@/features/products/types';
+import type { ProductParameterDto as ProductParameter, ProductParameterValueDto as ProductParameterValue } from '@/shared/contracts/products';
 
 import { extractBaseParameters } from './extractor';
 import { getCatalogParameterLinks, mergeCatalogParameterLinks } from './link-map-repository';

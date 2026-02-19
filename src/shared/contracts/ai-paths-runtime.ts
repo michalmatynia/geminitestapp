@@ -209,3 +209,70 @@ export const runtimeProfileOptionsSchema = z.object({
 });
 
 export type RuntimeProfileOptionsDto = z.infer<typeof runtimeProfileOptionsSchema>;
+
+/**
+ * AI Path Queue SLO DTOs
+ */
+
+export const sloLevelSchema = z.enum(['ok', 'warning', 'critical']);
+export type SloLevelDto = z.infer<typeof sloLevelSchema>;
+
+export const queueSloThresholdsSchema = z.object({
+  queueLagWarningMs: z.number(),
+  queueLagCriticalMs: z.number(),
+  successRateWarningPct: z.number(),
+  successRateCriticalPct: z.number(),
+  deadLetterRateWarningPct: z.number(),
+  deadLetterRateCriticalPct: z.number(),
+  brainErrorRateWarningPct: z.number(),
+  brainErrorRateCriticalPct: z.number(),
+  minTerminalSamples: z.number(),
+  minBrainSamples: z.number(),
+});
+export type QueueSloThresholdsDto = z.infer<typeof queueSloThresholdsSchema>;
+
+export const aiPathRunQueueSloStatusSchema = z.object({
+  overall: sloLevelSchema,
+  evaluatedAt: z.string(),
+  thresholds: queueSloThresholdsSchema,
+  indicators: z.object({
+    workerHealth: z.object({
+      level: sloLevelSchema,
+      running: z.boolean(),
+      healthy: z.boolean(),
+      message: z.string(),
+    }),
+    queueLag: z.object({
+      level: sloLevelSchema,
+      valueMs: z.number().nullable(),
+      message: z.string(),
+    }),
+    successRate24h: z.object({
+      level: sloLevelSchema,
+      valuePct: z.number(),
+      sampleSize: z.number(),
+      message: z.string(),
+    }),
+    deadLetterRate24h: z.object({
+      level: sloLevelSchema,
+      valuePct: z.number(),
+      sampleSize: z.number(),
+      message: z.string(),
+    }),
+    brainErrorRate24h: z.object({
+      level: sloLevelSchema,
+      valuePct: z.number(),
+      sampleSize: z.number(),
+      message: z.string(),
+    }),
+  }),
+  breachCount: z.number(),
+  breaches: z.array(
+    z.object({
+      indicator: z.string(),
+      level: sloLevelSchema,
+      message: z.string(),
+    })
+  ),
+});
+export type AiPathRunQueueSloStatusDto = z.infer<typeof aiPathRunQueueSloStatusSchema>;

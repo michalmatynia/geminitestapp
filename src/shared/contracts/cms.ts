@@ -315,10 +315,25 @@ export type CreateCmsPageDto = z.infer<typeof createCmsPageSchema>;
 export type UpdateCmsPageDto = Partial<CreateCmsPageDto>;
 
 /**
+ * CMS AI Config Contract
+ */
+export const cmsCssAiProviderSchema = z.enum(['model', 'agent']);
+export type CmsCssAiProviderDto = z.infer<typeof cmsCssAiProviderSchema>;
+
+export const cmsCssAiConfigSchema = z.object({
+  provider: cmsCssAiProviderSchema.optional(),
+  modelId: z.string().optional(),
+  agentId: z.string().optional(),
+  prompt: z.string().optional(),
+});
+
+export type CmsCssAiConfigDto = z.infer<typeof cmsCssAiConfigSchema>;
+
+/**
  * CMS AI Request Contract
  */
 export const cmsCssAiRequestSchema = z.object({
-  provider: z.enum(['model', 'agent']).optional(),
+  provider: cmsCssAiProviderSchema.optional(),
   modelId: z.string().optional(),
   agentId: z.string().optional(),
   messages: z.array(z.any()).optional(),
@@ -334,6 +349,8 @@ export const cmsDomainSettingsSchema = z.object({
 });
 
 export type CmsDomainSettingsDto = z.infer<typeof cmsDomainSettingsSchema>;
+
+export const CMS_DOMAIN_SETTINGS_KEY = 'cms_domain_settings.v1';
 
 /**
  * CMS Event Effects Contract

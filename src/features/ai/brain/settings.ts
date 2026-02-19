@@ -6,11 +6,13 @@ import {
   type AiBrainProviderCatalogDto,
   aiBrainSettingsSchema as settingsSchema,
   aiBrainProviderCatalogSchema as providerCatalogSchema,
+  AI_BRAIN_SETTINGS_KEY as SETTINGS_KEY,
+  AI_BRAIN_PROVIDER_CATALOG_KEY as CATALOG_KEY,
 } from '@/shared/contracts/ai-brain';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
-export const AI_BRAIN_SETTINGS_KEY = 'ai_brain_settings';
-export const AI_BRAIN_PROVIDER_CATALOG_KEY = 'ai_brain_provider_catalog';
+export const AI_BRAIN_SETTINGS_KEY = SETTINGS_KEY;
+export const AI_BRAIN_PROVIDER_CATALOG_KEY = CATALOG_KEY;
 
 export type AiBrainProvider = AiBrainProviderDto;
 export type AiBrainFeature = AiBrainFeatureDto;

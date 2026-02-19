@@ -11,6 +11,7 @@ import type {
   PathConfig,
   PathExecutionMode,
   PathFlowIntensity,
+  AiPathsValidationConfig,
   PathRunMode,
   PathDebugSnapshot,
   PathMeta,
@@ -30,6 +31,7 @@ import {
   AI_PATHS_HISTORY_RETENTION_DEFAULT,
   AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT,
   AI_PATHS_LAST_ERROR_KEY,
+  DEFAULT_AI_PATHS_VALIDATION_CONFIG,
   DEFAULT_MODELS,
   createDefaultPathConfig,
   initialEdges,
@@ -37,6 +39,7 @@ import {
   palette,
   safeStringify,
   sanitizeEdges,
+  normalizeAiPathsValidationConfig,
   TRIGGER_INPUT_PORTS,
   TRIGGER_OUTPUT_PORTS,
   triggers,
@@ -116,12 +119,15 @@ export interface UseAiPathsSettingsStateReturn {
   flowIntensity: PathFlowIntensity;
   runMode: PathRunMode;
   strictFlowMode: boolean;
+  aiPathsValidation: AiPathsValidationConfig;
   historyRetentionPasses: number;
   historyRetentionOptionsMax: number;
   handleExecutionModeChange: (mode: PathExecutionMode) => void;
   handleFlowIntensityChange: (intensity: PathFlowIntensity) => void;
   handleRunModeChange: (mode: PathRunMode) => void;
   handleStrictFlowModeChange: (enabled: boolean) => void;
+  setAiPathsValidation: React.Dispatch<React.SetStateAction<AiPathsValidationConfig>>;
+  updateAiPathsValidation: (patch: Partial<AiPathsValidationConfig>) => void;
   handleHistoryRetentionChange: (passes: number) => Promise<void>;
   triggers: string[];
   isPathLocked: boolean;
@@ -420,6 +426,10 @@ export function useAiPathsSettingsState({
     useState<PathFlowIntensity>('medium');
   const [runMode, setRunMode] = useState<PathRunMode>('manual');
   const [strictFlowMode, setStrictFlowMode] = useState<boolean>(true);
+  const [aiPathsValidationState, setAiPathsValidationState] =
+    useState<AiPathsValidationConfig>(
+      normalizeAiPathsValidationConfig(DEFAULT_AI_PATHS_VALIDATION_CONFIG),
+    );
   const [historyRetentionPasses, setHistoryRetentionPasses] = useState<number>(
     AI_PATHS_HISTORY_RETENTION_DEFAULT,
   );
@@ -469,6 +479,56 @@ export function useAiPathsSettingsState({
   });
   const [loadNonce, setLoadNonce] = useState(0);
   const queryClient = useQueryClient();
+
+  const setAiPathsValidation: React.Dispatch<
+    React.SetStateAction<AiPathsValidationConfig>
+  > = useCallback(
+    (
+      nextValue: React.SetStateAction<AiPathsValidationConfig>,
+    ): void => {
+      setAiPathsValidationState(
+        (previous: AiPathsValidationConfig): AiPathsValidationConfig => {
+          const resolved =
+            typeof nextValue === 'function'
+              ? (nextValue as (
+                prevState: AiPathsValidationConfig,
+              ) => AiPathsValidationConfig)(previous)
+              : nextValue;
+          const normalized = normalizeAiPathsValidationConfig(resolved);
+          if (activePathId) {
+            setPathConfigs(
+              (prevConfigs: Record<string, PathConfig>): Record<string, PathConfig> => {
+                const base =
+                  prevConfigs[activePathId] ??
+                  createDefaultPathConfig(activePathId);
+                return {
+                  ...prevConfigs,
+                  [activePathId]: {
+                    ...base,
+                    aiPathsValidation: normalized,
+                  },
+                };
+              },
+            );
+          }
+          return normalized;
+        },
+      );
+    },
+    [activePathId],
+  );
+
+  const updateAiPathsValidation = useCallback(
+    (patch: Partial<AiPathsValidationConfig>): void => {
+      setAiPathsValidation((previous: AiPathsValidationConfig): AiPathsValidationConfig =>
+        normalizeAiPathsValidationConfig({
+          ...previous,
+          ...patch,
+        }),
+      );
+    },
+    [setAiPathsValidation],
+  );
 
   const triggerButtonsQuery = createListQueryV2<
     AiTriggerButtonRecord[],
@@ -859,6 +919,7 @@ export function useAiPathsSettingsState({
     paths,
     runMode,
     strictFlowMode,
+    aiPathsValidation: aiPathsValidationState,
     selectedNodeId,
     runtimeState,
     updaterSamples,
@@ -891,6 +952,7 @@ export function useAiPathsSettingsState({
     setFlowIntensity,
     setRunMode,
     setStrictFlowMode,
+    setAiPathsValidation,
     setHistoryRetentionPasses,
     setHistoryRetentionOptionsMax,
     setPathName,
@@ -954,6 +1016,7 @@ export function useAiPathsSettingsState({
     executionMode,
     runMode,
     strictFlowMode,
+    aiPathsValidation: aiPathsValidationState,
     historyRetentionPasses,
     isPathActive,
     edges,
@@ -994,6 +1057,7 @@ export function useAiPathsSettingsState({
     flowIntensity,
     runMode,
     strictFlowMode,
+    aiPathsValidation: aiPathsValidationState,
     isPathActive,
     parserSamples,
     updaterSamples,
@@ -1155,6 +1219,7 @@ export function useAiPathsSettingsState({
     setRunMode,
     strictFlowMode,
     setStrictFlowMode,
+    aiPathsValidation: aiPathsValidationState,
     historyRetentionPasses,
     setHistoryRetentionPasses,
     nodes,
@@ -1200,6 +1265,7 @@ export function useAiPathsSettingsState({
     setFlowIntensity,
     setRunMode,
     setStrictFlowMode,
+    setAiPathsValidation,
     setParserSamples,
     setUpdaterSamples,
     setRuntimeState,
@@ -1344,12 +1410,15 @@ export function useAiPathsSettingsState({
     flowIntensity,
     runMode,
     strictFlowMode,
+    aiPathsValidation: aiPathsValidationState,
     historyRetentionPasses,
     historyRetentionOptionsMax,
     handleExecutionModeChange,
     handleFlowIntensityChange,
     handleRunModeChange,
     handleStrictFlowModeChange,
+    setAiPathsValidation,
+    updateAiPathsValidation,
     handleHistoryRetentionChange,
     triggers,
     isPathLocked,

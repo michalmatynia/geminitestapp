@@ -9,6 +9,11 @@ import { processRun, processStaleRunRecovery } from '@/features/jobs/processors/
 import { getAiInsightsQueueStatus } from '@/features/jobs/workers/aiInsightsQueue';
 import { logSystemEvent } from '@/features/observability/server';
 import { createManagedQueue, getRedisConnection } from '@/shared/lib/queue';
+import type {
+  AiPathRunQueueSloStatusDto as AiPathRunQueueSloStatus,
+  QueueSloThresholdsDto as QueueSloThresholds,
+  SloLevelDto as SloLevel,
+} from '@/shared/contracts/ai-paths-runtime';
 
 const DEFAULT_CONCURRENCY = Number(process.env['AI_PATHS_RUN_CONCURRENCY'] ?? '1');
 const AI_PATH_RUN_QUEUE_NAME = 'ai-path-run';
@@ -45,64 +50,6 @@ type AiPathRunJobData = {
 
 type EnqueuePathRunJobOptions = {
   delayMs?: number;
-};
-
-type SloLevel = 'ok' | 'warning' | 'critical';
-
-export type QueueSloThresholds = {
-  queueLagWarningMs: number;
-  queueLagCriticalMs: number;
-  successRateWarningPct: number;
-  successRateCriticalPct: number;
-  deadLetterRateWarningPct: number;
-  deadLetterRateCriticalPct: number;
-  brainErrorRateWarningPct: number;
-  brainErrorRateCriticalPct: number;
-  minTerminalSamples: number;
-  minBrainSamples: number;
-};
-
-export type AiPathRunQueueSloStatus = {
-  overall: SloLevel;
-  evaluatedAt: string;
-  thresholds: QueueSloThresholds;
-  indicators: {
-    workerHealth: {
-      level: SloLevel;
-      running: boolean;
-      healthy: boolean;
-      message: string;
-    };
-    queueLag: {
-      level: SloLevel;
-      valueMs: number | null;
-      message: string;
-    };
-    successRate24h: {
-      level: SloLevel;
-      valuePct: number;
-      sampleSize: number;
-      message: string;
-    };
-    deadLetterRate24h: {
-      level: SloLevel;
-      valuePct: number;
-      sampleSize: number;
-      message: string;
-    };
-    brainErrorRate24h: {
-      level: SloLevel;
-      valuePct: number;
-      sampleSize: number;
-      message: string;
-    };
-  };
-  breachCount: number;
-  breaches: Array<{
-    indicator: string;
-    level: Extract<SloLevel, 'warning' | 'critical'>;
-    message: string;
-  }>;
 };
 
 type ComputeQueueSloInput = {

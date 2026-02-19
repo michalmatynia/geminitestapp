@@ -157,7 +157,35 @@ export async function buildMongoUpdatePlan({
     }
   }
   if (missingTemplatePorts.length > 0) {
-    return { output: prevOutputs };
+    const errorMessage = `Update template is missing connected inputs: ${missingTemplatePorts.join(
+      ', '
+    )}.`;
+    reportAiPathsError(
+      new Error(errorMessage),
+      {
+        action: 'dbUpdateTemplate',
+        nodeId: node.id,
+        missingTemplatePorts,
+      },
+      'Database update skipped:'
+    );
+    toast(errorMessage, { variant: 'error' });
+    return {
+      output: {
+        result: null,
+        bundle: {
+          error: errorMessage,
+          guardrail: 'update-template-inputs',
+          missingTemplatePorts,
+        },
+        debugPayload: {
+          ...debugPayload,
+          guardrail: 'update-template-inputs',
+          missingTemplatePorts,
+        },
+        aiPrompt,
+      },
+    };
   }
   const parsedUpdate: unknown = updateTemplate ? parseJsonTemplate(updateTemplate) : null;
   if (

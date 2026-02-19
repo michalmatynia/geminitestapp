@@ -12,7 +12,7 @@ import {
   useTagMappings,
 } from '@/features/integrations/hooks/useMarketplaceQueries';
 import { useCatalogs } from '@/features/products/hooks/useProductMetadataQueries';
-import type { CatalogRecord, ProductTag } from '@/features/products/types';
+import type { CatalogDto as CatalogRecord, ProductTagDto as ProductTag } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

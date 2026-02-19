@@ -119,7 +119,7 @@ const toConnectionRecord = (
 ): IntegrationConnectionRecord => {
   const isPrisma = 'id' in doc;
   return {
-    id: isPrisma ? doc.id : (doc as WithId<IntegrationConnectionDocument>)._id.toString(),
+    id: isPrisma ? doc.id : (doc)._id.toString(),
     integrationId: doc.integrationId,
     name: doc.name,
     username: doc.username,

@@ -206,16 +206,13 @@ app.prepare().then(async () => {
       logSystemEvent({ level: 'warn', message: '[root-request]', source: 'server', context: { url: originalRawUrl, normalized: normalizedUrl, host, referer: req.headers.referer, userAgent: req.headers['user-agent'] } });
     }
     const url = new URL(normalizedUrl, baseUrl);
+    // Next custom server expects a path-focused parsedUrl (like url.parse(req.url, true)).
+    // Passing host/protocol fields can cause absolute-url redirects in router normalization.
     const parsedUrl = {
-      href: url.href,
       pathname: url.pathname,
-      search: url.search,
       query: Object.fromEntries(url.searchParams.entries()),
+      search: url.search,
       hash: url.hash,
-      host: url.host,
-      hostname: url.hostname,
-      protocol: url.protocol,
-      port: url.port,
     };
     const remoteAddress = req.socket?.remoteAddress;
     if (remoteAddress) {

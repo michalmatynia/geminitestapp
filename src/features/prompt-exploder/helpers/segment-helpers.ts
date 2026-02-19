@@ -53,12 +53,12 @@ export const promptExploderFormatSubsectionLabel = (subsection: PromptExploderSu
 
 export const promptExploderBuildSegmentSampleText = (segment: PromptExploderSegment): string => {
   if (segment.listItems.length > 0) {
-    return segment.listItems.slice(0, 4).map((item) => item.text).join(' ');
+    return segment.listItems.slice(0, 4).map((item: PromptExploderListItem) => item.text).join(' ');
   }
   if (segment.subsections.length > 0) {
     return segment.subsections
       .slice(0, 3)
-      .map((subsection) => subsection.title)
+      .map((subsection: PromptExploderSubsection) => subsection.title)
       .join(' ');
   }
   return segment.text.slice(0, 220);

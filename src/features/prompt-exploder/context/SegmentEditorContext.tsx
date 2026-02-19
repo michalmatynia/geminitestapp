@@ -36,6 +36,7 @@ import { useSettingsState, useSettingsActions } from './hooks/useSettings';
 
 import type {
   PromptExploderLearnedTemplate,
+  PromptExploderSegment,
 } from '../types';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -147,7 +148,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     if (!draggingSegmentId) return;
-    const segmentIds = new Set((documentState?.segments ?? []).map((s) => s.id));
+    const segmentIds = new Set((documentState?.segments ?? []).map((s: PromptExploderSegment) => s.id));
     if (segmentIds.has(draggingSegmentId)) return;
     setDraggingSegmentId(null);
     setSegmentDropTargetId(null);
@@ -173,7 +174,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
   const matchedRuleDetails = useMemo(() => {
     if (!selectedSegment) return [];
     const byId = new Map(effectiveRules.map((rule) => [rule.id, rule]));
-    return selectedSegment.matchedPatternIds.map((patternId, index) => {
+    return selectedSegment.matchedPatternIds.map((patternId: string, index: number) => {
       const rule = byId.get(patternId);
       const storedLabel = selectedSegment.matchedPatternLabels?.[index]?.trim() ?? '';
       const sequenceLabel = rule?.sequenceGroupLabel?.trim() ?? '';

@@ -1,5 +1,6 @@
-import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
+
+import { Prisma } from '@prisma/client';
 import { ObjectId } from 'mongodb';
 
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
@@ -525,7 +526,7 @@ export async function listProductListingsByProductIdAcrossProviders(
 
 export async function listAllProductListingsAcrossProviders(): Promise<
   Array<Pick<ProductListingRecord, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
-> {
+  > {
   const [prismaListings, mongoListings] = await Promise.all([
     prismaRepository.listAllListings(),
     mongoRepository.listAllListings(),

@@ -616,12 +616,17 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
 
   const handleCapturePatternSnapshot = useCallback(async () => {
     try {
+      const activeRuleScope: string =
+        activeValidationScope === 'case-resolver-prompt-exploder'
+          ? 'case_resolver_prompt_exploder'
+          : 'prompt_exploder';
+
       const scopedPromptRules = promptSettings.promptValidation.rules.filter((rule) => {
         if (!promptExploderIsPromptExploderManagedRule(rule)) return false;
-        const scopes = rule.appliesToScopes ?? [];
+        const scopes = (rule.appliesToScopes || []) as string[];
         return (
           scopes.length === 0 ||
-          scopes.includes(activeValidationScope) ||
+          scopes.includes(activeRuleScope) ||
           scopes.includes('global')
         );
       });

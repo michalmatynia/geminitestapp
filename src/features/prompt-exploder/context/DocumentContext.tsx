@@ -1,10 +1,18 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useToast } from '@/shared/ui';
 
+import {
+  readPromptExploderDraftPayload,
+  savePromptExploderApplyPrompt,
+  savePromptExploderApplyPromptForCaseResolver,
+  type PromptExploderBridgeSource,
+  type PromptExploderCaseResolverContext,
+} from '../bridge';
+import { promptExploderClampNumber } from '../helpers/formatting';
 import {
   buildPromptExploderParamEntries,
   PromptExploderParamEntry,
@@ -16,16 +24,6 @@ import {
   reassemblePromptSegments,
   updatePromptExploderDocument,
 } from '../parser';
-import {
-  readPromptExploderDraftPayload,
-  savePromptExploderApplyPrompt,
-  savePromptExploderApplyPromptForCaseResolver,
-} from '../bridge';
-import type { 
-  PromptExploderBridgeSource, 
-  PromptExploderCaseResolverContext 
-} from '../public';
-import { promptExploderClampNumber } from '../helpers/formatting';
 import { extractCaseResolverBridgePayloadFromSegments } from '../utils/case-resolver-extraction';
 import { useSettingsState } from './hooks/useSettings';
 
@@ -40,6 +38,7 @@ import type {
 export interface DocumentState {
   promptText: string;
   documentState: PromptExploderDocument | null;
+  manualBindings: PromptExploderBinding[];
   selectedSegmentId: string | null;
   selectedSegment: PromptExploderSegment | null;
   selectedParamEntriesState: PromptExploderParamEntriesState | null;
@@ -62,7 +61,7 @@ export interface DocumentActions {
   setPromptText: (text: string) => void;
   setDocumentState: React.Dispatch<React.SetStateAction<PromptExploderDocument | null>>;
   setManualBindings: React.Dispatch<React.SetStateAction<PromptExploderBinding[]>>;
-  setSelectedSegmentId: (id: string | null) => void;
+  setSelectedSegmentId: React.Dispatch<React.SetStateAction<string | null>>;
   handleExplode: () => void;
   syncManualBindings: (bindings: PromptExploderBinding[]) => void;
   replaceSegments: (segments: PromptExploderSegment[]) => void;
@@ -109,6 +108,8 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     signature: string;
     document: PromptExploderDocument;
   } | null>(null);
+
+  const returnTarget = incomingBridgeSource === 'case-resolver' ? 'case-resolver' : 'image-studio';
 
   // ── Derived state ──────────────────────────────────────────────────────────
 
@@ -210,7 +211,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
   );
 
   const segmentById = useMemo(
-    () => new Map((documentState?.segments ?? []).map((segment: PromptExploderSegment) => [segment.id, segment])),
+    () => new Map<string, PromptExploderSegment>((documentState?.segments ?? []).map((segment: PromptExploderSegment) => [segment.id, segment])),
     [documentState?.segments]
   );
 
@@ -264,7 +265,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
       
       setDocumentState(document);
       setSelectedSegmentId(document.segments[0]?.id || null);
-      setManualBindings(document.bindings.filter(b => b.origin === 'manual'));
+      setManualBindings(document.bindings.filter((b: PromptExploderBinding) => b.origin === 'manual'));
       
       lastExplosionRef.current = {
         signature: promptText.trim(),
@@ -399,6 +400,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     () => ({
       promptText,
       documentState,
+      manualBindings,
       selectedSegmentId,
       selectedSegment,
       selectedParamEntriesState,
@@ -412,6 +414,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     [
       promptText,
       documentState,
+      manualBindings,
       selectedSegmentId,
       selectedSegment,
       selectedParamEntriesState,

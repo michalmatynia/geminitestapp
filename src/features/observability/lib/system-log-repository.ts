@@ -431,7 +431,7 @@ export async function listSystemLogs(
           context: (row.context as Record<string, unknown> | null) ?? null,
           createdAt: row.createdAt.toISOString(),
           updatedAt: row.updatedAt?.toISOString() ?? null,
-        } as any),
+        }),
     );
 
     return { logs, total, page, pageSize };

@@ -144,6 +144,43 @@ describe('case resolver case context resolution', () => {
     );
   });
 
+  it('ignores workspace revision metadata in unsaved-change fingerprint', () => {
+    const caseFile = createCaseResolverFile({
+      id: 'case-a',
+      fileType: 'case',
+      name: 'Case A',
+    });
+    const documentFile = createCaseResolverFile({
+      id: 'doc-a',
+      fileType: 'document',
+      name: 'Doc A',
+      parentCaseId: caseFile.id,
+    });
+    const baseWorkspace = {
+      version: 2,
+      workspaceRevision: 1,
+      lastMutationId: 'mutation-a',
+      lastMutationAt: '2026-02-19T00:00:00.000Z',
+      folders: [],
+      folderRecords: [],
+      folderTimestamps: {},
+      files: [caseFile, documentFile],
+      assets: [],
+      relationGraph: { nodes: [], edges: [] },
+      activeFileId: caseFile.id,
+    };
+    const revisionOnlyWorkspace = {
+      ...baseWorkspace,
+      workspaceRevision: 2,
+      lastMutationId: 'mutation-b',
+      lastMutationAt: '2026-02-19T00:05:00.000Z',
+    };
+
+    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace)).toBe(
+      serializeWorkspaceForUnsavedChangesCheck(revisionOnlyWorkspace)
+    );
+  });
+
   it('still detects real workspace changes in unsaved-change fingerprint', () => {
     const caseFile = createCaseResolverFile({
       id: 'case-a',

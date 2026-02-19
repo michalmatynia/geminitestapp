@@ -223,6 +223,12 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   );
 
   const lastEmittedHashRef = useRef<string>('');
+  const skipNextGraphEmitRef = useRef<boolean>(true);
+
+  useEffect(() => {
+    // Opening/switching a file should not immediately enqueue a workspace mutation.
+    skipNextGraphEmitRef.current = true;
+  }, [activeFile?.id]);
 
   useEffect(() => {
     const incomingPreset = graph.pdfExtractionPresetId ?? DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID;
@@ -243,6 +249,11 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       documentSourceFileIdByNode: normalizedDocumentSourceFileIdByNode,
     };
     const nextHash = stableStringify(nextGraph);
+    if (skipNextGraphEmitRef.current) {
+      lastEmittedHashRef.current = nextHash;
+      skipNextGraphEmitRef.current = false;
+      return;
+    }
     if (nextHash === lastEmittedHashRef.current) return;
     lastEmittedHashRef.current = nextHash;
     onGraphChange(nextGraph);

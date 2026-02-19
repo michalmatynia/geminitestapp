@@ -843,6 +843,10 @@ export const serializeWorkspaceForUnsavedChangesCheck = (
 ): string =>
   JSON.stringify({
     ...workspace,
+    // Revision metadata is persistence bookkeeping, not user-facing edits.
+    workspaceRevision: 0,
+    lastMutationId: null,
+    lastMutationAt: null,
     // Keep active selection changes from triggering global unsaved-change prompts.
     activeFileId: null,
   });

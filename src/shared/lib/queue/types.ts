@@ -1,24 +1,9 @@
-import type { QueueHealthStatusDto } from '@/shared/contracts/jobs';
+import type { QueueHealthStatusDto, QueueNameDto } from '@/shared/contracts/jobs';
 
 import type { JobsOptions, WorkerOptions } from 'bullmq';
 
 
-export type QueueName =
-  | 'product-ai'
-  | 'ai-path-run'
-  | 'chatbot'
-  | 'agent'
-  | 'ai-insights'
-  | 'database-backup-scheduler'
-  | 'image-studio-run'
-  | 'image-studio-sequence'
-  | 'base-import'
-  | 'tradera-listings'
-  | 'tradera-relist-scheduler'
-  | 'product-sync'
-  | 'product-sync-backfill'
-  | 'product-sync-scheduler'
-  | 'case-resolver-ocr';
+export type QueueName = QueueNameDto;
 
 export type QueueHealthStatus = QueueHealthStatusDto;
 

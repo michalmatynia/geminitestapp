@@ -69,6 +69,29 @@ export type UpdateJobDto = Partial<CreateJobDto>;
 export type JobUpdateInput = UpdateJobDto;
 
 /**
+ * Queue Names Contract
+ */
+export const queueNameSchema = z.enum([
+  'product-ai',
+  'ai-path-run',
+  'chatbot',
+  'agent',
+  'ai-insights',
+  'database-backup-scheduler',
+  'image-studio-run',
+  'image-studio-sequence',
+  'base-import',
+  'tradera-listings',
+  'tradera-relist-scheduler',
+  'product-sync',
+  'product-sync-backfill',
+  'product-sync-scheduler',
+  'case-resolver-ocr',
+]);
+
+export type QueueNameDto = z.infer<typeof queueNameSchema>;
+
+/**
  * Product AI Job Contract
  */
 export const productAiJobTypeSchema = z.enum([

@@ -676,7 +676,16 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
       initialNodes={initialNodes}
       initialEdges={snapshot.edges}
       initialLoading={false}
-      initialRuntimeState={{ inputs: {}, outputs: {}, history: {} }}
+      initialRuntimeState={{
+        status: 'idle',
+        nodeStatuses: {},
+        nodeOutputs: {},
+        variables: {},
+        events: [],
+        inputs: {},
+        outputs: {},
+        history: {},
+      }}
     >
       <CaseResolverNodeFileWorkspaceInner
         assetId={selectedAsset.id}

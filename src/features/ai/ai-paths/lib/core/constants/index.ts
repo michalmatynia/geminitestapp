@@ -1,4 +1,15 @@
-import type { AiNode, DbQueryConfig, Edge, NodeType } from '@/shared/types/domain/ai-paths';
+import type { AiNode, DbQueryConfig, Edge, NodeType, RuntimeState } from '@/shared/types/domain/ai-paths';
+
+export const EMPTY_RUNTIME_STATE: RuntimeState = {
+  status: 'idle',
+  nodeStatuses: {},
+  nodeOutputs: {},
+  variables: {},
+  events: [],
+  inputs: {},
+  outputs: {},
+  history: {},
+};
 
 export const NODE_WIDTH = 260;
 export const NODE_MIN_HEIGHT = 184;

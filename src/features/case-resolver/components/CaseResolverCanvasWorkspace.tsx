@@ -23,6 +23,7 @@ import {
   NODE_WIDTH,
   palette,
   stableStringify,
+  EMPTY_RUNTIME_STATE,
   type AiNode,
   type Edge,
   type NodeDefinition,
@@ -860,11 +861,7 @@ export function CaseResolverCanvasWorkspace(): React.JSX.Element {
       initialNodes={initialNodes}
       initialEdges={activeFile.graph.edges}
       initialLoading={false}
-      initialRuntimeState={{
-        inputs: {},
-        outputs: {},
-        history: {},
-      }}
+      initialRuntimeState={EMPTY_RUNTIME_STATE}
     >
       <CaseResolverCanvasWorkspaceInner />
     </AiPathsProvider>

@@ -53,6 +53,8 @@ export const PRODUCT_FIELDS = [
 
 export const PRODUCT_PARAMETER_TARGET_PREFIX = 'parameter:' as const;
 export const PRODUCT_PARAMETER_TARGET_PATTERN = `${PRODUCT_PARAMETER_TARGET_PREFIX}<parameter_id>`;
+export const PRODUCT_PARAMETER_TARGET_TRANSLATED_PATTERN =
+  `${PRODUCT_PARAMETER_TARGET_PREFIX}<parameter_id>|<language_code>`;
 
 export const IMAGE_SLOT_KEYS = Array.from(
   { length: 15 },

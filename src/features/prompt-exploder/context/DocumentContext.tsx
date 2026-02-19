@@ -37,7 +37,7 @@ import {
 } from '../runtime-load-shedder';
 import {
   buildCaseResolverSegmentCaptureRules,
-  extractCaseResolverBridgePayloadFromSegments,
+  resolveCaseResolverBridgePayloadForTransfer,
 } from '../utils/case-resolver-extraction';
 import { useSettingsState } from './hooks/useSettings';
 
@@ -429,15 +429,28 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
           { variant: 'warning' }
         );
       }
-      const payload = extractCaseResolverBridgePayloadFromSegments(documentState.segments, {
+      const transferPayload = resolveCaseResolverBridgePayloadForTransfer({
+        segments: documentState.segments,
         captureRules,
         mode: promptExploderSettings.runtime.caseResolverCaptureMode,
       });
+      if (transferPayload.usedFallback) {
+        toast(
+          'Rules-only extraction did not find captures. Applied heuristics fallback for this transfer.',
+          { variant: 'warning' }
+        );
+      }
+      if (!transferPayload.hasCaptureData) {
+        toast(
+          'No addresser/addressee/date captures found in this output. You can still apply the reassembled text.',
+          { variant: 'info' }
+        );
+      }
       savePromptExploderApplyPromptForCaseResolver(
         reassembled,
         incomingCaseResolverContext,
-        payload.parties,
-        payload.metadata
+        transferPayload.payload.parties,
+        transferPayload.payload.metadata
       );
     } else {
       savePromptExploderApplyPrompt(reassembled);

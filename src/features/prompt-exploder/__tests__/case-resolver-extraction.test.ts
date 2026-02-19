@@ -5,6 +5,7 @@ import type { PromptExploderSegment } from '@/features/prompt-exploder/types';
 import {
   buildCaseResolverSegmentCaptureRules,
   extractCaseResolverBridgePayloadFromSegments,
+  resolveCaseResolverBridgePayloadForTransfer,
 } from '@/features/prompt-exploder/utils/case-resolver-extraction';
 
 
@@ -187,5 +188,57 @@ describe('case resolver extraction bridge payload', () => {
     expect(payload.metadata?.placeDate?.day).toBe('25');
     expect(payload.metadata?.placeDate?.month).toBe('01');
     expect(payload.metadata?.placeDate?.year).toBe('2026');
+  });
+
+  it('uses visible transfer fallback when rules-only mode has no captures', () => {
+    const segments: PromptExploderSegment[] = [
+      createSegment({
+        id: 'heuristic-place-date',
+        raw: 'Szczecin 25.01.2026',
+      }),
+      createSegment({
+        id: 'heuristic-addresser',
+        raw: 'Michał Matynia\nFioletowa 71/2\n70-781 Szczecin\nPolska',
+      }),
+      createSegment({
+        id: 'heuristic-addressee',
+        raw: 'Inspektorat ZUS w Gryficach\nDąbskiego 5\n72-300 Gryfice',
+      }),
+    ];
+
+    const result = resolveCaseResolverBridgePayloadForTransfer({
+      segments,
+      captureRules: [],
+      mode: 'rules_only',
+    });
+
+    expect(result.requestedMode).toBe('rules_only');
+    expect(result.effectiveMode).toBe('rules_with_heuristics');
+    expect(result.usedFallback).toBe(true);
+    expect(result.hasCaptureData).toBe(true);
+    expect(result.payload.parties?.addresser?.displayName).toBe('Michał Matynia');
+    expect(result.payload.parties?.addressee?.displayName).toBe('Inspektorat ZUS w Gryficach');
+    expect(result.payload.metadata?.placeDate?.city).toBe('Szczecin');
+  });
+
+  it('reports no transfer captures when both rule and fallback extraction fail', () => {
+    const segments: PromptExploderSegment[] = [
+      createSegment({
+        id: 'plain',
+        raw: 'Treść dokumentu bez danych adresowych i daty.',
+      }),
+    ];
+
+    const result = resolveCaseResolverBridgePayloadForTransfer({
+      segments,
+      captureRules: [],
+      mode: 'rules_only',
+    });
+
+    expect(result.requestedMode).toBe('rules_only');
+    expect(result.usedFallback).toBe(false);
+    expect(result.hasCaptureData).toBe(false);
+    expect(result.payload.parties).toBeUndefined();
+    expect(result.payload.metadata).toBeUndefined();
   });
 });

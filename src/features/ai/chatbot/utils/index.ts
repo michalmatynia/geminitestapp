@@ -1,11 +1,11 @@
-import {
-  AgentAuditLog,
-  AgentBrowserLog,
-  ChatMessage,
-  ModelProfile,
-  ModelTaskRule,
-  TimelineEntry,
-} from '@/shared/types/domain/chatbot';
+import type {
+  AgentAuditLogDto as AgentAuditLog,
+  AgentBrowserLogDto as AgentBrowserLog,
+  ChatMessageDto as ChatMessage,
+  ModelProfileDto as ModelProfile,
+  ModelTaskRuleDto as ModelTaskRule,
+  ChatbotTimelineEntryDto as TimelineEntry,
+} from '@/shared/contracts/chatbot';
 
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === 'object' && !Array.isArray(value);

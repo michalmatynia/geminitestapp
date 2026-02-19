@@ -3,7 +3,7 @@ import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import Link from 'next/link';
 
 import type { ActivityLogDto } from '@/shared/contracts/system';
-import { Button } from '@/shared/ui';
+import { Button, LoadingState } from '@/shared/ui';
 
 export function QuickAccessPanel(): React.JSX.Element {
   return (
@@ -30,10 +30,15 @@ export function SystemHealthPanel({
   return (
     <div className='rounded-lg bg-gray-950 p-6'>
       <h2 className='text-xl font-bold mb-3'>System Health</h2>
-      {isLoading && <p>Loading health status...</p>}
-      {errorMessage && <p className='text-red-500'>Error: {errorMessage}</p>}
-      {isHealthy === true && <p className='text-green-500'>API is healthy!</p>}
-      {isHealthy === false && <p className='text-red-500'>API is not healthy.</p>}
+      {isLoading ? (
+        <LoadingState message='Checking health...' className='p-0 py-2 items-start' size='sm' />
+      ) : errorMessage ? (
+        <p className='text-red-500 text-sm'>Error: {errorMessage}</p>
+      ) : isHealthy === true ? (
+        <p className='text-green-500 text-sm'>API is healthy!</p>
+      ) : isHealthy === false ? (
+        <p className='text-red-500 text-sm'>API is not healthy.</p>
+      ) : null}
     </div>
   );
 }
@@ -63,9 +68,9 @@ export function RecentActivityPanel({
           <ChevronRightIcon className='size-6' />
         )}
       </Collapsible.Trigger>
-      <Collapsible.Content className='p-6'>
+      <Collapsible.Content className='p-6 pt-0'>
         {isLoading ? (
-          <p className='text-sm text-gray-400'>Loading activity...</p>
+          <LoadingState message='Loading activity...' className='py-4' size='sm' />
         ) : activity.length > 0 ? (
           <div className='space-y-3'>
             {activity.map((log: ActivityLogDto) => (

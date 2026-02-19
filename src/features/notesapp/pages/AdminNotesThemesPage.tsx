@@ -8,33 +8,6 @@ import { useNotebooks, useNoteThemes } from '@/features/notesapp/api/useNoteQuer
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
 import type { NoteThemeDto as ThemeRecord } from '@/shared/contracts/notes';
-import { Button, useToast, Input, SectionHeader, FormSection, FormField, RefreshButton, LoadingState } from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
-
-const defaultTheme: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> = {
-
-  name: '',
-  notebookId: null,
-  textColor: '#e5e7eb',           // gray-200 - matches page text
-  backgroundColor: '#111827',      // gray-900 - matches card backgrounds
-  markdownHeadingColor: '#ffffff', // white - matches headings
-  markdownLinkColor: '#60a5fa',    // blue-400 - visible links
-  markdownCodeBackground: '#1f2937', // gray-800 - matches input backgrounds
-  markdownCodeText: '#e5e7eb',     // gray-200 - matches page text
-  relatedNoteBorderWidth: 1,
-  relatedNoteBorderColor: '#374151', // gray-700 - matches borders
-  relatedNoteBackgroundColor: '#1f2937', // gray-800
-  relatedNoteTextColor: '#e5e7eb', // gray-200
-};
-
-import { Trash2 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
-
-import { useCreateNoteTheme, useDeleteNoteTheme, useUpdateNoteTheme } from '@/features/notesapp/api/useNoteMutations';
-import { useNotebooks, useNoteThemes } from '@/features/notesapp/api/useNoteQueries';
-import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
-import { logClientError } from '@/features/observability';
-import type { ThemeRecord } from '@/shared/types/domain/notes';
 import { Button, useToast, Input, PageLayout, FormSection, FormField, RefreshButton, LoadingState, ListPanel } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -133,7 +106,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
         ...editingForm,
         name: editingForm.name.trim(),
       });
-      toast('Tag updated', { variant: 'success' });
+      toast('Theme updated', { variant: 'success' });
       handleEditCancel();
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'AdminNotesThemesPage', action: 'updateTheme', themeId } });
@@ -400,23 +373,5 @@ export function AdminNotesThemesPage(): React.JSX.Element {
         }}
       />
     </PageLayout>
-  );
-}
-
-
-      <ConfirmModal
-        isOpen={Boolean(themeToDelete)}
-        onClose={() => setThemeToDelete(null)}
-        title='Delete Theme?'
-        message='Are you sure you want to delete this theme? This action cannot be undone.'
-        confirmText='Delete'
-        isDangerous={true}
-        onConfirm={(): void => {
-          if (themeToDelete) {
-            void handleDelete(themeToDelete);
-          }
-        }}
-      />
-    </div>
   );
 }

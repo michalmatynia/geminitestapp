@@ -4,13 +4,22 @@ import { ObjectId } from 'mongodb';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
-  ChatSession,
-  CreateSessionInput,
-  UpdateSessionInput,
-  ChatSessionDocument,
-} from '@/shared/types/domain/chatbot';
+  ChatbotSessionDto as ChatSession,
+  CreateChatSessionDto as CreateSessionInput,
+  UpdateChatSessionDto as UpdateSessionInput,
+  ChatMessageDto as ChatMessage,
+} from '@/shared/contracts/chatbot';
 
 const COLLECTION_NAME = 'chatbot_sessions';
+
+interface ChatSessionDocument {
+  _id: ObjectId;
+  title: string | null;
+  messages: ChatMessage[];
+  createdAt: Date;
+  updatedAt: Date;
+  settings?: ChatSession['settings'];
+}
 
 function documentToSession(doc: ChatSessionDocument): ChatSession {
   return {

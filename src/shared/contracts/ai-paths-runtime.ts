@@ -234,8 +234,18 @@ export const runtimeProfileSummarySchema = z.object({
 export type RuntimeProfileSummaryDto = z.infer<typeof runtimeProfileSummarySchema>;
 
 export const runtimeProfileOptionsSchema = z.object({
-  onEvent: z.function().args(aiPathRuntimeProfileEventSchema).returns(z.void()).optional(),
-  onSummary: z.function().args(runtimeProfileSummarySchema).returns(z.void()).optional(),
+  onEvent: z
+    .function({
+      input: [aiPathRuntimeProfileEventSchema],
+      output: z.void(),
+    })
+    .optional(),
+  onSummary: z
+    .function({
+      input: [runtimeProfileSummarySchema],
+      output: z.void(),
+    })
+    .optional(),
 });
 
 export type RuntimeProfileOptionsDto = z.infer<typeof runtimeProfileOptionsSchema>;

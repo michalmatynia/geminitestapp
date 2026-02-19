@@ -2,7 +2,7 @@
 
 import { Plus, Trash2, MessageSquare } from 'lucide-react';
 
-import type { ChatSession } from '@/shared/types/domain/chatbot';
+import type { ChatbotSessionDto as ChatSession } from '@/shared/contracts/chatbot';
 import { Button } from '@/shared/ui';
 
 import { useChatbot } from '../context/ChatbotContext';

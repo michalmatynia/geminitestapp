@@ -1,4 +1,4 @@
-import type { ChatbotSettingsPayload } from '@/shared/types/domain/chatbot';
+import type { ChatbotSettingsDto as ChatbotSettingsPayload } from '@/shared/contracts/chatbot';
 
 import { fetchWithTimeout, readErrorResponse, requestJson } from './client';
 

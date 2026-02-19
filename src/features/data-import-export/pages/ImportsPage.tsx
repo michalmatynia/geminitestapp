@@ -8,6 +8,7 @@ import {
   EXPORT_PARAMETER_KEYS,
   PRODUCT_PARAMETER_TARGET_PATTERN,
   PRODUCT_PARAMETER_TARGET_PREFIX,
+  PRODUCT_PARAMETER_TARGET_TRANSLATED_PATTERN,
 } from '@/features/data-import-export/components/imports/constants';
 import { ExportTab } from '@/features/data-import-export/components/imports/ExportTab';
 import { ImportTab } from '@/features/data-import-export/components/imports/ImportTab';
@@ -33,7 +34,48 @@ import {
   TabsTrigger,
   Label,
   SectionHeader,
+  LoadingState,
 } from '@/shared/ui';
+
+type ParsedParameterTarget = {
+  parameterId: string;
+  languageCode: string | null;
+};
+
+const parseParameterTarget = (value: string): ParsedParameterTarget | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (
+    !trimmed
+      .toLowerCase()
+      .startsWith(PRODUCT_PARAMETER_TARGET_PREFIX)
+  ) {
+    return null;
+  }
+
+  const payload = trimmed.slice(PRODUCT_PARAMETER_TARGET_PREFIX.length).trim();
+  if (!payload) return null;
+
+  const languageDelimiterIndex = payload.indexOf('|');
+  if (languageDelimiterIndex < 0) {
+    return {
+      parameterId: payload,
+      languageCode: null,
+    };
+  }
+
+  const parameterId = payload.slice(0, languageDelimiterIndex).trim();
+  if (!parameterId) return null;
+  const languageCode = payload.slice(languageDelimiterIndex + 1).trim();
+  if (!languageCode) return null;
+  return {
+    parameterId,
+    languageCode: languageCode.toLowerCase(),
+  };
+};
+
+const toParameterTargetValue = (parameterId: string): string =>
+  `${PRODUCT_PARAMETER_TARGET_PREFIX}${parameterId}`.toLowerCase();
 
 function ImportsPageContent(): React.JSX.Element {
   const {
@@ -135,20 +177,21 @@ function ImportsPageContent(): React.JSX.Element {
       const normalizedSourceKey = sourceKey.trim();
       if (!normalizedSourceKey) return sourceKey;
 
-      const knownParameterLabel = parameterSourceLabelByValue.get(
-        normalizedSourceKey.toLowerCase()
-      );
-      if (knownParameterLabel) return knownParameterLabel;
-
-      if (
-        normalizedSourceKey
-          .toLowerCase()
-          .startsWith(PRODUCT_PARAMETER_TARGET_PREFIX)
-      ) {
-        const parameterId = normalizedSourceKey
-          .slice(PRODUCT_PARAMETER_TARGET_PREFIX.length)
-          .trim();
-        return parameterId ? `Parameter: ${parameterId}` : 'Parameter';
+      const parsedParameterTarget = parseParameterTarget(normalizedSourceKey);
+      if (parsedParameterTarget) {
+        const normalizedParameterValue = toParameterTargetValue(
+          parsedParameterTarget.parameterId
+        );
+        const knownParameterLabel = parameterSourceLabelByValue.get(
+          normalizedParameterValue
+        );
+        const languageSuffix = parsedParameterTarget.languageCode
+          ? ` (${parsedParameterTarget.languageCode.toUpperCase()})`
+          : '';
+        if (knownParameterLabel) {
+          return `${knownParameterLabel}${languageSuffix}`;
+        }
+        return `Parameter: ${parsedParameterTarget.parameterId}${languageSuffix}`;
       }
 
       return normalizedSourceKey;
@@ -186,7 +229,8 @@ function ImportsPageContent(): React.JSX.Element {
     (): Set<string> =>
       new Set(
         customParameterTargetFields.map(
-          (entry: { value: string; label: string }) => entry.value
+          (entry: { value: string; label: string }) =>
+            entry.value.trim().toLowerCase()
         )
       ),
     [customParameterTargetFields]
@@ -210,10 +254,7 @@ function ImportsPageContent(): React.JSX.Element {
   if (checkingIntegration) {
     return (
       <div className='w-full py-10 container mx-auto'>
-        <div className='rounded-lg border border-border/60 bg-card/40 p-12 text-center text-sm text-gray-400'>
-          <div className='inline-block size-6 animate-spin rounded-full border-2 border-primary border-t-transparent mb-4' />
-          <p>Checking Base.com integration status...</p>
-        </div>
+        <LoadingState message='Checking Base.com integration status...' className='bg-card/40 border border-border/60 rounded-lg h-64' />
       </div>
     );
   }
@@ -569,18 +610,45 @@ function ImportsPageContent(): React.JSX.Element {
                             <Trash2 className='size-4' />
                           </Button>
                         </div>
-                        {templateScope === 'export' &&
-                        m.targetField.trim().toLowerCase().startsWith(
-                          PRODUCT_PARAMETER_TARGET_PREFIX
-                        ) ? (
-                            validParameterTargetValues.has(m.targetField.trim()) ? null : (
+                        {templateScope === 'export' ? (
+                          (() => {
+                            const targetValue = m.targetField.trim();
+                            const hasParameterPrefix = targetValue
+                              .toLowerCase()
+                              .startsWith(PRODUCT_PARAMETER_TARGET_PREFIX);
+                            if (!hasParameterPrefix) return null;
+
+                            const parsedParameterTarget = parseParameterTarget(
+                              targetValue
+                            );
+                            if (!parsedParameterTarget) {
+                              return (
+                                <p className='text-[11px] text-amber-300'>
+                                  Invalid parameter target format. Use{' '}
+                                  <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code> or{' '}
+                                  <code>{PRODUCT_PARAMETER_TARGET_TRANSLATED_PATTERN}</code>.
+                                </p>
+                              );
+                            }
+
+                            const normalizedTargetValue = toParameterTargetValue(
+                              parsedParameterTarget.parameterId
+                            );
+                            if (
+                              validParameterTargetValues.has(normalizedTargetValue)
+                            ) {
+                              return null;
+                            }
+
+                            return (
                               <p className='text-[11px] text-amber-300'>
                                 {catalogId
                                   ? 'Parameter target is not in current catalog parameter list. Verify the parameter ID.'
                                   : 'Select a catalog in Imports tab to validate parameter targets.'}
                               </p>
-                            )
-                          ) : null}
+                            );
+                          })()
+                        ) : null}
                       </div>
                     ))}
                   </div>
@@ -611,7 +679,8 @@ function ImportsPageContent(): React.JSX.Element {
                       </datalist>
                       <p className='text-xs text-gray-500 italic'>
                         Tip: For category mapping use source <code>category_id</code> and target <code>categoryId</code>.
-                        {' '}For parameters use target <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code>.
+                        {' '}For parameters use target <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code> or{' '}
+                        <code>{PRODUCT_PARAMETER_TARGET_TRANSLATED_PATTERN}</code>.
                         {' '}Available source keys: {exportSourceFieldOptions.length}.
                       </p>
                     </>

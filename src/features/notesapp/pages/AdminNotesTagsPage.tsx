@@ -16,9 +16,9 @@ import {
   FormSection, 
   FormField, 
   StandardDataTablePanel,
-  PanelHeader,
   Tag,
   EmptyState,
+  PageLayout,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -214,16 +214,14 @@ export function AdminNotesTagsPage(): React.JSX.Element {
   ], [editingId, editingName, editingColor, handleUpdate, updateTag.isPending, handleEditCancel, handleEditStart]);
 
   return (
-    <div className='container mx-auto space-y-6 py-10'>
-      <PanelHeader
-        title='Note Tags'
-        description='Create and remove tags used in the Notes app.'
-        icon={<Tags className='size-4' />}
-        refreshable={true}
-        isRefreshing={tagsQuery.isFetching}
-        onRefresh={() => { void tagsQuery.refetch(); }}
-      />
-
+    <PageLayout
+      title='Note Tags'
+      description='Create and remove tags used in the Notes app.'
+      refresh={{
+        onRefresh: () => { void tagsQuery.refetch(); },
+        isRefreshing: tagsQuery.isFetching,
+      }}
+    >
       <div className='max-w-4xl space-y-6'>
         <FormSection title='Create Tag' variant='subtle'>
           <div className='flex flex-col gap-4 sm:flex-row sm:items-end'>
@@ -290,6 +288,6 @@ export function AdminNotesTagsPage(): React.JSX.Element {
         isDangerous={true}
         loading={deleteTag.isPending}
       />
-    </div>
+    </PageLayout>
   );
 }

@@ -10,15 +10,15 @@ import type {
   ThemeDocument,
 } from '@/features/notesapp/services/notes/types/mongo-note-types';
 import type {
-  CategoryRecord,
-  CategoryWithChildren,
-  NoteFileRecord,
-  NoteFilters,
-  NoteWithRelations as NoteRecord,
-  NotebookRecord,
-  TagRecord,
-  ThemeRecord,
-} from '@/shared/types/domain/notes';
+  NoteCategoryDto as CategoryRecord,
+  NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
+  NoteFileDto as NoteFileRecord,
+  NoteFiltersDto as NoteFilters,
+  NoteWithRelationsDto as NoteRecord,
+  NotebookDto as NotebookRecord,
+  NoteTagDto as TagRecord,
+  NoteThemeDto as ThemeRecord,
+} from '@/shared/contracts/notes';
 
 import type { Filter, WithId } from 'mongodb';
 

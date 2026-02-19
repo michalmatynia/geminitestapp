@@ -7,7 +7,7 @@ import React, { useCallback } from 'react';
 import { MarkdownToolbarActionsProvider } from '@/features/notesapp/context/MarkdownToolbarActionsContext';
 import { useNoteFormContext, NoteFormProvider } from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFormProps } from '@/features/notesapp/types/notes-ui';
-import { Button, Label, Input } from '@/shared/ui';
+import { Button, Label, Input, FormField } from '@/shared/ui';
 
 import { FileAttachments } from './editor/FileAttachments';
 import { MarkdownEditor } from './editor/MarkdownEditor';
@@ -197,36 +197,32 @@ function NoteFormInner(): React.JSX.Element {
         id={note ? 'note-edit-form' : undefined}
         ref={formRef}
         onSubmit={(e: React.FormEvent): void => { void handleSubmit(e); }}
-        className='space-y-4'
+        className='space-y-6'
       >      
 
-        <div>
-          <Label className='mb-2 block text-sm font-medium text-white'>
-          Title
-          </Label>
+        <FormField label='Title'>
           <Input
             type='text'
             placeholder='Enter note title'
             value={title}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setTitle(e.target.value)}
-            className='w-full rounded-lg border bg-gray-800 px-4 py-2 text-white text-lg font-semibold placeholder:text-gray-500 focus:border-blue-500 focus:outline-none'
+            className='w-full rounded-lg border bg-gray-800 px-4 py-2 text-white text-lg font-semibold placeholder:text-gray-500 focus:border-blue-500 focus:outline-none h-12'
             required
           />
-        </div>
+        </FormField>
 
-        <div>
-          <Label className='mb-2 block text-sm font-medium text-white'>
-          Content
-          </Label>
+        <FormField label='Content'>
           <MarkdownToolbarActionsProvider value={markdownToolbarActions}>
             <MarkdownToolbar />
           </MarkdownToolbarActionsProvider>
-          {editorMode === 'markdown' || editorMode === 'code' ? (
-            <MarkdownEditor isCodeMode={editorMode === 'code'} />
-          ) : (
-            <WysiwygEditor />
-          )}
-        </div>
+          <div className='mt-2'>
+            {editorMode === 'markdown' || editorMode === 'code' ? (
+              <MarkdownEditor isCodeMode={editorMode === 'code'} />
+            ) : (
+              <WysiwygEditor />
+            )}
+          </div>
+        </FormField>
 
         <FileAttachments />
 

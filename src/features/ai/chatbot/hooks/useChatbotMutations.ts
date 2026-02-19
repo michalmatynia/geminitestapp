@@ -8,7 +8,7 @@ import {
   invalidateChatbotSessions,
   invalidateSettingsScope,
 } from '@/shared/lib/query-invalidation';
-import type { ChatMessage, ChatbotSettingsPayload, ChatSession } from '@/shared/types/domain/chatbot';
+import type { ChatMessageDto as ChatMessage, ChatbotSettingsDto as ChatbotSettingsPayload, ChatbotSessionDto as ChatSession } from '@/shared/contracts/chatbot';
 import type { CreateMutation, UpdateMutation } from '@/shared/types/query-result-types';
 
 import {

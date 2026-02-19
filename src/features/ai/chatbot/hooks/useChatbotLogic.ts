@@ -10,12 +10,12 @@ import {
 } from 'react';
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator';
-import {
-  ChatMessage,
-  ChatbotSettingsPayload,
-  ChatbotDebugState,
-  ChatSession,
-} from '@/shared/types/domain/chatbot';
+import type {
+  ChatMessageDto as ChatMessage,
+  ChatbotSettingsDto as ChatbotSettingsPayload,
+  ChatbotDebugStateDto as ChatbotDebugState,
+  ChatbotSessionDto as ChatSession,
+} from '@/shared/contracts/chatbot';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

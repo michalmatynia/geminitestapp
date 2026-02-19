@@ -142,4 +142,48 @@ describe('buildBaseProductData producer mapping', () => {
 
     expect(payload['custom_material']).toBe('Wood');
   });
+
+  it('exports language-specific parameter values via parameter:<id>|<lang>', async () => {
+    const product = createProduct();
+    product.parameters = [
+      {
+        parameterId: 'param-material',
+        value: '',
+        valuesByLanguage: {
+          en: 'Wood',
+          de: 'Holz',
+        },
+      },
+    ];
+    const payload = await buildBaseProductData(product, [
+      {
+        sourceKey: 'custom_material_de',
+        targetField: 'parameter:param-material|de',
+      },
+    ]);
+
+    expect(payload['custom_material_de']).toBe('Holz');
+  });
+
+  it('falls back when requested parameter language is missing', async () => {
+    const product = createProduct();
+    product.parameters = [
+      {
+        parameterId: 'param-material',
+        value: '',
+        valuesByLanguage: {
+          en: 'Wood',
+          de: 'Holz',
+        },
+      },
+    ];
+    const payload = await buildBaseProductData(product, [
+      {
+        sourceKey: 'custom_material_pl',
+        targetField: 'parameter:param-material|pl',
+      },
+    ]);
+
+    expect(payload['custom_material_pl']).toBe('Wood');
+  });
 });

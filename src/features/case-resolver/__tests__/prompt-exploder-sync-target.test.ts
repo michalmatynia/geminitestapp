@@ -137,10 +137,7 @@ describe('case resolver prompt exploder manual apply flow', () => {
 
   it('does not consume payload when apply target is missing', () => {
     const harness = createWorkspaceHarness();
-    savePromptExploderApplyPromptForCaseResolver('Exploded output body', {
-      fileId: 'doc-1',
-      fileName: 'Document',
-    });
+    savePromptExploderApplyPromptForCaseResolver('Exploded output body', null);
 
     const result = applyPendingPromptExploderPayloadToCaseResolver({
       targetFileId: 'missing-doc',
@@ -203,5 +200,53 @@ describe('case resolver prompt exploder manual apply flow', () => {
     expect(result.applied).toBe(true);
     const updatedDocument = workspace.files.find((file) => file.id === '  doc-spaced  ');
     expect(updatedDocument?.documentContentPlainText).toContain('Normalized payload');
+  });
+
+  it('falls back to case resolver context file id when explicit target is invalid', () => {
+    const harness = createWorkspaceHarness();
+    savePromptExploderApplyPromptForCaseResolver(
+      'Context fallback payload',
+      {
+        fileId: 'doc-1',
+        fileName: 'Document',
+      }
+    );
+
+    const result = applyPendingPromptExploderPayloadToCaseResolver({
+      targetFileId: 'missing-doc-id',
+      workspaceFiles: harness.getWorkspace().files,
+      updateWorkspace: harness.updateWorkspace,
+      setEditingDocumentDraft: harness.setEditingDocumentDraft,
+      filemakerDatabase: parseFilemakerDatabase(null),
+      caseResolverCaptureSettings: parseCaseResolverCaptureSettings(null),
+    });
+
+    expect(result.applied).toBe(true);
+    const updatedDocument = harness.getWorkspace().files.find((file) => file.id === 'doc-1');
+    expect(updatedDocument?.documentContentPlainText).toContain('Context fallback payload');
+  });
+
+  it('accepts target file names when selector token is not a file id', () => {
+    const harness = createWorkspaceHarness();
+    savePromptExploderApplyPromptForCaseResolver(
+      'Name fallback payload',
+      {
+        fileId: 'doc-1',
+        fileName: 'Document',
+      }
+    );
+
+    const result = applyPendingPromptExploderPayloadToCaseResolver({
+      targetFileId: 'Document',
+      workspaceFiles: harness.getWorkspace().files,
+      updateWorkspace: harness.updateWorkspace,
+      setEditingDocumentDraft: harness.setEditingDocumentDraft,
+      filemakerDatabase: parseFilemakerDatabase(null),
+      caseResolverCaptureSettings: parseCaseResolverCaptureSettings(null),
+    });
+
+    expect(result.applied).toBe(true);
+    const updatedDocument = harness.getWorkspace().files.find((file) => file.id === 'doc-1');
+    expect(updatedDocument?.documentContentPlainText).toContain('Name fallback payload');
   });
 });

@@ -70,6 +70,60 @@ const normalizeCandidateId = (value: string | null | undefined): string | null =
   return normalized.length > 0 ? normalized : null;
 };
 
+const normalizeTargetFileName = (value: string | null | undefined): string | null => {
+  const normalized = normalizeCandidateId(value);
+  if (!normalized) return null;
+  return normalized.replace(/\s+/g, ' ').toLowerCase();
+};
+
+const resolvePromptExploderApplyTargetFileId = ({
+  requestedTargetFileId,
+  payloadContextFileId,
+  workspaceFiles,
+}: {
+  requestedTargetFileId: string | null;
+  payloadContextFileId: string | null;
+  workspaceFiles: CaseResolverWorkspace['files'];
+}): string | null => {
+  const fileIdByNormalizedId = new Map<string, string>();
+  const fileIdByNormalizedName = new Map<string, string>();
+  const duplicateNormalizedNames = new Set<string>();
+
+  workspaceFiles.forEach((file) => {
+    const normalizedFileId = normalizeCandidateId(file.id);
+    if (normalizedFileId && !fileIdByNormalizedId.has(normalizedFileId)) {
+      fileIdByNormalizedId.set(normalizedFileId, file.id);
+    }
+
+    const normalizedName = normalizeTargetFileName(file.name);
+    if (!normalizedName) return;
+    if (duplicateNormalizedNames.has(normalizedName)) return;
+    if (fileIdByNormalizedName.has(normalizedName)) {
+      fileIdByNormalizedName.delete(normalizedName);
+      duplicateNormalizedNames.add(normalizedName);
+      return;
+    }
+    fileIdByNormalizedName.set(normalizedName, file.id);
+  });
+
+  const candidates = [requestedTargetFileId, payloadContextFileId];
+  for (const candidate of candidates) {
+    const normalizedCandidateId = normalizeCandidateId(candidate);
+    if (normalizedCandidateId) {
+      const byId = fileIdByNormalizedId.get(normalizedCandidateId);
+      if (byId) return byId;
+    }
+
+    const normalizedCandidateName = normalizeTargetFileName(candidate);
+    if (normalizedCandidateName) {
+      const byName = fileIdByNormalizedName.get(normalizedCandidateName);
+      if (byName) return byName;
+    }
+  }
+
+  return null;
+};
+
 const normalizePayloadCreatedAt = (value: string | null | undefined): string =>
   normalizeCandidateId(value) ?? 'missing-created-at';
 
@@ -134,21 +188,11 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
   }
 
   const requestedTargetFileId = normalizeCandidateId(targetFileId);
-  if (!requestedTargetFileId) {
-    return {
-      applied: false,
-      payload: payloadToApply,
-      proposalState: null,
-      reason: 'target_file_missing',
-    };
-  }
-  const fileIdByNormalizedId = new Map<string, string>();
-  workspaceFiles.forEach((file) => {
-    const normalizedFileId = normalizeCandidateId(file.id);
-    if (!normalizedFileId || fileIdByNormalizedId.has(normalizedFileId)) return;
-    fileIdByNormalizedId.set(normalizedFileId, file.id);
+  const resolvedTargetFileId = resolvePromptExploderApplyTargetFileId({
+    requestedTargetFileId,
+    payloadContextFileId: payloadToApply.caseResolverContext?.fileId ?? null,
+    workspaceFiles,
   });
-  const resolvedTargetFileId = fileIdByNormalizedId.get(requestedTargetFileId) ?? null;
   if (!resolvedTargetFileId) {
     return {
       applied: false,

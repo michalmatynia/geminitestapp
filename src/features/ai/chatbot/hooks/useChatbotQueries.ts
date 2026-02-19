@@ -2,7 +2,7 @@
 
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { chatbotKeys } from '@/shared/lib/query-key-exports';
-import type { ChatSession } from '@/shared/types/domain/chatbot';
+import type { ChatbotSessionDto as ChatSession } from '@/shared/contracts/chatbot';
 import type { ListQuery, SingleQuery } from '@/shared/types/query-result-types';
 
 import {

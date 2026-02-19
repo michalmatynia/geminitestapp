@@ -1,17 +1,25 @@
 import { MongoDocument } from '@/shared/types/core/base-types';
 import type { 
-  TagRecord, 
-  CategoryRecord, 
-  NotebookRecord, 
-  NoteFileRecord, 
-  ThemeRecord, 
-  NoteWithRelations,
-  NoteTagRecord,
-  NoteCategoryRecord,
-  NoteRelationWithTarget,
-  NoteRelationWithSource,
-  NoteRecord
-} from '@/shared/types/domain/notes';
+  NoteTagDto as TagRecord, 
+  NoteCategoryDto as CategoryRecord, 
+  NotebookDto as NotebookRecord, 
+  NoteFileDto as NoteFileRecord, 
+  NoteThemeDto as ThemeRecord, 
+  NoteWithRelationsDto as NoteWithRelations,
+  NoteTagRelationDto as NoteTagRecord,
+  NoteCategoryRelationDto as NoteCategoryRecord,
+  NoteRelationDto,
+  RelatedNoteDto as RelatedNote,
+  NoteDto as NoteRecord
+} from '@/shared/contracts/notes';
+
+type NoteRelationWithTarget = NoteRelationDto & {
+  targetNote?: RelatedNote | undefined;
+};
+
+type NoteRelationWithSource = NoteRelationDto & {
+  sourceNote?: RelatedNote | undefined;
+};
 
 export type TagDocument = MongoDocument<TagRecord>;
 export type CategoryDocument = MongoDocument<CategoryRecord>;

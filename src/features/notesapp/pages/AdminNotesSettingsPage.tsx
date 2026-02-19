@@ -3,9 +3,6 @@
 import { RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 
-
-
-
 import { useNoteSettings, DEFAULT_NOTE_SETTINGS } from '@/features/notesapp/hooks/NoteSettingsContext';
 import type { NoteSettings } from '@/features/notesapp/types/notes-settings';
 import { Button, SelectSimple, useToast, Label, RadioGroup, RadioGroupItem, SectionHeader, FormSection, FormField, ToggleRow } from '@/shared/ui';
@@ -73,7 +70,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
         className='mb-6'
       />
 
-      <div className='max-w-xl space-y-6'>
+      <div className='max-xl space-y-6'>
         {/* Sorting Settings */}
         <FormSection title='Sorting' className='p-6'>
           <FormField
@@ -234,62 +231,6 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             )}
           </div>
         </FormSection>
-
-        {/* Reset Button */}
-        <div className='flex justify-end'>
-          <Button
-            variant='outline'
-            onClick={handleResetToDefaults}
-            disabled={allDefaults}
-            className='gap-2'
-          >
-            <RotateCcw className='size-4' />
-            Reset to Defaults
-          </Button>
-        </div>
-
-        {/* Current Settings Summary */}
-        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-          <h3 className='mb-2 text-sm font-medium text-gray-400'>
-            Current Settings Summary
-          </h3>
-          <div className='grid grid-cols-2 gap-2 text-xs text-gray-500'>
-            <span>Sort:</span>
-            <span className='text-gray-300'>
-              {sortByOptions.find((o: { value: string }) => o.value === settings.sortBy)?.label} (
-              {settings.sortOrder === 'desc' ? 'Descending' : 'Ascending'})
-            </span>
-            <span>Timestamps:</span>
-            <span className='text-gray-300'>
-              {settings.showTimestamps ? 'Visible' : 'Hidden'}
-            </span>
-            <span>Breadcrumbs:</span>
-            <span className='text-gray-300'>
-              {settings.showBreadcrumbs ? 'Visible' : 'Hidden'}
-            </span>
-            <span>Search Scope:</span>
-            <span className='text-gray-300'>
-              {searchScopeOptions.find((o: { value: string }) => o.value === settings.searchScope)?.label}
-            </span>
-            <span>Selected Folder:</span>
-            <span className='text-gray-300'>
-              {settings.selectedFolderId ? 'Saved' : 'All Notes (default)'}
-            </span>
-            <span>Autoformat on Paste:</span>
-            <span className='text-gray-300'>
-              {settings.autoformatOnPaste ? 'Enabled' : 'Disabled'}
-            </span>
-            <span>Editor Mode:</span>
-            <span className='text-gray-300'>
-              {editorModeOptions.find((o: { value: string }) => o.value === settings.editorMode)?.label}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 
         {/* Reset Button */}
         <div className='flex justify-end'>

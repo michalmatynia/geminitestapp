@@ -181,6 +181,20 @@ export const getProducerRefId = (value: unknown): string => {
 
 export type BaseFieldMapping = { sourceKey: string; targetField: string };
 
+const toBaseFieldMappings = (value: unknown): BaseFieldMapping[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry: unknown): BaseFieldMapping | null => {
+      if (!entry || typeof entry !== 'object') return null;
+      const record = entry as Record<string, unknown>;
+      const sourceKey = toTrimmedString(record['sourceKey']);
+      const targetField = toTrimmedString(record['targetField']);
+      if (!sourceKey || !targetField) return null;
+      return { sourceKey, targetField };
+    })
+    .filter((entry): entry is BaseFieldMapping => entry !== null);
+};
+
 type BaseExportProductLike = {
   categoryId?: string | null | undefined;
   producers?: unknown[] | null | undefined;
@@ -198,7 +212,7 @@ type BaseExportProductLike = {
 
 const PRODUCT_PARAMETER_MAPPING_PREFIX = 'parameter:';
 
-const parseMappedParameterId = (value: unknown): string => {
+export const parseMappedParameterId = (value: unknown): string => {
   if (typeof value !== 'string') return '';
   const trimmed = value.trim();
   if (!trimmed) return '';
@@ -387,14 +401,22 @@ export const prepareBaseExportMappingsAndProduct = async <
           }
         );
       } else {
-        mappings = template.mappings;
+        const templateRecord = template as {
+          mappings?: unknown;
+          exportImagesAsBase64?: unknown;
+        };
+        mappings = toBaseFieldMappings(templateRecord.mappings);
         resolvedTemplateId = template.id;
+        const templateExportImagesAsBase64 =
+          typeof templateRecord.exportImagesAsBase64 === 'boolean'
+            ? templateRecord.exportImagesAsBase64
+            : undefined;
         if (
           !hasImageOverrides &&
           data.exportImagesAsBase64 === undefined &&
-          template.exportImagesAsBase64 !== undefined
+          templateExportImagesAsBase64 !== undefined
         ) {
-          exportImagesAsBase64 = template.exportImagesAsBase64;
+          exportImagesAsBase64 = templateExportImagesAsBase64;
         }
       }
     }

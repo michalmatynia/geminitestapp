@@ -89,6 +89,97 @@ const normalizeAutoRefreshInterval = (value: number): number => {
   );
 };
 
+import { Trash2 } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import React, { useMemo } from 'react';
+
+import { runsApi } from '@/features/ai/ai-paths/lib';
+import type {
+  AiPathRunEventRecord,
+  AiPathRunRecord,
+} from '@/features/ai/ai-paths/lib';
+import { fetchAiPathsSettingsCached } from '@/features/ai/ai-paths/lib/settings-store-client';
+import { createDeleteMutationV2, createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import {
+  Button,
+  ConfirmModal,
+  Input,
+  Label,
+  SelectSimple,
+  useToast,
+  Pagination,
+  FilterPanel,
+} from '@/shared/ui';
+import type { FilterField } from '@/shared/ui/templates/panels';
+
+import { JobQueueOverview } from './job-queue-overview';
+import {
+  getLatestEventTimestamp,
+  getPanelDescription,
+  getPanelLabel,
+  isRunningStatus,
+  normalizeRunDetail,
+  normalizeRunEvents,
+  normalizeRunNodes,
+  resolveRunExecutionKind,
+  resolveRunOrigin,
+  resolveRunSource,
+  resolveRunSourceDebug,
+  type QueueHistoryEntry,
+  type QueueStatus,
+  type RunDetail,
+  type StreamConnectionStatus,
+} from './job-queue-panel-utils';
+import { JobQueueRunCard } from './job-queue-run-card';
+import { buildHistoryNodeOptions } from './run-history-utils';
+
+type JobQueuePanelProps = {
+  activePathId?: string | null;
+  sourceFilter?: string | null;
+  sourceMode?: 'include' | 'exclude';
+  isActive?: boolean;
+};
+
+type StreamMessageEvent = Event & { data: string };
+
+const PAGE_SIZES = [10, 25, 50];
+const SEARCH_DEBOUNCE_MS = 300;
+const AUTO_REFRESH_ENABLED_KEY = 'ai-paths-job-queue-auto-refresh-enabled';
+const AUTO_REFRESH_INTERVAL_KEY = 'ai-paths-job-queue-auto-refresh-interval';
+const AUTO_REFRESH_INTERVAL_OPTIONS = [5000, 10000, 30000, 60000] as const;
+const DEFAULT_AUTO_REFRESH_INTERVAL = 10000;
+const ACTIVE_RUN_REFRESH_MIN_MS = 5000;
+const IDLE_RUN_REFRESH_MIN_MS = 30000;
+const ACTIVE_QUEUE_STATUS_REFRESH_MIN_MS = 10000;
+const IDLE_QUEUE_STATUS_REFRESH_MIN_MS = 30000;
+const ACTIVE_RUN_STATUSES = new Set(['queued', 'running', 'paused']);
+const RUNS_REQUEST_COOLDOWN_MS = 2500;
+const QUEUE_STATUS_REQUEST_COOLDOWN_MS = 2500;
+const POLLING_JITTER_MS = 500;
+const QUEUE_LAG_THRESHOLD_KEY = 'ai_paths_queue_lag_threshold_ms';
+const STATUS_FILTERS = [
+  { value: 'all', label: 'All' },
+  { value: 'queued', label: 'Queued' },
+  { value: 'running', label: 'Running' },
+  { value: 'paused', label: 'Paused' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'failed', label: 'Failed' },
+  { value: 'canceled', label: 'Canceled' },
+  { value: 'dead_lettered', label: 'Dead-lettered' },
+] as const;
+
+const normalizeAutoRefreshInterval = (value: number): number => {
+  if (!Number.isFinite(value) || value <= 0) return DEFAULT_AUTO_REFRESH_INTERVAL;
+  // Legacy value migration: older clients may have stored seconds.
+  const asMs = value < 1000 ? value * 1000 : value;
+  return AUTO_REFRESH_INTERVAL_OPTIONS.reduce(
+    (best: number, option: number): number =>
+      Math.abs(option - asMs) < Math.abs(best - asMs) ? option : best,
+    AUTO_REFRESH_INTERVAL_OPTIONS[0]
+  );
+};
+
 export function JobQueuePanel({
   activePathId,
   sourceFilter,
@@ -100,7 +191,7 @@ export function JobQueuePanel({
   const [pathFilter, setPathFilter] = React.useState(activePathId ?? '');
   const [searchQuery, setSearchQuery] = React.useState('');
   const [debouncedQuery, setDebouncedQuery] = React.useState(searchQuery);
-  const [statusFilter, setStatusFilter] = React.useState<(typeof STATUS_FILTERS)[number]['id']>('all');
+  const [statusFilter, setStatusFilter] = React.useState<string>('all');
   const [pageSize, setPageSize] = React.useState(25);
   const [page, setPage] = React.useState(1);
   const [expandedRunIds, setExpandedRunIds] = React.useState<Set<string>>(new Set());
@@ -835,6 +926,46 @@ export function JobQueuePanel({
     },    [historySelection]
   );
 
+  const filterConfig = useMemo<FilterField[]>(() => [
+    {
+      key: 'pathId',
+      label: 'Path ID',
+      type: 'text',
+      placeholder: activePathId ? `Active path: ${activePathId}` : 'All paths',
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      type: 'select',
+      options: [...STATUS_FILTERS],
+    },
+    {
+      key: 'pageSize',
+      label: 'Page Size',
+      type: 'select',
+      options: PAGE_SIZES.map((size) => ({ value: String(size), label: String(size) })),
+    },
+  ], [activePathId]);
+
+  const filterValues = useMemo(() => ({
+    pathId: pathFilter,
+    status: statusFilter,
+    pageSize: String(pageSize),
+  }), [pathFilter, statusFilter, pageSize]);
+
+  const handleFilterChange = (key: string, value: unknown) => {
+    if (key === 'pathId') setPathFilter(String(value));
+    if (key === 'status') setStatusFilter(String(value));
+    if (key === 'pageSize') setPageSize(Number(value));
+  };
+
+  const handleResetFilters = () => {
+    setPathFilter(activePathId ?? '');
+    setStatusFilter('all');
+    setPageSize(25);
+    setSearchQuery('');
+  };
+
   return (
     <div className='space-y-4'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
@@ -934,56 +1065,17 @@ export function JobQueuePanel({
         onClearHistory={() => setQueueHistory([])}
       />
 
-      <div className='grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]'>
-        <div className='space-y-1'>
-          <Label className='text-[10px] uppercase text-gray-500'>Path filter</Label>
-          <Input
-            className='h-9 rounded-md border border-border bg-card/60 px-3 text-sm text-white'
-            value={pathFilter}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPathFilter(event.target.value)}
-            placeholder={activePathId ? `Active path: ${activePathId}` : 'All paths'}
-          />
-        </div>
-        <div className='space-y-1'>
-          <Label className='text-[10px] uppercase text-gray-500'>Search</Label>
-          <Input
-            className='h-9 rounded-md border border-border bg-card/60 px-3 text-sm text-white'
-            value={searchQuery}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(event.target.value)}
-            placeholder='Run ID, path name, entity, error...'
-          />
-        </div>
-        <div className='space-y-1'>
-          <Label className='text-[10px] uppercase text-gray-500'>Page size</Label>
-          <SelectSimple
-            size='sm'
-            value={String(pageSize)}
-            onValueChange={(value: string) => setPageSize(Number.parseInt(value, 10))}
-            options={PAGE_SIZES.map((size: number) => ({
-              value: String(size),
-              label: String(size),
-            }))}
-            triggerClassName='h-9 w-[110px] border-border bg-card/70 text-[11px] text-white'
-          />
-        </div>                    </div>
+      <FilterPanel
+        filters={filterConfig}
+        values={filterValues}
+        onFilterChange={handleFilterChange}
+        search={searchQuery}
+        onSearchChange={setSearchQuery}
+        onReset={handleResetFilters}
+        headerTitle='Job Queue Filters'
+        searchPlaceholder='Run ID, path name, entity, error...'
+      />
             
-      <div className='flex flex-wrap gap-2'>
-        {STATUS_FILTERS.map((filter: (typeof STATUS_FILTERS)[number]) => {
-          const active = statusFilter === filter.id;
-          return (
-            <Button
-              key={filter.id}
-              type='button'
-              className={`rounded-md border px-2 py-1 text-[10px] ${
-                active ? 'border-emerald-500/50 text-emerald-200' : 'text-gray-300 hover:bg-muted/60'
-              }`}
-              onClick={() => setStatusFilter(filter.id)}
-            >
-              {filter.label}
-            </Button>
-          );
-        })}
-      </div>            
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <div className='text-[11px] text-gray-400'>
           Showing {runs.length} of {total} runs

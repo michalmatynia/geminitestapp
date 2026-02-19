@@ -5,7 +5,7 @@ import React from 'react';
 
 import { APP_EMBED_OPTIONS } from '@/features/app-embeds/lib/constants';
 import { AppEmbedsProvider, useAppEmbeds } from '@/features/app-embeds/providers/AppEmbedsProvider';
-import { Button, Checkbox, SectionHeader, SimpleSettingsList } from '@/shared/ui';
+import { Button, Checkbox, SectionHeader, SimpleSettingsList, LoadingState } from '@/shared/ui';
 
 export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.ReactNode {
   return (
@@ -20,9 +20,7 @@ function AppEmbedsPanelContent({ showHeader }: { showHeader: boolean }): React.R
 
   if (isLoading) {
     return (
-      <div className='flex h-full items-center justify-center p-4 text-xs text-gray-500'>
-        Loading app embeds...
-      </div>
+      <LoadingState message='Loading app embeds...' className='h-full' />
     );
   }
 
@@ -59,7 +57,7 @@ function AppEmbedsPanelContent({ showHeader }: { showHeader: boolean }): React.R
                 </label>
                 <Link
                   href={item.original.settingsRoute}
-                  className='text-xs text-blue-300 hover:text-blue-200'
+                  className='text-xs text-blue-300 hover:text-blue-200 underline underline-offset-2'
                 >
                   Settings
                 </Link>
@@ -71,10 +69,11 @@ function AppEmbedsPanelContent({ showHeader }: { showHeader: boolean }): React.R
       <div className='border-t border-border px-4 py-3'>
         <Button
           onClick={() => void save()}
-          disabled={isSaving}
+          loading={isSaving}
+          loadingText='Saving...'
           className='w-full'
         >
-          {isSaving ? 'Saving...' : 'Save'}
+          Save Configuration
         </Button>
       </div>
     </div>

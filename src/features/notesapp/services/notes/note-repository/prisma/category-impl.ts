@@ -4,11 +4,11 @@ import { Prisma } from '@prisma/client';
 
 import prisma from '@/shared/lib/db/prisma';
 import type {
-  CategoryRecord,
-  CategoryWithChildren,
-  CategoryCreateInput,
-  CategoryUpdateInput,
-} from '@/shared/types/domain/notes';
+  NoteCategoryDto as CategoryRecord,
+  NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
+  CreateNoteCategoryDto as CategoryCreateInput,
+  UpdateNoteCategoryDto as CategoryUpdateInput,
+} from '@/shared/contracts/notes';
 
 import { getOrCreateDefaultNotebook } from './notebook-impl';
 

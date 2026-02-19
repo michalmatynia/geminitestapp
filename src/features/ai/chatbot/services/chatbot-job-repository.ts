@@ -4,11 +4,25 @@ import { ObjectId } from 'mongodb';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
-  ChatbotJob,
-  ChatbotJobDocument,
-} from '@/shared/types/domain/chatbot';
+  ChatbotJobDto as ChatbotJob,
+  ChatbotJobPayloadDto as ChatbotJobPayload,
+} from '@/shared/contracts/chatbot';
 
 const COLLECTION_NAME = 'chatbot_jobs';
+
+interface ChatbotJobDocument {
+  _id: ObjectId;
+  sessionId: string;
+  status: string;
+  model?: string | undefined;
+  payload: ChatbotJobPayload;
+  resultText?: string | undefined;
+  errorMessage?: string | undefined;
+  createdAt: Date;
+  updatedAt?: Date | null | undefined;
+  startedAt?: Date | undefined;
+  finishedAt?: Date | undefined;
+}
 
 type ChatbotJobCreateInput = Pick<
   ChatbotJobDocument,

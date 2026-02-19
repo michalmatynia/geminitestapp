@@ -6,7 +6,7 @@ import React from 'react';
 
 import type { SessionCookie } from '@/features/integrations/types/integrations-ui';
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { Badge, StatusBadge } from '@/shared/ui';
+import { Badge, StatusBadge, LoadingState } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 import { cn } from '@/shared/utils';
 
@@ -37,10 +37,7 @@ export function SessionModal({
       size='lg'
     >
       {loading ? (
-        <div className='flex flex-col items-center justify-center py-12 text-muted-foreground'>
-          <div className='size-6 animate-spin rounded-full border-2 border-primary border-t-transparent mb-4' />
-          <p className='text-sm'>Retrieving session artifacts...</p>
-        </div>
+        <LoadingState message='Retrieving session artifacts...' className='py-12' />
       ) : error ? (
         <div className='rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive'>
           {error}

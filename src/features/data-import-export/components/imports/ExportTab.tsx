@@ -470,31 +470,34 @@ export function ExportTab(): React.JSX.Element {
               onClick={(): void => {
                 handleLoadInventories().catch(() => {});
               }}
-              disabled={loadingInventories}
+              loading={loadingInventories}
+              loadingText='Loading Inventories...'
               variant='outline'
               size='sm'
             >
-              {loadingInventories ? 'Loading...' : 'Load Inventories'}
+              Load Inventories
             </Button>
             <Button
               onClick={(): void => {
                 handleLoadWarehouses().catch(() => {});
               }}
-              disabled={loadingWarehouses}
+              loading={loadingWarehouses}
+              loadingText='Loading Warehouses...'
               variant='outline'
               size='sm'
             >
-              {loadingWarehouses ? 'Loading...' : 'Load Warehouses'}
+              Load Warehouses
             </Button>
             <Button
               onClick={(): void => {
                 handleDebugWarehouses();
               }}
-              disabled={loadingDebugWarehouses}
+              loading={loadingDebugWarehouses}
+              loadingText='Debugging...'
               variant='outline'
               size='sm'
             >
-              {loadingDebugWarehouses ? 'Debugging...' : 'Debug Warehouses'}
+              Debug Warehouses
             </Button>
             <ToggleRow
               label='Try loading global warehouses (if supported)'
@@ -506,10 +509,11 @@ export function ExportTab(): React.JSX.Element {
               onClick={(): void => {
                 handleSaveExportSettings().catch(() => {});
               }}
-              disabled={savingExportSettings}
+              loading={savingExportSettings}
+              loadingText='Saving...'
               size='sm'
             >
-              {savingExportSettings ? 'Saving...' : 'Save Export Settings'}
+              Save Export Settings
             </Button>
             <Link href='/admin/ai-paths/queue?tab=paths-external#export-jobs'>
               <Button variant='outline' size='sm'>

@@ -12,7 +12,7 @@ import { useNotebooks } from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
 import type { NotebookDto as NotebookRecord } from '@/shared/contracts/notes';
-import { Button, useToast, Input, PageLayout, FormSection, FormField, RefreshButton, LoadingState, StatusBadge, SimpleSettingsList } from '@/shared/ui';
+import { Button, useToast, Input, PageLayout, FormSection, FormField, RefreshButton, LoadingState, StatusBadge, SimpleSettingsList, DropdownMenuItem } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 export function AdminNotesNotebooksPage(): React.JSX.Element {
@@ -238,24 +238,6 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
           />
         </FormSection>
       </div>
-
-      <ConfirmModal
-        isOpen={Boolean(notebookToDelete)}
-        onClose={() => setNotebookToDelete(null)}
-        title='Delete Notebook?'
-        message='Delete this notebook and all its notes/tags/folders? This action cannot be undone.'
-        confirmText='Destroy Notebook'
-        isDangerous={true}
-        onConfirm={(): void => {
-          if (notebookToDelete) {
-            void handleDelete(notebookToDelete);
-          }
-        }}
-      />
-    </PageLayout>
-  );
-}
-
 
       <ConfirmModal
         isOpen={Boolean(notebookToDelete)}

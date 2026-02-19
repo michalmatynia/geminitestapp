@@ -4,10 +4,10 @@ import { Prisma, type Theme } from '@prisma/client';
 
 import prisma from '@/shared/lib/db/prisma';
 import type {
-  ThemeRecord,
-  ThemeCreateInput,
-  ThemeUpdateInput,
-} from '@/shared/types/domain/notes';
+  NoteThemeDto as ThemeRecord,
+  CreateNoteThemeDto as ThemeCreateInput,
+  UpdateNoteThemeDto as ThemeUpdateInput,
+} from '@/shared/contracts/notes';
 
 import { getOrCreateDefaultNotebook } from './notebook-impl';
 

@@ -1,9 +1,9 @@
 import prisma from '@/shared/lib/db/prisma';
 import type {
-  TagRecord,
-  TagCreateInput,
-  TagUpdateInput,
-} from '@/shared/types/domain/notes';
+  NoteTagDto as TagRecord,
+  CreateNoteTagDto as TagCreateInput,
+  UpdateNoteTagDto as TagUpdateInput,
+} from '@/shared/contracts/notes';
 
 import { getOrCreateDefaultNotebook } from './notebook-impl';
 

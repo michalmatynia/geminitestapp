@@ -31,8 +31,8 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, pa
     userId: profile.userId,
     mfaEnabled: profile.mfaEnabled,
     allowedIps: profile.allowedIps,
-    disabledAt: profile.disabledAt ? profile.disabledAt.toISOString() : null,
-    bannedAt: profile.bannedAt ? profile.bannedAt.toISOString() : null,
+    disabledAt: profile.disabledAt,
+    bannedAt: profile.bannedAt,
   });
 }
 
@@ -91,7 +91,7 @@ export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, pa
     userId: profile.userId,
     mfaEnabled: profile.mfaEnabled,
     allowedIps: profile.allowedIps,
-    disabledAt: profile.disabledAt ? profile.disabledAt.toISOString() : null,
-    bannedAt: profile.bannedAt ? profile.bannedAt.toISOString() : null,
+    disabledAt: profile.disabledAt,
+    bannedAt: profile.bannedAt,
   });
 }

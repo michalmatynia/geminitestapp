@@ -731,7 +731,12 @@ export const resolveWarehouseAndStockMappings = async ({
           warehouseId = fallbackWarehouseId;
         }
       } else {
-        warehouseId = warehouses[0]?.typedId ?? warehouses[0]?.id ?? null;
+        const firstWarehouse = warehouses[0] as Record<string, unknown> | undefined;
+        const fallbackTypedWarehouseId =
+          firstWarehouse && typeof firstWarehouse['typedId'] === 'string'
+            ? firstWarehouse['typedId']
+            : undefined;
+        warehouseId = fallbackTypedWarehouseId ?? warehouses[0]?.id ?? null;
       }
     } catch (error) {
       await ErrorSystem.logWarning(

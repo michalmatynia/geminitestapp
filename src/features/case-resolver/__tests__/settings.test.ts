@@ -220,7 +220,7 @@ describe('case-resolver settings', () => {
     expect(workspace.files[0]?.caseIdentifierId).toBe('identifier-1');
     expect(workspace.folders).toEqual(['Root_A', 'Root_A/Sub__']);
     expect(workspace.activeFileId).toBe('dup-file');
-    expect(workspace.files[0]?.editorType).toBe('markdown');
+    expect(workspace.files[0]?.editorType).toBe('wysiwyg');
     expect(workspace.files[0]?.documentContentFormatVersion).toBe(1);
     expect(workspace.files[0]?.documentContentVersion).toBe(1);
     expect(workspace.files[0]?.documentContentMarkdown).toBe('');
@@ -457,7 +457,7 @@ describe('case-resolver settings', () => {
     expect(file?.documentHistory[0]?.editorType).toBe('wysiwyg');
     expect(file?.documentHistory[0]?.documentContentPlainText).toContain('Second version');
     expect(file?.documentHistory[1]?.id).toBe('entry-1');
-    expect(file?.documentHistory[1]?.editorType).toBe('markdown');
+    expect(file?.documentHistory[1]?.editorType).toBe('wysiwyg');
     expect(file?.documentHistory[1]?.documentContentMarkdown).toContain('# First version');
   });
 
@@ -820,25 +820,25 @@ describe('case-resolver settings', () => {
     const parsedDefaults = parseCaseResolverSettings(JSON.stringify({}));
     expect(parsedDefaults.ocrModel).toBe('');
     expect(parsedDefaults.ocrPrompt).toBe(DEFAULT_CASE_RESOLVER_OCR_PROMPT);
-    expect(parsedDefaults.defaultDocumentFormat).toBe('markdown');
+    expect(parsedDefaults.defaultDocumentFormat).toBe('wysiwyg');
     expect(parsedDefaults.confirmDeleteDocument).toBe(true);
 
     const parsedNull = parseCaseResolverSettings(null);
     expect(parsedNull.ocrModel).toBe('');
     expect(parsedNull.ocrPrompt).toBe(DEFAULT_CASE_RESOLVER_OCR_PROMPT);
-    expect(parsedNull.defaultDocumentFormat).toBe('markdown');
+    expect(parsedNull.defaultDocumentFormat).toBe('wysiwyg');
     expect(parsedNull.confirmDeleteDocument).toBe(true);
 
     const parsedLegacyPlainValue = parseCaseResolverSettings('wysiwyg');
-    expect(parsedLegacyPlainValue.defaultDocumentFormat).toBe('markdown');
+    expect(parsedLegacyPlainValue.defaultDocumentFormat).toBe('wysiwyg');
 
     const parsedLegacyJsonString = parseCaseResolverSettings(JSON.stringify('wysiwyg'));
-    expect(parsedLegacyJsonString.defaultDocumentFormat).toBe('markdown');
+    expect(parsedLegacyJsonString.defaultDocumentFormat).toBe('wysiwyg');
 
     const parsedLegacyObjectKey = parseCaseResolverSettings(
       JSON.stringify({ editorType: 'wysiwyg' })
     );
-    expect(parsedLegacyObjectKey.defaultDocumentFormat).toBe('markdown');
+    expect(parsedLegacyObjectKey.defaultDocumentFormat).toBe('wysiwyg');
 
     expect(parseCaseResolverDefaultDocumentFormat('wysiwyg')).toBe('wysiwyg');
     expect(parseCaseResolverDefaultDocumentFormat(JSON.stringify('wysiwyg'))).toBe('wysiwyg');
@@ -847,8 +847,8 @@ describe('case-resolver settings', () => {
     ).toBe('wysiwyg');
     expect(
       parseCaseResolverDefaultDocumentFormat(JSON.stringify({ editorType: 'wysiwyg' }))
-    ).toBe('markdown');
-    expect(parseCaseResolverDefaultDocumentFormat('invalid-value')).toBe('markdown');
+    ).toBe('wysiwyg');
+    expect(parseCaseResolverDefaultDocumentFormat('invalid-value')).toBe('wysiwyg');
     expect(parseCaseResolverDefaultDocumentFormat('invalid-value', 'wysiwyg')).toBe('wysiwyg');
   });
 

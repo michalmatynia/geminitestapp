@@ -57,6 +57,7 @@ export async function handleDatabaseQueryOperation({
     toast,
     queryConfig: resolution.queryConfig,
     query: resolution.query,
+    querySource: resolution.querySource,
     dryRun,
     templateInputs,
     aiPrompt,

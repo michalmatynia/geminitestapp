@@ -1,5 +1,9 @@
 'use client';
 
+import {
+  ensureHtmlForPreview,
+  ensureSafeDocumentHtml,
+} from '@/features/document-editor/content-format';
 import type {
   FilemakerDatabase,
   FilemakerEntityKind,
@@ -512,6 +516,21 @@ export const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEdit
     requestedVersion === 'exploded' && explodedDocumentContent.trim().length === 0
       ? 'original'
       : requestedVersion;
+  const activeDocumentContent = activeDocumentVersion === 'exploded'
+    ? explodedDocumentContent
+    : originalDocumentContent;
+  const resolvedDraftHtml = (() => {
+    if (typeof file.documentContentHtml === 'string' && file.documentContentHtml.trim().length > 0) {
+      return file.documentContentHtml;
+    }
+    if (
+      typeof file.documentContentMarkdown === 'string' &&
+      file.documentContentMarkdown.trim().length > 0
+    ) {
+      return ensureHtmlForPreview(file.documentContentMarkdown, 'markdown');
+    }
+    return ensureSafeDocumentHtml(activeDocumentContent);
+  })();
   return {
     id: file.id,
     fileType: file.fileType,
@@ -525,15 +544,13 @@ export const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEdit
     originalDocumentContent,
     explodedDocumentContent,
     activeDocumentVersion,
-    editorType: file.editorType,
+    editorType: 'wysiwyg',
     documentContentFormatVersion: file.documentContentFormatVersion,
     documentContentVersion: file.documentContentVersion,
     baseDocumentContentVersion: file.documentContentVersion,
-    documentContent: activeDocumentVersion === 'exploded' && explodedDocumentContent.trim().length > 0
-      ? explodedDocumentContent
-      : originalDocumentContent,
+    documentContent: activeDocumentContent,
     documentContentMarkdown: file.documentContentMarkdown,
-    documentContentHtml: file.documentContentHtml,
+    documentContentHtml: resolvedDraftHtml,
     documentContentPlainText: file.documentContentPlainText,
     documentHistory: file.documentHistory,
     documentConversionWarnings: file.documentConversionWarnings,

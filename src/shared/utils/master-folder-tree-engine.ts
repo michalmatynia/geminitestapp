@@ -1,3 +1,15 @@
+import type {
+  MasterTreeViewNodeDto,
+  MasterTreeValidationIssueCodeDto,
+  MasterTreeValidationIssueDto,
+  MasterTreeBuildResultDto,
+  MasterTreeCycleGuardResultDto,
+  MasterTreeDropRejectionReasonDto,
+  MasterTreeCanDropResultDto,
+  MasterTreeMutationErrorCodeDto,
+  MasterTreeMutationResultDto,
+} from '@/shared/contracts/master-folder-tree';
+
 import {
   canNestTreeNodeV2,
   type FolderTreeProfileV2,
@@ -14,59 +26,23 @@ import {
   type MasterTreeTargetType,
 } from './master-folder-tree-contract';
 
-export type MasterTreeViewNode = MasterTreeNode & {
-  children: MasterTreeViewNode[];
-};
+export type MasterTreeViewNode = MasterTreeViewNodeDto;
 
-export type MasterTreeValidationIssueCode =
-  | 'DUPLICATE_ID'
-  | 'MISSING_PARENT'
-  | 'CYCLE_DETECTED';
+export type MasterTreeValidationIssueCode = MasterTreeValidationIssueCodeDto;
 
-export type MasterTreeValidationIssue = {
-  code: MasterTreeValidationIssueCode;
-  nodeId: string;
-  message: string;
-};
+export type MasterTreeValidationIssue = MasterTreeValidationIssueDto;
 
-export type MasterTreeBuildResult = {
-  roots: MasterTreeViewNode[];
-  issues: MasterTreeValidationIssue[];
-};
+export type MasterTreeBuildResult = MasterTreeBuildResultDto;
 
-export type MasterTreeCycleGuardResult = {
-  hasCycle: boolean;
-  cycleNodeIds: string[];
-};
+export type MasterTreeCycleGuardResult = MasterTreeCycleGuardResultDto;
 
-export type MasterTreeDropRejectionReason =
-  | 'NODE_NOT_FOUND'
-  | 'TARGET_NOT_FOUND'
-  | 'TARGET_NOT_FOLDER'
-  | 'TARGET_IS_SELF'
-  | 'TARGET_IN_SUBTREE'
-  | 'PROFILE_RULE_BLOCKED';
+export type MasterTreeDropRejectionReason = MasterTreeDropRejectionReasonDto;
 
-export type MasterTreeCanDropResult = {
-  ok: boolean;
-  reason?: MasterTreeDropRejectionReason | undefined;
-  resolvedParentId: MasterTreeId | null;
-};
+export type MasterTreeCanDropResult = MasterTreeCanDropResultDto;
 
-export type MasterTreeMutationErrorCode =
-  | MasterTreeDropRejectionReason
-  | 'TARGET_PARENT_NOT_FOUND';
+export type MasterTreeMutationErrorCode = MasterTreeMutationErrorCodeDto;
 
-export type MasterTreeMutationResult =
-  | {
-      ok: true;
-      nodes: MasterTreeNode[];
-    }
-  | {
-      ok: false;
-      code: MasterTreeMutationErrorCode;
-      nodes: MasterTreeNode[];
-    };
+export type MasterTreeMutationResult = MasterTreeMutationResultDto;
 
 export type BuildMasterTreeOptions = {
   strict?: boolean | undefined;

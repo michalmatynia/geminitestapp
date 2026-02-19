@@ -10,7 +10,8 @@ import type {
   DatabaseEngineBackupSchedulerStatusDto,
   RedisOverviewDto,
   DatabaseEngineProviderPreviewDto,
-  DatabaseEngineWorkspaceViewDto
+  DatabaseEngineWorkspaceViewDto,
+  UnifiedCollectionDto
 } from '@/shared/contracts/database';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
@@ -47,13 +48,7 @@ import {
 
 export type DatabaseEngineWorkspaceView = DatabaseEngineWorkspaceViewDto;
 
-export type DatabaseCollectionRow = {
-  name: string;
-  existsInMongo: boolean;
-  existsInPrisma: boolean;
-  mongoDocumentCount: number | null;
-  prismaRowCount: number | null;
-};
+export type DatabaseCollectionRow = UnifiedCollectionDto;
 
 const services: DatabaseEngineServiceRoute[] = ['app', 'auth', 'product', 'integrations', 'cms'];
 

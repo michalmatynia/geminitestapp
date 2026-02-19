@@ -582,9 +582,11 @@ export function useAiPathsPersistence({
             : 'medium'
         );
         setRunMode(
-          activeConfig.runMode === 'queue' || activeConfig.runMode === 'block'
+          activeConfig.runMode === 'automatic' || activeConfig.runMode === 'manual' || activeConfig.runMode === 'step'
             ? activeConfig.runMode
-            : 'block'
+            : activeConfig.runMode === 'queue'
+              ? 'automatic'
+              : 'manual'
         );
         setParserSamples(activeConfig.parserSamples ?? {});
         setUpdaterSamples(activeConfig.updaterSamples ?? {});

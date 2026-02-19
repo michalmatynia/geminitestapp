@@ -26,6 +26,28 @@ export * from './domain/internationalization';
 export * from './domain/user-preferences';
 export * from './domain/integrations';
 export * from './domain/viewer3d';
+export * from './domain/case-resolver';
+export * from './domain/prompt-exploder';
+export * from './domain/cms';
+export * from './domain/auth';
+export * from './domain/database';
+export * from './domain/admin';
+export * from './domain/drafter';
+export * from './domain/gsap';
+export * from './domain/playwright';
+export * from './domain/data-import-export';
+export * from './domain/foldertree';
+export * from './domain/agent-runtime';
+export * from './domain/agents';
+export * from './domain/ai-brain';
+export * from './domain/app-embeds';
+export * from './domain/cms-menu';
+export * from './domain/cms-theme';
+export * from './domain/document-editor';
+export * from './domain/filemaker';
+export * from './domain/image-slots';
+export * from './domain/image-studio';
+export * from './domain/master-folder-tree';
 
 // API types
 export type {

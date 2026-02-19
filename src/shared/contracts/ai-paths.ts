@@ -369,6 +369,7 @@ export const databaseConfigSchema = z.object({
   idField: z.string().optional(),
   mode: z.enum(['replace', 'append']).optional(),
   updateStrategy: z.enum(['one', 'many']).optional(),
+  updatePayloadMode: z.enum(['mapping', 'custom']).optional(),
   useMongoActions: z.boolean().optional(),
   actionCategory: z.enum(['create', 'read', 'update', 'delete', 'aggregate']).optional(),
   action: z.enum([
@@ -754,6 +755,10 @@ export type AiPathRunEventLevelDto = z.infer<typeof aiPathRunEventLevelSchema>;
 export const aiPathRunEventSchema = dtoBaseSchema.extend({
   runId: z.string(),
   nodeId: z.string().nullable().optional(),
+  nodeType: z.string().nullable().optional(),
+  nodeTitle: z.string().nullable().optional(),
+  status: z.string().nullable().optional(),
+  iteration: z.number().nullable().optional(),
   level: aiPathRunEventLevelSchema,
   message: z.string(),
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
@@ -772,6 +777,11 @@ export type AiPathRunNodeUpdateDto = z.infer<typeof aiPathRunNodeUpdateSchema>;
 
 export const aiPathRunEventCreateInputSchema = z.object({
   runId: z.string(),
+  nodeId: z.string().nullable().optional(),
+  nodeType: z.string().nullable().optional(),
+  nodeTitle: z.string().nullable().optional(),
+  status: z.string().nullable().optional(),
+  iteration: z.number().nullable().optional(),
   level: aiPathRunEventLevelSchema,
   message: z.string(),
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),

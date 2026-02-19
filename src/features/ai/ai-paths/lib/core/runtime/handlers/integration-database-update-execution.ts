@@ -14,6 +14,10 @@ interface DbActionResult {
   count?: number;
   modifiedCount?: number;
   matchedCount?: number;
+  provider?: 'mongodb' | 'prisma';
+  requestedProvider?: 'auto' | 'mongodb' | 'prisma';
+  resolvedProvider?: 'mongodb' | 'prisma';
+  fallback?: Record<string, unknown>;
 }
 
 type ResolveCollectionUpdateContextInput = {
@@ -80,11 +84,48 @@ export type ExecuteDatabaseUpdateInput = {
   idField: string;
   entityId: string | null;
   configuredCollection: string;
+  updatePayloadMode?: 'mapping' | 'custom';
+  customFilter?: Record<string, unknown>;
+  customUpdateDoc?: unknown;
 };
 
 export type ExecuteDatabaseUpdateResult =
   | { skipped: true }
-  | { skipped: false; updateResult: unknown };
+  | {
+    skipped: false;
+    updateResult: unknown;
+    executionMeta: Record<string, unknown>;
+  };
+
+const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const resolveProviderMeta = (
+  responseData: unknown
+): Record<string, unknown> => {
+  if (!isPlainRecord(responseData)) return {};
+  const requestedProvider =
+    responseData['requestedProvider'] === 'auto' ||
+    responseData['requestedProvider'] === 'mongodb' ||
+    responseData['requestedProvider'] === 'prisma'
+      ? responseData['requestedProvider']
+      : undefined;
+  const resolvedProvider =
+    responseData['resolvedProvider'] === 'mongodb' ||
+    responseData['resolvedProvider'] === 'prisma'
+      ? responseData['resolvedProvider']
+      : responseData['provider'] === 'mongodb' || responseData['provider'] === 'prisma'
+        ? responseData['provider']
+        : undefined;
+  const fallback = isPlainRecord(responseData['fallback'])
+    ? responseData['fallback']
+    : undefined;
+  return {
+    ...(requestedProvider ? { requestedProvider } : {}),
+    ...(resolvedProvider ? { resolvedProvider } : {}),
+    ...(fallback ? { providerFallback: fallback } : {}),
+  };
+};
 
 export async function executeDatabaseUpdate({
   nodeId,
@@ -102,19 +143,47 @@ export async function executeDatabaseUpdate({
   idField,
   entityId,
   configuredCollection,
+  updatePayloadMode = 'mapping',
+  customFilter,
+  customUpdateDoc,
 }: ExecuteDatabaseUpdateInput): Promise<ExecuteDatabaseUpdateResult> {
+  const isCustomPayloadMode = updatePayloadMode === 'custom';
   let updateResult: unknown = updates;
+  let executionMeta: Record<string, unknown> = {
+    mode: updatePayloadMode,
+    strategy: updateStrategy,
+  };
 
   if (updateStrategy === 'many') {
     const queryPayload = buildDbQueryPayload(
       resolvedInputs,
       queryConfig,
     );
-    const query = queryPayload['query'] ?? {};
+    const queryFromPayload =
+      queryPayload['query'] &&
+      typeof queryPayload['query'] === 'object' &&
+      !Array.isArray(queryPayload['query'])
+        ? queryPayload['query']
+        : {};
+    const query =
+      isCustomPayloadMode && customFilter
+        ? customFilter
+        : queryFromPayload;
     const hasQuery =
       query && typeof query === 'object' && Object.keys(query).length > 0;
 
+    executionMeta = {
+      ...executionMeta,
+      action: isCustomPayloadMode ? 'updateMany' : 'dbUpdateMany',
+      collection: queryPayload['collection'],
+      filter: query,
+      update: isCustomPayloadMode ? customUpdateDoc : updates,
+      requestedProvider: queryPayload.provider,
+      ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
+    };
+
     if (
+      !isCustomPayloadMode &&
       dbConfig.mode === 'append' &&
       !executed.updater.has(nodeId)
     ) {
@@ -142,19 +211,29 @@ export async function executeDatabaseUpdate({
           updateMany: true,
           collection: queryPayload['collection'],
           query,
-          updates,
+          update: isCustomPayloadMode ? customUpdateDoc : updates,
           mode: dbConfig.mode ?? 'replace',
+          ...executionMeta,
         };
         executed.updater.add(nodeId);
       } else {
-        const dbUpdateResult: ApiResponse<DbActionResult> = await dbApi.update<DbActionResult>({
-          provider: queryPayload.provider,
-          collection: queryPayload.collection,
-          query,
-          updates,
-          single: false,
-          ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
-        });
+        const dbUpdateResult: ApiResponse<DbActionResult> = isCustomPayloadMode
+          ? await dbApi.action<DbActionResult>({
+            provider: queryPayload.provider,
+            action: 'updateMany',
+            collection: queryPayload.collection,
+            filter: query,
+            update: customUpdateDoc,
+            ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
+          })
+          : await dbApi.update<DbActionResult>({
+            provider: queryPayload.provider,
+            collection: queryPayload.collection,
+            query,
+            updates,
+            single: false,
+            ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
+          });
         executed.updater.add(nodeId);
         if (!dbUpdateResult.ok) {
           reportAiPathsError(
@@ -171,6 +250,10 @@ export async function executeDatabaseUpdate({
           });
         } else {
           updateResult = dbUpdateResult.data;
+          executionMeta = {
+            ...executionMeta,
+            ...resolveProviderMeta(dbUpdateResult.data),
+          };
           const modified: number =
             (dbUpdateResult.data as Record<string, unknown>)?.['modifiedCount'] as number ?? 0;
           const matched: number =
@@ -185,18 +268,28 @@ export async function executeDatabaseUpdate({
     }
   } else if (!executed.updater.has(nodeId)) {
     if (dryRun) {
-      if (shouldUseEntityUpdate) {
+      if (shouldUseEntityUpdate && !isCustomPayloadMode) {
+        executionMeta = {
+          ...executionMeta,
+          action: 'entityUpdate',
+          entityType,
+          entityId: entityId || undefined,
+          requestedProvider: 'entityApi',
+          resolvedProvider: 'entityApi',
+        };
         updateResult = {
           dryRun: true,
           entityType,
           entityId: entityId || undefined,
           updates,
           mode: dbConfig.mode ?? 'replace',
+          ...executionMeta,
         };
       } else {
         const {
           query,
           collection,
+          queryPayload,
         } = resolveCollectionUpdateContext({
           resolvedInputs,
           queryConfig,
@@ -205,17 +298,31 @@ export async function executeDatabaseUpdate({
           configuredCollection,
           entityType,
         });
+        const resolvedFilter =
+          isCustomPayloadMode && customFilter
+            ? customFilter
+            : query;
+        executionMeta = {
+          ...executionMeta,
+          action: isCustomPayloadMode ? 'updateOne' : 'dbUpdateOne',
+          collection,
+          filter: resolvedFilter,
+          update: isCustomPayloadMode ? customUpdateDoc : updates,
+          requestedProvider: queryPayload.provider,
+          ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
+        };
         updateResult = {
           dryRun: true,
           updateMany: false,
           collection,
-          query,
-          updates,
+          query: resolvedFilter,
+          update: isCustomPayloadMode ? customUpdateDoc : updates,
           mode: dbConfig.mode ?? 'replace',
+          ...executionMeta,
         };
       }
       executed.updater.add(nodeId);
-    } else if (shouldUseEntityUpdate) {
+    } else if (shouldUseEntityUpdate && !isCustomPayloadMode) {
       if (!entityId) {
         return { skipped: true };
       }
@@ -230,6 +337,14 @@ export async function executeDatabaseUpdate({
           throw new Error(entityUpdateResult.error);
         }
         updateResult = entityUpdateResult.data ?? updates;
+        executionMeta = {
+          ...executionMeta,
+          action: 'entityUpdate',
+          entityType,
+          entityId,
+          requestedProvider: 'entityApi',
+          resolvedProvider: 'entityApi',
+        };
         executed.updater.add(nodeId);
         const suffix = entityId ? ` ${entityId}` : '';
         toast(`Updated ${entityType}${suffix}`, { variant: 'success' });
@@ -255,8 +370,21 @@ export async function executeDatabaseUpdate({
         configuredCollection,
         entityType,
       });
+      const resolvedFilter =
+        isCustomPayloadMode && customFilter
+          ? customFilter
+          : query;
+      executionMeta = {
+        ...executionMeta,
+        action: isCustomPayloadMode ? 'updateOne' : 'dbUpdateOne',
+        collection,
+        filter: resolvedFilter,
+        update: isCustomPayloadMode ? customUpdateDoc : updates,
+        requestedProvider: queryPayload.provider,
+        ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
+      };
 
-      if (Object.keys(query).length === 0) {
+      if (Object.keys(resolvedFilter).length === 0) {
         reportAiPathsError(
           new Error('Database update missing query filter'),
           {
@@ -269,17 +397,30 @@ export async function executeDatabaseUpdate({
           'Database update failed:',
         );
         toast('Database update requires a query filter.', { variant: 'error' });
-        updateResult = { error: 'missing_query', collection, updates };
+        updateResult = {
+          error: 'missing_query',
+          collection,
+          ...(isCustomPayloadMode ? { update: customUpdateDoc } : { updates }),
+        };
         executed.updater.add(nodeId);
       } else {
-        const dbUpdateResult: ApiResponse<DbActionResult> = await dbApi.update<DbActionResult>({
-          provider: queryPayload.provider,
-          collection,
-          query,
-          updates,
-          single: true,
-          ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
-        });
+        const dbUpdateResult: ApiResponse<DbActionResult> = isCustomPayloadMode
+          ? await dbApi.action<DbActionResult>({
+            provider: queryPayload.provider,
+            action: 'updateOne',
+            collection,
+            filter: resolvedFilter,
+            update: customUpdateDoc,
+            ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
+          })
+          : await dbApi.update<DbActionResult>({
+            provider: queryPayload.provider,
+            collection,
+            query: resolvedFilter,
+            updates,
+            single: true,
+            ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
+          });
         executed.updater.add(nodeId);
         if (!dbUpdateResult.ok) {
           reportAiPathsError(
@@ -297,6 +438,10 @@ export async function executeDatabaseUpdate({
           });
         } else {
           updateResult = dbUpdateResult.data;
+          executionMeta = {
+            ...executionMeta,
+            ...resolveProviderMeta(dbUpdateResult.data),
+          };
           const modified: number = dbUpdateResult.data?.modifiedCount ?? 0;
           const matched: number = dbUpdateResult.data?.matchedCount ?? 0;
           const countLabel = modified || matched;
@@ -312,5 +457,6 @@ export async function executeDatabaseUpdate({
   return {
     skipped: false,
     updateResult,
+    executionMeta,
   };
 }

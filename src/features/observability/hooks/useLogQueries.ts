@@ -1,43 +1,20 @@
 'use client';
 
-import type { ActivityLogDto } from '@/shared/contracts/system';
+import type { 
+  SystemLogsResponseDto as SystemLogsResponse,
+  SystemActivityResponseDto as SystemActivityResponse,
+  SystemLogMetricsResponseDto as SystemLogMetricsResponse,
+  ListSystemLogsInputDto as LogFilters,
+} from '@/shared/contracts/observability';
 import { api } from '@/shared/lib/api-client';
 import {
   createSingleQueryV2,
 } from '@/shared/lib/query-factories-v2';
 import { logsKeys, activityKeys, diagnosticsKeys } from '@/shared/lib/query-key-exports';
-import type { SystemLogMetrics, SystemLogRecord, AiInsightRecord } from '@/shared/types';
+import type { AiInsightRecord } from '@/shared/types';
 import type { SingleQuery } from '@/shared/types/query-result-types';
 
-export type LogFilters = {
-  page?: number;
-  pageSize?: number;
-  level?: string;
-  query?: string;
-  source?: string;
-  method?: string;
-  statusCode?: number | null;
-  requestId?: string;
-  userId?: string;
-  fingerprint?: string;
-  category?: string;
-  from?: string | null;
-  to?: string | null;
-};
-
-export interface SystemLogsResponse {
-  logs?: SystemLogRecord[];
-  total?: number;
-  page?: number;
-  pageSize?: number;
-}
-
-export interface SystemActivityResponse {
-  data: ActivityLogDto[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
+export type { LogFilters, SystemLogsResponse, SystemActivityResponse, SystemLogMetricsResponse };
 
 export function useSystemLogs(filters: LogFilters): SingleQuery<SystemLogsResponse> {
   const queryKey = logsKeys.list(filters);
@@ -90,10 +67,6 @@ export function useSystemActivity(params: { page?: number; pageSize?: number; se
       tags: ['observability', 'activity'],
     },
   });
-}
-
-export interface SystemLogMetricsResponse {
-  metrics?: SystemLogMetrics;
 }
 
 export function useSystemLogMetrics(filters: Omit<LogFilters, 'page' | 'pageSize'>): SingleQuery<SystemLogMetricsResponse> {

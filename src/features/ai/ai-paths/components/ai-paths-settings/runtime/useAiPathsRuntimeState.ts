@@ -32,7 +32,7 @@ export function useAiPathsRuntimeState() {
   }, []);
 
   const appendRuntimeEvent = useCallback((input: RuntimeEventInput): void => {
-    const event: AiPathRuntimeEvent = {
+    const event = {
       id:
         input.id ??
         (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -51,7 +51,7 @@ export function useAiPathsRuntimeState() {
       ...(input.status != null ? { status: input.status } : {}),
       ...(input.iteration !== undefined ? { iteration: input.iteration } : {}),
       ...(input.metadata != null ? { metadata: input.metadata } : {}),
-    };
+    } as unknown as AiPathRuntimeEvent;
     setRuntimeEvents((prev: AiPathRuntimeEvent[]): AiPathRuntimeEvent[] => {
       const next = [...prev, event];
       if (next.length > MAX_RUNTIME_EVENTS) {

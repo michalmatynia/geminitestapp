@@ -1,11 +1,11 @@
 import type { 
-  ProductTag 
-} from '@/shared/types/domain/products';
-import type { 
   ProductTagFiltersDto, 
   ProductTagCreateInputDto, 
   ProductTagUpdateInputDto 
 } from '@/shared/contracts/products';
+import type { 
+  ProductTag 
+} from '@/shared/types/domain/products';
 
 export type TagFilters = ProductTagFiltersDto;
 

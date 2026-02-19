@@ -117,6 +117,11 @@ type NodeDocument = {
 type EventDocument = {
   _id: string;
   runId: string;
+  nodeId?: string | null;
+  nodeType?: string | null;
+  nodeTitle?: string | null;
+  status?: string | null;
+  iteration?: number | null;
   level: string;
   message: string;
   metadata?: Record<string, unknown> | null;
@@ -212,6 +217,11 @@ const toNodeRecord = (doc: NodeDocument): AiPathRunNodeRecord => ({
 const toEventRecord = (doc: EventDocument): AiPathRunEventRecord => ({
   id: doc._id,
   runId: doc.runId,
+  nodeId: doc.nodeId ?? null,
+  nodeType: doc.nodeType ?? null,
+  nodeTitle: doc.nodeTitle ?? null,
+  status: doc.status ?? null,
+  iteration: doc.iteration ?? null,
   level: doc.level as AiPathRunEventRecord['level'],
   message: doc.message,
   metadata: doc.metadata ?? null,
@@ -654,6 +664,11 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     const document: EventDocument = {
       _id: randomUUID(),
       runId: input.runId,
+      nodeId: input.nodeId ?? null,
+      nodeType: input.nodeType ?? null,
+      nodeTitle: input.nodeTitle ?? null,
+      status: input.status ?? null,
+      iteration: input.iteration ?? null,
       level: input.level,
       message: input.message,
       metadata: input.metadata ?? null,

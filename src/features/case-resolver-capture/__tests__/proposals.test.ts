@@ -167,7 +167,7 @@ describe('case-resolver-capture proposals', () => {
     ).toBeNull();
   });
 
-  it('removes captured address lines from exploded text for mapped parties', () => {
+  it('removes captured addresser block lines from exploded text for mapped parties', () => {
     const payload: PromptExploderCaseResolverPartyBundle = {
       addresser: createAddresserCandidate(),
     };
@@ -186,11 +186,9 @@ describe('case-resolver-capture proposals', () => {
       'Wniosek o ponowne rozpatrzenie sprawy',
     ].join('\n');
 
-    expect(stripCapturedAddressLinesFromText(sourceText, state)).toBe([
-      'Michał Matynia',
-      '',
-      'Wniosek o ponowne rozpatrzenie sprawy',
-    ].join('\n'));
+    expect(stripCapturedAddressLinesFromText(sourceText, state)).toBe(
+      'Wniosek o ponowne rozpatrzenie sprawy'
+    );
   });
 
   it('keeps exploded text unchanged when role action is ignore', () => {
@@ -426,10 +424,105 @@ describe('case-resolver-capture proposals', () => {
       }
     );
 
-    expect(stripAcceptedCaptureContentFromText(sourceText, state)).toBe([
+    expect(stripAcceptedCaptureContentFromText(sourceText, state)).toBe(
+      'Wniosek o ponowne rozpatrzenie sprawy'
+    );
+  });
+
+  it('keeps repeated name mentions in document body while removing header mapping lines', () => {
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+    };
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings()
+    );
+    const sourceText = [
+      'Michał Matynia',
+      'Fioletowa 71/2',
+      '70-781 Szczecin',
+      'Poland',
+      '',
+      'Michał Matynia potwierdził odbiór dokumentu i wnosi o rozpoznanie sprawy.',
+    ].join('\n');
+
+    expect(stripCapturedAddressLinesFromText(sourceText, state)).toBe(
+      'Michał Matynia potwierdził odbiór dokumentu i wnosi o rozpoznanie sprawy.'
+    );
+  });
+
+  it('is idempotent when capture cleanup is applied multiple times', () => {
+    const sourceText = [
+      'Szczecin 25.01.2026',
+      'Michał Matynia',
+      'Fioletowa 71/2',
+      '70-781 Szczecin',
+      'Poland',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        metadata: {
+          placeDate: {
+            city: 'Szczecin',
+            day: '25',
+            month: '01',
+            year: '2026',
+          },
+        },
+        sourceText,
+      }
+    );
+
+    const firstPass = stripAcceptedCaptureContentFromText(sourceText, state);
+    const secondPass = stripAcceptedCaptureContentFromText(firstPass, state);
+    expect(firstPass).toBe('Wniosek o ponowne rozpatrzenie sprawy');
+    expect(secondPass).toBe(firstPass);
+  });
+
+  it('removes only header date occurrence and keeps matching body date mentions', () => {
+    const sourceText = [
+      'Szczecin 25.01.2026',
       'Michał Matynia',
       '',
       'Wniosek o ponowne rozpatrzenie sprawy',
+      'W dniu 25.01.2026 r. otrzymano pismo.',
+    ].join('\n');
+
+    const state = buildCaseResolverCaptureProposalState(
+      undefined,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        metadata: {
+          placeDate: {
+            city: 'Szczecin',
+            day: '25',
+            month: '01',
+            year: '2026',
+          },
+        },
+        sourceText,
+      }
+    );
+
+    expect(stripAcceptedDateLineFromText(sourceText, state)).toBe([
+      'Michał Matynia',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+      'W dniu 25.01.2026 r. otrzymano pismo.',
     ].join('\n'));
   });
 });

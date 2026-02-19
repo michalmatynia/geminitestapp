@@ -1,0 +1,93 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { dbQueryMock } = vi.hoisted(() => ({
+  dbQueryMock: vi.fn(),
+}));
+
+vi.mock('@/features/ai/ai-paths/lib/api', () => ({
+  dbApi: {
+    query: dbQueryMock,
+  },
+}));
+
+import { executeDatabaseQuery } from '@/features/ai/ai-paths/lib/core/runtime/handlers/integration-database-query-execution';
+
+describe('executeDatabaseQuery guardrail metadata', () => {
+  beforeEach(() => {
+    dbQueryMock.mockReset();
+  });
+
+  it('preserves querySource in dry-run bundle', async () => {
+    const result = await executeDatabaseQuery({
+      reportAiPathsError: vi.fn(),
+      toast: vi.fn(),
+      queryConfig: {
+        provider: 'auto',
+        collection: 'products',
+        mode: 'custom',
+        preset: 'by_id',
+        field: '_id',
+        idType: 'string',
+        queryTemplate: '{"id":"{{value}}"}',
+        limit: 20,
+        sort: '',
+        projection: '',
+        single: false,
+      },
+      query: { id: 'dry-id' },
+      querySource: 'customTemplate',
+      dryRun: true,
+      templateInputs: {},
+      aiPrompt: 'test',
+    });
+
+    expect(result.bundle).toEqual(
+      expect.objectContaining({
+        querySource: 'customTemplate',
+        query: { id: 'dry-id' },
+      })
+    );
+  });
+
+  it('preserves querySource in real execution bundle', async () => {
+    dbQueryMock.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        items: [{ id: 'abc' }],
+        count: 1,
+        provider: 'mongodb',
+      },
+    });
+
+    const result = await executeDatabaseQuery({
+      reportAiPathsError: vi.fn(),
+      toast: vi.fn(),
+      queryConfig: {
+        provider: 'auto',
+        collection: 'products',
+        mode: 'custom',
+        preset: 'by_id',
+        field: '_id',
+        idType: 'string',
+        queryTemplate: '{"id":"{{value}}"}',
+        limit: 20,
+        sort: '',
+        projection: '',
+        single: false,
+      },
+      query: { id: 'abc' },
+      querySource: 'input',
+      dryRun: false,
+      templateInputs: {},
+      aiPrompt: 'test',
+    });
+
+    expect(result.bundle).toEqual(
+      expect.objectContaining({
+        querySource: 'input',
+        query: { id: 'abc' },
+        provider: 'mongodb',
+      })
+    );
+  });
+});

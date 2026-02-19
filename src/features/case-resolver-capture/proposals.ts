@@ -284,6 +284,105 @@ const normalizeCaptureTextLine = (value: string): string =>
     .trim()
     .toLowerCase();
 
+const CAPTURE_HEADER_LINE_SEARCH_LIMIT = 80;
+const CAPTURE_HEADER_BLOCK_EXTRA_SPAN = 6;
+
+const splitCaptureTextLines = (sourceText: string): string[] =>
+  sourceText.split(/\r?\n/);
+
+const compactCaptureTextLines = (lines: string[]): string[] => {
+  const compact: string[] = [];
+  let previousBlank = false;
+  lines.forEach((line: string): void => {
+    const isBlank = line.trim().length === 0;
+    if (isBlank && previousBlank) return;
+    compact.push(line);
+    previousBlank = isBlank;
+  });
+  while (compact.length > 0 && compact[0]?.trim().length === 0) {
+    compact.shift();
+  }
+  while (compact.length > 0 && compact[compact.length - 1]?.trim().length === 0) {
+    compact.pop();
+  }
+  return compact;
+};
+
+const resolveCaptureHeaderSearchLimit = (sourceLines: string[]): number => {
+  const fallback = Math.min(sourceLines.length, CAPTURE_HEADER_LINE_SEARCH_LIMIT);
+  if (fallback === 0) return 0;
+
+  let blankRun = 0;
+  for (let index = 0; index < fallback; index += 1) {
+    const line = sourceLines[index]?.trim() ?? '';
+    if (!line) {
+      blankRun += 1;
+      if (blankRun >= 2) {
+        return Math.max(0, index - 1);
+      }
+      continue;
+    }
+
+    blankRun = 0;
+    const wordCount = line.split(/\s+/).filter(Boolean).length;
+    const looksLikeBodyParagraph =
+      index >= 6 &&
+      wordCount >= 12 &&
+      line.length >= 70 &&
+      /[.;:]/.test(line);
+    if (looksLikeBodyParagraph) {
+      return index;
+    }
+  }
+
+  return fallback;
+};
+
+const isLikelyCaptureHeaderPartyLine = (line: string): boolean => {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  if (extractCaseResolverDocumentDate(trimmed)) return false;
+  if (trimmed.length > 90) return false;
+  const wordCount = trimmed.split(/\s+/).filter(Boolean).length;
+  if (wordCount > 10) return false;
+  return true;
+};
+
+const collectCandidateNameLines = (
+  candidate: PromptExploderCaseResolverPartyCandidate
+): string[] => {
+  const lines = new Set<string>();
+  const pushLine = (value: string | undefined): void => {
+    if (!value) return;
+    const normalized = value.trim();
+    if (!normalized) return;
+    lines.add(normalized);
+  };
+
+  pushLine(candidate.displayName);
+  pushLine(candidate.organizationName);
+  const personFullName = [
+    candidate.firstName ?? '',
+    candidate.middleName ?? '',
+    candidate.lastName ?? '',
+  ]
+    .map((part: string): string => part.trim())
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  const personShortName = [
+    candidate.firstName ?? '',
+    candidate.lastName ?? '',
+  ]
+    .map((part: string): string => part.trim())
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  pushLine(personFullName);
+  pushLine(personShortName);
+  return [...lines];
+};
+
 const collectCandidateAddressLines = (
   candidate: PromptExploderCaseResolverPartyCandidate
 ): string[] => {
@@ -343,46 +442,135 @@ const collectCandidateAddressLines = (
   return [...lines];
 };
 
+const collectCandidateRawHeaderBlockLines = (
+  candidate: PromptExploderCaseResolverPartyCandidate
+): string[] =>
+  candidate.rawText
+    .split(/\r?\n/)
+    .map((line: string): string => line.trim())
+    .filter((line: string): boolean => isLikelyCaptureHeaderPartyLine(line))
+    .slice(0, 8);
+
+const collectCandidateRemovalLineKeys = (
+  candidate: PromptExploderCaseResolverPartyCandidate
+): Set<string> => {
+  const keys = new Set<string>();
+  const pushLine = (line: string): void => {
+    const key = normalizeCaptureTextLine(line);
+    if (!key) return;
+    keys.add(key);
+  };
+
+  collectCandidateNameLines(candidate).forEach(pushLine);
+  collectCandidateAddressLines(candidate).forEach(pushLine);
+  collectCandidateRawHeaderBlockLines(candidate).forEach(pushLine);
+
+  return keys;
+};
+
+const findOrderedCaptureBlockIndices = (input: {
+  sourceLineKeys: string[];
+  blockLineKeys: string[];
+  headerSearchLimit: number;
+  excludedIndexes?: Set<number> | undefined;
+}): number[] | null => {
+  const {
+    sourceLineKeys,
+    blockLineKeys,
+    headerSearchLimit,
+    excludedIndexes,
+  } = input;
+
+  const sanitizedBlock = blockLineKeys.filter(Boolean);
+  if (sanitizedBlock.length < 2) return null;
+  if (headerSearchLimit <= 0) return null;
+
+  let bestMatch: number[] | null = null;
+  let bestSpan = Number.POSITIVE_INFINITY;
+
+  for (let start = 0; start < headerSearchLimit; start += 1) {
+    if (excludedIndexes?.has(start)) continue;
+    if (sourceLineKeys[start] !== sanitizedBlock[0]) continue;
+    const matchIndexes: number[] = [start];
+    let blockIndex = 1;
+
+    for (
+      let sourceIndex = start + 1;
+      sourceIndex < headerSearchLimit && blockIndex < sanitizedBlock.length;
+      sourceIndex += 1
+    ) {
+      if (excludedIndexes?.has(sourceIndex)) continue;
+      if (sourceLineKeys[sourceIndex] !== sanitizedBlock[blockIndex]) continue;
+      matchIndexes.push(sourceIndex);
+      blockIndex += 1;
+    }
+
+    if (blockIndex !== sanitizedBlock.length) continue;
+    const span =
+      (matchIndexes[matchIndexes.length - 1] ?? start) - start;
+    const maxSpan = sanitizedBlock.length + CAPTURE_HEADER_BLOCK_EXTRA_SPAN;
+    if (span > maxSpan) continue;
+    if (span < bestSpan) {
+      bestSpan = span;
+      bestMatch = matchIndexes;
+    }
+  }
+
+  return bestMatch;
+};
+
 export const stripAcceptedAddressLinesFromText = (
   sourceText: string,
   proposalState: CaseResolverCaptureProposalState | null
 ): string => {
   if (!sourceText || !proposalState) return sourceText;
 
-  const removalKeys = new Set<string>();
+  const sourceLines = splitCaptureTextLines(sourceText);
+  const sourceLineKeys = sourceLines.map((line: string): string =>
+    normalizeCaptureTextLine(line)
+  );
+  const headerSearchLimit = resolveCaptureHeaderSearchLimit(sourceLines);
+  if (headerSearchLimit <= 0) return sourceText;
+
+  const removalIndexes = new Set<number>();
+  let changed = false;
+
   [proposalState.addresser, proposalState.addressee].forEach((proposal) => {
     if (!proposal || proposal.action === 'ignore' || proposal.action === 'keepText') return;
-    collectCandidateAddressLines(proposal.candidate).forEach((line: string): void => {
-      const key = normalizeCaptureTextLine(line);
-      if (!key) return;
-      removalKeys.add(key);
+
+    const blockLineKeys = collectCandidateRawHeaderBlockLines(proposal.candidate)
+      .map((line: string): string => normalizeCaptureTextLine(line))
+      .filter(Boolean);
+    const blockIndexes = findOrderedCaptureBlockIndices({
+      sourceLineKeys,
+      blockLineKeys,
+      headerSearchLimit,
+      excludedIndexes: removalIndexes,
     });
-  });
+    if (blockIndexes) {
+      blockIndexes.forEach((index: number): void => {
+        if (removalIndexes.has(index)) return;
+        removalIndexes.add(index);
+        changed = true;
+      });
+    }
 
-  if (removalKeys.size === 0) return sourceText;
-
-  const sourceLines = sourceText.split(/\r?\n/);
-  let changed = false;
-  const filtered = sourceLines.filter((line: string): boolean => {
-    const key = normalizeCaptureTextLine(line);
-    const shouldRemove = Boolean(key) && removalKeys.has(key);
-    if (shouldRemove) changed = true;
-    return !shouldRemove;
+    const pendingRemovalKeys = collectCandidateRemovalLineKeys(proposal.candidate);
+    for (let index = 0; index < headerSearchLimit; index += 1) {
+      if (pendingRemovalKeys.size === 0) break;
+      if (removalIndexes.has(index)) continue;
+      const key = sourceLineKeys[index];
+      if (!key || !pendingRemovalKeys.has(key)) continue;
+      removalIndexes.add(index);
+      pendingRemovalKeys.delete(key);
+      changed = true;
+    }
   });
 
   if (!changed) return sourceText;
-
-  const compact: string[] = [];
-  let previousBlank = false;
-  filtered.forEach((line: string): void => {
-    const isBlank = line.trim().length === 0;
-    if (isBlank && previousBlank) return;
-    compact.push(line);
-    previousBlank = isBlank;
-  });
-
+  const filtered = sourceLines.filter((_, index: number): boolean => !removalIndexes.has(index));
   const newline = sourceText.includes('\r\n') ? '\r\n' : '\n';
-  return compact.join(newline);
+  return compactCaptureTextLines(filtered).join(newline);
 };
 
 export const stripCapturedAddressLinesFromText = stripAcceptedAddressLinesFromText;
@@ -395,7 +583,12 @@ export const stripAcceptedDateLineFromText = (
   const documentDate = proposalState.documentDate;
   if (documentDate.action !== 'useDetectedDate') return sourceText;
 
-  const sourceLines = sourceText.split(/\r?\n/);
+  const sourceLines = splitCaptureTextLines(sourceText);
+  const sourceLineKeys = sourceLines.map((line: string): string =>
+    normalizeCaptureTextLine(line)
+  );
+  const headerSearchLimit = resolveCaptureHeaderSearchLimit(sourceLines);
+  if (headerSearchLimit <= 0) return sourceText;
   const sourceLineKey = documentDate.sourceLine
     ? normalizeCaptureTextLine(documentDate.sourceLine)
     : '';
@@ -403,38 +596,34 @@ export const stripAcceptedDateLineFromText = (
     ? normalizeCaseResolverComparable(documentDate.cityHint)
     : '';
 
-  let removed = false;
-  const filtered = sourceLines.filter((line: string): boolean => {
-    if (removed) return true;
-    const lineKey = normalizeCaptureTextLine(line);
-    if (sourceLineKey && lineKey === sourceLineKey) {
-      removed = true;
-      return false;
+  let removalIndex = -1;
+  if (sourceLineKey) {
+    for (let index = 0; index < headerSearchLimit; index += 1) {
+      if (sourceLineKeys[index] !== sourceLineKey) continue;
+      removalIndex = index;
+      break;
     }
-    const extractedDate = extractCaseResolverDocumentDate(line);
-    if (extractedDate !== documentDate.isoDate) return true;
-    if (
-      normalizedCityHint &&
-      !normalizeCaseResolverComparable(line).includes(normalizedCityHint)
-    ) {
-      return true;
+  }
+  if (removalIndex < 0) {
+    for (let index = 0; index < headerSearchLimit; index += 1) {
+      const line = sourceLines[index] ?? '';
+      const extractedDate = extractCaseResolverDocumentDate(line);
+      if (extractedDate !== documentDate.isoDate) continue;
+      if (
+        normalizedCityHint &&
+        !normalizeCaseResolverComparable(line).includes(normalizedCityHint)
+      ) {
+        continue;
+      }
+      removalIndex = index;
+      break;
     }
-    removed = true;
-    return false;
-  });
+  }
 
-  if (!removed) return sourceText;
-
-  const compact: string[] = [];
-  let previousBlank = false;
-  filtered.forEach((line: string): void => {
-    const isBlank = line.trim().length === 0;
-    if (isBlank && previousBlank) return;
-    compact.push(line);
-    previousBlank = isBlank;
-  });
+  if (removalIndex < 0) return sourceText;
+  const filtered = sourceLines.filter((_, index: number): boolean => index !== removalIndex);
   const newline = sourceText.includes('\r\n') ? '\r\n' : '\n';
-  return compact.join(newline);
+  return compactCaptureTextLines(filtered).join(newline);
 };
 
 export const stripAcceptedCaptureContentFromText = (

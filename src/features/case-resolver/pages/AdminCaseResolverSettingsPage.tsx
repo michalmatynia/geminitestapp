@@ -164,7 +164,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
     const nextSettings: CaseResolverSettings = {
       ocrModel: draft.ocrModel.trim(),
       ocrPrompt: draft.ocrPrompt.trim(),
-      defaultDocumentFormat: draft.defaultDocumentFormat === 'wysiwyg' ? 'wysiwyg' : 'markdown',
+      defaultDocumentFormat: 'wysiwyg',
       confirmDeleteDocument: draft.confirmDeleteDocument !== false,
     };
 
@@ -328,30 +328,31 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
 
       <FormSection
         title='Document Defaults'
-        description='Choose which editor format is assigned to newly created documents. Existing documents keep their stored format.'
+        description='Case Resolver documents always use WYSIWYG format. Markdown mode is disabled.'
         variant='subtle'
         className='p-4'
       >
         <div className='grid gap-3 md:grid-cols-2'>
           <FormField
             label='Default Document Format'
-            description='Existing documents continue to open using their stored format (for example WYSIWYG documents stay WYSIWYG).'
+            description='Legacy markdown content is migrated to WYSIWYG HTML automatically.'
           >
             <SelectSimple
               value={draft.defaultDocumentFormat}
               onValueChange={(value: string): void => {
-                if (value !== 'markdown' && value !== 'wysiwyg') return;
+                if (value !== 'wysiwyg') return;
                 setDraft((previous: CaseResolverSettings | null) =>
                   previous
                     ? {
                       ...previous,
-                      defaultDocumentFormat: value,
+                      defaultDocumentFormat: 'wysiwyg',
                     }
                     : previous
                 );
               }}
               options={CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_OPTIONS}
               placeholder='Select default document format'
+              disabled
             />
           </FormField>
           <FormField

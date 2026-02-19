@@ -6,6 +6,7 @@ import {
 } from '@/features/case-resolver-capture/proposals';
 import {
   deriveDocumentContentSync,
+  ensureSafeDocumentHtml,
   toStorageDocumentValue,
 } from '@/features/document-editor/content-format';
 import {
@@ -197,8 +198,8 @@ export const useCaseResolverStatePromptExploderSync = ({
     const nextExplodedContent = payloadToApply.prompt;
     const now = new Date().toISOString();
     const canonicalExploded = deriveDocumentContentSync({
-      mode: 'markdown',
-      value: nextExplodedContent,
+      mode: 'wysiwyg',
+      value: ensureSafeDocumentHtml(nextExplodedContent),
     });
     const explodedStoredContent = toStorageDocumentValue(canonicalExploded);
 

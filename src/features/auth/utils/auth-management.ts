@@ -1,17 +1,8 @@
-export type AuthPermission = {
-  id: string;
-  name: string;
-  description?: string;
-};
+import type { AuthPermissionDto, AuthRoleDto } from '@/shared/contracts/auth';
 
-export type AuthRole = {
-  id: string;
-  name: string;
-  description?: string;
-  permissions: string[];
-  deniedPermissions?: string[];
-  level?: number;
-};
+export type AuthPermission = AuthPermissionDto;
+
+export type AuthRole = AuthRoleDto;
 
 export type AuthUserRoleMap = Record<string, string>;
 

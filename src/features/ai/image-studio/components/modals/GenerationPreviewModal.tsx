@@ -2,12 +2,12 @@
 
 import React from 'react';
 
-import type { ModalStateProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { StatusBadge, MetadataItem, FormActions } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 // TODO: These types should be defined in a more central place
-type LinkedGeneratedVariant = {
+export type LinkedGeneratedVariant = {
   key: string;
   runId: string;
   runCreatedAt: string;
@@ -75,8 +75,7 @@ const formatLinkedVariantTimestamp = (value: string): string => {
   return parsed.toLocaleString();
 };
 
-interface GenerationPreviewModalProps extends ModalStateProps {
-  selectedGenerationPreview: LinkedGeneratedVariant | null;
+interface GenerationPreviewModalProps extends EntityModalProps<LinkedGeneratedVariant> {
   selectedGenerationModalDimensions: string;
   slotUpdateBusy: boolean;
   handleApplyLinkedVariantToCard: (variant: LinkedGeneratedVariant) => Promise<void>;
@@ -86,7 +85,7 @@ interface GenerationPreviewModalProps extends ModalStateProps {
 export function GenerationPreviewModal({
   isOpen,
   onClose,
-  selectedGenerationPreview,
+  item: selectedGenerationPreview,
   selectedGenerationModalDimensions,
   slotUpdateBusy,
   handleApplyLinkedVariantToCard,

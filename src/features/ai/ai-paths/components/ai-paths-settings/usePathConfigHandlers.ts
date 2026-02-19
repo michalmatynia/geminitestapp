@@ -10,7 +10,7 @@ import { useGraphActions, useGraphState } from '../../context';
 
 type PathExecutionMode = 'local' | 'server';
 type PathFlowIntensity = 'off' | 'low' | 'medium' | 'high';
-type PathRunMode = 'block' | 'queue';
+type PathRunMode = 'manual' | 'automatic' | 'step';
 
 export interface PathConfigHandlers {
   handleExecutionModeChange: (mode: PathExecutionMode) => void;

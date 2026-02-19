@@ -64,6 +64,24 @@ export const createSystemLogInputSchema = z.object({
 
 export type CreateSystemLogInputDto = z.infer<typeof createSystemLogInputSchema>;
 
+export const listSystemLogsInputSchema = z.object({
+  page: z.number().optional(),
+  pageSize: z.number().optional(),
+  level: systemLogLevelSchema.nullable().optional(),
+  source: z.string().nullable().optional(),
+  method: z.string().nullable().optional(),
+  statusCode: z.number().nullable().optional(),
+  requestId: z.string().nullable().optional(),
+  userId: z.string().nullable().optional(),
+  fingerprint: z.string().nullable().optional(),
+  category: z.string().nullable().optional(),
+  query: z.string().nullable().optional(),
+  from: z.string().nullable().optional(), // ISO string
+  to: z.string().nullable().optional(), // ISO string
+});
+
+export type ListSystemLogsInputDto = z.infer<typeof listSystemLogsInputSchema>;
+
 export const listSystemLogsResultSchema = z.object({
   logs: z.array(systemLogRecordSchema),
   total: z.number(),
@@ -84,6 +102,85 @@ export const systemLogMetricsSchema = z.object({
 });
 
 export type SystemLogMetricsDto = z.infer<typeof systemLogMetricsSchema>;
+
+export const systemLogsResponseSchema = z.object({
+  logs: z.array(systemLogRecordSchema).optional(),
+  total: z.number().optional(),
+  page: z.number().optional(),
+  pageSize: z.number().optional(),
+});
+
+export type SystemLogsResponseDto = z.infer<typeof systemLogsResponseSchema>;
+
+export const systemActivityResponseSchema = z.object({
+  data: z.array(z.any()), // activityLogSchema reference can be circular or complex, use any for now or import properly
+  total: z.number(),
+  page: z.number(),
+  pageSize: z.number(),
+});
+
+export type SystemActivityResponseDto = z.infer<typeof systemActivityResponseSchema>;
+
+export const systemLogMetricsResponseSchema = z.object({
+  metrics: systemLogMetricsSchema.optional(),
+});
+
+export type SystemLogMetricsResponseDto = z.infer<typeof systemLogMetricsResponseSchema>;
+
+export const clientLoggingSettingsSchema = z.object({
+  featureFlags: z.record(z.string(), z.unknown()).nullable(),
+  tags: z.record(z.string(), z.unknown()).nullable(),
+});
+
+export type ClientLoggingSettingsDto = z.infer<typeof clientLoggingSettingsSchema>;
+
+export const systemLogFilterFormValuesSchema = z.object({
+  level: z.union([systemLogLevelSchema, z.literal('all')]),
+  query: z.string(),
+  source: z.string(),
+  method: z.string(),
+  statusCode: z.string(),
+  requestId: z.string(),
+  userId: z.string(),
+  fingerprint: z.string(),
+  category: z.string(),
+  fromDate: z.string(),
+  toDate: z.string(),
+});
+
+export type SystemLogFilterFormValuesDto = z.infer<typeof systemLogFilterFormValuesSchema>;
+
+export const logTriagePresetSchema = z.object({
+  id: z.enum(['recent-errors-24h', 'http-500-last7d', 'client-errors-last7d', 'auth-anomalies-last3d']),
+  label: z.string(),
+  description: z.string(),
+});
+
+export type LogTriagePresetDto = z.infer<typeof logTriagePresetSchema>;
+
+export const mongoIndexInfoSchema = z.object({
+  name: z.string().optional(),
+  key: z.record(z.string(), z.unknown()),
+});
+
+export type MongoIndexInfoDto = z.infer<typeof mongoIndexInfoSchema>;
+
+export const mongoCollectionIndexStatusSchema = z.object({
+  name: z.string(),
+  expected: z.array(mongoIndexInfoSchema),
+  existing: z.array(mongoIndexInfoSchema),
+  missing: z.array(mongoIndexInfoSchema),
+  extra: z.array(mongoIndexInfoSchema),
+  error: z.string().optional(),
+});
+
+export type MongoCollectionIndexStatusDto = z.infer<typeof mongoCollectionIndexStatusSchema>;
+
+export const clearLogsResponseSchema = z.object({
+  deleted: z.number(),
+});
+
+export type ClearLogsResponseDto = z.infer<typeof clearLogsResponseSchema>;
 
 /**
  * Trace & Span DTOs

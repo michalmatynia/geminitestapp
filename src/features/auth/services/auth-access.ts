@@ -68,13 +68,7 @@ export const getAuthDefaultRoleId = async (): Promise<string | null> => {
   return value.trim();
 };
 
-export type AuthUserAccess = {
-  roleId: string;
-  permissions: string[];
-  level: number;
-  isElevated: boolean;
-  role?: AuthRole;
-};
+import type { AuthUserAccessDetail as AuthUserAccess } from '@/shared/types/domain/auth';
 
 const parseNumber = (value: string | undefined, fallback: number): number => {
   if (!value) return fallback;

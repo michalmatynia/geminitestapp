@@ -27,6 +27,7 @@ export type ExecuteDatabaseQueryInput = {
   toast: NodeHandlerContext['toast'];
   queryConfig: DbQueryConfig;
   query: Record<string, unknown>;
+  querySource?: string;
   dryRun: boolean;
   templateInputs: RuntimePortValues;
   aiPrompt: string;
@@ -37,6 +38,7 @@ export async function executeDatabaseQuery({
   toast,
   queryConfig,
   query,
+  querySource,
   dryRun,
   templateInputs,
   aiPrompt,
@@ -66,6 +68,7 @@ export async function executeDatabaseQuery({
         idType: queryConfig.idType,
         requestedProvider,
         resolvedProvider,
+        ...(querySource ? { querySource } : {}),
       } as RuntimePortValues,
       aiPrompt,
     };
@@ -99,6 +102,7 @@ export async function executeDatabaseQuery({
         collection: queryConfig.collection,
         requestedProvider,
         error: 'Query failed',
+        ...(querySource ? { querySource } : {}),
       },
       aiPrompt,
     };
@@ -194,6 +198,7 @@ export async function executeDatabaseQuery({
       collection: queryConfig.collection,
       requestedProvider,
       resolvedProvider,
+      ...(querySource ? { querySource } : {}),
       ...(resolvedProvider ? { provider: resolvedProvider } : {}),
       ...(providerFallback ? { providerFallback } : {}),
       ...(fallbackMeta ? { fallback: fallbackMeta } : {}),

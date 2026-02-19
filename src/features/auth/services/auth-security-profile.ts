@@ -3,18 +3,7 @@ import 'server-only';
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-
-export type AuthSecurityProfile = {
-  userId: string;
-  mfaEnabled: boolean;
-  mfaSecret: string | null;
-  recoveryCodes: string[];
-  allowedIps: string[];
-  disabledAt: Date | null;
-  bannedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
+import type { AuthSecurityProfile } from '@/shared/types/domain/auth';
 
 type MongoProfileDoc = {
   _id: string;

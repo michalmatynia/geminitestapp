@@ -1,17 +1,6 @@
-export type AuthSecurityPolicy = {
-  minPasswordLength: number;
-  requireStrongPassword: boolean;
-  requireUppercase: boolean;
-  requireLowercase: boolean;
-  requireNumber: boolean;
-  requireSymbol: boolean;
-  lockoutMaxAttempts: number;
-  lockoutWindowMinutes: number;
-  lockoutDurationMinutes: number;
-  ipRateLimitMaxAttempts: number;
-  ipRateLimitWindowMinutes: number;
-  ipRateLimitDurationMinutes: number;
-};
+import type { AuthSecurityPolicyDto } from '@/shared/contracts/auth';
+
+export type AuthSecurityPolicy = AuthSecurityPolicyDto;
 
 export const DEFAULT_AUTH_SECURITY_POLICY: AuthSecurityPolicy = {
   minPasswordLength: 10,

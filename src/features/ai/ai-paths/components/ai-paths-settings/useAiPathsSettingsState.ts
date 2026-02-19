@@ -416,7 +416,7 @@ export function useAiPathsSettingsState({
     useState<PathExecutionMode>('server');
   const [flowIntensity, setFlowIntensity] =
     useState<PathFlowIntensity>('medium');
-  const [runMode, setRunMode] = useState<PathRunMode>('block');
+  const [runMode, setRunMode] = useState<PathRunMode>('manual');
   const [historyRetentionPasses, setHistoryRetentionPasses] = useState<number>(
     AI_PATHS_HISTORY_RETENTION_DEFAULT,
   );
@@ -446,7 +446,7 @@ export function useAiPathsSettingsState({
     for (let index = nodes.length - 1; index >= 0; index -= 1) {
       const node = nodes[index];
       if (node?.type !== 'model') continue;
-      const output = runtimeState.outputs[node.id] as
+      const output = runtimeState.outputs?.[node.id] as
         | { debugPayload?: unknown }
         | undefined;
       if (output?.debugPayload) {

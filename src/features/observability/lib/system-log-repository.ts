@@ -13,48 +13,14 @@ import type {
   SystemLogLevel,
   SystemLogMetrics,
   SystemLogRecord,
+  CreateSystemLogInput,
+  ListSystemLogsInput,
+  ListSystemLogsResult,
 } from '@/shared/types/domain/system-logs';
 
 const toMongoId = (id: string): ObjectId | string => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
   return id;
-};
-
-export type CreateSystemLogInput = {
-  level?: SystemLogLevel | undefined;
-  message: string;
-  source?: string | null | undefined;
-  context?: Record<string, unknown> | null | undefined;
-  stack?: string | null | undefined;
-  path?: string | null | undefined;
-  method?: string | null | undefined;
-  statusCode?: number | null | undefined;
-  requestId?: string | null | undefined;
-  userId?: string | null | undefined;
-  createdAt?: Date | undefined;
-};
-
-export type ListSystemLogsInput = {
-  page?: number | undefined;
-  pageSize?: number | undefined;
-  level?: SystemLogLevel | null | undefined;
-  source?: string | null | undefined;
-  method?: string | null | undefined;
-  statusCode?: number | null | undefined;
-  requestId?: string | null | undefined;
-  userId?: string | null | undefined;
-  fingerprint?: string | null | undefined;
-  category?: string | null | undefined;
-  query?: string | null | undefined;
-  from?: Date | null | undefined;
-  to?: Date | null | undefined;
-};
-
-export type ListSystemLogsResult = {
-  logs: SystemLogRecord[];
-  total: number;
-  page: number;
-  pageSize: number;
 };
 
 const SYSTEM_LOGS_COLLECTION = 'system_logs';

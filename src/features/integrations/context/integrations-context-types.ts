@@ -1,11 +1,12 @@
-import {
-  type Integration,
-  type IntegrationConnection,
-  type SessionCookie,
-  type TestLogEntry,
-  integrationDefinitions,
-} from '@/features/integrations/types/integrations-ui';
+import { integrationDefinitions } from '@/features/integrations/types/integrations-ui';
 import type { PlaywrightPersona, PlaywrightSettings } from '@/features/playwright';
+import type { 
+  IntegrationDto as Integration, 
+  IntegrationConnectionDto as IntegrationConnection, 
+  SessionCookieDto as SessionCookie, 
+  TestLogEntryDto as TestLogEntry,
+  SessionPayloadDto
+} from '@/shared/contracts/integrations';
 
 import type { Dispatch, SetStateAction } from 'react';
 
@@ -46,12 +47,7 @@ export type IntegrationDefinition = (typeof integrationDefinitions)[number];
 
 export type StepWithResult = TestLogEntry & { status: 'ok' | 'failed' };
 
-export interface SessionPayload {
-  cookies?: SessionCookie[];
-  origins?: unknown[];
-  updatedAt?: string;
-  error?: string;
-}
+export type SessionPayload = SessionPayloadDto;
 
 export interface IntegrationsContextType {
   integrations: Integration[];

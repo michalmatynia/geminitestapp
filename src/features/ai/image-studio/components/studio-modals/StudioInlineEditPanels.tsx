@@ -215,7 +215,7 @@ export function StudioInlineEditPanels({
         isOpen={slotInlineEditOpen}
         onClose={() => setSlotInlineEditOpen(false)}
         onSuccess={() => {}}
-        selectedSlot={selectedSlot}
+        item={selectedSlot}
         onCopyId={(id) => { void onCopyCardId(id); }}
         header={editCardModalHeader}
       >

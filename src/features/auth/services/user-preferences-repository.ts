@@ -4,7 +4,11 @@ import { ObjectId } from 'mongodb';
 
 import { operationFailedError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import type { JsonValue } from '@/shared/types/domain/user-preferences';
+import {
+  type UserPreferences,
+  type UserPreferencesUpdate as UserPreferencesData,
+  type JsonValue
+} from '@/shared/types/domain/user-preferences';
 
 const toMongoId = (id: string): ObjectId | string => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
@@ -16,69 +20,7 @@ const parsePositiveInt = (value: string | undefined, fallback: number): number =
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
 };
 
-export type UserPreferencesData = {
-  productListNameLocale?: string | null;
-  productListCatalogFilter?: string | null;
-  productListCurrencyCode?: string | null;
-  productListPageSize?: number | null;
-  productListThumbnailSource?: 'file' | 'link' | 'base64' | null;
-  productListFiltersCollapsedByDefault?: boolean | null;
-  productListDraftIconColorMode?: 'theme' | 'custom' | null;
-  productListDraftIconColor?: string | null;
-  aiPathsActivePathId?: string | null;
-  imageStudioLastProjectId?: string | null;
-  caseResolverCaseListViewMode?: 'hierarchy' | 'list' | null;
-  caseResolverCaseListSortBy?: 'updated' | 'created' | 'name' | null;
-  caseResolverCaseListSortOrder?: 'asc' | 'desc' | null;
-  caseResolverCaseListSearchScope?: 'all' | 'name' | 'folder' | 'content' | null;
-  caseResolverCaseListFiltersCollapsedByDefault?: boolean | null;
-  adminMenuCollapsed?: boolean | null;
-  adminMenuFavorites?: string[] | null;
-  adminMenuSectionColors?: Record<string, string> | null;
-  adminMenuCustomEnabled?: boolean | null;
-  adminMenuCustomNav?: JsonValue | null;
-  cmsLastPageId?: string | null;
-  cmsActiveDomainId?: string | null;
-  cmsThemeOpenSections?: string[] | null;
-  cmsThemeLogoWidth?: number | null;
-  cmsThemeLogoUrl?: string | null;
-  cmsPreviewEnabled?: boolean | null;
-  cmsSlideshowPauseOnHoverInEditor?: boolean | null;
-};
-
-type UserPreferencesRecord = {
-  id: string;
-  userId: string;
-  productListNameLocale: string | null;
-  productListCatalogFilter: string | null;
-  productListCurrencyCode: string | null;
-  productListPageSize: number | null;
-  productListThumbnailSource: 'file' | 'link' | 'base64' | null;
-  productListFiltersCollapsedByDefault: boolean | null;
-  productListDraftIconColorMode: 'theme' | 'custom' | null;
-  productListDraftIconColor: string | null;
-  aiPathsActivePathId: string | null;
-  imageStudioLastProjectId: string | null;
-  caseResolverCaseListViewMode: 'hierarchy' | 'list' | null;
-  caseResolverCaseListSortBy: 'updated' | 'created' | 'name' | null;
-  caseResolverCaseListSortOrder: 'asc' | 'desc' | null;
-  caseResolverCaseListSearchScope: 'all' | 'name' | 'folder' | 'content' | null;
-  caseResolverCaseListFiltersCollapsedByDefault: boolean | null;
-  adminMenuCollapsed: boolean | null;
-  adminMenuFavorites: string[];
-  adminMenuSectionColors: Record<string, string>;
-  adminMenuCustomEnabled: boolean | null;
-  adminMenuCustomNav: JsonValue | null;
-  cmsLastPageId: string | null;
-  cmsActiveDomainId: string | null;
-  cmsThemeOpenSections: string[];
-  cmsThemeLogoWidth: number | null;
-  cmsThemeLogoUrl: string | null;
-  cmsPreviewEnabled: boolean | null;
-  cmsSlideshowPauseOnHoverInEditor: boolean | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
+export type UserPreferencesRecord = UserPreferences;
 
 type UserPreferencesDocument = {
   _id: string | ObjectId;

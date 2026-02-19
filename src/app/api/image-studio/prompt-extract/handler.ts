@@ -16,10 +16,10 @@ import {
   validateProgrammaticPrompt,
 } from '@/features/prompt-engine/prompt-validator';
 import {
-  type PromptValidationSettings,
   parsePromptEngineSettings,
   PROMPT_ENGINE_SETTINGS_KEY,
 } from '@/features/prompt-engine/settings';
+import type { PromptValidationSettingsDto as PromptValidationSettings } from '@/shared/contracts/prompt-engine';
 import { authError, badRequestError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -227,7 +227,7 @@ export async function postImageStudioPromptExtractHandler(
   const programmatic = runProgrammaticAttempt(
     parsed.data.prompt,
     applyAutofix,
-    promptEngineSettings.promptValidation
+    promptEngineSettings.promptValidation as PromptValidationSettings
   );
 
   if (modeRequested === 'programmatic') {

@@ -1,10 +1,12 @@
-
-
 import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { enforceAiPathsActionRateLimit, isCollectionAllowed, requireAiPathsAccessOrInternal } from '@/features/ai/ai-paths/server';
+import {
+  enforceAiPathsActionRateLimit,
+  isCollectionAllowed,
+  requireAiPathsAccessOrInternal,
+} from '@/features/ai/ai-paths/server';
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
@@ -56,6 +58,33 @@ const PRISMA_COLLECTION_DELEGATES: Record<string, string> = {
 type PrismaDelegate = {
   updateMany: (args: Record<string, unknown>) => Promise<{ count: number }>;
 };
+
+type DbProvider = 'mongodb' | 'prisma';
+
+type ProviderResolutionErrorCode =
+  | 'provider_not_configured'
+  | 'collection_not_available';
+
+class ProviderResolutionError extends Error {
+  public readonly code: ProviderResolutionErrorCode;
+  public readonly provider: DbProvider;
+
+  constructor(
+    code: ProviderResolutionErrorCode,
+    provider: DbProvider,
+    message: string
+  ) {
+    super(message);
+    this.name = 'ProviderResolutionError';
+    this.code = code;
+    this.provider = provider;
+  }
+}
+
+const isProviderResolutionError = (
+  error: unknown
+): error is ProviderResolutionError =>
+  error instanceof ProviderResolutionError;
 
 const coerceQuery = (value: unknown): Record<string, unknown> => {
   if (!value) return {};
@@ -111,7 +140,14 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   });
   if (!parsed.ok) return parsed.response;
   const data = parsed.data;
-  const { provider: requestedProvider, collection, query, updates, single = true, idType } = data;
+  const {
+    provider: requestedProvider,
+    collection,
+    query,
+    updates,
+    single = true,
+    idType,
+  } = data;
 
   if (!isCollectionAllowed(collection)) {
     throw internalError('Collection not allowlisted');
@@ -122,57 +158,117 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   if (Object.keys(normalizedUpdates).length === 0) {
     throw badRequestError('No updates provided');
   }
-  const provider = await resolveCollectionProviderForRequest(
-    collection,
-    requestedProvider
-  );
 
-  if (provider === 'prisma') {
-    if (!process.env['DATABASE_URL']) {
-      throw internalError('Prisma is not configured');
+  const runUpdateWithProvider = async (
+    provider: DbProvider
+  ): Promise<Record<string, unknown>> => {
+    if (provider === 'prisma') {
+      if (!process.env['DATABASE_URL']) {
+        throw new ProviderResolutionError(
+          'provider_not_configured',
+          provider,
+          'Prisma is not configured'
+        );
+      }
+      const resolvedCollection = resolvePrismaCollectionKey(collection);
+      const delegate = resolvedCollection ? getPrismaDelegate(resolvedCollection) : null;
+      if (!delegate) {
+        throw new ProviderResolutionError(
+          'collection_not_available',
+          provider,
+          'Collection not available for Prisma'
+        );
+      }
+      const where = coerceQuery(query);
+      if (!where || Object.keys(where).length === 0) {
+        throw badRequestError('Update requires a query filter');
+      }
+      const result = await delegate.updateMany({
+        where,
+        data: normalizedUpdates,
+      });
+      return {
+        ok: true,
+        collection,
+        single,
+        matchedCount: result.count,
+        modifiedCount: result.count,
+        provider,
+        requestedProvider: requestedProvider ?? 'auto',
+        resolvedProvider: provider,
+      };
     }
-    const resolvedCollection = resolvePrismaCollectionKey(collection);
-    const delegate = resolvedCollection ? getPrismaDelegate(resolvedCollection) : null;
-    if (!delegate) {
-      throw badRequestError('Collection not available for Prisma');
+
+    if (!process.env['MONGODB_URI']) {
+      throw new ProviderResolutionError(
+        'provider_not_configured',
+        provider,
+        'MongoDB is not configured'
+      );
     }
-    const where = coerceQuery(query);
-    if (!where || Object.keys(where).length === 0) {
+
+    const filter = normalizeObjectId(coerceQuery(query), idType);
+    if (!filter || Object.keys(filter).length === 0) {
       throw badRequestError('Update requires a query filter');
     }
-    const result = await delegate.updateMany({
-      where,
-      data: normalizedUpdates,
-    });
-    return NextResponse.json({
+
+    const mongo = await getMongoDb();
+    const collectionRef = mongo.collection(collection);
+    const result = single
+      ? await collectionRef.updateOne(filter, { $set: normalizedUpdates })
+      : await collectionRef.updateMany(filter, { $set: normalizedUpdates });
+
+    return {
       ok: true,
       collection,
       single,
-      matchedCount: result.count,
-      modifiedCount: result.count,
-    });
-  }
+      matchedCount: result.matchedCount,
+      modifiedCount: result.modifiedCount,
+      provider,
+      requestedProvider: requestedProvider ?? 'auto',
+      resolvedProvider: provider,
+    };
+  };
 
-  if (!process.env['MONGODB_URI']) {
-    throw internalError('MongoDB is not configured');
-  }
-
-  const filter = normalizeObjectId(coerceQuery(query), idType);
-  if (!filter || Object.keys(filter).length === 0) {
-    throw badRequestError('Update requires a query filter');
-  }
-
-  const mongo = await getMongoDb();
-  const collectionRef = mongo.collection(collection);
-  const result = single
-    ? await collectionRef.updateOne(filter, { $set: normalizedUpdates })
-    : await collectionRef.updateMany(filter, { $set: normalizedUpdates });
-
-  return NextResponse.json({
-    ok: true,
+  const primaryProvider = await resolveCollectionProviderForRequest(
     collection,
-    single,
-    matchedCount: result.matchedCount,
-    modifiedCount: result.modifiedCount,
-  });
+    requestedProvider
+  );
+  const canAttemptFallback =
+    requestedProvider !== 'mongodb' && requestedProvider !== 'prisma';
+
+  try {
+    const result = await runUpdateWithProvider(primaryProvider);
+    return NextResponse.json(result);
+  } catch (primaryError) {
+    if (!isProviderResolutionError(primaryError)) {
+      throw primaryError;
+    }
+    if (!canAttemptFallback) {
+      if (primaryError.code === 'provider_not_configured') {
+        throw internalError(primaryError.message);
+      }
+      throw badRequestError(primaryError.message);
+    }
+
+    const fallbackProvider: DbProvider =
+      primaryProvider === 'prisma' ? 'mongodb' : 'prisma';
+
+    try {
+      const fallbackResult = await runUpdateWithProvider(fallbackProvider);
+      return NextResponse.json({
+        ...fallbackResult,
+        fallback: {
+          used: true,
+          requestedProvider: requestedProvider ?? 'auto',
+          attemptedProvider: primaryProvider,
+          resolvedProvider: fallbackProvider,
+          reason: primaryError.message,
+          code: primaryError.code,
+        },
+      });
+    } catch {
+      throw primaryError;
+    }
+  }
 }

@@ -15,13 +15,14 @@ import type {
   MasterFolderTreeDragStateDto,
   MasterFolderTreeUndoEntryDto,
   MasterFolderTreeErrorDto,
+  MasterFolderTreePersistContextDto,
+  MasterFolderTreeActionFailDto,
+  UseMasterFolderTreeOptionsDto,
 } from '@/shared/contracts/master-folder-tree';
 
 export type MasterFolderTreePersistOperation = MasterFolderTreePersistOperationDto;
 
-export type MasterFolderTreePersistContext = {
-  previousNodes: MasterTreeNode[];
-  nextNodes: MasterTreeNode[];
+export type MasterFolderTreePersistContext = MasterFolderTreePersistContextDto & {
   profile?: FolderTreeProfileV2 | undefined;
 };
 
@@ -45,23 +46,15 @@ export type MasterFolderTreeActionOk = {
   ok: true;
 };
 
-export type MasterFolderTreeActionFail = {
-  ok: false;
-  code: string;
-};
+export type MasterFolderTreeActionFail = MasterFolderTreeActionFailDto;
 
 export type MasterFolderTreeActionResult =
   | MasterFolderTreeActionOk
   | MasterFolderTreeActionFail;
 
-export type UseMasterFolderTreeOptions = {
-  initialNodes: MasterTreeNode[];
-  initialSelectedNodeId?: MasterTreeId | null | undefined;
-  initiallyExpandedNodeIds?: MasterTreeId[] | undefined;
+export type UseMasterFolderTreeOptions = UseMasterFolderTreeOptionsDto & {
   profile?: FolderTreeProfileV2 | undefined;
   adapter?: MasterFolderTreeAdapter | undefined;
-  maxUndoEntries?: number | undefined;
-  externalRevision?: string | number | undefined;
 };
 
 export type MasterFolderTreeController = {

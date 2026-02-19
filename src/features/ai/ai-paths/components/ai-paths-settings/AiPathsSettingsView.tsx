@@ -976,7 +976,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                 value={runMode}
                 onValueChange={(value: string): void => {
                   if (value === runMode) return;
-                  if (value === 'block' || value === 'queue') {
+                  if (value === 'manual' || value === 'automatic' || value === 'step') {
                     handleRunModeChange(value);
                   }
                 }}

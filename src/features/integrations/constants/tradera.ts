@@ -1,3 +1,5 @@
+import type { TraderaSystemSettingsDto } from '@/shared/contracts/integrations';
+
 export const TRADERA_SETTINGS_KEYS = {
   defaultDurationHours: 'tradera_default_duration_hours',
   autoRelistEnabled: 'tradera_auto_relist_enabled',
@@ -9,16 +11,7 @@ export const TRADERA_SETTINGS_KEYS = {
   selectorProfile: 'tradera_selector_profile',
 } as const;
 
-export type TraderaSystemSettings = {
-  defaultDurationHours: number;
-  autoRelistEnabled: boolean;
-  autoRelistLeadMinutes: number;
-  schedulerEnabled: boolean;
-  schedulerIntervalMs: number;
-  allowSimulatedSuccess: boolean;
-  listingFormUrl: string;
-  selectorProfile: string;
-};
+export type TraderaSystemSettings = TraderaSystemSettingsDto;
 
 export const DEFAULT_TRADERA_SYSTEM_SETTINGS: TraderaSystemSettings = {
   defaultDurationHours: 72,

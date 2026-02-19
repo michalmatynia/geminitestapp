@@ -1,11 +1,11 @@
-import type {
-  ProductValidationInstanceDenyBehaviorMap,
-  ProductValidationPattern,
-} from '@/shared/types/domain/products';
 import type { 
   CreateProductValidationPatternDto, 
   UpdateProductValidationPatternDto 
 } from '@/shared/contracts/products';
+import type {
+  ProductValidationInstanceDenyBehaviorMap,
+  ProductValidationPattern,
+} from '@/shared/types/domain/products';
 
 export type CreateProductValidationPatternInput = CreateProductValidationPatternDto;
 

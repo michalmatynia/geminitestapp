@@ -1,9 +1,13 @@
 'use client';
 
 import { AlertTriangle, Copy, Link2, Monitor, Server, Shield, Trash2, SearchIcon, Eye } from 'lucide-react';
-import React, { useMemo } from 'react';
+import React, { Suspense, useMemo } from 'react';
 
-import { SystemLogsProvider, useSystemLogsContext, type MongoCollectionIndexStatus, type MongoIndexInfo } from '@/features/observability/context/SystemLogsContext';
+import { 
+  MongoIndexInfoDto as MongoIndexInfo,
+  MongoCollectionIndexStatusDto as MongoCollectionIndexStatus
+} from '@/shared/contracts/observability';
+import { SystemLogsProvider, useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
 import {
   SYSTEM_LOG_FILTER_DEFAULTS,
   SYSTEM_LOG_TRIAGE_PRESETS,

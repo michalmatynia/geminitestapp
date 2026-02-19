@@ -6,6 +6,7 @@ import type {
 } from '../../contracts/ai-trigger-buttons';
 
 export type {
+  AiTriggerButtonDto,
   AiTriggerButtonLocation,
   AiTriggerButtonMode,
   AiTriggerButtonDisplay

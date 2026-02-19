@@ -67,6 +67,14 @@ const DEFAULT_QUERY: DbQueryConfig = {
 
 const LEGACY_MONGO_DEFAULT_QUERY_TEMPLATE = '{\n  "_id": "{{value}}"\n}';
 
+const normalizeTemplateText = (value: string | undefined | null): string => {
+  if (typeof value !== 'string') return '';
+  if (!value.includes('\\n') || value.includes('\n')) return value;
+  const trimmed = value.trim();
+  if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) return value;
+  return value.replace(/\\n/g, '\n');
+};
+
 const isLegacyMongoDefaultQuery = (query: DbQueryConfig): boolean =>
   query.provider === 'mongodb' &&
   query.collection === 'products' &&
@@ -81,19 +89,25 @@ const isLegacyMongoDefaultQuery = (query: DbQueryConfig): boolean =>
   query.single === false;
 
 const normalizeLegacyQueryProvider = (query: DbQueryConfig): DbQueryConfig => {
+  const normalizedTemplate = normalizeTemplateText(query.queryTemplate ?? '');
   if (query.provider !== 'auto' && query.provider !== 'mongodb' && query.provider !== 'prisma') {
     return {
       ...query,
       provider: 'auto',
+      queryTemplate: normalizedTemplate,
     };
   }
   if (isLegacyMongoDefaultQuery(query)) {
     return {
       ...query,
       provider: 'auto',
+      queryTemplate: normalizedTemplate,
     };
   }
-  return query;
+  return {
+    ...query,
+    queryTemplate: normalizedTemplate,
+  };
 };
 
 const DEFAULT_MAPPINGS: UpdaterMapping[] = [
@@ -184,11 +198,12 @@ export function useDatabaseNodeConfigState() {
     actionCategory: persistedDatabase?.actionCategory,
     action: persistedDatabase?.action,
     distinctField: persistedDatabase?.distinctField ?? '',
-    updateTemplate: persistedDatabase?.updateTemplate ?? '',
+    updateTemplate: normalizeTemplateText(persistedDatabase?.updateTemplate ?? ''),
     mappings: persistedDatabase?.mappings && persistedDatabase.mappings.length > 0 ? persistedDatabase.mappings : DEFAULT_MAPPINGS,
     query: normalizeLegacyQueryProvider(
       { ...DEFAULT_QUERY, ...(persistedDatabase?.query ?? {}) } as DbQueryConfig
     ),
+    updatePayloadMode: persistedDatabase?.updatePayloadMode ?? 'mapping',
     writeSource: persistedDatabase?.writeSource ?? 'bundle',
     writeSourcePath: persistedDatabase?.writeSourcePath ?? '',
     dryRun: persistedDatabase?.dryRun ?? false,
@@ -201,7 +216,7 @@ export function useDatabaseNodeConfigState() {
   }), [persistedDatabase]);
 
   const queryConfig = databaseConfig.query ?? DEFAULT_QUERY;
-  const appDbProvider = settingsQuery.data?.get('app_db_provider') === 'mongodb' ? 'mongodb' : 'prisma';
+  const appDbProvider = settingsQuery.data?.get('app_db_provider') === 'prisma' ? 'prisma' : 'mongodb';
   const resolvedProvider = resolveDbActionProvider(queryConfig.provider, appDbProvider);
 
   const queryTemplateValue = useMemo(() => {
@@ -258,16 +273,50 @@ export function useDatabaseNodeConfigState() {
 
       const val = Array.isArray(rawValue) ? (rawValue as unknown[])[0] : rawValue;
 
-      const activeVal = isUpdateAction ? databaseConfig.updateTemplate : queryTemplateValue;
+      const actionCategory = databaseConfig.actionCategory;
+      const action = databaseConfig.action as DatabaseAction;
+      let actionPayload: Record<string, unknown> = {};
 
-      const rendered = renderTemplate(activeVal || '', ctx, val ?? '');      const parsed = safeParseJson(rendered);
-      if (parsed.error) throw new Error(parsed.error);
+      if (actionCategory === 'update') {
+        const renderedFilter = renderTemplate(
+          queryConfig.queryTemplate || '{}',
+          ctx,
+          val ?? ''
+        );
+        const parsedFilter = safeParseJson(renderedFilter);
+        if (parsedFilter.error) throw new Error(parsedFilter.error);
+
+        const renderedUpdate = renderTemplate(
+          databaseConfig.updateTemplate || '{}',
+          ctx,
+          val ?? ''
+        );
+        const parsedUpdate = safeParseJson(renderedUpdate);
+        if (parsedUpdate.error) throw new Error(parsedUpdate.error);
+
+        actionPayload = {
+          filter: parsedFilter.value,
+          update: parsedUpdate.value,
+        };
+      } else {
+        const activeVal = queryTemplateValue;
+        const rendered = renderTemplate(activeVal || '', ctx, val ?? '');
+        const parsed = safeParseJson(rendered);
+        if (parsed.error) throw new Error(parsed.error);
+        actionPayload = {
+          [actionCategory === 'create'
+            ? 'document'
+            : actionCategory === 'aggregate'
+              ? 'pipeline'
+              : 'filter']: parsed.value,
+        };
+      }
 
       const res = await dbApi.action({
         provider: queryConfig.provider || 'auto',
-        action: databaseConfig.action as DatabaseAction,
+        action,
         collection: queryConfig.collection || 'products',
-        [databaseConfig.actionCategory === 'create' ? 'document' : databaseConfig.actionCategory === 'aggregate' ? 'pipeline' : 'filter']: parsed.value,
+        ...actionPayload,
         idType: queryConfig.idType || 'string',
       });
       if (!res.ok) throw new Error(res.error || 'Query failed');

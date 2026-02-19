@@ -139,7 +139,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                 status: status || undefined,
                 iteration: iteration ?? undefined,
                 metadata: metadata ?? undefined,
-              });
+              } as unknown as AiPathRuntimeEvent);
             });
             if (logEvents.length > 0) {
               args.setRuntimeEvents((prev) => [...prev, ...logEvents]);

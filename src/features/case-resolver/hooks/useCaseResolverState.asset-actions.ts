@@ -7,7 +7,6 @@ import {
 } from '@/features/document-editor/content-format';
 
 import {
-  CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY,
   CASE_RESOLVER_SETTINGS_KEY,
   DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT,
   DEFAULT_CASE_RESOLVER_OCR_PROMPT,
@@ -16,7 +15,6 @@ import {
   inferCaseResolverAssetKind,
   normalizeFolderPath,
   normalizeFolderPaths,
-  parseCaseResolverDefaultDocumentFormat,
   parseCaseResolverSettings,
 } from '../settings';
 import {
@@ -255,10 +253,6 @@ export const useCaseResolverStateAssetActions = ({
     const runtimeCaseResolverSettings = parseCaseResolverSettings(
       settingsStoreRef.current.get(CASE_RESOLVER_SETTINGS_KEY)
     );
-    const runtimeDefaultDocumentFormat = parseCaseResolverDefaultDocumentFormat(
-      settingsStoreRef.current.get(CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY),
-      runtimeCaseResolverSettings.defaultDocumentFormat
-    );
     if (!activeCaseId) {
       toast(
         requestedCaseStatus === 'loading'
@@ -288,7 +282,7 @@ export const useCaseResolverStateAssetActions = ({
         name,
         folder,
         parentCaseId: activeCaseId,
-        editorType: runtimeDefaultDocumentFormat,
+        editorType: 'wysiwyg',
         scanSlots: [],
         scanOcrModel:
           runtimeCaseResolverSettings.ocrModel.trim() ||
@@ -523,10 +517,9 @@ export const useCaseResolverStateAssetActions = ({
               if (file.id !== fileId || file.fileType !== 'scanfile') return file;
               didUpdate = true;
               const mergedText = buildCombinedOcrText(nextSlots);
-              const mode = file.editorType === 'wysiwyg' ? 'wysiwyg' : 'markdown';
               const canonicalDocument = deriveDocumentContentSync({
-                mode,
-                value: mode === 'wysiwyg' ? ensureSafeDocumentHtml(mergedText) : mergedText,
+                mode: 'wysiwyg',
+                value: ensureSafeDocumentHtml(mergedText),
               });
               const storedDocumentContent = toStorageDocumentValue(canonicalDocument);
               const nextOriginalDocumentContent =
@@ -565,10 +558,9 @@ export const useCaseResolverStateAssetActions = ({
             if (current?.id !== fileId || current?.fileType !== 'scanfile') return current;
             const now = new Date().toISOString();
             const mergedText = buildCombinedOcrText(nextSlots);
-            const mode = current.editorType === 'wysiwyg' ? 'wysiwyg' : 'markdown';
             const canonicalDocument = deriveDocumentContentSync({
-              mode,
-              value: mode === 'wysiwyg' ? ensureSafeDocumentHtml(mergedText) : mergedText,
+              mode: 'wysiwyg',
+              value: ensureSafeDocumentHtml(mergedText),
             });
             const storedDocumentContent = toStorageDocumentValue(canonicalDocument);
             const nextOriginalDocumentContent: string =

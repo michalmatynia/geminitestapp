@@ -1,56 +1,18 @@
-import { z } from 'zod';
+import { z as zod } from 'zod';
+
+import { 
+  PromptValidationScopeDto as PromptValidationScope,
+  PromptExploderSegmentTypeDto as PromptExploderRuleSegmentType,
+  PromptExploderCaptureApplyToDto as PromptExploderCaptureApplyTo,
+  PromptExploderCaptureNormalizeDto as PromptExploderCaptureNormalize,
+  PromptValidationRuleDto as PromptValidationRule,
+  PromptEngineSettingsDto as PromptEngineSettings,
+  promptEngineSettingsSchema,
+  promptValidationRuleSchema,
+} from '@/shared/contracts/prompt-engine';
 
 export const PROMPT_ENGINE_SETTINGS_KEY = 'prompt_engine_settings';
-
-export type PromptValidationSeverity = 'error' | 'warning' | 'info';
-export type PromptValidationChainMode = 'continue' | 'stop_on_match' | 'stop_on_replace';
-export type PromptValidationScope =
-  | 'image_studio_prompt'
-  | 'image_studio_extraction'
-  | 'image_studio_generation'
-  | 'prompt_exploder'
-  | 'case_resolver_prompt_exploder'
-  | 'global';
-export type PromptValidationLaunchScopeBehavior = 'gate' | 'bypass';
-export type PromptValidationLaunchOperator =
-  | 'equals'
-  | 'not_equals'
-  | 'contains'
-  | 'starts_with'
-  | 'ends_with'
-  | 'regex'
-  | 'gt'
-  | 'gte'
-  | 'lt'
-  | 'lte'
-  | 'is_empty'
-  | 'is_not_empty';
-export type PromptExploderRuleSegmentType =
-  | 'metadata'
-  | 'assigned_text'
-  | 'list'
-  | 'parameter_block'
-  | 'referential_list'
-  | 'sequence'
-  | 'hierarchical_list'
-  | 'conditional_list'
-  | 'qa_matrix';
-export type PromptExploderCaptureApplyTo = 'segment' | 'line';
-export type PromptExploderCaptureNormalize =
-  | 'trim'
-  | 'lower'
-  | 'upper'
-  | 'country'
-  | 'day'
-  | 'month'
-  | 'year';
-
 export const PROMPT_VALIDATION_SCOPE_VALUES: PromptValidationScope[] = [
-  'image_studio_prompt',
-  'image_studio_extraction',
-  'image_studio_generation',
-  'prompt_exploder',
-  'case_resolver_prompt_exploder',
   'global',
 ];
 
@@ -89,114 +51,6 @@ export const PROMPT_VALIDATION_SCOPE_LABELS: Record<PromptValidationScope, strin
   prompt_exploder: 'Prompt Exploder',
   case_resolver_prompt_exploder: 'Case Resolver Prompt Exploder',
   global: 'Global',
-};
-
-export type PromptValidationSimilarPattern = {
-  pattern: string;
-  flags?: string | undefined;
-  suggestion: string;
-  comment?: string | null;
-};
-
-export type PromptAutofixOperation =
-  | {
-      kind: 'replace';
-      pattern: string;
-      flags?: string | undefined;
-      replacement: string;
-      comment?: string | null;
-    }
-  | {
-      kind: 'params_json';
-      comment?: string | null;
-    };
-
-export type PromptAutofixConfig = {
-  enabled: boolean;
-  operations: PromptAutofixOperation[];
-};
-
-export type PromptValidationRule =
-  | {
-      kind: 'regex';
-      id: string;
-      enabled: boolean;
-      severity: PromptValidationSeverity;
-      title: string;
-      description: string | null;
-      pattern: string;
-      flags: string;
-      message: string;
-      similar: PromptValidationSimilarPattern[];
-      autofix?: PromptAutofixConfig | undefined;
-      sequenceGroupId?: string | null;
-      sequenceGroupLabel?: string | null;
-      sequenceGroupDebounceMs?: number;
-      sequence?: number | null;
-      chainMode?: PromptValidationChainMode;
-      maxExecutions?: number;
-      passOutputToNext?: boolean;
-      appliesToScopes?: PromptValidationScope[];
-      launchEnabled?: boolean;
-      launchAppliesToScopes?: PromptValidationScope[];
-      launchScopeBehavior?: PromptValidationLaunchScopeBehavior;
-      launchOperator?: PromptValidationLaunchOperator;
-      launchValue?: string | null;
-      launchFlags?: string | null;
-      promptExploderSegmentType?: PromptExploderRuleSegmentType | null;
-      promptExploderConfidenceBoost?: number;
-      promptExploderPriority?: number;
-      promptExploderTreatAsHeading?: boolean;
-      promptExploderCaptureTarget?: string | null;
-      promptExploderCaptureGroup?: number | null;
-      promptExploderCaptureApplyTo?: PromptExploderCaptureApplyTo;
-      promptExploderCaptureNormalize?: PromptExploderCaptureNormalize;
-      promptExploderCaptureOverwrite?: boolean;
-    }
-  | {
-      kind: 'params_object';
-      id: string;
-      enabled: boolean;
-      severity: PromptValidationSeverity;
-      title: string;
-      description: string | null;
-      message: string;
-      similar: PromptValidationSimilarPattern[];
-      autofix?: PromptAutofixConfig | undefined;
-      sequenceGroupId?: string | null;
-      sequenceGroupLabel?: string | null;
-      sequenceGroupDebounceMs?: number;
-      sequence?: number | null;
-      chainMode?: PromptValidationChainMode;
-      maxExecutions?: number;
-      passOutputToNext?: boolean;
-      appliesToScopes?: PromptValidationScope[];
-      launchEnabled?: boolean;
-      launchAppliesToScopes?: PromptValidationScope[];
-      launchScopeBehavior?: PromptValidationLaunchScopeBehavior;
-      launchOperator?: PromptValidationLaunchOperator;
-      launchValue?: string | null;
-      launchFlags?: string | null;
-      promptExploderSegmentType?: PromptExploderRuleSegmentType | null;
-      promptExploderConfidenceBoost?: number;
-      promptExploderPriority?: number;
-      promptExploderTreatAsHeading?: boolean;
-      promptExploderCaptureTarget?: string | null;
-      promptExploderCaptureGroup?: number | null;
-      promptExploderCaptureApplyTo?: PromptExploderCaptureApplyTo;
-      promptExploderCaptureNormalize?: PromptExploderCaptureNormalize;
-      promptExploderCaptureOverwrite?: boolean;
-    };
-
-export type PromptValidationSettings = {
-  enabled: boolean;
-  rules: PromptValidationRule[];
-  learnedRules?: PromptValidationRule[];
-};
-
-export type PromptEngineSettings = {
-  version: 1;
-  promptValidation: PromptValidationSettings;
 };
 
 export const defaultPromptValidationRules: PromptValidationRule[] = [
@@ -376,163 +230,6 @@ export const defaultPromptEngineSettings: PromptEngineSettings = {
   },
 };
 
-const promptValidationSeveritySchema = z.enum(['error', 'warning', 'info']);
-const promptValidationChainModeSchema = z.enum(['continue', 'stop_on_match', 'stop_on_replace']);
-const promptValidationScopeSchema = z.enum(
-  PROMPT_VALIDATION_SCOPE_VALUES as [PromptValidationScope, ...PromptValidationScope[]]
-);
-const promptValidationLaunchScopeBehaviorSchema = z.enum(['gate', 'bypass']);
-const promptValidationLaunchOperatorSchema = z.enum([
-  'equals',
-  'not_equals',
-  'contains',
-  'starts_with',
-  'ends_with',
-  'regex',
-  'gt',
-  'gte',
-  'lt',
-  'lte',
-  'is_empty',
-  'is_not_empty',
-]);
-const promptExploderRuleSegmentTypeSchema = z.enum(
-  PROMPT_EXPLODER_RULE_SEGMENT_TYPE_VALUES as [
-    PromptExploderRuleSegmentType,
-    ...PromptExploderRuleSegmentType[],
-  ]
-);
-const promptExploderCaptureApplyToSchema = z.enum(
-  PROMPT_EXPLODER_CAPTURE_APPLY_TO_VALUES as [
-    PromptExploderCaptureApplyTo,
-    ...PromptExploderCaptureApplyTo[],
-  ]
-);
-const promptExploderCaptureNormalizeSchema = z.enum(
-  PROMPT_EXPLODER_CAPTURE_NORMALIZE_VALUES as [
-    PromptExploderCaptureNormalize,
-    ...PromptExploderCaptureNormalize[],
-  ]
-);
-const promptValidationSimilarSchema: z.ZodType<PromptValidationSimilarPattern> = z
-  .object({
-    pattern: z.string().trim().min(1),
-    flags: z.string().trim().optional(),
-    suggestion: z.string().trim().min(1),
-    comment: z.string().trim().min(1).nullable().optional().default(null),
-  })
-  .strict();
-
-const promptAutofixOperationSchema: z.ZodType<PromptAutofixOperation> = z.discriminatedUnion('kind', [
-  z
-    .object({
-      kind: z.literal('replace'),
-      pattern: z.string().trim().min(1),
-      flags: z.string().trim().optional(),
-      replacement: z.string(),
-      comment: z.string().trim().min(1).nullable().optional().default(null),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal('params_json'),
-      comment: z.string().trim().min(1).nullable().optional().default(null),
-    })
-    .strict(),
-]);
-
-const promptAutofixSchema: z.ZodType<PromptAutofixConfig> = z
-  .object({
-    enabled: z.boolean().optional().default(true),
-    operations: z.array(promptAutofixOperationSchema).optional().default([]),
-  })
-  .strict();
-
-const promptValidationSequenceFieldsSchema = z
-  .object({
-    sequenceGroupId: z.string().trim().min(1).nullable().optional().default(null),
-    sequenceGroupLabel: z.string().trim().min(1).nullable().optional().default(null),
-    sequenceGroupDebounceMs: z.number().int().min(0).max(30000).optional().default(0),
-    sequence: z.number().int().nullable().optional().default(null),
-    chainMode: promptValidationChainModeSchema.optional().default('continue'),
-    maxExecutions: z.number().int().min(1).max(20).optional().default(1),
-    passOutputToNext: z.boolean().optional().default(true),
-    appliesToScopes: z
-      .array(promptValidationScopeSchema)
-      .optional()
-      .default(DEFAULT_PROMPT_VALIDATION_SCOPES),
-    launchEnabled: z.boolean().optional().default(false),
-    launchAppliesToScopes: z
-      .array(promptValidationScopeSchema)
-      .optional()
-      .default(DEFAULT_PROMPT_VALIDATION_SCOPES),
-    launchScopeBehavior: promptValidationLaunchScopeBehaviorSchema.optional().default('gate'),
-    launchOperator: promptValidationLaunchOperatorSchema.optional().default('contains'),
-    launchValue: z.string().nullable().optional().default(null),
-    launchFlags: z.string().trim().nullable().optional().default(null),
-    promptExploderSegmentType: promptExploderRuleSegmentTypeSchema
-      .nullable()
-      .optional()
-      .default(null),
-    promptExploderConfidenceBoost: z.number().min(0).max(0.5).optional().default(0),
-    promptExploderPriority: z.number().int().min(-50).max(50).optional().default(0),
-    promptExploderTreatAsHeading: z.boolean().optional().default(false),
-    promptExploderCaptureTarget: z.string().trim().min(1).nullable().optional().default(null),
-    promptExploderCaptureGroup: z.number().int().min(0).max(20).nullable().optional().default(null),
-    promptExploderCaptureApplyTo: promptExploderCaptureApplyToSchema.optional().default('segment'),
-    promptExploderCaptureNormalize: promptExploderCaptureNormalizeSchema.optional().default('trim'),
-    promptExploderCaptureOverwrite: z.boolean().optional().default(false),
-  })
-  .strict();
-
-const promptValidationRuleSchema: z.ZodType<PromptValidationRule> = z.discriminatedUnion('kind', [
-  z
-    .object({
-      kind: z.literal('regex'),
-      id: z.string().trim().min(1),
-      enabled: z.boolean().optional().default(true),
-      severity: promptValidationSeveritySchema.optional().default('warning'),
-      title: z.string().trim().min(1),
-      description: z.string().trim().min(1).nullable().optional().default(null),
-      pattern: z.string().trim().min(1),
-      flags: z.string().trim().optional().default('mi'),
-      message: z.string().trim().min(1),
-      similar: z.array(promptValidationSimilarSchema).optional().default([]),
-      autofix: promptAutofixSchema.optional().default({ enabled: true, operations: [] }),
-    })
-    .merge(promptValidationSequenceFieldsSchema)
-    .strict(),
-  z
-    .object({
-      kind: z.literal('params_object'),
-      id: z.string().trim().min(1),
-      enabled: z.boolean().optional().default(true),
-      severity: promptValidationSeveritySchema.optional().default('error'),
-      title: z.string().trim().min(1),
-      description: z.string().trim().min(1).nullable().optional().default(null),
-      message: z.string().trim().min(1),
-      similar: z.array(promptValidationSimilarSchema).optional().default([]),
-      autofix: promptAutofixSchema.optional().default({ enabled: true, operations: [] }),
-    })
-    .merge(promptValidationSequenceFieldsSchema)
-    .strict(),
-]);
-
-const promptValidationSettingsSchema: z.ZodType<PromptValidationSettings> = z
-  .object({
-    enabled: z.boolean().optional().default(defaultPromptEngineSettings.promptValidation.enabled),
-    rules: z.array(promptValidationRuleSchema).optional().default(defaultPromptEngineSettings.promptValidation.rules),
-    learnedRules: z.array(promptValidationRuleSchema).optional().default([]),
-  })
-  .strict();
-
-const promptEngineSettingsSchema: z.ZodType<PromptEngineSettings> = z
-  .object({
-    version: z.literal(1).optional().default(1),
-    promptValidation: promptValidationSettingsSchema.optional().default(defaultPromptEngineSettings.promptValidation),
-  })
-  .strict();
-
 export function parsePromptEngineSettings(raw: string | null | undefined): PromptEngineSettings {
   if (!raw) return defaultPromptEngineSettings;
   try {
@@ -580,7 +277,7 @@ export function parsePromptEngineSettings(raw: string | null | undefined): Promp
 export function parsePromptValidationRules(raw: string): { ok: true; rules: PromptValidationRule[] } | { ok: false; error: string } {
   try {
     const parsed = JSON.parse(raw) as unknown;
-    const result = z.array(promptValidationRuleSchema).safeParse(parsed);
+    const result = zod.array(promptValidationRuleSchema).safeParse(parsed);
     if (result.success) {
       const hadAutofix = Array.isArray(parsed)
         ? parsed.some((rule: unknown) => Boolean(rule) && typeof rule === 'object' && 'autofix' in (rule as Record<string, unknown>))

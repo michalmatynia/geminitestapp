@@ -2,6 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
+import { ClearLogsResponseDto as ClearLogsResponse } from '@/shared/contracts/observability';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
@@ -11,10 +12,6 @@ import {
 import { logsKeys, diagnosticsKeys } from '@/shared/lib/query-key-exports';
 import type { AiInsightRecord } from '@/shared/types';
 import type { UpdateMutation } from '@/shared/types/query-result-types';
-
-type ClearLogsResponse = {
-  deleted: number;
-};
 
 export function useClearLogsMutation(): UpdateMutation<ClearLogsResponse, void> {
   const queryClient = useQueryClient();

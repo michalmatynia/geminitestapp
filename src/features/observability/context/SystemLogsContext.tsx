@@ -8,6 +8,9 @@ import { useClearLogsMutation, useRebuildIndexesMutation, useRunLogInsight, useI
 import { useSystemLogs, useSystemLogMetrics, useMongoDiagnostics, useLogInsights } from '@/features/observability/hooks/useLogQueries';
 import { readSystemLogUrlState, writeSystemLogUrlState } from '@/features/observability/lib/system-log-filter-url-state';
 import { logClientError } from '@/features/observability/utils/client-error-logger';
+import type { 
+  MongoCollectionIndexStatusDto as MongoCollectionIndexStatus
+} from '@/shared/contracts/observability';
 import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import type { SystemLogMetrics, SystemLogRecord, SystemLogLevel, AiInsightRecord } from '@/shared/types';
@@ -33,20 +36,6 @@ const filterFields: FilterField[] = [
   { key: 'fromDate', label: 'From', type: 'date' },
   { key: 'toDate', label: 'To', type: 'date' },
 ];
-
-export type MongoIndexInfo = {
-  name?: string;
-  key: Record<string, unknown>;
-};
-
-export type MongoCollectionIndexStatus = {
-  name: string;
-  expected: MongoIndexInfo[];
-  existing: MongoIndexInfo[];
-  missing: MongoIndexInfo[];
-  extra: MongoIndexInfo[];
-  error?: string;
-};
 
 interface MongoDiagnosticsData {
   collections?: MongoCollectionIndexStatus[];

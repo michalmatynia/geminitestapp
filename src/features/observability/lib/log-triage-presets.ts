@@ -1,23 +1,11 @@
-import type { SystemLogLevel } from '@/shared/types';
+import type { 
+  SystemLogFilterFormValuesDto,
+  LogTriagePresetDto
+} from '@/shared/contracts/observability';
 
-export type SystemLogFilterFormValues = {
-  level: SystemLogLevel | 'all';
-  query: string;
-  source: string;
-  method: string;
-  statusCode: string;
-  requestId: string;
-  userId: string;
-  fingerprint: string;
-  category: string;
-  fromDate: string;
-  toDate: string;
-};
+export type SystemLogFilterFormValues = SystemLogFilterFormValuesDto;
 
-export type LogTriagePreset = {
-  id: 'recent-errors-24h' | 'http-500-last7d' | 'client-errors-last7d' | 'auth-anomalies-last3d';
-  label: string;
-  description: string;
+export type LogTriagePreset = LogTriagePresetDto & {
   resolve: (now: Date) => Partial<SystemLogFilterFormValues>;
 };
 

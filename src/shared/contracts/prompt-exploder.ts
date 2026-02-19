@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
 import { validatorPatternListSchema, validatorScopeSchema } from './admin';
-import { promptExploderSegmentTypeSchema } from './prompt-engine';
 
 /**
  * Prompt Exploder DTOs
@@ -9,6 +8,19 @@ import { promptExploderSegmentTypeSchema } from './prompt-engine';
 
 export const promptExploderLogicalOperatorSchema = z.enum(['if', 'only_if', 'unless', 'when']);
 export type PromptExploderLogicalOperatorDto = z.infer<typeof promptExploderLogicalOperatorSchema>;
+
+export const promptExploderSegmentTypeSchema = z.enum([
+  'metadata',
+  'assigned_text',
+  'list',
+  'parameter_block',
+  'referential_list',
+  'sequence',
+  'hierarchical_list',
+  'conditional_list',
+  'qa_matrix',
+]);
+export type PromptExploderSegmentTypeDto = z.infer<typeof promptExploderSegmentTypeSchema>;
 
 export const promptExploderLogicalComparatorSchema = z.enum([
   'truthy',
@@ -142,8 +154,8 @@ export const promptExploderDocumentSchema = z.object({
 export type PromptExploderDocumentDto = z.infer<typeof promptExploderDocumentSchema>;
 
 export const promptExploderPatternRuleMapSchema = z.object({
-  allRules: z.array(promptValidationRuleSchema),
-  scopedRules: z.array(promptValidationRuleSchema),
+  allRules: z.array(z.record(z.string(), z.unknown())),
+  scopedRules: z.array(z.record(z.string(), z.unknown())),
 });
 
 export type PromptExploderPatternRuleMapDto = z.infer<typeof promptExploderPatternRuleMapSchema>;

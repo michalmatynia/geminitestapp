@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { aiInsightRecordSchema } from './ai-insights';
+
 /**
  * AI Brain DTOs
  */
@@ -48,3 +50,24 @@ export const aiBrainProviderCatalogSchema = z.object({
 });
 
 export type AiBrainProviderCatalogDto = z.infer<typeof aiBrainProviderCatalogSchema>;
+
+/**
+ * AI Brain Query Response DTOs
+ */
+
+export const chatbotModelsResponseSchema = z.object({
+  models: z.array(z.string()).optional(),
+  warning: z.object({
+    code: z.string().optional(),
+    message: z.string().optional(),
+  }).optional(),
+});
+
+export type ChatbotModelsResponseDto = z.infer<typeof chatbotModelsResponseSchema>;
+
+export const insightsSnapshotSchema = z.object({
+  analytics: z.array(aiInsightRecordSchema),
+  logs: z.array(aiInsightRecordSchema),
+});
+
+export type InsightsSnapshotDto = z.infer<typeof insightsSnapshotSchema>;

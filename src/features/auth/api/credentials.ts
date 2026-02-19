@@ -1,11 +1,4 @@
-export type VerifyCredentialsResponse = {
-  ok: boolean;
-  mfaRequired?: boolean;
-  challengeId?: string;
-  expiresAt?: string;
-  code?: string;
-  message?: string;
-};
+import type { VerifyCredentialsResponseDto as VerifyCredentialsResponse } from '@/shared/contracts/auth';
 
 const safeJson = async <T>(res: Response): Promise<T> => {
   try {

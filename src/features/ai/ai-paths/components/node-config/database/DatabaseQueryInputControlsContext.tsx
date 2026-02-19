@@ -8,6 +8,7 @@ import type { QueryValidationResult } from './query-utils';
 
 export type DatabaseQueryInputControlsContextValue = {
   provider: DbQueryConfig['provider'];
+  updatePayloadMode?: 'mapping' | 'custom';
   actionCategory: DatabaseActionCategory;
   action: DatabaseAction;
   actionCategoryOptions: Array<{ value: DatabaseActionCategory; label: string }>;
@@ -18,6 +19,7 @@ export type DatabaseQueryInputControlsContextValue = {
   filterTemplateValue?: string;
   filterPlaceholder?: string;
   onFilterChange?: (value: string) => void;
+  onUpdatePayloadModeChange?: (value: 'mapping' | 'custom') => void;
   runDry?: boolean;
   onToggleRunDry?: () => void;
   queryValidation: QueryValidationResult | null;

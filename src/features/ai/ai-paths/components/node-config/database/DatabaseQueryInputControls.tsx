@@ -10,6 +10,7 @@ import { useDatabaseQueryInputControlsContext } from './DatabaseQueryInputContro
 export function DatabaseQueryInputControls(): React.JSX.Element {
   const {
     provider,
+    updatePayloadMode,
     actionCategory,
     action,
     actionCategoryOptions,
@@ -20,6 +21,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
     filterTemplateValue,
     filterPlaceholder,
     onFilterChange,
+    onUpdatePayloadModeChange,
     runDry,
     onToggleRunDry,
     queryValidation,
@@ -42,6 +44,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
   const filterHint = isPrismaProvider ? 'Matches records' : 'Matches documents';
   const updateLabel = isPrismaProvider ? 'Update Data' : 'Update Document';
   const updateHint = isPrismaProvider ? 'Applies to matched records' : 'Applies to matched docs';
+  const mappingMode = updatePayloadMode ?? 'mapping';
   return (
     <div className='space-y-2'>
       <div className='flex items-center justify-between'>
@@ -66,6 +69,20 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
             }))}
             triggerClassName='h-7 w-[170px] border-border bg-card/70 text-xs text-white'
           />
+          {showFilterInput ? (
+            <SelectSimple
+              size='xs'
+              value={mappingMode}
+              onValueChange={(value: string): void =>
+                onUpdatePayloadModeChange?.(value as 'mapping' | 'custom')
+              }
+              options={[
+                { value: 'custom', label: 'Custom update doc' },
+                { value: 'mapping', label: 'Mapping-based' },
+              ]}
+              triggerClassName='h-7 w-[170px] border-border bg-card/70 text-xs text-white'
+            />
+          ) : null}
         </div>
         <div className='flex gap-2'>
           <Button
@@ -147,7 +164,11 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
             <span className='text-[10px] uppercase tracking-wide text-gray-500'>
               {updateLabel}
             </span>
-            <span className='text-[9px] text-gray-500'>{updateHint}</span>
+            <span className='text-[9px] text-gray-500'>
+              {mappingMode === 'custom'
+                ? updateHint
+                : 'Used only in Custom mode'}
+            </span>
           </div>
           <Textarea
             ref={queryTemplateRef}
@@ -155,8 +176,14 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
             value={queryTemplateValue}
             onFocus={onQueryFocus}
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => onQueryChange(event.target.value)}
+            disabled={mappingMode !== 'custom'}
             placeholder={queryTemplateValue.trim() === '' ? queryPlaceholder : undefined}
           />
+          {mappingMode !== 'custom' ? (
+            <div className='text-[10px] text-gray-500'>
+              Mapping mode applies field mappings below. Switch to Custom update doc to send raw update JSON.
+            </div>
+          ) : null}
         </div>
       ) : (
         <Textarea

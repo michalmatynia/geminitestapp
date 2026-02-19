@@ -436,7 +436,9 @@ export function CanvasBoard({
       if (!Array.isArray(history) || history.length === 0) return directValue;
       const lastEntry = history[history.length - 1];
       const fallbackSource =
-        direction === 'input' ? lastEntry?.inputs : lastEntry?.outputs;
+        (direction === 'input' ? lastEntry?.['inputs'] : lastEntry?.['outputs']) as
+          | Record<string, unknown>
+          | undefined;
       return fallbackSource?.[port];
     },
     [runtimeState]
@@ -453,8 +455,8 @@ export function CanvasBoard({
           ? history[history.length - 1]
           : null;
       return {
-        inputs: mergeRuntimePayload(runtimeState.inputs[nodeId], lastEntry?.inputs),
-        outputs: mergeRuntimePayload(runtimeState.outputs[nodeId], lastEntry?.outputs),
+        inputs: mergeRuntimePayload(runtimeState.inputs?.[nodeId], lastEntry?.['inputs']),
+        outputs: mergeRuntimePayload(runtimeState.outputs?.[nodeId], lastEntry?.['outputs']),
       };
     },
     [runtimeState.history, runtimeState.inputs, runtimeState.outputs]
@@ -576,8 +578,8 @@ export function CanvasBoard({
     edges,
     runtimeEvents,
     runtimeState: {
-      inputs: runtimeState.inputs,
-      outputs: runtimeState.outputs,
+      inputs: runtimeState.inputs ?? {},
+      outputs: runtimeState.outputs ?? {},
     },
     getPortValue,
     edgesByFromPort,
@@ -1111,7 +1113,7 @@ export function CanvasBoard({
             const isPrimarySelected = node.id === selectedNodeId;
             const style = typeStyles[node.type] ?? typeStyles.template;
             const canUsePersistedStatusFallback = runtimeRunStatus !== 'idle';
-            const statusFromRuntimeState = runtimeState.outputs[node.id]?.['status'];
+            const statusFromRuntimeState = runtimeState.outputs?.[node.id]?.['status'];
             const runtimeNodeStatusRaw =
             runtimeNodeStatuses?.[node.id] ??
             (canUsePersistedStatusFallback && typeof statusFromRuntimeState === 'string'
@@ -1126,7 +1128,7 @@ export function CanvasBoard({
               : null;
             const iteratorOutput =
             node.type === 'iterator'
-              ? runtimeState.outputs[node.id]
+              ? runtimeState.outputs?.[node.id]
               : undefined;
             const iteratorStatus = (iteratorOutput?.['status'] as string | undefined) ?? null;
             const iteratorIndex =

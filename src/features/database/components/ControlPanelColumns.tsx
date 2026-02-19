@@ -4,16 +4,9 @@ import { Button, StatusBadge, DataTableSortableHeader, SelectSimple } from '@/sh
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-export type UnifiedCollectionRow = {
-  name: string;
-  mongoFieldCount: number | null;
-  prismaFieldCount: number | null;
-  mongoDocumentCount: number | null;
-  prismaRowCount: number | null;
-  existsInMongo: boolean;
-  existsInPrisma: boolean;
-  assignedProvider: 'mongodb' | 'prisma' | 'auto';
-};
+import type { UnifiedCollectionDto } from '@/shared/contracts/database';
+
+export type UnifiedCollectionRow = UnifiedCollectionDto;
 
 const ProviderBadge = ({
   exists,

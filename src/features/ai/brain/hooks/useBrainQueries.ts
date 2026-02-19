@@ -1,5 +1,9 @@
 'use client';
 
+import type { 
+  ChatbotModelsResponseDto, 
+  InsightsSnapshotDto 
+} from '@/shared/contracts/ai-brain';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { brainKeys } from '@/shared/lib/query-key-exports';
@@ -13,15 +17,9 @@ import type { SingleQuery } from '@/shared/types/query-result-types';
 
 export { brainKeys };
 
-export type ChatbotModelsResponse = {
-  models?: string[];
-  warning?: { code?: string; message?: string };
-};
+export type ChatbotModelsResponse = ChatbotModelsResponseDto;
 
-export type InsightsSnapshot = {
-  analytics: AiInsightRecord[];
-  logs: AiInsightRecord[];
-};
+export type InsightsSnapshot = InsightsSnapshotDto;
 
 export function useOllamaModels(): SingleQuery<ChatbotModelsResponse> {
   const queryKey = brainKeys.ollamaModels();

@@ -1,4 +1,7 @@
+import type { QueueHealthStatusDto } from '@/shared/contracts/jobs';
+
 import type { JobsOptions, WorkerOptions } from 'bullmq';
+
 
 export type QueueName =
   | 'product-ai'
@@ -17,17 +20,7 @@ export type QueueName =
   | 'product-sync-scheduler'
   | 'case-resolver-ocr';
 
-export type QueueHealthStatus = {
-  running: boolean;
-  healthy: boolean;
-  processing: boolean;
-  activeCount: number;
-  waitingCount: number;
-  failedCount: number;
-  completedCount: number;
-  lastPollTime: number;
-  timeSinceLastPoll: number;
-};
+export type QueueHealthStatus = QueueHealthStatusDto;
 
 export type QueueConfig<TJobData = unknown> = {
   name: QueueName;

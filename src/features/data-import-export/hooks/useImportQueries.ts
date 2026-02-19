@@ -18,6 +18,9 @@ import type {
   BaseImportStartResponse,
   BaseImportMode,
 } from '@/features/integrations/types/base-import-runs';
+import type { 
+  ImportParameterCacheResponseDto as ImportParameterCacheResponse 
+} from '@/shared/contracts/integrations';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,
@@ -273,14 +276,10 @@ export function useParameters(
   });
 }
 
-export type ImportParameterCacheResponse = {
-  inventoryId?: string | null;
-  productId?: string | null;
-  keys?: string[];
-  values?: Record<string, string>;
-  updatedAt?: string;
-};
-
+import type { 
+  ImportParameterCacheResponseDto as ImportParameterCacheResponse 
+} from '@/shared/contracts/integrations';
+...
 export function useImportParameterCache(
   enabled: boolean = true
 ): SingleQuery<ImportParameterCacheResponse> {

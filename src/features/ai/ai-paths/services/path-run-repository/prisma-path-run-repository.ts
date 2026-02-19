@@ -108,6 +108,11 @@ const mapEvent = (event: unknown): AiPathRunEventRecord => {
   return {
     id: String(e['id']),
     runId: String(e['runId']),
+    nodeId: (e['nodeId'] as string) ?? null,
+    nodeType: (e['nodeType'] as string) ?? null,
+    nodeTitle: (e['nodeTitle'] as string) ?? null,
+    status: (e['status'] as string) ?? null,
+    iteration: (e['iteration'] as number) ?? null,
     level: e['level'] as AiPathRunEventRecord['level'],
     message: String(e['message']),
     metadata: (e['metadata'] as AiPathRunEventRecord['metadata']) ?? null,
@@ -481,6 +486,11 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     const event = await prismaAny.aiPathRunEvent!.create({
       data: {
         runId: input.runId,
+        nodeId: input.nodeId ?? null,
+        nodeType: input.nodeType ?? null,
+        nodeTitle: input.nodeTitle ?? null,
+        status: input.status ?? null,
+        iteration: input.iteration ?? null,
         level: input.level,
         message: input.message,
         metadata: input.metadata ?? null,

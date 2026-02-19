@@ -111,7 +111,7 @@ const DEFAULT_PATH_DESCRIPTION = 'Visual analysis + description generation with 
 const DEFAULT_TRIGGER = 'Product Modal - Context Filter';
 const DEFAULT_EXECUTION_MODE: PathExecutionMode = 'server';
 const DEFAULT_FLOW_INTENSITY: PathFlowIntensity = 'medium';
-const DEFAULT_RUN_MODE: PathRunMode = 'block';
+const DEFAULT_RUN_MODE: PathRunMode = 'manual';
 
 // ---------------------------------------------------------------------------
 // Contexts (split for re-render optimization)

@@ -14,8 +14,9 @@ export const FLOW_OPTIONS = [
 ] as const;
 
 export const RUN_MODE_OPTIONS = [
-  { value: 'block', label: 'Run: Block' },
-  { value: 'queue', label: 'Run: Queue' },
+  { value: 'manual', label: 'Run: Manual' },
+  { value: 'automatic', label: 'Run: Automatic' },
+  { value: 'step', label: 'Run: Step' },
 ] as const;
 
 const isTemplatePathName = (name: string): boolean =>

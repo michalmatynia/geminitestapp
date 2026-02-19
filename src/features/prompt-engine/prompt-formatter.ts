@@ -4,8 +4,9 @@ import type {
   PromptValidationRuleDto as PromptValidationRule,
   PromptValidationSettingsDto as PromptValidationSettings,
   PromptValidationSimilarDto as PromptValidationSimilarPattern,
-  PromptAppliedFixDto,
-  FormatPromptResultDto,
+  PromptAppliedFixDto as AppliedFix,
+  FormatPromptResultDto as FormatPromptResult,
+  FormatPromptOptionsDto,
 } from '@/shared/contracts/prompt-engine';
 
 import {
@@ -16,20 +17,14 @@ import {
   normalizePromptRuleMaxExecutions,
   preparePromptValidationRuntime,
   shouldLaunchPromptRule,
-  type PromptValidationIssue,
   validateProgrammaticPromptWithRuntime,
   type PromptValidationExecutionContext,
 } from './prompt-validator';
 
+export type { FormatPromptResult };
 
-type AppliedFix = PromptAppliedFixDto;
-
-export type FormatPromptResult = FormatPromptResultDto;
-
-export type FormatPromptOptions = {
-  precomputedIssuesBefore?: PromptValidationIssue[] | undefined;
+export type FormatPromptOptions = FormatPromptOptionsDto & {
   preparedRuntime?: ReturnType<typeof preparePromptValidationRuntime> | undefined;
-  enableIncrementalValidation?: boolean | undefined;
 };
 
 type ScanState = {

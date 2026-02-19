@@ -1,19 +1,10 @@
+import type { 
+  AuthUsersResponseDto as AuthUsersResponse,
+  AuthUserSecurityProfileDto as AuthUserSecurityProfile
+} from '@/shared/contracts/auth';
 import { api } from '@/shared/lib/api-client';
 
 import type { AuthUserSummary } from '../types';
-
-export type AuthUsersResponse = {
-  provider: 'mongodb' | 'prisma';
-  users: AuthUserSummary[];
-};
-
-export type AuthUserSecurityProfile = {
-  userId: string;
-  mfaEnabled: boolean;
-  allowedIps: string[];
-  disabledAt: string | null;
-  bannedAt: string | null;
-};
 
 export const fetchAuthUsers = async (): Promise<AuthUsersResponse> => {
   return api.get<AuthUsersResponse>('/api/auth/users');

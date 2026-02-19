@@ -1,11 +1,11 @@
 import type { 
-  ProductParameter 
-} from '@/shared/types/domain/products';
-import type { 
   ProductParameterFiltersDto, 
   ProductParameterCreateInputDto, 
   ProductParameterUpdateInputDto 
 } from '@/shared/contracts/products';
+import type { 
+  ProductParameter 
+} from '@/shared/types/domain/products';
 
 export type ParameterFilters = ProductParameterFiltersDto;
 

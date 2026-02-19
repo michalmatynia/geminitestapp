@@ -118,7 +118,7 @@ export const getAppDbProvider = async (): Promise<AppDbProvider> => {
       'App provider is set to Prisma but DATABASE_URL is missing.'
     );
   }
-  if (process.env['DATABASE_URL'] && process.env['MONGODB_URI']) return 'prisma';
+  if (process.env['DATABASE_URL'] && process.env['MONGODB_URI']) return 'mongodb';
   if (process.env['DATABASE_URL']) return 'prisma';
   if (process.env['MONGODB_URI']) return 'mongodb';
   throw internalError(

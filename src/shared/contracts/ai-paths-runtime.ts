@@ -38,9 +38,16 @@ export const aiPathRuntimeEventSchema = z.object({
   id: z.string(),
   timestamp: z.string(),
   type: aiPathRuntimeEventKindSchema,
+  kind: z.string().optional(),
+  source: z.enum(['local', 'server']).optional(),
   message: z.string(),
+  runId: z.string().nullable().optional(),
+  runStartedAt: z.string().nullable().optional(),
   nodeId: z.string().optional(),
   nodeType: z.string().optional(),
+  nodeTitle: z.string().nullable().optional(),
+  status: z.union([aiPathRuntimeNodeStatusSchema, z.string()]).optional(),
+  iteration: z.number().optional(),
   level: z.enum(['info', 'warn', 'error', 'debug']).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
@@ -102,6 +109,14 @@ export const runtimeStateSchema = z.object({
   variables: z.record(z.string(), z.unknown()),
   events: z.array(aiPathRuntimeEventSchema),
   currentRun: aiPathRunSchema.nullable().optional(),
+  // Backward-compat fields retained for legacy local execution paths.
+  runId: z.string().nullable().optional(),
+  runStartedAt: z.string().nullable().optional(),
+  inputs: z.record(z.string(), runtimePortValuesSchema).optional(),
+  outputs: z.record(z.string(), runtimePortValuesSchema).optional(),
+  history: z.record(z.string(), z.array(z.record(z.string(), z.unknown()))).optional(),
+  hashes: z.record(z.string(), z.string()).optional(),
+  hashTimestamps: z.record(z.string(), z.number()).optional(),
 });
 
 export type RuntimeStateDto = z.infer<typeof runtimeStateSchema>;

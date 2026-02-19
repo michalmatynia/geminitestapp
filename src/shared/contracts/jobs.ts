@@ -140,12 +140,20 @@ export type ProductAiJobUpdateInput = UpdateProductAiJobDto;
 /**
  * Job Queue Stats Contract
  */
-export const jobQueueStatsSchema = z.object({
+export const queueHealthStatusSchema = z.object({
   running: z.boolean(),
   healthy: z.boolean(),
   processing: z.boolean(),
+  activeCount: z.number(),
+  waitingCount: z.number(),
+  failedCount: z.number(),
+  completedCount: z.number(),
   lastPollTime: z.number(),
   timeSinceLastPoll: z.number(),
 });
+
+export type QueueHealthStatusDto = z.infer<typeof queueHealthStatusSchema>;
+
+export const jobQueueStatsSchema = queueHealthStatusSchema;
 
 export type JobQueueStatsDto = z.infer<typeof jobQueueStatsSchema>;

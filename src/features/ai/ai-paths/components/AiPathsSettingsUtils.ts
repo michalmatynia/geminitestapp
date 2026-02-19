@@ -191,10 +191,11 @@ export const buildPersistedRuntimeState = (
       outputs[key] = trimRuntimePorts(value);
     }
   });
-  Object.entries(state.history ?? {}).forEach(([key, value]: [string, RuntimeHistoryEntry[]]) => {
+  Object.entries(state.history ?? {}).forEach(([key, value]) => {
     if (!includeHistoryInPathConfig) return;
     if (!nodeIds.has(key)) return;
-    const trimmed = Array.isArray(value) ? value.slice(-historyLimit) : [];
+    const entries = Array.isArray(value) ? (value as RuntimeHistoryEntry[]) : [];
+    const trimmed = entries.slice(-historyLimit);
     if (trimmed.length > 0) {
       history[key] = trimmed.map((entry: RuntimeHistoryEntry): RuntimeHistoryEntry => ({
         ...entry,

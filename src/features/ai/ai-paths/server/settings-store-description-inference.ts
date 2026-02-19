@@ -286,7 +286,7 @@ export const buildDescriptionInferenceLitePathConfigValue = (
               preset: 'by_id',
               field: '_id',
               idType: 'string',
-              queryTemplate: '{\\n  "id": "{{entityId}}"\\n}',
+              queryTemplate: '{\n  "id": "{{entityId}}"\n}',
               limit: 1,
               sort: '',
               projection: '',

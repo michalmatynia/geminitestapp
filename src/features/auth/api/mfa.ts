@@ -1,20 +1,8 @@
-export type MfaSetupResponse = {
-  ok: boolean;
-  secret?: string;
-  otpauthUrl?: string;
-  message?: string;
-};
-
-export type MfaVerifyResponse = {
-  ok: boolean;
-  recoveryCodes?: string[];
-  message?: string;
-};
-
-export type MfaDisableResponse = {
-  ok: boolean;
-  message?: string;
-};
+import type { 
+  MfaSetupResponseDto as MfaSetupResponse,
+  MfaVerifyResponseDto as MfaVerifyResponse,
+  MfaDisableResponseDto as MfaDisableResponse
+} from '@/shared/contracts/auth';
 
 const safeJson = async <T>(res: Response): Promise<T> => {
   try {

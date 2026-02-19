@@ -20,9 +20,20 @@ import { DatabaseConstructorTab } from './database/DatabaseConstructorTab';
 import { DatabasePresetsTab } from './database/DatabasePresetsTab';
 import { DatabasePresetsTabContextProvider } from './database/DatabasePresetsTabContext';
 import { DatabaseQueryInputControlsContextProvider } from './database/DatabaseQueryInputControlsContext';
+import { DatabaseQueryValidatorPanel } from './database/DatabaseQueryValidatorPanel';
+import { DatabaseQueryValidatorPanelContextProvider } from './database/DatabaseQueryValidatorPanelContext';
 import { DatabaseSaveQueryPresetDialog } from './database/DatabaseSaveQueryPresetDialog';
 import { DatabaseSaveQueryPresetDialogContextProvider } from './database/DatabaseSaveQueryPresetDialogContext';
 import { DatabaseSettingsTab } from './database/DatabaseSettingsTab';
+import {
+  buildJsonQueryValidation,
+  buildMongoQueryValidation,
+  formatAndFixMongoQuery,
+  getQueryPlaceholderByAction,
+  getQueryPlaceholderByOperation,
+  getUpdatePlaceholderByAction,
+  type QueryValidationResult,
+} from './database/query-utils';
 import { useDatabaseNodeConfigState } from '../../hooks/useDatabaseNodeConfigState';
 import { resolveNodeLabel } from '../../utils/ui-utils';
 
@@ -60,6 +71,24 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
       ),
     [resolvedActionCategory, state.action, state.queryConfig.single, state.resolvedProvider]
   );
+  const updatePayloadMode = state.databaseConfig.updatePayloadMode ?? 'mapping';
+  const activeQueryTemplateValue = state.isUpdateAction
+    ? (state.databaseConfig.updateTemplate ?? '')
+    : state.queryTemplateValue;
+  const editingFilterOnly = state.isUpdateAction && updatePayloadMode !== 'custom';
+  const queryPlaceholder = state.isUpdateAction
+    ? getUpdatePlaceholderByAction(resolvedAction)
+    : getQueryPlaceholderByAction(resolvedAction) || getQueryPlaceholderByOperation(state.operation);
+  const filterPlaceholder = getQueryPlaceholderByAction(resolvedAction);
+  const validationTargetTemplate = editingFilterOnly
+    ? (state.queryConfig.queryTemplate ?? '')
+    : activeQueryTemplateValue;
+  const queryValidation: QueryValidationResult = React.useMemo(() => {
+    if (state.resolvedProvider === 'prisma') {
+      return buildJsonQueryValidation(validationTargetTemplate);
+    }
+    return buildMongoQueryValidation(validationTargetTemplate);
+  }, [state.resolvedProvider, validationTargetTemplate]);
 
   const constructorValue: DatabaseConstructorContextValue = {
     pendingAiQuery: state.pendingAiQuery,
@@ -100,36 +129,104 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
 
   const queryInputControlsValue: DatabaseQueryInputControlsContextValue = {
     provider: state.resolvedProvider,
+    updatePayloadMode,
     actionCategory: resolvedActionCategory,
     action: resolvedAction,
     actionCategoryOptions,
     actionOptions,
-    queryTemplateValue: state.queryTemplateValue,
-    queryPlaceholder: '',
+    queryTemplateValue: activeQueryTemplateValue,
+    queryPlaceholder,
     showFilterInput: state.isUpdateAction,
     filterTemplateValue: state.queryConfig.queryTemplate || '',
-    filterPlaceholder: '',
+    filterPlaceholder,
     onFilterChange: (val) => state.updateQueryConfig({ queryTemplate: val }),
+    onUpdatePayloadModeChange: (value) =>
+      state.updateSelectedNodeConfig({
+        database: {
+          ...state.databaseConfig,
+          updatePayloadMode: value,
+          ...(value === 'custom' && !(state.databaseConfig.updateTemplate ?? '').trim()
+            ? { updateTemplate: getUpdatePlaceholderByAction(resolvedAction) }
+            : {}),
+        },
+      }),
     runDry: state.databaseConfig.dryRun || false,
     onToggleRunDry: () => state.updateSelectedNodeConfig({ database: { ...state.databaseConfig, dryRun: !state.databaseConfig.dryRun } }),
-    queryValidation: null,
+    queryValidation,
     queryFormatterEnabled: state.queryFormatterEnabled,
     queryValidatorEnabled: state.queryValidatorEnabled,
     testQueryLoading: state.testQueryLoading,
     queryTemplateRef: state.queryTemplateRef,
     onActionCategoryChange: state.handleActionCategoryChange,
     onActionChange: (val) => state.applyActionConfig(resolvedActionCategory, val),
-    onFormatClick: () => {},
-    onFormatContextMenu: () => {},
+    onFormatClick: () => {
+      const targetValue = editingFilterOnly
+        ? (state.queryConfig.queryTemplate ?? '')
+        : activeQueryTemplateValue;
+      if (!targetValue.trim()) return;
+      const formatted =
+        state.resolvedProvider === 'mongodb'
+          ? formatAndFixMongoQuery(targetValue)
+          : (() => {
+              try {
+                return JSON.stringify(JSON.parse(targetValue), null, 2);
+              } catch {
+                return targetValue;
+              }
+            })();
+      if (editingFilterOnly) {
+        state.updateQueryConfig({ queryTemplate: formatted });
+      } else if (state.isUpdateAction) {
+        state.updateSelectedNodeConfig({
+          database: {
+            ...state.databaseConfig,
+            updateTemplate: formatted,
+            updatePayloadMode: 'custom',
+          },
+        });
+      } else {
+        state.updateQueryConfig({ queryTemplate: formatted });
+      }
+    },
+    onFormatContextMenu: (event) => {
+      event.preventDefault();
+      state.setQueryFormatterEnabled(!state.queryFormatterEnabled);
+      state.toast(
+        state.queryFormatterEnabled ? 'Smart formatter disabled.' : 'Smart formatter enabled.',
+        { variant: 'info' }
+      );
+    },
     onToggleValidator: () => state.setQueryValidatorEnabled(!state.queryValidatorEnabled),
     onRunQuery: () => { void state.handleRunQuery(); },
-    onQueryChange: (val) => state.updateQueryConfig({ queryTemplate: val }),
+    onQueryChange: (val) => {
+      if (state.isUpdateAction) {
+        state.updateSelectedNodeConfig({
+          database: {
+            ...state.databaseConfig,
+            updateTemplate: val,
+            updatePayloadMode: 'custom',
+          },
+        });
+        return;
+      }
+      state.updateQueryConfig({ queryTemplate: val });
+    },
   };
 
   return (
-    <DatabaseQueryInputControlsContextProvider value={queryInputControlsValue}>
-      <DatabaseConstructorContextProvider value={constructorValue}>
-        <div className='space-y-4'>
+    <DatabaseQueryValidatorPanelContextProvider
+      value={{
+        queryValidation,
+        queryConfig: state.queryConfig,
+        resolvedProvider: state.resolvedProvider,
+        operation: state.operation,
+        queryTemplateValue: validationTargetTemplate,
+        databaseConfig: state.databaseConfig,
+      }}
+    >
+      <DatabaseQueryInputControlsContextProvider value={queryInputControlsValue}>
+        <DatabaseConstructorContextProvider value={constructorValue}>
+          <div className='space-y-4'>
           <div className='flex flex-wrap items-center justify-between gap-2'>
             <h3 className='text-sm font-medium text-white'>
               Database Node: {resolveNodeLabel(selectedNode.type, (selectedNode.config?.database as { label?: string } | undefined)?.label)}
@@ -151,8 +248,9 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
               <DatabaseSettingsTab />
             </TabsContent>
 
-            <TabsContent value='constructor'>
+            <TabsContent value='constructor' className='space-y-3'>
               <DatabaseConstructorTab />
+              {state.queryValidatorEnabled ? <DatabaseQueryValidatorPanel /> : null}
             </TabsContent>
 
             <TabsContent value='presets'>
@@ -180,8 +278,9 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
           </DatabaseSaveQueryPresetDialogContextProvider>
           
           <state.ConfirmationModal />
-        </div>
-      </DatabaseConstructorContextProvider>
-    </DatabaseQueryInputControlsContextProvider>
+          </div>
+        </DatabaseConstructorContextProvider>
+      </DatabaseQueryInputControlsContextProvider>
+    </DatabaseQueryValidatorPanelContextProvider>
   );
 }

@@ -13,7 +13,8 @@ import {
 } from '@/features/case-resolver-capture/settings';
 import {
   deriveDocumentContentSync,
-  normalizeRawDocumentModeFromContent,
+  ensureHtmlForPreview,
+  ensureSafeDocumentHtml,
   toStorageDocumentValue,
 } from '@/features/document-editor/content-format';
 import {
@@ -710,11 +711,9 @@ export function useCaseResolverState() {
     ({
       ownerCaseId,
       targetFolderPath,
-      runtimeDefaultDocumentFormat,
     }: {
       ownerCaseId: string;
       targetFolderPath: string | null;
-      runtimeDefaultDocumentFormat: 'markdown' | 'wysiwyg';
     }): void => {
       updateWorkspace((current) => {
         const folder = resolveCaseScopedFolderTarget({
@@ -733,7 +732,7 @@ export function useCaseResolverState() {
           name,
           folder,
           parentCaseId: ownerCaseId,
-          editorType: runtimeDefaultDocumentFormat,
+          editorType: 'wysiwyg',
           tagId: defaultTagId,
           caseIdentifierId: defaultCaseIdentifierId,
           categoryId: defaultCategoryId,
@@ -815,18 +814,10 @@ export function useCaseResolverState() {
   ]);
 
   const handleCreateFile = useCallback((targetFolderPath: string | null): void => {
-    const runtimeCaseResolverSettings = parseCaseResolverSettings(
-      settingsStoreRef.current.get(CASE_RESOLVER_SETTINGS_KEY)
-    );
-    const runtimeDefaultDocumentFormat = parseCaseResolverDefaultDocumentFormat(
-      settingsStoreRef.current.get(CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY),
-      runtimeCaseResolverSettings.defaultDocumentFormat
-    );
     if (activeCaseId && canCreateInActiveCase) {
       createDocumentForCase({
         ownerCaseId: activeCaseId,
         targetFolderPath,
-        runtimeDefaultDocumentFormat,
       });
       return;
     }
@@ -842,7 +833,6 @@ export function useCaseResolverState() {
           createDocumentForCase({
             ownerCaseId: recoveredCaseId,
             targetFolderPath,
-            runtimeDefaultDocumentFormat,
           });
           return;
         }
@@ -1079,7 +1069,7 @@ export function useCaseResolverState() {
     const canRecoverStoredDraft =
       recoveredDraft !== null &&
       recoveredDraft.baseDocumentContentVersion === baseDraft.baseDocumentContentVersion;
-    const nextDraft: CaseResolverFileEditDraft = canRecoverStoredDraft
+    const mergedDraft: CaseResolverFileEditDraft = canRecoverStoredDraft
       ? {
         ...baseDraft,
         ...recoveredDraft.draft,
@@ -1089,6 +1079,37 @@ export function useCaseResolverState() {
         ...baseDraft,
         documentHistory: baseDraft.documentHistory ?? [],
       };
+    const resolvedDraftHtml = (() => {
+      if (
+        typeof mergedDraft.documentContentHtml === 'string' &&
+        mergedDraft.documentContentHtml.trim().length > 0
+      ) {
+        return mergedDraft.documentContentHtml;
+      }
+      if (
+        typeof mergedDraft.documentContentMarkdown === 'string' &&
+        mergedDraft.documentContentMarkdown.trim().length > 0
+      ) {
+        return ensureHtmlForPreview(mergedDraft.documentContentMarkdown, 'markdown');
+      }
+      return ensureSafeDocumentHtml(mergedDraft.documentContent ?? '');
+    })();
+    const canonicalDraft = deriveDocumentContentSync({
+      mode: 'wysiwyg',
+      value: resolvedDraftHtml,
+      previousHtml: mergedDraft.documentContentHtml,
+      previousMarkdown: mergedDraft.documentContentMarkdown,
+    });
+    const nextDraft: CaseResolverFileEditDraft = {
+      ...mergedDraft,
+      editorType: 'wysiwyg',
+      documentContentFormatVersion: 1,
+      documentContent: toStorageDocumentValue(canonicalDraft),
+      documentContentMarkdown: canonicalDraft.markdown,
+      documentContentHtml: canonicalDraft.html,
+      documentContentPlainText: canonicalDraft.plainText,
+      documentConversionWarnings: canonicalDraft.warnings,
+    };
     if (canRecoverStoredDraft) {
       toast('Recovered unsaved draft from local storage.', { variant: 'info' });
     } else if (recoveredDraft) {
@@ -1138,20 +1159,26 @@ export function useCaseResolverState() {
       });
     }
     const resolvedMode =
-      editingDocumentDraft.editorType === 'wysiwyg' || currentFile.editorType === 'wysiwyg'
-        ? 'wysiwyg'
-        : normalizeRawDocumentModeFromContent({
-          mode: editingDocumentDraft.editorType,
-          rawContent: editingDocumentDraft.documentContent,
-          rawMarkdown: editingDocumentDraft.documentContentMarkdown,
-          rawHtml: editingDocumentDraft.documentContentHtml,
-        });
+      'wysiwyg';
+    const resolvedHtmlContent = (() => {
+      if (
+        typeof editingDocumentDraft.documentContentHtml === 'string' &&
+        editingDocumentDraft.documentContentHtml.trim().length > 0
+      ) {
+        return editingDocumentDraft.documentContentHtml;
+      }
+      if (
+        typeof editingDocumentDraft.documentContentMarkdown === 'string' &&
+        editingDocumentDraft.documentContentMarkdown.trim().length > 0
+      ) {
+        return ensureHtmlForPreview(editingDocumentDraft.documentContentMarkdown, 'markdown');
+      }
+      return ensureSafeDocumentHtml(editingDocumentDraft.documentContent ?? '');
+    })();
     const canonical = deriveDocumentContentSync({
       mode: resolvedMode,
-      value: resolvedMode === 'wysiwyg'
-        ? (editingDocumentDraft.documentContentHtml ?? '')
-        : (editingDocumentDraft.documentContentMarkdown ?? ''),
-      previousHtml: editingDocumentDraft.documentContentHtml ?? '',
+      value: resolvedHtmlContent,
+      previousHtml: resolvedHtmlContent,
       previousMarkdown: editingDocumentDraft.documentContentMarkdown ?? '',
     });
     const nextStoredContent = toStorageDocumentValue(canonical);
@@ -1190,6 +1217,7 @@ export function useCaseResolverState() {
 
     if (!hasMeaningfulChanges) {
       clearStoredEditorDraft(editingDocumentDraft.id);
+      toast('No document changes to save.', { variant: 'info' });
       return;
     }
     const now = new Date().toISOString();
@@ -1238,7 +1266,7 @@ export function useCaseResolverState() {
     }), { persistToast: 'Document changes saved.' });
     clearStoredEditorDraft(editingDocumentDraft.id);
     setEditingDocumentDraft((current) => {
-      if (!current || current.id !== editingDocumentDraft.id) return current;
+      if (current?.id !== editingDocumentDraft.id) return current;
       return {
         ...current,
         ...editingDocumentDraft,

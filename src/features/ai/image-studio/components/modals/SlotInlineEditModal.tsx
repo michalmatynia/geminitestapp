@@ -3,14 +3,13 @@
 import { Copy } from 'lucide-react';
 import React from 'react';
 
-import type { ModalStateProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { Button } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 import type { ImageStudioSlotRecord } from '../../types';
 
-interface SlotInlineEditModalProps extends ModalStateProps {
-  selectedSlot: ImageStudioSlotRecord | null;
+interface SlotInlineEditModalProps extends EntityModalProps<ImageStudioSlotRecord> {
   onCopyId: (id: string) => void;
   header: React.ReactNode;
   children: React.ReactNode;
@@ -19,7 +18,7 @@ interface SlotInlineEditModalProps extends ModalStateProps {
 export function SlotInlineEditModal({
   isOpen,
   onClose,
-  selectedSlot,
+  item: selectedSlot,
   onCopyId,
   header,
   children,

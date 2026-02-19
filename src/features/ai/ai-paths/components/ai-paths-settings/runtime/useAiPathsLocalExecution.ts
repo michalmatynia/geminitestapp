@@ -120,8 +120,8 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
           source: 'local',
           kind: 'run_completed',
           level: 'info',
-          runId: args.currentRunIdRef.current ?? outcome.state?.runId ?? null,
-          runStartedAt: args.currentRunStartedAtRef.current ?? outcome.state?.runStartedAt ?? null,
+          runId: args.currentRunIdRef.current ?? outcome.state?.currentRun?.id ?? null,
+          runStartedAt: args.currentRunStartedAtRef.current ?? outcome.state?.currentRun?.startedAt ?? null,
           timestamp: finishedAt,
           message: 'Run completed.',
         });
@@ -187,8 +187,8 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
           source: 'local',
           kind: 'run_failed',
           level: 'error',
-          runId: args.currentRunIdRef.current ?? outcome.state?.runId ?? null,
-          runStartedAt: args.currentRunStartedAtRef.current ?? outcome.state?.runStartedAt ?? null,
+          runId: args.currentRunIdRef.current ?? outcome.state?.currentRun?.id ?? null,
+          runStartedAt: args.currentRunStartedAtRef.current ?? outcome.state?.currentRun?.startedAt ?? null,
           timestamp: finishedAt,
           message:
             outcome.error instanceof Error ? `Run failed: ${outcome.error.message}` : 'Run failed.',
@@ -247,8 +247,8 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
           source: 'local',
           kind: 'run_canceled',
           level: 'info',
-          runId: args.currentRunIdRef.current ?? outcome.state?.runId ?? null,
-          runStartedAt: args.currentRunStartedAtRef.current ?? outcome.state?.runStartedAt ?? null,
+          runId: args.currentRunIdRef.current ?? outcome.state?.currentRun?.id ?? null,
+          runStartedAt: args.currentRunStartedAtRef.current ?? outcome.state?.currentRun?.startedAt ?? null,
           timestamp: finishedAt,
           message: 'Run cancelled.',
         });
@@ -322,8 +322,8 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
         args.setRunStatus(mode === 'step' ? 'stepping' : 'running');
         let state = args.runtimeStateRef.current;
         while (true) {
-          const runId = args.currentRunIdRef.current ?? state.runId ?? createRunId();
-          const runStartedAt = args.currentRunStartedAtRef.current ?? state.runStartedAt ?? new Date().toISOString();
+          const runId = args.currentRunIdRef.current ?? state.currentRun?.id ?? createRunId();
+          const runStartedAt = args.currentRunStartedAtRef.current ?? state.currentRun?.startedAt ?? new Date().toISOString();
           args.currentRunIdRef.current = runId;
           args.currentRunStartedAtRef.current = runStartedAt;
           const seedHashes = Object.fromEntries(
@@ -362,8 +362,8 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
               state.history && typeof state.history === 'object' && !Array.isArray(state.history)
                 ? (state.history as Record<string, never[]>)
                 : undefined,
-            seedRunId: state.runId ?? runId,
-            seedRunStartedAt: state.runStartedAt ?? runStartedAt,
+            seedRunId: state.currentRun?.id ?? runId,
+            seedRunStartedAt: state.currentRun?.startedAt ?? runStartedAt,
             onNodeStart: ({
               runId: callbackRunId,
               runStartedAt: callbackRunStartedAt,
@@ -586,7 +586,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
     }
     const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id ?? 'manual';
     if (args.runInFlightRef.current) {
-      if (args.runMode === 'queue' && mode === 'run') {
+      if (args.runMode === 'automatic' && mode === 'run') {
         const triggerContextArgs = {
           triggerNode,
           triggerEvent,
@@ -774,7 +774,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       triggerContext,
     });
 
-    if (args.runMode === 'queue' && args.queuedRunsRef.current.length > 0) {
+    if (args.runMode === 'automatic' && args.queuedRunsRef.current.length > 0) {
       const next = args.queuedRunsRef.current.shift();
       if (next) {
         if (next.pathId !== (args.activePathId ?? null)) {

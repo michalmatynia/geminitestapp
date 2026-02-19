@@ -969,3 +969,43 @@ export const traderaAddShopItemResultSchema = z.object({
 });
 
 export type TraderaAddShopItemResultDto = z.infer<typeof traderaAddShopItemResultSchema>;
+
+/**
+ * Session & Payload DTOs
+ */
+
+export const sessionPayloadSchema = z.object({
+  cookies: z.array(sessionCookieSchema).optional(),
+  origins: z.array(z.unknown()).optional(),
+  updatedAt: z.string().optional(),
+  error: z.string().optional(),
+});
+
+export type SessionPayloadDto = z.infer<typeof sessionPayloadSchema>;
+
+/**
+ * Tradera System Settings DTO
+ */
+
+export const traderaSystemSettingsSchema = z.object({
+  defaultDurationHours: z.number(),
+  autoRelistEnabled: z.boolean(),
+  autoRelistLeadMinutes: z.number(),
+  schedulerEnabled: z.boolean(),
+  schedulerIntervalMs: z.number(),
+  allowSimulatedSuccess: z.boolean(),
+  listingFormUrl: z.string(),
+  selectorProfile: z.string(),
+});
+
+export type TraderaSystemSettingsDto = z.infer<typeof traderaSystemSettingsSchema>;
+
+export const importParameterCacheResponseSchema = z.object({
+  inventoryId: z.string().nullable().optional(),
+  productId: z.string().nullable().optional(),
+  keys: z.array(z.string()).optional(),
+  values: z.record(z.string(), z.string()).optional(),
+  updatedAt: z.string().optional(),
+});
+
+export type ImportParameterCacheResponseDto = z.infer<typeof importParameterCacheResponseSchema>;

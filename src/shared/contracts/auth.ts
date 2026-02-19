@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { dtoBaseSchema, namedDtoSchema } from './base';
+import { dtoBaseSchema } from './base';
 
 /**
  * Auth User DTOs
@@ -39,38 +39,137 @@ export const authUserAccessSchema = dtoBaseSchema.extend({
 
 export type AuthUserAccessDto = z.infer<typeof authUserAccessSchema>;
 
+export const authUserAccessDetailSchema = z.object({
+  roleId: z.string(),
+  permissions: z.array(z.string()),
+  level: z.number(),
+  isElevated: z.boolean(),
+  role: authRoleSchema.optional(),
+});
+
+export type AuthUserAccessDetailDto = z.infer<typeof authUserAccessDetailSchema>;
+
 export const authUserSecuritySchema = z.object({
   disabledAt: z.string().nullable().optional(),
 });
 
 export type AuthUserSecurityDto = z.infer<typeof authUserSecuritySchema>;
 
+export const authSecurityProfileSchema = z.object({
+  userId: z.string(),
+  mfaEnabled: z.boolean(),
+  mfaSecret: z.string().nullable(),
+  recoveryCodes: z.array(z.string()),
+  allowedIps: z.array(z.string()),
+  disabledAt: z.string().nullable(), // ISO string
+  bannedAt: z.string().nullable(), // ISO string
+  createdAt: z.string(), // ISO string
+  updatedAt: z.string(), // ISO string
+});
+
+export type AuthSecurityProfileDto = z.infer<typeof authSecurityProfileSchema>;
+
+export const authUsersResponseSchema = z.object({
+  provider: z.enum(['mongodb', 'prisma']),
+  users: z.array(authUserSchema),
+});
+
+export type AuthUsersResponseDto = z.infer<typeof authUsersResponseSchema>;
+
+export const authUserSecurityProfileSchema = z.object({
+  userId: z.string(),
+  mfaEnabled: z.boolean(),
+  allowedIps: z.array(z.string()),
+  disabledAt: z.string().nullable(),
+  bannedAt: z.string().nullable(),
+});
+
+export type AuthUserSecurityProfileDto = z.infer<typeof authUserSecurityProfileSchema>;
+
+export const mfaSetupResponseSchema = z.object({
+  ok: z.boolean(),
+  secret: z.string().optional(),
+  otpauthUrl: z.string().optional(),
+  message: z.string().optional(),
+});
+
+export type MfaSetupResponseDto = z.infer<typeof mfaSetupResponseSchema>;
+
+export const mfaVerifyResponseSchema = z.object({
+  ok: z.boolean(),
+  recoveryCodes: z.array(z.string()).optional(),
+  message: z.string().optional(),
+});
+
+export type MfaVerifyResponseDto = z.infer<typeof mfaVerifyResponseSchema>;
+
+export const mfaDisableResponseSchema = z.object({
+  ok: z.boolean(),
+  message: z.string().optional(),
+});
+
+export type MfaDisableResponseDto = z.infer<typeof mfaDisableResponseSchema>;
+
+export const verifyCredentialsResponseSchema = z.object({
+  ok: z.boolean(),
+  mfaRequired: z.boolean().optional(),
+  challengeId: z.string().optional(),
+  expiresAt: z.string().optional(),
+  code: z.string().optional(),
+  message: z.string().optional(),
+});
+
+export type VerifyCredentialsResponseDto = z.infer<typeof verifyCredentialsResponseSchema>;
+
+export const registerResponseSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  name: z.string().nullable().optional(),
+});
+
+export type RegisterResponseDto = z.infer<typeof registerResponseSchema>;
+
 export const authUserPageSettingsSchema = z.object({
-  defaultPage: z.string(),
-  allowedPages: z.array(z.string()),
+  allowSignup: z.boolean(),
+  allowPasswordReset: z.boolean(),
+  allowSocialLogin: z.boolean(),
+  requireEmailVerification: z.boolean(),
 });
 
 export type AuthUserPageSettingsDto = z.infer<typeof authUserPageSettingsSchema>;
 
 export const authSecurityPolicySchema = z.object({
-  passwordMinLength: z.number(),
-  requireSpecialChar: z.boolean(),
+  minPasswordLength: z.number(),
+  requireStrongPassword: z.boolean(),
+  requireUppercase: z.boolean(),
+  requireLowercase: z.boolean(),
   requireNumber: z.boolean(),
-  lockoutThreshold: z.number(),
-  lockoutDuration: z.number(),
+  requireSymbol: z.boolean(),
+  lockoutMaxAttempts: z.number(),
+  lockoutWindowMinutes: z.number(),
+  lockoutDurationMinutes: z.number(),
+  ipRateLimitMaxAttempts: z.number(),
+  ipRateLimitWindowMinutes: z.number(),
+  ipRateLimitDurationMinutes: z.number(),
 });
 
 export type AuthSecurityPolicyDto = z.infer<typeof authSecurityPolicySchema>;
 
 export const authPermissionSchema = z.object({
-  action: z.string(),
-  resource: z.string(),
+  id: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
 });
 
 export type AuthPermissionDto = z.infer<typeof authPermissionSchema>;
 
-export const authRoleSchema = namedDtoSchema.extend({
-  permissions: z.array(authPermissionSchema),
+export const authRoleSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  permissions: z.array(z.string()),
+  deniedPermissions: z.array(z.string()).optional(),
+  level: z.number().optional(),
 });
 
 export type AuthRoleDto = z.infer<typeof authRoleSchema>;

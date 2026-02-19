@@ -1,98 +1,80 @@
 import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
 import type {
-  CaseResolverNodeRoleDto,
-  CaseResolverQuoteModeDto,
-  CaseResolverJoinModeDto,
-  CaseResolverDocumentNodePortDto,
-  CaseResolverAssetKindDto,
-  CaseResolverFileTypeDto,
-  CaseResolverDocumentVersionDto,
-  CaseResolverEditorTypeDto,
-  CaseResolverPdfExtractionPresetIdDto,
-  CaseResolverPartyReferenceDto,
-  CaseResolverTagDto,
-  CaseResolverIdentifierDto,
-  CaseResolverCategoryDto,
-  CaseResolverScanSlotDto,
-  CaseResolverDocumentHistoryEntryDto,
-  CaseResolverNodeMetaDto,
-  CaseResolverEdgeMetaDto,
-  CaseResolverGraphDto,
-  CaseResolverNodeFileMetaDto,
-  CaseResolverNodeFileSnapshotDto,
-  CaseResolverRelationEntityTypeDto,
-  CaseResolverRelationFileKindDto,
-  CaseResolverRelationEdgeKindDto,
-  CaseResolverRelationNodeMetaDto,
-  CaseResolverRelationEdgeMetaDto,
-  CaseResolverRelationGraphDto,
-  CaseResolverFileDto,
-  CaseResolverAssetFileDto,
-  CaseResolverFolderTimestampDto,
-  CaseResolverFolderRecordDto,
-  CaseResolverWorkspaceDto,
-  CaseResolverFileEditDraftDto,
-  CaseResolverEditorNodeContextDto,
-  CaseResolverPdfExtractionPresetDto,
-} from '@/shared/contracts/case-resolver';
+  CaseResolverNodeRole,
+  CaseResolverQuoteMode,
+  CaseResolverJoinMode,
+  CaseResolverDocumentNodePort,
+  CaseResolverAssetKind,
+  CaseResolverFileType,
+  CaseResolverDocumentVersion,
+  CaseResolverEditorType,
+  CaseResolverPdfExtractionPresetId,
+  CaseResolverPartyReference,
+  CaseResolverTag,
+  CaseResolverIdentifier,
+  CaseResolverCategory,
+  CaseResolverScanSlot,
+  CaseResolverDocumentHistoryEntry,
+  CaseResolverNodeMeta,
+  CaseResolverEdgeMeta,
+  CaseResolverGraph,
+  CaseResolverNodeFileMeta,
+  CaseResolverNodeFileSnapshot,
+  CaseResolverRelationEntityType,
+  CaseResolverRelationFileKind,
+  CaseResolverRelationEdgeKind,
+  CaseResolverRelationNodeMeta,
+  CaseResolverRelationEdgeMeta,
+  CaseResolverRelationGraph,
+  CaseResolverFile,
+  CaseResolverAssetFile,
+  CaseResolverFolderTimestamp,
+  CaseResolverFolderRecord,
+  CaseResolverWorkspace,
+  CaseResolverFileEditDraft,
+  CaseResolverEditorNodeContext,
+  CaseResolverPdfExtractionPreset,
+} from '@/shared/types/domain/case-resolver';
 
 export type { AiNode, Edge };
 
-export type CaseResolverNodeRole = CaseResolverNodeRoleDto;
-export type CaseResolverQuoteMode = CaseResolverQuoteModeDto;
-export type CaseResolverJoinMode = CaseResolverJoinModeDto;
-export type CaseResolverDocumentNodePort = CaseResolverDocumentNodePortDto;
-export type CaseResolverAssetKind = CaseResolverAssetKindDto;
-export type CaseResolverFileType = CaseResolverFileTypeDto;
-export type CaseResolverDocumentVersion = CaseResolverDocumentVersionDto;
-export type CaseResolverEditorType = CaseResolverEditorTypeDto;
+export type {
+  CaseResolverNodeRole,
+  CaseResolverQuoteMode,
+  CaseResolverJoinMode,
+  CaseResolverDocumentNodePort,
+  CaseResolverAssetKind,
+  CaseResolverFileType,
+  CaseResolverDocumentVersion,
+  CaseResolverEditorType,
+  CaseResolverPdfExtractionPresetId,
+  CaseResolverPartyReference,
+  CaseResolverTag,
+  CaseResolverIdentifier,
+  CaseResolverCategory,
+  CaseResolverScanSlot,
+  CaseResolverDocumentHistoryEntry,
+  CaseResolverNodeMeta,
+  CaseResolverEdgeMeta,
+  CaseResolverGraph,
+  CaseResolverNodeFileMeta,
+  CaseResolverNodeFileSnapshot,
+  CaseResolverRelationEntityType,
+  CaseResolverRelationFileKind,
+  CaseResolverRelationEdgeKind,
+  CaseResolverRelationNodeMeta,
+  CaseResolverRelationEdgeMeta,
+  CaseResolverRelationGraph,
+  CaseResolverFile,
+  CaseResolverFileEditDraft,
+  CaseResolverAssetFile,
+  CaseResolverFolderTimestamp,
+  CaseResolverFolderRecord,
+  CaseResolverWorkspace,
+  CaseResolverEditorNodeContext,
+};
+
 export type CaseResolverDocumentFormatVersion = 1;
-export type CaseResolverPdfExtractionPresetId = CaseResolverPdfExtractionPresetIdDto;
-export type CaseResolverPartyReference = CaseResolverPartyReferenceDto;
-
-export type CaseResolverTag = CaseResolverTagDto;
-
-export type CaseResolverIdentifier = CaseResolverIdentifierDto;
-
-export type CaseResolverCategory = CaseResolverCategoryDto;
-
-export type CaseResolverScanSlot = CaseResolverScanSlotDto;
-
-export type CaseResolverDocumentHistoryEntry = CaseResolverDocumentHistoryEntryDto;
-
-export type CaseResolverNodeMeta = CaseResolverNodeMetaDto;
-
-export type CaseResolverEdgeMeta = CaseResolverEdgeMetaDto;
-
-export type CaseResolverGraph = CaseResolverGraphDto;
-
-export type CaseResolverNodeFileMeta = CaseResolverNodeFileMetaDto;
-
-export type CaseResolverNodeFileSnapshot = CaseResolverNodeFileSnapshotDto;
-
-export type CaseResolverRelationEntityType = CaseResolverRelationEntityTypeDto;
-export type CaseResolverRelationFileKind = CaseResolverRelationFileKindDto;
-export type CaseResolverRelationEdgeKind = CaseResolverRelationEdgeKindDto;
-
-export type CaseResolverRelationNodeMeta = CaseResolverRelationNodeMetaDto;
-
-export type CaseResolverRelationEdgeMeta = CaseResolverRelationEdgeMetaDto;
-
-export type CaseResolverRelationGraph = CaseResolverRelationGraphDto;
-
-export type CaseResolverFile = CaseResolverFileDto;
-
-export type CaseResolverFileEditDraft = CaseResolverFileEditDraftDto;
-
-export type CaseResolverAssetFile = CaseResolverAssetFileDto;
-
-export type CaseResolverFolderTimestamp = CaseResolverFolderTimestampDto;
-
-export type CaseResolverFolderRecord = CaseResolverFolderRecordDto;
-
-export type CaseResolverWorkspace = CaseResolverWorkspaceDto;
-
-export type CaseResolverEditorNodeContext = CaseResolverEditorNodeContextDto;
 
 export const CASE_RESOLVER_NODE_ROLE_OPTIONS: Array<{
   value: CaseResolverNodeRole;
@@ -134,7 +116,7 @@ export const CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS: CaseResolverDocumentNodeP
   'plainText',
 ];
 
-export type CaseResolverPdfExtractionPreset = CaseResolverPdfExtractionPresetDto;
+export type { CaseResolverPdfExtractionPreset };
 
 export const CASE_RESOLVER_PDF_EXTRACTION_PRESETS: CaseResolverPdfExtractionPreset[] = [
   {

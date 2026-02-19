@@ -1,9 +1,13 @@
 import {
   deriveDocumentContentSync,
-  normalizeRawDocumentModeFromContent,
+  ensureHtmlForPreview,
+  ensureSafeDocumentHtml,
   toStorageDocumentValue,
-  type DocumentPersistenceMode,
 } from '@/features/document-editor/content-format';
+import type {
+  CaseResolverDefaultDocumentFormatDto,
+  CaseResolverSettingsDto,
+} from '@/shared/contracts/case-resolver';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { sanitizeCaseResolverGraphNodeFileRelations } from './nodefile-relations';
@@ -57,10 +61,6 @@ import {
   type CaseResolverScanSlot,
   type CaseResolverWorkspace,
 } from './types';
-import type { 
-  CaseResolverSettingsDto, 
-  CaseResolverDefaultDocumentFormatDto 
-} from '@/shared/contracts/case-resolver';
 
 export const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v1';
 export const CASE_RESOLVER_TAGS_KEY = 'case_resolver_tags_v1';
@@ -82,7 +82,7 @@ export type CaseResolverSettings = CaseResolverSettingsDto;
 export const DEFAULT_CASE_RESOLVER_SETTINGS: CaseResolverSettings = {
   ocrModel: '',
   ocrPrompt: DEFAULT_CASE_RESOLVER_OCR_PROMPT,
-  defaultDocumentFormat: 'markdown',
+  defaultDocumentFormat: 'wysiwyg',
   confirmDeleteDocument: true,
 };
 
@@ -95,11 +95,6 @@ export const CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_OPTIONS: Array<{
     value: 'wysiwyg',
     label: 'WYSIWYG',
     description: 'Open and create documents using rich text editor mode.',
-  },
-  {
-    value: 'markdown',
-    label: 'Markdown',
-    description: 'Open and create documents using markdown mode.',
   },
 ];
 
@@ -346,8 +341,6 @@ const normalizeCaseResolverDocumentHistory = (
 
     const fallbackContent =
       typeof record['documentContent'] === 'string' ? record['documentContent'] : '';
-    const rawEditorType =
-      typeof record['editorType'] === 'string' ? record['editorType'] : undefined;
     const rawMarkdown =
       typeof record['documentContentMarkdown'] === 'string'
         ? record['documentContentMarkdown']
@@ -359,22 +352,18 @@ const normalizeCaseResolverDocumentHistory = (
     const activeDocumentVersion = normalizeCaseResolverDocumentVersion(
       record['activeDocumentVersion']
     );
-    const resolvedMode: DocumentPersistenceMode = normalizeRawDocumentModeFromContent({
-      mode: rawEditorType,
-      rawContent: fallbackContent,
-      rawMarkdown,
-      rawHtml,
-    });
+    const resolvedHtmlContent = (() => {
+      if (typeof rawHtml === 'string' && rawHtml.trim().length > 0) {
+        return rawHtml;
+      }
+      if (typeof rawMarkdown === 'string' && rawMarkdown.trim().length > 0) {
+        return ensureHtmlForPreview(rawMarkdown, 'markdown');
+      }
+      return ensureSafeDocumentHtml(fallbackContent);
+    })();
     const canonical = deriveDocumentContentSync({
-      mode: resolvedMode,
-      value:
-        resolvedMode === 'wysiwyg'
-          ? (typeof record['documentContentHtml'] === 'string'
-            ? record['documentContentHtml']
-            : fallbackContent)
-          : (typeof record['documentContentMarkdown'] === 'string'
-            ? record['documentContentMarkdown']
-            : fallbackContent),
+      mode: 'wysiwyg',
+      value: resolvedHtmlContent,
       previousHtml: rawHtml,
       previousMarkdown: rawMarkdown,
     });
@@ -473,7 +462,7 @@ const normalizeCaseResolverDefaultDocumentFormatValue = (
   if (typeof input !== 'string') return null;
   const normalized = input.trim().toLowerCase();
   if (normalized === 'wysiwyg' || normalized === 'markdown') {
-    return normalized;
+    return 'wysiwyg';
   }
   return null;
 };
@@ -582,27 +571,26 @@ export const createCaseResolverFile = (input: {
       : requestedVersion;
   const activeDocumentContent =
     activeDocumentVersion === 'exploded' ? explodedDocumentContent : originalDocumentContent;
-  const resolvedMode: DocumentPersistenceMode = normalizeRawDocumentModeFromContent({
-    mode: input.editorType,
-    rawContent: activeDocumentContent,
-    rawMarkdown: input.documentContentMarkdown,
-    rawHtml: input.documentContentHtml,
-  });
+  const resolvedHtmlContent = (() => {
+    if (typeof input.documentContentHtml === 'string' && input.documentContentHtml.trim().length > 0) {
+      return input.documentContentHtml;
+    }
+    if (
+      typeof input.documentContentMarkdown === 'string' &&
+      input.documentContentMarkdown.trim().length > 0
+    ) {
+      return ensureHtmlForPreview(input.documentContentMarkdown, 'markdown');
+    }
+    return ensureSafeDocumentHtml(activeDocumentContent);
+  })();
   const canonicalDocument = deriveDocumentContentSync({
-    mode: resolvedMode,
-    value:
-      resolvedMode === 'wysiwyg'
-        ? (typeof input.documentContentHtml === 'string' && input.documentContentHtml.trim().length > 0
-          ? input.documentContentHtml
-          : activeDocumentContent)
-        : (typeof input.documentContentMarkdown === 'string' && input.documentContentMarkdown.trim().length > 0
-          ? input.documentContentMarkdown
-          : activeDocumentContent),
+    mode: 'wysiwyg',
+    value: resolvedHtmlContent,
     previousHtml: input.documentContentHtml,
     previousMarkdown: input.documentContentMarkdown,
   });
   const documentContent = toStorageDocumentValue(canonicalDocument);
-  const editorType: CaseResolverEditorType = canonicalDocument.mode;
+  const editorType: CaseResolverEditorType = 'wysiwyg';
   const documentContentFormatVersion = normalizeDocumentFormatVersion(input.documentContentFormatVersion);
   const documentContentVersion = normalizeDocumentContentVersion(input.documentContentVersion);
   const documentConversionWarnings = Array.isArray(input.documentConversionWarnings)

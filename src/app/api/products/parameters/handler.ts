@@ -88,10 +88,11 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
   }
 
   const parameter = await repository.createParameter({
+    name: name_en,
     name_en,
+    name_pl: data.name_pl ?? null,
+    name_de: data.name_de ?? null,
     catalogId,
-    ...(data.name_pl !== undefined && { name_pl: data.name_pl }),
-    ...(data.name_de !== undefined && { name_de: data.name_de }),
     selectorType: data.selectorType,
     optionLabels: normalizeOptionLabels(data.optionLabels),
   });

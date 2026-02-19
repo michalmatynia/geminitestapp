@@ -1,6 +1,24 @@
-import type { ProductAiJobDto, ProductAiJobTypeDto, ProductAiJobResultDto } from '../../contracts/jobs';
+import type { 
+  JobDto,
+  JobStatusDto,
+  JobRowDataDto,
+  ProductAiJobDto, 
+  ProductAiJobTypeDto, 
+  ProductAiJobResultDto,
+  CreateProductAiJobDto,
+  UpdateProductAiJobDto
+} from '../../contracts/jobs';
 
-export type { ProductAiJobDto, ProductAiJobTypeDto, ProductAiJobResultDto };
+export type { 
+  JobDto,
+  JobStatusDto,
+  JobRowDataDto,
+  ProductAiJobDto, 
+  ProductAiJobTypeDto, 
+  ProductAiJobResultDto,
+  CreateProductAiJobDto,
+  UpdateProductAiJobDto
+};
 
 export type ProductAiJobType = ProductAiJobTypeDto;
 

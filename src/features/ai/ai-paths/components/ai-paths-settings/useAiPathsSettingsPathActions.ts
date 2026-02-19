@@ -180,9 +180,11 @@ export function useAiPathsSettingsPathActions({
           : 'medium'
       );
       setRunMode(
-        config.runMode === 'queue' || config.runMode === 'block'
+        config.runMode === 'automatic' || config.runMode === 'manual' || config.runMode === 'step'
           ? config.runMode
-          : 'block'
+          : config.runMode === 'queue'
+            ? 'automatic'
+            : 'manual'
       );
       setParserSamples(config.parserSamples ?? {});
       setUpdaterSamples(config.updaterSamples ?? {});
@@ -258,7 +260,7 @@ export function useAiPathsSettingsPathActions({
       trigger: triggers[0] ?? 'Product Modal - Context Filter',
       executionMode: 'server',
       flowIntensity: 'medium',
-      runMode: 'block',
+      runMode: 'manual',
       nodes: [],
       edges: [],
       updatedAt: now,

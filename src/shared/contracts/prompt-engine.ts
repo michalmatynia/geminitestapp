@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 import { validatorPatternListSchema, validatorScopeSchema } from './admin';
-import { dtoBaseSchema } from './base';
 import {
+  promptExploderSegmentTypeSchema,
   promptExploderLearnedTemplateSchema,
   promptExploderRuntimeValidationScopeSchema,
   promptExploderValidationRuleStackSchema,
@@ -47,17 +47,6 @@ export const promptValidationLaunchOperatorSchema = z.enum([
 ]);
 export type PromptValidationLaunchOperatorDto = z.infer<typeof promptValidationLaunchOperatorSchema>;
 
-export const promptExploderSegmentTypeSchema = z.enum([
-  'metadata',
-  'assigned_text',
-  'list',
-  'parameter_block',
-  'referential_list',
-  'sequence',
-  'hierarchical_list',
-  'conditional_list',
-  'qa_matrix',
-]);
 export type PromptExploderSegmentTypeDto = z.infer<typeof promptExploderSegmentTypeSchema>;
 
 export const promptExploderCaptureApplyToSchema = z.enum(['segment', 'line']);
@@ -247,6 +236,54 @@ export const promptValidationPreparedRuntimeSchema = z.object({
 export type PromptValidationPreparedRuntimeDto = z.infer<typeof promptValidationPreparedRuntimeSchema>;
 
 /**
+ * Prompt Params DTOs
+ */
+
+export const paramSpecKindSchema = z.enum(['boolean', 'number', 'string', 'enum', 'rgb', 'tuple2', 'json']);
+export type ParamSpecKindDto = z.infer<typeof paramSpecKindSchema>;
+
+export const paramSpecSchema = z.object({
+  path: z.string(),
+  kind: paramSpecKindSchema,
+  hint: z.string().optional(),
+  enumOptions: z.array(z.string()).optional(),
+  min: z.number().optional(),
+  max: z.number().optional(),
+  step: z.number().optional(),
+  integer: z.boolean().optional(),
+});
+
+export type ParamSpecDto = z.infer<typeof paramSpecSchema>;
+
+export const paramIssueSeveritySchema = z.enum(['error', 'warning']);
+export type ParamIssueSeverityDto = z.infer<typeof paramIssueSeveritySchema>;
+
+export const paramIssueSchema = z.object({
+  path: z.string(),
+  severity: paramIssueSeveritySchema,
+  message: z.string(),
+  code: z.string().optional(),
+});
+
+export type ParamIssueDto = z.infer<typeof paramIssueSchema>;
+
+export const extractParamsResultSchema = z.discriminatedUnion('ok', [
+  z.object({
+    ok: z.literal(true),
+    params: z.record(z.string(), z.unknown()),
+    objectStart: z.number(),
+    objectEnd: z.number(),
+    rawObjectText: z.string(),
+  }),
+  z.object({
+    ok: z.literal(false),
+    error: z.string(),
+  }),
+]);
+
+export type ExtractParamsResultDto = z.infer<typeof extractParamsResultSchema>;
+
+/**
  * Prompt Formatter DTOs
  */
 
@@ -266,3 +303,10 @@ export const formatPromptResultSchema = z.object({
 });
 
 export type FormatPromptResultDto = z.infer<typeof formatPromptResultSchema>;
+
+export const formatPromptOptionsSchema = z.object({
+  precomputedIssuesBefore: z.array(promptValidationIssueSchema).optional(),
+  enableIncrementalValidation: z.boolean().optional(),
+});
+
+export type FormatPromptOptionsDto = z.infer<typeof formatPromptOptionsSchema>;

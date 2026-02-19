@@ -1,12 +1,12 @@
 import 'server-only';
 
-import { configurationError, externalServiceError } from '@/shared/errors/app-error';
 import type {
   TraderaApiCredentialsDto,
   TraderaApiUserInfoDto,
   TraderaAddShopItemInputDto,
   TraderaAddShopItemResultDto,
 } from '@/shared/contracts/integrations';
+import { configurationError, externalServiceError } from '@/shared/errors/app-error';
 
 type TraderaSoapService = 'public' | 'restricted';
 

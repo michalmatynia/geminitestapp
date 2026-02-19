@@ -19,6 +19,8 @@ import {
 } from '@/features/case-resolver-capture/settings';
 import {
   deriveDocumentContentSync,
+  ensureHtmlForPreview,
+  ensureSafeDocumentHtml,
   toStorageDocumentValue,
 } from '@/features/document-editor';
 import {
@@ -41,14 +43,17 @@ import {
   normalizeFolderPaths,
 } from '../settings';
 import {
+  DEFAULT_CASE_RESOLVER_NODE_META,
+} from '../types';
+import {
   buildCombinedOcrText,
   buildDocumentPdfMarkup,
   createId,
   isPathWithinFolder,
 } from '../utils/caseResolverUtils';
 import {
-  DEFAULT_CASE_RESOLVER_NODE_META,
-} from '../types';
+  logCaseResolverWorkspaceEvent,
+} from '../workspace-persistence';
 
 import type {
   CaseResolverAssetFile,
@@ -221,14 +226,24 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const buildDraftFingerprint = useCallback((input: typeof editingDocumentDraft): string => {
     if (!input) return '';
-    const resolvedMode = input.editorType === 'wysiwyg' ? 'wysiwyg' : 'markdown';
+    const resolvedMode = 'wysiwyg';
+    const resolvedHtmlContent = (() => {
+      if (typeof input.documentContentHtml === 'string' && input.documentContentHtml.trim().length > 0) {
+        return input.documentContentHtml;
+      }
+      if (
+        typeof input.documentContentMarkdown === 'string' &&
+        input.documentContentMarkdown.trim().length > 0
+      ) {
+        return ensureHtmlForPreview(input.documentContentMarkdown, 'markdown');
+      }
+      return ensureSafeDocumentHtml(input.documentContent ?? '');
+    })();
     const canonical = deriveDocumentContentSync({
       mode: resolvedMode,
-      value: resolvedMode === 'wysiwyg'
-        ? (input.documentContentHtml ?? '')
-        : (input.documentContentMarkdown ?? ''),
+      value: resolvedHtmlContent,
       previousMarkdown: input.documentContentMarkdown ?? '',
-      previousHtml: input.documentContentHtml ?? '',
+      previousHtml: resolvedHtmlContent,
     });
     return stableStringify({
       id: input.id,
@@ -271,7 +286,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       return;
     }
     const tracked = trackedDraftBaseVersionRef.current;
-    if (!tracked || tracked.fileId !== editingDocumentDraft.id) {
+    if (tracked?.fileId !== editingDocumentDraft.id) {
       trackedDraftBaseVersionRef.current = {
         fileId: editingDocumentDraft.id,
         baseDocumentContentVersion: editingDocumentDraft.baseDocumentContentVersion,
@@ -600,6 +615,24 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           : null;
         const shouldPatchDocumentDate =
           acceptedDateValue !== null && targetFile.documentDate !== acceptedDateValue;
+        const cleanupProposalState: CaseResolverCaptureProposalState = {
+          ...nextProposalState,
+          addresser: shouldPatchAddresser
+            ? nextProposalState.addresser
+            : nextProposalState.addresser
+              ? { ...nextProposalState.addresser, action: 'keepText' }
+              : null,
+          addressee: shouldPatchAddressee
+            ? nextProposalState.addressee
+            : nextProposalState.addressee
+              ? { ...nextProposalState.addressee, action: 'keepText' }
+              : null,
+          documentDate: shouldAcceptDate
+            ? nextProposalState.documentDate
+            : nextProposalState.documentDate
+              ? { ...nextProposalState.documentDate, action: 'keepText' }
+              : null,
+        };
 
         const sourceExplodedContent =
           targetFile.explodedDocumentContent.trim().length > 0
@@ -609,13 +642,24 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               : '';
         const cleanedExplodedContent =
           sourceExplodedContent.trim().length > 0
-            ? stripAcceptedCaptureContentFromText(sourceExplodedContent, nextProposalState)
+            ? stripAcceptedCaptureContentFromText(sourceExplodedContent, cleanupProposalState)
             : sourceExplodedContent;
         const hasExplodedCleanup = cleanedExplodedContent !== sourceExplodedContent;
+        logCaseResolverWorkspaceEvent({
+          source: 'case_view',
+          action: 'capture_cleanup_evaluated',
+          message: JSON.stringify({
+            targetFileId,
+            appliedAddresser: shouldPatchAddresser,
+            appliedAddressee: shouldPatchAddressee,
+            appliedDate: shouldAcceptDate,
+            cleanupChanged: hasExplodedCleanup,
+          }),
+        });
         const cleanedExplodedCanonical = hasExplodedCleanup
           ? deriveDocumentContentSync({
-            mode: 'markdown',
-            value: cleanedExplodedContent,
+            mode: 'wysiwyg',
+            value: ensureSafeDocumentHtml(cleanedExplodedContent),
             previousMarkdown: targetFile.documentContentMarkdown,
             previousHtml: targetFile.documentContentHtml,
           })
@@ -932,7 +976,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   }, [editingDocumentDraft, toast]);
 
   const buildDraftPdfPreviewMarkup = useCallback((draft: CaseResolverFileEditDraft): string => {
-    const resolvedMode = draft.editorType === 'wysiwyg' ? 'wysiwyg' : 'markdown';
+    const resolvedMode = 'wysiwyg';
     const legacyDocumentContent =
       typeof draft.documentContent === 'string' ? draft.documentContent : '';
     const scanFallbackText =
@@ -947,9 +991,15 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         : fallbackContent;
     const canonical = deriveDocumentContentSync({
       mode: resolvedMode,
-      value: resolvedMode === 'wysiwyg'
-        ? resolvePreferredContent(draft.documentContentHtml)
-        : resolvePreferredContent(draft.documentContentMarkdown),
+      value: (() => {
+        const preferredHtml = resolvePreferredContent(draft.documentContentHtml);
+        if (preferredHtml.trim().length > 0) return preferredHtml;
+        const preferredMarkdown = resolvePreferredContent(draft.documentContentMarkdown);
+        if (preferredMarkdown.trim().length > 0) {
+          return ensureHtmlForPreview(preferredMarkdown, 'markdown');
+        }
+        return ensureSafeDocumentHtml(fallbackContent);
+      })(),
       previousMarkdown: resolvePreferredContent(draft.documentContentMarkdown),
       previousHtml: resolvePreferredContent(draft.documentContentHtml),
     });
@@ -1198,7 +1248,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const applyDraftCanonicalContent = useCallback(
     (input: {
-      mode: 'markdown' | 'wysiwyg' | 'code';
       value: string;
       markdown?: string | undefined;
       html?: string | undefined;
@@ -1207,7 +1256,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       setEditingDocumentDraft((current) => {
         if (!current) return current;
         const canonical = deriveDocumentContentSync({
-          mode: input.mode,
+          mode: 'wysiwyg',
           value: input.value,
           previousMarkdown: input.markdown ?? current.documentContentMarkdown,
           previousHtml: input.html ?? current.documentContentHtml,
@@ -1246,30 +1295,27 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const handleUpdateDraftDocumentContent = useCallback((next: string) => {
     if (!editingDocumentDraft) return;
-    if (editingDocumentDraft.editorType === 'wysiwyg') {
-      applyDraftCanonicalContent({
-        mode: 'wysiwyg',
-        value: next,
-        html: next,
-        markdown: editingDocumentDraft.documentContentMarkdown,
-      });
-      return;
-    }
     applyDraftCanonicalContent({
-      mode: editingDocumentDraft.editorType ?? 'markdown',
       value: next,
-      markdown: next,
-      html: editingDocumentDraft.documentContentHtml ?? '',
+      html: next,
+      markdown: editingDocumentDraft.documentContentMarkdown ?? '',
     });
   }, [applyDraftCanonicalContent, editingDocumentDraft]);
 
   const handleUseHistoryEntry = useCallback((entry: CaseResolverDocumentHistoryEntry): void => {
     if (!editingDocumentDraft) return;
-    const nextMode = entry.editorType;
+    const nextHtml = (() => {
+      if (entry.documentContentHtml.trim().length > 0) {
+        return entry.documentContentHtml;
+      }
+      if (entry.documentContentMarkdown.trim().length > 0) {
+        return ensureHtmlForPreview(entry.documentContentMarkdown, 'markdown');
+      }
+      return ensureSafeDocumentHtml(entry.documentContent);
+    })();
     applyDraftCanonicalContent({
-      mode: nextMode,
-      value: nextMode === 'wysiwyg' ? entry.documentContentHtml : entry.documentContentMarkdown,
-      html: entry.documentContentHtml,
+      value: nextHtml,
+      html: nextHtml,
       markdown: entry.documentContentMarkdown,
     });
     updateEditingDocumentDraft({

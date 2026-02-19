@@ -6,7 +6,14 @@ import type {
 } from '@/shared/types/domain/ai-paths';
 import type { NodeHandlerContext } from '@/shared/types/domain/ai-paths-runtime';
 
-import { resolveEntityIdFromInputs } from '../utils';
+import {
+  parseJsonSafe,
+  renderJsonTemplate,
+} from '../../utils';
+import {
+  buildDbQueryPayload,
+  resolveEntityIdFromInputs,
+} from '../utils';
 import {
   ParameterInferenceGateError,
   applyParameterInferenceGuard,
@@ -15,6 +22,7 @@ import {
   normalizeNonEmptyString,
   toRecord,
 } from './database-parameter-inference';
+import { extractMissingTemplatePorts } from './integration-database-mongo-update-plan-helpers';
 import { executeDatabaseUpdate } from './integration-database-update-execution';
 import { resolveDatabaseUpdateMappings } from './integration-database-update-mapping-resolution';
 
@@ -37,6 +45,19 @@ export type HandleDatabaseUpdateOperationInput = {
   ensureExistingParameterTemplateContext: (targetPath: string) => Promise<void>;
 };
 
+const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const resolveCustomContentEnValue = (customUpdateDoc: unknown): string | undefined => {
+  if (!isPlainRecord(customUpdateDoc)) return undefined;
+  const directValue = customUpdateDoc['content_en'];
+  if (typeof directValue === 'string') return directValue;
+  const setDoc = customUpdateDoc['$set'];
+  if (!isPlainRecord(setDoc)) return undefined;
+  const setValue = setDoc['content_en'];
+  return typeof setValue === 'string' ? setValue : undefined;
+};
+
 export async function handleDatabaseUpdateOperation({
   node,
   nodeInputs,
@@ -55,68 +76,11 @@ export async function handleDatabaseUpdateOperation({
   aiPrompt,
   ensureExistingParameterTemplateContext,
 }: HandleDatabaseUpdateOperationInput): Promise<RuntimePortValues> {
+  const updatePayloadMode = dbConfig.updatePayloadMode ?? 'mapping';
+  const isCustomPayloadMode = updatePayloadMode === 'custom';
   const parameterTargetPath =
     normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ??
     'parameters';
-  const {
-    fallbackTarget,
-    mappings,
-    updates: mappingUpdates,
-    requiredSourcePorts,
-    unresolvedSourcePorts,
-  } = resolveDatabaseUpdateMappings({
-    dbConfig,
-    nodeInputPorts,
-    resolvedInputs,
-    parameterTargetPath,
-  });
-  let updates: Record<string, unknown> = mappingUpdates;
-
-  const guardResult = applyParameterInferenceGuard({
-    dbConfig,
-    updates,
-    templateInputs,
-  });
-  if (guardResult.applied) {
-    updates = guardResult.updates;
-  }
-  if (guardResult.blocked) {
-    const message =
-      guardResult.errorMessage ??
-      'Parameter inference blocked due to missing parameter definitions.';
-    reportAiPathsError(
-      new Error(message),
-      {
-        action: 'parameterInferenceGuard',
-        nodeId: node.id,
-        targetPath: parameterTargetPath,
-      },
-      'Parameter inference guard blocked update:',
-    );
-    toast(message, { variant: 'error' });
-    throw new ParameterInferenceGateError(message);
-  }
-
-  await ensureExistingParameterTemplateContext(parameterTargetPath);
-  const mergeResult = mergeParameterInferenceUpdates({
-    targetPath: parameterTargetPath,
-    updates,
-    templateInputs,
-  });
-  if (mergeResult.applied) {
-    updates = mergeResult.updates;
-  }
-
-  const missingSourcePorts: string[] = Array.from(requiredSourcePorts).filter(
-    (sourcePort: string): boolean => resolvedInputs[sourcePort] === undefined,
-  );
-  const hasUpdates = Object.keys(updates).length > 0;
-  if (missingSourcePorts.length > 0 || unresolvedSourcePorts.size > 0) {
-    return prevOutputs;
-  }
-  if (!hasUpdates) {
-    return prevOutputs;
-  }
 
   const updateStrategy: 'one' | 'many' = dbConfig.updateStrategy ?? 'one';
   const entityType = (dbConfig.entityType ?? 'product').trim().toLowerCase();
@@ -135,26 +99,163 @@ export async function handleDatabaseUpdateOperation({
     simulationEntityId,
   );
 
+  let fallbackTarget = 'content_en';
+  let mappings: UpdaterMapping[] = [];
+  let updates: Record<string, unknown> = {};
+  let guardApplied = false;
+  let guardMeta: Record<string, unknown> | null = null;
+  let mergeApplied = false;
+  let mergeMeta: Record<string, unknown> | null = null;
+  let customFilter: Record<string, unknown> | undefined;
+  let customUpdateDoc: unknown;
+
+  if (isCustomPayloadMode) {
+    const updateTemplate = dbConfig.updateTemplate?.trim() ?? '';
+    if (!updateTemplate) {
+      return prevOutputs;
+    }
+
+    const missingFilterPorts = queryConfig.queryTemplate?.trim()
+      ? extractMissingTemplatePorts(queryConfig.queryTemplate, templateInputs)
+      : [];
+    const missingUpdatePorts = extractMissingTemplatePorts(updateTemplate, templateInputs);
+    if (missingFilterPorts.length > 0 || missingUpdatePorts.length > 0) {
+      return prevOutputs;
+    }
+
+    const currentValueRaw: unknown =
+      templateInputs['value'] ?? templateInputs['jobId'] ?? '';
+    const currentValue = Array.isArray(currentValueRaw)
+      ? (currentValueRaw as unknown[])[0]
+      : currentValueRaw;
+    const renderedUpdate = renderJsonTemplate(
+      updateTemplate,
+      templateInputs,
+      currentValue,
+    );
+    const parsedUpdate = parseJsonSafe(renderedUpdate);
+    if (
+      !parsedUpdate ||
+      (typeof parsedUpdate !== 'object' && !Array.isArray(parsedUpdate))
+    ) {
+      toast('Update template must be valid JSON.', { variant: 'error' });
+      return {
+        result: null,
+        bundle: { error: 'Invalid update template' },
+        debugPayload: {
+          mode: 'custom',
+          updateStrategy,
+          collection: configuredCollection || null,
+          updateTemplate,
+        },
+        aiPrompt,
+      };
+    }
+
+    const renderedFilterPayload = buildDbQueryPayload(templateInputs, queryConfig);
+    const renderedFilter = isPlainRecord(renderedFilterPayload.query)
+      ? renderedFilterPayload.query
+      : {};
+
+    customUpdateDoc = parsedUpdate;
+    customFilter = renderedFilter;
+  } else {
+    const {
+      fallbackTarget: resolvedFallbackTarget,
+      mappings: resolvedMappings,
+      updates: mappingUpdates,
+      requiredSourcePorts,
+      unresolvedSourcePorts,
+    } = resolveDatabaseUpdateMappings({
+      dbConfig,
+      nodeInputPorts,
+      resolvedInputs,
+      parameterTargetPath,
+    });
+    fallbackTarget = resolvedFallbackTarget;
+    mappings = resolvedMappings;
+    updates = mappingUpdates;
+
+    const guardResult = applyParameterInferenceGuard({
+      dbConfig,
+      updates,
+      templateInputs,
+    });
+    if (guardResult.applied) {
+      updates = guardResult.updates;
+      guardApplied = true;
+      guardMeta = guardResult.meta ?? null;
+    }
+    if (guardResult.blocked) {
+      const message =
+        guardResult.errorMessage ??
+        'Parameter inference blocked due to missing parameter definitions.';
+      reportAiPathsError(
+        new Error(message),
+        {
+          action: 'parameterInferenceGuard',
+          nodeId: node.id,
+          targetPath: parameterTargetPath,
+        },
+        'Parameter inference guard blocked update:',
+      );
+      toast(message, { variant: 'error' });
+      throw new ParameterInferenceGateError(message);
+    }
+
+    await ensureExistingParameterTemplateContext(parameterTargetPath);
+    const mergeResult = mergeParameterInferenceUpdates({
+      targetPath: parameterTargetPath,
+      updates,
+      templateInputs,
+    });
+    if (mergeResult.applied) {
+      updates = mergeResult.updates;
+      mergeApplied = true;
+      mergeMeta = mergeResult.meta ?? null;
+    }
+
+    const missingSourcePorts: string[] = Array.from(requiredSourcePorts).filter(
+      (sourcePort: string): boolean => resolvedInputs[sourcePort] === undefined,
+    );
+    const hasUpdates = Object.keys(updates).length > 0;
+    if (missingSourcePorts.length > 0 || unresolvedSourcePorts.size > 0) {
+      return prevOutputs;
+    }
+    if (!hasUpdates) {
+      return prevOutputs;
+    }
+  }
+
   const debugPayload: Record<string, unknown> = {
-    mode: 'mapping',
+    mode: updatePayloadMode,
     updateStrategy,
     entityType,
     collection: configuredCollection || null,
     forceCollectionUpdate,
     idField,
     entityId,
-    updates,
-    mappings,
-    ...(guardResult.applied
+    ...(isCustomPayloadMode
       ? {
-        parameterInferenceGuard: {
-          ...(guardResult.meta ?? {}),
-          ...(mergeResult.applied && mergeResult.meta
-            ? { writePlan: mergeResult.meta }
-            : {}),
-        },
+        filter: customFilter ?? {},
+        updateDoc: customUpdateDoc,
+        queryTemplate: queryConfig.queryTemplate ?? '',
+        updateTemplate: dbConfig.updateTemplate ?? '',
       }
-      : {}),
+      : {
+        updates,
+        mappings,
+        ...(guardApplied
+          ? {
+            parameterInferenceGuard: {
+              ...(guardMeta ?? {}),
+              ...(mergeApplied && mergeMeta
+                ? { writePlan: mergeMeta }
+                : {}),
+            },
+          }
+          : {}),
+      }),
   };
 
   const executionResult = await executeDatabaseUpdate({
@@ -173,17 +274,20 @@ export async function handleDatabaseUpdateOperation({
     idField,
     entityId,
     configuredCollection,
+    updatePayloadMode,
+    customFilter,
+    customUpdateDoc,
   });
   if (executionResult.skipped) {
     return prevOutputs;
   }
 
+  debugPayload['execution'] = executionResult.executionMeta;
+
   const updateResult: unknown = executionResult.updateResult;
-  const primaryTarget =
-    mappings.find((mapping: UpdaterMapping) => mapping.targetPath)?.targetPath ??
-    fallbackTarget;
   if (
-    guardResult.applied &&
+    !isCustomPayloadMode &&
+    guardApplied &&
     debugPayload['parameterInferenceGuard'] &&
     typeof debugPayload['parameterInferenceGuard'] === 'object'
   ) {
@@ -198,15 +302,30 @@ export async function handleDatabaseUpdateOperation({
     };
   }
 
+  const primaryTarget =
+    mappings.find((mapping: UpdaterMapping) => mapping.targetPath)?.targetPath ??
+    fallbackTarget;
   const primaryValue = updates[primaryTarget];
+  const customContentEnValue = isCustomPayloadMode
+    ? resolveCustomContentEnValue(customUpdateDoc)
+    : undefined;
+
   return {
     content_en:
-      primaryTarget === 'content_en'
-        ? ((primaryValue as string | undefined) ??
-          (nodeInputs['content_en'] as string | undefined) ??
-          '')
-        : (nodeInputs['content_en'] as string | undefined),
-    bundle: updates,
+      isCustomPayloadMode
+        ? (customContentEnValue ?? (nodeInputs['content_en'] as string | undefined) ?? '')
+        : primaryTarget === 'content_en'
+          ? ((primaryValue as string | undefined) ??
+            (nodeInputs['content_en'] as string | undefined) ??
+            '')
+          : (nodeInputs['content_en'] as string | undefined),
+    bundle: isCustomPayloadMode
+      ? {
+        filter: customFilter ?? {},
+        update: customUpdateDoc,
+        ...(executionResult.executionMeta ?? {}),
+      }
+      : updates,
     result: updateResult,
     debugPayload,
     aiPrompt,

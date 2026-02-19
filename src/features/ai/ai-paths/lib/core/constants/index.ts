@@ -805,6 +805,7 @@ export const initialNodes = [
         entityType: 'product',
         idField: 'productId',
         mode: 'replace',
+        updatePayloadMode: 'mapping',
         mappings: [
           {
             targetPath: 'content_en',

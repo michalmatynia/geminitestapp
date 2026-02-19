@@ -1,6 +1,6 @@
-import type { AdminSettingsDto, UpdateAdminSettingsDto } from '@/shared/contracts/admin';
-import type { ChatbotSettingsRecordDto } from '@/shared/contracts/chatbot';
-import type { SettingRecordDto } from '@/shared/contracts/settings';
+import type { AdminSettingsDto, UpdateAdminSettingsDto } from '../../contracts/admin';
+import type { ChatbotSettingsRecordDto } from '../../contracts/chatbot';
+import type { SettingRecordDto } from '../../contracts/settings';
 
 export type { AdminSettingsDto, UpdateAdminSettingsDto, SettingRecordDto, ChatbotSettingsRecordDto };
 

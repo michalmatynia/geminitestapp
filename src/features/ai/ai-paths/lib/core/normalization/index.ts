@@ -44,6 +44,14 @@ import { createParserMappings, createViewerOutputs, ensureUniquePorts, normalize
 
 const DEFAULT_LEGACY_DB_QUERY_TEMPLATE = '{\n  "_id": "{{value}}"\n}';
 
+export const normalizeTemplateText = (value: string | undefined | null): string => {
+  if (typeof value !== 'string') return '';
+  if (!value.includes('\\n') || value.includes('\n')) return value;
+  const trimmed = value.trim();
+  if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) return value;
+  return value.replace(/\\n/g, '\n');
+};
+
 const isLegacyDefaultMongoQuery = (query: DbQueryConfig): boolean =>
   query.provider === 'mongodb' &&
   query.collection === 'products' &&
@@ -58,19 +66,25 @@ const isLegacyDefaultMongoQuery = (query: DbQueryConfig): boolean =>
   query.single === false;
 
 const migrateLegacyDbQueryProvider = (query: DbQueryConfig): DbQueryConfig => {
+  const normalizedTemplate = normalizeTemplateText(query.queryTemplate ?? '');
   const provider = query.provider;
   if (provider === 'auto' || provider === 'mongodb' || provider === 'prisma') {
     if (isLegacyDefaultMongoQuery(query)) {
       return {
         ...query,
         provider: 'auto',
+        queryTemplate: normalizedTemplate,
       };
     }
-    return query;
+    return {
+      ...query,
+      queryTemplate: normalizedTemplate,
+    };
   }
   return {
     ...query,
     provider: 'auto',
+    queryTemplate: normalizedTemplate,
   };
 };
 
@@ -483,11 +497,12 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
               idField: databaseConfig.idField ?? 'entityId',
               mode: databaseConfig.mode ?? 'replace',
               updateStrategy: databaseConfig.updateStrategy ?? 'one',
+              updatePayloadMode: databaseConfig.updatePayloadMode ?? 'mapping',
               useMongoActions: inferredUseMongoActions,
               ...(databaseConfig.actionCategory ? { actionCategory: databaseConfig.actionCategory } : {}),
               ...(databaseConfig.action ? { action: databaseConfig.action } : {}),
               distinctField: databaseConfig.distinctField ?? '',
-              updateTemplate: databaseConfig.updateTemplate ?? '',
+              updateTemplate: normalizeTemplateText(databaseConfig.updateTemplate ?? ''),
               mappings,
               query: migratedQueryConfig,
               writeSource: databaseConfig.writeSource ?? 'bundle',
@@ -854,6 +869,7 @@ export const getDefaultConfigForType = (
         idField: 'entityId',
         mode: 'replace',
         updateStrategy: 'one',
+        updatePayloadMode: 'mapping',
         useMongoActions: false,
         mappings: [
           {

@@ -71,7 +71,8 @@ export const SignalDots = React.memo(function SignalDots({
     <g className='ai-paths-flow-particles'>
       <path id={motionPathId} d={path} fill='none' stroke='none' pointerEvents='none' />
       {Array.from({ length: count }, (_value, index) => {
-        const beginOffset = `${(index * particleSpacing).toFixed(2)}s`;
+        // Start each particle at a different phase immediately; avoid idle dots at (0,0).
+        const beginOffset = `${(-index * particleSpacing).toFixed(2)}s`;
         const pulseDuration = Math.max(0.7, duration * 0.75);
         return (
           <circle

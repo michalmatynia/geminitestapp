@@ -4,6 +4,10 @@ import { callBaseApi } from '@/features/integrations/services/imports/base-clien
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
 import { ErrorSystem } from '@/features/observability/server';
 import type { ProductWithImages } from '@/features/products';
+import type { 
+  ImageExportDiagnosticsDto as ImageExportDiagnostics,
+  ImageUrlDiagnosticDto as ImageUrlDiagnostic 
+} from '@/shared/contracts/integrations';
 import type { ImportExportTemplateMapping as ExportTemplateMapping } from '@/shared/types/domain/integrations';
 
 import {
@@ -32,10 +36,6 @@ export type {
   ImageExportLogger,
   ImageTransformOptions,
 } from './base-exporter-images';
-import type { 
-  ImageExportDiagnosticsDto as ImageExportDiagnostics,
-  ImageUrlDiagnosticDto as ImageUrlDiagnostic 
-} from '@/shared/contracts/integrations';
 export type { ImageExportDiagnostics, ImageUrlDiagnostic };
 
 const IMAGE_EXPORT_ALIASES = new Set([

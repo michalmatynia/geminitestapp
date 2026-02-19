@@ -92,7 +92,7 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
     : selectedNode.outputs.length
       ? selectedNode.outputs
       : ['value'];
-  const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
+  const runtimeInputs = runtimeState.inputs?.[selectedNode.id] ?? {};
   const mapperSources = buildMapperSources(runtimeInputs as Record<string, unknown>);
   const contextInput = getMapperContextValue(mapperSources);
   const preview = contextInput !== null && contextInput !== undefined

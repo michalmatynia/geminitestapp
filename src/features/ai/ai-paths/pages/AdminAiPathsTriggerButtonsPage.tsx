@@ -66,6 +66,7 @@ const normalizeDraft = (record?: AiTriggerButtonDto | null): TriggerButtonDraft 
   ...(record?.id ? { id: record.id } : {}),
   name: record?.name ?? '',
   iconId: record?.iconId ?? null,
+  enabled: record?.enabled ?? true,
   locations: record?.locations ?? ['product_modal'],
   mode: record?.mode ?? 'click',
   display:
@@ -244,6 +245,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       const result = await triggerButtonsApi.update(id, {
         name: input.name,
         iconId: input.iconId,
+        enabled: input.enabled,
         locations: input.locations,
         mode: input.mode,
         display: input.display,
@@ -351,6 +353,22 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const handleOrderChange = useCallback((orderedIds: string[]): void => {
     reorderMutation.mutate(orderedIds);
   }, [reorderMutation]);
+  const handleToggleVisibility = useCallback((record: AiTriggerButtonRecord, enabled: boolean): void => {
+    updateMutation.mutate({
+      id: record.id,
+      input: {
+        name: record.name,
+        iconId: record.iconId ?? null,
+        enabled,
+        locations: record.locations && record.locations.length > 0 ? record.locations : ['product_modal'],
+        mode: record.mode ?? 'click',
+        display:
+          record.display === 'icon' || record.display === 'icon_label'
+            ? record.display
+            : 'icon_label',
+      },
+    });
+  }, [updateMutation]);
 
   const triggerButtonPathUsageMap = useMemo(
     () => extractTriggerButtonPathUsageMap(aiPathsSettingsQuery.data ?? []),
@@ -380,6 +398,12 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       placeholder: 'e.g. Generate SEO Title',
       helperText: 'Displayed to users in the UI.',
       required: true,
+    },
+    {
+      key: 'enabled',
+      label: 'Visible',
+      type: 'switch',
+      helperText: 'Show this trigger button in product/note lists and modals.',
     },
     {
       key: 'iconId',
@@ -520,6 +544,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       {
         name: draft.name,
         iconId: draft.iconId,
+        enabled: draft.enabled,
         locations: draft.locations,
         mode: draft.mode,
         display: draft.display,
@@ -576,6 +601,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
           onEdit={(record: AiTriggerButtonRecord): void => { handleEdit(record); }}
           onDelete={(id: string): void => { handleDeleteRequest(id); }}
           onOrderChange={(ids: string[]): void => { handleOrderChange(ids); }}
+          onToggleVisibility={handleToggleVisibility}
           isLoading={triggerButtonsQuery.isLoading}
         />
         <div className='mt-4 flex items-center gap-2 text-[11px] text-muted-foreground bg-muted/20 p-2 rounded'>

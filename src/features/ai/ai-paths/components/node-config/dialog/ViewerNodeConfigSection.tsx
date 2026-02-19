@@ -59,7 +59,7 @@ export function ViewerNodeConfigSection(): React.JSX.Element | null {
     }
     return visited.has(selectedNode.id);
   })();
-  const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
+  const runtimeInputs = runtimeState.inputs?.[selectedNode.id] ?? {};
   const resolvedRuntimeInputs = selectedNode.inputs.reduce<Record<string, unknown>>(
     (acc: Record<string, unknown>, input: string): Record<string, unknown> => {
       const directValue = runtimeInputs[input];
@@ -73,7 +73,7 @@ export function ViewerNodeConfigSection(): React.JSX.Element | null {
       const merged = matchingEdges.reduce<unknown>((current: unknown, edge: Edge): unknown => {
         const fromNodeId = edge.from;
         if (!fromNodeId) return current;
-        const fromOutput = runtimeState.outputs[fromNodeId];
+        const fromOutput = runtimeState.outputs?.[fromNodeId];
         if (!fromOutput) return current;
         const fromPort = edge.fromPort;
         if (!fromPort) return current;

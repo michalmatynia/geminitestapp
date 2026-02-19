@@ -73,7 +73,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
   const resolvedRuntimeInputs = selectedNode.inputs.reduce<
     Record<string, unknown>
   >((acc: Record<string, unknown>, input: string): Record<string, unknown> => {
-    const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
+    const runtimeInputs = runtimeState.inputs?.[selectedNode.id] ?? {};
     const directValue = runtimeInputs[input];
     if (directValue !== undefined) {
       acc[input] = directValue;
@@ -86,7 +86,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
       (current: unknown, edge: Edge): unknown => {
         const fromNodeId = edge.from;
         if (!fromNodeId) return current;
-        const fromOutput = runtimeState.outputs[fromNodeId];
+        const fromOutput = runtimeState.outputs?.[fromNodeId];
         if (!fromOutput) return current;
         const fromPort = edge.fromPort;
         if (!fromPort) return current;

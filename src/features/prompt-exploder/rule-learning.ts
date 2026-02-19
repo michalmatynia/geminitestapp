@@ -1,4 +1,4 @@
-import type { PromptValidationRule } from '@/features/prompt-engine/settings';
+import type { PromptValidationRuleDto as PromptValidationRule } from '@/shared/contracts/prompt-engine';
 
 import { mergeRegexPatternsForRule } from './rule-merge';
 

@@ -122,9 +122,9 @@ export function SimpleSettingsList<T extends SimpleSettingsListItem>({
                     )}
                   </div>
                   {item.description && (
-                    <p className='mt-1 text-xs text-gray-400 line-clamp-2'>
+                    <div className='mt-1 text-xs text-gray-400 line-clamp-2'>
                       {item.description}
-                    </p>
+                    </div>
                   )}
                 </div>
               </div>

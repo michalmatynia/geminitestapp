@@ -14,6 +14,7 @@ import {
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { MongoSettingRecord } from '@/shared/types/core/base-types';
+import type { AuthUserAccessDetail as AuthUserAccess } from '@/shared/types/domain/auth';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 
@@ -68,7 +69,6 @@ export const getAuthDefaultRoleId = async (): Promise<string | null> => {
   return value.trim();
 };
 
-import type { AuthUserAccessDetail as AuthUserAccess } from '@/shared/types/domain/auth';
 
 const parseNumber = (value: string | undefined, fallback: number): number => {
   if (!value) return fallback;

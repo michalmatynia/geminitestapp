@@ -10,7 +10,8 @@ import {
 import {
   Button,
   DataTable,
-  StatusBadge
+  StatusBadge,
+  Switch,
 } from '@/shared/ui';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -28,6 +29,7 @@ type TriggerButtonListManagerProps = {
   onEdit: (item: AiTriggerButtonRecord) => void;
   onDelete: (id: string) => void;
   onOrderChange: (orderedIds: string[]) => void;
+  onToggleVisibility: (item: AiTriggerButtonRecord, enabled: boolean) => void;
   isLoading: boolean;
 };
 
@@ -36,6 +38,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
   onEdit,
   onDelete,
   onOrderChange,
+  onToggleVisibility,
   isLoading,
 }: TriggerButtonListManagerProps) => {
   const [localRows, setLocalRows] = useState<AiTriggerButtonRecord[]>(data);
@@ -139,6 +142,21 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
       cell: ({ row }) => <StatusBadge status={row.original.mode ?? ''} variant='neutral' size='sm' />,
     },
     {
+      id: 'visibility',
+      header: 'Visibility',
+      cell: ({ row }) => (
+        <div className='flex items-center gap-2'>
+          <Switch
+            checked={row.original.enabled !== false}
+            onCheckedChange={(checked: boolean) => onToggleVisibility(row.original, checked)}
+          />
+          <span className='text-xs text-gray-400'>
+            {row.original.enabled === false ? 'Hidden' : 'Visible'}
+          </span>
+        </div>
+      ),
+    },
+    {
       id: 'display',
       header: 'Display',
       cell: ({ row }) => {
@@ -201,7 +219,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
         </div>
       ),
     },
-  ], [handleDragStart, handleDragEnter, handleDragEnd, handleDrop, onEdit, onDelete]);
+  ], [handleDragStart, handleDragEnter, handleDragEnd, handleDrop, onEdit, onDelete, onToggleVisibility]);
 
   if (isLoading && localRows.length === 0) {
     return <p className='text-sm text-gray-500'>Loading trigger buttons...</p>;

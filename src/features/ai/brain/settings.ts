@@ -1,11 +1,12 @@
-import { z } from 'zod';
-
-import type {
-  AiBrainProviderDto,
-  AiBrainFeatureDto,
-  AiBrainAssignmentDto,
-  AiBrainSettingsDto,
-  AiBrainProviderCatalogDto,
+import {
+  type AiBrainProviderDto,
+  type AiBrainFeatureDto,
+  type AiBrainAssignmentDto,
+  type AiBrainSettingsDto,
+  type AiBrainProviderCatalogDto,
+  aiBrainSettingsSchema as settingsSchema,
+  aiBrainProviderCatalogSchema as providerCatalogSchema,
+  aiBrainAssignmentSchema as assignmentSchema,
 } from '@/shared/contracts/ai-brain';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
@@ -17,61 +18,9 @@ export type AiBrainFeature = AiBrainFeatureDto;
 
 export type AiBrainAssignment = AiBrainAssignmentDto;
 
-export type AiBrainSettings = Omit<AiBrainSettingsDto, 'assignments'> & {
-  assignments: Partial<Record<AiBrainFeature, AiBrainAssignment>>;
-};
+export type AiBrainSettings = AiBrainSettingsDto;
 
 export type AiBrainProviderCatalog = AiBrainProviderCatalogDto;
-
-const numberField = (min: number, max: number): z.ZodType<number | undefined> =>
-  z.preprocess(
-    (value: unknown) => {
-      if (value === '' || value === null || value === undefined) return undefined;
-      if (typeof value === 'string') {
-        const parsed = Number(value);
-        return Number.isFinite(parsed) ? parsed : undefined;
-      }
-      return value;
-    },
-    z.number().min(min).max(max).optional()
-  );
-
-const assignmentSchema = z.object({
-  enabled: z.boolean().default(true),
-  provider: z.enum(['model', 'agent']).default('model'),
-  modelId: z.string().trim().default(''),
-  agentId: z.string().trim().default(''),
-  temperature: numberField(0, 2),
-  maxTokens: numberField(1, 8192),
-  notes: z.string().trim().nullable().optional().default(null),
-});
-
-const settingsSchema = z.object({
-  defaults: assignmentSchema,
-  assignments: z
-    .object({
-      cms_builder: assignmentSchema.optional(),
-      system_logs: assignmentSchema.optional(),
-      error_logs: assignmentSchema.optional(),
-      analytics: assignmentSchema.optional(),
-      runtime_analytics: assignmentSchema.optional(),
-      image_studio: assignmentSchema.optional(),
-      ai_paths: assignmentSchema.optional(),
-      prompt_engine: assignmentSchema.optional(),
-    })
-    .default({}),
-});
-
-const providerListSchema = z.array(z.string().trim().min(1)).default([]);
-
-const providerCatalogSchema = z.object({
-  modelPresets: providerListSchema,
-  paidModels: providerListSchema,
-  ollamaModels: providerListSchema,
-  agentModels: providerListSchema,
-  deepthinkingAgents: providerListSchema,
-  playwrightPersonas: providerListSchema,
-});
 
 export const defaultBrainAssignment: AiBrainAssignment = {
   enabled: true,

@@ -1,8 +1,12 @@
 import type { 
-  MfaSetupResponseDto as MfaSetupResponse,
-  MfaVerifyResponseDto as MfaVerifyResponse,
-  MfaDisableResponseDto as MfaDisableResponse
+  MfaSetupResponseDto,
+  MfaVerifyResponseDto,
+  MfaDisableResponseDto
 } from '@/shared/contracts/auth';
+
+export type MfaSetupResponse = MfaSetupResponseDto;
+export type MfaVerifyResponse = MfaVerifyResponseDto;
+export type MfaDisableResponse = MfaDisableResponseDto;
 
 const safeJson = async <T>(res: Response): Promise<T> => {
   try {

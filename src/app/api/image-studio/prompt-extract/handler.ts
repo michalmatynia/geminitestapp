@@ -227,7 +227,7 @@ export async function postImageStudioPromptExtractHandler(
   const programmatic = runProgrammaticAttempt(
     parsed.data.prompt,
     applyAutofix,
-    promptEngineSettings.promptValidation as PromptValidationSettings
+    promptEngineSettings.promptValidation
   );
 
   if (modeRequested === 'programmatic') {

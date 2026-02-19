@@ -295,6 +295,7 @@ export const triggerButtonsApi = {
   async create(payload: {
     name: string;
     iconId?: string | null;
+    enabled?: boolean;
     display?: AiTriggerButtonRecord['display'];
     locations: AiTriggerButtonRecord['locations'];
     mode?: AiTriggerButtonRecord['mode'];
@@ -311,7 +312,7 @@ export const triggerButtonsApi = {
 
   async update(
     id: string,
-    patch: Partial<Pick<AiTriggerButtonRecord, 'name' | 'iconId' | 'locations' | 'mode' | 'display'>>
+    patch: Partial<Pick<AiTriggerButtonRecord, 'name' | 'iconId' | 'enabled' | 'locations' | 'mode' | 'display'>>
   ): Promise<ApiResponse<AiTriggerButtonRecord>> {
     const validation = aiTriggerButtonUpdateSchema.safeParse(patch);
     if (!validation.success) {

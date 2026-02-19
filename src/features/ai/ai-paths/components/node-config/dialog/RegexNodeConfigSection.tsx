@@ -371,8 +371,8 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
 
   React.useEffect(() => {
     const callbackValue =
-      runtimeState.inputs[selectedNode.id]?.['regexCallback'] ??
-      runtimeState.outputs[selectedNode.id]?.['regexCallback'];
+      runtimeState.inputs?.[selectedNode.id]?.['regexCallback'] ??
+      runtimeState.outputs?.[selectedNode.id]?.['regexCallback'];
     const resolvedCallbackValue =
       typeof callbackValue === 'string'
         ? callbackValue
@@ -414,10 +414,10 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
   }, [isPatternEmpty, pattern, normalizedFlags]);
 
   const runtimeSample =
-    runtimeState.inputs[selectedNode.id]?.['value'] ??
-    runtimeState.inputs[selectedNode.id]?.['prompt'] ??
-    runtimeState.outputs[selectedNode.id]?.['value'] ??
-    runtimeState.outputs[selectedNode.id]?.['prompt'] ??
+    runtimeState.inputs?.[selectedNode.id]?.['value'] ??
+    runtimeState.inputs?.[selectedNode.id]?.['prompt'] ??
+    runtimeState.outputs?.[selectedNode.id]?.['value'] ??
+    runtimeState.outputs?.[selectedNode.id]?.['prompt'] ??
     undefined;
 
   const sampleSource = (regexConfig.sampleText ?? '').trim() ? regexConfig.sampleText : runtimeSample;

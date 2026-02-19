@@ -342,7 +342,7 @@ export function NotesAppProvider({
       );
       
       setSelectedNote((prev: NoteWithRelations | null): NoteWithRelations | null =>
-        prev && prev.id === note.id ? { ...prev, isFavorite: nextFavorite } : prev
+        prev?.id === note.id ? { ...prev, isFavorite: nextFavorite } : prev
       );
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'NotesAppProvider', action: 'toggleFavorite', noteId: note.id } });

@@ -41,7 +41,7 @@ const AUTH_SECURITY_STALE_MS = 10_000;
 
 export function useAuthUsers(enabled: boolean = true): SingleQuery<AuthUsersResponse> {
   const queryKey = authKeys.users.all;
-  return createSingleQueryV2({
+  return createSingleQueryV2<AuthUsersResponse>({
     id: 'auth-users',
     queryKey,
     queryFn: fetchAuthUsers,
@@ -59,7 +59,7 @@ export function useAuthUsers(enabled: boolean = true): SingleQuery<AuthUsersResp
 
 export function useAuthUserSecurity(userId?: string | null): SingleQuery<AuthUserSecurityProfile> {
   const queryKey = userId ? authKeys.users.security(userId) : authKeys.users.security('');
-  return createSingleQueryV2({
+  return createSingleQueryV2<AuthUserSecurityProfile>({
     id: userId ?? 'auth-user-security',
     queryKey,
     queryFn: (): Promise<AuthUserSecurityProfile> => fetchAuthUserSecurity(userId as string),

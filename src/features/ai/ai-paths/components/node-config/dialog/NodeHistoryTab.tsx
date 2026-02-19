@@ -1,5 +1,6 @@
 'use client';
 import { RunHistoryEntries } from '@/features/ai/ai-paths/components/RunHistoryEntries';
+import type { RuntimeHistoryEntry } from '@/features/ai/ai-paths/lib';
 import { Button } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -8,7 +9,7 @@ export function NodeHistoryTab(): React.JSX.Element | null {
   const { selectedNode, runtimeState, clearNodeHistory } = useAiPathConfig();
   if (!selectedNode) return null;
 
-  const history = (runtimeState.history?.[selectedNode.id] ?? []);
+  const history = (runtimeState.history?.[selectedNode.id] ?? []) as RuntimeHistoryEntry[];
   const hasHistory = history.length > 0;
   return (
     <div className='space-y-4'>

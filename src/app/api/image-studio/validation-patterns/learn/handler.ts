@@ -13,8 +13,8 @@ import {
   PROMPT_ENGINE_SETTINGS_KEY,
   parsePromptEngineSettings,
   parsePromptValidationRules,
-  type PromptValidationRule,
 } from '@/features/prompt-engine/public';
+import type { PromptValidationRuleDto as PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import { authError, configurationError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/types/api/api';

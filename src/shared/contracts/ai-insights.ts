@@ -53,3 +53,9 @@ export const aiInsightNotificationSchema = z.object({
 });
 
 export type AiInsightNotificationDto = z.infer<typeof aiInsightNotificationSchema>;
+
+export const aiInsightNotificationsResponseSchema = z.object({
+  notifications: z.array(aiInsightNotificationSchema),
+});
+
+export type AiInsightNotificationsResponseDto = z.infer<typeof aiInsightNotificationsResponseSchema>;

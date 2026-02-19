@@ -300,7 +300,10 @@ export function CanvasSvgNodeLayer({
       const history = runtimeState.history?.[nodeId];
       if (!Array.isArray(history) || history.length === 0) return directValue;
       const lastEntry = history[history.length - 1];
-      const fallbackSource = direction === 'input' ? lastEntry?.inputs : lastEntry?.outputs;
+      const fallbackSource =
+        (direction === 'input' ? lastEntry?.['inputs'] : lastEntry?.['outputs']) as
+          | Record<string, unknown>
+          | undefined;
       return fallbackSource?.[port];
     },
     [runtimeState.history, runtimeState.inputs, runtimeState.outputs]
@@ -317,8 +320,8 @@ export function CanvasSvgNodeLayer({
           ? history[history.length - 1]
           : null;
       return {
-        inputs: mergeRuntimePayload(runtimeState.inputs[nodeId], lastEntry?.inputs),
-        outputs: mergeRuntimePayload(runtimeState.outputs[nodeId], lastEntry?.outputs),
+        inputs: mergeRuntimePayload(runtimeState.inputs?.[nodeId], lastEntry?.['inputs']),
+        outputs: mergeRuntimePayload(runtimeState.outputs?.[nodeId], lastEntry?.['outputs']),
       };
     },
     [runtimeState.history, runtimeState.inputs, runtimeState.outputs]
@@ -396,9 +399,9 @@ export function CanvasSvgNodeLayer({
         const runtimeNodeStatusRaw =
           runtimeNodeStatuses?.[node.id] ??
           (runtimeRunStatus !== 'idle' &&
-          typeof runtimeState.outputs[node.id]?.['status'] ===
+          typeof runtimeState.outputs?.[node.id]?.['status'] ===
             'string'
-            ? runtimeState.outputs[node.id]?.['status']
+            ? runtimeState.outputs?.[node.id]?.['status']
             : null);
         const runtimeNodeStatus =
           typeof runtimeNodeStatusRaw === 'string' && runtimeNodeStatusRaw.trim().length > 0

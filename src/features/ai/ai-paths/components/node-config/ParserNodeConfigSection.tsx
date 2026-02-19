@@ -172,7 +172,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
       }),
     [samplePaths]
   );
-  const parserRuntimeInputs = (runtimeState.inputs[selectedNode.id] ?? {}) as Record<string, unknown>;
+  const parserRuntimeInputs = (runtimeState.inputs?.[selectedNode.id] ?? {}) as Record<string, unknown>;
   const parserContext =
     parserRuntimeInputs['context'] && typeof parserRuntimeInputs['context'] === 'object'
       ? (parserRuntimeInputs['context'] as Record<string, unknown>)

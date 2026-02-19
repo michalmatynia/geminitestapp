@@ -127,6 +127,8 @@ export const promptValidationRuleBaseSchema = z.object({
   promptExploderCaptureApplyTo: promptExploderCaptureApplyToSchema.optional(),
   promptExploderCaptureNormalize: promptExploderCaptureNormalizeSchema.optional(),
   promptExploderCaptureOverwrite: z.boolean().optional(),
+  pattern: z.string().optional(),
+  flags: z.string().optional(),
 });
 
 export const promptValidationRuleSchema = z.discriminatedUnion('kind', [

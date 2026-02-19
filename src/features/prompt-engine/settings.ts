@@ -1,18 +1,41 @@
-import { z as zod } from 'zod';
+import { z } from 'zod';
 
 import { 
-  PromptValidationScopeDto as PromptValidationScope,
-  PromptExploderSegmentTypeDto as PromptExploderRuleSegmentType,
-  PromptExploderCaptureApplyToDto as PromptExploderCaptureApplyTo,
-  PromptExploderCaptureNormalizeDto as PromptExploderCaptureNormalize,
-  PromptValidationRuleDto as PromptValidationRule,
-  PromptEngineSettingsDto as PromptEngineSettings,
+  PromptValidationSeverityDto,
+  PromptValidationChainModeDto,
+  PromptValidationScopeDto,
+  PromptValidationLaunchScopeBehaviorDto,
+  PromptValidationLaunchOperatorDto,
+  PromptExploderSegmentTypeDto,
+  PromptExploderCaptureApplyToDto,
+  PromptExploderCaptureNormalizeDto,
+  PromptValidationSimilarDto,
+  PromptAutofixOperationDto,
+  PromptAutofixDto,
+  PromptValidationRuleDto,
+  PromptValidationSettingsDto,
+  PromptEngineSettingsDto,
   promptEngineSettingsSchema,
   promptValidationRuleSchema,
 } from '@/shared/contracts/prompt-engine';
 
 export const PROMPT_ENGINE_SETTINGS_KEY = 'prompt_engine_settings';
+
+export type PromptValidationSeverity = PromptValidationSeverityDto;
+export type PromptValidationChainMode = PromptValidationChainModeDto;
+export type PromptValidationScope = PromptValidationScopeDto;
+export type PromptValidationLaunchScopeBehavior = PromptValidationLaunchScopeBehaviorDto;
+export type PromptValidationLaunchOperator = PromptValidationLaunchOperatorDto;
+export type PromptExploderRuleSegmentType = PromptExploderSegmentTypeDto;
+export type PromptExploderCaptureApplyTo = PromptExploderCaptureApplyToDto;
+export type PromptExploderCaptureNormalize = PromptExploderCaptureNormalizeDto;
+
 export const PROMPT_VALIDATION_SCOPE_VALUES: PromptValidationScope[] = [
+  'image_studio_prompt',
+  'image_studio_extraction',
+  'image_studio_generation',
+  'prompt_exploder',
+  'case_resolver_prompt_exploder',
   'global',
 ];
 
@@ -52,6 +75,18 @@ export const PROMPT_VALIDATION_SCOPE_LABELS: Record<PromptValidationScope, strin
   case_resolver_prompt_exploder: 'Case Resolver Prompt Exploder',
   global: 'Global',
 };
+
+export type PromptValidationSimilarPattern = PromptValidationSimilarDto;
+
+export type PromptAutofixOperation = PromptAutofixOperationDto;
+
+export type PromptAutofixConfig = PromptAutofixDto;
+
+export type PromptValidationRule = PromptValidationRuleDto;
+
+export type PromptValidationSettings = PromptValidationSettingsDto;
+
+export type PromptEngineSettings = PromptEngineSettingsDto;
 
 export const defaultPromptValidationRules: PromptValidationRule[] = [
   {
@@ -268,7 +303,7 @@ export function parsePromptEngineSettings(raw: string | null | undefined): Promp
         rules: mergedRules,
         learnedRules: result.data.promptValidation.learnedRules ?? [],
       },
-    };
+    } as PromptEngineSettings;
   } catch {
     return defaultPromptEngineSettings;
   }
@@ -277,7 +312,7 @@ export function parsePromptEngineSettings(raw: string | null | undefined): Promp
 export function parsePromptValidationRules(raw: string): { ok: true; rules: PromptValidationRule[] } | { ok: false; error: string } {
   try {
     const parsed = JSON.parse(raw) as unknown;
-    const result = zod.array(promptValidationRuleSchema).safeParse(parsed);
+    const result = z.array(promptValidationRuleSchema).safeParse(parsed);
     if (result.success) {
       const hadAutofix = Array.isArray(parsed)
         ? parsed.some((rule: unknown) => Boolean(rule) && typeof rule === 'object' && 'autofix' in (rule as Record<string, unknown>))

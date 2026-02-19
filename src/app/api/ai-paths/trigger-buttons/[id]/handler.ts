@@ -46,6 +46,7 @@ export async function PATCH_handler(
     ...current,
     ...(parsed.data.name ? { name: parsed.data.name.trim() } : {}),
     ...(parsed.data.iconId !== undefined ? { iconId: parsed.data.iconId ? parsed.data.iconId.trim() : null } : {}),
+    ...(parsed.data.enabled !== undefined ? { enabled: parsed.data.enabled } : {}),
     ...(parsed.data.locations ? { locations: parsed.data.locations } : {}),
     ...(parsed.data.mode ? { mode: parsed.data.mode } : {}),
     ...(parsed.data.display ? { display: parsed.data.display } : {}),

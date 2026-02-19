@@ -93,8 +93,10 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   traderaAutoRelistEnabled: z.boolean().optional(),
   traderaAutoRelistLeadMinutes: z.number().optional(),
   traderaApiAppId: z.number().nullable().optional(),
+  traderaApiAppKey: z.string().nullable().optional(),
   traderaApiPublicKey: z.string().nullable().optional(),
   traderaApiUserId: z.number().nullable().optional(),
+  traderaApiToken: z.string().nullable().optional(),
   traderaApiSandbox: z.boolean().optional(),
   hasTraderaApiAppKey: z.boolean().optional(),
   hasTraderaApiToken: z.boolean().optional(),
@@ -999,6 +1001,23 @@ export const traderaSystemSettingsSchema = z.object({
 });
 
 export type TraderaSystemSettingsDto = z.infer<typeof traderaSystemSettingsSchema>;
+
+export const traderaListingJobInputSchema = z.object({
+  listingId: z.string(),
+  action: z.enum(['list', 'relist']),
+  source: z.enum(['manual', 'scheduler', 'api']).optional(),
+  jobId: z.string().optional(),
+});
+
+export type TraderaListingJobInputDto = z.infer<typeof traderaListingJobInputSchema>;
+
+export const traderaCategoryRecordSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  parentId: z.string(),
+});
+
+export type TraderaCategoryRecordDto = z.infer<typeof traderaCategoryRecordSchema>;
 
 export const importParameterCacheResponseSchema = z.object({
   inventoryId: z.string().nullable().optional(),

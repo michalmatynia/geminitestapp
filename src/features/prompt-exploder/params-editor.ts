@@ -2,9 +2,11 @@ import {
   extractParamsFromPrompt,
   flattenParams,
   inferParamSpecs,
-  type ParamSpec,
-  type ParamSpecKind,
 } from '@/features/prompt-engine/prompt-params';
+import type {
+  ParamSpecDto as ParamSpec,
+  ParamSpecKindDto as ParamSpecKind,
+} from '@/shared/contracts/prompt-engine';
 
 import type { PromptExploderParamUiControl } from './types';
 

@@ -131,6 +131,14 @@ export function useAiPathsPersistence({
   setUpdaterSamples,
   toast,
 }: UseAiPathsPersistenceArgs): UseAiPathsPersistenceResult {
+  const stringifyForStorage = useCallback((value: unknown, label: string): string => {
+    const serialized = stableStringify(value);
+    if (!serialized) {
+      throw new Error(`Failed to serialize ${label} for AI Paths persistence.`);
+    }
+    return serialized;
+  }, []);
+
   const queryClient = useQueryClient();
   const updateAiPathsSettingsMutation = createUpdateMutationV2({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('settings.bulk-update'),
@@ -162,6 +170,7 @@ export function useAiPathsPersistence({
   const lastUserPrefsActivePathIdRef = useRef<string | null>(null);
   const loadAttemptRef = useRef<number | null>(null);
   const loadInFlightRef = useRef(false);
+  const settingsWriteQueueRef = useRef<Promise<void>>(Promise.resolve());
   const nodesRef = useRef<AiNode[]>(nodes);
   const edgesRef = useRef<Edge[]>(edges);
   const pathsRef = useRef<PathMeta[]>(paths);
@@ -180,20 +189,36 @@ export function useAiPathsPersistence({
     pathConfigsRef.current = pathConfigs;
   }, [pathConfigs]);
 
+  const enqueueSettingsWrite = useCallback(
+    async <T>(operation: () => Promise<T>): Promise<T> => {
+      const run = settingsWriteQueueRef.current.then(operation, operation);
+      settingsWriteQueueRef.current = run.then(
+        () => undefined,
+        () => undefined
+      );
+      return await run;
+    },
+    []
+  );
+
   const persistSettingsBulk = useCallback(
     async (payload: PersistSettingsPayload): Promise<void> => {
-      await updateAiPathsSettingsMutation.mutateAsync(payload);
+      await enqueueSettingsWrite(async (): Promise<void> => {
+        await updateAiPathsSettingsMutation.mutateAsync(payload);
+      });
     },
-    [updateAiPathsSettingsMutation]
+    [enqueueSettingsWrite, updateAiPathsSettingsMutation]
   );
 
   const persistUiState = useCallback(
     async (payload: AiPathsUiState): Promise<void> => {
-      await updateAiPathsSettingsMutation.mutateAsync([
-        { key: AI_PATHS_UI_STATE_KEY, value: JSON.stringify(payload) },
-      ]);
+      await enqueueSettingsWrite(async (): Promise<void> => {
+        await updateAiPathsSettingsMutation.mutateAsync([
+          { key: AI_PATHS_UI_STATE_KEY, value: JSON.stringify(payload) },
+        ]);
+      });
     },
-    [updateAiPathsSettingsMutation]
+    [enqueueSettingsWrite, updateAiPathsSettingsMutation]
   );
   const persistUserPreferences = useCallback(
     async (pathId: string | null): Promise<void> => {
@@ -607,7 +632,9 @@ export function useAiPathsPersistence({
         }
         if (migrationPayload.length > 0) {
           try {
-            await updateAiPathsSettingsMutation.mutateAsync(migrationPayload);
+            await enqueueSettingsWrite(async (): Promise<void> => {
+              await updateAiPathsSettingsMutation.mutateAsync(migrationPayload);
+            });
           } catch (error) {
             logClientError(error, { context: { source: 'useAiPathsPersistence', action: 'loadConfigMigration' } });
           }
@@ -627,7 +654,7 @@ export function useAiPathsPersistence({
     toast,
     reportAiPathsError,
     loadNonce,
-    updateAiPathsSettingsMutation,
+    enqueueSettingsWrite,
     persistLastError,
     resolveUserPreferences,
     setLoading,
@@ -677,13 +704,16 @@ export function useAiPathsPersistence({
         config: normalizeConfigForHash(sanitizedConfig),
       });
       if (payloadKey === lastSettingsPayloadRef.current) return sanitizedConfig;
-      const responses = await updateAiPathsSettingsMutation.mutateAsync([
-        { key: PATH_INDEX_KEY, value: JSON.stringify(nextPaths) },
-        {
-          key: `${PATH_CONFIG_PREFIX}${configId}`,
-          value: JSON.stringify(sanitizedConfig),
-        },
-      ]);
+      const responses = await enqueueSettingsWrite(
+        async (): Promise<Array<{ key: string; value: string }>> =>
+          await updateAiPathsSettingsMutation.mutateAsync([
+            { key: PATH_INDEX_KEY, value: stringifyForStorage(nextPaths, 'path index') },
+            {
+              key: `${PATH_CONFIG_PREFIX}${configId}`,
+              value: stringifyForStorage(sanitizedConfig, `path config (${configId})`),
+            },
+          ])
+      );
       lastSettingsPayloadRef.current = payloadKey;
       const configResponse = responses[1];
       if (!configResponse) return sanitizedConfig;
@@ -713,12 +743,17 @@ export function useAiPathsPersistence({
       configId: string,
       config: PathConfig
     ): Promise<void> => {
-      const payload = JSON.stringify(sanitizePathConfig(config));
-      await updateAiPathsSettingsMutation.mutateAsync([
-        { key: `${PATH_CONFIG_PREFIX}${configId}`, value: payload },
-      ]);
+      const payload = stringifyForStorage(
+        sanitizePathConfig(config),
+        `runtime path config (${configId})`
+      );
+      await enqueueSettingsWrite(async (): Promise<void> => {
+        await updateAiPathsSettingsMutation.mutateAsync([
+          { key: `${PATH_CONFIG_PREFIX}${configId}`, value: payload },
+        ]);
+      });
     },
-    [updateAiPathsSettingsMutation]
+    [enqueueSettingsWrite, stringifyForStorage, updateAiPathsSettingsMutation]
   );
 
   const buildNodesForAutoSave = useCallback(

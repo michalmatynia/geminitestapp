@@ -56,8 +56,8 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
     excludePaths: [],
   };
   const presetSet = getContextPresetSet(contextConfig.entityType);
-  const receivedInputs = runtimeState.inputs[selectedNode.id] ?? {};
-  const resolvedOutputs = runtimeState.outputs[selectedNode.id] ?? {};
+  const receivedInputs = runtimeState.inputs?.[selectedNode.id] ?? {};
+  const resolvedOutputs = runtimeState.outputs?.[selectedNode.id] ?? {};
 
   const stringifyPayload = (value: unknown): string => {
     if (value === undefined) return '';

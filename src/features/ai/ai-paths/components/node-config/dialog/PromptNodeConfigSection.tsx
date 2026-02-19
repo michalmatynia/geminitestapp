@@ -38,7 +38,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
   const resolvedPrompt = React.useMemo((): string => {
     if (selectedNode?.type !== 'prompt') return '';
     const config = selectedNode.config?.prompt ?? { template: '' };
-    const inputs = runtimeState.inputs[selectedNode.id] ?? {};
+    const inputs = runtimeState.inputs?.[selectedNode.id] ?? {};
     const { promptOutput } = buildPromptOutput(config, inputs);
     return promptOutput;
   }, [selectedNode?.type, selectedNode?.id, selectedNode?.config?.prompt, runtimeState.inputs]);
@@ -102,7 +102,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
     }
   });
   const directPlaceholders = inputPorts.filter((port: string) => port !== 'bundle');
-  const runtimeInputs = runtimeState.inputs[selectedNode.id] ?? {};
+  const runtimeInputs = runtimeState.inputs?.[selectedNode.id] ?? {};
   const placeholderGroups: PlaceholderGroup[] = React.useMemo(() => {
     const groups: PlaceholderGroup[] = [];
     const uniqueDirect = Array.from(new Set(directPlaceholders));
@@ -378,8 +378,8 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
       </div>
 
       {(() : React.JSX.Element => {
-        const resultValue = runtimeState.inputs[selectedNode.id]?.['result']
-          ?? runtimeState.outputs[selectedNode.id]?.['result'];
+        const resultValue = runtimeState.inputs?.[selectedNode.id]?.['result']
+          ?? runtimeState.outputs?.[selectedNode.id]?.['result'];
         const hasResult = resultValue !== undefined && resultValue !== null;
         const displayValue = hasResult
           ? (typeof resultValue === 'string'
@@ -393,7 +393,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
         const resultSourcePort = resultEdge?.fromPort ?? null;
         const resultSourcePollStatus =
           resultSourceNode?.type === 'poll'
-            ? (runtimeState.outputs[resultSourceNode.id]?.['status'] as string | undefined)
+            ? (runtimeState.outputs?.[resultSourceNode.id]?.['status'] as string | undefined)
             : undefined;
         const resultSourceModelHasPoll =
           resultSourceNode?.type === 'model'

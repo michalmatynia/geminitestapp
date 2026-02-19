@@ -1,4 +1,6 @@
-import type { VerifyCredentialsResponseDto as VerifyCredentialsResponse } from '@/shared/contracts/auth';
+import type { VerifyCredentialsResponseDto } from '@/shared/contracts/auth';
+
+export type VerifyCredentialsResponse = VerifyCredentialsResponseDto;
 
 const safeJson = async <T>(res: Response): Promise<T> => {
   try {

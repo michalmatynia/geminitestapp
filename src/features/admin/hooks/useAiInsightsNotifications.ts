@@ -2,13 +2,11 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
+import type { AiInsightNotificationsResponseDto as NotificationsResponse } from '@/shared/contracts/ai-insights';
 import { api } from '@/shared/lib/api-client';
 import { createDeleteMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { AiInsightNotification } from '@/shared/types/ai-insights';
 import type { DeleteMutation, SingleQuery } from '@/shared/types/query-result-types';
-
-export type NotificationsResponse = { notifications: AiInsightNotification[] };
 
 export const aiNotificationsQueryKey = QUERY_KEYS.ai.insights.notifications();
 

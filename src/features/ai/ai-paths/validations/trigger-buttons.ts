@@ -15,7 +15,9 @@ export const aiTriggerButtonDisplaySchema = z.enum(['icon', 'icon_label']);
 export const aiTriggerButtonRecordSchema = z.object({
   id: z.string().trim().min(1),
   name: z.string().trim().min(1),
+  icon: z.string().trim().min(1).nullable().optional(),
   iconId: z.string().trim().min(1).nullable().optional(),
+  enabled: z.boolean().optional(),
   locations: z
     .preprocess(
       (value) => (typeof value === 'string' ? [value] : value),
@@ -35,6 +37,7 @@ export const aiTriggerButtonRecordSchema = z.object({
 export const aiTriggerButtonCreateSchema = z.object({
   name: z.string().trim().min(1),
   iconId: z.string().trim().min(1).nullable().optional().default(null),
+  enabled: z.boolean().optional().default(true),
   locations: z.array(aiTriggerButtonLocationSchema).min(1),
   mode: aiTriggerButtonModeSchema.optional().default('click'),
   display: aiTriggerButtonDisplaySchema.optional().default('icon_label'),
@@ -44,6 +47,7 @@ export const aiTriggerButtonUpdateSchema = z
   .object({
     name: z.string().trim().min(1).optional(),
     iconId: z.string().trim().min(1).nullable().optional(),
+    enabled: z.boolean().optional(),
     locations: z.array(aiTriggerButtonLocationSchema).min(1).optional(),
     mode: aiTriggerButtonModeSchema.optional(),
     display: aiTriggerButtonDisplaySchema.optional(),
@@ -72,7 +76,8 @@ const normalizeAiTriggerButtonRecord = (
   return {
     id: record.id,
     name: record.name,
-    iconId: record.iconId ?? null,
+    iconId: record.iconId ?? record.icon ?? null,
+    enabled: record.enabled ?? true,
     locations: [...locations],
     mode: record.mode ?? 'click',
     display: record.display ?? 'icon_label',

@@ -41,28 +41,19 @@ import type { IntegrationConnectionRecord } from '@/features/integrations/types/
 import type { ProductListingRecord } from '@/features/integrations/types/listings';
 import { ErrorSystem } from '@/features/observability/server';
 import { getProductRepository, getSettingValue } from '@/features/products/server';
+import type { 
+  TraderaListingJobInputDto as TraderaListingJobInput,
+  TraderaCategoryRecordDto as TraderaCategoryRecord 
+} from '@/shared/contracts/integrations';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-
-export type TraderaListingJobInput = {
-  listingId: string;
-  action: 'list' | 'relist';
-  source?: 'manual' | 'scheduler' | 'api';
-  jobId?: string;
-};
 
 type TraderaListingResult = {
   externalListingId: string;
   listingUrl?: string;
   simulated?: boolean;
   metadata?: Record<string, unknown>;
-};
-
-export type TraderaCategoryRecord = {
-  id: string;
-  name: string;
-  parentId: string;
 };
 
 const LOGIN_SUCCESS_SELECTOR = [
@@ -322,8 +313,8 @@ const ensureLoggedIn = async (
     throw internalError('Unable to locate Tradera login inputs.');
   }
 
-  const decryptedPassword = decryptSecret(connection.password);
-  await usernameInput.fill(connection.username);
+  const decryptedPassword = decryptSecret(connection.password ?? '');
+  await usernameInput.fill(connection.username ?? '');
   await passwordInput.fill(decryptedPassword);
 
   const submitButton = await findVisibleLocator(page, LOGIN_BUTTON_SELECTORS);
@@ -560,7 +551,7 @@ const resolveTraderaApiCredentials = (
 
 const resolveTraderaApiCategoryId = (
   listing: ProductListingRecord,
-  product: { categoryId?: string | null }
+  product: { categoryId?: string | null | undefined }
 ): number => {
   const listingData = toRecord(listing.marketplaceData);
   const traderaData = toRecord(listingData['tradera']);

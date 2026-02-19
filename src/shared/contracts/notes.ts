@@ -11,8 +11,8 @@ export const noteEditorTypeSchema = documentEditorModeSchema;
 export type NoteEditorType = DocumentEditorModeDto;
 
 export const noteSchema = dtoBaseSchema.extend({
-  title: z.string(),
-  content: z.string(),
+  title: z.string().min(1),
+  content: z.string().min(1),
   notebookId: z.string().nullable(),
   editorType: noteEditorTypeSchema,
   color: z.string().nullable(),
@@ -87,32 +87,42 @@ export const noteWithRelationsSchema = noteSchema.extend({
 
 export type NoteWithRelationsDto = z.infer<typeof noteWithRelationsSchema>;
 
-export const createNoteSchema = noteSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const createNoteSchema = z.object({
+  title: z.string().min(1),
+  content: z.string().min(1),
+  notebookId: z.string().nullable().optional(),
+  editorType: noteEditorTypeSchema.optional(),
+  color: z.string().nullable().optional(),
+  isPinned: z.boolean().optional(),
+  isArchived: z.boolean().optional(),
+  isFavorite: z.boolean().optional(),
+  tagIds: z.array(z.string()).optional(),
+  categoryIds: z.array(z.string()).optional(),
+  relatedNoteIds: z.array(z.string()).optional(),
 });
 
 export type CreateNoteDto = z.infer<typeof createNoteSchema>;
 export type UpdateNoteDto = Partial<CreateNoteDto>;
 
 export const notebookSchema = namedDtoSchema.extend({
+  name: z.string().min(1),
   color: z.string().nullable(),
   defaultThemeId: z.string().nullable(),
 });
 
 export type NotebookDto = z.infer<typeof notebookSchema>;
 
-export const createNotebookSchema = notebookSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const createNotebookSchema = z.object({
+  name: z.string().min(1),
+  color: z.string().nullable().optional(),
+  defaultThemeId: z.string().nullable().optional(),
 });
 
 export type CreateNotebookDto = z.infer<typeof createNotebookSchema>;
 export type UpdateNotebookDto = Partial<CreateNotebookDto>;
 
 export const noteCategorySchema = namedDtoSchema.extend({
+  name: z.string().min(1),
   color: z.string().nullable(),
   parentId: z.string().nullable(),
   notebookId: z.string().nullable(),
@@ -149,32 +159,38 @@ export const noteCategoryRecordWithChildrenSchema: z.ZodType<NoteCategoryRecordW
   }).optional(),
 });
 
-export const createNoteCategorySchema = noteCategorySchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const createNoteCategorySchema = z.object({
+  name: z.string().min(1),
+  description: z.string().nullable().optional(),
+  color: z.string().nullable().optional(),
+  parentId: z.string().nullable().optional(),
+  notebookId: z.string().nullable().optional(),
+  themeId: z.string().nullable().optional(),
+  sortIndex: z.number().int().nullable().optional(),
 });
 
 export type CreateNoteCategoryDto = z.infer<typeof createNoteCategorySchema>;
 export type UpdateNoteCategoryDto = Partial<CreateNoteCategoryDto>;
 
 export const noteTagSchema = namedDtoSchema.extend({
+  name: z.string().min(1),
   color: z.string().nullable(),
   notebookId: z.string().nullable(),
 });
 
 export type NoteTagDto = z.infer<typeof noteTagSchema>;
 
-export const createNoteTagSchema = noteTagSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const createNoteTagSchema = z.object({
+  name: z.string().min(1),
+  color: z.string().nullable().optional(),
+  notebookId: z.string().nullable().optional(),
 });
 
 export type CreateNoteTagDto = z.infer<typeof createNoteTagSchema>;
 export type UpdateNoteTagDto = Partial<CreateNoteTagDto>;
 
 export const noteThemeSchema = namedDtoSchema.extend({
+  name: z.string().min(1),
   notebookId: z.string().nullable(),
   textColor: z.string(),
   backgroundColor: z.string(),
@@ -190,10 +206,19 @@ export const noteThemeSchema = namedDtoSchema.extend({
 
 export type NoteThemeDto = z.infer<typeof noteThemeSchema>;
 
-export const createNoteThemeSchema = noteThemeSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const createNoteThemeSchema = z.object({
+  name: z.string().min(1),
+  notebookId: z.string().nullable().optional(),
+  textColor: z.string().optional(),
+  backgroundColor: z.string().optional(),
+  markdownHeadingColor: z.string().optional(),
+  markdownLinkColor: z.string().optional(),
+  markdownCodeBackground: z.string().optional(),
+  markdownCodeText: z.string().optional(),
+  relatedNoteBorderWidth: z.number().optional(),
+  relatedNoteBorderColor: z.string().optional(),
+  relatedNoteBackgroundColor: z.string().optional(),
+  relatedNoteTextColor: z.string().optional(),
 });
 
 export type CreateNoteThemeDto = z.infer<typeof createNoteThemeSchema>;

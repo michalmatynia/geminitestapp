@@ -3,8 +3,6 @@
 import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { useState, useMemo, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
 
-import type { RegisterResponse } from '@/features/auth/api/register';
-import type { AuthUserSecurityProfile } from '@/features/auth/api/users';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import {
   useAuthUsers,
@@ -15,12 +13,16 @@ import {
   useUpdateAuthUser,
   useUpdateAuthUserSecurity,
 } from '@/features/auth/hooks/useAuthQueries';
-import type { AuthUserSummary } from '@/features/auth/types';
 import {
   AUTH_SETTINGS_KEYS,
   type AuthUserRoleMap,
-  type AuthRole,
 } from '@/features/auth/utils/auth-management';
+import type { 
+  RegisterResponseDto as RegisterResponse,
+  AuthUserSecurityProfileDto as AuthUserSecurityProfile,
+  AuthUserDto as AuthUserSummary,
+  AuthRoleDto as AuthRole
+} from '@/shared/contracts/auth';
 import { invalidateUsers } from '@/shared/lib/query-invalidation';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';

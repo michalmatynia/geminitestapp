@@ -6,6 +6,19 @@ import { aiInsightRecordSchema } from './ai-insights';
  * AI Brain DTOs
  */
 
+const numberField = (min: number, max: number): z.ZodType<number | undefined> =>
+  z.preprocess(
+    (value: unknown) => {
+      if (value === '' || value === null || value === undefined) return undefined;
+      if (typeof value === 'string') {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : undefined;
+      }
+      return value;
+    },
+    z.number().min(min).max(max).optional()
+  );
+
 export const aiBrainProviderSchema = z.enum(['model', 'agent']);
 export type AiBrainProviderDto = z.infer<typeof aiBrainProviderSchema>;
 
@@ -22,31 +35,33 @@ export const aiBrainFeatureSchema = z.enum([
 export type AiBrainFeatureDto = z.infer<typeof aiBrainFeatureSchema>;
 
 export const aiBrainAssignmentSchema = z.object({
-  enabled: z.boolean(),
-  provider: aiBrainProviderSchema,
-  modelId: z.string(),
-  agentId: z.string(),
-  temperature: z.number().optional(),
-  maxTokens: z.number().optional(),
-  notes: z.string().nullable().optional(),
+  enabled: z.boolean().default(true),
+  provider: aiBrainProviderSchema.default('model'),
+  modelId: z.string().trim().default(''),
+  agentId: z.string().trim().default(''),
+  temperature: numberField(0, 2),
+  maxTokens: numberField(1, 8192),
+  notes: z.string().trim().nullable().optional().default(null),
 });
 
 export type AiBrainAssignmentDto = z.infer<typeof aiBrainAssignmentSchema>;
 
 export const aiBrainSettingsSchema = z.object({
   defaults: aiBrainAssignmentSchema,
-  assignments: z.record(aiBrainFeatureSchema, aiBrainAssignmentSchema).optional(),
+  assignments: z.record(aiBrainFeatureSchema, aiBrainAssignmentSchema.optional()).optional().default({}),
 });
 
 export type AiBrainSettingsDto = z.infer<typeof aiBrainSettingsSchema>;
 
+const providerListSchema = z.array(z.string().trim().min(1)).default([]);
+
 export const aiBrainProviderCatalogSchema = z.object({
-  modelPresets: z.array(z.string()),
-  paidModels: z.array(z.string()),
-  ollamaModels: z.array(z.string()),
-  agentModels: z.array(z.string()),
-  deepthinkingAgents: z.array(z.string()),
-  playwrightPersonas: z.array(z.string()),
+  modelPresets: providerListSchema,
+  paidModels: providerListSchema,
+  ollamaModels: providerListSchema,
+  agentModels: providerListSchema,
+  deepthinkingAgents: providerListSchema,
+  playwrightPersonas: providerListSchema,
 });
 
 export type AiBrainProviderCatalogDto = z.infer<typeof aiBrainProviderCatalogSchema>;

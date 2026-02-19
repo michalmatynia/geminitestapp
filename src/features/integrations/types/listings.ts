@@ -15,7 +15,10 @@ export type { ListingJob, ListingAttempt, ProductJob } from '@/shared/types/doma
 
 export type ProductListingRecord = ProductListingDto;
 
-export type ProductListingExportEvent = ProductListingExportEventDto;
+export type ProductListingExportEvent = Omit<ProductListingExportEventDto, 'exportedAt' | 'expiresAt'> & {
+  exportedAt: string | Date;
+  expiresAt?: string | Date | null;
+};
 
 export type ProductListingRelistPolicy = ProductListingRelistPolicyDto;
 
@@ -27,7 +30,13 @@ export type {
   IntegrationWithConnectionsBasic,
 };
 
-export type CreateProductListingInput = CreateProductListingDto;
+export type CreateProductListingInput = Omit<CreateProductListingDto, 'listedAt' | 'expiresAt' | 'nextRelistAt' | 'lastRelistedAt' | 'lastStatusCheckAt'> & {
+  listedAt?: string | Date | null;
+  expiresAt?: string | Date | null;
+  nextRelistAt?: string | Date | null;
+  lastRelistedAt?: string | Date | null;
+  lastStatusCheckAt?: string | Date | null;
+};
 
 export type ProductListingRepository = {
   getListingsByProductId: (productId: string) => Promise<ProductListingWithDetails[]>;

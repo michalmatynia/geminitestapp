@@ -77,6 +77,7 @@ import {
   serializeWorkspaceForUnsavedChangesCheck,
   resolveCaseContainerIdForFileId,
   resolveCaseResolverActiveCaseId,
+  resolveCaseResolverFileById,
   type CaseResolverRequestedCaseStatus,
   writeStoredEditorDraft,
 } from './useCaseResolverState.helpers';
@@ -205,6 +206,7 @@ export function useCaseResolverState() {
   }, [parsedWorkspace, requestedFileId]);
 
   const [workspace, setWorkspace] = useState<CaseResolverWorkspace>(initialWorkspaceState);
+  const workspaceRef = useRef<CaseResolverWorkspace>(initialWorkspaceState);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(
     requestedFileId ?? initialWorkspaceState.activeFileId
   );
@@ -271,6 +273,10 @@ export function useCaseResolverState() {
   useEffect(() => {
     requestedCaseStatusRef.current = requestedCaseStatus;
   }, [requestedCaseStatus]);
+
+  useEffect(() => {
+    workspaceRef.current = workspace;
+  }, [workspace]);
 
   const flushWorkspacePersist = useCallback((): void => {
     if (persistWorkspaceInFlightRef.current) return;
@@ -429,6 +435,7 @@ export function useCaseResolverState() {
   // Sync with store
   useEffect(() => {
     if (!canHydrateWorkspaceFromStore) return;
+    if (isApplyingPromptExploderPartyProposal) return;
     const incomingSerialized = JSON.stringify(parsedWorkspace);
     const incomingRevision = getCaseResolverWorkspaceRevision(parsedWorkspace);
     setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
@@ -466,7 +473,12 @@ export function useCaseResolverState() {
       queuedMutationIdRef.current = null;
       return parsedWorkspace;
     });
-  }, [canHydrateWorkspaceFromStore, parsedWorkspace, requestedFileId]);
+  }, [
+    canHydrateWorkspaceFromStore,
+    isApplyingPromptExploderPartyProposal,
+    parsedWorkspace,
+    requestedFileId,
+  ]);
 
   useEffect(() => {
     return (): void => {
@@ -537,6 +549,10 @@ export function useCaseResolverState() {
     () => readPendingCaseResolverPromptExploderPayload(),
     [promptExploderPayloadRefreshVersion]
   );
+  const workspaceFileIdsSignature = useMemo(
+    () => workspace.files.map((file: CaseResolverFile): string => file.id.trim()).join('|'),
+    [workspace.files]
+  );
   const pendingPromptExploderPayloadKey = useMemo<string | null>(() => {
     if (!pendingPromptExploderPayload) return null;
     return [
@@ -566,33 +582,51 @@ export function useCaseResolverState() {
       return;
     }
     lastPromptExploderPayloadKeyRef.current = pendingPromptExploderPayloadKey;
-    setPromptExploderApplyDiagnostics({
+    const payloadContextFileId =
+      pendingPromptExploderPayload.caseResolverContext?.fileId?.trim() || null;
+    const precheckResolvedTargetFileId = resolveCaseResolverFileById(
+      workspace.files,
+      payloadContextFileId
+    )?.id ?? null;
+    const precheckResolutionStrategy = precheckResolvedTargetFileId ? 'requested_id' : 'unresolved';
+    const diagnostics: PromptExploderApplyUiDiagnostics = {
       applyAttemptId: 'pending',
       payloadKey: pendingPromptExploderPayloadKey,
-      requestedTargetFileId: null,
-      payloadContextFileId: pendingPromptExploderPayload.caseResolverContext?.fileId ?? null,
+      requestedTargetFileId: payloadContextFileId,
+      payloadContextFileId,
       fallbackTargetFileId: null,
-      precheckResolvedTargetFileId: null,
-      precheckResolutionStrategy: 'unresolved',
+      precheckResolvedTargetFileId,
+      precheckResolutionStrategy,
       precheckWorkspaceFileCount: workspace.files.length,
       mutationResolvedTargetFileId: null,
       mutationResolutionStrategy: 'unresolved',
       mutationWorkspaceFileCount: workspace.files.length,
-      resolvedTargetFileId: null,
-      resolutionStrategy: 'unresolved',
+      resolvedTargetFileId: precheckResolvedTargetFileId,
+      resolutionStrategy: precheckResolutionStrategy,
       hasPartiesPayload: Boolean(pendingPromptExploderPayload.caseResolverParties),
       hasMetadataPayload: Boolean(pendingPromptExploderPayload.caseResolverMetadata?.placeDate),
       captureSettingsEnabled: caseResolverCaptureSettings.enabled,
       proposalBuilt: false,
+      proposalReason: caseResolverCaptureSettings.enabled
+        ? (
+          (pendingPromptExploderPayload.caseResolverParties ||
+          pendingPromptExploderPayload.caseResolverMetadata?.placeDate)
+            ? 'proposal_builder_returned_null'
+            : 'no_capture_payload'
+        )
+        : 'capture_disabled',
+      mutationMissingAfterPrecheck: false,
       status: 'idle',
       reason: null,
       updatedAt: new Date().toISOString(),
-    });
+    };
+    setPromptExploderApplyDiagnostics(diagnostics);
   }, [
     caseResolverCaptureSettings.enabled,
     pendingPromptExploderPayload,
     pendingPromptExploderPayloadKey,
-    workspace.files.length,
+    workspaceFileIdsSignature,
+    workspace.files,
   ]);
 
   useEffect(() => {
@@ -616,46 +650,62 @@ export function useCaseResolverState() {
       toast('No pending Prompt Exploder output to discard.', { variant: 'info' });
       return;
     }
+    const payloadContextFileId = discardedPayload.caseResolverContext?.fileId?.trim() || null;
+    const precheckResolvedTargetFileId = resolveCaseResolverFileById(
+      workspace.files,
+      payloadContextFileId
+    )?.id ?? null;
+    const precheckResolutionStrategy = precheckResolvedTargetFileId ? 'requested_id' : 'unresolved';
     setPromptExploderPartyProposal(null);
     setIsPromptExploderPartyProposalOpen(false);
     setIsApplyingPromptExploderPartyProposal(false);
-    setPromptExploderApplyDiagnostics({
+    const diagnostics: PromptExploderApplyUiDiagnostics = {
       applyAttemptId: 'discarded',
       payloadKey: [
         discardedPayload.createdAt,
         discardedPayload.caseResolverContext?.fileId ?? '',
         discardedPayload.prompt.length,
       ].join('|'),
-      requestedTargetFileId: null,
-      payloadContextFileId: discardedPayload.caseResolverContext?.fileId ?? null,
+      requestedTargetFileId: payloadContextFileId,
+      payloadContextFileId,
       fallbackTargetFileId: null,
-      precheckResolvedTargetFileId: null,
-      precheckResolutionStrategy: 'unresolved',
+      precheckResolvedTargetFileId,
+      precheckResolutionStrategy,
       precheckWorkspaceFileCount: workspace.files.length,
       mutationResolvedTargetFileId: null,
       mutationResolutionStrategy: 'unresolved',
       mutationWorkspaceFileCount: workspace.files.length,
-      resolvedTargetFileId: null,
-      resolutionStrategy: 'unresolved',
+      resolvedTargetFileId: precheckResolvedTargetFileId,
+      resolutionStrategy: precheckResolutionStrategy,
       hasPartiesPayload: Boolean(discardedPayload.caseResolverParties),
       hasMetadataPayload: Boolean(discardedPayload.caseResolverMetadata?.placeDate),
       captureSettingsEnabled: caseResolverCaptureSettings.enabled,
       proposalBuilt: false,
+      proposalReason: caseResolverCaptureSettings.enabled
+        ? (
+          (discardedPayload.caseResolverParties ||
+          discardedPayload.caseResolverMetadata?.placeDate)
+            ? 'proposal_builder_returned_null'
+            : 'no_capture_payload'
+        )
+        : 'capture_disabled',
+      mutationMissingAfterPrecheck: false,
       status: 'discarded',
       reason: null,
       updatedAt: new Date().toISOString(),
-    });
+    };
+    setPromptExploderApplyDiagnostics(diagnostics);
     refreshPendingPromptExploderPayload();
     toast('Prompt Exploder output discarded.', { variant: 'info' });
   }, [
     caseResolverCaptureSettings.enabled,
     refreshPendingPromptExploderPayload,
     toast,
-    workspace.files.length,
+    workspace.files,
   ]);
 
   const handleApplyPendingPromptExploderPayload = useCallback(
-    async (targetFileId: string): Promise<boolean> => {
+    async (): Promise<boolean> => {
       const payload = pendingPromptExploderPayload;
       if (!payload) {
         toast('No pending Prompt Exploder output to apply.', { variant: 'info' });
@@ -664,13 +714,9 @@ export function useCaseResolverState() {
       }
 
       setIsApplyingPromptExploderPartyProposal(true);
-      const fallbackTargetFileId = editingDocumentDraft?.id ?? null;
-      const runApply = (candidateTargetFileId: string, workspaceFilesSnapshot: CaseResolverWorkspace['files']) =>
+      const runApply = (workspaceFilesSnapshot: CaseResolverWorkspace['files']) =>
         applyPendingPromptExploderPayloadToCaseResolver({
           payload,
-          targetFileId: candidateTargetFileId,
-          fallbackTargetFileId,
-          editingDocumentDraft,
           workspaceFiles: workspaceFilesSnapshot,
           updateWorkspace,
           setEditingDocumentDraft,
@@ -678,80 +724,17 @@ export function useCaseResolverState() {
           caseResolverCaptureSettings,
         });
 
-      const isMissingTargetReason = (
-        reason: string
-      ): reason is
-      | 'target_file_missing_precheck'
-      | 'target_file_missing_mutation_snapshot'
-      | 'target_missing_after_refresh' =>
-        reason === 'target_file_missing_precheck' ||
-        reason === 'target_file_missing_mutation_snapshot' ||
-        reason === 'target_missing_after_refresh';
-
-      const applyResult = async (): Promise<ReturnType<typeof runApply>> => {
+      const applyResult = (): ReturnType<typeof runApply> => {
         let result!: ReturnType<typeof runApply>;
         flushSync(() => {
-          result = runApply(targetFileId, workspace.files);
+          result = runApply(workspaceRef.current.files);
         });
-        if (
-          !result.applied &&
-          isMissingTargetReason(result.reason) &&
-          fallbackTargetFileId &&
-          fallbackTargetFileId !== targetFileId
-        ) {
-          flushSync(() => {
-            result = runApply(fallbackTargetFileId, workspace.files);
-          });
-        }
-        if (result.applied || !isMissingTargetReason(result.reason)) {
-          return result;
-        }
-
-        const refreshedWorkspace = await fetchCaseResolverWorkspaceSnapshot(
-          'case_view_prompt_exploder_apply_refresh'
-        );
-        if (!refreshedWorkspace) {
-          return {
-            ...result,
-            reason: 'target_missing_after_refresh' as const,
-          };
-        }
-
-        const refreshedSerialized = JSON.stringify(refreshedWorkspace);
-        lastPersistedValueRef.current = refreshedSerialized;
-        setPersistedWorkspaceSnapshot(refreshedSerialized);
-        lastPersistedRevisionRef.current = getCaseResolverWorkspaceRevision(refreshedWorkspace);
-        queuedSerializedWorkspaceRef.current = null;
-        queuedExpectedRevisionRef.current = null;
-        queuedMutationIdRef.current = null;
-        setWorkspace(refreshedWorkspace);
-
-        let retryResult!: ReturnType<typeof runApply>;
-        flushSync(() => {
-          retryResult = runApply(targetFileId, refreshedWorkspace.files);
-        });
-        if (
-          !retryResult.applied &&
-          isMissingTargetReason(retryResult.reason) &&
-          fallbackTargetFileId &&
-          fallbackTargetFileId !== targetFileId
-        ) {
-          flushSync(() => {
-            retryResult = runApply(fallbackTargetFileId, refreshedWorkspace.files);
-          });
-        }
-        if (!retryResult.applied && isMissingTargetReason(retryResult.reason)) {
-          return {
-            ...retryResult,
-            reason: 'target_missing_after_refresh' as const,
-          };
-        }
-        return retryResult;
+        return result;
       };
 
-      let result: Awaited<ReturnType<typeof applyResult>>;
+      let result: ReturnType<typeof applyResult>;
       try {
-        result = await applyResult();
+        result = applyResult();
       } finally {
         setIsApplyingPromptExploderPartyProposal(false);
       }
@@ -769,9 +752,13 @@ export function useCaseResolverState() {
           toast('Prompt Exploder output is empty. Reassemble text before applying.', {
             variant: 'warning',
           });
-        } else if (result.reason === 'target_missing_after_refresh') {
+        } else if (result.reason === 'missing_context_file_id') {
+          toast('Prompt Exploder output is missing a target document context.', {
+            variant: 'warning',
+          });
+        } else if (result.reason === 'target_missing_in_live_workspace_after_precheck') {
           toast(
-            'Target document is no longer available after refreshing workspace state. Re-open the document and apply again.',
+            'Target document was resolved in precheck but is unavailable in the live workspace snapshot.',
             {
               variant: 'warning',
             }
@@ -801,9 +788,12 @@ export function useCaseResolverState() {
               variant: 'warning',
             });
           } else {
-            toast('Capture data exists, but no mapping proposal was generated.', {
-              variant: 'warning',
-            });
+            toast(
+              `Capture data exists, but no mapping proposal was generated (${result.diagnostics.proposalReason}).`,
+              {
+                variant: 'warning',
+              }
+            );
           }
         } else {
           toast('Applied output has no captured addresser, addressee, or document date.', {
@@ -816,11 +806,11 @@ export function useCaseResolverState() {
         window.setTimeout((): void => {
           flushWorkspacePersist();
         }, 0);
-        toast('Prompt Exploder output applied to the selected document.', {
+        toast('Prompt Exploder output applied to the bound document.', {
           variant: 'success',
         });
       } else {
-        toast('Prompt Exploder output already matches the selected document.', {
+        toast('Prompt Exploder output already matches the bound document.', {
           variant: 'info',
         });
       }
@@ -828,14 +818,13 @@ export function useCaseResolverState() {
     },
     [
       caseResolverCaptureSettings,
-      editingDocumentDraft,
       filemakerDatabase,
       pendingPromptExploderPayload,
       refreshPendingPromptExploderPayload,
       toast,
       updateWorkspace,
       flushWorkspacePersist,
-      workspace.files,
+      workspaceRef,
     ]
   );
 
@@ -1622,6 +1611,7 @@ export function useCaseResolverState() {
       lastContentConversionAt: now,
       originalDocumentContent: nextOriginalDocumentContent,
       explodedDocumentContent: nextExplodedDocumentContent,
+      createdAt: editingDocumentDraft.createdAt || currentFile.createdAt || now,
       updatedAt: now,
     });
     updateWorkspace((current) => ({
@@ -1675,6 +1665,7 @@ export function useCaseResolverState() {
 
   return {
     workspace,
+    workspaceRef,
     setWorkspace,
     updateWorkspace,
     isWorkspaceDirty,

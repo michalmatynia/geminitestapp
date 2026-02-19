@@ -26,7 +26,7 @@ const normalizeRuleScopes = (
   const activeRuleScope = isCaseResolverExploderScope(fallbackScope)
     ? 'case_resolver_prompt_exploder'
     : 'prompt_exploder';
-  return [activeRuleScope as any] as PromptValidationScope[];
+  return [activeRuleScope as PromptValidationScope];
 };
 
 export const includesScope = (
@@ -37,7 +37,7 @@ export const includesScope = (
   const activeRuleScope = isCaseResolverExploderScope(scope)
     ? 'case_resolver_prompt_exploder'
     : 'prompt_exploder';
-  return scopes.includes(activeRuleScope as any) || scopes.includes('global');
+  return scopes.includes(activeRuleScope as PromptValidationScope) || scopes.includes('global');
 };
 
 export const remapExploderScopesForTarget = (
@@ -55,14 +55,14 @@ export const remapExploderScopesForTarget = (
 
   const remapped = normalizedScopes.map((scope) => {
     if (scope === 'prompt_exploder' || scope === 'case_resolver_prompt_exploder') {
-      return activeRuleScope as any;
+      return activeRuleScope as PromptValidationScope;
     }
     return scope;
   });
 
   const deduped = [...new Set(remapped)];
-  if (!deduped.includes(activeRuleScope as any) && !deduped.includes('global')) {
-    deduped.push(activeRuleScope as any);
+  if (!deduped.includes(activeRuleScope as PromptValidationScope) && !deduped.includes('global')) {
+    deduped.push(activeRuleScope as PromptValidationScope);
   }
   return deduped;
 };
@@ -797,7 +797,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     description:
       'Extracts addressee organization/company name.',
     pattern:
-      '^\\s*((?=.*\\b(zus|inspektorat|urząd|urzad|sąd|sad|ministerstwo|fundacja|stowarzyszenie|sp\\.?\\s*z\\s*o\\.?\\s*o\\.?|s\\.?a\\.?|llc|inc|corp|office|department|agency|authority|institute|university|bank)\\b)[\\p{L}0-9][\\p{L}0-9&.,\'’"\\-\\/()\\s]{2,120})\\s*$',
+      '^\\s*((?=.*\\b(zus|zakład|zaklad|ubezpieczeń|ubezpieczen|społecznych|spolecznych|oddział|oddzial|inspektorat|urząd|urzad|sąd|sad|ministerstwo|fundacja|stowarzyszenie|sp\\.?\\s*z\\s*o\\.?\\s*o\\.?|s\\.?a\\.?|llc|inc|corp|office|department|agency|authority|institute|university|bank)\\b)[\\p{L}0-9][\\p{L}0-9&.,\'’"\\-\\/()\\s]{2,120})\\s*$',
     flags: 'imu',
     message: 'Case Resolver addressee organization captured.',
     sequence: 52,

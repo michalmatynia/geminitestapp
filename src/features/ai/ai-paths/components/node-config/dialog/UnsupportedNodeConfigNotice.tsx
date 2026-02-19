@@ -26,6 +26,7 @@ const SUPPORTED_NODE_TYPES = new Set<AiNode['type']>([
   'delay',
   'poll',
   'http',
+  'api_advanced',
   'prompt',
   'model',
   'agent',

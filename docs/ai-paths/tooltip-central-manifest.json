@@ -1,0 +1,43 @@
+{
+  "version": "1.0.0",
+  "sources": [
+    {
+      "id": "ai-paths-manual-overrides",
+      "type": "manual_overrides",
+      "path": "docs/ai-paths/tooltip-overrides.json",
+      "enabled": true,
+      "priority": 10,
+      "tags": ["ai-paths", "manual", "controls"]
+    },
+    {
+      "id": "ai-paths-node-docs",
+      "type": "node_docs_catalog",
+      "path": "src/features/ai/ai-paths/lib/core/docs/node-docs.ts",
+      "enabled": true,
+      "priority": 20,
+      "tags": ["ai-paths", "nodes", "palette", "config"]
+    },
+    {
+      "id": "ai-paths-semantic-nodes",
+      "type": "semantic_nodes_index",
+      "path": "docs/ai-paths/semantic-grammar/nodes/index.json",
+      "enabled": true,
+      "priority": 30,
+      "tags": ["ai-paths", "semantic-grammar", "nodes"]
+    },
+    {
+      "id": "ai-paths-doc-snippets",
+      "type": "docs_snippet",
+      "path": "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts",
+      "enabled": true,
+      "priority": 40,
+      "tags": ["ai-paths", "docs", "snippets"],
+      "snippetNames": [
+        "DOCS_OVERVIEW_SNIPPET",
+        "DOCS_WIRING_SNIPPET",
+        "DOCS_DESCRIPTION_SNIPPET",
+        "DOCS_JOBS_SNIPPET"
+      ]
+    }
+  ]
+}

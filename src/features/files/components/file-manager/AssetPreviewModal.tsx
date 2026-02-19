@@ -50,7 +50,7 @@ export function AssetPreviewModal({
           />
           <MetadataItem
             label='Added'
-            value={new Date(previewAsset.createdAt).toLocaleString()}
+            value={previewAsset.createdAt ? new Date(previewAsset.createdAt).toLocaleString() : '—'}
             valueClassName='text-xs text-gray-400'
           />
           <MetadataItem

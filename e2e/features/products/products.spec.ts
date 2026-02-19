@@ -112,7 +112,7 @@ test.describe('Products Management', () => {
       await nextButton.click();
       await expect(page.locator('text=/ 2')).toBeVisible(); // Assuming at least 2 pages
     } else {
-      console.log("Not enough products for pagination test, skipping");
+      console.log('Not enough products for pagination test, skipping');
     }
   });
 

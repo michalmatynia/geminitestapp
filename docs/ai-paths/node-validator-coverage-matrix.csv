@@ -1,0 +1,34 @@
+node_type,config_completeness,wiring_integrity,runtime_safety,provider_compatibility,async_correctness,persistence_safety,coverage_status,notes
+trigger,yes,yes,yes,n/a,n/a,n/a,covered,Core and wiring packs cover event + entry checks
+simulation,yes,yes,yes,n/a,n/a,n/a,covered,Simulation pack includes identity and collection resolve checks
+context,yes,yes,partial,n/a,n/a,n/a,partial,Entity source constraints covered; scope-mode combos can be extended
+parser,yes,yes,partial,n/a,n/a,n/a,partial,Mappings and parser wiring covered
+regex,yes,partial,partial,n/a,n/a,n/a,partial,Pattern check present; extract mode validation can be extended
+prompt,yes,yes,partial,n/a,n/a,n/a,partial,Template + model handoff covered
+model,yes,yes,yes,n/a,yes,n/a,covered,Model id + async poll chain covered
+agent,partial,partial,partial,n/a,partial,n/a,partial,Runtime pack covers agent basics; add persona-level rules next
+learner_agent,yes,partial,partial,n/a,partial,n/a,partial,Advanced pack now validates agentId configuration
+poll,yes,yes,yes,n/a,yes,n/a,covered,Interval/attempt/result-consume checks included
+database,yes,yes,yes,yes,n/a,yes,covered,Operation/query/update identity safety checks included
+db_schema,yes,partial,partial,yes,n/a,n/a,partial,Selected collections covered; provider relation checks pending
+http,yes,partial,partial,n/a,n/a,n/a,partial,URL required covered; method/header checks pending
+router,partial,yes,partial,n/a,n/a,n/a,partial,Outgoing branch checks included
+gate,partial,yes,partial,n/a,n/a,n/a,partial,Outgoing branch checks included
+validation_pattern,yes,partial,yes,n/a,n/a,n/a,partial,Stack/rules presence covered
+audio_oscillator,yes,n/a,partial,n/a,n/a,n/a,partial,Advanced pack validates core oscillator config presence
+audio_speaker,yes,n/a,partial,n/a,n/a,n/a,partial,Advanced pack validates explicit enablement config
+iterator,yes,partial,yes,n/a,n/a,n/a,partial,Advanced pack validates maxSteps safety cap
+mapper,yes,partial,partial,n/a,n/a,n/a,partial,Advanced pack validates mapper mappings
+mutator,yes,partial,partial,n/a,n/a,n/a,partial,Advanced pack validates mutator target path
+string_mutator,yes,partial,partial,n/a,n/a,n/a,partial,Advanced pack validates operations list
+constant,yes,n/a,partial,n/a,n/a,n/a,partial,Advanced pack validates constant value presence
+math,yes,n/a,partial,n/a,n/a,n/a,partial,Advanced pack validates operation presence
+template,yes,partial,partial,n/a,n/a,n/a,partial,Advanced pack validates template text presence
+bundle,yes,yes,partial,n/a,n/a,n/a,partial,Advanced pack validates includePorts and bundle output usage
+compare,yes,partial,partial,n/a,n/a,n/a,partial,Advanced pack validates compare operator presence
+delay,yes,partial,partial,n/a,n/a,n/a,partial,Advanced pack validates delay duration
+viewer,n/a,yes,partial,n/a,n/a,n/a,covered,Incoming data checks included
+notification,partial,partial,partial,n/a,n/a,n/a,partial,Advanced pack adds incoming data wiring validation
+ai_description,partial,yes,partial,n/a,n/a,partial,partial,Description flow wiring covered via snippets
+description_updater,partial,yes,partial,n/a,n/a,yes,partial,Legacy/deprecated path checks pending
+cross_graph_invariants,yes,yes,yes,yes,yes,yes,covered,Semantic grammar pack enforces edge endpoint and declared-port integrity

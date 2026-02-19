@@ -4,6 +4,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ArrowUpDown, Download } from 'lucide-react';
 import { useRef, useState } from 'react';
 
+import {
+  TriggerButtonBar,
+} from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
 import {
   fetchPreferredBaseConnection,
@@ -815,6 +818,15 @@ export const getProductColumns = (
                 ? (): void => handleOpenExportSettings(product)
                 : undefined
             }
+          />
+          <TriggerButtonBar
+            location='product_row'
+            entityType='product'
+            entityId={product.id}
+            getEntityJson={(): Record<string, unknown> =>
+              product as unknown as Record<string, unknown>
+            }
+            className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[10px] [&_button]:font-black [&_button]:uppercase [&_button]:tracking-tight'
           />
           {showTraderaBadge && (
             <TraderaStatusButton

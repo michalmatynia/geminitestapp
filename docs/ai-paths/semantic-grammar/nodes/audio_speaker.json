@@ -1,0 +1,94 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "audio_speaker",
+  "title": "Audio Speaker (Mono)",
+  "purpose": "Play incoming audio signals in local runtime.",
+  "inputs": [
+    "audioSignal",
+    "frequency",
+    "waveform",
+    "gain",
+    "durationMs",
+    "trigger"
+  ],
+  "outputs": [
+    "status",
+    "audioSignal"
+  ],
+  "configFields": [
+    {
+      "path": "audioSpeaker.enabled",
+      "description": "If false, speaker stays muted and reports disabled status.",
+      "defaultValue": "true"
+    },
+    {
+      "path": "audioSpeaker.autoPlay",
+      "description": "If true, plays incoming audio signal immediately.",
+      "defaultValue": "true"
+    },
+    {
+      "path": "audioSpeaker.gain",
+      "description": "Speaker output gain multiplier in 0..1 range.",
+      "defaultValue": "1"
+    },
+    {
+      "path": "audioSpeaker.stopPrevious",
+      "description": "Stop existing tone before playing the next signal.",
+      "defaultValue": "true"
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "defaultConfig": {
+    "audioSpeaker": {
+      "enabled": true,
+      "autoPlay": true,
+      "gain": 1,
+      "stopPrevious": true
+    }
+  },
+  "semanticNodeExample": {
+    "id": "node_audio_speaker",
+    "type": "audio_speaker",
+    "title": "Audio Speaker (Mono)",
+    "description": "Play incoming audio signals in local runtime.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "audioSignal",
+      "frequency",
+      "waveform",
+      "gain",
+      "durationMs",
+      "trigger"
+    ],
+    "outputs": [
+      "status",
+      "audioSignal"
+    ],
+    "config": {
+      "audioSpeaker": {
+        "enabled": true,
+        "autoPlay": true,
+        "gain": 1,
+        "stopPrevious": true
+      }
+    },
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

@@ -22,6 +22,7 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
   AppModal,
+  Input,
   Label,
   Textarea,
   ValidatorFormatterToggle,
@@ -50,11 +51,15 @@ import { UIPresetsPanel } from './UIPresetsPanel';
 import { VersionNodeMapPanel } from './VersionNodeMapPanel';
 import { useGenerationState, useGenerationActions } from '../context/GenerationContext';
 import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
-import { useProjectsState } from '../context/ProjectsContext';
+import { useProjectsActions, useProjectsState } from '../context/ProjectsContext';
 import { usePromptActions, usePromptState } from '../context/PromptContext';
 import { useSettingsState, useSettingsActions } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState } from '../context/UiContext';
+import {
+  applyCanvasResizeLocalTransform,
+  type CanvasResizeDirection,
+} from '../utils/canvas-resize';
 import { supportsImageSequenceGeneration } from '../utils/image-models';
 import {
   getImageStudioProjectSessionKey,
@@ -71,6 +76,98 @@ import type { ParamUiControl } from '../utils/param-ui';
 const IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID = 'image-studio-quick-actions-host';
 
 type RequestPreviewMode = 'without_sequence' | 'with_sequence';
+
+const CANVAS_RESIZE_MIN_PX = 64;
+const CANVAS_RESIZE_MAX_PX = 32_768;
+
+const parseCanvasDimensionInput = (value: string): number | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed)) return null;
+  const normalized = Math.floor(parsed);
+  if (normalized < CANVAS_RESIZE_MIN_PX || normalized > CANVAS_RESIZE_MAX_PX) {
+    return null;
+  }
+  return normalized;
+};
+
+const formatCanvasSizeLabel = (
+  width: number | null,
+  height: number | null
+): string => {
+  if (
+    typeof width !== 'number' ||
+    !Number.isFinite(width) ||
+    typeof height !== 'number' ||
+    !Number.isFinite(height)
+  ) {
+    return 'Auto';
+  }
+  return `${Math.floor(width)} x ${Math.floor(height)}`;
+};
+
+const CANVAS_RESIZE_DIRECTION_OPTIONS: Array<{
+  value: CanvasResizeDirection;
+  arrow: string;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'up-left',
+    arrow: '^<',
+    label: 'Extend Up + Left',
+    description: 'Adds new canvas area above and left of current content.',
+  },
+  {
+    value: 'up',
+    arrow: '^',
+    label: 'Extend Up',
+    description: 'Adds new canvas area above current content.',
+  },
+  {
+    value: 'up-right',
+    arrow: '^>',
+    label: 'Extend Up + Right',
+    description: 'Adds new canvas area above and right of current content.',
+  },
+  {
+    value: 'left',
+    arrow: '<',
+    label: 'Extend Left',
+    description: 'Adds new canvas area left of current content.',
+  },
+  {
+    value: 'center',
+    arrow: '+',
+    label: 'Extend From Center',
+    description: 'Splits extension evenly around current content.',
+  },
+  {
+    value: 'right',
+    arrow: '>',
+    label: 'Extend Right',
+    description: 'Adds new canvas area right of current content.',
+  },
+  {
+    value: 'down-left',
+    arrow: 'v<',
+    label: 'Extend Down + Left',
+    description: 'Adds new canvas area below and left of current content.',
+  },
+  {
+    value: 'down',
+    arrow: 'v',
+    label: 'Extend Down',
+    description: 'Adds new canvas area below current content.',
+  },
+  {
+    value: 'down-right',
+    arrow: 'v>',
+    label: 'Extend Down + Right',
+    description: 'Adds new canvas area below and right of current content.',
+  },
+];
 
 export function RightSidebar(): React.JSX.Element {
   const router = useRouter();
@@ -92,7 +189,8 @@ export function RightSidebar(): React.JSX.Element {
     resetCanvasImageOffset,
     getPreviewCanvasImageFrame,
   } = useUiActions();
-  const { projectId } = useProjectsState();
+  const { projectId, projectsQuery } = useProjectsState();
+  const { handleResizeProjectCanvas, resizeProjectCanvasMutation } = useProjectsActions();
   const {
     tool,
     maskShapes,
@@ -155,6 +253,11 @@ export function RightSidebar(): React.JSX.Element {
   const [promptSaveBusy, setPromptSaveBusy] = useState(false);
   const [sequenceRunBusy, setSequenceRunBusy] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
+  const [resizeCanvasOpen, setResizeCanvasOpen] = useState(false);
+  const [resizeCanvasWidthDraft, setResizeCanvasWidthDraft] = useState('');
+  const [resizeCanvasHeightDraft, setResizeCanvasHeightDraft] = useState('');
+  const [resizeCanvasDirection, setResizeCanvasDirection] =
+    useState<CanvasResizeDirection>('down-right');
   const [sidebarTab, setSidebarTab] = useState<'controls' | 'graph' | 'sequencing' | 'history'>('controls');
   const [historyMode, setHistoryMode] = useState<'actions' | 'runs'>('actions');
   const [quickActionsHostEl, setQuickActionsHostEl] = useState<HTMLElement | null>(null);
@@ -210,6 +313,12 @@ export function RightSidebar(): React.JSX.Element {
     () => enabledSequenceRuntimeSteps.some((step) => step.type === 'generate' || step.type === 'regenerate'),
     [enabledSequenceRuntimeSteps]
   );
+  const activeProject = useMemo(
+    () =>
+      (projectsQuery.data ?? []).find((project) => project.id === projectId) ??
+      null,
+    [projectId, projectsQuery.data]
+  );
   const workingSlotImageWidth = useMemo((): number | null => {
     const width = workingSlot?.imageFile?.width ?? null;
     return typeof width === 'number' && Number.isFinite(width) && width > 0 ? width : null;
@@ -218,6 +327,81 @@ export function RightSidebar(): React.JSX.Element {
     const height = workingSlot?.imageFile?.height ?? null;
     return typeof height === 'number' && Number.isFinite(height) && height > 0 ? height : null;
   }, [workingSlot?.imageFile?.height]);
+  const projectCanvasWidthPx = useMemo((): number | null => {
+    const width = activeProject?.canvasWidthPx ?? null;
+    if (typeof width !== 'number' || !Number.isFinite(width)) return null;
+    const normalized = Math.floor(width);
+    if (
+      normalized < CANVAS_RESIZE_MIN_PX ||
+      normalized > CANVAS_RESIZE_MAX_PX
+    ) {
+      return null;
+    }
+    return normalized;
+  }, [activeProject?.canvasWidthPx]);
+  const projectCanvasHeightPx = useMemo((): number | null => {
+    const height = activeProject?.canvasHeightPx ?? null;
+    if (typeof height !== 'number' || !Number.isFinite(height)) return null;
+    const normalized = Math.floor(height);
+    if (
+      normalized < CANVAS_RESIZE_MIN_PX ||
+      normalized > CANVAS_RESIZE_MAX_PX
+    ) {
+      return null;
+    }
+    return normalized;
+  }, [activeProject?.canvasHeightPx]);
+  const projectCanvasSizeLabel = useMemo(
+    () => formatCanvasSizeLabel(projectCanvasWidthPx, projectCanvasHeightPx),
+    [projectCanvasHeightPx, projectCanvasWidthPx]
+  );
+  const fallbackCanvasWidthPx = useMemo(
+    () => projectCanvasWidthPx ?? workingSlotImageWidth ?? 1024,
+    [projectCanvasWidthPx, workingSlotImageWidth]
+  );
+  const fallbackCanvasHeightPx = useMemo(
+    () => projectCanvasHeightPx ?? workingSlotImageHeight ?? 1024,
+    [projectCanvasHeightPx, workingSlotImageHeight]
+  );
+  const resizeCanvasDirectionMeta = useMemo(
+    () =>
+      CANVAS_RESIZE_DIRECTION_OPTIONS.find(
+        (option) => option.value === resizeCanvasDirection
+      ) ?? CANVAS_RESIZE_DIRECTION_OPTIONS[8]!,
+    [resizeCanvasDirection]
+  );
+  const resizeCanvasWidthValue = useMemo(
+    () => parseCanvasDimensionInput(resizeCanvasWidthDraft),
+    [resizeCanvasWidthDraft]
+  );
+  const resizeCanvasHeightValue = useMemo(
+    () => parseCanvasDimensionInput(resizeCanvasHeightDraft),
+    [resizeCanvasHeightDraft]
+  );
+  const canSubmitResizeCanvas = useMemo(() => {
+    if (!projectId.trim()) return false;
+    if (resizeProjectCanvasMutation.isPending) return false;
+    if (resizeCanvasWidthValue === null || resizeCanvasHeightValue === null) {
+      return false;
+    }
+    if (
+      projectCanvasWidthPx !== null &&
+      projectCanvasHeightPx !== null &&
+      resizeCanvasWidthValue === projectCanvasWidthPx &&
+      resizeCanvasHeightValue === projectCanvasHeightPx
+    ) {
+      return false;
+    }
+    return true;
+  }, [
+    projectCanvasHeightPx,
+    projectCanvasWidthPx,
+    projectId,
+    resizeCanvasHeightValue,
+    resizeCanvasWidthValue,
+    resizeProjectCanvasMutation.isPending,
+  ]);
+  const resizeCanvasDisabled = !projectId.trim();
   const sequenceImageContentFrame = useMemo((): { x: number; y: number; width: number; height: number } | null => {
     const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
     if (!normalizedWorkingSlotId) return null;
@@ -275,6 +459,101 @@ export function RightSidebar(): React.JSX.Element {
       setCanvasSelectionEnabled(false);
     }
   }, [canvasSelectionEnabled, setCanvasSelectionEnabled, setTool, tool]);
+
+  const handleOpenResizeCanvasModal = useCallback((): void => {
+    const normalizedProjectId = projectId.trim();
+    if (!normalizedProjectId) {
+      toast('Select a project before resizing canvas.', { variant: 'info' });
+      return;
+    }
+    setResizeCanvasWidthDraft(String(projectCanvasWidthPx ?? fallbackCanvasWidthPx));
+    setResizeCanvasHeightDraft(
+      String(projectCanvasHeightPx ?? fallbackCanvasHeightPx)
+    );
+    setResizeCanvasDirection('down-right');
+    setResizeCanvasOpen(true);
+  }, [
+    fallbackCanvasHeightPx,
+    fallbackCanvasWidthPx,
+    projectCanvasHeightPx,
+    projectCanvasWidthPx,
+    projectId,
+    toast,
+  ]);
+
+  const handleResizeCanvasSubmit = useCallback(async (): Promise<void> => {
+    const normalizedProjectId = projectId.trim();
+    if (!normalizedProjectId) {
+      toast('Select a project before resizing canvas.', { variant: 'info' });
+      return;
+    }
+    const nextWidth = resizeCanvasWidthValue;
+    const nextHeight = resizeCanvasHeightValue;
+    if (nextWidth === null || nextHeight === null) {
+      toast(
+        `Canvas width and height must be between ${CANVAS_RESIZE_MIN_PX} and ${CANVAS_RESIZE_MAX_PX}.`,
+        { variant: 'error' }
+      );
+      return;
+    }
+
+    const oldWidth = projectCanvasWidthPx ?? fallbackCanvasWidthPx;
+    const oldHeight = projectCanvasHeightPx ?? fallbackCanvasHeightPx;
+    const sourceAspectRatio =
+      typeof workingSlotImageWidth === 'number' &&
+      Number.isFinite(workingSlotImageWidth) &&
+      workingSlotImageWidth > 0 &&
+      typeof workingSlotImageHeight === 'number' &&
+      Number.isFinite(workingSlotImageHeight) &&
+      workingSlotImageHeight > 0
+        ? workingSlotImageWidth / workingSlotImageHeight
+        : null;
+
+    const transform = applyCanvasResizeLocalTransform({
+      shapes: maskShapes,
+      oldCanvasWidth: oldWidth,
+      oldCanvasHeight: oldHeight,
+      newCanvasWidth: nextWidth,
+      newCanvasHeight: nextHeight,
+      direction: resizeCanvasDirection,
+      currentImageOffset: canvasImageOffset,
+      currentImageFrame: sequenceImageContentFrame,
+      sourceAspectRatio,
+    });
+
+    await handleResizeProjectCanvas({
+      projectId: normalizedProjectId,
+      canvasWidthPx: nextWidth,
+      canvasHeightPx: nextHeight,
+    });
+
+    setMaskShapes(transform.shapes);
+    setCanvasImageOffset(transform.imageOffset);
+    setResizeCanvasOpen(false);
+  }, [
+    canvasImageOffset,
+    fallbackCanvasHeightPx,
+    fallbackCanvasWidthPx,
+    handleResizeProjectCanvas,
+    maskShapes,
+    projectCanvasHeightPx,
+    projectCanvasWidthPx,
+    projectId,
+    resizeCanvasDirection,
+    resizeCanvasHeightValue,
+    resizeCanvasWidthValue,
+    sequenceImageContentFrame,
+    setCanvasImageOffset,
+    setMaskShapes,
+    toast,
+    workingSlotImageHeight,
+    workingSlotImageWidth,
+  ]);
+
+  const handleCloseResizeCanvasModal = useCallback((): void => {
+    if (resizeProjectCanvasMutation.isPending) return;
+    setResizeCanvasOpen(false);
+  }, [resizeProjectCanvasMutation.isPending]);
 
   const applyActionHistorySnapshot = useCallback((snapshot: StudioActionHistorySnapshot): void => {
     setSelectedFolder(snapshot.selectedFolder);
@@ -860,6 +1139,7 @@ export function RightSidebar(): React.JSX.Element {
             <RightSidebarControlsTab
               activeShapeDrawingTool={activeShapeDrawingTool}
               brushRadius={brushRadius}
+              canvasSizeLabel={projectCanvasSizeLabel}
               canRecenterCanvasImage={canRecenterCanvasImage}
               compositeAssetIds={compositeAssetIds}
               compositeAssetOptions={compositeAssetOptions}
@@ -876,6 +1156,7 @@ export function RightSidebar(): React.JSX.Element {
               onMaskEdgeSensitivityChange={setMaskEdgeSensitivity}
               onMaskFeatherChange={setMaskFeather}
               onMaskThresholdSensitivityChange={setMaskThresholdSensitivity}
+              onOpenResizeCanvasModal={handleOpenResizeCanvasModal}
               onRecenterCanvasImage={resetCanvasImageOffset}
               onSelectShapeTool={handleSelectShapeTool}
               onToggleMoveImage={() => {
@@ -884,6 +1165,7 @@ export function RightSidebar(): React.JSX.Element {
               onToggleSelectTool={handleToggleSelectTool}
               quickActionsHostEl={quickActionsHostEl}
               quickActionsPanelContent={quickActionsPanelContent}
+              resizeCanvasDisabled={resizeCanvasDisabled}
               tool={tool}
               workingSlotPresent={Boolean(workingSlot)}
             />
@@ -988,6 +1270,135 @@ export function RightSidebar(): React.JSX.Element {
               No extracted controls available yet.
             </div>
           )}
+        </div>
+      </AppModal>
+
+      <AppModal
+        open={resizeCanvasOpen}
+        onClose={handleCloseResizeCanvasModal}
+        title='Resize Canvas'
+        size='md'
+      >
+        <div className='space-y-4 text-sm text-gray-200'>
+          <div className='text-xs text-gray-400'>
+            Current canvas: {projectCanvasSizeLabel}
+          </div>
+
+          <div className='grid grid-cols-2 gap-3'>
+            <div className='space-y-1'>
+              <Label className='text-xs text-gray-400'>Width (px)</Label>
+              <Input
+                size='sm'
+                type='number'
+                min={CANVAS_RESIZE_MIN_PX}
+                max={CANVAS_RESIZE_MAX_PX}
+                step={1}
+                value={resizeCanvasWidthDraft}
+                onChange={(event) => setResizeCanvasWidthDraft(event.target.value)}
+                className={cn(
+                  'h-9',
+                  resizeCanvasWidthValue === null && 'border-red-400/60'
+                )}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    void handleResizeCanvasSubmit();
+                  }
+                }}
+              />
+            </div>
+            <div className='space-y-1'>
+              <Label className='text-xs text-gray-400'>Height (px)</Label>
+              <Input
+                size='sm'
+                type='number'
+                min={CANVAS_RESIZE_MIN_PX}
+                max={CANVAS_RESIZE_MAX_PX}
+                step={1}
+                value={resizeCanvasHeightDraft}
+                onChange={(event) => setResizeCanvasHeightDraft(event.target.value)}
+                className={cn(
+                  'h-9',
+                  resizeCanvasHeightValue === null && 'border-red-400/60'
+                )}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    void handleResizeCanvasSubmit();
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          <div className='space-y-2'>
+            <Label className='text-xs text-gray-400'>
+              Extension Direction
+            </Label>
+            <div className='grid grid-cols-3 gap-2'>
+              {CANVAS_RESIZE_DIRECTION_OPTIONS.map((directionOption) => {
+                const selected = directionOption.value === resizeCanvasDirection;
+                return (
+                  <Button
+                    key={directionOption.value}
+                    size='xs'
+                    type='button'
+                    variant={selected ? 'default' : 'outline'}
+                    onClick={() => setResizeCanvasDirection(directionOption.value)}
+                    className={cn(
+                      'h-10 px-2 text-xs',
+                      selected &&
+                        'border-cyan-400/70 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30'
+                    )}
+                    title={directionOption.label}
+                    aria-label={directionOption.label}
+                  >
+                    {directionOption.arrow}
+                  </Button>
+                );
+              })}
+            </div>
+            <div className='text-[11px] text-gray-500'>
+              {resizeCanvasDirectionMeta.description}
+            </div>
+          </div>
+
+          <div className='rounded border border-border/60 bg-card/30 p-3 text-xs text-gray-400'>
+            <div>
+              New canvas:{' '}
+              {resizeCanvasWidthValue !== null &&
+              resizeCanvasHeightValue !== null
+                ? `${resizeCanvasWidthValue} x ${resizeCanvasHeightValue}`
+                : 'Invalid dimensions'}
+            </div>
+            <div className='mt-1'>
+              Direction: {resizeCanvasDirectionMeta.label}
+            </div>
+          </div>
+
+          <div className='flex items-center justify-end gap-2'>
+            <Button
+              size='xs'
+              type='button'
+              variant='outline'
+              onClick={handleCloseResizeCanvasModal}
+              disabled={resizeProjectCanvasMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              size='xs'
+              type='button'
+              onClick={() => {
+                void handleResizeCanvasSubmit();
+              }}
+              disabled={!canSubmitResizeCanvas}
+              loading={resizeProjectCanvasMutation.isPending}
+              loadingText='Applying...'
+            >
+              Apply Resize
+            </Button>
+          </div>
         </div>
       </AppModal>
 

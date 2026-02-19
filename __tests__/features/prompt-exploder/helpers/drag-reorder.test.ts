@@ -31,7 +31,12 @@ const makeSegment = (id: string): PromptExploderSegment => ({
   subsections: [],
   paramsText: '',
   paramsObject: null,
+  paramUiControls: {},
+  paramComments: {},
+  paramDescriptions: {},
   matchedPatternIds: [],
+  matchedPatternLabels: [],
+  matchedSequenceLabels: [],
   confidence: 1,
 });
 

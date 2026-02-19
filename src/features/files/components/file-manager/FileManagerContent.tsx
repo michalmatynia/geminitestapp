@@ -45,7 +45,7 @@ export function FileManagerContent(): React.JSX.Element {
               {(asset.tags ?? []).length > 0 && (
                 <div className='mt-2 flex flex-wrap gap-1'>
                   {asset.tags.slice(0, 4).map((tag: string) => (
-                    <Tag key={tag} label={`#${tag}`} size='xs' className='text-[10px]' />
+                    <Tag key={tag} label={`#${tag}`} className='text-[10px]' />
                   ))}
                 </div>
               )}

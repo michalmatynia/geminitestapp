@@ -23,7 +23,7 @@ const buildRule = (
   message: id,
   similar: [],
   ...overrides,
-});
+} as PromptValidationRule);
 
 describe('prompt exploder pattern snapshots', () => {
   it('builds snapshot with fallback name and serialized rules', () => {

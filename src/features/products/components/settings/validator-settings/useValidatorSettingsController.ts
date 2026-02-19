@@ -24,6 +24,7 @@ import {
   normalizeProductValidationInstanceDenyBehaviorMap,
 } from '@/features/products/utils/validator-instance-behavior';
 import { encodeDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
+import type { CreateProductValidationPatternDto } from '@/shared/contracts/products';
 import { invalidateValidatorConfig } from '@/shared/lib/query-invalidation';
 import type {
   ProductValidationDenyBehavior,
@@ -51,6 +52,7 @@ import {
   formatReplacementFields,
   getReplacementFieldsForTarget,
 } from './helpers';
+
 import type { PatternFormData, SequenceGroupDraft } from './types';
 
 export function useValidatorSettingsController() {
@@ -67,7 +69,7 @@ export function useValidatorSettingsController() {
   const [showModal, setShowModal] = useState(false);
   const [editingPattern, setEditingPattern] = useState<ProductValidationPattern | null>(null);
   const [formData, setFormData] = useState<PatternFormData>(EMPTY_FORM);
-  const [testResult, setTestResult] = useState<any>(null);
+  const [testResult, setTestResult] = useState<unknown>(null);
   const [groupDrafts, setGroupDrafts] = useState<Record<string, SequenceGroupDraft>>({});
   const [draggedPatternId, setDraggedPatternId] = useState<string | null>(null);
   const [dragOverPatternId, setDragOverPatternId] = useState<string | null>(null);
@@ -201,7 +203,7 @@ export function useValidatorSettingsController() {
         denyBehaviorOverride:
           formData.denyBehaviorOverride === 'inherit'
             ? null
-            : (formData.denyBehaviorOverride as ProductValidationDenyBehavior),
+            : (formData.denyBehaviorOverride),
         sequenceGroupId: editingPattern?.sequenceGroupId ?? null,
         sequenceGroupLabel: editingPattern?.sequenceGroupLabel ?? null,
         sequenceGroupDebounceMs: editingPattern?.sequenceGroupDebounceMs ?? 0,
@@ -237,16 +239,16 @@ export function useValidatorSettingsController() {
 
       if (editingPattern) {
         await updatePattern.mutateAsync({ id: editingPattern.id, data: payload });
-        toast('Pattern updated.', { variant: 'success' });
+        toast({ title: 'Pattern updated.', variant: 'default' });
       } else {
-        await createPattern.mutateAsync(payload as any);
-        toast('Pattern created.', { variant: 'success' });
-      }
-      setShowModal(false);
+        await createPattern.mutateAsync(payload as CreateProductValidationPatternDto);
+        toast({ title: 'Pattern created.', variant: 'default' });
+      }      setShowModal(false);
     } catch (error) {
       logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'savePattern', editingId: editingPattern?.id } });
-      toast(error instanceof Error ? error.message : 'Failed to save pattern.', {
-        variant: 'error',
+      toast({
+        title: error instanceof Error ? error.message : 'Failed to save pattern.',
+        variant: 'destructive',
       });
     }
   };
@@ -454,5 +456,3 @@ export function useValidatorSettingsController() {
     openEdit: handleEditPattern,
   };
 }
-
-export type ValidatorSettingsController = ReturnType<typeof useValidatorSettingsController>;

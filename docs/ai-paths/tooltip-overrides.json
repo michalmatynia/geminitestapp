@@ -1,0 +1,282 @@
+[
+  {
+    "id": "workflow_overview",
+    "title": "AI-Paths Workflow",
+    "summary": "Build node workflows, validate them, and execute runs through canvas controls.",
+    "section": "Overview",
+    "aliases": ["workflow", "overview", "ai paths"],
+    "docPath": "/docs/ai-paths/semantic-grammar/README.md",
+    "tags": ["ai-paths", "overview"],
+    "uiTargets": ["ai-paths-root"]
+  },
+  {
+    "id": "docs_tooltips_toggle",
+    "title": "Docs Tooltips Toggle",
+    "summary": "Enables documentation-driven tooltips for AI-Paths controls in this route.",
+    "section": "Canvas Header",
+    "aliases": ["docs tooltip", "tooltips"],
+    "docPath": "/docs/ai-paths/tooltip-schema-v1.md",
+    "tags": ["ai-paths", "tooltips"],
+    "uiTargets": ["canvas.header.docs-tooltips-toggle"]
+  },
+  {
+    "id": "canvas_save_path",
+    "title": "Save Path",
+    "summary": "Persists the active path graph and settings.",
+    "section": "Canvas Header",
+    "aliases": ["save path"],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": ["ai-paths", "canvas", "save"],
+    "uiTargets": ["canvas.header.save-path"]
+  },
+  {
+    "id": "canvas_paths_settings",
+    "title": "Paths Settings",
+    "summary": "Opens path-level settings including validation and runtime controls.",
+    "section": "Canvas Header",
+    "aliases": ["paths settings"],
+    "docPath": "/docs/ai-paths/node-validator-central-patterns.md",
+    "tags": ["ai-paths", "settings"],
+    "uiTargets": ["canvas.header.paths-settings"]
+  },
+  {
+    "id": "canvas_enable_node_validation",
+    "title": "Enable Node Validation",
+    "summary": "Turns on preflight node validator checks for this path.",
+    "section": "Canvas Header",
+    "aliases": ["enable validation", "node validation"],
+    "docPath": "/docs/ai-paths/node-validator-central-patterns.md",
+    "tags": ["ai-paths", "validation"],
+    "uiTargets": ["canvas.header.enable-node-validation"]
+  },
+  {
+    "id": "canvas_validate_nodes",
+    "title": "Validate Nodes",
+    "summary": "Runs node validation checks immediately and reports blocking findings.",
+    "section": "Canvas Header",
+    "aliases": ["validate nodes"],
+    "docPath": "/docs/ai-paths/node-validator-central-patterns.md",
+    "tags": ["ai-paths", "validation"],
+    "uiTargets": ["canvas.header.validate-nodes"]
+  },
+  {
+    "id": "canvas_open_node_validator",
+    "title": "Open Node Validator",
+    "summary": "Opens AI-Paths Node Validator patterns and sequences.",
+    "section": "Canvas Header",
+    "aliases": ["node validator"],
+    "docPath": "/docs/ai-paths/node-validator-central-patterns.md",
+    "tags": ["ai-paths", "validation", "patterns"],
+    "uiTargets": ["canvas.header.node-validator"]
+  },
+  {
+    "id": "canvas_toggle_path_lock",
+    "title": "Lock or Unlock Path",
+    "summary": "Locks the path to prevent edits or unlocks it for changes.",
+    "section": "Canvas Header",
+    "aliases": ["lock path", "unlock path"],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": ["ai-paths", "path"],
+    "uiTargets": ["canvas.header.path-lock"]
+  },
+  {
+    "id": "canvas_toggle_path_active",
+    "title": "Activate or Deactivate Path",
+    "summary": "Controls whether the path can execute runs.",
+    "section": "Canvas Header",
+    "aliases": ["activate path", "deactivate path"],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": ["ai-paths", "runtime"],
+    "uiTargets": ["canvas.header.path-active"]
+  },
+  {
+    "id": "canvas_clear_connector_data",
+    "title": "Clear Connector Data",
+    "summary": "Clears stored connector payload data shown in runtime inspection.",
+    "section": "Canvas Header",
+    "aliases": ["clear connector data"],
+    "docPath": "/docs/ai-paths/node-validator-runtime-patterns.md",
+    "tags": ["ai-paths", "runtime", "connector"],
+    "uiTargets": ["canvas.header.clear-connector-data"]
+  },
+  {
+    "id": "canvas_clear_history",
+    "title": "Clear History",
+    "summary": "Resets node runtime history for the active path.",
+    "section": "Canvas Header",
+    "aliases": ["clear history"],
+    "docPath": "/docs/ai-paths/node-validator-runtime-patterns.md",
+    "tags": ["ai-paths", "runtime", "history"],
+    "uiTargets": ["canvas.header.clear-history"]
+  },
+  {
+    "id": "canvas_focus_mode_toggle",
+    "title": "Canvas Focus Mode Toggle",
+    "summary": "Shows canvas-only mode or restores side panels.",
+    "section": "Canvas Header",
+    "aliases": ["show canvas only", "show side panels", "focus mode"],
+    "docPath": "/docs/ai-paths/semantic-grammar/README.md",
+    "tags": ["ai-paths", "canvas", "layout"],
+    "uiTargets": ["canvas.header.focus-mode-toggle"]
+  },
+  {
+    "id": "canvas_path_name_field",
+    "title": "Path Name",
+    "summary": "Displays and edits the active path name.",
+    "section": "Canvas Header",
+    "aliases": ["path name"],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": ["ai-paths", "path"],
+    "uiTargets": ["canvas.header.path-name"]
+  },
+  {
+    "id": "canvas_path_selector",
+    "title": "Path Selector",
+    "summary": "Switches the currently active path on the canvas.",
+    "section": "Canvas Header",
+    "aliases": ["path selector"],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": ["ai-paths", "path"],
+    "uiTargets": ["canvas.header.path-selector"]
+  },
+  {
+    "id": "palette_toggle",
+    "title": "Palette Collapse Toggle",
+    "summary": "Expands or collapses the node palette.",
+    "section": "Node Palette",
+    "aliases": ["node palette collapse", "node palette expand"],
+    "docPath": "/docs/ai-paths/semantic-grammar/README.md",
+    "tags": ["ai-paths", "palette"],
+    "uiTargets": ["palette.toggle"]
+  },
+  {
+    "id": "palette_mode_data",
+    "title": "Data Signal Mode",
+    "summary": "Shows data-processing nodes in the palette.",
+    "section": "Node Palette",
+    "aliases": ["data signal"],
+    "docPath": "/docs/ai-paths/semantic-grammar/README.md",
+    "tags": ["ai-paths", "palette"],
+    "uiTargets": ["palette.mode.data"]
+  },
+  {
+    "id": "palette_mode_sound",
+    "title": "Sound Signal Mode",
+    "summary": "Shows audio-related nodes in the palette.",
+    "section": "Node Palette",
+    "aliases": ["sound signal"],
+    "docPath": "/docs/ai-paths/semantic-grammar/README.md",
+    "tags": ["ai-paths", "palette"],
+    "uiTargets": ["palette.mode.sound"]
+  },
+  {
+    "id": "palette_search",
+    "title": "Palette Search",
+    "summary": "Filters node palette items by node title, type, or description.",
+    "section": "Node Palette",
+    "aliases": ["search node palette", "search nodes"],
+    "docPath": "/docs/ai-paths/semantic-grammar/README.md",
+    "tags": ["ai-paths", "palette", "search"],
+    "uiTargets": ["palette.search"]
+  },
+  {
+    "id": "inspector_open_node_config",
+    "title": "Open Node Config",
+    "summary": "Opens the full node configuration modal for the selected node.",
+    "section": "Inspector",
+    "aliases": ["open node config"],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": ["ai-paths", "inspector", "node-config"],
+    "uiTargets": ["inspector.open-node-config"]
+  },
+  {
+    "id": "inspector_remove_node",
+    "title": "Remove Node",
+    "summary": "Deletes the selected node from the path.",
+    "section": "Inspector",
+    "aliases": ["remove node"],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": ["ai-paths", "inspector"],
+    "uiTargets": ["inspector.remove-node"]
+  },
+  {
+    "id": "inspector_node_title",
+    "title": "Node Title",
+    "summary": "Editable display title of the selected node.",
+    "section": "Inspector",
+    "aliases": ["node title"],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": ["ai-paths", "inspector"],
+    "uiTargets": ["inspector.node-title"]
+  },
+  {
+    "id": "inspector_node_description",
+    "title": "Node Description",
+    "summary": "Editable description metadata for the selected node.",
+    "section": "Inspector",
+    "aliases": ["node description"],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": ["ai-paths", "inspector"],
+    "uiTargets": ["inspector.node-description"]
+  },
+  {
+    "id": "node_config_update",
+    "title": "Update Node",
+    "summary": "Applies unsaved node modal edits into the canvas node state.",
+    "section": "Node Config Modal",
+    "aliases": ["update node"],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": ["ai-paths", "node-config"],
+    "uiTargets": ["node-config.update"]
+  },
+  {
+    "id": "node_config_close",
+    "title": "Close Node Config",
+    "summary": "Closes the node modal; if there are unsaved changes, a confirmation appears.",
+    "section": "Node Config Modal",
+    "aliases": ["close node config"],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": ["ai-paths", "node-config"],
+    "uiTargets": ["node-config.close"]
+  },
+  {
+    "id": "node_config_copy_id",
+    "title": "Copy Node ID",
+    "summary": "Copies the current node identifier to clipboard.",
+    "section": "Node Config Modal",
+    "aliases": ["copy node id"],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": ["ai-paths", "node-config"],
+    "uiTargets": ["node-config.copy-id"]
+  },
+  {
+    "id": "regex_placeholder_text",
+    "title": "{{text}} Placeholder",
+    "summary": "Resolved sample text from preview sample or runtime input.",
+    "section": "Regex AI Prompt",
+    "aliases": ["{{text}}"],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": ["ai-paths", "regex"],
+    "uiTargets": ["regex.placeholder.text"]
+  },
+  {
+    "id": "regex_placeholder_lines",
+    "title": "{{lines}} Placeholder",
+    "summary": "Resolved sample items array derived from line-split input.",
+    "section": "Regex AI Prompt",
+    "aliases": ["{{lines}}"],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": ["ai-paths", "regex"],
+    "uiTargets": ["regex.placeholder.lines"]
+  },
+  {
+    "id": "regex_placeholder_value",
+    "title": "{{value}} Placeholder",
+    "summary": "Alias of the current value, equivalent to sample text.",
+    "section": "Regex AI Prompt",
+    "aliases": ["{{value}}"],
+    "docPath": "/docs/ai-paths/semantic-grammar/spec-v1.md",
+    "tags": ["ai-paths", "regex"],
+    "uiTargets": ["regex.placeholder.value"]
+  }
+]

@@ -114,7 +114,7 @@ describe('handleDatabaseMongoUpdateAction', () => {
   };
 
   it('uses collection update executor for custom payload mode', async () => {
-    await handleDatabaseMongoUpdateAction(baseArgs);
+    await handleDatabaseMongoUpdateAction(baseArgs as any);
 
     expect(executeMongoCollectionUpdateMock).toHaveBeenCalledTimes(1);
     expect(executeMongoEntityUpdateMock).not.toHaveBeenCalled();
@@ -128,9 +128,11 @@ describe('handleDatabaseMongoUpdateAction', () => {
         updatePayloadMode: 'mapping' as const,
       },
     };
-    await handleDatabaseMongoUpdateAction(args);
-
+      
+    await handleDatabaseMongoUpdateAction(args as any);
+      
     expect(executeMongoEntityUpdateMock).toHaveBeenCalledTimes(1);
+      
     expect(executeMongoCollectionUpdateMock).not.toHaveBeenCalled();
   });
 });

@@ -33,6 +33,7 @@ export const aiNodeTypeSchema = z.enum([
   'delay',
   'poll',
   'http',
+  'api_advanced',
   'prompt',
   'model',
   'agent',
@@ -369,6 +370,126 @@ export const httpConfigSchema = z.object({
 
 export type HttpConfigDto = z.infer<typeof httpConfigSchema>;
 
+export const advancedApiMethodSchema = z.enum([
+  'GET',
+  'POST',
+  'PUT',
+  'PATCH',
+  'DELETE',
+  'HEAD',
+  'OPTIONS',
+]);
+
+export type AdvancedApiMethodDto = z.infer<typeof advancedApiMethodSchema>;
+
+export const advancedApiBodyModeSchema = z.enum(['none', 'json', 'text']);
+export type AdvancedApiBodyModeDto = z.infer<typeof advancedApiBodyModeSchema>;
+
+export const advancedApiResponseModeSchema = z.enum(['json', 'text', 'status']);
+export type AdvancedApiResponseModeDto = z.infer<typeof advancedApiResponseModeSchema>;
+
+export const advancedApiAuthModeSchema = z.enum([
+  'none',
+  'api_key',
+  'bearer',
+  'basic',
+  'oauth2_client_credentials',
+  'connection',
+]);
+export type AdvancedApiAuthModeDto = z.infer<typeof advancedApiAuthModeSchema>;
+
+export const advancedApiApiKeyPlacementSchema = z.enum(['header', 'query']);
+export type AdvancedApiApiKeyPlacementDto = z.infer<
+  typeof advancedApiApiKeyPlacementSchema
+>;
+
+export const advancedApiBackoffStrategySchema = z.enum([
+  'fixed',
+  'exponential',
+]);
+export type AdvancedApiBackoffStrategyDto = z.infer<
+  typeof advancedApiBackoffStrategySchema
+>;
+
+export const advancedApiPaginationModeSchema = z.enum([
+  'none',
+  'page',
+  'cursor',
+  'link',
+]);
+export type AdvancedApiPaginationModeDto = z.infer<
+  typeof advancedApiPaginationModeSchema
+>;
+
+export const advancedApiPaginationAggregateModeSchema = z.enum([
+  'first_page',
+  'concat_items',
+]);
+export type AdvancedApiPaginationAggregateModeDto = z.infer<
+  typeof advancedApiPaginationAggregateModeSchema
+>;
+
+export const advancedApiRateLimitOnLimitSchema = z.enum(['wait', 'fail']);
+export type AdvancedApiRateLimitOnLimitDto = z.infer<
+  typeof advancedApiRateLimitOnLimitSchema
+>;
+
+export const advancedApiConfigSchema = z.object({
+  url: z.string(),
+  method: advancedApiMethodSchema,
+  pathParamsJson: z.string().optional(),
+  queryParamsJson: z.string().optional(),
+  headersJson: z.string().optional(),
+  bodyTemplate: z.string().optional(),
+  bodyMode: advancedApiBodyModeSchema.optional(),
+  timeoutMs: z.number().optional(),
+  authMode: advancedApiAuthModeSchema.optional(),
+  apiKeyName: z.string().optional(),
+  apiKeyValueTemplate: z.string().optional(),
+  apiKeyPlacement: advancedApiApiKeyPlacementSchema.optional(),
+  bearerTokenTemplate: z.string().optional(),
+  basicUsernameTemplate: z.string().optional(),
+  basicPasswordTemplate: z.string().optional(),
+  oauthTokenUrl: z.string().optional(),
+  oauthClientIdTemplate: z.string().optional(),
+  oauthClientSecretTemplate: z.string().optional(),
+  oauthScopeTemplate: z.string().optional(),
+  connectionIdTemplate: z.string().optional(),
+  connectionHeaderName: z.string().optional(),
+  responseMode: advancedApiResponseModeSchema.optional(),
+  responsePath: z.string().optional(),
+  outputMappingsJson: z.string().optional(),
+  retryEnabled: z.boolean().optional(),
+  retryAttempts: z.number().optional(),
+  retryBackoff: advancedApiBackoffStrategySchema.optional(),
+  retryBackoffMs: z.number().optional(),
+  retryMaxBackoffMs: z.number().optional(),
+  retryJitterRatio: z.number().optional(),
+  retryOnStatusJson: z.string().optional(),
+  retryOnNetworkError: z.boolean().optional(),
+  paginationMode: advancedApiPaginationModeSchema.optional(),
+  pageParam: z.string().optional(),
+  limitParam: z.string().optional(),
+  startPage: z.number().optional(),
+  pageSize: z.number().optional(),
+  cursorParam: z.string().optional(),
+  cursorPath: z.string().optional(),
+  itemsPath: z.string().optional(),
+  maxPages: z.number().optional(),
+  paginationAggregateMode: advancedApiPaginationAggregateModeSchema.optional(),
+  rateLimitEnabled: z.boolean().optional(),
+  rateLimitRequests: z.number().optional(),
+  rateLimitIntervalMs: z.number().optional(),
+  rateLimitConcurrency: z.number().optional(),
+  rateLimitOnLimit: advancedApiRateLimitOnLimitSchema.optional(),
+  idempotencyEnabled: z.boolean().optional(),
+  idempotencyHeaderName: z.string().optional(),
+  idempotencyKeyTemplate: z.string().optional(),
+  errorRoutesJson: z.string().optional(),
+});
+
+export type AdvancedApiConfigDto = z.infer<typeof advancedApiConfigSchema>;
+
 export const dbQueryConfigSchema = z.object({
   provider: z.enum(['auto', 'mongodb', 'prisma']),
   collection: z.string(),
@@ -587,6 +708,7 @@ export const nodeConfigSchema = z.object({
   delay: delayConfigSchema.optional(),
   poll: pollConfigSchema.optional(),
   http: httpConfigSchema.optional(),
+  apiAdvanced: advancedApiConfigSchema.optional(),
   db_schema: dbSchemaConfigSchema.optional(),
   description: descriptionConfigSchema.optional(),
   parser: parserConfigSchema.optional(),
@@ -1030,6 +1152,12 @@ export const aiPathsValidationOperatorSchema = z.enum([
   'jsonpath_equals',
   'collection_exists',
   'entity_collection_resolves',
+  'edge_endpoints_resolve',
+  'edge_ports_declared',
+  'node_types_known',
+  'node_ids_unique',
+  'edge_ids_unique',
+  'node_positions_finite',
 ]);
 export type AiPathsValidationOperatorDto = z.infer<
   typeof aiPathsValidationOperatorSchema
@@ -1072,8 +1200,38 @@ export const aiPathsValidationRuleSchema = z.object({
   forceProbabilityIfFailed: z.number().optional(),
   recommendation: z.string().optional(),
   docsBindings: z.array(z.string()).optional(),
+  inference: z
+    .object({
+      sourceType: z.enum(['manual', 'central_docs']).optional(),
+      status: z.enum(['candidate', 'approved', 'rejected', 'deprecated']).optional(),
+      assertionId: z.string().optional(),
+      sourcePath: z.string().optional(),
+      sourceHash: z.string().optional(),
+      docsSnapshotHash: z.string().optional(),
+      confidence: z.number().optional(),
+      compilerVersion: z.string().optional(),
+      inferredAt: z.string().optional(),
+      approvedAt: z.string().optional(),
+      approvedBy: z.string().optional(),
+      reviewNote: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+      deprecates: z.array(z.string()).optional(),
+    })
+    .optional(),
 });
 export type AiPathsValidationRuleDto = z.infer<typeof aiPathsValidationRuleSchema>;
+
+export const aiPathsValidationDocsSyncStateSchema = z.object({
+  lastSnapshotHash: z.string().optional(),
+  lastSyncedAt: z.string().optional(),
+  lastSyncStatus: z.enum(['idle', 'success', 'warning', 'error']).optional(),
+  lastSyncWarnings: z.array(z.string()).optional(),
+  sourceCount: z.number().optional(),
+  candidateCount: z.number().optional(),
+});
+export type AiPathsValidationDocsSyncStateDto = z.infer<
+  typeof aiPathsValidationDocsSyncStateSchema
+>;
 
 export const aiPathsValidationPolicySchema = z.enum([
   'report_only',
@@ -1095,6 +1253,8 @@ export const aiPathsValidationConfigSchema = z.object({
   collectionMap: z.record(z.string(), z.string()).optional(),
   docsSources: z.array(z.string()).optional(),
   rules: z.array(aiPathsValidationRuleSchema).optional(),
+  inferredCandidates: z.array(aiPathsValidationRuleSchema).optional(),
+  docsSyncState: aiPathsValidationDocsSyncStateSchema.optional(),
 });
 export type AiPathsValidationConfigDto = z.infer<
   typeof aiPathsValidationConfigSchema

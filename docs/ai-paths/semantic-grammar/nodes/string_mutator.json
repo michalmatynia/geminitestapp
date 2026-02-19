@@ -1,0 +1,81 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "string_mutator",
+  "title": "String Mutator",
+  "purpose": "Transform text with chained string operations.",
+  "inputs": [
+    "value",
+    "prompt",
+    "result"
+  ],
+  "outputs": [
+    "value"
+  ],
+  "configFields": [
+    {
+      "path": "stringMutator.operations",
+      "description": "Ordered list of string operations to apply to the incoming value.",
+      "defaultValue": "[]"
+    },
+    {
+      "path": "stringMutator.operations[].type",
+      "description": "Operation type: trim, replace, remove, case, append, slice."
+    },
+    {
+      "path": "stringMutator.operations[].search",
+      "description": "Text or regex pattern to replace/remove (replace/remove only)."
+    },
+    {
+      "path": "stringMutator.operations[].replace",
+      "description": "Replacement text for replace operations."
+    },
+    {
+      "path": "stringMutator.operations[].matchMode",
+      "description": "Match mode for replace/remove (first or all).",
+      "defaultValue": "all"
+    },
+    {
+      "path": "stringMutator.operations[].useRegex",
+      "description": "If true, treat search as a regex pattern.",
+      "defaultValue": "false"
+    },
+    {
+      "path": "stringMutator.operations[].flags",
+      "description": "Regex flags when useRegex is enabled (e.g., gim)."
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_string_mutator",
+    "type": "string_mutator",
+    "title": "String Mutator",
+    "description": "Transform text with chained string operations.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "value",
+      "prompt",
+      "result"
+    ],
+    "outputs": [
+      "value"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

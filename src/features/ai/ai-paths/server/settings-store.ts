@@ -6,6 +6,14 @@ import type { SettingRecordDto } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import {
+  BASE_EXPORT_BLWO_PATH_ID,
+  BASE_EXPORT_BLWO_PATH_NAME,
+  BASE_EXPORT_BLWO_TRIGGER_BUTTON_ID,
+  BASE_EXPORT_BLWO_TRIGGER_BUTTON_NAME,
+  buildBaseExportBlwoPathConfigValue,
+  needsBaseExportBlwoConfigUpgrade,
+} from './settings-store-base-export-workflow';
+import {
   buildDescriptionInferenceLitePathConfigValue,
   DESCRIPTION_INFERENCE_LITE_PATH_ID,
   DESCRIPTION_INFERENCE_LITE_PATH_NAME,
@@ -874,6 +882,151 @@ const ensureDescriptionInferenceLiteDefaults = async (
   );
 };
 
+const ensureBaseExportBlwoDefaults = async (
+  records: AiPathsSettingRecord[]
+): Promise<AiPathsSettingRecord[]> => {
+  const map = new Map<string, string>(
+    records.map((entry: AiPathsSettingRecord): [string, string] => [entry.key, entry.value])
+  );
+  const updates: AiPathsSettingRecord[] = [];
+  const now = new Date().toISOString();
+  const pathConfigKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${BASE_EXPORT_BLWO_PATH_ID}`;
+  let pathConfigRaw = map.get(pathConfigKey);
+
+  const parsedConfigMeta = pathConfigRaw
+    ? parsePathConfigMeta(BASE_EXPORT_BLWO_PATH_ID, pathConfigRaw)
+    : null;
+
+  if (!pathConfigRaw || !parsedConfigMeta || needsBaseExportBlwoConfigUpgrade(pathConfigRaw)) {
+    pathConfigRaw = buildBaseExportBlwoPathConfigValue(now);
+    map.set(pathConfigKey, pathConfigRaw);
+    updates.push({ key: pathConfigKey, value: pathConfigRaw });
+  }
+
+  const currentMetas = parsePathMetas(map.get(AI_PATHS_INDEX_KEY));
+  const pathMetaIndex = currentMetas.findIndex(
+    (meta: ParsedPathMeta): boolean => meta.id === BASE_EXPORT_BLWO_PATH_ID
+  );
+  if (pathMetaIndex === -1) {
+    const fallbackMeta: ParsedPathMeta = {
+      id: BASE_EXPORT_BLWO_PATH_ID,
+      name: BASE_EXPORT_BLWO_PATH_NAME,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const configMeta = pathConfigRaw
+      ? parsePathConfigMeta(BASE_EXPORT_BLWO_PATH_ID, pathConfigRaw)
+      : null;
+    const nextMetas = [...currentMetas, configMeta ?? fallbackMeta].sort(
+      (a: ParsedPathMeta, b: ParsedPathMeta) => b.updatedAt.localeCompare(a.updatedAt)
+    );
+    const indexValue = JSON.stringify(nextMetas);
+    map.set(AI_PATHS_INDEX_KEY, indexValue);
+    updates.push({ key: AI_PATHS_INDEX_KEY, value: indexValue });
+  } else {
+    const currentMeta = currentMetas[pathMetaIndex];
+    if (currentMeta && currentMeta.name.trim() !== BASE_EXPORT_BLWO_PATH_NAME) {
+      const nextMetas = [...currentMetas];
+      nextMetas[pathMetaIndex] = {
+        ...currentMeta,
+        name: BASE_EXPORT_BLWO_PATH_NAME,
+        updatedAt: now,
+      };
+      const indexValue = JSON.stringify(nextMetas);
+      map.set(AI_PATHS_INDEX_KEY, indexValue);
+      updates.push({ key: AI_PATHS_INDEX_KEY, value: indexValue });
+    }
+  }
+
+  const parsedButtons = parseTriggerButtons(map.get(AI_PATHS_TRIGGER_BUTTONS_KEY));
+  if (parsedButtons === null) {
+    const triggerButtonsValue = JSON.stringify([
+      {
+        id: BASE_EXPORT_BLWO_TRIGGER_BUTTON_ID,
+        name: BASE_EXPORT_BLWO_TRIGGER_BUTTON_NAME,
+        iconId: null,
+        locations: ['product_row'],
+        mode: 'click',
+        display: 'icon_label',
+        createdAt: now,
+        updatedAt: now,
+      },
+    ]);
+    map.set(AI_PATHS_TRIGGER_BUTTONS_KEY, triggerButtonsValue);
+    updates.push({
+      key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+      value: triggerButtonsValue,
+    });
+  } else if (parsedButtons) {
+    const canonicalButtonName = BASE_EXPORT_BLWO_TRIGGER_BUTTON_NAME.trim().toLowerCase();
+    const seenButtonIds = new Set<string>();
+    const nextButtons = parsedButtons.reduce(
+      (acc: TriggerButtonSettingRecord[], button: TriggerButtonSettingRecord) => {
+        const normalizedName =
+          typeof button['name'] === 'string' ? button['name'].trim().toLowerCase() : '';
+        if (
+          button.id !== BASE_EXPORT_BLWO_TRIGGER_BUTTON_ID &&
+          normalizedName === canonicalButtonName
+        ) {
+          return acc;
+        }
+        if (seenButtonIds.has(button.id)) return acc;
+        seenButtonIds.add(button.id);
+        acc.push(button);
+        return acc;
+      },
+      []
+    );
+    const existingIndex = nextButtons.findIndex(
+      (button: TriggerButtonSettingRecord): boolean =>
+        button.id === BASE_EXPORT_BLWO_TRIGGER_BUTTON_ID
+    );
+    if (existingIndex >= 0) {
+      const existingButton = nextButtons[existingIndex]!;
+      nextButtons[existingIndex] = {
+        ...existingButton,
+        name: BASE_EXPORT_BLWO_TRIGGER_BUTTON_NAME,
+        locations: Array.from(
+          new Set([
+            ...(Array.isArray(existingButton['locations'])
+              ? (existingButton['locations'] as string[])
+              : []),
+            'product_row',
+          ])
+        ),
+        mode: 'click',
+        display: 'icon_label',
+      };
+    } else {
+      nextButtons.push({
+        id: BASE_EXPORT_BLWO_TRIGGER_BUTTON_ID,
+        name: BASE_EXPORT_BLWO_TRIGGER_BUTTON_NAME,
+        iconId: null,
+        locations: ['product_row'],
+        mode: 'click',
+        display: 'icon_label',
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    if (JSON.stringify(nextButtons) !== JSON.stringify(parsedButtons)) {
+      const triggerButtonsValue = JSON.stringify(nextButtons);
+      map.set(AI_PATHS_TRIGGER_BUTTONS_KEY, triggerButtonsValue);
+      updates.push({
+        key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+        value: triggerButtonsValue,
+      });
+    }
+  }
+
+  if (updates.length === 0) return records;
+  await upsertMongoAiPathsSettingsBatch(updates);
+  return Array.from(map.entries()).map(
+    ([key, value]): AiPathsSettingRecord => ({ key, value })
+  );
+};
+
 const ensureTranslationEnPlDefaults = async (
   records: AiPathsSettingRecord[]
 ): Promise<AiPathsSettingRecord[]> => {
@@ -1082,6 +1235,44 @@ const hasDescriptionInferenceLiteDefaults = (
   return locations.includes('product_modal');
 };
 
+const hasBaseExportBlwoDefaults = (
+  records: AiPathsSettingRecord[]
+): boolean => {
+  if (records.length === 0) return false;
+  const map = new Map<string, string>(
+    records.map((entry: AiPathsSettingRecord): [string, string] => [entry.key, entry.value])
+  );
+  const configRaw = map.get(
+    `${AI_PATHS_CONFIG_KEY_PREFIX}${BASE_EXPORT_BLWO_PATH_ID}`
+  );
+  if (needsBaseExportBlwoConfigUpgrade(configRaw)) return false;
+  const configMeta = configRaw
+    ? parsePathConfigMeta(BASE_EXPORT_BLWO_PATH_ID, configRaw)
+    : null;
+  if (!configMeta) return false;
+
+  const metas = parsePathMetas(map.get(AI_PATHS_INDEX_KEY));
+  const pathMeta = metas.find(
+    (meta: ParsedPathMeta): boolean => meta.id === BASE_EXPORT_BLWO_PATH_ID
+  );
+  if (!pathMeta) return false;
+
+  const buttons = parseTriggerButtons(map.get(AI_PATHS_TRIGGER_BUTTONS_KEY));
+  if (buttons === null) return false;
+  const blwoButton = buttons.find(
+    (button: TriggerButtonSettingRecord): boolean =>
+      button.id === BASE_EXPORT_BLWO_TRIGGER_BUTTON_ID
+  );
+  if (!blwoButton) return false;
+  const buttonName =
+    typeof blwoButton['name'] === 'string' ? (blwoButton['name']).trim() : '';
+  if (buttonName !== BASE_EXPORT_BLWO_TRIGGER_BUTTON_NAME) return false;
+  const locations = Array.isArray(blwoButton['locations'])
+    ? blwoButton['locations']
+    : [];
+  return locations.includes('product_row');
+};
+
 const hasTranslationEnPlDefaults = (records: AiPathsSettingRecord[]): boolean => {
   if (records.length === 0) return false;
   const map = new Map<string, string>(
@@ -1097,6 +1288,7 @@ const hasTranslationEnPlDefaults = (records: AiPathsSettingRecord[]): boolean =>
 const hasAiPathsSeedDefaults = (records: AiPathsSettingRecord[]): boolean =>
   hasParameterInferenceDefaults(records) &&
   hasDescriptionInferenceLiteDefaults(records) &&
+  hasBaseExportBlwoDefaults(records) &&
   hasTranslationEnPlDefaults(records);
 
 export async function listAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
@@ -1111,8 +1303,11 @@ export async function listAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
   const withDescriptionDefaults = await ensureDescriptionInferenceLiteDefaults(
     withParameterDefaults
   );
-  const ensuredDefaults = await ensureTranslationEnPlDefaults(
+  const withBaseExportDefaults = await ensureBaseExportBlwoDefaults(
     withDescriptionDefaults
+  );
+  const ensuredDefaults = await ensureTranslationEnPlDefaults(
+    withBaseExportDefaults
   );
   setCachedAiPathsSettings(ensuredDefaults);
   return ensuredDefaults;

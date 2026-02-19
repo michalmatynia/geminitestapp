@@ -1,0 +1,69 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "compare",
+  "title": "Compare",
+  "purpose": "Compare a value and emit valid/errors.",
+  "inputs": [
+    "value"
+  ],
+  "outputs": [
+    "value",
+    "valid",
+    "errors"
+  ],
+  "configFields": [
+    {
+      "path": "compare.operator",
+      "description": "Comparison operator (eq/neq/gt/gte/lt/lte/contains/startsWith/endsWith/isEmpty/notEmpty).",
+      "defaultValue": "eq"
+    },
+    {
+      "path": "compare.compareTo",
+      "description": "String to compare against (converted based on operator and input value).",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "compare.caseSensitive",
+      "description": "When comparing strings, whether case matters.",
+      "defaultValue": "false"
+    },
+    {
+      "path": "compare.message",
+      "description": "Optional error message to emit when valid is false."
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_compare",
+    "type": "compare",
+    "title": "Compare",
+    "description": "Compare a value and emit valid/errors.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "value"
+    ],
+    "outputs": [
+      "value",
+      "valid",
+      "errors"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

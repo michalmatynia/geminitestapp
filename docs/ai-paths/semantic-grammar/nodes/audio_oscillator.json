@@ -1,0 +1,98 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "audio_oscillator",
+  "title": "Audio Oscillator",
+  "purpose": "Generate a waveform signal (sine/square/triangle/sawtooth).",
+  "inputs": [
+    "frequency",
+    "waveform",
+    "gain",
+    "durationMs",
+    "trigger"
+  ],
+  "outputs": [
+    "audioSignal",
+    "frequency",
+    "waveform",
+    "gain",
+    "durationMs"
+  ],
+  "configFields": [
+    {
+      "path": "audioOscillator.waveform",
+      "description": "Wave shape for generated signal: sine/square/triangle/sawtooth.",
+      "defaultValue": "sine"
+    },
+    {
+      "path": "audioOscillator.frequencyHz",
+      "description": "Signal frequency in Hz.",
+      "defaultValue": "440"
+    },
+    {
+      "path": "audioOscillator.gain",
+      "description": "Signal amplitude in 0..1 range.",
+      "defaultValue": "0.25"
+    },
+    {
+      "path": "audioOscillator.durationMs",
+      "description": "Playback duration in milliseconds.",
+      "defaultValue": "400"
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "defaultConfig": {
+    "audioOscillator": {
+      "waveform": "sine",
+      "frequencyHz": 440,
+      "gain": 0.25,
+      "durationMs": 400
+    }
+  },
+  "semanticNodeExample": {
+    "id": "node_audio_oscillator",
+    "type": "audio_oscillator",
+    "title": "Audio Oscillator",
+    "description": "Generate a waveform signal (sine/square/triangle/sawtooth).",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "frequency",
+      "waveform",
+      "gain",
+      "durationMs",
+      "trigger"
+    ],
+    "outputs": [
+      "audioSignal",
+      "frequency",
+      "waveform",
+      "gain",
+      "durationMs"
+    ],
+    "config": {
+      "audioOscillator": {
+        "waveform": "sine",
+        "frequencyHz": 440,
+        "gain": 0.25,
+        "durationMs": 400
+      }
+    },
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

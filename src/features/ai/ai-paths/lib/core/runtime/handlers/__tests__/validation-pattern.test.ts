@@ -82,7 +82,7 @@ const buildContext = (
   }) as NodeHandlerContext;
 
 describe('handleValidationPattern', () => {
-  it('blocks when error-level issues are present', () => {
+  it('blocks when error-level issues are present', async () => {
     const node = buildNode({
       config: {
         validationPattern: {
@@ -122,18 +122,18 @@ describe('handleValidationPattern', () => {
       },
     });
 
-    const result = handleValidationPattern(buildContext(node, { value: 'world' }));
-    expect(result.valid).toBe(false);
-    expect(result.errors).toEqual(
+    const result = (await handleValidationPattern(buildContext(node, { value: 'world' }))) as Record<string, any>;
+    expect(result['valid']).toBe(false);
+    expect(result['errors']).toEqual(
       expect.arrayContaining([
         expect.stringContaining('Must contain hello'),
       ])
     );
-    expect(result.value).toBe('world');
-    expect((result.bundle as Record<string, unknown>)['issueCount']).toBe(1);
+    expect(result['value']).toBe('world');
+    expect((result['bundle'] as Record<string, unknown>)['issueCount']).toBe(1);
   });
 
-  it('can autofix input and clear issues', () => {
+  it('can autofix input and clear issues', async () => {
     const node = buildNode({
       config: {
         validationPattern: {
@@ -184,16 +184,16 @@ describe('handleValidationPattern', () => {
       },
     });
 
-    const result = handleValidationPattern(buildContext(node, { value: 'foo text' }));
-    expect(result.valid).toBe(true);
-    expect(result.value).toContain('bar');
-    expect(result.errors).toEqual([]);
+    const result = (await handleValidationPattern(buildContext(node, { value: 'foo text' }))) as Record<string, any>;
+    expect(result['valid']).toBe(true);
+    expect(result['value']).toContain('bar');
+    expect(result['errors']).toEqual([]);
     expect(
-      Array.isArray((result.bundle as Record<string, unknown>)['appliedFixes'])
+      Array.isArray((result['bundle'] as Record<string, unknown>)['appliedFixes'])
     ).toBe(true);
   });
 
-  it('supports report-only mode', () => {
+  it('supports report-only mode', async () => {
     const node = buildNode({
       config: {
         validationPattern: {
@@ -233,17 +233,17 @@ describe('handleValidationPattern', () => {
       },
     });
 
-    const result = handleValidationPattern(buildContext(node, { value: 'abc' }));
-    expect(result.valid).toBe(true);
-    expect((result.errors as string[]).length).toBe(1);
+    const result = (await handleValidationPattern(buildContext(node, { value: 'abc' }))) as Record<string, any>;
+    expect(result['valid']).toBe(true);
+    expect((result['errors'] as string[]).length).toBe(1);
   });
 
-  it('passes through when no rules are configured', () => {
+  it('passes through when no rules are configured', async () => {
     const node = buildNode();
-    const result = handleValidationPattern(buildContext(node, { value: 'abc' }));
-    expect(result.valid).toBe(true);
-    expect(result.errors).toEqual([]);
-    expect((result.bundle as Record<string, unknown>)['reason']).toBe(
+    const result = (await handleValidationPattern(buildContext(node, { value: 'abc' }))) as Record<string, any>;
+    expect(result['valid']).toBe(true);
+    expect(result['errors']).toEqual([]);
+    expect((result['bundle'] as Record<string, unknown>)['reason']).toBe(
       'no_rules_configured'
     );
   });

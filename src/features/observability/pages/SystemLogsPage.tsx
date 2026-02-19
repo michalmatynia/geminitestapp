@@ -14,11 +14,12 @@ import {
   type SystemLogFilterFormValues,
 } from '@/features/observability/lib/log-triage-presets';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
+import type { AiInsightRecordDto as AiInsightRecord } from '@/shared/contracts/ai-insights';
 import { 
   MongoIndexInfoDto as MongoIndexInfo,
-  MongoCollectionIndexStatusDto as MongoCollectionIndexStatus
+  MongoCollectionIndexStatusDto as MongoCollectionIndexStatus,
+  SystemLogRecordDto as SystemLogRecord
 } from '@/shared/contracts/observability';
-import type { SystemLogRecord, AiInsightRecord } from '@/shared/types';
 import { 
   Button, 
   DataTable,
@@ -273,7 +274,7 @@ function LogMetrics(): React.JSX.Element {
           <Card variant='glass' padding='md'>
             <Hint uppercase className='mb-2 font-semibold' variant='muted'>Traffic Origins</Hint>
             <div className='max-h-[100px] overflow-y-auto pr-2 space-y-1'>
-              {metrics.topSources.map((item) => (
+              {metrics.topSources.map((item: { source: string; count: number }) => (
                 <PropertyRow
                   key={item.source}
                   label={<StatusBadge status={item.source} variant='neutral' size='sm' className='font-mono h-4' />}
@@ -380,7 +381,7 @@ function LogList(): React.JSX.Element {
     {
       accessorKey: 'createdAt',
       header: 'Timestamp',
-      cell: ({ row }) => <span className='text-xs text-gray-500 font-mono'>{formatTimestamp(row.original.createdAt)}</span>,
+      cell: ({ row }) => <span className='text-xs text-gray-500 font-mono'>{formatTimestamp(row.original.createdAt || '')}</span>,
     },
     {
       accessorKey: 'message',

@@ -1,4 +1,4 @@
-import type { SystemLogLevel } from '@/shared/types';
+import type { SystemLogLevelDto as SystemLogLevel } from '@/shared/contracts/observability';
 
 import { SYSTEM_LOG_FILTER_DEFAULTS, type SystemLogFilterFormValues } from './log-triage-presets';
 

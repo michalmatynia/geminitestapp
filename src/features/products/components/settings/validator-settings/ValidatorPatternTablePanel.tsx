@@ -98,7 +98,7 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
     pattern: ProductValidationPattern,
     event: React.DragEvent<HTMLDivElement>
   ): void => {
-    void handlePatternDrop(pattern, event);
+    handlePatternDrop(pattern, event);
   };
   const onTogglePattern = (pattern: ProductValidationPattern): void => {
     void handleTogglePattern(pattern);

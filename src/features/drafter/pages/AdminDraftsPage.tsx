@@ -7,6 +7,7 @@ import { SectionHeader } from '@/shared/ui';
 import { DraftCreatorModal } from '../components/DraftCreatorModal';
 import { DraftList } from '../components/DraftList';
 import { DrafterProvider, useDrafterContext } from '../context/DrafterContext';
+import { useDraftQueries } from '../hooks/useDraftQueries';
 
 function AdminDraftsPageContent(): React.JSX.Element {
   const { 
@@ -15,6 +16,9 @@ function AdminDraftsPageContent(): React.JSX.Element {
     closeCreator, 
     formRef 
   } = useDrafterContext();
+
+  const { data: drafts = [] } = useDraftQueries();
+  const editingDraft = drafts.find(d => d.id === editingDraftId) ?? null;
 
   return (
     <div className='container mx-auto py-10'>
@@ -30,7 +34,7 @@ function AdminDraftsPageContent(): React.JSX.Element {
         isOpen={isCreatorOpen}
         onClose={closeCreator}
         onSuccess={() => {}}
-        item={editingDraftId}
+        item={editingDraft}
         formRef={formRef}
       />
     </div>

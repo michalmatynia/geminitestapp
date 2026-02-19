@@ -60,8 +60,10 @@ export function ItemLibrary<T extends LibraryItem>({
 
   const sortedItems = useMemo(() => {
     return [...items].sort((a, b) => {
-      const aDate = new Date(a.updatedAt ?? a.createdAt).getTime();
-      const bDate = new Date(b.updatedAt ?? b.createdAt).getTime();
+      const aTime = a.updatedAt || a.createdAt;
+      const bTime = b.updatedAt || b.createdAt;
+      const aDate = new Date(aTime || 0).getTime();
+      const bDate = new Date(bTime || 0).getTime();
       return bDate - aDate;
     });
   }, [items]);

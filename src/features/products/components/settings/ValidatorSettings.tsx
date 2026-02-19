@@ -23,8 +23,7 @@ export function ValidatorSettings(): React.JSX.Element {
   return (
     <ValidatorDocsTooltipsProvider>
       <ValidatorSettingsProvider value={controller}>
-        <div className='space-y-5'>
-          <ValidatorDocsTooltipsPanel />
+        <div className='space-y-5'>          <ValidatorDocsTooltipsPanel />
           <ValidatorDefaultPanel />
           <ValidatorInstanceBehaviorPanel />
           <ValidatorPatternListLinkPanel />

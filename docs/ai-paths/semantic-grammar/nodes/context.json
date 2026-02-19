@@ -1,0 +1,91 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "context",
+  "title": "Context Filter",
+  "purpose": "Filter incoming context payloads into scoped entity data.",
+  "inputs": [
+    "context"
+  ],
+  "outputs": [
+    "context",
+    "entityId",
+    "entityType",
+    "entityJson"
+  ],
+  "configFields": [
+    {
+      "path": "context.role",
+      "description": "Context role for downstream nodes (used as a hint for prompts and filtering)."
+    },
+    {
+      "path": "context.entityType",
+      "description": "Forced entity type (auto/product/note/etc). If auto, it uses incoming trigger context.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "context.entityIdSource",
+      "description": "Where to read entityId from when loading context. simulation/manual/context.",
+      "defaultValue": "simulation"
+    },
+    {
+      "path": "context.entityId",
+      "description": "Entity ID to fetch when entityIdSource is manual (or as a fallback when missing).",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "context.scopeMode",
+      "description": "How to scope the payload: full (no filter), include (only includePaths), exclude (drop excludePaths).",
+      "defaultValue": "full"
+    },
+    {
+      "path": "context.scopeTarget",
+      "description": "What is being scoped: entity (only entity object) or context (full context payload).",
+      "defaultValue": "entity"
+    },
+    {
+      "path": "context.includePaths",
+      "description": "List of JSON paths to keep when scopeMode is include (example: ['title','images']).",
+      "defaultValue": "[]"
+    },
+    {
+      "path": "context.excludePaths",
+      "description": "List of JSON paths to remove when scopeMode is exclude (example: ['internal.notes']).",
+      "defaultValue": "[]"
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_context",
+    "type": "context",
+    "title": "Context Filter",
+    "description": "Filter incoming context payloads into scoped entity data.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "context"
+    ],
+    "outputs": [
+      "context",
+      "entityId",
+      "entityType",
+      "entityJson"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

@@ -15,10 +15,12 @@ import {
   DEFAULT_AI_PATHS_VALIDATION_DOC_SOURCES,
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
+  approveInferredAiPathsValidationRule,
   buildAiPathsValidationRulesFromDocs,
   createDefaultPathConfig,
   evaluateAiPathsValidationPreflight,
   normalizeAiPathsValidationConfig,
+  rejectInferredAiPathsValidationRule,
 } from '@/features/ai/ai-paths/lib';
 import { AI_PATHS_NODE_DOCS } from '@/features/ai/ai-paths/lib/core/docs/node-docs';
 import { updateAiPathsSettingsBulk } from '@/features/ai/ai-paths/lib/settings-store-client';
@@ -47,6 +49,31 @@ type ParsedAiPathsSettings = {
 type RuleParseResult =
   | { ok: true; value: AiPathsValidationRule[] }
   | { ok: false; error: string };
+
+type CentralDocsSnapshotSource = {
+  id: string;
+  path: string;
+  type: string;
+  hash: string;
+  assertionCount: number;
+  priority?: number | undefined;
+  tags?: string[] | undefined;
+  snippetNames?: string[] | undefined;
+};
+
+type CentralDocsSnapshotPayload = {
+  generatedAt: string;
+  snapshotHash: string;
+  warnings: string[];
+  sources: CentralDocsSnapshotSource[];
+};
+
+type CentralDocsSnapshotResponse = {
+  snapshot: CentralDocsSnapshotPayload;
+  inferredCandidates: AiPathsValidationRule[];
+};
+
+type CandidateChangeKind = 'new' | 'changed' | 'existing';
 
 const VALIDATION_POLICY_OPTIONS = [
   { value: 'block_below_threshold', label: 'Block Below Threshold' },
@@ -128,6 +155,32 @@ const parseRulesDraft = (value: string): RuleParseResult => {
     return { ok: false, error: 'Invalid validation rules JSON.' };
   }
 };
+
+const uniqueStringList = (values: string[]): string[] =>
+  Array.from(
+    new Set(
+      values
+        .map((value: string): string => value.trim())
+        .filter((value: string): boolean => value.length > 0),
+    ),
+  );
+
+const getAssertionIdFromRule = (rule: AiPathsValidationRule): string | null => {
+  const value = rule.inference?.assertionId;
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const getSourceHashFromRule = (rule: AiPathsValidationRule): string | null => {
+  const value = rule.inference?.sourceHash;
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const getCandidateTags = (rule: AiPathsValidationRule): string[] =>
+  uniqueStringList(rule.inference?.tags ?? []);
 
 const coercePathConfig = (pathId: string, raw: unknown): PathConfig | null => {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
@@ -271,7 +324,12 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
   const [rulesDraft, setRulesDraft] = useState<string>('[]');
   const [rulesDraftError, setRulesDraftError] = useState<string | null>(null);
   const [docsSearch, setDocsSearch] = useState<string>('');
+  const [candidateTagFilter, setCandidateTagFilter] = useState<string>('all');
+  const [candidateModuleFilter, setCandidateModuleFilter] = useState<string>('all');
   const [saving, setSaving] = useState<boolean>(false);
+  const [syncingCentralDocs, setSyncingCentralDocs] = useState<boolean>(false);
+  const [centralSnapshot, setCentralSnapshot] =
+    useState<CentralDocsSnapshotPayload | null>(null);
 
   useEffect(() => {
     if (parsedSettings.pathMetas.length === 0) {
@@ -307,6 +365,7 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
     setCollectionMapDraft(serializeCollectionMap(persistedValidation.collectionMap ?? {}));
     setRulesDraft(JSON.stringify(persistedValidation.rules ?? [], null, 2));
     setRulesDraftError(null);
+    setCentralSnapshot(null);
   }, [persistedSignature, selectedPathConfig]);
 
   const pathOptions = useMemo(
@@ -367,6 +426,141 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
     });
   }, [focusNodeType, sortedRules]);
 
+  const inferredCandidates = useMemo(
+    () => [...(validationDraft.inferredCandidates ?? [])],
+    [validationDraft.inferredCandidates],
+  );
+  const centralRuleByAssertionId = useMemo(() => {
+    const map = new Map<string, AiPathsValidationRule>();
+    (validationDraft.rules ?? []).forEach((rule: AiPathsValidationRule) => {
+      const assertionId = getAssertionIdFromRule(rule);
+      if (!assertionId) return;
+      map.set(assertionId, rule);
+    });
+    return map;
+  }, [validationDraft.rules]);
+
+  const candidateChangeKindById = useMemo(() => {
+    const map = new Map<string, CandidateChangeKind>();
+    inferredCandidates.forEach((rule: AiPathsValidationRule) => {
+      const assertionId = getAssertionIdFromRule(rule);
+      if (!assertionId) {
+        map.set(rule.id, 'new');
+        return;
+      }
+      const existing = centralRuleByAssertionId.get(assertionId);
+      if (!existing) {
+        map.set(rule.id, 'new');
+        return;
+      }
+      const nextSourceHash = getSourceHashFromRule(rule);
+      const previousSourceHash = getSourceHashFromRule(existing);
+      if (nextSourceHash && previousSourceHash && nextSourceHash !== previousSourceHash) {
+        map.set(rule.id, 'changed');
+        return;
+      }
+      map.set(rule.id, 'existing');
+    });
+    return map;
+  }, [centralRuleByAssertionId, inferredCandidates]);
+
+  const candidateModuleOptions = useMemo(
+    () =>
+      [
+        { value: 'all', label: 'All Modules' },
+        ...Array.from(
+          new Set(
+            inferredCandidates.map((rule: AiPathsValidationRule): string => rule.module),
+          ),
+        )
+          .sort((left: string, right: string) => left.localeCompare(right))
+          .map((module: string) => ({
+            value: module,
+            label: module,
+          })),
+      ] satisfies Array<{ value: string; label: string }>,
+    [inferredCandidates],
+  );
+
+  const candidateTagOptions = useMemo(
+    () =>
+      [
+        { value: 'all', label: 'All Tags' },
+        ...Array.from(
+          new Set(
+            inferredCandidates.flatMap((rule: AiPathsValidationRule): string[] =>
+              getCandidateTags(rule),
+            ),
+          ),
+        )
+          .sort((left: string, right: string) => left.localeCompare(right))
+          .map((tag: string) => ({
+            value: tag,
+            label: tag,
+          })),
+      ] satisfies Array<{ value: string; label: string }>,
+    [inferredCandidates],
+  );
+
+  const candidateRules = useMemo(
+    () =>
+      inferredCandidates
+        .filter(
+          (rule: AiPathsValidationRule): boolean =>
+            (rule.inference?.status ?? 'candidate') === 'candidate',
+        )
+        .filter((rule: AiPathsValidationRule): boolean => {
+          if (candidateModuleFilter === 'all') return true;
+          return rule.module === candidateModuleFilter;
+        })
+        .filter((rule: AiPathsValidationRule): boolean => {
+          if (candidateTagFilter === 'all') return true;
+          return getCandidateTags(rule).includes(candidateTagFilter);
+        })
+        .sort((left, right) => left.id.localeCompare(right.id)),
+    [candidateModuleFilter, candidateTagFilter, inferredCandidates],
+  );
+  const rejectedCandidates = useMemo(
+    () =>
+      inferredCandidates
+        .filter(
+          (rule: AiPathsValidationRule): boolean =>
+            (rule.inference?.status ?? 'candidate') === 'rejected',
+        )
+        .sort((left, right) => left.id.localeCompare(right.id)),
+    [inferredCandidates],
+  );
+
+  const candidateChangeStats = useMemo(() => {
+    const stats = { new: 0, changed: 0, existing: 0 };
+    candidateRules.forEach((rule: AiPathsValidationRule) => {
+      const kind = candidateChangeKindById.get(rule.id) ?? 'new';
+      stats[kind] += 1;
+    });
+    return stats;
+  }, [candidateChangeKindById, candidateRules]);
+
+  const validatorCoverage = useMemo(() => {
+    const coveredNodeTypes = new Set<string>();
+    (validationDraft.rules ?? [])
+      .filter((rule: AiPathsValidationRule): boolean => rule.enabled !== false)
+      .forEach((rule: AiPathsValidationRule) => {
+        (rule.appliesToNodeTypes ?? []).forEach((nodeType: string) =>
+          coveredNodeTypes.add(nodeType),
+        );
+      });
+    const docsNodeTypes = AI_PATHS_NODE_DOCS.map((doc) => doc.type);
+    const uncoveredNodeTypes = docsNodeTypes.filter(
+      (nodeType: string): boolean => !coveredNodeTypes.has(nodeType),
+    );
+    return {
+      coveredCount: coveredNodeTypes.size,
+      totalCount: docsNodeTypes.length,
+      uncoveredNodeTypes,
+    };
+  }, [validationDraft.rules]);
+  const syncWarnings = validationDraft.docsSyncState?.lastSyncWarnings ?? [];
+
   const validationReport = useMemo(() => {
     if (!selectedPathConfig) return null;
     return evaluateAiPathsValidationPreflight({
@@ -389,6 +583,12 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
         ...patch,
       }),
     );
+  };
+
+  const setDraftRules = (nextRules: AiPathsValidationRule[]): void => {
+    updateDraft({ rules: nextRules });
+    setRulesDraft(JSON.stringify(nextRules, null, 2));
+    setRulesDraftError(null);
   };
 
   const applyDocsSources = (nextSources: string[]): void => {
@@ -416,8 +616,7 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
       toast(parsed.error, { variant: 'error' });
       return false;
     }
-    setRulesDraftError(null);
-    updateDraft({ rules: parsed.value });
+    setDraftRules(parsed.value);
     toast(`Applied ${parsed.value.length} validation rules.`, { variant: 'success' });
     return true;
   };
@@ -425,13 +624,10 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
   const handleRebuildRulesFromDocs = (): void => {
     const scopedSources = parseDocsSourcesText(docsSourcesDraft);
     const rebuiltRules = buildAiPathsValidationRulesFromDocs(scopedSources);
-    setValidationDraft((previous: AiPathsValidationConfig) =>
-      normalizeAiPathsValidationConfig({
-        ...previous,
-        docsSources: scopedSources,
-        rules: rebuiltRules,
-      }),
-    );
+    updateDraft({
+      docsSources: scopedSources,
+      rules: rebuiltRules,
+    });
     setDocsSourcesDraft(serializeDocsSources(scopedSources));
     setRulesDraft(JSON.stringify(rebuiltRules, null, 2));
     setRulesDraftError(null);
@@ -451,38 +647,285 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
   };
 
   const handleToggleRuleEnabled = (ruleId: string): void => {
-    updateDraft({
-      rules: (validationDraft.rules ?? []).map((rule: AiPathsValidationRule) =>
-        rule.id === ruleId ? { ...rule, enabled: rule.enabled === false } : rule,
-      ),
-    });
+    const nextRules = (validationDraft.rules ?? []).map((rule: AiPathsValidationRule) =>
+      rule.id === ruleId ? { ...rule, enabled: rule.enabled === false } : rule,
+    );
+    setDraftRules(nextRules);
   };
 
   const handleRuleSequenceBlur = (ruleId: string, rawValue: string): void => {
     const parsed = Number.parseInt(rawValue, 10);
     if (!Number.isFinite(parsed)) return;
+    const nextRules = (validationDraft.rules ?? []).map((rule: AiPathsValidationRule) =>
+      rule.id === ruleId ? { ...rule, sequence: parsed } : rule,
+    );
+    setDraftRules(nextRules);
+  };
+
+  const handleSyncFromCentralDocs = async (): Promise<void> => {
+    setSyncingCentralDocs(true);
+    try {
+      const response = await fetch('/api/ai-paths/validation/docs-snapshot', {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      if (!response.ok) {
+        throw new Error(`Central docs sync failed (${response.status}).`);
+      }
+      const payload = (await response.json()) as CentralDocsSnapshotResponse;
+      if (!payload?.snapshot || !Array.isArray(payload?.inferredCandidates)) {
+        throw new Error('Central docs sync returned invalid payload.');
+      }
+
+      const rejectedAssertionIds = new Set<string>(
+        (validationDraft.inferredCandidates ?? [])
+          .filter(
+            (rule: AiPathsValidationRule): boolean =>
+              rule.inference?.status === 'rejected',
+          )
+          .map((rule: AiPathsValidationRule): string | null => {
+            const assertionId = rule.inference?.assertionId;
+            return typeof assertionId === 'string' && assertionId.trim().length > 0
+              ? assertionId.trim()
+              : null;
+          })
+          .filter((value: string | null): value is string => Boolean(value)),
+      );
+
+      const mergedCandidates = payload.inferredCandidates.map(
+        (candidate: AiPathsValidationRule): AiPathsValidationRule => {
+          const assertionId = candidate.inference?.assertionId ?? null;
+          if (!assertionId || !rejectedAssertionIds.has(assertionId)) {
+            return candidate;
+          }
+          return rejectInferredAiPathsValidationRule(
+            candidate,
+            'Previously rejected during docs sync review.',
+          );
+        },
+      );
+
+      const incomingByAssertionId = new Map<string, AiPathsValidationRule>();
+      mergedCandidates.forEach((candidate: AiPathsValidationRule) => {
+        const assertionId = getAssertionIdFromRule(candidate);
+        if (!assertionId) return;
+        incomingByAssertionId.set(assertionId, candidate);
+      });
+
+      const previousRules = [...(validationDraft.rules ?? [])];
+      const nextRules = [...previousRules];
+      const autoDeprecatedRuleIds = new Set<string>();
+      const staleWarnings: string[] = [];
+
+      mergedCandidates.forEach((candidate: AiPathsValidationRule) => {
+        const deprecates = uniqueStringList(candidate.inference?.deprecates ?? []);
+        if (deprecates.length === 0) return;
+        const assertionId = getAssertionIdFromRule(candidate) ?? candidate.id;
+        deprecates.forEach((deprecatedAssertionId: string) => {
+          const index = nextRules.findIndex(
+            (rule: AiPathsValidationRule): boolean =>
+              getAssertionIdFromRule(rule) === deprecatedAssertionId,
+          );
+          if (index < 0) return;
+          const targetRule = nextRules[index];
+          if (!targetRule) return;
+          autoDeprecatedRuleIds.add(targetRule.id);
+          nextRules[index] = {            ...targetRule,
+            enabled: false,
+            inference: {
+              ...(targetRule.inference ?? {}),
+              sourceType: targetRule.inference?.sourceType ?? 'central_docs',
+              status: 'deprecated',
+              reviewNote: `Deprecated by assertion ${assertionId}.`,
+            },
+          };
+          staleWarnings.push(
+            `Rule "${targetRule.title}" is deprecated by central assertion "${assertionId}".`,
+          );
+        });
+      });
+
+      previousRules.forEach((rule: AiPathsValidationRule) => {
+        if (rule.inference?.sourceType !== 'central_docs') return;
+        const assertionId = getAssertionIdFromRule(rule);
+        if (!assertionId) return;
+        const incoming = incomingByAssertionId.get(assertionId);
+        if (!incoming) {
+          if (!autoDeprecatedRuleIds.has(rule.id)) {
+            staleWarnings.push(
+              `Rule "${rule.title}" is no longer present in central docs snapshot.`,
+            );
+          }
+          return;
+        }
+        const previousHash = getSourceHashFromRule(rule);
+        const incomingHash = getSourceHashFromRule(incoming);
+        if (previousHash && incomingHash && previousHash !== incomingHash) {
+          staleWarnings.push(
+            `Rule "${rule.title}" changed in central docs and should be reviewed.`,
+          );
+        }
+      });
+
+      const combinedWarnings = uniqueStringList([
+        ...payload.snapshot.warnings,
+        ...staleWarnings,
+      ]);
+
+      if (JSON.stringify(nextRules) !== JSON.stringify(previousRules)) {
+        setDraftRules(nextRules);
+      }
+
+      setCentralSnapshot(payload.snapshot);
+      updateDraft({
+        inferredCandidates: mergedCandidates,
+        docsSyncState: {
+          lastSnapshotHash: payload.snapshot.snapshotHash,
+          lastSyncedAt: payload.snapshot.generatedAt,
+          lastSyncStatus: combinedWarnings.length > 0 ? 'warning' : 'success',
+          lastSyncWarnings: combinedWarnings,
+          sourceCount: payload.snapshot.sources.length,
+          candidateCount: mergedCandidates.filter(
+            (rule: AiPathsValidationRule): boolean =>
+              (rule.inference?.status ?? 'candidate') === 'candidate',
+          ).length,
+        },
+      });
+      toast(
+        `Synced ${mergedCandidates.length} inferred validation candidates from central docs.`,
+        { variant: combinedWarnings.length > 0 ? 'warning' : 'success' },
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to sync central docs.';
+      updateDraft({
+        docsSyncState: {
+          ...(validationDraft.docsSyncState ?? {}),
+          lastSyncStatus: 'error',
+          lastSyncWarnings: [message],
+        },
+      });
+      toast(message, { variant: 'error' });
+    } finally {
+      setSyncingCentralDocs(false);
+    }
+  };
+
+  const handleApproveCandidate = (candidateRuleId: string): void => {
+    const candidates = validationDraft.inferredCandidates ?? [];
+    const candidate = candidates.find(
+      (rule: AiPathsValidationRule): boolean => rule.id === candidateRuleId,
+    );
+    if (!candidate) return;
+    const approved = approveInferredAiPathsValidationRule(candidate);
+    const nextRules = [...(validationDraft.rules ?? [])];
+    const existingRuleIndex = nextRules.findIndex(
+      (rule: AiPathsValidationRule): boolean => rule.id === approved.id,
+    );
+    if (existingRuleIndex >= 0) {
+      nextRules[existingRuleIndex] = approved;
+    } else {
+      nextRules.push(approved);
+    }
+    const nextCandidates = candidates.filter(
+      (rule: AiPathsValidationRule): boolean => rule.id !== candidateRuleId,
+    );
+    setDraftRules(nextRules);
     updateDraft({
-      rules: (validationDraft.rules ?? []).map((rule: AiPathsValidationRule) =>
-        rule.id === ruleId ? { ...rule, sequence: parsed } : rule,
-      ),
+      inferredCandidates: nextCandidates,
+      docsSyncState: {
+        ...(validationDraft.docsSyncState ?? {}),
+        candidateCount: nextCandidates.filter(
+          (rule: AiPathsValidationRule): boolean =>
+            (rule.inference?.status ?? 'candidate') === 'candidate',
+        ).length,
+      },
+    });
+    toast(`Approved inferred rule "${approved.title}".`, { variant: 'success' });
+  };
+
+  const handleRejectCandidate = (candidateRuleId: string): void => {
+    const nextCandidates = (validationDraft.inferredCandidates ?? []).map(
+      (rule: AiPathsValidationRule): AiPathsValidationRule =>
+        rule.id === candidateRuleId
+          ? rejectInferredAiPathsValidationRule(rule)
+          : rule,
+    );
+    updateDraft({
+      inferredCandidates: nextCandidates,
+      docsSyncState: {
+        ...(validationDraft.docsSyncState ?? {}),
+        candidateCount: nextCandidates.filter(
+          (rule: AiPathsValidationRule): boolean =>
+            (rule.inference?.status ?? 'candidate') === 'candidate',
+        ).length,
+      },
+    });
+    toast('Candidate marked as rejected.', { variant: 'info' });
+  };
+
+  const handleApproveAllCandidates = (): void => {
+    if (candidateRules.length === 0) return;
+    const approvedRules = candidateRules.map((rule: AiPathsValidationRule) =>
+      approveInferredAiPathsValidationRule(rule),
+    );
+    const approvedRuleIds = new Set<string>(
+      approvedRules.map((rule: AiPathsValidationRule): string => rule.id),
+    );
+    const nextRules = [...(validationDraft.rules ?? [])];
+    approvedRules.forEach((approvedRule: AiPathsValidationRule) => {
+      const index = nextRules.findIndex(
+        (existingRule: AiPathsValidationRule): boolean =>
+          existingRule.id === approvedRule.id,
+      );
+      if (index >= 0) {
+        nextRules[index] = approvedRule;
+      } else {
+        nextRules.push(approvedRule);
+      }
+    });
+    const nextCandidates = (validationDraft.inferredCandidates ?? []).filter(
+      (rule: AiPathsValidationRule): boolean =>
+        !approvedRuleIds.has(rule.id),
+    );
+    setDraftRules(nextRules);
+    updateDraft({
+      inferredCandidates: nextCandidates,
+      docsSyncState: {
+        ...(validationDraft.docsSyncState ?? {}),
+        candidateCount: 0,
+      },
+    });
+    toast(`Approved ${approvedRules.length} visible inferred rules.`, {
+      variant: 'success',
     });
   };
 
   const handleSave = async (): Promise<void> => {
     if (!selectedPathConfig || !selectedPathId) return;
-    const parsedRules = parseRulesDraft(rulesDraft);
-    if (!parsedRules.ok) {
-      setRulesDraftError(parsedRules.error);
-      toast(parsedRules.error, { variant: 'error' });
+    const normalizedRulesText = JSON.stringify(validationDraft.rules ?? [], null, 2).trim();
+    const rulesDraftText = rulesDraft.trim();
+    const rulesFromDraft =
+      rulesDraftText.length > 0 && rulesDraftText !== normalizedRulesText
+        ? parseRulesDraft(rulesDraft)
+        : null;
+    if (rulesFromDraft && !rulesFromDraft.ok) {
+      setRulesDraftError(rulesFromDraft.error);
+      toast(rulesFromDraft.error, { variant: 'error' });
       return;
     }
+    const effectiveRules =
+      rulesFromDraft?.ok
+        ? rulesFromDraft.value
+        : validationDraft.rules ?? [];
 
     const now = new Date().toISOString();
     const nextValidation = normalizeAiPathsValidationConfig({
       ...validationDraft,
       docsSources: parseDocsSourcesText(docsSourcesDraft),
       collectionMap: parseCollectionMapText(collectionMapDraft),
-      rules: parsedRules.value,
+      rules: effectiveRules,
       lastEvaluatedAt: now,
     });
     const nextPathConfig: PathConfig = {
@@ -610,6 +1053,24 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
               />
             </>
           ) : null}
+          <StatusBadge
+            status={`Docs sync: ${validationDraft.docsSyncState?.lastSyncStatus ?? 'idle'}`}
+            variant={
+              validationDraft.docsSyncState?.lastSyncStatus === 'error'
+                ? 'error'
+                : validationDraft.docsSyncState?.lastSyncStatus === 'warning'
+                  ? 'warning'
+                  : validationDraft.docsSyncState?.lastSyncStatus === 'success'
+                    ? 'success'
+                    : 'neutral'
+            }
+            size='sm'
+          />
+          <StatusBadge
+            status={`Candidates: ${candidateRules.length}`}
+            variant={candidateRules.length > 0 ? 'warning' : 'neutral'}
+            size='sm'
+          />
           {focusNodeType ? (
             <Badge variant='outline' className='text-[10px]'>
               Focus node type: {focusNodeType}
@@ -814,6 +1275,218 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                   );
                 })}
               </div>
+            </div>
+
+            <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+              <div className='mb-4 flex flex-wrap items-center justify-between gap-2'>
+                <h3 className='text-sm font-semibold text-white'>
+                  Central Docs Inference Sync
+                </h3>
+                <div className='flex items-center gap-2'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={() => {
+                      void handleSyncFromCentralDocs();
+                    }}
+                    disabled={syncingCentralDocs}
+                  >
+                    {syncingCentralDocs ? 'Syncing...' : 'Sync From Central Docs'}
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={handleApproveAllCandidates}
+                    disabled={candidateRules.length === 0}
+                  >
+                    Approve Visible Candidates
+                  </Button>
+                </div>
+              </div>
+
+              <div className='mb-3 flex flex-wrap items-center gap-2'>
+                <StatusBadge
+                  status={`Snapshot: ${validationDraft.docsSyncState?.lastSnapshotHash?.slice(0, 12) ?? 'none'}`}
+                  variant='neutral'
+                  size='sm'
+                />
+                <StatusBadge
+                  status={`Sources: ${validationDraft.docsSyncState?.sourceCount ?? 0}`}
+                  variant='neutral'
+                  size='sm'
+                />
+                <StatusBadge
+                  status={`Candidates: ${candidateRules.length}`}
+                  variant={candidateRules.length > 0 ? 'warning' : 'success'}
+                  size='sm'
+                />
+                <StatusBadge
+                  status={`New: ${candidateChangeStats.new}`}
+                  variant={candidateChangeStats.new > 0 ? 'warning' : 'neutral'}
+                  size='sm'
+                />
+                <StatusBadge
+                  status={`Changed: ${candidateChangeStats.changed}`}
+                  variant={candidateChangeStats.changed > 0 ? 'warning' : 'neutral'}
+                  size='sm'
+                />
+                <StatusBadge
+                  status={`Rejected: ${rejectedCandidates.length}`}
+                  variant={rejectedCandidates.length > 0 ? 'warning' : 'neutral'}
+                  size='sm'
+                />
+                <StatusBadge
+                  status={`Coverage: ${validatorCoverage.coveredCount}/${validatorCoverage.totalCount}`}
+                  variant={
+                    validatorCoverage.coveredCount >= validatorCoverage.totalCount
+                      ? 'success'
+                      : 'warning'
+                  }
+                  size='sm'
+                />
+              </div>
+
+              {validatorCoverage.uncoveredNodeTypes.length > 0 ? (
+                <div className='mb-3 text-[11px] text-gray-500'>
+                  Uncovered node types:{' '}
+                  {validatorCoverage.uncoveredNodeTypes.slice(0, 10).join(', ')}
+                  {validatorCoverage.uncoveredNodeTypes.length > 10 ? ' …' : ''}
+                </div>
+              ) : null}
+
+              {syncWarnings.length > 0 ? (
+                <div className='mb-3 space-y-1 rounded-md border border-amber-500/30 bg-amber-500/10 p-2 text-[11px] text-amber-200'>
+                  {syncWarnings.map((warning, index) => (
+                    <div key={`${warning}-${index}`}>{warning}</div>
+                  ))}
+                </div>
+              ) : null}
+
+              {centralSnapshot?.sources?.length ? (
+                <div className='mb-3 max-h-28 space-y-1 overflow-y-auto rounded-md border border-border/60 bg-card/30 p-2'>
+                  {centralSnapshot.sources.map((source) => (
+                    <div
+                      key={`${source.id}:${source.hash}`}
+                      className='flex flex-wrap items-center justify-between gap-2 text-[11px]'
+                    >
+                      <span className='text-gray-300'>{source.path}</span>
+                      <span className='text-gray-500'>
+                        {source.assertionCount} assertions
+                        {typeof source.priority === 'number' ? ` · p${source.priority}` : ''}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              <div className='mb-3 grid gap-2 sm:grid-cols-2'>
+                <SelectSimple
+                  value={candidateModuleFilter}
+                  onValueChange={(value: string) =>
+                    setCandidateModuleFilter(value || 'all')
+                  }
+                  options={candidateModuleOptions}
+                  ariaLabel='Filter candidates by module'
+                />
+                <SelectSimple
+                  value={candidateTagFilter}
+                  onValueChange={(value: string) =>
+                    setCandidateTagFilter(value || 'all')
+                  }
+                  options={candidateTagOptions}
+                  ariaLabel='Filter candidates by tag'
+                />
+              </div>
+              <div className='space-y-2'>
+                <div className='text-xs font-medium text-gray-300'>
+                  Inferred Candidates ({candidateRules.length})
+                </div>
+                {candidateRules.length > 0 ? (
+                  <div className='max-h-60 space-y-2 overflow-y-auto rounded-md border border-border/60 bg-card/30 p-2'>
+                    {candidateRules.map((rule: AiPathsValidationRule) => (
+                      <div
+                        key={rule.id}
+                        className='rounded-md border border-border/50 bg-card/40 p-2'
+                      >
+                        <div className='flex flex-wrap items-start justify-between gap-2'>
+                          <div className='min-w-0'>
+                            <div className='text-xs font-medium text-gray-100'>
+                              {rule.title}
+                            </div>
+                            <div className='text-[10px] text-gray-500'>{rule.id}</div>
+                            <div className='text-[10px] text-gray-500'>
+                              {rule.inference?.sourcePath ?? 'central docs'}
+                            </div>
+                            <div className='mt-1 flex flex-wrap items-center gap-1'>
+                              <Badge variant='outline' className='text-[10px] uppercase'>
+                                {rule.module}
+                              </Badge>
+                              <Badge
+                                variant={
+                                  (candidateChangeKindById.get(rule.id) ?? 'new') === 'changed'
+                                    ? 'warning'
+                                    : (candidateChangeKindById.get(rule.id) ?? 'new') === 'new'
+                                      ? 'warning'
+                                      : 'neutral'
+                                }
+                                className='text-[10px] uppercase'
+                              >
+                                {candidateChangeKindById.get(rule.id) ?? 'new'}
+                              </Badge>
+                              {getCandidateTags(rule).slice(0, 3).map((tag: string) => (
+                                <Badge key={`${rule.id}:${tag}`} variant='outline' className='text-[10px]'>
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                          <div className='flex items-center gap-1'>
+                            <Button
+                              type='button'
+                              variant='outline'
+                              size='sm'
+                              className='h-7 px-2 text-[11px]'
+                              onClick={() => handleApproveCandidate(rule.id)}
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              type='button'
+                              variant='outline'
+                              size='sm'
+                              className='h-7 px-2 text-[11px]'
+                              onClick={() => handleRejectCandidate(rule.id)}
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className='rounded-md border border-border/60 bg-card/30 p-3 text-xs text-gray-500'>
+                    Sync from central docs to generate inference candidates.
+                  </div>
+                )}
+              </div>
+
+              {rejectedCandidates.length > 0 ? (
+                <div className='mt-3 space-y-1 rounded-md border border-border/60 bg-card/30 p-2'>
+                  <div className='text-[11px] font-medium text-gray-300'>
+                    Rejected candidates
+                  </div>
+                  <div className='max-h-20 space-y-1 overflow-y-auto'>
+                    {rejectedCandidates.map((rule: AiPathsValidationRule) => (
+                      <div key={rule.id} className='text-[10px] text-gray-500'>
+                        {rule.title} ({rule.id})
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             <div className='rounded-lg border border-border/60 bg-card/40 p-4'>

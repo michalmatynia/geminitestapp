@@ -1,0 +1,90 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "http",
+  "title": "HTTP Fetch",
+  "purpose": "Call external APIs with templated inputs.",
+  "inputs": [
+    "context",
+    "bundle",
+    "prompt",
+    "result",
+    "value",
+    "entityId",
+    "entityType"
+  ],
+  "outputs": [
+    "value",
+    "bundle"
+  ],
+  "configFields": [
+    {
+      "path": "http.url",
+      "description": "Request URL.",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "http.method",
+      "description": "HTTP method.",
+      "defaultValue": "GET"
+    },
+    {
+      "path": "http.headers",
+      "description": "JSON string of request headers. Must be valid JSON.",
+      "defaultValue": "{...}"
+    },
+    {
+      "path": "http.bodyTemplate",
+      "description": "Template for request body (JSON/text) using {{placeholders}} from incoming ports.",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "http.responseMode",
+      "description": "How to interpret the response: json/text/status.",
+      "defaultValue": "json"
+    },
+    {
+      "path": "http.responsePath",
+      "description": "Optional JSON path to extract from the response when responseMode is json.",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_http",
+    "type": "http",
+    "title": "HTTP Fetch",
+    "description": "Call external APIs with templated inputs.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "context",
+      "bundle",
+      "prompt",
+      "result",
+      "value",
+      "entityId",
+      "entityType"
+    ],
+    "outputs": [
+      "value",
+      "bundle"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

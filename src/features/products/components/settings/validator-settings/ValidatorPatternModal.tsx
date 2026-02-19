@@ -104,7 +104,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                 onValueChange={(value: string): void =>
                   setFormData((prev: PatternFormData) => {
                     const nextTarget = value as PatternFormData['target'];
-                    const allowed = new Set<string>(getReplacementFieldsForTarget(nextTarget));
+                    const allowed = new Set<string>(getReplacementFieldsForTarget(nextTarget).map(f => f.value));
                     const nextSourceOptions = getSourceFieldOptionsForTarget(nextTarget);
                     const hasSourceField = nextSourceOptions.some(
                       (option: { value: string }) => option.value === prev.sourceField
@@ -758,7 +758,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
               onChange={(values: string[]) =>
                 setFormData((prev: PatternFormData) => ({
                   ...prev,
-                  replacementFields: normalizeReplacementFields(values),
+                  replacementFields: normalizeReplacementFields(values, prev.target),
                 }))
               }
               placeholder='All matching fields (global)'

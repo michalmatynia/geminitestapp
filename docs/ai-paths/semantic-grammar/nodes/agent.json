@@ -1,0 +1,89 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "agent",
+  "title": "Reasoning Agent",
+  "purpose": "Run a multi-step agent persona over the prompt.",
+  "inputs": [
+    "prompt",
+    "bundle",
+    "context",
+    "entityJson",
+    "value",
+    "result",
+    "title",
+    "images",
+    "content_en",
+    "entityId",
+    "entityType",
+    "productId"
+  ],
+  "outputs": [
+    "result",
+    "jobId",
+    "status",
+    "bundle"
+  ],
+  "configFields": [
+    {
+      "path": "agent.personaId",
+      "description": "Persona to use from Agent Creator. Empty means runtime defaults.",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "agent.promptTemplate",
+      "description": "Optional template to build the agent prompt from incoming ports.",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "agent.waitForResult",
+      "description": "When true, waits for completion and emits result. When false, emits jobId/status.",
+      "defaultValue": "true"
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_agent",
+    "type": "agent",
+    "title": "Reasoning Agent",
+    "description": "Run a multi-step agent persona over the prompt.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "prompt",
+      "bundle",
+      "context",
+      "entityJson",
+      "value",
+      "result",
+      "title",
+      "images",
+      "content_en",
+      "entityId",
+      "entityType",
+      "productId"
+    ],
+    "outputs": [
+      "result",
+      "jobId",
+      "status",
+      "bundle"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

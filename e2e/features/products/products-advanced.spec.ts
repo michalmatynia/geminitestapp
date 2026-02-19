@@ -31,14 +31,14 @@ test.describe('Products Management - Advanced', () => {
     // Try to click catalog selector - it might already have a value or be "Select catalogs"
     const catalogTrigger = modal.locator('button:has-text("Select catalogs"), button:has-text("Default"), button:has-text("Main")').first();
     if (await catalogTrigger.isVisible()) {
-        await catalogTrigger.click();
+      await catalogTrigger.click();
+      await page.waitForTimeout(500);
+      const catalogOptions = page.getByRole('menuitemcheckbox');
+      if (await catalogOptions.count() > 0) {
+        await catalogOptions.first().click();
+        await page.keyboard.press('Escape');
         await page.waitForTimeout(500);
-        const catalogOptions = page.getByRole('menuitemcheckbox');
-        if (await catalogOptions.count() > 0) {
-            await catalogOptions.first().click();
-            await page.keyboard.press('Escape');
-            await page.waitForTimeout(500);
-        }
+      }
     }
 
     // Go back to General to fill name
@@ -48,7 +48,7 @@ test.describe('Products Management - Advanced', () => {
     // Fill name if visible
     const nameInput = modal.locator('input#name_en');
     if (await nameInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await nameInput.fill(name);
+      await nameInput.fill(name);
     }
     
     await modal.getByRole('button', { name: 'Create', exact: true }).click({ force: true });
@@ -128,7 +128,7 @@ test.describe('Products Management - Advanced', () => {
     const modal = page.locator('[role="dialog"]');
     const nameInput = modal.locator('input#name_en');
     if (await nameInput.isVisible({ timeout: 10000 }).catch(() => false)) {
-        await nameInput.fill(updatedName);
+      await nameInput.fill(updatedName);
     }
     
     const updatePromise = page.waitForResponse(response => response.url().includes('/api/products/') && response.request().method() === 'PUT');
@@ -140,7 +140,7 @@ test.describe('Products Management - Advanced', () => {
 
   test('should manage product parameters', async ({ page }) => {
     const sku = `PARAM${Date.now()}`;
-    await createTestProduct(page, sku, `Param Test`);
+    await createTestProduct(page, sku, 'Param Test');
 
     const skuSearchInput = page.getByPlaceholder('Search by SKU...');
     await skuSearchInput.fill(sku);
@@ -208,7 +208,7 @@ test.describe('Products Management - Advanced', () => {
 
     // Close modal
     await modal.getByRole('button', { name: 'Close' }).click({ force: true }).catch(() => {
-        return page.getByLabel('Close').click({ force: true });
+      return page.getByLabel('Close').click({ force: true });
     });
     await expect(modal).not.toBeVisible();
   });

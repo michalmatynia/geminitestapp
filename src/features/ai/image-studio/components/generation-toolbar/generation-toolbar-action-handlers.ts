@@ -13,6 +13,7 @@ import {
   upscaleCanvasImage,
   withCropRetry,
   withUpscaleRetry,
+  type CropCanvasContext,
   type CropRect,
   type CropRectResolutionDiagnostics,
   type UpscaleRequestStrategyPayload,
@@ -78,6 +79,7 @@ type CreateGenerationToolbarActionHandlersDeps = {
   projectId: string | null;
   queryClient: QueryClient;
   resolveCropRect: () => Promise<{ cropRect: CropRect; diagnostics: CropRectResolutionDiagnostics | null }>;
+  resolveCropCanvasContext: () => Promise<CropCanvasContext | null>;
   resolveUpscaleSourceDimensions: () => Promise<{ width: number; height: number }>;
   setCropBusy: (value: boolean) => void;
   setCropStatus: (value: CropStatus) => void;
@@ -113,6 +115,17 @@ type CropDiagnosticsPayload = {
   usedImageContentFrameMapping?: boolean;
 };
 
+type CropCanvasContextPayload = {
+  canvasWidth: number;
+  canvasHeight: number;
+  imageFrame: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+};
+
 const toCropDiagnosticsPayload = (
   diagnostics: CropRectResolutionDiagnostics | null
 ): CropDiagnosticsPayload | null => {
@@ -129,6 +142,35 @@ const toCropDiagnosticsPayload = (
       }
       : null,
     usedImageContentFrameMapping: diagnostics.usedImageContentFrameMapping,
+  };
+};
+
+const toCropCanvasContextPayload = (
+  canvasContext: CropCanvasContext | null
+): CropCanvasContextPayload | null => {
+  if (!canvasContext) return null;
+  const canvasWidth = Math.floor(canvasContext.canvasWidth);
+  const canvasHeight = Math.floor(canvasContext.canvasHeight);
+  if (!(canvasWidth > 0 && canvasHeight > 0)) return null;
+  const frame = canvasContext.imageFrame;
+  if (
+    !Number.isFinite(frame.x) ||
+    !Number.isFinite(frame.y) ||
+    !Number.isFinite(frame.width) ||
+    !Number.isFinite(frame.height) ||
+    !(frame.width > 0 && frame.height > 0)
+  ) {
+    return null;
+  }
+  return {
+    canvasWidth,
+    canvasHeight,
+    imageFrame: {
+      x: frame.x,
+      y: frame.y,
+      width: frame.width,
+      height: frame.height,
+    },
   };
 };
 
@@ -162,7 +204,7 @@ export const createGenerationToolbarActionHandlers = (
   deps: CreateGenerationToolbarActionHandlersDeps
 ): {
   handleUpscale: () => Promise<void>;
-  handleCrop: (cropRectOverride?: CropRect) => Promise<void>;
+  handleCrop: (cropRectOverride?: CropRect, options?: { includeCanvasContext?: boolean }) => Promise<void>;
 } => {
   const handleUpscale = async (): Promise<void> => {
     if (!deps.workingSlot?.id) {
@@ -357,7 +399,10 @@ export const createGenerationToolbarActionHandlers = (
     }
   };
 
-  const handleCrop = async (cropRectOverride?: CropRect): Promise<void> => {
+  const handleCrop = async (
+    cropRectOverride?: CropRect,
+    options?: { includeCanvasContext?: boolean }
+  ): Promise<void> => {
     if (!deps.workingSlot?.id) {
       deps.toast('No active source slot selected.', { variant: 'info' });
       return;
@@ -388,6 +433,10 @@ export const createGenerationToolbarActionHandlers = (
       const cropRect = resolvedCrop.cropRect;
       const cropDiagnostics = resolvedCrop.diagnostics ?? deps.getCropDiagnostics();
       const cropDiagnosticsPayload = toCropDiagnosticsPayload(cropDiagnostics);
+      const includeCanvasContext = options?.includeCanvasContext ?? !cropRectOverride;
+      const cropCanvasContext = includeCanvasContext
+        ? toCropCanvasContextPayload(await deps.resolveCropCanvasContext())
+        : null;
       let response: CropActionResponse;
       let resolvedMode: CropMode = deps.cropMode;
       if (deps.cropMode === 'client_bbox') {
@@ -397,7 +446,7 @@ export const createGenerationToolbarActionHandlers = (
         }
         try {
           deps.setCropStatus('preparing');
-          const croppedDataUrl = await cropCanvasImage(sourceForClientCrop, cropRect);
+          const croppedDataUrl = await cropCanvasImage(sourceForClientCrop, cropRect, cropCanvasContext);
           let uploadBlob: Blob;
           try {
             uploadBlob = await dataUrlToUploadBlob(croppedDataUrl);
@@ -414,6 +463,9 @@ export const createGenerationToolbarActionHandlers = (
               formData.append('requestId', cropRequestId);
               if (cropDiagnosticsPayload) {
                 formData.append('diagnostics', JSON.stringify(cropDiagnosticsPayload));
+              }
+              if (cropCanvasContext) {
+                formData.append('canvasContext', JSON.stringify(cropCanvasContext));
               }
               formData.append('image', uploadBlob, `crop-client-${Date.now()}.png`);
               return api.post<CropActionResponse>(
@@ -441,6 +493,7 @@ export const createGenerationToolbarActionHandlers = (
                   mode: 'server_bbox',
                   cropRect,
                   requestId: cropRequestId,
+                  ...(cropCanvasContext ? { canvasContext: cropCanvasContext } : {}),
                   ...(cropDiagnosticsPayload ? { diagnostics: cropDiagnosticsPayload } : {}),
                 },
                 {
@@ -466,6 +519,7 @@ export const createGenerationToolbarActionHandlers = (
                 mode: deps.cropMode,
                 cropRect,
                 requestId: cropRequestId,
+                ...(cropCanvasContext ? { canvasContext: cropCanvasContext } : {}),
                 ...(cropDiagnosticsPayload ? { diagnostics: cropDiagnosticsPayload } : {}),
               },
               {

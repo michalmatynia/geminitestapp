@@ -1,0 +1,75 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "bundle",
+  "title": "Bundle",
+  "purpose": "Cluster inputs into a single bundle output.",
+  "inputs": [
+    "context",
+    "meta",
+    "trigger",
+    "triggerName",
+    "result",
+    "entityJson",
+    "entityId",
+    "entityType",
+    "value",
+    "errors",
+    "valid",
+    "description_en",
+    "prompt"
+  ],
+  "outputs": [
+    "bundle"
+  ],
+  "configFields": [
+    {
+      "path": "bundle.includePorts",
+      "description": "Optional allowlist: only these input port names are included in the emitted bundle.",
+      "defaultValue": "undefined (all inputs)"
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_bundle",
+    "type": "bundle",
+    "title": "Bundle",
+    "description": "Cluster inputs into a single bundle output.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "context",
+      "meta",
+      "trigger",
+      "triggerName",
+      "result",
+      "entityJson",
+      "entityId",
+      "entityType",
+      "value",
+      "errors",
+      "valid",
+      "description_en",
+      "prompt"
+    ],
+    "outputs": [
+      "bundle"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

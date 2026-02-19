@@ -1,0 +1,63 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "gate",
+  "title": "Gate",
+  "purpose": "Allow context through when valid is true.",
+  "inputs": [
+    "context",
+    "valid",
+    "errors"
+  ],
+  "outputs": [
+    "context",
+    "valid",
+    "errors"
+  ],
+  "configFields": [
+    {
+      "path": "gate.mode",
+      "description": "block = stop downstream when valid is false; pass = always pass but preserve valid/errors.",
+      "defaultValue": "block"
+    },
+    {
+      "path": "gate.failMessage",
+      "description": "Optional message to display/log when blocking."
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_gate",
+    "type": "gate",
+    "title": "Gate",
+    "description": "Allow context through when valid is true.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "context",
+      "valid",
+      "errors"
+    ],
+    "outputs": [
+      "context",
+      "valid",
+      "errors"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

@@ -40,6 +40,20 @@ const toTrimmedStringList = (value: unknown): string[] => {
   });
   return [...out];
 };
+const toNonNegativeInt = (value: unknown): number | undefined => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const normalized = Math.trunc(value);
+    return normalized >= 0 ? normalized : undefined;
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim();
+    if (!normalized) return undefined;
+    const parsed = Number.parseInt(normalized, 10);
+    if (!Number.isFinite(parsed) || String(parsed) !== normalized) return undefined;
+    return parsed >= 0 ? parsed : undefined;
+  }
+  return undefined;
+};
 
 const sanitizeCaseResolverPartyCandidate = (
   value: unknown,
@@ -129,10 +143,14 @@ const parseBridgePayload = (raw: string | null): PromptExploderBridgePayload | n
       const record = parsed.caseResolverContext as Record<string, unknown>;
       const fileId = typeof record['fileId'] === 'string' ? record['fileId'].trim() : '';
       const fileName = typeof record['fileName'] === 'string' ? record['fileName'].trim() : '';
-      if (!fileId || !fileName) return undefined;
+      const sessionId = toTrimmedString(record['sessionId']) || undefined;
+      const documentVersionAtStart = toNonNegativeInt(record['documentVersionAtStart']);
+      if (!fileId) return undefined;
       return {
         fileId,
-        fileName,
+        fileName: fileName || fileId,
+        sessionId,
+        documentVersionAtStart,
       };
     })();
     const caseResolverParties = (() => {

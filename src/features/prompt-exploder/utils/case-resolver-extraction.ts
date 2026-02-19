@@ -139,7 +139,8 @@ const isLikelyAddresserSegment = (segment: PromptExploderSegment): boolean => {
   const lines = splitSegmentLines(segment);
   if (!lines.length || BODY_SECTION_HINT_RE.test(lines.join('\n'))) return false;
   const likelyName = lines.some((line: string): boolean => isLikelyPersonNameLine(line));
-  return likelyName && hasAddressLikeLine(lines);
+  const likelyOrganization = lines.some((line: string): boolean => ORGANIZATION_HINT_RE.test(line));
+  return likelyName && !likelyOrganization && hasAddressLikeLine(lines);
 };
 
 const isLikelyAddresseeSegment = (segment: PromptExploderSegment): boolean => {
@@ -371,17 +372,29 @@ type CaseResolverRuleExtractionDraft = {
 const inferSegmentRoleHint = (
   segment: PromptExploderSegment
 ): PromptExploderCaseResolverPartyRole | null => {
-  if (
+  const hasAddresserPattern =
     hasPatternId(segment, 'segment.case_resolver.heading.addresser_person') ||
-    hasPatternPrefix(segment, 'segment.case_resolver.extract.addresser.')
-  ) {
+    hasPatternPrefix(segment, 'segment.case_resolver.extract.addresser.');
+  const hasAddresseePattern =
+    hasPatternId(segment, 'segment.case_resolver.heading.addressee_organization') ||
+    hasPatternPrefix(segment, 'segment.case_resolver.extract.addressee.');
+
+  if (hasAddresserPattern && !hasAddresseePattern) {
     return 'addresser';
   }
-  if (
-    hasPatternId(segment, 'segment.case_resolver.heading.addressee_organization') ||
-    hasPatternPrefix(segment, 'segment.case_resolver.extract.addressee.')
-  ) {
+  if (hasAddresseePattern && !hasAddresserPattern) {
     return 'addressee';
+  }
+  const likelyAddresser = isLikelyAddresserSegment(segment);
+  const likelyAddressee = isLikelyAddresseeSegment(segment);
+  if (likelyAddresser && !likelyAddressee) return 'addresser';
+  if (likelyAddressee && !likelyAddresser) return 'addressee';
+
+  if (hasAddresserPattern && hasAddresseePattern) {
+    const hasOrganizationLine = splitSegmentLines(segment).some(
+      (line: string): boolean => ORGANIZATION_HINT_RE.test(line)
+    );
+    if (hasOrganizationLine) return 'addressee';
   }
   return null;
 };
@@ -761,52 +774,6 @@ export const resolveCaseResolverBridgePayloadForTransfer = (args: {
   const initialAddressee = initialPayload.parties?.addressee;
   const initialMetadata = initialPayload.metadata;
   const initialHasCaptureData = Boolean(initialAddresser || initialAddressee || initialMetadata);
-
-  if (requestedMode === 'rules_only') {
-    const isMissingAddresser = !initialAddresser;
-    const isMissingAddressee = !initialAddressee;
-    const isMissingMetadata = !initialMetadata;
-    const needsFallback = isMissingAddresser || isMissingAddressee || isMissingMetadata;
-
-    if (needsFallback) {
-      const fallbackPayload = extractCaseResolverBridgePayloadFromSegments(args.segments, {
-        captureRules: args.captureRules,
-        mode: 'rules_with_heuristics',
-      });
-      const fallbackAddresser = fallbackPayload.parties?.addresser;
-      const fallbackAddressee = fallbackPayload.parties?.addressee;
-      const fallbackMetadata = fallbackPayload.metadata;
-
-      const usedFallbackForAddresser = isMissingAddresser && Boolean(fallbackAddresser);
-      const usedFallbackForAddressee = isMissingAddressee && Boolean(fallbackAddressee);
-      const usedFallbackForMetadata = isMissingMetadata && Boolean(fallbackMetadata);
-      const usedFallback =
-        usedFallbackForAddresser || usedFallbackForAddressee || usedFallbackForMetadata;
-
-      if (usedFallback) {
-        const mergedAddresser = initialAddresser ?? fallbackAddresser;
-        const mergedAddressee = initialAddressee ?? fallbackAddressee;
-        const mergedMetadata = initialMetadata ?? fallbackMetadata;
-        const mergedParties =
-          mergedAddresser || mergedAddressee
-            ? {
-              ...(mergedAddresser ? { addresser: mergedAddresser } : {}),
-              ...(mergedAddressee ? { addressee: mergedAddressee } : {}),
-            }
-            : undefined;
-        return {
-          payload: {
-            ...(mergedParties ? { parties: mergedParties } : {}),
-            ...(mergedMetadata ? { metadata: mergedMetadata } : {}),
-          },
-          requestedMode,
-          effectiveMode: 'rules_with_heuristics',
-          usedFallback: true,
-          hasCaptureData: Boolean(mergedParties || mergedMetadata),
-        };
-      }
-    }
-  }
 
   return {
     payload: initialPayload,

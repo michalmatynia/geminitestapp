@@ -25,7 +25,8 @@ import {
 } from '@/features/ai/image-studio/utils/generation-cost';
 import { parseImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
-export type { ImageStudioRunDispatchModeDto as ImageStudioRunDispatchMode } from '@/shared/contracts/image-studio';
+import type { ImageStudioRunDispatchModeDto } from '@/shared/contracts/image-studio';
+export type ImageStudioRunDispatchMode = ImageStudioRunDispatchModeDto;
 import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';
 import { publishRunEvent } from '@/shared/lib/redis-pubsub';
 

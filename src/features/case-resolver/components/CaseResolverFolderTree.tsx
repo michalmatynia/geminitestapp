@@ -318,8 +318,9 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     }
     return buildCaseResolverNodeFileRelationIndexFromAssets({
       assets: treeWorkspace.assets,
+      files: treeWorkspace.files,
     });
-  }, [treeWorkspace.assets]);
+  }, [treeWorkspace.assets, treeWorkspace.files]);
 
   const documentNodeIdsBySourceFileId = useMemo((): Map<string, string[]> => {
     return new Map<string, string[]>(

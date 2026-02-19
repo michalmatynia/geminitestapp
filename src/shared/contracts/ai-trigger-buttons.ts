@@ -9,6 +9,7 @@ import { namedDtoSchema } from './base';
 export const aiTriggerButtonLocationEnum = z.enum([
   'product_modal',
   'product_list',
+  'product_row',
   'note_modal',
   'note_list',
 ]);

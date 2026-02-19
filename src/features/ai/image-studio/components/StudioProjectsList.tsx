@@ -440,7 +440,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
       header: 'Created',
       cell: ({ row }) => (
         <span className='text-xs text-gray-400'>
-          {formatProjectTimestamp(row.original.createdAt)}
+          {formatProjectTimestamp(row.original.createdAt ?? null)}
         </span>
       ),
     },
@@ -449,7 +449,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
       header: 'Updated',
       cell: ({ row }) => (
         <span className='text-xs text-gray-400'>
-          {formatProjectTimestamp(row.original.updatedAt)}
+          {formatProjectTimestamp(row.original.updatedAt ?? null)}
         </span>
       ),
     },

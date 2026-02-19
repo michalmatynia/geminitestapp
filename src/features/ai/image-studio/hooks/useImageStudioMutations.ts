@@ -17,7 +17,11 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/types/domain/files';
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/types/query-result-types';
 
-import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
+import type {
+  ImageStudioProjectRecord,
+  ImageStudioSlotRecord,
+  StudioSlotsResponse,
+} from '../types';
 
 const normalizeStudioSlotId = (rawId: string): string => rawId.trim();
 const DELETE_SLOT_TIMEOUT_MS = 120_000;
@@ -186,6 +190,19 @@ export interface RenameStudioProjectResult {
   renamed: boolean;
 }
 
+export interface ResizeStudioProjectCanvasPayload {
+  projectId: string;
+  canvasWidthPx?: number | null;
+  canvasHeightPx?: number | null;
+}
+
+export interface ResizeStudioProjectCanvasResult {
+  projectId: string;
+  fromProjectId?: string;
+  renamed?: boolean;
+  project?: ImageStudioProjectRecord;
+}
+
 export function useCreateStudioProject(): CreateMutation<string, CreateStudioProjectPayload> {
   const queryClient = useQueryClient();
 
@@ -256,6 +273,64 @@ export function useRenameStudioProject(): UpdateMutation<RenameStudioProjectResu
       }
       if (toProjectId && toProjectId !== fromProjectId) {
         void invalidateImageStudioSlots(queryClient, toProjectId);
+      }
+    },
+  });
+}
+
+export function useResizeStudioProjectCanvas(): UpdateMutation<ResizeStudioProjectCanvasResult, ResizeStudioProjectCanvasPayload> {
+  const queryClient = useQueryClient();
+
+  return createUpdateMutationV2({
+    mutationFn: async (
+      payload: ResizeStudioProjectCanvasPayload
+    ): Promise<ResizeStudioProjectCanvasResult> => {
+      const normalizedProjectId = payload.projectId.trim();
+      if (!normalizedProjectId) {
+        throw new Error('Project id is required.');
+      }
+      if (
+        typeof payload.canvasWidthPx !== 'number' &&
+        typeof payload.canvasHeightPx !== 'number'
+      ) {
+        throw new Error('At least one canvas dimension is required.');
+      }
+      const response = await api.patch<ResizeStudioProjectCanvasResult>(
+        `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}`,
+        {
+          ...(typeof payload.canvasWidthPx === 'number'
+            ? { canvasWidthPx: payload.canvasWidthPx }
+            : {}),
+          ...(typeof payload.canvasHeightPx === 'number'
+            ? { canvasHeightPx: payload.canvasHeightPx }
+            : {}),
+        },
+        {
+          timeout: 120_000,
+        }
+      );
+      if (!response.projectId?.trim()) {
+        throw new Error('Failed to update project canvas size.');
+      }
+      return response;
+    },
+    mutationKey: QUERY_KEYS.imageStudio.all,
+    meta: {
+      source: 'imageStudio.hooks.useResizeStudioProjectCanvas',
+      operation: 'update',
+      resource: 'image-studio.projects',
+      domain: 'image_studio',
+      mutationKey: QUERY_KEYS.imageStudio.all,
+      tags: ['image-studio', 'project', 'resize-canvas'],
+    },
+    onSuccess: (
+      result: ResizeStudioProjectCanvasResult,
+      variables: ResizeStudioProjectCanvasPayload
+    ) => {
+      const normalizedProjectId = result.projectId?.trim() || variables.projectId.trim();
+      void invalidateImageStudioProjects(queryClient);
+      if (normalizedProjectId) {
+        void invalidateImageStudioSlots(queryClient, normalizedProjectId);
       }
     },
   });

@@ -25,7 +25,12 @@ const makeSegment = (overrides: Partial<PromptExploderSegment> & { id: string })
   subsections: [],
   paramsText: '',
   paramsObject: null,
+  paramUiControls: {},
+  paramComments: {},
+  paramDescriptions: {},
   matchedPatternIds: [],
+  matchedPatternLabels: [],
+  matchedSequenceLabels: [],
   confidence: 1,
   ...overrides,
 });

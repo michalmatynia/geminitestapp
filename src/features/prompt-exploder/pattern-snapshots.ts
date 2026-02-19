@@ -48,7 +48,7 @@ export const ensurePromptExploderScopeOnRules = (
   return rules.map((rule) => ({
     ...rule,
     appliesToScopes: [
-      ...new Set([...(rule.appliesToScopes ?? []), activeRuleScope as any]),
+      ...new Set([...(rule.appliesToScopes ?? []), activeRuleScope as PromptValidationScope]),
     ] as PromptValidationScope[],
   }));
 };
@@ -64,7 +64,7 @@ export const mergeRestoredPromptExploderRules = (args: {
     if (!args.isPromptExploderManagedRule(rule)) return false;
     const scopes = rule.appliesToScopes ?? [];
     const activeRuleScope = scope === 'case-resolver-prompt-exploder' ? 'case_resolver_prompt_exploder' : 'prompt_exploder';
-    return scopes.length === 0 || scopes.includes(activeRuleScope as any) || scopes.includes('global');
+    return scopes.length === 0 || scopes.includes(activeRuleScope as PromptValidationScope) || scopes.includes('global');
   };
   const keptRules = args.existingRules.filter(
     (rule) => !shouldReplaceManagedRule(rule)

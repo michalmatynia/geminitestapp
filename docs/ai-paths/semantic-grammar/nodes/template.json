@@ -1,0 +1,73 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "template",
+  "title": "Template",
+  "purpose": "Create prompts from template strings.",
+  "inputs": [
+    "context",
+    "meta",
+    "trigger",
+    "triggerName",
+    "result",
+    "entityJson",
+    "entityId",
+    "entityType",
+    "value",
+    "bundle",
+    "description_en",
+    "prompt"
+  ],
+  "outputs": [
+    "prompt"
+  ],
+  "configFields": [
+    {
+      "path": "template.template",
+      "description": "Template used to generate a prompt string from incoming ports ({{bundle}}, {{context}}, etc).",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_template",
+    "type": "template",
+    "title": "Template",
+    "description": "Create prompts from template strings.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "context",
+      "meta",
+      "trigger",
+      "triggerName",
+      "result",
+      "entityJson",
+      "entityId",
+      "entityType",
+      "value",
+      "bundle",
+      "description_en",
+      "prompt"
+    ],
+    "outputs": [
+      "prompt"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

@@ -199,9 +199,9 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
       if (sortBy === 'name') {
         delta = left.name.localeCompare(right.name);
       } else if (sortBy === 'created') {
-        delta = new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+        delta = new Date(left.createdAt || 0).getTime() - new Date(right.createdAt || 0).getTime();
       } else {
-        delta = new Date(left.updatedAt ?? '').getTime() - new Date(right.updatedAt ?? '').getTime();
+        delta = new Date(left.updatedAt || left.createdAt || 0).getTime() - new Date(right.updatedAt || right.createdAt || 0).getTime();
       }
       return sortOrder === 'asc' ? delta : -delta;
     });

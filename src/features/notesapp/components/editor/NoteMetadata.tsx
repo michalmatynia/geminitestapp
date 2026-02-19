@@ -145,7 +145,7 @@ export function NoteMetadata({
           })}
         </div>
         <div className='relative'>
-          <FormField label='Tags' showLabel={selectedTagIds.length === 0}>
+          <FormField label={selectedTagIds.length === 0 ? 'Tags' : undefined}>
             <Input
               ref={tagInputRef}
               type='text'

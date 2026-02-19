@@ -1,0 +1,143 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "regex",
+  "title": "Regex Grouper",
+  "purpose": "Group strings with regex or extract matched fragments.",
+  "inputs": [
+    "value",
+    "prompt",
+    "regexCallback"
+  ],
+  "outputs": [
+    "grouped",
+    "matches",
+    "value",
+    "aiPrompt"
+  ],
+  "configFields": [
+    {
+      "path": "regex.pattern",
+      "description": "JavaScript/ECMAScript regex pattern (without / delimiters).",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "regex.flags",
+      "description": "Regex flags string (example: g, i, m).",
+      "defaultValue": "\"g\""
+    },
+    {
+      "path": "regex.mode",
+      "description": "group = emit grouped matches; extract = emit selected capture on value output; extract_json = extract and parse JSON when possible.",
+      "defaultValue": "group"
+    },
+    {
+      "path": "regex.matchMode",
+      "description": "first = one match per input string; first_overall = stop after the first match across all inputs; all = all matches per input string.",
+      "defaultValue": "first"
+    },
+    {
+      "path": "regex.groupBy",
+      "description": "Selector used for grouping (group mode) or extraction (extract mode): match/0, capture index (1...), named group, groups, or captures.",
+      "defaultValue": "match"
+    },
+    {
+      "path": "regex.outputMode",
+      "description": "Grouped output mode: object (Record) or array (list of groups).",
+      "defaultValue": "object"
+    },
+    {
+      "path": "regex.includeUnmatched",
+      "description": "If true, inputs that do not match are emitted under unmatchedKey.",
+      "defaultValue": "true"
+    },
+    {
+      "path": "regex.unmatchedKey",
+      "description": "Group key label for unmatched values.",
+      "defaultValue": "\"__unmatched__\""
+    },
+    {
+      "path": "regex.splitLines",
+      "description": "If true, string inputs are split by newline into multiple items.",
+      "defaultValue": "true"
+    },
+    {
+      "path": "regex.sampleText",
+      "description": "Optional sample text used for preview / AI prompt rendering.",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "regex.aiPrompt",
+      "description": "Optional AI prompt template used to propose a regex.",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "defaultConfig": {
+    "regex": {
+      "pattern": "",
+      "flags": "g",
+      "mode": "group",
+      "matchMode": "first",
+      "groupBy": "match",
+      "outputMode": "object",
+      "includeUnmatched": true,
+      "unmatchedKey": "__unmatched__",
+      "splitLines": true,
+      "sampleText": "",
+      "aiPrompt": "You are a regex expert. Propose a JavaScript RegExp to group items in the input.\n\nReturn ONLY JSON:\n{\"pattern\":\"...\",\"flags\":\"...\",\"groupBy\":\"match|1|<namedGroup>\"}\n\nInput:\n{{text}}",
+      "aiAutoRun": false
+    }
+  },
+  "semanticNodeExample": {
+    "id": "node_regex",
+    "type": "regex",
+    "title": "Regex Grouper",
+    "description": "Group strings with regex or extract matched fragments.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "value",
+      "prompt",
+      "regexCallback"
+    ],
+    "outputs": [
+      "grouped",
+      "matches",
+      "value",
+      "aiPrompt"
+    ],
+    "config": {
+      "regex": {
+        "pattern": "",
+        "flags": "g",
+        "mode": "group",
+        "matchMode": "first",
+        "groupBy": "match",
+        "outputMode": "object",
+        "includeUnmatched": true,
+        "unmatchedKey": "__unmatched__",
+        "splitLines": true,
+        "sampleText": "",
+        "aiPrompt": "You are a regex expert. Propose a JavaScript RegExp to group items in the input.\n\nReturn ONLY JSON:\n{\"pattern\":\"...\",\"flags\":\"...\",\"groupBy\":\"match|1|<namedGroup>\"}\n\nInput:\n{{text}}",
+        "aiAutoRun": false
+      }
+    },
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

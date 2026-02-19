@@ -281,7 +281,7 @@ export function NotesAppProvider({
         const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
         return aTime - bTime;
       }
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
     });
     return settings.sortOrder === 'desc' ? sorted.reverse() : sorted;
   }, [notesInScope, settings.sortBy, settings.sortOrder]);

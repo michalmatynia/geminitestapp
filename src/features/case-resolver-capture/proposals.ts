@@ -92,6 +92,93 @@ const inferCandidateRoleFromLabels = (
   return addresserScore > addresseeScore ? 'addresser' : 'addressee';
 };
 
+export const areEquivalentCandidates = (
+  left: PromptExploderCaseResolverPartyCandidate,
+  right: PromptExploderCaseResolverPartyCandidate
+): boolean => {
+  const equivalentOrMissing = (leftValue: string, rightValue: string): boolean =>
+    leftValue === rightValue || !leftValue || !rightValue;
+
+  const normalizedLeftSegmentId = normalizeCaseResolverComparable(left.sourceSegmentId ?? '');
+  const normalizedRightSegmentId = normalizeCaseResolverComparable(right.sourceSegmentId ?? '');
+  if (
+    normalizedLeftSegmentId &&
+    normalizedRightSegmentId &&
+    normalizedLeftSegmentId === normalizedRightSegmentId
+  ) {
+    return true;
+  }
+
+  const normalizedLeftRawText = normalizeCaseResolverComparable(left.rawText ?? '');
+  const normalizedRightRawText = normalizeCaseResolverComparable(right.rawText ?? '');
+  if (
+    normalizedLeftRawText &&
+    normalizedRightRawText &&
+    normalizedLeftRawText === normalizedRightRawText
+  ) {
+    return true;
+  }
+
+  const normalizedLeftCore = normalizeCaseResolverComparable(
+    left.rawText || left.displayName || left.organizationName || ''
+  );
+  const normalizedRightCore = normalizeCaseResolverComparable(
+    right.rawText || right.displayName || right.organizationName || ''
+  );
+  if (!normalizedLeftCore || !normalizedRightCore) return false;
+  if (normalizedLeftCore !== normalizedRightCore) return false;
+
+  const normalizedLeftStreet = normalizeCaseResolverComparable(left.street ?? '');
+  const normalizedRightStreet = normalizeCaseResolverComparable(right.street ?? '');
+  const normalizedLeftStreetNumber = normalizeCaseResolverComparable(
+    composeCandidateStreetNumber(left)
+  );
+  const normalizedRightStreetNumber = normalizeCaseResolverComparable(
+    composeCandidateStreetNumber(right)
+  );
+  const normalizedLeftCity = normalizeCaseResolverComparable(left.city ?? '');
+  const normalizedRightCity = normalizeCaseResolverComparable(right.city ?? '');
+  const normalizedLeftPostalCode = normalizeCaseResolverComparable(left.postalCode ?? '');
+  const normalizedRightPostalCode = normalizeCaseResolverComparable(right.postalCode ?? '');
+  const normalizedLeftCountry = normalizeCaseResolverComparable(left.country ?? '');
+  const normalizedRightCountry = normalizeCaseResolverComparable(right.country ?? '');
+
+  return (
+    equivalentOrMissing(normalizedLeftStreet, normalizedRightStreet) &&
+    equivalentOrMissing(normalizedLeftStreetNumber, normalizedRightStreetNumber) &&
+    equivalentOrMissing(normalizedLeftCity, normalizedRightCity) &&
+    equivalentOrMissing(normalizedLeftPostalCode, normalizedRightPostalCode) &&
+    equivalentOrMissing(normalizedLeftCountry, normalizedRightCountry)
+  );
+};
+
+const resolvePreferredRoleForEquivalentCandidates = (
+  addresserCandidate: PromptExploderCaseResolverPartyCandidate,
+  addresseeCandidate: PromptExploderCaseResolverPartyCandidate
+): CaseResolverCaptureRole => {
+  const addresserLabelRole = inferCandidateRoleFromLabels(addresserCandidate);
+  const addresseeLabelRole = inferCandidateRoleFromLabels(addresseeCandidate);
+
+  if (addresserLabelRole === 'addressee' && addresseeLabelRole !== 'addresser') {
+    return 'addressee';
+  }
+  if (addresseeLabelRole === 'addresser' && addresserLabelRole !== 'addressee') {
+    return 'addresser';
+  }
+
+  const hasOrganizationSignal = (
+    candidate: PromptExploderCaseResolverPartyCandidate
+  ): boolean =>
+    candidate.kind === 'organization' ||
+    normalizeCaseResolverComparable(candidate.organizationName ?? '').length > 0;
+
+  if (hasOrganizationSignal(addresserCandidate) || hasOrganizationSignal(addresseeCandidate)) {
+    return 'addressee';
+  }
+
+  return 'addresser';
+};
+
 const buildCaseResolverCaptureProposal = (args: {
   sourceRole: CaseResolverCaptureRole;
   targetRole: CaseResolverCaptureRole;
@@ -186,13 +273,21 @@ export const buildCaseResolverCaptureProposalState = (
     ...(payload?.addressee ? { addressee: payload.addressee } : {}),
   };
 
-  [payload?.addresser, payload?.addressee].forEach((candidate) => {
-    if (!candidate) return;
-    const inferredRole = inferCandidateRoleFromLabels(candidate);
-    if (!inferredRole || resolvedCandidates[inferredRole]) return;
-    resolvedCandidates[inferredRole] = candidate;
-  });
-
+  if (
+    resolvedCandidates.addresser &&
+        resolvedCandidates.addressee &&
+        areEquivalentCandidates(resolvedCandidates.addresser, resolvedCandidates.addressee)
+  ) {
+    const preferredRole = resolvePreferredRoleForEquivalentCandidates(
+      resolvedCandidates.addresser,
+      resolvedCandidates.addressee
+    );
+    if (preferredRole === 'addressee') {
+      delete resolvedCandidates.addresser;
+    } else {
+      delete resolvedCandidates.addressee;
+    }
+  }
   const proposals: Record<CaseResolverCaptureRole, CaseResolverCaptureProposal | null> = {
     addresser: null,
     addressee: null,

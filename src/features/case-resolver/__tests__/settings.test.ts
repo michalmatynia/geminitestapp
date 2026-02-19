@@ -1139,6 +1139,69 @@ describe('case-resolver settings', () => {
     });
   });
 
+  it('removes stale legacy node-file binding snapshots when no graph binding exists', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        workspaceRevision: 0,
+        lastMutationId: null,
+        lastMutationAt: null,
+        folders: [],
+        files: [
+          {
+            id: 'case-a',
+            fileType: 'case',
+            name: 'Case A',
+            folder: '',
+            graph: {
+              nodes: [],
+              edges: [],
+              nodeMeta: {},
+              edgeMeta: {},
+            },
+          },
+          {
+            id: 'doc-legacy',
+            fileType: 'document',
+            name: 'Legacy Document',
+            folder: '',
+            parentCaseId: 'case-a',
+            graph: {
+              nodes: [],
+              edges: [],
+              nodeMeta: {},
+              edgeMeta: {},
+            },
+          },
+        ],
+        assets: [
+          {
+            id: 'node-file-legacy',
+            name: 'Legacy Node File',
+            folder: '',
+            kind: 'node_file',
+            sourceFileId: 'doc-legacy',
+            textContent: JSON.stringify({
+              kind: 'case_resolver_node_file_snapshot_v1',
+              source: 'manual',
+              nodeId: 'legacy-node',
+              sourceFileId: 'doc-legacy',
+              sourceFileType: 'document',
+              sourceFileName: 'Legacy Document',
+            }),
+          },
+        ],
+        activeFileId: 'doc-legacy',
+      })
+    );
+
+    const legacyNodeFile = workspace.assets.find((asset) => asset.id === 'node-file-legacy');
+    expect(legacyNodeFile).toBeDefined();
+    expect(legacyNodeFile?.sourceFileId).toBeNull();
+    const snapshot = parseNodeFileSnapshot(legacyNodeFile?.textContent ?? '');
+    expect(snapshot.nodeFileMeta).toEqual({});
+  });
+
   it('normalizes text node edge ports to textfield/content only', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({

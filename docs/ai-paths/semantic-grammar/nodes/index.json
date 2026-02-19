@@ -1,0 +1,274 @@
+[
+  {
+    "nodeType": "agent",
+    "title": "Reasoning Agent",
+    "file": "docs/ai-paths/semantic-grammar/nodes/agent.json",
+    "inputCount": 12,
+    "outputCount": 4,
+    "configFieldCount": 5
+  },
+  {
+    "nodeType": "ai_description",
+    "title": "AI Description Generator",
+    "file": "docs/ai-paths/semantic-grammar/nodes/ai_description.json",
+    "inputCount": 3,
+    "outputCount": 1,
+    "configFieldCount": 4
+  },
+  {
+    "nodeType": "api_advanced",
+    "title": "API Operation (Advanced)",
+    "file": "docs/ai-paths/semantic-grammar/nodes/api_advanced.json",
+    "inputCount": 9,
+    "outputCount": 8,
+    "configFieldCount": 16
+  },
+  {
+    "nodeType": "audio_oscillator",
+    "title": "Audio Oscillator",
+    "file": "docs/ai-paths/semantic-grammar/nodes/audio_oscillator.json",
+    "inputCount": 5,
+    "outputCount": 5,
+    "configFieldCount": 6
+  },
+  {
+    "nodeType": "audio_speaker",
+    "title": "Audio Speaker (Mono)",
+    "file": "docs/ai-paths/semantic-grammar/nodes/audio_speaker.json",
+    "inputCount": 6,
+    "outputCount": 2,
+    "configFieldCount": 6
+  },
+  {
+    "nodeType": "bundle",
+    "title": "Bundle",
+    "file": "docs/ai-paths/semantic-grammar/nodes/bundle.json",
+    "inputCount": 13,
+    "outputCount": 1,
+    "configFieldCount": 3
+  },
+  {
+    "nodeType": "compare",
+    "title": "Compare",
+    "file": "docs/ai-paths/semantic-grammar/nodes/compare.json",
+    "inputCount": 1,
+    "outputCount": 3,
+    "configFieldCount": 6
+  },
+  {
+    "nodeType": "constant",
+    "title": "Constant",
+    "file": "docs/ai-paths/semantic-grammar/nodes/constant.json",
+    "inputCount": 0,
+    "outputCount": 1,
+    "configFieldCount": 4
+  },
+  {
+    "nodeType": "context",
+    "title": "Context Filter",
+    "file": "docs/ai-paths/semantic-grammar/nodes/context.json",
+    "inputCount": 1,
+    "outputCount": 4,
+    "configFieldCount": 10
+  },
+  {
+    "nodeType": "database",
+    "title": "Database Query",
+    "file": "docs/ai-paths/semantic-grammar/nodes/database.json",
+    "inputCount": 12,
+    "outputCount": 4,
+    "configFieldCount": 37
+  },
+  {
+    "nodeType": "db_schema",
+    "title": "Database Schema",
+    "file": "docs/ai-paths/semantic-grammar/nodes/db_schema.json",
+    "inputCount": 0,
+    "outputCount": 2,
+    "configFieldCount": 8
+  },
+  {
+    "nodeType": "delay",
+    "title": "Delay",
+    "file": "docs/ai-paths/semantic-grammar/nodes/delay.json",
+    "inputCount": 5,
+    "outputCount": 5,
+    "configFieldCount": 3
+  },
+  {
+    "nodeType": "description_updater",
+    "title": "Description Updater (Deprecated)",
+    "file": "docs/ai-paths/semantic-grammar/nodes/description_updater.json",
+    "inputCount": 2,
+    "outputCount": 1,
+    "configFieldCount": 2
+  },
+  {
+    "nodeType": "gate",
+    "title": "Gate",
+    "file": "docs/ai-paths/semantic-grammar/nodes/gate.json",
+    "inputCount": 3,
+    "outputCount": 3,
+    "configFieldCount": 4
+  },
+  {
+    "nodeType": "http",
+    "title": "HTTP Fetch",
+    "file": "docs/ai-paths/semantic-grammar/nodes/http.json",
+    "inputCount": 7,
+    "outputCount": 2,
+    "configFieldCount": 8
+  },
+  {
+    "nodeType": "iterator",
+    "title": "Iterator",
+    "file": "docs/ai-paths/semantic-grammar/nodes/iterator.json",
+    "inputCount": 2,
+    "outputCount": 5,
+    "configFieldCount": 4
+  },
+  {
+    "nodeType": "learner_agent",
+    "title": "Learner Agent",
+    "file": "docs/ai-paths/semantic-grammar/nodes/learner_agent.json",
+    "inputCount": 12,
+    "outputCount": 4,
+    "configFieldCount": 5
+  },
+  {
+    "nodeType": "mapper",
+    "title": "JSON Mapper",
+    "file": "docs/ai-paths/semantic-grammar/nodes/mapper.json",
+    "inputCount": 4,
+    "outputCount": 2,
+    "configFieldCount": 4
+  },
+  {
+    "nodeType": "math",
+    "title": "Math",
+    "file": "docs/ai-paths/semantic-grammar/nodes/math.json",
+    "inputCount": 1,
+    "outputCount": 1,
+    "configFieldCount": 4
+  },
+  {
+    "nodeType": "model",
+    "title": "Model",
+    "file": "docs/ai-paths/semantic-grammar/nodes/model.json",
+    "inputCount": 2,
+    "outputCount": 2,
+    "configFieldCount": 7
+  },
+  {
+    "nodeType": "mutator",
+    "title": "Mutator",
+    "file": "docs/ai-paths/semantic-grammar/nodes/mutator.json",
+    "inputCount": 1,
+    "outputCount": 1,
+    "configFieldCount": 4
+  },
+  {
+    "nodeType": "notification",
+    "title": "Toast Notification",
+    "file": "docs/ai-paths/semantic-grammar/nodes/notification.json",
+    "inputCount": 9,
+    "outputCount": 0,
+    "configFieldCount": 2
+  },
+  {
+    "nodeType": "parser",
+    "title": "JSON Parser",
+    "file": "docs/ai-paths/semantic-grammar/nodes/parser.json",
+    "inputCount": 2,
+    "outputCount": 4,
+    "configFieldCount": 5
+  },
+  {
+    "nodeType": "poll",
+    "title": "Poll Job",
+    "file": "docs/ai-paths/semantic-grammar/nodes/poll.json",
+    "inputCount": 6,
+    "outputCount": 4,
+    "configFieldCount": 21
+  },
+  {
+    "nodeType": "prompt",
+    "title": "Prompt",
+    "file": "docs/ai-paths/semantic-grammar/nodes/prompt.json",
+    "inputCount": 5,
+    "outputCount": 2,
+    "configFieldCount": 3
+  },
+  {
+    "nodeType": "regex",
+    "title": "Regex Grouper",
+    "file": "docs/ai-paths/semantic-grammar/nodes/regex.json",
+    "inputCount": 3,
+    "outputCount": 4,
+    "configFieldCount": 13
+  },
+  {
+    "nodeType": "router",
+    "title": "Router",
+    "file": "docs/ai-paths/semantic-grammar/nodes/router.json",
+    "inputCount": 7,
+    "outputCount": 7,
+    "configFieldCount": 5
+  },
+  {
+    "nodeType": "simulation",
+    "title": "Simulation: Entity Modal",
+    "file": "docs/ai-paths/semantic-grammar/nodes/simulation.json",
+    "inputCount": 1,
+    "outputCount": 4,
+    "configFieldCount": 5
+  },
+  {
+    "nodeType": "string_mutator",
+    "title": "String Mutator",
+    "file": "docs/ai-paths/semantic-grammar/nodes/string_mutator.json",
+    "inputCount": 3,
+    "outputCount": 1,
+    "configFieldCount": 9
+  },
+  {
+    "nodeType": "template",
+    "title": "Template",
+    "file": "docs/ai-paths/semantic-grammar/nodes/template.json",
+    "inputCount": 12,
+    "outputCount": 1,
+    "configFieldCount": 3
+  },
+  {
+    "nodeType": "trigger",
+    "title": "Trigger: Scheduled Run",
+    "file": "docs/ai-paths/semantic-grammar/nodes/trigger.json",
+    "inputCount": 1,
+    "outputCount": 6,
+    "configFieldCount": 3
+  },
+  {
+    "nodeType": "validation_pattern",
+    "title": "Validation Pattern",
+    "file": "docs/ai-paths/semantic-grammar/nodes/validation_pattern.json",
+    "inputCount": 4,
+    "outputCount": 6,
+    "configFieldCount": 13
+  },
+  {
+    "nodeType": "validator",
+    "title": "Validator",
+    "file": "docs/ai-paths/semantic-grammar/nodes/validator.json",
+    "inputCount": 1,
+    "outputCount": 3,
+    "configFieldCount": 4
+  },
+  {
+    "nodeType": "viewer",
+    "title": "Result Viewer",
+    "file": "docs/ai-paths/semantic-grammar/nodes/viewer.json",
+    "inputCount": 35,
+    "outputCount": 0,
+    "configFieldCount": 4
+  }
+]

@@ -16,10 +16,14 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
   if (!selectedNode) return null;
   const runtimeConfig = selectedNode.config?.runtime ?? {};
   const cacheConfig = runtimeConfig.cache ?? {};
+  const retryConfig = runtimeConfig.retry ?? {};
   const cacheMode: NodeCacheMode = cacheConfig.mode ?? 'auto';
   const cacheTtlSeconds = cacheConfig.ttlMs ? Math.round(cacheConfig.ttlMs / 1000) : '';
   const defaultWaitForInputs = selectedNode.type === 'database';
   const waitForInputs = runtimeConfig.waitForInputs ?? defaultWaitForInputs;
+  const timeoutMs = runtimeConfig.timeoutMs ?? '';
+  const retryAttempts = retryConfig.attempts ?? '';
+  const retryBackoffMs = retryConfig.backoffMs ?? '';
 
   return (
     <div className='space-y-3 rounded-md border border-border bg-card/50 p-3'>
@@ -98,6 +102,79 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
         }
         className='mt-3 bg-transparent border-none p-0 hover:bg-transparent'
       />
+      <FormField
+        label='Execution timeout (ms)'
+        description='Optional per-node timeout. Leave empty to use global runtime behavior.'
+      >
+        <Input
+          type='number'
+          min={0}
+          placeholder='No timeout'
+          value={timeoutMs}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+            const parsed = parseInt(event.target.value, 10);
+            updateSelectedNodeConfig({
+              runtime: {
+                ...runtimeConfig,
+                ...(Number.isFinite(parsed) && parsed > 0 ? { timeoutMs: parsed } : { timeoutMs: undefined }),
+              },
+            });
+          }}
+          className='mt-1 w-full border-border bg-card/70 text-sm text-white'
+        />
+      </FormField>
+      <div className='grid gap-3 sm:grid-cols-2'>
+        <FormField
+          label='Retry attempts'
+          description='Total attempts including first execution.'
+        >
+          <Input
+            type='number'
+            min={1}
+            placeholder='1'
+            value={retryAttempts}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+              const parsed = parseInt(event.target.value, 10);
+              const nextRetry = {
+                ...retryConfig,
+                ...(Number.isFinite(parsed) && parsed > 0 ? { attempts: parsed } : { attempts: undefined }),
+              };
+              updateSelectedNodeConfig({
+                runtime: {
+                  ...runtimeConfig,
+                  retry: nextRetry,
+                },
+              });
+            }}
+            className='mt-1 w-full border-border bg-card/70 text-sm text-white'
+          />
+        </FormField>
+        <FormField
+          label='Retry backoff (ms)'
+          description='Delay before each retry attempt.'
+        >
+          <Input
+            type='number'
+            min={0}
+            placeholder='0'
+            value={retryBackoffMs}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+              const parsed = parseInt(event.target.value, 10);
+              const nextRetry = {
+                ...retryConfig,
+                ...(Number.isFinite(parsed) && parsed >= 0 ? { backoffMs: parsed } : { backoffMs: undefined }),
+              };
+              updateSelectedNodeConfig({
+                runtime: {
+                  ...runtimeConfig,
+                  retry: nextRetry,
+                },
+              });
+            }}
+            className='mt-1 w-full border-border bg-card/70 text-sm text-white'
+          />
+        </FormField>
+      </div>
     </div>
   );
 }

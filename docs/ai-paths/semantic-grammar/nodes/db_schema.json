@@ -1,0 +1,74 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "db_schema",
+  "title": "Database Schema",
+  "purpose": "Provides live database structure as context for AI.",
+  "inputs": [],
+  "outputs": [
+    "schema",
+    "context"
+  ],
+  "configFields": [
+    {
+      "path": "db_schema.provider",
+      "description": "Which provider to load: auto (primary), mongodb, prisma, or all.",
+      "defaultValue": "all"
+    },
+    {
+      "path": "db_schema.mode",
+      "description": "all = include all collections; selected = include only `collections`.",
+      "defaultValue": "all"
+    },
+    {
+      "path": "db_schema.collections",
+      "description": "Collection names to include when mode is selected.",
+      "defaultValue": "[]"
+    },
+    {
+      "path": "db_schema.includeFields",
+      "description": "Include field lists for each collection.",
+      "defaultValue": "true"
+    },
+    {
+      "path": "db_schema.includeRelations",
+      "description": "Include inferred relations/foreign key hints when available.",
+      "defaultValue": "false"
+    },
+    {
+      "path": "db_schema.formatAs",
+      "description": "json emits a JSON object; text emits a compact schema text for prompting.",
+      "defaultValue": "json"
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_db_schema",
+    "type": "db_schema",
+    "title": "Database Schema",
+    "description": "Provides live database structure as context for AI.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [],
+    "outputs": [
+      "schema",
+      "context"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

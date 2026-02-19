@@ -46,6 +46,34 @@ describe('crop-utils', () => {
     expect(buildCropFingerprintRelationType(clientFingerprint)).toMatch(/^crop:output:[a-f0-9]{20}$/);
   });
 
+  it('includes canvas context in bbox fingerprint payload', () => {
+    const sourceSignature = 'slot-1|project-1|file-1';
+    const rect = { x: 10, y: 20, width: 100, height: 80 };
+
+    const withoutCanvas = buildCropFingerprint({
+      sourceSignature,
+      mode: 'server_bbox',
+      cropRect: rect,
+    });
+    const withCanvas = buildCropFingerprint({
+      sourceSignature,
+      mode: 'server_bbox',
+      cropRect: rect,
+      canvasContext: {
+        canvasWidth: 1600,
+        canvasHeight: 2400,
+        imageFrame: {
+          x: 0.1,
+          y: 0.2,
+          width: 0.7,
+          height: 0.6,
+        },
+      },
+    });
+
+    expect(withCanvas).not.toBe(withoutCanvas);
+  });
+
   it('uses request id relation hashing for idempotency links', () => {
     const relation = buildCropRequestRelationType('req_123456789');
     expect(relation).toMatch(/^crop:request:[a-f0-9]{20}$/);

@@ -1,11 +1,12 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from '@playwright/test';
+
 import type {
   NoteRelationWithSource,
   NoteRelationWithTarget,
-} from "@/shared/types/domain/notes";
+} from '@/shared/types/domain/notes';
 
-test.describe("Notes page", () => {
-  test("lists, filters, and creates notes", async ({ page }) => {
+test.describe('Notes page', () => {
+  test('lists, filters, and creates notes', async ({ page }) => {
     const now = new Date().toISOString();
     type TagFixture = {
       id: string;
@@ -52,19 +53,19 @@ test.describe("Notes page", () => {
 
     const tags: TagFixture[] = [
       {
-        id: "tag-1",
-        name: "Work",
-        color: "#3b82f6",
+        id: 'tag-1',
+        name: 'Work',
+        color: '#3b82f6',
         createdAt: now,
         updatedAt: now,
       },
     ];
     const categories: CategoryFixture[] = [
       {
-        id: "cat-1",
-        name: "Projects",
+        id: 'cat-1',
+        name: 'Projects',
         description: null,
-        color: "#10b981",
+        color: '#10b981',
         parentId: null,
         createdAt: now,
         updatedAt: now,
@@ -72,26 +73,26 @@ test.describe("Notes page", () => {
     ];
     const notes: NoteFixture[] = [
       {
-        id: "note-1",
-        title: "Alpha",
-        content: "First note",
-        color: "#ffffff",
+        id: 'note-1',
+        title: 'Alpha',
+        content: 'First note',
+        color: '#ffffff',
         isPinned: true,
         isArchived: false,
         createdAt: now,
         updatedAt: now,
         tags: [
           {
-            noteId: "note-1",
-            tagId: "tag-1",
+            noteId: 'note-1',
+            tagId: 'tag-1',
             assignedAt: now,
             tag: tags[0]!,
           },
         ],
         categories: [
           {
-            noteId: "note-1",
-            categoryId: "cat-1",
+            noteId: 'note-1',
+            categoryId: 'cat-1',
             assignedAt: now,
             category: categories[0]!,
           },
@@ -100,10 +101,10 @@ test.describe("Notes page", () => {
         relationsTo: [],
       },
       {
-        id: "note-2",
-        title: "Beta",
-        content: "Second note",
-        color: "#ffffff",
+        id: 'note-2',
+        title: 'Beta',
+        content: 'Second note',
+        color: '#ffffff',
         isPinned: false,
         isArchived: false,
         createdAt: now,
@@ -117,9 +118,9 @@ test.describe("Notes page", () => {
 
     const notebooks = [
       {
-        id: "notebook-1",
-        name: "Default",
-        color: "#3b82f6",
+        id: 'notebook-1',
+        name: 'Default',
+        color: '#3b82f6',
         createdAt: now,
         updatedAt: now,
       },
@@ -145,70 +146,70 @@ test.describe("Notes page", () => {
           })),
       }));
 
-    await page.route("**/api/settings/lite**", async (route) => {
+    await page.route('**/api/settings/lite**', async (route) => {
       return route.fulfill({
         status: 200,
-        contentType: "application/json",
+        contentType: 'application/json',
         body: JSON.stringify([]),
       });
     });
 
-    await page.route("**/api/settings**", async (route) => {
+    await page.route('**/api/settings**', async (route) => {
       const request = route.request();
-      if (request.method() === "GET") {
+      if (request.method() === 'GET') {
         return route.fulfill({
           status: 200,
-          contentType: "application/json",
+          contentType: 'application/json',
           body: JSON.stringify([
-            { key: "noteSettings:selectedNotebookId", value: "notebook-1" }
+            { key: 'noteSettings:selectedNotebookId', value: 'notebook-1' }
           ]),
         });
       }
       return route.fulfill({
         status: 200,
-        contentType: "application/json",
+        contentType: 'application/json',
         body: JSON.stringify({ ok: true }),
       });
     });
 
-    await page.route("**/api/notes/tags**", async (route) => {
+    await page.route('**/api/notes/tags**', async (route) => {
       return route.fulfill({
         status: 200,
-        contentType: "application/json",
+        contentType: 'application/json',
         body: JSON.stringify(tags),
       });
     });
 
-    await page.route("**/api/notes/notebooks**", async (route) => {
+    await page.route('**/api/notes/notebooks**', async (route) => {
       return route.fulfill({
         status: 200,
-        contentType: "application/json",
+        contentType: 'application/json',
         body: JSON.stringify(notebooks),
       });
     });
 
-    await page.route("**/api/notes/categories/tree**", async (route) => {
+    await page.route('**/api/notes/categories/tree**', async (route) => {
       return route.fulfill({
         status: 200,
-        contentType: "application/json",
+        contentType: 'application/json',
         body: JSON.stringify(buildTree()),
       });
     });
 
-    await page.route("**/api/notes*", async (route) => {
+    await page.route('**/api/notes*', async (route) => {
       const request = route.request();
       const url = new URL(request.url());
       
       // Skip other specific routes
-      if (url.pathname.includes("/api/notes/")) {
-        const subpath = url.pathname.split("/api/notes/")[1];
-        if (["tags", "notebooks", "categories", "themes"].some(p => subpath?.startsWith(p))) {
-           return route.fallback();
+      if (url.pathname.includes('/api/notes/')) {
+        const subpath = url.pathname.split('/api/notes/')[1];
+        if (['tags', 'notebooks', 'categories', 'themes'].some(p => subpath?.startsWith(p))) {
+          return route.fallback();
         }
       }
 
-      if (request.method() === "POST") {
-        const body = JSON.parse(request.postData() || "{}") as {
+      if (request.method() === 'POST') {
+        const body = JSON.parse(request.postData() || '{}') as {
           title?: string;
           content?: string;
           color?: string;
@@ -221,21 +222,21 @@ test.describe("Notes page", () => {
         const categoryIds = Array.isArray(body.categoryIds) ? body.categoryIds : [];
         const newNote = {
           id: `note-${notes.length + 1}`,
-          title: body.title || "Untitled",
-          content: body.content || "",
-          color: body.color ?? "#ffffff",
+          title: body.title || 'Untitled',
+          content: body.content || '',
+          color: body.color ?? '#ffffff',
           isPinned: body.isPinned ?? false,
           isArchived: body.isArchived ?? false,
           createdAt: now,
           updatedAt: now,
           tags: tagIds.map((tagId) => ({
-            noteId: "temp",
+            noteId: 'temp',
             tagId,
             assignedAt: now,
             tag: tags.find((tag) => tag.id === tagId) ?? tags[0]!,
           })),
           categories: categoryIds.map((categoryId) => ({
-            noteId: "temp",
+            noteId: 'temp',
             categoryId,
             assignedAt: now,
             category:
@@ -248,14 +249,14 @@ test.describe("Notes page", () => {
         notes.push(newNote);
         return route.fulfill({
           status: 201,
-          contentType: "application/json",
+          contentType: 'application/json',
           body: JSON.stringify(newNote),
         });
       }
 
       let filtered = [...notes];
-      const search = url.searchParams.get("search");
-      const searchScope = url.searchParams.get("searchScope") ?? "both";
+      const search = url.searchParams.get('search');
+      const searchScope = url.searchParams.get('searchScope') ?? 'both';
 
       if (search) {
         filtered = filtered.filter((note) => {
@@ -265,38 +266,38 @@ test.describe("Notes page", () => {
           const inContent = note.content
             .toLowerCase()
             .includes(search.toLowerCase());
-          if (searchScope === "title") return inTitle;
-          if (searchScope === "content") return inContent;
+          if (searchScope === 'title') return inTitle;
+          if (searchScope === 'content') return inContent;
           return inTitle || inContent;
         });
       }
 
       return route.fulfill({
         status: 200,
-        contentType: "application/json",
+        contentType: 'application/json',
         body: JSON.stringify(filtered),
       });
     });
 
-    await page.goto("/admin/notes");
+    await page.goto('/admin/notes');
 
-    await expect(page.getByRole("heading", { name: "Notes", exact: true })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Alpha" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Beta" })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Notes', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Alpha' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Beta' })).toBeVisible();
 
-    await page.getByPlaceholder("Search in All Notes...").fill("Alpha");
-    await expect(page.getByRole("heading", { name: "Alpha" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Beta" })).toBeHidden();
+    await page.getByPlaceholder('Search in All Notes...').fill('Alpha');
+    await expect(page.getByRole('heading', { name: 'Alpha' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Beta' })).toBeHidden();
 
     // Clear search BEFORE creating
-    await page.getByPlaceholder("Search in All Notes...").fill("");
-    await expect(page.getByRole("heading", { name: "Beta" })).toBeVisible();
+    await page.getByPlaceholder('Search in All Notes...').fill('');
+    await expect(page.getByRole('heading', { name: 'Beta' })).toBeVisible();
 
-    await page.getByRole("button", { name: "Create note" }).click();
-    await page.getByPlaceholder("Enter note title").fill("Gamma");
-    await page.getByPlaceholder("Enter note content").fill("Third note");
-    await page.getByRole("button", { name: "Create" }).click();
+    await page.getByRole('button', { name: 'Create note' }).click();
+    await page.getByPlaceholder('Enter note title').fill('Gamma');
+    await page.getByPlaceholder('Enter note content').fill('Third note');
+    await page.getByRole('button', { name: 'Create' }).click();
 
-    await expect(page.getByRole("heading", { name: "Gamma" })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Gamma' })).toBeVisible();
   });
 });

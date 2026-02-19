@@ -31,6 +31,15 @@ type PromptExploderCaptureMappingModalProps = {
         : null | undefined
       : null | undefined
   ) => string;
+  diagnostics: {
+    status: 'idle' | 'success' | 'failed';
+    stage: 'precheck' | 'mutation' | 'rebase' | null;
+    message: string;
+    targetFileId: string | null;
+    resolvedTargetFileId: string | null;
+    workspaceRevision: number;
+    at: string;
+  } | null;
 };
 
 export function PromptExploderCaptureMappingModal({
@@ -45,6 +54,7 @@ export function PromptExploderCaptureMappingModal({
   onUpdateReference,
   onUpdateDateAction,
   resolveMatchedPartyLabel,
+  diagnostics,
 }: PromptExploderCaptureMappingModalProps): React.JSX.Element {
   const resolveActionOptions = (
     proposal: NonNullable<CaseResolverCaptureProposalState['addresser']>
@@ -127,6 +137,20 @@ export function PromptExploderCaptureMappingModal({
           <div className='rounded border border-border/60 bg-card/30 px-3 py-2 text-xs text-gray-300'>
             Target File: <span className='font-medium text-gray-100'>{targetFileName}</span>
           </div>
+          {diagnostics ? (
+            <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-[11px] text-gray-300'>
+              <div>
+                Apply status: <span className='font-medium text-gray-100'>{diagnostics.status}</span>
+                {diagnostics.stage ? ` (${diagnostics.stage})` : ''}
+              </div>
+              <div className='mt-0.5'>
+                {diagnostics.message}
+              </div>
+              <div className='mt-0.5 text-gray-400'>
+                target: {diagnostics.targetFileId ?? '(none)'} · resolved: {diagnostics.resolvedTargetFileId ?? '(none)'} · rev: {diagnostics.workspaceRevision}
+              </div>
+            </div>
+          ) : null}
 
           {draft.documentDate ? (
             <div className='space-y-3 rounded border border-border/60 bg-card/25 p-3'>

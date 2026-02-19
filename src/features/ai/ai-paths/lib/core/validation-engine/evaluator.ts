@@ -11,6 +11,7 @@ import {
   AI_PATHS_VALIDATION_SCHEMA_VERSION,
   normalizeAiPathsValidationConfig,
 } from './defaults';
+import { AI_PATHS_NODE_DOCS } from '../docs/node-docs';
 
 export type AiPathsValidationFinding = {
   id: string;
@@ -84,6 +85,9 @@ const DEFAULT_SEVERITY_WEIGHT: Record<'error' | 'warning' | 'info', number> = {
 
 const COLLECTION_ALLOWLIST = new Set(
   DB_COLLECTION_OPTIONS.map((option) => option.value),
+);
+const KNOWN_NODE_TYPES = new Set(
+  AI_PATHS_NODE_DOCS.map((doc) => doc.type),
 );
 
 const clampScore = (value: number): number =>
@@ -215,16 +219,86 @@ const isAllowedCollection = (value: string): boolean => {
   return false;
 };
 
+const doEdgeEndpointsResolve = (
+  edges: Edge[],
+  nodesById: Map<string, AiNode>,
+): boolean =>
+  edges.every((edge: Edge): boolean => {
+    const fromNodeId = edgeFromNodeId(edge);
+    const toNodeId = edgeToNodeId(edge);
+    if (!fromNodeId || !toNodeId) return false;
+    return nodesById.has(fromNodeId) && nodesById.has(toNodeId);
+  });
+
+const doEdgePortsMatchNodeDeclarations = (
+  edges: Edge[],
+  nodesById: Map<string, AiNode>,
+): boolean =>
+  edges.every((edge: Edge): boolean => {
+    const fromNodeId = edgeFromNodeId(edge);
+    const toNodeId = edgeToNodeId(edge);
+    if (!fromNodeId || !toNodeId) return false;
+    const sourceNode = nodesById.get(fromNodeId);
+    const targetNode = nodesById.get(toNodeId);
+    if (!sourceNode || !targetNode) return false;
+    const fromPort = edgeFromPort(edge);
+    const toPort = edgeToPort(edge);
+    const sourcePortValid =
+      !fromPort || (Array.isArray(sourceNode.outputs) && sourceNode.outputs.includes(fromPort));
+    const targetPortValid =
+      !toPort || (Array.isArray(targetNode.inputs) && targetNode.inputs.includes(toPort));
+    return sourcePortValid && targetPortValid;
+  });
+
+const doNodeTypesKnown = (nodes: AiNode[], allowedTypes?: string[]): boolean => {
+  const normalizedAllowed =
+    Array.isArray(allowedTypes) && allowedTypes.length > 0
+      ? new Set(
+        allowedTypes
+          .map((type) => toText(type).trim())
+          .filter((type) => type.length > 0),
+      )
+      : KNOWN_NODE_TYPES;
+  if (normalizedAllowed.size === 0) return false;
+  return nodes.every((node: AiNode): boolean => normalizedAllowed.has(node.type));
+};
+
+const doNodeIdsUnique = (nodes: AiNode[]): boolean => {
+  const seen = new Set<string>();
+  for (const node of nodes) {
+    const id = toText(node.id).trim();
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+  }
+  return true;
+};
+
+const doEdgeIdsUnique = (edges: Edge[]): boolean => {
+  const seen = new Set<string>();
+  for (const edge of edges) {
+    const id = toText(edge.id).trim();
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+  }
+  return true;
+};
+
+const doNodePositionsFinite = (nodes: AiNode[]): boolean =>
+  nodes.every((node: AiNode): boolean =>
+    Number.isFinite(node.position?.x) && Number.isFinite(node.position?.y),
+  );
+
 const evaluateCondition = (args: {
   condition: AiPathsValidationCondition;
   rule: AiPathsValidationRule;
   node: AiNode | null;
+  nodes: AiNode[];
   nodesById: Map<string, AiNode>;
   edges: Edge[];
   graphContext: Record<string, unknown>;
   config: AiPathsValidationConfig;
 }): boolean => {
-  const { condition, rule, node, nodesById, edges, graphContext, config } = args;
+  const { condition, rule, node, nodes, nodesById, edges, graphContext, config } = args;
 
   const evaluate = (): boolean => {
     switch (condition.operator) {
@@ -387,6 +461,24 @@ const evaluateCondition = (args: {
         const mappedCollection = toText(collectionMap[entityType]).trim();
         return entityId.length > 0 && mappedCollection.length > 0;
       }
+      case 'edge_endpoints_resolve': {
+        return doEdgeEndpointsResolve(edges, nodesById);
+      }
+      case 'edge_ports_declared': {
+        return doEdgePortsMatchNodeDeclarations(edges, nodesById);
+      }
+      case 'node_types_known': {
+        return doNodeTypesKnown(nodes, condition.list);
+      }
+      case 'node_ids_unique': {
+        return doNodeIdsUnique(nodes);
+      }
+      case 'edge_ids_unique': {
+        return doEdgeIdsUnique(edges);
+      }
+      case 'node_positions_finite': {
+        return doNodePositionsFinite(nodes);
+      }
       default:
         return false;
     }
@@ -416,12 +508,13 @@ const matchesRuleNode = (rule: AiPathsValidationRule, node: AiNode): boolean => 
 const evaluateRuleForNode = (args: {
   rule: AiPathsValidationRule;
   node: AiNode | null;
+  nodes: AiNode[];
   nodesById: Map<string, AiNode>;
   edges: Edge[];
   graphContext: Record<string, unknown>;
   config: AiPathsValidationConfig;
 }): { passed: boolean; failedConditions: string[] } => {
-  const { rule, node, nodesById, edges, graphContext, config } = args;
+  const { rule, node, nodes, nodesById, edges, graphContext, config } = args;
   const mode = rule.conditionMode === 'any' ? 'any' : 'all';
   const checks = rule.conditions.map(
     (condition: AiPathsValidationCondition): boolean =>
@@ -429,6 +522,7 @@ const evaluateRuleForNode = (args: {
         condition,
         rule,
         node,
+        nodes,
         nodesById,
         edges,
         graphContext,
@@ -461,6 +555,23 @@ const createEmptyModuleImpact = (module: string): AiPathsValidationModuleImpact 
   scorePenalty: 0,
   severityCounts: createEmptySeverityCounts(),
 });
+
+const shouldEvaluateRuleAtRuntime = (rule: AiPathsValidationRule): boolean => {
+  if (rule.enabled === false) return false;
+  const inference = rule.inference;
+  if (!inference) return true;
+  if (
+    inference.status === 'candidate' ||
+    inference.status === 'rejected' ||
+    inference.status === 'deprecated'
+  ) {
+    return false;
+  }
+  if (inference.sourceType === 'central_docs') {
+    return inference.status === 'approved';
+  }
+  return true;
+};
 
 export const evaluateAiPathsValidationPreflight = ({
   nodes,
@@ -508,8 +619,12 @@ export const evaluateAiPathsValidationPreflight = ({
   const nodesById = new Map<string, AiNode>(
     nodes.map((node: AiNode): [string, AiNode] => [node.id, node]),
   );
+  const findings: AiPathsValidationFinding[] = [];
+  const moduleImpactMap = new Map<string, AiPathsValidationModuleImpact>();
+  const appliedRuleIds = new Set<string>();
+  const skippedRuleIds = new Set<string>();
   const orderedRules = (normalizedConfig.rules ?? [])
-    .filter((rule: AiPathsValidationRule): boolean => rule.enabled !== false)
+    .filter((rule: AiPathsValidationRule): boolean => shouldEvaluateRuleAtRuntime(rule))
     .slice()
     .sort((a: AiPathsValidationRule, b: AiPathsValidationRule): number => {
       const left = typeof a.sequence === 'number' ? a.sequence : 0;
@@ -517,11 +632,11 @@ export const evaluateAiPathsValidationPreflight = ({
       if (left !== right) return left - right;
       return a.id.localeCompare(b.id);
     });
-
-  const findings: AiPathsValidationFinding[] = [];
-  const moduleImpactMap = new Map<string, AiPathsValidationModuleImpact>();
-  const appliedRuleIds = new Set<string>();
-  const skippedRuleIds = new Set<string>();
+  (normalizedConfig.rules ?? []).forEach((rule: AiPathsValidationRule): void => {
+    if (!shouldEvaluateRuleAtRuntime(rule)) {
+      skippedRuleIds.add(rule.id);
+    }
+  });
   let score = baseScore;
   let rulesEvaluated = 0;
   let failedRules = 0;
@@ -541,6 +656,7 @@ export const evaluateAiPathsValidationPreflight = ({
     const evaluation = evaluateRuleForNode({
       rule,
       node,
+      nodes,
       nodesById,
       edges,
       graphContext,

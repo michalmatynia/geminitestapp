@@ -45,6 +45,7 @@ import type {
   RouterConfigDto,
   DelayConfigDto,
   HttpConfigDto,
+  AdvancedApiConfigDto,
   DbQueryConfigDto,
   PollConfigDto,
   DbSchemaConfigDto,
@@ -64,6 +65,7 @@ import type {
   AiPathsValidationOperatorDto,
   AiPathsValidationConditionDto,
   AiPathsValidationRuleDto,
+  AiPathsValidationDocsSyncStateDto,
   AiPathsValidationPolicyDto,
   AiPathsValidationConfigDto,
   PathDebugEntryDto,
@@ -202,6 +204,8 @@ export type DelayConfig = DelayConfigDto;
 
 export type HttpConfig = HttpConfigDto;
 
+export type AdvancedApiConfig = AdvancedApiConfigDto;
+
 export type DbQueryConfig = DbQueryConfigDto;
 
 export type PollConfig = PollConfigDto;
@@ -262,6 +266,8 @@ export type AiPathsValidationOperator = AiPathsValidationOperatorDto;
 export type AiPathsValidationCondition = AiPathsValidationConditionDto;
 
 export type AiPathsValidationRule = AiPathsValidationRuleDto;
+
+export type AiPathsValidationDocsSyncState = AiPathsValidationDocsSyncStateDto;
 
 export type AiPathsValidationPolicy = AiPathsValidationPolicyDto;
 

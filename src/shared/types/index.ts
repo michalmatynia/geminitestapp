@@ -67,6 +67,7 @@ export * from './domain/jobs';
 // AI & Runtime types
 export * from './domain/ai-paths';
 export * from './domain/ai-paths-runtime';
+export * from './domain/ai-paths-semantic-grammar';
 export * from './domain/chatbot';
 export * from './domain/agent-teaching';
 export * from './domain/analytics';

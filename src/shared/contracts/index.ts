@@ -5,6 +5,7 @@ export * from './agents';
 export * from './ai-brain';
 export * from './ai-insights';
 export * from './ai-paths-runtime';
+export * from './ai-paths-semantic-grammar';
 export * from './ai-paths';
 export * from './ai-trigger-buttons';
 export * from './analytics';

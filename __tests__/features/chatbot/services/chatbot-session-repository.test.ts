@@ -186,7 +186,8 @@ describe('Chatbot Session Repository', () => {
       // We can't strictly assert the date instance passed to $set because it's created inside the function,
       // but we verified it is passed in the previous test. 
       // Here we just verify the returned object reflects an update.
-      expect(result?.updatedAt.getTime()).toBeGreaterThan(beforeDate.getTime());
+      expect(result?.updatedAt).toBeDefined();
+      expect(new Date(result!.updatedAt!).getTime()).toBeGreaterThan(beforeDate.getTime());
     });
   });
 });

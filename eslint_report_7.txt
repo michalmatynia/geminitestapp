@@ -1,0 +1,34 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/product-sync/components/ProductSyncSettings.tsx
+  508:22  error  Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/product-studio-service.ts
+  1717:20  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/prompt-exploder/components/ReassembledPromptPanel.tsx
+  23:19  error  Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/prompt-exploder/pattern-pack-rules.ts
+  29:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  40:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  58:7   error  Unsafe return of a value of type `any`    @typescript-eslint/no-unsafe-return
+  58:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  64:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  65:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  67:3   error  Unsafe return of a value of type `any[]`  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/prompt-exploder/pattern-snapshots.ts
+  51:71  error  Unexpected any. Specify a different type                                                                                                                                                                        @typescript-eslint/no-explicit-any
+  67:51  error  Unsafe argument of type `any` assigned to a parameter of type `"global" | "image_studio_prompt" | "image_studio_extraction" | "image_studio_generation" | "prompt_exploder" | "case_resolver_prompt_exploder"`  @typescript-eslint/no-unsafe-argument
+  67:70  error  Unexpected any. Specify a different type                                                                                                                                                                        @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/contracts/ai-brain.ts
+  51:102  error  Unsafe argument of type `any` assigned to a parameter of type `Record<"analytics" | "image_studio" | "runtime_analytics" | "system_logs" | "cms_builder" | "error_logs" | "ai_paths" | "prompt_engine", { enabled: boolean; provider: "model" | "agent"; ... 4 more ...; notes: string | null; } | undefined>`  @typescript-eslint/no-unsafe-argument
+  51:108  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                        @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/templates/StandardDataTablePanel.tsx
+  31:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 16 problems (16 errors, 0 warnings)
+  1 error and 0 warnings potentially fixable with the `--fix` option.
+

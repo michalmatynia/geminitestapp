@@ -1,0 +1,67 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "delay",
+  "title": "Delay",
+  "purpose": "Delay signals to sequence flows.",
+  "inputs": [
+    "context",
+    "bundle",
+    "prompt",
+    "result",
+    "value"
+  ],
+  "outputs": [
+    "context",
+    "bundle",
+    "prompt",
+    "result",
+    "value"
+  ],
+  "configFields": [
+    {
+      "path": "delay.ms",
+      "description": "Delay duration in milliseconds.",
+      "defaultValue": "500"
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_delay",
+    "type": "delay",
+    "title": "Delay",
+    "description": "Delay signals to sequence flows.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "context",
+      "bundle",
+      "prompt",
+      "result",
+      "value"
+    ],
+    "outputs": [
+      "context",
+      "bundle",
+      "prompt",
+      "result",
+      "value"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

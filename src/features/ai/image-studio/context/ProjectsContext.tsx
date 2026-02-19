@@ -16,9 +16,12 @@ import {
 
 import {
   type CreateStudioProjectPayload,
+  type ResizeStudioProjectCanvasPayload,
+  type ResizeStudioProjectCanvasResult,
   useCreateStudioProject,
   useDeleteStudioProject,
   useRenameStudioProject,
+  useResizeStudioProjectCanvas,
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import {
@@ -61,7 +64,14 @@ export interface ProjectsActions {
     { projectId: string; nextProjectId: string }
   >;
   deleteProjectMutation: DeleteMutation<string, string>;
+  resizeProjectCanvasMutation: UpdateMutation<
+    ResizeStudioProjectCanvasResult,
+    ResizeStudioProjectCanvasPayload
+  >;
   handleRenameProject: (id: string, nextId: string) => Promise<string>;
+  handleResizeProjectCanvas: (
+    payload: ResizeStudioProjectCanvasPayload
+  ) => Promise<ResizeStudioProjectCanvasResult>;
   handleDeleteProject: (id: string) => Promise<void>;
   handleConfirmDeleteProject: (id: string, onDeleted?: () => Promise<void>) => void;
   setProjectSearch: (s: string) => void;
@@ -90,6 +100,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
   const createProjectMutation = useCreateStudioProject();
   const renameProjectMutation = useRenameStudioProject();
   const deleteProjectMutation = useDeleteStudioProject();
+  const resizeProjectCanvasMutation = useResizeStudioProjectCanvas();
   const lastPersistedProjectRef = useRef<string | null>(null);
 
   const activeProjectIdFromPreferences = useMemo(() => {
@@ -259,6 +270,62 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
     }
   }, [projectId, renameProjectMutation, toast]);
 
+  const handleResizeProjectCanvas = useCallback(
+    async (
+      payload: ResizeStudioProjectCanvasPayload
+    ): Promise<ResizeStudioProjectCanvasResult> => {
+      const normalizedProjectId = payload.projectId.trim();
+      if (!normalizedProjectId) {
+        throw new Error('Project id is required.');
+      }
+      if (
+        typeof payload.canvasWidthPx !== 'number' &&
+        typeof payload.canvasHeightPx !== 'number'
+      ) {
+        throw new Error('Enter at least one canvas dimension.');
+      }
+
+      try {
+        const result = await resizeProjectCanvasMutation.mutateAsync({
+          ...payload,
+          projectId: normalizedProjectId,
+        });
+        const resolvedProjectId = result.projectId?.trim() || normalizedProjectId;
+        if (projectId === normalizedProjectId && resolvedProjectId !== normalizedProjectId) {
+          setProjectId(resolvedProjectId);
+        }
+        const canvasWidth =
+          typeof result.project?.canvasWidthPx === 'number'
+            ? result.project.canvasWidthPx
+            : payload.canvasWidthPx;
+        const canvasHeight =
+          typeof result.project?.canvasHeightPx === 'number'
+            ? result.project.canvasHeightPx
+            : payload.canvasHeightPx;
+        if (
+          typeof canvasWidth === 'number' &&
+          Number.isFinite(canvasWidth) &&
+          typeof canvasHeight === 'number' &&
+          Number.isFinite(canvasHeight)
+        ) {
+          toast(`Canvas resized to ${canvasWidth}x${canvasHeight}.`, {
+            variant: 'success',
+          });
+        } else {
+          toast('Project canvas updated.', { variant: 'success' });
+        }
+        return result;
+      } catch (error) {
+        toast(
+          error instanceof Error ? error.message : 'Failed to resize canvas.',
+          { variant: 'error' }
+        );
+        throw error;
+      }
+    },
+    [projectId, resizeProjectCanvasMutation, toast]
+  );
+
   const state = useMemo<ProjectsState>(
     () => ({ projectId, projectsQuery, projectSearch }),
     [projectId, projectsQuery, projectSearch]
@@ -270,7 +337,9 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
       createProjectMutation,
       renameProjectMutation,
       deleteProjectMutation,
+      resizeProjectCanvasMutation,
       handleRenameProject,
+      handleResizeProjectCanvas,
       handleDeleteProject,
       handleConfirmDeleteProject,
       setProjectSearch,
@@ -282,7 +351,9 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
       handleDeleteProject,
       handleConfirmDeleteProject,
       handleRenameProject,
+      handleResizeProjectCanvas,
       renameProjectMutation,
+      resizeProjectCanvasMutation,
       ConfirmationModal,
     ]
   );

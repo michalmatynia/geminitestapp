@@ -33,6 +33,8 @@ interface SelectSimpleProps {
   disabled?: boolean | undefined;
   ariaLabel?: string | undefined;
   size?: 'default' | 'sm' | 'xs';
+  dataDocId?: string | undefined;
+  dataDocAlias?: string | undefined;
 }
 
 export function SelectSimple({
@@ -46,6 +48,8 @@ export function SelectSimple({
   disabled = false,
   ariaLabel,
   size = 'default',
+  dataDocId,
+  dataDocAlias,
 }: SelectSimpleProps): React.JSX.Element {
   const normalizedOptions = React.useMemo(
     () => options.filter((option) => option.value && option.value.trim() !== ''),
@@ -93,6 +97,8 @@ export function SelectSimple({
             triggerClassName
           )}
           aria-label={ariaLabel}
+          data-doc-id={dataDocId}
+          data-doc-alias={dataDocAlias}
         >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>

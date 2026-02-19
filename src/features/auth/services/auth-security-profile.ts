@@ -1,5 +1,8 @@
 import 'server-only';
 
+import { Prisma } from '@prisma/client';
+import { type UpdateFilter } from 'mongodb';
+
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
 import type { AuthSecurityProfileDto as AuthSecurityProfile } from '@/shared/contracts/auth';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -14,10 +17,10 @@ type MongoProfileDoc = {
   mfaSecret?: string | null;
   recoveryCodes?: string[];
   allowedIps?: string[];
-  disabledAt?: Date | null;
-  bannedAt?: Date | null;
-  createdAt?: Date;
-  updatedAt?: Date;
+  disabledAt?: Date | string | null;
+  bannedAt?: Date | string | null;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
 };
 
 const PROFILES_COLLECTION = 'auth_security_profiles';
@@ -30,8 +33,8 @@ const buildDefaultProfile = (userId: string): AuthSecurityProfile => ({
   allowedIps: [],
   disabledAt: null,
   bannedAt: null,
-  createdAt: new Date(),
-  updatedAt: new Date(),
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
 });
 
 const normalizeProfile = (profile: AuthSecurityProfile): AuthSecurityProfile => ({
@@ -44,6 +47,12 @@ const parseNumber = (value: string | undefined, fallback: number): number => {
   if (!value) return fallback;
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const toIsoString = (value: Date | string | null | undefined): string | null => {
+  if (!value) return null;
+  if (value instanceof Date) return value.toISOString();
+  return value;
 };
 
 const AUTH_SECURITY_CACHE_TTL_MS = parseNumber(
@@ -88,10 +97,10 @@ export const getAuthSecurityProfile = async (
         mfaSecret: profile.mfaSecret ?? null,
         recoveryCodes: profile.recoveryCodes ?? [],
         allowedIps: profile.allowedIps ?? [],
-        disabledAt: profile.disabledAt ?? null,
-        bannedAt: profile.bannedAt ?? null,
-        createdAt: profile.createdAt,
-        updatedAt: profile.updatedAt,
+        disabledAt: toIsoString(profile.disabledAt),
+        bannedAt: toIsoString(profile.bannedAt),
+        createdAt: profile.createdAt.toISOString(),
+        updatedAt: profile.updatedAt.toISOString(),
       });
     }
     if (!process.env['MONGODB_URI']) return buildDefaultProfile(userId);
@@ -106,10 +115,10 @@ export const getAuthSecurityProfile = async (
       mfaSecret: doc.mfaSecret ?? null,
       recoveryCodes: doc.recoveryCodes ?? [],
       allowedIps: doc.allowedIps ?? [],
-      disabledAt: doc.disabledAt ?? null,
-      bannedAt: doc.bannedAt ?? null,
-      createdAt: doc.createdAt ?? new Date(),
-      updatedAt: doc.updatedAt ?? new Date(),
+      disabledAt: toIsoString(doc.disabledAt),
+      bannedAt: toIsoString(doc.bannedAt),
+      createdAt: toIsoString(doc.createdAt) ?? new Date().toISOString(),
+      updatedAt: toIsoString(doc.updatedAt) ?? new Date().toISOString(),
     });
   })();
 
@@ -128,41 +137,41 @@ export const updateAuthSecurityProfile = async (
   updates: Partial<AuthSecurityProfile>
 ): Promise<AuthSecurityProfile> => {
   const now = new Date();
-  const payload: Partial<AuthSecurityProfile> = {
+  const payload: Record<string, unknown> = {
     updatedAt: now,
   };
   if (typeof updates.mfaEnabled === 'boolean') {
-    payload.mfaEnabled = updates.mfaEnabled;
+    payload['mfaEnabled'] = updates.mfaEnabled;
   }
   if (updates.mfaSecret !== undefined) {
-    payload.mfaSecret = updates.mfaSecret;
+    payload['mfaSecret'] = updates.mfaSecret;
   }
   if (updates.recoveryCodes !== undefined) {
-    payload.recoveryCodes = updates.recoveryCodes;
+    payload['recoveryCodes'] = updates.recoveryCodes;
   }
   if (updates.allowedIps !== undefined) {
-    payload.allowedIps = updates.allowedIps;
+    payload['allowedIps'] = updates.allowedIps;
   }
   if (updates.disabledAt !== undefined) {
-    payload.disabledAt = updates.disabledAt;
+    payload['disabledAt'] = updates.disabledAt ? new Date(updates.disabledAt) : null;
   }
   if (updates.bannedAt !== undefined) {
-    payload.bannedAt = updates.bannedAt;
+    payload['bannedAt'] = updates.bannedAt ? new Date(updates.bannedAt) : null;
   }
 
   const provider = requireAuthProvider(await getAuthDataProvider());
   if (provider === 'prisma') {
     await prisma.authSecurityProfile.upsert({
       where: { userId },
-      update: payload,
+      update: payload as unknown as Prisma.AuthSecurityProfileUpdateInput,
       create: {
         userId,
-        mfaEnabled: payload.mfaEnabled ?? false,
-        mfaSecret: payload.mfaSecret ?? null,
-        recoveryCodes: payload.recoveryCodes ?? [],
-        allowedIps: payload.allowedIps ?? [],
-        disabledAt: payload.disabledAt ?? null,
-        bannedAt: payload.bannedAt ?? null,
+        mfaEnabled: (payload['mfaEnabled'] as boolean) ?? false,
+        mfaSecret: (payload['mfaSecret'] as string | null) ?? null,
+        recoveryCodes: (payload['recoveryCodes'] as string[]) ?? [],
+        allowedIps: (payload['allowedIps'] as string[]) ?? [],
+        disabledAt: (payload['disabledAt'] as Date | null) ?? null,
+        bannedAt: (payload['bannedAt'] as Date | null) ?? null,
         createdAt: now,
         updatedAt: now,
       },
@@ -179,7 +188,7 @@ export const updateAuthSecurityProfile = async (
         _id: userId,
         userId,
         ...payload,
-      },
+      } as unknown as UpdateFilter<MongoProfileDoc>,
       $setOnInsert: { createdAt: now },
     },
     { upsert: true }

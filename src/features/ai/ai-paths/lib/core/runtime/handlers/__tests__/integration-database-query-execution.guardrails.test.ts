@@ -41,7 +41,7 @@ describe('executeDatabaseQuery guardrail metadata', () => {
       aiPrompt: 'test',
     });
 
-    expect(result.bundle).toEqual(
+    expect(result['bundle']).toEqual(
       expect.objectContaining({
         querySource: 'customTemplate',
         query: { id: 'dry-id' },
@@ -82,7 +82,7 @@ describe('executeDatabaseQuery guardrail metadata', () => {
       aiPrompt: 'test',
     });
 
-    expect(result.bundle).toEqual(
+    expect(result['bundle']).toEqual(
       expect.objectContaining({
         querySource: 'input',
         query: { id: 'abc' },
@@ -148,14 +148,14 @@ describe('executeDatabaseQuery guardrail metadata', () => {
         query: { id: { $in: ['param-1'] } },
       })
     );
-    expect(result.result).toEqual([{ id: 'param-1', label: 'Color' }]);
-    expect(result.bundle).toEqual(
+    expect(result['result']).toEqual([{ id: 'param-1', label: 'Color' }]);
+    expect(result['bundle']).toEqual(
       expect.objectContaining({
         querySource: 'customTemplate',
         query: { id: { $in: ['param-1'] } },
       })
     );
-    const bundle = result.bundle as Record<string, unknown>;
+    const bundle = result['bundle'] as Record<string, unknown>;
     const fallback = bundle['fallback'] as Record<string, unknown> | undefined;
     expect(fallback).toEqual(
       expect.objectContaining({
@@ -208,15 +208,15 @@ describe('executeDatabaseQuery guardrail metadata', () => {
     });
 
     expect(dbQueryMock).toHaveBeenCalledTimes(1);
-    expect(result.result).toEqual([]);
-    expect(result.bundle).toEqual(
+    expect(result['result']).toEqual([]);
+    expect(result['bundle']).toEqual(
       expect.objectContaining({
         querySource: 'customTemplate',
         query: { catalogId: '' },
         count: 0,
       })
     );
-    const bundle = result.bundle as Record<string, unknown>;
+    const bundle = result['bundle'] as Record<string, unknown>;
     expect(bundle['fallback']).toBeUndefined();
   });
 });

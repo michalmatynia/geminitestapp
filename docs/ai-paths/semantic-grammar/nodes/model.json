@@ -1,0 +1,75 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "model",
+  "title": "Model",
+  "purpose": "Runs a selected model.",
+  "inputs": [
+    "prompt",
+    "images"
+  ],
+  "outputs": [
+    "result",
+    "jobId"
+  ],
+  "configFields": [
+    {
+      "path": "model.modelId",
+      "description": "Model identifier to run.",
+      "defaultValue": "gpt-4o"
+    },
+    {
+      "path": "model.temperature",
+      "description": "Sampling temperature (0-2).",
+      "defaultValue": "0.2"
+    },
+    {
+      "path": "model.maxTokens",
+      "description": "Maximum output tokens.",
+      "defaultValue": "2048"
+    },
+    {
+      "path": "model.vision",
+      "description": "When true, image URLs are included as vision inputs if connected.",
+      "defaultValue": "false"
+    },
+    {
+      "path": "model.waitForResult",
+      "description": "When true, node waits and emits result. When false, emits jobId/status immediately.",
+      "defaultValue": "true"
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_model",
+    "type": "model",
+    "title": "Model",
+    "description": "Runs a selected model.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "prompt",
+      "images"
+    ],
+    "outputs": [
+      "result",
+      "jobId"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

@@ -17,7 +17,7 @@ describe('resolveDatabaseInputs catalogId resolution', () => {
       simulationEntityType: null,
     });
 
-    expect(resolved.catalogId).toBe('catalog-from-context');
+    expect(resolved['catalogId']).toBe('catalog-from-context');
   });
 
   it('resolves catalogId from bundle when context does not provide it', () => {
@@ -32,7 +32,7 @@ describe('resolveDatabaseInputs catalogId resolution', () => {
       simulationEntityType: null,
     });
 
-    expect(resolved.catalogId).toBe('catalog-from-bundle');
+    expect(resolved['catalogId']).toBe('catalog-from-bundle');
   });
 
   it('preserves explicitly provided catalogId input', () => {
@@ -50,7 +50,7 @@ describe('resolveDatabaseInputs catalogId resolution', () => {
       simulationEntityType: null,
     });
 
-    expect(resolved.catalogId).toBe('explicit-catalog');
+    expect(resolved['catalogId']).toBe('explicit-catalog');
   });
 
   it('does not inject trigger fallback identifiers in strict mode', () => {
@@ -66,10 +66,10 @@ describe('resolveDatabaseInputs catalogId resolution', () => {
       strictFlowMode: true,
     });
 
-    expect(resolved.entityId).toBeUndefined();
-    expect(resolved.productId).toBeUndefined();
-    expect(resolved.entityType).toBeUndefined();
-    expect(resolved.value).toBeUndefined();
+    expect(resolved['entityId']).toBeUndefined();
+    expect(resolved['productId']).toBeUndefined();
+    expect(resolved['entityType']).toBeUndefined();
+    expect(resolved['value']).toBeUndefined();
   });
 
   it('can still use fallback identifiers when strict mode is disabled', () => {
@@ -85,9 +85,9 @@ describe('resolveDatabaseInputs catalogId resolution', () => {
       strictFlowMode: false,
     });
 
-    expect(resolved.entityId).toBe('trigger-entity');
-    expect(resolved.productId).toBe('trigger-product');
-    expect(resolved.entityType).toBe('product');
-    expect(resolved.value).toBe('trigger-entity');
+    expect(resolved['entityId']).toBe('trigger-entity');
+    expect(resolved['productId']).toBe('trigger-product');
+    expect(resolved['entityType']).toBe('product');
+    expect(resolved['value']).toBe('trigger-entity');
   });
 });

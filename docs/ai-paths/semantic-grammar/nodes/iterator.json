@@ -1,0 +1,78 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "iterator",
+  "title": "Iterator",
+  "purpose": "Iterate over an array and emit one item at a time (advance on callback).",
+  "inputs": [
+    "value",
+    "callback"
+  ],
+  "outputs": [
+    "value",
+    "index",
+    "total",
+    "done",
+    "status"
+  ],
+  "configFields": [
+    {
+      "path": "iterator.autoContinue",
+      "description": "If true, the runtime will automatically attempt to advance to the next item after a callback is received.",
+      "defaultValue": "true"
+    },
+    {
+      "path": "iterator.maxSteps",
+      "description": "Safety cap for automatic continuation steps per run/tick (prevents infinite loops).",
+      "defaultValue": "50"
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "defaultConfig": {
+    "iterator": {
+      "autoContinue": true,
+      "maxSteps": 50
+    }
+  },
+  "semanticNodeExample": {
+    "id": "node_iterator",
+    "type": "iterator",
+    "title": "Iterator",
+    "description": "Iterate over an array and emit one item at a time (advance on callback).",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "value",
+      "callback"
+    ],
+    "outputs": [
+      "value",
+      "index",
+      "total",
+      "done",
+      "status"
+    ],
+    "config": {
+      "iterator": {
+        "autoContinue": true,
+        "maxSteps": 50
+      }
+    },
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

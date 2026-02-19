@@ -95,6 +95,11 @@ describe('CanvasSvgNodeLayer', () => {
   it('includes node runtime input/output payloads in connector hover info', () => {
     const historyEntry = createHistoryEntry();
     const runtimeState: RuntimeState = {
+      status: 'idle',
+      nodeStatuses: {},
+      nodeOutputs: {},
+      variables: {},
+      events: [],
       inputs: {},
       outputs: {},
       history: {
@@ -139,6 +144,11 @@ describe('CanvasSvgNodeLayer', () => {
   it('keeps connector hover payload stable after rerender with updated view and runtime values', () => {
     const historyEntry = createHistoryEntry();
     const initialState: RuntimeState = {
+      status: 'idle',
+      nodeStatuses: {},
+      nodeOutputs: {},
+      variables: {},
+      events: [],
       inputs: {},
       outputs: {},
       history: {
@@ -208,6 +218,11 @@ describe('CanvasSvgNodeLayer', () => {
 
   it('does not fallback to stale output status while run is active', () => {
     const runtimeState: RuntimeState = {
+      status: 'idle',
+      nodeStatuses: {},
+      nodeOutputs: {},
+      variables: {},
+      events: [],
       inputs: {},
       outputs: {
         'node-db-1': {

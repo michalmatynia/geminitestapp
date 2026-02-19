@@ -1,0 +1,152 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "validation_pattern",
+  "title": "Validation Pattern",
+  "purpose": "Run ordered validation patterns from a stack or a path-local rule list.",
+  "inputs": [
+    "value",
+    "prompt",
+    "result",
+    "context"
+  ],
+  "outputs": [
+    "value",
+    "result",
+    "context",
+    "valid",
+    "errors",
+    "bundle"
+  ],
+  "configFields": [
+    {
+      "path": "validationPattern.source",
+      "description": "Rule source: global_stack uses synced validator-stack rules, path_local uses node-local rules.",
+      "defaultValue": "global_stack"
+    },
+    {
+      "path": "validationPattern.stackId",
+      "description": "Selected global validation stack/list ID used when source=global_stack."
+    },
+    {
+      "path": "validationPattern.scope",
+      "description": "Prompt validation scope used while evaluating rules (for scope-gated rules).",
+      "defaultValue": "global"
+    },
+    {
+      "path": "validationPattern.runtimeMode",
+      "description": "validate_only runs checks; validate_and_autofix also applies rule autofix operations.",
+      "defaultValue": "validate_only"
+    },
+    {
+      "path": "validationPattern.failPolicy",
+      "description": "block_on_error sets valid=false when error issues exist; report_only always emits valid=true.",
+      "defaultValue": "block_on_error"
+    },
+    {
+      "path": "validationPattern.inputPort",
+      "description": "Preferred input source (auto/value/prompt/result/context).",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "validationPattern.outputPort",
+      "description": "Primary output target for normalized text.",
+      "defaultValue": "value"
+    },
+    {
+      "path": "validationPattern.maxAutofixPasses",
+      "description": "Maximum autofix refinement passes when runtimeMode is validate_and_autofix.",
+      "defaultValue": "1"
+    },
+    {
+      "path": "validationPattern.includeRuleIds",
+      "description": "Optional allowlist of rule IDs to execute.",
+      "defaultValue": "[]"
+    },
+    {
+      "path": "validationPattern.rules",
+      "description": "Active rule set used during runtime (global snapshot or path-local list).",
+      "defaultValue": "[]"
+    },
+    {
+      "path": "validationPattern.learnedRules",
+      "description": "Optional learned-rule list merged into runtime validation.",
+      "defaultValue": "[]"
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "defaultConfig": {
+    "validationPattern": {
+      "source": "global_stack",
+      "stackId": "",
+      "scope": "global",
+      "includeLearnedRules": true,
+      "runtimeMode": "validate_only",
+      "failPolicy": "block_on_error",
+      "inputPort": "auto",
+      "outputPort": "value",
+      "maxAutofixPasses": 1,
+      "includeRuleIds": [],
+      "localListName": "Path Local Validation List",
+      "localListDescription": "",
+      "rules": [],
+      "learnedRules": []
+    }
+  },
+  "semanticNodeExample": {
+    "id": "node_validation_pattern",
+    "type": "validation_pattern",
+    "title": "Validation Pattern",
+    "description": "Run ordered validation patterns from a stack or a path-local rule list.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "value",
+      "prompt",
+      "result",
+      "context"
+    ],
+    "outputs": [
+      "value",
+      "result",
+      "context",
+      "valid",
+      "errors",
+      "bundle"
+    ],
+    "config": {
+      "validationPattern": {
+        "source": "global_stack",
+        "stackId": "",
+        "scope": "global",
+        "includeLearnedRules": true,
+        "runtimeMode": "validate_only",
+        "failPolicy": "block_on_error",
+        "inputPort": "auto",
+        "outputPort": "value",
+        "maxAutofixPasses": 1,
+        "includeRuleIds": [],
+        "localListName": "Path Local Validation List",
+        "localListDescription": "",
+        "rules": [],
+        "learnedRules": []
+      }
+    },
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

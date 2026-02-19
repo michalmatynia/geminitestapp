@@ -63,7 +63,7 @@ describe('evaluateGraph trigger cache guardrail', () => {
       seedOutputs: first.outputs,
       seedHashes: first.hashes,
       seedHashTimestamps: first.hashTimestamps,
-      seedHistory: first.history,
+      seedHistory: first.history as any,
       fetchEntityByType,
       reportAiPathsError,
       toast,

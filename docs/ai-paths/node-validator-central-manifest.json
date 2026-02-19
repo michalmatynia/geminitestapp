@@ -1,0 +1,114 @@
+{
+  "version": "2.1.0",
+  "sources": [
+    {
+      "id": "core-patterns",
+      "type": "markdown_assertion",
+      "path": "docs/ai-paths/node-validator-core-patterns.md",
+      "enabled": true,
+      "priority": 10,
+      "tags": ["core", "graph", "trigger"]
+    },
+    {
+      "id": "simulation-patterns",
+      "type": "markdown_assertion",
+      "path": "docs/ai-paths/node-validator-simulation-patterns.md",
+      "enabled": true,
+      "priority": 20,
+      "tags": ["simulation"]
+    },
+    {
+      "id": "database-patterns",
+      "type": "markdown_assertion",
+      "path": "docs/ai-paths/node-validator-database-patterns.md",
+      "enabled": true,
+      "priority": 30,
+      "tags": ["database", "safety"]
+    },
+    {
+      "id": "runtime-patterns",
+      "type": "markdown_assertion",
+      "path": "docs/ai-paths/node-validator-runtime-patterns.md",
+      "enabled": true,
+      "priority": 40,
+      "tags": ["runtime", "async"]
+    },
+    {
+      "id": "wiring-patterns",
+      "type": "markdown_assertion",
+      "path": "docs/ai-paths/node-validator-wiring-patterns.md",
+      "enabled": true,
+      "priority": 50,
+      "tags": ["wiring"]
+    },
+    {
+      "id": "advanced-patterns",
+      "type": "markdown_assertion",
+      "path": "docs/ai-paths/node-validator-advanced-patterns.md",
+      "enabled": true,
+      "priority": 55,
+      "tags": ["advanced", "extended-coverage"]
+    },
+    {
+      "id": "semantic-grammar-patterns",
+      "type": "markdown_assertion",
+      "path": "docs/ai-paths/node-validator-semantic-grammar-patterns.md",
+      "enabled": true,
+      "priority": 57,
+      "tags": ["semantic-grammar", "interop", "graph"]
+    },
+    {
+      "id": "central-index",
+      "type": "markdown_assertion",
+      "path": "docs/ai-paths/node-validator-central-patterns.md",
+      "enabled": true,
+      "priority": 60,
+      "tags": ["index"]
+    },
+    {
+      "id": "node-docs-catalog",
+      "type": "node_docs_catalog",
+      "path": "src/features/ai/ai-paths/lib/core/docs/node-docs.ts",
+      "enabled": true,
+      "priority": 80,
+      "tags": ["catalog"]
+    },
+    {
+      "id": "docs-snippets",
+      "type": "docs_snippet",
+      "path": "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts",
+      "enabled": true,
+      "priority": 90,
+      "snippetNames": [
+        "DOCS_WIRING_SNIPPET",
+        "DOCS_DESCRIPTION_SNIPPET",
+        "DOCS_JOBS_SNIPPET"
+      ],
+      "tags": ["snippets", "wiring"]
+    },
+    {
+      "id": "semantic-nodes-catalog",
+      "type": "semantic_nodes_catalog",
+      "path": "docs/ai-paths/semantic-grammar/nodes/index.json",
+      "enabled": true,
+      "priority": 95,
+      "tags": ["semantic-grammar", "nodes", "catalog"]
+    },
+    {
+      "id": "tooltip-docs-catalog",
+      "type": "tooltip_docs_catalog",
+      "path": "docs/ai-paths/tooltip-catalog.json",
+      "enabled": true,
+      "priority": 98,
+      "tags": ["tooltip", "docs", "catalog"]
+    },
+    {
+      "id": "coverage-matrix",
+      "type": "coverage_matrix_csv",
+      "path": "docs/ai-paths/node-validator-coverage-matrix.csv",
+      "enabled": true,
+      "priority": 99,
+      "tags": ["coverage", "matrix", "inference"]
+    }
+  ]
+}

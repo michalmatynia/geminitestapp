@@ -1,0 +1,146 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "api_advanced",
+  "title": "API Operation (Advanced)",
+  "purpose": "Advanced API node with auth, retries, pagination, and error routing.",
+  "inputs": [
+    "context",
+    "bundle",
+    "prompt",
+    "result",
+    "value",
+    "entityId",
+    "entityType",
+    "cursor",
+    "page"
+  ],
+  "outputs": [
+    "value",
+    "bundle",
+    "status",
+    "headers",
+    "items",
+    "route",
+    "error",
+    "success"
+  ],
+  "configFields": [
+    {
+      "path": "apiAdvanced.url",
+      "description": "Request URL template.",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "apiAdvanced.method",
+      "description": "HTTP method including advanced methods (HEAD/OPTIONS).",
+      "defaultValue": "GET"
+    },
+    {
+      "path": "apiAdvanced.pathParamsJson",
+      "description": "JSON object for explicit path parameter substitution before request execution.",
+      "defaultValue": "{}"
+    },
+    {
+      "path": "apiAdvanced.queryParamsJson",
+      "description": "JSON object for explicit query parameters. Values can include templates.",
+      "defaultValue": "{}"
+    },
+    {
+      "path": "apiAdvanced.headersJson",
+      "description": "JSON object for request headers.",
+      "defaultValue": "{}"
+    },
+    {
+      "path": "apiAdvanced.authMode",
+      "description": "none/api_key/bearer/basic/oauth2_client_credentials/connection auth strategy.",
+      "defaultValue": "none"
+    },
+    {
+      "path": "apiAdvanced.responseMode",
+      "description": "How to interpret response payload: json/text/status.",
+      "defaultValue": "json"
+    },
+    {
+      "path": "apiAdvanced.responsePath",
+      "description": "Optional JSON path selection from parsed response payload.",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "apiAdvanced.outputMappingsJson",
+      "description": "JSON object mapping output port -> JSON path in response envelope.",
+      "defaultValue": "{}"
+    },
+    {
+      "path": "apiAdvanced.retryEnabled",
+      "description": "Enable/disable retry behavior.",
+      "defaultValue": "true"
+    },
+    {
+      "path": "apiAdvanced.retryAttempts",
+      "description": "Maximum attempts including first request.",
+      "defaultValue": "2"
+    },
+    {
+      "path": "apiAdvanced.retryOnStatusJson",
+      "description": "JSON array of status codes that should be retried when retries are enabled.",
+      "defaultValue": "[429,500,502,503,504]"
+    },
+    {
+      "path": "apiAdvanced.paginationMode",
+      "description": "none/page/cursor/link pagination strategy.",
+      "defaultValue": "none"
+    },
+    {
+      "path": "apiAdvanced.errorRoutesJson",
+      "description": "JSON array of explicit error route matchers and target output ports.",
+      "defaultValue": "[]"
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_api_advanced",
+    "type": "api_advanced",
+    "title": "API Operation (Advanced)",
+    "description": "Advanced API node with auth, retries, pagination, and error routing.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "context",
+      "bundle",
+      "prompt",
+      "result",
+      "value",
+      "entityId",
+      "entityType",
+      "cursor",
+      "page"
+    ],
+    "outputs": [
+      "value",
+      "bundle",
+      "status",
+      "headers",
+      "items",
+      "route",
+      "error",
+      "success"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "validator",
+  "title": "Validator",
+  "purpose": "Validate required fields.",
+  "inputs": [
+    "context"
+  ],
+  "outputs": [
+    "context",
+    "valid",
+    "errors"
+  ],
+  "configFields": [
+    {
+      "path": "validator.requiredPaths",
+      "description": "List of JSON paths that must exist (and be non-empty) for valid=true.",
+      "defaultValue": "[]"
+    },
+    {
+      "path": "validator.mode",
+      "description": "all = require all requiredPaths; any = require at least one.",
+      "defaultValue": "all"
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_validator",
+    "type": "validator",
+    "title": "Validator",
+    "description": "Validate required fields.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "context"
+    ],
+    "outputs": [
+      "context",
+      "valid",
+      "errors"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

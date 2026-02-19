@@ -37,6 +37,12 @@ export type ImageContentFrame = {
   height: number;
 };
 
+export type CropCanvasContext = {
+  canvasWidth: number;
+  canvasHeight: number;
+  imageFrame: ImageContentFrame;
+};
+
 export type CropRectResolutionDiagnostics = {
   rawCanvasBounds: CropRect | null;
   mappedImageBounds: CropRect | null;
@@ -582,7 +588,8 @@ export const withUpscaleRetry = async <T,>(
 
 export const cropCanvasImage = async (
   src: string,
-  cropRect: CropRect
+  cropRect: CropRect,
+  canvasContext?: CropCanvasContext | null
 ): Promise<string> => {
   const image = await loadImageElement(src, { crossOrigin: 'anonymous' });
   const sourceWidth = image.naturalWidth || image.width;
@@ -591,21 +598,56 @@ export const cropCanvasImage = async (
     throw new Error('Source image dimensions are invalid.');
   }
 
-  const left = Math.max(0, Math.min(Math.floor(cropRect.x), sourceWidth - 1));
-  const top = Math.max(0, Math.min(Math.floor(cropRect.y), sourceHeight - 1));
-  const width = Math.max(1, Math.min(Math.floor(cropRect.width), sourceWidth - left));
-  const height = Math.max(1, Math.min(Math.floor(cropRect.height), sourceHeight - top));
+  const hasCanvasContext = Boolean(
+    canvasContext &&
+    Number.isFinite(canvasContext.canvasWidth) &&
+    Number.isFinite(canvasContext.canvasHeight) &&
+    canvasContext.canvasWidth > 0 &&
+    canvasContext.canvasHeight > 0 &&
+    Number.isFinite(canvasContext.imageFrame.x) &&
+    Number.isFinite(canvasContext.imageFrame.y) &&
+    Number.isFinite(canvasContext.imageFrame.width) &&
+    Number.isFinite(canvasContext.imageFrame.height) &&
+    canvasContext.imageFrame.width > 0 &&
+    canvasContext.imageFrame.height > 0
+  );
+  const workingCanvasWidth = hasCanvasContext ? Math.floor(canvasContext!.canvasWidth) : sourceWidth;
+  const workingCanvasHeight = hasCanvasContext ? Math.floor(canvasContext!.canvasHeight) : sourceHeight;
 
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const context2d = canvas.getContext('2d');
+  const left = Math.max(0, Math.min(Math.floor(cropRect.x), workingCanvasWidth - 1));
+  const top = Math.max(0, Math.min(Math.floor(cropRect.y), workingCanvasHeight - 1));
+  const width = Math.max(1, Math.min(Math.floor(cropRect.width), workingCanvasWidth - left));
+  const height = Math.max(1, Math.min(Math.floor(cropRect.height), workingCanvasHeight - top));
+
+  const sourceCanvas = document.createElement('canvas');
+  sourceCanvas.width = workingCanvasWidth;
+  sourceCanvas.height = workingCanvasHeight;
+  const sourceContext2d = sourceCanvas.getContext('2d');
+  if (!sourceContext2d) {
+    throw new Error('Canvas context is unavailable.');
+  }
+  sourceContext2d.clearRect(0, 0, workingCanvasWidth, workingCanvasHeight);
+  if (hasCanvasContext) {
+    const imageFrame = canvasContext!.imageFrame;
+    const frameLeft = Math.round(imageFrame.x * workingCanvasWidth);
+    const frameTop = Math.round(imageFrame.y * workingCanvasHeight);
+    const frameWidth = Math.max(1, Math.round(imageFrame.width * workingCanvasWidth));
+    const frameHeight = Math.max(1, Math.round(imageFrame.height * workingCanvasHeight));
+    sourceContext2d.drawImage(image, frameLeft, frameTop, frameWidth, frameHeight);
+  } else {
+    sourceContext2d.drawImage(image, 0, 0, sourceWidth, sourceHeight);
+  }
+
+  const outputCanvas = document.createElement('canvas');
+  outputCanvas.width = width;
+  outputCanvas.height = height;
+  const context2d = outputCanvas.getContext('2d');
   if (!context2d) {
     throw new Error('Canvas context is unavailable.');
   }
 
   context2d.drawImage(
-    image,
+    sourceCanvas,
     left,
     top,
     width,
@@ -617,7 +659,7 @@ export const cropCanvasImage = async (
   );
 
   try {
-    return canvas.toDataURL('image/png');
+    return outputCanvas.toDataURL('image/png');
   } catch {
     throw new Error('Client crop failed due to cross-origin restrictions. Use "Crop Server: Sharp".');
   }
@@ -1221,12 +1263,14 @@ const boundsToCropRect = (
 
 export const resolveCropRectFromShapesWithDiagnostics = (
   shapes: MaskShapeForExport[],
+  canvasWidth: number,
+  canvasHeight: number,
   sourceWidth: number,
   sourceHeight: number,
   activeMaskId?: string | null,
   imageContentFrame?: ImageContentFrame | null
 ): { cropRect: CropRect | null; diagnostics: CropRectResolutionDiagnostics | null } => {
-  if (!(sourceWidth > 0 && sourceHeight > 0)) {
+  if (!(canvasWidth > 0 && canvasHeight > 0 && sourceWidth > 0 && sourceHeight > 0)) {
     return { cropRect: null, diagnostics: null };
   }
   const normalizedActiveMaskId = activeMaskId?.trim() ?? '';
@@ -1240,7 +1284,7 @@ export const resolveCropRectFromShapesWithDiagnostics = (
 
   let lastDiagnostics: CropRectResolutionDiagnostics | null = null;
   for (const shape of orderedShapes) {
-    const rawPolygons = normalizeShapeToPolygons(shape, sourceWidth, sourceHeight);
+    const rawPolygons = normalizeShapeToPolygons(shape, canvasWidth, canvasHeight);
     const mappedPolygons = normalizeShapeToPolygons(shape, sourceWidth, sourceHeight, {
       imageContentFrame: normalizedFrame,
     });
@@ -1249,15 +1293,14 @@ export const resolveCropRectFromShapesWithDiagnostics = (
     const mappedBounds = resolveBounds(mappedPolygons.flatMap((polygon) => polygon));
     const usedImageContentFrameMapping = Boolean(normalizedFrame && shapePointsAreUnitNormalized(shape));
     const diagnostics: CropRectResolutionDiagnostics = {
-      rawCanvasBounds: boundsToCropRect(rawBounds, sourceWidth, sourceHeight),
+      rawCanvasBounds: boundsToCropRect(rawBounds, canvasWidth, canvasHeight),
       mappedImageBounds: boundsToCropRect(mappedBounds, sourceWidth, sourceHeight),
       imageContentFrame: normalizedFrame,
       usedImageContentFrameMapping,
     };
 
     lastDiagnostics = diagnostics;
-    if (mappedPolygons.length === 0) continue;
-    const cropRect = diagnostics.mappedImageBounds;
+    const cropRect = diagnostics.rawCanvasBounds;
     if (!cropRect) continue;
     return {
       cropRect,
@@ -1273,6 +1316,8 @@ export const resolveCropRectFromShapesWithDiagnostics = (
 
 export const resolveCropRectFromShapes = (
   shapes: MaskShapeForExport[],
+  canvasWidth: number,
+  canvasHeight: number,
   sourceWidth: number,
   sourceHeight: number,
   activeMaskId?: string | null,
@@ -1280,6 +1325,8 @@ export const resolveCropRectFromShapes = (
 ): CropRect | null => {
   return resolveCropRectFromShapesWithDiagnostics(
     shapes,
+    canvasWidth,
+    canvasHeight,
     sourceWidth,
     sourceHeight,
     activeMaskId,

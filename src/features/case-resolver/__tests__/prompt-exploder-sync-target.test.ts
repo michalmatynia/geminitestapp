@@ -117,7 +117,6 @@ describe('case resolver prompt exploder manual apply flow', () => {
     });
 
     const result = applyPendingPromptExploderPayloadToCaseResolver({
-      targetFileId: 'doc-1',
       workspaceFiles: harness.getWorkspace().files,
       updateWorkspace: harness.updateWorkspace,
       setEditingDocumentDraft: harness.setEditingDocumentDraft,
@@ -130,6 +129,7 @@ describe('case resolver prompt exploder manual apply flow', () => {
       expect(result.workspaceChanged).toBe(true);
       expect(result.diagnostics.resolutionStrategy).toBe('requested_id');
       expect(result.diagnostics.proposalBuilt).toBe(false);
+      expect(result.diagnostics.proposalReason).toBe('no_capture_payload');
     }
 
     const updatedDocument = harness.getWorkspace().files.find((file) => file.id === 'doc-1');
@@ -137,12 +137,11 @@ describe('case resolver prompt exploder manual apply flow', () => {
     expect(readPendingCaseResolverPromptExploderPayload()).toBeNull();
   });
 
-  it('does not consume payload when apply target is missing', () => {
+  it('does not consume payload when bridge payload has no target context', () => {
     const harness = createWorkspaceHarness();
     savePromptExploderApplyPromptForCaseResolver('Exploded output body', null);
 
     const result = applyPendingPromptExploderPayloadToCaseResolver({
-      targetFileId: 'missing-doc',
       workspaceFiles: harness.getWorkspace().files,
       updateWorkspace: harness.updateWorkspace,
       setEditingDocumentDraft: harness.setEditingDocumentDraft,
@@ -152,7 +151,7 @@ describe('case resolver prompt exploder manual apply flow', () => {
 
     expect(result.applied).toBe(false);
     if (!result.applied) {
-      expect(result.reason).toBe('target_file_missing_precheck');
+      expect(result.reason).toBe('missing_context_file_id');
       expect(result.diagnostics.resolutionStrategy).toBe('unresolved');
     }
     expect(readPendingCaseResolverPromptExploderPayload()?.prompt).toBe('Exploded output body');
@@ -182,7 +181,6 @@ describe('case resolver prompt exploder manual apply flow', () => {
       fileName: 'Document',
     });
     const result = applyPendingPromptExploderPayloadToCaseResolver({
-      targetFileId: 'doc-1',
       workspaceFiles: workspace.files,
       updateWorkspace,
       setEditingDocumentDraft,
@@ -203,6 +201,50 @@ describe('case resolver prompt exploder manual apply flow', () => {
     }
     const updatedDocument = workspace.files.find((file) => file.id === 'doc-1');
     expect(updatedDocument?.documentContentPlainText).toContain('Deferred mutation payload');
+  });
+
+  it('fails when live mutation snapshot no longer has the prechecked target file', () => {
+    const precheckDocument = createCaseResolverFile({
+      id: 'doc-1',
+      fileType: 'document',
+      name: 'Document',
+    });
+    let liveWorkspace: CaseResolverWorkspace = {
+      ...parseCaseResolverWorkspace(null),
+      files: [],
+      activeFileId: null,
+    };
+    const updateWorkspace = (
+      updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace
+    ): void => {
+      liveWorkspace = updater(liveWorkspace);
+    };
+    const setEditingDocumentDraft: Dispatch<SetStateAction<CaseResolverFileEditDraft | null>> = () => {};
+
+    savePromptExploderApplyPromptForCaseResolver('Recovered from precheck snapshot', {
+      fileId: 'doc-1',
+      fileName: 'Document',
+    });
+    const result = applyPendingPromptExploderPayloadToCaseResolver({
+      workspaceFiles: [precheckDocument],
+      updateWorkspace,
+      setEditingDocumentDraft,
+      filemakerDatabase: parseFilemakerDatabase(null),
+      caseResolverCaptureSettings: parseCaseResolverCaptureSettings(null),
+    });
+
+    expect(result.applied).toBe(false);
+    if (!result.applied) {
+      expect(result.reason).toBe('target_missing_in_live_workspace_after_precheck');
+      expect(result.diagnostics.precheckResolutionStrategy).toBe('requested_id');
+      expect(result.diagnostics.mutationResolutionStrategy).toBe('unresolved');
+      expect(result.diagnostics.mutationMissingAfterPrecheck).toBe(true);
+    }
+    const updatedDocument = liveWorkspace.files.find((file) => file.id === 'doc-1');
+    expect(updatedDocument).toBeUndefined();
+    expect(readPendingCaseResolverPromptExploderPayload()?.prompt).toBe(
+      'Recovered from precheck snapshot'
+    );
   });
 
   it('discards pending payload explicitly', () => {
@@ -239,7 +281,6 @@ describe('case resolver prompt exploder manual apply flow', () => {
       fileName: 'Document',
     });
     const result = applyPendingPromptExploderPayloadToCaseResolver({
-      targetFileId: 'doc-spaced',
       workspaceFiles: workspace.files,
       updateWorkspace,
       setEditingDocumentDraft,
@@ -255,7 +296,7 @@ describe('case resolver prompt exploder manual apply flow', () => {
     expect(updatedDocument?.documentContentPlainText).toContain('Normalized payload');
   });
 
-  it('falls back to case resolver context file id when explicit target is invalid', () => {
+  it('uses payload context target when it points to an existing file', () => {
     const harness = createWorkspaceHarness();
     savePromptExploderApplyPromptForCaseResolver(
       'Context fallback payload',
@@ -266,7 +307,6 @@ describe('case resolver prompt exploder manual apply flow', () => {
     );
 
     const result = applyPendingPromptExploderPayloadToCaseResolver({
-      targetFileId: 'missing-doc-id',
       workspaceFiles: harness.getWorkspace().files,
       updateWorkspace: harness.updateWorkspace,
       setEditingDocumentDraft: harness.setEditingDocumentDraft,
@@ -276,23 +316,14 @@ describe('case resolver prompt exploder manual apply flow', () => {
 
     expect(result.applied).toBe(true);
     if (result.applied) {
-      expect(result.diagnostics.resolutionStrategy).toBe('payload_context_id');
+      expect(result.diagnostics.resolutionStrategy).toBe('requested_id');
     }
     const updatedDocument = harness.getWorkspace().files.find((file) => file.id === 'doc-1');
     expect(updatedDocument?.documentContentPlainText).toContain('Context fallback payload');
+    expect(readPendingCaseResolverPromptExploderPayload()).toBeNull();
   });
 
-  it('applies payload by recovering the target from the open editing draft when workspace snapshot misses it', () => {
-    const documentFile = createCaseResolverFile({
-      id: 'doc-recover',
-      fileType: 'document',
-      name: 'Recovered Document',
-      documentContent: 'Original draft body',
-    });
-    const editingDocumentDraft: CaseResolverFileEditDraft = {
-      ...documentFile,
-      baseDocumentContentVersion: documentFile.documentContentVersion,
-    };
+  it('fails when workspace snapshot is missing explicit target', () => {
     let workspace: CaseResolverWorkspace = {
       ...parseCaseResolverWorkspace(null),
       files: [],
@@ -310,8 +341,6 @@ describe('case resolver prompt exploder manual apply flow', () => {
       fileName: 'Recovered Document',
     });
     const result = applyPendingPromptExploderPayloadToCaseResolver({
-      targetFileId: 'doc-recover',
-      editingDocumentDraft,
       workspaceFiles: workspace.files,
       updateWorkspace,
       setEditingDocumentDraft,
@@ -319,20 +348,19 @@ describe('case resolver prompt exploder manual apply flow', () => {
       caseResolverCaptureSettings: parseCaseResolverCaptureSettings(null),
     });
 
-    expect(result.applied).toBe(true);
-    if (result.applied) {
-      expect(result.diagnostics.resolutionStrategy).toBe('fallback_id');
+    expect(result.applied).toBe(false);
+    if (!result.applied) {
+      expect(result.reason).toBe('target_file_missing_precheck');
+      expect(result.diagnostics.resolutionStrategy).toBe('unresolved');
     }
-    const updatedDocument = workspace.files.find((file) => file.id === 'doc-recover');
-    expect(updatedDocument?.documentContentPlainText).toContain('Recovered payload body');
+    expect(readPendingCaseResolverPromptExploderPayload()?.prompt).toBe('Recovered payload body');
   });
 
-  it('accepts target file names when selector token is not a file id', () => {
+  it('fails when payload context is missing (no selector fallback path)', () => {
     const harness = createWorkspaceHarness();
     savePromptExploderApplyPromptForCaseResolver('Name fallback payload', null);
 
     const result = applyPendingPromptExploderPayloadToCaseResolver({
-      targetFileId: 'Document',
       workspaceFiles: harness.getWorkspace().files,
       updateWorkspace: harness.updateWorkspace,
       setEditingDocumentDraft: harness.setEditingDocumentDraft,
@@ -340,11 +368,70 @@ describe('case resolver prompt exploder manual apply flow', () => {
       caseResolverCaptureSettings: parseCaseResolverCaptureSettings(null),
     });
 
+    expect(result.applied).toBe(false);
+    if (!result.applied) {
+      expect(result.reason).toBe('missing_context_file_id');
+      expect(result.diagnostics.resolutionStrategy).toBe('unresolved');
+    }
+    expect(readPendingCaseResolverPromptExploderPayload()?.prompt).toBe('Name fallback payload');
+  });
+
+  it('returns no proposal when mappings are disabled but capture payload exists', () => {
+    const harness = createWorkspaceHarness();
+    savePromptExploderApplyPromptForCaseResolver(
+      'Exploded output with parties',
+      {
+        fileId: 'doc-1',
+        fileName: 'Document',
+      },
+      {
+        addresser: {
+          role: 'addresser',
+          displayName: 'Michał Matynia',
+          rawText: 'Michał Matynia\nFioletowa 71/2\n70-781 Szczecin',
+        },
+        addressee: {
+          role: 'addressee',
+          displayName: 'Inspektorat ZUS w Gryficach',
+          rawText: 'Inspektorat ZUS w Gryficach\nDąbskiego 5\n72-300 Gryfice',
+        },
+      }
+    );
+
+    const disabledMappings = parseCaseResolverCaptureSettings(JSON.stringify({
+      enabled: true,
+      autoOpenProposalModal: true,
+      roleMappings: {
+        addresser: {
+          enabled: false,
+          targetRole: 'addresser',
+          defaultAction: 'keepText',
+          autoMatchPartyReference: false,
+          autoMatchAddress: false,
+        },
+        addressee: {
+          enabled: false,
+          targetRole: 'addressee',
+          defaultAction: 'keepText',
+          autoMatchPartyReference: false,
+          autoMatchAddress: false,
+        },
+      },
+    }));
+
+    const result = applyPendingPromptExploderPayloadToCaseResolver({
+      workspaceFiles: harness.getWorkspace().files,
+      updateWorkspace: harness.updateWorkspace,
+      setEditingDocumentDraft: harness.setEditingDocumentDraft,
+      filemakerDatabase: parseFilemakerDatabase(null),
+      caseResolverCaptureSettings: disabledMappings,
+    });
+
     expect(result.applied).toBe(true);
     if (result.applied) {
-      expect(result.diagnostics.resolutionStrategy).toBe('requested_name');
+      expect(result.proposalState).toBeNull();
+      expect(result.diagnostics.proposalBuilt).toBe(false);
+      expect(result.diagnostics.proposalReason).toBe('proposal_builder_returned_null');
     }
-    const updatedDocument = harness.getWorkspace().files.find((file) => file.id === 'doc-1');
-    expect(updatedDocument?.documentContentPlainText).toContain('Name fallback payload');
   });
 });

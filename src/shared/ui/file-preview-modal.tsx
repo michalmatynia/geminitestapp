@@ -13,8 +13,8 @@ export interface FilePreviewData {
   width: number | null;
   height: number | null;
   tags?: string[];
-  createdAt?: Date | string | null;
-  updatedAt?: Date | string | null;
+  createdAt?: Date | string | null | undefined;
+  updatedAt?: Date | string | null | undefined;
 }
 
 interface FilePreviewModalProps {

@@ -1,0 +1,64 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "mapper",
+  "title": "JSON Mapper",
+  "purpose": "Map context to custom outputs.",
+  "inputs": [
+    "context",
+    "result",
+    "bundle",
+    "value"
+  ],
+  "outputs": [
+    "value",
+    "result"
+  ],
+  "configFields": [
+    {
+      "path": "mapper.outputs",
+      "description": "Which output ports the mapper should expose (the ports must exist on the node).",
+      "defaultValue": "[\"value\"]"
+    },
+    {
+      "path": "mapper.mappings",
+      "description": "Map output port name -> JSON path (relative to context).",
+      "defaultValue": "{}"
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_mapper",
+    "type": "mapper",
+    "title": "JSON Mapper",
+    "description": "Map context to custom outputs.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "context",
+      "result",
+      "bundle",
+      "value"
+    ],
+    "outputs": [
+      "value",
+      "result"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

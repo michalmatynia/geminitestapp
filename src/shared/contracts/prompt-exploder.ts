@@ -13,6 +13,7 @@ export const promptExploderRuntimeValidationScopeSchema = z.enum([
   'products',
   'image-studio',
   'prompt-exploder',
+  'prompt_exploder',
   'case-resolver-prompt-exploder',
   'case_resolver_prompt_exploder',
 ]);
@@ -354,6 +355,8 @@ export type PromptExploderBridgeTargetDto = z.infer<typeof promptExploderBridgeT
 export const promptExploderCaseResolverContextSchema = z.object({
   fileId: z.string(),
   fileName: z.string(),
+  sessionId: z.string().optional(),
+  documentVersionAtStart: z.number().int().nonnegative().optional(),
 });
 export type PromptExploderCaseResolverContextDto = z.infer<
   typeof promptExploderCaseResolverContextSchema

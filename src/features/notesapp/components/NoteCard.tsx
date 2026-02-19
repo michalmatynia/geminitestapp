@@ -268,8 +268,8 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
         <div className='flex flex-col items-stretch pt-2 mt-2 border-t border-white/10'>
           {showTimestamps && (
             <div className='flex flex-col gap-0.5 text-[10px] text-gray-500'>
-              <span>Created: {new Date(note.createdAt).toLocaleString()}</span>
-              <span>Modified: {note.updatedAt ? new Date(note.updatedAt).toLocaleString() : 'Never'}</span>
+              <span>Created: {new Date(note.createdAt || 0).toLocaleString()}</span>
+              <span>Modified: {note.updatedAt ? new Date(note.updatedAt || 0).toLocaleString() : 'Never'}</span>
             </div>
           )}
           {showBreadcrumbs && (

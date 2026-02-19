@@ -4,6 +4,7 @@ import {
   IMAGE_STUDIO_CROP_MAX_OUTPUT_PIXELS,
   IMAGE_STUDIO_CROP_MAX_SOURCE_PIXELS,
   IMAGE_STUDIO_CROP_MAX_SOURCE_SIDE_PX,
+  type ImageStudioCropCanvasContext,
   type ImageStudioCropMode,
   type ImageStudioCropPoint,
   type ImageStudioCropRect,
@@ -43,17 +44,39 @@ export const normalizeCropRectForFingerprint = (
 const normalizeModeForFingerprint = (mode: ImageStudioCropMode): 'bbox' | 'polygon' =>
   mode === 'server_polygon' ? 'polygon' : 'bbox';
 
+const normalizeCanvasContextForFingerprint = (
+  canvasContext: ImageStudioCropCanvasContext | undefined
+): {
+  canvasWidth: number;
+  canvasHeight: number;
+  imageFrame: { x: number; y: number; width: number; height: number };
+} | null => {
+  if (!canvasContext) return null;
+  return {
+    canvasWidth: Math.max(1, Math.floor(canvasContext.canvasWidth)),
+    canvasHeight: Math.max(1, Math.floor(canvasContext.canvasHeight)),
+    imageFrame: {
+      x: Number(canvasContext.imageFrame.x.toFixed(6)),
+      y: Number(canvasContext.imageFrame.y.toFixed(6)),
+      width: Number(canvasContext.imageFrame.width.toFixed(6)),
+      height: Number(canvasContext.imageFrame.height.toFixed(6)),
+    },
+  };
+};
+
 export const buildCropFingerprint = (input: {
   sourceSignature: string;
   mode: ImageStudioCropMode;
   cropRect?: ImageStudioCropRect | undefined;
   polygon?: ImageStudioCropPoint[] | undefined;
+  canvasContext?: ImageStudioCropCanvasContext | undefined;
 }): string => {
   const fingerprintPayload = {
     sourceSignature: input.sourceSignature,
     mode: normalizeModeForFingerprint(input.mode),
     cropRect: normalizeCropRectForFingerprint(input.cropRect),
     polygon: normalizePolygonForFingerprint(input.polygon),
+    canvasContext: normalizeCanvasContextForFingerprint(input.canvasContext),
   };
   return createHash('sha1').update(JSON.stringify(fingerprintPayload)).digest('hex').slice(0, 20);
 };

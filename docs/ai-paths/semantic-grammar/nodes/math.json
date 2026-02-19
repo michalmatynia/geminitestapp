@@ -1,0 +1,56 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "math",
+  "title": "Math",
+  "purpose": "Apply numeric transformation to a value.",
+  "inputs": [
+    "value"
+  ],
+  "outputs": [
+    "value"
+  ],
+  "configFields": [
+    {
+      "path": "math.operation",
+      "description": "Numeric operation to apply: add/subtract/multiply/divide/round/ceil/floor.",
+      "defaultValue": "add"
+    },
+    {
+      "path": "math.operand",
+      "description": "Number used by the operation (ignored for round/ceil/floor).",
+      "defaultValue": "0"
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_math",
+    "type": "math",
+    "title": "Math",
+    "description": "Apply numeric transformation to a value.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "value"
+    ],
+    "outputs": [
+      "value"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

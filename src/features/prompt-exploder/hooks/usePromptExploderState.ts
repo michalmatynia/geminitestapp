@@ -503,14 +503,15 @@ export function usePromptExploderState() {
       });
       if (transferPayload.usedFallback) {
         toast(
-          'Rules-only extraction had missing capture fields. Applied heuristics fallback for this transfer.',
-          { variant: 'warning' }
+          'Unexpected capture fallback path detected. Transfer was blocked; review extraction mode and rules.',
+          { variant: 'error' }
         );
+        return;
       }
       if (!transferPayload.hasCaptureData) {
         toast(
-          'No addresser/addressee/date captures found in this output. You can still apply the reassembled text.',
-          { variant: 'info' }
+          'No addresser/addressee/date captures found in rules-only mode. No fallback extraction will run; applying will transfer text only.',
+          { variant: 'warning' }
         );
       }
       savePromptExploderApplyPromptForCaseResolver(

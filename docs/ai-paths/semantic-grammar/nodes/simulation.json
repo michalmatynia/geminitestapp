@@ -1,0 +1,66 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "simulation",
+  "title": "Simulation: Entity Modal",
+  "purpose": "Simulate a modal action by Entity ID.",
+  "inputs": [
+    "trigger"
+  ],
+  "outputs": [
+    "context",
+    "entityId",
+    "entityType",
+    "productId"
+  ],
+  "configFields": [
+    {
+      "path": "simulation.entityType",
+      "description": "Entity type to load (product, note, ...).",
+      "defaultValue": "product"
+    },
+    {
+      "path": "simulation.entityId",
+      "description": "Entity ID to load (preferred)."
+    },
+    {
+      "path": "simulation.productId",
+      "description": "Product ID alias for entity identifier. Prefer entityId + entityType.",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_simulation",
+    "type": "simulation",
+    "title": "Simulation: Entity Modal",
+    "description": "Simulate a modal action by Entity ID.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "trigger"
+    ],
+    "outputs": [
+      "context",
+      "entityId",
+      "entityType",
+      "productId"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

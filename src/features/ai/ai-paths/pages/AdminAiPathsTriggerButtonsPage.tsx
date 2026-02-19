@@ -47,6 +47,7 @@ type TriggerButtonPathUsage = { id: string; name: string };
 const LOCATION_OPTIONS: Array<{ value: AiTriggerButtonLocation; label: string }> = [
   { value: 'product_modal', label: 'Products: Product Modal' },
   { value: 'product_list', label: 'Products: Product List' },
+  { value: 'product_row', label: 'Products: Product Row' },
   { value: 'note_modal', label: 'Notes: Note Modal' },
   { value: 'note_list', label: 'Notes: Note List' },
 ];

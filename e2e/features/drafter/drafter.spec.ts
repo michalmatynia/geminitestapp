@@ -21,7 +21,7 @@ test.describe('Product Drafts', () => {
     await expect(page.getByRole('heading', { name: 'Create Draft' })).toBeVisible();
     
     // Check for form elements (Draft Name is likely required)
-    await expect(page.getByLabel("Draft Name")).toBeVisible();
+    await expect(page.getByLabel('Draft Name')).toBeVisible();
     
     // Close modal
     await page.getByRole('button', { name: 'Close' }).click();
@@ -34,7 +34,7 @@ test.describe('Product Drafts', () => {
     await page.getByRole('button', { name: /Create.*Draft/i }).click();
     
     // Fill name
-    await page.getByLabel("Draft Name").fill(draftName);
+    await page.getByLabel('Draft Name').fill(draftName);
     
     // Save
     await page.getByRole('button', { name: 'Create', exact: true }).click();
@@ -50,7 +50,7 @@ test.describe('Product Drafts', () => {
     const draftName = `Delete Me ${Date.now()}`;
     
     await page.getByRole('button', { name: /Create.*Draft/i }).click();
-    await page.getByLabel("Draft Name").fill(draftName);
+    await page.getByLabel('Draft Name').fill(draftName);
     await page.getByRole('button', { name: 'Create', exact: true }).click();
     await expect(page.getByText(draftName)).toBeVisible();
 

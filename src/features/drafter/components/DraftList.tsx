@@ -2,8 +2,6 @@
 import {
   PlusIcon,
   Edit2Icon,
-  CheckIcon,
-  XIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 

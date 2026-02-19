@@ -1,0 +1,68 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "parser",
+  "title": "JSON Parser",
+  "purpose": "Extract fields into outputs or a single bundle.",
+  "inputs": [
+    "entityJson",
+    "context"
+  ],
+  "outputs": [
+    "productId",
+    "title",
+    "images",
+    "content_en"
+  ],
+  "configFields": [
+    {
+      "path": "parser.outputMode",
+      "description": "individual emits one port per mapping; bundle emits a single bundle output.",
+      "defaultValue": "individual"
+    },
+    {
+      "path": "parser.mappings",
+      "description": "Map output port name -> JSON path (relative to entityJson/context).",
+      "defaultValue": "{}"
+    },
+    {
+      "path": "parser.presetId",
+      "description": "Optional preset that seeds mappings and output options (keeps your parser consistent)."
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_parser",
+    "type": "parser",
+    "title": "JSON Parser",
+    "description": "Extract fields into outputs or a single bundle.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "entityJson",
+      "context"
+    ],
+    "outputs": [
+      "productId",
+      "title",
+      "images",
+      "content_en"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

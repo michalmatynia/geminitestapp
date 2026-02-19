@@ -282,6 +282,39 @@ describe('case-resolver-capture proposals', () => {
     expect(state?.addressee?.existingReference).toBeNull();
   });
 
+  it('deduplicates equivalent addresser/addressee candidates and keeps organization as addressee', () => {
+    const duplicatedOrganizationCandidate: PromptExploderCaseResolverPartyCandidate = {
+      role: 'addresser',
+      displayName: 'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie',
+      rawText: 'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie\nul. Matejki 22\n70-530 Szczecin',
+      kind: 'organization',
+      organizationName: 'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie',
+      sourcePatternLabels: ['Case Resolver Extract: Addresser Organization Name'],
+      sourceSequenceLabels: ['Case Resolver Structure'],
+    };
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: duplicatedOrganizationCandidate,
+      addressee: {
+        ...duplicatedOrganizationCandidate,
+        role: 'addressee',
+        sourcePatternLabels: ['Case Resolver Extract: Addressee Organization Name'],
+      },
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings()
+    );
+
+    expect(state?.addresser).toBeNull();
+    expect(state?.addressee?.sourceRole).toBe('addressee');
+    expect(state?.addressee?.candidate.organizationName).toBe(
+      'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie'
+    );
+  });
+
   it('keeps exploded text unchanged when role action is keepText', () => {
     const payload: PromptExploderCaseResolverPartyBundle = {
       addresser: createAddresserCandidate(),

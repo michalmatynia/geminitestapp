@@ -15,6 +15,7 @@ import { StudioCard } from '../StudioCard';
 type RightSidebarControlsTabProps = {
   activeShapeDrawingTool: VectorToolMode | null;
   brushRadius: number;
+  canvasSizeLabel: string;
   canRecenterCanvasImage: boolean;
   compositeAssetIds: string[];
   compositeAssetOptions: Array<{ value: string; label: string }>;
@@ -32,11 +33,13 @@ type RightSidebarControlsTabProps = {
   onMaskFeatherChange: (value: number) => void;
   onMaskThresholdSensitivityChange: (value: number) => void;
   onRecenterCanvasImage: () => void;
+  onOpenResizeCanvasModal: () => void;
   onSelectShapeTool: (nextTool: VectorToolMode) => void;
   onToggleMoveImage: () => void;
   onToggleSelectTool: () => void;
   quickActionsHostEl: HTMLElement | null;
   quickActionsPanelContent: React.ReactNode;
+  resizeCanvasDisabled: boolean;
   tool: VectorToolMode;
   workingSlotPresent: boolean;
 };
@@ -44,6 +47,7 @@ type RightSidebarControlsTabProps = {
 export function RightSidebarControlsTab({
   activeShapeDrawingTool,
   brushRadius,
+  canvasSizeLabel,
   canRecenterCanvasImage,
   compositeAssetIds,
   compositeAssetOptions,
@@ -61,11 +65,13 @@ export function RightSidebarControlsTab({
   onMaskFeatherChange,
   onMaskThresholdSensitivityChange,
   onRecenterCanvasImage,
+  onOpenResizeCanvasModal,
   onSelectShapeTool,
   onToggleMoveImage,
   onToggleSelectTool,
   quickActionsHostEl,
   quickActionsPanelContent,
+  resizeCanvasDisabled,
   tool,
   workingSlotPresent,
 }: RightSidebarControlsTabProps): React.JSX.Element {
@@ -175,9 +181,23 @@ export function RightSidebarControlsTab({
               >
                 Re-center
               </Button>
+              <Button
+                size='xs'
+                type='button'
+                variant='outline'
+                onClick={onOpenResizeCanvasModal}
+                disabled={resizeCanvasDisabled}
+                title='Resize project canvas'
+                aria-label='Resize project canvas'
+              >
+                Resize Canvas
+              </Button>
             </div>
             <div className='mt-2 text-[11px] text-gray-500'>
               Use Move Image, then drag the canvas image to manually align it in frame.
+            </div>
+            <div className='mt-1 text-[11px] text-gray-500'>
+              Current canvas: {canvasSizeLabel}
             </div>
           </div>
 

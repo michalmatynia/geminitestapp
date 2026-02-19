@@ -28,7 +28,7 @@ export interface StandardDataTablePanelProps<TData> {
   variant?: 'default' | 'flat' | undefined;
   
   // DataTable props
-  columns: ColumnDef<TData, any>[];
+  columns: ColumnDef<TData, unknown>[];
   data: TData[];
   isLoading?: boolean | undefined;
   loadingMessage?: string | undefined;

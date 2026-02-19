@@ -49,15 +49,9 @@ describe('offline-support', () => {
     setupOfflineSupport(queryClient);
 
     expect(persistQueryClientMock).toHaveBeenCalledTimes(1);
-    const options = persistQueryClientMock.mock.calls[0]?.[0] as {
-      dehydrateOptions?: {
-        shouldDehydrateQuery?: (query: {
-          state: { status: string };
-          queryKey: readonly unknown[];
-        }) => boolean;
-      };
-    };
-    const shouldDehydrate = options.dehydrateOptions?.shouldDehydrateQuery;
+    const firstCallArgs: any = persistQueryClientMock.mock.calls[0];
+    const options = firstCallArgs ? firstCallArgs[0] : {};
+    const shouldDehydrate = options?.dehydrateOptions?.shouldDehydrateQuery;
     expect(typeof shouldDehydrate).toBe('function');
     if (!shouldDehydrate) return;
 

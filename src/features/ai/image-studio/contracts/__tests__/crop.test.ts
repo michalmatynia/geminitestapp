@@ -19,6 +19,24 @@ describe('imageStudioCropRequestSchema', () => {
     expect(parsed.success).toBe(true);
   });
 
+  it('accepts bbox payload with canvas context', () => {
+    const parsed = imageStudioCropRequestSchema.safeParse({
+      mode: 'server_bbox',
+      cropRect: { x: 10, y: 12, width: 120, height: 80 },
+      canvasContext: {
+        canvasWidth: 1600,
+        canvasHeight: 2400,
+        imageFrame: {
+          x: 0.1,
+          y: 0.2,
+          width: 0.7,
+          height: 0.6,
+        },
+      },
+    });
+    expect(parsed.success).toBe(true);
+  });
+
   it('requires polygon points for polygon mode', () => {
     const parsed = imageStudioCropRequestSchema.safeParse({
       mode: 'server_polygon',

@@ -5,6 +5,7 @@ import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-but
 export const aiTriggerButtonLocationSchema = z.enum([
   'product_modal',
   'product_list',
+  'product_row',
   'note_modal',
   'note_list',
 ]);
@@ -42,13 +43,23 @@ const normalizeModeForRead = (value: unknown): 'click' | 'toggle' | undefined =>
   return undefined;
 };
 
-const normalizeLocationsForRead = (value: unknown): Array<'product_modal' | 'product_list' | 'note_modal' | 'note_list'> | undefined => {
+const normalizeLocationsForRead = (
+  value: unknown
+): Array<
+  | 'product_modal'
+  | 'product_list'
+  | 'product_row'
+  | 'note_modal'
+  | 'note_list'
+> | undefined => {
   const source = Array.isArray(value)
     ? value
     : typeof value === 'string'
       ? [value]
       : [];
-  const seen = new Set<'product_modal' | 'product_list' | 'note_modal' | 'note_list'>();
+  const seen = new Set<
+    'product_modal' | 'product_list' | 'product_row' | 'note_modal' | 'note_list'
+  >();
   source.forEach((entry: unknown) => {
     if (typeof entry !== 'string') return;
     const normalized = entry.trim();

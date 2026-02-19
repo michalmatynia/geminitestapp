@@ -402,7 +402,7 @@ export const getLatestAdaptiveTrigger = (audits: AgentAuditLog[]): {
             : 'adaptive replan';
       return {
         id: audit.id,
-        createdAt: audit.createdAt,
+        createdAt: audit.createdAt || new Date().toISOString(),
         reason: typeof metadata?.['reason'] === 'string' ? (metadata['reason']) : null,
         label,
       };

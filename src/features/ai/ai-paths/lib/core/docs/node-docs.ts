@@ -17,6 +17,7 @@ export type AiPathsNodeDoc = {
   inputs: string[];
   outputs: string[];
   config: NodeConfigDocField[];
+  defaultConfig?: Record<string, unknown>;
   notes?: string[];
 };
 
@@ -615,6 +616,83 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
     },
     ...COMMON_RUNTIME_FIELDS,
   ],
+  api_advanced: [
+    { path: 'apiAdvanced.url', description: 'Request URL template.', defaultValue: '""' },
+    {
+      path: 'apiAdvanced.method',
+      description: 'HTTP method including advanced methods (HEAD/OPTIONS).',
+      defaultValue: 'GET',
+    },
+    {
+      path: 'apiAdvanced.pathParamsJson',
+      description:
+        'JSON object for explicit path parameter substitution before request execution.',
+      defaultValue: '{}',
+    },
+    {
+      path: 'apiAdvanced.queryParamsJson',
+      description:
+        'JSON object for explicit query parameters. Values can include templates.',
+      defaultValue: '{}',
+    },
+    {
+      path: 'apiAdvanced.headersJson',
+      description: 'JSON object for request headers.',
+      defaultValue: '{}',
+    },
+    {
+      path: 'apiAdvanced.authMode',
+      description:
+        'none/api_key/bearer/basic/oauth2_client_credentials/connection auth strategy.',
+      defaultValue: 'none',
+    },
+    {
+      path: 'apiAdvanced.responseMode',
+      description: 'How to interpret response payload: json/text/status.',
+      defaultValue: 'json',
+    },
+    {
+      path: 'apiAdvanced.responsePath',
+      description:
+        'Optional JSON path selection from parsed response payload.',
+      defaultValue: '""',
+    },
+    {
+      path: 'apiAdvanced.outputMappingsJson',
+      description:
+        'JSON object mapping output port -> JSON path in response envelope.',
+      defaultValue: '{}',
+    },
+    {
+      path: 'apiAdvanced.retryEnabled',
+      description: 'Enable/disable retry behavior.',
+      defaultValue: 'true',
+    },
+    {
+      path: 'apiAdvanced.retryAttempts',
+      description: 'Maximum attempts including first request.',
+      defaultValue: '2',
+    },
+    {
+      path: 'apiAdvanced.retryOnStatusJson',
+      description:
+        'JSON array of status codes that should be retried when retries are enabled.',
+      defaultValue: '[429,500,502,503,504]',
+    },
+    {
+      path: 'apiAdvanced.paginationMode',
+      description:
+        'none/page/cursor/link pagination strategy.',
+      defaultValue: 'none',
+    },
+    {
+      path: 'apiAdvanced.errorRoutesJson',
+      description:
+        'JSON array of explicit error route matchers and target output ports.',
+      defaultValue: '[]',
+    },
+    ...COMMON_RUNTIME_FIELDS,
+  ],
   prompt: [
     {
       path: 'prompt.template',
@@ -671,6 +749,27 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
       path: 'agent.waitForResult',
       description:
         'When true, waits for completion and emits result. When false, emits jobId/status.',
+      defaultValue: 'true',
+    },
+    ...COMMON_RUNTIME_FIELDS,
+  ],
+  learner_agent: [
+    {
+      path: 'learnerAgent.agentId',
+      description:
+        'Learner agent identifier used to resolve embeddings source and runtime execution behavior.',
+      defaultValue: '""',
+    },
+    {
+      path: 'learnerAgent.promptTemplate',
+      description:
+        'Optional prompt template used to compose final query context before model execution.',
+      defaultValue: '""',
+    },
+    {
+      path: 'learnerAgent.includeSources',
+      description:
+        'When true, include matched source snippets in node outputs for downstream auditing.',
       defaultValue: 'true',
     },
     ...COMMON_RUNTIME_FIELDS,
@@ -904,9 +1003,11 @@ const ALL_NODE_TYPES: NodeType[] = [
   'delay',
   'poll',
   'http',
+  'api_advanced',
   'prompt',
   'model',
   'agent',
+  'learner_agent',
   'database',
   'db_schema',
   'viewer',
@@ -944,6 +1045,26 @@ export const AI_PATHS_NODE_DOCS: AiPathsNodeDoc[] = ALL_NODE_TYPES.map((type: No
     inputs: def?.inputs ?? [],
     outputs: def?.outputs ?? [],
     config: CONFIG_DOCS_BY_TYPE[type] ?? COMMON_RUNTIME_FIELDS,
+    ...((def as unknown as { config?: unknown })?.config &&
+    typeof (def as unknown as { config: Record<string, unknown> }).config === 'object' &&
+    !Array.isArray((def as unknown as { config: Record<string, unknown> }).config)
+      ? { defaultConfig: (def as unknown as { config: Record<string, unknown> }).config }
+      : {}),
     ...(notes ? { notes } : {}),
   };
 });
+
+export const buildAiPathsNodeDocJsonSnippet = (doc: AiPathsNodeDoc): string =>
+  `${JSON.stringify(
+    {
+      type: doc.type,
+      title: doc.title,
+      description: doc.purpose,
+      inputs: doc.inputs,
+      outputs: doc.outputs,
+      config: doc.defaultConfig ?? {},
+      notes: doc.notes ?? [],
+    },
+    null,
+    2,
+  )}\n`;

@@ -16,6 +16,7 @@ import {
   DELAY_OUTPUT_PORTS,
   DESCRIPTION_OUTPUT_PORTS,
   HTTP_INPUT_PORTS,
+  API_ADVANCED_INPUT_PORTS,
   MODEL_OUTPUT_PORTS,
   NOTIFICATION_INPUT_PORTS,
   POLL_INPUT_PORTS,
@@ -267,6 +268,13 @@ export const palette: NodeDefinition[] = [
     description: 'Call external APIs with templated inputs.',
     inputs: HTTP_INPUT_PORTS,
     outputs: ['value', 'bundle'],
+  },
+  {
+    type: 'api_advanced',
+    title: 'API Operation (Advanced)',
+    description: 'Advanced API node with auth, retries, pagination, and error routing.',
+    inputs: API_ADVANCED_INPUT_PORTS,
+    outputs: ['value', 'bundle', 'status', 'headers', 'items', 'route', 'error', 'success'],
   },
   {
     type: 'database',

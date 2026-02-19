@@ -166,6 +166,15 @@ type CaseResolverPageViewProps = {
         : null | undefined
       : null | undefined
   ) => string;
+  captureApplyDiagnostics: {
+    status: 'idle' | 'success' | 'failed';
+    stage: 'precheck' | 'mutation' | 'rebase' | null;
+    message: string;
+    targetFileId: string | null;
+    resolvedTargetFileId: string | null;
+    workspaceRevision: number;
+    at: string;
+  } | null;
 };
 
 const formatHistoryTimestamp = (value: string): string => {
@@ -192,7 +201,6 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     React.useState<PartySearchKind>('organization');
   const [addresserPartyQuery, setAddresserPartyQuery] = React.useState('');
   const [addresseePartyQuery, setAddresseePartyQuery] = React.useState('');
-  const [pendingPromptApplyTargetFileId, setPendingPromptApplyTargetFileId] = React.useState('');
   const {
     state,
     workspaceView,
@@ -241,6 +249,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     updatePromptExploderProposalReference,
     updatePromptExploderProposalDateAction,
     resolvePromptExploderMatchedPartyLabel,
+    captureApplyDiagnostics,
   } = props;
 
   const {
@@ -363,70 +372,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     },
     [partyOptions]
   );
-  const pendingPromptApplyTargetOptions = React.useMemo<SelectOption[]>(
-    () =>
-      workspace.files
-        .filter((file: CaseResolverFile): boolean =>
-          file.fileType === 'document' || file.fileType === 'scanfile'
-        )
-        .map((file: CaseResolverFile) => ({
-          value: file.id,
-          label: file.name,
-          description: file.folder ? `Folder: ${file.folder}` : 'Folder: (root)',
-        })),
-    [workspace.files]
-  );
-
-  const pendingPromptPayloadKey = React.useMemo(() => {
-    if (!pendingPromptExploderPayload) return null;
-    return [
-      pendingPromptExploderPayload.createdAt,
-      pendingPromptExploderPayload.caseResolverContext?.fileId ?? '',
-      pendingPromptExploderPayload.prompt.length,
-    ].join('|');
-  }, [pendingPromptExploderPayload]);
-
-  React.useEffect(() => {
-    if (!pendingPromptExploderPayload) {
-      setPendingPromptApplyTargetFileId('');
-      return;
-    }
-
-    setPendingPromptApplyTargetFileId((current) => {
-      if (
-        current &&
-        pendingPromptApplyTargetOptions.some((option: SelectOption) => option.value === current)
-      ) {
-        return current;
-      }
-
-      const preferredTargets = [
-        editingDocumentDraft?.id ?? '',
-        pendingPromptExploderPayload.caseResolverContext?.fileId ?? '',
-      ].filter((value: string): boolean => value.trim().length > 0);
-      for (const preferred of preferredTargets) {
-        const match = pendingPromptApplyTargetOptions.find(
-          (option: SelectOption) => option.value.trim() === preferred.trim()
-        );
-        if (match) return match.value;
-      }
-
-      return pendingPromptApplyTargetOptions[0]?.value ?? '';
-    });
-  }, [
-    editingDocumentDraft?.id,
-    pendingPromptApplyTargetOptions,
-    pendingPromptExploderPayload,
-    pendingPromptPayloadKey,
-  ]);
-
-  const canApplyPendingPromptOutput = Boolean(
-    pendingPromptExploderPayload &&
-    pendingPromptApplyTargetFileId &&
-    pendingPromptApplyTargetOptions.some(
-      (option: SelectOption) => option.value === pendingPromptApplyTargetFileId
-    )
-  );
+  const canApplyPendingPromptOutput = Boolean(pendingPromptExploderPayload);
 
   const addresserPartyOptions = React.useMemo(
     () =>
@@ -531,6 +477,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     }
     const relationIndex = buildCaseResolverNodeFileRelationIndexFromAssets({
       assets: workspace.assets,
+      files: workspace.files,
     });
     const linkedAssetIds = relationIndex.nodeFileAssetIdsByDocumentFileId[editingDocumentDraft.id] ?? [];
     return linkedAssetIds
@@ -1516,6 +1463,14 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                       <span className='text-cyan-200'>Proposal Built:</span>{' '}
                       {promptExploderApplyDiagnostics.proposalBuilt ? 'yes' : 'no'}
                     </div>
+                    <div>
+                      <span className='text-cyan-200'>Proposal Reason:</span>{' '}
+                      {promptExploderApplyDiagnostics.proposalReason}
+                    </div>
+                    <div>
+                      <span className='text-cyan-200'>Mutation Missing After Precheck:</span>{' '}
+                      {promptExploderApplyDiagnostics.mutationMissingAfterPrecheck ? 'yes' : 'no'}
+                    </div>
                   </div>
                 </div>
               ) : null}
@@ -1542,30 +1497,13 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                   Prompt Exploder: Extract + Reassemble
                 </Button>
                 {pendingPromptExploderPayload ? (
-                  <SelectSimple
-                    size='sm'
-                    value={pendingPromptApplyTargetFileId || '__none__'}
-                    onValueChange={(value: string): void => {
-                      setPendingPromptApplyTargetFileId(value === '__none__' ? '' : value);
-                    }}
-                    options={
-                      pendingPromptApplyTargetOptions.length > 0
-                        ? pendingPromptApplyTargetOptions
-                        : [{ value: '__none__', label: 'No document files available' }]
-                    }
-                    triggerClassName='h-8 min-w-[220px]'
-                    placeholder='Choose target document'
-                  />
-                ) : null}
-                {pendingPromptExploderPayload ? (
                   <Button
                     type='button'
                     variant='outline'
                     className='h-8'
                     disabled={!canApplyPendingPromptOutput || isApplyingPromptExploderPartyProposal}
                     onClick={(): void => {
-                      if (!pendingPromptApplyTargetFileId) return;
-                      void handleApplyPendingPromptExploderPayload(pendingPromptApplyTargetFileId);
+                      void handleApplyPendingPromptExploderPayload();
                     }}
                   >
                     {isApplyingPromptExploderPartyProposal
@@ -1679,6 +1617,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
           onUpdateReference={updatePromptExploderProposalReference}
           onUpdateDateAction={updatePromptExploderProposalDateAction}
           resolveMatchedPartyLabel={resolvePromptExploderMatchedPartyLabel}
+          diagnostics={captureApplyDiagnostics}
         />
         
         <ConfirmationModal />

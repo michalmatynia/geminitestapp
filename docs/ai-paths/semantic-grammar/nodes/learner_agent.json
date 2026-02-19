@@ -1,0 +1,103 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "learner_agent",
+  "title": "Learner Agent",
+  "purpose": "Answer using connected embedding collections (RAG).",
+  "inputs": [
+    "prompt",
+    "bundle",
+    "context",
+    "entityJson",
+    "value",
+    "result",
+    "title",
+    "images",
+    "content_en",
+    "entityId",
+    "entityType",
+    "productId"
+  ],
+  "outputs": [
+    "result",
+    "sources",
+    "status",
+    "bundle"
+  ],
+  "configFields": [
+    {
+      "path": "learnerAgent.agentId",
+      "description": "Learner agent identifier used to resolve embeddings source and runtime execution behavior.",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "learnerAgent.promptTemplate",
+      "description": "Optional prompt template used to compose final query context before model execution.",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "learnerAgent.includeSources",
+      "description": "When true, include matched source snippets in node outputs for downstream auditing.",
+      "defaultValue": "true"
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "defaultConfig": {
+    "learnerAgent": {
+      "agentId": "",
+      "promptTemplate": "",
+      "includeSources": true
+    }
+  },
+  "semanticNodeExample": {
+    "id": "node_learner_agent",
+    "type": "learner_agent",
+    "title": "Learner Agent",
+    "description": "Answer using connected embedding collections (RAG).",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "prompt",
+      "bundle",
+      "context",
+      "entityJson",
+      "value",
+      "result",
+      "title",
+      "images",
+      "content_en",
+      "entityId",
+      "entityType",
+      "productId"
+    ],
+    "outputs": [
+      "result",
+      "sources",
+      "status",
+      "bundle"
+    ],
+    "config": {
+      "learnerAgent": {
+        "agentId": "",
+        "promptTemplate": "",
+        "includeSources": true
+      }
+    },
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

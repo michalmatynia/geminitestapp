@@ -1,0 +1,71 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "trigger",
+  "title": "Trigger: Scheduled Run",
+  "purpose": "Runs on a server schedule or cron.",
+  "inputs": [
+    "context"
+  ],
+  "outputs": [
+    "trigger",
+    "triggerName",
+    "context",
+    "meta",
+    "entityId",
+    "entityType"
+  ],
+  "configFields": [
+    {
+      "path": "trigger.event",
+      "description": "What event fires this Trigger node. Use manual for UI-driven runs; scheduled_run for server/cron runs.",
+      "defaultValue": "manual"
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "defaultConfig": {
+    "trigger": {
+      "event": "scheduled_run"
+    }
+  },
+  "semanticNodeExample": {
+    "id": "node_trigger",
+    "type": "trigger",
+    "title": "Trigger: Scheduled Run",
+    "description": "Runs on a server schedule or cron.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "context"
+    ],
+    "outputs": [
+      "trigger",
+      "triggerName",
+      "context",
+      "meta",
+      "entityId",
+      "entityType"
+    ],
+    "config": {
+      "trigger": {
+        "event": "scheduled_run"
+      }
+    },
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

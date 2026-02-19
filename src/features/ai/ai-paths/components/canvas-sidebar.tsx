@@ -55,7 +55,7 @@ const DATA_PALETTE_GROUPS: PaletteGroup[] = [
     icon: '🧪',
   },
   { title: 'Bundles + Templates', types: ['bundle', 'template'], icon: '🧩' },
-  { title: 'IO + Fetch', types: ['http', 'database', 'db_schema'], icon: '🌐' },
+  { title: 'IO + Fetch', types: ['http', 'api_advanced', 'database', 'db_schema'], icon: '🌐' },
   { title: 'Prompts + Models', types: ['prompt', 'model'], icon: '🤖' },
   { title: 'Agents', types: ['agent', 'learner_agent'], icon: '🧠' },
   { title: 'Viewers', types: ['viewer', 'notification'], icon: '👁' },
@@ -162,6 +162,7 @@ export function CanvasSidebar(): React.JSX.Element {
         <div className='mb-3 flex items-center justify-between'>
           <span className='text-sm font-semibold text-white'>Node Palette</span>
           <button
+            data-doc-id='palette_toggle'
             type='button'
             className='rounded border px-2 py-1 text-[10px] text-gray-300 hover:bg-muted/60'
             onClick={() => setPaletteCollapsed(!paletteCollapsed)}
@@ -171,6 +172,7 @@ export function CanvasSidebar(): React.JSX.Element {
         </div>
         <div className='mb-3 flex items-center gap-2'>
           <button
+            data-doc-id='palette_mode_data'
             type='button'
             onClick={() => setPaletteMode('data')}
           >
@@ -182,6 +184,7 @@ export function CanvasSidebar(): React.JSX.Element {
             />
           </button>
           <button
+            data-doc-id='palette_mode_sound'
             type='button'
             onClick={() => setPaletteMode('sound')}
           >
@@ -195,6 +198,7 @@ export function CanvasSidebar(): React.JSX.Element {
         </div>
         <div className='mb-3'>
           <Input
+            data-doc-id='palette_search'
             value={paletteSearch}
             onChange={(event) => setPaletteSearch(event.target.value)}
             placeholder='Search nodes...'
@@ -256,6 +260,8 @@ export function CanvasSidebar(): React.JSX.Element {
                           <div
                             key={node.title}
                             draggable
+                            role='button'
+                            data-doc-id={`node_palette_${node.type}`}
                             onDragStart={(event) => handleDragStart(event, node)}
                             className='cursor-grab rounded-md border border-border/60 bg-card/30 p-2 text-xs text-gray-300 transition hover:border-border/80 hover:bg-muted/50 active:cursor-grabbing'
                           >
@@ -349,6 +355,7 @@ export function CanvasSidebar(): React.JSX.Element {
               <div>
                 <Label className='text-[10px] uppercase text-gray-500'>Title</Label>
                 <Input
+                  data-doc-id='inspector_node_title'
                   className='mt-2 w-full rounded-md border bg-card/70 px-3 py-2 text-xs text-white'
                   value={selectedNode.title}
                   onChange={(event) => {
@@ -363,6 +370,7 @@ export function CanvasSidebar(): React.JSX.Element {
               <div>
                 <Label className='text-[10px] uppercase text-gray-500'>Description</Label>
                 <Textarea
+                  data-doc-id='inspector_node_description'
                   className='mt-2 min-h-[64px] w-full rounded-md border bg-card/70 text-xs text-white'
                   value={selectedNode.description}
                   onChange={(event) => {
@@ -447,12 +455,14 @@ export function CanvasSidebar(): React.JSX.Element {
                 );
               })()}
               <Button
+                data-doc-id='inspector_open_node_config'
                 className='w-full rounded-md border text-xs text-white hover:bg-muted/60'
                 onClick={() => setConfigOpen(true)}
               >
                 Open Node Config
               </Button>
               <Button
+                data-doc-id='inspector_remove_node'
                 className='w-full rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10'
                 type='button'
                 onClick={() => deleteSelectedNode()}

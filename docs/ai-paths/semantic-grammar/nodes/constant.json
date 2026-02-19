@@ -1,0 +1,52 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "constant",
+  "title": "Constant",
+  "purpose": "Emit a constant value as a signal.",
+  "inputs": [],
+  "outputs": [
+    "value"
+  ],
+  "configFields": [
+    {
+      "path": "constant.valueType",
+      "description": "How to interpret the stored value: string/number/boolean/json.",
+      "defaultValue": "string"
+    },
+    {
+      "path": "constant.value",
+      "description": "The literal value to emit (for json, this should be JSON text).",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_constant",
+    "type": "constant",
+    "title": "Constant",
+    "description": "Emit a constant value as a signal.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [],
+    "outputs": [
+      "value"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

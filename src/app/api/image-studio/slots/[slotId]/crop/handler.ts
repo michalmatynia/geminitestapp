@@ -122,6 +122,9 @@ async function parseCropRequestPayload(
   const mode = form.get('mode');
   const cropRect = parseJsonFormValue<ImageStudioCropRect>(form.get('cropRect'));
   const polygon = parseJsonFormValue<Array<ImageStudioCropPoint>>(form.get('polygon'));
+  const canvasContext = parseJsonFormValue<NonNullable<ImageStudioCropRequest['canvasContext']>>(
+    form.get('canvasContext')
+  );
   const dataUrl = form.get('dataUrl');
   const name = form.get('name');
   const requestId = form.get('requestId');
@@ -142,6 +145,7 @@ async function parseCropRequestPayload(
       ...(typeof mode === 'string' ? { mode } : {}),
       ...(cropRect ? { cropRect } : {}),
       ...(polygon ? { polygon } : {}),
+      ...(canvasContext ? { canvasContext } : {}),
       ...(typeof dataUrl === 'string' ? { dataUrl } : {}),
       ...(typeof name === 'string' ? { name } : {}),
       ...(typeof requestId === 'string' ? { requestId } : {}),
@@ -293,6 +297,98 @@ async function cropByPolygonMask(
   };
 }
 
+const normalizeCanvasCompositeFrame = (input: {
+  canvasWidth: number;
+  canvasHeight: number;
+  imageFrame: { x: number; y: number; width: number; height: number };
+}): { left: number; top: number; width: number; height: number } => {
+  const left = Math.round(input.imageFrame.x * input.canvasWidth);
+  const top = Math.round(input.imageFrame.y * input.canvasHeight);
+  const width = Math.max(1, Math.round(input.imageFrame.width * input.canvasWidth));
+  const height = Math.max(1, Math.round(input.imageFrame.height * input.canvasHeight));
+  return { left, top, width, height };
+};
+
+async function composeSourceOnCanvas(input: {
+  sourceBuffer: Buffer;
+  canvasWidth: number;
+  canvasHeight: number;
+  imageFrame: { x: number; y: number; width: number; height: number };
+}): Promise<Buffer> {
+  const { sourceBuffer, canvasWidth, canvasHeight, imageFrame } = input;
+  const baseCanvas = sharp({
+    create: {
+      width: canvasWidth,
+      height: canvasHeight,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  });
+  const frame = normalizeCanvasCompositeFrame({ canvasWidth, canvasHeight, imageFrame });
+
+  let sourceToComposite = await sharp(sourceBuffer)
+    .ensureAlpha()
+    .resize(frame.width, frame.height, { fit: 'fill' })
+    .png()
+    .toBuffer();
+
+  let compositeLeft = frame.left;
+  let compositeTop = frame.top;
+  let extractLeft = 0;
+  let extractTop = 0;
+  let extractWidth = frame.width;
+  let extractHeight = frame.height;
+
+  if (compositeLeft < 0) {
+    extractLeft = Math.min(frame.width, Math.abs(compositeLeft));
+    extractWidth = frame.width - extractLeft;
+    compositeLeft = 0;
+  }
+  if (compositeTop < 0) {
+    extractTop = Math.min(frame.height, Math.abs(compositeTop));
+    extractHeight = frame.height - extractTop;
+    compositeTop = 0;
+  }
+  if (compositeLeft + extractWidth > canvasWidth) {
+    extractWidth = Math.max(0, canvasWidth - compositeLeft);
+  }
+  if (compositeTop + extractHeight > canvasHeight) {
+    extractHeight = Math.max(0, canvasHeight - compositeTop);
+  }
+
+  if (!(extractWidth > 0 && extractHeight > 0)) {
+    return baseCanvas.png().toBuffer();
+  }
+
+  if (
+    extractLeft > 0 ||
+    extractTop > 0 ||
+    extractWidth !== frame.width ||
+    extractHeight !== frame.height
+  ) {
+    sourceToComposite = await sharp(sourceToComposite)
+      .extract({
+        left: extractLeft,
+        top: extractTop,
+        width: extractWidth,
+        height: extractHeight,
+      })
+      .png()
+      .toBuffer();
+  }
+
+  return baseCanvas
+    .composite([
+      {
+        input: sourceToComposite,
+        left: compositeLeft,
+        top: compositeTop,
+      },
+    ])
+    .png()
+    .toBuffer();
+}
+
 async function processCropPayload(input: {
   payload: ImageStudioCropRequest;
   sourceSlot: StudioSlotRecord;
@@ -380,7 +476,37 @@ async function processCropPayload(input: {
   }
 
   if (sourceBuffer && sourceWidth > 0 && sourceHeight > 0) {
-    const region = clampCropRect(requestedRect, sourceWidth, sourceHeight);
+    let cropSourceBuffer = sourceBuffer;
+    let cropSourceWidth = sourceWidth;
+    let cropSourceHeight = sourceHeight;
+
+    if (payload.canvasContext) {
+      const canvasValidation = validateCropSourceDimensions(
+        payload.canvasContext.canvasWidth,
+        payload.canvasContext.canvasHeight
+      );
+      if (!canvasValidation.ok) {
+        throw cropBadRequest(
+          IMAGE_STUDIO_CROP_ERROR_CODES.SOURCE_IMAGE_TOO_LARGE,
+          'Canvas context exceeds crop processing limits.',
+          {
+            reason: canvasValidation.reason,
+            width: payload.canvasContext.canvasWidth,
+            height: payload.canvasContext.canvasHeight,
+          }
+        );
+      }
+      cropSourceBuffer = await composeSourceOnCanvas({
+        sourceBuffer,
+        canvasWidth: payload.canvasContext.canvasWidth,
+        canvasHeight: payload.canvasContext.canvasHeight,
+        imageFrame: payload.canvasContext.imageFrame,
+      });
+      cropSourceWidth = payload.canvasContext.canvasWidth;
+      cropSourceHeight = payload.canvasContext.canvasHeight;
+    }
+
+    const region = clampCropRect(requestedRect, cropSourceWidth, cropSourceHeight);
     const outputValid = validateCropOutputDimensions(region.width, region.height);
     if (!outputValid) {
       throw cropBadRequest(
@@ -390,7 +516,7 @@ async function processCropPayload(input: {
       );
     }
 
-    const outputBuffer = await sharp(sourceBuffer).extract(region).png().toBuffer();
+    const outputBuffer = await sharp(cropSourceBuffer).extract(region).png().toBuffer();
     return {
       outputBuffer,
       outputMime: 'image/png',
@@ -537,6 +663,7 @@ export async function postCropSlotHandler(
     mode: payload.mode,
     cropRect: payload.cropRect,
     polygon: payload.polygon,
+    canvasContext: payload.canvasContext,
   });
   const fingerprintRelationType = buildCropFingerprintRelationType(fingerprint);
   const requestRelationType = idempotencyKey ? buildCropRequestRelationType(idempotencyKey) : null;
@@ -556,6 +683,7 @@ export async function postCropSlotHandler(
             mode: payload.mode,
             effectiveMode: payload.mode,
             cropRect: payload.cropRect ?? null,
+            canvasContext: payload.canvasContext ?? null,
             requestId: idempotencyKey,
             fingerprint,
             deduplicated: true,
@@ -582,6 +710,7 @@ export async function postCropSlotHandler(
           mode: payload.mode,
           effectiveMode: payload.mode,
           cropRect: payload.cropRect ?? null,
+          canvasContext: payload.canvasContext ?? null,
           requestId: idempotencyKey,
           fingerprint,
           deduplicated: true,
@@ -611,6 +740,7 @@ export async function postCropSlotHandler(
           projectId: sourceSlot.projectId,
           sourceSlotId: sourceSlot.id,
           mode: payload.mode,
+          canvasContext: payload.canvasContext ?? null,
           diagnostics: payload.diagnostics ?? null,
           requestId: idempotencyKey,
           fingerprint,
@@ -660,6 +790,7 @@ export async function postCropSlotHandler(
             effectiveMode: processed.effectiveMode,
             authoritativeSource: processed.authoritativeSource,
             cropRect: processed.cropRect,
+            canvasContext: payload.canvasContext ?? null,
             diagnostics: payload.diagnostics ?? null,
             polygon: payload.mode === 'server_polygon' ? payload.polygon : undefined,
             requestId: idempotencyKey,
@@ -688,6 +819,7 @@ export async function postCropSlotHandler(
         mode: payload.mode,
         effectiveMode: processed.effectiveMode,
         cropRect: processed.cropRect,
+        canvasContext: payload.canvasContext ?? null,
         diagnostics: payload.diagnostics ?? null,
         fingerprint,
         requestId: idempotencyKey,
@@ -705,6 +837,7 @@ export async function postCropSlotHandler(
           mode: payload.mode,
           effectiveMode: processed.effectiveMode,
           cropRect: processed.cropRect,
+          canvasContext: payload.canvasContext ?? null,
           diagnostics: payload.diagnostics ?? null,
           fingerprint,
           requestId: idempotencyKey,
@@ -727,6 +860,7 @@ export async function postCropSlotHandler(
         mode: payload.mode,
         effectiveMode: processed.effectiveMode,
         authoritativeSource: processed.authoritativeSource,
+        canvasContext: payload.canvasContext ?? null,
         diagnostics: payload.diagnostics ?? null,
         outputWidth: processed.outputWidth,
         outputHeight: processed.outputHeight,
@@ -745,6 +879,7 @@ export async function postCropSlotHandler(
         mode: payload.mode,
         effectiveMode: processed.effectiveMode,
         cropRect: processed.cropRect,
+        canvasContext: payload.canvasContext ?? null,
         requestId: idempotencyKey,
         fingerprint,
         deduplicated: false,
@@ -768,6 +903,7 @@ export async function postCropSlotHandler(
         projectId: sourceSlot.projectId,
         sourceSlotId: sourceSlot.id,
         mode: payload.mode,
+        canvasContext: payload.canvasContext ?? null,
         requestId: idempotencyKey,
         fingerprint,
         diagnostics: payload.diagnostics ?? null,

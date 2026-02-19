@@ -33,7 +33,12 @@ const buildSegment = (
   subsections,
   paramsText: '',
   paramsObject: null,
+  paramUiControls: {},
+  paramComments: {},
+  paramDescriptions: {},
   matchedPatternIds: [],
+  matchedPatternLabels: [],
+  matchedSequenceLabels: [],
   confidence: 0.5,
 });
 

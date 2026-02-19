@@ -104,6 +104,8 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
+  const caseResolverSessionId = searchParams?.get('sessionId')?.trim() ?? '';
+  const isCaseResolverReturnTarget = returnTo.startsWith('/admin/case-resolver');
 
   const {
     runtimeSelection,
@@ -125,7 +127,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     document: PromptExploderDocument;
   } | null>(null);
 
-  const returnTarget = incomingBridgeSource === 'case-resolver' ? 'case-resolver' : 'image-studio';
+  const returnTarget = isCaseResolverReturnTarget ? 'case-resolver' : 'image-studio';
 
   // ── Derived state ──────────────────────────────────────────────────────────
 
@@ -415,6 +417,27 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     if (!documentState) return;
     const reassembled = reassemblePromptSegments(documentState.segments);
     if (returnTarget === 'case-resolver') {
+      const resolvedContextFileId = incomingCaseResolverContext?.fileId?.trim() ?? '';
+      const resolvedContextSessionId = incomingCaseResolverContext?.sessionId?.trim() ?? '';
+      if (!resolvedContextFileId) {
+        toast(
+          'Cannot apply to Case Resolver without a valid target document context.',
+          { variant: 'error' }
+        );
+        return;
+      }
+      if (
+        !isCaseResolverReturnTarget ||
+        !caseResolverSessionId ||
+        !resolvedContextSessionId ||
+        resolvedContextSessionId !== caseResolverSessionId
+      ) {
+        toast(
+          'Prompt Exploder session is not bound to the current Case Resolver document. Reopen Prompt Exploder from the document editor and try again.',
+          { variant: 'error' }
+        );
+        return;
+      }
       const captureRules = buildCaseResolverSegmentCaptureRules(
         runtimeSelection.runtimeValidationRules,
         runtimeSelection.identity.scope
@@ -435,14 +458,15 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
       });
       if (transferPayload.usedFallback) {
         toast(
-          'Rules-only extraction had missing capture fields. Applied heuristics fallback for this transfer.',
-          { variant: 'warning' }
+          'Unexpected capture fallback path detected. Transfer was blocked; review extraction mode and rules.',
+          { variant: 'error' }
         );
+        return;
       }
       if (!transferPayload.hasCaptureData) {
         toast(
-          'No addresser/addressee/date captures found in this output. You can still apply the reassembled text.',
-          { variant: 'info' }
+          'No addresser/addressee/date captures found in rules-only mode. No fallback extraction will run; applying will transfer text only.',
+          { variant: 'warning' }
         );
       }
       savePromptExploderApplyPromptForCaseResolver(
@@ -457,6 +481,8 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     router.push(returnTo);
   }, [
     documentState,
+    caseResolverSessionId,
+    isCaseResolverReturnTarget,
     incomingCaseResolverContext,
     promptExploderSettings.runtime.caseResolverCaptureMode,
     returnTarget,
@@ -541,25 +567,36 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
 
   useEffect(() => {
     const payload = readPromptExploderDraftPayload();
-    if (payload?.source && payload.source !== incomingBridgeSource) {
-      setIncomingBridgeSource(payload.source);
+    const rawPayloadContext = payload?.caseResolverContext ?? null;
+    const rawPayloadSessionId = rawPayloadContext?.sessionId?.trim() ?? '';
+    const hasMatchingCaseResolverSession =
+      isCaseResolverReturnTarget &&
+      caseResolverSessionId.length > 0 &&
+      rawPayloadSessionId.length > 0 &&
+      rawPayloadSessionId === caseResolverSessionId;
+    const isConsumableDraftPayload =
+      payload !== null &&
+      (!payload.target || payload.target === 'prompt-exploder') &&
+      (payload.source !== 'case-resolver' || hasMatchingCaseResolverSession);
+    const nextBridgeSource = isConsumableDraftPayload ? payload?.source ?? null : null;
+    if (nextBridgeSource !== incomingBridgeSource) {
+      setIncomingBridgeSource(nextBridgeSource);
     }
-    const payloadContext = payload?.caseResolverContext ?? null;
+    const payloadContext = isConsumableDraftPayload ? rawPayloadContext : null;
     if (
-      (incomingCaseResolverContext?.fileId ?? null) !== (payloadContext?.fileId ?? null)
+      (incomingCaseResolverContext?.fileId ?? null) !== (payloadContext?.fileId ?? null) ||
+      (incomingCaseResolverContext?.sessionId ?? null) !== (payloadContext?.sessionId ?? null)
     ) {
       setIncomingCaseResolverContext(payloadContext);
     }
-    const promptFromPayload =
-      payload && (!payload.target || payload.target === 'prompt-exploder')
-        ? payload.prompt
-        : null;
+    const promptFromPayload = isConsumableDraftPayload ? payload?.prompt ?? null : null;
     const payloadKey = payload
       ? [
         payload.createdAt,
         payload.source ?? '',
         payload.target ?? '',
         payload.caseResolverContext?.fileId ?? '',
+        payload.caseResolverContext?.sessionId ?? '',
         String(payload.prompt.length),
       ].join('|')
       : null;
@@ -573,7 +610,13 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
       setPromptText(promptFromPayload);
       return;
     }
-  }, [clearDocument, incomingBridgeSource, incomingCaseResolverContext]);
+  }, [
+    caseResolverSessionId,
+    clearDocument,
+    incomingBridgeSource,
+    incomingCaseResolverContext,
+    isCaseResolverReturnTarget,
+  ]);
 
   // ── Context values ─────────────────────────────────────────────────────────
 

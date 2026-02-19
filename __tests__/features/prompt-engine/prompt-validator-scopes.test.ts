@@ -28,7 +28,7 @@ const buildRegexRule = (overrides: Partial<PromptValidationRule> = {}): PromptVa
   launchValue: null,
   launchFlags: null,
   ...overrides,
-});
+} as PromptValidationRule);
 
 const buildSettings = (rules: PromptValidationRule[]): PromptValidationSettings => ({
   enabled: true,

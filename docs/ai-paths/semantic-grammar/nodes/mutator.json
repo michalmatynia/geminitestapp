@@ -1,0 +1,54 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "mutator",
+  "title": "Mutator",
+  "purpose": "Mutate context values with templates.",
+  "inputs": [
+    "context"
+  ],
+  "outputs": [
+    "context"
+  ],
+  "configFields": [
+    {
+      "path": "mutator.path",
+      "description": "JSON path to write to (example: 'meta.flags.needsReview')."
+    },
+    {
+      "path": "mutator.valueTemplate",
+      "description": "Template used to compute the value written at `path` (supports {{placeholders}})."
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_mutator",
+    "type": "mutator",
+    "title": "Mutator",
+    "description": "Mutate context values with templates.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "context"
+    ],
+    "outputs": [
+      "context"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

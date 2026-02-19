@@ -1,0 +1,235 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "database",
+  "title": "Database Query",
+  "purpose": "Query, update, insert, or delete records.",
+  "inputs": [
+    "entityId",
+    "entityType",
+    "productId",
+    "context",
+    "query",
+    "value",
+    "bundle",
+    "result",
+    "content_en",
+    "queryCallback",
+    "schema",
+    "aiQuery"
+  ],
+  "outputs": [
+    "result",
+    "bundle",
+    "content_en",
+    "aiPrompt"
+  ],
+  "configFields": [
+    {
+      "path": "database.operation",
+      "description": "Operation category: query/update/insert/delete."
+    },
+    {
+      "path": "database.entityType",
+      "description": "Collection/entity type to operate on (product/note/custom)."
+    },
+    {
+      "path": "database.idField",
+      "description": "Primary key field when using preset queries (example: _id or id).",
+      "defaultValue": "_id"
+    },
+    {
+      "path": "database.query",
+      "description": "Query definition (provider/collection/preset/queryTemplate/sort/projection/etc)."
+    },
+    {
+      "path": "database.query.provider",
+      "description": "Database provider (mongodb|prisma).",
+      "defaultValue": "mongodb"
+    },
+    {
+      "path": "database.query.collection",
+      "description": "Collection to query (example: products).",
+      "defaultValue": "\"products\""
+    },
+    {
+      "path": "database.query.mode",
+      "description": "preset uses a predefined query; custom uses queryTemplate.",
+      "defaultValue": "preset"
+    },
+    {
+      "path": "database.query.preset",
+      "description": "Preset query shape (by_id/by_productId/by_entityId/by_field).",
+      "defaultValue": "by_id"
+    },
+    {
+      "path": "database.query.field",
+      "description": "Field used by preset queries (example: _id, productId).",
+      "defaultValue": "\"_id\""
+    },
+    {
+      "path": "database.query.idType",
+      "description": "How to treat IDs: string vs objectId.",
+      "defaultValue": "string"
+    },
+    {
+      "path": "database.query.queryTemplate",
+      "description": "JSON query template (string) with {{placeholders}}.",
+      "defaultValue": "\"{...}\""
+    },
+    {
+      "path": "database.query.limit",
+      "description": "Limit for multi-result queries.",
+      "defaultValue": "20"
+    },
+    {
+      "path": "database.query.sort",
+      "description": "Sort JSON (string).",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "database.query.projection",
+      "description": "Projection JSON (string).",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "database.query.single",
+      "description": "If true, treat result as a single document.",
+      "defaultValue": "false"
+    },
+    {
+      "path": "database.mappings",
+      "description": "Updater mappings for write operations: targetPath <- (sourcePort + optional sourcePath)."
+    },
+    {
+      "path": "database.updateTemplate",
+      "description": "Template JSON for updates (when using custom update templates)."
+    },
+    {
+      "path": "database.mode",
+      "description": "Write mode: replace overwrites, append merges/extends (behavior depends on operation)."
+    },
+    {
+      "path": "database.updateStrategy",
+      "description": "When updating: one vs many (for multi-match updates)."
+    },
+    {
+      "path": "database.useMongoActions",
+      "description": "When true, uses provider action mode (actionCategory/action) instead of simplified operation."
+    },
+    {
+      "path": "database.actionCategory",
+      "description": "Provider action category: create/read/update/delete/(aggregate for MongoDB)."
+    },
+    {
+      "path": "database.action",
+      "description": "Provider action command (MongoDB or Prisma-mapped command labels)."
+    },
+    {
+      "path": "database.distinctField",
+      "description": "Field for distinct action."
+    },
+    {
+      "path": "database.writeSource",
+      "description": "Which incoming port to write from (example: result/bundle/context)."
+    },
+    {
+      "path": "database.writeSourcePath",
+      "description": "Optional JSON path within writeSource to write (example: 'result.items[0]')."
+    },
+    {
+      "path": "database.dryRun",
+      "description": "When true, does not persist changes; returns computed payload only.",
+      "defaultValue": "false"
+    },
+    {
+      "path": "database.skipEmpty",
+      "description": "When true, empty strings/nulls are skipped when building updates.",
+      "defaultValue": "false"
+    },
+    {
+      "path": "database.trimStrings",
+      "description": "When true, trims string values before writing.",
+      "defaultValue": "false"
+    },
+    {
+      "path": "database.aiPrompt",
+      "description": "Optional AI prompt string used by some presets/helpers (does not call a model by itself)."
+    },
+    {
+      "path": "database.parameterInferenceGuard.enabled",
+      "description": "When true, sanitizes inferred `parameters` updates against parameter definitions before write.",
+      "defaultValue": "false"
+    },
+    {
+      "path": "database.parameterInferenceGuard.targetPath",
+      "description": "Update field to sanitize (default: parameters).",
+      "defaultValue": "parameters"
+    },
+    {
+      "path": "database.parameterInferenceGuard.definitionsPort",
+      "description": "Input port carrying parameter definitions used for validation (default: result).",
+      "defaultValue": "result"
+    },
+    {
+      "path": "database.parameterInferenceGuard.definitionsPath",
+      "description": "Optional JSON path inside definitionsPort payload to locate definition rows.",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "database.parameterInferenceGuard.enforceOptionLabels",
+      "description": "When true, radio/select/dropdown values must match optionLabels from definitions.",
+      "defaultValue": "true"
+    },
+    {
+      "path": "database.parameterInferenceGuard.allowUnknownParameterIds",
+      "description": "When true, keeps inferred parameterIds missing from definitions.",
+      "defaultValue": "false"
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_database",
+    "type": "database",
+    "title": "Database Query",
+    "description": "Query, update, insert, or delete records.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "entityId",
+      "entityType",
+      "productId",
+      "context",
+      "query",
+      "value",
+      "bundle",
+      "result",
+      "content_en",
+      "queryCallback",
+      "schema",
+      "aiQuery"
+    ],
+    "outputs": [
+      "result",
+      "bundle",
+      "content_en",
+      "aiPrompt"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

@@ -505,9 +505,8 @@ export function ProductSyncSettings(): React.JSX.Element {
             />
 
             <FormActions
-              onSave={handleSave}
-              saveText='Save Profile'
-              isSaving={isSaving}
+              onSave={(): void => { void handleSave(); }}
+              saveText='Save Profile'              isSaving={isSaving}
               className='justify-start'
             >
               <Button
@@ -636,7 +635,7 @@ export function ProductSyncSettings(): React.JSX.Element {
                 </div>
               ),
               description: run.summaryMessage || `Processed ${run.stats.processed}/${run.stats.total} items.`,
-              subtitle: `${new Date(run.createdAt).toLocaleString()} · success ${run.stats.success} · skipped ${run.stats.skipped} · failed ${run.stats.failed}`,
+              subtitle: `${new Date(run.createdAt || 0).toLocaleString()} · success ${run.stats.success} · skipped ${run.stats.skipped} · failed ${run.stats.failed}`,
               original: run
             }))}
             emptyMessage='No sync runs yet.'

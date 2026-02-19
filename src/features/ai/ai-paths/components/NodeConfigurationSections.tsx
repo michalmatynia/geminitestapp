@@ -8,6 +8,7 @@ import { DatabaseNodeConfigSection } from './node-config/DatabaseNodeConfigSecti
 import { DbSchemaNodeConfigSection } from './node-config/DbSchemaNodeConfigSection';
 import { AgentNodeConfigSection } from './node-config/dialog/AgentNodeConfigSection';
 import { AiDescriptionNodeConfigSection } from './node-config/dialog/AiDescriptionNodeConfigSection';
+import { ApiAdvancedNodeConfigSection } from './node-config/dialog/ApiAdvancedNodeConfigSection';
 import { AudioOscillatorNodeConfigSection } from './node-config/dialog/AudioOscillatorNodeConfigSection';
 import { AudioSpeakerNodeConfigSection } from './node-config/dialog/AudioSpeakerNodeConfigSection';
 import { BundleNodeConfigSection } from './node-config/dialog/BundleNodeConfigSection';
@@ -66,6 +67,7 @@ export function NodeConfigurationSections(): React.JSX.Element | null {
       <DelayNodeConfigSection />
       <PollNodeConfigSection />
       <HttpNodeConfigSection />
+      <ApiAdvancedNodeConfigSection />
       <PromptNodeConfigSection />
       <ModelNodeConfigSection />
       <AgentNodeConfigSection />

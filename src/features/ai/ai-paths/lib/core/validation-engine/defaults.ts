@@ -25,6 +25,18 @@ const VALIDATION_MODULES: ReadonlySet<AiPathsValidationModule> =
     'custom',
   ]);
 
+const VALIDATION_RULE_INFERENCE_SOURCE_TYPES: ReadonlySet<string> = new Set([
+  'manual',
+  'central_docs',
+]);
+
+const VALIDATION_RULE_INFERENCE_STATUSES: ReadonlySet<string> = new Set([
+  'candidate',
+  'approved',
+  'rejected',
+  'deprecated',
+]);
+
 export const AI_PATHS_VALIDATION_SCHEMA_VERSION = 2;
 export const DEFAULT_AI_PATHS_VALIDATION_SCHEMA_VERSION =
   AI_PATHS_VALIDATION_SCHEMA_VERSION;
@@ -58,6 +70,89 @@ const sanitizeCondition = (
     ...rawCondition,
     id,
   };
+};
+
+const sanitizeRuleInference = (
+  value: AiPathsValidationRule['inference'] | null | undefined,
+): AiPathsValidationRule['inference'] | undefined => {
+  if (!value || typeof value !== 'object') return undefined;
+  const record = value as Record<string, unknown>;
+  const sourceType =
+    typeof record['sourceType'] === 'string' &&
+    VALIDATION_RULE_INFERENCE_SOURCE_TYPES.has(record['sourceType'])
+      ? (record['sourceType'] as NonNullable<
+          AiPathsValidationRule['inference']
+        >['sourceType'])
+      : undefined;
+  const status =
+    typeof record['status'] === 'string' &&
+    VALIDATION_RULE_INFERENCE_STATUSES.has(record['status'])
+      ? (record['status'] as NonNullable<
+          AiPathsValidationRule['inference']
+        >['status'])
+      : undefined;
+  const assertionId =
+    typeof record['assertionId'] === 'string' && record['assertionId'].trim().length > 0
+      ? record['assertionId'].trim()
+      : undefined;
+  const sourcePath =
+    typeof record['sourcePath'] === 'string' && record['sourcePath'].trim().length > 0
+      ? record['sourcePath'].trim()
+      : undefined;
+  const sourceHash =
+    typeof record['sourceHash'] === 'string' && record['sourceHash'].trim().length > 0
+      ? record['sourceHash'].trim()
+      : undefined;
+  const docsSnapshotHash =
+    typeof record['docsSnapshotHash'] === 'string' &&
+    record['docsSnapshotHash'].trim().length > 0
+      ? record['docsSnapshotHash'].trim()
+      : undefined;
+  const confidence =
+    typeof record['confidence'] === 'number' && Number.isFinite(record['confidence'])
+      ? Math.max(0, Math.min(1, record['confidence']))
+      : undefined;
+  const compilerVersion =
+    typeof record['compilerVersion'] === 'string' &&
+    record['compilerVersion'].trim().length > 0
+      ? record['compilerVersion'].trim()
+      : undefined;
+  const inferredAt =
+    typeof record['inferredAt'] === 'string' && record['inferredAt'].trim().length > 0
+      ? record['inferredAt'].trim()
+      : undefined;
+  const approvedAt =
+    typeof record['approvedAt'] === 'string' && record['approvedAt'].trim().length > 0
+      ? record['approvedAt'].trim()
+      : undefined;
+  const approvedBy =
+    typeof record['approvedBy'] === 'string' && record['approvedBy'].trim().length > 0
+      ? record['approvedBy'].trim()
+      : undefined;
+  const reviewNote =
+    typeof record['reviewNote'] === 'string' && record['reviewNote'].trim().length > 0
+      ? record['reviewNote'].trim()
+      : undefined;
+  const tags = sanitizeStringArray(record['tags']);
+  const deprecates = sanitizeStringArray(record['deprecates']);
+
+  const normalized: NonNullable<AiPathsValidationRule['inference']> = {
+    ...(sourceType ? { sourceType } : {}),
+    ...(status ? { status } : {}),
+    ...(assertionId ? { assertionId } : {}),
+    ...(sourcePath ? { sourcePath } : {}),
+    ...(sourceHash ? { sourceHash } : {}),
+    ...(docsSnapshotHash ? { docsSnapshotHash } : {}),
+    ...(confidence !== undefined ? { confidence } : {}),
+    ...(compilerVersion ? { compilerVersion } : {}),
+    ...(inferredAt ? { inferredAt } : {}),
+    ...(approvedAt ? { approvedAt } : {}),
+    ...(approvedBy ? { approvedBy } : {}),
+    ...(reviewNote ? { reviewNote } : {}),
+    ...(tags.length > 0 ? { tags } : {}),
+    ...(deprecates.length > 0 ? { deprecates } : {}),
+  };
+  return Object.keys(normalized).length > 0 ? normalized : undefined;
 };
 
 const sanitizeRule = (
@@ -100,6 +195,7 @@ const sanitizeRule = (
 
   const appliesToNodeTypes = sanitizeStringArray(rawRule.appliesToNodeTypes);
   const docsBindings = sanitizeStringArray(rawRule.docsBindings);
+  const inference = sanitizeRuleInference(rawRule.inference);
 
   return {
     ...rawRule,
@@ -113,6 +209,7 @@ const sanitizeRule = (
     appliesToNodeTypes:
       appliesToNodeTypes.length > 0 ? appliesToNodeTypes : undefined,
     docsBindings: docsBindings.length > 0 ? docsBindings : undefined,
+    ...(inference ? { inference } : {}),
     conditions,
   };
 };
@@ -138,6 +235,62 @@ const sanitizeRules = (rules: AiPathsValidationRule[]): AiPathsValidationRule[] 
           Boolean(rule),
       ),
   );
+
+export const normalizeAiPathsValidationRules = (
+  rules: AiPathsValidationRule[] | null | undefined,
+): AiPathsValidationRule[] =>
+  Array.isArray(rules) && rules.length > 0 ? sanitizeRules(rules) : [];
+
+const sanitizeDocsSyncState = (
+  value: AiPathsValidationConfig['docsSyncState'] | null | undefined,
+): AiPathsValidationConfig['docsSyncState'] => {
+  if (!value || typeof value !== 'object') {
+    return {
+      lastSyncStatus: 'idle',
+      lastSyncWarnings: [],
+      sourceCount: 0,
+      candidateCount: 0,
+    };
+  }
+  const record = value as Record<string, unknown>;
+  const lastSnapshotHash =
+    typeof record['lastSnapshotHash'] === 'string' &&
+    record['lastSnapshotHash'].trim().length > 0
+      ? record['lastSnapshotHash'].trim()
+      : undefined;
+  const lastSyncedAt =
+    typeof record['lastSyncedAt'] === 'string' &&
+    record['lastSyncedAt'].trim().length > 0
+      ? record['lastSyncedAt'].trim()
+      : undefined;
+  const lastSyncStatus =
+    record['lastSyncStatus'] === 'success' ||
+    record['lastSyncStatus'] === 'warning' ||
+    record['lastSyncStatus'] === 'error' ||
+    record['lastSyncStatus'] === 'idle'
+      ? (record['lastSyncStatus'] as NonNullable<
+          AiPathsValidationConfig['docsSyncState']
+        >['lastSyncStatus'])
+      : 'idle';
+  const sourceCount =
+    typeof record['sourceCount'] === 'number' && Number.isFinite(record['sourceCount'])
+      ? Math.max(0, Math.trunc(record['sourceCount']))
+      : 0;
+  const candidateCount =
+    typeof record['candidateCount'] === 'number' &&
+    Number.isFinite(record['candidateCount'])
+      ? Math.max(0, Math.trunc(record['candidateCount']))
+      : 0;
+  const lastSyncWarnings = sanitizeStringArray(record['lastSyncWarnings']);
+  return {
+    ...(lastSnapshotHash ? { lastSnapshotHash } : {}),
+    ...(lastSyncedAt ? { lastSyncedAt } : {}),
+    lastSyncStatus,
+    sourceCount,
+    candidateCount,
+    lastSyncWarnings,
+  };
+};
 
 export const createAiPathsValidationRuleId = (
   title: string,
@@ -348,6 +501,13 @@ export const DEFAULT_AI_PATHS_VALIDATION_CONFIG: AiPathsValidationConfig = {
   collectionMap: { ...DEFAULT_AI_PATHS_ENTITY_COLLECTION_MAP },
   docsSources: [...DEFAULT_AI_PATHS_VALIDATION_DOC_SOURCES],
   rules: buildAiPathsValidationRulesFromDocs(),
+  inferredCandidates: [],
+  docsSyncState: {
+    lastSyncStatus: 'idle',
+    lastSyncWarnings: [],
+    sourceCount: 0,
+    candidateCount: 0,
+  },
 };
 
 export const normalizeAiPathsValidationConfig = (
@@ -393,14 +553,15 @@ export const normalizeAiPathsValidationConfig = (
       ) as Record<string, string>)
       : { ...DEFAULT_AI_PATHS_ENTITY_COLLECTION_MAP };
 
-  const sanitizedRules =
-    Array.isArray(source.rules) && source.rules.length > 0
-      ? sanitizeRules(source.rules)
-      : [];
+  const sanitizedRules = normalizeAiPathsValidationRules(source.rules);
   const rules =
     sanitizedRules.length > 0
       ? sanitizedRules
       : buildAiPathsValidationRulesFromDocs(docsSources);
+  const inferredCandidates = normalizeAiPathsValidationRules(
+    source.inferredCandidates,
+  );
+  const docsSyncState = sanitizeDocsSyncState(source.docsSyncState);
 
   const lastEvaluatedAt =
     typeof source.lastEvaluatedAt === 'string' &&
@@ -423,6 +584,8 @@ export const normalizeAiPathsValidationConfig = (
     collectionMap,
     docsSources,
     rules,
+    inferredCandidates,
+    docsSyncState,
     lastEvaluatedAt:
       legacySchemaVersion < AI_PATHS_VALIDATION_SCHEMA_VERSION
         ? null

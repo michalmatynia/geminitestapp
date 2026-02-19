@@ -1,0 +1,50 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "description_updater",
+  "title": "Description Updater (Deprecated)",
+  "purpose": "Writes description_en back to the product.",
+  "inputs": [
+    "productId",
+    "description_en"
+  ],
+  "outputs": [
+    "description_en"
+  ],
+  "configFields": [
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [
+    "Deprecated node. Prefer Database node write operations for updates."
+  ],
+  "semanticNodeExample": {
+    "id": "node_description_updater",
+    "type": "description_updater",
+    "title": "Description Updater (Deprecated)",
+    "description": "Writes description_en back to the product.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "productId",
+      "description_en"
+    ],
+    "outputs": [
+      "description_en"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

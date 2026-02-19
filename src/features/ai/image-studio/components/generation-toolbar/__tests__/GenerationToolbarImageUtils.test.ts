@@ -31,14 +31,16 @@ describe('GenerationToolbarImageUtils coordinate mapping', () => {
       shapes,
       1617,
       2420,
+      1617,
+      2420,
       'rect-1',
       IMAGE_FRAME
     );
 
     expect(result.cropRect).toEqual({
-      x: 202,
+      x: 404,
       y: 605,
-      width: 1213,
+      width: 809,
       height: 1210,
     });
     expect(result.diagnostics?.usedImageContentFrameMapping).toBe(true);
@@ -47,7 +49,7 @@ describe('GenerationToolbarImageUtils coordinate mapping', () => {
     );
   });
 
-  it('rejects crop when selected shape is fully outside the image content frame', () => {
+  it('keeps canvas-space crop even when selected shape is outside the image content frame', () => {
     const shapes: MaskShapeForExport[] = [
       {
         id: 'rect-outside',
@@ -62,11 +64,18 @@ describe('GenerationToolbarImageUtils coordinate mapping', () => {
       shapes,
       1617,
       2420,
+      1617,
+      2420,
       'rect-outside',
       IMAGE_FRAME
     );
 
-    expect(result.cropRect).toBeNull();
+    expect(result.cropRect).toEqual({
+      x: 32,
+      y: 484,
+      width: 130,
+      height: 1453,
+    });
     expect(result.diagnostics?.usedImageContentFrameMapping).toBe(true);
     expect(result.diagnostics?.rawCanvasBounds).not.toBeNull();
     expect(result.diagnostics?.mappedImageBounds).toBeNull();

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useAiPathRuntimeAnalytics } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
+import { useAiPathsDocsTooltips } from '@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips';
 import type {
   AiNode,
   AiPathsValidationCondition,
@@ -48,6 +49,7 @@ import {
 import { CanvasBoard } from '../canvas-board';
 import { CanvasSidebar } from '../canvas-sidebar';
 import { ClusterPresetsPanel } from '../cluster-presets-panel';
+import { DocsTooltipEnhancer } from '../DocsTooltipEnhancer';
 import { GraphModelDebugPanel } from '../graph-model-debug-panel';
 import { NodeConfigDialog } from '../node-config-dialog';
 import { PresetsDialog } from '../presets-dialog';
@@ -135,6 +137,12 @@ const VALIDATION_OPERATOR_OPTIONS: Array<{ label: string; value: AiPathsValidati
   { label: 'Wired to', value: 'wired_to' },
   { label: 'Collection exists', value: 'collection_exists' },
   { label: 'Entity+collection resolves', value: 'entity_collection_resolves' },
+  { label: 'Edge endpoints resolve', value: 'edge_endpoints_resolve' },
+  { label: 'Edge ports declared', value: 'edge_ports_declared' },
+  { label: 'Node types known', value: 'node_types_known' },
+  { label: 'Node IDs unique', value: 'node_ids_unique' },
+  { label: 'Edge IDs unique', value: 'edge_ids_unique' },
+  { label: 'Node positions finite', value: 'node_positions_finite' },
 ];
 
 const DEFAULT_CONDITION_DRAFT: ValidationConditionDraft = {
@@ -249,6 +257,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
 
   // Utility — imported directly
   const { toast } = useToast();
+  const { docsTooltipsEnabled, setDocsTooltipsEnabled } = useAiPathsDocsTooltips();
 
   // Domain: Error reporting — read from dedicated hook
   const { persistLastError } = useAiPathsErrorReporting(activeTab);
@@ -766,7 +775,11 @@ export function AiPathsSettingsView(): React.JSX.Element {
   }
 
   return (
-    <div className={isFocusMode ? 'h-full space-y-0' : 'space-y-6'}>
+    <div
+      id='ai-paths-docs-root'
+      className={isFocusMode ? 'h-full space-y-0' : 'space-y-6'}
+    >
+      <DocsTooltipEnhancer rootId='ai-paths-docs-root' enabled={docsTooltipsEnabled} />
       {activeTab === 'canvas' && (
         <div className={isFocusMode ? 'h-full space-y-0' : 'space-y-6'}>
           {!isFocusMode && typeof document !== 'undefined' && renderActions
@@ -776,6 +789,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                   <div className='flex flex-col items-start gap-2'>
                     <div className='flex flex-wrap items-center gap-3'>
                       <Button
+                        data-doc-id='canvas_save_path'
                         className='rounded-md border text-sm text-white hover:bg-muted/60'
                         onClick={() => {
                           if (nodeConfigDirty) {
@@ -791,6 +805,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         {saving ? 'Saving...' : 'Save Path'}
                       </Button>
                       <Button
+                        data-doc-id='canvas_paths_settings'
                         type='button'
                         className='rounded-md border border-border text-sm text-gray-200 hover:bg-card/60'
                         onClick={() => {
@@ -801,6 +816,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         Paths Settings
                       </Button>
                       <Button
+                        data-doc-id='canvas_enable_node_validation'
                         type='button'
                         className={`rounded-md border text-sm ${
                           normalizedAiPathsValidation.enabled === false
@@ -830,6 +846,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                           : 'Node Validation Enabled'}
                       </Button>
                       <Button
+                        data-doc-id='canvas_validate_nodes'
                         type='button'
                         className='rounded-md border border-sky-500/40 text-sm text-sky-200 hover:bg-sky-500/10'
                         onClick={handleRunNodeValidationCheck}
@@ -841,6 +858,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         Validate Nodes
                       </Button>
                       <Button
+                        data-doc-id='canvas_open_node_validator'
                         type='button'
                         className='rounded-md border border-indigo-500/40 text-sm text-indigo-200 hover:bg-indigo-500/10'
                         onClick={handleOpenNodeValidator}
@@ -888,6 +906,15 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         className='font-medium'
                       />
                       <Button
+                        data-doc-id='docs_tooltips_toggle'
+                        type='button'
+                        className='rounded-md border border-violet-500/40 text-sm text-violet-200 hover:bg-violet-500/10'
+                        onClick={() => setDocsTooltipsEnabled(!docsTooltipsEnabled)}
+                      >
+                        {docsTooltipsEnabled ? 'Docs Tooltips: On' : 'Docs Tooltips: Off'}
+                      </Button>
+                      <Button
+                        data-doc-id='canvas_toggle_path_lock'
                         type='button'
                         className='rounded-md border border-border text-sm text-gray-300 hover:bg-card/60'
                         onClick={handleTogglePathLock}
@@ -969,6 +996,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         </div>
                       ) : null}
                       <Button
+                        data-doc-id='canvas_clear_connector_data'
                         className='rounded-md border border-amber-500/40 text-sm text-amber-200 hover:bg-amber-500/10'
                         onClick={() => {
                           void handleClearConnectorData();
@@ -979,6 +1007,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                           Clear Connector Data
                       </Button>
                       <Button
+                        data-doc-id='canvas_toggle_path_active'
                         type='button'
                         className={`rounded-md border text-sm ${isPathActive ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10' : 'border-rose-500/40 text-rose-200 hover:bg-rose-500/10'}`}
                         onClick={handleTogglePathActive}
@@ -992,6 +1021,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         {isPathActive ? 'Deactivate' : 'Activate'}
                       </Button>
                       <Button
+                        data-doc-id='canvas_clear_history'
                         className='rounded-md border border-sky-500/40 text-sm text-sky-200 hover:bg-sky-500/10'
                         onClick={() => {
                           void handleClearHistory();
@@ -1061,6 +1091,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
             ? (() => {
               return createPortal(
                 <Button size='xs'
+                  data-doc-id='canvas_focus_mode_toggle'
                   type='button'
                   variant='outline'
                   onClick={() => setIsFocusMode(!isFocusMode)}
@@ -1098,6 +1129,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                 <div className='flex items-center gap-2'>
                   {isPathNameEditing ? (
                     <input
+                      data-doc-id='canvas_path_name_field'
                       type='text'
                       value={renameDraft}
                       onChange={(event) => {
@@ -1122,6 +1154,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                     />
                   ) : (
                     <button
+                      data-doc-id='canvas_path_name_field'
                       type='button'
                       className='h-9 w-[320px] rounded-md border border-border bg-card/60 px-3 text-left text-sm text-gray-200 hover:bg-card/70 disabled:cursor-not-allowed disabled:opacity-60'
                       onDoubleClick={startPathNameEdit}
@@ -1138,6 +1171,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                     </button>
                   )}
                   <SelectSimple
+                    dataDocId='canvas_path_selector'
                     size='sm'
                     value={activePathId ?? undefined}
                     onValueChange={(value: string): void => {

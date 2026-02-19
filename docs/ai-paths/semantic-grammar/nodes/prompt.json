@@ -1,0 +1,61 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "prompt",
+  "title": "Prompt",
+  "purpose": "Formats text with placeholders.",
+  "inputs": [
+    "bundle",
+    "title",
+    "images",
+    "result",
+    "entityId"
+  ],
+  "outputs": [
+    "prompt",
+    "images"
+  ],
+  "configFields": [
+    {
+      "path": "prompt.template",
+      "description": "Template to produce final prompt text. Uses {{title}}, {{content_en}}, {{bundle}}, etc.",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_prompt",
+    "type": "prompt",
+    "title": "Prompt",
+    "description": "Formats text with placeholders.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "bundle",
+      "title",
+      "images",
+      "result",
+      "entityId"
+    ],
+    "outputs": [
+      "prompt",
+      "images"
+    ],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

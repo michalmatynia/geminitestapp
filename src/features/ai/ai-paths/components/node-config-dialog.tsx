@@ -224,6 +224,7 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
             <div className='min-w-0'>
               <div className='flex min-w-0 items-center gap-2'>
                 <Button
+                  data-doc-id='node_config_update'
                   type='button'
                   size='sm'
                   className='rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10 disabled:opacity-50'
@@ -244,6 +245,7 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
             </div>
             <div className='flex flex-wrap items-center justify-end gap-2'>
               <Button
+                data-doc-id='node_config_close'
                 type='button'
                 onClick={requestClose}
                 variant='outline'
@@ -287,6 +289,7 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
             {selectedNodeSafe.id}
           </span>
           <Button
+            data-doc-id='node_config_copy_id'
             type='button'
             size='sm'
             className='rounded border border-border px-2 py-1 text-[11px] text-gray-200 hover:bg-muted/50'

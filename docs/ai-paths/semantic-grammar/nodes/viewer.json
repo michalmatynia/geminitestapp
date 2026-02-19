@@ -1,0 +1,120 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "viewer",
+  "title": "Result Viewer",
+  "purpose": "Preview outputs connected from other nodes.",
+  "inputs": [
+    "result",
+    "sources",
+    "grouped",
+    "matches",
+    "index",
+    "total",
+    "done",
+    "analysis",
+    "description",
+    "description_en",
+    "prompt",
+    "images",
+    "title",
+    "productId",
+    "content_en",
+    "context",
+    "meta",
+    "trigger",
+    "triggerName",
+    "jobId",
+    "status",
+    "entityId",
+    "entityType",
+    "entityJson",
+    "bundle",
+    "valid",
+    "errors",
+    "value",
+    "audioSignal",
+    "frequency",
+    "waveform",
+    "gain",
+    "durationMs",
+    "queryCallback",
+    "aiPrompt"
+  ],
+  "outputs": [],
+  "configFields": [
+    {
+      "path": "viewer.outputs",
+      "description": "Map of input port -> label/path. Used to display structured output inside the node config panel.",
+      "defaultValue": "{}"
+    },
+    {
+      "path": "viewer.showImagesAsJson",
+      "description": "When true, image lists render as JSON instead of thumbnails.",
+      "defaultValue": "false"
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [],
+  "semanticNodeExample": {
+    "id": "node_viewer",
+    "type": "viewer",
+    "title": "Result Viewer",
+    "description": "Preview outputs connected from other nodes.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "result",
+      "sources",
+      "grouped",
+      "matches",
+      "index",
+      "total",
+      "done",
+      "analysis",
+      "description",
+      "description_en",
+      "prompt",
+      "images",
+      "title",
+      "productId",
+      "content_en",
+      "context",
+      "meta",
+      "trigger",
+      "triggerName",
+      "jobId",
+      "status",
+      "entityId",
+      "entityType",
+      "entityJson",
+      "bundle",
+      "valid",
+      "errors",
+      "value",
+      "audioSignal",
+      "frequency",
+      "waveform",
+      "gain",
+      "durationMs",
+      "queryCallback",
+      "aiPrompt"
+    ],
+    "outputs": [],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

@@ -32,9 +32,8 @@ const ensureSignedInForAdmin = async (page: import('@playwright/test').Page): Pr
 };
 
 test.describe('Observability and Monitoring', () => {
-  test.beforeEach(async ({}) => {
-    // Restore ClientErrorReporter, if it was temporarily commented out
-    // This is a safety measure to ensure the application behaves as expected outside of this specific test.
+  test.beforeEach(async () => {
+    // Restore ClientErrorReporter, if it was temporarily commented out    // This is a safety measure to ensure the application behaves as expected outside of this specific test.
     // In a real scenario, this would be part of a setup/teardown.
     // Given the previous steps, ClientErrorReporter is currently enabled.
   });
@@ -161,26 +160,26 @@ test.describe('Observability and Monitoring', () => {
           cleared
             ? { logs: [], total: 0, page: 1, pageSize: 50 }
             : {
-                logs: [
-                  {
-                    id: 'log-e2e-1',
-                    level: 'info',
-                    message: 'E2E log entry',
-                    source: 'e2e',
-                    context: null,
-                    stack: null,
-                    path: '/admin/system/logs',
-                    method: 'GET',
-                    statusCode: 200,
-                    requestId: 'req-e2e-1',
-                    userId: null,
-                    createdAt: new Date().toISOString(),
-                  },
-                ],
-                total: 1,
-                page: 1,
-                pageSize: 50,
-              }
+              logs: [
+                {
+                  id: 'log-e2e-1',
+                  level: 'info',
+                  message: 'E2E log entry',
+                  source: 'e2e',
+                  context: null,
+                  stack: null,
+                  path: '/admin/system/logs',
+                  method: 'GET',
+                  statusCode: 200,
+                  requestId: 'req-e2e-1',
+                  userId: null,
+                  createdAt: new Date().toISOString(),
+                },
+              ],
+              total: 1,
+              page: 1,
+              pageSize: 50,
+            }
         ),
       });
     });

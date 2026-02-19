@@ -27,10 +27,11 @@ import {
 
 import { AdvancedSection } from './animation/AdvancedSection';
 import { AnimationConfigProvider } from './animation/AnimationConfigContext';
-import type { OpenVectorOverlay } from './animation/AnimationConfigContext';
 import { ParallaxSection } from './animation/ParallaxSection';
 import { TimelineSection } from './animation/TimelineSection';
 import { VisualEffectsSection } from './animation/VisualEffectsSection';
+
+import type { OpenVectorOverlay } from './animation/AnimationConfigContext';
 
 interface AnimationConfigPanelProps {
   config: GsapAnimationConfig;

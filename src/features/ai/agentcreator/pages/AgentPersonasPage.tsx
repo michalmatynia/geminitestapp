@@ -57,11 +57,6 @@ export function AgentPersonasPage(): React.JSX.Element {
     }
   };
 
-  const _forceRead = [AgentPersonaSettingsForm, Button, loading, saving, handleSavePersona, handleDeletePersona];
-  if (typeof window === 'undefined' && (1 as any) === 2) {
-    console.log(_forceRead);
-  }
-
   return (
     <ItemLibrary<AgentPersona & { description: string | null }>
       title='Agent Personas'

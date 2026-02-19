@@ -18,9 +18,25 @@ import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 const projectsRootResolved = path.resolve(projectsRoot);
-const renameProjectSchema = z.object({
-  projectId: z.string().trim().min(1).max(120),
-});
+const patchProjectSchema = z
+  .object({
+    projectId: z.string().trim().min(1).max(120).optional(),
+    canvasWidthPx: z.number().int().min(64).max(32_768).nullable().optional(),
+    canvasHeightPx: z.number().int().min(64).max(32_768).nullable().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (
+      value.projectId === undefined &&
+      value.canvasWidthPx === undefined &&
+      value.canvasHeightPx === undefined
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['projectId'],
+        message: 'Patch payload must include at least one field to update.',
+      });
+    }
+  });
 const SLOT_COLLECTION = 'image_studio_slots';
 const RUN_COLLECTION = 'image_studio_runs';
 const SLOT_LINK_COLLECTION = 'image_studio_slot_links';
@@ -570,20 +586,55 @@ export async function patchImageStudioProjectHandler(
   }
 
   const body = (await req.json().catch(() => null)) as unknown;
-  const parsed = renameProjectSchema.safeParse(body);
+  const parsed = patchProjectSchema.safeParse(body);
   if (!parsed.success) {
     throw badRequestError('Invalid payload', { errors: parsed.error.format() });
   }
 
-  const toProjectId = sanitizeProjectId(parsed.data.projectId);
-  if (!toProjectId) {
-    throw badRequestError('Target project id is required.');
-  }
+  const projectSummaryUpsertOptions = {
+    ...(parsed.data.canvasWidthPx !== undefined
+      ? { canvasWidthPx: parsed.data.canvasWidthPx }
+      : {}),
+    ...(parsed.data.canvasHeightPx !== undefined
+      ? { canvasHeightPx: parsed.data.canvasHeightPx }
+      : {}),
+  };
 
-  if (fromProjectIds.includes(toProjectId)) {
-    const project = await upsertProjectSummary(toProjectId);
+  const sourceStates = await Promise.all(
+    fromProjectIds.map(async (projectId) => {
+      const [hasData, hasDirectory] = await Promise.all([
+        hasProjectData(projectId),
+        (async (): Promise<boolean> => {
+          const dir = resolveProjectDir(projectId);
+          if (!dir) return false;
+          const stats = await fs.stat(dir).catch(() => null);
+          return Boolean(stats?.isDirectory());
+        })(),
+      ]);
+      return {
+        projectId,
+        hasData,
+        hasDirectory,
+      };
+    })
+  );
+  const sourceExists = sourceStates.some(
+    (state) => state.hasData || state.hasDirectory
+  );
+  if (!sourceExists) {
+    throw notFoundError('Project not found', { projectId: rawProjectId });
+  }
+  const resolvedSourceProjectId =
+    sourceStates.find((state) => state.hasData || state.hasDirectory)
+      ?.projectId ?? fromProjectIds[0]!;
+
+  if (parsed.data.projectId === undefined) {
+    const project = await upsertProjectSummary(
+      resolvedSourceProjectId,
+      projectSummaryUpsertOptions
+    );
     return NextResponse.json({
-      projectId: toProjectId,
+      projectId: resolvedSourceProjectId,
       project,
       fromProjectId: rawProjectId,
       renamed: false,
@@ -599,20 +650,31 @@ export async function patchImageStudioProjectHandler(
     });
   }
 
-  const [sourceDataFlags, sourceDirFlags] = await Promise.all([
-    Promise.all(fromProjectIds.map((projectId) => hasProjectData(projectId))),
-    Promise.all(
-      fromProjectIds.map(async (projectId) => {
-        const dir = resolveProjectDir(projectId);
-        if (!dir) return false;
-        const stats = await fs.stat(dir).catch(() => null);
-        return Boolean(stats?.isDirectory());
-      })
-    ),
-  ]);
-  const sourceExists = sourceDataFlags.some(Boolean) || sourceDirFlags.some(Boolean);
-  if (!sourceExists) {
-    throw notFoundError('Project not found', { projectId: rawProjectId });
+  const toProjectId = sanitizeProjectId(parsed.data.projectId);
+  if (!toProjectId) {
+    throw badRequestError('Target project id is required.');
+  }
+
+  if (fromProjectIds.includes(toProjectId)) {
+    const project = await upsertProjectSummary(
+      toProjectId,
+      projectSummaryUpsertOptions
+    );
+    return NextResponse.json({
+      projectId: toProjectId,
+      project,
+      fromProjectId: rawProjectId,
+      renamed: false,
+      stats: {
+        movedDirectory: false,
+        createdDirectory: false,
+        updatedSlots: 0,
+        updatedSlotImageUrls: 0,
+        updatedRuns: 0,
+        updatedSlotLinks: 0,
+        updatedImageFiles: 0,
+      },
+    });
   }
 
   const targetDir = resolveProjectDir(toProjectId);
@@ -636,7 +698,10 @@ export async function patchImageStudioProjectHandler(
     fromProjectIds,
     toProjectId,
   });
-  const project = await upsertProjectSummary(toProjectId);
+  const project = await upsertProjectSummary(
+    toProjectId,
+    projectSummaryUpsertOptions
+  );
 
   return NextResponse.json({
     projectId: toProjectId,

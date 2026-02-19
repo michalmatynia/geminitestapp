@@ -40,7 +40,7 @@ describe('resolveDatabaseQuery guardrails', () => {
       throw new Error('Expected guardrail output.');
     }
 
-    expect(result.output.bundle).toEqual(
+    expect(result.output['bundle']).toEqual(
       expect.objectContaining({
         error: 'Custom query template is empty. Use {} explicitly for full collection scans.',
         guardrail: 'query-resolution',
@@ -78,7 +78,7 @@ describe('resolveDatabaseQuery guardrails', () => {
       throw new Error('Expected guardrail output.');
     }
 
-    expect(result.output.bundle).toEqual(
+    expect(result.output['bundle']).toEqual(
       expect.objectContaining({
         error: 'Query template must render to a valid JSON object.',
         guardrail: 'query-resolution',
@@ -111,7 +111,7 @@ describe('resolveDatabaseQuery guardrails', () => {
       throw new Error('Expected guardrail output.');
     }
 
-    expect(result.output.bundle).toEqual(
+    expect(result.output['bundle']).toEqual(
       expect.objectContaining({
         error: 'Query template is missing connected inputs: entityId.',
         guardrail: 'query-resolution',

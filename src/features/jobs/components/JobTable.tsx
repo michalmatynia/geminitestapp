@@ -192,7 +192,7 @@ export function JobTable({
                   size='icon'
                   className='h-8 w-8 text-yellow-500 hover:text-yellow-400'
                   onClick={() => handleCancel(job.id)}
-                  loading={isCancelling?.(job.id)}
+                  loading={isCancelling?.(job.id) ?? false}
                   aria-label='Cancel job'
                 >
                   <XCircle className='h-4 w-4' />
@@ -204,7 +204,7 @@ export function JobTable({
                   size='icon'
                   className='h-8 w-8 text-red-500 hover:text-red-400'
                   onClick={() => onDelete(job.id)}
-                  loading={isDeleting?.(job.id)}
+                  loading={isDeleting?.(job.id) ?? false}
                   aria-label='Delete job'
                 >
                   <Trash2 className='h-4 w-4' />

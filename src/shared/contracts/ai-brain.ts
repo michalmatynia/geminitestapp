@@ -48,7 +48,7 @@ export type AiBrainAssignmentDto = z.infer<typeof aiBrainAssignmentSchema>;
 
 export const aiBrainSettingsSchema = z.object({
   defaults: aiBrainAssignmentSchema,
-  assignments: z.record(aiBrainFeatureSchema, aiBrainAssignmentSchema.optional()).optional().default({} as any),
+  assignments: z.record(aiBrainFeatureSchema, aiBrainAssignmentSchema.optional()).optional().default({} as Record<AiBrainFeatureDto, AiBrainAssignmentDto>),
 });
 
 export type AiBrainSettingsDto = z.infer<typeof aiBrainSettingsSchema>;

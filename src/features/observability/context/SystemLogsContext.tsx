@@ -8,13 +8,17 @@ import { useClearLogsMutation, useRebuildIndexesMutation, useRunLogInsight, useI
 import { useSystemLogs, useSystemLogMetrics, useMongoDiagnostics, useLogInsights } from '@/features/observability/hooks/useLogQueries';
 import { readSystemLogUrlState, writeSystemLogUrlState } from '@/features/observability/lib/system-log-filter-url-state';
 import { logClientError } from '@/features/observability/utils/client-error-logger';
+import type { AiInsightRecordDto as AiInsightRecord } from '@/shared/contracts/ai-insights';
 import type { 
   MongoCollectionIndexStatusDto as MongoCollectionIndexStatus,
   SystemLogLevelDto as SystemLogLevel
 } from '@/shared/contracts/observability';
+import type { 
+  SystemLogRecordDto as SystemLogRecord,
+  SystemLogMetricsDto as SystemLogMetrics
+} from '@/shared/contracts/observability';
 import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import type { SystemLogMetrics, SystemLogRecord, AiInsightRecord } from '@/shared/types';
 import { useToast, type FilterField } from '@/shared/ui';
 
 const levelOptions: Array<{ value: SystemLogLevel | 'all'; label: string }> = [

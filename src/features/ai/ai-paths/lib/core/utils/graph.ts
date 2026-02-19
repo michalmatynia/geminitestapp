@@ -152,6 +152,7 @@ const PROCESSING_NODE_TYPES = new Set<string>([
   'database',
   'poll',
   'http',
+  'api_advanced',
 ]);
 
 export const inspectGraphIntegrity = (nodes: AiNode[], edges: Edge[]): GraphIntegrityReport => {

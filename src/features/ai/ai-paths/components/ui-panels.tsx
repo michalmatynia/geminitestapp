@@ -4,8 +4,21 @@ import { Lock, Edit, Copy, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import type { PathMeta } from '@/features/ai/ai-paths/lib';
-import { AI_PATHS_NODE_DOCS } from '@/features/ai/ai-paths/lib/core/docs/node-docs';
-import { Button, SearchInput, DataTable, DocumentationSection, CollapsibleSection, ActionMenu, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui';
+import {
+  AI_PATHS_NODE_DOCS,
+  buildAiPathsNodeDocJsonSnippet,
+} from '@/features/ai/ai-paths/lib/core/docs/node-docs';
+import {
+  ActionMenu,
+  Button,
+  CollapsibleSection,
+  DataTable,
+  DocumentationSection,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  SearchInput,
+  useToast,
+} from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useGraphState } from '../context';
@@ -182,6 +195,7 @@ export function PathsTabPanel({
 
 export function DocsTabPanel(): React.JSX.Element {
   const orchestrator = useAiPathsSettingsOrchestrator();
+  const { toast } = useToast();
   const resolvedDocsOverviewSnippet = orchestrator.docsOverviewSnippet;
   const resolvedDocsWiringSnippet = orchestrator.docsWiringSnippet;
   const resolvedDocsDescriptionSnippet = orchestrator.docsDescriptionSnippet;
@@ -233,6 +247,28 @@ export function DocsTabPanel(): React.JSX.Element {
       return haystack.includes(q);
     });
   }, [searchQuery]);
+
+  const nodeJsonSnippetByType = useMemo(
+    () =>
+      Object.fromEntries(
+        AI_PATHS_NODE_DOCS.map((doc) => [
+          doc.type,
+          buildAiPathsNodeDocJsonSnippet(doc),
+        ]),
+      ) as Record<string, string>,
+    [],
+  );
+
+  const handleCopyNodeSnippet = async (nodeType: string): Promise<void> => {
+    const snippet = nodeJsonSnippetByType[nodeType];
+    if (!snippet) return;
+    try {
+      await navigator.clipboard.writeText(snippet);
+      toast(`Copied ${nodeType} JSON snippet.`, { variant: 'success' });
+    } catch {
+      toast(`Failed to copy ${nodeType} JSON snippet.`, { variant: 'error' });
+    }
+  };
 
   const showHowItWorks = shouldShow(['How AI Paths Works', overviewLines]);
   const showSystemOverview = shouldShow([
@@ -708,6 +744,26 @@ export function DocsTabPanel(): React.JSX.Element {
                       ]}
                       data={doc.config}
                     />
+                  </div>
+
+                  <div className='mt-4 rounded-md border border-border/60 bg-card/30 p-3'>
+                    <div className='flex flex-wrap items-center justify-between gap-2'>
+                      <div className='text-xs font-semibold uppercase tracking-wide text-gray-300'>
+                        Code Snippet (JSON)
+                      </div>
+                      <Button
+                        type='button'
+                        className='rounded-md border text-[11px] text-white hover:bg-muted/60'
+                        onClick={() => {
+                          void handleCopyNodeSnippet(doc.type);
+                        }}
+                      >
+                        Copy JSON
+                      </Button>
+                    </div>
+                    <pre className='mt-3 overflow-x-auto rounded border border-border/60 bg-black/20 p-3 text-[11px] text-gray-200'>
+                      {nodeJsonSnippetByType[doc.type]}
+                    </pre>
                   </div>
 
                   {doc.notes?.length ? (

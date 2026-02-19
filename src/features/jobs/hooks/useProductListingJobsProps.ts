@@ -52,8 +52,8 @@ export function useProductListingJobsProps() {
   }), [listingRows, query]);
 
   const sortedRows: ListingRow[] = useMemo<ListingRow[]>(() => [...filteredRows].sort((a: ListingRow, b: ListingRow) => {
-    const aTime: number = new Date(a.listing.updatedAt ?? a.listing.createdAt).getTime();
-    const bTime: number = new Date(b.listing.updatedAt ?? b.listing.createdAt).getTime();
+    const aTime: number = new Date(a.listing.updatedAt ?? a.listing.createdAt ?? 0).getTime();
+    const bTime: number = new Date(b.listing.updatedAt ?? b.listing.createdAt ?? 0).getTime();
     return bTime - aTime;
   }), [filteredRows]);
 
@@ -77,7 +77,7 @@ export function useProductListingJobsProps() {
       entityName: job.productName,
       entitySubText: `SKU: ${job.productSku || 'N/A'} · Listing`,
       productId: job.productId,
-      createdAt: listing.createdAt,
+      createdAt: listing.createdAt || new Date().toISOString(),
       finishedAt: listing.updatedAt,
     };
   }), [pagedRows]);

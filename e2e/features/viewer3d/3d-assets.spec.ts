@@ -34,7 +34,7 @@ test.describe('3D Assets', () => {
     // If no assets, it shows "No 3D assets yet"
     const emptyState = page.getByText('No 3D assets yet');
     if (await emptyState.isVisible()) {
-        await expect(emptyState).toBeVisible();
+      await expect(emptyState).toBeVisible();
     }
   });
 

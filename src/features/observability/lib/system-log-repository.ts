@@ -4,7 +4,7 @@ import 'server-only';
 import { randomUUID } from 'crypto';
 
 import { Prisma, type SystemLog } from '@prisma/client';
-import { ObjectId, type Filter, type UpdateFilter, type Document, type OptionalId } from 'mongodb';
+import { ObjectId, type Filter, type OptionalId } from 'mongodb';
 
 import type {
   SystemLogLevelDto as SystemLogLevel,
@@ -63,7 +63,7 @@ const normalizeLogRecord = (record: SystemLogRecord): SystemLogRecord => ({
       ? (record.createdAt as unknown as Date).toISOString()
       : typeof record.createdAt === 'string'
         ? record.createdAt
-        : new Date(record.createdAt).toISOString(),
+        : new Date(record.createdAt || Date.now()).toISOString(),
 });
 
 const toSystemLogRecord = (doc: MongoSystemLogDoc): SystemLogRecord => ({
@@ -365,7 +365,7 @@ export async function createSystemLog(
       .insertOne({
         _id: toMongoId(payload.id),
         ...payload,
-        createdAt: new Date(payload.createdAt),
+        createdAt: new Date(payload.createdAt || Date.now()),
         updatedAt: payload.updatedAt ? new Date(payload.updatedAt) : null,
       } as OptionalId<MongoSystemLogDoc>);
     return normalizeLogRecord(payload);
@@ -403,7 +403,7 @@ export async function createSystemLog(
         ...(payload.userId !== null && payload.userId !== undefined
           ? { userId: payload.userId }
           : {}),
-        createdAt: payload.createdAt,
+        createdAt: payload.createdAt || new Date().toISOString(),
       },
     });
     
@@ -421,7 +421,7 @@ export async function createSystemLog(
         .insertOne({
           _id: toMongoId(payload.id),
           ...payload,
-          createdAt: new Date(payload.createdAt),
+          createdAt: new Date(payload.createdAt || Date.now()),
           updatedAt: payload.updatedAt ? new Date(payload.updatedAt) : null,
         } as OptionalId<MongoSystemLogDoc>);
       return normalizeLogRecord(payload);

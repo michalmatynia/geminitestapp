@@ -47,6 +47,8 @@ describe('prompt exploder bridge parties', () => {
       {
         fileId: 'file-1',
         fileName: 'Notice',
+        sessionId: 'session-1',
+        documentVersionAtStart: 12,
       },
       {
         addresser: {
@@ -91,6 +93,8 @@ describe('prompt exploder bridge parties', () => {
     expect(payload?.caseResolverContext).toEqual({
       fileId: 'file-1',
       fileName: 'Notice',
+      sessionId: 'session-1',
+      documentVersionAtStart: 12,
     });
     expect(payload?.caseResolverParties?.addresser?.displayName).toBe('Michał Matynia');
     expect(payload?.caseResolverParties?.addresser?.kind).toBe('person');
@@ -161,5 +165,56 @@ describe('prompt exploder bridge parties', () => {
 
     const payload = consumePromptExploderApplyPromptForCaseResolver();
     expect(payload?.createdAt).toBe('1970-01-01T00:00:00.000Z');
+  });
+
+  it('keeps case resolver context when fileName is missing', () => {
+    window.localStorage.setItem(
+      PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
+      JSON.stringify({
+        prompt: 'Context without file name',
+        source: 'prompt-exploder',
+        target: 'case-resolver',
+        caseResolverContext: {
+          fileId: 'file-ctx-1',
+          sessionId: 'ctx-session',
+          documentVersionAtStart: 5,
+        },
+        createdAt: '2026-02-19T00:00:00.000Z',
+      })
+    );
+
+    const payload = consumePromptExploderApplyPromptForCaseResolver();
+    expect(payload?.caseResolverContext).toEqual({
+      fileId: 'file-ctx-1',
+      fileName: 'file-ctx-1',
+      sessionId: 'ctx-session',
+      documentVersionAtStart: 5,
+    });
+  });
+
+  it('sanitizes malformed case resolver context metadata', () => {
+    window.localStorage.setItem(
+      PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
+      JSON.stringify({
+        prompt: 'Context sanitization',
+        source: 'prompt-exploder',
+        target: 'case-resolver',
+        caseResolverContext: {
+          fileId: ' file-ctx-2 ',
+          fileName: '  ',
+          sessionId: '   ',
+          documentVersionAtStart: -3,
+        },
+        createdAt: '2026-02-19T00:00:00.000Z',
+      })
+    );
+
+    const payload = consumePromptExploderApplyPromptForCaseResolver();
+    expect(payload?.caseResolverContext).toEqual({
+      fileId: 'file-ctx-2',
+      fileName: 'file-ctx-2',
+      sessionId: undefined,
+      documentVersionAtStart: undefined,
+    });
   });
 });

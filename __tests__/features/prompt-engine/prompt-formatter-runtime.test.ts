@@ -35,7 +35,7 @@ const buildRule = (overrides: Partial<PromptValidationRule> = {}): PromptValidat
   },
   appliesToScopes: ['prompt_exploder'],
   ...overrides,
-});
+} as PromptValidationRule);
 
 const buildSettings = (rules: PromptValidationRule[]): PromptValidationSettings => ({
   enabled: true,

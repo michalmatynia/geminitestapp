@@ -53,6 +53,23 @@ export const imageStudioCropRectSchema = z.object({
 export type ImageStudioCropRectDto = z.infer<typeof imageStudioCropRectSchema>;
 export type ImageStudioCropRect = ImageStudioCropRectDto;
 
+export const imageStudioCropCanvasFrameSchema = z.object({
+  x: z.number().finite(),
+  y: z.number().finite(),
+  width: z.number().finite().positive(),
+  height: z.number().finite().positive(),
+});
+export type ImageStudioCropCanvasFrameDto = z.infer<typeof imageStudioCropCanvasFrameSchema>;
+export type ImageStudioCropCanvasFrame = ImageStudioCropCanvasFrameDto;
+
+export const imageStudioCropCanvasContextSchema = z.object({
+  canvasWidth: z.number().int().min(1).max(32_768),
+  canvasHeight: z.number().int().min(1).max(32_768),
+  imageFrame: imageStudioCropCanvasFrameSchema,
+});
+export type ImageStudioCropCanvasContextDto = z.infer<typeof imageStudioCropCanvasContextSchema>;
+export type ImageStudioCropCanvasContext = ImageStudioCropCanvasContextDto;
+
 export const imageStudioCropDiagnosticsSchema = z.object({
   rawCanvasBounds: imageStudioCropRectSchema.nullable().optional(),
   mappedImageBounds: imageStudioCropRectSchema.nullable().optional(),
@@ -72,6 +89,7 @@ export const imageStudioCropRequestSchema = z
     mode: imageStudioCropModeSchema,
     cropRect: imageStudioCropRectSchema.optional(),
     polygon: z.array(imageStudioCropPointSchema).min(3).optional(),
+    canvasContext: imageStudioCropCanvasContextSchema.optional(),
     dataUrl: z.string().trim().min(1).optional(),
     name: z.string().trim().min(1).max(180).optional(),
     requestId: z.string().trim().min(8).max(160).optional(),

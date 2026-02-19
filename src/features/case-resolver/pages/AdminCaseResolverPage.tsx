@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import React, { useCallback } from 'react';
+import { flushSync } from 'react-dom';
 
 import {
   stableStringify,
@@ -40,6 +41,7 @@ import { useCaseResolverState } from '../hooks/useCaseResolverState';
 import {
   applyCaseResolverFileMutationAndRebaseDraft,
   hasCaseResolverDraftMeaningfulChanges,
+  resolveCaptureTargetFile,
 } from '../hooks/useCaseResolverState.helpers';
 import {
   createCaseResolverAssetFile,
@@ -56,6 +58,7 @@ import {
   isPathWithinFolder,
 } from '../utils/caseResolverUtils';
 import {
+  getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
 } from '../workspace-persistence';
 
@@ -77,8 +80,19 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const { toast } = useToast();
   const updateSetting = useUpdateSetting();
   const [workspaceView, setWorkspaceView] = React.useState<'document' | 'relations'>('document');
+  const [captureApplyDiagnostics, setCaptureApplyDiagnostics] = React.useState<{
+    status: 'idle' | 'success' | 'failed';
+    stage: 'precheck' | 'mutation' | 'rebase' | null;
+    message: string;
+    targetFileId: string | null;
+    resolvedTargetFileId: string | null;
+    workspaceRevision: number;
+    at: string;
+  } | null>(null);
+  const captureApplyInFlightRef = React.useRef(false);
   const {
     workspace,
+    workspaceRef,
     selectedFileId,
     selectedAssetId,
     setSelectedFileId,
@@ -189,6 +203,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       nodeId: string;
       sourceFileId: string | null;
       sourceFileName: string | null;
+      sourceFileType: 'document' | 'scanfile' | null;
       sourceFolder: string | null;
       activeCanvasFileId: string;
     }): string => {
@@ -204,19 +219,32 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       )
         .filter((nodeId: string): boolean => nodeId !== input.nodeId)
         .sort((left, right) => left.localeCompare(right));
+      const nodeFileMeta = (() => {
+        if (!input.sourceFileId || !input.nodeId) return {};
+        return {
+          [input.nodeId]: {
+            fileId: input.sourceFileId,
+            fileType: input.sourceFileType === 'scanfile' ? 'scanfile' : 'document',
+            fileName: input.sourceFileName ?? 'Linked document',
+          },
+        };
+      })();
 
       return JSON.stringify(
         {
           kind: 'case_resolver_node_file_snapshot_v1',
+          source: 'manual',
           activeCanvasFileId: input.activeCanvasFileId,
           sourceFileId: input.sourceFileId,
           sourceFileName: input.sourceFileName,
+          sourceFileType: input.sourceFileType,
           sourceFolder: input.sourceFolder,
           nodeId: input.nodeId,
-          node: targetNode,
           nodeMeta: input.graph.nodeMeta?.[input.nodeId] ?? null,
-          connectedEdges,
           relatedNodeIds,
+          nodes: targetNode ? [targetNode] : [],
+          edges: connectedEdges,
+          nodeFileMeta,
         },
         null,
         2
@@ -337,8 +365,10 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   React.useEffect(() => {
     if (!isPromptExploderPartyProposalOpen || !promptExploderPartyProposal) {
       setPromptExploderProposalDraft(null);
+      setCaptureApplyDiagnostics(null);
       return;
     }
+    setCaptureApplyDiagnostics(null);
     setPromptExploderProposalDraft({
       targetFileId: promptExploderPartyProposal.targetFileId,
       addresser: promptExploderPartyProposal.addresser
@@ -429,20 +459,44 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       setIsPromptExploderPartyProposalOpen(false);
       return;
     }
+    if (captureApplyInFlightRef.current) return;
+    captureApplyInFlightRef.current = true;
 
     void (async (): Promise<void> => {
       setIsApplyingPromptExploderPartyProposal(true);
       try {
         const requestedTargetFileId = promptExploderProposalDraft.targetFileId;
-        const normalizedRequestedTargetFileId = requestedTargetFileId.trim();
-        const resolvedTargetFile =
-          workspace.files.find((file) => file.id === requestedTargetFileId) ??
-          workspace.files.find((file) => file.id.trim() === normalizedRequestedTargetFileId) ??
-          (editingDocumentDraft
-            ? workspace.files.find((file) => file.id === editingDocumentDraft.id) ?? null
-            : null);
+        const workspaceSnapshot = workspaceRef.current;
+        const targetResolution = resolveCaptureTargetFile({
+          workspaceFiles: workspaceSnapshot.files,
+          proposalTargetFileId: requestedTargetFileId,
+          contextFileId: promptExploderPartyProposal?.targetFileId ?? null,
+          editingDraftFileId: editingDocumentDraft?.id ?? null,
+        });
+        const resolvedTargetFile = targetResolution.file;
         if (!resolvedTargetFile) {
-          toast('Target file for capture mapping is no longer available.', {
+          const precheckRevision = getCaseResolverWorkspaceRevision(workspaceSnapshot);
+          setCaptureApplyDiagnostics({
+            status: 'failed',
+            stage: 'precheck',
+            message: 'Capture target is missing before mutation.',
+            targetFileId: requestedTargetFileId,
+            resolvedTargetFileId: null,
+            workspaceRevision: precheckRevision,
+            at: new Date().toISOString(),
+          });
+          logCaseResolverWorkspaceEvent({
+            source: 'capture_mapping_apply',
+            action: 'capture_target_missing_precheck',
+            message: JSON.stringify({
+              requestedTargetFileId,
+              proposalTargetFileId: promptExploderProposalDraft.targetFileId,
+              editingDraftFileId: editingDocumentDraft?.id ?? null,
+              activeFileId: workspaceSnapshot.activeFileId ?? null,
+              workspaceRevision: precheckRevision,
+            }),
+          });
+          toast('Capture mapping failed: target file missing (precheck).', {
             variant: 'warning',
           });
           return;
@@ -676,68 +730,121 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
         if (shouldPersistPatch) {
           const now = new Date().toISOString();
-          const mutationResult = applyCaseResolverFileMutationAndRebaseDraft({
-            fileId: targetFileId,
-            updateWorkspace,
-            setEditingDocumentDraft,
-            source: 'capture_mapping_apply',
-            persistToast: 'Capture mapping applied.',
-            skipNormalization: true,
-            mutate: (file) => {
-              const fileShouldPatchDocumentDate =
-                acceptedDateValue !== null && file.documentDate !== acceptedDateValue;
-              const fileShouldPersistPatch =
-                shouldPatchAddresser ||
-                shouldPatchAddressee ||
-                fileShouldPatchDocumentDate ||
-                hasExplodedCleanup;
-              if (!fileShouldPersistPatch) return null;
-              const nextContentVersion = file.documentContentVersion + 1;
-              const nextDocumentHistory = hasExplodedCleanup
-                ? [
-                  {
-                    id: createId('case-doc-history'),
-                    savedAt: now,
-                    documentContentVersion: file.documentContentVersion,
-                    activeDocumentVersion: file.activeDocumentVersion,
-                    editorType: file.editorType,
-                    documentContent: file.documentContent,
-                    documentContentMarkdown: file.documentContentMarkdown,
-                    documentContentHtml: file.documentContentHtml,
-                    documentContentPlainText: file.documentContentPlainText,
-                  },
-                  ...file.documentHistory,
-                ].slice(0, 120)
-                : file.documentHistory;
-              return {
-                ...(shouldPatchAddresser ? { addresser: rolePatches.addresser ?? null } : {}),
-                ...(shouldPatchAddressee ? { addressee: rolePatches.addressee ?? null } : {}),
-                ...(fileShouldPatchDocumentDate ? { documentDate: acceptedDateValue ?? '' } : {}),
-                ...(hasExplodedCleanup && cleanedExplodedCanonical && cleanedExplodedStored
-                  ? {
-                    explodedDocumentContent: cleanedExplodedStored,
-                    ...(file.activeDocumentVersion === 'exploded'
-                      ? {
-                        editorType: cleanedExplodedCanonical.mode,
-                        documentContentFormatVersion: 1,
-                        documentContent: cleanedExplodedStored,
-                        documentContentMarkdown: cleanedExplodedCanonical.markdown,
-                        documentContentHtml: cleanedExplodedCanonical.html,
-                        documentContentPlainText: cleanedExplodedCanonical.plainText,
-                        documentConversionWarnings: cleanedExplodedCanonical.warnings,
-                        lastContentConversionAt: now,
-                      }
-                      : {}),
-                    documentHistory: nextDocumentHistory,
-                  }
-                  : {}),
-                documentContentVersion: nextContentVersion,
-                updatedAt: now,
-              };
-            },
+          let mutationResult!: ReturnType<typeof applyCaseResolverFileMutationAndRebaseDraft>;
+          flushSync(() => {
+            mutationResult = applyCaseResolverFileMutationAndRebaseDraft({
+              fileId: targetFileId,
+              updateWorkspace,
+              setEditingDocumentDraft,
+              fallbackFileOnMissing: null,
+              allowFallbackOnMissing: false,
+              precheckWorkspaceFiles: workspaceRef.current.files,
+              source: 'capture_mapping_apply',
+              persistToast: 'Capture mapping applied.',
+              skipNormalization: true,
+              mutate: (file) => {
+                const fileShouldPatchDocumentDate =
+                  acceptedDateValue !== null && file.documentDate !== acceptedDateValue;
+                const fileShouldPersistPatch =
+                  shouldPatchAddresser ||
+                  shouldPatchAddressee ||
+                  fileShouldPatchDocumentDate ||
+                  hasExplodedCleanup;
+                if (!fileShouldPersistPatch) return null;
+                const nextContentVersion = file.documentContentVersion + 1;
+                const nextDocumentHistory = hasExplodedCleanup
+                  ? [
+                    {
+                      id: createId('case-doc-history'),
+                      savedAt: now,
+                      documentContentVersion: file.documentContentVersion,
+                      activeDocumentVersion: file.activeDocumentVersion,
+                      editorType: file.editorType,
+                      documentContent: file.documentContent,
+                      documentContentMarkdown: file.documentContentMarkdown,
+                      documentContentHtml: file.documentContentHtml,
+                      documentContentPlainText: file.documentContentPlainText,
+                    },
+                    ...file.documentHistory,
+                  ].slice(0, 120)
+                  : file.documentHistory;
+                return {
+                  ...(shouldPatchAddresser ? { addresser: rolePatches.addresser ?? null } : {}),
+                  ...(shouldPatchAddressee ? { addressee: rolePatches.addressee ?? null } : {}),
+                  ...(fileShouldPatchDocumentDate ? { documentDate: acceptedDateValue ?? '' } : {}),
+                  ...(hasExplodedCleanup && cleanedExplodedCanonical && cleanedExplodedStored
+                    ? {
+                      explodedDocumentContent: cleanedExplodedStored,
+                      ...(file.activeDocumentVersion === 'exploded'
+                        ? {
+                          editorType: cleanedExplodedCanonical.mode,
+                          documentContentFormatVersion: 1,
+                          documentContent: cleanedExplodedStored,
+                          documentContentMarkdown: cleanedExplodedCanonical.markdown,
+                          documentContentHtml: cleanedExplodedCanonical.html,
+                          documentContentPlainText: cleanedExplodedCanonical.plainText,
+                          documentConversionWarnings: cleanedExplodedCanonical.warnings,
+                          lastContentConversionAt: now,
+                        }
+                        : {}),
+                      documentHistory: nextDocumentHistory,
+                    }
+                    : {}),
+                  documentContentVersion: nextContentVersion,
+                  updatedAt: now,
+                };
+              },
+            });
           });
+          if (!mutationResult.ok) {
+            const failureStage = mutationResult.stage ?? 'mutation';
+            const workspaceRevision = getCaseResolverWorkspaceRevision(workspaceRef.current);
+            const failureMessage =
+              failureStage === 'precheck'
+                ? 'Capture target missing during precheck.'
+                : 'Capture target missing during workspace mutation.';
+            setCaptureApplyDiagnostics({
+              status: 'failed',
+              stage: failureStage,
+              message: failureMessage,
+              targetFileId,
+              resolvedTargetFileId: mutationResult.resolvedTargetFileId,
+              workspaceRevision,
+              at: new Date().toISOString(),
+            });
+            logCaseResolverWorkspaceEvent({
+              source: 'capture_mapping_apply',
+              action: failureStage === 'precheck'
+                ? 'capture_target_missing_precheck'
+                : 'capture_target_missing_mutation',
+              message: JSON.stringify({
+                targetFileId,
+                proposalTargetFileId: promptExploderProposalDraft.targetFileId,
+                mutationResult,
+                workspaceRevision,
+              }),
+            });
+            toast(
+              failureStage === 'precheck'
+                ? 'Capture mapping failed: target file missing (precheck).'
+                : 'Capture mapping failed: target file missing during apply.',
+              {
+                variant: 'warning',
+              }
+            );
+            return;
+          }
           if (!mutationResult.fileFound) {
-            toast('Target file for capture mapping is no longer available.', {
+            setCaptureApplyDiagnostics({
+              status: 'failed',
+              stage: 'rebase',
+              message: 'Capture target missing during draft rebase.',
+              targetFileId,
+              resolvedTargetFileId: mutationResult.resolvedTargetFileId,
+              workspaceRevision: getCaseResolverWorkspaceRevision(workspaceRef.current),
+              at: new Date().toISOString(),
+            });
+            toast('Capture mapping failed: target file missing during draft rebase.', {
               variant: 'warning',
             });
             return;
@@ -746,6 +853,15 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
         setPromptExploderPartyProposal(nextProposalState);
         setPromptExploderProposalDraft(nextProposalState);
+        setCaptureApplyDiagnostics({
+          status: 'success',
+          stage: null,
+          message: 'Capture mapping applied successfully.',
+          targetFileId,
+          resolvedTargetFileId: targetFileId,
+          workspaceRevision: getCaseResolverWorkspaceRevision(workspaceRef.current),
+          at: new Date().toISOString(),
+        });
 
         if (failedRoles.length > 0) {
           toast(
@@ -775,12 +891,16 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         });
       } finally {
         setIsApplyingPromptExploderPartyProposal(false);
+        captureApplyInFlightRef.current = false;
       }
     })();
   }, [
+    captureApplyInFlightRef,
     editingDocumentDraft,
     filemakerDatabase,
+    promptExploderPartyProposal,
     promptExploderProposalDraft,
+    setCaptureApplyDiagnostics,
     setEditingDocumentDraft,
     setIsApplyingPromptExploderPartyProposal,
     setIsPromptExploderPartyProposalOpen,
@@ -788,8 +908,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     setPromptExploderPartyProposal,
     toast,
     updateSetting,
-    workspace.files,
     updateWorkspace,
+    workspaceRef,
   ]);
 
   const resolvePromptExploderMatchedPartyLabel = useCallback(
@@ -906,12 +1026,28 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const handleOpenPromptExploderForDraft = useCallback((): void => {
     if (!editingDocumentDraft) return;
-    const promptSource = (
-      editingDocumentDraft.documentContentPlainText ||
-      editingDocumentDraft.documentContent ||
-      editingDocumentDraft.documentContentMarkdown ||
-      ''
-    ).trim();
+    const promptExploderSessionId = createId('case-prompt-session');
+    const promptSource = (() => {
+      const sourceHtml = (
+        typeof editingDocumentDraft.documentContentHtml === 'string' &&
+        editingDocumentDraft.documentContentHtml.trim().length > 0
+      )
+        ? editingDocumentDraft.documentContentHtml
+        : ensureSafeDocumentHtml(editingDocumentDraft.documentContent ?? '');
+      const canonical = deriveDocumentContentSync({
+        mode: 'wysiwyg',
+        value: sourceHtml,
+        previousMarkdown: editingDocumentDraft.documentContentMarkdown ?? '',
+        previousHtml: editingDocumentDraft.documentContentHtml ?? '',
+      });
+      return (
+        canonical.plainText ||
+        editingDocumentDraft.documentContentPlainText ||
+        editingDocumentDraft.documentContent ||
+        editingDocumentDraft.documentContentMarkdown ||
+        ''
+      ).trim();
+    })();
     if (!promptSource) {
       toast('Add document content before opening Prompt Exploder.', { variant: 'warning' });
       return;
@@ -920,11 +1056,15 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     savePromptExploderDraftPromptFromCaseResolver(promptSource, {
       fileId: editingDocumentDraft.id,
       fileName: editingDocumentDraft.name?.trim() || editingDocumentDraft.id,
+      sessionId: promptExploderSessionId,
+      documentVersionAtStart: editingDocumentDraft.documentContentVersion,
     });
     const returnTo = `/admin/case-resolver?openEditor=1&fileId=${encodeURIComponent(
       editingDocumentDraft.id
     )}`;
-    router.push(`/admin/prompt-exploder?returnTo=${encodeURIComponent(returnTo)}`);
+    router.push(
+      `/admin/prompt-exploder?returnTo=${encodeURIComponent(returnTo)}&sessionId=${encodeURIComponent(promptExploderSessionId)}`
+    );
   }, [editingDocumentDraft, router, toast]);
 
   const handleCopyDraftFileId = useCallback(async (): Promise<void> => {
@@ -1647,6 +1787,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             nodeId,
             sourceFileId,
             sourceFileName: sourceFile?.name ?? null,
+            sourceFileType: sourceFile?.fileType === 'scanfile' ? 'scanfile' : 'document',
             sourceFolder: sourceFile?.folder ?? null,
             activeCanvasFileId: activeFile.id,
           });
@@ -1674,6 +1815,56 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           createNodeFileAssetForNode(nodeId, normalizedSourceFileId);
         });
 
+        const nextNodeIdsByAssetId = new Map<string, Set<string>>();
+        Object.entries(nextNodeFileMap).forEach(([nodeId, assetId]: [string, string]): void => {
+          const normalizedNodeId = typeof nodeId === 'string' ? nodeId.trim() : '';
+          const normalizedAssetId = typeof assetId === 'string' ? assetId.trim() : '';
+          if (!normalizedNodeId || !normalizedAssetId) return;
+          const nextNodeIdsForAsset = nextNodeIdsByAssetId.get(normalizedAssetId) ?? new Set<string>();
+          nextNodeIdsForAsset.add(normalizedNodeId);
+          nextNodeIdsByAssetId.set(normalizedAssetId, nextNodeIdsForAsset);
+        });
+
+        Object.entries(existingNodeFileMap).forEach(([nodeId, assetId]: [string, string]): void => {
+          const normalizedNodeId = typeof nodeId === 'string' ? nodeId.trim() : '';
+          const normalizedAssetId = typeof assetId === 'string' ? assetId.trim() : '';
+          if (!normalizedNodeId || !normalizedAssetId) return;
+          if (nextNodeIds.has(normalizedNodeId)) return;
+          const stillReferenced = nextNodeIdsByAssetId.get(normalizedAssetId);
+          if (stillReferenced && stillReferenced.size > 0) return;
+          const assetIndex = nextAssets.findIndex(
+            (asset: CaseResolverAssetFile): boolean =>
+              asset.id === normalizedAssetId && asset.kind === 'node_file'
+          );
+          if (assetIndex < 0) return;
+          const currentAsset = nextAssets[assetIndex];
+          if (!currentAsset) return;
+          const clearedSnapshot = buildNodeFileSnapshotText({
+            graph: nextGraph,
+            nodeId: normalizedNodeId,
+            sourceFileId: null,
+            sourceFileName: null,
+            sourceFileType: null,
+            sourceFolder: null,
+            activeCanvasFileId: activeFile.id,
+          });
+          if (currentAsset.textContent === clearedSnapshot && currentAsset.sourceFileId === null) {
+            return;
+          }
+          const clearedAsset: CaseResolverAssetFile = {
+            ...currentAsset,
+            sourceFileId: null,
+            textContent: clearedSnapshot,
+            updatedAt: now,
+          };
+          nextAssets = [
+            ...nextAssets.slice(0, assetIndex),
+            clearedAsset,
+            ...nextAssets.slice(assetIndex + 1),
+          ];
+          assetsChanged = true;
+        });
+
         Object.entries({ ...nextNodeFileMap }).forEach(([nodeId, assetId]: [string, string]): void => {
           if (!nextNodeIds.has(nodeId)) {
             delete nextNodeFileMap[nodeId];
@@ -1697,25 +1888,28 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             typeof nextSourceFileIdByNode[nodeId] === 'string' &&
             nextSourceFileIdByNode[nodeId].trim().length > 0
               ? nextSourceFileIdByNode[nodeId].trim()
-              : currentAsset.sourceFileId;
+              : null;
           const sourceFile = mappedSourceFileId
             ? filesById.get(mappedSourceFileId) ?? null
             : null;
           const snapshot = buildNodeFileSnapshotText({
             graph: nextGraph,
             nodeId,
-            sourceFileId: mappedSourceFileId ?? null,
+            sourceFileId: mappedSourceFileId,
             sourceFileName: sourceFile?.name ?? null,
+            sourceFileType: mappedSourceFileId
+              ? (sourceFile?.fileType === 'scanfile' ? 'scanfile' : 'document')
+              : null,
             sourceFolder: sourceFile?.folder ?? null,
             activeCanvasFileId: activeFile.id,
           });
           const shouldUpdateAsset =
             currentAsset.textContent !== snapshot ||
-            (mappedSourceFileId ?? null) !== currentAsset.sourceFileId;
+            mappedSourceFileId !== currentAsset.sourceFileId;
           if (!shouldUpdateAsset) return;
           const updatedAsset: CaseResolverAssetFile = {
             ...currentAsset,
-            sourceFileId: mappedSourceFileId ?? null,
+            sourceFileId: mappedSourceFileId,
             textContent: snapshot,
             updatedAt: now,
           };
@@ -1845,6 +2039,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         updatePromptExploderProposalReference={updatePromptExploderProposalReference}
         updatePromptExploderProposalDateAction={updatePromptExploderProposalDateAction}
         resolvePromptExploderMatchedPartyLabel={resolvePromptExploderMatchedPartyLabel}
+        captureApplyDiagnostics={captureApplyDiagnostics}
       />
     </>
   );

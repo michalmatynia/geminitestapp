@@ -35,6 +35,7 @@ import {
   resolveClientProcessingImageSrc,
   shapeHasUsableCropGeometry,
   withCenterRetry,
+  type CropCanvasContext,
   type CropRectResolutionDiagnostics,
   type CropRect,
   type ImageContentFrame,
@@ -263,10 +264,7 @@ export function GenerationToolbar(): React.JSX.Element {
     return frameBinding.frame;
   };
 
-  const resolveCropRect = async (): Promise<{
-    cropRect: CropRect;
-    diagnostics: CropRectResolutionDiagnostics | null;
-  }> => {
+  const resolveWorkingSourceDimensions = async (): Promise<{ width: number; height: number }> => {
     let sourceWidth = workingSlot?.imageFile?.width ?? 0;
     let sourceHeight = workingSlot?.imageFile?.height ?? 0;
     if (!(sourceWidth > 0 && sourceHeight > 0)) {
@@ -278,12 +276,42 @@ export function GenerationToolbar(): React.JSX.Element {
     if (!(sourceWidth > 0 && sourceHeight > 0)) {
       throw new Error('Source image dimensions are invalid.');
     }
+    return {
+      width: sourceWidth,
+      height: sourceHeight,
+    };
+  };
 
+  const resolveWorkingCropCanvasContext = async (): Promise<CropCanvasContext | null> => {
+    const imageContentFrame = resolveWorkingSlotImageContentFrame();
+    if (!imageContentFrame) return null;
+
+    const sourceDimensions = await resolveWorkingSourceDimensions();
+    const canvasWidth = projectCanvasSize?.width ?? sourceDimensions.width;
+    const canvasHeight = projectCanvasSize?.height ?? sourceDimensions.height;
+    if (!(canvasWidth > 0 && canvasHeight > 0)) return null;
+
+    return {
+      canvasWidth,
+      canvasHeight,
+      imageFrame: imageContentFrame,
+    };
+  };
+
+  const resolveCropRect = async (): Promise<{
+    cropRect: CropRect;
+    diagnostics: CropRectResolutionDiagnostics | null;
+  }> => {
+    const sourceDimensions = await resolveWorkingSourceDimensions();
+    const canvasWidth = projectCanvasSize?.width ?? sourceDimensions.width;
+    const canvasHeight = projectCanvasSize?.height ?? sourceDimensions.height;
     const imageContentFrame = resolveWorkingSlotImageContentFrame();
     const resolved = resolveCropRectFromShapesWithDiagnostics(
       exportMaskShapes,
-      sourceWidth,
-      sourceHeight,
+      canvasWidth,
+      canvasHeight,
+      sourceDimensions.width,
+      sourceDimensions.height,
       activeMaskId,
       imageContentFrame
     );
@@ -295,24 +323,11 @@ export function GenerationToolbar(): React.JSX.Element {
       };
     }
 
-    if (resolved.diagnostics?.usedImageContentFrameMapping) {
-      throw new Error('Selected shape is outside the loaded image area. Move or redraw it over the image, then crop.');
-    }
     throw new Error('Set a valid crop boundary first (polygon/lasso/brush, rectangle, or ellipse).');
   };
 
   const resolveCenteredSquareCropRect = async (): Promise<CropRect> => {
-    let sourceWidth = workingSlot?.imageFile?.width ?? 0;
-    let sourceHeight = workingSlot?.imageFile?.height ?? 0;
-    if (!(sourceWidth > 0 && sourceHeight > 0)) {
-      const sourceForDimensions = clientProcessingImageSrc || workingSlotImageSrc || '';
-      const image = await loadImageElement(sourceForDimensions);
-      sourceWidth = image.naturalWidth || image.width;
-      sourceHeight = image.naturalHeight || image.height;
-    }
-    if (!(sourceWidth > 0 && sourceHeight > 0)) {
-      throw new Error('Source image dimensions are invalid.');
-    }
+    const { width: sourceWidth, height: sourceHeight } = await resolveWorkingSourceDimensions();
 
     const side = Math.max(1, Math.min(sourceWidth, sourceHeight));
     const x = Math.max(0, Math.floor((sourceWidth - side) / 2));
@@ -445,21 +460,7 @@ export function GenerationToolbar(): React.JSX.Element {
   };
 
   const resolveUpscaleSourceDimensions = async (): Promise<{ width: number; height: number }> => {
-    let sourceWidth = workingSlot?.imageFile?.width ?? 0;
-    let sourceHeight = workingSlot?.imageFile?.height ?? 0;
-    if (!(sourceWidth > 0 && sourceHeight > 0)) {
-      const sourceForDimensions = clientProcessingImageSrc || workingSlotImageSrc || '';
-      const image = await loadImageElement(sourceForDimensions);
-      sourceWidth = image.naturalWidth || image.width;
-      sourceHeight = image.naturalHeight || image.height;
-    }
-    if (!(sourceWidth > 0 && sourceHeight > 0)) {
-      throw new Error('Source image dimensions are invalid.');
-    }
-    return {
-      width: sourceWidth,
-      height: sourceHeight,
-    };
+    return resolveWorkingSourceDimensions();
   };
 
   const { handleUpscale, handleCrop } = createGenerationToolbarActionHandlers({
@@ -474,6 +475,7 @@ export function GenerationToolbar(): React.JSX.Element {
     projectId,
     queryClient,
     resolveCropRect,
+    resolveCropCanvasContext: resolveWorkingCropCanvasContext,
     resolveUpscaleSourceDimensions,
     setCropBusy,
     setCropStatus,
@@ -520,7 +522,7 @@ export function GenerationToolbar(): React.JSX.Element {
     try {
       const squareCropRect = await resolveCenteredSquareCropRect();
       cropDiagnosticsRef.current = null;
-      await handleCrop(squareCropRect);
+      await handleCrop(squareCropRect, { includeCanvasContext: false });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to prepare square crop.', { variant: 'error' });
     }
@@ -553,7 +555,7 @@ export function GenerationToolbar(): React.JSX.Element {
 
     try {
       cropDiagnosticsRef.current = null;
-      await handleCrop(previewCrop.cropRect);
+      await handleCrop(previewCrop.cropRect, { includeCanvasContext: false });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to prepare crop from preview view.', { variant: 'error' });
     }

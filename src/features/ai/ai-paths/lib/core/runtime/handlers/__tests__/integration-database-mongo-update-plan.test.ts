@@ -31,7 +31,7 @@ describe('buildMongoUpdatePlan', () => {
         id: 'node-update-params',
         type: 'database',
         title: 'Database Query',
-      },
+      } as any,
       prevOutputs: {},
       reportAiPathsError: vi.fn(),
       toast: vi.fn(),
@@ -113,7 +113,7 @@ describe('buildMongoUpdatePlan', () => {
         id: 'node-db-update-translate-en-pl',
         type: 'database',
         title: 'Database Update: Desc + Params',
-      },
+      } as any,
       prevOutputs: {},
       reportAiPathsError,
       toast,
@@ -192,7 +192,7 @@ describe('buildMongoUpdatePlan', () => {
     if (!('output' in result)) {
       throw new Error('Expected guardrail output.');
     }
-    const outputBundle = result.output.bundle as Record<string, unknown>;
+    const outputBundle = result.output['bundle'] as Record<string, unknown>;
     expect(outputBundle).toEqual(
       expect.objectContaining({
         guardrail: 'update-template-inputs',

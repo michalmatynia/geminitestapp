@@ -1,0 +1,60 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeType": "notification",
+  "title": "Toast Notification",
+  "purpose": "Display an instant toast from incoming results.",
+  "inputs": [
+    "result",
+    "prompt",
+    "value",
+    "bundle",
+    "context",
+    "meta",
+    "trigger",
+    "triggerName",
+    "entityId"
+  ],
+  "outputs": [],
+  "configFields": [
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [
+    "Configuration UI is not available yet; it runs with defaults."
+  ],
+  "semanticNodeExample": {
+    "id": "node_notification",
+    "type": "notification",
+    "title": "Toast Notification",
+    "description": "Display an instant toast from incoming results.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "result",
+      "prompt",
+      "value",
+      "bundle",
+      "context",
+      "meta",
+      "trigger",
+      "triggerName",
+      "entityId"
+    ],
+    "outputs": [],
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  }
+}

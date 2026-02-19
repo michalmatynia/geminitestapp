@@ -142,7 +142,7 @@ export async function tick(): Promise<void> {
       const lastErrorSeen = parseDate(
         await getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.logsLastErrorSeenAt),
       );
-      const latestAt = latest ? new Date(latest.createdAt) : null;
+      const latestAt = latest ? new Date(latest.createdAt || 0) : null;
       if (latestAt && (!lastErrorSeen || latestAt.getTime() > lastErrorSeen.getTime())) {
         await appendRunEvent('Detected new system error log. Generating auto logs insight.');
         await generateLogsInsight({ source: 'auto' });

@@ -33,7 +33,7 @@ const buildRegexRule = (overrides: Partial<PromptValidationRule> = {}): PromptVa
   similar: [],
   appliesToScopes: ['prompt_exploder'],
   ...overrides,
-});
+} as PromptValidationRule);
 
 const buildPromptSettings = (rule: PromptValidationRule): PromptEngineSettings => ({
   version: 1,

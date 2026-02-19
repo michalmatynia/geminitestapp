@@ -123,7 +123,7 @@ const parseBridgePayload = (raw: string | null): PromptExploderBridgePayload | n
     const createdAt =
       typeof parsed.createdAt === 'string' && parsed.createdAt.trim().length > 0
         ? parsed.createdAt
-        : new Date().toISOString();
+        : '1970-01-01T00:00:00.000Z';
     const caseResolverContext = (() => {
       if (!parsed.caseResolverContext || typeof parsed.caseResolverContext !== 'object') return undefined;
       const record = parsed.caseResolverContext as Record<string, unknown>;

@@ -61,7 +61,7 @@ describe('buildMongoUpdatePlan', () => {
         preset: 'by_id',
         field: 'id',
         idType: 'string',
-        queryTemplate: '{\"id\":\"{{entityId}}\"}',
+        queryTemplate: '{"id":"{{entityId}}"}',
         limit: 1,
         sort: '',
         projection: '',
@@ -70,7 +70,7 @@ describe('buildMongoUpdatePlan', () => {
       collection: 'products',
       filter: { id: 'product-1' },
       idType: 'string',
-      updateTemplate: '{\"$set\":{\"parameters\":{{value}}}}',
+      updateTemplate: '{"$set":{"parameters":{{value}}}}',
       templateInputs,
       parseJsonTemplate: (template: string): unknown =>
         parseJsonSafe(
@@ -192,16 +192,15 @@ describe('buildMongoUpdatePlan', () => {
     if (!('output' in result)) {
       throw new Error('Expected guardrail output.');
     }
-    expect(result.output.bundle).toEqual(
+    const outputBundle = result.output.bundle as Record<string, unknown>;
+    expect(outputBundle).toEqual(
       expect.objectContaining({
         guardrail: 'update-template-inputs',
       })
     );
-    expect(result.output.bundle).toEqual(
-      expect.objectContaining({
-        missingTemplatePorts: expect.arrayContaining(['bundle']),
-      })
-    );
+    const missingTemplatePorts = outputBundle['missingTemplatePorts'];
+    expect(Array.isArray(missingTemplatePorts)).toBe(true);
+    expect(missingTemplatePorts).toContain('bundle');
     expect(toast).toHaveBeenCalledWith(
       expect.stringContaining('Update template is missing connected inputs'),
       { variant: 'error' }

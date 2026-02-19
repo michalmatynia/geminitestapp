@@ -192,6 +192,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     React.useState<PartySearchKind>('organization');
   const [addresserPartyQuery, setAddresserPartyQuery] = React.useState('');
   const [addresseePartyQuery, setAddresseePartyQuery] = React.useState('');
+  const [pendingPromptApplyTargetFileId, setPendingPromptApplyTargetFileId] = React.useState('');
   const {
     state,
     workspaceView,
@@ -285,6 +286,9 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     handleUpdateSelectedAsset,
     handleSaveFileEditor,
     handleDiscardFileEditorDraft,
+    pendingPromptExploderPayload,
+    handleApplyPendingPromptExploderPayload,
+    handleDiscardPendingPromptExploderPayload,
     promptExploderPartyProposal,
     isPromptExploderPartyProposalOpen,
     setIsPromptExploderPartyProposalOpen,
@@ -357,6 +361,70 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
       return filtered;
     },
     [partyOptions]
+  );
+  const pendingPromptApplyTargetOptions = React.useMemo<SelectOption[]>(
+    () =>
+      workspace.files
+        .filter((file: CaseResolverFile): boolean =>
+          file.fileType === 'document' || file.fileType === 'scanfile'
+        )
+        .map((file: CaseResolverFile) => ({
+          value: file.id,
+          label: file.name,
+          description: file.folder ? `Folder: ${file.folder}` : 'Folder: (root)',
+        })),
+    [workspace.files]
+  );
+
+  const pendingPromptPayloadKey = React.useMemo(() => {
+    if (!pendingPromptExploderPayload) return null;
+    return [
+      pendingPromptExploderPayload.createdAt,
+      pendingPromptExploderPayload.caseResolverContext?.fileId ?? '',
+      pendingPromptExploderPayload.prompt.length,
+    ].join('|');
+  }, [pendingPromptExploderPayload]);
+
+  React.useEffect(() => {
+    if (!pendingPromptExploderPayload) {
+      setPendingPromptApplyTargetFileId('');
+      return;
+    }
+
+    setPendingPromptApplyTargetFileId((current) => {
+      if (
+        current &&
+        pendingPromptApplyTargetOptions.some((option: SelectOption) => option.value === current)
+      ) {
+        return current;
+      }
+
+      const preferredTargets = [
+        editingDocumentDraft?.id ?? '',
+        pendingPromptExploderPayload.caseResolverContext?.fileId ?? '',
+      ].filter((value: string): boolean => value.trim().length > 0);
+      for (const preferred of preferredTargets) {
+        const match = pendingPromptApplyTargetOptions.find(
+          (option: SelectOption) => option.value.trim() === preferred.trim()
+        );
+        if (match) return match.value;
+      }
+
+      return pendingPromptApplyTargetOptions[0]?.value ?? '';
+    });
+  }, [
+    editingDocumentDraft?.id,
+    pendingPromptApplyTargetOptions,
+    pendingPromptExploderPayload,
+    pendingPromptPayloadKey,
+  ]);
+
+  const canApplyPendingPromptOutput = Boolean(
+    pendingPromptExploderPayload &&
+    pendingPromptApplyTargetFileId &&
+    pendingPromptApplyTargetOptions.some(
+      (option: SelectOption) => option.value === pendingPromptApplyTargetFileId
+    )
   );
 
   const addresserPartyOptions = React.useMemo(
@@ -1374,6 +1442,18 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
               </Tabs>
 
               <div className='flex justify-end gap-2'>
+                {pendingPromptExploderPayload ? (
+                  <div className='rounded border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-100'>
+                    Pending Prompt Exploder output
+                    {pendingPromptExploderPayload.caseResolverContext?.fileName
+                      ? ` from "${pendingPromptExploderPayload.caseResolverContext.fileName}".`
+                      : '.'}
+                    {' '}Apply it explicitly to this document or discard it.
+                  </div>
+                ) : null}
+              </div>
+
+              <div className='flex flex-wrap justify-end gap-2'>
                 {promptExploderPartyProposal?.targetFileId === editingDocumentDraft.id ? (
                   <Button
                     type='button'
@@ -1394,6 +1474,51 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                 >
                   Prompt Exploder: Extract + Reassemble
                 </Button>
+                {pendingPromptExploderPayload ? (
+                  <SelectSimple
+                    size='sm'
+                    value={pendingPromptApplyTargetFileId || '__none__'}
+                    onValueChange={(value: string): void => {
+                      setPendingPromptApplyTargetFileId(value === '__none__' ? '' : value);
+                    }}
+                    options={
+                      pendingPromptApplyTargetOptions.length > 0
+                        ? pendingPromptApplyTargetOptions
+                        : [{ value: '__none__', label: 'No document files available' }]
+                    }
+                    triggerClassName='h-8 min-w-[220px]'
+                    placeholder='Choose target document'
+                  />
+                ) : null}
+                {pendingPromptExploderPayload ? (
+                  <Button
+                    type='button'
+                    variant='outline'
+                    className='h-8'
+                    disabled={!canApplyPendingPromptOutput || isApplyingPromptExploderPartyProposal}
+                    onClick={(): void => {
+                      if (!pendingPromptApplyTargetFileId) return;
+                      handleApplyPendingPromptExploderPayload(pendingPromptApplyTargetFileId);
+                    }}
+                  >
+                    {isApplyingPromptExploderPartyProposal
+                      ? 'Applying Output...'
+                      : 'Apply Prompt Exploder Output'}
+                  </Button>
+                ) : null}
+                {pendingPromptExploderPayload ? (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    className='h-8'
+                    disabled={isApplyingPromptExploderPartyProposal}
+                    onClick={(): void => {
+                      handleDiscardPendingPromptExploderPayload();
+                    }}
+                  >
+                    Discard Pending Output
+                  </Button>
+                ) : null}
               </div>
 
               {editingDocumentDraft.editorType === 'markdown' ? (

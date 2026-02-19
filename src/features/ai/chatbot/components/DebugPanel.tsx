@@ -1,5 +1,6 @@
 'use client';
 
+import { StatusBadge } from '@/shared/ui';
 import { useChatbot } from '../context/ChatbotContext';
 
 interface LogEntry {
@@ -38,21 +39,20 @@ export function DebugPanel({
           <h4 className='mb-1 font-medium text-gray-400'>Agent Logs</h4>
           <div className='max-h-60 overflow-y-auto rounded bg-gray-900 p-2'>
             {agentRunLogs.map((log: LogEntry): React.JSX.Element => (
-              <div key={log.id} className='mb-1 border-b border-border pb-1'>
-                <span className='text-gray-500'>
-                  [{new Date(log.createdAt).toLocaleTimeString()}]
-                </span>{' '}
-                <span
-                  className={
-                    log.level === 'error'
-                      ? 'text-red-400'
-                      : log.level === 'warning'
-                        ? 'text-yellow-400'
-                        : 'text-gray-300'
-                  }
-                >
+              <div key={log.id} className='mb-2 border-b border-border pb-2'>
+                <div className='flex items-center gap-2 mb-1'>
+                  <span className='text-gray-500'>
+                    [{new Date(log.createdAt).toLocaleTimeString()}]
+                  </span>
+                  <StatusBadge 
+                    status={log.level} 
+                    size='sm' 
+                    className='h-4 font-bold uppercase' 
+                  />
+                </div>
+                <div className='text-gray-300 leading-relaxed'>
                   {log.message}
-                </span>
+                </div>
               </div>
             ))}
           </div>

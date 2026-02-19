@@ -3,12 +3,12 @@ import 'server-only';
 import { callBaseApi } from '@/features/integrations/services/imports/base-client';
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
 import { ErrorSystem } from '@/features/observability/server';
-import type { ProductWithImages } from '@/features/products';
 import type { 
   ImageExportDiagnosticsDto as ImageExportDiagnostics,
-  ImageUrlDiagnosticDto as ImageUrlDiagnostic 
+  ImageUrlDiagnosticDto as ImageUrlDiagnostic,
+  TemplateMappingDto as ExportTemplateMapping
 } from '@/shared/contracts/integrations';
-import type { ImportExportTemplateMapping as ExportTemplateMapping } from '@/shared/types/domain/integrations';
+import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 
 import {
   getAllImageUrls,

@@ -401,10 +401,12 @@ export function ImportTab(): React.JSX.Element {
               onClick={(): void => {
                 void handleLoadInventories();
               }}
-              disabled={loadingInventories || !selectedBaseConnectionId}
+              disabled={!selectedBaseConnectionId}
+              loading={loadingInventories}
+              loadingText='Loading inventories...'
               className='h-9'
             >
-              {loadingInventories ? 'Loading...' : 'Load inventories'}
+              Load inventories
             </Button>
             <FormField label='Inventory' className='flex-1 min-w-[200px]'>
               <SelectSimple size='sm'
@@ -540,13 +542,10 @@ export function ImportTab(): React.JSX.Element {
               onClick={(): void => {
                 void handleImport();
               }}
-              disabled={importing}
+              loading={importing}
+              loadingText='Processing...'
             >
-              {importing
-                ? 'Processing...'
-                : importDryRun
-                  ? 'Run dry-run'
-                  : 'Import products'}
+              {importDryRun ? 'Run dry-run' : 'Import products'}
             </Button>
           </div>
         </div>
@@ -619,9 +618,10 @@ export function ImportTab(): React.JSX.Element {
               onClick={(): void => {
                 void handleLoadImportList();
               }}
-              disabled={loadingImportList}
+              loading={loadingImportList}
+              loadingText='Loading...'
             >
-              {loadingImportList ? 'Loading...' : 'Load import list'}
+              Load import list
             </Button>
           </div>
         }

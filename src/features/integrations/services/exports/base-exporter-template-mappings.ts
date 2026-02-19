@@ -1,7 +1,7 @@
 import 'server-only';
 
-import type { ProductWithImages } from '@/features/products';
-import type { ImportExportTemplateMapping as ExportTemplateMapping } from '@/shared/types/domain/integrations';
+import type { TemplateMappingDto as ExportTemplateMapping } from '@/shared/contracts/integrations';
+import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 
 import {
   getAllImageUrls,
@@ -111,20 +111,63 @@ const toTrimmedString = (value: unknown): string | null => {
   return trimmed || null;
 };
 
-const parseParameterSourceKey = (sourceKey: string): string | null => {
+type ParsedParameterSourceKey = {
+  parameterId: string;
+  languageCode: string | null;
+};
+
+const parseParameterSourceKey = (
+  sourceKey: string
+): ParsedParameterSourceKey | null => {
   const trimmed = sourceKey.trim();
   if (!trimmed) return null;
   if (!trimmed.toLowerCase().startsWith('parameter:')) return null;
-  const parameterId = trimmed.slice('parameter:'.length).trim();
-  return parameterId || null;
+  const rawPayload = trimmed.slice('parameter:'.length).trim();
+  if (!rawPayload) return null;
+
+  const languageDelimiterIndex = rawPayload.indexOf('|');
+  if (languageDelimiterIndex < 0) {
+    return {
+      parameterId: rawPayload,
+      languageCode: null,
+    };
+  }
+
+  const parameterId = rawPayload.slice(0, languageDelimiterIndex).trim();
+  if (!parameterId) return null;
+  const languageCode = rawPayload.slice(languageDelimiterIndex + 1).trim();
+  return {
+    parameterId,
+    languageCode: languageCode ? languageCode.toLowerCase() : null,
+  };
+};
+
+const getLocalizedParameterValue = (
+  valuesByLanguage: Record<string, unknown>,
+  languageCode: string
+): string | null => {
+  const directValue = toTrimmedString(valuesByLanguage[languageCode]);
+  if (directValue) return directValue;
+
+  const normalizedCode = languageCode.trim().toLowerCase();
+  if (!normalizedCode) return null;
+  for (const [key, value] of Object.entries(valuesByLanguage)) {
+    if (key.trim().toLowerCase() !== normalizedCode) continue;
+    const normalizedValue = toTrimmedString(value);
+    if (normalizedValue) return normalizedValue;
+  }
+  return null;
 };
 
 const getProductParameterValue = (
   product: ProductWithImages,
-  parameterId: string
+  parameterId: string,
+  languageCode?: string | null
 ): string | null => {
   const normalizedParameterId = parameterId.trim().toLowerCase();
   if (!normalizedParameterId) return null;
+  const normalizedLanguageCode =
+    typeof languageCode === 'string' ? languageCode.trim().toLowerCase() : '';
   const entries = Array.isArray(product.parameters)
     ? product.parameters
     : [];
@@ -137,15 +180,25 @@ const getProductParameterValue = (
   });
   if (!match) return null;
 
-  const directValue = toTrimmedString(match.value);
-  if (directValue) return directValue;
-
-  if (
+  const valuesByLanguage =
     match.valuesByLanguage &&
     typeof match.valuesByLanguage === 'object' &&
     !Array.isArray(match.valuesByLanguage)
-  ) {
-    const valuesByLanguage = match.valuesByLanguage as Record<string, unknown>;
+      ? (match.valuesByLanguage as Record<string, unknown>)
+      : null;
+
+  if (normalizedLanguageCode && valuesByLanguage) {
+    const localizedValue = getLocalizedParameterValue(
+      valuesByLanguage,
+      normalizedLanguageCode
+    );
+    if (localizedValue) return localizedValue;
+  }
+
+  const directValue = toTrimmedString(match.value);
+  if (directValue) return directValue;
+
+  if (valuesByLanguage) {
     const preferred = ['default', 'en', 'pl', 'de']
       .map((code: string) => toTrimmedString(valuesByLanguage[code]))
       .find((value): value is string => Boolean(value));
@@ -678,9 +731,13 @@ const getProductValue = (
 ): unknown => {
   if (!sourceKey) return null;
 
-  const parameterId = parseParameterSourceKey(sourceKey);
-  if (parameterId) {
-    return getProductParameterValue(product, parameterId);
+  const parameterSource = parseParameterSourceKey(sourceKey);
+  if (parameterSource) {
+    return getProductParameterValue(
+      product,
+      parameterSource.parameterId,
+      parameterSource.languageCode
+    );
   }
 
   const normalized = sourceKey.trim().toLowerCase();

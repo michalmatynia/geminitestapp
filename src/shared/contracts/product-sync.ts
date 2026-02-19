@@ -170,3 +170,7 @@ export const productSyncRunDetailSchema = z.object({
   }),
 });
 export type ProductSyncRunDetailDto = z.infer<typeof productSyncRunDetailSchema>;
+
+export const PRODUCT_SYNC_PROFILE_SETTINGS_KEY = 'product_sync_profiles';
+export const PRODUCT_SYNC_RUN_KEY_PREFIX = 'product_sync_run:';
+export const PRODUCT_SYNC_ITEM_KEY_PREFIX = 'product_sync_run_item:';

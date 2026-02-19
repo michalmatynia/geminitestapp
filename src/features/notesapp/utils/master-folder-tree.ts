@@ -1,7 +1,7 @@
 import type {
-  CategoryWithChildren,
-  NoteRecord,
-} from '@/shared/types/domain/notes';
+  NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
+  NoteDto as NoteRecord,
+} from '@/shared/contracts/notes';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const FOLDER_NODE_PREFIX = 'folder:';

@@ -749,6 +749,8 @@ export type ApplyBaseParameterImportResultDto = z.infer<typeof applyBaseParamete
 export const testStatusSchema = z.enum(['pending', 'ok', 'failed']);
 export type TestStatusDto = z.infer<typeof testStatusSchema>;
 
+export const TEST_STATUSES = ['pending', 'ok', 'failed'] as const;
+
 export const testLogEntrySchema = z.object({
   step: z.string(),
   status: testStatusSchema,

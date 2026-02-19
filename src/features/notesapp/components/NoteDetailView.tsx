@@ -6,8 +6,20 @@ import React, { useMemo } from 'react';
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { useNotesLookup } from '@/features/notesapp/api/useNoteQueries';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
-import type { NoteWithRelations, RelatedNote, NoteRelationWithTarget, NoteRelationWithSource } from '@/shared/types/domain/notes';
+import type { 
+  NoteWithRelationsDto as NoteWithRelations, 
+  RelatedNoteDto as RelatedNote, 
+  NoteRelationDto 
+} from '@/shared/contracts/notes';
 import { Button, useToast } from '@/shared/ui';
+
+type NoteRelationWithTarget = NoteRelationDto & {
+  targetNote?: RelatedNote | undefined;
+};
+
+type NoteRelationWithSource = NoteRelationDto & {
+  sourceNote?: RelatedNote | undefined;
+};
 import { sanitizeHtml } from '@/shared/utils';
 
 import { NoteForm } from './NoteForm';

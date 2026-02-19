@@ -317,3 +317,86 @@ export const formatPromptOptionsSchema = z.object({
 });
 
 export type FormatPromptOptionsDto = z.infer<typeof formatPromptOptionsSchema>;
+
+/**
+ * Prompt Validation Observability DTOs
+ */
+
+export const promptValidationTimingNameSchema = z.enum([
+  'scope_resolve_ms',
+  'runtime_select_ms',
+  'runtime_compile_ms',
+  'explode_ms',
+  'runtime_pipeline_ms',
+  'validator_ms',
+  'formatter_ms',
+]);
+
+export type PromptValidationTimingNameDto = z.infer<typeof promptValidationTimingNameSchema>;
+
+export const promptValidationErrorNameSchema = z.enum([
+  'scope_resolution',
+  'rule_compile',
+  'runtime_execution',
+]);
+
+export type PromptValidationErrorNameDto = z.infer<typeof promptValidationErrorNameSchema>;
+
+export const promptValidationCounterNameSchema = z.enum([
+  'runtime_selection_total',
+  'runtime_selection_fallback',
+  'runtime_cache_hit',
+  'runtime_cache_miss',
+  'runtime_case_resolver_pack_fallback',
+  'runtime_fast_path_hit',
+  'runtime_fast_path_miss',
+  'runtime_inflight_dedup_hit',
+  'runtime_inflight_dedup_miss',
+  'runtime_retry',
+  'runtime_retry_success',
+  'runtime_timeout',
+  'runtime_backpressure_drop',
+  'runtime_circuit_break_open',
+]);
+
+export type PromptValidationCounterNameDto = z.infer<typeof promptValidationCounterNameSchema>;
+
+export const promptValidationRuntimeSloTargetsSchema = z.object({
+  p95PipelineMs: z.number(),
+  p95ExplodeMs: z.number(),
+  p95CompileMs: z.number(),
+  maxErrorRate: z.number(),
+  maxFallbackRate: z.number(),
+});
+
+export type PromptValidationRuntimeSloTargetsDto = z.infer<typeof promptValidationRuntimeSloTargetsSchema>;
+
+export const promptValidationRuntimeHealthSchema = z.object({
+  status: z.enum(['ok', 'degraded', 'critical']),
+  checks: z.array(z.object({
+    name: z.string(),
+    ok: z.boolean(),
+    value: z.number(),
+    target: z.number(),
+  })),
+});
+
+export type PromptValidationRuntimeHealthDto = z.infer<typeof promptValidationRuntimeHealthSchema>;
+
+export const promptValidationObservabilitySnapshotSchema = z.object({
+  generatedAt: z.string(),
+  metrics: z.array(z.object({
+    name: promptValidationTimingNameSchema,
+    count: z.number(),
+    avgMs: z.number(),
+    p50Ms: z.number(),
+    p95Ms: z.number(),
+    maxMs: z.number(),
+  })),
+  counters: z.record(promptValidationCounterNameSchema, z.number()),
+  sloTargets: promptValidationRuntimeSloTargetsSchema,
+  health: promptValidationRuntimeHealthSchema,
+  errors: z.record(promptValidationErrorNameSchema, z.number()),
+});
+
+export type PromptValidationObservabilitySnapshotDto = z.infer<typeof promptValidationObservabilitySnapshotSchema>;

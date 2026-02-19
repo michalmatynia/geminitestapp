@@ -7,7 +7,7 @@ import { useCreateNoteTag, useDeleteNoteTag, useUpdateNoteTag } from '@/features
 import { useNotebooks, useNoteTags } from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
-import type { TagRecord } from '@/shared/types/domain/notes';
+import type { NoteTagDto as TagRecord } from '@/shared/contracts/notes';
 import { 
   Button, 
   useToast, 
@@ -17,6 +17,8 @@ import {
   FormField, 
   StandardDataTablePanel,
   PanelHeader,
+  Tag,
+  EmptyState,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -148,13 +150,12 @@ export function AdminNotesTagsPage(): React.JSX.Element {
         }
 
         return (
-          <div className='flex items-center gap-3'>
-            <span
-              className='h-3 w-3 rounded-full shrink-0'
-              style={{ backgroundColor: tag.color || '#3b82f6' }}
-            />
-            <span className='text-sm font-medium text-gray-200'>{tag.name}</span>
-          </div>
+          <Tag 
+            label={tag.name} 
+            color={tag.color || '#3b82f6'} 
+            dot 
+            className='h-7 font-semibold' 
+          />
         );
       },
     },
@@ -269,9 +270,12 @@ export function AdminNotesTagsPage(): React.JSX.Element {
           data={filteredTags}
           isLoading={loading}
           emptyState={
-            <div className='py-12 text-center text-sm text-gray-500'>
-              {searchQuery ? 'No tags found matching your search.' : 'No tags created yet.'}
-            </div>
+            <EmptyState
+              title={searchQuery ? 'No tags found' : 'No tags created yet'}
+              description={searchQuery ? 'Try a different search query.' : 'Create your first tag to start organizing notes.'}
+              variant='compact'
+              className='py-8'
+            />
           }
         />
       </div>

@@ -3,7 +3,11 @@ import { useMemo, useCallback } from 'react';
 import { findFolderById } from '@/features/foldertree';
 import type { UseNoteThemeProps } from '@/features/notesapp/types/notes-hooks';
 import { logClientError } from '@/features/observability';
-import type { NoteWithRelations, NotebookRecord, ThemeRecord } from '@/shared/types/domain/notes';
+import type { 
+  NoteWithRelationsDto as NoteWithRelations, 
+  NotebookDto as NotebookRecord, 
+  NoteThemeDto as ThemeRecord 
+} from '@/shared/contracts/notes';
 
 export function useNoteTheme({
   themes,

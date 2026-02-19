@@ -1,4 +1,4 @@
-import type { CategoryWithChildren } from '@/shared/types/domain/notes';
+import type { NoteCategoryRecordWithChildrenDto as CategoryWithChildren } from '@/shared/contracts/notes';
 import { darkenColor } from '@/shared/utils/color-utils';
 import { autoformatMarkdown } from '@/shared/utils/markdown-utils';
 

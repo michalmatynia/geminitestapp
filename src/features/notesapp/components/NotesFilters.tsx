@@ -4,7 +4,7 @@ import { ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
-import type { TagRecord } from '@/shared/types/domain/notes';
+import type { NoteTagDto as TagRecord } from '@/shared/contracts/notes';
 import { Button } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';

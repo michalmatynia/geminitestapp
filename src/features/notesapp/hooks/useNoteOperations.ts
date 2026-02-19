@@ -5,9 +5,18 @@ import type { UseNoteOperationsProps } from '@/features/notesapp/types/notes-hoo
 import type { UndoAction } from '@/features/notesapp/types/notes-hooks';
 import { ApiError } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { NoteWithRelations, CategoryWithChildren, NoteRelationWithTarget } from '@/shared/types/domain/notes';
+import type { 
+  NoteWithRelationsDto as NoteWithRelations, 
+  NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
+  NoteRelationDto,
+  RelatedNoteDto as RelatedNote
+} from '@/shared/contracts/notes';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { findTreeNodeById, findTreeNodeParentId } from '@/shared/utils/tree-operations';
+
+type NoteRelationWithTarget = NoteRelationDto & {
+  targetNote?: RelatedNote | undefined;
+};
 
 import {
   useCreateCategoryMutation,

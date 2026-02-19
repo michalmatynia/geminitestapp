@@ -11,22 +11,22 @@ import {
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { DeleteResponse } from '@/shared/types/api/api';
 import type {
-  NoteWithRelations,
-  NoteCreateInput,
-  NoteUpdateInput,
-  CategoryRecord,
-  CategoryCreateInput,
-  CategoryUpdateInput,
-  NotebookRecord,
-  NotebookCreateInput,
-  NotebookUpdateInput,
-  TagRecord,
-  TagCreateInput,
-  TagUpdateInput,
-  ThemeRecord,
-  ThemeCreateInput,
-  ThemeUpdateInput,
-} from '@/shared/types/domain/notes';
+  NoteWithRelationsDto as NoteWithRelations,
+  CreateNoteDto as NoteCreateInput,
+  UpdateNoteDto as NoteUpdateInput,
+  NoteCategoryDto as CategoryRecord,
+  CreateNoteCategoryDto as CategoryCreateInput,
+  UpdateNoteCategoryDto as CategoryUpdateInput,
+  NotebookDto as NotebookRecord,
+  CreateNotebookDto as NotebookCreateInput,
+  UpdateNotebookDto as NotebookUpdateInput,
+  NoteTagDto as TagRecord,
+  CreateNoteTagDto as TagCreateInput,
+  UpdateNoteTagDto as TagUpdateInput,
+  NoteThemeDto as ThemeRecord,
+  CreateNoteThemeDto as ThemeCreateInput,
+  UpdateNoteThemeDto as ThemeUpdateInput,
+} from '@/shared/contracts/notes';
 import type { 
   CreateMutation, 
   UpdateMutation, 

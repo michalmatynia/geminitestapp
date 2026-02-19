@@ -148,4 +148,18 @@ describe('prompt exploder bridge parties', () => {
     expect(payload?.caseResolverParties?.addressee?.displayName).toBe('Inspektorat');
     expect(payload?.caseResolverParties?.addressee?.kind).toBeUndefined();
   });
+
+  it('uses a deterministic createdAt fallback for malformed payloads', () => {
+    window.localStorage.setItem(
+      PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
+      JSON.stringify({
+        prompt: 'Fallback timestamp payload',
+        source: 'prompt-exploder',
+        target: 'case-resolver',
+      })
+    );
+
+    const payload = consumePromptExploderApplyPromptForCaseResolver();
+    expect(payload?.createdAt).toBe('1970-01-01T00:00:00.000Z');
+  });
 });

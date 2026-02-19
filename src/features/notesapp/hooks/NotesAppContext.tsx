@@ -16,8 +16,24 @@ import type { UndoAction } from '@/features/notesapp/types/notes-hooks';
 import type { NoteSettings } from '@/features/notesapp/types/notes-settings';
 import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
-import type { NoteWithRelations, TagRecord, ThemeRecord, CategoryWithChildren, NoteTagRecord, NoteRelationWithSource, NoteRelationWithTarget } from '@/shared/types/domain/notes';
+import type { 
+  NoteWithRelationsDto as NoteWithRelations, 
+  NoteTagDto as TagRecord, 
+  NoteThemeDto as ThemeRecord, 
+  NoteCategoryRecordWithChildrenDto as CategoryWithChildren, 
+  NoteTagRelationDto as NoteTagRecord, 
+  NoteRelationDto,
+  RelatedNoteDto as RelatedNote
+} from '@/shared/contracts/notes';
 import { useToast } from '@/shared/ui';
+
+type NoteRelationWithSource = NoteRelationDto & {
+  sourceNote?: RelatedNote | undefined;
+};
+
+type NoteRelationWithTarget = NoteRelationDto & {
+  targetNote?: RelatedNote | undefined;
+};
 import { ConfirmModal, PromptModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

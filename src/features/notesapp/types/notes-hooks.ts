@@ -1,10 +1,10 @@
 import type { NoteSettings } from '@/features/notesapp/types/notes-settings';
 import type {
-  NoteWithRelations,
-  CategoryWithChildren,
-  ThemeRecord,
-  NotebookRecord,
-} from '@/shared/types/domain/notes';
+  NoteWithRelationsDto as NoteWithRelations,
+  NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
+  NoteThemeDto as ThemeRecord,
+  NotebookDto as NotebookRecord,
+} from '@/shared/contracts/notes';
 
 import type React from 'react';
 import type { RefObject } from 'react';

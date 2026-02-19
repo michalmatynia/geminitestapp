@@ -2,12 +2,12 @@ import 'server-only';
 
 import prisma from '@/shared/lib/db/prisma';
 import type {
-  NoteFilters,
-  NoteWithRelations,
-  NoteCreateInput,
-  NoteUpdateInput,
-  NoteEditorType,
-} from '@/shared/types/domain/notes';
+  NoteFiltersDto as NoteFilters,
+  NoteWithRelationsDto as NoteWithRelations,
+  CreateNoteDto as NoteCreateInput,
+  UpdateNoteDto as NoteUpdateInput,
+  NoteEditorTypeDto as NoteEditorType,
+} from '@/shared/contracts/notes';
 
 import { getOrCreateDefaultNotebook } from './notebook-impl';
 

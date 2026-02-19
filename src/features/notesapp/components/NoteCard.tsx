@@ -6,14 +6,21 @@ import React from 'react';
 
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import type {
-  ThemeRecord,
-  RelatedNote,
-  NoteFileRecord,
-  NoteWithRelations,
-  NoteRelationWithTarget,
-  NoteRelationWithSource,
-} from '@/shared/types/domain/notes';
+  NoteThemeDto as ThemeRecord,
+  RelatedNoteDto as RelatedNote,
+  NoteFileDto as NoteFileRecord,
+  NoteWithRelationsDto as NoteWithRelations,
+  NoteRelationDto,
+} from '@/shared/contracts/notes';
 import { BreadcrumbScroller, Button, CopyButton, Tag, Badge } from '@/shared/ui';
+
+type NoteRelationWithTarget = NoteRelationDto & {
+  targetNote?: RelatedNote | undefined;
+};
+
+type NoteRelationWithSource = NoteRelationDto & {
+  sourceNote?: RelatedNote | undefined;
+};
 import { cn, setNoteDragData, sanitizeHtml } from '@/shared/utils';
 
 

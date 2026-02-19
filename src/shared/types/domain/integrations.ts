@@ -71,7 +71,7 @@ export type ProducerMapping = ProducerMappingDto;
 export type ProducerMappingWithDetails = ProducerMappingWithDetailsDto;
 export type ExternalProducer = ExternalProducerDto;
 
-export type ImageBase64Mode = 'base-only' | 'full-data-uri';
+export type ImageBase64Mode = ImageBase64ModeDto;
 
 export type ImageTransformOptions = ImageTransformOptionsDto;
 

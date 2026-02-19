@@ -634,6 +634,15 @@ export function useSaveExportSettingsMutation(): MutationResult<void, {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: importExportKeys.preferences() });
+      void queryClient.invalidateQueries({
+        queryKey: integrationKeys.selection.defaultConnection(),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: integrationKeys.defaultExportInventory(),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: integrationKeys.activeExportTemplate(),
+      });
     },
   });
 }

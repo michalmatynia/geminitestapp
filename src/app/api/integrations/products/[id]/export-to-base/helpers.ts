@@ -209,7 +209,11 @@ const parseMappedParameterId = (value: unknown): string => {
   ) {
     return '';
   }
-  return trimmed.slice(PRODUCT_PARAMETER_MAPPING_PREFIX.length).trim();
+  const mappedValue = trimmed.slice(PRODUCT_PARAMETER_MAPPING_PREFIX.length).trim();
+  if (!mappedValue) return '';
+  const languageDelimiterIndex = mappedValue.indexOf('|');
+  if (languageDelimiterIndex < 0) return mappedValue;
+  return mappedValue.slice(0, languageDelimiterIndex).trim();
 };
 
 const hasMappedParameterValue = (

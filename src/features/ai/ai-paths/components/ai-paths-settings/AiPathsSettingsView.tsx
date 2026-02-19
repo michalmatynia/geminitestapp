@@ -5,8 +5,19 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useAiPathRuntimeAnalytics } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
-import type { AiNode, AiPathsValidationConfig } from '@/features/ai/ai-paths/lib';
+import type {
+  AiNode,
+  AiPathsValidationCondition,
+  AiPathsValidationConfig,
+  AiPathsValidationModule,
+  AiPathsValidationOperator,
+  AiPathsValidationRule,
+  AiPathsValidationSeverity,
+} from '@/features/ai/ai-paths/lib';
 import {
+  buildAiPathsValidationRulesFromDocs,
+  createAiPathsValidationConditionId,
+  createAiPathsValidationRuleId,
   evaluateAiPathsValidationPreflight,
   inspectPathDependencies,
   normalizeAiPathsValidationConfig,
@@ -57,6 +68,117 @@ import {
   sortPathMetas,
   statusToVariant,
 } from './ai-paths-settings-view-utils';
+
+type ValidationConditionDraft = {
+  operator: AiPathsValidationOperator;
+  field: string;
+  valuePath: string;
+  expected: string;
+  list: string;
+  flags: string;
+  port: string;
+  fromPort: string;
+  toPort: string;
+  fromNodeType: string;
+  toNodeType: string;
+  sourceNodeId: string;
+  targetNodeId: string;
+  negate: boolean;
+};
+
+type ValidationRuleDraft = {
+  title: string;
+  description: string;
+  module: AiPathsValidationModule;
+  severity: AiPathsValidationSeverity;
+  conditionMode: 'all' | 'any';
+  sequence: string;
+  weight: string;
+  forceProbabilityIfFailed: string;
+  recommendation: string;
+  appliesToNodeTypes: string;
+  docsBindings: string;
+};
+
+const VALIDATION_SEVERITY_OPTIONS: Array<{ label: string; value: AiPathsValidationSeverity }> = [
+  { label: 'Error', value: 'error' },
+  { label: 'Warning', value: 'warning' },
+  { label: 'Info', value: 'info' },
+];
+
+const VALIDATION_MODULE_OPTIONS: Array<{ label: string; value: AiPathsValidationModule }> = [
+  { label: 'Graph', value: 'graph' },
+  { label: 'Trigger', value: 'trigger' },
+  { label: 'Simulation', value: 'simulation' },
+  { label: 'Context', value: 'context' },
+  { label: 'Parser', value: 'parser' },
+  { label: 'Database', value: 'database' },
+  { label: 'Model', value: 'model' },
+  { label: 'Poll', value: 'poll' },
+  { label: 'Router', value: 'router' },
+  { label: 'Gate', value: 'gate' },
+  { label: 'Validation Pattern', value: 'validation_pattern' },
+  { label: 'Custom', value: 'custom' },
+];
+
+const VALIDATION_OPERATOR_OPTIONS: Array<{ label: string; value: AiPathsValidationOperator }> = [
+  { label: 'Exists', value: 'exists' },
+  { label: 'Non-empty', value: 'non_empty' },
+  { label: 'Equals', value: 'equals' },
+  { label: 'In list', value: 'in' },
+  { label: 'Matches regex', value: 'matches_regex' },
+  { label: 'JSONPath exists', value: 'jsonpath_exists' },
+  { label: 'JSONPath equals', value: 'jsonpath_equals' },
+  { label: 'Has incoming port', value: 'has_incoming_port' },
+  { label: 'Has outgoing port', value: 'has_outgoing_port' },
+  { label: 'Wired from', value: 'wired_from' },
+  { label: 'Wired to', value: 'wired_to' },
+  { label: 'Collection exists', value: 'collection_exists' },
+  { label: 'Entity+collection resolves', value: 'entity_collection_resolves' },
+];
+
+const DEFAULT_CONDITION_DRAFT: ValidationConditionDraft = {
+  operator: 'non_empty',
+  field: '',
+  valuePath: '',
+  expected: '',
+  list: '',
+  flags: '',
+  port: '',
+  fromPort: '',
+  toPort: '',
+  fromNodeType: '',
+  toNodeType: '',
+  sourceNodeId: '',
+  targetNodeId: '',
+  negate: false,
+};
+
+const DEFAULT_RULE_DRAFT: ValidationRuleDraft = {
+  title: '',
+  description: '',
+  module: 'custom',
+  severity: 'warning',
+  conditionMode: 'all',
+  sequence: '',
+  weight: '',
+  forceProbabilityIfFailed: '',
+  recommendation: '',
+  appliesToNodeTypes: '',
+  docsBindings: '',
+};
+
+const parseNumberInput = (value: string): number | undefined => {
+  if (!value.trim()) return undefined;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+const parseStringList = (value: string): string[] =>
+  value
+    .split(/[\n,|]/)
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
 
 export function AiPathsSettingsView(): React.JSX.Element {
   type PathSettingsFormState = {
@@ -231,6 +353,12 @@ export function AiPathsSettingsView(): React.JSX.Element {
   const [validationCollectionMapDraft, setValidationCollectionMapDraft] =
     useState('');
   const [validationRulesDraft, setValidationRulesDraft] = useState('');
+  const [validationConditionDraft, setValidationConditionDraft] =
+    useState<ValidationConditionDraft>(DEFAULT_CONDITION_DRAFT);
+  const [validationRuleDraft, setValidationRuleDraft] =
+    useState<ValidationRuleDraft>(DEFAULT_RULE_DRAFT);
+  const [validationRuleConditionsDraft, setValidationRuleConditionsDraft] =
+    useState<AiPathsValidationCondition[]>([]);
 
   const [simulationOpenNodeId, setSimulationOpenNodeId] = useState<
     string | null
@@ -275,6 +403,9 @@ export function AiPathsSettingsView(): React.JSX.Element {
     setValidationRulesDraft(
       JSON.stringify(normalizedAiPathsValidation.rules ?? [], null, 2),
     );
+    setValidationConditionDraft(DEFAULT_CONDITION_DRAFT);
+    setValidationRuleDraft(DEFAULT_RULE_DRAFT);
+    setValidationRuleConditionsDraft([]);
   }, [normalizedAiPathsValidation, pathSettingsModalOpen]);
 
   const nodeTitleById = useMemo((): Map<string, string> => {
@@ -343,6 +474,234 @@ export function AiPathsSettingsView(): React.JSX.Element {
       }),
     [nodes, edges, normalizedAiPathsValidation],
   );
+  const validationRules = normalizedAiPathsValidation.rules ?? [];
+  const validationModuleImpact = useMemo(
+    () =>
+      Object.values(validationPreflightReport.moduleImpact).sort((left, right) => {
+        if (left.scorePenalty !== right.scorePenalty) {
+          return right.scorePenalty - left.scorePenalty;
+        }
+        return left.module.localeCompare(right.module);
+      }),
+    [validationPreflightReport.moduleImpact],
+  );
+
+  const updateValidationRules = (
+    updater: (rules: AiPathsValidationRule[]) => AiPathsValidationRule[],
+  ): void => {
+    setAiPathsValidation((previous: AiPathsValidationConfig) =>
+      normalizeAiPathsValidationConfig({
+        ...previous,
+        rules: updater(previous.rules ?? []),
+      }),
+    );
+  };
+
+  const parseExpectedValue = (rawValue: string): unknown => {
+    const trimmed = rawValue.trim();
+    if (!trimmed) return undefined;
+    if (trimmed === 'true') return true;
+    if (trimmed === 'false') return false;
+    if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+      const parsedNumber = Number.parseFloat(trimmed);
+      if (Number.isFinite(parsedNumber)) return parsedNumber;
+    }
+    try {
+      return JSON.parse(trimmed);
+    } catch {
+      return trimmed;
+    }
+  };
+
+  const handleAddValidationConditionDraft = (): void => {
+    const operator = validationConditionDraft.operator;
+    const field = validationConditionDraft.field.trim();
+    const valuePath = validationConditionDraft.valuePath.trim();
+    const requiresFieldOrPath = new Set<AiPathsValidationOperator>([
+      'exists',
+      'non_empty',
+      'equals',
+      'in',
+      'matches_regex',
+      'jsonpath_exists',
+      'jsonpath_equals',
+    ]);
+    if (requiresFieldOrPath.has(operator) && !field && !valuePath) {
+      toast('Condition needs a field or valuePath.', { variant: 'error' });
+      return;
+    }
+
+    const expected = parseExpectedValue(validationConditionDraft.expected);
+    const list = parseStringList(validationConditionDraft.list);
+    if ((operator === 'equals' || operator === 'jsonpath_equals') && expected === undefined) {
+      toast('Equals operators need expected value.', { variant: 'error' });
+      return;
+    }
+    if (operator === 'in' && list.length === 0 && expected === undefined) {
+      toast('In operator needs list values or expected array.', { variant: 'error' });
+      return;
+    }
+    if (operator === 'matches_regex' && typeof expected !== 'string') {
+      toast('Regex operator needs regex string in expected field.', {
+        variant: 'error',
+      });
+      return;
+    }
+
+    const condition: AiPathsValidationCondition = {
+      id: createAiPathsValidationConditionId(
+        operator,
+        validationRuleConditionsDraft.map((entry) => entry.id),
+      ),
+      operator,
+      ...(field ? { field } : {}),
+      ...(valuePath ? { valuePath } : {}),
+      ...(expected !== undefined ? { expected } : {}),
+      ...(list.length > 0 ? { list } : {}),
+      ...(validationConditionDraft.flags.trim()
+        ? { flags: validationConditionDraft.flags.trim() }
+        : {}),
+      ...(validationConditionDraft.port.trim()
+        ? { port: validationConditionDraft.port.trim() }
+        : {}),
+      ...(validationConditionDraft.fromPort.trim()
+        ? { fromPort: validationConditionDraft.fromPort.trim() }
+        : {}),
+      ...(validationConditionDraft.toPort.trim()
+        ? { toPort: validationConditionDraft.toPort.trim() }
+        : {}),
+      ...(validationConditionDraft.fromNodeType.trim()
+        ? { fromNodeType: validationConditionDraft.fromNodeType.trim() }
+        : {}),
+      ...(validationConditionDraft.toNodeType.trim()
+        ? { toNodeType: validationConditionDraft.toNodeType.trim() }
+        : {}),
+      ...(validationConditionDraft.sourceNodeId.trim()
+        ? { sourceNodeId: validationConditionDraft.sourceNodeId.trim() }
+        : {}),
+      ...(validationConditionDraft.targetNodeId.trim()
+        ? { targetNodeId: validationConditionDraft.targetNodeId.trim() }
+        : {}),
+      ...(validationConditionDraft.negate ? { negate: true } : {}),
+    };
+
+    setValidationRuleConditionsDraft((previous) => [...previous, condition]);
+    setValidationConditionDraft(DEFAULT_CONDITION_DRAFT);
+  };
+
+  const handleAddValidationRuleDraft = (): void => {
+    const title = validationRuleDraft.title.trim();
+    if (!title) {
+      toast('Rule title is required.', { variant: 'error' });
+      return;
+    }
+    if (validationRuleConditionsDraft.length === 0) {
+      toast('Add at least one condition for the rule.', { variant: 'error' });
+      return;
+    }
+
+    const existingRuleIds = validationRules.map((rule) => rule.id);
+    const nextId = createAiPathsValidationRuleId(title, existingRuleIds);
+    const parsedWeight = parseNumberInput(validationRuleDraft.weight);
+    const parsedForceProbability = parseNumberInput(
+      validationRuleDraft.forceProbabilityIfFailed,
+    );
+    const parsedNodeTypes = parseStringList(
+      validationRuleDraft.appliesToNodeTypes,
+    );
+    const parsedDocsBindings = parseStringList(validationRuleDraft.docsBindings);
+    const parsedSequence = parseNumberInput(validationRuleDraft.sequence);
+    const defaultSequence =
+      validationRules.reduce((maxValue, rule) => {
+        const value = typeof rule.sequence === 'number' ? rule.sequence : 0;
+        return Math.max(maxValue, value);
+      }, 0) + 10;
+
+    const nextRule: AiPathsValidationRule = {
+      id: nextId,
+      title,
+      enabled: true,
+      severity: validationRuleDraft.severity,
+      module: validationRuleDraft.module,
+      conditionMode: validationRuleDraft.conditionMode,
+      sequence: parsedSequence ?? defaultSequence,
+      conditions: validationRuleConditionsDraft,
+      ...(validationRuleDraft.description.trim()
+        ? { description: validationRuleDraft.description.trim() }
+        : {}),
+      ...(parsedWeight !== undefined ? { weight: parsedWeight } : {}),
+      ...(parsedForceProbability !== undefined
+        ? {
+          forceProbabilityIfFailed: Math.max(
+            0,
+            Math.min(100, parsedForceProbability),
+          ),
+        }
+        : {}),
+      ...(validationRuleDraft.recommendation.trim()
+        ? { recommendation: validationRuleDraft.recommendation.trim() }
+        : {}),
+      ...(parsedNodeTypes.length > 0
+        ? {
+          appliesToNodeTypes: parsedNodeTypes,
+        }
+        : {}),
+      ...(parsedDocsBindings.length > 0
+        ? { docsBindings: parsedDocsBindings }
+        : {}),
+    };
+
+    updateValidationRules((rules: AiPathsValidationRule[]) => [...rules, nextRule]);
+    setValidationRuleDraft(DEFAULT_RULE_DRAFT);
+    setValidationRuleConditionsDraft([]);
+    setValidationConditionDraft(DEFAULT_CONDITION_DRAFT);
+    toast(`Validation rule "${title}" added.`, { variant: 'success' });
+  };
+
+  const handleToggleValidationRuleEnabled = (ruleId: string): void => {
+    updateValidationRules((rules: AiPathsValidationRule[]) =>
+      rules.map((rule: AiPathsValidationRule): AiPathsValidationRule =>
+        rule.id === ruleId ? { ...rule, enabled: rule.enabled === false } : rule,
+      ),
+    );
+  };
+
+  const handleDeleteValidationRule = (ruleId: string): void => {
+    updateValidationRules((rules: AiPathsValidationRule[]) =>
+      rules.filter((rule: AiPathsValidationRule): boolean => rule.id !== ruleId),
+    );
+  };
+
+  const handleRebuildValidationRulesFromDocs = (): void => {
+    const docsSources = normalizedAiPathsValidation.docsSources ?? [];
+    const rebuiltRules = buildAiPathsValidationRulesFromDocs(docsSources);
+    updateAiPathsValidation({ rules: rebuiltRules });
+    toast(`Rebuilt ${rebuiltRules.length} rules from docs sources.`, {
+      variant: 'success',
+    });
+  };
+
+  const handleApplyValidationRulesJson = (): void => {
+    try {
+      const parsed = JSON.parse(validationRulesDraft) as unknown;
+      if (!Array.isArray(parsed)) {
+        toast('Validation rules JSON must be an array.', {
+          variant: 'error',
+        });
+        return;
+      }
+      setAiPathsValidation((previous: AiPathsValidationConfig) =>
+        normalizeAiPathsValidationConfig({
+          ...previous,
+          rules: parsed as AiPathsValidationConfig['rules'],
+        }),
+      );
+    } catch {
+      toast('Invalid validation rules JSON.', {
+        variant: 'error',
+      });
+    }
+  };
 
   if (loading) {
     return <LoadingState message='Loading AI Paths...' className='py-12' />;
@@ -382,6 +741,35 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         disabled={!activePathId}
                       >
                         Paths Settings
+                      </Button>
+                      <Button
+                        type='button'
+                        className={`rounded-md border text-sm ${
+                          normalizedAiPathsValidation.enabled === false
+                            ? 'border-amber-500/40 text-amber-200 hover:bg-amber-500/10'
+                            : 'border-emerald-500/40 text-emerald-200'
+                        }`}
+                        onClick={() => {
+                          if (normalizedAiPathsValidation.enabled !== false) return;
+                          updateAiPathsValidation({ enabled: true });
+                          toast('AI Paths node validation enabled.', {
+                            variant: 'success',
+                          });
+                        }}
+                        disabled={
+                          !activePathId ||
+                          isPathLocked ||
+                          normalizedAiPathsValidation.enabled !== false
+                        }
+                        title={
+                          normalizedAiPathsValidation.enabled === false
+                            ? 'Enable AI Paths node validation'
+                            : 'AI Paths node validation is enabled'
+                        }
+                      >
+                        {normalizedAiPathsValidation.enabled === false
+                          ? 'Enable Node Validation'
+                          : 'Node Validation Enabled'}
                       </Button>
                       <Button
                         type='button'
@@ -1262,46 +1650,563 @@ export function AiPathsSettingsView(): React.JSX.Element {
           },
           {
             key: 'validationRules',
-            label: 'Validation Rules (JSON)',
+            label: 'Validation Rules',
             type: 'custom',
             render: () => (
-              <div className='space-y-2'>
-                <textarea
-                  value={validationRulesDraft}
-                  onChange={(event) => setValidationRulesDraft(event.target.value)}
-                  placeholder='[ { "id": "rule.id", ... } ]'
-                  className='min-h-[160px] w-full rounded-md border border-border bg-card/60 p-2 text-xs text-white'
-                  disabled={isPathLocked}
-                />
-                <div className='flex justify-end'>
-                  <Button
-                    type='button'
-                    className='h-8 rounded-md border border-border px-2 text-[11px] text-gray-200 hover:bg-card/70'
-                    onClick={() => {
-                      try {
-                        const parsed = JSON.parse(validationRulesDraft) as unknown;
-                        if (!Array.isArray(parsed)) {
-                          toast('Validation rules JSON must be an array.', {
-                            variant: 'error',
-                          });
-                          return;
-                        }
-                        setAiPathsValidation((previous: AiPathsValidationConfig) =>
-                          normalizeAiPathsValidationConfig({
+              <div className='space-y-3'>
+                <div className='rounded-md border border-border/60 bg-card/40 p-2'>
+                  <div className='mb-2 flex items-center justify-between gap-2'>
+                    <div className='text-[11px] font-medium text-gray-200'>
+                      Rule Builder (UI-first)
+                    </div>
+                    <Button
+                      type='button'
+                      className='h-8 rounded-md border border-border px-2 text-[11px] text-gray-200 hover:bg-card/70'
+                      onClick={handleRebuildValidationRulesFromDocs}
+                      disabled={isPathLocked}
+                    >
+                      Rebuild From Docs
+                    </Button>
+                  </div>
+                  <div className='grid grid-cols-1 gap-2 md:grid-cols-2'>
+                    <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                      Rule title
+                      <input
+                        type='text'
+                        value={validationRuleDraft.title}
+                        onChange={(event) =>
+                          setValidationRuleDraft((previous) => ({
                             ...previous,
-                            rules: parsed as AiPathsValidationConfig['rules'],
-                          }),
-                        );
-                      } catch {
-                        toast('Invalid validation rules JSON.', {
-                          variant: 'error',
-                        });
-                      }
-                    }}
+                            title: event.target.value,
+                          }))
+                        }
+                        placeholder='Simulation must have entity ID'
+                        className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                        disabled={isPathLocked}
+                      />
+                    </label>
+                    <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                      Module
+                      <SelectSimple
+                        size='sm'
+                        value={validationRuleDraft.module}
+                        onValueChange={(value: string): void => {
+                          if (
+                            VALIDATION_MODULE_OPTIONS.some(
+                              (entry) => entry.value === value,
+                            )
+                          ) {
+                            setValidationRuleDraft((previous) => ({
+                              ...previous,
+                              module: value as AiPathsValidationModule,
+                            }));
+                          }
+                        }}
+                        options={VALIDATION_MODULE_OPTIONS}
+                        triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
+                        disabled={isPathLocked}
+                      />
+                    </label>
+                    <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                      Severity
+                      <SelectSimple
+                        size='sm'
+                        value={validationRuleDraft.severity}
+                        onValueChange={(value: string): void => {
+                          if (
+                            VALIDATION_SEVERITY_OPTIONS.some(
+                              (entry) => entry.value === value,
+                            )
+                          ) {
+                            setValidationRuleDraft((previous) => ({
+                              ...previous,
+                              severity: value as AiPathsValidationSeverity,
+                            }));
+                          }
+                        }}
+                        options={VALIDATION_SEVERITY_OPTIONS}
+                        triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
+                        disabled={isPathLocked}
+                      />
+                    </label>
+                    <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                      Condition mode
+                      <SelectSimple
+                        size='sm'
+                        value={validationRuleDraft.conditionMode}
+                        onValueChange={(value: string): void => {
+                          if (value === 'all' || value === 'any') {
+                            setValidationRuleDraft((previous) => ({
+                              ...previous,
+                              conditionMode: value,
+                            }));
+                          }
+                        }}
+                        options={[
+                          { label: 'All conditions', value: 'all' },
+                          { label: 'Any condition', value: 'any' },
+                        ]}
+                        triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
+                        disabled={isPathLocked}
+                      />
+                    </label>
+                    <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                      Sequence (optional)
+                      <input
+                        type='number'
+                        value={validationRuleDraft.sequence}
+                        onChange={(event) =>
+                          setValidationRuleDraft((previous) => ({
+                            ...previous,
+                            sequence: event.target.value,
+                          }))
+                        }
+                        className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                        disabled={isPathLocked}
+                      />
+                    </label>
+                    <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                      Weight (optional)
+                      <input
+                        type='number'
+                        value={validationRuleDraft.weight}
+                        onChange={(event) =>
+                          setValidationRuleDraft((previous) => ({
+                            ...previous,
+                            weight: event.target.value,
+                          }))
+                        }
+                        className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                        disabled={isPathLocked}
+                      />
+                    </label>
+                    <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                      Max score if failed (optional)
+                      <input
+                        type='number'
+                        min={0}
+                        max={100}
+                        value={validationRuleDraft.forceProbabilityIfFailed}
+                        onChange={(event) =>
+                          setValidationRuleDraft((previous) => ({
+                            ...previous,
+                            forceProbabilityIfFailed: event.target.value,
+                          }))
+                        }
+                        className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                        disabled={isPathLocked}
+                      />
+                    </label>
+                    <label className='flex flex-col gap-1 text-[11px] text-gray-400 md:col-span-2'>
+                      Description (optional)
+                      <input
+                        type='text'
+                        value={validationRuleDraft.description}
+                        onChange={(event) =>
+                          setValidationRuleDraft((previous) => ({
+                            ...previous,
+                            description: event.target.value,
+                          }))
+                        }
+                        className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                        disabled={isPathLocked}
+                      />
+                    </label>
+                    <label className='flex flex-col gap-1 text-[11px] text-gray-400 md:col-span-2'>
+                      Recommendation (optional)
+                      <input
+                        type='text'
+                        value={validationRuleDraft.recommendation}
+                        onChange={(event) =>
+                          setValidationRuleDraft((previous) => ({
+                            ...previous,
+                            recommendation: event.target.value,
+                          }))
+                        }
+                        className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                        disabled={isPathLocked}
+                      />
+                    </label>
+                    <label className='flex flex-col gap-1 text-[11px] text-gray-400 md:col-span-2'>
+                      Applies to node types (comma/pipe/newline)
+                      <input
+                        type='text'
+                        value={validationRuleDraft.appliesToNodeTypes}
+                        onChange={(event) =>
+                          setValidationRuleDraft((previous) => ({
+                            ...previous,
+                            appliesToNodeTypes: event.target.value,
+                          }))
+                        }
+                        placeholder='simulation|database'
+                        className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                        disabled={isPathLocked}
+                      />
+                    </label>
+                    <label className='flex flex-col gap-1 text-[11px] text-gray-400 md:col-span-2'>
+                      Docs bindings (comma/pipe/newline)
+                      <input
+                        type='text'
+                        value={validationRuleDraft.docsBindings}
+                        onChange={(event) =>
+                          setValidationRuleDraft((previous) => ({
+                            ...previous,
+                            docsBindings: event.target.value,
+                          }))
+                        }
+                        placeholder='ai-paths:node-docs|ai-paths:quick-wiring'
+                        className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                        disabled={isPathLocked}
+                      />
+                    </label>
+                  </div>
+                  <div className='mt-3 rounded-md border border-border/60 bg-card/30 p-2'>
+                    <div className='mb-2 text-[11px] font-medium text-gray-200'>
+                      Condition Builder
+                    </div>
+                    <div className='grid grid-cols-1 gap-2 md:grid-cols-3'>
+                      <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                        Operator
+                        <SelectSimple
+                          size='sm'
+                          value={validationConditionDraft.operator}
+                          onValueChange={(value: string): void => {
+                            if (
+                              VALIDATION_OPERATOR_OPTIONS.some(
+                                (entry) => entry.value === value,
+                              )
+                            ) {
+                              setValidationConditionDraft((previous) => ({
+                                ...previous,
+                                operator: value as AiPathsValidationOperator,
+                              }));
+                            }
+                          }}
+                          options={VALIDATION_OPERATOR_OPTIONS}
+                          triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
+                          disabled={isPathLocked}
+                        />
+                      </label>
+                      <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                        Field
+                        <input
+                          type='text'
+                          value={validationConditionDraft.field}
+                          onChange={(event) =>
+                            setValidationConditionDraft((previous) => ({
+                              ...previous,
+                              field: event.target.value,
+                            }))
+                          }
+                          className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                          disabled={isPathLocked}
+                        />
+                      </label>
+                      <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                        Value path
+                        <input
+                          type='text'
+                          value={validationConditionDraft.valuePath}
+                          onChange={(event) =>
+                            setValidationConditionDraft((previous) => ({
+                              ...previous,
+                              valuePath: event.target.value,
+                            }))
+                          }
+                          className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                          disabled={isPathLocked}
+                        />
+                      </label>
+                      <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                        Expected value
+                        <input
+                          type='text'
+                          value={validationConditionDraft.expected}
+                          onChange={(event) =>
+                            setValidationConditionDraft((previous) => ({
+                              ...previous,
+                              expected: event.target.value,
+                            }))
+                          }
+                          className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                          disabled={isPathLocked}
+                        />
+                      </label>
+                      <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                        List values
+                        <input
+                          type='text'
+                          value={validationConditionDraft.list}
+                          onChange={(event) =>
+                            setValidationConditionDraft((previous) => ({
+                              ...previous,
+                              list: event.target.value,
+                            }))
+                          }
+                          placeholder='value_a|value_b'
+                          className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                          disabled={isPathLocked}
+                        />
+                      </label>
+                      <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                        Regex flags
+                        <input
+                          type='text'
+                          value={validationConditionDraft.flags}
+                          onChange={(event) =>
+                            setValidationConditionDraft((previous) => ({
+                              ...previous,
+                              flags: event.target.value,
+                            }))
+                          }
+                          placeholder='i'
+                          className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                          disabled={isPathLocked}
+                        />
+                      </label>
+                      <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                        Port
+                        <input
+                          type='text'
+                          value={validationConditionDraft.port}
+                          onChange={(event) =>
+                            setValidationConditionDraft((previous) => ({
+                              ...previous,
+                              port: event.target.value,
+                            }))
+                          }
+                          placeholder='entityId'
+                          className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                          disabled={isPathLocked}
+                        />
+                      </label>
+                      <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                        From port
+                        <input
+                          type='text'
+                          value={validationConditionDraft.fromPort}
+                          onChange={(event) =>
+                            setValidationConditionDraft((previous) => ({
+                              ...previous,
+                              fromPort: event.target.value,
+                            }))
+                          }
+                          className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                          disabled={isPathLocked}
+                        />
+                      </label>
+                      <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                        To port
+                        <input
+                          type='text'
+                          value={validationConditionDraft.toPort}
+                          onChange={(event) =>
+                            setValidationConditionDraft((previous) => ({
+                              ...previous,
+                              toPort: event.target.value,
+                            }))
+                          }
+                          className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                          disabled={isPathLocked}
+                        />
+                      </label>
+                      <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                        From node type
+                        <input
+                          type='text'
+                          value={validationConditionDraft.fromNodeType}
+                          onChange={(event) =>
+                            setValidationConditionDraft((previous) => ({
+                              ...previous,
+                              fromNodeType: event.target.value,
+                            }))
+                          }
+                          className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                          disabled={isPathLocked}
+                        />
+                      </label>
+                      <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                        To node type
+                        <input
+                          type='text'
+                          value={validationConditionDraft.toNodeType}
+                          onChange={(event) =>
+                            setValidationConditionDraft((previous) => ({
+                              ...previous,
+                              toNodeType: event.target.value,
+                            }))
+                          }
+                          className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                          disabled={isPathLocked}
+                        />
+                      </label>
+                      <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                        Source node ID
+                        <input
+                          type='text'
+                          value={validationConditionDraft.sourceNodeId}
+                          onChange={(event) =>
+                            setValidationConditionDraft((previous) => ({
+                              ...previous,
+                              sourceNodeId: event.target.value,
+                            }))
+                          }
+                          className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                          disabled={isPathLocked}
+                        />
+                      </label>
+                      <label className='flex flex-col gap-1 text-[11px] text-gray-400'>
+                        Target node ID
+                        <input
+                          type='text'
+                          value={validationConditionDraft.targetNodeId}
+                          onChange={(event) =>
+                            setValidationConditionDraft((previous) => ({
+                              ...previous,
+                              targetNodeId: event.target.value,
+                            }))
+                          }
+                          className='h-9 rounded-md border border-border bg-card/60 px-2 text-xs text-white'
+                          disabled={isPathLocked}
+                        />
+                      </label>
+                    </div>
+                    <div className='mt-2 flex items-center justify-between gap-2'>
+                      <label className='flex items-center gap-2 text-[11px] text-gray-300'>
+                        <input
+                          type='checkbox'
+                          checked={validationConditionDraft.negate}
+                          onChange={(event) =>
+                            setValidationConditionDraft((previous) => ({
+                              ...previous,
+                              negate: event.target.checked,
+                            }))
+                          }
+                          disabled={isPathLocked}
+                        />
+                        Negate condition
+                      </label>
+                      <Button
+                        type='button'
+                        className='h-8 rounded-md border border-border px-2 text-[11px] text-gray-200 hover:bg-card/70'
+                        onClick={handleAddValidationConditionDraft}
+                        disabled={isPathLocked}
+                      >
+                        Add Condition
+                      </Button>
+                    </div>
+                    {validationRuleConditionsDraft.length > 0 ? (
+                      <div className='mt-2 space-y-1'>
+                        {validationRuleConditionsDraft.map((condition) => (
+                          <div
+                            key={condition.id}
+                            className='flex items-center justify-between gap-2 rounded-md border border-border/50 bg-card/60 px-2 py-1 text-[11px]'
+                          >
+                            <div className='truncate text-gray-200'>
+                              {condition.id} · {condition.operator}
+                            </div>
+                            <Button
+                              type='button'
+                              className='h-7 rounded-md border border-border px-2 text-[10px] text-gray-200 hover:bg-card/70'
+                              onClick={() =>
+                                setValidationRuleConditionsDraft((previous) =>
+                                  previous.filter(
+                                    (entry) => entry.id !== condition.id,
+                                  ),
+                                )
+                              }
+                              disabled={isPathLocked}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className='mt-2 text-[11px] text-gray-400'>
+                        No draft conditions yet.
+                      </div>
+                    )}
+                  </div>
+                  <div className='mt-3 flex justify-end'>
+                    <Button
+                      type='button'
+                      className='h-8 rounded-md border border-border px-2 text-[11px] text-gray-200 hover:bg-card/70'
+                      onClick={handleAddValidationRuleDraft}
+                      disabled={isPathLocked}
+                    >
+                      Add Rule
+                    </Button>
+                  </div>
+                </div>
+                <div className='rounded-md border border-border/60 bg-card/40 p-2'>
+                  <div className='mb-2 text-[11px] font-medium text-gray-200'>
+                    Active Rules ({validationRules.length})
+                  </div>
+                  {validationRules.length > 0 ? (
+                    <div className='max-h-[220px] space-y-1 overflow-y-auto'>
+                      {validationRules.map((rule) => (
+                        <div
+                          key={rule.id}
+                          className='rounded-md border border-border/50 bg-card/60 px-2 py-1.5 text-[11px]'
+                        >
+                          <div className='flex items-center justify-between gap-2'>
+                            <div className='font-medium text-gray-100'>{rule.title}</div>
+                            <div className='flex items-center gap-1'>
+                              <Button
+                                type='button'
+                                className='h-7 rounded-md border border-border px-2 text-[10px] text-gray-200 hover:bg-card/70'
+                                onClick={() =>
+                                  handleToggleValidationRuleEnabled(rule.id)
+                                }
+                                disabled={isPathLocked}
+                              >
+                                {rule.enabled === false ? 'Enable' : 'Disable'}
+                              </Button>
+                              <Button
+                                type='button'
+                                className='h-7 rounded-md border border-border px-2 text-[10px] text-rose-200 hover:bg-rose-500/10'
+                                onClick={() => handleDeleteValidationRule(rule.id)}
+                                disabled={isPathLocked}
+                              >
+                                Remove
+                              </Button>
+                            </div>
+                          </div>
+                          <div className='mt-0.5 text-gray-400'>
+                            {rule.module} · {rule.severity} · seq {rule.sequence ?? 0} ·
+                            {` ${rule.conditions.length} condition(s)`}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className='text-[11px] text-gray-400'>
+                      No rules configured.
+                    </div>
+                  )}
+                </div>
+                <div className='rounded-md border border-border/60 bg-card/40 p-2'>
+                  <div className='mb-2 text-[11px] font-medium text-gray-200'>
+                    Advanced Rules JSON
+                  </div>
+                  <textarea
+                    value={validationRulesDraft}
+                    onChange={(event) => setValidationRulesDraft(event.target.value)}
+                    placeholder='[ { \"id\": \"rule.id\", ... } ]'
+                    className='min-h-[160px] w-full rounded-md border border-border bg-card/60 p-2 text-xs text-white'
                     disabled={isPathLocked}
-                  >
-                    Apply Rules JSON
-                  </Button>
+                  />
+                  <div className='mt-2 flex justify-end'>
+                    <Button
+                      type='button'
+                      className='h-8 rounded-md border border-border px-2 text-[11px] text-gray-200 hover:bg-card/70'
+                      onClick={handleApplyValidationRulesJson}
+                      disabled={isPathLocked}
+                    >
+                      Apply Rules JSON
+                    </Button>
+                  </div>
                 </div>
               </div>
             )
@@ -1311,8 +2216,13 @@ export function AiPathsSettingsView(): React.JSX.Element {
             label: 'Validation Preview',
             type: 'custom',
             render: () => (
-              <div className='space-y-2'>
+              <div className='space-y-3'>
                 <div className='flex flex-wrap items-center gap-2 text-[11px]'>
+                  <StatusBadge
+                    status={`Schema v${validationPreflightReport.schemaVersion}`}
+                    variant='neutral'
+                    size='sm'
+                  />
                   <StatusBadge
                     status={`Score: ${validationPreflightReport.score}`}
                     variant={
@@ -1329,6 +2239,11 @@ export function AiPathsSettingsView(): React.JSX.Element {
                     variant={
                       validationPreflightReport.failedRules > 0 ? 'warning' : 'neutral'
                     }
+                    size='sm'
+                  />
+                  <StatusBadge
+                    status={`Skipped rules: ${validationPreflightReport.skippedRuleIds.length}`}
+                    variant='neutral'
                     size='sm'
                   />
                   <StatusBadge
@@ -1349,6 +2264,29 @@ export function AiPathsSettingsView(): React.JSX.Element {
                     size='sm'
                   />
                 </div>
+                {validationModuleImpact.length > 0 ? (
+                  <div className='rounded-md border border-border/60 bg-card/40 p-2'>
+                    <div className='mb-1 text-[11px] font-medium text-gray-200'>
+                      Module impact
+                    </div>
+                    <div className='max-h-[140px] space-y-1 overflow-y-auto'>
+                      {validationModuleImpact.map((impact) => (
+                        <div
+                          key={impact.module}
+                          className='rounded-md border border-border/50 bg-card/60 px-2 py-1 text-[11px]'
+                        >
+                          <div className='font-medium text-gray-100'>
+                            {impact.module}
+                          </div>
+                          <div className='text-gray-400'>
+                            eval {impact.rulesEvaluated} · failed {impact.failedRules} ·
+                            penalty {impact.scorePenalty}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
                 {validationPreflightReport.findings.length > 0 ? (
                   <div className='max-h-[180px] space-y-1 overflow-y-auto rounded-md border border-border/60 bg-card/40 p-2'>
                     {validationPreflightReport.findings
@@ -1375,6 +2313,30 @@ export function AiPathsSettingsView(): React.JSX.Element {
                     Validation preflight reports no findings for the current graph.
                   </div>
                 )}
+                {validationPreflightReport.recommendations.length > 0 ? (
+                  <div className='rounded-md border border-border/60 bg-card/40 p-2'>
+                    <div className='mb-1 text-[11px] font-medium text-gray-200'>
+                      Recommendations
+                    </div>
+                    <div className='max-h-[140px] space-y-1 overflow-y-auto'>
+                      {validationPreflightReport.recommendations
+                        .slice(0, 8)
+                        .map((recommendation) => (
+                          <div
+                            key={recommendation.id}
+                            className='rounded-md border border-border/50 bg-card/60 px-2 py-1 text-[11px]'
+                          >
+                            <div className='font-medium text-gray-100'>
+                              {recommendation.ruleId}
+                            </div>
+                            <div className='text-gray-300'>
+                              {recommendation.recommendation}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             )
           },

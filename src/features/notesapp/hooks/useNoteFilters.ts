@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 import type { UseNoteFiltersProps } from '@/features/notesapp/types/notes-hooks';
-import type { NoteWithRelations } from '@/shared/types/domain/notes';
+import type { NoteWithRelationsDto as NoteWithRelations } from '@/shared/contracts/notes';
 
 export type UseNoteFiltersResult = {
   searchQuery: string;

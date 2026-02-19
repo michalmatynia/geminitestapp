@@ -8,6 +8,7 @@ import type {
 
 import { DB_COLLECTION_OPTIONS } from '../constants';
 import {
+  AI_PATHS_VALIDATION_SCHEMA_VERSION,
   normalizeAiPathsValidationConfig,
 } from './defaults';
 
@@ -25,7 +26,28 @@ export type AiPathsValidationFinding = {
   failedConditionIds: string[];
 };
 
+export type AiPathsValidationRecommendation = {
+  id: string;
+  ruleId: string;
+  module: string;
+  severity: 'error' | 'warning' | 'info';
+  message: string;
+  recommendation: string;
+  nodeId: string | null;
+  nodeTitle: string | null;
+};
+
+export type AiPathsValidationModuleImpact = {
+  module: string;
+  rulesEvaluated: number;
+  failedRules: number;
+  scorePenalty: number;
+  severityCounts: Record<'error' | 'warning' | 'info', number>;
+};
+
 export type AiPathsValidationReport = {
+  schemaVersion: number;
+  evaluatedAt: string;
   enabled: boolean;
   policy: NonNullable<AiPathsValidationConfig['policy']>;
   score: number;
@@ -36,7 +58,16 @@ export type AiPathsValidationReport = {
   rulesEvaluated: number;
   failedRules: number;
   findings: AiPathsValidationFinding[];
+  recommendations: AiPathsValidationRecommendation[];
   severityCounts: Record<'error' | 'warning' | 'info', number>;
+  graphStats: {
+    nodes: number;
+    edges: number;
+    byType: Record<string, number>;
+  };
+  moduleImpact: Record<string, AiPathsValidationModuleImpact>;
+  appliedRuleIds: string[];
+  skippedRuleIds: string[];
 };
 
 export type EvaluateAiPathsValidationInput = {
@@ -52,17 +83,14 @@ const DEFAULT_SEVERITY_WEIGHT: Record<'error' | 'warning' | 'info', number> = {
 };
 
 const COLLECTION_ALLOWLIST = new Set(
-  DB_COLLECTION_OPTIONS.map((option) => option.value)
+  DB_COLLECTION_OPTIONS.map((option) => option.value),
 );
 
 const clampScore = (value: number): number =>
   Math.max(0, Math.min(100, Math.trunc(value)));
 
 const normalizePathToken = (value: string): string =>
-  value
-    .trim()
-    .replace(/^\$\./, '')
-    .replace(/^\$\[/, '[');
+  value.trim().replace(/^\$\./, '').replace(/^\$\[/, '[');
 
 const resolvePathValue = (input: unknown, path: string | undefined): unknown => {
   if (!path?.trim()) return input;
@@ -102,18 +130,29 @@ const hasMeaningfulValue = (value: unknown): boolean => {
   if (typeof value === 'number') return Number.isFinite(value);
   if (typeof value === 'boolean') return true;
   if (Array.isArray(value)) return value.length > 0;
-  if (typeof value === 'object') return Object.keys(value as Record<string, unknown>).length > 0;
+  if (typeof value === 'object') {
+    return Object.keys(value as Record<string, unknown>).length > 0;
+  }
   return false;
 };
 
-const buildGraphContext = (nodes: AiNode[], edges: Edge[]): Record<string, unknown> => {
+const buildGraphContext = (
+  nodes: AiNode[],
+  edges: Edge[],
+): {
+  counts: {
+    nodes: number;
+    edges: number;
+    byType: Record<string, number>;
+  };
+} => {
   const countsByType = nodes.reduce<Record<string, number>>(
     (acc: Record<string, number>, node: AiNode): Record<string, number> => {
       const key = node.type;
       acc[key] = (acc[key] ?? 0) + 1;
       return acc;
     },
-    {}
+    {},
   );
   return {
     counts: {
@@ -134,18 +173,24 @@ const normalizeEntityType = (value: unknown): string => {
 
 const edgeToNodeId = (edge: Edge): string | null => {
   if (typeof edge.to === 'string' && edge.to.trim().length > 0) return edge.to;
-  if (typeof edge.target === 'string' && edge.target.trim().length > 0) return edge.target;
+  if (typeof edge.target === 'string' && edge.target.trim().length > 0) {
+    return edge.target;
+  }
   return null;
 };
 
 const edgeFromNodeId = (edge: Edge): string | null => {
   if (typeof edge.from === 'string' && edge.from.trim().length > 0) return edge.from;
-  if (typeof edge.source === 'string' && edge.source.trim().length > 0) return edge.source;
+  if (typeof edge.source === 'string' && edge.source.trim().length > 0) {
+    return edge.source;
+  }
   return null;
 };
 
 const edgeToPort = (edge: Edge): string | null => {
-  if (typeof edge.toPort === 'string' && edge.toPort.trim().length > 0) return edge.toPort;
+  if (typeof edge.toPort === 'string' && edge.toPort.trim().length > 0) {
+    return edge.toPort;
+  }
   if (typeof edge.targetHandle === 'string' && edge.targetHandle.trim().length > 0) {
     return edge.targetHandle;
   }
@@ -153,7 +198,9 @@ const edgeToPort = (edge: Edge): string | null => {
 };
 
 const edgeFromPort = (edge: Edge): string | null => {
-  if (typeof edge.fromPort === 'string' && edge.fromPort.trim().length > 0) return edge.fromPort;
+  if (typeof edge.fromPort === 'string' && edge.fromPort.trim().length > 0) {
+    return edge.fromPort;
+  }
   if (typeof edge.sourceHandle === 'string' && edge.sourceHandle.trim().length > 0) {
     return edge.sourceHandle;
   }
@@ -183,7 +230,10 @@ const evaluateCondition = (args: {
     switch (condition.operator) {
       case 'exists': {
         if (rule.module === 'graph') {
-          return resolvePathValue(graphContext, condition.valuePath ?? condition.field) !== undefined;
+          return (
+            resolvePathValue(graphContext, condition.valuePath ?? condition.field) !==
+            undefined
+          );
         }
         if (!node) return false;
         return resolvePathValue(node, condition.valuePath ?? condition.field) !== undefined;
@@ -191,32 +241,40 @@ const evaluateCondition = (args: {
       case 'non_empty': {
         if (rule.module === 'graph') {
           return hasMeaningfulValue(
-            resolvePathValue(graphContext, condition.valuePath ?? condition.field)
+            resolvePathValue(graphContext, condition.valuePath ?? condition.field),
           );
         }
         if (!node) return false;
-        return hasMeaningfulValue(resolvePathValue(node, condition.valuePath ?? condition.field));
+        return hasMeaningfulValue(
+          resolvePathValue(node, condition.valuePath ?? condition.field),
+        );
       }
       case 'equals': {
         if (rule.module === 'graph') {
-          return resolvePathValue(graphContext, condition.valuePath ?? condition.field) === condition.expected;
+          return (
+            resolvePathValue(graphContext, condition.valuePath ?? condition.field) ===
+            condition.expected
+          );
         }
         if (!node) return false;
-        return resolvePathValue(node, condition.valuePath ?? condition.field) === condition.expected;
+        return (
+          resolvePathValue(node, condition.valuePath ?? condition.field) ===
+          condition.expected
+        );
       }
       case 'in': {
-        const list =
-          Array.isArray(condition.list)
-            ? condition.list
-            : Array.isArray(condition.expected)
-              ? (condition.expected as string[])
-              : [];
+        const list = Array.isArray(condition.list)
+          ? condition.list
+          : Array.isArray(condition.expected)
+            ? (condition.expected as string[])
+            : [];
         if (list.length === 0) return false;
-        const value = rule.module === 'graph'
-          ? resolvePathValue(graphContext, condition.valuePath ?? condition.field)
-          : node
-            ? resolvePathValue(node, condition.valuePath ?? condition.field)
-            : undefined;
+        const value =
+          rule.module === 'graph'
+            ? resolvePathValue(graphContext, condition.valuePath ?? condition.field)
+            : node
+              ? resolvePathValue(node, condition.valuePath ?? condition.field)
+              : undefined;
         return list.includes(toText(value));
       }
       case 'matches_regex': {
@@ -233,24 +291,25 @@ const evaluateCondition = (args: {
         } catch {
           return false;
         }
-        const value = rule.module === 'graph'
-          ? resolvePathValue(graphContext, condition.valuePath ?? condition.field)
-          : node
-            ? resolvePathValue(node, condition.valuePath ?? condition.field)
-            : undefined;
+        const value =
+          rule.module === 'graph'
+            ? resolvePathValue(graphContext, condition.valuePath ?? condition.field)
+            : node
+              ? resolvePathValue(node, condition.valuePath ?? condition.field)
+              : undefined;
         return regex.test(toText(value));
       }
       case 'jsonpath_exists': {
         const value = resolvePathValue(
           rule.module === 'graph' ? graphContext : node,
-          condition.valuePath ?? condition.field
+          condition.valuePath ?? condition.field,
         );
         return value !== undefined;
       }
       case 'jsonpath_equals': {
         const value = resolvePathValue(
           rule.module === 'graph' ? graphContext : node,
-          condition.valuePath ?? condition.field
+          condition.valuePath ?? condition.field,
         );
         if (typeof condition.expected === 'number' && typeof value === 'number') {
           return value >= condition.expected;
@@ -309,14 +368,14 @@ const evaluateCondition = (args: {
         if (!node) return false;
         const raw = resolvePathValue(
           node,
-          condition.field ?? condition.valuePath ?? 'config.database.query.collection'
+          condition.field ?? condition.valuePath ?? 'config.database.query.collection',
         );
         return isAllowedCollection(toText(raw));
       }
       case 'entity_collection_resolves': {
         if (!node) return false;
         const entityType = normalizeEntityType(
-          resolvePathValue(node, 'config.simulation.entityType')
+          resolvePathValue(node, 'config.simulation.entityType'),
         );
         const entityId =
           toText(resolvePathValue(node, 'config.simulation.entityId')).trim() ||
@@ -364,24 +423,44 @@ const evaluateRuleForNode = (args: {
 }): { passed: boolean; failedConditions: string[] } => {
   const { rule, node, nodesById, edges, graphContext, config } = args;
   const mode = rule.conditionMode === 'any' ? 'any' : 'all';
-  const checks = rule.conditions.map((condition: AiPathsValidationCondition): boolean =>
-    evaluateCondition({
-      condition,
-      rule,
-      node,
-      nodesById,
-      edges,
-      graphContext,
-      config,
-    })
+  const checks = rule.conditions.map(
+    (condition: AiPathsValidationCondition): boolean =>
+      evaluateCondition({
+        condition,
+        rule,
+        node,
+        nodesById,
+        edges,
+        graphContext,
+        config,
+      }),
   );
   const passed =
-    mode === 'any' ? checks.some((value: boolean): boolean => value) : checks.every((value: boolean): boolean => value);
+    mode === 'any'
+      ? checks.some((value: boolean): boolean => value)
+      : checks.every((value: boolean): boolean => value);
   const failedConditions = rule.conditions
-    .filter((condition: AiPathsValidationCondition, index: number): boolean => !checks[index])
+    .filter(
+      (condition: AiPathsValidationCondition, index: number): boolean =>
+        !checks[index],
+    )
     .map((condition: AiPathsValidationCondition): string => condition.id);
   return { passed, failedConditions };
 };
+
+const createEmptySeverityCounts = (): Record<'error' | 'warning' | 'info', number> => ({
+  error: 0,
+  warning: 0,
+  info: 0,
+});
+
+const createEmptyModuleImpact = (module: string): AiPathsValidationModuleImpact => ({
+  module,
+  rulesEvaluated: 0,
+  failedRules: 0,
+  scorePenalty: 0,
+  severityCounts: createEmptySeverityCounts(),
+});
 
 export const evaluateAiPathsValidationPreflight = ({
   nodes,
@@ -395,8 +474,14 @@ export const evaluateAiPathsValidationPreflight = ({
       ? clampScore(normalizedConfig.baseScore)
       : 100;
 
+  const evaluatedAt = new Date().toISOString();
+  const graphContext = buildGraphContext(nodes, edges);
+
   if (!normalizedConfig.enabled) {
     return {
+      schemaVersion:
+        normalizedConfig.schemaVersion ?? AI_PATHS_VALIDATION_SCHEMA_VERSION,
+      evaluatedAt,
       enabled: false,
       policy,
       score: 100,
@@ -407,14 +492,22 @@ export const evaluateAiPathsValidationPreflight = ({
       rulesEvaluated: 0,
       failedRules: 0,
       findings: [],
-      severityCounts: { error: 0, warning: 0, info: 0 },
+      recommendations: [],
+      severityCounts: createEmptySeverityCounts(),
+      graphStats: {
+        nodes: graphContext.counts.nodes,
+        edges: graphContext.counts.edges,
+        byType: graphContext.counts.byType,
+      },
+      moduleImpact: {},
+      appliedRuleIds: [],
+      skippedRuleIds: [],
     };
   }
 
   const nodesById = new Map<string, AiNode>(
-    nodes.map((node: AiNode): [string, AiNode] => [node.id, node])
+    nodes.map((node: AiNode): [string, AiNode] => [node.id, node]),
   );
-  const graphContext = buildGraphContext(nodes, edges);
   const orderedRules = (normalizedConfig.rules ?? [])
     .filter((rule: AiPathsValidationRule): boolean => rule.enabled !== false)
     .slice()
@@ -426,12 +519,25 @@ export const evaluateAiPathsValidationPreflight = ({
     });
 
   const findings: AiPathsValidationFinding[] = [];
+  const moduleImpactMap = new Map<string, AiPathsValidationModuleImpact>();
+  const appliedRuleIds = new Set<string>();
+  const skippedRuleIds = new Set<string>();
   let score = baseScore;
   let rulesEvaluated = 0;
   let failedRules = 0;
 
-  const evaluateAndCollectFinding = (rule: AiPathsValidationRule, node: AiNode | null): void => {
+  const evaluateAndCollectFinding = (
+    rule: AiPathsValidationRule,
+    node: AiNode | null,
+  ): void => {
     rulesEvaluated += 1;
+    appliedRuleIds.add(rule.id);
+
+    const moduleKey = rule.module ?? 'custom';
+    const moduleImpact =
+      moduleImpactMap.get(moduleKey) ?? createEmptyModuleImpact(moduleKey);
+    moduleImpact.rulesEvaluated += 1;
+
     const evaluation = evaluateRuleForNode({
       rule,
       node,
@@ -440,14 +546,23 @@ export const evaluateAiPathsValidationPreflight = ({
       graphContext,
       config: normalizedConfig,
     });
-    if (evaluation.passed) return;
+    if (evaluation.passed) {
+      moduleImpactMap.set(moduleKey, moduleImpact);
+      return;
+    }
 
     failedRules += 1;
+    moduleImpact.failedRules += 1;
+
+    const severity = rule.severity ?? 'warning';
     const weight =
       typeof rule.weight === 'number' && Number.isFinite(rule.weight)
         ? Math.max(0, Math.trunc(rule.weight))
-        : DEFAULT_SEVERITY_WEIGHT[rule.severity ?? 'warning'];
+        : DEFAULT_SEVERITY_WEIGHT[severity];
+
     score = clampScore(score - weight);
+    moduleImpact.scorePenalty += weight;
+    moduleImpact.severityCounts[severity] += 1;
 
     if (
       typeof rule.forceProbabilityIfFailed === 'number' &&
@@ -460,7 +575,7 @@ export const evaluateAiPathsValidationPreflight = ({
       id: `${rule.id}:${node?.id ?? 'graph'}`,
       ruleId: rule.id,
       ruleTitle: rule.title,
-      severity: rule.severity ?? 'warning',
+      severity,
       module: rule.module,
       nodeId: node?.id ?? null,
       nodeTitle: node?.title ?? null,
@@ -469,6 +584,8 @@ export const evaluateAiPathsValidationPreflight = ({
       docsBindings: Array.isArray(rule.docsBindings) ? rule.docsBindings : [],
       failedConditionIds: evaluation.failedConditions,
     });
+
+    moduleImpactMap.set(moduleKey, moduleImpact);
   };
 
   orderedRules.forEach((rule: AiPathsValidationRule): void => {
@@ -477,9 +594,11 @@ export const evaluateAiPathsValidationPreflight = ({
       return;
     }
 
-    const matchingNodes = nodes.filter((node: AiNode): boolean => matchesRuleNode(rule, node));
+    const matchingNodes = nodes.filter((node: AiNode): boolean =>
+      matchesRuleNode(rule, node),
+    );
     if (matchingNodes.length === 0) {
-      // Node-scoped rule with no matching nodes is treated as not-applicable.
+      skippedRuleIds.add(rule.id);
       return;
     }
     matchingNodes.forEach((node: AiNode): void => {
@@ -488,13 +607,39 @@ export const evaluateAiPathsValidationPreflight = ({
   });
 
   const severityCounts = findings.reduce<Record<'error' | 'warning' | 'info', number>>(
-    (acc: Record<'error' | 'warning' | 'info', number>, finding: AiPathsValidationFinding) => {
+    (
+      acc: Record<'error' | 'warning' | 'info', number>,
+      finding: AiPathsValidationFinding,
+    ) => {
       const key = finding.severity;
       acc[key] = (acc[key] ?? 0) + 1;
       return acc;
     },
-    { error: 0, warning: 0, info: 0 }
+    createEmptySeverityCounts(),
   );
+
+  const recommendations = findings
+    .filter(
+      (
+        finding: AiPathsValidationFinding,
+      ): finding is AiPathsValidationFinding & { recommendation: string } =>
+        typeof finding.recommendation === 'string' &&
+        finding.recommendation.trim().length > 0,
+    )
+    .map(
+      (
+        finding: AiPathsValidationFinding & { recommendation: string },
+      ): AiPathsValidationRecommendation => ({
+        id: `${finding.ruleId}:${finding.nodeId ?? 'graph'}:recommendation`,
+        ruleId: finding.ruleId,
+        module: finding.module,
+        severity: finding.severity,
+        message: finding.message,
+        recommendation: finding.recommendation,
+        nodeId: finding.nodeId,
+        nodeTitle: finding.nodeTitle,
+      }),
+    );
 
   const warnThreshold = normalizedConfig.warnThreshold ?? 70;
   const blockThreshold = normalizedConfig.blockThreshold ?? 50;
@@ -507,6 +652,8 @@ export const evaluateAiPathsValidationPreflight = ({
         : severityCounts.warning > 0 || severityCounts.error > 0;
 
   return {
+    schemaVersion: normalizedConfig.schemaVersion ?? AI_PATHS_VALIDATION_SCHEMA_VERSION,
+    evaluatedAt,
     enabled: true,
     policy,
     score,
@@ -517,6 +664,15 @@ export const evaluateAiPathsValidationPreflight = ({
     rulesEvaluated,
     failedRules,
     findings,
+    recommendations,
     severityCounts,
+    graphStats: {
+      nodes: graphContext.counts.nodes,
+      edges: graphContext.counts.edges,
+      byType: graphContext.counts.byType,
+    },
+    moduleImpact: Object.fromEntries(moduleImpactMap.entries()),
+    appliedRuleIds: Array.from(appliedRuleIds),
+    skippedRuleIds: Array.from(skippedRuleIds),
   };
 };

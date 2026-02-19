@@ -8,7 +8,7 @@ import { useCreateIntegration } from '@/features/integrations/hooks/useIntegrati
 import { useIntegrations } from '@/features/integrations/hooks/useIntegrationQueries';
 import type { Integration } from '@/features/integrations/types/integrations-ui';
 import { logClientError } from '@/features/observability';
-import { useToast, Button, SectionHeader, StatusBadge } from '@/shared/ui';
+import { useToast, Button, SectionHeader, StatusBadge, SimpleSettingsList } from '@/shared/ui';
 
 const AVAILABLE_INTEGRATIONS = [
   {
@@ -93,55 +93,47 @@ export default function AddIntegrationPage(): React.JSX.Element {
         className='mb-6'
       />
 
-      <div className='grid gap-6 md:grid-cols-2'>
-        {AVAILABLE_INTEGRATIONS.map((integration: (typeof AVAILABLE_INTEGRATIONS)[number]) => (
-          <div
-            key={integration.slug}
-            className='rounded-xl border bg-card p-5'
+      <SimpleSettingsList
+        items={AVAILABLE_INTEGRATIONS.map((integration) => ({
+          id: integration.slug,
+          title: integration.name,
+          description: integration.description,
+          original: integration,
+        }))}
+        isLoading={integrationsQuery.isLoading}
+        columns={2}
+        renderActions={(item) => (
+          <Button
+            size='sm'
+            disabled={createIntegrationMutation.isPending}
+            onClick={() => { void handleAdd(item.original); }}
           >
-            <div className='flex items-start justify-between'>
-              <div>
-                <h2 className='text-xl font-semibold text-white'>
-                  {integration.name}
-                </h2>
-                <p className='mt-2 text-sm text-gray-400'>
-                  {integration.description}
-                </p>
-              </div>
-              <div className='flex flex-col items-end gap-2'>
-                <StatusBadge
-                  status={integration.type === 'marketplace' ? 'Marketplace' : 'Platform'}
-                  variant={integration.type === 'marketplace' ? 'success' : 'processing'}
-                  size='sm'
-                  className='font-semibold'
-                />
-                <StatusBadge
-                  status={integration.method === 'api' ? 'API' : 'Browser'}
-                  variant={integration.method === 'api' ? 'info' : 'warning'}
-                  size='sm'
-                  className='font-semibold'
-                />
-                <StatusBadge
-                  status={`Added: ${integrationCounts[integration.slug] ?? 0}`}
-                  variant='neutral'
-                  size='sm'
-                  className='font-semibold'
-                />
-              </div>
-            </div>
-            <div className='mt-6 flex justify-end'>
-              <Button
-                className='rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200'
-                type='button'
-                disabled={createIntegrationMutation.isPending}
-                onClick={() => { void handleAdd(integration); }}
-              >
-                  Add
-              </Button>
-            </div>
+            Add
+          </Button>
+        )}
+        renderCustomContent={(item) => (
+          <div className='flex items-center gap-2 mt-2'>
+            <StatusBadge
+              status={item.original.type === 'marketplace' ? 'Marketplace' : 'Platform'}
+              variant={item.original.type === 'marketplace' ? 'success' : 'processing'}
+              size='sm'
+              className='font-semibold'
+            />
+            <StatusBadge
+              status={item.original.method === 'api' ? 'API' : 'Browser'}
+              variant={item.original.method === 'api' ? 'info' : 'warning'}
+              size='sm'
+              className='font-semibold'
+            />
+            <StatusBadge
+              status={`Added: ${integrationCounts[item.original.slug] ?? 0}`}
+              variant='neutral'
+              size='sm'
+              className='font-semibold'
+            />
           </div>
-        ))}
-      </div>
+        )}
+      />
     </div>
   );
 }

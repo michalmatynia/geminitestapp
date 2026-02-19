@@ -1,32 +1,11 @@
-export type PromptValidationTimingName =
-  | 'scope_resolve_ms'
-  | 'runtime_select_ms'
-  | 'runtime_compile_ms'
-  | 'explode_ms'
-  | 'runtime_pipeline_ms'
-  | 'validator_ms'
-  | 'formatter_ms';
-
-export type PromptValidationErrorName =
-  | 'scope_resolution'
-  | 'rule_compile'
-  | 'runtime_execution';
-
-export type PromptValidationCounterName =
-  | 'runtime_selection_total'
-  | 'runtime_selection_fallback'
-  | 'runtime_cache_hit'
-  | 'runtime_cache_miss'
-  | 'runtime_case_resolver_pack_fallback'
-  | 'runtime_fast_path_hit'
-  | 'runtime_fast_path_miss'
-  | 'runtime_inflight_dedup_hit'
-  | 'runtime_inflight_dedup_miss'
-  | 'runtime_retry'
-  | 'runtime_retry_success'
-  | 'runtime_timeout'
-  | 'runtime_backpressure_drop'
-  | 'runtime_circuit_break_open';
+import type {
+  PromptValidationTimingNameDto as PromptValidationTimingName,
+  PromptValidationErrorNameDto as PromptValidationErrorName,
+  PromptValidationCounterNameDto as PromptValidationCounterName,
+  PromptValidationRuntimeSloTargetsDto as PromptValidationRuntimeSloTargets,
+  PromptValidationRuntimeHealthDto as PromptValidationRuntimeHealth,
+  PromptValidationObservabilitySnapshotDto as PromptValidationObservabilitySnapshot,
+} from '@/shared/contracts/prompt-engine';
 
 type PromptValidationTimingMetric = {
   name: PromptValidationTimingName;
@@ -116,30 +95,12 @@ const getCounterValue = (name: PromptValidationCounterName): number =>
     .filter((metric) => metric.name === name)
     .reduce((acc, metric) => acc + metric.value, 0);
 
-export type PromptValidationRuntimeSloTargets = {
-  p95PipelineMs: number;
-  p95ExplodeMs: number;
-  p95CompileMs: number;
-  maxErrorRate: number;
-  maxFallbackRate: number;
-};
-
 export const PROMPT_VALIDATION_RUNTIME_SLO_TARGETS: PromptValidationRuntimeSloTargets = {
   p95PipelineMs: 120,
   p95ExplodeMs: 100,
   p95CompileMs: 40,
   maxErrorRate: 0.005,
   maxFallbackRate: 0.01,
-};
-
-export type PromptValidationRuntimeHealth = {
-  status: 'ok' | 'degraded' | 'critical';
-  checks: Array<{
-    name: string;
-    ok: boolean;
-    value: number;
-    target: number;
-  }>;
 };
 
 const toRate = (numerator: number, denominator: number): number => {
@@ -208,21 +169,7 @@ const evaluateRuntimeHealth = (args: {
 
 export const getPromptValidationObservabilitySnapshot = (
   metricName?: PromptValidationTimingName
-): {
-  generatedAt: string;
-  metrics: Array<{
-    name: PromptValidationTimingName;
-    count: number;
-    avgMs: number;
-    p50Ms: number;
-    p95Ms: number;
-    maxMs: number;
-  }>;
-  counters: Record<PromptValidationCounterName, number>;
-  sloTargets: PromptValidationRuntimeSloTargets;
-  health: PromptValidationRuntimeHealth;
-  errors: Record<PromptValidationErrorName, number>;
-} => {
+): PromptValidationObservabilitySnapshot => {
   const grouped = new Map<PromptValidationTimingName, number[]>();
   timings.forEach((metric) => {
     if (metricName && metric.name !== metricName) return;

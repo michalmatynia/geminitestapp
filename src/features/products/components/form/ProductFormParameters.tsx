@@ -49,6 +49,25 @@ const normalizeLanguageCode = (value: unknown): string => {
   return value.trim().toLowerCase();
 };
 
+const getParameterLanguageValue = (
+  entry: ProductParameterValue,
+  languageCode: string,
+  primaryLanguageCode: string
+): string => {
+  const normalizedLanguageCode = normalizeLanguageCode(languageCode);
+  if (!normalizedLanguageCode) return '';
+  const valuesByLanguage =
+    entry.valuesByLanguage &&
+    typeof entry.valuesByLanguage === 'object' &&
+    !Array.isArray(entry.valuesByLanguage)
+      ? entry.valuesByLanguage
+      : null;
+  const localizedValue = valuesByLanguage?.[normalizedLanguageCode];
+  if (typeof localizedValue === 'string') return localizedValue;
+  if (normalizedLanguageCode !== primaryLanguageCode) return '';
+  return typeof entry.value === 'string' ? entry.value : '';
+};
+
 const parseChecklistValues = (value: string): string[] => {
   const seen = new Set<string>();
   return value
@@ -123,6 +142,15 @@ export default function ProductFormParameters(): React.JSX.Element {
     () => parameterValues.map((entry: ProductParameterValue) => entry.parameterId).filter(Boolean),
     [parameterValues]
   );
+  const hasParameterValueByLanguage = useMemo((): Record<string, boolean> => {
+    const result: Record<string, boolean> = {};
+    languageTabValues.forEach((languageCode: string) => {
+      result[languageCode] = parameterValues.some((entry: ProductParameterValue): boolean =>
+        getParameterLanguageValue(entry, languageCode, primaryLanguageCode).trim().length > 0
+      );
+    });
+    return result;
+  }, [languageTabValues, parameterValues, primaryLanguageCode]);
   const parameterById = useMemo(() => {
     const map = new Map<string, ProductParameter>();
     parameters.forEach((parameter: ProductParameter) => {
@@ -178,7 +206,15 @@ export default function ProductFormParameters(): React.JSX.Element {
             >
               <TabsList className='mb-1'>
                 {catalogLanguages.map((language: CatalogLanguageOption) => (
-                  <TabsTrigger key={language.code} value={language.code}>
+                  <TabsTrigger
+                    key={language.code}
+                    value={language.code}
+                    className={
+                      !hasParameterValueByLanguage[language.code]
+                        ? 'text-muted-foreground/90 data-[state=active]:text-muted-foreground/90'
+                        : 'text-foreground data-[state=inactive]:text-foreground font-medium'
+                    }
+                  >
                     {language.label}
                   </TabsTrigger>
                 ))}
@@ -212,23 +248,8 @@ export default function ProductFormParameters(): React.JSX.Element {
               ) {
                 normalizedOptionLabels.unshift(entry.value);
               }
-              const valuesByLanguage =
-                entry.valuesByLanguage &&
-                typeof entry.valuesByLanguage === 'object' &&
-                !Array.isArray(entry.valuesByLanguage)
-                  ? entry.valuesByLanguage
-                  : null;
               const getLanguageValue = (languageCode: string): string => {
-                const normalizedLanguageCode = normalizeLanguageCode(languageCode);
-                if (!normalizedLanguageCode) return '';
-                const localizedValue = valuesByLanguage?.[normalizedLanguageCode];
-                if (typeof localizedValue === 'string') {
-                  return localizedValue;
-                }
-                if (normalizedLanguageCode === primaryLanguageCode) {
-                  return entry.value ?? '';
-                }
-                return '';
+                return getParameterLanguageValue(entry, languageCode, primaryLanguageCode);
               };
               const handleLanguageValueChange = (
                 languageCode: string,

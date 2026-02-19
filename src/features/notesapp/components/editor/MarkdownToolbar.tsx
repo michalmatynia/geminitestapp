@@ -5,7 +5,7 @@ import React from 'react';
 import { MarkdownToolbar as DocumentMarkdownToolbar } from '@/features/document-editor';
 import { useMarkdownToolbarActions } from '@/features/notesapp/context/MarkdownToolbarActionsContext';
 import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
-import type { NoteFileRecord } from '@/shared/types/domain/notes';
+import type { NoteFileDto as NoteFileRecord } from '@/shared/contracts/notes';
 
 export function MarkdownToolbar(): React.JSX.Element {
   const {

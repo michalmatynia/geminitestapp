@@ -17,13 +17,13 @@ import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { noteKeys } from '@/shared/lib/query-key-exports';
 import type { 
-  NotebookRecord, 
-  CategoryRecord, 
-  NoteWithRelations, 
-  TagRecord, 
-  ThemeRecord,
-  RelatedNote
-} from '@/shared/types/domain/notes';
+  NotebookDto as NotebookRecord, 
+  NoteCategoryDto as CategoryRecord, 
+  NoteWithRelationsDto as NoteWithRelations, 
+  NoteTagDto as TagRecord, 
+  NoteThemeDto as ThemeRecord,
+  RelatedNoteDto as RelatedNote
+} from '@/shared/contracts/notes';
 import type { ListQuery, SingleQuery } from '@/shared/types/query-result-types';
 
 const NOTES_STALE_MS = 10_000;

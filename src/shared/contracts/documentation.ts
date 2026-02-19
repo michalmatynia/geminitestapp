@@ -32,4 +32,27 @@ export const documentationEntrySchema = z.object({
 
 export type DocumentationEntryDto = z.infer<typeof documentationEntrySchema>;
 
+export const documentationFunctionDocSchema = z.object({
+  id: z.string(),
+  symbol: z.string(),
+  file: z.string(),
+  purpose: z.string(),
+  params: z.array(z.string()),
+  returns: z.string(),
+  errors: z.array(z.string()),
+  edgeCases: z.array(z.string()),
+  example: z.string(),
+});
+
+export type DocumentationFunctionDocDto = z.infer<typeof documentationFunctionDocSchema>;
+
+export const documentationUiDocSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  relatedFunctions: z.array(z.string()),
+});
+
+export type DocumentationUiDocDto = z.infer<typeof documentationUiDocSchema>;
+
 export type DocumentationEntryKeyDto = `${string}:${string}`;

@@ -12,6 +12,7 @@ import {
   TabsTrigger,
   Tooltip,
   CopyButton,
+  LoadingState,
 } from '@/shared/ui';
 
 import { AdminImageStudioPromptsPage } from './AdminImageStudioPromptsPage';
@@ -116,7 +117,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
 
   return (
     <div className='mx-auto box-border flex h-[calc((100dvh-4rem)*1.035)] w-full min-h-0 min-w-0 max-w-none flex-col gap-2 overflow-hidden px-0.5 pb-0 pt-2'>
-      <ClientOnly fallback={<div className='flex min-h-0 flex-1' />}>
+      <ClientOnly fallback={<LoadingState className='flex min-h-0 flex-1' />}>
         <Tabs
           id='image-studio-tabs'
           value={activeTab as string}
@@ -207,7 +208,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
 
 export function AdminImageStudioPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className='p-8 text-white'>Loading Image Studio...</div>}>
+    <Suspense fallback={<LoadingState message='Loading Image Studio...' className='h-screen' />}>
       <ImageStudioProvider>
         <AdminImageStudioPageContent />
       </ImageStudioProvider>

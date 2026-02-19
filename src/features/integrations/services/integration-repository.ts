@@ -15,6 +15,13 @@ import {
 const INTEGRATION_COLLECTION = 'integrations';
 const INTEGRATION_CONNECTION_COLLECTION = 'integration_connections';
 
+const toMongoDocumentId = (id: string): ObjectId | string => {
+  if (ObjectId.isValid(id) && id.length === 24) {
+    return new ObjectId(id);
+  }
+  return id;
+};
+
 /**
  * MongoDB Documents
  */
@@ -358,11 +365,10 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
     },
 
     async getIntegrationById(id: string): Promise<IntegrationRecord | null> {
-      if (!ObjectId.isValid(id)) return null;
       const db = await getMongoDb();
       const doc = await db
         .collection<IntegrationDocument>(INTEGRATION_COLLECTION)
-        .findOne({ _id: new ObjectId(id) });
+        .findOne({ _id: toMongoDocumentId(id) });
       return doc ? toIntegrationRecord(doc) : null;
     },
 
@@ -383,13 +389,12 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
     async getConnectionById(
       id: string
     ): Promise<IntegrationConnectionRecord | null> {
-      if (!ObjectId.isValid(id)) return null;
       const db = await getMongoDb();
       const doc = await db
         .collection<IntegrationConnectionDocument>(
           INTEGRATION_CONNECTION_COLLECTION
         )
-        .findOne({ _id: new ObjectId(id) });
+        .findOne({ _id: toMongoDocumentId(id) });
       return doc ? toConnectionRecord(doc) : null;
     },
 
@@ -397,13 +402,12 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
       id: string,
       integrationId: string
     ): Promise<IntegrationConnectionRecord | null> {
-      if (!ObjectId.isValid(id)) return null;
       const db = await getMongoDb();
       const doc = await db
         .collection<IntegrationConnectionDocument>(
           INTEGRATION_CONNECTION_COLLECTION
         )
-        .findOne({ _id: new ObjectId(id), integrationId });
+        .findOne({ _id: toMongoDocumentId(id), integrationId });
       return doc ? toConnectionRecord(doc) : null;
     },
 
@@ -434,7 +438,6 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
       id: string,
       input: Partial<IntegrationConnectionRecord>
     ): Promise<IntegrationConnectionRecord> {
-      if (!ObjectId.isValid(id)) throw new Error('Invalid connection ID');
       const db = await getMongoDb();
       const now = new Date();
       const updateData: Record<string, unknown> = {
@@ -450,7 +453,7 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
           INTEGRATION_CONNECTION_COLLECTION
         )
         .findOneAndUpdate(
-          { _id: new ObjectId(id) },
+          { _id: toMongoDocumentId(id) },
           { $set: updateData },
           { returnDocument: 'after' }
         );
@@ -459,13 +462,12 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
     },
 
     async deleteConnection(id: string): Promise<void> {
-      if (!ObjectId.isValid(id)) return;
       const db = await getMongoDb();
       await db
         .collection<IntegrationConnectionDocument>(
           INTEGRATION_CONNECTION_COLLECTION
         )
-        .deleteOne({ _id: new ObjectId(id) });
+        .deleteOne({ _id: toMongoDocumentId(id) });
     },
   };
 }

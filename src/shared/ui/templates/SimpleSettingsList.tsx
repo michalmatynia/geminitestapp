@@ -1,14 +1,13 @@
 'use client';
 
-import { MoreVertical, Loader2 } from 'lucide-react';
 import React from 'react';
 
 import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger, 
   Button,
+  LoadingState,
+  EmptyState,
+  ActionMenu,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -59,18 +58,17 @@ export function SimpleSettingsList<T extends SimpleSettingsListItem>({
 }: SimpleSettingsListProps<T>): React.JSX.Element {
   if (isLoading) {
     return (
-      <div className='py-8 flex flex-col items-center justify-center gap-2 text-sm text-gray-400'>
-        <Loader2 className='size-5 animate-spin text-blue-500' />
-        <span>Loading...</span>
-      </div>
+      <LoadingState className='py-8' />
     );
   }
 
   if (items.length === 0) {
     return (
-      <div className='py-8 text-center text-sm text-gray-500'>
-        {emptyMessage}
-      </div>
+      <EmptyState
+        title={emptyMessage}
+        variant='compact'
+        className='py-8'
+      />
     );
   }
 
@@ -133,41 +131,31 @@ export function SimpleSettingsList<T extends SimpleSettingsListItem>({
                 {renderActions?.(item)}
                 
                 {(onEdit || onDelete || renderExtraActions) && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        className='-mr-2 size-8 text-gray-400 hover:text-white'
-                        type='button'
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <MoreVertical className='size-4' />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      {renderExtraActions?.(item)}
-                      {onEdit && (
-                        <DropdownMenuItem onSelect={(e) => {
+                  <ActionMenu
+                    triggerClassName='-mr-2 size-8 text-gray-400 hover:text-white'
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {renderExtraActions?.(item)}
+                    {onEdit && (
+                      <DropdownMenuItem onSelect={(e) => {
+                        e.stopPropagation();
+                        onEdit(item);
+                      }}>
+                        Edit
+                      </DropdownMenuItem>
+                    )}
+                    {onDelete && (
+                      <DropdownMenuItem
+                        className='text-red-300 focus:text-red-300'
+                        onSelect={(e) => {
                           e.stopPropagation();
-                          onEdit(item);
-                        }}>
-                          Edit
-                        </DropdownMenuItem>
-                      )}
-                      {onDelete && (
-                        <DropdownMenuItem
-                          className='text-red-300 focus:text-red-300'
-                          onSelect={(e) => {
-                            e.stopPropagation();
-                            void onDelete(item);
-                          }}
-                        >
-                          Delete
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                          void onDelete(item);
+                        }}
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    )}
+                  </ActionMenu>
                 )}
               </div>
             </div>

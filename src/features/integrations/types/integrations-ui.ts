@@ -6,12 +6,13 @@ import type {
   TestConnectionResponseDto,
   SessionCookieDto,
 } from '@/shared/contracts/integrations';
+import { TEST_STATUSES as CENTRALIZED_TEST_STATUSES } from '@/shared/contracts/integrations';
 
 export type Integration = IntegrationDto;
 
 export type IntegrationConnection = IntegrationConnectionDto;
 
-export const TEST_STATUSES = ['pending', 'ok', 'failed'] as const;
+export const TEST_STATUSES = CENTRALIZED_TEST_STATUSES;
 export type TestStatus = TestStatusDto;
 
 export type TestLogEntry = TestLogEntryDto;

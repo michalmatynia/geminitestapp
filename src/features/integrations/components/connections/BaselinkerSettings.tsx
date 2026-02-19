@@ -1,10 +1,14 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, useRef } from 'react';
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import { useDefaultExportConnection } from '@/features/integrations/hooks/useIntegrationQueries';
 import { useSettings, useUpdateSetting } from '@/shared/hooks/useSettings';
-import { Button, Input,  StatusBadge, FormSection, FormField } from '@/shared/ui';
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { Button, Input, SelectSimple, StatusBadge, FormSection, FormField } from '@/shared/ui';
 
 export function BaselinkerSettings(): React.JSX.Element {
   const { connections, handleBaselinkerTest, isTesting } = useIntegrationsContext();
@@ -16,9 +20,14 @@ export function BaselinkerSettings(): React.JSX.Element {
   
   const settingsQuery = useSettings();
   const updateSettingMutation = useUpdateSetting();
+  const defaultExportConnectionQuery = useDefaultExportConnection();
+  const queryClient = useQueryClient();
   
   const [syncIntervalMinutes, setSyncIntervalMinutes] = useState('10');
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [defaultOneClickConnectionId, setDefaultOneClickConnectionId] = useState('');
+  const [savingDefaultConnection, setSavingDefaultConnection] = useState(false);
+  const [defaultConnectionMessage, setDefaultConnectionMessage] = useState<string | null>(null);
   const hasInitialized = useRef(false);
 
   useEffect(() => {
@@ -37,6 +46,26 @@ export function BaselinkerSettings(): React.JSX.Element {
     };
   }, [settingsQuery.data]);
 
+  useEffect(() => {
+    if (connections.length === 0) {
+      setDefaultOneClickConnectionId('');
+      return;
+    }
+
+    const persistedConnectionId =
+      defaultExportConnectionQuery.data?.connectionId?.trim() ?? '';
+    const persistedExists = connections.some(
+      (connection) => connection.id === persistedConnectionId
+    );
+
+    setDefaultOneClickConnectionId((current) => {
+      const currentExists = connections.some((connection) => connection.id === current);
+      if (currentExists) return current;
+      if (persistedExists) return persistedConnectionId;
+      return connections[0]?.id ?? '';
+    });
+  }, [connections, defaultExportConnectionQuery.data?.connectionId]);
+
   const handleSaveSyncInterval = async (): Promise<void> => {
     const parsed = Number(syncIntervalMinutes);
     if (!Number.isFinite(parsed) || parsed <= 0) {
@@ -52,6 +81,42 @@ export function BaselinkerSettings(): React.JSX.Element {
       setSyncMessage('Sync interval saved.');
     } catch {
       setSyncMessage('Failed to save sync interval.');
+    }
+  };
+
+  const handleSaveDefaultConnection = async (): Promise<void> => {
+    const normalizedConnectionId = defaultOneClickConnectionId.trim();
+    if (!normalizedConnectionId) {
+      setDefaultConnectionMessage('Select a connection first.');
+      return;
+    }
+
+    setDefaultConnectionMessage(null);
+    setSavingDefaultConnection(true);
+
+    try {
+      await api.post('/api/integrations/exports/base/default-connection', {
+        connectionId: normalizedConnectionId,
+      });
+
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.integrations.selection.defaultConnection(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.integrations.importExport.pref('default-connection'),
+        }),
+      ]);
+
+      setDefaultConnectionMessage('Default OneClick connection saved.');
+    } catch (error) {
+      setDefaultConnectionMessage(
+        error instanceof Error
+          ? error.message
+          : 'Failed to save default OneClick connection.'
+      );
+    } finally {
+      setSavingDefaultConnection(false);
     }
   };
 
@@ -82,6 +147,53 @@ export function BaselinkerSettings(): React.JSX.Element {
                 {activeConnection.baseLastInventoryId}
               </p>
             )}
+          </FormSection>
+
+          <FormSection
+            title='Default OneClick connection'
+            description='Used by Product List one-click export to Base.com (BL button).'
+            variant='subtle'
+            className='p-3 text-xs text-gray-300'
+          >
+            <div className='mt-2 space-y-2'>
+              <SelectSimple
+                value={defaultOneClickConnectionId || undefined}
+                onValueChange={(value: string): void => {
+                  setDefaultOneClickConnectionId(value);
+                  setDefaultConnectionMessage(null);
+                }}
+                options={connections.map((connection) => ({
+                  value: connection.id,
+                  label: connection.name,
+                  description: connection.hasBaseApiToken
+                    ? 'Base API token configured'
+                    : 'Token not detected',
+                }))}
+                placeholder='Select default connection...'
+                disabled={connections.length === 0 || savingDefaultConnection}
+                triggerClassName='w-full bg-gray-900 border-border text-xs text-white'
+                size='sm'
+              />
+              <div className='flex items-center gap-2'>
+                <Button
+                  type='button'
+                  onClick={(): void => { void handleSaveDefaultConnection(); }}
+                  disabled={savingDefaultConnection || connections.length === 0}
+                  className='rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 hover:bg-gray-200 disabled:opacity-50'
+                >
+                  {savingDefaultConnection ? 'Saving...' : 'Save Default'}
+                </Button>
+                {defaultExportConnectionQuery.data?.connectionId?.trim() ? (
+                  <span className='text-[10px] text-gray-400'>
+                    Current default ID:{' '}
+                    {defaultExportConnectionQuery.data.connectionId}
+                  </span>
+                ) : null}
+              </div>
+              {defaultConnectionMessage ? (
+                <p className='text-[10px] text-gray-400'>{defaultConnectionMessage}</p>
+              ) : null}
+            </div>
           </FormSection>
 
           <FormSection 

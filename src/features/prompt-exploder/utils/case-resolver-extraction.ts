@@ -736,6 +736,55 @@ export const extractCaseResolverBridgePayloadFromSegments = (
   };
 };
 
+export const resolveCaseResolverBridgePayloadForTransfer = (args: {
+  segments: PromptExploderSegment[] | null | undefined;
+  captureRules?: CaseResolverSegmentCaptureRule[] | null | undefined;
+  mode?: PromptExploderCaseResolverExtractionMode | null | undefined;
+}): {
+  payload: {
+    parties?: PromptExploderCaseResolverPartyBundle;
+    metadata?: PromptExploderCaseResolverMetadata;
+  };
+  requestedMode: PromptExploderCaseResolverExtractionMode;
+  effectiveMode: PromptExploderCaseResolverExtractionMode;
+  usedFallback: boolean;
+  hasCaptureData: boolean;
+} => {
+  const requestedMode: PromptExploderCaseResolverExtractionMode =
+    args.mode === 'rules_with_heuristics' ? 'rules_with_heuristics' : 'rules_only';
+
+  const initialPayload = extractCaseResolverBridgePayloadFromSegments(args.segments, {
+    captureRules: args.captureRules,
+    mode: requestedMode,
+  });
+  const initialHasCaptureData = Boolean(initialPayload.parties || initialPayload.metadata);
+
+  if (requestedMode === 'rules_only' && !initialHasCaptureData) {
+    const fallbackPayload = extractCaseResolverBridgePayloadFromSegments(args.segments, {
+      captureRules: args.captureRules,
+      mode: 'rules_with_heuristics',
+    });
+    const fallbackHasCaptureData = Boolean(fallbackPayload.parties || fallbackPayload.metadata);
+    if (fallbackHasCaptureData) {
+      return {
+        payload: fallbackPayload,
+        requestedMode,
+        effectiveMode: 'rules_with_heuristics',
+        usedFallback: true,
+        hasCaptureData: true,
+      };
+    }
+  }
+
+  return {
+    payload: initialPayload,
+    requestedMode,
+    effectiveMode: requestedMode,
+    usedFallback: false,
+    hasCaptureData: initialHasCaptureData,
+  };
+};
+
 export const buildCaseResolverSegmentCaptureRules = (
   rules: PromptValidationRule[],
   validationScope: string

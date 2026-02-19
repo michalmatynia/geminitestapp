@@ -6,7 +6,7 @@ import React, { useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 import type { ExternalCategory } from '@/features/integrations/types/category-mapping';
-import { Button, SelectSimple, StandardDataTablePanel } from '@/shared/ui';
+import { Button, SelectSimple, StandardDataTablePanel, EmptyState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { CategoryMapperCatalogSelector } from './CategoryMapperCatalogSelector';
@@ -174,9 +174,12 @@ export function CategoryMapperTable(): React.JSX.Element {
 
   if (externalCategories.length === 0 && !isLoading) {
     return (
-      <div className='rounded-md border border-border p-8 text-center text-gray-500'>
-        No external categories found. Click &quot;Fetch Categories&quot; to load from Base.com.
-      </div>
+      <EmptyState
+        title='No external categories found'
+        description='Click "Fetch Categories" to load from Base.com.'
+        variant='compact'
+        className='py-8'
+      />
     );
   }
 

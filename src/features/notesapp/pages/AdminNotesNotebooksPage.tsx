@@ -11,8 +11,8 @@ import {
 import { useNotebooks } from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
-import type { NotebookRecord } from '@/shared/types/domain/notes';
-import { Button, useToast, Input, PageLayout, FormSection, FormField, RefreshButton, LoadingState, ActionMenu, DropdownMenuItem, DropdownMenuSeparator, StatusBadge, EmptyState } from '@/shared/ui';
+import type { NotebookDto as NotebookRecord } from '@/shared/contracts/notes';
+import { Button, useToast, Input, PageLayout, FormSection, FormField, RefreshButton, LoadingState, StatusBadge, SimpleSettingsList } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 export function AdminNotesNotebooksPage(): React.JSX.Element {
@@ -135,7 +135,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
       title='Notebooks'
       description='Create and manage notebooks. Notes, folders, and tags are scoped per notebook.'
     >
-      <div className='max-w-3xl space-y-6'>
+      <div className='max-w-4xl space-y-6'>
         <FormSection title='Create Notebook' className='p-6'>
           <div className='flex flex-col gap-4 sm:flex-row sm:items-end'>
             <FormField label='Notebook Name' className='flex-1'>
@@ -163,119 +163,99 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
             />
           )}
         >
-          {loading ? (
-            <LoadingState message='Loading notebooks...' className='py-8' />
-          ) : notebooks.length === 0 ? (
-            <EmptyState
-              title='No notebooks created yet'
-              description='Create your first notebook to start organizing your thoughts.'
-              variant='compact'
-            />
-          ) : (
-            <div className='grid gap-3 sm:grid-cols-2'>
-              {notebooks.map((notebook: NotebookRecord) => {
-                const isEditing = editingId === notebook.id;
-                const isActive = selectedNotebookId === notebook.id;
-                return (
-                  <div
-                    key={notebook.id}
-                    className='flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-border/60 bg-card/30 px-4 py-3 transition hover:border-border/80'
-                    onClick={(): void => {
-                      updateSettings({ selectedNotebookId: notebook.id });
-                      router.push('/admin/notes');
+          <SimpleSettingsList
+            items={notebooks.map((nb) => ({
+              id: nb.id,
+              title: (
+                <div className='flex items-center gap-2'>
+                  {editingId === nb.id ? (
+                    <Input
+                      type='text'
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      className='h-7 py-0'
+                      autoFocus
+                    />
+                  ) : (
+                    <>
+                      <span>{nb.name}</span>
+                      {selectedNotebookId === nb.id && (
+                        <StatusBadge status='Active' variant='active' size='sm' className='font-bold' />
+                      )}
+                    </>
+                  )}
+                </div>
+              ),
+              original: nb,
+            }))}
+            isLoading={loading}
+            onSelect={(item) => {
+              if (editingId === item.id) return;
+              updateSettings({ selectedNotebookId: item.id });
+              router.push('/admin/notes');
+            }}
+            onEdit={(item) => handleEditStart(item.original)}
+            onDelete={(item) => setNotebookToDelete(item.id)}
+            renderActions={(item) => (
+              editingId === item.id ? (
+                <div className='flex items-center gap-1'>
+                  <Button
+                    variant='outline'
+                    size='xs'
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void handleUpdate(item.id);
+                    }}
+                    disabled={updateNotebook.isPending}
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    variant='ghost'
+                    size='xs'
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditCancel();
                     }}
                   >
-                    <div className='flex flex-1 items-center gap-3'>
-                      {isEditing ? (
-                        <div className='flex flex-1 flex-col gap-2 sm:flex-row sm:items-center'>
-                          <Input
-                            type='text'
-                            value={editingName}
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setEditingName(event.target.value)}
-                            className='w-full'
-                          />
-                        </div>
-                      ) : (
-                        <div className='flex flex-col'>
-                          <Button
-                            type='button'
-                            onClick={(event: React.MouseEvent): void => {
-                              event.stopPropagation();
-                              handleEditStart(notebook);
-                            }}
-                            className='text-left text-sm text-gray-200 hover:text-white'
-                          >
-                            {notebook.name}
-                          </Button>
-                          {isActive && (
-                            <StatusBadge status='Active' variant='active' size='sm' className='font-bold ml-1' />
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      {isEditing ? (
-                        <>
-                          <Button
-                            variant='outline'
-                            size='sm'
-                            onClick={(event: React.MouseEvent): void => {
-                              event.stopPropagation();
-                              void handleUpdate(notebook.id);
-                            }}
-                            disabled={updateNotebook.isPending}
-                          >
-                            Save
-                          </Button>
-                          <Button
-                            variant='ghost'
-                            size='sm'
-                            onClick={(event: React.MouseEvent): void => {
-                              event.stopPropagation();
-                              handleEditCancel();
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                        </>
-                      ) : (
-                        <ActionMenu ariaLabel={`Notebook actions for ${notebook.name}`}>
-                          <DropdownMenuItem
-                            onSelect={(event: Event): void => {
-                              event.preventDefault();
-                              handleEditStart(notebook);
-                            }}
-                          >
-                            Rename
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={(event: Event): void => {
-                              event.preventDefault();
-                              void handleDuplicate(notebook);
-                            }}
-                          >
-                            Duplicate
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className='text-destructive focus:text-destructive'
-                            onSelect={(event: Event): void => {
-                              event.preventDefault();
-                              setNotebookToDelete(notebook.id);
-                            }}
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </ActionMenu>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                    Cancel
+                  </Button>
+                </div>
+              ) : null
+            )}
+            renderExtraActions={(item) => (
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  void handleDuplicate(item.original);
+                }}
+              >
+                Duplicate
+              </DropdownMenuItem>
+            )}
+            emptyMessage='No notebooks created yet. Create your first notebook to start organizing your thoughts.'
+            columns={2}
+          />
         </FormSection>
       </div>
+
+      <ConfirmModal
+        isOpen={Boolean(notebookToDelete)}
+        onClose={() => setNotebookToDelete(null)}
+        title='Delete Notebook?'
+        message='Delete this notebook and all its notes/tags/folders? This action cannot be undone.'
+        confirmText='Destroy Notebook'
+        isDangerous={true}
+        onConfirm={(): void => {
+          if (notebookToDelete) {
+            void handleDelete(notebookToDelete);
+          }
+        }}
+      />
+    </PageLayout>
+  );
+}
+
 
       <ConfirmModal
         isOpen={Boolean(notebookToDelete)}

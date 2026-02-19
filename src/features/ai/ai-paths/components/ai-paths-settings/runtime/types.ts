@@ -17,41 +17,22 @@ import type {
   UpdaterSampleState,
 } from '@/features/ai/ai-paths/lib';
 import type { QueuedRunDto, RunStatusDto, RuntimeEventInputDto, SetNodeStatusInputDto } from '@/shared/contracts/ai-paths-runtime';
+import {
+  NON_SETTLED_RUNTIME_NODE_STATUSES as NON_SETTLED,
+  TRANSIENT_RUNTIME_NODE_STATUSES as TRANSIENT,
+  IDLE_REHYDRATION_BLOCKED_NODE_STATUSES as IDLE_REHYDRATION_BLOCKED,
+} from '@/shared/contracts/ai-paths-runtime';
 
 export const AI_PATHS_SESSION_STALE_MS = 30_000;
 export const AI_PATHS_ENTITY_STALE_MS = 10_000;
 export const LOCAL_RUN_STEP_CHUNK = 25;
 export const MAX_RUNTIME_EVENTS = 300;
 
-export const NON_SETTLED_RUNTIME_NODE_STATUSES = new Set<string>([
-  'idle',
-  'queued',
-  'completed',
-  'failed',
-  'canceled',
-  'cancelled',
-  'cached',
-  'blocked',
-  'skipped',
-  'timeout',
-]);
+export const NON_SETTLED_RUNTIME_NODE_STATUSES = NON_SETTLED;
 
-export const TRANSIENT_RUNTIME_NODE_STATUSES = new Set<string>([
-  'queued',
-  'running',
-  'polling',
-  'waiting_callback',
-  'advance_pending',
-  'pending',
-  'processing',
-]);
+export const TRANSIENT_RUNTIME_NODE_STATUSES = TRANSIENT;
 
-export const IDLE_REHYDRATION_BLOCKED_NODE_STATUSES = new Set<string>([
-  'completed',
-  'cached',
-  'canceled',
-  'cancelled',
-]);
+export const IDLE_REHYDRATION_BLOCKED_NODE_STATUSES = IDLE_REHYDRATION_BLOCKED;
 
 export type ToastFn = (message: string, options?: Partial<{ variant: 'success' | 'error' | 'info' | 'warning'; duration: number }>) => void;
 

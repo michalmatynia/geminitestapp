@@ -8,15 +8,11 @@ import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
 } from '@/features/data-import-export';
-import type { ImageRetryPreset } from '@/features/data-import-export';
+import type { ImageRetryPresetDto as ImageRetryPreset, TemplateDto as DomainImportExportTemplate, TemplateMappingDto as DomainImportExportTemplateMapping } from '@/shared/contracts/integrations';
 import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import { getProductDataProvider } from '@/features/products/server';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type {
-  ImportExportTemplate as DomainImportExportTemplate,
-  ImportExportTemplateMapping as DomainImportExportTemplateMapping,
-} from '@/shared/types/domain/integrations';
 
 type SettingDoc = { _id: string | ObjectId; key?: string; value?: string; updatedAt?: Date; createdAt?: Date };
 

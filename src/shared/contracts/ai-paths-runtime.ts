@@ -27,6 +27,36 @@ export const aiPathRuntimeNodeStatusSchema = z.enum([
 
 export type AiPathRuntimeNodeStatusDto = z.infer<typeof aiPathRuntimeNodeStatusSchema>;
 
+export const NON_SETTLED_RUNTIME_NODE_STATUSES = new Set<AiPathRuntimeNodeStatusDto>([
+  'idle',
+  'queued',
+  'completed',
+  'failed',
+  'canceled',
+  'cancelled',
+  'cached',
+  'blocked',
+  'skipped',
+  'timeout',
+]);
+
+export const TRANSIENT_RUNTIME_NODE_STATUSES = new Set<AiPathRuntimeNodeStatusDto>([
+  'queued',
+  'running',
+  'polling',
+  'waiting_callback',
+  'advance_pending',
+  'pending',
+  'processing',
+]);
+
+export const IDLE_REHYDRATION_BLOCKED_NODE_STATUSES = new Set<AiPathRuntimeNodeStatusDto>([
+  'completed',
+  'cached',
+  'canceled',
+  'cancelled',
+]);
+
 export const aiPathRuntimeNodeStatusMapSchema = z.record(z.string(), aiPathRuntimeNodeStatusSchema);
 
 export type AiPathRuntimeNodeStatusMapDto = z.infer<typeof aiPathRuntimeNodeStatusMapSchema>;

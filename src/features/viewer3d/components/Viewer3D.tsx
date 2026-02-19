@@ -18,6 +18,7 @@ import { ToneMappingMode, BlendFunction } from 'postprocessing';
 import { Suspense, useEffect, useRef, useMemo, Component, ErrorInfo } from 'react';
 import * as THREE from 'three';
 
+import type { Asset3dLightingPresetDto, Asset3dEnvironmentPresetDto } from '@/shared/contracts/viewer3d';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { getLastUserAction } from '@/shared/utils/observability/user-action-tracker';
 
@@ -316,8 +317,8 @@ function SceneLighting({ preset, intensity = 1 }: SceneLightingProps): React.JSX
 }
 
 // Camera auto-framing
-export type LightingPreset = 'studio' | 'outdoor' | 'dramatic' | 'soft';
-export type EnvironmentPreset = 'studio' | 'sunset' | 'dawn' | 'night' | 'warehouse' | 'forest' | 'apartment' | 'city' | 'park' | 'lobby';
+export type LightingPreset = Asset3dLightingPresetDto;
+export type EnvironmentPreset = Asset3dEnvironmentPresetDto;
 
 export interface Viewer3DProps {
   /** URL to the 3D model file (.glb or .gltf) */

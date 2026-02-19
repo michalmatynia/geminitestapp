@@ -6,7 +6,7 @@ import path from 'path';
 import sharp from 'sharp';
 
 import { getDiskPathFromPublicPath } from '@/features/files/server';
-import type { ProductWithImages } from '@/features/products';
+import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 
 const IMAGE_BASE_URL =
   process.env['NEXT_PUBLIC_APP_URL'] ||

@@ -1,149 +1,207 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
-  resolveCaseResolverPromptExploderFallbackTarget,
-  resolveCaseResolverPromptExploderTarget,
+  applyPendingPromptExploderPayloadToCaseResolver,
+  discardPendingCaseResolverPromptExploderPayload,
+  readPendingCaseResolverPromptExploderPayload,
 } from '@/features/case-resolver/hooks/useCaseResolverState.prompt-exploder-sync';
-import { createCaseResolverFile } from '@/features/case-resolver/settings';
+import {
+  createCaseResolverFile,
+  parseCaseResolverWorkspace,
+} from '@/features/case-resolver/settings';
+import type {
+  CaseResolverFileEditDraft,
+  CaseResolverWorkspace,
+} from '@/features/case-resolver/types';
+import { parseCaseResolverCaptureSettings } from '@/features/case-resolver-capture/settings';
+import { parseFilemakerDatabase } from '@/features/filemaker/settings';
+import { savePromptExploderApplyPromptForCaseResolver } from '@/features/prompt-exploder/bridge';
 
-describe('case resolver prompt exploder target resolution', () => {
-  const caseFile = createCaseResolverFile({
-    id: 'case-1',
-    fileType: 'case',
-    name: 'Case',
-  });
-  const documentFile = createCaseResolverFile({
-    id: 'doc-1',
-    fileType: 'document',
-    name: 'Document',
-    parentCaseId: 'case-1',
-  });
-  const alternateFile = createCaseResolverFile({
-    id: 'doc-2',
-    fileType: 'document',
-    name: 'Alternate Document',
-    parentCaseId: 'case-1',
-  });
+import type { Dispatch, SetStateAction } from 'react';
 
-  it('uses payload context file when it exists in workspace', () => {
-    expect(
-      resolveCaseResolverPromptExploderTarget({
-        workspaceActiveFileId: alternateFile.id,
-        workspaceFiles: [caseFile, documentFile, alternateFile],
-        payloadContextFileId: documentFile.id,
-      })
-    ).toEqual({
-      status: 'ready',
-      targetFileId: documentFile.id,
-      usedActiveFallback: false,
+type StorageMock = {
+  getItem: (key: string) => string | null;
+  setItem: (key: string, value: string) => void;
+  removeItem: (key: string) => void;
+};
+
+const createLocalStorageMock = (): StorageMock => {
+  const map = new Map<string, string>();
+  return {
+    getItem: (key: string): string | null => map.get(key) ?? null,
+    setItem: (key: string, value: string): void => {
+      map.set(key, value);
+    },
+    removeItem: (key: string): void => {
+      map.delete(key);
+    },
+  };
+};
+
+describe('case resolver prompt exploder manual apply flow', () => {
+  beforeEach(() => {
+    const localStorage = createLocalStorageMock();
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      writable: true,
+      value: {
+        localStorage,
+      },
     });
   });
 
-  it('falls back to active file when context file is missing', () => {
-    expect(
-      resolveCaseResolverPromptExploderTarget({
-        workspaceActiveFileId: alternateFile.id,
-        workspaceFiles: [caseFile, alternateFile],
-        payloadContextFileId: documentFile.id,
-      })
-    ).toEqual({
-      status: 'ready',
-      targetFileId: alternateFile.id,
-      usedActiveFallback: true,
-    });
+  afterEach(() => {
+    Reflect.deleteProperty(globalThis, 'window');
   });
 
-  it('waits when workspace has not loaded files yet', () => {
-    expect(
-      resolveCaseResolverPromptExploderTarget({
-        workspaceActiveFileId: null,
-        workspaceFiles: [],
-        payloadContextFileId: documentFile.id,
-      })
-    ).toEqual({
-      status: 'pending',
-      reason: 'waiting-for-files',
+  const createWorkspaceHarness = (): {
+    getWorkspace: () => CaseResolverWorkspace;
+    updateWorkspace: (
+      updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace
+    ) => void;
+    setEditingDocumentDraft: Dispatch<SetStateAction<CaseResolverFileEditDraft | null>>;
+  } => {
+    const documentFile = createCaseResolverFile({
+      id: 'doc-1',
+      fileType: 'document',
+      name: 'Document',
     });
+    let workspace: CaseResolverWorkspace = {
+      ...parseCaseResolverWorkspace(null),
+      files: [documentFile],
+      activeFileId: documentFile.id,
+    };
+    let draft: CaseResolverFileEditDraft | null = null;
+    const updateWorkspace = (
+      updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace
+    ): void => {
+      workspace = updater(workspace);
+    };
+    const setEditingDocumentDraft: Dispatch<SetStateAction<CaseResolverFileEditDraft | null>> = (
+      updater
+    ): void => {
+      if (typeof updater === 'function') {
+        draft = (updater as (current: CaseResolverFileEditDraft | null) => CaseResolverFileEditDraft | null)(draft);
+        return;
+      }
+      draft = updater;
+    };
+    return {
+      getWorkspace: () => workspace,
+      updateWorkspace,
+      setEditingDocumentDraft,
+    };
+  };
+
+  it('keeps payload pending until explicit apply is invoked', () => {
+    savePromptExploderApplyPromptForCaseResolver('Pending content', {
+      fileId: 'doc-1',
+      fileName: 'Document',
+    });
+
+    const firstRead = readPendingCaseResolverPromptExploderPayload();
+    const secondRead = readPendingCaseResolverPromptExploderPayload();
+
+    expect(firstRead?.prompt).toBe('Pending content');
+    expect(secondRead?.prompt).toBe('Pending content');
   });
 
-  it('reports missing context when workspace is loaded but context is absent', () => {
-    expect(
-      resolveCaseResolverPromptExploderTarget({
-        workspaceActiveFileId: null,
-        workspaceFiles: [caseFile, alternateFile],
-        payloadContextFileId: documentFile.id,
-      })
-    ).toEqual({
-      status: 'pending',
-      reason: 'context-missing',
+  it('applies pending payload only on explicit apply call and then consumes it', () => {
+    const harness = createWorkspaceHarness();
+    const initialDocument = harness.getWorkspace().files[0];
+    expect(initialDocument?.documentContentPlainText).toBe('');
+
+    savePromptExploderApplyPromptForCaseResolver('Exploded output body', {
+      fileId: 'doc-1',
+      fileName: 'Document',
     });
+
+    const result = applyPendingPromptExploderPayloadToCaseResolver({
+      targetFileId: 'doc-1',
+      workspaceFiles: harness.getWorkspace().files,
+      updateWorkspace: harness.updateWorkspace,
+      setEditingDocumentDraft: harness.setEditingDocumentDraft,
+      filemakerDatabase: parseFilemakerDatabase(null),
+      caseResolverCaptureSettings: parseCaseResolverCaptureSettings(null),
+    });
+
+    expect(result.applied).toBe(true);
+    if (result.applied) {
+      expect(result.workspaceChanged).toBe(true);
+    }
+
+    const updatedDocument = harness.getWorkspace().files.find((file) => file.id === 'doc-1');
+    expect(updatedDocument?.documentContentPlainText).toContain('Exploded output body');
+    expect(readPendingCaseResolverPromptExploderPayload()).toBeNull();
   });
 
-  it('reports missing target when no context and no active file are available', () => {
-    expect(
-      resolveCaseResolverPromptExploderTarget({
-        workspaceActiveFileId: null,
-        workspaceFiles: [caseFile, alternateFile],
-        payloadContextFileId: null,
-      })
-    ).toEqual({
-      status: 'pending',
-      reason: 'no-target',
+  it('does not consume payload when apply target is missing', () => {
+    const harness = createWorkspaceHarness();
+    savePromptExploderApplyPromptForCaseResolver('Exploded output body', {
+      fileId: 'doc-1',
+      fileName: 'Document',
     });
+
+    const result = applyPendingPromptExploderPayloadToCaseResolver({
+      targetFileId: 'missing-doc',
+      workspaceFiles: harness.getWorkspace().files,
+      updateWorkspace: harness.updateWorkspace,
+      setEditingDocumentDraft: harness.setEditingDocumentDraft,
+      filemakerDatabase: parseFilemakerDatabase(null),
+      caseResolverCaptureSettings: parseCaseResolverCaptureSettings(null),
+    });
+
+    expect(result.applied).toBe(false);
+    if (!result.applied) {
+      expect(result.reason).toBe('target_file_missing');
+    }
+    expect(readPendingCaseResolverPromptExploderPayload()?.prompt).toBe('Exploded output body');
   });
 
-  it('uses active file when payload has no context file id', () => {
-    expect(
-      resolveCaseResolverPromptExploderTarget({
-        workspaceActiveFileId: alternateFile.id,
-        workspaceFiles: [caseFile, alternateFile],
-        payloadContextFileId: null,
-      })
-    ).toEqual({
-      status: 'ready',
-      targetFileId: alternateFile.id,
-      usedActiveFallback: false,
+  it('discards pending payload explicitly', () => {
+    savePromptExploderApplyPromptForCaseResolver('Discard me', {
+      fileId: 'doc-1',
+      fileName: 'Document',
     });
+
+    const discarded = discardPendingCaseResolverPromptExploderPayload();
+    expect(discarded?.prompt).toBe('Discard me');
+    expect(readPendingCaseResolverPromptExploderPayload()).toBeNull();
   });
 
-  it('returns the stored workspace id when context id matches only after normalization', () => {
-    const spacedIdDocument = createCaseResolverFile({
+  it('resolves target ids using normalized id lookup', () => {
+    const documentFile = createCaseResolverFile({
       id: '  doc-spaced  ',
       fileType: 'document',
-      name: 'Document With Spaced Id',
-      parentCaseId: 'case-1',
+      name: 'Document',
+    });
+    let workspace: CaseResolverWorkspace = {
+      ...parseCaseResolverWorkspace(null),
+      files: [documentFile],
+      activeFileId: documentFile.id,
+    };
+    const updateWorkspace = (
+      updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace
+    ): void => {
+      workspace = updater(workspace);
+    };
+    const setEditingDocumentDraft: Dispatch<SetStateAction<CaseResolverFileEditDraft | null>> = () => {};
+
+    savePromptExploderApplyPromptForCaseResolver('Normalized payload', {
+      fileId: 'doc-spaced',
+      fileName: 'Document',
+    });
+    const result = applyPendingPromptExploderPayloadToCaseResolver({
+      targetFileId: 'doc-spaced',
+      workspaceFiles: workspace.files,
+      updateWorkspace,
+      setEditingDocumentDraft,
+      filemakerDatabase: parseFilemakerDatabase(null),
+      caseResolverCaptureSettings: parseCaseResolverCaptureSettings(null),
     });
 
-    expect(
-      resolveCaseResolverPromptExploderTarget({
-        workspaceActiveFileId: null,
-        workspaceFiles: [caseFile, spacedIdDocument],
-        payloadContextFileId: 'doc-spaced',
-      })
-    ).toEqual({
-      status: 'ready',
-      targetFileId: '  doc-spaced  ',
-      usedActiveFallback: false,
-    });
-  });
-
-  it('prefers active file as fallback target when original target is unavailable', () => {
-    expect(
-      resolveCaseResolverPromptExploderFallbackTarget({
-        workspaceActiveFileId: alternateFile.id,
-        workspaceFiles: [caseFile, documentFile, alternateFile],
-        excludedFileId: documentFile.id,
-      })
-    ).toBe(alternateFile.id);
-  });
-
-  it('falls back to another document-like file when active fallback is unavailable', () => {
-    expect(
-      resolveCaseResolverPromptExploderFallbackTarget({
-        workspaceActiveFileId: documentFile.id,
-        workspaceFiles: [caseFile, documentFile, alternateFile],
-        excludedFileId: documentFile.id,
-      })
-    ).toBe(alternateFile.id);
+    expect(result.applied).toBe(true);
+    const updatedDocument = workspace.files.find((file) => file.id === '  doc-spaced  ');
+    expect(updatedDocument?.documentContentPlainText).toContain('Normalized payload');
   });
 });

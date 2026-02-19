@@ -43,25 +43,25 @@ import {
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { DeleteResponse } from '@/shared/types/api/api';
 import type {
-  NoteWithRelations,
-  NoteFilters,
-  NotebookRecord,
-  TagRecord,
-  CategoryRecord,
-  ThemeRecord,
-  NoteCreateInput,
-  NoteUpdateInput,
-  NotebookCreateInput,
-  NotebookUpdateInput,
-  TagCreateInput,
-  TagUpdateInput,
-  CategoryCreateInput,
-  CategoryUpdateInput,
-  ThemeCreateInput,
-  ThemeUpdateInput,
-  NoteFileRecord,
-  CategoryWithChildren,
-} from '@/shared/types/domain/notes';
+  NoteWithRelationsDto as NoteWithRelations,
+  NoteFiltersDto as NoteFilters,
+  NotebookDto as NotebookRecord,
+  NoteTagDto as TagRecord,
+  NoteCategoryDto as CategoryRecord,
+  NoteThemeDto as ThemeRecord,
+  CreateNoteDto as NoteCreateInput,
+  UpdateNoteDto as NoteUpdateInput,
+  CreateNotebookDto as NotebookCreateInput,
+  UpdateNotebookDto as NotebookUpdateInput,
+  CreateNoteTagDto as TagCreateInput,
+  UpdateNoteTagDto as TagUpdateInput,
+  CreateNoteCategoryDto as CategoryCreateInput,
+  UpdateNoteCategoryDto as CategoryUpdateInput,
+  CreateNoteThemeDto as ThemeCreateInput,
+  UpdateNoteThemeDto as ThemeUpdateInput,
+  NoteFileDto as NoteFileRecord,
+  NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
+} from '@/shared/contracts/notes';
 
 // --- Queries ---
 

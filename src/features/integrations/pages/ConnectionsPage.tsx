@@ -7,6 +7,8 @@ import { IntegrationModal } from '@/features/integrations/components/connections
 import { IntegrationsProvider, useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 
+import { LoadingState } from '@/shared/ui';
+
 function IntegrationsContent(): React.JSX.Element {
   const {
     activeIntegration,
@@ -38,7 +40,7 @@ function IntegrationsContent(): React.JSX.Element {
 
 export default function IntegrationsPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div>Loading integrations...</div>}>
+    <Suspense fallback={<LoadingState message='Loading integrations...' className='h-screen' />}>
       <IntegrationsProvider>
         <IntegrationsContent />
       </IntegrationsProvider>

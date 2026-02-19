@@ -5,7 +5,7 @@ import { useEffect, useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 import { logClientError } from '@/features/observability';
-import { Button, SelectSimple, StandardDataTablePanel } from '@/shared/ui';
+import { Button, SelectSimple, StandardDataTablePanel, MetadataItem, EmptyState } from '@/shared/ui';
 import { useToast } from '@/shared/ui/toast';
 
 import { usePendingExternalMappings } from './usePendingExternalMappings';
@@ -215,17 +215,11 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
   ]);
 
   const alerts = (
-    <div className='flex gap-6 text-sm mb-4'>
-      <div className='text-gray-400'>
-        Total: <span className='text-white'>{stats.total}</span>
-      </div>
-      <div className='text-gray-400'>
-        Mapped: <span className='text-emerald-400'>{stats.mapped}</span>
-      </div>
+    <div className='flex gap-4 mb-4'>
+      <MetadataItem label='Total' value={stats.total} variant='minimal' />
+      <MetadataItem label='Mapped' value={stats.mapped} variant='minimal' valueClassName='text-emerald-400 font-bold' />
       {stats.pending > 0 && (
-        <div className='text-gray-400'>
-          Unsaved changes: <span className='text-yellow-400'>{stats.pending}</span>
-        </div>
+        <MetadataItem label='Pending' value={stats.pending} variant='minimal' valueClassName='text-yellow-400 font-bold' />
       )}
     </div>
   );
@@ -263,6 +257,14 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
         getRowId={(row) => getInternalId(row)}
         maxHeight='60vh'
         stickyHeader
+        emptyState={
+          <EmptyState
+            title={`No ${title.toLowerCase()} found`}
+            description={`Try fetching ${title.toLowerCase()} from the marketplace.`}
+            variant='compact'
+            className='py-8'
+          />
+        }
         getRowClassName={(row: any) => {
           const hasPendingChange = pendingMappings.size > 0 && pendingMappings.has(getInternalId(row.original));
           return hasPendingChange ? 'bg-amber-500/5 hover:bg-amber-500/10' : '';

@@ -281,3 +281,29 @@ export const errorContextSchema = z.record(z.string(), z.unknown()).and(z.object
 }));
 
 export type ErrorContextDto = z.infer<typeof errorContextSchema>;
+
+/**
+ * Transient Recovery DTOs
+ */
+
+export const transientRecoverySettingsSchema = z.object({
+  enabled: z.boolean(),
+  retry: z.object({
+    enabled: z.boolean(),
+    maxAttempts: z.number(),
+    initialDelayMs: z.number(),
+    maxDelayMs: z.number(),
+    timeoutMs: z.number().nullable(),
+  }),
+  circuit: z.object({
+    enabled: z.boolean(),
+    failureThreshold: z.number(),
+    resetTimeoutMs: z.number(),
+  }),
+});
+
+export type TransientRecoverySettingsDto = z.infer<typeof transientRecoverySettingsSchema>;
+
+export const TRANSIENT_RECOVERY_KEYS = {
+  settings: 'transient_recovery_settings',
+} as const;

@@ -2,7 +2,7 @@
 
 import { useResource } from '@/shared/hooks/query/useResource';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { NotebookDto } from '@/shared/types/domain/notes';
+import type { NotebookDto } from '@/shared/contracts/notes';
 
 /**
  * Hook for Notebook CRUD operations using the generic useResource.

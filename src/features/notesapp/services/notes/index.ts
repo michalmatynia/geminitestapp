@@ -4,9 +4,39 @@ import type { NoteRepository } from '@/features/notesapp/services/notes/types/no
 import { ErrorSystem, logActivity, ActivityTypes } from '@/features/observability/server';
 import { configurationError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
-import type { NoteWithRelations, RelatedNote, NoteUpdateInput, NoteCreateInput, NoteFilters, TagRecord, TagCreateInput, TagUpdateInput, CategoryRecord, CategoryCreateInput, CategoryUpdateInput, CategoryWithChildren, NotebookRecord, NotebookCreateInput, NotebookUpdateInput, ThemeRecord, ThemeCreateInput, ThemeUpdateInput, NoteFileRecord, NoteFileCreateInput, NoteRelationWithSource, NoteRelationWithTarget } from '@/shared/types/domain/notes';
+import type { 
+  NoteWithRelationsDto as NoteWithRelations, 
+  RelatedNoteDto as RelatedNote, 
+  UpdateNoteDto as NoteUpdateInput, 
+  CreateNoteDto as NoteCreateInput, 
+  NoteFiltersDto as NoteFilters, 
+  NoteTagDto as TagRecord, 
+  CreateNoteTagDto as TagCreateInput, 
+  UpdateNoteTagDto as TagUpdateInput, 
+  NoteCategoryDto as CategoryRecord, 
+  CreateNoteCategoryDto as CategoryCreateInput, 
+  UpdateNoteCategoryDto as CategoryUpdateInput, 
+  NoteCategoryRecordWithChildrenDto as CategoryWithChildren, 
+  NotebookDto as NotebookRecord, 
+  CreateNotebookDto as NotebookCreateInput, 
+  UpdateNotebookDto as NotebookUpdateInput, 
+  NoteThemeDto as ThemeRecord, 
+  CreateNoteThemeDto as ThemeCreateInput, 
+  UpdateNoteThemeDto as ThemeUpdateInput, 
+  NoteFileDto as NoteFileRecord, 
+  CreateNoteFileDto as NoteFileCreateInput, 
+  NoteRelationDto
+} from '@/shared/contracts/notes';
 
 import { cleanupNoteFile } from './file-cleanup';
+
+type NoteRelationWithSource = NoteRelationDto & {
+  sourceNote?: RelatedNote | undefined;
+};
+
+type NoteRelationWithTarget = NoteRelationDto & {
+  targetNote?: RelatedNote | undefined;
+};
 
 // Lazy load to avoid initializing Prisma when using MongoDB
 let _repository: NoteRepository | null = null;

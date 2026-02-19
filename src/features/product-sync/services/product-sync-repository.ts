@@ -7,6 +7,9 @@ import { ObjectId } from 'mongodb';
 import {
   DEFAULT_PRODUCT_SYNC_FIELD_RULES,
   PRODUCT_SYNC_APP_FIELDS,
+  PRODUCT_SYNC_PROFILE_SETTINGS_KEY as PROFILE_SETTINGS_KEY,
+  PRODUCT_SYNC_RUN_KEY_PREFIX as RUN_KEY_PREFIX,
+  PRODUCT_SYNC_ITEM_KEY_PREFIX as ITEM_KEY_PREFIX,
 } from '@/features/product-sync/types/product-sync';
 import type {
   ProductSyncAppField,
@@ -26,9 +29,6 @@ import prisma from '@/shared/lib/db/prisma';
 
 import type { Filter } from 'mongodb';
 
-const PROFILE_SETTINGS_KEY = 'product_sync_profiles';
-const RUN_KEY_PREFIX = 'product_sync_run:';
-const ITEM_KEY_PREFIX = 'product_sync_run_item:';
 const ITEM_LIMIT_HARD = 100_000;
 const MAX_RUN_SCAN_LIMIT = 2_000;
 const STALE_QUEUED_DEFAULT_MS = 20 * 60 * 1000;

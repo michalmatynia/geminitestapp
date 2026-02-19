@@ -8,11 +8,7 @@ import Link from 'next/link';
 
 import { useNoteSettings, DEFAULT_NOTE_SETTINGS } from '@/features/notesapp/hooks/NoteSettingsContext';
 import type { NoteSettings } from '@/features/notesapp/types/notes-settings';
-import { Button, SelectSimple, useToast, Label, Checkbox, RadioGroup, RadioGroupItem, SectionHeader,  FormSection, FormField } from '@/shared/ui';
-
-
-
-
+import { Button, SelectSimple, useToast, Label, RadioGroup, RadioGroupItem, SectionHeader, FormSection, FormField, ToggleRow } from '@/shared/ui';
 
 const sortByOptions = [
   { value: 'created', label: 'Created Date' },
@@ -110,40 +106,36 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
         </FormSection>
 
         {/* Visibility Settings */}
-        <FormSection title='Card Visibility' className='p-6'>
-          <FormField
+        <FormSection title='Card Visibility' className='p-6 space-y-4'>
+          <ToggleRow
             label='Show Timestamps'
             description='Display created and modified dates on note cards'
-          >
-            <div className='flex items-center justify-between'>
-              <Checkbox
-                checked={settings.showTimestamps}
-                onCheckedChange={(checked: boolean | 'indeterminate'): void =>
-                  updateSettings({ showTimestamps: Boolean(checked) })
-                }
-              />
-              {!isDefault('showTimestamps') && (
-                <span className='text-xs text-blue-400'>Modified</span>
-              )}
-            </div>
-          </FormField>
+            checked={settings.showTimestamps}
+            onCheckedChange={(checked: boolean): void =>
+              updateSettings({ showTimestamps: checked })
+            }
+            className={!isDefault('showTimestamps') ? 'border-blue-500/30' : ''}
+          />
 
-          <FormField
+          <ToggleRow
             label='Show Breadcrumbs'
             description='Display folder path at the bottom of note cards'
-          >
-            <div className='flex items-center justify-between'>
-              <Checkbox
-                checked={settings.showBreadcrumbs}
-                onCheckedChange={(checked: boolean | 'indeterminate'): void =>
-                  updateSettings({ showBreadcrumbs: Boolean(checked) })
-                }
-              />
-              {!isDefault('showBreadcrumbs') && (
-                <span className='text-xs text-blue-400'>Modified</span>
-              )}
-            </div>
-          </FormField>
+            checked={settings.showBreadcrumbs}
+            onCheckedChange={(checked: boolean): void =>
+              updateSettings({ showBreadcrumbs: checked })
+            }
+            className={!isDefault('showBreadcrumbs') ? 'border-blue-500/30' : ''}
+          />
+
+          <ToggleRow
+            label='Show Related Notes'
+            description='Display linked notes as quick access cards'
+            checked={settings.showRelatedNotes}
+            onCheckedChange={(checked: boolean): void =>
+              updateSettings({ showRelatedNotes: checked })
+            }
+            className={!isDefault('showRelatedNotes') ? 'border-blue-500/30' : ''}
+          />
         </FormSection>
 
         {/* Search Settings */}
@@ -205,49 +197,99 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             </RadioGroup>
           </FormField>
 
-          <FormField
-            label='Autoformat on Paste'
-            description='Automatically format pasted markdown content (Markdown mode only)'
-          >
-            <div className='flex items-center justify-between'>
-              <Checkbox
-                checked={settings.autoformatOnPaste}
-                onCheckedChange={(checked: boolean | 'indeterminate'): void =>
-                  updateSettings({ autoformatOnPaste: Boolean(checked) })
-                }
-              />
-              {!isDefault('autoformatOnPaste') && (
-                <span className='text-xs text-blue-400'>Modified</span>
-              )}
-            </div>
-          </FormField>
+          <div className='mt-4'>
+            <ToggleRow
+              label='Autoformat on Paste'
+              description='Automatically format pasted markdown content (Markdown mode only)'
+              checked={settings.autoformatOnPaste}
+              onCheckedChange={(checked: boolean): void =>
+                updateSettings({ autoformatOnPaste: checked })
+              }
+              className={!isDefault('autoformatOnPaste') ? 'border-blue-500/30' : ''}
+            />
+          </div>
         </FormSection>
 
         {/* Navigation State */}
         <FormSection title='Navigation' className='p-6'>
-          <FormField
-            label='Remember Selected Folder'
-            description='Your selected folder is saved to the database and persists across sessions.'
-          >
-            <div className='flex items-center justify-between'>
-              {!isDefault('selectedFolderId') ? (
-                <div className='flex items-center gap-2'>
-                  <span className='text-xs text-green-400'>Saved to database</span>
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    onClick={(): void => updateSettings({ selectedFolderId: null })}
-                    className='h-6 px-2 text-xs text-gray-400 hover:text-white'
-                  >
-                    Clear
-                  </Button>
-                </div>
-              ) : (
-                <span className='text-xs text-gray-500'>Using default</span>
-              )}
+          <div className='flex items-center justify-between rounded-lg border border-border/60 bg-card/30 p-3'>
+            <div className='flex-1 space-y-0.5'>
+              <p className='text-sm font-medium text-gray-200'>Remember Selected Folder</p>
+              <p className='text-[11px] text-gray-500'>Your selected folder is saved to the database and persists across sessions.</p>
             </div>
-          </FormField>
+            {!isDefault('selectedFolderId') ? (
+              <div className='flex items-center gap-2'>
+                <span className='text-xs text-green-400 font-bold uppercase'>Saved</span>
+                <Button
+                  variant='outline'
+                  size='xs'
+                  onClick={(): void => updateSettings({ selectedFolderId: null })}
+                  className='h-7 px-2 text-xs'
+                >
+                  Clear
+                </Button>
+              </div>
+            ) : (
+              <span className='text-xs text-gray-500'>Using default</span>
+            )}
+          </div>
         </FormSection>
+
+        {/* Reset Button */}
+        <div className='flex justify-end'>
+          <Button
+            variant='outline'
+            onClick={handleResetToDefaults}
+            disabled={allDefaults}
+            className='gap-2'
+          >
+            <RotateCcw className='size-4' />
+            Reset to Defaults
+          </Button>
+        </div>
+
+        {/* Current Settings Summary */}
+        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+          <h3 className='mb-2 text-sm font-medium text-gray-400'>
+            Current Settings Summary
+          </h3>
+          <div className='grid grid-cols-2 gap-2 text-xs text-gray-500'>
+            <span>Sort:</span>
+            <span className='text-gray-300'>
+              {sortByOptions.find((o: { value: string }) => o.value === settings.sortBy)?.label} (
+              {settings.sortOrder === 'desc' ? 'Descending' : 'Ascending'})
+            </span>
+            <span>Timestamps:</span>
+            <span className='text-gray-300'>
+              {settings.showTimestamps ? 'Visible' : 'Hidden'}
+            </span>
+            <span>Breadcrumbs:</span>
+            <span className='text-gray-300'>
+              {settings.showBreadcrumbs ? 'Visible' : 'Hidden'}
+            </span>
+            <span>Search Scope:</span>
+            <span className='text-gray-300'>
+              {searchScopeOptions.find((o: { value: string }) => o.value === settings.searchScope)?.label}
+            </span>
+            <span>Selected Folder:</span>
+            <span className='text-gray-300'>
+              {settings.selectedFolderId ? 'Saved' : 'All Notes (default)'}
+            </span>
+            <span>Autoformat on Paste:</span>
+            <span className='text-gray-300'>
+              {settings.autoformatOnPaste ? 'Enabled' : 'Disabled'}
+            </span>
+            <span>Editor Mode:</span>
+            <span className='text-gray-300'>
+              {editorModeOptions.find((o: { value: string }) => o.value === settings.editorMode)?.label}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
         {/* Reset Button */}
         <div className='flex justify-end'>

@@ -10,17 +10,24 @@ import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { 
-  NoteWithRelations, 
-  TagRecord, 
-  NoteFileRecord, 
-  ThemeRecord, 
-  CategoryWithChildren,
-  RelatedNote,
-  NoteRelationWithSource,
-  NoteRelationWithTarget,
-} from '@/shared/types/domain/notes';
+  NoteWithRelationsDto as NoteWithRelations, 
+  NoteTagDto as TagRecord, 
+  NoteFileDto as NoteFileRecord, 
+  NoteThemeDto as ThemeRecord, 
+  NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
+  RelatedNoteDto as RelatedNote,
+  NoteRelationDto,
+} from '@/shared/contracts/notes';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
+type NoteRelationWithSource = NoteRelationDto & {
+  sourceNote?: RelatedNote | undefined;
+};
+
+type NoteRelationWithTarget = NoteRelationDto & {
+  targetNote?: RelatedNote | undefined;
+};
 
 import { useNotesAppContext } from '../hooks/NotesAppContext';
 import { useNoteSettings } from '../hooks/NoteSettingsContext';

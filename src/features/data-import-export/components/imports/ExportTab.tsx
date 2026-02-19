@@ -153,7 +153,7 @@ export function ExportTab(): React.JSX.Element {
         <div className='grid grid-cols-2 gap-4'>
           <div className='col-span-2'>
             <Label className='text-xs text-gray-400'>
-              Base connection for inventories/warehouses
+              Default Base connection (OneClick + inventory tools)
             </Label>
             <div className='mt-2'>
               <SelectSimple size='sm'
@@ -169,7 +169,7 @@ export function ExportTab(): React.JSX.Element {
               />
             </div>
             <p className='mt-1 text-xs text-gray-500'>
-              Used for loading inventories/warehouses and debug output.
+              Used by Product List OneClick export and for loading inventories/warehouses.
             </p>
           </div>
           <div>

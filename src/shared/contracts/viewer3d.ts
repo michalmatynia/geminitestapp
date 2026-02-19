@@ -44,6 +44,9 @@ export const asset3dListFiltersSchema = z.object({
 
 export type Asset3dListFiltersDto = z.infer<typeof asset3dListFiltersSchema>;
 
+export const asset3dViewModeSchema = z.enum(['grid', 'list']);
+export type Asset3dViewModeDto = z.infer<typeof asset3dViewModeSchema>;
+
 // Browser-native File object
 export const uploadAsset3dSchema = z.object({
   name: z.string(),
@@ -105,12 +108,44 @@ export type UpdateAsset3dTagDto = Partial<CreateAsset3dTagDto>;
  * 3D Viewer Config DTO
  */
 
+export const asset3dLightingPresetSchema = z.enum(['studio', 'outdoor', 'dramatic', 'soft']);
+export type Asset3dLightingPresetDto = z.infer<typeof asset3dLightingPresetSchema>;
+
+export const asset3dEnvironmentPresetSchema = z.enum([
+  'studio',
+  'sunset',
+  'dawn',
+  'night',
+  'warehouse',
+  'forest',
+  'apartment',
+  'city',
+  'park',
+  'lobby',
+]);
+export type Asset3dEnvironmentPresetDto = z.infer<typeof asset3dEnvironmentPresetSchema>;
+
+export const asset3dOrderedDitheringPresetKeySchema = z.enum([
+  'balanced',
+  'fineMono',
+  'chunkyMono',
+  'inverted',
+  'custom',
+]);
+export type Asset3dOrderedDitheringPresetKeyDto = z.infer<
+  typeof asset3dOrderedDitheringPresetKeySchema
+>;
+
 export const asset3dViewerConfigSchema = z.object({
   backgroundColor: z.string(),
   enableControls: z.boolean(),
   enableLighting: z.boolean(),
   cameraPosition: z.object({ x: z.number(), y: z.number(), z: z.number() }),
   autoRotate: z.boolean(),
+  lighting: asset3dLightingPresetSchema.optional(),
+  environment: asset3dEnvironmentPresetSchema.optional(),
+  lightIntensity: z.number().optional(),
+  exposure: z.number().optional(),
 });
 
 export type Asset3dViewerConfigDto = z.infer<typeof asset3dViewerConfigSchema>;

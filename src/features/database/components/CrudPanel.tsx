@@ -161,6 +161,8 @@ export function CrudPanel(props: {
     rowsQuery,
   } = useCrudPanelState(props);
 
+  const errorMessage = mutationError ?? (rowsQuery.isError ? (rowsQuery.error as Error).message : null);
+
   const columnDefs = useMemo<ColumnDef<Record<string, unknown>>[]>(() => {
     if (!columns.length && rows.length === 0) return [];
     

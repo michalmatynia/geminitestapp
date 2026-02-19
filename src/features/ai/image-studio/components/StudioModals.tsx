@@ -11,7 +11,7 @@ import type { ProductImageSlot } from '@/features/products/types/products-ui';
 import {
   flattenParams,
   type ParamSpec,
-} from '@/features/prompt-engine/prompt-params';
+} from '../utils/prompt-params';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

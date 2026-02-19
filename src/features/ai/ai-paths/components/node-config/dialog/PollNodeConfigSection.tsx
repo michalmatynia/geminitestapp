@@ -26,7 +26,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
   if (selectedNode?.type !== 'poll') return null;
 
   const defaultQuery: DbQueryConfig = {
-    provider: 'mongodb',
+    provider: 'auto',
     collection: 'products',
     mode: 'preset',
     preset: 'by_id',

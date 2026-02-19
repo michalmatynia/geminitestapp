@@ -32,6 +32,61 @@ import {
   safeJsonStringify 
 } from './utils';
 
+const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const extractDatabaseRuntimeMetadata = (
+  nextOutputs: RuntimePortValues
+): Record<string, unknown> | null => {
+  const bundle = nextOutputs['bundle'];
+  if (!isPlainRecord(bundle)) return null;
+
+  const collection =
+    typeof bundle['collection'] === 'string' && bundle['collection'].trim().length > 0
+      ? bundle['collection']
+      : null;
+  const requestedProvider =
+    typeof bundle['requestedProvider'] === 'string' &&
+    bundle['requestedProvider'].trim().length > 0
+      ? bundle['requestedProvider']
+      : null;
+  const resolvedProvider =
+    typeof bundle['resolvedProvider'] === 'string' &&
+    bundle['resolvedProvider'].trim().length > 0
+      ? bundle['resolvedProvider']
+      : typeof bundle['provider'] === 'string' &&
+          bundle['provider'].trim().length > 0
+        ? bundle['provider']
+        : null;
+  const providerFallback = isPlainRecord(bundle['providerFallback'])
+    ? bundle['providerFallback']
+    : null;
+  const count =
+    typeof bundle['count'] === 'number' && Number.isFinite(bundle['count'])
+      ? bundle['count']
+      : null;
+
+  const databaseMeta: Record<string, unknown> = {};
+  if (collection) {
+    databaseMeta['collection'] = collection;
+  }
+  if (requestedProvider) {
+    databaseMeta['requestedProvider'] = requestedProvider;
+  }
+  if (resolvedProvider) {
+    databaseMeta['resolvedProvider'] = resolvedProvider;
+  }
+  if (providerFallback) {
+    databaseMeta['providerFallback'] = providerFallback;
+  }
+  if (count !== null) {
+    databaseMeta['count'] = count;
+  }
+
+  if (Object.keys(databaseMeta).length === 0) return null;
+  return { database: databaseMeta };
+};
+
 export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
   const persistDebugSnapshot = useCallback(
     async (pathId: string | null, runAt: string, state: RuntimeState): Promise<void> => {
@@ -272,12 +327,12 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
           args.currentRunIdRef.current = runId;
           args.currentRunStartedAtRef.current = runStartedAt;
           const seedHashes = Object.fromEntries(
-            Object.entries((state.hashes ?? {}) as Record<string, unknown>).filter(
+            Object.entries(state.hashes ?? {}).filter(
               ([, value]) => typeof value === 'string'
             )
           ) as Record<string, string>;
           const seedHashTimestamps = Object.fromEntries(
-            Object.entries((state.hashTimestamps ?? {}) as Record<string, unknown>).filter(
+            Object.entries(state.hashTimestamps ?? {}).filter(
               ([, value]) => typeof value === 'number' && Number.isFinite(value)
             )
           ) as Record<string, number>;
@@ -343,7 +398,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
                   outputs: {
                     ...prevOutputs,
                     [node.id]: {
-                      ...((prevOutputs[node.id] ?? {}) as Record<string, unknown>),
+                      ...(prevOutputs[node.id] ?? {}),
                       status: 'running',
                     },
                   },
@@ -364,6 +419,10 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
               const rawStatus = (nextOutputs)?.['status'];
               const normalizedStatus =
                 args.normalizeNodeStatus(rawStatus) ?? (cached ? 'cached' : 'completed');
+              const metadata =
+                node.type === 'database'
+                  ? extractDatabaseRuntimeMetadata(nextOutputs)
+                  : null;
               args.setNodeStatus({
                 nodeId: node.id,
                 status: normalizedStatus,
@@ -379,10 +438,11 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
                   normalizedStatus === 'cached'
                     ? `Node ${node.title ?? node.id} reused cached outputs.`
                     : `Node ${node.title ?? node.id} ${args.formatStatusLabel(normalizedStatus)}.`,
+                ...(metadata ? { metadata } : {}),
               });
               args.setRuntimeState((prev: RuntimeState): RuntimeState => {
                 const nextOutput = {
-                  ...((prev.outputs?.[node.id] ?? {}) as Record<string, unknown>),
+                  ...(prev.outputs?.[node.id] ?? {}),
                   ...(nextOutputs),
                   status: normalizedStatus,
                 } as RuntimePortValues;

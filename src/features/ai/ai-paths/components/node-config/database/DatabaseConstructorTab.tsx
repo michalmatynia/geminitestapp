@@ -57,6 +57,7 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
     openSaveQueryPresetModal,
     databaseConfig,
     queryConfig,
+    resolvedProvider,
     operation,
     queryTemplateValue,
     queryTemplateRef,
@@ -97,8 +98,13 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
   const selectedNodeId = selectedNode.id;
   const isUpdateAction =
     databaseConfig.useMongoActions && databaseConfig.actionCategory === 'update';
-  const isPrismaProvider = queryConfig.provider === 'prisma';
-  const providerLabel = isPrismaProvider ? 'Prisma' : 'MongoDB';
+  const isPrismaProvider = resolvedProvider === 'prisma';
+  const providerLabel =
+    queryConfig.provider === 'auto'
+      ? `Auto (resolved: ${resolvedProvider === 'prisma' ? 'Prisma' : 'MongoDB'})`
+      : resolvedProvider === 'prisma'
+        ? 'Prisma'
+        : 'MongoDB';
   const templateSnippets = isPrismaProvider ? PRISMA_TEMPLATE_SNIPPETS : TEMPLATE_SNIPPETS;
   const readQueryTypes = isPrismaProvider ? PRISMA_READ_QUERY_TYPES : READ_QUERY_TYPES;
   const queryOperatorGroups = isPrismaProvider ? PRISMA_QUERY_OPERATOR_GROUPS : QUERY_OPERATOR_GROUPS;
@@ -380,6 +386,15 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
     <div className='space-y-4 rounded-md border border-border bg-card/40 p-3'>
       <div onFocusCapture={(): void => setPlaceholderTarget('query')}>
         <DatabaseQueryInputControls />
+      </div>
+      <div className='flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-card/35 px-3 py-2 text-[10px] text-gray-300'>
+        <span className='uppercase tracking-wide text-gray-500'>Provider</span>
+        <span className='rounded border border-border/70 bg-card/70 px-2 py-0.5'>
+          Requested: {queryConfig.provider}
+        </span>
+        <span className='rounded border border-border/70 bg-card/70 px-2 py-0.5'>
+          Effective: {resolvedProvider}
+        </span>
       </div>
 
       <DatabaseAiQueryReviewSection

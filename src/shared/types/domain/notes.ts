@@ -1,4 +1,3 @@
-
 import type {
   NoteDto,
   NotebookDto,
@@ -23,7 +22,8 @@ import type {
   RelatedNoteDto,
   NoteFiltersDto,
   NoteFileDto,
-  CreateNoteFileDto
+  CreateNoteFileDto,
+  NoteCategoryRecordWithChildrenDto
 } from '../../contracts/notes';
   
 export type {
@@ -80,19 +80,10 @@ export type NoteRelationWithSource = NoteRelationRecord & {
     sourceNote?: RelatedNote | undefined;
   };
   
-export type NoteWithRelations = NoteWithRelationsDto & {
-    tags: (NoteTagRecord & { tag: TagRecord })[];
-    categories: (NoteCategoryRecord & { category: CategoryRecord })[];
-    relations?: RelatedNote[];
-    files?: NoteFileRecord[];
-  };
+export type NoteWithRelations = NoteWithRelationsDto;
   
-export type CategoryWithChildren = CategoryRecord & {
-    children: CategoryWithChildren[];
+export type CategoryWithChildren = NoteCategoryRecordWithChildrenDto & {
     notes: NoteRecord[];
-    _count?: {
-      notes: number;
-    };
   };
   
 export type NoteCreateInput = CreateNoteDto;
@@ -111,4 +102,3 @@ export type NoteFilters = NoteFiltersDto;
 export type NoteFileRecord = NoteFileDto;
   
 export type NoteFileCreateInput = CreateNoteFileDto;
-  

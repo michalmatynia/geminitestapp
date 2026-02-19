@@ -675,7 +675,7 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
                 </div>
                 <div className='flex-1'>
                   <Input
-                    value={entry.value}
+                    value={entry.value ?? ''}
                     onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                       updateParameterValue(index, event.target.value)
                     }

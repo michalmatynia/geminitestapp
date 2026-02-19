@@ -1,38 +1,26 @@
-export type BaseApiResponse = {
-  status?: string;
-  error_code?: string;
-  error_message?: string;
-  [key: string]: unknown;
-};
+import type {
+  BaseApiResponseDto,
+  BaseInventoryDto,
+  BaseWarehouseDto,
+  BaseProducerDto,
+  BaseTagDto,
+  BaseProductRecordDto,
+  BaseCategoryDto,
+} from '@/shared/contracts/integrations';
 
-export type BaseInventory = {
-  id: string;
-  name: string;
-};
+export type BaseApiResponse = BaseApiResponseDto;
 
-export type BaseWarehouse = {
-  id: string;
-  name: string;
-  typedId?: string;
-};
+export type BaseInventory = BaseInventoryDto;
 
-export type BaseProducer = {
-  id: string;
-  name: string;
-};
+export type BaseWarehouse = BaseWarehouseDto;
 
-export type BaseTag = {
-  id: string;
-  name: string;
-};
+export type BaseProducer = BaseProducerDto;
 
-export type BaseProductRecord = Record<string, unknown>;
+export type BaseTag = BaseTagDto;
 
-export type BaseCategory = {
-  id: string;
-  name: string;
-  parentId: string | null;
-};
+export type BaseProductRecord = BaseProductRecordDto;
+
+export type BaseCategory = BaseCategoryDto;
 
 const toArray = (value: unknown): unknown[] => {
   if (Array.isArray(value)) return value;

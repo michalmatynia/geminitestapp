@@ -21,13 +21,9 @@ import {
 } from '@/features/database/utils/postgres';
 import { ErrorSystem } from '@/features/observability/server';
 import { forbiddenError, operationFailedError } from '@/shared/errors/app-error';
+import type { DatabaseBackupResultDto, FullDatabaseBackupResultDto } from '@/shared/contracts/database';
 
-export type DatabaseBackupResult = {
-  message: string;
-  backupName: string;
-  log: string;
-  warning?: string | undefined;
-};
+export type DatabaseBackupResult = DatabaseBackupResultDto;
 
 const shouldSkipBackups = (): boolean => process.env['SKIP_DB_BACKUP'] === 'true';
 
@@ -168,7 +164,7 @@ export const createPostgresBackup = async (): Promise<DatabaseBackupResult> => {
   }
 };
 
-export const createFullDatabaseBackup = async (): Promise<{ mongo: DatabaseBackupResult; postgres: DatabaseBackupResult }> => {
+export const createFullDatabaseBackup = async (): Promise<FullDatabaseBackupResultDto> => {
   if (shouldSkipBackups()) {
     const timestamp = Date.now();
     const message = 'Backup skipped (SKIP_DB_BACKUP=true)';

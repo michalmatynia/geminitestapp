@@ -119,7 +119,7 @@ export const STRING_MUTATOR_OUTPUT_PORTS = ['value'];
 export const ITERATOR_INPUT_PORTS = ['value', 'callback'];
 export const ITERATOR_OUTPUT_PORTS = ['value', 'index', 'total', 'done', 'status'];
 export const DEFAULT_DB_QUERY: DbQueryConfig = {
-  provider: 'mongodb',
+  provider: 'auto',
   collection: 'products',
   mode: 'preset',
   preset: 'by_id',
@@ -812,7 +812,7 @@ export const initialNodes = [
           },
         ],
         query: {
-          provider: 'mongodb',
+          provider: 'auto',
           collection: 'products',
           mode: 'preset',
           preset: 'by_id',

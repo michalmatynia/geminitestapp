@@ -130,6 +130,25 @@ export const noteCategoryWithChildrenSchema: z.ZodType<NoteCategoryWithChildrenD
   children: z.lazy(() => z.array(noteCategoryWithChildrenSchema)),
 });
 
+/**
+ * Note Category Record With Children (Domain-specific DTO)
+ */
+export interface NoteCategoryRecordWithChildrenDto extends NoteCategoryDto {
+  children: NoteCategoryRecordWithChildrenDto[];
+  notes?: NoteDto[];
+  _count?: {
+    notes: number;
+  };
+}
+
+export const noteCategoryRecordWithChildrenSchema: z.ZodType<NoteCategoryRecordWithChildrenDto> = noteCategorySchema.extend({
+  children: z.lazy(() => z.array(noteCategoryRecordWithChildrenSchema)),
+  notes: z.array(noteSchema).optional(),
+  _count: z.object({
+    notes: z.number(),
+  }).optional(),
+});
+
 export const createNoteCategorySchema = noteCategorySchema.omit({
   id: true,
   createdAt: true,

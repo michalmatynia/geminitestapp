@@ -1,4 +1,3 @@
-import type { PromptValidationRuleDto } from '@/shared/contracts/prompt-engine';
 import type {
   PromptExploderSegmentTypeDto,
   PromptExploderListItemDto,
@@ -20,6 +19,7 @@ import type {
   PromptExploderOperationModeDto,
   PromptExploderAiProviderDto,
   PromptExploderSettingsDto,
+  PromptExploderPatternRuleMapDto,
 } from '@/shared/contracts/prompt-exploder';
 
 import type { PromptExploderValidationRuleStack } from './validation-stack';
@@ -49,10 +49,7 @@ export type PromptExploderSegment = PromptExploderSegmentDto;
 
 export type PromptExploderDocument = PromptExploderDocumentDto;
 
-export type PromptExploderPatternRuleMap = {
-  allRules: PromptValidationRuleDto[];
-  scopedRules: PromptValidationRuleDto[];
-};
+export type PromptExploderPatternRuleMap = PromptExploderPatternRuleMapDto;
 
 export type PromptExploderLearnedTemplate = PromptExploderLearnedTemplateDto;
 

@@ -6,12 +6,13 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
   ChatbotJob,
   ChatbotJobDocument,
-  ChatbotJobStatus,
 } from '@/shared/types/domain/chatbot';
 
 const COLLECTION_NAME = 'chatbot_jobs';
 
-type ChatbotJobCreateInput = Omit<ChatbotJob, 'id' | 'createdAt' | 'status'>;
+type ChatbotJobCreateInput = Pick<ChatbotJob, 'sessionId' | 'model' | 'payload'> & Partial<
+  Pick<ChatbotJob, 'resultText' | 'errorMessage' | 'startedAt' | 'finishedAt'>
+>;
 type ChatbotJobUpdateInput = Partial<
   Pick<ChatbotJobDocument, 'status' | 'model' | 'payload' | 'resultText' | 'errorMessage' | 'startedAt' | 'finishedAt'>
 >;
@@ -37,7 +38,7 @@ export interface ChatbotJobRepository {
   findNextPending(): Promise<ChatbotJob | null>;
   create(input: ChatbotJobCreateInput): Promise<ChatbotJob>;
   update(id: string, update: ChatbotJobUpdateInput): Promise<ChatbotJob | null>;
-  deleteMany(statusIn: ChatbotJobStatus[]): Promise<number>;
+  deleteMany(statusIn: Array<ChatbotJob['status']>): Promise<number>;
   delete(id: string): Promise<boolean>;
 }
 
@@ -134,7 +135,7 @@ export const chatbotJobRepository: ChatbotJobRepository = {
     return result ? documentToJob(result) : null;
   },
 
-  async deleteMany(statusIn: ChatbotJobStatus[]): Promise<number> {
+  async deleteMany(statusIn: Array<ChatbotJob['status']>): Promise<number> {
     const db = await getMongoDb();
     const result = await db
       .collection<ChatbotJobDocument>(COLLECTION_NAME)

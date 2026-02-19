@@ -3,7 +3,7 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
 
-import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
+import { Button, ListPanel, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
 
 import { BenchmarkReportPanel } from '../components/BenchmarkReportPanel';
 import { BindingsPanel } from '../components/BindingsPanel';
@@ -48,7 +48,7 @@ class PromptExploderErrorBoundary extends React.Component<
     }
 
     return (
-      <div className='container mx-auto space-y-3 py-8'>
+      <div className='space-y-3'>
         <div className='rounded border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-100'>
           Prompt Exploder encountered a runtime error: {this.state.errorMessage ?? 'Unknown error'}
         </div>
@@ -89,41 +89,46 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   return (
     <PromptExploderErrorBoundary>
       <PromptExploderProvider>
-        <div id='prompt-exploder-docs-root' className='container mx-auto space-y-5 py-6'>
-          <PromptExploderHeaderBar
-            docsTooltipsEnabled={docsTooltipsEnabled}
-            onDocsTooltipsChange={setDocsTooltipsEnabled}
-          />
-          <Tabs value={activeTab} onValueChange={handleTabChange} className='w-full space-y-4'>
-            <TabsList className='grid h-auto w-full grid-cols-2 gap-2 border border-border/60 bg-card/30 p-2'>
-              <TabsTrigger value='workspace' className='h-10'>Workspace</TabsTrigger>
-              <TabsTrigger value='docs' className='h-10'>Docs</TabsTrigger>
-            </TabsList>
+        <div id='prompt-exploder-docs-root'>
+          <ListPanel
+            header={(
+              <PromptExploderHeaderBar
+                docsTooltipsEnabled={docsTooltipsEnabled}
+                onDocsTooltipsChange={setDocsTooltipsEnabled}
+              />
+            )}
+          >
+            <Tabs value={activeTab} onValueChange={handleTabChange} className='w-full space-y-4'>
+              <TabsList className='grid h-auto w-full grid-cols-2 gap-2 border border-border/60 bg-card/30 p-2'>
+                <TabsTrigger value='workspace' className='h-10'>Workspace</TabsTrigger>
+                <TabsTrigger value='docs' className='h-10'>Docs</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value='workspace' className='space-y-4'>
-              <div className='grid grid-cols-1 gap-4 2xl:grid-cols-[minmax(380px,0.85fr)_minmax(640px,1.15fr)]'>
-                <div className='space-y-4'>
-                  <SourcePromptPanel />
-                  <ExplosionMetricsPanel />
-                  <WarningsPanel />
-                  <PromptProjectsPanel />
+              <TabsContent value='workspace' className='space-y-4'>
+                <div className='grid grid-cols-1 gap-4 2xl:grid-cols-[minmax(380px,0.85fr)_minmax(640px,1.15fr)]'>
+                  <div className='space-y-4'>
+                    <SourcePromptPanel />
+                    <ExplosionMetricsPanel />
+                    <WarningsPanel />
+                    <PromptProjectsPanel />
+                  </div>
+                  <div className='space-y-4'>
+                    <SegmentEditorPanel />
+                    <BindingsPanel />
+                    <ReassembledPromptPanel />
+                  </div>
                 </div>
-                <div className='space-y-4'>
-                  <SegmentEditorPanel />
-                  <BindingsPanel />
-                  <ReassembledPromptPanel />
-                </div>
-              </div>
 
-              <PatternRuntimePanel />
-              <ParserTuningSection />
-              <BenchmarkReportPanel />
-            </TabsContent>
+                <PatternRuntimePanel />
+                <ParserTuningSection />
+                <BenchmarkReportPanel />
+              </TabsContent>
 
-            <TabsContent value='docs'>
-              <PromptExploderDocsTab />
-            </TabsContent>
-          </Tabs>
+              <TabsContent value='docs'>
+                <PromptExploderDocsTab />
+              </TabsContent>
+            </Tabs>
+          </ListPanel>
         </div>
         <DocsTooltipEnhancer rootId='prompt-exploder-docs-root' enabled={docsTooltipsEnabled} />
       </PromptExploderProvider>

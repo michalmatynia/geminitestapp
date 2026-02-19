@@ -1,28 +1,17 @@
 import type { 
   ProductParameter 
 } from '@/shared/types/domain/products';
+import type { 
+  ProductParameterFiltersDto, 
+  ProductParameterCreateInputDto, 
+  ProductParameterUpdateInputDto 
+} from '@/shared/contracts/products';
 
-export type ParameterFilters = {
-  catalogId?: string;
-  search?: string;
-};
+export type ParameterFilters = ProductParameterFiltersDto;
 
-export type ParameterCreateInput = {
-  name_en: string;
-  name_pl?: string | null;
-  name_de?: string | null;
-  catalogId: string;
-  selectorType?: ProductParameter['selectorType'];
-  optionLabels?: string[];
-};
+export type ParameterCreateInput = ProductParameterCreateInputDto;
 
-export type ParameterUpdateInput = {
-  name_en?: string;
-  name_pl?: string | null;
-  name_de?: string | null;
-  selectorType?: ProductParameter['selectorType'];
-  optionLabels?: string[];
-};
+export type ParameterUpdateInput = ProductParameterUpdateInputDto;
 
 export type ParameterRepository = {
   listParameters(filters: ParameterFilters): Promise<ProductParameter[]>;

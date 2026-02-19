@@ -4,7 +4,7 @@ import type {
   AgentTeachingAgentDto,
   AgentTeachingChatSourceDto,
   AgentTeachingDocumentMetadataDto
-} from '../../dtos/agent-teaching';
+} from '../../contracts/agent-teaching';
 
 export type {
   AgentTeachingCollectionDto,

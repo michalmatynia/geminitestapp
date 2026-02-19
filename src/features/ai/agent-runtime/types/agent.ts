@@ -15,9 +15,15 @@ import type {
   AgentRunStatusTypeDto,
   AgentAuditLogRecordDto,
   AgentExecutionContextDto,
+  AuditLevelDto,
+  MemoryScopeDto,
+  AgentDecisionActionDto,
+  PlannerTaskTypeDto,
 } from '@/shared/contracts/agent-runtime';
 
 export type AgentDecision = AgentDecisionDto;
+
+export type AgentDecisionAction = AgentDecisionActionDto;
 
 export type PlanStep = PlanStepDto;
 
@@ -26,6 +32,8 @@ export type PlannerCritique = PlannerCritiqueDto;
 export type PlannerAlternative = PlannerAlternativeDto;
 
 export type PlannerMeta = PlannerMetaDto;
+
+export type PlannerTaskType = PlannerTaskTypeDto;
 
 export type AgentPlanSettings = AgentPlanSettingsDto;
 
@@ -40,11 +48,11 @@ export type ApprovalRequest = Omit<ApprovalRequestDto, 'requestedAt' | 'decidedA
   decidedAt?: Date;
 };
 
-export type AuditLevel = 'info' | 'warning' | 'error';
+export type AuditLevel = AuditLevelDto;
 
 export type PlanHierarchy = PlanHierarchyDto;
 
-export type MemoryScope = 'session' | 'longterm';
+export type MemoryScope = MemoryScopeDto;
 
 export type AgentToolRequest = AgentToolRequestDto;
 

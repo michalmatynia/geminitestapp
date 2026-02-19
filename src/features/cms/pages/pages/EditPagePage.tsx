@@ -9,7 +9,7 @@ import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelectio
 import { useCmsAllSlugs, useCmsPage, useCmsSlugs, useUpdatePage } from '@/features/cms/hooks/useCmsQueries';
 import type { Page, Slug } from '@/features/cms/types';
 import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
-import { Button, Checkbox, Input, SectionHeader, ToggleRow, FormSection, Badge, Alert, StatusBadge, LoadingState, FormActions, Breadcrumbs, Hint } from '@/shared/ui';
+import { Checkbox, Input, SectionHeader, ToggleRow, FormSection, Badge, Alert, StatusBadge, LoadingState, FormActions, Breadcrumbs, Hint } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function EditPagePageLoader(): React.JSX.Element {

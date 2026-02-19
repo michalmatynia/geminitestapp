@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildCaseResolverCaptureProposalState,
+  stripAcceptedCaptureContentFromText,
+  stripAcceptedDateLineFromText,
   stripCapturedAddressLinesFromText,
 } from '@/features/case-resolver-capture/proposals';
 import {
@@ -291,5 +293,143 @@ describe('case-resolver-capture proposals', () => {
       state.addresser.action = 'keepText';
     }
     expect(stripCapturedAddressLinesFromText(sourceText, state)).toBe(sourceText);
+  });
+
+  it('builds document-date proposal from metadata and resolves source line', () => {
+    const sourceText = [
+      'Szczecin 25.01.2026',
+      'Michał Matynia',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+
+    const state = buildCaseResolverCaptureProposalState(
+      undefined,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        metadata: {
+          placeDate: {
+            city: 'Szczecin',
+            day: '25',
+            month: '01',
+            year: '2026',
+          },
+        },
+        sourceText,
+      }
+    );
+
+    expect(state?.documentDate).toEqual({
+      isoDate: '2026-01-25',
+      source: 'metadata',
+      sourceLine: 'Szczecin 25.01.2026',
+      cityHint: 'Szczecin',
+      action: 'useDetectedDate',
+    });
+  });
+
+  it('removes detected date line when date action is useDetectedDate', () => {
+    const sourceText = [
+      'Szczecin 25.01.2026',
+      'Michał Matynia',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+
+    const state = buildCaseResolverCaptureProposalState(
+      undefined,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        metadata: {
+          placeDate: {
+            city: 'Szczecin',
+            day: '25',
+            month: '01',
+            year: '2026',
+          },
+        },
+        sourceText,
+      }
+    );
+
+    expect(stripAcceptedDateLineFromText(sourceText, state)).toBe([
+      'Michał Matynia',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n'));
+  });
+
+  it('keeps detected date line when date action is keepText', () => {
+    const sourceText = [
+      'Szczecin 25.01.2026',
+      'Michał Matynia',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+
+    const state = buildCaseResolverCaptureProposalState(
+      undefined,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        metadata: {
+          placeDate: {
+            city: 'Szczecin',
+            day: '25',
+            month: '01',
+            year: '2026',
+          },
+        },
+        sourceText,
+      }
+    );
+    if (state?.documentDate) {
+      state.documentDate.action = 'keepText';
+    }
+
+    expect(stripAcceptedDateLineFromText(sourceText, state)).toBe(sourceText);
+  });
+
+  it('strips accepted addresses and date in one pass', () => {
+    const sourceText = [
+      'Szczecin 25.01.2026',
+      'Michał Matynia',
+      'Fioletowa 71/2',
+      '70-781 Szczecin',
+      'Poland',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        metadata: {
+          placeDate: {
+            city: 'Szczecin',
+            day: '25',
+            month: '01',
+            year: '2026',
+          },
+        },
+        sourceText,
+      }
+    );
+
+    expect(stripAcceptedCaptureContentFromText(sourceText, state)).toBe([
+      'Michał Matynia',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n'));
   });
 });

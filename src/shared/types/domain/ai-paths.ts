@@ -87,6 +87,8 @@ export type {
   AiPathNodeStatusDto,
   AiPathRunRecordDto,
   AiPathRunDetailDto,
+  AiPathRunEventDto,
+  AiPathRunEventLevelDto,
   EdgeDto,
   NodeDefinitionDto,
   RuntimeHistoryLinkDto,
@@ -102,6 +104,13 @@ export type {
   DbNodePresetDto,
   JsonPathEntryDto,
   ConnectionValidationDto,
+  AiPathRuntimeEventDto,
+  AiPathRuntimeNodeStatusDto,
+  AiPathRuntimeNodeStatusMapDto,
+  RuntimeStateDto,
+  RuntimePortValuesDto,
+  PathExecutionModeDto,
+  PathRunModeDto
 };
 
 export type NodeType = AiNodeTypeDto;
@@ -200,12 +209,7 @@ export type Edge = EdgeDto;
 
 export type AiPathRunEventLevel = AiPathRunEventLevelDto;
 
-export type AiPathRunEventRecord = AiPathRunEventDto & {
-  nodeType?: string | null | undefined;
-  nodeTitle?: string | null | undefined;
-  status?: string | null | undefined;
-  iteration?: number | null | undefined;
-};
+export type AiPathRunEventRecord = AiPathRunEventDto;
 
 export type NodeDefinition = NodeDefinitionDto;
 
@@ -215,32 +219,9 @@ export type RuntimeHistoryEntry = RuntimeHistoryEntryDto;
 
 export type RuntimePortValues = RuntimePortValuesDto;
 
-export type RuntimeState = Partial<RuntimeStateDto> & {
-  runId?: string | null | undefined;
-  runStartedAt?: string | null | undefined;
-  outputs: Record<string, RuntimePortValues>;
-  inputs: Record<string, RuntimePortValues>;
-  hashes?: Record<string, unknown> | undefined;
-  hashTimestamps?: Record<string, unknown> | undefined;
-  history?: Record<string, RuntimeHistoryEntry[]> | undefined;
-};
+export type RuntimeState = RuntimeStateDto;
 
-export type AiPathRuntimeEventKind = string;
-export type AiPathRuntimeEventLevel = AiPathRuntimeEventDto['level'];
-
-export type AiPathRuntimeEvent = Omit<AiPathRuntimeEventDto, 'type' | 'runId' | 'level' | 'createdAt' | 'updatedAt'> & {
-  type?: AiPathRuntimeEventDto['type'] | string | undefined;
-  createdAt?: string | undefined;
-  updatedAt?: string | null | undefined;
-  level?: AiPathRuntimeEventDto['level'] | undefined;
-  source?: string | null | undefined;
-  kind?: AiPathRuntimeEventKind | null | undefined;
-  runId?: string | null | undefined;
-  runStartedAt?: string | null | undefined;
-  nodeTitle?: string | null | undefined;
-  status?: string | null | undefined;
-  iteration?: number | undefined;
-};
+export type AiPathRuntimeEvent = AiPathRuntimeEventDto;
 
 export type AiPathRuntimeNodeStatus = AiPathRuntimeNodeStatusDto;
 
@@ -248,7 +229,7 @@ export type AiPathRuntimeNodeStatusMap = AiPathRuntimeNodeStatusMapDto;
 
 export type PathExecutionMode = PathExecutionModeDto;
 
-export type PathRunMode = PathRunModeDto | 'queue' | 'block';
+export type PathRunMode = PathRunModeDto;
 
 export type AiPathRuntimeAnalyticsRange = '1h' | '24h' | '7d' | '30d';
 

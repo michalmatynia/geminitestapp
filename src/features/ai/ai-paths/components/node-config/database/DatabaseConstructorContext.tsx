@@ -24,6 +24,7 @@ export type DatabaseConstructorContextValue = {
   openSaveQueryPresetModal: () => void;
   databaseConfig: DatabaseConfig;
   queryConfig: DbQueryConfig;
+  resolvedProvider: 'mongodb' | 'prisma';
   operation: DatabaseOperation;
   queryTemplateValue: string;
   queryTemplateRef?: React.RefObject<HTMLTextAreaElement | null>;

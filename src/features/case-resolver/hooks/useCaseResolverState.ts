@@ -1190,38 +1190,37 @@ export function useCaseResolverState() {
 
     if (!hasMeaningfulChanges) {
       clearStoredEditorDraft(editingDocumentDraft.id);
-      setEditingDocumentDraft(null);
-      setEditingDocumentNodeContext(null);
       return;
     }
     const now = new Date().toISOString();
+    const nextDocumentContentVersion = currentFile.documentContentVersion + 1;
+    const nextDocumentHistory = hasContentChanges
+      ? [
+        {
+          id: createId('case-doc-history'),
+          savedAt: now,
+          documentContentVersion: currentFile.documentContentVersion,
+          activeDocumentVersion: currentFile.activeDocumentVersion,
+          editorType: currentFile.editorType,
+          documentContent: currentFile.documentContent,
+          documentContentMarkdown: currentFile.documentContentMarkdown,
+          documentContentHtml: currentFile.documentContentHtml,
+          documentContentPlainText: currentFile.documentContentPlainText,
+        },
+        ...currentFile.documentHistory,
+      ].slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT)
+      : currentFile.documentHistory;
     updateWorkspace((current) => ({
       ...current,
       files: current.files.map((file) =>
         file.id === editingDocumentDraft.id
           ? (() => {
-            const nextDocumentHistory = hasContentChanges
-              ? [
-                {
-                  id: createId('case-doc-history'),
-                  savedAt: now,
-                  documentContentVersion: file.documentContentVersion,
-                  activeDocumentVersion: file.activeDocumentVersion,
-                  editorType: file.editorType,
-                  documentContent: file.documentContent,
-                  documentContentMarkdown: file.documentContentMarkdown,
-                  documentContentHtml: file.documentContentHtml,
-                  documentContentPlainText: file.documentContentPlainText,
-                },
-                ...file.documentHistory,
-              ].slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT)
-              : file.documentHistory;
             return {
               ...file,
               ...editingDocumentDraft,
               editorType: canonical.mode,
               documentContentFormatVersion: 1,
-              documentContentVersion: file.documentContentVersion + 1,
+              documentContentVersion: nextDocumentContentVersion,
               documentContent: nextStoredContent,
               documentContentMarkdown: canonical.markdown,
               documentContentHtml: canonical.html,
@@ -1238,8 +1237,27 @@ export function useCaseResolverState() {
       ),
     }), { persistToast: 'Document changes saved.' });
     clearStoredEditorDraft(editingDocumentDraft.id);
-    setEditingDocumentDraft(null);
-    setEditingDocumentNodeContext(null);
+    setEditingDocumentDraft((current) => {
+      if (!current || current.id !== editingDocumentDraft.id) return current;
+      return {
+        ...current,
+        ...editingDocumentDraft,
+        editorType: canonical.mode,
+        documentContentFormatVersion: 1,
+        documentContentVersion: nextDocumentContentVersion,
+        baseDocumentContentVersion: nextDocumentContentVersion,
+        documentContent: nextStoredContent,
+        documentContentMarkdown: canonical.markdown,
+        documentContentHtml: canonical.html,
+        documentContentPlainText: canonical.plainText,
+        documentHistory: nextDocumentHistory,
+        documentConversionWarnings: canonical.warnings,
+        lastContentConversionAt: now,
+        originalDocumentContent: nextOriginalDocumentContent,
+        explodedDocumentContent: nextExplodedDocumentContent,
+        updatedAt: now,
+      };
+    });
   }, [editingDocumentDraft, toast, updateWorkspace, workspace.files]);
 
   const handleDiscardFileEditorDraft = useCallback((): void => {

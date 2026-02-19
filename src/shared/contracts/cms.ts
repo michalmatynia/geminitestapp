@@ -163,18 +163,39 @@ export const cmsBlockInstanceSchema: z.ZodType<CmsBlockInstanceDto> = z.lazy(() 
   })
 );
 
+export const pageZoneSchema = z.enum(['header', 'template', 'footer']);
+export type PageZoneDto = z.infer<typeof pageZoneSchema>;
+
 export const cmsSectionInstanceSchema = z.object({
   id: z.string(),
   type: z.string(),
-  zone: z.enum(['header', 'template', 'footer']),
+  zone: pageZoneSchema,
   settings: z.record(z.string(), z.unknown()),
   blocks: z.array(cmsBlockInstanceSchema),
 });
 
 export type CmsSectionInstanceDto = z.infer<typeof cmsSectionInstanceSchema>;
 
-export const pageZoneSchema = z.enum(['header', 'template', 'footer']);
-export type PageZoneDto = z.infer<typeof pageZoneSchema>;
+export const clipboardDataSchema = z.object({
+  type: z.enum(['section', 'block']),
+  data: z.union([cmsSectionInstanceSchema, cmsBlockInstanceSchema]),
+});
+
+export type ClipboardDataDto = z.infer<typeof clipboardDataSchema>;
+
+export const pageBuilderSnapshotSchema = z.object({
+  currentPage: z.lazy(() => cmsPageSchema).nullable(),
+  sections: z.array(cmsSectionInstanceSchema),
+});
+
+export type PageBuilderSnapshotDto = z.infer<typeof pageBuilderSnapshotSchema>;
+
+export const pageBuilderHistorySchema = z.object({
+  past: z.array(pageBuilderSnapshotSchema),
+  future: z.array(pageBuilderSnapshotSchema),
+});
+
+export type PageBuilderHistoryDto = z.infer<typeof pageBuilderHistorySchema>;
 
 /**
  * CMS Page Contract

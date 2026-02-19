@@ -1,26 +1,11 @@
 import type { CatalogRecord } from '@/features/products/types';
+import type { CatalogCreateInputDto, CatalogUpdateInputDto } from '@/shared/contracts/products';
 
 export type { CatalogRecord };
 
-export type CatalogCreateInput = {
-  name: string;
-  description?: string | null | undefined;
-  isDefault?: boolean | undefined;
-  languageIds?: string[] | undefined;
-  defaultLanguageId?: string | null | undefined;
-  priceGroupIds?: string[] | undefined;
-  defaultPriceGroupId?: string | null | undefined;
-};
+export type CatalogCreateInput = CatalogCreateInputDto;
 
-export type CatalogUpdateInput = {
-  name?: string | undefined;
-  description?: string | null | undefined;
-  isDefault?: boolean | undefined;
-  languageIds?: string[] | undefined;
-  defaultLanguageId?: string | null | undefined;
-  priceGroupIds?: string[] | undefined;
-  defaultPriceGroupId?: string | null | undefined;
-};
+export type CatalogUpdateInput = CatalogUpdateInputDto;
 
 export type CatalogRepository = {
   listCatalogs(): Promise<CatalogRecord[]>;

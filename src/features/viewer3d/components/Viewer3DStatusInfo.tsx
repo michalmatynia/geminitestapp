@@ -23,9 +23,9 @@ export function Viewer3DStatusInfo(): React.JSX.Element {
       <div className='flex items-center gap-4'>
         <div className='flex items-center gap-2'>
           <Layers className='h-4 w-4 text-gray-500' />
-          <PropertyRow label='Env' value={environment} variant='subtle' valueClassName='text-gray-300' />
+          <PropertyRow label='Env' value={environment} valueClassName='text-gray-300' />
         </div>
-        <PropertyRow label='Light' value={lighting} variant='subtle' valueClassName='text-gray-300' />
+        <PropertyRow label='Light' value={lighting} valueClassName='text-gray-300' />
       </div>
       <div className='flex items-center gap-2'>
         {enableBloom && (

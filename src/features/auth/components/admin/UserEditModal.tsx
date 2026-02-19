@@ -3,15 +3,13 @@
 import React from 'react';
 
 import type { AuthUserSecurityProfile } from '@/features/auth/api/users';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { StatusToggle, MetadataItem, LoadingState, ToggleRow } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import type { AuthUserSummary } from '../../types';
 
-interface UserEditModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  item: AuthUserSummary | null;
+interface UserEditModalProps extends EntityModalProps<AuthUserSummary> {
   setEditingUser: React.Dispatch<React.SetStateAction<AuthUserSummary | null>>;
   isSaving: boolean;
   loadingSecurity: boolean;

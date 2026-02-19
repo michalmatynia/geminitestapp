@@ -5,6 +5,7 @@ import type {
   DynamicReplacementRoundMode,
   DynamicReplacementSourceMode,
 } from '@/features/products/utils/validator-replacement-recipe';
+import type { ProductValidationSequenceGroupDto } from '@/shared/contracts/products';
 import type {
   ProductValidationDenyBehavior,
   ProductValidationInstanceScope,
@@ -14,7 +15,6 @@ import type {
   ProductValidationRuntimeType,
   ProductValidationTarget,
 } from '@/shared/types/domain/products';
-import type { ProductValidationSequenceGroupDto } from '@/shared/contracts/products';
 
 export type ReplacementMode = 'static' | 'dynamic';
 

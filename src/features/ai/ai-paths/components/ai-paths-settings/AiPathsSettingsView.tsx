@@ -902,7 +902,9 @@ export function AiPathsSettingsView(): React.JSX.Element {
         title='Paths Settings'
         subtitle='Configure persistence and runtime behavior for this path.'
         size='sm'
-        onSave={() => setPathSettingsModalOpen(false)}
+        onSave={async () => {
+          setPathSettingsModalOpen(false);
+        }}
         cancelText='Close'
         showSaveButton={false}
         fields={[

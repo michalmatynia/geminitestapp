@@ -9,7 +9,7 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 import type { JsonParseResult } from '@/shared/types/api/api';
-import type { ChatbotJobStatus, ChatbotJob } from '@/shared/types/domain/chatbot';
+import type { ChatbotJob } from '@/shared/types/domain/chatbot';
 import { logger } from '@/shared/utils/logger';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
@@ -97,7 +97,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
 export async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const scope = req.nextUrl.searchParams.get('scope') ?? 'terminal';
 
-  const terminalStatuses: ChatbotJobStatus[] = ['completed', 'failed', 'canceled'];
+  const terminalStatuses: Array<ChatbotJob['status']> = ['completed', 'failed', 'canceled'];
 
   if (scope !== 'terminal') {
     throw badRequestError('Unsupported delete scope.');

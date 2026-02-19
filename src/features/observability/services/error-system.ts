@@ -2,9 +2,14 @@ import {
   classifyError as classifySharedError,
   getSuggestedActions as getSharedSuggestedActions,
 } from '@/shared/errors/error-classifier';
-import { ErrorCategory, type ErrorContext } from '@/shared/types/observability';
+import {
+  ERROR_CATEGORY,
+  type ErrorCategory as ErrorCategoryType,
+  type ErrorContext,
+} from '@/shared/types/observability';
 
-export { ErrorCategory, type ErrorContext };
+export const ErrorCategory = ERROR_CATEGORY;
+export type { ErrorCategoryType as ErrorCategory, ErrorContext };
 
 /**
  * Centralized error handling system.
@@ -112,7 +117,7 @@ export const ErrorSystem = {
         source: service,
         context: {
           ...context,
-          category: ErrorCategory.VALIDATION
+          category: ERROR_CATEGORY.VALIDATION
         }
       });
     } catch (importError) {
@@ -153,10 +158,10 @@ export const ErrorSystem = {
     const message = error instanceof Error ? error.message : String(error);
     const stack = error instanceof Error ? error.stack : undefined;
     const contextCategory = context.category;
-    const category: ErrorCategory =
+    const category: ErrorCategoryType =
       typeof contextCategory === 'string' &&
       (Object.values(ErrorCategory) as string[]).includes(contextCategory)
-        ? (contextCategory as ErrorCategory)
+        ? (contextCategory as ErrorCategoryType)
         : classifySharedError(error);
     
     return {

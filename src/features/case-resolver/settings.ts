@@ -57,6 +57,10 @@ import {
   type CaseResolverScanSlot,
   type CaseResolverWorkspace,
 } from './types';
+import type { 
+  CaseResolverSettingsDto, 
+  CaseResolverDefaultDocumentFormatDto 
+} from '@/shared/contracts/case-resolver';
 
 export const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v1';
 export const CASE_RESOLVER_TAGS_KEY = 'case_resolver_tags_v1';
@@ -66,19 +70,14 @@ export const CASE_RESOLVER_SETTINGS_KEY = 'case_resolver_settings_v1';
 export const CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY = 'case_resolver_default_document_format_v1';
 export const CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
-export type CaseResolverDefaultDocumentFormat = Extract<CaseResolverEditorType, 'markdown' | 'wysiwyg'>;
+export type CaseResolverDefaultDocumentFormat = CaseResolverDefaultDocumentFormatDto;
 
 export const DEFAULT_CASE_RESOLVER_OCR_PROMPT =
   'Extract all readable text from the attached image and return plain text only. Keep line breaks. Do not add commentary.';
 export const DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT =
   'Extract text from the uploaded document';
 
-export type CaseResolverSettings = {
-  ocrModel: string;
-  ocrPrompt: string;
-  defaultDocumentFormat: CaseResolverDefaultDocumentFormat;
-  confirmDeleteDocument: boolean;
-};
+export type CaseResolverSettings = CaseResolverSettingsDto;
 
 export const DEFAULT_CASE_RESOLVER_SETTINGS: CaseResolverSettings = {
   ocrModel: '',

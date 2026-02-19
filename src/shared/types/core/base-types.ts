@@ -1,9 +1,8 @@
 import { DtoBase, NamedDto, Localized, CreateDto, UpdateDto } from '../base';
 import type { StatusDto } from '../../contracts/base';
+import type { SettingRecordDto } from '../../dtos/settings';
 
 export type { DtoBase, NamedDto, Localized, CreateDto, UpdateDto };
-
-import type { SettingRecordDto } from '../../dtos/settings';
 
 // Minimal types - single source of truth
 export type Status = StatusDto;

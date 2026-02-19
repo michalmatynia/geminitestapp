@@ -8,7 +8,11 @@ import {
 } from '@/features/ai/ai-paths/lib';
 import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver-capture/filemaker-upsert';
 import type {
+  CaseResolverCaptureDocumentDateAction,
   CaseResolverCaptureProposalState,
+} from '@/features/case-resolver-capture/proposals';
+import {
+  stripAcceptedCaptureContentFromText,
 } from '@/features/case-resolver-capture/proposals';
 import {
   type CaseResolverCaptureAction,
@@ -120,7 +124,9 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   ]);
 
   const [editorWidth, setEditorWidth] = React.useState<number | null>(null);
-  const [editorDetailsTab, setEditorDetailsTab] = React.useState<'document' | 'metadata' | 'history'>('document');
+  const [editorDetailsTab, setEditorDetailsTab] = React.useState<
+    'document' | 'relations' | 'metadata' | 'revisions'
+  >('document');
   const [isDraggingSplitter, setIsDraggingSplitter] = React.useState(false);
   const [editorContentRevisionSeed, setEditorContentRevisionSeed] = React.useState(0);
   const editorSplitRef = React.useRef<HTMLDivElement | null>(null);
@@ -130,6 +136,10 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const [isDocumentPreviewOpen, setIsDocumentPreviewOpen] = React.useState(false);
   const [documentPreviewHtml, setDocumentPreviewHtml] = React.useState('');
   const initialDraftFingerprintRef = React.useRef<string | null>(null);
+  const trackedDraftBaseVersionRef = React.useRef<{
+    fileId: string;
+    baseDocumentContentVersion: number;
+  } | null>(null);
 
   const preserveWorkspaceView = useCallback(
     (view: 'document' | 'relations'): void => {
@@ -242,13 +252,45 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   React.useEffect(() => {
     if (!editingDocumentDraft) {
       initialDraftFingerprintRef.current = null;
+      trackedDraftBaseVersionRef.current = null;
       return;
     }
     initialDraftFingerprintRef.current = buildDraftFingerprint(editingDocumentDraft);
+    trackedDraftBaseVersionRef.current = {
+      fileId: editingDocumentDraft.id,
+      baseDocumentContentVersion: editingDocumentDraft.baseDocumentContentVersion,
+    };
     setEditorWidth(null);
     setEditorDetailsTab('document');
     setEditorContentRevisionSeed((value) => value + 1);
   }, [buildDraftFingerprint, editingDocumentDraft?.id]);
+
+  React.useEffect(() => {
+    if (!editingDocumentDraft) {
+      trackedDraftBaseVersionRef.current = null;
+      return;
+    }
+    const tracked = trackedDraftBaseVersionRef.current;
+    if (!tracked || tracked.fileId !== editingDocumentDraft.id) {
+      trackedDraftBaseVersionRef.current = {
+        fileId: editingDocumentDraft.id,
+        baseDocumentContentVersion: editingDocumentDraft.baseDocumentContentVersion,
+      };
+      return;
+    }
+    if (tracked.baseDocumentContentVersion === editingDocumentDraft.baseDocumentContentVersion) {
+      return;
+    }
+    initialDraftFingerprintRef.current = buildDraftFingerprint(editingDocumentDraft);
+    trackedDraftBaseVersionRef.current = {
+      fileId: editingDocumentDraft.id,
+      baseDocumentContentVersion: editingDocumentDraft.baseDocumentContentVersion,
+    };
+  }, [
+    buildDraftFingerprint,
+    editingDocumentDraft?.id,
+    editingDocumentDraft?.baseDocumentContentVersion,
+  ]);
 
   const isEditorDraftDirty = React.useMemo(() => {
     if (!editingDocumentDraft) return false;
@@ -355,6 +397,11 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             : null,
         }
         : null,
+      documentDate: promptExploderPartyProposal.documentDate
+        ? {
+          ...promptExploderPartyProposal.documentDate,
+        }
+        : null,
     });
   }, [isPromptExploderPartyProposalOpen, promptExploderPartyProposal]);
 
@@ -399,6 +446,22 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     []
   );
 
+  const updatePromptExploderProposalDateAction = useCallback(
+    (action: CaseResolverCaptureDocumentDateAction): void => {
+      setPromptExploderProposalDraft((current) => {
+        if (!current?.documentDate) return current;
+        return {
+          ...current,
+          documentDate: {
+            ...current.documentDate,
+            action,
+          },
+        };
+      });
+    },
+    []
+  );
+
   const handleApplyPromptExploderProposal = useCallback((): void => {
     if (!promptExploderProposalDraft) {
       setIsPromptExploderPartyProposalOpen(false);
@@ -429,6 +492,11 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               existingReference: promptExploderProposalDraft.addressee.existingReference
                 ? { ...promptExploderProposalDraft.addressee.existingReference }
                 : null,
+            }
+            : null,
+          documentDate: promptExploderProposalDraft.documentDate
+            ? {
+              ...promptExploderProposalDraft.documentDate,
             }
             : null,
         };
@@ -515,7 +583,52 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
         const shouldPatchAddresser = rolePatches.addresser !== undefined;
         const shouldPatchAddressee = rolePatches.addressee !== undefined;
-        const shouldPersistPatch = shouldPatchAddresser || shouldPatchAddressee;
+        const targetFile = workspace.files.find((file) => file.id === targetFileId) ?? null;
+        if (!targetFile) {
+          toast('Target file for capture mapping is no longer available.', {
+            variant: 'warning',
+          });
+          return;
+        }
+
+        const dateProposal = nextProposalState.documentDate;
+        const shouldAcceptDate =
+          dateProposal?.action === 'useDetectedDate' &&
+          dateProposal.isoDate.trim().length > 0;
+        const acceptedDateValue = shouldAcceptDate
+          ? dateProposal.isoDate.trim()
+          : null;
+        const shouldPatchDocumentDate =
+          acceptedDateValue !== null && targetFile.documentDate !== acceptedDateValue;
+
+        const sourceExplodedContent =
+          targetFile.explodedDocumentContent.trim().length > 0
+            ? targetFile.explodedDocumentContent
+            : targetFile.activeDocumentVersion === 'exploded'
+              ? targetFile.documentContent
+              : '';
+        const cleanedExplodedContent =
+          sourceExplodedContent.trim().length > 0
+            ? stripAcceptedCaptureContentFromText(sourceExplodedContent, nextProposalState)
+            : sourceExplodedContent;
+        const hasExplodedCleanup = cleanedExplodedContent !== sourceExplodedContent;
+        const cleanedExplodedCanonical = hasExplodedCleanup
+          ? deriveDocumentContentSync({
+            mode: 'markdown',
+            value: cleanedExplodedContent,
+            previousMarkdown: targetFile.documentContentMarkdown,
+            previousHtml: targetFile.documentContentHtml,
+          })
+          : null;
+        const cleanedExplodedStored = cleanedExplodedCanonical
+          ? toStorageDocumentValue(cleanedExplodedCanonical)
+          : null;
+
+        const shouldPersistPatch =
+          shouldPatchAddresser ||
+          shouldPatchAddressee ||
+          shouldPatchDocumentDate ||
+          hasExplodedCleanup;
 
         if (shouldPersistPatch) {
           const now = new Date().toISOString();
@@ -523,20 +636,106 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             ...current,
             files: current.files.map((file) => {
               if (file.id !== targetFileId) return file;
+              const nextContentVersion = file.documentContentVersion + 1;
+              const nextDocumentHistory = hasExplodedCleanup
+                ? [
+                  {
+                    id: createId('case-doc-history'),
+                    savedAt: now,
+                    documentContentVersion: file.documentContentVersion,
+                    activeDocumentVersion: file.activeDocumentVersion,
+                    editorType: file.editorType,
+                    documentContent: file.documentContent,
+                    documentContentMarkdown: file.documentContentMarkdown,
+                    documentContentHtml: file.documentContentHtml,
+                    documentContentPlainText: file.documentContentPlainText,
+                  },
+                  ...file.documentHistory,
+                ].slice(0, 120)
+                : file.documentHistory;
               return {
                 ...file,
                 ...(shouldPatchAddresser ? { addresser: rolePatches.addresser ?? null } : {}),
                 ...(shouldPatchAddressee ? { addressee: rolePatches.addressee ?? null } : {}),
+                ...(shouldPatchDocumentDate ? { documentDate: acceptedDateValue ?? '' } : {}),
+                ...(hasExplodedCleanup && cleanedExplodedCanonical && cleanedExplodedStored
+                  ? {
+                    explodedDocumentContent: cleanedExplodedStored,
+                    ...(file.activeDocumentVersion === 'exploded'
+                      ? {
+                        editorType: cleanedExplodedCanonical.mode,
+                        documentContentFormatVersion: 1,
+                        documentContent: cleanedExplodedStored,
+                        documentContentMarkdown: cleanedExplodedCanonical.markdown,
+                        documentContentHtml: cleanedExplodedCanonical.html,
+                        documentContentPlainText: cleanedExplodedCanonical.plainText,
+                        documentConversionWarnings: cleanedExplodedCanonical.warnings,
+                        lastContentConversionAt: now,
+                      }
+                      : {}),
+                    documentHistory: nextDocumentHistory,
+                  }
+                  : {}),
+                documentContentVersion: nextContentVersion,
                 updatedAt: now,
               };
             }),
           }), { persistToast: 'Capture mapping applied.' });
           setEditingDocumentDraft((current) => {
             if (current?.id !== targetFileId) return current;
+            const nextContentVersion = (current.documentContentVersion ?? 0) + 1;
+            const normalizedHistory = (current.documentHistory ?? []).map((entry) => ({
+              id: entry.id,
+              savedAt: entry.savedAt,
+              documentContentVersion: entry.documentContentVersion,
+              activeDocumentVersion: entry.activeDocumentVersion ?? 'original',
+              editorType: entry.editorType ?? 'wysiwyg',
+              documentContent: entry.documentContent ?? '',
+              documentContentMarkdown: entry.documentContentMarkdown ?? '',
+              documentContentHtml: entry.documentContentHtml ?? '',
+              documentContentPlainText: entry.documentContentPlainText ?? '',
+            }));
+            const nextDocumentHistory = hasExplodedCleanup
+              ? [
+                {
+                  id: createId('case-doc-history'),
+                  savedAt: now,
+                  documentContentVersion: current.documentContentVersion ?? 0,
+                  activeDocumentVersion: current.activeDocumentVersion ?? 'original',
+                  editorType: current.editorType ?? 'wysiwyg',
+                  documentContent: current.documentContent ?? '',
+                  documentContentMarkdown: current.documentContentMarkdown ?? '',
+                  documentContentHtml: current.documentContentHtml ?? '',
+                  documentContentPlainText: current.documentContentPlainText ?? '',
+                },
+                ...normalizedHistory,
+              ].slice(0, 120)
+              : normalizedHistory;
             return {
               ...current,
               ...(shouldPatchAddresser ? { addresser: rolePatches.addresser ?? null } : {}),
               ...(shouldPatchAddressee ? { addressee: rolePatches.addressee ?? null } : {}),
+              ...(shouldPatchDocumentDate ? { documentDate: acceptedDateValue ?? '' } : {}),
+              ...(hasExplodedCleanup && cleanedExplodedCanonical && cleanedExplodedStored
+                ? {
+                  explodedDocumentContent: cleanedExplodedStored,
+                  ...(current.activeDocumentVersion === 'exploded'
+                    ? {
+                      editorType: cleanedExplodedCanonical.mode,
+                      documentContentFormatVersion: 1,
+                      documentContent: cleanedExplodedStored,
+                      documentContentMarkdown: cleanedExplodedCanonical.markdown,
+                      documentContentHtml: cleanedExplodedCanonical.html,
+                      documentContentPlainText: cleanedExplodedCanonical.plainText,
+                      documentConversionWarnings: cleanedExplodedCanonical.warnings,
+                      lastContentConversionAt: now,
+                    }
+                    : {}),
+                  documentHistory: nextDocumentHistory,
+                }
+                : {}),
+              documentContentVersion: nextContentVersion,
+              baseDocumentContentVersion: nextContentVersion,
             };
           });
         }
@@ -553,8 +752,12 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         }
 
         setIsPromptExploderPartyProposalOpen(false);
-        if (appliedRoles.length > 0) {
-          toast('Capture mapping applied to document parties.', { variant: 'success' });
+        if (appliedRoles.length > 0 || shouldPatchDocumentDate || hasExplodedCleanup) {
+          const successParts: string[] = [];
+          if (appliedRoles.length > 0) successParts.push('document parties');
+          if (shouldPatchDocumentDate) successParts.push('document date');
+          if (hasExplodedCleanup) successParts.push('reassembled text cleanup');
+          toast(`Capture mapping applied to ${successParts.join(', ')}.`, { variant: 'success' });
           return;
         }
         if (shouldPersistFilemakerDatabase) {
@@ -580,6 +783,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     setPromptExploderPartyProposal,
     toast,
     updateSetting,
+    workspace.files,
     updateWorkspace,
   ]);
 
@@ -1537,6 +1741,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         handleApplyPromptExploderProposal={handleApplyPromptExploderProposal}
         updatePromptExploderProposalAction={updatePromptExploderProposalAction}
         updatePromptExploderProposalReference={updatePromptExploderProposalReference}
+        updatePromptExploderProposalDateAction={updatePromptExploderProposalDateAction}
         resolvePromptExploderMatchedPartyLabel={resolvePromptExploderMatchedPartyLabel}
       />
     </>

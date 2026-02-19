@@ -4,6 +4,8 @@ import type { ParameterRepository } from '@/features/products/types/services/par
 import type {
   ExtractedBaseParameterDto,
   BaseParameterImportSummaryDto,
+  ApplyBaseParameterImportResultDto,
+  ApplyBaseParameterImportInputDto,
 } from '@/shared/contracts/integrations';
 
 import type { BaseProductRecord } from '../base-client';
@@ -12,21 +14,9 @@ export type ExtractedBaseParameter = ExtractedBaseParameterDto;
 
 export type BaseParameterImportSummary = BaseParameterImportSummaryDto;
 
-export type ApplyBaseParameterImportInput = {
-  record: BaseProductRecord;
-  catalogId: string;
-  connectionId?: string | null;
-  inventoryId?: string | null;
+export type ApplyBaseParameterImportInput = Omit<ApplyBaseParameterImportInputDto, 'settings'> & {
   parameterRepository: ParameterRepository;
-  existingValues: ProductParameterValue[];
-  catalogLanguageCodes: string[];
-  defaultLanguageCode?: string | null;
   settings: BaseImportParameterImportSettings;
-  templateMappings: Array<{ sourceKey: string; targetField: string }>;
 };
 
-export type ApplyBaseParameterImportResult = {
-  applied: boolean;
-  parameters: ProductParameterValue[];
-  summary: BaseParameterImportSummary;
-};
+export type ApplyBaseParameterImportResult = ApplyBaseParameterImportResultDto;

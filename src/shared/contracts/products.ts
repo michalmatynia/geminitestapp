@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
 import { localizedSchema, dtoBaseSchema, namedDtoSchema } from './base';
+import { imageFileRecordSchema } from './files';
+import { commonListQuerySchema } from '../validations/api-schemas';
 
 /**
  * Product Category Contract
@@ -17,6 +19,18 @@ export const productCategorySchema = namedDtoSchema.extend({
 
 export type ProductCategoryDto = z.infer<typeof productCategorySchema>;
 
+/**
+ * Product Category With Children Contract
+ */
+export interface ProductCategoryWithChildrenDto extends ProductCategoryDto {
+  children: ProductCategoryWithChildrenDto[];
+}
+
+export const productCategoryWithChildrenSchema: z.ZodType<ProductCategoryWithChildrenDto> =
+  productCategorySchema.extend({
+    children: z.lazy(() => z.array(productCategoryWithChildrenSchema)),
+  });
+
 export const createProductCategorySchema = productCategorySchema.omit({
   id: true,
   createdAt: true,
@@ -27,6 +41,14 @@ export type CreateProductCategoryDto = z.infer<typeof createProductCategorySchem
 export type ProductCategoryCreateInput = CreateProductCategoryDto;
 export type UpdateProductCategoryDto = Partial<CreateProductCategoryDto>;
 export type ProductCategoryUpdateInput = UpdateProductCategoryDto;
+
+export const productCategoryFiltersSchema = z.object({
+  catalogId: z.string().optional(),
+  parentId: z.string().nullable().optional(),
+  search: z.string().optional(),
+});
+
+export type ProductCategoryFiltersDto = z.infer<typeof productCategoryFiltersSchema>;
 
 /**
  * Product Tag Contract
@@ -42,12 +64,22 @@ export const createProductTagSchema = productTagSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  color: z.string().nullable().optional(),
 });
 
-export type CreateProductTagDto = z.infer<typeof createProductTagSchema>;
-export type ProductTagCreateInput = CreateProductTagDto;
-export type UpdateProductTagDto = Partial<CreateProductTagDto>;
-export type ProductTagUpdateInput = UpdateProductTagDto;
+export type ProductTagCreateInputDto = z.infer<typeof createProductTagSchema>;
+
+export const updateProductTagSchema = createProductTagSchema.partial();
+
+export type ProductTagUpdateInputDto = z.infer<typeof updateProductTagSchema>;
+
+export const productTagFiltersSchema = z.object({
+  catalogId: z.string().optional(),
+  search: z.string().optional(),
+});
+
+export type ProductTagFiltersDto = z.infer<typeof productTagFiltersSchema>;
 
 /**
  * Catalog Contract
@@ -66,12 +98,18 @@ export const createCatalogSchema = catalogSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  description: z.string().nullable().optional(),
+  isDefault: z.boolean().optional(),
+  languageIds: z.array(z.string()).optional(),
+  priceGroupIds: z.array(z.string()).optional(),
 });
 
-export type CreateCatalogDto = z.infer<typeof createCatalogSchema>;
-export type CatalogCreateInput = CreateCatalogDto;
-export type UpdateCatalogDto = Partial<CreateCatalogDto>;
-export type CatalogUpdateInput = UpdateCatalogDto;
+export type CatalogCreateInputDto = z.infer<typeof createCatalogSchema>;
+
+export const updateCatalogSchema = createCatalogSchema.partial();
+
+export type CatalogUpdateInputDto = z.infer<typeof updateCatalogSchema>;
 
 /**
  * Price Group Contract
@@ -147,6 +185,48 @@ export const productParameterSchema = namedDtoSchema.extend({
 
 export type ProductParameterDto = z.infer<typeof productParameterSchema>;
 
+export const createProductParameterSchema = productParameterSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  selectorType: productParameterSelectorTypeSchema.optional(),
+  optionLabels: z.array(z.string()).optional(),
+});
+
+export type ProductParameterCreateInputDto = z.infer<typeof createProductParameterSchema>;
+
+export const updateProductParameterSchema = createProductParameterSchema.partial();
+
+export type ProductParameterUpdateInputDto = z.infer<typeof updateProductParameterSchema>;
+
+export const productParameterFiltersSchema = z.object({
+  catalogId: z.string().optional(),
+  search: z.string().optional(),
+});
+
+export type ProductParameterFiltersDto = z.infer<typeof productParameterFiltersSchema>;
+
+/**
+ * Product Simple Parameter Contract
+ */
+export const productSimpleParameterSchema = productParameterSchema.omit({
+  selectorType: true,
+  optionLabels: true,
+});
+
+export type ProductSimpleParameterDto = z.infer<typeof productSimpleParameterSchema>;
+
+/**
+ * Product Simple Parameter Value Contract
+ */
+export const productSimpleParameterValueSchema = z.object({
+  parameterId: z.string(),
+  value: z.string().nullable().optional(),
+});
+
+export type ProductSimpleParameterValueDto = z.infer<typeof productSimpleParameterValueSchema>;
+
 /**
  * Currency Contract (Product-specific)
  */
@@ -158,16 +238,55 @@ export const productCurrencySchema = namedDtoSchema.extend({
 export type ProductCurrencyDto = z.infer<typeof productCurrencySchema>;
 
 /**
+ * Price Group With Details Contract
+ */
+export const priceGroupWithDetailsSchema = priceGroupSchema.extend({
+  currency: productCurrencySchema,
+  currencyCode: z.string(),
+});
+
+export type PriceGroupWithDetailsDto = z.infer<typeof priceGroupWithDetailsSchema>;
+
+/**
+ * Price Group For Calculation Contract
+ */
+export const priceGroupForCalculationSchema = z.object({
+  id: z.string(),
+  groupId: z.string().optional(),
+  currencyId: z.string(),
+  type: z.string(),
+  isDefault: z.boolean(),
+  sourceGroupId: z.string().nullable(),
+  priceMultiplier: z.number(),
+  addToPrice: z.number(),
+  currency: z.object({ code: z.string() }),
+  currencyCode: z.string().optional(),
+});
+
+export type PriceGroupForCalculationDto = z.infer<typeof priceGroupForCalculationSchema>;
+
+/**
  * Product Image Contract
  */
 export const productImageSchema = z.object({
   productId: z.string(),
   imageFileId: z.string(),
   assignedAt: z.string(),
-  imageFile: z.unknown().optional(), // Avoid circular dependency if ImageFile is in another contract
+  imageFile: z.lazy(() => imageFileRecordSchema).optional(),
 });
 
 export type ProductImageDto = z.infer<typeof productImageSchema>;
+
+/**
+ * Product Image Record Contract (Domain-specific DTO)
+ */
+export const productImageRecordSchema = productImageSchema.omit({
+  imageFile: true,
+}).extend({
+  imageFile: imageFileRecordSchema,
+});
+
+export type ProductImageRecordDto = z.infer<typeof productImageRecordSchema>;
 
 /**
  * Product Catalog Contract
@@ -180,6 +299,15 @@ export const productCatalogSchema = z.object({
 });
 
 export type ProductCatalogDto = z.infer<typeof productCatalogSchema>;
+
+/**
+ * Product Catalog Record Contract (Domain-specific DTO)
+ */
+export const productCatalogRecordSchema = productCatalogSchema.extend({
+  catalog: catalogSchema,
+});
+
+export type ProductCatalogRecordDto = z.infer<typeof productCatalogRecordSchema>;
 
 /**
  * Product Tag Relation Contract
@@ -210,7 +338,7 @@ export type ProductProducerRelationDto = z.infer<typeof productProducerRelationS
  */
 export const productParameterValueSchema = z.object({
   parameterId: z.string(),
-  value: z.string(),
+  value: z.string().nullable().optional(),
   valuesByLanguage: z.record(z.string(), z.string()).optional(),
 });
 
@@ -258,6 +386,26 @@ export const productSchema = dtoBaseSchema.extend({
 
 export type ProductDto = z.infer<typeof productSchema>;
 
+/**
+ * Product With Images Contract
+ */
+export const productWithImagesSchema = productSchema
+  .omit({
+    images: true,
+    catalogs: true,
+    tags: true,
+    producers: true,
+  })
+  .extend({
+    images: z.array(productImageRecordSchema),
+    catalogs: z.array(productCatalogRecordSchema),
+    categoryId: z.string().nullable().optional(),
+    tags: z.array(productTagRelationSchema).optional(),
+    producers: z.array(productProducerRelationSchema).optional(),
+  });
+
+export type ProductWithImagesDto = z.infer<typeof productWithImagesSchema>;
+
 export const createProductSchema = productSchema.omit({
   id: true,
   createdAt: true,
@@ -278,6 +426,9 @@ export type ProductUpdateInput = UpdateProductDto;
 
 export const productDbProviderSchema = z.enum(['prisma', 'mongodb']);
 export type ProductDbProviderDto = z.infer<typeof productDbProviderSchema>;
+
+export const integrationDbProviderSchema = z.enum(['prisma', 'mongodb']);
+export type IntegrationDbProviderDto = z.infer<typeof integrationDbProviderSchema>;
 
 export const productMigrationDirectionSchema = z.enum(['prisma-to-mongo', 'mongo-to-prisma']);
 export type ProductMigrationDirectionDto = z.infer<typeof productMigrationDirectionSchema>;
@@ -309,6 +460,32 @@ export const productListPreferencesSchema = z.object({
 });
 
 export type ProductListPreferencesDto = z.infer<typeof productListPreferencesSchema>;
+
+/**
+ * Product Filter Contract
+ */
+export const productFilterSchema = commonListQuerySchema.extend({
+  sku: z.string().trim().optional(),
+  description: z.string().trim().optional(),
+  categoryId: z.string().trim().optional(),
+  minPrice: z.coerce.number().min(0).optional(),
+  maxPrice: z.coerce.number().min(0).optional(),
+  catalogId: z.string().trim().optional(),
+  searchLanguage: z.enum(['name_en', 'name_pl', 'name_de']).optional(),
+  baseExported: z.preprocess((value: unknown) => {
+    if (value === undefined || value === null) return undefined;
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (!normalized) return undefined;
+      if (normalized === 'true' || normalized === '1') return true;
+      if (normalized === 'false' || normalized === '0') return false;
+    }
+    return value;
+  }, z.boolean().optional()),
+});
+
+export type ProductFilterDto = z.infer<typeof productFilterSchema>;
 
 /**
  * Validation Contracts
@@ -412,6 +589,62 @@ export type ProductValidationLaunchOperatorDto =
   | 'is_not_empty';
 
 export type ProductValidationPatternDto = z.infer<typeof productValidationPatternSchema>;
+
+export const createProductValidationPatternSchema = productValidationPatternSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  locale: z.string().nullable().optional(),
+  flags: z.string().nullable().optional(),
+  severity: productValidationSeveritySchema.nullable().optional(),
+  enabled: z.boolean().optional(),
+  replacementEnabled: z.boolean().optional(),
+  replacementAutoApply: z.boolean().optional(),
+  skipNoopReplacementProposal: z.boolean().optional(),
+  replacementValue: z.string().nullable().optional(),
+  replacementFields: z.array(z.string()).optional(),
+  runtimeEnabled: z.boolean().optional(),
+  runtimeType: z.enum(['none', 'database_query', 'ai_prompt']).optional(),
+  runtimeConfig: z.string().nullable().optional(),
+  postAcceptBehavior: z.enum(['revalidate', 'stop_after_accept']).optional(),
+  denyBehaviorOverride: productValidationDenyBehaviorSchema.nullable().optional(),
+  validationDebounceMs: z.number().optional(),
+  sequenceGroupId: z.string().nullable().optional(),
+  sequenceGroupLabel: z.string().nullable().optional(),
+  sequenceGroupDebounceMs: z.number().optional(),
+  sequence: z.number().nullable().optional(),
+  chainMode: z.enum(['continue', 'stop_on_match', 'stop_on_replace']).optional(),
+  maxExecutions: z.number().optional(),
+  passOutputToNext: z.boolean().optional(),
+  launchEnabled: z.boolean().optional(),
+  launchSourceMode: z.enum(['current_field', 'form_field', 'latest_product_field']).optional(),
+  launchSourceField: z.string().nullable().optional(),
+  launchOperator: z.enum([
+    'equals',
+    'not_equals',
+    'contains',
+    'starts_with',
+    'ends_with',
+    'regex',
+    'gt',
+    'gte',
+    'lt',
+    'lte',
+    'is_empty',
+    'is_not_empty',
+  ]).optional(),
+  launchValue: z.string().nullable().optional(),
+  launchFlags: z.string().nullable().optional(),
+});
+
+export type CreateProductValidationPatternDto = z.infer<typeof createProductValidationPatternSchema>;
+
+export const updateProductValidationPatternSchema = createProductValidationPatternSchema.partial().extend({
+  expectedUpdatedAt: z.string().nullable().optional(),
+});
+
+export type UpdateProductValidationPatternDto = z.infer<typeof updateProductValidationPatternSchema>;
 
 export const productValidationSequenceGroupSchema = z.object({
   id: z.string(),

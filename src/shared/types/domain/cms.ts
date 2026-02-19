@@ -20,7 +20,8 @@ import type {
   SettingsFieldDto,
   SectionDefinitionDto,
   BlockDefinitionDto,
-  PageComponentDto
+  PageComponentDto,
+  PageZoneDto
 } from '../../dtos/cms';
 
 export type {
@@ -45,7 +46,8 @@ export type {
   SettingsFieldDto,
   SectionDefinitionDto,
   BlockDefinitionDto,
-  PageComponentDto
+  PageComponentDto,
+  PageZoneDto
 };
 
 // ---------------------------------------------------------------------------
@@ -78,7 +80,7 @@ export type CmsDomain = CmsDomainDto;
 // ---------------------------------------------------------------------------
 // Page Builder Instances & Definitions
 // ---------------------------------------------------------------------------
-export type PageZone = 'header' | 'template' | 'footer';
+export type PageZone = PageZoneDto;
 
 export type BlockInstance = CmsBlockInstanceDto;
 

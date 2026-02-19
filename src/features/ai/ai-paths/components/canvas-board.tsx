@@ -26,6 +26,7 @@ import {
 } from '../context';
 import {
   buildConnectorInfo,
+  type ConnectorInfo,
   renderConnectorTooltip,
 } from './canvas-board-connectors';
 import { useCanvasPulseEffects } from './canvas-board-pulse-effects';
@@ -67,6 +68,12 @@ type CanvasBoardProps = {
         input: CanvasBoardConnectorTooltipOverrideInput
       ) => CanvasBoardConnectorTooltipOverride | null | undefined)
     | undefined;
+};
+
+type SvgConnectorTooltipState = {
+  clientX: number;
+  clientY: number;
+  info: ConnectorInfo;
 };
 
 const formatRuntimeStatusLabel = (status: string): string =>
@@ -113,6 +120,25 @@ const downgradeDetailLevel = (level: SvgDetailLevel): SvgDetailLevel => {
   if (level === 'full') return 'compact';
   if (level === 'compact') return 'skeleton';
   return 'skeleton';
+};
+
+const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const mergeRuntimePayload = (
+  current: Record<string, unknown> | undefined,
+  historyValue: unknown
+): Record<string, unknown> | undefined => {
+  const historical = isPlainRecord(historyValue)
+    ? historyValue
+    : undefined;
+  if (!historical && !current) return undefined;
+  if (!historical) return current;
+  if (!current) return historical;
+  return {
+    ...historical,
+    ...current,
+  };
 };
 
 const buildConnectingPreviewPath = (
@@ -197,6 +223,8 @@ export function CanvasBoard({
   // --- Local State & Refs ---
   const [hoveredConnectorKey, setHoveredConnectorKey] = React.useState<string | null>(null);
   const [pinnedConnectorKey, setPinnedConnectorKey] = React.useState<string | null>(null);
+  const [svgConnectorTooltip, setSvgConnectorTooltip] =
+    React.useState<SvgConnectorTooltipState | null>(null);
   const [rendererMode, setRendererMode] = React.useState<CanvasRendererMode>('svg');
   const [showMinimap, setShowMinimap] = React.useState<boolean>(true);
   const [viewportSize, setViewportSize] = React.useState<{
@@ -253,6 +281,12 @@ export function CanvasBoard({
   }, [showMinimap]);
 
   React.useEffect(() => {
+    if (rendererMode !== 'svg' && svgConnectorTooltip !== null) {
+      setSvgConnectorTooltip(null);
+    }
+  }, [rendererMode, svgConnectorTooltip]);
+
+  React.useEffect(() => {
     if (typeof window === 'undefined') return;
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');
     const apply = (): void => setPrefersReducedMotion(query.matches);
@@ -291,10 +325,10 @@ export function CanvasBoard({
   const flowEnabled = effectiveFlowIntensity !== 'off';
   const flowingIntensity =
     effectiveFlowIntensity === 'off' ? 'low' : effectiveFlowIntensity;
-  const useSvgRenderer = rendererMode === 'svg';
+  const isSvgRenderer = rendererMode === 'svg';
 
   React.useEffect(() => {
-    if (!useSvgRenderer || typeof window === 'undefined' || prefersReducedMotion) {
+    if (!isSvgRenderer || typeof window === 'undefined' || prefersReducedMotion) {
       setSvgPerf({ fps: 0, avgFrameMs: 0, slowFrameRatio: 0 });
       return;
     }
@@ -340,7 +374,7 @@ export function CanvasBoard({
     };
     rafId = window.requestAnimationFrame(tick);
     return (): void => window.cancelAnimationFrame(rafId);
-  }, [prefersReducedMotion, useSvgRenderer]);
+  }, [prefersReducedMotion, isSvgRenderer]);
 
   // --- Derived from Context ---
   const connectingFromNode = React.useMemo<AiNode | null>(() => {
@@ -412,11 +446,18 @@ export function CanvasBoard({
     (nodeId: string): {
       inputs: Record<string, unknown> | undefined;
       outputs: Record<string, unknown> | undefined;
-    } => ({
-      inputs: runtimeState.inputs[nodeId],
-      outputs: runtimeState.outputs[nodeId],
-    }),
-    [runtimeState.inputs, runtimeState.outputs]
+    } => {
+      const history = runtimeState.history?.[nodeId];
+      const lastEntry =
+        Array.isArray(history) && history.length > 0
+          ? history[history.length - 1]
+          : null;
+      return {
+        inputs: mergeRuntimePayload(runtimeState.inputs[nodeId], lastEntry?.inputs),
+        outputs: mergeRuntimePayload(runtimeState.outputs[nodeId], lastEntry?.outputs),
+      };
+    },
+    [runtimeState.history, runtimeState.inputs, runtimeState.outputs]
   );
 
   const nodeById = React.useMemo(
@@ -436,6 +477,21 @@ export function CanvasBoard({
         getNodeRuntimeData,
       }),
     [edges, getNodeRuntimeData, getPortValue, nodeById]
+  );
+
+  const svgConnectorTooltipPosition = React.useMemo(
+    (): { left: number; top: number } | null => {
+      if (!svgConnectorTooltip || !viewportRef.current) return null;
+      const rect = viewportRef.current.getBoundingClientRect();
+      const localX = svgConnectorTooltip.clientX - rect.left;
+      const localY = svgConnectorTooltip.clientY - rect.top;
+      const maxLeft = Math.max(12, rect.width - 332);
+      const maxTop = Math.max(12, rect.height - 272);
+      const left = Math.min(Math.max(12, localX + 14), maxLeft);
+      const top = Math.min(Math.max(12, localY + 14), maxTop);
+      return { left, top };
+    },
+    [svgConnectorTooltip, viewportRef]
   );
 
   const triggerConnected = React.useMemo((): Set<string> => {
@@ -573,7 +629,7 @@ export function CanvasBoard({
     return visible;
   }, [nodes, selectedNodeIdSet, svgWorldViewport]);
   const renderedEdgePaths = React.useMemo((): EdgePath[] => {
-    if (!useSvgRenderer) return edgePaths;
+    if (!isSvgRenderer) return edgePaths;
     return (edgePaths).filter((edgePath: EdgePath): boolean => {
       if (!edgeMetaMap.has(edgePath.id)) return true;
       const fromNodeId = edgePath.fromNodeId;
@@ -605,7 +661,7 @@ export function CanvasBoard({
     selectedNodeIdSet,
     svgEdgeViewport,
     svgVisibleNodeIdSet,
-    useSvgRenderer,
+    isSvgRenderer,
   ]);
   const svgDetailLevel = React.useMemo((): SvgDetailLevel => {
     let next: SvgDetailLevel =
@@ -626,7 +682,7 @@ export function CanvasBoard({
   ]);
   const wireFlowEnabled = React.useMemo((): boolean => {
     if (!flowEnabled) return false;
-    if (!useSvgRenderer) return true;
+    if (!isSvgRenderer) return true;
     if (svgDetailLevel === 'skeleton') return false;
     if (svgPerf.fps > 0 && svgPerf.fps < 34) return false;
     if (svgPerf.slowFrameRatio > 0.55) return false;
@@ -636,10 +692,10 @@ export function CanvasBoard({
     svgDetailLevel,
     svgPerf.fps,
     svgPerf.slowFrameRatio,
-    useSvgRenderer,
+    isSvgRenderer,
   ]);
   const svgReduceEdgeEffects = React.useMemo((): boolean => {
-    if (!useSvgRenderer) return false;
+    if (!isSvgRenderer) return false;
     if (svgDetailLevel === 'skeleton') return true;
     if (renderedEdgePaths.length > 780) return true;
     if (svgPerf.fps > 0 && svgPerf.fps < 40) return true;
@@ -650,10 +706,10 @@ export function CanvasBoard({
     svgDetailLevel,
     svgPerf.fps,
     svgPerf.slowFrameRatio,
-    useSvgRenderer,
+    isSvgRenderer,
   ]);
   const svgEnableNodeAnimations = React.useMemo((): boolean => {
-    if (!useSvgRenderer) return true;
+    if (!isSvgRenderer) return true;
     if (prefersReducedMotion) return false;
     if (svgDetailLevel === 'skeleton') return false;
     if (svgPerf.fps > 0 && svgPerf.fps < 38) return false;
@@ -664,23 +720,23 @@ export function CanvasBoard({
     svgDetailLevel,
     svgPerf.fps,
     svgPerf.slowFrameRatio,
-    useSvgRenderer,
+    isSvgRenderer,
   ]);
   const svgConnectorHitTargetPx = React.useMemo((): number => {
-    if (!useSvgRenderer) return 14;
+    if (!isSvgRenderer) return 14;
     if (svgDetailLevel === 'skeleton') return 22;
     if (view.scale < 0.72) return 18;
     return 14;
-  }, [svgDetailLevel, useSvgRenderer, view.scale]);
-  const svgCulledNodeCount = useSvgRenderer
+  }, [svgDetailLevel, isSvgRenderer, view.scale]);
+  const svgCulledNodeCount = isSvgRenderer
     ? Math.max(0, nodes.length - svgVisibleNodeIdSet.size)
     : 0;
-  const svgCulledEdgeCount = useSvgRenderer
+  const svgCulledEdgeCount = isSvgRenderer
     ? Math.max(0, edges.length - renderedEdgePaths.length)
     : 0;
   const flowModeLabel = (() => {
     if (wireFlowEnabled) return effectiveFlowIntensity;
-    if (useSvgRenderer && flowEnabled) return 'adaptive-off';
+    if (isSvgRenderer && flowEnabled) return 'adaptive-off';
     return 'off';
   })();
   const touchLongPressProgressDegrees = touchLongPressIndicator
@@ -713,15 +769,15 @@ export function CanvasBoard({
         {` • Edges: ${edges.length}`}
         {lastDrop ? ` • Last drop: ${Math.round(lastDrop.x)}, ${Math.round(lastDrop.y)}` : ''}
         {` • View: ${Math.round(view.x)}, ${Math.round(view.y)} @ ${Math.round(view.scale * 100)}%`}
-        {` • Renderer: ${useSvgRenderer ? 'SVG' : 'Legacy'}`}
-        {useSvgRenderer
+        {` • Renderer: ${isSvgRenderer ? 'SVG' : 'Legacy'}`}
+        {isSvgRenderer
           ? ` • Visible: ${svgVisibleNodeIdSet.size} nodes / ${renderedEdgePaths.length} wires`
           : ''}
-        {useSvgRenderer
+        {isSvgRenderer
           ? ` • Culled: ${svgCulledNodeCount} nodes / ${svgCulledEdgeCount} wires`
           : ''}
-        {useSvgRenderer ? ` • Detail: ${svgDetailLevel}` : ''}
-        {useSvgRenderer && svgPerf.fps > 0
+        {isSvgRenderer ? ` • Detail: ${svgDetailLevel}` : ''}
+        {isSvgRenderer && svgPerf.fps > 0
           ? ` • FPS: ${svgPerf.fps} (${svgPerf.avgFrameMs.toFixed(1)}ms)`
           : ''}
         {` • Routing: ${edgeRoutingMode}`}
@@ -779,7 +835,7 @@ export function CanvasBoard({
           >
             Reset
           </Button>
-          {useSvgRenderer ? (
+          {isSvgRenderer ? (
             <Button
               className={`h-7 rounded-full border px-2 text-[11px] ${
                 showMinimap ? 'border-sky-400/70 text-sky-200' : 'text-gray-300'
@@ -796,7 +852,7 @@ export function CanvasBoard({
           <div className='ml-2 flex items-center gap-1 rounded-full border border-border/60 bg-card/70 px-1 py-1'>
             <Button
               className={`h-6 rounded-full px-2 text-[10px] ${
-                useSvgRenderer ? 'border-sky-400/70 text-sky-200' : 'text-gray-300'
+                isSvgRenderer ? 'border-sky-400/70 text-sky-200' : 'text-gray-300'
               }`}
               type='button'
               variant='ghost'
@@ -807,7 +863,7 @@ export function CanvasBoard({
             </Button>
             <Button
               className={`h-6 rounded-full px-2 text-[10px] ${
-                !useSvgRenderer ? 'border-sky-400/70 text-sky-200' : 'text-gray-300'
+                !isSvgRenderer ? 'border-sky-400/70 text-sky-200' : 'text-gray-300'
               }`}
               type='button'
               variant='ghost'
@@ -847,7 +903,7 @@ export function CanvasBoard({
           </div>
         </div>
       </div>
-      {useSvgRenderer && showMinimap ? (
+      {isSvgRenderer && showMinimap ? (
         <CanvasMinimap
           nodes={nodes}
           edgePaths={edgePaths}
@@ -907,6 +963,17 @@ export function CanvasBoard({
           </span>
         </div>
       ) : null}
+      {isSvgRenderer && svgConnectorTooltip && svgConnectorTooltipPosition ? (
+        <div
+          className='pointer-events-none absolute z-40 max-w-[320px] rounded-md border border-border/70 bg-card/95 p-2 shadow-lg backdrop-blur-sm'
+          style={{
+            left: svgConnectorTooltipPosition.left,
+            top: svgConnectorTooltipPosition.top,
+          }}
+        >
+          {renderConnectorTooltip(svgConnectorTooltip.info)}
+        </div>
+      ) : null}
       <div
         ref={canvasRef}
         className='absolute left-0 top-0'
@@ -917,7 +984,7 @@ export function CanvasBoard({
           height: CANVAS_HEIGHT,
           transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})`,
           transformOrigin: '0 0',
-          willChange: useSvgRenderer ? 'transform' : undefined,
+          willChange: isSvgRenderer ? 'transform' : undefined,
           backgroundImage:
             'radial-gradient(circle at 1px 1px, rgba(148,163,184,0.18) 1px, transparent 0)',
           backgroundSize: '24px 24px',
@@ -987,7 +1054,7 @@ export function CanvasBoard({
               />
             );
           })() : null}
-          {useSvgRenderer ? (
+          {isSvgRenderer ? (
             <CanvasSvgNodeLayer
               nodes={nodes}
               edges={edges}
@@ -1028,11 +1095,17 @@ export function CanvasBoard({
               onFireTrigger={(node: AiNode) => {
                 void fireTrigger(node);
               }}
+              onConnectorHover={({ clientX, clientY, info }) => {
+                setSvgConnectorTooltip({ clientX, clientY, info });
+              }}
+              onConnectorLeave={() => {
+                setSvgConnectorTooltip(null);
+              }}
             />
           ) : null}
         </svg>
 
-        {!useSvgRenderer
+        {!isSvgRenderer
           ? nodes.map((node) => {
             const isSelected = selectedNodeIdSet.has(node.id);
             const isPrimarySelected = node.id === selectedNodeId;

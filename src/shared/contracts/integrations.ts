@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
+import { productParameterValueSchema } from './products';
 
 /**
  * Image Processing Contracts
@@ -690,6 +691,52 @@ export const baseParameterImportSummarySchema = z.object({
 export type BaseParameterImportSummaryDto = z.infer<typeof baseParameterImportSummarySchema>;
 
 /**
+ * Base.com Parameter Import Settings DTOs
+ */
+
+export const baseImportParameterImportModeSchema = z.enum(['all', 'mapped']);
+export type BaseImportParameterImportModeDto = z.infer<typeof baseImportParameterImportModeSchema>;
+
+export const baseImportParameterLanguageScopeSchema = z.enum(['catalog_languages', 'default_only']);
+export type BaseImportParameterLanguageScopeDto = z.infer<typeof baseImportParameterLanguageScopeSchema>;
+
+export const baseImportParameterMatchBySchema = z.enum(['base_id_then_name', 'name_only']);
+export type BaseImportParameterMatchByDto = z.infer<typeof baseImportParameterMatchBySchema>;
+
+export const baseImportParameterImportSettingsSchema = z.object({
+  enabled: z.boolean(),
+  mode: baseImportParameterImportModeSchema,
+  languageScope: baseImportParameterLanguageScopeSchema,
+  createMissingParameters: z.boolean(),
+  overwriteExistingValues: z.boolean(),
+  matchBy: baseImportParameterMatchBySchema,
+});
+
+export type BaseImportParameterImportSettingsDto = z.infer<typeof baseImportParameterImportSettingsSchema>;
+
+export const applyBaseParameterImportInputSchema = z.object({
+  record: z.record(z.string(), z.unknown()),
+  catalogId: z.string(),
+  connectionId: z.string().nullable().optional(),
+  inventoryId: z.string().nullable().optional(),
+  existingValues: z.array(productParameterValueSchema),
+  catalogLanguageCodes: z.array(z.string()),
+  defaultLanguageCode: z.string().nullable().optional(),
+  settings: baseImportParameterImportSettingsSchema,
+  templateMappings: z.array(z.object({ sourceKey: z.string(), targetField: z.string() })),
+});
+
+export type ApplyBaseParameterImportInputDto = z.infer<typeof applyBaseParameterImportInputSchema>;
+
+export const applyBaseParameterImportResultSchema = z.object({
+  applied: z.boolean(),
+  parameters: z.array(productParameterValueSchema),
+  summary: baseParameterImportSummarySchema,
+});
+
+export type ApplyBaseParameterImportResultDto = z.infer<typeof applyBaseParameterImportResultSchema>;
+
+/**
  * Integration Test DTOs
  */
 
@@ -728,30 +775,6 @@ export const sessionCookieSchema = z.object({
 });
 
 export type SessionCookieDto = z.infer<typeof sessionCookieSchema>;
-
-/**
- * Base.com Parameter Import Settings DTOs
- */
-
-export const baseImportParameterImportModeSchema = z.enum(['all', 'mapped']);
-export type BaseImportParameterImportModeDto = z.infer<typeof baseImportParameterImportModeSchema>;
-
-export const baseImportParameterLanguageScopeSchema = z.enum(['catalog_languages', 'default_only']);
-export type BaseImportParameterLanguageScopeDto = z.infer<typeof baseImportParameterLanguageScopeSchema>;
-
-export const baseImportParameterMatchBySchema = z.enum(['base_id_then_name', 'name_only']);
-export type BaseImportParameterMatchByDto = z.infer<typeof baseImportParameterMatchBySchema>;
-
-export const baseImportParameterImportSettingsSchema = z.object({
-  enabled: z.boolean(),
-  mode: baseImportParameterImportModeSchema,
-  languageScope: baseImportParameterLanguageScopeSchema,
-  createMissingParameters: z.boolean(),
-  overwriteExistingValues: z.boolean(),
-  matchBy: baseImportParameterMatchBySchema,
-});
-
-export type BaseImportParameterImportSettingsDto = z.infer<typeof baseImportParameterImportSettingsSchema>;
 
 /**
  * Image Export Diagnostics DTOs
@@ -872,3 +895,77 @@ export const importParameterCacheSchema = z.object({
 });
 
 export type ImportParameterCacheDto = z.infer<typeof importParameterCacheSchema>;
+
+export const baseApiResponseSchema = z.object({
+  status: z.string().optional(),
+  error_code: z.string().optional(),
+  error_message: z.string().optional(),
+}).catchall(z.unknown());
+
+export type BaseApiResponseDto = z.infer<typeof baseApiResponseSchema>;
+
+export const priceGroupLookupSchema = z.object({
+  id: z.string(),
+  groupId: z.string().nullable().optional(),
+  currencyId: z.string().nullable().optional(),
+  currencyCode: z.string().nullable().optional(),
+  isDefault: z.boolean().optional(),
+});
+
+export type PriceGroupLookupDto = z.infer<typeof priceGroupLookupSchema>;
+
+export const baseConnectionContextSchema = z.object({
+  baseIntegrationId: z.string().nullable(),
+  connectionId: z.string().nullable(),
+  token: z.string().nullable(),
+  issue: baseImportPreflightIssueSchema.nullable(),
+});
+
+export type BaseConnectionContextDto = z.infer<typeof baseConnectionContextSchema>;
+
+/**
+ * Tradera API DTOs
+ */
+
+export const traderaApiCredentialsSchema = z.object({
+  appId: z.number(),
+  appKey: z.string(),
+  userId: z.number(),
+  token: z.string(),
+  sandbox: z.boolean().optional(),
+  maxResultAgeSeconds: z.number().optional(),
+});
+
+export type TraderaApiCredentialsDto = z.infer<typeof traderaApiCredentialsSchema>;
+
+export const traderaApiUserInfoSchema = z.object({
+  userId: z.number(),
+  alias: z.string().nullable(),
+  email: z.string().nullable(),
+  firstName: z.string().nullable(),
+  lastName: z.string().nullable(),
+});
+
+export type TraderaApiUserInfoDto = z.infer<typeof traderaApiUserInfoSchema>;
+
+export const traderaAddShopItemInputSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  categoryId: z.number(),
+  price: z.number(),
+  quantity: z.number(),
+  shippingCondition: z.string(),
+  paymentCondition: z.string(),
+  acceptedBuyerId: z.number().optional(),
+});
+
+export type TraderaAddShopItemInputDto = z.infer<typeof traderaAddShopItemInputSchema>;
+
+export const traderaAddShopItemResultSchema = z.object({
+  itemId: z.number(),
+  requestId: z.number().nullable(),
+  resultCode: z.string().nullable(),
+  resultMessage: z.string().nullable(),
+});
+
+export type TraderaAddShopItemResultDto = z.infer<typeof traderaAddShopItemResultSchema>;

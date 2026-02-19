@@ -1,12 +1,15 @@
 'use client';
 
+import type { ModalStateProps } from '@/shared/types/modal-props';
+
 import { AppModal } from './app-modal';
 import { Button } from './button';
 
 import type { ReactNode } from 'react';
 
-interface FormModalProps {
-  open: boolean;
+interface FormModalProps extends Partial<ModalStateProps> {
+  open?: boolean;
+  isOpen?: boolean;
   onClose: () => void;
   title: string;
   subtitle?: string;
@@ -28,6 +31,7 @@ interface FormModalProps {
 
 export function FormModal({
   open,
+  isOpen,
   onClose,
   title,
   subtitle,
@@ -46,7 +50,8 @@ export function FormModal({
   actions,
   className,
 }: FormModalProps): React.JSX.Element | null {
-  if (!open) return null;
+  const isCurrentlyOpen = isOpen ?? open;
+  if (!isCurrentlyOpen) return null;
 
   const saveButton = formRef ? (
     <Button

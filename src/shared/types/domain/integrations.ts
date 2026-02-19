@@ -1,4 +1,9 @@
 import type {
+  ImportExportTemplateDto,
+  ImportExportTemplateMappingDto,
+  ImportTemplateParameterImportDto,
+} from '../../contracts/data-import-export';
+import type {
   IntegrationDto,
   IntegrationConnectionDto,
   ProductListingDto,
@@ -13,8 +18,20 @@ import type {
   IntegrationWithConnectionsDto,
   ListingJobDto,
   ProductJobDto,
-  ExportJobDetailDto
+  ExportJobDetailDto,
+  ProductListingWithDetailsDto,
+  CategoryMappingDto,
+  CategoryMappingWithDetailsDto,
+  ExternalCategoryDto,
+  ExternalCategoryWithChildrenDto,
+  TagMappingDto,
+  TagMappingWithDetailsDto,
+  ExternalTagDto,
+  ProducerMappingDto,
+  ProducerMappingWithDetailsDto,
+  ExternalProducerDto,
 } from '../../contracts/integrations';
+
 
 export type Integration = IntegrationDto;
 export type IntegrationConnection = IntegrationConnectionDto;
@@ -38,6 +55,21 @@ export type IntegrationConnectionBasic = IntegrationConnectionBasicDto;
 export type IntegrationWithConnections = IntegrationWithConnectionsDto;
 
 export type IntegrationWithConnectionsBasic = IntegrationWithConnections;
+
+export type ProductListingWithDetails = ProductListingWithDetailsDto;
+
+export type CategoryMapping = CategoryMappingDto;
+export type CategoryMappingWithDetails = CategoryMappingWithDetailsDto;
+export type ExternalCategory = ExternalCategoryDto;
+export type ExternalCategoryWithChildren = ExternalCategoryWithChildrenDto;
+
+export type TagMapping = TagMappingDto;
+export type TagMappingWithDetails = TagMappingWithDetailsDto;
+export type ExternalTag = ExternalTagDto;
+
+export type ProducerMapping = ProducerMappingDto;
+export type ProducerMappingWithDetails = ProducerMappingWithDetailsDto;
+export type ExternalProducer = ExternalProducerDto;
 
 export type ImageBase64Mode = 'base-only' | 'full-data-uri';
 

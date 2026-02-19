@@ -45,6 +45,9 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
   const currentRunIdRef = useRef<string | null>(null);
   const currentRunStartedAtRef = useRef<string | null>(null);
   const currentRunStartedAtMsRef = useRef<number | null>(null);
+  const fetchEntityByTypeRef = useRef<(entityType: string, entityId: string) => Promise<Record<string, unknown> | null>>(
+    async () => null
+  );
 
   // 1. Centralized State
   const state = useAiPathsRuntimeState();
@@ -94,6 +97,11 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
       }),
     [normalizedNodes]
   );
+  const fetchEntityByType = useCallback(
+    (entityType: string, entityId: string): Promise<Record<string, unknown> | null> =>
+      fetchEntityByTypeRef.current(entityType, entityId),
+    []
+  );
 
   // 2. Server execution engine
   const server = useAiPathsServerExecution({
@@ -129,9 +137,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     sessionUser: null,
     hasPendingIteratorAdvance,
     seedImmediateDownstreamInputs,
-    fetchEntityByType: async (_type, _id) => {
-      return null;
-    }
+    fetchEntityByType
   });
 
   // 4. Simulation logic
@@ -143,6 +149,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     pendingSimulationContextRef,
     runGraphForTrigger: local.runGraphForTrigger
   });
+  fetchEntityByTypeRef.current = simulation.fetchEntityByType;
 
   // Effect to sync refs
   useEffect(() => {

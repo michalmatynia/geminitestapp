@@ -53,3 +53,31 @@ export const masterFolderTreePersistOperationSchema = z.discriminatedUnion('type
 ]);
 
 export type MasterFolderTreePersistOperationDto = z.infer<typeof masterFolderTreePersistOperationSchema>;
+
+export const masterFolderTreeDragStateSchema = z.object({
+  draggedNodeId: z.string(),
+  targetId: z.string().nullable(),
+  position: masterTreeDropPositionSchema,
+});
+
+export type MasterFolderTreeDragStateDto = z.infer<typeof masterFolderTreeDragStateSchema>;
+
+export const masterFolderTreeUndoEntrySchema = z.object({
+  label: z.string(),
+  createdAt: z.number(),
+  nodes: z.array(masterTreeNodeSchema),
+  selectedNodeId: z.string().nullable(),
+  expandedNodeIds: z.array(z.string()),
+});
+
+export type MasterFolderTreeUndoEntryDto = z.infer<typeof masterFolderTreeUndoEntrySchema>;
+
+export const masterFolderTreeErrorSchema = z.object({
+  code: z.string(),
+  message: z.string(),
+  operationType: z.string(),
+  at: z.string(),
+  cause: z.unknown().optional(),
+});
+
+export type MasterFolderTreeErrorDto = z.infer<typeof masterFolderTreeErrorSchema>;

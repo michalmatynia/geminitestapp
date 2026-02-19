@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 
 import {
   buildCaseResolverCaptureProposalState,
-  stripCapturedAddressLinesFromText,
   type CaseResolverCaptureProposalState,
 } from '@/features/case-resolver-capture/proposals';
 import {
@@ -13,8 +12,6 @@ import {
   consumePromptExploderApplyPromptForCaseResolver,
   readPromptExploderApplyPayload,
 } from '@/features/prompt-exploder/bridge';
-
-import { extractCaseResolverDocumentDate } from '../settings';
 import { CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT } from './useCaseResolverState.helpers';
 import { createId } from '../utils/caseResolverUtils';
 
@@ -191,13 +188,13 @@ export const useCaseResolverStatePromptExploderSync = ({
       payloadToApply.caseResolverParties,
       targetFileId,
       filemakerDatabaseRef.current,
-      caseResolverCaptureSettingsRef.current
+      caseResolverCaptureSettingsRef.current,
+      {
+        metadata: payloadToApply.caseResolverMetadata,
+        sourceText: payloadToApply.prompt,
+      }
     );
-    const nextExplodedContent = stripCapturedAddressLinesFromText(
-      payloadToApply.prompt,
-      proposalState
-    );
-    const extractedDocumentDate = extractCaseResolverDocumentDate(nextExplodedContent);
+    const nextExplodedContent = payloadToApply.prompt;
     const now = new Date().toISOString();
     const canonicalExploded = deriveDocumentContentSync({
       mode: 'markdown',
@@ -239,7 +236,6 @@ export const useCaseResolverStatePromptExploderSync = ({
           documentHistory: nextDocumentHistory,
           documentConversionWarnings: canonicalExploded.warnings,
           lastContentConversionAt: now,
-          documentDate: extractedDocumentDate ?? file.documentDate,
           updatedAt: now,
         };
       }),
@@ -290,7 +286,6 @@ export const useCaseResolverStatePromptExploderSync = ({
         documentHistory: nextDocumentHistory,
         documentConversionWarnings: canonicalExploded.warnings,
         lastContentConversionAt: now,
-        documentDate: extractedDocumentDate ?? current.documentDate ?? '',
       };
     });
 

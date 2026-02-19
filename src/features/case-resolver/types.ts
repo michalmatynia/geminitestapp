@@ -32,6 +32,8 @@ import type {
   CaseResolverFolderRecordDto,
   CaseResolverWorkspaceDto,
   CaseResolverFileEditDraftDto,
+  CaseResolverEditorNodeContextDto,
+  CaseResolverPdfExtractionPresetDto,
 } from '@/shared/contracts/case-resolver';
 
 export type { AiNode, Edge };
@@ -90,10 +92,7 @@ export type CaseResolverFolderRecord = CaseResolverFolderRecordDto;
 
 export type CaseResolverWorkspace = CaseResolverWorkspaceDto;
 
-export type CaseResolverEditorNodeContext = {
-  canvasFileId: string;
-  nodeId: string;
-};
+export type CaseResolverEditorNodeContext = CaseResolverEditorNodeContextDto;
 
 export const CASE_RESOLVER_NODE_ROLE_OPTIONS: Array<{
   value: CaseResolverNodeRole;
@@ -135,12 +134,7 @@ export const CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS: CaseResolverDocumentNodeP
   'plainText',
 ];
 
-export type CaseResolverPdfExtractionPreset = {
-  value: CaseResolverPdfExtractionPresetId;
-  label: string;
-  description: string;
-  template: string;
-};
+export type CaseResolverPdfExtractionPreset = CaseResolverPdfExtractionPresetDto;
 
 export const CASE_RESOLVER_PDF_EXTRACTION_PRESETS: CaseResolverPdfExtractionPreset[] = [
   {

@@ -7,7 +7,6 @@ import {
   EyeIcon,
   PlusIcon,
 } from 'lucide-react';
-import Link from 'next/link';
 
 import {
   Badge,
@@ -98,17 +97,13 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
             <div className='flex flex-wrap items-start justify-between gap-3'>
               <div className='space-y-1'>
                 <h2 className='text-2xl font-bold tracking-tight text-white'>Backup Center</h2>
-                <nav aria-label='Breadcrumb' className='flex flex-wrap items-center gap-1 text-xs text-gray-400'>
-                  <Link href='/admin' className='transition-colors hover:text-gray-200'>
-                    Admin
-                  </Link>
-                  <span>/</span>
-                  <Link href='/admin/databases/engine' className='transition-colors hover:text-gray-200'>
-                    Databases
-                  </Link>
-                  <span>/</span>
-                  <span className='text-gray-300'>Backups</span>
-                </nav>
+                <Breadcrumbs
+                  items={[
+                    { label: 'Admin', href: '/admin' },
+                    { label: 'Databases', href: '/admin/databases/engine' },
+                    { label: 'Backups' },
+                  ]}
+                />
               </div>
               <div className='flex flex-wrap items-center gap-2'>
                 <Badge variant='active' className='gap-1.5'>

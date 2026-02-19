@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { ModalStateProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 export interface UserCreateFormState {
@@ -13,8 +13,7 @@ export interface UserCreateFormState {
   verified: boolean;
 }
 
-interface UserCreateModalProps extends ModalStateProps {
-  createForm: UserCreateFormState;
+interface UserCreateModalProps extends EntityModalProps<UserCreateFormState> {
   setCreateForm: React.Dispatch<React.SetStateAction<UserCreateFormState>>;
   isSaving: boolean;
   onSave: () => void;
@@ -46,13 +45,16 @@ const FIELDS: SettingsField<UserCreateFormState>[] = [
 export function UserCreateModal({
   isOpen,
   onClose,
-  createForm,
+  item: createForm,
   setCreateForm,
   isSaving,
   onSave,
 }: UserCreateModalProps): React.JSX.Element | null {
   const handleChange = (values: Partial<UserCreateFormState>) => {
-    setCreateForm(prev => ({ ...prev, ...values }));
+    setCreateForm(prev => {
+      if (!prev) return prev;
+      return ({ ...prev, ...values });
+    });
   };
 
   return (
@@ -62,7 +64,7 @@ export function UserCreateModal({
       title='Provision New Account'
       subtitle='New users will be created with the Default Access Policy. You can adjust their specific roles after creation.'
       fields={FIELDS}
-      values={createForm}
+      values={createForm || ({} as UserCreateFormState)}
       onChange={handleChange}
       onSave={async () => onSave()}
       isSaving={isSaving}

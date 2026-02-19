@@ -254,7 +254,7 @@ export default function AuthUsersPage(): React.JSX.Element {
         isOpen={createOpen}
         onClose={() => setCreateOpen(false)}
         onSuccess={() => {}}
-        createForm={createForm}
+        item={createForm}
         setCreateForm={setCreateForm}
         isSaving={mutations.register.isPending}
         onSave={() => {
@@ -285,9 +285,8 @@ export default function AuthUsersPage(): React.JSX.Element {
         isOpen={mockOpen}
         onClose={() => setMockOpen(false)}
         onSuccess={() => {}}
-        email={mockEmail}
+        item={{ email: mockEmail, password: mockPassword }}
         setEmail={setMockEmail}
-        password={mockPassword}
         setPassword={setMockPassword}
         isSaving={mutations.mockSignIn.isPending}
         onSave={() => {

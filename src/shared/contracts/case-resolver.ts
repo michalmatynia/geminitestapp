@@ -291,6 +291,50 @@ export const caseResolverSettingsSchema = z.object({
 });
 export type CaseResolverSettingsDto = z.infer<typeof caseResolverSettingsSchema>;
 
+export type CaseResolverDefaultDocumentFormatDto = 'markdown' | 'wysiwyg';
+
+/**
+ * Case Resolver UI & Editor DTOs
+ */
+
+export const caseResolverEditorNodeContextSchema = z.object({
+  canvasFileId: z.string(),
+  nodeId: z.string(),
+});
+
+export type CaseResolverEditorNodeContextDto = z.infer<typeof caseResolverEditorNodeContextSchema>;
+
+export const caseResolverPdfExtractionPresetSchema = z.object({
+  value: caseResolverPdfExtractionPresetIdSchema,
+  label: z.string(),
+  description: z.string(),
+  template: z.string(),
+});
+
+export type CaseResolverPdfExtractionPresetDto = z.infer<typeof caseResolverPdfExtractionPresetSchema>;
+
+export const caseResolverCompiledSegmentSchema = z.object({
+  nodeId: z.string(),
+  title: z.string(),
+  text: z.string(),
+  role: caseResolverNodeRoleSchema,
+  includeInOutput: z.boolean(),
+});
+
+export type CaseResolverCompiledSegmentDto = z.infer<typeof caseResolverCompiledSegmentSchema>;
+
+export const caseResolverCompileResultSchema = z.object({
+  prompt: z.string(),
+  segments: z.array(caseResolverCompiledSegmentSchema),
+  outputsByNode: z.record(z.string(), z.object({
+    textfield: z.string(),
+    content: z.string(),
+    plainText: z.string(),
+  })),
+});
+
+export type CaseResolverCompileResultDto = z.infer<typeof caseResolverCompileResultSchema>;
+
 /**
  * Case Resolver Capture DTOs
  */

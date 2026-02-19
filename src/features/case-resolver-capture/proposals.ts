@@ -4,9 +4,11 @@ import {
   findExistingFilemakerPartyReference,
   normalizeCaseResolverComparable,
 } from '@/features/case-resolver/party-matching';
+import { extractCaseResolverDocumentDate } from '@/features/case-resolver/settings';
 import type { CaseResolverPartyReference } from '@/features/case-resolver/types';
 import type { FilemakerDatabase } from '@/features/filemaker/types';
 import type {
+  PromptExploderCaseResolverMetadata,
   PromptExploderCaseResolverPartyBundle,
   PromptExploderCaseResolverPartyCandidate,
 } from '@/features/prompt-exploder/bridge';
@@ -31,10 +33,21 @@ export type CaseResolverCaptureProposal = {
   action: CaseResolverCaptureAction;
 };
 
+export type CaseResolverCaptureDocumentDateAction = 'useDetectedDate' | 'keepText' | 'ignore';
+
+export type CaseResolverCaptureDocumentDateProposal = {
+  isoDate: string;
+  source: 'metadata' | 'text';
+  sourceLine: string | null;
+  cityHint: string | null;
+  action: CaseResolverCaptureDocumentDateAction;
+};
+
 export type CaseResolverCaptureProposalState = {
   targetFileId: string;
   addresser: CaseResolverCaptureProposal | null;
   addressee: CaseResolverCaptureProposal | null;
+  documentDate: CaseResolverCaptureDocumentDateProposal | null;
 };
 
 const CAPTURE_ADDRESSER_LABEL_HINTS = ['addresser', 'nadawca', 'sender', 'wnioskodawca'];
@@ -143,18 +156,23 @@ export const buildCaseResolverCaptureProposalState = (
   payload: PromptExploderCaseResolverPartyBundle | undefined,
   targetFileId: string,
   database: FilemakerDatabase,
-  settings: CaseResolverCaptureSettings
+  settings: CaseResolverCaptureSettings,
+  options?: {
+    metadata?: PromptExploderCaseResolverMetadata | null | undefined;
+    sourceText?: string | null | undefined;
+    currentDocumentDate?: string | null | undefined;
+  }
 ): CaseResolverCaptureProposalState | null => {
-  if (!settings.enabled || !payload) return null;
+  if (!settings.enabled) return null;
 
   const resolvedCandidates: Partial<
     Record<CaseResolverCaptureRole, PromptExploderCaseResolverPartyCandidate>
   > = {
-    ...(payload.addresser ? { addresser: payload.addresser } : {}),
-    ...(payload.addressee ? { addressee: payload.addressee } : {}),
+    ...(payload?.addresser ? { addresser: payload.addresser } : {}),
+    ...(payload?.addressee ? { addressee: payload.addressee } : {}),
   };
 
-  [payload.addresser, payload.addressee].forEach((candidate) => {
+  [payload?.addresser, payload?.addressee].forEach((candidate) => {
     if (!candidate) return;
     const inferredRole = inferCandidateRoleFromLabels(candidate);
     if (!inferredRole || resolvedCandidates[inferredRole]) return;
@@ -188,11 +206,73 @@ export const buildCaseResolverCaptureProposalState = (
     }
   });
 
-  if (!proposals.addresser && !proposals.addressee) return null;
+  const normalizeDateToken = (value: string): string =>
+    value.replace(/[^\d]/g, '');
+
+  const normalizeYear = (value: string): string => {
+    const digits = normalizeDateToken(value);
+    if (digits.length === 2) {
+      return `20${digits}`;
+    }
+    return digits;
+  };
+
+  const metadataPlaceDate = options?.metadata?.placeDate;
+  const metadataDate = (() => {
+    if (!metadataPlaceDate) return null;
+    const year = normalizeYear(metadataPlaceDate.year ?? '');
+    const month = normalizeDateToken(metadataPlaceDate.month ?? '').padStart(2, '0');
+    const day = normalizeDateToken(metadataPlaceDate.day ?? '').padStart(2, '0');
+    if (year.length !== 4 || month.length !== 2 || day.length !== 2) return null;
+    return extractCaseResolverDocumentDate(`${year}-${month}-${day}`);
+  })();
+
+  const sourceText = options?.sourceText?.trim() ?? '';
+  const sourceTextDate = sourceText ? extractCaseResolverDocumentDate(sourceText) : null;
+  const detectedDate = metadataDate ?? sourceTextDate;
+  const detectedDateSource: CaseResolverCaptureDocumentDateProposal['source'] | null =
+    metadataDate !== null
+      ? 'metadata'
+      : sourceTextDate !== null
+        ? 'text'
+        : null;
+  const cityHint = metadataPlaceDate?.city?.trim() || null;
+  const sourceDateLine = (() => {
+    if (!detectedDate || !sourceText) return null;
+    const lines = sourceText.split(/\r?\n/).map((line: string): string => line.trim());
+    const normalizedCityHint = cityHint ? normalizeCaseResolverComparable(cityHint) : '';
+    for (const line of lines) {
+      if (!line) continue;
+      const extracted = extractCaseResolverDocumentDate(line);
+      if (extracted !== detectedDate) continue;
+      if (
+        normalizedCityHint &&
+        !normalizeCaseResolverComparable(line).includes(normalizedCityHint)
+      ) {
+        continue;
+      }
+      return line;
+    }
+    return null;
+  })();
+
+  const documentDateProposal: CaseResolverCaptureDocumentDateProposal | null =
+    detectedDate && detectedDateSource
+      ? {
+        isoDate: detectedDate,
+        source: detectedDateSource,
+        sourceLine: sourceDateLine,
+        cityHint,
+        action: 'useDetectedDate',
+      }
+      : null;
+
+  if (!proposals.addresser && !proposals.addressee && !documentDateProposal) return null;
   return {
     targetFileId,
     addresser: proposals.addresser,
     addressee: proposals.addressee,
+    documentDate: documentDateProposal,
   };
 };
 
@@ -263,7 +343,7 @@ const collectCandidateAddressLines = (
   return [...lines];
 };
 
-export const stripCapturedAddressLinesFromText = (
+export const stripAcceptedAddressLinesFromText = (
   sourceText: string,
   proposalState: CaseResolverCaptureProposalState | null
 ): string => {
@@ -303,4 +383,64 @@ export const stripCapturedAddressLinesFromText = (
 
   const newline = sourceText.includes('\r\n') ? '\r\n' : '\n';
   return compact.join(newline);
+};
+
+export const stripCapturedAddressLinesFromText = stripAcceptedAddressLinesFromText;
+
+export const stripAcceptedDateLineFromText = (
+  sourceText: string,
+  proposalState: CaseResolverCaptureProposalState | null
+): string => {
+  if (!sourceText || !proposalState?.documentDate) return sourceText;
+  const documentDate = proposalState.documentDate;
+  if (documentDate.action !== 'useDetectedDate') return sourceText;
+
+  const sourceLines = sourceText.split(/\r?\n/);
+  const sourceLineKey = documentDate.sourceLine
+    ? normalizeCaptureTextLine(documentDate.sourceLine)
+    : '';
+  const normalizedCityHint = documentDate.cityHint
+    ? normalizeCaseResolverComparable(documentDate.cityHint)
+    : '';
+
+  let removed = false;
+  const filtered = sourceLines.filter((line: string): boolean => {
+    if (removed) return true;
+    const lineKey = normalizeCaptureTextLine(line);
+    if (sourceLineKey && lineKey === sourceLineKey) {
+      removed = true;
+      return false;
+    }
+    const extractedDate = extractCaseResolverDocumentDate(line);
+    if (extractedDate !== documentDate.isoDate) return true;
+    if (
+      normalizedCityHint &&
+      !normalizeCaseResolverComparable(line).includes(normalizedCityHint)
+    ) {
+      return true;
+    }
+    removed = true;
+    return false;
+  });
+
+  if (!removed) return sourceText;
+
+  const compact: string[] = [];
+  let previousBlank = false;
+  filtered.forEach((line: string): void => {
+    const isBlank = line.trim().length === 0;
+    if (isBlank && previousBlank) return;
+    compact.push(line);
+    previousBlank = isBlank;
+  });
+  const newline = sourceText.includes('\r\n') ? '\r\n' : '\n';
+  return compact.join(newline);
+};
+
+export const stripAcceptedCaptureContentFromText = (
+  sourceText: string,
+  proposalState: CaseResolverCaptureProposalState | null
+): string => {
+  const withoutAddresses = stripAcceptedAddressLinesFromText(sourceText, proposalState);
+  return stripAcceptedDateLineFromText(withoutAddresses, proposalState);
 };

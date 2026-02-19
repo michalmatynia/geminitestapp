@@ -11,6 +11,7 @@ import type {
   DatabaseRestoreOperationResponseDto as DatabaseRestoreResponse,
   MultiSchemaResponseDto as MultiSchemaResponse,
   RedisOverviewDto as RedisOverviewResponse,
+  SettingsBackfillResultDto,
 } from '@/shared/contracts/database';
 import type { AppProviderDiagnosticsDto as ProviderDiagnosticsResponse } from '@/shared/contracts/system';
 import { apiClient, ApiError } from '@/shared/lib/api-client';
@@ -419,12 +420,7 @@ export const syncDatabase = async (
   return result.payload ?? {};
 };
 
-export type SettingsBackfillResult = {
-  matched: number;
-  modified: number;
-  remaining: number;
-  sampleIds?: string[];
-};
+export type SettingsBackfillResult = SettingsBackfillResultDto;
 
 export const backfillSettings = async (
   dryRun: boolean,

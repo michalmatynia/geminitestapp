@@ -54,31 +54,20 @@ import { ErrorSystem } from '@/features/observability/server';
 import { operationFailedError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import type {
+  DatabaseSyncDirectionDto,
+  DatabaseSyncCollectionResultDto,
+  DatabaseSyncResultDto,
+  DatabaseSyncOptionsDto,
+} from '@/shared/contracts/database';
 
-export type DatabaseSyncDirection = 'mongo_to_prisma' | 'prisma_to_mongo';
+export type DatabaseSyncDirection = DatabaseSyncDirectionDto;
 
-export type DatabaseSyncCollectionResult = {
-  name: string;
-  status: 'completed' | 'skipped' | 'failed';
-  sourceCount: number;
-  targetDeleted: number;
-  targetInserted: number;
-  warnings?: string[];
-  error?: string;
-};
+export type DatabaseSyncCollectionResult = DatabaseSyncCollectionResultDto;
 
-export type DatabaseSyncResult = {
-  direction: DatabaseSyncDirection;
-  startedAt: string;
-  finishedAt: string;
-  backups: Awaited<ReturnType<typeof createFullDatabaseBackup>>;
-  collections: DatabaseSyncCollectionResult[];
-};
+export type DatabaseSyncResult = DatabaseSyncResultDto;
 
-export type DatabaseSyncOptions = {
-  skipCollections?: string[];
-  skipAuthCollections?: boolean;
-};
+export type DatabaseSyncOptions = DatabaseSyncOptionsDto;
 
 // Utility functions (isObjectIdString, toObjectIdMaybe, toDate, toJsonValue, normalizeId)
 // are imported from ./sync-utils.ts

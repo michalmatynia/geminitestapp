@@ -15,28 +15,19 @@ import {
 } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import type {
+  DatabaseEngineBackupSchedulerTickResultDto,
+  DatabaseEngineBackupSchedulerStatusDto,
+} from '@/shared/contracts/database';
 
 type TargetEvaluation = {
   dueNow: boolean;
   nextDueAt: string | null;
 };
 
-export type DatabaseBackupSchedulerTickResult = {
-  checkedAt: string;
-  schedulerEnabled: boolean;
-  triggered: Array<{ dbType: DatabaseEngineBackupType; jobId: string }>;
-  skipped: Array<{ dbType: DatabaseEngineBackupType; reason: string }>;
-};
+export type DatabaseBackupSchedulerTickResult = DatabaseEngineBackupSchedulerTickResultDto;
 
-export type DatabaseEngineBackupSchedulerStatus = {
-  timestamp: string;
-  schedulerEnabled: boolean;
-  lastCheckedAt: string | null;
-  targets: {
-    mongodb: DatabaseEngineBackupTargetSchedule & { dueNow: boolean };
-    postgresql: DatabaseEngineBackupTargetSchedule & { dueNow: boolean };
-  };
-};
+export type DatabaseEngineBackupSchedulerStatus = DatabaseEngineBackupSchedulerStatusDto;
 
 const LOG_SOURCE = 'database-backup-scheduler';
 const SETTINGS_COLLECTION = 'settings';
@@ -410,6 +401,12 @@ export async function getDatabaseBackupSchedulerStatus(
     timestamp: now.toISOString(),
     schedulerEnabled: schedule.schedulerEnabled,
     lastCheckedAt: schedule.lastCheckedAt,
+    queue: {
+      running: false,
+      healthy: false,
+      processing: false,
+    },
+    repeatEveryMs: 0,
     targets: {
       mongodb: {
         ...schedule.mongodb,

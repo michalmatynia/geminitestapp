@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from './dialog'
 import { SectionHeader } from './section-header';
 
 type AppModalProps = {
-  open: boolean;
+  open?: boolean;
+  isOpen?: boolean;
   onOpenChange?: (open: boolean) => void | undefined;
   onClose?: (() => void) | undefined;
   title: React.ReactNode;
@@ -40,6 +41,7 @@ const sizeClasses = {
 
 export function AppModal({
   open,
+  isOpen,
   onOpenChange,
   onClose,
   title,
@@ -60,9 +62,11 @@ export function AppModal({
   contentClassName,
   bodyClassName,
 }: AppModalProps): React.JSX.Element {
-  const handleOpenChange = (isOpen: boolean): void => {
-    onOpenChange?.(isOpen);
-    if (!isOpen) onClose?.();
+  const isCurrentlyOpen = isOpen ?? open ?? false;
+
+  const handleOpenChange = (newOpen: boolean): void => {
+    onOpenChange?.(newOpen);
+    if (!newOpen) onClose?.();
   };
 
   const handleInteractOutside = (event: Event): void => {
@@ -87,7 +91,7 @@ export function AppModal({
       : 'Modal dialog content');
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={isCurrentlyOpen} onOpenChange={handleOpenChange}>
       <DialogContent
         className={cn(
           'max-w-none w-auto p-0 border-none bg-transparent shadow-none',

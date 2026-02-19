@@ -17,7 +17,9 @@ export type SqlQueryResult = SqlQueryResultDto;
 
 export type FieldSchema = FieldInfoDto;
 
-export type CollectionSchema = CollectionSchemaDto;
+export type CollectionSchema = CollectionSchemaDto & {
+  provider?: 'mongodb' | 'prisma';
+};
 
 type ProviderSourceSchema = {
   provider: 'mongodb' | 'prisma';

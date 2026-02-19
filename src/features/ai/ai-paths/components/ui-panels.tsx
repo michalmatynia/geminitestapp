@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 
 import type { PathMeta } from '@/features/ai/ai-paths/lib';
 import { AI_PATHS_NODE_DOCS } from '@/features/ai/ai-paths/lib/core/docs/node-docs';
-import { Button, SearchInput, DataTable, DocumentationSection, CollapsibleSection } from '@/shared/ui';
+import { Button, SearchInput, DataTable, DocumentationSection, CollapsibleSection, ActionMenu, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useGraphState } from '../context';
@@ -119,32 +119,28 @@ export function PathsTabPanel({
       id: 'actions',
       header: () => <div className='text-right'>Actions</div>,
       cell: ({ row }) => (
-        <div className='flex justify-end gap-2'>
-          <Button
-            variant='ghost'
-            size='xs'
-            className='h-7 w-7 p-0'
-            onClick={() => handleOpenPath(row.original.id)}
-          >
-            <Edit className='size-3.5' />
-          </Button>
-          <Button
-            variant='ghost'
-            size='xs'
-            className='h-7 w-7 p-0 text-sky-300 hover:text-sky-200'
-            onClick={() => handleDuplicatePath(row.original.id)}
-            title='Duplicate path'
-          >
-            <Copy className='size-3.5' />
-          </Button>
-          <Button
-            variant='ghost'
-            size='xs'
-            className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
-            onClick={() => handleDeletePath(row.original.id)}
-          >
-            <Trash2 className='size-3.5' />
-          </Button>
+        <div className='flex justify-end'>
+          <ActionMenu>
+            <DropdownMenuItem onClick={() => handleOpenPath(row.original.id)}>
+              <Edit className='mr-2 size-3.5' />
+              Edit Path
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className='text-sky-300 focus:text-sky-200'
+              onClick={() => handleDuplicatePath(row.original.id)}
+            >
+              <Copy className='mr-2 size-3.5' />
+              Duplicate
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className='text-rose-400 focus:text-rose-300'
+              onClick={() => handleDeletePath(row.original.id)}
+            >
+              <Trash2 className='mr-2 size-3.5' />
+              Delete
+            </DropdownMenuItem>
+          </ActionMenu>
         </div>
       ),
     },

@@ -1,17 +1,14 @@
 import type { 
   CreateProductCategoryDto, 
-  UpdateProductCategoryDto 
+  UpdateProductCategoryDto,
+  ProductCategoryFiltersDto,
 } from '@/shared/contracts/products';
 import type { 
   ProductCategory, 
   ProductCategoryWithChildren 
 } from '@/shared/types/domain/products';
 
-export type CategoryFilters = {
-  catalogId?: string;
-  parentId?: string | null;
-  search?: string;
-};
+export type CategoryFilters = ProductCategoryFiltersDto;
 
 export type CategoryRepository = {
   listCategories(filters: CategoryFilters): Promise<ProductCategory[]>;

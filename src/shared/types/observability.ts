@@ -5,7 +5,7 @@ import type {
 } from '../contracts/observability';
 
 export type ErrorCategory = ErrorCategoryDto;
-export const ErrorCategory = {
+export const ERROR_CATEGORY = {
   SYSTEM: 'SYSTEM',
   USER: 'USER',
   VALIDATION: 'VALIDATION',

@@ -9,6 +9,7 @@ import type { QueryValidationResult } from './query-utils';
 export type DatabaseQueryValidatorPanelContextValue = {
   queryValidation: QueryValidationResult;
   queryConfig: DbQueryConfig;
+  resolvedProvider?: 'mongodb' | 'prisma';
   operation: DatabaseOperation;
   queryTemplateValue: string;
   databaseConfig: DatabaseConfig;

@@ -1,5 +1,3 @@
-import { Status } from '../common';
-
 import type {
   ChatMessageDto,
   ChatbotSessionDto,
@@ -28,7 +26,7 @@ import type {
   ModelProfileDto,
   ModelTaskRuleDto,
   AgentSettingsPayloadDto
-} from '../../dtos/chatbot';
+} from '../../contracts/chatbot';
 import type { ObjectId } from 'mongodb';
 
 export type {
@@ -63,10 +61,7 @@ export type {
 
 export type ChatMessage = ChatMessageDto;
 
-export interface ChatSession extends Omit<ChatbotSessionDto, 'createdAt' | 'updatedAt'> {
-  createdAt: Date;
-  updatedAt: Date;
-}
+export interface ChatSession extends ChatbotSessionDto {}
 
 export type CreateSessionInput = CreateChatSessionDto;
 export type UpdateSessionInput = UpdateChatSessionDto;
@@ -80,21 +75,14 @@ export interface ChatSessionDocument {
   settings?: ChatSession['settings'];
 }
 
-export type ChatbotJobStatus = Status;
-
 export type ChatbotJobPayload = ChatbotJobPayloadDto;
 
-export interface ChatbotJob extends Omit<ChatbotJobDto, 'createdAt' | 'updatedAt'> {
-  createdAt: Date;
-  updatedAt?: Date | undefined;
-  startedAt?: Date | undefined;
-  finishedAt?: Date | undefined;
-}
+export interface ChatbotJob extends ChatbotJobDto {}
 
 export interface ChatbotJobDocument {
   _id: ObjectId;
   sessionId: string;
-  status: ChatbotJobStatus;
+  status: string;
   model?: string | undefined;
   payload: ChatbotJobPayload;
   resultText?: string | undefined;
@@ -123,13 +111,9 @@ export type AgentSessionContext = AgentSessionContextDto;
 
 export type AgentLoginCandidates = AgentLoginCandidatesDto;
 
-export type AgentAuditLog = Omit<AgentAuditLogDto, 'metadata'> & {
-  metadata?: AgentPlanningMeta | null;
-};
+export type AgentAuditLog = AgentAuditLogDto;
 
-export type AgentBrowserLog = Omit<AgentBrowserLogDto, 'metadata'> & {
-  metadata?: AgentSessionContext | AgentLoginCandidates | null;
-};
+export type AgentBrowserLog = AgentBrowserLogDto;
 
 export type TimelineEntry = ChatbotTimelineEntryDto;
 

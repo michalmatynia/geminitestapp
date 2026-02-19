@@ -15,7 +15,12 @@ interface DbQueryResult {
   items?: unknown[];
   item?: unknown;
   count?: number;
+  provider?: 'mongodb' | 'prisma';
+  fallback?: Record<string, unknown>;
 }
+
+const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 export type ExecuteDatabaseQueryInput = {
   reportAiPathsError: NodeHandlerContext['reportAiPathsError'];
@@ -44,6 +49,10 @@ export async function executeDatabaseQuery({
     | undefined;
 
   if (dryRun) {
+    const requestedProvider =
+      typeof queryConfig.provider === 'string' ? queryConfig.provider : 'auto';
+    const resolvedProvider =
+      requestedProvider === 'auto' ? null : requestedProvider;
     return {
       result: query,
       bundle: {
@@ -55,6 +64,8 @@ export async function executeDatabaseQuery({
         limit: queryConfig.limit,
         single: queryConfig.single,
         idType: queryConfig.idType,
+        requestedProvider,
+        resolvedProvider,
       } as RuntimePortValues,
       aiPrompt,
     };
@@ -72,6 +83,8 @@ export async function executeDatabaseQuery({
   });
 
   if (!queryResult.ok) {
+    const requestedProvider =
+      typeof queryConfig.provider === 'string' ? queryConfig.provider : 'auto';
     reportAiPathsError(
       new Error(queryResult.error),
       { action: 'dbQuery', collection: queryConfig.collection, query },
@@ -84,17 +97,34 @@ export async function executeDatabaseQuery({
         count: 0,
         query,
         collection: queryConfig.collection,
+        requestedProvider,
         error: 'Query failed',
       },
       aiPrompt,
     };
   }
 
+  const queryResultData = isPlainRecord(queryResult.data)
+    ? queryResult.data
+    : ({} as Record<string, unknown>);
+  const requestedProvider =
+    typeof queryConfig.provider === 'string' ? queryConfig.provider : 'auto';
+  const responseProvider = queryResultData['provider'];
+  const resolvedProvider =
+    responseProvider === 'mongodb' || responseProvider === 'prisma'
+      ? responseProvider
+      : requestedProvider === 'auto'
+        ? null
+        : requestedProvider;
+  const providerFallback = isPlainRecord(queryResultData['fallback'])
+    ? queryResultData['fallback']
+    : null;
+
   let result: unknown = queryConfig.single
-    ? ((queryResult.data as Record<string, unknown>)['item'] ?? null)
-    : ((queryResult.data as Record<string, unknown>)['items'] ?? []);
+    ? (queryResultData['item'] ?? null)
+    : (queryResultData['items'] ?? []);
   let count: number =
-    ((queryResult.data as Record<string, unknown>)['count'] as number) ??
+    (queryResultData['count'] as number) ??
     (Array.isArray(result) ? (result as unknown[]).length : result ? 1 : 0);
   let queryForBundle: Record<string, unknown> = query;
   let fallbackMeta: Record<string, unknown> | undefined;
@@ -162,6 +192,10 @@ export async function executeDatabaseQuery({
       count,
       query: queryForBundle,
       collection: queryConfig.collection,
+      requestedProvider,
+      resolvedProvider,
+      ...(resolvedProvider ? { provider: resolvedProvider } : {}),
+      ...(providerFallback ? { providerFallback } : {}),
       ...(fallbackMeta ? { fallback: fallbackMeta } : {}),
     },
     aiPrompt,

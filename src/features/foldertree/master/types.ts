@@ -10,7 +10,12 @@ import type {
   MasterTreeValidationIssue,
   MasterTreeViewNode,
 } from '@/shared/utils/master-folder-tree-engine';
-import type { MasterFolderTreePersistOperationDto } from '@/shared/contracts/master-folder-tree';
+import type {
+  MasterFolderTreePersistOperationDto,
+  MasterFolderTreeDragStateDto,
+  MasterFolderTreeUndoEntryDto,
+  MasterFolderTreeErrorDto,
+} from '@/shared/contracts/master-folder-tree';
 
 export type MasterFolderTreePersistOperation = MasterFolderTreePersistOperationDto;
 
@@ -30,27 +35,11 @@ export type MasterFolderTreeAdapter = {
     | undefined;
 };
 
-export type MasterFolderTreeDragState = {
-  draggedNodeId: MasterTreeId;
-  targetId: MasterTreeId | null;
-  position: MasterTreeDropPosition;
-};
+export type MasterFolderTreeDragState = MasterFolderTreeDragStateDto;
 
-export type MasterFolderTreeUndoEntry = {
-  label: string;
-  createdAt: number;
-  nodes: MasterTreeNode[];
-  selectedNodeId: MasterTreeId | null;
-  expandedNodeIds: MasterTreeId[];
-};
+export type MasterFolderTreeUndoEntry = MasterFolderTreeUndoEntryDto;
 
-export type MasterFolderTreeError = {
-  code: string;
-  message: string;
-  operationType: MasterFolderTreePersistOperation['type'] | 'unknown';
-  at: string;
-  cause?: unknown;
-};
+export type MasterFolderTreeError = MasterFolderTreeErrorDto;
 
 export type MasterFolderTreeActionOk = {
   ok: true;

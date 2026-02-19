@@ -1,6 +1,3 @@
-import { Entity } from '../core/base-types';
-
-import type { ImageFileRecord } from './files';
 import type { 
   ProductDto, 
   ProductTagDto, 
@@ -38,6 +35,15 @@ import type {
   ProductValidationLaunchOperatorDto,
   ProductValidationLaunchScopeBehaviorDto,
   ProductValidationPatternDto,
+  ProductSimpleParameterDto,
+  ProductSimpleParameterValueDto,
+  PriceGroupWithDetailsDto,
+  PriceGroupForCalculationDto,
+  ProductImageRecordDto,
+  ProductCatalogRecordDto,
+  ProductWithImagesDto,
+  ProductCategoryWithChildrenDto,
+  IntegrationDbProviderDto,
 } from '../../contracts/products';
 
 export type {
@@ -69,12 +75,9 @@ export type ProductParameter = ProductParameterDto;
 
 export type ProductParameterValue = ProductParameterValueDto;
 
-export type ProductSimpleParameter = Omit<ProductParameterDto, 'selectorType' | 'optionLabels'>;
+export type ProductSimpleParameter = ProductSimpleParameterDto;
 
-export type ProductSimpleParameterValue = {
-  parameterId: string;
-  value?: string | null;
-};
+export type ProductSimpleParameterValue = ProductSimpleParameterValueDto;
 
 export type CurrencyRecord = ProductCurrencyDto;
 
@@ -83,23 +86,9 @@ export type CurrencyRecord = ProductCurrencyDto;
  */
 export type PriceGroupRecord = PriceGroupDto;
 
-export type PriceGroupWithDetails = PriceGroupRecord & {
-  currency: CurrencyRecord;
-  currencyCode: string;
-};
+export type PriceGroupWithDetails = PriceGroupWithDetailsDto;
 
-export type PriceGroupForCalculation = {
-  id: string;
-  groupId?: string;
-  currencyId: string;
-  type: string;
-  isDefault: boolean;
-  sourceGroupId: string | null;
-  priceMultiplier: number;
-  addToPrice: number;
-  currency: { code: string };
-  currencyCode?: string;
-};
+export type PriceGroupForCalculation = PriceGroupForCalculationDto;
 
 /**
  * Domain record for a catalog.
@@ -114,30 +103,18 @@ export type Catalog = CatalogRecord;
  */
 export type ProductRecord = ProductDto;
 
-export type ProductImageRecord = Omit<ProductImageDto, 'imageFile'> & {
-  imageFile: ImageFileRecord;
-};
+export type ProductImageRecord = ProductImageRecordDto;
 
-export type ProductCatalogRecord = ProductCatalogDto & {
-  catalog: CatalogRecord;
-};
+export type ProductCatalogRecord = ProductCatalogRecordDto;
 
-export type ProductWithImages = Omit<ProductRecord, 'images' | 'catalogs' | 'tags' | 'producers'> & {
-  images: ProductImageRecord[];
-  catalogs: ProductCatalogRecord[];
-  categoryId?: string | null;
-  tags?: ProductTagRelationDto[];
-  producers?: ProductProducerRelationDto[];
-};
+export type ProductWithImages = ProductWithImagesDto;
 
 /**
  * Domain record for a product category.
  */
 export type ProductCategory = ProductCategoryDto;
 
-export type ProductCategoryWithChildren = ProductCategory & {
-  children: ProductCategoryWithChildren[];
-};
+export type ProductCategoryWithChildren = ProductCategoryWithChildrenDto;
 
 /**
  * Domain record for a product tag.
@@ -183,7 +160,7 @@ export { type ProductAiJobType } from './jobs';
 export { type UserPreferences } from './user-preferences';
 
 export type IntegrationDbProvider = IntegrationDbProviderDto;
-export const IntegrationDbProvider = {
+export const INTEGRATION_DB_PROVIDER = {
   PRISMA: 'prisma',
   MONGODB: 'mongodb',
 } as const;

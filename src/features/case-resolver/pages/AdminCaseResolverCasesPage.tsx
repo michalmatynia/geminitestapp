@@ -14,7 +14,6 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react';
-import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -31,6 +30,8 @@ import {
   MultiSelect,
   SelectSimple,
   useToast,
+  Breadcrumbs,
+  PanelHeader,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import type { FilterField } from '@/shared/ui/templates/panels';
@@ -2690,47 +2691,27 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
 
       <ListPanel
         header={
-          <div className='space-y-4'>
-            <div className='mb-2 flex flex-wrap items-center gap-2'>
-              <Button
-                type='button'
-                onClick={(): void => {
-                  handleOpenCreateCaseModal();
-                }}
-                size='icon-lg'
-                variant='outline'
-                aria-label='Create new case'
-                title='Create new case'
-              >
-                <Plus className='h-6 w-6' />
-              </Button>
-            </div>
-            <div className='space-y-1'>
-              <h1 className='text-3xl font-bold tracking-tight text-white'>
-                Cases
-              </h1>
-              <nav
-                aria-label='Breadcrumb'
-                className='mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-400'
-              >
-                <Link
-                  href='/admin'
-                  className='transition-colors hover:text-gray-200'
-                >
-                  Admin
-                </Link>
-                <span>/</span>
-                <Link
-                  href='/admin/case-resolver'
-                  className='transition-colors hover:text-gray-200'
-                >
-                  Case Resolver
-                </Link>
-                <span>/</span>
-                <span className='text-gray-300'>Cases</span>
-              </nav>
-            </div>
-          </div>
+          <PanelHeader
+            title='Cases'
+            description={
+              <Breadcrumbs
+                items={[
+                  { label: 'Admin', href: '/admin' },
+                  { label: 'Case Resolver', href: '/admin/case-resolver' },
+                  { label: 'Cases' },
+                ]}
+              />
+            }
+            actions={[
+              {
+                key: 'create',
+                label: 'New Case',
+                icon: <Plus className='size-4' />,
+                onClick: () => handleOpenCreateCaseModal(),
+                variant: 'default',
+              }
+            ]}
+          />
         }
       >
         <div className='space-y-6'>

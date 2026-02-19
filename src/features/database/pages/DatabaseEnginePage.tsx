@@ -8,7 +8,6 @@ import {
   ArchiveIcon,
   ClipboardListIcon,
 } from 'lucide-react';
-import Link from 'next/link';
 import React, { useMemo, Suspense } from 'react';
 
 import type { DatabaseEngineOperationJobDto } from '@/shared/contracts/database';
@@ -29,6 +28,7 @@ import {
   MetadataItem,
   LoadingState,
   ToggleRow,
+  Breadcrumbs,
 } from '@/shared/ui';
 
 import { DatabaseBackupsPanel } from '../components/DatabaseBackupsPanel';
@@ -151,17 +151,13 @@ function DatabaseEngineContent(): React.JSX.Element {
       <SectionHeader
         title='Database Engine'
         subtitle={
-          <nav aria-label='Breadcrumb' className='flex flex-wrap items-center gap-1 text-xs text-gray-400'>
-            <Link href='/admin' className='transition-colors hover:text-gray-200'>
-              Admin
-            </Link>
-            <span>/</span>
-            <Link href='/admin/databases/engine' className='transition-colors hover:text-gray-200'>
-              Databases
-            </Link>
-            <span>/</span>
-            <span className='text-gray-300'>{activeViewLabel}</span>
-          </nav>
+          <Breadcrumbs
+            items={[
+              { label: 'Admin', href: '/admin' },
+              { label: 'Databases', href: '/admin/databases/engine' },
+              { label: activeViewLabel },
+            ]}
+          />
         }
         description='Control center for data provider routing, synchronization, and fallback policies.'
         actions={

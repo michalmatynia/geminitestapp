@@ -9,7 +9,8 @@ import type {
   DatabaseEngineOperationsJobsDto,
   DatabaseEngineBackupSchedulerStatusDto,
   RedisOverviewDto,
-  DatabaseEngineProviderPreviewDto
+  DatabaseEngineProviderPreviewDto,
+  DatabaseEngineWorkspaceViewDto
 } from '@/shared/contracts/database';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
@@ -44,7 +45,7 @@ import {
   useRedisOverview,
 } from '../hooks/useDatabaseQueries';
 
-export type DatabaseEngineWorkspaceView = 'engine' | 'backups' | 'operations';
+export type DatabaseEngineWorkspaceView = DatabaseEngineWorkspaceViewDto;
 
 export type DatabaseCollectionRow = {
   name: string;

@@ -73,6 +73,12 @@ type SvgNodeLayerProps = {
   ) => void | Promise<void>;
   onDisconnectPort: (direction: 'input' | 'output', nodeId: string, port: string) => void;
   onFireTrigger: (node: AiNode) => void | Promise<void>;
+  onConnectorHover?: ((payload: {
+    clientX: number;
+    clientY: number;
+    info: ConnectorInfo;
+  }) => void) | undefined;
+  onConnectorLeave?: (() => void) | undefined;
 };
 
 const BLOCKER_PROCESSING_STATUSES = new Set<string>([
@@ -200,6 +206,25 @@ const summarizeTitleValue = (value: unknown): string => {
   return formatted.length > 220 ? `${formatted.slice(0, 220)}...` : formatted;
 };
 
+const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const mergeRuntimePayload = (
+  current: Record<string, unknown> | undefined,
+  historyValue: unknown
+): Record<string, unknown> | undefined => {
+  const historical = isPlainRecord(historyValue)
+    ? historyValue
+    : undefined;
+  if (!historical && !current) return undefined;
+  if (!historical) return current;
+  if (!current) return historical;
+  return {
+    ...historical,
+    ...current,
+  };
+};
+
 const buildConnectorTitle = (info: ConnectorInfo): string => {
   const label = info.direction === 'input' ? 'Input' : 'Output';
   return [
@@ -252,6 +277,8 @@ export function CanvasSvgNodeLayer({
   onReconnectInput,
   onDisconnectPort,
   onFireTrigger,
+  onConnectorHover,
+  onConnectorLeave,
 }: SvgNodeLayerProps): React.JSX.Element {
   const buildConnectorKey = React.useCallback(
     (direction: 'input' | 'output', nodeId: string, port: string): string =>
@@ -283,11 +310,18 @@ export function CanvasSvgNodeLayer({
     (nodeId: string): {
       inputs: Record<string, unknown> | undefined;
       outputs: Record<string, unknown> | undefined;
-    } => ({
-      inputs: runtimeState.inputs[nodeId],
-      outputs: runtimeState.outputs[nodeId],
-    }),
-    [runtimeState.inputs, runtimeState.outputs]
+    } => {
+      const history = runtimeState.history?.[nodeId];
+      const lastEntry =
+        Array.isArray(history) && history.length > 0
+          ? history[history.length - 1]
+          : null;
+      return {
+        inputs: mergeRuntimePayload(runtimeState.inputs[nodeId], lastEntry?.inputs),
+        outputs: mergeRuntimePayload(runtimeState.outputs[nodeId], lastEntry?.outputs),
+      };
+    },
+    [runtimeState.history, runtimeState.inputs, runtimeState.outputs]
   );
 
   const getConnectorInfo = React.useCallback(
@@ -658,12 +692,27 @@ export function CanvasSvgNodeLayer({
                       fill='transparent'
                       data-port='input'
                       style={{ cursor: 'pointer' }}
-                      onPointerEnter={() => setHoveredConnectorKey(connectorKey)}
-                      onPointerLeave={() =>
+                      onPointerMove={(event: React.PointerEvent<SVGCircleElement>) => {
+                        onConnectorHover?.({
+                          clientX: event.clientX,
+                          clientY: event.clientY,
+                          info: connectorInfo,
+                        });
+                      }}
+                      onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {
+                        setHoveredConnectorKey(connectorKey);
+                        onConnectorHover?.({
+                          clientX: event.clientX,
+                          clientY: event.clientY,
+                          info: connectorInfo,
+                        });
+                      }}
+                      onPointerLeave={() => {
                         setHoveredConnectorKey((prev: string | null) =>
                           prev === connectorKey ? null : prev
-                        )
-                      }
+                        );
+                        onConnectorLeave?.();
+                      }}
                       onPointerDown={(event: React.PointerEvent<SVGCircleElement>) => {
                         event.stopPropagation();
                         if (hasIncomingEdge) {
@@ -757,12 +806,27 @@ export function CanvasSvgNodeLayer({
                       fill='transparent'
                       data-port='output'
                       style={{ cursor: 'pointer' }}
-                      onPointerEnter={() => setHoveredConnectorKey(connectorKey)}
-                      onPointerLeave={() =>
+                      onPointerMove={(event: React.PointerEvent<SVGCircleElement>) => {
+                        onConnectorHover?.({
+                          clientX: event.clientX,
+                          clientY: event.clientY,
+                          info: connectorInfo,
+                        });
+                      }}
+                      onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {
+                        setHoveredConnectorKey(connectorKey);
+                        onConnectorHover?.({
+                          clientX: event.clientX,
+                          clientY: event.clientY,
+                          info: connectorInfo,
+                        });
+                      }}
+                      onPointerLeave={() => {
                         setHoveredConnectorKey((prev: string | null) =>
                           prev === connectorKey ? null : prev
-                        )
-                      }
+                        );
+                        onConnectorLeave?.();
+                      }}
                       onPointerDown={(event: React.PointerEvent<SVGCircleElement>) => {
                         event.stopPropagation();
                         void onStartConnection(event, node, output);

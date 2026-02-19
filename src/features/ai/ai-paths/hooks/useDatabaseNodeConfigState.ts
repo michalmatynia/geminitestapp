@@ -65,6 +65,37 @@ const DEFAULT_QUERY: DbQueryConfig = {
   single: false,
 };
 
+const LEGACY_MONGO_DEFAULT_QUERY_TEMPLATE = '{\n  "_id": "{{value}}"\n}';
+
+const isLegacyMongoDefaultQuery = (query: DbQueryConfig): boolean =>
+  query.provider === 'mongodb' &&
+  query.collection === 'products' &&
+  query.mode === 'preset' &&
+  query.preset === 'by_id' &&
+  query.field === '_id' &&
+  query.idType === 'string' &&
+  query.queryTemplate === LEGACY_MONGO_DEFAULT_QUERY_TEMPLATE &&
+  query.limit === 20 &&
+  query.sort === '' &&
+  query.projection === '' &&
+  query.single === false;
+
+const normalizeLegacyQueryProvider = (query: DbQueryConfig): DbQueryConfig => {
+  if (query.provider !== 'auto' && query.provider !== 'mongodb' && query.provider !== 'prisma') {
+    return {
+      ...query,
+      provider: 'auto',
+    };
+  }
+  if (isLegacyMongoDefaultQuery(query)) {
+    return {
+      ...query,
+      provider: 'auto',
+    };
+  }
+  return query;
+};
+
 const DEFAULT_MAPPINGS: UpdaterMapping[] = [
   {
     targetPath: 'content_en',
@@ -155,7 +186,9 @@ export function useDatabaseNodeConfigState() {
     distinctField: persistedDatabase?.distinctField ?? '',
     updateTemplate: persistedDatabase?.updateTemplate ?? '',
     mappings: persistedDatabase?.mappings && persistedDatabase.mappings.length > 0 ? persistedDatabase.mappings : DEFAULT_MAPPINGS,
-    query: { ...DEFAULT_QUERY, ...(persistedDatabase?.query ?? {}) } as DbQueryConfig,
+    query: normalizeLegacyQueryProvider(
+      { ...DEFAULT_QUERY, ...(persistedDatabase?.query ?? {}) } as DbQueryConfig
+    ),
     writeSource: persistedDatabase?.writeSource ?? 'bundle',
     writeSourcePath: persistedDatabase?.writeSourcePath ?? '',
     dryRun: persistedDatabase?.dryRun ?? false,

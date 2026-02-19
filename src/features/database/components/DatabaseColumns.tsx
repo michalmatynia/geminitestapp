@@ -1,6 +1,6 @@
 'use client';
 
-import { ActionMenu, Button, DataTableSortableHeader, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui';
+import { ActionMenu, DataTableSortableHeader, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui';
 
 import type { DatabaseInfo } from '../types';
 import type { ColumnDef, Row } from '@tanstack/react-table';

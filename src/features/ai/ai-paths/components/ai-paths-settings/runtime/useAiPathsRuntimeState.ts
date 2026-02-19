@@ -4,7 +4,6 @@ import { useCallback, useRef, useState } from 'react';
 
 import type {
   AiPathRuntimeEvent,
-  AiPathRuntimeEventKind,
   AiPathRuntimeNodeStatus,
   AiPathRuntimeNodeStatusMap,
 } from '@/features/ai/ai-paths/lib';
@@ -14,6 +13,7 @@ import {
   NON_SETTLED_RUNTIME_NODE_STATUSES,
   type RunStatus,
   type RuntimeEventInput,
+  type SetNodeStatusInput,
 } from './types';
 
 export function useAiPathsRuntimeState() {
@@ -98,20 +98,7 @@ export function useAiPathsRuntimeState() {
   }, []);
 
   const setNodeStatus = useCallback(
-    (input: {
-      nodeId: string;
-      status: unknown;
-      source: 'local' | 'server';
-      runId?: string | null | undefined;
-      runStartedAt?: string | null | undefined;
-      iteration?: number | undefined;
-      nodeType?: string | null | undefined;
-      nodeTitle?: string | null | undefined;
-      kind?: AiPathRuntimeEventKind | undefined;
-      level?: 'info' | 'warn' | 'error' | undefined;
-      message?: string | undefined;
-      metadata?: Record<string, unknown> | null | undefined;
-    }): void => {
+    (input: SetNodeStatusInput): void => {
       const normalizedStatus = normalizeNodeStatus(input.status);
       if (!normalizedStatus) return;
       // Track node execution timing

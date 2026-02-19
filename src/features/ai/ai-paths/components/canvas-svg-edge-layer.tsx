@@ -125,6 +125,7 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
                 />
                 {!reduceVisualEffects ? (
                   <SignalDots
+                    key={`dots-${edge.id}-${edge.path}`}
                     path={edge.path}
                     intensity={flowingIntensity}
                     viewScale={viewScale}

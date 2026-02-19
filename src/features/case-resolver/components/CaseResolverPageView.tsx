@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import React, { useCallback } from 'react';
 
 import type {
+  CaseResolverCaptureDocumentDateAction,
   CaseResolverCaptureProposalState,
 } from '@/features/case-resolver-capture/proposals';
 import {
@@ -70,7 +71,7 @@ type SelectOption = {
 };
 
 type WorkspaceView = 'document' | 'relations';
-type EditorDetailsTab = 'document' | 'metadata' | 'history';
+type EditorDetailsTab = 'document' | 'relations' | 'metadata' | 'revisions';
 
 type CaseResolverPageViewProps = {
   state: ReturnType<typeof useCaseResolverState>;
@@ -138,6 +139,9 @@ type CaseResolverPageViewProps = {
   updatePromptExploderProposalReference: (
     role: 'addresser' | 'addressee',
     value: string
+  ) => void;
+  updatePromptExploderProposalDateAction: (
+    action: CaseResolverCaptureDocumentDateAction
   ) => void;
   resolvePromptExploderMatchedPartyLabel: (
     reference: CaseResolverCaptureProposalState['addresser'] extends infer T
@@ -215,6 +219,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     handleApplyPromptExploderProposal,
     updatePromptExploderProposalAction,
     updatePromptExploderProposalReference,
+    updatePromptExploderProposalDateAction,
     resolvePromptExploderMatchedPartyLabel,
   } = props;
 
@@ -436,18 +441,6 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
       'You have unsaved Case Resolver changes. Leave this page without saving?'
     );
   }, []);
-
-  React.useEffect(() => {
-    const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
-      if (!hasUnsavedChanges) return;
-      event.preventDefault();
-      event.returnValue = '';
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return (): void => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [hasUnsavedChanges]);
 
   React.useEffect(() => {
     const handleDocumentClick = (event: MouseEvent): void => {
@@ -820,7 +813,12 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
               <Tabs
                 value={editorDetailsTab}
                 onValueChange={(value: string): void => {
-                  if (value === 'document' || value === 'metadata' || value === 'history') {
+                  if (
+                    value === 'document' ||
+                    value === 'relations' ||
+                    value === 'metadata' ||
+                    value === 'revisions'
+                  ) {
                     setEditorDetailsTab(value);
                   }
                 }}
@@ -828,8 +826,9 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
               >
                 <TabsList className='h-9'>
                   <TabsTrigger value='document' className='text-xs'>Document</TabsTrigger>
+                  <TabsTrigger value='relations' className='text-xs'>Relations</TabsTrigger>
                   <TabsTrigger value='metadata' className='text-xs'>Case Metadata</TabsTrigger>
-                  <TabsTrigger value='history' className='text-xs'>History</TabsTrigger>
+                  <TabsTrigger value='revisions' className='text-xs'>Revisions</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value='document' className='mt-0'>
@@ -915,7 +914,25 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                       </div>
                     </FormField>
 
+                  </div>
+                </TabsContent>
+
+                <TabsContent value='relations' className='mt-0'>
+                  <div className='grid gap-3 md:grid-cols-2'>
                     <FormField label='Connected Node Canvases' className='md:col-span-2'>
+                      <div className='mb-2 flex justify-end'>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          className='h-7 text-[11px]'
+                          onClick={(): void => {
+                            handleCreateNodeFile(editingDocumentDraft.folder ?? null);
+                          }}
+                        >
+                          New Node File
+                        </Button>
+                      </div>
                       {connectedNodeCanvasLinks.length === 0 ? (
                         <div className='rounded border border-dashed border-border/60 px-3 py-2 text-xs text-gray-500'>
                           Not connected to any node canvas yet. Add this document to a node canvas to link it.
@@ -1019,7 +1036,6 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                         </div>
                       )}
                     </FormField>
-
                   </div>
                 </TabsContent>
 
@@ -1111,62 +1127,63 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                   </div>
                 </TabsContent>
 
-                <TabsContent value='history' className='mt-0'>
-                  {(editingDocumentDraft.documentHistory ?? []).length === 0 ? (
-                    <div className='rounded border border-dashed border-border/60 px-3 py-3 text-xs text-gray-500'>
-                      No saved versions yet. Once you save an overwrite, the previous text will appear here.
+                <TabsContent value='revisions' className='mt-0'>
+                  <div className='space-y-2'>
+                    <div className='flex items-center justify-between gap-2 rounded border border-border/60 bg-card/30 px-3 py-2 text-xs'>
+                      <span className='text-gray-400'>
+                        Revision {editingDocumentDraft.baseDocumentContentVersion}
+                        {isEditorDraftDirty ? ' · unsaved changes' : ' · saved'}
+                      </span>
+                      {(editingDocumentDraft.documentConversionWarnings ?? []).length > 0 ? (
+                        <span className='text-amber-300'>
+                          {(editingDocumentDraft.documentConversionWarnings ?? [])[0]}
+                        </span>
+                      ) : null}
                     </div>
-                  ) : (
-                    <div className='space-y-2'>
-                      {(editingDocumentDraft.documentHistory ?? []).map((entry: CaseResolverDocumentHistoryEntry) => (
-                        <div
-                          key={entry.id}
-                          className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'
-                        >
-                          <div className='flex flex-wrap items-center justify-between gap-2'>
-                            <div className='text-gray-300'>
-                              Version {entry.documentContentVersion} · {entry.editorType.toUpperCase()}
+                    {(editingDocumentDraft.documentHistory ?? []).length === 0 ? (
+                      <div className='rounded border border-dashed border-border/60 px-3 py-3 text-xs text-gray-500'>
+                        No saved versions yet. Once you save an overwrite, the previous text will appear here.
+                      </div>
+                    ) : (
+                      <div className='space-y-2'>
+                        {(editingDocumentDraft.documentHistory ?? []).map((entry: CaseResolverDocumentHistoryEntry) => (
+                          <div
+                            key={entry.id}
+                            className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'
+                          >
+                            <div className='flex flex-wrap items-center justify-between gap-2'>
+                              <div className='text-gray-300'>
+                                Version {entry.documentContentVersion} · {entry.editorType.toUpperCase()}
+                              </div>
+                              <div className='text-[11px] text-gray-500'>
+                                {formatHistoryTimestamp(entry.savedAt)}
+                              </div>
                             </div>
-                            <div className='text-[11px] text-gray-500'>
-                              {formatHistoryTimestamp(entry.savedAt)}
+                            <div className='mt-2 max-h-28 overflow-auto rounded border border-border/60 bg-card/30 px-2 py-1.5 font-mono text-[11px] text-gray-400 whitespace-pre-wrap'>
+                              {entry.documentContentPlainText.trim().length > 0
+                                ? entry.documentContentPlainText
+                                : '(Empty version)'}
+                            </div>
+                            <div className='mt-2 flex justify-end'>
+                              <Button
+                                type='button'
+                                variant='outline'
+                                size='sm'
+                                className='h-7 text-[11px]'
+                                onClick={(): void => {
+                                  handleUseHistoryEntry(entry);
+                                }}
+                              >
+                                Load Into Editor
+                              </Button>
                             </div>
                           </div>
-                          <div className='mt-2 max-h-28 overflow-auto rounded border border-border/60 bg-card/30 px-2 py-1.5 font-mono text-[11px] text-gray-400 whitespace-pre-wrap'>
-                            {entry.documentContentPlainText.trim().length > 0
-                              ? entry.documentContentPlainText
-                              : '(Empty version)'}
-                          </div>
-                          <div className='mt-2 flex justify-end'>
-                            <Button
-                              type='button'
-                              variant='outline'
-                              size='sm'
-                              className='h-7 text-[11px]'
-                              onClick={(): void => {
-                                handleUseHistoryEntry(entry);
-                              }}
-                            >
-                              Load Into Editor
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </TabsContent>
               </Tabs>
-
-              <div className='flex items-center justify-between gap-2 rounded border border-border/60 bg-card/30 px-3 py-2 text-xs'>
-                <span className='text-gray-400'>
-                  Revision {editingDocumentDraft.baseDocumentContentVersion}
-                  {isEditorDraftDirty ? ' · unsaved changes' : ' · saved'}
-                </span>
-                {(editingDocumentDraft.documentConversionWarnings ?? []).length > 0 ? (
-                  <span className='text-amber-300'>
-                    {(editingDocumentDraft.documentConversionWarnings ?? [])[0]}
-                  </span>
-                ) : null}
-              </div>
 
               <div className='flex justify-end gap-2'>
                 {promptExploderPartyProposal?.targetFileId === editingDocumentDraft.id ? (
@@ -1322,6 +1339,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
           onApply={handleApplyPromptExploderProposal}
           onUpdateAction={updatePromptExploderProposalAction}
           onUpdateReference={updatePromptExploderProposalReference}
+          onUpdateDateAction={updatePromptExploderProposalDateAction}
           resolveMatchedPartyLabel={resolvePromptExploderMatchedPartyLabel}
         />
         

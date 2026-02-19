@@ -73,6 +73,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     openSaveQueryPresetModal: state.openSaveQueryPresetModal,
     databaseConfig: state.databaseConfig,
     queryConfig: state.queryConfig,
+    resolvedProvider: state.resolvedProvider,
     operation: state.operation,
     queryTemplateValue: state.queryTemplateValue,
     queryTemplateRef: state.queryTemplateRef,

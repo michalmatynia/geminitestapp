@@ -1,6 +1,9 @@
 import React from 'react';
 
-import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture/proposals';
+import type {
+  CaseResolverCaptureDocumentDateAction,
+  CaseResolverCaptureProposalState,
+} from '@/features/case-resolver-capture/proposals';
 import {
   type CaseResolverCaptureAction,
 } from '@/features/case-resolver-capture/settings';
@@ -20,6 +23,7 @@ type PromptExploderCaptureMappingModalProps = {
     action: CaseResolverCaptureAction
   ) => void;
   onUpdateReference: (role: 'addresser' | 'addressee', value: string) => void;
+  onUpdateDateAction: (action: CaseResolverCaptureDocumentDateAction) => void;
   resolveMatchedPartyLabel: (
     reference: CaseResolverCaptureProposalState['addresser'] extends infer T
       ? T extends { existingReference?: infer R | null }
@@ -39,6 +43,7 @@ export function PromptExploderCaptureMappingModal({
   onApply,
   onUpdateAction,
   onUpdateReference,
+  onUpdateDateAction,
   resolveMatchedPartyLabel,
 }: PromptExploderCaptureMappingModalProps): React.JSX.Element {
   const resolveActionOptions = (
@@ -66,6 +71,24 @@ export function PromptExploderCaptureMappingModal({
     if (proposal.matchKind === 'address') return 'Matched address only';
     return proposal.hasAddressCandidate ? 'Address found, not matched' : 'No match';
   };
+
+  const dateActionOptions: Array<{
+    value: CaseResolverCaptureDocumentDateAction;
+    label: string;
+  }> = [
+    {
+      value: 'useDetectedDate',
+      label: 'Use detected date and remove it from text',
+    },
+    {
+      value: 'keepText',
+      label: 'Keep date in text only',
+    },
+    {
+      value: 'ignore',
+      label: 'Ignore date capture',
+    },
+  ];
 
   return (
     <AppModal
@@ -104,6 +127,46 @@ export function PromptExploderCaptureMappingModal({
           <div className='rounded border border-border/60 bg-card/30 px-3 py-2 text-xs text-gray-300'>
             Target File: <span className='font-medium text-gray-100'>{targetFileName}</span>
           </div>
+
+          {draft.documentDate ? (
+            <div className='space-y-3 rounded border border-border/60 bg-card/25 p-3'>
+              <div className='flex items-center justify-between gap-3'>
+                <div className='flex items-center gap-2'>
+                  <div className='text-sm font-semibold text-gray-100'>Document Date</div>
+                  <Badge variant='outline' className='px-1.5 py-0 text-[10px]'>
+                    Source: {draft.documentDate.source === 'metadata' ? 'Metadata' : 'Text'}
+                  </Badge>
+                </div>
+              </div>
+              <div className='rounded border border-border/60 bg-card/30 p-2 text-xs text-gray-200'>
+                <div>
+                  Detected date: <span className='font-medium'>{draft.documentDate.isoDate}</span>
+                </div>
+                {draft.documentDate.sourceLine ? (
+                  <div className='mt-1 text-[11px] text-gray-400'>
+                    Source line: {draft.documentDate.sourceLine}
+                  </div>
+                ) : null}
+              </div>
+              <FormField label='Date Action'>
+                <SelectSimple
+                  size='sm'
+                  value={draft.documentDate.action}
+                  onValueChange={(value: string): void => {
+                    if (value === 'useDetectedDate' || value === 'keepText' || value === 'ignore') {
+                      onUpdateDateAction(value);
+                    }
+                  }}
+                  options={dateActionOptions}
+                  triggerClassName='h-9'
+                />
+              </FormField>
+            </div>
+          ) : (
+            <div className='rounded border border-dashed border-border/60 bg-card/20 px-3 py-3 text-sm text-gray-400'>
+              No captured document date in this Prompt Exploder payload.
+            </div>
+          )}
 
           {(['addresser', 'addressee'] as const).map((role) => {
             const proposal = draft[role];

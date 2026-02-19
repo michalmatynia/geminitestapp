@@ -11,17 +11,21 @@ export function DatabaseQueryValidatorPanel(): React.JSX.Element | null {
   const {
     queryValidation,
     queryConfig,
+    resolvedProvider,
     operation,
     queryTemplateValue,
     databaseConfig,
   } = useDatabaseQueryValidatorPanelContext();
   const { selectedNode, nodes, edges, updateSelectedNodeConfig, toast } = useAiPathConfig();
   if (!selectedNode) return null;
+  const effectiveProvider = resolvedProvider ?? (queryConfig.provider === 'prisma' ? 'prisma' : 'mongodb');
   const providerLabel =
-    queryConfig.provider === 'prisma'
-      ? 'Prisma'
-      : 'MongoDB';
-  const isPrismaProvider = queryConfig.provider === 'prisma';
+    queryConfig.provider === 'auto'
+      ? `Auto (resolved: ${effectiveProvider === 'prisma' ? 'Prisma' : 'MongoDB'})`
+      : effectiveProvider === 'prisma'
+        ? 'Prisma'
+        : 'MongoDB';
+  const isPrismaProvider = effectiveProvider === 'prisma';
   const looksLikeMongo =
     /\$[a-zA-Z]+/.test(queryTemplateValue) || /"_id"\s*:/.test(queryTemplateValue);
   return (
@@ -100,10 +104,10 @@ export function DatabaseQueryValidatorPanel(): React.JSX.Element | null {
             className='mt-3 w-full rounded-md border border-purple-700 bg-purple-500/10 px-3 py-2 text-[11px] text-purple-200 hover:bg-purple-500/20'
             onClick={(): void => {
               const providerName =
-                queryConfig.provider === 'prisma'
-                  ? 'Prisma'
-                  : queryConfig.provider === 'auto'
-                    ? 'MongoDB (auto)'
+                queryConfig.provider === 'auto'
+                  ? `Auto (${effectiveProvider === 'prisma' ? 'Prisma' : 'MongoDB'})`
+                  : effectiveProvider === 'prisma'
+                    ? 'Prisma'
                     : 'MongoDB';
               const correctionPrompt = `Fix this invalid ${providerName} query for a ${operation} operation on the "${queryConfig.collection}" collection.
 

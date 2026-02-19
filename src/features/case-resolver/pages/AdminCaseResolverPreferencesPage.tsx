@@ -275,7 +275,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
       <FormActions
         onCancel={() => { void handleReset(); }}
         cancelText='Reset to Defaults'
-        cancelVariant='warning'
+        cancelVariant='outline'
         onSave={() => { void handleSave(); }}
         saveText='Save Preferences'
         isSaving={updatePreferencesMutation.isPending}

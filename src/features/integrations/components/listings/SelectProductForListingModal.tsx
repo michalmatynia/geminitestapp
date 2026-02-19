@@ -7,7 +7,7 @@ import {
   useListingSettingsContext,
 } from '@/features/integrations/context/ListingSettingsContext';
 import { useProductsWithCount } from '@/features/products/hooks/useProductsQuery';
-import type { ModalStateProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { FormModal } from '@/shared/ui';
 
 import { useProductSelectionForm } from './hooks/useProductSelectionForm';
@@ -16,7 +16,7 @@ import { SelectProductForListingModalViewProvider, useSelectProductForListingMod
 import { IntegrationSettingsSection } from './select-product-modal/IntegrationSettingsSection';
 import { ProductListSection } from './select-product-modal/ProductListSection';
 
-interface SelectProductForListingModalProps extends ModalStateProps {
+interface SelectProductForListingModalProps extends EntityModalProps<never> {
   initialIntegrationId?: string | null;
   initialConnectionId?: string | null;
 }

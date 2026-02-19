@@ -1,4 +1,8 @@
 import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
+import type {
+  CaseResolverCompiledSegmentDto,
+  CaseResolverCompileResultDto,
+} from '@/shared/contracts/case-resolver';
 
 import {
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
@@ -10,19 +14,9 @@ import {
   type CaseResolverNodeMeta,
 } from './types';
 
-export type CaseResolverCompiledSegment = {
-  nodeId: string;
-  title: string;
-  text: string;
-  role: CaseResolverNodeMeta['role'];
-  includeInOutput: boolean;
-};
+export type CaseResolverCompiledSegment = CaseResolverCompiledSegmentDto;
 
-export type CaseResolverCompileResult = {
-  prompt: string;
-  segments: CaseResolverCompiledSegment[];
-  outputsByNode: Record<string, { textfield: string; content: string; plainText: string }>;
-};
+export type CaseResolverCompileResult = CaseResolverCompileResultDto;
 
 const JOIN_VALUE_MAP: Record<CaseResolverJoinMode, string> = {
   newline: '\n',

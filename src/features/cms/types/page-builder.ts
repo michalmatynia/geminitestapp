@@ -11,6 +11,11 @@ import type {
   BlockInstance,
   SectionInstance
 } from '@/shared/types/domain/cms';
+import type {
+  ClipboardDataDto,
+  PageBuilderSnapshotDto,
+  PageBuilderHistoryDto,
+} from '@/shared/contracts/cms';
 
 export type {
   PageSummary,
@@ -30,20 +35,11 @@ export type {
 // Page builder state & actions
 // ---------------------------------------------------------------------------
 
-export interface ClipboardData {
-  type: 'section' | 'block';
-  data: SectionInstance | BlockInstance;
-}
+export type ClipboardData = ClipboardDataDto;
 
-export interface PageBuilderSnapshot {
-  currentPage: Page | null;
-  sections: SectionInstance[];
-}
+export type PageBuilderSnapshot = PageBuilderSnapshotDto;
 
-export interface PageBuilderHistory {
-  past: PageBuilderSnapshot[];
-  future: PageBuilderSnapshot[];
-}
+export type PageBuilderHistory = PageBuilderHistoryDto;
 
 export interface InspectorSettings {
   showTooltip: boolean;

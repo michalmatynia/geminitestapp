@@ -119,9 +119,9 @@ export const promptExploderSegmentSchema = z.object({
   subsections: z.array(promptExploderSubsectionSchema),
   paramsText: z.string(),
   paramsObject: z.record(z.string(), z.unknown()).nullable(),
-  paramUiControls: z.record(promptExploderParamUiControlSchema).optional(),
-  paramComments: z.record(z.string()).optional(),
-  paramDescriptions: z.record(z.string()).optional(),
+  paramUiControls: z.record(z.string(), promptExploderParamUiControlSchema).optional(),
+  paramComments: z.record(z.string(), z.string()).optional(),
+  paramDescriptions: z.record(z.string(), z.string()).optional(),
   matchedPatternIds: z.array(z.string()),
   matchedPatternLabels: z.array(z.string()).optional(),
   matchedSequenceLabels: z.array(z.string()).optional(),
@@ -140,6 +140,13 @@ export const promptExploderDocumentSchema = z.object({
 });
 
 export type PromptExploderDocumentDto = z.infer<typeof promptExploderDocumentSchema>;
+
+export const promptExploderPatternRuleMapSchema = z.object({
+  allRules: z.array(promptValidationRuleSchema),
+  scopedRules: z.array(promptValidationRuleSchema),
+});
+
+export type PromptExploderPatternRuleMapDto = z.infer<typeof promptExploderPatternRuleMapSchema>;
 
 export const promptExploderLearnedTemplateSchema = z.object({
   id: z.string(),

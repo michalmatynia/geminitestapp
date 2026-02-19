@@ -32,6 +32,15 @@ interface SignalDotsProps {
   color?: string | undefined;
 }
 
+const hashPath = (value: string): string => {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return Math.abs(hash >>> 0).toString(36);
+};
+
 /**
  * Renders a single animated signal dot that travels along an SVG edge path.
  *
@@ -46,23 +55,23 @@ export const SignalDots = React.memo(function SignalDots({
   viewScale = 1,
   color = 'rgb(56, 189, 248)',
 }: SignalDotsProps): React.JSX.Element {
-  const motionPathBaseId = React.useId();
-  const motionPathId = React.useMemo(
-    (): string => `ai-paths-flow-${motionPathBaseId.replace(/[^a-zA-Z0-9_-]/g, '')}`,
-    [motionPathBaseId]
-  );
   const { duration, radius, opacity, count } = INTENSITY_CONFIG[intensity];
   const normalizedScale =
     Number.isFinite(viewScale) && viewScale > 0 ? viewScale : 1;
   // Wires use non-scaling strokes; keep particles visually aligned to that width.
   const adjustedRadius = Math.max(1.25, radius / normalizedScale);
   const particleSpacing = duration / Math.max(count, 1);
+  const stableId = React.useId();
+  const motionPathId = React.useMemo(
+    () => `ai-paths-flow-${hashPath(path)}-${stableId.replace(/[:]/g, '')}`,
+    [path, stableId]
+  );
 
   return (
     <g className='ai-paths-flow-particles'>
-      <path id={motionPathId} d={path} fill='none' stroke='none' />
+      <path id={motionPathId} d={path} fill='none' stroke='none' pointerEvents='none' />
       {Array.from({ length: count }, (_value, index) => {
-        const beginOffset = `-${(index * particleSpacing).toFixed(2)}s`;
+        const beginOffset = `${(index * particleSpacing).toFixed(2)}s`;
         const pulseDuration = Math.max(0.7, duration * 0.75);
         return (
           <circle
@@ -74,8 +83,13 @@ export const SignalDots = React.memo(function SignalDots({
             className='ai-paths-flow-particle'
             style={{ pointerEvents: 'none' }}
           >
-            <animateMotion dur={`${duration}s`} repeatCount='indefinite' begin={beginOffset}>
-              <mpath href={`#${motionPathId}`} />
+            <animateMotion
+              dur={`${duration}s`}
+              repeatCount='indefinite'
+              begin={beginOffset}
+              path={path}
+            >
+              <mpath href={`#${motionPathId}`} xlinkHref={`#${motionPathId}`} />
             </animateMotion>
             <animate
               attributeName='opacity'

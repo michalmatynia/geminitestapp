@@ -17,6 +17,11 @@ import type { ProductCreateInput } from '@/features/products/validations/schemas
 
 export const BASE_DETAILS_BATCH_SIZE = 100;
 export const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
+import type {
+  PriceGroupLookupDto,
+  BaseImportRunParamsDto,
+  BaseConnectionContextDto,
+} from '@/shared/contracts/integrations';
 export const MAX_IMAGES_PER_PRODUCT = 15;
 
 const DEFAULT_BASE_IMPORT_MAX_ATTEMPTS = 3;
@@ -25,35 +30,11 @@ const DEFAULT_BASE_IMPORT_RETRY_MAX_DELAY_MS = 60_000;
 const DEFAULT_BASE_IMPORT_LEASE_MS = 60_000;
 const DEFAULT_BASE_IMPORT_HEARTBEAT_EVERY_ITEMS = 10;
 
-export type PriceGroupLookup = {
-  id: string;
-  groupId?: string | null;
-  currencyId?: string | null;
-  currencyCode?: string | null;
-  isDefault?: boolean;
-};
+export type PriceGroupLookup = PriceGroupLookupDto;
 
-export type StartBaseImportRunInput = {
-  connectionId?: string;
-  inventoryId: string;
-  catalogId: string;
-  templateId?: string;
-  limit?: number;
-  imageMode: 'links' | 'download';
-  uniqueOnly: boolean;
-  allowDuplicateSku: boolean;
-  selectedIds?: string[];
-  dryRun?: boolean;
-  mode?: BaseImportMode;
-  requestId?: string;
-};
+export type StartBaseImportRunInput = BaseImportRunParamsDto;
 
-export type BaseConnectionContext = {
-  baseIntegrationId: string | null;
-  connectionId: string | null;
-  token: string | null;
-  issue: BaseImportPreflightIssue | null;
-};
+export type BaseConnectionContext = BaseConnectionContextDto;
 
 export type ProductLookupMaps = {
   producerIdSet: Set<string>;

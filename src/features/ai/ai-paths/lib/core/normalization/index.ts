@@ -1,4 +1,10 @@
-import type { AiNode, NodeConfig, NodeType, DatabaseConfig } from '@/shared/types/domain/ai-paths';
+import type {
+  AiNode,
+  NodeConfig,
+  NodeType,
+  DatabaseConfig,
+  DbQueryConfig,
+} from '@/shared/types/domain/ai-paths';
 
 import {
   AGENT_INPUT_PORTS,
@@ -35,6 +41,38 @@ import {
   VIEWER_INPUT_PORTS,
 } from '../constants';
 import { createParserMappings, createViewerOutputs, ensureUniquePorts, normalizePortName } from '../utils';
+
+const DEFAULT_LEGACY_DB_QUERY_TEMPLATE = '{\n  "_id": "{{value}}"\n}';
+
+const isLegacyDefaultMongoQuery = (query: DbQueryConfig): boolean =>
+  query.provider === 'mongodb' &&
+  query.collection === 'products' &&
+  query.mode === 'preset' &&
+  query.preset === 'by_id' &&
+  query.field === '_id' &&
+  query.idType === 'string' &&
+  query.queryTemplate === DEFAULT_LEGACY_DB_QUERY_TEMPLATE &&
+  query.limit === 20 &&
+  query.sort === '' &&
+  query.projection === '' &&
+  query.single === false;
+
+const migrateLegacyDbQueryProvider = (query: DbQueryConfig): DbQueryConfig => {
+  const provider = query.provider;
+  if (provider === 'auto' || provider === 'mongodb' || provider === 'prisma') {
+    if (isLegacyDefaultMongoQuery(query)) {
+      return {
+        ...query,
+        provider: 'auto',
+      };
+    }
+    return query;
+  }
+  return {
+    ...query,
+    provider: 'auto',
+  };
+};
 
 export const normalizeNodes = (items: AiNode[]): AiNode[] =>
   items
@@ -374,7 +412,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
       }
       if (node.type === 'database') {
         const defaultQuery = {
-          provider: 'mongodb' as const,
+          provider: 'auto' as const,
           collection: 'products',
           mode: 'preset' as const,
           preset: 'by_id' as const,
@@ -396,6 +434,9 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
               : {})
           ),
         };
+        const migratedQueryConfig = migrateLegacyDbQueryProvider(
+          queryConfig as DbQueryConfig
+        );
         const databaseConfig: DatabaseConfig = node.config?.database ?? { operation: 'query' };
         const mappings = 
         databaseConfig.mappings && databaseConfig.mappings.length > 0
@@ -448,7 +489,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] =>
               distinctField: databaseConfig.distinctField ?? '',
               updateTemplate: databaseConfig.updateTemplate ?? '',
               mappings,
-              query: queryConfig,
+              query: migratedQueryConfig,
               writeSource: databaseConfig.writeSource ?? 'bundle',
               writeSourcePath: databaseConfig.writeSourcePath ?? '',
               dryRun: databaseConfig.dryRun ?? false,

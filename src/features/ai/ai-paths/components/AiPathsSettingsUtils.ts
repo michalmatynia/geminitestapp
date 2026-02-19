@@ -24,7 +24,7 @@ import type { DbQueryPayload } from '@/features/ai/ai-paths/lib/api/client';
 type DatabaseOperation = 'query' | 'update' | 'insert' | 'delete';
 
 export const DEFAULT_DB_QUERY: DbQueryConfig = {
-  provider: 'mongodb',
+  provider: 'auto',
   collection: 'products',
   mode: 'preset',
   preset: 'by_id',

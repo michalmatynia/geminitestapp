@@ -139,6 +139,90 @@ const normalizePrismaOrderBy = (
   return Object.keys(orderBy).length > 0 ? orderBy : undefined;
 };
 
+const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const isScalarValue = (value: unknown): boolean =>
+  value === null ||
+  typeof value === 'string' ||
+  typeof value === 'number' ||
+  typeof value === 'boolean';
+
+const isSimpleInValue = (value: unknown): boolean => {
+  if (!isPlainRecord(value)) return false;
+  const keys = Object.keys(value);
+  if (keys.length !== 1 || keys[0] !== '$in') return false;
+  const list = value['$in'];
+  return Array.isArray(list) && list.length > 0 && list.length <= 200 && list.every(isScalarValue);
+};
+
+const isSafeSimpleFilter = (filter: Record<string, unknown>): boolean => {
+  const entries = Object.entries(filter);
+  if (entries.length === 0) return true;
+  return entries.every(([key, value]) => {
+    if (!key || key.startsWith('$')) return false;
+    return isScalarValue(value) || isSimpleInValue(value);
+  });
+};
+
+const isSafeSimpleProjection = (
+  projection?: Record<string, unknown>
+): boolean => {
+  if (!projection || !isPlainRecord(projection)) return true;
+  return Object.values(projection).every(
+    (value: unknown) =>
+      value === 1 ||
+      value === 0 ||
+      value === true ||
+      value === false
+  );
+};
+
+const isSafeSimpleSort = (sort?: Record<string, unknown>): boolean => {
+  if (!sort || !isPlainRecord(sort)) return true;
+  return Object.values(sort).every(
+    (value: unknown) =>
+      value === 1 ||
+      value === -1 ||
+      value === 'asc' ||
+      value === 'desc'
+  );
+};
+
+const isSafeAutoFallbackCandidate = (input: {
+  requestedProvider?: 'auto' | 'mongodb' | 'prisma';
+  query: Record<string, unknown>;
+  projection?: Record<string, unknown>;
+  sort?: Record<string, unknown>;
+  idType?: 'string' | 'objectId';
+}): boolean => {
+  if (input.requestedProvider === 'mongodb' || input.requestedProvider === 'prisma') {
+    return false;
+  }
+  if (input.idType === 'objectId') {
+    return false;
+  }
+  return (
+    isSafeSimpleFilter(input.query) &&
+    isSafeSimpleProjection(input.projection) &&
+    isSafeSimpleSort(input.sort)
+  );
+};
+
+type QueryResponsePayload =
+  | {
+      item: Record<string, unknown> | null;
+      count: number;
+      provider: 'mongodb' | 'prisma';
+      fallback?: Record<string, unknown>;
+    }
+  | {
+      items: Record<string, unknown>[];
+      count: number;
+      provider: 'mongodb' | 'prisma';
+      fallback?: Record<string, unknown>;
+    };
+
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
   if (!isInternal) {
@@ -163,98 +247,150 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   if (!isCollectionAllowed(collection)) {
     throw internalError('Collection not allowlisted');
   }
+  const rawFilter = coerceQuery(query);
+  const requestSort = sort as Record<string, unknown> | undefined;
+  const requestProjection = projection as Record<string, unknown> | undefined;
+  const canAttemptSafeAutoFallback = isSafeAutoFallbackCandidate({
+    ...(requestedProvider !== undefined ? { requestedProvider } : {}),
+    query: rawFilter,
+    ...(requestProjection !== undefined ? { projection: requestProjection } : {}),
+    ...(requestSort !== undefined ? { sort: requestSort } : {}),
+    ...(idType !== undefined ? { idType } : {}),
+  });
 
-  const provider = await resolveCollectionProviderForRequest(
+  const runQueryWithProvider = async (
+    provider: 'mongodb' | 'prisma'
+  ): Promise<QueryResponsePayload> => {
+    if (provider === 'prisma') {
+      if (!process.env['DATABASE_URL']) {
+        throw internalError('Prisma is not configured');
+      }
+      const resolvedCollection = resolvePrismaCollectionKey(collection);
+      const delegate = resolvedCollection ? getPrismaDelegate(resolvedCollection) : null;
+      if (!delegate) {
+        throw badRequestError('Collection not available for Prisma');
+      }
+      const where = rawFilter;
+      const select = normalizePrismaSelect(requestProjection);
+      const orderBy = normalizePrismaOrderBy(requestSort);
+      if (single) {
+        const item = delegate.findFirst
+          ? await delegate.findFirst({
+            where,
+            ...(select ? { select } : {}),
+            ...(orderBy ? { orderBy } : {}),
+          })
+          : (await delegate.findMany({
+            where,
+            ...(select ? { select } : {}),
+            ...(orderBy ? { orderBy } : {}),
+            take: 1,
+          }))[0] ?? null;
+        return { item: (item as Record<string, unknown> | null) ?? null, count: item ? 1 : 0, provider: 'prisma' };
+      }
+      const [items, count] = await Promise.all([
+        delegate.findMany({
+          where,
+          ...(select ? { select } : {}),
+          ...(orderBy ? { orderBy } : {}),
+          take: limit,
+        }),
+        delegate.count({ where }),
+      ]);
+      return {
+        items: (items as Record<string, unknown>[]) ?? [],
+        count,
+        provider: 'prisma',
+      };
+    }
+
+    if (!process.env['MONGODB_URI']) {
+      throw internalError('MongoDB is not configured');
+    }
+    const mongo = await getMongoDb();
+    const collectionRef = mongo.collection(collection);
+    const filter = normalizeObjectId(rawFilter, idType);
+
+    const findOneWithFilter = async (
+      candidateFilter: Record<string, unknown>
+    ): Promise<Record<string, unknown> | null> =>
+      collectionRef.findOne(candidateFilter, {
+        ...(requestProjection ? { projection: requestProjection } : {}),
+        ...(requestSort ? { sort: requestSort as Sort } : {}),
+      }) as Promise<Record<string, unknown> | null>;
+
+    const findManyWithFilter = async (
+      candidateFilter: Record<string, unknown>
+    ): Promise<{ items: Record<string, unknown>[]; count: number }> => {
+      const cursor = collectionRef.find(
+        candidateFilter,
+        requestProjection ? { projection: requestProjection } : undefined
+      );
+      if (requestSort) {
+        cursor.sort(requestSort as Sort);
+      }
+      const [items, count] = await Promise.all([
+        cursor.limit(limit).toArray() as Promise<Record<string, unknown>[]>,
+        collectionRef.countDocuments(candidateFilter),
+      ]);
+      return { items, count };
+    };
+
+    if (single) {
+      let item = await findOneWithFilter(filter);
+      if (!item && canRetryWithObjectId(rawFilter, idType)) {
+        item = await findOneWithFilter(normalizeObjectId(rawFilter, 'objectId'));
+      }
+      return {
+        item,
+        count: item ? 1 : 0,
+        provider: 'mongodb',
+      };
+    }
+
+    let { items, count } = await findManyWithFilter(filter);
+    if (count === 0 && canRetryWithObjectId(rawFilter, idType)) {
+      ({ items, count } = await findManyWithFilter(
+        normalizeObjectId(rawFilter, 'objectId')
+      ));
+    }
+    return {
+      items,
+      count,
+      provider: 'mongodb',
+    };
+  };
+
+  const primaryProvider = await resolveCollectionProviderForRequest(
     collection,
     requestedProvider
   );
 
-  if (provider === 'prisma') {
-    if (!process.env['DATABASE_URL']) {
-      throw internalError('Prisma is not configured');
+  try {
+    const result = await runQueryWithProvider(primaryProvider);
+    return NextResponse.json(result);
+  } catch (primaryError) {
+    if (!canAttemptSafeAutoFallback) {
+      throw primaryError;
     }
-    const resolvedCollection = resolvePrismaCollectionKey(collection);
-    const delegate = resolvedCollection ? getPrismaDelegate(resolvedCollection) : null;
-    if (!delegate) {
-      throw badRequestError('Collection not available for Prisma');
+    const fallbackProvider = primaryProvider === 'prisma' ? 'mongodb' : 'prisma';
+    try {
+      const fallbackResult = await runQueryWithProvider(fallbackProvider);
+      return NextResponse.json({
+        ...fallbackResult,
+        fallback: {
+          used: true,
+          requestedProvider: requestedProvider ?? 'auto',
+          attemptedProvider: primaryProvider,
+          resolvedProvider: fallbackProvider,
+          reason:
+            primaryError instanceof Error
+              ? primaryError.message
+              : 'Primary provider failed for auto mode',
+        },
+      } as QueryResponsePayload);
+    } catch {
+      throw primaryError;
     }
-    const where = coerceQuery(query);
-    const select = normalizePrismaSelect(projection);
-    const orderBy = normalizePrismaOrderBy(sort);
-    if (single) {
-      const item = delegate.findFirst
-        ? await delegate.findFirst({
-          where,
-          ...(select ? { select } : {}),
-          ...(orderBy ? { orderBy } : {}),
-        })
-        : (await delegate.findMany({
-          where,
-          ...(select ? { select } : {}),
-          ...(orderBy ? { orderBy } : {}),
-          take: 1,
-        }))[0] ?? null;
-      return NextResponse.json({ item, count: item ? 1 : 0 });
-    }
-    const [items, count] = await Promise.all([
-      delegate.findMany({
-        where,
-        ...(select ? { select } : {}),
-        ...(orderBy ? { orderBy } : {}),
-        take: limit,
-      }),
-      delegate.count({ where }),
-    ]);
-    return NextResponse.json({ items, count });
   }
-
-  if (!process.env['MONGODB_URI']) {
-    throw internalError('MongoDB is not configured');
-  }
-
-  const mongo = await getMongoDb();
-  const collectionRef = mongo.collection(collection);
-  const rawFilter = coerceQuery(query);
-  const filter = normalizeObjectId(rawFilter, idType);
-
-  const findOneWithFilter = async (
-    candidateFilter: Record<string, unknown>
-  ): Promise<Record<string, unknown> | null> =>
-    collectionRef.findOne(candidateFilter, {
-      ...(projection ? { projection } : {}),
-      ...(sort ? { sort: sort as Sort } : {}),
-    }) as Promise<Record<string, unknown> | null>;
-
-  const findManyWithFilter = async (
-    candidateFilter: Record<string, unknown>
-  ): Promise<{ items: Record<string, unknown>[]; count: number }> => {
-    const cursor = collectionRef.find(
-      candidateFilter,
-      projection ? { projection } : undefined
-    );
-    if (sort) {
-      cursor.sort(sort as Sort);
-    }
-    const [items, count] = await Promise.all([
-      cursor.limit(limit).toArray() as Promise<Record<string, unknown>[]>,
-      collectionRef.countDocuments(candidateFilter),
-    ]);
-    return { items, count };
-  };
-
-  if (single) {
-    let item = await findOneWithFilter(filter);
-    if (!item && canRetryWithObjectId(rawFilter, idType)) {
-      item = await findOneWithFilter(normalizeObjectId(rawFilter, 'objectId'));
-    }
-    return NextResponse.json({ item, count: item ? 1 : 0 });
-  }
-
-  let { items, count } = await findManyWithFilter(filter);
-  if (count === 0 && canRetryWithObjectId(rawFilter, idType)) {
-    ({ items, count } = await findManyWithFilter(
-      normalizeObjectId(rawFilter, 'objectId')
-    ));
-  }
-  return NextResponse.json({ items, count });
 }

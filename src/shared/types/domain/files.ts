@@ -5,7 +5,7 @@ import type {
   UpdateFileDto,
   ImageFileRecordDto,
   ImageFileSelectionDto
-} from '../dtos/files';
+} from '../../contracts/files';
 
 export type { 
   FileDto, 

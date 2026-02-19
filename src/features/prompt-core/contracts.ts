@@ -3,19 +3,16 @@ import type {
   ValidatorScopeDto,
 } from '@/shared/contracts/admin';
 import type {
-  PromptExploderLearnedTemplateDto,
-  PromptExploderRuntimeValidationScopeDto,
-  PromptExploderValidationRuleStackDto,
-} from '@/shared/contracts/prompt-exploder';
-import type {
-  PromptValidationRuleDto as PromptValidationRule,
-} from '@/shared/contracts/prompt-engine';
-import type {
   PromptValidationRuntimeProfileDto,
   PromptValidationRuntimeIdentityDto,
   PromptValidationRuntimeSelectionDto,
   PromptValidationStackResolutionDto,
 } from '@/shared/contracts/prompt-engine';
+import type {
+  PromptExploderLearnedTemplateDto,
+  PromptExploderRuntimeValidationScopeDto,
+  PromptExploderValidationRuleStackDto,
+} from '@/shared/contracts/prompt-exploder';
 
 export type ValidatorPatternList = ValidatorPatternListDto;
 export type ValidatorScope = ValidatorScopeDto;

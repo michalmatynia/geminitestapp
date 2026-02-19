@@ -8,14 +8,11 @@ import type {
   AgentBrowserLog,
   AgentSnapshot,
 } from '@/shared/types/domain/chatbot';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
-export interface AgentRunDetailModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess?: () => void;
-  item: AiPathRunRecord | null;
+export interface AgentRunDetailModalProps extends EntityModalProps<AiPathRunRecord> {
   agentSnapshots: AgentSnapshot[];
   agentBrowserLogs: AgentBrowserLog[];
   agentAuditLogs: AgentAuditLog[];

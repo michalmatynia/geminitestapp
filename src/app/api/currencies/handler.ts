@@ -52,6 +52,8 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     code: data.code,
     name: data.name,
     symbol: data.symbol ?? null,
+    enabled: true,
+    isDefault: false,
   });
 
   return NextResponse.json(currency);

@@ -81,6 +81,7 @@ const sanitizeRelationNodes = (value: unknown): AiNode[] => {
   if (!Array.isArray(value)) return [];
   const seen = new Set<string>();
   const nodes: AiNode[] = [];
+  const now = new Date().toISOString();
   value.forEach((entry: unknown, index: number): void => {
     if (!entry || typeof entry !== 'object') return;
     const record = entry as Record<string, unknown>;
@@ -117,14 +118,24 @@ const sanitizeRelationNodes = (value: unknown): AiNode[] => {
       record['config'] && typeof record['config'] === 'object' && !Array.isArray(record['config'])
         ? record['config']
         : undefined;
+    const createdAt = normalizeTimestamp(record['createdAt'], now);
+    const updatedAt =
+      record['updatedAt'] === null ? null : normalizeTimestamp(record['updatedAt'], createdAt);
+    const data =
+      record['data'] && typeof record['data'] === 'object' && !Array.isArray(record['data'])
+        ? (record['data'] as Record<string, unknown>)
+        : {};
     nodes.push({
       id: rawId,
+      createdAt,
+      updatedAt,
       type: sanitizeRelationNodeType(record['type']),
       title,
       description,
       inputs: inputs.length > 0 ? inputs : ['in'],
       outputs: outputs.length > 0 ? outputs : ['out'],
       position: { x, y },
+      data,
       ...(config ? { config: config as AiNode['config'] } : {}),
     });
   });
@@ -387,14 +398,19 @@ export const buildCaseResolverRelationGraph = ({
     nextNodes.push({
       ...(existingNode ?? {
         id: seed.id,
+        createdAt: now,
+        updatedAt: null,
         type: resolveRelationNodeType(seed.entityType),
         title: seed.title,
         description: seed.description,
         inputs: ['in'],
         outputs: ['out'],
         position,
+        data: {},
       }),
       id: seed.id,
+      createdAt: existingNode?.createdAt ?? now,
+      updatedAt: existingNode?.updatedAt ?? null,
       type: existingNode?.type ?? resolveRelationNodeType(seed.entityType),
       title: seed.title,
       description: seed.description,
@@ -407,6 +423,10 @@ export const buildCaseResolverRelationGraph = ({
           ? existingNode.outputs
           : ['out'],
       position,
+      data:
+        existingNode?.data && typeof existingNode.data === 'object' && !Array.isArray(existingNode.data)
+          ? existingNode.data
+          : {},
     });
 
     const existingMeta = rawNodeMeta[seed.id];
@@ -653,13 +673,16 @@ export const buildCaseResolverRelationGraph = ({
   rawEdges.forEach((edge: Edge): void => {
     const existingMeta = rawEdgeMeta[edge.id];
     if (existingMeta?.isStructural) return;
-    if (!nextNodeIdSet.has(edge.from) || !nextNodeIdSet.has(edge.to)) return;
+    const fromNodeId = edge.from;
+    const toNodeId = edge.to;
+    if (!fromNodeId || !toNodeId) return;
+    if (!nextNodeIdSet.has(fromNodeId) || !nextNodeIdSet.has(toNodeId)) return;
     const relationType = existingMeta ? existingMeta.relationType : 'related';
     const label = existingMeta?.label ?? edge.label ?? '';
     upsertEdge({
       id: edge.id,
-      from: edge.from,
-      to: edge.to,
+      from: fromNodeId,
+      to: toNodeId,
       relationType,
       label,
       isStructural: false,

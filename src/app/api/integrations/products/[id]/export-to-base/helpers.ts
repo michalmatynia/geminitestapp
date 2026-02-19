@@ -182,10 +182,10 @@ export const getProducerRefId = (value: unknown): string => {
 export type BaseFieldMapping = { sourceKey: string; targetField: string };
 
 type BaseExportProductLike = {
-  categoryId?: string | null;
-  producers?: unknown[] | null;
-  tags?: Array<{ tagId?: string | null }> | null;
-  catalogs?: Array<{ catalogId: string }> | null;
+  categoryId?: string | null | undefined;
+  producers?: unknown[] | null | undefined;
+  tags?: Array<{ tagId?: string | null | undefined }> | null | undefined;
+  catalogs?: Array<{ catalogId: string }> | null | undefined;
 };
 
 export const prepareBaseExportMappingsAndProduct = async <
@@ -663,8 +663,11 @@ export const resolveWarehouseAndStockMappings = async ({
         return { typed, numeric: match[2] };
       };
       for (const warehouse of warehouses) {
+        const warehouseRecord = warehouse as Record<string, unknown>;
+        const typedWarehouseId =
+          typeof warehouseRecord['typedId'] === 'string' ? warehouseRecord['typedId'] : undefined;
         warehouseIdSet.add(warehouse['id']);
-        const inferred = warehouse['typedId'] ?? inferTypedWarehouseId(warehouse['id'])?.typed;
+        const inferred = typedWarehouseId ?? inferTypedWarehouseId(warehouse['id'])?.typed;
         if (inferred) {
           warehouseIdSet.add(inferred);
           if (inferred !== warehouse['id']) {
@@ -676,8 +679,8 @@ export const resolveWarehouseAndStockMappings = async ({
             }
           }
         }
-        if (warehouse['typedId'] && warehouse['typedId'] !== warehouse['id']) {
-          warehouseAliases[warehouse['id']] = warehouse['typedId'];
+        if (typedWarehouseId && typedWarehouseId !== warehouse['id']) {
+          warehouseAliases[warehouse['id']] = typedWarehouseId;
         }
       }
       if (warehouseId) {
@@ -694,16 +697,28 @@ export const resolveWarehouseAndStockMappings = async ({
         warehouseId = stockWarehouseAliases[warehouseId] ?? null;
       } else if (warehouseId) {
         const match = warehouses.find(
-          (warehouse) =>
-            warehouse['id'] === warehouseId || warehouse['typedId'] === warehouseId
+          (warehouse) => {
+            const warehouseRecord = warehouse as Record<string, unknown>;
+            const typedWarehouseId =
+              typeof warehouseRecord['typedId'] === 'string' ? warehouseRecord['typedId'] : undefined;
+            return warehouse['id'] === warehouseId || typedWarehouseId === warehouseId;
+          }
         );
-        if (match?.typedId) {
-          warehouseId = match.typedId ?? null;
+        const matchRecord = match as Record<string, unknown> | undefined;
+        const matchTypedId =
+          matchRecord && typeof matchRecord['typedId'] === 'string' ? matchRecord['typedId'] : undefined;
+        if (matchTypedId) {
+          warehouseId = matchTypedId;
         }
       }
       if (warehouseId) {
         if (!validWarehouseIds.has(warehouseId)) {
-          const fallbackWarehouseId = warehouses[0]?.typedId ?? warehouses[0]?.id ?? null;
+          const firstWarehouse = warehouses[0] as Record<string, unknown> | undefined;
+          const fallbackTypedWarehouseId =
+            firstWarehouse && typeof firstWarehouse['typedId'] === 'string'
+              ? firstWarehouse['typedId']
+              : undefined;
+          const fallbackWarehouseId = fallbackTypedWarehouseId ?? warehouses[0]?.id ?? null;
           await ErrorSystem.logWarning(
             '[export-to-base] Warehouse not in inventory, using fallback',
             {

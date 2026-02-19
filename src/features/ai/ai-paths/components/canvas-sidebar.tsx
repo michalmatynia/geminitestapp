@@ -501,13 +501,15 @@ export function CanvasSidebar(): React.JSX.Element {
           <div>Active wires: {edges.length}</div>
           {selectedEdgeId ? ((): React.JSX.Element | null => {
             const selectedEdge = edges.find((edge) => edge.id === selectedEdgeId);
-            const fromNode = selectedEdge ? nodes.find((n) => n.id === selectedEdge.from) : null;
-            const toNode = selectedEdge ? nodes.find((n) => n.id === selectedEdge.to) : null;
-            const sourceOutputs = selectedEdge
-              ? (runtimeState.outputs[selectedEdge.from] as Record<string, unknown> | undefined)
+            const fromNodeId = selectedEdge?.from;
+            const toNodeId = selectedEdge?.to;
+            const fromNode = fromNodeId ? nodes.find((n) => n.id === fromNodeId) : null;
+            const toNode = toNodeId ? nodes.find((n) => n.id === toNodeId) : null;
+            const sourceOutputs = fromNodeId
+              ? (runtimeState.outputs[fromNodeId] as Record<string, unknown> | undefined)
               : undefined;
-            const targetInputs = selectedEdge
-              ? (runtimeState.inputs[selectedEdge.to] as Record<string, unknown> | undefined)
+            const targetInputs = toNodeId
+              ? (runtimeState.inputs[toNodeId] as Record<string, unknown> | undefined)
               : undefined;
             const sourceValue = selectedEdge
               ? readPortRuntimeValue(sourceOutputs, selectedEdge.fromPort)

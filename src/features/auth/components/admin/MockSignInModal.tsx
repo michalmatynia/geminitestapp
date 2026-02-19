@@ -2,13 +2,11 @@
 
 import React, { useMemo } from 'react';
 
-import type { ModalStateProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
-interface MockSignInModalProps extends ModalStateProps {
-  email: string;
+interface MockSignInModalProps extends EntityModalProps<MockSignInFormState> {
   setEmail: (value: string) => void;
-  password: string;
   setPassword: (value: string) => void;
   isSaving: boolean;
   onSave: () => void;
@@ -22,14 +20,12 @@ type MockSignInFormState = {
 export function MockSignInModal({
   isOpen,
   onClose,
-  email,
+  item: values,
   setEmail,
-  password,
   setPassword,
   isSaving,
   onSave,
 }: MockSignInModalProps): React.JSX.Element | null {
-  const values: MockSignInFormState = { email, password };
 
   const fields: SettingsField<MockSignInFormState>[] = useMemo(() => [
     {

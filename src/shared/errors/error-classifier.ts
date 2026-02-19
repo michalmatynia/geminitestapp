@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
-import { ErrorCategory, type SuggestedAction } from '@/shared/types/observability';
+import { ERROR_CATEGORY, type ErrorCategory, type SuggestedAction } from '@/shared/types/observability';
 
 const ERROR_PATTERNS: [RegExp, ErrorCategory][] = [
-  [/connection|network|timeout|refused|reset|fetch/i, ErrorCategory.EXTERNAL],
-  [/auth|login|permission|access|unauthorized|forbidden|jwt|session|not found/i, ErrorCategory.USER],
-  [/validation|invalid|missing|required|wrong format|bad request/i, ErrorCategory.VALIDATION],
-  [/database|prisma|mongo|sql|query failed|migration|foreign key/i, ErrorCategory.DATABASE],
-  [/ai|openai|ollama|llm|token limit|embedding|vision|prompt/i, ErrorCategory.AI],
+  [/connection|network|timeout|refused|reset|fetch/i, ERROR_CATEGORY.EXTERNAL],
+  [/auth|login|permission|access|unauthorized|forbidden|jwt|session|not found/i, ERROR_CATEGORY.USER],
+  [/validation|invalid|missing|required|wrong format|bad request/i, ERROR_CATEGORY.VALIDATION],
+  [/database|prisma|mongo|sql|query failed|migration|foreign key/i, ERROR_CATEGORY.DATABASE],
+  [/ai|openai|ollama|llm|token limit|embedding|vision|prompt/i, ERROR_CATEGORY.AI],
 ];
 
 /**
@@ -15,14 +15,14 @@ const ERROR_PATTERNS: [RegExp, ErrorCategory][] = [
  */
 export function classifyError(error: unknown): ErrorCategory {
   if (error instanceof z.ZodError) {
-    return ErrorCategory.VALIDATION;
+    return ERROR_CATEGORY.VALIDATION;
   }
 
   const message = error instanceof Error ? error.message : String(error);
   
   // Check common library error indicators
   if (message.includes('PrismaClient') || message.includes('MongoDB')) {
-    return ErrorCategory.DATABASE;
+    return ERROR_CATEGORY.DATABASE;
   }
 
   for (const [pattern, category] of ERROR_PATTERNS) {
@@ -31,7 +31,7 @@ export function classifyError(error: unknown): ErrorCategory {
     }
   }
   
-  return ErrorCategory.SYSTEM;
+  return ERROR_CATEGORY.SYSTEM;
 }
 
 /**
@@ -42,7 +42,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
   const message = error instanceof Error ? error.message : String(error);
 
   switch (category) {
-    case ErrorCategory.EXTERNAL:
+    case ERROR_CATEGORY.EXTERNAL:
       actions.push({
         label: 'Retry',
         description: 'The external service might be temporarily unavailable. Please try again in a few moments.',
@@ -50,7 +50,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
       });
       break;
 
-    case ErrorCategory.USER:
+    case ERROR_CATEGORY.USER:
       if (message.toLowerCase().includes('auth') || message.toLowerCase().includes('session')) {
         actions.push({
           label: 'Login Again',
@@ -66,7 +66,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
       }
       break;
 
-    case ErrorCategory.DATABASE:
+    case ERROR_CATEGORY.DATABASE:
       if (message.toLowerCase().includes('migration') || message.toLowerCase().includes('schema')) {
         actions.push({
           label: 'Run Migrations',
@@ -81,7 +81,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
       });
       break;
 
-    case ErrorCategory.VALIDATION:
+    case ERROR_CATEGORY.VALIDATION:
       actions.push({
         label: 'Check Input',
         description: 'Please review the highlighted fields and ensure all required information is correctly provided.',
@@ -89,7 +89,7 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
       });
       break;
 
-    case ErrorCategory.AI:
+    case ERROR_CATEGORY.AI:
       actions.push({
         label: 'Adjust Prompt',
         description: 'The AI model might be having trouble with the current input. Try rephrasing or simplifying your request.',

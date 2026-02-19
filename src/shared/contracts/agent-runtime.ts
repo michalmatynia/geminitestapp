@@ -6,8 +6,11 @@ import { dtoBaseSchema } from './base';
  * Agent Runtime DTOs
  */
 
+export const agentDecisionActionSchema = z.enum(['respond', 'tool', 'wait_human']);
+export type AgentDecisionActionDto = z.infer<typeof agentDecisionActionSchema>;
+
 export const agentDecisionSchema = z.object({
-  action: z.enum(['respond', 'tool', 'wait_human']),
+  action: agentDecisionActionSchema,
   reason: z.string(),
   toolName: z.string().optional(),
 });
@@ -78,6 +81,8 @@ export const plannerMetaSchema = z.object({
 });
 
 export type PlannerMetaDto = z.infer<typeof plannerMetaSchema>;
+
+export type PlannerTaskTypeDto = 'web_task' | 'extract_info';
 
 export const agentPlanSettingsSchema = z.object({
   maxSteps: z.number(),
@@ -177,6 +182,10 @@ export const approvalRequestSchema = z.object({
 });
 
 export type ApprovalRequestDto = z.infer<typeof approvalRequestSchema>;
+
+export type AuditLevelDto = 'info' | 'warning' | 'error';
+
+export type MemoryScopeDto = 'session' | 'longterm';
 
 export const planHierarchySchema = z.object({
   goals: z.array(z.object({

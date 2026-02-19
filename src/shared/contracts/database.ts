@@ -294,6 +294,26 @@ export const databaseRestoreOperationResponseSchema = z.object({
 export type DatabaseRestoreOperationResponseDto = z.infer<typeof databaseRestoreOperationResponseSchema>;
 
 /**
+ * Database Backup Operation Results DTOs
+ */
+
+export const databaseBackupResultSchema = z.object({
+  message: z.string(),
+  backupName: z.string(),
+  log: z.string(),
+  warning: z.string().optional(),
+});
+
+export type DatabaseBackupResultDto = z.infer<typeof databaseBackupResultSchema>;
+
+export const fullDatabaseBackupResultSchema = z.object({
+  mongo: databaseBackupResultSchema,
+  postgres: databaseBackupResultSchema,
+});
+
+export type FullDatabaseBackupResultDto = z.infer<typeof fullDatabaseBackupResultSchema>;
+
+/**
  * Redis DTOs
  */
 
@@ -431,6 +451,19 @@ export type DatabaseEngineBackupSchedulerTickResponseDto = z.infer<
 >;
 
 /**
+ * Settings Backfill DTOs
+ */
+
+export const settingsBackfillResultSchema = z.object({
+  matched: z.number(),
+  modified: z.number(),
+  remaining: z.number(),
+  sampleIds: z.array(z.string()).optional(),
+});
+
+export type SettingsBackfillResultDto = z.infer<typeof settingsBackfillResultSchema>;
+
+/**
  * Database Engine Policy DTOs
  */
 
@@ -539,3 +572,83 @@ export const databaseCollectionCopyResultSchema = z.object({
 });
 
 export type DatabaseCollectionCopyResultDto = z.infer<typeof databaseCollectionCopyResultSchema>;
+
+/**
+ * Database Synchronization DTOs
+ */
+
+export const databaseSyncDirectionSchema = z.enum(['mongo_to_prisma', 'prisma_to_mongo']);
+export type DatabaseSyncDirectionDto = z.infer<typeof databaseSyncDirectionSchema>;
+
+export const databaseSyncCollectionResultSchema = z.object({
+  name: z.string(),
+  status: z.enum(['completed', 'skipped', 'failed']),
+  sourceCount: z.number(),
+  targetDeleted: z.number(),
+  targetInserted: z.number(),
+  warnings: z.array(z.string()).optional(),
+  error: z.string().optional(),
+});
+
+export type DatabaseSyncCollectionResultDto = z.infer<typeof databaseSyncCollectionResultSchema>;
+
+export const databaseSyncResultSchema = z.object({
+  direction: databaseSyncDirectionSchema,
+  startedAt: z.string(),
+  finishedAt: z.string(),
+  backups: fullDatabaseBackupResultSchema,
+  collections: z.array(databaseSyncCollectionResultSchema),
+});
+
+export type DatabaseSyncResultDto = z.infer<typeof databaseSyncResultSchema>;
+
+export const databaseSyncOptionsSchema = z.object({
+  skipCollections: z.array(z.string()).optional(),
+  skipAuthCollections: z.boolean().optional(),
+});
+
+export type DatabaseSyncOptionsDto = z.infer<typeof databaseSyncOptionsSchema>;
+
+/**
+ * Database Engine Workspace DTOs
+ */
+
+export const databaseEngineWorkspaceViewSchema = z.enum(['engine', 'backups', 'operations']);
+export type DatabaseEngineWorkspaceViewDto = z.infer<typeof databaseEngineWorkspaceViewSchema>;
+
+export const databaseEngineOperationControlsSchema = z.object({
+  allowManualFullSync: z.boolean(),
+  allowManualCollectionSync: z.boolean(),
+  allowManualBackfill: z.boolean(),
+  allowManualBackupRunNow: z.boolean(),
+  allowManualBackupMaintenance: z.boolean(),
+  allowBackupSchedulerTick: z.boolean(),
+  allowOperationJobCancellation: z.boolean(),
+});
+
+export type DatabaseEngineOperationControlsDto = z.infer<typeof databaseEngineOperationControlsSchema>;
+
+export const databaseEngineBackupTargetScheduleSchema = z.object({
+  enabled: z.boolean(),
+  cadence: z.enum(['daily', 'every_n_days', 'weekly']),
+  intervalDays: z.number(),
+  weekday: z.number(),
+  timeUtc: z.string(),
+  lastQueuedAt: z.string().nullable(),
+  lastRunAt: z.string().nullable(),
+  lastStatus: z.enum(['idle', 'queued', 'running', 'success', 'failed']),
+  lastJobId: z.string().nullable(),
+  lastError: z.string().nullable(),
+  nextDueAt: z.string().nullable(),
+});
+
+export type DatabaseEngineBackupTargetScheduleDto = z.infer<typeof databaseEngineBackupTargetScheduleSchema>;
+
+export const databaseEngineBackupScheduleSchema = z.object({
+  schedulerEnabled: z.boolean(),
+  lastCheckedAt: z.string().nullable(),
+  mongodb: databaseEngineBackupTargetScheduleSchema,
+  postgresql: databaseEngineBackupTargetScheduleSchema,
+});
+
+export type DatabaseEngineBackupScheduleDto = z.infer<typeof databaseEngineBackupScheduleSchema>;

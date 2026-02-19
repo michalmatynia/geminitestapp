@@ -243,12 +243,17 @@ export async function postExportToBaseHandler(
       );
     }
 
+    const normalizedProductForExport = {
+      ...product,
+      categoryId: product.categoryId ?? null,
+    };
+
     const preparedExportContext = await prepareBaseExportMappingsAndProduct({
       data,
       imagesOnly,
       productId,
       resolvedInventoryId,
-      product,
+      product: normalizedProductForExport,
     });
     const mappings = preparedExportContext.mappings;
     const resolvedTemplateId = preparedExportContext.resolvedTemplateId;

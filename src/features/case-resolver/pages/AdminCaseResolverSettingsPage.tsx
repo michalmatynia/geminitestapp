@@ -8,7 +8,7 @@ import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settin
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Badge, Button, FormField, FormSection, Input, SectionHeader, SelectSimple, Textarea, useToast } from '@/shared/ui';
+import { Badge, Button, FormField, FormSection, Input, SectionHeader, SelectSimple, Textarea, useToast, Breadcrumbs } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { isLikelyCaseResolverOcrCapableModelId } from '../ocr-models';
@@ -149,20 +149,14 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
 
   const modelSummary = `${modelOptions.length} OCR-capable model(s) available`;
   const headerBreadcrumb = (
-    <nav
-      aria-label='Breadcrumb'
-      className='mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-400'
-    >
-      <Link href='/admin' className='transition-colors hover:text-gray-200'>
-        Admin
-      </Link>
-      <span>/</span>
-      <Link href='/admin/case-resolver' className='transition-colors hover:text-gray-200'>
-        Case Resolver
-      </Link>
-      <span>/</span>
-      <span className='text-gray-300'>Settings</span>
-    </nav>
+    <Breadcrumbs
+      items={[
+        { label: 'Admin', href: '/admin' },
+        { label: 'Case Resolver', href: '/admin/case-resolver' },
+        { label: 'Settings' },
+      ]}
+      className='mt-1'
+    />
   );
 
   const handleSave = async (): Promise<void> => {

@@ -96,6 +96,13 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
     setOverId(null);
   }, []);
 
+  const handleVisibilityToggle = useCallback((record: AiTriggerButtonRecord, enabled: boolean): void => {
+    setLocalRows((prev) =>
+      prev.map((row) => (row.id === record.id ? { ...row, enabled } : row))
+    );
+    onToggleVisibility(record, enabled);
+  }, [onToggleVisibility]);
+
   const columns = useMemo<ColumnDef<AiTriggerButtonRecord>[]>(() => [
     {
       id: 'drag',
@@ -145,10 +152,18 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
       id: 'visibility',
       header: 'Visibility',
       cell: ({ row }) => (
-        <div className='flex items-center gap-2'>
+        <div
+          className='flex items-center gap-2'
+          onPointerDown={(event: React.PointerEvent<HTMLDivElement>): void => {
+            event.stopPropagation();
+          }}
+          onClick={(event: React.MouseEvent<HTMLDivElement>): void => {
+            event.stopPropagation();
+          }}
+        >
           <Switch
             checked={row.original.enabled !== false}
-            onCheckedChange={(checked: boolean) => onToggleVisibility(row.original, checked)}
+            onCheckedChange={(checked: boolean) => handleVisibilityToggle(row.original, checked)}
           />
           <span className='text-xs text-gray-400'>
             {row.original.enabled === false ? 'Hidden' : 'Visible'}
@@ -219,7 +234,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
         </div>
       ),
     },
-  ], [handleDragStart, handleDragEnter, handleDragEnd, handleDrop, onEdit, onDelete, onToggleVisibility]);
+  ], [handleDragStart, handleDragEnter, handleDragEnd, handleDrop, onEdit, onDelete, handleVisibilityToggle]);
 
   if (isLoading && localRows.length === 0) {
     return <p className='text-sm text-gray-500'>Loading trigger buttons...</p>;

@@ -10,8 +10,9 @@ import type {
 
 const COLLECTION_NAME = 'chatbot_jobs';
 
-type ChatbotJobCreateInput = Pick<ChatbotJob, 'sessionId' | 'model' | 'payload'> & Partial<
-  Pick<ChatbotJob, 'resultText' | 'errorMessage' | 'startedAt' | 'finishedAt'>
+type ChatbotJobCreateInput = Pick<
+  ChatbotJobDocument,
+  'sessionId' | 'model' | 'payload' | 'resultText' | 'errorMessage'
 >;
 type ChatbotJobUpdateInput = Partial<
   Pick<ChatbotJobDocument, 'status' | 'model' | 'payload' | 'resultText' | 'errorMessage' | 'startedAt' | 'finishedAt'>
@@ -26,9 +27,8 @@ function documentToJob(doc: ChatbotJobDocument): ChatbotJob {
     payload: doc.payload,
     resultText: doc.resultText,
     errorMessage: doc.errorMessage,
-    createdAt: doc.createdAt,
-    startedAt: doc.startedAt,
-    finishedAt: doc.finishedAt,
+    createdAt: doc.createdAt.toISOString(),
+    updatedAt: null,
   };
 }
 
@@ -82,8 +82,7 @@ export const chatbotJobRepository: ChatbotJobRepository = {
       resultText: input.resultText,
       errorMessage: input.errorMessage,
       createdAt: now,
-      startedAt: input.startedAt,
-      finishedAt: input.finishedAt,
+      updatedAt: null,
     };
 
     const result = await db
@@ -98,9 +97,8 @@ export const chatbotJobRepository: ChatbotJobRepository = {
       payload: doc.payload,
       resultText: doc.resultText,
       errorMessage: doc.errorMessage,
-      createdAt: doc.createdAt,
-      startedAt: doc.startedAt,
-      finishedAt: doc.finishedAt,
+      createdAt: doc.createdAt.toISOString(),
+      updatedAt: null,
     };
   },
 

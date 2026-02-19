@@ -3,6 +3,7 @@ import type {
   ImageTransformOptionsDto, 
   ImageRetryPresetDto, 
   ImageBase64ModeDto,
+  IntegrationDto,
   IntegrationConnectionDto,
   ProductListingDto
 } from '@/shared/contracts/integrations';
@@ -60,6 +61,18 @@ export type ProductListingRecord = Omit<ProductListingDto, 'createdAt' | 'update
   nextRelistAt?: string | Date | null;
   lastRelistedAt?: string | Date | null;
   lastStatusCheckAt?: string | Date | null;
+};
+
+export type IntegrationRepository = {
+  listIntegrations: () => Promise<IntegrationRecord[]>;
+  upsertIntegration: (input: { name: string; slug: string }) => Promise<IntegrationRecord>;
+  getIntegrationById: (id: string) => Promise<IntegrationRecord | null>;
+  listConnections: (integrationId: string) => Promise<IntegrationConnectionRecord[]>;
+  getConnectionById: (id: string) => Promise<IntegrationConnectionRecord | null>;
+  getConnectionByIdAndIntegration: (id: string, integrationId: string) => Promise<IntegrationConnectionRecord | null>;
+  createConnection: (integrationId: string, input: any) => Promise<IntegrationConnectionRecord>;
+  updateConnection: (id: string, input: Partial<IntegrationConnectionRecord>) => Promise<IntegrationConnectionRecord>;
+  deleteConnection: (id: string) => Promise<void>;
 };
 
 export type ExternalCategoryRepository = {

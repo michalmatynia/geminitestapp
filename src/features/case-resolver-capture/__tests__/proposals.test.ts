@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildCaseResolverCaptureProposalState,
   stripAcceptedCaptureContentFromText,
+  stripAcceptedCaptureContentFromTextWithReport,
   stripAcceptedDateLineFromText,
   stripCapturedAddressLinesFromText,
 } from '@/features/case-resolver-capture/proposals';
@@ -90,6 +91,19 @@ const createAddresserCandidate = (): PromptExploderCaseResolverPartyCandidate =>
   houseNumber: '2',
   city: 'Szczecin',
   postalCode: '70-781',
+  country: 'Poland',
+});
+
+const createAddresseeCandidate = (): PromptExploderCaseResolverPartyCandidate => ({
+  role: 'addressee',
+  displayName: 'Inspektorat ZUS w Gryficach',
+  rawText: 'Inspektorat ZUS w Gryficach\nDąbskiego 5\n72-300 Gryfice\nPoland',
+  kind: 'organization',
+  organizationName: 'Inspektorat ZUS w Gryficach',
+  street: 'Dąbskiego',
+  streetNumber: '5',
+  city: 'Gryfice',
+  postalCode: '72-300',
   country: 'Poland',
 });
 
@@ -524,5 +538,110 @@ describe('case-resolver-capture proposals', () => {
       'Wniosek o ponowne rozpatrzenie sprawy',
       'W dniu 25.01.2026 r. otrzymano pismo.',
     ].join('\n'));
+  });
+
+  it('removes accepted capture lines from HTML source text and reports cleanup stats', () => {
+    const sourceHtml = [
+      '<p>Szczecin 25.01.2026</p>',
+      '<p>Michał Matynia</p>',
+      '<p>Fioletowa 71/2</p>',
+      '<p>70-781 Szczecin</p>',
+      '<p>Poland</p>',
+      '<p>Wniosek o ponowne rozpatrzenie sprawy</p>',
+    ].join('');
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+    };
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        metadata: {
+          placeDate: {
+            city: 'Szczecin',
+            day: '25',
+            month: '01',
+            year: '2026',
+          },
+        },
+        sourceText: sourceHtml,
+      }
+    );
+
+    const result = stripAcceptedCaptureContentFromTextWithReport(sourceHtml, state);
+    expect(result.text).toBe('Wniosek o ponowne rozpatrzenie sprawy');
+    expect(result.report.changed).toBe(true);
+    expect(result.report.sourceWasHtml).toBe(true);
+    expect(result.report.removedAddresserLineCount).toBeGreaterThanOrEqual(1);
+    expect(result.report.removedDateLineCount).toBe(1);
+  });
+
+  it('removes both addresser and addressee header blocks in one pass', () => {
+    const sourceText = [
+      'Michał Matynia',
+      'Fioletowa 71/2',
+      '70-781 Szczecin',
+      'Poland',
+      '',
+      'Inspektorat ZUS w Gryficach',
+      'Dąbskiego 5',
+      '72-300 Gryfice',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+      addressee: createAddresseeCandidate(),
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        sourceText,
+      }
+    );
+
+    expect(stripAcceptedCaptureContentFromText(sourceText, state)).toBe(
+      'Wniosek o ponowne rozpatrzenie sprawy'
+    );
+  });
+
+  it('removes contiguous address continuation lines after matched party-name anchor', () => {
+    const sourceText = [
+      'Inspektorat ZUS w Gryficach',
+      'Dąbskiego 5',
+      '72-300 Gryfice',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addressee: {
+        ...createAddresseeCandidate(),
+        rawText: 'Inspektorat ZUS w Gryficach',
+        street: undefined,
+        streetNumber: undefined,
+        city: undefined,
+        postalCode: undefined,
+      },
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        sourceText,
+      }
+    );
+
+    expect(stripCapturedAddressLinesFromText(sourceText, state)).toBe(
+      'Wniosek o ponowne rozpatrzenie sprawy'
+    );
   });
 });

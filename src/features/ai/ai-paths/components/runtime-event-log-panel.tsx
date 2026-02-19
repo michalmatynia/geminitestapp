@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { AiPathRuntimeEvent, AiPathRuntimeEventLevel } from '@/features/ai/ai-paths/lib';
+import type { AiPathRuntimeEvent, AiPathRunEventLevel } from '@/features/ai/ai-paths/lib';
 import { Button, StatusBadge, SelectSimple } from '@/shared/ui';
 
 import { useRuntimeState, useRuntimeActions } from '../context';
@@ -11,7 +11,7 @@ import { useRuntimeState, useRuntimeActions } from '../context';
 // Helpers
 // ---------------------------------------------------------------------------
 
-type RuntimeEventLevelFilter = NonNullable<AiPathRuntimeEventLevel> | 'all';
+type RuntimeEventLevelFilter = NonNullable<AiPathRunEventLevel> | 'all';
 
 const LEVEL_OPTIONS: { value: RuntimeEventLevelFilter; label: string }[] = [
   { value: 'all', label: 'All' },

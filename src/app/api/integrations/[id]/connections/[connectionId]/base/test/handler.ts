@@ -121,7 +121,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
       try {
         await repo.updateConnection(connection.id, {
           baseApiToken: encryptSecret(baseToken),
-          baseTokenUpdatedAt: new Date()
+          baseTokenUpdatedAt: new Date().toISOString()
         });
         pushStep('Storing token', 'ok', 'API token saved to connection');
       } catch (error) {
@@ -131,7 +131,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
     } else {
       // Update the token timestamp
       await repo.updateConnection(connection.id, {
-        baseTokenUpdatedAt: new Date()
+        baseTokenUpdatedAt: new Date().toISOString()
       });
     }
 
@@ -165,4 +165,3 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
     return fail('Testing API connection', `Base.com API error: ${message}`);
   }
 }
-

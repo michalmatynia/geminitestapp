@@ -45,6 +45,8 @@ export function useProductSelectionForm({
   const createListingMutation = useCreateListingMutation(selectedProductId || '');
 
   const submitting = exportToBaseMutation.isPending || createListingMutation.isPending;
+  const createExportRequestId = (): string =>
+    `base-export-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
   const handleSubmit = async (onSuccess: () => void): Promise<void> => {
     const validation = validateFormData(
@@ -70,6 +72,7 @@ export function useProductSelectionForm({
           connectionId: selectedConnectionId!,
           inventoryId: selectedInventoryId!,
           allowDuplicateSku,
+          requestId: createExportRequestId(),
         };
         if (selectedTemplateId && selectedTemplateId !== 'none') {
           exportData.templateId = selectedTemplateId;

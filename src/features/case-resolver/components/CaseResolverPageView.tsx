@@ -124,10 +124,7 @@ type CaseResolverPageViewProps = {
   handleCopyDraftFileId: () => Promise<void>;
   handlePreviewDraftPdf: () => void;
   handlePrintDraftDocument: () => void;
-  isDocumentPreviewOpen: boolean;
-  documentPreviewHtml: string;
-  handleCloseDocumentPreview: () => void;
-  handlePrintDocumentPreview: () => void;
+  handleExportDraftPdf: () => Promise<void>;
   promptExploderProposalDraft: CaseResolverCaptureProposalState | null;
   captureProposalTargetFileName: string | null;
   handleClosePromptExploderProposalModal: () => void;
@@ -209,10 +206,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     handleCopyDraftFileId,
     handlePreviewDraftPdf,
     handlePrintDraftDocument,
-    isDocumentPreviewOpen,
-    documentPreviewHtml,
-    handleCloseDocumentPreview,
-    handlePrintDocumentPreview,
+    handleExportDraftPdf,
     promptExploderProposalDraft,
     captureProposalTargetFileName,
     handleClosePromptExploderProposalModal,
@@ -677,6 +671,16 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                   className='min-w-[84px]'
                 >
                   Print
+                </Button>
+                <Button
+                  type='button'
+                  onClick={(): void => {
+                    void handleExportDraftPdf();
+                  }}
+                  variant='outline'
+                  className='min-w-[98px]'
+                >
+                  Export PDF
                 </Button>
                 <Button
                   type='button'
@@ -1265,50 +1269,6 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                   editorContentClassName='[&_.ProseMirror]:!min-h-[300px]'
                 />
               )}
-
-              {isDocumentPreviewOpen ? (
-                <div
-                  data-case-resolver-document-preview
-                  className='rounded border border-border/60 bg-card/25 p-3'
-                >
-                  <div className='mb-2 flex items-center justify-between gap-2'>
-                    <div className='text-xs font-semibold uppercase tracking-[0.08em] text-gray-300'>
-                      Document Preview (HTML)
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='sm'
-                        className='h-7 px-3 text-xs'
-                        onClick={handlePrintDocumentPreview}
-                      >
-                        Print
-                      </Button>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='sm'
-                        className='h-7 px-3 text-xs'
-                        onClick={handleCloseDocumentPreview}
-                      >
-                        Hide Preview
-                      </Button>
-                    </div>
-                  </div>
-                  {documentPreviewHtml.trim().length > 0 ? (
-                    <iframe
-                      title='Document preview'
-                      srcDoc={documentPreviewHtml}
-                      className='h-[420px] w-full rounded border border-border/50 bg-white'
-                    />
-                  ) : (
-                    <div className='rounded border border-dashed border-border/50 px-3 py-8 text-center text-sm text-gray-400'>
-                      Preview is empty.
-                    </div>
-                  )}
-                </div>
-              ) : null}
 
               <div className='flex justify-end gap-2'>
                 <Button

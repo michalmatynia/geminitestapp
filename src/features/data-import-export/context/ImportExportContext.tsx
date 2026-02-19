@@ -791,6 +791,58 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     }
   };
 
+  const handleCreateExportFromImportTemplate = async (): Promise<void> => {
+    const activeImportTemplateId = importActiveTemplateId.trim();
+    if (!activeImportTemplateId) {
+      toast('Select an import template first.', { variant: 'error' });
+      return;
+    }
+
+    const sourceTemplate = importTemplates.find(
+      (template: Template) => template.id === activeImportTemplateId
+    );
+    if (!sourceTemplate) {
+      toast('Selected import template is missing.', { variant: 'error' });
+      return;
+    }
+
+    const cleanMappings = (sourceTemplate.mappings ?? [])
+      .map((mapping: TemplateMapping) => ({
+        sourceKey: mapping.sourceKey?.trim() ?? '',
+        targetField: mapping.targetField?.trim() ?? '',
+      }))
+      .filter(
+        (mapping: TemplateMapping) => mapping.sourceKey && mapping.targetField
+      );
+
+    const baseName = (sourceTemplate.name || 'Template').trim();
+    const exportTemplateNameCandidate = baseName.toLowerCase().includes('export')
+      ? baseName
+      : `${baseName} Export`;
+
+    try {
+      const created = (await createExportTemplateMutation.mutateAsync({
+        data: {
+          name: exportTemplateNameCandidate,
+          description: sourceTemplate.description?.trim() || undefined,
+          mappings: cleanMappings,
+          exportImagesAsBase64: false,
+        },
+      })) as Template;
+      setTemplateScope('export');
+      applyTemplate(created, 'export');
+      toast('Export template created from import template.', {
+        variant: 'success',
+      });
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to create export template from import template';
+      toast(message, { variant: 'error' });
+    }
+  };
+
   const handleSaveTemplate = async (): Promise<void> => {
     const isImport = templateScope === 'import';
     const name = isImport ? importTemplateName : exportTemplateName;
@@ -966,6 +1018,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     handleClearInventory,
     handleNewTemplate,
     handleDuplicateTemplate,
+    handleCreateExportFromImportTemplate,
     handleSaveTemplate,
     handleDeleteTemplate,
     applyTemplate,

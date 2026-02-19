@@ -644,6 +644,11 @@ export async function evaluateGraph({
   const buildRuntimeStateSnapshot = (
     inputsSnapshot: Record<string, RuntimePortValues>
   ): RuntimeState => ({
+    status: 'running',
+    nodeStatuses: {},
+    nodeOutputs: cloneValue(outputs),
+    variables: {},
+    events: [],
     runId: resolvedRunId,
     runStartedAt: resolvedRunStartedAt,
     inputs: cloneValue(inputsSnapshot),
@@ -1710,6 +1715,11 @@ export async function evaluateGraph({
               ? (cloneValue(Object.fromEntries(history)) as Record<string, RuntimeHistoryEntry[]>)
               : undefined;
           const errorState: RuntimeState = {
+            status: 'running',
+            nodeStatuses: {},
+            nodeOutputs: cloneValue(outputs),
+            variables: {},
+            events: [],
             runId: resolvedRunId,
             runStartedAt: resolvedRunStartedAt,
             inputs: cloneValue(nextInputs),
@@ -1834,6 +1844,11 @@ export async function evaluateGraph({
   }
 
   const result: RuntimeState = {
+    status: 'idle',
+    nodeStatuses: {},
+    nodeOutputs: cloneValue(outputs),
+    variables: {},
+    events: [],
     runId: resolvedRunId,
     runStartedAt: resolvedRunStartedAt,
     inputs,
@@ -1914,7 +1929,7 @@ const hasPendingIteratorAdvance = (nodes: AiNode[], state: RuntimeState): boolea
   nodes.some((node: AiNode): boolean => {
     if (node.type !== 'iterator') return false;
     if (node.config?.iterator?.autoContinue === false) return false;
-    const status = state.outputs[node.id]?.['status'];
+    const status = state.outputs?.[node.id]?.['status'];
     return status === 'advance_pending';
   });
 
@@ -1958,7 +1973,7 @@ export async function evaluateGraphWithIteratorAutoContinue(options: EvaluateGra
         seedHashTimestamps:
           (current.hashTimestamps as Record<string, number> | undefined) ??
           undefined,
-        seedHistory: current.history ?? undefined,
+        seedHistory: current.history as Record<string, RuntimeHistoryEntry[]> | undefined,
         seedRunId: current.runId ?? resolvedRunId,
         seedRunStartedAt: current.runStartedAt ?? resolvedRunStartedAt,
       });

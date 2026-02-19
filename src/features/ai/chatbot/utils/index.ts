@@ -214,14 +214,14 @@ export const buildAgentResultMessage = (
       ?.taskType ?? null;
   const extractionAudit: AgentAuditLog | undefined = audits.find(
     (audit: AgentAuditLog): boolean =>
-      Array.isArray(audit.metadata?.items) ||
-      Array.isArray(audit.metadata?.names)
+      Array.isArray(audit.metadata?.['items']) ||
+      Array.isArray(audit.metadata?.['names'])
   );
   if (extractionAudit) {
-    const extractionItems: unknown[] = Array.isArray(extractionAudit.metadata?.items) 
-      ? (extractionAudit.metadata.items)
-      : Array.isArray(extractionAudit.metadata?.names)
-        ? (extractionAudit.metadata.names)
+    const extractionItems: unknown[] = Array.isArray(extractionAudit.metadata?.['items']) 
+      ? (extractionAudit.metadata['items'] as unknown[])
+      : Array.isArray(extractionAudit.metadata?.['names'])
+        ? (extractionAudit.metadata['names'] as unknown[])
         : [];
     const items: string[] = extractionItems
       .filter((name: unknown): name is string => typeof name === 'string')
@@ -229,12 +229,12 @@ export const buildAgentResultMessage = (
       .filter(Boolean);
     if (items.length > 0) {
       const url: string | null = 
-        typeof extractionAudit.metadata?.url === 'string'
-          ? (extractionAudit.metadata.url)
+        typeof extractionAudit.metadata?.['url'] === 'string'
+          ? (extractionAudit.metadata['url'] as string)
           : null;
       const extractionType: string | null = 
-        typeof extractionAudit.metadata?.extractionType === 'string'
-          ? (extractionAudit.metadata.extractionType)
+        typeof extractionAudit.metadata?.['extractionType'] === 'string'
+          ? (extractionAudit.metadata['extractionType'] as string)
           : null;
       const label: string = 
         extractionType === 'emails'
@@ -252,8 +252,8 @@ export const buildAgentResultMessage = (
   );
   if (emptyAudit) {
     const url: string | null = 
-      typeof emptyAudit.metadata?.url === 'string'
-        ? (emptyAudit.metadata.url)
+      typeof emptyAudit.metadata?.['url'] === 'string'
+        ? (emptyAudit.metadata['url'] as string)
         : null;
     return `No information extracted${url ? ` from ${url}` : ''}.`;
   }
@@ -291,8 +291,8 @@ export const buildAgentResumeSummaryMessage = (audits: AgentAuditLog[]): string 
     return `Auto-resume queued for stuck run${timestamp ? ` (${timestamp})` : ''}.`;
   }
   const summary: string = 
-    typeof resumeAudit.metadata?.summary === 'string'
-      ? (resumeAudit.metadata.summary).trim()
+    typeof resumeAudit.metadata?.['summary'] === 'string'
+      ? (resumeAudit.metadata['summary'] as string).trim()
       : '';
   if (!summary) return null;
   return `Resume summary:\n${summary}`;
@@ -386,7 +386,7 @@ export const getLatestAdaptiveTrigger = (audits: AgentAuditLog[]): {
         type?: string;
         reason?: string | null;
       } | null;
-      const type: string | undefined = metadata?.type;
+      const type: string | undefined = metadata?.['type'];
       if (
         type !== 'plan-replan' &&
         type !== 'plan-adapt' &&
@@ -403,7 +403,7 @@ export const getLatestAdaptiveTrigger = (audits: AgentAuditLog[]): {
       return {
         id: audit.id,
         createdAt: audit.createdAt,
-        reason: typeof metadata?.reason === 'string' ? metadata.reason : null,
+        reason: typeof metadata?.['reason'] === 'string' ? (metadata['reason'] as string) : null,
         label,
       };
     })
@@ -445,7 +445,7 @@ export const getLatestAuditByType = (
   audits: AgentAuditLog[],
   type: string
 ): AgentAuditLog | null => {
-  const filtered: AgentAuditLog[] = audits.filter((audit: AgentAuditLog): boolean => audit.metadata?.type === type);
+  const filtered: AgentAuditLog[] = audits.filter((audit: AgentAuditLog): boolean => audit.metadata?.['type'] === type);
   return filtered.length ? filtered[filtered.length - 1]! : null;
 };
 

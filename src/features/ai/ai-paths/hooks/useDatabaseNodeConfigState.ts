@@ -265,9 +265,9 @@ export function useDatabaseNodeConfigState() {
 
     try {
 
-      const inputs = runtimeState.inputs[selectedNodeId];
+      const inputs = runtimeState.inputs?.[selectedNodeId];
 
-      const ctx = { ...runtimeState.outputs[selectedNodeId], ...inputs };
+      const ctx = { ...runtimeState.outputs?.[selectedNodeId], ...inputs };
 
       const rawValue = inputs?.['value'] ?? inputs?.['jobId'];
 
@@ -550,7 +550,7 @@ export function useDatabaseNodeConfigState() {
   // Sync logic
   useEffect(() => {
     if (!isDatabaseSelected || !selectedNodeId) return;
-    const runtimeInputs = (runtimeState.inputs[selectedNodeId] ?? {}) as Record<string, unknown>;
+    const runtimeInputs = (runtimeState.inputs?.[selectedNodeId] ?? {}) as Record<string, unknown>;
     const detectedId = (runtimeInputs['entityId'] as string || runtimeInputs['productId'] as string || runtimeInputs['value'] as string)?.trim?.();
     if (!detectedId) return;
 

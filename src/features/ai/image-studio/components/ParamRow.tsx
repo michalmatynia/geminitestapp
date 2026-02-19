@@ -3,12 +3,12 @@
 import { Repeat2 } from 'lucide-react';
 import React from 'react';
 
-import { type ParamLeaf, type ParamSpec, type ParamIssue } from '@/features/prompt-engine/prompt-params';
 import { Button, Checkbox, Input, Textarea, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { usePrompt } from '../context/PromptContext';
 import { isParamUiControl, paramUiControlLabel, recommendParamUiControl, type ParamUiControl } from '../utils/param-ui';
+import { type ParamLeaf, type ParamSpec } from '../utils/prompt-params';
 
 function safeJsonStringify(value: unknown): string {
   try {
@@ -38,8 +38,8 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
   const onUiControlChange = (control: ParamUiControl): void => onParamUiControlChange(leaf.path, control);
   const value = leaf.value;
 
-  const errors = issues.filter((i: ParamIssue) => i.severity === 'error');
-  const warnings = issues.filter((i: ParamIssue) => i.severity === 'warning');
+  const errors = issues.filter((i) => i.severity === 'error');
+  const warnings = issues.filter((i) => i.severity === 'warning');
   const borderClass =
     errors.length > 0 ? 'border-red-500/60' : warnings.length > 0 ? 'border-yellow-500/50' : 'border-border';
 
@@ -59,7 +59,21 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
       ? 'json'
       : kind;
 
-  const recommendation = recommendParamUiControl(value, spec ? { ...spec, kind: uiKind } : undefined);
+  let recommendationSpec: ParamSpec | undefined;
+  if (spec) {
+    const nextSpec: ParamSpec = {
+      kind: uiKind,
+      path: spec.path,
+    };
+    if (typeof spec.hint === 'string') nextSpec.hint = spec.hint;
+    if (Array.isArray(spec.enumOptions)) nextSpec.enumOptions = spec.enumOptions;
+    if (typeof spec.min === 'number') nextSpec.min = spec.min;
+    if (typeof spec.max === 'number') nextSpec.max = spec.max;
+    if (typeof spec.step === 'number') nextSpec.step = spec.step;
+    if (typeof spec.integer === 'boolean') nextSpec.integer = spec.integer;
+    recommendationSpec = nextSpec;
+  }
+  const recommendation = recommendParamUiControl(value, recommendationSpec);
   const selectedUiControl = uiControl;
   const requestedControl = selectedUiControl === 'auto' ? recommendation.recommended : selectedUiControl;
   const autoLabel = `Auto (${paramUiControlLabel(recommendation.recommended)})`;
@@ -122,12 +136,12 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
 
           {errors.length > 0 || warnings.length > 0 ? (
             <div className='space-y-1 text-[11px]'>
-              {errors.map((issue: ParamIssue) => (
+              {errors.map((issue) => (
                 <div key={`${issue.path}:${issue.code ?? issue.message}`} className='text-red-300'>
                   {issue.message}
                 </div>
               ))}
-              {warnings.map((issue: ParamIssue) => (
+              {warnings.map((issue) => (
                 <div key={`${issue.path}:${issue.code ?? issue.message}`} className='text-yellow-300'>
                   {issue.message}
                 </div>

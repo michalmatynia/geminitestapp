@@ -1,0 +1,521 @@
+{
+  "description": "Single-call translation path: translates English description and parameter values into Polish and writes description_pl + parameters.valuesByLanguage.pl.",
+  "edges": [
+    {
+      "from": "node-trigger-translate-en-pl",
+      "fromPort": "context",
+      "id": "edge-tr-pl-01",
+      "to": "node-context-translate-en-pl",
+      "toPort": "context"
+    },
+    {
+      "from": "node-context-translate-en-pl",
+      "fromPort": "entityJson",
+      "id": "edge-tr-pl-02",
+      "to": "node-parser-translate-en-pl",
+      "toPort": "entityJson"
+    },
+    {
+      "from": "node-parser-translate-en-pl",
+      "fromPort": "bundle",
+      "id": "edge-tr-pl-03",
+      "to": "node-prompt-translate-en-pl",
+      "toPort": "bundle"
+    },
+    {
+      "from": "node-prompt-translate-en-pl",
+      "fromPort": "prompt",
+      "id": "edge-tr-pl-04",
+      "to": "node-model-translate-en-pl",
+      "toPort": "prompt"
+    },
+    {
+      "from": "node-model-translate-en-pl",
+      "fromPort": "result",
+      "id": "edge-tr-pl-05",
+      "to": "node-regex-translate-en-pl",
+      "toPort": "value"
+    },
+    {
+      "from": "node-regex-translate-en-pl",
+      "fromPort": "value",
+      "id": "edge-tr-pl-06",
+      "to": "node-db-update-translate-en-pl",
+      "toPort": "value"
+    },
+    {
+      "from": "node-context-translate-en-pl",
+      "fromPort": "entityId",
+      "id": "edge-tr-pl-07",
+      "to": "node-db-update-translate-en-pl",
+      "toPort": "entityId"
+    },
+    {
+      "from": "node-context-translate-en-pl",
+      "fromPort": "entityType",
+      "id": "edge-tr-pl-08",
+      "to": "node-db-update-translate-en-pl",
+      "toPort": "entityType"
+    },
+    {
+      "from": "node-regex-translate-en-pl",
+      "fromPort": "value",
+      "id": "edge-tr-pl-09",
+      "to": "node-view-translate-en-pl",
+      "toPort": "value"
+    },
+    {
+      "from": "node-db-update-translate-en-pl",
+      "fromPort": "result",
+      "id": "edge-tr-pl-10",
+      "to": "node-view-translate-en-pl",
+      "toPort": "result"
+    },
+    {
+      "from": "node-parser-translate-en-pl",
+      "fromPort": "bundle",
+      "id": "edge-tr-pl-11",
+      "to": "node-view-translate-en-pl",
+      "toPort": "bundle"
+    },
+    {
+      "from": "node-trigger-translate-en-pl",
+      "fromPort": "trigger",
+      "id": "edge-zzn7u9",
+      "to": "node-f2qfiiyi",
+      "toPort": "trigger"
+    },
+    {
+      "from": "node-f2qfiiyi",
+      "fromPort": "context",
+      "id": "edge-l8rdvc",
+      "to": "node-trigger-translate-en-pl",
+      "toPort": "context"
+    }
+  ],
+  "executionMode": "server",
+  "flowIntensity": "medium",
+  "id": "path_96708d",
+  "isActive": true,
+  "isLocked": false,
+  "lastRunAt": "2026-02-19T02:33:18.160Z",
+  "name": "Translation EN->PL Description + Parameters",
+  "nodes": [
+    {
+      "config": {
+        "trigger": {
+          "event": "11d19fd4-4086-4d1c-9ec1-55f5a9c2f1e8"
+        }
+      },
+      "description": "User trigger button (11d19fd4-4086-4d1c-9ec1-55f5a9c2f1e8).",
+      "id": "node-trigger-translate-en-pl",
+      "inputs": [
+        "context"
+      ],
+      "outputs": [
+        "trigger",
+        "triggerName",
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "position": {
+        "x": 47.28313893611276,
+        "y": 324.9222995918841
+      },
+      "title": "Trigger: Translate EN->PL (Desc+Params)",
+      "type": "trigger"
+    },
+    {
+      "config": {
+        "context": {
+          "entityId": "",
+          "entityIdSource": "simulation",
+          "entityType": "auto",
+          "excludePaths": [],
+          "includePaths": [
+            "id",
+            "description_en",
+            "content_en",
+            "parameters"
+          ],
+          "role": "entity",
+          "scopeMode": "include",
+          "scopeTarget": "entity"
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "description": "Resolve product context and entity payload.",
+      "id": "node-context-translate-en-pl",
+      "inputs": [
+        "context"
+      ],
+      "outputs": [
+        "context",
+        "entityId",
+        "entityType",
+        "entityJson"
+      ],
+      "position": {
+        "x": 360,
+        "y": 360
+      },
+      "title": "Context Filter",
+      "type": "context"
+    },
+    {
+      "config": {
+        "parser": {
+          "mappings": {
+            "content_en": "$.content_en",
+            "description_en": "$.description_en",
+            "entityId": "$.id",
+            "parameters": "$.parameters"
+          },
+          "outputMode": "bundle",
+          "presetId": "product_core"
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "description": "Extract source English description + parameters into one bundle.",
+      "id": "node-parser-translate-en-pl",
+      "inputs": [
+        "entityJson",
+        "context"
+      ],
+      "outputs": [
+        "bundle"
+      ],
+      "position": {
+        "x": 740,
+        "y": 360
+      },
+      "title": "JSON Parser",
+      "type": "parser"
+    },
+    {
+      "config": {
+        "prompt": {
+          "template": "You are a strict EN->PL translator for ecommerce data.\\nTranslate only the provided English text into Polish.\\n\\nSOURCE JSON:\\n{{bundle}}\\n\\nExpected output: return ONLY valid JSON object with this exact shape:\\n{\"description_pl\":\"\",\"parameters\":[{\"parameterId\":\"\",\"value\":\"\",\"valuesByLanguage\":{\"pl\":\"\"}}]}\\n\\nRules:\\n1) No markdown, no commentary, JSON only.\\n2) description_pl must be translation of source description: prefer content_en; if empty use description_en.\\n3) parameters array must preserve order and parameterId from input parameters.\\n4) Keep each parameter value field as source English base value (from valuesByLanguage.en if present, otherwise value).\\n5) Put Polish translation into valuesByLanguage.pl.\\n6) If valuesByLanguage.pl already exists and is non-empty, keep it unchanged.\\n7) For purely numeric/code/unit-like values (e.g. 12V, 42, XL, SKU codes), keep PL text same as source.\\n8) If no translatable source exists, output empty string for that pl value.\\n"
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "description": "Single-call deterministic translator for description + parameters.",
+      "id": "node-prompt-translate-en-pl",
+      "inputs": [
+        "bundle",
+        "title",
+        "images",
+        "result",
+        "entityId"
+      ],
+      "outputs": [
+        "prompt",
+        "images"
+      ],
+      "position": {
+        "x": 1123.9643736933358,
+        "y": 352.5840243644326
+      },
+      "title": "Prompt",
+      "type": "prompt"
+    },
+    {
+      "config": {
+        "model": {
+          "maxTokens": 1400,
+          "modelId": "gemma3:27b",
+          "temperature": 1,
+          "vision": false,
+          "waitForResult": true
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "description": "Single economical local call.",
+      "id": "node-model-translate-en-pl",
+      "inputs": [
+        "prompt",
+        "images",
+        "context"
+      ],
+      "outputs": [
+        "result",
+        "jobId"
+      ],
+      "position": {
+        "x": 1540.1460231307549,
+        "y": 360.1460231307549
+      },
+      "title": "Model",
+      "type": "model"
+    },
+    {
+      "config": {
+        "regex": {
+          "activeVariant": "manual",
+          "aiAutoRun": false,
+          "aiPrompt": "",
+          "flags": "",
+          "groupBy": "match",
+          "includeUnmatched": false,
+          "matchMode": "first_overall",
+          "mode": "extract_json",
+          "outputMode": "object",
+          "pattern": "\\{[\\s\\S]*\\}",
+          "sampleText": "",
+          "splitLines": false,
+          "unmatchedKey": "__unmatched__"
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "description": "Extract JSON object from model output.",
+      "id": "node-regex-translate-en-pl",
+      "inputs": [
+        "value",
+        "prompt",
+        "regexCallback"
+      ],
+      "outputs": [
+        "grouped",
+        "matches",
+        "value",
+        "aiPrompt"
+      ],
+      "position": {
+        "x": 1939.8492664456726,
+        "y": 359.84926644567236
+      },
+      "title": "Regex JSON Extract",
+      "type": "regex"
+    },
+    {
+      "config": {
+        "database": {
+          "action": "updateOne",
+          "actionCategory": "update",
+          "aiPrompt": "",
+          "distinctField": "",
+          "dryRun": false,
+          "entityType": "product",
+          "idField": "entityId",
+          "mappings": [
+            {
+              "sourcePath": "description_pl",
+              "sourcePort": "value",
+              "targetPath": "description_pl"
+            },
+            {
+              "sourcePath": "parameters",
+              "sourcePort": "value",
+              "targetPath": "parameters"
+            }
+          ],
+          "mode": "replace",
+          "operation": "update",
+          "query": {
+            "collection": "products",
+            "field": "_id",
+            "idType": "string",
+            "limit": 1,
+            "mode": "custom",
+            "preset": "by_id",
+            "projection": "",
+            "provider": "auto",
+            "queryTemplate": "{\n  \"id\": \"{{entityId}}\"\n}",
+            "single": true,
+            "sort": ""
+          },
+          "skipEmpty": true,
+          "trimStrings": true,
+          "updatePayloadMode": "mapping",
+          "updateStrategy": "one",
+          "updateTemplate": "",
+          "useMongoActions": true,
+          "validationRuleIds": [],
+          "writeSource": "bundle",
+          "writeSourcePath": ""
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "description": "Persist description_pl and translated parameter valuesByLanguage.pl.",
+      "id": "node-db-update-translate-en-pl",
+      "inputs": [
+        "entityId",
+        "entityType",
+        "productId",
+        "context",
+        "query",
+        "value",
+        "bundle",
+        "result",
+        "content_en",
+        "queryCallback",
+        "schema",
+        "aiQuery"
+      ],
+      "outputs": [
+        "result",
+        "bundle",
+        "content_en",
+        "aiPrompt"
+      ],
+      "position": {
+        "x": 2360,
+        "y": 360
+      },
+      "title": "Database Query",
+      "type": "database"
+    },
+    {
+      "config": {
+        "viewer": {
+          "outputs": {
+            "aiPrompt": "",
+            "analysis": "",
+            "audioSignal": "",
+            "bundle": "",
+            "content_en": "",
+            "context": "",
+            "description": "",
+            "description_en": "",
+            "done": "",
+            "durationMs": "",
+            "entityId": "",
+            "entityJson": "",
+            "entityType": "",
+            "errors": "",
+            "frequency": "",
+            "gain": "",
+            "grouped": "",
+            "images": "",
+            "index": "",
+            "jobId": "",
+            "matches": "",
+            "meta": "",
+            "productId": "",
+            "prompt": "",
+            "queryCallback": "",
+            "result": "",
+            "sources": "",
+            "status": "",
+            "title": "",
+            "total": "",
+            "trigger": "",
+            "triggerName": "",
+            "valid": "",
+            "value": "",
+            "waveform": ""
+          },
+          "showImagesAsJson": false
+        }
+      },
+      "description": "Inspect translation payload and write result.",
+      "id": "node-view-translate-en-pl",
+      "inputs": [
+        "result",
+        "value",
+        "bundle",
+        "context",
+        "meta",
+        "trigger",
+        "triggerName",
+        "entityId",
+        "entityType",
+        "entityJson",
+        "description_en",
+        "prompt",
+        "sources",
+        "grouped",
+        "matches",
+        "index",
+        "total",
+        "done",
+        "analysis",
+        "description",
+        "images",
+        "title",
+        "productId",
+        "content_en",
+        "jobId",
+        "status",
+        "valid",
+        "errors",
+        "audioSignal",
+        "frequency",
+        "waveform",
+        "gain",
+        "durationMs",
+        "queryCallback",
+        "aiPrompt"
+      ],
+      "outputs": [],
+      "position": {
+        "x": 2800.146023130755,
+        "y": 360
+      },
+      "title": "Result Viewer",
+      "type": "viewer"
+    },
+    {
+      "config": {
+        "simulation": {
+          "entityId": "9c7956d8-4783-4812-a663-39b721aab54d",
+          "entityType": "product",
+          "productId": "9c7956d8-4783-4812-a663-39b721aab54d"
+        }
+      },
+      "createdAt": "2026-02-19T02:31:54.832Z",
+      "data": {},
+      "description": "Simulate a modal action by Entity ID.",
+      "id": "node-f2qfiiyi",
+      "inputs": [
+        "trigger"
+      ],
+      "outputs": [
+        "context",
+        "entityId",
+        "entityType",
+        "productId"
+      ],
+      "position": {
+        "x": 157.45668467316221,
+        "y": 117.24642706438661
+      },
+      "title": "Simulation: Entity Modal",
+      "type": "simulation",
+      "updatedAt": null
+    }
+  ],
+  "parserSamples": {},
+  "runCount": 1,
+  "runMode": "manual",
+  "runtimeState": "{\"inputs\":{\"node-trigger-translate-en-pl\":{\"context\":{\"entityType\":\"product\",\"entityId\":\"9c7956d8-4783-4812-a663-39b721aab54d\",\"source\":\"Simulation: Entity Modal\",\"timestamp\":\"2026-02-19T02:32:12.662Z\",\"images\":\"[Array(3)]\",\"imageUrls\":\"[Array(3)]\",\"entity\":\"[Object]\",\"entityJson\":\"[Object]\",\"product\":\"[Object]\"}},\"node-context-translate-en-pl\":{\"context\":{\"entityType\":\"product\",\"entityId\":\"9c7956d8-4783-4812-a663-39b721aab54d\",\"source\":\"[Object]\",\"timestamp\":\"2026-02-19T02:32:12.662Z\",\"images\":\"[Array(3)]\",\"imageUrls\":\"[Array(3)]\",\"entity\":\"[Object]\",\"entityJson\":\"[Object]\",\"product\":\"[Object]\",\"ui\":\"[Object]\",\"location\":\"[Object]\",\"event\":\"[Object]\",\"extras\":\"[Object]\",\"trigger\":\"11d19fd4-4086-4d1c-9ec1-55f5a9c2f1e8\",\"pathId\":\"path_96708d\"}},\"node-parser-translate-en-pl\":{\"entityJson\":{\"id\":\"9c7956d8-4783-4812-a663-39b721aab54d\",\"description_en\":\"Some say a partner’s Franxx is all you need, but a little reminder never hurts. This adjustable ring captures the iconic horns of Zero Two in sleek, polished metal, accented with sparkling cubic zirconia flanking the vivid red crest. It’s a subtle nod to the Klaxosaur pilot, perfect for adding a touch of the 13th Squad to your everyday wear. Showcase your love for *Darling in the Franxx* with this unique piece, or gift it to a fellow APUS enthusiast.\",\"parameters\":\"[Array(6)]\"}},\"node-prompt-translate-en-pl\":{\"bundle\":{\"content_en\":\"Some say a partner’s Franxx is all you need, but a little reminder never hurts. This adjustable ring captures the iconic horns of Zero Two in sleek, polished metal, accented with sparkling cubic zirconia flanking the vivid red crest. It’s a subtle nod to the Klaxosaur pilot, perfect for adding a touch of the 13th Squad to your everyday wear. Showcase your love for *Darling in the Franxx* with this unique piece, or gift it to a fellow APUS enthusiast.\",\"description_en\":\"Some say a partner’s Franxx is all you need, but a little reminder never hurts. This adjustable ring captures the iconic horns of Zero Two in sleek, polished metal, accented with sparkling cubic zirconia flanking the vivid red crest. It’s a subtle nod to the Klaxosaur pilot, perfect for adding a touch of the 13th Squad to your everyday wear. Showcase your love for *Darling in the Franxx* with this unique piece, or gift it to a fellow APUS enthusiast.\",\"entityId\":\"9c7956d8-4783-4812-a663-39b721aab54d\",\"parameters\":\"[Array(6)]\"}},\"node-model-translate-en-pl\":{\"prompt\":\"You are a strict EN->PL translator for ecommerce data.\\\\nTranslate only the provided English text into Polish.\\\\n\\\\nSOURCE JSON:\\\\n{\\\"content_en\\\":\\\"Some say a partner’s Franxx is all you need, but a little reminder never hurts. This adjustable ring captures the iconic horns of Zero Two in sleek, polished metal, accented with sparkling cubic zirconia flanking the vivid red crest. It’s a subtle nod to the Klaxosaur pilot, perfect for adding a touch of the 13th Squad to your everyday wear. Showcase your love for *Darling in the Franxx* with this unique piece, or gift it to a fellow APUS enthusiast.\\\",\\\"description_en\\\":\\\"Some say a partner’s Franxx is all you need, but a little reminder never hurts. This adjustable ring captures the iconic horns of Zero Two in sleek, polished metal, accented with sparkling cubic zirconia flanking the vivid red crest. It’s a subtle nod to the Klaxosaur pilot, perfect for adding a touch of the 13th Squad to your everyday wear. Showcase your love for *Darling in the F…\"},\"node-regex-translate-en-pl\":{\"value\":\"```json\\n{\\\"description_pl\\\":\\\"Niektórzy twierdzą, że Franxx partnera to wszystko, czego potrzebujesz, ale małe przypomnienie nigdy nie zaszkodzi. Ten regulowany pierścionek uchwycił kultowe rogi Zero Two w gładkim, polerowanym metalu, ozdobiony błyszczącymi cyrkoniami otaczającymi żywy czerwony grzebień. To subtelne nawiązanie do pilotki Klaxosaur, idealne do dodania odrobiny 13. Oddziału do codziennego noszenia. Pokaż swoją miłość do *Darling in the Franxx* dzięki temu wyjątkowemu kawałkowi lub podaruj go innemu entuzjaście APUS.\\\",\\\"parameters\\\":[{\\\"parameterId\\\":\\\"0a92f045-7c01-4b06-a0df-ebdf6ab9c24a\\\",\\\"value\\\":\\\"\\\",\\\"valuesByLanguage\\\":{\\\"pl\\\":\\\"\\\"}},{\\\"parameterId\\\":\\\"8cb8f430-d6c6-4b53-a529-eb3cfaa63d0e\\\",\\\"value\\\":\\\"Silver\\\",\\\"valuesByLanguage\\\":{\\\"pl\\\":\\\"Silver\\\"}},{\\\"parameterId\\\":\\\"0eadf821-34ff-49bf-8ba7-84f797359f43\\\",\\\"value\\\":\\\"\\\",\\\"valuesByLanguage\\\":{\\\"pl\\\":\\\"\\\"}},{\\\"parameterId\\\":\\\"ab9d7dc2-632c-4b35-89fc-c6d44752b52e\\\",\\\"value\\\":\\\"\\\",\\\"valuesByLanguage\\\":{\\\"pl\\\":\\\"\\\"}},{\\\"parameterId\\\":\\\"9c80ceb6-b8ed-47e8-ba07-cbdb602045d5\\\",\\\"valu…\"},\"node-db-update-translate-en-pl\":{\"value\":{\"description_pl\":\"Niektórzy twierdzą, że Franxx partnera to wszystko, czego potrzebujesz, ale małe przypomnienie nigdy nie zaszkodzi. Ten regulowany pierścionek uchwycił kultowe rogi Zero Two w gładkim, polerowanym metalu, ozdobiony błyszczącymi cyrkoniami otaczającymi żywy czerwony grzebień. To subtelne nawiązanie do pilotki Klaxosaur, idealne do dodania odrobiny 13. Oddziału do codziennego noszenia. Pokaż swoją miłość do *Darling in the Franxx* dzięki temu wyjątkowemu kawałkowi lub podaruj go innemu entuzjaście APUS.\",\"parameters\":\"[Array(6)]\"},\"entityId\":\"9c7956d8-4783-4812-a663-39b721aab54d\",\"entityType\":\"product\",\"productId\":\"9c7956d8-4783-4812-a663-39b721aab54d\"},\"node-f2qfiiyi\":{\"trigger\":true}},\"outputs\":{\"node-f2qfiiyi\":{\"context\":{\"entityType\":\"product\",\"entityId\":\"9c7956d8-4783-4812-a663-39b721aab54d\",\"source\":\"Simulation: Entity Modal\",\"timestamp\":\"2026-02-19T02:32:12.662Z\",\"images\":\"[Array(3)]\",\"imageUrls\":\"[Array(3)]\",\"entity\":\"[Object]\",\"entityJson\":\"[Object]\",\"product\":\"[Object]\"},\"entityId\":\"9c7956d8-4783-4812-a663-39b721aab54d\",\"entityType\":\"product\",\"productId\":\"9c7956d8-4783-4812-a663-39b721aab54d\"},\"node-trigger-translate-en-pl\":{\"trigger\":true,\"triggerName\":\"11d19fd4-4086-4d1c-9ec1-55f5a9c2f1e8\",\"meta\":{\"firedAt\":\"2026-02-19T02:32:12.662Z\",\"trigger\":\"11d19fd4-4086-4d1c-9ec1-55f5a9c2f1e8\",\"pathId\":\"path_96708d\",\"entityId\":\"9c7956d8-4783-4812-a663-39b721aab54d\",\"entityType\":\"product\",\"ui\":\"[Object]\",\"location\":\"[Object]\",\"source\":\"[Object]\",\"user\":null,\"event\":\"[Object]\",\"extras\":\"[Object]\"},\"context\":{\"entityType\":\"product\",\"entityId\":\"9c7956d8-4783-4812-a663-39b721aab54d\",\"source\":\"[Object]\",\"timestamp\":\"2026-02-19T02:32:12.662Z\",\"images\":\"[Array(3)]\",\"imageUrls\":\"[Array(3)]\",\"entity\":\"[Object]\",\"entityJson\":\"[Object]\",\"product\":\"[Object]\",\"ui\":\"[Object]\",\"location\":\"[Object]\",\"event\":\"[Object]\",\"extras\":\"[Object]\",\"trigger\":\"11d19fd4-4086-4d1c-9ec1-55f5a9c2f1e8\",\"pathId\":\"path_96708d\"},\"entityId\":\"9c7956d8-4783-4812-a663-39b721aab54d\",\"entityType\":\"product\",\"status\":\"cached\"},\"node-context-translate-en-pl\":{\"context\":{\"role\":\"entity\",\"entityType\":\"product\",\"entityId\":\"9c7956d8-4783-4812-a663-39b721aab54d\",\"source\":\"[Object]\",\"timestamp\":\"2026-02-19T02:32:12.662Z\",\"images\":\"[Array(3)]\",\"imageUrls\":\"[Array(3)]\",\"ui\":\"[Object]\",\"location\":\"[Object]\",\"event\":\"[Object]\",\"extras\":\"[Object]\",\"trigger\":\"11d19fd4-4086-4d1c-9ec1-55f5a9c2f1e8\",\"pathId\":\"path_96708d\",\"entity\":\"[Object]\",\"productId\":\"9c7956d8-4783-4812-a663-39b721aab54d\",\"product\":\"[Object]\"},\"entityId\":\"9c7956d8-4783-4812-a663-39b721aab54d\",\"entityType\":\"product\",\"entityJson\":{\"id\":\"9c7956d8-4783-4812-a663-39b721aab54d\",\"description_en\":\"Some say a partner’s Franxx is all you need, but a little reminder never hurts. This adjustable ring captures the iconic horns of Zero Two in sleek, polished metal, accented with sparkling cubic zirconia flanking the vivid red crest. It’s a subtle nod to the Klaxosaur pilot, perfect for adding a touch of the 13th Squad to your everyday wear. Showcase your love for *Darling in the Franxx* with this unique piece, or gift it to a fellow APUS enthusiast.\",\"parameters\":\"[Array(6)]\"},\"status\":\"cached\"},\"node-parser-translate-en-pl\":{\"bundle\":{\"content_en\":\"Some say a partner’s Franxx is all you need, but a little reminder never hurts. This adjustable ring captures the iconic horns of Zero Two in sleek, polished metal, accented with sparkling cubic zirconia flanking the vivid red crest. It’s a subtle nod to the Klaxosaur pilot, perfect for adding a touch of the 13th Squad to your everyday wear. Showcase your love for *Darling in the Franxx* with this unique piece, or gift it to a fellow APUS enthusiast.\",\"description_en\":\"Some say a partner’s Franxx is all you need, but a little reminder never hurts. This adjustable ring captures the iconic horns of Zero Two in sleek, polished metal, accented with sparkling cubic zirconia flanking the vivid red crest. It’s a subtle nod to the Klaxosaur pilot, perfect for adding a touch of the 13th Squad to your everyday wear. Showcase your love for *Darling in the Franxx* with this unique piece, or gift it to a fellow APUS enthusiast.\",\"entityId\":\"9c7956d8-4783-4812-a663-39b721aab54d\",\"parameters\":\"[Array(6)]\"},\"status\":\"cached\"},\"node-prompt-translate-en-pl\":{\"prompt\":\"You are a strict EN->PL translator for ecommerce data.\\\\nTranslate only the provided English text into Polish.\\\\n\\\\nSOURCE JSON:\\\\n{\\\"content_en\\\":\\\"Some say a partner’s Franxx is all you need, but a little reminder never hurts. This adjustable ring captures the iconic horns of Zero Two in sleek, polished metal, accented with sparkling cubic zirconia flanking the vivid red crest. It’s a subtle nod to the Klaxosaur pilot, perfect for adding a touch of the 13th Squad to your everyday wear. Showcase your love for *Darling in the Franxx* with this unique piece, or gift it to a fellow APUS enthusiast.\\\",\\\"description_en\\\":\\\"Some say a partner’s Franxx is all you need, but a little reminder never hurts. This adjustable ring captures the iconic horns of Zero Two in sleek, polished metal, accented with sparkling cubic zirconia flanking the vivid red crest. It’s a subtle nod to the Klaxosaur pilot, perfect for adding a touch of the 13th Squad to your everyday wear. Showcase your love for *Darling in the F…\",\"status\":\"cached\"},\"node-model-translate-en-pl\":{\"result\":\"```json\\n{\\\"description_pl\\\":\\\"Niektórzy twierdzą, że Franxx partnera to wszystko, czego potrzebujesz, ale małe przypomnienie nigdy nie zaszkodzi. Ten regulowany pierścionek uchwycił kultowe rogi Zero Two w gładkim, polerowanym metalu, ozdobiony błyszczącymi cyrkoniami otaczającymi żywy czerwony grzebień. To subtelne nawiązanie do pilotki Klaxosaur, idealne do dodania odrobiny 13. Oddziału do codziennego noszenia. Pokaż swoją miłość do *Darling in the Franxx* dzięki temu wyjątkowemu kawałkowi lub podaruj go innemu entuzjaście APUS.\\\",\\\"parameters\\\":[{\\\"parameterId\\\":\\\"0a92f045-7c01-4b06-a0df-ebdf6ab9c24a\\\",\\\"value\\\":\\\"\\\",\\\"valuesByLanguage\\\":{\\\"pl\\\":\\\"\\\"}},{\\\"parameterId\\\":\\\"8cb8f430-d6c6-4b53-a529-eb3cfaa63d0e\\\",\\\"value\\\":\\\"Silver\\\",\\\"valuesByLanguage\\\":{\\\"pl\\\":\\\"Silver\\\"}},{\\\"parameterId\\\":\\\"0eadf821-34ff-49bf-8ba7-84f797359f43\\\",\\\"value\\\":\\\"\\\",\\\"valuesByLanguage\\\":{\\\"pl\\\":\\\"\\\"}},{\\\"parameterId\\\":\\\"ab9d7dc2-632c-4b35-89fc-c6d44752b52e\\\",\\\"value\\\":\\\"\\\",\\\"valuesByLanguage\\\":{\\\"pl\\\":\\\"\\\"}},{\\\"parameterId\\\":\\\"9c80ceb6-b8ed-47e8-ba07-cbdb602045d5\\\",\\\"valu…\",\"jobId\":\"ce3ee190-a40a-4822-8a29-50b25771f7e8\",\"status\":\"running\",\"debugPayload\":{\"prompt\":\"You are a strict EN->PL translator for ecommerce data.\\\\nTranslate only the provided English text into Polish.\\\\n\\\\nSOURCE JSON:\\\\n{\\\"content_en\\\":\\\"Some say a partner’s Franxx is all you need, but a little reminder never hurts. This adjustable ring captures the iconic horns of Zero Two in sleek, polished metal, accented with sparkling cubic zirconia flanking the vivid red crest. It’s a subtle nod to the Klaxosaur pilot, perfect for adding a touch of the 13th Squad to your everyday wear. Showcase your love for *Darling in the Franxx* with this unique piece, or gift it to a fellow APUS enthusiast.\\\",\\\"description_en\\\":\\\"Some say a partner’s Franxx is all you need, but a little reminder never hurts. This adjustable ring captures the iconic horns of Zero Two in sleek, polished metal, accented with sparkling cubic zirconia flanking the vivid red crest. It’s a subtle nod to the Klaxosaur pilot, perfect for adding a touch of the 13th Squad to your everyday wear. Showcase your love for *Darling in the F…\",\"imageUrls\":\"[Array(0)]\",\"modelId\":\"gemma3:12b\",\"temperature\":0.1,\"maxTokens\":1400,\"vision\":false,\"source\":\"ai_paths\",\"graph\":\"[Object]\"},\"cacheKey\":\"9a2247b8\",\"payloadHash\":\"b4fa0f42\"},\"node-regex-translate-en-pl\":{\"grouped\":{\"{\\\"description_pl\\\":\\\"Niektórzy twierdzą, że Franxx partnera to wszystko, czego potrzebujesz, ale małe przypomnienie nigdy nie zaszkodzi. Ten regulowany pierścionek uchwycił kultowe rogi Zero Two w gładkim, polerowanym metalu, ozdobiony błyszczącymi cyrkoniami otaczającymi żywy czerwony grzebień. To subtelne nawiązanie do pilotki Klaxosaur, idealne do dodania odrobiny 13. Oddziału do codziennego noszenia. Pokaż swoją miłość do *Darling in the Franxx* dzięki temu wyjątkowemu kawałkowi lub podaruj go innemu entuzjaście APUS.\\\",\\\"parameters\\\":[{\\\"parameterId\\\":\\\"0a92f045-7c01-4b06-a0df-ebdf6ab9c24a\\\",\\\"value\\\":\\\"\\\",\\\"valuesByLanguage\\\":{\\\"pl\\\":\\\"\\\"}},{\\\"parameterId\\\":\\\"8cb8f430-d6c6-4b53-a529-eb3cfaa63d0e\\\",\\\"value\\\":\\\"Silver\\\",\\\"valuesByLanguage\\\":{\\\"pl\\\":\\\"Silver\\\"}},{\\\"parameterId\\\":\\\"0eadf821-34ff-49bf-8ba7-84f797359f43\\\",\\\"value\\\":\\\"\\\",\\\"valuesByLanguage\\\":{\\\"pl\\\":\\\"\\\"}},{\\\"parameterId\\\":\\\"ab9d7dc2-632c-4b35-89fc-c6d44752b52e\\\",\\\"value\\\":\\\"\\\",\\\"valuesByLanguage\\\":{\\\"pl\\\":\\\"\\\"}},{\\\"parameterId\\\":\\\"9c80ceb6-b8ed-47e8-ba07-cbdb602045d5\\\",\\\"value\\\":\\\"\\\",\\\"valuesByLanguage\\\":{\\\"pl\\\":\\\"\\\"}},{\\\"parameterId\\\":\\\"64a58022-5c7c-46e8-9d07-53c75a94c7dc\\\",\\\"value\\\":\\\"Metal\\\",\\\"valuesByLanguage\\\":{\\\"pl\\\":\\\"Metal\\\"}}]}\":\"[Array(1)]\"},\"matches\":[\"[Object]\"],\"value\":{\"description_pl\":\"Niektórzy twierdzą, że Franxx partnera to wszystko, czego potrzebujesz, ale małe przypomnienie nigdy nie zaszkodzi. Ten regulowany pierścionek uchwycił kultowe rogi Zero Two w gładkim, polerowanym metalu, ozdobiony błyszczącymi cyrkoniami otaczającymi żywy czerwony grzebień. To subtelne nawiązanie do pilotki Klaxosaur, idealne do dodania odrobiny 13. Oddziału do codziennego noszenia. Pokaż swoją miłość do *Darling in the Franxx* dzięki temu wyjątkowemu kawałkowi lub podaruj go innemu entuzjaście APUS.\",\"parameters\":\"[Array(6)]\"}},\"node-db-update-translate-en-pl\":{\"result\":{\"ok\":true,\"entityType\":\"product\",\"entityId\":\"9c7956d8-4783-4812-a663-39b721aab54d\",\"updates\":\"[Object]\"},\"bundle\":{\"ok\":true,\"entityType\":\"product\",\"entityId\":\"9c7956d8-4783-4812-a663-39b721aab54d\",\"updates\":\"[Object]\"},\"debugPayload\":{\"mode\":\"mongo\",\"actionCategory\":\"update\",\"action\":\"updateOne\",\"collection\":\"products\",\"filter\":\"[Object]\",\"idType\":\"string\",\"entityId\":\"9c7956d8-4783-4812-a663-39b721aab54d\",\"productId\":\"9c7956d8-4783-4812-a663-39b721aab54d\",\"entityType\":\"product\"},\"aiPrompt\":\"\"}},\"runId\":\"2bd325f7-7ef2-432c-86d2-ec3840da1b74\",\"runStartedAt\":\"2026-02-19T02:38:46.416Z\"}",
+  "trigger": "Product Modal - Translate EN->PL (Desc+Params)",
+  "uiState": {
+    "selectedNodeId": "node-trigger-translate-en-pl"
+  },
+  "updatedAt": "2026-02-19T02:38:47.417Z",
+  "updaterSamples": {
+    "node-db-update-translate-en-pl": {
+      "depth": 2,
+      "entityId": "9c7956d8-4783-4812-a663-39b721aab54d",
+      "entityType": "products",
+      "includeContainers": false,
+      "json": "{\n  \"_id\": \"9c7956d8-4783-4812-a663-39b721aab54d\",\n  \"id\": \"9c7956d8-4783-4812-a663-39b721aab54d\",\n  \"sku\": \"KEYCHA1078\",\n  \"baseProductId\": null,\n  \"defaultPriceGroupId\": \"15ba906f-e2d1-4a0e-995f-67047a011ae5\",\n  \"ean\": \"\",\n  \"gtin\": \"\",\n  \"asin\": \"\",\n  \"name_en\": \"Zero Two | Adjustable Size | Metal | Ring | Darling in the Franxx\",\n  \"name_pl\": \"Zero Two | Rozmiar Regulowany | Metal | Pierścień | Darling in the Franxx\",\n  \"name_de\": \"\",\n  \"description_en\": \"Some say a partner’s Franxx is all you need, but a little reminder never hurts. This adjustable ring captures the iconic horns of Zero Two in sleek, polished metal, accented with sparkling cubic zirconia flanking the vivid red crest. It’s a subtle nod to the Klaxosaur pilot, perfect for adding a touch of the 13th Squad to your everyday wear. Showcase your love for *Darling in the Franxx* with this unique piece, or gift it to a fellow APUS enthusiast.\",\n  \"description_pl\": \"Niektórzy twierdzą, że Franxx partnera to wszystko, czego potrzebujesz, ale małe przypomnienie nigdy nie zaszkodzi. Ten regulowany pierścionek uchwycił kultowe rogi Zero Two w gładkim, polerowanym metalu, ozdobiony błyszczącymi cyrkoniami otaczającymi żywy czerwony grzebień. To subtelne nawiązanie do pilotki Klaxosaur, idealne do dodania odrobiny 13. Oddziału do codziennego noszenia. Pokaż swoją miłość do *Darling in the Franxx* dzięki temu wyjątkowemu kawałkowi lub podaruj go innemu entuzjaście APUS.\",\n  \"description_de\": \"\",\n  \"supplierName\": \"\",\n  \"supplierLink\": \"\",\n  \"priceComment\": \"\",\n  \"stock\": 4,\n  \"price\": 46,\n  \"categoryId\": \"77a9f296-39c9-4014-b915-375d5d879d82\",\n  \"sizeLength\": 4,\n  \"sizeWidth\": 4,\n  \"weight\": 0,\n  \"length\": 4,\n  \"parameters\": [\n    {\n      \"parameterId\": \"0a92f045-7c01-4b06-a0df-ebdf6ab9c24a\",\n      \"value\": \"\"\n    },\n    {\n      \"parameterId\": \"8cb8f430-d6c6-4b53-a529-eb3cfaa63d0e\",\n      \"value\": \"Silver\"\n    },\n    {\n      \"parameterId\": \"0eadf821-34ff-49bf-8ba7-84f797359f43\",\n      \"value\": \"\"\n    },\n    {\n      \"parameterId\": \"ab9d7dc2-632c-4b35-89fc-c6d44752b52e\",\n      \"value\": \"\"\n    },\n    {\n      \"parameterId\": \"9c80ceb6-b8ed-47e8-ba07-cbdb602045d5\",\n      \"value\": \"\"\n    },\n    {\n      \"parameterId\": \"64a58022-5c7c-46e8-9d07-53c75a94c7dc\",\n      \"value\": \"Metal\"\n    }\n  ],\n  \"imageLinks\": [],\n  \"imageBase64s\": [],\n  \"noteIds\": [],\n  \"createdAt\": \"2026-02-16T06:34:49.483Z\",\n  \"updatedAt\": \"2026-02-19T02:33:18.028Z\",\n  \"images\": [\n    {\n      \"productId\": \"9c7956d8-4783-4812-a663-39b721aab54d\",\n      \"imageFileId\": \"51ac6ff8-8aac-459e-bcf8-f5f0c52a52ee\",\n      \"assignedAt\": \"2026-02-19T02:09:29.800Z\",\n      \"imageFile\": {\n        \"id\": \"51ac6ff8-8aac-459e-bcf8-f5f0c52a52ee\",\n        \"filename\": \"3e0b840c-8f4b-4191-815e-7f4e6572e5e1.png\",\n        \"filepath\": \"/uploads/products/KEYCHA1078/3e0b840c-8f4b-4191-815e-7f4e6572e5e1.png\",\n        \"mimetype\": \"image/png\",\n        \"size\": 2492237,\n        \"width\": null,\n        \"height\": null,\n        \"tags\": [],\n        \"createdAt\": \"2026-02-16T06:34:49.601Z\",\n        \"updatedAt\": \"2026-02-16T06:34:49.601Z\"\n      }\n    },\n    {\n      \"productId\": \"9c7956d8-4783-4812-a663-39b721aab54d\",\n      \"imageFileId\": \"7eb26f83-85ff-431d-990c-fcde1e913a94\",\n      \"assignedAt\": \"2026-02-19T02:09:29.799Z\",\n      \"imageFile\": {\n        \"id\": \"7eb26f83-85ff-431d-990c-fcde1e913a94\",\n        \"filename\": \"8241b65d-da3f-439e-8f57-2acacb545e12.png\",\n        \"filepath\": \"/uploads/products/KEYCHA1078/8241b65d-da3f-439e-8f57-2acacb545e12.png\",\n        \"mimetype\": \"image/png\",\n        \"size\": 2827882,\n        \"width\": null,\n        \"height\": null,\n        \"tags\": [],\n        \"createdAt\": \"2026-02-16T06:34:49.669Z\",\n        \"updatedAt\": \"2026-02-16T06:34:49.669Z\"\n      }\n    },\n    {\n      \"productId\": \"9c7956d8-4783-4812-a663-39b721aab54d\",\n      \"imageFileId\": \"6b3b5d40-4874-4589-85b3-534ae15fd27f\",\n      \"assignedAt\": \"2026-02-19T02:09:29.798Z\",\n      \"imageFile\": {\n        \"id\": \"6b3b5d40-4874-4589-85b3-534ae15fd27f\",\n        \"filename\": \"af85e89e-b854-4481-95a0-cdeb22c23d12.png\",\n        \"filepath\": \"/uploads/products/KEYCHA1078/af85e89e-b854-4481-95a0-cdeb22c23d12.png\",\n        \"mimetype\": \"image/png\",\n        \"size\": 3179130,\n        \"width\": null,\n        \"height\": null,\n        \"tags\": [],\n        \"createdAt\": \"2026-02-16T06:34:49.747Z\",\n        \"updatedAt\": \"2026-02-16T06:34:49.747Z\"\n      }\n    }\n  ],\n  \"catalogs\": [\n    {\n      \"productId\": \"9c7956d8-4783-4812-a663-39b721aab54d\",\n      \"catalogId\": \"cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10\",\n      \"assignedAt\": \"2026-02-19T02:09:29.943Z\",\n      \"catalog\": {\n        \"id\": \"cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10\",\n        \"name\": \"Mentios\",\n        \"description\": \"\",\n        \"isDefault\": true,\n        \"defaultLanguageId\": \"EN\",\n        \"defaultPriceGroupId\": \"15ba906f-e2d1-4a0e-995f-67047a011ae5\",\n        \"createdAt\": \"2026-01-19T18:31:41.835Z\",\n        \"updatedAt\": \"2026-02-10T18:25:18.806Z\",\n        \"languageIds\": [\n          \"EN\",\n          \"PL\"\n        ],\n        \"priceGroupIds\": [\n          \"15ba906f-e2d1-4a0e-995f-67047a011ae5\",\n          \"09fa9579-2eb3-4ce8-90b8-576935373e8f\"\n        ]\n      }\n    }\n  ],\n  \"categories\": [\n    {\n      \"productId\": \"9c7956d8-4783-4812-a663-39b721aab54d\",\n      \"categoryId\": \"77a9f296-39c9-4014-b915-375d5d879d82\",\n      \"assignedAt\": \"2026-02-19T02:09:30.133Z\"\n    }\n  ],\n  \"tags\": [],\n  \"producers\": [\n    {\n      \"productId\": \"9c7956d8-4783-4812-a663-39b721aab54d\",\n      \"producerId\": \"7efcaa41-3e52-4dc9-a451-8a18d319ca8b\",\n      \"assignedAt\": \"2026-02-19T02:09:30.229Z\"\n    }\n  ],\n  \"catalogId\": \"cad266e9-5a76-4ed3-8e49-a8c7b6bdfc10\"\n}"
+    }
+  },
+  "version": 3
+}

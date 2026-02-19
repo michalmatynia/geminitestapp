@@ -50,6 +50,20 @@ export type CaseResolverCaptureProposalState = {
   documentDate: CaseResolverCaptureDocumentDateProposal | null;
 };
 
+export type CaseResolverCaptureCleanupReport = {
+  changed: boolean;
+  sourceWasHtml: boolean;
+  removedAddressLineCount: number;
+  removedAddresserLineCount: number;
+  removedAddresseeLineCount: number;
+  removedDateLineCount: number;
+};
+
+export type CaseResolverCaptureCleanupResult = {
+  text: string;
+  report: CaseResolverCaptureCleanupReport;
+};
+
 const CAPTURE_ADDRESSER_LABEL_HINTS = ['addresser', 'nadawca', 'sender', 'wnioskodawca'];
 const CAPTURE_ADDRESSEE_LABEL_HINTS = ['addressee', 'adresat', 'recipient', 'odbiorca', 'organ'];
 
@@ -284,6 +298,60 @@ const normalizeCaptureTextLine = (value: string): string =>
     .trim()
     .toLowerCase();
 
+const CAPTURE_HTML_TAG_PATTERN = /<[^>]+>/;
+const CAPTURE_POSTAL_CODE_PATTERN = /\b\d{2}-\d{3}\b/;
+const CAPTURE_COUNTRY_HINTS = [
+  'polska',
+  'poland',
+  'niemcy',
+  'germany',
+  'france',
+  'francja',
+  'spain',
+  'hiszpania',
+  'italy',
+  'wlochy',
+  'uk',
+  'england',
+];
+const CAPTURE_STREET_HINT_PATTERN =
+  /\b(ul\.?|ulica|street|st\.?|avenue|ave\.?|road|rd\.?|al\.?|aleja|plac|pl\.)\b/i;
+
+const decodeBasicCaptureHtmlEntities = (value: string): string =>
+  value
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, '\'');
+
+const normalizeCaptureSourceText = (
+  sourceText: string
+): { plainText: string; sourceWasHtml: boolean } => {
+  const sourceWasHtml = CAPTURE_HTML_TAG_PATTERN.test(sourceText);
+  if (!sourceWasHtml) {
+    return {
+      plainText: sourceText,
+      sourceWasHtml: false,
+    };
+  }
+
+  const plainText = decodeBasicCaptureHtmlEntities(
+    sourceText
+      .replace(/\r\n/g, '\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/(p|div|li|h1|h2|h3|h4|h5|h6|tr|section|article|blockquote)>/gi, '\n')
+      .replace(/<li[^>]*>/gi, '')
+      .replace(/<[^>]*>/g, '')
+  );
+
+  return {
+    plainText,
+    sourceWasHtml: true,
+  };
+};
+
 const CAPTURE_HEADER_LINE_SEARCH_LIMIT = 80;
 const CAPTURE_HEADER_BLOCK_EXTRA_SPAN = 6;
 
@@ -346,6 +414,20 @@ const isLikelyCaptureHeaderPartyLine = (line: string): boolean => {
   const wordCount = trimmed.split(/\s+/).filter(Boolean).length;
   if (wordCount > 10) return false;
   return true;
+};
+
+const isLikelyCaptureAddressContinuationLine = (line: string): boolean => {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  if (extractCaseResolverDocumentDate(trimmed)) return false;
+  if (trimmed.length > 100) return false;
+  const normalized = normalizeCaseResolverComparable(trimmed);
+  const wordCount = trimmed.split(/\s+/).filter(Boolean).length;
+  if (wordCount > 10) return false;
+  if (CAPTURE_POSTAL_CODE_PATTERN.test(trimmed)) return true;
+  if (/\d/.test(trimmed)) return true;
+  if (CAPTURE_STREET_HINT_PATTERN.test(trimmed)) return true;
+  return CAPTURE_COUNTRY_HINTS.some((hint: string): boolean => normalized === hint);
 };
 
 const collectCandidateNameLines = (
@@ -519,25 +601,66 @@ const findOrderedCaptureBlockIndices = (input: {
   return bestMatch;
 };
 
-export const stripAcceptedAddressLinesFromText = (
+const stripAcceptedAddressLinesFromTextDetailed = (
   sourceText: string,
   proposalState: CaseResolverCaptureProposalState | null
-): string => {
-  if (!sourceText || !proposalState) return sourceText;
+): {
+    text: string;
+    removedLineCount: number;
+    removedByRole: { addresser: number; addressee: number };
+  } => {
+  if (!sourceText || !proposalState) {
+    return {
+      text: sourceText,
+      removedLineCount: 0,
+      removedByRole: {
+        addresser: 0,
+        addressee: 0,
+      },
+    };
+  }
 
   const sourceLines = splitCaptureTextLines(sourceText);
   const sourceLineKeys = sourceLines.map((line: string): string =>
     normalizeCaptureTextLine(line)
   );
   const headerSearchLimit = resolveCaptureHeaderSearchLimit(sourceLines);
-  if (headerSearchLimit <= 0) return sourceText;
+  if (headerSearchLimit <= 0) {
+    return {
+      text: sourceText,
+      removedLineCount: 0,
+      removedByRole: {
+        addresser: 0,
+        addressee: 0,
+      },
+    };
+  }
 
   const removalIndexes = new Set<number>();
+  const removedByRole = {
+    addresser: 0,
+    addressee: 0,
+  };
+  const removedIndexesByRole = {
+    addresser: new Set<number>(),
+    addressee: new Set<number>(),
+  };
   let changed = false;
+  const markForRemoval = (index: number, role: 'addresser' | 'addressee'): void => {
+    if (removalIndexes.has(index)) return;
+    removalIndexes.add(index);
+    removedIndexesByRole[role].add(index);
+    removedByRole[role] += 1;
+    changed = true;
+  };
 
-  [proposalState.addresser, proposalState.addressee].forEach((proposal) => {
+  ([
+    ['addresser', proposalState.addresser],
+    ['addressee', proposalState.addressee],
+  ] as const).forEach(([role, proposal]) => {
     if (!proposal || proposal.action === 'ignore' || proposal.action === 'keepText') return;
 
+    const beforeCount = removedByRole[role];
     const blockLineKeys = collectCandidateRawHeaderBlockLines(proposal.candidate)
       .map((line: string): string => normalizeCaptureTextLine(line))
       .filter(Boolean);
@@ -549,9 +672,7 @@ export const stripAcceptedAddressLinesFromText = (
     });
     if (blockIndexes) {
       blockIndexes.forEach((index: number): void => {
-        if (removalIndexes.has(index)) return;
-        removalIndexes.add(index);
-        changed = true;
+        markForRemoval(index, role);
       });
     }
 
@@ -561,34 +682,109 @@ export const stripAcceptedAddressLinesFromText = (
       if (removalIndexes.has(index)) continue;
       const key = sourceLineKeys[index];
       if (!key || !pendingRemovalKeys.has(key)) continue;
-      removalIndexes.add(index);
+      markForRemoval(index, role);
       pendingRemovalKeys.delete(key);
-      changed = true;
+    }
+
+    const nameLineKeys = new Set(
+      collectCandidateNameLines(proposal.candidate)
+        .map((line: string): string => normalizeCaptureTextLine(line))
+        .filter(Boolean)
+    );
+    if (nameLineKeys.size === 0) return;
+
+    let anchorIndex = -1;
+    for (let index = 0; index < headerSearchLimit; index += 1) {
+      if (removalIndexes.has(index)) continue;
+      const key = sourceLineKeys[index];
+      if (!key || !nameLineKeys.has(key)) continue;
+      anchorIndex = index;
+      break;
+    }
+    if (anchorIndex < 0) {
+      const roleRemovedIndexes = [...removedIndexesByRole[role]].sort(
+        (left: number, right: number): number => left - right
+      );
+      anchorIndex = roleRemovedIndexes[0] ?? -1;
+    }
+    if (anchorIndex < 0) return;
+    if (!removedIndexesByRole[role].has(anchorIndex)) {
+      markForRemoval(anchorIndex, role);
+    }
+
+    let continuationSteps = 0;
+    for (
+      let index = anchorIndex + 1;
+      index < headerSearchLimit && continuationSteps < 6;
+      index += 1
+    ) {
+      const line = sourceLines[index] ?? '';
+      const trimmed = line.trim();
+      if (!trimmed) break;
+      if (!isLikelyCaptureAddressContinuationLine(trimmed)) break;
+      markForRemoval(index, role);
+      continuationSteps += 1;
+    }
+
+    if (removedByRole[role] <= beforeCount) {
+      return;
     }
   });
 
-  if (!changed) return sourceText;
+  if (!changed) {
+    return {
+      text: sourceText,
+      removedLineCount: 0,
+      removedByRole,
+    };
+  }
   const filtered = sourceLines.filter((_, index: number): boolean => !removalIndexes.has(index));
   const newline = sourceText.includes('\r\n') ? '\r\n' : '\n';
-  return compactCaptureTextLines(filtered).join(newline);
+  return {
+    text: compactCaptureTextLines(filtered).join(newline),
+    removedLineCount: removalIndexes.size,
+    removedByRole,
+  };
+};
+
+export const stripAcceptedAddressLinesFromText = (
+  sourceText: string,
+  proposalState: CaseResolverCaptureProposalState | null
+): string => {
+  return stripAcceptedAddressLinesFromTextDetailed(sourceText, proposalState).text;
 };
 
 export const stripCapturedAddressLinesFromText = stripAcceptedAddressLinesFromText;
 
-export const stripAcceptedDateLineFromText = (
+const stripAcceptedDateLineFromTextDetailed = (
   sourceText: string,
   proposalState: CaseResolverCaptureProposalState | null
-): string => {
-  if (!sourceText || !proposalState?.documentDate) return sourceText;
+): { text: string; removedLineCount: number } => {
+  if (!sourceText || !proposalState?.documentDate) {
+    return {
+      text: sourceText,
+      removedLineCount: 0,
+    };
+  }
   const documentDate = proposalState.documentDate;
-  if (documentDate.action !== 'useDetectedDate') return sourceText;
+  if (documentDate.action !== 'useDetectedDate') {
+    return {
+      text: sourceText,
+      removedLineCount: 0,
+    };
+  }
 
   const sourceLines = splitCaptureTextLines(sourceText);
   const sourceLineKeys = sourceLines.map((line: string): string =>
     normalizeCaptureTextLine(line)
   );
   const headerSearchLimit = resolveCaptureHeaderSearchLimit(sourceLines);
-  if (headerSearchLimit <= 0) return sourceText;
+  if (headerSearchLimit <= 0) {
+    return {
+      text: sourceText,
+      removedLineCount: 0,
+    };
+  }
   const sourceLineKey = documentDate.sourceLine
     ? normalizeCaptureTextLine(documentDate.sourceLine)
     : '';
@@ -620,16 +816,69 @@ export const stripAcceptedDateLineFromText = (
     }
   }
 
-  if (removalIndex < 0) return sourceText;
+  if (removalIndex < 0) {
+    return {
+      text: sourceText,
+      removedLineCount: 0,
+    };
+  }
   const filtered = sourceLines.filter((_, index: number): boolean => index !== removalIndex);
   const newline = sourceText.includes('\r\n') ? '\r\n' : '\n';
-  return compactCaptureTextLines(filtered).join(newline);
+  return {
+    text: compactCaptureTextLines(filtered).join(newline),
+    removedLineCount: 1,
+  };
+};
+
+export const stripAcceptedDateLineFromText = (
+  sourceText: string,
+  proposalState: CaseResolverCaptureProposalState | null
+): string => {
+  return stripAcceptedDateLineFromTextDetailed(sourceText, proposalState).text;
+};
+
+export const stripAcceptedCaptureContentFromTextWithReport = (
+  sourceText: string,
+  proposalState: CaseResolverCaptureProposalState | null
+): CaseResolverCaptureCleanupResult => {
+  if (!sourceText) {
+    return {
+      text: sourceText,
+      report: {
+        changed: false,
+        sourceWasHtml: false,
+        removedAddressLineCount: 0,
+        removedAddresserLineCount: 0,
+        removedAddresseeLineCount: 0,
+        removedDateLineCount: 0,
+      },
+    };
+  }
+  const normalizedSource = normalizeCaptureSourceText(sourceText);
+  const addressCleanup = stripAcceptedAddressLinesFromTextDetailed(
+    normalizedSource.plainText,
+    proposalState
+  );
+  const dateCleanup = stripAcceptedDateLineFromTextDetailed(
+    addressCleanup.text,
+    proposalState
+  );
+  return {
+    text: dateCleanup.text,
+    report: {
+      changed: dateCleanup.text !== normalizedSource.plainText,
+      sourceWasHtml: normalizedSource.sourceWasHtml,
+      removedAddressLineCount: addressCleanup.removedLineCount,
+      removedAddresserLineCount: addressCleanup.removedByRole.addresser,
+      removedAddresseeLineCount: addressCleanup.removedByRole.addressee,
+      removedDateLineCount: dateCleanup.removedLineCount,
+    },
+  };
 };
 
 export const stripAcceptedCaptureContentFromText = (
   sourceText: string,
   proposalState: CaseResolverCaptureProposalState | null
 ): string => {
-  const withoutAddresses = stripAcceptedAddressLinesFromText(sourceText, proposalState);
-  return stripAcceptedDateLineFromText(withoutAddresses, proposalState);
+  return stripAcceptedCaptureContentFromTextWithReport(sourceText, proposalState).text;
 };

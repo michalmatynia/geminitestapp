@@ -84,8 +84,17 @@ type BaseApiCallOptions = {
 const isProductWriteMethod = (method: string): boolean =>
   method === 'addInventoryProduct' || method === 'updateInventoryProduct';
 
-const isNonIdempotentProductWriteMethod = (method: string): boolean =>
-  method === 'addInventoryProduct';
+const hasProductIdentifier = (parameters: Record<string, unknown>): boolean => {
+  const value = parameters['product_id'];
+  if (typeof value === 'number') return Number.isFinite(value);
+  if (typeof value !== 'string') return false;
+  return value.trim().length > 0;
+};
+
+const isNonIdempotentProductWriteCall = (
+  method: string,
+  parameters: Record<string, unknown>
+): boolean => method === 'addInventoryProduct' && !hasProductIdentifier(parameters);
 
 const hasImagePayload = (parameters: Record<string, unknown>): boolean => {
   const images = parameters['images'];
@@ -140,7 +149,7 @@ export async function callBaseApi(
   const timeoutMs = resolveBaseApiTimeoutMs(method, parameters, options);
   const maxAttempts =
     options?.maxAttempts ??
-    (isNonIdempotentProductWriteMethod(method)
+    (isNonIdempotentProductWriteCall(method, parameters)
       ? 1
       : isProductWriteMethod(method) || hasImagePayload(parameters)
         ? 2

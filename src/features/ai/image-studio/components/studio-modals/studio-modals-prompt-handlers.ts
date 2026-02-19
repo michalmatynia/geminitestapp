@@ -1,4 +1,4 @@
-import { flattenParams, inferParamSpecs, type ParamSpec } from '@/features/prompt-engine/prompt-params';
+import { flattenParams, inferParamSpecs, type ParamSpec } from '../../utils/prompt-params';
 import { api } from '@/shared/lib/api-client';
 
 

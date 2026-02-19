@@ -129,8 +129,8 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, par
         : null,
       allegroTokenType: payload.token_type ?? null,
       allegroScope: payload.scope ?? null,
-      allegroExpiresAt: expiresAt,
-      allegroTokenUpdatedAt: new Date()
+      allegroExpiresAt: expiresAt ? expiresAt.toISOString() : null,
+      allegroTokenUpdatedAt: new Date().toISOString()
     });
 
     const successUrl = new URL('/admin/integrations', requestUrl.origin);
@@ -173,4 +173,3 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, par
     );
   }
 }
-

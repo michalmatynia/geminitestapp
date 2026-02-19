@@ -1,4 +1,4 @@
-import { flattenParams, type ParamSpec } from '@/features/prompt-engine/prompt-params';
+import { flattenParams, type ParamSpec } from '../../utils/prompt-params';
 
 import { recommendParamUiControl, type ParamUiControl } from '../../utils/param-ui';
 

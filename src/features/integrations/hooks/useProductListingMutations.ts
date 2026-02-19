@@ -36,6 +36,7 @@ export type ExportToBaseVariables = {
   externalListingId?: string;
   exportImagesAsBase64?: boolean;
   allowDuplicateSku?: boolean;
+  requestId?: string;
 };
 
 type ExportResponse = {
@@ -360,8 +361,17 @@ export function useExportToBaseMutation(productId: string): UpdateMutation<
 
   return createCreateMutationV2({
     mutationFn: async (payload: ExportToBaseVariables): Promise<ExportResponse> => {
+      const { requestId, ...body } = payload;
+      const requestKey = requestId?.trim();
+      const options = requestKey
+        ? { headers: { 'x-idempotency-key': requestKey } }
+        : undefined;
       try {
-        return await api.post<ExportResponse>(`/api/integrations/products/${productId}/export-to-base`, payload);
+        return await api.post<ExportResponse>(
+          `/api/integrations/products/${productId}/export-to-base`,
+          body,
+          options
+        );
       } catch (error: unknown) {
         if (error && typeof error === 'object' && 'data' in error) {
           const payloadRes = (error as { data: ExportResponse }).data;

@@ -19,8 +19,8 @@ function documentToSession(doc: ChatSessionDocument): ChatSession {
     userId: null,
     messages: doc.messages,
     messageCount: doc.messages.length,
-    createdAt: doc.createdAt,
-    updatedAt: doc.updatedAt,
+    createdAt: doc.createdAt.toISOString(),
+    updatedAt: doc.updatedAt.toISOString(),
     settings: doc.settings,
   };
 }
@@ -74,8 +74,8 @@ export const chatbotSessionRepository: ChatbotSessionRepository = {
       userId: null,
       messages: doc.messages,
       messageCount: doc.messages.length,
-      createdAt: doc.createdAt,
-      updatedAt: doc.updatedAt,
+      createdAt: doc.createdAt.toISOString(),
+      updatedAt: doc.updatedAt.toISOString(),
       settings: doc.settings,
     };
   },

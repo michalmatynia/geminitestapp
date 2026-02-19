@@ -264,7 +264,23 @@ export async function postTestConnectionHandler(
     'pending',
     'Validating encryption key and decrypting password'
   );
-  const decryptedPassword = manualMode ? '' : decryptSecret(connection.password);
+  const encryptedPassword = connection.password;
+  if (!manualMode && !encryptedPassword) {
+    return fail(
+      'Decrypting credentials',
+      'No encrypted password configured for this connection.'
+    );
+  }
+  const loginUsername = connection.username;
+  if (!manualMode && !loginUsername) {
+    return fail(
+      'Decrypting credentials',
+      'No username configured for this connection.'
+    );
+  }
+  const decryptedPassword = manualMode
+    ? ''
+    : decryptSecret(encryptedPassword as string);
   pushStep(
     'Decrypting credentials',
     'ok',
@@ -730,7 +746,7 @@ export async function postTestConnectionHandler(
         );
       }
       try {
-        await humanizedFill(usernameField.locator, connection.username);
+        await humanizedFill(usernameField.locator, loginUsername as string);
         await humanizedFill(passwordField.locator, decryptedPassword);
         await humanizedPause();
       } catch (error) {

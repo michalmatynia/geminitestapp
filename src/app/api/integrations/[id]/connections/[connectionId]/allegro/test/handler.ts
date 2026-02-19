@@ -159,8 +159,8 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
         : connection.allegroRefreshToken ?? null,
       allegroTokenType: payload.token_type ?? null,
       allegroScope: payload.scope ?? null,
-      allegroExpiresAt: expiresAt,
-      allegroTokenUpdatedAt: new Date()
+      allegroExpiresAt: expiresAt ? expiresAt.toISOString() : null,
+      allegroTokenUpdatedAt: new Date().toISOString()
     });
     return payload.access_token;
   };
@@ -198,7 +198,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
   );
 
   await repo.updateConnection(connection.id, {
-    allegroTokenUpdatedAt: new Date()
+    allegroTokenUpdatedAt: new Date().toISOString()
   });
 
   let profile: unknown = raw;
@@ -214,4 +214,3 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
     profile
   });
 }
-

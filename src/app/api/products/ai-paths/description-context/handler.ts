@@ -9,6 +9,17 @@ import type {
   ProductCategory,
   ProductParameter,
 } from '@/shared/types/domain/products';
+import type { DescriptionContextQuery } from '@/shared/validations/product-metadata-api-schemas';
+
+type DescriptionContextCategory = {
+  id: string;
+  name: string;
+  name_en: string | null;
+  name_pl: string | null;
+  name_de: string | null;
+  parentId: string | null;
+  sortIndex: number | null;
+};
 
 type DescriptionContextPayload = {
   catalogId: string | null;
@@ -22,6 +33,7 @@ type DescriptionContextPayload = {
     selectorType: ProductParameter['selectorType'];
     optionLabels: string[];
   }>;
+  categories: DescriptionContextCategory[];
 };
 
 const normalizeQueryValue = (value: string | null): string => {
@@ -40,6 +52,7 @@ const buildEmptyPayload = (
   categoryId,
   categoryName: null,
   parameters: [],
+  categories: [],
 });
 
 const normalizeOptionLabels = (input: unknown): string[] => {
@@ -59,45 +72,81 @@ const normalizeOptionLabels = (input: unknown): string[] => {
 };
 
 const resolveCategoryName = (
-  categories: ProductCategory[],
+  categories: DescriptionContextCategory[],
   categoryId: string
 ): string | null => {
   const match = categories.find(
-    (category: ProductCategory): boolean => category.id === categoryId
+    (category: DescriptionContextCategory): boolean => category.id === categoryId
   );
   if (!match) return null;
   const preferredName = [
-    typeof match.name_en === 'string' ? match.name_en : null,
-    typeof match.name === 'string' ? match.name : null,
-    typeof match.name_pl === 'string' ? match.name_pl : null,
-    typeof match.name_de === 'string' ? match.name_de : null,
+    match.name_en,
+    match.name,
+    match.name_pl,
+    match.name_de,
   ].find((value: string | null): value is string => Boolean(value?.trim()));
   return preferredName?.trim() ?? null;
 };
 
+const toDescriptionContextCategory = (
+  category: ProductCategory
+): DescriptionContextCategory => ({
+  id: category.id,
+  name: category.name,
+  name_en: category.name_en ?? null,
+  name_pl: category.name_pl ?? null,
+  name_de: category.name_de ?? null,
+  parentId: category.parentId,
+  sortIndex: category.sortIndex ?? null,
+});
+
+const normalizeIncludeCategories = (value: string | null): boolean => {
+  const normalized = normalizeQueryValue(value).toLowerCase();
+  if (!normalized) return true;
+  if (
+    normalized === '0' ||
+    normalized === 'false' ||
+    normalized === 'no' ||
+    normalized === 'off'
+  ) {
+    return false;
+  }
+  return true;
+};
+
 export async function GET_handler(
   req: NextRequest,
-  _ctx: ApiHandlerContext
+  ctx: ApiHandlerContext
 ): Promise<Response> {
+  const query = ctx.query as DescriptionContextQuery | undefined;
   const { searchParams } = new URL(req.url);
-  const catalogId = normalizeQueryValue(searchParams.get('catalogId'));
-  const categoryId = normalizeQueryValue(searchParams.get('categoryId'));
+  const catalogId =
+    query?.catalogId ?? normalizeQueryValue(searchParams.get('catalogId'));
+  const categoryId =
+    query?.categoryId ?? normalizeQueryValue(searchParams.get('categoryId'));
+  const includeCategories =
+    query?.includeCategories ??
+    normalizeIncludeCategories(searchParams.get('includeCategories'));
 
   if (!catalogId) {
     return NextResponse.json(buildEmptyPayload(null, categoryId || null));
   }
 
   const parameterRepository = await getParameterRepository();
-  const [parameters, categoryName] = await Promise.all([
+  const shouldFetchCategories = includeCategories || Boolean(categoryId);
+
+  const [parameters, categories] = await Promise.all([
     parameterRepository.listParameters({ catalogId }),
-    categoryId
-      ? (async (): Promise<string | null> => {
+    shouldFetchCategories
+      ? (async (): Promise<DescriptionContextCategory[]> => {
         const categoryRepository = await getCategoryRepository();
-        const categories = await categoryRepository.listCategories({ catalogId });
-        return resolveCategoryName(categories, categoryId);
+        const categoryList = await categoryRepository.listCategories({ catalogId });
+        return categoryList.map(toDescriptionContextCategory);
       })()
-      : Promise.resolve(null),
+      : Promise.resolve<DescriptionContextCategory[]>([]),
   ]);
+
+  const categoryName = categoryId ? resolveCategoryName(categories, categoryId) : null;
 
   const payload: DescriptionContextPayload = {
     catalogId,
@@ -113,6 +162,7 @@ export async function GET_handler(
         optionLabels: normalizeOptionLabels(parameter.optionLabels),
       })
     ),
+    categories: includeCategories ? categories : [],
   };
 
   return NextResponse.json(payload);

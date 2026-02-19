@@ -12,7 +12,7 @@ import type {
   CaseResolverCaptureProposalState,
 } from '@/features/case-resolver-capture/proposals';
 import {
-  stripAcceptedCaptureContentFromText,
+  stripAcceptedCaptureContentFromTextWithReport,
 } from '@/features/case-resolver-capture/proposals';
 import {
   type CaseResolverCaptureAction,
@@ -27,6 +27,7 @@ import {
   FILEMAKER_DATABASE_KEY,
   buildFilemakerPartyOptions,
   decodeFilemakerPartyReference,
+  formatFilemakerAddress,
   normalizeFilemakerDatabase,
   resolveFilemakerPartyLabel,
 } from '@/features/filemaker/settings';
@@ -138,8 +139,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const editorTextareaRef = React.useRef<HTMLTextAreaElement | null>(null);
   const scanDraftUploadInputRef = React.useRef<HTMLInputElement | null>(null);
   const [isScanDraftDropActive, setIsScanDraftDropActive] = React.useState(false);
-  const [isDocumentPreviewOpen, setIsDocumentPreviewOpen] = React.useState(false);
-  const [documentPreviewHtml, setDocumentPreviewHtml] = React.useState('');
   const initialDraftFingerprintRef = React.useRef<string | null>(null);
   const trackedDraftBaseVersionRef = React.useRef<{
     fileId: string;
@@ -634,17 +633,55 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               : null,
         };
 
-        const sourceExplodedContent =
-          targetFile.explodedDocumentContent.trim().length > 0
-            ? targetFile.explodedDocumentContent
-            : targetFile.activeDocumentVersion === 'exploded'
-              ? targetFile.documentContent
-              : '';
-        const cleanedExplodedContent =
+        const draftForTargetFile =
+          editingDocumentDraft?.id === targetFileId ? editingDocumentDraft : null;
+        const sourceExplodedContent = (() => {
+          if (draftForTargetFile) {
+            const draftActiveContent =
+              typeof draftForTargetFile.documentContent === 'string'
+                ? draftForTargetFile.documentContent
+                : '';
+            const draftExplodedContent =
+              typeof draftForTargetFile.explodedDocumentContent === 'string'
+                ? draftForTargetFile.explodedDocumentContent
+                : '';
+            if (
+              draftForTargetFile.activeDocumentVersion === 'exploded' &&
+              draftActiveContent.trim().length > 0
+            ) {
+              return draftActiveContent;
+            }
+            if (draftExplodedContent.trim().length > 0) {
+              return draftExplodedContent;
+            }
+          }
+          if (targetFile.explodedDocumentContent.trim().length > 0) {
+            return targetFile.explodedDocumentContent;
+          }
+          if (targetFile.activeDocumentVersion === 'exploded') {
+            return targetFile.documentContent;
+          }
+          return '';
+        })();
+        const cleanupResult =
           sourceExplodedContent.trim().length > 0
-            ? stripAcceptedCaptureContentFromText(sourceExplodedContent, cleanupProposalState)
-            : sourceExplodedContent;
-        const hasExplodedCleanup = cleanedExplodedContent !== sourceExplodedContent;
+            ? stripAcceptedCaptureContentFromTextWithReport(
+              sourceExplodedContent,
+              cleanupProposalState
+            )
+            : {
+              text: sourceExplodedContent,
+              report: {
+                changed: false,
+                sourceWasHtml: false,
+                removedAddressLineCount: 0,
+                removedAddresserLineCount: 0,
+                removedAddresseeLineCount: 0,
+                removedDateLineCount: 0,
+              },
+            };
+        const cleanedExplodedContent = cleanupResult.text;
+        const hasExplodedCleanup = cleanupResult.report.changed;
         logCaseResolverWorkspaceEvent({
           source: 'case_view',
           action: 'capture_cleanup_evaluated',
@@ -654,14 +691,21 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             appliedAddressee: shouldPatchAddressee,
             appliedDate: shouldAcceptDate,
             cleanupChanged: hasExplodedCleanup,
+            cleanupSourceWasHtml: cleanupResult.report.sourceWasHtml,
+            removedAddressLineCount: cleanupResult.report.removedAddressLineCount,
+            removedAddresserLineCount: cleanupResult.report.removedAddresserLineCount,
+            removedAddresseeLineCount: cleanupResult.report.removedAddresseeLineCount,
+            removedDateLineCount: cleanupResult.report.removedDateLineCount,
           }),
         });
         const cleanedExplodedCanonical = hasExplodedCleanup
           ? deriveDocumentContentSync({
             mode: 'wysiwyg',
             value: ensureSafeDocumentHtml(cleanedExplodedContent),
-            previousMarkdown: targetFile.documentContentMarkdown,
-            previousHtml: targetFile.documentContentHtml,
+            previousMarkdown:
+              draftForTargetFile?.documentContentMarkdown ?? targetFile.documentContentMarkdown,
+            previousHtml:
+              draftForTargetFile?.documentContentHtml ?? targetFile.documentContentHtml,
           })
           : null;
         const cleanedExplodedStored = cleanedExplodedCanonical
@@ -818,6 +862,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       }
     })();
   }, [
+    editingDocumentDraft,
     filemakerDatabase,
     promptExploderProposalDraft,
     setEditingDocumentDraft,
@@ -975,6 +1020,39 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     }
   }, [editingDocumentDraft, toast]);
 
+  const sanitizeDocumentExportBaseName = useCallback((value: string): string => {
+    const normalized = value
+      .trim()
+      .replace(/[<>:"/\\|?*\u0000-\u001f]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!normalized) return 'Case Resolver Document';
+    return normalized.slice(0, 120);
+  }, []);
+
+  const resolvePartyPdfLabel = useCallback(
+    (
+      reference: CaseResolverFileEditDraft['addresser'] | CaseResolverFileEditDraft['addressee']
+    ): string => {
+      if (!reference) return 'Not selected';
+      if (reference.kind === 'person') {
+        const person = filemakerDatabase.persons.find((entry) => entry.id === reference.id);
+        if (!person) return 'Not selected';
+        const name = `${person.firstName} ${person.lastName}`.trim() || person.id;
+        const address = formatFilemakerAddress(person);
+        return [name, address].filter(Boolean).join('\n');
+      }
+      const organization = filemakerDatabase.organizations.find(
+        (entry) => entry.id === reference.id
+      );
+      if (!organization) return 'Not selected';
+      const name = organization.name.trim() || organization.id;
+      const address = formatFilemakerAddress(organization);
+      return [name, address].filter(Boolean).join('\n');
+    },
+    [filemakerDatabase]
+  );
+
   const buildDraftPdfPreviewMarkup = useCallback((draft: CaseResolverFileEditDraft): string => {
     const resolvedMode = 'wysiwyg';
     const legacyDocumentContent =
@@ -1003,22 +1081,15 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       previousMarkdown: resolvePreferredContent(draft.documentContentMarkdown),
       previousHtml: resolvePreferredContent(draft.documentContentHtml),
     });
-    const addresserLabel = draft.addresser
-      ? resolveFilemakerPartyLabel(filemakerDatabase, draft.addresser) ?? 'Not selected'
-      : 'Not selected';
-    const addresseeLabel = draft.addressee
-      ? resolveFilemakerPartyLabel(filemakerDatabase, draft.addressee) ?? 'Not selected'
-      : 'Not selected';
+    const addresserLabel = resolvePartyPdfLabel(draft.addresser);
+    const addresseeLabel = resolvePartyPdfLabel(draft.addressee);
     return buildDocumentPdfMarkup({
       documentDate: draft.documentDate ?? '',
-      documentHash: draft.id,
-      createdAt: draft.createdAt ?? '',
-      updatedAt: draft.updatedAt ?? '',
       addresserLabel,
       addresseeLabel,
       documentContent: canonical.html,
     });
-  }, [filemakerDatabase]);
+  }, [resolvePartyPdfLabel]);
 
   const printDocumentMarkup = useCallback((markup: string): void => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
@@ -1065,15 +1136,17 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     if (!editingDocumentDraft) return;
     try {
       const markup = buildDraftPdfPreviewMarkup(editingDocumentDraft);
-      setDocumentPreviewHtml(markup);
-      setIsDocumentPreviewOpen(true);
-      if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-        window.setTimeout((): void => {
-          document
-            .querySelector<HTMLElement>('[data-case-resolver-document-preview]')
-            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 0);
+      if (typeof window === 'undefined') return;
+      const previewBlob = new Blob([markup], { type: 'text/html;charset=utf-8' });
+      const previewUrl = URL.createObjectURL(previewBlob);
+      const previewWindow = window.open(previewUrl, '_blank');
+      if (!previewWindow) {
+        URL.revokeObjectURL(previewUrl);
+        throw new Error('Preview popup was blocked by the browser.');
       }
+      window.setTimeout((): void => {
+        URL.revokeObjectURL(previewUrl);
+      }, 120_000);
     } catch (error: unknown) {
       toast(
         error instanceof Error ? error.message : 'Failed to generate PDF preview.',
@@ -1095,23 +1168,57 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     }
   }, [buildDraftPdfPreviewMarkup, editingDocumentDraft, printDocumentMarkup, toast]);
 
-  const handleCloseDocumentPreview = useCallback((): void => {
-    setIsDocumentPreviewOpen(false);
-  }, []);
-
-  const handlePrintDocumentPreview = useCallback((): void => {
-    if (!documentPreviewHtml.trim()) {
-      toast('No preview content to print.', { variant: 'warning' });
-      return;
+  const handleExportDraftPdf = useCallback(async (): Promise<void> => {
+    if (!editingDocumentDraft) return;
+    try {
+      const markup = buildDraftPdfPreviewMarkup(editingDocumentDraft);
+      const documentBaseName = sanitizeDocumentExportBaseName(
+        editingDocumentDraft.name || 'Case Resolver Document'
+      );
+      const response = await fetch('/api/case-resolver/documents/export-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          html: markup,
+          filename: `${documentBaseName}.pdf`,
+        }),
+      });
+      if (!response.ok) {
+        let message = `Failed to export PDF (${response.status}).`;
+        try {
+          const payload = (await response.json()) as {
+            error?: { message?: string };
+            message?: string;
+          };
+          message = payload.error?.message ?? payload.message ?? message;
+        } catch {
+          // keep fallback message
+        }
+        throw new Error(message);
+      }
+      const pdfBlob = await response.blob();
+      if (typeof window === 'undefined' || typeof document === 'undefined') return;
+      const downloadUrl = URL.createObjectURL(pdfBlob);
+      const anchor = document.createElement('a');
+      anchor.href = downloadUrl;
+      anchor.download = `${documentBaseName}.pdf`;
+      anchor.style.display = 'none';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout((): void => {
+        URL.revokeObjectURL(downloadUrl);
+      }, 500);
+      toast('PDF exported.', { variant: 'success' });
+    } catch (error: unknown) {
+      toast(
+        error instanceof Error ? error.message : 'Failed to export PDF.',
+        { variant: 'error' }
+      );
     }
-    printDocumentMarkup(documentPreviewHtml);
-  }, [documentPreviewHtml, printDocumentMarkup, toast]);
-
-  React.useEffect(() => {
-    if (editingDocumentDraft) return;
-    setIsDocumentPreviewOpen(false);
-    setDocumentPreviewHtml('');
-  }, [editingDocumentDraft]);
+  }, [buildDraftPdfPreviewMarkup, editingDocumentDraft, sanitizeDocumentExportBaseName, toast]);
 
   const handleTriggerScanDraftUpload = useCallback((): void => {
     if (editingDocumentDraft?.fileType !== 'scanfile') return;
@@ -1777,10 +1884,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         handleCopyDraftFileId={handleCopyDraftFileId}
         handlePreviewDraftPdf={handlePreviewDraftPdf}
         handlePrintDraftDocument={handlePrintDraftDocument}
-        isDocumentPreviewOpen={isDocumentPreviewOpen}
-        documentPreviewHtml={documentPreviewHtml}
-        handleCloseDocumentPreview={handleCloseDocumentPreview}
-        handlePrintDocumentPreview={handlePrintDocumentPreview}
+        handleExportDraftPdf={handleExportDraftPdf}
         promptExploderProposalDraft={promptExploderProposalDraft}
         captureProposalTargetFileName={captureProposalTargetFileName}
         handleClosePromptExploderProposalModal={handleClosePromptExploderProposalModal}

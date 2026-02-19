@@ -165,35 +165,18 @@ export const toLocalDateLabel = (value: string): string => {
   return parsed.toLocaleDateString();
 };
 
-export const toLocalDateTimeLabel = (value: string): string => {
-  const normalized = value.trim();
-  if (!normalized) return 'Not specified';
-  const parsed = new Date(normalized);
-  if (Number.isNaN(parsed.getTime())) return normalized;
-  return parsed.toLocaleString();
-};
-
 export const buildDocumentPdfMarkup = ({
   documentDate,
-  documentHash,
-  createdAt,
-  updatedAt,
   addresserLabel,
   addresseeLabel,
   documentContent,
 }: {
   documentDate: string;
-  documentHash: string;
-  createdAt: string;
-  updatedAt: string;
   addresserLabel: string;
   addresseeLabel: string;
   documentContent: string;
 }): string => {
   const normalizedDocumentDate = toLocalDateLabel(documentDate);
-  const normalizedCreatedAt = toLocalDateTimeLabel(createdAt);
-  const normalizedUpdatedAt = toLocalDateTimeLabel(updatedAt);
-  const normalizedDocumentHash = documentHash.trim() || 'DOC-UNKNOWN';
   const normalizedAddresser = addresserLabel.trim() || 'Not selected';
   const normalizedAddressee = addresseeLabel.trim() || 'Not selected';
 
@@ -235,9 +218,9 @@ export const buildDocumentPdfMarkup = ({
       }
 
       .meta {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
         margin-bottom: 18px;
       }
 
@@ -253,9 +236,7 @@ export const buildDocumentPdfMarkup = ({
       }
 
       .meta-card {
-        border: 1px solid #d1d5db;
-        border-radius: 6px;
-        padding: 8px 10px;
+        padding: 0;
       }
 
       .meta-label {
@@ -270,7 +251,7 @@ export const buildDocumentPdfMarkup = ({
         font-size: 12px;
         line-height: 1.4;
         color: #111827;
-        word-break: break-word;
+        white-space: pre-line;
       }
 
       .content {
@@ -321,26 +302,6 @@ export const buildDocumentPdfMarkup = ({
         height: auto;
       }
 
-      .document-footer {
-        margin-top: 16px;
-        display: flex;
-        justify-content: flex-end;
-      }
-
-      .document-footer-meta {
-        text-align: right;
-        color: #4b5563;
-        font-size: 10px;
-        line-height: 1.35;
-      }
-
-      .document-id {
-        margin-top: 3px;
-        font-family: "Courier New", Courier, monospace;
-        letter-spacing: 0.04em;
-        color: #111827;
-      }
-
       @media print {
         body {
           background: #ffffff;
@@ -372,13 +333,6 @@ export const buildDocumentPdfMarkup = ({
         </article>
       </section>
       <section class="content">${documentContent}</section>
-      <footer class="document-footer">
-        <div class="document-footer-meta">
-          <div>Created: ${escapeHtml(normalizedCreatedAt)}</div>
-          <div>Modified: ${escapeHtml(normalizedUpdatedAt)}</div>
-          <div class="document-id">${escapeHtml(normalizedDocumentHash)}</div>
-        </div>
-      </footer>
     </main>
   </body>
 </html>`;

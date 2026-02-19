@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { getParameterRepository } from '@/features/products/server';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { CatalogIdQuery } from '@/shared/validations/product-metadata-api-schemas';
 
 const SELECTOR_TYPES = ['text', 'textarea', 'radio', 'select', 'dropdown', 'checkbox', 'checklist'] as const;
 const selectorTypeSchema = z.enum(SELECTOR_TYPES);
@@ -56,8 +57,11 @@ export const productParameterCreateSchema = z.object({
  * - catalogId: Filter by catalog (required)
  */
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const { searchParams } = new URL(req.url);
-  const catalogId = searchParams.get('catalogId');
+  const query = _ctx.query as CatalogIdQuery | undefined;
+  const catalogId =
+    query?.catalogId ??
+    new URL(req.url).searchParams.get('catalogId')?.trim() ??
+    '';
 
   if (!catalogId) {
     throw badRequestError('catalogId query parameter is required');

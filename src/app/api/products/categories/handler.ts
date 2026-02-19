@@ -7,6 +7,7 @@ import { logSystemEvent } from '@/features/observability/server';
 import { getCategoryRepository, getProductDataProvider } from '@/features/products/server';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { CatalogIdQuery } from '@/shared/validations/product-metadata-api-schemas';
 
 const shouldLogTiming = () => process.env['DEBUG_API_TIMING'] === 'true';
 
@@ -42,8 +43,11 @@ export const productCategoryCreateSchema = z.object({
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const timings: Record<string, number | null | undefined> = {};
   const requestStart = performance.now();
-  const { searchParams } = new URL(req.url);
-  const catalogId = searchParams.get('catalogId');
+  const query = _ctx.query as CatalogIdQuery | undefined;
+  const catalogId =
+    query?.catalogId ??
+    new URL(req.url).searchParams.get('catalogId')?.trim() ??
+    '';
 
   if (!catalogId) {
     throw badRequestError('catalogId query parameter is required');

@@ -186,6 +186,123 @@ type BaseExportProductLike = {
   producers?: unknown[] | null | undefined;
   tags?: Array<{ tagId?: string | null | undefined }> | null | undefined;
   catalogs?: Array<{ catalogId: string }> | null | undefined;
+  parameters?:
+    | Array<{
+      parameterId?: string | null | undefined;
+      value?: unknown;
+      valuesByLanguage?: Record<string, unknown> | null | undefined;
+    }>
+    | null
+    | undefined;
+};
+
+const PRODUCT_PARAMETER_MAPPING_PREFIX = 'parameter:';
+
+const parseMappedParameterId = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  if (
+    !trimmed
+      .toLowerCase()
+      .startsWith(PRODUCT_PARAMETER_MAPPING_PREFIX)
+  ) {
+    return '';
+  }
+  return trimmed.slice(PRODUCT_PARAMETER_MAPPING_PREFIX.length).trim();
+};
+
+const hasMappedParameterValue = (
+  entry: NonNullable<BaseExportProductLike['parameters']>[number]
+): boolean => {
+  const directValue = toTrimmedString(entry.value);
+  if (directValue) return true;
+
+  const valuesByLanguage =
+    entry.valuesByLanguage &&
+    typeof entry.valuesByLanguage === 'object' &&
+    !Array.isArray(entry.valuesByLanguage)
+      ? entry.valuesByLanguage
+      : null;
+  if (!valuesByLanguage) return false;
+
+  return Object.values(valuesByLanguage).some((value: unknown) =>
+    Boolean(toTrimmedString(value))
+  );
+};
+
+const collectTemplateParameterIds = (
+  mappings: BaseFieldMapping[]
+): string[] => {
+  const ids = new Set<string>();
+  mappings.forEach((mapping: BaseFieldMapping) => {
+    const targetParameterId = parseMappedParameterId(mapping.targetField);
+    if (targetParameterId) ids.add(targetParameterId);
+
+    const sourceParameterId = parseMappedParameterId(mapping.sourceKey);
+    if (sourceParameterId) ids.add(sourceParameterId);
+  });
+  return Array.from(ids);
+};
+
+const validateTemplateParameterMappings = <TProduct extends BaseExportProductLike>({
+  productId,
+  product,
+  mappings,
+}: {
+  productId: string;
+  product: TProduct;
+  mappings: BaseFieldMapping[];
+}): void => {
+  const mappedParameterIds = collectTemplateParameterIds(mappings);
+  if (mappedParameterIds.length === 0) return;
+
+  const entries = Array.isArray(product.parameters) ? product.parameters : [];
+  const lookup = new Map<string, { id: string; hasValue: boolean }>();
+  entries.forEach((entry) => {
+    const parameterId = toTrimmedString(entry?.parameterId);
+    if (!parameterId) return;
+    const normalizedId = parameterId.toLowerCase();
+    const nextHasValue = hasMappedParameterValue(entry);
+    const existing = lookup.get(normalizedId);
+    if (!existing || (nextHasValue && !existing.hasValue)) {
+      lookup.set(normalizedId, {
+        id: parameterId,
+        hasValue: nextHasValue,
+      });
+    }
+  });
+
+  const missingParameterIds = mappedParameterIds.filter((parameterId: string) => {
+    return !lookup.has(parameterId.toLowerCase());
+  });
+  if (missingParameterIds.length > 0) {
+    throw badRequestError(
+      `Export template maps parameters missing on this product: ${missingParameterIds.join(', ')}.`
+    );
+  }
+
+  const parameterIdsWithValue = mappedParameterIds.filter((parameterId: string) => {
+    return lookup.get(parameterId.toLowerCase())?.hasValue === true;
+  });
+  if (parameterIdsWithValue.length === 0) {
+    throw badRequestError(
+      `Export template parameter mappings contain no values for product "${productId}". Fill mapped parameter values before export.`
+    );
+  }
+
+  const emptyParameterIds = mappedParameterIds.filter((parameterId: string) => {
+    return lookup.get(parameterId.toLowerCase())?.hasValue === false;
+  });
+  if (emptyParameterIds.length > 0) {
+    void ErrorSystem.logWarning(
+      '[export-to-base] Some mapped parameters are empty and will be skipped',
+      {
+        productId,
+        parameterIds: emptyParameterIds,
+      }
+    );
+  }
 };
 
 export const prepareBaseExportMappingsAndProduct = async <
@@ -277,6 +394,12 @@ export const prepareBaseExportMappingsAndProduct = async <
         }
       }
     }
+
+    validateTemplateParameterMappings({
+      productId,
+      product,
+      mappings,
+    });
   }
 
   const productProducerIds = !imagesOnly

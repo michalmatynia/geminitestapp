@@ -6,7 +6,6 @@ import {
   type AiBrainProviderCatalogDto,
   aiBrainSettingsSchema as settingsSchema,
   aiBrainProviderCatalogSchema as providerCatalogSchema,
-  aiBrainAssignmentSchema as assignmentSchema,
 } from '@/shared/contracts/ai-brain';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
@@ -22,6 +21,17 @@ export type AiBrainSettings = AiBrainSettingsDto;
 
 export type AiBrainProviderCatalog = AiBrainProviderCatalogDto;
 
+const BRAIN_FEATURE_KEYS: AiBrainFeature[] = [
+  'image_studio',
+  'analytics',
+  'runtime_analytics',
+  'cms_builder',
+  'system_logs',
+  'error_logs',
+  'ai_paths',
+  'prompt_engine',
+];
+
 export const defaultBrainAssignment: AiBrainAssignment = {
   enabled: true,
   provider: 'model',
@@ -34,7 +44,9 @@ export const defaultBrainAssignment: AiBrainAssignment = {
 
 export const defaultBrainSettings: AiBrainSettings = {
   defaults: { ...defaultBrainAssignment },
-  assignments: {},
+  assignments: Object.fromEntries(
+    BRAIN_FEATURE_KEYS.map((feature: AiBrainFeature): [AiBrainFeature, undefined] => [feature, undefined])
+  ) as Record<AiBrainFeature, AiBrainAssignment | undefined>,
 };
 
 export const defaultBrainProviderCatalog: AiBrainProviderCatalog = {
@@ -72,7 +84,7 @@ export const parseBrainSettings = (raw: string | null | undefined): AiBrainSetti
   const parsed = parseJsonSetting<unknown>(raw, null);
   const result = settingsSchema.safeParse(parsed ?? defaultBrainSettings);
   if (!result.success) return defaultBrainSettings;
-  return result.data as AiBrainSettings;
+  return result.data;
 };
 
 export const parseBrainProviderCatalog = (

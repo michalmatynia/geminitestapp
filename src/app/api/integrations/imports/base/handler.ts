@@ -220,8 +220,8 @@ export async function postBaseImportsHandler(
   let resolvedBaseConnectionId = data.connectionId?.trim() || null;
   let resolvedBaseConnection: {
     id: string;
-    baseApiToken?: string | null;
-    password?: string | null;
+    baseApiToken?: string | null | undefined;
+    password?: string | null | undefined;
   } | null = null;
   if (baseIntegrationId && resolvedBaseConnectionId) {
     resolvedBaseConnection =

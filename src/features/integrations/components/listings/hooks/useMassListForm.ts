@@ -39,6 +39,10 @@ export function useMassListForm({
 
   const exportMutation = useGenericExportToBaseMutation();
   const createListingMutation = useGenericCreateListingMutation();
+  const createExportRequestId = (productId: string, index: number): string =>
+    `base-export-${productId}-${index}-${Date.now().toString(36)}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
 
   const handleSubmit = useCallback(async (): Promise<void> => {
     const validation = validateFormData(
@@ -73,6 +77,7 @@ export function useMassListForm({
             connectionId: selectedConnectionId || '',
             inventoryId: selectedInventoryId || '',
             allowDuplicateSku,
+            requestId: createExportRequestId(productId, i),
           };
           if (selectedTemplateId && selectedTemplateId !== 'none') {
             exportData.templateId = selectedTemplateId;

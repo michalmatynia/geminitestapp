@@ -275,8 +275,8 @@ export async function handleDatabaseUpdateOperation({
     entityId,
     configuredCollection,
     updatePayloadMode,
-    customFilter,
-    customUpdateDoc,
+    ...(customFilter ? { customFilter } : {}),
+    ...(customUpdateDoc !== undefined ? { customUpdateDoc } : {}),
   });
   if (executionResult.skipped) {
     return prevOutputs;

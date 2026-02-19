@@ -55,13 +55,20 @@ export function useListProductForm(productId: string): UseListProductFormResult 
 
   const submitting = exportToBaseMutation.isPending || createListingMutation.isPending;
 
-  const exportToBase = async (options?: {
+  const createExportRequestId = (): string =>
+    `base-export-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+  const exportToBase = async (
+    connectionId: string,
+    inventoryId: string,
+    options?: {
     imageBase64Mode?: 'base-only' | 'full-data-uri';
     imageTransform?: ImageTransformOptions | null;
   }): Promise<void> => {
     const exportData: ExportToBaseVariables = {
-      connectionId: '',
-      inventoryId: '',
+      connectionId,
+      inventoryId,
+      requestId: createExportRequestId(),
       exportImagesAsBase64: Boolean(options?.imageBase64Mode || options?.imageTransform),
     };
     if (options?.imageBase64Mode) exportData.imageBase64Mode = options.imageBase64Mode;
@@ -111,6 +118,7 @@ export function useListProductForm(productId: string): UseListProductFormResult 
         const exportData: ExportToBaseVariables = {
           connectionId: selectedConnectionId || '',
           inventoryId: selectedInventoryId || '',
+          requestId: createExportRequestId(),
           exportImagesAsBase64: false,
         };
         if (selectedTemplateId && selectedTemplateId !== 'none') {
@@ -185,7 +193,11 @@ export function useListProductForm(productId: string): UseListProductFormResult 
       if (preset.imageBase64Mode) exportOptions.imageBase64Mode = preset.imageBase64Mode;
       if (preset.transform) exportOptions.imageTransform = preset.transform;
       
-      await exportToBase(exportOptions);
+      await exportToBase(
+        selectedConnectionId || '',
+        selectedInventoryId || '',
+        exportOptions
+      );
       onSuccess();
     } catch (err: unknown) {
       logClientError(err, {

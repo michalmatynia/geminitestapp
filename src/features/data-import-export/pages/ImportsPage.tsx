@@ -43,6 +43,7 @@ function ImportsPageContent(): React.JSX.Element {
     setTemplateScope,
     handleNewTemplate,
     handleDuplicateTemplate,
+    handleCreateExportFromImportTemplate,
     handleSaveTemplate,
     handleDeleteTemplate,
     savingImportTemplate,
@@ -113,16 +114,33 @@ function ImportsPageContent(): React.JSX.Element {
   const currentTemplates = isImportTemplateScope ? importTemplates : exportTemplates;
   const currentActiveTemplateId = isImportTemplateScope ? importActiveTemplateId : exportActiveTemplateId;
   const currentTemplateMappings = isImportTemplateScope ? importTemplateMappings : exportTemplateMappings;
-  const exportSourceFieldOptions = React.useMemo(
-    (): string[] => [...EXPORT_PARAMETER_KEYS].sort((a: string, b: string): number => a.localeCompare(b)),
-    []
-  );
   const importSourceFieldOptions = React.useMemo(
     (): string[] =>
       [...importSourceFields].sort(
         (a: string, b: string): number => a.localeCompare(b)
       ),
     [importSourceFields]
+  );
+  const exportSourceFieldOptions = React.useMemo(
+    (): string[] => {
+      const allKeys = new Set<string>(EXPORT_PARAMETER_KEYS);
+      importSourceFieldOptions.forEach((key: string) => {
+        allKeys.add(key);
+      });
+      return Array.from(allKeys).sort((a: string, b: string): number =>
+        a.localeCompare(b)
+      );
+    },
+    [importSourceFieldOptions]
+  );
+  const validParameterTargetValues = React.useMemo(
+    (): Set<string> =>
+      new Set(
+        customParameterTargetFields.map(
+          (entry: { value: string; label: string }) => entry.value
+        )
+      ),
+    [customParameterTargetFields]
   );
 
   const updateMapping = (index: number, patch: Partial<TemplateMapping>): void => {
@@ -223,6 +241,22 @@ function ImportsPageContent(): React.JSX.Element {
                 >
                   Duplicate
                 </Button>
+                {templateScope === 'import' && (
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => {
+                      void handleCreateExportFromImportTemplate();
+                    }}
+                    disabled={
+                      !importActiveTemplateId ||
+                      savingImportTemplate ||
+                      savingExportTemplate
+                    }
+                  >
+                    Create Export Copy
+                  </Button>
+                )}
                 <Button size='sm' onClick={() => { void handleSaveTemplate(); }} disabled={savingImportTemplate || savingExportTemplate}>
                   {savingImportTemplate || savingExportTemplate ? 'Saving...' : 'Save Template'}
                 </Button>
@@ -403,87 +437,101 @@ function ImportsPageContent(): React.JSX.Element {
                   <Label className='text-xs font-bold uppercase tracking-wider text-gray-500 block mb-1'>Field Mappings</Label>
                   <div className='space-y-2'>
                     {currentTemplateMappings.map((m: TemplateMapping, i: number) => (
-                      <div key={i} className='flex gap-2 items-center'>
-                        {templateScope === 'export' ? (
-                          <Input
-                            value={m.sourceKey}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateMapping(i, { sourceKey: e.target.value })}
-                            placeholder='Source (e.g. category_id)'
-                            list='export-source-field-options'
-                            className='flex-1 h-9'
-                          />
-                        ) : (
+                      <div key={i} className='space-y-1'>
+                        <div className='flex gap-2 items-center'>
+                          {templateScope === 'export' ? (
+                            <Input
+                              value={m.sourceKey}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateMapping(i, { sourceKey: e.target.value })}
+                              placeholder='Source (e.g. category_id or custom_color)'
+                              list='export-source-field-options'
+                              className='flex-1 h-9'
+                            />
+                          ) : (
+                            <div className='flex-1'>
+                              <SelectSimple 
+                                size='sm'
+                                value={m.sourceKey || '__none__'}
+                                onValueChange={(value: string): void =>
+                                  updateMapping(i, {
+                                    sourceKey:
+                                      value === '__none__'
+                                        ? ''
+                                        : value,
+                                  })
+                                }
+                                options={[
+                                  { value: '__none__', label: 'Source Field' },
+                                  ...(m.sourceKey &&
+                                  !importSourceFieldOptions.includes(m.sourceKey)
+                                    ? [
+                                      {
+                                        value: m.sourceKey,
+                                        label: `${m.sourceKey} (custom)`,
+                                      },
+                                    ]
+                                    : []),
+                                  ...importSourceFieldOptions.map((field: string) => ({
+                                    value: field,
+                                    label: importSourceFieldValues[field]
+                                      ? `${field} (${importSourceFieldValues[field].slice(0, 60)})`
+                                      : field,
+                                  })),
+                                ]}
+                                triggerClassName='w-full h-9 bg-gray-950/40'
+                                placeholder='Select source field'
+                              />
+                            </div>
+                          )}
                           <div className='flex-1'>
                             <SelectSimple 
                               size='sm'
-                              value={m.sourceKey || '__none__'}
-                              onValueChange={(value: string): void =>
+                              value={m.targetField || '__none__'}
+                              onValueChange={(v: string): void =>
                                 updateMapping(i, {
-                                  sourceKey:
-                                    value === '__none__'
-                                      ? ''
-                                      : value,
+                                  targetField: v === '__none__' ? '' : v,
                                 })
                               }
                               options={[
-                                { value: '__none__', label: 'Source Field' },
-                                ...(m.sourceKey &&
-                                !importSourceFieldOptions.includes(m.sourceKey)
+                                { value: '__none__', label: 'Target Field' },
+                                ...(m.targetField &&
+                                !templateTargetFieldOptions.some(
+                                  (option) => option.value === m.targetField
+                                )
                                   ? [
                                     {
-                                      value: m.sourceKey,
-                                      label: `${m.sourceKey} (custom)`,
+                                      value: m.targetField,
+                                      label: `${m.targetField} (custom)`,
                                     },
                                   ]
                                   : []),
-                                ...importSourceFieldOptions.map((field: string) => ({
-                                  value: field,
-                                  label: importSourceFieldValues[field]
-                                    ? `${field} (${importSourceFieldValues[field].slice(0, 60)})`
-                                    : field,
-                                })),
+                                ...templateTargetFieldOptions,
                               ]}
                               triggerClassName='w-full h-9 bg-gray-950/40'
-                              placeholder='Select source field'
+                              placeholder='Target Field'
                             />
                           </div>
-                        )}
-                        <div className='flex-1'>
-                          <SelectSimple 
-                            size='sm'
-                            value={m.targetField || '__none__'}
-                            onValueChange={(v: string): void =>
-                              updateMapping(i, {
-                                targetField: v === '__none__' ? '' : v,
-                              })
-                            }
-                            options={[
-                              { value: '__none__', label: 'Target Field' },
-                              ...(m.targetField &&
-                              !templateTargetFieldOptions.some(
-                                (option) => option.value === m.targetField
-                              )
-                                ? [
-                                  {
-                                    value: m.targetField,
-                                    label: `${m.targetField} (custom)`,
-                                  },
-                                ]
-                                : []),
-                              ...templateTargetFieldOptions,
-                            ]}
-                            triggerClassName='w-full h-9 bg-gray-950/40'
-                            placeholder='Target Field'
-                          />
+                          <Button 
+                            variant='ghost' 
+                            size='icon' 
+                            className='h-9 w-9 text-gray-500 hover:text-red-400'
+                            onClick={() => removeMappingRow(i)}
+                          >
+                            <Trash2 className='size-4' />
+                          </Button>
                         </div>
-                        <Button 
-                          variant='ghost' 
-                          size='icon' 
-                          className='h-9 w-9 text-gray-500 hover:text-red-400'
-                          onClick={() => removeMappingRow(i)}
-                        >
-                          <Trash2 className='size-4' />
-                        </Button>
+                        {templateScope === 'export' &&
+                        m.targetField.trim().toLowerCase().startsWith(
+                          PRODUCT_PARAMETER_TARGET_PREFIX
+                        ) ? (
+                            validParameterTargetValues.has(m.targetField.trim()) ? null : (
+                              <p className='text-[11px] text-amber-300'>
+                                {catalogId
+                                  ? 'Parameter target is not in current catalog parameter list. Verify the parameter ID.'
+                                  : 'Select a catalog in Imports tab to validate parameter targets.'}
+                              </p>
+                            )
+                          ) : null}
                       </div>
                     ))}
                   </div>
@@ -504,6 +552,7 @@ function ImportsPageContent(): React.JSX.Element {
                       <p className='text-xs text-gray-500 italic'>
                         Tip: For category mapping use source <code>category_id</code> and target <code>categoryId</code>.
                         {' '}For parameters use target <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code>.
+                        {' '}Available source keys: {exportSourceFieldOptions.length}.
                       </p>
                     </>
                   )}

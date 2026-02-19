@@ -341,7 +341,7 @@ export function StudioInlineEditPanels({
       <GenerationPreviewModal
         isOpen={generationPreviewModalOpen}
         onClose={() => setGenerationPreviewModalOpen(false)}
-        selectedGenerationPreview={selectedGenerationPreview}
+        item={selectedGenerationPreview}
         selectedGenerationModalDimensions={selectedGenerationModalDimensions}
         slotUpdateBusy={slotUpdateBusy}
         handleApplyLinkedVariantToCard={onApplyLinkedVariantToCard}

@@ -3,8 +3,8 @@ import 'server-only';
 import { decryptSecret } from '@/features/integrations/utils/encryption';
 
 type BaseTokenCarrier = {
-  baseApiToken?: string | null;
-  password?: string | null;
+  baseApiToken?: string | null | undefined;
+  password?: string | null | undefined;
 };
 
 type ResolvedBaseToken = {

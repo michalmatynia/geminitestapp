@@ -227,8 +227,8 @@ export function RuntimeProvider({
 
   const clearNodeRuntime = useCallback((nodeId: string) => {
     setRuntimeStateInternal((prev) => {
-      const { [nodeId]: _removedInputs, ...restInputs } = prev.inputs;
-      const { [nodeId]: _removedOutputs, ...restOutputs } = prev.outputs;
+      const { [nodeId]: _removedInputs, ...restInputs } = prev.inputs ?? {};
+      const { [nodeId]: _removedOutputs, ...restOutputs } = prev.outputs ?? {};
       const newHistory = prev.history ? { ...prev.history } : undefined;
       if (newHistory) {
         delete newHistory[nodeId];
@@ -571,8 +571,8 @@ export function useNodeRuntime(nodeId: string): {
 } {
   const { runtimeState } = useRuntimeState();
   return {
-    inputs: runtimeState.inputs[nodeId],
-    outputs: runtimeState.outputs[nodeId],
-    history: runtimeState.history?.[nodeId],
+    inputs: runtimeState.inputs?.[nodeId],
+    outputs: runtimeState.outputs?.[nodeId],
+    history: runtimeState.history?.[nodeId] as RuntimeHistoryEntry[] | undefined,
   };
 }

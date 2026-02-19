@@ -60,20 +60,51 @@ const isMissingRunUpdateError = (error: unknown): boolean => {
   );
 };
 
+const EMPTY_RUNTIME_STATE: RuntimeState = {
+  status: 'idle',
+  nodeStatuses: {},
+  nodeOutputs: {},
+  variables: {},
+  events: [],
+  inputs: {},
+  outputs: {},
+};
+
 const parseRuntimeState = (value: unknown): RuntimeState => {
-  if (!value) return { inputs: {}, outputs: {} };
+  if (!value) return EMPTY_RUNTIME_STATE;
   if (typeof value === 'string') {
     try {
       const parsed = JSON.parse(value) as RuntimeState;
-      return parsed && typeof parsed === 'object' ? parsed : { inputs: {}, outputs: {} };
+      return parsed && typeof parsed === 'object'
+        ? {
+          ...EMPTY_RUNTIME_STATE,
+          ...parsed,
+          inputs: parsed.inputs ?? {},
+          outputs: parsed.outputs ?? {},
+          nodeOutputs: parsed.nodeOutputs ?? {},
+          nodeStatuses: parsed.nodeStatuses ?? {},
+          variables: parsed.variables ?? {},
+          events: parsed.events ?? [],
+        }
+        : EMPTY_RUNTIME_STATE;
     } catch {
-      return { inputs: {}, outputs: {} };
+      return EMPTY_RUNTIME_STATE;
     }
   }
   if (typeof value === 'object') {
-    return value as RuntimeState;
+    const parsed = value as RuntimeState;
+    return {
+      ...EMPTY_RUNTIME_STATE,
+      ...parsed,
+      inputs: parsed.inputs ?? {},
+      outputs: parsed.outputs ?? {},
+      nodeOutputs: parsed.nodeOutputs ?? {},
+      nodeStatuses: parsed.nodeStatuses ?? {},
+      variables: parsed.variables ?? {},
+      events: parsed.events ?? [],
+    };
   }
-  return { inputs: {}, outputs: {} };
+  return EMPTY_RUNTIME_STATE;
 };
 
 const toJsonSafe = (value: unknown): unknown => {
@@ -101,9 +132,19 @@ const toJsonSafe = (value: unknown): unknown => {
 const sanitizeRuntimeState = (state: RuntimeState): RuntimeState => {
   const safe = toJsonSafe(state);
   if (safe && typeof safe === 'object') {
-    return safe as RuntimeState;
+    const parsed = safe as RuntimeState;
+    return {
+      ...EMPTY_RUNTIME_STATE,
+      ...parsed,
+      inputs: parsed.inputs ?? {},
+      outputs: parsed.outputs ?? {},
+      nodeOutputs: parsed.nodeOutputs ?? {},
+      nodeStatuses: parsed.nodeStatuses ?? {},
+      variables: parsed.variables ?? {},
+      events: parsed.events ?? [],
+    };
   }
-  return { inputs: {}, outputs: {} };
+  return EMPTY_RUNTIME_STATE;
 };
 
 const computeDownstreamNodes = (
@@ -325,10 +366,13 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     try {
       await updateRunSnapshot({
         runtimeState: sanitizeRuntimeState({
+          ...EMPTY_RUNTIME_STATE,
+          status: 'running',
           runId: resolvedRunId,
           runStartedAt: resolvedRunStartedAt,
           inputs: accInputs,
           outputs: accOutputs,
+          nodeOutputs: accOutputs,
         }),
       });
     } catch (error) {
@@ -406,7 +450,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       seedHashTimestamps:
         (runtimeState.hashTimestamps as Record<string, number> | undefined) ??
         undefined,
-      seedHistory: runtimeState.history ?? undefined,
+      seedHistory: runtimeState.history as Record<string, RuntimeHistoryEntry[]> | undefined,
       seedRunId: runtimeState.runId ?? undefined,
       seedRunStartedAt: runtimeState.runStartedAt ?? undefined,
       recordHistory: true,
@@ -711,10 +755,13 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
 
           await updateRunSnapshot({
             runtimeState: sanitizeRuntimeState({
+              ...EMPTY_RUNTIME_STATE,
+              status: 'running',
               runId: cbRunId,
               runStartedAt: cbRunStartedAt,
               inputs,
               outputs,
+              nodeOutputs: outputs,
               hashes,
               history,
             }),

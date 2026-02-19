@@ -403,12 +403,17 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
       return;
     }
 
-    const nextAssignments = allFeatureKeys.reduce<Partial<Record<AiBrainFeature, AiBrainAssignment>>>((acc: Partial<Record<AiBrainFeature, AiBrainAssignment>>, key: AiBrainFeature) => {
-      if (!overridesEnabled[key] && !REPORT_FEATURE_KEYS.has(key)) return acc;
-      const assignment = settings.assignments[key] ?? resolveBrainAssignment(settings, key);
-      acc[key] = sanitizeBrainAssignment(assignment);
-      return acc;
-    }, {});
+    const nextAssignments = allFeatureKeys.reduce<Record<AiBrainFeature, AiBrainAssignment | undefined>>(
+      (acc: Record<AiBrainFeature, AiBrainAssignment | undefined>, key: AiBrainFeature) => {
+        if (!overridesEnabled[key] && !REPORT_FEATURE_KEYS.has(key)) return acc;
+        const assignment = settings.assignments[key] ?? resolveBrainAssignment(settings, key);
+        acc[key] = sanitizeBrainAssignment(assignment);
+        return acc;
+      },
+      Object.fromEntries(
+        allFeatureKeys.map((key: AiBrainFeature): [AiBrainFeature, undefined] => [key, undefined])
+      ) as Record<AiBrainFeature, AiBrainAssignment | undefined>
+    );
 
     const nextSettings: AiBrainSettings = {
       ...settings,

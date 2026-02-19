@@ -268,6 +268,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     onError: (error: unknown): void => {
       logClientError(error, { context: { source: 'AdminAiPathsTriggerButtonsPage', action: 'updateTriggerButton' } });
       toast(error instanceof Error ? error.message : 'Failed to update trigger button.', { variant: 'error' });
+      void triggerButtonsQuery.refetch();
     },
   });
 

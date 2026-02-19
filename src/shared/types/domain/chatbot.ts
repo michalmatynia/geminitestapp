@@ -88,6 +88,7 @@ export interface ChatbotJobDocument {
   resultText?: string | undefined;
   errorMessage?: string | undefined;
   createdAt: Date;
+  updatedAt?: Date | null | undefined;
   startedAt?: Date | undefined;
   finishedAt?: Date | undefined;
 }

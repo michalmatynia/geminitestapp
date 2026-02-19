@@ -127,6 +127,7 @@ export interface ImportExportContextType {
   handleClearInventory: () => Promise<void>;
   handleNewTemplate: () => void;
   handleDuplicateTemplate: () => Promise<void>;
+  handleCreateExportFromImportTemplate: () => Promise<void>;
   handleSaveTemplate: () => Promise<void>;
   handleDeleteTemplate: () => Promise<void>;
   applyTemplate: (template: Template, scope: 'import' | 'export') => void;

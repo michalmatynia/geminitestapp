@@ -653,7 +653,6 @@ const ensureParameterInferenceDefaults = async (
         ),
         mode: 'click',
         display: 'icon_label',
-        updatedAt: now,
       };
     } else {
       nextButtons.push(seededButton);
@@ -823,7 +822,6 @@ const ensureDescriptionInferenceLiteDefaults = async (
         ),
         mode: 'click',
         display: 'icon_label',
-        updatedAt: now,
       };
     } else {
       nextButtons.push(seededButton);

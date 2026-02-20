@@ -88,15 +88,15 @@ describe('prompt exploder hierarchy master tree adapter', () => {
       previousItems: SAMPLE_ITEMS,
     });
 
-    expect(rebuilt.map((item) => item.id)).toEqual(['qa_r2', 'qa_r1']);
-    expect(rebuilt[1]?.children.map((item) => item.id)).toEqual(['qa_r1_pass', 'qa_r1_fail']);
+    expect(rebuilt.map((item: any) => item.id)).toEqual(['qa_r2', 'qa_r1']);
+    expect(rebuilt[1]?.children.map((item: any) => item.id)).toEqual(['qa_r1_pass', 'qa_r1_fail']);
   });
 
   it('updates and removes nested list items by id', () => {
     const updated = updatePromptExploderListItemById(
       SAMPLE_ITEMS,
       'qa_r1_fail',
-      (item) => ({
+      (item: any) => ({
         ...item,
         text: 'FAIL if relighting is missing.',
       })
@@ -104,6 +104,6 @@ describe('prompt exploder hierarchy master tree adapter', () => {
     expect(updated[0]?.children[1]?.text).toBe('FAIL if relighting is missing.');
 
     const removed = removePromptExploderListItemById(updated, 'qa_r1_pass');
-    expect(removed[0]?.children.map((item) => item.id)).toEqual(['qa_r1_fail']);
+    expect(removed[0]?.children.map((item: any) => item.id)).toEqual(['qa_r1_fail']);
   });
 });

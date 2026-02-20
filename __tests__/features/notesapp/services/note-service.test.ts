@@ -117,7 +117,7 @@ describe('NoteService', () => {
       expect(nb.name).toBe('Work');
 
       const all = await noteService.getAllNotebooks();
-      expect(all.some(n => n.id === nb.id)).toBe(true);
+      expect(all.some((n: any) => n.id === nb.id)).toBe(true);
     });
 
     it('gets or creates default notebook', async () => {
@@ -213,11 +213,12 @@ describe('NoteService', () => {
         color: null, notebookId: null, themeId: null, sortIndex: null
       });
 
-      const tree = await noteService.getCategoryTree();
-      const parentInTree = tree.find(c => c.id === parent.id);
+            const tree = await noteService.getCategoryTree();
+            const parentInTree = tree.find((c: any) => c.id === parent.id);
+            
+            expect(parentInTree).toBeDefined();
+            expect(parentInTree?.children.some((c: any) => c.id === child.id)).toBe(true);
+          });
+        });
+      });
       
-      expect(parentInTree).toBeDefined();
-      expect(parentInTree?.children.some(c => c.id === child.id)).toBe(true);
-    });
-  });
-});

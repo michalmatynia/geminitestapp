@@ -266,9 +266,14 @@ export const databaseEngineProviderPreviewSchema = z.object({
   appProviderError: z.string().nullable().optional(),
   provider: z.string().optional(),
   collections: z.array(z.object({
-    name: z.string(),
-    count: z.number(),
-    sizeBytes: z.number().nullable(),
+    name: z.string().optional(),
+    collection: z.string().optional(),
+    count: z.number().optional(),
+    sizeBytes: z.number().nullable().optional(),
+    configuredProvider: z.string().optional(),
+    effectiveProvider: z.string().optional(),
+    source: z.string().optional(),
+    error: z.string().nullable().optional(),
   })),
 });
 

@@ -144,10 +144,10 @@ describe('Notes page UI', () => {
           ...category,
           children: [],
           notes: notes
-            .filter((note) =>
-              note.categories.some((cat: any) => cat.categoryId === category.id)
+            .filter((note: any) =>
+              note.categories?.some((cat: any) => cat.categoryId === category.id)
             )
-            .map((note) => ({
+            .map((note: any) => ({
               id: note.id,
               title: note.title,
               content: note.content,

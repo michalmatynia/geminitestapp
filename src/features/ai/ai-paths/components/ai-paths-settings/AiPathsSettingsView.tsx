@@ -1,7 +1,7 @@
 'use client';
 
 import { Eye, EyeOff } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useAiPathRuntimeAnalytics } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
@@ -14,6 +14,7 @@ import type {
   AiPathsValidationOperator,
   AiPathsValidationRule,
   AiPathsValidationSeverity,
+  RuntimeHistoryEntry,
 } from '@/features/ai/ai-paths/lib';
 import {
   buildAiPathsValidationRulesFromDocs,
@@ -29,6 +30,7 @@ import {
   useToast,
   StatusBadge,
   LoadingState,
+  Card,
   type StatusVariant,
 } from '@/shared/ui';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
@@ -348,10 +350,6 @@ export function AiPathsSettingsView(): React.JSX.Element {
   };
 
   // State for dialogs
-  const [runDetailOpen, setRunDetailOpen] = useState(false);
-  const [runStreamPaused, setRunStreamPaused] = useState(false);
-  const [runHistoryNodeId, setRunHistoryNodeId] = useState<string | null>(null);
-
   const [presetsModalOpen, setPresetsModalOpen] = useState(false);
   const [pathSettingsModalOpen, setPathSettingsModalOpen] = useState(false);
   const normalizedAiPathsValidation = useMemo<AiPathsValidationConfig>(
@@ -468,6 +466,69 @@ export function AiPathsSettingsView(): React.JSX.Element {
   const runtimeLogEvents = useMemo(
     () => runtimeEvents.slice(Math.max(0, runtimeEvents.length - 80)).reverse(),
     [runtimeEvents],
+  );
+
+  const findLatestRunWithNodeHistory = useCallback(
+    (nodeId: string): string | null => {
+      const targetNodeId = nodeId.trim();
+      if (!targetNodeId) return null;
+      const sortedRuns = [...state.runList].sort((left, right) => {
+        const leftMs = left.createdAt ? Date.parse(left.createdAt) : 0;
+        const rightMs = right.createdAt ? Date.parse(right.createdAt) : 0;
+        if (!Number.isFinite(leftMs) && !Number.isFinite(rightMs)) return 0;
+        if (!Number.isFinite(leftMs)) return 1;
+        if (!Number.isFinite(rightMs)) return -1;
+        return rightMs - leftMs;
+      });
+      const matchedRun = sortedRuns.find((run) => {
+        const history = (
+          run.runtimeState as
+            | { history?: Record<string, RuntimeHistoryEntry[]> }
+            | undefined
+        )?.history;
+        const nodeHistory = history?.[targetNodeId];
+        if (Array.isArray(nodeHistory)) {
+          return nodeHistory.length > 0;
+        }
+        if (history && targetNodeId in history) return true;
+        return Boolean(
+          run.graph?.nodes?.some((node: AiNode): boolean => node.id === targetNodeId),
+        );
+      });
+      return matchedRun?.id ?? null;
+    },
+    [state.runList],
+  );
+
+  const handleInspectTraceNode = useCallback(
+    (nodeId: string, focus: 'all' | 'failed'): void => {
+      const targetNodeId = nodeId.trim();
+      if (!targetNodeId) return;
+      const runId = findLatestRunWithNodeHistory(targetNodeId);
+      if (!runId) {
+        toast(`No recent runs found for ${targetNodeId}.`, { variant: 'warning' });
+        return;
+      }
+      state.setRunHistoryNodeId(targetNodeId);
+      state.setRunFilter(focus);
+      void state.handleOpenRunDetail(runId).catch((error: unknown) => {
+        state.reportAiPathsError(
+          error,
+          {
+            action: 'inspectRuntimeTraceNode',
+            runId,
+            nodeId: targetNodeId,
+          },
+          'Failed to open runtime trace node drill-down:',
+        );
+        toast('Failed to open run details for trace node.', { variant: 'error' });
+      });
+    },
+    [
+      findLatestRunWithNodeHistory,
+      state,
+      toast,
+    ],
   );
 
   const dependencyReport = useMemo(
@@ -1225,7 +1286,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
           {!isFocusMode && <RuntimeEventLogPanel />}
           {!isFocusMode ? (
             <div className='grid gap-4 lg:grid-cols-2'>
-              <div className='space-y-3 rounded-lg border border-border/60 bg-card/50 p-4'>
+              <Card variant='subtle' padding='md' className='space-y-3 border-border/60 bg-card/50'>
                 <div className='flex items-start justify-between gap-3'>
                   <div>
                     <div className='text-sm font-semibold text-white'>
@@ -1251,30 +1312,30 @@ export function AiPathsSettingsView(): React.JSX.Element {
                 </div>
 
                 <div className='grid gap-2 sm:grid-cols-3'>
-                  <div className='rounded-md border border-border/60 bg-card/60 p-2'>
+                  <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/60'>
                     <div className='text-[10px] uppercase text-gray-500'>
                       Run Status
                     </div>
                     <div className='mt-1 text-sm text-white'>
                       {formatStatusLabel(runtimeRunStatus)}
                     </div>
-                  </div>
-                  <div className='rounded-md border border-border/60 bg-card/60 p-2'>
+                  </Card>
+                  <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/60'>
                     <div className='text-[10px] uppercase text-gray-500'>
                       Live Nodes
                     </div>
                     <div className='mt-1 text-sm text-white'>
                       {runtimeNodeLiveStates.length}
                     </div>
-                  </div>
-                  <div className='rounded-md border border-border/60 bg-card/60 p-2'>
+                  </Card>
+                  <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/60'>
                     <div className='text-[10px] uppercase text-gray-500'>
                       Storage
                     </div>
                     <div className='mt-1 text-sm text-white'>
                       {runtimeAnalyticsQuery.data?.storage ?? '—'}
                     </div>
-                  </div>
+                  </Card>
                 </div>
 
                 <div className='grid grid-cols-2 gap-2 text-[11px] text-gray-300 sm:grid-cols-4'>
@@ -1288,9 +1349,11 @@ export function AiPathsSettingsView(): React.JSX.Element {
                       'cached',
                     ] as const
                   ).map((status) => (
-                    <div
+                    <Card
                       key={status}
-                      className='rounded-md border border-border/60 bg-card/60 px-2 py-1'
+                      variant='subtle-compact'
+                      padding='sm'
+                      className='border-border/60 bg-card/60 px-2 py-1'
                     >
                       <span className='text-gray-500'>
                         {formatStatusLabel(status)}:
@@ -1298,7 +1361,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                       <span className='text-gray-200'>
                         {runtimeNodeStatusCounts[status] ?? 0}
                       </span>
-                    </div>
+                    </Card>
                   ))}
                 </div>
 
@@ -1337,7 +1400,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                 )}
 
                 <div className='grid gap-2 sm:grid-cols-2'>
-                  <div className='rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'>
+                  <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'>
                     <div className='text-[10px] uppercase text-gray-500'>
                       Runs (24h)
                     </div>
@@ -1350,8 +1413,8 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         runtimeAnalyticsQuery.data?.runs.successRate ?? 0,
                       )}
                     </div>
-                  </div>
-                  <div className='rounded-md border border-border/60 bg-card/60 p-2 text-[11px] text-gray-300'>
+                  </Card>
+                  <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/60 text-[11px] text-gray-300'>
                     <div className='text-[10px] uppercase text-gray-500'>
                       Run Runtime (24h)
                     </div>
@@ -1395,33 +1458,50 @@ export function AiPathsSettingsView(): React.JSX.Element {
                     ) : null}
                     {(runtimeAnalyticsQuery.data?.traces.topSlowNodes.length ?? 0) > 0 ? (
                       <div className='mt-1 text-gray-500'>
-                        Top slow:{' '}
-                        {runtimeAnalyticsQuery.data?.traces.topSlowNodes
-                          .slice(0, 2)
-                          .map(
-                            (entry) =>
-                              `${entry.nodeId} (${formatDurationMs(
-                                entry.avgDurationMs,
-                              )} avg)`,
-                          )
-                          .join(' · ')}
+                        <div>Top slow:</div>
+                        <div className='mt-1 flex flex-wrap gap-1'>
+                          {runtimeAnalyticsQuery.data?.traces.topSlowNodes
+                            .slice(0, 2)
+                            .map((entry) => (
+                              <button
+                                key={`slow-${entry.nodeId}-${entry.nodeType}`}
+                                type='button'
+                                className='rounded border border-sky-500/40 bg-sky-500/10 px-1.5 py-0.5 text-[10px] text-sky-100 hover:bg-sky-500/20'
+                                onClick={() => handleInspectTraceNode(entry.nodeId, 'all')}
+                                title='Open latest run detail for this node'
+                              >
+                                {entry.nodeId} (
+                                {formatDurationMs(entry.avgDurationMs)} avg)
+                              </button>
+                            ))}
+                        </div>
                       </div>
                     ) : null}
                     {(runtimeAnalyticsQuery.data?.traces.topFailedNodes.length ?? 0) > 0 ? (
                       <div className='mt-1 text-gray-500'>
-                        Top failed:{' '}
-                        {runtimeAnalyticsQuery.data?.traces.topFailedNodes
-                          .slice(0, 2)
-                          .map(
-                            (entry) =>
-                              `${entry.nodeId} (${entry.failedCount}/${entry.spanCount})`,
-                          )
-                          .join(' · ')}
+                        <div>Top failed:</div>
+                        <div className='mt-1 flex flex-wrap gap-1'>
+                          {runtimeAnalyticsQuery.data?.traces.topFailedNodes
+                            .slice(0, 2)
+                            .map((entry) => (
+                              <button
+                                key={`failed-${entry.nodeId}-${entry.nodeType}`}
+                                type='button'
+                                className='rounded border border-rose-500/40 bg-rose-500/10 px-1.5 py-0.5 text-[10px] text-rose-100 hover:bg-rose-500/20'
+                                onClick={() =>
+                                  handleInspectTraceNode(entry.nodeId, 'failed')
+                                }
+                                title='Open latest failed run detail for this node'
+                              >
+                                {entry.nodeId} ({entry.failedCount}/{entry.spanCount})
+                              </button>
+                            ))}
+                        </div>
                       </div>
                     ) : null}
                   </div>
                 </div>
-              </div>
+              </Card>
 
               <div className='space-y-3 rounded-lg border border-border/60 bg-card/50 p-4'>
                 <div>
@@ -1503,18 +1583,18 @@ export function AiPathsSettingsView(): React.JSX.Element {
 
       <NodeConfigDialog />
       <RunDetailDialog
-        isOpen={runDetailOpen}
-        onClose={() => setRunDetailOpen(false)}
+        isOpen={state.runDetailOpen}
+        onClose={() => state.setRunDetailOpen(false)}
         onSuccess={() => {}}
-        loading={false}
-        runDetail={null}
-        runStreamStatus='idle'
-        runStreamPaused={runStreamPaused}
-        runEventsOverflow={false}
-        runEventsBatchLimit={100}
-        runHistoryNodeId={runHistoryNodeId}
-        onStreamPauseToggle={setRunStreamPaused}
-        onHistoryNodeSelect={setRunHistoryNodeId}
+        loading={state.runDetailLoading}
+        runDetail={state.runDetail}
+        runStreamStatus={state.runStreamStatus}
+        runStreamPaused={state.runStreamPaused}
+        runEventsOverflow={state.runEventsOverflow}
+        runEventsBatchLimit={state.runEventsBatchLimit}
+        runHistoryNodeId={state.runDetailSelectedHistoryNodeId}
+        onStreamPauseToggle={state.setRunStreamPaused}
+        onHistoryNodeSelect={state.setRunHistoryNodeId}
       />
       <PresetsDialog
         isOpen={presetsModalOpen}

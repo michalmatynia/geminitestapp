@@ -3,8 +3,8 @@ import { renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ImageRetryPreset } from '@/features/data-import-export';
-import { getDefaultImageRetryPresets } from '@/features/data-import-export';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations';
+import { getDefaultImageRetryPresets } from '@/features/data-import-export/utils/image-retry-presets';
 import { useImageRetryPresets } from '@/features/integrations/components/listings/useImageRetryPresets';
 import { api } from '@/shared/lib/api-client';
 

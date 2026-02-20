@@ -12,13 +12,13 @@ export type PromptExploderSegmentType = PromptExploderSegmentTypeDto;
 
 export const promptExploderListItemSchema: z.ZodType<PromptExploderListItemDto> = z.lazy(() => z.object({
   id: z.string(),
-  label: z.string(),
-  value: z.string(),
+  label: z.string().optional(),
+  value: z.string().optional(),
   text: z.string().optional(),
   description: z.string().optional(),
   logicalOperator: z.string().nullable().optional(),
   logicalConditions: z.array(z.any()).optional(),
-  referencedParamPath: z.string().optional(),
+  referencedParamPath: z.string().nullable().optional(),
   referencedComparator: z.string().nullable().optional(),
   referencedValue: z.union([z.string(), z.boolean()]).nullable().optional(),
   children: z.array(promptExploderListItemSchema).optional(),
@@ -26,13 +26,13 @@ export const promptExploderListItemSchema: z.ZodType<PromptExploderListItemDto> 
 
 export interface PromptExploderListItemDto {
   id: string;
-  label: string;
-  value: string;
+  label?: string;
+  value?: string;
   text?: string;
   description?: string;
   logicalOperator?: string | null;
   logicalConditions?: any[];
-  referencedParamPath?: string;
+  referencedParamPath?: string | null;
   referencedComparator?: string | null;
   referencedValue?: string | boolean | null;
   children?: PromptExploderListItemDto[];
@@ -161,10 +161,13 @@ export type PromptExploderPatternRuleMap = PromptExploderPatternRuleMapDto;
 export const promptExploderLearnedTemplateSchema = z.object({
   id: z.string(),
   pattern: z.string(),
+  title: z.string().optional(),
+  normalizedTitle: z.string().optional(),
+  anchorTokens: z.array(z.string()).optional(),
   segmentType: promptExploderSegmentTypeSchema.optional(),
   usageCount: z.number(),
   lastUsedAt: z.string(),
-  state: z.record(z.string(), z.unknown()).optional(),
+  state: z.union([z.string(), z.record(z.string(), z.unknown())]).optional(),
 });
 
 export type PromptExploderLearnedTemplateDto = z.infer<typeof promptExploderLearnedTemplateSchema>;

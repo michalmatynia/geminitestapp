@@ -9,7 +9,7 @@ const TestComponent = () => {
   return (
     <div>
       <div data-testid='headless'>{settings.headless ? 'true' : 'false'}</div>
-      <button onClick={() => setSettings(prev => ({ ...prev, headless: !prev.headless }))}>
+      <button onClick={() => setSettings((prev: any) => ({ ...prev, headless: !prev.headless }))}>
         Toggle Headless
       </button>
     </div>

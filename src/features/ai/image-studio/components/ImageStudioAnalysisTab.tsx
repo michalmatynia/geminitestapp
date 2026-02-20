@@ -1,5 +1,6 @@
 'use client';
 
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -8,7 +9,7 @@ import {
 } from '@/features/products/constants';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, SelectSimple, useToast, Card, Badge } from '@/shared/ui';
+import { Button, Card, SelectSimple, useToast } from '@/shared/ui';
 
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsState } from '../context/SlotsContext';
@@ -37,6 +38,12 @@ import {
   type ObjectLayoutCustomPreset,
   type ObjectLayoutPresetOptionValue,
 } from '../utils/object-layout-presets';
+import {
+  saveImageStudioAnalysisApplyIntent,
+  saveImageStudioAnalysisPlanSnapshot,
+  type ImageStudioAnalysisApplyTarget,
+  type ImageStudioAnalysisSharedLayout,
+} from '../utils/analysis-bridge';
 
 import type {
   ImageStudioCenterDetectionMode,
@@ -87,6 +94,9 @@ const normalizeThreshold = (
 
 export function ImageStudioAnalysisTab(): React.JSX.Element {
   const { toast } = useToast();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const settingsStore = useSettingsStore();
   const { projectId, projectsQuery } = useProjectsState();
   const { workingSlot } = useSlotsState();
@@ -110,6 +120,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<AnalysisStatus>('idle');
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [resultSourceSlotId, setResultSourceSlotId] = useState('');
   const abortControllerRef = useRef<AbortController | null>(null);
   const skipAdvancedDefaultsSaveRef = useRef(true);
   const selectedCustomPresetIdRef = useRef<string | null>(null);

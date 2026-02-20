@@ -264,10 +264,14 @@ export const readPendingCaseResolverPromptExploderPayload =
 
 export const discardPendingCaseResolverPromptExploderPayload =
 (): CaseResolverPromptExploderPendingPayload | null => {
-  const consumed = toCaseResolverPendingPayload(consumePromptExploderApplyPromptForCaseResolver());
-  if (consumed) return consumed;
   const snapshot = readPromptExploderApplyPayloadSnapshot();
   const snapshotPayload = toCaseResolverPendingPayload(snapshot.payload);
+  if (snapshotPayload && snapshot.isExpired) {
+    clearPromptExploderApplyPayload();
+    return snapshotPayload;
+  }
+  const consumed = toCaseResolverPendingPayload(consumePromptExploderApplyPromptForCaseResolver());
+  if (consumed) return consumed;
   if (!snapshotPayload) return null;
   clearPromptExploderApplyPayload();
   return snapshotPayload;

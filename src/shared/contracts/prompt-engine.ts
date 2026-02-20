@@ -163,6 +163,7 @@ export type PromptEngineSettingsDto = z.infer<typeof promptEngineSettingsSchema>
 
 export const promptValidationRuntimeProfileSchema = z.enum(['all', 'pattern_pack', 'learned_only']);
 export type PromptValidationRuntimeProfileDto = z.infer<typeof promptValidationRuntimeProfileSchema>;
+export type PromptValidationRuntimeProfile = PromptValidationRuntimeProfileDto;
 
 export const promptValidationRuntimeIdentitySchema = z.object({
   scope: promptExploderRuntimeValidationScopeSchema,
@@ -175,6 +176,7 @@ export const promptValidationRuntimeIdentitySchema = z.object({
 });
 
 export type PromptValidationRuntimeIdentityDto = z.infer<typeof promptValidationRuntimeIdentitySchema>;
+export type PromptValidationRuntimeIdentity = PromptValidationRuntimeIdentityDto;
 
 export const promptValidationRuntimeSelectionSchema = z.object({
   identity: promptValidationRuntimeIdentitySchema,
@@ -186,6 +188,7 @@ export const promptValidationRuntimeSelectionSchema = z.object({
 });
 
 export type PromptValidationRuntimeSelectionDto = z.infer<typeof promptValidationRuntimeSelectionSchema>;
+export type PromptValidationRuntimeSelection = PromptValidationRuntimeSelectionDto;
 
 export const promptValidationStackResolutionSchema = z.object({
   stack: promptExploderValidationRuleStackSchema,
@@ -197,6 +200,7 @@ export const promptValidationStackResolutionSchema = z.object({
 });
 
 export type PromptValidationStackResolutionDto = z.infer<typeof promptValidationStackResolutionSchema>;
+export type PromptValidationStackResolution = PromptValidationStackResolutionDto;
 
 export const promptValidationStackResolutionInputSchema = z.object({
   stack: promptExploderValidationRuleStackSchema.nullable().optional(),
@@ -204,6 +208,7 @@ export const promptValidationStackResolutionInputSchema = z.object({
 });
 
 export type PromptValidationStackResolutionInputDto = z.infer<typeof promptValidationStackResolutionInputSchema>;
+export type PromptValidationStackResolutionInput = PromptValidationStackResolutionInputDto;
 
 /**
  * Prompt Validation Evaluation DTOs

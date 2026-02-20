@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { dtoBaseSchema } from './base';
+import { dtoBaseSchema, namedDtoSchema } from './base';
 
 /**
  * Prompt Exploder Basic DTOs

@@ -13,8 +13,8 @@ import {
   useCreateSlug,
   useDeleteSlug,
 } from '@/features/cms/hooks/useCmsQueries';
-import type { CmsDomain, Slug } from '@/features/cms/types';
-import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from '@/features/cms/types/domain-settings';
+import type { CmsDomain, Slug } from '@/shared/contracts/cms';
+import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from '@/shared/contracts/cms/domain-settings';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {

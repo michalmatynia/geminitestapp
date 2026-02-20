@@ -4,7 +4,7 @@ import type {
 } from '@/features/admin/pages/validator-scope';
 import {
   type PromptValidationRuntimeSelection,
-} from '@/features/prompt-core/contracts';
+} from '@/shared/contracts';
 import {
   PromptValidationRuntimeError,
   PromptValidationScopeResolutionError,

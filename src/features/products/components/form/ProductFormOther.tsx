@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { CatalogMultiSelectField } from '@/features/products/components/form/CatalogMultiSelectField';
@@ -8,21 +8,82 @@ import { CategorySingleSelectField } from '@/features/products/components/form/C
 import { ProducerMultiSelectField } from '@/features/products/components/form/ProducerMultiSelectField';
 import { TagMultiSelectField } from '@/features/products/components/form/TagMultiSelectField';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
-import { useProductValidationSettings } from '@/features/products/context/ProductValidationSettingsContext';
+import {
+  useProductValidationActions,
+  useProductValidationState,
+} from '@/features/products/context/ProductValidationSettingsContext';
 import { ProductFormData, CatalogRecord, PriceGroupWithDetails, ProductCategory } from '@/features/products/types';
 import {
   getIssueReplacementPreview,
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
-import { Button, Input, SelectSimple, FormSection, FormField, StandardDataTablePanel, StatusBadge, Alert, Label } from '@/shared/ui';
+import { Button, Input, SelectSimple, FormSection, FormField, StandardDataTablePanel, StatusBadge, Alert } from '@/shared/ui';
 
-import { ValidatorIssueHint } from './ProductFormGeneral';
+import { IssueHintRow, ValidatorIssueHint } from './ProductFormGeneral';
 
 interface PriceGroupWithCalculatedPrice extends PriceGroupWithDetails {
   calculatedPrice: number | null;
   isCalculated: boolean;
   sourceGroupName: string | undefined;
 }
+
+// ── Category issue hint ───────────────────────────────────────────────────────
+// Owns stable onReplace/onDeny callbacks so parent re-renders don't cause
+// unnecessary re-renders of category issue hints.
+
+type CategoryIssueHintRowProps = {
+  issue: FieldValidatorIssue;
+  currentCategoryLabel: string;
+  proposedCategoryLabel: string | null;
+  selectedCategoryId: string | null;
+};
+
+const CategoryIssueHintRow = memo(function CategoryIssueHintRow({
+  issue,
+  currentCategoryLabel,
+  proposedCategoryLabel,
+  selectedCategoryId,
+}: CategoryIssueHintRowProps): React.JSX.Element {
+  const { setCategoryId } = useProductFormContext();
+  const { acceptIssue, denyIssue, getDenyActionLabel } = useProductValidationActions();
+
+  const onReplace = useCallback((): void => {
+    const currentValue = selectedCategoryId ?? '';
+    const nextValue = getIssueReplacementPreview(currentValue, issue).trim();
+    acceptIssue({
+      fieldName: 'categoryId',
+      patternId: issue.patternId,
+      postAcceptBehavior: issue.postAcceptBehavior,
+      message: issue.message,
+      replacementValue: issue.replacementValue,
+    });
+    if (!nextValue || nextValue === currentValue) return;
+    setCategoryId(nextValue);
+  }, [acceptIssue, issue, selectedCategoryId, setCategoryId]);
+
+  const onDeny = useCallback((): void => {
+    denyIssue({
+      fieldName: 'categoryId',
+      patternId: issue.patternId,
+      message: issue.message,
+      replacementValue: issue.replacementValue,
+    });
+  }, [denyIssue, issue.message, issue.patternId, issue.replacementValue]);
+
+  return (
+    <ValidatorIssueHint
+      issue={issue}
+      value={currentCategoryLabel}
+      proposedValueOverride={proposedCategoryLabel}
+      hideMatchSnippet
+      onReplace={issue.replacementValue ? onReplace : undefined}
+      onDeny={onDeny}
+      denyLabel={getDenyActionLabel(issue.patternId)}
+    />
+  );
+});
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 type ProductFormOtherProps = {
   visibleFieldIssues: Record<string, FieldValidatorIssue[]>;
@@ -42,24 +103,25 @@ export default function ProductFormOther({
     filteredPriceGroups,
     product,
   } = useProductFormContext();
-  const {
-    validatorEnabled,
-    getDenyActionLabel,
-    acceptIssue,
-    denyIssue,
-  } = useProductValidationSettings();
 
-  const { register, setValue, watch, getValues } = useFormContext<ProductFormData>();
-  const allValues = watch();
+  // Subscribe only to the fields this component needs — avoids cascade re-renders
+  // triggered by unrelated fields (name, description, etc.).
+  const { validatorEnabled } = useProductValidationState();
+
+  const { register, setValue, watch } = useFormContext<ProductFormData>();
+  const basePrice = watch('price') || 0;
+  const stockValue = watch('stock');
+  const selectedDefaultPriceGroupId = watch('defaultPriceGroupId');
+
   const selectedCategoryName = useMemo((): string => {
     if (!selectedCategoryId) return '';
     const category =
       categories.find((item: ProductCategory) => item.id === selectedCategoryId) ?? null;
     return category?.name?.trim() ?? '';
   }, [categories, selectedCategoryId]);
-  const basePrice = watch('price') || 0;
-  const selectedDefaultPriceGroupId = watch('defaultPriceGroupId');
+
   const hasCatalogs = selectedCatalogIds.length > 0;
+
   const getIssueList = (fieldName: string): FieldValidatorIssue[] => {
     if (!validatorEnabled) return [];
     const issueList = visibleFieldIssues[fieldName];
@@ -70,6 +132,7 @@ export default function ProductFormOther({
   const stockIssueList = getIssueList('stock');
   const stockIssue = stockIssueList[0];
   const categoryIssueList = getIssueList('categoryId');
+
   const categoryNameById = useMemo((): Map<string, string> => {
     const map = new Map<string, string>();
     for (const category of categories) {
@@ -80,31 +143,6 @@ export default function ProductFormOther({
     }
     return map;
   }, [categories]);
-  const applyNumericIssueReplacement = (
-    field: 'price' | 'stock',
-    issue: FieldValidatorIssue
-  ): void => {
-    const rawCurrent = getValues(field);
-    const currentValue =
-      typeof rawCurrent === 'number' && Number.isFinite(rawCurrent)
-        ? String(rawCurrent)
-        : '';
-    const nextValue = getIssueReplacementPreview(currentValue, issue);
-    if (nextValue === currentValue) return;
-    const numericValue = Number(nextValue);
-    if (!Number.isFinite(numericValue)) return;
-    const normalizedNumeric = Math.max(0, Math.floor(numericValue));
-    setValue(field, normalizedNumeric as ProductFormData[typeof field], {
-      shouldDirty: true,
-      shouldTouch: true,
-    });
-  };
-  const applyCategoryIssueReplacement = (issue: FieldValidatorIssue): void => {
-    const currentValue = selectedCategoryId ?? '';
-    const nextValue = getIssueReplacementPreview(currentValue, issue).trim();
-    if (!nextValue || nextValue === currentValue) return;
-    setCategoryId(nextValue);
-  };
 
   // Check if price group is auto-assigned from catalog (for new products only)
   const isNewProduct = !product;
@@ -114,7 +152,6 @@ export default function ProductFormOther({
   // Calculate prices for all price groups
   const priceGroupPrices = filteredPriceGroups.map((group: PriceGroupWithDetails) => {
     if (!group.sourceGroupId || !group.priceMultiplier) {
-      // This is a base price group (not dependent)
       return {
         ...group,
         calculatedPrice: group.id === selectedDefaultPriceGroupId ? basePrice : null,
@@ -123,8 +160,6 @@ export default function ProductFormOther({
       };
     }
 
-    // This is a dependent price group
-    // Find the source group's price
     const sourceGroup = filteredPriceGroups.find((g: PriceGroupWithDetails) => g.id === group.sourceGroupId);
     if (!sourceGroup) {
       return {
@@ -135,7 +170,6 @@ export default function ProductFormOther({
       };
     }
 
-    // If the source group is the selected default, use the base price
     const sourcePrice = sourceGroup.id === selectedDefaultPriceGroupId ? basePrice : null;
     const calculatedPrice = sourcePrice ? sourcePrice * group.priceMultiplier : null;
 
@@ -174,39 +208,18 @@ export default function ProductFormOther({
             />
             {validatorEnabled &&
               priceIssueList.map((issue: FieldValidatorIssue) => (
-                <ValidatorIssueHint
+                <IssueHintRow
                   key={issue.patternId}
+                  fieldName='price'
                   issue={issue}
-                  value={String(allValues['price'] ?? '')}
-                  onReplace={
-                    issue.replacementValue
-                      ? (): void => {
-                        acceptIssue({
-                          fieldName: 'price',
-                          patternId: issue.patternId,
-                          postAcceptBehavior: issue.postAcceptBehavior,
-                          message: issue.message,
-                          replacementValue: issue.replacementValue,
-                        });
-                        applyNumericIssueReplacement('price', issue);
-                      }
-                      : undefined
-                  }
-                  onDeny={() => {
-                    denyIssue({
-                      fieldName: 'price',
-                      patternId: issue.patternId,
-                      message: issue.message,
-                      replacementValue: issue.replacementValue,
-                    });
-                  }}
-                  denyLabel={getDenyActionLabel(issue.patternId)}
+                  fieldValue={String(basePrice || 0)}
+                  numericField='price'
                 />
               ))}
           </FormField>
 
-          <FormField 
-            label='Default Price Group' 
+          <FormField
+            label='Default Price Group'
             id='defaultPriceGroupId'
             description={isPriceGroupAutoAssigned ? 'Auto-assigned from catalog' : undefined}
           >
@@ -314,33 +327,12 @@ export default function ProductFormOther({
           />
           {validatorEnabled &&
             stockIssueList.map((issue: FieldValidatorIssue) => (
-              <ValidatorIssueHint
+              <IssueHintRow
                 key={issue.patternId}
+                fieldName='stock'
                 issue={issue}
-                value={String(allValues['stock'] ?? '')}
-                onReplace={
-                  issue.replacementValue
-                    ? (): void => {
-                      acceptIssue({
-                        fieldName: 'stock',
-                        patternId: issue.patternId,
-                        postAcceptBehavior: issue.postAcceptBehavior,
-                        message: issue.message,
-                        replacementValue: issue.replacementValue,
-                      });
-                      applyNumericIssueReplacement('stock', issue);
-                    }
-                    : undefined
-                }
-                onDeny={() => {
-                  denyIssue({
-                    fieldName: 'stock',
-                    patternId: issue.patternId,
-                    message: issue.message,
-                    replacementValue: issue.replacementValue,
-                  });
-                }}
-                denyLabel={getDenyActionLabel(issue.patternId)}
+                fieldValue={String(stockValue ?? '')}
+                numericField='stock'
               />
             ))}
         </FormField>
@@ -357,49 +349,24 @@ export default function ProductFormOther({
             placeholder={hasCatalogs ? 'Select category' : 'Select a catalog first'}
           />
           {validatorEnabled &&
-            categoryIssueList.map((issue: FieldValidatorIssue) => (
-              (() => {
-                const currentCategoryLabel =
-                  selectedCategoryName ||
-                  (selectedCategoryId ? categoryNameById.get(selectedCategoryId) ?? selectedCategoryId : '(none)');
-                const replacementId = issue.replacementValue?.trim() ?? '';
-                const proposedCategoryLabel = replacementId
-                  ? categoryNameById.get(replacementId) ?? replacementId
-                  : null;
-                return (
-                  <ValidatorIssueHint
-                    key={issue.patternId}
-                    issue={issue}
-                    value={currentCategoryLabel}
-                    proposedValueOverride={proposedCategoryLabel}
-                    hideMatchSnippet
-                    onReplace={
-                      issue.replacementValue
-                        ? (): void => {
-                          acceptIssue({
-                            fieldName: 'categoryId',
-                            patternId: issue.patternId,
-                            postAcceptBehavior: issue.postAcceptBehavior,
-                            message: issue.message,
-                            replacementValue: issue.replacementValue,
-                          });
-                          applyCategoryIssueReplacement(issue);
-                        }
-                        : undefined
-                    }
-                    onDeny={() => {
-                      denyIssue({
-                        fieldName: 'categoryId',
-                        patternId: issue.patternId,
-                        message: issue.message,
-                        replacementValue: issue.replacementValue,
-                      });
-                    }}
-                    denyLabel={getDenyActionLabel(issue.patternId)}
-                  />
-                );
-              })()
-            ))}
+            categoryIssueList.map((issue: FieldValidatorIssue) => {
+              const currentCategoryLabel =
+                selectedCategoryName ||
+                (selectedCategoryId ? categoryNameById.get(selectedCategoryId) ?? selectedCategoryId : '(none)');
+              const replacementId = issue.replacementValue?.trim() ?? '';
+              const proposedCategoryLabel = replacementId
+                ? categoryNameById.get(replacementId) ?? replacementId
+                : null;
+              return (
+                <CategoryIssueHintRow
+                  key={issue.patternId}
+                  issue={issue}
+                  currentCategoryLabel={currentCategoryLabel}
+                  proposedCategoryLabel={proposedCategoryLabel}
+                  selectedCategoryId={selectedCategoryId}
+                />
+              );
+            })}
           {selectedCategoryId ? (
             <div className='-mt-2 flex justify-end'>
               <Button

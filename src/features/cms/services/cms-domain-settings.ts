@@ -6,7 +6,7 @@ import {
   CMS_DOMAIN_SETTINGS_KEY,
   normalizeCmsDomainSettings,
   type CmsDomainSettings,
-} from '@/features/cms/types/domain-settings';
+} from '@/shared/contracts/cms/domain-settings';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';

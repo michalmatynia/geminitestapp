@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
 import { useCreateTheme } from '@/features/cms/hooks/useCmsQueries';
-import type { CmsThemeColors, CmsThemeTypography, CmsThemeSpacing, CmsThemeCreateInput } from '@/features/cms/types';
+import type { CmsThemeColors, CmsThemeTypography, CmsThemeSpacing, CmsThemeCreateInput } from '@/shared/contracts/cms';
 import { cmsThemeCreateSchema } from '@/features/cms/validations/api';
 import { logClientError } from '@/features/observability';
 import { Input, FormSection, FormField, PageLayout, Alert, FormActions, Breadcrumbs } from '@/shared/ui';

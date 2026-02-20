@@ -32,7 +32,7 @@ import {
   fetchThemes,
   updateTheme,
 } from '@/features/cms/api/themes';
-import type { Page, PageSummary, Slug, CmsDomain, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from '@/features/cms/types';
+import type { Page, PageSummary, Slug, CmsDomain, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from '@/shared/contracts/cms';
 import {
   createDeleteMutationV2,
   createListQueryV2,

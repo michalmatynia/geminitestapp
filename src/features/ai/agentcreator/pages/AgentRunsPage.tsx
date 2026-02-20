@@ -6,8 +6,6 @@ import React, { useState, useMemo, useCallback } from 'react';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { 
   Button, 
-  SectionHeader, 
-  RefreshButton, 
   MetadataItem, 
   PropertyRow, 
   Hint, 
@@ -66,29 +64,14 @@ export default function AgentRunsPage(): React.JSX.Element {
           },
           isRefreshing: isAgentRunsFetching,
         }}
-        header={
-          <SectionHeader
-            title='Agent Runs'
-            description='Manage and monitor agent runs across the system.'
-            eyebrow={
-              <Breadcrumbs
-                items={[
-                  { label: 'Admin', href: '/admin' },
-                  { label: 'Agent Creator', href: '/admin/agentcreator' },
-                  { label: 'Runs' }
-                ]}
-                className='mb-2'
-              />
-            }
-            actions={
-              <RefreshButton
-                onRefresh={() => {
-                  void queryClient.invalidateQueries();
-                  void refetchAgentRuns();
-                }}
-                isRefreshing={isAgentRunsFetching}
-              />
-            }
+        eyebrow={
+          <Breadcrumbs
+            items={[
+              { label: 'Admin', href: '/admin' },
+              { label: 'Agent Creator', href: '/admin/agentcreator' },
+              { label: 'Runs' }
+            ]}
+            className='mb-2'
           />
         }
         isLoading={isAgentRunsLoading}

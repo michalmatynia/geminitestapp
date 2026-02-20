@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 
-import type { CustomCssAiProvider } from '@/features/cms/types/custom-css-ai';
+import type { CustomCssAiProvider } from '@/shared/contracts/cms/custom-css-ai';
 import { Button, ToggleRow, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField } from '@/shared/ui';
 
 import { useInspectorAi } from '../context/InspectorAiContext';

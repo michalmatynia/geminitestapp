@@ -88,6 +88,7 @@ export const cmsPageComponentSchema = dtoBaseSchema.extend({
 });
 
 export type CmsPageComponentDto = z.infer<typeof cmsPageComponentSchema>;
+export type PageComponent = CmsPageComponentDto;
 
 export const createCmsPageComponentSchema = cmsPageComponentSchema.omit({
   id: true,
@@ -194,6 +195,7 @@ export const clipboardDataSchema = z.object({
 });
 
 export type ClipboardDataDto = z.infer<typeof clipboardDataSchema>;
+export type ClipboardData = ClipboardDataDto;
 
 export const pageBuilderSnapshotSchema = z.object({
   currentPage: z.lazy(() => cmsPageSchema).nullable(),
@@ -201,6 +203,7 @@ export const pageBuilderSnapshotSchema = z.object({
 });
 
 export type PageBuilderSnapshotDto = z.infer<typeof pageBuilderSnapshotSchema>;
+export type PageBuilderSnapshot = PageBuilderSnapshotDto;
 
 export const pageBuilderHistoryDtoSchema = z.object({
   past: z.array(pageBuilderSnapshotSchema),
@@ -208,6 +211,7 @@ export const pageBuilderHistoryDtoSchema = z.object({
 });
 
 export type PageBuilderHistoryDto = z.infer<typeof pageBuilderHistoryDtoSchema>;
+export type PageBuilderHistory = PageBuilderHistoryDto;
 
 /**
  * CMS Inspector Settings DTO
@@ -224,6 +228,17 @@ export const cmsInspectorSettingsSchema = z.object({
 });
 
 export type CmsInspectorSettingsDto = z.infer<typeof cmsInspectorSettingsSchema>;
+export type InspectorSettings = CmsInspectorSettingsDto;
+
+export const DEFAULT_INSPECTOR_SETTINGS: InspectorSettings = {
+  showTooltip: true,
+  showStyleSettings: true,
+  showStructureInfo: true,
+  showIdentifiers: false,
+  showVisibilityInfo: true,
+  showConnectionInfo: true,
+  showEditorChrome: false,
+};
 
 export const pageBuilderStateSchema = z.object({
   pages: z.array(cmsPageSummarySchema),
@@ -240,6 +255,7 @@ export const pageBuilderStateSchema = z.object({
 });
 
 export type PageBuilderStateDto = z.infer<typeof pageBuilderStateSchema>;
+export type PageBuilderState = PageBuilderStateDto;
 
 export const pageBuilderActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('UNDO') }),
@@ -305,19 +321,11 @@ export const pageBuilderActionSchema = z.discriminatedUnion('type', [
 ]);
 
 export type PageBuilderActionDto = z.infer<typeof pageBuilderActionSchema>;
+export type PageBuilderAction = PageBuilderActionDto;
 
 /**
  * CMS Page Contract
  */
-
-export const pageComponentSchema = z.object({
-  type: z.string(),
-  order: z.number(),
-  content: z.record(z.string(), z.unknown()),
-});
-
-export type PageComponentDto = z.infer<typeof pageComponentSchema>;
-export type PageComponent = PageComponentDto;
 
 export const cmsPageSchema = dtoBaseSchema.extend({
   name: z.string(),

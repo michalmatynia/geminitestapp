@@ -5,7 +5,7 @@ import { useMemo, useState, useEffect } from 'react';
 
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { useCmsDomains, useCmsSlug, useCmsSlugDomains, useUpdateSlug, useUpdateSlugDomains } from '@/features/cms/hooks/useCmsQueries';
-import type { CmsDomain, Slug } from '@/features/cms/types';
+import type { CmsDomain, Slug } from '@/shared/contracts/cms';
 import {
   cmsSlugDomainsUpdateSchema,
   cmsSlugUpdateSchema,

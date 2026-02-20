@@ -119,7 +119,7 @@ export async function getTeachingAgentById(agentId: string): Promise<AgentTeachi
   };
 }
 
-export async function upsertTeachingAgent(input: Partial<AgentTeachingAgentRecord> & { name: string }): Promise<AgentTeachingAgentRecord> {
+export async function upsertTeachingAgent(input: Partial<AgentTeachingAgentRecord>): Promise<AgentTeachingAgentRecord> {
   if (!isMongoAvailable()) {
     throw new Error('MongoDB is not configured for agent teaching data.');
   }

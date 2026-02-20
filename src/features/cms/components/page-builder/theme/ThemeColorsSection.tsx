@@ -3,7 +3,7 @@
 import { ArrowLeft, ChevronDown } from 'lucide-react';
 import React, { useCallback } from 'react';
 
-import type { ColorScheme, ThemeSettings } from '@/features/cms/types/theme-settings';
+import type { ColorScheme, ThemeSettings } from '@/shared/contracts/cms/theme-settings';
 import { Button, Badge } from '@/shared/ui';
 
 import { useThemeColors } from './ThemeColorsContext';

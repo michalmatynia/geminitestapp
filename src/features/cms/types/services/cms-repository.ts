@@ -1,4 +1,4 @@
-import type { Page, Slug, PageComponent, PageStatus, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from '@/features/cms/types';
+import type { Page, Slug, PageComponent, PageStatus, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from '@/shared/contracts/cms';
 
 export interface PageUpdateData {
   name?: string | undefined;

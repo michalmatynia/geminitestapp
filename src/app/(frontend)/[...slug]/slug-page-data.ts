@@ -7,8 +7,8 @@ import { getSlugForDomainByValue, resolveCmsDomainFromHeaders } from '@/features
 import { getCmsMenuSettings } from '@/features/cms/services/cms-menu-settings';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings';
-import type { CmsTheme, Page, PageComponent } from '@/features/cms/types';
-import { buildColorSchemeMap } from '@/features/cms/types/theme-settings';
+import type { CmsTheme, Page, PageComponent } from '@/shared/contracts/cms';
+import { buildColorSchemeMap } from '@/shared/contracts/cms/theme-settings';
 
 import type { Metadata } from 'next';
 import type { Session } from 'next-auth';
@@ -106,16 +106,18 @@ export const loadSlugRenderData = async (page: Page): Promise<SlugRenderData> =>
   const themeSettings = await getCmsThemeSettings();
   const menuSettings = await getCmsMenuSettings(domain.id);
   const colorSchemes = buildColorSchemeMap(themeSettings);
-  const layout = { fullWidth: themeSettings.fullWidth };
+  const layout = { fullWidth: Boolean(themeSettings.fullWidth) };
   const mediaVars = getMediaStyleVars(themeSettings);
   const mediaStyles = getMediaInlineStyles(themeSettings);
   const hoverEffect = themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined;
   const hoverScale = themeSettings.enableAnimations ? themeSettings.hoverScale : undefined;
   const showMenu = page.showMenu !== false;
   const rendererComponents: PageComponent[] = (page.components ?? []).map((component) => ({
+    id: component.id ?? `component-${Math.random().toString(36).slice(2, 9)}`,
     type: component.type,
     order: component.order || 0,
     content: (component.content as Record<string, unknown>) ?? {},
+    pageId: page.id,
   }));
 
   return {

@@ -42,7 +42,6 @@ export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): P
   const agent: AgentTeachingAgentRecord = await upsertTeachingAgent({
     ...existing,
     id: agentId,
-    ...(data.name !== undefined ? { name: data.name } : {}),
     ...(data.description !== undefined ? { description: data.description ?? null } : {}),
     ...(data.llmModel !== undefined ? { llmModel: data.llmModel } : {}),
     ...(data.embeddingModel !== undefined ? { embeddingModel: data.embeddingModel } : {}),

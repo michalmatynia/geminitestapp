@@ -12,7 +12,7 @@ import type {
   CmsThemeSpacing,
   CmsThemeTypography,
   CmsThemeUpdateInput,
-} from '@/features/cms/types';
+} from '@/shared/contracts/cms';
 import { cmsThemeUpdateSchema } from '@/features/cms/validations/api';
 import { logClientError } from '@/features/observability';
 import { Input, FormSection, FormField, FormActions, PageLayout, Alert, LoadingState } from '@/shared/ui';

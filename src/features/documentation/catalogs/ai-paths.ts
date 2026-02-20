@@ -1,8 +1,9 @@
+import { DOCUMENTATION_MODULE_IDS, type DocumentationEntry } from '@/features/documentation/types';
+
 import {
   AI_PATHS_TOOLTIP_CATALOG,
   type AiPathsTooltipDocEntry,
 } from '../../../../docs/ai-paths/tooltip-catalog';
-import { DOCUMENTATION_MODULE_IDS, type DocumentationEntry } from '../types';
 
 export type AiPathsDocEntry = AiPathsTooltipDocEntry;
 

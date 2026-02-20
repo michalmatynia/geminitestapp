@@ -1,10 +1,11 @@
+import { DOCUMENTATION_MODULE_IDS, type DocumentationEntry } from '@/features/documentation/types';
+
 import {
   VALIDATOR_FUNCTION_DOCS,
   VALIDATOR_UI_DOCS,
   type ValidatorFunctionDoc,
   type ValidatorUiDoc,
 } from './validator-docs';
-import { DOCUMENTATION_MODULE_IDS, type DocumentationEntry } from '../types';
 
 const UI_DOC_PATH = '/docs/validator/tooltips.md';
 const FUNCTION_DOC_PATH = '/docs/validator/function-reference.md';

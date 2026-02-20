@@ -4,9 +4,9 @@ import { Trash2, MousePointer2, Monitor, Smartphone, PanelRightClose, Paintbrush
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { APP_EMBED_SETTING_KEY, type AppEmbedId, APP_EMBED_OPTIONS } from '@/features/app-embeds/lib/constants';
-import type { CssAnimationConfig } from '@/features/cms/types/css-animations';
-import type { CustomCssAiConfig } from '@/features/cms/types/custom-css-ai';
-import { DEFAULT_CUSTOM_CSS_AI_CONFIG } from '@/features/cms/types/custom-css-ai';
+import type { CssAnimationConfig } from '@/shared/contracts/cms/css-animations';
+import type { CustomCssAiConfig } from '@/shared/contracts/cms/custom-css-ai';
+import { DEFAULT_CUSTOM_CSS_AI_CONFIG } from '@/shared/contracts/cms/custom-css-ai';
 import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
 import type { GsapAnimationConfig } from '@/features/gsap';
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';

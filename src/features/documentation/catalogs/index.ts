@@ -1,3 +1,5 @@
+import type { DocumentationEntry } from '@/features/documentation/types';
+
 import {
   AI_PATHS_DOCUMENTATION_CATALOG,
 } from './ai-paths';
@@ -13,8 +15,6 @@ import {
 import {
   VALIDATOR_DOCUMENTATION_CATALOG,
 } from './validator';
-
-import type { DocumentationEntry } from '../types';
 
 export const DOCUMENTATION_CATALOG: DocumentationEntry[] = [
   ...AI_PATHS_DOCUMENTATION_CATALOG,

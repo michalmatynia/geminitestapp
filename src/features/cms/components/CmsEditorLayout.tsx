@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { AdminLayout } from '@/features/admin/layout/AdminLayout';
 import { CmsEditorProvider } from '@/features/cms/components/CmsEditorContext';
 import CmsSideMenu from '@/features/cms/components/CmsSideMenu';
-import type { Page } from '@/features/cms/types';
+import type { Page } from '@/shared/contracts/cms';
 
 export default function CmsEditorLayout({
   children,

@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
-import type { MenuSettings } from '@/features/cms/types/menu-settings';
-import type { ColorSchemeColors } from '@/features/cms/types/theme-settings';
+import type { MenuSettings } from '@/shared/contracts/cms/menu-settings';
+import type { ColorSchemeColors } from '@/shared/contracts/cms/theme-settings';
 import { getGsapFromVars } from '@/features/gsap/utils/presets';
 
 const isExternalUrl = (url: string): boolean => /^https?:\/\//i.test(url);

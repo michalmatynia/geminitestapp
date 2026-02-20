@@ -8,8 +8,8 @@ import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/s
 import { getCmsMenuSettings } from '@/features/cms/services/cms-menu-settings';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings';
-import type { Slug } from '@/features/cms/types';
-import { buildColorSchemeMap } from '@/features/cms/types/theme-settings';
+import type { Slug } from '@/shared/contracts/cms';
+import { buildColorSchemeMap } from '@/shared/contracts/cms/theme-settings';
 import { productService } from '@/features/products/server';
 
 import { HomeCmsDefaultContent } from './home-cms-default-content';
@@ -104,7 +104,7 @@ export default async function Home(): Promise<JSX.Element> {
       menu={menuSettings}
       theme={themeSettings}
       colorSchemes={colorSchemes}
-      showMenu={menuSettings.showMenu}
+      showMenu={Boolean(menuSettings.showMenu)}
     >
       <HomeFallbackContent
         showFallbackHeader={showFallbackHeader}

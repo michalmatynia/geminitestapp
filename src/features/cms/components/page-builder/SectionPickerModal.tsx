@@ -3,7 +3,7 @@
 import { Trash2 } from 'lucide-react';
 import React, { createContext, useContext, useMemo } from 'react';
 
-import type { SectionDefinition } from '@/features/cms/types/page-builder';
+import type { SectionDefinition } from '@/shared/contracts/cms/page-builder';
 import type { ModalStateProps } from '@/shared/contracts/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 import { GenericGridPicker } from '@/shared/ui/templates/pickers';

@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import { CmsDomainSelector } from '@/features/cms';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { useCmsAllSlugs, useCmsSlugs, useCreatePage } from '@/features/cms/hooks/useCmsQueries';
-import type { Slug } from '@/features/cms/types';
+import type { Slug } from '@/shared/contracts/cms';
 import { cmsPageCreateSchema } from '@/features/cms/validations/api';
 import { logClientError } from '@/features/observability';
 import { Input, SectionHeader, Checkbox, ToggleRow, FormSection, FormField, Badge, Alert, StatusBadge, FormActions, Hint, Breadcrumbs } from '@/shared/ui';

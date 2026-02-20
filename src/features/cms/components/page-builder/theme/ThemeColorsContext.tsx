@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useCallback, useMemo, useRe
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
 import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } from '@/features/ai/brain';
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
-import type { ColorSchemeColors, ColorScheme, ThemeSettings } from '@/features/cms/types/theme-settings';
+import type { ColorSchemeColors, ColorScheme, ThemeSettings } from '@/shared/contracts/cms/theme-settings';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

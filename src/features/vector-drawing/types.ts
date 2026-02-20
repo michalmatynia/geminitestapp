@@ -1,13 +1,14 @@
-import type {
-  VectorPointDto,
-  VectorShapeDto,
-  VectorShapeRoleDto,
-  VectorShapeTypeDto,
-  VectorToolModeDto,
-} from '@/shared/contracts/vector';
+import type { VectorShapeDto, VectorPointDto } from '@/shared/contracts/vector-drawing';
 
-export type VectorPoint = VectorPointDto;
 export type VectorShape = VectorShapeDto;
-export type VectorShapeRole = VectorShapeRoleDto;
-export type VectorShapeType = VectorShapeTypeDto;
-export type VectorToolMode = VectorToolModeDto;
+export type VectorPoint = VectorPointDto;
+
+export type VectorTool = 'select' | 'pencil' | 'line' | 'rect' | 'circle' | 'text' | 'eraser';
+
+export interface VectorCanvasState {
+  shapes: VectorShape[];
+  selectedIds: string[];
+  tool: VectorTool;
+  zoom: number;
+  pan: { x: number; y: number };
+}

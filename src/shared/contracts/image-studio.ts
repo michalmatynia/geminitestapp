@@ -322,6 +322,7 @@ export const compositeLayerConfigSchema = z.object({
 });
 
 export type CompositeLayerConfigDto = z.infer<typeof compositeLayerConfigSchema>;
+export type CompositeLayerConfig = CompositeLayerConfigDto;
 
 export const slotGenerationMetadataSchema = z.object({
   role: z.enum(['generation', 'merge', 'base', 'import', 'composite']).optional(),
@@ -393,6 +394,7 @@ export const slotGenerationMetadataSchema = z.object({
 });
 
 export type SlotGenerationMetadataDto = z.infer<typeof slotGenerationMetadataSchema>;
+export type SlotGenerationMetadata = SlotGenerationMetadataDto;
 
 export const imageStudioSlotSchema = dtoBaseSchema.extend({
   projectId: z.string(),
@@ -411,6 +413,7 @@ export const imageStudioSlotSchema = dtoBaseSchema.extend({
 });
 
 export type ImageStudioSlotDto = z.infer<typeof imageStudioSlotSchema>;
+export type ImageStudioSlotRecord = ImageStudioSlotDto;
 
 export const imageStudioProjectSchema = dtoBaseSchema.extend({
   canvasWidthPx: z.number().nullable(),
@@ -418,6 +421,7 @@ export const imageStudioProjectSchema = dtoBaseSchema.extend({
 });
 
 export type ImageStudioProjectDto = z.infer<typeof imageStudioProjectSchema>;
+export type ImageStudioProjectRecord = ImageStudioProjectDto;
 
 export const imageStudioRunDispatchModeSchema = z.enum(['queued', 'inline']);
 export type ImageStudioRunDispatchModeDto = z.infer<typeof imageStudioRunDispatchModeSchema>;
@@ -427,9 +431,11 @@ export const studioProjectsResponseSchema = z.object({
 });
 
 export type StudioProjectsResponseDto = z.infer<typeof studioProjectsResponseSchema>;
+export type StudioProjectsResponse = StudioProjectsResponseDto;
 
 export const studioSlotsResponseSchema = z.object({
   slots: z.array(imageStudioSlotSchema),
 });
 
 export type StudioSlotsResponseDto = z.infer<typeof studioSlotsResponseSchema>;
+export type StudioSlotsResponse = StudioSlotsResponseDto;

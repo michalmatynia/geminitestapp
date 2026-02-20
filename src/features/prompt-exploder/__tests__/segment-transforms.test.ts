@@ -6,7 +6,7 @@ import {
   promptExploderRemoveSegmentById,
   promptExploderSplitSegmentByRange,
 } from '@/features/prompt-exploder/helpers/segment-transforms';
-import type { PromptExploderSegment } from '@/features/prompt-exploder/types';
+import type { PromptExploderSegment } from '@/shared/contracts/prompt-exploder';
 
 const buildSegment = (id: string, text: string, title = 'Segment'): PromptExploderSegment => ({
   id,

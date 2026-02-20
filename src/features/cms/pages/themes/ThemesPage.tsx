@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import React, { useMemo } from 'react';
 
 import { useCmsThemes, useDeleteTheme } from '@/features/cms/hooks/useCmsQueries';
-import type { CmsTheme } from '@/features/cms/types';
+import type { CmsTheme } from '@/shared/contracts/cms';
 import { Button, EmptyState, ActionMenu, DropdownMenuItem, DropdownMenuSeparator, StandardDataTablePanel } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 

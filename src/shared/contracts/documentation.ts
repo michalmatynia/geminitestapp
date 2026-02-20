@@ -58,5 +58,5 @@ export const documentationUiDocSchema = z.object({
 
 export type DocumentationUiDocDto = z.infer<typeof documentationUiDocSchema>;
 
-export type DocumentationEntryKeyDto = `${string}:${string}`];
+export type DocumentationEntryKeyDto = `${string}:${string}`;
 export type DocumentationEntryKey = DocumentationEntryKeyDto;

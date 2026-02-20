@@ -7,7 +7,7 @@ import {
   DEFAULT_THEME,
   normalizeThemeSettings,
   type ThemeSettings,
-} from '@/features/cms/types/theme-settings';
+} from '@/shared/contracts/cms/theme-settings';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';

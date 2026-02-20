@@ -141,7 +141,7 @@ export function useValidatorSettingsController() {
     notifyInfo: (msg) => { toast(msg, { variant: 'info' }); },
   });
 
-  const handleAddPattern = (target?: string): void => {
+  const handleAddPattern = useCallback((target?: string): void => {
     setEditingPattern(null);
     setFormData({
       ...EMPTY_FORM,
@@ -149,23 +149,23 @@ export function useValidatorSettingsController() {
     });
     setTestResult(null);
     setShowModal(true);
-  };
+  }, []);
 
-  const handleEditPattern = (pattern: ProductValidationPattern): void => {
+  const handleEditPattern = useCallback((pattern: ProductValidationPattern): void => {
     setEditingPattern(pattern);
     setFormData(buildFormDataFromPattern(pattern));
     setTestResult(null);
     setShowModal(true);
-  };
+  }, []);
 
-  const handleDuplicatePattern = (pattern: ProductValidationPattern): void => {
+  const handleDuplicatePattern = useCallback((pattern: ProductValidationPattern): void => {
     setEditingPattern(null);
     const duplicated = buildFormDataFromPattern(pattern);
     duplicated.label = buildDuplicateLabel(pattern.label, new Set(patterns.map(p => p.label.toLowerCase())));
     setFormData(duplicated);
     setTestResult(null);
     setShowModal(true);
-  };
+  }, [patterns]);
 
   const handleSavePattern = async (): Promise<void> => {
     if (!formData.label.trim() || !formData.regex.trim() || !formData.message.trim()) {
@@ -256,7 +256,7 @@ export function useValidatorSettingsController() {
     }
   };
 
-  const handleTogglePattern = async (
+  const handleTogglePattern = useCallback(async (
     pattern: ProductValidationPattern
   ): Promise<void> => {
     try {
@@ -273,9 +273,9 @@ export function useValidatorSettingsController() {
         variant: 'error',
       });
     }
-  };
+  }, [updatePattern.mutateAsync, toast]);
 
-  const handleDeletePattern = async (id: string): Promise<void> => {
+  const handleDeletePattern = useCallback(async (id: string): Promise<void> => {
     try {
       await deletePattern.mutateAsync(id);
       toast('Pattern deleted.', { variant: 'success' });
@@ -285,7 +285,7 @@ export function useValidatorSettingsController() {
         variant: 'error',
       });
     }
-  };
+  }, [deletePattern.mutateAsync, toast]);
 
   const handleUpdateSettings = async (
     updates: Partial<{
@@ -319,7 +319,7 @@ export function useValidatorSettingsController() {
     await handleUpdateSettings({ instanceDenyBehavior: nextMap });
   };
 
-  const handleReorder = async (
+  const handleReorder = useCallback(async (
     patternId: string,
     targetIndex: number
   ): Promise<void> => {
@@ -346,22 +346,22 @@ export function useValidatorSettingsController() {
         variant: 'error',
       });
     }
-  };
+  }, [patterns, reorderPatterns.mutateAsync, toast]);
 
-  const handleReorderGroupInGroup = async (
+  const handleReorderGroupInGroup = useCallback(async (
     _groupId: string,
     patternId: string,
     targetIndex: number
   ): Promise<void> => {
     // This is simplified but should satisfy the component's need for now
     await handleReorder(patternId, targetIndex);
-  };
+  }, [handleReorder]);
 
-  const handleDragStart = (e: DragEvent, patternId: string): void => {
+  const handleDragStart = useCallback((e: DragEvent, patternId: string): void => {
     e.dataTransfer.setData('patternId', patternId);
-  };
+  }, []);
 
-  const handleDrop = (pattern: ProductValidationPattern, e: DragEvent): void => {
+  const handleDrop = useCallback((pattern: ProductValidationPattern, e: DragEvent): void => {
     const draggedId = e.dataTransfer.getData('text/plain');
     if (draggedId && draggedId !== pattern.id) {
       const targetIndex = orderedPatterns.findIndex(p => p.id === pattern.id);
@@ -369,7 +369,7 @@ export function useValidatorSettingsController() {
         void handleReorder(draggedId, targetIndex);
       }
     }
-  };
+  }, [orderedPatterns, handleReorder]);
 
   const summary = useMemo(() => ({
     total: patterns.length,

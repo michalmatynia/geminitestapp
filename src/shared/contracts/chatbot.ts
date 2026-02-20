@@ -334,14 +334,14 @@ export interface ChatbotJobDocument {
   finishedAt?: Date | undefined;
 }
 
-export type AgentPlanStepDto = z.any(); // To avoid error if referenced
+export type AgentPlanStepDto = any; // To avoid error if referenced
 export type AgentPlanStep = AgentPlanStepDto;
 
-export type AgentPlanningMetaDto = z.any();
+export type AgentPlanningMetaDto = any;
 export type AgentPlanningMeta = AgentPlanningMetaDto;
 
-export type AgentSessionContextDto = z.any();
+export type AgentSessionContextDto = any;
 export type AgentSessionContext = AgentSessionContextDto;
 
-export type AgentLoginCandidatesDto = z.any();
+export type AgentLoginCandidatesDto = any;
 export type AgentLoginCandidates = AgentLoginCandidatesDto;

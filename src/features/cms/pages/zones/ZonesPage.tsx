@@ -9,7 +9,7 @@ import {
   useDeleteCmsDomain,
   useUpdateCmsDomain,
 } from '@/features/cms/hooks/useCmsQueries';
-import type { CmsDomain } from '@/features/cms/types';
+import type { CmsDomain } from '@/shared/contracts/cms';
 import { logClientError } from '@/features/observability';
 import {
   Button,

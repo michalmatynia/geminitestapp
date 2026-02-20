@@ -2,7 +2,7 @@
 
 import React, { useCallback, useMemo } from 'react';
 
-import type { CmsEventEffectsConfig } from '@/features/cms/types/event-effects';
+import type { CmsEventEffectsConfig } from '@/shared/contracts/cms/event-effects';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 import {
   getEventClassName,

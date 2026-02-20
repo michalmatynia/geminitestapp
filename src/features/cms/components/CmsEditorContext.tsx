@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { Page } from '@/features/cms/types';
+import type { Page } from '@/shared/contracts/cms';
 
 type CmsEditorContextValue = {
   page: Page | null;

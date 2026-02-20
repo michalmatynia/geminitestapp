@@ -172,6 +172,7 @@ export const validatorScopeSchema = z.enum([
 ]);
 
 export type ValidatorScopeDto = z.infer<typeof validatorScopeSchema>;
+export type ValidatorScope = ValidatorScopeDto;
 
 export const validatorPatternListSchema = dtoBaseSchema.extend({
   name: z.string(),
@@ -181,6 +182,7 @@ export const validatorPatternListSchema = dtoBaseSchema.extend({
 });
 
 export type ValidatorPatternListDto = z.infer<typeof validatorPatternListSchema>;
+export type ValidatorPatternList = ValidatorPatternListDto;
 
 export type ValidatorPatternDto = ProductValidationPatternDto;
 export type CreateValidatorPatternDto = CreateProductValidationPatternDto;

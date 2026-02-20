@@ -1,4 +1,4 @@
-import type { ColorSchemeColors, ThemeSettings } from '@/features/cms/types/theme-settings';
+import type { ColorSchemeColors, ThemeSettings } from '@/shared/contracts/cms/theme-settings';
 
 import type React from 'react';
 
@@ -80,24 +80,32 @@ export function getHoverEffectVars(
 const clampNumber = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);
 
-const withOpacity = (hex: string, opacityPercent: number): string => {
-  const normalized = hex.replace('#', '').trim();
+const withOpacity = (hex: unknown, opacityPercent: unknown): string => {
+  const safeHex = typeof hex === 'string' ? hex : '#000000';
+  const safeOpacity = typeof opacityPercent === 'number' && Number.isFinite(opacityPercent)
+    ? opacityPercent
+    : 100;
+  const normalized = safeHex.replace('#', '').trim();
   const expanded =
     normalized.length === 3
       ? normalized.split('').map((c: string) => c + c).join('')
       : normalized;
   if (expanded.length !== 6 || Number.isNaN(Number.parseInt(expanded, 16))) {
-    return hex;
+    return safeHex;
   }
   const r = Number.parseInt(expanded.slice(0, 2), 16);
   const g = Number.parseInt(expanded.slice(2, 4), 16);
   const b = Number.parseInt(expanded.slice(4, 6), 16);
-  const alpha = clampNumber(opacityPercent, 0, 100) / 100;
+  const alpha = clampNumber(safeOpacity, 0, 100) / 100;
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
 const buildMediaShadow = (theme: ThemeSettings): string => {
-  const opacity = clampNumber(theme.imageShadowOpacity, 0, 100) / 100;
+  const opacity = clampNumber(
+    typeof theme.imageShadowOpacity === 'number' ? theme.imageShadowOpacity : 0,
+    0,
+    100
+  ) / 100;
   if (opacity <= 0) return 'none';
   const x = theme.imageShadowX ?? 0;
   const y = theme.imageShadowY ?? 0;
@@ -106,9 +114,11 @@ const buildMediaShadow = (theme: ThemeSettings): string => {
 };
 
 export function getMediaStyleVars(theme: ThemeSettings): React.CSSProperties {
+  const imageRadius = typeof theme.imageRadius === 'number' ? theme.imageRadius : 8;
+  const imageBorderWidth = typeof theme.imageBorderWidth === 'number' ? theme.imageBorderWidth : 0;
   return {
-    ['--cms-media-radius' as keyof React.CSSProperties]: `${theme.imageRadius}px`,
-    ['--cms-media-border-width' as keyof React.CSSProperties]: `${theme.imageBorderWidth}px`,
+    ['--cms-media-radius' as keyof React.CSSProperties]: `${imageRadius}px`,
+    ['--cms-media-border-width' as keyof React.CSSProperties]: `${imageBorderWidth}px`,
     ['--cms-media-border-color' as keyof React.CSSProperties]: withOpacity(
       theme.imageBorderColor,
       theme.imageBorderOpacity
@@ -118,10 +128,12 @@ export function getMediaStyleVars(theme: ThemeSettings): React.CSSProperties {
 }
 
 export function getMediaInlineStyles(theme: ThemeSettings): React.CSSProperties {
+  const imageRadius = typeof theme.imageRadius === 'number' ? theme.imageRadius : 8;
+  const imageBorderWidth = typeof theme.imageBorderWidth === 'number' ? theme.imageBorderWidth : 0;
   return {
-    borderRadius: `${theme.imageRadius}px`,
-    borderWidth: `${theme.imageBorderWidth}px`,
-    borderStyle: theme.imageBorderWidth > 0 ? 'solid' : 'none',
+    borderRadius: `${imageRadius}px`,
+    borderWidth: `${imageBorderWidth}px`,
+    borderStyle: imageBorderWidth > 0 ? 'solid' : 'none',
     borderColor: withOpacity(theme.imageBorderColor, theme.imageBorderOpacity),
     boxShadow: buildMediaShadow(theme),
   };

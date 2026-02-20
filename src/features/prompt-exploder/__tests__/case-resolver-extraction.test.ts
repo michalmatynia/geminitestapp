@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { PROMPT_EXPLODER_PATTERN_PACK } from '@/features/prompt-exploder/pattern-pack';
-import type { PromptExploderSegment } from '@/features/prompt-exploder/types';
+import type { PromptExploderSegment } from '@/shared/contracts/prompt-exploder';
 import {
   buildCaseResolverSegmentCaptureRules,
   type CaseResolverSegmentCaptureRule,

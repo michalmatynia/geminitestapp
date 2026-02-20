@@ -1,23 +1,13 @@
 import type {
-  FilemakerEntityKindDto,
-  FilemakerPartyReferenceDto,
-  FilemakerPersonDto,
   FilemakerOrganizationDto,
-  FilemakerAddressDto,
-  FilemakerDatabaseDto,
-  FilemakerPartyOptionDto,
+  FilemakerProjectDto,
+  FilemakerTemplateDto,
+  FilemakerDocumentDto,
+  FilemakerExportFormatDto,
 } from '@/shared/contracts/filemaker';
 
-export type FilemakerEntityKind = FilemakerEntityKindDto;
-
-export type FilemakerPartyReference = FilemakerPartyReferenceDto;
-
-export type FilemakerPerson = FilemakerPersonDto;
-
 export type FilemakerOrganization = FilemakerOrganizationDto;
-
-export type FilemakerAddress = FilemakerAddressDto;
-
-export type FilemakerDatabase = FilemakerDatabaseDto;
-
-export type FilemakerPartyOption = FilemakerPartyOptionDto;
+export type FilemakerProject = FilemakerProjectDto;
+export type FilemakerTemplate = FilemakerTemplateDto;
+export type FilemakerDocument = FilemakerDocumentDto;
+export type FilemakerExportFormat = FilemakerExportFormatDto;

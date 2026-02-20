@@ -3,7 +3,7 @@
 import * as React from 'react';
 
 import { useCmsEditor } from '@/features/cms/components/CmsEditorContext';
-import type { Page } from '@/features/cms/types';
+import type { Page } from '@/shared/contracts/cms';
 import { Button, SectionHeader, SidePanel } from '@/shared/ui';
 
 import RichTextBlock, { type RichTextContent } from './RichTextBlock';

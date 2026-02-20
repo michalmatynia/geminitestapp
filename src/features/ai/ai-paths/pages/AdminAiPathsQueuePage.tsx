@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 
 import { FileUploadEventsPanel } from '@/features/files/components/FileUploadEventsPanel';
 import ProductListingJobsPanel from '@/features/jobs/components/ProductListingJobsPanel';
-import { Badge, Button, ListPanel, PanelHeader, Tabs, TabsContent, TabsList, TabsTrigger, Breadcrumbs } from '@/shared/ui';
+import { Badge, Button, ListPanel, Tabs, TabsContent, TabsList, TabsTrigger, Breadcrumbs } from '@/shared/ui';
 
 import { ImageStudioRunsQueuePanel } from '../components/ImageStudioRunsQueuePanel';
 import { JobQueuePanel } from '../components/job-queue-panel';
@@ -58,30 +58,27 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
         className='space-y-6'
       >
         <ListPanel
-          header={
-            <PanelHeader
-              title='Job Queue'
-              description={
-                <Breadcrumbs
-                  items={[
-                    { label: 'Admin', href: '/admin' },
-                    { label: 'AI Paths', href: '/admin/ai-paths/queue' },
-                    { label: activeTabMeta.label },
-                  ]}
-                />
-              }
-              customActions={
-                <div className='flex flex-wrap items-center gap-2'>
-                  <Badge variant='processing' className='gap-1.5'>
-                    <ActiveTabIcon className='size-3.5' />
-                    {activeTabMeta.label}
-                  </Badge>
-                  <Badge variant='outline' className='border-white/10 text-gray-300'>
-                    {QUEUE_TABS.length} views
-                  </Badge>
-                </div>
-              }
+          title='Job Queue'
+          eyebrow={
+            <Breadcrumbs
+              items={[
+                { label: 'Admin', href: '/admin' },
+                { label: 'AI Paths', href: '/admin/ai-paths/queue' },
+                { label: activeTabMeta.label },
+              ]}
+              className='mb-2'
             />
+          }
+          headerActions={
+            <div className='flex flex-wrap items-center gap-2'>
+              <Badge variant='processing' className='gap-1.5'>
+                <ActiveTabIcon className='size-3.5' />
+                {activeTabMeta.label}
+              </Badge>
+              <Badge variant='outline' className='border-white/10 text-gray-300'>
+                {QUEUE_TABS.length} views
+              </Badge>
+            </div>
           }
           filters={
             <TabsList className='grid h-auto w-full grid-cols-2 gap-2 border border-border/60 bg-card/30 p-2 lg:grid-cols-4'>

@@ -1,3 +1,5 @@
+import { DOCUMENTATION_MODULE_IDS, type DocumentationEntry } from '@/features/documentation/types';
+
 import {
   IMAGE_STUDIO_CROP_DOC_KEYS,
   IMAGE_STUDIO_DOCS,
@@ -7,7 +9,6 @@ import {
   type ImageStudioDocEntry,
   type ImageStudioDocKey,
 } from './image-studio-docs';
-import { DOCUMENTATION_MODULE_IDS, type DocumentationEntry } from '../types';
 
 const CROP_KEYS = new Set<ImageStudioDocKey>(IMAGE_STUDIO_CROP_DOC_KEYS);
 const OBJECT_LAYOUT_KEYS = new Set<ImageStudioDocKey>(IMAGE_STUDIO_OBJECT_LAYOUT_DOC_KEYS);

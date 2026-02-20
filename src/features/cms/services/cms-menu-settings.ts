@@ -9,7 +9,7 @@ import {
   getCmsMenuSettingsKey,
   normalizeMenuSettings,
   type MenuSettings,
-} from '@/features/cms/types/menu-settings';
+} from '@/shared/contracts/cms/menu-settings';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';

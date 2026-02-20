@@ -5,7 +5,10 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
-import { useProductValidationSettings } from '@/features/products/context/ProductValidationSettingsContext';
+import {
+  useProductValidationActions,
+  useProductValidationState,
+} from '@/features/products/context/ProductValidationSettingsContext';
 import { ProductFormData } from '@/features/products/types';
 import {
   isPatternEnabledForValidationScope,
@@ -157,7 +160,7 @@ type IssueHintRowProps = {
   fieldName: string;
   issue: FieldValidatorIssue;
   fieldValue: string;
-  numericField?: 'weight' | 'sizeLength' | 'sizeWidth' | 'length';
+  numericField?: 'weight' | 'sizeLength' | 'sizeWidth' | 'length' | 'price' | 'stock';
 };
 
 /**
@@ -165,14 +168,14 @@ type IssueHintRowProps = {
  * callbacks via useCallback. Prevents re-rendering hints for unchanged fields
  * when a sibling field is edited.
  */
-const IssueHintRow = memo(function IssueHintRow({
+export const IssueHintRow = memo(function IssueHintRow({
   fieldName,
   issue,
   fieldValue,
   numericField,
 }: IssueHintRowProps): React.JSX.Element {
   const { getValues, setValue } = useFormContext<ProductFormData>();
-  const { acceptIssue, denyIssue, getDenyActionLabel } = useProductValidationSettings();
+  const { acceptIssue, denyIssue, getDenyActionLabel } = useProductValidationActions();
 
   const onReplace = useCallback((): void => {
     if (numericField) {
@@ -255,7 +258,7 @@ export default function ProductFormGeneral({
     validationInstanceScope,
     validatorEnabled,
     formatterEnabled,
-  } = useProductValidationSettings();
+  } = useProductValidationState();
   const {
     filteredLanguages,
     errors,
@@ -886,24 +889,12 @@ export default function ProductFormGeneral({
                 </div>
                 {validatorEnabled &&
                   fieldIssueList.map((issue: FieldValidatorIssue) => (
-                    <ValidatorIssueHint
+                    <IssueHintRow
                       key={issue.patternId}
+                      fieldName={fieldName}
                       issue={issue}
-                      value={fieldValue}
-                      onReplace={
-                        issue.replacementValue
-                          ? () => applyNumericFieldIssueReplacement('sizeWidth', issue)
-                          : undefined
-                      }
-                      onDeny={() => {
-                        denyIssue({
-                          fieldName,
-                          patternId: issue.patternId,
-                          message: issue.message,
-                          replacementValue: issue.replacementValue,
-                        });
-                      }}
-                      denyLabel={getDenyActionLabel(issue.patternId)}
+                      fieldValue={fieldValue}
+                      numericField={fieldName}
                     />
                   ))}
               </>
@@ -944,24 +935,12 @@ export default function ProductFormGeneral({
                 </div>
                 {validatorEnabled &&
                   fieldIssueList.map((issue: FieldValidatorIssue) => (
-                    <ValidatorIssueHint
+                    <IssueHintRow
                       key={issue.patternId}
+                      fieldName={fieldName}
                       issue={issue}
-                      value={fieldValue}
-                      onReplace={
-                        issue.replacementValue
-                          ? () => applyNumericFieldIssueReplacement('length', issue)
-                          : undefined
-                      }
-                      onDeny={() => {
-                        denyIssue({
-                          fieldName,
-                          patternId: issue.patternId,
-                          message: issue.message,
-                          replacementValue: issue.replacementValue,
-                        });
-                      }}
-                      denyLabel={getDenyActionLabel(issue.patternId)}
+                      fieldValue={fieldValue}
+                      numericField={fieldName}
                     />
                   ))}
               </>

@@ -5,8 +5,8 @@ import Image from 'next/image';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useCmsThemes } from '@/features/cms/hooks/useCmsQueries';
-import type { CmsTheme } from '@/features/cms/types';
-import type { ColorScheme, ThemeSettings } from '@/features/cms/types/theme-settings';
+import type { CmsTheme } from '@/shared/contracts/cms';
+import type { ColorScheme, ThemeSettings } from '@/shared/contracts/cms/theme-settings';
 import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
 import {
   Button,

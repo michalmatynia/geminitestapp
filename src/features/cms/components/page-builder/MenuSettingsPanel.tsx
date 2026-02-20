@@ -4,7 +4,7 @@ import { ChevronDown, Plus, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
-import type { CmsDomain } from '@/features/cms/types';
+import type { CmsDomain } from '@/shared/contracts/cms';
 import {
   CMS_MENU_SETTINGS_KEY,
   DEFAULT_MENU_SETTINGS,
@@ -12,8 +12,8 @@ import {
   type MenuItem,
   type MenuSettings,
   normalizeMenuSettings,
-} from '@/features/cms/types/menu-settings';
-import type { ColorScheme } from '@/features/cms/types/theme-settings';
+} from '@/shared/contracts/cms/menu-settings';
+import type { ColorScheme } from '@/shared/contracts/cms/theme-settings';
 import { ANIMATION_PRESETS } from '@/shared/contracts/gsap';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

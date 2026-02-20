@@ -16,29 +16,28 @@ async function main() {
 
   // 2. Create a note
   const note = await prismaNoteRepository.create({
+    name: "Debug Note",
     title: "Debug Note",
     content: "Content",
-    color: null,
-    tagIds: [],
     notebookId: null,
     editorType: 'markdown',
+    categoryId: category.id,
+    themeId: null,
     isPinned: false,
     isArchived: false,
     isFavorite: false,
-    categoryIds: [],
-    relatedNoteIds: [],
   });
   console.log("Created note:", note.id);
 
   // 3. Update note to add category
   console.log("Updating note to add category...");
   const updatedNote = await prismaNoteRepository.update(note.id, {
-    categoryIds: [category.id],
+    categoryId: category.id,
   });
   
-  console.log("Updated note categories:", JSON.stringify(updatedNote?.categories, null, 2));
+  console.log("Updated note category:", updatedNote?.categoryId);
 
-  if (updatedNote?.categories.length === 1 && updatedNote.categories[0]?.categoryId === category.id) {
+  if (updatedNote?.categoryId === category.id) {
     console.log("SUCCESS: Category added correctly.");
   } else {
     console.log("FAILURE: Category NOT added.");

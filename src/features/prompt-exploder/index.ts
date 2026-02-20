@@ -20,4 +20,3 @@ export {
   PROMPT_EXPLODER_BENCHMARK_RECALL_TARGET,
   runPromptExploderBenchmark,
 } from './benchmark';
-export * from './types';

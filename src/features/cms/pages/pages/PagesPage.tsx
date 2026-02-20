@@ -8,7 +8,7 @@ import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import { CmsDomainSelector } from '@/features/cms/components/CmsDomainSelector';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { useCmsPages, useCmsSlugs, useDeletePage } from '@/features/cms/hooks/useCmsQueries';
-import type { PageStatus, PageSummary, Slug } from '@/features/cms/types';
+import type { PageStatus, PageSummary, Slug } from '@/shared/contracts/cms';
 import {
   Button,
   StatusBadge,

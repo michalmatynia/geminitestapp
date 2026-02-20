@@ -11,6 +11,8 @@ type ListPanelVariant = 'default' | 'flat';
 type ListPanelProps = {
   title?: string;
   description?: string;
+  eyebrow?: ReactNode;
+  icon?: ReactNode;
   headerActions?: ReactNode;
   header?: ReactNode; // Legacy or custom header
   refresh?: {
@@ -25,6 +27,8 @@ type ListPanelProps = {
   className?: string;
   contentClassName?: string;
   headerClassName?: string;
+  titleClassName?: string;
+  descriptionClassName?: string;
   alertsClassName?: string;
   filtersClassName?: string;
   actionsClassName?: string;
@@ -43,6 +47,8 @@ const variantStyles: Record<ListPanelVariant, string> = {
 export function ListPanel({
   title,
   description,
+  eyebrow,
+  icon,
   headerActions,
   header,
   refresh,
@@ -54,6 +60,8 @@ export function ListPanel({
   className,
   contentClassName,
   headerClassName,
+  titleClassName,
+  descriptionClassName,
   alertsClassName,
   filtersClassName,
   actionsClassName,
@@ -71,8 +79,12 @@ export function ListPanel({
             <SectionHeader
               title={title ?? ''}
               description={description}
+              eyebrow={eyebrow}
+              icon={icon}
               actions={headerActions}
               refresh={refresh}
+              titleClassName={titleClassName}
+              descriptionClassName={descriptionClassName}
             />
           )}
         </div>

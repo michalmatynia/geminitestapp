@@ -1,4 +1,4 @@
-import { DOCUMENTATION_MODULE_IDS, type DocumentationEntry } from '../types';
+import { DOCUMENTATION_MODULE_IDS, type DocumentationEntry } from '@/features/documentation/types';
 
 export const SHARED_TOOLTIP_DOCUMENTATION_CATALOG: DocumentationEntry[] = [
   {

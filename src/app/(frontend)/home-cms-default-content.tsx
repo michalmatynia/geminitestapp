@@ -19,7 +19,7 @@ export function HomeCmsDefaultContent({
       <CmsPageRenderer
         components={rendererComponents}
         colorSchemes={colorSchemes}
-        layout={{ fullWidth: themeSettings.fullWidth }}
+        layout={{ fullWidth: Boolean(themeSettings.fullWidth) }}
         hoverEffect={themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined}
         hoverScale={themeSettings.enableAnimations ? themeSettings.hoverScale : undefined}
         mediaVars={getMediaStyleVars(themeSettings)}

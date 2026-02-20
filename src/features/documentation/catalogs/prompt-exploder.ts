@@ -1,8 +1,9 @@
+import { DOCUMENTATION_MODULE_IDS, type DocumentationEntry } from '@/features/documentation/types';
+
 import {
   PROMPT_EXPLODER_TOOLTIP_CATALOG,
   type PromptExploderTooltipDocEntry,
 } from '../../../../docs/prompt-exploder/tooltip-catalog';
-import { DOCUMENTATION_MODULE_IDS, type DocumentationEntry } from '../types';
 
 export type PromptExploderDocEntry = PromptExploderTooltipDocEntry;
 

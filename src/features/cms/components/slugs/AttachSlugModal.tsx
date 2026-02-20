@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 
-import type { Slug } from '@/features/cms/types';
+import type { Slug } from '@/shared/contracts/cms';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { FormModal, Checkbox, FormField, SearchInput, LoadingState } from '@/shared/ui';
 

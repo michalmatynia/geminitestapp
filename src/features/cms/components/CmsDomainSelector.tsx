@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
-import type { CmsDomain } from '@/features/cms/types';
+import type { CmsDomain } from '@/shared/contracts/cms';
 import { SelectSimple } from '@/shared/ui';
 
 type CmsDomainSelectorProps = {

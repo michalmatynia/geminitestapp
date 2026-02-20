@@ -3,6 +3,7 @@
 import {
   createContext,
   useContext,
+  useMemo,
   type Dispatch,
   type SetStateAction,
 } from 'react';
@@ -29,15 +30,37 @@ export type ProductValidationAcceptIssueInput = {
   replacementValue?: string | null;
 };
 
-export interface ProductValidationSettingsValue {
+// ── State sub-context ────────────────────────────────────────────────────────
+// Re-renders consumers only when the boolean/enum settings change.
+
+export interface ProductValidationStateValue {
   validationInstanceScope: ProductValidationInstanceScope;
   validatorEnabled: boolean;
   formatterEnabled: boolean;
+  validationDenyBehavior: ProductValidationDenyBehavior;
+  denyActionLabel: 'Deny' | 'Mute';
+}
+
+const ProductValidationStateContext =
+  createContext<ProductValidationStateValue | null>(null);
+
+export function useProductValidationState(): ProductValidationStateValue {
+  const ctx = useContext(ProductValidationStateContext);
+  if (!ctx) {
+    throw internalError(
+      'useProductValidationState must be used within ProductValidationSettingsProvider'
+    );
+  }
+  return ctx;
+}
+
+// ── Actions sub-context ──────────────────────────────────────────────────────
+// Stable function references — subscribers do NOT re-render on state changes.
+
+export interface ProductValidationActionsValue {
   setValidatorEnabled: Dispatch<SetStateAction<boolean>>;
   setFormatterEnabled: Dispatch<SetStateAction<boolean>>;
-  validationDenyBehavior: ProductValidationDenyBehavior;
   setValidationDenyBehavior: Dispatch<SetStateAction<ProductValidationDenyBehavior>>;
-  denyActionLabel: 'Deny' | 'Mute';
   getDenyActionLabel: (patternId: string) => 'Deny' | 'Mute';
   isIssueDenied: (fieldName: string, patternId: string) => boolean;
   denyIssue: (input: ProductValidationDenyIssueInput) => void;
@@ -45,7 +68,37 @@ export interface ProductValidationSettingsValue {
   acceptIssue: (input: ProductValidationAcceptIssueInput) => void;
 }
 
-const ProductValidationSettingsContext = createContext<ProductValidationSettingsValue | null>(null);
+const ProductValidationActionsContext =
+  createContext<ProductValidationActionsValue | null>(null);
+
+export function useProductValidationActions(): ProductValidationActionsValue {
+  const ctx = useContext(ProductValidationActionsContext);
+  if (!ctx) {
+    throw internalError(
+      'useProductValidationActions must be used within ProductValidationSettingsProvider'
+    );
+  }
+  return ctx;
+}
+
+// ── Combined type & backward-compatible hook ─────────────────────────────────
+
+export interface ProductValidationSettingsValue
+  extends ProductValidationStateValue,
+    ProductValidationActionsValue {}
+
+/**
+ * Combined hook for components that need both state and actions.
+ * Prefer `useProductValidationState()` or `useProductValidationActions()`
+ * for components that only need one subset, to avoid unnecessary re-renders.
+ */
+export function useProductValidationSettings(): ProductValidationSettingsValue {
+  const state = useProductValidationState();
+  const actions = useProductValidationActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
+}
+
+// ── Provider ─────────────────────────────────────────────────────────────────
 
 interface ProductValidationSettingsProviderProps {
   value: ProductValidationSettingsValue;
@@ -56,19 +109,51 @@ export function ProductValidationSettingsProvider({
   value,
   children,
 }: ProductValidationSettingsProviderProps): React.JSX.Element {
-  return (
-    <ProductValidationSettingsContext.Provider value={value}>
-      {children}
-    </ProductValidationSettingsContext.Provider>
+  const stateValue: ProductValidationStateValue = useMemo(
+    () => ({
+      validationInstanceScope: value.validationInstanceScope,
+      validatorEnabled: value.validatorEnabled,
+      formatterEnabled: value.formatterEnabled,
+      validationDenyBehavior: value.validationDenyBehavior,
+      denyActionLabel: value.denyActionLabel,
+    }),
+    [
+      value.validationInstanceScope,
+      value.validatorEnabled,
+      value.formatterEnabled,
+      value.validationDenyBehavior,
+      value.denyActionLabel,
+    ]
   );
-}
 
-export function useProductValidationSettings(): ProductValidationSettingsValue {
-  const context = useContext(ProductValidationSettingsContext);
-  if (!context) {
-    throw internalError(
-      'useProductValidationSettings must be used within ProductValidationSettingsProvider'
-    );
-  }
-  return context;
+  const actionsValue: ProductValidationActionsValue = useMemo(
+    () => ({
+      setValidatorEnabled: value.setValidatorEnabled,
+      setFormatterEnabled: value.setFormatterEnabled,
+      setValidationDenyBehavior: value.setValidationDenyBehavior,
+      getDenyActionLabel: value.getDenyActionLabel,
+      isIssueDenied: value.isIssueDenied,
+      denyIssue: value.denyIssue,
+      isIssueAccepted: value.isIssueAccepted,
+      acceptIssue: value.acceptIssue,
+    }),
+    [
+      value.setValidatorEnabled,
+      value.setFormatterEnabled,
+      value.setValidationDenyBehavior,
+      value.getDenyActionLabel,
+      value.isIssueDenied,
+      value.denyIssue,
+      value.isIssueAccepted,
+      value.acceptIssue,
+    ]
+  );
+
+  return (
+    <ProductValidationStateContext.Provider value={stateValue}>
+      <ProductValidationActionsContext.Provider value={actionsValue}>
+        {children}
+      </ProductValidationActionsContext.Provider>
+    </ProductValidationStateContext.Provider>
+  );
 }

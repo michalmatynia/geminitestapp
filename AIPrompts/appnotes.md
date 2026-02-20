@@ -2,6 +2,16 @@
 In Image Studio
 I want to be be able to centre based on white pixel to non white pixel ratio.
 
+Scaler
+
+Products
+Import Product and connect sugargoo
+Rezise scale
+
+FASTCOMET
+
+npm run storage:configure:fastcomet -- --write --source=fastcomet --upload-endpoint=https://YOUR_FASTCOMET_ENDPOINT --base-url=https://YOUR_FILE_BASE_URL --delete-endpoint=https://YOUR_DELETE_ENDPOINT --auth-token=YOUR_TOKEN --keep-local-copy=true --timeout-ms=20000
+npm run storage:migrate:fastcomet -- --write --set-source=fastcomet
 
 
 retrieve app notes from old Prisma backups, I need prisma viewer to find notes somewhere

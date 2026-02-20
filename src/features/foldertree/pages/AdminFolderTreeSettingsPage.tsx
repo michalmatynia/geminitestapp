@@ -15,6 +15,7 @@ import {
   useToast,
   FormField,
   FormActions,
+  Card,
 } from '@/shared/ui';
 import {
   createDefaultFolderTreeProfilesV2,
@@ -347,10 +348,12 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
           const fileKinds = getRuleKinds(profile, 'file_to_folder');
 
           return (
-            <div
+            <Card
               key={meta.id}
               id={`folder-tree-instance-${meta.id}`}
-              className='scroll-mt-24 space-y-5 rounded-lg border border-border/60 bg-card/40 p-5'
+              variant='subtle'
+              padding='lg'
+              className='scroll-mt-24 space-y-5 bg-card/40'
             >
               <SectionHeader
                 title={meta.title}
@@ -712,7 +715,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                   placeholder='note=FileText'
                 />
               </FormField>
-            </div>
+            </Card>
           );
         })}
       </div>

@@ -4,6 +4,7 @@ import React, { type ReactNode } from 'react';
 
 import { cn } from '@/shared/utils';
 
+import { Card } from './card';
 import { Checkbox } from './checkbox';
 import { Label } from './label';
 import { Switch } from './switch';
@@ -40,13 +41,17 @@ export function ToggleRow({
   const Control = type === 'switch' ? Switch : Checkbox;
 
   return (
-    <div className={cn(
-      'flex items-center justify-between gap-4 rounded-lg border border-border/60 bg-card/30 p-3 transition-colors hover:bg-card/50',
-      disabled && 'opacity-50 pointer-events-none',
-      className
-    )}>
+    <Card
+      variant='subtle-compact'
+      padding='sm'
+      className={cn(
+        'flex flex-row items-center justify-between gap-4 transition-colors hover:bg-card/50 bg-card/30',
+        disabled && 'opacity-50 pointer-events-none',
+        className
+      )}
+    >
       {children}
-      <div className='relative z-10 flex-1 space-y-0.5'>
+      <div id={id} className='relative z-10 flex-1 space-y-0.5'>
         <div className='flex items-center gap-1.5'>
           {icon ? <span className='shrink-0'>{icon}</span> : null}
           <Label 
@@ -68,6 +73,6 @@ export function ToggleRow({
         onCheckedChange={(val: boolean | 'indeterminate') => onCheckedChange(type === 'switch' ? Boolean(val) : val === true)}
         disabled={disabled}
       />
-    </div>
+    </Card>
   );
 }

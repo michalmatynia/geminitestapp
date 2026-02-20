@@ -20,12 +20,27 @@ import { getImageStudioSlotImageSrc } from '../utils/image-src';
 
 type AnalysisMode = 'client_analysis_v1' | 'server_analysis_v1';
 type AnalysisStatus = 'idle' | 'resolving' | 'processing';
+type ShadowPolicy = 'auto' | 'include_shadow' | 'exclude_shadow';
+type DetectionDetails = {
+  shadowPolicyRequested: ShadowPolicy;
+  shadowPolicyApplied: ShadowPolicy;
+  componentCount: number;
+  coreComponentCount: number;
+  selectedComponentPixels: number;
+  selectedComponentCoverage: number;
+  foregroundPixels: number;
+  corePixels: number;
+  touchesBorder: boolean;
+  maskSource: 'foreground' | 'core';
+};
 
 type AnalysisResult = {
   width: number;
   height: number;
   sourceObjectBounds: { left: number; top: number; width: number; height: number };
   detectionUsed: 'alpha_bbox' | 'white_bg_first_colored_pixel';
+  confidence: number;
+  detectionDetails: DetectionDetails | null;
   whitespace: {
     px: { left: number; top: number; right: number; bottom: number };
     percent: { left: number; top: number; right: number; bottom: number };
@@ -40,6 +55,7 @@ type AnalysisResult = {
     targetCanvasHeight: number | null;
     whiteThreshold: number;
     chromaThreshold: number;
+    shadowPolicy: ShadowPolicy;
     detection: 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel';
   };
   suggestedPlan: {
@@ -87,6 +103,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
   const [layoutPaddingY, setLayoutPaddingY] = useState<string>(String(PADDING_DEFAULT));
   const [layoutSplitAxes, setLayoutSplitAxes] = useState(false);
   const [layoutFillMissingCanvasWhite, setLayoutFillMissingCanvasWhite] = useState(false);
+  const [layoutShadowPolicy, setLayoutShadowPolicy] = useState<ShadowPolicy>('auto');
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<AnalysisStatus>('idle');
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -146,6 +163,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
         targetCanvasHeight: projectCanvasSize.height,
       }
       : {}),
+    shadowPolicy: layoutShadowPolicy,
     detection: 'auto' as const,
   };
 
@@ -153,6 +171,14 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
     () => ([
       { value: 'server_analysis_v1', label: 'Analysis Server: Sharp' },
       { value: 'client_analysis_v1', label: 'Analysis Client: Canvas' },
+    ]),
+    []
+  );
+  const shadowPolicyOptions = useMemo(
+    () => ([
+      { value: 'auto', label: 'Shadow: Auto' },
+      { value: 'include_shadow', label: 'Shadow: Include' },
+      { value: 'exclude_shadow', label: 'Shadow: Exclude' },
     ]),
     []
   );
@@ -252,7 +278,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
         </div>
 
         <div className='rounded border border-border/60 bg-card/30 p-3'>
-          <div className='grid gap-3 lg:grid-cols-2'>
+          <div className='grid gap-3 lg:grid-cols-3'>
             <div className='space-y-2'>
               <div className='text-[11px] text-gray-400'>Mode</div>
               <SelectSimple
@@ -303,6 +329,19 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
                   aria-label='Analysis padding percent'
                 />
               </div>
+            </div>
+            <div className='space-y-2'>
+              <div className='text-[11px] text-gray-400'>Shadow Policy</div>
+              <SelectSimple
+                size='sm'
+                value={layoutShadowPolicy}
+                onValueChange={(value: string) => {
+                  setLayoutShadowPolicy(value as ShadowPolicy);
+                }}
+                options={shadowPolicyOptions}
+                triggerClassName='h-8 text-xs'
+                ariaLabel='Analysis shadow policy'
+              />
             </div>
           </div>
 
@@ -414,10 +453,18 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
         <div className='rounded border border-border/60 bg-card/30 p-3'>
           {result ? (
             <div className='space-y-3 text-xs text-gray-200'>
-              <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-4'>
+              <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-6'>
                 <div className='rounded border border-border/50 bg-card/30 p-2'>
                   <div className='text-[10px] uppercase tracking-wide text-gray-500'>Detection</div>
                   <div>{result.detectionUsed}</div>
+                </div>
+                <div className='rounded border border-border/50 bg-card/30 p-2'>
+                  <div className='text-[10px] uppercase tracking-wide text-gray-500'>Confidence</div>
+                  <div>{(result.confidence * 100).toFixed(2)}%</div>
+                </div>
+                <div className='rounded border border-border/50 bg-card/30 p-2'>
+                  <div className='text-[10px] uppercase tracking-wide text-gray-500'>Shadow Policy</div>
+                  <div>{result.detectionDetails?.shadowPolicyApplied ?? result.layout.shadowPolicy}</div>
                 </div>
                 <div className='rounded border border-border/50 bg-card/30 p-2'>
                   <div className='text-[10px] uppercase tracking-wide text-gray-500'>Object Area</div>
@@ -432,6 +479,18 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
                   <div>{result.suggestedPlan.scale.toFixed(6)}</div>
                 </div>
               </div>
+
+              {result.detectionDetails ? (
+                <div className='rounded border border-border/50 bg-card/30 p-2 text-[11px] text-gray-300'>
+                  <div className='mb-1 text-[10px] uppercase tracking-wide text-gray-500'>Detection Details</div>
+                  <div>
+                    components: {result.detectionDetails.componentCount} | core components: {result.detectionDetails.coreComponentCount} | mask: {result.detectionDetails.maskSource}
+                  </div>
+                  <div>
+                    selected coverage: {(result.detectionDetails.selectedComponentCoverage * 100).toFixed(2)}% | border touch: {result.detectionDetails.touchesBorder ? 'yes' : 'no'}
+                  </div>
+                </div>
+              ) : null}
 
               <div className='grid gap-2 sm:grid-cols-2'>
                 <div className='rounded border border-border/50 bg-card/30 p-2'>

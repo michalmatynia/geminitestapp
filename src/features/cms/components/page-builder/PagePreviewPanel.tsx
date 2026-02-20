@@ -508,7 +508,7 @@ export function PagePreviewPanel(): React.ReactNode {
               <CmsDomainSelector label='' triggerClassName='h-8 w-[200px]' />
               <PageSelectorBar variant='toolbar' />
               {slugsQuery.isLoading ? (
-                <Badge variant='outline' className='h-8 border-slate-500/40 bg-slate-500/10 px-3 py-1 text-[10px] text-slate-300'>
+                <Badge variant='neutral' className='h-8 px-3 py-1 text-[10px]'>
                   Loading zone slugs…
                 </Badge>
               ) : zoneSlugValues.length > 1 ? (
@@ -527,19 +527,19 @@ export function PagePreviewPanel(): React.ReactNode {
                 />
               ) : zoneSlugValues.length === 1 ? (
                 <Badge
-                  variant='outline'
-                  className='h-8 border-blue-500/30 bg-blue-500/10 px-3 py-1 text-[10px] text-blue-200'
+                  variant='info'
+                  className='h-8 px-3 py-1 text-[10px]'
                   title={previewTargetLabel}
                 >
                   Preview: /{zoneSlugValues[0]}
                 </Badge>
               ) : (
-                <Badge variant='outline' className='h-8 border-red-500/40 bg-red-500/10 px-3 py-1 text-[10px] text-red-200'>
+                <Badge variant='error' className='h-8 px-3 py-1 text-[10px]'>
                   No slug in zone
                 </Badge>
               )}
               {outOfZoneSlugs.length > 0 && (
-                <Badge variant='outline' className='h-8 border-amber-500/40 bg-amber-500/10 px-3 py-1 text-[10px] text-amber-200'>
+                <Badge variant='warning' className='h-8 px-3 py-1 text-[10px]'>
                   Cross-zone: {outOfZoneSlugs.map((slug: string) => `/${slug}`).join(', ')}
                 </Badge>
               )}
@@ -576,7 +576,7 @@ export function PagePreviewPanel(): React.ReactNode {
               <Button
                 onClick={(): void => { void handleSave(); }}
                 size='sm'
-                className='bg-blue-600 hover:bg-blue-700'
+                variant='solid'
                 disabled={!state.currentPage || updatePage.isPending}
               >
                 {updatePage.isPending ? 'Saving...' : 'Save'}

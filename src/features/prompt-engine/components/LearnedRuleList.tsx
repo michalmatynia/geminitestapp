@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { ClientOnly, EmptyState, Hint, SectionHeader } from '@/shared/ui';
+import { ClientOnly, EmptyState, Hint, SectionHeader, Card } from '@/shared/ui';
 
 import { LearnedRuleItem } from './LearnedRuleItem';
 import { usePromptEngine } from '../context/PromptEngineContext';
@@ -20,13 +20,13 @@ export function LearnedRuleList(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+      <Card variant='subtle' padding='md' className='bg-card/40'>
         <SectionHeader
           title={`${tabLabel} Learned Rules`}
           description='Auto-generated patterns from prompts for the selected list. Review and edit before saving.'
           size='xs'
         />
-      </div>
+      </Card>
 
       {filteredLearnedDrafts.length === 0 ? (
         <EmptyState
@@ -41,12 +41,12 @@ export function LearnedRuleList(): React.JSX.Element {
       ))}
 
       <ClientOnly>
-        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+        <Card variant='subtle' padding='md' className='bg-card/40'>
           <Hint uppercase className='mb-1'>Tip</Hint>
           <Hint>
             Use the Image Studio prompt tools to suggest learned patterns automatically.
           </Hint>
-        </div>
+        </Card>
       </ClientOnly>
     </div>
   );

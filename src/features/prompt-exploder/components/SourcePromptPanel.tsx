@@ -37,7 +37,7 @@ export function SourcePromptPanel(): React.JSX.Element {
             onClick={() => {
               void handleApplyToImageStudio();
             }}
-            disabled={!documentState}
+            disabled={!documentState && promptText.trim().length === 0}
           >
             {returnTarget === 'case-resolver'
               ? 'Apply to Case Resolver'

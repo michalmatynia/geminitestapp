@@ -1,10 +1,10 @@
 'use client';
 
 import Link from '@tiptap/extension-link';
-import { useEditor, EditorContent, type Editor } from '@tiptap/react';
+import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Bold, Italic, Link2, List, ListOrdered } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { usePrompt } from '@/shared/hooks/ui/usePrompt';
 import {
@@ -13,8 +13,6 @@ import {
   SelectSimple,
   Card,
 } from '@/shared/ui';
-
-import { sanitizeRichText } from './theme-utils';
 
 function RichTextToolbarButton({
   title,
@@ -38,6 +36,9 @@ function RichTextToolbarButton({
       disabled={disabled}
       title={title}
       className='size-8 rounded-md'
+    >
+      {children}
+    </Button>
   );
 }
 

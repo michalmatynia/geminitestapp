@@ -313,15 +313,17 @@ export function ConnectionManager(): React.JSX.Element {
             </>
           )}
           <Button
-            className='w-full rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200'
+            className='w-full font-semibold'
             type='button'
+            variant='solid'
             onClick={() => { void handleSaveConnection(); }}
           >
             {isCreateMode ? 'Save connection' : 'Update connection'}
           </Button>
           <Button
-            className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-gray-200 hover:bg-card/80'
+            className='w-full font-semibold'
             type='button'
+            variant='outline'
             onClick={(): void => {
               setEditingConnectionId(NEW_CONNECTION_DRAFT_ID);
               setConnectionForm({

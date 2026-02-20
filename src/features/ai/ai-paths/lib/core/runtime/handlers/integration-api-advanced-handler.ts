@@ -8,6 +8,7 @@ import type {
 } from '@/shared/contracts/ai-paths-runtime';
 
 import { getValueAtMappingPath, renderTemplate, safeStringify } from '../../utils';
+import { evaluateOutboundUrlPolicy } from '../security/outbound-url-policy';
 
 type JsonRecord = Record<string, unknown>;
 
@@ -461,6 +462,7 @@ export const handleAdvancedApi: NodeHandler = async ({
   executed,
   reportAiPathsError,
   abortSignal,
+  sideEffectControl,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (executed.http.has(node.id)) return prevOutputs;
 
@@ -482,6 +484,22 @@ export const handleAdvancedApi: NodeHandler = async ({
       status: 0,
       error: 'Missing URL',
       route: 'missing_url',
+      success: false,
+    };
+  }
+  const baseOutboundPolicy = evaluateOutboundUrlPolicy(baseUrl);
+  if (!baseOutboundPolicy.allowed) {
+    return {
+      value: null,
+      bundle: {
+        ok: false,
+        status: 0,
+        error: `Blocked outbound URL (${baseOutboundPolicy.reason ?? 'policy_violation'})`,
+        route: 'blocked_outbound_url',
+      },
+      status: 0,
+      error: `Blocked outbound URL (${baseOutboundPolicy.reason ?? 'policy_violation'})`,
+      route: 'blocked_outbound_url',
       success: false,
     };
   }
@@ -551,14 +569,16 @@ export const handleAdvancedApi: NodeHandler = async ({
   const retryAttempts = Math.max(1, Math.trunc(config.retryAttempts ?? 1));
   const retryOnNetworkError = config.retryOnNetworkError !== false;
 
-  const idempotencyEnabled = Boolean(config.idempotencyEnabled);
+  const generatedIdempotencyKey = sideEffectControl?.idempotencyKey?.trim() ?? '';
+  const idempotencyEnabled = Boolean(config.idempotencyEnabled) || generatedIdempotencyKey.length > 0;
   const idempotencyHeaderName =
     (config.idempotencyHeaderName ?? '').trim() || 'Idempotency-Key';
-  const idempotencyKey = renderTemplate(
+  const configuredIdempotencyKey = renderTemplate(
     config.idempotencyKeyTemplate ?? '',
     nodeInputs,
     ''
   ).trim();
+  const idempotencyKey = configuredIdempotencyKey || generatedIdempotencyKey;
 
   const baseResolvedUrl = applyPathParams(baseUrl, parsedPathParams);
   const aggregateItems: unknown[] = [];
@@ -586,6 +606,34 @@ export const handleAdvancedApi: NodeHandler = async ({
     const withAuth = await resolveAuthHeaders(config, nodeInputs, headers, queryParams);
     const finalUrl = appendQueryParams(requestUrl, withAuth.queryParams);
     const finalHeaders: Record<string, string> = { ...withAuth.headers };
+    const outboundPolicy = evaluateOutboundUrlPolicy(finalUrl);
+    if (!outboundPolicy.allowed) {
+      return {
+        envelope: {
+          ok: false,
+          status: 0,
+          url: finalUrl,
+          method: config.method,
+          headers: {},
+          data: null,
+          value: null,
+          attempt,
+          page,
+          cursor,
+          route: 'blocked_outbound_url',
+          error: `Blocked outbound URL (${outboundPolicy.reason ?? 'policy_violation'})`,
+          timedOut: false,
+          networkError: false,
+        },
+        responseText: '',
+        status: 0,
+        ok: false,
+        route: null,
+        timedOut: false,
+        networkError: false,
+        responseData: null,
+      };
+    }
 
     if (idempotencyEnabled && idempotencyHeaderName && idempotencyKey) {
       finalHeaders[idempotencyHeaderName] = idempotencyKey;

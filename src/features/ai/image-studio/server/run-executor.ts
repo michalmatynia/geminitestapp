@@ -152,6 +152,7 @@ type ImageStudioCenterExecutionMeta = {
     targetCanvasHeight: number | null;
     whiteThreshold: number;
     chromaThreshold: number;
+    shadowPolicy: 'auto' | 'include_shadow' | 'exclude_shadow';
     detectionUsed: ImageStudioCenterDetectionMode | null;
     scale: number | null;
   } | null;
@@ -486,6 +487,7 @@ async function executeCenterOperation(params: {
         targetCanvasHeight: normalizedLayout.targetCanvasHeight,
         whiteThreshold: normalizedLayout.whiteThreshold,
         chromaThreshold: normalizedLayout.chromaThreshold,
+        shadowPolicy: normalizedLayout.shadowPolicy,
         detectionUsed: null,
         scale: null,
       };
@@ -540,6 +542,7 @@ async function executeCenterOperation(params: {
         targetCanvasHeight: normalizedLayout.targetCanvasHeight,
         whiteThreshold: normalizedLayout.whiteThreshold,
         chromaThreshold: normalizedLayout.chromaThreshold,
+        shadowPolicy: normalizedLayout.shadowPolicy,
         detectionUsed: centered.detectionUsed,
         scale: centered.scale,
       };

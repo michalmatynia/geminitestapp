@@ -13,6 +13,7 @@ type CenterTooltipContent = {
   mode: string;
   padding: string;
   paddingAxes: string;
+  shadowPolicy: string;
 };
 
 type GenerationToolbarCenterSectionProps = {
@@ -26,6 +27,8 @@ type GenerationToolbarCenterSectionProps = {
   centerLayoutSplitAxes: boolean;
   centerLayoutFillMissingCanvasWhite: boolean;
   centerLayoutProjectCanvasSize: { width: number; height: number } | null;
+  centerLayoutShadowPolicy: string;
+  centerLayoutShadowPolicyOptions: SelectOption[];
   centerTooltipContent: CenterTooltipContent;
   centerTooltipsEnabled: boolean;
   centerMode: string;
@@ -36,6 +39,7 @@ type GenerationToolbarCenterSectionProps = {
   onCenterLayoutPaddingChange: (value: string) => void;
   onCenterLayoutPaddingXChange: (value: string) => void;
   onCenterLayoutPaddingYChange: (value: string) => void;
+  onCenterLayoutShadowPolicyChange: (value: string) => void;
   onCenterObject: () => void;
   onCenterModeChange: (value: string) => void;
   onToggleCenterLayoutSplitAxes: () => void;
@@ -53,6 +57,8 @@ export function GenerationToolbarCenterSection({
   centerLayoutSplitAxes,
   centerLayoutFillMissingCanvasWhite,
   centerLayoutProjectCanvasSize,
+  centerLayoutShadowPolicy,
+  centerLayoutShadowPolicyOptions,
   centerTooltipContent,
   centerTooltipsEnabled,
   centerMode,
@@ -63,6 +69,7 @@ export function GenerationToolbarCenterSection({
   onCenterLayoutPaddingChange,
   onCenterLayoutPaddingXChange,
   onCenterLayoutPaddingYChange,
+  onCenterLayoutShadowPolicyChange,
   onCenterObject,
   onCenterModeChange,
   onToggleCenterLayoutSplitAxes,
@@ -109,6 +116,19 @@ export function GenerationToolbarCenterSection({
       </div>
       {centerLayoutEnabled ? (
         <div className='mt-2 space-y-2'>
+          {maybeWrapTooltip(
+            centerTooltipContent.shadowPolicy,
+            <SelectSimple
+              size='sm'
+              className='w-full'
+              value={centerLayoutShadowPolicy}
+              onValueChange={onCenterLayoutShadowPolicyChange}
+              options={centerLayoutShadowPolicyOptions}
+              triggerClassName='h-8 text-xs'
+              ariaLabel='Object layout shadow policy'
+            />,
+            'inline-flex w-full'
+          )}
           <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
             {maybeWrapTooltip(
               centerTooltipContent.padding,

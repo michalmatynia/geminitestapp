@@ -15,6 +15,7 @@ import {
   type ImageStudioCenterLayoutConfig,
   type ImageStudioCenterMode,
   type ImageStudioCenterObjectBounds,
+  type ImageStudioCenterShadowPolicy,
 } from '@/features/ai/image-studio/contracts/center';
 
 type CenterSourceLimitValidation = {
@@ -44,6 +45,7 @@ type NormalizedCenterLayoutConfig = {
   targetCanvasHeight: number | null;
   whiteThreshold: number;
   chromaThreshold: number;
+  shadowPolicy: ImageStudioCenterShadowPolicy;
   detection: ImageStudioCenterDetectionMode;
 };
 

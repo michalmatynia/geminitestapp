@@ -458,25 +458,40 @@ export function StudioInlineEditProvider({ children }: { children: React.ReactNo
     setGenerationPreviewModalOpen(true);
   }, []);
 
-  const inlineCardImageManagerController: ProductImageManagerController = useMemo(() => ({
-    imageSlots: [managedInlineCardImageSlot as any],
-    imageLinks: [slotImageUrlDraft],
-    imageBase64s: [slotBase64Draft],
-    setImageLinkAt: setInlineCardImageLinkAt,
-    setImageBase64At: setInlineCardImageBase64At,
-    handleSlotImageChange: async (file, index) => {
-      // Logic from StudioModals.tsx
-    },
-    handleSlotDisconnectImage: inlineHandlers.handleClearSlotImage,
-    setShowFileManager: (show) => { if (show) /* logic to open drive import */ ; },
-    setShowFileManagerForSlot: () => { /* logic */ },
-    slotLabels: [''],
-    isSlotImageLocked: (idx) => idx === INLINE_CARD_IMAGE_SLOT_INDEX && isCardImageRemovalLocked(selectedSlot),
-    slotImageLockedReason: 'Card image is locked.',
-    swapImageSlots: () => {},
-    setImagesReordering: () => {},
-    uploadError: inlineSlotUploadError,
-  }), [managedInlineCardImageSlot, slotImageUrlDraft, slotBase64Draft, setInlineCardImageLinkAt, setInlineCardImageBase64At, inlineHandlers.handleClearSlotImage, selectedSlot, inlineSlotUploadError]);
+  const inlineCardImageManagerController: ProductImageManagerController = useMemo(() => {
+    const previewPath = selectedSlot?.imageFile?.url || selectedSlot?.imageUrl || null;
+    const managedInlineSlot = selectedSlot?.imageFileId && previewPath
+      ? {
+        type: 'existing' as const,
+        data: {
+          id: selectedSlot.imageFileId,
+          filepath: previewPath,
+        },
+        previewUrl: previewPath,
+        slotId: selectedSlot.id,
+      }
+      : null;
+
+    return {
+      imageSlots: [managedInlineSlot as any],
+      imageLinks: [slotImageUrlDraft],
+      imageBase64s: [slotBase64Draft],
+      setImageLinkAt: setInlineCardImageLinkAt,
+      setImageBase64At: setInlineCardImageBase64At,
+      handleSlotImageChange: async (_file, _index) => {
+        // Logic from StudioModals.tsx
+      },
+      handleSlotDisconnectImage: inlineHandlers.handleClearSlotImage,
+      setShowFileManager: (_show) => { /* logic to open drive import */ },
+      setShowFileManagerForSlot: () => { /* logic */ },
+      slotLabels: [''],
+      isSlotImageLocked: (idx) => idx === INLINE_CARD_IMAGE_SLOT_INDEX && isCardImageRemovalLocked(selectedSlot),
+      slotImageLockedReason: 'Card image is locked.',
+      swapImageSlots: () => {},
+      setImagesReordering: () => {},
+      uploadError: inlineSlotUploadError,
+    };
+  }, [slotImageUrlDraft, slotBase64Draft, setInlineCardImageLinkAt, setInlineCardImageBase64At, inlineHandlers.handleClearSlotImage, selectedSlot, inlineSlotUploadError]);
 
   const value: StudioInlineEditContextValue = useMemo(() => ({
     selectedSlot, slotInlineEditOpen, slotImageUrlDraft, slotBase64Draft, slotUpdateBusy,

@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { useIntegrationModalViewContext } from './IntegrationModalViewContext';
+import { Badge } from '@/shared/ui';
 
 export function IntegrationModalHeader(): React.JSX.Element {
   const {
@@ -15,24 +16,24 @@ export function IntegrationModalHeader(): React.JSX.Element {
     <div className='flex items-center'>
       {integrationName} Integration
       {isTradera && showPlaywright && (
-        <span className='ml-2 rounded bg-orange-500/30 px-1.5 py-0.5 text-xs font-normal uppercase tracking-wider text-orange-200'>
+        <Badge variant='warning' className='ml-2 h-auto px-1.5 py-0 text-[10px] font-normal uppercase tracking-wider'>
           Browser
-        </span>
+        </Badge>
       )}
       {isTradera && !showPlaywright && (
-        <span className='ml-2 rounded bg-blue-500/30 px-1.5 py-0.5 text-xs font-normal uppercase tracking-wider text-blue-200'>
+        <Badge variant='info' className='ml-2 h-auto px-1.5 py-0 text-[10px] font-normal uppercase tracking-wider'>
           API
-        </span>
+        </Badge>
       )}
       {isAllegro && (
-        <span className='ml-2 rounded bg-blue-500/30 px-1.5 py-0.5 text-xs font-normal uppercase tracking-wider text-blue-200'>
+        <Badge variant='info' className='ml-2 h-auto px-1.5 py-0 text-[10px] font-normal uppercase tracking-wider'>
           API
-        </span>
+        </Badge>
       )}
       {isBaselinker && (
-        <span className='ml-2 rounded bg-purple-500/30 px-1.5 py-0.5 text-xs font-normal uppercase tracking-wider text-purple-200'>
+        <Badge variant='secondary' className='ml-2 h-auto px-1.5 py-0 text-[10px] font-normal uppercase tracking-wider'>
           Platform
-        </span>
+        </Badge>
       )}
     </div>
   );

@@ -32,7 +32,7 @@ const CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES = readPositiveIntegerEnv(
   CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES_DEFAULT
 );
 
-type CaseResolverWorkspaceDebugEvent = {
+export type CaseResolverWorkspaceDebugEvent = {
   id: string;
   timestamp: string;
   source: string;

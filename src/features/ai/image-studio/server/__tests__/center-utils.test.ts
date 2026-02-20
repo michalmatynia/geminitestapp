@@ -92,6 +92,7 @@ describe('center-utils', () => {
       targetCanvasHeight: 1800,
       whiteThreshold: 16,
       chromaThreshold: 10,
+      shadowPolicy: 'auto',
       detection: 'auto',
     });
   });

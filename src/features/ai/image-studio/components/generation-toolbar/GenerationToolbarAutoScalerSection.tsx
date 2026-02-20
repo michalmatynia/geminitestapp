@@ -13,6 +13,7 @@ type AutoScaleTooltipContent = {
   mode: string;
   padding: string;
   paddingAxes: string;
+  shadowPolicy: string;
 };
 
 type GenerationToolbarAutoScalerSectionProps = {
@@ -24,6 +25,8 @@ type GenerationToolbarAutoScalerSectionProps = {
   autoScaleLayoutSplitAxes: boolean;
   autoScaleLayoutFillMissingCanvasWhite: boolean;
   autoScaleLayoutProjectCanvasSize: { width: number; height: number } | null;
+  autoScaleShadowPolicy: string;
+  autoScaleShadowPolicyOptions: SelectOption[];
   autoScaleTooltipContent: AutoScaleTooltipContent;
   autoScaleTooltipsEnabled: boolean;
   autoScaleMode: string;
@@ -35,6 +38,7 @@ type GenerationToolbarAutoScalerSectionProps = {
   onAutoScaleLayoutPaddingXChange: (value: string) => void;
   onAutoScaleLayoutPaddingYChange: (value: string) => void;
   onAutoScaleModeChange: (value: string) => void;
+  onAutoScaleShadowPolicyChange: (value: string) => void;
   onCancelAutoScale: () => void;
   onToggleAutoScaleLayoutSplitAxes: () => void;
 };
@@ -48,6 +52,8 @@ export function GenerationToolbarAutoScalerSection({
   autoScaleLayoutSplitAxes,
   autoScaleLayoutFillMissingCanvasWhite,
   autoScaleLayoutProjectCanvasSize,
+  autoScaleShadowPolicy,
+  autoScaleShadowPolicyOptions,
   autoScaleTooltipContent,
   autoScaleTooltipsEnabled,
   autoScaleMode,
@@ -59,6 +65,7 @@ export function GenerationToolbarAutoScalerSection({
   onAutoScaleLayoutPaddingXChange,
   onAutoScaleLayoutPaddingYChange,
   onAutoScaleModeChange,
+  onAutoScaleShadowPolicyChange,
   onCancelAutoScale,
   onToggleAutoScaleLayoutSplitAxes,
 }: GenerationToolbarAutoScalerSectionProps): React.JSX.Element {
@@ -104,6 +111,21 @@ export function GenerationToolbarAutoScalerSection({
           >
             {autoScaleLayoutSplitAxes ? 'Linked X/Y' : 'Split X/Y'}
           </Button>
+        )}
+      </div>
+      <div className='mt-2 grid gap-2'>
+        {maybeWrapTooltip(
+          autoScaleTooltipContent.shadowPolicy,
+          <SelectSimple
+            size='sm'
+            className='w-full'
+            value={autoScaleShadowPolicy}
+            onValueChange={onAutoScaleShadowPolicyChange}
+            options={autoScaleShadowPolicyOptions}
+            triggerClassName='h-8 text-xs'
+            ariaLabel='Auto scaler shadow policy'
+          />,
+          'inline-flex w-full'
         )}
       </div>
       <div className='mt-2 space-y-2'>

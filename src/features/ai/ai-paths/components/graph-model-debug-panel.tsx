@@ -1,13 +1,14 @@
 'use client';
 
 import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
+import { Card } from '@/shared/ui';
 
 export function GraphModelDebugPanel(): React.JSX.Element {
   const orchestrator = useAiPathsSettingsOrchestrator();
   const payload = orchestrator.lastGraphModelPayload;
 
   return (
-    <div className='rounded-lg border border-border bg-card/60 p-4'>
+    <Card variant='subtle' padding='md' className='bg-card/60'>
       <div className='mb-2 text-sm font-semibold text-white'>Graph Model Debug</div>
       {payload ? (
         <pre className='max-h-60 overflow-auto rounded-md border border-border bg-card/70 p-3 text-[11px] text-gray-300 whitespace-pre-wrap'>
@@ -18,6 +19,6 @@ export function GraphModelDebugPanel(): React.JSX.Element {
           Run a model node to capture the latest payload.
         </div>
       )}
-    </div>
+    </Card>
   );
 }

@@ -446,7 +446,6 @@ export function useCaseResolverState() {
           mutationId,
           expectedRevision: serverRevision,
           workspaceRevision: serverRevision,
-          durationMs: retryDelayMs,
           message: `Auto-retrying save after conflict (${nextRetryCount}/${CASE_RESOLVER_WORKSPACE_CONFLICT_AUTO_RETRY_LIMIT}) in ${retryDelayMs}ms.`,
         });
         return;

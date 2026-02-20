@@ -5,7 +5,10 @@ import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
 
-import type { ImageStudioObjectWhitespaceMetrics } from '@/features/ai/image-studio/analysis/shared';
+import type {
+  ImageStudioDetectionDetails,
+  ImageStudioObjectWhitespaceMetrics,
+} from '@/features/ai/image-studio/analysis/shared';
 import {
   IMAGE_STUDIO_AUTOSCALER_ERROR_CODES,
   imageStudioAutoScalerRequestSchema,
@@ -17,6 +20,7 @@ import {
 import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterObjectBounds,
+  ImageStudioCenterShadowPolicy,
 } from '@/features/ai/image-studio/contracts/center';
 import {
   autoScaleObjectByAnalysis,
@@ -65,6 +69,7 @@ type AutoScaleLayoutMetadata = {
   targetCanvasHeight: number | null;
   whiteThreshold: number;
   chromaThreshold: number;
+  shadowPolicy?: ImageStudioCenterShadowPolicy;
 };
 type AutoScaleProcessingResult = {
   outputBuffer: Buffer;
@@ -77,6 +82,8 @@ type AutoScaleProcessingResult = {
   authoritativeSource: 'source_slot' | 'client_upload_fallback';
   layout: AutoScaleLayoutMetadata;
   detectionUsed: ImageStudioCenterDetectionMode | null;
+  confidenceBefore: number | null;
+  detectionDetails: ImageStudioDetectionDetails | null;
   scale: number | null;
   whitespaceBefore: ImageStudioObjectWhitespaceMetrics | null;
   whitespaceAfter: ImageStudioObjectWhitespaceMetrics | null;
@@ -200,6 +207,8 @@ const readAutoScaleMetadataFromSlot = (
   targetObjectBounds: ImageStudioCenterObjectBounds | null;
   layout: AutoScaleLayoutMetadata | null;
   detectionUsed: ImageStudioCenterDetectionMode | null;
+  confidenceBefore: number | null;
+  detectionDetails: ImageStudioDetectionDetails | null;
   scale: number | null;
   whitespaceBefore: ImageStudioObjectWhitespaceMetrics | null;
   whitespaceAfter: ImageStudioObjectWhitespaceMetrics | null;
@@ -276,6 +285,82 @@ const readAutoScaleMetadataFromSlot = (
     };
   };
 
+  const parseShadowPolicy = (value: unknown): ImageStudioCenterShadowPolicy | null =>
+    value === 'auto' || value === 'include_shadow' || value === 'exclude_shadow'
+      ? value
+      : null;
+
+  const parseDetectionDetails = (value: unknown): ImageStudioDetectionDetails | null => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const details = value as Record<string, unknown>;
+    const shadowPolicyRequested = parseShadowPolicy(details['shadowPolicyRequested']);
+    const shadowPolicyApplied = parseShadowPolicy(details['shadowPolicyApplied']);
+    const componentCountRaw = details['componentCount'];
+    const coreComponentCountRaw = details['coreComponentCount'];
+    const selectedComponentPixelsRaw = details['selectedComponentPixels'];
+    const selectedComponentCoverageRaw = details['selectedComponentCoverage'];
+    const foregroundPixelsRaw = details['foregroundPixels'];
+    const corePixelsRaw = details['corePixels'];
+    const touchesBorder = details['touchesBorder'] === true;
+    const maskSourceRaw = details['maskSource'];
+    const maskSource =
+      maskSourceRaw === 'foreground' || maskSourceRaw === 'core'
+        ? maskSourceRaw
+        : null;
+
+    const componentCount =
+      typeof componentCountRaw === 'number' && Number.isFinite(componentCountRaw)
+        ? Math.max(0, Math.floor(componentCountRaw))
+        : NaN;
+    const coreComponentCount =
+      typeof coreComponentCountRaw === 'number' && Number.isFinite(coreComponentCountRaw)
+        ? Math.max(0, Math.floor(coreComponentCountRaw))
+        : NaN;
+    const selectedComponentPixels =
+      typeof selectedComponentPixelsRaw === 'number' && Number.isFinite(selectedComponentPixelsRaw)
+        ? Math.max(0, Math.floor(selectedComponentPixelsRaw))
+        : NaN;
+    const selectedComponentCoverage =
+      typeof selectedComponentCoverageRaw === 'number' && Number.isFinite(selectedComponentCoverageRaw)
+        ? Math.max(0, Math.min(1, selectedComponentCoverageRaw))
+        : NaN;
+    const foregroundPixels =
+      typeof foregroundPixelsRaw === 'number' && Number.isFinite(foregroundPixelsRaw)
+        ? Math.max(0, Math.floor(foregroundPixelsRaw))
+        : NaN;
+    const corePixels =
+      typeof corePixelsRaw === 'number' && Number.isFinite(corePixelsRaw)
+        ? Math.max(0, Math.floor(corePixelsRaw))
+        : NaN;
+
+    if (
+      !shadowPolicyRequested ||
+      !shadowPolicyApplied ||
+      !maskSource ||
+      !Number.isFinite(componentCount) ||
+      !Number.isFinite(coreComponentCount) ||
+      !Number.isFinite(selectedComponentPixels) ||
+      !Number.isFinite(selectedComponentCoverage) ||
+      !Number.isFinite(foregroundPixels) ||
+      !Number.isFinite(corePixels)
+    ) {
+      return null;
+    }
+
+    return {
+      shadowPolicyRequested,
+      shadowPolicyApplied,
+      componentCount,
+      coreComponentCount,
+      selectedComponentPixels,
+      selectedComponentCoverage: Number(selectedComponentCoverage.toFixed(4)),
+      foregroundPixels,
+      corePixels,
+      touchesBorder,
+      maskSource,
+    };
+  };
+
   const parseLayout = (): AutoScaleLayoutMetadata | null => {
     if (!autoscale || typeof autoscale !== 'object') return null;
     const layoutRaw =
@@ -297,6 +382,7 @@ const readAutoScaleMetadataFromSlot = (
         : null;
     const whiteThreshold = typeof layoutRaw['whiteThreshold'] === 'number' ? layoutRaw['whiteThreshold'] : NaN;
     const chromaThreshold = typeof layoutRaw['chromaThreshold'] === 'number' ? layoutRaw['chromaThreshold'] : NaN;
+    const shadowPolicy = parseShadowPolicy(layoutRaw['shadowPolicy']);
     if (
       !Number.isFinite(paddingPercent) ||
       !Number.isFinite(paddingXPercent) ||
@@ -315,16 +401,22 @@ const readAutoScaleMetadataFromSlot = (
       targetCanvasHeight,
       whiteThreshold,
       chromaThreshold,
+      ...(shadowPolicy ? { shadowPolicy } : {}),
     };
   };
 
   const detectionUsedRaw = autoscale?.['detectionUsed'];
   const detectionUsed =
-    detectionUsedRaw === 'auto' ||
     detectionUsedRaw === 'alpha_bbox' ||
     detectionUsedRaw === 'white_bg_first_colored_pixel'
       ? detectionUsedRaw
       : null;
+  const confidenceBeforeRaw = autoscale?.['confidenceBefore'];
+  const confidenceBefore =
+    typeof confidenceBeforeRaw === 'number' && Number.isFinite(confidenceBeforeRaw)
+      ? Math.max(0, Math.min(1, confidenceBeforeRaw))
+      : null;
+  const detectionDetails = parseDetectionDetails(autoscale?.['detectionDetails']);
   const scaleRaw = autoscale?.['scale'];
   const scale = typeof scaleRaw === 'number' && Number.isFinite(scaleRaw) ? scaleRaw : null;
   const objectAreaPercentBeforeRaw = autoscale?.['objectAreaPercentBefore'];
@@ -336,6 +428,8 @@ const readAutoScaleMetadataFromSlot = (
     targetObjectBounds: parseBounds(autoscale?.['targetObjectBounds']),
     layout: parseLayout(),
     detectionUsed,
+    confidenceBefore,
+    detectionDetails,
     scale,
     whitespaceBefore: parseWhitespace(autoscale?.['whitespaceBefore']),
     whitespaceAfter: parseWhitespace(autoscale?.['whitespaceAfter']),
@@ -465,8 +559,11 @@ async function processAutoScalerPayload(input: {
         targetCanvasHeight: scaled.layout.targetCanvasHeight,
         whiteThreshold: scaled.layout.whiteThreshold,
         chromaThreshold: scaled.layout.chromaThreshold,
+        shadowPolicy: scaled.layout.shadowPolicy,
       },
       detectionUsed: scaled.detectionUsed,
+      confidenceBefore: scaled.confidenceBefore,
+      detectionDetails: scaled.detectionDetails,
       scale: scaled.scale,
       whitespaceBefore: scaled.whitespaceBefore,
       whitespaceAfter: scaled.whitespaceAfter,
@@ -514,8 +611,11 @@ async function processAutoScalerPayload(input: {
         targetCanvasHeight: normalizedLayout.targetCanvasHeight,
         whiteThreshold: normalizedLayout.whiteThreshold,
         chromaThreshold: normalizedLayout.chromaThreshold,
+        shadowPolicy: normalizedLayout.shadowPolicy,
       },
       detectionUsed: null,
+      confidenceBefore: null,
+      detectionDetails: null,
       scale: null,
       whitespaceBefore: null,
       whitespaceAfter: null,
@@ -561,8 +661,11 @@ async function processAutoScalerPayload(input: {
       targetCanvasHeight: normalizedLayout.targetCanvasHeight,
       whiteThreshold: normalizedLayout.whiteThreshold,
       chromaThreshold: normalizedLayout.chromaThreshold,
+      shadowPolicy: normalizedLayout.shadowPolicy,
     },
     detectionUsed: null,
+    confidenceBefore: null,
+    detectionDetails: null,
     scale: null,
     whitespaceBefore: null,
     whitespaceAfter: null,
@@ -667,6 +770,8 @@ export async function postAutoScaleSlotHandler(
           targetObjectBounds: existingAutoScale.targetObjectBounds,
           layout: existingAutoScale.layout,
           detectionUsed: existingAutoScale.detectionUsed,
+          confidenceBefore: existingAutoScale.confidenceBefore,
+          detectionDetails: existingAutoScale.detectionDetails,
           scale: existingAutoScale.scale,
           whitespaceBefore: existingAutoScale.whitespaceBefore,
           whitespaceAfter: existingAutoScale.whitespaceAfter,
@@ -703,6 +808,8 @@ export async function postAutoScaleSlotHandler(
           targetObjectBounds: existingAutoScale.targetObjectBounds,
           layout: existingAutoScale.layout,
           detectionUsed: existingAutoScale.detectionUsed,
+          confidenceBefore: existingAutoScale.confidenceBefore,
+          detectionDetails: existingAutoScale.detectionDetails,
           scale: existingAutoScale.scale,
           whitespaceBefore: existingAutoScale.whitespaceBefore,
           whitespaceAfter: existingAutoScale.whitespaceAfter,
@@ -790,6 +897,8 @@ export async function postAutoScaleSlotHandler(
             targetObjectBounds: processed.targetObjectBounds,
             layout: processed.layout,
             detectionUsed: processed.detectionUsed,
+            confidenceBefore: processed.confidenceBefore,
+            detectionDetails: processed.detectionDetails,
             scale: processed.scale,
             whitespaceBefore: processed.whitespaceBefore,
             whitespaceAfter: processed.whitespaceAfter,
@@ -824,6 +933,8 @@ export async function postAutoScaleSlotHandler(
         targetObjectBounds: processed.targetObjectBounds,
         layout: processed.layout,
         detectionUsed: processed.detectionUsed,
+        confidenceBefore: processed.confidenceBefore,
+        detectionDetails: processed.detectionDetails,
         scale: processed.scale,
         whitespaceBefore: processed.whitespaceBefore,
         whitespaceAfter: processed.whitespaceAfter,
@@ -848,6 +959,8 @@ export async function postAutoScaleSlotHandler(
           targetObjectBounds: processed.targetObjectBounds,
           layout: processed.layout,
           detectionUsed: processed.detectionUsed,
+          confidenceBefore: processed.confidenceBefore,
+          detectionDetails: processed.detectionDetails,
           scale: processed.scale,
           whitespaceBefore: processed.whitespaceBefore,
           whitespaceAfter: processed.whitespaceAfter,
@@ -881,6 +994,8 @@ export async function postAutoScaleSlotHandler(
         targetObjectBounds: processed.targetObjectBounds,
         layout: processed.layout,
         detectionUsed: processed.detectionUsed,
+        confidenceBefore: processed.confidenceBefore,
+        detectionDetails: processed.detectionDetails,
         scale: processed.scale,
         whitespaceBefore: processed.whitespaceBefore,
         whitespaceAfter: processed.whitespaceAfter,
@@ -903,6 +1018,8 @@ export async function postAutoScaleSlotHandler(
       targetObjectBounds: processed.targetObjectBounds,
       layout: processed.layout,
       detectionUsed: processed.detectionUsed,
+      confidenceBefore: processed.confidenceBefore,
+      detectionDetails: processed.detectionDetails,
       scale: processed.scale,
       whitespaceBefore: processed.whitespaceBefore,
       whitespaceAfter: processed.whitespaceAfter,

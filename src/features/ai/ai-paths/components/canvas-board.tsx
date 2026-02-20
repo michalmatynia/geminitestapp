@@ -12,7 +12,7 @@ import {
   typeStyles,
   validateConnection,
 } from '@/features/ai/ai-paths/lib';
-import { Button, Tooltip, Badge } from '@/shared/ui';
+import { Button, Tooltip, Badge, Card } from '@/shared/ui';
 
 import {
   useCanvasState,
@@ -793,9 +793,11 @@ export function CanvasBoard({
       : 'cursor-grab';
 
   return (
-    <div
+    <Card
       ref={viewportRef}
-      className={`relative min-h-[672px] rounded-lg border bg-card/70 backdrop-blur overflow-hidden overscroll-contain ${
+      variant='subtle'
+      padding='none'
+      className={`relative min-h-[672px] backdrop-blur overflow-hidden overscroll-contain ${
         canvasCursorClass
       } ${viewportClassName ?? ''}`}
       style={flowStyle}
@@ -1566,14 +1568,15 @@ export function CanvasBoard({
                     style={{ backgroundColor: noteColor }}
                   >
                     <div className='whitespace-pre-wrap break-words'>{noteText}</div>
-                  </div>
+                                      </div>
                 ) : null}
               </div>
-            );
-          })
+          );
+        })
           : null}
-      </div>
-      <ConfirmationModal />
-    </div>
-  );
-}
+                        </div>
+                        <ConfirmationModal />
+                      </Card>
+                    );
+                  }
+                  

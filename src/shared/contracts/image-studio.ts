@@ -552,6 +552,23 @@ export const imageStudioNormalizedCenterLayoutSchema = z.object({
 export type ImageStudioNormalizedCenterLayoutDto = z.infer<typeof imageStudioNormalizedCenterLayoutSchema>;
 export type ImageStudioNormalizedCenterLayout = ImageStudioNormalizedCenterLayoutDto;
 
+export const imageStudioCenterLayoutMetadataSchema = z.object({
+  paddingPercent: z.number().finite(),
+  paddingXPercent: z.number().finite(),
+  paddingYPercent: z.number().finite(),
+  fillMissingCanvasWhite: z.boolean(),
+  targetCanvasWidth: z.number().int().positive().nullable(),
+  targetCanvasHeight: z.number().int().positive().nullable(),
+  whiteThreshold: z.number().int().finite(),
+  chromaThreshold: z.number().int().finite(),
+  shadowPolicy: imageStudioCenterShadowPolicySchema,
+  detectionUsed: imageStudioCenterDetectionModeSchema.nullable().optional(),
+  scale: z.number().finite().nullable().optional(),
+});
+
+export type ImageStudioCenterLayoutMetadataDto = z.infer<typeof imageStudioCenterLayoutMetadataSchema>;
+export type ImageStudioCenterLayoutMetadata = ImageStudioCenterLayoutMetadataDto;
+
 export const imageStudioAutoScalerLayoutMetadataSchema = z.object({
   paddingPercent: z.number().finite(),
   paddingXPercent: z.number().finite(),
@@ -636,6 +653,26 @@ const imageStudioOutputImageSchema = z.object({
   width: z.number().finite().nullable().optional(),
   height: z.number().finite().nullable().optional(),
 }).passthrough();
+
+export const imageStudioCenterResponseSchema = z.object({
+  sourceSlotId: z.string().optional(),
+  mode: imageStudioCenterModeSchema,
+  effectiveMode: imageStudioCenterModeSchema,
+  slot: imageStudioSlotSchema,
+  output: imageStudioOutputImageSchema.optional(),
+  sourceObjectBounds: imageStudioCenterObjectBoundsSchema.nullable().optional(),
+  targetObjectBounds: imageStudioCenterObjectBoundsSchema.nullable().optional(),
+  layout: imageStudioCenterLayoutMetadataSchema.nullable().optional(),
+  requestId: z.string().nullable().optional(),
+  fingerprint: z.string().optional(),
+  deduplicated: z.boolean(),
+  dedupeReason: z.enum(['request', 'fingerprint']).optional(),
+  lifecycle: imageStudioOperationLifecycleSchema,
+  pipelineVersion: z.string().trim().min(1),
+});
+
+export type ImageStudioCenterResponseDto = z.infer<typeof imageStudioCenterResponseSchema>;
+export type ImageStudioCenterResponse = ImageStudioCenterResponseDto;
 
 export const imageStudioAutoScalerResponseSchema = z.object({
   sourceSlotId: z.string().optional(),

@@ -72,6 +72,19 @@ type CenterMode =
 type AutoScalerMode =
   | 'client_auto_scaler_v1'
   | 'server_auto_scaler_v1';
+type CenterShadowPolicy = 'auto' | 'include_shadow' | 'exclude_shadow';
+type DetectionDetails = {
+  shadowPolicyRequested: CenterShadowPolicy;
+  shadowPolicyApplied: CenterShadowPolicy;
+  componentCount: number;
+  coreComponentCount: number;
+  selectedComponentPixels: number;
+  selectedComponentCoverage: number;
+  foregroundPixels: number;
+  corePixels: number;
+  touchesBorder: boolean;
+  maskSource: 'foreground' | 'core';
+};
 
 type CenterActionResponse = {
   slot?: ImageStudioSlotRecord;
@@ -88,6 +101,7 @@ type CenterActionResponse = {
     targetCanvasHeight?: number;
     whiteThreshold?: number;
     chromaThreshold?: number;
+    shadowPolicy?: CenterShadowPolicy;
     detectionUsed?: 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel' | null;
     scale?: number | null;
   } | null;
@@ -110,8 +124,11 @@ type AutoScaleActionResponse = {
     targetCanvasHeight?: number;
     whiteThreshold?: number;
     chromaThreshold?: number;
+    shadowPolicy?: CenterShadowPolicy;
   } | null;
   detectionUsed?: 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel' | null;
+  confidenceBefore?: number | null;
+  detectionDetails?: DetectionDetails | null;
   scale?: number | null;
   whitespaceBefore?: {
     px?: { left?: number; top?: number; right?: number; bottom?: number };
@@ -264,6 +281,7 @@ export function GenerationToolbar(): React.JSX.Element {
   );
   const [centerLayoutSplitAxes, setCenterLayoutSplitAxes] = useState(false);
   const [centerLayoutFillMissingCanvasWhite, setCenterLayoutFillMissingCanvasWhite] = useState(false);
+  const [centerLayoutShadowPolicy, setCenterLayoutShadowPolicy] = useState<CenterShadowPolicy>('auto');
   const [autoScaleLayoutPadding, setAutoScaleLayoutPadding] = useState<string>(
     String(CENTER_LAYOUT_DEFAULT_PADDING_PERCENT)
   );
@@ -275,6 +293,7 @@ export function GenerationToolbar(): React.JSX.Element {
   );
   const [autoScaleLayoutSplitAxes, setAutoScaleLayoutSplitAxes] = useState(false);
   const [autoScaleLayoutFillMissingCanvasWhite, setAutoScaleLayoutFillMissingCanvasWhite] = useState(false);
+  const [autoScaleLayoutShadowPolicy, setAutoScaleLayoutShadowPolicy] = useState<CenterShadowPolicy>('auto');
   const [upscaleScale, setUpscaleScale] = useState('2');
   const [upscaleTargetWidth, setUpscaleTargetWidth] = useState('');
   const [upscaleTargetHeight, setUpscaleTargetHeight] = useState('');
@@ -739,6 +758,7 @@ export function GenerationToolbar(): React.JSX.Element {
           targetCanvasHeight: projectCanvasSize.height,
         }
         : {}),
+      shadowPolicy: centerLayoutShadowPolicy,
       detection: 'auto' as const,
     }
     : undefined;
@@ -769,6 +789,7 @@ export function GenerationToolbar(): React.JSX.Element {
         targetCanvasHeight: projectCanvasSize.height,
       }
       : {}),
+    shadowPolicy: autoScaleLayoutShadowPolicy,
     detection: 'auto' as const,
   };
 
@@ -1329,6 +1350,14 @@ export function GenerationToolbar(): React.JSX.Element {
     ]),
     []
   );
+  const shadowPolicyOptions = useMemo(
+    () => ([
+      { value: 'auto', label: 'Shadow: Auto' },
+      { value: 'include_shadow', label: 'Shadow: Include' },
+      { value: 'exclude_shadow', label: 'Shadow: Exclude' },
+    ]),
+    []
+  );
   const upscaleScaleOptions = useMemo(
     () => ['1.5', '2', '3', '4'].map((value: string) => ({ value, label: `${value}x` })),
     []
@@ -1360,6 +1389,7 @@ export function GenerationToolbar(): React.JSX.Element {
       padding: getImageStudioDocTooltip('object_layout_padding'),
       paddingAxes: getImageStudioDocTooltip('object_layout_padding_axes'),
       fillMissingCanvasWhite: getImageStudioDocTooltip('object_layout_fill_missing_canvas_white'),
+      shadowPolicy: getImageStudioDocTooltip('object_layout_mode'),
       apply: getImageStudioDocTooltip('object_layout_apply'),
     }),
     []
@@ -1370,6 +1400,7 @@ export function GenerationToolbar(): React.JSX.Element {
       padding: getImageStudioDocTooltip('object_layout_padding'),
       paddingAxes: getImageStudioDocTooltip('object_layout_padding_axes'),
       fillMissingCanvasWhite: getImageStudioDocTooltip('object_layout_fill_missing_canvas_white'),
+      shadowPolicy: getImageStudioDocTooltip('object_layout_mode'),
       apply: getImageStudioDocTooltip('object_layout_apply'),
     }),
     []
@@ -1520,6 +1551,8 @@ export function GenerationToolbar(): React.JSX.Element {
         centerLayoutSplitAxes={centerLayoutSplitAxes}
         centerLayoutFillMissingCanvasWhite={centerLayoutFillMissingCanvasWhite}
         centerLayoutProjectCanvasSize={projectCanvasSize}
+        centerLayoutShadowPolicy={centerLayoutShadowPolicy}
+        centerLayoutShadowPolicyOptions={shadowPolicyOptions}
         centerTooltipContent={centerTooltipContent}
         centerTooltipsEnabled={cropTooltipsEnabled}
         centerMode={centerMode}
@@ -1544,6 +1577,9 @@ export function GenerationToolbar(): React.JSX.Element {
         }}
         onCenterLayoutFillMissingCanvasWhiteChange={(checked: boolean) => {
           setCenterLayoutFillMissingCanvasWhite(checked);
+        }}
+        onCenterLayoutShadowPolicyChange={(value: string) => {
+          setCenterLayoutShadowPolicy(value as CenterShadowPolicy);
         }}
         onCenterModeChange={(value: string) => {
           setCenterMode(value as CenterMode);
@@ -1583,6 +1619,8 @@ export function GenerationToolbar(): React.JSX.Element {
         autoScaleLayoutSplitAxes={autoScaleLayoutSplitAxes}
         autoScaleLayoutFillMissingCanvasWhite={autoScaleLayoutFillMissingCanvasWhite}
         autoScaleLayoutProjectCanvasSize={projectCanvasSize}
+        autoScaleShadowPolicy={autoScaleLayoutShadowPolicy}
+        autoScaleShadowPolicyOptions={shadowPolicyOptions}
         autoScaleTooltipContent={autoScaleTooltipContent}
         autoScaleTooltipsEnabled={cropTooltipsEnabled}
         autoScaleMode={autoScaleMode}
@@ -1610,6 +1648,9 @@ export function GenerationToolbar(): React.JSX.Element {
         }}
         onAutoScaleLayoutFillMissingCanvasWhiteChange={(checked: boolean) => {
           setAutoScaleLayoutFillMissingCanvasWhite(checked);
+        }}
+        onAutoScaleShadowPolicyChange={(value: string) => {
+          setAutoScaleLayoutShadowPolicy(value as CenterShadowPolicy);
         }}
         onAutoScaleModeChange={(value: string) => {
           setAutoScaleMode(value as AutoScalerMode);

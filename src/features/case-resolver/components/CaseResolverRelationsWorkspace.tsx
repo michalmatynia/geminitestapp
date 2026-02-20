@@ -3,7 +3,7 @@
 import { Link2, Network } from 'lucide-react';
 import React from 'react';
 
-import { Button, StatusBadge, EmptyState } from '@/shared/ui';
+import { Button, StatusBadge, EmptyState, Card } from '@/shared/ui';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 
@@ -372,7 +372,7 @@ export function CaseResolverRelationsWorkspace(): React.JSX.Element {
 
   return (
     <div className='flex h-full min-h-0 flex-col gap-3'>
-      <div className='rounded-lg border border-border/60 bg-card/35 p-3'>
+      <Card variant='subtle-compact' padding='sm' className='bg-card/35'>
         <div className='flex items-center gap-2 text-sm text-gray-200'>
           <Link2 className='size-4 text-cyan-300' />
           <span>
@@ -384,11 +384,13 @@ export function CaseResolverRelationsWorkspace(): React.JSX.Element {
         <div className='mt-1 text-xs text-gray-400'>
           One segment equals one case. Straight lines represent case-to-case relations.
         </div>
-      </div>
+      </Card>
 
-      <div
+      <Card
         ref={viewportRef}
-        className='relative min-h-0 flex-1 overflow-auto rounded-lg border border-border/60 bg-card/20'
+        variant='subtle'
+        padding='none'
+        className='relative min-h-0 flex-1 overflow-auto border-border/60 bg-card/20'
       >
         <div className='relative' style={{ width: scaledBoardSize.width, height: scaledBoardSize.height }}>
           <div
@@ -439,10 +441,14 @@ export function CaseResolverRelationsWorkspace(): React.JSX.Element {
             {positionedNodes.map((node: PositionedCaseNode) => {
               const file = node.file;
               return (
-                <button
+                <Card
                   key={file.id}
-                  type='button'
-                  className={`absolute flex flex-col rounded-lg border p-4 text-left shadow-sm transition ${
+                  variant={node.isCurrent ? 'default' : 'subtle'}
+                  padding='md'
+                  onClick={(): void => {
+                    onSelectFile(file.id);
+                  }}
+                  className={`absolute flex cursor-pointer flex-col shadow-sm transition ${
                     node.isCurrent
                       ? 'border-blue-400/70 bg-blue-500/14 ring-2 ring-blue-400/55'
                       : 'border-border/60 bg-card/80 hover:border-cyan-300/40 hover:bg-card/95'
@@ -452,9 +458,6 @@ export function CaseResolverRelationsWorkspace(): React.JSX.Element {
                     top: node.y,
                     width: CARD_WIDTH,
                     minHeight: CARD_HEIGHT,
-                  }}
-                  onClick={(): void => {
-                    onSelectFile(file.id);
                   }}
                 >
                   <div className='mb-2 flex items-start justify-between gap-2'>
@@ -490,12 +493,12 @@ export function CaseResolverRelationsWorkspace(): React.JSX.Element {
                       ))}
                     </div>
                   ) : null}
-                </button>
+                </Card>
               );
             })}
           </div>
         </div>
-        <div className='absolute bottom-3 right-3 z-10 max-w-[min(92vw,48rem)] rounded-md border border-border/60 bg-card/30 p-2 text-xs text-gray-300'>
+        <Card variant='subtle-compact' padding='sm' className='absolute bottom-3 right-3 z-10 max-w-[min(92vw,48rem)] bg-card/30 text-xs text-gray-300'>
           <div className='mb-2 text-[11px] uppercase text-gray-500'>View Controls</div>
           <div className='flex flex-wrap items-center justify-end gap-2'>
             <Button
@@ -548,8 +551,8 @@ export function CaseResolverRelationsWorkspace(): React.JSX.Element {
               Reset
             </Button>
           </div>
-        </div>
-      </div>
+        </Card>
+      </Card>
     </div>
   );
 }

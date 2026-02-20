@@ -1,6 +1,7 @@
 import type {
   AiNode,
   Edge,
+  NodeSideEffectPolicy,
   RuntimeHistoryEntry,
   RuntimeHistoryLink,
 } from '@/shared/contracts/ai-paths';
@@ -203,6 +204,46 @@ export type EvaluateGraphOptions = {
 
 const CACHE_VERSION = 1;
 
+type SideEffectDecision =
+  | 'executed'
+  | 'skipped_duplicate'
+  | 'skipped_policy'
+  | 'skipped_missing_idempotency'
+  | 'failed';
+
+type SideEffectChannel =
+  | 'notification'
+  | 'updater'
+  | 'http'
+  | 'delay'
+  | 'poll'
+  | 'ai'
+  | 'schema';
+
+const SIDE_EFFECT_CHANNEL_BY_NODE_TYPE: Partial<Record<AiNode['type'], SideEffectChannel>> = {
+  model: 'ai',
+  agent: 'ai',
+  learner_agent: 'ai',
+  ai_description: 'ai',
+  description_updater: 'updater',
+  database: 'updater',
+  http: 'http',
+  api_advanced: 'http',
+  notification: 'notification',
+  delay: 'delay',
+  poll: 'poll',
+  db_schema: 'schema',
+};
+
+const IDEMPOTENCY_NODE_TYPES = new Set<AiNode['type']>([
+  'model',
+  'agent',
+  'learner_agent',
+  'http',
+  'api_advanced',
+  'database',
+]);
+
 const buildNodeInputHash = (
   node: AiNode,
   nodeInputs: RuntimePortValues
@@ -365,6 +406,18 @@ const isDatabaseWriteNode = (node: AiNode): boolean => {
     action.startsWith('delete') ||
     action.startsWith('replace')
   );
+};
+
+const resolveSideEffectChannel = (node: AiNode): SideEffectChannel | null => {
+  return SIDE_EFFECT_CHANNEL_BY_NODE_TYPE[node.type] ?? null;
+};
+
+const resolveNodeSideEffectPolicy = (
+  node: AiNode,
+  channel: SideEffectChannel | null
+): NodeSideEffectPolicy | null => {
+  if (!channel) return null;
+  return node.config?.runtime?.sideEffectPolicy ?? 'per_run';
 };
 
 const HANDLERS: Record<string, NodeHandler> = {
@@ -575,6 +628,14 @@ export async function evaluateGraph({
       : []
   );
   const runFencesByNode = new Map<string, Set<string>>();
+  const sideEffectActivationsByNode = new Map<string, Set<string>>();
+  const getSideEffectActivations = (nodeId: string): Set<string> => {
+    const existing = sideEffectActivationsByNode.get(nodeId);
+    if (existing) return existing;
+    const created = new Set<string>();
+    sideEffectActivationsByNode.set(nodeId, created);
+    return created;
+  };
   if (seedHistory) {
     Object.entries(seedHistory).forEach(([nodeId, entries]: [string, RuntimeHistoryEntry[]]) => {
       if (!Array.isArray(entries)) return;
@@ -586,6 +647,13 @@ export async function evaluateGraph({
         const set = runFencesByNode.get(nodeId) ?? new Set<string>();
         set.add(hash);
         runFencesByNode.set(nodeId, set);
+        if (
+          entry.sideEffectDecision === 'executed' &&
+          typeof entry.activationHash === 'string' &&
+          entry.activationHash.trim().length > 0
+        ) {
+          getSideEffectActivations(nodeId).add(entry.activationHash);
+        }
       });
     });
   }
@@ -744,6 +812,21 @@ export async function evaluateGraph({
       ? ((triggerSource as Record<string, unknown>)['pathName'] as string | undefined)
       : undefined);
 
+  const buildNodeIdempotencyKey = (
+    node: AiNode,
+    activationHash: string | null
+  ): string | null => {
+    if (!activationHash || !IDEMPOTENCY_NODE_TYPES.has(node.type)) return null;
+    return hashRuntimeValue({
+      runId: resolvedRunId,
+      runStartedAt: resolvedRunStartedAt,
+      pathId: resolvedPathId,
+      nodeId: node.id,
+      nodeType: node.type,
+      activationHash,
+    });
+  };
+
   const buildInputLinks = (
     nodeId: string,
     nodeInputs: RuntimePortValues
@@ -821,6 +904,13 @@ export async function evaluateGraph({
     return true;
   };
 
+  type NodeInputReadiness = {
+    ready: boolean;
+    requiredPorts: string[];
+    optionalPorts: string[];
+    waitingOnPorts: string[];
+  };
+
   const resolveConfiguredRequiredInputPorts = (
     node: AiNode,
     connectedPorts: Set<string>
@@ -839,34 +929,71 @@ export async function evaluateGraph({
     return explicitRequired;
   };
 
-  const hasRequiredInputs = (node: AiNode, rawInputs: RuntimePortValues): boolean => {
+  const evaluateInputReadiness = (
+    node: AiNode,
+    rawInputs: RuntimePortValues
+  ): NodeInputReadiness => {
     const incoming = incomingEdgesByNode.get(node.id) ?? [];
-    if (incoming.length === 0) return true;
+    if (incoming.length === 0) {
+      return {
+        ready: true,
+        requiredPorts: [],
+        optionalPorts: [],
+        waitingOnPorts: [],
+      };
+    }
     const connectedPorts = new Set<string>();
     incoming.forEach((edge: Edge) => {
       if (edge.toPort) connectedPorts.add(edge.toPort);
     });
-    if (connectedPorts.size === 0) return true;
+    if (connectedPorts.size === 0) {
+      return {
+        ready: true,
+        requiredPorts: [],
+        optionalPorts: [],
+        waitingOnPorts: [],
+      };
+    }
 
     const explicitRequiredPorts = resolveConfiguredRequiredInputPorts(node, connectedPorts);
+    const requiredPorts =
+      explicitRequiredPorts.length > 0
+        ? explicitRequiredPorts
+        : Array.from(connectedPorts);
+    const requiredPortSet = new Set(requiredPorts);
+    const optionalPorts = Array.from(connectedPorts).filter(
+      (port: string): boolean => !requiredPortSet.has(port)
+    );
+    const waitingOnPorts = new Set<string>();
     if (explicitRequiredPorts.length > 0) {
-      const requiredReady = explicitRequiredPorts.every((port: string): boolean => {
+      explicitRequiredPorts.forEach((port: string): void => {
         const value = rawInputs[port];
-        return value !== undefined;
+        if (value === undefined) {
+          waitingOnPorts.add(port);
+        }
       });
-      if (!requiredReady) {
-        return false;
+      if (waitingOnPorts.size > 0) {
+        return {
+          ready: false,
+          requiredPorts,
+          optionalPorts,
+          waitingOnPorts: Array.from(waitingOnPorts),
+        };
       }
     }
 
     if (node.type !== 'database') {
-      const requiredPorts =
-        explicitRequiredPorts.length > 0
-          ? explicitRequiredPorts
-          : Array.from(connectedPorts);
-      return requiredPorts.every((port: string) =>
-        (rawInputs)[port] !== undefined
-      );
+      requiredPorts.forEach((port: string): void => {
+        if ((rawInputs)[port] === undefined) {
+          waitingOnPorts.add(port);
+        }
+      });
+      return {
+        ready: waitingOnPorts.size === 0,
+        requiredPorts,
+        optionalPorts,
+        waitingOnPorts: Array.from(waitingOnPorts),
+      };
     }
 
     const dbConfig = node.config?.database ?? { operation: 'query' };
@@ -881,43 +1008,79 @@ export async function evaluateGraph({
       ports.every((port: string) =>
         !connectedPorts.has(port) || hasMeaningfulValue(coerceInput((rawInputs)[port]))
       );
+    const markWaitingPorts = (ports: string[], connectedOnly: boolean): void => {
+      ports.forEach((port: string): void => {
+        if (connectedOnly && !connectedPorts.has(port)) return;
+        if (!hasMeaningfulValue(coerceInput((rawInputs)[port]))) {
+          waitingOnPorts.add(port);
+        }
+      });
+    };
 
     if (operation === 'query') {
       const queryPorts = ['aiQuery', 'query', 'queryCallback'];
       const idPorts = ['value', 'entityId', 'productId'];
       const queryGroup = [...queryPorts, ...idPorts];
       if (anyConnected(queryGroup) && !hasAnyValue(queryGroup)) {
-        return false;
+        markWaitingPorts(queryGroup, true);
       }
       const nonQueryPorts = Array.from(connectedPorts).filter(
         (port: string) => !queryGroup.includes(port)
       );
       if (!allConnectedHaveValues(nonQueryPorts)) {
-        return false;
+        markWaitingPorts(nonQueryPorts, true);
       }
-      return true;
+      return {
+        ready: waitingOnPorts.size === 0,
+        requiredPorts,
+        optionalPorts,
+        waitingOnPorts: Array.from(waitingOnPorts),
+      };
     }
 
     if (operation === 'delete') {
       const idPorts = ['entityId', 'productId', 'value'];
       if (anyConnected(idPorts)) {
-        return hasAnyValue(idPorts);
+        if (!hasAnyValue(idPorts)) {
+          markWaitingPorts(idPorts, true);
+        }
       }
-      return true;
+      return {
+        ready: waitingOnPorts.size === 0,
+        requiredPorts,
+        optionalPorts,
+        waitingOnPorts: Array.from(waitingOnPorts),
+      };
     }
 
     if (operation === 'insert') {
       // When a query template is configured, the payload comes from
       // config (queryTemplate) rather than from an input port.
       const hasTemplatePayload = Boolean(dbConfig.query?.queryTemplate?.trim());
-      if (hasTemplatePayload) return true;
+      if (hasTemplatePayload) {
+        return {
+          ready: true,
+          requiredPorts,
+          optionalPorts,
+          waitingOnPorts: [],
+        };
+      }
       const writeSource = dbConfig.writeSource ?? 'bundle';
       const insertPorts = [writeSource, 'queryCallback'];
       const hasPayload = hasAnyValue(insertPorts);
       if (connectedPorts.has(writeSource) || connectedPorts.has('queryCallback')) {
-        return hasPayload;
+        if (!hasPayload) {
+          markWaitingPorts(insertPorts, true);
+        }
+      } else if (!hasPayload) {
+        markWaitingPorts(insertPorts, false);
       }
-      return hasPayload;
+      return {
+        ready: waitingOnPorts.size === 0,
+        requiredPorts,
+        optionalPorts,
+        waitingOnPorts: Array.from(waitingOnPorts),
+      };
     }
 
     if (operation === 'update') {
@@ -932,27 +1095,39 @@ export async function evaluateGraph({
         const allSourcesReady = connectedSources.every((port: string) =>
           hasMeaningfulValue(coerceInput(rawInputs[port]))
         );
-        if (!allSourcesReady) return false;
+        if (!allSourcesReady) {
+          markWaitingPorts(connectedSources, true);
+        }
       }
 
       const entityType = (dbConfig.entityType ?? 'product').trim().toLowerCase();
       if (entityType !== 'custom') {
         const idPorts = ['entityId', 'productId', 'value'];
         if (anyConnected(idPorts) && !hasAnyValue(idPorts)) {
-          return false;
+          markWaitingPorts(idPorts, true);
         }
       }
 
       if ((dbConfig.updateStrategy ?? 'one') === 'many') {
         const queryPorts = ['aiQuery', 'query', 'queryCallback', 'value', 'entityId', 'productId'];
         if (anyConnected(queryPorts) && !hasAnyValue(queryPorts)) {
-          return false;
+          markWaitingPorts(queryPorts, true);
         }
       }
-      return true;
+      return {
+        ready: waitingOnPorts.size === 0,
+        requiredPorts,
+        optionalPorts,
+        waitingOnPorts: Array.from(waitingOnPorts),
+      };
     }
 
-    return true;
+    return {
+      ready: true,
+      requiredPorts,
+      optionalPorts,
+      waitingOnPorts: [],
+    };
   };
 
   const pushHistoryEntry = (nodeId: string, entry: RuntimeHistoryEntry): void => {
@@ -965,6 +1140,10 @@ export async function evaluateGraph({
       last.runStartedAt === entry.runStartedAt &&
       last.status === entry.status &&
       last.skipReason === entry.skipReason &&
+      last.sideEffectPolicy === entry.sideEffectPolicy &&
+      last.sideEffectDecision === entry.sideEffectDecision &&
+      last.activationHash === entry.activationHash &&
+      last.idempotencyKey === entry.idempotencyKey &&
       hashRuntimeValue(last.inputs) === hashRuntimeValue(entry.inputs) &&
       hashRuntimeValue(last.outputs) === hashRuntimeValue(entry.outputs)
     ) {
@@ -989,6 +1168,11 @@ export async function evaluateGraph({
       reason: string;
       iteration: number;
       inputHash?: string | null;
+      waitDiagnostics?: NodeInputReadiness;
+      sideEffectPolicy?: NodeSideEffectPolicy | null;
+      sideEffectDecision?: SideEffectDecision | null;
+      activationHash?: string | null;
+      idempotencyKey?: string | null;
     }
   ): void => {
     if (!recordHistory) return;
@@ -1007,6 +1191,13 @@ export async function evaluateGraph({
       outputs: prevOutputs,
       inputHash: options.inputHash ?? null,
       skipReason: options.reason,
+      requiredPorts: options.waitDiagnostics?.requiredPorts,
+      optionalPorts: options.waitDiagnostics?.optionalPorts,
+      waitingOnPorts: options.waitDiagnostics?.waitingOnPorts,
+      sideEffectPolicy: options.sideEffectPolicy ?? undefined,
+      sideEffectDecision: options.sideEffectDecision ?? undefined,
+      activationHash: options.activationHash ?? null,
+      idempotencyKey: options.idempotencyKey ?? null,
       inputsFrom: buildInputLinks(node.id, nodeInputs),
       outputsTo: buildOutputLinks(node.id, prevOutputs),
       delayMs: node.type === 'delay' ? (node.config?.delay?.ms ?? 300) : null,
@@ -1389,7 +1580,8 @@ export async function evaluateGraph({
       }
       const shouldWaitForInputs = node.config?.runtime?.waitForInputs ?? false;
       if (shouldWaitForInputs) {
-        if (!hasRequiredInputs(node, nodeInputs)) {
+        const waitDiagnostics = evaluateInputReadiness(node, nodeInputs);
+        if (!waitDiagnostics.ready) {
           nextInputs[node.id] = nodeInputs;
           if (isActiveNode(node)) {
             const prevOutputs = outputs[node.id] ?? {};
@@ -1397,6 +1589,7 @@ export async function evaluateGraph({
               status: 'skipped',
               reason: 'missing_inputs',
               iteration,
+              waitDiagnostics,
             });
             recordNodeProfile(node, { durationMs: 0, status: 'skipped' });
             emitProfileEvent({
@@ -1409,6 +1602,9 @@ export async function evaluateGraph({
               status: 'skipped',
               durationMs: 0,
               reason: 'missing_inputs',
+              requiredPorts: waitDiagnostics.requiredPorts,
+              optionalPorts: waitDiagnostics.optionalPorts,
+              waitingOnPorts: waitDiagnostics.waitingOnPorts,
             });
             if (markStep(node)) {
               break;
@@ -1566,6 +1762,74 @@ export async function evaluateGraph({
         continue;
       }
 
+      const sideEffectChannel = resolveSideEffectChannel(node);
+      const sideEffectPolicy = resolveNodeSideEffectPolicy(node, sideEffectChannel);
+      const sideEffectActivationHash = sideEffectPolicy ? fenceHash : null;
+      const sideEffectIdempotencyKey = sideEffectPolicy
+        ? buildNodeIdempotencyKey(node, sideEffectActivationHash)
+        : null;
+      if (sideEffectPolicy && sideEffectChannel) {
+        const executionBucket = executed[sideEffectChannel];
+        const activationSet = getSideEffectActivations(node.id);
+        const hasExecutedForRun = executionBucket.has(node.id);
+        const hasExecutedForActivation = sideEffectActivationHash
+          ? activationSet.has(sideEffectActivationHash)
+          : false;
+        const shouldSkipForPolicy =
+          sideEffectPolicy === 'per_run' ? hasExecutedForRun : hasExecutedForActivation;
+        if (shouldSkipForPolicy) {
+          const sideEffectDecision: SideEffectDecision =
+            sideEffectPolicy === 'per_run' ? 'skipped_policy' : 'skipped_duplicate';
+          pushSkipEntry(node, nodeInputs, prevOutputs, {
+            status: 'cached',
+            reason: 'side_effect_policy',
+            iteration,
+            inputHash: historyInputHash ?? null,
+            sideEffectPolicy,
+            sideEffectDecision,
+            activationHash: sideEffectActivationHash,
+            idempotencyKey: sideEffectIdempotencyKey,
+          });
+          recordNodeProfile(node, { durationMs: 0, status: 'cached' });
+          emitProfileEvent({
+            type: 'node',
+            runId: resolvedRunId,
+            runStartedAt: resolvedRunStartedAt,
+            nodeId: node.id,
+            nodeType: node.type,
+            iteration,
+            status: 'skipped',
+            durationMs: 0,
+            hashMs: profileHashMs,
+            reason: 'side_effect_policy',
+            sideEffectPolicy,
+            sideEffectDecision,
+            activationHash: sideEffectActivationHash ?? undefined,
+            idempotencyKey: sideEffectIdempotencyKey ?? undefined,
+          });
+          if (onNodeFinish) {
+            await onNodeFinish({
+              runId: resolvedRunId,
+              runStartedAt: resolvedRunStartedAt,
+              node,
+              nodeInputs,
+              prevOutputs,
+              nextOutputs: prevOutputs,
+              changed: false,
+              iteration,
+              cached: true,
+            });
+          }
+          if (markStep(node)) {
+            break;
+          }
+          continue;
+        }
+        if (sideEffectPolicy === 'per_activation') {
+          executionBucket.delete(node.id);
+        }
+      }
+
       const handler = HANDLERS[node.type];
       const nodeStartMs = nowMs();
       if (handler) {
@@ -1616,6 +1880,15 @@ export async function evaluateGraph({
                     resolvedEntity,
                     fallbackEntityId,
                     strictFlowMode,
+                    sideEffectControl:
+                      sideEffectPolicy && sideEffectChannel
+                        ? {
+                          policy: sideEffectPolicy,
+                          decision: 'executed',
+                          activationHash: sideEffectActivationHash,
+                          idempotencyKey: sideEffectIdempotencyKey,
+                        }
+                        : undefined,
                     executed,
                   })
                 ),
@@ -1629,6 +1902,9 @@ export async function evaluateGraph({
           );
           ensureNotCancelled(nextInputs, node.id);
           nextOutputs = result;
+          if (sideEffectPolicy && sideEffectActivationHash) {
+            getSideEffectActivations(node.id).add(sideEffectActivationHash);
+          }
           const durationMs = profileEnabled ? nowMs() - nodeStartMs : 0;
           recordNodeProfile(node, { durationMs, status: 'executed' });
           emitProfileEvent({
@@ -1641,6 +1917,10 @@ export async function evaluateGraph({
             status: 'executed',
             durationMs,
             hashMs: profileHashMs,
+            sideEffectPolicy: sideEffectPolicy ?? undefined,
+            sideEffectDecision: sideEffectPolicy ? 'executed' : undefined,
+            activationHash: sideEffectActivationHash ?? undefined,
+            idempotencyKey: sideEffectIdempotencyKey ?? undefined,
           });
         } catch (error) {
           if (error instanceof GraphExecutionCancelled) {
@@ -1661,6 +1941,10 @@ export async function evaluateGraph({
             status: 'error',
             durationMs,
             hashMs: profileHashMs,
+            sideEffectPolicy: sideEffectPolicy ?? undefined,
+            sideEffectDecision: sideEffectPolicy ? 'failed' : undefined,
+            activationHash: sideEffectActivationHash ?? undefined,
+            idempotencyKey: sideEffectIdempotencyKey ?? undefined,
           });
           if (recordHistory) {
             const entry: RuntimeHistoryEntry = {
@@ -1677,6 +1961,10 @@ export async function evaluateGraph({
               inputs: nodeInputs,
               outputs: prevOutputs,
               inputHash: historyInputHash ?? null,
+              sideEffectPolicy: sideEffectPolicy ?? undefined,
+              sideEffectDecision: sideEffectPolicy ? 'failed' : undefined,
+              activationHash: sideEffectActivationHash ?? null,
+              idempotencyKey: sideEffectIdempotencyKey ?? null,
               error: error instanceof Error ? error.message : String(error),
               inputsFrom: buildInputLinks(node.id, nodeInputs),
               outputsTo: buildOutputLinks(node.id, prevOutputs),
@@ -1739,6 +2027,10 @@ export async function evaluateGraph({
           inputs: nodeInputs,
           outputs: nextOutputs,
           inputHash: historyInputHash ?? null,
+          sideEffectPolicy: sideEffectPolicy ?? undefined,
+          sideEffectDecision: sideEffectPolicy ? 'executed' : undefined,
+          activationHash: sideEffectActivationHash ?? null,
+          idempotencyKey: sideEffectIdempotencyKey ?? null,
           inputsFrom: buildInputLinks(node.id, nodeInputs),
           outputsTo: buildOutputLinks(node.id, nextOutputs),
           delayMs: node.type === 'delay' ? (node.config?.delay?.ms ?? 300) : null,

@@ -35,6 +35,8 @@ import {
   PanelHeader,
   EmptyState,
   FileUploadTrigger,
+  Card,
+  Alert,
 } from '@/shared/ui';
 import { sanitizeHtml } from '@/shared/utils';
 
@@ -379,6 +381,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
   const showPromptExploderManualRetry = Boolean(
     pendingPromptExploderPayload && promptExploderApplyDiagnostics?.status === 'failed'
   );
+  const showPromptExploderApplyAction = Boolean(pendingPromptExploderPayload);
 
   const addresserPartyOptions = React.useMemo(
     () =>
@@ -772,14 +775,14 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
             ) : activeFile ? (
               <CaseResolverCanvasWorkspace />
             ) : (
-              <div className='flex flex-1 items-center justify-center rounded-lg border border-dashed border-border'>
+              <Card variant='subtle' padding='lg' className='flex flex-1 items-center justify-center border-dashed'>
                 <EmptyState
                   icon={<FileText className='size-12 text-gray-600' />}
                   title='No case selected'
                   description='Select a file from the tree to begin.'
                   className='border-none p-0'
                 />
-              </div>
+              </Card>
             )}
           </div>
         </div>
@@ -800,11 +803,8 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                     onClick={handleSaveFileEditor}
                     size='sm'
                     disabled={!isEditorDraftDirty}
-                    className={`min-w-[100px] rounded-md border text-xs transition-colors ${
-                      isEditorDraftDirty
-                        ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
-                        : 'border-border/60 text-gray-500 hover:bg-transparent'
-                    }`}
+                    variant={isEditorDraftDirty ? 'success' : 'default'}
+                    className='min-w-[100px]'
                   >
                     Save Changes
                   </Button>
@@ -860,11 +860,13 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                   multiple
                   asChild
                 >
-                  <div
-                    className={`rounded border px-3 py-3 transition ${
+                  <Card
+                    variant='subtle'
+                    padding='sm'
+                    className={`transition ${
                       isScanDraftDropActive
                         ? 'border-cyan-500/70 bg-cyan-500/10'
-                        : 'border-border/60 bg-card/30'
+                        : 'bg-card/30'
                     }`}
                   >
                     <div className='flex flex-wrap items-center gap-2'>
@@ -922,9 +924,11 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                                   ? 'OCR extracted'
                                   : 'OCR pending';
                           return (
-                            <div
+                            <Card
                               key={slot.id}
-                              className='flex items-center justify-between gap-2 rounded border border-border/60 bg-card/30 px-2 py-1.5 text-[11px]'
+                              variant='subtle-compact'
+                              padding='none'
+                              className='flex items-center justify-between gap-2 bg-card/30 px-2 py-1.5 text-[11px]'
                             >
                               <div className='min-w-0'>
                                 <div className='truncate text-gray-200'>{slot.name || 'Untitled file'}</div>
@@ -961,12 +965,12 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                                   Delete
                                 </Button>
                               </div>
-                            </div>
+                            </Card>
                           );
                         })
                       )}
                     </div>
-                  </div>
+                  </Card>
                 </FileUploadTrigger>
               ) : null}
 
@@ -1413,7 +1417,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                     {' '}
                     {showPromptExploderManualRetry
                       ? 'Automatic apply failed. Retry apply or discard this output.'
-                      : 'Applying automatically and opening Capture Mapping.'}
+                      : 'Apply this output manually, or keep waiting for automatic apply.'}
                   </div>
                 ) : null}
               </div>
@@ -1513,7 +1517,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                 >
                   Prompt Exploder: Extract + Reassemble
                 </Button>
-                {showPromptExploderManualRetry ? (
+                {showPromptExploderApplyAction ? (
                   <Button
                     type='button'
                     variant='outline'

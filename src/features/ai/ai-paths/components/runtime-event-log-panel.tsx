@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { AiPathRuntimeEvent, AiPathRunEventLevel } from '@/features/ai/ai-paths/lib';
-import { Button, StatusBadge, SelectSimple } from '@/shared/ui';
+import { Button, StatusBadge, SelectSimple, Card } from '@/shared/ui';
 
 import { useRuntimeState, useRuntimeActions } from '../context';
 
@@ -91,7 +91,7 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
   );
 
   return (
-    <div className='rounded-lg border border-border/60 bg-card/50'>
+    <Card variant='subtle-compact' padding='none' className='bg-card/50'>
       {/* Header */}
       <div className='flex items-center justify-between gap-2 border-b border-border/40 px-3 py-2'>
         <div className='flex items-center gap-2'>
@@ -198,6 +198,6 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
           )}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

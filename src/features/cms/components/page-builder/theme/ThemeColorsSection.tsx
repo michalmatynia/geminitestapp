@@ -260,7 +260,7 @@ export function ThemeColorsSection(): React.JSX.Element {
             <ColorField label='Success' value={theme.successColor} onChange={updateSetting('successColor')} />
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

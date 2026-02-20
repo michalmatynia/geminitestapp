@@ -350,4 +350,201 @@ describe('AI Paths Runtime Engine', () => {
 
     expect(result.outputs['bundle-node']).toBeUndefined();
   });
+
+  it('emits waiting diagnostics for missing required inputs', async () => {
+    const profileEvents: Array<Record<string, unknown>> = [];
+    const nodes: AiNode[] = [
+      {
+        id: 'required-source',
+        type: 'constant',
+        title: 'Required Source',
+        description: '',
+        inputs: [],
+        outputs: ['value'],
+        position: { x: 0, y: 0 },
+        config: { constant: { valueType: 'string', value: 'required' } },
+      },
+      {
+        id: 'bundle-node',
+        type: 'bundle',
+        title: 'Bundle',
+        description: '',
+        inputs: ['value', 'context'],
+        outputs: ['bundle'],
+        position: { x: 160, y: 0 },
+        config: {
+          runtime: {
+            waitForInputs: true,
+            inputContracts: {
+              value: { required: true },
+              context: { required: true },
+            },
+          },
+        },
+      },
+    ];
+
+    const edges: Edge[] = [
+      {
+        id: 'edge-required',
+        from: 'required-source',
+        to: 'bundle-node',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+    ];
+
+    const result = await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+      recordHistory: true,
+      profile: {
+        onEvent: (event): void => {
+          profileEvents.push(event as unknown as Record<string, unknown>);
+        },
+      },
+    });
+
+    const skippedEvent = profileEvents.find(
+      (event): boolean =>
+        event['type'] === 'node' &&
+        event['nodeId'] === 'bundle-node' &&
+        event['status'] === 'skipped' &&
+        event['reason'] === 'missing_inputs'
+    );
+    expect(skippedEvent).toBeDefined();
+    expect((skippedEvent?.['requiredPorts'] as string[] | undefined) ?? []).toContain('context');
+    expect((skippedEvent?.['waitingOnPorts'] as string[] | undefined) ?? []).toContain('context');
+
+    const historyEntries = result.history?.['bundle-node'];
+    const skipHistory = Array.isArray(historyEntries)
+      ? historyEntries.find((entry) => entry['skipReason'] === 'missing_inputs')
+      : null;
+    expect(skipHistory).toBeDefined();
+    expect((skipHistory?.['requiredPorts'] as string[] | undefined) ?? []).toContain('context');
+    expect((skipHistory?.['waitingOnPorts'] as string[] | undefined) ?? []).toContain('context');
+  });
+
+  it('supports per-activation side-effect policy for notification nodes', async () => {
+    const nodes: AiNode[] = [
+      {
+        id: 'math-node',
+        type: 'math',
+        title: 'Math',
+        description: '',
+        inputs: ['value'],
+        outputs: ['value'],
+        position: { x: 0, y: 0 },
+        config: { math: { operation: 'add', operand: 1 } },
+      },
+      {
+        id: 'notify-node',
+        type: 'notification',
+        title: 'Notify',
+        description: '',
+        inputs: ['value'],
+        outputs: [],
+        position: { x: 140, y: 0 },
+        config: {
+          runtime: {
+            sideEffectPolicy: 'per_activation',
+          },
+        },
+      },
+    ];
+
+    const edges: Edge[] = [
+      {
+        id: 'edge-loop',
+        from: 'math-node',
+        to: 'math-node',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+      {
+        id: 'edge-notify',
+        from: 'math-node',
+        to: 'notify-node',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+    ];
+
+    const result = await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+      seedOutputs: { 'math-node': { value: 0 } },
+      recordHistory: true,
+    });
+
+    expect(mockToast.mock.calls.length).toBeGreaterThan(1);
+    const notifyHistory = result.history?.['notify-node'] ?? [];
+    const executedEntries = notifyHistory.filter(
+      (entry) => entry['sideEffectDecision'] === 'executed'
+    );
+    expect(executedEntries.length).toBeGreaterThan(1);
+  });
+
+  it('keeps per-run side-effect policy for notification nodes', async () => {
+    const nodes: AiNode[] = [
+      {
+        id: 'math-node',
+        type: 'math',
+        title: 'Math',
+        description: '',
+        inputs: ['value'],
+        outputs: ['value'],
+        position: { x: 0, y: 0 },
+        config: { math: { operation: 'add', operand: 1 } },
+      },
+      {
+        id: 'notify-node',
+        type: 'notification',
+        title: 'Notify',
+        description: '',
+        inputs: ['value'],
+        outputs: [],
+        position: { x: 140, y: 0 },
+        config: {
+          runtime: {
+            sideEffectPolicy: 'per_run',
+          },
+        },
+      },
+    ];
+
+    const edges: Edge[] = [
+      {
+        id: 'edge-loop',
+        from: 'math-node',
+        to: 'math-node',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+      {
+        id: 'edge-notify',
+        from: 'math-node',
+        to: 'notify-node',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+    ];
+
+    const result = await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+      seedOutputs: { 'math-node': { value: 0 } },
+      recordHistory: true,
+    });
+
+    expect(mockToast).toHaveBeenCalledTimes(1);
+    const notifyHistory = result.history?.['notify-node'] ?? [];
+    const skippedEntries = notifyHistory.filter(
+      (entry) => entry['sideEffectDecision'] === 'skipped_policy'
+    );
+    expect(skippedEntries.length).toBeGreaterThan(0);
+  });
 });

@@ -13,6 +13,7 @@ import {
   StatusBadge,
   Alert,
   EmptyState,
+  Card,
 } from '@/shared/ui';
 
 import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
@@ -86,7 +87,7 @@ export function RunHistoryPanel(): React.JSX.Element {
   }, [runFilter, resolvedRuns]);
 
   return (
-    <div className='rounded-lg border border-border bg-card/60 p-4'>
+    <Card variant='subtle' padding='md' className='bg-card/60'>
       <div className='mb-3 flex items-center justify-between'>
         <span className='text-sm font-semibold text-white'>Run History</span>
         <Button
@@ -148,9 +149,11 @@ export function RunHistoryPanel(): React.JSX.Element {
                 ? runHistory[selectedHistoryNodeId] ?? []
                 : [];
             return (
-              <div
+              <Card
                 key={run.id}
-                className='rounded-md border border-border/60 bg-card/70 p-2'
+                variant='subtle-compact'
+                padding='sm'
+                className='bg-card/70'
               >
                 <div className='flex items-center justify-between'>
                   <div>
@@ -247,7 +250,7 @@ export function RunHistoryPanel(): React.JSX.Element {
                   </Alert>
                 )}
                 {historyOpen && (
-                  <div className='mt-2 rounded-md border border-border/70 bg-black/20 p-3'>
+                  <Card variant='subtle-compact' padding='sm' className='mt-2 border-border/70 bg-black/20'>
                     <div className='flex flex-wrap items-center gap-2'>
                       <Label className='text-[10px] uppercase text-gray-500'>History</Label>
                       {runHistory ? (
@@ -287,13 +290,13 @@ export function RunHistoryPanel(): React.JSX.Element {
                         No history recorded for this run.
                       </div>
                     )}
-                  </div>
+                  </Card>
                 )}
-              </div>
+              </Card>
             );
           })}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

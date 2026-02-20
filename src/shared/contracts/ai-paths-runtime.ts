@@ -197,6 +197,15 @@ export const aiPathRuntimeProfileEventSchema = z.discriminatedUnion('type', [
     durationMs: z.number(),
     hashMs: z.number().optional(),
     reason: z.string().optional(),
+    requiredPorts: z.array(z.string()).optional(),
+    optionalPorts: z.array(z.string()).optional(),
+    waitingOnPorts: z.array(z.string()).optional(),
+    sideEffectPolicy: z.enum(['per_run', 'per_activation']).optional(),
+    sideEffectDecision: z
+      .enum(['executed', 'skipped_duplicate', 'skipped_policy', 'skipped_missing_idempotency', 'failed'])
+      .optional(),
+    activationHash: z.string().optional(),
+    idempotencyKey: z.string().optional(),
   }),
 ]);
 
@@ -372,6 +381,12 @@ export interface NodeHandlerContext {
   resolvedEntity: Record<string, unknown> | null;
   fallbackEntityId: string | null;
   strictFlowMode: boolean;
+  sideEffectControl?: {
+    policy: 'per_run' | 'per_activation';
+    decision: 'executed' | 'skipped_duplicate' | 'skipped_policy' | 'skipped_missing_idempotency' | 'failed';
+    activationHash: string | null;
+    idempotencyKey: string | null;
+  };
   executed: {
     notification: Set<string>;
     updater: Set<string>;

@@ -19,6 +19,8 @@ related_components:
 - Added workspace payload-size guardrail before save persistence.
 - Added OCR correlation IDs and error taxonomy (`errorCategory`, `retryableError`) in runtime job records.
 - Added focused CI regression workflow for Case Resolver save/OCR runtime paths.
+- Added `GET /api/case-resolver/ocr/observability` snapshot endpoint for OCR SLO monitoring.
+- Added workspace debug observability snapshot (`p95`, conflict/success rates, payload trends) in debug panel.
 
 ## Changelog Entry Template
 

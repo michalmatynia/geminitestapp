@@ -3,6 +3,7 @@
 import React from 'react';
 
 import { useProductListingsViewContext } from './context/ProductListingsViewContext';
+import { Card } from '@/shared/ui';
 import { ProductListingItem } from './ProductListingItem';
 import { ProductListingsSyncPanel } from './ProductListingsSyncPanel';
 
@@ -18,9 +19,9 @@ export function ProductListingsContent(): React.JSX.Element {
   return (
     <div className='space-y-3'>
       {filterIntegrationSlug && (
-        <div className='rounded-md border border-border bg-card/60 px-3 py-2 text-xs text-gray-300'>
+        <Card variant='subtle-compact' padding='sm' className='bg-card/60 text-xs text-gray-300'>
           {statusTargetLabel} status: {filteredListings[0]?.status ?? 'Unknown'}
-        </div>
+        </Card>
       )}
       {showSync && isBaseFilter && <ProductListingsSyncPanel />}
       {filteredListings.map((listing) => (

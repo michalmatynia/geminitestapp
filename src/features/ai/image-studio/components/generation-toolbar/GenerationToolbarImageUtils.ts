@@ -55,6 +55,7 @@ export type CropRectResolutionDiagnostics = {
 };
 
 export type CenterDetectionMode = 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel';
+export type CenterShadowPolicy = 'auto' | 'include_shadow' | 'exclude_shadow';
 
 export type CenterLayoutConfig = {
   paddingPercent?: number;
@@ -65,7 +66,21 @@ export type CenterLayoutConfig = {
   targetCanvasHeight?: number;
   whiteThreshold?: number;
   chromaThreshold?: number;
+  shadowPolicy?: CenterShadowPolicy;
   detection?: CenterDetectionMode;
+};
+
+export type CenterDetectionDetails = {
+  shadowPolicyRequested: CenterShadowPolicy;
+  shadowPolicyApplied: CenterShadowPolicy;
+  componentCount: number;
+  coreComponentCount: number;
+  selectedComponentPixels: number;
+  selectedComponentCoverage: number;
+  foregroundPixels: number;
+  corePixels: number;
+  touchesBorder: boolean;
+  maskSource: 'foreground' | 'core';
 };
 
 export type CenterLayoutResult = {
@@ -83,6 +98,7 @@ export type CenterLayoutResult = {
     targetCanvasHeight: number | null;
     whiteThreshold: number;
     chromaThreshold: number;
+    shadowPolicy: CenterShadowPolicy;
     detection: CenterDetectionMode;
   };
 };
@@ -92,6 +108,8 @@ export type ClientImageObjectAnalysisResult = {
   height: number;
   sourceObjectBounds: { left: number; top: number; width: number; height: number };
   detectionUsed: Exclude<CenterDetectionMode, 'auto'>;
+  confidence: number;
+  detectionDetails: CenterDetectionDetails | null;
   whitespace: {
     px: { left: number; top: number; right: number; bottom: number };
     percent: { left: number; top: number; right: number; bottom: number };
@@ -113,6 +131,8 @@ export type ClientImageObjectAnalysisResult = {
 export type AutoScaleCanvasResult = CenterLayoutResult & {
   outputWidth: number;
   outputHeight: number;
+  confidenceBefore: number;
+  detectionDetails: CenterDetectionDetails | null;
   whitespaceBefore: ClientImageObjectAnalysisResult['whitespace'];
   whitespaceAfter: ClientImageObjectAnalysisResult['whitespace'];
   objectAreaPercentBefore: number;
@@ -228,6 +248,11 @@ export const normalizeCenterLayoutConfig = (
     detectionRaw === 'alpha_bbox' || detectionRaw === 'white_bg_first_colored_pixel'
       ? detectionRaw
       : 'auto';
+  const shadowPolicyRaw = layout?.shadowPolicy;
+  const shadowPolicy: CenterShadowPolicy =
+    shadowPolicyRaw === 'include_shadow' || shadowPolicyRaw === 'exclude_shadow'
+      ? shadowPolicyRaw
+      : 'auto';
   const explicitPaddingPercent = clampNumber(
     layout?.paddingPercent,
     CENTER_LAYOUT_MIN_PADDING_PERCENT,
@@ -277,6 +302,7 @@ export const normalizeCenterLayoutConfig = (
         CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD
       )
     ),
+    shadowPolicy,
     detection,
   };
 };
@@ -1164,6 +1190,8 @@ export const analyzeCanvasImageObject = async (
     height: sourceHeight,
     sourceObjectBounds: planned.analysis.sourceObjectBounds,
     detectionUsed: planned.analysis.detectionUsed,
+    confidence: planned.analysis.confidence,
+    detectionDetails: planned.analysis.detectionDetails,
     whitespace: planned.analysis.whitespace,
     objectAreaPercent: planned.analysis.objectAreaPercent,
     layout: planned.analysis.layout,
@@ -1234,6 +1262,8 @@ export const autoScaleCanvasImageObject = async (
     sourceObjectBounds,
     targetObjectBounds,
     detectionUsed: planned.analysis.detectionUsed,
+    confidenceBefore: planned.analysis.confidence,
+    detectionDetails: planned.analysis.detectionDetails,
     scale: planned.plan.scale,
     layout: planned.analysis.layout,
     outputWidth,

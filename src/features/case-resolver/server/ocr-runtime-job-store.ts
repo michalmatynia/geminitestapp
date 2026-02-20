@@ -36,10 +36,13 @@ export type CaseResolverOcrJobRecord = {
 };
 
 const OCR_RUNTIME_JOB_KEY_PREFIX = 'case-resolver:ocr:job:';
+const OCR_RUNTIME_JOB_RECENT_IDS_KEY = 'case-resolver:ocr:job:recent';
 const OCR_RUNTIME_JOB_TTL_SECONDS = 60 * 60 * 6;
 const OCR_RUNTIME_JOB_TTL_MS = OCR_RUNTIME_JOB_TTL_SECONDS * 1000;
+const OCR_RUNTIME_JOB_RECENT_LIMIT = 400;
 
 const inMemoryJobs = new Map<string, { record: CaseResolverOcrJobRecord; expiresAt: number }>();
+const inMemoryRecentJobIds: string[] = [];
 
 const nowIso = (): string => new Date().toISOString();
 
@@ -172,9 +175,27 @@ const writeInMemoryJob = (record: CaseResolverOcrJobRecord): void => {
   });
 };
 
+const touchInMemoryRecentJobId = (jobId: string): void => {
+  const normalizedJobId = jobId.trim();
+  if (!normalizedJobId) return;
+  const existingIndex = inMemoryRecentJobIds.indexOf(normalizedJobId);
+  if (existingIndex >= 0) {
+    inMemoryRecentJobIds.splice(existingIndex, 1);
+  }
+  inMemoryRecentJobIds.unshift(normalizedJobId);
+  if (inMemoryRecentJobIds.length > OCR_RUNTIME_JOB_RECENT_LIMIT) {
+    inMemoryRecentJobIds.splice(OCR_RUNTIME_JOB_RECENT_LIMIT);
+  }
+};
+
 const readInMemoryJob = (jobId: string): CaseResolverOcrJobRecord | null => {
   cleanupInMemoryJobs();
   return inMemoryJobs.get(jobId)?.record ?? null;
+};
+
+const readInMemoryRecentJobIds = (limit: number): string[] => {
+  cleanupInMemoryJobs();
+  return inMemoryRecentJobIds.slice(0, limit);
 };
 
 const writeRedisJob = async (record: CaseResolverOcrJobRecord): Promise<boolean> => {
@@ -206,15 +227,47 @@ const readRedisJob = async (jobId: string): Promise<CaseResolverOcrJobRecord | n
   }
 };
 
+const persistRecentJobIdInRedis = async (jobId: string): Promise<boolean> => {
+  const redis = getRedisConnection();
+  if (!redis) return false;
+  try {
+    await redis.multi()
+      .lrem(OCR_RUNTIME_JOB_RECENT_IDS_KEY, 0, jobId)
+      .lpush(OCR_RUNTIME_JOB_RECENT_IDS_KEY, jobId)
+      .ltrim(OCR_RUNTIME_JOB_RECENT_IDS_KEY, 0, OCR_RUNTIME_JOB_RECENT_LIMIT - 1)
+      .expire(OCR_RUNTIME_JOB_RECENT_IDS_KEY, OCR_RUNTIME_JOB_TTL_SECONDS)
+      .exec();
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const readRecentJobIdsFromRedis = async (limit: number): Promise<string[] | null> => {
+  const redis = getRedisConnection();
+  if (!redis) return null;
+  try {
+    const ids = await redis.lrange(OCR_RUNTIME_JOB_RECENT_IDS_KEY, 0, Math.max(0, limit - 1));
+    const normalized = ids
+      .map((entry): string => entry.trim())
+      .filter((entry): entry is string => entry.length > 0);
+    return normalized;
+  } catch {
+    return null;
+  }
+};
+
 const persistCaseResolverOcrJob = async (
   record: CaseResolverOcrJobRecord
 ): Promise<CaseResolverOcrJobRecord> => {
   const wroteRedis = await writeRedisJob(record);
   if (!wroteRedis) {
     writeInMemoryJob(record);
-    return record;
+  } else {
+    inMemoryJobs.delete(record.id);
   }
-  inMemoryJobs.delete(record.id);
+  touchInMemoryRecentJobId(record.id);
+  await persistRecentJobIdInRedis(record.id);
   return record;
 };
 
@@ -431,4 +484,27 @@ export const markCaseResolverOcrJobQueuedForRetry = async (
     ...(typeof retryableError === 'boolean' ? { retryableError } : {}),
     finishedAt: null,
   });
+};
+
+export const listCaseResolverRecentOcrJobs = async (
+  limit = 120
+): Promise<CaseResolverOcrJobRecord[]> => {
+  const normalizedLimit =
+    Number.isFinite(limit) && limit > 0
+      ? Math.min(400, Math.max(1, Math.floor(limit)))
+      : 120;
+  const redisIds = await readRecentJobIdsFromRedis(normalizedLimit);
+  const fallbackIds = readInMemoryRecentJobIds(normalizedLimit);
+  const candidateIds = (redisIds && redisIds.length > 0 ? redisIds : fallbackIds)
+    .slice(0, normalizedLimit);
+  const uniqueIds = new Set<string>();
+  const records: CaseResolverOcrJobRecord[] = [];
+  for (const id of candidateIds) {
+    if (uniqueIds.has(id)) continue;
+    uniqueIds.add(id);
+    const record = await getCaseResolverOcrJobById(id);
+    if (!record) continue;
+    records.push(record);
+  }
+  return records;
 };

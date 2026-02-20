@@ -7,6 +7,7 @@ import type {
   ImageStudioCenterModeDto,
   ImageStudioCenterObjectBoundsDto,
   ImageStudioCenterRequestDto,
+  ImageStudioCenterResponseDto,
   ImageStudioCenterShadowPolicyDto,
 } from '@/shared/contracts/image-studio';
 
@@ -16,4 +17,5 @@ export type ImageStudioCenterShadowPolicy = ImageStudioCenterShadowPolicyDto;
 export type ImageStudioCenterLayoutConfig = ImageStudioCenterLayoutConfigDto;
 export type ImageStudioCenterObjectBounds = ImageStudioCenterObjectBoundsDto;
 export type ImageStudioCenterRequest = ImageStudioCenterRequestDto;
+export type ImageStudioCenterResponse = ImageStudioCenterResponseDto;
 export type ImageStudioCenterErrorCode = ImageStudioCenterErrorCodeDto;

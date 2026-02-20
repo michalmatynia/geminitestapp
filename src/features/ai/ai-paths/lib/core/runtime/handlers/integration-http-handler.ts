@@ -8,6 +8,7 @@ import {
   getValueAtMappingPath,
   renderTemplate,
 } from '../../utils';
+import { evaluateOutboundUrlPolicy } from '../security/outbound-url-policy';
 
 export const handleHttp: NodeHandler = async ({
   node,
@@ -16,6 +17,7 @@ export const handleHttp: NodeHandler = async ({
   executed,
   reportAiPathsError,
   abortSignal,
+  sideEffectControl,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (executed.http.has(node.id)) return prevOutputs;
 
@@ -36,6 +38,29 @@ export const handleHttp: NodeHandler = async ({
     return {
       value: null,
       bundle: { ok: false, status: 0, error: 'Missing URL' },
+    };
+  }
+  const outboundPolicy = evaluateOutboundUrlPolicy(resolvedUrl);
+  if (!outboundPolicy.allowed) {
+    reportAiPathsError(
+      new Error('Blocked outbound URL request'),
+      {
+        action: 'httpOutboundPolicy',
+        nodeId: node.id,
+        url: resolvedUrl,
+        reason: outboundPolicy.reason,
+      },
+      'Blocked outbound URL by policy:'
+    );
+    return {
+      value: null,
+      bundle: {
+        ok: false,
+        status: 0,
+        url: resolvedUrl,
+        route: 'blocked_outbound_url',
+        error: `Blocked outbound URL (${outboundPolicy.reason ?? 'policy_violation'})`,
+      },
     };
   }
   let headers: Record<string, string> = {};
@@ -76,6 +101,9 @@ export const handleHttp: NodeHandler = async ({
         }
       }
     }
+  }
+  if (sideEffectControl?.idempotencyKey && !headers['Idempotency-Key']) {
+    headers['Idempotency-Key'] = sideEffectControl.idempotencyKey;
   }
   const fetchInit: RequestInit = {
     method: httpConfig.method,

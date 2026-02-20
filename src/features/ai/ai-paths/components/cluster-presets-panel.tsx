@@ -1,7 +1,7 @@
 'use client';
 
 import type { ClusterPreset } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, Textarea, SimpleSettingsList } from '@/shared/ui';
+import { Button, Input, Label, Textarea, SimpleSettingsList, Card } from '@/shared/ui';
 
 import { usePresetsState, usePresetsActions } from '../context';
 import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
@@ -32,7 +32,7 @@ export function ClusterPresetsPanel(): React.JSX.Element {
   const handleExportPresets = orchestrator.handleExportPresets;
 
   return (
-    <div className='rounded-lg border border-border bg-card/60 p-4'>
+    <Card variant='subtle' padding='md' className='bg-card/60'>
       <div className='mb-3 flex items-center justify-between text-sm font-semibold text-white'>
         <span>Cluster Presets</span>
         <div className='flex items-center gap-2'>
@@ -145,6 +145,6 @@ export function ClusterPresetsPanel(): React.JSX.Element {
           Export / Import
         </Button>
       </div>
-    </div>
+    </Card>
   );
 }

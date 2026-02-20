@@ -8,11 +8,13 @@ import sharp from 'sharp';
 import {
   IMAGE_STUDIO_CENTER_ERROR_CODES,
   imageStudioCenterRequestSchema,
+  imageStudioCenterResponseSchema,
   type ImageStudioCenterErrorCode,
   type ImageStudioCenterDetectionMode,
   type ImageStudioCenterMode,
   type ImageStudioCenterObjectBounds,
   type ImageStudioCenterRequest,
+  type ImageStudioCenterShadowPolicy,
 } from '@/features/ai/image-studio/contracts/center';
 import {
   buildCenterFingerprint,
@@ -72,6 +74,7 @@ type CenterProcessingResult = {
     targetCanvasHeight: number | null;
     whiteThreshold: number;
     chromaThreshold: number;
+    shadowPolicy: ImageStudioCenterShadowPolicy;
     detectionUsed: ImageStudioCenterDetectionMode | null;
     scale: number | null;
   } | null;
@@ -145,6 +148,7 @@ async function parseCenterRequestPayload(
   const name = form.get('name');
   const requestId = form.get('requestId');
   const image = form.get('image');
+  const layout = parseJsonFormValue<Record<string, unknown>>(form.get('layout'));
 
   let uploadedClientImage: UploadedClientCenterImage | null = null;
   if (isFileLike(image) && image.size > 0) {
@@ -161,6 +165,7 @@ async function parseCenterRequestPayload(
       ...(typeof dataUrl === 'string' ? { dataUrl } : {}),
       ...(typeof name === 'string' ? { name } : {}),
       ...(typeof requestId === 'string' ? { requestId } : {}),
+      ...(layout ? { layout } : {}),
       ...(parseJsonFormValue<Record<string, unknown>>(form.get('center')) ?? {}),
     },
     uploadedClientImage,
@@ -243,6 +248,7 @@ const readCenterMetadataFromSlot = (
       const targetCanvasHeightRaw = layoutRaw['targetCanvasHeight'];
       const whiteThresholdRaw = layoutRaw['whiteThreshold'];
       const chromaThresholdRaw = layoutRaw['chromaThreshold'];
+      const shadowPolicyRaw = layoutRaw['shadowPolicy'];
       const detectionUsedRaw = layoutRaw['detectionUsed'];
       const scaleRaw = layoutRaw['scale'];
       const paddingXFromRaw = typeof paddingXPercentRaw === 'number' ? paddingXPercentRaw : NaN;
@@ -269,6 +275,12 @@ const readCenterMetadataFromSlot = (
           : null;
       const whiteThreshold = typeof whiteThresholdRaw === 'number' ? whiteThresholdRaw : NaN;
       const chromaThreshold = typeof chromaThresholdRaw === 'number' ? chromaThresholdRaw : NaN;
+      const shadowPolicy: ImageStudioCenterShadowPolicy =
+        shadowPolicyRaw === 'auto' ||
+        shadowPolicyRaw === 'include_shadow' ||
+        shadowPolicyRaw === 'exclude_shadow'
+          ? shadowPolicyRaw
+          : 'auto';
       const detectionUsed =
         detectionUsedRaw === 'auto' ||
         detectionUsedRaw === 'alpha_bbox' ||
@@ -294,6 +306,7 @@ const readCenterMetadataFromSlot = (
         targetCanvasHeight,
         whiteThreshold,
         chromaThreshold,
+        shadowPolicy,
         detectionUsed,
         scale,
       };
@@ -415,6 +428,7 @@ async function processCenterPayload(input: {
           targetCanvasHeight: normalizedLayout.targetCanvasHeight,
           whiteThreshold: normalizedLayout.whiteThreshold,
           chromaThreshold: normalizedLayout.chromaThreshold,
+          shadowPolicy: normalizedLayout.shadowPolicy,
           detectionUsed: centered.detectionUsed,
           scale: centered.scale,
         },
@@ -504,6 +518,7 @@ async function processCenterPayload(input: {
           targetCanvasHeight: normalizedLayout.targetCanvasHeight,
           whiteThreshold: normalizedLayout.whiteThreshold,
           chromaThreshold: normalizedLayout.chromaThreshold,
+          shadowPolicy: normalizedLayout.shadowPolicy,
           detectionUsed: null,
           scale: null,
         }
@@ -549,6 +564,7 @@ async function processCenterPayload(input: {
         targetCanvasHeight: normalizedLayout.targetCanvasHeight,
         whiteThreshold: normalizedLayout.whiteThreshold,
         chromaThreshold: normalizedLayout.chromaThreshold,
+        shadowPolicy: normalizedLayout.shadowPolicy,
         detectionUsed: null,
         scale: null,
       }
@@ -643,23 +659,22 @@ export async function postCenterSlotHandler(
       const existingSlot = await getImageStudioSlotById(existingByRequest.targetSlotId);
       if (existingSlot) {
         const existingCenter = readCenterMetadataFromSlot(existingSlot);
-        return NextResponse.json(
-          {
-            slot: existingSlot,
-            mode: payload.mode,
-            effectiveMode: existingCenter.effectiveMode ?? payload.mode,
-            sourceObjectBounds: existingCenter.sourceObjectBounds,
-            targetObjectBounds: existingCenter.targetObjectBounds,
-            layout: existingCenter.layout,
-            requestId: idempotencyKey,
-            fingerprint,
-            deduplicated: true,
-            dedupeReason: 'request',
-            lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
-            pipelineVersion: CENTER_PIPELINE_VERSION,
-          },
-          { status: 200 }
-        );
+        const responseBody = imageStudioCenterResponseSchema.parse({
+          sourceSlotId: sourceSlot.id,
+          slot: existingSlot,
+          mode: payload.mode,
+          effectiveMode: existingCenter.effectiveMode ?? payload.mode,
+          sourceObjectBounds: existingCenter.sourceObjectBounds,
+          targetObjectBounds: existingCenter.targetObjectBounds,
+          layout: existingCenter.layout,
+          requestId: idempotencyKey,
+          fingerprint,
+          deduplicated: true,
+          dedupeReason: 'request',
+          lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
+          pipelineVersion: CENTER_PIPELINE_VERSION,
+        });
+        return NextResponse.json(responseBody, { status: 200 });
       }
     }
   }
@@ -674,23 +689,22 @@ export async function postCenterSlotHandler(
       const existingSlot = await getImageStudioSlotById(existingFingerprintLink.targetSlotId);
       if (existingSlot) {
         const existingCenter = readCenterMetadataFromSlot(existingSlot);
-        return NextResponse.json(
-          {
-            slot: existingSlot,
-            mode: payload.mode,
-            effectiveMode: existingCenter.effectiveMode ?? payload.mode,
-            sourceObjectBounds: existingCenter.sourceObjectBounds,
-            targetObjectBounds: existingCenter.targetObjectBounds,
-            layout: existingCenter.layout,
-            requestId: idempotencyKey,
-            fingerprint,
-            deduplicated: true,
-            dedupeReason: 'fingerprint',
-            lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
-            pipelineVersion: CENTER_PIPELINE_VERSION,
-          },
-          { status: 200 }
-        );
+        const responseBody = imageStudioCenterResponseSchema.parse({
+          sourceSlotId: sourceSlot.id,
+          slot: existingSlot,
+          mode: payload.mode,
+          effectiveMode: existingCenter.effectiveMode ?? payload.mode,
+          sourceObjectBounds: existingCenter.sourceObjectBounds,
+          targetObjectBounds: existingCenter.targetObjectBounds,
+          layout: existingCenter.layout,
+          requestId: idempotencyKey,
+          fingerprint,
+          deduplicated: true,
+          dedupeReason: 'fingerprint',
+          lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
+          pipelineVersion: CENTER_PIPELINE_VERSION,
+        });
+        return NextResponse.json(responseBody, { status: 200 });
       }
     }
   }
@@ -844,27 +858,26 @@ export async function postCenterSlotHandler(
       },
     });
 
-    return NextResponse.json(
-      {
-        sourceSlotId: sourceSlot.id,
-        mode: payload.mode,
-        effectiveMode: processed.effectiveMode,
-        slot: createdSlot,
-        output: imageFile,
-        sourceObjectBounds: processed.sourceObjectBounds,
-        targetObjectBounds: processed.targetObjectBounds,
-        layout: processed.layout,
-        requestId: idempotencyKey,
-        fingerprint,
-        deduplicated: false,
-        lifecycle: {
-          state: 'persisted',
-          durationMs,
-        },
-        pipelineVersion: CENTER_PIPELINE_VERSION,
+    const responseBody = imageStudioCenterResponseSchema.parse({
+      sourceSlotId: sourceSlot.id,
+      mode: payload.mode,
+      effectiveMode: processed.effectiveMode,
+      slot: createdSlot,
+      output: imageFile,
+      sourceObjectBounds: processed.sourceObjectBounds,
+      targetObjectBounds: processed.targetObjectBounds,
+      layout: processed.layout,
+      requestId: idempotencyKey,
+      fingerprint,
+      deduplicated: false,
+      lifecycle: {
+        state: 'persisted',
+        durationMs,
       },
-      { status: 201 }
-    );
+      pipelineVersion: CENTER_PIPELINE_VERSION,
+    });
+
+    return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {
     void logSystemEvent({
       level: 'warn',

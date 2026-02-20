@@ -218,6 +218,7 @@ export type GraphCompileCode =
   | 'optional_input_incompatible_wiring'
   | 'terminal_node_has_outgoing_edges'
   | 'cycle_detected'
+  | 'cycle_wait_deadlock_risk'
   | 'unsupported_cycle'
   | 'unreachable_node';
 
@@ -433,6 +434,92 @@ const detectCycleNodes = (nodes: AiNode[], edges: Edge[]): Set<string> => {
   return cycleNodes;
 };
 
+const detectStronglyConnectedComponents = (
+  nodes: AiNode[],
+  edges: Edge[]
+): string[][] => {
+  const nodeIds = new Set(nodes.map((node: AiNode): string => node.id));
+  const adjacency = new Map<string, string[]>();
+  nodes.forEach((node: AiNode): void => {
+    adjacency.set(node.id, []);
+  });
+  edges.forEach((edge: Edge): void => {
+    if (!edge.from || !edge.to) return;
+    if (!nodeIds.has(edge.from) || !nodeIds.has(edge.to)) return;
+    const next = adjacency.get(edge.from) ?? [];
+    next.push(edge.to);
+    adjacency.set(edge.from, next);
+  });
+
+  let index = 0;
+  const stack: string[] = [];
+  const onStack = new Set<string>();
+  const indexByNode = new Map<string, number>();
+  const lowLinkByNode = new Map<string, number>();
+  const components: string[][] = [];
+
+  const visit = (nodeId: string): void => {
+    indexByNode.set(nodeId, index);
+    lowLinkByNode.set(nodeId, index);
+    index += 1;
+    stack.push(nodeId);
+    onStack.add(nodeId);
+
+    const neighbors = adjacency.get(nodeId) ?? [];
+    neighbors.forEach((nextNodeId: string): void => {
+      if (!indexByNode.has(nextNodeId)) {
+        visit(nextNodeId);
+        const currentLowLink = lowLinkByNode.get(nodeId) ?? 0;
+        const nextLowLink = lowLinkByNode.get(nextNodeId) ?? currentLowLink;
+        lowLinkByNode.set(nodeId, Math.min(currentLowLink, nextLowLink));
+        return;
+      }
+      if (!onStack.has(nextNodeId)) return;
+      const currentLowLink = lowLinkByNode.get(nodeId) ?? 0;
+      const nextIndex = indexByNode.get(nextNodeId) ?? currentLowLink;
+      lowLinkByNode.set(nodeId, Math.min(currentLowLink, nextIndex));
+    });
+
+    if ((lowLinkByNode.get(nodeId) ?? 0) !== (indexByNode.get(nodeId) ?? 0)) {
+      return;
+    }
+
+    const component: string[] = [];
+    while (stack.length > 0) {
+      const current = stack.pop();
+      if (!current) break;
+      onStack.delete(current);
+      component.push(current);
+      if (current === nodeId) break;
+    }
+    components.push(component);
+  };
+
+  nodes.forEach((node: AiNode): void => {
+    if (indexByNode.has(node.id)) return;
+    visit(node.id);
+  });
+
+  return components.filter((component: string[]): boolean => {
+    if (component.length > 1) return true;
+    const singleNodeId = component[0];
+    if (!singleNodeId) return false;
+    return edges.some((edge: Edge): boolean => edge.from === singleNodeId && edge.to === singleNodeId);
+  });
+};
+
+const resolveCycleRequiredPortsForNode = (
+  node: AiNode,
+  connectedPorts: Set<string>,
+  options: GraphCompileOptions
+): string[] => {
+  const explicitRequiredPorts = getRequiredInputPortsForNode(node, options);
+  if (explicitRequiredPorts.length > 0) return explicitRequiredPorts;
+  const shouldWaitForInputs = node.config?.runtime?.waitForInputs ?? false;
+  if (!shouldWaitForInputs) return [];
+  return Array.from(connectedPorts);
+};
+
 const detectReachableNodes = (nodes: AiNode[], edges: Edge[]): Set<string> => {
   if (nodes.length === 0) return new Set<string>();
   const nodeMap = new Map(nodes.map((node: AiNode): [string, AiNode] => [node.id, node]));
@@ -617,6 +704,70 @@ export const compileGraph = (
         metadata: { nodeIds: Array.from(cycleNodes) },
       });
     }
+
+    const cycleComponents = detectStronglyConnectedComponents(nodes, sanitized);
+    cycleComponents.forEach((componentNodeIds: string[]): void => {
+      const componentNodeSet = new Set(componentNodeIds);
+      const componentNodes = componentNodeIds
+        .map((nodeId: string): AiNode | undefined => nodeById.get(nodeId))
+        .filter((node: AiNode | undefined): node is AiNode => Boolean(node));
+      if (componentNodes.length === 0) return;
+
+      const waitNodes = componentNodes.filter(
+        (node: AiNode): boolean => (node.config?.runtime?.waitForInputs ?? false) === true
+      );
+      if (waitNodes.length !== componentNodes.length) return;
+
+      const diagnostics = waitNodes.map((node: AiNode) => {
+        const incoming = incomingByPort;
+        const connectedPorts = new Set<string>();
+        sanitized
+          .filter((edge: Edge): boolean => edge.to === node.id)
+          .forEach((edge: Edge): void => {
+            if (edge.toPort) connectedPorts.add(edge.toPort);
+          });
+        const requiredPorts = resolveCycleRequiredPortsForNode(node, connectedPorts, options);
+        const unresolvedRequiredPorts = requiredPorts.filter((port: string): boolean => {
+          const key = `${node.id}::${port}`;
+          const portEdges = incoming.get(key) ?? [];
+          if (portEdges.length === 0) return false;
+          const hasExternalProducer = portEdges.some(
+            (edge: Edge): boolean => {
+              const fromNodeId = edge.from;
+              if (!fromNodeId) return false;
+              return !componentNodeSet.has(fromNodeId);
+            }
+          );
+          return !hasExternalProducer;
+        });
+        return {
+          node,
+          requiredPorts,
+          unresolvedRequiredPorts,
+        };
+      });
+
+      const allNodesHaveUnresolvedRequired = diagnostics.every(
+        (diagnostic) => diagnostic.unresolvedRequiredPorts.length > 0
+      );
+      if (!allNodesHaveUnresolvedRequired) return;
+
+      findings.push({
+        code: 'cycle_wait_deadlock_risk',
+        severity: 'warning',
+        message:
+          'Cycle may deadlock: all wait-for-inputs nodes in the cycle depend on cycle-internal required inputs.',
+        metadata: {
+          nodeIds: componentNodeIds,
+          diagnostics: diagnostics.map((diagnostic) => ({
+            nodeId: diagnostic.node.id,
+            nodeType: diagnostic.node.type,
+            requiredPorts: diagnostic.requiredPorts,
+            unresolvedRequiredPorts: diagnostic.unresolvedRequiredPorts,
+          })),
+        },
+      });
+    });
   }
 
   const reachable = detectReachableNodes(nodes, sanitized);

@@ -208,6 +208,7 @@ describe('GenerationToolbarImageUtils coordinate mapping', () => {
       targetCanvasHeight: null,
       whiteThreshold: 16,
       chromaThreshold: 10,
+      shadowPolicy: 'auto',
       detection: 'auto',
     });
 
@@ -232,6 +233,7 @@ describe('GenerationToolbarImageUtils coordinate mapping', () => {
       targetCanvasHeight: 4000,
       whiteThreshold: 1,
       chromaThreshold: 80,
+      shadowPolicy: 'auto',
       detection: 'white_bg_first_colored_pixel',
     });
   });

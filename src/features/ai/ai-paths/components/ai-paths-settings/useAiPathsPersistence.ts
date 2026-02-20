@@ -27,6 +27,7 @@ import {
   STORAGE_VERSION,
   createDefaultPathConfig,
   createPathMeta,
+  compileGraph,
   normalizeNodes,
   migrateDatabaseConfigCollections,
   migratePathConfigCollections,
@@ -959,6 +960,23 @@ export function useAiPathsPersistence({
           lintResult.warnings.forEach((message: string): void => {
             toast(message, { variant: 'info' });
           });
+        }
+        const edgesForSave = options?.edgesOverride ?? edgesRef.current;
+        const compileReport = compileGraph(nodesForSave, edgesForSave);
+        if (!silent && compileReport.errors > 0) {
+          const primaryError = compileReport.findings.find(
+            (finding): boolean => finding.severity === 'error'
+          );
+          const message =
+            primaryError?.message ??
+            `Graph compile reports ${compileReport.errors} blocking issue(s). Runs will be blocked until fixed.`;
+          toast(message, { variant: 'warning' });
+        }
+        if (!silent && compileReport.warnings > 0) {
+          toast(
+            `Graph compile warnings: ${compileReport.warnings} non-blocking issue(s) detected.`,
+            { variant: 'warning' }
+          );
         }
         const config = buildActivePathConfig(
           updatedAt,

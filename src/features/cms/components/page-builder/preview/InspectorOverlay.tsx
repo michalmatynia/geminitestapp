@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, useId, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useOptionalPreviewEditor } from './context/PreviewEditorContext';
+import { Card } from '@/shared/ui';
 
 const INSPECTOR_TOOLTIP_DELAY_MS = 500;
 const INSPECTOR_TOOLTIP_WIDTH = 260;
@@ -218,12 +219,14 @@ export const InspectorHover = ({
       {children}
       {enabled && showTooltip && effectiveOpen && content && tooltipPos && typeof document !== 'undefined'
         ? createPortal(
-          <div
-            className='fixed z-[99999] -translate-x-full -translate-y-full rounded-md border border-gray-700 bg-gray-900/95 px-3 py-2 text-xs text-gray-200 shadow-lg pointer-events-none'
+          <Card
+            variant='subtle-compact'
+            padding='sm'
+            className='fixed z-[99999] -translate-x-full -translate-y-full border-gray-700 bg-gray-900/95 text-xs text-gray-200 shadow-lg pointer-events-none'
             style={{ left: tooltipPos.left, top: tooltipPos.top, width: INSPECTOR_TOOLTIP_WIDTH }}
           >
             {content}
-          </div>,
+          </Card>,
           document.body
         )
         : null}

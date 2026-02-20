@@ -27,7 +27,7 @@ Use this runbook when Case Resolver is slow, unstable, or has elevated save/OCR 
 3. Check OCR queue failure/retry patterns and `attemptsMade/maxAttempts`.
 4. Validate whether issue is global or tied to large workspaces only.
 5. Verify whether payload guardrails are rejecting oversized saves.
-5. Decide mitigation path:
+6. Decide mitigation path:
    - revert release
    - reduce load
    - apply feature-level workaround
@@ -46,6 +46,7 @@ Use this runbook when Case Resolver is slow, unstable, or has elevated save/OCR 
   - `payloadBytes`
   - revision deltas for conflict cases
   - conflict retry delay (`manual_save_conflict_retry`)
+  - summary rates (`save success`, `conflict`) in workspace debug panel
 - OCR logs:
   - transient retries
   - final failures

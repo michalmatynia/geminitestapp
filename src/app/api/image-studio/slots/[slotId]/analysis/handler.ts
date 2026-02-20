@@ -256,6 +256,8 @@ export async function postAnalyzeSlotHandler(
         sourceObjectBounds: analysis.sourceObjectBounds,
         whitespace: analysis.whitespace,
         detectionUsed: analysis.detectionUsed,
+        confidence: analysis.confidence,
+        detectionDetails: analysis.detectionDetails,
         objectAreaPercent: analysis.objectAreaPercent,
         suggestedPlan: analysis.suggestedPlan,
         durationMs,

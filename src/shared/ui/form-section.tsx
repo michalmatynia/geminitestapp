@@ -2,9 +2,9 @@
 
 import { cn } from '@/shared/utils';
 
+import { Card } from './card';
 import { Label } from './label';
 import { SectionHeader } from './section-header';
-import { Card } from './card';
 
 import type { ReactNode } from 'react';
 

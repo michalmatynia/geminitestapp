@@ -4,9 +4,9 @@
 
 import React from 'react';
 
-import type { SessionCookie } from '@/shared/contracts/integrations';
+import type { SessionCookieDto as SessionCookie } from '@/shared/contracts/integrations';
 import type { ModalStateProps } from '@/shared/contracts/ui';
-import { Badge, StatusBadge, LoadingState } from '@/shared/ui';
+import { Badge, StatusBadge, LoadingState, Card, Alert } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 import { cn } from '@/shared/utils';
 
@@ -39,9 +39,9 @@ export function SessionModal({
       {loading ? (
         <LoadingState message='Retrieving session artifacts...' className='py-12' />
       ) : error ? (
-        <div className='rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive'>
+        <Alert variant='error'>
           {error}
-        </div>
+        </Alert>
       ) : (
         <div className='space-y-6'>
           <div className='space-y-3'>
@@ -53,15 +53,17 @@ export function SessionModal({
             </div>
 
             {cookies.length === 0 ? (
-              <div className='rounded-lg border border-dashed border-border bg-card/20 p-8 text-center text-sm text-muted-foreground italic'>
+              <Card variant='subtle' padding='lg' className='border-dashed text-center text-sm text-muted-foreground italic'>
                 No active session cookies detected.
-              </div>
+              </Card>
             ) : (
               <div className='space-y-3'>
                 {cookies.map((cookie: SessionCookie, index: number) => (
-                  <div
+                  <Card
                     key={`${cookie.name || 'cookie'}-${index}`}
-                    className='rounded-lg border border-border bg-card/40 p-4 transition-colors hover:bg-card/60'
+                    variant='subtle'
+                    padding='md'
+                    className='transition-colors hover:bg-card/60'
                   >
                     <div className='flex flex-wrap items-center justify-between gap-2 mb-3'>
                       <Badge variant='neutral' className='font-mono text-[11px]'>
@@ -105,7 +107,7 @@ export function SessionModal({
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </Card>
                 ))}
               </div>
             )}

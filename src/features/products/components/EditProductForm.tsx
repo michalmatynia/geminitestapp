@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import ProductForm from '@/features/products/components/ProductForm';
 import { ProductFormProvider, useProductFormContext } from '@/features/products/context/ProductFormContext';
 import type { ProductWithImages } from '@/shared/contracts/products';
-import { Button } from '@/shared/ui';
+import { Button, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
@@ -44,18 +44,14 @@ function EditProductForm(): React.JSX.Element {
   const isSaveDisabled = uploading || !hasUnsavedChanges;
 
   return (
-    <div className='rounded-lg bg-card p-6 shadow-lg'>
+    <Card variant='default' padding='lg' className='shadow-lg'>
       <div className='mb-6 flex items-center gap-4 border-b border-border pb-4'>
         <Button
           onClick={(e: React.FormEvent | React.MouseEvent) => { void handleSubmit(e); }}
           disabled={isSaveDisabled}
           aria-disabled={isSaveDisabled}
-          className={cn(
-            'min-w-[100px] transition-colors',
-            hasUnsavedChanges
-              ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
-              : 'border-border/60 text-gray-500 hover:bg-transparent'
-          )}
+          variant={hasUnsavedChanges ? 'success' : 'default'}
+          className='min-w-[100px]'
         >
           {uploading ? 'Saving...' : 'Update'}
         </Button>
@@ -74,7 +70,7 @@ function EditProductForm(): React.JSX.Element {
       ) : (
         <ProductForm submitButtonText='Update' validationInstanceScopeOverride='product_edit' />
       )}
-    </div>
+    </Card>
   );
 }
 

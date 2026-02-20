@@ -715,6 +715,10 @@ export const nodeCacheModeSchema = z.enum(['auto', 'force', 'disabled']);
 export type NodeCacheModeDto = z.infer<typeof nodeCacheModeSchema>;
 export type NodeCacheMode = NodeCacheModeDto;
 
+export const nodeSideEffectPolicySchema = z.enum(['per_run', 'per_activation']);
+export type NodeSideEffectPolicyDto = z.infer<typeof nodeSideEffectPolicySchema>;
+export type NodeSideEffectPolicy = NodeSideEffectPolicyDto;
+
 export const nodePortCardinalitySchema = z.enum(['single', 'many']);
 export type NodePortCardinalityDto = z.infer<typeof nodePortCardinalitySchema>;
 export type NodePortCardinality = NodePortCardinalityDto;
@@ -734,6 +738,7 @@ export const nodeRuntimeConfigSchema = z.object({
   inputContracts: z.record(z.string(), nodePortContractSchema).optional(),
   inputCardinality: z.record(z.string(), nodePortCardinalitySchema).optional(),
   waitForInputs: z.boolean().optional(),
+  sideEffectPolicy: nodeSideEffectPolicySchema.optional(),
   timeoutMs: z.number().optional(),
   retry: z.object({
     attempts: z.number().optional(),
@@ -1120,6 +1125,13 @@ export const runtimeHistoryEntrySchema = z.object({
   outputs: z.record(z.string(), z.unknown()),
   inputHash: z.string().nullable(),
   skipReason: z.string().optional(),
+  requiredPorts: z.array(z.string()).optional(),
+  optionalPorts: z.array(z.string()).optional(),
+  waitingOnPorts: z.array(z.string()).optional(),
+  sideEffectPolicy: nodeSideEffectPolicySchema.optional(),
+  sideEffectDecision: z.string().optional(),
+  activationHash: z.string().nullable().optional(),
+  idempotencyKey: z.string().nullable().optional(),
   error: z.string().optional(),
   inputsFrom: z.array(runtimeHistoryLinkSchema),
   outputsTo: z.array(runtimeHistoryLinkSchema),

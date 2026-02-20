@@ -10,6 +10,7 @@ import {
   Alert,
   LoadingState,
   IntegrationSelector,
+  Card,
 } from '@/shared/ui';
 
 export function ProductListingsStartPanel(): React.JSX.Element {
@@ -44,7 +45,7 @@ export function ProductListingsStartPanel(): React.JSX.Element {
   }
 
   return (
-    <div className='rounded-lg border border-border/60 bg-card/40 px-4 py-4'>
+    <Card variant='subtle' padding='md' className='bg-card/40'>
       <div className='space-y-4'>
         <IntegrationSelector
           integrations={integrations}
@@ -67,6 +68,6 @@ export function ProductListingsStartPanel(): React.JSX.Element {
           </Button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

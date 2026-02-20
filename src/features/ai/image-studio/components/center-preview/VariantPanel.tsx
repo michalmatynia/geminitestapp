@@ -1,7 +1,7 @@
 import { Eye, Loader2, Trash2 } from 'lucide-react';
 import React from 'react';
 
-import { Button, Input } from '@/shared/ui';
+import { Button, Input, Card, Badge, Alert } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import type { VariantThumbnailInfo } from './preview-utils';
@@ -52,7 +52,7 @@ export function VariantPanel({
   onVariantTooltipMove,
 }: VariantPanelProps): React.JSX.Element {
   return (
-    <div className='h-full shrink-0 overflow-hidden rounded-lg border border-border/60 bg-card/40 p-2'>
+    <Card variant='subtle-compact' padding='sm' className='h-full shrink-0 overflow-hidden bg-card/40'>
       <div className='mb-2 flex items-center gap-2'>
         <Input size='sm'
           value={variantTimestampQuery}
@@ -69,12 +69,18 @@ export function VariantPanel({
       </div>
       <div className='mb-2 flex items-center gap-2 text-[11px] text-gray-400'>
         <span>Compare in canvas:</span>
-        <span className={cn('rounded border px-1.5 py-0.5', compareVariantA ? 'border-cyan-400/60 text-cyan-200' : 'border-border/60')}>
+        <Badge
+          variant={compareVariantA ? 'active' : 'neutral'}
+          className={cn('px-1.5 py-0.5 text-[10px]', compareVariantA ? 'border-cyan-400/60 text-cyan-200' : 'border-border/60')}
+        >
           1 {compareVariantA ? `#${compareVariantA.index}` : 'unset'}
-        </span>
-        <span className={cn('rounded border px-1.5 py-0.5', compareVariantB ? 'border-amber-400/60 text-amber-200' : 'border-border/60')}>
+        </Badge>
+        <Badge
+          variant={compareVariantB ? 'warning' : 'neutral'}
+          className={cn('px-1.5 py-0.5 text-[10px]', compareVariantB ? 'border-amber-400/60 text-amber-200' : 'border-border/60')}
+        >
           2 {compareVariantB ? `#${compareVariantB.index}` : 'unset'}
-        </span>
+        </Badge>
         <Button
           size='xs'
           type='button'
@@ -213,20 +219,22 @@ export function VariantPanel({
           </div>
         )}
         {activeRunError ? (
-          <div className='mt-2 flex items-start justify-between gap-2 rounded border border-red-500/30 bg-red-500/10 p-2'>
-            <div className='text-[11px] text-red-300'>{activeRunError}</div>
-            <Button
-              type='button'
-              size='xs'
-              variant='ghost'
-              className='h-6 shrink-0 px-2 text-[10px] text-red-200 hover:text-red-100'
-              onClick={onDismissRunError}
-            >
-              Dismiss
-            </Button>
-          </div>
+          <Alert variant='error' className='mt-2 p-2'>
+            <div className='flex items-start justify-between gap-2'>
+              <div className='text-[11px]'>{activeRunError}</div>
+              <Button
+                type='button'
+                size='xs'
+                variant='ghost'
+                className='h-6 shrink-0 px-2 text-[10px] text-red-200 hover:text-red-100'
+                onClick={onDismissRunError}
+              >
+                Dismiss
+              </Button>
+            </div>
+          </Alert>
         ) : null}
       </div>
-    </div>
+    </Card>
   );
 }

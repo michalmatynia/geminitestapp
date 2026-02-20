@@ -278,4 +278,128 @@ describe('compileGraph', () => {
       report.findings.some((finding) => finding.code === 'unsupported_cycle')
     ).toBe(false);
   });
+
+  it('warns when a wait-for-inputs cycle has only cycle-internal required dependencies', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'iter-1',
+        type: 'iterator',
+        inputs: ['value'],
+        outputs: ['value'],
+        config: {
+          runtime: {
+            waitForInputs: true,
+            inputContracts: {
+              value: { required: true },
+            },
+          },
+        },
+      }),
+      buildNode({
+        id: 'delay-1',
+        type: 'delay',
+        inputs: ['value'],
+        outputs: ['value'],
+        config: {
+          runtime: {
+            waitForInputs: true,
+            inputContracts: {
+              value: { required: true },
+            },
+          },
+        },
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-a',
+        from: 'iter-1',
+        to: 'delay-1',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+      {
+        id: 'edge-b',
+        from: 'delay-1',
+        to: 'iter-1',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+    ];
+
+    const report = compileGraph(nodes, edges);
+    expect(report.ok).toBe(true);
+    expect(
+      report.findings.some((finding) => finding.code === 'cycle_wait_deadlock_risk')
+    ).toBe(true);
+  });
+
+  it('does not warn deadlock risk when at least one wait node has an external required source', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'seed-1',
+        type: 'constant',
+        inputs: [],
+        outputs: ['value'],
+      }),
+      buildNode({
+        id: 'iter-1',
+        type: 'iterator',
+        inputs: ['value', 'context'],
+        outputs: ['value'],
+        config: {
+          runtime: {
+            waitForInputs: true,
+            inputContracts: {
+              value: { required: false },
+              context: { required: true },
+            },
+          },
+        },
+      }),
+      buildNode({
+        id: 'delay-1',
+        type: 'delay',
+        inputs: ['value'],
+        outputs: ['value'],
+        config: {
+          runtime: {
+            waitForInputs: true,
+            inputContracts: {
+              value: { required: true },
+            },
+          },
+        },
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-seed',
+        from: 'seed-1',
+        to: 'iter-1',
+        fromPort: 'value',
+        toPort: 'context',
+      },
+      {
+        id: 'edge-a',
+        from: 'iter-1',
+        to: 'delay-1',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+      {
+        id: 'edge-b',
+        from: 'delay-1',
+        to: 'iter-1',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+    ];
+
+    const report = compileGraph(nodes, edges);
+    expect(report.ok).toBe(true);
+    expect(
+      report.findings.some((finding) => finding.code === 'cycle_wait_deadlock_risk')
+    ).toBe(false);
+  });
 });

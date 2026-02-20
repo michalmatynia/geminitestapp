@@ -38,6 +38,10 @@ Key dimensions:
 - revisions (`expectedRevision`, `currentRevision`, `workspaceRevision`)
 - `mutationId`
 - conflict retry delay telemetry from `manual_save_conflict_retry` events
+- derived summary snapshot from `workspace-observability.ts`:
+  - save latency `p50/p95/max`
+  - payload size `p50/p95/max`
+  - conflict rate and save success rate
 
 ### OCR queue telemetry
 
@@ -46,6 +50,7 @@ Key dimensions:
 - model failover warnings when chain fallback is used
 - correlation propagation (`correlationId`) from API dispatch to worker execution
 - error taxonomy (`errorCategory`, `retryableError`) for failed/queued-for-retry jobs
+- observability snapshot API: `GET /api/case-resolver/ocr/observability`
 
 ### Case list rendering behavior
 

@@ -1,6 +1,6 @@
 'use client';
 
-import type { NodeCacheMode } from '@/features/ai/ai-paths/lib';
+import type { NodeCacheMode, NodeSideEffectPolicy } from '@/features/ai/ai-paths/lib';
 import { Button, Input, MultiSelect, SelectSimple, ToggleRow, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -10,6 +10,25 @@ const cacheModeOptions = [
   { value: 'force', label: 'Force cache' },
   { value: 'disabled', label: 'Disable cache' },
 ];
+
+const sideEffectPolicyOptions = [
+  { value: 'per_run', label: 'Per run (default)' },
+  { value: 'per_activation', label: 'Per activation (loop-aware)' },
+];
+
+const sideEffectNodeTypes = new Set<string>([
+  'model',
+  'agent',
+  'learner_agent',
+  'database',
+  'http',
+  'api_advanced',
+  'notification',
+  'delay',
+  'poll',
+  'db_schema',
+  'description_updater',
+]);
 
 export function RuntimeNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig, clearNodeCache } = useAiPathConfig();
@@ -24,6 +43,8 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
   const timeoutMs = runtimeConfig.timeoutMs ?? '';
   const retryAttempts = retryConfig.attempts ?? '';
   const retryBackoffMs = retryConfig.backoffMs ?? '';
+  const isSideEffectNode = sideEffectNodeTypes.has(selectedNode.type);
+  const sideEffectPolicy: NodeSideEffectPolicy = runtimeConfig.sideEffectPolicy ?? 'per_run';
   const inputContracts = runtimeConfig.inputContracts ?? {};
   const inputPortOptions = selectedNode.inputs.map((port: string) => ({
     value: port,
@@ -147,6 +168,27 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
       <p className='text-[11px] text-gray-500'>
         Disable cache to always re-run nodes that must execute every time (HTTP, DB writes, AI, delays, notifications).
       </p>
+      {isSideEffectNode && (
+        <FormField
+          label='Side-effect policy'
+          description='Controls whether this node executes once per run or once per unique activation.'
+        >
+          <SelectSimple
+            size='sm'
+            value={sideEffectPolicy}
+            onValueChange={(value: string): void =>
+              updateSelectedNodeConfig({
+                runtime: {
+                  ...runtimeConfig,
+                  sideEffectPolicy: value as NodeSideEffectPolicy,
+                },
+              })
+            }
+            options={sideEffectPolicyOptions}
+            className='mt-2'
+          />
+        </FormField>
+      )}
       <ToggleRow
         label='Require inputs'
         description='Wait for required inputs before execution. If no required ports are set, all connected inputs are required.'

@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { CLIENT_LOGGING_KEYS } from '@/features/observability/constants/client-logging';
+import { PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY } from '@/features/products/constants';
 import { APP_FONT_SET_SETTING_KEY } from '@/shared/constants/typography';
 import { internalError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
@@ -27,6 +28,7 @@ const LITE_SETTINGS_KEYS = [
   'noteSettings:editorMode',
   'case_resolver_default_document_format_v1',
   'case_resolver_settings_v1',
+  PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
   FOLDER_TREE_PROFILES_V2_SETTING_KEY,
   CLIENT_LOGGING_KEYS.featureFlags,
   CLIENT_LOGGING_KEYS.tags,

@@ -821,29 +821,30 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         className={`rounded-md border text-sm ${
                           normalizedAiPathsValidation.enabled === false
                             ? 'border-amber-500/40 text-amber-200 hover:bg-amber-500/10'
-                            : 'border-emerald-500/40 text-emerald-200'
+                            : 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
                         }`}
                         onClick={() => {
-                          if (normalizedAiPathsValidation.enabled !== false) return;
-                          updateAiPathsValidation({ enabled: true });
-                          toast('AI Paths node validation enabled.', {
-                            variant: 'success',
-                          });
+                          const nextEnabled = normalizedAiPathsValidation.enabled === false;
+                          updateAiPathsValidation({ enabled: nextEnabled });
+                          toast(
+                            nextEnabled
+                              ? 'AI Paths node validation enabled.'
+                              : 'AI Paths node validation disabled.',
+                            {
+                              variant: nextEnabled ? 'success' : 'info',
+                            },
+                          );
                         }}
-                        disabled={
-                          !activePathId ||
-                          isPathLocked ||
-                          normalizedAiPathsValidation.enabled !== false
-                        }
+                        disabled={!activePathId || isPathLocked}
                         title={
                           normalizedAiPathsValidation.enabled === false
                             ? 'Enable AI Paths node validation'
-                            : 'AI Paths node validation is enabled'
+                            : 'Disable AI Paths node validation'
                         }
                       >
                         {normalizedAiPathsValidation.enabled === false
                           ? 'Enable Node Validation'
-                          : 'Node Validation Enabled'}
+                          : 'Disable Node Validation'}
                       </Button>
                       <Button
                         data-doc-id='canvas_validate_nodes'

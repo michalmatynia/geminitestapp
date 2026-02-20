@@ -44,9 +44,9 @@ import {
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
   type AiNode,
+  type AiEdge,
   type CaseResolverEdgeMeta,
-  type CaseResolverAssetFile,
-  type CaseResolverFile,
+  type CaseResolverAssetFile,  type CaseResolverFile,
   type CaseResolverGraph,
   type CaseResolverNodeMeta,
   type CaseResolverPdfExtractionPresetId,
@@ -454,7 +454,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     };
     onGraphChange({
       nodes: nextNodes,
-      edges: toStrictEdges(nextEdges as any),
+      edges: toStrictEdges(nextEdges),
       nodeMeta: nextNodeMeta,
       edgeMeta: normalizedEdgeMeta,
       pdfExtractionPresetId,
@@ -824,7 +824,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
               onClick={() =>
                 onGraphChange({
                   nodes,
-                  edges: strictEdges as any,
+                  edges: strictEdges,
                   nodeMeta: normalizedNodeMeta,
                   edgeMeta: normalizedEdgeMeta,
                   pdfExtractionPresetId,

@@ -6,7 +6,7 @@ import { getImageFileRepository } from '@/features/files/server';
 import { getDiskPathFromPublicPath } from '@/features/files/utils/fileUploader';
 import { getProductRepository } from '@/features/products/services/product-repository';
 import { pruneProductStudioSourceSlotsForProject } from '@/features/products/services/product-studio-config';
-import type { Asset3DRecord } from '@/features/viewer3d/types';
+import type { Asset3dDto as Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { ImageFileRecord } from '@/shared/types/domain/files';
 

@@ -14,10 +14,18 @@ const isEmbeddingModel = (model: string): boolean => buildModelProfile(model).is
 export function useAgentTeachingQueriesCollectionsState() {
   const { toast } = useToast();
   const { collections, agents, modelOptions, isLoading } = useAgentTeachingQueriesContext();
+  const normalizedModelOptions = useMemo(
+    () =>
+      (Array.isArray(modelOptions) ? modelOptions : [])
+        .filter((model): model is string => typeof model === 'string')
+        .map((model) => model.trim())
+        .filter((model) => model.length > 0),
+    [modelOptions]
+  );
 
   const embeddingModels = useMemo(
-    () => modelOptions.filter((m: string) => m.trim().length > 0 && isEmbeddingModel(m)),
-    [modelOptions]
+    () => normalizedModelOptions.filter((m: string) => isEmbeddingModel(m)),
+    [normalizedModelOptions]
   );
 
   const { mutateAsync: upsert, isPending: saving } = useUpsertEmbeddingCollectionMutation();

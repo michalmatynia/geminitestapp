@@ -1,0 +1,4 @@
+
+ RUN  v2.1.9 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp
+
+ ✓ __tests__/features/chatbot/services/chatbot-session-repository.test.ts (9 tests) 48ms

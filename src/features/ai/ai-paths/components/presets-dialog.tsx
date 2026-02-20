@@ -4,9 +4,9 @@ import type { ClusterPreset } from '@/shared/types/domain/ai-paths';
 import type { ModalStateProps } from '@/shared/types/modal-props';
 import {
   Button,
-  AppModal,
   Textarea,
 } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 interface PresetsDialogProps extends ModalStateProps {
   presetsJson: string;
@@ -26,8 +26,8 @@ export function PresetsDialog({
   onCopyJson,
 }: PresetsDialogProps): React.JSX.Element {
   return (
-    <AppModal
-      open={isOpen}
+    <DetailModal
+      isOpen={isOpen}
       onClose={onClose}
       title='Export / Import Presets'
       subtitle='Share Cluster Presets as JSON across projects.'
@@ -75,6 +75,6 @@ export function PresetsDialog({
           </Button>
         </div>
       </div>
-    </AppModal>
+    </DetailModal>
   );
 }

@@ -2,7 +2,6 @@ import { Split } from 'lucide-react';
 import React from 'react';
 
 import {
-  AppModal,
   Button,
   Checkbox,
   FormField,
@@ -10,6 +9,7 @@ import {
   SelectSimple,
   EmptyState,
 } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import {
   CASE_RESOLVER_JOIN_MODE_OPTIONS,
@@ -79,9 +79,9 @@ export function CaseResolverNodeInspectorModal({
   const edgeToPort = (selectedEdge as CompatEdge)?.toPort ?? (selectedEdge as CompatEdge)?.targetHandle;
 
   return (
-    <AppModal
-      open={open}
-      onOpenChange={onOpenChange}
+    <DetailModal
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
       title='Node Inspector'
       subtitle='Inspect and edit selected node/edge settings.'
       size='xl'
@@ -320,6 +320,6 @@ export function CaseResolverNodeInspectorModal({
           />
         )}
       </div>
-    </AppModal>
+    </DetailModal>
   );
 }

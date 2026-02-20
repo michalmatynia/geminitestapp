@@ -264,6 +264,10 @@ if (typeof window !== 'undefined') {
 
 // Polyfill for window.matchMedia (GSAP needs this)
 if (typeof window !== 'undefined') {
+  Object.defineProperty(window, "isSecureContext", {
+    writable: true,
+    value: true,
+  });
   Object.defineProperty(window, "matchMedia", {
     writable: true,
     value: vi.fn().mockImplementation((query) => ({
@@ -346,6 +350,8 @@ vi.mock('@/features/observability/context/SystemLogsContext', () => ({
       mutate: vi.fn(),
       isPending: false,
     },
+    confirmAction: vi.fn(),
+    ConfirmationModal: () => null,
     setIsRebuildIndexesConfirmOpen: vi.fn(),
     handleRebuildMongoIndexes: vi.fn(),
     insightsQuery: {

@@ -63,7 +63,7 @@ describe('MediaLibraryPanel Component', () => {
       { wrapper }
     );
 
-    expect(screen.getByText('Media Library')).toBeInTheDocument();
+    expect(screen.getAllByText('Media Library')[0]).toBeInTheDocument();
     expect(screen.getByTestId('file-manager')).toBeInTheDocument();
   });
 

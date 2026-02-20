@@ -21,14 +21,22 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
 
   const { mutateAsync: upsert, isPending: saving } = useUpsertTeachingAgentMutation();
   const { mutateAsync: remove } = useDeleteTeachingAgentMutation();
-
-  const chatModels = React.useMemo(
-    () => modelOptions.filter((m: string) => m.trim().length > 0 && !isEmbeddingModel(m)),
+  const normalizedModelOptions = React.useMemo(
+    () =>
+      (Array.isArray(modelOptions) ? modelOptions : [])
+        .filter((model): model is string => typeof model === 'string')
+        .map((model) => model.trim())
+        .filter((model) => model.length > 0),
     [modelOptions]
   );
+
+  const chatModels = React.useMemo(
+    () => normalizedModelOptions.filter((m: string) => !isEmbeddingModel(m)),
+    [normalizedModelOptions]
+  );
   const embeddingModels = React.useMemo(
-    () => modelOptions.filter((m: string) => m.trim().length > 0 && isEmbeddingModel(m)),
-    [modelOptions]
+    () => normalizedModelOptions.filter((m: string) => isEmbeddingModel(m)),
+    [normalizedModelOptions]
   );
   const libraryAgents = React.useMemo<AgentTeachingLibraryItem[]>(
     () =>

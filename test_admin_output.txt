@@ -1,0 +1,428 @@
+
+ RUN  v2.1.9 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp
+
+stderr | __tests__/features/admin/pages/SystemLogsPage.test.tsx > SystemLogsPage > opens clear logs action without crashing
+TypeError: confirmAction is not a function
+    at onClick (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/pages/SystemLogsPage.tsx:652:28)
+    at executeDispatch (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:19116:9)
+    at runWithFiberInDEV (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)
+    at processDispatchQueue (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:19166:19)
+    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:19767:9
+    at batchedUpdates$1 (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:3255:40)
+    at dispatchEventForPluginEventSystem (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:19320:7)
+    at dispatchEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:23585:11)
+    at dispatchDiscreteEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:23553:11)
+    at HTMLDivElement.callTheUserObjectsOperation (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30) {
+  stackStr: 'TypeError: confirmAction is not a function\n' +
+    '    at onClick (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/pages/SystemLogsPage.tsx:652:28)\n' +
+    '    at executeDispatch (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:19116:9)\n' +
+    '    at runWithFiberInDEV (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)\n' +
+    '    at processDispatchQueue (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:19166:19)\n' +
+    '    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:19767:9\n' +
+    '    at batchedUpdates$1 (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:3255:40)\n' +
+    '    at dispatchEventForPluginEventSystem (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:19320:7)\n' +
+    '    at dispatchEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:23585:11)\n' +
+    '    at dispatchDiscreteEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:23553:11)\n' +
+    '    at HTMLDivElement.callTheUserObjectsOperation (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)',
+  nameStr: 'TypeError',
+  expected: 'undefined',
+  actual: 'undefined'
+}
+
+stderr | __tests__/features/admin/pages/SystemLogsPage.test.tsx
+[MSW] Warning: intercepted a request without a matching request handler:
+
+  • POST /api/client-errors
+
+  • Request body: {"message":"document.execCommand is not a function","timestamp":"2026-02-20T01:55:52.192Z","url":"http://localhost:3000/","userAgent":"Mozilla/5.0 (darwin) AppleWebKit/537.36 (KHTML, like Gecko) jsdom/27.4.0","name":"TypeError","stack":"TypeError: document.execCommand is not a function\n    at handleCopy (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/copy-button.tsx:51:18)\n    at onClick (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/copy-button.tsx:66:54)\n    at executeDispatch (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:19116:9)\n    at runWithFiberInDEV (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:874:13)\n    at processDispatchQueue (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:19166:19)\n    at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:19767:9\n    at batchedUpdates$1 (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:3255:40)\n    at dispatchEventForPluginEventSystem (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:19320:7)\n    at dispatchEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:23585:11)\n    at dispatchDiscreteEvent (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/react-dom/cjs/react-dom-client.development.js:23553:11)","context":{"source":"CopyButton","action":"copyToClipboard"}}
+
+If you still wish to intercept this unhandled request, please create a request handler for it.
+Read more: https://mswjs.io/docs/http/intercepting-requests
+
+ ❯ __tests__/features/admin/pages/SystemLogsPage.test.tsx (4 tests | 2 failed) 249ms
+   × SystemLogsPage > renders logs list and metrics 150ms
+     → Unable to find an element with the text: Total Logs. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"container mx-auto py-10"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-2 flex-1 min-w-0"[39m
+        [36m>[39m
+          [0m [0m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-3"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-bold tracking-tight text-white text-3xl"[39m
+            [36m>[39m
+              [0mObservation Post[0m
+            [36m</h1>[39m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-gray-400"[39m
+          [36m>[39m
+            [0mAggregate telemetry and event logging across all platform components.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-center gap-2 shrink-0"[39m
+        [36m>[39m
+          [0m [0m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap border text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 ring-offset-background cursor-pointer border-foreground/15 bg-transparent hover:bg-foreground/8 h-8 rounded-lg px-3 gap-2"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-refresh-ccw size-4"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 3v5h5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 16h5v5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span>[39m
+              [0mRefresh[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex gap-2"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"h-8"[39m
+            [36m>[39m
+              [0mSettings[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-lg border text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 ring-offset-background cursor-pointer border-foreground/15 bg-transparent hover:bg-foreground/8 px-3.5 py-2 h-8"[39m
+              [33mtitle[39m=[32m"Copy to clipboard"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-link2 lucide-link-2 size-3.5 mr-2"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9 17H7A5 5 0 0 1 7 7h2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 7h2a5 5 0 1 1 0 10h-2"[39m
+                [36m/>[39m
+                [36m<line[39m
+                  [33mx1[39m=[32m"8"[39m
+                  [33mx2[39m=[32m"16"[39m
+                  [33my1[39m=[32m"12"[39m
+                  [33my2[39m=[32m"12"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mSync Link[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-lg border text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 ring-offset-background cursor-pointer border-foreground/15 bg-transparent hover:bg-foreground/8 px-3.5 py-2 h-8"[39m
+              [33mtitle[39m=[32m"Copy to clipboard"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-copy size-3.5 mr-2"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"14"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mry[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"14"[39m
+                  [33mx[39m=[32m"8"[39m
+                  [33my[39m=[32m"8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mExport[0m
+            [36m</button>[3...
+   × SystemLogsPage > exports logs to clipboard 37ms
+     → expected "spy" to be called at least once
+stderr | __tests__/features/admin/components/Menu.test.tsx > Menu Component > renders main menu categories
+Received `false` for a non-boolean attribute `prefetch`.
+
+If you want to write it to the DOM, pass a string instead: prefetch="false" or prefetch={value.toString()}.
+
+If you used to conditionally omit it with prefetch={condition && value}, pass prefetch={condition ? value : undefined} instead.
+[MSW] Warning: intercepted a request without a matching request handler:
+
+  • POST /api/client-errors
+
+  • Request body: {"message":"Failed to fetch lite settings (404)","timestamp":"2026-02-20T01:55:53.199Z","url":"http://localhost:3000/","userAgent":"Mozilla/5.0 (darwin) AppleWebKit/537.36 (KHTML, like Gecko) jsdom/27.4.0","name":"Error","stack":"Error: Failed to fetch lite settings (404)\n    at fetchLiteSettingsFromApi (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/api/settings-client.ts:175:13)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at fetchLiteSettingsWithFallback (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/hooks/use-settings.ts:41:13)\n    at queryFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/query-factories-v2.ts:358:22)","context":{"source":"settings-client","action":"fetchLiteSettingsFromApi","message":"Failed to fetch lite settings, returning empty list.","level":"error"}}
+
+If you still wish to intercept this unhandled request, please create a request handler for it.
+Read more: https://mswjs.io/docs/http/intercepting-requests
+
+stderr | __tests__/features/admin/components/Menu.test.tsx > Menu Component > contains correctly linked standalone sections
+[MSW] Warning: intercepted a request without a matching request handler:
+
+  • POST /api/query-telemetry
+
+  • Request body: {"events":[{"id":"5cc35b56-a519-49dd-9d11-bbbf0da42d81","timestamp":"2026-02-20T01:55:53.161Z","traceId":"a9037756-6669-4541-b91d-461716612efd","entity":"query","stage":"start","source":"shared.hooks.useLiteSettingsMap","operation":"list","resource":"settings","key":"[\"settings\",\"lite\"]","keyHash":"ef3fd40e","criticality":"normal","domain":"global","sampled":true,"attempt":1,"tags":["settings","map","lite"]},{"id":"24664cc5-fb3a-432c-a27a-bc5ecaab4b9a","timestamp":"2026-02-20T01:55:53.295Z","traceId":"a9037756-6669-4541-b91d-461716612efd","entity":"query","stage":"success","source":"shared.hooks.useLiteSettingsMap","operation":"list","resource":"settings","key":"[\"settings\",\"lite\"]","keyHash":"ef3fd40e","criticality":"normal","domain":"global","sampled":true,"attempt":1,"durationMs":9,"tags":["settings","map","lite"]}]}
+
+If you still wish to intercept this unhandled request, please create a request handler for it.
+Read more: https://mswjs.io/docs/http/intercepting-requests
+
+ ✓ __tests__/features/admin/components/Menu.test.tsx (4 tests) 564ms
+   ✓ Menu Component > contains correctly linked standalone sections 337ms
+ ✓ __tests__/features/admin/pages/AdminFrontManagePage.test.tsx (3 tests) 235ms
+stderr | __tests__/features/admin/components/AdminLayout.test.tsx > AdminLayout > renders children correctly
+Received `false` for a non-boolean attribute `prefetch`.
+
+If you want to write it to the DOM, pass a string instead: prefetch="false" or prefetch={value.toString()}.
+
+If you used to conditionally omit it with prefetch={condition && value}, pass prefetch={condition ? value : undefined} instead.
+
+ ✓ __tests__/features/admin/components/AdminLayout.test.tsx (3 tests) 296ms
+ ✓ __tests__/features/admin/pages/AdminGlobalValidatorPage.test.ts (3 tests) 12ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  __tests__/features/admin/pages/SystemLogsPage.test.tsx > SystemLogsPage > renders logs list and metrics
+TestingLibraryElementError: Unable to find an element with the text: Total Logs. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"container mx-auto py-10"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"space-y-2 flex-1 min-w-0"[39m
+        [36m>[39m
+          [0m [0m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-center gap-3"[39m
+          [36m>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"font-bold tracking-tight text-white text-3xl"[39m
+            [36m>[39m
+              [0mObservation Post[0m
+            [36m</h1>[39m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-sm text-gray-400"[39m
+          [36m>[39m
+            [0mAggregate telemetry and event logging across all platform components.[0m
+          [36m</p>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-wrap items-center gap-2 shrink-0"[39m
+        [36m>[39m
+          [0m [0m
+          [36m<button[39m
+            [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap border text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 ring-offset-background cursor-pointer border-foreground/15 bg-transparent hover:bg-foreground/8 h-8 rounded-lg px-3 gap-2"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-refresh-ccw size-4"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 3v5h5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M16 16h5v5"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span>[39m
+              [0mRefresh[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex gap-2"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"h-8"[39m
+            [36m>[39m
+              [0mSettings[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-lg border text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 ring-offset-background cursor-pointer border-foreground/15 bg-transparent hover:bg-foreground/8 px-3.5 py-2 h-8"[39m
+              [33mtitle[39m=[32m"Copy to clipboard"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-link2 lucide-link-2 size-3.5 mr-2"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9 17H7A5 5 0 0 1 7 7h2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M15 7h2a5 5 0 1 1 0 10h-2"[39m
+                [36m/>[39m
+                [36m<line[39m
+                  [33mx1[39m=[32m"8"[39m
+                  [33mx2[39m=[32m"16"[39m
+                  [33my1[39m=[32m"12"[39m
+                  [33my2[39m=[32m"12"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mSync Link[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"inline-flex items-center justify-center whitespace-nowrap rounded-lg border text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 ring-offset-background cursor-pointer border-foreground/15 bg-transparent hover:bg-foreground/8 px-3.5 py-2 h-8"[39m
+              [33mtitle[39m=[32m"Copy to clipboard"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-copy size-3.5 mr-2"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<rect[39m
+                  [33mheight[39m=[32m"14"[39m
+                  [33mrx[39m=[32m"2"[39m
+                  [33mry[39m=[32m"2"[39m
+                  [33mwidth[39m=[32m"14"[39m
+                  [33mx[39m=[32m"8"[39m
+                  [33my[39m=[32m"8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mExport[0m
+            [36m</button>[3...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ __tests__/features/admin/pages/SystemLogsPage.test.tsx:143:19
+    141|     
+    142|     // Check metrics
+    143|     expect(screen.getByText('Total Logs')).toBeInTheDocument();
+       |                   ^
+    144|     expect(screen.getAllByText('2').length).toBeGreaterThan(0);
+    145|     expect(screen.getByText('Errors')).toBeInTheDocument();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  __tests__/features/admin/pages/SystemLogsPage.test.tsx > SystemLogsPage > exports logs to clipboard
+AssertionError: expected "spy" to be called at least once
+ ❯ __tests__/features/admin/pages/SystemLogsPage.test.tsx:182:27
+    180|     fireEvent.click(copyButton);
+    181|     
+    182|     expect(mockWriteText).toHaveBeenCalled();
+       |                           ^
+    183|   });
+    184| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: confirmAction is not a function
+ ❯ onClick src/features/observability/pages/SystemLogsPage.tsx:652:28
+    650|             size='xs'
+    651|             className='h-8 border-rose-500/20 text-rose-300 hover:bg-r…
+    652|             onClick={() => confirmAction({
+       |                            ^
+    653|               title: 'Wipe Observation Logs',
+    654|               message: 'Permanently delete all captured telemetry data…
+ ❯ executeDispatch node_modules/react-dom/cjs/react-dom-client.development.js:19116:9
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ processDispatchQueue node_modules/react-dom/cjs/react-dom-client.development.js:19166:19
+ ❯ node_modules/react-dom/cjs/react-dom-client.development.js:19767:9
+ ❯ batchedUpdates$1 node_modules/react-dom/cjs/react-dom-client.development.js:3255:40
+ ❯ dispatchEventForPluginEventSystem node_modules/react-dom/cjs/react-dom-client.development.js:19320:7
+ ❯ dispatchEvent node_modules/react-dom/cjs/react-dom-client.development.js:23585:11
+ ❯ dispatchDiscreteEvent node_modules/react-dom/cjs/react-dom-client.development.js:23553:11
+ ❯ HTMLDivElement.callTheUserObjectsOperation node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30
+
+This error originated in "__tests__/features/admin/pages/SystemLogsPage.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "opens clear logs action without crashing". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  2 failed | 15 passed (17)
+     Errors  1 error
+   Start at  02:55:49
+   Duration  6.69s (transform 884ms, setup 648ms, collect 2.17s, tests 1.36s, environment 1.65s, prepare 181ms)
+

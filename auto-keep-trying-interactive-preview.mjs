@@ -1,4 +1,6 @@
-import pty from "node-pty";
+import ptyPkg from "node-pty";
+const { spawn } = ptyPkg;
+
 
 const shell = process.env.SHELL || "/bin/zsh";
 
@@ -37,7 +39,7 @@ function spawnGemini() {
 
   console.error(`\n[gemini - preview] launching model: ${model}${RESUME_LATEST ? " (resume latest)" : ""}\n`);
 
-  p = pty.spawn(shell, ["-lc", geminiCmd], {
+  p = spawn(shell, ["-lc", geminiCmd], {
     name: "xterm-256color",
     cols: process.stdout.columns ?? 120,
     rows: process.stdout.rows ?? 40,

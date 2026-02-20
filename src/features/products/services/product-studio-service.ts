@@ -588,22 +588,8 @@ const resolveSequenceReadiness = (params: {
   requestedMode: ProductStudioSequenceGenerationMode;
   route: ProductStudioExecutionRoute;
 }): ProductStudioSequenceReadiness => {
-  const projectIdLabel =
-    params.sequencingDiagnostics.projectId ?? 'selected project';
   const projectSettingsKey =
     params.sequencingDiagnostics.projectSettingsKey ?? 'project settings key';
-
-  if (
-    params.sequencingDiagnostics.projectSettingsKey &&
-    params.sequencingDiagnostics.selectedScope !== 'project'
-  ) {
-    return {
-      ready: false,
-      requiresProjectSequence: true,
-      state: 'project_settings_missing',
-      message: `Project settings for "${projectIdLabel}" are not persisted under "${projectSettingsKey}". Open this project in Image Studio and click "Save Project".`,
-    };
-  }
 
   const requiresSequence =
     doesRequestedModeRequireProjectSequence(params.requestedMode) ||

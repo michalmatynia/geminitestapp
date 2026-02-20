@@ -7,7 +7,7 @@ import ProductImageManager, {
   type ProductImageManagerController,
 } from '@/features/products/components/ProductImageManager';
 import { ProductImageManagerControllerProvider } from '@/features/products/components/ProductImageManagerControllerContext';
-import type { ProductImageSlot } from '@/features/products/types/products-ui';
+import type { ManagedImageSlotDto as ProductImageSlot } from '@/shared/contracts/image-slots';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 

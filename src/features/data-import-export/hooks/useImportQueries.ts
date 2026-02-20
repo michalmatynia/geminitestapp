@@ -11,14 +11,12 @@ import type {
   Template,
   WarehouseOption,
 } from '@/features/data-import-export/types/imports';
-import type { IntegrationWithConnections } from '@/features/integrations';
-import type {
-  BaseImportRunDetailResponse,
-  BaseImportRunRecord,
-  BaseImportStartResponse,
-  BaseImportMode,
-} from '@/features/integrations/types/base-import-runs';
 import type { 
+  IntegrationWithConnectionsDto as IntegrationWithConnections,
+  BaseImportRunDetailResponseDto as BaseImportRunDetailResponse,
+  BaseImportRunRecordDto as BaseImportRunRecord,
+  BaseImportStartResponseDto as BaseImportStartResponse,
+  BaseImportModeDto as BaseImportMode,
   ImportParameterCacheResponseDto
 } from '@/shared/contracts/integrations';
 import { api } from '@/shared/lib/api-client';

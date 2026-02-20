@@ -12,6 +12,16 @@ const INTERACTIVE_SELECTOR =
   'button,[role="button"],input,textarea,select,a[href]';
 const ORIGINAL_TITLE_ATTR = 'data-docs-tooltip-original-title';
 const MANAGED_ATTR = 'data-docs-tooltip-managed';
+const OBSERVED_ATTRIBUTE_FILTER = [
+  'data-doc-id',
+  'data-doc-alias',
+  'aria-label',
+  'placeholder',
+  'name',
+  'id',
+  'role',
+  'href',
+];
 
 const restoreElementTitle = (element: HTMLElement): void => {
   const original = element.getAttribute(ORIGINAL_TITLE_ATTR);
@@ -42,8 +52,12 @@ const applyElementTitle = (
     return;
   }
 
-  element.setAttribute('title', tooltip);
-  element.setAttribute(MANAGED_ATTR, '1');
+  if (element.getAttribute('title') !== tooltip) {
+    element.setAttribute('title', tooltip);
+  }
+  if (element.getAttribute(MANAGED_ATTR) !== '1') {
+    element.setAttribute(MANAGED_ATTR, '1');
+  }
 };
 
 const applyToRoot = (
@@ -79,20 +93,32 @@ export function DocumentationTooltipEnhancer({
     const root = document.getElementById(rootId);
     if (!root) return;
 
+    let rafId: number | null = null;
+    const scheduleApply = (): void => {
+      if (rafId !== null) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = null;
+        applyToRoot(root, moduleId, enabled, fallbackDocId);
+      });
+    };
+
     applyToRoot(root, moduleId, enabled, fallbackDocId);
     const observer = new MutationObserver(() => {
-      applyToRoot(root, moduleId, enabled, fallbackDocId);
+      scheduleApply();
     });
 
     observer.observe(root, {
       childList: true,
       subtree: true,
-      characterData: true,
       attributes: true,
+      attributeFilter: OBSERVED_ATTRIBUTE_FILTER,
     });
 
     return () => {
       observer.disconnect();
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
       if (!enabled) return;
       applyToRoot(root, moduleId, false, fallbackDocId);
     };

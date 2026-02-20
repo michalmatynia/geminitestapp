@@ -4,7 +4,12 @@ import React from 'react';
 
 import { logClientError } from '@/features/observability';
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/types/domain/files';
-import { AppModal, useToast, FileUploadButton, type FileUploadHelpers } from '@/shared/ui';
+import {
+  useToast,
+  FileUploadButton,
+  type FileUploadHelpers,
+} from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { useUploadCmsMedia } from '../../hooks/useCmsQueries';
 
@@ -83,9 +88,9 @@ export function MediaLibraryPanel({
   };
 
   return (
-    <AppModal
-      open={open}
-      onOpenChange={onOpenChange}
+    <DetailModal
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
       title='Media Library'
       size='xl'
       padding='none'

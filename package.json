@@ -175,5 +175,21 @@
   },
   "overrides": {
     "@auth/core": "0.41.1"
-  }
+  },
+  "description": "",
+  "main": "auto-keep-trying.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/michalmatynia/geminitestapp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/michalmatynia/geminitestapp/issues"
+  },
+  "homepage": "https://github.com/michalmatynia/geminitestapp#readme"
 }

@@ -13,6 +13,7 @@ import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/ima
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+  PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
 } from '@/features/products/constants';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import { invalidateProductsAndCounts } from '@/features/products/hooks/productCache';
@@ -196,6 +197,7 @@ type ProductImageSlotPreview = {
 
 const SPLIT_ZOOM_RESET = 1;
 const SPLIT_ZOOM_STEP = 0.1;
+const STUDIO_PROJECT_NOT_CONNECTED = '__product_studio_not_connected__';
 
 const getSlotTimestamp = (slot: ImageStudioSlotRecord): string | null => {
   const metadata = slot.metadata;
@@ -230,21 +232,30 @@ export default function ProductFormStudio(): React.JSX.Element {
     refreshImagesFromProduct,
   } = useProductFormContext();
   const studioProjectsQuery = useStudioProjects();
+  const studioProjectIds = useMemo(
+    () =>
+      (studioProjectsQuery.data ?? [])
+        .map((project) => project.id.trim())
+        .filter((projectId) => projectId.length > 0),
+    [studioProjectsQuery.data]
+  );
   const studioProjectOptions = useMemo(
     () => [
-      { value: '', label: 'Not Connected' },
-      ...(studioProjectsQuery.data ?? []).map((project) => ({
-        value: project.id,
-        label: project.id,
+      { value: STUDIO_PROJECT_NOT_CONNECTED, label: 'Not Connected' },
+      ...studioProjectIds.map((projectId) => ({
+        value: projectId,
+        label: projectId,
       })),
     ],
-    [studioProjectsQuery.data]
+    [studioProjectIds]
   );
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const settingsStore = useSettingsStore();
+  const configuredDefaultStudioProjectId =
+    settingsStore.get(PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY)?.trim() ?? '';
   const productImagesExternalBaseUrl =
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
     DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
@@ -323,6 +334,36 @@ export default function ProductFormStudio(): React.JSX.Element {
     if (!requestedStudioProjectId || requestedStudioProjectId === studioProjectId) return;
     setStudioProjectId(requestedStudioProjectId);
   }, [requestedStudioProjectId, setStudioProjectId, studioProjectId]);
+
+  useEffect(() => {
+    if (studioProjectsQuery.isLoading || studioConfigLoading || studioConfigSaving) return;
+
+    const currentStudioProjectId = studioProjectId?.trim() ?? '';
+    if (currentStudioProjectId.length > 0 && studioProjectIds.includes(currentStudioProjectId)) {
+      return;
+    }
+
+    const fallbackProjectId =
+      configuredDefaultStudioProjectId.length > 0 &&
+      studioProjectIds.includes(configuredDefaultStudioProjectId)
+        ? configuredDefaultStudioProjectId
+        : null;
+
+    if (fallbackProjectId === currentStudioProjectId) return;
+    if (!fallbackProjectId && currentStudioProjectId.length === 0) return;
+    if (!product?.id && !fallbackProjectId) return;
+
+    setStudioProjectId(fallbackProjectId);
+  }, [
+    configuredDefaultStudioProjectId,
+    product?.id,
+    setStudioProjectId,
+    studioConfigLoading,
+    studioConfigSaving,
+    studioProjectId,
+    studioProjectIds,
+    studioProjectsQuery.isLoading,
+  ]);
 
   useEffect(() => {
     const normalizedProductId = product?.id?.trim() ?? '';
@@ -613,6 +654,34 @@ export default function ProductFormStudio(): React.JSX.Element {
     sequenceReadiness,
   ]);
   const blockSendForSequenceReadiness = Boolean(sequenceReadinessMessage);
+  const studioProjectField = (
+    <FormField
+      id='studioProjectIdFromStudioTab'
+      label='Studio Project'
+      description='Defaults to Product settings and can be overridden for this product.'
+    >
+      <SelectSimple size='sm'
+        value={studioProjectId ?? STUDIO_PROJECT_NOT_CONNECTED}
+        onValueChange={(value: string): void => {
+          setStudioProjectId(value === STUDIO_PROJECT_NOT_CONNECTED ? null : value);
+        }}
+        options={studioProjectOptions}
+        placeholder={
+          studioProjectsQuery.isLoading
+            ? 'Loading Studio projects...'
+            : 'Select Studio project'
+        }
+        disabled={
+          studioConfigLoading ||
+          studioConfigSaving ||
+          studioProjectsQuery.isLoading
+        }
+        triggerClassName={
+          studioConfigLoading || studioConfigSaving ? 'opacity-70' : ''
+        }
+      />
+    </FormField>
+  );
 
   useEffect(() => {
     if (canCompareWithSource) return;
@@ -885,32 +954,7 @@ export default function ProductFormStudio(): React.JSX.Element {
         title='Studio'
         description='Connect this product to an Image Studio project to enable permanent listing generations.'
       >
-        <FormField
-          id='studioProjectIdFromStudioTab'
-          label='Studio Project'
-          description='Once selected, you can send product images to Studio and accept generated variants into image slots.'
-        >
-          <SelectSimple size='sm'
-            value={studioProjectId ?? ''}
-            onValueChange={(value: string): void => {
-              setStudioProjectId(value || null);
-            }}
-            options={studioProjectOptions}
-            placeholder={
-              studioProjectsQuery.isLoading
-                ? 'Loading Studio projects...'
-                : 'Select Studio project'
-            }
-            disabled={
-              studioConfigLoading ||
-              studioConfigSaving ||
-              studioProjectsQuery.isLoading
-            }
-            triggerClassName={
-              studioConfigLoading || studioConfigSaving ? 'opacity-70' : ''
-            }
-          />
-        </FormField>
+        {studioProjectField}
       </FormSection>
     );
   }
@@ -920,7 +964,9 @@ export default function ProductFormStudio(): React.JSX.Element {
       <FormSection
         title='Studio'
         description='Save the product first to start permanent Studio generations and autosave accepts.'
-      />
+      >
+        {studioProjectField}
+      </FormSection>
     );
   }
 
@@ -930,6 +976,7 @@ export default function ProductFormStudio(): React.JSX.Element {
         title='Studio'
         description='Pick a product image, send it to Studio, preview generated variants, then accept one to autosave it into this image slot.'
       >
+        {studioProjectField}
         <div className='flex flex-wrap items-center gap-2'>
           <Button size='xs'
             type='button'

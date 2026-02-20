@@ -1,0 +1,75 @@
+
+ RUN  v2.1.9 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp
+
+ ✓ src/features/case-resolver/__tests__/settings.test.ts (28 tests) 103ms
+ ✓ src/features/case-resolver/__tests__/prompt-exploder-sync-target.test.ts (11 tests) 50ms
+ ✓ src/features/case-resolver/__tests__/nodefile-relations.test.ts (6 tests) 34ms
+ ✓ src/features/case-resolver/__tests__/composer.test.ts (6 tests) 24ms
+ ✓ src/features/case-resolver/__tests__/case-context-resolution.test.ts (9 tests) 29ms
+ ✓ src/features/case-resolver/__tests__/editor-draft-storage.test.ts (4 tests) 25ms
+ ✓ src/features/case-resolver/__tests__/party-matching.test.ts (6 tests) 15ms
+stdout | src/features/case-resolver/__tests__/workspace-persistence.test.ts > case-resolver workspace persistence > returns conflict details with server workspace on CAS mismatch
+[case-resolver][workspace] {
+  id: 'workspace-debug-9cd959ce-f48c-4d90-8675-c1cb7442186b',
+  timestamp: '2026-02-20T01:54:32.386Z',
+  source: 'test',
+  action: 'persist_attempt',
+  mutationId: 'mutation-local',
+  expectedRevision: 0,
+  workspaceRevision: 1
+}
+[case-resolver][workspace] {
+  id: 'workspace-debug-fb9f7d22-3f2d-4c96-8803-88b3c9c8daeb',
+  timestamp: '2026-02-20T01:54:32.389Z',
+  source: 'test',
+  action: 'persist_conflict',
+  mutationId: 'mutation-local',
+  expectedRevision: 0,
+  currentRevision: 3,
+  workspaceRevision: 1
+}
+
+stdout | src/features/case-resolver/__tests__/workspace-persistence.test.ts > case-resolver workspace persistence > treats idempotent server acknowledgement as success
+[case-resolver][workspace] {
+  id: 'workspace-debug-c86db5bc-70ef-4c65-ae2e-3f6ae40cb5df',
+  timestamp: '2026-02-20T01:54:32.391Z',
+  source: 'test',
+  action: 'persist_attempt',
+  mutationId: 'mutation-repeat',
+  expectedRevision: 0,
+  workspaceRevision: 1
+}
+[case-resolver][workspace] {
+  id: 'workspace-debug-4f97c536-55a7-4a8d-ab29-f9767e925ae7',
+  timestamp: '2026-02-20T01:54:32.392Z',
+  source: 'test',
+  action: 'persist_success',
+  mutationId: 'mutation-repeat',
+  expectedRevision: 0,
+  workspaceRevision: 1,
+  currentRevision: 1,
+  message: 'idempotent'
+}
+
+stdout | src/features/case-resolver/__tests__/workspace-persistence.test.ts > case-resolver workspace persistence > requests fresh settings snapshots for workspace recovery reads
+[case-resolver][workspace] {
+  id: 'workspace-debug-356d9aaf-1407-446a-afad-a0cdf8a6342a',
+  timestamp: '2026-02-20T01:54:32.393Z',
+  source: 'test_source',
+  action: 'refresh_success',
+  workspaceRevision: 0
+}
+
+ ✓ src/features/case-resolver/__tests__/workspace-persistence.test.ts (4 tests) 26ms
+ ✓ src/features/case-resolver/__tests__/case-resolver-tree-workspace.test.ts (3 tests) 21ms
+ ✓ src/features/case-resolver/__tests__/capture-target-resolution.test.ts (3 tests) 24ms
+ ✓ src/features/case-resolver/__tests__/master-tree.test.ts (2 tests) 26ms
+ ✓ src/features/case-resolver/__tests__/ocr-runtime.test.ts (4 tests) 4ms
+ ✓ src/features/case-resolver/__tests__/ocr-queue-model-routing.test.ts (4 tests) 5ms
+ ✓ src/features/case-resolver/__tests__/scan-input-files.test.ts (2 tests) 14ms
+
+ Test Files  14 passed (14)
+      Tests  92 passed (92)
+   Start at  02:54:22
+   Duration  17.48s (transform 2.15s, setup 1.62s, collect 8.25s, tests 399ms, environment 4.54s, prepare 526ms)
+

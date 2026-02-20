@@ -31,7 +31,7 @@ import {
   translateProduct,
 } from '@/features/products/server';
 import { buildImageBase64Slots, type ProductImageBase64Source } from '@/features/products/services/image-base64';
-import type { ProductFormData } from '@/features/products/types/forms';
+import type { ProductCreateInputDto as ProductFormData } from '@/shared/contracts/products';
 import {
   badRequestError,
   configurationError,

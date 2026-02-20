@@ -57,6 +57,8 @@ type ProductSyncDraftDefaults = {
   inventoryId?: string;
 };
 
+const EMPTY_PROFILES: ProductSyncProfile[] = [];
+
 const makeRuleId = (): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
@@ -144,7 +146,7 @@ export function ProductSyncSettings(): React.JSX.Element {
   const defaultExportConnectionQuery = useDefaultExportConnection();
   const defaultExportInventoryQuery = useDefaultExportInventory();
 
-  const profiles = profilesQuery.data ?? [];
+  const profiles = profilesQuery.data ?? EMPTY_PROFILES;
   const [selectedProfileId, setSelectedProfileId] = useState<string>('');
   const [draft, setDraft] = useState<ProductSyncProfileDraft>(defaultDraft());
 

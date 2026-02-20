@@ -1,0 +1,271 @@
+
+ RUN  v2.1.9 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp
+
+ ✓ __tests__/features/integrations/services/exports/base-exporter.test.ts (12 tests) 7ms
+ ✓ __tests__/features/integrations/services/imports/parameter-import.test.ts (3 tests) 5ms
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts (8 tests | 7 failed) 8ms
+   × Integration Repository > Prisma Provider > listIntegrations calls prisma.integration.findMany 2ms
+     → Cannot read properties of undefined (reading 'toISOString')
+   × Integration Repository > Prisma Provider > createConnection calls prisma.integrationConnection.create 0ms
+     → Cannot read properties of undefined (reading 'toISOString')
+   × Integration Repository > Prisma Provider > upsertIntegration calls prisma.integration.upsert 0ms
+     → Cannot read properties of undefined (reading 'toISOString')
+   × Integration Repository > MongoDB Provider > listIntegrations calls mongo collection find 0ms
+     → Cannot read properties of undefined (reading 'toISOString')
+   × Integration Repository > MongoDB Provider > createConnection inserts into mongo collection 0ms
+     → Cannot read properties of undefined (reading 'toISOString')
+   × Integration Repository > MongoDB Provider > upsertIntegration updates existing in mongo 0ms
+     → Cannot read properties of undefined (reading 'toISOString')
+   × Integration Repository > MongoDB Provider > deleteConnection calls deleteOne in mongo 1ms
+     → expected "spy" to be called with arguments: [ 'integration_connections' ]
+
+Received: 
+
+
+
+Number of calls: 0
+
+ ✓ __tests__/features/integrations/hooks/useMarketplaceMutations.test.tsx (6 tests) 43ms
+ ❯ __tests__/features/integrations/hooks/useIntegrationMutations.test.tsx (5 tests | 3 failed) 41ms
+   × useIntegrationMutations invalidation > useUpsertConnection invalidates connections key after create 7ms
+     → expected "spy" to be called with arguments: [ …(2) ]
+
+Received: 
+
+  1st spy call:
+
+  Array [
+    "/api/integrations/int-1/connections",
+    Object {
++     "integrationId": "int-1",
++     "payload": Object {
+        "name": "Connection",
++     },
+    },
+  ]
+
+
+Number of calls: 1
+
+   × useIntegrationMutations invalidation > useUpsertConnection update path calls api.put and invalidates scoped keys 4ms
+     → api.patch is not a function
+   × useIntegrationMutations invalidation > useDisconnectAllegro invalidates connections key 3ms
+     → expected "spy" to be called with arguments: [ …(2) ]
+
+Received: 
+
+  1st spy call:
+
+  Array [
+    "/api/integrations/connections/conn-1/allegro/disconnect",
+-   Object {},
++   Object {
++     "connectionId": "conn-1",
++     "integrationId": "int-1",
++   },
+  ]
+
+
+Number of calls: 1
+
+ ✓ __tests__/features/integrations/services/imports/base-import-run-starter.test.ts (3 tests) 13ms
+ ✓ __tests__/features/integrations/components/GenericItemMapper.test.tsx (8 tests) 279ms
+ ✓ __tests__/features/integrations/components/GenericApiConsole.test.tsx (12 tests) 259ms
+ ✓ __tests__/features/integrations/services/category-mapping-repository.test.ts (6 tests) 378ms
+ ✓ __tests__/features/integrations/services/imports/base-mapper.test.ts (6 tests) 15ms
+ ✓ __tests__/features/integrations/services/export-template-repository.test.ts (5 tests) 194ms
+ ✓ __tests__/features/integrations/services/imports/base-import-service.helpers.test.ts (4 tests) 13ms
+ ✓ __tests__/features/integrations/components/listings/useImageRetryPresets.test.tsx (2 tests) 82ms
+ ✓ __tests__/features/integrations/hooks/listingCache.test.ts (4 tests) 13ms
+ ✓ __tests__/features/integrations/services/base-token-resolver.test.ts (4 tests) 38ms
+ ✓ __tests__/features/integrations/services/imports/base-import-service-shared.test.ts (5 tests) 13ms
+ ✓ __tests__/features/integrations/utils/connections.test.ts (4 tests) 13ms
+ ✓ __tests__/features/integrations/services/category-mapping-repository-mongo.test.ts (1 test) 4ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  __tests__/features/integrations/hooks/useIntegrationMutations.test.tsx > useIntegrationMutations invalidation > useUpsertConnection invalidates connections key after create
+AssertionError: expected "spy" to be called with arguments: [ …(2) ]
+
+Received: 
+
+  1st spy call:
+
+  Array [
+    "/api/integrations/int-1/connections",
+    Object {
++     "integrationId": "int-1",
++     "payload": Object {
+        "name": "Connection",
++     },
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ __tests__/features/integrations/hooks/useIntegrationMutations.test.tsx:80:22
+     78|     });
+     79| 
+     80|     expect(api.post).toHaveBeenCalledWith('/api/integrations/int-1/con…
+       |                      ^
+     81|       name: 'Connection',
+     82|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  __tests__/features/integrations/hooks/useIntegrationMutations.test.tsx > useIntegrationMutations invalidation > useUpsertConnection update path calls api.put and invalidates scoped keys
+TypeError: api.patch is not a function
+ ❯ mutationFn src/features/integrations/hooks/useIntegrationMutations.ts:56:20
+     54|         : `/api/integrations/${variables.integrationId}/connections`;
+     55|       if (hasConnection) {
+     56|         return api.patch<IntegrationConnection>(url, variables);
+       |                    ^
+     57|       }
+     58|       return api.post<IntegrationConnection>(url, variables);
+ ❯ Object.mutationFn src/shared/lib/query-factories-v2.ts:522:28
+ ❯ Object.fn ../../Gemini%20new%20Pull/geminitestapp/node_modules/@tanstack/query-core/build/modern/mutation.js:74:29
+ ❯ run ../../Gemini%20new%20Pull/geminitestapp/node_modules/@tanstack/query-core/build/modern/retryer.js:77:49
+ ❯ Object.start ../../Gemini%20new%20Pull/geminitestapp/node_modules/@tanstack/query-core/build/modern/retryer.js:119:9
+ ❯ Mutation.execute ../../Gemini%20new%20Pull/geminitestapp/node_modules/@tanstack/query-core/build/modern/mutation.js:115:40
+ ❯ __tests__/features/integrations/hooks/useIntegrationMutations.test.tsx:102:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  __tests__/features/integrations/hooks/useIntegrationMutations.test.tsx > useIntegrationMutations invalidation > useDisconnectAllegro invalidates connections key
+AssertionError: expected "spy" to be called with arguments: [ …(2) ]
+
+Received: 
+
+  1st spy call:
+
+  Array [
+    "/api/integrations/connections/conn-1/allegro/disconnect",
+-   Object {},
++   Object {
++     "connectionId": "conn-1",
++     "integrationId": "int-1",
++   },
+  ]
+
+
+Number of calls: 1
+
+ ❯ __tests__/features/integrations/hooks/useIntegrationMutations.test.tsx:152:22
+    150|     });
+    151| 
+    152|     expect(api.post).toHaveBeenCalledWith(
+       |                      ^
+    153|       '/api/integrations/connections/conn-1/allegro/disconnect',
+    154|       {}
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  __tests__/features/integrations/services/integration-repository.test.ts > Integration Repository > Prisma Provider > listIntegrations calls prisma.integration.findMany
+TypeError: Cannot read properties of undefined (reading 'toISOString')
+ ❯ toIntegrationRecord src/features/integrations/services/integration-repository.ts:120:28
+    118|   name: doc.name,
+    119|   slug: doc.slug,
+    120|   createdAt: doc.createdAt.toISOString(),
+       |                            ^
+    121|   updatedAt: doc.updatedAt ? doc.updatedAt.toISOString() : null,
+    122| });
+ ❯ Object.listIntegrations src/features/integrations/services/integration-repository.ts:248:19
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts:67:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  __tests__/features/integrations/services/integration-repository.test.ts > Integration Repository > Prisma Provider > createConnection calls prisma.integrationConnection.create
+TypeError: Cannot read properties of undefined (reading 'toISOString')
+ ❯ toConnectionRecord src/features/integrations/services/integration-repository.ts:214:30
+    212|       ? doc.traderaApiTokenUpdatedAt.toISOString()
+    213|       : null,
+    214|     createdAt: doc.createdAt.toISOString(),
+       |                              ^
+    215|     updatedAt: doc.updatedAt ? doc.updatedAt.toISOString() : null,
+    216|   };
+ ❯ Object.createConnection src/features/integrations/services/integration-repository.ts:311:14
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts:80:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  __tests__/features/integrations/services/integration-repository.test.ts > Integration Repository > Prisma Provider > upsertIntegration calls prisma.integration.upsert
+TypeError: Cannot read properties of undefined (reading 'toISOString')
+ ❯ toIntegrationRecord src/features/integrations/services/integration-repository.ts:120:28
+    118|   name: doc.name,
+    119|   slug: doc.slug,
+    120|   createdAt: doc.createdAt.toISOString(),
+       |                            ^
+    121|   updatedAt: doc.updatedAt ? doc.updatedAt.toISOString() : null,
+    122| });
+ ❯ Object.upsertIntegration src/features/integrations/services/integration-repository.ts:260:14
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts:102:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  __tests__/features/integrations/services/integration-repository.test.ts > Integration Repository > MongoDB Provider > listIntegrations calls mongo collection find
+TypeError: Cannot read properties of undefined (reading 'toISOString')
+ ❯ toIntegrationRecord src/features/integrations/services/integration-repository.ts:120:28
+    118|   name: doc.name,
+    119|   slug: doc.slug,
+    120|   createdAt: doc.createdAt.toISOString(),
+       |                            ^
+    121|   updatedAt: doc.updatedAt ? doc.updatedAt.toISOString() : null,
+    122| });
+ ❯ Object.listIntegrations src/features/integrations/services/integration-repository.ts:248:19
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts:137:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  __tests__/features/integrations/services/integration-repository.test.ts > Integration Repository > MongoDB Provider > createConnection inserts into mongo collection
+TypeError: Cannot read properties of undefined (reading 'toISOString')
+ ❯ toConnectionRecord src/features/integrations/services/integration-repository.ts:214:30
+    212|       ? doc.traderaApiTokenUpdatedAt.toISOString()
+    213|       : null,
+    214|     createdAt: doc.createdAt.toISOString(),
+       |                              ^
+    215|     updatedAt: doc.updatedAt ? doc.updatedAt.toISOString() : null,
+    216|   };
+ ❯ Object.createConnection src/features/integrations/services/integration-repository.ts:311:14
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts:150:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  __tests__/features/integrations/services/integration-repository.test.ts > Integration Repository > MongoDB Provider > upsertIntegration updates existing in mongo
+TypeError: Cannot read properties of undefined (reading 'toISOString')
+ ❯ toIntegrationRecord src/features/integrations/services/integration-repository.ts:120:28
+    118|   name: doc.name,
+    119|   slug: doc.slug,
+    120|   createdAt: doc.createdAt.toISOString(),
+       |                            ^
+    121|   updatedAt: doc.updatedAt ? doc.updatedAt.toISOString() : null,
+    122| });
+ ❯ Object.upsertIntegration src/features/integrations/services/integration-repository.ts:260:14
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts:173:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  __tests__/features/integrations/services/integration-repository.test.ts > Integration Repository > MongoDB Provider > deleteConnection calls deleteOne in mongo
+AssertionError: expected "spy" to be called with arguments: [ 'integration_connections' ]
+
+Received: 
+
+
+
+Number of calls: 0
+
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts:191:30
+    189|       await repo.deleteConnection('c1');
+    190| 
+    191|       expect(mockCollection).toHaveBeenCalledWith('integration_connect…
+       |                              ^
+    192|       expect(mockDeleteOne).toHaveBeenCalledWith({ _id: 'c1' });
+    193|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+ Test Files  2 failed | 16 passed (18)
+      Tests  10 failed | 88 passed (98)
+   Start at  03:28:11
+   Duration  14.80s (transform 1.42s, setup 1.88s, collect 3.97s, tests 1.42s, environment 4.73s, prepare 611ms)
+

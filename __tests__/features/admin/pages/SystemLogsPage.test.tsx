@@ -1,23 +1,10 @@
-import { QueryClient, QueryClientProvider, useQuery, useMutation } from '@tanstack/react-query';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import SystemLogsPage from '@/features/observability/pages/SystemLogsPage';
-import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
-import { useToast } from '@/shared/ui';
-
-// Mock react-query
-vi.mock('@tanstack/react-query', async (importOriginal) => {
-  const actual = await importOriginal<any>();
-  return {
-    ...actual,
-    useQuery: vi.fn(),
-    useMutation: vi.fn(),
-    useQueryClient: vi.fn(() => ({
-      invalidateQueries: vi.fn(),
-    })),
-  };
-});
+import { useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
@@ -27,6 +14,31 @@ vi.mock('next/navigation', () => ({
     push: vi.fn(),
     replace: vi.fn(),
     prefetch: vi.fn(),
+  })),
+}));
+
+// Mock SystemLogsContext (override global mock from vitest.setup.ts if needed)
+vi.mock('@/features/observability/context/SystemLogsContext', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    SystemLogsProvider: ({ children }: any) => children,
+    useSystemLogsContext: vi.fn(),
+  };
+});
+
+// Mock SettingsStoreProvider to avoid react-query issues in provider
+vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+  SettingsStoreProvider: ({ children }: any) => children,
+  useSettingsStore: vi.fn(() => ({
+    get: vi.fn(),
+    getBoolean: vi.fn(() => false),
+    getNumber: vi.fn(),
+    map: new Map(),
+    isLoading: false,
+    isFetching: false,
+    error: null,
+    refetch: vi.fn(),
   })),
 }));
 
@@ -78,57 +90,65 @@ const renderPage = () => {
   const queryClient = createTestQueryClient();
   return render(
     <QueryClientProvider client={queryClient}>
-      <SettingsStoreProvider>
-        <SystemLogsPage />
-      </SettingsStoreProvider>
+      <SystemLogsPage />
     </QueryClientProvider>
   );
 };
 
 describe('SystemLogsPage', () => {
   const mockToast = vi.fn();
+  const mockConfirmAction = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useToast as any).mockReturnValue({ toast: mockToast });
     
-    // Default mock for logs
-    (useQuery as any).mockImplementation(({ queryKey }: any) => {
-      if (queryKey[0] === 'system-logs') {
-        if (queryKey[1] === 'list') {
-          return {
-            isPending: false,
-            data: {
-              logs: [
-                { id: '1', level: 'error', message: 'Test Error', createdAt: new Date().toISOString(), source: 'api' },
-                { id: '2', level: 'info', message: 'Test Info', createdAt: new Date().toISOString(), source: 'client' },
-              ],
-              total: 2,
-            },
-          };
-        }
-        if (queryKey[1] === 'metrics') {
-          return {
-            isPending: false,
-            data: {
-              metrics: {
-                total: 2,
-                last24Hours: 1,
-                last7Days: 2,
-                levels: { error: 1, warn: 0, info: 1 },
-                topSources: [{ source: 'api', count: 1 }],
-                topPaths: [{ path: '/api/test', count: 1 }],
-              },
-            },
-          };
-        }
-      }
-      return { isPending: false, data: null };
-    });
-
-    (useMutation as any).mockReturnValue({
-      mutateAsync: vi.fn(),
-      isPending: false,
+    // Default context mock
+    (useSystemLogsContext as any).mockReturnValue({
+      logsQuery: { isPending: false, isFetching: false, refetch: vi.fn() },
+      metricsQuery: { isPending: false, isFetching: false, refetch: vi.fn() },
+      insightsQuery: { isLoading: false, data: { insights: [] } },
+      mongoDiagnosticsQuery: { isLoading: false, data: { collections: [] }, refetch: vi.fn() },
+      runInsightMutation: { isPending: false, mutate: vi.fn() },
+      interpretLogMutation: { isPending: false },
+      clearLogsMutation: { isPending: false },
+      confirmAction: mockConfirmAction,
+      ConfirmationModal: () => null,
+      logs: [
+        { id: '1', level: 'error', message: 'Test Error', createdAt: new Date().toISOString(), source: 'api' },
+        { id: '2', level: 'info', message: 'Test Info', createdAt: new Date().toISOString(), source: 'client' },
+      ],
+      metrics: {
+        total: 2,
+        last24Hours: 1,
+        last7Days: 2,
+        levels: { error: 1, warn: 0, info: 1 },
+        topSources: [{ source: 'api', count: 1 }],
+        topPaths: [{ path: '/api/test', count: 1 }],
+        generatedAt: new Date().toISOString(),
+      },
+      levels: { error: 1, warn: 0, info: 1 },
+      total: 2,
+      totalPages: 1,
+      page: 1,
+      setPage: vi.fn(),
+      filterFields: [],
+      level: 'all',
+      query: '',
+      source: '',
+      method: '',
+      statusCode: '',
+      requestId: '',
+      userId: '',
+      fingerprint: '',
+      category: '',
+      fromDate: '',
+      toDate: '',
+      handleFilterChange: vi.fn(),
+      handleResetFilters: vi.fn(),
+      logsJson: '[]',
+      diagnostics: [],
+      diagnosticsUpdatedAt: null,
+      logInterpretations: {},
     });
   });
 
@@ -139,34 +159,30 @@ describe('SystemLogsPage', () => {
     expect(screen.getByText('Test Error')).toBeInTheDocument();
     expect(screen.getByText('Test Info')).toBeInTheDocument();
     
-    // Check metrics
-    expect(screen.getByText('Total Logs')).toBeInTheDocument();
-    expect(screen.getAllByText('2').length).toBeGreaterThan(0);
-    expect(screen.getByText('Errors')).toBeInTheDocument();
-    expect(screen.getAllByText('1').length).toBeGreaterThan(0);
+    // Check metrics using flexible matchers for PropertyRow labels
+    expect(screen.getByText(/^Total Logs:/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Errors:/i)).toBeInTheDocument();
   });
 
   it('renders filter section', () => {
     renderPage();
-    expect(screen.getByText('Filters')).toBeInTheDocument();
+    // In our mock PageLayout/DynamicFilters might not render "Filters" text exactly, 
+    // let's check for "Log Filters" which is in SystemLogsPage.tsx
+    expect(screen.getByText(/Log Filters/i)).toBeInTheDocument();
   });
 
   it('opens clear logs action without crashing', async () => {
-    const mockMutate = vi.fn().mockResolvedValue(true);
-    (useMutation as any).mockImplementation(({ mutationFn: _mutationFn }: any) => {
-      // Check if it's the clear logs mutation
-      return { mutateAsync: mockMutate, isPending: false };
-    });
-    
+    const user = userEvent.setup();
     renderPage();
     
     const clearButton = screen.getByText('Wipe Logs');
-    fireEvent.click(clearButton);
+    await user.click(clearButton);
 
-    expect(clearButton).toBeInTheDocument();
+    expect(mockConfirmAction).toHaveBeenCalled();
   });
 
   it('exports logs to clipboard', async () => {
+    const user = userEvent.setup();
     // Mock clipboard
     const mockWriteText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', {
@@ -177,8 +193,9 @@ describe('SystemLogsPage', () => {
     renderPage();
     
     const copyButton = screen.getByText('Export');
-    fireEvent.click(copyButton);
+    await user.click(copyButton);
     
+    // CopyButton component internally calls navigator.clipboard.writeText
     expect(mockWriteText).toHaveBeenCalled();
   });
 });

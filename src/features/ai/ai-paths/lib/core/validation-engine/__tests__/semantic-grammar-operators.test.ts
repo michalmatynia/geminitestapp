@@ -250,4 +250,89 @@ describe('semantic grammar validation operators', () => {
       ),
     ).toBe(true);
   });
+
+  it('treats wired_to checks as not applicable when target node type is absent', () => {
+    const nodes: AiNode[] = [
+      buildNode('node-a', 'trigger', ['context'], ['trigger']),
+    ];
+    const edges: Edge[] = [];
+    const config = normalizeAiPathsValidationConfig({
+      ...baseValidationConfig(),
+      rules: [
+        ...(baseValidationConfig().rules ?? []),
+        {
+          id: 'semantic.wiring.trigger_to_simulation',
+          title: 'Trigger feeds simulation',
+          enabled: true,
+          severity: 'warning',
+          module: 'trigger',
+          appliesToNodeTypes: ['trigger'],
+          conditionMode: 'all',
+          conditions: [
+            {
+              id: 'wire-trigger',
+              operator: 'wired_to',
+              fromPort: 'trigger',
+              toNodeType: 'simulation',
+              toPort: 'trigger',
+            },
+          ],
+        },
+      ],
+    });
+
+    const report = evaluateAiPathsValidationPreflight({
+      nodes,
+      edges,
+      config,
+    });
+    expect(
+      report.findings.some(
+        (finding) => finding.ruleId === 'semantic.wiring.trigger_to_simulation',
+      ),
+    ).toBe(false);
+  });
+
+  it('fails wired_to checks when target node type exists but wiring is missing', () => {
+    const nodes: AiNode[] = [
+      buildNode('node-a', 'trigger', ['context'], ['trigger']),
+      buildNode('node-b', 'simulation', ['trigger'], ['context']),
+    ];
+    const edges: Edge[] = [];
+    const config = normalizeAiPathsValidationConfig({
+      ...baseValidationConfig(),
+      rules: [
+        ...(baseValidationConfig().rules ?? []),
+        {
+          id: 'semantic.wiring.trigger_to_simulation',
+          title: 'Trigger feeds simulation',
+          enabled: true,
+          severity: 'warning',
+          module: 'trigger',
+          appliesToNodeTypes: ['trigger'],
+          conditionMode: 'all',
+          conditions: [
+            {
+              id: 'wire-trigger',
+              operator: 'wired_to',
+              fromPort: 'trigger',
+              toNodeType: 'simulation',
+              toPort: 'trigger',
+            },
+          ],
+        },
+      ],
+    });
+
+    const report = evaluateAiPathsValidationPreflight({
+      nodes,
+      edges,
+      config,
+    });
+    expect(
+      report.findings.some(
+        (finding) => finding.ruleId === 'semantic.wiring.trigger_to_simulation',
+      ),
+    ).toBe(true);
+  });
 });

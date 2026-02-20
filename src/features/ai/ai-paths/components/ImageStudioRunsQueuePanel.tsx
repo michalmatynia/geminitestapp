@@ -4,9 +4,8 @@ import React, { useMemo } from 'react';
 
 import { 
   Button, 
-  DataTable, 
+  StandardDataTablePanel, 
   SelectSimple,
-  SectionHeader,
   PanelStats,
   StatusBadge,
 } from '@/shared/ui';
@@ -110,11 +109,10 @@ export function ImageStudioRunsQueuePanel(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <SectionHeader
+      <StandardDataTablePanel
         title='Image Studio Runs'
         description='Queue-backed generation runs persisted from Image Studio.'
-        size='xs'
-        actions={(
+        headerActions={(
           <div className='flex items-center gap-2'>
             <Button
               type='button'
@@ -135,37 +133,35 @@ export function ImageStudioRunsQueuePanel(): React.JSX.Element {
             </Button>
           </div>
         )}
+        columns={columns}
+        data={runs}
+        isLoading={isLoading}
+        initialSorting={[{ id: 'createdAt', desc: true }]}
+        variant='flat'
+        alerts={
+          <PanelStats
+            className='mb-0 border-none bg-transparent p-0'
+            stats={[
+              { key: 'total', label: 'Total', value: stats.total },
+              { key: 'queued', label: 'Queued', value: stats.queuedCount, color: 'warning' },
+              { key: 'running', label: 'Running', value: stats.runningCount, color: 'info' },
+              {
+                key: 'filter',
+                label: 'Filter',
+                value: (
+                  <SelectSimple
+                    value={statusFilter}
+                    onValueChange={(v) => setStatusFilter(v as 'all' | ImageStudioRunStatus)}
+                    options={STATUS_OPTIONS}
+                    size='xs'
+                    className='w-28 mt-[-2px]'
+                  />
+                ),
+              },
+            ]}
+          />
+        }
       />
-
-      <PanelStats
-        stats={[
-          { key: 'total', label: 'Total', value: stats.total },
-          { key: 'queued', label: 'Queued', value: stats.queuedCount, color: 'warning' },
-          { key: 'running', label: 'Running', value: stats.runningCount, color: 'info' },
-          {
-            key: 'filter',
-            label: 'Filter',
-            value: (
-              <SelectSimple
-                value={statusFilter}
-                onValueChange={(v) => setStatusFilter(v as 'all' | ImageStudioRunStatus)}
-                options={STATUS_OPTIONS}
-                size='xs'
-                className='w-28 mt-[-2px]'
-              />
-            ),
-          },
-        ]}
-      />
-
-      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-        <DataTable
-          columns={columns}
-          data={runs}
-          isLoading={isLoading}
-          initialSorting={[{ id: 'createdAt', desc: true }]}
-        />
-      </div>
     </div>
   );
 }

@@ -38,14 +38,17 @@ import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
 } from '@/features/data-import-export/utils/image-retry-presets';
-import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/features/integrations';
+import type { 
+  IntegrationConnectionBasicDto as IntegrationConnectionBasic,
+  IntegrationWithConnectionsDto as IntegrationWithConnections,
+  BaseImportParameterImportSettingsDto as BaseImportParameterImportSettings,
+  BaseImportModeDto as BaseImportMode
+} from '@/shared/contracts/integrations';
 import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
 import {
   defaultBaseImportParameterImportSettings,
   normalizeBaseImportParameterImportSettings,
-  type BaseImportParameterImportSettings,
 } from '@/features/integrations/types/base-import-parameter-import';
-import type { BaseImportMode } from '@/features/integrations/types/base-import-runs';
 import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries';
 import { useToast } from '@/shared/ui';
 

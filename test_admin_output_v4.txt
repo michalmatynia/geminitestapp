@@ -1,0 +1,47 @@
+
+ RUN  v2.1.9 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp
+
+ ✓ __tests__/features/admin/pages/SystemLogsPage.test.tsx (4 tests) 401ms
+stderr | __tests__/features/admin/components/Menu.test.tsx > Menu Component > renders main menu categories
+Received `false` for a non-boolean attribute `prefetch`.
+
+If you want to write it to the DOM, pass a string instead: prefetch="false" or prefetch={value.toString()}.
+
+If you used to conditionally omit it with prefetch={condition && value}, pass prefetch={condition ? value : undefined} instead.
+[MSW] Warning: intercepted a request without a matching request handler:
+
+  • POST /api/client-errors
+
+  • Request body: {"message":"Failed to fetch lite settings (404)","timestamp":"2026-02-20T02:25:27.146Z","url":"http://localhost:3000/","userAgent":"Mozilla/5.0 (darwin) AppleWebKit/537.36 (KHTML, like Gecko) jsdom/27.4.0","name":"Error","stack":"Error: Failed to fetch lite settings (404)\n    at fetchLiteSettingsFromApi (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/api/settings-client.ts:175:13)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at fetchLiteSettingsWithFallback (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/hooks/use-settings.ts:41:13)\n    at queryFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/query-factories-v2.ts:358:22)","context":{"source":"settings-client","action":"fetchLiteSettingsFromApi","message":"Failed to fetch lite settings, returning empty list.","level":"error"}}
+
+If you still wish to intercept this unhandled request, please create a request handler for it.
+Read more: https://mswjs.io/docs/http/intercepting-requests
+
+stderr | __tests__/features/admin/components/Menu.test.tsx > Menu Component > contains correctly linked standalone sections
+[MSW] Warning: intercepted a request without a matching request handler:
+
+  • POST /api/query-telemetry
+
+  • Request body: {"events":[{"id":"95d3f805-fe55-4ab6-b37f-ca9d17ae12ed","timestamp":"2026-02-20T02:25:27.305Z","traceId":"567b5a5b-c02a-4bf1-8e1d-557c6389314e","entity":"query","stage":"start","source":"shared.hooks.useLiteSettingsMap","operation":"list","resource":"settings","key":"[\"settings\",\"lite\"]","keyHash":"ef3fd40e","criticality":"normal","domain":"global","sampled":true,"attempt":1,"tags":["settings","map","lite"]},{"id":"b4b5844c-19dc-47c8-9ec2-93efb481e346","timestamp":"2026-02-20T02:25:27.727Z","traceId":"567b5a5b-c02a-4bf1-8e1d-557c6389314e","entity":"query","stage":"success","source":"shared.hooks.useLiteSettingsMap","operation":"list","resource":"settings","key":"[\"settings\",\"lite\"]","keyHash":"ef3fd40e","criticality":"normal","domain":"global","sampled":true,"attempt":1,"durationMs":308,"tags":["settings","map","lite"]}]}
+
+If you still wish to intercept this unhandled request, please create a request handler for it.
+Read more: https://mswjs.io/docs/http/intercepting-requests
+
+ ✓ __tests__/features/admin/components/Menu.test.tsx (4 tests) 974ms
+   ✓ Menu Component > contains correctly linked standalone sections 592ms
+ ✓ __tests__/features/admin/pages/AdminFrontManagePage.test.tsx (3 tests) 309ms
+stderr | __tests__/features/admin/components/AdminLayout.test.tsx > AdminLayout > renders children correctly
+Received `false` for a non-boolean attribute `prefetch`.
+
+If you want to write it to the DOM, pass a string instead: prefetch="false" or prefetch={value.toString()}.
+
+If you used to conditionally omit it with prefetch={condition && value}, pass prefetch={condition ? value : undefined} instead.
+
+ ✓ __tests__/features/admin/components/AdminLayout.test.tsx (3 tests) 427ms
+ ✓ __tests__/features/admin/pages/AdminGlobalValidatorPage.test.ts (3 tests) 12ms
+
+ Test Files  5 passed (5)
+      Tests  17 passed (17)
+   Start at  03:25:20
+   Duration  13.24s (transform 2.09s, setup 1.37s, collect 5.02s, tests 2.12s, environment 2.85s, prepare 404ms)
+

@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 
 import type { AnalyticsSummaryDto } from '@/shared/types';
-import { Button, DataTable } from '@/shared/ui';
+import { Button, StandardDataTablePanel, EmptyState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useAnalytics } from '../context/AnalyticsContext';
@@ -81,25 +81,29 @@ export function RecentEventsTable(): React.JSX.Element {
     },
   ], [expandedId]);
 
-  if (events.length === 0) {
-    return <p className='text-sm text-gray-500'>No events yet.</p>;
-  }
-
   return (
-    <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
-      <DataTable
-        columns={columns}
-        data={events}
-        renderRowDetails={({ row }) => {
-          if (expandedId !== row.original.id) return null;
-          return (
-            <div className='bg-gray-950/40 px-4 py-4 border-t border-border/40'>
-              <EventDetails event={row.original} />
-            </div>
-          );
-        }}
-      />
-    </div>
+    <StandardDataTablePanel
+      title='Recent Events'
+      columns={columns}
+      data={events}
+      isLoading={summaryQuery.isLoading}
+      variant='flat'
+      emptyState={
+        <EmptyState
+          title='No events yet'
+          description='Visitor activity will appear here once tracked.'
+          variant='compact'
+        />
+      }
+      renderRowDetails={({ row }) => {
+        if (expandedId !== row.original.id) return null;
+        return (
+          <div className='bg-black/40 px-4 py-4 border-t border-white/5'>
+            <EventDetails event={row.original} />
+          </div>
+        );
+      }}
+    />
   );
 }
 

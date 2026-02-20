@@ -7,7 +7,7 @@ import { cn } from '@/shared/utils';
 import { DataTable } from '../data-table';
 import { ListPanel } from '../list-panel';
 
-import type { ColumnDef, ExpandedState, OnChangeFn, Row } from '@tanstack/react-table';
+import type { ColumnDef, ExpandedState, OnChangeFn, Row, SortingState } from '@tanstack/react-table';
 
 export interface StandardDataTablePanelProps<TData> {
   // ListPanel props
@@ -33,6 +33,8 @@ export interface StandardDataTablePanelProps<TData> {
   isLoading?: boolean | undefined;
   loadingMessage?: string | undefined;
   emptyState?: React.ReactNode | undefined;
+  initialSorting?: SortingState | undefined;
+  sortingStorageKey?: string | undefined;
   getRowId?: (row: TData) => string | number | undefined;
   getRowClassName?: (row: Row<TData>) => string | undefined;
   maxHeight?: string | number | undefined;
@@ -81,6 +83,8 @@ export function StandardDataTablePanel<TData>({
   isLoading = false,
   loadingMessage,
   emptyState,
+  initialSorting,
+  sortingStorageKey,
   getRowId,
   getRowClassName,
   maxHeight,
@@ -123,6 +127,8 @@ export function StandardDataTablePanel<TData>({
           data={data}
           isLoading={showTableLoading}
           {...(emptyState !== undefined ? { emptyState } : {})}
+          {...(initialSorting !== undefined ? { initialSorting } : {})}
+          {...(sortingStorageKey !== undefined ? { sortingStorageKey } : {})}
           {...(getRowId !== undefined ? { getRowId: getRowId as (row: TData) => string | number } : {})}
           {...(getRowClassName !== undefined ? { getRowClassName } : {})}
           {...(maxHeight !== undefined ? { maxHeight } : {})}

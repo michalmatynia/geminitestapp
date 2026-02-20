@@ -126,6 +126,144 @@ export const revealStyleSchema = z.enum([
 export type RevealStyleDto = z.infer<typeof revealStyleSchema>;
 
 /**
+ * GSAP Animation Constants
+ */
+
+export const ANIMATION_PRESETS: { label: string; value: AnimationPresetDto }[] = [
+  { label: 'None', value: 'none' },
+  { label: 'Fade In', value: 'fadeIn' },
+  { label: 'Fade In Up', value: 'fadeInUp' },
+  { label: 'Fade In Down', value: 'fadeInDown' },
+  { label: 'Fade Out', value: 'fadeOut' },
+  { label: 'Slide In Left', value: 'slideInLeft' },
+  { label: 'Slide In Right', value: 'slideInRight' },
+  { label: 'Slide In Top', value: 'slideInTop' },
+  { label: 'Slide In Bottom', value: 'slideInBottom' },
+  { label: 'Scale Up', value: 'scaleUp' },
+  { label: 'Scale Down', value: 'scaleDown' },
+  { label: 'Zoom In', value: 'zoomIn' },
+  { label: 'Flip Y', value: 'flipY' },
+  { label: 'Skew', value: 'skew' },
+  { label: 'Blur In', value: 'blurIn' },
+  { label: 'Rotate', value: 'rotate' },
+  { label: 'Rotate X (3D)', value: 'rotateX' },
+  { label: 'Rotate Y (3D)', value: 'rotateY' },
+  { label: 'Pop Z (3D)', value: 'popZ' },
+  { label: 'Card Tilt (3D)', value: 'cardTilt' },
+  { label: 'Flip 3D', value: 'flip3D' },
+  { label: 'Cube', value: 'cube' },
+  { label: 'Carousel', value: 'carousel' },
+  { label: 'Orbit', value: 'orbit' },
+  { label: 'Shake', value: 'shake' },
+  { label: 'Wobble', value: 'wobble' },
+  { label: 'Wiggle', value: 'wiggle' },
+  { label: 'Bounce', value: 'bounce' },
+  { label: 'Stagger (children)', value: 'stagger' },
+];
+
+export const ANIMATION_EASINGS: { label: string; value: AnimationEasingDto }[] = [
+  { label: 'Power 1 (gentle)', value: 'power1.out' },
+  { label: 'Power 2 (smooth)', value: 'power2.out' },
+  { label: 'Power 3 (strong)', value: 'power3.out' },
+  { label: 'Power 4 (sharp)', value: 'power4.out' },
+  { label: 'Expo (dramatic)', value: 'expo.out' },
+  { label: 'Circ (rounded)', value: 'circ.out' },
+  { label: 'Sine (soft)', value: 'sine.inOut' },
+  { label: 'Elastic', value: 'elastic.out' },
+  { label: 'Elastic (tight)', value: 'elastic.out(1,0.3)' },
+  { label: 'Elastic (loose)', value: 'elastic.out(1,0.5)' },
+  { label: 'Bounce', value: 'bounce.out' },
+  { label: 'Back (overshoot)', value: 'back.out' },
+  { label: 'Back (overshoot +)', value: 'back.out(1.7)' },
+  { label: 'Back (anticipation)', value: 'back.in(1.7)' },
+  { label: 'Custom ease', value: 'custom' },
+];
+
+export const PARALLAX_PRESETS: { label: string; value: ParallaxPresetDto }[] = [
+  { label: 'None', value: 'none' },
+  { label: 'Soft', value: 'soft' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'Strong', value: 'strong' },
+  { label: 'Depth', value: 'depth' },
+];
+
+export const PARALLAX_PATTERNS: { label: string; value: ParallaxPatternDto }[] = [
+  { label: 'Uniform', value: 'uniform' },
+  { label: 'Alternate', value: 'alternate' },
+  { label: 'Increment', value: 'increment' },
+  { label: 'Layers', value: 'layers' },
+  { label: 'Random', value: 'random' },
+];
+
+export const TIMELINE_MODES: { label: string; value: TimelineModeDto }[] = [
+  { label: 'None', value: 'none' },
+  { label: 'Sequence', value: 'sequence' },
+  { label: 'Overlap', value: 'overlap' },
+  { label: 'Call & Response', value: 'callResponse' },
+  { label: 'Cascade', value: 'cascade' },
+  { label: 'Wave', value: 'wave' },
+  { label: 'Domino', value: 'domino' },
+  { label: 'Ripple', value: 'ripple' },
+];
+
+export const SCROLL_MODES: { label: string; value: ScrollModeDto }[] = [
+  { label: 'None', value: 'none' },
+  { label: 'Reveal on scroll', value: 'reveal' },
+  { label: 'Scrub', value: 'scrub' },
+  { label: 'Pin + Scrub', value: 'pin' },
+  { label: 'Story (pin + snap)', value: 'story' },
+];
+
+export const REVEAL_STYLES: { label: string; value: RevealStyleDto }[] = [
+  { label: 'None', value: 'none' },
+  { label: 'Clip up', value: 'clipUp' },
+  { label: 'Clip down', value: 'clipDown' },
+  { label: 'Clip left', value: 'clipLeft' },
+  { label: 'Clip right', value: 'clipRight' },
+  { label: 'Mask', value: 'mask' },
+];
+
+export const TEXT_EFFECTS: { label: string; value: TextEffectDto }[] = [
+  { label: 'None', value: 'none' },
+  { label: 'Split characters', value: 'splitChars' },
+  { label: 'Split words', value: 'splitWords' },
+  { label: 'Split lines', value: 'splitLines' },
+  { label: 'Scramble', value: 'scramble' },
+  { label: 'Typing', value: 'typing' },
+  { label: 'Count up', value: 'countUp' },
+];
+
+export const DRAG_AXES: { label: string; value: DragAxisDto }[] = [
+  { label: 'Free (x,y)', value: 'x,y' },
+  { label: 'Horizontal', value: 'x' },
+  { label: 'Vertical', value: 'y' },
+];
+
+export const OBSERVER_TYPES: { label: string; value: ObserverTypeDto }[] = [
+  { label: 'Wheel + Touch', value: 'wheel,touch' },
+  { label: 'Wheel only', value: 'wheel' },
+  { label: 'Touch only', value: 'touch' },
+  { label: 'Pointer (drag)', value: 'pointer' },
+  { label: 'All', value: 'wheel,touch,pointer' },
+];
+
+export const VELOCITY_EFFECTS: { label: string; value: VelocityEffectDto }[] = [
+  { label: 'None', value: 'none' },
+  { label: 'Skew X', value: 'skewX' },
+  { label: 'Skew Y', value: 'skewY' },
+  { label: 'Rotate', value: 'rotation' },
+  { label: 'Scale', value: 'scale' },
+];
+
+export const PARALLAX_DEFAULTS: Record<ParallaxPresetDto, { offset: number; scale?: number }> = {
+  none: { offset: 0 },
+  soft: { offset: 30 },
+  medium: { offset: 60 },
+  strong: { offset: 110 },
+  depth: { offset: 80, scale: 1.04 },
+};
+
+/**
  * GSAP Animation Config Contract
  */
 

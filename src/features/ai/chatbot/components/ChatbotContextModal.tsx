@@ -13,7 +13,7 @@ import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/
 import type { ContextDraft } from '../hooks/useChatbotContextState';
 
 interface ChatbotContextModalProps extends EntityModalProps<ContextDraft> {
-  modalDraft: ContextDraft;
+  modalDraft: ContextDraft | null;
   setModalDraft: React.Dispatch<React.SetStateAction<ContextDraft | null>>;
   tagDraft: string;
   setTagDraft: (value: string) => void;
@@ -32,6 +32,20 @@ export function ChatbotContextModal({
   isSaving,
   onSave,
 }: ChatbotContextModalProps): React.JSX.Element | null {
+  const effectiveDraft = useMemo<ContextDraft>(() => {
+    if (modalDraft) return modalDraft;
+    return {
+      id: '',
+      title: '',
+      content: '',
+      tags: [],
+      source: 'manual',
+      createdAt: '',
+      active: false,
+    };
+  }, [modalDraft]);
+  const draftTags = effectiveDraft.tags ?? [];
+
   const fields: SettingsField<ContextDraft>[] = useMemo(() => [
     {
       key: 'title',
@@ -47,7 +61,7 @@ export function ChatbotContextModal({
       render: () => (
         <div className='space-y-2'>
           <div className='flex flex-wrap gap-2'>
-            {(modalDraft.tags || []).map((tag: string) => (
+            {draftTags.map((tag: string) => (
               <Tag
                 key={tag}
                 label={tag}
@@ -132,7 +146,7 @@ export function ChatbotContextModal({
       label: 'Active in global context',
       type: 'checkbox',
     }
-  ], [modalDraft.tags, tagDraft, isSaving, setModalDraft, setTagDraft]);
+  ], [draftTags, tagDraft, isSaving, setModalDraft, setTagDraft]);
 
   const handleChange = (vals: Partial<ContextDraft>) => {
     setModalDraft(prev => prev ? ({ ...prev, ...vals }) : prev);
@@ -140,11 +154,11 @@ export function ChatbotContextModal({
 
   return (
     <SettingsPanelBuilder
-      open={isOpen}
+      open={isOpen && Boolean(modalDraft)}
       onClose={onClose}
       title={editingItem ? 'Edit Context' : 'New Context'}
       fields={fields}
-      values={modalDraft}
+      values={effectiveDraft}
       onChange={handleChange}
       onSave={async () => onSave()}
       isSaving={isSaving}

@@ -8,7 +8,6 @@ import type {
 } from '@/features/ai/ai-paths/lib';
 import { stableStringify } from '@/features/ai/ai-paths/lib';
 import {
-  AppModal,
   Button,
   Tabs,
   TabsContent,
@@ -16,6 +15,7 @@ import {
   TabsTrigger,
   ConfirmModal,
 } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { AiPathConfigProviderWithContext, useAiPathConfig } from './AiPathConfigContext';
 import { NodeHistoryTab } from './node-config/dialog/NodeHistoryTab';
@@ -206,105 +206,79 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
 
   if (!hasSelectedNode) return null;
 
-  return (
-    <>
-      <AppModal
-        open={configOpen}
-        onOpenChange={(open: boolean): void => {
-          if (open) {
-            setConfigOpen(true);
-            return;
-          }
-          requestClose();
-        }}
-        title={`Configure ${selectedNodeSafe.title}`}
-        showClose={false}
-        header={
-          <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
-            <div className='min-w-0'>
-              <div className='flex min-w-0 items-center gap-2'>
-                <Button
-                  data-doc-id='node_config_update'
-                  type='button'
-                  size='sm'
-                  className='rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10 disabled:opacity-50'
-                  disabled={!hasUnsavedChanges || isPathLocked}
-                  onClick={handleUpdateNode}
-                >
-                  Update Node
-                </Button>
-                <h2 className='truncate text-2xl font-bold tracking-tight text-white'>
-                  Configure {selectedNodeSafe.title}
-                </h2>
-                {isScheduledTrigger ? (
-                  <span className='rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[10px] uppercase text-amber-200'>
-                    Scheduled
-                  </span>
-                ) : null}
-              </div>
-            </div>
-            <div className='flex flex-wrap items-center justify-end gap-2'>
+    return (
+      <>
+        <DetailModal
+          isOpen={configOpen}
+          onClose={requestClose}
+          title={`Configure ${selectedNodeSafe.title}`}
+          size='lg'
+          headerActions={
+            <div className='flex items-center gap-2'>
               <Button
-                data-doc-id='node_config_close'
+                data-doc-id='node_config_update'
                 type='button'
-                onClick={requestClose}
-                variant='outline'
-                className='min-w-[100px]'
+                size='sm'
+                className='rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10 disabled:opacity-50'
+                disabled={!hasUnsavedChanges || isPathLocked}
+                onClick={handleUpdateNode}
               >
-                Close
+                Update Node
               </Button>
+              {isScheduledTrigger ? (
+                <span className='rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[10px] uppercase text-amber-200'>
+                  Scheduled
+                </span>
+              ) : null}
             </div>
-          </div>
-        }
-        size='lg'
-      >
-        <AiPathConfigProviderWithContext overrides={configContextOverrides}>
-          <Tabs defaultValue='settings' className='mt-2'>
-            <TabsList className='w-full justify-start'>
-              <TabsTrigger value='settings'>Settings</TabsTrigger>
-              <TabsTrigger value='notes'>Notes</TabsTrigger>
-              <TabsTrigger value='history'>History</TabsTrigger>
-            </TabsList>
-            <TabsContent value='settings'>
-              <div className='mb-4 rounded-md border border-border bg-card/60 px-3 py-2'>
-                <div className='text-[11px] text-gray-400'>
-                  {hasUnsavedChanges
-                    ? 'Unsaved changes (manual update required).'
-                    : 'Node settings are applied in canvas. Click "Save Path" to persist.'}
+          }
+        >
+          <AiPathConfigProviderWithContext overrides={configContextOverrides}>
+            <Tabs defaultValue='settings' className='mt-2'>
+              <TabsList className='w-full justify-start'>
+                <TabsTrigger value='settings'>Settings</TabsTrigger>
+                <TabsTrigger value='notes'>Notes</TabsTrigger>
+                <TabsTrigger value='history'>History</TabsTrigger>
+              </TabsList>
+              <TabsContent value='settings'>
+                <div className='mb-4 rounded-md border border-border bg-card/60 px-3 py-2'>
+                  <div className='text-[11px] text-gray-400'>
+                    {hasUnsavedChanges
+                      ? 'Unsaved changes (manual update required).'
+                      : 'Node settings are applied in canvas. Click "Save Path" to persist.'}
+                  </div>
                 </div>
-              </div>
-              <NodeConfigurationSections />
-            </TabsContent>
-            <TabsContent value='notes'>
-              <NodeNotesTab />
-            </TabsContent>
-            <TabsContent value='history'>
-              <NodeHistoryTab />
-            </TabsContent>
-          </Tabs>
-        </AiPathConfigProviderWithContext>
-        <div className='mt-4 flex items-center justify-end gap-2 text-xs text-gray-400'>
-          <span className='text-[11px] uppercase tracking-wide text-gray-500'>Node ID</span>
-          <span className='max-w-[260px] truncate font-mono text-xs text-gray-300'>
-            {selectedNodeSafe.id}
-          </span>
-          <Button
-            data-doc-id='node_config_copy_id'
-            type='button'
-            size='sm'
-            className='rounded border border-border px-2 py-1 text-[11px] text-gray-200 hover:bg-muted/50'
-            onClick={() => {
-              void navigator.clipboard.writeText(selectedNodeSafe.id).then(
-                () => toast('Node ID copied.', { variant: 'success' }),
-                () => toast('Failed to copy Node ID.', { variant: 'error' })
-              );
-            }}
-          >
-            Copy
-          </Button>
-        </div>
-      </AppModal>
-      <ConfirmModal
+                <NodeConfigurationSections />
+              </TabsContent>
+              <TabsContent value='notes'>
+                <NodeNotesTab />
+              </TabsContent>
+              <TabsContent value='history'>
+                <NodeHistoryTab />
+              </TabsContent>
+            </Tabs>
+          </AiPathConfigProviderWithContext>
+          <div className='mt-4 flex items-center justify-end gap-2 text-xs text-gray-400'>
+            <span className='text-[11px] uppercase tracking-wide text-gray-500'>Node ID</span>
+            <span className='max-w-[260px] truncate font-mono text-xs text-gray-300'>
+              {selectedNodeSafe.id}
+            </span>
+            <Button
+              data-doc-id='node_config_copy_id'
+              type='button'
+              size='sm'
+              className='rounded border border-border px-2 py-1 text-[11px] text-gray-200 hover:bg-muted/50'
+              onClick={() => {
+                void navigator.clipboard.writeText(selectedNodeSafe.id).then(
+                  () => toast('Node ID copied.', { variant: 'success' }),
+                  () => toast('Failed to copy Node ID.', { variant: 'error' })
+                );
+              }}
+            >
+              Copy
+            </Button>
+          </div>
+        </DetailModal>      <ConfirmModal
         isOpen={closePromptOpen}
         onClose={() => setClosePromptOpen(false)}
         title='Unsaved Changes'

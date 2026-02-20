@@ -13,9 +13,12 @@ import {
 
 vi.mock('@/features/ai/chatbot/api', () => ({
   chatbotQueryKeys: {
+    all: ['ai', 'chatbot'],
     sessions: () => ['chatbot', 'sessions'],
     session: (id: string) => ['chatbot', 'session', id],
     settings: (key?: string) => ['chatbot', 'settings', key],
+    mutations: () => ['ai', 'chatbot', 'mutation'],
+    mutation: (name: string) => ['ai', 'chatbot', 'mutation', name],
   },
   createChatbotSession: vi.fn(),
   updateChatbotSessionTitle: vi.fn(),

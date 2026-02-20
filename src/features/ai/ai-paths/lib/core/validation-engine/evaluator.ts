@@ -408,6 +408,12 @@ const evaluateCondition = (args: {
       }
       case 'wired_from': {
         if (!node) return false;
+        if (condition.fromNodeType === 'simulation') {
+          const hasSourceType = nodes.some(
+            (candidate: AiNode): boolean => candidate.type === condition.fromNodeType,
+          );
+          if (!hasSourceType) return true;
+        }
         return edges.some((edge: Edge): boolean => {
           if (edgeToNodeId(edge) !== node.id) return false;
           if (condition.toPort && edgeToPort(edge) !== condition.toPort) return false;
@@ -424,6 +430,12 @@ const evaluateCondition = (args: {
       }
       case 'wired_to': {
         if (!node) return false;
+        if (condition.toNodeType === 'simulation') {
+          const hasTargetType = nodes.some(
+            (candidate: AiNode): boolean => candidate.type === condition.toNodeType,
+          );
+          if (!hasTargetType) return true;
+        }
         return edges.some((edge: Edge): boolean => {
           if (edgeFromNodeId(edge) !== node.id) return false;
           if (condition.fromPort && edgeFromPort(edge) !== condition.fromPort) return false;

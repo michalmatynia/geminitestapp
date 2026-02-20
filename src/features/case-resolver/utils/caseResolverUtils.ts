@@ -5,11 +5,11 @@ import {
   ensureSafeDocumentHtml,
 } from '@/features/document-editor/content-format';
 import type {
-  FilemakerDatabase,
-  FilemakerEntityKind,
-  FilemakerOrganization,
-  FilemakerPerson,
-} from '@/features/filemaker/types';
+  FilemakerDatabaseDto as FilemakerDatabase,
+  FilemakerEntityKindDto as FilemakerEntityKind,
+  FilemakerOrganizationDto as FilemakerOrganization,
+  FilemakerPersonDto as FilemakerPerson,
+} from '@/shared/contracts/filemaker';
 
 import { normalizeCaseResolverComparable } from '../party-matching';
 import { normalizeFolderPath } from '../settings';

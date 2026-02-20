@@ -144,6 +144,8 @@ export function useChatbotModels(options?: { enabled?: boolean; staleTime?: numb
       const raw = await fetchChatbotModels();
       return normalizeModelList(raw);
     },
+    // Guard against stale/hydrated cache payloads that may not be arrays yet.
+    select: (raw: string[]): string[] => normalizeModelList(raw as unknown),
     staleTime: options?.staleTime ?? 1000 * 60 * 5, // 5 minutes
     enabled: options?.enabled ?? true,
     refetchOnMount: false,

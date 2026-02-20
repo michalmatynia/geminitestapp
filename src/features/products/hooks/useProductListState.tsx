@@ -164,7 +164,9 @@ export function useProductListState(): ProductListContextType & {
     priceGroups,
     languageOptions,
     fallbackNameLocale,
-  } = useCatalogSync(preferences.catalogFilter || 'all');
+  } = useCatalogSync(preferences.catalogFilter || 'all', {
+    enabled: !preferencesLoading,
+  });
 
   const {
     data,

@@ -9,10 +9,8 @@ import {
   RadioGroupItem,
   Button,
   SelectSimple,
-  AppModal,
-  SearchInput,
-  EmptyState,
 } from '@/shared/ui';
+import { SelectModal, type SelectOption } from '@/shared/ui/templates/modals/SelectModal';
 
 import {
   ColorField,
@@ -786,12 +784,15 @@ function TypographyField(): React.ReactNode {
 
 function LinkField({ value, onChange }: { value: string; onChange: (v: string) => void }): React.ReactNode {
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
   const { data: slugs = [] } = useCmsSlugs();
 
-  const filteredSlugs = useMemo(() =>
-    slugs.filter(s => s.slug.toLowerCase().includes(search.toLowerCase())),
-  [slugs, search]
+  const options = useMemo<SelectOption<string>[]>(() =>
+    slugs.map(s => ({
+      id: s.id,
+      label: `/${s.slug}`,
+      value: `/${s.slug}`,
+    })),
+  [slugs]
   );
 
   return (
@@ -805,45 +806,15 @@ function LinkField({ value, onChange }: { value: string; onChange: (v: string) =
       <Button size='icon' variant='outline' className='h-8 w-8 shrink-0' onClick={() => setOpen(true)}>
         <Link2 className='size-3.5' />
       </Button>
-      <AppModal
+      <SelectModal
         open={open}
         onClose={() => setOpen(false)}
         title='Select Page Link'
+        subtitle='Choose a page slug to link to.'
+        options={options}
+        onSelect={(opt) => onChange(opt.value)}
         size='sm'
-      >
-        <div className='space-y-4'>
-          <SearchInput
-            placeholder='Search slugs...'
-            value={search}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-            onClear={() => setSearch('')}
-          />
-          <div className='max-h-[300px] overflow-y-auto space-y-1 rounded border p-1'>
-            {filteredSlugs.length === 0 ? (
-              <EmptyState
-                title='No slugs found'
-                description='No routes match your search criteria.'
-                variant='compact'
-                className='py-4'
-              />
-            ) : (
-              filteredSlugs.map((s) => (
-                <Button
-                  key={s.id}
-                  variant='ghost'
-                  className='w-full justify-start text-left font-normal h-9'
-                  onClick={() => {
-                    onChange(`/${s.slug}`);
-                    setOpen(false);
-                  }}
-                >
-                  /{s.slug}
-                </Button>
-              ))
-            )}
-          </div>
-        </div>
-      </AppModal>
+      />
     </div>
   );
 }

@@ -1,12 +1,9 @@
 'use client';
 
-import { Button, Input, Textarea, AppModal, FormField } from '@/shared/ui';
+import { Button, Input, Textarea, FormField } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { useDatabaseSaveQueryPresetDialogContext } from './DatabaseSaveQueryPresetDialogContext';
-
-
-
-
 
 export function DatabaseSaveQueryPresetDialog(): React.JSX.Element {
   const {
@@ -19,14 +16,14 @@ export function DatabaseSaveQueryPresetDialog(): React.JSX.Element {
     onSave,
   } = useDatabaseSaveQueryPresetDialogContext();
   return (
-    <AppModal
-      open={open}
-      onOpenChange={onOpenChange}
+    <DetailModal
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
       title='Save Query Preset'
       subtitle='Name this query to reuse it in other database nodes.'
       size='sm'
       footer={
-        <>
+        <div className='flex justify-end gap-2'>
           <Button
             type='button'
             variant='outline'
@@ -41,7 +38,7 @@ export function DatabaseSaveQueryPresetDialog(): React.JSX.Element {
           >
             Save preset
           </Button>
-        </>
+        </div>
       }
     >
       <div className='space-y-4'>
@@ -61,6 +58,6 @@ export function DatabaseSaveQueryPresetDialog(): React.JSX.Element {
           />
         </FormField>
       </div>
-    </AppModal>
+    </DetailModal>
   );
 }

@@ -5,13 +5,13 @@ import {
   normalizeCaseResolverComparable,
 } from '@/features/case-resolver/party-matching';
 import { extractCaseResolverDocumentDate } from '@/features/case-resolver/settings';
-import type { CaseResolverPartyReference } from '@/features/case-resolver/types';
-import type { FilemakerDatabase } from '@/features/filemaker/types';
+import type { CaseResolverPartyReferenceDto as CaseResolverPartyReference } from '@/shared/contracts/case-resolver';
+import type { FilemakerDatabaseDto as FilemakerDatabase } from '@/shared/contracts/filemaker';
 import type {
-  PromptExploderCaseResolverMetadata,
-  PromptExploderCaseResolverPartyBundle,
-  PromptExploderCaseResolverPartyCandidate,
-} from '@/features/prompt-exploder/bridge';
+  PromptExploderCaseResolverMetadataDto as PromptExploderCaseResolverMetadata,
+  PromptExploderCaseResolverPartyBundleDto as PromptExploderCaseResolverPartyBundle,
+  PromptExploderCaseResolverPartyCandidateDto as PromptExploderCaseResolverPartyCandidate,
+} from '@/shared/contracts/prompt-exploder';
 
 import type {
   CaseResolverCaptureAction,

@@ -252,7 +252,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
         onClose={closeModal}
         onSuccess={() => {}}
         item={modalDraft}
-        modalDraft={modalDraft!}
+        modalDraft={modalDraft}
         setModalDraft={setModalDraft}
         tagDraft={tagDraft}
         setTagDraft={setTagDraft}

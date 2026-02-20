@@ -5,7 +5,7 @@ import React, { useState, useMemo } from 'react';
 import { Viewer3D } from '@/features/viewer3d';
 import { Asset3DPreviewModal } from '@/features/viewer3d';
 import { useAssets3D, useAsset3DCategories, useAsset3DTags } from '@/features/viewer3d/hooks/useAsset3dQueries';
-import type { Asset3DListFilters, Asset3DRecord } from '@/features/viewer3d/types';
+import type { Asset3dListFiltersDto as Asset3DListFilters, Asset3dDto as Asset3DRecord } from '@/shared/contracts/viewer3d';
 import type { EntityModalProps } from '@/shared/types/modal-props';
 import { FilterPanel, Button, FormSection, EmptyState } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';

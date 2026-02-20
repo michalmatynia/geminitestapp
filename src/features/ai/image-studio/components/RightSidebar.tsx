@@ -21,13 +21,14 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
-  AppModal,
   Input,
   Label,
   Textarea,
   ValidatorFormatterToggle,
   useToast,
+  FormField,
 } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 import { cn } from '@/shared/utils';
 
 import { ParamRow } from './ParamRow';
@@ -1173,8 +1174,8 @@ export function RightSidebar(): React.JSX.Element {
         </div>
       </RightSidebarProvider>
 
-      <AppModal
-        open={promptControlOpen}
+      <DetailModal
+        isOpen={promptControlOpen}
         onClose={() => setPromptControlOpen(false)}
         title='Control Prompt'
         size='md'
@@ -1252,8 +1253,8 @@ export function RightSidebar(): React.JSX.Element {
         </div>
       </AppModal>
 
-      <AppModal
-        open={controlsOpen}
+      <DetailModal
+        isOpen={controlsOpen}
         onClose={() => setControlsOpen(false)}
         title='Controls'
         size='lg'
@@ -1273,11 +1274,36 @@ export function RightSidebar(): React.JSX.Element {
         </div>
       </AppModal>
 
-      <AppModal
-        open={resizeCanvasOpen}
+      <DetailModal
+        isOpen={resizeCanvasOpen}
         onClose={handleCloseResizeCanvasModal}
         title='Resize Canvas'
         size='md'
+        footer={
+          <div className='flex items-center justify-end gap-2'>
+            <Button
+              size='xs'
+              type='button'
+              variant='outline'
+              onClick={handleCloseResizeCanvasModal}
+              disabled={resizeProjectCanvasMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              size='xs'
+              type='button'
+              onClick={() => {
+                void handleResizeCanvasSubmit();
+              }}
+              disabled={!canSubmitResizeCanvas}
+              loading={resizeProjectCanvasMutation.isPending}
+              loadingText='Applying...'
+            >
+              Apply Resize
+            </Button>
+          </div>
+        }
       >
         <div className='space-y-4 text-sm text-gray-200'>
           <div className='text-xs text-gray-400'>
@@ -1375,35 +1401,11 @@ export function RightSidebar(): React.JSX.Element {
               Direction: {resizeCanvasDirectionMeta.label}
             </div>
           </div>
-
-          <div className='flex items-center justify-end gap-2'>
-            <Button
-              size='xs'
-              type='button'
-              variant='outline'
-              onClick={handleCloseResizeCanvasModal}
-              disabled={resizeProjectCanvasMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              size='xs'
-              type='button'
-              onClick={() => {
-                void handleResizeCanvasSubmit();
-              }}
-              disabled={!canSubmitResizeCanvas}
-              loading={resizeProjectCanvasMutation.isPending}
-              loadingText='Applying...'
-            >
-              Apply Resize
-            </Button>
-          </div>
         </div>
-      </AppModal>
+      </DetailModal>
 
-      <AppModal
-        open={requestPreviewOpen}
+      <DetailModal
+        isOpen={requestPreviewOpen}
         onClose={() => setRequestPreviewOpen(false)}
         title='Generation Request Preview'
         size='xl'

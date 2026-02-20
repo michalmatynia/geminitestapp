@@ -292,20 +292,25 @@ export function useProductData({
   const [catalogFilter, setCatalogFilter] = useState(initialCatalogFilter || 'all');
   const [baseExported, setBaseExported] = useState<'' | 'true' | 'false'>('');
   const hasInitialized = useRef(false);
+  const [filtersInitialized, setFiltersInitialized] = useState(!preferencesLoaded);
 
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    if (preferencesLoaded && !hasInitialized.current) {
-      timer = setTimeout(() => {
-        if (initialCatalogFilter) setCatalogFilter(initialCatalogFilter);
-        if (initialPageSize) setPageSize(initialPageSize);
-        hasInitialized.current = true;
-      }, 0);
-    }
-    return (): void => {
-      if (timer) clearTimeout(timer);
-    };
+    if (hasInitialized.current) return;
+    if (!preferencesLoaded) return;
+
+    if (initialCatalogFilter) setCatalogFilter(initialCatalogFilter);
+    if (initialPageSize) setPageSize(initialPageSize);
+    hasInitialized.current = true;
+    setFiltersInitialized(true);
   }, [preferencesLoaded, initialCatalogFilter, initialPageSize]);
+
+  useEffect(() => {
+    if (!preferencesLoaded) {
+      setFiltersInitialized(false);
+    }
+  }, [preferencesLoaded]);
+
+  const queriesEnabled = preferencesLoaded && filtersInitialized;
 
   const filters: UseProductsFilters = useMemo(() => ({
     search: search || undefined,
@@ -334,7 +339,7 @@ export function useProductData({
       {
         queryKey: normalizeQueryKey(getProductListQueryKey(filters)),
         queryFn: ({ signal }: { signal?: AbortSignal }): Promise<ProductWithImages[]> => getProducts(filters, signal),
-        enabled: preferencesLoaded,
+        enabled: queriesEnabled,
         staleTime: 10_000,
         refetchOnMount: 'always',
         refetchOnWindowFocus: false,
@@ -343,7 +348,7 @@ export function useProductData({
       {
         queryKey: normalizeQueryKey(getProductCountQueryKey(filters)),
         queryFn: ({ signal }: { signal?: AbortSignal }): Promise<number> => countProducts(filters, signal),
-        enabled: preferencesLoaded,
+        enabled: queriesEnabled,
         staleTime: 10_000,
         refetchOnMount: 'always',
         refetchOnWindowFocus: false,

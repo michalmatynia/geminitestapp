@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { AppModal, EmptyState } from '@/shared/ui';
+import { EmptyState } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import type { CaseResolverCompileResult } from '../composer';
 
@@ -16,9 +17,9 @@ export function CaseResolverLinkedPreviewModal({
   compiled,
 }: CaseResolverLinkedPreviewModalProps): React.JSX.Element {
   return (
-    <AppModal
-      open={open}
-      onOpenChange={onOpenChange}
+    <DetailModal
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
       title='Linked Nodes Preview'
       subtitle='Compilation starts from the selected node. If no node is selected, it starts from graph roots.'
       size='xl'
@@ -51,6 +52,6 @@ export function CaseResolverLinkedPreviewModal({
           {compiled.prompt || 'Compiled prompt output will appear here.'}
         </div>
       </div>
-    </AppModal>
+    </DetailModal>
   );
 }

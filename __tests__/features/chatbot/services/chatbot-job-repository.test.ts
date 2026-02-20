@@ -100,6 +100,7 @@ describe('Chatbot Job Repository', () => {
         _id: new ObjectId(validId),
         status: 'completed',
         resultText: 'done',
+        createdAt: new Date(),
       };
       mockCollection.findOneAndUpdate.mockResolvedValue(mockJob);
 

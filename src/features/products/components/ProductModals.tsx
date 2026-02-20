@@ -118,23 +118,16 @@ export function ProductModals(): React.JSX.Element {
         />
       )}
 
-      <AppModal
-        open={!!massListIntegration && !!massListProductIds && massListProductIds.length > 0}
-        onClose={() => onCloseMassList?.()}
-        title='Mass List Products'
-        size='md'
-      >
-        {massListIntegration && massListProductIds && onCloseMassList && onMassListSuccess && (
-          <MassListProductModal
-            isOpen={true}
-            onSuccess={onMassListSuccess}
-            integrationId={massListIntegration.integrationId}
-            connectionId={massListIntegration.connectionId}
-            item={massListProductIds}
-            onClose={onCloseMassList}
-          />
-        )}
-      </AppModal>
+      {massListIntegration && massListProductIds && massListProductIds.length > 0 && (
+        <MassListProductModal
+          isOpen={true}
+          onSuccess={onMassListSuccess ?? (() => {})}
+          integrationId={massListIntegration.integrationId}
+          connectionId={massListIntegration.connectionId}
+          item={massListProductIds}
+          onClose={onCloseMassList ?? (() => {})}
+        />
+      )}
 
       {showIntegrationModal && (
         <SelectIntegrationModal

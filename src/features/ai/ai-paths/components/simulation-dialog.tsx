@@ -8,9 +8,9 @@ import {
   Button,
   Input,
   Alert,
-  AppModal,
   FormField,
 } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 interface SimulationDialogProps extends EntityModalProps<AiNode> {
   isPathLocked: boolean;
@@ -40,15 +40,27 @@ export function SimulationDialog({
   if (!isOpen || !simulationNode) return null;
 
   return (
-    <AppModal
-      open={isOpen}
+    <DetailModal
+      isOpen={isOpen}
       onClose={() => {
         void onConfigChange(simulationNode.id, draftEntityId);
         onClose();
       }}
-      title='Simulation Modal'
+      title='Simulation'
       subtitle='Set an Entity ID and simulate the connected trigger action.'
       size='sm'
+      footer={
+        <Button
+          className='w-full'
+          variant='default'
+          type='button'
+          onClick={(): void => {
+            void onSimulate(simulationNode, draftEntityId);
+          }}
+        >
+          Simulate Trigger
+        </Button>
+      }
     >
       <div className='space-y-4'>
         <FormField label='Entity ID' id='entity-id'>
@@ -71,18 +83,7 @@ export function SimulationDialog({
         <Alert variant='info' className='px-2 py-1 text-[11px]'>
           Current entity type: {simulationConfig.entityType ?? 'product'}
         </Alert>
-
-        <Button
-          className='w-full'
-          variant='default'
-          type='button'
-          onClick={(): void => {
-            void onSimulate(simulationNode, draftEntityId);
-          }}
-        >
-          Simulate Trigger
-        </Button>
       </div>
-    </AppModal>
+    </DetailModal>
   );
 }

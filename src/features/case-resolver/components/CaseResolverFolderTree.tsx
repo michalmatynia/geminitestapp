@@ -29,6 +29,7 @@ import {
   type MasterFolderTreeProps,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { Button, FolderTreePanel, TreeHeader } from '@/shared/ui';
 import { DRAG_KEYS, resolveVerticalDropPosition, setDragData } from '@/shared/utils/drag-drop';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
@@ -129,6 +130,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     onToggleFileLock,
     onEditFile,
   } = useCaseResolverPageContext();
+  const { confirm, ConfirmationModal } = useConfirm();
   const [isRootExplicitlySelected, setIsRootExplicitlySelected] = useState(true);
   const [highlightedNodeFileAssetIds, setHighlightedNodeFileAssetIds] = useState<string[]>([]);
   const [pendingNodeCanvasAction, setPendingNodeCanvasAction] = useState<PendingNodeCanvasAction | null>(null);
@@ -605,10 +607,15 @@ export function CaseResolverFolderTree(): React.JSX.Element {
             type='button'
             onClick={(): void => {
               if (isWorkspaceDirty) {
-                const shouldLeave = window.confirm(
-                  'You have unsaved Case Resolver changes. Leave without saving?'
-                );
-                if (!shouldLeave) return;
+                confirm({
+                  title: 'Unsaved Changes',
+                  message: 'You have unsaved Case Resolver changes. Leave without saving?',
+                  confirmText: 'Leave',
+                  onConfirm: () => {
+                    router.push('/admin/case-resolver/cases');
+                  },
+                });
+                return;
               }
               router.push('/admin/case-resolver/cases');
             }}
@@ -1193,6 +1200,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
           }}
         />
       </div>
+      <ConfirmationModal />
     </FolderTreePanel>
   );
 }

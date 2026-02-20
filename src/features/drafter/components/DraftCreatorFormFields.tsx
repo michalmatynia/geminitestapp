@@ -12,7 +12,10 @@ import type {
   ProductParameter,
   ProductParameterValue,
 } from '@/features/products/types';
-import { PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS, type ProductDraftOpenFormTab } from '@/features/products/types/drafts';
+import {
+  PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
+  type ProductDraftOpenFormTab,
+} from '@/shared/contracts/products';
 import { Button, Input, Textarea, SelectSimple, FormField, FormSection } from '@/shared/ui';
 
 import { useDraftCreatorFormContext } from './DraftCreatorFormContext';

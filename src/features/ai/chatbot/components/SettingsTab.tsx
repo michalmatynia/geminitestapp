@@ -5,7 +5,7 @@ import React from 'react';
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator';
 import { AgentCreatorSettingsSection } from '@/features/ai/agentcreator/components/AgentCreatorSettingsSection';
 import { logClientError } from '@/features/observability';
-import type { PlaywrightPersona } from '@/features/playwright/types';
+import type { PlaywrightPersonaDto as PlaywrightPersona } from '@/shared/contracts/playwright';
 import { Button, SelectSimple, useToast, FormSection, FormField, ToggleRow, FormActions } from '@/shared/ui';
 
 import { useChatbot } from '../context/ChatbotContext';

@@ -4,15 +4,18 @@ import {
   findExistingFilemakerPartyReference,
   normalizeCaseResolverComparable,
 } from '@/features/case-resolver/party-matching';
-import type { CaseResolverPartyReference } from '@/features/case-resolver/types';
+import type { CaseResolverPartyReferenceDto as CaseResolverPartyReference } from '@/shared/contracts/case-resolver';
 import { createId } from '@/features/case-resolver/utils/caseResolverUtils';
 import {
   createFilemakerAddress,
   createFilemakerOrganization,
   createFilemakerPerson,
 } from '@/features/filemaker/settings';
-import type { FilemakerAddress, FilemakerDatabase } from '@/features/filemaker/types';
-import type { PromptExploderCaseResolverPartyCandidate } from '@/features/prompt-exploder/bridge';
+import type {
+  FilemakerAddressDto as FilemakerAddress,
+  FilemakerDatabaseDto as FilemakerDatabase,
+} from '@/shared/contracts/filemaker';
+import type { PromptExploderCaseResolverPartyCandidateDto as PromptExploderCaseResolverPartyCandidate } from '@/shared/contracts/prompt-exploder';
 
 export type UpsertFilemakerCaptureCandidateResult = {
   database: FilemakerDatabase;

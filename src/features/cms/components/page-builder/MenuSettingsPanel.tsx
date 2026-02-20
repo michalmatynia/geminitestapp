@@ -14,7 +14,7 @@ import {
   normalizeMenuSettings,
 } from '@/features/cms/types/menu-settings';
 import type { ColorScheme } from '@/features/cms/types/theme-settings';
-import { ANIMATION_PRESETS } from '@/features/gsap/types/animation';
+import { ANIMATION_PRESETS } from '@/shared/contracts/gsap';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {

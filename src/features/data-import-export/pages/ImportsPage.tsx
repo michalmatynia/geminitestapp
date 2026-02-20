@@ -21,7 +21,7 @@ import type {
   TemplateMapping,
 } from '@/features/data-import-export/types/imports';
 import { useParameters as useProductParameters } from '@/features/products/hooks/useProductSettingsQueries';
-import type { ProductParameter } from '@/features/products/types';
+import type { ProductParameterDto as ProductParameter } from '@/shared/contracts/products';
 import {
   Button,
   Checkbox,

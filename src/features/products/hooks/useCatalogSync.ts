@@ -53,7 +53,14 @@ export interface UseCatalogSyncResult {
   fallbackNameLocale: 'name_en' | 'name_pl' | 'name_de' | undefined;
 }
 
-export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
+export interface UseCatalogSyncOptions {
+  enabled?: boolean;
+}
+
+export function useCatalogSync(
+  catalogFilter: string,
+  { enabled = true }: UseCatalogSyncOptions = {}
+): UseCatalogSyncResult {
   const catalogFilterInitialized = useRef(false);
 
   // Parallel queries for all data sources
@@ -62,6 +69,7 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
       {
         queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.catalogs()),
         queryFn: ({ signal }): Promise<Catalog[]> => fetchCatalogs(signal),
+        enabled,
         staleTime: 1000 * 60 * 5, // 5 minutes
         refetchOnMount: false,
         refetchOnWindowFocus: false,
@@ -70,6 +78,7 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
       {
         queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.priceGroups()),
         queryFn: ({ signal }): Promise<PriceGroupWithDetails[]> => fetchPriceGroups(signal),
+        enabled,
         staleTime: 1000 * 60 * 5,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
@@ -78,6 +87,7 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
       {
         queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.languages()),
         queryFn: ({ signal }): Promise<LanguageRecord[]> => fetchLanguages(signal),
+        enabled,
         staleTime: 1000 * 60 * 5,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
@@ -86,6 +96,7 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
       {
         queryKey: normalizeQueryKey(QUERY_KEYS.internationalization.currencies()),
         queryFn: ({ signal }): Promise<CurrencyRecord[]> => fetchCurrencies(signal),
+        enabled,
         staleTime: 1000 * 60 * 5,
         refetchOnMount: false,
         refetchOnWindowFocus: false,

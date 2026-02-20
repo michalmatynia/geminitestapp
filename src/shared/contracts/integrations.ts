@@ -722,6 +722,16 @@ export const baseImportParameterImportSettingsSchema = z.object({
 
 export type BaseImportParameterImportSettingsDto = z.infer<typeof baseImportParameterImportSettingsSchema>;
 
+export const DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS: BaseImportParameterImportSettingsDto =
+  {
+    enabled: false,
+    mode: 'all',
+    languageScope: 'catalog_languages',
+    createMissingParameters: true,
+    overwriteExistingValues: false,
+    matchBy: 'base_id_then_name',
+  };
+
 export const applyBaseParameterImportInputSchema = z.object({
   record: z.record(z.string(), z.unknown()),
   catalogId: z.string(),

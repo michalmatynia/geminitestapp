@@ -13,6 +13,7 @@ export interface DetailModalProps extends ModalStateProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  padding?: 'default' | 'none';
   maxHeight?: string;
 }
 
@@ -29,6 +30,7 @@ export function DetailModal({
   children,
   footer,
   size = 'md',
+  padding = 'default',
   maxHeight = 'max-h-[70vh]',
 }: DetailModalProps) {
   return (
@@ -39,6 +41,7 @@ export function DetailModal({
       title={title}
       subtitle={subtitle}
       size={size}
+      padding={padding}
       footer={footer}
       bodyClassName={`${maxHeight} overflow-y-auto`}
     >

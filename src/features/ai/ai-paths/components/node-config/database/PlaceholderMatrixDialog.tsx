@@ -4,9 +4,9 @@ import React from 'react';
 
 import {
   Button,
-  AppModal,
   SelectSimple,
 } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 export type PlaceholderTarget = 'query' | 'aiPrompt' | 'prompt' | 'template';
 
@@ -65,9 +65,9 @@ export function PlaceholderMatrixDialog({
   const selectedTarget = resolvedTargets.find((option: PlaceholderTargetOption) => option.value === target);
 
   return (
-    <AppModal
-      open={open}
-      onOpenChange={onOpenChange}
+    <DetailModal
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
       title='Placeholder Matrix'
       size='lg'
     >
@@ -100,7 +100,7 @@ export function PlaceholderMatrixDialog({
           </Button>
         ) : null}
       </div>
-      <div className='mt-4 max-h-[60vh] space-y-4 overflow-auto pr-2'>
+      <div className='mt-4 space-y-4'>
         {visibleGroups.length === 0 ? (
           <div className='rounded-md border border-dashed border-border/70 bg-card/40 p-4 text-xs text-gray-400'>
             No placeholders available yet. Connect inputs to surface placeholders (or sync schema placeholders where available).
@@ -152,6 +152,6 @@ export function PlaceholderMatrixDialog({
           ))
         )}
       </div>
-    </AppModal>
+    </DetailModal>
   );
 }

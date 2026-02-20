@@ -4,7 +4,8 @@ import { Eye } from 'lucide-react';
 import React from 'react';
 
 import type { DbQueryPreset } from '@/features/ai/ai-paths/lib';
-import { Button, AppModal, Input, Label, Textarea } from '@/shared/ui';
+import { Button, Input, Label, Textarea } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { useDatabasePresetsTabContext } from './DatabasePresetsTabContext';
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -155,12 +156,10 @@ export function DatabasePresetsTab(): React.JSX.Element {
         )}
       </div>
 
-      <AppModal
-        open={Boolean(activePreset)}
-        onOpenChange={(open: boolean): void => {
-          if (!open) {
-            setViewPresetId(null);
-          }
+      <DetailModal
+        isOpen={Boolean(activePreset)}
+        onClose={(): void => {
+          setViewPresetId(null);
         }}
         title={activePreset?.name ?? 'Query Preset'}
         size='md'

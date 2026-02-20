@@ -1,6 +1,6 @@
 'use client';
 
-import { GripVertical, Trash2, Edit, RefreshCw } from 'lucide-react';
+import { GripVertical, Trash2, Edit, RefreshCw, ChevronUp, ChevronDown } from 'lucide-react';
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 
 import { ICON_LIBRARY_MAP } from '@/features/icons';
@@ -95,6 +95,22 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
     setDraggingId(null);
     setOverId(null);
   }, []);
+
+  const handleMove = useCallback((id: string, direction: 'up' | 'down'): void => {
+    setLocalRows((prev): AiTriggerButtonRecord[] => {
+      const index = prev.findIndex((row) => row.id === id);
+      if (index === -1) return prev;
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+
+      const nextRows = [...prev];
+      const [item] = nextRows.splice(index, 1);
+      if (!item) return prev;
+      nextRows.splice(targetIndex, 0, item);
+      onOrderChange(nextRows.map((row) => row.id));
+      return nextRows;
+    });
+  }, [onOrderChange]);
 
   const handleVisibilityToggle = useCallback((record: AiTriggerButtonRecord, enabled: boolean): void => {
     setLocalRows((prev) =>
@@ -218,6 +234,28 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
           <Button
             variant='ghost'
             size='xs'
+            onClick={() => handleMove(row.original.id, 'up')}
+            className='h-7 w-7 p-0'
+            disabled={row.index === 0}
+            aria-label='Move up'
+            title='Move up'
+          >
+            <ChevronUp className='size-3.5' />
+          </Button>
+          <Button
+            variant='ghost'
+            size='xs'
+            onClick={() => handleMove(row.original.id, 'down')}
+            className='h-7 w-7 p-0'
+            disabled={row.index === localRows.length - 1}
+            aria-label='Move down'
+            title='Move down'
+          >
+            <ChevronDown className='size-3.5' />
+          </Button>
+          <Button
+            variant='ghost'
+            size='xs'
             onClick={() => onEdit(row.original)}
             className='h-7 w-7 p-0'
           >
@@ -234,7 +272,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
         </div>
       ),
     },
-  ], [handleDragStart, handleDragEnter, handleDragEnd, handleDrop, onEdit, onDelete, handleVisibilityToggle]);
+  ], [handleDragStart, handleDragEnter, handleDragEnd, handleDrop, onEdit, onDelete, handleMove, handleVisibilityToggle, localRows.length]);
 
   if (isLoading && localRows.length === 0) {
     return <p className='text-sm text-gray-500'>Loading trigger buttons...</p>;
@@ -253,7 +291,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
       footer={
         <div className='flex items-center gap-2 text-[11px] text-muted-foreground bg-muted/20 p-2 rounded'>
           <RefreshCw className='size-3' />
-          Drag the handle on the left to reorder. The same order is used in modals and lists.
+          Reorder with drag-and-drop or the up/down buttons. The same order is used in modals and lists.
         </div>
       }
     />

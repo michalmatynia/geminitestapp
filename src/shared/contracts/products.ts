@@ -1028,6 +1028,17 @@ export const productDraftOpenFormTabSchema = z.enum([
 
 export type ProductDraftOpenFormTab = z.infer<typeof productDraftOpenFormTabSchema>;
 
+export const PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS: ProductDraftOpenFormTab[] = [
+  'general',
+  'other',
+  'parameters',
+  'images',
+  'studio',
+  'import-info',
+  'note-link',
+  'validation',
+];
+
 export const productDraftSchema = namedDtoSchema.extend({
   description: z.string().nullable().optional(),
   sku: z.string().nullable().optional(),

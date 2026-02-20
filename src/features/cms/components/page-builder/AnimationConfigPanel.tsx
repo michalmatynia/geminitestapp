@@ -4,16 +4,16 @@ import { Zap } from 'lucide-react';
 import React from 'react';
 
 import type { 
-  GsapAnimationConfig,
-  AnimationPreset,
-  AnimationEasing,
-  AnimationTrigger
-} from '@/features/gsap/types/animation';
+  GsapAnimationConfigDto as GsapAnimationConfig,
+  AnimationPresetDto as AnimationPreset,
+  AnimationEasingDto as AnimationEasing,
+  AnimationTriggerDto as AnimationTrigger
+} from '@/shared/contracts/gsap';
 import { 
   ANIMATION_PRESETS, 
   ANIMATION_EASINGS,
-  DEFAULT_ANIMATION_CONFIG
-} from '@/features/gsap/types/animation';
+} from '@/shared/contracts/gsap';
+import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap/types/animation';
 import { 
   Input, 
   Label, 

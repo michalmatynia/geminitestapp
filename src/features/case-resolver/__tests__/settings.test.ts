@@ -580,16 +580,16 @@ describe('case-resolver settings', () => {
     expect(
       relationGraph.edges.some(
         (edge): boolean =>
-          edge.source === 'case:case-a' &&
-          edge.target === 'case:case-b' &&
+          edge.from === 'case:case-a' &&
+          edge.to === 'case:case-b' &&
           relationGraph.edgeMeta[edge.id]?.relationType === 'parent_case'
       )
     ).toBe(true);
     expect(
       relationGraph.edges.some(
         (edge): boolean =>
-          edge.source === 'case:case-a' &&
-          edge.target === 'case:case-b' &&
+          edge.from === 'case:case-a' &&
+          edge.to === 'case:case-b' &&
           relationGraph.edgeMeta[edge.id]?.relationType === 'references'
       )
     ).toBe(true);

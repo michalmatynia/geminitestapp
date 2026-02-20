@@ -1,0 +1,81 @@
+
+ RUN  v2.1.9 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp
+
+ ❯ __tests__/features/admin/pages/SystemLogsPage.test.tsx (4 tests | 4 failed) 74ms
+   × SystemLogsPage > renders logs list and metrics 52ms
+     → Cannot read properties of undefined (reading 'data')
+   × SystemLogsPage > renders filter section 5ms
+     → Cannot read properties of undefined (reading 'data')
+   × SystemLogsPage > opens clear logs action without crashing 6ms
+     → Cannot read properties of undefined (reading 'data')
+   × SystemLogsPage > exports logs to clipboard 7ms
+     → Cannot read properties of undefined (reading 'data')
+stderr | __tests__/features/admin/components/Menu.test.tsx > Menu Component > renders main menu categories
+Received `false` for a non-boolean attribute `prefetch`.
+
+If you want to write it to the DOM, pass a string instead: prefetch="false" or prefetch={value.toString()}.
+
+If you used to conditionally omit it with prefetch={condition && value}, pass prefetch={condition ? value : undefined} instead.
+[MSW] Warning: intercepted a request without a matching request handler:
+
+  • POST /api/client-errors
+
+  • Request body: {"message":"Failed to fetch lite settings (404)","timestamp":"2026-02-20T02:24:04.538Z","url":"http://localhost:3000/","userAgent":"Mozilla/5.0 (darwin) AppleWebKit/537.36 (KHTML, like Gecko) jsdom/27.4.0","name":"Error","stack":"Error: Failed to fetch lite settings (404)\n    at fetchLiteSettingsFromApi (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/api/settings-client.ts:175:13)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at fetchLiteSettingsWithFallback (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/hooks/use-settings.ts:41:13)\n    at queryFn (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/query-factories-v2.ts:358:22)","context":{"source":"settings-client","action":"fetchLiteSettingsFromApi","message":"Failed to fetch lite settings, returning empty list.","level":"error"}}
+
+If you still wish to intercept this unhandled request, please create a request handler for it.
+Read more: https://mswjs.io/docs/http/intercepting-requests
+
+stderr | __tests__/features/admin/components/Menu.test.tsx > Menu Component > navigates to create page and collapses menu when Create Page is clicked
+[MSW] Warning: intercepted a request without a matching request handler:
+
+  • POST /api/query-telemetry
+
+  • Request body: {"events":[{"id":"d32063c4-26b5-4cea-be37-13d2cb605b01","timestamp":"2026-02-20T02:24:04.463Z","traceId":"a6699baa-7f36-474b-ab13-3980a19ce5f2","entity":"query","stage":"start","source":"shared.hooks.useLiteSettingsMap","operation":"list","resource":"settings","key":"[\"settings\",\"lite\"]","keyHash":"ef3fd40e","criticality":"normal","domain":"global","sampled":true,"attempt":1,"tags":["settings","map","lite"]}]}
+
+If you still wish to intercept this unhandled request, please create a request handler for it.
+Read more: https://mswjs.io/docs/http/intercepting-requests
+
+ ✓ __tests__/features/admin/components/Menu.test.tsx (4 tests) 864ms
+   ✓ Menu Component > contains correctly linked standalone sections 504ms
+ ✓ __tests__/features/admin/pages/AdminFrontManagePage.test.tsx (3 tests) 305ms
+stderr | __tests__/features/admin/components/AdminLayout.test.tsx > AdminLayout > renders children correctly
+Received `false` for a non-boolean attribute `prefetch`.
+
+If you want to write it to the DOM, pass a string instead: prefetch="false" or prefetch={value.toString()}.
+
+If you used to conditionally omit it with prefetch={condition && value}, pass prefetch={condition ? value : undefined} instead.
+
+ ✓ __tests__/features/admin/components/AdminLayout.test.tsx (3 tests) 352ms
+ ✓ __tests__/features/admin/pages/AdminGlobalValidatorPage.test.ts (3 tests) 21ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  __tests__/features/admin/pages/SystemLogsPage.test.tsx > SystemLogsPage > renders logs list and metrics
+ FAIL  __tests__/features/admin/pages/SystemLogsPage.test.tsx > SystemLogsPage > renders filter section
+ FAIL  __tests__/features/admin/pages/SystemLogsPage.test.tsx > SystemLogsPage > opens clear logs action without crashing
+ FAIL  __tests__/features/admin/pages/SystemLogsPage.test.tsx > SystemLogsPage > exports logs to clipboard
+TypeError: Cannot read properties of undefined (reading 'data')
+ ❯ SettingsStoreProvider src/shared/providers/SettingsStoreProvider.tsx:57:33
+     55|   const liteQuery = useLiteSettingsMap({ enabled: !useAdmin });
+     56|   const settingsQuery = useAdmin ? adminQuery : liteQuery;
+     57|   const mapData = settingsQuery.data;
+       |                                 ^
+     58|   const isLoading = settingsQuery.isLoading;
+     59|   const isFetching = settingsQuery.isFetching;
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+ ❯ performWorkOnRoot node_modules/react-dom/cjs/react-dom-client.development.js:16583:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  4 failed | 13 passed (17)
+   Start at  03:23:58
+   Duration  11.18s (transform 1.91s, setup 1.22s, collect 4.32s, tests 1.61s, environment 2.69s, prepare 335ms)
+

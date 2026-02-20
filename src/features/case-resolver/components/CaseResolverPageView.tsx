@@ -572,11 +572,14 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     isEditorDraftDirty,
   ]);
   const hasUnsavedChanges = isWorkspaceDirty || isEditorDraftDirty;
-  const confirmLeaveWithUnsavedChanges = useCallback((): boolean => {
-    return window.confirm(
-      'You have unsaved Case Resolver changes. Leave this page without saving?'
-    );
-  }, []);
+  const confirmLeaveWithUnsavedChanges = useCallback((onConfirm: () => void): void => {
+    confirmAction({
+      title: 'Unsaved Changes',
+      message: 'You have unsaved Case Resolver changes. Leave this page without saving?',
+      confirmText: 'Leave',
+      onConfirm,
+    });
+  }, [confirmAction]);
 
   React.useEffect(() => {
     const handleDocumentClick = (event: MouseEvent): void => {
@@ -600,10 +603,12 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
       ) {
         return;
       }
-      const shouldLeave = confirmLeaveWithUnsavedChanges();
-      if (shouldLeave) return;
+      
       event.preventDefault();
       event.stopPropagation();
+      confirmLeaveWithUnsavedChanges(() => {
+        window.location.href = anchor.href;
+      });
     };
     document.addEventListener('click', handleDocumentClick, true);
     return (): void => {
@@ -614,7 +619,10 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
   React.useEffect(() => {
     const handlePopState = (): void => {
       if (!hasUnsavedChanges) return;
-      if (confirmLeaveWithUnsavedChanges()) return;
+      event?.preventDefault();
+      confirmLeaveWithUnsavedChanges(() => {
+        window.history.back();
+      });
       window.history.go(1);
     };
     window.addEventListener('popstate', handlePopState);

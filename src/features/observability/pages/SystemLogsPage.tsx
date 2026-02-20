@@ -196,10 +196,10 @@ function LogDiagnostics(): React.JSX.Element {
   ], []);
 
   return (
-    <FormSection
+    <StandardDataTablePanel
       title='Database Health'
       description='Mongo index consistency for observability collections.'
-      actions={
+      headerActions={
         <div className='flex items-center gap-2'>
           {diagnosticsUpdatedAt ? (
             <Hint uppercase variant='muted' size='xs' className='font-semibold'>
@@ -224,16 +224,11 @@ function LogDiagnostics(): React.JSX.Element {
           </Button>
         </div>
       }
-      className='p-6'
-    >
-      <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden mt-4'>
-        <DataTable
-          columns={columns}
-          data={diagnostics}
-          isLoading={mongoDiagnosticsQuery.isLoading}
-        />
-      </div>
-    </FormSection>
+      variant='flat'
+      columns={columns}
+      data={diagnostics}
+      isLoading={mongoDiagnosticsQuery.isLoading}
+    />
   );
 }
 

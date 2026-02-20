@@ -7,9 +7,13 @@ export const readDocsTooltipsEnabled = (
   defaultValue = false
 ): boolean => {
   if (typeof window === 'undefined') return defaultValue;
-  const raw = window.localStorage.getItem(storageKey);
-  if (raw === null) return defaultValue;
-  return raw === '1';
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (raw === null) return defaultValue;
+    return raw === '1';
+  } catch {
+    return defaultValue;
+  }
 };
 
 export function useDocsTooltipsSetting(
@@ -29,7 +33,11 @@ export function useDocsTooltipsSetting(
     (value: boolean): void => {
       setEnabledState(value);
       if (typeof window !== 'undefined') {
-        window.localStorage.setItem(storageKey, value ? '1' : '0');
+        try {
+          window.localStorage.setItem(storageKey, value ? '1' : '0');
+        } catch {
+          // No-op when storage is unavailable; keep UI state responsive.
+        }
       }
     },
     [storageKey]

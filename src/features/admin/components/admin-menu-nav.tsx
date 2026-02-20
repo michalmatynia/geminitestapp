@@ -365,7 +365,6 @@ export const buildAdminNav = (handlers: {
         keywords: ['ai insights', 'analytics', 'logs', 'warnings'],
       },
       { id: 'system/logs', label: 'System Logs', href: '/admin/system/logs', icon: <ActivityIcon className='size-4' /> },
-      { id: 'system/uploads', label: 'Upload Events', href: '/admin/ai-paths/queue?tab=file-uploads', icon: <ActivityIcon className='size-4' /> },
       {
         id: 'system/auth',
         label: 'Auth',

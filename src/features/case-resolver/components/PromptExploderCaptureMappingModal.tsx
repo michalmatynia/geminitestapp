@@ -8,7 +8,8 @@ import {
   type CaseResolverCaptureAction,
 } from '@/features/case-resolver-capture/settings';
 import { encodeFilemakerPartyReference } from '@/features/filemaker/settings';
-import { AppModal, Badge, Button, FormField, SelectSimple } from '@/shared/ui';
+import { Badge, Button, FormField, SelectSimple } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 type PromptExploderCaptureMappingModalProps = {
   open: boolean;
@@ -102,47 +103,22 @@ export function PromptExploderCaptureMappingModal({
   ];
 
   return (
-    <AppModal
-      open={open && draft !== null}
-      onOpenChange={(nextOpen) => {
-        if (!nextOpen) {
-          onClose();
-        }
-      }}
+    <DetailModal
+      isOpen={open && draft !== null}
+      onClose={onClose}
       title='Prompt Exploder Capture Mapping'
       subtitle='Review and edit addresser/addressee mapping before it updates this document.'
       size='lg'
-      showClose={false}
-      bodyClassName='h-auto max-h-[78vh]'
-      header={(
-        <div className='flex flex-col gap-3'>
-          <div className='flex items-center justify-between gap-2'>
-            <Button
-              type='button'
-              onClick={onApply}
-              disabled={!draft || applying}
-            >
-              {applying ? 'Applying...' : 'Apply Mapping'}
-            </Button>
-            <Button
-              type='button'
-              variant='outline'
-              onClick={onClose}
-              disabled={applying}
-            >
-              Close
-            </Button>
-          </div>
-          <div>
-            <h2 className='text-2xl font-bold tracking-tight text-white'>
-              Prompt Exploder Capture Mapping
-            </h2>
-            <p className='mt-1 text-sm text-muted-foreground'>
-              Review and edit addresser/addressee mapping before it updates this document.
-            </p>
-          </div>
-        </div>
-      )}
+      headerActions={
+        <Button
+          type='button'
+          onClick={onApply}
+          disabled={!draft || applying}
+          size='sm'
+        >
+          {applying ? 'Applying...' : 'Apply Mapping'}
+        </Button>
+      }
     >
       {draft ? (
         <div className='space-y-4'>
@@ -305,6 +281,6 @@ export function PromptExploderCaptureMappingModal({
           })}
         </div>
       ) : null}
-    </AppModal>
+    </DetailModal>
   );
 }

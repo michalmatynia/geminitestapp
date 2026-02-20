@@ -18,6 +18,26 @@ interface AgentTeachingContextType {
 
 const AgentTeachingContext = createContext<AgentTeachingContextType | null>(null);
 
+const normalizeModelOptions = (input: unknown): string[] => {
+  if (Array.isArray(input)) {
+    return input
+      .filter((item): item is string => typeof item === 'string')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+  }
+  if (!input || typeof input !== 'object') {
+    return [];
+  }
+  const record = input as Record<string, unknown>;
+  if ('models' in record) {
+    return normalizeModelOptions(record['models']);
+  }
+  if ('data' in record) {
+    return normalizeModelOptions(record['data']);
+  }
+  return [];
+};
+
 export const useAgentTeachingQueriesContext = (): AgentTeachingContextType => {
   const context = useContext(AgentTeachingContext);
   if (!context) {
@@ -29,7 +49,8 @@ export const useAgentTeachingQueriesContext = (): AgentTeachingContextType => {
 export function AgentTeachingProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { data: agents = [], isLoading: loadingAgents, refetch: refetchAgents } = useTeachingAgents();
   const { data: collections = [], isLoading: loadingCollections, refetch: refetchCollections } = useTeachingCollections();
-  const { data: modelOptions = [], isLoading: loadingModels } = useChatbotModels();
+  const { data: modelOptionsRaw, isLoading: loadingModels } = useChatbotModels();
+  const modelOptions = useMemo(() => normalizeModelOptions(modelOptionsRaw), [modelOptionsRaw]);
 
   const isLoading = loadingAgents || loadingCollections || loadingModels;
 

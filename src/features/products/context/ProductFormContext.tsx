@@ -381,7 +381,7 @@ export function ProductFormProvider({
     const productId = product?.id?.trim() ?? '';
 
     if (!productId) {
-      const fallbackProjectId = currentStudioProjectRef.current ?? defaultStudioProjectId;
+      const fallbackProjectId = defaultStudioProjectId;
       setStudioProjectIdState(fallbackProjectId);
       setStudioConfigLoading(false);
       setStudioConfigSaving(false);

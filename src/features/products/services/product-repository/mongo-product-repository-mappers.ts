@@ -40,6 +40,43 @@ const toTrimmedString = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
+const normalizeLocalizedField = (
+  legacy: ProductRecord['name'] | ProductRecord['description'] | undefined,
+  scalar: {
+    en: string | null | undefined;
+    pl: string | null | undefined;
+    de: string | null | undefined;
+  },
+): ProductRecord['name'] => {
+  const legacyRecord =
+    legacy && typeof legacy === 'object' && !Array.isArray(legacy)
+      ? legacy
+      : { en: '', pl: null, de: null };
+
+  const resolveNullable = (
+    primary: string | null | undefined,
+    fallback: unknown,
+  ): string | null => {
+    if (typeof primary === 'string') return primary;
+    if (primary === null) return null;
+    if (typeof fallback === 'string') return fallback;
+    return null;
+  };
+
+  const resolvedEn =
+    typeof scalar.en === 'string'
+      ? scalar.en
+      : typeof legacyRecord['en'] === 'string'
+        ? legacyRecord['en']
+        : '';
+
+  return {
+    en: resolvedEn,
+    pl: resolveNullable(scalar.pl, legacyRecord['pl']),
+    de: resolveNullable(scalar.de, legacyRecord['de']),
+  };
+};
+
 const resolveCategoryId = (doc: ProductDocument): string | null => {
   const direct = toTrimmedString(doc.categoryId);
   if (direct) return direct;
@@ -228,6 +265,16 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
   const productId = doc.id ?? doc._id;
   const images = Array.isArray(doc.images) ? doc.images : [];
   const catalogs = Array.isArray(doc.catalogs) ? doc.catalogs : [];
+  const normalizedName = normalizeLocalizedField(doc.name, {
+    en: doc.name_en,
+    pl: doc.name_pl,
+    de: doc.name_de,
+  });
+  const normalizedDescription = normalizeLocalizedField(doc.description, {
+    en: doc.description_en,
+    pl: doc.description_pl,
+    de: doc.description_de,
+  });
   const fallbackAssignedAt =
     doc.updatedAt instanceof Date
       ? doc.updatedAt.toISOString()
@@ -250,8 +297,8 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     ean: doc.ean ?? null,
     gtin: doc.gtin ?? null,
     asin: doc.asin ?? null,
-    name: doc.name || { en: doc.name_en ?? '', pl: doc.name_pl ?? null, de: doc.name_de ?? null },
-    description: doc.description || { en: doc.description_en ?? '', pl: doc.description_pl ?? null, de: doc.description_de ?? null },
+    name: normalizedName,
+    description: normalizedDescription,
     name_en: doc.name_en ?? null,
     name_pl: doc.name_pl ?? null,
     name_de: doc.name_de ?? null,
@@ -291,6 +338,16 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
 
 export const toProductBase = (doc: ProductDocument): ProductRecord => {
   const productId = doc.id ?? doc._id;
+  const normalizedName = normalizeLocalizedField(doc.name, {
+    en: doc.name_en,
+    pl: doc.name_pl,
+    de: doc.name_de,
+  });
+  const normalizedDescription = normalizeLocalizedField(doc.description, {
+    en: doc.description_en,
+    pl: doc.description_pl,
+    de: doc.description_de,
+  });
   const noteIds = Array.isArray((doc as unknown as { noteIds?: unknown }).noteIds)
     ? (doc as unknown as { noteIds: string[] }).noteIds
     : [];
@@ -313,8 +370,8 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
     ean: doc.ean ?? null,
     gtin: doc.gtin ?? null,
     asin: doc.asin ?? null,
-    name: doc.name || { en: doc.name_en ?? '', pl: doc.name_pl ?? null, de: doc.name_de ?? null },
-    description: doc.description || { en: doc.description_en ?? '', pl: doc.description_pl ?? null, de: doc.description_de ?? null },
+    name: normalizedName,
+    description: normalizedDescription,
     name_en: doc.name_en ?? null,
     name_pl: doc.name_pl ?? null,
     name_de: doc.name_de ?? null,

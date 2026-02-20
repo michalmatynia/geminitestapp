@@ -1,0 +1,23 @@
+
+ RUN  v2.1.9 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp
+
+stdout | __tests__/features/ai-paths/api/db-query.test.ts > AI Paths db-query API > returns single Mongo document in "item" shape and retries _id as ObjectId when needed
+[DEBUG] MockResponse.json status: 200
+
+stdout | __tests__/features/ai-paths/api/db-query.test.ts > AI Paths db-query API > returns Mongo list count from countDocuments (not limited item length)
+[DEBUG] MockResponse.json status: 200
+
+stdout | __tests__/features/ai-paths/api/db-query.test.ts > AI Paths db-query API > returns Prisma single result with provider metadata
+[DEBUG] MockResponse.json status: 200
+
+stdout | __tests__/features/ai-paths/api/db-query.test.ts > AI Paths db-query API > retries with alternate provider for safe auto query when primary provider fails
+[DEBUG] MockResponse.json status: 200
+
+ ✓ __tests__/features/ai-paths/api/db-query.test.ts (4 tests) 12ms
+ ✓ __tests__/features/ai-paths/lib/core/runtime/engine.test.ts (5 tests) 26ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  02:40:23
+   Duration  1.91s (transform 388ms, setup 335ms, collect 551ms, tests 38ms, environment 458ms, prepare 72ms)
+

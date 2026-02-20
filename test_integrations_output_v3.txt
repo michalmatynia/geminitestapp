@@ -1,0 +1,141 @@
+
+ RUN  v2.1.9 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp
+
+ ✓ __tests__/features/integrations/services/exports/base-exporter.test.ts (12 tests) 7ms
+ ✓ __tests__/features/integrations/services/imports/parameter-import.test.ts (3 tests) 5ms
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts (8 tests | 4 failed) 8ms
+   × Integration Repository > MongoDB Provider > listIntegrations calls mongo collection find 1ms
+     → expected "spy" to be called with arguments: [ 'integrations' ]
+
+Received: 
+
+
+
+Number of calls: 0
+
+   × Integration Repository > MongoDB Provider > createConnection inserts into mongo collection 0ms
+     → expected "spy" to be called with arguments: [ 'integration_connections' ]
+
+Received: 
+
+
+
+Number of calls: 0
+
+   × Integration Repository > MongoDB Provider > upsertIntegration updates existing in mongo 0ms
+     → expected "spy" to be called with arguments: [ 'integrations' ]
+
+Received: 
+
+
+
+Number of calls: 0
+
+   × Integration Repository > MongoDB Provider > deleteConnection calls deleteOne in mongo 0ms
+     → expected "spy" to be called with arguments: [ 'integration_connections' ]
+
+Received: 
+
+
+
+Number of calls: 0
+
+ ✓ __tests__/features/integrations/hooks/useMarketplaceMutations.test.tsx (6 tests) 48ms
+ ✓ __tests__/features/integrations/hooks/useIntegrationMutations.test.tsx (5 tests) 48ms
+ ✓ __tests__/features/integrations/services/imports/base-import-run-starter.test.ts (3 tests) 14ms
+ ✓ __tests__/features/integrations/components/GenericItemMapper.test.tsx (8 tests) 271ms
+ ✓ __tests__/features/integrations/components/GenericApiConsole.test.tsx (12 tests) 223ms
+ ✓ __tests__/features/integrations/services/category-mapping-repository.test.ts (6 tests) 314ms
+ ✓ __tests__/features/integrations/services/imports/base-mapper.test.ts (6 tests) 14ms
+ ✓ __tests__/features/integrations/services/export-template-repository.test.ts (5 tests) 184ms
+ ✓ __tests__/features/integrations/services/imports/base-import-service.helpers.test.ts (4 tests) 12ms
+ ✓ __tests__/features/integrations/components/listings/useImageRetryPresets.test.tsx (2 tests) 79ms
+ ✓ __tests__/features/integrations/hooks/listingCache.test.ts (4 tests) 14ms
+ ✓ __tests__/features/integrations/services/base-token-resolver.test.ts (4 tests) 39ms
+ ✓ __tests__/features/integrations/services/imports/base-import-service-shared.test.ts (5 tests) 11ms
+ ✓ __tests__/features/integrations/utils/connections.test.ts (4 tests) 14ms
+ ✓ __tests__/features/integrations/services/category-mapping-repository-mongo.test.ts (1 test) 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  __tests__/features/integrations/services/integration-repository.test.ts > Integration Repository > MongoDB Provider > listIntegrations calls mongo collection find
+AssertionError: expected "spy" to be called with arguments: [ 'integrations' ]
+
+Received: 
+
+
+
+Number of calls: 0
+
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts:162:30
+    160|       const result = await repo.listIntegrations();
+    161| 
+    162|       expect(mockCollection).toHaveBeenCalledWith('integrations');
+       |                              ^
+    163|       expect(mockFind).toHaveBeenCalled();
+    164|       expect(result[0]!.id).toBe('1');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  __tests__/features/integrations/services/integration-repository.test.ts > Integration Repository > MongoDB Provider > createConnection inserts into mongo collection
+AssertionError: expected "spy" to be called with arguments: [ 'integration_connections' ]
+
+Received: 
+
+
+
+Number of calls: 0
+
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts:177:30
+    175|       } as any);
+    176| 
+    177|       expect(mockCollection).toHaveBeenCalledWith('integration_connect…
+       |                              ^
+    178|       expect(mockInsertOne).toHaveBeenCalled();
+    179|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  __tests__/features/integrations/services/integration-repository.test.ts > Integration Repository > MongoDB Provider > upsertIntegration updates existing in mongo
+AssertionError: expected "spy" to be called with arguments: [ 'integrations' ]
+
+Received: 
+
+
+
+Number of calls: 0
+
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts:188:30
+    186|       const result = await repo.upsertIntegration({ name: 'New', slug:…
+    187| 
+    188|       expect(mockCollection).toHaveBeenCalledWith('integrations');
+       |                              ^
+    189|       expect(mockFindOneAndUpdate).toHaveBeenCalled();
+    190|       expect(result.name).toBe('New');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  __tests__/features/integrations/services/integration-repository.test.ts > Integration Repository > MongoDB Provider > deleteConnection calls deleteOne in mongo
+AssertionError: expected "spy" to be called with arguments: [ 'integration_connections' ]
+
+Received: 
+
+
+
+Number of calls: 0
+
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts:199:30
+    197|       await repo.deleteConnection('c1');
+    198| 
+    199|       expect(mockCollection).toHaveBeenCalledWith('integration_connect…
+       |                              ^
+    200|       expect(mockDeleteOne).toHaveBeenCalled();
+    201|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+ Test Files  1 failed | 17 passed (18)
+      Tests  4 failed | 94 passed (98)
+   Start at  03:29:45
+   Duration  14.52s (transform 1.35s, setup 1.85s, collect 3.72s, tests 1.31s, environment 4.82s, prepare 622ms)
+

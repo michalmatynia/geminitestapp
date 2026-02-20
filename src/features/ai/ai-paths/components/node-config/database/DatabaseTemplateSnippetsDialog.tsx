@@ -1,7 +1,8 @@
 import React from 'react';
 
 import type { DbQueryConfig } from '@/features/ai/ai-paths/lib';
-import { Button, AppModal, Label } from '@/shared/ui';
+import { Button, Label } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 type TemplateSnippet = { label: string; value: string };
 type ReadQuerySnippet = {
@@ -55,13 +56,13 @@ export function DatabaseTemplateSnippetsDialog({
   toast,
 }: DatabaseTemplateSnippetsDialogProps): React.JSX.Element {
   return (
-    <AppModal
-      open={open}
-      onOpenChange={onOpenChange}
+    <DetailModal
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
       title='Template Snippets'
       size='lg'
     >
-      <div className='space-y-4 max-h-[60vh] overflow-y-auto'>
+      <div className='space-y-4'>
         <div className='space-y-2'>
           <Label className='text-xs text-gray-400 uppercase tracking-wide'>Query Templates</Label>
           <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
@@ -245,6 +246,6 @@ export function DatabaseTemplateSnippetsDialog({
           </div>
         </div>
       </div>
-    </AppModal>
+    </DetailModal>
   );
 }

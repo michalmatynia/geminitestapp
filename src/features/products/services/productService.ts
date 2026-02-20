@@ -20,7 +20,21 @@ import {
   uploadFile,
 } from '@/features/files/server';
 import { getImageFileRepository } from '@/features/files/server';
-import type { ImageFileRepository } from '@/features/files/types/services/image-file-repository';
+import type { 
+  ImageFileRecordDto as ImageFileRecord,
+  ImageFileCreateInputDto as ImageFileCreateInput,
+  ImageFileListFiltersDto as ImageFileListFilters
+} from '@/shared/contracts/files';
+
+export type ImageFileRepository = {
+  createImageFile(data: ImageFileCreateInput): Promise<ImageFileRecord>;
+  getImageFileById(id: string): Promise<ImageFileRecord | null>;
+  listImageFiles(filters?: ImageFileListFilters): Promise<ImageFileRecord[]>;
+  findImageFilesByIds(ids: string[]): Promise<ImageFileRecord[]>;
+  updateImageFilePath(id: string, filepath: string): Promise<ImageFileRecord | null>;
+  updateImageFileTags(id: string, tags: string[]): Promise<ImageFileRecord | null>;
+  deleteImageFile(id: string): Promise<ImageFileRecord | null>;
+};
 import { ErrorSystem, logActivity, ActivityTypes, logSystemEvent } from '@/features/observability/server';
 import { performanceMonitor } from '@/features/products/performance';
 import { getCatalogRepository } from '@/features/products/services/catalog-repository';

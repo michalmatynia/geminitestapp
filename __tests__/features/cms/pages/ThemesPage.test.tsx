@@ -1,6 +1,6 @@
-
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useRouter } from 'next/navigation';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
@@ -56,17 +56,19 @@ describe('ThemesPage Component', () => {
     expect(screen.getByText('Minimal Light')).toBeInTheDocument();
   });
 
-  it('should navigate to create page when button is clicked', () => {
+  it('should navigate to create page when button is clicked', async () => {
+    const user = userEvent.setup();
     (useCmsThemes as any).mockReturnValue({ data: [], isLoading: false });
     renderWithProviders(<ThemesPage />);
     
     const createBtn = screen.getByRole('button', { name: /Create Theme/i });
-    fireEvent.click(createBtn);
+    await user.click(createBtn);
     
     expect(mockPush).toHaveBeenCalledWith('/admin/cms/themes/create');
   });
 
-  it('should handle theme deletion', () => {
+  it('should handle theme deletion', async () => {
+    const user = userEvent.setup();
     const mockDelete = vi.fn().mockResolvedValue({});
     (useDeleteTheme as any).mockReturnValue({ mutateAsync: mockDelete });
     (useCmsThemes as any).mockReturnValue({ 
@@ -74,14 +76,20 @@ describe('ThemesPage Component', () => {
       isLoading: false 
     });
     
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
-
     renderWithProviders(<ThemesPage />);
     
-    const deleteBtn = screen.getByRole('button', { name: /Delete theme/i });
-    fireEvent.click(deleteBtn);
+    // 1. Open the ActionMenu
+    const actionsBtn = screen.getByLabelText(/Actions for theme Dark/i);
+    await user.click(actionsBtn);
     
-    expect(window.confirm).toHaveBeenCalledWith('Delete this theme?');
+    // 2. Click the Delete item in dropdown
+    const deleteItem = screen.getByText('Delete');
+    await user.click(deleteItem);
+    
+    // 3. Confirm in the modal
+    const confirmBtn = screen.getByRole('button', { name: /Destroy Theme/i });
+    await user.click(confirmBtn);
+    
     expect(mockDelete).toHaveBeenCalledWith('t1');
   });
 });

@@ -1,0 +1,251 @@
+
+ RUN  v2.1.9 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp
+
+ ✓ __tests__/features/integrations/services/exports/base-exporter.test.ts (12 tests) 7ms
+ ✓ __tests__/features/integrations/services/imports/parameter-import.test.ts (3 tests) 9ms
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts (8 tests | 6 failed) 9ms
+   × Integration Repository > Prisma Provider > listIntegrations calls prisma.integration.findMany 4ms
+     → expected "spy" to be called with arguments: [ { orderBy: { createdAt: 'desc' } } ]
+
+Received: 
+
+  1st spy call:
+
+  Array [
+    Object {
+      "orderBy": Object {
+-       "createdAt": "desc",
++       "name": "asc",
+      },
+    },
+  ]
+
+
+Number of calls: 1
+
+   × Integration Repository > Prisma Provider > createConnection calls prisma.integrationConnection.create 1ms
+     → expected "spy" to be called with arguments: [ { data: { …(4) } } ]
+
+Received: 
+
+  1st spy call:
+
+  Array [
+    Object {
+      "data": Object {
+-       "integrationId": "int-1",
++       "integration": Object {
++         "connect": Object {
++           "id": "int-1",
++         },
++       },
+        "name": "Conn 1",
+        "password": "pass",
+        "username": "user",
+      },
+    },
+  ]
+
+
+Number of calls: 1
+
+   × Integration Repository > MongoDB Provider > listIntegrations calls mongo collection find 0ms
+     → expected "spy" to be called with arguments: [ 'integrations' ]
+
+Received: 
+
+
+
+Number of calls: 0
+
+   × Integration Repository > MongoDB Provider > createConnection inserts into mongo collection 0ms
+     → expected "spy" to be called with arguments: [ 'integration_connections' ]
+
+Received: 
+
+
+
+Number of calls: 0
+
+   × Integration Repository > MongoDB Provider > upsertIntegration updates existing in mongo 0ms
+     → expected "spy" to be called with arguments: [ { _id: '1' }, …(1) ]
+
+Received: 
+
+
+
+Number of calls: 0
+
+   × Integration Repository > MongoDB Provider > deleteConnection calls deleteOne in mongo 0ms
+     → expected "spy" to be called with arguments: [ 'integration_connections' ]
+
+Received: 
+
+
+
+Number of calls: 0
+
+ ✓ __tests__/features/integrations/hooks/useMarketplaceMutations.test.tsx (6 tests) 44ms
+ ✓ __tests__/features/integrations/hooks/useIntegrationMutations.test.tsx (5 tests) 42ms
+ ✓ __tests__/features/integrations/services/imports/base-import-run-starter.test.ts (3 tests) 14ms
+ ✓ __tests__/features/integrations/components/GenericItemMapper.test.tsx (8 tests) 265ms
+ ✓ __tests__/features/integrations/components/GenericApiConsole.test.tsx (12 tests) 207ms
+ ✓ __tests__/features/integrations/services/category-mapping-repository.test.ts (6 tests) 313ms
+ ✓ __tests__/features/integrations/services/imports/base-mapper.test.ts (6 tests) 15ms
+ ✓ __tests__/features/integrations/services/export-template-repository.test.ts (5 tests) 175ms
+ ✓ __tests__/features/integrations/services/imports/base-import-service.helpers.test.ts (4 tests) 17ms
+ ✓ __tests__/features/integrations/components/listings/useImageRetryPresets.test.tsx (2 tests) 82ms
+ ✓ __tests__/features/integrations/hooks/listingCache.test.ts (4 tests) 14ms
+ ✓ __tests__/features/integrations/services/base-token-resolver.test.ts (4 tests) 44ms
+ ✓ __tests__/features/integrations/services/imports/base-import-service-shared.test.ts (5 tests) 13ms
+ ✓ __tests__/features/integrations/utils/connections.test.ts (4 tests) 13ms
+ ✓ __tests__/features/integrations/services/category-mapping-repository-mongo.test.ts (1 test) 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  __tests__/features/integrations/services/integration-repository.test.ts > Integration Repository > Prisma Provider > listIntegrations calls prisma.integration.findMany
+AssertionError: expected "spy" to be called with arguments: [ { orderBy: { createdAt: 'desc' } } ]
+
+Received: 
+
+  1st spy call:
+
+  Array [
+    Object {
+      "orderBy": Object {
+-       "createdAt": "desc",
++       "name": "asc",
+      },
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts:73:43
+     71|       const result = await repo.listIntegrations();
+     72| 
+     73|       expect(prisma.integration.findMany).toHaveBeenCalledWith({
+       |                                           ^
+     74|         orderBy: { createdAt: 'desc' },
+     75|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  __tests__/features/integrations/services/integration-repository.test.ts > Integration Repository > Prisma Provider > createConnection calls prisma.integrationConnection.create
+AssertionError: expected "spy" to be called with arguments: [ { data: { …(4) } } ]
+
+Received: 
+
+  1st spy call:
+
+  Array [
+    Object {
+      "data": Object {
+-       "integrationId": "int-1",
++       "integration": Object {
++         "connect": Object {
++           "id": "int-1",
++         },
++       },
+        "name": "Conn 1",
+        "password": "pass",
+        "username": "user",
+      },
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts:90:51
+     88|       } as any);
+     89| 
+     90|       expect(prisma.integrationConnection.create).toHaveBeenCalledWith…
+       |                                                   ^
+     91|         data: {
+     92|           integrationId: 'int-1',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  __tests__/features/integrations/services/integration-repository.test.ts > Integration Repository > MongoDB Provider > listIntegrations calls mongo collection find
+AssertionError: expected "spy" to be called with arguments: [ 'integrations' ]
+
+Received: 
+
+
+
+Number of calls: 0
+
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts:143:30
+    141|       const result = await repo.listIntegrations();
+    142| 
+    143|       expect(mockCollection).toHaveBeenCalledWith('integrations');
+       |                              ^
+    144|       expect(mockFind).toHaveBeenCalledWith({});
+    145|       expect(result[0]!.id).toBe('1');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  __tests__/features/integrations/services/integration-repository.test.ts > Integration Repository > MongoDB Provider > createConnection inserts into mongo collection
+AssertionError: expected "spy" to be called with arguments: [ 'integration_connections' ]
+
+Received: 
+
+
+
+Number of calls: 0
+
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts:160:30
+    158|       } as any);
+    159| 
+    160|       expect(mockCollection).toHaveBeenCalledWith('integration_connect…
+       |                              ^
+    161|       expect(mockInsertOne).toHaveBeenCalled();
+    162|       expect(result.name).toBe('Conn 1');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  __tests__/features/integrations/services/integration-repository.test.ts > Integration Repository > MongoDB Provider > upsertIntegration updates existing in mongo
+AssertionError: expected "spy" to be called with arguments: [ { _id: '1' }, …(1) ]
+
+Received: 
+
+
+
+Number of calls: 0
+
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts:173:29
+    171|       const result = await repo.upsertIntegration({ name: 'New', slug:…
+    172| 
+    173|       expect(mockUpdateOne).toHaveBeenCalledWith(
+       |                             ^
+    174|         { _id: '1' },
+    175|         { $set: expect.objectContaining({ name: 'New' }) }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  __tests__/features/integrations/services/integration-repository.test.ts > Integration Repository > MongoDB Provider > deleteConnection calls deleteOne in mongo
+AssertionError: expected "spy" to be called with arguments: [ 'integration_connections' ]
+
+Received: 
+
+
+
+Number of calls: 0
+
+ ❯ __tests__/features/integrations/services/integration-repository.test.ts:186:30
+    184|       await repo.deleteConnection('c1');
+    185| 
+    186|       expect(mockCollection).toHaveBeenCalledWith('integration_connect…
+       |                              ^
+    187|       expect(mockDeleteOne).toHaveBeenCalledWith({ _id: 'c1' });
+    188|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+ Test Files  1 failed | 17 passed (18)
+      Tests  6 failed | 92 passed (98)
+   Start at  03:29:10
+   Duration  14.36s (transform 1.43s, setup 1.79s, collect 3.82s, tests 1.29s, environment 4.64s, prepare 619ms)
+

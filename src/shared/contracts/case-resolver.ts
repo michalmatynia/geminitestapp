@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { aiNodeTypeSchema, aiNodeSchema, aiEdgeSchema } from './ai-paths';
+import { aiNodeTypeSchema, aiNodeSchema } from './ai-paths';
 import { dtoBaseSchema, namedDtoSchema } from './base';
 import { documentEditorModeSchema, type DocumentEditorModeDto } from './document-editor';
 import { filemakerPartyReferenceSchema, type FilemakerPartyReferenceDto } from './filemaker';
@@ -204,7 +204,7 @@ export type CaseResolverRelationEdgeMetaDto = z.infer<typeof caseResolverRelatio
 
 export const caseResolverRelationGraphSchema = z.object({
   nodes: z.array(aiNodeSchema),
-  edges: z.array(aiEdgeSchema),
+  edges: z.array(caseResolverCanvasEdgeSchema),
   nodeMeta: z.record(z.string(), caseResolverRelationNodeMetaSchema),
   edgeMeta: z.record(z.string(), caseResolverRelationEdgeMetaSchema),
 });

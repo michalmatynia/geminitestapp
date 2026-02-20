@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import type { ProductDraftDto, CreateProductDraftDto, UpdateProductDraftDto } from '@/features/products/types/drafts';
+import type { ProductDraftDto, CreateProductDraftDto, UpdateProductDraftDto } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,

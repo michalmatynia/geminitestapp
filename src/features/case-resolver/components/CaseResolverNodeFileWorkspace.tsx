@@ -31,7 +31,7 @@ import {
   type CaseResolverShowDocumentInCanvasDetail,
 } from '../drag';
 import { parseNodeFileSnapshot, serializeNodeFileSnapshot } from '../settings';
-import { type AiNode, type NodeDefinition } from '../types';
+import { type AiNode, type AiEdge, type NodeDefinition } from '../types';
 import {
   type CaseResolverFile,
   type CaseResolverNodeFileMeta,
@@ -186,8 +186,8 @@ function CaseResolverNodeFileWorkspaceInner({
     []
   );
   const strictEdges = useMemo((): CaseResolverNodeFileSnapshot['edges'] => {
-    return (edges as any[])
-      .map((edge: any): CaseResolverNodeFileSnapshot['edges'][number] | null => {
+    return (edges)
+      .map((edge: AiEdge): CaseResolverNodeFileSnapshot['edges'][number] | null => {
         const from = edge.from ?? edge.source;
         const to = edge.to ?? edge.target;
         if (!from || !to) return null;

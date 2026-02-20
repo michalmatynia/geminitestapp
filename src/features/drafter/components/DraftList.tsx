@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { useDraftQueries, useDeleteDraft } from '@/features/drafter/hooks/useDraftQueries';
 import { ICON_LIBRARY_MAP } from '@/features/icons';
 import { logClientError } from '@/features/observability';
-import type { ProductDraftDto } from '@/features/products/types/drafts';
+import type { ProductDraftDto } from '@/shared/contracts/products';
 import { Button, ListPanel, useToast, SimpleSettingsList, StatusBadge } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 

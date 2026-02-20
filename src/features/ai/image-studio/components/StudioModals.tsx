@@ -7,7 +7,7 @@ import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
-import type { ProductImageSlot } from '@/features/products/types/products-ui';
+import type { ManagedImageSlotDto as ProductImageSlot } from '@/shared/contracts/image-slots';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

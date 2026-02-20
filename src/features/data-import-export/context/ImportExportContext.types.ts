@@ -11,9 +11,12 @@ import type {
   DebugWarehouses,
   CatalogOption,
 } from '@/features/data-import-export/types/imports';
-import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/features/integrations';
-import type { BaseImportParameterImportSettings } from '@/features/integrations/types/base-import-parameter-import';
-import type { BaseImportMode } from '@/features/integrations/types/base-import-runs';
+import type { 
+  BaseImportParameterImportSettingsDto as BaseImportParameterImportSettings,
+  BaseImportModeDto as BaseImportMode,
+  IntegrationConnectionBasicDto as IntegrationConnectionBasic,
+  IntegrationWithConnectionsDto as IntegrationWithConnections
+} from '@/shared/contracts/integrations';
 
 import type { Dispatch, SetStateAction } from 'react';
 

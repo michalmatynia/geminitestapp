@@ -15,9 +15,9 @@ import {
   SelectSimple,
   Textarea,
   LoadingState,
-  AppModal,
   CollapsibleSection,
 } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { buildHistoryNodeOptions } from './run-history-utils';
 import { RunTimeline } from './run-timeline';
@@ -85,8 +85,8 @@ export function RunDetailDialog({
   const isScheduledRun = Boolean(runDetail?.run?.triggerEvent === 'scheduled_run');
 
   return (
-    <AppModal
-      open={isOpen}
+    <DetailModal
+      isOpen={isOpen}
       onClose={onClose}
       title='Run Details'
       subtitle='Persistent AI Path runtime snapshot.'
@@ -250,7 +250,7 @@ export function RunDetailDialog({
       ) : (
         <div className='text-sm text-gray-400'>No run selected.</div>
       )}
-    </AppModal>
+    </DetailModal>
   );
 }
 

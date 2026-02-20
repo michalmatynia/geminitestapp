@@ -4,6 +4,9 @@ import type {
   BaseImportParameterMatchByDto,
   BaseImportParameterImportSettingsDto,
 } from '@/shared/contracts/integrations';
+import { DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS } from '@/shared/contracts/integrations';
+
+export const defaultBaseImportParameterImportSettings = DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS;
 
 export type BaseImportParameterImportMode = BaseImportParameterImportModeDto;
 
@@ -12,16 +15,6 @@ export type BaseImportParameterLanguageScope = BaseImportParameterLanguageScopeD
 export type BaseImportParameterMatchBy = BaseImportParameterMatchByDto;
 
 export type BaseImportParameterImportSettings = BaseImportParameterImportSettingsDto;
-
-export const defaultBaseImportParameterImportSettings: BaseImportParameterImportSettings =
-  {
-    enabled: false,
-    mode: 'all',
-    languageScope: 'catalog_languages',
-    createMissingParameters: true,
-    overwriteExistingValues: false,
-    matchBy: 'base_id_then_name',
-  };
 
 const normalizeMode = (
   value: unknown

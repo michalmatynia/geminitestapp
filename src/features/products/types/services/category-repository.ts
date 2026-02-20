@@ -2,11 +2,9 @@ import type {
   CreateProductCategoryDto, 
   UpdateProductCategoryDto,
   ProductCategoryFiltersDto,
+  ProductCategoryDto as ProductCategory,
+  ProductCategoryWithChildrenDto as ProductCategoryWithChildren
 } from '@/shared/contracts/products';
-import type { 
-  ProductCategory, 
-  ProductCategoryWithChildren 
-} from '@/shared/types/domain/products';
 
 export type CategoryFilters = ProductCategoryFiltersDto;
 

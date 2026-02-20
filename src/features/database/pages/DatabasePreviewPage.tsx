@@ -31,7 +31,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-  DataTable,
+  StandardDataTablePanel,
   StatusBadge,
   Alert,
   SearchInput,
@@ -39,6 +39,7 @@ import {
   MetadataItem,
   LoadingState,
   EmptyState,
+  PageLayout,
 } from '@/shared/ui';
 
 import { CrudPanel } from '../components/CrudPanel';
@@ -224,10 +225,10 @@ function ColumnsTab({ columns }: { columns: DatabaseColumnInfo[] }): React.JSX.E
 
   return (
     <div className='p-2'>
-      <DataTable
+      <StandardDataTablePanel
         columns={tableColumns}
         data={columns}
-        className='border-none bg-transparent'
+        variant='flat'
       />
     </div>
   );
@@ -265,10 +266,10 @@ function IndexesTab({ indexes }: { indexes: DatabaseIndexInfo[] }): React.JSX.El
 
   return (
     <div className='p-2'>
-      <DataTable
+      <StandardDataTablePanel
         columns={tableColumns}
         data={indexes}
-        className='border-none bg-transparent'
+        variant='flat'
       />
     </div>
   );
@@ -306,10 +307,10 @@ function ForeignKeysTab({ foreignKeys }: { foreignKeys: DatabaseForeignKeyInfo[]
 
   return (
     <div className='p-2'>
-      <DataTable
+      <StandardDataTablePanel
         columns={tableColumns}
         data={foreignKeys}
-        className='border-none bg-transparent'
+        variant='flat'
       />
     </div>
   );
@@ -353,10 +354,10 @@ function DataTab({
       <div className='px-2 text-[10px] uppercase font-bold text-gray-500'>
         Rows {startRow}–{startRow + tableRows.rows.length - 1} of {tableRows.totalRows.toLocaleString()}
       </div>
-      <DataTable
+      <StandardDataTablePanel
         columns={columns}
         data={tableRows.rows}
-        className='border-none bg-transparent'
+        variant='flat'
       />
     </div>
   );
@@ -408,33 +409,27 @@ function DatabasePreviewContent(): React.JSX.Element {
     stats,
   } = useDatabasePreviewState();
   return (
-    <div className='mx-auto w-full max-w-none py-10 space-y-6'>
-      <SectionHeader
-        title='Database Preview'
-        description={
-          mode === 'current'
-            ? 'Source: Current database instance'
-            : backupName
-              ? `Source: ${backupName}`
-              : 'No source selected.'
-        }
-        eyebrow={(
-          <Link href='/admin/databases' className='text-blue-300 hover:text-blue-200 transition-colors'>
-            ← Back to databases
-          </Link>
-        )}
-        actions={
-          <div className='flex gap-2'>
-            <Button variant='outline' size='xs' className='h-8' onClick={() => window.location.reload()}>
-              <RefreshCwIcon className='size-3.5 mr-2' />
-              Refresh
-            </Button>
-          </div>
-        }
-      />
-
+    <PageLayout
+      title='Database Preview'
+      description={
+        mode === 'current'
+          ? 'Source: Current database instance'
+          : backupName
+            ? `Source: ${backupName}`
+            : 'No source selected.'
+      }
+      eyebrow={(
+        <Link href='/admin/databases' className='text-blue-300 hover:text-blue-200 transition-colors'>
+          ← Back to databases
+        </Link>
+      )}
+      refresh={{
+        onRefresh: () => window.location.reload(),
+        isRefreshing: false,
+      }}
+    >
       {error && (
-        <Alert variant='error' className='flex items-center gap-3'>
+        <Alert variant='error' className='flex items-center gap-3 mb-6'>
           <ShieldCheckIcon className='size-4 shrink-0' />
           {error}
         </Alert>
@@ -630,7 +625,7 @@ function DatabasePreviewContent(): React.JSX.Element {
           )}
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 }
 

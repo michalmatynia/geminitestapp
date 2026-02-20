@@ -225,45 +225,44 @@ export function SqlQueryConsole({
 
           {/* Results table */}
           {!result.error && result.rows.length > 0 && (
-            <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
-              <DataTable
-                columns={[
-                  {
-                    id: 'index',
-                    header: '#',
-                    cell: ({ row }: { row: { index: number } }) => <span className='text-gray-600 text-[10px]'>{row.index + 1}</span>,
-                    size: 40,
-                  },
-                  ...(result.fields.length > 0
-                    ? result.fields.map((f: { name: string }) => ({
-                      accessorKey: f.name,
-                      header: f.name,
-                      cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
-                        <span 
-                          className='font-mono text-[11px] text-gray-300 truncate block max-w-[250px]' 
-                          title={formatCellValue(row.original[f.name])}
-                        >
-                          {formatCellValue(row.original[f.name])}
-                        </span>
-                      )
-                    }))
-                    : Object.keys(result.rows[0] ?? {}).map((key) => ({
-                      accessorKey: key,
-                      header: key,
-                      cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
-                        <span 
-                          className='font-mono text-[11px] text-gray-300 truncate block max-w-[250px]' 
-                          title={formatCellValue(row.original[key])}
-                        >
-                          {formatCellValue(row.original[key])}
-                        </span>
-                      )
-                    }))
-                  )
-                ] as ColumnDef<Record<string, unknown>>[]}
-                data={result.rows}
-              />
-            </div>
+            <StandardDataTablePanel
+              columns={[
+                {
+                  id: 'index',
+                  header: '#',
+                  cell: ({ row }: { row: { index: number } }) => <span className='text-gray-600 text-[10px]'>{row.index + 1}</span>,
+                  size: 40,
+                },
+                ...(result.fields.length > 0
+                  ? result.fields.map((f: { name: string }) => ({
+                    accessorKey: f.name,
+                    header: f.name,
+                    cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
+                      <span 
+                        className='font-mono text-[11px] text-gray-300 truncate block max-w-[250px]' 
+                        title={formatCellValue(row.original[f.name])}
+                      >
+                        {formatCellValue(row.original[f.name])}
+                      </span>
+                    )
+                  }))
+                  : Object.keys(result.rows[0] ?? {}).map((key) => ({
+                    accessorKey: key,
+                    header: key,
+                    cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
+                      <span 
+                        className='font-mono text-[11px] text-gray-300 truncate block max-w-[250px]' 
+                        title={formatCellValue(row.original[key])}
+                      >
+                        {formatCellValue(row.original[key])}
+                      </span>
+                    )
+                  }))
+                )
+              ] as ColumnDef<Record<string, unknown>>[]}
+              data={result.rows}
+              variant='flat'
+            />
           )}
 
           {/* No rows message for non-error SELECT */}

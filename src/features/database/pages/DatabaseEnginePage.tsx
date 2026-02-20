@@ -2,7 +2,6 @@
 
 import { 
   SaveIcon, 
-  RefreshCwIcon,
   ShieldCheckIcon,
   SlidersHorizontalIcon,
   ArchiveIcon,
@@ -15,7 +14,7 @@ import type { DatabaseEngineProvider, DatabaseEnginePolicy } from '@/shared/lib/
 import { 
   Button, 
   FormSection, 
-  DataTable, 
+  StandardDataTablePanel, 
   SelectSimple, 
   StatusBadge,
   Badge,
@@ -23,12 +22,11 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
-  SectionHeader,
   Alert,
   MetadataItem,
   LoadingState,
   ToggleRow,
-  Breadcrumbs,
+  PageLayout,
 } from '@/shared/ui';
 
 import { DatabaseBackupsPanel } from '../components/DatabaseBackupsPanel';
@@ -131,14 +129,6 @@ function DatabaseEngineContent(): React.JSX.Element {
     },
   ], []);
 
-  if (isLoading) {
-    return (
-      <div className='flex min-h-[400px] items-center justify-center'>
-        <LoadingState message='Initializing database engine console...' />
-      </div>
-    );
-  }
-
   const activeViewLabel =
     workspaceView === 'engine'
       ? 'Engine Settings'
@@ -147,36 +137,25 @@ function DatabaseEngineContent(): React.JSX.Element {
         : 'Operations Log';
 
   return (
-    <div className='mx-auto w-full max-w-none py-10 space-y-6'>
-      <SectionHeader
-        title='Database Engine'
-        subtitle={
-          <Breadcrumbs
-            items={[
-              { label: 'Admin', href: '/admin' },
-              { label: 'Databases', href: '/admin/databases/engine' },
-              { label: activeViewLabel },
-            ]}
-          />
-        }
-        description='Control center for data provider routing, synchronization, and fallback policies.'
-        actions={
-          <div className='flex gap-2'>
-            <Badge variant='processing' className='hidden h-8 items-center px-3 text-[11px] uppercase tracking-wide md:inline-flex'>
-              {activeViewLabel}
-            </Badge>
-            <Button variant='outline' size='xs' className='h-8' onClick={refetch} disabled={isFetching}>
-              <RefreshCwIcon className={`size-3.5 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <Button size='xs' className='h-8' onClick={() => { void saveConfiguration(); }} disabled={saving || validationErrors.length > 0}>
-              <SaveIcon className='size-3.5 mr-2' />
-              {saving ? 'Saving...' : 'Save Configuration'}
-            </Button>
-          </div>
-        }
-      />
-
+    <PageLayout
+      title='Database Engine'
+      description='Control center for data provider routing, synchronization, and fallback policies.'
+      refresh={{
+        onRefresh: refetch,
+        isRefreshing: isFetching,
+      }}
+      headerActions={
+        <div className='flex gap-2'>
+          <Badge variant='processing' className='hidden h-8 items-center px-3 text-[11px] uppercase tracking-wide md:inline-flex'>
+            {activeViewLabel}
+          </Badge>
+          <Button size='xs' className='h-8' onClick={() => { void saveConfiguration(); }} disabled={saving || validationErrors.length > 0}>
+            <SaveIcon className='size-3.5 mr-2' />
+            {saving ? 'Saving...' : 'Save Configuration'}
+          </Button>
+        </div>
+      }
+    >
       <Tabs value={workspaceView} onValueChange={(v) => setView(v as DatabaseEngineWorkspaceView)} className='w-full'>
         <TabsList className='grid h-auto w-full grid-cols-1 gap-2 border border-border/60 bg-card/30 p-2 md:grid-cols-3'>
           <TabsTrigger value='engine' className='h-12 justify-start gap-2 px-3 text-left'>
@@ -260,15 +239,13 @@ function DatabaseEngineContent(): React.JSX.Element {
             </FormSection>
           </div>
 
-          <FormSection title='Collection Routing' className='p-6'>
-            <div className='rounded-md border border-border bg-gray-950/20'>
-              <DataTable
-                columns={collectionColumns}
-                data={rows}
-                isLoading={isFetching}
-              />
-            </div>
-          </FormSection>
+          <StandardDataTablePanel
+            title='Collection Routing'
+            columns={collectionColumns}
+            data={rows}
+            isLoading={isFetching}
+            variant='flat'
+          />
 
           <div className='grid gap-6 md:grid-cols-2'>
             <FormSection title='Redis Overview' className='p-6'>
@@ -300,15 +277,13 @@ function DatabaseEngineContent(): React.JSX.Element {
               )}
             </FormSection>
 
-            <FormSection title='Recent Activity' className='p-6'>
-              <div className='rounded-md border border-border bg-gray-950/20'>
-                <DataTable
-                  columns={jobColumns}
-                  data={operationJobs.slice(0, 5)}
-                  isLoading={isFetching}
-                />
-              </div>
-            </FormSection>
+            <StandardDataTablePanel
+              title='Recent Activity'
+              columns={jobColumns}
+              data={operationJobs.slice(0, 5)}
+              isLoading={isFetching}
+              variant='flat'
+            />
           </div>
         </TabsContent>
 
@@ -332,7 +307,7 @@ function DatabaseEngineContent(): React.JSX.Element {
           </ul>
         </Alert>
       )}
-    </div>
+    </PageLayout>
   );
 }
 

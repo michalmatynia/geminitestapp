@@ -14,7 +14,7 @@ import {
   getIssueReplacementPreview,
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
-import { Button, Input, SelectSimple, FormSection, FormField, DataTable, StatusBadge, Alert, Label } from '@/shared/ui';
+import { Button, Input, SelectSimple, FormSection, FormField, StandardDataTablePanel, StatusBadge, Alert, Label } from '@/shared/ui';
 
 import { ValidatorIssueHint } from './ProductFormGeneral';
 
@@ -228,61 +228,58 @@ export default function ProductFormOther({
 
           {selectedDefaultPriceGroupId && filteredPriceGroups.length > 0 && (
             <div className='md:col-span-2 space-y-2'>
-              <Label className='text-[11px] font-medium uppercase tracking-wider text-gray-400'>Price Groups Overview</Label>
-              <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
-                <DataTable
-                  columns={[
-                    {
-                      accessorKey: 'name',
-                      header: 'Price Group',
-                      cell: ({ row }: { row: { original: PriceGroupWithCalculatedPrice } }) => (
-                        <div className='flex items-center gap-2'>
-                          <span className={row.original.id === selectedDefaultPriceGroupId ? 'font-semibold text-white' : 'text-gray-300'}>
-                            {row.original.name}
+              <StandardDataTablePanel
+                title='Price Groups Overview'
+                description='Blue prices are automatically calculated based on the default group.'
+                columns={[
+                  {
+                    accessorKey: 'name',
+                    header: 'Price Group',
+                    cell: ({ row }: { row: { original: PriceGroupWithCalculatedPrice } }) => (
+                      <div className='flex items-center gap-2'>
+                        <span className={row.original.id === selectedDefaultPriceGroupId ? 'font-semibold text-white' : 'text-gray-300'}>
+                          {row.original.name}
+                        </span>
+                        {row.original.id === selectedDefaultPriceGroupId && (
+                          <StatusBadge
+                            status='Selected'
+                            variant='active'
+                            size='sm'
+                            className='font-bold'
+                          />
+                        )}
+                        {row.original.isCalculated && row.original.sourceGroupName && (
+                          <span className='text-[10px] text-gray-500 italic'>
+                            ({row.original.sourceGroupName} × {row.original.priceMultiplier})
                           </span>
-                          {row.original.id === selectedDefaultPriceGroupId && (
-                            <StatusBadge
-                              status='Selected'
-                              variant='active'
-                              size='sm'
-                              className='font-bold'
-                            />
-                          )}
-                          {row.original.isCalculated && row.original.sourceGroupName && (
-                            <span className='text-[10px] text-gray-500 italic'>
-                              ({row.original.sourceGroupName} × {row.original.priceMultiplier})
-                            </span>
-                          )}
-                        </div>
-                      )
-                    },
-                    {
-                      accessorKey: 'currencyCode',
-                      header: 'Currency',
-                      cell: ({ row }: { row: { original: PriceGroupWithCalculatedPrice } }) => <span className='text-gray-500'>{row.original.currency?.code ?? row.original.currencyCode}</span>
-                    },
-                    {
-                      accessorKey: 'calculatedPrice',
-                      header: () => <div className='text-right'>Price</div>,
-                      cell: ({ row }: { row: { original: PriceGroupWithCalculatedPrice } }) => (
-                        <div className='text-right font-mono'>
-                          {row.original.calculatedPrice !== null ? (
-                            <span className={row.original.isCalculated ? 'text-blue-400' : 'text-white'}>
-                              {row.original.calculatedPrice.toFixed(2)}
-                            </span>
-                          ) : (
-                            <span className='text-gray-600'>-</span>
-                          )}
-                        </div>
-                      )
-                    }
-                  ]}
-                  data={priceGroupPrices}
-                />
-              </div>
-              <p className='text-[10px] text-gray-500 italic'>
-                Blue prices are automatically calculated based on the default group.
-              </p>
+                        )}
+                      </div>
+                    )
+                  },
+                  {
+                    accessorKey: 'currencyCode',
+                    header: 'Currency',
+                    cell: ({ row }: { row: { original: PriceGroupWithCalculatedPrice } }) => <span className='text-gray-500'>{row.original.currency?.code ?? row.original.currencyCode}</span>
+                  },
+                  {
+                    accessorKey: 'calculatedPrice',
+                    header: () => <div className='text-right'>Price</div>,
+                    cell: ({ row }: { row: { original: PriceGroupWithCalculatedPrice } }) => (
+                      <div className='text-right font-mono'>
+                        {row.original.calculatedPrice !== null ? (
+                          <span className={row.original.isCalculated ? 'text-blue-400' : 'text-white'}>
+                            {row.original.calculatedPrice.toFixed(2)}
+                          </span>
+                        ) : (
+                          <span className='text-gray-600'>-</span>
+                        )}
+                      </div>
+                    )
+                  }
+                ]}
+                data={priceGroupPrices}
+                variant='flat'
+              />
             </div>
           )}
         </FormSection>

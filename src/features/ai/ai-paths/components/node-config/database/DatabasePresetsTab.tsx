@@ -182,7 +182,7 @@ export function DatabasePresetsTab(): React.JSX.Element {
             />
           </div>
         </div>
-      </AppModal>
+      </DetailModal>
     </div>
   );
 }

@@ -26,7 +26,6 @@ import {
   Textarea,
   ValidatorFormatterToggle,
   useToast,
-  FormField,
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 import { cn } from '@/shared/utils';
@@ -1251,7 +1250,7 @@ export function RightSidebar(): React.JSX.Element {
             </Button>
           </div>
         </div>
-      </AppModal>
+      </DetailModal>
 
       <DetailModal
         isOpen={controlsOpen}
@@ -1272,7 +1271,7 @@ export function RightSidebar(): React.JSX.Element {
             </div>
           )}
         </div>
-      </AppModal>
+      </DetailModal>
 
       <DetailModal
         isOpen={resizeCanvasOpen}
@@ -1421,7 +1420,7 @@ export function RightSidebar(): React.JSX.Element {
           sequenceStepCount={sequenceRequestPreview.stepCount}
           setRequestPreviewMode={setRequestPreviewMode}
         />
-      </AppModal>
+      </DetailModal>
     </>
   );
 }

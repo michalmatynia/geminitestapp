@@ -8,7 +8,7 @@ import { DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY } from '@/shared/lib/db/databa
 import {
   PageLayout,
   Button,
-  DataTable,
+  StandardDataTablePanel,
   useToast,
   FormSection,
   RefreshButton,
@@ -233,43 +233,35 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
       />
 
       {/* Collections Table */}
-      <FormSection
+      <StandardDataTablePanel
         title='Collections'
-        actions={(
+        headerActions={(
           <RefreshButton
             onRefresh={(): void => { void schemaQuery.refetch(); }}
             isRefreshing={schemaQuery.isFetching}
           />
         )}
-        className='p-6'
-      >
-        <div className='mt-4'>
-          {schemaQuery.isLoading && (
-            <LoadingState message='Loading collections...' className='py-8' />
-          )}
-
-          {schemaQuery.isError && (
+        columns={columns}
+        data={rows}
+        isLoading={schemaQuery.isLoading}
+        initialSorting={[{ id: 'name', desc: false }]}
+        sortingStorageKey='stardb:control-panel:sorting'
+        variant='flat'
+        alerts={
+          copyMutation.isPending && (
+            <Alert variant='info' className='mb-3 px-3 py-2 text-xs'>
+              Copying collection... This may take a moment.
+            </Alert>
+          )
+        }
+        emptyState={
+          schemaQuery.isError ? (
             <p className='py-4 text-center text-red-300 text-sm'>
               {schemaQuery.error?.message ?? 'Failed to load collections.'}
             </p>
-          )}
-
-          {!schemaQuery.isLoading && !schemaQuery.isError && (
-            <DataTable
-              columns={columns}
-              data={rows}
-              initialSorting={[{ id: 'name', desc: false }]}
-              sortingStorageKey='stardb:control-panel:sorting'
-            />
-          )}
-
-          {copyMutation.isPending && (
-            <Alert variant='info' className='mt-3 px-3 py-2 text-xs'>
-              Copying collection... This may take a moment.
-            </Alert>
-          )}
-        </div>
-      </FormSection>
+          ) : undefined
+        }
+      />
 
       {/* JSON Backup & Restore */}
       <CollapsibleSection

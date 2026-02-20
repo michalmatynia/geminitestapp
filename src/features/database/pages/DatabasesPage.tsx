@@ -6,7 +6,6 @@ import { useState, useCallback } from 'react';
 import { logClientError } from '@/features/observability';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
-  DataTable,
   Button,
   useToast,
   
@@ -14,7 +13,7 @@ import {
   type FileUploadHelpers,
   PageLayout,
   Alert,
-  Card,
+  StandardDataTablePanel,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -290,18 +289,19 @@ function DatabasesContent(): React.JSX.Element {
           Backups are disabled in production. Create or upload backups in a non-production environment.
         </Alert>
       )}
-      <Card variant='glass' padding='lg'>
-        <DataTable
-          columns={getDatabaseColumns({
-            onPreview: handlePreview,
-            onRestoreRequest: handleRestoreRequest,
-            onDeleteRequest: (name: string): void => { handleDeleteRequest(name); },
-          })}
-          data={data}
-          initialSorting={[{ id: 'lastModifiedAt', desc: true }]}
-          sortingStorageKey={`stardb:database-backups:${activeTab}:sorting`}
-        />
-      </Card>
+      
+      <StandardDataTablePanel
+        columns={getDatabaseColumns({
+          onPreview: handlePreview,
+          onRestoreRequest: handleRestoreRequest,
+          onDeleteRequest: (name: string): void => { handleDeleteRequest(name); },
+        })}
+        data={data}
+        isLoading={backupsQuery.isLoading}
+        initialSorting={[{ id: 'lastModifiedAt', desc: true }]}
+        sortingStorageKey={`stardb:database-backups:${activeTab}:sorting`}
+        variant='flat'
+      />
     </PageLayout>
   );
 }

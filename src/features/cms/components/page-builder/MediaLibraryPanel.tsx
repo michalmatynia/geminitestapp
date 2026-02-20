@@ -127,6 +127,6 @@ export function MediaLibraryPanel({
           />
         </div>
       </div>
-    </AppModal>
+    </DetailModal>
   );
 }

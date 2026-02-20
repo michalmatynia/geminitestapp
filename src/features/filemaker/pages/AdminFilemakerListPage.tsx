@@ -16,7 +16,6 @@ import {
   TabsTrigger,
   TabsContent,
   EmptyState,
-  DataTable
 } from '@/shared/ui';
 
 import {
@@ -205,71 +204,88 @@ export function AdminFilemakerListPage(): React.JSX.Element {
         ]}
       />
 
-      <StandardDataTablePanel
-        filters={
-          <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
-            <div className='flex items-center gap-2'>
-              <Badge variant='outline' className='text-[10px]'>Persons: {persons.length}</Badge>
-              <Badge variant='outline' className='text-[10px]'>Organizations: {organizations.length}</Badge>
-              <Badge variant='outline' className='text-[10px]'>Addresses: {database.addresses.length}</Badge>
-            </div>
-            <div className='w-full max-w-sm'>
-              <SearchInput
-                value={query}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                  setQuery(event.target.value);
-                }}
-                onClear={() => setQuery('')}
-                placeholder='Search name, address, NIP, REGON, phone...'
-                size='sm'
+      <Tabs defaultValue='persons' className='w-full'>
+        <TabsList className='mb-4'>
+          <TabsTrigger value='persons' className='gap-2'>
+            <Users className='size-3.5' />
+            Persons
+          </TabsTrigger>
+          <TabsTrigger value='organizations' className='gap-2'>
+            <Building2 className='size-3.5' />
+            Organizations
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value='persons' className='m-0'>
+          <StandardDataTablePanel
+            filters={
+              <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+                <div className='flex items-center gap-2'>
+                  <Badge variant='outline' className='text-[10px]'>Persons: {persons.length}</Badge>
+                  <Badge variant='outline' className='text-[10px]'>Organizations: {organizations.length}</Badge>
+                  <Badge variant='outline' className='text-[10px]'>Addresses: {database.addresses.length}</Badge>
+                </div>
+                <div className='w-full max-w-sm'>
+                  <SearchInput
+                    value={query}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                      setQuery(event.target.value);
+                    }}
+                    onClear={() => setQuery('')}
+                    placeholder='Search name, address, NIP, REGON, phone...'
+                    size='sm'
+                  />
+                </div>
+              </div>
+            }
+            columns={personColumns}
+            data={persons}
+            isLoading={settingsStore.isLoading}
+            variant='flat'
+            emptyState={
+              <EmptyState
+                title={query ? 'No persons found' : 'No persons yet'}
+                description={query ? 'Try adjusting your search terms.' : 'Add your first person to the database.'}
               />
-            </div>
-          </div>
-        }
-        columns={[]}
-        data={[]}
-      >
-        <Tabs defaultValue='persons' className='w-full'>
-          <TabsList className='mb-4'>
-            <TabsTrigger value='persons' className='gap-2'>
-              <Users className='size-3.5' />
-              Persons
-            </TabsTrigger>
-            <TabsTrigger value='organizations' className='gap-2'>
-              <Building2 className='size-3.5' />
-              Organizations
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value='persons' className='m-0'>
-            <DataTable
-              columns={personColumns}
-              data={persons}
-              isLoading={settingsStore.isLoading}
-              emptyState={
-                <EmptyState
-                  title={query ? 'No persons found' : 'No persons yet'}
-                  description={query ? 'Try adjusting your search terms.' : 'Add your first person to the database.'}
-                />
-              }
-            />
-          </TabsContent>
-          
-          <TabsContent value='organizations' className='m-0'>
-            <DataTable
-              columns={orgColumns}
-              data={organizations}
-              isLoading={settingsStore.isLoading}
-              emptyState={
-                <EmptyState
-                  title={query ? 'No organizations found' : 'No organizations yet'}
-                  description={query ? 'Try adjusting your search terms.' : 'Add your first organization to the database.'}
-                />
-              }
-            />
-          </TabsContent>
-        </Tabs>
-      </StandardDataTablePanel>
+            }
+          />
+        </TabsContent>
+        
+        <TabsContent value='organizations' className='m-0'>
+          <StandardDataTablePanel
+            filters={
+              <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+                <div className='flex items-center gap-2'>
+                  <Badge variant='outline' className='text-[10px]'>Persons: {persons.length}</Badge>
+                  <Badge variant='outline' className='text-[10px]'>Organizations: {organizations.length}</Badge>
+                  <Badge variant='outline' className='text-[10px]'>Addresses: {database.addresses.length}</Badge>
+                </div>
+                <div className='w-full max-w-sm'>
+                  <SearchInput
+                    value={query}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                      setQuery(event.target.value);
+                    }}
+                    onClear={() => setQuery('')}
+                    placeholder='Search name, address, NIP, REGON, phone...'
+                    size='sm'
+                  />
+                </div>
+              </div>
+            }
+            columns={orgColumns}
+            data={organizations}
+            isLoading={settingsStore.isLoading}
+            variant='flat'
+            emptyState={
+              <EmptyState
+                title={query ? 'No organizations found' : 'No organizations yet'}
+                description={query ? 'Try adjusting your search terms.' : 'Add your first organization to the database.'}
+              />
+            }
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

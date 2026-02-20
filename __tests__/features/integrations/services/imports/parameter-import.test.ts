@@ -4,7 +4,7 @@ import {
   applyBaseParameterImport,
   extractBaseParameters,
 } from '@/features/integrations/services/imports/parameter-import';
-import type { ParameterRepository } from '@/shared/contracts/products/services/parameter-repository';
+import type { ParameterRepository } from '@/shared/contracts/products';
 
 const createInMemoryParameterRepository = (): ParameterRepository => {
   const items: Array<{

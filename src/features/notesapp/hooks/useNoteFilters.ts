@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-import type { UseNoteFiltersProps } from '@/shared/contracts/notes/notes-hooks';
+import type { UseNoteFiltersProps } from '@/shared/contracts/notes';
 import type { NoteWithRelationsDto as NoteWithRelations } from '@/shared/contracts/notes';
 
 export type UseNoteFiltersResult = {

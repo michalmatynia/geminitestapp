@@ -1,8 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { randomUUID } from 'crypto';
 
-import { getCaseResolverOcrJobById } from '@/features/case-resolver/server/ocr-runtime-job-store';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import {
+  createCaseResolverOcrJob,
+  getCaseResolverOcrJobById,
+  markCaseResolverOcrJobFailed,
+  setCaseResolverOcrJobDispatchMode,
+} from '@/features/case-resolver/server/ocr-runtime-job-store';
+import { DEFAULT_CASE_RESOLVER_OCR_PROMPT } from '@/features/case-resolver/settings';
+import {
+  enqueueCaseResolverOcrJob,
+  startCaseResolverOcrQueue,
+} from '@/features/jobs/workers/caseResolverOcrQueue';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
+
+const retryCaseResolverOcrJobSchema = z.object({
+  action: z.literal('retry'),
+  model: z.string().trim().optional(),
+  prompt: z.string().trim().optional(),
+  correlationId: z.string().trim().optional(),
+});
+const CASE_RESOLVER_OCR_DEFAULT_MAX_ATTEMPTS = 3;
 
 export async function GET_handler(
   _req: NextRequest,
@@ -22,3 +43,80 @@ export async function GET_handler(
   return NextResponse.json({ job });
 }
 
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { jobId: string }
+): Promise<Response> {
+  const jobId = params.jobId?.trim();
+  if (!jobId) {
+    throw badRequestError('Job id is required.');
+  }
+
+  const sourceJob = await getCaseResolverOcrJobById(jobId);
+  if (!sourceJob) {
+    throw notFoundError('OCR job not found.', { jobId });
+  }
+
+  const body = (await req.json().catch(() => null)) as unknown;
+  const parsed = retryCaseResolverOcrJobSchema.safeParse(body);
+  if (!parsed.success) {
+    throw badRequestError('Invalid payload.', { errors: parsed.error.format() });
+  }
+
+  const runtimeModel =
+    parsed.data.model?.trim() || sourceJob.model?.trim() || '';
+  const runtimePrompt =
+    parsed.data.prompt?.trim() ||
+    sourceJob.prompt?.trim() ||
+    DEFAULT_CASE_RESOLVER_OCR_PROMPT;
+  const runtimeCorrelationId =
+    parsed.data.correlationId?.trim() ||
+    req.headers.get('x-correlation-id')?.trim() ||
+    sourceJob.correlationId?.trim() ||
+    `case-resolver-ocr-${randomUUID()}`;
+
+  const retriedJob = await createCaseResolverOcrJob({
+    filepath: sourceJob.filepath,
+    model: runtimeModel || null,
+    prompt: runtimePrompt,
+    retryOfJobId: sourceJob.id,
+    correlationId: runtimeCorrelationId,
+    maxAttempts: sourceJob.maxAttempts || CASE_RESOLVER_OCR_DEFAULT_MAX_ATTEMPTS,
+  });
+
+  let dispatchMode: 'queued' | 'inline';
+  try {
+    startCaseResolverOcrQueue();
+    dispatchMode = await enqueueCaseResolverOcrJob({
+      jobId: retriedJob.id,
+      filepath: retriedJob.filepath,
+      model: runtimeModel,
+      prompt: runtimePrompt,
+      correlationId: runtimeCorrelationId,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Failed to dispatch OCR runtime retry job.';
+    await markCaseResolverOcrJobFailed(retriedJob.id, message);
+    throw operationFailedError('Failed to dispatch OCR runtime retry job.', {
+      jobId: retriedJob.id,
+      retriedFromJobId: sourceJob.id,
+      reason: message,
+    });
+  }
+
+  await setCaseResolverOcrJobDispatchMode(retriedJob.id, dispatchMode);
+  const latestJob =
+    (await getCaseResolverOcrJobById(retriedJob.id)) ?? retriedJob;
+
+  return NextResponse.json(
+    {
+      job: latestJob,
+      dispatchMode,
+      retriedFromJobId: sourceJob.id,
+      correlationId: latestJob.correlationId ?? runtimeCorrelationId,
+    },
+    { status: 201 }
+  );
+}

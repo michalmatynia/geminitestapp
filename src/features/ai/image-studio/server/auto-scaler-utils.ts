@@ -7,6 +7,7 @@ import {
   analyzeImageObjectFromRgba,
   normalizeImageStudioAnalysisLayoutConfig,
   type ImageStudioAutoScalePlan,
+  type ImageStudioDetectionDetails,
   type ImageStudioObjectAnalysisResult,
   type NormalizedImageStudioAnalysisLayoutConfig,
 } from '@/features/ai/image-studio/analysis/shared';
@@ -31,6 +32,8 @@ export type ImageStudioAutoScalerResult = {
   sourceObjectBounds: ImageStudioCenterObjectBounds;
   targetObjectBounds: ImageStudioCenterObjectBounds;
   detectionUsed: Exclude<ImageStudioCenterDetectionMode, 'auto'>;
+  confidenceBefore: number;
+  detectionDetails: ImageStudioDetectionDetails | null;
   scale: number;
   layout: NormalizedImageStudioAnalysisLayoutConfig;
   whitespaceBefore: ImageStudioObjectAnalysisResult['whitespace'];
@@ -44,6 +47,8 @@ export type ImageStudioAnalysisSummary = {
   height: number;
   sourceObjectBounds: ImageStudioCenterObjectBounds;
   detectionUsed: Exclude<ImageStudioCenterDetectionMode, 'auto'>;
+  confidence: number;
+  detectionDetails: ImageStudioDetectionDetails | null;
   whitespace: ImageStudioObjectAnalysisResult['whitespace'];
   objectAreaPercent: number;
   layout: NormalizedImageStudioAnalysisLayoutConfig;
@@ -173,6 +178,8 @@ export async function analyzeImageByAutoScalerLayout(
     height,
     sourceObjectBounds: analysis.sourceObjectBounds,
     detectionUsed: analysis.detectionUsed,
+    confidence: analysis.confidence,
+    detectionDetails: analysis.detectionDetails,
     whitespace: analysis.whitespace,
     objectAreaPercent: analysis.objectAreaPercent,
     layout: analysis.layout,
@@ -254,6 +261,8 @@ export async function autoScaleObjectByAnalysis(
     sourceObjectBounds,
     targetObjectBounds,
     detectionUsed: planned.analysis.detectionUsed,
+    confidenceBefore: planned.analysis.confidence,
+    detectionDetails: planned.analysis.detectionDetails,
     scale: planned.plan.scale,
     layout: normalizedLayout,
     whitespaceBefore: planned.analysis.whitespace,

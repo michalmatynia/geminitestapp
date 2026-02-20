@@ -120,6 +120,12 @@ export const useCaseResolverStateAssetActions = ({
 }: UseCaseResolverStateAssetActionsInput): UseCaseResolverStateAssetActionsResult => {
   const settingsStoreRef = useRef(settingsStore);
   settingsStoreRef.current = settingsStore;
+  const createCaseResolverOcrCorrelationId = useCallback((): string => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return `case-resolver-ocr-${crypto.randomUUID()}`;
+    }
+    return `case-resolver-ocr-${Math.random().toString(36).slice(2, 10)}-${Date.now()}`;
+  }, []);
 
   const uploadSourceFileToCaseResolver = useCallback(
     async (sourceFile: File, targetFolderPath: string): Promise<CaseResolverUploadedFile> => {
@@ -170,15 +176,18 @@ export const useCaseResolverStateAssetActions = ({
       filepath: string;
       runtime: { model: string; prompt: string };
     }): Promise<string> => {
+      const correlationId = createCaseResolverOcrCorrelationId();
       const response = await fetch('/api/case-resolver/ocr/jobs', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Correlation-Id': correlationId,
         },
         body: JSON.stringify({
           filepath: input.filepath,
           model: input.runtime.model,
           prompt: input.runtime.prompt,
+          correlationId,
         }),
       });
       if (!response.ok) {
@@ -195,7 +204,7 @@ export const useCaseResolverStateAssetActions = ({
       }
       return jobIdRaw.trim();
     },
-    []
+    [createCaseResolverOcrCorrelationId]
   );
 
   const pollImageOcrRuntimeJob = useCallback(

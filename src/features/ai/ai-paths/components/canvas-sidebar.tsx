@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 
 import type { AiNode, NodeDefinition } from '@/features/ai/ai-paths/lib';
 import { createParserMappings, formatRuntimeValue } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, Textarea, StatusBadge } from '@/shared/ui';
+import { Button, Input, Label, Textarea, StatusBadge, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import {
@@ -155,8 +155,8 @@ export function CanvasSidebar(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <div
-        className='rounded-lg border border-border/60 bg-card/40 p-4'
+      <Card
+        className='border-border/60 bg-card/40 p-4'
         data-edge-panel
       >
         <div className='mb-3 flex items-center justify-between'>
@@ -297,10 +297,11 @@ export function CanvasSidebar(): React.JSX.Element {
             )}
           </div>
         )}
-      </div>
-
-      {!selectedEdgeId && (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+              </Card>
+      
+              {!selectedEdgeId && (
+      
+        <Card className='border-border/60 bg-card/40 p-4'>
           <div className='mb-3 text-sm font-semibold text-white'>Inspector</div>
           {selectedNode ? (
             <div className='space-y-3 text-xs text-gray-300'>
@@ -475,11 +476,11 @@ export function CanvasSidebar(): React.JSX.Element {
               Select a node to inspect inputs, outputs, and configuration.
             </div>
           )}
-        </div>
+        </Card>
       )}
 
       {showRunControls && (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+        <Card className='border-border/60 bg-card/40 p-4'>
           <div className='mb-3 flex items-center justify-between'>
             <span className='text-sm font-semibold text-white'>Run Controls</span>
             <StatusBadge
@@ -558,10 +559,10 @@ export function CanvasSidebar(): React.JSX.Element {
               </Button>
             )}
           </div>
-        </div>
+        </Card>
       )}
 
-      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+      <Card className='border-border/60 bg-card/40 p-4'>
         <div className='mb-3 text-sm font-semibold text-white'>Connections</div>
         <div className='space-y-2 text-xs text-gray-400'>
           <div>Active wires: {edges.length}</div>
@@ -710,7 +711,7 @@ export function CanvasSidebar(): React.JSX.Element {
             })}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

@@ -493,6 +493,7 @@ const DEFAULT_CASE_LIST_VIEW_DEFAULTS: CaseListViewDefaults = {
 };
 const CASE_RESOLVER_CASE_READY_MAX_ATTEMPTS = 20;
 const CASE_RESOLVER_CASE_READY_INTERVAL_MS = 250;
+const CASE_RESOLVER_VISIBLE_CASE_ROOT_BATCH_SIZE = 200;
 
 const normalizeCaseListViewDefaults = (
   preferences: UserPreferences | undefined,
@@ -913,6 +914,33 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       ),
     [files],
   );
+  const caseTagById = useMemo(
+    () =>
+      new Map<string, CaseResolverTag>(
+        caseResolverTags.map((tag: CaseResolverTag) => [tag.id, tag]),
+      ),
+    [caseResolverTags],
+  );
+  const caseIdentifierById = useMemo(
+    () =>
+      new Map<string, CaseResolverIdentifier>(
+        caseResolverIdentifiers.map((identifier: CaseResolverIdentifier) => [
+          identifier.id,
+          identifier,
+        ]),
+      ),
+    [caseResolverIdentifiers],
+  );
+  const caseCategoryById = useMemo(
+    () =>
+      new Map<string, CaseResolverCategory>(
+        caseResolverCategories.map((category: CaseResolverCategory) => [
+          category.id,
+          category,
+        ]),
+      ),
+    [caseResolverCategories],
+  );
   const caseTagPathById = useMemo(
     () => buildPathLabelMap(caseResolverTags),
     [caseResolverTags],
@@ -1230,6 +1258,29 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       caseViewMode === 'hierarchy' ? filteredCaseTree : flatCaseNodes,
     [caseViewMode, filteredCaseTree, flatCaseNodes],
   );
+  const [visibleCaseRootCount, setVisibleCaseRootCount] = useState(
+    CASE_RESOLVER_VISIBLE_CASE_ROOT_BATCH_SIZE,
+  );
+  useEffect(() => {
+    setVisibleCaseRootCount(CASE_RESOLVER_VISIBLE_CASE_ROOT_BATCH_SIZE);
+  }, [displayedCaseNodes.length, caseViewMode]);
+  const visibleCaseNodes = useMemo(
+    (): CaseTreeNode[] =>
+      displayedCaseNodes.slice(0, visibleCaseRootCount),
+    [displayedCaseNodes, visibleCaseRootCount],
+  );
+  const hiddenCaseRootCount = Math.max(
+    0,
+    displayedCaseNodes.length - visibleCaseRootCount,
+  );
+  const handleLoadMoreCaseRoots = useCallback((): void => {
+    setVisibleCaseRootCount((current: number): number =>
+      Math.min(
+        current + CASE_RESOLVER_VISIBLE_CASE_ROOT_BATCH_SIZE,
+        displayedCaseNodes.length,
+      ),
+    );
+  }, [displayedCaseNodes.length]);
   const hasActiveCaseFilters = useMemo(
     (): boolean =>
       caseSearchQuery.trim() !== '' ||
@@ -2345,28 +2396,19 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           const isCollapsed = collapsedCaseIds.has(file.id);
           const caseIdentifierId = file.caseIdentifierId;
           const parentCase = file.parentCaseId
-            ? (workspace.files.find(
-              (candidate: CaseResolverFile) =>
-                candidate.id === file.parentCaseId,
-            ) ?? null)
+            ? (filesById.get(file.parentCaseId) ?? null)
             : null;
-          const referencedCases = file.referenceCaseIds
-            .map(
-              (referenceCaseId: string) =>
-                workspace.files.find(
-                  (candidate: CaseResolverFile) =>
-                    candidate.id === referenceCaseId,
-                ) ?? null,
-            )
-            .filter(
-              (
-                candidate: CaseResolverFile | null,
-              ): candidate is CaseResolverFile => candidate !== null,
-            );
-          const editReferenceOptions = caseReferenceOptions.filter(
-            (option: { value: string; label: string }) =>
-              option.value !== file.id,
+          const referencedCaseCount = file.referenceCaseIds.reduce(
+            (count: number, referenceCaseId: string): number =>
+              filesById.has(referenceCaseId) ? count + 1 : count,
+            0,
           );
+          const editReferenceOptions = isEditing
+            ? caseReferenceOptions.filter(
+              (option: { value: string; label: string }) =>
+                option.value !== file.id,
+            )
+            : caseReferenceOptions;
 
           return (
             <div key={file.id} className='space-y-2'>
@@ -2537,18 +2579,16 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                             Parent: {parentCase.name}
                           </Badge>
                         ) : null}
-                        {referencedCases.length > 0 ? (
+                        {referencedCaseCount > 0 ? (
                           <Badge variant='outline' className='text-[10px]'>
                             <Link2 className='mr-1 size-3' />
-                            {referencedCases.length} reference
-                            {referencedCases.length === 1 ? '' : 's'}
+                            {referencedCaseCount} reference
+                            {referencedCaseCount === 1 ? '' : 's'}
                           </Badge>
                         ) : null}
                         {file.tagId ? (
                           <Badge variant='outline' className='text-[10px]'>
-                            {caseResolverTags.find(
-                              (tag: CaseResolverTag) => tag.id === file.tagId,
-                            )?.name ?? 'Tag'}
+                            {caseTagById.get(file.tagId)?.name ?? 'Tag'}
                           </Badge>
                         ) : null}
                         {caseIdentifierId ? (
@@ -2565,20 +2605,15 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                               className='cursor-pointer text-[10px] hover:bg-muted/60'
                             >
                               {caseIdentifierPathById.get(caseIdentifierId) ??
-                                caseResolverIdentifiers.find(
-                                  (identifier: CaseResolverIdentifier) =>
-                                    identifier.id === caseIdentifierId,
-                                )?.name ??
+                                caseIdentifierById.get(caseIdentifierId)?.name ??
                                 'Case Identifier'}
                             </Badge>
                           </button>
                         ) : null}
                         {file.categoryId ? (
                           <Badge variant='outline' className='text-[10px]'>
-                            {caseResolverCategories.find(
-                              (category: CaseResolverCategory) =>
-                                category.id === file.categoryId,
-                            )?.name ?? 'Category'}
+                            {caseCategoryById.get(file.categoryId)?.name ??
+                              'Category'}
                           </Badge>
                         ) : null}
                       </div>
@@ -2656,14 +2691,15 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       </div>
     ),
     [
+      caseCategoryById,
+      caseIdentifierById,
       caseIdentifierPathById,
       caseReferenceOptions,
-      caseResolverCategories,
       caseResolverCategoryOptions,
-      caseResolverIdentifiers,
-      caseResolverTags,
       caseResolverTagOptions,
+      caseTagById,
       collapsedCaseIds,
+      filesById,
       handleCreateCaseIdentifier,
       editingCaseCaseIdentifierId,
       editingCaseCategoryId,
@@ -2683,7 +2719,6 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       handleViewCase,
       toggleCaseCollapsed,
       updateSetting.isPending,
-      workspace.files,
     ],
   );
 
@@ -2851,7 +2886,21 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                 </Button>
               </div>
             ) : (
-              renderCaseTree(displayedCaseNodes, 0)
+              <div className='space-y-3'>
+                {renderCaseTree(visibleCaseNodes, 0)}
+                {hiddenCaseRootCount > 0 ? (
+                  <div className='flex items-center justify-center'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      onClick={handleLoadMoreCaseRoots}
+                    >
+                      Load more cases ({hiddenCaseRootCount} remaining)
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
             )}
           </div>
         </div>

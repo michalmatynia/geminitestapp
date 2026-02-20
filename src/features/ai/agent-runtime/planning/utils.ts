@@ -9,7 +9,7 @@ import type {
   PlannerAlternative,
   PlannerCritique,
   PlannerMeta,
-} from '@/shared/contracts/agent-runtime/agent';
+} from '@/shared/contracts/agent-runtime';
 
 export type PlanHierarchy = {
   goals: Array<{

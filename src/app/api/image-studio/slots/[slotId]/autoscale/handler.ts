@@ -9,6 +9,7 @@ import type { ImageStudioObjectWhitespaceMetrics } from '@/features/ai/image-stu
 import {
   IMAGE_STUDIO_AUTOSCALER_ERROR_CODES,
   imageStudioAutoScalerRequestSchema,
+  imageStudioAutoScalerResponseSchema,
   type ImageStudioAutoScalerErrorCode,
   type ImageStudioAutoScalerMode,
   type ImageStudioAutoScalerRequest,
@@ -35,7 +36,11 @@ import {
   createImageStudioSlots,
   getImageStudioSlotById,
 } from '@/features/ai/image-studio/server/slot-repository';
-import { getDiskPathFromPublicPath, getImageFileRepository } from '@/features/files/server';
+import {
+  loadSourceBufferFromSlot,
+  parseImageDataUrl,
+} from '@/features/ai/image-studio/server/source-image-utils';
+import { getImageFileRepository } from '@/features/files/server';
 import { logSystemEvent } from '@/features/observability/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
@@ -109,18 +114,6 @@ const readIdempotencyKey = (req: NextRequest): string | null => {
   return normalized.length >= 8 ? normalized : null;
 };
 
-function parseDataUrl(dataUrl: string): { buffer: Buffer; mime: string } | null {
-  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/i);
-  if (!match) return null;
-  try {
-    const buffer = Buffer.from(match[2] ?? '', 'base64');
-    const mime = (match[1] ?? 'image/png').toLowerCase();
-    return { buffer, mime };
-  } catch {
-    return null;
-  }
-}
-
 const parseJsonFormValue = <T,>(value: FormDataEntryValue | null): T | undefined => {
   if (typeof value !== 'string') return undefined;
   const normalized = value.trim();
@@ -184,76 +177,6 @@ function guessExtension(mime: string): string {
   if (clean.includes('webp')) return '.webp';
   if (clean.includes('avif')) return '.avif';
   return '.png';
-}
-
-function normalizePublicPath(filepath: string): string {
-  let normalized = filepath.trim().replace(/\\/g, '/');
-  if (!normalized) return '';
-  if (/^https?:\/\//i.test(normalized)) return normalized;
-  if (normalized.startsWith('public/')) {
-    normalized = normalized.slice('public'.length);
-  }
-  if (!normalized.startsWith('/')) normalized = `/${normalized}`;
-  return normalized;
-}
-
-async function loadSourceBuffer(slot: StudioSlotRecord): Promise<{ buffer: Buffer; mimeHint: string | null }> {
-  const base64Candidate =
-    typeof slot.imageBase64 === 'string' && slot.imageBase64.trim().startsWith('data:')
-      ? slot.imageBase64.trim()
-      : null;
-  if (base64Candidate) {
-    const parsed = parseDataUrl(base64Candidate);
-    if (parsed) {
-      return { buffer: parsed.buffer, mimeHint: parsed.mime };
-    }
-  }
-
-  const sourcePath = slot.imageFile?.filepath ?? slot.imageUrl ?? null;
-  if (!sourcePath) {
-    throw autoScaleBadRequest(
-      IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.SOURCE_IMAGE_MISSING,
-      'Slot has no source image to auto scale.'
-    );
-  }
-
-  const normalizedPath = normalizePublicPath(sourcePath);
-  if (!normalizedPath) {
-    throw autoScaleBadRequest(
-      IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.SOURCE_IMAGE_INVALID,
-      'Slot source image path is invalid.'
-    );
-  }
-
-  if (/^https?:\/\//i.test(normalizedPath)) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), SOURCE_FETCH_TIMEOUT_MS);
-    try {
-      const response = await fetch(normalizedPath, { signal: controller.signal });
-      if (!response.ok) {
-        throw autoScaleBadRequest(
-          IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.SOURCE_IMAGE_INVALID,
-          `Failed to fetch source image (${response.status}).`,
-          { status: response.status }
-        );
-      }
-      const contentType = response.headers.get('content-type');
-      const arrayBuffer = await response.arrayBuffer();
-      return {
-        buffer: Buffer.from(arrayBuffer),
-        mimeHint: contentType ? contentType.toLowerCase() : null,
-      };
-    } finally {
-      clearTimeout(timeoutId);
-    }
-  }
-
-  const diskPath = getDiskPathFromPublicPath(normalizedPath);
-  const buffer = await fs.readFile(diskPath);
-  return {
-    buffer,
-    mimeHint: slot.imageFile?.mimetype?.toLowerCase() ?? null,
-  };
 }
 
 const buildClientPayloadSignature = (
@@ -444,7 +367,26 @@ async function processAutoScalerPayload(input: {
 
   if (preferAuthoritativeSource || isClientAutoScaleMode(payload.mode)) {
     try {
-      const source = await loadSourceBuffer(sourceSlot);
+      const source = await loadSourceBufferFromSlot({
+        slot: sourceSlot,
+        sourceFetchTimeoutMs: SOURCE_FETCH_TIMEOUT_MS,
+        onMissingSource: () =>
+          autoScaleBadRequest(
+            IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.SOURCE_IMAGE_MISSING,
+            'Slot has no source image to auto scale.'
+          ),
+        onInvalidSource: () =>
+          autoScaleBadRequest(
+            IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.SOURCE_IMAGE_INVALID,
+            'Slot source image path is invalid.'
+          ),
+        onRemoteFetchFailed: (status) =>
+          autoScaleBadRequest(
+            IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.SOURCE_IMAGE_INVALID,
+            `Failed to fetch source image (${status}).`,
+            { status }
+          ),
+      });
       const metadata = await sharp(source.buffer).metadata();
       sourceWidth = metadata.width ?? sourceSlot.imageFile?.width ?? 0;
       sourceHeight = metadata.height ?? sourceSlot.imageFile?.height ?? 0;
@@ -582,7 +524,7 @@ async function processAutoScalerPayload(input: {
     };
   }
 
-  const parsedData = parseDataUrl(payload.dataUrl ?? '');
+  const parsedData = parseImageDataUrl(payload.dataUrl ?? '');
   if (!parsedData) {
     throw autoScaleBadRequest(
       IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.CLIENT_DATA_URL_INVALID,
@@ -716,29 +658,28 @@ export async function postAutoScaleSlotHandler(
       const existingSlot = await getImageStudioSlotById(existingByRequest.targetSlotId);
       if (existingSlot) {
         const existingAutoScale = readAutoScaleMetadataFromSlot(existingSlot);
-        return NextResponse.json(
-          {
-            slot: existingSlot,
-            mode: payload.mode,
-            effectiveMode: existingAutoScale.effectiveMode ?? payload.mode,
-            sourceObjectBounds: existingAutoScale.sourceObjectBounds,
-            targetObjectBounds: existingAutoScale.targetObjectBounds,
-            layout: existingAutoScale.layout,
-            detectionUsed: existingAutoScale.detectionUsed,
-            scale: existingAutoScale.scale,
-            whitespaceBefore: existingAutoScale.whitespaceBefore,
-            whitespaceAfter: existingAutoScale.whitespaceAfter,
-            objectAreaPercentBefore: existingAutoScale.objectAreaPercentBefore,
-            objectAreaPercentAfter: existingAutoScale.objectAreaPercentAfter,
-            requestId: idempotencyKey,
-            fingerprint,
-            deduplicated: true,
-            dedupeReason: 'request',
-            lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
-            pipelineVersion: AUTOSCALE_PIPELINE_VERSION,
-          },
-          { status: 200 }
-        );
+        const responseBody = imageStudioAutoScalerResponseSchema.parse({
+          sourceSlotId: sourceSlot.id,
+          slot: existingSlot,
+          mode: payload.mode,
+          effectiveMode: existingAutoScale.effectiveMode ?? payload.mode,
+          sourceObjectBounds: existingAutoScale.sourceObjectBounds,
+          targetObjectBounds: existingAutoScale.targetObjectBounds,
+          layout: existingAutoScale.layout,
+          detectionUsed: existingAutoScale.detectionUsed,
+          scale: existingAutoScale.scale,
+          whitespaceBefore: existingAutoScale.whitespaceBefore,
+          whitespaceAfter: existingAutoScale.whitespaceAfter,
+          objectAreaPercentBefore: existingAutoScale.objectAreaPercentBefore,
+          objectAreaPercentAfter: existingAutoScale.objectAreaPercentAfter,
+          requestId: idempotencyKey,
+          fingerprint,
+          deduplicated: true,
+          dedupeReason: 'request',
+          lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
+          pipelineVersion: AUTOSCALE_PIPELINE_VERSION,
+        });
+        return NextResponse.json(responseBody, { status: 200 });
       }
     }
   }
@@ -753,29 +694,28 @@ export async function postAutoScaleSlotHandler(
       const existingSlot = await getImageStudioSlotById(existingFingerprintLink.targetSlotId);
       if (existingSlot) {
         const existingAutoScale = readAutoScaleMetadataFromSlot(existingSlot);
-        return NextResponse.json(
-          {
-            slot: existingSlot,
-            mode: payload.mode,
-            effectiveMode: existingAutoScale.effectiveMode ?? payload.mode,
-            sourceObjectBounds: existingAutoScale.sourceObjectBounds,
-            targetObjectBounds: existingAutoScale.targetObjectBounds,
-            layout: existingAutoScale.layout,
-            detectionUsed: existingAutoScale.detectionUsed,
-            scale: existingAutoScale.scale,
-            whitespaceBefore: existingAutoScale.whitespaceBefore,
-            whitespaceAfter: existingAutoScale.whitespaceAfter,
-            objectAreaPercentBefore: existingAutoScale.objectAreaPercentBefore,
-            objectAreaPercentAfter: existingAutoScale.objectAreaPercentAfter,
-            requestId: idempotencyKey,
-            fingerprint,
-            deduplicated: true,
-            dedupeReason: 'fingerprint',
-            lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
-            pipelineVersion: AUTOSCALE_PIPELINE_VERSION,
-          },
-          { status: 200 }
-        );
+        const responseBody = imageStudioAutoScalerResponseSchema.parse({
+          sourceSlotId: sourceSlot.id,
+          slot: existingSlot,
+          mode: payload.mode,
+          effectiveMode: existingAutoScale.effectiveMode ?? payload.mode,
+          sourceObjectBounds: existingAutoScale.sourceObjectBounds,
+          targetObjectBounds: existingAutoScale.targetObjectBounds,
+          layout: existingAutoScale.layout,
+          detectionUsed: existingAutoScale.detectionUsed,
+          scale: existingAutoScale.scale,
+          whitespaceBefore: existingAutoScale.whitespaceBefore,
+          whitespaceAfter: existingAutoScale.whitespaceAfter,
+          objectAreaPercentBefore: existingAutoScale.objectAreaPercentBefore,
+          objectAreaPercentAfter: existingAutoScale.objectAreaPercentAfter,
+          requestId: idempotencyKey,
+          fingerprint,
+          deduplicated: true,
+          dedupeReason: 'fingerprint',
+          lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
+          pipelineVersion: AUTOSCALE_PIPELINE_VERSION,
+        });
+        return NextResponse.json(responseBody, { status: 200 });
       }
     }
   }
@@ -820,6 +760,7 @@ export async function postAutoScaleSlotHandler(
 
     const imageFileRepository = await getImageFileRepository();
     const imageFile = await imageFileRepository.createImageFile({
+      name: fileName,
       filename: fileName,
       filepath: publicPath,
       mimetype: processed.outputMime,
@@ -952,33 +893,32 @@ export async function postAutoScaleSlotHandler(
       },
     });
 
-    return NextResponse.json(
-      {
-        sourceSlotId: sourceSlot.id,
-        mode: payload.mode,
-        effectiveMode: processed.effectiveMode,
-        slot: createdSlot,
-        output: imageFile,
-        sourceObjectBounds: processed.sourceObjectBounds,
-        targetObjectBounds: processed.targetObjectBounds,
-        layout: processed.layout,
-        detectionUsed: processed.detectionUsed,
-        scale: processed.scale,
-        whitespaceBefore: processed.whitespaceBefore,
-        whitespaceAfter: processed.whitespaceAfter,
-        objectAreaPercentBefore: processed.objectAreaPercentBefore,
-        objectAreaPercentAfter: processed.objectAreaPercentAfter,
-        requestId: idempotencyKey,
-        fingerprint,
-        deduplicated: false,
-        lifecycle: {
-          state: 'persisted',
-          durationMs,
-        },
-        pipelineVersion: AUTOSCALE_PIPELINE_VERSION,
+    const responseBody = imageStudioAutoScalerResponseSchema.parse({
+      sourceSlotId: sourceSlot.id,
+      mode: payload.mode,
+      effectiveMode: processed.effectiveMode,
+      slot: createdSlot,
+      output: imageFile,
+      sourceObjectBounds: processed.sourceObjectBounds,
+      targetObjectBounds: processed.targetObjectBounds,
+      layout: processed.layout,
+      detectionUsed: processed.detectionUsed,
+      scale: processed.scale,
+      whitespaceBefore: processed.whitespaceBefore,
+      whitespaceAfter: processed.whitespaceAfter,
+      objectAreaPercentBefore: processed.objectAreaPercentBefore,
+      objectAreaPercentAfter: processed.objectAreaPercentAfter,
+      requestId: idempotencyKey,
+      fingerprint,
+      deduplicated: false,
+      lifecycle: {
+        state: 'persisted',
+        durationMs,
       },
-      { status: 201 }
-    );
+      pipelineVersion: AUTOSCALE_PIPELINE_VERSION,
+    });
+
+    return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {
     void logSystemEvent({
       level: 'warn',

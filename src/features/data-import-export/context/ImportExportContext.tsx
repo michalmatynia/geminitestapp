@@ -33,7 +33,7 @@ import type {
   ImportListItem,
   ImportRunDetail,
   DebugWarehouses,
-} from '@/shared/contracts/data-import-export/imports';
+} from '@/shared/contracts/data-import-export';
 import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
@@ -48,7 +48,7 @@ import { useIntegrationsWithConnections } from '@/features/integrations/hooks/us
 import {
   defaultBaseImportParameterImportSettings,
   normalizeBaseImportParameterImportSettings,
-} from '@/shared/contracts/integrations/base-import-parameter-import';
+} from '@/shared/contracts/integrations';
 import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries';
 import { useToast } from '@/shared/ui';
 

@@ -68,7 +68,7 @@ export const ALL_IMAGE_KEYS = [
   'images_all',
 ];
 
-import type { ExportParameterDoc } from '@/shared/contracts/data-import-export/imports';
+import type { ExportParameterDoc } from '@/shared/contracts/data-import-export';
 
 export const EXPORT_PARAMETER_DOCS: ExportParameterDoc[] = [
   { key: 'sku', description: 'Unique product SKU/code.' },

@@ -731,6 +731,7 @@ export const nodeRuntimeConfigSchema = z.object({
     mode: nodeCacheModeSchema.optional(),
     ttlMs: z.number().optional(),
   }).optional(),
+  inputContracts: z.record(z.string(), nodePortContractSchema).optional(),
   inputCardinality: z.record(z.string(), nodePortCardinalitySchema).optional(),
   waitForInputs: z.boolean().optional(),
   timeoutMs: z.number().optional(),
@@ -798,6 +799,8 @@ export const aiNodeSchema = dtoBaseSchema.extend({
   config: nodeConfigSchema.optional(),
   inputs: z.array(z.string()),
   outputs: z.array(z.string()),
+  inputContracts: z.record(z.string(), nodePortContractSchema).optional(),
+  outputContracts: z.record(z.string(), nodePortContractSchema).optional(),
 });
 
 export type AiNodeDto = z.infer<typeof aiNodeSchema>;

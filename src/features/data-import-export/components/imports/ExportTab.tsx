@@ -9,7 +9,7 @@ import type {
   Template,
   WarehouseOption,
   ImageRetryPreset,
-} from '@/shared/contracts/data-import-export/imports';
+} from '@/shared/contracts/data-import-export';
 import {
   getDefaultImageRetryPresets,
   withImageRetryPresetLabels,
@@ -424,7 +424,7 @@ export function ExportTab(): React.JSX.Element {
               ))}
             </div>
           )}
-        </div>
+        </Card>
 
         <DocumentationSection
           title='Export Guidelines'
@@ -527,7 +527,7 @@ export function ExportTab(): React.JSX.Element {
               </Button>
             </Link>
           </div>
-        </div>
+        </Card>
         {debugWarehouses ? (
           <Card className='border-border bg-card/60 p-3 text-xs text-gray-300'>
             <div className='flex flex-wrap items-center justify-between gap-2 mb-2'>
@@ -619,7 +619,7 @@ export function ExportTab(): React.JSX.Element {
                 )}
               </div>
             </div>
-          </div>
+          </Card>
         ) : null}
       </div>
     </Card>

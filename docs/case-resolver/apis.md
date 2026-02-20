@@ -1,0 +1,134 @@
+---
+owner: "Case Resolver Team"
+last_reviewed: "2026-02-20"
+status: "active"
+related_components:
+  - "src/app/api/case-resolver"
+---
+
+# Case Resolver API Reference
+
+## Assets
+
+### `POST /api/case-resolver/assets/upload`
+
+Purpose:
+
+- Upload one or more case resolver assets.
+
+Input:
+
+- `multipart/form-data` with `file` / `files` / `image`
+- optional `folder`
+
+Behavior:
+
+- infers asset kind and resolves storage folder
+- stores files under case-resolver upload category
+
+### `POST /api/case-resolver/assets/extract-pdf`
+
+Purpose:
+
+- Extract plain text from an uploaded PDF.
+
+Input JSON:
+
+- `filepath` (must be under `/uploads/case-resolver/` and `.pdf`)
+
+Output JSON:
+
+- `filepath`
+- `text`
+- `pageCount`
+
+## Documents
+
+### `POST /api/case-resolver/documents/export-pdf`
+
+Purpose:
+
+- Render HTML and return PDF bytes.
+
+Input JSON:
+
+- `html` (required)
+- `filename` (optional, sanitized)
+
+Output:
+
+- `application/pdf` binary response
+
+## OCR Models
+
+### `GET /api/case-resolver/ocr/models`
+
+Purpose:
+
+- Return OCR-capable model candidates from configured sources.
+
+Output JSON (shape summary):
+
+- `models`
+- `ollamaModels`
+- `otherModels`
+- `keySource`
+- optional `warning`
+
+## OCR Jobs
+
+### `POST /api/case-resolver/ocr/jobs`
+
+Purpose:
+
+- Create and dispatch OCR runtime job.
+
+Input JSON:
+
+- `filepath` (required)
+- `model` (optional)
+- `prompt` (optional)
+
+Output JSON:
+
+- `job`
+- `dispatchMode` (`queued` or `inline`)
+
+### `GET /api/case-resolver/ocr/jobs/{jobId}`
+
+Purpose:
+
+- Read OCR job status/result.
+
+Output JSON:
+
+- `job` record
+
+### `POST /api/case-resolver/ocr/jobs/{jobId}`
+
+Purpose:
+
+- Create a retry job linked to existing OCR job.
+
+Input JSON:
+
+- `action: "retry"` (required)
+- `model` (optional override)
+- `prompt` (optional override)
+
+Output JSON:
+
+- `job` (new retry job)
+- `dispatchMode`
+- `retriedFromJobId`
+
+## Error Handling
+
+Case Resolver handlers use standardized app errors (`badRequestError`, `notFoundError`, `operationFailedError`, etc.).
+
+Common failure classes:
+
+- validation errors
+- path safety violations
+- OCR provider/runtime failures
+- queue dispatch failures

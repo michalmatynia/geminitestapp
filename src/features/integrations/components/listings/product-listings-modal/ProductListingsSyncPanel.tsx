@@ -7,7 +7,7 @@ import { useProductListingsContext } from '@/features/integrations/context/Produ
 import type { SyncDirectionDto as SyncDirection } from '@/shared/contracts/products';
 import {
   Button,
-  
+  Card,
 } from '@/shared/ui';
 
 const normalizeIntegrationSlug = (value: string | null | undefined): string =>
@@ -106,7 +106,7 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
   const uploadCount = Array.isArray(product.images) ? product.images.length : 0;
 
   return (
-    <div className='rounded-lg border border-border/60 bg-card/40 p-3'>
+    <Card variant='subtle-compact' padding='sm' className='bg-card/40'>
       <div className='mb-3 flex items-center justify-between'>
         <h4 className='text-xs font-medium uppercase tracking-wide text-gray-400'>
           Sync Configuration
@@ -117,14 +117,14 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
         </div>
       </div>
 
-      <div className='mb-3 rounded-md border border-blue-500/20 bg-blue-500/5 px-2 py-1.5'>
+      <Card variant='subtle-compact' padding='none' className='mb-3 border-blue-500/20 bg-blue-500/5 px-2 py-1.5'>
         <div className='flex items-center gap-2 text-xs text-blue-300'>
           <ArrowRight className='size-3' />
           <span>
             Currently configured for <strong>one-way export</strong> (Product &rarr; Base.com)
           </span>
         </div>
-      </div>
+      </Card>
 
       <div className='space-y-1'>
         {syncFields.map((field) => (
@@ -178,7 +178,7 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
         </div>
       </div>
 
-      <div className='mt-4 rounded-md border border-border bg-card/50 p-3'>
+      <Card variant='subtle-compact' padding='sm' className='mt-4 bg-card/50'>
         <div className='mb-2 flex items-center justify-between'>
           <h5 className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             Images
@@ -205,7 +205,7 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
             Connect this product to Base.com to enable image sync.
           </p>
         )}
-      </div>
-    </div>
+      </Card>
+    </Card>
   );
 }

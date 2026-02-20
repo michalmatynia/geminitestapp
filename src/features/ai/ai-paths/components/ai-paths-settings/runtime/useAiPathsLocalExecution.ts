@@ -720,6 +720,28 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       );
       return;
     }
+    if (compileReport.warnings > 0) {
+      const timestamp = new Date().toISOString();
+      const warningMessage = `Graph compile warnings: ${compileReport.warnings} non-blocking issue(s) detected.`;
+      args.appendRuntimeEvent({
+        source: 'local',
+        kind: 'run_warning',
+        level: 'warn',
+        timestamp,
+        message: warningMessage,
+        nodeId: triggerNode.id,
+        nodeType: triggerNode.type,
+        nodeTitle: triggerNode.title ?? null,
+        metadata: {
+          compile: {
+            errors: compileReport.errors,
+            warnings: compileReport.warnings,
+            findings: compileReport.findings,
+          },
+        },
+      });
+      args.toast(warningMessage, { variant: 'warning' });
+    }
 
     if (args.strictFlowMode) {
       const dependencyReport = inspectPathDependencies(args.normalizedNodes, args.sanitizedEdges);

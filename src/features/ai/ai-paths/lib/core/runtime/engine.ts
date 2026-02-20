@@ -1,26 +1,27 @@
 import type {
+  AiNode,
+  Edge,
+  RuntimeHistoryEntry,
+  RuntimeHistoryLink,
+} from '@/shared/contracts/ai-paths';
+import type {
   AiPathRuntimeProfileEventDto,
   RuntimeProfileNodeStatsDto,
   RuntimeProfileSummaryDto,
   RuntimePortValues,
   RuntimeState,
 } from '@/shared/contracts/ai-paths-runtime';
-import type {
-  AiNode,
-  Edge,
-  RuntimeHistoryEntry,
-  RuntimeHistoryLink,
-} from '@/shared/contracts/ai-paths';
 
 import { DEFAULT_DB_QUERY } from '../constants';
 import {
   appendInputValue,
   cloneValue,
   coerceInput,
+  getNodeInputPortContract,
   hashRuntimeValue,
-  sanitizeEdges,
   getPortDataTypes,
   isValueCompatibleWithTypes,
+  sanitizeEdges,
 } from '../utils';
 import {
   DEFAULT_RETRY_BACKOFF_MS,
@@ -820,24 +821,54 @@ export async function evaluateGraph({
     return true;
   };
 
+  const resolveConfiguredRequiredInputPorts = (
+    node: AiNode,
+    connectedPorts: Set<string>
+  ): string[] => {
+    const configuredPorts = new Set<string>([
+      ...Object.keys(node.inputContracts ?? {}),
+      ...Object.keys(node.config?.runtime?.inputContracts ?? {}),
+      ...Array.from(connectedPorts),
+    ]);
+    node.inputs.forEach((port: string): void => {
+      configuredPorts.add(port);
+    });
+    const explicitRequired = Array.from(configuredPorts).filter(
+      (port: string): boolean => getNodeInputPortContract(node, port).required === true
+    );
+    return explicitRequired;
+  };
+
   const hasRequiredInputs = (node: AiNode, rawInputs: RuntimePortValues): boolean => {
     const incoming = incomingEdgesByNode.get(node.id) ?? [];
     if (incoming.length === 0) return true;
-    if (node.type !== 'database') {
-      const connectedPorts = new Set<string>();
-      incoming.forEach((edge: Edge) => {
-        if (edge.toPort) connectedPorts.add(edge.toPort);
-      });
-      if (connectedPorts.size === 0) return true;
-      return Array.from(connectedPorts).every((port: string) =>
-        (rawInputs)[port] !== undefined
-      );
-    }
     const connectedPorts = new Set<string>();
     incoming.forEach((edge: Edge) => {
       if (edge.toPort) connectedPorts.add(edge.toPort);
     });
     if (connectedPorts.size === 0) return true;
+
+    const explicitRequiredPorts = resolveConfiguredRequiredInputPorts(node, connectedPorts);
+    if (explicitRequiredPorts.length > 0) {
+      const requiredReady = explicitRequiredPorts.every((port: string): boolean => {
+        const value = rawInputs[port];
+        return value !== undefined;
+      });
+      if (!requiredReady) {
+        return false;
+      }
+    }
+
+    if (node.type !== 'database') {
+      const requiredPorts =
+        explicitRequiredPorts.length > 0
+          ? explicitRequiredPorts
+          : Array.from(connectedPorts);
+      return requiredPorts.every((port: string) =>
+        (rawInputs)[port] !== undefined
+      );
+    }
+
     const dbConfig = node.config?.database ?? { operation: 'query' };
     const operation = dbConfig.operation ?? 'query';
     const hasAnyValue = (ports: string[]): boolean =>

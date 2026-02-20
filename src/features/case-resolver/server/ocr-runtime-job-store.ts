@@ -6,18 +6,33 @@ import { getRedisConnection } from '@/shared/lib/queue';
 
 export type CaseResolverOcrJobStatus = 'queued' | 'running' | 'completed' | 'failed';
 export type CaseResolverOcrJobDispatchMode = 'queued' | 'inline';
+export type CaseResolverOcrErrorCategory =
+  | 'timeout'
+  | 'rate_limit'
+  | 'network'
+  | 'provider'
+  | 'validation'
+  | 'unknown';
 
 export type CaseResolverOcrJobRecord = {
   id: string;
   status: CaseResolverOcrJobStatus;
   filepath: string;
+  model: string | null;
+  prompt: string | null;
+  retryOfJobId: string | null;
+  correlationId: string | null;
   dispatchMode: CaseResolverOcrJobDispatchMode | null;
+  attemptsMade: number;
+  maxAttempts: number;
   createdAt: string;
   updatedAt: string;
   startedAt: string | null;
   finishedAt: string | null;
   resultText: string | null;
   errorMessage: string | null;
+  errorCategory: CaseResolverOcrErrorCategory | null;
+  retryableError: boolean | null;
 };
 
 const OCR_RUNTIME_JOB_KEY_PREFIX = 'case-resolver:ocr:job:';
@@ -40,6 +55,19 @@ const isCaseResolverOcrJobDispatchMode = (
   return value === 'queued' || value === 'inline';
 };
 
+const isCaseResolverOcrErrorCategory = (
+  value: unknown
+): value is CaseResolverOcrErrorCategory => {
+  return (
+    value === 'timeout' ||
+    value === 'rate_limit' ||
+    value === 'network' ||
+    value === 'provider' ||
+    value === 'validation' ||
+    value === 'unknown'
+  );
+};
+
 const parseCaseResolverOcrJobRecord = (value: unknown): CaseResolverOcrJobRecord | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const record = value as Record<string, unknown>;
@@ -47,10 +75,43 @@ const parseCaseResolverOcrJobRecord = (value: unknown): CaseResolverOcrJobRecord
   const filepath = typeof record['filepath'] === 'string' ? record['filepath'].trim() : '';
   const status = record['status'];
   if (!id || !filepath || !isCaseResolverOcrJobStatus(status)) return null;
+  const model =
+    typeof record['model'] === 'string' && record['model'].trim().length > 0
+      ? record['model'].trim()
+      : null;
+  const prompt =
+    typeof record['prompt'] === 'string' && record['prompt'].trim().length > 0
+      ? record['prompt']
+      : null;
+  const retryOfJobId =
+    typeof record['retryOfJobId'] === 'string' && record['retryOfJobId'].trim().length > 0
+      ? record['retryOfJobId'].trim()
+      : null;
+  const correlationId =
+    typeof record['correlationId'] === 'string' && record['correlationId'].trim().length > 0
+      ? record['correlationId'].trim()
+      : null;
+  const attemptsMade =
+    typeof record['attemptsMade'] === 'number' && Number.isFinite(record['attemptsMade'])
+      ? Math.max(0, Math.floor(record['attemptsMade']))
+      : 0;
+  const maxAttemptsRaw =
+    typeof record['maxAttempts'] === 'number' && Number.isFinite(record['maxAttempts'])
+      ? Math.floor(record['maxAttempts'])
+      : 1;
+  const maxAttempts = Math.max(1, maxAttemptsRaw);
 
   const dispatchModeRaw = record['dispatchMode'];
   const dispatchMode = isCaseResolverOcrJobDispatchMode(dispatchModeRaw)
     ? dispatchModeRaw
+    : null;
+  const errorCategoryRaw = record['errorCategory'];
+  const errorCategory = isCaseResolverOcrErrorCategory(errorCategoryRaw)
+    ? errorCategoryRaw
+    : null;
+  const retryableErrorRaw = record['retryableError'];
+  const retryableError = typeof retryableErrorRaw === 'boolean'
+    ? retryableErrorRaw
     : null;
   const createdAt =
     typeof record['createdAt'] === 'string' && record['createdAt'].trim().length > 0
@@ -65,7 +126,13 @@ const parseCaseResolverOcrJobRecord = (value: unknown): CaseResolverOcrJobRecord
     id,
     status,
     filepath,
+    model,
+    prompt,
+    retryOfJobId,
+    correlationId,
     dispatchMode,
+    attemptsMade,
+    maxAttempts,
     createdAt,
     updatedAt,
     startedAt:
@@ -84,6 +151,8 @@ const parseCaseResolverOcrJobRecord = (value: unknown): CaseResolverOcrJobRecord
       typeof record['errorMessage'] === 'string' && record['errorMessage'].trim().length > 0
         ? record['errorMessage']
         : null,
+    errorCategory,
+    retryableError,
   };
 };
 
@@ -164,13 +233,21 @@ const updateCaseResolverOcrJob = async (
       id: normalizedJobId,
       status: 'queued',
       filepath: options.filepath?.trim() || '',
+      model: null,
+      prompt: null,
+      retryOfJobId: null,
+      correlationId: null,
       dispatchMode: null,
+      attemptsMade: 0,
+      maxAttempts: 1,
       createdAt,
       updatedAt: createdAt,
       startedAt: null,
       finishedAt: null,
       resultText: null,
       errorMessage: null,
+      errorCategory: null,
+      retryableError: null,
     };
   }
   if (!current) return null;
@@ -202,19 +279,40 @@ const updateCaseResolverOcrJob = async (
 
 export const createCaseResolverOcrJob = async (input: {
   filepath: string;
+  model?: string | null;
+  prompt?: string | null;
+  retryOfJobId?: string | null;
+  correlationId?: string | null;
+  maxAttempts?: number | null;
 }): Promise<CaseResolverOcrJobRecord> => {
   const createdAt = nowIso();
+  const normalizedModel = input.model?.trim() ?? null;
+  const normalizedPrompt = input.prompt?.trim() || null;
+  const normalizedRetryOfJobId = input.retryOfJobId?.trim() || null;
+  const normalizedCorrelationId = input.correlationId?.trim() || null;
+  const maxAttempts =
+    typeof input.maxAttempts === 'number' && Number.isFinite(input.maxAttempts)
+      ? Math.max(1, Math.floor(input.maxAttempts))
+      : 1;
   const record: CaseResolverOcrJobRecord = {
     id: randomUUID(),
     status: 'queued',
     filepath: input.filepath.trim(),
+    model: normalizedModel,
+    prompt: normalizedPrompt,
+    retryOfJobId: normalizedRetryOfJobId,
+    correlationId: normalizedCorrelationId,
     dispatchMode: null,
+    attemptsMade: 0,
+    maxAttempts,
     createdAt,
     updatedAt: createdAt,
     startedAt: null,
     finishedAt: null,
     resultText: null,
     errorMessage: null,
+    errorCategory: null,
+    retryableError: null,
   };
   return persistCaseResolverOcrJob(record);
 };
@@ -238,8 +336,10 @@ export const setCaseResolverOcrJobDispatchMode = async (
 
 export const markCaseResolverOcrJobRunning = async (
   jobId: string,
-  filepath: string
+  filepath: string,
+  options?: { correlationId?: string | null }
 ): Promise<CaseResolverOcrJobRecord | null> => {
+  const normalizedCorrelationId = options?.correlationId?.trim() || null;
   return updateCaseResolverOcrJob(
     jobId,
     {
@@ -247,6 +347,9 @@ export const markCaseResolverOcrJobRunning = async (
       startedAt: nowIso(),
       finishedAt: null,
       errorMessage: null,
+      errorCategory: null,
+      retryableError: null,
+      ...(normalizedCorrelationId ? { correlationId: normalizedCorrelationId } : {}),
     },
     { createIfMissing: true, filepath }
   );
@@ -260,26 +363,72 @@ export const markCaseResolverOcrJobCompleted = async (
     status: 'completed',
     resultText,
     errorMessage: null,
+    errorCategory: null,
+    retryableError: null,
     finishedAt: nowIso(),
   });
 };
 
 export const markCaseResolverOcrJobFailed = async (
   jobId: string,
-  errorMessage: string
+  errorMessage: string,
+  options?: {
+    attemptsMade?: number;
+    maxAttempts?: number;
+    errorCategory?: CaseResolverOcrErrorCategory;
+    retryableError?: boolean;
+  }
 ): Promise<CaseResolverOcrJobRecord | null> => {
+  const attemptsMade =
+    typeof options?.attemptsMade === 'number' && Number.isFinite(options.attemptsMade)
+      ? Math.max(0, Math.floor(options.attemptsMade))
+      : undefined;
+  const maxAttempts =
+    typeof options?.maxAttempts === 'number' && Number.isFinite(options.maxAttempts)
+      ? Math.max(1, Math.floor(options.maxAttempts))
+      : undefined;
+  const errorCategory = options?.errorCategory;
+  const retryableError = typeof options?.retryableError === 'boolean'
+    ? options.retryableError
+    : undefined;
   return updateCaseResolverOcrJob(jobId, {
     status: 'failed',
     errorMessage: errorMessage.trim() || 'OCR runtime job failed.',
+    ...(typeof attemptsMade === 'number' ? { attemptsMade } : {}),
+    ...(typeof maxAttempts === 'number' ? { maxAttempts } : {}),
+    ...(errorCategory ? { errorCategory } : {}),
+    ...(typeof retryableError === 'boolean' ? { retryableError } : {}),
     finishedAt: nowIso(),
   });
 };
 
 export const markCaseResolverOcrJobQueuedForRetry = async (
-  jobId: string
+  jobId: string,
+  options?: {
+    attemptsMade?: number;
+    maxAttempts?: number;
+    errorCategory?: CaseResolverOcrErrorCategory;
+    retryableError?: boolean;
+  }
 ): Promise<CaseResolverOcrJobRecord | null> => {
+  const attemptsMade =
+    typeof options?.attemptsMade === 'number' && Number.isFinite(options.attemptsMade)
+      ? Math.max(0, Math.floor(options.attemptsMade))
+      : undefined;
+  const maxAttempts =
+    typeof options?.maxAttempts === 'number' && Number.isFinite(options.maxAttempts)
+      ? Math.max(1, Math.floor(options.maxAttempts))
+      : undefined;
+  const errorCategory = options?.errorCategory;
+  const retryableError = typeof options?.retryableError === 'boolean'
+    ? options.retryableError
+    : undefined;
   return updateCaseResolverOcrJob(jobId, {
     status: 'queued',
+    ...(typeof attemptsMade === 'number' ? { attemptsMade } : {}),
+    ...(typeof maxAttempts === 'number' ? { maxAttempts } : {}),
+    ...(errorCategory ? { errorCategory } : {}),
+    ...(typeof retryableError === 'boolean' ? { retryableError } : {}),
     finishedAt: null,
   });
 };

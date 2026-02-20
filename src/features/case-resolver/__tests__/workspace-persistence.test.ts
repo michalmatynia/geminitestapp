@@ -2,8 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CASE_RESOLVER_WORKSPACE_KEY, createDefaultCaseResolverWorkspace } from '@/features/case-resolver/settings';
 import {
+  computeCaseResolverConflictRetryDelayMs,
   fetchCaseResolverWorkspaceSnapshot,
+  getCaseResolverWorkspaceMaxPayloadBytes,
   getCaseResolverWorkspaceRevision,
+  isCaseResolverWorkspacePayloadTooLarge,
   persistCaseResolverWorkspaceSnapshot,
   stampCaseResolverWorkspaceMutation,
 } from '@/features/case-resolver/workspace-persistence';
@@ -136,5 +139,30 @@ describe('case-resolver workspace persistence', () => {
       method: 'GET',
       cache: 'no-store',
     });
+  });
+
+  it('computes exponential conflict retry delays with bounded jitter', () => {
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    const attemptOne = computeCaseResolverConflictRetryDelayMs(1, {
+      baseDelayMs: 100,
+      maxDelayMs: 1_000,
+      jitterMs: 40,
+    });
+    const attemptThree = computeCaseResolverConflictRetryDelayMs(3, {
+      baseDelayMs: 100,
+      maxDelayMs: 1_000,
+      jitterMs: 40,
+    });
+
+    expect(attemptOne).toBe(120);
+    expect(attemptThree).toBe(420);
+    randomSpy.mockRestore();
+  });
+
+  it('flags payload sizes above configured workspace threshold', () => {
+    const maxPayload = getCaseResolverWorkspaceMaxPayloadBytes();
+    expect(isCaseResolverWorkspacePayloadTooLarge(maxPayload - 1)).toBe(false);
+    expect(isCaseResolverWorkspacePayloadTooLarge(maxPayload)).toBe(false);
+    expect(isCaseResolverWorkspacePayloadTooLarge(maxPayload + 1)).toBe(true);
   });
 });

@@ -1,3 +1,5 @@
+import 'server-only';
+
 import fs from 'fs/promises';
 
 import { getDiskPathFromPublicPath } from '@/features/files/server';
@@ -100,4 +102,3 @@ export const loadSourceBufferFromSlot = async (input: {
     mimeHint: slot.imageFile?.mimetype?.toLowerCase() ?? null,
   };
 };
-

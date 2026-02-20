@@ -4,7 +4,7 @@ import { ArrowLeft, ChevronDown } from 'lucide-react';
 import React, { useCallback } from 'react';
 
 import type { ColorScheme, ThemeSettings } from '@/shared/contracts/cms';
-import { Button, Badge } from '@/shared/ui';
+import { Button, Badge, Card } from '@/shared/ui';
 
 import { useThemeColors } from './ThemeColorsContext';
 import { ColorField, TextField } from '../shared-fields';
@@ -37,7 +37,7 @@ export function ThemeColorsSection(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <div className='rounded border border-border/40 bg-gray-900/60 p-3'>
+      <Card variant='subtle-compact' padding='sm' className='bg-gray-900/60'>
         <div className='flex items-center justify-end'>
           {schemeView === 'list' ? (
             <div className='flex items-center gap-2'>
@@ -81,12 +81,14 @@ export function ThemeColorsSection(): React.JSX.Element {
               {theme.colorSchemes.map((scheme: ColorScheme) => {
                 const isActive = scheme.id === theme.activeColorSchemeId;
                 return (
-                  <div
+                  <Card
                     key={scheme.id}
-                    className={`group rounded border p-2 text-left transition ${
+                    variant={isActive ? 'default' : 'subtle-compact'}
+                    padding='sm'
+                    className={`group text-left transition ${
                       isActive
                         ? 'border-blue-500/60 bg-blue-500/10'
-                        : 'border-border/40 bg-gray-900/40 hover:border-border/70'
+                        : 'bg-gray-900/40 hover:border-border/70'
                     }`}
                   >
                     <div
@@ -176,7 +178,7 @@ export function ThemeColorsSection(): React.JSX.Element {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </Card>
                 );
               })}
             </div>
@@ -233,9 +235,9 @@ export function ThemeColorsSection(): React.JSX.Element {
             <ThemeAiSection />
           </div>
         )}
-      </div>
+      </Card>
 
-      <div className='rounded border border-border/40 bg-gray-900/40 p-3'>
+      <Card variant='subtle-compact' padding='sm' className='bg-gray-900/40'>
         <button
           type='button'
           onClick={toggleGlobalPalette}

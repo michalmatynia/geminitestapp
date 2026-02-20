@@ -10,7 +10,7 @@ import type {
   ImportRunDetail,
   DebugWarehouses,
   CatalogOption,
-} from '@/shared/contracts/data-import-export/imports';
+} from '@/shared/contracts/data-import-export';
 import type { 
   BaseImportParameterImportSettingsDto as BaseImportParameterImportSettings,
   BaseImportModeDto as BaseImportMode,

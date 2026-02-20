@@ -62,6 +62,7 @@ import {
   createUniqueFolderPath,
 } from '../utils/caseResolverUtils';
 import {
+  computeCaseResolverConflictRetryDelayMs,
   createCaseResolverWorkspaceMutationId,
   fetchCaseResolverWorkspaceSnapshot,
   getCaseResolverWorkspaceRevision,
@@ -252,6 +253,7 @@ export function useCaseResolverState() {
   const queuedSerializedWorkspaceRef = useRef<string | null>(null);
   const queuedExpectedRevisionRef = useRef<number | null>(null);
   const queuedMutationIdRef = useRef<string | null>(null);
+  const conflictRetryTimerRef = useRef<number | null>(null);
   const draftStorageWarningShownRef = useRef(false);
   const persistWorkspaceTimerRef = useRef<number | null>(null);
   const persistWorkspaceInFlightRef = useRef(false);
@@ -315,8 +317,15 @@ export function useCaseResolverState() {
     []
   );
 
+  const clearConflictRetryTimer = useCallback((): void => {
+    if (conflictRetryTimerRef.current === null) return;
+    window.clearTimeout(conflictRetryTimerRef.current);
+    conflictRetryTimerRef.current = null;
+  }, []);
+
   const flushWorkspacePersist = useCallback((): void => {
     if (persistWorkspaceInFlightRef.current) return;
+    clearConflictRetryTimer();
 
     // If the settings store is currently fetching (e.g. after navigation from the
     // Cases page which called refetch() after its own save), defer the save.
@@ -358,6 +367,7 @@ export function useCaseResolverState() {
       source: 'case_view',
     }).then((result) => {
       if (result.ok) {
+        clearConflictRetryTimer();
         workspaceConflictAutoRetryCountRef.current = 0;
         const persistedWorkspace = result.workspace;
         syncPersistedWorkspaceTracking(persistedWorkspace);
@@ -399,6 +409,7 @@ export function useCaseResolverState() {
         const nextRetryCount = workspaceConflictAutoRetryCountRef.current + 1;
         workspaceConflictAutoRetryCountRef.current = nextRetryCount;
         if (nextRetryCount > CASE_RESOLVER_WORKSPACE_CONFLICT_AUTO_RETRY_LIMIT) {
+          clearConflictRetryTimer();
           shouldContinuePersistQueue = false;
           pendingSaveToastRef.current = null;
           const retryErrorMessage =
@@ -420,19 +431,28 @@ export function useCaseResolverState() {
         queuedSerializedWorkspaceRef.current = nextSerialized;
         queuedExpectedRevisionRef.current = serverRevision;
         queuedMutationIdRef.current = mutationId;
+        const retryDelayMs = computeCaseResolverConflictRetryDelayMs(nextRetryCount);
         setWorkspaceSaveStatus('saving');
         setWorkspaceSaveError(null);
+        clearConflictRetryTimer();
+        conflictRetryTimerRef.current = window.setTimeout((): void => {
+          conflictRetryTimerRef.current = null;
+          flushWorkspacePersist();
+        }, retryDelayMs);
+        shouldContinuePersistQueue = false;
         logCaseResolverWorkspaceEvent({
           source: 'case_view',
           action: 'manual_save_conflict_retry',
           mutationId,
           expectedRevision: serverRevision,
           workspaceRevision: serverRevision,
-          message: `Auto-retrying save after conflict (${nextRetryCount}/${CASE_RESOLVER_WORKSPACE_CONFLICT_AUTO_RETRY_LIMIT}).`,
+          durationMs: retryDelayMs,
+          message: `Auto-retrying save after conflict (${nextRetryCount}/${CASE_RESOLVER_WORKSPACE_CONFLICT_AUTO_RETRY_LIMIT}) in ${retryDelayMs}ms.`,
         });
         return;
       }
 
+      clearConflictRetryTimer();
       workspaceConflictAutoRetryCountRef.current = 0;
       if (pendingSaveToastRef.current) {
         pendingSaveToastRef.current = null;
@@ -461,7 +481,7 @@ export function useCaseResolverState() {
       }
       setIsWorkspaceSaving(false);
     });
-  }, [syncPersistedWorkspaceTracking, toast]);
+  }, [clearConflictRetryTimer, syncPersistedWorkspaceTracking, toast]);
 
   // Sync with store
   useEffect(() => {
@@ -504,12 +524,13 @@ export function useCaseResolverState() {
 
   useEffect(() => {
     return (): void => {
+      clearConflictRetryTimer();
       if (persistWorkspaceTimerRef.current) {
         window.clearTimeout(persistWorkspaceTimerRef.current);
         persistWorkspaceTimerRef.current = null;
       }
     };
-  }, []);
+  }, [clearConflictRetryTimer]);
 
   const updateWorkspace = useCallback(
     (

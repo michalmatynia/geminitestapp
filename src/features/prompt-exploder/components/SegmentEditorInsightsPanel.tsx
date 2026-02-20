@@ -9,6 +9,7 @@ import {
   SelectSimple,
   StatusToggle,
   Textarea,
+  Card,
 } from '@/shared/ui';
 
 import {
@@ -50,7 +51,7 @@ export function SegmentEditorInsightsPanel(args: {
   };
 
   return (
-    <div className='space-y-3 rounded border border-border/60 bg-card/30 p-2 text-[11px] text-gray-400'>
+    <Card variant='subtle-compact' padding='sm' className='space-y-3 bg-card/30 text-[11px] text-gray-400'>
       <div className='text-[11px] uppercase tracking-wide text-gray-400'>
         Matched Rule Insights
       </div>
@@ -349,6 +350,6 @@ export function SegmentEditorInsightsPanel(args: {
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

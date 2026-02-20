@@ -212,4 +212,142 @@ describe('AI Paths Runtime Engine', () => {
       nextOutputs: { value: 'test' }
     }));
   });
+
+  it('waits only for required ports when input contracts are defined', async () => {
+    const nodes: AiNode[] = [
+      {
+        id: 'required-source',
+        type: 'constant',
+        title: 'Required Source',
+        description: '',
+        inputs: [],
+        outputs: ['value'],
+        position: { x: 0, y: 0 },
+        config: { constant: { valueType: 'string', value: 'required' } },
+      },
+      {
+        id: 'optional-source',
+        type: 'constant',
+        title: 'Optional Source',
+        description: '',
+        inputs: [],
+        outputs: ['value'],
+        position: { x: 80, y: 0 },
+        config: { constant: { valueType: 'string', value: 'optional' } },
+      },
+      {
+        id: 'bundle-node',
+        type: 'bundle',
+        title: 'Bundle',
+        description: '',
+        inputs: ['value', 'context'],
+        outputs: ['bundle'],
+        position: { x: 160, y: 0 },
+        config: {
+          runtime: {
+            waitForInputs: true,
+            inputContracts: {
+              value: { required: true },
+              context: { required: false },
+            },
+          },
+        },
+      },
+    ];
+
+    const edges: Edge[] = [
+      {
+        id: 'edge-required',
+        from: 'required-source',
+        to: 'bundle-node',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+      {
+        id: 'edge-optional',
+        from: 'optional-source',
+        to: 'bundle-node',
+        fromPort: 'value',
+        toPort: 'context',
+      },
+    ];
+
+    const result = await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+      skipNodeIds: ['optional-source'],
+    });
+
+    expect(result.outputs['bundle-node']).toEqual({
+      bundle: {
+        value: 'required',
+      },
+    });
+  });
+
+  it('falls back to all-connected waiting when no required contracts are defined', async () => {
+    const nodes: AiNode[] = [
+      {
+        id: 'required-source',
+        type: 'constant',
+        title: 'Required Source',
+        description: '',
+        inputs: [],
+        outputs: ['value'],
+        position: { x: 0, y: 0 },
+        config: { constant: { valueType: 'string', value: 'required' } },
+      },
+      {
+        id: 'optional-source',
+        type: 'constant',
+        title: 'Optional Source',
+        description: '',
+        inputs: [],
+        outputs: ['value'],
+        position: { x: 80, y: 0 },
+        config: { constant: { valueType: 'string', value: 'optional' } },
+      },
+      {
+        id: 'bundle-node',
+        type: 'bundle',
+        title: 'Bundle',
+        description: '',
+        inputs: ['value', 'context'],
+        outputs: ['bundle'],
+        position: { x: 160, y: 0 },
+        config: {
+          runtime: {
+            waitForInputs: true,
+          },
+        },
+      },
+    ];
+
+    const edges: Edge[] = [
+      {
+        id: 'edge-required',
+        from: 'required-source',
+        to: 'bundle-node',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+      {
+        id: 'edge-optional',
+        from: 'optional-source',
+        to: 'bundle-node',
+        fromPort: 'value',
+        toPort: 'context',
+      },
+    ];
+
+    const result = await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+      skipNodeIds: ['optional-source'],
+    });
+
+    expect(result.outputs['bundle-node']).toBeUndefined();
+  });
 });

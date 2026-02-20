@@ -1,6 +1,6 @@
 import { Prisma, type SystemLog } from '@prisma/client';
 
-import type { ActivityRepository, ActivityFilters } from '@/shared/contracts/system/services/activity-repository';
+import type { ActivityRepository, ActivityFilters } from '@/shared/contracts/system';
 import type { ActivityLogDto, CreateActivityLogDto } from '@/shared/contracts/system';
 import prisma from '@/shared/lib/db/prisma';
 

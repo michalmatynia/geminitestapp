@@ -1,8 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import type { UseNoteOperationsProps } from '@/shared/contracts/notes/notes-hooks';
-import type { UndoAction } from '@/shared/contracts/notes/notes-hooks';
+import type { UseNoteOperationsProps } from '@/shared/contracts/notes';
+import type { UndoAction } from '@/shared/contracts/notes';
 import type { 
   NoteWithRelationsDto as NoteWithRelations, 
   NoteCategoryRecordWithChildrenDto as CategoryWithChildren,

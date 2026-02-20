@@ -12,8 +12,8 @@ import {
 import { useNoteFilters, type UseNoteFiltersResult } from '@/features/notesapp/hooks/useNoteFilters';
 import { useNoteOperations } from '@/features/notesapp/hooks/useNoteOperations';
 import { useNoteTheme } from '@/features/notesapp/hooks/useNoteTheme';
-import type { UndoAction } from '@/shared/contracts/notes/notes-hooks';
-import type { NoteSettings } from '@/shared/contracts/notes/notes-settings';
+import type { UndoAction } from '@/shared/contracts/notes';
+import type { NoteSettings } from '@/shared/contracts/notes';
 import type { 
   NoteWithRelationsDto as NoteWithRelations, 
   NoteTagDto as TagRecord, 

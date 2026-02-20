@@ -5,7 +5,7 @@ import type {
   AgentPlanSettings,
   PlanStep,
   PlannerMeta,
-} from '@/shared/contracts/agent-runtime/agent';
+} from '@/shared/contracts/agent-runtime';
 import prisma from '@/shared/lib/db/prisma';
 
 export function parseCheckpoint(payload: unknown): AgentCheckpoint | null {

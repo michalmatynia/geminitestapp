@@ -26,7 +26,7 @@ import {
   defaultBaseImportParameterImportSettings,
   normalizeBaseImportParameterImportSettings,
   type BaseImportParameterImportSettings,
-} from '@/shared/contracts/integrations/base-import-parameter-import';
+} from '@/shared/contracts/integrations';
 import type {
   BaseImportErrorClass,
   BaseImportErrorCode,

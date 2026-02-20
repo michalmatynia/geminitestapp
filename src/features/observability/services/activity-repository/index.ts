@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { ActivityRepository } from '@/shared/contracts/system/services/activity-repository';
+import type { ActivityRepository } from '@/shared/contracts/system';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 
 import { mongoActivityRepository } from './mongo-activity-repository';

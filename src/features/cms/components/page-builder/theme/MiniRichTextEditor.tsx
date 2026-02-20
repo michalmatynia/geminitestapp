@@ -11,6 +11,7 @@ import {
   Button,
   Label,
   SelectSimple,
+  Card,
 } from '@/shared/ui';
 
 import { sanitizeRichText } from './theme-utils';
@@ -31,136 +32,88 @@ function RichTextToolbarButton({
   return (
     <Button
       type='button'
-      variant='ghost'
+      variant={active ? 'solid' : 'ghost'}
       size='icon'
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`size-8 rounded-md ${active ? 'bg-blue-600 text-white hover:bg-blue-500' : 'text-gray-300 hover:text-white'}`}
-    >
-      {children}
-    </Button>
+      className='size-8 rounded-md'
   );
 }
 
 export function MiniRichTextEditor({
-  label,
   value,
   onChange,
-  minHeight = 90,
-  showFormatSelect = false,
-  enableLists = false,
+  label,
+  minHeight = '120px',
+  showFormatSelect = true,
+  enableLists = true,
 }: {
-  label: string;
   value: string;
   onChange: (value: string) => void;
-  minHeight?: number;
+  label: string;
+  minHeight?: string;
   showFormatSelect?: boolean;
   enableLists?: boolean;
 }): React.JSX.Element {
   const { prompt, PromptInputModal } = usePrompt();
-  const lastValueRef = useRef<string>(value);
-  const [formatValue, setFormatValue] = useState<string>('paragraph');
 
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({
-        heading: showFormatSelect ? { levels: [1, 2, 3] } : false,
-        ...(enableLists ? {} : { bulletList: false, orderedList: false, listItem: false }),
-      }),
+      StarterKit,
       Link.configure({
         openOnClick: false,
-        HTMLAttributes: {
-          class: 'text-blue-400 underline hover:text-blue-300',
-        },
       }),
     ],
-    content: sanitizeRichText(value),
-    editorProps: {
-      attributes: {
-        class: 'min-h-full outline-none text-sm text-gray-200',
-      },
-    },
-    onUpdate: ({ editor }: { editor: Editor }): void => {
-      const html = editor.getHTML();
-      if (html !== lastValueRef.current) {
-        lastValueRef.current = html;
-        onChange(html);
-      }
+    content: value,
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML());
     },
   });
 
-  useEffect((): void => {
-    if (!editor) return;
-    if (value === lastValueRef.current) return;
-    const sanitized = sanitizeRichText(value);
-    if (sanitized !== editor.getHTML()) {
-      lastValueRef.current = sanitized;
-      editor.commands.setContent(sanitized, { emitUpdate: false });
-    }
-  }, [value, editor]);
+  const [formatValue, setFormatValue] = useState('paragraph');
 
-  useEffect((): void | (() => void) => {
-    if (!editor || !showFormatSelect) return;
-    const updateFormat = (): void => {
-      if (editor.isActive('heading', { level: 1 })) {
-        setFormatValue('heading-1');
-        return;
-      }
-      if (editor.isActive('heading', { level: 2 })) {
-        setFormatValue('heading-2');
-        return;
-      }
-      if (editor.isActive('heading', { level: 3 })) {
-        setFormatValue('heading-3');
-        return;
-      }
-      setFormatValue('paragraph');
-    };
-    updateFormat();
-    editor.on('selectionUpdate', updateFormat);
-    editor.on('transaction', updateFormat);
-    return (): void => {
-      editor.off('selectionUpdate', updateFormat);
-      editor.off('transaction', updateFormat);
-    };
-  }, [editor, showFormatSelect]);
-
-  const applyFormat = (format: string): void => {
+  useEffect(() => {
     if (!editor) return;
-    if (format === 'paragraph') {
-      editor.chain().focus().setParagraph().run();
-      return;
-    }
-    const level = format === 'heading-1' ? 1 : format === 'heading-2' ? 2 : 3;
-    editor.chain().focus().setHeading({ level }).run();
+    if (editor.isActive('heading', { level: 1 })) setFormatValue('heading-1');
+    else if (editor.isActive('heading', { level: 2 })) setFormatValue('heading-2');
+    else if (editor.isActive('heading', { level: 3 })) setFormatValue('heading-3');
+    else setFormatValue('paragraph');
+  }, [editor?.state.selection, editor]);
+
+  const applyFormat = (type: string) => {
+    if (!editor) return;
+    if (type === 'paragraph') editor.chain().focus().setParagraph().run();
+    else if (type === 'heading-1') editor.chain().focus().toggleHeading({ level: 1 }).run();
+    else if (type === 'heading-2') editor.chain().focus().toggleHeading({ level: 2 }).run();
+    else if (type === 'heading-3') editor.chain().focus().toggleHeading({ level: 3 }).run();
+    setFormatValue(type);
   };
 
-  const addLink = (): void => {
+  const addLink = async () => {
     if (!editor) return;
-    const previousUrl = editor.getAttributes('link')['href'] as string | undefined;
-    prompt({
+    const url = await prompt({
       title: 'Insert Link',
+      message: 'Enter the URL for the link:',
       label: 'URL',
-      defaultValue: previousUrl ?? '',
-      placeholder: 'https://...',
-      onConfirm: (url) => {
-        if (url.trim() === '') {
-          editor.chain().focus().unsetLink().run();
-          return;
-        }
-        editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-      }
+      defaultValue: editor.getAttributes('link').href,
     });
+
+    if (url === null) return;
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+    } else {
+      editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+    }
   };
 
   if (!editor) {
     return (
       <div className='space-y-2'>
         <Label className='text-[10px] uppercase tracking-wider text-gray-500'>{label}</Label>
-        <div className='rounded border border-border/50 bg-gray-800/40 p-3 text-xs text-gray-500'>
+        <Card variant='subtle-compact' padding='sm' className='text-xs text-gray-500'>
           Loading editor...
-        </div>
+        </Card>
       </div>
     );
   }
@@ -168,7 +121,7 @@ export function MiniRichTextEditor({
   return (
     <div className='space-y-2'>
       <Label className='text-[10px] uppercase tracking-wider text-gray-500'>{label}</Label>
-      <div className='flex flex-wrap items-center gap-1 rounded border border-border/50 bg-gray-900/60 px-2 py-1'>
+      <Card variant='subtle-compact' padding='none' className='flex flex-wrap items-center gap-1 bg-gray-900/60 px-2 py-1'>
         {showFormatSelect && (
           <div className='mr-2'>
             <SelectSimple
@@ -224,14 +177,14 @@ export function MiniRichTextEditor({
         >
           <Link2 className='size-4' />
         </RichTextToolbarButton>
-      </div>
-      <div className='rounded border border-border/50 bg-gray-800/40'>
+      </Card>
+      <Card variant='subtle-compact' padding='none' className='bg-gray-800/40'>
         <EditorContent
           editor={editor}
           className='px-3 py-2 [&_.ProseMirror]:min-h-[80px] [&_.ProseMirror]:outline-none [&_.ProseMirror_h1]:text-xl [&_.ProseMirror_h1]:font-semibold [&_.ProseMirror_h2]:text-lg [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h3]:text-base [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_p]:my-1 [&_.ProseMirror_ul]:ml-5 [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ol]:ml-5 [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_a]:text-blue-400 [&_.ProseMirror_a]:underline'
           style={{ minHeight }}
         />
-      </div>
+      </Card>
       <PromptInputModal />
     </div>
   );

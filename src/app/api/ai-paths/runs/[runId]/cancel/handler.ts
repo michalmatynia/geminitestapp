@@ -11,7 +11,7 @@ import { prismaPathRunRepository } from '@/features/ai/ai-paths/services/path-ru
 import {
   cancelPathRunWithRepository,
 } from '@/features/ai/ai-paths/services/path-run-service';
-import type { AiPathRunRepository } from '@/shared/contracts/ai-paths/path-run-repository';
+import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 import { removePathRunQueueEntries } from '@/features/jobs/workers/aiPathRunQueue';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';

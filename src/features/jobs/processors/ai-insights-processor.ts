@@ -95,16 +95,28 @@ export async function tick(): Promise<void> {
     await getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.logsLastRunAt),
   );
   const executedJobs: string[] = [];
+  const failedJobs: Array<{ job: string; error: string }> = [];
+  const runInsightStep = async (job: string, action: () => Promise<void>): Promise<void> => {
+    try {
+      await action();
+      executedJobs.push(job);
+    } catch (error: unknown) {
+      const message = toErrorMessage(error);
+      failedJobs.push({ job, error: message });
+      await appendRunEvent(`Insight step failed (${job}): ${message}`, 'warning');
+    }
+  };
 
   if (
     schedule.analyticsEnabled &&
     analyticsBrain.enabled &&
     shouldRun(analyticsLastRun, schedule.analyticsMinutes)
   ) {
-    await appendRunEvent('Generating analytics insight.');
-    await generateAnalyticsInsight({ source: 'scheduled' });
-    executedJobs.push('analytics');
-    await appendRunEvent('Analytics insight generated.');
+    await runInsightStep('analytics', async () => {
+      await appendRunEvent('Generating analytics insight.');
+      await generateAnalyticsInsight({ source: 'scheduled' });
+      await appendRunEvent('Analytics insight generated.');
+    });
   } else if (schedule.analyticsEnabled && !analyticsBrain.enabled) {
     await appendRunEvent('Skipping analytics insight: disabled in Brain settings.', 'info');
   }
@@ -114,10 +126,11 @@ export async function tick(): Promise<void> {
     runtimeAnalyticsBrain.enabled &&
     shouldRun(runtimeAnalyticsLastRun, schedule.runtimeAnalyticsMinutes)
   ) {
-    await appendRunEvent('Generating runtime analytics insight.');
-    await generateRuntimeAnalyticsInsight({ source: 'scheduled', range: '24h' });
-    executedJobs.push('runtime_analytics');
-    await appendRunEvent('Runtime analytics insight generated.');
+    await runInsightStep('runtime_analytics', async () => {
+      await appendRunEvent('Generating runtime analytics insight.');
+      await generateRuntimeAnalyticsInsight({ source: 'scheduled', range: '24h' });
+      await appendRunEvent('Runtime analytics insight generated.');
+    });
   } else if (schedule.runtimeAnalyticsEnabled && !runtimeAnalyticsBrain.enabled) {
     await appendRunEvent('Skipping runtime analytics insight: disabled in Brain settings.', 'info');
   }
@@ -127,10 +140,11 @@ export async function tick(): Promise<void> {
     logsBrain.enabled &&
     shouldRun(logsLastRun, schedule.logsMinutes)
   ) {
-    await appendRunEvent('Generating logs insight.');
-    await generateLogsInsight({ source: 'scheduled' });
-    executedJobs.push('logs');
-    await appendRunEvent('Logs insight generated.');
+    await runInsightStep('logs', async () => {
+      await appendRunEvent('Generating logs insight.');
+      await generateLogsInsight({ source: 'scheduled' });
+      await appendRunEvent('Logs insight generated.');
+    });
   } else if (schedule.logsEnabled && !logsBrain.enabled) {
     await appendRunEvent('Skipping logs insight: disabled in Brain settings.', 'info');
   }
@@ -144,14 +158,15 @@ export async function tick(): Promise<void> {
       );
       const latestAt = latest ? new Date(latest.createdAt || 0) : null;
       if (latestAt && (!lastErrorSeen || latestAt.getTime() > lastErrorSeen.getTime())) {
-        await appendRunEvent('Detected new system error log. Generating auto logs insight.');
-        await generateLogsInsight({ source: 'auto' });
-        await setAiInsightsMeta(
-          AI_INSIGHTS_SETTINGS_KEYS.logsLastErrorSeenAt,
-          latestAt.toISOString(),
-        );
-        executedJobs.push('logs_auto');
-        await appendRunEvent('Auto logs insight generated.');
+        await runInsightStep('logs_auto', async () => {
+          await appendRunEvent('Detected new system error log. Generating auto logs insight.');
+          await generateLogsInsight({ source: 'auto' });
+          await setAiInsightsMeta(
+            AI_INSIGHTS_SETTINGS_KEYS.logsLastErrorSeenAt,
+            latestAt.toISOString(),
+          );
+          await appendRunEvent('Auto logs insight generated.');
+        });
       }
     } else if (schedule.logsAutoOnError && !logsBrain.enabled) {
       await appendRunEvent('Skipping auto logs insight: disabled in Brain settings.', 'info');
@@ -176,6 +191,7 @@ export async function tick(): Promise<void> {
           outputs: {
             summary: {
               executedJobs,
+              failedJobs,
               events: runEvents,
             },
           },
@@ -184,6 +200,7 @@ export async function tick(): Promise<void> {
           ...baseMeta,
           completedAt: new Date().toISOString(),
           executedJobs,
+          failedJobs,
         },
       });
       await appendRunEvent('AI Insights tick completed.');

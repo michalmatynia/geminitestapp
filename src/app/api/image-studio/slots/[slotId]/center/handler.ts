@@ -33,10 +33,14 @@ import {
   createImageStudioSlots,
   getImageStudioSlotById,
 } from '@/features/ai/image-studio/server/slot-repository';
-import { getDiskPathFromPublicPath, getImageFileRepository } from '@/features/files/server';
+import {
+  loadSourceBufferFromSlot,
+  parseImageDataUrl,
+} from '@/features/ai/image-studio/server/source-image-utils';
+import { getImageFileRepository } from '@/features/files/server';
 import { logSystemEvent } from '@/features/observability/server';
-import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'center');
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
@@ -106,18 +110,6 @@ const readIdempotencyKey = (req: NextRequest): string | null => {
   return normalized.length >= 8 ? normalized : null;
 };
 
-function parseDataUrl(dataUrl: string): { buffer: Buffer; mime: string } | null {
-  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/i);
-  if (!match) return null;
-  try {
-    const buffer = Buffer.from(match[2] ?? '', 'base64');
-    const mime = (match[1] ?? 'image/png').toLowerCase();
-    return { buffer, mime };
-  } catch {
-    return null;
-  }
-}
-
 const parseJsonFormValue = <T,>(value: FormDataEntryValue | null): T | undefined => {
   if (typeof value !== 'string') return undefined;
   const normalized = value.trim();
@@ -181,76 +173,6 @@ function guessExtension(mime: string): string {
   if (clean.includes('webp')) return '.webp';
   if (clean.includes('avif')) return '.avif';
   return '.png';
-}
-
-function normalizePublicPath(filepath: string): string {
-  let normalized = filepath.trim().replace(/\\/g, '/');
-  if (!normalized) return '';
-  if (/^https?:\/\//i.test(normalized)) return normalized;
-  if (normalized.startsWith('public/')) {
-    normalized = normalized.slice('public'.length);
-  }
-  if (!normalized.startsWith('/')) normalized = `/${normalized}`;
-  return normalized;
-}
-
-async function loadSourceBuffer(slot: StudioSlotRecord): Promise<{ buffer: Buffer; mimeHint: string | null }> {
-  const base64Candidate =
-    typeof slot.imageBase64 === 'string' && slot.imageBase64.trim().startsWith('data:')
-      ? slot.imageBase64.trim()
-      : null;
-  if (base64Candidate) {
-    const parsed = parseDataUrl(base64Candidate);
-    if (parsed) {
-      return { buffer: parsed.buffer, mimeHint: parsed.mime };
-    }
-  }
-
-  const sourcePath = slot.imageFile?.filepath ?? slot.imageUrl ?? null;
-  if (!sourcePath) {
-    throw centerBadRequest(
-      IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_MISSING,
-      'Slot has no source image to center.'
-    );
-  }
-
-  const normalizedPath = normalizePublicPath(sourcePath);
-  if (!normalizedPath) {
-    throw centerBadRequest(
-      IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_INVALID,
-      'Slot source image path is invalid.'
-    );
-  }
-
-  if (/^https?:\/\//i.test(normalizedPath)) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), SOURCE_FETCH_TIMEOUT_MS);
-    try {
-      const response = await fetch(normalizedPath, { signal: controller.signal });
-      if (!response.ok) {
-        throw centerBadRequest(
-          IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_INVALID,
-          `Failed to fetch source image (${response.status}).`,
-          { status: response.status }
-        );
-      }
-      const contentType = response.headers.get('content-type');
-      const arrayBuffer = await response.arrayBuffer();
-      return {
-        buffer: Buffer.from(arrayBuffer),
-        mimeHint: contentType ? contentType.toLowerCase() : null,
-      };
-    } finally {
-      clearTimeout(timeoutId);
-    }
-  }
-
-  const diskPath = getDiskPathFromPublicPath(normalizedPath);
-  const buffer = await fs.readFile(diskPath);
-  return {
-    buffer,
-    mimeHint: slot.imageFile?.mimetype?.toLowerCase() ?? null,
-  };
 }
 
 const buildClientPayloadSignature = (
@@ -396,7 +318,26 @@ async function processCenterPayload(input: {
 
   if (preferAuthoritativeSource || isClientCenterMode(payload.mode)) {
     try {
-      const source = await loadSourceBuffer(sourceSlot);
+      const source = await loadSourceBufferFromSlot({
+        slot: sourceSlot,
+        sourceFetchTimeoutMs: SOURCE_FETCH_TIMEOUT_MS,
+        onMissingSource: () =>
+          centerBadRequest(
+            IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_MISSING,
+            'Slot has no source image to center.'
+          ),
+        onInvalidSource: () =>
+          centerBadRequest(
+            IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_INVALID,
+            'Slot source image path is invalid.'
+          ),
+        onRemoteFetchFailed: (status) =>
+          centerBadRequest(
+            IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_INVALID,
+            `Failed to fetch source image (${status}).`,
+            { status }
+          ),
+      });
       const metadata = await sharp(source.buffer).metadata();
       sourceWidth = metadata.width ?? sourceSlot.imageFile?.width ?? 0;
       sourceHeight = metadata.height ?? sourceSlot.imageFile?.height ?? 0;
@@ -570,7 +511,7 @@ async function processCenterPayload(input: {
     };
   }
 
-  const parsedData = parseDataUrl(payload.dataUrl ?? '');
+  const parsedData = parseImageDataUrl(payload.dataUrl ?? '');
   if (!parsedData) {
     throw centerBadRequest(
       IMAGE_STUDIO_CENTER_ERROR_CODES.CLIENT_DATA_URL_INVALID,
@@ -794,12 +735,13 @@ export async function postCenterSlotHandler(
 
     const imageFileRepository = await getImageFileRepository();
     const imageFile = await imageFileRepository.createImageFile({
+      name: fileName,
       filename: fileName,
       filepath: publicPath,
       mimetype: processed.outputMime,
       size: processed.outputBuffer.length,
-      width: processed.outputWidth,
-      height: processed.outputHeight,
+      width: processed.outputWidth ?? undefined,
+      height: processed.outputHeight ?? undefined,
     });
 
     const sourceLabel = sourceSlot.name?.trim() || sourceSlot.id;

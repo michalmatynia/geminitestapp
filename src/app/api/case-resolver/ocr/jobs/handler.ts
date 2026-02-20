@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -16,14 +18,16 @@ import {
   enqueueCaseResolverOcrJob,
   startCaseResolverOcrQueue,
 } from '@/features/jobs/workers/caseResolverOcrQueue';
-import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 
 const createCaseResolverOcrJobSchema = z.object({
   filepath: z.string().trim().min(1),
   model: z.string().trim().optional(),
   prompt: z.string().trim().optional(),
+  correlationId: z.string().trim().optional(),
 });
+const CASE_RESOLVER_OCR_DEFAULT_MAX_ATTEMPTS = 3;
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const body = (await req.json().catch(() => null)) as unknown;
@@ -44,7 +48,17 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   const runtimeModel = parsed.data.model?.trim() ?? '';
   const runtimePrompt = parsed.data.prompt?.trim() || DEFAULT_CASE_RESOLVER_OCR_PROMPT;
-  const createdJob = await createCaseResolverOcrJob({ filepath });
+  const runtimeCorrelationId =
+    parsed.data.correlationId?.trim() ||
+    req.headers.get('x-correlation-id')?.trim() ||
+    `case-resolver-ocr-${randomUUID()}`;
+  const createdJob = await createCaseResolverOcrJob({
+    filepath,
+    model: runtimeModel || null,
+    prompt: runtimePrompt,
+    correlationId: runtimeCorrelationId,
+    maxAttempts: CASE_RESOLVER_OCR_DEFAULT_MAX_ATTEMPTS,
+  });
 
   let dispatchMode: 'queued' | 'inline';
   try {
@@ -54,6 +68,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       filepath,
       model: runtimeModel,
       prompt: runtimePrompt,
+      correlationId: runtimeCorrelationId,
     });
   } catch (error) {
     const message =
@@ -72,6 +87,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     {
       job: latestJob,
       dispatchMode,
+      correlationId: latestJob.correlationId ?? runtimeCorrelationId,
     },
     { status: 201 }
   );

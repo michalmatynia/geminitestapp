@@ -119,6 +119,85 @@ describe('compileGraph', () => {
     ).toBe(false);
   });
 
+  it('blocks nodes with required inputs that are not wired', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'model-1',
+        type: 'model',
+        inputs: ['prompt', 'images'],
+        outputs: ['result'],
+        inputContracts: {
+          prompt: { required: true },
+          images: { required: false },
+        },
+      }),
+      buildNode({
+        id: 'viewer-1',
+        type: 'viewer',
+        inputs: ['result'],
+        outputs: [],
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-model-viewer',
+        from: 'model-1',
+        to: 'viewer-1',
+        fromPort: 'result',
+        toPort: 'result',
+      },
+    ];
+
+    const report = compileGraph(nodes, edges);
+    expect(report.ok).toBe(false);
+    expect(
+      report.findings.some(
+        (finding) =>
+          finding.code === 'required_input_missing_wiring' &&
+          finding.nodeId === 'model-1' &&
+          finding.port === 'prompt'
+      )
+    ).toBe(true);
+  });
+
+  it('warns when optional inputs are wired incompatibly', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'osc-1',
+        type: 'audio_oscillator',
+        inputs: ['frequency'],
+        outputs: ['audioSignal'],
+      }),
+      buildNode({
+        id: 'prompt-1',
+        type: 'prompt',
+        inputs: ['prompt'],
+        outputs: ['prompt'],
+        inputContracts: {
+          prompt: { required: false },
+        },
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-optional-invalid',
+        from: 'osc-1',
+        to: 'prompt-1',
+        fromPort: 'audioSignal',
+        toPort: 'prompt',
+      },
+    ];
+
+    const report = compileGraph(nodes, edges);
+    expect(
+      report.findings.some(
+        (finding) =>
+          finding.code === 'optional_input_incompatible_wiring' &&
+          finding.edgeId === 'edge-optional-invalid'
+      )
+    ).toBe(true);
+  });
+
   it('blocks cycles that use unsupported node types', () => {
     const nodes: AiNode[] = [
       buildNode({

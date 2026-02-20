@@ -5,7 +5,7 @@ import { randomUUID } from 'crypto';
 import {
   normalizeBaseImportParameterImportSettings,
   defaultBaseImportParameterImportSettings,
-} from '@/shared/contracts/integrations/base-import-parameter-import';
+} from '@/shared/contracts/integrations';
 import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import { getProductDataProvider } from '@/features/products/server';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

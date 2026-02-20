@@ -14,6 +14,7 @@ import {
   markCaseResolverOcrJobFailed,
   markCaseResolverOcrJobQueuedForRetry,
   markCaseResolverOcrJobRunning,
+  type CaseResolverOcrErrorCategory,
 } from '@/features/case-resolver/server/ocr-runtime-job-store';
 import { DEFAULT_CASE_RESOLVER_OCR_PROMPT } from '@/features/case-resolver/settings';
 import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
@@ -34,6 +35,7 @@ type CaseResolverOcrQueueJobData = {
   filepath: string;
   model: string;
   prompt: string;
+  correlationId?: string | null;
 };
 
 type CaseResolverResolvedOcrModel = {
@@ -78,6 +80,19 @@ type PdfParseResult = {
 type PdfParseModule = {
   default: (buffer: Buffer) => Promise<PdfParseResult>;
 };
+
+type PreparedCaseResolverOcrInput =
+  | {
+    kind: 'image';
+    filepath: string;
+    base64Image: string;
+    mimeType: string;
+  }
+  | {
+    kind: 'pdf';
+    filepath: string;
+    extractedDocumentText: string;
+  };
 
 export type CaseResolverOcrDispatchMode = 'queued' | 'inline';
 
@@ -128,6 +143,39 @@ export const resolveCaseResolverOcrModel = (
     model: selectedModel,
     provider: inferCaseResolverOcrProviderFromModel(selectedModel),
   };
+};
+
+export const resolveCaseResolverOcrModelCandidates = (
+  model: string,
+  fallbackModel: string = OLLAMA_MODEL
+): CaseResolverResolvedOcrModel[] => {
+  const runtimeCandidates = model
+    .split(/[\n,;]+/)
+    .map((entry: string): string => entry.trim())
+    .filter(Boolean);
+  const fallbackCandidate = fallbackModel.trim();
+  const candidateValues =
+    runtimeCandidates.length > 0
+      ? runtimeCandidates
+      : fallbackCandidate
+        ? [fallbackCandidate]
+        : [];
+
+  if (candidateValues.length === 0) {
+    throw new Error('OCR model is not configured.');
+  }
+
+  const uniqueCandidates = new Set<string>();
+  return candidateValues.reduce<CaseResolverResolvedOcrModel[]>(
+    (resolvedCandidates: CaseResolverResolvedOcrModel[], entry: string) => {
+      const normalizedEntry = entry.toLowerCase();
+      if (uniqueCandidates.has(normalizedEntry)) return resolvedCandidates;
+      uniqueCandidates.add(normalizedEntry);
+      resolvedCandidates.push(resolveCaseResolverOcrModel(entry));
+      return resolvedCandidates;
+    },
+    []
+  );
 };
 
 const resolveOpenAiApiKey = async (): Promise<string> => {
@@ -300,22 +348,55 @@ const withPromiseTimeout = async <T>(
   }
 };
 
-export const isRetryableCaseResolverOcrError = (error: unknown): boolean => {
+export const classifyCaseResolverOcrError = (
+  error: unknown
+): CaseResolverOcrErrorCategory => {
   const message =
     error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
-  return (
-    message.includes('timed out') ||
-    message.includes('timeout') ||
-    message.includes('temporarily unavailable') ||
+  if (message.includes('timed out') || message.includes('timeout')) {
+    return 'timeout';
+  }
+  if (
     message.includes('rate limit') ||
     message.includes('429') ||
-    message.includes('503') ||
-    message.includes('502') ||
-    message.includes('504') ||
+    message.includes('too many requests')
+  ) {
+    return 'rate_limit';
+  }
+  if (
     message.includes('econnreset') ||
     message.includes('econnrefused') ||
     message.includes('socket hang up') ||
     message.includes('network')
+  ) {
+    return 'network';
+  }
+  if (
+    message.includes('temporarily unavailable') ||
+    message.includes('503') ||
+    message.includes('502') ||
+    message.includes('504')
+  ) {
+    return 'provider';
+  }
+  if (
+    message.includes('invalid filepath') ||
+    message.includes('only image and pdf files are supported') ||
+    message.includes('filepath is required') ||
+    message.includes('ocr model is not configured')
+  ) {
+    return 'validation';
+  }
+  return 'unknown';
+};
+
+export const isRetryableCaseResolverOcrError = (error: unknown): boolean => {
+  const category = classifyCaseResolverOcrError(error);
+  return (
+    category === 'timeout' ||
+    category === 'rate_limit' ||
+    category === 'network' ||
+    category === 'provider'
   );
 };
 
@@ -549,11 +630,8 @@ const runGeminiOcrRequest = async (input: {
   return parseGeminiResponseText(payload);
 };
 
-const resolveOcrModel = (model: string): CaseResolverResolvedOcrModel => {
-  const resolved = resolveCaseResolverOcrModel(model);
-  if (resolved.model.trim()) return resolved;
-  throw new Error('OCR model is not configured.');
-};
+const resolveOcrModels = (model: string): CaseResolverResolvedOcrModel[] =>
+  resolveCaseResolverOcrModelCandidates(model);
 
 const extractPdfTextForOcr = async (diskPath: string): Promise<string> => {
   const fileBuffer = await fs.readFile(diskPath);
@@ -566,84 +644,141 @@ const extractPdfTextForOcr = async (diskPath: string): Promise<string> => {
   return `${text.slice(0, MAX_PDF_OCR_TEXT_CHARS)}\n\n[TRUNCATED ${truncatedChars} chars]`;
 };
 
+const prepareCaseResolverOcrInput = async (
+  resolvedPath: ReturnType<typeof resolveCaseResolverOcrDiskPath>
+): Promise<PreparedCaseResolverOcrInput> => {
+  if (resolvedPath.kind === 'image') {
+    const buffer = await fs.readFile(resolvedPath.diskPath);
+    return {
+      kind: 'image',
+      filepath: resolvedPath.filepath,
+      base64Image: buffer.toString('base64'),
+      mimeType: resolveImageMimeType(resolvedPath.filepath),
+    };
+  }
+
+  return {
+    kind: 'pdf',
+    filepath: resolvedPath.filepath,
+    extractedDocumentText: await extractPdfTextForOcr(resolvedPath.diskPath),
+  };
+};
+
+const runPreparedCaseResolverOcrRequest = async (input: {
+  prepared: PreparedCaseResolverOcrInput;
+  model: CaseResolverResolvedOcrModel;
+  prompt: string;
+}): Promise<string> => {
+  if (input.prepared.kind === 'image') {
+    if (input.model.provider === 'openai') {
+      return runOpenAiOcrRequest({
+        model: input.model.model,
+        prompt: input.prompt,
+        filepath: input.prepared.filepath,
+        base64Image: input.prepared.base64Image,
+        mimeType: input.prepared.mimeType,
+      });
+    }
+    if (input.model.provider === 'anthropic') {
+      return runAnthropicOcrRequest({
+        model: input.model.model,
+        prompt: input.prompt,
+        filepath: input.prepared.filepath,
+        base64Image: input.prepared.base64Image,
+        mimeType: input.prepared.mimeType,
+      });
+    }
+    if (input.model.provider === 'gemini') {
+      return runGeminiOcrRequest({
+        model: input.model.model,
+        prompt: input.prompt,
+        filepath: input.prepared.filepath,
+        base64Image: input.prepared.base64Image,
+        mimeType: input.prepared.mimeType,
+      });
+    }
+    return runOllamaOcrRequest({
+      model: input.model.model,
+      prompt: input.prompt,
+      filepath: input.prepared.filepath,
+      images: [input.prepared.base64Image],
+    });
+  }
+
+  if (input.model.provider === 'openai') {
+    return runOpenAiOcrRequest({
+      model: input.model.model,
+      prompt: input.prompt,
+      filepath: input.prepared.filepath,
+      extractedDocumentText: input.prepared.extractedDocumentText,
+    });
+  }
+  if (input.model.provider === 'anthropic') {
+    return runAnthropicOcrRequest({
+      model: input.model.model,
+      prompt: input.prompt,
+      filepath: input.prepared.filepath,
+      extractedDocumentText: input.prepared.extractedDocumentText,
+    });
+  }
+  if (input.model.provider === 'gemini') {
+    return runGeminiOcrRequest({
+      model: input.model.model,
+      prompt: input.prompt,
+      filepath: input.prepared.filepath,
+      extractedDocumentText: input.prepared.extractedDocumentText,
+    });
+  }
+  return runOllamaOcrRequest({
+    model: input.model.model,
+    prompt: input.prompt,
+    filepath: input.prepared.filepath,
+    extractedDocumentText: input.prepared.extractedDocumentText,
+  });
+};
+
 const runCaseResolverOcr = async (input: {
   filepath: string;
   model: string;
   prompt: string;
 }): Promise<string> => {
   const resolvedPath = resolveCaseResolverOcrDiskPath(input.filepath);
-  const resolvedModel = resolveOcrModel(input.model);
+  const resolvedModels = resolveOcrModels(input.model);
   const prompt = resolveOcrPrompt(input.prompt);
-  if (resolvedPath.kind === 'image') {
-    const buffer = await fs.readFile(resolvedPath.diskPath);
-    const base64Image = buffer.toString('base64');
-    const mimeType = resolveImageMimeType(resolvedPath.filepath);
-    if (resolvedModel.provider === 'openai') {
-      return runOpenAiOcrRequest({
-        model: resolvedModel.model,
+  const prepared = await prepareCaseResolverOcrInput(resolvedPath);
+  const attemptedModels: string[] = [];
+
+  for (let index = 0; index < resolvedModels.length; index += 1) {
+    const model = resolvedModels[index];
+    attemptedModels.push(`${model.provider}:${model.model}`);
+    try {
+      return await runPreparedCaseResolverOcrRequest({
+        prepared,
+        model,
         prompt,
-        filepath: resolvedPath.filepath,
-        base64Image,
-        mimeType,
+      });
+    } catch (error) {
+      const hasNextCandidate = index < resolvedModels.length - 1;
+      if (!hasNextCandidate || !isRetryableCaseResolverOcrError(error)) {
+        throw error;
+      }
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorCategory = classifyCaseResolverOcrError(error);
+      await logSystemEvent({
+        level: 'warn',
+        source: LOG_SOURCE,
+        message: `OCR request failed for model ${model.provider}:${model.model}; trying next model candidate`,
+        context: {
+          filepath: resolvedPath.filepath,
+          attemptedModels,
+          reason: errorMessage,
+          errorCategory,
+        },
       });
     }
-    if (resolvedModel.provider === 'anthropic') {
-      return runAnthropicOcrRequest({
-        model: resolvedModel.model,
-        prompt,
-        filepath: resolvedPath.filepath,
-        base64Image,
-        mimeType,
-      });
-    }
-    if (resolvedModel.provider === 'gemini') {
-      return runGeminiOcrRequest({
-        model: resolvedModel.model,
-        prompt,
-        filepath: resolvedPath.filepath,
-        base64Image,
-        mimeType,
-      });
-    }
-    return runOllamaOcrRequest({
-      model: resolvedModel.model,
-      prompt,
-      filepath: resolvedPath.filepath,
-      images: [base64Image],
-    });
   }
 
-  const extractedDocumentText = await extractPdfTextForOcr(resolvedPath.diskPath);
-  if (resolvedModel.provider === 'openai') {
-    return runOpenAiOcrRequest({
-      model: resolvedModel.model,
-      prompt,
-      filepath: resolvedPath.filepath,
-      extractedDocumentText,
-    });
-  }
-  if (resolvedModel.provider === 'anthropic') {
-    return runAnthropicOcrRequest({
-      model: resolvedModel.model,
-      prompt,
-      filepath: resolvedPath.filepath,
-      extractedDocumentText,
-    });
-  }
-  if (resolvedModel.provider === 'gemini') {
-    return runGeminiOcrRequest({
-      model: resolvedModel.model,
-      prompt,
-      filepath: resolvedPath.filepath,
-      extractedDocumentText,
-    });
-  }
-  return runOllamaOcrRequest({
-    model: resolvedModel.model,
-    prompt,
-    filepath: resolvedPath.filepath,
-    extractedDocumentText,
-  });
+  throw new Error('OCR model chain exhausted without result.');
 };
 
 const queue = createManagedQueue<CaseResolverOcrQueueJobData>({
@@ -659,7 +794,9 @@ const queue = createManagedQueue<CaseResolverOcrQueueJobData>({
     removeOnFail: false,
   },
   processor: async (data) => {
-    await markCaseResolverOcrJobRunning(data.jobId, data.filepath);
+    await markCaseResolverOcrJobRunning(data.jobId, data.filepath, {
+      correlationId: data.correlationId,
+    });
     try {
       const extractedText = await runCaseResolverOcr({
         filepath: data.filepath,
@@ -671,7 +808,8 @@ const queue = createManagedQueue<CaseResolverOcrQueueJobData>({
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'OCR runtime job failed.';
-      if (!isRetryableCaseResolverOcrError(error)) {
+      const retryable = isRetryableCaseResolverOcrError(error);
+      if (!retryable) {
         throw new UnrecoverableError(errorMessage);
       }
       throw error;
@@ -682,7 +820,11 @@ const queue = createManagedQueue<CaseResolverOcrQueueJobData>({
       level: 'info',
       source: LOG_SOURCE,
       message: `OCR job ${data.jobId} completed`,
-      context: { queueJobId: jobId, runtimeJobId: data.jobId },
+      context: {
+        queueJobId: jobId,
+        runtimeJobId: data.jobId,
+        correlationId: data.correlationId ?? null,
+      },
     });
   },
   onFailed: async (jobId, error, data, context) => {
@@ -690,9 +832,16 @@ const queue = createManagedQueue<CaseResolverOcrQueueJobData>({
     const maxAttempts = context?.maxAttempts ?? 1;
     const isFinalAttempt = attemptsMade >= maxAttempts;
     const errorMessage = error instanceof Error ? error.message : 'OCR runtime job failed.';
+    const errorCategory = classifyCaseResolverOcrError(error);
+    const retryable = isRetryableCaseResolverOcrError(error);
 
-    if (!isFinalAttempt && isRetryableCaseResolverOcrError(error)) {
-      await markCaseResolverOcrJobQueuedForRetry(data.jobId);
+    if (!isFinalAttempt && retryable) {
+      await markCaseResolverOcrJobQueuedForRetry(data.jobId, {
+        attemptsMade,
+        maxAttempts,
+        errorCategory,
+        retryableError: true,
+      });
       await logSystemEvent({
         level: 'warn',
         source: LOG_SOURCE,
@@ -701,12 +850,20 @@ const queue = createManagedQueue<CaseResolverOcrQueueJobData>({
           queueJobId: jobId,
           runtimeJobId: data.jobId,
           reason: errorMessage,
+          errorCategory,
+          retryable,
+          correlationId: data.correlationId ?? null,
         },
       });
       return;
     }
 
-    await markCaseResolverOcrJobFailed(data.jobId, errorMessage);
+    await markCaseResolverOcrJobFailed(data.jobId, errorMessage, {
+      attemptsMade,
+      maxAttempts,
+      errorCategory,
+      retryableError: retryable,
+    });
     await ErrorSystem.captureException(error, {
       service: LOG_SOURCE,
       action: 'onFailed',
@@ -714,6 +871,9 @@ const queue = createManagedQueue<CaseResolverOcrQueueJobData>({
       runtimeJobId: data.jobId,
       attemptsMade,
       maxAttempts,
+      errorCategory,
+      retryable,
+      correlationId: data.correlationId ?? null,
     });
   },
 });
@@ -730,7 +890,10 @@ export const enqueueCaseResolverOcrJob = async (
       level: 'info',
       source: LOG_SOURCE,
       message: `Redis unavailable for OCR job ${data.jobId}; processing inline`,
-      context: { runtimeJobId: data.jobId },
+      context: {
+        runtimeJobId: data.jobId,
+        correlationId: data.correlationId ?? null,
+      },
     });
     await queue.processInline(data);
     return 'inline';
@@ -746,6 +909,7 @@ export const enqueueCaseResolverOcrJob = async (
       message: `Queue enqueue failed for OCR job ${data.jobId}; falling back to inline processing`,
       context: {
         runtimeJobId: data.jobId,
+        correlationId: data.correlationId ?? null,
         error:
           enqueueError instanceof Error
             ? enqueueError.message
@@ -761,6 +925,7 @@ export const enqueueCaseResolverOcrJob = async (
         service: LOG_SOURCE,
         action: 'inline-fallback-failed',
         runtimeJobId: data.jobId,
+        correlationId: data.correlationId ?? null,
       });
       throw inlineError;
     }

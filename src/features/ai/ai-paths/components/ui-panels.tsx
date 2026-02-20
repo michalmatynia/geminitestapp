@@ -18,6 +18,7 @@ import {
   DropdownMenuSeparator,
   SearchInput,
   useToast,
+  Card,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -558,13 +559,13 @@ export function DocsTabPanel(): React.JSX.Element {
           </div>
         </div>
       </div>
-      <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
+      <Card className='border-border/60 bg-card/40 p-5'>
         <h2 className='text-lg font-semibold text-white'>AI Paths Docs</h2>
         <p className='mt-2 text-gray-400'>
           Modular workflows are built by connecting node outputs (right) to matching
           node inputs (left). Connections are strict: port names must match.
         </p>
-      </div>
+      </Card>
 
       {showHowItWorks ? (
         <DocumentationSection title='How AI Paths Works'>
@@ -766,7 +767,7 @@ export function DocsTabPanel(): React.JSX.Element {
       ) : null}
 
       {showQuickWiring ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
+        <Card className='border-border/60 bg-card/40 p-5'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <h3 className='text-base font-semibold text-white'>Quick Wiring</h3>
             <Button
@@ -780,11 +781,11 @@ export function DocsTabPanel(): React.JSX.Element {
           <pre className='mt-4 whitespace-pre-wrap rounded-md border border-border bg-card/60 p-3 text-[11px] text-gray-200'>
             {resolvedDocsWiringSnippet}
           </pre>
-        </div>
+        </Card>
       ) : null}
 
       {showDescriptionFlow ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
+        <Card className='border-border/60 bg-card/40 p-5'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <h3 className='text-base font-semibold text-white'>
               AI Description Wiring
@@ -800,11 +801,11 @@ export function DocsTabPanel(): React.JSX.Element {
           <pre className='mt-4 whitespace-pre-wrap rounded-md border border-border bg-card/60 p-3 text-[11px] text-gray-200'>
             {resolvedDocsDescriptionSnippet}
           </pre>
-        </div>
+        </Card>
       ) : null}
 
       {showJobsWiring ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
+        <Card className='border-border/60 bg-card/40 p-5'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <h3 className='text-base font-semibold text-white'>AI Job Wiring</h3>
             <Button
@@ -818,11 +819,11 @@ export function DocsTabPanel(): React.JSX.Element {
           <pre className='mt-4 whitespace-pre-wrap rounded-md border border-border bg-card/60 p-3 text-[11px] text-gray-200'>
             {resolvedDocsJobsSnippet}
           </pre>
-        </div>
+        </Card>
       ) : null}
 
       {showNodeDocs ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
+        <Card className='border-border/60 bg-card/40 p-5'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <h3 className='text-base font-semibold text-white'>Node Documentation</h3>
           </div>
@@ -958,7 +959,7 @@ export function DocsTabPanel(): React.JSX.Element {
               </div>
             ) : null}
           </div>
-        </div>
+        </Card>
       ) : null}
 
       {showSavingDebugging ? (
@@ -1003,11 +1004,11 @@ export function DocsTabPanel(): React.JSX.Element {
       ) : null}
 
       {!hasAnyResults ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
+        <Card className='border-border/60 bg-card/40 p-5'>
           <div className='text-sm text-gray-400'>
             No documentation sections match your search.
           </div>
-        </div>
+        </Card>
       ) : null}
     </div>
   );

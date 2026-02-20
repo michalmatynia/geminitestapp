@@ -10,7 +10,7 @@ import type {
   ImportResponse,
   Template,
   WarehouseOption,
-} from '@/shared/contracts/data-import-export/imports';
+} from '@/shared/contracts/data-import-export';
 import type { 
   IntegrationWithConnectionsDto as IntegrationWithConnections,
   BaseImportRunDetailResponseDto as BaseImportRunDetailResponse,

@@ -460,6 +460,21 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         `Graph compile blocked run: ${compileReport.errors} issue(s) detected.`
       );
     }
+    if (compileReport.warnings > 0) {
+      await repo.createRunEvent({
+        runId: run.id,
+        level: 'warn',
+        message: `Graph compile warnings detected (${compileReport.warnings}).`,
+        metadata: {
+          compile: {
+            errors: compileReport.errors,
+            warnings: compileReport.warnings,
+            findings: compileReport.findings.slice(0, 10),
+          },
+          runStartedAt,
+        },
+      });
+    }
 
     const validationReport = evaluateAiPathsValidationPreflight({
       nodes,

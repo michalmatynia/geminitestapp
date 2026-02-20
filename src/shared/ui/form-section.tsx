@@ -4,6 +4,7 @@ import { cn } from '@/shared/utils';
 
 import { Label } from './label';
 import { SectionHeader } from './section-header';
+import { Card } from './card';
 
 import type { ReactNode } from 'react';
 
@@ -32,16 +33,16 @@ export function FormSection({
   variant = 'subtle',
   id,
 }: FormSectionProps): React.JSX.Element {
-  const variantClasses = {
-    default: 'rounded-lg border border-border bg-card p-4',
-    compact: 'rounded-md border border-border bg-card p-3',
-    subtle: 'rounded-lg border border-border/60 bg-card/40 p-4',
-    'subtle-compact': 'rounded-md border border-border/60 bg-card/40 p-3',
-    glass: 'rounded-lg border border-white/10 bg-white/5 backdrop-blur-md p-4',
-  }[variant];
+  const cardVariant = variant === 'glass' ? 'glass' : (variant?.startsWith('subtle') ? 'subtle' : 'default');
+  const cardPadding = variant?.endsWith('compact') ? 'sm' : 'default';
 
   return (
-    <div id={id} className={cn('space-y-4', variantClasses, className)}>
+    <Card
+      id={id}
+      variant={cardVariant}
+      padding={cardPadding}
+      className={cn('space-y-4', className)}
+    >
       {(title || subtitle || description || actions) && (
         <SectionHeader
           title={title ?? ''}
@@ -57,7 +58,7 @@ export function FormSection({
           {children}
         </div>
       ) : null}
-    </div>
+    </Card>
   );
 }
 

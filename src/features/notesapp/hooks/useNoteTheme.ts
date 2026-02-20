@@ -1,7 +1,7 @@
 import { useMemo, useCallback } from 'react';
 
 import { findFolderById } from '@/features/foldertree';
-import type { UseNoteThemeProps } from '@/shared/contracts/notes/notes-hooks';
+import type { UseNoteThemeProps } from '@/shared/contracts/notes';
 import { logClientError } from '@/features/observability';
 import type { 
   NoteWithRelationsDto as NoteWithRelations, 

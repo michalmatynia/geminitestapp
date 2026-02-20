@@ -29,6 +29,14 @@ import {
 } from './settings';
 
 const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
+const AI_INSIGHTS_MODEL_MAX_RETRIES = Math.max(
+  0,
+  Number(process.env['AI_INSIGHTS_MODEL_MAX_RETRIES'] ?? 2),
+);
+const AI_INSIGHTS_MODEL_RETRY_BASE_MS = Math.max(
+  100,
+  Number(process.env['AI_INSIGHTS_MODEL_RETRY_BASE_MS'] ?? 750),
+);
 const AI_INSIGHTS_USE_MONGO_SETTINGS =
   process.env['AI_INSIGHTS_USE_MONGO_SETTINGS'] === 'true' ||
   !process.env['DATABASE_URL'];
@@ -231,6 +239,104 @@ const stripCodeFence = (value: string): string => {
   return trimmed;
 };
 
+const sleep = async (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+const collectErrorMessages = (error: unknown): string[] => {
+  const queue: unknown[] = [error];
+  const seen = new Set<unknown>();
+  const messages: string[] = [];
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current || seen.has(current)) continue;
+    seen.add(current);
+    if (typeof current === 'string') {
+      messages.push(current);
+      continue;
+    }
+    if (current instanceof Error) {
+      messages.push(current.message);
+      const withCause = current as Error & { cause?: unknown };
+      if (withCause.cause) queue.push(withCause.cause);
+      continue;
+    }
+    if (typeof current === 'object') {
+      const record = current as Record<string, unknown>;
+      if (typeof record['message'] === 'string') {
+        messages.push(record['message']);
+      }
+      if (Array.isArray(record['causeChain'])) {
+        queue.push(...record['causeChain']);
+      }
+      if (record['cause']) {
+        queue.push(record['cause']);
+      }
+      if (typeof record['code'] === 'string') {
+        messages.push(record['code']);
+      }
+    }
+  }
+  return messages;
+};
+
+const isTransientModelConnectionError = (error: unknown): boolean => {
+  const merged = collectErrorMessages(error).join(' | ').toLowerCase();
+  if (!merged) return false;
+  return [
+    'connection error',
+    'fetch failed',
+    'network error',
+    'timed out',
+    'timeout',
+    'socket hang up',
+    'econnreset',
+    'econnrefused',
+    'eai_again',
+    'enotfound',
+    '429',
+    'rate limit',
+    'overloaded',
+    'temporarily unavailable',
+    'service unavailable',
+    'bad gateway',
+    'gateway timeout',
+  ].some((token) => merged.includes(token));
+};
+
+const withTransientModelRetry = async <T>(
+  action: () => Promise<T>,
+  context: { provider: 'openai' | 'anthropic' | 'gemini' | 'ollama'; modelId: string },
+): Promise<T> => {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= AI_INSIGHTS_MODEL_MAX_RETRIES; attempt += 1) {
+    try {
+      return await action();
+    } catch (error: unknown) {
+      lastError = error;
+      if (!isTransientModelConnectionError(error) || attempt >= AI_INSIGHTS_MODEL_MAX_RETRIES) {
+        throw error;
+      }
+      const delayMs = AI_INSIGHTS_MODEL_RETRY_BASE_MS * Math.pow(2, attempt);
+      await ErrorSystem.logWarning('AI insights model call failed; retrying transient error.', {
+        service: 'ai-insights',
+        context: {
+          provider: context.provider,
+          modelId: context.modelId,
+          attempt: attempt + 1,
+          maxRetries: AI_INSIGHTS_MODEL_MAX_RETRIES,
+          delayMs,
+          error:
+            error instanceof Error
+              ? error.message
+              : String(error),
+        },
+      });
+      await sleep(delayMs);
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError ?? 'Unknown model error'));
+};
+
 const parseInsightPayload = (raw: string): {
   status: AiInsightStatus;
   summary: string;
@@ -332,7 +438,10 @@ const runInsightModel = async (params: {
     if (!anthropicKey) {
       throw new Error('Anthropic API key is missing.');
     }
-    return runAnthropicChat({ model: modelId, apiKey: anthropicKey, messages: params.messages });
+    return withTransientModelRetry(
+      () => runAnthropicChat({ model: modelId, apiKey: anthropicKey, messages: params.messages }),
+      { provider: 'anthropic', modelId }
+    );
   }
 
   if (isGeminiModel(modelId)) {
@@ -341,19 +450,27 @@ const runInsightModel = async (params: {
     if (!geminiKey) {
       throw new Error('Gemini API key is missing.');
     }
-    return runGeminiChat({ model: modelId, apiKey: geminiKey, messages: params.messages });
+    return withTransientModelRetry(
+      () => runGeminiChat({ model: modelId, apiKey: geminiKey, messages: params.messages }),
+      { provider: 'gemini', modelId }
+    );
   }
 
   const apiKey =
     (await readInsightSettingValue('openai_api_key')) ?? process.env['OPENAI_API_KEY'] ?? null;
   const { openai } = getClient(modelId, apiKey);
-  const response = await openai.chat.completions.create({
-    model: modelId,
-    messages: params.messages.map((message: ChatMessage) => ({
-      role: message.role,
-      content: message.content,
-    })),
-  });
+  const provider = modelId.toLowerCase().includes('gpt') ? 'openai' : 'ollama';
+  const response = await withTransientModelRetry(
+    () =>
+      openai.chat.completions.create({
+        model: modelId,
+        messages: params.messages.map((message: ChatMessage) => ({
+          role: message.role,
+          content: message.content,
+        })),
+      }),
+    { provider, modelId }
+  );
   return response.choices?.[0]?.message?.content?.trim() ?? '';
 };
 

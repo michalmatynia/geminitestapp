@@ -13,33 +13,33 @@ const BLOCKING_QUERY_TELEMETRY_INGESTION =
   process.env['QUERY_TELEMETRY_BLOCKING_INGESTION'] === 'true';
 
 const eventSchema = z.object({
-  id: z.string().trim().min(1).max(120),
-  timestamp: z.string().trim().min(1).max(120),
-  traceId: z.string().trim().min(1).max(120),
-  entity: z.enum(['query', 'mutation', 'query-cache', 'mutation-cache']),
-  stage: z.enum(['start', 'success', 'error', 'retry', 'cancel']),
-  source: z.string().trim().min(1).max(240),
-  operation: z.enum(['list', 'detail', 'infinite', 'polling', 'create', 'update', 'delete', 'action', 'upload']),
-  resource: z.string().trim().min(1).max(240),
-  key: z.string().trim().min(1).max(2_000),
-  keyHash: z.string().trim().min(1).max(120),
-  criticality: z.enum(['low', 'normal', 'high', 'critical']),
-  domain: z.enum(['global', 'products', 'image_studio', 'integrations']),
-  sampled: z.boolean(),
-  attempt: z.number().int().positive().optional(),
-  durationMs: z.number().int().nonnegative().optional(),
-  statusCode: z.number().int().nonnegative().optional(),
-  category: z.string().trim().min(1).max(120).optional(),
-  errorMessage: z.string().trim().min(1).max(2_000).optional(),
-  context: z.record(z.string(), z.unknown()).optional(),
-  tags: z.array(z.string().trim().min(1).max(120)).max(16).optional(),
+  id: z.coerce.string().trim().min(1).max(120),
+  timestamp: z.coerce.string().trim().min(1).max(120),
+  traceId: z.coerce.string().trim().min(1).max(120),
+  entity: z.coerce.string().trim().min(1).max(64),
+  stage: z.coerce.string().trim().min(1).max(64),
+  source: z.coerce.string().trim().min(1).max(240),
+  operation: z.coerce.string().trim().min(1).max(64),
+  resource: z.coerce.string().trim().min(1).max(240),
+  key: z.coerce.string().trim().min(1).max(2_000),
+  keyHash: z.coerce.string().trim().min(1).max(120),
+  criticality: z.coerce.string().trim().min(1).max(32),
+  domain: z.coerce.string().trim().min(1).max(64),
+  sampled: z.coerce.boolean(),
+  attempt: z.coerce.number().int().positive().optional(),
+  durationMs: z.coerce.number().int().nonnegative().optional(),
+  statusCode: z.coerce.number().int().nonnegative().optional(),
+  category: z.coerce.string().trim().min(1).max(120).optional(),
+  errorMessage: z.coerce.string().trim().min(1).max(2_000).optional(),
+  context: z.record(z.string(), z.unknown()).nullable().optional().transform((value) => value ?? undefined),
+  tags: z.array(z.coerce.string().trim().min(1).max(120)).max(16).optional(),
 });
 
 export const bodySchema = z.object({
   events: z.array(eventSchema).min(1).max(MAX_BATCH_SIZE),
 });
 
-const toLogLevel = (stage: z.infer<typeof eventSchema>['stage']): 'info' | 'warn' | 'error' => {
+const toLogLevel = (stage: string): 'info' | 'warn' | 'error' => {
   if (stage === 'error') return 'error';
   if (stage === 'retry' || stage === 'cancel') return 'warn';
   return 'info';
@@ -208,4 +208,3 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     requestId: ctx.requestId,
   }, { status: 202 });
 }
-

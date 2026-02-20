@@ -17,6 +17,7 @@ import {
   FormField,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  Card,
 } from '@/shared/ui';
 
 import { PromptExploderHierarchyTreeProvider } from './PromptExploderHierarchyTreeContext';
@@ -172,7 +173,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
       ) : (
         <div className='mt-3 grid gap-3 lg:grid-cols-[280px_minmax(0,1fr)]'>
           {/* ── Segment list sidebar ─────────────────────────────────────── */}
-          <div className='max-h-[65vh] space-y-2 overflow-auto rounded border border-border/60 bg-card/20 p-2'>
+          <Card variant='subtle' padding='sm' className='max-h-[65vh] space-y-2 overflow-auto bg-card/20'>
             {documentState.segments.map((segment: PromptExploderSegment, segmentIndex: number) => {
               const isDropTarget = segmentDropTargetId === segment.id;
               const isDropBefore = isDropTarget && segmentDropPosition === 'before';
@@ -295,10 +296,10 @@ export function SegmentEditorPanel(): React.JSX.Element {
                 </div>
               );
             })}
-          </div>
+          </Card>
 
           {/* ── Segment detail editor ────────────────────────────────────── */}
-          <div className='max-h-[65vh] space-y-3 overflow-auto rounded border border-border/60 bg-card/20 p-3'>
+          <Card variant='subtle' padding='md' className='max-h-[65vh] space-y-3 overflow-auto bg-card/20'>
             {!selectedSegment ? (
               <div className='text-sm text-gray-500'>Select a segment to edit.</div>
             ) : (
@@ -1039,7 +1040,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                 />
               </>
             )}
-          </div>
+          </Card>
         </div>
       )}
     </FormSection>

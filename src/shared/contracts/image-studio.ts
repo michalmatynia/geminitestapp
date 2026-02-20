@@ -245,6 +245,13 @@ export const imageStudioCenterDetectionModeSchema = z.enum([
 ]);
 export type ImageStudioCenterDetectionModeDto = z.infer<typeof imageStudioCenterDetectionModeSchema>;
 
+export const imageStudioCenterShadowPolicySchema = z.enum([
+  'auto',
+  'include_shadow',
+  'exclude_shadow',
+]);
+export type ImageStudioCenterShadowPolicyDto = z.infer<typeof imageStudioCenterShadowPolicySchema>;
+
 export const imageStudioCenterObjectBoundsSchema = z.object({
   left: z.number().int().min(0),
   top: z.number().int().min(0),
@@ -297,6 +304,7 @@ export const imageStudioCenterLayoutConfigSchema = z.object({
     .min(IMAGE_STUDIO_CENTER_LAYOUT_MIN_CHROMA_THRESHOLD)
     .max(IMAGE_STUDIO_CENTER_LAYOUT_MAX_CHROMA_THRESHOLD)
     .optional(),
+  shadowPolicy: imageStudioCenterShadowPolicySchema.optional(),
   detection: imageStudioCenterDetectionModeSchema.optional(),
 });
 export type ImageStudioCenterLayoutConfigDto = z.infer<typeof imageStudioCenterLayoutConfigSchema>;
@@ -504,3 +512,155 @@ export const studioSlotsResponseSchema = z.object({
 
 export type StudioSlotsResponseDto = z.infer<typeof studioSlotsResponseSchema>;
 export type StudioSlotsResponse = StudioSlotsResponseDto;
+
+const imageStudioObjectDetectionUsedSchema = z.enum([
+  'alpha_bbox',
+  'white_bg_first_colored_pixel',
+]);
+
+export const imageStudioWhitespaceMetricsSchema = z.object({
+  px: z.object({
+    left: z.number().finite(),
+    top: z.number().finite(),
+    right: z.number().finite(),
+    bottom: z.number().finite(),
+  }),
+  percent: z.object({
+    left: z.number().finite(),
+    top: z.number().finite(),
+    right: z.number().finite(),
+    bottom: z.number().finite(),
+  }),
+});
+
+export type ImageStudioWhitespaceMetricsDto = z.infer<typeof imageStudioWhitespaceMetricsSchema>;
+export type ImageStudioWhitespaceMetrics = ImageStudioWhitespaceMetricsDto;
+
+export const imageStudioNormalizedCenterLayoutSchema = z.object({
+  paddingPercent: z.number().finite(),
+  paddingXPercent: z.number().finite(),
+  paddingYPercent: z.number().finite(),
+  fillMissingCanvasWhite: z.boolean(),
+  targetCanvasWidth: z.number().int().positive().nullable(),
+  targetCanvasHeight: z.number().int().positive().nullable(),
+  whiteThreshold: z.number().int().finite(),
+  chromaThreshold: z.number().int().finite(),
+  shadowPolicy: imageStudioCenterShadowPolicySchema,
+  detection: imageStudioCenterDetectionModeSchema,
+});
+
+export type ImageStudioNormalizedCenterLayoutDto = z.infer<typeof imageStudioNormalizedCenterLayoutSchema>;
+export type ImageStudioNormalizedCenterLayout = ImageStudioNormalizedCenterLayoutDto;
+
+export const imageStudioAutoScalerLayoutMetadataSchema = z.object({
+  paddingPercent: z.number().finite(),
+  paddingXPercent: z.number().finite(),
+  paddingYPercent: z.number().finite(),
+  fillMissingCanvasWhite: z.boolean(),
+  targetCanvasWidth: z.number().int().positive().nullable(),
+  targetCanvasHeight: z.number().int().positive().nullable(),
+  whiteThreshold: z.number().int().finite(),
+  chromaThreshold: z.number().int().finite(),
+  shadowPolicy: imageStudioCenterShadowPolicySchema.optional(),
+});
+
+export type ImageStudioAutoScalerLayoutMetadataDto = z.infer<typeof imageStudioAutoScalerLayoutMetadataSchema>;
+export type ImageStudioAutoScalerLayoutMetadata = ImageStudioAutoScalerLayoutMetadataDto;
+
+export const imageStudioOperationLifecycleSchema = z.object({
+  state: z.enum(['analyzed', 'persisted']),
+  durationMs: z.number().int().nonnegative(),
+});
+
+export type ImageStudioOperationLifecycleDto = z.infer<typeof imageStudioOperationLifecycleSchema>;
+export type ImageStudioOperationLifecycle = ImageStudioOperationLifecycleDto;
+
+export const imageStudioDetectionDetailsSchema = z.object({
+  shadowPolicyRequested: imageStudioCenterShadowPolicySchema,
+  shadowPolicyApplied: imageStudioCenterShadowPolicySchema,
+  componentCount: z.number().int().nonnegative(),
+  coreComponentCount: z.number().int().nonnegative(),
+  selectedComponentPixels: z.number().int().nonnegative(),
+  selectedComponentCoverage: z.number().finite().min(0).max(1),
+  foregroundPixels: z.number().int().nonnegative(),
+  corePixels: z.number().int().nonnegative(),
+  touchesBorder: z.boolean(),
+  maskSource: z.enum(['foreground', 'core']),
+});
+
+export type ImageStudioDetectionDetailsDto = z.infer<typeof imageStudioDetectionDetailsSchema>;
+export type ImageStudioDetectionDetails = ImageStudioDetectionDetailsDto;
+
+export const imageStudioAnalysisSummarySchema = z.object({
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+  sourceObjectBounds: imageStudioCenterObjectBoundsSchema,
+  detectionUsed: imageStudioObjectDetectionUsedSchema,
+  confidence: z.number().finite().min(0).max(1),
+  detectionDetails: imageStudioDetectionDetailsSchema.nullable().optional(),
+  whitespace: imageStudioWhitespaceMetricsSchema,
+  objectAreaPercent: z.number().finite(),
+  layout: imageStudioNormalizedCenterLayoutSchema,
+  suggestedPlan: z.object({
+    outputWidth: z.number().int().positive(),
+    outputHeight: z.number().int().positive(),
+    targetObjectBounds: imageStudioCenterObjectBoundsSchema,
+    scale: z.number().finite(),
+    whitespace: imageStudioWhitespaceMetricsSchema,
+  }),
+});
+
+export type ImageStudioAnalysisSummaryDto = z.infer<typeof imageStudioAnalysisSummarySchema>;
+export type ImageStudioAnalysisSummary = ImageStudioAnalysisSummaryDto;
+
+export const imageStudioAnalysisResponseSchema = z.object({
+  sourceSlotId: z.string(),
+  mode: imageStudioAnalysisModeSchema,
+  effectiveMode: imageStudioAnalysisModeSchema,
+  authoritativeSource: z.enum(['source_slot', 'client_upload']),
+  sourceMimeHint: z.string().nullable(),
+  analysis: imageStudioAnalysisSummarySchema,
+  lifecycle: imageStudioOperationLifecycleSchema,
+  pipelineVersion: z.string().trim().min(1),
+});
+
+export type ImageStudioAnalysisResponseDto = z.infer<typeof imageStudioAnalysisResponseSchema>;
+export type ImageStudioAnalysisResponse = ImageStudioAnalysisResponseDto;
+
+const imageStudioOutputImageSchema = z.object({
+  id: z.string(),
+  filename: z.string(),
+  filepath: z.string(),
+  mimetype: z.string(),
+  size: z.number().finite().nonnegative(),
+  width: z.number().finite().nullable().optional(),
+  height: z.number().finite().nullable().optional(),
+}).passthrough();
+
+export const imageStudioAutoScalerResponseSchema = z.object({
+  sourceSlotId: z.string().optional(),
+  mode: imageStudioAutoScalerModeSchema,
+  effectiveMode: imageStudioAutoScalerModeSchema,
+  slot: imageStudioSlotSchema,
+  output: imageStudioOutputImageSchema.optional(),
+  sourceObjectBounds: imageStudioCenterObjectBoundsSchema.nullable().optional(),
+  targetObjectBounds: imageStudioCenterObjectBoundsSchema.nullable().optional(),
+  layout: imageStudioAutoScalerLayoutMetadataSchema.nullable().optional(),
+  detectionUsed: imageStudioObjectDetectionUsedSchema.nullable().optional(),
+  confidenceBefore: z.number().finite().min(0).max(1).nullable().optional(),
+  detectionDetails: imageStudioDetectionDetailsSchema.nullable().optional(),
+  scale: z.number().finite().nullable().optional(),
+  whitespaceBefore: imageStudioWhitespaceMetricsSchema.nullable().optional(),
+  whitespaceAfter: imageStudioWhitespaceMetricsSchema.nullable().optional(),
+  objectAreaPercentBefore: z.number().finite().nullable().optional(),
+  objectAreaPercentAfter: z.number().finite().nullable().optional(),
+  requestId: z.string().nullable().optional(),
+  fingerprint: z.string().optional(),
+  deduplicated: z.boolean(),
+  dedupeReason: z.enum(['request', 'fingerprint']).optional(),
+  lifecycle: imageStudioOperationLifecycleSchema,
+  pipelineVersion: z.string().trim().min(1),
+});
+
+export type ImageStudioAutoScalerResponseDto = z.infer<typeof imageStudioAutoScalerResponseSchema>;
+export type ImageStudioAutoScalerResponse = ImageStudioAutoScalerResponseDto;

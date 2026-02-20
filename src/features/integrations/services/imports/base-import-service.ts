@@ -46,7 +46,7 @@ import {
   type BaseConnectionContext,
   type StartBaseImportRunInput,
 } from '@/features/integrations/services/imports/base-import-service-shared';
-import { normalizeBaseImportParameterImportSettings } from '@/shared/contracts/integrations/base-import-parameter-import';
+import { normalizeBaseImportParameterImportSettings } from '@/shared/contracts/integrations';
 import type {
   BaseImportErrorCode,
   BaseImportErrorClass,

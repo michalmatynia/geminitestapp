@@ -14,6 +14,7 @@ import {
   type ImageStudioCenterDetectionMode,
   type ImageStudioCenterLayoutConfig,
   type ImageStudioCenterObjectBounds,
+  type ImageStudioCenterShadowPolicy,
 } from '@/features/ai/image-studio/contracts/center';
 
 type PixelData = ArrayLike<number>;
@@ -33,6 +34,20 @@ const WHITE_BACKGROUND_BORDER_MIN_SAMPLES = 48;
 const WHITE_FOREGROUND_HIT_RATIO = 0.03;
 const WHITE_FOREGROUND_MIN_DIMENSION_RATIO = 0.001;
 const WHITE_FOREGROUND_STRICT_RUN_LENGTH = 2;
+const WHITE_FOREGROUND_COMPONENT_ANALYSIS_MAX_PIXELS = 25_000_000;
+
+type WhiteForegroundMaskSource = 'foreground' | 'core';
+
+type ConnectedComponent = {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+  pixelCount: number;
+  touchesBorder: boolean;
+  centroidX: number;
+  centroidY: number;
+};
 
 export type NormalizedImageStudioAnalysisLayoutConfig = {
   paddingPercent: number;
@@ -43,7 +58,21 @@ export type NormalizedImageStudioAnalysisLayoutConfig = {
   targetCanvasHeight: number | null;
   whiteThreshold: number;
   chromaThreshold: number;
+  shadowPolicy: ImageStudioCenterShadowPolicy;
   detection: ImageStudioCenterDetectionMode;
+};
+
+export type ImageStudioDetectionDetails = {
+  shadowPolicyRequested: ImageStudioCenterShadowPolicy;
+  shadowPolicyApplied: ImageStudioCenterShadowPolicy;
+  componentCount: number;
+  coreComponentCount: number;
+  selectedComponentPixels: number;
+  selectedComponentCoverage: number;
+  foregroundPixels: number;
+  corePixels: number;
+  touchesBorder: boolean;
+  maskSource: WhiteForegroundMaskSource;
 };
 
 export type ImageStudioObjectWhitespaceMetrics = {
@@ -64,6 +93,8 @@ export type ImageStudioObjectWhitespaceMetrics = {
 export type ImageStudioObjectAnalysisResult = {
   sourceObjectBounds: ImageStudioCenterObjectBounds;
   detectionUsed: Exclude<ImageStudioCenterDetectionMode, 'auto'>;
+  confidence: number;
+  detectionDetails: ImageStudioDetectionDetails | null;
   whitespace: ImageStudioObjectWhitespaceMetrics;
   objectAreaPercent: number;
   canvasAreaPx: number;
@@ -91,6 +122,9 @@ const isNormalizedImageStudioAnalysisLayoutConfig = (
     typeof candidate.fillMissingCanvasWhite === 'boolean' &&
     typeof candidate.whiteThreshold === 'number' &&
     typeof candidate.chromaThreshold === 'number' &&
+    (candidate.shadowPolicy === 'auto' ||
+      candidate.shadowPolicy === 'include_shadow' ||
+      candidate.shadowPolicy === 'exclude_shadow') &&
     (candidate.detection === 'auto' ||
       candidate.detection === 'alpha_bbox' ||
       candidate.detection === 'white_bg_first_colored_pixel')
@@ -126,6 +160,11 @@ export const normalizeImageStudioAnalysisLayoutConfig = (
   const detection: ImageStudioCenterDetectionMode =
     detectionRaw === 'alpha_bbox' || detectionRaw === 'white_bg_first_colored_pixel'
       ? detectionRaw
+      : 'auto';
+  const shadowPolicyRaw = layout?.shadowPolicy;
+  const shadowPolicy: ImageStudioCenterShadowPolicy =
+    shadowPolicyRaw === 'include_shadow' || shadowPolicyRaw === 'exclude_shadow'
+      ? shadowPolicyRaw
       : 'auto';
 
   const explicitPaddingPercent = clampNumber(
@@ -174,6 +213,7 @@ export const normalizeImageStudioAnalysisLayoutConfig = (
         IMAGE_STUDIO_CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD
       )
     ),
+    shadowPolicy,
     detection,
   };
 };
@@ -339,6 +379,100 @@ const isWhiteBackgroundForegroundPixel = (
   );
 };
 
+type WhiteForegroundMaskComputation = {
+  backgroundModel: WhiteBackgroundModel;
+  foregroundMask: Uint8Array;
+  coreMask: Uint8Array;
+  foregroundCount: number;
+  coreCount: number;
+};
+
+const buildWhiteForegroundMasks = (
+  pixelData: PixelData,
+  width: number,
+  height: number,
+  whiteThreshold: number,
+  chromaThreshold: number
+): WhiteForegroundMaskComputation => {
+  const backgroundModel = resolveWhiteBackgroundModel(
+    pixelData,
+    width,
+    height,
+    whiteThreshold,
+    chromaThreshold
+  );
+  const totalPixels = Math.max(1, width * height);
+  const foregroundMask = new Uint8Array(totalPixels);
+  const coreMask = new Uint8Array(totalPixels);
+
+  let foregroundCount = 0;
+  let coreCount = 0;
+  const backgroundIntensity = (backgroundModel.r + backgroundModel.g + backgroundModel.b) / 3;
+  const coreDistanceThreshold = Math.max(
+    backgroundModel.whiteThreshold + 6,
+    Math.ceil(backgroundModel.whiteThreshold * 1.25)
+  );
+  const coreChromaThreshold = Math.max(
+    backgroundModel.chromaThreshold + 4,
+    Math.ceil(backgroundModel.chromaThreshold * 1.15)
+  );
+  const coreChromaDeltaThreshold = Math.max(
+    backgroundModel.chromaDeltaThreshold + 4,
+    Math.ceil(backgroundModel.chromaDeltaThreshold * 1.15)
+  );
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const index = (y * width) + x;
+      const offset = index * 4;
+      const r = pixelData[offset] ?? 0;
+      const g = pixelData[offset + 1] ?? 0;
+      const b = pixelData[offset + 2] ?? 0;
+      const a = pixelData[offset + 3] ?? 0;
+      if (!isWhiteBackgroundForegroundPixel(r, g, b, a, backgroundModel)) continue;
+
+      foregroundMask[index] = 1;
+      foregroundCount += 1;
+
+      const distanceFromBackground = Math.max(
+        Math.abs(r - backgroundModel.r),
+        Math.abs(g - backgroundModel.g),
+        Math.abs(b - backgroundModel.b)
+      );
+      const chroma = Math.max(r, g, b) - Math.min(r, g, b);
+      const chromaDelta = Math.abs(chroma - backgroundModel.chroma);
+      const intensity = (r + g + b) / 3;
+      const strongAlpha = a > IMAGE_STUDIO_CENTER_ALPHA_THRESHOLD + 20;
+      const darkerThanBackground =
+        intensity < (backgroundIntensity - Math.max(8, backgroundModel.whiteThreshold * 0.4));
+
+      const isCorePixel =
+        distanceFromBackground > coreDistanceThreshold ||
+        chroma > coreChromaThreshold ||
+        chromaDelta > coreChromaDeltaThreshold ||
+        (strongAlpha && darkerThanBackground);
+      if (!isCorePixel) continue;
+
+      coreMask[index] = 1;
+      coreCount += 1;
+    }
+  }
+
+  // Keep exclude-shadow mode resilient for very low-contrast assets.
+  if (foregroundCount > 0 && coreCount <= Math.max(1, Math.floor(foregroundCount * 0.01))) {
+    coreMask.set(foregroundMask);
+    coreCount = foregroundCount;
+  }
+
+  return {
+    backgroundModel,
+    foregroundMask,
+    coreMask,
+    foregroundCount,
+    coreCount,
+  };
+};
+
 const findLeadingHitIndex = (
   hits: Uint32Array,
   minHits: number,
@@ -402,32 +536,19 @@ const resolveLineBounds = (
   return { start, end };
 };
 
-export const resolveWhiteForegroundObjectBoundsFromRgba = (
-  pixelData: PixelData,
+const resolveBoundsFromForegroundMask = (
+  mask: Uint8Array,
   width: number,
-  height: number,
-  whiteThreshold: number,
-  chromaThreshold: number
+  height: number
 ): ImageStudioCenterObjectBounds | null => {
-  const backgroundModel = resolveWhiteBackgroundModel(
-    pixelData,
-    width,
-    height,
-    whiteThreshold,
-    chromaThreshold
-  );
   const columnHits = new Uint32Array(width);
   const rowHits = new Uint32Array(height);
   let foregroundCount = 0;
 
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
-      const offset = ((y * width) + x) * 4;
-      const r = pixelData[offset] ?? 0;
-      const g = pixelData[offset + 1] ?? 0;
-      const b = pixelData[offset + 2] ?? 0;
-      const a = pixelData[offset + 3] ?? 0;
-      if (!isWhiteBackgroundForegroundPixel(r, g, b, a, backgroundModel)) continue;
+      const index = (y * width) + x;
+      if ((mask[index] ?? 0) <= 0) continue;
       columnHits[x] = (columnHits[x] ?? 0) + 1;
       rowHits[y] = (rowHits[y] ?? 0) + 1;
       foregroundCount += 1;
@@ -453,6 +574,314 @@ export const resolveWhiteForegroundObjectBoundsFromRgba = (
   };
 };
 
+const resolveConnectedComponents = (
+  mask: Uint8Array,
+  width: number,
+  height: number
+): ConnectedComponent[] => {
+  if (width <= 0 || height <= 0) return [];
+  if ((width * height) > WHITE_FOREGROUND_COMPONENT_ANALYSIS_MAX_PIXELS) return [];
+
+  const components: ConnectedComponent[] = [];
+  const visited = new Uint8Array(mask.length);
+  const queue: number[] = [];
+
+  for (let index = 0; index < mask.length; index += 1) {
+    if ((mask[index] ?? 0) <= 0 || (visited[index] ?? 0) > 0) continue;
+    visited[index] = 1;
+    queue.length = 0;
+    queue.push(index);
+
+    let head = 0;
+    let minX = width;
+    let maxX = -1;
+    let minY = height;
+    let maxY = -1;
+    let pixelCount = 0;
+    let touchesBorder = false;
+    let sumX = 0;
+    let sumY = 0;
+
+    while (head < queue.length) {
+      const current = queue[head] ?? 0;
+      head += 1;
+
+      const y = Math.floor(current / width);
+      const x = current - (y * width);
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+      if (x === 0 || y === 0 || x === width - 1 || y === height - 1) {
+        touchesBorder = true;
+      }
+      pixelCount += 1;
+      sumX += x;
+      sumY += y;
+
+      const left = x > 0 ? current - 1 : -1;
+      const right = x < width - 1 ? current + 1 : -1;
+      const up = y > 0 ? current - width : -1;
+      const down = y < height - 1 ? current + width : -1;
+      if (left >= 0 && (mask[left] ?? 0) > 0 && (visited[left] ?? 0) === 0) {
+        visited[left] = 1;
+        queue.push(left);
+      }
+      if (right >= 0 && (mask[right] ?? 0) > 0 && (visited[right] ?? 0) === 0) {
+        visited[right] = 1;
+        queue.push(right);
+      }
+      if (up >= 0 && (mask[up] ?? 0) > 0 && (visited[up] ?? 0) === 0) {
+        visited[up] = 1;
+        queue.push(up);
+      }
+      if (down >= 0 && (mask[down] ?? 0) > 0 && (visited[down] ?? 0) === 0) {
+        visited[down] = 1;
+        queue.push(down);
+      }
+    }
+
+    if (pixelCount <= 0) continue;
+    components.push({
+      left: minX,
+      top: minY,
+      right: maxX,
+      bottom: maxY,
+      pixelCount,
+      touchesBorder,
+      centroidX: sumX / pixelCount,
+      centroidY: sumY / pixelCount,
+    });
+  }
+
+  return components;
+};
+
+const componentToBounds = (component: ConnectedComponent): ImageStudioCenterObjectBounds => ({
+  left: Math.max(0, component.left),
+  top: Math.max(0, component.top),
+  width: Math.max(1, component.right - component.left + 1),
+  height: Math.max(1, component.bottom - component.top + 1),
+});
+
+const componentBoundsArea = (component: ConnectedComponent): number =>
+  Math.max(1, (component.right - component.left + 1) * (component.bottom - component.top + 1));
+
+const selectBestConnectedComponent = (
+  components: ConnectedComponent[],
+  width: number,
+  height: number,
+  totalForegroundPixels: number
+): ConnectedComponent | null => {
+  if (components.length <= 0) return null;
+
+  const frameCenterX = (width - 1) / 2;
+  const frameCenterY = (height - 1) / 2;
+  const maxCenterDistance = Math.max(1, Math.hypot(frameCenterX, frameCenterY));
+
+  let bestComponent: ConnectedComponent | null = null;
+  let bestScore = Number.NEGATIVE_INFINITY;
+  for (const component of components) {
+    const bboxArea = componentBoundsArea(component);
+    const density = component.pixelCount / bboxArea;
+    const dominance = component.pixelCount / Math.max(1, totalForegroundPixels);
+    const centerDistance = Math.hypot(
+      component.centroidX - frameCenterX,
+      component.centroidY - frameCenterY
+    );
+    const normalizedCenterDistance = centerDistance / maxCenterDistance;
+    const borderPenalty = component.touchesBorder ? 0.86 : 1;
+    const score = component.pixelCount * borderPenalty * (
+      1 + density * 0.45 + dominance * 0.35 - normalizedCenterDistance * 0.25
+    );
+    if (score > bestScore) {
+      bestScore = score;
+      bestComponent = component;
+    }
+  }
+  return bestComponent;
+};
+
+const computeComponentConfidence = (params: {
+  component: ConnectedComponent;
+  totalForegroundPixels: number;
+  width: number;
+  height: number;
+}): number => {
+  const { component, totalForegroundPixels, width, height } = params;
+  const bboxArea = componentBoundsArea(component);
+  const coverage = component.pixelCount / Math.max(1, bboxArea);
+  const dominance = component.pixelCount / Math.max(1, totalForegroundPixels);
+  const borderScore = component.touchesBorder ? 0.45 : 1;
+  const areaRatio = bboxArea / Math.max(1, width * height);
+  const sizePenalty = areaRatio < 0.0005 || areaRatio > 0.95 ? 0.65 : 1;
+  const rawConfidence = (coverage * 0.45 + dominance * 0.35 + borderScore * 0.2) * sizePenalty;
+  return Number(Math.max(0.05, Math.min(0.99, rawConfidence)).toFixed(4));
+};
+
+type WhiteForegroundDetection = {
+  bounds: ImageStudioCenterObjectBounds;
+  confidence: number;
+  details: ImageStudioDetectionDetails;
+};
+
+export const resolveWhiteForegroundObjectDetectionFromRgba = (
+  pixelData: PixelData,
+  width: number,
+  height: number,
+  whiteThreshold: number,
+  chromaThreshold: number,
+  shadowPolicy: ImageStudioCenterShadowPolicy
+): WhiteForegroundDetection | null => {
+  const maskData = buildWhiteForegroundMasks(
+    pixelData,
+    width,
+    height,
+    whiteThreshold,
+    chromaThreshold
+  );
+  if (maskData.foregroundCount <= 0) return null;
+
+  const foregroundComponents = resolveConnectedComponents(maskData.foregroundMask, width, height);
+  const coreComponents = resolveConnectedComponents(maskData.coreMask, width, height);
+  const foregroundBest = selectBestConnectedComponent(
+    foregroundComponents,
+    width,
+    height,
+    maskData.foregroundCount
+  );
+  const coreBest = selectBestConnectedComponent(
+    coreComponents,
+    width,
+    height,
+    Math.max(1, maskData.coreCount)
+  );
+
+  let selectedComponent: ConnectedComponent | null = null;
+  let selectedSource: WhiteForegroundMaskSource = 'foreground';
+  let appliedShadowPolicy: ImageStudioCenterShadowPolicy = shadowPolicy;
+
+  if (shadowPolicy === 'include_shadow') {
+    selectedComponent = foregroundBest ?? coreBest;
+    selectedSource = foregroundBest ? 'foreground' : 'core';
+    appliedShadowPolicy = foregroundBest ? 'include_shadow' : 'exclude_shadow';
+  } else if (shadowPolicy === 'exclude_shadow') {
+    selectedComponent = coreBest ?? foregroundBest;
+    selectedSource = coreBest ? 'core' : 'foreground';
+    appliedShadowPolicy = coreBest ? 'exclude_shadow' : 'include_shadow';
+  } else if (foregroundBest && coreBest) {
+    const foregroundArea = componentBoundsArea(foregroundBest);
+    const coreArea = componentBoundsArea(coreBest);
+    const areaExpansion = foregroundArea / Math.max(1, coreArea);
+    const likelyShadowExpansion = areaExpansion >= 1.35 && !coreBest.touchesBorder;
+    const likelyForegroundBleed = foregroundBest.touchesBorder && !coreBest.touchesBorder;
+    if (likelyShadowExpansion || likelyForegroundBleed) {
+      selectedComponent = coreBest;
+      selectedSource = 'core';
+      appliedShadowPolicy = 'exclude_shadow';
+    } else {
+      selectedComponent = foregroundBest;
+      selectedSource = 'foreground';
+      appliedShadowPolicy = 'include_shadow';
+    }
+  } else {
+    selectedComponent = foregroundBest ?? coreBest;
+    selectedSource = foregroundBest ? 'foreground' : 'core';
+    appliedShadowPolicy = foregroundBest ? 'include_shadow' : 'exclude_shadow';
+  }
+
+  if (selectedComponent) {
+    const selectedConfidence = computeComponentConfidence({
+      component: selectedComponent,
+      totalForegroundPixels:
+        selectedSource === 'core'
+          ? Math.max(1, maskData.coreCount)
+          : Math.max(1, maskData.foregroundCount),
+      width,
+      height,
+    });
+    return {
+      bounds: componentToBounds(selectedComponent),
+      confidence: selectedConfidence,
+      details: {
+        shadowPolicyRequested: shadowPolicy,
+        shadowPolicyApplied: appliedShadowPolicy,
+        componentCount: foregroundComponents.length,
+        coreComponentCount: coreComponents.length,
+        selectedComponentPixels: selectedComponent.pixelCount,
+        selectedComponentCoverage: Number(
+          Math.min(
+            1,
+            selectedComponent.pixelCount / Math.max(1, componentBoundsArea(selectedComponent))
+          ).toFixed(4)
+        ),
+        foregroundPixels: maskData.foregroundCount,
+        corePixels: maskData.coreCount,
+        touchesBorder: selectedComponent.touchesBorder,
+        maskSource: selectedSource,
+      },
+    };
+  }
+
+  const fallbackMask = shadowPolicy === 'exclude_shadow' ? maskData.coreMask : maskData.foregroundMask;
+  const fallbackSource: WhiteForegroundMaskSource =
+    shadowPolicy === 'exclude_shadow' ? 'core' : 'foreground';
+  const fallbackBounds = resolveBoundsFromForegroundMask(fallbackMask, width, height);
+  if (!fallbackBounds) return null;
+  return {
+    bounds: fallbackBounds,
+    confidence: 0.45,
+    details: {
+      shadowPolicyRequested: shadowPolicy,
+      shadowPolicyApplied: shadowPolicy,
+      componentCount: foregroundComponents.length,
+      coreComponentCount: coreComponents.length,
+      selectedComponentPixels: 0,
+      selectedComponentCoverage: 0,
+      foregroundPixels: maskData.foregroundCount,
+      corePixels: maskData.coreCount,
+      touchesBorder: false,
+      maskSource: fallbackSource,
+    },
+  };
+};
+
+export const resolveWhiteForegroundObjectBoundsFromRgba = (
+  pixelData: PixelData,
+  width: number,
+  height: number,
+  whiteThreshold: number,
+  chromaThreshold: number,
+  shadowPolicy: ImageStudioCenterShadowPolicy = 'auto'
+): ImageStudioCenterObjectBounds | null => {
+  const detection = resolveWhiteForegroundObjectDetectionFromRgba(
+    pixelData,
+    width,
+    height,
+    whiteThreshold,
+    chromaThreshold,
+    shadowPolicy
+  );
+  return detection?.bounds ?? null;
+};
+
+const computeAlphaDetectionConfidence = (
+  bounds: ImageStudioCenterObjectBounds,
+  width: number,
+  height: number
+): number => {
+  const area = Math.max(1, bounds.width * bounds.height);
+  const areaRatio = area / Math.max(1, width * height);
+  const touchesBorder =
+    bounds.left <= 0 ||
+    bounds.top <= 0 ||
+    bounds.left + bounds.width >= width ||
+    bounds.top + bounds.height >= height;
+  const areaScore = areaRatio < 0.0005 || areaRatio > 0.95 ? 0.65 : 0.95;
+  const borderScore = touchesBorder ? 0.82 : 1;
+  return Number(Math.max(0.05, Math.min(0.99, areaScore * borderScore)).toFixed(4));
+};
+
 export const detectObjectBoundsForLayoutFromRgba = (
   pixelData: PixelData,
   width: number,
@@ -461,6 +890,8 @@ export const detectObjectBoundsForLayoutFromRgba = (
 ): {
   bounds: ImageStudioCenterObjectBounds;
   detectionUsed: Exclude<ImageStudioCenterDetectionMode, 'auto'>;
+  confidence: number;
+  detectionDetails: ImageStudioDetectionDetails | null;
 } | null => {
   const normalizedLayout = isNormalizedImageStudioAnalysisLayoutConfig(layout)
     ? layout
@@ -468,40 +899,87 @@ export const detectObjectBoundsForLayoutFromRgba = (
 
   if (normalizedLayout.detection === 'alpha_bbox') {
     const alpha = resolveAlphaObjectBoundsFromRgba(pixelData, width, height);
-    return alpha ? { bounds: alpha, detectionUsed: 'alpha_bbox' } : null;
+    return alpha
+      ? {
+        bounds: alpha,
+        detectionUsed: 'alpha_bbox',
+        confidence: computeAlphaDetectionConfidence(alpha, width, height),
+        detectionDetails: null,
+      }
+      : null;
   }
 
   if (normalizedLayout.detection === 'white_bg_first_colored_pixel') {
-    const white = resolveWhiteForegroundObjectBoundsFromRgba(
+    const white = resolveWhiteForegroundObjectDetectionFromRgba(
       pixelData,
       width,
       height,
       normalizedLayout.whiteThreshold,
-      normalizedLayout.chromaThreshold
+      normalizedLayout.chromaThreshold,
+      normalizedLayout.shadowPolicy
     );
-    return white ? { bounds: white, detectionUsed: 'white_bg_first_colored_pixel' } : null;
+    return white
+      ? {
+        bounds: white.bounds,
+        detectionUsed: 'white_bg_first_colored_pixel',
+        confidence: white.confidence,
+        detectionDetails: white.details,
+      }
+      : null;
   }
 
-  const white = resolveWhiteForegroundObjectBoundsFromRgba(
+  const white = resolveWhiteForegroundObjectDetectionFromRgba(
     pixelData,
     width,
     height,
     normalizedLayout.whiteThreshold,
-    normalizedLayout.chromaThreshold
+    normalizedLayout.chromaThreshold,
+    normalizedLayout.shadowPolicy
   );
-  const alpha = resolveAlphaObjectBoundsFromRgba(pixelData, width, height);
+  const alphaBounds = resolveAlphaObjectBoundsFromRgba(pixelData, width, height);
+  const alpha = alphaBounds
+    ? {
+      bounds: alphaBounds,
+      detectionUsed: 'alpha_bbox' as const,
+      confidence: computeAlphaDetectionConfidence(alphaBounds, width, height),
+      detectionDetails: null,
+    }
+    : null;
 
   if (white && alpha) {
-    const whiteArea = white.width * white.height;
-    const alphaArea = alpha.width * alpha.height;
-    if (whiteArea <= alphaArea * 0.995) {
-      return { bounds: white, detectionUsed: 'white_bg_first_colored_pixel' };
+    if ((white.confidence - alpha.confidence) >= 0.08) {
+      return {
+        bounds: white.bounds,
+        detectionUsed: 'white_bg_first_colored_pixel',
+        confidence: white.confidence,
+        detectionDetails: white.details,
+      };
     }
-    return { bounds: alpha, detectionUsed: 'alpha_bbox' };
+    if ((alpha.confidence - white.confidence) >= 0.08) {
+      return alpha;
+    }
+    const whiteArea = white.bounds.width * white.bounds.height;
+    const alphaArea = alpha.bounds.width * alpha.bounds.height;
+    if (whiteArea <= alphaArea * 0.995) {
+      return {
+        bounds: white.bounds,
+        detectionUsed: 'white_bg_first_colored_pixel',
+        confidence: white.confidence,
+        detectionDetails: white.details,
+      };
+    }
+    return alpha;
   }
 
-  if (white) return { bounds: white, detectionUsed: 'white_bg_first_colored_pixel' };
-  if (alpha) return { bounds: alpha, detectionUsed: 'alpha_bbox' };
+  if (white) {
+    return {
+      bounds: white.bounds,
+      detectionUsed: 'white_bg_first_colored_pixel',
+      confidence: white.confidence,
+      detectionDetails: white.details,
+    };
+  }
+  if (alpha) return alpha;
   return null;
 };
 
@@ -562,6 +1040,8 @@ export const analyzeImageObjectFromRgba = (params: {
   return {
     sourceObjectBounds: detected.bounds,
     detectionUsed: detected.detectionUsed,
+    confidence: detected.confidence,
+    detectionDetails: detected.detectionDetails,
     whitespace,
     objectAreaPx,
     canvasAreaPx,

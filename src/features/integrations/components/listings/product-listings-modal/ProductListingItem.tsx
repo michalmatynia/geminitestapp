@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   Label,
   StatusBadge,
+  Card,
 } from '@/shared/ui';
 
 const formatTimestamp = (value: string | Date | null | undefined): string => {
@@ -93,7 +94,7 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
   };
 
   return (
-    <div className='flex items-center justify-between rounded-md border bg-card/50 px-4 py-3'>
+    <Card variant='subtle' padding='md' className='flex items-center justify-between'>
       <div className='flex-1'>
         <div className='flex items-center gap-2'>
           <span className='font-medium text-white'>
@@ -133,13 +134,15 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
           )}
         </div>
         {listing.exportHistory && listing.exportHistory.length > 0 ? (
-          <div className='mt-3 rounded border border-border bg-card/50 p-2'>
+          <Card variant='subtle-compact' padding='sm' className='mt-3 bg-card/50'>
             <div className='flex items-center justify-between'>
               <p className='text-[10px] uppercase tracking-wide text-gray-500'>
                 Export history
               </p>
               <Button
                 type='button'
+                variant='ghost'
+                size='xs'
                 onClick={(): void =>
                   setHistoryOpenByListing((prev) => ({
                     ...prev,
@@ -180,7 +183,7 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
                 ))}
               </div>
             ) : null}
-          </div>
+          </Card>
         ) : (
           <p className='mt-2 text-xs text-gray-600'>No export history recorded.</p>
         )}
@@ -191,24 +194,23 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
             {canRetryExport && (
               <Button
                 type='button'
-                variant='outline'
+                variant='success'
                 size='sm'
                 onClick={(): void => { void handleExportAgain(listing.id); }}
                 disabled={exportingListing === listing.id}
-                className='border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
               >
                 {isSuccessStatus ? 'Re-export product' : 'Export again'}
               </Button>
             )}
             <ActionMenu
               trigger='Re-export images only'
-              variant='outline'
+              variant='info'
               size='sm'
               disabled={
                 exportingListing === listing.id ||
                 !listing.externalListingId
               }
-              triggerClassName='border-sky-500/40 text-sky-200 hover:bg-sky-500/10 px-3 py-1.5 h-auto w-auto'
+              triggerClassName='px-3 py-1.5 h-auto w-auto'
               align='start'
             >
               <DropdownMenuItem
@@ -270,11 +272,10 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
             )}
             <Button
               type='button'
-              variant='outline'
+              variant='destructive'
               size='sm'
               onClick={(): void => setListingToDelete(listing.id)}
               disabled={deletingFromBase === listing.id || !listing.externalListingId}
-              className='border-red-500/40 text-red-300 hover:bg-red-500/10'
             >
               Delete from Base.com
             </Button>
@@ -285,7 +286,7 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
             {traderaNeedsManualLogin && (
               <Button
                 type='button'
-                variant='outline'
+                variant='warning'
                 size='sm'
                 onClick={(): void => {
                   void handleOpenTraderaLogin(
@@ -295,7 +296,6 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
                   );
                 }}
                 disabled={openingTraderaLogin === listing.id}
-                className='border-amber-500/40 text-amber-200 hover:bg-amber-500/10'
               >
                 {openingTraderaLogin === listing.id
                   ? 'Waiting for manual login...'
@@ -304,11 +304,10 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
             )}
             <Button
               type='button'
-              variant='outline'
+              variant='success'
               size='sm'
               onClick={(): void => { void handleRelistTradera(listing.id); }}
               disabled={relistingListing === listing.id}
-              className='border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
             >
               {relistingListing === listing.id ? 'Queuing relist...' : 'Relist now'}
             </Button>
@@ -326,6 +325,6 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
           {isBaseListing ? 'Break connection' : 'Remove history'}
         </Button>
       </div>
-    </div>
+    </Card>
   );
 }

@@ -1,5 +1,5 @@
 import { getProductAiJobRepository } from '@/features/jobs/services/product-ai-job-repository';
-import type { ProductAiJobRecord, ProductAiJobUpdate } from '@/shared/contracts/jobs/product-ai-job-repository';
+import type { ProductAiJobRecord, ProductAiJobUpdate } from '@/shared/contracts/jobs';
 import { logSystemEvent } from '@/features/observability/server';
 import { productService } from '@/features/products/server';
 import { invalidStateError, notFoundError } from '@/shared/errors/app-error';

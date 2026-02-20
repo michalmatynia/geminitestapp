@@ -41,6 +41,26 @@ import {
   VIEWER_INPUT_PORTS,
 } from '../constants';
 
+const buildOptionalInputContracts = (
+  inputs: string[]
+): Record<string, { required: boolean }> =>
+  Object.fromEntries(
+    inputs.map((port: string): [string, { required: boolean }] => [port, { required: false }])
+  );
+
+const buildRequiredInputContracts = (
+  inputs: string[],
+  requiredPorts: string[]
+): Record<string, { required: boolean }> => {
+  const required = new Set(requiredPorts);
+  return Object.fromEntries(
+    inputs.map((port: string): [string, { required: boolean }] => [
+      port,
+      { required: required.has(port) },
+    ])
+  );
+};
+
 export const palette: NodeDefinition[] = [
   {
     type: 'trigger',
@@ -48,6 +68,7 @@ export const palette: NodeDefinition[] = [
     description: 'Runs when Context Filter is clicked inside Product modal.',
     inputs: TRIGGER_INPUT_PORTS,
     outputs: TRIGGER_OUTPUT_PORTS,
+    inputContracts: buildOptionalInputContracts(TRIGGER_INPUT_PORTS),
   },
   {
     type: 'trigger',
@@ -55,6 +76,7 @@ export const palette: NodeDefinition[] = [
     description: 'Runs from bulk action in Product list.',
     inputs: TRIGGER_INPUT_PORTS,
     outputs: TRIGGER_OUTPUT_PORTS,
+    inputContracts: buildOptionalInputContracts(TRIGGER_INPUT_PORTS),
   },
   {
     type: 'trigger',
@@ -62,6 +84,7 @@ export const palette: NodeDefinition[] = [
     description: 'Runs automatically after a product is saved.',
     inputs: TRIGGER_INPUT_PORTS,
     outputs: TRIGGER_OUTPUT_PORTS,
+    inputContracts: buildOptionalInputContracts(TRIGGER_INPUT_PORTS),
   },
   {
     type: 'trigger',
@@ -69,6 +92,7 @@ export const palette: NodeDefinition[] = [
     description: 'Runs on a server schedule or cron.',
     inputs: TRIGGER_INPUT_PORTS,
     outputs: TRIGGER_OUTPUT_PORTS,
+    inputContracts: buildOptionalInputContracts(TRIGGER_INPUT_PORTS),
     config: { trigger: { event: 'scheduled_run' } },
   },
   {
@@ -77,6 +101,7 @@ export const palette: NodeDefinition[] = [
     description: 'Simulate a modal action by Entity ID.',
     inputs: SIMULATION_INPUT_PORTS,
     outputs: SIMULATION_OUTPUT_PORTS,
+    inputContracts: buildOptionalInputContracts(SIMULATION_INPUT_PORTS),
   },
   {
     type: 'audio_oscillator',
@@ -84,6 +109,7 @@ export const palette: NodeDefinition[] = [
     description: 'Generate a waveform signal (sine/square/triangle/sawtooth).',
     inputs: AUDIO_OSCILLATOR_INPUT_PORTS,
     outputs: AUDIO_OSCILLATOR_OUTPUT_PORTS,
+    inputContracts: buildOptionalInputContracts(AUDIO_OSCILLATOR_INPUT_PORTS),
     config: {
       audioOscillator: {
         waveform: 'sine',
@@ -99,6 +125,7 @@ export const palette: NodeDefinition[] = [
     description: 'Play incoming audio signals in local runtime.',
     inputs: AUDIO_SPEAKER_INPUT_PORTS,
     outputs: AUDIO_SPEAKER_OUTPUT_PORTS,
+    inputContracts: buildRequiredInputContracts(AUDIO_SPEAKER_INPUT_PORTS, ['audioSignal']),
     config: {
       audioSpeaker: {
         enabled: true,
@@ -114,6 +141,7 @@ export const palette: NodeDefinition[] = [
     description: 'Preview outputs connected from other nodes.',
     inputs: VIEWER_INPUT_PORTS,
     outputs: [],
+    inputContracts: buildOptionalInputContracts(VIEWER_INPUT_PORTS),
   },
   {
     type: 'notification',
@@ -121,6 +149,7 @@ export const palette: NodeDefinition[] = [
     description: 'Display an instant toast from incoming results.',
     inputs: NOTIFICATION_INPUT_PORTS,
     outputs: [],
+    inputContracts: buildOptionalInputContracts(NOTIFICATION_INPUT_PORTS),
   },
   {
     type: 'ai_description',
@@ -128,6 +157,7 @@ export const palette: NodeDefinition[] = [
     description: 'Runs the AI Description pipeline to produce description_en.',
     inputs: ['entityJson', 'images', 'title'],
     outputs: DESCRIPTION_OUTPUT_PORTS,
+    inputContracts: buildRequiredInputContracts(['entityJson', 'images', 'title'], ['entityJson']),
   },
   {
     type: 'context',
@@ -135,6 +165,7 @@ export const palette: NodeDefinition[] = [
     description: 'Filter incoming context payloads into scoped entity data.',
     inputs: CONTEXT_INPUT_PORTS,
     outputs: ['context', 'entityId', 'entityType', 'entityJson'],
+    inputContracts: buildRequiredInputContracts(CONTEXT_INPUT_PORTS, ['context']),
   },
   {
     type: 'parser',
@@ -142,6 +173,7 @@ export const palette: NodeDefinition[] = [
     description: 'Extract fields into outputs or a single bundle.',
     inputs: ['entityJson', 'context'],
     outputs: ['productId', 'title', 'images', 'content_en'],
+    inputContracts: buildOptionalInputContracts(['entityJson', 'context']),
   },
   {
     type: 'regex',
@@ -149,6 +181,7 @@ export const palette: NodeDefinition[] = [
     description: 'Group strings with regex or extract matched fragments.',
     inputs: REGEX_INPUT_PORTS,
     outputs: REGEX_OUTPUT_PORTS,
+    inputContracts: buildOptionalInputContracts(REGEX_INPUT_PORTS),
     config: {
       regex: {
         pattern: '',
@@ -173,6 +206,7 @@ export const palette: NodeDefinition[] = [
     description: 'Iterate over an array and emit one item at a time (advance on callback).',
     inputs: ITERATOR_INPUT_PORTS,
     outputs: ITERATOR_OUTPUT_PORTS,
+    inputContracts: buildRequiredInputContracts(ITERATOR_INPUT_PORTS, ['value']),
     config: {
       iterator: {
         autoContinue: true,
@@ -186,6 +220,7 @@ export const palette: NodeDefinition[] = [
     description: 'Map context to custom outputs.',
     inputs: ['context', 'result', 'bundle', 'value'],
     outputs: ['value', 'result'],
+    inputContracts: buildOptionalInputContracts(['context', 'result', 'bundle', 'value']),
   },
   {
     type: 'mutator',
@@ -193,6 +228,7 @@ export const palette: NodeDefinition[] = [
     description: 'Mutate context values with templates.',
     inputs: ['context'],
     outputs: ['context'],
+    inputContracts: buildRequiredInputContracts(['context'], ['context']),
   },
   {
     type: 'string_mutator',
@@ -200,6 +236,7 @@ export const palette: NodeDefinition[] = [
     description: 'Transform text with chained string operations.',
     inputs: STRING_MUTATOR_INPUT_PORTS,
     outputs: STRING_MUTATOR_OUTPUT_PORTS,
+    inputContracts: buildOptionalInputContracts(STRING_MUTATOR_INPUT_PORTS),
   },
   {
     type: 'validator',
@@ -207,6 +244,7 @@ export const palette: NodeDefinition[] = [
     description: 'Validate required fields.',
     inputs: ['context'],
     outputs: ['context', 'valid', 'errors'],
+    inputContracts: buildRequiredInputContracts(['context'], ['context']),
   },
   {
     type: 'validation_pattern',
@@ -215,6 +253,7 @@ export const palette: NodeDefinition[] = [
       'Run ordered validation patterns from a stack or a path-local rule list.',
     inputs: VALIDATION_PATTERN_INPUT_PORTS,
     outputs: VALIDATION_PATTERN_OUTPUT_PORTS,
+    inputContracts: buildOptionalInputContracts(VALIDATION_PATTERN_INPUT_PORTS),
     config: {
       validationPattern: {
         source: 'global_stack',
@@ -240,6 +279,9 @@ export const palette: NodeDefinition[] = [
     description: 'Compare a value and emit valid/errors.',
     inputs: ['value'],
     outputs: ['value', 'valid', 'errors'],
+    inputContracts: {
+      value: { required: true },
+    },
   },
   {
     type: 'router',
@@ -247,6 +289,7 @@ export const palette: NodeDefinition[] = [
     description: 'Route payloads based on a condition.',
     inputs: ROUTER_INPUT_PORTS,
     outputs: ROUTER_OUTPUT_PORTS,
+    inputContracts: buildOptionalInputContracts(ROUTER_INPUT_PORTS),
   },
   {
     type: 'delay',
@@ -254,6 +297,7 @@ export const palette: NodeDefinition[] = [
     description: 'Delay signals to sequence flows.',
     inputs: DELAY_INPUT_PORTS,
     outputs: DELAY_OUTPUT_PORTS,
+    inputContracts: buildOptionalInputContracts(DELAY_INPUT_PORTS),
   },
   {
     type: 'poll',
@@ -261,6 +305,7 @@ export const palette: NodeDefinition[] = [
     description: 'Poll an AI job or database query until it completes.',
     inputs: POLL_INPUT_PORTS,
     outputs: POLL_OUTPUT_PORTS,
+    inputContracts: buildOptionalInputContracts(POLL_INPUT_PORTS),
   },
   {
     type: 'http',
@@ -268,6 +313,7 @@ export const palette: NodeDefinition[] = [
     description: 'Call external APIs with templated inputs.',
     inputs: HTTP_INPUT_PORTS,
     outputs: ['value', 'bundle'],
+    inputContracts: buildOptionalInputContracts(HTTP_INPUT_PORTS),
   },
   {
     type: 'api_advanced',
@@ -275,6 +321,7 @@ export const palette: NodeDefinition[] = [
     description: 'Advanced API node with auth, retries, pagination, and error routing.',
     inputs: API_ADVANCED_INPUT_PORTS,
     outputs: ['value', 'bundle', 'status', 'headers', 'items', 'route', 'error', 'success'],
+    inputContracts: buildOptionalInputContracts(API_ADVANCED_INPUT_PORTS),
   },
   {
     type: 'database',
@@ -282,6 +329,7 @@ export const palette: NodeDefinition[] = [
     description: 'Query, update, insert, or delete records.',
     inputs: DATABASE_INPUT_PORTS,
     outputs: ['result', 'bundle', 'content_en', 'aiPrompt'],
+    inputContracts: buildOptionalInputContracts(DATABASE_INPUT_PORTS),
   },
   {
     type: 'db_schema',
@@ -303,6 +351,9 @@ export const palette: NodeDefinition[] = [
     description: 'Apply numeric transformation to a value.',
     inputs: ['value'],
     outputs: ['value'],
+    inputContracts: {
+      value: { required: true },
+    },
   },
   {
     type: 'gate',
@@ -310,6 +361,7 @@ export const palette: NodeDefinition[] = [
     description: 'Allow context through when valid is true.',
     inputs: ['context', 'valid', 'errors'],
     outputs: ['context', 'valid', 'errors'],
+    inputContracts: buildRequiredInputContracts(['context', 'valid', 'errors'], ['valid']),
   },
   {
     type: 'bundle',
@@ -317,6 +369,7 @@ export const palette: NodeDefinition[] = [
     description: 'Cluster inputs into a single bundle output.',
     inputs: BUNDLE_INPUT_PORTS,
     outputs: ['bundle'],
+    inputContracts: buildOptionalInputContracts(BUNDLE_INPUT_PORTS),
   },
   {
     type: 'template',
@@ -324,6 +377,7 @@ export const palette: NodeDefinition[] = [
     description: 'Create prompts from template strings.',
     inputs: TEMPLATE_INPUT_PORTS,
     outputs: ['prompt'],
+    inputContracts: buildOptionalInputContracts(TEMPLATE_INPUT_PORTS),
   },
   {
     type: 'prompt',
@@ -331,6 +385,7 @@ export const palette: NodeDefinition[] = [
     description: 'Formats text with placeholders.',
     inputs: PROMPT_INPUT_PORTS,
     outputs: PROMPT_OUTPUT_PORTS,
+    inputContracts: buildOptionalInputContracts(PROMPT_INPUT_PORTS),
   },
   {
     type: 'model',
@@ -338,6 +393,10 @@ export const palette: NodeDefinition[] = [
     description: 'Runs a selected model.',
     inputs: ['prompt', 'images'],
     outputs: MODEL_OUTPUT_PORTS,
+    inputContracts: {
+      prompt: { required: true },
+      images: { required: false },
+    },
   },
   {
     type: 'learner_agent',
@@ -345,6 +404,9 @@ export const palette: NodeDefinition[] = [
     description: 'Answer using connected embedding collections (RAG).',
     inputs: LEARNER_AGENT_INPUT_PORTS,
     outputs: LEARNER_AGENT_OUTPUT_PORTS,
+    inputContracts: {
+      prompt: { required: true },
+    },
     config: {
       learnerAgent: {
         agentId: '',
@@ -359,5 +421,8 @@ export const palette: NodeDefinition[] = [
     description: 'Run a multi-step agent persona over the prompt.',
     inputs: AGENT_INPUT_PORTS,
     outputs: AGENT_OUTPUT_PORTS,
+    inputContracts: {
+      prompt: { required: true },
+    },
   },
 ];

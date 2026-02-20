@@ -4,7 +4,7 @@ import { RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 
 import { useNoteSettings, DEFAULT_NOTE_SETTINGS } from '@/features/notesapp/hooks/NoteSettingsContext';
-import type { NoteSettings } from '@/shared/contracts/notes/notes-settings';
+import type { NoteSettings } from '@/shared/contracts/notes';
 import { Button, SelectSimple, useToast, Label, RadioGroup, RadioGroupItem, SectionHeader, FormSection, FormField, ToggleRow } from '@/shared/ui';
 
 const sortByOptions = [

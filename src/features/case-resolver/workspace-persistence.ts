@@ -9,6 +9,28 @@ import {
 const CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY = '__caseResolverWorkspaceDebugEvents';
 const CASE_RESOLVER_WORKSPACE_DEBUG_EVENT_NAME = 'case-resolver-workspace-debug';
 const CASE_RESOLVER_WORKSPACE_DEBUG_LIMIT = 200;
+const CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES_DEFAULT = 1_500_000;
+const CASE_RESOLVER_CONFLICT_RETRY_BASE_DELAY_MS_DEFAULT = 150;
+const CASE_RESOLVER_CONFLICT_RETRY_MAX_DELAY_MS_DEFAULT = 1_500;
+const CASE_RESOLVER_CONFLICT_RETRY_JITTER_MS_DEFAULT = 120;
+
+const readPositiveIntegerEnv = (
+  key: string,
+  fallback: number
+): number => {
+  const value = process.env[key];
+  if (!value) return fallback;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  const normalized = Math.floor(parsed);
+  if (normalized <= 0) return fallback;
+  return normalized;
+};
+
+const CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES = readPositiveIntegerEnv(
+  'NEXT_PUBLIC_CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES',
+  CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES_DEFAULT
+);
 
 type CaseResolverWorkspaceDebugEvent = {
   id: string;
@@ -87,6 +109,59 @@ const safeParseJson = <T>(value: string): T | null => {
   } catch {
     return null;
   }
+};
+
+const formatByteCount = (value: number): string => {
+  if (!Number.isFinite(value) || value <= 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let normalized = value;
+  let unitIndex = 0;
+  while (normalized >= 1024 && unitIndex < units.length - 1) {
+    normalized /= 1024;
+    unitIndex += 1;
+  }
+  const rounded = normalized >= 10 || unitIndex === 0
+    ? normalized.toFixed(0)
+    : normalized.toFixed(1);
+  return `${rounded} ${units[unitIndex]}`;
+};
+
+export const getCaseResolverWorkspaceMaxPayloadBytes = (): number =>
+  CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES;
+
+export const isCaseResolverWorkspacePayloadTooLarge = (payloadBytes: number): boolean =>
+  Number.isFinite(payloadBytes) &&
+  payloadBytes > CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES;
+
+export const computeCaseResolverConflictRetryDelayMs = (
+  attempt: number,
+  options?: {
+    baseDelayMs?: number;
+    maxDelayMs?: number;
+    jitterMs?: number;
+  }
+): number => {
+  const normalizedAttempt =
+    Number.isFinite(attempt) && attempt > 0 ? Math.floor(attempt) : 1;
+  const baseDelayMs =
+    Number.isFinite(options?.baseDelayMs) && (options?.baseDelayMs ?? 0) > 0
+      ? Math.floor(options?.baseDelayMs ?? 0)
+      : CASE_RESOLVER_CONFLICT_RETRY_BASE_DELAY_MS_DEFAULT;
+  const maxDelayMs =
+    Number.isFinite(options?.maxDelayMs) && (options?.maxDelayMs ?? 0) > 0
+      ? Math.max(baseDelayMs, Math.floor(options?.maxDelayMs ?? baseDelayMs))
+      : CASE_RESOLVER_CONFLICT_RETRY_MAX_DELAY_MS_DEFAULT;
+  const jitterMs =
+    Number.isFinite(options?.jitterMs) && (options?.jitterMs ?? 0) >= 0
+      ? Math.floor(options?.jitterMs ?? 0)
+      : CASE_RESOLVER_CONFLICT_RETRY_JITTER_MS_DEFAULT;
+
+  const exponentialDelay = Math.min(
+    maxDelayMs,
+    baseDelayMs * Math.pow(2, normalizedAttempt - 1)
+  );
+  const jitter = jitterMs > 0 ? Math.floor(Math.random() * (jitterMs + 1)) : 0;
+  return exponentialDelay + jitter;
 };
 
 export const createCaseResolverWorkspaceMutationId = (prefix = 'case-resolver-workspace'): string => {
@@ -219,6 +294,30 @@ export const persistCaseResolverWorkspaceSnapshot = async (
     workspaceRevision: getCaseResolverWorkspaceRevision(normalizedWorkspace),
     payloadBytes,
   });
+  if (isCaseResolverWorkspacePayloadTooLarge(payloadBytes)) {
+    const maxPayloadBytes = getCaseResolverWorkspaceMaxPayloadBytes();
+    const message = [
+      'Case Resolver workspace is too large to save safely.',
+      `Payload: ${formatByteCount(payloadBytes)}.`,
+      `Limit: ${formatByteCount(maxPayloadBytes)}.`,
+      'Reduce content size or split work into smaller documents.',
+    ].join(' ');
+    logCaseResolverWorkspaceEvent({
+      source: input.source,
+      action: 'persist_rejected_payload_too_large',
+      mutationId: input.mutationId,
+      expectedRevision: input.expectedRevision,
+      workspaceRevision: getCaseResolverWorkspaceRevision(normalizedWorkspace),
+      payloadBytes,
+      durationMs: Date.now() - startedAt,
+      message,
+    });
+    return {
+      ok: false,
+      conflict: false,
+      error: message,
+    };
+  }
 
   let response: Response;
   try {

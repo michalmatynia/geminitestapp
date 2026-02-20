@@ -3,7 +3,7 @@ import type {
   ImageFileListFilters,
   ImageFileRecord,
   ImageFileRepository,
-} from '@/shared/contracts/files/services/image-file-repository';
+} from '@/shared/contracts/files';
 import prisma from '@/shared/lib/db/prisma';
 
 const toRecord = (imageFile: {

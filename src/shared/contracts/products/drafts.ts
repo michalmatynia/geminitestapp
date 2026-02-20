@@ -51,7 +51,7 @@ export const productDraftSchema = namedDtoSchema.extend({
   categoryId: z.string().nullable().optional(),
   tagIds: z.array(z.string()).optional(),
   producerIds: z.array(z.string()).optional(),
-  parameters: z.array(productParameterValueSchema).optional(),
+  parameters: z.array(z.lazy(() => productParameterValueSchema)).optional(),
   defaultPriceGroupId: z.string().nullable().optional(),
   active: z.boolean().optional(),
   validatorEnabled: z.boolean().optional(),

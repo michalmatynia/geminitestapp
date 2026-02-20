@@ -8,8 +8,8 @@ import {
 } from '@/features/ai/ai-paths/server';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { removePathRunQueueEntries } from '@/features/jobs/workers/aiPathRunQueue';
-import { notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { notFoundError } from '@/shared/errors/app-error';
 
 export async function GET_handler(
   _req: NextRequest,
@@ -26,7 +26,15 @@ export async function GET_handler(
   assertAiPathRunAccess(access, run);
   const nodes = await repo.listRunNodes(runId);
   const events = await repo.listRunEvents(runId);
-  return NextResponse.json({ run, nodes, events });
+  const runMeta =
+    run.meta && typeof run.meta === 'object'
+      ? run.meta
+      : null;
+  const compile =
+    runMeta?.['graphCompile'] && typeof runMeta['graphCompile'] === 'object'
+      ? (runMeta['graphCompile'] as Record<string, unknown>)
+      : null;
+  return NextResponse.json({ run, nodes, events, compile });
 }
 
 export async function DELETE_handler(

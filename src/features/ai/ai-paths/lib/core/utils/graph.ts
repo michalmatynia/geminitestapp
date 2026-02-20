@@ -214,6 +214,8 @@ export type GraphCompileSeverity = 'error' | 'warning';
 export type GraphCompileCode =
   | 'invalid_edges'
   | 'fan_in_single_port'
+  | 'required_input_missing_wiring'
+  | 'optional_input_incompatible_wiring'
   | 'terminal_node_has_outgoing_edges'
   | 'cycle_detected'
   | 'unsupported_cycle'
@@ -242,6 +244,14 @@ export type GraphCompileOptions = {
   allowedCycleNodeTypes?: string[];
   inputCardinalityByNodeType?: Record<string, Record<string, PortCardinality>>;
   inputCardinalityByNodeId?: Record<string, Record<string, PortCardinality>>;
+  inputContractsByNodeType?: Record<
+    string,
+    Record<string, { required?: boolean; cardinality?: PortCardinality }>
+  >;
+  inputContractsByNodeId?: Record<
+    string,
+    Record<string, { required?: boolean; cardinality?: PortCardinality }>
+  >;
 };
 
 const DEFAULT_ALLOWED_CYCLE_NODE_TYPES = new Set<string>([
@@ -254,11 +264,56 @@ const DEFAULT_ALLOWED_CYCLE_NODE_TYPES = new Set<string>([
   'simulation',
 ]);
 
+type InputPortContract = {
+  required?: boolean;
+  cardinality?: PortCardinality;
+};
+
+const mergeInputPortContracts = (
+  base: InputPortContract | undefined,
+  override: InputPortContract | undefined
+): InputPortContract | undefined => {
+  if (!base && !override) return undefined;
+  return {
+    ...(base ?? {}),
+    ...(override ?? {}),
+  };
+};
+
+const getConfiguredInputPortContract = (
+  node: AiNode,
+  port: string,
+  options: GraphCompileOptions
+): InputPortContract | undefined => {
+  const baseContract = node.inputContracts?.[port] as InputPortContract | undefined;
+  const runtimeContract = node.config?.runtime?.inputContracts?.[port] as
+    | InputPortContract
+    | undefined;
+  const byNodeType = options.inputContractsByNodeType?.[node.type]?.[port];
+  const byNodeId = options.inputContractsByNodeId?.[node.id]?.[port];
+
+  return mergeInputPortContracts(
+    mergeInputPortContracts(
+      mergeInputPortContracts(baseContract, runtimeContract),
+      byNodeType
+    ),
+    byNodeId
+  );
+};
+
 const getConfiguredInputCardinality = (
   node: AiNode,
   port: string,
   options: GraphCompileOptions
 ): PortCardinality => {
+  const configuredContract = getConfiguredInputPortContract(node, port, options);
+  if (
+    configuredContract?.cardinality === 'single' ||
+    configuredContract?.cardinality === 'many'
+  ) {
+    return configuredContract.cardinality;
+  }
+
   const byNodeId = options.inputCardinalityByNodeId?.[node.id]?.[port];
   if (byNodeId === 'single' || byNodeId === 'many') return byNodeId;
 
@@ -282,6 +337,38 @@ export const getNodeInputPortCardinality = (
   options: GraphCompileOptions = {}
 ): PortCardinality => {
   return getConfiguredInputCardinality(node, port, options);
+};
+
+export const getNodeInputPortContract = (
+  node: AiNode,
+  port: string,
+  options: GraphCompileOptions = {}
+): InputPortContract => {
+  return getConfiguredInputPortContract(node, port, options) ?? {};
+};
+
+const getRequiredInputPortsForNode = (
+  node: AiNode,
+  options: GraphCompileOptions
+): string[] => {
+  const contractPorts = new Set<string>([
+    ...Object.keys(node.inputContracts ?? {}),
+    ...Object.keys(node.config?.runtime?.inputContracts ?? {}),
+    ...Object.keys(options.inputContractsByNodeType?.[node.type] ?? {}),
+    ...Object.keys(options.inputContractsByNodeId?.[node.id] ?? {}),
+  ]);
+  node.inputs.forEach((port: string): void => {
+    contractPorts.add(port);
+  });
+
+  const requiredPorts: string[] = [];
+  contractPorts.forEach((port: string): void => {
+    const contract = getConfiguredInputPortContract(node, port, options);
+    if (contract?.required === true) {
+      requiredPorts.push(port);
+    }
+  });
+  return requiredPorts;
 };
 
 const buildIncomingEdgePortMap = (edges: Edge[]): Map<string, Edge[]> => {
@@ -403,6 +490,36 @@ export const compileGraph = (
     });
   }
 
+  const sanitizedEdgeIds = new Set(
+    sanitized
+      .map((edge: Edge): string | undefined => edge.id)
+      .filter((edgeId: string | undefined): edgeId is string => Boolean(edgeId))
+  );
+  edges.forEach((edge: Edge): void => {
+    if (sanitizedEdgeIds.has(edge.id)) return;
+    if (!edge.from || !edge.to || !edge.fromPort || !edge.toPort) return;
+    const fromNode = nodeById.get(edge.from);
+    const toNode = nodeById.get(edge.to);
+    if (!fromNode || !toNode) return;
+    const contract = getConfiguredInputPortContract(toNode, edge.toPort, options);
+    if (contract?.required !== false) return;
+    if (isValidConnection(fromNode, toNode, edge.fromPort, edge.toPort)) return;
+    findings.push({
+      code: 'optional_input_incompatible_wiring',
+      severity: 'warning',
+      message: `Optional input "${edge.toPort}" on node "${toNode.title ?? toNode.id}" has incompatible wiring from "${fromNode.title ?? fromNode.id}.${edge.fromPort}".`,
+      nodeId: toNode.id,
+      nodeType: toNode.type,
+      port: edge.toPort,
+      edgeId: edge.id,
+      metadata: {
+        fromNodeId: fromNode.id,
+        fromNodeType: fromNode.type,
+        fromPort: edge.fromPort,
+      },
+    });
+  });
+
   const incomingByPort = buildIncomingEdgePortMap(sanitized);
   incomingByPort.forEach((portEdges: Edge[], key: string): void => {
     if (portEdges.length <= 1) return;
@@ -423,6 +540,28 @@ export const compileGraph = (
         edgeIds: portEdges.map((edge: Edge): string => edge.id),
         incomingCount: portEdges.length,
       },
+    });
+  });
+
+  nodes.forEach((node: AiNode): void => {
+    const requiredPorts = getRequiredInputPortsForNode(node, options);
+    if (requiredPorts.length === 0) return;
+    const hasAnyEdge = sanitized.some(
+      (edge: Edge): boolean => edge.from === node.id || edge.to === node.id
+    );
+    if (!hasAnyEdge) return;
+    requiredPorts.forEach((port: string): void => {
+      const key = `${node.id}::${port}`;
+      const connected = incomingByPort.get(key) ?? [];
+      if (connected.length > 0) return;
+      findings.push({
+        code: 'required_input_missing_wiring',
+        severity: 'error',
+        message: `Required input "${port}" on node "${node.title ?? node.id}" has no incoming edge.`,
+        nodeId: node.id,
+        nodeType: node.type,
+        port,
+      });
     });
   });
 

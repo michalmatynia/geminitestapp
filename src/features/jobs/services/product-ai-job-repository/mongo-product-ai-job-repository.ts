@@ -7,7 +7,7 @@ import type {
   ProductAiJobRecord,
   ProductAiJobRepository,
   ProductAiJobUpdate,
-} from '@/shared/contracts/jobs/product-ai-job-repository';
+} from '@/shared/contracts/jobs';
 import { notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 

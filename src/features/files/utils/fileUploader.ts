@@ -11,7 +11,7 @@ import {
   getPublicPathFromStoredPath,
   uploadToConfiguredStorage,
 } from '@/features/files/services/storage/file-storage-service';
-import type { ImageFileRecord } from '@/shared/contracts/files/services/image-file-repository';
+import type { ImageFileRecord } from '@/shared/contracts/files';
 import { noteService } from '@/features/notesapp/server';
 import { ErrorSystem } from '@/features/observability/server';
 import type { NoteFileRecord } from '@/shared/contracts/notes';

@@ -14,6 +14,7 @@ import {
   renderTemplate,
   dbApi,
   aiJobsApi,
+  backfillPathConfigNodeContracts,
   getValueAtMappingPath,
   migratePathConfigCollections,
   safeStringify,
@@ -222,7 +223,8 @@ const isDatabaseOperation = (value: unknown): value is DatabaseOperation =>
 
 export const sanitizePathConfig = (config: PathConfig): PathConfig => {
   const migrated = migratePathConfigCollections(config).config;
-  const sanitizedNodes = migrated.nodes.map((node: AiNode): AiNode => {
+  const contractBackfilled = backfillPathConfigNodeContracts(migrated).config;
+  const sanitizedNodes = contractBackfilled.nodes.map((node: AiNode): AiNode => {
     if (node.type !== 'database' || !node.config || typeof node.config !== 'object') {
       return node;
     }
@@ -248,16 +250,16 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
       },
     };
   });
-  const uiState = migrated.uiState ? { ...migrated.uiState } : undefined;
+  const uiState = contractBackfilled.uiState ? { ...contractBackfilled.uiState } : undefined;
   if (uiState && 'configOpen' in uiState) {
     delete (uiState as { configOpen?: boolean }).configOpen;
   }
   return {
-    ...migrated,
+    ...contractBackfilled,
     nodes: sanitizedNodes,
     uiState,
     runtimeState: buildPersistedRuntimeState(
-      parseRuntimeState(migrated.runtimeState),
+      parseRuntimeState(contractBackfilled.runtimeState),
       sanitizedNodes
     ),
   };

@@ -1,7 +1,7 @@
 'use client';
 
 import type { NodeCacheMode } from '@/features/ai/ai-paths/lib';
-import { Button, Input, SelectSimple, ToggleRow, FormField } from '@/shared/ui';
+import { Button, Input, MultiSelect, SelectSimple, ToggleRow, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -24,6 +24,65 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
   const timeoutMs = runtimeConfig.timeoutMs ?? '';
   const retryAttempts = retryConfig.attempts ?? '';
   const retryBackoffMs = retryConfig.backoffMs ?? '';
+  const inputContracts = runtimeConfig.inputContracts ?? {};
+  const inputPortOptions = selectedNode.inputs.map((port: string) => ({
+    value: port,
+    label: port,
+  }));
+  const requiredInputPorts = selectedNode.inputs.filter(
+    (port: string): boolean => inputContracts[port]?.required === true
+  );
+  const optionalInputPorts = selectedNode.inputs.filter(
+    (port: string): boolean => inputContracts[port]?.required === false
+  );
+
+  const buildInputContracts = (
+    nextRequiredPorts: string[],
+    nextOptionalPorts: string[]
+  ): Record<string, { required?: boolean; cardinality?: 'single' | 'many' }> | undefined => {
+    const requiredSet = new Set(nextRequiredPorts);
+    const optionalSet = new Set(
+      nextOptionalPorts.filter((port: string): boolean => !requiredSet.has(port))
+    );
+    const keys = new Set<string>([
+      ...Object.keys(inputContracts),
+      ...Array.from(requiredSet),
+      ...Array.from(optionalSet),
+    ]);
+
+    const nextContracts: Record<
+      string,
+      { required?: boolean; cardinality?: 'single' | 'many' }
+    > = {};
+    keys.forEach((port: string): void => {
+      const existing = inputContracts[port];
+      const required = requiredSet.has(port)
+        ? true
+        : optionalSet.has(port)
+          ? false
+          : undefined;
+      if (!existing && required === undefined) return;
+      const cardinality = existing?.cardinality;
+      if (required === undefined && cardinality === undefined) return;
+      nextContracts[port] = {
+        ...(required !== undefined ? { required } : {}),
+        ...(cardinality ? { cardinality } : {}),
+      };
+    });
+    return Object.keys(nextContracts).length > 0 ? nextContracts : undefined;
+  };
+
+  const updateInputContractSelections = (
+    nextRequiredPorts: string[],
+    nextOptionalPorts: string[]
+  ): void => {
+    updateSelectedNodeConfig({
+      runtime: {
+        ...runtimeConfig,
+        inputContracts: buildInputContracts(nextRequiredPorts, nextOptionalPorts),
+      },
+    });
+  };
 
   return (
     <div className='space-y-3 rounded-md border border-border bg-card/50 p-3'>
@@ -90,7 +149,7 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
       </p>
       <ToggleRow
         label='Require inputs'
-        description='Wait for connected inputs to be present before execution.'
+        description='Wait for required inputs before execution. If no required ports are set, all connected inputs are required.'
         checked={waitForInputs}
         onCheckedChange={(checked: boolean): void =>
           updateSelectedNodeConfig({
@@ -102,6 +161,42 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
         }
         className='mt-3 bg-transparent border-none p-0 hover:bg-transparent'
       />
+      {selectedNode.inputs.length > 0 && (
+        <div className='grid gap-3 sm:grid-cols-2'>
+          <FormField
+            label='Required input ports'
+            description='Execution waits for these ports when "Require inputs" is enabled.'
+          >
+            <MultiSelect
+              options={inputPortOptions}
+              selected={requiredInputPorts}
+              placeholder='All connected ports (default)'
+              onChange={(values: string[]): void => {
+                const dedupedOptional = optionalInputPorts.filter(
+                  (port: string): boolean => !values.includes(port)
+                );
+                updateInputContractSelections(values, dedupedOptional);
+              }}
+            />
+          </FormField>
+          <FormField
+            label='Optional input ports'
+            description='Optional ports can be wired without blocking execution.'
+          >
+            <MultiSelect
+              options={inputPortOptions}
+              selected={optionalInputPorts}
+              placeholder='No optional overrides'
+              onChange={(values: string[]): void => {
+                const dedupedOptional = values.filter(
+                  (port: string): boolean => !requiredInputPorts.includes(port)
+                );
+                updateInputContractSelections(requiredInputPorts, dedupedOptional);
+              }}
+            />
+          </FormField>
+        </div>
+      )}
       <FormField
         label='Execution timeout (ms)'
         description='Optional per-node timeout. Leave empty to use global runtime behavior.'

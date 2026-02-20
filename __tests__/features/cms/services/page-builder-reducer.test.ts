@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { pageBuilderReducer, initialState } from '@/features/cms/hooks/usePageBuilderContext';
-import { PageBuilderState } from '@/shared/contracts/cms/page-builder';
+import { PageBuilderState } from '@/shared/contracts/cms';
 
 describe('Page Builder Reducer', () => {
   it('should handle SELECT_NODE', () => {

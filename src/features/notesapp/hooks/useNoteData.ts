@@ -29,7 +29,7 @@ import {
   useNoteThemes as useNoteThemesQuery,
   type FetchNotesParams,
 } from '@/features/notesapp/api/useNoteQueries';
-import type { UseNoteDataProps } from '@/shared/contracts/notes/notes-hooks';
+import type { UseNoteDataProps } from '@/shared/contracts/notes';
 import type {
   NoteWithRelationsDto as NoteWithRelations,
   NoteFiltersDto as NoteFilters,

@@ -1,4 +1,4 @@
-import type { AgentPlanPreferences, AgentPlanSettings } from '@/shared/contracts/agent-runtime/agent';
+import type { AgentPlanPreferences, AgentPlanSettings } from '@/shared/contracts/agent-runtime';
 
 export const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 export const MAX_PLAN_STEPS = 12;

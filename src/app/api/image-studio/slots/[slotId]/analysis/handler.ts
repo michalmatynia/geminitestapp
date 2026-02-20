@@ -9,11 +9,11 @@ import {
   type ImageStudioAnalysisRequest,
 } from '@/features/ai/image-studio/contracts/analysis';
 import { analyzeImageByAutoScalerLayout } from '@/features/ai/image-studio/server/auto-scaler-utils';
+import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
 import {
   loadSourceBufferFromSlot,
   parseImageDataUrl,
 } from '@/features/ai/image-studio/server/source-image-utils';
-import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
 import { logSystemEvent } from '@/features/observability/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';

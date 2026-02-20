@@ -1,6 +1,6 @@
 import { ObjectId, Filter } from 'mongodb';
 
-import type { ActivityRepository, ActivityFilters } from '@/shared/contracts/system/services/activity-repository';
+import type { ActivityRepository, ActivityFilters } from '@/shared/contracts/system';
 import type { ActivityLogDto, CreateActivityLogDto } from '@/shared/contracts/system';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 

@@ -14,7 +14,7 @@ import type {
   AgentExecutionContext,
   PlanStep,
   PlannerMeta,
-} from '@/shared/contracts/agent-runtime/agent';
+} from '@/shared/contracts/agent-runtime';
 import prisma from '@/shared/lib/db/prisma';
 
 import {

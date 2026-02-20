@@ -13,6 +13,7 @@
     "lint": "eslint src __tests__",
     "seed": "node prisma/seed.js",
     "seed:admin": "tsx scripts/db/seed-admin.ts",
+    "backfill:ai-paths-input-contracts": "tsx scripts/db/backfill-ai-paths-input-contracts.ts",
     "backfill:image-studio-center-links": "tsx scripts/db/backfill-image-studio-center-links.ts",
     "backfill:image-studio-upscale-links": "tsx scripts/db/backfill-image-studio-upscale-links.ts",
     "cleanup:db-providers": "tsx scripts/cleanup/cleanup-db-provider-settings.ts",
@@ -40,6 +41,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
+    "test:case-resolver:regression": "vitest run src/features/case-resolver/__tests__/workspace-persistence.test.ts src/features/case-resolver/__tests__/ocr-queue-model-routing.test.ts src/features/case-resolver/__tests__/ocr-runtime.test.ts",
     "test:e2e": "playwright test"
   },
   "engines": {

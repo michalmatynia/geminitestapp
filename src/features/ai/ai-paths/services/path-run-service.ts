@@ -10,7 +10,7 @@ import {
 import { enqueuePathRunJob } from '@/features/jobs/workers/aiPathRunQueue';
 import { ErrorSystem } from '@/features/observability/services/error-system';
 import type { AiNode, Edge, AiPathRunRecord } from '@/shared/contracts/ai-paths';
-import type { AiPathRunRepository } from '@/shared/contracts/ai-paths/path-run-repository';
+import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 
 type EnqueueRunInput = {
   userId?: string | null;

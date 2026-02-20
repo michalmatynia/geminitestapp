@@ -1436,43 +1436,37 @@ export function RightSidebar(): React.JSX.Element {
 
           <div className='flex items-center justify-end gap-2'>
             {modelSupportsSequenceGeneration ? (
-              <Button
-                size='xs'
-                type='button'
-                variant='outline'
-                onClick={handleRunSequenceGeneration}
-                disabled={generationBusy || sequenceRunBusy}
-              >
-                {sequenceRunBusy ? (
-                  <Loader2 className='mr-2 size-4 animate-spin' />
-                ) : (
-                  <Workflow className='mr-2 size-4' />
-                )}
-                {sequenceRunBusy ? 'Starting Sequence...' : 'Generate Sequence'}
-              </Button>
-            ) : null}
+                                <Button
+                                  size='xs'
+                                  type='button'
+                                  variant='outline'
+                                  onClick={handleRunSequenceGeneration}
+                                  disabled={generationBusy || sequenceRunBusy}
+                                  loading={sequenceRunBusy}
+                                >
+                                  <Workflow className='mr-2 size-4' />
+                                  {sequenceRunBusy ? 'Starting Sequence...' : 'Generate Sequence'}
+                                </Button>            ) : null}
             <Button
               size='xs'
               type='button'
               onClick={handleRunGeneration}
               disabled={!promptText.trim() || generationBusy || sequenceRunBusy}
+              loading={generationBusy}
             >
-              {generationBusy ? (
-                <Loader2 className='mr-2 size-4 animate-spin' />
-              ) : (
-                <Play className='mr-2 size-4' />
-              )}
+              <Play className='mr-2 size-4' />
               Generate From Prompt
             </Button>
             <Button size='xs'
               variant='outline'
               title='Extract functions and selectors from prompt'
               aria-label='Extract functions and selectors from prompt'
-              disabled={!promptText.trim()}
+              disabled={!promptText.trim() || extractBusy !== 'none'}
               onClick={() => {
                 setPromptControlOpen(false);
                 handleExtractReviewOpen();
               }}
+              loading={extractBusy !== 'none'}
             >
               <Sparkles className='mr-2 size-4' />
               Extract

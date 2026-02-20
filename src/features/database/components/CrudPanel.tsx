@@ -253,8 +253,8 @@ export function CrudPanel(props: {
             onClick={fetchRows}
             disabled={rowsQuery.isFetching}
             className='h-8'
+            loading={rowsQuery.isFetching}
           >
-            <RefreshCwIcon className={`size-3.5 mr-2 ${rowsQuery.isFetching ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
           <Button

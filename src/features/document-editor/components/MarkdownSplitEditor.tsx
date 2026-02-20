@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Textarea } from '@/shared/ui';
+import { Textarea, LoadingState } from '@/shared/ui';
 
 export interface MarkdownSplitEditorProps {
   value: string;
@@ -175,12 +175,7 @@ export function MarkdownSplitEditor({
             required
           />
           {isPasting ? (
-            <div className='absolute inset-0 flex items-center justify-center rounded-lg bg-black/50'>
-              <div className='flex items-center gap-2 text-white'>
-                <div className='h-5 w-5 animate-spin rounded-full border-2 border-gray-400 border-t-white' />
-                <span className='text-sm'>Uploading image...</span>
-              </div>
-            </div>
+            <LoadingState message='Uploading image...' className='absolute inset-0 bg-black/50' />
           ) : null}
         </div>
       </div>

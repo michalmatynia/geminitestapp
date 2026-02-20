@@ -122,7 +122,7 @@ describe('handleHttp', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const result = await handleHttp(
-      buildContext(buildNode({ config: { http: { ...buildNode().config!.http, responsePath: 'value' } } }), {})
+      buildContext(buildNode({ config: { http: { ...buildNode().config!.http, responsePath: 'value' } as any } }), {})
     );
 
     expect(fetchMock).toHaveBeenCalledTimes(2);

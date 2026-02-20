@@ -1,4 +1,5 @@
-import type { AiNode, DbQueryConfig, Edge, NodeType, RuntimeState } from '@/shared/contracts/ai-paths';
+import type { AiNode, DbQueryConfig, Edge, NodeType } from '@/shared/contracts/ai-paths';
+import type { RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
 export const EMPTY_RUNTIME_STATE: RuntimeState = {
   status: 'idle',

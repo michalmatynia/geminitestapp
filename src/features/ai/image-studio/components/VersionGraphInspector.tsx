@@ -3,7 +3,7 @@
 import { Copy, Crosshair, Focus, Info, Layers, MousePointer2, RefreshCw } from 'lucide-react';
 import React from 'react';
 
-import { Button } from '@/shared/ui';
+import { Button, Hint } from '@/shared/ui';
 
 import { useVersionGraphInspectorContext } from './VersionGraphInspectorContext';
 import { useSettingsState } from '../context/SettingsContext';
@@ -168,8 +168,9 @@ export function VersionGraphInspector(): React.JSX.Element {
             title={versionGraphTooltipsEnabled ? tooltipContent.refreshCompositePreview : undefined}
             disabled={compositeBusy || compositeLoading}
             onClick={() => onRefreshCompositePreview(selectedNode.id)}
+            loading={compositeLoading}
           >
-            <RefreshCw className={`size-3 ${compositeLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className='size-3' />
           </Button>
         ) : null}
       </div>
@@ -177,7 +178,7 @@ export function VersionGraphInspector(): React.JSX.Element {
       {/* Composite layer controls */}
       {selectedNode.type === 'composite' && meta.compositeConfig?.layers ? (
         <div className='mt-2 space-y-1'>
-          <div className='text-[9px] font-medium uppercase tracking-wide text-gray-500'>Layers</div>
+          <Hint size='xxs' uppercase className='text-gray-500'>Layers</Hint>
           {meta.compositeConfig.layers.map((layer, idx) => (
             <div key={layer.slotId} className='flex items-center gap-1.5 text-[10px] text-gray-400'>
               <span className='w-4 text-right text-gray-600'>{idx + 1}</span>

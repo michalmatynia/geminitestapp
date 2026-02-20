@@ -1,7 +1,7 @@
 import { Loader2 } from 'lucide-react';
 import React from 'react';
 
-import { Button, TabsContent } from '@/shared/ui';
+import { Button, TabsContent, Hint } from '@/shared/ui';
 
 import { InlineImagePreviewCanvas } from './InlineImagePreviewCanvas';
 
@@ -45,27 +45,26 @@ export function SlotInlineEditGenerationsTab({
       <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <div className='space-y-0.5'>
-            <div className='text-[10px] uppercase tracking-wide text-gray-500'>Generation Preview</div>
+            <Hint size='xxs' uppercase className='text-gray-500'>Generation Preview</Hint>
             <div className='text-xs text-gray-200'>
               {selectedGenerationPreview
                 ? `Run ${selectedGenerationPreview.runId.slice(0, 8)} • Variant ${selectedGenerationPreview.outputIndex}/${selectedGenerationPreview.outputCount}`
                 : 'No generated variants available for this card.'}
             </div>
           </div>
-          <Button
-            size='xs'
-            type='button'
-            variant='outline'
-            onClick={onRefreshLinkedRuns}
-            disabled={linkedRunsIsFetching}
-          >
-            {linkedRunsIsFetching ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-            Refresh
-          </Button>
-        </div>
-
-        <InlineImagePreviewCanvas
-          imageSrc={selectedGenerationPreview?.imageSrc ?? null}
+                      <Button
+                        size='xs'
+                        type='button'
+                        variant='outline'
+                        onClick={onRefreshLinkedRuns}
+                        disabled={linkedRunsIsFetching}
+                        loading={linkedRunsIsFetching}
+                      >
+                        Refresh
+                      </Button>
+                    </div>
+          
+                  <InlineImagePreviewCanvas          imageSrc={selectedGenerationPreview?.imageSrc ?? null}
           imageAlt={
             selectedGenerationPreview?.output.filename ||
             `${slotNameDraft.trim() || selectedSlotName || 'Card'} generation preview`
@@ -118,19 +117,16 @@ export function SlotInlineEditGenerationsTab({
 
       <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
         <div className='flex items-center justify-between gap-2'>
-          <div className='text-[10px] uppercase tracking-wide text-gray-500'>
+          <Hint size='xxs' uppercase className='text-gray-500'>
             Generated Image Slots
-          </div>
+          </Hint>
           <div className='text-[11px] text-gray-400'>
             {linkedGeneratedVariants.length} image{linkedGeneratedVariants.length === 1 ? '' : 's'}
           </div>
         </div>
         <div className='grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'>
           {linkedRunsIsLoading ? (
-            <div className='col-span-full flex items-center gap-2 rounded border border-border/60 bg-card/40 px-3 py-2 text-xs text-gray-400'>
-              <Loader2 className='size-4 animate-spin' />
-              Loading generation slots...
-            </div>
+            <LoadingState message='Loading generation slots...' className='col-span-full' />
           ) : linkedRunsIsError ? (
             <div className='col-span-full rounded border border-red-500/35 bg-red-500/10 px-3 py-2 text-xs text-red-200'>
               {linkedRunsErrorMessage}

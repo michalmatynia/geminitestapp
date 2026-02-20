@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
-import { Pagination, Card, Badge, Alert } from '@/shared/ui';
+import { Pagination, Card, Badge, Alert, LoadingState } from '@/shared/ui';
 
 import { useProjectsState } from '../context/ProjectsContext';
 import { studioKeys } from '../hooks/useImageStudioQueries';
@@ -257,8 +257,7 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
   if (runsQuery.isLoading) {
     return (
       <Card variant='subtle-compact' padding='md' className='flex items-center gap-2 border-border/60 bg-card/40 text-sm text-muted-foreground'>
-        <Loader2 className='size-4 animate-spin' />
-        Loading generation history...
+        <LoadingState message='Loading generation history...' />
       </Card>
     );
   }

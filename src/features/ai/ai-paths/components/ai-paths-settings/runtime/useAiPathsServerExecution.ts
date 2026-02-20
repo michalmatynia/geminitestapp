@@ -92,7 +92,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           if (data.type === 'state_update' && data.state) {
             const nextState = parseRuntimeState(data.state);
             if (nextState) {
-              args.setRuntimeState((prev) => mergeRuntimeStateSnapshot(prev, nextState));
+              args.setRuntimeState( (prev: any) => mergeRuntimeStateSnapshot(prev, nextState));
             }
           }
 
@@ -142,7 +142,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
               } as unknown as AiPathRuntimeEvent);
             });
             if (logEvents.length > 0) {
-              args.setRuntimeEvents((prev) => [...prev, ...logEvents]);
+              args.setRuntimeEvents( (prev: any) => [...prev, ...logEvents]);
             }
           }
 
@@ -162,7 +162,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             if (data.state) {
               const finalState = parseRuntimeState(data.state);
               if (finalState && args.activePathId) {
-                args.setPathConfigs((prev) => ({
+                args.setPathConfigs( (prev: any) => ({
                   ...prev,
                   [args.activePathId!]: {
                     ...(prev[args.activePathId!] ?? buildActivePathConfig({
@@ -211,7 +211,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             });
             args.setLastRunAt(finishedAt);
             if (args.activePathId) {
-              args.setPathConfigs((prev) => ({
+              args.setPathConfigs( (prev: any) => ({
                 ...prev,
                 [args.activePathId!]: {
                   ...(prev[args.activePathId!] ?? buildActivePathConfig({

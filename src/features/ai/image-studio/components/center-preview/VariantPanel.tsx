@@ -1,7 +1,7 @@
 import { Eye, Loader2, Trash2 } from 'lucide-react';
 import React from 'react';
 
-import { Button, Input, Card, Badge, Alert } from '@/shared/ui';
+import { Button, Input, Card, Badge, Alert, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import type { VariantThumbnailInfo } from './preview-utils';
@@ -142,10 +142,7 @@ export function VariantPanel({
                     ) : (
                       <Card variant='subtle-compact' padding='none' className='flex h-20 w-full items-center justify-center border-dashed border-border/70 text-[10px] text-gray-500'>
                         {variant.status === 'pending' ? (
-                          <span className='inline-flex items-center gap-1'>
-                            <Loader2 className='size-3 animate-spin' />
-                            Waiting
-                          </span>
+                          <LoadingState message='Waiting' size='xs' />
                         ) : (
                           <span>Failed</span>
                         )}

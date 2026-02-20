@@ -1,11 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { handleValidationPattern } from '@/features/ai/ai-paths/lib/core/runtime/handlers/transform';
-import type {
-  AiNode,
-  RuntimePortValues,
-} from '@/shared/contracts/ai-paths';
-import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import type { NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
 const buildNode = (
   patch: Partial<AiNode> = {}

@@ -83,10 +83,10 @@ function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element
     key: 'app-queries',
     queryKeys: [
       [...QUERY_KEYS.userPreferences.all],
-      [...QUERY_KEYS.settings.scope('light')],
       [...QUERY_KEYS.settings.scope('lite')],
     ],
     ttl: 1000 * 60 * 60,
+    maxItemBytes: 16 * 1024,
   });
 
   return (

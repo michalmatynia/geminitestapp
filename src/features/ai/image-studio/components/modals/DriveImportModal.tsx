@@ -38,8 +38,9 @@ export function DriveImportModal({
             variant='outline'
             disabled={isUploading}
             className='gap-2'
+            loading={isUploading}
           >
-            {isUploading ? <Loader2 className='size-4 animate-spin' /> : <Upload className='size-4' />}
+            <Upload className='size-4' />
             Upload From Computer
           </Button>
         )

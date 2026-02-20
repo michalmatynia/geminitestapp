@@ -17,6 +17,7 @@ import type { AiPathRuntimeAnalyticsRangeDto as AiPathRuntimeAnalyticsRange } fr
 import type { AnalyticsEventDto, AnalyticsSummaryDto } from '@/shared/contracts/analytics';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import type { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
+import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -37,9 +38,6 @@ const AI_INSIGHTS_MODEL_RETRY_BASE_MS = Math.max(
   100,
   Number(process.env['AI_INSIGHTS_MODEL_RETRY_BASE_MS'] ?? 750),
 );
-const AI_INSIGHTS_USE_MONGO_SETTINGS =
-  process.env['AI_INSIGHTS_USE_MONGO_SETTINGS'] === 'true' ||
-  !process.env['DATABASE_URL'];
 
 type SettingDoc = { key?: string; value?: string; _id?: string };
 
@@ -65,15 +63,41 @@ const readMongoSettingValue = async (key: string): Promise<string | null> => {
 };
 
 const readInsightSettingValue = async (key: string): Promise<string | null> => {
+  const provider = await getAppDbProvider().catch(() => null);
+
+  if (provider === 'mongodb') {
+    try {
+      const mongoValue = await readMongoSettingValue(key);
+      if (mongoValue !== null) return mongoValue;
+    } catch {
+      // Continue with fallback when provider read fails.
+    }
+    try {
+      return await readPrismaSettingValue(key);
+    } catch {
+      return null;
+    }
+  }
+
+  if (provider === 'prisma') {
+    try {
+      const prismaValue = await readPrismaSettingValue(key);
+      if (prismaValue !== null) return prismaValue;
+    } catch {
+      // Continue with fallback when provider read fails.
+    }
+    try {
+      return await readMongoSettingValue(key);
+    } catch {
+      return null;
+    }
+  }
+
   try {
     const prismaValue = await readPrismaSettingValue(key);
     if (prismaValue !== null) return prismaValue;
   } catch {
     // Fall back to defaults when settings storage is temporarily unavailable.
-  }
-
-  if (!AI_INSIGHTS_USE_MONGO_SETTINGS) {
-    return null;
   }
 
   try {

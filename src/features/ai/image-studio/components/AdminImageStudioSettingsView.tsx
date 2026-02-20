@@ -640,8 +640,9 @@ export function AdminImageStudioSettingsView(
                     className='h-10'
                     onClick={() => { void imageModelsQuery.refetch(); }}
                     disabled={imageModelsQuery.isFetching}
+                    loading={imageModelsQuery.isFetching}
                   >
-                    <RefreshCcw className={cn('mr-2 size-4', imageModelsQuery.isFetching && 'animate-spin')} />
+                    <RefreshCcw className='mr-2 size-4' />
                     Sync Models
                   </Button>
                 </div>
@@ -943,15 +944,9 @@ export function AdminImageStudioSettingsView(
                     onClick={() => { void runCardBackfill(); }}
                     disabled={backfillRunning}
                     className='min-w-[160px]'
+                    loading={backfillRunning}
                   >
-                    {backfillRunning ? (
-                      <>
-                        <RefreshCcw className='mr-2 size-4 animate-spin' />
-                        Processing...
-                      </>
-                    ) : (
-                      'Execute Backfill'
-                    )}
+                    Execute Backfill
                   </Button>
                 </div>
 

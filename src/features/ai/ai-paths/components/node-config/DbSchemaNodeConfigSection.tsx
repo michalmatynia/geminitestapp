@@ -38,7 +38,7 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
         | null
         | undefined;
       if (!source?.collections?.length) return;
-      source.collections.forEach((collection: SchemaData['collections'][number]) => {
+      source.collections.forEach((collection: any) => {
         merged.push({ ...stripUndefinedProvider(collection), provider });
       });
     });

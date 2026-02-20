@@ -1,6 +1,5 @@
-import type { RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
-import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
+import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
 import { aiJobsApi, aiGenerationApi } from '../../../api';
 import {

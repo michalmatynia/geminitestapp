@@ -10,27 +10,57 @@ interface PersistenceConfig {
   queryKeys: unknown[][];
   storage?: Storage;
   ttl?: number; // Time to live in milliseconds
+  maxItemBytes?: number;
 }
+
+const DEFAULT_MAX_ITEM_BYTES = 64 * 1024;
+const quotaErrorNames = new Set(['QuotaExceededError', 'NS_ERROR_DOM_QUOTA_REACHED']);
+const mutedQuotaKeys = new Set<string>();
+
+const isQuotaExceededError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+  const name = (error as { name?: unknown }).name;
+  return typeof name === 'string' && quotaErrorNames.has(name);
+};
 
 // Hook for persisting query data to localStorage/sessionStorage
 export function useQueryPersistence(config: PersistenceConfig) {
   const queryClient = useQueryClient();
   const storage = typeof window !== 'undefined' ? (config.storage || localStorage) : null;
+  const maxItemBytes = config.maxItemBytes ?? DEFAULT_MAX_ITEM_BYTES;
 
   const saveToStorage = useCallback((queryKey: unknown[], data: unknown) => {
     if (!storage) return;
+    const key = `${config.key}-${JSON.stringify(queryKey)}`;
     try {
       const item = {
         data,
         timestamp: Date.now(),
         ttl: config.ttl,
       };
-      const key = `${config.key}-${JSON.stringify(queryKey)}`;
-      storage.setItem(key, JSON.stringify(item));
+      const serialized = JSON.stringify(item);
+      if (serialized.length > maxItemBytes) {
+        storage.removeItem(key);
+        return;
+      }
+      storage.setItem(key, serialized);
+      mutedQuotaKeys.delete(key);
     } catch (error) {
-      logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useQueryPersistence', action: 'saveQueryToStorage', level: 'warn' } });
+      if (isQuotaExceededError(error)) {
+        storage.removeItem(key);
+        if (mutedQuotaKeys.has(key)) return;
+        mutedQuotaKeys.add(key);
+      }
+      logClientError(error instanceof Error ? error : new Error(String(error)), {
+        context: {
+          source: 'useQueryPersistence',
+          action: 'saveQueryToStorage',
+          level: 'warn',
+          storageKey: key,
+        },
+      });
     }
-  }, [config.key, config.ttl, storage]);
+  }, [config.key, config.ttl, maxItemBytes, storage]);
 
   const loadFromStorage = useCallback((queryKey: unknown[]) => {
     if (!storage) return null;

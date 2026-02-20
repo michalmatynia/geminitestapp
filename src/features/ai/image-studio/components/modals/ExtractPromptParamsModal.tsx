@@ -108,23 +108,19 @@ export function ExtractPromptParamsModal({
 
   const actions = (
     <>
-      <Button
-        size='sm'
-        variant='outline'
-        onClick={() => {
-          handleSmartExtraction();
-        }}
-        disabled={extractBusy !== 'none'}
-        className='gap-2'
-      >
-        {extractBusy === 'smart' ? (
-          <Loader2 className='size-4 animate-spin' />
-        ) : (
-          <Zap className='size-4' />
-        )}
-        Smart
-      </Button>
-      <Button
+              <Button
+                size='sm'
+                variant='outline'
+                onClick={() => {
+                  handleSmartExtraction();
+                }}
+                disabled={extractBusy !== 'none'}
+                className='gap-2'
+                loading={extractBusy === 'smart'}
+              >
+                <Zap className='size-4' />
+                Smart
+              </Button>      <Button
         size='sm'
         variant='outline'
         onClick={() => {
@@ -140,23 +136,19 @@ export function ExtractPromptParamsModal({
         )}
         Programmatic
       </Button>
-      <Button
-        size='sm'
-        variant='outline'
-        onClick={() => {
-          handleAiExtraction();
-        }}
-        disabled={extractBusy !== 'none'}
-        className='gap-2'
-      >
-        {extractBusy === 'ai' ? (
-          <Loader2 className='size-4 animate-spin' />
-        ) : (
-          <Sparkles className='size-4' />
-        )}
-        AI Only
-      </Button>
-      <Button
+              <Button
+                size='sm'
+                variant='outline'
+                onClick={() => {
+                  handleAiExtraction();
+                }}
+                disabled={extractBusy !== 'none'}
+                className='gap-2'
+                loading={extractBusy === 'ai'}
+              >
+                <Sparkles className='size-4' />
+                AI Only
+              </Button>      <Button
         size='sm'
         variant='outline'
         onClick={() => {

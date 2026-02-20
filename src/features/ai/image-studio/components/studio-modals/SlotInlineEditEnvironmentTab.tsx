@@ -46,7 +46,7 @@ export function SlotInlineEditEnvironmentTab({
       <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <div className='space-y-0.5'>
-            <div className='text-[10px] uppercase tracking-wide text-gray-500'>Environment Reference</div>
+            <Hint size='xxs' uppercase className='text-gray-500'>Environment Reference</Hint>
             <div className='text-xs text-gray-200'>
               Source: {environmentPreviewSource.sourceType}
             </div>
@@ -112,16 +112,15 @@ export function SlotInlineEditEnvironmentTab({
         >
           Upload Environment From Drive
         </Button>
-        <Button size='xs'
-          type='button'
-          variant='outline'
-          onClick={onUploadEnvironmentFromLocal}
-          disabled={uploadPending}
-        >
-          {uploadPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-          Upload Environment From Local
-        </Button>
-        <Button size='xs'
+                  <Button size='xs'
+                    type='button'
+                    variant='outline'
+                    onClick={onUploadEnvironmentFromLocal}
+                    disabled={uploadPending}
+                    loading={uploadPending}
+                  >
+                    Upload Environment From Local
+                  </Button>        <Button size='xs'
           type='button'
           variant='outline'
           onClick={onClearEnvironmentImage}

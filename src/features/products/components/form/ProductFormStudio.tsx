@@ -986,12 +986,9 @@ export default function ProductFormStudio(): React.JSX.Element {
             }}
             disabled={sending || accepting || rotatingDirection !== null || selectedImageIndex === null || !selectedSourcePreview}
             title='Rotate selected image slot 90° left'
+            loading={rotatingDirection === 'left'}
           >
-            {rotatingDirection === 'left' ? (
-              <Loader2 className='mr-2 size-4 animate-spin' />
-            ) : (
-              <RotateCcw className='mr-2 size-4' />
-            )}
+            <RotateCcw className='mr-2 size-4' />
             Rotate Left
           </Button>
 
@@ -1003,12 +1000,9 @@ export default function ProductFormStudio(): React.JSX.Element {
             }}
             disabled={sending || accepting || rotatingDirection !== null || selectedImageIndex === null || !selectedSourcePreview}
             title='Rotate selected image slot 90° right'
+            loading={rotatingDirection === 'right'}
           >
-            {rotatingDirection === 'right' ? (
-              <Loader2 className='mr-2 size-4 animate-spin' />
-            ) : (
-              <RotateCw className='mr-2 size-4' />
-            )}
+            <RotateCw className='mr-2 size-4' />
             Rotate Right
           </Button>
 
@@ -1026,12 +1020,9 @@ export default function ProductFormStudio(): React.JSX.Element {
               !selectedSourcePreview
             }
             title='Open selected image in Image Studio without running generation'
+            loading={openingInImageStudio}
           >
-            {openingInImageStudio ? (
-              <Loader2 className='mr-2 size-4 animate-spin' />
-            ) : (
-              <ExternalLink className='mr-2 size-4' />
-            )}
+            <ExternalLink className='mr-2 size-4' />
             {openingInImageStudio ? 'Opening...' : 'Open In Image Studio'}
           </Button>
 
@@ -1053,12 +1044,9 @@ export default function ProductFormStudio(): React.JSX.Element {
                 ? sequenceReadinessMessage ?? 'Project sequencing is not ready.'
                 : 'Send selected product image to Studio'
             }
+            loading={sending}
           >
-            {sending ? (
-              <Loader2 className='mr-2 size-4 animate-spin' />
-            ) : (
-              <Monitor className='mr-2 size-4' />
-            )}
+            <Monitor className='mr-2 size-4' />
             {sending ? 'Sending...' : 'Send To Studio'}
           </Button>
 
@@ -1070,12 +1058,9 @@ export default function ProductFormStudio(): React.JSX.Element {
             disabled={!selectedVariant || accepting || sending || openingInImageStudio}
             variant='outline'
             className='border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
+            loading={accepting}
           >
-            {accepting ? (
-              <Loader2 className='mr-2 size-4 animate-spin' />
-            ) : (
-              <Check className='mr-2 size-4' />
-            )}
+            <Check className='mr-2 size-4' />
             {accepting ? 'Accepting...' : 'Accept Variant'}
           </Button>
 
@@ -1086,10 +1071,8 @@ export default function ProductFormStudio(): React.JSX.Element {
               void refreshVariants();
             }}
             disabled={variantsLoading || sending || accepting}
+            loading={variantsLoading}
           >
-            {variantsLoading ? (
-              <Loader2 className='mr-2 size-4 animate-spin' />
-            ) : null}
             Refresh Variants
           </Button>
 
@@ -1250,10 +1233,7 @@ export default function ProductFormStudio(): React.JSX.Element {
 
       <FormSection title='Generated Variants' description='Click a generated card to preview it.'>
         {variantsLoading ? (
-          <div className='flex items-center gap-2 text-sm text-gray-400'>
-            <Loader2 className='size-4 animate-spin' />
-            Loading variants...
-          </div>
+          <LoadingState message='Loading variants...' />
         ) : variants.length === 0 && pendingVariantPlaceholderCount === 0 ? (
           <p className='text-sm text-gray-400'>
             No generations yet for the selected product image.
@@ -1313,12 +1293,9 @@ export default function ProductFormStudio(): React.JSX.Element {
                     }}
                     disabled={deletingVariantId !== null || sending || accepting}
                     title='Delete generated variant'
+                    loading={isDeleting}
                   >
-                    {isDeleting ? (
-                      <Loader2 className='mr-1 size-3 animate-spin' />
-                    ) : (
-                      <Trash2 className='mr-1 size-3' />
-                    )}
+                    <Trash2 className='mr-1 size-3' />
                     Delete
                   </Button>
                 </div>
@@ -1330,10 +1307,7 @@ export default function ProductFormStudio(): React.JSX.Element {
                 className='space-y-1 rounded border border-border/60 p-1'
               >
                 <div className='flex h-24 w-full items-center justify-center rounded bg-black/20 text-xs text-gray-500'>
-                  <span className='inline-flex items-center gap-1'>
-                    <Loader2 className='size-3 animate-spin' />
-                    Syncing...
-                  </span>
+                  <LoadingState message='Syncing...' size='xs' />
                 </div>
                 <div className='px-0.5 text-[10px] text-gray-500'>
                   Waiting for sequence output
@@ -1467,8 +1441,8 @@ export default function ProductFormStudio(): React.JSX.Element {
               void refreshAudit();
             }}
             disabled={auditLoading}
+            loading={auditLoading}
           >
-            {auditLoading ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
             Refresh Audit
           </Button>
         </div>
@@ -1480,10 +1454,7 @@ export default function ProductFormStudio(): React.JSX.Element {
         ) : null}
 
         {auditLoading ? (
-          <div className='mt-2 flex items-center gap-2 text-sm text-gray-400'>
-            <Loader2 className='size-4 animate-spin' />
-            Loading run audit...
-          </div>
+          <LoadingState message='Loading run audit...' />
         ) : auditEntries.length === 0 ? (
           <p className='mt-2 text-sm text-gray-400'>No run audit entries yet for this image slot.</p>
         ) : (

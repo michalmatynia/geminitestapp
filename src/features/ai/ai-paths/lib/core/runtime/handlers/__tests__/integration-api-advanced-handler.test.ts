@@ -1,11 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { handleAdvancedApi } from '@/features/ai/ai-paths/lib/core/runtime/handlers/integration-api-advanced-handler';
-import type {
-  AiNode,
-  RuntimePortValues,
-} from '@/shared/contracts/ai-paths';
-import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import type { NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
 const buildNode = (
   patch: Partial<AiNode> = {}
@@ -76,6 +73,7 @@ const buildContext = (
     prevOutputs: {},
     edges: [],
     nodes: [node],
+    nodeById: new Map([[node.id, node]]),
     runId: 'run-1',
     runStartedAt: new Date().toISOString(),
     activePathId: 'path-1',

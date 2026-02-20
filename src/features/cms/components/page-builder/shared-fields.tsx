@@ -74,9 +74,7 @@ export function ImagePickerField({
             <span className='text-xs text-gray-500'>No image</span>
           )}
           {isUploading && (
-            <div className='absolute inset-0 flex items-center justify-center bg-black/50'>
-              <Loader2 className='size-6 animate-spin text-white' />
-            </div>
+            <LoadingState message='Uploading...' className='absolute inset-0 bg-black/50' />
           )}
         </div>
         <div className='grid grid-cols-2 gap-2'>

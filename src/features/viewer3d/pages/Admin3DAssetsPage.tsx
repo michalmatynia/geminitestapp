@@ -342,9 +342,9 @@ export function Admin3DAssetsPage(): React.JSX.Element {
                   size='sm'
                   onClick={() => { void handleReindex(); }}
                   disabled={isReindexing}
+                  loading={isReindexing}
                 >
-                  <RefreshCw className={`mr-2 h-3.5 w-3.5 ${isReindexing ? 'animate-spin' : ''}`} />
-                  {isReindexing ? 'Reindexing...' : 'Reindex Local Files'}
+                  Reindex Local Files
                 </Button>
               </div>
             ) : undefined

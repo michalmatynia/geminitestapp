@@ -9,8 +9,8 @@ import type {
   PromptValidationRuleDto,
   PromptValidationScopeDto,
 } from '@/shared/contracts/prompt-engine';
-import type { RegexConfig, RuntimePortValues, StringMutatorOperation } from '@/shared/contracts/ai-paths';
-import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
+import type { RegexConfig, StringMutatorOperation } from '@/shared/contracts/ai-paths';
+import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
 import {
   cloneValue,

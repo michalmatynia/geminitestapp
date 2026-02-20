@@ -390,7 +390,7 @@ export interface NodeHandlerContext {
     decision: 'executed' | 'skipped_duplicate' | 'skipped_policy' | 'skipped_missing_idempotency' | 'failed';
     activationHash: string | null;
     idempotencyKey: string | null;
-  };
+  } | undefined;
   executed: {
     notification: Set<string>;
     updater: Set<string>;

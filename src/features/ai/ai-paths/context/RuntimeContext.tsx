@@ -212,21 +212,21 @@ export function RuntimeProvider({
 
   // Memoized update operations
   const updateNodeInputs = useCallback((nodeId: string, inputs: RuntimePortValues) => {
-    setRuntimeStateInternal((prev) => ({
+    setRuntimeStateInternal( (prev: any) => ({
       ...prev,
       inputs: { ...prev.inputs, [nodeId]: inputs },
     }));
   }, []);
 
   const updateNodeOutputs = useCallback((nodeId: string, outputs: RuntimePortValues) => {
-    setRuntimeStateInternal((prev) => ({
+    setRuntimeStateInternal( (prev: any) => ({
       ...prev,
       outputs: { ...prev.outputs, [nodeId]: outputs },
     }));
   }, []);
 
   const clearNodeRuntime = useCallback((nodeId: string) => {
-    setRuntimeStateInternal((prev) => {
+    setRuntimeStateInternal( (prev: any) => {
       const { [nodeId]: _removedInputs, ...restInputs } = prev.inputs ?? {};
       const { [nodeId]: _removedOutputs, ...restOutputs } = prev.outputs ?? {};
       const newHistory = prev.history ? { ...prev.history } : undefined;
@@ -250,7 +250,7 @@ export function RuntimeProvider({
   }, []);
 
   const addRuntimeEvent = useCallback((event: AiPathRuntimeEvent) => {
-    setRuntimeEventsInternal((prev) => {
+    setRuntimeEventsInternal( (prev: any) => {
       const next = [...prev, event];
       if (next.length > MAX_RUNTIME_EVENTS) {
         return next.slice(next.length - MAX_RUNTIME_EVENTS);
@@ -268,7 +268,7 @@ export function RuntimeProvider({
   }, []);
 
   const appendHistory = useCallback((nodeId: string, entry: RuntimeHistoryEntry) => {
-    setRuntimeStateInternal((prev) => {
+    setRuntimeStateInternal( (prev: any) => {
       const existingHistory = prev.history ?? {};
       const nodeHistory = existingHistory[nodeId] ?? [];
       return {
@@ -282,14 +282,14 @@ export function RuntimeProvider({
   }, []);
 
   const clearHistory = useCallback(() => {
-    setRuntimeStateInternal((prev) => ({
+    setRuntimeStateInternal( (prev: any) => ({
       ...prev,
       history: undefined,
     }));
   }, []);
 
   const clearNodeHistory = useCallback((nodeId: string) => {
-    setRuntimeStateInternal((prev) => {
+    setRuntimeStateInternal( (prev: any) => {
       if (!prev.history) return prev;
       const { [nodeId]: _removed, ...restHistory } = prev.history;
       return {
@@ -300,15 +300,15 @@ export function RuntimeProvider({
   }, []);
 
   const updateParserSample = useCallback((nodeId: string, sample: ParserSampleState) => {
-    setParserSamplesInternal((prev) => ({ ...prev, [nodeId]: sample }));
+    setParserSamplesInternal( (prev: any) => ({ ...prev, [nodeId]: sample }));
   }, []);
 
   const updateUpdaterSample = useCallback((nodeId: string, sample: UpdaterSampleState) => {
-    setUpdaterSamplesInternal((prev) => ({ ...prev, [nodeId]: sample }));
+    setUpdaterSamplesInternal( (prev: any) => ({ ...prev, [nodeId]: sample }));
   }, []);
 
   const updatePathDebugSnapshot = useCallback((pathId: string, snapshot: PathDebugSnapshot) => {
-    setPathDebugSnapshotsInternal((prev) => ({ ...prev, [pathId]: snapshot }));
+    setPathDebugSnapshotsInternal( (prev: any) => ({ ...prev, [pathId]: snapshot }));
   }, []);
 
   const setRunControlHandlers = useCallback((handlers: RuntimeControlHandlers) => {

@@ -1123,12 +1123,12 @@ export function SequencingPanel(): React.JSX.Element {
               onCheckedChange={handleToggleSequencingEnabled}
               className='bg-transparent border-none p-0 hover:bg-transparent'
             />
-            <div className='text-[11px] text-gray-500'>
+            <Hint size='xxs' className='text-gray-500'>
               Trigger: {studioSettings.projectSequencing.trigger}
-            </div>
-            <div className='text-[11px] text-gray-500'>
+            </Hint>
+            <Hint size='xxs' className='text-gray-500'>
               Runtime: {studioSettings.projectSequencing.runtime}
-            </div>
+            </Hint>
           </div>
         </div>
       </StudioCard>
@@ -1206,12 +1206,9 @@ export function SequencingPanel(): React.JSX.Element {
                 !studioSettings.projectSequencing.enabled ||
                 enabledRuntimeSteps.length === 0
               }
+              loading={isSequenceRunning}
             >
-              {isSequenceRunning ? (
-                <Loader2 className='mr-2 size-4 animate-spin' />
-              ) : (
-                <Play className='mr-2 size-4' />
-              )}
+              <Play className='mr-2 size-4' />
               {isSequenceRunning ? 'Running Sequence...' : 'Start Sequence'}
             </Button>
             <Button

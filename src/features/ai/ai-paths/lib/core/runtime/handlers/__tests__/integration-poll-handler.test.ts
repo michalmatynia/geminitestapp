@@ -1,11 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { handlePoll } from '@/features/ai/ai-paths/lib/core/runtime/handlers/integration-poll-handler';
-import type {
-  AiNode,
-  RuntimePortValues,
-} from '@/shared/contracts/ai-paths';
-import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import type { NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
 import {
   pollDatabaseQuery,

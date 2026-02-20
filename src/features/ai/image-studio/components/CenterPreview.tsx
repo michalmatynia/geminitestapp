@@ -741,8 +741,9 @@ export function CenterPreview(): React.JSX.Element {
               onClick={() => { void handleSaveScreenshot(); }}
               disabled={screenshotBusy}
               title='Capture current 3D frame and attach it to this slot'
+              loading={screenshotBusy}
             >
-              {screenshotBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : <Camera className='mr-2 size-4' />}
+              <Camera className='mr-2 size-4' />
               Save Shot
             </Button>
           ) : null}
@@ -817,12 +818,7 @@ export function CenterPreview(): React.JSX.Element {
             </VectorDrawingProvider>
             {/* Composite loading overlay */}
             {isCompositeSlot && compositeLoading ? (
-              <div className='absolute inset-0 z-30 flex items-center justify-center bg-black/40 backdrop-blur-sm'>
-                <div className='flex items-center gap-2 rounded-lg bg-card/90 px-4 py-2 shadow-lg'>
-                  <Loader2 className='size-4 animate-spin text-teal-400' />
-                  <span className='text-xs text-teal-400'>Compositing layers...</span>
-                </div>
-              </div>
+              <LoadingState message='Compositing layers...' className='absolute inset-0 z-30' />
             ) : null}
             {canNavigateToSource ? (
               <SplitViewControls

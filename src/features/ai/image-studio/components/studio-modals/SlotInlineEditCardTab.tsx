@@ -14,6 +14,7 @@ import type {
   LinkedGeneratedVariantViewModel,
 } from './slot-inline-edit-tab-types';
 import type { ImageStudioSlotRecord } from '../../types';
+import { Hint } from '@/shared/ui';
 
 type SlotInlineEditCardTabProps = {
   clearImageDisabled: boolean;
@@ -85,7 +86,7 @@ export function SlotInlineEditCardTab({
       <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <div className='space-y-0.5'>
-            <div className='text-[10px] uppercase tracking-wide text-gray-500'>Image Slot Preview</div>
+            <Hint size='xxs' uppercase className='text-gray-500'>Image Slot Preview</Hint>
             <div className='text-xs text-gray-200'>
               Source: {inlinePreviewSource.sourceType}
             </div>
@@ -172,9 +173,9 @@ export function SlotInlineEditCardTab({
       </div>
 
       <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
-        <div className='text-[10px] uppercase tracking-wide text-gray-500'>
+        <Hint size='xxs' uppercase className='text-gray-500'>
           Image Slot
-        </div>
+        </Hint>
         <ProductImageManagerControllerProvider value={inlineCardImageManagerController}>
           <ProductImageManager showDragHandle={false} />
         </ProductImageManagerControllerProvider>
@@ -182,27 +183,24 @@ export function SlotInlineEditCardTab({
 
       <div className='space-y-2'>
         <div className='flex items-center justify-between gap-2'>
-          <Label className='text-xs text-gray-400'>Linked Generated Variants</Label>
-          <Button size='xs'
-            type='button'
-            variant='outline'
-            onClick={onRefreshLinkedRuns}
-            disabled={linkedRunsIsFetching}
-          >
-            {linkedRunsIsFetching ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-            Refresh
-          </Button>
-        </div>
-        <div className='max-h-56 space-y-2 overflow-y-auto rounded-lg border border-border/60 bg-card/40 p-2'>
-          {linkedRunsIsLoading ? (
-            <div className='flex items-center gap-2 px-1 py-2 text-xs text-gray-400'>
-              <Loader2 className='size-4 animate-spin' />
-              Loading linked variants...
-            </div>
-          ) : linkedRunsIsError ? (
-            <div className='rounded border border-red-500/35 bg-red-500/10 px-2 py-2 text-xs text-red-200'>
-              {linkedRunsErrorMessage}
-            </div>
+                      <Label className='text-xs text-gray-400'>Linked Generated Variants</Label>
+                      <Button size='xs'
+                        type='button'
+                        variant='outline'
+                        onClick={onRefreshLinkedRuns}
+                        disabled={linkedRunsIsFetching}
+                        loading={linkedRunsIsFetching}
+                      >
+                        Refresh
+                      </Button>
+                    </div>
+                            <div className='max-h-56 space-y-2 overflow-y-auto rounded-lg border border-border/60 bg-card/40 p-2'>
+                              {linkedRunsIsLoading ? (
+                                <LoadingState message='Loading linked variants...' />
+                              ) : linkedRunsIsError ? (
+                                <div className='rounded border border-red-500/35 bg-red-500/10 px-2 py-2 text-xs text-red-200'>
+                                  {linkedRunsErrorMessage}
+                                </div>
           ) : linkedGeneratedVariants.length === 0 ? (
             <div className='px-1 py-2 text-xs text-gray-500'>
               No generated variants linked to this card yet.
@@ -242,8 +240,8 @@ export function SlotInlineEditCardTab({
                       onApplyLinkedVariantToCard(variant);
                     }}
                     disabled={slotUpdateBusy}
+                    loading={isApplying}
                   >
-                    {isApplying ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
                     Use On Card
                   </Button>
                 </div>
@@ -261,16 +259,15 @@ export function SlotInlineEditCardTab({
         >
           Replace From Drive
         </Button>
-        <Button size='xs'
-          type='button'
-          variant='outline'
-          onClick={onReplaceFromLocal}
-          disabled={uploadPending}
-        >
-          {uploadPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-          Replace From Local Upload
-        </Button>
-        <Button size='xs'
+                  <Button size='xs'
+                    type='button'
+                    variant='outline'
+                    onClick={onReplaceFromLocal}
+                    disabled={uploadPending}
+                    loading={uploadPending}
+                  >
+                    Replace From Local Upload
+                  </Button>        <Button size='xs'
           type='button'
           variant='outline'
           onClick={onClearSlotImage}

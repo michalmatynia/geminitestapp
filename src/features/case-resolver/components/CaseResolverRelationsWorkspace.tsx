@@ -126,7 +126,13 @@ const getCasePreview = (file: CaseResolverFile): string => {
   return `${normalized.slice(0, 180)}...`;
 };
 
-export function CaseResolverRelationsWorkspace(): React.JSX.Element {
+type CaseResolverRelationsWorkspaceProps = {
+  focusCaseId?: string | null;
+};
+
+export function CaseResolverRelationsWorkspace({
+  focusCaseId = null,
+}: CaseResolverRelationsWorkspaceProps = {}): React.JSX.Element {
   const { workspace, selectedFileId, onSelectFile } = useCaseResolverPageContext();
   const viewportRef = React.useRef<HTMLDivElement | null>(null);
   const [zoom, setZoom] = React.useState<number>(1);
@@ -155,6 +161,11 @@ export function CaseResolverRelationsWorkspace(): React.JSX.Element {
   );
 
   const currentCaseId = React.useMemo((): string | null => {
+    const normalizedFocusedCaseId = focusCaseId?.trim() ?? '';
+    if (normalizedFocusedCaseId && fileById.has(normalizedFocusedCaseId)) {
+      return normalizedFocusedCaseId;
+    }
+
     const resolveCaseId = (fileId: string | null): string | null => {
       if (!fileId) return null;
       const file = allFilesById.get(fileId) ?? null;
@@ -165,7 +176,7 @@ export function CaseResolverRelationsWorkspace(): React.JSX.Element {
     };
 
     return resolveCaseId(selectedFileId) ?? resolveCaseId(workspace.activeFileId) ?? null;
-  }, [allFilesById, fileById, selectedFileId, workspace.activeFileId]);
+  }, [allFilesById, fileById, focusCaseId, selectedFileId, workspace.activeFileId]);
 
   const visibleCaseIdSet = React.useMemo((): Set<string> => {
     if (!currentCaseId) {

@@ -6,8 +6,7 @@ import React from 'react';
 
 import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFileDto as NoteFileRecord } from '@/shared/contracts/notes';
-import { Button, Label, FileUploadTrigger, type FileUploadHelpers, Card } from '@/shared/ui';
-
+import { Button, Label, FileUploadTrigger, type FileUploadHelpers, Card, LoadingState } from '@/shared/ui';
 
 export function FileAttachments(): React.JSX.Element {
   const {
@@ -57,9 +56,7 @@ export function FileAttachments(): React.JSX.Element {
               }}
             >
               {isUploading ? (
-                <div className='flex h-full items-center justify-center'>
-                  <div className='h-5 w-5 animate-spin rounded-full border-2 border-border/60 border-t-blue-500' />
-                </div>
+                <LoadingState size='sm' />
               ) : nextSlot === null ? (
                 <div className='flex h-full items-center justify-center text-[10px] text-gray-500'>
                   Full

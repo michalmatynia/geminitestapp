@@ -3,9 +3,8 @@ import {
   DEFAULT_AGENT_PERSONA_SETTINGS,
 } from '@/features/ai/agentcreator/constants/personas';
 import type { AgentPersona } from '@/shared/contracts/agents';
-import type { RuntimePortValues } from '@/shared/contracts/ai-paths';
-import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
-import type { ChatMessage } from '@/shared/contracts/chatbot';
+import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import type { ChatMessage, SimpleChatMessage } from '@/shared/contracts/chatbot';
 
 import { agentApi, learnerAgentsApi, settingsApi } from '../../../api';
 import {
@@ -282,7 +281,7 @@ export const handleLearnerAgent: NodeHandler = async ({
     return prevOutputs;
   }
 
-  const messages: ChatMessage[] = [{ role: 'user', content: prompt }];
+  const messages: SimpleChatMessage[] = [{ role: 'user', content: prompt }];
   const payload = { agentId, messages };
   const payloadHash = hashRuntimeValue({ payload, runId, runStartedAt });
   const prevPayloadHash =

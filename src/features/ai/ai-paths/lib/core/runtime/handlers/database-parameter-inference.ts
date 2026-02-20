@@ -1,4 +1,5 @@
-import type { DatabaseConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
+import type { DatabaseConfig } from '@/shared/contracts/ai-paths';
+import type { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
 import {
   coerceInput,

@@ -50,6 +50,7 @@ import {
 import { sanitizeHtml } from '@/shared/utils';
 
 import { CaseResolverCanvasWorkspace } from './CaseResolverCanvasWorkspace';
+import { CaseResolverCaseOverviewWorkspace } from './CaseResolverCaseOverviewWorkspace';
 import { CaseResolverFileViewer } from './CaseResolverFileViewer';
 import { CaseResolverFolderTree } from './CaseResolverFolderTree';
 import { CaseResolverNodeFileWorkspace } from './CaseResolverNodeFileWorkspace';
@@ -285,6 +286,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     caseResolverIdentifiers,
     caseResolverCategories,
     caseResolverSettings,
+    updateWorkspace,
     handleSelectFile,
     handleSelectAsset,
     handleSelectFolder,
@@ -524,6 +526,13 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     return null;
   }, [activeCaseId, activeFile, workspace.files]);
   const activeCaseIdentifierId = activeCaseFile?.caseIdentifierId ?? null;
+  const hasExplicitTreeSelection = Boolean(
+    selectedFileId ||
+    selectedAssetId ||
+    selectedFolderPath !== null
+  );
+  const showCaseOverviewWorkspace =
+    workspaceView === 'document' && !hasExplicitTreeSelection;
   const activeCaseIdentifierLabel = React.useMemo((): string | null => {
     if (!activeCaseIdentifierId) return null;
     const matchingIdentifier = caseResolverIdentifiers.find(
@@ -639,6 +648,83 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     setActiveMainView('workspace');
     handleOpenFileEditor(id);
   }, [handleOpenFileEditor, setActiveMainView]);
+  const handleUpdateActiveCaseMetadata = useCallback((
+    patch: Partial<
+      Pick<
+        CaseResolverFile,
+        'name' | 'parentCaseId' | 'referenceCaseIds' | 'tagId' | 'caseIdentifierId' | 'categoryId'
+      >
+    >
+  ): void => {
+    if (!activeCaseFile) return;
+    if (activeCaseFile.isLocked) return;
+
+    updateWorkspace((current) => {
+      const currentCase = current.files.find(
+        (file: CaseResolverFile): boolean =>
+          file.id === activeCaseFile.id && file.fileType === 'case'
+      );
+      if (!currentCase || currentCase.isLocked) return current;
+
+      const hasNamePatch = Object.prototype.hasOwnProperty.call(patch, 'name');
+      const hasParentCasePatch = Object.prototype.hasOwnProperty.call(patch, 'parentCaseId');
+      const hasReferencePatch = Object.prototype.hasOwnProperty.call(patch, 'referenceCaseIds');
+      const hasTagPatch = Object.prototype.hasOwnProperty.call(patch, 'tagId');
+      const hasCaseIdentifierPatch = Object.prototype.hasOwnProperty.call(patch, 'caseIdentifierId');
+      const hasCategoryPatch = Object.prototype.hasOwnProperty.call(patch, 'categoryId');
+
+      const nextName = hasNamePatch
+        ? (patch.name?.trim() || currentCase.name || 'Untitled Case')
+        : currentCase.name;
+      const rawParentCaseId = hasParentCasePatch ? (patch.parentCaseId ?? null) : currentCase.parentCaseId;
+      const nextParentCaseId = rawParentCaseId?.trim() ? rawParentCaseId.trim() : null;
+      const normalizedParentCaseId = nextParentCaseId === currentCase.id ? null : nextParentCaseId;
+      const nextReferenceCaseIds = hasReferencePatch
+        ? Array.from(new Set(
+          (patch.referenceCaseIds ?? [])
+            .map((value: string): string => value.trim())
+            .filter((value: string): boolean => value.length > 0 && value !== currentCase.id)
+        ))
+        : currentCase.referenceCaseIds;
+      const nextTagId = hasTagPatch ? (patch.tagId?.trim() || null) : currentCase.tagId;
+      const nextCaseIdentifierId = hasCaseIdentifierPatch
+        ? (patch.caseIdentifierId?.trim() || null)
+        : currentCase.caseIdentifierId;
+      const nextCategoryId = hasCategoryPatch ? (patch.categoryId?.trim() || null) : currentCase.categoryId;
+
+      if (
+        nextName === currentCase.name &&
+        normalizedParentCaseId === currentCase.parentCaseId &&
+        nextTagId === currentCase.tagId &&
+        nextCaseIdentifierId === currentCase.caseIdentifierId &&
+        nextCategoryId === currentCase.categoryId &&
+        JSON.stringify(nextReferenceCaseIds) === JSON.stringify(currentCase.referenceCaseIds)
+      ) {
+        return current;
+      }
+
+      const now = new Date().toISOString();
+      return {
+        ...current,
+        files: current.files.map((file: CaseResolverFile): CaseResolverFile =>
+          file.id === currentCase.id
+            ? {
+              ...file,
+              name: nextName,
+              parentCaseId: normalizedParentCaseId,
+              referenceCaseIds: nextReferenceCaseIds,
+              tagId: nextTagId,
+              caseIdentifierId: nextCaseIdentifierId,
+              categoryId: nextCategoryId,
+              updatedAt: now,
+            }
+            : file
+        ),
+      };
+    }, {
+      source: 'case_view_case_metadata',
+    });
+  }, [activeCaseFile, updateWorkspace]);
   const isEditingDocumentLocked = editingDocumentDraft?.isLocked === true;
   const fileEditorTitle = editingDocumentDraft?.fileType === 'scanfile'
     ? 'Edit Scan'
@@ -827,7 +913,11 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
               actions={[
                 {
                   key: 'document',
-                  label: selectedAsset?.kind === 'node_file' ? 'Node Canvas' : 'Document Canvas',
+                  label: showCaseOverviewWorkspace
+                    ? 'Case Overview'
+                    : selectedAsset?.kind === 'node_file'
+                      ? 'Node Canvas'
+                      : 'Document Canvas',
                   variant: workspaceView === 'document' ? 'default' : 'outline',
                   onClick: () => {
                     if (selectedAsset?.kind === 'node_file') {
@@ -856,7 +946,17 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
             />
 
             {workspaceView === 'relations' ? (
-              <CaseResolverRelationsWorkspace />
+              <CaseResolverRelationsWorkspace focusCaseId={activeCaseFile?.id ?? activeCaseId} />
+            ) : showCaseOverviewWorkspace ? (
+              <CaseResolverCaseOverviewWorkspace
+                activeCaseFile={activeCaseFile}
+                caseTagOptions={caseTagOptions}
+                caseIdentifierOptions={caseIdentifierOptions}
+                caseCategoryOptions={caseCategoryOptions}
+                caseReferenceOptions={caseReferenceOptions}
+                parentCaseOptions={parentCaseOptions}
+                onUpdateActiveCase={handleUpdateActiveCaseMetadata}
+              />
             ) : selectedAsset?.kind === 'node_file' ? (
               <CaseResolverNodeFileWorkspace />
             ) : selectedAsset ? (

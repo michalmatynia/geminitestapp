@@ -3,7 +3,7 @@ import type { ProductAiJobRecord, ProductAiJobUpdate } from '@/features/jobs/typ
 import { logSystemEvent } from '@/features/observability/server';
 import { productService } from '@/features/products/server';
 import { invalidStateError, notFoundError } from '@/shared/errors/app-error';
-import type { ProductAiJobType, ProductAiJob, ProductAiJobResult } from '@/shared/types/domain/jobs';
+import type { ProductAiJobType, ProductAiJob, ProductAiJobResult } from '@/shared/contracts/jobs';
 
 type ProductSummary = {
   name_en: string | null;

@@ -8,7 +8,7 @@ import type {
   DynamicReplacementLogicActionDto,
   DynamicReplacementRecipeDto,
 } from '@/shared/contracts/products';
-import type { ProductValidationPattern } from '@/shared/types/domain/products';
+import type { ProductValidationPattern } from '@/shared/contracts/products';
 
 export const DYNAMIC_REPLACEMENT_PREFIX = '__recipe__:';
 

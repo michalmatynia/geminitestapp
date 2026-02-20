@@ -5,8 +5,8 @@ import { generateOllamaEmbedding } from '@/features/ai/agentcreator/teaching/ser
 import { createEmbeddingDocument, getEmbeddingCollectionById, listEmbeddingDocuments } from '@/features/ai/agentcreator/teaching/server/repository';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { AgentTeachingEmbeddingDocumentListItem } from '@/shared/types/domain/agent-teaching';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { AgentTeachingEmbeddingDocumentListItem } from '@/shared/contracts/agent-teaching';
 
 const createDocumentSchema = z.object({
   text: z.string().trim().min(1),

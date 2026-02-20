@@ -1,4 +1,4 @@
-import type { AiNode, Edge, ConnectionValidation } from '@/shared/types/domain/ai-paths';
+import type { AiNode, Edge, ConnectionValidation } from '@/shared/contracts/ai-paths';
 
 import {
   CANVAS_HEIGHT,

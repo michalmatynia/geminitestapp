@@ -6,7 +6,7 @@ import {
 } from '@/features/case-resolver/settings';
 import { uploadFile } from '@/features/files/server';
 import { badRequestError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const isFileLike = (entry: FormDataEntryValue): entry is File => {
   return typeof entry === 'object' && entry !== null && 'arrayBuffer' in entry && 'size' in entry;

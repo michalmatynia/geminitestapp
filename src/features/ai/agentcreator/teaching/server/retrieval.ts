@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { AgentTeachingChatSource, AgentTeachingEmbeddingDocumentMetadata } from '@/shared/types/domain/agent-teaching';
+import type { AgentTeachingChatSource, AgentTeachingEmbeddingDocumentMetadata } from '@/shared/contracts/agent-teaching';
 
 import { listEmbeddingDocumentsForRetrieval } from './repository';
 

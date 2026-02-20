@@ -2,13 +2,13 @@
 
 import React from 'react';
 
-import type { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type {
   AgentAuditLog,
   AgentBrowserLog,
   AgentSnapshot,
-} from '@/shared/types/domain/chatbot';
-import type { EntityModalProps } from '@/shared/types/modal-props';
+} from '@/shared/contracts/chatbot';
+import type { EntityModalProps } from '@/shared/contracts/ui';
 import { Tabs, TabsList, TabsTrigger, TabsContent, StatusBadge, LogList } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 

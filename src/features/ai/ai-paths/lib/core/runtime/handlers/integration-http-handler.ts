@@ -1,8 +1,8 @@
-import type { HttpConfig, RuntimePortValues } from '@/shared/types/domain/ai-paths';
+import type { HttpConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type {
   NodeHandler,
   NodeHandlerContext,
-} from '@/shared/types/domain/ai-paths-runtime';
+} from '@/shared/contracts/ai-paths-runtime';
 
 import {
   getValueAtMappingPath,

@@ -3,7 +3,7 @@
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { MutationResult, SingleQuery } from '@/shared/types/query-result-types';
+import type { MutationResult, SingleQuery } from '@/shared/contracts/ui';
 
 export interface AiJobStatus {
   status: 'pending' | 'running' | 'completed' | 'failed' | 'canceled';

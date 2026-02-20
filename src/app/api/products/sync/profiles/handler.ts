@@ -7,7 +7,7 @@ import {
   createProductSyncProfile,
   listProductSyncProfiles,
 } from '@/features/product-sync/services/product-sync-repository';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const fieldRuleSchema = z.object({
   id: z.string().trim().min(1).optional(),

@@ -10,7 +10,7 @@ import {
   toCmsZoneFooterNodeId,
   toCmsZoneNodeId,
 } from '@/features/cms/components/page-builder/utils/cms-master-tree';
-import type { SectionInstance } from '@/shared/types/domain/cms';
+import type { SectionInstance } from '@/shared/contracts/cms';
 
 const createSection = (overrides: Partial<SectionInstance>): SectionInstance =>
   ({

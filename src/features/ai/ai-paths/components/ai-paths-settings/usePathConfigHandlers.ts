@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 
 import { createDefaultPathConfig } from '@/features/ai/ai-paths/lib';
-import type { PathConfig } from '@/shared/types/domain/ai-paths';
+import type { PathConfig } from '@/shared/contracts/ai-paths';
 import { useToast } from '@/shared/ui';
 
 import { useGraphActions, useGraphState } from '../../context';

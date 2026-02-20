@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { ERROR_CATEGORY, type ErrorCategory, type SuggestedAction } from '@/shared/types/observability';
+import { ERROR_CATEGORY, type ErrorCategory, type SuggestedAction } from '@/shared/contracts/observability';
 
 const ERROR_PATTERNS: [RegExp, ErrorCategory][] = [
   [/connection|network|timeout|refused|reset|fetch/i, ERROR_CATEGORY.EXTERNAL],

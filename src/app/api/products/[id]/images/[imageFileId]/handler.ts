@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 
 import { productService } from '@/features/products/server';
 import { badRequestError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 /**
  * DELETE /api/products/[id]/images/[imageFileId]

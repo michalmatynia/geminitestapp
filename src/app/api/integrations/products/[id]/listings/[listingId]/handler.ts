@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { findProductListingByIdAcrossProviders } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const updateListingSchema = z.object({
   inventoryId: z.string().trim().min(1).nullable()

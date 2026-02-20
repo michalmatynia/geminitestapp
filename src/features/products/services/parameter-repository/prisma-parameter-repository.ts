@@ -9,7 +9,7 @@ import type {
 import prisma from '@/shared/lib/db/prisma';
 import type { 
   ProductParameter 
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 
 const ALLOWED_SELECTOR_TYPES = new Set<ProductParameter['selectorType']>([
   'text',

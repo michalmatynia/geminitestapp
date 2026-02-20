@@ -1,11 +1,11 @@
 import type {
   AdvancedApiConfig,
   RuntimePortValues,
-} from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
 import type {
   NodeHandler,
   NodeHandlerContext,
-} from '@/shared/types/domain/ai-paths-runtime';
+} from '@/shared/contracts/ai-paths-runtime';
 
 import { getValueAtMappingPath, renderTemplate, safeStringify } from '../../utils';
 

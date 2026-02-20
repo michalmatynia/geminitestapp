@@ -47,6 +47,7 @@ export const aiNodeTypeSchema = z.enum([
 ]);
 
 export type AiNodeTypeDto = z.infer<typeof aiNodeTypeSchema>;
+export type NodeType = AiNodeTypeDto;
 
 /**
  * AI Path Node Config DTOs - Basic & Audio
@@ -57,6 +58,7 @@ export const triggerConfigSchema = z.object({
 });
 
 export type TriggerConfigDto = z.infer<typeof triggerConfigSchema>;
+export type TriggerConfig = TriggerConfigDto;
 
 export const simulationConfigSchema = z.object({
   productId: z.string(),
@@ -65,6 +67,7 @@ export const simulationConfigSchema = z.object({
 });
 
 export type SimulationConfigDto = z.infer<typeof simulationConfigSchema>;
+export type SimulationConfig = SimulationConfigDto;
 
 export const viewerConfigSchema = z.object({
   outputs: z.record(z.string(), z.string()),
@@ -72,6 +75,7 @@ export const viewerConfigSchema = z.object({
 });
 
 export type ViewerConfigDto = z.infer<typeof viewerConfigSchema>;
+export type ViewerConfig = ViewerConfigDto;
 
 export const contextConfigSchema = z.object({
   role: z.string(),
@@ -85,15 +89,18 @@ export const contextConfigSchema = z.object({
 });
 
 export type ContextConfigDto = z.infer<typeof contextConfigSchema>;
+export type ContextConfig = ContextConfigDto;
 
 export const delayConfigSchema = z.object({
   ms: z.number(),
 });
 
 export type DelayConfigDto = z.infer<typeof delayConfigSchema>;
+export type DelayConfig = DelayConfigDto;
 
 export const audioWaveformSchema = z.enum(['sine', 'square', 'sawtooth', 'triangle']);
 export type AudioWaveformDto = z.infer<typeof audioWaveformSchema>;
+export type AudioWaveform = AudioWaveformDto;
 
 export const audioOscillatorConfigSchema = z.object({
   waveform: audioWaveformSchema,
@@ -103,6 +110,7 @@ export const audioOscillatorConfigSchema = z.object({
 });
 
 export type AudioOscillatorConfigDto = z.infer<typeof audioOscillatorConfigSchema>;
+export type AudioOscillatorConfig = AudioOscillatorConfigDto;
 
 export const audioSpeakerConfigSchema = z.object({
   enabled: z.boolean(),
@@ -112,6 +120,7 @@ export const audioSpeakerConfigSchema = z.object({
 });
 
 export type AudioSpeakerConfigDto = z.infer<typeof audioSpeakerConfigSchema>;
+export type AudioSpeakerConfig = AudioSpeakerConfigDto;
 
 export const descriptionConfigSchema = z.object({
   visionOutputEnabled: z.boolean().optional(),
@@ -119,6 +128,7 @@ export const descriptionConfigSchema = z.object({
 });
 
 export type DescriptionConfigDto = z.infer<typeof descriptionConfigSchema>;
+export type DescriptionConfig = DescriptionConfigDto;
 
 /**
  * AI Path Node Config DTOs - Utilities
@@ -130,6 +140,7 @@ export const mapperConfigSchema = z.object({
 });
 
 export type MapperConfigDto = z.infer<typeof mapperConfigSchema>;
+export type MapperConfig = MapperConfigDto;
 
 export const mutatorConfigSchema = z.object({
   path: z.string(),
@@ -138,6 +149,7 @@ export const mutatorConfigSchema = z.object({
 });
 
 export type MutatorConfigDto = z.infer<typeof mutatorConfigSchema>;
+export type MutatorConfig = MutatorConfigDto;
 
 export const stringMutatorOperationSchema = z.discriminatedUnion('type', [
   z.object({ id: z.string().optional(), type: z.literal('trim'), mode: z.enum(['both', 'start', 'end']).optional() }),
@@ -159,17 +171,20 @@ export const stringMutatorOperationSchema = z.discriminatedUnion('type', [
     flags: z.string().optional(),
   }),
   z.object({ id: z.string().optional(), type: z.literal('case'), mode: z.enum(['upper', 'lower', 'title']) }),
+  z.object({ id: z.string().optional(), type: z.literal('case'), mode: z.enum(['upper', 'lower', 'title']) }),
   z.object({ id: z.string().optional(), type: z.literal('append'), value: z.string(), position: z.enum(['prefix', 'suffix']).optional() }),
   z.object({ id: z.string().optional(), type: z.literal('slice'), start: z.number().optional(), end: z.number().optional() }),
 ]);
 
 export type StringMutatorOperationDto = z.infer<typeof stringMutatorOperationSchema>;
+export type StringMutatorOperation = StringMutatorOperationDto;
 
 export const stringMutatorConfigSchema = z.object({
   operations: z.array(stringMutatorOperationSchema),
 });
 
 export type StringMutatorConfigDto = z.infer<typeof stringMutatorConfigSchema>;
+export type StringMutatorConfig = StringMutatorConfigDto;
 
 export const validatorConfigSchema = z.object({
   requiredPaths: z.array(z.string()),
@@ -177,6 +192,7 @@ export const validatorConfigSchema = z.object({
 });
 
 export type ValidatorConfigDto = z.infer<typeof validatorConfigSchema>;
+export type ValidatorConfig = ValidatorConfigDto;
 
 export const validationPatternSourceSchema = z.enum([
   'global_stack',
@@ -241,6 +257,7 @@ export const validationPatternConfigSchema = z.object({
 export type ValidationPatternConfigDto = z.infer<
   typeof validationPatternConfigSchema
 >;
+export type ValidationPatternConfig = ValidationPatternConfigDto;
 
 export const constantConfigSchema = z.object({
   valueType: z.enum(['string', 'number', 'boolean', 'json']),
@@ -248,6 +265,7 @@ export const constantConfigSchema = z.object({
 });
 
 export type ConstantConfigDto = z.infer<typeof constantConfigSchema>;
+export type ConstantConfig = ConstantConfigDto;
 
 export const mathConfigSchema = z.object({
   operation: z.enum(['add', 'subtract', 'multiply', 'divide', 'round', 'ceil', 'floor']),
@@ -255,18 +273,21 @@ export const mathConfigSchema = z.object({
 });
 
 export type MathConfigDto = z.infer<typeof mathConfigSchema>;
+export type MathConfig = MathConfigDto;
 
 export const templateConfigSchema = z.object({
   template: z.string(),
 });
 
 export type TemplateConfigDto = z.infer<typeof templateConfigSchema>;
+export type TemplateConfig = TemplateConfigDto;
 
 export const bundleConfigSchema = z.object({
   includePorts: z.array(z.string()).optional(),
 });
 
 export type BundleConfigDto = z.infer<typeof bundleConfigSchema>;
+export type BundleConfig = BundleConfigDto;
 
 export const gateConfigSchema = z.object({
   mode: z.enum(['block', 'pass']),
@@ -274,6 +295,7 @@ export const gateConfigSchema = z.object({
 });
 
 export type GateConfigDto = z.infer<typeof gateConfigSchema>;
+export type GateConfig = GateConfigDto;
 
 export const compareConfigSchema = z.object({
   operator: z.enum([
@@ -295,6 +317,7 @@ export const compareConfigSchema = z.object({
 });
 
 export type CompareConfigDto = z.infer<typeof compareConfigSchema>;
+export type CompareConfig = CompareConfigDto;
 
 export const routerConfigSchema = z.object({
   mode: z.enum(['valid', 'value']),
@@ -303,6 +326,7 @@ export const routerConfigSchema = z.object({
 });
 
 export type RouterConfigDto = z.infer<typeof routerConfigSchema>;
+export type RouterConfig = RouterConfigDto;
 
 /**
  * AI Path Node Config DTOs - Complex
@@ -329,6 +353,7 @@ export const regexTemplateSchema = z.object({
 });
 
 export type RegexTemplateDto = z.infer<typeof regexTemplateSchema>;
+export type RegexTemplate = RegexTemplateDto;
 
 export const regexConfigSchema = z.object({
   pattern: z.string(),
@@ -351,6 +376,7 @@ export const regexConfigSchema = z.object({
 });
 
 export type RegexConfigDto = z.infer<typeof regexConfigSchema>;
+export type RegexConfig = RegexConfigDto;
 
 export const iteratorConfigSchema = z.object({
   autoContinue: z.boolean().optional(),
@@ -358,6 +384,7 @@ export const iteratorConfigSchema = z.object({
 });
 
 export type IteratorConfigDto = z.infer<typeof iteratorConfigSchema>;
+export type IteratorConfig = IteratorConfigDto;
 
 export const httpConfigSchema = z.object({
   url: z.string(),
@@ -369,6 +396,7 @@ export const httpConfigSchema = z.object({
 });
 
 export type HttpConfigDto = z.infer<typeof httpConfigSchema>;
+export type HttpConfig = HttpConfigDto;
 
 export const advancedApiMethodSchema = z.enum([
   'GET',
@@ -489,6 +517,7 @@ export const advancedApiConfigSchema = z.object({
 });
 
 export type AdvancedApiConfigDto = z.infer<typeof advancedApiConfigSchema>;
+export type AdvancedApiConfig = AdvancedApiConfigDto;
 
 export const dbQueryConfigSchema = z.object({
   provider: z.enum(['auto', 'mongodb', 'prisma']),
@@ -507,6 +536,7 @@ export const dbQueryConfigSchema = z.object({
 });
 
 export type DbQueryConfigDto = z.infer<typeof dbQueryConfigSchema>;
+export type DbQueryConfig = DbQueryConfigDto;
 
 export const pollConfigSchema = z.object({
   intervalMs: z.number(),
@@ -520,6 +550,7 @@ export const pollConfigSchema = z.object({
 });
 
 export type PollConfigDto = z.infer<typeof pollConfigSchema>;
+export type PollConfig = PollConfigDto;
 
 export const dbSchemaConfigSchema = z.object({
   provider: z.enum(['auto', 'mongodb', 'prisma', 'all']).optional(),
@@ -531,6 +562,7 @@ export const dbSchemaConfigSchema = z.object({
 });
 
 export type DbSchemaConfigDto = z.infer<typeof dbSchemaConfigSchema>;
+export type DbSchemaConfig = DbSchemaConfigDto;
 
 export const dbSchemaSnapshotSchema = z.object({
   provider: z.enum(['mongodb', 'prisma', 'multi']),
@@ -552,6 +584,7 @@ export const dbSchemaSnapshotSchema = z.object({
 });
 
 export type DbSchemaSnapshotDto = z.infer<typeof dbSchemaSnapshotSchema>;
+export type DbSchemaSnapshot = DbSchemaSnapshotDto;
 
 export const databaseConfigSchema = z.object({
   operation: z.enum(['query', 'update', 'insert', 'delete']),
@@ -602,6 +635,17 @@ export const databaseConfigSchema = z.object({
 });
 
 export type DatabaseConfigDto = z.infer<typeof databaseConfigSchema>;
+export type DatabaseConfig = DatabaseConfigDto;
+
+export type DatabaseActionCategory = NonNullable<DatabaseConfigDto['actionCategory']>;
+export type DatabaseAction = NonNullable<DatabaseConfigDto['action']>;
+export type UpdaterMapping = NonNullable<DatabaseConfigDto['mappings']>[number];
+export type DatabaseOperation = DatabaseConfigDto['operation'];
+
+export type DatabaseOperation = DatabaseConfigDto['operation'];
+export type DatabaseActionCategory = NonNullable<DatabaseConfigDto['actionCategory']>;
+export type DatabaseAction = NonNullable<DatabaseConfigDto['action']>;
+export type UpdaterMapping = NonNullable<DatabaseConfigDto['mappings']>[number];
 
 export const parserConfigSchema = z.object({
   mappings: z.record(z.string(), z.string()),
@@ -610,6 +654,7 @@ export const parserConfigSchema = z.object({
 });
 
 export type ParserConfigDto = z.infer<typeof parserConfigSchema>;
+export type ParserConfig = ParserConfigDto;
 
 export const parserSampleStateSchema = z.object({
   entityType: z.string(),
@@ -623,18 +668,21 @@ export const parserSampleStateSchema = z.object({
 });
 
 export type ParserSampleStateDto = z.infer<typeof parserSampleStateSchema>;
+export type ParserSampleState = ParserSampleStateDto;
 
 export const updaterSampleStateSchema = parserSampleStateSchema.extend({
   targetPath: z.string().optional(),
 });
 
 export type UpdaterSampleStateDto = z.infer<typeof updaterSampleStateSchema>;
+export type UpdaterSampleState = UpdaterSampleStateDto;
 
 export const promptConfigSchema = z.object({
   template: z.string(),
 });
 
 export type PromptConfigDto = z.infer<typeof promptConfigSchema>;
+export type PromptConfig = PromptConfigDto;
 
 export const modelConfigSchema = z.object({
   modelId: z.string(),
@@ -645,6 +693,7 @@ export const modelConfigSchema = z.object({
 });
 
 export type ModelConfigDto = z.infer<typeof modelConfigSchema>;
+export type ModelConfig = ModelConfigDto;
 
 export const agentConfigSchema = z.object({
   personaId: z.string().optional(),
@@ -653,6 +702,7 @@ export const agentConfigSchema = z.object({
 });
 
 export type AgentConfigDto = z.infer<typeof agentConfigSchema>;
+export type AgentConfig = AgentConfigDto;
 
 export const learnerAgentConfigSchema = z.object({
   agentId: z.string(),
@@ -661,6 +711,7 @@ export const learnerAgentConfigSchema = z.object({
 });
 
 export type LearnerAgentConfigDto = z.infer<typeof learnerAgentConfigSchema>;
+export type LearnerAgentConfig = LearnerAgentConfigDto;
 
 /**
  * AI Path Node Config DTOs - Runtime & Wrapper
@@ -668,6 +719,7 @@ export type LearnerAgentConfigDto = z.infer<typeof learnerAgentConfigSchema>;
 
 export const nodeCacheModeSchema = z.enum(['auto', 'force', 'disabled']);
 export type NodeCacheModeDto = z.infer<typeof nodeCacheModeSchema>;
+export type NodeCacheMode = NodeCacheModeDto;
 
 export const nodeRuntimeConfigSchema = z.object({
   cache: z.object({
@@ -726,6 +778,7 @@ export const nodeConfigSchema = z.object({
 });
 
 export type NodeConfigDto = z.infer<typeof nodeConfigSchema>;
+export type NodeConfig = NodeConfigDto;
 
 /**
  * AI Path Node Contract
@@ -742,6 +795,7 @@ export const aiNodeSchema = dtoBaseSchema.extend({
 });
 
 export type AiNodeDto = z.infer<typeof aiNodeSchema>;
+export type AiNode = AiNodeDto;
 
 export const createAiNodeSchema = aiNodeSchema.omit({
   id: true,
@@ -813,6 +867,7 @@ export const aiPathRunStatusSchema = z.enum([
 ]);
 
 export type AiPathRunStatusDto = z.infer<typeof aiPathRunStatusSchema>;
+export type AiPathRunStatus = AiPathRunStatusDto;
 
 /**
  * AI Path Run Contract
@@ -872,6 +927,7 @@ export const aiPathRunRecordSchema = aiPathRunSchema.extend({
 });
 
 export type AiPathRunRecordDto = z.infer<typeof aiPathRunRecordSchema>;
+export type AiPathRunRecord = AiPathRunRecordDto;
 
 export const aiPathRunDetailSchema = z.object({
   run: aiPathRunRecordSchema,
@@ -880,6 +936,7 @@ export const aiPathRunDetailSchema = z.object({
 });
 
 export type AiPathRunDetailDto = z.infer<typeof aiPathRunDetailSchema>;
+export type AiPathRunDetail = AiPathRunDetailDto;
 
 export const createAiPathRunSchema = aiPathRunSchema
   .omit({
@@ -922,6 +979,7 @@ export const aiPathNodeStatusSchema = z.enum([
 ]);
 
 export type AiPathNodeStatusDto = z.infer<typeof aiPathNodeStatusSchema>;
+export type AiPathNodeStatus = AiPathNodeStatusDto;
 
 /**
  * AI Path Run Node Contract
@@ -943,12 +1001,14 @@ export const aiPathRunNodeSchema = dtoBaseSchema.extend({
 });
 
 export type AiPathRunNodeDto = z.infer<typeof aiPathRunNodeSchema>;
+export type AiPathRunNodeRecord = AiPathRunNodeDto;
 
 /**
  * AI Path Run Event Contract
  */
 export const aiPathRunEventLevelSchema = z.enum(['debug', 'info', 'warn', 'error', 'fatal']);
 export type AiPathRunEventLevelDto = z.infer<typeof aiPathRunEventLevelSchema>;
+export type AiPathRunEventLevel = AiPathRunEventLevelDto;
 
 export const aiPathRunEventSchema = dtoBaseSchema.extend({
   runId: z.string(),
@@ -963,6 +1023,7 @@ export const aiPathRunEventSchema = dtoBaseSchema.extend({
 });
 
 export type AiPathRunEventDto = z.infer<typeof aiPathRunEventSchema>;
+export type AiPathRunEventRecord = AiPathRunEventDto;
 
 export const aiPathRunNodeUpdateSchema = aiPathRunNodeSchema.partial().omit({
   id: true,
@@ -1009,6 +1070,7 @@ export const edgeSchema = z.object({
 });
 
 export type EdgeDto = z.infer<typeof edgeSchema>;
+export type Edge = EdgeDto;
 
 export const nodeDefinitionSchema = z.object({
   type: aiNodeTypeSchema,
@@ -1020,6 +1082,7 @@ export const nodeDefinitionSchema = z.object({
 });
 
 export type NodeDefinitionDto = z.infer<typeof nodeDefinitionSchema>;
+export type NodeDefinition = NodeDefinitionDto;
 
 export const runtimeHistoryLinkSchema = z.object({
   nodeId: z.string(),
@@ -1030,6 +1093,7 @@ export const runtimeHistoryLinkSchema = z.object({
 });
 
 export type RuntimeHistoryLinkDto = z.infer<typeof runtimeHistoryLinkSchema>;
+export type RuntimeHistoryLink = RuntimeHistoryLinkDto;
 
 export const runtimeHistoryEntrySchema = z.object({
   timestamp: z.string(),
@@ -1054,9 +1118,11 @@ export const runtimeHistoryEntrySchema = z.object({
 });
 
 export type RuntimeHistoryEntryDto = z.infer<typeof runtimeHistoryEntrySchema>;
+export type RuntimeHistoryEntry = RuntimeHistoryEntryDto;
 
 export const aiPathRuntimeAnalyticsRangeSchema = z.enum(['1h', '24h', '7d', '30d']);
 export type AiPathRuntimeAnalyticsRangeDto = z.infer<typeof aiPathRuntimeAnalyticsRangeSchema>;
+export type AiPathRuntimeAnalyticsRange = AiPathRuntimeAnalyticsRangeDto;
 
 export const aiPathRuntimeAnalyticsSummarySchema = z.object({
   from: z.string(),
@@ -1098,6 +1164,7 @@ export const aiPathRuntimeAnalyticsSummarySchema = z.object({
 });
 
 export type AiPathRuntimeAnalyticsSummaryDto = z.infer<typeof aiPathRuntimeAnalyticsSummarySchema>;
+export type AiPathRuntimeAnalyticsSummary = AiPathRuntimeAnalyticsSummaryDto;
 
 export const pathMetaSchema = z.object({
   id: z.string(),
@@ -1107,6 +1174,7 @@ export const pathMetaSchema = z.object({
 });
 
 export type PathMetaDto = z.infer<typeof pathMetaSchema>;
+export type PathMeta = PathMetaDto;
 
 export const pathUiStateSchema = z.object({
   selectedNodeId: z.string().nullable().optional(),
@@ -1114,11 +1182,13 @@ export const pathUiStateSchema = z.object({
 });
 
 export type PathUiStateDto = z.infer<typeof pathUiStateSchema>;
+export type PathUiState = PathUiStateDto;
 
 export const aiPathsValidationSeveritySchema = z.enum(['error', 'warning', 'info']);
 export type AiPathsValidationSeverityDto = z.infer<
   typeof aiPathsValidationSeveritySchema
 >;
+export type AiPathsValidationSeverity = AiPathsValidationSeverityDto;
 
 export const aiPathsValidationModuleSchema = z.enum([
   'graph',
@@ -1137,6 +1207,7 @@ export const aiPathsValidationModuleSchema = z.enum([
 export type AiPathsValidationModuleDto = z.infer<
   typeof aiPathsValidationModuleSchema
 >;
+export type AiPathsValidationModule = AiPathsValidationModuleDto;
 
 export const aiPathsValidationOperatorSchema = z.enum([
   'exists',
@@ -1162,6 +1233,7 @@ export const aiPathsValidationOperatorSchema = z.enum([
 export type AiPathsValidationOperatorDto = z.infer<
   typeof aiPathsValidationOperatorSchema
 >;
+export type AiPathsValidationOperator = AiPathsValidationOperatorDto;
 
 export const aiPathsValidationConditionSchema = z.object({
   id: z.string(),
@@ -1184,6 +1256,7 @@ export const aiPathsValidationConditionSchema = z.object({
 export type AiPathsValidationConditionDto = z.infer<
   typeof aiPathsValidationConditionSchema
 >;
+export type AiPathsValidationCondition = AiPathsValidationConditionDto;
 
 export const aiPathsValidationRuleSchema = z.object({
   id: z.string(),
@@ -1220,6 +1293,7 @@ export const aiPathsValidationRuleSchema = z.object({
     .optional(),
 });
 export type AiPathsValidationRuleDto = z.infer<typeof aiPathsValidationRuleSchema>;
+export type AiPathsValidationRule = AiPathsValidationRuleDto;
 
 export const aiPathsValidationDocsSyncStateSchema = z.object({
   lastSnapshotHash: z.string().optional(),
@@ -1232,6 +1306,7 @@ export const aiPathsValidationDocsSyncStateSchema = z.object({
 export type AiPathsValidationDocsSyncStateDto = z.infer<
   typeof aiPathsValidationDocsSyncStateSchema
 >;
+export type AiPathsValidationDocsSyncState = AiPathsValidationDocsSyncStateDto;
 
 export const aiPathsValidationPolicySchema = z.enum([
   'report_only',
@@ -1241,6 +1316,7 @@ export const aiPathsValidationPolicySchema = z.enum([
 export type AiPathsValidationPolicyDto = z.infer<
   typeof aiPathsValidationPolicySchema
 >;
+export type AiPathsValidationPolicy = AiPathsValidationPolicyDto;
 
 export const aiPathsValidationConfigSchema = z.object({
   schemaVersion: z.number().int().positive().optional(),
@@ -1259,6 +1335,7 @@ export const aiPathsValidationConfigSchema = z.object({
 export type AiPathsValidationConfigDto = z.infer<
   typeof aiPathsValidationConfigSchema
 >;
+export type AiPathsValidationConfig = AiPathsValidationConfigDto;
 
 export const pathConfigSchema = z.object({
   id: z.string(),
@@ -1285,6 +1362,7 @@ export const pathConfigSchema = z.object({
 });
 
 export type PathConfigDto = z.infer<typeof pathConfigSchema>;
+export type PathConfig = PathConfigDto;
 
 export const pathDebugEntrySchema = z.object({
   nodeId: z.string(),
@@ -1293,6 +1371,7 @@ export const pathDebugEntrySchema = z.object({
 });
 
 export type PathDebugEntryDto = z.infer<typeof pathDebugEntrySchema>;
+export type PathDebugEntry = PathDebugEntryDto;
 
 export const pathDebugSnapshotSchema = z.object({
   pathId: z.string(),
@@ -1301,6 +1380,7 @@ export const pathDebugSnapshotSchema = z.object({
 });
 
 export type PathDebugSnapshotDto = z.infer<typeof pathDebugSnapshotSchema>;
+export type PathDebugSnapshot = PathDebugSnapshotDto;
 
 export const clusterPresetSchema = z.object({
   id: z.string(),
@@ -1313,6 +1393,7 @@ export const clusterPresetSchema = z.object({
 });
 
 export type ClusterPresetDto = z.infer<typeof clusterPresetSchema>;
+export type ClusterPreset = ClusterPresetDto;
 
 export const dbQueryPresetSchema = z.object({
   id: z.string(),
@@ -1324,6 +1405,7 @@ export const dbQueryPresetSchema = z.object({
 });
 
 export type DbQueryPresetDto = z.infer<typeof dbQueryPresetSchema>;
+export type DbQueryPreset = DbQueryPresetDto;
 
 export const dbNodePresetSchema = z.object({
   id: z.string(),
@@ -1335,6 +1417,7 @@ export const dbNodePresetSchema = z.object({
 });
 
 export type DbNodePresetDto = z.infer<typeof dbNodePresetSchema>;
+export type DbNodePreset = DbNodePresetDto;
 
 export const jsonPathEntrySchema = z.object({
   path: z.string(),
@@ -1342,6 +1425,7 @@ export const jsonPathEntrySchema = z.object({
 });
 
 export type JsonPathEntryDto = z.infer<typeof jsonPathEntrySchema>;
+export type JsonPathEntry = JsonPathEntryDto;
 
 export const connectionValidationSchema = z.object({
   valid: z.boolean(),
@@ -1349,6 +1433,7 @@ export const connectionValidationSchema = z.object({
 });
 
 export type ConnectionValidationDto = z.infer<typeof connectionValidationSchema>;
+export type ConnectionValidation = ConnectionValidationDto;
 
 /**
  * AI Path Run List Options Contract
@@ -1422,3 +1507,5 @@ export const executeAiPathSchema = z.object({
 });
 
 export type ExecuteAiPathDto = z.infer<typeof executeAiPathSchema>;
+
+export type PathFlowIntensity = 'off' | 'low' | 'medium' | 'high';

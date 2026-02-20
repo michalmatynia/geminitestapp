@@ -11,7 +11,7 @@ import { getTraderaUserInfo } from '@/features/integrations/services/tradera-api
 import { createTraderaBrowserTestUtils } from '@/features/integrations/services/tradera-browser-test-utils';
 import { internalError } from '@/shared/errors/app-error';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 import type {
   Browser,

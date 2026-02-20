@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import type { PageZone } from '@/shared/types/domain/cms';
+import type { PageZone } from '@/shared/contracts/cms';
 
 import { useDragState, type BlockDragState, type SectionDragState } from './useDragStateContext';
 

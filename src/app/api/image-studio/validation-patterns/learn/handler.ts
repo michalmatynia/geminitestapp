@@ -17,7 +17,7 @@ import {
 import type { PromptValidationRuleDto as PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import { authError, configurationError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const payloadSchema = z.object({
   prompt: z.string().trim().min(1),

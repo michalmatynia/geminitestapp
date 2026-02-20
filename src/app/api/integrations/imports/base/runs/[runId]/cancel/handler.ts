@@ -4,7 +4,7 @@ import {
   cancelBaseImportRun,
   toStartResponse,
 } from '@/features/integrations/services/imports/base-import-service';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export async function POST_handler(
   _req: NextRequest,

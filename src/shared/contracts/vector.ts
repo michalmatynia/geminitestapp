@@ -1,72 +1,90 @@
 import { z } from 'zod';
 
-/**
- * Vector Tool Modes
- */
-export const vectorToolModeSchema = z.enum(['select', 'polygon', 'lasso', 'rect', 'ellipse', 'brush']);
-export type VectorToolModeDto = z.infer<typeof vectorToolModeSchema>;
+import { dtoBaseSchema } from './base';
 
 /**
- * Vector Point Contract
+ * Vector Drawing Contracts
  */
+
+export const vectorToolModeSchema = z.enum([
+  'select',
+  'path',
+  'rect',
+  'circle',
+  'line',
+  'freehand',
+  'eraser',
+]);
+
+export type VectorToolModeDto = z.infer<typeof vectorToolModeSchema>;
+export type VectorToolMode = VectorToolModeDto;
+
 export const vectorPointSchema = z.object({
   x: z.number(),
   y: z.number(),
+  pressure: z.number().optional(),
 });
 
 export type VectorPointDto = z.infer<typeof vectorPointSchema>;
+export type VectorPoint = VectorPointDto;
 
-/**
- * Vector Shape Type Contract
- */
-export const vectorShapeTypeSchema = z.enum(['polygon', 'lasso', 'rect', 'ellipse', 'brush']);
+export const vectorShapeTypeSchema = z.enum([
+  'path',
+  'rect',
+  'circle',
+  'line',
+  'freehand',
+  'text',
+]);
+
 export type VectorShapeTypeDto = z.infer<typeof vectorShapeTypeSchema>;
+export type VectorShapeType = VectorShapeTypeDto;
 
-/**
- * Vector Shape Role Contract
- */
-export const vectorShapeRoleSchema = z.enum(['product', 'shadow', 'background', 'custom']);
+export const vectorShapeRoleSchema = z.enum(['contour', 'fill', 'inner', 'outer', 'custom']);
 export type VectorShapeRoleDto = z.infer<typeof vectorShapeRoleSchema>;
+export type VectorShapeRole = VectorShapeRoleDto;
 
-/**
- * Vector Shape Contract
- */
 export const vectorShapeSchema = z.object({
   id: z.string(),
-  name: z.string(),
   type: vectorShapeTypeSchema,
+  role: vectorShapeRoleSchema,
   points: z.array(vectorPointSchema),
-  closed: z.boolean(),
-  visible: z.boolean(),
-  label: z.string().optional(),
-  role: vectorShapeRoleSchema.optional(),
-  color: z.string().optional(),
+  style: z.record(z.string(), z.unknown()),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type VectorShapeDto = z.infer<typeof vectorShapeSchema>;
+export type VectorShape = VectorShapeDto;
 
-/**
- * Vector Layer Contract
- */
 export const vectorLayerSchema = z.object({
   id: z.string(),
   name: z.string(),
+  shapes: z.array(vectorShapeSchema),
   visible: z.boolean(),
   locked: z.boolean(),
-  shapes: z.array(vectorShapeSchema),
-  opacity: z.number().optional(),
+  opacity: z.number(),
 });
 
 export type VectorLayerDto = z.infer<typeof vectorLayerSchema>;
+export type VectorLayer = VectorLayerDto;
 
-/**
- * Vector Drawing Contract
- */
-export const vectorDrawingSchema = z.object({
+export const vectorDrawingSchema = dtoBaseSchema.extend({
+  name: z.string(),
   width: z.number(),
   height: z.number(),
   layers: z.array(vectorLayerSchema),
-  activeLayerId: z.string().nullable(),
+  activeLayerId: z.string(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type VectorDrawingDto = z.infer<typeof vectorDrawingSchema>;
+export type VectorDrawing = VectorDrawingDto;
+
+export const createVectorDrawingSchema = vectorDrawingSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CreateVectorDrawingDto = z.infer<typeof createVectorDrawingSchema>;
+export type UpdateVectorDrawingDto = Partial<CreateVectorDrawingDto>;

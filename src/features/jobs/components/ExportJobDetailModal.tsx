@@ -1,7 +1,7 @@
 import React from 'react';
 
-import type { ListingAttempt, ListingJob, ProductJob } from '@/shared/types/domain/listing-jobs';
-import type { EntityModalProps } from '@/shared/types/modal-props';
+import type { ListingAttempt, ListingJob, ProductJob } from '@/shared/contracts/integrations';
+import type { EntityModalProps } from '@/shared/contracts/ui';
 import { StatusBadge } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 

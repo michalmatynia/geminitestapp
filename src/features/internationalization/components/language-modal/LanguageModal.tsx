@@ -2,8 +2,8 @@
 
 import React from 'react';
 
-import type { CountryOption, Language } from '@/shared/types/domain/internationalization';
-import type { EntityModalProps } from '@/shared/types/modal-props';
+import type { CountryOption, Language } from '@/shared/contracts/internationalization';
+import type { EntityModalProps } from '@/shared/contracts/ui';
 import { Checkbox, Label, Hint } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 

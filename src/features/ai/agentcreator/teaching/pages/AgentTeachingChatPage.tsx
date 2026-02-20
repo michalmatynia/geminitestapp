@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import React from 'react';
 
-import type { AgentTeachingAgentRecord, AgentTeachingChatSource, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
-import type { ChatMessage } from '@/shared/types/domain/chatbot';
+import type { AgentTeachingAgentRecord, AgentTeachingChatSource, AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
+import type { ChatMessage } from '@/shared/contracts/chatbot';
 import { Button, SectionHeader, Textarea, useToast, FormSection, FormField } from '@/shared/ui';
 
 import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';

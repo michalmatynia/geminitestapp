@@ -7,8 +7,8 @@ import type {
   AiPathRunNodeRecord,
   RuntimeHistoryEntry,
   AiPathRunEventRecord,
-} from '@/shared/types/domain/ai-paths';
-import type { ModalStateProps } from '@/shared/types/modal-props';
+} from '@/shared/contracts/ai-paths';
+import type { ModalStateProps } from '@/shared/contracts/ui';
 import {
   Button,
   Label,

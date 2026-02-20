@@ -4,12 +4,11 @@ import { Pencil, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import React, { useMemo } from 'react';
 
-import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
+import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
 import { 
   Button, 
   SectionHeader, 
-  DataTable, 
-  FormSection 
+  StandardDataTablePanel, 
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -120,15 +119,11 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
         )}
       />
 
-      <FormSection className='p-6'>
-        <div className='rounded-md border border-border bg-gray-950/20'>
-          <DataTable
-            columns={columns}
-            data={collections}
-            isLoading={isLoading}
-          />
-        </div>
-      </FormSection>
+      <StandardDataTablePanel
+        columns={columns}
+        data={collections}
+        isLoading={isLoading}
+      />
 
       <ConfirmModal
         isOpen={!!itemToDelete}

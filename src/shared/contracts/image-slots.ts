@@ -28,3 +28,4 @@ export const managedImageSlotSchema = z.union([
 ]).nullable();
 
 export type ManagedImageSlotDto = z.infer<typeof managedImageSlotSchema>;
+export type ManagedImageSlot = ManagedImageSlotDto;

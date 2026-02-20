@@ -4,7 +4,7 @@ import type {
   DatabaseConfig,
   RuntimePortValues,
   UpdaterMapping,
-} from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
 
 import { coerceInput, getValueAtMappingPath } from '../../utils';
 

@@ -9,7 +9,7 @@ import { deleteBaseProduct } from '@/features/integrations/server';
 import { decryptSecret } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 import { resolveDeleteInventoryId } from './helpers';
 

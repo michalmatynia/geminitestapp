@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import { getAiPathRunQueueStatus } from '@/features/jobs/server';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const parseEnvNumber = (value: string | undefined, fallback: number): number => {
   const parsed = Number.parseInt(value ?? '', 10);

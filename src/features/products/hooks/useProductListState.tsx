@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueries, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -220,36 +220,44 @@ export function useProductListState(): ProductListContextType & {
       if (!categoryId || !catalogId) return;
       ids.add(catalogId);
     });
-    return Array.from(ids);
+    return Array.from(ids).sort();
   }, [data]);
-  const categoryQueries = useQueries({
-    queries: categoryLookupCatalogIds.map((catalogId: string) => ({
-      queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.categories(catalogId)),
-      queryFn: ({ signal }: { signal?: AbortSignal }): Promise<ProductCategory[]> =>
-        api.get<ProductCategory[]>(
-          `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`,
-          { signal }
-        ),
-      staleTime: 1000 * 60 * 5,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-    })),
+
+  // Single batch request instead of N parallel useQueries calls.
+  const batchCategoryQueryKey = useMemo(
+    () => normalizeQueryKey([...QUERY_KEYS.products.metadata.all, 'categories-batch', categoryLookupCatalogIds]),
+    [categoryLookupCatalogIds]
+  );
+  const { data: categoryBatchData } = useQuery<Record<string, ProductCategory[]>>({
+    queryKey: batchCategoryQueryKey,
+    queryFn: ({ signal }): Promise<Record<string, ProductCategory[]>> => {
+      if (categoryLookupCatalogIds.length === 0) return Promise.resolve({});
+      return api.get<Record<string, ProductCategory[]>>(
+        `/api/products/categories/batch?catalogIds=${categoryLookupCatalogIds.map(encodeURIComponent).join(',')}`,
+        { signal }
+      );
+    },
+    staleTime: 5 * 60 * 1_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    enabled: categoryLookupCatalogIds.length > 0,
   });
+
   const categoryNameById = useMemo((): Map<string, string> => {
     const map = new Map<string, string>();
     const locale = preferences.nameLocale ?? 'name_en';
-    categoryQueries.forEach((queryResult) => {
-      const categories = queryResult.data ?? [];
-      categories.forEach((category: ProductCategory) => {
-        if (!category.id || map.has(category.id)) return;
+    const grouped = categoryBatchData ?? {};
+    for (const categories of Object.values(grouped)) {
+      for (const category of categories) {
+        if (!category.id || map.has(category.id)) continue;
         const label = resolveCategoryLabelByLocale(category, locale);
-        if (!label) return;
+        if (!label) continue;
         map.set(category.id, label);
-      });
-    });
+      }
+    }
     return map;
-  }, [categoryQueries, preferences.nameLocale]);
+  }, [categoryBatchData, preferences.nameLocale]);
 
   // Enable background sync for product list
   useProductListSync({

@@ -22,8 +22,8 @@ import type {
   IntegrationWithConnections,
   BaseInventory,
   ImportExportTemplate
-} from '@/shared/types/domain/integrations';
-import type { ListQuery, SingleQuery } from '@/shared/types/query-result-types';
+} from '@/shared/contracts/integrations';
+import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { getIntegrationConnectionsQueryKey } from './integrationCache';

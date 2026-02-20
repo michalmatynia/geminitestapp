@@ -4,7 +4,7 @@ import { runTeachingChat } from '@/features/ai/agentcreator/teaching/server/chat
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import type { CmsCssAiRequestDto as CssAiRequest } from '@/shared/contracts/cms';
 import { badRequestError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 
 const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] ?? 'http://localhost:11434';

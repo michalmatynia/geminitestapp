@@ -6,7 +6,7 @@ import { useDeleteCountryMutation, useDeleteCurrencyMutation, useDeleteLanguageM
 import { useCountries, useCurrencies, useLanguages } from '@/features/internationalization/hooks/useInternationalizationQueries';
 import { logClientError } from '@/features/observability';
 import { internalError } from '@/shared/errors/app-error';
-import type { CurrencyOption, CountryOption, Language } from '@/shared/types/domain/internationalization';
+import type { CurrencyOption, CountryOption, Language } from '@/shared/contracts/internationalization';
 import { useToast } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 

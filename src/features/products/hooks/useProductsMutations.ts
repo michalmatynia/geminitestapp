@@ -16,7 +16,7 @@ import type {
   CreateMutation, 
   UpdateMutation, 
   DeleteMutation 
-} from '@/shared/types/query-result-types';
+} from '@/shared/contracts/ui';
 import { delay } from '@/shared/utils';
 
 import {

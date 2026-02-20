@@ -36,6 +36,7 @@ export interface StandardDataTablePanelProps<TData> {
   initialSorting?: SortingState | undefined;
   sortingStorageKey?: string | undefined;
   getRowId?: (row: TData) => string | number | undefined;
+  getSubRows?: (row: TData) => TData[] | undefined;
   getRowClassName?: (row: Row<TData>) => string | undefined;
   maxHeight?: string | number | undefined;
   stickyHeader?: boolean | undefined;
@@ -86,6 +87,7 @@ export function StandardDataTablePanel<TData>({
   initialSorting,
   sortingStorageKey,
   getRowId,
+  getSubRows,
   getRowClassName,
   maxHeight,
   stickyHeader,
@@ -130,6 +132,7 @@ export function StandardDataTablePanel<TData>({
           {...(initialSorting !== undefined ? { initialSorting } : {})}
           {...(sortingStorageKey !== undefined ? { sortingStorageKey } : {})}
           {...(getRowId !== undefined ? { getRowId: getRowId as (row: TData) => string | number } : {})}
+          {...(getSubRows !== undefined ? { getSubRows } : {})}
           {...(getRowClassName !== undefined ? { getRowClassName } : {})}
           {...(maxHeight !== undefined ? { maxHeight } : {})}
           {...(stickyHeader !== undefined ? { stickyHeader } : {})}

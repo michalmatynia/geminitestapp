@@ -7,7 +7,7 @@ import {
   useUpdateUserPreferencesMutation,
   useUserPreferences,
 } from '@/features/auth/hooks/useUserPreferences';
-import type { UserPreferences } from '@/shared/types/domain/user-preferences';
+import type { UserPreferences } from '@/shared/contracts/auth';
 import {
   Button,
   FormField,

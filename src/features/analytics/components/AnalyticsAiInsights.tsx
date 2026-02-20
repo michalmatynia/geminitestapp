@@ -1,6 +1,6 @@
 'use client';
 
-import type { AiInsightRecord } from '@/shared/types';
+import type { AiInsightRecord } from '@/shared/contracts';
 import { Button, StatusBadge, DocumentationSection, Hint, FormSection } from '@/shared/ui';
 
 import { useAnalytics } from '../context/AnalyticsContext';

@@ -1,6 +1,6 @@
 'use client';
 
-import type { IntegrationWithConnections } from '@/shared/types';
+import type { IntegrationWithConnections } from '@/shared/contracts';
 
 import { Label } from './label';
 import { SelectSimple } from './select-simple';

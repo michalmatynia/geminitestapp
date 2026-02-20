@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { listFileUploadEvents } from '@/features/files/server';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const parseDateParam = (value: string | null, endOfDay: boolean = false): Date | null => {
   if (!value) return null;

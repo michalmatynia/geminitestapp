@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { syncBaseImagesForListing } from '@/features/integrations/services/base-image-sync';
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const syncSchema = z.object({
   inventoryId: z.string().min(1).optional()

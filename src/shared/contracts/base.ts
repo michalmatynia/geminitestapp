@@ -6,9 +6,11 @@ import { z } from 'zod';
 
 export const statusSchema = z.enum(['pending', 'running', 'completed', 'failed', 'cancelled', 'canceled']);
 export type StatusDto = z.infer<typeof statusSchema>;
+export type Status = StatusDto;
 
 export const localizedSchema = z.record(z.string(), z.string().nullable());
 export type LocalizedDto = z.infer<typeof localizedSchema>;
+export type Localized<T = string> = Record<string, T | null>;
 
 export const dtoBaseSchema = z.object({
   id: z.string(),
@@ -35,6 +37,7 @@ export const apiErrorSchema = z.object({
 });
 
 export type ApiErrorDto = z.infer<typeof apiErrorSchema>;
+export type ApiError = ApiErrorDto;
 
 /**
  * Standard Application Error Codes
@@ -77,6 +80,49 @@ export const AppErrorCodes = {
 
 export const appErrorCodeSchema = z.string();
 export type AppErrorCodeDto = string;
+export type AppErrorCode = AppErrorCodeDto;
+
+export type AppErrorOptions = {
+  code: AppErrorCode;
+  httpStatus: number;
+  cause?: unknown;
+  meta?: Record<string, unknown> | undefined;
+  expected?: boolean;
+  /** Whether this error should trigger alerts/notifications */
+  critical?: boolean;
+  /** Retry hint for clients */
+  retryable?: boolean;
+  /** Suggested retry delay in milliseconds */
+  retryAfterMs?: number;
+};
+
+export type ResolvedError = {
+  message: string;
+  code: string;
+  status: number;
+  details?: unknown;
+};
+
+export type MapStatusOptions = {
+  defaultStatus?: number;
+  fallbackCode?: string;
+};
+
+export interface ErrorContext {
+  userId?: string;
+  requestId?: string;
+  path?: string;
+  method?: string;
+  timestamp: string;
+}
+
+export type ClientErrorPayload = {
+  message: string;
+  stack?: string;
+  url?: string;
+  componentStack?: string;
+  context?: Record<string, unknown>;
+};
 
 /**
  * Standard API response wrapper
@@ -94,6 +140,7 @@ export type ApiResponseDto<T = unknown> = {
   error?: ApiErrorDto;
   message?: string;
 };
+export type ApiResponse<T> = ApiResponseDto<T>;
 
 /**
  * Standard paginated list response
@@ -115,6 +162,7 @@ export type ListResponseDto<T> = {
   totalPages?: number;
   hasMore?: boolean;
 };
+export type ListResponse<T> = ListResponseDto<T>;
 
 /**
  * Utility type for creating a new entity (omits base fields)
@@ -133,11 +181,13 @@ export interface SavePayloadDto<T extends DtoBase> {
   id?: string;
   data: Partial<CreateDto<T>>;
 }
+export type SavePayload<T extends DtoBase> = SavePayloadDto<T>;
 
 /**
  * Payload for create operations
  */
 export type CreatePayloadDto<T extends DtoBase> = CreateDto<T>;
+export type CreatePayload<T extends DtoBase> = CreatePayloadDto<T>;
 
 /**
  * Payload for update operations
@@ -146,3 +196,28 @@ export interface UpdatePayloadDto<T extends DtoBase> {
   id: string;
   data: Partial<CreateDto<T>>;
 }
+export type UpdatePayload<T extends DtoBase> = UpdatePayloadDto<T>;
+
+/**
+ * Base interface for all entities in the system (legacy support)
+ */
+export interface BaseEntity {
+  id: string;
+  createdAt: string | Date;
+  updatedAt: string | Date | null;
+}
+
+/**
+ * Base interface for named entities (legacy support)
+ */
+export interface NamedEntity extends BaseEntity {
+  name: string;
+  description?: string | null;
+}
+
+/**
+ * MongoDB and Core Data Access Types
+ */
+export type MongoSettingRecord = { _id: string; key: string; value: string };
+export type MongoDocument<T> = T & { _id: string };
+export type ApiParams = { id: string };

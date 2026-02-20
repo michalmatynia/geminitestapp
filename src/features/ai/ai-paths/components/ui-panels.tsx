@@ -12,7 +12,7 @@ import {
   ActionMenu,
   Button,
   CollapsibleSection,
-  DataTable,
+  StandardDataTablePanel,
   DocumentationSection,
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -327,12 +327,11 @@ export function PathsTabPanel({
         </div>
       </div>
 
-      <div className='rounded-md border border-border/60 bg-card/40'>
-        <DataTable
-          columns={columns}
-          data={graphPaths}
-        />
-      </div>
+      <StandardDataTablePanel
+        columns={columns}
+        data={graphPaths}
+        variant='flat'
+      />
     </div>
   );
 }
@@ -889,11 +888,9 @@ export function DocsTabPanel(): React.JSX.Element {
                     </div>
                   </div>
 
-                  <div className='mt-4 rounded-md border border-border/60 bg-gray-950/20 overflow-hidden'>
-                    <div className='border-b border-border/60 bg-black/20 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-300'>
-                    Configuration
-                    </div>
-                    <DataTable
+                  <div className='mt-4 overflow-hidden'>
+                    <StandardDataTablePanel
+                      title='Configuration'
                       columns={[
                         {
                           accessorKey: 'path',
@@ -916,6 +913,7 @@ export function DocsTabPanel(): React.JSX.Element {
                         }
                       ]}
                       data={doc.config}
+                      variant='flat'
                     />
                   </div>
 

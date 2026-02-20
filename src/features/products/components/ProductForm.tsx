@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import * as productsApi from '@/features/products/api/products';
@@ -30,7 +30,7 @@ import type {
   ProductValidationInstanceScope,
   ProductValidationPattern,
   ProductValidationPostAcceptBehavior,
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 import { Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, ValidatorFormatterToggle } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -92,14 +92,43 @@ export default function ProductForm({
     ConfirmationModal,
   } = useProductFormContext();
   const { watch } = useFormContext<ProductFormData>();
-  
+
   const searchParams = useSearchParams();
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<ProductDraftOpenFormTab>(() =>
     normalizeProductFormTab(draft?.openProductFormTab)
   );
+  // Deferred tab mounting: only mount tab content on first visit to avoid paying
+  // render cost for all 8 tabs upfront. The 'general' tab is always pre-mounted
+  // because the formatter effect depends on its fields from the first render.
+  // The initial active tab (e.g. from a draft link) is also pre-mounted so the
+  // user sees content immediately on load.
+  const [mountedTabs, setMountedTabs] = useState<Set<ProductDraftOpenFormTab>>(() => {
+    const initial = new Set<ProductDraftOpenFormTab>(['general']);
+    const startTab = normalizeProductFormTab(draft?.openProductFormTab);
+    initial.add(startTab);
+    return initial;
+  });
   const validatorConfigQuery = useProductValidatorConfig();
-  const allValues = watch();
+
+  // Subscribe to only the fields that validators and the nameEn segment extraction
+  // actually need. This prevents re-renders (and downstream useMemo cascades) from
+  // unrelated field changes such as parameters, imageLinks or imageBase64s.
+  const [
+    nameEn, namePl, nameDe,
+    descEn, descPl, descDe,
+    sku, price, stock,
+    weight, sizeLength, sizeWidth, formLength,
+    supplierName, supplierLink, priceComment,
+    formCategoryId,
+  ] = watch([
+    'name_en', 'name_pl', 'name_de',
+    'description_en', 'description_pl', 'description_de',
+    'sku', 'price', 'stock',
+    'weight', 'sizeLength', 'sizeWidth', 'length',
+    'supplierName', 'supplierLink', 'priceComment',
+    'categoryId',
+  ]);
   const [validatorEnabled, setValidatorEnabled] = useState<boolean>(() => draft?.validatorEnabled ?? true);
   const [formatterEnabled, setFormatterEnabled] = useState<boolean>(
     () => ((draft?.validatorEnabled ?? true) ? (draft?.formatterEnabled ?? false) : false)
@@ -225,24 +254,47 @@ export default function ProductForm({
     return category?.name?.trim() ?? '';
   }, [categories, selectedCategoryId]);
   const nameEnSegment4 = useMemo(
-    () => extractNameEnSegment(String(allValues['name_en'] ?? ''), 3),
-    [allValues]
+    () => extractNameEnSegment(String(nameEn ?? ''), 3),
+    [nameEn]
   );
   const nameEnSegment4RegexEscaped = useMemo(
     () => escapeRegexSegment(nameEnSegment4),
     [nameEnSegment4]
   );
+  // Build the values object the validator engine receives. Only includes fields
+  // that validator patterns can target — complex array fields (parameters,
+  // imageLinks, imageBase64s) are intentionally excluded since no pattern targets them.
   const validatorValues = useMemo(
     (): Record<string, unknown> => ({
-      ...(allValues as Record<string, unknown>),
-      categoryId: selectedCategoryId ?? '',
+      name_en: nameEn,
+      name_pl: namePl,
+      name_de: nameDe,
+      description_en: descEn,
+      description_pl: descPl,
+      description_de: descDe,
+      sku,
+      price,
+      stock,
+      weight,
+      sizeLength,
+      sizeWidth,
+      length: formLength,
+      supplierName,
+      supplierLink,
+      priceComment,
+      categoryId: selectedCategoryId ?? formCategoryId ?? '',
       categoryName: selectedCategoryName,
       primaryCatalogId,
       nameEnSegment4,
       nameEnSegment4RegexEscaped,
     }),
     [
-      allValues,
+      nameEn, namePl, nameDe,
+      descEn, descPl, descDe,
+      sku, price, stock,
+      weight, sizeLength, sizeWidth, formLength,
+      supplierName, supplierLink, priceComment,
+      formCategoryId,
       nameEnSegment4,
       nameEnSegment4RegexEscaped,
       primaryCatalogId,
@@ -331,28 +383,53 @@ export default function ProductForm({
     validatorManuallyChanged,
   ]);
 
+  // Debounce refs for sessionStorage writes. sessionStorage is only read on
+  // mount, so a 300ms write delay is imperceptible while removing synchronous
+  // main-thread I/O from every deny/accept action.
+  const denyBehaviorWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const deniedIssuesWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const acceptedIssuesWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.sessionStorage.setItem(
-      VALIDATION_DENY_BEHAVIOR_SESSION_KEY,
-      JSON.stringify(validationDenyBehaviorOverrides)
-    );
+    if (denyBehaviorWriteTimerRef.current) clearTimeout(denyBehaviorWriteTimerRef.current);
+    denyBehaviorWriteTimerRef.current = setTimeout(() => {
+      window.sessionStorage.setItem(
+        VALIDATION_DENY_BEHAVIOR_SESSION_KEY,
+        JSON.stringify(validationDenyBehaviorOverrides)
+      );
+    }, 300);
+    return () => {
+      if (denyBehaviorWriteTimerRef.current) clearTimeout(denyBehaviorWriteTimerRef.current);
+    };
   }, [validationDenyBehaviorOverrides]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.sessionStorage.setItem(
-      VALIDATION_DENIED_ISSUES_SESSION_KEY,
-      JSON.stringify([...deniedIssueKeys])
-    );
+    if (deniedIssuesWriteTimerRef.current) clearTimeout(deniedIssuesWriteTimerRef.current);
+    deniedIssuesWriteTimerRef.current = setTimeout(() => {
+      window.sessionStorage.setItem(
+        VALIDATION_DENIED_ISSUES_SESSION_KEY,
+        JSON.stringify([...deniedIssueKeys])
+      );
+    }, 300);
+    return () => {
+      if (deniedIssuesWriteTimerRef.current) clearTimeout(deniedIssuesWriteTimerRef.current);
+    };
   }, [deniedIssueKeys]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.sessionStorage.setItem(
-      VALIDATION_ACCEPTED_ISSUES_SESSION_KEY,
-      JSON.stringify([...acceptedIssueKeys])
-    );
+    if (acceptedIssuesWriteTimerRef.current) clearTimeout(acceptedIssuesWriteTimerRef.current);
+    acceptedIssuesWriteTimerRef.current = setTimeout(() => {
+      window.sessionStorage.setItem(
+        VALIDATION_ACCEPTED_ISSUES_SESSION_KEY,
+        JSON.stringify([...acceptedIssueKeys])
+      );
+    }, 300);
+    return () => {
+      if (acceptedIssuesWriteTimerRef.current) clearTimeout(acceptedIssuesWriteTimerRef.current);
+    };
   }, [acceptedIssueKeys]);
 
   const validationScopeKey = useMemo((): string => {
@@ -632,9 +709,16 @@ export default function ProductForm({
       >
         <Tabs
           value={activeTab}
-          onValueChange={(value: string): void =>
-            setActiveTab(normalizeProductFormTab(value))
-          }
+          onValueChange={(value: string): void => {
+            const tab = normalizeProductFormTab(value);
+            setActiveTab(tab);
+            setMountedTabs((prev) => {
+              if (prev.has(tab)) return prev;
+              const next = new Set(prev);
+              next.add(tab);
+              return next;
+            });
+          }}
           className='w-full'
         >
           <TabsList
@@ -649,6 +733,7 @@ export default function ProductForm({
             <TabsTrigger value='note-link'>Note Link</TabsTrigger>
             <TabsTrigger value='validation'>Validation</TabsTrigger>
           </TabsList>
+          {/* General tab is always mounted — the formatter effect reads its fields from mount */}
           <TabsContent value='general' className='mt-4 data-[state=inactive]:hidden' forceMount>
             <ProductFormGeneral
               validatorPatterns={validatorPatterns}
@@ -656,23 +741,25 @@ export default function ProductForm({
               visibleFieldIssues={visibleFieldIssues}
             />
           </TabsContent>
-          <TabsContent value='other' className='mt-4 data-[state=inactive]:hidden' forceMount>
-            <ProductFormOther visibleFieldIssues={visibleFieldIssues} />
+          {/* Remaining tabs use deferred mounting: content renders on first visit and */}
+          {/* remains hidden via CSS when inactive, avoiding repeated mount/unmount cost. */}
+          <TabsContent value='other' className='mt-4 data-[state=inactive]:hidden'>
+            {mountedTabs.has('other') && <ProductFormOther visibleFieldIssues={visibleFieldIssues} />}
           </TabsContent>
-          <TabsContent value='parameters' className='mt-4 data-[state=inactive]:hidden' forceMount>
-            <ProductFormParameters />
+          <TabsContent value='parameters' className='mt-4 data-[state=inactive]:hidden'>
+            {mountedTabs.has('parameters') && <ProductFormParameters />}
           </TabsContent>
-          <TabsContent value='images' className='mt-4 data-[state=inactive]:hidden' forceMount>
-            <ProductFormImages />
+          <TabsContent value='images' className='mt-4 data-[state=inactive]:hidden'>
+            {mountedTabs.has('images') && <ProductFormImages />}
           </TabsContent>
-          <TabsContent value='studio' className='mt-4 data-[state=inactive]:hidden' forceMount>
-            <ProductFormStudio />
+          <TabsContent value='studio' className='mt-4 data-[state=inactive]:hidden'>
+            {mountedTabs.has('studio') && <ProductFormStudio />}
           </TabsContent>
-          <TabsContent value='import-info' className='mt-4 data-[state=inactive]:hidden' forceMount>
-            <ProductFormImportInfo />
+          <TabsContent value='import-info' className='mt-4 data-[state=inactive]:hidden'>
+            {mountedTabs.has('import-info') && <ProductFormImportInfo />}
           </TabsContent>
-          <TabsContent value='note-link' className='mt-4 data-[state=inactive]:hidden' forceMount>
-            <ProductFormNoteLink />
+          <TabsContent value='note-link' className='mt-4 data-[state=inactive]:hidden'>
+            {mountedTabs.has('note-link') && <ProductFormNoteLink />}
           </TabsContent>
           <TabsContent value='validation' className='mt-4 space-y-4'>
             <div className='rounded-md border border-border bg-gray-900/70 p-4'>

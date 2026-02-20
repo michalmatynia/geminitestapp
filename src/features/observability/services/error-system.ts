@@ -6,7 +6,7 @@ import {
   ERROR_CATEGORY,
   type ErrorCategory,
   type ErrorContext,
-} from '@/shared/types/observability';
+} from '@/shared/contracts/observability';
 
 export const ErrorCategories = ERROR_CATEGORY;
 export type { ErrorCategory, ErrorContext };

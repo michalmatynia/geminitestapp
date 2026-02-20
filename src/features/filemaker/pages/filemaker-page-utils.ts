@@ -1,4 +1,4 @@
-import type { CountryOption } from '@/shared/types/domain/internationalization';
+import type { CountryOption } from '@/shared/contracts/internationalization';
 
 export const includeQuery = (values: string[], query: string): boolean => {
   if (!query) return true;

@@ -10,7 +10,7 @@ import { ErrorSystem } from '@/features/observability/server';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export const dynamic = 'force-dynamic';
 

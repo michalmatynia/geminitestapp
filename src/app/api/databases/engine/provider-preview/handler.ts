@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getDatabaseEngineProviderPreview } from '@/features/database/services/database-engine-provider-preview';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const parseCollectionsParam = (raw: string | null): string[] | undefined => {
   if (!raw) return undefined;

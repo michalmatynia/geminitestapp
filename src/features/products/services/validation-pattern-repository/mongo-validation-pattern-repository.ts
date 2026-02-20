@@ -34,7 +34,7 @@ import type {
   ProductValidationPattern,
   ProductValidationSeverity,
   ProductValidationTarget,
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 
 const COLLECTION = 'product_validation_patterns';
 const SETTINGS_COLLECTION = 'settings';

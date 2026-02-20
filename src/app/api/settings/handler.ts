@@ -43,7 +43,7 @@ import {
   getLastKnownSettings,
   type SettingsScope,
 } from '@/shared/lib/settings-cache';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const shouldLog = () => process.env['DEBUG_SETTINGS'] === 'true';
 

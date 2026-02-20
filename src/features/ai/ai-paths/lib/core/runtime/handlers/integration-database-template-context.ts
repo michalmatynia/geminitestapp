@@ -1,8 +1,8 @@
 import type {
   DatabaseConfig,
   RuntimePortValues,
-} from '@/shared/types/domain/ai-paths';
-import type { NodeHandlerContext } from '@/shared/types/domain/ai-paths-runtime';
+} from '@/shared/contracts/ai-paths';
+import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import {
   normalizeNonEmptyString,

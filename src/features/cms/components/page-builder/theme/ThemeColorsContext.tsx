@@ -9,8 +9,8 @@ import type { ColorSchemeColors, ColorScheme, ThemeSettings } from '@/features/c
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import type { AgentTeachingAgentRecord } from '@/shared/types/domain/agent-teaching';
-import type { ChatMessage } from '@/shared/types/domain/chatbot';
+import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
+import type { ChatMessage } from '@/shared/contracts/chatbot';
 import { useToast } from '@/shared/ui';
 
 import { DEFAULT_SCHEME_COLORS } from './theme-constants';

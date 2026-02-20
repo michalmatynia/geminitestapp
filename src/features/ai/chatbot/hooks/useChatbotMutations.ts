@@ -9,7 +9,7 @@ import {
   invalidateChatbotSessions,
   invalidateSettingsScope,
 } from '@/shared/lib/query-invalidation';
-import type { CreateMutation, UpdateMutation } from '@/shared/types/query-result-types';
+import type { CreateMutation, UpdateMutation } from '@/shared/contracts/ui';
 
 import {
   chatbotQueryKeys,

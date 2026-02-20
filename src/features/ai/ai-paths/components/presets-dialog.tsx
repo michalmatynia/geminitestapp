@@ -1,7 +1,7 @@
 'use client';
 
-import type { ClusterPreset } from '@/shared/types/domain/ai-paths';
-import type { ModalStateProps } from '@/shared/types/modal-props';
+import type { ClusterPreset } from '@/shared/contracts/ai-paths';
+import type { ModalStateProps } from '@/shared/contracts/ui';
 import {
   Button,
   Textarea,

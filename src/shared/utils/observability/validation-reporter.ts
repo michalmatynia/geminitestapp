@@ -1,4 +1,4 @@
-import type { ErrorContext } from '@/shared/types/observability';
+import type { ErrorContext } from '@/shared/contracts/observability';
 
 /**
  * Reports a validation error to the centralized logging system.

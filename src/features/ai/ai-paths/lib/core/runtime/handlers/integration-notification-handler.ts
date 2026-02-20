@@ -1,8 +1,8 @@
-import type { AiNode, Edge } from '@/shared/types/domain/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import type {
   NodeHandler,
   NodeHandlerContext,
-} from '@/shared/types/domain/ai-paths-runtime';
+} from '@/shared/contracts/ai-paths-runtime';
 
 import {
   coerceInput,

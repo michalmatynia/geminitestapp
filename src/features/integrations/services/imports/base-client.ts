@@ -722,6 +722,35 @@ type FetchBaseCategoriesOptions = {
   inventoryId?: string | null;
 };
 
+const hasCategoryHierarchy = (categories: BaseCategory[]): boolean =>
+  categories.some((category: BaseCategory): boolean => Boolean(category.parentId));
+
+const scoreCategories = (
+  categories: BaseCategory[],
+): { total: number; withParent: number } => {
+  const withParent = categories.reduce(
+    (count: number, category: BaseCategory): number =>
+      count + (category.parentId ? 1 : 0),
+    0
+  );
+  return {
+    total: categories.length,
+    withParent,
+  };
+};
+
+const isBetterCategoryCandidate = (
+  candidate: BaseCategory[],
+  currentBest: BaseCategory[],
+): boolean => {
+  const candidateScore = scoreCategories(candidate);
+  const bestScore = scoreCategories(currentBest);
+  if (candidateScore.withParent !== bestScore.withParent) {
+    return candidateScore.withParent > bestScore.withParent;
+  }
+  return candidateScore.total > bestScore.total;
+};
+
 /**
  * Fetches categories from Base.com inventory.
  * Tries global categories first, then inventory-scoped categories when required.
@@ -731,6 +760,7 @@ export async function fetchBaseCategories(
   options?: FetchBaseCategoriesOptions
 ): Promise<BaseCategory[]> {
   let lastError: Error | null = null;
+  let bestCategories: BaseCategory[] = [];
   const preferredInventoryId =
     typeof options?.inventoryId === 'string' ? options.inventoryId.trim() : '';
 
@@ -739,11 +769,22 @@ export async function fetchBaseCategories(
     singlePassInventoryIds.push(preferredInventoryId);
   }
 
+  const considerCandidate = (categories: BaseCategory[]): void => {
+    const deduped = dedupeCategories(categories);
+    if (deduped.length === 0) return;
+    if (
+      bestCategories.length === 0
+      || isBetterCategoryCandidate(deduped, bestCategories)
+    ) {
+      bestCategories = deduped;
+    }
+  };
+
   // First attempt without inventory_id for connectors returning global category trees.
   try {
     const payload = await callBaseApi(token, 'getInventoryCategories', {});
     const categories = fetchBaseCategoriesFromPayload(payload);
-    if (categories.length > 0) return dedupeCategories(categories);
+    considerCandidate(categories);
   } catch (error: unknown) {
     lastError = error instanceof Error ? error : new Error('Base API error.');
   }
@@ -755,10 +796,14 @@ export async function fetchBaseCategories(
         inventory_id: inventoryId,
       });
       const categories = fetchBaseCategoriesFromPayload(payload);
-      if (categories.length > 0) return dedupeCategories(categories);
+      considerCandidate(categories);
     } catch (error: unknown) {
       lastError = error instanceof Error ? error : new Error('Base API error.');
     }
+  }
+
+  if (hasCategoryHierarchy(bestCategories)) {
+    return bestCategories;
   }
 
   // Final fallback: load inventories and aggregate category trees across each one.
@@ -790,9 +835,8 @@ export async function fetchBaseCategories(
     }
   }
 
-  if (aggregated.length > 0) {
-    return dedupeCategories(aggregated);
-  }
+  considerCandidate(aggregated);
+  if (bestCategories.length > 0) return bestCategories;
 
   if (lastError) throw lastError;
   return [];

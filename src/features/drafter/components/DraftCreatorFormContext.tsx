@@ -12,7 +12,7 @@ import type {
   ProductTag,
 } from '@/features/products/types';
 import type { ProductDraftOpenFormTab } from '@/features/products/types/drafts';
-import type { ImageFileSelection } from '@/shared/types/domain/files';
+import type { ImageFileSelection } from '@/shared/contracts/files';
 
 export interface DraftCreatorFormContextValue {
   name: string;

@@ -51,13 +51,13 @@ import {
   invalidateFiles,
 } from '@/shared/lib/query-invalidation';
 import { cmsKeys } from '@/shared/lib/query-key-exports';
-import type { ImageFileRecord } from '@/shared/types/domain/files';
+import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { 
   ListQuery,
   SingleQuery,
   CreateMutation, 
   UpdateMutation 
-} from '@/shared/types/query-result-types';
+} from '@/shared/contracts/ui';
 
 
 export function useCmsPages(domainId?: string | null): ListQuery<PageSummary> {

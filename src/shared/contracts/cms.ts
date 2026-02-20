@@ -4,6 +4,7 @@ import { dtoBaseSchema, namedDtoSchema } from './base';
 
 export const cmsPageStatusSchema = z.enum(['draft', 'published', 'scheduled']);
 export type CmsPageStatusDto = z.infer<typeof cmsPageStatusSchema>;
+export type PageStatus = CmsPageStatusDto;
 
 export const cmsPageSlugLinkSchema = z.object({
   slug: z.object({
@@ -13,6 +14,7 @@ export const cmsPageSlugLinkSchema = z.object({
 });
 
 export type CmsPageSlugLinkDto = z.infer<typeof cmsPageSlugLinkSchema>;
+export type PageSlugLink = CmsPageSlugLinkDto;
 
 export const cmsPageSummarySchema = z.object({
   id: z.string(),
@@ -22,6 +24,7 @@ export const cmsPageSummarySchema = z.object({
 });
 
 export type CmsPageSummaryDto = z.infer<typeof cmsPageSummarySchema>;
+export type PageSummary = CmsPageSummaryDto;
 
 /**
  * CMS Theme Contract
@@ -61,6 +64,7 @@ export const cmsThemeSchema = namedDtoSchema.extend({
 });
 
 export type CmsThemeDto = z.infer<typeof cmsThemeSchema>;
+export type CmsTheme = CmsThemeDto;
 
 export const createCmsThemeSchema = cmsThemeSchema.omit({
   id: true,
@@ -69,7 +73,9 @@ export const createCmsThemeSchema = cmsThemeSchema.omit({
 });
 
 export type CreateCmsThemeDto = z.infer<typeof createCmsThemeSchema>;
+export type CmsThemeCreateInput = CreateCmsThemeDto;
 export type UpdateCmsThemeDto = Partial<CreateCmsThemeDto>;
+export type CmsThemeUpdateInput = UpdateCmsThemeDto;
 
 /**
  * CMS Component Contract
@@ -102,6 +108,7 @@ export const cmsSlugSchema = dtoBaseSchema.extend({
 });
 
 export type CmsSlugDto = z.infer<typeof cmsSlugSchema>;
+export type Slug = CmsSlugDto;
 
 export const createCmsSlugSchema = cmsSlugSchema.omit({
   id: true,
@@ -121,6 +128,7 @@ export const cmsDomainSchema = namedDtoSchema.extend({
 });
 
 export type CmsDomainDto = z.infer<typeof cmsDomainSchema>;
+export type CmsDomain = CmsDomainDto;
 
 export const createCmsDomainSchema = cmsDomainSchema.omit({
   id: true,
@@ -143,6 +151,7 @@ export const cmsPageSeoSchema = z.object({
 });
 
 export type CmsPageSeoDto = z.infer<typeof cmsPageSeoSchema>;
+export type PageSeoData = CmsPageSeoDto;
 
 /**
  * CMS Page Builder Contracts
@@ -153,6 +162,7 @@ export interface CmsBlockInstanceDto {
   settings: Record<string, unknown>;
   blocks?: CmsBlockInstanceDto[] | undefined;
 }
+export type BlockInstance = CmsBlockInstanceDto;
 
 export const cmsBlockInstanceSchema: z.ZodType<CmsBlockInstanceDto> = z.lazy(() =>
   z.object({
@@ -165,6 +175,7 @@ export const cmsBlockInstanceSchema: z.ZodType<CmsBlockInstanceDto> = z.lazy(() 
 
 export const pageZoneSchema = z.enum(['header', 'template', 'footer']);
 export type PageZoneDto = z.infer<typeof pageZoneSchema>;
+export type PageZone = PageZoneDto;
 
 export const cmsSectionInstanceSchema = z.object({
   id: z.string(),
@@ -175,6 +186,7 @@ export const cmsSectionInstanceSchema = z.object({
 });
 
 export type CmsSectionInstanceDto = z.infer<typeof cmsSectionInstanceSchema>;
+export type SectionInstance = CmsSectionInstanceDto;
 
 export const clipboardDataSchema = z.object({
   type: z.enum(['section', 'block']),
@@ -305,6 +317,7 @@ export const pageComponentSchema = z.object({
 });
 
 export type PageComponentDto = z.infer<typeof pageComponentSchema>;
+export type PageComponent = PageComponentDto;
 
 export const cmsPageSchema = dtoBaseSchema.extend({
   name: z.string(),
@@ -320,6 +333,7 @@ export const cmsPageSchema = dtoBaseSchema.extend({
 }).merge(cmsPageSeoSchema);
 
 export type CmsPageDto = z.infer<typeof cmsPageSchema>;
+export type Page = CmsPageDto;
 
 export const createCmsPageSchema = cmsPageSchema.omit({
   id: true,
@@ -463,6 +477,7 @@ export const settingsFieldOptionSchema = z.object({
 });
 
 export type SettingsFieldOptionDto = z.infer<typeof settingsFieldOptionSchema>;
+export type SettingsFieldOption = SettingsFieldOptionDto;
 
 export const settingsFieldTypeSchema = z.enum([
   'text',
@@ -499,6 +514,7 @@ export const settingsFieldSchema = z.object({
 });
 
 export type SettingsFieldDto = z.infer<typeof settingsFieldSchema>;
+export type SettingsField = SettingsFieldDto;
 
 export const sectionDefinitionSchema = z.object({
   type: z.string(),
@@ -510,6 +526,7 @@ export const sectionDefinitionSchema = z.object({
 });
 
 export type SectionDefinitionDto = z.infer<typeof sectionDefinitionSchema>;
+export type SectionDefinition = SectionDefinitionDto;
 
 export const blockDefinitionSchema = z.object({
   type: z.string(),
@@ -521,4 +538,4 @@ export const blockDefinitionSchema = z.object({
 });
 
 export type BlockDefinitionDto = z.infer<typeof blockDefinitionSchema>;
-
+export type BlockDefinition = BlockDefinitionDto;

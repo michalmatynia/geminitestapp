@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { AiInsightRecord } from '@/shared/types';
+import type { AiInsightRecord } from '@/shared/contracts';
 import { StatusBadge, ResourceCard, DocumentationSection } from '@/shared/ui';
 
 export function InsightCard({ insight }: { insight: AiInsightRecord }): React.JSX.Element {

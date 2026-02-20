@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useReducer, useMemo, useCallback, type ReactNode } from 'react';
 
-import type { PageZone } from '@/shared/types/domain/cms';
+import type { PageZone } from '@/shared/contracts/cms';
 
 // ---------------------------------------------------------------------------
 // Types

@@ -26,7 +26,7 @@ import type { ProductCreateInput, ProductWithImages } from '@/features/products/
 import { badRequestError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export const requestSchema = z.object({
   token: z.string().trim().min(1).optional(),

@@ -5,6 +5,7 @@ import React from 'react';
 import { Input, Label } from '@/shared/ui';
 
 import { SettingsFieldRenderer } from '../SettingsFieldRenderer';
+import { useOptionalSettingsForm } from './SettingsFormContext';
 
 import type { SettingsField } from '../../../types/page-builder';
 
@@ -59,10 +60,15 @@ function groupSettingsFields(schema: SettingsField[]): FieldGroup[] {
 
 function renderFieldGroups(
   groups: FieldGroup[],
-  settings: Record<string, unknown>,
-  onChange: (key: string, value: unknown) => void,
+  settings?: Record<string, unknown>,
+  onChange?: (key: string, value: unknown) => void,
   resolveField?: (field: SettingsField) => SettingsField,
 ): React.ReactNode[] {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const context = useOptionalSettingsForm();
+  const effectiveSettings = settings || context?.values || {};
+  const effectiveOnChange = onChange || context?.onChange;
+
   return groups.map((group: FieldGroup) => {
     if (group.kind === 'single') {
       const raw = group.fields[0]!;
@@ -71,8 +77,8 @@ function renderFieldGroups(
         <SettingsFieldRenderer
           key={field.key}
           field={field}
-          value={settings[field.key]}
-          onChange={onChange}
+          value={effectiveSettings[field.key]}
+          onChange={effectiveOnChange}
         />
       );
     }
@@ -88,8 +94,12 @@ function renderFieldGroups(
               </span>
               <Input
                 type='number'
-                value={(settings[field.key] as number) ?? field.defaultValue ?? 0}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(field.key, Number(e.target.value))}
+                value={(effectiveSettings[field.key] as number) ?? field.defaultValue ?? 0}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
+                  if (effectiveOnChange) {
+                    effectiveOnChange(field.key, Number(e.target.value));
+                  }
+                }}
                 className='text-xs h-7 px-1.5'
               />
             </div>

@@ -1,4 +1,4 @@
-import type { NodeDefinition } from '@/shared/types/domain/ai-paths';
+import type { NodeDefinition } from '@/shared/contracts/ai-paths';
 
 import {
   AGENT_INPUT_PORTS,

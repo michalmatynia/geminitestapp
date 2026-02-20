@@ -11,8 +11,8 @@ import {
 } from '@/shared/lib/query-factories-v2';
 import { invalidateIntegrations } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { Integration, IntegrationConnection } from '@/shared/types/domain/integrations';
-import type { MutationResult } from '@/shared/types/query-result-types';
+import type { Integration, IntegrationConnection } from '@/shared/contracts/integrations';
+import type { MutationResult } from '@/shared/contracts/ui';
 
 import { invalidateIntegrationConnections } from './integrationCache';
 

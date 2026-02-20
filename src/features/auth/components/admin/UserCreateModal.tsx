@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { EntityModalProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/contracts/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 export interface UserCreateFormState {

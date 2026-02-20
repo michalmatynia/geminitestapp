@@ -1,4 +1,4 @@
-import type { AiNode, Edge } from '@/shared/types/domain/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 
 export type DependencyRiskSeverity = 'warning' | 'error';
 

@@ -16,8 +16,8 @@ import type { ProductAiJobStatus } from '@/features/jobs/types/product-ai-job-re
 import { notifyAiPathsSloBreach } from '@/features/observability/lib/ai-paths-slo-notifier';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { AiPathRunStatus } from '@/shared/types/domain/ai-paths';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { AiPathRunStatus } from '@/shared/contracts/ai-paths';
 
 const AI_PATH_STATUSES: AiPathRunStatus[] = [
   'queued',

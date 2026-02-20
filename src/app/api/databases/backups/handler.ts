@@ -11,7 +11,7 @@ import {
 } from '@/features/database/server';
 import { assertDatabaseEngineManageAccess } from '@/features/database/services/database-engine-access';
 import type { DatabaseBackupFileDto as DatabaseInfo } from '@/shared/contracts/database';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 async function getBackups(type: 'postgresql' | 'mongodb'): Promise<DatabaseInfo[]> {
   const backupsDir = type === 'mongodb' ? mongoBackupsDir : pgBackupsDir;

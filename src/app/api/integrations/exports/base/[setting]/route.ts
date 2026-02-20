@@ -3,7 +3,7 @@ export const runtime = 'nodejs';
 
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext, ApiRouteHandler } from '@/shared/types/api/api';
+import type { ApiHandlerContext, ApiRouteHandler } from '@/shared/contracts/ui';
 
 import {
   GET_handler as getActiveTemplateHandler,

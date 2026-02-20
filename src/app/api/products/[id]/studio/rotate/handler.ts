@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { rotateProductStudioImageSlot } from '@/features/products/services/product-studio-service';
 import { badRequestError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const rotateSchema = z.object({
   imageSlotIndex: z.number().int().min(0),

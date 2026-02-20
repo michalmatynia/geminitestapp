@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCategoryMappingRepository } from '@/features/integrations/server';
 import type { BulkCategoryMappingRequestDto as BulkMappingRequest } from '@/shared/contracts/integrations';
 import { badRequestError, validationError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 /**
  * POST /api/marketplace/mappings/bulk

@@ -12,8 +12,8 @@ import {
   isAppError,
 } from '@/shared/errors/app-error';
 import { getQueryParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { AiPathRuntimeAnalyticsRange } from '@/shared/types/domain/ai-paths';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
 
 const RANGE_VALUES: readonly AiPathRuntimeAnalyticsRange[] = ['1h', '24h', '7d', '30d'];
 

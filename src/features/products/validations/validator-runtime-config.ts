@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { badRequestError } from '@/shared/errors/app-error';
-import type { ProductValidationRuntimeType } from '@/shared/types/domain/products';
+import type { ProductValidationRuntimeType } from '@/shared/contracts/products';
 
 const runtimeOperatorSchema = z.enum([
   'truthy',

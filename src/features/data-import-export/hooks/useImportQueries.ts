@@ -33,7 +33,7 @@ import type {
   ListQuery,
   MutationResult,
   SingleQuery,
-} from '@/shared/types/query-result-types';
+} from '@/shared/contracts/ui';
 
 export type ImportParameterCacheResponse = ImportParameterCacheResponseDto;
 export type { CatalogRecord };

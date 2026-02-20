@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import { createCreateMutationV2, createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';
-import type { UpdateMutation, VoidMutation } from '@/shared/types/query-result-types';
+import type { UpdateMutation, VoidMutation } from '@/shared/contracts/ui';
 
 import { 
   performProductAiJobAction, 

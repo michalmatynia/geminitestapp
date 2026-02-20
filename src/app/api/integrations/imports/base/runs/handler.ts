@@ -7,7 +7,7 @@ import {
 import {
   startBaseImportRunResponse,
 } from '@/features/integrations/services/imports/base-import-run-starter';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export const startRunSchema = z.object({
   connectionId: z.string().trim().min(1).optional(),

@@ -2,7 +2,7 @@ import { Prisma as _Prisma, type Currency, CurrencyCode } from '@prisma/client';
 
 import { defaultCurrencies } from '@/features/internationalization/server';
 import prisma from '@/shared/lib/db/prisma';
-import type { CurrencyRecord } from '@/shared/types/domain/internationalization';
+import type { CurrencyRecord } from '@/shared/contracts/internationalization';
 
 import type { CurrencyRepository } from '../../types/services/currency-repository';
 

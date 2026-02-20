@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic';
 import React from 'react';
 
 import { logClientError } from '@/features/observability';
-import type { ImageFileRecord, ImageFileSelection } from '@/shared/types/domain/files';
+import type { ImageFileRecord, ImageFileSelection } from '@/shared/contracts/files';
 import {
   useToast,
   FileUploadButton,

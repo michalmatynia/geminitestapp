@@ -14,7 +14,7 @@ import type { AuthUserDto } from '@/shared/contracts/auth';
 import { authError, badRequestError, conflictError, forbiddenError, internalError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 export const updateSchema = z.object({

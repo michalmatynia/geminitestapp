@@ -4,7 +4,7 @@ import {
   getDefaultConfigForType,
   normalizeNodes,
 } from '@/features/ai/ai-paths/lib/core/normalization';
-import type { AiNode } from '@/shared/types/domain/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
 
 describe('validation_pattern normalization', () => {
   it('injects default config and ports for validation pattern nodes', () => {

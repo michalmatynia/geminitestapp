@@ -13,8 +13,8 @@ import {
 } from '@/features/ai/ai-paths/services/path-run-service';
 import type { AiPathRunRepository } from '@/features/ai/ai-paths/types/path-run-repository';
 import { removePathRunQueueEntries } from '@/features/jobs/workers/aiPathRunQueue';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
 const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 

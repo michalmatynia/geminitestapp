@@ -12,7 +12,7 @@ import {
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import { AppErrorCodes, badRequestError, isAppError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const AI_PATHS_TRIGGER_BUTTONS_KEY = 'ai_paths_trigger_buttons';
 const readTriggerButtonsRaw = async (): Promise<string | null> =>

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAsset3DRepository, uploadAsset3D, validate3DFile } from '@/features/viewer3d/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import { getQueryParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logger } from '@/shared/utils/logger';
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB

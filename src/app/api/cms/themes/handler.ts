@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { cmsThemeCreateSchema } from '@/features/cms/validations/api';
 import { parseJsonBody } from '@/features/products/server';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const cmsRepository = await getCmsRepository();

@@ -12,7 +12,7 @@ import type { CatalogRecord } from '@/features/products/types';
 import { badRequestError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 
 const catalogSchema = z.object({

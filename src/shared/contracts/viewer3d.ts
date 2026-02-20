@@ -1,93 +1,16 @@
 import { z } from 'zod';
 
-import { namedDtoSchema } from './base';
+import { dtoBaseSchema, namedDtoSchema } from './base';
 
 /**
- * 3D Asset DTOs
- */
-
-export const asset3dSchema = namedDtoSchema.extend({
-  filename: z.string(),
-  filepath: z.string(),
-  mimetype: z.string(),
-  size: z.number(),
-  fileUrl: z.string(),
-  thumbnailUrl: z.string().nullable(),
-  fileSize: z.number(),
-  format: z.string(),
-  categoryId: z.string().nullable(),
-  tags: z.array(z.string()),
-  metadata: z.record(z.string(), z.unknown()),
-  isPublic: z.boolean(),
-});
-
-export type Asset3dDto = z.infer<typeof asset3dSchema>;
-
-export const createAsset3dSchema = asset3dSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type CreateAsset3dDto = z.infer<typeof createAsset3dSchema>;
-export type Asset3dCreateInput = CreateAsset3dDto;
-export type UpdateAsset3dDto = Partial<CreateAsset3dDto>;
-export type Asset3dUpdateInput = UpdateAsset3dDto;
-
-export const asset3dListFiltersSchema = z.object({
-  filename: z.string().nullable().optional(),
-  categoryId: z.string().nullable().optional(),
-  tags: z.array(z.string()).optional(),
-  isPublic: z.boolean().optional(),
-  search: z.string().nullable().optional(),
-});
-
-export type Asset3dListFiltersDto = z.infer<typeof asset3dListFiltersSchema>;
-
-export const asset3dViewModeSchema = z.enum(['grid', 'list']);
-export type Asset3dViewModeDto = z.infer<typeof asset3dViewModeSchema>;
-
-// Browser-native File object
-export const uploadAsset3dSchema = z.object({
-  name: z.string(),
-  description: z.string().optional(),
-  file: z.any(),
-  categoryId: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-});
-
-export type UploadAsset3dDto = {
-  name: string;
-  description?: string;
-  file: File;
-  categoryId?: string;
-  tags?: string[];
-  metadata?: Record<string, unknown>;
-};
-
-/**
- * 3D Category DTO
+ * Asset 3D Contracts
  */
 
 export const asset3dCategorySchema = namedDtoSchema.extend({
-  parentId: z.string().nullable(),
+  description: z.string().nullable(),
 });
 
 export type Asset3dCategoryDto = z.infer<typeof asset3dCategorySchema>;
-
-export const createAsset3dCategorySchema = asset3dCategorySchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type CreateAsset3dCategoryDto = z.infer<typeof createAsset3dCategorySchema>;
-export type UpdateAsset3dCategoryDto = Partial<CreateAsset3dCategoryDto>;
-
-/**
- * 3D Tag DTO
- */
 
 export const asset3dTagSchema = namedDtoSchema.extend({
   color: z.string().nullable(),
@@ -95,57 +18,50 @@ export const asset3dTagSchema = namedDtoSchema.extend({
 
 export type Asset3dTagDto = z.infer<typeof asset3dTagSchema>;
 
-export const createAsset3dTagSchema = asset3dTagSchema.omit({
+export const asset3dViewerConfigSchema = z.object({
+  autoRotate: z.boolean(),
+  autoRotateSpeed: z.number(),
+  exposure: z.number(),
+  environmentImage: z.string().nullable(),
+  backgroundColor: z.string().nullable(),
+  showGrid: z.boolean(),
+  showAxes: z.boolean(),
+});
+
+export type Asset3dViewerConfigDto = z.infer<typeof asset3dViewerConfigSchema>;
+
+export const asset3dSchema = namedDtoSchema.extend({
+  description: z.string().nullable(),
+  fileId: z.string(),
+  thumbnailId: z.string().nullable(),
+  categoryId: z.string().nullable(),
+  tagIds: z.array(z.string()),
+  viewerConfig: asset3dViewerConfigSchema.optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type Asset3dDto = z.infer<typeof asset3dSchema>;
+export type Asset3DRecord = Asset3dDto;
+
+export const createAsset3dSchema = asset3dSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export type CreateAsset3dTagDto = z.infer<typeof createAsset3dTagSchema>;
-export type UpdateAsset3dTagDto = Partial<CreateAsset3dTagDto>;
+export type Asset3dCreateInput = z.infer<typeof createAsset3dSchema>;
+export type Asset3DCreateInput = Asset3dCreateInput;
 
-/**
- * 3D Viewer Config DTO
- */
+export const updateAsset3dSchema = createAsset3dSchema.partial();
 
-export const asset3dLightingPresetSchema = z.enum(['studio', 'outdoor', 'dramatic', 'soft']);
-export type Asset3dLightingPresetDto = z.infer<typeof asset3dLightingPresetSchema>;
+export type Asset3dUpdateInput = z.infer<typeof updateAsset3dSchema>;
+export type Asset3DUpdateInput = Asset3dUpdateInput;
 
-export const asset3dEnvironmentPresetSchema = z.enum([
-  'studio',
-  'sunset',
-  'dawn',
-  'night',
-  'warehouse',
-  'forest',
-  'apartment',
-  'city',
-  'park',
-  'lobby',
-]);
-export type Asset3dEnvironmentPresetDto = z.infer<typeof asset3dEnvironmentPresetSchema>;
-
-export const asset3dOrderedDitheringPresetKeySchema = z.enum([
-  'balanced',
-  'fineMono',
-  'chunkyMono',
-  'inverted',
-  'custom',
-]);
-export type Asset3dOrderedDitheringPresetKeyDto = z.infer<
-  typeof asset3dOrderedDitheringPresetKeySchema
->;
-
-export const asset3dViewerConfigSchema = z.object({
-  backgroundColor: z.string(),
-  enableControls: z.boolean(),
-  enableLighting: z.boolean(),
-  cameraPosition: z.object({ x: z.number(), y: z.number(), z: z.number() }),
-  autoRotate: z.boolean(),
-  lighting: asset3dLightingPresetSchema.optional(),
-  environment: asset3dEnvironmentPresetSchema.optional(),
-  lightIntensity: z.number().optional(),
-  exposure: z.number().optional(),
+export const asset3dListFiltersSchema = z.object({
+  categoryId: z.string().optional(),
+  tagId: z.string().optional(),
+  search: z.string().optional(),
 });
 
-export type Asset3dViewerConfigDto = z.infer<typeof asset3dViewerConfigSchema>;
+export type Asset3dListFiltersDto = z.infer<typeof asset3dListFiltersSchema>;
+export type Asset3DListFilters = Asset3dListFiltersDto;

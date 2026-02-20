@@ -2,8 +2,8 @@ import type {
   DatabaseConfig,
   DbQueryConfig,
   RuntimePortValues,
-} from '@/shared/types/domain/ai-paths';
-import type { NodeHandlerContext } from '@/shared/types/domain/ai-paths-runtime';
+} from '@/shared/contracts/ai-paths';
+import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { executeDatabaseInsert } from './integration-database-insert-execution';
 import { resolveDatabaseInsertPayload } from './integration-database-insert-payload';

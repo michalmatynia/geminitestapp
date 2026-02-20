@@ -10,8 +10,8 @@ import {
   invalidateSystemLogs,
 } from '@/shared/lib/query-invalidation';
 import { logsKeys, diagnosticsKeys } from '@/shared/lib/query-key-exports';
-import type { AiInsightRecord } from '@/shared/types';
-import type { UpdateMutation } from '@/shared/types/query-result-types';
+import type { AiInsightRecord } from '@/shared/contracts';
+import type { UpdateMutation } from '@/shared/contracts/ui';
 
 export function useClearLogsMutation(): UpdateMutation<ClearLogsResponse, void> {
   const queryClient = useQueryClient();

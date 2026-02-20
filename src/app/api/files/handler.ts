@@ -4,7 +4,7 @@ import { imageFileService } from '@/features/files/server';
 import { getProductRepository } from '@/features/products/server';
 import type { ImageFileRecordDto as ImageFileRecord } from '@/shared/contracts/files';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { searchParams } = new URL(req.url);

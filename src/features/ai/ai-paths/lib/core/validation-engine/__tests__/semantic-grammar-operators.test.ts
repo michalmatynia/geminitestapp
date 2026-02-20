@@ -4,7 +4,7 @@ import type {
   AiNode,
   AiPathsValidationConfig,
   Edge,
-} from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
 
 import { normalizeAiPathsValidationConfig } from '../defaults';
 import { evaluateAiPathsValidationPreflight } from '../evaluator';

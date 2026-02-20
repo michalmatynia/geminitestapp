@@ -4,8 +4,8 @@ import { assertAiPathRunAccess, requireAiPathsRunAccess } from '@/features/ai/ai
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { notFoundError } from '@/shared/errors/app-error';
 import { getRedisSubscriber, isSubscriberConnected } from '@/shared/lib/redis-pubsub';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
 const TERMINAL_STATUSES = new Set([
   'completed',

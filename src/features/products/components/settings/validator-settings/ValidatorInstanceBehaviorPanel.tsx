@@ -2,7 +2,7 @@
 
 import type {
   ProductValidationInstanceScope,
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 import { FormSection, SelectSimple } from '@/shared/ui';
 
 import { INSTANCE_SCOPE_LABELS } from './constants';

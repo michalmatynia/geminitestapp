@@ -4,7 +4,7 @@ import type {
   AiPathsValidationModule,
   AiPathsValidationRule,
   AiPathsValidationSeverity,
-} from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
 
 const VALIDATION_SEVERITIES: ReadonlySet<AiPathsValidationSeverity> =
   new Set<AiPathsValidationSeverity>(['error', 'warning', 'info']);

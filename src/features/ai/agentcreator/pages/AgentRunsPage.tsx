@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useState, useMemo, useCallback } from 'react';
 
-import type { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { 
   Button, 
   SectionHeader, 

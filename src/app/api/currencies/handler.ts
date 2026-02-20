@@ -7,7 +7,7 @@ import {
   type InternationalizationProvider,
 } from '@/features/internationalization/server';
 import { conflictError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export const currencySchema = z.object({
   code: z.enum(['USD', 'EUR', 'PLN', 'GBP', 'SEK']),

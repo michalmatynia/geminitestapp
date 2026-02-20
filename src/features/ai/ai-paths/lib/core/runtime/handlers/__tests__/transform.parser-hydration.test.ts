@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { handleParser } from '@/features/ai/ai-paths/lib/core/runtime/handlers/transform';
-import type { AiNode } from '@/shared/types/domain/ai-paths';
-import type { NodeHandlerContext } from '@/shared/types/domain/ai-paths-runtime';
+import type { AiNode } from '@/shared/contracts/ai-paths';
+import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 const buildParserNode = (): AiNode =>
   ({

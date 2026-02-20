@@ -7,7 +7,7 @@ import type {
   DatabaseEngineOperationsJobsDto,
 } from '@/shared/contracts/database';
 import { authError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const parseLimit = (raw: string | null): number => {
   const parsed = Number.parseInt(raw ?? '', 10);

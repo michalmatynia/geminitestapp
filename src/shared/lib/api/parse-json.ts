@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { badRequestError, validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
-import type { JsonParseResult, ParseJsonOptions } from '@/shared/types/api/api';
+import type { JsonParseResult, ParseJsonOptions } from '@/shared/contracts/ui';
 
 export async function parseJsonBody<T>(
   req: Request,

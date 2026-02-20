@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { useAiPathTriggerEvent } from '@/features/ai/ai-paths/hooks/useAiPathTriggerEvent';
-import type { AiTriggerButtonLocation, AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
+import type { AiTriggerButtonLocation, AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { useToast } from '@/shared/ui';
 
 import { useAiPathsTriggerButtonsQuery } from './useAiPathQueries';
@@ -63,13 +63,25 @@ export function useTriggerButtons({
   const buttons = useMemo(() => {
     const all = triggerButtonsQuery.data ?? [];
     const seen = new Set<string>();
-    return all.filter((button: AiTriggerButtonRecord) => {
-      if (button.enabled === false) return false;
-      if (!(button.locations ?? []).includes(location)) return false;
-      if (!button.id || seen.has(button.id)) return false;
-      seen.add(button.id);
-      return true;
+    const sourceIndexById = new Map<string, number>();
+    all.forEach((button: AiTriggerButtonRecord, index: number) => {
+      if (!button.id || sourceIndexById.has(button.id)) return;
+      sourceIndexById.set(button.id, index);
     });
+
+    return all
+      .filter((button: AiTriggerButtonRecord) => {
+        if (button.enabled === false) return false;
+        if (!(button.locations ?? []).includes(location)) return false;
+        if (!button.id || seen.has(button.id)) return false;
+        seen.add(button.id);
+        return true;
+      })
+      .sort((a: AiTriggerButtonRecord, b: AiTriggerButtonRecord) => {
+        const left = sourceIndexById.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+        const right = sourceIndexById.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+        return left - right;
+      });
   }, [triggerButtonsQuery.data, location]);
 
   const handleTrigger = useCallback(async (button: AiTriggerButtonRecord, options: { mode: 'click' | 'toggle', checked?: boolean, event?: React.MouseEvent }) => {

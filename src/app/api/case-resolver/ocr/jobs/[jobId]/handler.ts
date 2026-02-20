@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getCaseResolverOcrJobById } from '@/features/case-resolver/server/ocr-runtime-job-store';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export async function GET_handler(
   _req: NextRequest,

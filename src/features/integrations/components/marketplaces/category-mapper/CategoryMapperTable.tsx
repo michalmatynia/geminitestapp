@@ -224,6 +224,7 @@ export function CategoryMapperTable(): React.JSX.Element {
       expanded={expanded}
       onExpandedChange={onExpandedChange}
       getRowId={(row) => row.id}
+      getSubRows={(row) => row.subRows}
       maxHeight='60vh'
       stickyHeader
     />

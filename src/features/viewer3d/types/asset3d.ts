@@ -3,7 +3,7 @@ import type {
   Asset3DCreateInput, 
   Asset3DUpdateInput, 
   Asset3DListFilters 
-} from '@/shared/types/domain/viewer3d';
+} from '@/shared/contracts/viewer3d';
 
 export type { 
   Asset3DRecord, 

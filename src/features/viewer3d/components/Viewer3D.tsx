@@ -22,7 +22,7 @@ import type { Asset3dLightingPresetDto, Asset3dEnvironmentPresetDto } from '@/sh
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { getLastUserAction } from '@/shared/utils/observability/user-action-tracker';
 
-import { useOptionalViewer3D } from '../context/Viewer3DContext';
+import { useOptionalViewer3D, type Viewer3DState } from '../context/Viewer3DContext';
 import { DitheringPass } from './shaders/DitheringEffect';
 import { OrderedDitheringPass } from './shaders/OrderedDitheringEffect';
 import { PixelationPass } from './shaders/PixelationEffect';
@@ -320,9 +320,19 @@ function SceneLighting({ preset, intensity = 1 }: SceneLightingProps): React.JSX
 export type LightingPreset = Asset3dLightingPresetDto;
 export type EnvironmentPreset = Asset3dEnvironmentPresetDto;
 
+/**
+ * Grouped settings for the 3D viewer.
+ * All these can be provided via context or as a single 'settings' prop.
+ */
+export type Viewer3DSettings = Partial<Viewer3DState> & {
+  enableAntiAliasing?: boolean;
+};
+
 export interface Viewer3DProps {
   /** URL to the 3D model file (.glb or .gltf) */
   modelUrl: string;
+  /** Grouped visual settings (optional, overrides context) */
+  settings?: Viewer3DSettings;
   /** Background color */
   backgroundColor?: string;
   /** Enable dithering post-processing effect */
@@ -418,6 +428,7 @@ function ScreenshotCapture({
 
 export function Viewer3D({
   modelUrl,
+  settings: propSettings,
   backgroundColor: propBackgroundColor,
   enableDithering: propEnableDithering,
   ditheringIntensity: propDitheringIntensity,
@@ -456,38 +467,43 @@ export function Viewer3D({
 }: Viewer3DProps): React.JSX.Element {
   const context = useOptionalViewer3D();
 
-  // Helper to get value from prop if defined, otherwise from context, otherwise fallback to default
-  const getValue = <T,>(prop: T | undefined, contextValue: T | undefined, defaultValue: T): T => {
-    if (prop !== undefined) return prop;
-    if (contextValue !== undefined) return contextValue;
+  // Helper to resolve value from prop (legacy), grouped settings (new), or context
+  const getSetting = <K extends keyof Viewer3DSettings>(
+    key: K,
+    legacyProp: Viewer3DSettings[K] | undefined,
+    defaultValue: Required<Viewer3DSettings>[K]
+  ): Required<Viewer3DSettings>[K] => {
+    if (propSettings?.[key] !== undefined) return propSettings[key] as Required<Viewer3DSettings>[K];
+    if (legacyProp !== undefined) return legacyProp as Required<Viewer3DSettings>[K];
+    if (context?.[key as keyof typeof context] !== undefined) return context[key as keyof typeof context] as Required<Viewer3DSettings>[K];
     return defaultValue;
   };
 
-  const backgroundColor = getValue(propBackgroundColor, context?.backgroundColor, '#1a1a2e');
-  const enableDithering = getValue(propEnableDithering, context?.enableDithering, false);
-  const ditheringIntensity = getValue(propDitheringIntensity, context?.ditheringIntensity, 1.0);
-  const enableOrderedDithering = getValue(propEnableOrderedDithering, context?.enableOrderedDithering, false);
-  const orderedDitheringGridSize = getValue(propOrderedDitheringGridSize, context?.orderedDitheringGridSize, 4);
-  const orderedDitheringPixelSizeRatio = getValue(propOrderedDitheringPixelSizeRatio, context?.orderedDitheringPixelSizeRatio, 1);
-  const orderedDitheringGrayscaleOnly = getValue(propOrderedDitheringGrayscaleOnly, context?.orderedDitheringGrayscaleOnly, false);
-  const orderedDitheringInvertColor = getValue(propOrderedDitheringInvertColor, context?.orderedDitheringInvertColor, false);
-  const orderedDitheringLuminanceMethod = getValue(propOrderedDitheringLuminanceMethod, context?.orderedDitheringLuminanceMethod, 1);
-  const enablePixelation = getValue(propEnablePixelation, context?.enablePixelation, false);
-  const pixelSize = getValue(propPixelSize, context?.pixelSize, 6);
-  const autoRotate = getValue(propAutoRotate, context?.autoRotate, true);
-  const autoRotateSpeed = getValue(propAutoRotateSpeed, context?.autoRotateSpeed, 2);
-  const environment = getValue(propEnvironment, context?.environment, 'studio' as EnvironmentPreset);
-  const lighting = getValue(propLighting, context?.lighting, 'studio' as LightingPreset);
-  const lightIntensity = getValue(propLightIntensity, context?.lightIntensity, 1);
-  const enableShadows = getValue(propEnableShadows, context?.enableShadows, true);
-  const enableBloom = getValue(propEnableBloom, context?.enableBloom, false);
-  const bloomIntensity = getValue(propBloomIntensity, context?.bloomIntensity, 0.5);
-  const enableToneMapping = getValue(propEnableToneMapping, context?.enableToneMapping, true);
-  const exposure = getValue(propExposure, context?.exposure, 1);
-  const showGround = getValue(propShowGround, context?.showGround, false);
-  const enableContactShadows = getValue(propEnableContactShadows, context?.enableContactShadows, true);
-  const enableVignette = getValue(propEnableVignette, context?.enableVignette, false);
-  const enableAntiAliasing = getValue(propEnableAntiAliasing, undefined, true); // Anti-aliasing not in context for now
+  const backgroundColor = getSetting('backgroundColor', propBackgroundColor, '#1a1a2e');
+  const enableDithering = getSetting('enableDithering', propEnableDithering, false);
+  const ditheringIntensity = getSetting('ditheringIntensity', propDitheringIntensity, 1.0);
+  const enableOrderedDithering = getSetting('enableOrderedDithering', propEnableOrderedDithering, false);
+  const orderedDitheringGridSize = getSetting('orderedDitheringGridSize', propOrderedDitheringGridSize, 4);
+  const orderedDitheringPixelSizeRatio = getSetting('orderedDitheringPixelSizeRatio', propOrderedDitheringPixelSizeRatio, 1);
+  const orderedDitheringGrayscaleOnly = getSetting('orderedDitheringGrayscaleOnly', propOrderedDitheringGrayscaleOnly, false);
+  const orderedDitheringInvertColor = getSetting('orderedDitheringInvertColor', propOrderedDitheringInvertColor, false);
+  const orderedDitheringLuminanceMethod = getSetting('orderedDitheringLuminanceMethod', propOrderedDitheringLuminanceMethod, 1);
+  const enablePixelation = getSetting('enablePixelation', propEnablePixelation, false);
+  const pixelSize = getSetting('pixelSize', propPixelSize, 6);
+  const autoRotate = getSetting('autoRotate', propAutoRotate, true);
+  const autoRotateSpeed = getSetting('autoRotateSpeed', propAutoRotateSpeed, 2);
+  const environment = getSetting('environment', propEnvironment, 'studio' as EnvironmentPreset);
+  const lighting = getSetting('lighting', propLighting, 'studio' as LightingPreset);
+  const lightIntensity = getSetting('lightIntensity', propLightIntensity, 1);
+  const enableShadows = getSetting('enableShadows', propEnableShadows, true);
+  const enableBloom = getSetting('enableBloom', propEnableBloom, false);
+  const bloomIntensity = getSetting('bloomIntensity', propBloomIntensity, 0.5);
+  const enableToneMapping = getSetting('enableToneMapping', propEnableToneMapping, true);
+  const exposure = getSetting('exposure', propExposure, 1);
+  const showGround = getSetting('showGround', propShowGround, false);
+  const enableContactShadows = getSetting('enableContactShadows', propEnableContactShadows, true);
+  const enableVignette = getSetting('enableVignette', propEnableVignette, false);
+  const enableAntiAliasing = getSetting('enableAntiAliasing', propEnableAntiAliasing, true);
 
   const hasPostProcessing =
     enableDithering ||

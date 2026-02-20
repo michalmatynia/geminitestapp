@@ -2,13 +2,13 @@ import {
   canvasSemanticDocumentSchema,
   semanticDocumentSchema,
 } from '@/shared/contracts/ai-paths-semantic-grammar';
-import type { AiNode, Edge, PathConfig } from '@/shared/types/domain/ai-paths';
+import type { AiNode, Edge, PathConfig } from '@/shared/contracts/ai-paths';
 import type {
   CanvasSemanticDocument,
   SemanticDocument,
   SemanticEdge,
   SemanticNode,
-} from '@/shared/types/domain/ai-paths-semantic-grammar';
+} from '@/shared/contracts/ai-paths-semantic-grammar';
 
 import { createDefaultPathConfig } from '../utils/factory';
 import { normalizeAiPathsValidationConfig } from '../validation-engine';

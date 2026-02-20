@@ -31,7 +31,7 @@ import type {
   SingleQuery, 
   MutationResult, 
   UpdateMutation
-} from '@/shared/types/query-result-types';
+} from '@/shared/contracts/ui';
 
 import {
   cancelDatabaseEngineOperationJob,

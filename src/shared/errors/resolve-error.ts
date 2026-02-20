@@ -16,7 +16,7 @@ import {
   ERROR_CATEGORY,
   type ErrorCategory,
   type SuggestedAction,
-} from '@/shared/types/observability';
+} from '@/shared/contracts/observability';
 
 export type ResolvedError = {
   errorId: string;

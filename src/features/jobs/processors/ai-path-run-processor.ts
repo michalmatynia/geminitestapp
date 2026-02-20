@@ -7,7 +7,7 @@ import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-pub
 import { recordRuntimeRunFinished } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { logSystemEvent } from '@/features/observability/server';
 import { ErrorSystem } from '@/features/observability/services/error-system';
-import type { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
 const DEFAULT_MAX_ATTEMPTS = Number(process.env['AI_PATHS_RUN_MAX_ATTEMPTS'] ?? '3');
 const DEFAULT_BACKOFF_MS = Number(process.env['AI_PATHS_RUN_BACKOFF_MS'] ?? '5000');

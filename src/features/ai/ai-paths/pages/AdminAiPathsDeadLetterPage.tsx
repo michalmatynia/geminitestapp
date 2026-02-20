@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useMemo } from 'react';
 
-import type { AiPathRunEventRecord, AiPathRunRecord } from '@/shared/types/domain/ai-paths';
+import type { AiPathRunEventRecord, AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { 
   Button, 
   Checkbox, 

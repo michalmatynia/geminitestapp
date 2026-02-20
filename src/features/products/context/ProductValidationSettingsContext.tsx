@@ -12,7 +12,7 @@ import type {
   ProductValidationDenyBehavior,
   ProductValidationInstanceScope,
   ProductValidationPostAcceptBehavior,
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 
 export type ProductValidationDenyIssueInput = {
   fieldName: string;

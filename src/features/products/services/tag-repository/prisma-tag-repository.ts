@@ -7,7 +7,7 @@ import type {
 import prisma from '@/shared/lib/db/prisma';
 import type { 
   ProductTag 
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 
 const toTagDomain = (tag: PrismaProductTag): ProductTag => ({
   id: tag.id,

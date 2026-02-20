@@ -1,6 +1,6 @@
 'use client';
 
-import type { DbSchemaSnapshot } from '@/shared/types/domain/ai-paths';
+import type { DbSchemaSnapshot } from '@/shared/contracts/ai-paths';
 
 import type { 
   CollectionSchema, 

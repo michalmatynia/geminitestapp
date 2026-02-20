@@ -1046,3 +1046,36 @@ export const importParameterCacheResponseSchema = z.object({
 });
 
 export type ImportParameterCacheResponseDto = z.infer<typeof importParameterCacheResponseSchema>;
+
+/**
+ * Legacy Integration Type Aliases
+ */
+export type Integration = IntegrationDto;
+export type IntegrationConnection = IntegrationConnectionDto;
+export type ProductListing = ProductListingDto;
+export type Template = TemplateDto;
+export type TemplateMapping = TemplateMappingDto;
+export type BaseInventory = BaseInventoryDto;
+export type BaseWarehouse = BaseWarehouseDto;
+export type BaseCategory = BaseCategoryDto;
+export type ListingJob = ListingJobDto;
+export type ListingAttempt = NonNullable<ProductListingDto['exportHistory']>[number];
+export type ProductJob = ProductJobDto;
+export type ExportJobDetail = ExportJobDetailDto;
+export type IntegrationConnectionBasic = IntegrationConnectionBasicDto;
+export type IntegrationWithConnections = IntegrationWithConnectionsDto;
+export type IntegrationWithConnectionsBasic = IntegrationWithConnections;
+export type ProductListingWithDetails = ProductListingWithDetailsDto;
+export type CategoryMapping = CategoryMappingDto;
+export type CategoryMappingWithDetails = CategoryMappingWithDetailsDto;
+export type ExternalCategory = ExternalCategoryDto;
+export type ExternalCategoryWithChildren = ExternalCategoryWithChildrenDto;
+export type TagMapping = TagMappingDto;
+export type TagMappingWithDetails = TagMappingWithDetailsDto;
+export type ExternalTag = ExternalTagDto;
+export type ProducerMapping = ProducerMappingDto;
+export type ProducerMappingWithDetails = ProducerMappingWithDetailsDto;
+export type ExternalProducer = ExternalProducerDto;
+export type ImageBase64Mode = ImageBase64ModeDto;
+export type ImageTransformOptions = ImageTransformOptionsDto;
+export type ImageRetryPreset = ImageRetryPresetDto;

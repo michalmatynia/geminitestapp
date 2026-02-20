@@ -11,7 +11,7 @@ import type {
   ProductValidationPatternDto as ProductValidationPattern,
   ProductValidationTargetDto as ProductValidationTarget,
 } from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 type TemplateTarget = Extract<ProductValidationTarget, 'size_length' | 'length'>;
 

@@ -16,7 +16,7 @@ import type {
   ProductValidationPattern,
   ProductValidationPostAcceptBehavior,
   ProductValidationTarget,
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 
 export type FieldValidatorIssue = {
   patternId: string;

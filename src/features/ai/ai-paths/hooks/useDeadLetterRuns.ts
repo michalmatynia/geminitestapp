@@ -10,7 +10,7 @@ import type {
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
   AiPathRunRecord,
-} from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
 import { useToast } from '@/shared/ui';
 
 import {

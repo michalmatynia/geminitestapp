@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { isSensitiveKey, REDACTED_VALUE, truncateString } from '@/features/observability/lib/log-redaction';
 import { ErrorSystem } from '@/features/observability/server';
 import type { ErrorContext } from '@/features/observability/services/error-system';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
 
 

@@ -16,7 +16,7 @@ import type {
   AiNode,
   PathConfig,
   PathMeta,
-} from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
 
 import type { QueryClient } from '@tanstack/react-query';
 

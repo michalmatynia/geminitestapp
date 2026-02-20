@@ -4,7 +4,7 @@ import type {
   ProductValidationPattern,
   ProductValidatorConfig,
   ProductValidatorSettings,
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 
 import { 
   Catalog, 

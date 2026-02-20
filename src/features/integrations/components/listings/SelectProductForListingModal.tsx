@@ -7,7 +7,7 @@ import {
   useListingSettingsContext,
 } from '@/features/integrations/context/ListingSettingsContext';
 import { useProductsWithCount } from '@/features/products/hooks/useProductsQuery';
-import type { EntityModalProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/contracts/ui';
 import { FormModal } from '@/shared/ui';
 
 import { useProductSelectionForm } from './hooks/useProductSelectionForm';

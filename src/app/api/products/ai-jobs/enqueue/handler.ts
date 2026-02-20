@@ -6,7 +6,7 @@ import { startProductAiJobQueue, processSingleJob } from '@/features/jobs/server
 import { logSystemEvent, ErrorSystem } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ProductAiJobTypeDto as ProductAiJobType } from '@/shared/contracts/jobs';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const enqueueSchema = z.object({
   productId: z.string().trim().min(1),

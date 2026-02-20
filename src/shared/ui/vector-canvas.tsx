@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { VectorPoint, VectorShape, VectorShapeType, VectorToolMode } from '@/shared/types/domain/vector';
+import type { VectorPoint, VectorShape, VectorShapeType, VectorToolMode } from '@/shared/contracts/vector';
 import { cn } from '@/shared/utils';
 
 import { Button } from './button';

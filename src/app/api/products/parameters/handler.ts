@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { getParameterRepository } from '@/features/products/server';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import type { CatalogIdQuery } from '@/shared/validations/product-metadata-api-schemas';
 
 const SELECTOR_TYPES = ['text', 'textarea', 'radio', 'select', 'dropdown', 'checkbox', 'checklist'] as const;

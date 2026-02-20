@@ -10,7 +10,7 @@ import {
   noteTagSchema, 
   noteThemeSchema,
   noteCategorySchema,
-  noteCategoryWithChildrenSchema,
+  noteCategoryRecordWithChildrenSchema as noteCategoryWithChildrenSchema,
   relatedNoteSchema
 } from '@/shared/contracts/notes';
 import type { 
@@ -24,7 +24,7 @@ import type {
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { noteKeys } from '@/shared/lib/query-key-exports';
-import type { ListQuery, SingleQuery } from '@/shared/types/query-result-types';
+import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 
 const NOTES_STALE_MS = 10_000;
 

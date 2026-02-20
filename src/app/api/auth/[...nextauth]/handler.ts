@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { handlers } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await logAuthEvent({ req, action: 'auth.nextauth', stage: 'start' });

@@ -1,7 +1,7 @@
 import { Upload } from 'lucide-react';
 import React from 'react';
 
-import type { ImageFileSelection } from '@/shared/types/domain/files';
+import type { ImageFileSelection } from '@/shared/contracts/files';
 import { Button, FileUploadTrigger } from '@/shared/ui';
 
 import { DriveImportModal } from '../modals/DriveImportModal';

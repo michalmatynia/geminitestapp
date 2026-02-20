@@ -9,7 +9,7 @@ import {
 } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { removeUndefined } from '@/shared/utils';
 
 const migrationDirectionSchema = z.enum(['prisma-to-mongo', 'mongo-to-prisma']);

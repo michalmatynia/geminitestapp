@@ -1,125 +1,97 @@
 import { z } from 'zod';
 
-import { dtoBaseSchema, namedDtoSchema } from './base';
+import { dtoBaseSchema } from './base';
+import { aiNodeTypeSchema } from './ai-paths';
 
 /**
- * Agent Teaching DTOs
+ * Agent Documentation / Context Extraction Contract
  */
+export const agentTeachingChatSourceSchema = z.enum([
+  'cms-page',
+  'cms-domain',
+  'product-list',
+  'product-item',
+  'external-url',
+  'file-upload',
+  'manual-text',
+]);
+
+export type AgentTeachingChatSourceDto = z.infer<typeof agentTeachingChatSourceSchema>;
+export type AgentTeachingChatSource = AgentTeachingChatSourceDto;
 
 export const agentTeachingDocumentMetadataSchema = z.object({
-  title: z.string().nullable().optional(),
-  source: z.string().nullable().optional(),
+  source: agentTeachingChatSourceSchema,
+  sourceId: z.string().optional(),
+  title: z.string().optional(),
+  description: z.string().optional(),
   tags: z.array(z.string()).optional(),
-}).catchall(z.unknown());
+});
 
 export type AgentTeachingDocumentMetadataDto = z.infer<typeof agentTeachingDocumentMetadataSchema>;
+export type AgentTeachingEmbeddingDocumentMetadata = AgentTeachingDocumentMetadataDto;
 
-export const agentTeachingCollectionSchema = namedDtoSchema.extend({
-  embeddingModel: z.string(),
-});
-
-export type AgentTeachingCollectionDto = z.infer<typeof agentTeachingCollectionSchema>;
-
-export const createAgentTeachingCollectionSchema = agentTeachingCollectionSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type CreateAgentTeachingCollectionDto = z.infer<typeof createAgentTeachingCollectionSchema>;
-export type UpdateAgentTeachingCollectionDto = Partial<CreateAgentTeachingCollectionDto>;
-
-export const agentTeachingChunkSchema = dtoBaseSchema.extend({
-  documentId: z.string(),
-  text: z.string(),
-  embedding: z.array(z.number()).nullable(),
-  metadata: z.record(z.string(), z.unknown()),
-});
-
-export type AgentTeachingChunkDto = z.infer<typeof agentTeachingChunkSchema>;
-
-export const createAgentTeachingChunkSchema = agentTeachingChunkSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type CreateAgentTeachingChunkDto = z.infer<typeof createAgentTeachingChunkSchema>;
-export type UpdateAgentTeachingChunkDto = Partial<CreateAgentTeachingChunkDto>;
-
-export const agentTeachingDocumentSchema = namedDtoSchema.extend({
+export const agentTeachingDocumentSchema = dtoBaseSchema.extend({
   collectionId: z.string(),
-  text: z.string(),
-  metadata: agentTeachingDocumentMetadataSchema,
-  chunks: z.array(agentTeachingChunkSchema).optional(),
-  embeddingModel: z.string(),
-  embeddingDimensions: z.number(),
+  content: z.string(),
+  embedding: z.array(z.number()).optional(),
+  tokens: z.number().optional(),
+  metadata: agentTeachingDocumentMetadataSchema.optional(),
 });
 
 export type AgentTeachingDocumentDto = z.infer<typeof agentTeachingDocumentSchema>;
+export type AgentTeachingEmbeddingDocumentListItem = AgentTeachingDocumentDto;
 
-export const createAgentTeachingDocumentSchema = agentTeachingDocumentSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const agentTeachingCollectionSchema = dtoBaseSchema.extend({
+  name: z.string(),
+  description: z.string(),
+  provider: z.string(),
+  model: z.string(),
+  dimensions: z.number(),
+  documentCount: z.number(),
+  totalTokens: z.number(),
+  isDefault: z.boolean(),
 });
 
-export type CreateAgentTeachingDocumentDto = z.infer<typeof createAgentTeachingDocumentSchema>;
-export type UpdateAgentTeachingDocumentDto = Partial<CreateAgentTeachingDocumentDto>;
+export type AgentTeachingCollectionDto = z.infer<typeof agentTeachingCollectionSchema>;
+export type AgentTeachingEmbeddingCollectionRecord = AgentTeachingCollectionDto;
 
-export const agentTeachingLoadSchema = dtoBaseSchema.extend({
-  source: z.string(),
-  type: z.string(),
-  metadata: z.record(z.string(), z.unknown()),
-});
-
-export type AgentTeachingLoadDto = z.infer<typeof agentTeachingLoadSchema>;
-
-export const agentTeachingGlobalBioSchema = namedDtoSchema.extend({
-  content: z.string(),
-  metadata: z.record(z.string(), z.unknown()),
-});
-
-export type AgentTeachingGlobalBioDto = z.infer<typeof agentTeachingGlobalBioSchema>;
-
-export const createAgentTeachingGlobalBioSchema = agentTeachingGlobalBioSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type CreateAgentTeachingGlobalBioDto = z.infer<typeof createAgentTeachingGlobalBioSchema>;
-export type UpdateAgentTeachingGlobalBioDto = Partial<CreateAgentTeachingGlobalBioDto>;
-
-export const agentTeachingAgentSchema = namedDtoSchema.extend({
-  llmModel: z.string(),
-  embeddingModel: z.string(),
-  systemPrompt: z.string(),
+/**
+ * Agent Teaching & Context Extension
+ */
+export const agentTeachingAgentSchema = z.object({
+  id: z.string(),
+  agentId: z.string(),
   collectionIds: z.array(z.string()),
-  temperature: z.number(),
-  maxTokens: z.number(),
-  retrievalTopK: z.number(),
-  retrievalMinScore: z.number(),
-  maxDocsPerCollection: z.number(),
+  enabled: z.boolean(),
+  topK: z.number().optional(),
+  scoreThreshold: z.number().optional(),
+  includeSources: z.boolean().optional(),
 });
 
 export type AgentTeachingAgentDto = z.infer<typeof agentTeachingAgentSchema>;
+export type AgentTeachingAgentRecord = AgentTeachingAgentDto;
 
-export const createAgentTeachingAgentSchema = agentTeachingAgentSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const agentTeachingContextSchema = z.object({
+  query: z.string(),
+  results: z.array(
+    z.object({
+      documentId: z.string(),
+      content: z.string(),
+      score: z.number(),
+      metadata: agentTeachingDocumentMetadataSchema.optional(),
+    })
+  ),
+  tokensUsed: z.number(),
 });
 
-export type CreateAgentTeachingAgentDto = z.infer<typeof createAgentTeachingAgentSchema>;
-export type UpdateAgentTeachingAgentDto = Partial<CreateAgentTeachingAgentDto>;
+export type AgentTeachingContextDto = z.infer<typeof agentTeachingContextSchema>;
 
-export const agentTeachingChatSourceSchema = z.object({
-  documentId: z.string(),
-  collectionId: z.string(),
-  score: z.number(),
-  text: z.string(),
-  metadata: agentTeachingDocumentMetadataSchema.nullable(),
+export const agentTeachingSearchOptionsSchema = z.object({
+  agentId: z.string().optional(),
+  collectionIds: z.array(z.string()).optional(),
+  query: z.string(),
+  limit: z.number().optional(),
+  minScore: z.number().optional(),
 });
 
-export type AgentTeachingChatSourceDto = z.infer<typeof agentTeachingChatSourceSchema>;
+export type AgentTeachingSearchOptionsDto = z.infer<typeof agentTeachingSearchOptionsSchema>;

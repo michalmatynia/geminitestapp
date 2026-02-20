@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 
-import type { EntityModalProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/contracts/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 import { readMeta } from '../utils/metadata';

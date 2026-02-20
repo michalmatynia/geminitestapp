@@ -6,7 +6,7 @@ import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
 import { logSystemEvent } from '@/features/observability/server';
 import { mapErrorToAppError } from '@/shared/errors/error-mapper';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const PROD_TOKEN_URL =
   process.env['ALLEGRO_TOKEN_URL'] ?? 'https://allegro.pl/auth/oauth/token';

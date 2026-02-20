@@ -1,4 +1,4 @@
-import type { PathMeta } from '@/shared/types/domain/ai-paths';
+import type { PathMeta } from '@/shared/contracts/ai-paths';
 import type { StatusVariant } from '@/shared/ui';
 
 export const EXECUTION_OPTIONS = [

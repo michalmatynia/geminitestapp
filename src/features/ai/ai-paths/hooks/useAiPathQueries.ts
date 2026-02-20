@@ -9,9 +9,9 @@ import {
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { AiPathRuntimeAnalyticsSummary } from '@/shared/types/domain/ai-paths';
-import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
-import type { ListQuery, VoidMutation, SingleQuery } from '@/shared/types/query-result-types';
+import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths';
+import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
+import type { ListQuery, VoidMutation, SingleQuery } from '@/shared/contracts/ui';
 
 import { 
   fetchAiPathsSettingsCached, 

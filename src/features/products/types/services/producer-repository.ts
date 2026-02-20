@@ -1,6 +1,6 @@
 import type { 
   Producer 
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 
 export type ProducerFilters = {
   search?: string;

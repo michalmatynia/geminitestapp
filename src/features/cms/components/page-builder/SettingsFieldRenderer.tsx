@@ -23,6 +23,7 @@ import {
 } from './shared-fields';
 import { useThemeSettings } from './ThemeSettingsContext';
 import { useCmsSlugs } from '../../hooks/useCmsQueries';
+import { useOptionalSettingsForm } from './settings/SettingsFormContext';
 
 import type { SettingsField, SettingsFieldOption } from '../../types/page-builder';
 
@@ -98,8 +99,8 @@ const COLOR_SCHEME_OPTIONS: SettingsFieldOption[] = [
 
 interface SettingsFieldRendererProps {
   field: SettingsField;
-  value: unknown;
-  onChange: (key: string, value: unknown) => void;
+  value?: unknown;
+  onChange?: (key: string, value: unknown) => void;
 }
 
 type CompositeFieldContextValue = {
@@ -140,9 +141,15 @@ function useCompositeFieldContext(): CompositeFieldContextValue {
 
 export function SettingsFieldRenderer({
   field,
-  value,
-  onChange,
+  value: propValue,
+  onChange: propOnChange,
 }: SettingsFieldRendererProps): React.ReactNode {
+  const context = useOptionalSettingsForm();
+  
+  // Resolve value and onChange from prop or context
+  const value = propValue !== undefined ? propValue : context?.values[field.key];
+  const onChange = propOnChange || context?.onChange;
+
   const { theme } = useThemeSettings();
   const isDisabled = Boolean(field.disabled);
   const colorSchemeOptions = useMemo<SettingsFieldOption[]>((): SettingsFieldOption[] => {
@@ -160,7 +167,9 @@ export function SettingsFieldRenderer({
   }, [field.options, theme.colorSchemes]);
   const handleChange = useCallback(
     (newValue: unknown): void => {
-      onChange(field.key, newValue);
+      if (onChange) {
+        onChange(field.key, newValue);
+      }
     },
     [field.key, onChange]
   );

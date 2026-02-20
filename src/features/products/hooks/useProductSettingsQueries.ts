@@ -22,7 +22,7 @@ import type {
   ProductValidationPattern,
   ProductValidatorConfig,
   ProductValidatorSettings,
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 import type { 
   UpdateMutation, 
   DeleteMutation, 
@@ -30,7 +30,7 @@ import type {
   CreateMutation,
   ListQuery,
   SingleQuery,
-} from '@/shared/types/query-result-types';
+} from '@/shared/contracts/ui';
 
 import * as api from '../api/settings';
 import {
@@ -105,9 +105,13 @@ export function useValidationPatterns(): ListQuery<ProductValidationPattern> {
   return createListQueryV2({
     queryKey,
     queryFn: api.getValidationPatterns,
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    // Patterns are config data that rarely change mid-session. Mutations already
+    // call invalidateValidatorConfig() on success, so fresh data is guaranteed
+    // after any user-initiated change. Aggressive refetching caused a refetch
+    // storm on every window focus event.
+    staleTime: 5 * 60 * 1_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     meta: {
       source: 'products.hooks.useValidationPatterns',
@@ -127,9 +131,10 @@ export function useProductValidatorConfig(includeDisabled: boolean = false): Sin
     id,
     queryKey,
     queryFn: () => api.getProductValidatorConfig(includeDisabled),
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    // Same rationale as useValidationPatterns: config is stable within a session.
+    staleTime: 5 * 60 * 1_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     meta: {
       source: 'products.hooks.useProductValidatorConfig',

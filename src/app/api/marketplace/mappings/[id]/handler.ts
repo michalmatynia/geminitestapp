@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getCategoryMappingRepository } from '@/features/integrations/server';
 import { notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 type UpdateMappingRequest = {
   internalCategoryId?: string;

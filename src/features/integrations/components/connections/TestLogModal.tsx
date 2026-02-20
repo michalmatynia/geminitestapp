@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { ModalStateProps } from '@/shared/types/modal-props';
+import type { ModalStateProps } from '@/shared/contracts/ui';
 import { StatusBadge, MetadataItem, Hint, FormField } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 

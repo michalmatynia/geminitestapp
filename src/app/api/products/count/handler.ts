@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { productService } from '@/features/products/server';
 import { ProductFiltersParsed } from '@/features/products/validations';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 /**
  * GET /api/products/count

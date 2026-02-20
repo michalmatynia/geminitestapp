@@ -14,8 +14,8 @@ import {
   invalidateImageStudioSlots,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { ImageFileRecord, ImageFileSelection } from '@/shared/types/domain/files';
-import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/types/query-result-types';
+import type { ImageFileRecord, ImageFileSelection } from '@/shared/contracts/files';
+import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui';
 
 import type {
   ImageStudioProjectRecord,

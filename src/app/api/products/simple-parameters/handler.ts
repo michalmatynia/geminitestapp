@@ -6,7 +6,7 @@ import {
   listSimpleParameters,
 } from '@/features/products/services/simple-parameter-service';
 import { badRequestError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export const productSimpleParameterCreateSchema = z.object({
   name_en: z.string().trim().min(1, 'English name is required'),

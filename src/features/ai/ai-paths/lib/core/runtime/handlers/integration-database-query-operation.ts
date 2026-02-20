@@ -1,8 +1,8 @@
 import type {
   DbQueryConfig,
   RuntimePortValues,
-} from '@/shared/types/domain/ai-paths';
-import type { NodeHandlerContext } from '@/shared/types/domain/ai-paths-runtime';
+} from '@/shared/contracts/ai-paths';
+import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { executeDatabaseQuery } from './integration-database-query-execution';
 import { resolveDatabaseQuery } from './integration-database-query-resolution';

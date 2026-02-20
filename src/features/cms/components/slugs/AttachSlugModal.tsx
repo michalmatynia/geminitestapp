@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 
 import type { Slug } from '@/features/cms/types';
-import type { EntityModalProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/contracts/ui';
 import { FormModal, Checkbox, FormField, SearchInput, LoadingState } from '@/shared/ui';
 
 interface AttachSlugModalProps extends EntityModalProps<Slug, Slug> {

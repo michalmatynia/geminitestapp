@@ -9,7 +9,7 @@ import {
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { removePathRunQueueEntries } from '@/features/jobs/workers/aiPathRunQueue';
 import { notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export async function GET_handler(
   _req: NextRequest,

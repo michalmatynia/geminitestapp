@@ -18,6 +18,7 @@ export const productCategorySchema = namedDtoSchema.extend({
 });
 
 export type ProductCategoryDto = z.infer<typeof productCategorySchema>;
+export type ProductCategory = ProductCategoryDto;
 
 /**
  * Product Category With Children Contract
@@ -25,6 +26,7 @@ export type ProductCategoryDto = z.infer<typeof productCategorySchema>;
 export interface ProductCategoryWithChildrenDto extends ProductCategoryDto {
   children: ProductCategoryWithChildrenDto[];
 }
+export type ProductCategoryWithChildren = ProductCategoryWithChildrenDto;
 
 export const productCategoryWithChildrenSchema: z.ZodType<ProductCategoryWithChildrenDto> =
   productCategorySchema.extend({
@@ -59,6 +61,7 @@ export const productTagSchema = namedDtoSchema.extend({
 });
 
 export type ProductTagDto = z.infer<typeof productTagSchema>;
+export type ProductTag = ProductTagDto;
 
 export const createProductTagSchema = productTagSchema.omit({
   id: true,
@@ -93,6 +96,8 @@ export const catalogSchema = namedDtoSchema.extend({
 });
 
 export type CatalogDto = z.infer<typeof catalogSchema>;
+export type Catalog = CatalogDto;
+export type CatalogRecord = CatalogDto;
 
 export const createCatalogSchema = catalogSchema.omit({
   id: true,
@@ -128,6 +133,8 @@ export const priceGroupSchema = namedDtoSchema.extend({
 });
 
 export type PriceGroupDto = z.infer<typeof priceGroupSchema>;
+export type PriceGroup = PriceGroupDto;
+export type PriceGroupRecord = PriceGroupDto;
 
 export const createPriceGroupSchema = priceGroupSchema.omit({
   id: true,
@@ -148,6 +155,7 @@ export const producerSchema = namedDtoSchema.extend({
 });
 
 export type ProducerDto = z.infer<typeof producerSchema>;
+export type Producer = ProducerDto;
 
 export const createProducerSchema = producerSchema.omit({
   id: true,
@@ -184,6 +192,7 @@ export const productParameterSchema = namedDtoSchema.extend({
 });
 
 export type ProductParameterDto = z.infer<typeof productParameterSchema>;
+export type ProductParameter = ProductParameterDto;
 
 export const createProductParameterSchema = productParameterSchema.omit({
   id: true,
@@ -216,6 +225,7 @@ export const productSimpleParameterSchema = productParameterSchema.omit({
 });
 
 export type ProductSimpleParameterDto = z.infer<typeof productSimpleParameterSchema>;
+export type ProductSimpleParameter = ProductSimpleParameterDto;
 
 /**
  * Product Simple Parameter Value Contract
@@ -226,6 +236,7 @@ export const productSimpleParameterValueSchema = z.object({
 });
 
 export type ProductSimpleParameterValueDto = z.infer<typeof productSimpleParameterValueSchema>;
+export type ProductSimpleParameterValue = ProductSimpleParameterValueDto;
 
 /**
  * Currency Contract (Product-specific)
@@ -236,6 +247,7 @@ export const productCurrencySchema = namedDtoSchema.extend({
 });
 
 export type ProductCurrencyDto = z.infer<typeof productCurrencySchema>;
+export type CurrencyRecord = ProductCurrencyDto;
 
 /**
  * Price Group With Details Contract
@@ -246,6 +258,7 @@ export const priceGroupWithDetailsSchema = priceGroupSchema.extend({
 });
 
 export type PriceGroupWithDetailsDto = z.infer<typeof priceGroupWithDetailsSchema>;
+export type PriceGroupWithDetails = PriceGroupWithDetailsDto;
 
 /**
  * Price Group For Calculation Contract
@@ -264,6 +277,7 @@ export const priceGroupForCalculationSchema = z.object({
 });
 
 export type PriceGroupForCalculationDto = z.infer<typeof priceGroupForCalculationSchema>;
+export type PriceGroupForCalculation = PriceGroupForCalculationDto;
 
 /**
  * Product Image Contract
@@ -287,6 +301,7 @@ export const productImageRecordSchema = productImageSchema.omit({
 });
 
 export type ProductImageRecordDto = z.infer<typeof productImageRecordSchema>;
+export type ProductImageRecord = ProductImageRecordDto;
 
 /**
  * Product Catalog Contract
@@ -308,6 +323,7 @@ export const productCatalogRecordSchema = productCatalogSchema.extend({
 });
 
 export type ProductCatalogRecordDto = z.infer<typeof productCatalogRecordSchema>;
+export type ProductCatalogRecord = ProductCatalogRecordDto;
 
 /**
  * Product Tag Relation Contract
@@ -343,6 +359,7 @@ export const productParameterValueSchema = z.object({
 });
 
 export type ProductParameterValueDto = z.infer<typeof productParameterValueSchema>;
+export type ProductParameterValue = ProductParameterValueDto;
 
 /**
  * Product Contract
@@ -385,6 +402,7 @@ export const productSchema = dtoBaseSchema.extend({
 });
 
 export type ProductDto = z.infer<typeof productSchema>;
+export type ProductRecord = ProductDto;
 
 /**
  * Product With Images Contract
@@ -404,6 +422,7 @@ export const productWithImagesSchema = productSchema
   });
 
 export type ProductWithImagesDto = z.infer<typeof productWithImagesSchema>;
+export type ProductWithImages = ProductWithImagesDto;
 
 /**
  * Product Input Contracts (Modular/API)
@@ -535,18 +554,23 @@ export type UpdateProductDto = z.infer<typeof updateProductSchema>;
 
 export const productDbProviderSchema = z.enum(['prisma', 'mongodb']);
 export type ProductDbProviderDto = z.infer<typeof productDbProviderSchema>;
+export type ProductDbProvider = ProductDbProviderDto;
 
 export const integrationDbProviderSchema = z.enum(['prisma', 'mongodb']);
 export type IntegrationDbProviderDto = z.infer<typeof integrationDbProviderSchema>;
+export type IntegrationDbProvider = IntegrationDbProviderDto;
 
 export const productMigrationDirectionSchema = z.enum(['prisma-to-mongo', 'mongo-to-prisma']);
 export type ProductMigrationDirectionDto = z.infer<typeof productMigrationDirectionSchema>;
+export type ProductMigrationDirection = ProductMigrationDirectionDto;
 
 export const syncDirectionSchema = z.enum(['to_base', 'from_base', 'bidirectional']);
 export type SyncDirectionDto = z.infer<typeof syncDirectionSchema>;
+export type SyncDirection = SyncDirectionDto;
 
 export const priceGroupTypeSchema = z.enum(['standard', 'dependent']);
 export type PriceGroupTypeDto = z.infer<typeof priceGroupTypeSchema>;
+export type PriceGroupType = PriceGroupTypeDto;
 
 export const productMigrationBatchResultSchema = z.object({
   direction: productMigrationDirectionSchema,
@@ -558,6 +582,7 @@ export const productMigrationBatchResultSchema = z.object({
 });
 
 export type ProductMigrationBatchResultDto = z.infer<typeof productMigrationBatchResultSchema>;
+export type ProductMigrationBatchResult = ProductMigrationBatchResultDto;
 
 export const productListPreferencesSchema = z.object({
   nameLocale: z.enum(['name_en', 'name_pl', 'name_de']),
@@ -614,9 +639,11 @@ export const productValidationTargetSchema = z.enum([
 
 export const productValidationSeveritySchema = z.enum(['error', 'warning']);
 export type ProductValidationSeverityDto = z.infer<typeof productValidationSeveritySchema>;
+export type ProductValidationSeverity = ProductValidationSeverityDto;
 
 export const productValidationDenyBehaviorSchema = z.enum(['ask_again', 'mute_session']);
 export type ProductValidationDenyBehaviorDto = z.infer<typeof productValidationDenyBehaviorSchema>;
+export type ProductValidationDenyBehavior = ProductValidationDenyBehaviorDto;
 
 export const productValidationInstanceScopeSchema = z.enum([
   'draft_template',
@@ -624,6 +651,7 @@ export const productValidationInstanceScopeSchema = z.enum([
   'product_edit',
 ]);
 export type ProductValidationInstanceScopeDto = z.infer<typeof productValidationInstanceScopeSchema>;
+export type ProductValidationInstanceScope = ProductValidationInstanceScopeDto;
 
 export const productValidationPatternSchema = dtoBaseSchema.extend({
   label: z.string(),
@@ -678,11 +706,17 @@ export const productValidationPatternSchema = dtoBaseSchema.extend({
 });
 
 export type ProductValidationTargetDto = z.infer<typeof productValidationTargetSchema>;
+export type ProductValidationTarget = ProductValidationTargetDto;
 export type ProductValidationRuntimeTypeDto = 'none' | 'database_query' | 'ai_prompt';
+export type ProductValidationRuntimeType = ProductValidationRuntimeTypeDto;
 export type ProductValidationPostAcceptBehaviorDto = 'revalidate' | 'stop_after_accept';
+export type ProductValidationPostAcceptBehavior = ProductValidationPostAcceptBehaviorDto;
 export type ProductValidationChainModeDto = 'continue' | 'stop_on_match' | 'stop_on_replace';
+export type ProductValidationChainMode = ProductValidationChainModeDto;
 export type ProductValidationLaunchScopeBehaviorDto = 'gate' | 'condition_only';
+export type ProductValidationLaunchScopeBehavior = ProductValidationLaunchScopeBehaviorDto;
 export type ProductValidationLaunchSourceModeDto = 'current_field' | 'form_field' | 'latest_product_field';
+export type ProductValidationLaunchSourceMode = ProductValidationLaunchSourceModeDto;
 export type ProductValidationLaunchOperatorDto =
   | 'equals'
   | 'not_equals'
@@ -696,8 +730,10 @@ export type ProductValidationLaunchOperatorDto =
   | 'lte'
   | 'is_empty'
   | 'is_not_empty';
+export type ProductValidationLaunchOperator = ProductValidationLaunchOperatorDto;
 
 export type ProductValidationPatternDto = z.infer<typeof productValidationPatternSchema>;
+export type ProductValidationPattern = ProductValidationPatternDto;
 
 export const createProductValidationPatternSchema = productValidationPatternSchema.omit({
   id: true,
@@ -774,6 +810,8 @@ export const productValidatorSettingsSchema = z.object({
 
 export type ProductValidationInstanceDenyBehaviorMapDto = z.infer<typeof productValidatorSettingsSchema>['instanceDenyBehavior'];
 export type ProductValidatorSettingsDto = z.infer<typeof productValidatorSettingsSchema>;
+export type ProductValidatorSettings = ProductValidatorSettingsDto;
+export type ProductValidationInstanceDenyBehaviorMap = ProductValidationInstanceDenyBehaviorMapDto;
 
 export const productValidatorConfigSchema = z.object({
   enabledByDefault: z.boolean(),
@@ -785,6 +823,7 @@ export const productValidatorConfigSchema = z.object({
 });
 
 export type ProductValidatorConfigDto = z.infer<typeof productValidatorConfigSchema>;
+export type ProductValidatorConfig = ProductValidatorConfigDto;
 
 /**
  * Product Validation Replacement DTOs

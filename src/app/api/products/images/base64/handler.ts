@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const bulkSchema = z.object({
   productIds: z.array(z.string().min(1)).min(1),

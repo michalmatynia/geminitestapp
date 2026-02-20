@@ -6,7 +6,7 @@ import { useMemo } from 'react';
 import { TRIGGER_EVENTS, triggerButtonsApi } from '@/features/ai/ai-paths/lib';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
+import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { Label, SelectSimple } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';

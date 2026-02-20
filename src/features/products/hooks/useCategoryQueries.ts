@@ -4,7 +4,7 @@ import type { ProductCategory, ProductCategoryWithChildren } from '@/features/pr
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { productSettingsKeys } from '@/shared/lib/query-key-exports';
-import type { ListQuery } from '@/shared/types/query-result-types';
+import type { ListQuery } from '@/shared/contracts/ui';
 
 import { useCategories as useMetadataCategories } from './useProductMetadataQueries';
 

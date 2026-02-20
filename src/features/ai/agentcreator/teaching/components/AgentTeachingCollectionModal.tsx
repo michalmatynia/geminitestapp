@@ -2,8 +2,8 @@
 
 import React, { useMemo } from 'react';
 
-import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
-import type { EntityModalProps } from '@/shared/types/modal-props';
+import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
+import type { EntityModalProps } from '@/shared/contracts/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 interface AgentTeachingCollectionModalProps extends EntityModalProps<AgentTeachingEmbeddingCollectionRecord, string> {

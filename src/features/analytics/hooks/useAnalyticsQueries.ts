@@ -11,7 +11,7 @@ import {
   createCreateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { analyticsKeys } from '@/shared/lib/query-key-exports';
-import type { SingleQuery, MutationResult } from '@/shared/types/query-result-types';
+import type { SingleQuery, MutationResult } from '@/shared/contracts/ui';
 
 export { analyticsKeys };
 

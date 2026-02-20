@@ -4,7 +4,7 @@ import { auth } from '@/features/auth/server';
 import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
 import { cancelProductAiJob, getProductAiJob } from '@/features/jobs/server';
 import { authError, badRequestError, notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 type DatabaseEngineCancelableJob = {
   productId?: string | null | undefined;

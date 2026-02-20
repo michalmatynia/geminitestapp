@@ -10,7 +10,7 @@ import type {
   ProductValidationInstanceDenyBehaviorMap,
   ProductValidationInstanceScope,
   ProductValidationDenyBehavior,
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 
 export type ReplacementMode = ProductReplacementModeDto;
 

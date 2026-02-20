@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { AuthUserSecurityProfile } from '@/features/auth/api/users';
-import type { EntityModalProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/contracts/ui';
 import { StatusToggle, MetadataItem, LoadingState, ToggleRow } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 

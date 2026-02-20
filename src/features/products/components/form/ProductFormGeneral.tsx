@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowRight } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
@@ -28,7 +28,7 @@ import {
   sortValidatorPatterns,
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
-import type { ProductValidationPattern } from '@/shared/types/domain/products';
+import type { ProductValidationPattern } from '@/shared/contracts/products';
 import { Button, Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField, Alert, Skeleton, Hint } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -50,7 +50,7 @@ const buildIssueSnippet = (
   };
 };
 
-export function ValidatorIssueHint({
+export const ValidatorIssueHint = memo(function ValidatorIssueHint({
   issue,
   value,
   onReplace,
@@ -151,7 +151,94 @@ export function ValidatorIssueHint({
       ) : null}
     </div>
   );
-}
+});
+
+type IssueHintRowProps = {
+  fieldName: string;
+  issue: FieldValidatorIssue;
+  fieldValue: string;
+  numericField?: 'weight' | 'sizeLength' | 'sizeWidth' | 'length';
+};
+
+/**
+ * Memoized wrapper around ValidatorIssueHint that owns stable onReplace/onDeny
+ * callbacks via useCallback. Prevents re-rendering hints for unchanged fields
+ * when a sibling field is edited.
+ */
+const IssueHintRow = memo(function IssueHintRow({
+  fieldName,
+  issue,
+  fieldValue,
+  numericField,
+}: IssueHintRowProps): React.JSX.Element {
+  const { getValues, setValue } = useFormContext<ProductFormData>();
+  const { acceptIssue, denyIssue, getDenyActionLabel } = useProductValidationSettings();
+
+  const onReplace = useCallback((): void => {
+    if (numericField) {
+      const raw = getValues(numericField);
+      const currentValue =
+        typeof raw === 'string'
+          ? raw
+          : typeof raw === 'number' && Number.isFinite(raw)
+            ? String(raw)
+            : '';
+      const nextValue = getIssueReplacementPreview(currentValue, issue);
+      acceptIssue({
+        fieldName,
+        patternId: issue.patternId,
+        postAcceptBehavior: issue.postAcceptBehavior,
+        message: issue.message,
+        replacementValue: issue.replacementValue,
+      });
+      if (nextValue === currentValue) return;
+      const numericValue = Number(nextValue.replace(',', '.'));
+      if (!Number.isFinite(numericValue)) return;
+      setValue(
+        numericField,
+        Math.max(0, Math.floor(numericValue)) as ProductFormData[typeof numericField],
+        { shouldDirty: true, shouldTouch: true }
+      );
+    } else {
+      const currentValue =
+        (getValues(fieldName as keyof ProductFormData) as string | undefined) ?? '';
+      const nextValue = getIssueReplacementPreview(currentValue, issue);
+      acceptIssue({
+        fieldName,
+        patternId: issue.patternId,
+        postAcceptBehavior: issue.postAcceptBehavior,
+        message: issue.message,
+        replacementValue: issue.replacementValue,
+      });
+      if (nextValue !== currentValue) {
+        setValue(
+          fieldName as keyof ProductFormData,
+          nextValue as ProductFormData[keyof ProductFormData],
+          { shouldDirty: true, shouldTouch: true }
+        );
+      }
+    }
+  }, [acceptIssue, fieldName, getValues, issue, numericField, setValue]);
+
+  const onDeny = useCallback((): void => {
+    denyIssue({
+      fieldName,
+      patternId: issue.patternId,
+      message: issue.message,
+      replacementValue: issue.replacementValue,
+    });
+  }, [denyIssue, fieldName, issue.message, issue.patternId, issue.replacementValue]);
+
+  return (
+    <ValidatorIssueHint
+      issue={issue}
+      value={fieldValue}
+      onReplace={issue.replacementValue ? onReplace : undefined}
+      onDeny={onDeny}
+      denyLabel={getDenyActionLabel(issue.patternId)}
+    />
+  );
+});
 
 type ProductFormGeneralProps = {
   validatorPatterns: ProductValidationPattern[];
@@ -168,9 +255,6 @@ export default function ProductFormGeneral({
     validationInstanceScope,
     validatorEnabled,
     formatterEnabled,
-    getDenyActionLabel,
-    acceptIssue,
-    denyIssue,
   } = useProductValidationSettings();
   const {
     filteredLanguages,
@@ -188,7 +272,50 @@ export default function ProductFormGeneral({
     if (vals.gtin) return 'gtin';
     return 'ean';
   });
-  const allValues = watch();
+
+  // Subscribe only to the fields this component renders or uses in the formatter.
+  // Changes to parameters, imageLinks, imageBase64s, etc. will no longer cause
+  // this component to re-render.
+  const [
+    nameEn, namePl, nameDe,
+    descEn, descPl, descDe,
+    sku, weight, sizeLength, sizeWidth, fieldLength,
+    supplierName, supplierLink, priceComment,
+    price, stock,
+  ] = watch([
+    'name_en', 'name_pl', 'name_de',
+    'description_en', 'description_pl', 'description_de',
+    'sku', 'weight', 'sizeLength', 'sizeWidth', 'length',
+    'supplierName', 'supplierLink', 'priceComment',
+    'price', 'stock',
+  ]);
+
+  // Object used for field-value lookups in JSX (tab labels, hint values).
+  // Only reconstructed when one of the watched fields changes.
+  const displayValues = useMemo((): Record<string, unknown> => ({
+    name_en: nameEn,
+    name_pl: namePl,
+    name_de: nameDe,
+    description_en: descEn,
+    description_pl: descPl,
+    description_de: descDe,
+    sku,
+    weight,
+    sizeLength,
+    sizeWidth,
+    length: fieldLength,
+    supplierName,
+    supplierLink,
+    priceComment,
+    price,
+    stock,
+  }), [
+    nameEn, namePl, nameDe,
+    descEn, descPl, descDe,
+    sku, weight, sizeLength, sizeWidth, fieldLength,
+    supplierName, supplierLink, priceComment,
+    price, stock,
+  ]);
   const hasCatalogs = (filteredLanguages ?? []).length > 0;
   const languagesReady = (filteredLanguages ?? []).length > 0;
   const languageTabValues = useMemo(
@@ -214,48 +341,42 @@ export default function ProductFormGeneral({
     );
   }, [firstLanguageTab, languageTabValues]);
 
-  const applyIssueReplacement = (
-    value: string,
-    issue: FieldValidatorIssue
-  ): string => {
-    return getIssueReplacementPreview(value, issue);
-  };
-
   const toFieldString = (value: unknown): string => {
     if (typeof value === 'string') return value;
     if (typeof value === 'number' && Number.isFinite(value)) return String(value);
     return '';
   };
 
-  const applyNumericFieldIssueReplacement = (
-    fieldName: 'weight' | 'sizeLength' | 'sizeWidth' | 'length',
-    issue: FieldValidatorIssue
-  ): void => {
-    const currentValue = toFieldString(getValues(fieldName));
-    const nextValue = applyIssueReplacement(currentValue, issue);
-    acceptIssue({
-      fieldName,
-      patternId: issue.patternId,
-      postAcceptBehavior: issue.postAcceptBehavior,
-      message: issue.message,
-      replacementValue: issue.replacementValue,
-    });
-    if (nextValue === currentValue) return;
-    const numericValue = Number(nextValue.replace(',', '.'));
-    if (!Number.isFinite(numericValue)) return;
-    const normalizedNumeric = Math.max(0, Math.floor(numericValue));
-    setValue(fieldName, normalizedNumeric as ProductFormData[typeof fieldName], {
-      shouldDirty: true,
-      shouldTouch: true,
-    });
-  };
+  // Pre-compile regexes once per validatorPatterns change instead of re-creating
+  // them on every loop iteration inside the formatter effect (Fix 1.2).
+  const compiledPatterns = useMemo(
+    () =>
+      validatorPatterns.map((p: ProductValidationPattern) => {
+        let compiledRegex: RegExp | null = null;
+        try {
+          compiledRegex = new RegExp(p.regex, p.flags ?? undefined);
+        } catch {
+          compiledRegex = null;
+        }
+        return { pattern: p, compiledRegex };
+      }),
+    [validatorPatterns]
+  );
 
   useEffect(() => {
     if (!validatorEnabled || !formatterEnabled) return;
-    if (validatorPatterns.length === 0) return;
-    const orderedPatterns = sortValidatorPatterns(validatorPatterns);
+    if (compiledPatterns.length === 0) return;
+    // Read current form values lazily inside the effect so we don't need allValues
+    // in the dependency array. This means the effect only re-runs when one of the
+    // formatter-target watched fields changes, not on every unrelated field change.
+    const currentValues = getValues() as Record<string, unknown>;
+    const orderedPatterns = sortValidatorPatterns(compiledPatterns.map((c) => c.pattern));
     const sequenceGroupCounts = buildSequenceGroupCounts(orderedPatterns);
-    for (const [fieldNameRaw, rawUnknown] of Object.entries(allValues as Record<string, unknown>)) {
+    // Build a map for O(1) compiled-regex lookup inside the inner loop.
+    const compiledRegexByPatternId = new Map(
+      compiledPatterns.map((c) => [c.pattern.id, c.compiledRegex])
+    );
+    for (const [fieldNameRaw, rawUnknown] of Object.entries(currentValues)) {
       const rawValue: string =
         typeof rawUnknown === 'string'
           ? rawUnknown
@@ -320,18 +441,21 @@ export default function ProductFormGeneral({
               pattern,
               validationScope: validationInstanceScope,
               fieldValue: candidateValue,
-              values: allValues,
+              values: currentValues,
               latestProductValues,
             })
           ) {
             break;
           }
+          // Use the pre-compiled regex instead of re-creating it each iteration.
+          const precompiled = compiledRegexByPatternId.get(pattern.id) ?? null;
           let hasMatch = false;
-          try {
-            const regex = new RegExp(pattern.regex, pattern.flags ?? undefined);
-            hasMatch = regex.test(candidateValue);
-          } catch {
-            hasMatch = false;
+          if (precompiled) {
+            try {
+              hasMatch = precompiled.test(candidateValue);
+            } catch {
+              hasMatch = false;
+            }
           }
           const allowWithoutRegexMatch = isLatestPriceStockMirrorPattern(pattern);
           if (!hasMatch && !allowWithoutRegexMatch) break;
@@ -341,7 +465,7 @@ export default function ProductFormGeneral({
             const replacement = resolvePatternReplacementValue({
               pattern,
               fieldValue: candidateValue,
-              values: allValues,
+              values: currentValues,
               latestProductValues,
             });
             const replacementEnabledForScope = isPatternReplacementEnabledForValidationScope(
@@ -404,13 +528,22 @@ export default function ProductFormGeneral({
       }
     }
   }, [
-    allValues,
+    // Specific watched field values drive WHEN the formatter runs. getValues()
+    // is called inside the effect to get fresh values at execution time, so we
+    // don't need allValues in deps. Changes to parameters/imageLinks/imageBase64s
+    // no longer trigger this effect.
+    nameEn, namePl, nameDe,
+    descEn, descPl, descDe,
+    sku, price, stock,
+    weight, sizeLength, sizeWidth, fieldLength,
+    supplierName, supplierLink, priceComment,
+    compiledPatterns,
     formatterEnabled,
+    getValues,
     latestProductValues,
     setValue,
     validationInstanceScope,
     validatorEnabled,
-    validatorPatterns,
   ]);
 
   return (
@@ -455,7 +588,7 @@ export default function ProductFormGeneral({
             <TabsList className='mb-4'>
               {filteredLanguages.map((language: { name: string; code: string }) => {
                 const fieldName = `name_${language.code.toLowerCase()}` as keyof ProductFormData;
-                const fieldValue = allValues[fieldName] as string | undefined;
+                const fieldValue = displayValues[String(fieldName)] as string | undefined;
                 return (
                   <TabsTrigger
                     key={language.code}
@@ -477,7 +610,7 @@ export default function ProductFormGeneral({
               const fieldNameKey = String(fieldName);
               const fieldIssueList = validatorEnabled ? visibleFieldIssues[fieldNameKey] ?? [] : [];
               const fieldIssue = fieldIssueList[0];
-              const fieldValue = (allValues[fieldName] as string | undefined) ?? '';
+              const fieldValue = (displayValues[String(fieldName)] as string | undefined) ?? '';
               return (
                 <TabsContent key={language.code} value={language.code.toLowerCase()}>
                   <FormField label={`${language.name} Name`} error={error} id={fieldName}>
@@ -494,40 +627,11 @@ export default function ProductFormGeneral({
                       placeholder={`Enter product name in ${language.name}`}
                     />
                     {validatorEnabled && fieldIssueList.map((issue: FieldValidatorIssue) => (
-                      <ValidatorIssueHint
+                      <IssueHintRow
                         key={issue.patternId}
+                        fieldName={fieldNameKey}
                         issue={issue}
-                        value={fieldValue}
-                        onReplace={
-                          issue.replacementValue
-                            ? () => {
-                              const currentValue = ((getValues(fieldName) as string | undefined) ?? '');
-                              const nextValue = applyIssueReplacement(currentValue, issue);
-                              acceptIssue({
-                                fieldName: fieldNameKey,
-                                patternId: issue.patternId,
-                                postAcceptBehavior: issue.postAcceptBehavior,
-                                message: issue.message,
-                                replacementValue: issue.replacementValue,
-                              });
-                              if (nextValue !== currentValue) {
-                                setValue(fieldName, nextValue as ProductFormData[typeof fieldName], {
-                                  shouldDirty: true,
-                                  shouldTouch: true,
-                                });
-                              }
-                            }
-                            : undefined
-                        }
-                        onDeny={() => {
-                          denyIssue({
-                            fieldName: fieldNameKey,
-                            patternId: issue.patternId,
-                            message: issue.message,
-                            replacementValue: issue.replacementValue,
-                          });
-                        }}
-                        denyLabel={getDenyActionLabel(issue.patternId)}
+                        fieldValue={fieldValue}
                       />
                     ))}
                   </FormField>
@@ -544,7 +648,7 @@ export default function ProductFormGeneral({
             <TabsList className='mb-4'>
               {filteredLanguages.map((language: { name: string; code: string }) => {
                 const fieldName = `description_${language.code.toLowerCase()}` as keyof ProductFormData;
-                const fieldValue = allValues[fieldName] as string | undefined;
+                const fieldValue = displayValues[String(fieldName)] as string | undefined;
                 return (
                   <TabsTrigger
                     key={language.code}
@@ -566,7 +670,7 @@ export default function ProductFormGeneral({
               const fieldNameKey = String(fieldName);
               const fieldIssueList = validatorEnabled ? visibleFieldIssues[fieldNameKey] ?? [] : [];
               const fieldIssue = fieldIssueList[0];
-              const fieldValue = (allValues[fieldName] as string | undefined) ?? '';
+              const fieldValue = (displayValues[String(fieldName)] as string | undefined) ?? '';
               return (
                 <TabsContent key={language.code} value={language.code.toLowerCase()}>
                   <FormField label={`${language.name} Description`} error={error} id={fieldName}>
@@ -584,40 +688,11 @@ export default function ProductFormGeneral({
                       rows={4}
                     />
                     {validatorEnabled && fieldIssueList.map((issue: FieldValidatorIssue) => (
-                      <ValidatorIssueHint
+                      <IssueHintRow
                         key={issue.patternId}
+                        fieldName={fieldNameKey}
                         issue={issue}
-                        value={fieldValue}
-                        onReplace={
-                          issue.replacementValue
-                            ? () => {
-                              const currentValue = ((getValues(fieldName) as string | undefined) ?? '');
-                              const nextValue = applyIssueReplacement(currentValue, issue);
-                              acceptIssue({
-                                fieldName: fieldNameKey,
-                                patternId: issue.patternId,
-                                postAcceptBehavior: issue.postAcceptBehavior,
-                                message: issue.message,
-                                replacementValue: issue.replacementValue,
-                              });
-                              if (nextValue !== currentValue) {
-                                setValue(fieldName, nextValue as ProductFormData[typeof fieldName], {
-                                  shouldDirty: true,
-                                  shouldTouch: true,
-                                });
-                              }
-                            }
-                            : undefined
-                        }
-                        onDeny={() => {
-                          denyIssue({
-                            fieldName: fieldNameKey,
-                            patternId: issue.patternId,
-                            message: issue.message,
-                            replacementValue: issue.replacementValue,
-                          });
-                        }}
-                        denyLabel={getDenyActionLabel(issue.patternId)}
+                        fieldValue={fieldValue}
                       />
                     ))}
                   </FormField>
@@ -633,7 +708,7 @@ export default function ProductFormGeneral({
           {(() => {
             const skuFieldIssueList = validatorEnabled ? visibleFieldIssues['sku'] ?? [] : [];
             const skuFieldIssue = skuFieldIssueList[0];
-            const skuValue = (allValues.sku as string | undefined) ?? '';
+            const skuValue = (displayValues['sku'] as string | undefined) ?? '';
             return (
               <>
                 <Input
@@ -650,40 +725,11 @@ export default function ProductFormGeneral({
                 />
                 {validatorEnabled &&
                   skuFieldIssueList.map((issue: FieldValidatorIssue) => (
-                    <ValidatorIssueHint
+                    <IssueHintRow
                       key={issue.patternId}
+                      fieldName='sku'
                       issue={issue}
-                      value={skuValue}
-                      onReplace={
-                        issue.replacementValue
-                          ? () => {
-                            const currentValue = (getValues('sku') as string | undefined) ?? '';
-                            const nextValue = applyIssueReplacement(currentValue, issue);
-                            acceptIssue({
-                              fieldName: 'sku',
-                              patternId: issue.patternId,
-                              postAcceptBehavior: issue.postAcceptBehavior,
-                              message: issue.message,
-                              replacementValue: issue.replacementValue,
-                            });
-                            if (nextValue !== currentValue) {
-                              setValue('sku', nextValue, {
-                                shouldDirty: true,
-                                shouldTouch: true,
-                              });
-                            }
-                          }
-                          : undefined
-                      }
-                      onDeny={() => {
-                        denyIssue({
-                          fieldName: 'sku',
-                          patternId: issue.patternId,
-                          message: issue.message,
-                          replacementValue: issue.replacementValue,
-                        });
-                      }}
-                      denyLabel={getDenyActionLabel(issue.patternId)}
+                      fieldValue={skuValue}
                     />
                   ))}
               </>
@@ -720,7 +766,7 @@ export default function ProductFormGeneral({
             const fieldName = 'weight';
             const fieldIssueList = validatorEnabled ? visibleFieldIssues[fieldName] ?? [] : [];
             const fieldIssue = fieldIssueList[0];
-            const fieldValue = toFieldString(allValues[fieldName]);
+            const fieldValue = toFieldString(displayValues[String(fieldName)]);
             return (
               <>
                 <div className='relative'>
@@ -748,24 +794,12 @@ export default function ProductFormGeneral({
                 </div>
                 {validatorEnabled &&
                   fieldIssueList.map((issue: FieldValidatorIssue) => (
-                    <ValidatorIssueHint
+                    <IssueHintRow
                       key={issue.patternId}
+                      fieldName={fieldName}
                       issue={issue}
-                      value={fieldValue}
-                      onReplace={
-                        issue.replacementValue
-                          ? () => applyNumericFieldIssueReplacement('weight', issue)
-                          : undefined
-                      }
-                      onDeny={() => {
-                        denyIssue({
-                          fieldName,
-                          patternId: issue.patternId,
-                          message: issue.message,
-                          replacementValue: issue.replacementValue,
-                        });
-                      }}
-                      denyLabel={getDenyActionLabel(issue.patternId)}
+                      fieldValue={fieldValue}
+                      numericField={fieldName}
                     />
                   ))}
               </>
@@ -778,7 +812,7 @@ export default function ProductFormGeneral({
             const fieldName = 'sizeLength';
             const fieldIssueList = validatorEnabled ? visibleFieldIssues[fieldName] ?? [] : [];
             const fieldIssue = fieldIssueList[0];
-            const fieldValue = toFieldString(allValues[fieldName]);
+            const fieldValue = toFieldString(displayValues[String(fieldName)]);
             return (
               <>
                 <div className='relative'>
@@ -806,24 +840,12 @@ export default function ProductFormGeneral({
                 </div>
                 {validatorEnabled &&
                   fieldIssueList.map((issue: FieldValidatorIssue) => (
-                    <ValidatorIssueHint
+                    <IssueHintRow
                       key={issue.patternId}
+                      fieldName={fieldName}
                       issue={issue}
-                      value={fieldValue}
-                      onReplace={
-                        issue.replacementValue
-                          ? () => applyNumericFieldIssueReplacement('sizeLength', issue)
-                          : undefined
-                      }
-                      onDeny={() => {
-                        denyIssue({
-                          fieldName,
-                          patternId: issue.patternId,
-                          message: issue.message,
-                          replacementValue: issue.replacementValue,
-                        });
-                      }}
-                      denyLabel={getDenyActionLabel(issue.patternId)}
+                      fieldValue={fieldValue}
+                      numericField={fieldName}
                     />
                   ))}
               </>
@@ -836,7 +858,7 @@ export default function ProductFormGeneral({
             const fieldName = 'sizeWidth';
             const fieldIssueList = validatorEnabled ? visibleFieldIssues[fieldName] ?? [] : [];
             const fieldIssue = fieldIssueList[0];
-            const fieldValue = toFieldString(allValues[fieldName]);
+            const fieldValue = toFieldString(displayValues[String(fieldName)]);
             return (
               <>
                 <div className='relative'>
@@ -894,7 +916,7 @@ export default function ProductFormGeneral({
             const fieldName = 'length';
             const fieldIssueList = validatorEnabled ? visibleFieldIssues[fieldName] ?? [] : [];
             const fieldIssue = fieldIssueList[0];
-            const fieldValue = toFieldString(allValues[fieldName]);
+            const fieldValue = toFieldString(displayValues[String(fieldName)]);
             return (
               <>
                 <div className='relative'>

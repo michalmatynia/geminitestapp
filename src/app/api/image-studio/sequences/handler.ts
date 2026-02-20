@@ -4,7 +4,7 @@ import {
   listImageStudioSequenceRuns,
   type ImageStudioSequenceRunStatus,
 } from '@/features/ai/image-studio/server/sequence-run-repository';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const RUN_STATUSES = new Set<ImageStudioSequenceRunStatus>([
   'queued',

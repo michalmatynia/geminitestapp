@@ -5,7 +5,7 @@
 import React from 'react';
 
 import type { SessionCookie } from '@/features/integrations/types/integrations-ui';
-import type { ModalStateProps } from '@/shared/types/modal-props';
+import type { ModalStateProps } from '@/shared/contracts/ui';
 import { Badge, StatusBadge, LoadingState } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 import { cn } from '@/shared/utils';

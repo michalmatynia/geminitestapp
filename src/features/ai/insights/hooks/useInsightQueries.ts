@@ -5,8 +5,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { AiInsightRecord } from '@/shared/types';
-import type { ListQuery, MutationResult } from '@/shared/types/query-result-types';
+import type { AiInsightRecord } from '@/shared/contracts';
+import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 
 type InsightResponse = { insights: AiInsightRecord[] };
 

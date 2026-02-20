@@ -19,9 +19,9 @@ import type {
   SettingRecordDto,
   SettingsScopeDto,
 } from '@/shared/contracts/settings';
-import type { AgentTeachingAgentRecord, AgentTeachingChatSource } from '@/shared/types/domain/agent-teaching';
-import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
-import type { ChatMessage } from '@/shared/types/domain/chatbot';
+import type { AgentTeachingAgentRecord, AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
+import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
+import type { ChatMessage } from '@/shared/contracts/chatbot';
 
 import type { AiPathRuntimeAnalyticsSummary } from '..';
 

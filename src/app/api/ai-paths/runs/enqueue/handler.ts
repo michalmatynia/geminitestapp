@@ -10,8 +10,8 @@ import { enqueuePathRun } from '@/features/ai/ai-paths/services/path-run-service
 import { startAiPathRunQueue } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { AiNode, Edge } from '@/shared/types/domain/ai-paths';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 
 const enqueueSchema = z.object({
   pathId: z.string().trim().min(1),

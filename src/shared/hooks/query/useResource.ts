@@ -8,7 +8,7 @@ import {
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { ListQuery, MutationResult } from '@/shared/types/query-result-types';
+import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 
 /**
  * A generic hook to handle standard CRUD operations for a resource

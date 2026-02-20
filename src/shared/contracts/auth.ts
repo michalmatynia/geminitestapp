@@ -243,6 +243,7 @@ export const userPreferencesSchema = dtoBaseSchema.extend({
 });
 
 export type UserPreferencesDto = z.infer<typeof userPreferencesSchema>;
+export type UserPreferences = UserPreferencesDto;
 
 export const createUserPreferencesSchema = userPreferencesSchema.omit({
   id: true,
@@ -252,3 +253,4 @@ export const createUserPreferencesSchema = userPreferencesSchema.omit({
 
 export type CreateUserPreferencesDto = z.infer<typeof createUserPreferencesSchema>;
 export type UpdateUserPreferencesDto = Partial<CreateUserPreferencesDto>;
+export type UserPreferencesUpdate = UpdateUserPreferencesDto;

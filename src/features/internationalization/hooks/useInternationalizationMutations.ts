@@ -5,8 +5,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/shared/lib/api-client';
 import { createDeleteMutationV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { CurrencyOption, CountryOption, Language } from '@/shared/types/domain/internationalization';
-import type { DeleteMutation, SaveMutation } from '@/shared/types/query-result-types';
+import type { CurrencyOption, CountryOption, Language } from '@/shared/contracts/internationalization';
+import type { DeleteMutation, SaveMutation } from '@/shared/contracts/ui';
 
 import type { 
   SaveCurrencyInput, 

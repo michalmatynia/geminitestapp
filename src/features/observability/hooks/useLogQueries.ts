@@ -11,8 +11,8 @@ import {
   createSingleQueryV2,
 } from '@/shared/lib/query-factories-v2';
 import { logsKeys, activityKeys, diagnosticsKeys } from '@/shared/lib/query-key-exports';
-import type { AiInsightRecord } from '@/shared/types';
-import type { SingleQuery } from '@/shared/types/query-result-types';
+import type { AiInsightRecord } from '@/shared/contracts';
+import type { SingleQuery } from '@/shared/contracts/ui';
 
 export type { LogFilters, SystemLogsResponse, SystemActivityResponse, SystemLogMetricsResponse };
 

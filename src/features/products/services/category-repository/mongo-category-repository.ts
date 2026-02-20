@@ -13,7 +13,7 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { 
   ProductCategory, 
   ProductCategoryWithChildren 
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 
 import type { AnyBulkWriteOperation, Filter, UpdateFilter, Document } from 'mongodb';
 

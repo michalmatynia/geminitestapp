@@ -1,121 +1,65 @@
 import { z } from 'zod';
 
-import { dtoBaseSchema } from './base';
+import { dtoBaseSchema, namedDtoSchema } from './base';
 
 /**
- * File DTOs
+ * File Contracts
  */
-
-export const fileSchema = dtoBaseSchema.extend({
+export const fileSchema = namedDtoSchema.extend({
   filename: z.string(),
-  originalName: z.string(),
-  mimeType: z.string(),
+  filepath: z.string(),
+  mimetype: z.string(),
   size: z.number(),
-  path: z.string(),
-  url: z.string(),
+  extension: z.string().optional(),
+  publicUrl: z.string().optional(),
+  storageProvider: z.enum(['local', 's3', 'imagekit']).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type FileDto = z.infer<typeof fileSchema>;
 
-export const updateFileSchema = fileSchema.partial().omit({
+export const uploadFileSchema = fileSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
+
+export type UploadFileDto = z.infer<typeof uploadFileSchema>;
+
+export const updateFileSchema = uploadFileSchema.partial();
 
 export type UpdateFileDto = z.infer<typeof updateFileSchema>;
 
 /**
- * Image File DTO
+ * Image File Contracts
  */
-
 export const imageFileSchema = fileSchema.extend({
-  width: z.number(),
-  height: z.number(),
-  alt: z.string().optional(),
+  width: z.number().optional(),
+  height: z.number().optional(),
+  thumbnailPath: z.string().optional(),
   thumbnailUrl: z.string().optional(),
+  isAnimated: z.boolean().optional(),
+  hasAlpha: z.boolean().optional(),
+  blurHash: z.string().optional(),
 });
 
 export type ImageFileDto = z.infer<typeof imageFileSchema>;
 
-export const updateImageFileSchema = imageFileSchema.partial().omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type UpdateImageFileDto = z.infer<typeof updateImageFileSchema>;
-
-export const imageFileRecordSchema = dtoBaseSchema.extend({
-  filename: z.string(),
-  filepath: z.string(),
-  mimetype: z.string(),
-  size: z.number(),
-  width: z.number().nullable(),
-  height: z.number().nullable(),
-  tags: z.array(z.string()),
-  name: z.string().nullable().optional(),
-  categoryId: z.string().nullable().optional(),
-  isPublic: z.boolean().optional(),
-  description: z.string().nullable().optional(),
-  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+export const imageFileRecordSchema = imageFileSchema.extend({
+  // Added fields specific to DB record if needed
 });
 
 export type ImageFileRecordDto = z.infer<typeof imageFileRecordSchema>;
+export type ImageFileRecord = ImageFileRecordDto;
 
 export const imageFileSelectionSchema = z.object({
   id: z.string(),
-  filepath: z.string(),
+  url: z.string(),
+  thumbnailUrl: z.string().optional(),
+  filename: z.string().optional(),
+  width: z.number().optional(),
+  height: z.number().optional(),
 });
 
 export type ImageFileSelectionDto = z.infer<typeof imageFileSelectionSchema>;
-
-export const imageFileListFiltersSchema = z.object({
-  filename: z.string().nullable().optional(),
-  tags: z.array(z.string()).nullable().optional(),
-});
-
-export type ImageFileListFiltersDto = z.infer<typeof imageFileListFiltersSchema>;
-
-/**
- * Image File Operation DTOs
- */
-
-export const imageFileCreateInputSchema = z.object({
-  filename: z.string(),
-  filepath: z.string(),
-  mimetype: z.string(),
-  size: z.number(),
-  width: z.number().nullable().optional(),
-  height: z.number().nullable().optional(),
-  tags: z.array(z.string()).nullable().optional(),
-});
-
-export type ImageFileCreateInputDto = z.infer<typeof imageFileCreateInputSchema>;
-
-/**
- * Upload DTOs
- */
-
-// Note: File object is a browser native, so we use z.any() or z.instanceof(File)
-export const uploadFileSchema = z.object({
-  file: z.any(),
-  alt: z.string().optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-});
-
-export type UploadFileDto = {
-  file: File;
-  alt?: string;
-  metadata?: Record<string, unknown>;
-};
-
-export const fileUploadResponseSchema = z.object({
-  id: z.string(),
-  url: z.string(),
-  filename: z.string(),
-  size: z.number(),
-});
-
-export type FileUploadResponseDto = z.infer<typeof fileUploadResponseSchema>;
+export type ImageFileSelection = ImageFileSelectionDto;

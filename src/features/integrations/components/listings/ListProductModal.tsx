@@ -7,7 +7,7 @@ import {
 import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
 import type { ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
-import type { EntityModalProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/contracts/ui';
 import { FormModal } from '@/shared/ui';
 
 import { BaseListingSettings } from './BaseListingSettings';

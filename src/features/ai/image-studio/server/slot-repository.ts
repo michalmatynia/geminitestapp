@@ -8,7 +8,7 @@ import { getProductRepository } from '@/features/products/services/product-repos
 import { pruneProductStudioSourceSlotsForProject } from '@/features/products/services/product-studio-config';
 import type { Asset3dDto as Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import type { ImageFileRecord } from '@/shared/types/domain/files';
+import type { ImageFileRecord } from '@/shared/contracts/files';
 
 import { removeImageStudioRunOutputs } from './run-repository';
 import {

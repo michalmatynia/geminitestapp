@@ -4,8 +4,8 @@ import { handleValidationPattern } from '@/features/ai/ai-paths/lib/core/runtime
 import type {
   AiNode,
   RuntimePortValues,
-} from '@/shared/types/domain/ai-paths';
-import type { NodeHandlerContext } from '@/shared/types/domain/ai-paths-runtime';
+} from '@/shared/contracts/ai-paths';
+import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 const buildNode = (
   patch: Partial<AiNode> = {}

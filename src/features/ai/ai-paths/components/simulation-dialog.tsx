@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { AiNode } from '@/features/ai/ai-paths/lib';
-import type { EntityModalProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/contracts/ui';
 import {
   Button,
   Input,

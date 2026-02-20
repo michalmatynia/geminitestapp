@@ -4,8 +4,8 @@ import { Loader2, Upload } from 'lucide-react';
 import React from 'react';
 
 import FileManager from '@/features/files/components/FileManager';
-import type { ImageFileSelection } from '@/shared/types/domain/files';
-import type { ModalStateProps } from '@/shared/types/modal-props';
+import type { ImageFileSelection } from '@/shared/contracts/files';
+import type { ModalStateProps } from '@/shared/contracts/ui';
 import { Button } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 

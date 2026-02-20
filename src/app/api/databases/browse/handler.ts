@@ -9,7 +9,7 @@ import { badRequestError } from '@/shared/errors/app-error';
 import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 async function browseMongoCollection(params: BrowseParams): Promise<BrowseResponse> {
   const db = await getMongoDb();

@@ -4,7 +4,7 @@ import type {
   NodeType,
   DatabaseConfig,
   DbQueryConfig,
-} from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
 
 import {
   AGENT_INPUT_PORTS,

@@ -4,7 +4,7 @@ import { categoryUpdateSchema } from '@/features/notesapp/public';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { UpdateNoteCategoryDto as CategoryUpdateInput } from '@/shared/contracts/notes';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { removeUndefined } from '@/shared/utils';
 
 /**

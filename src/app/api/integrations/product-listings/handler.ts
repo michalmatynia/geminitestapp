@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import { getIntegrationRepository, listAllProductListingsAcrossProviders } from '@/features/integrations/server';
 import { getProductRepository } from '@/features/products/server';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 type MarketplaceBadgeKey = 'base' | 'tradera';

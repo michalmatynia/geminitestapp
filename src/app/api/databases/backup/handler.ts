@@ -11,7 +11,7 @@ import {
 } from '@/features/jobs/server';
 import { logSystemError } from '@/features/observability/server';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const backupTypeSchema = z.enum(['mongodb', 'postgresql']);
 const isProductionRuntime = (): boolean => process.env['NODE_ENV'] === 'production';

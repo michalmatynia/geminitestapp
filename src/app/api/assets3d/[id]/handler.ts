@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAsset3DRepository, deleteAsset3D } from '@/features/viewer3d/server';
 import type { Asset3DUpdateInput } from '@/features/viewer3d/server';
 import { notFoundError, badRequestError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export async function GET_handler(
   _req: NextRequest,

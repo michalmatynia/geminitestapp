@@ -9,7 +9,7 @@ import type { ProductAiJobTypeDto as ProductAiJobType } from '@/shared/contracts
 import { authError, forbiddenError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getDatabaseEnginePolicy } from '@/shared/lib/db/database-engine-policy';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logger } from '@/shared/utils/logger';
 
 const syncSchema = z.object({

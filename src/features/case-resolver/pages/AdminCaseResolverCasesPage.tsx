@@ -20,7 +20,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import type { UserPreferences } from '@/shared/types/domain/user-preferences';
+import type { UserPreferences } from '@/shared/contracts/auth';
 import {
   Badge,
   Button,

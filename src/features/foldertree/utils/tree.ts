@@ -1,4 +1,4 @@
-import type { CategoryWithChildren } from '@/shared/types/domain/notes';
+import type { CategoryWithChildren } from '@/shared/contracts/notes';
 import {
   findTreeNodeById,
   findTreeNodeParentId,

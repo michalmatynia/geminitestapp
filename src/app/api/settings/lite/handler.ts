@@ -8,7 +8,7 @@ import { internalError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { FOLDER_TREE_PROFILES_V2_SETTING_KEY } from '@/shared/utils/folder-tree-profiles-v2';
 
 type SettingRecord = { key: string; value: string };

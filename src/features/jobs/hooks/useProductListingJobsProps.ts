@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 
 import { useJobsContext } from '@/features/jobs/context/JobsContext';
-import type { ListingJob, ProductJob } from '@/shared/types/domain/listing-jobs';
+import type { ListingJob, ProductJob } from '@/shared/contracts/integrations';
 
 import { type JobRowData } from '../types';
 

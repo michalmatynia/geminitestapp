@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRealtimeQuery } from '@/shared/hooks/query/useRealtimeQuery';
 import { createCreateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { MutationResult } from '@/shared/types/query-result-types';
+import type { MutationResult } from '@/shared/contracts/ui';
 
 import { cancelJob, getJobStatus, getJobStatusDetail } from '../api';
 

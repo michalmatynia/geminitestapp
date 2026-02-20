@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logger } from '@/shared/utils/logger';
 import { isSensitiveKey, REDACTED_VALUE, truncateString } from '@/shared/utils/observability/client-redaction';
 

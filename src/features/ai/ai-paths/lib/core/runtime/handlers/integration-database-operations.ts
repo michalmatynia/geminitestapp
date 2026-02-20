@@ -3,8 +3,8 @@ import type {
   DbQueryConfig,
   DatabaseOperation,
   RuntimePortValues,
-} from '@/shared/types/domain/ai-paths';
-import type { NodeHandlerContext } from '@/shared/types/domain/ai-paths-runtime';
+} from '@/shared/contracts/ai-paths';
+import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { handleDatabaseDeleteOperation } from './integration-database-delete-operation';
 import { handleDatabaseInsertOperation } from './integration-database-insert-operation';

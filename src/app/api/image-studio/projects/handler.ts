@@ -15,7 +15,7 @@ import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { clearSettingsCache } from '@/shared/lib/settings-cache';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');

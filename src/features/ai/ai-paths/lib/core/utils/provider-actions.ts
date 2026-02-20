@@ -1,4 +1,4 @@
-import type { DatabaseAction, DatabaseActionCategory } from '@/shared/types/domain/ai-paths';
+import type { DatabaseAction, DatabaseActionCategory } from '@/shared/contracts/ai-paths';
 
 export type DbActionProvider = 'mongodb' | 'prisma';
 export type DbActionProviderSelection = 'auto' | DbActionProvider | undefined;

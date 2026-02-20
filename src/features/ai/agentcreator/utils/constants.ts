@@ -1,4 +1,4 @@
-import type { AgentSettingsPayload, ModelTaskRule } from '@/shared/types/domain/chatbot';
+import type { AgentSettingsPayload, ModelTaskRule } from '@/shared/contracts/chatbot';
 
 export const MODEL_TASK_RULES: Record<string, ModelTaskRule> = {
   main: { preferLarge: true, minSize: 7, preferReasoning: true },

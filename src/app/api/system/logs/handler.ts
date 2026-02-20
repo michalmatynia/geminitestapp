@@ -9,7 +9,7 @@ import {
 import { parseJsonBody } from '@/features/products/server';
 import { validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const levelSchema = z.enum(['info', 'warn', 'error']);
 

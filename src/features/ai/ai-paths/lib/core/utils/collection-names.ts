@@ -4,7 +4,7 @@ import type {
   DbQueryConfig,
   DbSchemaConfig,
   PathConfig,
-} from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
 
 const CANONICAL_COLLECTION_NAMES = new Set<string>([
   'products',

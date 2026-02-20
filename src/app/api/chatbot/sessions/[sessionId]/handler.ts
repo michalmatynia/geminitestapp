@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 import { logSystemEvent } from '@/features/observability/server';
 import { notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 

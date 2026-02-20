@@ -12,7 +12,7 @@ import {
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
-import type { ImageFileRecord } from '@/shared/types/domain/files';
+import type { ImageFileRecord } from '@/shared/contracts/files';
 import { useToast } from '@/shared/ui';
 
 import { useMaskingState, useMaskingActions } from './MaskingContext';

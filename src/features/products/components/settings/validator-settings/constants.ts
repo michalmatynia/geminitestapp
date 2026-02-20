@@ -1,4 +1,4 @@
-import type { ProductValidationInstanceScope } from '@/shared/types/domain/products';
+import type { ProductValidationInstanceScope } from '@/shared/contracts/products';
 
 export const INSTANCE_SCOPE_LABELS: Record<ProductValidationInstanceScope, string> = {
   draft_template: 'Draft Template Form',

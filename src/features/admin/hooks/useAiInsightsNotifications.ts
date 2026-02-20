@@ -6,7 +6,7 @@ import type { AiInsightNotificationsResponseDto as NotificationsResponse } from 
 import { api } from '@/shared/lib/api-client';
 import { createDeleteMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { DeleteMutation, SingleQuery } from '@/shared/types/query-result-types';
+import type { DeleteMutation, SingleQuery } from '@/shared/contracts/ui';
 
 export const aiNotificationsQueryKey = QUERY_KEYS.ai.insights.notifications();
 

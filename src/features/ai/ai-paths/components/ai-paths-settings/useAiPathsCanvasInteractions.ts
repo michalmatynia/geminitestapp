@@ -19,7 +19,7 @@ import {
   validateConnection,
 } from '@/features/ai/ai-paths/lib';
 import { type ConfirmConfig, useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { ToastFn } from '@/shared/types/domain/ai-paths-runtime';
+import { ToastFn } from '@/shared/contracts/ai-paths-runtime';
 import { DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils/drag-drop';
 
 type UseAiPathsCanvasInteractionsArgs = {

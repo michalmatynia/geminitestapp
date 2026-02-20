@@ -25,7 +25,7 @@ import {
   externalServiceError,
   notFoundError
 } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 import {
   BASE_EXPORT_RUN_PATH_ID,
@@ -150,14 +150,15 @@ export async function postExportToBaseHandler(
         maxAttempts: 1,
         retryCount: 0,
       });
-      runId = createdRun.id;
-      await runRepository.updateRun(runId, {
+      const createdRunId = createdRun.id;
+      runId = createdRunId;
+      await runRepository.updateRun(createdRunId, {
         status: 'running',
         startedAt: new Date().toISOString(),
         meta: runMeta,
       });
       await runRepository.createRunEvent({
-        runId,
+        runId: createdRunId,
         level: 'info',
         message: 'Export to Base.com started.',
         metadata: {

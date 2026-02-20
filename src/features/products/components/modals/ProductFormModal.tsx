@@ -6,7 +6,7 @@ import React from 'react';
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import ProductForm from '@/features/products/components/ProductForm';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
-import type { ModalStateProps } from '@/shared/types/modal-props';
+import type { ModalStateProps } from '@/shared/contracts/ui';
 import { FormModal } from '@/shared/ui';
 
 const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {

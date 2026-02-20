@@ -3,8 +3,8 @@ import type {
   DbQueryConfig,
   RuntimePortValues,
   DatabaseOperation,
-} from '@/shared/types/domain/ai-paths';
-import type { NodeHandler, NodeHandlerContext } from '@/shared/types/domain/ai-paths-runtime';
+} from '@/shared/contracts/ai-paths';
+import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import {
   ParameterInferenceGateError,

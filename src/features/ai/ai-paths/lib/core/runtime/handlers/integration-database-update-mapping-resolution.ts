@@ -1,7 +1,7 @@
 import type {
   DatabaseConfig,
   UpdaterMapping,
-} from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
 
 import {
   coerceInput,

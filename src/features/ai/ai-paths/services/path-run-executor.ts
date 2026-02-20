@@ -27,7 +27,7 @@ import type {
   RuntimeHistoryEntry,
   RuntimePortValues,
   RuntimeState,
-} from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
 
 const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 const UPDATE_ELIGIBLE_RUN_STATUSES: AiPathRunStatus[] = [

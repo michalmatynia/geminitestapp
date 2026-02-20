@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { logSystemEvent } from '@/features/observability/server';
 import { getCategoryRepository, getProductDataProvider } from '@/features/products/server';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import type { CatalogIdQuery } from '@/shared/validations/product-metadata-api-schemas';
 
 const shouldLogTiming = () => process.env['DEBUG_API_TIMING'] === 'true';

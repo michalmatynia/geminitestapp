@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { PathConfig } from '@/shared/types/domain/ai-paths';
+import type { PathConfig } from '@/shared/contracts/ai-paths';
 
 import { createDefaultPathConfig } from '../../utils/factory';
 import {

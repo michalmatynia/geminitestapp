@@ -4,7 +4,7 @@ import { assertDatabaseEngineManageAccess } from '@/features/database/services/d
 import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
 import { restorePrismaJsonBackup } from '@/features/database/services/database-json-backup';
 import { badRequestError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();

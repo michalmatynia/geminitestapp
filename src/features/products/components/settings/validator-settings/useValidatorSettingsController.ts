@@ -36,7 +36,7 @@ import type {
   ProductValidationTarget,
   ProductValidationLaunchOperator,
   ProductValidationInstanceScope,
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 import { useToast } from '@/shared/ui';
 
 import { buildFormDataFromPattern } from './controller-form-utils';

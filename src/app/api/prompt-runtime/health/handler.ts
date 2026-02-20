@@ -16,7 +16,7 @@ import {
   getPromptRuntimeLoadSnapshot,
   resetPromptRuntimeLoadSnapshot,
 } from '@/features/prompt-exploder/runtime-load-shedder';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const isResetEnabled = (request: NextRequest): boolean => {
   const raw = request.nextUrl.searchParams.get('reset');

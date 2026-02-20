@@ -22,7 +22,7 @@ import type {
 import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import { conflictError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import type { ImageFileRecord } from '@/shared/types/domain/files';
+import type { ImageFileRecord } from '@/shared/contracts/files';
 
 import type { Prisma } from '@prisma/client';
 
@@ -50,6 +50,7 @@ const ensureProductIndexes = async (): Promise<void> => {
       const db = await getMongoDb();
       const collection = db.collection<ProductDocument>(productCollectionName);
       await Promise.all([
+        // Single-field indexes for individual filter conditions
         collection.createIndex({ createdAt: -1 }, { name: 'products_createdAt_desc' }),
         collection.createIndex({ updatedAt: -1 }, { name: 'products_updatedAt_desc' }),
         collection.createIndex({ sku: 1 }, { name: 'products_sku' }),
@@ -60,6 +61,21 @@ const ensureProductIndexes = async (): Promise<void> => {
         collection.createIndex({ name_en: 1 }, { name: 'products_name_en' }),
         collection.createIndex({ name_pl: 1 }, { name: 'products_name_pl' }),
         collection.createIndex({ name_de: 1 }, { name: 'products_name_de' }),
+        // Composite indexes for the most common filter+sort combinations.
+        // The list always sorts by createdAt DESC, so each composite index
+        // ends with { createdAt: -1 } to serve both filter and sort in one scan.
+        collection.createIndex(
+          { 'catalogs.catalogId': 1, createdAt: -1 },
+          { name: 'products_catalogId_createdAt' }
+        ),
+        collection.createIndex(
+          { categoryId: 1, createdAt: -1 },
+          { name: 'products_categoryId_createdAt' }
+        ),
+        collection.createIndex(
+          { 'catalogs.catalogId': 1, categoryId: 1, createdAt: -1 },
+          { name: 'products_catalogId_categoryId_createdAt' }
+        ),
       ]);
     })();
   }

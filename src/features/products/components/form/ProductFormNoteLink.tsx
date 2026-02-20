@@ -9,7 +9,7 @@ import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { NoteWithRelations, RelatedNote } from '@/shared/types/domain/notes';
+import type { NoteWithRelations, RelatedNote } from '@/shared/contracts/notes';
 import { Button, Input, FormSection, EmptyState, LoadingState } from '@/shared/ui';
 
 type NotesLookupResult = RelatedNote[];

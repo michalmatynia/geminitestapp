@@ -7,7 +7,7 @@ import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError, configurationError, externalServiceError, notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const requestSchema = z.object({
   method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']).default('GET'),

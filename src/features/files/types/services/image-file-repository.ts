@@ -1,5 +1,5 @@
 import type { ImageFileListFiltersDto, ImageFileCreateInputDto } from '@/shared/contracts/files';
-import type { ImageFileRecord } from '@/shared/types/domain/files';
+import type { ImageFileRecord } from '@/shared/contracts/files';
 
 export type { ImageFileRecord };
 

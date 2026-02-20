@@ -31,7 +31,7 @@ import type {
   ProductValidationRuntimeType,
   ProductValidationSeverity,
   ProductValidationTarget,
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 
 const DEFAULT_ENABLED_BY_DEFAULT = true;
 const MISSING_DELEGATE_MESSAGE =

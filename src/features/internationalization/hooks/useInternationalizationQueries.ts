@@ -2,8 +2,8 @@
 
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { CurrencyOption, CountryOption, Language } from '@/shared/types/domain/internationalization';
-import type { ListQuery } from '@/shared/types/query-result-types';
+import type { CurrencyOption, CountryOption, Language } from '@/shared/contracts/internationalization';
+import type { ListQuery } from '@/shared/contracts/ui';
 
 import { getCurrencies, getCountries, getLanguages } from '../api';
 

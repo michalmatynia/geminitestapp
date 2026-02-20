@@ -6,7 +6,7 @@ import {
   listExportTemplates
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const mappingSchema = z.object({
   sourceKey: z.string().trim().min(1),

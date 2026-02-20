@@ -1,4 +1,4 @@
-import type { ImageFileSelection } from '@/shared/types/domain/files';
+import type { ImageFileSelection } from '@/shared/contracts/files';
 
 import { setImageStudioSlotImageLocked } from '../../utils/slot-image-lock';
 

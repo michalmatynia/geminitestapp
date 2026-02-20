@@ -426,10 +426,10 @@ export function AiPathsSettingsView(): React.JSX.Element {
   }, [nodes]);
 
   const runtimeNodeStatusEntries = useMemo(
-    () =>
+    (): Array<[string, string]> =>
       Object.entries(runtimeNodeStatuses ?? {}).filter(
-        ([, status]: [string, string]) =>
-          typeof status === 'string' && status.trim().length > 0,
+        (entry: [string, unknown]): entry is [string, string] =>
+          typeof entry[1] === 'string' && entry[1].trim().length > 0,
       ),
     [runtimeNodeStatuses],
   );

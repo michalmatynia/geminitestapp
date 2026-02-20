@@ -6,7 +6,7 @@ import { invalidateValidationPatternRuntimeCache } from '@/features/products/ser
 import type { UpdateProductValidationPatternInput } from '@/features/products/types/services/validation-pattern-repository';
 import type { ProductValidationPatternDto as ProductValidationPattern } from '@/shared/contracts/products';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const reorderUpdateSchema = z.object({
   id: z.string().trim().min(1),

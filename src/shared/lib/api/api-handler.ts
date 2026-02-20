@@ -20,7 +20,7 @@ import type {
   ApiHandlerContext,
   ApiRouteHandler,
   ApiRouteHandlerWithParams,
-} from '@/shared/types/api/api';
+} from '@/shared/contracts/ui';
 import { logger } from '@/shared/utils/logger';
 
 import type { ZodSchema } from 'zod';

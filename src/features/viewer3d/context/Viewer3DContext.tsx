@@ -44,7 +44,7 @@ export const orderedDitheringPresets = {
   },
 } as const;
 
-interface Viewer3DState {
+export interface Viewer3DState {
   // View settings
   autoRotate: boolean;
   autoRotateSpeed: number;

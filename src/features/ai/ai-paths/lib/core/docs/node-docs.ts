@@ -1,4 +1,4 @@
-import type { NodeType } from '@/shared/types/domain/ai-paths';
+import type { NodeType } from '@/shared/contracts/ai-paths';
 
 import { palette as NODE_DEFINITIONS } from '../definitions';
 

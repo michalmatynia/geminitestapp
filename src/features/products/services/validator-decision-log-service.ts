@@ -8,7 +8,7 @@ import {
 import { getProductDataProvider } from '@/features/products/services/product-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ProductValidationDenyBehavior } from '@/shared/types/domain/products';
+import type { ProductValidationDenyBehavior } from '@/shared/contracts/products';
 
 import type { Document, Filter } from 'mongodb';
 

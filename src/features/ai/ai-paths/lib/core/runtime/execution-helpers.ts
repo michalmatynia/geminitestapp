@@ -1,4 +1,4 @@
-import type { AiNode } from '@/shared/types/domain/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
 
 const parseTimeout = (value: string | undefined, fallback: number, min: number): number => {
   const parsed = Number.parseInt(value ?? '', 10);

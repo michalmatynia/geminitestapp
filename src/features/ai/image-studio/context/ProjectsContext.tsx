@@ -38,7 +38,7 @@ import type {
   CreateMutation,
   DeleteMutation,
   UpdateMutation,
-} from '@/shared/types/query-result-types';
+} from '@/shared/contracts/ui';
 import { useToast } from '@/shared/ui';
 
 import {

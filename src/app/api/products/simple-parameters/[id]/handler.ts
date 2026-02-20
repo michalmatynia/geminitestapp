@@ -5,7 +5,7 @@ import {
   deleteSimpleParameter,
   updateSimpleParameter,
 } from '@/features/products/services/simple-parameter-service';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export const productSimpleParameterUpdateSchema = z.object({
   name_en: z.string().trim().min(1).optional(),

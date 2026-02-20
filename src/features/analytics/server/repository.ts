@@ -15,7 +15,7 @@ import type {
   AnalyticsSummaryDto,
   AnalyticsUtm,
   AnalyticsViewport,
-} from '@/shared/types';
+} from '@/shared/contracts';
 
 import type { ObjectId } from 'mongodb';
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { inspectPathDependencies } from '@/features/ai/ai-paths/lib/core/utils/dependency-inspector';
-import type { AiNode, Edge } from '@/shared/types/domain/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 
 const buildNode = (patch: Partial<AiNode>): AiNode =>
   ({

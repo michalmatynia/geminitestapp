@@ -7,8 +7,8 @@ import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries'
 import { logClientError } from '@/features/observability';
 import { internalError } from '@/shared/errors/app-error';
 import { ApiError } from '@/shared/lib/api-client';
-import type { AgentTeachingAgentRecord } from '@/shared/types/domain/agent-teaching';
-import type { ChatMessage } from '@/shared/types/domain/chatbot';
+import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
+import type { ChatMessage } from '@/shared/contracts/chatbot';
 import { useToast } from '@/shared/ui';
 
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';

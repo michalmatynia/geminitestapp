@@ -4,7 +4,7 @@ import type {
   ProductValidationPatternDenyBehaviorOverride,
   ProductValidationInstanceDenyBehaviorMap,
   ProductValidationInstanceScope,
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 
 export const PRODUCT_VALIDATION_INSTANCE_SCOPES: ProductValidationInstanceScope[] = [
   'draft_template',

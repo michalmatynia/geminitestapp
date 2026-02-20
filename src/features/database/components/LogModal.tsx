@@ -3,7 +3,7 @@
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-import type { EntityModalProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/contracts/ui';
 import { ContentDisplayModal } from '@/shared/ui/templates';
 
 interface LogModalProps extends EntityModalProps<string> {

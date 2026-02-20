@@ -5,7 +5,7 @@ import type {
 } from '@/shared/contracts/products';
 import type { 
   ProductTag 
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 
 export type TagFilters = ProductTagFiltersDto;
 

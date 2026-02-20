@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
-import type { AnalyticsSummaryDto } from '@/shared/types';
+import type { AnalyticsSummaryDto } from '@/shared/contracts';
 import { Button, StandardDataTablePanel, EmptyState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

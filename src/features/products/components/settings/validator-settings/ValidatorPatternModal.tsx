@@ -15,7 +15,7 @@ import type {
 import type {
   ProductValidationLaunchOperator,
   ProductValidationRuntimeType,
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 import {
   Input,
   MultiSelect,

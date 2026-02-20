@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { evaluateGraph } from '@/features/ai/ai-paths/lib/core/runtime/engine';
-import type { AiNode } from '@/shared/types/domain/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
 
 const buildTriggerNode = (): AiNode =>
   ({

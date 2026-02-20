@@ -1,4 +1,4 @@
-import type { RegexTemplate } from '@/shared/types/domain/ai-paths';
+import type { RegexTemplate } from '@/shared/contracts/ai-paths';
 
 export const AI_PATHS_REGEX_TEMPLATES_KEY = 'ai_paths_regex_templates';
 

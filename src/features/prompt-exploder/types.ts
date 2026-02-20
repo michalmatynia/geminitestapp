@@ -22,7 +22,7 @@ import type {
   PromptExploderCaseResolverCaptureMode,
   PromptExploderSettings,
   PromptExploderPatternRuleMap,
-} from '@/shared/types/domain/prompt-exploder';
+} from '@/shared/contracts/prompt-exploder';
 
 export type {
   PromptExploderSegmentType,

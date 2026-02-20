@@ -1,5 +1,5 @@
-import type { RuntimePortValues } from '@/shared/types/domain/ai-paths';
-import type { NodeHandler, NodeHandlerContext } from '@/shared/types/domain/ai-paths-runtime';
+import type { RuntimePortValues } from '@/shared/contracts/ai-paths';
+import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { coerceInput } from '../../utils';
 import { buildFallbackEntity } from '../utils';

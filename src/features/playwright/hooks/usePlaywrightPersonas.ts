@@ -9,7 +9,7 @@ import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { playwrightKeys } from '@/shared/lib/query-key-exports';
-import type { ListQuery, VoidMutation } from '@/shared/types/query-result-types';
+import type { ListQuery, VoidMutation } from '@/shared/contracts/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 export function usePlaywrightPersonas(): ListQuery<PlaywrightPersona> {

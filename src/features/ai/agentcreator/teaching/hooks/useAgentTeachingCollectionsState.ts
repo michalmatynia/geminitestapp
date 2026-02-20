@@ -3,7 +3,7 @@
 import { useMemo, useState, useCallback } from 'react';
 
 import { buildModelProfile } from '@/features/ai/chatbot/utils';
-import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
+import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
 import { useToast } from '@/shared/ui';
 
 import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';

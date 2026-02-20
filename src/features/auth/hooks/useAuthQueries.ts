@@ -31,7 +31,7 @@ import type {
   UpdateMutation, 
   CreateMutation, 
   MutationResult 
-} from '@/shared/types/query-result-types';
+} from '@/shared/contracts/ui';
 
 import type { AuthUserSummary } from '../types';
 

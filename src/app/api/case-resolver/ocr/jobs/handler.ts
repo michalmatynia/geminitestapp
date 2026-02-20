@@ -17,7 +17,7 @@ import {
   startCaseResolverOcrQueue,
 } from '@/features/jobs/workers/caseResolverOcrQueue';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const createCaseResolverOcrJobSchema = z.object({
   filepath: z.string().trim().min(1),

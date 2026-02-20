@@ -14,7 +14,7 @@ import {
 import type { ImageFileRecord } from '@/features/files/types/services/image-file-repository';
 import { noteService } from '@/features/notesapp/server';
 import { ErrorSystem } from '@/features/observability/server';
-import type { NoteFileRecord } from '@/shared/types/domain/notes';
+import type { NoteFileRecord } from '@/shared/contracts/notes';
 
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');

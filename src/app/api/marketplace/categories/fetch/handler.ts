@@ -7,7 +7,7 @@ import { getIntegrationRepository } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import type { FetchMarketplaceCategoriesRequestDto as FetchCategoriesRequest } from '@/shared/contracts/integrations';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
 const TRADERA_MARKETPLACE_SLUGS = new Set(['tradera']);

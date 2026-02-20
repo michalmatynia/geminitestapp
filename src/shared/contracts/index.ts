@@ -42,5 +42,6 @@ export * from './prompt-engine';
 export * from './prompt-exploder';
 export * from './settings';
 export * from './system';
+export * from './ui';
 export * from './vector';
 export * from './viewer3d';

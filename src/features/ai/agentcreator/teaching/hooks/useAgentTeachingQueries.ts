@@ -21,7 +21,7 @@ import type {
   ListQuery, 
   SingleQuery, 
   MutationResult 
-} from '@/shared/types/query-result-types';
+} from '@/shared/contracts/ui';
 
 import { 
   getTeachingAgents, 

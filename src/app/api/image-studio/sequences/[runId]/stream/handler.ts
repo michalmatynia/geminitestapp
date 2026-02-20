@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server';
 import { getImageStudioSequenceRunById } from '@/features/ai/image-studio/server/sequence-run-repository';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { startIntervalTask } from '@/shared/lib/timers';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const REDIS_CONNECT_TIMEOUT_MS = 3000;
 const HEARTBEAT_INTERVAL_MS = 15000;

@@ -6,7 +6,7 @@ import { useState, useMemo, useCallback } from 'react';
 import type { 
   AgentTeachingChatSource, 
   AgentTeachingEmbeddingDocumentListItem 
-} from '@/shared/types/domain/agent-teaching';
+} from '@/shared/contracts/agent-teaching';
 import { useToast } from '@/shared/ui';
 
 import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';

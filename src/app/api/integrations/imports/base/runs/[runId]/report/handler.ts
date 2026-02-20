@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getBaseImportRunDetailOrThrow } from '@/features/integrations/services/imports/base-import-service';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const querySchema = z.object({
   format: z.enum(['json', 'csv']).optional(),

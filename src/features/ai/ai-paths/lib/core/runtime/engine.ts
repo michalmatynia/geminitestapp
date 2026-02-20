@@ -10,7 +10,7 @@ import type {
   RuntimeHistoryLink,
   RuntimePortValues,
   RuntimeState,
-} from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
 
 import { DEFAULT_DB_QUERY } from '../constants';
 import {

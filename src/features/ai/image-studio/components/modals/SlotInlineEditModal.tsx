@@ -3,7 +3,7 @@
 import { Copy } from 'lucide-react';
 import React from 'react';
 
-import type { EntityModalProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/contracts/ui';
 import { Button } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 

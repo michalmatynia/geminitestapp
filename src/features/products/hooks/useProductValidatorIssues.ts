@@ -13,7 +13,7 @@ import { api } from '@/shared/lib/api-client';
 import type {
   ProductValidationInstanceScope,
   ProductValidationPattern,
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 
 type UseProductValidatorIssuesOptions = {
   values: Record<string, unknown>;
@@ -59,6 +59,10 @@ export const useProductValidatorIssues = ({
   const previousFieldValuesRef = useRef<Record<string, string>>({});
   const fieldEditTimestampsRef = useRef<Record<string, number>>({});
   const debounceRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Tracks the JSON key of the last values payload sent to the runtime API.
+  // Prevents resetting the debounce timer when the component re-renders due to
+  // reference churn (watch() producing new objects) without semantic value changes.
+  const lastSentRuntimeKeyRef = useRef<string>('');
   const [debounceTick, setDebounceTick] = useState(0);
   const [runtimeFieldIssues, setRuntimeFieldIssues] = useState<Record<string, FieldValidatorIssue[]>>(
     {}
@@ -80,14 +84,38 @@ export const useProductValidatorIssues = ({
     [trackedFields, values]
   );
 
+  // Build a stable semantic key for the current runtime payload. This is used to
+  // skip the API call (and debounce reset) when the component re-renders due to
+  // reference churn from watch() but the actual field values haven't changed.
+  const runtimeValuesKey = useMemo((): string => {
+    if (!validatorEnabled || runtimePatternIds.length === 0) return '';
+    try {
+      return JSON.stringify({
+        v: runtimeValues ?? values,
+        lp: latestProductValues,
+        p: runtimePatternIds,
+        s: validationScope,
+      });
+    } catch {
+      return '';
+    }
+  }, [latestProductValues, runtimePatternIds, runtimeValues, validationScope, validatorEnabled, values]);
+
   useEffect(() => {
     if (!validatorEnabled || runtimePatternIds.length === 0) {
       setRuntimeFieldIssues((previous) =>
         Object.keys(previous).length === 0 ? previous : {}
       );
+      lastSentRuntimeKeyRef.current = '';
+      return;
+    }
+    // Skip if the payload is semantically identical to the last sent request.
+    // This prevents the debounce timer from resetting on pure reference churn.
+    if (runtimeValuesKey && runtimeValuesKey === lastSentRuntimeKeyRef.current) {
       return;
     }
     const timer = setTimeout(() => {
+      lastSentRuntimeKeyRef.current = runtimeValuesKey;
       void api
         .post<{ issues?: Record<string, FieldValidatorIssue[]> }>(
           '/api/products/validator-runtime/evaluate',
@@ -125,6 +153,7 @@ export const useProductValidatorIssues = ({
     runtimeDebounceMs,
     runtimePatternIds,
     runtimeValues,
+    runtimeValuesKey,
     source,
     validationScope,
     validatorEnabled,

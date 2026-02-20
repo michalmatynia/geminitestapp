@@ -36,7 +36,7 @@ import type {
   AiPathRunRecord,
   AiPathRunStatus,
   Edge,
-} from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
 
 
 // Extend the DTO with internal-only fields not exposed through the API contract.

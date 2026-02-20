@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import type { ImageFileRecord } from '@/shared/types/domain/files';
+import type { ImageFileRecord } from '@/shared/contracts/files';
 
 import type { ImageStudioRunRequest } from './run-executor';
 

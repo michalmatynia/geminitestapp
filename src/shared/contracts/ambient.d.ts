@@ -24,3 +24,17 @@ declare module 'next-auth/jwt' {
     accountBanned?: boolean;
   }
 }
+
+declare module 'pdf-parse' {
+  export interface PdfParseResult {
+    text: string;
+    numpages?: number;
+    info?: unknown;
+    metadata?: unknown;
+    version?: string;
+  }
+
+  export default function pdfParse(
+    data: Buffer | Uint8Array | ArrayBuffer
+  ): Promise<PdfParseResult>;
+}

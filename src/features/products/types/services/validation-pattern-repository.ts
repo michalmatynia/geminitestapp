@@ -5,7 +5,7 @@ import type {
 import type {
   ProductValidationInstanceDenyBehaviorMap,
   ProductValidationPattern,
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 
 export type CreateProductValidationPatternInput = CreateProductValidationPatternDto;
 

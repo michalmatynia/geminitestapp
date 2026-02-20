@@ -13,7 +13,7 @@ import prisma from '@/shared/lib/db/prisma';
 import type {
   ImportExportTemplate as DomainImportExportTemplate,
   ImportExportTemplateMapping as DomainImportExportTemplateMapping,
-} from '@/shared/types/domain/integrations';
+} from '@/shared/contracts/integrations';
 
 import type { Document, Filter } from 'mongodb';
 

@@ -3,8 +3,8 @@
 import { Loader2, Zap, Cpu, Sparkles, Wand2 } from 'lucide-react';
 import React from 'react';
 
-import type { ModalStateProps } from '@/shared/types/modal-props';
-import { FormModal, Button, Label, Textarea, DataTable } from '@/shared/ui';
+import type { ModalStateProps } from '@/shared/contracts/ui';
+import { FormModal, Button, Label, Textarea, StandardDataTablePanel } from '@/shared/ui';
 
 import type {
   PromptExtractHistoryEntry,
@@ -257,12 +257,12 @@ export function ExtractPromptParamsModal({
         <div className='space-y-2'>
           <Label className='text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1'>Extracted Parameters</Label>
           {previewLeaves.length > 0 ? (
-            <div className='max-h-80 overflow-auto rounded-lg border border-border/60 bg-black/20'>
-              <DataTable
-                columns={columns}
-                data={previewLeaves}
-              />
-            </div>
+            <StandardDataTablePanel
+              columns={columns}
+              data={previewLeaves}
+              variant='flat'
+              maxHeight='20rem'
+            />
           ) : (
             <div className='rounded-lg border border-dashed border-border bg-card/20 py-12 text-center text-xs text-muted-foreground italic'>
               No parameters extracted yet. Use one of the extraction methods above.

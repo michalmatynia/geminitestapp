@@ -9,7 +9,7 @@ import { getProductDataProvider } from '@/features/products/services/product-pro
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ProductSimpleParameter } from '@/shared/types/domain/products';
+import type { ProductSimpleParameter } from '@/shared/contracts/products';
 
 
 

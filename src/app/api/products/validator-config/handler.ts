@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getValidationPatternRepository } from '@/features/products/server';
 import { listValidationPatternsCached } from '@/features/products/services/validation-pattern-runtime-cache';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const includeDisabled = req.nextUrl.searchParams.get('includeDisabled') === 'true';

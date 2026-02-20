@@ -6,12 +6,12 @@ async function main() {
   // 1. Create a category
   const category = await prismaNoteRepository.createCategory({
     name: "Debug Category " + Date.now(),
-    themeId: null,
+    description: "Debug category description",
     color: null,
     parentId: null,
-    sortIndex: null,
-    notebookId: null,
+    notebookId: null
   });
+
   console.log("Created category:", category.id);
 
   // 2. Create a note

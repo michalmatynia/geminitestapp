@@ -11,8 +11,8 @@ import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/use
 import { ApiError } from '@/shared/lib/api-client';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { AgentTeachingAgentRecord } from '@/shared/types/domain/agent-teaching';
-import type { ChatMessage } from '@/shared/types/domain/chatbot';
+import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
+import type { ChatMessage } from '@/shared/contracts/chatbot';
 import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Textarea, SelectSimple, useToast, Badge, ToggleRow } from '@/shared/ui';
 
 import { useCmsDomainSelection } from '../../../hooks/useCmsDomainSelection';

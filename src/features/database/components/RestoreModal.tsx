@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 
-import type { ModalStateProps } from '@/shared/types/modal-props';
+import type { ModalStateProps } from '@/shared/contracts/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 interface RestoreModalProps extends ModalStateProps {

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
+import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 
 export const aiTriggerButtonLocationSchema = z.enum([
   'product_modal',

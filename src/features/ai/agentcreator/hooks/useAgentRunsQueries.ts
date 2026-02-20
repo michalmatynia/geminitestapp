@@ -6,12 +6,12 @@ import {
 } from '@/shared/lib/query-factories-v2';
 import { invalidateAgentRuns } from '@/shared/lib/query-invalidation';
 import { agentRunsKeys } from '@/shared/lib/query-key-exports';
-import { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
-import { AgentSnapshot, AgentBrowserLog, AgentAuditLog } from '@/shared/types/domain/chatbot';
+import { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import { AgentSnapshot, AgentBrowserLog, AgentAuditLog } from '@/shared/contracts/chatbot';
 import type { 
   ListQuery, 
   MutationResult
-} from '@/shared/types/query-result-types';
+} from '@/shared/contracts/ui';
 
 import * as api from '../api/client';
 

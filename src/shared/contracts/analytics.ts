@@ -50,6 +50,7 @@ export type AnalyticsConnectionInfoDto = z.infer<typeof analyticsConnectionInfoS
  */
 export const analyticsScopeSchema = z.enum(['public', 'admin']);
 export type AnalyticsScopeDto = z.infer<typeof analyticsScopeSchema>;
+export type AnalyticsScope = AnalyticsScopeDto;
 
 export const analyticsEventTypeSchema = z.enum(['pageview', 'event']);
 export type AnalyticsEventTypeDto = z.infer<typeof analyticsEventTypeSchema>;
@@ -102,6 +103,7 @@ export const createAnalyticsEventSchema = analyticsEventSchema.omit({
 });
 
 export type CreateAnalyticsEventDto = z.infer<typeof createAnalyticsEventSchema>;
+export type AnalyticsEventCreateInput = CreateAnalyticsEventDto;
 
 /**
  * Analytics Summary Contract

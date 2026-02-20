@@ -8,7 +8,7 @@ import { useIntegrationJobs, useChatbotJobs, useTraderaQueueHealth } from '@/fea
 import { logClientError } from '@/features/observability';
 import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import type { ListingJob, ProductJob } from '@/shared/types/domain/listing-jobs';
+import type { ListingJob, ProductJob } from '@/shared/contracts/integrations';
 
 export type ChatbotJob = {
   id: string;

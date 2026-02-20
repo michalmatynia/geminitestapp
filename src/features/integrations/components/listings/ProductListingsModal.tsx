@@ -10,7 +10,7 @@ import {
 import { ProductListingsProvider, useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
 import type { ProductListingWithDetails } from '@/features/integrations/types/listings';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
-import type { EntityModalProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/contracts/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 import {

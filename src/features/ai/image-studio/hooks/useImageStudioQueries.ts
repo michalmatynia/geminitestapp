@@ -9,7 +9,7 @@ import { studioKeys } from '@/shared/lib/query-key-exports';
 import type { 
   ListQuery, 
   SingleQuery 
-} from '@/shared/types/query-result-types';
+} from '@/shared/contracts/ui';
 
 import type { ImageStudioProjectRecord, StudioProjectsResponse, StudioSlotsResponse } from '../types';
 

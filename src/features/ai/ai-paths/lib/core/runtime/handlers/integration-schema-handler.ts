@@ -1,6 +1,6 @@
 import type { CollectionSchemaDto } from '@/shared/contracts/database';
-import type { DbSchemaConfig, RuntimePortValues } from '@/shared/types/domain/ai-paths';
-import type { NodeHandler, NodeHandlerContext } from '@/shared/types/domain/ai-paths-runtime';
+import type { DbSchemaConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
+import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { dbApi, type ApiResponse } from '../../../api';
 

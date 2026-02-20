@@ -7,7 +7,7 @@ import { resolveProductImageUrl } from '@/features/products/utils/image-routing'
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import type { ImageFileSelection } from '@/shared/types/domain/files';
+import type { ImageFileSelection } from '@/shared/contracts/files';
 import { useToast } from '@/shared/ui';
 
 import {

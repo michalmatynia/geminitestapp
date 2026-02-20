@@ -26,6 +26,7 @@ export const aiPathRuntimeNodeStatusSchema = z.enum([
 ]);
 
 export type AiPathRuntimeNodeStatusDto = z.infer<typeof aiPathRuntimeNodeStatusSchema>;
+export type AiPathRuntimeNodeStatus = AiPathRuntimeNodeStatusDto;
 
 export const NON_SETTLED_RUNTIME_NODE_STATUSES = new Set<AiPathRuntimeNodeStatusDto>([
   'idle',
@@ -60,6 +61,7 @@ export const IDLE_REHYDRATION_BLOCKED_NODE_STATUSES = new Set<AiPathRuntimeNodeS
 export const aiPathRuntimeNodeStatusMapSchema = z.record(z.string(), aiPathRuntimeNodeStatusSchema);
 
 export type AiPathRuntimeNodeStatusMapDto = z.infer<typeof aiPathRuntimeNodeStatusMapSchema>;
+export type AiPathRuntimeNodeStatusMap = AiPathRuntimeNodeStatusMapDto;
 
 export const aiPathRuntimeEventKindSchema = z.enum(['log', 'status', 'error', 'output']);
 export type AiPathRuntimeEventKindDto = z.infer<typeof aiPathRuntimeEventKindSchema>;
@@ -83,6 +85,7 @@ export const aiPathRuntimeEventSchema = z.object({
 });
 
 export type AiPathRuntimeEventDto = z.infer<typeof aiPathRuntimeEventSchema>;
+export type AiPathRuntimeEvent = AiPathRuntimeEventDto;
 
 export const runStatusSchema = z.enum(['idle', 'running', 'paused', 'stepping']);
 export type RunStatusDto = z.infer<typeof runStatusSchema>;
@@ -125,12 +128,15 @@ export type SetNodeStatusInputDto = z.infer<typeof setNodeStatusInputSchema>;
 
 export const pathExecutionModeSchema = z.enum(['local', 'server']);
 export type PathExecutionModeDto = z.infer<typeof pathExecutionModeSchema>;
+export type PathExecutionMode = PathExecutionModeDto;
 
 export const pathRunModeSchema = z.enum(['manual', 'automatic', 'step']);
 export type PathRunModeDto = z.infer<typeof pathRunModeSchema>;
+export type PathRunMode = PathRunModeDto;
 
 export const runtimePortValuesSchema = z.record(z.string(), z.unknown());
 export type RuntimePortValuesDto = z.infer<typeof runtimePortValuesSchema>;
+export type RuntimePortValues = RuntimePortValuesDto;
 
 export const runtimeStateSchema = z.object({
   status: runStatusSchema,
@@ -150,6 +156,7 @@ export const runtimeStateSchema = z.object({
 });
 
 export type RuntimeStateDto = z.infer<typeof runtimeStateSchema>;
+export type RuntimeState = RuntimeStateDto;
 
 export const queuedRunSchema = z.object({
   triggerNodeId: z.string(),

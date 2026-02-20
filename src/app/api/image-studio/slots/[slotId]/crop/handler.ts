@@ -31,7 +31,7 @@ import {
 import { getImageFileRepository, getDiskPathFromPublicPath } from '@/features/files/server';
 import { logSystemEvent } from '@/features/observability/server';
 import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'crops');
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;

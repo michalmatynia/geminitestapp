@@ -41,7 +41,7 @@ import type {
   Edge,
   PathConfig,
   PathMeta,
-} from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
 import { useToast } from '@/shared/ui';
 
 type TriggerEventEntityType = 'product' | 'note' | 'custom';

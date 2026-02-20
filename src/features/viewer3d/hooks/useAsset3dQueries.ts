@@ -21,7 +21,7 @@ import type {
   SingleQuery, 
   DeleteMutation, 
   UpdateMutation 
-} from '@/shared/types/query-result-types';
+} from '@/shared/contracts/ui';
 
 import type { Asset3DListFilters, Asset3DRecord } from '../types';
 

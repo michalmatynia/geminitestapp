@@ -6,7 +6,7 @@ import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
 import { configurationError, externalServiceError } from '@/shared/errors/app-error';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 type TestLogEntry = {
   step: string;

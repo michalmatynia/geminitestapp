@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 
 import type { ProductDraftDto } from '@/shared/contracts/products';
-import type { EntityModalProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/contracts/ui';
 import { FormModal, Button } from '@/shared/ui';
 
 import { DraftCreator } from './DraftCreator';

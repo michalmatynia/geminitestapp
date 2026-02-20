@@ -1,4 +1,4 @@
-import type { ErrorCategory } from '@/shared/types/observability';
+import type { ErrorCategory } from '@/shared/contracts/observability';
 
 import type { QueryKey } from '@tanstack/react-query';
 

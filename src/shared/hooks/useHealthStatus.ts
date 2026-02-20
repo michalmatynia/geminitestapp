@@ -3,7 +3,7 @@
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { SingleQuery } from '@/shared/types/query-result-types';
+import type { SingleQuery } from '@/shared/contracts/ui';
 
 interface HealthStatus {
   ok: boolean;

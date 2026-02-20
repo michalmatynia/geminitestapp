@@ -3,7 +3,7 @@ import type {
   CountryOption,
   CurrencyOption,
   Language,
-} from '@/shared/types/domain/internationalization';
+} from '@/shared/contracts/internationalization';
 
 export async function getCurrencies(): Promise<CurrencyOption[]> {
   return api.get<CurrencyOption[]>('/api/currencies');

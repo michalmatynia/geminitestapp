@@ -1,44 +1,58 @@
 import { z } from 'zod';
 
-import { namedDtoSchema } from './base';
+import { dtoBaseSchema } from './base';
 
 /**
- * AI Trigger Button DTOs
+ * AI Trigger Button Contracts
  */
-
-export const aiTriggerButtonLocationEnum = z.enum([
-  'product_modal',
-  'product_list',
-  'product_row',
-  'note_modal',
-  'note_list',
+export const aiTriggerButtonLocationSchema = z.enum([
+  'product_list_header',
+  'product_list_item',
+  'product_form_header',
+  'product_form_footer',
+  'cms_page_header',
+  'cms_block_header',
+  'admin_dashboard',
 ]);
 
-export type AiTriggerButtonLocation = z.infer<typeof aiTriggerButtonLocationEnum>;
+export type AiTriggerButtonLocation = z.infer<typeof aiTriggerButtonLocationSchema>;
 
-export const aiTriggerButtonModeEnum = z.enum(['click', 'toggle']);
-export type AiTriggerButtonMode = z.infer<typeof aiTriggerButtonModeEnum>;
+export const aiTriggerButtonModeSchema = z.enum([
+  'execute_path',
+  'open_chat',
+  'open_url',
+  'copy_text',
+]);
 
-export const aiTriggerButtonDisplayEnum = z.enum(['icon', 'label', 'icon_label']);
-export type AiTriggerButtonDisplay = z.infer<typeof aiTriggerButtonDisplayEnum>;
+export type AiTriggerButtonMode = z.infer<typeof aiTriggerButtonModeSchema>;
 
-export const aiTriggerButtonSchema = namedDtoSchema.extend({
-  pathId: z.string().optional(),
-  icon: z.string().nullable().optional(),
-  iconId: z.string().nullable().optional(),
-  color: z.string().nullable().optional(),
-  style: z.enum(['button', 'icon']).optional(),
-  size: z.enum(['small', 'medium', 'large']).optional(),
-  position: z.enum(['top-left', 'top-right', 'bottom-left', 'bottom-right', 'inline']).optional(),
-  contextMapping: z.record(z.string(), z.string()).optional(),
-  enabled: z.boolean().optional(),
-  // New fields from usage
-  locations: z.array(aiTriggerButtonLocationEnum).optional(),
-  mode: aiTriggerButtonModeEnum.optional(),
-  display: aiTriggerButtonDisplayEnum.optional(),
+export const aiTriggerButtonDisplaySchema = z.object({
+  label: z.string(),
+  icon: z.string().optional(),
+  color: z.string().optional(),
+  variant: z.enum(['default', 'outline', 'secondary', 'ghost', 'link']).optional(),
+  size: z.enum(['default', 'sm', 'lg', 'icon']).optional(),
+  showLabel: z.boolean().optional(),
+  tooltip: z.string().optional(),
+});
+
+export type AiTriggerButtonDisplay = z.infer<typeof aiTriggerButtonDisplaySchema>;
+
+export const aiTriggerButtonSchema = dtoBaseSchema.extend({
+  location: aiTriggerButtonLocationSchema,
+  mode: aiTriggerButtonModeSchema,
+  display: aiTriggerButtonDisplaySchema,
+  pathId: z.string().nullable().optional(),
+  urlTemplate: z.string().nullable().optional(),
+  textTemplate: z.string().nullable().optional(),
+  contextTemplate: z.record(z.string(), z.unknown()).nullable().optional(),
+  condition: z.string().nullable().optional(),
+  isActive: z.boolean(),
+  sortIndex: z.number(),
 });
 
 export type AiTriggerButtonDto = z.infer<typeof aiTriggerButtonSchema>;
+export type AiTriggerButtonRecord = AiTriggerButtonDto;
 
 export const createAiTriggerButtonSchema = aiTriggerButtonSchema.omit({
   id: true,

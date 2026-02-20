@@ -22,7 +22,7 @@ import {
 import type { PromptValidationSettingsDto as PromptValidationSettings } from '@/shared/contracts/prompt-engine';
 import { authError, badRequestError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const extractionModeSchema = z.enum(['programmatic', 'gpt', 'hybrid']);
 

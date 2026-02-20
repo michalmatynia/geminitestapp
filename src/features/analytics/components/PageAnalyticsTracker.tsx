@@ -4,7 +4,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
 
 import { useTrackEventMutation } from '@/features/analytics/hooks/useAnalytics';
-import type { AnalyticsEventCreateInput, AnalyticsScope } from '@/shared/types';
+import type { AnalyticsEventCreateInput, AnalyticsScope } from '@/shared/contracts';
 
 const VISITOR_COOKIE = 'pa_vid';
 const SESSION_STORAGE_KEY = 'pa_sid';

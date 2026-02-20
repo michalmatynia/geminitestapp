@@ -1,7 +1,7 @@
 import { api } from '@/shared/lib/api-client';
 import type { QueueHealthStatus } from '@/shared/lib/queue/types';
-import type { ProductAiJob } from '@/shared/types/domain/jobs';
-import type { ProductJob } from '@/shared/types/domain/listing-jobs';
+import type { ProductAiJob } from '@/shared/contracts/jobs';
+import type { ProductJob } from '@/shared/contracts/integrations';
 
 /**
  * Fetch integration jobs

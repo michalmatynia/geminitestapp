@@ -176,4 +176,29 @@ describe('GenericPickerDropdown', () => {
 
     expect(container.firstChild).toBeNull();
   });
+
+  it('does not change hook order when groups become empty', () => {
+    const onSelect = vi.fn();
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const { rerender } = render(
+      <GenericPickerDropdown
+        groups={mockGroups}
+        onSelect={onSelect}
+      />
+    );
+
+    rerender(
+      <GenericPickerDropdown
+        groups={[]}
+        onSelect={onSelect}
+      />
+    );
+
+    expect(errorSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining('React has detected a change in the order of Hooks called')
+    );
+
+    errorSpy.mockRestore();
+  });
 });

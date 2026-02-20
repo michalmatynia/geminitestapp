@@ -17,37 +17,40 @@ export const documentationModuleIdsSchema = z.enum([
   'vector-drawing',
 ]);
 
-export type DocumentationModuleIdDto = z.infer<typeof documentationModuleIdsSchema> | (string & {});
+export type DocumentationModuleIdDto = z.infer<typeof documentationModuleIdsSchema>;
+export type DocumentationModuleId = DocumentationModuleIdDto;
+
+export const DOCUMENTATION_MODULE_IDS = {
+  aiPaths: 'ai-paths',
+  cms: 'cms',
+  dataImportExport: 'data-import-export',
+  imageStudio: 'image-studio',
+  observability: 'observability',
+  products: 'products',
+  promptEngine: 'prompt-engine',
+  promptExploder: 'prompt-exploder',
+  validator: 'validator',
+  vectorDrawing: 'vector-drawing',
+} as const;
+
+export type BuiltInDocumentationModuleId =
+  (typeof DOCUMENTATION_MODULE_IDS)[keyof typeof DOCUMENTATION_MODULE_IDS];
 
 export const documentationEntrySchema = z.object({
   id: z.string(),
-  moduleId: z.string(),
+  moduleId: documentationModuleIdsSchema,
   title: z.string(),
-  summary: z.string(),
-  section: z.string().optional(),
-  aliases: z.array(z.string()),
-  docPath: z.string().optional(),
-  tags: z.array(z.string()).optional(),
+  content: z.string(),
+  keywords: z.array(z.string()),
+  relatedLinks: z.array(z.string()).optional(),
 });
 
 export type DocumentationEntryDto = z.infer<typeof documentationEntrySchema>;
-
-export const documentationFunctionDocSchema = z.object({
-  id: z.string(),
-  symbol: z.string(),
-  file: z.string(),
-  purpose: z.string(),
-  params: z.array(z.string()),
-  returns: z.string(),
-  errors: z.array(z.string()),
-  edgeCases: z.array(z.string()),
-  example: z.string(),
-});
-
-export type DocumentationFunctionDocDto = z.infer<typeof documentationFunctionDocSchema>;
+export type DocumentationEntry = DocumentationEntryDto;
 
 export const documentationUiDocSchema = z.object({
   id: z.string(),
+  moduleId: z.string(),
   title: z.string(),
   description: z.string(),
   relatedFunctions: z.array(z.string()),
@@ -55,4 +58,5 @@ export const documentationUiDocSchema = z.object({
 
 export type DocumentationUiDocDto = z.infer<typeof documentationUiDocSchema>;
 
-export type DocumentationEntryKeyDto = `${string}:${string}`;
+export type DocumentationEntryKeyDto = `${string}:${string}`];
+export type DocumentationEntryKey = DocumentationEntryKeyDto;

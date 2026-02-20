@@ -10,7 +10,7 @@ import {
 } from '@/features/product-sync/services/product-sync-repository';
 import type { ProductSyncProfile } from '@/features/product-sync/types/product-sync';
 import { notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const fieldRuleSchema = z.object({
   id: z.string().trim().min(1).optional(),

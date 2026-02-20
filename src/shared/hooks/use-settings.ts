@@ -16,8 +16,8 @@ import {
 } from '@/shared/lib/query-factories-v2';
 import { invalidateAllSettings } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { SystemSetting } from '@/shared/types/domain/settings';
-import type { ListQuery, MutationResult, SingleQuery } from '@/shared/types/query-result-types';
+import type { SystemSetting } from '@/shared/contracts/settings';
+import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export type { SystemSetting };

@@ -9,7 +9,7 @@ import {
   uniqueSortedCaseResolverOcrModelIds,
 } from '@/features/case-resolver/ocr-models';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
 const OLLAMA_MODELS_TIMEOUT_MS = 2_500;

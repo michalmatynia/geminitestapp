@@ -25,12 +25,12 @@ import {
 import { invalidateProductMetadata } from '@/shared/lib/query-invalidation';
 import { productMetadataKeys } from '@/shared/lib/query-key-exports';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
-import type { Language } from '@/shared/types/domain/internationalization';
+import type { Language } from '@/shared/contracts/internationalization';
 import type { 
   ListQuery, 
   SaveMutation, 
   DeleteMutation 
-} from '@/shared/types/query-result-types';
+} from '@/shared/contracts/ui';
 
 export { productMetadataKeys };
 

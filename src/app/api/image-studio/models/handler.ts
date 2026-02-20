@@ -10,7 +10,7 @@ import {
   IMAGE_STUDIO_OPENAI_API_KEY_KEY,
 } from '@/features/ai/image-studio/utils/studio-settings';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 type ImageStudioModelsResponse = {
   models: string[];

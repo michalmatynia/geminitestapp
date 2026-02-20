@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 import { GET_handler } from '../route';
 

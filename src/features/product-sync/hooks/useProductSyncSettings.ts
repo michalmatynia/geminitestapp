@@ -24,7 +24,7 @@ import type {
   MutationResult,
   SingleQuery,
   UpdateMutation,
-} from '@/shared/types/query-result-types';
+} from '@/shared/contracts/ui';
 
 export function useProductSyncProfiles(): ListQuery<ProductSyncProfile> {
   const queryKey = productSettingsKeys.syncProfiles();

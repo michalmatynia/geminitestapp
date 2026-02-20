@@ -4,7 +4,7 @@ import type { AppProviderDiagnosticsDto as ProviderDiagnosticsResponse } from '@
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { SingleQuery, MutationResult } from '@/shared/types/query-result-types';
+import type { SingleQuery, MutationResult } from '@/shared/contracts/ui';
 
 import type {
   DatabaseSyncDirection,

@@ -4,7 +4,7 @@ import { Trash2, BookOpen, Plus, Search, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import React, { useMemo } from 'react';
 
-import type { AgentTeachingChatSource, AgentTeachingEmbeddingDocumentListItem } from '@/shared/types/domain/agent-teaching';
+import type { AgentTeachingChatSource, AgentTeachingEmbeddingDocumentListItem } from '@/shared/contracts/agent-teaching';
 import { 
   Button, 
   Input, 

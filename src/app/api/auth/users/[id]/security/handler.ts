@@ -5,7 +5,7 @@ import { updateAuthSecurityProfile, getAuthSecurityProfile } from '@/features/au
 import { auth } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
 import { internalError, authError, badRequestError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export const updateSchema = z.object({
   disabled: z.boolean().optional(),

@@ -269,6 +269,187 @@ export const dedupeCategories = (categories: BaseCategory[]): BaseCategory[] => 
   return Array.from(byId.values());
 };
 
+const CATEGORY_SYSTEM_KEYS = new Set<string>([
+  'status',
+  'error_code',
+  'error_message',
+]);
+
+const CATEGORY_CHILD_COLLECTION_KEYS = [
+  'children',
+  'categories',
+  'subcategories',
+  'sub_categories',
+  'child_categories',
+  'items',
+] as const;
+
+const hasOwn = (record: Record<string, unknown>, key: string): boolean =>
+  Object.prototype.hasOwnProperty.call(record, key);
+
+const resolveFallbackId = (fallbackKey: string | undefined): string | null => {
+  if (!fallbackKey) return null;
+  const trimmed = fallbackKey.trim();
+  if (!trimmed || CATEGORY_SYSTEM_KEYS.has(trimmed)) return null;
+  return toStringId(trimmed) ?? trimmed;
+};
+
+type ParsedCategoryNode = {
+  category: BaseCategory;
+  hasExplicitParent: boolean;
+  childCollections: unknown[];
+};
+
+const parseCategoryNode = (
+  value: unknown,
+  inheritedParentId: string | null,
+  fallbackKey?: string,
+): ParsedCategoryNode | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const explicitId = toStringId(record['category_id']) ?? toStringId(record['id']);
+  const fallbackId = resolveFallbackId(fallbackKey);
+
+  const rawName =
+    (typeof record['name'] === 'string' && record['name'].trim()) ||
+    (typeof record['label'] === 'string' && record['label'].trim()) ||
+    '';
+  const hasName = rawName.length > 0;
+
+  const hasExplicitParent = hasOwn(record, 'parent_id')
+    || hasOwn(record, 'parent_category_id')
+    || hasOwn(record, 'parentId');
+
+  const childCollections = CATEGORY_CHILD_COLLECTION_KEYS
+    .map((key) => record[key])
+    .filter((entry: unknown): entry is unknown => entry !== undefined && entry !== null);
+
+  if (!explicitId && !(fallbackId && (hasName || hasExplicitParent || childCollections.length > 0))) {
+    return null;
+  }
+
+  if (!hasName && !hasExplicitParent && childCollections.length === 0) {
+    return null;
+  }
+
+  const id = explicitId ?? fallbackId;
+  if (!id) return null;
+
+  const explicitParentId = normalizeBaseParentId(
+    record['parent_id'] ?? record['parent_category_id'] ?? record['parentId'],
+  );
+  const parentId = hasExplicitParent ? explicitParentId : inheritedParentId;
+
+  return {
+    category: {
+      id,
+      name: hasName ? rawName : id,
+      parentId,
+    },
+    hasExplicitParent,
+    childCollections,
+  };
+};
+
+type StoredCategory = {
+  category: BaseCategory;
+  hasExplicitParent: boolean;
+};
+
+const mergeCategory = (
+  categoriesById: Map<string, StoredCategory>,
+  parsed: ParsedCategoryNode,
+): void => {
+  const existing = categoriesById.get(parsed.category.id);
+  if (!existing) {
+    categoriesById.set(parsed.category.id, {
+      category: parsed.category,
+      hasExplicitParent: parsed.hasExplicitParent,
+    });
+    return;
+  }
+
+  const nextCategory: BaseCategory = { ...existing.category };
+  const existingHasConcreteName = Boolean(nextCategory.name && nextCategory.name !== nextCategory.id);
+  const parsedHasConcreteName = Boolean(
+    parsed.category.name && parsed.category.name !== parsed.category.id,
+  );
+  if (!existingHasConcreteName && parsedHasConcreteName) {
+    nextCategory.name = parsed.category.name;
+  }
+
+  if (parsed.hasExplicitParent) {
+    nextCategory.parentId = parsed.category.parentId;
+  } else if (!existing.hasExplicitParent && !nextCategory.parentId && parsed.category.parentId) {
+    nextCategory.parentId = parsed.category.parentId;
+  }
+
+  categoriesById.set(parsed.category.id, {
+    category: nextCategory,
+    hasExplicitParent: existing.hasExplicitParent || parsed.hasExplicitParent,
+  });
+};
+
+const collectCategoriesFromNode = (
+  value: unknown,
+  categoriesById: Map<string, StoredCategory>,
+  inheritedParentId: string | null,
+  fallbackKey?: string,
+  depth: number = 0,
+): void => {
+  if (depth > 32) return;
+
+  if (Array.isArray(value)) {
+    value.forEach((entry: unknown) =>
+      collectCategoriesFromNode(entry, categoriesById, inheritedParentId, undefined, depth + 1),
+    );
+    return;
+  }
+
+  if (typeof value === 'string') {
+    const id = resolveFallbackId(fallbackKey);
+    const name = value.trim();
+    if (!id || !name) return;
+    mergeCategory(categoriesById, {
+      category: { id, name, parentId: inheritedParentId },
+      hasExplicitParent: false,
+      childCollections: [],
+    });
+    return;
+  }
+
+  if (!value || typeof value !== 'object') return;
+
+  const parsed = parseCategoryNode(value, inheritedParentId, fallbackKey);
+  if (parsed) {
+    mergeCategory(categoriesById, parsed);
+    parsed.childCollections.forEach((childCollection: unknown) => {
+      collectCategoriesFromNode(
+        childCollection,
+        categoriesById,
+        parsed.category.id,
+        undefined,
+        depth + 1,
+      );
+    });
+    return;
+  }
+
+  Object.entries(value as Record<string, unknown>).forEach(([key, childValue]: [string, unknown]) => {
+    if (CATEGORY_SYSTEM_KEYS.has(key)) return;
+    collectCategoriesFromNode(
+      childValue,
+      categoriesById,
+      inheritedParentId,
+      key,
+      depth + 1,
+    );
+  });
+};
+
 export const fetchBaseCategoriesFromPayload = (
   payload: BaseApiResponse,
 ): BaseCategory[] => {
@@ -276,44 +457,7 @@ export const fetchBaseCategoriesFromPayload = (
     payload['categories'] ??
     (payload['data'] as Record<string, unknown> | undefined)?.['categories'] ??
     payload;
-
-  if (
-    rawCategories &&
-    typeof rawCategories === 'object' &&
-    !Array.isArray(rawCategories)
-  ) {
-    return Object.entries(rawCategories as Record<string, unknown>)
-      .filter(
-        ([key]: [string, unknown]) =>
-          key !== 'status' && key !== 'error_code' && key !== 'error_message',
-      )
-      .map(([key, value]: [string, unknown]) => {
-        const cat = value as Record<string, unknown>;
-        const id = toStringId(cat['category_id']) ?? toStringId(cat['id']) ?? key;
-        const name =
-          (typeof cat['name'] === 'string' && cat['name'].trim()) ||
-          (typeof cat['label'] === 'string' && cat['label'].trim()) ||
-          id;
-        const parentId = normalizeBaseParentId(
-          cat['parent_id'] ?? cat['parent_category_id'],
-        );
-        return { id, name, parentId };
-      });
-  }
-
-  if (Array.isArray(rawCategories)) {
-    return rawCategories.map((cat: Record<string, unknown>) => {
-      const id = toStringId(cat['category_id']) ?? toStringId(cat['id']) ?? '';
-      const name =
-        (typeof cat['name'] === 'string' && cat['name'].trim()) ||
-        (typeof cat['label'] === 'string' && cat['label'].trim()) ||
-        id;
-      const parentId = normalizeBaseParentId(
-        cat['parent_id'] ?? cat['parent_category_id'],
-      );
-      return { id, name, parentId };
-    });
-  }
-
-  return [];
+  const categoriesById = new Map<string, StoredCategory>();
+  collectCategoriesFromNode(rawCategories, categoriesById, null);
+  return Array.from(categoriesById.values()).map((entry: StoredCategory) => entry.category);
 };

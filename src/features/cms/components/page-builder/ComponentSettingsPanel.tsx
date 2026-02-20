@@ -28,6 +28,7 @@ import { ContentAiSection } from './settings/ContentAiSection';
 import { CssAiSection } from './settings/CssAiSection';
 import { EventEffectsTab } from './settings/EventEffectsTab';
 import { prependManagementFields, groupSettingsFields, renderFieldGroups } from './settings/field-group-helpers';
+import { SettingsFormProvider } from './settings/SettingsFormContext';
 import { PageSettingsTab } from './settings/PageSettingsTab';
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 
@@ -424,47 +425,53 @@ export function ComponentSettingsPanel(): React.ReactNode {
             </TabsList>
             <TabsContent value='settings' className='flex-1 overflow-y-auto p-4 mt-0'>
               {selectedSection && sectionDef ? (
-                <div className='space-y-4'>
-                  <div className='grid grid-cols-2 gap-2'><Button onClick={handleCopySection} variant='outline' size='sm' className='text-xs'>Copy</Button><Button onClick={handleDuplicateSection} variant='outline' size='sm' className='text-xs'>Duplicate</Button></div>
-                  {renderFieldGroups(groupSettingsFields(selectedSection.type === 'Grid' ? prependManagementFields(sectionDef.settingsSchema) : sectionDef.settingsSchema), selectedSection.settings, handleSectionSettingChangeWithGridColumns)}
-                  <div className='rounded border border-border/40 bg-gray-900/40 p-3'>
-                    <div className='flex gap-2'><Input value={sectionTemplateName} onChange={(e) => setSectionTemplateName(e.target.value)} placeholder='Name' className='h-8 text-xs' /><Input value={sectionTemplateCategory} onChange={(e) => setSectionTemplateCategory(e.target.value)} placeholder='Cat' className='h-8 text-xs' /></div>
-                    <Button onClick={() => void handleSaveSectionTemplate()} size='sm' className='mt-2 w-full h-8' disabled={updateSetting.isPending}>Save Template</Button>
+                <SettingsFormProvider values={selectedSection.settings} onChange={handleSectionSettingChangeWithGridColumns}>
+                  <div className='space-y-4'>
+                    <div className='grid grid-cols-2 gap-2'><Button onClick={handleCopySection} variant='outline' size='sm' className='text-xs'>Copy</Button><Button onClick={handleDuplicateSection} variant='outline' size='sm' className='text-xs'>Duplicate</Button></div>
+                    {renderFieldGroups(groupSettingsFields(selectedSection.type === 'Grid' ? prependManagementFields(sectionDef.settingsSchema) : sectionDef.settingsSchema))}
+                    <div className='rounded border border-border/40 bg-gray-900/40 p-3'>
+                      <div className='flex gap-2'><Input value={sectionTemplateName} onChange={(e) => setSectionTemplateName(e.target.value)} placeholder='Name' className='h-8 text-xs' /><Input value={sectionTemplateCategory} onChange={(e) => setSectionTemplateCategory(e.target.value)} placeholder='Cat' className='h-8 text-xs' /></div>
+                      <Button onClick={() => void handleSaveSectionTemplate()} size='sm' className='mt-2 w-full h-8' disabled={updateSetting.isPending}>Save Template</Button>
+                    </div>
+                    <Button onClick={handleRemoveSection} variant='destructive' size='sm' className='w-full'><Trash2 className='mr-2 size-4' />Remove Section</Button>
                   </div>
-                  <Button onClick={handleRemoveSection} variant='destructive' size='sm' className='w-full'><Trash2 className='mr-2 size-4' />Remove Section</Button>
-                </div>
+                </SettingsFormProvider>
               ) : selectedColumn && columnDef ? (
-                <div className='space-y-4'>
-                  {renderFieldGroups(groupSettingsFields(prependManagementFields(columnDef.settingsSchema)), columnSettingsForRender ?? selectedColumn.settings, handleColumnSettingChange, (f) => columnHeightMode === 'inherit' && f.key === 'height' ? { ...f, disabled: true } : f)}
-                </div>
-              ) : selectedBlock && blockDef ? (
-                <div className='space-y-4'>
-                  {isImageElementInContainer && backgroundTargetOptions.length > 1 && (
-                    <div className='rounded border border-border/40 bg-gray-900/40 p-3 mb-4'>
-                      <SelectSimple
-                        value={currentBackgroundTarget}
-                        onValueChange={(value: string) => handleBlockSettingChange('backgroundTarget', value)}
-                        options={backgroundTargetOptions}
-                        size='sm'
-                        triggerClassName='h-8 bg-gray-800 border-border text-gray-200'
-                      />
-                    </div>
-                  )}
-                  {isImageElementInContainer && isInBackgroundMode ? (
-                    renderFieldGroups(groupSettingsFields(prependManagementFields(IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS)), selectedBlock.settings, handleBlockSettingChange)
-                  ) : (
-                    renderFieldGroups(groupSettingsFields(prependManagementFields(blockDef.settingsSchema)), rowSettingsForRender ?? selectedBlock.settings, handleBlockSettingChange, (f) => (selectedBlock.type === 'AppEmbed' && f.key === 'appId') ? { ...f, options: appEmbedOptions } : (isRowBlock && rowHeightMode === 'inherit' && f.key === 'height') ? { ...f, disabled: true } : f)
-                  )}
-                  {isGridImageElement && !isInBackgroundMode && (
-                    <div className='grid gap-2 border-t border-border/30 pt-4'>
-                      {selectedParentColumn && <Button onClick={() => handleMakeBackground('column')} variant='outline' size='sm' className='w-full text-xs' disabled={!imageBackgroundSrc}>To Column</Button>}
-                      <Button onClick={() => handleMakeBackground('grid')} variant='outline' size='sm' className='w-full text-xs' disabled={!imageBackgroundSrc}>To Grid</Button>
-                    </div>
-                  )}
-                  <div className='border-t border-border/30 pt-4'>
-                    <Button onClick={isRowBlock ? handleRemoveRow : handleRemoveBlock} variant='destructive' size='sm' className='w-full'><Trash2 className='mr-2 size-4' />{isRowBlock ? 'Remove Row' : 'Remove Block'}</Button>
+                <SettingsFormProvider values={columnSettingsForRender ?? selectedColumn.settings} onChange={handleColumnSettingChange}>
+                  <div className='space-y-4'>
+                    {renderFieldGroups(groupSettingsFields(prependManagementFields(columnDef.settingsSchema)), undefined, undefined, (f) => columnHeightMode === 'inherit' && f.key === 'height' ? { ...f, disabled: true } : f)}
                   </div>
-                </div>
+                </SettingsFormProvider>
+              ) : selectedBlock && blockDef ? (
+                <SettingsFormProvider values={rowSettingsForRender ?? selectedBlock.settings} onChange={handleBlockSettingChange}>
+                  <div className='space-y-4'>
+                    {isImageElementInContainer && backgroundTargetOptions.length > 1 && (
+                      <div className='rounded border border-border/40 bg-gray-900/40 p-3 mb-4'>
+                        <SelectSimple
+                          value={currentBackgroundTarget}
+                          onValueChange={(value: string) => handleBlockSettingChange('backgroundTarget', value)}
+                          options={backgroundTargetOptions}
+                          size='sm'
+                          triggerClassName='h-8 bg-gray-800 border-border text-gray-200'
+                        />
+                      </div>
+                    )}
+                    {isImageElementInContainer && isInBackgroundMode ? (
+                      renderFieldGroups(groupSettingsFields(prependManagementFields(IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS)))
+                    ) : (
+                      renderFieldGroups(groupSettingsFields(prependManagementFields(blockDef.settingsSchema)), undefined, undefined, (f) => (selectedBlock.type === 'AppEmbed' && f.key === 'appId') ? { ...f, options: appEmbedOptions } : (isRowBlock && rowHeightMode === 'inherit' && f.key === 'height') ? { ...f, disabled: true } : f)
+                    )}
+                    {isGridImageElement && !isInBackgroundMode && (
+                      <div className='grid gap-2 border-t border-border/30 pt-4'>
+                        {selectedParentColumn && <Button onClick={() => handleMakeBackground('column')} variant='outline' size='sm' className='w-full text-xs' disabled={!imageBackgroundSrc}>To Column</Button>}
+                        <Button onClick={() => handleMakeBackground('grid')} variant='outline' size='sm' className='w-full text-xs' disabled={!imageBackgroundSrc}>To Grid</Button>
+                      </div>
+                    )}
+                    <div className='border-t border-border/30 pt-4'>
+                      <Button onClick={isRowBlock ? handleRemoveRow : handleRemoveBlock} variant='destructive' size='sm' className='w-full'><Trash2 className='mr-2 size-4' />{isRowBlock ? 'Remove Row' : 'Remove Block'}</Button>
+                    </div>
+                  </div>
+                </SettingsFormProvider>
               ) : null}
             </TabsContent>
             <TabsContent value='animation' className='flex-1 overflow-y-auto p-4 mt-0'><AnimationConfigPanel config={currentAnimationConfig} onChange={handleAnimationChange} /></TabsContent>

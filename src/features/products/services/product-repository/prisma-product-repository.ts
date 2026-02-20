@@ -13,7 +13,7 @@ import type {
 import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import { conflictError, internalError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
-import type { ImageFileRecord } from '@/shared/types/domain/files';
+import type { ImageFileRecord } from '@/shared/contracts/files';
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -3,8 +3,8 @@
 import React, { useMemo } from 'react';
 
 import { countryCodeOptions } from '@/shared/constants/internationalization';
-import type { CountryOption, CurrencyOption } from '@/shared/types/domain/internationalization';
-import type { EntityModalProps } from '@/shared/types/modal-props';
+import type { CountryOption, CurrencyOption } from '@/shared/contracts/internationalization';
+import type { EntityModalProps } from '@/shared/contracts/ui';
 import { Checkbox, Label, LoadingState, Hint } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 

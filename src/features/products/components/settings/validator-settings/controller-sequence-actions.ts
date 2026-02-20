@@ -7,7 +7,7 @@ import {
   encodeDynamicReplacementRecipe,
 } from '@/features/products/utils/validator-replacement-recipe';
 import { api } from '@/shared/lib/api-client';
-import type { ProductValidationPattern } from '@/shared/types/domain/products';
+import type { ProductValidationPattern } from '@/shared/contracts/products';
 
 import {
   buildLatestFieldRecipe,

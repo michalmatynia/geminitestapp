@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { AiNode, Edge } from '@/shared/types/domain/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 
 import { normalizeAiPathsValidationConfig } from '../defaults';
 import {

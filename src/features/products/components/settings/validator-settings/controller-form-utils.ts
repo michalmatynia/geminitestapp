@@ -9,7 +9,7 @@ import {
   getStaticReplacementValue,
   parseDynamicReplacementRecipe,
 } from '@/features/products/utils/validator-replacement-recipe';
-import type { ProductValidationPattern } from '@/shared/types/domain/products';
+import type { ProductValidationPattern } from '@/shared/contracts/products';
 
 import { normalizeReplacementFields } from './helpers';
 

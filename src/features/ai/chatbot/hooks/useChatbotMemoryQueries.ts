@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/shared/lib/api-client';
 import { createDeleteMutationV2, createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { ListQuery, MutationResult } from '@/shared/types/query-result-types';
+import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 
 import type { ChatbotMemoryItem } from '../types';
 

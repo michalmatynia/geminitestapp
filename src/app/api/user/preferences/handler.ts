@@ -9,7 +9,7 @@ import {
 import { auth } from '@/features/auth/server';
 import { logSystemEvent } from '@/features/observability/server';
 import type { UpdateUserPreferencesDto as UserPreferencesData } from '@/shared/contracts/auth';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseUserPreferencesUpdatePayload } from '@/shared/validations/user-preferences';
 
 // For now, we'll use a hardcoded user ID

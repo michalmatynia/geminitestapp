@@ -7,7 +7,7 @@ import { getProductRepository } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ProductAiJobTypeDto as ProductAiJobType } from '@/shared/contracts/jobs';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 
 const bulkJobSchema = z.object({

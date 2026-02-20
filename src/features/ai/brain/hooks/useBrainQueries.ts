@@ -12,8 +12,8 @@ import type {
   AiInsightRecord, 
   AiPathRuntimeAnalyticsSummary, 
   AnalyticsSummaryDto, 
-} from '@/shared/types';
-import type { SingleQuery } from '@/shared/types/query-result-types';
+} from '@/shared/contracts';
+import type { SingleQuery } from '@/shared/contracts/ui';
 
 export { brainKeys };
 

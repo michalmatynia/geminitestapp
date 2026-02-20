@@ -7,7 +7,7 @@ import type { AuthUserDto } from '@/shared/contracts/auth';
 import { authError, internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 import type { ObjectId } from 'mongodb';
 

@@ -15,7 +15,7 @@ import type {
   ListQuery, 
   DeleteMutation, 
   UpdateMutation 
-} from '@/shared/types/query-result-types';
+} from '@/shared/contracts/ui';
 
 export { fileKeys };
 

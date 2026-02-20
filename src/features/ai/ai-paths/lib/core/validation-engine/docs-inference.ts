@@ -1,7 +1,7 @@
 import type {
   AiPathsValidationCondition,
   AiPathsValidationRule,
-} from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
 
 import {
   createAiPathsValidationConditionId,

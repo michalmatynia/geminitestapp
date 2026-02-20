@@ -2,7 +2,7 @@ import type {
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
   AiPathRunRecord,
-} from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
 
 export const PAGE_SIZES = [10, 25, 50];
 export const SEARCH_DEBOUNCE_MS = 300;

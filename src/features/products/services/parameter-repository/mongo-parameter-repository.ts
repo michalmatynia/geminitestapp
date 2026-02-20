@@ -11,7 +11,7 @@ import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { 
   ProductParameter 
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 
 import type { Filter, UpdateFilter, Document } from 'mongodb';
 

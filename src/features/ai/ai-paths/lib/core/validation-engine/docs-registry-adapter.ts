@@ -15,7 +15,7 @@ import type {
   AiPathsValidationModule,
   AiPathsValidationOperator,
   AiPathsValidationSeverity,
-} from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
 
 import { AI_PATHS_NODE_DOCS } from '../docs/node-docs';
 

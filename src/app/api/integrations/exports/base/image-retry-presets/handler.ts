@@ -7,7 +7,7 @@ import {
   setExportImageRetryPresets
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const transformSchema = z.object({
   forceJpeg: z.boolean().optional(),

@@ -4,7 +4,7 @@ import type {
   AiPathsValidationConfig,
   AiPathsValidationRule,
   Edge,
-} from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
 
 import { DB_COLLECTION_OPTIONS } from '../constants';
 import {

@@ -8,7 +8,7 @@ import type {
   ProductCategoryDto as ProductCategory,
   ProductParameterDto as ProductParameter,
 } from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import type { DescriptionContextQuery } from '@/shared/validations/product-metadata-api-schemas';
 
 type DescriptionContextCategory = {

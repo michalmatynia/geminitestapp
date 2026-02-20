@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { AiInsightRecord } from '@/shared/types';
+import type { AiInsightRecord } from '@/shared/contracts';
 import { Button, FormSection, EmptyState, LoadingState } from '@/shared/ui';
 
 import { InsightCard } from './InsightCard';

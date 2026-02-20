@@ -30,7 +30,7 @@ import {
 import { getImageFileRepository } from '@/features/files/server';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
 import { badRequestError, configurationError, operationFailedError } from '@/shared/errors/app-error';
-import type { ImageFileRecord } from '@/shared/types/domain/files';
+import type { ImageFileRecord } from '@/shared/contracts/files';
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 const publicRoot = path.join(process.cwd(), 'public');

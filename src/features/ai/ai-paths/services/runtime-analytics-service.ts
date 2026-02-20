@@ -8,7 +8,7 @@ import type {
   AiPathRuntimeAnalyticsRange,
   AiPathRuntimeAnalyticsSummary,
   AiPathRuntimeNodeStatus,
-} from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
 
 const KEY_PREFIX = 'ai_paths:runtime:analytics:v1';
 const RETENTION_MS = 30 * 24 * 60 * 60 * 1000;

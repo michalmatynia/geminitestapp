@@ -5,7 +5,7 @@ import { resolveDraftCategoryId, updateDraftPayloadSchema } from '@/features/dra
 import type { UpdateProductDraftDto } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
 import { notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 /**
  * GET /api/drafts/[id]

@@ -2,7 +2,7 @@
 
 import type {
   AiNode,
-  AiPathRuntimeEvent,
+  AiPathRunEventDto as AiPathRuntimeEvent,
   AiPathRuntimeNodeStatus,
   AiPathRuntimeNodeStatusMap,
   Edge,

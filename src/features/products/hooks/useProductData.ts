@@ -25,7 +25,7 @@ import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api } from '@/shared/lib/api-client';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
-import type { DeleteResponse } from '@/shared/types/api/api';
+import type { DeleteResponse } from '@/shared/contracts/ui';
 
 import {
   getProductCountQueryKey,

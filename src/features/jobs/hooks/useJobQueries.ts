@@ -4,9 +4,9 @@ import { type Query } from '@tanstack/react-query';
 
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { jobKeys } from '@/shared/lib/query-key-exports';
-import type { ProductAiJob } from '@/shared/types/domain/jobs';
-import type { ProductJob } from '@/shared/types/domain/listing-jobs';
-import type { ListQuery, SingleQuery } from '@/shared/types/query-result-types';
+import type { ProductAiJob } from '@/shared/contracts/jobs';
+import type { ProductJob } from '@/shared/contracts/integrations';
+import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 
 import {
   getIntegrationJobs,

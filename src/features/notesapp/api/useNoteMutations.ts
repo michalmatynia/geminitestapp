@@ -26,12 +26,12 @@ import {
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { DeleteResponse } from '@/shared/types/api/api';
+import type { DeleteResponse } from '@/shared/contracts/ui';
 import type { 
   CreateMutation, 
   UpdateMutation, 
   DeleteMutation 
-} from '@/shared/types/query-result-types';
+} from '@/shared/contracts/ui';
 
 
 export function useCreateNote(): CreateMutation<NoteWithRelations, NoteCreateInput> {

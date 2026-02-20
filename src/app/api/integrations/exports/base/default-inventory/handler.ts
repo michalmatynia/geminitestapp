@@ -6,7 +6,7 @@ import {
   setExportDefaultInventoryId
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const requestSchema = z.object({
   inventoryId: z.string().trim().min(1).nullable().optional()

@@ -1,9 +1,9 @@
 import { subgraphSemanticDocumentSchema } from '@/shared/contracts/ai-paths-semantic-grammar';
-import type { AiNode, Edge, PathConfig } from '@/shared/types/domain/ai-paths';
+import type { AiNode, Edge, PathConfig } from '@/shared/contracts/ai-paths';
 import type {
   SemanticNode,
   SubgraphSemanticDocument,
-} from '@/shared/types/domain/ai-paths-semantic-grammar';
+} from '@/shared/contracts/ai-paths-semantic-grammar';
 
 import { serializePathConfigToSemanticCanvas } from './serialize';
 

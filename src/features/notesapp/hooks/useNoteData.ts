@@ -61,7 +61,7 @@ import {
   invalidateNoteDetail,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { DeleteResponse } from '@/shared/types/api/api';
+import type { DeleteResponse } from '@/shared/contracts/ui';
 
 // --- Queries ---
 

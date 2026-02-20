@@ -8,7 +8,7 @@ import {
   type UserPreferences,
   type UserPreferencesUpdate as UserPreferencesData,
   type JsonValue
-} from '@/shared/types/domain/user-preferences';
+} from '@/shared/contracts/auth';
 
 const toMongoId = (id: string): ObjectId | string => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);

@@ -25,7 +25,7 @@ import { useSettingsMap, useUpdateSetting, useUpdateSettingsBulk } from '@/share
 import type {
   AiPathRuntimeAnalyticsSummary,
   AnalyticsSummaryDto,
-} from '@/shared/types';
+} from '@/shared/contracts';
 import { useToast, type SelectSimpleOption } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 

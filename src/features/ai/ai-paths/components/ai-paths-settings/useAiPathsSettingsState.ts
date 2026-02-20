@@ -53,7 +53,7 @@ import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
+import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { useToast } from '@/shared/ui';
 
 import {

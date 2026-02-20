@@ -5,7 +5,7 @@ import { logSystemEvent } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError, internalError, notFoundError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 

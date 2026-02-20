@@ -5,7 +5,7 @@ import Link from 'next/link';
 import React, { useCallback } from 'react';
 
 import type { ExpandedImageFile } from '@/features/products';
-import { ImageFileSelection } from '@/shared/types/domain/files';
+import { ImageFileSelection } from '@/shared/contracts/files';
 import { Button } from '@/shared/ui';
 
 import { useFileManager } from '../../contexts/FileManagerContext';

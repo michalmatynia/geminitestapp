@@ -33,6 +33,7 @@ interface DataTableProps<TData> {
   initialSorting?: SortingState;
   sortingStorageKey?: string;
   getRowId?: (row: TData) => string | number;
+  getSubRows?: (row: TData) => TData[] | undefined;
   footer?: (table: ReactTable<TData>) => React.ReactNode;
   rowSelection?: RowSelectionState;
   onRowSelectionChange?: OnChangeFn<RowSelectionState>;
@@ -92,6 +93,7 @@ export const DataTable = memo(function DataTable<TData>({
   initialSorting,
   sortingStorageKey,
   getRowId,
+  getSubRows,
   footer,
   rowSelection: controlledRowSelection,
   onRowSelectionChange: controlledOnRowSelectionChange,
@@ -155,6 +157,7 @@ export const DataTable = memo(function DataTable<TData>({
     data,
     columns,
     getRowId: getRowId as (row: TData) => string,
+    getSubRows: getSubRows as ((row: TData) => TData[] | undefined),
     getCoreRowModel: getCoreRowModel(),
     onRowSelectionChange: onRowSelectionChange,
     onExpandedChange: onExpandedChange,

@@ -2,8 +2,8 @@
 
 import React from 'react';
 
-import type { CurrencyOption } from '@/shared/types/domain/internationalization';
-import type { EntityModalProps } from '@/shared/types/modal-props';
+import type { CurrencyOption } from '@/shared/contracts/internationalization';
+import type { EntityModalProps } from '@/shared/contracts/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useCurrencyForm } from './hooks/useCurrencyForm';

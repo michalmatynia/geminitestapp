@@ -3,7 +3,7 @@
 import { Brush, Circle, Eye, EyeOff, Lasso, PenLine, RectangleHorizontal, Trash2 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 
-import type { VectorShape, VectorShapeRole } from '@/shared/types/domain/vector';
+import type { VectorShape, VectorShapeRole } from '@/shared/contracts/vector';
 import {
   Button,
   Input,

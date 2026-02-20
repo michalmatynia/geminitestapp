@@ -13,7 +13,7 @@ import prisma from '@/shared/lib/db/prisma';
 import type { 
   ProductCategory, 
   ProductCategoryWithChildren 
-} from '@/shared/types/domain/products';
+} from '@/shared/contracts/products';
 
 type PrismaCategoryWithChildren = PrismaProductCategory & {
   children?: PrismaCategoryWithChildren[];

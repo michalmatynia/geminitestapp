@@ -11,7 +11,7 @@ import type { ProductWithImages } from '@/features/products/types';
 import { productSchema } from '@/shared/contracts/products';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { ListQuery, SingleQuery } from '@/shared/types/query-result-types';
+import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 
 import {
   refetchProductsAndCounts,

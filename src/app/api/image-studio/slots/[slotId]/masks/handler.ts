@@ -16,7 +16,7 @@ import {
 } from '@/features/ai/image-studio/server/slot-repository';
 import { getDiskPathFromPublicPath, getImageFileRepository } from '@/features/files/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const pointSchema = z.object({
   x: z.number().finite().min(0).max(1),

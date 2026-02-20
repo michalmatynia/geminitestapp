@@ -1,4 +1,4 @@
-import type { CountryOption } from '@/shared/types/domain/internationalization';
+import type { CountryOption } from '@/shared/contracts/internationalization';
 
 import type { PromptExploderCaseResolverPartyCandidate } from './types';
 import type { FilemakerAddress, FilemakerDatabase } from '../filemaker/types';

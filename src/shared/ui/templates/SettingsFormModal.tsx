@@ -1,6 +1,6 @@
 'use client';
 
-import type { ModalStateProps } from '@/shared/types/modal-props';
+import type { ModalStateProps } from '@/shared/contracts/ui';
 
 import { FormModal } from '../FormModal';
 

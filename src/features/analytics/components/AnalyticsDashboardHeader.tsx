@@ -1,6 +1,6 @@
 'use client';
 
-import type { AnalyticsScope } from '@/shared/types';
+import type { AnalyticsScope } from '@/shared/contracts';
 import {
   Button,
   SectionHeader,

@@ -83,9 +83,6 @@ export const GenericPickerDropdown = memo(function GenericPickerDropdown<
     [groups]
   );
 
-  const allOptionsCount = allOptions.length;
-  if (allOptionsCount === 0) return null;
-
   const filteredGroups = useMemo(() => {
     if (!searchable || !searchQuery) return groups;
 
@@ -100,6 +97,9 @@ export const GenericPickerDropdown = memo(function GenericPickerDropdown<
       }))
       .filter((group: PickerGroup) => group.options.length > 0);
   }, [groups, searchQuery, searchable]);
+
+  const allOptionsCount = allOptions.length;
+  if (allOptionsCount === 0) return null;
 
   return (
     <div className='relative'>

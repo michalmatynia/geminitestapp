@@ -4,7 +4,7 @@ import { type UseQueryResult, type UseMutationResult } from '@tanstack/react-que
 import { createContext, useContext, useMemo, useState, ReactNode } from 'react';
 
 import { useAnalyticsSummary, useAnalyticsInsights, useRunAnalyticsInsight } from '@/features/analytics/hooks/useAnalytics';
-import type { AnalyticsScope, AnalyticsSummaryDto, AiInsightRecord } from '@/shared/types';
+import type { AnalyticsScope, AnalyticsSummaryDto, AiInsightRecord } from '@/shared/contracts';
 
 import { type AnalyticsRange } from '../api';
 

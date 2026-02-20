@@ -5,7 +5,7 @@ import {
   useAiInsightsNotifications,
   useClearAiInsightsNotifications,
 } from '@/features/admin/hooks/useAiInsightsNotifications';
-import type { AiInsightNotification } from '@/shared/types';
+import type { AiInsightNotification } from '@/shared/contracts';
 import { Button, StatusBadge, DocumentationSection, LoadingState, EmptyState, Drawer } from '@/shared/ui';
 import { useToast } from '@/shared/ui';
 

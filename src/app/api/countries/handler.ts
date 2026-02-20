@@ -15,7 +15,7 @@ import type { CountryWithCurrenciesDto as CountryWithCurrencies } from '@/shared
 import { conflictError, internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 import type { CountryCode } from '@prisma/client';
 import type { Prisma } from '@prisma/client';

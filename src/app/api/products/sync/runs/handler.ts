@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { listProductSyncRuns } from '@/features/product-sync/services/product-sync-repository';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export const querySchema = z.object({
   profileId: z.string().trim().min(1).optional(),

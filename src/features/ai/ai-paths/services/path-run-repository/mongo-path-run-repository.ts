@@ -11,8 +11,8 @@ import type {
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
   AiPathRunRecord,
-} from '@/shared/types/domain/ai-paths';
-import type { AiNode } from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
+import type { AiNode } from '@/shared/contracts/ai-paths';
 
 import {
   AiPathRunEventCreateInput,

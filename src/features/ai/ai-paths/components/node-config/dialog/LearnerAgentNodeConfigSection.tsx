@@ -5,7 +5,7 @@ import React from 'react';
 
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
 import type { LearnerAgentConfig } from '@/features/ai/ai-paths/lib';
-import type { AgentTeachingAgentRecord } from '@/shared/types/domain/agent-teaching';
+import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
 import {
   Button,
   Label,

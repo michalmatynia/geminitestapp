@@ -6,7 +6,7 @@ import {
   createPrismaJsonBackup,
   listJsonBackups,
 } from '@/features/database/services/database-json-backup';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();

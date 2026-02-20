@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 interface FolderNode {
   name: string;

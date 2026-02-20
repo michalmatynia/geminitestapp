@@ -1,4 +1,4 @@
-import type { ContextConfig } from '@/shared/types/domain/ai-paths';
+import type { ContextConfig } from '@/shared/contracts/ai-paths';
 
 import { CONTEXT_PRESET_FIELDS } from '../constants';
 import { omitByPaths, pickByPaths } from './json';

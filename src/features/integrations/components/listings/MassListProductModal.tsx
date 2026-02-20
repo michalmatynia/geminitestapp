@@ -6,7 +6,7 @@ import {
   ListingSettingsProvider,
   useListingSettingsContext,
 } from '@/features/integrations/context/ListingSettingsContext';
-import type { EntityModalProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/contracts/ui';
 import { FormModal, Alert, LoadingState } from '@/shared/ui';
 
 import { BaseListingSettings } from './BaseListingSettings';

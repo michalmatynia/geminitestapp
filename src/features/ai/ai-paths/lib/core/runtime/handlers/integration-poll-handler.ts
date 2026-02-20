@@ -2,11 +2,11 @@ import type {
   DbQueryConfig,
   PollConfig,
   RuntimePortValues,
-} from '@/shared/types/domain/ai-paths';
+} from '@/shared/contracts/ai-paths';
 import type {
   NodeHandler,
   NodeHandlerContext,
-} from '@/shared/types/domain/ai-paths-runtime';
+} from '@/shared/contracts/ai-paths-runtime';
 
 import { DEFAULT_DB_QUERY } from '../../constants';
 import { coerceInput } from '../../utils';

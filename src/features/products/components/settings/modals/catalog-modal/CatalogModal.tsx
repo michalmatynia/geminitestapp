@@ -4,7 +4,7 @@ import React from 'react';
 
 import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
 import type { Catalog, PriceGroup } from '@/features/products/types';
-import type { EntityModalProps } from '@/shared/types/modal-props';
+import type { EntityModalProps } from '@/shared/contracts/ui';
 import { Alert } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 

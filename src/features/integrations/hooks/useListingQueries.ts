@@ -8,7 +8,7 @@ import {
   createListQueryV2,
 } from '@/shared/lib/query-factories-v2';
 import { integrationKeys } from '@/shared/lib/query-key-exports';
-import type { ListQuery } from '@/shared/types/query-result-types';
+import type { ListQuery } from '@/shared/contracts/ui';
 
 const PRODUCT_LISTINGS_STALE_TIME_MS = 30_000;
 

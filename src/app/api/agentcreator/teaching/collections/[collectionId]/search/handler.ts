@@ -6,8 +6,8 @@ import { getEmbeddingCollectionById } from '@/features/ai/agentcreator/teaching/
 import { retrieveTopContext } from '@/features/ai/agentcreator/teaching/server/retrieval';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { AgentTeachingChatSource } from '@/shared/types/domain/agent-teaching';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
 
 const searchSchema = z.object({
   queryText: z.string().trim().min(1),

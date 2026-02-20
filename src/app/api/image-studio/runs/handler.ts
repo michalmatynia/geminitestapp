@@ -4,7 +4,7 @@ import {
   listImageStudioRuns,
   type ImageStudioRunStatus,
 } from '@/features/ai/image-studio/server/run-repository';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const RUN_STATUSES = new Set<ImageStudioRunStatus>(['queued', 'running', 'completed', 'failed']);
 

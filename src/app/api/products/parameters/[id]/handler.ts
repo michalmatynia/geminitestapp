@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { getParameterRepository } from '@/features/products/server';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const SELECTOR_TYPES = ['text', 'textarea', 'radio', 'select', 'dropdown', 'checkbox', 'checklist'] as const;
 const selectorTypeSchema = z.enum(SELECTOR_TYPES);

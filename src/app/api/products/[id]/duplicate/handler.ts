@@ -5,7 +5,7 @@ import { parseJsonBody } from '@/features/products/server';
 import { productService } from '@/features/products/services/productService'; // Direct import
 import type { ProductWithImages } from '@/features/products/types';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const duplicateSchema = z.object({
   sku: z.string().trim().optional(),

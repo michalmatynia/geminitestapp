@@ -15,7 +15,7 @@ import {
 } from '@/features/products/types/drafts';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ProductParameterValue } from '@/shared/types/domain/products';
+import type { ProductParameterValue } from '@/shared/contracts/products';
 
 type DraftProvider = 'mongodb' | 'prisma';
 

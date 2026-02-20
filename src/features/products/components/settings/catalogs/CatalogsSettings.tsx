@@ -1,6 +1,6 @@
 import { useInternationalizationContext } from '@/features/internationalization';
 import { Catalog } from '@/features/products/types';
-import type { Language } from '@/shared/types/domain/internationalization';
+import type { Language } from '@/shared/contracts/internationalization';
 import { Button, Badge, SimpleSettingsList } from '@/shared/ui';
 
 import { useProductSettingsContext } from '../ProductSettingsContext';

@@ -8,7 +8,7 @@ import type {
   ProductValidationInstanceScopeDto as ProductValidationInstanceScope, 
   ProductValidationPatternDto as ProductValidationPattern 
 } from '@/shared/contracts/products';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const TEMPLATE_SCOPES: ProductValidationInstanceScope[] = [
   'draft_template',

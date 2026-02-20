@@ -580,16 +580,16 @@ describe('case-resolver settings', () => {
     expect(
       relationGraph.edges.some(
         (edge): boolean =>
-          edge.from === 'case:case-a' &&
-          edge.to === 'case:case-b' &&
+          edge.source === 'case:case-a' &&
+          edge.target === 'case:case-b' &&
           relationGraph.edgeMeta[edge.id]?.relationType === 'parent_case'
       )
     ).toBe(true);
     expect(
       relationGraph.edges.some(
         (edge): boolean =>
-          edge.from === 'case:case-a' &&
-          edge.to === 'case:case-b' &&
+          edge.source === 'case:case-a' &&
+          edge.target === 'case:case-b' &&
           relationGraph.edgeMeta[edge.id]?.relationType === 'references'
       )
     ).toBe(true);
@@ -958,7 +958,7 @@ describe('case-resolver settings', () => {
     expect(parseCaseResolverIdentifiers('not-json')).toEqual([]);
   });
 
-  it('adds document textfield/content ports for linked document nodes', () => {
+  it('adds document wysiwygText/content/plainText ports for linked document nodes', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
@@ -1001,6 +1001,47 @@ describe('case-resolver settings', () => {
     );
   });
 
+  it('normalizes explanatory prompt nodes to document wysiwygText/content/plainText ports', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        workspaceRevision: 0,
+        lastMutationId: null,
+        lastMutationAt: null,
+        folders: [],
+        files: [
+          {
+            id: 'case-explanatory-ports',
+            name: 'Case Explanatory Ports',
+            folder: '',
+            graph: {
+              nodes: [createPromptNode('explanatory-node')],
+              edges: [],
+              nodeMeta: {
+                'explanatory-node': {
+                  role: 'explanatory',
+                  includeInOutput: true,
+                  quoteMode: 'none',
+                  surroundPrefix: '',
+                  surroundSuffix: '',
+                },
+              },
+              edgeMeta: {},
+            },
+          },
+        ],
+        assets: [],
+        activeFileId: 'case-explanatory-ports',
+      })
+    );
+
+    const graph = workspace.files[0]?.graph;
+    const explanatoryNode = graph?.nodes.find((node: AiNode): boolean => node.id === 'explanatory-node');
+
+    expect(explanatoryNode?.inputs).toEqual(CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS);
+    expect(explanatoryNode?.outputs).toEqual(CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS);
+  });
+
   it('migrates legacy template document nodes to prompt nodes', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
@@ -1037,7 +1078,7 @@ describe('case-resolver settings', () => {
     const legacyNode = graph?.nodes.find((node: AiNode): boolean => node.id === 'legacy-doc-node');
 
     expect(legacyNode?.type).toBe('prompt');
-    expect(legacyNode?.config?.prompt?.template).toBe('<p>Legacy template text</p>');
+    expect(((legacyNode?.config as any)?.prompt)?.template).toBe('<p>Legacy template text</p>');
     expect(legacyNode?.inputs).toEqual(CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS);
     expect(legacyNode?.outputs).toEqual(CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS);
   });
@@ -1139,6 +1180,22 @@ describe('case-resolver settings', () => {
     });
   });
 
+  it('returns isolated empty node-file snapshots per parse call', () => {
+    const first = parseNodeFileSnapshot('');
+    const second = parseNodeFileSnapshot('');
+
+    first.nodes.push(createPromptNode('mutated-node'));
+    first.nodeFileMeta['mutated-node'] = {
+      fileId: 'doc-mutated',
+      fileType: 'document',
+      fileName: 'Mutated',
+    };
+
+    expect(second.nodes).toEqual([]);
+    expect(second.edges).toEqual([]);
+    expect(second.nodeFileMeta).toEqual({});
+  });
+
   it('removes stale legacy node-file binding snapshots when no graph binding exists', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
@@ -1202,7 +1259,7 @@ describe('case-resolver settings', () => {
     expect(snapshot.nodeFileMeta).toEqual({});
   });
 
-  it('normalizes text node edge ports to textfield/content only', () => {
+  it('normalizes text node edge ports to document ports and maps legacy textfield', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
@@ -1237,6 +1294,13 @@ describe('case-resolver settings', () => {
                   toPort: 'custom',
                 },
                 {
+                  id: 'edge-in-legacy-textfield',
+                  from: 'upstream',
+                  to: 'doc-node',
+                  fromPort: 'result',
+                  toPort: 'textfield',
+                },
+                {
                   id: 'edge-out-result',
                   from: 'doc-node',
                   to: 'downstream',
@@ -1248,6 +1312,13 @@ describe('case-resolver settings', () => {
                   from: 'doc-node',
                   to: 'downstream',
                   fromPort: 'prompt',
+                  toPort: 'prompt',
+                },
+                {
+                  id: 'edge-out-legacy-textfield',
+                  from: 'doc-node',
+                  to: 'downstream',
+                  fromPort: 'textfield',
                   toPort: 'prompt',
                 },
               ],
@@ -1274,7 +1345,11 @@ describe('case-resolver settings', () => {
 
     expect(edgeById.get('edge-in-prompt')?.toPort).toBe('content');
     expect(edgeById.get('edge-in-unknown')?.toPort).toBe('content');
+    expect(edgeById.get('edge-in-legacy-textfield')?.toPort).toBe(CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0]);
     expect(edgeById.get('edge-out-result')?.fromPort).toBe('content');
     expect(edgeById.get('edge-out-prompt')?.fromPort).toBe('content');
+    expect(edgeById.get('edge-out-legacy-textfield')?.fromPort).toBe(
+      CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0]
+    );
   });
 });

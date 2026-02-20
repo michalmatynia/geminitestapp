@@ -413,7 +413,7 @@ export const createGenerationToolbarActionHandlers = (
       return;
     }
     if (!cropRectOverride && !deps.hasCropBoundary) {
-      deps.toast('Set a valid crop boundary first.', { variant: 'info' });
+      deps.toast('Set a valid crop boundary or move image outside canvas first.', { variant: 'info' });
       return;
     }
     if (deps.cropRequestInFlightRef.current) {

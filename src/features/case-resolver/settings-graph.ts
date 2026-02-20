@@ -145,7 +145,9 @@ const ensureDocumentPromptPorts = (
 ): AiNode[] =>
   nodes.map((node: AiNode): AiNode => {
     const isTextNode =
-      nodeMeta[node.id]?.role === 'text_note' || Boolean(documentSourceFileIdByNode[node.id]);
+      nodeMeta[node.id]?.role === 'text_note' ||
+      nodeMeta[node.id]?.role === 'explanatory' ||
+      Boolean(documentSourceFileIdByNode[node.id]);
     const normalizedNode: AiNode =
       node.type === 'template' && isTextNode
         ? {
@@ -189,16 +191,19 @@ const sanitizeTextNodeEdgePorts = (
   textNodeIds: Set<string>
 ): Edge[] => {
   if (edges.length === 0 || textNodeIds.size === 0) return edges;
-  const textfieldPort = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'textfield';
+  const textfieldPort = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'wysiwygText';
   const contentPort = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'content';
   const plainTextPort = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
+  const legacyTextfieldPort = 'textfield';
 
   const normalizeInputPort = (value: string | null | undefined): string => {
+    if (value === legacyTextfieldPort) return textfieldPort;
     if (value === textfieldPort || value === contentPort || value === plainTextPort) return value;
     return contentPort;
   };
 
   const normalizeOutputPort = (value: string | null | undefined): string => {
+    if (value === legacyTextfieldPort) return textfieldPort;
     if (value === textfieldPort || value === contentPort || value === plainTextPort) return value;
     return contentPort;
   };
@@ -273,13 +278,15 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
       .filter((node: AiNode): boolean => {
         if (node.type !== 'prompt') return false;
         return (
-          sanitizedNodeMeta[node.id]?.role === 'text_note' || Boolean(documentSourceFileIdByNode[node.id])
+          sanitizedNodeMeta[node.id]?.role === 'text_note' ||
+          sanitizedNodeMeta[node.id]?.role === 'explanatory' ||
+          Boolean(documentSourceFileIdByNode[node.id])
         );
       })
       .map((node: AiNode): string => node.id)
   );
   const sanitizedEdges = sanitizeTextNodeEdgePorts(edgesByNodeId, textNodeIds);
-  const strictEdges: CaseResolverGraph['edges'] = sanitizedEdges
+  const strictEdges: CaseResolverGraph['edges'] = (sanitizedEdges)
     .map((edge: Edge): CaseResolverGraph['edges'][number] | null => {
       const from = edge.from ?? edge.source;
       const to = edge.to ?? edge.target;

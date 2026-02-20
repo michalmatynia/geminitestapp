@@ -677,4 +677,43 @@ describe('case-resolver-capture proposals', () => {
       'Wniosek o ponowne rozpatrzenie sprawy'
     );
   });
+
+  it('removes split header lines when captured addressee text is flattened into one line', () => {
+    const sourceText = [
+      'Zakład Ubezpieczeń Społecznych',
+      'Oddział w Szczecinie',
+      'ul. Matejki 22',
+      '70-530 Szczecin',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addressee: {
+        role: 'addressee',
+        displayName: 'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie',
+        rawText:
+          'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie ul. Matejki 22 70-530 Szczecin',
+        kind: 'organization',
+        organizationName: 'Zakład Ubezpieczeń Społecznych',
+        street: 'ul. Matejki',
+        streetNumber: '22',
+        city: 'Szczecin',
+        postalCode: '70-530',
+      },
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        sourceText,
+      }
+    );
+
+    expect(stripCapturedAddressLinesFromText(sourceText, state)).toBe(
+      'Wniosek o ponowne rozpatrzenie sprawy'
+    );
+  });
 });

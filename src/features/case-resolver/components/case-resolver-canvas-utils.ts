@@ -5,6 +5,7 @@ import {
   NODE_WIDTH,
   getDefaultConfigForType,
 } from '@/features/ai/ai-paths/lib';
+import { type EdgeDto as AiEdge } from '@/shared/contracts/ai-paths';
 
 import {
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
@@ -12,7 +13,6 @@ import {
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
   type AiNode,
-  type Edge,
   type NodeDefinition,
   type CaseResolverEdgeMeta,
   type CaseResolverFile,
@@ -70,11 +70,15 @@ export const ensureDocumentPromptPorts = (node: AiNode): AiNode => {
   };
 };
 
-export const DOCUMENT_TEXTFIELD_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'textfield';
+export const DOCUMENT_TEXTFIELD_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'wysiwygText';
 export const DOCUMENT_CONTENT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'content';
 export const DOCUMENT_PLAIN_TEXT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
+const LEGACY_DOCUMENT_TEXTFIELD_PORT = 'textfield';
 
 const normalizeTextNodeInputPort = (value: string | null | undefined): string => {
+  if (value === LEGACY_DOCUMENT_TEXTFIELD_PORT) {
+    return DOCUMENT_TEXTFIELD_PORT;
+  }
   if (
     value === DOCUMENT_TEXTFIELD_PORT ||
     value === DOCUMENT_CONTENT_PORT ||
@@ -86,6 +90,9 @@ const normalizeTextNodeInputPort = (value: string | null | undefined): string =>
 };
 
 const normalizeTextNodeOutputPort = (value: string | null | undefined): string => {
+  if (value === LEGACY_DOCUMENT_TEXTFIELD_PORT) {
+    return DOCUMENT_TEXTFIELD_PORT;
+  }
   if (
     value === DOCUMENT_TEXTFIELD_PORT ||
     value === DOCUMENT_CONTENT_PORT ||
@@ -96,9 +103,9 @@ const normalizeTextNodeOutputPort = (value: string | null | undefined): string =
   return DOCUMENT_CONTENT_PORT;
 };
 
-export const normalizeEdgesForTextNode = (edges: Edge[], nodeId: string): Edge[] =>
-  edges.map((edge: Edge): Edge => {
-    const legacyEdge = edge as Edge & {
+export const normalizeEdgesForTextNode = (edges: AiEdge[], nodeId: string): AiEdge[] =>
+  edges.map((edge: AiEdge): AiEdge => {
+    const legacyEdge = edge as AiEdge & {
       from?: string;
       to?: string;
       fromPort?: string;

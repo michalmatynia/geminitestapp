@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  hasCanvasOverflowFromImageFrame,
   mapImageCropRectToCanvasRect,
   normalizeCenterLayoutConfig,
   polygonsFromShapes,
+  resolveCanvasOverflowCropRect,
   resolveCropRectFromShapesWithDiagnostics,
   type ImageContentFrame,
   type MaskShapeForExport,
@@ -154,6 +156,45 @@ describe('GenerationToolbarImageUtils coordinate mapping', () => {
       y: 0,
       width: 100,
       height: 400,
+    });
+  });
+
+  it('detects canvas overflow from moved image frame', () => {
+    expect(
+      hasCanvasOverflowFromImageFrame({
+        x: -0.1,
+        y: 0.1,
+        width: 0.8,
+        height: 0.8,
+      })
+    ).toBe(true);
+    expect(
+      hasCanvasOverflowFromImageFrame({
+        x: 0.1,
+        y: 0.1,
+        width: 0.8,
+        height: 0.8,
+      })
+    ).toBe(false);
+  });
+
+  it('resolves full-canvas crop rect when image overflows canvas bounds', () => {
+    const cropRect = resolveCanvasOverflowCropRect({
+      canvasWidth: 1600,
+      canvasHeight: 1200,
+      imageContentFrame: {
+        x: -0.2,
+        y: 0,
+        width: 1,
+        height: 1,
+      },
+    });
+
+    expect(cropRect).toEqual({
+      x: 0,
+      y: 0,
+      width: 1600,
+      height: 1200,
     });
   });
 

@@ -31,7 +31,7 @@ import {
   type CaseResolverShowDocumentInCanvasDetail,
 } from '../drag';
 import { parseNodeFileSnapshot, serializeNodeFileSnapshot } from '../settings';
-import { type AiNode, type Edge, type NodeDefinition } from '../types';
+import { type AiNode, type NodeDefinition } from '../types';
 import {
   type CaseResolverFile,
   type CaseResolverNodeFileMeta,
@@ -150,7 +150,8 @@ function CaseResolverNodeFileWorkspaceInner({
   const { selectedNodeId } = useSelectionState();
   const { selectNode } = useSelectionActions();
   const { toast } = useToast();
-  const [newNodeType, setNewNodeType] = useState<'prompt' | 'model' | 'template' | 'database'>('prompt');
+  const [newNodeType, setNewNodeType] = useState<'prompt' | 'model' | 'template' | 'database' | 'viewer'>('prompt');
+  const [isSidePanelVisible, setIsSidePanelVisible] = useState(false);
 
   // nodeFileMeta lives in a ref so changes don't trigger re-renders but are
   // always available synchronously when the save effect fires.
@@ -185,8 +186,8 @@ function CaseResolverNodeFileWorkspaceInner({
     []
   );
   const strictEdges = useMemo((): CaseResolverNodeFileSnapshot['edges'] => {
-    return edges
-      .map((edge: Edge): CaseResolverNodeFileSnapshot['edges'][number] | null => {
+    return (edges as any[])
+      .map((edge: any): CaseResolverNodeFileSnapshot['edges'][number] | null => {
         const from = edge.from ?? edge.source;
         const to = edge.to ?? edge.target;
         if (!from || !to) return null;
@@ -241,7 +242,7 @@ function CaseResolverNodeFileWorkspaceInner({
   }, [nodes, onSnapshotChange, strictEdges]);
 
   // Migrate legacy template-based linked-file nodes to prompt nodes so they expose
-  // Case Resolver document ports (textfield/content/plainText).
+  // Case Resolver document ports (wysiwygText/content/plainText).
   useEffect(() => {
     if (!promptDefinition) return;
     setNodes((previousNodes: AiNode[]): AiNode[] => {
@@ -359,18 +360,19 @@ function CaseResolverNodeFileWorkspaceInner({
     if (!promptDefinition) return;
 
     const nodeId = `node-${Math.random().toString(36).slice(2, 10)}`;
-    const node = buildNode(promptDefinition, placePosition, nodeId, 'Explanatory Note');
-    const promptConfig = resolvePromptConfig(node);
-    addNode({
-      ...node,
+    const promptNode = buildNode(promptDefinition, placePosition, nodeId, 'Explanatory Note');
+    const promptConfig = resolvePromptConfig(promptNode);
+    const node = ensureDocumentPromptPorts({
+      ...promptNode,
       config: {
-        ...(node.config ?? {}),
+        ...(promptNode.config ?? {}),
         prompt: {
           ...promptConfig,
           template: '',
         },
       },
     });
+    addNode(node);
     selectNode(nodeId);
     toast('Explanatory node added.', { variant: 'success' });
   }, [addNode, placePosition, selectNode, toast]);
@@ -551,7 +553,8 @@ function CaseResolverNodeFileWorkspaceInner({
                 value === 'prompt' ||
                 value === 'model' ||
                 value === 'template' ||
-                value === 'database'
+                value === 'database' ||
+                value === 'viewer'
               ) {
                 setNewNodeType(value);
               }
@@ -561,6 +564,7 @@ function CaseResolverNodeFileWorkspaceInner({
               { value: 'model', label: 'Model Node' },
               { value: 'template', label: 'Template Node' },
               { value: 'database', label: 'Database Node' },
+              { value: 'viewer', label: 'Result Viewer Node' },
             ]}
             className='w-[170px]'
             triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
@@ -575,6 +579,15 @@ function CaseResolverNodeFileWorkspaceInner({
           </Button>
 
           <div className='ml-auto'>
+            <Button
+              type='button'
+              onClick={(): void => {
+                setIsSidePanelVisible((previous) => !previous);
+              }}
+              className='mr-2 h-8 rounded-md border border-border text-xs text-gray-200 hover:bg-muted/60'
+            >
+              {isSidePanelVisible ? 'Hide Sidebar' : 'Show Sidebar'}
+            </Button>
             <Button
               type='button'
               onClick={handleManualSave}
@@ -607,7 +620,7 @@ function CaseResolverNodeFileWorkspaceInner({
       </div>
 
       {/* ── File reference side panel ── */}
-      {selectedNodeMeta ? (
+      {isSidePanelVisible && selectedNodeMeta ? (
         <NodeFilePanel
           meta={selectedNodeMeta}
           file={selectedFile}

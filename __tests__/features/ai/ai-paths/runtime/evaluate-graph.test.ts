@@ -515,7 +515,8 @@ describe('evaluateGraph', () => {
         onNodeStart,
       });
 
-      expect(onNodeStart).not.toHaveBeenCalled();
+      expect(onNodeStart).toHaveBeenCalledTimes(1);
+      expect(onNodeStart.mock.calls[0]?.[0]?.node.id).toBe('trigger');
     });
 
     it('should re-execute if cache is disabled', async () => {
@@ -556,9 +557,9 @@ describe('evaluateGraph', () => {
         onNodeStart,
       });
 
-      // trigger node is cached, but n1 is NOT cacheable (disabled), so it runs.
+      // trigger node always executes, and n1 is NOT cacheable (disabled), so both run.
       const executedNodeIds = onNodeStart.mock.calls.map(args => args[0].node.id);
-      expect(executedNodeIds).not.toContain('trigger');
+      expect(executedNodeIds).toContain('trigger');
       expect(executedNodeIds).toContain('n1');
     });
   });

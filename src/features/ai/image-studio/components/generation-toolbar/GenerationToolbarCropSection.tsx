@@ -16,6 +16,7 @@ type CropTooltipContent = {
 };
 
 type GenerationToolbarCropSectionProps = {
+  boundaryStatusLabel: string;
   cropBusy: boolean;
   cropBusyLabel: string;
   cropMode: string;
@@ -33,6 +34,7 @@ type GenerationToolbarCropSectionProps = {
 };
 
 export function GenerationToolbarCropSection({
+  boundaryStatusLabel,
   cropBusy,
   cropBusyLabel,
   cropMode,
@@ -62,7 +64,7 @@ export function GenerationToolbarCropSection({
       <div className='mb-2 flex items-center justify-between gap-2'>
         <div className='text-[10px] uppercase tracking-wide text-gray-500'>Crop</div>
         <span className='text-[11px] text-gray-500'>
-          {hasCropBoundary ? 'Boundary ready' : 'Set a boundary first'}
+          {boundaryStatusLabel}
         </span>
       </div>
       <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>

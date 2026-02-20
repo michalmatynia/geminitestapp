@@ -3,7 +3,7 @@
 import { Link2, Network } from 'lucide-react';
 import React from 'react';
 
-import { StatusBadge, EmptyState } from '@/shared/ui';
+import { Button, StatusBadge, EmptyState } from '@/shared/ui';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 
@@ -28,6 +28,8 @@ type PositionedCaseNode = {
 
 const CARD_WIDTH = 280;
 const CARD_HEIGHT = 180;
+const MIN_ZOOM = 0.4;
+const MAX_ZOOM = 2.2;
 
 const sortCaseFiles = (files: CaseResolverFile[]): CaseResolverFile[] =>
   [...files].sort((left: CaseResolverFile, right: CaseResolverFile) => {
@@ -126,6 +128,8 @@ const getCasePreview = (file: CaseResolverFile): string => {
 
 export function CaseResolverRelationsWorkspace(): React.JSX.Element {
   const { workspace, selectedFileId, onSelectFile } = useCaseResolverPageContext();
+  const viewportRef = React.useRef<HTMLDivElement | null>(null);
+  const [zoom, setZoom] = React.useState<number>(1);
 
   const caseFiles = React.useMemo(
     (): CaseResolverFile[] =>
@@ -268,6 +272,92 @@ export function CaseResolverRelationsWorkspace(): React.JSX.Element {
   }, [positionedNodes]);
 
   const currentCaseName = currentCaseId ? fileById.get(currentCaseId)?.name ?? null : null;
+  const currentCaseNode = React.useMemo(
+    (): PositionedCaseNode | null =>
+      currentCaseId
+        ? positionedNodes.find((node: PositionedCaseNode): boolean => node.file.id === currentCaseId) ?? null
+        : null,
+    [currentCaseId, positionedNodes]
+  );
+
+  const clampZoom = React.useCallback((value: number): number => {
+    if (!Number.isFinite(value)) return 1;
+    if (value < MIN_ZOOM) return MIN_ZOOM;
+    if (value > MAX_ZOOM) return MAX_ZOOM;
+    return value;
+  }, []);
+
+  const zoomTo = React.useCallback(
+    (nextZoom: number): void => {
+      const viewport = viewportRef.current;
+      const clampedZoom = clampZoom(nextZoom);
+      if (!viewport) {
+        setZoom(clampedZoom);
+        return;
+      }
+      const centerX = (viewport.scrollLeft + viewport.clientWidth / 2) / zoom;
+      const centerY = (viewport.scrollTop + viewport.clientHeight / 2) / zoom;
+      setZoom(clampedZoom);
+      requestAnimationFrame((): void => {
+        viewport.scrollLeft = Math.max(0, centerX * clampedZoom - viewport.clientWidth / 2);
+        viewport.scrollTop = Math.max(0, centerY * clampedZoom - viewport.clientHeight / 2);
+      });
+    },
+    [clampZoom, zoom]
+  );
+
+  const fitToBoard = React.useCallback((): void => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const paddedWidth = Math.max(200, viewport.clientWidth - 64);
+    const paddedHeight = Math.max(200, viewport.clientHeight - 64);
+    const fitZoom = clampZoom(
+      Math.min(paddedWidth / boardSize.width, paddedHeight / boardSize.height)
+    );
+    setZoom(fitZoom);
+    requestAnimationFrame((): void => {
+      const scaledWidth = boardSize.width * fitZoom;
+      const scaledHeight = boardSize.height * fitZoom;
+      viewport.scrollLeft = Math.max(0, (scaledWidth - viewport.clientWidth) / 2);
+      viewport.scrollTop = Math.max(0, (scaledHeight - viewport.clientHeight) / 2);
+    });
+  }, [boardSize.height, boardSize.width, clampZoom]);
+
+  const fitToCurrentCase = React.useCallback((): void => {
+    if (!currentCaseNode) return;
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const targetWidth = CARD_WIDTH + 120;
+    const targetHeight = CARD_HEIGHT + 120;
+    const fitZoom = clampZoom(
+      Math.min(viewport.clientWidth / targetWidth, viewport.clientHeight / targetHeight)
+    );
+    const targetCenterX = currentCaseNode.x + CARD_WIDTH / 2;
+    const targetCenterY = currentCaseNode.y + CARD_HEIGHT / 2;
+    setZoom(fitZoom);
+    requestAnimationFrame((): void => {
+      viewport.scrollLeft = Math.max(0, targetCenterX * fitZoom - viewport.clientWidth / 2);
+      viewport.scrollTop = Math.max(0, targetCenterY * fitZoom - viewport.clientHeight / 2);
+    });
+  }, [clampZoom, currentCaseNode]);
+
+  const resetView = React.useCallback((): void => {
+    const viewport = viewportRef.current;
+    setZoom(1);
+    if (!viewport) return;
+    requestAnimationFrame((): void => {
+      viewport.scrollLeft = 0;
+      viewport.scrollTop = 0;
+    });
+  }, []);
+
+  const scaledBoardSize = React.useMemo(
+    (): { width: number; height: number } => ({
+      width: Math.max(1, Math.round(boardSize.width * zoom)),
+      height: Math.max(1, Math.round(boardSize.height * zoom)),
+    }),
+    [boardSize.height, boardSize.width, zoom]
+  );
 
   if (caseFiles.length === 0) {
     return (
@@ -296,101 +386,168 @@ export function CaseResolverRelationsWorkspace(): React.JSX.Element {
         </div>
       </div>
 
-      <div className='relative min-h-0 flex-1 overflow-auto rounded-lg border border-border/60 bg-card/20'>
-        <div className='relative' style={{ width: boardSize.width, height: boardSize.height }}>
-          <svg className='pointer-events-none absolute inset-0 h-full w-full'>
-            {visibleEdges.map((edge: CaseRelationEdge) => {
-              const fromPoint = centerByNodeId.get(edge.from);
-              const toPoint = centerByNodeId.get(edge.to);
-              if (!fromPoint || !toPoint) return null;
+      <div
+        ref={viewportRef}
+        className='relative min-h-0 flex-1 overflow-auto rounded-lg border border-border/60 bg-card/20'
+      >
+        <div className='relative' style={{ width: scaledBoardSize.width, height: scaledBoardSize.height }}>
+          <div
+            className='relative origin-top-left'
+            style={{
+              width: boardSize.width,
+              height: boardSize.height,
+              transform: `scale(${zoom})`,
+              transformOrigin: 'top left',
+            }}
+          >
+            <svg className='pointer-events-none absolute inset-0 h-full w-full'>
+              {visibleEdges.map((edge: CaseRelationEdge) => {
+                const fromPoint = centerByNodeId.get(edge.from);
+                const toPoint = centerByNodeId.get(edge.to);
+                if (!fromPoint || !toPoint) return null;
 
-              const labelX = (fromPoint.x + toPoint.x) / 2;
-              const labelY = (fromPoint.y + toPoint.y) / 2;
-              const label = edge.kind === 'parent_case' ? 'parent' : 'reference';
+                const labelX = (fromPoint.x + toPoint.x) / 2;
+                const labelY = (fromPoint.y + toPoint.y) / 2;
+                const label = edge.kind === 'parent_case' ? 'parent' : 'reference';
 
+                return (
+                  <g key={edge.id}>
+                    <line
+                      x1={fromPoint.x}
+                      y1={fromPoint.y}
+                      x2={toPoint.x}
+                      y2={toPoint.y}
+                      stroke='rgba(148, 163, 184, 0.55)'
+                      strokeWidth={2}
+                    />
+                    <text
+                      x={labelX}
+                      y={labelY - 6}
+                      textAnchor='middle'
+                      fill='rgba(148, 163, 184, 0.8)'
+                      fontSize='10'
+                      fontWeight={600}
+                      letterSpacing='0.02em'
+                    >
+                      {label}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+
+            {positionedNodes.map((node: PositionedCaseNode) => {
+              const file = node.file;
               return (
-                <g key={edge.id}>
-                  <line
-                    x1={fromPoint.x}
-                    y1={fromPoint.y}
-                    x2={toPoint.x}
-                    y2={toPoint.y}
-                    stroke='rgba(148, 163, 184, 0.55)'
-                    strokeWidth={2}
-                  />
-                  <text
-                    x={labelX}
-                    y={labelY - 6}
-                    textAnchor='middle'
-                    fill='rgba(148, 163, 184, 0.8)'
-                    fontSize='10'
-                    fontWeight={600}
-                    letterSpacing='0.02em'
-                  >
-                    {label}
-                  </text>
-                </g>
+                <button
+                  key={file.id}
+                  type='button'
+                  className={`absolute flex flex-col rounded-lg border p-4 text-left shadow-sm transition ${
+                    node.isCurrent
+                      ? 'border-blue-400/70 bg-blue-500/14 ring-2 ring-blue-400/55'
+                      : 'border-border/60 bg-card/80 hover:border-cyan-300/40 hover:bg-card/95'
+                  }`}
+                  style={{
+                    left: node.x,
+                    top: node.y,
+                    width: CARD_WIDTH,
+                    minHeight: CARD_HEIGHT,
+                  }}
+                  onClick={(): void => {
+                    onSelectFile(file.id);
+                  }}
+                >
+                  <div className='mb-2 flex items-start justify-between gap-2'>
+                    <div className='min-w-0 flex-1'>
+                      <div className='truncate text-sm font-semibold text-gray-100'>{file.name}</div>
+                      <div className='mt-1 truncate text-[11px] text-gray-400'>
+                        {file.folder || '(root)'}
+                      </div>
+                    </div>
+                    {node.isCurrent ? (
+                      <StatusBadge
+                        status='Current'
+                        variant='info'
+                        size='sm'
+                        className='border-blue-300/45 bg-blue-500/15 text-blue-200'
+                      />
+                    ) : null}
+                  </div>
+
+                  <div className='min-h-0 flex-1 overflow-hidden text-[12px] leading-5 text-gray-300'>
+                    {getCasePreview(file)}
+                  </div>
+
+                  {node.relationHints.length > 0 ? (
+                    <div className='mt-3 flex flex-wrap gap-1'>
+                      {node.relationHints.map((hint: string) => (
+                        <span
+                          key={`${file.id}:${hint}`}
+                          className='rounded border border-cyan-300/35 bg-cyan-500/10 px-1.5 py-0.5 text-[10px] text-cyan-200'
+                        >
+                          {hint}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </button>
               );
             })}
-          </svg>
-
-          {positionedNodes.map((node: PositionedCaseNode) => {
-            const file = node.file;
-            return (
-              <button
-                key={file.id}
-                type='button'
-                className={`absolute flex flex-col rounded-lg border p-4 text-left shadow-sm transition ${
-                  node.isCurrent
-                    ? 'border-blue-400/70 bg-blue-500/14 ring-2 ring-blue-400/55'
-                    : 'border-border/60 bg-card/80 hover:border-cyan-300/40 hover:bg-card/95'
-                }`}
-                style={{
-                  left: node.x,
-                  top: node.y,
-                  width: CARD_WIDTH,
-                  minHeight: CARD_HEIGHT,
-                }}
-                onClick={(): void => {
-                  onSelectFile(file.id);
-                }}
-              >
-                <div className='mb-2 flex items-start justify-between gap-2'>
-                  <div className='min-w-0 flex-1'>
-                    <div className='truncate text-sm font-semibold text-gray-100'>{file.name}</div>
-                    <div className='mt-1 truncate text-[11px] text-gray-400'>
-                      {file.folder || '(root)'}
-                    </div>
-                  </div>
-                  {node.isCurrent ? (
-                    <StatusBadge
-                      status='Current'
-                      variant='info'
-                      size='sm'
-                      className='border-blue-300/45 bg-blue-500/15 text-blue-200'
-                    />
-                  ) : null}
-                </div>
-
-                <div className='min-h-0 flex-1 overflow-hidden text-[12px] leading-5 text-gray-300'>
-                  {getCasePreview(file)}
-                </div>
-
-                {node.relationHints.length > 0 ? (
-                  <div className='mt-3 flex flex-wrap gap-1'>
-                    {node.relationHints.map((hint: string) => (
-                      <span
-                        key={`${file.id}:${hint}`}
-                        className='rounded border border-cyan-300/35 bg-cyan-500/10 px-1.5 py-0.5 text-[10px] text-cyan-200'
-                      >
-                        {hint}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-              </button>
-            );
-          })}
+          </div>
+        </div>
+        <div className='absolute bottom-3 right-3 z-10 max-w-[min(92vw,48rem)] rounded-md border border-border/60 bg-card/30 p-2 text-xs text-gray-300'>
+          <div className='mb-2 text-[11px] uppercase text-gray-500'>View Controls</div>
+          <div className='flex flex-wrap items-center justify-end gap-2'>
+            <Button
+              className='h-7 w-7 rounded-full border text-xs text-white hover:bg-muted/60'
+              type='button'
+              variant='ghost'
+              size='xs'
+              onClick={() => zoomTo(zoom - 0.1)}
+            >
+              -
+            </Button>
+            <span className='min-w-[56px] text-center text-[11px] text-gray-300'>
+              {Math.round(zoom * 100)}%
+            </span>
+            <Button
+              className='h-7 w-7 rounded-full border text-xs text-white hover:bg-muted/60'
+              type='button'
+              variant='ghost'
+              size='xs'
+              onClick={() => zoomTo(zoom + 0.1)}
+            >
+              +
+            </Button>
+            <Button
+              className='h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60'
+              type='button'
+              variant='ghost'
+              size='xs'
+              onClick={fitToBoard}
+            >
+              Fit
+            </Button>
+            <Button
+              className='h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60 disabled:opacity-40 disabled:hover:bg-transparent'
+              type='button'
+              variant='ghost'
+              size='xs'
+              onClick={fitToCurrentCase}
+              disabled={!currentCaseNode}
+            >
+              Sel
+            </Button>
+            <Button
+              className='h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60'
+              type='button'
+              variant='ghost'
+              size='xs'
+              onClick={resetView}
+            >
+              Reset
+            </Button>
+          </div>
         </div>
       </div>
     </div>

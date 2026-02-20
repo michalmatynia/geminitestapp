@@ -1003,13 +1003,13 @@ export const hasCaseResolverWorkspaceFilesArray = (
   }
 };
 
-const EMPTY_NODE_FILE_SNAPSHOT: CaseResolverNodeFileSnapshot = {
+const createEmptyNodeFileSnapshot = (): CaseResolverNodeFileSnapshot => ({
   kind: 'case_resolver_node_file_snapshot_v1',
   source: 'manual',
   nodes: [],
   edges: [],
   nodeFileMeta: {},
-};
+});
 
 export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFileSnapshot => {
   try {
@@ -1033,9 +1033,9 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
         return {
           kind: 'case_resolver_node_file_snapshot_v1',
           source: 'manual',
-          nodes: parsedNodes,
-          edges: parsedEdges,
-          nodeFileMeta: parsedNodeFileMeta,
+          nodes: [...parsedNodes],
+          edges: [...parsedEdges],
+          nodeFileMeta: { ...parsedNodeFileMeta },
         };
       }
 
@@ -1079,15 +1079,15 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
       return {
         kind: 'case_resolver_node_file_snapshot_v1',
         source: 'manual',
-        nodes: legacyNodes,
-        edges: legacyEdges,
-        nodeFileMeta: legacyNodeFileMeta,
+        nodes: [...legacyNodes],
+        edges: [...legacyEdges],
+        nodeFileMeta: { ...legacyNodeFileMeta },
       };
     }
   } catch {
     // fall through to empty snapshot
   }
-  return { ...EMPTY_NODE_FILE_SNAPSHOT };
+  return createEmptyNodeFileSnapshot();
 };
 
 export const serializeNodeFileSnapshot = (snapshot: CaseResolverNodeFileSnapshot): string => {

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { Prisma } from '@prisma/client';
+import { Prisma, AiPathRunEventLevel } from '@prisma/client';
 
 import {
   AI_PATHS_RUN_SOURCE_TABS,
@@ -105,17 +105,18 @@ const mapNode = (node: unknown): AiPathRunNodeRecord => {
 
 const mapEvent = (event: unknown): AiPathRunEventRecord => {
   const e = event as Record<string, unknown>;
+  const metadata = (e['metadata'] as Record<string, unknown>) ?? null;
   return {
     id: String(e['id']),
     runId: String(e['runId']),
-    nodeId: (e['nodeId'] as string) ?? null,
-    nodeType: (e['nodeType'] as string) ?? null,
-    nodeTitle: (e['nodeTitle'] as string) ?? null,
-    status: (e['status'] as string) ?? null,
-    iteration: (e['iteration'] as number) ?? null,
+    nodeId: (e['nodeId'] as string) ?? (metadata?.['nodeId'] as string) ?? null,
+    nodeType: (e['nodeType'] as string) ?? (metadata?.['nodeType'] as string) ?? null,
+    nodeTitle: (e['nodeTitle'] as string) ?? (metadata?.['nodeTitle'] as string) ?? null,
+    status: (e['status'] as string) ?? (metadata?.['status'] as string) ?? null,
+    iteration: (e['iteration'] as number) ?? (metadata?.['iteration'] as number) ?? null,
     level: e['level'] as AiPathRunEventRecord['level'],
     message: String(e['message']),
-    metadata: (e['metadata'] as AiPathRunEventRecord['metadata']) ?? null,
+    metadata: metadata as AiPathRunEventRecord['metadata'],
     createdAt: (e['createdAt'] as Date).toISOString(),
     updatedAt: toIsoString(e['updatedAt'] as Date),
   };
@@ -483,17 +484,22 @@ export const prismaPathRunRepository: AiPathRunRepository = {
 
   async createRunEvent(input: AiPathRunEventCreateInput): Promise<AiPathRunEventRecord> {
     ensureModels();
+    const prismaLevel = input.level === 'warn' ? 'warning' : input.level;
     const event = await prismaAny.aiPathRunEvent!.create({
       data: {
         runId: input.runId,
-        nodeId: input.nodeId ?? null,
-        nodeType: input.nodeType ?? null,
-        nodeTitle: input.nodeTitle ?? null,
-        status: input.status ?? null,
-        iteration: input.iteration ?? null,
-        level: input.level,
+        level: prismaLevel as AiPathRunEventLevel,
         message: input.message,
-        metadata: input.metadata ?? null,
+        metadata: (input.metadata || input.nodeId || input.nodeType || input.nodeTitle || input.status || input.iteration) 
+          ? {
+            ...(input.metadata as Record<string, unknown> || {}),
+            ...(input.nodeId ? { nodeId: input.nodeId } : {}),
+            ...(input.nodeType ? { nodeType: input.nodeType } : {}),
+            ...(input.nodeTitle ? { nodeTitle: input.nodeTitle } : {}),
+            ...(input.status ? { status: input.status } : {}),
+            ...(input.iteration !== undefined && input.iteration !== null ? { iteration: input.iteration } : {}),
+          } 
+          : null,
       },
     });
     return mapEvent(event);

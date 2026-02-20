@@ -619,6 +619,49 @@ const collectCandidateAddressLines = (
   return [...lines];
 };
 
+const buildCandidateComparableText = (
+  candidate: PromptExploderCaseResolverPartyCandidate
+): string => {
+  const parts = [
+    candidate.rawText,
+    candidate.displayName,
+    candidate.organizationName,
+    candidate.firstName,
+    candidate.middleName,
+    candidate.lastName,
+    candidate.street,
+    composeCandidateStreetNumber(candidate),
+    candidate.city,
+    candidate.postalCode,
+    candidate.country,
+  ]
+    .filter((value: string | undefined): value is string => Boolean(value?.trim()))
+    .map((value: string): string => normalizeCaptureTextLine(value))
+    .filter(Boolean);
+  return parts.join(' ').trim();
+};
+
+const candidateLikelyContainsSourceLine = (
+  candidateComparableText: string,
+  sourceLineKey: string
+): boolean => {
+  if (!candidateComparableText || !sourceLineKey) return false;
+  if (candidateComparableText.includes(sourceLineKey)) return true;
+
+  const meaningfulTokens = sourceLineKey
+    .split(' ')
+    .map((token: string): string => token.trim())
+    .filter((token: string): boolean => token.length >= 3);
+  if (meaningfulTokens.length === 0) return false;
+
+  const matchedTokenCount = meaningfulTokens.reduce(
+    (count: number, token: string): number =>
+      candidateComparableText.includes(token) ? count + 1 : count,
+    0
+  );
+  return matchedTokenCount >= 2 && matchedTokenCount === meaningfulTokens.length;
+};
+
 const collectCandidateRawHeaderBlockLines = (
   candidate: PromptExploderCaseResolverPartyCandidate
 ): string[] =>
@@ -756,6 +799,7 @@ const stripAcceptedAddressLinesFromTextDetailed = (
     if (!proposal || proposal.action === 'ignore' || proposal.action === 'keepText') return;
 
     const beforeCount = removedByRole[role];
+    const candidateComparableText = buildCandidateComparableText(proposal.candidate);
     const blockLineKeys = collectCandidateRawHeaderBlockLines(proposal.candidate)
       .map((line: string): string => normalizeCaptureTextLine(line))
       .filter(Boolean);
@@ -781,26 +825,59 @@ const stripAcceptedAddressLinesFromTextDetailed = (
       pendingRemovalKeys.delete(key);
     }
 
+    if (candidateComparableText) {
+      for (let index = 0; index < headerSearchLimit; index += 1) {
+        if (removalIndexes.has(index)) continue;
+        const line = sourceLines[index] ?? '';
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        const key = sourceLineKeys[index];
+        if (!key) continue;
+        if (!candidateLikelyContainsSourceLine(candidateComparableText, key)) continue;
+        if (
+          !isLikelyCaptureHeaderPartyLine(trimmed) &&
+          !isLikelyCaptureAddressContinuationLine(trimmed)
+        ) {
+          continue;
+        }
+        markForRemoval(index, role);
+      }
+    }
+
     const nameLineKeys = new Set(
       collectCandidateNameLines(proposal.candidate)
         .map((line: string): string => normalizeCaptureTextLine(line))
         .filter(Boolean)
     );
-    if (nameLineKeys.size === 0) return;
 
     let anchorIndex = -1;
-    for (let index = 0; index < headerSearchLimit; index += 1) {
-      if (removalIndexes.has(index)) continue;
-      const key = sourceLineKeys[index];
-      if (!key || !nameLineKeys.has(key)) continue;
-      anchorIndex = index;
-      break;
+    if (nameLineKeys.size > 0) {
+      for (let index = 0; index < headerSearchLimit; index += 1) {
+        if (removalIndexes.has(index)) continue;
+        const key = sourceLineKeys[index];
+        if (!key || !nameLineKeys.has(key)) continue;
+        anchorIndex = index;
+        break;
+      }
     }
     if (anchorIndex < 0) {
       const roleRemovedIndexes = [...removedIndexesByRole[role]].sort(
         (left: number, right: number): number => left - right
       );
       anchorIndex = roleRemovedIndexes[0] ?? -1;
+    }
+    if (anchorIndex < 0 && candidateComparableText) {
+      for (let index = 0; index < headerSearchLimit; index += 1) {
+        if (removalIndexes.has(index)) continue;
+        const line = sourceLines[index] ?? '';
+        const trimmed = line.trim();
+        if (!trimmed || !isLikelyCaptureHeaderPartyLine(trimmed)) continue;
+        const key = sourceLineKeys[index];
+        if (!key) continue;
+        if (!candidateLikelyContainsSourceLine(candidateComparableText, key)) continue;
+        anchorIndex = index;
+        break;
+      }
     }
     if (anchorIndex < 0) return;
     if (!removedIndexesByRole[role].has(anchorIndex)) {
@@ -816,7 +893,13 @@ const stripAcceptedAddressLinesFromTextDetailed = (
       const line = sourceLines[index] ?? '';
       const trimmed = line.trim();
       if (!trimmed) break;
-      if (!isLikelyCaptureAddressContinuationLine(trimmed)) break;
+      const key = sourceLineKeys[index];
+      const continuationMatchesCandidate = key
+        ? candidateLikelyContainsSourceLine(candidateComparableText, key)
+        : false;
+      if (!isLikelyCaptureAddressContinuationLine(trimmed) && !continuationMatchesCandidate) {
+        break;
+      }
       markForRemoval(index, role);
       continuationSteps += 1;
     }

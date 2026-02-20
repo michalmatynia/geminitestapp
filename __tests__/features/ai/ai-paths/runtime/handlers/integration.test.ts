@@ -210,6 +210,7 @@ describe('Integration Handlers', () => {
             },
           },
         },
+        strictFlowMode: false,
       });
 
       const result = await handleDatabase(ctx);
@@ -416,7 +417,7 @@ describe('Integration Handlers', () => {
         expect.objectContaining({
           updates: expect.objectContaining({
             parameters: [
-              { parameterId: 'p_features', value: 'Waterproof, Bluetooth' },
+              { parameterId: 'p_features', value: 'Waterproof|Bluetooth' },
             ],
           }),
         })

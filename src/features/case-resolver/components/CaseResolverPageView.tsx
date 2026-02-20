@@ -64,6 +64,8 @@ import {
 
 const ENABLE_CASE_RESOLVER_MULTIFORMAT_EDITOR =
   process.env['NEXT_PUBLIC_CASE_RESOLVER_MULTIFORMAT_EDITOR'] !== 'false';
+const ENABLE_CASE_RESOLVER_TRANSFER_DIAGNOSTICS =
+  process.env['NEXT_PUBLIC_CASE_RESOLVER_TRANSFER_DIAGNOSTICS'] === '1';
 
 type SelectOption = {
   value: string;
@@ -374,6 +376,9 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     [partyOptions]
   );
   const canApplyPendingPromptOutput = Boolean(pendingPromptExploderPayload);
+  const showPromptExploderManualRetry = Boolean(
+    pendingPromptExploderPayload && promptExploderApplyDiagnostics?.status === 'failed'
+  );
 
   const addresserPartyOptions = React.useMemo(
     () =>
@@ -1397,11 +1402,14 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                     {pendingPromptExploderPayload.caseResolverContext?.fileName
                       ? ` from "${pendingPromptExploderPayload.caseResolverContext.fileName}".`
                       : '.'}
-                    {' '}Apply it explicitly to this document or discard it.
+                    {' '}
+                    {showPromptExploderManualRetry
+                      ? 'Automatic apply failed. Retry apply or discard this output.'
+                      : 'Applying automatically and opening Capture Mapping.'}
                   </div>
                 ) : null}
               </div>
-              {promptExploderApplyDiagnostics ? (
+              {ENABLE_CASE_RESOLVER_TRANSFER_DIAGNOSTICS && promptExploderApplyDiagnostics ? (
                 <div className='rounded border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-[11px] text-cyan-100'>
                   <div className='font-medium tracking-wide text-cyan-50'>
                     Prompt Exploder Transfer Diagnostics
@@ -1497,7 +1505,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                 >
                   Prompt Exploder: Extract + Reassemble
                 </Button>
-                {pendingPromptExploderPayload ? (
+                {showPromptExploderManualRetry ? (
                   <Button
                     type='button'
                     variant='outline'

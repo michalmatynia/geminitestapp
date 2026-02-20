@@ -763,7 +763,7 @@ export function VectorCanvas({
 
     return {
       x: (resolvedImageOffset.x + ((canvasWidth - contentWidth) / 2)) / canvasWidth,
-      y: resolvedImageOffset.y / canvasHeight,
+      y: (resolvedImageOffset.y + ((canvasHeight - contentHeight) / 2)) / canvasHeight,
       width: contentWidth / canvasWidth,
       height: contentHeight / canvasHeight,
     };

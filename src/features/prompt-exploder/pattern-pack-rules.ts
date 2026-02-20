@@ -399,10 +399,10 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     description:
       'Detects organization addressee heading lines in correspondence blocks.',
     pattern:
-      '^\\s*(?!.*\\b(niniejszym|przez|jednocześnie|jednoczesnie|wnoszę|wnosze|na\\s+podstawie|albowiem|ponieważ|poniewaz|uzasadnienie|dotyczy|wnioskodawca|organ\\s+rentowy|postępowania|postepowania)\\b)(?=.*\\b(zus|inspektorat|urząd|urzad|sąd|sad|ministerstwo|fundacja|stowarzyszenie|sp\\.?\\s*z\\s*o\\.?\\s*o\\.?|s\\.?a\\.?|llc|inc|corp|office|department|agency|authority|institute|university|bank)\\b)[\\p{L}0-9][\\p{L}0-9&.,\'’"\\-\\/()\\s]{2,96}\\s*$',
+      '^\\s*(?!.*\\b(niniejszym|przez|jednocześnie|jednoczesnie|wnoszę|wnosze|na\\s+podstawie|albowiem|ponieważ|poniewaz|uzasadnienie|dotyczy|wnioskodawca|organ\\s+rentowy|postępowania|postepowania)\\b)(?=.*\\b(zus|zakład|zaklad|ubezpieczeń|ubezpieczen|społecznych|spolecznych|oddział|oddzial|inspektorat|urząd|urzad|sąd|sad|ministerstwo|fundacja|stowarzyszenie|sp\\.?\\s*z\\s*o\\.?\\s*o\\.?|s\\.?a\\.?|llc|inc|corp|office|department|agency|authority|institute|university|bank)\\b)[\\p{L}0-9][\\p{L}0-9&.,\'’"\\-\\/()\\s]{2,96}\\s*$',
     flags: 'imu',
     message: 'Addressee organization heading detected.',
-    sequence: 37,
+    sequence: 36,
     sequenceGroupId: 'case_resolver_structure',
     sequenceGroupLabel: 'Case Resolver Structure',
     promptExploderPriority: 45,
@@ -417,7 +417,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     description:
       'Detects common subject and section headings in legal document bodies.',
     pattern:
-      '^\\s*(wniosek\\b|dotyczy\\b|uzasadnienie\\b|na\\s+zakończenie\\b|z\\s+poważaniem\\b|subject\\b|re:\\b|sincerely\\b|regards\\b).*$',
+      '^\\s*(wniosek\\b|rezygnacja\\b|dotyczy\\b|uzasadnienie\\b|na\\s+zakończenie\\b|z\\s+poważaniem\\b|subject\\b|re:\\b|sincerely\\b|regards\\b).*$',
     flags: 'imu',
     message: 'Case Resolver subject/section heading detected.',
     sequence: 38,

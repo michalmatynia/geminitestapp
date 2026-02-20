@@ -2,7 +2,6 @@
 
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { flushSync } from 'react-dom';
 
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import {
@@ -255,6 +254,7 @@ export function useCaseResolverState() {
   const persistWorkspaceInFlightRef = useRef(false);
   const workspaceConflictAutoRetryCountRef = useRef(0);
   const lastPromptExploderPayloadKeyRef = useRef<string | null>(null);
+  const autoAppliedPromptExploderPayloadKeysRef = useRef<Set<string>>(new Set());
   const requestedCaseStatusRef = useRef<CaseResolverRequestedCaseStatus>(
     requestedFileId ? 'loading' : 'ready'
   );
@@ -744,18 +744,9 @@ export function useCaseResolverState() {
           filemakerDatabase,
           caseResolverCaptureSettings,
         });
-
-      const applyResult = (): ReturnType<typeof runApply> => {
-        let result!: ReturnType<typeof runApply>;
-        flushSync(() => {
-          result = runApply(workspaceRef.current.files);
-        });
-        return result;
-      };
-
-      let result: ReturnType<typeof applyResult>;
+      let result: ReturnType<typeof runApply>;
       try {
-        result = applyResult();
+        result = runApply(workspaceRef.current.files);
       } finally {
         setIsApplyingPromptExploderPartyProposal(false);
       }
@@ -848,6 +839,38 @@ export function useCaseResolverState() {
       workspaceRef,
     ]
   );
+
+  useEffect(() => {
+    if (!pendingPromptExploderPayloadKey) {
+      autoAppliedPromptExploderPayloadKeysRef.current.clear();
+      return;
+    }
+    if (isApplyingPromptExploderPartyProposalRef.current) return;
+    if (autoAppliedPromptExploderPayloadKeysRef.current.has(pendingPromptExploderPayloadKey)) {
+      return;
+    }
+    const contextFileId = pendingPromptExploderPayload?.caseResolverContext?.fileId?.trim() || '';
+    if (!contextFileId) return;
+    const requestedContextFileId = requestedFileId?.trim() ?? '';
+    const editingDraftFileId = editingDocumentDraft?.id?.trim() ?? '';
+    const isContextBoundToCurrentDocument =
+      (requestedContextFileId.length > 0 && requestedContextFileId === contextFileId) ||
+      (editingDraftFileId.length > 0 && editingDraftFileId === contextFileId);
+    if (!shouldOpenEditorFromQuery && !isContextBoundToCurrentDocument) return;
+    const resolvedTargetFile = resolveCaseResolverFileById(workspaceRef.current.files, contextFileId);
+    if (!resolvedTargetFile) return;
+
+    autoAppliedPromptExploderPayloadKeysRef.current.add(pendingPromptExploderPayloadKey);
+    void handleApplyPendingPromptExploderPayload();
+  }, [
+    editingDocumentDraft?.id,
+    handleApplyPendingPromptExploderPayload,
+    pendingPromptExploderPayload,
+    pendingPromptExploderPayloadKey,
+    requestedFileId,
+    shouldOpenEditorFromQuery,
+    workspaceFileIdsSignature,
+  ]);
 
   const isWorkspaceDirty = useMemo(
     (): boolean =>

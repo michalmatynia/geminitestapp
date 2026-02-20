@@ -19,7 +19,7 @@ describe('SignalDots', () => {
     const circle = container.querySelector('circle');
     expect(circle).toBeInTheDocument();
     expect(circle).toHaveAttribute('fill', 'rgb(56, 189, 248)');
-    expect(circle).toHaveAttribute('r', '3'); // medium intensity radius
+    expect(circle).toHaveAttribute('r', '2.5'); // medium intensity radius
     expect(circle).toHaveAttribute('opacity', '0.8'); // medium intensity opacity
   });
 
@@ -30,7 +30,7 @@ describe('SignalDots', () => {
       </svg>
     );
     const lowCircle = lowContainer.querySelector('circle');
-    expect(lowCircle).toHaveAttribute('r', '2.5');
+    expect(lowCircle).toHaveAttribute('r', '2.2');
     expect(lowCircle).toHaveAttribute('opacity', '0.5');
 
     const { container: highContainer } = render(
@@ -39,7 +39,7 @@ describe('SignalDots', () => {
       </svg>
     );
     const highCircle = highContainer.querySelector('circle');
-    expect(highCircle).toHaveAttribute('r', '3.5');
+    expect(highCircle).toHaveAttribute('r', '2.8');
     expect(highCircle).toHaveAttribute('opacity', '1');
   });
 

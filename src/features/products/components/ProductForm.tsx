@@ -656,22 +656,22 @@ export default function ProductForm({
               visibleFieldIssues={visibleFieldIssues}
             />
           </TabsContent>
-          <TabsContent value='other' className='mt-4'>
+          <TabsContent value='other' className='mt-4 data-[state=inactive]:hidden' forceMount>
             <ProductFormOther visibleFieldIssues={visibleFieldIssues} />
           </TabsContent>
-          <TabsContent value='parameters' className='mt-4'>
+          <TabsContent value='parameters' className='mt-4 data-[state=inactive]:hidden' forceMount>
             <ProductFormParameters />
           </TabsContent>
-          <TabsContent value='images' className='mt-4'>
+          <TabsContent value='images' className='mt-4 data-[state=inactive]:hidden' forceMount>
             <ProductFormImages />
           </TabsContent>
-          <TabsContent value='studio' className='mt-4'>
+          <TabsContent value='studio' className='mt-4 data-[state=inactive]:hidden' forceMount>
             <ProductFormStudio />
           </TabsContent>
-          <TabsContent value='import-info' className='mt-4'>
+          <TabsContent value='import-info' className='mt-4 data-[state=inactive]:hidden' forceMount>
             <ProductFormImportInfo />
           </TabsContent>
-          <TabsContent value='note-link' className='mt-4'>
+          <TabsContent value='note-link' className='mt-4 data-[state=inactive]:hidden' forceMount>
             <ProductFormNoteLink />
           </TabsContent>
           <TabsContent value='validation' className='mt-4 space-y-4'>

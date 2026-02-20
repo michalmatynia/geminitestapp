@@ -29,9 +29,11 @@ import {
   isClientCenterCrossOriginError,
   layoutCanvasImageObject,
   loadImageElement,
+  hasCanvasOverflowFromImageFrame,
   mapImageCropRectToCanvasRect,
   polygonsFromShapes,
   renderMaskDataUrlFromPolygons,
+  resolveCanvasOverflowCropRect,
   resolveCropRectFromShapesWithDiagnostics,
   resolveClientProcessingImageSrc,
   shapeHasUsableCropGeometry,
@@ -217,7 +219,7 @@ export function GenerationToolbar(): React.JSX.Element {
   );
 
   const exportMaskCount = exportMaskShapes.length;
-  const hasCropBoundary = useMemo(
+  const hasShapeCropBoundary = useMemo(
     () => exportMaskShapes.some(shapeHasUsableCropGeometry),
     [exportMaskShapes]
   );
@@ -264,6 +266,15 @@ export function GenerationToolbar(): React.JSX.Element {
     if (frameBinding.slotId !== normalizedWorkingSlotId) return null;
     return frameBinding.frame;
   };
+  const hasCanvasOverflowBoundary = hasCanvasOverflowFromImageFrame(
+    resolveWorkingSlotImageContentFrame()
+  );
+  const hasCropBoundary = hasShapeCropBoundary || hasCanvasOverflowBoundary;
+  const cropBoundaryStatusLabel = hasShapeCropBoundary
+    ? 'Boundary ready'
+    : hasCanvasOverflowBoundary
+      ? 'Canvas overflow boundary ready'
+      : 'Set a boundary or move image outside canvas';
 
   const resolveWorkingSourceDimensions = async (): Promise<{ width: number; height: number }> => {
     let sourceWidth = workingSlot?.imageFile?.width ?? 0;
@@ -323,8 +334,19 @@ export function GenerationToolbar(): React.JSX.Element {
         diagnostics: resolved.diagnostics,
       };
     }
+    const overflowCropRect = resolveCanvasOverflowCropRect({
+      canvasWidth,
+      canvasHeight,
+      imageContentFrame,
+    });
+    if (overflowCropRect) {
+      return {
+        cropRect: overflowCropRect,
+        diagnostics: resolved.diagnostics,
+      };
+    }
 
-    throw new Error('Set a valid crop boundary first (polygon/lasso/brush, rectangle, or ellipse).');
+    throw new Error('Set a valid crop boundary or move image outside canvas first.');
   };
 
   const resolveCenteredSquareCropRect = async (): Promise<CropRect> => {
@@ -1057,6 +1079,7 @@ export function GenerationToolbar(): React.JSX.Element {
       <GenerationToolbarCropSection
         cropBusy={cropBusy}
         cropBusyLabel={cropBusyLabel}
+        boundaryStatusLabel={cropBoundaryStatusLabel}
         cropMode={cropMode}
         cropModeOptions={cropModeOptions}
         cropTooltipContent={cropTooltipContent}

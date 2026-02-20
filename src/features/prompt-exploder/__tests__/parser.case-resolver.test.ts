@@ -25,12 +25,12 @@ describe('case resolver prompt exploder segmentation', () => {
 
     const rules = getPromptExploderScopedRules(
       defaultPromptEngineSettings,
-      'case-resolver-prompt-exploder'
+      'case_resolver_prompt_exploder'
     );
     const document = explodePromptText({
       prompt,
       validationRules: rules,
-      validationScope: 'case-resolver-prompt-exploder',
+      validationScope: 'case_resolver_prompt_exploder',
     });
 
     const segmentBodies = document.segments.map((segment) => segment.raw || segment.text);
@@ -132,12 +132,12 @@ describe('case resolver prompt exploder segmentation', () => {
 
     const rules = getPromptExploderScopedRules(
       defaultPromptEngineSettings,
-      'case-resolver-prompt-exploder'
+      'case_resolver_prompt_exploder'
     );
     const document = explodePromptText({
       prompt,
       validationRules: rules,
-      validationScope: 'case-resolver-prompt-exploder',
+      validationScope: 'case_resolver_prompt_exploder',
     });
 
     const placeDateSegment = document.segments.find((segment) =>
@@ -187,12 +187,12 @@ describe('case resolver prompt exploder segmentation', () => {
 
     const rules = getPromptExploderScopedRules(
       defaultPromptEngineSettings,
-      'case-resolver-prompt-exploder'
+      'case_resolver_prompt_exploder'
     );
     const document = explodePromptText({
       prompt,
       validationRules: rules,
-      validationScope: 'case-resolver-prompt-exploder',
+      validationScope: 'case_resolver_prompt_exploder',
     });
 
     const placeDateSegment = document.segments.find((segment) =>
@@ -221,12 +221,12 @@ describe('case resolver prompt exploder segmentation', () => {
 
     const rules = getPromptExploderScopedRules(
       defaultPromptEngineSettings,
-      'case-resolver-prompt-exploder'
+      'case_resolver_prompt_exploder'
     );
     const document = explodePromptText({
       prompt,
       validationRules: rules,
-      validationScope: 'case-resolver-prompt-exploder',
+      validationScope: 'case_resolver_prompt_exploder',
     });
 
     const dotyczySegment = document.segments.find((segment) =>
@@ -259,6 +259,69 @@ describe('case resolver prompt exploder segmentation', () => {
     expect(bodySegment?.title).toBe('');
   });
 
+  it('splits compact sender and ZUS addressee blocks without blank-line separator', () => {
+    const prompt = `Szczecin 06.02.2026
+
+Michał Matynia
+Fioletowa 71/2
+70-781 Szczecin
+Polska
+Zakład Ubezpieczeń Społecznych Oddział w Szczecinie
+ul. MATEJKI 22
+70-530 SZCZECIN
+
+Rezygnacja z funkcji płatnika składek (wyrejestrowanie)
+
+Na podstawie obowiązujących przepisów informuję, że z dniem [dd.mm.2026] zaprzestaję prowadzenia działalności gospodarczej. W związku z tym rezygnuję z pełnienia funkcji płatnika składek na ubezpieczenia społeczne i zdrowotne. Proszę o dokonanie wyrejestrowania mnie w trybie natychmiastowym.`;
+
+    const rules = getPromptExploderScopedRules(
+      defaultPromptEngineSettings,
+      'case_resolver_prompt_exploder'
+    );
+    const document = explodePromptText({
+      prompt,
+      validationRules: rules,
+      validationScope: 'case_resolver_prompt_exploder',
+    });
+
+    const segmentBodies = document.segments.map((segment) => segment.raw || segment.text);
+    const addresserIndex = segmentBodies.findIndex((value) => value.includes('Michał Matynia'));
+    const addresseeIndex = segmentBodies.findIndex((value) =>
+      value.includes('Zakład Ubezpieczeń Społecznych Oddział w Szczecinie')
+    );
+    const subjectIndex = document.segments.findIndex(
+      (segment) =>
+        segment.title === 'Rezygnacja z funkcji płatnika składek (wyrejestrowanie)'
+    );
+
+    expect(addresserIndex).toBeGreaterThanOrEqual(0);
+    expect(addresseeIndex).toBeGreaterThanOrEqual(0);
+    expect(subjectIndex).toBeGreaterThanOrEqual(0);
+    expect(addresseeIndex).toBeGreaterThan(addresserIndex);
+    expect(subjectIndex).toBeGreaterThan(addresseeIndex);
+
+    const addresserSegment = document.segments[addresserIndex];
+    const addresseeSegment = document.segments[addresseeIndex];
+    const subjectSegment = document.segments[subjectIndex];
+
+    expect(addresserSegment?.raw).toContain('Fioletowa 71/2');
+    expect(addresserSegment?.raw).not.toContain(
+      'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie'
+    );
+    expect(addresseeSegment?.raw).toContain('ul. MATEJKI 22');
+    expect(addresseeSegment?.raw).not.toContain('Michał Matynia');
+    expect(addresseeSegment?.raw).not.toContain(
+      'Rezygnacja z funkcji płatnika składek (wyrejestrowanie)'
+    );
+    expect(addresseeSegment?.matchedPatternLabels).toContain(
+      'Case Resolver Heading: Addressee Organization'
+    );
+    expect(subjectSegment?.raw).toContain('Na podstawie obowiązujących przepisów informuję');
+    expect(subjectSegment?.raw).not.toContain(
+      'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie'
+    );
+  });
+
   it('keeps Uzasadnienie in title only and removes it from body text', () => {
     const prompt = [
       '<p><strong>Uzasadnienie</strong></p>',
@@ -268,12 +331,12 @@ describe('case resolver prompt exploder segmentation', () => {
 
     const rules = getPromptExploderScopedRules(
       defaultPromptEngineSettings,
-      'case-resolver-prompt-exploder'
+      'case_resolver_prompt_exploder'
     );
     const document = explodePromptText({
       prompt,
       validationRules: rules,
-      validationScope: 'case-resolver-prompt-exploder',
+      validationScope: 'case_resolver_prompt_exploder',
     });
 
     const uzasadnienieSegment = document.segments.find((segment) =>
@@ -296,12 +359,12 @@ describe('case resolver prompt exploder segmentation', () => {
 
     const rules = getPromptExploderScopedRules(
       defaultPromptEngineSettings,
-      'case-resolver-prompt-exploder'
+      'case_resolver_prompt_exploder'
     );
     const document = explodePromptText({
       prompt,
       validationRules: rules,
-      validationScope: 'case-resolver-prompt-exploder',
+      validationScope: 'case_resolver_prompt_exploder',
     });
 
     const closingSegment = document.segments.find((segment) =>
@@ -351,12 +414,12 @@ Z poważaniem,`;
 
     const rules = getPromptExploderScopedRules(
       defaultPromptEngineSettings,
-      'case-resolver-prompt-exploder'
+      'case_resolver_prompt_exploder'
     );
     const document = explodePromptText({
       prompt,
       validationRules: rules,
-      validationScope: 'case-resolver-prompt-exploder',
+      validationScope: 'case_resolver_prompt_exploder',
     });
 
     expect(document.segments.length).toBeGreaterThan(5);
@@ -448,7 +511,7 @@ Z poważaniem,`;
       flags: 'i',
       message: 'synthetic',
       similar: [],
-      appliesToScopes: ['case-resolver-prompt-exploder'],
+      appliesToScopes: ['case_resolver_prompt_exploder'],
       promptExploderTreatAsHeading: true,
       promptExploderSegmentType: 'assigned_text',
       promptExploderConfidenceBoost: 0,
@@ -458,7 +521,7 @@ Z poważaniem,`;
     const document = explodePromptText({
       prompt,
       validationRules: [fallbackOnlyHeadingRule],
-      validationScope: 'case-resolver-prompt-exploder',
+      validationScope: 'case_resolver_prompt_exploder',
     });
 
     expect(document.segments).toHaveLength(1);

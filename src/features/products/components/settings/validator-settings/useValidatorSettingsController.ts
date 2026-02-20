@@ -7,7 +7,11 @@ import {
 } from 'react';
 
 import { logClientError } from '@/features/observability';
-import type { ReorderValidationPatternUpdatePayload, UpdateValidationPatternPayload } from '@/features/products/api/settings';
+import type {
+  CreateValidationPatternPayload,
+  ReorderValidationPatternUpdatePayload,
+  UpdateValidationPatternPayload,
+} from '@/features/products/api/settings';
 import {
   useCreateValidationPatternMutation,
   useDeleteValidationPatternMutation,
@@ -24,7 +28,6 @@ import {
   normalizeProductValidationInstanceDenyBehaviorMap,
 } from '@/features/products/utils/validator-instance-behavior';
 import { encodeDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
-import type { CreateProductValidationPatternDto } from '@/shared/contracts/products';
 import { invalidateValidatorConfig } from '@/shared/lib/query-invalidation';
 import type {
   ProductValidationDenyBehavior,
@@ -193,7 +196,7 @@ export function useValidatorSettingsController() {
         replacementEnabled: formData.replacementEnabled,
         replacementAutoApply: formData.replacementAutoApply,
         skipNoopReplacementProposal: formData.skipNoopReplacementProposal,
-        replacementValue,
+        replacementValue: replacementValue || null,
         replacementFields: formData.replacementFields,
         replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
           formData.replacementAppliesToScopes,
@@ -228,7 +231,7 @@ export function useValidatorSettingsController() {
         launchSourceMode: formData.launchSourceMode,
         launchSourceField: formData.launchSourceField.trim() || null,
         launchOperator: formData.launchOperator as ProductValidationLaunchOperator,
-        launchValue: formData.launchValue,
+        launchValue: formData.launchValue || null,
         launchFlags: formData.launchFlags.trim() || null,
         runtimeEnabled,
         runtimeType: runtimeEnabled ? formData.runtimeType : 'none',
@@ -241,7 +244,7 @@ export function useValidatorSettingsController() {
         await updatePattern.mutateAsync({ id: editingPattern.id, data: payload });
         toast('Pattern updated.', { variant: 'success' });
       } else {
-        await createPattern.mutateAsync(payload as CreateProductValidationPatternDto);
+        await createPattern.mutateAsync(payload as CreateValidationPatternPayload);
         toast('Pattern created.', { variant: 'success' });
       }
       setShowModal(false);

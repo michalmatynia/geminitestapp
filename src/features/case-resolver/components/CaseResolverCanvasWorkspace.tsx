@@ -24,6 +24,7 @@ import {
   palette,
   stableStringify,
   EMPTY_RUNTIME_STATE,
+  type Edge,
 } from '@/features/ai/ai-paths/lib';
 import {
   Button,
@@ -43,7 +44,6 @@ import {
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
   type AiNode,
-  type Edge,
   type CaseResolverEdgeMeta,
   type CaseResolverAssetFile,
   type CaseResolverFile,
@@ -73,6 +73,19 @@ import {
 import { CaseResolverLinkedPreviewModal } from './CaseResolverLinkedPreviewModal';
 import { CaseResolverNodeInspectorModal } from './CaseResolverNodeInspectorModal';
 
+interface CompatEdge {
+  id: string;
+  from?: string | null | undefined;
+  to?: string | null | undefined;
+  source?: string | null | undefined;
+  target?: string | null | undefined;
+  label?: string | null | undefined;
+  fromPort?: string | null | undefined;
+  toPort?: string | null | undefined;
+  sourceHandle?: string | null | undefined;
+  targetHandle?: string | null | undefined;
+}
+
 function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const {
     activeFile,
@@ -96,7 +109,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const { selectedNodeId, selectedEdgeId, configOpen } = useSelectionState();
   const { selectNode, setConfigOpen } = useSelectionActions();
 
-  const [newNodeType, setNewNodeType] = useState<'prompt' | 'model' | 'template' | 'database'>('prompt');
+  const [newNodeType, setNewNodeType] = useState<'prompt' | 'model' | 'template' | 'database' | 'viewer'>('prompt');
   const [pdfExtractionPresetId, setPdfExtractionPresetId] = useState<CaseResolverPdfExtractionPresetId>(
     graph.pdfExtractionPresetId ?? DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID
   );
@@ -109,12 +122,12 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     [graph.nodeMeta, nodes]
   );
   const normalizedEdgeMeta = useMemo(
-    () => ensureEdgeMeta(edges, graph.edgeMeta),
+    () => ensureEdgeMeta(edges as unknown as { id: string }[], graph.edgeMeta),
     [edges, graph.edgeMeta]
   );
-  const toStrictEdges = React.useCallback((inputEdges: Edge[]): CaseResolverGraph['edges'] => {
-    return inputEdges
-      .map((edge: Edge): CaseResolverGraph['edges'][number] | null => {
+  const toStrictEdges = React.useCallback((inputEdges: AiEdge[]): CaseResolverGraph['edges'] => {
+    return (inputEdges as unknown as CompatEdge[])
+      .map((edge: CompatEdge): CaseResolverGraph['edges'][number] | null => {
         const from = edge.from ?? edge.source;
         const to = edge.to ?? edge.target;
         if (!from || !to) return null;
@@ -124,16 +137,16 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
           to,
           ...(edge.label ? { label: edge.label } : {}),
           ...(edge.fromPort ?? edge.sourceHandle
-            ? { fromPort: edge.fromPort ?? edge.sourceHandle ?? undefined }
+            ? { fromPort: (edge.fromPort ?? edge.sourceHandle) || undefined }
             : {}),
           ...(edge.toPort ?? edge.targetHandle
-            ? { toPort: edge.toPort ?? edge.targetHandle ?? undefined }
+            ? { toPort: (edge.toPort ?? edge.targetHandle) || undefined }
             : {}),
         };
       })
       .filter((edge): edge is CaseResolverGraph['edges'][number] => edge !== null);
   }, []);
-  const strictEdges = useMemo((): CaseResolverGraph['edges'] => toStrictEdges(edges), [edges, toStrictEdges]);
+  const strictEdges = useMemo((): CaseResolverGraph['edges'] => toStrictEdges(edges as unknown as AiEdge[]), [edges, toStrictEdges]);
   const availableFilesById = useMemo(
     () =>
       new Map<string, CaseResolverFile>(
@@ -190,6 +203,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       { value: 'model', label: 'Model Node' },
       { value: 'template', label: 'Template Node' },
       { value: 'database', label: 'Database Node' },
+      { value: 'viewer', label: 'Result Viewer Node' },
     ] as const,
     []
   );
@@ -355,18 +369,19 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
 
     const id = `node-${Math.random().toString(36).slice(2, 10)}`;
     const title = 'Explanatory Note';
-    const node = buildNode(promptDefinition, placePosition, id, title);
-    const promptConfig = resolvePromptConfig(node);
-    addNode({
-      ...node,
+    const promptNode = buildNode(promptDefinition, placePosition, id, title);
+    const promptConfig = resolvePromptConfig(promptNode);
+    const explanatoryNode = ensureDocumentPromptPorts({
+      ...promptNode,
       config: {
-        ...(node.config ?? {}),
+        ...(promptNode.config ?? {}),
         prompt: {
           ...promptConfig,
           template: '',
         },
       },
     });
+    addNode(explanatoryNode);
     selectNode(id);
 
     const meta: CaseResolverNodeMeta = {
@@ -383,7 +398,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     };
 
     onGraphChange({
-      nodes: [...nodes, node],
+      nodes: [...nodes, explanatoryNode],
       edges: strictEdges,
       nodeMeta: nextNodeMeta,
       edgeMeta: normalizedEdgeMeta,
@@ -409,7 +424,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     const nextRole = patch.role ?? current.role;
     const shouldNormalizeTextPorts =
       selectedNode.type === 'prompt' &&
-      nextRole === 'text_note';
+      (nextRole === 'text_note' || nextRole === 'explanatory');
     const nextNodes = shouldNormalizeTextPorts
       ? nodes.map((node: AiNode): AiNode => {
         return node.id === selectedNode.id ? ensureDocumentPromptPorts(node) : node;
@@ -439,7 +454,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     };
     onGraphChange({
       nodes: nextNodes,
-      edges: toStrictEdges(nextEdges),
+      edges: toStrictEdges(nextEdges as any),
       nodeMeta: nextNodeMeta,
       edgeMeta: normalizedEdgeMeta,
       pdfExtractionPresetId,
@@ -599,31 +614,38 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const selectedPromptSourceFile = selectedPromptSourceFileId
     ? availableFilesById.get(selectedPromptSourceFileId) ?? null
     : null;
+  const selectedPromptInputText = useMemo((): string => {
+    if (selectedNode?.type !== 'prompt') return '';
+    const promptTemplate = resolvePromptConfig(selectedNode).template;
+    const normalizedTemplate = stripHtmlToPlainText(promptTemplate);
+    if (normalizedTemplate) return normalizedTemplate;
+    if (!selectedPromptSourceFile) return '';
+    if (selectedPromptSourceFile.documentContentHtml.trim()) {
+      return stripHtmlToPlainText(selectedPromptSourceFile.documentContentHtml);
+    }
+    return stripHtmlToPlainText(selectedPromptSourceFile.documentContent);
+  }, [selectedNode, selectedPromptSourceFile]);
+  const selectedPromptOutputPreview = useMemo(() => {
+    if (selectedNode?.type !== 'prompt') return null;
+    const computedOutputs = compiled.outputsByNode[selectedNode.id];
+    const nodeMeta = selectedPromptMeta ?? DEFAULT_CASE_RESOLVER_NODE_META;
+    const textfieldOutput =
+      computedOutputs?.textfield ??
+      stripHtmlToPlainText(resolvePromptConfig(selectedNode).template);
+    return {
+      textfield: textfieldOutput,
+      content:
+        computedOutputs?.content ?? renderPromptNodeTextPreview(selectedNode, nodeMeta),
+      plainText: computedOutputs?.plainText ?? stripHtmlToPlainText(textfieldOutput),
+    };
+  }, [compiled.outputsByNode, selectedNode, selectedPromptMeta]);
 
   useEffect(() => {
     if (!configOpen) return;
-    if (
-      selectedNode?.type === 'prompt' &&
-      selectedPromptSourceFile &&
-      activeFile
-    ) {
-      onEditFile(selectedPromptSourceFile.id, {
-        nodeContext: {
-          nodeId: selectedNode.id,
-          canvasFileId: activeFile.id,
-        },
-      });
-      setConfigOpen(false);
-      return;
-    }
     setIsNodeInspectorOpen(true);
     setConfigOpen(false);
   }, [
-    activeFile,
     configOpen,
-    onEditFile,
-    selectedNode,
-    selectedPromptSourceFile,
     setConfigOpen,
   ]);
 
@@ -669,7 +691,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
         ? 'Plain text output'
         : isContentPort
           ? 'Content output'
-          : 'Text field output';
+          : 'WYSIWYG text output';
 
       return {
         maxWidth: '720px',
@@ -715,7 +737,8 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
                   value === 'prompt' ||
                   value === 'model' ||
                   value === 'template' ||
-                  value === 'database'
+                  value === 'database' ||
+                  value === 'viewer'
                 ) {
                   setNewNodeType(value);
                 }
@@ -801,7 +824,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
               onClick={() =>
                 onGraphChange({
                   nodes,
-                  edges: strictEdges,
+                  edges: strictEdges as any,
                   nodeMeta: normalizedNodeMeta,
                   edgeMeta: normalizedEdgeMeta,
                   pdfExtractionPresetId,
@@ -835,6 +858,8 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
         selectedNode={selectedNode}
         selectedPromptMeta={selectedPromptMeta}
         selectedPromptSourceFile={selectedPromptSourceFile}
+        selectedPromptInputText={selectedPromptInputText}
+        selectedPromptOutputPreview={selectedPromptOutputPreview}
         selectedCanvasFileId={activeFile?.id ?? null}
         onEditFile={onEditFile}
         onUpdateSelectedNodeMeta={updateSelectedNodeMeta}

@@ -51,6 +51,7 @@ describe('system-logger', () => {
         message: 'Test message',
         context: { password: 'secret123', token: 'abc-123', safe: 'value' },
       });
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(createSystemLog).toHaveBeenCalledWith(expect.objectContaining({
         context: expect.objectContaining({
@@ -86,6 +87,7 @@ describe('system-logger', () => {
   describe('logSystemEvent', () => {
     it('should call createSystemLog with default info level', async () => {
       await logSystemEvent({ message: 'Hello' });
+      await new Promise((resolve) => setTimeout(resolve, 0));
       expect(createSystemLog).toHaveBeenCalledWith(expect.objectContaining({
         level: 'info',
         message: 'Hello',
@@ -94,6 +96,7 @@ describe('system-logger', () => {
 
     it('should notify critical errors', async () => {
       await logSystemEvent({ message: 'Critical fail', critical: true });
+      await new Promise((resolve) => setTimeout(resolve, 0));
       expect(notifyCriticalError).toHaveBeenCalled();
     });
 
@@ -102,6 +105,7 @@ describe('system-logger', () => {
       context.self = context;
 
       await logSystemEvent({ message: 'Circular', context });
+      await new Promise((resolve) => setTimeout(resolve, 0));
       
       const calls = (createSystemLog as any).mock.calls;
       const actualContext = calls[0][0].context;

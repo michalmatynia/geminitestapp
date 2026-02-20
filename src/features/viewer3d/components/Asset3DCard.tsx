@@ -125,7 +125,7 @@ export function Asset3DCard({
         <div className='text-xs text-muted-foreground'>
           <span>{formatFileSize(asset.size)}</span>
           <span className='mx-1'>•</span>
-          <span>{formatDate(asset.createdAt)}</span>
+          <span>{asset.createdAt ? formatDate(asset.createdAt) : ''}</span>
         </div>
       }
     >

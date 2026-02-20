@@ -18,7 +18,7 @@ export type CaseResolverQuoteModeDto = z.infer<typeof caseResolverQuoteModeSchem
 export const caseResolverJoinModeSchema = z.enum(['newline', 'tab', 'space', 'none']);
 export type CaseResolverJoinModeDto = z.infer<typeof caseResolverJoinModeSchema>;
 
-export const caseResolverDocumentNodePortSchema = z.enum(['textfield', 'content', 'plainText']);
+export const caseResolverDocumentNodePortSchema = z.enum(['wysiwygText', 'content', 'plainText']);
 export type CaseResolverDocumentNodePortDto = z.infer<typeof caseResolverDocumentNodePortSchema>;
 
 export const caseResolverAssetKindSchema = z.enum(['node_file', 'image', 'pdf', 'file']);
@@ -119,16 +119,21 @@ const caseResolverCanvasNodeSchema = z.object({
   outputs: z.array(z.string()),
 });
 
-// Lightweight canvas edge schema — matches the Edge runtime type with from/to.
-// The canvas uses from/to (not source/target), so we cannot use aiEdgeSchema here.
-const caseResolverCanvasEdgeSchema = z.object({
+export const caseResolverCanvasEdgeSchema = z.object({
   id: z.string(),
   from: z.string(),
   to: z.string(),
   label: z.string().optional(),
   fromPort: z.string().optional(),
   toPort: z.string().optional(),
+  source: z.string().optional(),
+  target: z.string().optional(),
+  sourceHandle: z.string().nullable().optional(),
+  targetHandle: z.string().nullable().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().nullable().optional(),
 });
+export type CaseResolverCanvasEdgeDto = z.infer<typeof caseResolverCanvasEdgeSchema>;
 
 export const caseResolverGraphSchema = z.object({
   nodes: z.array(caseResolverCanvasNodeSchema),

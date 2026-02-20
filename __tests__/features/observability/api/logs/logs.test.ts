@@ -79,7 +79,12 @@ describe('System Logs API', () => {
         { requestId: { contains: 'req-1', mode: 'insensitive' } },
         { userId: { contains: 'user-1', mode: 'insensitive' } },
         { context: { path: ['fingerprint'], equals: 'fp-123' } },
-        { context: { path: ['category'], equals: 'DATABASE' } },
+        {
+          OR: [
+            { category: { equals: 'DATABASE', mode: 'insensitive' } },
+            { context: { path: ['category'], equals: 'DATABASE' } },
+          ],
+        },
       ])
     );
   });

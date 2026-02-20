@@ -1,6 +1,7 @@
 import { palette } from '@/features/ai/ai-paths/lib';
+import { type EdgeDto as AiEdge } from '@/shared/contracts/ai-paths';
 
-import { type AiNode, type Edge, type NodeDefinition } from '../types';
+import { type AiNode, type NodeDefinition } from '../types';
 import {
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
@@ -51,13 +52,13 @@ type ToastFn = (message: string, options?: { variant?: 'error' | 'warning' | 'su
 
 type CreateCaseResolverCanvasDropHandlersInput = {
   addNode: (node: AiNode) => void;
-  addEdge: (edge: Edge) => void;
+  addEdge: (edge: AiEdge) => void;
   updateNode: (id: string, patch: Partial<AiNode>) => void;
   selectNode: (nodeId: string) => void;
   focusNodeInCanvas: (nodeId: string, position: { x: number; y: number }) => void;
   onGraphChange: (graph: CaseResolverGraph) => void;
   nodes: AiNode[];
-  edges: Edge[];
+  edges: AiEdge[];
   normalizedNodeMeta: Record<string, CaseResolverNodeMeta>;
   normalizedEdgeMeta: Record<string, CaseResolverEdgeMeta>;
   normalizedDocumentFileLinksByNode: Record<string, string[]>;
@@ -100,9 +101,9 @@ export const createCaseResolverCanvasDropHandlers = ({
   showDocumentNodeInCanvas: (fileId: string, preferredNodeId?: string | null) => void;
 } => {
   const toCaseResolverEdge = (
-    edge: Edge
+    edge: AiEdge
   ): CaseResolverGraph['edges'][number] | null => {
-    const legacyEdge = edge as Edge & {
+    const legacyEdge = edge as AiEdge & {
       from?: string;
       to?: string;
       fromPort?: string;
@@ -125,14 +126,14 @@ export const createCaseResolverCanvasDropHandlers = ({
         : {}),
     };
   };
-  const toCanvasEdge = (edge: CaseResolverGraph['edges'][number]): Edge => ({
+  const toCanvasEdge = (edge: CaseResolverGraph['edges'][number]): AiEdge => ({
     id: edge.id,
-    createdAt: new Date().toISOString(),
-    updatedAt: null,
     source: edge.from,
     target: edge.to,
     type: 'default',
     data: {},
+    createdAt: new Date().toISOString(),
+    updatedAt: null,
     ...(edge.fromPort ? { sourceHandle: edge.fromPort } : {}),
     ...(edge.toPort ? { targetHandle: edge.toPort } : {}),
   });

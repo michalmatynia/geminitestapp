@@ -388,6 +388,45 @@ export const shapeHasUsableCropGeometry = (shape: MaskShapeForExport): boolean =
   return false;
 };
 
+export const hasCanvasOverflowFromImageFrame = (
+  frame: ImageContentFrame | null | undefined
+): boolean => {
+  const normalizedFrame = normalizeImageContentFrame(frame);
+  if (!normalizedFrame) return false;
+  const left = normalizedFrame.x;
+  const top = normalizedFrame.y;
+  const right = normalizedFrame.x + normalizedFrame.width;
+  const bottom = normalizedFrame.y + normalizedFrame.height;
+  return left < 0 || top < 0 || right > 1 || bottom > 1;
+};
+
+export const resolveCanvasOverflowCropRect = (params: {
+  canvasWidth: number;
+  canvasHeight: number;
+  imageContentFrame: ImageContentFrame | null | undefined;
+}): CropRect | null => {
+  if (!hasCanvasOverflowFromImageFrame(params.imageContentFrame)) {
+    return null;
+  }
+  if (
+    !Number.isFinite(params.canvasWidth) ||
+    !Number.isFinite(params.canvasHeight)
+  ) {
+    return null;
+  }
+  const canvasWidth = Math.floor(params.canvasWidth);
+  const canvasHeight = Math.floor(params.canvasHeight);
+  if (!(canvasWidth > 0 && canvasHeight > 0)) {
+    return null;
+  }
+  return {
+    x: 0,
+    y: 0,
+    width: canvasWidth,
+    height: canvasHeight,
+  };
+};
+
 const normalizeLocalImageSource = (value: string | null | undefined): string | null => {
   const normalized = value?.trim() ?? '';
   if (!normalized) return null;

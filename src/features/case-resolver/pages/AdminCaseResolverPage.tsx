@@ -1873,110 +1873,26 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           createNodeFileAssetForNode(nodeId, normalizedSourceFileId);
         });
 
-        const nextNodeIdsByAssetId = new Map<string, Set<string>>();
-        Object.entries(nextNodeFileMap).forEach(([nodeId, assetId]: [string, string]): void => {
+        // Node files are independent workspaces. Do not overwrite their snapshots
+        // from document-canvas graph updates after creation.
+        Object.entries({ ...nextNodeFileMap }).forEach(([nodeId, assetId]: [string, string]): void => {
           const normalizedNodeId = typeof nodeId === 'string' ? nodeId.trim() : '';
           const normalizedAssetId = typeof assetId === 'string' ? assetId.trim() : '';
-          if (!normalizedNodeId || !normalizedAssetId) return;
-          const nextNodeIdsForAsset = nextNodeIdsByAssetId.get(normalizedAssetId) ?? new Set<string>();
-          nextNodeIdsForAsset.add(normalizedNodeId);
-          nextNodeIdsByAssetId.set(normalizedAssetId, nextNodeIdsForAsset);
-        });
-
-        Object.entries(existingNodeFileMap).forEach(([nodeId, assetId]: [string, string]): void => {
-          const normalizedNodeId = typeof nodeId === 'string' ? nodeId.trim() : '';
-          const normalizedAssetId = typeof assetId === 'string' ? assetId.trim() : '';
-          if (!normalizedNodeId || !normalizedAssetId) return;
-          if (nextNodeIds.has(normalizedNodeId)) return;
-          const stillReferenced = nextNodeIdsByAssetId.get(normalizedAssetId);
-          if (stillReferenced && stillReferenced.size > 0) return;
-          const assetIndex = nextAssets.findIndex(
+          if (!normalizedNodeId || !normalizedAssetId) {
+            delete nextNodeFileMap[nodeId];
+            return;
+          }
+          if (!nextNodeIds.has(normalizedNodeId)) {
+            delete nextNodeFileMap[nodeId];
+            return;
+          }
+          const hasMappedAsset = nextAssets.some(
             (asset: CaseResolverAssetFile): boolean =>
               asset.id === normalizedAssetId && asset.kind === 'node_file'
           );
-          if (assetIndex < 0) return;
-          const currentAsset = nextAssets[assetIndex];
-          if (!currentAsset) return;
-          const clearedSnapshot = buildNodeFileSnapshotText({
-            graph: nextGraph,
-            nodeId: normalizedNodeId,
-            sourceFileId: null,
-            sourceFileName: null,
-            sourceFileType: null,
-            sourceFolder: null,
-            activeCanvasFileId: activeFile.id,
-          });
-          if (currentAsset.textContent === clearedSnapshot && currentAsset.sourceFileId === null) {
-            return;
-          }
-          const clearedAsset: CaseResolverAssetFile = {
-            ...currentAsset,
-            sourceFileId: null,
-            textContent: clearedSnapshot,
-            updatedAt: now,
-          };
-          nextAssets = [
-            ...nextAssets.slice(0, assetIndex),
-            clearedAsset,
-            ...nextAssets.slice(assetIndex + 1),
-          ];
-          assetsChanged = true;
-        });
-
-        Object.entries({ ...nextNodeFileMap }).forEach(([nodeId, assetId]: [string, string]): void => {
-          if (!nextNodeIds.has(nodeId)) {
+          if (!hasMappedAsset) {
             delete nextNodeFileMap[nodeId];
-            return;
           }
-          const assetIndex = nextAssets.findIndex(
-            (asset: CaseResolverAssetFile): boolean =>
-              asset.id === assetId && asset.kind === 'node_file'
-          );
-          if (assetIndex < 0) {
-            delete nextNodeFileMap[nodeId];
-            return;
-          }
-
-          const currentAsset = nextAssets[assetIndex];
-          if (!currentAsset) {
-            delete nextNodeFileMap[nodeId];
-            return;
-          }
-          const mappedSourceFileId =
-            typeof nextSourceFileIdByNode[nodeId] === 'string' &&
-            nextSourceFileIdByNode[nodeId].trim().length > 0
-              ? nextSourceFileIdByNode[nodeId].trim()
-              : null;
-          const sourceFile = mappedSourceFileId
-            ? filesById.get(mappedSourceFileId) ?? null
-            : null;
-          const snapshot = buildNodeFileSnapshotText({
-            graph: nextGraph,
-            nodeId,
-            sourceFileId: mappedSourceFileId,
-            sourceFileName: sourceFile?.name ?? null,
-            sourceFileType: mappedSourceFileId
-              ? (sourceFile?.fileType === 'scanfile' ? 'scanfile' : 'document')
-              : null,
-            sourceFolder: sourceFile?.folder ?? null,
-            activeCanvasFileId: activeFile.id,
-          });
-          const shouldUpdateAsset =
-            currentAsset.textContent !== snapshot ||
-            mappedSourceFileId !== currentAsset.sourceFileId;
-          if (!shouldUpdateAsset) return;
-          const updatedAsset: CaseResolverAssetFile = {
-            ...currentAsset,
-            sourceFileId: mappedSourceFileId,
-            textContent: snapshot,
-            updatedAt: now,
-          };
-          nextAssets = [
-            ...nextAssets.slice(0, assetIndex),
-            updatedAsset,
-            ...nextAssets.slice(assetIndex + 1),
-          ];
-          assetsChanged = true;
         });
 
         const nextNodeFileMapKeys = Object.keys(nextNodeFileMap);

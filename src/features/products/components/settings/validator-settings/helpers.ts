@@ -105,7 +105,10 @@ const ALLOWED_REPLACEMENT_FIELDS = new Set<string>(PRODUCT_VALIDATION_REPLACEMEN
 /**
  * Validator docs: see docs/validator/function-reference.md#helpers.normalizereplacementfields
  */
-export const normalizeReplacementFields = (fields: string[] | null | undefined): string[] => {
+export const normalizeReplacementFields = (
+  fields: string[] | null | undefined,
+  _target?: string
+): string[] => {
   if (!Array.isArray(fields) || fields.length === 0) return [];
   const unique = new Set<string>();
   for (const field of fields) {
@@ -128,30 +131,43 @@ export const formatReplacementFields = (fields: string[] | null | undefined): st
  * Validator docs: see docs/validator/function-reference.md#helpers.getreplacementfieldsfortarget
  */
 export const getReplacementFieldsForTarget = (
-  target: PatternFormData['target']
-): string[] => {
+  target: string
+): Array<{ value: string; label: string }> => {
+  let fields: string[] = [];
   if (target === 'name') {
-    return PRODUCT_VALIDATION_REPLACEMENT_FIELDS.filter((field) => field.startsWith('name_'));
-  }
-  if (target === 'description') {
-    return PRODUCT_VALIDATION_REPLACEMENT_FIELDS.filter((field) =>
+    fields = PRODUCT_VALIDATION_REPLACEMENT_FIELDS.filter((field) => field.startsWith('name_'));
+  } else if (target === 'description') {
+    fields = PRODUCT_VALIDATION_REPLACEMENT_FIELDS.filter((field) =>
       field.startsWith('description_')
     );
+  } else if (target === 'price') {
+    fields = ['price'];
+  } else if (target === 'stock') {
+    fields = ['stock'];
+  } else if (target === 'category') {
+    fields = ['categoryId'];
+  } else if (target === 'weight') {
+    fields = ['weight'];
+  } else if (target === 'size_length') {
+    fields = ['sizeLength'];
+  } else if (target === 'size_width') {
+    fields = ['sizeWidth'];
+  } else if (target === 'length') {
+    fields = ['length'];
+  } else {
+    fields = ['sku'];
   }
-  if (target === 'price') return ['price'];
-  if (target === 'stock') return ['stock'];
-  if (target === 'category') return ['categoryId'];
-  if (target === 'weight') return ['weight'];
-  if (target === 'size_length') return ['sizeLength'];
-  if (target === 'size_width') return ['sizeWidth'];
-  if (target === 'length') return ['length'];
-  return ['sku'];
+
+  return fields.map((field) => ({
+    value: field,
+    label: REPLACEMENT_FIELD_LABELS[field] ?? field,
+  }));
 };
 
 /**
  * Validator docs: see docs/validator/function-reference.md#helpers.islocaletarget
  */
-export const isLocaleTarget = (target: PatternFormData['target']): boolean =>
+export const isLocaleTarget = (target: string): boolean =>
   target === 'name' || target === 'description';
 
 /**
@@ -194,7 +210,7 @@ export const isNameSecondSegmentDimensionPattern = (
  * Validator docs: see docs/validator/function-reference.md#helpers.getsourcefieldoptionsfortarget
  */
 export const getSourceFieldOptionsForTarget = (
-  _target: PatternFormData['target']
+  _target: string
 ): Array<{ value: string; label: string }> => {
   return SOURCE_FIELD_OPTIONS;
 };

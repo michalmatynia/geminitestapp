@@ -131,7 +131,7 @@ describe('case resolver case context resolution', () => {
       folderTimestamps: {},
       files: [caseFile, documentFile],
       assets: [],
-      relationGraph: { nodes: [], edges: [] },
+      relationGraph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
       activeFileId: caseFile.id,
     };
     const selectedOtherFileWorkspace = {
@@ -166,7 +166,7 @@ describe('case resolver case context resolution', () => {
       folderTimestamps: {},
       files: [caseFile, documentFile],
       assets: [],
-      relationGraph: { nodes: [], edges: [] },
+      relationGraph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
       activeFileId: caseFile.id,
     };
     const revisionOnlyWorkspace = {
@@ -208,7 +208,7 @@ describe('case resolver case context resolution', () => {
       },
       files: [caseFile],
       assets: [],
-      relationGraph: { nodes: [], edges: [] },
+      relationGraph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
       activeFileId: caseFile.id,
     };
     const reorderedWorkspace = {
@@ -246,7 +246,7 @@ describe('case resolver case context resolution', () => {
       folderTimestamps: {},
       files: [caseFile, documentFile],
       assets: [],
-      relationGraph: { nodes: [], edges: [] },
+      relationGraph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
       activeFileId: caseFile.id,
     };
     const renamedDocumentWorkspace = {

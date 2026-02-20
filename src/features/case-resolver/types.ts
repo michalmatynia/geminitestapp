@@ -1,4 +1,4 @@
-import type { AiNodeDto as AiNode, EdgeDto as Edge, NodeDefinitionDto as NodeDefinition } from '@/shared/contracts/ai-paths';
+import type { AiNodeDto as AiNode, EdgeDto as AiEdge, NodeDefinitionDto as NodeDefinition } from '@/shared/contracts/ai-paths';
 import type {
   CaseResolverNodeRoleDto as CaseResolverNodeRole,
   CaseResolverQuoteModeDto as CaseResolverQuoteMode,
@@ -34,12 +34,13 @@ import type {
   CaseResolverWorkspaceDto as CaseResolverWorkspace,
   CaseResolverEditorNodeContextDto as CaseResolverEditorNodeContext,
   CaseResolverPdfExtractionPresetDto as CaseResolverPdfExtractionPreset,
+  CaseResolverCanvasEdgeDto as Edge,
 } from '@/shared/contracts/case-resolver';
 import type {
   PromptExploderCaseResolverPartyCandidateDto as PromptExploderCaseResolverPartyCandidate,
 } from '@/shared/contracts/prompt-exploder';
 
-export type { AiNode, Edge, NodeDefinition, PromptExploderCaseResolverPartyCandidate };
+export type { AiNode, Edge, AiEdge, NodeDefinition, PromptExploderCaseResolverPartyCandidate };
 
 export type {
   CaseResolverNodeRole,
@@ -108,13 +109,13 @@ export const CASE_RESOLVER_JOIN_MODE_OPTIONS: Array<{
 ];
 
 export const CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS: CaseResolverDocumentNodePort[] = [
-  'textfield',
+  'wysiwygText',
   'content',
   'plainText',
 ];
 
 export const CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS: CaseResolverDocumentNodePort[] = [
-  'textfield',
+  'wysiwygText',
   'content',
   'plainText',
 ];

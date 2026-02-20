@@ -37,8 +37,6 @@ const createEdge = (input: {
     to: input.to,
     fromPort: input.fromPort,
     toPort: input.toPort,
-    source: input.from,
-    target: input.to,
   }) as Edge;
 
 describe('case-resolver composer', () => {

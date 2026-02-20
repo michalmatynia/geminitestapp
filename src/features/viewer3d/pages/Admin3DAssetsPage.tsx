@@ -128,7 +128,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
     {
       accessorKey: 'createdAt',
       header: 'Date',
-      cell: ({ row }) => <span className='text-xs text-muted-foreground'>{formatDate(row.original.createdAt)}</span>,
+      cell: ({ row }) => <span className='text-xs text-muted-foreground'>{row.original.createdAt ? formatDate(row.original.createdAt) : ''}</span>,
     },
     {
       id: 'actions',

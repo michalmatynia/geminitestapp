@@ -26,9 +26,10 @@ const JOIN_VALUE_MAP: Record<CaseResolverJoinMode, string> = {
   none: '',
 };
 
-const DOCUMENT_TEXTFIELD_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'textfield';
+const DOCUMENT_TEXTFIELD_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'wysiwygText';
 const DOCUMENT_CONTENT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'content';
 const DOCUMENT_PLAIN_TEXT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
+const LEGACY_DOCUMENT_TEXTFIELD_PORT = 'textfield';
 
 const resolveNodeMeta = (
   nodeId: string,
@@ -168,7 +169,7 @@ const resolveSourceOutputValue = (
   fallback: 'textfield' | 'content' | 'plainText'
 ): string => {
   if (!sourceOutputs) return '';
-  if (fromPort === DOCUMENT_TEXTFIELD_PORT) {
+  if (fromPort === DOCUMENT_TEXTFIELD_PORT || fromPort === LEGACY_DOCUMENT_TEXTFIELD_PORT) {
     return sourceOutputs.textfield;
   }
   if (fromPort === DOCUMENT_CONTENT_PORT) {
@@ -184,7 +185,7 @@ const resolveSourceOutputValue = (
 };
 
 const isTextfieldInputPort = (port: string | null | undefined): boolean =>
-  port === DOCUMENT_TEXTFIELD_PORT;
+  port === DOCUMENT_TEXTFIELD_PORT || port === LEGACY_DOCUMENT_TEXTFIELD_PORT;
 
 const isContentInputPort = (port: string | null | undefined): boolean =>
   port === DOCUMENT_CONTENT_PORT || !port;

@@ -50,7 +50,7 @@ describe('RunHistoryPanel Component', () => {
 
   it('should render empty state', () => {
     renderPanel();
-    expect(screen.getByText('No runs yet.')).toBeInTheDocument();
+    expect(screen.getByText('No runs yet')).toBeInTheDocument();
   });
 
   it('should render a list of runs', () => {

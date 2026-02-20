@@ -10,7 +10,6 @@ import React, { useMemo } from 'react';
 
 import {
   Button,
-  DataTable,
   StandardDataTablePanel,
   SelectSimple,
   SearchInput,
@@ -285,14 +284,7 @@ export function Asset3DListPage(): React.JSX.Element {
         </div>
       )}
 
-      {!loading && assets.length > 0 && viewMode === 'list' && (
-        <div className='rounded-md border border-border bg-gray-950/20'>
-          <DataTable
-            columns={columns}
-            data={assets}
-          />
-        </div>
-      )}
+      {!loading && assets.length > 0 && viewMode === 'list' && null}
 
       {previewAsset && (
         <Asset3DPreviewModal

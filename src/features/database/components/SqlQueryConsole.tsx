@@ -9,7 +9,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
-import { Badge, Button, Textarea, SelectSimple, DataTable, Alert } from '@/shared/ui';
+import { Badge, Button, Textarea, SelectSimple, StandardDataTablePanel, Alert } from '@/shared/ui';
 
 import { useDatabase } from '../context/DatabaseContext';
 import { useSqlQueryMutation } from '../hooks/useDatabaseQueries';

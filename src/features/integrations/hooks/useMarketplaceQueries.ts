@@ -1,14 +1,14 @@
 'use client';
 
-import type { ExternalCategory, CategoryMappingWithDetails } from '@/features/integrations/types/category-mapping';
+import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations/category-mapping';
 import type {
   ExternalProducer,
   ProducerMappingWithDetails,
-} from '@/features/integrations/types/producer-mapping';
+} from '@/shared/contracts/integrations/producer-mapping';
 import type {
   ExternalTag,
   TagMappingWithDetails,
-} from '@/features/integrations/types/tag-mapping';
+} from '@/shared/contracts/integrations/tag-mapping';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,

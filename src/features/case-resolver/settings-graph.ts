@@ -10,7 +10,7 @@ import {
   type CaseResolverGraph,
   type CaseResolverNodeMeta,
   type CaseResolverPdfExtractionPresetId,
-} from './types';
+} from '@/shared/contracts/case-resolver';
 
 const sanitizeNodeMeta = (
   source: Record<string, CaseResolverNodeMeta> | null | undefined

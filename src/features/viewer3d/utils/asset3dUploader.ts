@@ -8,7 +8,7 @@ import { badRequestError } from '@/shared/errors/app-error';
 
 import { isValid3DAsset, validate3DFileAsync } from './validateAsset3d';
 
-import type { Asset3DRecord } from '../types';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
 const assets3dRoot = path.join(uploadsRoot, 'assets3d');

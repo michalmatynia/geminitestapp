@@ -1,4 +1,4 @@
-import { ProductWithImages } from '@/features/products/types';
+import { ProductWithImages } from '@/shared/contracts/products';
 import { api, type ApiClientOptions } from '@/shared/lib/api-client';
 
 // This function fetches a list of products from the API.
@@ -75,6 +75,57 @@ export async function countProducts(filters: {
   } catch (_error) {
     return 0;
   }
+}
+
+export type ProductsPagedResult = {
+  products: ProductWithImages[];
+  total: number;
+};
+
+type ProductListFilters = {
+  search?: string | undefined;
+  sku?: string | undefined;
+  description?: string | undefined;
+  categoryId?: string | undefined;
+  minPrice?: number | undefined;
+  maxPrice?: number | undefined;
+  startDate?: string | undefined;
+  endDate?: string | undefined;
+  page?: number | undefined;
+  pageSize?: number | undefined;
+  catalogId?: string | undefined;
+  searchLanguage?: string | undefined;
+  baseExported?: boolean | undefined;
+};
+
+/**
+ * Fetches products + total count in a single request via GET /api/products/paged.
+ * Prefer this over calling getProducts() and countProducts() separately.
+ */
+export async function getProductsWithCount(
+  filters: ProductListFilters,
+  signal?: AbortSignal
+): Promise<ProductsPagedResult> {
+  const options: ApiClientOptions = {
+    params: {
+      search: filters.search,
+      sku: filters.sku,
+      description: filters.description,
+      categoryId: filters.categoryId,
+      minPrice: filters.minPrice,
+      maxPrice: filters.maxPrice,
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+      page: filters.page,
+      pageSize: filters.pageSize,
+      catalogId: filters.catalogId,
+      searchLanguage: filters.searchLanguage,
+      baseExported: filters.baseExported,
+    },
+    cache: 'no-store',
+  };
+  if (signal) options.signal = signal;
+  return api.get<ProductsPagedResult>('/api/products/paged', options);
 }
 
 export async function createProduct(formData: FormData): Promise<ProductWithImages> {

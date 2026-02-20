@@ -5,7 +5,7 @@ export * from './services/database-sync';
 export * from './services/database-json-backup';
 export * from './services/database-collection-copy';
 export * from './services/sync-utils';
-export * from './types';
+export * from '@/shared/contracts/database';
 
 export {
   backupsDir as pgBackupsDir,

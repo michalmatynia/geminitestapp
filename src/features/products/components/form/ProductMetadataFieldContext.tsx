@@ -7,7 +7,7 @@ import type {
   Producer,
   ProductCategoryDto,
   ProductTag,
-} from '@/features/products/types';
+} from '@/shared/contracts/products';
 
 export type ProductMetadataFieldContextValue = {
   catalogs?: CatalogRecord[];

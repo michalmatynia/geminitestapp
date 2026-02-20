@@ -93,6 +93,11 @@ const createId = (): string => {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 };
 
+// Hard cap on the number of slots returned per project query. Projects
+// approaching this limit will see a server warning in the logs. The cap
+// protects against unbounded memory growth and slow network payloads.
+const SLOT_LIST_HARD_LIMIT = 500;
+
 const ensureIndexesOnce = (() => {
   let started = false;
   return async (): Promise<void> => {
@@ -103,6 +108,11 @@ const ensureIndexesOnce = (() => {
       await Promise.all([
         db.collection<ImageStudioSlotDocument>(COLLECTION).createIndex({ projectId: 1, createdAt: -1 }),
         db.collection<ImageStudioSlotDocument>(COLLECTION).createIndex({ projectId: 1, folderPath: 1 }),
+        // Covers combined folderPath filter + createdAt sort (e.g. future paginated tree queries).
+        db.collection<ImageStudioSlotDocument>(COLLECTION).createIndex(
+          { projectId: 1, folderPath: 1, createdAt: -1 },
+          { name: 'image_studio_slots_projectId_folderPath_createdAt' },
+        ),
       ]);
     } catch {
       // best-effort indexing
@@ -399,7 +409,15 @@ export async function listImageStudioSlots(projectId: string): Promise<ImageStud
     .collection<ImageStudioSlotDocument>(COLLECTION)
     .find({ projectId })
     .sort({ createdAt: -1 })
+    .limit(SLOT_LIST_HARD_LIMIT + 1) // fetch one extra to detect overflow
     .toArray();
+  if (docs.length > SLOT_LIST_HARD_LIMIT) {
+    console.warn(
+      `[image-studio] listImageStudioSlots: project "${projectId}" has more than ${SLOT_LIST_HARD_LIMIT} slots. ` +
+      `Results are truncated to the ${SLOT_LIST_HARD_LIMIT} most recent slots.`
+    );
+    docs.splice(SLOT_LIST_HARD_LIMIT); // truncate in-place before enrichment
+  }
   const { imageFileMap, screenshotMap } = await resolveImageFiles(docs);
   return docs.map((doc: ImageStudioSlotDocument) => toRecord(doc, imageFileMap, screenshotMap));
 }

@@ -9,7 +9,7 @@ import {
   TRADERA_INTEGRATION_SLUGS,
 } from '@/features/integrations/constants/slugs';
 import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
-import type { ProductListingWithDetails, ProductListingExportEvent } from '@/features/integrations/types/listings';
+import type { ProductListingWithDetails, ProductListingExportEvent } from '@/shared/contracts/integrations/listings';
 import type { ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
 import {
   Button,

@@ -13,7 +13,7 @@ import {
   type ExportToBaseVariables,
 } from '@/features/integrations/hooks/useProductListingMutations';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
-import type { ProductListingWithDetails } from '@/features/integrations/types/listings';
+import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
 import { logClientError } from '@/features/observability';
 import type {
   ImageRetryPresetDto as ImageRetryPreset,

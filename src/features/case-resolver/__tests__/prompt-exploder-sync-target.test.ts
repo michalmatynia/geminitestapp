@@ -12,7 +12,7 @@ import {
 import type {
   CaseResolverFileEditDraft,
   CaseResolverWorkspace,
-} from '@/features/case-resolver/types';
+} from '@/shared/contracts/case-resolver';
 import { parseCaseResolverCaptureSettings } from '@/features/case-resolver-capture/settings';
 import { parseFilemakerDatabase } from '@/features/filemaker/settings';
 import { savePromptExploderApplyPromptForCaseResolver } from '@/features/prompt-exploder/bridge';

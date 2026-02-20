@@ -4,7 +4,7 @@ import type {
   CaseResolverAssetFile,
   CaseResolverFile,
   CaseResolverWorkspace,
-} from '../types';
+} from '@/shared/contracts/case-resolver';
 
 type UpdateWorkspaceOptions = {
   persistToast?: string;

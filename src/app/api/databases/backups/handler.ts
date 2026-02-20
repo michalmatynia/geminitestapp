@@ -1,5 +1,5 @@
 import { promises as fs } from 'fs';
-import path from 'path';
+import { join } from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -10,7 +10,7 @@ import {
   ensureMongoBackupsDir,
 } from '@/features/database/server';
 import { assertDatabaseEngineManageAccess } from '@/features/database/services/database-engine-access';
-import type { DatabaseBackupFileDto as DatabaseInfo } from '@/shared/contracts/database';
+import type { DatabaseBackupFileDto, DatabaseBackupFileDto as DatabaseInfo } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 async function getBackups(type: 'postgresql' | 'mongodb'): Promise<DatabaseInfo[]> {
@@ -20,41 +20,25 @@ async function getBackups(type: 'postgresql' | 'mongodb'): Promise<DatabaseInfo[
   const extension = type === 'mongodb' ? '.archive' : '.dump';
 
   await ensureDir();
-  const logPath = path.join(backupsDir, 'restore-log.json');
-
-  let logData: Record<string, string> = {};
-  try {
-    const logFile = await fs.readFile(logPath, 'utf-8');
-    logData = JSON.parse(logFile) as Record<string, string>;
-  } catch (error) {
-    const { ErrorSystem } = await import('@/features/observability/server');
-    void ErrorSystem.logWarning('Failed to load restore-log.json in getBackups', { error, type });
-    // No log yet.
-  }
 
   const files = await fs.readdir(backupsDir);
   const backupFiles = files.filter((file: string) => file.endsWith(extension));
 
-  const backups = await Promise.all(
-    backupFiles.map(async (file: string) => {
-      const filePath = path.join(backupsDir, file);
+  const backups: DatabaseBackupFileDto[] = await Promise.all(
+    backupFiles.map(async (file) => {
+      const filePath = join(backupsDir, file);
       const stats = await fs.stat(filePath);
       return {
         name: file,
-        size: `${(stats.size / 1024 / 1024).toFixed(2)} MB`,
-        created: stats.birthtime.toLocaleString(),
+        size: stats.size,
         createdAt: stats.birthtime.toISOString(),
-        lastModified: stats.mtime.toLocaleString(),
-        lastModifiedAt: stats.mtime.toISOString(),
-        lastRestored: logData[file]
-          ? new Date(logData[file]).toLocaleString()
-          : undefined,
       };
     })
   );
 
   return backups;
-}
+  }
+
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();

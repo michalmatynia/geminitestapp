@@ -50,11 +50,11 @@ import type {
   ProductWithImages,
   ProductImageRecord,
   ProductRecord,
-} from '@/features/products/types';
+} from '@/shared/contracts/products';
 import type {
   ProductFilters,
   ProductRepository,
-} from '@/features/products/types/services/product-repository';
+} from '@/shared/contracts/products/services/product-repository';
 import {
   validateProductCreate,
   validateProductUpdate,
@@ -173,6 +173,26 @@ async function countProducts(filters: ProductFilters): Promise<number> {
       action: 'countProducts',
     });
     return 0;
+  }
+}
+
+/**
+ * Fetches a paginated product list and total count in a single DB query ($facet on MongoDB,
+ * Promise.all on Prisma). Use this instead of calling getProducts + countProducts separately.
+ */
+async function getProductsWithCount(
+  filters: ProductFilters
+): Promise<{ products: ProductWithImages[]; total: number }> {
+  try {
+    const provider = await getProductDataProvider();
+    const productRepository = await resolveProductRepository(provider);
+    return await productRepository.getProductsWithCount(filters);
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'productService',
+      action: 'getProductsWithCount',
+    });
+    return { products: [], total: 0 };
   }
 }
 
@@ -854,6 +874,7 @@ async function moveLinkedTempImagesToSku(
 export const productService = {
   getProducts,
   countProducts,
+  getProductsWithCount,
   getProductById,
   getProductBySku,
   createProduct,

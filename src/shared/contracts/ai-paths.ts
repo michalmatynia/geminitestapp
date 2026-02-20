@@ -171,7 +171,6 @@ export const stringMutatorOperationSchema = z.discriminatedUnion('type', [
     flags: z.string().optional(),
   }),
   z.object({ id: z.string().optional(), type: z.literal('case'), mode: z.enum(['upper', 'lower', 'title']) }),
-  z.object({ id: z.string().optional(), type: z.literal('case'), mode: z.enum(['upper', 'lower', 'title']) }),
   z.object({ id: z.string().optional(), type: z.literal('append'), value: z.string(), position: z.enum(['prefix', 'suffix']).optional() }),
   z.object({ id: z.string().optional(), type: z.literal('slice'), start: z.number().optional(), end: z.number().optional() }),
 ]);
@@ -279,8 +278,8 @@ export const templateConfigSchema = z.object({
   template: z.string(),
 });
 
-export type TemplateConfigDto = z.infer<typeof templateConfigSchema>;
-export type TemplateConfig = TemplateConfigDto;
+export type templateConfigDto = z.infer<typeof templateConfigSchema>;
+export type TemplateConfig = templateConfigDto;
 
 export const bundleConfigSchema = z.object({
   includePorts: z.array(z.string()).optional(),
@@ -641,11 +640,6 @@ export type DatabaseActionCategory = NonNullable<DatabaseConfigDto['actionCatego
 export type DatabaseAction = NonNullable<DatabaseConfigDto['action']>;
 export type UpdaterMapping = NonNullable<DatabaseConfigDto['mappings']>[number];
 export type DatabaseOperation = DatabaseConfigDto['operation'];
-
-export type DatabaseOperation = DatabaseConfigDto['operation'];
-export type DatabaseActionCategory = NonNullable<DatabaseConfigDto['actionCategory']>;
-export type DatabaseAction = NonNullable<DatabaseConfigDto['action']>;
-export type UpdaterMapping = NonNullable<DatabaseConfigDto['mappings']>[number];
 
 export const parserConfigSchema = z.object({
   mappings: z.record(z.string(), z.string()),
@@ -1448,6 +1442,7 @@ export const aiPathRunEventListOptionsSchema = z.object({
 });
 
 export type AiPathRunEventListOptionsDto = z.infer<typeof aiPathRunEventListOptionsSchema>;
+export type AiPathRunEventListOptions = AiPathRunEventListOptionsDto;
 
 export const aiPathRunListOptionsSchema = z.object({
   userId: z.string().nullable().optional(),
@@ -1465,6 +1460,7 @@ export const aiPathRunListOptionsSchema = z.object({
 });
 
 export type AiPathRunListOptionsDto = z.infer<typeof aiPathRunListOptionsSchema>;
+export type AiPathRunListOptions = AiPathRunListOptionsDto;
 
 export const aiPathRunListResultSchema = z.object({
   runs: z.array(aiPathRunSchema),
@@ -1472,6 +1468,7 @@ export const aiPathRunListResultSchema = z.object({
 });
 
 export type AiPathRunListResultDto = z.infer<typeof aiPathRunListResultSchema>;
+export type AiPathRunListResult = AiPathRunListResultDto;
 
 /**
  * AI Path Presets Contracts
@@ -1509,3 +1506,57 @@ export const executeAiPathSchema = z.object({
 export type ExecuteAiPathDto = z.infer<typeof executeAiPathSchema>;
 
 export type PathFlowIntensity = 'off' | 'low' | 'medium' | 'high';
+
+/**
+ * AI Path Repository Interfaces
+ */
+
+export type AiPathRunCreateInput = Omit<CreateAiPathRunDto, 'status'> & {
+  status?: AiPathRunStatus | undefined;
+  graph?: { nodes: AiNode[]; edges: Edge[] | unknown[] } | null | undefined;
+  runtimeState?: Record<string, unknown> | null | undefined;
+};
+
+export type AiPathRunUpdate = AiPathRunUpdateDto & {
+  status?: AiPathRunStatus;
+  triggerContext?: Record<string, unknown> | null;
+  graph?: { nodes: AiNode[]; edges: Edge[] | unknown[] } | null;
+};
+
+export type AiPathRunNodeUpdate = AiPathRunNodeUpdateDto & {
+  status?: AiPathNodeStatus;
+};
+
+export type AiPathRunEventCreateInput = AiPathRunEventCreateInputDto;
+
+export type AiPathRunRepository = {
+  createRun(input: AiPathRunCreateInput): Promise<AiPathRunRecord>;
+  updateRun(runId: string, data: AiPathRunUpdate): Promise<AiPathRunRecord>;
+  updateRunIfStatus(
+    runId: string,
+    expectedStatuses: AiPathRunStatus[],
+    data: AiPathRunUpdate
+  ): Promise<AiPathRunRecord | null>;
+  claimRunForProcessing(runId: string): Promise<AiPathRunRecord | null>;
+  findRunById(runId: string): Promise<AiPathRunRecord | null>;
+  deleteRun(runId: string): Promise<boolean>;
+  listRuns(options?: AiPathRunListOptions): Promise<AiPathRunListResult>;
+  deleteRuns(options?: AiPathRunListOptions): Promise<{ count: number }>;
+  claimNextQueuedRun(): Promise<AiPathRunRecord | null>;
+  getQueueStats(): Promise<{ queuedCount: number; oldestQueuedAt: Date | null }>;
+  createRunNodes(runId: string, nodes: AiNode[]): Promise<void>;
+  upsertRunNode(
+    runId: string,
+    nodeId: string,
+    data: AiPathRunNodeUpdate & { nodeType: string; nodeTitle?: string | null }
+  ): Promise<AiPathRunNodeRecord>;
+  listRunNodes(runId: string): Promise<AiPathRunNodeRecord[]>;
+  listRunNodesSince(
+    runId: string,
+    cursor: { updatedAt: Date | string; nodeId: string },
+    options?: { limit?: number }
+  ): Promise<AiPathRunNodeRecord[]>;
+  createRunEvent(input: AiPathRunEventCreateInput): Promise<AiPathRunEventRecord>;
+  listRunEvents(runId: string, options?: AiPathRunEventListOptions): Promise<AiPathRunEventRecord[]>;
+  markStaleRunningRuns(maxAgeMs: number): Promise<{ count: number }>;
+};

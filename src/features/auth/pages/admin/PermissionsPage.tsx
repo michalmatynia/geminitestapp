@@ -427,7 +427,7 @@ function AuthPermissionsForm({
                   className='bg-gray-900 border text-white'
                 />
               </div>
-              <Button onClick={handleAddRole} className='bg-blue-600 hover:bg-blue-700 text-white'>
+              <Button onClick={handleAddRole} variant='default'>
                 Add Role
               </Button>
             </div>

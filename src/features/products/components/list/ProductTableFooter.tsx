@@ -5,7 +5,7 @@ import React, { JSX, memo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
 import { useBulkDeleteProducts, useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
-import { ProductWithImages } from '@/features/products/types';
+import { ProductWithImages } from '@/shared/contracts/products';
 import { Button, useToast } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logger } from '@/shared/utils/logger';

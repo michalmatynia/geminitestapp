@@ -3,7 +3,7 @@ import { ObjectId } from 'mongodb';
 import type { 
   CategoryRepository, 
   CategoryFilters 
-} from '@/features/products/types/services/category-repository';
+} from '@/shared/contracts/products/services/category-repository';
 import type { 
   CreateProductCategoryDto, 
   UpdateProductCategoryDto 

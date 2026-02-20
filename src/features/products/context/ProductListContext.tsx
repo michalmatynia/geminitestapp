@@ -10,7 +10,7 @@ import {
 
 import { internalError } from '@/shared/errors/app-error';
 
-import type { Catalog, PriceGroupWithDetails, ProductWithImages, ProductDraftDto } from '../types';
+import type { Catalog, PriceGroupWithDetails, ProductWithImages, ProductDraftDto } from '@/shared/contracts/products';
 import type { ColumnDef, RowSelectionState, OnChangeFn } from '@tanstack/react-table';
 import type { Row } from '@tanstack/react-table';
 

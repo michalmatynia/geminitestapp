@@ -4,7 +4,7 @@ import { ObjectId } from 'mongodb';
 import type { 
   TagRepository, 
   TagFilters 
-} from '@/features/products/types/services/tag-repository';
+} from '@/shared/contracts/products/services/tag-repository';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { 

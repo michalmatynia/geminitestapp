@@ -1082,17 +1082,8 @@ export function CanvasBoard({
           })() : null}
           {isSvgRenderer ? (
             <CanvasSvgNodeLayer
-              nodes={nodes}
-              edges={edges}
-              view={view}
-              viewportSize={viewportSize}
               cullPadding={SVG_CULL_PADDING}
               detailLevel={svgDetailLevel}
-              selectedNodeId={selectedNodeId}
-              selectedNodeIdSet={selectedNodeIdSet}
-              runtimeState={runtimeState}
-              runtimeNodeStatuses={runtimeNodeStatuses}
-              runtimeRunStatus={runtimeRunStatus}
               nodeDurations={nodeDurations}
               inputPulseNodes={inputPulseNodes}
               outputPulseNodes={outputPulseNodes}
@@ -1127,6 +1118,15 @@ export function CanvasBoard({
               onConnectorLeave={() => {
                 setSvgConnectorTooltip(null);
               }}
+              nodes={nodes}
+              edges={edges}
+              view={view}
+              viewportSize={viewportSize}
+              selectedNodeId={selectedNodeId}
+              selectedNodeIdSet={selectedNodeIdSet}
+              runtimeState={runtimeState}
+              runtimeNodeStatuses={runtimeNodeStatuses}
+              runtimeRunStatus={runtimeRunStatus as 'idle' | 'running' | 'paused' | 'stepping'}
             />
           ) : null}
         </svg>

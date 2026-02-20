@@ -5,7 +5,7 @@ import {
   resolveCaptureTargetFile,
 } from '@/features/case-resolver/hooks/useCaseResolverState.helpers';
 import { createCaseResolverFile, parseCaseResolverWorkspace } from '@/features/case-resolver/settings';
-import type { CaseResolverFileEditDraft, CaseResolverWorkspace } from '@/features/case-resolver/types';
+import type { CaseResolverFileEditDraft, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
 import type { Dispatch, SetStateAction } from 'react';
 

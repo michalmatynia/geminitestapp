@@ -2,7 +2,7 @@ import { Brain, Sparkles } from 'lucide-react';
 
 import { palette } from '@/features/ai/ai-paths/lib';
 
-import { type NodeDefinition } from '../types';
+import { type NodeDefinition } from '@/shared/contracts/case-resolver';
 
 import type React from 'react';
 

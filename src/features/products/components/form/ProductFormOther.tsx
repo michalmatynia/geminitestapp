@@ -12,7 +12,7 @@ import {
   useProductValidationActions,
   useProductValidationState,
 } from '@/features/products/context/ProductValidationSettingsContext';
-import { ProductFormData, CatalogRecord, PriceGroupWithDetails, ProductCategory } from '@/features/products/types';
+import { ProductFormData, CatalogRecord, PriceGroupWithDetails, ProductCategory } from '@/shared/contracts/products';
 import {
   getIssueReplacementPreview,
   type FieldValidatorIssue,

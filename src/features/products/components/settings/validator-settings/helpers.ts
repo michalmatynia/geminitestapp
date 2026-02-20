@@ -6,7 +6,7 @@ import {
 } from '@/features/products/utils/validator-replacement-recipe';
 import type { ProductValidationPattern } from '@/shared/contracts/products';
 
-import type { PatternFormData, SequenceGroupView } from './types';
+import type { PatternFormData, SequenceGroupView } from '@/shared/contracts/products';
 
 export const EMPTY_FORM: PatternFormData = {
   label: '',

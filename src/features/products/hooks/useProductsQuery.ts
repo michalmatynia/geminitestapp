@@ -6,8 +6,8 @@ import {
 import { useCallback } from 'react';
 import { z } from 'zod';
 
-import { getProducts, countProducts } from '@/features/products/api/products';
-import type { ProductWithImages } from '@/features/products/types';
+import { getProducts, countProducts, getProductsWithCount } from '@/features/products/api/products';
+import type { ProductWithImages } from '@/shared/contracts/products';
 import { productSchema } from '@/shared/contracts/products';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -98,19 +98,39 @@ export function useProductsWithCount(
     refetch: () => Promise<void>;
   } {
   const queryClient = useQueryClient();
-  const productsQuery = useProducts(filters, options);
-  const countQuery = useProductsCount(filters, options);
+
+  // Single request replaces the previous two parallel queries (getProducts + countProducts).
+  // The query key starts with QUERY_KEYS.products.lists() so refetchProductsAndCounts()
+  // invalidates it automatically on mutations.
+  const queryKey = [...QUERY_KEYS.products.lists(), 'paged', { filters }] as const;
+  const query = createSingleQueryV2({
+    id: JSON.stringify(filters) + ':paged',
+    queryKey,
+    queryFn: async (): Promise<{ products: ProductWithImages[]; total: number }> =>
+      getProductsWithCount(filters),
+    staleTime: PRODUCTS_STALE_MS,
+    refetchOnMount: 'always',
+    enabled: options?.enabled ?? true,
+    meta: {
+      source: 'products.hooks.useProductsWithCount',
+      operation: 'detail',
+      resource: 'products.paged',
+      domain: 'products',
+      queryKey,
+      tags: ['products', 'list', 'count'],
+    },
+  });
 
   const refetch = useCallback(async (): Promise<void> => {
     await refetchProductsAndCounts(queryClient);
   }, [queryClient]);
 
   return {
-    products: productsQuery.data ?? [],
-    total: countQuery.data ?? 0,
-    isLoading: productsQuery.isPending || countQuery.isPending,
-    isFetching: productsQuery.isFetching || countQuery.isFetching,
-    error: productsQuery.error || countQuery.error,
+    products: query.data?.products ?? [],
+    total: query.data?.total ?? 0,
+    isLoading: query.isPending,
+    isFetching: query.isFetching,
+    error: query.error,
     refetch,
   };
 }

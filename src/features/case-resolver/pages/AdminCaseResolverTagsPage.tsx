@@ -25,7 +25,7 @@ import { serializeSetting } from '@/shared/utils/settings-json';
 import { CaseResolverTagModal } from '../components/modals/CaseResolverTagModal';
 import { CASE_RESOLVER_TAGS_KEY, parseCaseResolverTags } from '../settings';
 
-import type { CaseResolverTag } from '../types';
+import type { CaseResolverTag } from '@/shared/contracts/case-resolver';
 
 type TagFormData = {
   name: string;

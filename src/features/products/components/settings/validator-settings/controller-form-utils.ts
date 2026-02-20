@@ -13,7 +13,7 @@ import type { ProductValidationPattern } from '@/shared/contracts/products';
 
 import { normalizeReplacementFields } from './helpers';
 
-import type { PatternFormData } from './types';
+import type { PatternFormData } from '@/shared/contracts/products';
 
 /**
  * Validator docs: see docs/validator/function-reference.md#controller.buildformdatafrompattern

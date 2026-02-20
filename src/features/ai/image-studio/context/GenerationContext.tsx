@@ -240,6 +240,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
   const [pendingSourceSlotId, setPendingSourceSlotId] = useState<string | null>(null);
 
   const pollTokenRef = useRef<PollToken | null>(null);
+  const lastSseHandledAtRef = useRef<number>(0);
 
   const maskEligibleCount = useMemo(
     () => maskShapes.filter((s) => s.visible && s.closed && (s.type === 'polygon' || s.type === 'lasso') && s.points.length >= 3).length,
@@ -414,6 +415,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
             } catch {
               // Continue with status refresh for unknown event payloads.
             }
+            lastSseHandledAtRef.current = Date.now();
             void fetchAndApplyRunStatus().catch(() => {
               // Polling fallback handles transient failures.
             });
@@ -434,16 +436,24 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
       for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt += 1) {
         if (token.cancelled || token.settled || pollTokenRef.current !== token) return;
 
-        try {
-          const finished = await fetchAndApplyRunStatus();
-          if (finished) {
-            return;
-          }
-        } catch (error) {
-          if (attempt === 0 && !sseConnected) {
-            toast(error instanceof Error ? error.message : 'Failed to receive generation callback.', {
-              variant: 'error',
-            });
+        // Skip the HTTP fetch when SSE already handled this status window to
+        // avoid sending duplicate requests while SSE is the active channel.
+        const sseHandledRecently =
+          sseConnected &&
+          Date.now() - lastSseHandledAtRef.current < SSE_FALLBACK_POLL_INTERVAL_MS;
+
+        if (!sseHandledRecently) {
+          try {
+            const finished = await fetchAndApplyRunStatus();
+            if (finished) {
+              return;
+            }
+          } catch (error) {
+            if (attempt === 0 && !sseConnected) {
+              toast(error instanceof Error ? error.message : 'Failed to receive generation callback.', {
+                variant: 'error',
+              });
+            }
           }
         }
 

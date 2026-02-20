@@ -2,7 +2,7 @@ import { useQueries } from '@tanstack/react-query';
 import { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from 'react';
 
 import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
-import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
+import type { IntegrationWithConnections } from '@/shared/contracts/integrations/listings';
 import { api } from '@/shared/lib/api-client';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

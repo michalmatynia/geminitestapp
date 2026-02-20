@@ -8,7 +8,7 @@ import { PanelHeader } from '@/shared/ui/templates/panels';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 
-import type { CaseResolverAssetFile } from '../types';
+import type { CaseResolverAssetFile } from '@/shared/contracts/case-resolver';
 
 const formatFileSize = (size: number | null): string => {
   if (size === null || size < 0 || !Number.isFinite(size)) return 'Unknown';

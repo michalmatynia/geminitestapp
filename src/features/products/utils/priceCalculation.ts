@@ -1,4 +1,4 @@
-import type { PriceGroupForCalculation } from '@/features/products/types';
+import type { PriceGroupForCalculation } from '@/shared/contracts/products';
 
 function normalizeCurrencyCode(code?: string | null): string {
   return (code ?? '').trim().toUpperCase();

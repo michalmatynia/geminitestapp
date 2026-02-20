@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import { useProductsWithCount } from '@/features/products/hooks/useProductsQuery';
-import type { ProductWithImages } from '@/features/products/types';
+import type { ProductWithImages } from '@/shared/contracts/products';
 
 interface UseProductDataWithQueryProps {
   initialCatalogFilter?: string;

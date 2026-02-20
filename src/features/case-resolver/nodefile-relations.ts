@@ -4,7 +4,7 @@ import type {
   CaseResolverFile,
   CaseResolverGraph,
   Edge,
-} from './types';
+} from '@/shared/contracts/case-resolver';
 
 export type CaseResolverNodeFileRelationIndex = {
   nodeIdsByDocumentFileId: Record<string, string[]>;

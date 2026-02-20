@@ -3,7 +3,7 @@
 import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import type { ProductListPreferences } from '@/features/products/types/products-ui';
+import type { ProductListPreferences } from '@/shared/contracts/products/products-ui';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';

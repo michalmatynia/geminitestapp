@@ -20,13 +20,13 @@ import {
 import {
   PRODUCT_SYNC_APP_FIELDS,
   PRODUCT_SYNC_DIRECTION_OPTIONS,
-} from '@/features/product-sync/types/product-sync';
+} from '@/shared/contracts/product-sync/product-sync';
 import type {
   ProductSyncAppField,
   ProductSyncDirection,
   ProductSyncFieldRule,
   ProductSyncProfile,
-} from '@/features/product-sync/types/product-sync';
+} from '@/shared/contracts/product-sync/product-sync';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import {
   Badge,

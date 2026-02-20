@@ -36,6 +36,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
+  if (!pdfParse) {
+    throw configurationError('Failed to initialize PDF parser.');
+  }
   const result = await pdfParse(buffer);
   const rawText = result.text || '';
   const pages = rawText.split('\f').map((chunk: string) => chunk.trim());

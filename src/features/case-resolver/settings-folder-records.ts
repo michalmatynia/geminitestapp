@@ -1,4 +1,4 @@
-import type { CaseResolverAssetFile, CaseResolverFile, CaseResolverFolderRecord } from './types';
+import type { CaseResolverAssetFile, CaseResolverFile, CaseResolverFolderRecord } from '@/shared/contracts/case-resolver';
 
 const normalizeFolderPath = (value: string): string => {
   const normalized = value.replace(/\\/g, '/').trim();

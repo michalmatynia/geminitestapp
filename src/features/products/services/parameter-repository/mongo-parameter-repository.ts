@@ -6,7 +6,7 @@ import type {
   ParameterFilters,
   ParameterCreateInput,
   ParameterUpdateInput,
-} from '@/features/products/types/services/parameter-repository';
+} from '@/shared/contracts/products/services/parameter-repository';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { 

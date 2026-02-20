@@ -6,7 +6,7 @@ import type {
   ProductStudioExecutionRoute,
   ProductStudioSequenceGenerationMode,
   ProductStudioSequencingDiagnosticsScope,
-} from '@/features/products/types/product-studio';
+} from '@/shared/contracts/products/product-studio';
 import type { ImageStudioRunDispatchModeDto as ImageStudioRunDispatchMode } from '@/shared/contracts/image-studio';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 

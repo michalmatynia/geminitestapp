@@ -4,8 +4,8 @@ import { useQueries } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
-import type { Catalog } from '@/features/products/types';
-import type { PriceGroupWithDetails } from '@/features/products/types';
+import type { Catalog } from '@/shared/contracts/products';
+import type { PriceGroupWithDetails } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

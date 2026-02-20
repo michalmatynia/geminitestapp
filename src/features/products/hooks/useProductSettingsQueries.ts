@@ -41,7 +41,7 @@ import {
   ProductCategoryWithChildren,
   ProductParameter,
   ProductTag,
-} from '../types';
+} from '@/shared/contracts/products';
 import {
   useCatalogs as useMetadataCatalogs,
   useParameters as useMetadataParameters,

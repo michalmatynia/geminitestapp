@@ -17,8 +17,8 @@ export async function GET_handler(
   const repository = getAsset3DRepository();
   const asset = await repository.getAsset3DById(id);
 
-  if (!asset) {
-    throw notFoundError(`Asset not found in database: ${id}`);
+  if (!asset || !asset.filepath) {
+    throw notFoundError(`Asset or filepath not found in database: ${id}`);
   }
 
   const diskPath = join(process.cwd(), 'public', asset.filepath.replace(/^\/+/, ''));

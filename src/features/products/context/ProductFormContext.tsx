@@ -30,17 +30,17 @@ import type {
   PriceGroupWithDetails,
   ProductFormData,
   ProductDraft,
-} from '@/features/products/types';
+} from '@/shared/contracts/products';
 import type {
   ProductCategory,
   ProductTag,
   ProductParameter,
   ProductParameterValue,
   Producer,
-} from '@/features/products/types';
+} from '@/shared/contracts/products';
 import {
   ProductImageSlot,
-} from '@/features/products/types/products-ui';
+} from '@/shared/contracts/products/products-ui';
 import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import {
   productCreateSchema,

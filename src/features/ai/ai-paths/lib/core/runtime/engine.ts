@@ -2,14 +2,14 @@ import type {
   AiPathRuntimeProfileEventDto,
   RuntimeProfileNodeStatsDto,
   RuntimeProfileSummaryDto,
+  RuntimePortValues,
+  RuntimeState,
 } from '@/shared/contracts/ai-paths-runtime';
 import type {
   AiNode,
   Edge,
   RuntimeHistoryEntry,
   RuntimeHistoryLink,
-  RuntimePortValues,
-  RuntimeState,
 } from '@/shared/contracts/ai-paths';
 
 import { DEFAULT_DB_QUERY } from '../constants';

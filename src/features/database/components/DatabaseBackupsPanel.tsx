@@ -26,7 +26,7 @@ import { LogModal } from './LogModal';
 import { RestoreModal } from './RestoreModal';
 import { useDatabaseBackupsState } from '../hooks/useDatabaseBackupsState';
 
-import type { DatabaseType } from '../types';
+import type { DatabaseType } from '@/shared/contracts/database';
 
 type BackupDatabaseOption = {
   id: string;

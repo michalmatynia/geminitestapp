@@ -46,7 +46,7 @@ import {
   type BaseConnectionContext,
   type StartBaseImportRunInput,
 } from '@/features/integrations/services/imports/base-import-service-shared';
-import { normalizeBaseImportParameterImportSettings } from '@/features/integrations/types/base-import-parameter-import';
+import { normalizeBaseImportParameterImportSettings } from '@/shared/contracts/integrations/base-import-parameter-import';
 import type {
   BaseImportErrorCode,
   BaseImportErrorClass,
@@ -57,7 +57,7 @@ import type {
   BaseImportRunDetailResponse,
   BaseImportRunParams,
   BaseImportRunRecord,
-} from '@/features/integrations/types/base-import-runs';
+} from '@/shared/contracts/integrations/base-import-runs';
 import { getCatalogRepository } from '@/features/products/services/catalog-repository';
 import { getParameterRepository } from '@/features/products/services/parameter-repository';
 import { getProductDataProvider } from '@/features/products/services/product-provider';

@@ -1,4 +1,4 @@
-import type { ProductCategoryWithChildren } from '@/features/products/types';
+import type { ProductCategoryWithChildren } from '@/shared/contracts/products';
 import type {
   MasterTreeDropPosition,
   MasterTreeNode,

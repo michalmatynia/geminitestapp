@@ -14,7 +14,7 @@ import { Badge, Button, Textarea, SelectSimple, StandardDataTablePanel, Alert } 
 import { useDatabase } from '../context/DatabaseContext';
 import { useSqlQueryMutation } from '../hooks/useDatabaseQueries';
 
-import type { DatabaseType, SqlQueryResult } from '../types';
+import type { DatabaseType, SqlQueryResult } from '@/shared/contracts/database';
 import type { ColumnDef } from '@tanstack/react-table';
 
 const HISTORY_KEY = 'db-sql-query-history';

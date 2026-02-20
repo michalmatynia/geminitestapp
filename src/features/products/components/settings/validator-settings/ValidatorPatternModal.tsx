@@ -51,7 +51,7 @@ import {
 import { ValidatorDocTooltip } from './ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 
-import type { PatternFormData, ReplacementMode } from './types';
+import type { PatternFormData, ReplacementMode } from '@/shared/contracts/products';
 
 /**
  * Validator docs: see docs/validator/function-reference.md#ui.validatorpatternmodal

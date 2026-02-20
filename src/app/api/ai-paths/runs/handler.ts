@@ -14,7 +14,7 @@ import {
   resolveAiPathsStaleRunningMaxAgeMs,
 } from '@/features/ai/ai-paths/services/path-run-recovery-service';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
-import type { AiPathRunListOptions } from '@/features/ai/ai-paths/types/path-run-repository';
+import type { AiPathRunListOptions } from '@/shared/contracts/ai-paths/path-run-repository';
 import { removePathRunQueueEntries } from '@/features/jobs/workers/aiPathRunQueue';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import type { AiPathRunStatus } from '@/shared/contracts/ai-paths';

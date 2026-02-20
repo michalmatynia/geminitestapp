@@ -4,7 +4,7 @@ import {
 import type {
   ProductParameterValue,
   ProductSimpleParameterValue,
-} from '@/features/products/types';
+} from '@/shared/contracts/products';
 
 const toTrimmedString = (value: unknown): string => {
   if (typeof value !== 'string') return '';

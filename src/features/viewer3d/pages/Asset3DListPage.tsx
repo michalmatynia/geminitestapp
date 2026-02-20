@@ -16,13 +16,14 @@ import {
   Alert,
   EmptyState,
   StatusBadge,
-  PanelHeader
+  PanelHeader,
+  Card
 } from '@/shared/ui';
 
 import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
 import { useAsset3DListState } from '../hooks/useAsset3DListState';
 
-import type { Asset3DRecord } from '../types';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import type { ColumnDef } from '@tanstack/react-table';
 
 const formatFileSize = (bytes: number): string => {
@@ -249,10 +250,10 @@ export function Asset3DListPage(): React.JSX.Element {
       {!loading && assets.length > 0 && viewMode === 'grid' && (
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'>
           {assets.map((asset) => (
-            <div
+            <Card
               key={asset.id}
               onClick={() => setPreviewAsset(asset)}
-              className='group cursor-pointer overflow-hidden rounded-lg border border-border bg-card/60 transition-all hover:border-blue-500/60 hover:shadow-lg hover:shadow-blue-500/10'
+              className='group cursor-pointer overflow-hidden bg-card/60 transition-all hover:border-blue-500/60 hover:shadow-lg hover:shadow-blue-500/10'
             >
               <div className='relative flex aspect-square items-center justify-center bg-muted/30'>
                 <Box className='h-12 w-12 text-muted-foreground/70' />
@@ -279,7 +280,7 @@ export function Asset3DListPage(): React.JSX.Element {
                   </span>
                 </div>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}

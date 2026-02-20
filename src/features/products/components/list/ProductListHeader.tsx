@@ -12,8 +12,8 @@ import {
   useProductListActionsContext,
   useProductListFiltersContext,
 } from '@/features/products/context/ProductListContext';
-import type { Catalog } from '@/features/products/types';
-import type { ProductDraftDto } from '@/features/products/types/drafts';
+import type { Catalog } from '@/shared/contracts/products';
+import type { ProductDraftDto } from '@/shared/contracts/products/drafts';
 import { Button, SelectSimple, Pagination, Breadcrumbs } from '@/shared/ui';
 
 interface ProductListHeaderProps {

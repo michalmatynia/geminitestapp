@@ -6,8 +6,8 @@ import React, { useCallback } from 'react';
 
 import { MarkdownToolbarActionsProvider } from '@/features/notesapp/context/MarkdownToolbarActionsContext';
 import { useNoteFormContext, NoteFormProvider } from '@/features/notesapp/context/NoteFormContext';
-import type { NoteFormProps } from '@/features/notesapp/types/notes-ui';
-import { Button, Input, FormField } from '@/shared/ui';
+import type { NoteFormProps } from '@/shared/contracts/notes/notes-ui';
+import { Button, Input, FormField, Dialog, DialogContent, DialogTitle } from '@/shared/ui';
 
 import { FileAttachments } from './editor/FileAttachments';
 import { MarkdownEditor } from './editor/MarkdownEditor';
@@ -229,32 +229,31 @@ function NoteFormInner(): React.JSX.Element {
         <NoteMetadata showTitle={false} />
       </form>
 
-      {lightboxImage && (
-        <div
-          className='fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4'
-          onClick={(): void => setLightboxImage(null)}
-        >
-          <Button
-            type='button'
-            className='absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors'
-            onClick={(): void => setLightboxImage(null)}
-          >
-            <X size={24} />
-          </Button>
-          <div
-            className='relative h-[90vh] w-[90vw] max-h-[90vh] max-w-[90vw]'
-            onClick={(e: React.MouseEvent): void => e.stopPropagation()}
-          >
-            <Image
-              src={lightboxImage}
-              alt='Lightbox preview'
-              fill
-              sizes='90vw'
-              className='rounded-lg object-contain'
-            />
+      <Dialog open={!!lightboxImage} onOpenChange={(open) => !open && setLightboxImage(null)}>
+        <DialogContent className='max-w-screen-xl border-none bg-black/90 p-0 shadow-none sm:max-w-screen-xl'>
+          <DialogTitle className='sr-only'>Image Preview</DialogTitle>
+          <div className='relative h-[90vh] w-[90vw]'>
+            {lightboxImage && (
+              <Image
+                src={lightboxImage}
+                alt='Lightbox preview'
+                fill
+                sizes='90vw'
+                className='object-contain'
+              />
+            )}
+            <Button
+              type='button'
+              variant='ghost'
+              size='icon'
+              className='absolute right-4 top-4 rounded-full bg-black/20 text-white hover:bg-black/40'
+              onClick={() => setLightboxImage(null)}
+            >
+              <X size={24} />
+            </Button>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

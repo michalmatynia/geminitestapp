@@ -6,7 +6,7 @@ import type {
   Asset3DRecord,
   Asset3DRepository,
   Asset3DUpdateInput,
-} from '@/features/viewer3d/types';
+} from '@/shared/contracts/viewer3d';
 import prisma from '@/shared/lib/db/prisma';
 
 type PrismaAsset3D = {

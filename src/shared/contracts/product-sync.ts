@@ -16,6 +16,7 @@ export const productSyncAppFieldSchema = z.enum([
   'weight',
 ]);
 export type ProductSyncAppFieldDto = z.infer<typeof productSyncAppFieldSchema>;
+export type ProductSyncAppField = ProductSyncAppFieldDto;
 
 export const PRODUCT_SYNC_APP_FIELDS: ProductSyncAppFieldDto[] = [
   'stock',
@@ -29,6 +30,7 @@ export const PRODUCT_SYNC_APP_FIELDS: ProductSyncAppFieldDto[] = [
 
 export const productSyncDirectionSchema = z.enum(['disabled', 'base_to_app', 'app_to_base']);
 export type ProductSyncDirectionDto = z.infer<typeof productSyncDirectionSchema>;
+export type ProductSyncDirection = ProductSyncDirectionDto;
 
 export const PRODUCT_SYNC_DIRECTION_OPTIONS: ProductSyncDirectionDto[] = [
   'disabled',
@@ -38,6 +40,7 @@ export const PRODUCT_SYNC_DIRECTION_OPTIONS: ProductSyncDirectionDto[] = [
 
 export const productSyncConflictPolicySchema = z.enum(['skip']);
 export type ProductSyncConflictPolicyDto = z.infer<typeof productSyncConflictPolicySchema>;
+export type ProductSyncConflictPolicy = ProductSyncConflictPolicyDto;
 
 export const productSyncFieldRuleSchema = z.object({
   id: z.string(),
@@ -46,6 +49,7 @@ export const productSyncFieldRuleSchema = z.object({
   direction: productSyncDirectionSchema,
 });
 export type ProductSyncFieldRuleDto = z.infer<typeof productSyncFieldRuleSchema>;
+export type ProductSyncFieldRule = ProductSyncFieldRuleDto;
 
 export const DEFAULT_PRODUCT_SYNC_FIELD_RULES: Array<Omit<ProductSyncFieldRuleDto, 'id'>> = [
   {
@@ -97,6 +101,7 @@ export const productSyncProfileSchema = namedDtoSchema.extend({
   lastRunAt: z.string().nullable(),
 });
 export type ProductSyncProfileDto = z.infer<typeof productSyncProfileSchema>;
+export type ProductSyncProfile = ProductSyncProfileDto;
 
 export const createProductSyncProfileSchema = productSyncProfileSchema.omit({
   id: true,
@@ -114,9 +119,11 @@ export const productSyncRunStatusSchema = z.enum([
   'failed',
 ]);
 export type ProductSyncRunStatusDto = z.infer<typeof productSyncRunStatusSchema>;
+export type ProductSyncRunStatus = ProductSyncRunStatusDto;
 
 export const productSyncRunTriggerSchema = z.enum(['manual', 'scheduled', 'relink']);
 export type ProductSyncRunTriggerDto = z.infer<typeof productSyncRunTriggerSchema>;
+export type ProductSyncRunTrigger = ProductSyncRunTriggerDto;
 
 export const productSyncRunStatsSchema = z.object({
   total: z.number(),
@@ -128,6 +135,7 @@ export const productSyncRunStatsSchema = z.object({
   baseUpdated: z.number(),
 });
 export type ProductSyncRunStatsDto = z.infer<typeof productSyncRunStatsSchema>;
+export type ProductSyncRunStats = ProductSyncRunStatsDto;
 
 export const productSyncRunRecordSchema = dtoBaseSchema.extend({
   profileId: z.string(),
@@ -142,9 +150,11 @@ export const productSyncRunRecordSchema = dtoBaseSchema.extend({
   stats: productSyncRunStatsSchema,
 });
 export type ProductSyncRunRecordDto = z.infer<typeof productSyncRunRecordSchema>;
+export type ProductSyncRunRecord = ProductSyncRunRecordDto;
 
 export const productSyncRunItemStatusSchema = z.enum(['success', 'skipped', 'failed']);
 export type ProductSyncRunItemStatusDto = z.infer<typeof productSyncRunItemStatusSchema>;
+export type ProductSyncRunItemStatus = ProductSyncRunItemStatusDto;
 
 export const productSyncRunItemRecordSchema = dtoBaseSchema.extend({
   runId: z.string(),
@@ -158,6 +168,7 @@ export const productSyncRunItemRecordSchema = dtoBaseSchema.extend({
   errorMessage: z.string().nullable(),
 });
 export type ProductSyncRunItemRecordDto = z.infer<typeof productSyncRunItemRecordSchema>;
+export type ProductSyncRunItemRecord = ProductSyncRunItemRecordDto;
 
 export const productSyncRunDetailSchema = z.object({
   run: productSyncRunRecordSchema,
@@ -170,6 +181,7 @@ export const productSyncRunDetailSchema = z.object({
   }),
 });
 export type ProductSyncRunDetailDto = z.infer<typeof productSyncRunDetailSchema>;
+export type ProductSyncRunDetail = ProductSyncRunDetailDto;
 
 export const PRODUCT_SYNC_PROFILE_SETTINGS_KEY = 'product_sync_profiles';
 export const PRODUCT_SYNC_RUN_KEY_PREFIX = 'product_sync_run:';

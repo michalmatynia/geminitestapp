@@ -72,7 +72,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     }
 
     try {
-      await enqueueProductAiJobToQueue(job.id, job.productId as string, job.type, job.payload);
+      await enqueueProductAiJobToQueue(job.id, job.productId as string, job.jobType, job.payload);
     } catch (enqueueError: unknown) {
       await logSystemError({
         message:

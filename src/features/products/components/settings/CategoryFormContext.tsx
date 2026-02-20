@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from 'react';
 
-import type { Catalog } from '@/features/products/types';
+import type { Catalog } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 
 export type CategoryFormData = {

@@ -7,7 +7,7 @@ import type {
   ApplyBaseParameterImportInput,
   ApplyBaseParameterImportResult,
   ExtractedBaseParameter,
-} from './types';
+} from '@/shared/contracts/integrations';
 
 const toTrimmedString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;

@@ -3,7 +3,7 @@ import { Prisma, ProductCategory as PrismaProductCategory } from '@prisma/client
 import type { 
   CategoryRepository, 
   CategoryFilters 
-} from '@/features/products/types/services/category-repository';
+} from '@/shared/contracts/products/services/category-repository';
 import type { 
   CreateProductCategoryDto, 
   UpdateProductCategoryDto 

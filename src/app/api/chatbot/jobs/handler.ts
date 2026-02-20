@@ -56,7 +56,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   }
 
   const trimmedUserMessage: string | undefined = data.userMessage?.trim();
-  if (trimmedUserMessage) {
+  if (trimmedUserMessage && session.messages) {
     const latest = session.messages[session.messages.length - 1];
 
     if (
@@ -75,6 +75,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     sessionId: session.id,
     model: data.model,
     payload: {
+      sessionId: session.id,
       model: data.model,
       messages: data.messages,
     },

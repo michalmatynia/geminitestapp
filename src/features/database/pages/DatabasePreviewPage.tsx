@@ -55,7 +55,7 @@ import type {
   DatabaseTableDetail,
   DatabaseType,
   DatabasePreviewMode,
-} from '../types';
+} from '@/shared/contracts/database';
 import type { ColumnDef } from '@tanstack/react-table';
 
 const groupIconMap: Record<string, React.ComponentType<{ className?: string }>> = {

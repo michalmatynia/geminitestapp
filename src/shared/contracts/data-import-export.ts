@@ -49,6 +49,7 @@ export const importExportTemplateMappingSchema = z.object({
 });
 
 export type ImportExportTemplateMappingDto = z.infer<typeof importExportTemplateMappingSchema>;
+export type TemplateMapping = ImportExportTemplateMappingDto;
 
 export const importTemplateParameterImportSchema = z.object({
   enabled: z.boolean().optional(),
@@ -62,6 +63,7 @@ export const importTemplateParameterImportSchema = z.object({
 export type ImportTemplateParameterImportDto = z.infer<
   typeof importTemplateParameterImportSchema
 >;
+export type ImportTemplateParameterImport = ImportTemplateParameterImportDto;
 
 export const importExportTemplateSchema = namedDtoSchema.extend({
   mappings: z.array(importExportTemplateMappingSchema),
@@ -70,6 +72,7 @@ export const importExportTemplateSchema = namedDtoSchema.extend({
 });
 
 export type ImportExportTemplateDto = z.infer<typeof importExportTemplateSchema>;
+export type Template = ImportExportTemplateDto;
 
 export const createImportExportTemplateSchema = importExportTemplateSchema.omit({
   id: true,
@@ -146,6 +149,7 @@ export const inventoryOptionSchema = z.object({
 });
 
 export type InventoryOptionDto = z.infer<typeof inventoryOptionSchema>;
+export type InventoryOption = InventoryOptionDto;
 
 export const warehouseOptionSchema = z.object({
   id: z.string(),
@@ -153,6 +157,7 @@ export const warehouseOptionSchema = z.object({
 });
 
 export type WarehouseOptionDto = z.infer<typeof warehouseOptionSchema>;
+export type WarehouseOption = WarehouseOptionDto;
 
 export const catalogOptionSchema = z.object({
   id: z.string(),
@@ -161,6 +166,7 @@ export const catalogOptionSchema = z.object({
 });
 
 export type CatalogOptionDto = z.infer<typeof catalogOptionSchema>;
+export type CatalogOption = CatalogOptionDto;
 
 /**
  * Import List DTOs
@@ -179,6 +185,7 @@ export const importListItemSchema = z.object({
 });
 
 export type ImportListItemDto = z.infer<typeof importListItemSchema>;
+export type ImportListItem = ImportListItemDto;
 
 export const importListStatsSchema = z.object({
   total: z.number(),
@@ -192,6 +199,7 @@ export const importListStatsSchema = z.object({
 });
 
 export type ImportListStatsDto = z.infer<typeof importListStatsSchema>;
+export type ImportListStats = ImportListStatsDto;
 
 export const exportParameterDocSchema = z.object({
   key: z.string(),
@@ -199,6 +207,7 @@ export const exportParameterDocSchema = z.object({
 });
 
 export type ExportParameterDocDto = z.infer<typeof exportParameterDocSchema>;
+export type ExportParameterDoc = ExportParameterDocDto;
 
 export const warehouseDebugRawSchema = z.object({
   method: z.string(),
@@ -209,6 +218,7 @@ export const warehouseDebugRawSchema = z.object({
 });
 
 export type WarehouseDebugRawDto = z.infer<typeof warehouseDebugRawSchema>;
+export type WarehouseDebugRaw = WarehouseDebugRawDto;
 
 export const inventoryDebugRawSchema = z.object({
   method: z.string(),
@@ -219,6 +229,7 @@ export const inventoryDebugRawSchema = z.object({
 });
 
 export type InventoryDebugRawDto = z.infer<typeof inventoryDebugRawSchema>;
+export type InventoryDebugRaw = InventoryDebugRawDto;
 
 export const debugWarehousesSchema = z.object({
   inventory: z.array(warehouseOptionSchema).optional(),
@@ -230,3 +241,4 @@ export const debugWarehousesSchema = z.object({
 }).nullable();
 
 export type DebugWarehousesDto = z.infer<typeof debugWarehousesSchema>;
+export type DebugWarehouses = DebugWarehousesDto;

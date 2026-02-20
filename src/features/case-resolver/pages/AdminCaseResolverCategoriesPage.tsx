@@ -26,7 +26,7 @@ import {
   parseCaseResolverCategories,
 } from '../settings';
 
-import type { CaseResolverCategory } from '../types';
+import type { CaseResolverCategory } from '@/shared/contracts/case-resolver';
 
 type CategoryFormData = {
   name: string;

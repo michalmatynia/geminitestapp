@@ -11,43 +11,43 @@ import {
   Textarea,
 } from '@/shared/ui';
 
+import {
+  useSegmentEditorActions,
+  useSegmentEditorState,
+} from '../context/hooks/useSegmentEditor';
+import { useSettingsState } from '../context/hooks/useSettings';
 import { promptExploderClampNumber } from '../helpers/formatting';
 import { promptExploderCreateApprovalDraftFromSegment } from '../helpers/segment-helpers';
 
-import type {
-  SegmentEditorActions,
-  SegmentEditorState,
-} from '../context/SegmentEditorContext';
 import type { TemplateMergeMode } from '../template-learning';
 import type {
-  PromptExploderLearnedTemplate,
   PromptExploderSegment,
 } from '../types';
 
 export function SegmentEditorInsightsPanel(args: {
   selectedSegment: PromptExploderSegment;
-  approvalDraft: SegmentEditorState['approvalDraft'];
-  matchedRuleDetails: SegmentEditorState['matchedRuleDetails'];
-  similarTemplateCandidates: SegmentEditorState['similarTemplateCandidates'];
-  templateTargetOptions: SegmentEditorState['templateTargetOptions'];
-  setApprovalDraft: SegmentEditorActions['setApprovalDraft'];
-  templateMergeThreshold: number;
-  effectiveLearnedTemplates: PromptExploderLearnedTemplate[];
-  isBusy: boolean;
-  onApprovePattern: () => void;
 }): React.JSX.Element {
+  const { selectedSegment } = args;
+
   const {
-    selectedSegment,
+    effectiveLearnedTemplates,
+    templateMergeThreshold,
+    isBusy,
+  } = useSettingsState();
+  const {
     approvalDraft,
     matchedRuleDetails,
     similarTemplateCandidates,
     templateTargetOptions,
+  } = useSegmentEditorState();
+  const {
     setApprovalDraft,
-    templateMergeThreshold,
-    effectiveLearnedTemplates,
-    isBusy,
-    onApprovePattern,
-  } = args;
+    handleApproveSelectedSegmentPattern,
+  } = useSegmentEditorActions();
+
+  const onApprovePattern = () => {
+    void handleApproveSelectedSegmentPattern();
+  };
 
   return (
     <div className='space-y-3 rounded border border-border/60 bg-card/30 p-2 text-[11px] text-gray-400'>

@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 
-import type { PlaywrightSettings } from '@/features/playwright/types';
+import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import { internalError } from '@/shared/errors/app-error';
 
 import type { Dispatch, ReactNode, SetStateAction } from 'react';

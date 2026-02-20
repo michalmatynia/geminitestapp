@@ -4,7 +4,7 @@ import {
   defaultPlaywrightSettings,
   PLAYWRIGHT_PERSONA_SETTINGS_KEY,
 } from '@/features/playwright/constants/playwright';
-import type { PlaywrightPersona, PlaywrightSettings } from '@/features/playwright/types';
+import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 

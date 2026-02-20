@@ -1,27 +1,21 @@
-import type {
-  DocumentationModuleIdDto,
-  DocumentationEntryDto,
-  DocumentationEntryKeyDto,
+import {
+  DOCUMENTATION_MODULE_IDS as SHARED_DOCUMENTATION_MODULE_IDS,
+  type DocumentationModuleId as SharedDocumentationModuleId,
 } from '@/shared/contracts/documentation';
 
-export const DOCUMENTATION_MODULE_IDS = {
-  aiPaths: 'ai-paths',
-  cms: 'cms',
-  dataImportExport: 'data-import-export',
-  imageStudio: 'image-studio',
-  observability: 'observability',
-  products: 'products',
-  promptEngine: 'prompt-engine',
-  promptExploder: 'prompt-exploder',
-  validator: 'validator',
-  vectorDrawing: 'vector-drawing',
-} as const;
+export const DOCUMENTATION_MODULE_IDS = SHARED_DOCUMENTATION_MODULE_IDS;
 
-export type BuiltInDocumentationModuleId =
-  (typeof DOCUMENTATION_MODULE_IDS)[keyof typeof DOCUMENTATION_MODULE_IDS];
+export type DocumentationModuleId = SharedDocumentationModuleId;
 
-export type DocumentationModuleId = DocumentationModuleIdDto;
+export type DocumentationEntry = {
+  id: string;
+  moduleId: DocumentationModuleId;
+  title: string;
+  summary: string;
+  section?: string;
+  aliases: string[];
+  docPath?: string;
+  tags?: string[];
+};
 
-export type DocumentationEntry = DocumentationEntryDto;
-
-export type DocumentationEntryKey = DocumentationEntryKeyDto;
+export type DocumentationEntryKey = `${DocumentationModuleId}:${string}`;

@@ -14,7 +14,7 @@ import type {
   DatabasePreviewTable,
   DatabasePreviewRow,
   DatabaseEnumInfo,
-} from '../types';
+} from '@/shared/contracts/database';
 
 interface DatabaseContextType {
   dbType: DatabaseType;

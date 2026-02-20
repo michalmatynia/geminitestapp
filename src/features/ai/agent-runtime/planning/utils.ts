@@ -9,7 +9,7 @@ import type {
   PlannerAlternative,
   PlannerCritique,
   PlannerMeta,
-} from '@/features/ai/agent-runtime/types/agent';
+} from '@/shared/contracts/agent-runtime/agent';
 
 export type PlanHierarchy = {
   goals: Array<{

@@ -15,7 +15,7 @@ import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/
 
 import { useAsset3DForm } from '../hooks/useAsset3DForm';
 
-import type { Asset3DRecord } from '../types';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 interface Asset3DEditModalProps extends EntityModalProps<Asset3DRecord> {
   onSave: (updated: Asset3DRecord) => void;

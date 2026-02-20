@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
-import type { ProductParameter, ProductParameterValue } from '@/features/products/types';
+import type { ProductParameter, ProductParameterValue } from '@/shared/contracts/products';
 import type { LanguageDto as Language } from '@/shared/contracts/internationalization';
 import {
   Alert,

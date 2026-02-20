@@ -8,7 +8,19 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { useRegisterUser } from '@/features/auth/hooks/useAuthQueries';
 import { DEFAULT_AUTH_SECURITY_POLICY } from '@/features/auth/utils/auth-security';
 import { logClientError } from '@/features/observability';
-import { Button, Input, Label, Alert, SectionHeader, LoadingState } from '@/shared/ui';
+import {
+  Button,
+  Input,
+  Label,
+  Alert,
+  LoadingState,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter
+} from '@/shared/ui';
 
 export default function RegisterPage(): React.JSX.Element {
   const { userPageSettings, isLoading } = useAuth();
@@ -90,82 +102,86 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
 
   return (
     <div className='flex min-h-screen items-center justify-center bg-gray-900 px-4'>
-      <div className='w-full max-w-md space-y-6 rounded-lg border border-border bg-card p-6 shadow-lg'>
-        <SectionHeader
-          title='Create account'
-          description='Create a new account with email and password.'
-        />
-        {error ? (
-          <Alert variant='error' className='p-3 text-xs'>
-            {error}
-          </Alert>
-        ) : null}
-        {!allowSignup ? (
-          <Alert variant='warning' className='p-3 text-xs'>
-            Self-service registration is disabled. Please contact an administrator.
-          </Alert>
-        ) : null}
-        <form className='space-y-4' onSubmit={(e: React.FormEvent<HTMLFormElement>) => void handleSubmit(e)}>
-          <div className='space-y-2'>
-            <Label className='text-sm text-gray-300' htmlFor='name'>
-              Name (optional)
-            </Label>
-            <Input
-              id='name'
-              type='text'
-              className='w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white'
-              value={name}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value)}
-              disabled={!allowSignup}
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-sm text-gray-300' htmlFor='email'>
-              Email
-            </Label>
-            <Input
-              id='email'
-              type='email'
-              className='w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white'
-              value={email}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)}
-              required
-              disabled={!allowSignup}
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-sm text-gray-300' htmlFor='password'>
-              Password
-            </Label>
-            <Input
-              id='password'
-              type='password'
-              className='w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white'
-              value={password}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)}
-              required
-              minLength={DEFAULT_AUTH_SECURITY_POLICY.minPasswordLength}
-              disabled={!allowSignup}
-            />
-            <p className='text-xs text-gray-500'>
-              Minimum {DEFAULT_AUTH_SECURITY_POLICY.minPasswordLength} characters.
-            </p>
-          </div>
-          <Button
-            className='w-full rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-300'
-            type='submit'
-            disabled={isSubmitting || !allowSignup}
-          >
-            {isSubmitting ? 'Creating...' : 'Create account'}
-          </Button>
-        </form>
-        <p className='text-xs text-gray-400'>
-          Already have an account?{' '}
-          <Link href='/auth/signin' className='text-white hover:underline'>
-            Sign in
-          </Link>
-        </p>
-      </div>
+      <Card className='w-full max-w-md shadow-lg'>
+        <CardHeader>
+          <CardTitle>Create account</CardTitle>
+          <CardDescription>Create a new account with email and password.</CardDescription>
+        </CardHeader>
+        <CardContent className='space-y-4'>
+          {error ? (
+            <Alert variant='error' className='p-3 text-xs'>
+              {error}
+            </Alert>
+          ) : null}
+          {!allowSignup ? (
+            <Alert variant='warning' className='p-3 text-xs'>
+              Self-service registration is disabled. Please contact an administrator.
+            </Alert>
+          ) : null}
+          <form className='space-y-4' onSubmit={(e: React.FormEvent<HTMLFormElement>) => void handleSubmit(e)}>
+            <div className='space-y-2'>
+              <Label className='text-sm text-gray-300' htmlFor='name'>
+                Name (optional)
+              </Label>
+              <Input
+                id='name'
+                type='text'
+                className='w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white'
+                value={name}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value)}
+                disabled={!allowSignup}
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label className='text-sm text-gray-300' htmlFor='email'>
+                Email
+              </Label>
+              <Input
+                id='email'
+                type='email'
+                className='w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white'
+                value={email}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)}
+                required
+                disabled={!allowSignup}
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label className='text-sm text-gray-300' htmlFor='password'>
+                Password
+              </Label>
+              <Input
+                id='password'
+                type='password'
+                className='w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white'
+                value={password}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)}
+                required
+                minLength={DEFAULT_AUTH_SECURITY_POLICY.minPasswordLength}
+                disabled={!allowSignup}
+              />
+              <p className='text-xs text-gray-500'>
+                Minimum {DEFAULT_AUTH_SECURITY_POLICY.minPasswordLength} characters.
+              </p>
+            </div>
+            <Button
+              className='w-full rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-300'
+              type='submit'
+              disabled={isSubmitting || !allowSignup}
+            >
+              {isSubmitting ? 'Creating...' : 'Create account'}
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className='justify-center'>
+          <p className='text-xs text-gray-400'>
+            Already have an account?{' '}
+            <Link href='/auth/signin' className='text-white hover:underline'>
+              Sign in
+            </Link>
+          </p>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

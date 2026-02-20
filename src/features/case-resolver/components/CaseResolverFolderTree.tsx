@@ -55,7 +55,7 @@ import {
   buildCaseResolverNodeFileRelationIndexFromAssets,
   EMPTY_CASE_RESOLVER_NODE_FILE_RELATION_INDEX,
 } from '../nodefile-relations';
-import { type NodeDefinition } from '../types';
+import { type NodeDefinition } from '@/shared/contracts/case-resolver';
 import { resolveCaseResolverTreeWorkspace } from './case-resolver-tree-workspace';
 import {
   CASE_RESOLVER_PALETTE,
@@ -67,7 +67,7 @@ import {
   type PaletteEntry,
 } from './CaseResolverFolderTree.helpers';
 
-import type { CaseResolverWorkspace } from '../types';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
 const resolveFolderAncestorNodeIds = (folderPath: string): string[] => {
   const normalizedFolder = folderPath.trim();

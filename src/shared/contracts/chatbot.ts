@@ -26,10 +26,12 @@ export const chatbotSettingsSchema = z.object({
 });
 
 export type ChatbotSettingsDto = z.infer<typeof chatbotSettingsSchema>;
+export type ChatbotSettingsRecordDto = ChatbotSettingsDto;
 
 export const createChatbotSettingsSchema = chatbotSettingsSchema.partial();
 export type CreateChatbotSettingsDto = z.infer<typeof createChatbotSettingsSchema>;
 export type ChatbotSettingsPayload = CreateChatbotSettingsDto;
+export type UpdateChatbotSettingsDto = CreateChatbotSettingsDto;
 
 /**
  * Chat Message Contract
@@ -53,6 +55,7 @@ export const chatMessageSchema = z.object({
   content: z.string(),
   timestamp: z.string(),
   model: z.string().optional(),
+  images: z.array(z.string()).optional(),
   toolCalls: z.array(z.record(z.string(), z.unknown())).optional(),
   toolResults: z.array(z.record(z.string(), z.unknown())).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
@@ -72,11 +75,23 @@ export const chatSessionSchema = dtoBaseSchema.extend({
   messageCount: z.number().optional(),
   isActive: z.boolean().optional(),
   tags: z.array(z.string()).optional(),
+  messages: z.array(chatMessageSchema).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type ChatbotSessionDto = z.infer<typeof chatSessionSchema>;
 export type ChatSession = ChatbotSessionDto;
+
+export const chatbotSessionListItemSchema = z.object({
+  id: z.string(),
+  title: z.string().nullable(),
+  lastMessageAt: z.string().nullable(),
+  messageCount: z.number(),
+  isActive: z.boolean(),
+});
+
+export type ChatbotSessionListItemDto = z.infer<typeof chatbotSessionListItemSchema>;
+export type ChatbotSessionListItem = ChatbotSessionListItemDto;
 
 export const createChatSessionSchema = chatSessionSchema.omit({
   id: true,
@@ -91,6 +106,15 @@ export const updateChatSessionSchema = createChatSessionSchema.partial();
 
 export type UpdateChatSessionDto = z.infer<typeof updateChatSessionSchema>;
 export type UpdateSessionInput = UpdateChatSessionDto;
+
+export const sendMessageSchema = z.object({
+  content: z.string(),
+  model: z.string().optional(),
+  images: z.array(z.string()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type SendMessageDto = z.infer<typeof sendMessageSchema>;
 
 /**
  * Chatbot Job Contract
@@ -109,6 +133,10 @@ export const chatbotJobPayloadSchema = z.object({
   sessionId: z.string(),
   model: z.string().optional(),
   prompt: z.string().optional(),
+  messages: z.array(z.object({
+    role: z.enum(['user', 'assistant', 'system']),
+    content: z.string(),
+  })).optional(),
   options: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -128,6 +156,18 @@ export const chatbotJobSchema = dtoBaseSchema.extend({
 
 export type ChatbotJobDto = z.infer<typeof chatbotJobSchema>;
 export type ChatbotJob = ChatbotJobDto;
+
+export const enqueueChatbotJobRequestSchema = z.object({
+  sessionId: z.string(),
+  model: z.string(),
+  messages: z.array(z.object({
+    role: z.enum(['user', 'assistant', 'system']),
+    content: z.string(),
+  })),
+  userMessage: z.string().optional(),
+});
+
+export type EnqueueChatbotJobRequestDto = z.infer<typeof enqueueChatbotJobRequestSchema>;
 
 /**
  * Chatbot Memory Contract
@@ -153,6 +193,21 @@ export type CreateChatbotMemoryItemDto = z.infer<typeof createChatbotMemoryItemS
 export const updateChatbotMemoryItemSchema = createChatbotMemoryItemSchema.partial();
 
 export type UpdateChatbotMemoryItemDto = z.infer<typeof updateChatbotMemoryItemSchema>;
+
+/**
+ * Chatbot Context Contract
+ */
+
+export const chatbotContextSegmentSchema = z.object({
+  id: z.string(),
+  content: z.string(),
+  source: z.string(),
+  score: z.number().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type ChatbotContextSegmentDto = z.infer<typeof chatbotContextSegmentSchema>;
+export type ChatbotContextSegment = ChatbotContextSegmentDto;
 
 /**
  * Agent Runtime Snapshot Contract
@@ -261,6 +316,7 @@ export const chatbotTimelineEntrySchema = z.object({
 
 export type ChatbotTimelineEntryDto = z.infer<typeof chatbotTimelineEntrySchema>;
 export type TimelineEntry = ChatbotTimelineEntryDto;
+export type ChatbotTimelineEntry = ChatbotTimelineEntryDto;
 
 export const chatbotDebugStateSchema = z.object({
   activeRunId: z.string().nullable(),

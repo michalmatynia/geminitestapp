@@ -10,7 +10,7 @@ import { CrudPanel } from './CrudPanel';
 import { SqlQueryConsole } from './SqlQueryConsole';
 import { DatabaseProvider, useDatabase } from '../context/DatabaseContext';
 
-import type { DatabaseType } from '../types';
+import type { DatabaseType } from '@/shared/contracts/database';
 
 const DATABASE_OPTIONS: Array<{
   value: DatabaseType;

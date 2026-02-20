@@ -18,6 +18,8 @@ export const aiTriggerButtonLocationSchema = z.enum([
 export type AiTriggerButtonLocation = z.infer<typeof aiTriggerButtonLocationSchema>;
 
 export const aiTriggerButtonModeSchema = z.enum([
+  'click',
+  'toggle',
   'execute_path',
   'open_chat',
   'open_url',
@@ -26,15 +28,18 @@ export const aiTriggerButtonModeSchema = z.enum([
 
 export type AiTriggerButtonMode = z.infer<typeof aiTriggerButtonModeSchema>;
 
-export const aiTriggerButtonDisplaySchema = z.object({
-  label: z.string(),
-  icon: z.string().optional(),
-  color: z.string().optional(),
-  variant: z.enum(['default', 'outline', 'secondary', 'ghost', 'link']).optional(),
-  size: z.enum(['default', 'sm', 'lg', 'icon']).optional(),
-  showLabel: z.boolean().optional(),
-  tooltip: z.string().optional(),
-});
+export const aiTriggerButtonDisplaySchema = z.union([
+  z.object({
+    label: z.string(),
+    icon: z.string().optional(),
+    color: z.string().optional(),
+    variant: z.enum(['default', 'outline', 'secondary', 'ghost', 'link']).optional(),
+    size: z.enum(['default', 'sm', 'lg', 'icon']).optional(),
+    showLabel: z.boolean().optional(),
+    tooltip: z.string().optional(),
+  }),
+  z.enum(['icon', 'icon_label']),
+]);
 
 export type AiTriggerButtonDisplay = z.infer<typeof aiTriggerButtonDisplaySchema>;
 

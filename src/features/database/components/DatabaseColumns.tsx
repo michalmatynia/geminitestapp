@@ -2,7 +2,7 @@
 
 import { ActionMenu, DataTableSortableHeader, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui';
 
-import type { DatabaseInfo } from '../types';
+import type { DatabaseInfo } from '@/shared/contracts/database';
 import type { ColumnDef, Row } from '@tanstack/react-table';
 
 

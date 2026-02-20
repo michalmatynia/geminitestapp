@@ -1129,3 +1129,214 @@ export type CreateProductDraftDto = z.infer<typeof createProductDraftSchema>;
 export const updateProductDraftSchema = createProductDraftSchema.partial();
 
 export type UpdateProductDraftDto = Partial<CreateProductDraftDto>;
+
+/**
+ * Product Repository Interfaces
+ */
+
+export type CatalogCreateInput = CatalogCreateInputDto;
+export type CatalogUpdateInput = CatalogUpdateInputDto;
+
+export type CatalogRepository = {
+  listCatalogs(): Promise<CatalogRecord[]>;
+  getCatalogById(id: string): Promise<CatalogRecord | null>;
+  createCatalog(input: CatalogCreateInput): Promise<CatalogRecord>;
+  updateCatalog(
+    id: string,
+    input: CatalogUpdateInput
+  ): Promise<CatalogRecord | null>;
+  deleteCatalog(id: string): Promise<void>;
+  getCatalogsByIds(ids: string[]): Promise<CatalogRecord[]>;
+  setDefaultCatalog(id: string): Promise<void>;
+};
+
+export type CategoryFilters = ProductCategoryFiltersDto;
+
+export type CategoryRepository = {
+  listCategories(filters: CategoryFilters): Promise<ProductCategory[]>;
+  getCategoryTree(catalogId?: string): Promise<ProductCategoryWithChildren[]>;
+  getCategoryById(id: string): Promise<ProductCategory | null>;
+  getCategoryWithChildren(id: string): Promise<ProductCategoryWithChildren | null>;
+  createCategory(data: CreateProductCategoryDto): Promise<ProductCategory>;
+  updateCategory(id: string, data: UpdateProductCategoryDto): Promise<ProductCategory>;
+  deleteCategory(id: string): Promise<void>;
+  findByName(catalogId: string, name: string, parentId?: string | null): Promise<ProductCategory | null>;
+  isDescendant(categoryId: string, targetId: string): Promise<boolean>;
+};
+
+export type ParameterFilters = ProductParameterFiltersDto;
+export type ParameterCreateInput = ProductParameterCreateInputDto;
+export type ParameterUpdateInput = ProductParameterUpdateInputDto;
+
+export type ParameterRepository = {
+  listParameters(filters: ParameterFilters): Promise<ProductParameter[]>;
+  getParameterById(id: string): Promise<ProductParameter | null>;
+  createParameter(data: ParameterCreateInput): Promise<ProductParameter>;
+  updateParameter(id: string, data: ParameterUpdateInput): Promise<ProductParameter>;
+  deleteParameter(id: string): Promise<void>;
+  findByName(catalogId: string, name_en: string): Promise<ProductParameter | null>;
+};
+
+export type ProducerFilters = {
+  search?: string;
+};
+
+export type ProducerRepository = {
+  listProducers(filters: ProducerFilters): Promise<Producer[]>;
+  getProducerById(id: string): Promise<Producer | null>;
+  createProducer(data: { name: string; website?: string | null }): Promise<Producer>;
+  updateProducer(id: string, data: { name?: string; website?: string | null }): Promise<Producer>;
+  deleteProducer(id: string): Promise<void>;
+  findByName(name: string): Promise<Producer | null>;
+};
+
+export type ProductFilters = ProductFilterDto & {
+  ids?: string[];
+  excludeIds?: string[];
+  tagIds?: string[];
+  producerIds?: string[];
+  priceGroupIds?: string[];
+};
+
+export type TransactionalProductRepository = {
+  getProducts(filters: ProductFilters): Promise<ProductWithImages[]>;
+  countProducts(filters: ProductFilters): Promise<number>;
+  getProductById(id: string): Promise<ProductWithImages | null>;
+  getProductBySku(sku: string): Promise<ProductRecord | null>;
+  findProductByBaseId(baseProductId: string): Promise<ProductRecord | null>;
+  createProduct(data: ProductCreateInputDto): Promise<ProductRecord>;
+  updateProduct(
+    id: string,
+    data: ProductUpdateInputDto
+  ): Promise<ProductRecord | null>;
+  deleteProduct(id: string): Promise<ProductRecord | null>;
+  duplicateProduct(id: string, sku: string): Promise<ProductRecord | null>;
+  addProductImages(productId: string, imageFileIds: string[]): Promise<void>;
+  replaceProductImages(productId: string, imageFileIds: string[]): Promise<void>;
+  replaceProductCatalogs(
+    productId: string,
+    catalogIds: string[]
+  ): Promise<void>;
+  replaceProductCategory(
+    productId: string,
+    categoryId: string | null
+  ): Promise<void>;
+  replaceProductTags(
+    productId: string,
+    tagIds: string[]
+  ): Promise<void>;
+  replaceProductProducers(
+    productId: string,
+    producerIds: string[]
+  ): Promise<void>;
+  replaceProductNotes(
+    productId: string,
+    noteIds: string[]
+  ): Promise<void>;
+  removeProductImage(productId: string, imageFileId: string): Promise<void>;
+  countProductsByImageFileId(imageFileId: string): Promise<number>;
+};
+
+export type ProductRepository = TransactionalProductRepository & {
+  getProductsWithCount(filters: ProductFilters): Promise<{ products: ProductWithImages[]; total: number }>;
+  createProductInTransaction: <T>(
+    callback: (tx: TransactionalProductRepository & any) => Promise<T>
+  ) => Promise<T>;
+};
+
+export type TagFilters = ProductTagFiltersDto;
+
+export type TagRepository = {
+  listTags(filters: TagFilters): Promise<ProductTag[]>;
+  getTagById(id: string): Promise<ProductTag | null>;
+  createTag(data: ProductTagCreateInputDto): Promise<ProductTag>;
+  updateTag(id: string, data: ProductTagUpdateInputDto): Promise<ProductTag>;
+  deleteTag(id: string): Promise<void>;
+  findByName(catalogId: string, name: string): Promise<ProductTag | null>;
+};
+
+export type CreateProductValidationPatternInput = CreateProductValidationPatternDto;
+export type UpdateProductValidationPatternInput = UpdateProductValidationPatternDto;
+
+export type ProductValidationPatternRepository = {
+  listPatterns(): Promise<ProductValidationPattern[]>;
+  getPatternById(id: string): Promise<ProductValidationPattern | null>;
+  createPattern(data: CreateProductValidationPatternInput): Promise<ProductValidationPattern>;
+  updatePattern(id: string, data: UpdateProductValidationPatternInput): Promise<ProductValidationPattern>;
+  deletePattern(id: string): Promise<void>;
+  getEnabledByDefault(): Promise<boolean>;
+  setEnabledByDefault(enabled: boolean): Promise<boolean>;
+  getInstanceDenyBehavior(): Promise<ProductValidationInstanceDenyBehaviorMap>;
+  setInstanceDenyBehavior(
+    value: ProductValidationInstanceDenyBehaviorMap
+  ): Promise<ProductValidationInstanceDenyBehaviorMap>;
+};
+
+/**
+ * Product UI and Context Types
+ */
+
+export type ExpandedImageFile = ProductImageRecord & {
+  products: {
+    product: {
+      id: string;
+      name: string;
+    };
+  }[];
+};
+
+export type DebugInfo = {
+  action: string;
+  message: string;
+  slotIndex?: number | undefined;
+  filename?: string | undefined;
+  timestamp: string;
+};
+
+export type ProductFormData = ProductCreateInputDto;
+
+export type ProductListPreferences = ProductListPreferencesDto;
+
+/**
+ * Legacy Product Type Aliases
+ */
+export type ProductTag = ProductTagDto;
+export type Catalog = CatalogDto;
+export type CatalogRecord = CatalogDto;
+export type PriceGroup = PriceGroupDto;
+export type PriceGroupRecord = PriceGroupDto;
+export type Producer = ProducerDto;
+export type ProductParameter = ProductParameterDto;
+export type ProductParameterValue = ProductParameterValueDto;
+export type ProductSimpleParameter = ProductSimpleParameterDto;
+export type ProductSimpleParameterValue = ProductSimpleParameterValueDto;
+export type ProductValidationPattern = ProductValidationPatternDto;
+export type ProductValidationTarget = ProductValidationTargetDto;
+export type ProductValidationSeverity = ProductValidationSeverityDto;
+export type ProductValidationDenyBehavior = ProductValidationDenyBehaviorDto;
+export type ProductValidationInstanceScope = ProductValidationInstanceScopeDto;
+export type ProductValidationPostAcceptBehavior = ProductValidationPostAcceptBehaviorDto;
+export type ProductValidationRuntimeType = ProductValidationRuntimeTypeDto;
+export type ProductValidationChainMode = ProductValidationChainModeDto;
+export type ProductValidationLaunchSourceMode = ProductValidationLaunchSourceModeDto;
+export type ProductValidationLaunchOperator = ProductValidationLaunchOperatorDto;
+export type ProductValidationLaunchScopeBehavior = ProductValidationLaunchScopeBehaviorDto;
+export type ProductValidatorConfig = ProductValidatorConfigDto;
+export type ProductValidatorSettings = ProductValidatorSettingsDto;
+export type PriceGroupType = PriceGroupTypeDto;
+export type SyncDirection = SyncDirectionDto;
+export type ProductDbProvider = ProductDbProviderDto;
+export type IntegrationDbProvider = IntegrationDbProviderDto;
+export type ProductMigrationDirection = ProductMigrationDirectionDto;
+export type ProductMigrationBatchResult = ProductMigrationBatchResultDto;
+export type PriceGroupWithDetails = PriceGroupWithDetailsDto;
+export type PriceGroupForCalculation = PriceGroupForCalculationDto;
+export type ProductWithImages = ProductWithImagesDto;
+export type ProductImageRecord = ProductImageRecordDto;
+export type ProductCatalogRecord = ProductCatalogRecordDto;
+export type ProductRecord = ProductDto;
+export type CurrencyRecord = ProductCurrencyDto;
+export type ProductValidationInstanceDenyBehaviorMap = Record<
+  ProductValidationInstanceScope,
+  ProductValidationDenyBehavior
+>;

@@ -4,7 +4,7 @@ import type {
   CaseResolverAssetFile,
   CaseResolverFile,
   CaseResolverWorkspace,
-} from './types';
+} from '@/shared/contracts/case-resolver';
 
 const FOLDER_NODE_PREFIX = 'folder:';
 const FILE_NODE_PREFIX = 'file:';

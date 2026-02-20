@@ -23,7 +23,7 @@ import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useCrudPanelState } from '../hooks/useCrudPanelState';
 
-import type { DatabaseColumnInfo, DatabaseTableDetail, DatabaseType } from '../types';
+import type { DatabaseColumnInfo, DatabaseTableDetail, DatabaseType } from '@/shared/contracts/database';
 import type { ColumnDef } from '@tanstack/react-table';
 
 function formatCellValue(value: unknown): string {

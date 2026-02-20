@@ -1,4 +1,4 @@
-import type { ProductCategory, ProductWithImages } from '@/features/products/types';
+import type { ProductCategory, ProductWithImages } from '@/shared/contracts/products';
 
 export const EDIT_PRODUCT_DETAIL_STALE_TIME_MS = 30_000;
 export const PRODUCT_ROW_HIGHLIGHT_DURATION_MS = 900;

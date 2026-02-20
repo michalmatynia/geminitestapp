@@ -13,7 +13,7 @@ import type {
   CaseResolverFile,
   CaseResolverIdentifier,
   CaseResolverTag,
-} from '../types';
+} from '@/shared/contracts/case-resolver';
 
 type SortKey = 'updated' | 'created' | 'name';
 type SortOrder = 'asc' | 'desc';

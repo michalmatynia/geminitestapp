@@ -8,7 +8,7 @@ import { BlockContextProvider, useBlockContext } from './context/BlockContext';
 import { usePreviewEditor } from './context/PreviewEditorContext';
 import { normalizeSlideshowAnimationType } from './preview-utils';
 
-import type { PreviewSectionBlockProps, PreviewBlockItemProps } from './types';
+import type { PreviewSectionBlockProps, PreviewBlockItemProps } from '@/shared/contracts/cms';
 import type { BlockInstance } from '../../../types/page-builder';
 
 // ---------------------------------------------------------------------------

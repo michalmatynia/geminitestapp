@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { useOptionalListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
-import type { IntegrationConnectionBasic } from '@/features/integrations/types/integrations';
+import type { IntegrationConnectionBasic } from '@/shared/contracts/integrations/integrations';
 
 interface IntegrationAccountSummaryProps {
   integrationName?: string;

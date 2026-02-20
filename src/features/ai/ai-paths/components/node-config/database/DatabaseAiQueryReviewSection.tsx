@@ -4,7 +4,7 @@ import React from 'react';
 import type { DatabaseConfig, DbQueryConfig, NodeConfig } from '@/features/ai/ai-paths/lib';
 import { Button } from '@/shared/ui';
 
-import type { AiQuery } from './types';
+import type { AiQuery } from '@/shared/contracts/ai-paths';
 
 type DatabaseAiQueryReviewSectionProps = {
   pendingAiQuery: string;

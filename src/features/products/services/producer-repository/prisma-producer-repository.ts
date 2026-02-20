@@ -3,7 +3,7 @@ import { Prisma, Producer as PrismaProducer } from '@prisma/client';
 import type { 
   ProducerRepository, 
   ProducerFilters 
-} from '@/features/products/types/services/producer-repository';
+} from '@/shared/contracts/products/services/producer-repository';
 import prisma from '@/shared/lib/db/prisma';
 import type { 
   Producer 

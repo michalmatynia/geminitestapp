@@ -4,7 +4,7 @@ import { Profiler, memo, useMemo } from 'react';
 
 import { useProductListTableContext } from '@/features/products/context/ProductListContext';
 import { useProductsTableProps } from '@/features/products/hooks/useProductsTableProps';
-import type { ProductWithImages } from '@/features/products/types';
+import type { ProductWithImages } from '@/shared/contracts/products';
 import { Alert, Button, StandardDataTablePanel } from '@/shared/ui';
 import { PromptModal } from '@/shared/ui/templates/modals';
 

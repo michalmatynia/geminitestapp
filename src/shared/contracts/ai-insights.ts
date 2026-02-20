@@ -12,6 +12,9 @@ export const aiInsightTypeSchema = z.enum([
   'anomaly_detection',
   'trend_analysis',
   'system_health',
+  'analytics',
+  'runtime_analytics',
+  'system_logs',
 ]);
 
 export type AiInsightTypeDto = z.infer<typeof aiInsightTypeSchema>;

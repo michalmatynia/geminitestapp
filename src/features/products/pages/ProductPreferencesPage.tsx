@@ -6,8 +6,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { logClientError } from '@/features/observability';
 import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries';
 import { useUserPreferences, useUpdateUserPreferences } from '@/features/products/hooks/useUserPreferences';
-import type { Catalog } from '@/features/products/types';
-import type { ProductListPreferences } from '@/features/products/types/products-ui';
+import type { Catalog } from '@/shared/contracts/products';
+import type { ProductListPreferences } from '@/shared/contracts/products/products-ui';
 import { Button, SelectSimple, Input, useToast, FormSection, FormField, LoadingState, PageLayout } from '@/shared/ui';
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {

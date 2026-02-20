@@ -3,7 +3,7 @@ import { ObjectId, type Filter } from 'mongodb';
 import type {
   ProducerMapping,
   ProducerMappingWithDetails,
-} from '@/features/integrations/types/producer-mapping';
+} from '@/shared/contracts/integrations/producer-mapping';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 export type MongoProducerMappingDoc = {

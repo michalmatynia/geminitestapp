@@ -14,7 +14,7 @@ import {
   listAgentLongTermMemory,
   listAgentMemory,
 } from '@/features/ai/agent-runtime/memory';
-import type { AgentExecutionContext } from '@/features/ai/agent-runtime/types/agent';
+import type { AgentExecutionContext } from '@/shared/contracts/agent-runtime/agent';
 import prisma from '@/shared/lib/db/prisma';
 
 type AgentRunContextInput = {

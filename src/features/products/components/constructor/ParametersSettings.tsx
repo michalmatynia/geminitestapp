@@ -4,8 +4,8 @@ import { Plus } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
 import { useSaveParameterMutation, useDeleteParameterMutation } from '@/features/products/hooks/useProductSettingsQueries';
-import type { CatalogRecord } from '@/features/products/types';
-import type { ProductParameter } from '@/features/products/types';
+import type { CatalogRecord } from '@/shared/contracts/products';
+import type { ProductParameter } from '@/shared/contracts/products';
 import { useToast, Button, Input, SelectSimple, FormModal, EmptyState, FormSection, FormField, Textarea, SimpleSettingsList } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 

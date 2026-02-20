@@ -4,7 +4,7 @@ import { ErrorSystem } from '@/features/observability/server';
 import { getProductDataProvider, type ProductDbProvider } from '@/features/products/services/product-provider';
 import { mongoProductRepository } from '@/features/products/services/product-repository/mongo-product-repository';
 import { prismaProductRepository } from '@/features/products/services/product-repository/prisma-product-repository';
-import type { ProductRepository } from '@/features/products/types/services/product-repository';
+import type { ProductRepository } from '@/shared/contracts/products/services/product-repository';
 
 export const getProductRepository = async (
   providerOverride?: ProductDbProvider

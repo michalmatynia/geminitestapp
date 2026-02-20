@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { deleteTeachingAgent, getTeachingAgentById, upsertTeachingAgent } from '@/features/ai/agentcreator/teaching/server/repository';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { getTeachingAgentById, upsertTeachingAgent, deleteTeachingAgent } from '@/features/ai/agentcreator/teaching/server/repository';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
@@ -19,22 +18,22 @@ const updateAgentSchema = z.object({
   retrievalTopK: z.number().int().min(1).max(50).optional(),
   retrievalMinScore: z.number().min(-1).max(1).optional(),
   maxDocsPerCollection: z.number().int().min(10).max(2000).optional(),
+  enabled: z.boolean().optional(),
 });
 
-type Params = { agentId: string };
-
 export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const params = ctx.params as unknown as Params | undefined;
-  const agentId = params?.agentId;
-  if (!agentId) {
-    throw badRequestError('Missing agentId.');
+  const agentId = ctx.params?.['agentId'];
+  if (typeof agentId !== 'string' || !agentId.trim()) {
+    return NextResponse.json({ error: 'Missing agentId' }, { status: 400 });
   }
+
   const existing = await getTeachingAgentById(agentId);
   if (!existing) {
-    throw notFoundError('Not found');
+    return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
   }
+
   const parsed = await parseJsonBody(req, updateAgentSchema, {
-    logPrefix: 'agentcreator.teaching.agents.PATCH',
+    logPrefix: `agentcreator.teaching.agents.${agentId}.PATCH`,
   });
   if (!parsed.ok) return parsed.response;
 
@@ -42,26 +41,40 @@ export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): P
   const agent: AgentTeachingAgentRecord = await upsertTeachingAgent({
     ...existing,
     id: agentId,
-    ...(data.description !== undefined ? { description: data.description ?? null } : {}),
-    ...(data.llmModel !== undefined ? { llmModel: data.llmModel } : {}),
-    ...(data.embeddingModel !== undefined ? { embeddingModel: data.embeddingModel } : {}),
-    ...(data.systemPrompt !== undefined ? { systemPrompt: data.systemPrompt } : {}),
-    ...(data.collectionIds !== undefined ? { collectionIds: data.collectionIds } : {}),
-    ...(data.temperature !== undefined ? { temperature: data.temperature } : {}),
-    ...(data.maxTokens !== undefined ? { maxTokens: data.maxTokens } : {}),
-    ...(data.retrievalTopK !== undefined ? { retrievalTopK: data.retrievalTopK } : {}),
-    ...(data.retrievalMinScore !== undefined ? { retrievalMinScore: data.retrievalMinScore } : {}),
-    ...(data.maxDocsPerCollection !== undefined ? { maxDocsPerCollection: data.maxDocsPerCollection } : {}),
+    name: data.name ?? existing.name,
+    description: data.description !== undefined ? (data.description ?? null) : existing.description,
+    llmModel: data.llmModel ?? existing.llmModel,
+    embeddingModel: data.embeddingModel ?? existing.embeddingModel,
+    systemPrompt: data.systemPrompt ?? existing.systemPrompt,
+    collectionIds: data.collectionIds ?? existing.collectionIds,
+    temperature: data.temperature ?? existing.temperature,
+    maxTokens: data.maxTokens ?? existing.maxTokens,
+    retrievalTopK: data.retrievalTopK ?? existing.retrievalTopK,
+    retrievalMinScore: data.retrievalMinScore ?? existing.retrievalMinScore,
+    maxDocsPerCollection: data.maxDocsPerCollection ?? existing.maxDocsPerCollection,
+    enabled: data.enabled ?? existing.enabled,
   });
+  
+  return NextResponse.json({ agent });
+}
+
+export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  const agentId = ctx.params?.['agentId'];
+  if (typeof agentId !== 'string' || !agentId.trim()) {
+    return NextResponse.json({ error: 'Missing agentId' }, { status: 400 });
+  }
+  const agent = await getTeachingAgentById(agentId);
+  if (!agent) {
+    return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
+  }
   return NextResponse.json({ agent });
 }
 
 export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const params = ctx.params as unknown as Params | undefined;
-  const agentId = params?.agentId;
-  if (!agentId) {
-    throw badRequestError('Missing agentId.');
+  const agentId = ctx.params?.['agentId'];
+  if (typeof agentId !== 'string' || !agentId.trim()) {
+    return NextResponse.json({ error: 'Missing agentId' }, { status: 400 });
   }
-  const deleted = await deleteTeachingAgent(agentId);
-  return NextResponse.json({ ok: true, deleted });
+  const success = await deleteTeachingAgent(agentId);
+  return NextResponse.json({ success });
 }

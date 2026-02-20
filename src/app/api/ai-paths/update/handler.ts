@@ -16,7 +16,7 @@ import { getProductRepository } from '@/features/products/server';
 import { getProductDataProvider } from '@/features/products/services/product-provider';
 import type {
   ProductParameterValue,
-} from '@/features/products/types';
+} from '@/shared/contracts/products';
 import { badRequestError, notFoundError, validationError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

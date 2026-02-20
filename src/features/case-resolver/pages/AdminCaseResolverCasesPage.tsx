@@ -74,7 +74,7 @@ import type {
   CaseResolverIdentifier,
   CaseResolverTag,
   CaseResolverWorkspace,
-} from '../types';
+} from '@/shared/contracts/case-resolver';
 
 const createId = (prefix: string): string => {
   if (

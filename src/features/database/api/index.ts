@@ -28,7 +28,7 @@ import type {
   DatabasePreviewTable,
   DatabaseType,
   SqlQueryResult,
-} from '../types';
+} from '@/shared/contracts/database';
 
 export type {
   CollectionCopyResult,

@@ -35,7 +35,7 @@ import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
 import { Asset3DUploader } from '../components/Asset3DUploader';
 import { useAdmin3DAssetsState } from '../hooks/useAdmin3DAssetsState';
 
-import type { Asset3DRecord } from '../types';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import type { ColumnDef } from '@tanstack/react-table';
 
 const formatFileSize = (bytes: number): string => {

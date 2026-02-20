@@ -12,7 +12,7 @@ import {
 import type {
   PlanStep,
   PlannerMeta,
-} from '@/features/ai/agent-runtime/types/agent';
+} from '@/shared/contracts/agent-runtime/agent';
 import { ErrorSystem } from '@/features/observability/server';
 import prisma from '@/shared/lib/db/prisma';
 

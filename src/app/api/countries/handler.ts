@@ -31,6 +31,7 @@ type CurrencyDoc = {
   code: string;
   name: string;
   symbol?: string | null;
+  isDefault?: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -108,8 +109,10 @@ const normalizeCountryResponse = (
   id: country.id,
   code: country.code,
   name: country.name,
-  enabled: true, // Assuming default value as it's missing
-  description: '', // Assuming default value as it's missing
+  isoAlpha3: '',
+  nativeName: country.name,
+  phoneCode: '',
+  isActive: true,
   createdAt: country.createdAt.toISOString(),
   updatedAt: country.updatedAt.toISOString(),
   currencies: (country.currencyIds ?? [])
@@ -123,6 +126,10 @@ const normalizeCountryResponse = (
           code: currency.code,
           name: currency.name,
           symbol: currency.symbol ?? null,
+          isDefault: currency.isDefault || false,
+          isActive: true,
+          createdAt: currency.createdAt.toISOString(),
+          updatedAt: currency.updatedAt.toISOString(),
         },
       };
     })

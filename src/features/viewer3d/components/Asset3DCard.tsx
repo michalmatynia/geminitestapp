@@ -5,7 +5,7 @@ import { Box, Eye, Edit2, Trash2, Loader2, Globe, Lock } from 'lucide-react';
 import { Button, Tag, ResourceCard } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import type { Asset3DRecord } from '../types';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 
 export interface Asset3DCardProps {

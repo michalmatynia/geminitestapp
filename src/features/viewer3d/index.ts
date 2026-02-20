@@ -10,4 +10,4 @@ export { Admin3DAssetsPage } from './pages/Admin3DAssetsPage';
 export { Asset3DListPage } from './pages/Asset3DListPage';
 export * from './context/Viewer3DContext';
 export * from './api';
-export * from './types';
+export * from '@/shared/contracts/viewer3d';

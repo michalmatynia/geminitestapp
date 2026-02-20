@@ -4,6 +4,6 @@ export * from './pages/AdminNotesPage';
 export * from './pages/AdminNotesSettingsPage';
 export * from './pages/AdminNotesTagsPage';
 export * from './pages/AdminNotesThemesPage';
-export * from './types';
+export * from '@/shared/contracts/notes';
 export * from './utils';
 export * from './validations/notes';

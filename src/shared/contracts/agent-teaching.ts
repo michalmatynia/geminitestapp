@@ -20,7 +20,7 @@ export type AgentTeachingChatSourceDto = z.infer<typeof agentTeachingChatSourceS
 export type AgentTeachingChatSource = AgentTeachingChatSourceDto;
 
 export const agentTeachingDocumentMetadataSchema = z.object({
-  source: agentTeachingChatSourceSchema,
+  source: agentTeachingChatSourceSchema.optional(),
   sourceId: z.string().optional(),
   title: z.string().optional(),
   description: z.string().optional(),
@@ -43,13 +43,14 @@ export type AgentTeachingEmbeddingDocumentListItem = AgentTeachingDocumentDto;
 
 export const agentTeachingCollectionSchema = dtoBaseSchema.extend({
   name: z.string(),
-  description: z.string(),
-  provider: z.string(),
-  model: z.string(),
-  dimensions: z.number(),
-  documentCount: z.number(),
-  totalTokens: z.number(),
-  isDefault: z.boolean(),
+  description: z.string().nullable(),
+  embeddingModel: z.string(),
+  provider: z.string().optional(),
+  model: z.string().optional(),
+  dimensions: z.number().optional(),
+  documentCount: z.number().optional(),
+  totalTokens: z.number().optional(),
+  isDefault: z.boolean().optional(),
 });
 
 export type AgentTeachingCollectionDto = z.infer<typeof agentTeachingCollectionSchema>;
@@ -61,11 +62,23 @@ export type AgentTeachingEmbeddingCollectionRecord = AgentTeachingCollectionDto;
 export const agentTeachingAgentSchema = z.object({
   id: z.string(),
   agentId: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  llmModel: z.string(),
+  embeddingModel: z.string(),
+  systemPrompt: z.string(),
   collectionIds: z.array(z.string()),
   enabled: z.boolean(),
+  temperature: z.number().optional(),
+  maxTokens: z.number().optional(),
+  retrievalTopK: z.number().optional(),
+  retrievalMinScore: z.number().optional(),
+  maxDocsPerCollection: z.number().optional(),
   topK: z.number().optional(),
   scoreThreshold: z.number().optional(),
   includeSources: z.boolean().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 export type AgentTeachingAgentDto = z.infer<typeof agentTeachingAgentSchema>;

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { DatabasePresetOption } from './types';
+import type { DatabasePresetOption } from '@/shared/contracts/ai-paths';
 
 export type DatabasePresetsTabContextValue = {
   builtInPresets?: DatabasePresetOption[];

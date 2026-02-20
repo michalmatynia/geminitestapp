@@ -17,7 +17,7 @@ import {
   asset3dKeys
 } from '../hooks/useAsset3dQueries';
 
-import type { Asset3DRecord } from '../types';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 export type ViewMode = Asset3dViewModeDto;
 

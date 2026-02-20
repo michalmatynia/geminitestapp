@@ -1,4 +1,4 @@
-import type { ImageRetryPreset } from '@/features/data-import-export/types/imports';
+import type { ImageRetryPreset } from '@/shared/contracts/data-import-export/imports';
 
 const clonePreset = (preset: ImageRetryPreset): ImageRetryPreset => ({
   ...preset,

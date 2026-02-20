@@ -4,7 +4,7 @@ import type {
   BaseTag,
   ExternalTag,
   ExternalTagSyncInput,
-} from '@/features/integrations/types/tag-mapping';
+} from '@/shared/contracts/integrations/tag-mapping';
 import prisma from '@/shared/lib/db/prisma';
 
 export type ExternalTagRepository = {

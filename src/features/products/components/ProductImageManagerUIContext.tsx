@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { ProductImageSlot, DebugInfo } from '@/features/products/types/products-ui';
+import { ProductImageSlot, DebugInfo } from '@/shared/contracts/products/products-ui';
 import { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

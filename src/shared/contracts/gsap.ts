@@ -1,271 +1,102 @@
 import { z } from 'zod';
 
-import { namedDtoSchema } from './base';
-import { vectorShapeSchema } from './vector';
-
 /**
- * GSAP Animation Enums
+ * GSAP Animation DTOs
  */
 
 export const animationPresetSchema = z.enum([
   'none',
-  'fadeIn',
-  'fadeInUp',
-  'fadeInDown',
-  'fadeOut',
-  'slideInLeft',
-  'slideInRight',
-  'slideInTop',
-  'slideInBottom',
-  'scaleUp',
-  'scaleDown',
-  'zoomIn',
-  'flipY',
-  'skew',
-  'blurIn',
+  'fade',
+  'slide-up',
+  'slide-down',
+  'slide-left',
+  'slide-right',
+  'zoom-in',
+  'zoom-out',
+  'flip-x',
+  'flip-y',
   'rotate',
-  'rotateX',
-  'rotateY',
-  'popZ',
-  'cardTilt',
-  'flip3D',
-  'cube',
-  'carousel',
-  'orbit',
-  'shake',
-  'wobble',
-  'wiggle',
+  'blur',
   'bounce',
-  'stagger',
+  'reveal',
 ]);
 export type AnimationPresetDto = z.infer<typeof animationPresetSchema>;
+export type AnimationPreset = AnimationPresetDto;
 
-export const animationEasingSchema = z.enum([
-  'power1.out',
-  'power2.out',
-  'power3.out',
-  'power4.out',
-  'expo.out',
-  'circ.out',
-  'sine.inOut',
-  'elastic.out',
-  'elastic.out(1,0.3)',
-  'elastic.out(1,0.5)',
-  'bounce.out',
-  'back.out',
-  'back.out(1.7)',
-  'back.in(1.7)',
+export const animationEasingSchema = z.string();
+export type AnimationEasingDto = string;
+export type AnimationEasing = AnimationEasingDto;
+
+export const animationTriggerSchema = z.enum(['load', 'hover', 'scroll', 'click', 'viewport']);
+export type AnimationTriggerDto = z.infer<typeof animationTriggerSchema>;
+export type AnimationTrigger = AnimationTriggerDto;
+
+export const staggerFromSchema = z.union([
+  z.enum(['start', 'center', 'end', 'edges', 'random']),
+  z.number(),
+]);
+export type StaggerFromDto = z.infer<typeof staggerFromSchema>;
+export type StaggerFrom = StaggerFromDto;
+
+export const parallaxPresetSchema = z.enum([
+  'none',
+  'slow-scroll',
+  'fast-scroll',
+  'zoom-scroll',
+  'tilt',
+  'float',
+  'horizontal-parallax',
+  'scale-parallax',
+  'blur-parallax',
   'custom',
 ]);
-export type AnimationEasingDto = z.infer<typeof animationEasingSchema>;
-
-export const animationTriggerSchema = z.enum(['load', 'scroll']);
-export type AnimationTriggerDto = z.infer<typeof animationTriggerSchema>;
-
-export const staggerFromSchema = z.enum(['start', 'center', 'end', 'edges', 'random']);
-export type StaggerFromDto = z.infer<typeof staggerFromSchema>;
-
-export const parallaxPresetSchema = z.enum(['none', 'soft', 'medium', 'strong', 'depth']);
 export type ParallaxPresetDto = z.infer<typeof parallaxPresetSchema>;
+export type ParallaxPreset = ParallaxPresetDto;
 
-export const parallaxAxisSchema = z.enum(['y', 'x']);
+export const parallaxAxisSchema = z.enum(['x', 'y', 'both']);
 export type ParallaxAxisDto = z.infer<typeof parallaxAxisSchema>;
+export type ParallaxAxis = ParallaxAxisDto;
 
-export const parallaxPatternSchema = z.enum(['uniform', 'alternate', 'increment', 'layers', 'random']);
+export const parallaxPatternSchema = z.enum(['uniform', 'random', 'stepped', 'alternating']);
 export type ParallaxPatternDto = z.infer<typeof parallaxPatternSchema>;
+export type ParallaxPattern = ParallaxPatternDto;
 
 export const textEffectSchema = z.enum([
   'none',
-  'splitChars',
-  'splitWords',
-  'splitLines',
+  'chars-fade',
+  'chars-slide-up',
+  'words-fade',
+  'lines-reveal',
   'scramble',
   'typing',
-  'countUp',
+  'counting',
 ]);
 export type TextEffectDto = z.infer<typeof textEffectSchema>;
+export type TextEffect = TextEffectDto;
 
 export const dragAxisSchema = z.enum(['x', 'y', 'x,y']);
 export type DragAxisDto = z.infer<typeof dragAxisSchema>;
+export type DragAxis = DragAxisDto;
 
-export const observerTypeSchema = z.enum([
-  'wheel,touch',
-  'wheel',
-  'touch',
-  'pointer',
-  'wheel,touch,pointer',
-]);
-export type ObserverTypeDto = z.infer<typeof observerTypeSchema>;
+export const observerTypeSchema = z.string();
+export type ObserverTypeDto = string;
+export type ObserverType = ObserverTypeDto;
 
-export const velocityEffectSchema = z.enum(['none', 'skewX', 'skewY', 'rotation', 'scale']);
+export const velocityEffectSchema = z.enum(['none', 'skew', 'scale', 'opacity', 'blur']);
 export type VelocityEffectDto = z.infer<typeof velocityEffectSchema>;
+export type VelocityEffect = VelocityEffectDto;
 
-export const timelineModeSchema = z.enum([
-  'none',
-  'sequence',
-  'overlap',
-  'callResponse',
-  'cascade',
-  'wave',
-  'domino',
-  'ripple',
-]);
+export const timelineModeSchema = z.enum(['none', 'sequence', 'parallel', 'staggered', 'wave']);
 export type TimelineModeDto = z.infer<typeof timelineModeSchema>;
+export type TimelineMode = TimelineModeDto;
 
-export const scrollModeSchema = z.enum(['none', 'reveal', 'scrub', 'pin', 'story']);
+export const scrollModeSchema = z.enum(['none', 'scrub', 'pin', 'reveal', 'horizontal-scroll']);
 export type ScrollModeDto = z.infer<typeof scrollModeSchema>;
+export type ScrollMode = ScrollModeDto;
 
-export const revealStyleSchema = z.enum([
-  'none',
-  'clipUp',
-  'clipDown',
-  'clipLeft',
-  'clipRight',
-  'mask',
-]);
+export const revealStyleSchema = z.enum(['none', 'curtain', 'mask', 'clip-path', 'grayscale']);
 export type RevealStyleDto = z.infer<typeof revealStyleSchema>;
-
-/**
- * GSAP Animation Constants
- */
-
-export const ANIMATION_PRESETS: { label: string; value: AnimationPresetDto }[] = [
-  { label: 'None', value: 'none' },
-  { label: 'Fade In', value: 'fadeIn' },
-  { label: 'Fade In Up', value: 'fadeInUp' },
-  { label: 'Fade In Down', value: 'fadeInDown' },
-  { label: 'Fade Out', value: 'fadeOut' },
-  { label: 'Slide In Left', value: 'slideInLeft' },
-  { label: 'Slide In Right', value: 'slideInRight' },
-  { label: 'Slide In Top', value: 'slideInTop' },
-  { label: 'Slide In Bottom', value: 'slideInBottom' },
-  { label: 'Scale Up', value: 'scaleUp' },
-  { label: 'Scale Down', value: 'scaleDown' },
-  { label: 'Zoom In', value: 'zoomIn' },
-  { label: 'Flip Y', value: 'flipY' },
-  { label: 'Skew', value: 'skew' },
-  { label: 'Blur In', value: 'blurIn' },
-  { label: 'Rotate', value: 'rotate' },
-  { label: 'Rotate X (3D)', value: 'rotateX' },
-  { label: 'Rotate Y (3D)', value: 'rotateY' },
-  { label: 'Pop Z (3D)', value: 'popZ' },
-  { label: 'Card Tilt (3D)', value: 'cardTilt' },
-  { label: 'Flip 3D', value: 'flip3D' },
-  { label: 'Cube', value: 'cube' },
-  { label: 'Carousel', value: 'carousel' },
-  { label: 'Orbit', value: 'orbit' },
-  { label: 'Shake', value: 'shake' },
-  { label: 'Wobble', value: 'wobble' },
-  { label: 'Wiggle', value: 'wiggle' },
-  { label: 'Bounce', value: 'bounce' },
-  { label: 'Stagger (children)', value: 'stagger' },
-];
-
-export const ANIMATION_EASINGS: { label: string; value: AnimationEasingDto }[] = [
-  { label: 'Power 1 (gentle)', value: 'power1.out' },
-  { label: 'Power 2 (smooth)', value: 'power2.out' },
-  { label: 'Power 3 (strong)', value: 'power3.out' },
-  { label: 'Power 4 (sharp)', value: 'power4.out' },
-  { label: 'Expo (dramatic)', value: 'expo.out' },
-  { label: 'Circ (rounded)', value: 'circ.out' },
-  { label: 'Sine (soft)', value: 'sine.inOut' },
-  { label: 'Elastic', value: 'elastic.out' },
-  { label: 'Elastic (tight)', value: 'elastic.out(1,0.3)' },
-  { label: 'Elastic (loose)', value: 'elastic.out(1,0.5)' },
-  { label: 'Bounce', value: 'bounce.out' },
-  { label: 'Back (overshoot)', value: 'back.out' },
-  { label: 'Back (overshoot +)', value: 'back.out(1.7)' },
-  { label: 'Back (anticipation)', value: 'back.in(1.7)' },
-  { label: 'Custom ease', value: 'custom' },
-];
-
-export const PARALLAX_PRESETS: { label: string; value: ParallaxPresetDto }[] = [
-  { label: 'None', value: 'none' },
-  { label: 'Soft', value: 'soft' },
-  { label: 'Medium', value: 'medium' },
-  { label: 'Strong', value: 'strong' },
-  { label: 'Depth', value: 'depth' },
-];
-
-export const PARALLAX_PATTERNS: { label: string; value: ParallaxPatternDto }[] = [
-  { label: 'Uniform', value: 'uniform' },
-  { label: 'Alternate', value: 'alternate' },
-  { label: 'Increment', value: 'increment' },
-  { label: 'Layers', value: 'layers' },
-  { label: 'Random', value: 'random' },
-];
-
-export const TIMELINE_MODES: { label: string; value: TimelineModeDto }[] = [
-  { label: 'None', value: 'none' },
-  { label: 'Sequence', value: 'sequence' },
-  { label: 'Overlap', value: 'overlap' },
-  { label: 'Call & Response', value: 'callResponse' },
-  { label: 'Cascade', value: 'cascade' },
-  { label: 'Wave', value: 'wave' },
-  { label: 'Domino', value: 'domino' },
-  { label: 'Ripple', value: 'ripple' },
-];
-
-export const SCROLL_MODES: { label: string; value: ScrollModeDto }[] = [
-  { label: 'None', value: 'none' },
-  { label: 'Reveal on scroll', value: 'reveal' },
-  { label: 'Scrub', value: 'scrub' },
-  { label: 'Pin + Scrub', value: 'pin' },
-  { label: 'Story (pin + snap)', value: 'story' },
-];
-
-export const REVEAL_STYLES: { label: string; value: RevealStyleDto }[] = [
-  { label: 'None', value: 'none' },
-  { label: 'Clip up', value: 'clipUp' },
-  { label: 'Clip down', value: 'clipDown' },
-  { label: 'Clip left', value: 'clipLeft' },
-  { label: 'Clip right', value: 'clipRight' },
-  { label: 'Mask', value: 'mask' },
-];
-
-export const TEXT_EFFECTS: { label: string; value: TextEffectDto }[] = [
-  { label: 'None', value: 'none' },
-  { label: 'Split characters', value: 'splitChars' },
-  { label: 'Split words', value: 'splitWords' },
-  { label: 'Split lines', value: 'splitLines' },
-  { label: 'Scramble', value: 'scramble' },
-  { label: 'Typing', value: 'typing' },
-  { label: 'Count up', value: 'countUp' },
-];
-
-export const DRAG_AXES: { label: string; value: DragAxisDto }[] = [
-  { label: 'Free (x,y)', value: 'x,y' },
-  { label: 'Horizontal', value: 'x' },
-  { label: 'Vertical', value: 'y' },
-];
-
-export const OBSERVER_TYPES: { label: string; value: ObserverTypeDto }[] = [
-  { label: 'Wheel + Touch', value: 'wheel,touch' },
-  { label: 'Wheel only', value: 'wheel' },
-  { label: 'Touch only', value: 'touch' },
-  { label: 'Pointer (drag)', value: 'pointer' },
-  { label: 'All', value: 'wheel,touch,pointer' },
-];
-
-export const VELOCITY_EFFECTS: { label: string; value: VelocityEffectDto }[] = [
-  { label: 'None', value: 'none' },
-  { label: 'Skew X', value: 'skewX' },
-  { label: 'Skew Y', value: 'skewY' },
-  { label: 'Rotate', value: 'rotation' },
-  { label: 'Scale', value: 'scale' },
-];
-
-export const PARALLAX_DEFAULTS: Record<ParallaxPresetDto, { offset: number; scale?: number }> = {
-  none: { offset: 0 },
-  soft: { offset: 30 },
-  medium: { offset: 60 },
-  strong: { offset: 110 },
-  depth: { offset: 80, scale: 1.04 },
-};
-
-/**
- * GSAP Animation Config Contract
- */
+export type RevealStyle = RevealStyleDto;
 
 export const gsapAnimationConfigSchema = z.object({
   preset: animationPresetSchema,
@@ -284,7 +115,7 @@ export const gsapAnimationConfigSchema = z.object({
   parallaxScrub: z.number().optional(),
   parallaxStart: z.string().optional(),
   parallaxEnd: z.string().optional(),
-  parallaxEase: animationEasingSchema.optional(),
+  parallaxEase: z.string().optional(),
   parallaxPattern: parallaxPatternSchema.optional(),
   parallaxReverse: z.boolean().optional(),
   parallaxChildStep: z.number().optional(),
@@ -308,17 +139,17 @@ export const gsapAnimationConfigSchema = z.object({
   motionPathEnd: z.number().optional(),
   motionPathFollow: z.boolean().optional(),
   motionPathSpacing: z.number().optional(),
-  motionPathShapes: z.array(vectorShapeSchema).optional(),
+  motionPathShapes: z.array(z.string()).optional(),
   svgDrawEnabled: z.boolean().optional(),
   svgDrawSelector: z.string().optional(),
   svgDrawFrom: z.number().optional(),
   svgDrawTo: z.number().optional(),
   svgDrawPath: z.string().optional(),
-  svgDrawShapes: z.array(vectorShapeSchema).optional(),
+  svgDrawShapes: z.array(z.string()).optional(),
   svgMorphEnabled: z.boolean().optional(),
   svgMorphSelector: z.string().optional(),
   svgMorphTo: z.string().optional(),
-  svgMorphShapes: z.array(vectorShapeSchema).optional(),
+  svgMorphShapes: z.array(z.string()).optional(),
   textEffect: textEffectSchema.optional(),
   textStagger: z.number().optional(),
   textScrambleChars: z.string().optional(),
@@ -342,7 +173,7 @@ export const gsapAnimationConfigSchema = z.object({
   flipScale: z.boolean().optional(),
   flipFade: z.boolean().optional(),
   draggableEnabled: z.boolean().optional(),
-  draggableType: dragAxisSchema.optional(),
+  draggableType: z.string().optional(),
   draggableBounds: z.string().optional(),
   draggableMomentum: z.boolean().optional(),
   draggableMomentumFactor: z.number().optional(),
@@ -352,7 +183,7 @@ export const gsapAnimationConfigSchema = z.object({
   draggableCarouselSnap: z.boolean().optional(),
   observerEnabled: z.boolean().optional(),
   observerType: observerTypeSchema.optional(),
-  observerAxis: dragAxisSchema.optional(),
+  observerAxis: parallaxAxisSchema.optional(),
   observerSpeed: z.number().optional(),
   velocityEffect: velocityEffectSchema.optional(),
   velocityStrength: z.number().optional(),
@@ -360,7 +191,7 @@ export const gsapAnimationConfigSchema = z.object({
   magnetEnabled: z.boolean().optional(),
   magnetStrength: z.number().optional(),
   magnetRadius: z.number().optional(),
-  magnetAxis: dragAxisSchema.optional(),
+  magnetAxis: z.string().optional(),
   magnetReturn: z.number().optional(),
   timelineMode: timelineModeSchema.optional(),
   timelineGap: z.number().optional(),
@@ -385,44 +216,239 @@ export const gsapAnimationConfigSchema = z.object({
 });
 
 export type GsapAnimationConfigDto = z.infer<typeof gsapAnimationConfigSchema>;
+export type GsapAnimationConfig = GsapAnimationConfigDto;
 
 /**
- * GSAP Animation DTOs
+ * GSAP UI Constants
  */
 
-export const animationSchema = namedDtoSchema.extend({
-  config: z.record(z.string(), z.unknown()),
-  duration: z.number(),
-  easing: z.string(),
-  targets: z.array(z.string()),
-  properties: z.record(z.string(), z.unknown()),
-});
+export const ANIMATION_PRESETS: { label: string; value: AnimationPreset }[] = [
+  { label: 'None', value: 'none' },
+  { label: 'Fade In', value: 'fade' },
+  { label: 'Slide Up', value: 'slide-up' },
+  { label: 'Slide Down', value: 'slide-down' },
+  { label: 'Slide Left', value: 'slide-left' },
+  { label: 'Slide Right', value: 'slide-right' },
+  { label: 'Zoom In', value: 'zoom-in' },
+  { label: 'Zoom Out', value: 'zoom-out' },
+  { label: 'Flip X', value: 'flip-x' },
+  { label: 'Flip Y', value: 'flip-y' },
+  { label: 'Rotate', value: 'rotate' },
+  { label: 'Blur', value: 'blur' },
+  { label: 'Bounce', value: 'bounce' },
+  { label: 'Reveal', value: 'reveal' },
+];
 
-export type AnimationDto = z.infer<typeof animationSchema>;
+export const ANIMATION_EASINGS = [
+  'power1.in', 'power1.out', 'power1.inOut',
+  'power2.in', 'power2.out', 'power2.inOut',
+  'power3.in', 'power3.out', 'power3.inOut',
+  'power4.in', 'power4.out', 'power4.inOut',
+  'back.in', 'back.out', 'back.inOut',
+  'elastic.in', 'elastic.out', 'elastic.inOut',
+  'bounce.in', 'bounce.out', 'bounce.inOut',
+  'sine.in', 'sine.out', 'sine.inOut',
+  'expo.in', 'expo.out', 'expo.inOut',
+  'circ.in', 'circ.out', 'circ.inOut',
+  'none', 'linear',
+];
 
-export const createAnimationSchema = animationSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const PARALLAX_PRESETS: { label: string; value: ParallaxPreset }[] = [
+  { label: 'None', value: 'none' },
+  { label: 'Slow Scroll', value: 'slow-scroll' },
+  { label: 'Fast Scroll', value: 'fast-scroll' },
+  { label: 'Zoom Scroll', value: 'zoom-scroll' },
+  { label: 'Tilt', value: 'tilt' },
+  { label: 'Float', value: 'float' },
+  { label: 'Horizontal Parallax', value: 'horizontal-parallax' },
+  { label: 'Scale Parallax', value: 'scale-parallax' },
+  { label: 'Blur Parallax', value: 'blur-parallax' },
+  { label: 'Custom', value: 'custom' },
+];
 
-export type CreateAnimationDto = z.infer<typeof createAnimationSchema>;
-export type UpdateAnimationDto = Partial<CreateAnimationDto>;
+export const PARALLAX_PATTERNS: { label: string; value: ParallaxPattern }[] = [
+  { label: 'Uniform', value: 'uniform' },
+  { label: 'Random', value: 'random' },
+  { label: 'Stepped', value: 'stepped' },
+  { label: 'Alternating', value: 'alternating' },
+];
 
-export const animationTimelineSchema = namedDtoSchema.extend({
-  animations: z.array(animationSchema),
-  totalDuration: z.number(),
-  repeat: z.number(),
-  yoyo: z.boolean(),
-});
+export const TIMELINE_MODES: { label: string; value: TimelineMode }[] = [
+  { label: 'None', value: 'none' },
+  { label: 'Sequence', value: 'sequence' },
+  { label: 'Parallel', value: 'parallel' },
+  { label: 'Staggered', value: 'staggered' },
+  { label: 'Wave', value: 'wave' },
+];
 
-export type AnimationTimelineDto = z.infer<typeof animationTimelineSchema>;
+export const SCROLL_MODES: { label: string; value: ScrollMode }[] = [
+  { label: 'None', value: 'none' },
+  { label: 'Scrub', value: 'scrub' },
+  { label: 'Pin', value: 'pin' },
+  { label: 'Reveal', value: 'reveal' },
+  { label: 'Horizontal Scroll', value: 'horizontal-scroll' },
+];
 
-export const createAnimationTimelineSchema = animationTimelineSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const REVEAL_STYLES: { label: string; value: RevealStyle }[] = [
+  { label: 'None', value: 'none' },
+  { label: 'Curtain', value: 'curtain' },
+  { label: 'Mask', value: 'mask' },
+  { label: 'Clip Path', value: 'clip-path' },
+  { label: 'Grayscale', value: 'grayscale' },
+];
 
-export type CreateAnimationTimelineDto = z.infer<typeof createAnimationTimelineSchema>;
-export type UpdateAnimationTimelineDto = Partial<CreateAnimationTimelineDto>;
+export const TEXT_EFFECTS: { label: string; value: TextEffect }[] = [
+  { label: 'None', value: 'none' },
+  { label: 'Chars Fade', value: 'chars-fade' },
+  { label: 'Chars Slide Up', value: 'chars-slide-up' },
+  { label: 'Words Fade', value: 'words-fade' },
+  { label: 'Lines Reveal', value: 'lines-reveal' },
+  { label: 'Scramble', value: 'scramble' },
+  { label: 'Typing', value: 'typing' },
+  { label: 'Counting', value: 'counting' },
+];
+
+export const DRAG_AXES: { label: string; value: DragAxis }[] = [
+  { label: 'X & Y', value: 'x,y' },
+  { label: 'X Axis Only', value: 'x' },
+  { label: 'Y Axis Only', value: 'y' },
+];
+
+export const OBSERVER_TYPES: { label: string; value: string }[] = [
+  { label: 'Wheel & Touch', value: 'wheel,touch' },
+  { label: 'Wheel Only', value: 'wheel' },
+  { label: 'Touch Only', value: 'touch' },
+  { label: 'Scroll Only', value: 'scroll' },
+];
+
+export const VELOCITY_EFFECTS: { label: string; value: VelocityEffect }[] = [
+  { label: 'None', value: 'none' },
+  { label: 'Skew', value: 'skew' },
+  { label: 'Scale', value: 'scale' },
+  { label: 'Opacity', value: 'opacity' },
+  { label: 'Blur', value: 'blur' },
+];
+
+export const PARALLAX_DEFAULTS = {
+  scrub: 0.6,
+  start: 'top 85%',
+  end: 'bottom top',
+  ease: 'sine.inOut',
+};
+
+export const DEFAULT_ANIMATION_CONFIG: GsapAnimationConfig = {
+  preset: 'none',
+  duration: 1,
+  delay: 0,
+  easing: 'power2.out',
+  trigger: 'load',
+  selector: '',
+  staggerEach: 0.12,
+  staggerAmount: 0,
+  staggerFrom: 'start',
+  parallaxPreset: 'none',
+  parallaxSelector: '',
+  parallaxAxis: 'y',
+  parallaxOffset: 0,
+  parallaxScrub: 0.6,
+  parallaxStart: 'top 85%',
+  parallaxEnd: 'bottom top',
+  parallaxEase: 'sine.inOut',
+  parallaxPattern: 'uniform',
+  parallaxReverse: false,
+  parallaxChildStep: 16,
+  parallaxLayerStrength: 0.35,
+  parallaxLayerScaleStep: 0.015,
+  parallaxRandomSeed: 7,
+  parallaxScaleFrom: 1,
+  parallaxScaleTo: 1,
+  parallaxRotateFrom: 0,
+  parallaxRotateTo: 0,
+  parallaxOpacityFrom: 1,
+  parallaxOpacityTo: 1,
+  parallaxBlurFrom: 0,
+  parallaxBlurTo: 0,
+  motionPathEnabled: false,
+  motionPathPath: '',
+  motionPathAlign: true,
+  motionPathAutoRotate: true,
+  motionPathRotateOffset: 0,
+  motionPathStart: 0,
+  motionPathEnd: 1,
+  motionPathFollow: false,
+  motionPathSpacing: 0.08,
+  motionPathShapes: [],
+  svgDrawEnabled: false,
+  svgDrawSelector: 'path, line, circle, rect, polyline, polygon',
+  svgDrawFrom: 0,
+  svgDrawTo: 100,
+  svgDrawPath: '',
+  svgDrawShapes: [],
+  svgMorphEnabled: false,
+  svgMorphSelector: 'path',
+  svgMorphTo: '',
+  svgMorphShapes: [],
+  textEffect: 'none',
+  textStagger: 0.05,
+  textScrambleChars: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+  textTypingSpeed: 24,
+  textCursor: true,
+  textCountFrom: undefined,
+  textCountTo: undefined,
+  textCountDecimals: 0,
+  visualFilterFrom: '',
+  visualFilterTo: '',
+  visualClipFrom: '',
+  visualClipTo: '',
+  visualRadiusFrom: '',
+  visualRadiusTo: '',
+  visualShadowFrom: '',
+  visualShadowTo: '',
+  visualBackgroundFrom: '',
+  visualBackgroundTo: '',
+  flipEnabled: false,
+  flipSelector: '',
+  flipScale: true,
+  flipFade: true,
+  draggableEnabled: false,
+  draggableType: 'x,y',
+  draggableBounds: '',
+  draggableMomentum: false,
+  draggableMomentumFactor: 0.6,
+  draggableSnap: 0,
+  draggableCarousel: false,
+  draggableCarouselSelector: '',
+  draggableCarouselSnap: true,
+  observerEnabled: false,
+  observerType: 'wheel,touch',
+  observerAxis: 'y',
+  observerSpeed: 1,
+  velocityEffect: 'none',
+  velocityStrength: 0.15,
+  velocityMax: 20,
+  magnetEnabled: false,
+  magnetStrength: 0.35,
+  magnetRadius: 140,
+  magnetAxis: 'x,y',
+  magnetReturn: 0.35,
+  timelineMode: 'none',
+  timelineGap: 0.15,
+  timelineOverlap: 0.2,
+  timelineResponseOffset: 0.2,
+  timelineStaggerEach: 0.12,
+  timelineWaveAmount: 0.5,
+  timelineRandomize: false,
+  timelineLoop: false,
+  timelineRepeat: -1,
+  timelineYoyo: false,
+  timelineRepeatDelay: 0.2,
+  scrollMode: 'none',
+  scrollScrub: 0.6,
+  scrollPin: false,
+  scrollSnap: false,
+  scrollSnapDuration: 0.35,
+  scrollStart: 'top 85%',
+  scrollEnd: 'bottom top',
+  revealStyle: 'none',
+  customEase: '',
+};

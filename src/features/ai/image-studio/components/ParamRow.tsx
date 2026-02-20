@@ -1,12 +1,12 @@
 'use client';
 
 import { Repeat2 } from 'lucide-react';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { Button, Checkbox, Input, Textarea, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { usePrompt } from '../context/PromptContext';
+import { usePromptState, usePromptActions } from '../context/PromptContext';
 import { isParamUiControl, paramUiControlLabel, recommendParamUiControl, type ParamUiControl } from '../utils/param-ui';
 import { type ParamLeaf, type ParamSpec } from '../utils/prompt-params';
 
@@ -18,24 +18,17 @@ function safeJsonStringify(value: unknown): string {
   }
 }
 
-export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
-  const {
-    paramSpecs,
-    paramUiOverrides,
-    paramFlipMap,
-    issuesByPath,
-    onParamChange,
-    onParamFlip,
-    onParamUiControlChange,
-  } = usePrompt();
+export const ParamRow = React.memo(function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
+  const { paramSpecs, paramUiOverrides, paramFlipMap, issuesByPath } = usePromptState();
+  const { onParamChange, onParamFlip, onParamUiControlChange } = usePromptActions();
 
   const spec = paramSpecs?.[leaf.path];
   const uiControl = paramUiOverrides[leaf.path] ?? 'auto';
   const flipped = Boolean(paramFlipMap[leaf.path]);
   const issues = issuesByPath[leaf.path] ?? [];
-  const onChange = (value: unknown): void => onParamChange(leaf.path, value);
-  const onFlip = (): void => onParamFlip(leaf.path);
-  const onUiControlChange = (control: ParamUiControl): void => onParamUiControlChange(leaf.path, control);
+  const onChange = useCallback((value: unknown): void => onParamChange(leaf.path, value), [onParamChange, leaf.path]);
+  const onFlip = useCallback((): void => onParamFlip(leaf.path), [onParamFlip, leaf.path]);
+  const onUiControlChange = useCallback((control: ParamUiControl): void => onParamUiControlChange(leaf.path, control), [onParamUiControlChange, leaf.path]);
   const value = leaf.value;
 
   const errors = issues.filter((i) => i.severity === 'error');
@@ -316,4 +309,4 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
       )}
     </div>
   );
-}
+});

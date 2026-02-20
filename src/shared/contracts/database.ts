@@ -59,6 +59,26 @@ export const databaseBackupFileSchema = z.object({
 });
 
 export type DatabaseBackupFileDto = z.infer<typeof databaseBackupFileSchema>;
+
+export const databaseBrowseParamsSchema = z.object({
+  collection: z.string(),
+  limit: z.number().optional(),
+  skip: z.number().optional(),
+  query: z.string().optional(),
+});
+
+export type DatabaseBrowseParamsDto = z.infer<typeof databaseBrowseParamsSchema>;
+
+export const databaseBrowseSchema = z.object({
+  provider: z.enum(['mongodb', 'postgresql', 'prisma']),
+  collection: z.string(),
+  documents: z.array(z.record(z.string(), z.unknown())),
+  total: z.number(),
+  limit: z.number(),
+  skip: z.number(),
+});
+
+export type DatabaseBrowseDto = z.infer<typeof databaseBrowseSchema>;
 export type DatabaseInfo = DatabaseBackupFileDto;
 
 export const databaseBackupOperationResponseSchema = z.object({
@@ -180,6 +200,18 @@ export const multiSchemaResponseSchema = z.object({
 export type MultiSchemaResponseDto = z.infer<typeof multiSchemaResponseSchema>;
 
 export const redisOverviewSchema = z.object({
+  enabled: z.boolean(),
+  connected: z.boolean(),
+  urlConfigured: z.boolean(),
+  dbSize: z.number(),
+  usedMemory: z.string().nullable(),
+  maxMemory: z.string().nullable(),
+  namespaces: z.array(z.object({
+    namespace: z.string(),
+    keyCount: z.number(),
+    sampleKeys: z.array(z.string()),
+  })),
+  sampleKeys: z.array(z.string()),
   status: z.string(),
   version: z.string(),
   keysCount: z.number(),
@@ -202,16 +234,27 @@ export const databaseEngineStatusSchema = z.object({
 
 export type DatabaseEngineStatusDto = z.infer<typeof databaseEngineStatusSchema>;
 
+export const databaseEngineOperationJobSchema = z.object({
+  id: z.string(),
+  type: z.enum(['db_backup', 'db_sync']),
+  status: z.string(),
+  dbType: z.enum(['mongodb', 'postgresql']).nullable(),
+  direction: z.enum(['mongo_to_prisma', 'prisma_to_mongo']).nullable(),
+  source: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string().nullable(),
+  startedAt: z.string().nullable(),
+  finishedAt: z.string().nullable(),
+  errorMessage: z.string().nullable(),
+  resultSummary: z.string().nullable(),
+});
+
+export type DatabaseEngineOperationJobDto = z.infer<typeof databaseEngineOperationJobSchema>;
+
 export const databaseEngineOperationsJobsSchema = z.object({
-  jobs: z.array(z.object({
-    id: z.string(),
-    type: z.string(),
-    status: z.string(),
-    progress: z.number(),
-    createdAt: z.string(),
-    startedAt: z.string().nullable(),
-    finishedAt: z.string().nullable(),
-  })),
+  timestamp: z.string(),
+  queueStatus: z.record(z.string(), z.unknown()),
+  jobs: z.array(databaseEngineOperationJobSchema),
 });
 
 export type DatabaseEngineOperationsJobsDto = z.infer<typeof databaseEngineOperationsJobsSchema>;

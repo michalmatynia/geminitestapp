@@ -21,7 +21,7 @@ import {
   useUploadBackupMutation,
 } from '../hooks/useDatabaseQueries';
 
-import type { DatabaseInfo, DatabaseType } from '../types';
+import type { DatabaseInfo, DatabaseType } from '@/shared/contracts/database';
 
 export function useDatabaseBackupsState() {
   const dbKeys = QUERY_KEYS.system.databases;

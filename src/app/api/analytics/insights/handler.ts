@@ -20,6 +20,6 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
 export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   startAiInsightsQueue();
-  const insight = await generateAnalyticsInsight({ source: 'manual' });
+  const insight = await generateAnalyticsInsight({ source: 'user_triggered' });
   return NextResponse.json({ insight });
 }

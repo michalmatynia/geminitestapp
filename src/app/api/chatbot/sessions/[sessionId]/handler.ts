@@ -25,7 +25,7 @@ export async function GET_handler(
       message: '[chatbot][sessions][GET:sessionId] Found',
       context: {
         sessionId: session.id,
-        messageCount: session.messages.length,
+        messageCount: session.messages?.length ?? 0,
       },
     });
   }

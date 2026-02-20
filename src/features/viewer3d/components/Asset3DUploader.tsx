@@ -10,7 +10,7 @@ import { cn } from '@/shared/utils';
 import { uploadAsset3DFile } from '../api';
 import { validate3DFileAsync, SUPPORTED_3D_FORMATS } from '../utils/validateAsset3d';
 
-import type { Asset3DRecord } from '../types';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 
 export interface Asset3DUploaderProps {

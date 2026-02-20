@@ -18,10 +18,12 @@ export type LanguageRecord = LanguageDto;
 
 export const countrySchema = namedDtoSchema.extend({
   code: z.string(),
-  isoAlpha3: z.string(),
-  nativeName: z.string(),
-  phoneCode: z.string(),
+  isoAlpha3: z.string().optional(),
+  nativeName: z.string().optional(),
+  phoneCode: z.string().optional(),
   isActive: z.boolean(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 export type CountryDto = z.infer<typeof countrySchema>;
@@ -29,9 +31,11 @@ export type CountryRecord = CountryDto;
 
 export const currencySchema = namedDtoSchema.extend({
   code: z.string(),
-  symbol: z.string(),
+  symbol: z.string().nullable(),
   isDefault: z.boolean(),
   isActive: z.boolean(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 export type CurrencyDto = z.infer<typeof currencySchema>;
@@ -74,6 +78,17 @@ export const createCurrencySchema = currencySchema.omit({
 export type CreateCurrencyDto = z.infer<typeof createCurrencySchema>;
 export type UpdateCurrencyDto = Partial<CreateCurrencyDto>;
 
+export type CurrencyRepository = {
+  listCurrencies(): Promise<CurrencyRecord[]>;
+  getCurrencyById(id: string): Promise<CurrencyRecord | null>;
+  getCurrencyByCode(code: string): Promise<CurrencyRecord | null>;
+  createCurrency(data: CreateCurrencyDto): Promise<CurrencyRecord>;
+  updateCurrency(id: string, data: UpdateCurrencyDto): Promise<CurrencyRecord>;
+  deleteCurrency(id: string): Promise<void>;
+  isCurrencyInUse(id: string): Promise<boolean>;
+  ensureDefaultCurrencies(): Promise<void>;
+};
+
 export const createTranslationSchema = translationSchema.omit({
   id: true,
   createdAt: true,
@@ -88,7 +103,10 @@ export type UpdateTranslationDto = Partial<CreateTranslationDto>;
  */
 
 export const countryWithCurrenciesSchema = countrySchema.extend({
-  currencies: z.array(currencySchema),
+  currencies: z.array(z.object({
+    currencyId: z.string(),
+    currency: currencySchema,
+  })),
 });
 
 export type CountryWithCurrenciesDto = z.infer<typeof countryWithCurrenciesSchema>;

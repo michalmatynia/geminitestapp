@@ -24,7 +24,7 @@ import type {
   CaseResolverFileEditDraft,
   CaseResolverFolderRecord,
   CaseResolverWorkspace,
-} from '../types';
+} from '@/shared/contracts/case-resolver';
 
 const CASE_RESOLVER_EDITOR_DRAFT_STORAGE_PREFIX = 'case-resolver-editor-draft-v1';
 

@@ -9,7 +9,7 @@ import {
   useProducers,
   useSaveProducerMutation,
 } from '@/features/products/hooks/useProductMetadataQueries';
-import type { Producer } from '@/features/products/types';
+import type { Producer } from '@/shared/contracts/products';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { 
   Button, 

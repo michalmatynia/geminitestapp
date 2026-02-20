@@ -15,7 +15,7 @@ import type {
   ProductCategoryWithChildren,
   ProductParameter,
   ProductTag,
-} from '@/features/products/types';
+} from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,

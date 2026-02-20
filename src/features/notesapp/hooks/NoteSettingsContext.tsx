@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 
-import type { NoteSettings } from '@/features/notesapp/types/notes-settings';
+import type { NoteSettings } from '@/shared/contracts/notes/notes-settings';
 import { logClientError } from '@/features/observability';
 import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';

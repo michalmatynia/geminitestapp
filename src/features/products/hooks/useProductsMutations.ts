@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import { createProduct, updateProduct, deleteProduct } from '@/features/products/api/products';
-import type { ProductWithImages } from '@/features/products/types';
+import type { ProductWithImages } from '@/shared/contracts/products';
 import { operationFailedError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import {

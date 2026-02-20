@@ -10,8 +10,8 @@ import type {
   PriceGroupWithDetails,
   ProductWithImages,
   Producer,
-} from '@/features/products/types';
-import type { ProductFormData } from '@/features/products/types';
+} from '@/shared/contracts/products';
+import type { ProductFormData } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import type { Language } from '@/shared/contracts/internationalization';
 

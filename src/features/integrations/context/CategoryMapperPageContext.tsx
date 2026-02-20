@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 
 import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
-import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
+import type { IntegrationWithConnections } from '@/shared/contracts/integrations/listings';
 import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
 

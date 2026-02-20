@@ -13,7 +13,7 @@ import {
   type CaseResolverGraph,
   type CaseResolverJoinMode,
   type CaseResolverNodeMeta,
-} from './types';
+} from '@/shared/contracts/case-resolver';
 
 export type CaseResolverCompiledSegment = CaseResolverCompiledSegmentDto;
 

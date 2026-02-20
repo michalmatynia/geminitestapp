@@ -21,7 +21,7 @@ import type {
   CaseResolverTag,
   CaseResolverPartyReference,
   CaseResolverFileEditDraft,
-} from '../types';
+} from '@/shared/contracts/case-resolver';
 
 export const createId = (prefix: string): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {

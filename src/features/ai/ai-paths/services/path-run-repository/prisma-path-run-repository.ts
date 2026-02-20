@@ -14,7 +14,7 @@ import type {
   AiPathRunRepository,
   AiPathRunUpdate,
   AiPathRunNodeUpdate,
-} from '@/features/ai/ai-paths/types/path-run-repository';
+} from '@/shared/contracts/ai-paths/path-run-repository';
 import prisma from '@/shared/lib/db/prisma';
 import type {
   AiPathRunEventRecord,

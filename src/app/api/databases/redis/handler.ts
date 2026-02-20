@@ -37,6 +37,12 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       maxMemory: null,
       namespaces: [],
       sampleKeys: [],
+      status: 'disabled',
+      version: 'n/a',
+      keysCount: 0,
+      memoryUsed: '0',
+      uptime: '0',
+      clients: 0,
     };
     return NextResponse.json(disabled, {
       headers: { 'Cache-Control': 'no-store' },

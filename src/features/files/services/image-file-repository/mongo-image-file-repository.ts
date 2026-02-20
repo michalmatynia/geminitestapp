@@ -7,7 +7,7 @@ import type {
   ImageFileListFilters,
   ImageFileRecord,
   ImageFileRepository,
-} from '@/features/files/types/services/image-file-repository';
+} from '@/shared/contracts/files/services/image-file-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { WithId } from 'mongodb';

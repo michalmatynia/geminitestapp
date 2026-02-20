@@ -8,7 +8,7 @@ import { logSystemEvent } from '@/features/observability/server';
 import { getCatalogRepository } from '@/features/products/server';
 import { getProductDataProvider } from '@/features/products/server';
 import { normalizeCatalogLanguageSelection } from '@/features/products/services/catalog-language-normalization';
-import type { CatalogRecord } from '@/features/products/types';
+import type { CatalogRecord } from '@/shared/contracts/products';
 import { badRequestError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

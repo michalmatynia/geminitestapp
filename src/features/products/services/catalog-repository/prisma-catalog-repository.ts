@@ -6,7 +6,7 @@ import type {
   CatalogRecord,
   CatalogRepository,
   CatalogUpdateInput,
-} from '@/features/products/types/services/catalog-repository';
+} from '@/shared/contracts/products/services/catalog-repository';
 import prisma from '@/shared/lib/db/prisma';
 
 import type { Catalog as PrismaCatalog } from '@prisma/client';

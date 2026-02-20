@@ -17,7 +17,7 @@ import {
   type CaseResolverEdgeMeta,
   type CaseResolverFile,
   type CaseResolverNodeMeta,
-} from '../types';
+} from '@/shared/contracts/case-resolver';
 
 export const buildNode = (
   definition: NodeDefinition,

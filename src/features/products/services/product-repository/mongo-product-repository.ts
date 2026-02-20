@@ -11,14 +11,14 @@ import {
   toProductResponse,
   type ProductDocument,
 } from '@/features/products/services/product-repository/mongo-product-repository-mappers';
-import type { ProductImageRecord, CatalogRecord } from '@/features/products/types';
+import type { ProductImageRecord, CatalogRecord, ProductWithImages } from '@/shared/contracts/products';
 import type {
   CreateProductInput,
   ProductFilters,
   ProductRepository,
   TransactionalProductRepository,
   UpdateProductInput,
-} from '@/features/products/types/services/product-repository';
+} from '@/shared/contracts/products/services/product-repository';
 import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import { conflictError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -430,6 +430,56 @@ export const mongoProductRepository: ProductRepository = {
       return collection.estimatedDocumentCount();
     }
     return collection.countDocuments(searchFilter);
+  },
+
+  async getProductsWithCount(filters: ProductFilters): Promise<{ products: ProductWithImages[]; total: number }> {
+    const collection = await getProductCollection();
+    const page = filters.page ?? 1;
+    const pageSize = filters.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
+    const searchFilter = await applyBaseExportedFilter(
+      buildSearchFilter(filters),
+      filters.baseExported
+    );
+    const projectStage = buildListProjectStage(filters);
+
+    // Build the $facet products sub-pipeline: sort → skip → limit → (optional) project
+    const facetProductsPipeline: Document[] = [
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: pageSize },
+    ];
+    if (projectStage) {
+      facetProductsPipeline.push({ $project: projectStage });
+    }
+
+    // Run $match once, then fan-out into the list branch and the count branch
+    const pipeline: Document[] = [];
+    if (!isEmptyFilter(searchFilter)) {
+      pipeline.push({ $match: searchFilter });
+    }
+    pipeline.push({
+      $facet: {
+        products: facetProductsPipeline,
+        total: [{ $count: 'count' }],
+      },
+    });
+
+    const aggregateOptions = isEmptyFilter(searchFilter)
+      ? { hint: { createdAt: -1 } }
+      : undefined;
+
+    const [result] = await collection
+      .aggregate<{ products: ProductDocument[]; total: Array<{ count: number }> }>(
+        pipeline,
+        aggregateOptions
+      )
+      .toArray();
+
+    return {
+      products: (result?.products ?? []).map(toProductResponse),
+      total: result?.total?.[0]?.count ?? 0,
+    };
   },
 
   async getProductById(id: string) {

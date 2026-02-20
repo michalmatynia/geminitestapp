@@ -245,3 +245,103 @@ export type NoteRelationWithSource = NoteRelationRecord & {
 export type CategoryWithChildren = NoteCategoryRecordWithChildrenDto & {
   notes?: NoteRecord[] | undefined;
 };
+
+/**
+ * Note Settings
+ */
+export const noteSettingsSchema = z.object({
+  sidebarCollapsed: z.boolean(),
+  viewMode: z.enum(['list', 'grid']),
+  sortBy: z.enum(['updatedAt', 'createdAt', 'title']),
+  sortOrder: z.enum(['asc', 'desc']),
+  showPinnedSection: z.boolean(),
+  defaultNotebookId: z.string().nullable(),
+});
+
+export type NoteSettingsDto = z.infer<typeof noteSettingsSchema>;
+export type NoteSettings = NoteSettingsDto;
+
+/**
+ * Note UI and Hook Types
+ */
+
+export type UndoAction =
+  | {
+      type: 'moveNote';
+      noteId: string;
+      fromFolderId: string | null;
+      toFolderId: string | null;
+    }
+  | {
+      type: 'moveFolder';
+      folderId: string;
+      fromParentId: string | null;
+      toParentId: string | null;
+    }
+  | { type: 'renameFolder'; folderId: string; fromName: string; toName: string }
+  | { type: 'renameNote'; noteId: string; fromTitle: string; toTitle: string };
+
+export interface UseNoteOperationsProps {
+  selectedNotebookId: string | null;
+  notesRef: any; // RefObject<NoteWithRelations[]>
+  folderTreeRef: any; // RefObject<CategoryWithChildren[]>
+  fetchNotes: () => Promise<void>;
+  fetchFolderTree: () => Promise<void>;
+  setUndoStack: any; // React.Dispatch<React.SetStateAction<UndoAction[]>>
+  toast: (
+    message: string,
+    options?: { variant?: 'success' | 'error' | 'info'; duration?: number },
+  ) => void;
+  setSelectedFolderId: (id: string | null) => void;
+  setSelectedNote: (note: NoteWithRelations | null) => void;
+  selectedNote: NoteWithRelations | null;
+  confirmAction: (config: {
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    confirmText?: string;
+    isDangerous?: boolean;
+  }) => void;
+  promptAction: (config: {
+    title: string;
+    message?: string;
+    label?: string;
+    defaultValue?: string;
+    placeholder?: string;
+    onConfirm: (value: string) => void | Promise<void>;
+    required?: boolean;
+  }) => void;
+}
+
+export interface UseNoteFiltersProps {
+  settings: NoteSettings;
+  updateSettings: (settings: Partial<NoteSettings>) => void;
+}
+
+export interface UseNoteThemeProps {
+  themes: NoteThemeDto[];
+  notebook: NotebookDto | null;
+  folderTree: CategoryWithChildren[];
+  selectedFolderId: string | null;
+  selectedNotebookId: string | null;
+  selectedNote: NoteWithRelations | null;
+  fetchFolderTree: () => Promise<void>;
+  setNotebook: (notebook: NotebookDto) => void;
+}
+
+export interface UseNoteDataProps {
+  selectedNotebookId: string | null;
+  selectedFolderId: string | null;
+  searchQuery: string;
+  searchScope: 'both' | 'title' | 'content';
+  filterPinned?: boolean | undefined;
+  filterArchived?: boolean | undefined;
+  filterFavorite?: boolean | undefined;
+  filterTagIds: string[];
+  setSelectedNotebookId: (id: string | null) => void;
+}
+
+export interface NoteFormProps {
+  note?: NoteWithRelations | null;
+  onSuccess: () => void;
+}

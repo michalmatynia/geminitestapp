@@ -4,7 +4,7 @@ import { ErrorSystem } from '@/features/observability/server';
 
 import { getImageFileRepository } from './image-file-repository';
 
-import type { ImageFileRecord, ImageFileRepository, ImageFileCreateInput, ImageFileListFilters } from '../types/services/image-file-repository';
+import type { ImageFileRecord, ImageFileRepository, ImageFileCreateInput, ImageFileListFilters } from '@/shared/contracts/files';
 
 /**
  * Service that wraps the Image File repository with error handling and logging.

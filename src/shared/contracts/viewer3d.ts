@@ -33,6 +33,10 @@ export type Asset3dViewerConfigDto = z.infer<typeof asset3dViewerConfigSchema>;
 export const asset3dSchema = namedDtoSchema.extend({
   description: z.string().nullable(),
   fileId: z.string(),
+  filename: z.string().optional(),
+  filepath: z.string().optional(),
+  mimetype: z.string().optional(),
+  size: z.number().optional(),
   thumbnailId: z.string().nullable(),
   categoryId: z.string().nullable(),
   tagIds: z.array(z.string()),
@@ -65,3 +69,13 @@ export const asset3dListFiltersSchema = z.object({
 
 export type Asset3dListFiltersDto = z.infer<typeof asset3dListFiltersSchema>;
 export type Asset3DListFilters = Asset3dListFiltersDto;
+
+export interface Asset3DRepository {
+  createAsset3D(data: Asset3DCreateInput): Promise<Asset3DRecord>;
+  getAsset3DById(id: string): Promise<Asset3DRecord | null>;
+  listAssets3D(filters?: Asset3DListFilters): Promise<Asset3DRecord[]>;
+  updateAsset3D(id: string, data: Asset3DUpdateInput): Promise<Asset3DRecord | null>;
+  deleteAsset3D(id: string): Promise<Asset3DRecord | null>;
+  getCategories(): Promise<string[]>;
+  getTags(): Promise<string[]>;
+}

@@ -26,14 +26,14 @@ import {
   defaultBaseImportParameterImportSettings,
   normalizeBaseImportParameterImportSettings,
   type BaseImportParameterImportSettings,
-} from '@/features/integrations/types/base-import-parameter-import';
+} from '@/shared/contracts/integrations/base-import-parameter-import';
 import type {
   BaseImportErrorClass,
   BaseImportErrorCode,
   BaseImportItemRecord,
   BaseImportMode,
   BaseImportRunRecord,
-} from '@/features/integrations/types/base-import-runs';
+} from '@/shared/contracts/integrations/base-import-runs';
 import { getProducerRepository } from '@/features/products/services/producer-repository';
 import { getProductRepository } from '@/features/products/services/product-repository';
 import { getTagRepository } from '@/features/products/services/tag-repository';

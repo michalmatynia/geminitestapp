@@ -27,7 +27,7 @@ import type {
   ProductSyncRunRecord,
   ProductSyncRunStats,
   ProductSyncRunStatus,
-} from '@/features/product-sync/types/product-sync';
+} from '@/shared/contracts/product-sync/product-sync';
 import { getProductRepository } from '@/features/products/server';
 import type {
   ProductWithImagesDto as ProductWithImages,

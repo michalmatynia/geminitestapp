@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 
 import { useProductListTableContext } from '@/features/products/context/ProductListContext';
-import type { ProductWithImages } from '@/features/products/types';
+import type { ProductWithImages } from '@/shared/contracts/products';
 
 import type { ColumnDef, OnChangeFn, RowSelectionState } from '@tanstack/react-table';
 import type { Row } from '@tanstack/react-table';

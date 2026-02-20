@@ -41,6 +41,7 @@ export const imageFileSchema = fileSchema.extend({
   isAnimated: z.boolean().optional(),
   hasAlpha: z.boolean().optional(),
   blurHash: z.string().optional(),
+  tags: z.array(z.string()).optional(),
 });
 
 export type ImageFileDto = z.infer<typeof imageFileSchema>;
@@ -63,3 +64,37 @@ export const imageFileSelectionSchema = z.object({
 
 export type ImageFileSelectionDto = z.infer<typeof imageFileSelectionSchema>;
 export type ImageFileSelection = ImageFileSelectionDto;
+
+export const imageFileCreateInputSchema = imageFileSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type ImageFileCreateInputDto = z.infer<typeof imageFileCreateInputSchema>;
+export type ImageFileCreateInput = ImageFileCreateInputDto;
+
+export const imageFileListFiltersSchema = z.object({
+  search: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  mimetypes: z.array(z.string()).optional(),
+});
+
+export type ImageFileListFiltersDto = z.infer<typeof imageFileListFiltersSchema>;
+export type ImageFileListFilters = ImageFileListFiltersDto;
+
+export type ImageFileRepository = {
+  createImageFile(data: ImageFileCreateInput): Promise<ImageFileRecord>;
+  getImageFileById(id: string): Promise<ImageFileRecord | null>;
+  listImageFiles(filters?: ImageFileListFilters): Promise<ImageFileRecord[]>;
+  findImageFilesByIds(ids: string[]): Promise<ImageFileRecord[]>;
+  updateImageFilePath(
+    id: string,
+    filepath: string
+  ): Promise<ImageFileRecord | null>;
+  updateImageFileTags(
+    id: string,
+    tags: string[]
+  ): Promise<ImageFileRecord | null>;
+  deleteImageFile(id: string): Promise<ImageFileRecord | null>;
+};

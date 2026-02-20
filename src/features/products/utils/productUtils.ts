@@ -1,5 +1,5 @@
 import { getProductRepository } from '@/features/products/services/product-repository';
-import type { ProductRecord } from '@/features/products/types';
+import type { ProductRecord } from '@/shared/contracts/products';
 import { validateProductCreate } from '@/features/products/validations';
 import { validationError } from '@/shared/errors/app-error';
 

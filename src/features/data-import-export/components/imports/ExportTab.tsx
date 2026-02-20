@@ -9,7 +9,7 @@ import type {
   Template,
   WarehouseOption,
   ImageRetryPreset,
-} from '@/features/data-import-export/types/imports';
+} from '@/shared/contracts/data-import-export/imports';
 import {
   getDefaultImageRetryPresets,
   withImageRetryPresetLabels,

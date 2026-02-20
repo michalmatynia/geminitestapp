@@ -9,7 +9,7 @@ import type {
   ImportListItem,
   InventoryOption,
   Template,
-} from '@/features/data-import-export/types/imports';
+} from '@/shared/contracts/data-import-export/imports';
 import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import {

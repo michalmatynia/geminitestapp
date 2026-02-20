@@ -4,7 +4,7 @@ import React from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
 
-import type { ValidatorSettingsController } from './types';
+import type { ValidatorSettingsController } from '@/shared/contracts/products';
 
 const ValidatorSettingsContext = React.createContext<ValidatorSettingsController | null>(null);
 

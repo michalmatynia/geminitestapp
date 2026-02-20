@@ -10,7 +10,7 @@ import type {
   UpdaterSampleState,
 } from '@/features/ai/ai-paths/lib';
 
-import type { AiQuery, DatabasePresetOption, SchemaData } from './types';
+import type { AiQuery, DatabasePresetOption, SchemaData } from '@/shared/contracts/ai-paths';
 
 export type DatabaseConstructorContextValue = {
   pendingAiQuery: string;

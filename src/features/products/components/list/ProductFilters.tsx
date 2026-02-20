@@ -9,7 +9,7 @@ import {
 } from '@/features/products/context/ProductListContext';
 import { useProductCategories } from '@/features/products/hooks/useCategoryQueries';
 import { useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
-import type { ProductCategory, ProductWithImages } from '@/features/products/types';
+import type { ProductCategory, ProductWithImages } from '@/shared/contracts/products';
 import { DropdownMenuItem, SelectionBar, useToast } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';

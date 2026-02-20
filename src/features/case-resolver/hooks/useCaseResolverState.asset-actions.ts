@@ -43,7 +43,7 @@ import type {
   CaseResolverFileEditDraft,
   CaseResolverScanSlot,
   CaseResolverWorkspace,
-} from '../types';
+} from '@/shared/contracts/case-resolver';
 
 type CaseResolverToast = (
   message: string,

@@ -8,7 +8,7 @@ import {
   serializeWorkspaceForUnsavedChangesCheck,
 } from '@/features/case-resolver/hooks/useCaseResolverState.helpers';
 import { createCaseResolverFile } from '@/features/case-resolver/settings';
-import type { CaseResolverFile } from '@/features/case-resolver/types';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 const buildFilesById = (files: CaseResolverFile[]): Map<string, CaseResolverFile> =>
   new Map(files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file]));

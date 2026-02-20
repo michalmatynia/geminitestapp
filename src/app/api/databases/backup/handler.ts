@@ -43,7 +43,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   let processedInline = false;
   startProductAiJobQueue();
   try {
-    await enqueueProductAiJobToQueue(job.id, job.productId as string, job.type, job.payload);
+    await enqueueProductAiJobToQueue(job.id, job.productId as string, job.jobType, job.payload);
   } catch (enqueueError: unknown) {
     await logSystemError({
       message: '[databases.backup] Failed to enqueue db backup job to runtime queue, falling back to inline processing',

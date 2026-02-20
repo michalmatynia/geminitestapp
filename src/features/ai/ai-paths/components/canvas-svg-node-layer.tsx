@@ -28,25 +28,16 @@ type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping';
 type SvgNodeDetailLevel = 'full' | 'compact' | 'skeleton';
 
 type SvgNodeLayerProps = {
-  nodes: AiNode[];
-  edges: Edge[];
-  view: { x: number; y: number; scale: number };
-  viewportSize: { width: number; height: number } | null;
   cullPadding?: number;
   detailLevel?: SvgNodeDetailLevel;
-  selectedNodeId: string | null;
-  selectedNodeIdSet: Set<string>;
-  runtimeState: RuntimeState;
-  runtimeNodeStatuses: AiPathRuntimeNodeStatusMap;
-  runtimeRunStatus: RuntimeRunStatus;
-  nodeDurations: Record<string, number>;
-  inputPulseNodes: Set<string>;
-  outputPulseNodes: Set<string>;
-  triggerConnected: Set<string>;
+  nodeDurations?: Record<string, number>;
+  inputPulseNodes?: Set<string>;
+  outputPulseNodes?: Set<string>;
+  triggerConnected?: Set<string>;
   enableNodeAnimations?: boolean;
   connectorHitTargetPx?: number;
-  connecting: { fromNodeId: string; fromPort: string } | null;
-  connectingFromNode: AiNode | null;
+  connecting?: { fromNodeId: string; fromPort: string } | null;
+  connectingFromNode?: AiNode | null;
   hoveredConnectorKey: string | null;
   pinnedConnectorKey: string | null;
   setHoveredConnectorKey: React.Dispatch<React.SetStateAction<string | null>>;
@@ -79,6 +70,16 @@ type SvgNodeLayerProps = {
     info: ConnectorInfo;
   }) => void) | undefined;
   onConnectorLeave?: (() => void) | undefined;
+  
+  nodes: AiNode[];
+  edges: Edge[];
+  view: { x: number; y: number; scale: number };
+  viewportSize: { width: number; height: number } | null;
+  selectedNodeId: string | null;
+  selectedNodeIdSet: Set<string>;
+  runtimeState: RuntimeState;
+  runtimeNodeStatuses: AiPathRuntimeNodeStatusMap;
+  runtimeRunStatus: RuntimeRunStatus;
 };
 
 const BLOCKER_PROCESSING_STATUSES = new Set<string>([
@@ -244,21 +245,12 @@ const buildConnectorTitle = (info: ConnectorInfo): string => {
 };
 
 export function CanvasSvgNodeLayer({
-  nodes,
-  edges,
-  view,
-  viewportSize,
   cullPadding = 260,
   detailLevel = 'full',
-  selectedNodeId,
-  selectedNodeIdSet,
-  runtimeState,
-  runtimeNodeStatuses,
-  runtimeRunStatus,
-  nodeDurations,
-  inputPulseNodes,
-  outputPulseNodes,
-  triggerConnected,
+  nodeDurations = {},
+  inputPulseNodes = new Set(),
+  outputPulseNodes = new Set(),
+  triggerConnected = new Set(),
   enableNodeAnimations = true,
   connectorHitTargetPx = 14,
   connecting,
@@ -279,6 +271,15 @@ export function CanvasSvgNodeLayer({
   onFireTrigger,
   onConnectorHover,
   onConnectorLeave,
+  nodes,
+  edges,
+  view,
+  viewportSize,
+  selectedNodeId,
+  selectedNodeIdSet,
+  runtimeState,
+  runtimeNodeStatuses,
+  runtimeRunStatus,
 }: SvgNodeLayerProps): React.JSX.Element {
   const buildConnectorKey = React.useCallback(
     (direction: 'input' | 'output', nodeId: string, port: string): string =>
@@ -306,7 +307,7 @@ export function CanvasSvgNodeLayer({
           | undefined;
       return fallbackSource?.[port];
     },
-    [runtimeState.history, runtimeState.inputs, runtimeState.outputs]
+    [runtimeState]
   );
 
   const getNodeRuntimeData = React.useCallback(
@@ -499,374 +500,321 @@ export function CanvasSvgNodeLayer({
               y={titleY}
               fill={palette.text}
               fontSize={titleFontSize}
-              fontWeight='700'
+              fontWeight='500'
+              pointerEvents='none'
+              style={{ userSelect: 'none' }}
             >
               {titleText}
             </text>
 
-            {showNodeId ? (
-              <text x={10} y={NODE_MIN_HEIGHT - 8} fill='rgba(148, 163, 184, 0.85)' fontSize='8' fontFamily='ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'>
+            {showNodeId && (
+              <text
+                x={10}
+                y={NODE_MIN_HEIGHT - 8}
+                fill='rgba(148, 163, 184, 0.85)'
+                fontSize='8'
+                fontFamily='ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+                pointerEvents='none'
+                style={{ userSelect: 'none' }}
+              >
                 {node.id}
               </text>
-            ) : null}
+            )}
 
-            {showFineDetails ? (
-              <>
+            {showFineDetails && (
+              <g transform={`translate(10 ${NODE_MIN_HEIGHT - 26})`} pointerEvents='none'>
                 <rect
-                  x={10}
-                  y={26}
                   width={typeBadgeWidth}
                   height={14}
-                  rx={7}
-                  fill='rgba(15, 23, 42, 0.58)'
-                  stroke='rgba(148, 163, 184, 0.35)'
-                />
-                <text x={16} y={35.5} fill='#cbd5e1' fontSize='9' fontWeight='600'>
-                  {typeBadge}
-                </text>
-              </>
-            ) : null}
-
-            {showRuntimeBadges && runtimeStatusLabel && runtimeStatusColors ? (
-              <>
-                <rect
-                  x={NODE_WIDTH - runtimeBadgeWidth - 10}
-                  y={26}
-                  width={runtimeBadgeWidth}
-                  height={14}
-                  rx={7}
-                  fill={runtimeStatusColors.fill}
-                  stroke={runtimeStatusColors.stroke}
+                  rx={4}
+                  fill='rgba(0, 0, 0, 0.25)'
+                  stroke={palette.accent}
+                  strokeWidth='0.5'
+                  strokeOpacity='0.4'
                 />
                 <text
-                  x={NODE_WIDTH - runtimeBadgeWidth - 4}
-                  y={35.5}
-                  fill={runtimeStatusColors.text}
-                  fontSize='9'
+                  x={typeBadgeWidth / 2}
+                  y={10}
+                  textAnchor='middle'
+                  fill={palette.accent}
+                  fontSize='8'
                   fontWeight='600'
+                  style={{ userSelect: 'none' }}
                 >
-                  {runtimeStatusLabel}
+                  {typeBadge}
                 </text>
-              </>
-            ) : null}
+              </g>
+            )}
 
-            {showFineDetails && nodeDurations[node.id] != null ? (
-              <text
-                x={NODE_WIDTH - 10}
-                y={16}
-                textAnchor='end'
-                fill='rgba(148, 163, 184, 0.92)'
-                fontSize='9'
-              >
-                {formatDurationMs(nodeDurations[node.id] ?? null)}
-              </text>
-            ) : null}
-
-            {showNodeAnimations && inputPulse ? (
-              <circle
-                cx={NODE_WIDTH - 24}
-                cy={13}
-                r={3}
-                fill='#38bdf8'
-                className='ai-paths-port-pulse'
-              />
-            ) : null}
-            {showNodeAnimations && outputPulse ? (
-              <circle
-                cx={NODE_WIDTH - 14}
-                cy={13}
-                r={3}
-                fill='#f59e0b'
-                className='ai-paths-port-pulse'
-              />
-            ) : null}
-
-            {showFineDetails && node.type === 'viewer' && !triggerConnected.has(node.id) ? (
-              <text x={10} y={52} fill='#fcd34d' fontSize='9'>
-                Not wired to Trigger
-              </text>
-            ) : null}
-            {showFineDetails && node.type === 'trigger' && isScheduledTrigger ? (
-              <text x={10} y={52} fill='#fcd34d' fontSize='9' fontWeight='600'>
-                Scheduled Trigger
-              </text>
-            ) : null}
-
-            {showTriggerButton && node.type === 'trigger' ? (
+            {showRuntimeBadges && runtimeStatusLabel && (
               <g
-                transform={`translate(10 ${NODE_MIN_HEIGHT - 26})`}
-                style={{ cursor: 'pointer' }}
-                onPointerDown={(event: React.PointerEvent<SVGGElement>) => {
-                  event.stopPropagation();
-                }}
-                onDoubleClick={(event: React.MouseEvent<SVGGElement>) => {
-                  event.stopPropagation();
-                }}
-                onClick={(event: React.MouseEvent<SVGGElement>) => {
-                  event.stopPropagation();
-                  void onFireTrigger(node);
-                }}
+                transform={`translate(${NODE_WIDTH - runtimeBadgeWidth - 10} ${
+                  NODE_MIN_HEIGHT - 26
+                })`}
+                pointerEvents='none'
               >
-                <rect
-                  x={0}
-                  y={0}
-                  width={76}
-                  height={18}
-                  rx={9}
-                  fill='rgba(16, 185, 129, 0.18)'
-                  stroke='rgba(16, 185, 129, 0.64)'
+                {runtimeStatusColors && (
+                  <>
+                    <rect
+                      width={runtimeBadgeWidth}
+                      height={14}
+                      rx={4}
+                      fill={runtimeStatusColors.fill}
+                      stroke={runtimeStatusColors.stroke}
+                      strokeWidth='0.5'
+                    />
+                    <text
+                      x={runtimeBadgeWidth / 2}
+                      y={10}
+                      textAnchor='middle'
+                      fill={runtimeStatusColors.text}
+                      fontSize='8'
+                      fontWeight='600'
+                      style={{ userSelect: 'none' }}
+                    >
+                      {runtimeStatusLabel}
+                    </text>
+                  </>
+                )}
+              </g>
+            )}
+
+            {showTriggerButton && node.type === 'trigger' && (
+              <g
+                transform={`translate(${NODE_WIDTH - 34} ${NODE_MIN_HEIGHT - 16})`}
+                pointerEvents='none'
+              >
+                <circle
+                  cx={12}
+                  cy={0}
+                  r={10}
+                  fill={triggerConnected.has(node.id) ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.1)'}
+                  stroke={triggerConnected.has(node.id) ? '#10b981' : '#f43f5e'}
+                  strokeWidth='1'
+                  style={{ cursor: 'pointer', pointerEvents: 'all' }}
+                  onClick={(event: React.MouseEvent<SVGCircleElement>) => {
+                    event.stopPropagation();
+                    void onFireTrigger(node);
+                  }}
                 />
-                <text x={12} y={12.5} fill='#a7f3d0' fontSize='9' fontWeight='700'>
-                  Fire Trigger
-                </text>
+                <path
+                  d='M10 4l6-4-6-4v8z'
+                  transform='translate(9 0) scale(0.6)'
+                  fill={triggerConnected.has(node.id) ? '#10b981' : '#f43f5e'}
+                />
               </g>
-            ) : null}
+            )}
 
-            {showNodeAnimations && isBlockerProcessing ? (
-              <g transform={`translate(${NODE_WIDTH - 34} ${NODE_MIN_HEIGHT - 16})`} pointerEvents='none'>
-                {[0, 1, 2].map((index: number) => (
-                  <circle
-                    key={`processing-dot-${node.id}-${index}`}
-                    cx={index * 7}
-                    cy={0}
-                    r={2}
-                    fill='#38bdf8'
-                  >
-                    <animate
-                      attributeName='cy'
-                      values='0;-3;0'
-                      dur='1.1s'
-                      begin={`${index * 0.16}s`}
-                      repeatCount='indefinite'
-                    />
-                    <animate
-                      attributeName='opacity'
-                      values='0.45;1;0.45'
-                      dur='1.1s'
-                      begin={`${index * 0.16}s`}
-                      repeatCount='indefinite'
-                    />
-                  </circle>
-                ))}
-              </g>
-            ) : null}
+            {showNodeAnimations && inputPulse && (
+              <rect
+                x={-2}
+                y={-2}
+                width={NODE_WIDTH + 4}
+                height={NODE_MIN_HEIGHT + 4}
+                rx={13}
+                ry={13}
+                fill='none'
+                stroke='#38bdf8'
+                strokeWidth='2'
+                className='ai-paths-node-pulse-input'
+                pointerEvents='none'
+              />
+            )}
+            {showNodeAnimations && outputPulse && (
+              <rect
+                x={-2}
+                y={-2}
+                width={NODE_WIDTH + 4}
+                height={NODE_MIN_HEIGHT + 4}
+                rx={13}
+                ry={13}
+                fill='none'
+                stroke='#10b981'
+                strokeWidth='2'
+                className='ai-paths-node-pulse-output'
+                pointerEvents='none'
+              />
+            )}
 
-            {showNodePorts
-              ? node.inputs.map((input: string, index: number) => {
-                const portY = getPortOffsetY(index, node.inputs.length);
-                const isConnecting = Boolean(connecting && connectingFromNode);
-                const isConnectable = isConnecting
-                  ? validateConnection(
-                    connectingFromNode as AiNode,
-                    node,
-                    connecting?.fromPort ?? '',
-                    input
-                  ).valid
-                  : false;
-                const connectorInfo = getConnectorInfo('input', node.id, input);
-                const hasMismatch = connectorInfo.hasMismatch;
-                const hasIncomingEdge = incomingEdgePortSet.has(`${node.id}:${input}`);
-                const connectorKey = buildConnectorKey('input', node.id, input);
-                const isPinned = pinnedConnectorKey === connectorKey;
-                const isHovered = hoveredConnectorKey === connectorKey;
-                const connectorStroke = isConnecting
-                  ? isConnectable
-                    ? '#34d399'
-                    : '#475569'
-                  : isPinned
-                    ? '#fcd34d'
-                    : '#38bdf8';
-                const connectorFill = isConnecting
-                  ? isConnectable
-                    ? 'rgba(16, 185, 129, 0.35)'
-                    : 'rgba(30, 41, 59, 0.4)'
-                  : isPinned || isHovered
-                    ? 'rgba(56, 189, 248, 0.38)'
-                    : 'rgba(56, 189, 248, 0.2)';
+            {showNodePorts && (
+              <>
+                {node.inputs?.map((port: string) => {
+                  const y = getPortOffsetY(node, 'input', port);
+                  const isConnected = incomingEdgePortSet.has(`${node.id}:${port}`);
+                  const key = buildConnectorKey('input', node.id, port);
+                  const isHovered = hoveredConnectorKey === key;
+                  const isPinned = pinnedConnectorKey === key;
 
-                return (
-                  <g key={`svg-input-${node.id}-${input}`} transform={`translate(0 ${portY})`}>
-                    <circle
-                      cx={-8}
-                      cy={0}
-                      r={connectorHitRadius}
-                      stroke='transparent'
-                      strokeWidth={1}
-                      fill='transparent'
-                      data-port='input'
-                      style={{ cursor: 'pointer' }}
-                      onPointerMove={(event: React.PointerEvent<SVGCircleElement>) => {
-                        onConnectorHover?.({
-                          clientX: event.clientX,
-                          clientY: event.clientY,
-                          info: connectorInfo,
-                        });
-                      }}
-                      onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {
-                        setHoveredConnectorKey(connectorKey);
-                        onConnectorHover?.({
-                          clientX: event.clientX,
-                          clientY: event.clientY,
-                          info: connectorInfo,
-                        });
-                      }}
-                      onPointerLeave={() => {
-                        setHoveredConnectorKey((prev: string | null) =>
-                          prev === connectorKey ? null : prev
-                        );
-                        onConnectorLeave?.();
-                      }}
-                      onPointerDown={(event: React.PointerEvent<SVGCircleElement>) => {
-                        event.stopPropagation();
-                        if (hasIncomingEdge) {
-                          void onReconnectInput(event, node.id, input);
-                        }
-                      }}
-                      onPointerUp={(event: React.PointerEvent<SVGCircleElement>) => {
-                        event.stopPropagation();
-                        if (connecting) {
-                          onCompleteConnection(event, node, input);
-                        }
-                      }}
-                      onClick={(event: React.MouseEvent<SVGCircleElement>) => {
-                        event.stopPropagation();
-                        setPinnedConnectorKey((prev: string | null) =>
-                          prev === connectorKey ? null : connectorKey
-                        );
-                      }}
-                      onContextMenu={(event: React.MouseEvent<SVGCircleElement>) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        onDisconnectPort('input', node.id, input);
-                      }}
-                    >
-                      <title>
-                        {buildConnectorTitle(connectorInfo)}
-                      </title>
-                    </circle>
-                    <circle
-                      cx={-8}
-                      cy={0}
-                      r={PORT_SIZE / 2 + 1}
-                      stroke={connectorStroke}
-                      strokeWidth={isPinned ? 2 : 1.2}
-                      fill={connectorFill}
-                      data-port='input'
-                      style={{ pointerEvents: 'none' }}
-                    />
-                    {showPortLabels ? (
-                      <text
-                        x={10}
-                        y={3}
-                        fill={hasMismatch ? '#fecaca' : isConnectable ? '#bbf7d0' : '#93c5fd'}
-                        fontSize='8.5'
-                        fontWeight='600'
-                        pointerEvents='none'
-                      >
-                        {formatPortLabel(input)}
-                      </text>
-                    ) : null}
-                    {hasMismatch ? <circle cx={-1} cy={-8} r={2} fill='#fb7185' /> : null}
-                  </g>
-                );
-              })
-              : null}
+                  return (
+                    <g key={key} transform={`translate(0 ${y})`}>
+                      <title>{buildConnectorTitle(getConnectorInfo('input', node.id, port))}</title>
+                      <circle
+                        cx={0}
+                        cy={0}
+                        r={isHovered || isPinned ? PORT_SIZE / 2 + 1.5 : PORT_SIZE / 2}
+                        fill={isConnected ? palette.accent : palette.fill}
+                        stroke={palette.accent}
+                        strokeWidth={isHovered || isPinned ? 2 : 1}
+                        style={{ cursor: 'crosshair' }}
+                        onPointerDown={(event: React.PointerEvent<SVGCircleElement>) => {
+                          event.stopPropagation();
+                          void onReconnectInput(event, node.id, port);
+                        }}
+                        onPointerUp={(event: React.PointerEvent<SVGCircleElement>) => {
+                          event.stopPropagation();
+                          onCompleteConnection(event, node, port);
+                        }}
+                        onContextMenu={(event: React.MouseEvent<SVGCircleElement>) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          onDisconnectPort('input', node.id, port);
+                        }}
+                        onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {
+                          setHoveredConnectorKey(key);
+                          onConnectorHover?.({
+                            clientX: event.clientX,
+                            clientY: event.clientY,
+                            info: getConnectorInfo('input', node.id, port),
+                          });
+                        }}
+                        onPointerLeave={() => {
+                          setHoveredConnectorKey(null);
+                          onConnectorLeave?.();
+                        }}
+                        onClick={(event: React.MouseEvent<SVGCircleElement>) => {
+                          if (event.altKey || event.ctrlKey || event.metaKey) {
+                            setPinnedConnectorKey(isPinned ? null : key);
+                          }
+                        }}
+                      />
+                      <circle
+                        cx={0}
+                        cy={0}
+                        r={connectorHitRadius}
+                        fill='transparent'
+                        stroke='none'
+                        style={{ cursor: 'crosshair' }}
+                        onPointerDown={(event: React.PointerEvent<SVGCircleElement>) => {
+                          event.stopPropagation();
+                          void onReconnectInput(event, node.id, port);
+                        }}
+                        onPointerUp={(event: React.PointerEvent<SVGCircleElement>) => {
+                          event.stopPropagation();
+                          onCompleteConnection(event, node, port);
+                        }}
+                        onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {
+                          setHoveredConnectorKey(key);
+                          onConnectorHover?.({
+                            clientX: event.clientX,
+                            clientY: event.clientY,
+                            info: getConnectorInfo('input', node.id, port),
+                          });
+                        }}
+                        onPointerLeave={() => {
+                          setHoveredConnectorKey(null);
+                          onConnectorLeave?.();
+                        }}
+                      />
+                      {showPortLabels && (
+                        <text
+                          x={PORT_SIZE + 4}
+                          y={3}
+                          fill='rgba(148, 163, 184, 0.7)'
+                          fontSize='9'
+                          style={{ userSelect: 'none' }}
+                        >
+                          {formatPortLabel(port)}
+                        </text>
+                      )}
+                    </g>
+                  );
+                })}
 
-            {showNodePorts
-              ? node.outputs.map((output: string, index: number) => {
-                const portY = getPortOffsetY(index, node.outputs.length);
-                const connectorInfo = getConnectorInfo('output', node.id, output);
-                const hasMismatch = connectorInfo.hasMismatch;
-                const connectorKey = buildConnectorKey('output', node.id, output);
-                const isPinned = pinnedConnectorKey === connectorKey;
-                const isHovered = hoveredConnectorKey === connectorKey;
-                const connectorStroke = isPinned ? '#fcd34d' : '#f59e0b';
-                const connectorFill =
-                isPinned || isHovered
-                  ? 'rgba(251, 191, 36, 0.44)'
-                  : 'rgba(251, 191, 36, 0.26)';
-                return (
-                  <g key={`svg-output-${node.id}-${output}`} transform={`translate(0 ${portY})`}>
-                    {showPortLabels ? (
-                      <text
-                        x={NODE_WIDTH - 10}
-                        y={3}
-                        fill={hasMismatch ? '#fecaca' : '#fcd34d'}
-                        fontSize='8.5'
-                        fontWeight='600'
-                        textAnchor='end'
-                        pointerEvents='none'
-                      >
-                        {formatPortLabel(output)}
-                      </text>
-                    ) : null}
-                    <circle
-                      cx={NODE_WIDTH + 8}
-                      cy={0}
-                      r={connectorHitRadius}
-                      stroke='transparent'
-                      strokeWidth={1}
-                      fill='transparent'
-                      data-port='output'
-                      style={{ cursor: 'pointer' }}
-                      onPointerMove={(event: React.PointerEvent<SVGCircleElement>) => {
-                        onConnectorHover?.({
-                          clientX: event.clientX,
-                          clientY: event.clientY,
-                          info: connectorInfo,
-                        });
-                      }}
-                      onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {
-                        setHoveredConnectorKey(connectorKey);
-                        onConnectorHover?.({
-                          clientX: event.clientX,
-                          clientY: event.clientY,
-                          info: connectorInfo,
-                        });
-                      }}
-                      onPointerLeave={() => {
-                        setHoveredConnectorKey((prev: string | null) =>
-                          prev === connectorKey ? null : prev
-                        );
-                        onConnectorLeave?.();
-                      }}
-                      onPointerDown={(event: React.PointerEvent<SVGCircleElement>) => {
-                        event.stopPropagation();
-                        void onStartConnection(event, node, output);
-                      }}
-                      onClick={(event: React.MouseEvent<SVGCircleElement>) => {
-                        event.stopPropagation();
-                        setPinnedConnectorKey((prev: string | null) =>
-                          prev === connectorKey ? null : connectorKey
-                        );
-                      }}
-                      onContextMenu={(event: React.MouseEvent<SVGCircleElement>) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        onDisconnectPort('output', node.id, output);
-                      }}
-                    >
-                      <title>
-                        {buildConnectorTitle(connectorInfo)}
-                      </title>
-                    </circle>
-                    <circle
-                      cx={NODE_WIDTH + 8}
-                      cy={0}
-                      r={PORT_SIZE / 2 + 1}
-                      stroke={connectorStroke}
-                      strokeWidth={isPinned ? 2 : 1.2}
-                      fill={connectorFill}
-                      data-port='output'
-                      style={{ pointerEvents: 'none' }}
-                    />
-                    {hasMismatch ? (
-                      <circle cx={NODE_WIDTH + 15} cy={-8} r={2} fill='#fb7185' />
-                    ) : null}
-                  </g>
-                );
-              })
-              : null}
+                {node.outputs?.map((port: string) => {
+                  const y = getPortOffsetY(node, 'output', port);
+                  const key = buildConnectorKey('output', node.id, port);
+                  const isHovered = hoveredConnectorKey === key;
+                  const isPinned = pinnedConnectorKey === key;
+
+                  return (
+                    <g key={key} transform={`translate(${NODE_WIDTH} ${y})`}>
+                      <title>{buildConnectorTitle(getConnectorInfo('output', node.id, port))}</title>
+                      <circle
+                        cx={0}
+                        cy={0}
+                        r={isHovered || isPinned ? PORT_SIZE / 2 + 1.5 : PORT_SIZE / 2}
+                        fill={palette.accent}
+                        stroke={palette.accent}
+                        strokeWidth={isHovered || isPinned ? 2 : 1}
+                        style={{ cursor: 'crosshair' }}
+                        onPointerDown={(event: React.PointerEvent<SVGCircleElement>) => {
+                          event.stopPropagation();
+                          void onStartConnection(event, node, port);
+                        }}
+                        onContextMenu={(event: React.MouseEvent<SVGCircleElement>) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          onDisconnectPort('output', node.id, port);
+                        }}
+                        onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {
+                          setHoveredConnectorKey(key);
+                          onConnectorHover?.({
+                            clientX: event.clientX,
+                            clientY: event.clientY,
+                            info: getConnectorInfo('output', node.id, port),
+                          });
+                        }}
+                        onPointerLeave={() => {
+                          setHoveredConnectorKey(null);
+                          onConnectorLeave?.();
+                        }}
+                        onClick={(event: React.MouseEvent<SVGCircleElement>) => {
+                          if (event.altKey || event.ctrlKey || event.metaKey) {
+                            setPinnedConnectorKey(isPinned ? null : key);
+                          }
+                        }}
+                      />
+                      <circle
+                        cx={0}
+                        cy={0}
+                        r={connectorHitRadius}
+                        fill='transparent'
+                        stroke='none'
+                        style={{ cursor: 'crosshair' }}
+                        onPointerDown={(event: React.PointerEvent<SVGCircleElement>) => {
+                          event.stopPropagation();
+                          void onStartConnection(event, node, port);
+                        }}
+                        onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {
+                          setHoveredConnectorKey(key);
+                          onConnectorHover?.({
+                            clientX: event.clientX,
+                            clientY: event.clientY,
+                            info: getConnectorInfo('output', node.id, port),
+                          });
+                        }}
+                        onPointerLeave={() => {
+                          setHoveredConnectorKey(null);
+                          onConnectorLeave?.();
+                        }}
+                      />
+                      {showPortLabels && (
+                        <text
+                          x={-PORT_SIZE - 4}
+                          y={3}
+                          textAnchor='end'
+                          fill='rgba(148, 163, 184, 0.7)'
+                          fontSize='9'
+                          style={{ userSelect: 'none' }}
+                        >
+                          {formatPortLabel(port)}
+                        </text>
+                      )}
+                    </g>
+                  );
+                })}
+              </>
+            )}
           </g>
         );
       })}

@@ -19,7 +19,7 @@ import {
 import type {
   Template,
   TemplateMapping,
-} from '@/features/data-import-export/types/imports';
+} from '@/shared/contracts/data-import-export/imports';
 import { useParameters as useProductParameters } from '@/features/products/hooks/useProductSettingsQueries';
 import type { ProductParameterDto as ProductParameter } from '@/shared/contracts/products';
 import {

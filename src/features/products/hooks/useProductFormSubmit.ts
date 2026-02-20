@@ -10,8 +10,8 @@ import type {
   ProductWithImages,
   ProductFormData,
   ProductParameterValue,
-} from '@/features/products/types';
-import type { ProductImageSlot } from '@/features/products/types/products-ui';
+} from '@/shared/contracts/products';
+import type { ProductImageSlot } from '@/shared/contracts/products/products-ui';
 import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';

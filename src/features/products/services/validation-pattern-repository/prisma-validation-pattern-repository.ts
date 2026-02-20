@@ -9,7 +9,7 @@ import type {
   CreateProductValidationPatternInput,
   ProductValidationPatternRepository,
   UpdateProductValidationPatternInput,
-} from '@/features/products/types/services/validation-pattern-repository';
+} from '@/shared/contracts/products/services/validation-pattern-repository';
 import {
   normalizeProductValidationPatternDenyBehaviorOverride,
   normalizeProductValidationLaunchScopeBehavior,

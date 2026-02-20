@@ -5,6 +5,8 @@ import React from 'react';
 
 import { cn } from '@/shared/utils';
 
+import { useTreeNodeState } from './TreeContext';
+
 export type TreeRowTone = 'primary' | 'subtle' | 'neutral' | 'none';
 
 const TONE_CLASSES: Record<TreeRowTone, { base: string; selected: string; dragOver: string }> = {
@@ -32,6 +34,7 @@ const TONE_CLASSES: Record<TreeRowTone, { base: string; selected: string; dragOv
 
 export interface TreeRowProps extends React.HTMLAttributes<HTMLDivElement> {
   asChild?: boolean;
+  nodeId?: string;
   depth?: number;
   baseIndent?: number;
   indent?: number;
@@ -45,12 +48,13 @@ export interface TreeRowProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function TreeRow({
   asChild = false,
+  nodeId,
   depth = 0,
   baseIndent = 8,
   indent = 16,
   disableIndent = false,
   tone = 'primary',
-  selected = false,
+  selected: propSelected,
   dragOver = false,
   selectedClassName,
   dragOverClassName,
@@ -58,6 +62,9 @@ export function TreeRow({
   style,
   ...props
 }: TreeRowProps): React.JSX.Element {
+  const { isSelected: contextSelected } = useTreeNodeState(nodeId);
+  const selected = propSelected ?? contextSelected;
+
   const toneClasses = TONE_CLASSES[tone];
   const mergedClassName = cn(
     'group relative flex items-center gap-2 rounded px-2 py-1.5 transition',

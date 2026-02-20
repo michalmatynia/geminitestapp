@@ -386,14 +386,15 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     await queryClient.cancelQueries({ queryKey: slotsQueryKey });
     queryClient.setQueryData<StudioSlotsResponse>(slotsQueryKey, (current) => {
       if (!current) return current;
-      return {
-        ...current,
-        slots: current.slots.map((item: ImageStudioSlotRecord) =>
-          item.id === slot.id
-            ? { ...item, folderPath: normalizedTarget || null }
-            : item
-        ),
-      };
+      const targetFolderPath = normalizedTarget || null;
+      const existingSlot = current.slots.find((item: ImageStudioSlotRecord) => item.id === slot.id);
+      if (existingSlot?.folderPath === targetFolderPath) return current; // no-op: already at target
+      const nextSlots = current.slots.map((item: ImageStudioSlotRecord) =>
+        item.id === slot.id
+          ? { ...item, folderPath: targetFolderPath }
+          : item
+      );
+      return { ...current, slots: nextSlots };
     });
 
     // Use the existing updateSlotMutation (same endpoint as rename, proven to work).
@@ -438,14 +439,13 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
 
       queryClient.setQueryData<StudioSlotsResponse>(slotsQueryKey, (current) => {
         if (!current) return current;
-        return {
-          ...current,
-          slots: current.slots.map((slot: ImageStudioSlotRecord) => {
-            const nextFolderPath = optimisticNextById.get(slot.id);
-            if (nextFolderPath === undefined) return slot;
-            return { ...slot, folderPath: nextFolderPath || null };
-          }),
-        };
+        const nextSlots = current.slots.map((slot: ImageStudioSlotRecord) => {
+          const nextFolderPath = optimisticNextById.get(slot.id);
+          if (nextFolderPath === undefined) return slot;
+          return { ...slot, folderPath: nextFolderPath || null };
+        });
+        if (nextSlots.every((s: ImageStudioSlotRecord, i: number) => s === current.slots[i])) return current;
+        return { ...current, slots: nextSlots };
       });
 
       void Promise.allSettled(
@@ -491,14 +491,13 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
 
       queryClient.setQueryData<StudioSlotsResponse>(slotsQueryKey, (current) => {
         if (!current) return current;
-        return {
-          ...current,
-          slots: current.slots.map((slot: ImageStudioSlotRecord) => {
-            const nextPath = optimisticNextById.get(slot.id);
-            if (nextPath === undefined) return slot;
-            return { ...slot, folderPath: nextPath || null };
-          }),
-        };
+        const nextSlots = current.slots.map((slot: ImageStudioSlotRecord) => {
+          const nextPath = optimisticNextById.get(slot.id);
+          if (nextPath === undefined) return slot;
+          return { ...slot, folderPath: nextPath || null };
+        });
+        if (nextSlots.every((s: ImageStudioSlotRecord, i: number) => s === current.slots[i])) return current;
+        return { ...current, slots: nextSlots };
       });
 
       await Promise.allSettled(

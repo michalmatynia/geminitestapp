@@ -98,7 +98,7 @@ import type {
   CaseResolverIdentifier,
   CaseResolverTag,
   CaseResolverWorkspace,
-} from '../types';
+} from '@/shared/contracts/case-resolver';
 
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';
 const CASE_RESOLVER_REQUESTED_FILE_REFRESH_MAX_ATTEMPTS = 20;

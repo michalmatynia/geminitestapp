@@ -26,7 +26,7 @@ import type {
   PlannerAlternative,
   PlannerCritique,
   PlannerMeta,
-} from '@/features/ai/agent-runtime/types/agent';
+} from '@/shared/contracts/agent-runtime/agent';
 import { ErrorSystem } from '@/features/observability/server';
 
 import {

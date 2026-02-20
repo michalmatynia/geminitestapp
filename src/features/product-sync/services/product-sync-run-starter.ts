@@ -5,7 +5,7 @@ import { ErrorSystem } from '@/features/observability/server';
 import type {
   ProductSyncRunRecord,
   ProductSyncRunTrigger,
-} from '@/features/product-sync/types/product-sync';
+} from '@/shared/contracts/product-sync/product-sync';
 
 import {
   createProductSyncRun,

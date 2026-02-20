@@ -50,7 +50,7 @@ import {
 } from '../settings';
 import {
   DEFAULT_CASE_RESOLVER_NODE_META,
-} from '../types';
+} from '@/shared/contracts/case-resolver';
 import {
   buildCombinedOcrText,
   buildDocumentPdfMarkup,
@@ -72,7 +72,7 @@ import type {
   CaseResolverNodeMeta,
   CaseResolverRelationGraph,
   CaseResolverTag,
-} from '../types';
+} from '@/shared/contracts/case-resolver';
 
 export function AdminCaseResolverPage(): React.JSX.Element {
   const state = useCaseResolverState();

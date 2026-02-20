@@ -51,7 +51,7 @@ import {
   type CaseResolverNodeMeta,
   type CaseResolverPdfExtractionPresetId,
   type NodeDefinition,
-} from '../types';
+} from '@/shared/contracts/case-resolver';
 import {
   createCaseResolverCanvasDropHandlers,
   type CaseResolverDroppedAsset,

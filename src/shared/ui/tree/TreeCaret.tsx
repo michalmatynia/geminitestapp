@@ -5,7 +5,10 @@ import React from 'react';
 
 import { cn } from '@/shared/utils';
 
+import { useTreeNodeState } from './TreeContext';
+
 export interface TreeCaretProps {
+  nodeId?: string | undefined;
   isOpen?: boolean | undefined;
   hasChildren?: boolean | undefined;
   showDot?: boolean | undefined;
@@ -19,10 +22,11 @@ export interface TreeCaretProps {
 }
 
 export function TreeCaret({
-  isOpen = false,
+  nodeId,
+  isOpen: propIsOpen,
   hasChildren = false,
   showDot = false,
-  onToggle,
+  onToggle: propOnToggle,
   ariaLabel,
   className,
   buttonClassName,
@@ -30,6 +34,11 @@ export function TreeCaret({
   placeholderClassName,
   dotClassName,
 }: TreeCaretProps): React.JSX.Element {
+  const { isExpanded: contextExpanded, onToggleExpand: contextToggle } = useTreeNodeState(nodeId);
+  
+  const isOpen = propIsOpen ?? contextExpanded;
+  const onToggle = propOnToggle ?? (nodeId ? contextToggle : undefined);
+
   const Icon = isOpen ? ChevronDown : ChevronRight;
   const iconClasses = cn('size-3.5', iconClassName);
   const sharedClasses = cn('inline-flex w-4 justify-center', className);

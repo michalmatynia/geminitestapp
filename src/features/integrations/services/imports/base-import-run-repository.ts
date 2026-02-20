@@ -16,7 +16,7 @@ import type {
   BaseImportRunStats,
   BaseImportRunStatus,
   BaseImportPreflight,
-} from '@/features/integrations/types/base-import-runs';
+} from '@/shared/contracts/integrations/base-import-runs';
 import { getProductDataProvider } from '@/features/products/server';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';

@@ -8,7 +8,7 @@ import type {
   ProductAiJobRepository,
   ProductAiJobUpdate,
   ProductAiJobStatus,
-} from '@/features/jobs/types/product-ai-job-repository';
+} from '@/shared/contracts/jobs/product-ai-job-repository';
 import prisma from '@/shared/lib/db/prisma';
 
 const mapJob = (job: ProductAiJob): ProductAiJobRecord => ({

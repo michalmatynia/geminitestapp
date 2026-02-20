@@ -1,6 +1,6 @@
 import { api } from '@/shared/lib/api-client';
 
-import type { Page, PageSummary } from '../types';
+import type { Page, PageSummary } from '@/shared/contracts/cms';
 
 export const fetchPages = async (domainId?: string | null): Promise<PageSummary[]> => {
   return api.get<PageSummary[]>('/api/cms/pages', {

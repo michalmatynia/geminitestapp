@@ -45,6 +45,8 @@ export async function PUT_handler(
     code: data.code,
     name: data.name,
     symbol: data.symbol ?? null,
+    isDefault: existing.isDefault,
+    isActive: existing.isActive,
   });
 
   return NextResponse.json(updated);

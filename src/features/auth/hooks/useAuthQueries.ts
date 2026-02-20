@@ -33,7 +33,7 @@ import type {
   MutationResult 
 } from '@/shared/contracts/ui';
 
-import type { AuthUserSummary } from '../types';
+import type { AuthUserSummary } from '@/shared/contracts/auth';
 
 
 const AUTH_USERS_STALE_MS = 10_000;

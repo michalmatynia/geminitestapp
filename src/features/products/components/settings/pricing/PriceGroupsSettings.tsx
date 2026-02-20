@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { PriceGroup } from '@/features/products/types';
+import { PriceGroup } from '@/shared/contracts/products';
 import { Badge, Button, FormSection, SelectSimple, SimpleSettingsList } from '@/shared/ui';
 
 import { useProductSettingsContext } from '../ProductSettingsContext';

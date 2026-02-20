@@ -22,7 +22,7 @@ import { getImageFileRepository } from '@/features/files/server';
 import { listBaseListingsForSync, syncBaseImagesForListing } from '@/features/integrations/services/base-image-sync';
 import { defaultLanguages } from '@/features/internationalization/server';
 import { getInternationalizationProvider } from '@/features/internationalization/services/internationalization-provider';
-import type { ProductAiJobRecord } from '@/features/jobs/types/product-ai-job-repository';
+import type { ProductAiJobRecord } from '@/shared/contracts/jobs/product-ai-job-repository';
 import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import {
   generateProductDescription,

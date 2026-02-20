@@ -13,7 +13,7 @@ import {
   ANIMATION_PRESETS, 
   ANIMATION_EASINGS,
 } from '@/shared/contracts/gsap';
-import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap/types/animation';
+import { DEFAULT_ANIMATION_CONFIG } from '@/shared/contracts/gsap/animation';
 import { 
   Input, 
   Label, 

@@ -14,7 +14,7 @@ import {
   ProductCategoryWithChildren,
   ProductTag, 
   ProductParameter,
-} from '../types';
+} from '@/shared/contracts/products';
 
 
 export async function getPriceGroups(): Promise<PriceGroup[]> {

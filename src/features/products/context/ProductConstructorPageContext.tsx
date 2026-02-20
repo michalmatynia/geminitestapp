@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from 'react';
 
-import type { CatalogRecord, ProductParameter } from '@/features/products/types';
+import type { CatalogRecord, ProductParameter } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 
 export type ProductConstructorParametersSection = {

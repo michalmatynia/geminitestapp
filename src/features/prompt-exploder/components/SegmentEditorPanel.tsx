@@ -1036,17 +1036,6 @@ export function SegmentEditorPanel(): React.JSX.Element {
                 {/* ── Matched rules + template + approval ─────────────────── */}
                 <SegmentEditorInsightsPanel
                   selectedSegment={selectedSegment}
-                  approvalDraft={approvalDraft}
-                  matchedRuleDetails={matchedRuleDetails}
-                  similarTemplateCandidates={similarTemplateCandidates}
-                  templateTargetOptions={templateTargetOptions}
-                  setApprovalDraft={setApprovalDraft}
-                  templateMergeThreshold={templateMergeThreshold}
-                  effectiveLearnedTemplates={effectiveLearnedTemplates}
-                  isBusy={isBusy}
-                  onApprovePattern={() => {
-                    void handleApproveSelectedSegmentPattern();
-                  }}
                 />
               </>
             )}

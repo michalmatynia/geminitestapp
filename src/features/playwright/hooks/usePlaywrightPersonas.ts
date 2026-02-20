@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright/constants/playwright';
-import type { PlaywrightPersona } from '@/features/playwright/types';
+import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { fetchPlaywrightPersonas } from '@/features/playwright/utils/personas';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import { api } from '@/shared/lib/api-client';

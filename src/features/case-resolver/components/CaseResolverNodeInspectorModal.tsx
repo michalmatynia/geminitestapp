@@ -21,7 +21,7 @@ import {
   type CaseResolverEditorNodeContext,
   type CaseResolverFile,
   type CaseResolverNodeMeta,
-} from '../types';
+} from '@/shared/contracts/case-resolver';
 
 const CASE_RESOLVER_NODE_TEXT_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 

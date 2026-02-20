@@ -28,7 +28,7 @@ import {
   useTags,
   useUpdatePriceGroupMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
-import { Catalog, PriceGroup } from '@/features/products/types';
+import { Catalog, PriceGroup } from '@/shared/contracts/products';
 import { Button, PageLayout, useToast } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -105,7 +105,7 @@ export function ProductSettingsPage(): React.JSX.Element {
   const deletePriceGroupMutation = useDeletePriceGroupMutation();
   const deleteCatalogMutation = useDeleteCatalogMutation();
 
-  const defaultGroupId = priceGroups.find((g: import('@/features/products/types').PriceGroup) => g.isDefault)?.id ?? '';
+  const defaultGroupId = priceGroups.find((g: import('@/shared/contracts/products').PriceGroup) => g.isDefault)?.id ?? '';
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;

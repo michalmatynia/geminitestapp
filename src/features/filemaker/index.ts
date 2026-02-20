@@ -5,4 +5,4 @@ export * from './pages/AdminFilemakerOrganizationsPage';
 export * from './pages/AdminFilemakerPersonEditPage';
 export * from './pages/AdminFilemakerOrganizationEditPage';
 export * from './settings';
-export * from './types';
+export * from '@/shared/contracts/filemaker';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator/hooks/useAgentCreatorSettings';
-import type { AgentPersonaSettings } from '@/features/ai/agentcreator/types';
+import type { AgentPersonaSettings } from '@/shared/contracts/agents';
 import { SelectSimple, FormField } from '@/shared/ui';
 
 const DEFAULT_VALUE = '__default__';

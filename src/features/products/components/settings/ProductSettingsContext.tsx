@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { Catalog, PriceGroup, ProductCategoryWithChildren, ProductParameter, ProductTag } from '@/features/products/types';
+import type { Catalog, PriceGroup, ProductCategoryWithChildren, ProductParameter, ProductTag } from '@/shared/contracts/products';
 
 type ProductSettingsContextValue = {
   loadingCatalogs: boolean;

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import React, { useMemo } from 'react';
 
 import { useCategoryMapperPageContext } from '@/features/integrations/context/CategoryMapperPageContext';
-import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/features/integrations/types/integrations';
+import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/shared/contracts/integrations/integrations';
 import { EmptyState, Skeleton } from '@/shared/ui';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
 import type { PickerOption, PickerGroup } from '@/shared/ui/templates/pickers/types';

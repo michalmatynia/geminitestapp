@@ -31,13 +31,13 @@ import {
   type CaseResolverShowDocumentInCanvasDetail,
 } from '../drag';
 import { parseNodeFileSnapshot, serializeNodeFileSnapshot } from '../settings';
-import { type AiNode, type AiEdge, type NodeDefinition } from '../types';
+import { type AiNode, type AiEdge, type NodeDefinition } from '@/shared/contracts/case-resolver';
 import {
   type CaseResolverFile,
   type CaseResolverNodeFileMeta,
   type CaseResolverNodeFileSnapshot,
   type CaseResolverScanSlot,
-} from '../types';
+} from '@/shared/contracts/case-resolver';
 import {
   buildNode,
   buildPromptTemplateFromDroppedDocumentFile,

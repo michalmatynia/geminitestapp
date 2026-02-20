@@ -7,7 +7,7 @@ import type {
   CatalogRecord,
   CatalogRepository,
   CatalogUpdateInput,
-} from '@/features/products/types/services/catalog-repository';
+} from '@/shared/contracts/products/services/catalog-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { WithId } from 'mongodb';

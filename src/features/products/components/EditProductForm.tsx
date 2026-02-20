@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import ProductForm from '@/features/products/components/ProductForm';
 import { ProductFormProvider, useProductFormContext } from '@/features/products/context/ProductFormContext';
-import type { ProductWithImages } from '@/features/products/types';
+import type { ProductWithImages } from '@/shared/contracts/products';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

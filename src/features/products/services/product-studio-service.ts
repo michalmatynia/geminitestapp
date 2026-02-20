@@ -56,7 +56,7 @@ import {
   type ProductStudioConfig,
 } from '@/features/products/services/product-studio-config';
 import { productService } from '@/features/products/services/productService';
-import type { ProductWithImages } from '@/features/products/types';
+import type { ProductWithImages } from '@/shared/contracts/products';
 import {
   DEFAULT_PRODUCT_STUDIO_SEQUENCE_READINESS,
   normalizeProductStudioSequenceGenerationMode,
@@ -65,7 +65,7 @@ import {
   type ProductStudioSequencingConfig,
   type ProductStudioSequencingDiagnostics,
   type ProductStudioSequenceReadiness,
-} from '@/features/products/types/product-studio';
+} from '@/shared/contracts/products/product-studio';
 import {
   badRequestError,
   notFoundError,

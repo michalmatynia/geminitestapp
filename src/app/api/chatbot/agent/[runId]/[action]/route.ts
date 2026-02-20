@@ -8,6 +8,7 @@ import {
   AgentCreatorAgentRunStreamGET,
   AgentCreatorAgentSnapshotGET,
 } from '@/features/ai/agentcreator/server';
+import { type ApiHandlerContext } from '@/shared/contracts/ui';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
 export const runtime = 'nodejs';
@@ -74,14 +75,14 @@ const POST_handler = async (
 };
 
 export const GET = apiHandlerWithParams<RouteParams>(
-  async (req, _ctx, params) => {
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: RouteParams) => {
     return await GET_handler(req, params);
   },
   { source: 'chatbot.agent.[runId].[action].GET' }
 );
 
 export const POST = apiHandlerWithParams<RouteParams>(
-  async (req, _ctx, params) => {
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: RouteParams) => {
     return await POST_handler(req, params);
   },
   { source: 'chatbot.agent.[runId].[action].POST' }

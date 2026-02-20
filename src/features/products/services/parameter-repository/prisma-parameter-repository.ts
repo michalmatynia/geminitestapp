@@ -5,7 +5,7 @@ import type {
   ParameterFilters,
   ParameterCreateInput,
   ParameterUpdateInput,
-} from '@/features/products/types/services/parameter-repository';
+} from '@/shared/contracts/products/services/parameter-repository';
 import prisma from '@/shared/lib/db/prisma';
 import type { 
   ProductParameter 

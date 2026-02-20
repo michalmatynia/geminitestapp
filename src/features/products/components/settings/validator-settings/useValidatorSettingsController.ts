@@ -56,7 +56,7 @@ import {
   getReplacementFieldsForTarget,
 } from './helpers';
 
-import type { PatternFormData, SequenceGroupDraft } from './types';
+import type { PatternFormData, SequenceGroupDraft } from '@/shared/contracts/products';
 
 export function useValidatorSettingsController() {
   const queryClient = useQueryClient();

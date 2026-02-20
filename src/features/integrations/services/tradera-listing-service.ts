@@ -37,8 +37,8 @@ import {
   loadTraderaSystemSettings,
   toTruthyBoolean,
 } from '@/features/integrations/services/tradera-system-settings';
-import type { IntegrationConnectionRecord } from '@/features/integrations/types/integrations';
-import type { ProductListingRecord } from '@/features/integrations/types/listings';
+import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/integrations';
+import type { ProductListingRecord } from '@/shared/contracts/integrations/listings';
 import { ErrorSystem } from '@/features/observability/server';
 import { getProductRepository, getSettingValue } from '@/features/products/server';
 import type { 

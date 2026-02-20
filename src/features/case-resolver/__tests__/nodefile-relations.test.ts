@@ -7,7 +7,7 @@ import {
   sanitizeCaseResolverGraphNodeFileRelations,
 } from '@/features/case-resolver/nodefile-relations';
 import { createCaseResolverAssetFile, createCaseResolverFile } from '@/features/case-resolver/settings';
-import type { AiNode, CaseResolverGraph } from '@/features/case-resolver/types';
+import type { AiNode, CaseResolverGraph } from '@/shared/contracts/case-resolver';
 
 const createPromptNode = (id: string): AiNode => ({
   id,

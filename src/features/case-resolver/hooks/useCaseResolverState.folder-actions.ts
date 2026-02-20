@@ -16,7 +16,7 @@ import type {
   CaseResolverAssetFile,
   CaseResolverFile,
   CaseResolverWorkspace,
-} from '../types';
+} from '@/shared/contracts/case-resolver';
 
 type ConfirmFn = (input: {
   title: string;

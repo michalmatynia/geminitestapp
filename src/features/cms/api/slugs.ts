@@ -1,6 +1,6 @@
 import { api } from '@/shared/lib/api-client';
 
-import type { Slug } from '../types';
+import type { Slug } from '@/shared/contracts/cms';
 
 export const fetchSlugs = async (domainId?: string | null): Promise<Slug[]> => {
   return api.get<Slug[]>('/api/cms/slugs', {

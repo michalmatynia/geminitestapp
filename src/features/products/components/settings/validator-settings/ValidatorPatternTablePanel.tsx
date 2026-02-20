@@ -33,7 +33,7 @@ import { INSTANCE_SCOPE_LABELS } from './constants';
 import { ValidatorDocTooltip } from './ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 
-import type { SequenceGroupDraft } from './types';
+import type { SequenceGroupDraft } from '@/shared/contracts/products';
 
 type PatternRowProps = {
   pattern: ProductValidationPattern;

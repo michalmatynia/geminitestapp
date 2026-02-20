@@ -2,7 +2,7 @@ import 'server-only';
 
 import { ErrorSystem } from '@/features/observability/server';
 import { getProductDataProvider, type ProductDbProvider } from '@/features/products/services/product-provider';
-import type { TagRepository } from '@/features/products/types/services/tag-repository';
+import type { TagRepository } from '@/shared/contracts/products/services/tag-repository';
 
 import { mongoTagRepository } from './mongo-tag-repository';
 import { prismaTagRepository } from './prisma-tag-repository';

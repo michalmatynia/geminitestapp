@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { ProductTag } from '@/features/products/types';
+import type { ProductTag } from '@/shared/contracts/products';
 
 import { ProductMetadataMultiSelectField } from './ProductMetadataMultiSelectField';
 

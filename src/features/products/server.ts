@@ -23,9 +23,9 @@ export {
   ProductsV2GET,
   ProductsV2POST,
 } from './api/routes/v2-products-route';
-export * from './types/drafts';
-export * from './types/products-ui';
-export type { ProductWithImages } from './types';
+export * from '@/shared/contracts/products/drafts';
+export * from '@/shared/contracts/products/products-ui';
+export type { ProductWithImages } from '@/shared/contracts/products';
 // Only re-export server-safe validations (schemas, validators, types).
 // Client hooks (useProductCreateValidation, etc.) and context (ValidationProvider)
 // must be imported directly from './validations' or './validations/hooks'.

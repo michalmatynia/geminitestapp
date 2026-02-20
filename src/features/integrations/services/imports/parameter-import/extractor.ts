@@ -1,7 +1,7 @@
-import type { BaseImportParameterImportSettings } from '@/features/integrations/types/base-import-parameter-import';
+import type { BaseImportParameterImportSettings } from '@/shared/contracts/integrations/base-import-parameter-import';
 
 import type { BaseProductRecord } from '../base-client';
-import type { ExtractedBaseParameter } from './types';
+import type { ExtractedBaseParameter } from '@/shared/contracts/integrations';
 
 const PARAMETER_VALUE_KEYS = [
   'value',

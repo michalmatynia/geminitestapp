@@ -10,7 +10,7 @@ import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 import { useDatabasePresetsTabContext } from './DatabasePresetsTabContext';
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
-import type { DatabasePresetOption } from './types';
+import type { DatabasePresetOption } from '@/shared/contracts/ai-paths';
 
 export function DatabasePresetsTab(): React.JSX.Element {
   const {

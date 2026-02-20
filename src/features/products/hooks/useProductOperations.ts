@@ -8,8 +8,8 @@ import { useState } from 'react';
 import { logClientError } from '@/features/observability';
 import { getProductListQueryKey } from '@/features/products/hooks/productCache';
 import { useDuplicateProduct } from '@/features/products/hooks/useProductsMutations';
-import type { ProductWithImages } from '@/features/products/types';
-import type { ProductDraftDto } from '@/features/products/types/drafts';
+import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductDraftDto } from '@/shared/contracts/products/drafts';
 import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 

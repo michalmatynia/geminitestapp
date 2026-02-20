@@ -65,7 +65,7 @@ import type {
   DatabasePreviewPayload,
   DatabaseType,
   SqlQueryResult,
-} from '../types';
+} from '@/shared/contracts/database';
 
 const invalidateBackups = (queryClient: QueryClient, dbType: DatabaseType): void => {
   void queryClient.invalidateQueries({ queryKey: dbKeys.backups(dbType) });

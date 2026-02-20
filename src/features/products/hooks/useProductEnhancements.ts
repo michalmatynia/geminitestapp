@@ -2,7 +2,7 @@
 
 import { getProductById, getProducts, updateProduct } from '@/features/products/api/products';
 import { getCatalogs } from '@/features/products/api/settings';
-import type { ProductWithImages } from '@/features/products/types';
+import type { ProductWithImages } from '@/shared/contracts/products';
 import { useCacheWarmup, useSmartPrefetch } from '@/shared/hooks/query/useCacheWarmup';
 import { useOptimisticMutation } from '@/shared/hooks/useOptimisticMutation';
 import { useQuerySync } from '@/shared/hooks/useQuerySync';

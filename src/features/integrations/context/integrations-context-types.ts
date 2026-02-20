@@ -1,4 +1,4 @@
-import { integrationDefinitions } from '@/features/integrations/types/integrations-ui';
+import { integrationDefinitions } from '@/shared/contracts/integrations/integrations-ui';
 import type { 
   IntegrationDto as Integration, 
   IntegrationConnectionDto as IntegrationConnection, 

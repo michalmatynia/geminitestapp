@@ -7,7 +7,7 @@ import type {
   PriceGroup,
   ProductCategoryWithChildren,
   ProductTag,
-} from '@/features/products/types';
+} from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 
 export type ProductSettingsCategoriesSection = {

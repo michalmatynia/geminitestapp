@@ -7,7 +7,7 @@ import { Button, StatusBadge, EmptyState } from '@/shared/ui';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 
-import type { CaseResolverFile } from '../types';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 type CaseRelationEdgeKind = 'parent_case' | 'references';
 

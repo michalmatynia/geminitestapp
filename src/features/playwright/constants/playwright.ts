@@ -1,4 +1,4 @@
-import type { PlaywrightSettings } from '../types';
+import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 
 export const PLAYWRIGHT_PERSONA_SETTINGS_KEY = 'playwright_personas';
 

@@ -10,11 +10,11 @@ import { useProductFormContext } from '@/features/products/context/ProductFormCo
 import { ProductValidationSettingsProvider } from '@/features/products/context/ProductValidationSettingsContext';
 import { useProductValidatorConfig } from '@/features/products/hooks/useProductSettingsQueries';
 import { useProductValidatorIssues } from '@/features/products/hooks/useProductValidatorIssues';
-import { ProductFormData } from '@/features/products/types';
+import { ProductFormData } from '@/shared/contracts/products';
 import {
   PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
   type ProductDraftOpenFormTab,
-} from '@/features/products/types/drafts';
+} from '@/shared/contracts/products/drafts';
 import {
   normalizeProductValidationDenyBehavior,
   normalizeProductValidationInstanceDenyBehaviorMap,

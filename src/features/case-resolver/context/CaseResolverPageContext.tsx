@@ -13,7 +13,7 @@ import type {
   CaseResolverRelationGraph,
   CaseResolverTag,
   CaseResolverWorkspace,
-} from '../types';
+} from '@/shared/contracts/case-resolver';
 
 type CaseResolverAssetPatch = Partial<
   Pick<CaseResolverAssetFile, 'textContent' | 'description'>

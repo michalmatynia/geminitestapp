@@ -5,4 +5,4 @@ export type {
   ApplyBaseParameterImportResult,
   BaseParameterImportSummary,
   ExtractedBaseParameter,
-} from './types';
+} from '@/shared/contracts/integrations';

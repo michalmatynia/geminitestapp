@@ -14,7 +14,7 @@ import { useCrudMutation } from '../hooks/useDatabaseQueries';
 import {
   type DatabaseTableDetail,
   type DatabaseType,
-} from '../types';
+} from '@/shared/contracts/database';
 
 type CrudRowsResult = {
   rows: Record<string, unknown>[];

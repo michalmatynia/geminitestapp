@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { useSaveCatalogMutation } from '@/features/products/hooks/useProductSettingsQueries';
-import type { Catalog } from '@/features/products/types';
+import type { Catalog } from '@/shared/contracts/products';
 import type { Language } from '@/shared/contracts/internationalization';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

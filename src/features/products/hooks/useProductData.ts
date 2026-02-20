@@ -19,7 +19,7 @@ import {
 import { addQueuedProductId, removeQueuedProductId } from '@/features/products/state/queued-product-ops';
 import type { 
   ProductWithImages, 
-} from '@/features/products/types';
+} from '@/shared/contracts/products';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api } from '@/shared/lib/api-client';

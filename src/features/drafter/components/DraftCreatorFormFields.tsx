@@ -11,7 +11,7 @@ import { TagMultiSelectField } from '@/features/products/components/form/TagMult
 import type {
   ProductParameter,
   ProductParameterValue,
-} from '@/features/products/types';
+} from '@/shared/contracts/products';
 import {
   PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
   type ProductDraftOpenFormTab,

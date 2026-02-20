@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 
 import { logClientError } from '@/features/observability';
 import { useSaveTagMutation, useDeleteTagMutation } from '@/features/products/hooks/useProductSettingsQueries';
-import type { Catalog, ProductTag } from '@/features/products/types';
+import type { Catalog, ProductTag } from '@/shared/contracts/products';
 import { useToast, Button, SelectSimple, Input, FormModal, EmptyState, Tag as UiTag, FormSection, FormField, SimpleSettingsList } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 

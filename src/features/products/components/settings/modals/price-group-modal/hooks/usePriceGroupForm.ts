@@ -2,7 +2,7 @@ import React from 'react';
 
 import { logClientError } from '@/features/observability';
 import { useSavePriceGroupMutation } from '@/features/products/hooks/useProductSettingsQueries';
-import type { PriceGroup } from '@/features/products/types';
+import type { PriceGroup } from '@/shared/contracts/products';
 import { useToast } from '@/shared/ui';
 
 interface PriceGroupFormState {

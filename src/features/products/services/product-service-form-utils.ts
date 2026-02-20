@@ -1,4 +1,4 @@
-import type { ProductImageRecord } from '@/features/products/types';
+import type { ProductImageRecord } from '@/shared/contracts/products';
 
 export type ParsedProductForm = {
   rawData: Record<string, unknown>;

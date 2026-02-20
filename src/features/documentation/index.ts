@@ -1,4 +1,4 @@
-export * from './types';
+export * from '@/shared/contracts/documentation';
 export * from './registry';
 export * from './catalogs';
 export * from './catalogs/image-studio';

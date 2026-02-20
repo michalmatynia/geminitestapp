@@ -2,7 +2,7 @@ import 'server-only';
 
 import { mongoProductAiJobRepository } from '@/features/jobs/services/product-ai-job-repository/mongo-product-ai-job-repository';
 import { prismaProductAiJobRepository } from '@/features/jobs/services/product-ai-job-repository/prisma-product-ai-job-repository';
-import type { ProductAiJobRepository } from '@/features/jobs/types/product-ai-job-repository';
+import type { ProductAiJobRepository } from '@/shared/contracts/jobs/product-ai-job-repository';
 import { getProductDataProvider } from '@/features/products/server';
 
 let cachedRepository: ProductAiJobRepository | null = null;

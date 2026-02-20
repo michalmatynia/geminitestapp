@@ -1,6 +1,6 @@
 import { api } from '@/shared/lib/api-client';
 
-import type { CmsDomain } from '../types';
+import type { CmsDomain } from '@/shared/contracts/cms';
 
 export const fetchDomains = async (): Promise<CmsDomain[]> => {
   return api.get<CmsDomain[]>('/api/cms/domains');

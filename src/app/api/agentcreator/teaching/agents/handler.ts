@@ -33,6 +33,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   const data = parsed.data;
   const agent: AgentTeachingAgentRecord = await upsertTeachingAgent({
+    agentId: data.llmModel, // fallback if needed or add to schema
     name: data.name,
     description: data.description ?? null,
     llmModel: data.llmModel,
@@ -44,6 +45,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     retrievalTopK: data.retrievalTopK,
     retrievalMinScore: data.retrievalMinScore,
     maxDocsPerCollection: data.maxDocsPerCollection,
+    enabled: true,
   });
   return NextResponse.json({ agent });
 }

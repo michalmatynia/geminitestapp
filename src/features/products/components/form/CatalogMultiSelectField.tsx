@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { CatalogRecord } from '@/features/products/types';
+import type { CatalogRecord } from '@/shared/contracts/products';
 
 import { ProductMetadataMultiSelectField } from './ProductMetadataMultiSelectField';
 

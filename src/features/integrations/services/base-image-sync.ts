@@ -7,7 +7,7 @@ import { getProductListingRepository } from '@/features/integrations/server';
 import { integrationService, decryptSecret } from '@/features/integrations/server';
 import { fetchBaseProductDetails } from '@/features/integrations/services/imports/base-client';
 import { extractBaseImageUrls } from '@/features/integrations/services/imports/base-mapper';
-import type { ProductListingExportEvent } from '@/features/integrations/types/listings';
+import type { ProductListingExportEvent } from '@/shared/contracts/integrations/listings';
 import { ErrorSystem } from '@/features/observability/server';
 import { getProductDataProvider, getProductRepository } from '@/features/products/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';

@@ -1,6 +1,6 @@
 'use client';
 
-import type { ProductCategory, ProductCategoryWithChildren } from '@/features/products/types';
+import type { ProductCategory, ProductCategoryWithChildren } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { productSettingsKeys } from '@/shared/lib/query-key-exports';

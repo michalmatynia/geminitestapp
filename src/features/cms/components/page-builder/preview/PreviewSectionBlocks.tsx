@@ -10,7 +10,7 @@ import { usePreviewEditor } from './context/PreviewEditorContext';
 import { getSpacingValue, resolveJustifyContent, resolveAlignItems } from './preview-utils';
 import { getSectionStyles, getTextAlign } from '../../frontend/theme-styles';
 
-import type { PreviewSectionBlockProps, PreviewBlockItemProps } from './types';
+import type { PreviewSectionBlockProps, PreviewBlockItemProps } from '@/shared/contracts/cms';
 import type { BlockInstance } from '../../../types/page-builder';
 
 // ---------------------------------------------------------------------------

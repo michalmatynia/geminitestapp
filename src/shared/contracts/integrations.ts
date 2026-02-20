@@ -1048,6 +1048,82 @@ export const importParameterCacheResponseSchema = z.object({
 export type ImportParameterCacheResponseDto = z.infer<typeof importParameterCacheResponseSchema>;
 
 /**
+ * Integration Repository Interfaces
+ */
+
+export type IntegrationRecord = Omit<IntegrationDto, 'createdAt' | 'updatedAt'> & {
+  createdAt: string | Date;
+  updatedAt: string | Date | null;
+};
+
+export type IntegrationConnectionRecord = Omit<IntegrationConnectionDto, 'createdAt' | 'updatedAt' | 'playwrightStorageStateUpdatedAt' | 'traderaApiTokenUpdatedAt'> & {
+  createdAt: string | Date;
+  updatedAt: string | Date | null;
+  playwrightStorageStateUpdatedAt?: string | Date | null;
+  traderaApiTokenUpdatedAt?: string | Date | null;
+};
+
+export type IntegrationRepository = {
+  listIntegrations: () => Promise<IntegrationRecord[]>;
+  upsertIntegration: (input: { name: string; slug: string }) => Promise<IntegrationRecord>;
+  getIntegrationById: (id: string) => Promise<IntegrationRecord | null>;
+  listConnections: (integrationId: string) => Promise<IntegrationConnectionRecord[]>;
+  getConnectionById: (id: string) => Promise<IntegrationConnectionRecord | null>;
+  getConnectionByIdAndIntegration: (id: string, integrationId: string) => Promise<IntegrationConnectionRecord | null>;
+  createConnection: (integrationId: string, input: Record<string, unknown>) => Promise<IntegrationConnectionRecord>;
+  updateConnection: (id: string, input: Partial<IntegrationConnectionRecord>) => Promise<IntegrationConnectionRecord>;
+  deleteConnection: (id: string) => Promise<void>;
+};
+
+export type ExternalCategoryRepository = {
+  listCategories: (integrationId: string) => Promise<{ category_id: string; name: string; parent_id: string }[]>;
+  syncCategories: (integrationId: string) => Promise<void>;
+};
+
+export type CategoryMappingRepository = {
+  getMapping: (categoryId: string, integrationId: string) => Promise<string | null>;
+  saveMapping: (categoryId: string, integrationId: string, externalId: string) => Promise<void>;
+};
+
+export type CreateProductListingInput = Omit<CreateProductListingDto, 'listedAt' | 'expiresAt' | 'nextRelistAt' | 'lastRelistedAt' | 'lastStatusCheckAt'> & {
+  listedAt?: string | Date | null;
+  expiresAt?: string | Date | null;
+  nextRelistAt?: string | Date | null;
+  lastRelistedAt?: string | Date | null;
+  lastStatusCheckAt?: string | Date | null;
+};
+
+export type ProductListingExportEvent = Omit<ProductListingExportEventDto, 'exportedAt' | 'expiresAt'> & {
+  exportedAt: string | Date;
+  expiresAt?: string | Date | null | undefined;
+};
+
+export type ProductListingRepository = {
+  getListingsByProductId: (productId: string) => Promise<ProductListingWithDetails[]>;
+  getListingById: (id: string) => Promise<ProductListingDto | null>;
+  createListing: (input: CreateProductListingInput) => Promise<ProductListingWithDetails>;
+  updateListingExternalId: (id: string, externalListingId: string | null) => Promise<void>;
+  updateListingStatus: (id: string, status: string) => Promise<void>;
+  updateListing: (id: string, input: Partial<CreateProductListingInput>) => Promise<void>;
+  updateListingInventoryId: (id: string, inventoryId: string | null) => Promise<void>;
+  appendExportHistory: (id: string, event: ProductListingExportEvent) => Promise<void>;
+  deleteListing: (id: string) => Promise<void>;
+  listingExists: (productId: string, connectionId: string) => Promise<boolean>;
+  listAllListings: () => Promise<Array<Pick<ProductListingDto, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>>;
+};
+
+/**
+ * Integration UI Constants
+ */
+
+export const integrationDefinitions = [
+  { name: 'Tradera', slug: 'tradera' },
+  { name: 'Tradera API', slug: 'tradera-api' },
+  { name: 'Allegro', slug: 'allegro' },
+  { name: 'Baselinker', slug: 'baselinker' },
+] as const;
+
+/**
  * Legacy Integration Type Aliases
  */
 export type Integration = IntegrationDto;
@@ -1079,3 +1155,30 @@ export type ExternalProducer = ExternalProducerDto;
 export type ImageBase64Mode = ImageBase64ModeDto;
 export type ImageTransformOptions = ImageTransformOptionsDto;
 export type ImageRetryPreset = ImageRetryPresetDto;
+
+export type BaseImportRunStatus = BaseImportRunStatusDto;
+export type BaseImportItemStatus = BaseImportItemStatusDto;
+export type BaseImportItemAction = BaseImportItemActionDto;
+export type BaseImportMode = BaseImportModeDto;
+export type BaseImportErrorCode = BaseImportErrorCodeDto;
+export type BaseImportErrorClass = BaseImportErrorClassDto;
+export type BaseImportParameterImportSummary = BaseImportParameterImportSummaryDto;
+export type BaseImportRunParameterImportSummary = BaseImportRunParameterImportSummaryDto;
+export type BaseImportRunStats = BaseImportRunStatsDto;
+export type BaseImportRunParams = BaseImportRunParamsDto;
+export type BaseImportPreflightIssue = BaseImportPreflightIssueDto;
+export type BaseImportPreflight = BaseImportPreflightDto;
+export type BaseImportRunRecord = BaseImportRunRecordDto;
+export type BaseImportItemRecord = BaseImportItemRecordDto;
+export type BaseImportStartResponse = BaseImportStartResponseDto;
+export type BaseImportRunDetailResponse = BaseImportRunDetailResponseDto;
+
+export type BaseImportParameterImportMode = BaseImportParameterImportModeDto;
+export type BaseImportParameterLanguageScope = BaseImportParameterLanguageScopeDto;
+export type BaseImportParameterMatchBy = BaseImportParameterMatchByDto;
+export type BaseImportParameterImportSettings = BaseImportParameterImportSettingsDto;
+
+export type TestStatus = TestStatusDto;
+export type TestLogEntry = TestLogEntryDto;
+export type TestConnectionResponse = TestConnectionResponseDto;
+export type SessionCookie = SessionCookieDto;

@@ -60,7 +60,7 @@ import {
   type CaseResolverIdentifier,
   type CaseResolverNodeMeta,
   type CaseResolverRelationGraph,
-} from '../types';
+} from '@/shared/contracts/case-resolver';
 
 const ENABLE_CASE_RESOLVER_MULTIFORMAT_EDITOR =
   process.env['NEXT_PUBLIC_CASE_RESOLVER_MULTIFORMAT_EDITOR'] !== 'false';

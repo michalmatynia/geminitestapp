@@ -4,7 +4,7 @@ import {
   ListingSettingsProvider,
   useListingSettingsContext,
 } from '@/features/integrations/context/ListingSettingsContext';
-import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
+import type { IntegrationWithConnections } from '@/shared/contracts/integrations/listings';
 import type { ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import type { EntityModalProps } from '@/shared/contracts/ui';

@@ -10,8 +10,8 @@ import type {
   ProductParameter,
   ProductParameterValue,
   ProductTag,
-} from '@/features/products/types';
-import type { ProductDraftOpenFormTab } from '@/features/products/types/drafts';
+} from '@/shared/contracts/products';
+import type { ProductDraftOpenFormTab } from '@/shared/contracts/products/drafts';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 
 export interface DraftCreatorFormContextValue {

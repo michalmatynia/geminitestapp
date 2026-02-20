@@ -4,7 +4,7 @@ import {
   parseCaseResolverWorkspace,
 } from './settings';
 
-import type { CaseResolverWorkspace } from './types';
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
 const CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY = '__caseResolverWorkspaceDebugEvents';
 const CASE_RESOLVER_WORKSPACE_DEBUG_EVENT_NAME = 'case-resolver-workspace-debug';

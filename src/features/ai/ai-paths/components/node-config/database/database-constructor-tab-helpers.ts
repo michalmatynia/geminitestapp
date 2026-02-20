@@ -1,4 +1,4 @@
-import type { CollectionSchema, FieldSchema, SchemaData } from './types';
+import type { CollectionSchema, FieldSchema, SchemaData } from '@/shared/contracts/ai-paths';
 
 export function extractCodeSnippets(text: string): string[] {
   const regex = /```[\w]*\n?([\s\S]*?)```/g;

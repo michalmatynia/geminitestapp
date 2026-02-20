@@ -8,11 +8,11 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 type DatabaseEngineCancelableJob = {
   productId?: string | null | undefined;
-  type: string;
+  jobType: string;
 };
 
 const isDatabaseEngineOperationJob = (job: DatabaseEngineCancelableJob): boolean =>
-  job.productId === 'system' && (job.type === 'db_backup' || job.type === 'db_sync');
+  job.productId === 'system' && (job.jobType === 'db_backup' || job.jobType === 'db_sync');
 
 export async function POST_handler(
   _req: NextRequest,
@@ -42,7 +42,7 @@ export async function POST_handler(
     throw badRequestError('Only Database Engine db_backup/db_sync jobs can be cancelled.', {
       jobId,
       productId: job['productId'],
-      type: job['type'],
+      type: job['jobType'],
     });
   }
 

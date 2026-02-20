@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { PriceGroup } from '@/features/products/types';
+import type { PriceGroup } from '@/shared/contracts/products';
 import type { Language } from '@/shared/contracts/internationalization';
 
 type CatalogFormState = {

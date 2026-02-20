@@ -4,7 +4,7 @@ export * from './context/AgentCreatorSettingsContext';
 export * from './context/AgentRunContext';
 export * from './hooks/useAgentPersonas';
 export * from './hooks/useAgentCreatorSettings';
-export * from './types';
+export * from '@/shared/contracts/agents';
 export { default as AgentRunsPage } from './pages/AgentRunsPage';
 export * from './pages/AgentPersonasPage';
 export * from './utils/constants';

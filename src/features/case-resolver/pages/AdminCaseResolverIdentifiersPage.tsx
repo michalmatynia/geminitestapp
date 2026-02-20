@@ -28,7 +28,7 @@ import {
   parseCaseResolverIdentifiers,
 } from '../settings';
 
-import type { CaseResolverIdentifier } from '../types';
+import type { CaseResolverIdentifier } from '@/shared/contracts/case-resolver';
 
 type CaseIdentifierFormData = {
   name: string;

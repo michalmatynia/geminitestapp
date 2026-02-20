@@ -18,7 +18,7 @@ import {
   isNameSecondSegmentDimensionPattern,
 } from './helpers';
 
-import type { SequenceGroupDraft } from './types';
+import type { SequenceGroupDraft } from '@/shared/contracts/products';
 
 type CreatePatternMutation = {
   mutateAsync: (payload: CreateValidationPatternPayload) => Promise<unknown>;

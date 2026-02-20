@@ -1,4 +1,4 @@
-import type { AgentPersonaSettings } from '@/features/ai/agentcreator/types';
+import type { AgentPersonaSettings } from '@/shared/contracts/agents';
 
 export const AGENT_PERSONA_SETTINGS_KEY = 'agent_personas';
 

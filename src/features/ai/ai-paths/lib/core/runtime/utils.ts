@@ -1,8 +1,8 @@
 import type {
   ContextConfig,
   DbQueryConfig,
-  RuntimePortValues,
 } from '@/shared/contracts/ai-paths';
+import type { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
 import { aiJobsApi, dbApi } from '../../api';
 import {

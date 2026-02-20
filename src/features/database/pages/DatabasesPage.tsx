@@ -29,7 +29,7 @@ import {
   useDeleteBackupMutation,
 } from '../hooks/useDatabaseQueries';
 
-import type { DatabaseInfo, DatabaseType } from '../types';
+import type { DatabaseInfo, DatabaseType } from '@/shared/contracts/database';
 
 
 function DatabasesContent(): React.JSX.Element {

@@ -22,7 +22,7 @@ import {
   useDeleteCategoryMutation,
   useReorderCategoryMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
-import type { ProductCategoryWithChildren, Catalog, ProductCategory } from '@/features/products/types';
+import type { ProductCategoryWithChildren, Catalog, ProductCategory } from '@/shared/contracts/products';
 import {
   Button,
   EmptyState,

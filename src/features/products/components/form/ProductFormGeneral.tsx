@@ -9,7 +9,7 @@ import {
   useProductValidationActions,
   useProductValidationState,
 } from '@/features/products/context/ProductValidationSettingsContext';
-import { ProductFormData } from '@/features/products/types';
+import { ProductFormData } from '@/shared/contracts/products';
 import {
   isPatternEnabledForValidationScope,
   isPatternReplacementEnabledForValidationScope,

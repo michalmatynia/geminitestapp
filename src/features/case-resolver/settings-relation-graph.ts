@@ -14,7 +14,7 @@ import {
   type CaseResolverRelationFileKind,
   type CaseResolverRelationGraph,
   type CaseResolverRelationNodeMeta,
-} from './types';
+} from '@/shared/contracts/case-resolver';
 
 const normalizeTimestamp = (value: unknown, fallback: string): string =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback;

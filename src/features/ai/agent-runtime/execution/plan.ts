@@ -15,7 +15,7 @@ import type {
   AgentExecutionContext,
   PlanStep,
   PlannerMeta,
-} from '@/features/ai/agent-runtime/types/agent';
+} from '@/shared/contracts/agent-runtime/agent';
 
 type CheckpointState = ReturnType<
   typeof import('@/features/ai/agent-runtime/memory/checkpoint').parseCheckpoint

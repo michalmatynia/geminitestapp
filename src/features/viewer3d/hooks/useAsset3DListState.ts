@@ -6,7 +6,7 @@ import type { Asset3dViewModeDto } from '@/shared/contracts/viewer3d';
 
 import { useAssets3D, useAsset3DCategories, useAsset3DTags, useReindexAssets3DMutation } from '../hooks/useAsset3dQueries';
 
-import type { Asset3DRecord } from '../types';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 export type ViewMode = Asset3dViewModeDto;
 

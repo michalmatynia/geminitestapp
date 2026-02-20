@@ -23,7 +23,7 @@ import type {
   UpdateMutation 
 } from '@/shared/contracts/ui';
 
-import type { Asset3DListFilters, Asset3DRecord } from '../types';
+import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 export { asset3dKeys };
 

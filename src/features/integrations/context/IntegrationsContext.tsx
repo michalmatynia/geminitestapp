@@ -45,7 +45,7 @@ import {
   IntegrationConnection,
   TestLogEntry,
   integrationDefinitions,
-} from '@/features/integrations/types/integrations-ui';
+} from '@/shared/contracts/integrations/integrations-ui';
 import { normalizeSteps } from '@/features/integrations/utils/connections';
 import { logClientError } from '@/features/observability';
 import { defaultPlaywrightSettings } from '@/features/playwright';

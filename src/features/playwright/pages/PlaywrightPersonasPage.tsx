@@ -6,7 +6,7 @@ import { usePlaywrightPersonas, useSavePlaywrightPersonasMutation } from '@/feat
 import type {
   PlaywrightPersona,
   PlaywrightSettings,
-} from '@/features/playwright/types';
+} from '@/shared/contracts/playwright';
 import { buildPlaywrightSettings, createPlaywrightPersonaId } from '@/features/playwright/utils/personas';
 import { ItemLibrary, useToast, Breadcrumbs } from '@/shared/ui';
 

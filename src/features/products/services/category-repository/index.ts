@@ -2,7 +2,7 @@ import 'server-only';
 
 import { ErrorSystem } from '@/features/observability/server';
 import { getProductDataProvider, type ProductDbProvider } from '@/features/products/services/product-provider';
-import type { CategoryRepository } from '@/features/products/types/services/category-repository';
+import type { CategoryRepository } from '@/shared/contracts/products/services/category-repository';
 
 import { mongoCategoryRepository } from './mongo-category-repository';
 import { prismaCategoryRepository } from './prisma-category-repository';

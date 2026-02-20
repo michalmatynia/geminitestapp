@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { AiPathRunRepository } from '@/features/ai/ai-paths/types/path-run-repository';
+import type { AiPathRunRepository } from '@/shared/contracts/ai-paths/path-run-repository';
 import { getCollectionProvider } from '@/shared/lib/db/collection-provider-map';
 
 import { mongoPathRunRepository } from './mongo-path-run-repository';

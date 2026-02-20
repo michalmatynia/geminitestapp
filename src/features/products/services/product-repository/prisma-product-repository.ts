@@ -2,14 +2,14 @@ import 'server-only';
 
 import { Prisma, Product as PrismaProduct, ProductImage as PrismaProductImage, ImageFile as PrismaImageFile, Catalog as PrismaCatalog, ProductCatalog as PrismaProductCatalog } from '@prisma/client';
 
-import type { CatalogRecord, ProductWithImages } from '@/features/products/types';
-import type { ProductParameterValue } from '@/features/products/types';
+import type { CatalogRecord, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductParameterValue } from '@/shared/contracts/products';
 import type {
   CreateProductInput,
   ProductFilters,
   ProductRepository,
   UpdateProductInput,
-} from '@/features/products/types/services/product-repository';
+} from '@/shared/contracts/products/services/product-repository';
 import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import { conflictError, internalError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
@@ -391,6 +391,33 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
 
   countProducts: (filters) => tx.product.count({ where: buildProductWhere(filters) }),
 
+  async getProductsWithCount(filters) {
+    const where = buildProductWhere(filters);
+    const page = filters.page ?? 1;
+    const pageSize = filters.pageSize ?? 20;
+    const [rawProducts, total] = await Promise.all([
+      tx.product.findMany({
+        where,
+        include: {
+          images: { include: { imageFile: true }, orderBy: { assignedAt: 'desc' } },
+          catalogs: {
+            include: {
+              catalog: { include: { languages: { select: { languageId: true } } } },
+            },
+          },
+          categories: { select: { categoryId: true } },
+          tags: { select: { tagId: true } },
+          producers: { select: { producerId: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      tx.product.count({ where }),
+    ]);
+    return { products: rawProducts.map(p => toProductRecord(p as FullPrismaProduct)), total };
+  },
+
   getProductById: async (id) => {
     const product = await tx.product.findUnique({
       where: { id },
@@ -738,6 +765,43 @@ export const prismaProductRepository: ProductRepository = {
   async countProducts(filters: ProductFilters) {
     const where = buildProductWhere(filters);
     return prisma.product.count({ where });
+  },
+
+  async getProductsWithCount(filters: ProductFilters): Promise<{ products: ProductWithImages[]; total: number }> {
+    const where = buildProductWhere(filters);
+    const page = filters.page ?? 1;
+    const pageSize = filters.pageSize ?? 20;
+
+    const [rawProducts, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        include: {
+          images: {
+            include: { imageFile: true },
+            orderBy: { assignedAt: 'desc' },
+          },
+          catalogs: {
+            include: {
+              catalog: {
+                include: { languages: { select: { languageId: true } } },
+              },
+            },
+          },
+          categories: { select: { categoryId: true } },
+          tags: { select: { tagId: true } },
+          producers: { select: { producerId: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.product.count({ where }),
+    ]);
+
+    return {
+      products: rawProducts.map(p => toProductRecord(p as FullPrismaProduct)),
+      total,
+    };
   },
 
   async getProductById(id: string) {

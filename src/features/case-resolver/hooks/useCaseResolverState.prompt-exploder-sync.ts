@@ -25,7 +25,7 @@ import type {
   CaseResolverFile,
   CaseResolverFileEditDraft,
   CaseResolverWorkspace,
-} from '../types';
+} from '@/shared/contracts/case-resolver';
 
 type UpdateWorkspaceOptions = {
   persistToast?: string;

@@ -2,7 +2,7 @@
 
 import { type Query } from '@tanstack/react-query';
 
-import type { ProductListingWithDetails } from '@/features/integrations/types/listings';
+import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,

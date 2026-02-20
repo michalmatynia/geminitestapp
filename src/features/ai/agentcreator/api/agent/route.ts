@@ -4,7 +4,7 @@ import path from 'node:path';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { logAgentAudit } from '@/features/ai/agent-runtime/server';
-import type { AgentRunStatusType } from '@/features/ai/agent-runtime/types/agent';
+import type { AgentRunStatusType } from '@/shared/contracts/agent-runtime/agent';
 import { startAgentQueue } from '@/features/jobs/server';
 import { ErrorSystem } from '@/features/observability/server';
 import { badRequestError, internalError } from '@/shared/errors/app-error';

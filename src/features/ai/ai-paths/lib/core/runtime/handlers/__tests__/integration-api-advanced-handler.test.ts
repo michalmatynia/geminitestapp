@@ -166,5 +166,69 @@ describe('handleAdvancedApi', () => {
     expect(result['success']).toBe(true);
     expect(result['error']).toBeNull();
   });
-});
 
+  it('blocks redirect chains that resolve to disallowed hosts', async () => {
+    const node = buildNode();
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 302,
+          headers: { location: 'http://169.254.169.254/latest/meta-data/' },
+        })
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await handleAdvancedApi(
+      buildContext(node, { entityId: '42', value: 'en', prompt: 'hello' })
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(result['status']).toBe(0);
+    expect(result['success']).toBe(false);
+    expect(result['route']).toBe('blocked_outbound_url');
+    expect(String(result['error'] ?? '')).toContain('Blocked outbound URL');
+  });
+
+  it('follows allowed redirects with policy revalidation', async () => {
+    const node = buildNode({
+      config: {
+        apiAdvanced: {
+          ...buildNode().config!.apiAdvanced!,
+          url: 'https://example.test/redirect',
+          retryEnabled: false,
+          retryAttempts: 1,
+          pathParamsJson: '{}',
+          queryParamsJson: '{}',
+          headersJson: '{}',
+          outputMappingsJson: '{}',
+          errorRoutesJson: '[]',
+        },
+      },
+    });
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 302,
+          headers: { location: '/final' },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ done: true, items: [1] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await handleAdvancedApi(
+      buildContext(node, {})
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result['status']).toBe(200);
+    expect(result['success']).toBe(true);
+    expect(result['error']).toBeNull();
+  });
+});

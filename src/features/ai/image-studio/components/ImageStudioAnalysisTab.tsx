@@ -13,70 +13,26 @@ import { Button, SelectSimple, useToast } from '@/shared/ui';
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsState } from '../context/SlotsContext';
 import {
+  imageStudioAnalysisResponseSchema,
+  type ImageStudioAnalysisMode,
+  type ImageStudioAnalysisResponse,
+  type ImageStudioAnalysisSummary,
+} from '../contracts/analysis';
+import {
   analyzeCanvasImageObject,
   resolveClientProcessingImageSrc,
 } from './generation-toolbar/GenerationToolbarImageUtils';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
 
-type AnalysisMode = 'client_analysis_v1' | 'server_analysis_v1';
+import type { ImageStudioCenterShadowPolicy } from '../contracts/center';
+
+type AnalysisMode = ImageStudioAnalysisMode;
 type AnalysisStatus = 'idle' | 'resolving' | 'processing';
-type ShadowPolicy = 'auto' | 'include_shadow' | 'exclude_shadow';
-type DetectionDetails = {
-  shadowPolicyRequested: ShadowPolicy;
-  shadowPolicyApplied: ShadowPolicy;
-  componentCount: number;
-  coreComponentCount: number;
-  selectedComponentPixels: number;
-  selectedComponentCoverage: number;
-  foregroundPixels: number;
-  corePixels: number;
-  touchesBorder: boolean;
-  maskSource: 'foreground' | 'core';
-};
-
-type AnalysisResult = {
-  width: number;
-  height: number;
-  sourceObjectBounds: { left: number; top: number; width: number; height: number };
-  detectionUsed: 'alpha_bbox' | 'white_bg_first_colored_pixel';
-  confidence: number;
-  detectionDetails: DetectionDetails | null;
-  whitespace: {
-    px: { left: number; top: number; right: number; bottom: number };
-    percent: { left: number; top: number; right: number; bottom: number };
-  };
-  objectAreaPercent: number;
-  layout: {
-    paddingPercent: number;
-    paddingXPercent: number;
-    paddingYPercent: number;
-    fillMissingCanvasWhite: boolean;
-    targetCanvasWidth: number | null;
-    targetCanvasHeight: number | null;
-    whiteThreshold: number;
-    chromaThreshold: number;
-    shadowPolicy: ShadowPolicy;
-    detection: 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel';
-  };
-  suggestedPlan: {
-    outputWidth: number;
-    outputHeight: number;
-    targetObjectBounds: { left: number; top: number; width: number; height: number };
-    scale: number;
-    whitespace: {
-      px: { left: number; top: number; right: number; bottom: number };
-      percent: { left: number; top: number; right: number; bottom: number };
-    };
-  };
-  effectiveMode: AnalysisMode;
-  authoritativeSource: 'source_slot' | 'client_upload';
-};
-
-type ServerAnalysisResponse = {
-  effectiveMode?: AnalysisMode;
-  authoritativeSource?: 'source_slot' | 'client_upload';
-  analysis?: Omit<AnalysisResult, 'effectiveMode' | 'authoritativeSource'>;
-};
+type ShadowPolicy = ImageStudioCenterShadowPolicy;
+type AnalysisResult = ImageStudioAnalysisSummary & Pick<
+  ImageStudioAnalysisResponse,
+  'effectiveMode' | 'authoritativeSource'
+>;
 
 const PADDING_DEFAULT = 8;
 const PADDING_MIN = 0;
@@ -228,24 +184,23 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
         });
       } else {
         setStatus('processing');
-        const response = await api.post<ServerAnalysisResponse>(
-          `/api/image-studio/slots/${encodeURIComponent(slotId)}/analysis`,
-          {
-            mode,
-            layout: layoutPayload,
-          },
-          {
-            signal: abortController.signal,
-            timeout: ANALYSIS_REQUEST_TIMEOUT_MS,
-          }
-        );
-        if (!response.analysis) {
-          throw new Error('Analysis response did not include analysis metrics.');
-        }
+        const response = await api
+          .post<unknown>(
+            `/api/image-studio/slots/${encodeURIComponent(slotId)}/analysis`,
+            {
+              mode,
+              layout: layoutPayload,
+            },
+            {
+              signal: abortController.signal,
+              timeout: ANALYSIS_REQUEST_TIMEOUT_MS,
+            }
+          )
+          .then((raw) => imageStudioAnalysisResponseSchema.parse(raw));
         setResult({
           ...response.analysis,
-          effectiveMode: response.effectiveMode ?? mode,
-          authoritativeSource: response.authoritativeSource ?? 'source_slot',
+          effectiveMode: response.effectiveMode,
+          authoritativeSource: response.authoritativeSource,
         });
       }
     } catch (error) {

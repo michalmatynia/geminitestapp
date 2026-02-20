@@ -611,7 +611,8 @@ export function DocsTabPanel(): React.JSX.Element {
               <span className='text-white'>Model</span>,{' '}
               <span className='text-white'>Database</span>,{' '}
               <span className='text-white'>HTTP</span>,{' '}
-              <span className='text-white'>Delay</span> run at most once per graph run.
+              <span className='text-white'>Delay</span> follow side-effect policy:
+              per-run (default) or per-activation for iterator/poll loops.
             </li>
             <li>
               Runtime outputs are stored per node. Viewer nodes can inspect live outputs

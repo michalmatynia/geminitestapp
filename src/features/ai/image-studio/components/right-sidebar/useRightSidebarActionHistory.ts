@@ -10,6 +10,8 @@ import type { ParamUiControl } from '../../utils/param-ui';
 type BuildActionHistorySnapshotInput = {
   activeMaskId: string | null;
   brushRadius: number;
+  canvasBackgroundColor: string;
+  canvasBackgroundLayerEnabled: boolean;
   canvasImageOffset: { x: number; y: number };
   canvasSelectionEnabled: boolean;
   compositeAssetIds: string[];
@@ -62,6 +64,8 @@ const buildActionHistorySnapshot = (
   canvasSelectionEnabled: input.canvasSelectionEnabled,
   imageTransformMode: input.imageTransformMode,
   canvasImageOffset: cloneSerializableValue(input.canvasImageOffset),
+  canvasBackgroundLayerEnabled: input.canvasBackgroundLayerEnabled,
+  canvasBackgroundColor: input.canvasBackgroundColor,
   maskShapes: cloneSerializableValue(input.maskShapes),
   activeMaskId: typeof input.activeMaskId === 'string' ? String(input.activeMaskId) : null,
   selectedPointIndex: Number.isFinite(input.selectedPointIndex) ? Number(input.selectedPointIndex) : null,
@@ -91,6 +95,12 @@ const resolveActionHistoryLabel = (
     previous.canvasImageOffset.y !== next.canvasImageOffset.y
   ) {
     return 'Canvas image position adjusted';
+  }
+  if (
+    previous.canvasBackgroundLayerEnabled !== next.canvasBackgroundLayerEnabled ||
+    previous.canvasBackgroundColor !== next.canvasBackgroundColor
+  ) {
+    return 'Canvas background changed';
   }
   if (previous.maskShapes.length !== next.maskShapes.length) {
     return next.maskShapes.length > previous.maskShapes.length ? 'Shape added' : 'Shape removed';

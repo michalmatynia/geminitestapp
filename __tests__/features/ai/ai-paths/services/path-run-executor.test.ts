@@ -1,12 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { 
-  evaluateGraphWithIteratorAutoContinue 
+  evaluateGraphWithIteratorAutoContinue,
+  GraphExecutionCancelled,
 } from '@/features/ai/ai-paths/lib';
 import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executor';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
-import prisma from '@/shared/lib/db/prisma';
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import prisma from '@/shared/lib/db/prisma';
 
 // Mock evaluateGraphWithIteratorAutoContinue to avoid real runtime complexity
 vi.mock('@/features/ai/ai-paths/lib', async () => {
@@ -141,6 +142,130 @@ describe('PathRunExecutor', () => {
 
     const updatedRun = await repo.findRunById(run.id);
     expect(updatedRun.status).toBe('failed');
+  });
+
+  it('should propagate cancellation to runtime evaluation via abort signal', async () => {
+    const previousInterval = process.env['AI_PATHS_CANCEL_POLL_INTERVAL_MS'];
+    process.env['AI_PATHS_CANCEL_POLL_INTERVAL_MS'] = '25';
+    try {
+      (evaluateGraphWithIteratorAutoContinue as any).mockImplementation((options: any) => {
+        return new Promise((_resolve, reject) => {
+          const signal = options?.control?.signal as AbortSignal | undefined;
+          const cancelError = new GraphExecutionCancelled(
+            'Run cancelled.',
+            {
+              status: 'running',
+              nodeStatuses: {},
+              nodeOutputs: {},
+              variables: {},
+              events: [],
+              inputs: {},
+              outputs: {},
+            },
+            'node-1'
+          );
+          if (!signal) {
+            reject(new Error('Missing abort signal'));
+            return;
+          }
+          if (signal.aborted) {
+            reject(cancelError);
+            return;
+          }
+          signal.addEventListener('abort', () => reject(cancelError), { once: true });
+        });
+      });
+
+      const run = await repo.createRun({
+        pathId: 'test-cancel',
+        status: 'running',
+        graph: { nodes: mockNodes, edges: mockEdges },
+        meta: { aiPathsValidation: { enabled: false } },
+      });
+      await repo.createRunNodes(run.id, mockNodes);
+
+      const executionPromise = executePathRun(run);
+      await new Promise((resolve) => setTimeout(resolve, 60));
+      await repo.updateRun(run.id, { status: 'canceled', finishedAt: new Date().toISOString() });
+
+      await expect(executionPromise).resolves.toBeUndefined();
+
+      const updatedRun = await repo.findRunById(run.id);
+      expect(updatedRun.status).toBe('canceled');
+      expect(updatedRun.runtimeState).toBeDefined();
+
+      const callArgs = (evaluateGraphWithIteratorAutoContinue as any).mock.calls[0]?.[0];
+      expect(callArgs?.control?.signal).toBeDefined();
+      expect(callArgs?.control?.signal).toBeInstanceOf(AbortSignal);
+    } finally {
+      if (previousInterval === undefined) {
+        delete process.env['AI_PATHS_CANCEL_POLL_INTERVAL_MS'];
+      } else {
+        process.env['AI_PATHS_CANCEL_POLL_INTERVAL_MS'] = previousInterval;
+      }
+    }
+  });
+
+  it('should persist runtime trace profile summary for completed runs', async () => {
+    (evaluateGraphWithIteratorAutoContinue as any).mockImplementation(async (options: any) => {
+      options.profile?.onEvent?.({
+        type: 'node',
+        runId: options.runId,
+        runStartedAt: options.runStartedAt,
+        nodeId: 'node-1',
+        nodeType: 'constant',
+        iteration: 0,
+        status: 'executed',
+        durationMs: 980,
+      });
+      options.profile?.onSummary?.({
+        runId: options.runId,
+        durationMs: 1200,
+        iterationCount: 1,
+        nodeCount: 1,
+        edgeCount: 0,
+        nodes: [],
+        hottestNodes: [
+          {
+            nodeId: 'node-1',
+            nodeType: 'constant',
+            count: 1,
+            totalMs: 980,
+            maxMs: 980,
+            cachedCount: 0,
+            skippedCount: 0,
+            errorCount: 0,
+            hashCount: 1,
+            hashTotalMs: 0,
+            hashMaxMs: 0,
+            avgMs: 980,
+            hashAvgMs: 0,
+          },
+        ],
+      });
+      return { outputs: { 'node-1': { value: 'trace-ok' } } };
+    });
+
+    const run = await repo.createRun({
+      pathId: 'test-trace-profile',
+      graph: { nodes: mockNodes, edges: mockEdges },
+      meta: { aiPathsValidation: { enabled: false } },
+    });
+    await repo.createRunNodes(run.id, mockNodes);
+
+    await executePathRun(run);
+
+    const updatedRun = await repo.findRunById(run.id);
+    const runtimeTrace = (updatedRun.meta as Record<string, unknown>)?.['runtimeTrace'] as
+      | { traceId?: string; profile?: { summary?: { durationMs?: number } | null } | null }
+      | undefined;
+    expect(runtimeTrace?.traceId).toBe(run.id);
+    expect(runtimeTrace?.profile?.summary?.durationMs).toBe(1200);
+
+    const events = await repo.listRunEvents(run.id);
+    expect(
+      events.some((event: any) => event.message === 'Runtime profile summary recorded.'),
+    ).toBe(true);
   });
 
   it('should block strict runs when dependency inspector reports errors', async () => {

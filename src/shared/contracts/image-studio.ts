@@ -654,6 +654,47 @@ const imageStudioOutputImageSchema = z.object({
   height: z.number().finite().nullable().optional(),
 }).passthrough();
 
+export const imageStudioCropResponseSchema = z.object({
+  sourceSlotId: z.string().optional(),
+  mode: imageStudioCropModeSchema,
+  effectiveMode: imageStudioCropModeSchema,
+  slot: imageStudioSlotSchema,
+  imageFile: imageStudioOutputImageSchema.optional(),
+  cropRect: imageStudioCropRectSchema.nullable().optional(),
+  canvasContext: imageStudioCropCanvasContextSchema.nullable().optional(),
+  requestId: z.string().nullable().optional(),
+  fingerprint: z.string().optional(),
+  deduplicated: z.boolean(),
+  dedupeReason: z.enum(['request', 'fingerprint']).optional(),
+  lifecycle: imageStudioOperationLifecycleSchema,
+  pipelineVersion: z.string().trim().min(1),
+});
+
+export type ImageStudioCropResponseDto = z.infer<typeof imageStudioCropResponseSchema>;
+export type ImageStudioCropResponse = ImageStudioCropResponseDto;
+
+export const imageStudioUpscaleResponseSchema = z.object({
+  sourceSlotId: z.string().optional(),
+  mode: imageStudioUpscaleModeSchema,
+  effectiveMode: imageStudioUpscaleModeSchema,
+  strategy: imageStudioUpscaleStrategySchema,
+  scale: z.number().finite().nullable().optional(),
+  targetWidth: z.number().int().positive().nullable().optional(),
+  targetHeight: z.number().int().positive().nullable().optional(),
+  smoothingQuality: imageStudioUpscaleSmoothingQualitySchema.nullable().optional(),
+  slot: imageStudioSlotSchema,
+  output: imageStudioOutputImageSchema.optional(),
+  requestId: z.string().nullable().optional(),
+  fingerprint: z.string().optional(),
+  deduplicated: z.boolean(),
+  dedupeReason: z.enum(['request', 'fingerprint']).optional(),
+  lifecycle: imageStudioOperationLifecycleSchema,
+  pipelineVersion: z.string().trim().min(1),
+});
+
+export type ImageStudioUpscaleResponseDto = z.infer<typeof imageStudioUpscaleResponseSchema>;
+export type ImageStudioUpscaleResponse = ImageStudioUpscaleResponseDto;
+
 export const imageStudioCenterResponseSchema = z.object({
   sourceSlotId: z.string().optional(),
   mode: imageStudioCenterModeSchema,
@@ -663,6 +704,10 @@ export const imageStudioCenterResponseSchema = z.object({
   sourceObjectBounds: imageStudioCenterObjectBoundsSchema.nullable().optional(),
   targetObjectBounds: imageStudioCenterObjectBoundsSchema.nullable().optional(),
   layout: imageStudioCenterLayoutMetadataSchema.nullable().optional(),
+  detectionUsed: imageStudioObjectDetectionUsedSchema.nullable().optional(),
+  confidenceBefore: z.number().finite().min(0).max(1).nullable().optional(),
+  detectionDetails: imageStudioDetectionDetailsSchema.nullable().optional(),
+  scale: z.number().finite().nullable().optional(),
   requestId: z.string().nullable().optional(),
   fingerprint: z.string().optional(),
   deduplicated: z.boolean(),

@@ -192,6 +192,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         metadata: {
           pathId: run.pathId,
           runStartedAt: resolveRunStartedAt(run),
+          traceId: run.id,
         },
       });
       await recordRuntimeRunFinished({
@@ -209,7 +210,11 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
           runId: run.id,
           level: 'info',
           message: 'Run queued.',
-          metadata: { pathId: run.pathId, runStartedAt: resolveRunStartedAt(run) },
+          metadata: {
+            pathId: run.pathId,
+            runStartedAt: resolveRunStartedAt(run),
+            traceId: run.id,
+          },
         }),
         recordRuntimeRunQueued({ runId: run.id }),
       ]);
@@ -283,7 +288,7 @@ export const resumePathRun = async (
           runId,
           level: 'info',
           message: `Run resumed (${mode}).`,
-          metadata: { runStartedAt: resolveRunStartedAt(updated) },
+          metadata: { runStartedAt: resolveRunStartedAt(updated), traceId: runId },
         }),
         recordRuntimeRunQueued({ runId: updated.id }),
       ]);
@@ -296,7 +301,7 @@ export const resumePathRun = async (
     }
 
     await dispatchRun(updated.id);
-    publishRunUpdate(runId, 'run', { status: 'queued', mode });
+    publishRunUpdate(runId, 'run', { status: 'queued', mode, traceId: runId });
 
     return updated;
   } catch (error) {
@@ -362,7 +367,7 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
           runId,
           level: 'info',
           message: `Retry node ${nodeId}.`,
-          metadata: { runStartedAt: resolveRunStartedAt(updated) },
+          metadata: { runStartedAt: resolveRunStartedAt(updated), traceId: runId },
         }),
         recordRuntimeRunQueued({ runId: updated.id }),
       ]);
@@ -376,7 +381,7 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
     }
 
     await dispatchRun(updated.id);
-    publishRunUpdate(runId, 'run', { status: 'queued', retryNodeId: nodeId });
+    publishRunUpdate(runId, 'run', { status: 'queued', retryNodeId: nodeId, traceId: runId });
 
     return updated;
   } catch (error) {
@@ -407,6 +412,7 @@ export const cancelPathRunWithRepository = async (
     if (run.status === 'completed' || run.status === 'failed' || run.status === 'dead_lettered') {
       return run;
     }
+    const wasInFlight = run.status === 'running' || run.status === 'paused';
     const finishedAt = new Date();
     const startedAtMs =
       typeof run.startedAt === 'string'
@@ -415,9 +421,18 @@ export const cancelPathRunWithRepository = async (
     const durationMs = Number.isFinite(startedAtMs)
       ? Math.max(0, finishedAt.getTime() - startedAtMs)
       : null;
+    const nextMeta = {
+      ...(run.meta ?? {}),
+      cancellation: {
+        requestedAt: finishedAt.toISOString(),
+        previousStatus: run.status,
+        phase: wasInFlight ? 'requested' : 'completed',
+      },
+    };
     const updated = await repo.updateRunIfStatus(runId, [run.status], {
       status: 'canceled',
       finishedAt: finishedAt.toISOString(),
+      meta: nextMeta,
     });
     if (!updated) {
       const latest = await repo.findRunById(runId);
@@ -425,13 +440,21 @@ export const cancelPathRunWithRepository = async (
       return latest;
     }
 
+    const cancellationMessage = wasInFlight
+      ? 'Cancellation requested. Run marked canceled while in-flight work stops.'
+      : 'Run canceled.';
     try {
       await Promise.all([
         repo.createRunEvent({
           runId,
           level: 'warn',
-          message: 'Run canceled.',
-          metadata: { runStartedAt: resolveRunStartedAt(updated) },
+          message: cancellationMessage,
+          metadata: {
+            runStartedAt: resolveRunStartedAt(updated),
+            cancellationRequestedAt: finishedAt.toISOString(),
+            cancellationPhase: wasInFlight ? 'requested' : 'completed',
+            traceId: runId,
+          },
         }),
         recordRuntimeRunFinished({
           runId: updated.id,
@@ -448,7 +471,7 @@ export const cancelPathRunWithRepository = async (
       });
     }
 
-    publishRunUpdate(runId, 'done', { status: 'canceled' });
+    publishRunUpdate(runId, 'done', { status: 'canceled', traceId: runId });
 
     return updated;
   } catch (error) {

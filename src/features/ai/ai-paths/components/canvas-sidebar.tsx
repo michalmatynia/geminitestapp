@@ -297,13 +297,11 @@ export function CanvasSidebar(): React.JSX.Element {
             )}
           </div>
         )}
-              </Card>
-      
-              {!selectedEdgeId && (
-      
-        <Card className='border-border/60 bg-card/40 p-4'>
-          <div className='mb-3 text-sm font-semibold text-white'>Inspector</div>
-          {selectedNode ? (
+      </Card>
+            
+                  {!selectedEdgeId && (
+                    <Card className='border-border/60 bg-card/40 p-4'>
+                      <div className='mb-3 text-sm font-semibold text-white'>Inspector</div>          {selectedNode ? (
             <div className='space-y-3 text-xs text-gray-300'>
               <div className='rounded-md border border-border/60 bg-card/50 px-3 py-2 text-[11px] text-gray-400'>
                 <div className='flex items-center justify-between'>

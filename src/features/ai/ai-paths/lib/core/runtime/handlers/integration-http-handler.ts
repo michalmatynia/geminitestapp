@@ -8,7 +8,10 @@ import {
   getValueAtMappingPath,
   renderTemplate,
 } from '../../utils';
-import { evaluateOutboundUrlPolicy } from '../security/outbound-url-policy';
+import {
+  fetchWithOutboundUrlPolicy,
+  OutboundUrlPolicyError,
+} from '../security/outbound-url-policy';
 
 export const handleHttp: NodeHandler = async ({
   node,
@@ -38,29 +41,6 @@ export const handleHttp: NodeHandler = async ({
     return {
       value: null,
       bundle: { ok: false, status: 0, error: 'Missing URL' },
-    };
-  }
-  const outboundPolicy = evaluateOutboundUrlPolicy(resolvedUrl);
-  if (!outboundPolicy.allowed) {
-    reportAiPathsError(
-      new Error('Blocked outbound URL request'),
-      {
-        action: 'httpOutboundPolicy',
-        nodeId: node.id,
-        url: resolvedUrl,
-        reason: outboundPolicy.reason,
-      },
-      'Blocked outbound URL by policy:'
-    );
-    return {
-      value: null,
-      bundle: {
-        ok: false,
-        status: 0,
-        url: resolvedUrl,
-        route: 'blocked_outbound_url',
-        error: `Blocked outbound URL (${outboundPolicy.reason ?? 'policy_violation'})`,
-      },
     };
   }
   let headers: Record<string, string> = {};
@@ -116,7 +96,10 @@ export const handleHttp: NodeHandler = async ({
     fetchInit.signal = abortSignal;
   }
   try {
-    const res: Response = await fetch(resolvedUrl, fetchInit);
+    const res: Response = await fetchWithOutboundUrlPolicy(resolvedUrl, {
+      ...fetchInit,
+      maxRedirects: 5,
+    });
     let data: unknown = null;
     if (httpConfig.responseMode === 'status') {
       data = res.status;
@@ -147,6 +130,29 @@ export const handleHttp: NodeHandler = async ({
   } catch (error: unknown) {
     if (abortSignal?.aborted || (error instanceof Error && error.name === 'AbortError')) {
       throw error;
+    }
+    if (error instanceof OutboundUrlPolicyError) {
+      reportAiPathsError(
+        error,
+        {
+          action: 'httpOutboundPolicy',
+          nodeId: node.id,
+          url: resolvedUrl,
+          reason: error.decision.reason,
+          hostname: error.decision.hostname,
+        },
+        'Blocked outbound URL by policy:'
+      );
+      return {
+        value: null,
+        bundle: {
+          ok: false,
+          status: 0,
+          url: resolvedUrl,
+          route: 'blocked_outbound_url',
+          error: `Blocked outbound URL (${error.decision.reason ?? 'policy_violation'})`,
+        },
+      };
     }
     reportAiPathsError(
       error,

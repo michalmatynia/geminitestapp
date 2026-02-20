@@ -17,6 +17,8 @@ import { useProjectsState } from '../context/ProjectsContext';
 import { useSettingsState, useSettingsActions } from '../context/SettingsContext';
 import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 import { useUiActions, useUiState } from '../context/UiContext';
+import { imageStudioAutoScalerResponseSchema } from '../contracts/autoscaler';
+import { imageStudioCenterResponseSchema } from '../contracts/center';
 import { createGenerationToolbarActionHandlers } from './generation-toolbar/generation-toolbar-action-handlers';
 import { GenerationToolbarAutoScalerSection } from './generation-toolbar/GenerationToolbarAutoScalerSection';
 import { GenerationToolbarCenterSection } from './generation-toolbar/GenerationToolbarCenterSection';
@@ -58,6 +60,11 @@ import { getImageStudioSlotImageSrc } from '../utils/image-src';
 import { getImageStudioDocTooltip } from '../utils/studio-docs';
 import { normalizeImageStudioModelPresets } from '../utils/studio-settings';
 
+import type { ImageStudioAutoScalerResponse } from '../contracts/autoscaler';
+import type {
+  ImageStudioCenterResponse,
+  ImageStudioCenterShadowPolicy,
+} from '../contracts/center';
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
 
 type MaskAttachMode = 'client_canvas_polygon' | 'server_polygon';
@@ -72,77 +79,9 @@ type CenterMode =
 type AutoScalerMode =
   | 'client_auto_scaler_v1'
   | 'server_auto_scaler_v1';
-type CenterShadowPolicy = 'auto' | 'include_shadow' | 'exclude_shadow';
-type DetectionDetails = {
-  shadowPolicyRequested: CenterShadowPolicy;
-  shadowPolicyApplied: CenterShadowPolicy;
-  componentCount: number;
-  coreComponentCount: number;
-  selectedComponentPixels: number;
-  selectedComponentCoverage: number;
-  foregroundPixels: number;
-  corePixels: number;
-  touchesBorder: boolean;
-  maskSource: 'foreground' | 'core';
-};
-
-type CenterActionResponse = {
-  slot?: ImageStudioSlotRecord;
-  mode?: CenterMode;
-  effectiveMode?: CenterMode;
-  sourceObjectBounds?: { left: number; top: number; width: number; height: number } | null;
-  targetObjectBounds?: { left: number; top: number; width: number; height: number } | null;
-  layout?: {
-    paddingPercent?: number;
-    paddingXPercent?: number;
-    paddingYPercent?: number;
-    fillMissingCanvasWhite?: boolean;
-    targetCanvasWidth?: number;
-    targetCanvasHeight?: number;
-    whiteThreshold?: number;
-    chromaThreshold?: number;
-    shadowPolicy?: CenterShadowPolicy;
-    detectionUsed?: 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel' | null;
-    scale?: number | null;
-  } | null;
-  requestId?: string | null;
-  deduplicated?: boolean;
-};
-
-type AutoScaleActionResponse = {
-  slot?: ImageStudioSlotRecord;
-  mode?: AutoScalerMode;
-  effectiveMode?: AutoScalerMode;
-  sourceObjectBounds?: { left: number; top: number; width: number; height: number } | null;
-  targetObjectBounds?: { left: number; top: number; width: number; height: number } | null;
-  layout?: {
-    paddingPercent?: number;
-    paddingXPercent?: number;
-    paddingYPercent?: number;
-    fillMissingCanvasWhite?: boolean;
-    targetCanvasWidth?: number;
-    targetCanvasHeight?: number;
-    whiteThreshold?: number;
-    chromaThreshold?: number;
-    shadowPolicy?: CenterShadowPolicy;
-  } | null;
-  detectionUsed?: 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel' | null;
-  confidenceBefore?: number | null;
-  detectionDetails?: DetectionDetails | null;
-  scale?: number | null;
-  whitespaceBefore?: {
-    px?: { left?: number; top?: number; right?: number; bottom?: number };
-    percent?: { left?: number; top?: number; right?: number; bottom?: number };
-  } | null;
-  whitespaceAfter?: {
-    px?: { left?: number; top?: number; right?: number; bottom?: number };
-    percent?: { left?: number; top?: number; right?: number; bottom?: number };
-  } | null;
-  objectAreaPercentBefore?: number | null;
-  objectAreaPercentAfter?: number | null;
-  requestId?: string | null;
-  deduplicated?: boolean;
-};
+type CenterShadowPolicy = ImageStudioCenterShadowPolicy;
+type CenterActionResponse = ImageStudioCenterResponse;
+type AutoScaleActionResponse = ImageStudioAutoScalerResponse;
 
 type CropStatus =
   | 'idle'
@@ -858,17 +797,19 @@ export function GenerationToolbar(): React.JSX.Element {
                 );
               }
               formData.append('image', uploadBlob, `center-client-${Date.now()}.png`);
-              return api.post<CenterActionResponse>(
-                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
-                formData,
-                {
-                  signal: abortController.signal,
-                  timeout: CENTER_REQUEST_TIMEOUT_MS,
-                  headers: {
-                    'x-idempotency-key': centerRequestId,
-                  },
-                }
-              );
+              return api
+                .post<unknown>(
+                  `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
+                  formData,
+                  {
+                    signal: abortController.signal,
+                    timeout: CENTER_REQUEST_TIMEOUT_MS,
+                    headers: {
+                      'x-idempotency-key': centerRequestId,
+                    },
+                  }
+                )
+                .then((raw) => imageStudioCenterResponseSchema.parse(raw));
             },
             abortController.signal
           );
@@ -883,21 +824,23 @@ export function GenerationToolbar(): React.JSX.Element {
               : 'server_alpha_bbox';
           response = await withCenterRetry(
             () =>
-              api.post<CenterActionResponse>(
-                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
-                {
-                  mode: fallbackMode,
-                  requestId: centerRequestId,
-                  ...(centerLayoutPayload ? { layout: centerLayoutPayload } : {}),
-                },
-                {
-                  signal: abortController.signal,
-                  timeout: CENTER_REQUEST_TIMEOUT_MS,
-                  headers: {
-                    'x-idempotency-key': centerRequestId,
+              api
+                .post<unknown>(
+                  `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
+                  {
+                    mode: fallbackMode,
+                    requestId: centerRequestId,
+                    ...(centerLayoutPayload ? { layout: centerLayoutPayload } : {}),
                   },
-                }
-              ),
+                  {
+                    signal: abortController.signal,
+                    timeout: CENTER_REQUEST_TIMEOUT_MS,
+                    headers: {
+                      'x-idempotency-key': centerRequestId,
+                    },
+                  }
+                )
+                .then((raw) => imageStudioCenterResponseSchema.parse(raw)),
             abortController.signal
           );
           resolvedMode = fallbackMode;
@@ -912,21 +855,23 @@ export function GenerationToolbar(): React.JSX.Element {
         setCenterStatus('processing');
         response = await withCenterRetry(
           () =>
-            api.post<CenterActionResponse>(
-              `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
-              {
-                mode: centerMode,
-                requestId: centerRequestId,
-                ...(centerLayoutPayload ? { layout: centerLayoutPayload } : {}),
-              },
-              {
-                signal: abortController.signal,
-                timeout: CENTER_REQUEST_TIMEOUT_MS,
-                headers: {
-                  'x-idempotency-key': centerRequestId,
+            api
+              .post<unknown>(
+                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
+                {
+                  mode: centerMode,
+                  requestId: centerRequestId,
+                  ...(centerLayoutPayload ? { layout: centerLayoutPayload } : {}),
                 },
-              }
-            ),
+                {
+                  signal: abortController.signal,
+                  timeout: CENTER_REQUEST_TIMEOUT_MS,
+                  headers: {
+                    'x-idempotency-key': centerRequestId,
+                  },
+                }
+              )
+              .then((raw) => imageStudioCenterResponseSchema.parse(raw)),
           abortController.signal
         );
       }
@@ -939,7 +884,7 @@ export function GenerationToolbar(): React.JSX.Element {
         const createdSlotId = response.slot?.id ?? '';
         const mergedSlots =
           createdSlotId
-            ? [response.slot!, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
+            ? [response.slot, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
             : slotsSnapshot;
         queryClient.setQueryData<StudioSlotsResponse>(
           studioKeys.slots(normalizedProjectId),
@@ -1069,17 +1014,19 @@ export function GenerationToolbar(): React.JSX.Element {
               formData.append('requestId', autoScaleRequestId);
               formData.append('layout', JSON.stringify(autoScaleLayoutPayload));
               formData.append('image', uploadBlob, `autoscale-client-${Date.now()}.png`);
-              return api.post<AutoScaleActionResponse>(
-                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/autoscale`,
-                formData,
-                {
-                  signal: abortController.signal,
-                  timeout: AUTOSCALER_REQUEST_TIMEOUT_MS,
-                  headers: {
-                    'x-idempotency-key': autoScaleRequestId,
-                  },
-                }
-              );
+              return api
+                .post<unknown>(
+                  `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/autoscale`,
+                  formData,
+                  {
+                    signal: abortController.signal,
+                    timeout: AUTOSCALER_REQUEST_TIMEOUT_MS,
+                    headers: {
+                      'x-idempotency-key': autoScaleRequestId,
+                    },
+                  }
+                )
+                .then((raw) => imageStudioAutoScalerResponseSchema.parse(raw));
             },
             abortController.signal
           );
@@ -1091,21 +1038,23 @@ export function GenerationToolbar(): React.JSX.Element {
           const fallbackMode: AutoScalerMode = 'server_auto_scaler_v1';
           response = await withAutoScalerRetry(
             () =>
-              api.post<AutoScaleActionResponse>(
-                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/autoscale`,
-                {
-                  mode: fallbackMode,
-                  requestId: autoScaleRequestId,
-                  layout: autoScaleLayoutPayload,
-                },
-                {
-                  signal: abortController.signal,
-                  timeout: AUTOSCALER_REQUEST_TIMEOUT_MS,
-                  headers: {
-                    'x-idempotency-key': autoScaleRequestId,
+              api
+                .post<unknown>(
+                  `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/autoscale`,
+                  {
+                    mode: fallbackMode,
+                    requestId: autoScaleRequestId,
+                    layout: autoScaleLayoutPayload,
                   },
-                }
-              ),
+                  {
+                    signal: abortController.signal,
+                    timeout: AUTOSCALER_REQUEST_TIMEOUT_MS,
+                    headers: {
+                      'x-idempotency-key': autoScaleRequestId,
+                    },
+                  }
+                )
+                .then((raw) => imageStudioAutoScalerResponseSchema.parse(raw)),
             abortController.signal
           );
           resolvedMode = fallbackMode;
@@ -1118,21 +1067,23 @@ export function GenerationToolbar(): React.JSX.Element {
         setAutoScaleStatus('processing');
         response = await withAutoScalerRetry(
           () =>
-            api.post<AutoScaleActionResponse>(
-              `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/autoscale`,
-              {
-                mode: autoScaleMode,
-                requestId: autoScaleRequestId,
-                layout: autoScaleLayoutPayload,
-              },
-              {
-                signal: abortController.signal,
-                timeout: AUTOSCALER_REQUEST_TIMEOUT_MS,
-                headers: {
-                  'x-idempotency-key': autoScaleRequestId,
+            api
+              .post<unknown>(
+                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/autoscale`,
+                {
+                  mode: autoScaleMode,
+                  requestId: autoScaleRequestId,
+                  layout: autoScaleLayoutPayload,
                 },
-              }
-            ),
+                {
+                  signal: abortController.signal,
+                  timeout: AUTOSCALER_REQUEST_TIMEOUT_MS,
+                  headers: {
+                    'x-idempotency-key': autoScaleRequestId,
+                  },
+                }
+              )
+              .then((raw) => imageStudioAutoScalerResponseSchema.parse(raw)),
           abortController.signal
         );
       }
@@ -1145,7 +1096,7 @@ export function GenerationToolbar(): React.JSX.Element {
         const createdSlotId = response.slot?.id ?? '';
         const mergedSlots =
           createdSlotId
-            ? [response.slot!, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
+            ? [response.slot, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
             : slotsSnapshot;
         queryClient.setQueryData<StudioSlotsResponse>(
           studioKeys.slots(normalizedProjectId),

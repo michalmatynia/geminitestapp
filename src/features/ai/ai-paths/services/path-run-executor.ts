@@ -7,6 +7,7 @@ import {
   compileGraph,
   evaluateAiPathsValidationPreflight,
   evaluateGraphWithIteratorAutoContinue,
+  GraphExecutionCancelled,
   inspectPathDependencies,
   normalizeAiPathsValidationConfig,
 } from '@/features/ai/ai-paths/lib';
@@ -29,6 +30,10 @@ import type {
   RuntimePortValues,
   RuntimeState,
 } from '@/shared/contracts/ai-paths';
+import type {
+  AiPathRuntimeProfileEventDto,
+  RuntimeProfileSummaryDto,
+} from '@/shared/contracts/ai-paths-runtime';
 
 const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 const UPDATE_ELIGIBLE_RUN_STATUSES: AiPathRunStatus[] = [
@@ -45,6 +50,23 @@ const INTERMEDIATE_SAVE_INTERVAL_MS = Math.max(
   500,
   Number.parseInt(process.env['AI_PATHS_RUNTIME_STATE_FLUSH_INTERVAL_MS'] ?? '', 10) || 2000
 );
+const RUNTIME_PROFILE_SAMPLE_LIMIT = Math.max(
+  5,
+  Number.parseInt(process.env['AI_PATHS_RUNTIME_PROFILE_SAMPLE_LIMIT'] ?? '', 10) || 30
+);
+const RUNTIME_PROFILE_HIGHLIGHT_LIMIT = Math.max(
+  5,
+  Number.parseInt(process.env['AI_PATHS_RUNTIME_PROFILE_HIGHLIGHT_LIMIT'] ?? '', 10) || 10
+);
+const RUNTIME_PROFILE_SLOW_NODE_MS = Math.max(
+  10,
+  Number.parseInt(process.env['AI_PATHS_RUNTIME_PROFILE_SLOW_NODE_MS'] ?? '', 10) || 600
+);
+const resolveCancellationPollIntervalMs = (): number => {
+  const parsed = Number.parseInt(process.env['AI_PATHS_CANCEL_POLL_INTERVAL_MS'] ?? '', 10);
+  if (!Number.isFinite(parsed)) return 750;
+  return Math.max(100, Math.min(5000, Math.trunc(parsed)));
+};
 
 const isMissingRunUpdateError = (error: unknown): boolean => {
   if (
@@ -149,6 +171,122 @@ const sanitizeRuntimeState = (state: RuntimeState): RuntimeState => {
     };
   }
   return EMPTY_RUNTIME_STATE;
+};
+
+type RuntimeProfileHighlight = {
+  type: 'run' | 'iteration' | 'node';
+  phase?: 'start' | 'end';
+  nodeId?: string;
+  nodeType?: string;
+  status?: string;
+  reason?: string;
+  iteration?: number;
+  durationMs?: number;
+  hashMs?: number;
+};
+
+type RuntimeProfileSnapshot = {
+  traceId: string;
+  recordedAt: string;
+  eventCount: number;
+  sampledEventCount: number;
+  droppedEventCount: number;
+  summary: {
+    durationMs: number;
+    iterationCount: number;
+    nodeCount: number;
+    edgeCount: number;
+    hottestNodes: Array<{
+      nodeId: string;
+      nodeType: string;
+      count: number;
+      totalMs: number;
+      maxMs: number;
+      avgMs: number;
+      errorCount: number;
+      cachedCount: number;
+      skippedCount: number;
+    }>;
+  } | null;
+  highlights: RuntimeProfileHighlight[];
+};
+
+const shouldCaptureRuntimeProfileHighlight = (
+  event: AiPathRuntimeProfileEventDto
+): boolean => {
+  if (event.type !== 'node') {
+    return event.type === 'run' && event.phase === 'end';
+  }
+  if (event.status === 'error' || event.status === 'skipped') return true;
+  if ((event.durationMs ?? 0) >= RUNTIME_PROFILE_SLOW_NODE_MS) return true;
+  if (event.sideEffectDecision === 'skipped_duplicate') return true;
+  if (event.reason === 'missing_inputs') return true;
+  return false;
+};
+
+const toRuntimeProfileHighlight = (
+  event: AiPathRuntimeProfileEventDto
+): RuntimeProfileHighlight => {
+  if (event.type === 'run') {
+    return {
+      type: 'run',
+      phase: event.phase,
+      durationMs: event.durationMs,
+    };
+  }
+  if (event.type === 'iteration') {
+    return {
+      type: 'iteration',
+      iteration: event.iteration,
+      durationMs: event.durationMs,
+    };
+  }
+  return {
+    type: 'node',
+    nodeId: event.nodeId,
+    nodeType: event.nodeType,
+    status: event.status,
+    reason: event.reason,
+    iteration: event.iteration,
+    durationMs: event.durationMs,
+    hashMs: event.hashMs,
+  };
+};
+
+const buildRuntimeProfileSnapshot = (input: {
+  traceId: string;
+  eventCount: number;
+  sampledHighlights: RuntimeProfileHighlight[];
+  summary: RuntimeProfileSummaryDto | null;
+}): RuntimeProfileSnapshot => {
+  const hottestNodes = input.summary?.hottestNodes.slice(0, 5).map((node) => ({
+    nodeId: node.nodeId,
+    nodeType: node.nodeType,
+    count: node.count,
+    totalMs: node.totalMs,
+    maxMs: node.maxMs,
+    avgMs: node.avgMs,
+    errorCount: node.errorCount,
+    cachedCount: node.cachedCount,
+    skippedCount: node.skippedCount,
+  })) ?? [];
+  return {
+    traceId: input.traceId,
+    recordedAt: new Date().toISOString(),
+    eventCount: input.eventCount,
+    sampledEventCount: input.sampledHighlights.length,
+    droppedEventCount: Math.max(input.eventCount - input.sampledHighlights.length, 0),
+    summary: input.summary
+      ? {
+        durationMs: input.summary.durationMs,
+        iterationCount: input.summary.iterationCount,
+        nodeCount: input.summary.nodeCount,
+        edgeCount: input.summary.edgeCount,
+        hottestNodes,
+      }
+      : null,
+    highlights: input.sampledHighlights.slice(0, RUNTIME_PROFILE_HIGHLIGHT_LIMIT),
+  };
 };
 
 const computeDownstreamNodes = (
@@ -295,6 +433,19 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     throw new Error('Database repository not available');
   }
   let dbRunMissing = false;
+  const runAbortController = new AbortController();
+  const cancellationPollIntervalMs = resolveCancellationPollIntervalMs();
+  let cancellationMonitorActive = false;
+  let cancellationMonitorTimer: NodeJS.Timeout | null = null;
+
+  const stopCancellationMonitor = (): void => {
+    cancellationMonitorActive = false;
+    if (cancellationMonitorTimer) {
+      clearTimeout(cancellationMonitorTimer);
+      cancellationMonitorTimer = null;
+    }
+  };
+
   const updateRunSnapshot = async (
     data: Parameters<typeof repo.updateRun>[1]
   ): Promise<AiPathRunRecord | null> => {
@@ -313,11 +464,115 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       throw error;
     }
   };
+  const checkForCancellation = async (): Promise<boolean> => {
+    if (runAbortController.signal.aborted) return true;
+    if (dbRunMissing) return false;
+    try {
+      const latestRun = await repo.findRunById(run.id);
+      if (latestRun?.status !== 'canceled') return false;
+      runAbortController.abort();
+      return true;
+    } catch (error) {
+      void ErrorSystem.logWarning('Failed to check cancellation status', {
+        service: 'ai-paths-executor',
+        error,
+        runId: run.id,
+      });
+      return false;
+    }
+  };
+  const startCancellationMonitor = async (): Promise<boolean> => {
+    const cancelledBeforeStart = await checkForCancellation();
+    if (cancelledBeforeStart) return true;
+    cancellationMonitorActive = true;
+    const scheduleNext = (): void => {
+      if (!cancellationMonitorActive) return;
+      cancellationMonitorTimer = setTimeout(() => {
+        void (async () => {
+          if (!cancellationMonitorActive) return;
+          const cancelled = await checkForCancellation();
+          if (!cancelled) {
+            scheduleNext();
+          }
+        })();
+      }, cancellationPollIntervalMs);
+    };
+    scheduleNext();
+    return false;
+  };
 
   const runStartedAt =
     typeof run.startedAt === 'string'
       ? run.startedAt
       : new Date().toISOString();
+  const traceId = run.id;
+  let runtimeProfileEventCount = 0;
+  const runtimeProfileHighlights: RuntimeProfileHighlight[] = [];
+  let runtimeProfileSummary: RuntimeProfileSummaryDto | null = null;
+  let runtimeProfilePersisted = false;
+
+  const captureRuntimeProfileEvent = (event: AiPathRuntimeProfileEventDto): void => {
+    runtimeProfileEventCount += 1;
+    if (
+      runtimeProfileHighlights.length >= RUNTIME_PROFILE_SAMPLE_LIMIT ||
+      !shouldCaptureRuntimeProfileHighlight(event)
+    ) {
+      return;
+    }
+    runtimeProfileHighlights.push(toRuntimeProfileHighlight(event));
+  };
+
+  const buildTraceMeta = (
+    snapshot: RuntimeProfileSnapshot | null
+  ): Record<string, unknown> => ({
+    traceId,
+    profile: snapshot,
+  });
+
+  const persistRuntimeProfile = async (
+    level: 'info' | 'warn' | 'error',
+    message: string
+  ): Promise<RuntimeProfileSnapshot | null> => {
+    if (runtimeProfilePersisted) return null;
+    const snapshot =
+      runtimeProfileEventCount > 0 || runtimeProfileSummary
+        ? buildRuntimeProfileSnapshot({
+          traceId,
+          eventCount: runtimeProfileEventCount,
+          sampledHighlights: runtimeProfileHighlights,
+          summary: runtimeProfileSummary,
+        })
+        : null;
+    runtimeProfilePersisted = true;
+    if (!snapshot || dbRunMissing) return snapshot;
+    try {
+      await repo.createRunEvent({
+        runId: run.id,
+        level,
+        message,
+        metadata: {
+          traceId,
+          kind: 'runtime_profile_summary',
+          runtimeProfile: snapshot,
+          runStartedAt,
+        },
+      });
+      publishRunUpdate(run.id, 'events', {
+        level,
+        message,
+        traceId,
+        kind: 'runtime_profile_summary',
+        runtimeProfile: snapshot,
+      });
+    } catch (error) {
+      void ErrorSystem.logWarning('Failed to persist runtime profile snapshot', {
+        service: 'ai-paths-executor',
+        error,
+        runId: run.id,
+      });
+    }
+    return snapshot;
+  };
   
   const graph = run.graph;
   if (!graph || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
@@ -333,7 +588,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           runId: run.id,
           level: 'error',
           message: errorMsg,
-          metadata: { runStartedAt, graphPresent: !!graph },
+          metadata: { runStartedAt, graphPresent: !!graph, traceId },
         });
       }
     } catch (dbError) {
@@ -434,6 +689,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       metadata: {
         error: error instanceof Error ? error.message : String(error),
         runStartedAt,
+        traceId,
         ...meta,
       },
     });
@@ -454,6 +710,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             findings: compileReport.findings.slice(0, 10),
           },
           runStartedAt,
+          traceId,
         },
       });
       throw new Error(
@@ -472,6 +729,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             findings: compileReport.findings.slice(0, 10),
           },
           runStartedAt,
+          traceId,
         },
       });
     }
@@ -500,6 +758,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             findings: validationReport.findings.slice(0, 8),
           },
           runStartedAt,
+          traceId,
         },
       });
       throw new Error(
@@ -521,6 +780,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             findings: validationReport.findings.slice(0, 5),
           },
           runStartedAt,
+          traceId,
         },
       });
     }
@@ -542,12 +802,19 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             blockedNodeIds: dependencyReport.risks
               .filter((risk): boolean => risk.severity === 'error')
               .map((risk) => risk.nodeId),
+            runStartedAt,
+            traceId,
           },
         });
         throw new Error(
           `Strict flow blocked run: ${dependencyReport.errors} dependency error(s) detected.`,
         );
       }
+    }
+
+    const cancelledBeforeExecution = await startCancellationMonitor();
+    if (cancelledBeforeExecution) {
+      return;
     }
 
     const resultState = await evaluateGraphWithIteratorAutoContinue({
@@ -577,6 +844,14 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         void reportAiPathsError(error, meta, summary);
       },
       toast,
+      profile: {
+        onEvent: (event): void => {
+          captureRuntimeProfileEvent(event);
+        },
+        onSummary: (summary): void => {
+          runtimeProfileSummary = summary;
+        },
+      },
       onNodeStart: async ({
         node,
         nodeInputs,
@@ -595,6 +870,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           resolvedRunStartedAt = cbRunStartedAt;
           const nextAttempt = (nodeAttemptMap.get(node.id) ?? 0) + 1;
           nodeAttemptMap.set(node.id, nextAttempt);
+          const nodeSpanId = `${node.id}:${nextAttempt}:${iteration}`;
 
           // Track intermediate state so SSE stream can deliver per-node progress
           const safeInputs = toJsonSafe(nodeInputs) as RuntimePortValues;
@@ -622,6 +898,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
                 level: 'info',
                 message: `Node ${node.title ?? node.id} started.`,
                 metadata: {
+                  traceId,
+                  spanId: nodeSpanId,
                   nodeId: node.id,
                   nodeType: node.type,
                   nodeTitle: node.title ?? null,
@@ -640,6 +918,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             status: 'running',
           });
           publishRunUpdate(run.id, 'nodes', {
+            traceId,
+            spanId: nodeSpanId,
             nodeId: node.id,
             nodeType: node.type,
             nodeTitle: node.title ?? null,
@@ -679,6 +959,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           const safeOutputs = toJsonSafe(nextOutputs) as RuntimePortValues;
           accInputs[node.id] = safeInputs;
           accOutputs[node.id] = { ...(safeOutputs), status: 'completed' } as RuntimePortValues;
+          const attempt = nodeAttemptMap.get(node.id) ?? 0;
+          const nodeSpanId = `${node.id}:${attempt}:${iteration}`;
 
           if (cached) {
             if (iteration === 0) {
@@ -687,7 +969,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
                   nodeType: node.type,
                   nodeTitle: node.title ?? null,
                   status: 'completed',
-                  attempt: nodeAttemptMap.get(node.id) ?? 0,
+                  attempt,
                   inputs: safeInputs,
                   outputs: safeOutputs,
                   finishedAt: new Date().toISOString(),
@@ -698,12 +980,14 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
                   level: 'info',
                   message: `Node ${node.title ?? node.id} reused cached outputs.`,
                   metadata: {
+                    traceId,
+                    spanId: nodeSpanId,
                     nodeId: node.id,
                     nodeType: node.type,
                     nodeTitle: node.title ?? null,
                     status: 'completed',
                     cached: true,
-                    attempt: nodeAttemptMap.get(node.id) ?? 0,
+                    attempt,
                     iteration,
                     runStartedAt: cbRunStartedAt,
                   },
@@ -716,6 +1000,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
                 status: 'cached',
               });
               publishRunUpdate(run.id, 'nodes', {
+                traceId,
+                spanId: nodeSpanId,
                 nodeId: node.id,
                 nodeType: node.type,
                 nodeTitle: node.title ?? null,
@@ -731,7 +1017,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               nodeType: node.type,
               nodeTitle: node.title ?? null,
               status: 'completed',
-              attempt: nodeAttemptMap.get(node.id) ?? 0,
+              attempt,
               inputs: safeInputs,
               outputs: safeOutputs,
               finishedAt: new Date().toISOString(),
@@ -742,11 +1028,13 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               level: 'info',
               message: `Node ${node.title ?? node.id} completed.`,
               metadata: {
+                traceId,
+                spanId: nodeSpanId,
                 nodeId: node.id,
                 nodeType: node.type,
                 nodeTitle: node.title ?? null,
                 status: 'completed',
-                attempt: nodeAttemptMap.get(node.id) ?? 0,
+                attempt,
                 iteration,
                 runStartedAt: cbRunStartedAt,
               },
@@ -759,6 +1047,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             status: 'completed',
           });
           publishRunUpdate(run.id, 'nodes', {
+            traceId,
+            spanId: nodeSpanId,
             nodeId: node.id,
             nodeType: node.type,
             nodeTitle: node.title ?? null,
@@ -794,13 +1084,15 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           const safeInputs = toJsonSafe(nodeInputs) as RuntimePortValues;
           const safePrevOutputs = toJsonSafe(prevOutputs) as RuntimePortValues;
           accOutputs[node.id] = { ...(accOutputs[node.id] ?? {}), status: 'failed' } as RuntimePortValues;
+          const attempt = nodeAttemptMap.get(node.id) ?? 0;
+          const nodeSpanId = `${node.id}:${attempt}:${iteration}`;
 
           await Promise.all([
             repo.upsertRunNode(run.id, node.id, {
               nodeType: node.type,
               nodeTitle: node.title ?? null,
               status: 'failed',
-              attempt: nodeAttemptMap.get(node.id) ?? 0,
+              attempt,
               inputs: safeInputs,
               outputs: safePrevOutputs,
               finishedAt: new Date().toISOString(),
@@ -811,11 +1103,13 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               level: 'error',
               message: `Node ${node.title ?? node.id} failed.`,
               metadata: {
+                traceId,
+                spanId: nodeSpanId,
                 nodeId: node.id,
                 nodeType: node.type,
                 nodeTitle: node.title ?? null,
                 status: 'failed',
-                attempt: nodeAttemptMap.get(node.id) ?? 0,
+                attempt,
                 error: error instanceof Error ? error.message : String(error),
                 iteration,
                 runStartedAt: cbRunStartedAt,
@@ -829,6 +1123,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             status: 'failed',
           });
           publishRunUpdate(run.id, 'nodes', {
+            traceId,
+            spanId: nodeSpanId,
             nodeId: node.id,
             nodeType: node.type,
             nodeTitle: node.title ?? null,
@@ -890,6 +1186,9 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           });
         }
       },
+      control: {
+        signal: runAbortController.signal,
+      },
     });
 
     // Flush any throttled intermediate state before writing final status
@@ -897,6 +1196,10 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       await saveIntermediateState();
     }
 
+    const runtimeProfileSnapshot = await persistRuntimeProfile(
+      'info',
+      'Runtime profile summary recorded.'
+    );
     const finishedAt = new Date();
     let finalizedAsCompleted = false;
     try {
@@ -904,6 +1207,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       if (latestRun?.status === 'canceled') {
         await updateRunSnapshot({
           runtimeState: sanitizeRuntimeState(resultState),
+          ...(latestRun.finishedAt ? {} : { finishedAt: finishedAt.toISOString() }),
         });
       } else if (!latestRun || !TERMINAL_RUN_STATUSES.has(latestRun.status)) {
         const updated = await updateRunSnapshot({
@@ -913,6 +1217,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           errorMessage: null,
           meta: {
             ...(run.meta ?? {}),
+            runtimeTrace: buildTraceMeta(runtimeProfileSnapshot),
             resumeMode: 'replay',
             retryNodeIds: [],
           },
@@ -922,7 +1227,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             runId: run.id,
             level: 'info',
             message: 'Run completed successfully.',
-            metadata: { runStartedAt },
+            metadata: { runStartedAt, traceId },
           });
           finalizedAsCompleted = true;
         }
@@ -936,7 +1241,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     }
 
     if (finalizedAsCompleted) {
-      publishRunUpdate(run.id, 'done', { status: 'completed' });
+      publishRunUpdate(run.id, 'done', { status: 'completed', traceId });
       try {
         const startedAtMs = Date.parse(runStartedAt);
         const durationMs = Number.isFinite(startedAtMs)
@@ -957,10 +1262,43 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       }
     }
   } catch (error) {
+    if (
+      error instanceof GraphExecutionCancelled ||
+      (error instanceof Error && error.name === 'GraphExecutionCancelled')
+    ) {
+      let latestRun: AiPathRunRecord | null = null;
+      try {
+        latestRun = await repo.findRunById(run.id);
+      } catch {
+        latestRun = null;
+      }
+      if (latestRun?.status === 'canceled') {
+        const finishedAt = new Date().toISOString();
+        try {
+          const cancelledRuntimeState =
+            error instanceof GraphExecutionCancelled
+              ? sanitizeRuntimeState(error.state)
+              : undefined;
+          await updateRunSnapshot({
+            ...(cancelledRuntimeState ? { runtimeState: cancelledRuntimeState } : {}),
+            ...(latestRun.finishedAt ? {} : { finishedAt }),
+          });
+        } catch (cancelUpdateError) {
+          void ErrorSystem.logWarning('Failed to finalize canceled run snapshot', {
+            service: 'ai-paths-executor',
+            error: cancelUpdateError,
+            runId: run.id,
+          });
+        }
+        return;
+      }
+    }
+
     void ErrorSystem.captureException(error, {
       service: 'ai-paths-executor',
       action: 'executePathRun',
       runId: run.id,
+      traceId,
     });
     const errorMessage = error instanceof Error ? error.message : String(error);
     const finishedAt = new Date();
@@ -974,12 +1312,20 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     if (latestRun && TERMINAL_RUN_STATUSES.has(latestRun.status)) {
       throw error;
     }
+    const runtimeProfileSnapshot = await persistRuntimeProfile(
+      'warn',
+      'Runtime profile captured before run failure.'
+    );
     
     try {
       await updateRunSnapshot({
         status: 'failed',
         finishedAt: finishedAt.toISOString(),
         errorMessage,
+        meta: {
+          ...(run.meta ?? {}),
+          runtimeTrace: buildTraceMeta(runtimeProfileSnapshot),
+        },
       });
     } catch (dbUpdateError) {
       void ErrorSystem.logWarning('Failed to update run status to failed in DB', {
@@ -998,6 +1344,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           metadata: {
             error: errorMessage,
             runStartedAt,
+            traceId,
           },
         });
       } catch (eventError) {
@@ -1009,7 +1356,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       }
     }
 
-    publishRunUpdate(run.id, 'error', { error: errorMessage });
+    publishRunUpdate(run.id, 'error', { error: errorMessage, traceId });
 
     try {
       const startedAtMs = Date.parse(runStartedAt);
@@ -1030,5 +1377,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       });
     }
     throw error;
+  } finally {
+    stopCancellationMonitor();
   }
 };

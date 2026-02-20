@@ -8,7 +8,7 @@ import { useDocumentState, useDocumentActions } from '../context/hooks/useDocume
 import { useSettingsState } from '../context/hooks/useSettings';
 
 export function SourcePromptPanel(): React.JSX.Element {
-  const { promptText, documentState, returnTarget } = useDocumentState();
+  const { promptText, returnTarget } = useDocumentState();
   const { setPromptText, handleExplode, handleApplyToImageStudio } = useDocumentActions();
   const { runtimeGuardrailIssue, promptExploderSettings } = useSettingsState();
   const caseResolverCaptureModeLabel =
@@ -37,7 +37,6 @@ export function SourcePromptPanel(): React.JSX.Element {
             onClick={() => {
               void handleApplyToImageStudio();
             }}
-            disabled={!documentState && promptText.trim().length === 0}
           >
             {returnTarget === 'case-resolver'
               ? 'Apply to Case Resolver'

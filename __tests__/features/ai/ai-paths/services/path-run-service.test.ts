@@ -4,15 +4,15 @@ vi.unmock('@/shared/lib/db/prisma');
 vi.unmock('@/features/ai/ai-paths/services/path-run-repository');
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
-import { 
+import {
   enqueuePathRun, 
   resumePathRun, 
   cancelPathRun, 
   cancelPathRunWithRepository,
   retryPathRunNode 
 } from '@/features/ai/ai-paths/services/path-run-service';
-import prisma from '@/shared/lib/db/prisma';
 import type { AiNode } from '@/shared/contracts/ai-paths';
+import prisma from '@/shared/lib/db/prisma';
 
 vi.mock('@/features/jobs/workers/aiPathRunQueue', () => ({
   enqueuePathRunJob: vi.fn().mockResolvedValue(undefined),
@@ -177,6 +177,33 @@ describe('PathRunService', () => {
       const canceled = await cancelPathRunWithRepository(repo, run.id);
       expect(canceled.status).toBe('canceled');
       expect(canceled.finishedAt).toBeDefined();
+    });
+
+    it('should mark in-flight cancellation metadata when canceling a running run', async () => {
+      const run = await enqueuePathRun({
+        pathId: 'test-path-running-cancel',
+        nodes: mockNodes,
+        edges: []
+      });
+      await repo.updateRun(run.id, { status: 'running', startedAt: new Date().toISOString() });
+
+      const canceled = await cancelPathRun(run.id);
+      expect(canceled.status).toBe('canceled');
+      expect(canceled.meta).toEqual(
+        expect.objectContaining({
+          cancellation: expect.objectContaining({
+            phase: 'requested',
+            previousStatus: 'running',
+          }),
+        })
+      );
+
+      const events = await repo.listRunEvents(run.id);
+      expect(
+        events.some((e: any) =>
+          String(e.message).includes('Cancellation requested')
+        )
+      ).toBe(true);
     });
   });
 

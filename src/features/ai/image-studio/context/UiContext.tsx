@@ -44,10 +44,16 @@ export interface PendingSequenceThumbnailState {
 }
 
 const DEFAULT_CANVAS_IMAGE_OFFSET: CanvasImageOffset = { x: 0, y: 0 };
+const DEFAULT_CANVAS_BACKGROUND_COLOR = '#ffffff';
 const normalizeCanvasImageOffset = (offset: CanvasImageOffset): CanvasImageOffset => ({
   x: Number.isFinite(offset.x) ? offset.x : 0,
   y: Number.isFinite(offset.y) ? offset.y : 0,
 });
+const normalizeCanvasBackgroundColor = (value: string): string => {
+  const normalized = value.trim().toLowerCase();
+  if (/^#[0-9a-f]{6}$/.test(normalized)) return normalized;
+  return DEFAULT_CANVAS_BACKGROUND_COLOR;
+};
 
 export interface UiState {
   isFocusMode: boolean;
@@ -59,6 +65,8 @@ export interface UiState {
   previewCanvasSize: PreviewCanvasSize;
   imageTransformMode: ImageTransformMode;
   canvasImageOffset: CanvasImageOffset;
+  canvasBackgroundLayerEnabled: boolean;
+  canvasBackgroundColor: string;
   pendingSequenceThumbnail: PendingSequenceThumbnailState | null;
 }
 
@@ -74,6 +82,8 @@ export interface UiActions {
   setImageTransformMode: (mode: ImageTransformMode) => void;
   setCanvasImageOffset: (offset: CanvasImageOffset) => void;
   resetCanvasImageOffset: () => void;
+  setCanvasBackgroundLayerEnabled: (value: boolean) => void;
+  setCanvasBackgroundColor: (value: string) => void;
   setPendingSequenceThumbnail: (value: PendingSequenceThumbnailState | null) => void;
   registerPreviewCanvasViewportCropResolver: (resolver: PreviewCanvasViewportCropResolver | null) => void;
   getPreviewCanvasViewportCrop: () => PreviewCanvasViewportCrop | null;
@@ -94,6 +104,8 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
   const [previewCanvasSize, setPreviewCanvasSize] = useState<PreviewCanvasSize>('regular');
   const [imageTransformMode, setImageTransformMode] = useState<ImageTransformMode>('none');
   const [canvasImageOffsetState, setCanvasImageOffsetState] = useState<CanvasImageOffset>(DEFAULT_CANVAS_IMAGE_OFFSET);
+  const [canvasBackgroundLayerEnabled, setCanvasBackgroundLayerEnabled] = useState(true);
+  const [canvasBackgroundColor, setCanvasBackgroundColorState] = useState(DEFAULT_CANVAS_BACKGROUND_COLOR);
   const [pendingSequenceThumbnail, setPendingSequenceThumbnail] = useState<PendingSequenceThumbnailState | null>(null);
   const previewCanvasViewportCropResolverRef = useRef<PreviewCanvasViewportCropResolver | null>(null);
   const previewCanvasImageFrameResolverRef = useRef<PreviewCanvasImageFrameResolver | null>(null);
@@ -109,6 +121,8 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
       previewCanvasSize,
       imageTransformMode,
       canvasImageOffset: canvasImageOffsetState,
+      canvasBackgroundLayerEnabled,
+      canvasBackgroundColor,
       pendingSequenceThumbnail,
     }),
     [
@@ -121,6 +135,8 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
       maskPreviewEnabled,
       validatorEnabled,
       canvasImageOffsetState,
+      canvasBackgroundLayerEnabled,
+      canvasBackgroundColor,
       pendingSequenceThumbnail,
     ]
   );
@@ -150,6 +166,10 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
       },
       resetCanvasImageOffset: (): void => {
         setCanvasImageOffsetState(DEFAULT_CANVAS_IMAGE_OFFSET);
+      },
+      setCanvasBackgroundLayerEnabled,
+      setCanvasBackgroundColor: (value: string): void => {
+        setCanvasBackgroundColorState(normalizeCanvasBackgroundColor(value));
       },
       setPendingSequenceThumbnail,
       registerPreviewCanvasViewportCropResolver: (resolver: PreviewCanvasViewportCropResolver | null): void => {

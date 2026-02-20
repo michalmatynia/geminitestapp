@@ -15,6 +15,65 @@ import {
   pollGraphJob,
 } from '../utils';
 
+type PollFailureClassification = {
+  status: 'failed' | 'timeout' | 'canceled';
+  reason:
+    | 'poll_timeout'
+    | 'poll_job_canceled'
+    | 'poll_connection_error'
+    | 'poll_query_failed'
+    | 'poll_unknown';
+  retryable: boolean;
+  error: string;
+};
+
+const classifyPollError = (
+  error: unknown,
+  mode: 'job' | 'database'
+): PollFailureClassification => {
+  const message = error instanceof Error ? error.message : String(error);
+  const normalized = message.trim().toLowerCase();
+
+  if (normalized.includes('timed out') || normalized.includes('timeout')) {
+    return {
+      status: 'timeout',
+      reason: 'poll_timeout',
+      retryable: true,
+      error: message,
+    };
+  }
+  if (normalized.includes('was canceled') || normalized.includes('was cancelled')) {
+    return {
+      status: 'canceled',
+      reason: 'poll_job_canceled',
+      retryable: false,
+      error: message,
+    };
+  }
+  if (normalized.includes('connection error') || normalized.includes('network')) {
+    return {
+      status: 'failed',
+      reason: 'poll_connection_error',
+      retryable: true,
+      error: message,
+    };
+  }
+  if (mode === 'database') {
+    return {
+      status: 'failed',
+      reason: 'poll_query_failed',
+      retryable: true,
+      error: message,
+    };
+  }
+  return {
+    status: 'failed',
+    reason: 'poll_unknown',
+    retryable: true,
+    error: message,
+  };
+};
+
 export const handlePoll: NodeHandler = async ({
   node,
   nodeInputs,
@@ -89,12 +148,16 @@ export const handlePoll: NodeHandler = async ({
           ...(response.bundle ?? {}),
           jobId,
           status: response.status,
+          ...(response.status === 'timeout'
+            ? { reason: 'poll_timeout', retryable: true }
+            : {}),
         },
       };
     } catch (error: unknown) {
       if (abortSignal?.aborted || (error instanceof Error && error.name === 'AbortError')) {
         throw error;
       }
+      const classification = classifyPollError(error, 'database');
       reportAiPathsError(
         error,
         { action: 'pollDatabase', nodeId: node.id },
@@ -102,12 +165,14 @@ export const handlePoll: NodeHandler = async ({
       );
       return {
         result: null,
-        status: 'failed',
+        status: classification.status,
         jobId,
         bundle: {
           jobId,
-          status: 'failed',
-          error: error instanceof Error ? error.message : 'Polling failed',
+          status: classification.status,
+          reason: classification.reason,
+          retryable: classification.retryable,
+          error: classification.error,
         },
       };
     }
@@ -131,6 +196,7 @@ export const handlePoll: NodeHandler = async ({
     if (abortSignal?.aborted || (error instanceof Error && error.name === 'AbortError')) {
       throw error;
     }
+    const classification = classifyPollError(error, 'job');
     reportAiPathsError(
       error,
       { action: 'pollJob', jobId, nodeId: node.id },
@@ -138,12 +204,14 @@ export const handlePoll: NodeHandler = async ({
     );
     return {
       result: null,
-      status: 'failed',
+      status: classification.status,
       jobId,
       bundle: {
         jobId,
-        status: 'failed',
-        error: error instanceof Error ? error.message : 'Polling failed',
+        status: classification.status,
+        reason: classification.reason,
+        retryable: classification.retryable,
+        error: classification.error,
       },
     };
   }

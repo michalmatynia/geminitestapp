@@ -13,6 +13,7 @@ export function PromptExploderDocsTooltipSwitch({
 }): React.JSX.Element {
   return (
     <ToggleRow
+      id='prompt-exploder-docs-tooltips-toggle'
       label='Docs Tooltips'
       checked={docsTooltipsEnabled}
       onCheckedChange={(checked: boolean) => {

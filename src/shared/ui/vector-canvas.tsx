@@ -367,6 +367,8 @@ export interface VectorCanvasProps {
   imageMoveEnabled?: boolean;
   imageOffset?: { x: number; y: number };
   onImageOffsetChange?: (offset: { x: number; y: number }) => void;
+  backgroundLayerEnabled?: boolean;
+  backgroundColor?: string;
   className?: string;
 }
 
@@ -399,6 +401,8 @@ export function VectorCanvas({
   imageMoveEnabled = false,
   imageOffset = { x: 0, y: 0 },
   onImageOffsetChange,
+  backgroundLayerEnabled = true,
+  backgroundColor = '#ffffff',
   className,
 }: VectorCanvasProps): React.JSX.Element {
   const SHAPE_VIEWBOX_SIZE = 1000;
@@ -467,6 +471,11 @@ export function VectorCanvas({
     }),
     [imageOffset.x, imageOffset.y]
   );
+  const resolvedBackgroundColor = useMemo(() => {
+    const normalized = backgroundColor.trim().toLowerCase();
+    if (/^#[0-9a-f]{6}$/.test(normalized)) return normalized;
+    return '#ffffff';
+  }, [backgroundColor]);
 
   // --- rAF draw batching ---
   const rafIdRef = useRef<number>(0);
@@ -1965,6 +1974,17 @@ export function VectorCanvas({
       aria-hidden='true'
     />
   ) : null;
+  const canvasBackgroundLayer = backgroundLayerEnabled ? (
+    <div
+      className='pointer-events-none absolute left-1/2 top-0 z-[1] -translate-x-1/2 border border-slate-700/70'
+      style={{
+        width: `${canvasRenderSize.width}px`,
+        height: `${canvasRenderSize.height}px`,
+        backgroundColor: resolvedBackgroundColor,
+      }}
+      aria-hidden='true'
+    />
+  ) : null;
 
   return (
     <div
@@ -1993,13 +2013,14 @@ export function VectorCanvas({
                 : undefined
             }
           >
+            {canvasBackgroundLayer}
             {canvasGridLayer}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               ref={imgRef}
               src={src}
               alt='Selected slot'
-              className='pointer-events-none absolute select-none object-contain object-top'
+              className='pointer-events-none absolute z-[2] select-none object-contain object-top'
               style={{
                 width: `${canvasRenderSize.width}px`,
                 height: `${canvasRenderSize.height}px`,
@@ -2150,6 +2171,7 @@ export function VectorCanvas({
                   : undefined
               }
             >
+              {canvasBackgroundLayer}
               {canvasGridLayer}
               <canvas
                 ref={canvasRef}

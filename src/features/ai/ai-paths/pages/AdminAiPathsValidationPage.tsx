@@ -11,18 +11,6 @@ import type {
   PathConfig,
   PathMeta,
 } from '@/features/ai/ai-paths/lib';
-import {
-  DEFAULT_AI_PATHS_VALIDATION_DOC_SOURCES,
-  PATH_CONFIG_PREFIX,
-  PATH_INDEX_KEY,
-  approveInferredAiPathsValidationRule,
-  buildAiPathsValidationRulesFromDocs,
-  createDefaultPathConfig,
-  evaluateAiPathsValidationPreflight,
-  normalizeAiPathsValidationConfig,
-  rejectInferredAiPathsValidationRule,
-} from '@/features/ai/ai-paths/lib';
-import { AI_PATHS_NODE_DOCS } from '@/features/ai/ai-paths/lib/core/docs/node-docs';
 import { updateAiPathsSettingsBulk } from '@/features/ai/ai-paths/lib/settings-store-client';
 import {
   Badge,

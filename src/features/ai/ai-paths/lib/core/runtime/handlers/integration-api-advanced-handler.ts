@@ -8,7 +8,11 @@ import type {
 } from '@/shared/contracts/ai-paths-runtime';
 
 import { getValueAtMappingPath, renderTemplate, safeStringify } from '../../utils';
-import { evaluateOutboundUrlPolicy } from '../security/outbound-url-policy';
+import {
+  evaluateOutboundUrlPolicy,
+  fetchWithOutboundUrlPolicy,
+  OutboundUrlPolicyError,
+} from '../security/outbound-url-policy';
 
 type JsonRecord = Record<string, unknown>;
 
@@ -430,10 +434,11 @@ const resolveAuthHeaders = async (
       client_secret: clientSecret,
       ...(scope.trim() ? { scope } : {}),
     });
-    const tokenResponse = await fetch(tokenUrl, {
+    const tokenResponse = await fetchWithOutboundUrlPolicy(tokenUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body,
+      maxRedirects: 3,
     });
     const tokenPayload = toObject(await tokenResponse.json().catch(() => ({})));
     const accessToken = String(tokenPayload['access_token'] ?? '').trim();
@@ -660,11 +665,12 @@ export const handleAdvancedApi: NodeHandler = async ({
 
     const signalControl = createSignalControl(abortSignal, config.timeoutMs);
     try {
-      const response = await fetch(finalUrl, {
+      const response = await fetchWithOutboundUrlPolicy(finalUrl, {
         method: config.method,
         headers: finalHeaders,
         ...(body !== undefined ? { body } : {}),
         ...(signalControl.signal ? { signal: signalControl.signal } : {}),
+        maxRedirects: 5,
       });
       const responseText = await response.text();
       const responseHeaders = Object.fromEntries(response.headers.entries());
@@ -718,6 +724,33 @@ export const handleAdvancedApi: NodeHandler = async ({
         responseData,
       };
     } catch (error) {
+      if (error instanceof OutboundUrlPolicyError) {
+        return {
+          envelope: {
+            ok: false,
+            status: 0,
+            url: finalUrl,
+            method: config.method,
+            headers: {},
+            data: null,
+            value: null,
+            attempt,
+            page,
+            cursor,
+            route: 'blocked_outbound_url',
+            error: `Blocked outbound URL (${error.decision.reason ?? 'policy_violation'})`,
+            timedOut: false,
+            networkError: false,
+          },
+          responseText: '',
+          status: 0,
+          ok: false,
+          route: null,
+          timedOut: false,
+          networkError: false,
+          responseData: null,
+        };
+      }
       const timedOut = signalControl.wasTimeout();
       const aborted = abortSignal?.aborted === true;
       if (aborted && !timedOut) {

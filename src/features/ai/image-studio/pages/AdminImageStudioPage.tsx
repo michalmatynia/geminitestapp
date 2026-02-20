@@ -170,6 +170,17 @@ function AdminImageStudioPageContent(): React.JSX.Element {
     router.push(`${target.pathname}${target.search}`);
   }, [projectId, returnToPath, router, selectedSlot?.id]);
 
+  const tabsList = (
+    <TabsList className='bg-card'>
+      <TabsTrigger value='studio'>Studio</TabsTrigger>
+      <TabsTrigger value='analysis'>Analysis</TabsTrigger>
+      <TabsTrigger value='projects'>Projects</TabsTrigger>
+      <TabsTrigger value='settings'>Settings</TabsTrigger>
+      <TabsTrigger value='prompts'>Prompts</TabsTrigger>
+      <TabsTrigger value='docs'>Docs</TabsTrigger>
+    </TabsList>
+  );
+
   return (
     <div className='mx-auto box-border flex h-[calc((100dvh-4rem)*1.035)] w-full min-h-0 min-w-0 max-w-none flex-col gap-2 overflow-hidden px-0.5 pb-0 pt-2'>
       <ClientOnly fallback={<LoadingState className='flex min-h-0 flex-1' />}>
@@ -182,14 +193,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
           {!hideTopBar ? (
             <div className='border-b bg-muted/40 px-1 py-2'>
               <div className='flex items-center gap-3'>
-                <TabsList className='bg-card'>
-                  <TabsTrigger value='studio'>Studio</TabsTrigger>
-                  <TabsTrigger value='analysis'>Analysis</TabsTrigger>
-                  <TabsTrigger value='projects'>Projects</TabsTrigger>
-                  <TabsTrigger value='settings'>Settings</TabsTrigger>
-                  <TabsTrigger value='prompts'>Prompts</TabsTrigger>
-                  <TabsTrigger value='docs'>Docs</TabsTrigger>
-                </TabsList>
+                {tabsList}
                 {activeTab === 'studio' && returnToPath ? (
                   <Button
                     type='button'
@@ -238,8 +242,24 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                 </div>
               </div>
             </div>
-          ) : null}
-
+          ) : (
+            <div className='border-b bg-muted/40 px-1 py-1.5'>
+              <div className='flex items-center gap-2'>
+                {tabsList}
+                {activeTab === 'studio' && returnToPath ? (
+                  <Button
+                    type='button'
+                    size='xs'
+                    variant='outline'
+                    className='h-7'
+                    onClick={handleReturnToProductStudio}
+                  >
+                    Back To Product Studio
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          )}
           <div className='flex-1 min-w-0 overflow-hidden'>
             <TabsContent value='studio' className='h-full m-0 p-0 flex flex-col'>
               <StudioMainContent />

@@ -30,6 +30,7 @@ import {
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 import { cn } from '@/shared/utils';
 
+import { ImageStudioAnalysisTab } from './ImageStudioAnalysisTab';
 import { ParamRow } from './ParamRow';
 import {
   ACTION_HISTORY_MAX_STEPS,
@@ -107,6 +108,56 @@ const formatCanvasSizeLabel = (
   return `${Math.floor(width)} x ${Math.floor(height)}`;
 };
 
+type CanvasSizePresetOption = {
+  value: string;
+  label: string;
+  description: string;
+};
+
+const CANVAS_SIZE_PRESET_OPTIONS: CanvasSizePresetOption[] = [
+  {
+    value: '1024x1024',
+    label: 'Square 1024 x 1024',
+    description: 'Balanced square canvas.',
+  },
+  {
+    value: '1536x1024',
+    label: 'Landscape 1536 x 1024',
+    description: 'Wider layout for horizontal compositions.',
+  },
+  {
+    value: '1024x1536',
+    label: 'Portrait 1024 x 1536',
+    description: 'Taller layout for vertical compositions.',
+  },
+  {
+    value: '2048x2048',
+    label: 'Square 2048 x 2048',
+    description: 'High-resolution square output.',
+  },
+  {
+    value: '2048x1536',
+    label: 'Landscape 2048 x 1536',
+    description: 'High-resolution horizontal output.',
+  },
+  {
+    value: '1536x2048',
+    label: 'Portrait 1536 x 2048',
+    description: 'High-resolution vertical output.',
+  },
+];
+
+const parseCanvasSizePresetValue = (
+  value: string
+): { width: number; height: number } | null => {
+  const [widthRaw, heightRaw] = value.split('x');
+  if (!widthRaw || !heightRaw) return null;
+  const width = parseCanvasDimensionInput(widthRaw);
+  const height = parseCanvasDimensionInput(heightRaw);
+  if (width === null || height === null) return null;
+  return { width, height };
+};
+
 const CANVAS_RESIZE_DIRECTION_OPTIONS: Array<{
   value: CanvasResizeDirection;
   arrow: string;
@@ -179,6 +230,8 @@ export function RightSidebar(): React.JSX.Element {
     canvasSelectionEnabled,
     imageTransformMode,
     canvasImageOffset,
+    canvasBackgroundLayerEnabled,
+    canvasBackgroundColor,
   } = useUiState();
   const {
     setValidatorEnabled,
@@ -187,6 +240,8 @@ export function RightSidebar(): React.JSX.Element {
     setImageTransformMode,
     setCanvasImageOffset,
     resetCanvasImageOffset,
+    setCanvasBackgroundLayerEnabled,
+    setCanvasBackgroundColor,
     getPreviewCanvasImageFrame,
   } = useUiActions();
   const { projectId, projectsQuery } = useProjectsState();
@@ -258,7 +313,8 @@ export function RightSidebar(): React.JSX.Element {
   const [resizeCanvasHeightDraft, setResizeCanvasHeightDraft] = useState('');
   const [resizeCanvasDirection, setResizeCanvasDirection] =
     useState<CanvasResizeDirection>('down-right');
-  const [sidebarTab, setSidebarTab] = useState<'controls' | 'graph' | 'sequencing' | 'history'>('controls');
+  const [canvasSizePresetValue, setCanvasSizePresetValue] = useState('1024x1024');
+  const [sidebarTab, setSidebarTab] = useState<'controls' | 'analysis' | 'graph' | 'sequencing' | 'history'>('controls');
   const [historyMode, setHistoryMode] = useState<'actions' | 'runs'>('actions');
   const [quickActionsHostEl, setQuickActionsHostEl] = useState<HTMLElement | null>(null);
   const switchToControls = useCallback(() => setSidebarTab('controls'), []);
@@ -363,6 +419,38 @@ export function RightSidebar(): React.JSX.Element {
     () => projectCanvasHeightPx ?? workingSlotImageHeight ?? 1024,
     [projectCanvasHeightPx, workingSlotImageHeight]
   );
+  const currentCanvasSizeValue = useMemo(
+    () => `${fallbackCanvasWidthPx}x${fallbackCanvasHeightPx}`,
+    [fallbackCanvasHeightPx, fallbackCanvasWidthPx]
+  );
+  const selectedCanvasSizePreset = useMemo(
+    () => parseCanvasSizePresetValue(canvasSizePresetValue),
+    [canvasSizePresetValue]
+  );
+  const canvasSizePresetOptions = useMemo(() => {
+    const hasCurrentOption = CANVAS_SIZE_PRESET_OPTIONS.some(
+      (option) => option.value === currentCanvasSizeValue
+    );
+    const currentLabel = `Current ${fallbackCanvasWidthPx} x ${fallbackCanvasHeightPx}`;
+    if (hasCurrentOption) {
+      return CANVAS_SIZE_PRESET_OPTIONS.map((option) =>
+        option.value === currentCanvasSizeValue
+          ? {
+            ...option,
+            label: `${option.label} (Current)`,
+          }
+          : option
+      );
+    }
+    return [
+      {
+        value: currentCanvasSizeValue,
+        label: currentLabel,
+        description: 'Current project canvas size.',
+      },
+      ...CANVAS_SIZE_PRESET_OPTIONS,
+    ];
+  }, [currentCanvasSizeValue, fallbackCanvasHeightPx, fallbackCanvasWidthPx]);
   const resizeCanvasDirectionMeta = useMemo(
     () =>
       CANVAS_RESIZE_DIRECTION_OPTIONS.find(
@@ -385,21 +473,34 @@ export function RightSidebar(): React.JSX.Element {
       return false;
     }
     if (
-      projectCanvasWidthPx !== null &&
-      projectCanvasHeightPx !== null &&
-      resizeCanvasWidthValue === projectCanvasWidthPx &&
-      resizeCanvasHeightValue === projectCanvasHeightPx
+      resizeCanvasWidthValue === fallbackCanvasWidthPx &&
+      resizeCanvasHeightValue === fallbackCanvasHeightPx
     ) {
       return false;
     }
     return true;
   }, [
-    projectCanvasHeightPx,
-    projectCanvasWidthPx,
+    fallbackCanvasHeightPx,
+    fallbackCanvasWidthPx,
     projectId,
     resizeCanvasHeightValue,
     resizeCanvasWidthValue,
     resizeProjectCanvasMutation.isPending,
+  ]);
+  const canApplyCanvasSizePreset = useMemo(() => {
+    if (!projectId.trim()) return false;
+    if (resizeProjectCanvasMutation.isPending) return false;
+    if (!selectedCanvasSizePreset) return false;
+    return !(
+      selectedCanvasSizePreset.width === fallbackCanvasWidthPx &&
+      selectedCanvasSizePreset.height === fallbackCanvasHeightPx
+    );
+  }, [
+    fallbackCanvasHeightPx,
+    fallbackCanvasWidthPx,
+    projectId,
+    resizeProjectCanvasMutation.isPending,
+    selectedCanvasSizePreset,
   ]);
   const resizeCanvasDisabled = !projectId.trim();
   const sequenceImageContentFrame = useMemo((): { x: number; y: number; width: number; height: number } | null => {
@@ -460,36 +561,28 @@ export function RightSidebar(): React.JSX.Element {
     }
   }, [canvasSelectionEnabled, setCanvasSelectionEnabled, setTool, tool]);
 
-  const handleOpenResizeCanvasModal = useCallback((): void => {
+  const runCanvasResize = useCallback(async ({
+    nextWidth,
+    nextHeight,
+    direction,
+    closeModalOnSuccess = false,
+  }: {
+    nextWidth: number;
+    nextHeight: number;
+    direction: CanvasResizeDirection;
+    closeModalOnSuccess?: boolean;
+  }): Promise<void> => {
     const normalizedProjectId = projectId.trim();
     if (!normalizedProjectId) {
       toast('Select a project before resizing canvas.', { variant: 'info' });
       return;
     }
-    setResizeCanvasWidthDraft(String(projectCanvasWidthPx ?? fallbackCanvasWidthPx));
-    setResizeCanvasHeightDraft(
-      String(projectCanvasHeightPx ?? fallbackCanvasHeightPx)
-    );
-    setResizeCanvasDirection('down-right');
-    setResizeCanvasOpen(true);
-  }, [
-    fallbackCanvasHeightPx,
-    fallbackCanvasWidthPx,
-    projectCanvasHeightPx,
-    projectCanvasWidthPx,
-    projectId,
-    toast,
-  ]);
-
-  const handleResizeCanvasSubmit = useCallback(async (): Promise<void> => {
-    const normalizedProjectId = projectId.trim();
-    if (!normalizedProjectId) {
-      toast('Select a project before resizing canvas.', { variant: 'info' });
-      return;
-    }
-    const nextWidth = resizeCanvasWidthValue;
-    const nextHeight = resizeCanvasHeightValue;
-    if (nextWidth === null || nextHeight === null) {
+    if (
+      nextWidth < CANVAS_RESIZE_MIN_PX ||
+      nextWidth > CANVAS_RESIZE_MAX_PX ||
+      nextHeight < CANVAS_RESIZE_MIN_PX ||
+      nextHeight > CANVAS_RESIZE_MAX_PX
+    ) {
       toast(
         `Canvas width and height must be between ${CANVAS_RESIZE_MIN_PX} and ${CANVAS_RESIZE_MAX_PX}.`,
         { variant: 'error' }
@@ -497,8 +590,14 @@ export function RightSidebar(): React.JSX.Element {
       return;
     }
 
-    const oldWidth = projectCanvasWidthPx ?? fallbackCanvasWidthPx;
-    const oldHeight = projectCanvasHeightPx ?? fallbackCanvasHeightPx;
+    const oldWidth = fallbackCanvasWidthPx;
+    const oldHeight = fallbackCanvasHeightPx;
+    if (nextWidth === oldWidth && nextHeight === oldHeight) {
+      if (closeModalOnSuccess) {
+        setResizeCanvasOpen(false);
+      }
+      return;
+    }
     const sourceAspectRatio =
       typeof workingSlotImageWidth === 'number' &&
       Number.isFinite(workingSlotImageWidth) &&
@@ -515,7 +614,7 @@ export function RightSidebar(): React.JSX.Element {
       oldCanvasHeight: oldHeight,
       newCanvasWidth: nextWidth,
       newCanvasHeight: nextHeight,
-      direction: resizeCanvasDirection,
+      direction,
       currentImageOffset: canvasImageOffset,
       currentImageFrame: sequenceImageContentFrame,
       sourceAspectRatio,
@@ -529,26 +628,76 @@ export function RightSidebar(): React.JSX.Element {
 
     setMaskShapes(transform.shapes);
     setCanvasImageOffset(transform.imageOffset);
-    setResizeCanvasOpen(false);
+    if (closeModalOnSuccess) {
+      setResizeCanvasOpen(false);
+    }
   }, [
     canvasImageOffset,
     fallbackCanvasHeightPx,
     fallbackCanvasWidthPx,
     handleResizeProjectCanvas,
     maskShapes,
-    projectCanvasHeightPx,
-    projectCanvasWidthPx,
     projectId,
-    resizeCanvasDirection,
-    resizeCanvasHeightValue,
-    resizeCanvasWidthValue,
     sequenceImageContentFrame,
     setCanvasImageOffset,
     setMaskShapes,
+    setResizeCanvasOpen,
     toast,
     workingSlotImageHeight,
     workingSlotImageWidth,
   ]);
+
+  const handleOpenResizeCanvasModal = useCallback((): void => {
+    const normalizedProjectId = projectId.trim();
+    if (!normalizedProjectId) {
+      toast('Select a project before resizing canvas.', { variant: 'info' });
+      return;
+    }
+    setResizeCanvasWidthDraft(
+      String(selectedCanvasSizePreset?.width ?? fallbackCanvasWidthPx)
+    );
+    setResizeCanvasHeightDraft(
+      String(selectedCanvasSizePreset?.height ?? fallbackCanvasHeightPx)
+    );
+    setResizeCanvasDirection('down-right');
+    setResizeCanvasOpen(true);
+  }, [
+    fallbackCanvasHeightPx,
+    fallbackCanvasWidthPx,
+    projectId,
+    selectedCanvasSizePreset,
+    toast,
+  ]);
+
+  const handleResizeCanvasSubmit = useCallback(async (): Promise<void> => {
+    const nextWidth = resizeCanvasWidthValue;
+    const nextHeight = resizeCanvasHeightValue;
+    if (nextWidth === null || nextHeight === null) {
+      toast(
+        `Canvas width and height must be between ${CANVAS_RESIZE_MIN_PX} and ${CANVAS_RESIZE_MAX_PX}.`,
+        { variant: 'error' }
+      );
+      return;
+    }
+    await runCanvasResize({
+      nextWidth,
+      nextHeight,
+      direction: resizeCanvasDirection,
+      closeModalOnSuccess: true,
+    });
+  }, [resizeCanvasDirection, resizeCanvasHeightValue, resizeCanvasWidthValue, runCanvasResize, toast]);
+
+  const handleApplyCanvasSizePreset = useCallback(async (): Promise<void> => {
+    if (!selectedCanvasSizePreset) {
+      toast('Select a valid canvas size before applying.', { variant: 'error' });
+      return;
+    }
+    await runCanvasResize({
+      nextWidth: selectedCanvasSizePreset.width,
+      nextHeight: selectedCanvasSizePreset.height,
+      direction: 'down-right',
+    });
+  }, [runCanvasResize, selectedCanvasSizePreset, toast]);
 
   const handleCloseResizeCanvasModal = useCallback((): void => {
     if (resizeProjectCanvasMutation.isPending) return;
@@ -566,6 +715,8 @@ export function RightSidebar(): React.JSX.Element {
     setCanvasSelectionEnabled(snapshot.canvasSelectionEnabled);
     setImageTransformMode(snapshot.imageTransformMode);
     setCanvasImageOffset(cloneSerializableValue(snapshot.canvasImageOffset));
+    setCanvasBackgroundLayerEnabled(snapshot.canvasBackgroundLayerEnabled);
+    setCanvasBackgroundColor(snapshot.canvasBackgroundColor);
     setMaskShapes(cloneSerializableValue(snapshot.maskShapes));
     setActiveMaskId(snapshot.activeMaskId);
     setSelectedPointIndex(snapshot.selectedPointIndex);
@@ -595,6 +746,8 @@ export function RightSidebar(): React.JSX.Element {
     setCanvasSelectionEnabled,
     setImageTransformMode,
     setCanvasImageOffset,
+    setCanvasBackgroundLayerEnabled,
+    setCanvasBackgroundColor,
     setMaskShapes,
     setActiveMaskId,
     setSelectedPointIndex,
@@ -615,6 +768,8 @@ export function RightSidebar(): React.JSX.Element {
     activeMaskId,
     brushRadius,
     canvasImageOffset,
+    canvasBackgroundLayerEnabled,
+    canvasBackgroundColor,
     canvasSelectionEnabled,
     compositeAssetIds,
     formatterEnabled,
@@ -638,6 +793,8 @@ export function RightSidebar(): React.JSX.Element {
     activeMaskId,
     brushRadius,
     canvasImageOffset,
+    canvasBackgroundLayerEnabled,
+    canvasBackgroundColor,
     canvasSelectionEnabled,
     compositeAssetIds,
     formatterEnabled,
@@ -678,6 +835,10 @@ export function RightSidebar(): React.JSX.Element {
   useEffect(() => {
     setHistoryMode('actions');
   }, [projectId]);
+
+  useEffect(() => {
+    setCanvasSizePresetValue(currentCanvasSizeValue);
+  }, [currentCanvasSizeValue, projectId]);
 
   useEffect((): (() => void) | void => {
     if (typeof document === 'undefined') return;
@@ -1014,7 +1175,7 @@ export function RightSidebar(): React.JSX.Element {
           aria-hidden={isFocusMode}
         >
           {/* Tab toggle */}
-          <div className='grid grid-cols-4 border-b border-border/40'>
+          <div className='grid grid-cols-5 border-b border-border/40'>
             <Button size='xs'
               type='button'
               variant='ghost'
@@ -1027,6 +1188,20 @@ export function RightSidebar(): React.JSX.Element {
               onClick={() => setSidebarTab('controls')}
             >
             Controls
+            </Button>
+            <Button size='xs'
+              type='button'
+              variant='ghost'
+              className={cn(
+                'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
+                sidebarTab === 'analysis'
+                  ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
+                  : 'text-gray-500 hover:text-gray-300'
+              )}
+              onClick={() => setSidebarTab('analysis')}
+            >
+              <Sparkles className='mr-1 inline size-3' />
+            Analysis
             </Button>
             <Button size='xs'
               type='button'
@@ -1115,7 +1290,11 @@ export function RightSidebar(): React.JSX.Element {
             )
             : null}
 
-          {sidebarTab === 'graph' ? (
+          {sidebarTab === 'analysis' ? (
+            <div className='min-h-0 flex flex-1 overflow-y-auto'>
+              <ImageStudioAnalysisTab />
+            </div>
+          ) : sidebarTab === 'graph' ? (
             selectedSlotId ? (
               <VersionNodeMapPanel />
             ) : (
@@ -1139,7 +1318,12 @@ export function RightSidebar(): React.JSX.Element {
             <RightSidebarControlsTab
               activeShapeDrawingTool={activeShapeDrawingTool}
               brushRadius={brushRadius}
+              canvasBackgroundColor={canvasBackgroundColor}
+              canvasBackgroundLayerEnabled={canvasBackgroundLayerEnabled}
+              canvasSizePresetOptions={canvasSizePresetOptions}
+              canvasSizePresetValue={canvasSizePresetValue}
               canvasSizeLabel={projectCanvasSizeLabel}
+              canApplyCanvasSizePreset={canApplyCanvasSizePreset}
               canRecenterCanvasImage={canRecenterCanvasImage}
               compositeAssetIds={compositeAssetIds}
               compositeAssetOptions={compositeAssetOptions}
@@ -1151,16 +1335,24 @@ export function RightSidebar(): React.JSX.Element {
               maskShapesLength={maskShapes.length}
               maskThresholdSensitivity={maskThresholdSensitivity}
               onBrushRadiusChange={setBrushRadius}
+              onCanvasBackgroundColorChange={setCanvasBackgroundColor}
               onClearAllShapes={handleClearAllShapes}
               onCompositeAssetIdsChange={setCompositeAssetIds}
               onMaskEdgeSensitivityChange={setMaskEdgeSensitivity}
               onMaskFeatherChange={setMaskFeather}
               onMaskThresholdSensitivityChange={setMaskThresholdSensitivity}
+              onApplyCanvasSizePreset={() => {
+                void handleApplyCanvasSizePreset();
+              }}
+              onCanvasSizePresetChange={setCanvasSizePresetValue}
               onOpenResizeCanvasModal={handleOpenResizeCanvasModal}
               onRecenterCanvasImage={resetCanvasImageOffset}
               onSelectShapeTool={handleSelectShapeTool}
               onToggleMoveImage={() => {
                 setImageTransformMode(isMoveImageActive ? 'none' : 'move');
+              }}
+              onToggleCanvasBackgroundLayer={() => {
+                setCanvasBackgroundLayerEnabled(!canvasBackgroundLayerEnabled);
               }}
               onToggleSelectTool={handleToggleSelectTool}
               quickActionsHostEl={quickActionsHostEl}

@@ -37,6 +37,8 @@ export function VectorDrawingCanvas({
   selectionEnabled,
   imageOffset,
   onImageOffsetChange,
+  backgroundLayerEnabled,
+  backgroundColor,
   className,
 }: Partial<VectorCanvasProps>): React.JSX.Element {
   const context = useOptionalVectorDrawing();
@@ -97,6 +99,8 @@ export function VectorDrawingCanvas({
       {...(selectionEnabled !== undefined ? { selectionEnabled } : {})}
       {...(imageOffset !== undefined ? { imageOffset } : {})}
       {...(onImageOffsetChange !== undefined ? { onImageOffsetChange } : {})}
+      {...(backgroundLayerEnabled !== undefined ? { backgroundLayerEnabled } : {})}
+      {...(backgroundColor !== undefined ? { backgroundColor } : {})}
       {...(className !== undefined ? { className } : {})}
     />
   );

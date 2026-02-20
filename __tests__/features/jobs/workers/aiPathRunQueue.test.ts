@@ -8,6 +8,8 @@ import {
 } from '@/features/jobs/processors/ai-path-run-processor';
 import {
   computeAiPathRunQueueSlo,
+  enqueuePathRunJob,
+  removePathRunQueueEntries,
   type QueueSloThresholds,
 } from '@/features/jobs/workers/aiPathRunQueue';
 
@@ -170,7 +172,7 @@ describe('AI Path Run Queue Worker', () => {
       }));
       expect(mockRepo.createRunEvent).toHaveBeenCalledWith(expect.objectContaining({
         runId: 'run-1',
-        level: 'warning',
+        level: 'warn',
       }));
     });
 
@@ -195,6 +197,23 @@ describe('AI Path Run Queue Worker', () => {
         level: 'error',
         message: expect.stringContaining('dead-letter'),
       }));
+    });
+  });
+
+  describe('removePathRunQueueEntries', () => {
+    it('clears local fallback timers when queue entries are removed', async () => {
+      vi.useFakeTimers();
+      try {
+        await enqueuePathRunJob('run-local-fallback', { delayMs: 5_000 });
+        const result = await removePathRunQueueEntries(['run-local-fallback']);
+        expect(result.requested).toBe(1);
+        expect(result.removed).toBeGreaterThanOrEqual(1);
+
+        await vi.runOnlyPendingTimersAsync();
+        expect(mockRepo.claimRunForProcessing).not.toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 });

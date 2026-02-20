@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 
 import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
+import { useCategoryMappingsByConnection } from '@/features/integrations/hooks/useMarketplaceQueries';
 import type {
   InventoryOption,
   Template,
@@ -15,7 +16,6 @@ import {
   withImageRetryPresetLabels,
 } from '@/features/data-import-export/utils/image-retry-presets';
 import type { IntegrationConnectionBasic } from '@/features/integrations';
-import { useCategoryMappingsByConnection } from '@/features/integrations/hooks/useMarketplaceQueries';
 import {
   Button,
   Input,

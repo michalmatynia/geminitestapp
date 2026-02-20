@@ -74,6 +74,8 @@ export function CenterPreview(): React.JSX.Element {
     previewCanvasSize,
     imageTransformMode,
     canvasImageOffset,
+    canvasBackgroundLayerEnabled,
+    canvasBackgroundColor,
     pendingSequenceThumbnail,
   } = useUiState();
   const {
@@ -805,6 +807,8 @@ export function CenterPreview(): React.JSX.Element {
                   selectionEnabled={canvasSelectionEnabled}
                   imageOffset={canvasImageOffset}
                   onImageOffsetChange={setCanvasImageOffset}
+                  backgroundLayerEnabled={canvasBackgroundLayerEnabled}
+                  backgroundColor={canvasBackgroundColor}
                   onViewCropRectChange={handlePreviewCanvasCropRectChange}
                   onImageContentFrameChange={handlePreviewCanvasImageFrameChange}
                   className={previewCanvasClassName}

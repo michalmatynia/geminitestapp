@@ -28,6 +28,35 @@ export type {
 };
 
 const hasWindow = (): boolean => typeof window !== 'undefined';
+type BridgeStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
+
+const QUOTA_ERROR_NAMES = new Set(['QuotaExceededError', 'NS_ERROR_DOM_QUOTA_REACHED']);
+const PROMPT_COMPACT_LENGTHS = [200_000, 100_000, 50_000, 20_000, 8_000] as const;
+const PROMPT_EXPLODER_PAYLOAD_TTL_MS = 15 * 60 * 1000;
+const FALLBACK_CREATED_AT = '1970-01-01T00:00:00.000Z';
+
+const isQuotaExceededError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+  const record = error as { name?: unknown; code?: unknown };
+  if (typeof record.name === 'string' && QUOTA_ERROR_NAMES.has(record.name)) return true;
+  return record.code === 22 || record.code === 1014;
+};
+
+const getBridgeStorages = (): BridgeStorage[] => {
+  if (!hasWindow()) return [];
+  const storages: BridgeStorage[] = [];
+  try {
+    if (window.localStorage) storages.push(window.localStorage);
+  } catch {
+    // Ignore blocked localStorage.
+  }
+  try {
+    if (window.sessionStorage) storages.push(window.sessionStorage);
+  } catch {
+    // Ignore blocked sessionStorage.
+  }
+  return storages;
+};
 
 const toTrimmedString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 const toTrimmedStringList = (value: unknown): string[] => {
@@ -137,7 +166,7 @@ const parseBridgePayload = (raw: string | null): PromptExploderBridgePayload | n
     const createdAt =
       typeof parsed.createdAt === 'string' && parsed.createdAt.trim().length > 0
         ? parsed.createdAt
-        : '1970-01-01T00:00:00.000Z';
+        : FALLBACK_CREATED_AT;
     const caseResolverContext = (() => {
       if (!parsed.caseResolverContext || typeof parsed.caseResolverContext !== 'object') return undefined;
       const record = parsed.caseResolverContext as Record<string, unknown>;
@@ -188,6 +217,83 @@ const parseBridgePayload = (raw: string | null): PromptExploderBridgePayload | n
   }
 };
 
+const trimPrompt = (prompt: string, maxLength: number): string =>
+  prompt.length <= maxLength ? prompt : prompt.slice(0, maxLength);
+
+const compactPayloadVariants = (payload: PromptExploderBridgePayload): PromptExploderBridgePayload[] => {
+  const variants: PromptExploderBridgePayload[] = [payload];
+  PROMPT_COMPACT_LENGTHS.forEach((maxLength) => {
+    variants.push({
+      ...payload,
+      prompt: trimPrompt(payload.prompt, maxLength),
+    });
+  });
+  variants.push({
+    ...payload,
+    prompt: trimPrompt(payload.prompt, 8_000),
+    caseResolverParties: undefined,
+    caseResolverMetadata: undefined,
+  });
+  return variants;
+};
+
+const writeBridgePayload = (storageKey: string, payload: PromptExploderBridgePayload): void => {
+  if (!hasWindow()) return;
+  const storages = getBridgeStorages();
+  if (storages.length === 0) return;
+
+  const variants = compactPayloadVariants(payload);
+  let lastError: unknown = null;
+
+  for (const variant of variants) {
+    const serialized = JSON.stringify(variant);
+    for (const storage of storages) {
+      try {
+        storage.setItem(storageKey, serialized);
+        return;
+      } catch (error: unknown) {
+        lastError = error;
+        if (!isQuotaExceededError(error)) {
+          continue;
+        }
+      }
+    }
+  }
+
+  if (lastError) {
+    // Drop stale payloads when persistence fails so old cross-app transfers
+    // cannot be replayed against the wrong document context.
+    clearBridgePayload(storageKey);
+    // Swallow storage failures to keep UI flows non-blocking.
+    return;
+  }
+};
+
+const readBridgePayload = (storageKey: string): PromptExploderBridgePayload | null => {
+  const storages = getBridgeStorages();
+  for (const storage of storages) {
+    const parsed = parseBridgePayload(storage.getItem(storageKey));
+    if (!parsed) continue;
+    const createdAtMs = Date.parse(parsed.createdAt);
+    const isExpired =
+      !Number.isFinite(createdAtMs) ||
+      Date.now() - createdAtMs > PROMPT_EXPLODER_PAYLOAD_TTL_MS;
+    if (!isExpired) return parsed;
+    try {
+      storage.removeItem(storageKey);
+    } catch {
+      // Ignore blocked storage cleanup.
+    }
+  }
+  return null;
+};
+
+const clearBridgePayload = (storageKey: string): void => {
+  getBridgeStorages().forEach((storage) => {
+    storage.removeItem(storageKey);
+  });
+};
+
 const shouldConsumeForTarget = (
   payload: PromptExploderBridgePayload,
   target: PromptExploderBridgeTarget
@@ -199,13 +305,11 @@ const shouldConsumeForTarget = (
 };
 
 const saveDraftPayload = (payload: PromptExploderBridgePayload): void => {
-  if (!hasWindow()) return;
-  window.localStorage.setItem(PROMPT_EXPLODER_DRAFT_PROMPT_KEY, JSON.stringify(payload));
+  writeBridgePayload(PROMPT_EXPLODER_DRAFT_PROMPT_KEY, payload);
 };
 
 const saveApplyPayload = (payload: PromptExploderBridgePayload): void => {
-  if (!hasWindow()) return;
-  window.localStorage.setItem(PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY, JSON.stringify(payload));
+  writeBridgePayload(PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY, payload);
 };
 
 export function savePromptExploderDraftPrompt(prompt: string): void {
@@ -231,8 +335,7 @@ export function savePromptExploderDraftPromptFromCaseResolver(
 }
 
 export function readPromptExploderDraftPayload(): PromptExploderBridgePayload | null {
-  if (!hasWindow()) return null;
-  return parseBridgePayload(window.localStorage.getItem(PROMPT_EXPLODER_DRAFT_PROMPT_KEY));
+  return readBridgePayload(PROMPT_EXPLODER_DRAFT_PROMPT_KEY);
 }
 
 export function readPromptExploderDraftPrompt(): string | null {
@@ -247,7 +350,7 @@ export function consumePromptExploderDraftPayload(
   if (!hasWindow()) return null;
   const payload = readPromptExploderDraftPayload();
   if (!payload || !shouldConsumeForTarget(payload, target)) return null;
-  window.localStorage.removeItem(PROMPT_EXPLODER_DRAFT_PROMPT_KEY);
+  clearBridgePayload(PROMPT_EXPLODER_DRAFT_PROMPT_KEY);
   return payload;
 }
 
@@ -282,8 +385,7 @@ export function savePromptExploderApplyPromptForCaseResolver(
 }
 
 export function readPromptExploderApplyPayload(): PromptExploderBridgePayload | null {
-  if (!hasWindow()) return null;
-  return parseBridgePayload(window.localStorage.getItem(PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY));
+  return readBridgePayload(PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY);
 }
 
 export function consumePromptExploderApplyPayload(
@@ -292,7 +394,7 @@ export function consumePromptExploderApplyPayload(
   if (!hasWindow()) return null;
   const payload = readPromptExploderApplyPayload();
   if (!payload || !shouldConsumeForTarget(payload, target)) return null;
-  window.localStorage.removeItem(PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY);
+  clearBridgePayload(PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY);
   return payload;
 }
 

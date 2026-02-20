@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-export * from './cms/index';
-
 import { dtoBaseSchema, namedDtoSchema } from './base';
 
 export const cmsPageStatusSchema = z.enum(['draft', 'published', 'scheduled']);
@@ -471,11 +469,13 @@ export const cssAnimationEffectSchema = z.enum([
   'shake',
   'wobble',
   'glow',
+  'bounce',
+  'reveal',
 ]);
 export type CssAnimationEffectDto = z.infer<typeof cssAnimationEffectSchema>;
 export type CssAnimationEffect = CssAnimationEffectDto;
 
-export const cssAnimationTriggerSchema = z.enum(['load', 'hover', 'inView']);
+export const cssAnimationTriggerSchema = z.enum(['load', 'hover', 'inView', 'none', 'scroll', 'click', 'viewport']);
 export type CssAnimationTriggerDto = z.infer<typeof cssAnimationTriggerSchema>;
 export type CssAnimationTrigger = CssAnimationTriggerDto;
 
@@ -494,7 +494,7 @@ export const cssAnimationConfigSchema = z.object({
   duration: z.number().optional(),
   delay: z.number().optional(),
   easing: z.string().optional(),
-  iterations: z.number().optional(),
+  iterations: z.union([z.number(), z.literal('infinite')]).optional(),
   loop: z.boolean().optional(),
   direction: cssAnimationDirectionSchema.optional(),
   fillMode: cssAnimationFillModeSchema.optional(),
@@ -503,6 +503,7 @@ export const cssAnimationConfigSchema = z.object({
   rotate: z.number().optional(),
   blur: z.number().optional(),
   replayOnExit: z.boolean().optional(),
+  scrollOffset: z.number().optional(),
 });
 
 export type CssAnimationConfigDto = z.infer<typeof cssAnimationConfigSchema>;
@@ -549,12 +550,18 @@ export const CSS_ANIMATION_EFFECTS: { label: string; value: CssAnimationEffect }
   { label: 'Shake', value: 'shake' },
   { label: 'Wobble', value: 'wobble' },
   { label: 'Glow', value: 'glow' },
+  { label: 'Bounce', value: 'bounce' },
+  { label: 'Reveal', value: 'reveal' },
 ];
 
 export const CSS_ANIMATION_TRIGGERS: { label: string; value: CssAnimationTrigger }[] = [
+  { label: 'None', value: 'none' },
   { label: 'On load', value: 'load' },
   { label: 'On hover', value: 'hover' },
   { label: 'On scroll into view', value: 'inView' },
+  { label: 'On scroll', value: 'scroll' },
+  { label: 'On click', value: 'click' },
+  { label: 'In viewport', value: 'viewport' },
 ];
 
 export const CSS_ANIMATION_DIRECTIONS: { label: string; value: CssAnimationDirection }[] = [
@@ -577,17 +584,13 @@ export const CSS_EASINGS: { label: string; value: string }[] = [
   { label: 'Ease out', value: 'ease-out' },
   { label: 'Ease in out', value: 'ease-in-out' },
   { label: 'Linear', value: 'linear' },
+  { label: 'Step start', value: 'step-start' },
+  { label: 'Step end', value: 'step-end' },
   { label: 'Cubic (soft)', value: 'cubic-bezier(0.22, 0.61, 0.36, 1)' },
   { label: 'Cubic (snappy)', value: 'cubic-bezier(0.2, 0.8, 0.2, 1)' },
   { label: 'Cubic (overshoot)', value: 'cubic-bezier(0.34, 1.56, 0.64, 1)' },
   { label: 'Custom', value: 'custom' },
 ];
-
-export * from './cms/theme-settings';
-export * from './cms/menu-settings';
-export * from './cms/css-animations';
-export * from './cms/custom-css-ai';
-export * from './cms/domain-settings';
 
 export const settingsFieldOptionSchema = z.object({
   label: z.string(),

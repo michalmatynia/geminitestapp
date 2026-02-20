@@ -35,6 +35,27 @@ interface RunDetailDialogProps extends ModalStateProps {
   onHistoryNodeSelect: (nodeId: string) => void;
 }
 
+type RuntimeTraceSnapshot = {
+  traceId?: string;
+  profile?: {
+    eventCount?: number;
+    sampledEventCount?: number;
+    droppedEventCount?: number;
+    summary?: {
+      durationMs?: number;
+      iterationCount?: number;
+      nodeCount?: number;
+      edgeCount?: number;
+      hottestNodes?: Array<{
+        nodeId?: string;
+        nodeType?: string;
+        avgMs?: number;
+        totalMs?: number;
+      }>;
+    } | null;
+  } | null;
+};
+
 export function RunDetailDialog({
   isOpen,
   onClose,
@@ -81,6 +102,13 @@ export function RunDetailDialog({
     if (!selectedHistoryNodeId || !runDetailHistory) return [];
     return runDetailHistory[selectedHistoryNodeId] ?? [];
   }, [selectedHistoryNodeId, runDetailHistory]);
+
+  const runtimeTrace = useMemo((): RuntimeTraceSnapshot | null => {
+    if (!runDetail?.run?.meta || typeof runDetail.run.meta !== 'object') return null;
+    const runtimeTraceRaw = runDetail.run.meta['runtimeTrace'];
+    if (!runtimeTraceRaw || typeof runtimeTraceRaw !== 'object') return null;
+    return runtimeTraceRaw as RuntimeTraceSnapshot;
+  }, [runDetail]);
 
   const isScheduledRun = Boolean(runDetail?.run?.triggerEvent === 'scheduled_run');
 
@@ -165,6 +193,41 @@ export function RunDetailDialog({
                   )
                 )}
               </div>
+            </div>
+          ) : null}
+          {runtimeTrace ? (
+            <div className='rounded-md border border-sky-500/30 bg-sky-500/5 p-3'>
+              <div className='flex flex-wrap items-center justify-between gap-2 text-[11px] text-sky-100'>
+                <span className='font-semibold'>Runtime Trace</span>
+                <span className='font-mono text-[10px] text-sky-200'>
+                  {runtimeTrace.traceId ?? 'n/a'}
+                </span>
+              </div>
+              <div className='mt-2 grid gap-2 text-[11px] text-sky-100 sm:grid-cols-2'>
+                <div>
+                  Profiled events: {runtimeTrace.profile?.sampledEventCount ?? 0}
+                  {typeof runtimeTrace.profile?.droppedEventCount === 'number' &&
+                  runtimeTrace.profile.droppedEventCount > 0
+                    ? ` (+${runtimeTrace.profile.droppedEventCount} truncated)`
+                    : ''}
+                </div>
+                <div>
+                  Engine events: {runtimeTrace.profile?.eventCount ?? 0}
+                </div>
+                <div>
+                  Runtime: {runtimeTrace.profile?.summary?.durationMs ?? 0}ms
+                </div>
+                <div>
+                  Iterations: {runtimeTrace.profile?.summary?.iterationCount ?? 0}
+                </div>
+              </div>
+              {runtimeTrace.profile?.summary?.hottestNodes?.[0] ? (
+                <div className='mt-2 text-[11px] text-sky-100'>
+                  Hottest node: {runtimeTrace.profile.summary.hottestNodes[0]?.nodeId ?? 'n/a'} (
+                  {runtimeTrace.profile.summary.hottestNodes[0]?.nodeType ?? 'unknown'}) ·
+                  avg {Math.round(runtimeTrace.profile.summary.hottestNodes[0]?.avgMs ?? 0)}ms
+                </div>
+              ) : null}
             </div>
           ) : null}
           <RunTimeline

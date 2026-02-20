@@ -2,6 +2,11 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { getDiskPathFromPublicPath } from '@/features/files/utils/fileUploader';
+import { ErrorSystem } from '@/features/observability/services/error-system';
+import {
+  fetchWithOutboundUrlPolicy,
+  OutboundUrlPolicyError,
+} from '@/shared/lib/security/outbound-url-policy';
 
 const TOTAL_IMAGE_SLOTS = 15;
 
@@ -19,11 +24,24 @@ const toDataUrl = (buffer: Buffer, mimetype: string): string =>
   `data:${mimetype};base64,${buffer.toString('base64')}`;
 
 const fetchAsDataUrl = async (url: string): Promise<string | null> => {
-  const res = await fetch(url);
-  if (!res.ok) return null;
-  const buffer = Buffer.from(await res.arrayBuffer());
-  const contentType = res.headers.get('content-type') || 'image/jpeg';
-  return toDataUrl(buffer, contentType);
+  try {
+    const res = await fetchWithOutboundUrlPolicy(url, { method: 'GET', maxRedirects: 3 });
+    if (!res.ok) return null;
+    const buffer = Buffer.from(await res.arrayBuffer());
+    const contentType = res.headers.get('content-type') || 'image/jpeg';
+    return toDataUrl(buffer, contentType);
+  } catch (error) {
+    if (error instanceof OutboundUrlPolicyError) {
+      await ErrorSystem.logWarning('Blocked outbound image fetch by URL policy.', {
+        service: 'product-image-base64',
+        url,
+        reason: error.decision.reason ?? 'unknown',
+        hostname: error.decision.hostname ?? null,
+      });
+      return null;
+    }
+    throw error;
+  }
 };
 
 const readLocalAsDataUrl = async (

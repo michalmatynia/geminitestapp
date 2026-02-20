@@ -1568,15 +1568,14 @@ export function CanvasBoard({
                     style={{ backgroundColor: noteColor }}
                   >
                     <div className='whitespace-pre-wrap break-words'>{noteText}</div>
-                                      </div>
+                  </div>
                 ) : null}
               </div>
-          );
-        })
+            );
+          })
           : null}
-                        </div>
-                        <ConfirmationModal />
-                      </Card>
-                    );
-                  }
-                  
+      </div>
+      <ConfirmationModal />
+    </Card>
+  );
+}

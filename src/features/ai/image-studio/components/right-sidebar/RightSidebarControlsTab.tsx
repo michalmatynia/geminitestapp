@@ -5,7 +5,7 @@ import {
   type VectorToolMode,
   VectorDrawingToolbar,
 } from '@/features/vector-drawing';
-import { Button, MultiSelect } from '@/shared/ui';
+import { Button, MultiSelect, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { GenerationToolbar } from '../GenerationToolbar';
@@ -15,7 +15,12 @@ import { StudioCard } from '../StudioCard';
 type RightSidebarControlsTabProps = {
   activeShapeDrawingTool: VectorToolMode | null;
   brushRadius: number;
+  canvasBackgroundColor: string;
+  canvasBackgroundLayerEnabled: boolean;
+  canvasSizePresetOptions: Array<{ value: string; label: string; description?: string }>;
+  canvasSizePresetValue: string;
   canvasSizeLabel: string;
+  canApplyCanvasSizePreset: boolean;
   canRecenterCanvasImage: boolean;
   compositeAssetIds: string[];
   compositeAssetOptions: Array<{ value: string; label: string }>;
@@ -27,15 +32,19 @@ type RightSidebarControlsTabProps = {
   maskShapesLength: number;
   maskThresholdSensitivity: number;
   onBrushRadiusChange: (value: number) => void;
+  onCanvasBackgroundColorChange: (value: string) => void;
   onClearAllShapes: () => void;
   onCompositeAssetIdsChange: (value: string[]) => void;
   onMaskEdgeSensitivityChange: (value: number) => void;
   onMaskFeatherChange: (value: number) => void;
   onMaskThresholdSensitivityChange: (value: number) => void;
+  onApplyCanvasSizePreset: () => void;
+  onCanvasSizePresetChange: (value: string) => void;
   onRecenterCanvasImage: () => void;
   onOpenResizeCanvasModal: () => void;
   onSelectShapeTool: (nextTool: VectorToolMode) => void;
   onToggleMoveImage: () => void;
+  onToggleCanvasBackgroundLayer: () => void;
   onToggleSelectTool: () => void;
   quickActionsHostEl: HTMLElement | null;
   quickActionsPanelContent: React.ReactNode;
@@ -47,7 +56,12 @@ type RightSidebarControlsTabProps = {
 export function RightSidebarControlsTab({
   activeShapeDrawingTool,
   brushRadius,
+  canvasBackgroundColor,
+  canvasBackgroundLayerEnabled,
+  canvasSizePresetOptions,
+  canvasSizePresetValue,
   canvasSizeLabel,
+  canApplyCanvasSizePreset,
   canRecenterCanvasImage,
   compositeAssetIds,
   compositeAssetOptions,
@@ -59,15 +73,19 @@ export function RightSidebarControlsTab({
   maskShapesLength,
   maskThresholdSensitivity,
   onBrushRadiusChange,
+  onCanvasBackgroundColorChange,
   onClearAllShapes,
   onCompositeAssetIdsChange,
   onMaskEdgeSensitivityChange,
   onMaskFeatherChange,
   onMaskThresholdSensitivityChange,
+  onApplyCanvasSizePreset,
+  onCanvasSizePresetChange,
   onRecenterCanvasImage,
   onOpenResizeCanvasModal,
   onSelectShapeTool,
   onToggleMoveImage,
+  onToggleCanvasBackgroundLayer,
   onToggleSelectTool,
   quickActionsHostEl,
   quickActionsPanelContent,
@@ -198,6 +216,69 @@ export function RightSidebarControlsTab({
             </div>
             <div className='mt-1 text-[11px] text-gray-500'>
               Current canvas: {canvasSizeLabel}
+            </div>
+            <div className='mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2'>
+              <SelectSimple
+                size='sm'
+                value={canvasSizePresetValue}
+                onValueChange={onCanvasSizePresetChange}
+                options={canvasSizePresetOptions}
+                triggerClassName='h-8 text-xs'
+                placeholder='Select canvas size'
+                disabled={resizeCanvasDisabled}
+                ariaLabel='Canvas size preset'
+              />
+              <Button
+                size='xs'
+                type='button'
+                variant='outline'
+                onClick={onApplyCanvasSizePreset}
+                disabled={!canApplyCanvasSizePreset}
+                aria-label='Apply canvas size preset'
+              >
+                Apply Size
+              </Button>
+            </div>
+            <div className='mt-1 text-[11px] text-gray-500'>
+              Choose a preset size and apply directly, or use Resize Canvas for custom dimensions and direction.
+            </div>
+          </div>
+
+          <div className='rounded border border-border/60 bg-card/30 p-3'>
+            <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Canvas Background</div>
+            <div className='flex flex-wrap items-center gap-2'>
+              <Button
+                size='xs'
+                type='button'
+                variant={canvasBackgroundLayerEnabled ? 'default' : 'outline'}
+                onClick={onToggleCanvasBackgroundLayer}
+                aria-pressed={canvasBackgroundLayerEnabled}
+                title={canvasBackgroundLayerEnabled ? 'Disable canvas background layer' : 'Enable canvas background layer'}
+                aria-label='Toggle canvas background layer'
+                className={cn(
+                  canvasBackgroundLayerEnabled
+                    ? 'border-cyan-400/70 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30'
+                    : undefined,
+                )}
+              >
+                {canvasBackgroundLayerEnabled ? 'Background On' : 'Background Off'}
+              </Button>
+              <label className='flex items-center gap-2 text-[11px] text-gray-300'>
+                <span>Color</span>
+                <input
+                  type='color'
+                  value={canvasBackgroundColor}
+                  onChange={(event) => onCanvasBackgroundColorChange(event.target.value)}
+                  aria-label='Canvas background color'
+                  className='h-7 w-10 cursor-pointer rounded border border-border/60 bg-transparent p-0'
+                />
+              </label>
+              <code className='rounded border border-border/60 bg-card/40 px-2 py-1 text-[10px] text-gray-300'>
+                {canvasBackgroundColor}
+              </code>
+            </div>
+            <div className='mt-2 text-[11px] text-gray-500'>
+              Background layer sits under the image and helps preview transparent edges.
             </div>
           </div>
 

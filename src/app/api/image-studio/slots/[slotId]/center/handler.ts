@@ -5,6 +5,7 @@ import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
 
+import type { ImageStudioDetectionDetails } from '@/features/ai/image-studio/analysis/shared';
 import {
   IMAGE_STUDIO_CENTER_ERROR_CODES,
   imageStudioCenterRequestSchema,
@@ -65,6 +66,10 @@ type CenterProcessingResult = {
   targetObjectBounds: ImageStudioCenterObjectBounds | null;
   effectiveMode: ImageStudioCenterMode;
   authoritativeSource: 'source_slot' | 'client_upload_fallback';
+  detectionUsed: ImageStudioCenterDetectionMode | null;
+  confidenceBefore: number | null;
+  detectionDetails: ImageStudioDetectionDetails | null;
+  scale: number | null;
   layout: {
     paddingPercent: number;
     paddingXPercent: number;
@@ -199,6 +204,10 @@ const readCenterMetadataFromSlot = (
   effectiveMode: ImageStudioCenterMode | null;
   sourceObjectBounds: ImageStudioCenterObjectBounds | null;
   targetObjectBounds: ImageStudioCenterObjectBounds | null;
+  detectionUsed: ImageStudioCenterDetectionMode | null;
+  confidenceBefore: number | null;
+  detectionDetails: ImageStudioDetectionDetails | null;
+  scale: number | null;
   layout: CenterProcessingResult['layout'];
 } => {
   const metadata =
@@ -229,88 +238,189 @@ const readCenterMetadataFromSlot = (
     return { left, top, width, height };
   };
 
-  return {
-    effectiveMode,
-    sourceObjectBounds: parseBounds(center?.['sourceObjectBounds']),
-    targetObjectBounds: parseBounds(center?.['targetObjectBounds']),
-    layout: (() => {
-      if (!center || typeof center !== 'object') return null;
-      const layoutRaw =
+  const parseShadowPolicy = (value: unknown): ImageStudioCenterShadowPolicy | null =>
+    value === 'auto' || value === 'include_shadow' || value === 'exclude_shadow'
+      ? value
+      : null;
+
+  const parseDetectionMode = (value: unknown): ImageStudioCenterDetectionMode | null =>
+    value === 'alpha_bbox' || value === 'white_bg_first_colored_pixel'
+      ? value
+      : null;
+
+  const parseDetectionDetails = (value: unknown): ImageStudioDetectionDetails | null => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const details = value as Record<string, unknown>;
+    const shadowPolicyRequested = parseShadowPolicy(details['shadowPolicyRequested']);
+    const shadowPolicyApplied = parseShadowPolicy(details['shadowPolicyApplied']);
+    const componentCountRaw = details['componentCount'];
+    const coreComponentCountRaw = details['coreComponentCount'];
+    const selectedComponentPixelsRaw = details['selectedComponentPixels'];
+    const selectedComponentCoverageRaw = details['selectedComponentCoverage'];
+    const foregroundPixelsRaw = details['foregroundPixels'];
+    const corePixelsRaw = details['corePixels'];
+    const touchesBorder = details['touchesBorder'] === true;
+    const maskSourceRaw = details['maskSource'];
+    const maskSource = maskSourceRaw === 'foreground' || maskSourceRaw === 'core' ? maskSourceRaw : null;
+
+    const componentCount =
+      typeof componentCountRaw === 'number' && Number.isFinite(componentCountRaw)
+        ? Math.max(0, Math.floor(componentCountRaw))
+        : NaN;
+    const coreComponentCount =
+      typeof coreComponentCountRaw === 'number' && Number.isFinite(coreComponentCountRaw)
+        ? Math.max(0, Math.floor(coreComponentCountRaw))
+        : NaN;
+    const selectedComponentPixels =
+      typeof selectedComponentPixelsRaw === 'number' && Number.isFinite(selectedComponentPixelsRaw)
+        ? Math.max(0, Math.floor(selectedComponentPixelsRaw))
+        : NaN;
+    const selectedComponentCoverage =
+      typeof selectedComponentCoverageRaw === 'number' && Number.isFinite(selectedComponentCoverageRaw)
+        ? Math.max(0, Math.min(1, selectedComponentCoverageRaw))
+        : NaN;
+    const foregroundPixels =
+      typeof foregroundPixelsRaw === 'number' && Number.isFinite(foregroundPixelsRaw)
+        ? Math.max(0, Math.floor(foregroundPixelsRaw))
+        : NaN;
+    const corePixels =
+      typeof corePixelsRaw === 'number' && Number.isFinite(corePixelsRaw)
+        ? Math.max(0, Math.floor(corePixelsRaw))
+        : NaN;
+
+    if (
+      !shadowPolicyRequested ||
+      !shadowPolicyApplied ||
+      !maskSource ||
+      !Number.isFinite(componentCount) ||
+      !Number.isFinite(coreComponentCount) ||
+      !Number.isFinite(selectedComponentPixels) ||
+      !Number.isFinite(selectedComponentCoverage) ||
+      !Number.isFinite(foregroundPixels) ||
+      !Number.isFinite(corePixels)
+    ) {
+      return null;
+    }
+
+    return {
+      shadowPolicyRequested,
+      shadowPolicyApplied,
+      componentCount,
+      coreComponentCount,
+      selectedComponentPixels,
+      selectedComponentCoverage: Number(selectedComponentCoverage.toFixed(4)),
+      foregroundPixels,
+      corePixels,
+      touchesBorder,
+      maskSource,
+    };
+  };
+
+  const parsedLayout = (() => {
+    if (!center || typeof center !== 'object') return null;
+    const layoutRaw =
         center['layout'] && typeof center['layout'] === 'object' && !Array.isArray(center['layout'])
           ? (center['layout'] as Record<string, unknown>)
           : null;
-      if (!layoutRaw) return null;
-      const paddingPercentRaw = layoutRaw['paddingPercent'];
-      const paddingXPercentRaw = layoutRaw['paddingXPercent'];
-      const paddingYPercentRaw = layoutRaw['paddingYPercent'];
-      const fillMissingCanvasWhiteRaw = layoutRaw['fillMissingCanvasWhite'];
-      const targetCanvasWidthRaw = layoutRaw['targetCanvasWidth'];
-      const targetCanvasHeightRaw = layoutRaw['targetCanvasHeight'];
-      const whiteThresholdRaw = layoutRaw['whiteThreshold'];
-      const chromaThresholdRaw = layoutRaw['chromaThreshold'];
-      const shadowPolicyRaw = layoutRaw['shadowPolicy'];
-      const detectionUsedRaw = layoutRaw['detectionUsed'];
-      const scaleRaw = layoutRaw['scale'];
-      const paddingXFromRaw = typeof paddingXPercentRaw === 'number' ? paddingXPercentRaw : NaN;
-      const paddingYFromRaw = typeof paddingYPercentRaw === 'number' ? paddingYPercentRaw : NaN;
-      const paddingPercent = (() => {
-        if (typeof paddingPercentRaw === 'number') return paddingPercentRaw;
-        if (Number.isFinite(paddingXFromRaw) && Number.isFinite(paddingYFromRaw)) {
-          return (paddingXFromRaw + paddingYFromRaw) / 2;
-        }
-        if (Number.isFinite(paddingXFromRaw)) return paddingXFromRaw;
-        if (Number.isFinite(paddingYFromRaw)) return paddingYFromRaw;
-        return NaN;
-      })();
-      const paddingXPercent = Number.isFinite(paddingXFromRaw) ? paddingXFromRaw : paddingPercent;
-      const paddingYPercent = Number.isFinite(paddingYFromRaw) ? paddingYFromRaw : paddingPercent;
-      const fillMissingCanvasWhite = fillMissingCanvasWhiteRaw === true;
-      const targetCanvasWidth =
+    if (!layoutRaw) return null;
+    const paddingPercentRaw = layoutRaw['paddingPercent'];
+    const paddingXPercentRaw = layoutRaw['paddingXPercent'];
+    const paddingYPercentRaw = layoutRaw['paddingYPercent'];
+    const fillMissingCanvasWhiteRaw = layoutRaw['fillMissingCanvasWhite'];
+    const targetCanvasWidthRaw = layoutRaw['targetCanvasWidth'];
+    const targetCanvasHeightRaw = layoutRaw['targetCanvasHeight'];
+    const whiteThresholdRaw = layoutRaw['whiteThreshold'];
+    const chromaThresholdRaw = layoutRaw['chromaThreshold'];
+    const shadowPolicyRaw = layoutRaw['shadowPolicy'];
+    const detectionUsedRaw = layoutRaw['detectionUsed'];
+    const scaleRaw = layoutRaw['scale'];
+    const paddingXFromRaw = typeof paddingXPercentRaw === 'number' ? paddingXPercentRaw : NaN;
+    const paddingYFromRaw = typeof paddingYPercentRaw === 'number' ? paddingYPercentRaw : NaN;
+    const paddingPercent = (() => {
+      if (typeof paddingPercentRaw === 'number') return paddingPercentRaw;
+      if (Number.isFinite(paddingXFromRaw) && Number.isFinite(paddingYFromRaw)) {
+        return (paddingXFromRaw + paddingYFromRaw) / 2;
+      }
+      if (Number.isFinite(paddingXFromRaw)) return paddingXFromRaw;
+      if (Number.isFinite(paddingYFromRaw)) return paddingYFromRaw;
+      return NaN;
+    })();
+    const paddingXPercent = Number.isFinite(paddingXFromRaw) ? paddingXFromRaw : paddingPercent;
+    const paddingYPercent = Number.isFinite(paddingYFromRaw) ? paddingYFromRaw : paddingPercent;
+    const fillMissingCanvasWhite = fillMissingCanvasWhiteRaw === true;
+    const targetCanvasWidth =
         typeof targetCanvasWidthRaw === 'number' && Number.isFinite(targetCanvasWidthRaw)
           ? Math.floor(targetCanvasWidthRaw)
           : null;
-      const targetCanvasHeight =
+    const targetCanvasHeight =
         typeof targetCanvasHeightRaw === 'number' && Number.isFinite(targetCanvasHeightRaw)
           ? Math.floor(targetCanvasHeightRaw)
           : null;
-      const whiteThreshold = typeof whiteThresholdRaw === 'number' ? whiteThresholdRaw : NaN;
-      const chromaThreshold = typeof chromaThresholdRaw === 'number' ? chromaThresholdRaw : NaN;
-      const shadowPolicy: ImageStudioCenterShadowPolicy =
-        shadowPolicyRaw === 'auto' ||
-        shadowPolicyRaw === 'include_shadow' ||
-        shadowPolicyRaw === 'exclude_shadow'
-          ? shadowPolicyRaw
-          : 'auto';
-      const detectionUsed =
-        detectionUsedRaw === 'auto' ||
-        detectionUsedRaw === 'alpha_bbox' ||
-        detectionUsedRaw === 'white_bg_first_colored_pixel'
-          ? detectionUsedRaw
-          : null;
-      const scale = typeof scaleRaw === 'number' && Number.isFinite(scaleRaw) ? scaleRaw : null;
-      if (
-        !Number.isFinite(paddingPercent) ||
+    const whiteThreshold = typeof whiteThresholdRaw === 'number' ? whiteThresholdRaw : NaN;
+    const chromaThreshold = typeof chromaThresholdRaw === 'number' ? chromaThresholdRaw : NaN;
+    const shadowPolicy: ImageStudioCenterShadowPolicy =
+      shadowPolicyRaw === 'auto' ||
+      shadowPolicyRaw === 'include_shadow' ||
+      shadowPolicyRaw === 'exclude_shadow'
+        ? shadowPolicyRaw
+        : 'auto';
+    const detectionUsed: ImageStudioCenterDetectionMode | null =
+      detectionUsedRaw === 'auto' ||
+      detectionUsedRaw === 'alpha_bbox' ||
+      detectionUsedRaw === 'white_bg_first_colored_pixel'
+        ? detectionUsedRaw
+        : null;
+    const scale = typeof scaleRaw === 'number' && Number.isFinite(scaleRaw) ? scaleRaw : null;
+    if (
+      !Number.isFinite(paddingPercent) ||
         !Number.isFinite(paddingXPercent) ||
         !Number.isFinite(paddingYPercent) ||
         !Number.isFinite(whiteThreshold) ||
         !Number.isFinite(chromaThreshold)
-      ) {
-        return null;
-      }
-      return {
-        paddingPercent,
-        paddingXPercent,
-        paddingYPercent,
-        fillMissingCanvasWhite,
-        targetCanvasWidth,
-        targetCanvasHeight,
-        whiteThreshold,
-        chromaThreshold,
-        shadowPolicy,
-        detectionUsed,
-        scale,
-      };
-    })(),
+    ) {
+      return null;
+    }
+    return {
+      paddingPercent,
+      paddingXPercent,
+      paddingYPercent,
+      fillMissingCanvasWhite,
+      targetCanvasWidth,
+      targetCanvasHeight,
+      whiteThreshold,
+      chromaThreshold,
+      shadowPolicy,
+      detectionUsed,
+      scale,
+    };
+  })();
+
+  const detectionUsedRaw = center?.['detectionUsed'];
+  const detectionUsed =
+    parseDetectionMode(detectionUsedRaw) ??
+    parseDetectionMode(parsedLayout?.detectionUsed) ??
+    null;
+  const confidenceBeforeRaw = center?.['confidenceBefore'];
+  const confidenceBefore =
+    typeof confidenceBeforeRaw === 'number' && Number.isFinite(confidenceBeforeRaw)
+      ? Math.max(0, Math.min(1, confidenceBeforeRaw))
+      : null;
+  const detectionDetails = parseDetectionDetails(center?.['detectionDetails']);
+  const scaleRaw = center?.['scale'];
+  const scaleFromCenter =
+    typeof scaleRaw === 'number' && Number.isFinite(scaleRaw)
+      ? scaleRaw
+      : null;
+
+  return {
+    effectiveMode,
+    sourceObjectBounds: parseBounds(center?.['sourceObjectBounds']),
+    targetObjectBounds: parseBounds(center?.['targetObjectBounds']),
+    detectionUsed,
+    confidenceBefore,
+    detectionDetails,
+    scale: scaleFromCenter ?? parsedLayout?.scale ?? null,
+    layout: parsedLayout,
   };
 };
 
@@ -419,6 +529,10 @@ async function processCenterPayload(input: {
         targetObjectBounds: centered.targetObjectBounds,
         effectiveMode: 'server_object_layout_v1',
         authoritativeSource: 'source_slot',
+        detectionUsed: centered.detectionUsed,
+        confidenceBefore: centered.confidenceBefore,
+        detectionDetails: centered.detectionDetails,
+        scale: centered.scale,
         layout: {
           paddingPercent: normalizedLayout.paddingPercent,
           paddingXPercent: normalizedLayout.paddingXPercent,
@@ -474,6 +588,10 @@ async function processCenterPayload(input: {
       targetObjectBounds: centered.targetObjectBounds,
       effectiveMode: 'server_alpha_bbox',
       authoritativeSource: 'source_slot',
+      detectionUsed: null,
+      confidenceBefore: null,
+      detectionDetails: null,
+      scale: null,
       layout: null,
     };
   }
@@ -508,6 +626,10 @@ async function processCenterPayload(input: {
       targetObjectBounds: null,
       effectiveMode: payload.mode === 'client_object_layout_v1' ? 'client_object_layout_v1' : 'client_alpha_bbox',
       authoritativeSource: 'client_upload_fallback',
+      detectionUsed: null,
+      confidenceBefore: null,
+      detectionDetails: null,
+      scale: null,
       layout: isObjectLayoutMode(payload.mode)
         ? {
           paddingPercent: normalizedLayout.paddingPercent,
@@ -554,6 +676,10 @@ async function processCenterPayload(input: {
     targetObjectBounds: null,
     effectiveMode: payload.mode === 'client_object_layout_v1' ? 'client_object_layout_v1' : 'client_alpha_bbox',
     authoritativeSource: 'client_upload_fallback',
+    detectionUsed: null,
+    confidenceBefore: null,
+    detectionDetails: null,
+    scale: null,
     layout: isObjectLayoutMode(payload.mode)
       ? {
         paddingPercent: normalizedLayout.paddingPercent,
@@ -667,6 +793,10 @@ export async function postCenterSlotHandler(
           sourceObjectBounds: existingCenter.sourceObjectBounds,
           targetObjectBounds: existingCenter.targetObjectBounds,
           layout: existingCenter.layout,
+          detectionUsed: existingCenter.detectionUsed,
+          confidenceBefore: existingCenter.confidenceBefore,
+          detectionDetails: existingCenter.detectionDetails,
+          scale: existingCenter.scale,
           requestId: idempotencyKey,
           fingerprint,
           deduplicated: true,
@@ -697,6 +827,10 @@ export async function postCenterSlotHandler(
           sourceObjectBounds: existingCenter.sourceObjectBounds,
           targetObjectBounds: existingCenter.targetObjectBounds,
           layout: existingCenter.layout,
+          detectionUsed: existingCenter.detectionUsed,
+          confidenceBefore: existingCenter.confidenceBefore,
+          detectionDetails: existingCenter.detectionDetails,
+          scale: existingCenter.scale,
           requestId: idempotencyKey,
           fingerprint,
           deduplicated: true,
@@ -778,6 +912,10 @@ export async function postCenterSlotHandler(
             sourceObjectBounds: processed.sourceObjectBounds,
             targetObjectBounds: processed.targetObjectBounds,
             layout: processed.layout,
+            detectionUsed: processed.detectionUsed,
+            confidenceBefore: processed.confidenceBefore,
+            detectionDetails: processed.detectionDetails,
+            scale: processed.scale,
             requestId: idempotencyKey,
             fingerprint,
             pipelineVersion: CENTER_PIPELINE_VERSION,
@@ -806,6 +944,10 @@ export async function postCenterSlotHandler(
         sourceObjectBounds: processed.sourceObjectBounds,
         targetObjectBounds: processed.targetObjectBounds,
         layout: processed.layout,
+        detectionUsed: processed.detectionUsed,
+        confidenceBefore: processed.confidenceBefore,
+        detectionDetails: processed.detectionDetails,
+        scale: processed.scale,
         fingerprint,
         requestId: idempotencyKey,
         pipelineVersion: CENTER_PIPELINE_VERSION,
@@ -824,6 +966,10 @@ export async function postCenterSlotHandler(
           sourceObjectBounds: processed.sourceObjectBounds,
           targetObjectBounds: processed.targetObjectBounds,
           layout: processed.layout,
+          detectionUsed: processed.detectionUsed,
+          confidenceBefore: processed.confidenceBefore,
+          detectionDetails: processed.detectionDetails,
+          scale: processed.scale,
           fingerprint,
           requestId: idempotencyKey,
           pipelineVersion: CENTER_PIPELINE_VERSION,
@@ -851,6 +997,10 @@ export async function postCenterSlotHandler(
         sourceObjectBounds: processed.sourceObjectBounds,
         targetObjectBounds: processed.targetObjectBounds,
         layout: processed.layout,
+        detectionUsed: processed.detectionUsed,
+        confidenceBefore: processed.confidenceBefore,
+        detectionDetails: processed.detectionDetails,
+        scale: processed.scale,
         durationMs,
         requestId: idempotencyKey,
         fingerprint,
@@ -867,6 +1017,10 @@ export async function postCenterSlotHandler(
       sourceObjectBounds: processed.sourceObjectBounds,
       targetObjectBounds: processed.targetObjectBounds,
       layout: processed.layout,
+      detectionUsed: processed.detectionUsed,
+      confidenceBefore: processed.confidenceBefore,
+      detectionDetails: processed.detectionDetails,
+      scale: processed.scale,
       requestId: idempotencyKey,
       fingerprint,
       deduplicated: false,

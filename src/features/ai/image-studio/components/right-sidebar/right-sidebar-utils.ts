@@ -228,6 +228,8 @@ export type StudioActionHistorySnapshot = {
   canvasSelectionEnabled: boolean;
   imageTransformMode: 'none' | 'move';
   canvasImageOffset: { x: number; y: number };
+  canvasBackgroundLayerEnabled: boolean;
+  canvasBackgroundColor: string;
   maskShapes: VectorShape[];
   activeMaskId: string | null;
   selectedPointIndex: number | null;
@@ -276,12 +278,20 @@ export const buildReferencePreviewImages = (
     .map((slotId: string) => slots.find((slot) => slot.id === slotId))
     .filter((slot): slot is ImageStudioSlotRecord => Boolean(slot))
     .flatMap((slot) => {
-      const filepath = slot.imageFile?.url || slot.imageUrl || '';
+      const imageFileRecord =
+        slot.imageFile && typeof slot.imageFile === 'object'
+          ? (slot.imageFile as Record<string, unknown>)
+          : null;
+      const imageFileUrl =
+        typeof imageFileRecord?.['url'] === 'string' ? imageFileRecord['url'] : '';
+      const slotImageUrl = typeof slot.imageUrl === 'string' ? slot.imageUrl : '';
+      const filepath = imageFileUrl || slotImageUrl;
       if (!filepath) return [];
+      const slotName = typeof slot.name === 'string' ? slot.name.trim() : '';
       return [{
         kind: 'reference' as const,
         id: slot.id,
-        name: slot.name || slot.id || 'Reference card',
+        name: slotName || slot.id || 'Reference card',
         filepath,
       }];
     });

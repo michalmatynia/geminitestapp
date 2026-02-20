@@ -1,4 +1,4 @@
-import { api } from '@/shared/lib/api-client';
+import { api, type ApiError } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 
 import {
@@ -19,6 +19,14 @@ import {
   type UpscaleRequestStrategyPayload,
   type UpscaleSmoothingQuality,
 } from './GenerationToolbarImageUtils';
+import {
+  imageStudioCropResponseSchema,
+  type ImageStudioCropResponse,
+} from '../../contracts/crop';
+import {
+  imageStudioUpscaleResponseSchema,
+  type ImageStudioUpscaleResponse,
+} from '../../contracts/upscale';
 import { studioKeys } from '../../hooks/useImageStudioQueries';
 
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../../types';
@@ -47,26 +55,8 @@ type CropStatus =
   | 'persisting';
 type UpscaleStrategy = 'scale' | 'target_resolution';
 
-type UpscaleActionResponse = {
-  slot?: ImageStudioSlotRecord;
-  mode?: 'client_data_url' | 'server_sharp';
-  effectiveMode?: 'client_data_url' | 'server_sharp';
-  strategy?: UpscaleStrategy;
-  scale?: number | null;
-  targetWidth?: number | null;
-  targetHeight?: number | null;
-  requestId?: string | null;
-  deduplicated?: boolean;
-};
-
-type CropActionResponse = {
-  slot?: ImageStudioSlotRecord;
-  mode?: CropMode;
-  effectiveMode?: CropMode;
-  cropRect?: CropRect | null;
-  requestId?: string | null;
-  deduplicated?: boolean;
-};
+type UpscaleActionResponse = ImageStudioUpscaleResponse;
+type CropActionResponse = ImageStudioCropResponse;
 
 type CreateGenerationToolbarActionHandlersDeps = {
   clientProcessingImageSrc: string | null;
@@ -200,6 +190,13 @@ const buildUpscaleRequestBody = (
   requestId,
 });
 
+const shouldFallbackToServerUpscale = (error: unknown): boolean => {
+  if (isClientUpscaleCrossOriginError(error)) return true;
+  const apiError = error as ApiError | null;
+  if (apiError?.status !== 400) return false;
+  return /invalid request payload|invalid upscale payload/i.test(apiError.message);
+};
+
 export const createGenerationToolbarActionHandlers = (
   deps: CreateGenerationToolbarActionHandlersDeps
 ): {
@@ -296,54 +293,61 @@ export const createGenerationToolbarActionHandlers = (
               formData.append('smoothingQuality', deps.upscaleSmoothingQuality);
               formData.append('requestId', upscaleRequestId);
               formData.append('image', uploadBlob, `upscale-client-${Date.now()}.png`);
-              return api.post<UpscaleActionResponse>(
-                `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/upscale`,
-                formData,
-                {
-                  signal: abortController.signal,
-                  timeout: deps.upscaleRequestTimeoutMs,
-                  headers: { 'x-idempotency-key': upscaleRequestId },
-                }
-              );
+              return api
+                .post<unknown>(
+                  `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/upscale`,
+                  formData,
+                  {
+                    signal: abortController.signal,
+                    timeout: deps.upscaleRequestTimeoutMs,
+                    headers: { 'x-idempotency-key': upscaleRequestId },
+                  }
+                )
+                .then((raw) => imageStudioUpscaleResponseSchema.parse(raw));
             },
             abortController.signal
           );
         } catch (error) {
-          if (!isClientUpscaleCrossOriginError(error)) {
+          if (!shouldFallbackToServerUpscale(error)) {
             throw error;
           }
           deps.setUpscaleStatus('processing');
           response = await withUpscaleRetry(
             () =>
-              api.post<UpscaleActionResponse>(
-                `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/upscale`,
-                buildUpscaleRequestBody('server_sharp', upscaleRequestPayload, upscaleRequestId),
-                {
-                  signal: abortController.signal,
-                  timeout: deps.upscaleRequestTimeoutMs,
-                  headers: { 'x-idempotency-key': upscaleRequestId },
-                }
-              ),
+              api
+                .post<unknown>(
+                  `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/upscale`,
+                  buildUpscaleRequestBody('server_sharp', upscaleRequestPayload, upscaleRequestId),
+                  {
+                    signal: abortController.signal,
+                    timeout: deps.upscaleRequestTimeoutMs,
+                    headers: { 'x-idempotency-key': upscaleRequestId },
+                  }
+                )
+                .then((raw) => imageStudioUpscaleResponseSchema.parse(raw)),
             abortController.signal
           );
           resolvedMode = 'server_sharp';
-          deps.toast('Client upscale was blocked by cross-origin restrictions; used server upscale instead.', {
-            variant: 'info',
-          });
+          const fallbackMessage = isClientUpscaleCrossOriginError(error)
+            ? 'Client upscale was blocked by cross-origin restrictions; used server upscale instead.'
+            : 'Client upscale upload payload was rejected; used server upscale instead.';
+          deps.toast(fallbackMessage, { variant: 'info' });
         }
       } else {
         deps.setUpscaleStatus('processing');
         response = await withUpscaleRetry(
           () =>
-            api.post<UpscaleActionResponse>(
-              `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/upscale`,
-              buildUpscaleRequestBody(mode, upscaleRequestPayload, upscaleRequestId),
-              {
-                signal: abortController.signal,
-                timeout: deps.upscaleRequestTimeoutMs,
-                headers: { 'x-idempotency-key': upscaleRequestId },
-              }
-            ),
+            api
+              .post<unknown>(
+                `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/upscale`,
+                buildUpscaleRequestBody(mode, upscaleRequestPayload, upscaleRequestId),
+                {
+                  signal: abortController.signal,
+                  timeout: deps.upscaleRequestTimeoutMs,
+                  headers: { 'x-idempotency-key': upscaleRequestId },
+                }
+              )
+              .then((raw) => imageStudioUpscaleResponseSchema.parse(raw)),
           abortController.signal
         );
       }
@@ -356,7 +360,7 @@ export const createGenerationToolbarActionHandlers = (
         const createdSlotId = response.slot?.id ?? '';
         const mergedSlots =
           createdSlotId
-            ? [response.slot!, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
+            ? [response.slot, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
             : slotsSnapshot;
         deps.queryClient.setQueryData<StudioSlotsResponse>(
           studioKeys.slots(normalizedProjectId),
@@ -468,15 +472,17 @@ export const createGenerationToolbarActionHandlers = (
                 formData.append('canvasContext', JSON.stringify(cropCanvasContext));
               }
               formData.append('image', uploadBlob, `crop-client-${Date.now()}.png`);
-              return api.post<CropActionResponse>(
-                `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/crop`,
-                formData,
-                {
-                  signal: abortController.signal,
-                  timeout: deps.cropRequestTimeoutMs,
-                  headers: { 'x-idempotency-key': cropRequestId },
-                }
-              );
+              return api
+                .post<unknown>(
+                  `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/crop`,
+                  formData,
+                  {
+                    signal: abortController.signal,
+                    timeout: deps.cropRequestTimeoutMs,
+                    headers: { 'x-idempotency-key': cropRequestId },
+                  }
+                )
+                .then((raw) => imageStudioCropResponseSchema.parse(raw));
             },
             abortController.signal
           );
@@ -487,21 +493,23 @@ export const createGenerationToolbarActionHandlers = (
           deps.setCropStatus('processing');
           response = await withCropRetry(
             () =>
-              api.post<CropActionResponse>(
-                `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/crop`,
-                {
-                  mode: 'server_bbox',
-                  cropRect,
-                  requestId: cropRequestId,
-                  ...(cropCanvasContext ? { canvasContext: cropCanvasContext } : {}),
-                  ...(cropDiagnosticsPayload ? { diagnostics: cropDiagnosticsPayload } : {}),
-                },
-                {
-                  signal: abortController.signal,
-                  timeout: deps.cropRequestTimeoutMs,
-                  headers: { 'x-idempotency-key': cropRequestId },
-                }
-              ),
+              api
+                .post<unknown>(
+                  `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/crop`,
+                  {
+                    mode: 'server_bbox',
+                    cropRect,
+                    requestId: cropRequestId,
+                    ...(cropCanvasContext ? { canvasContext: cropCanvasContext } : {}),
+                    ...(cropDiagnosticsPayload ? { diagnostics: cropDiagnosticsPayload } : {}),
+                  },
+                  {
+                    signal: abortController.signal,
+                    timeout: deps.cropRequestTimeoutMs,
+                    headers: { 'x-idempotency-key': cropRequestId },
+                  }
+                )
+                .then((raw) => imageStudioCropResponseSchema.parse(raw)),
             abortController.signal
           );
           resolvedMode = 'server_bbox';
@@ -513,21 +521,23 @@ export const createGenerationToolbarActionHandlers = (
         deps.setCropStatus('processing');
         response = await withCropRetry(
           () =>
-            api.post<CropActionResponse>(
-              `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/crop`,
-              {
-                mode: deps.cropMode,
-                cropRect,
-                requestId: cropRequestId,
-                ...(cropCanvasContext ? { canvasContext: cropCanvasContext } : {}),
-                ...(cropDiagnosticsPayload ? { diagnostics: cropDiagnosticsPayload } : {}),
-              },
-              {
-                signal: abortController.signal,
-                timeout: deps.cropRequestTimeoutMs,
-                headers: { 'x-idempotency-key': cropRequestId },
-              }
-            ),
+            api
+              .post<unknown>(
+                `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/crop`,
+                {
+                  mode: deps.cropMode,
+                  cropRect,
+                  requestId: cropRequestId,
+                  ...(cropCanvasContext ? { canvasContext: cropCanvasContext } : {}),
+                  ...(cropDiagnosticsPayload ? { diagnostics: cropDiagnosticsPayload } : {}),
+                },
+                {
+                  signal: abortController.signal,
+                  timeout: deps.cropRequestTimeoutMs,
+                  headers: { 'x-idempotency-key': cropRequestId },
+                }
+              )
+              .then((raw) => imageStudioCropResponseSchema.parse(raw)),
           abortController.signal
         );
       }
@@ -540,7 +550,7 @@ export const createGenerationToolbarActionHandlers = (
         const createdSlotId = response.slot?.id ?? '';
         const mergedSlots =
           createdSlotId
-            ? [response.slot!, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
+            ? [response.slot, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
             : slotsSnapshot;
         deps.queryClient.setQueryData<StudioSlotsResponse>(
           studioKeys.slots(normalizedProjectId),

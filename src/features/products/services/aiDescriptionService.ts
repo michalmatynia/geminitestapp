@@ -16,6 +16,10 @@ import {
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+import {
+  fetchWithOutboundUrlPolicy,
+  OutboundUrlPolicyError,
+} from '@/shared/lib/security/outbound-url-policy';
 
 import type { ProductFormData } from '../types/forms';
 import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
@@ -263,7 +267,10 @@ export async function generateProductDescription(params: {
         let base64Image: string;
         let mimetype: string = 'image/jpeg';
         if (item.startsWith('http')) {
-          const res = await fetch(item);
+          const res = await fetchWithOutboundUrlPolicy(item, {
+            method: 'GET',
+            maxRedirects: 3,
+          });
           if (!res.ok) {
             void ErrorSystem.logWarning(`Failed to fetch image URL: ${item}`, {
               service: 'ai-description-service',
@@ -287,6 +294,14 @@ export async function generateProductDescription(params: {
           image_url: { url: `data:${mimetype};base64,${base64Image}` },
         } as ChatCompletionContentPart;
       } catch (err) {
+        if (err instanceof OutboundUrlPolicyError) {
+          void ErrorSystem.logWarning(`Blocked outbound image URL by policy: ${item}`, {
+            service: 'ai-description-service',
+            reason: err.decision.reason ?? 'unknown',
+            hostname: err.decision.hostname ?? null,
+          });
+          return null;
+        }
         void ErrorSystem.logWarning(`Failed to process image: ${item}`, {
           service: 'ai-description-service',
           error: err

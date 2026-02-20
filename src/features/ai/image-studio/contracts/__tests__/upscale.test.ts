@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { imageStudioUpscaleRequestSchema } from '@/features/ai/image-studio/contracts/upscale';
+import {
+  imageStudioUpscaleRequestSchema,
+  imageStudioUpscaleResponseSchema,
+} from '@/features/ai/image-studio/contracts/upscale';
 
 describe('imageStudioUpscaleRequestSchema', () => {
   it('accepts server upscale payload with scale and request id', () => {
@@ -60,5 +63,48 @@ describe('imageStudioUpscaleRequestSchema', () => {
       targetWidth: 2048,
     });
     expect(parsed.success).toBe(false);
+  });
+});
+
+describe('imageStudioUpscaleResponseSchema', () => {
+  it('accepts an upscale response payload', () => {
+    const parsed = imageStudioUpscaleResponseSchema.safeParse({
+      sourceSlotId: 'slot_source_123',
+      mode: 'server_sharp',
+      effectiveMode: 'server_sharp',
+      strategy: 'scale',
+      scale: 2,
+      targetWidth: null,
+      targetHeight: null,
+      smoothingQuality: null,
+      slot: {
+        id: 'slot_upscale_123',
+        projectId: 'project_123',
+        name: 'Upscale slot',
+        folderPath: null,
+        imageFileId: 'file_upscale_123',
+        imageUrl: '/uploads/studio/upscale/project_123/slot_source_123/upscale.png',
+        imageBase64: null,
+        metadata: null,
+      },
+      output: {
+        id: 'file_upscale_123',
+        filename: 'upscale.png',
+        filepath: '/uploads/studio/upscale/project_123/slot_source_123/upscale.png',
+        mimetype: 'image/png',
+        size: 4096,
+        width: 1600,
+        height: 1200,
+      },
+      requestId: 'upscale_request_123456',
+      fingerprint: 'upscale_fp_123',
+      deduplicated: false,
+      lifecycle: {
+        state: 'persisted',
+        durationMs: 315,
+      },
+      pipelineVersion: 'v2',
+    });
+    expect(parsed.success).toBe(true);
   });
 });

@@ -3,8 +3,9 @@ import { createHash } from 'crypto';
 import sharp from 'sharp';
 
 import {
-  detectObjectBoundsForLayoutFromRgba,
+  analyzeAndPlanAutoScaleFromRgba,
   normalizeImageStudioAnalysisLayoutConfig,
+  type ImageStudioDetectionDetails,
 } from '@/features/ai/image-studio/analysis/shared';
 import {
   IMAGE_STUDIO_CENTER_ALPHA_THRESHOLD,
@@ -141,23 +142,6 @@ export const resolveAlphaObjectBounds = (
   };
 };
 
-const resolveObjectBoundsForLayout = (
-  pixelData: Buffer,
-  width: number,
-  height: number,
-  layout: NormalizedCenterLayoutConfig
-): {
-  bounds: ImageStudioCenterObjectBounds;
-  detectionUsed: ImageStudioCenterDetectionMode;
-} | null => {
-  const detected = detectObjectBoundsForLayoutFromRgba(pixelData, width, height, layout);
-  if (!detected) return null;
-  return {
-    bounds: detected.bounds,
-    detectionUsed: detected.detectionUsed,
-  };
-};
-
 export async function centerObjectByAlpha(sourceBuffer: Buffer): Promise<{
   outputBuffer: Buffer;
   width: number;
@@ -230,6 +214,8 @@ export async function centerAndScaleObjectByLayout(
   targetObjectBounds: ImageStudioCenterObjectBounds;
   scale: number;
   detectionUsed: ImageStudioCenterDetectionMode;
+  confidenceBefore: number;
+  detectionDetails: ImageStudioDetectionDetails | null;
 }> {
   const normalizedLayout = normalizeCenterLayoutConfig(layout);
   const sourceWithAlpha = sharp(sourceBuffer).ensureAlpha();
@@ -240,41 +226,20 @@ export async function centerAndScaleObjectByLayout(
     throw new Error('Source image dimensions are invalid.');
   }
 
-  const objectBoundsResult = resolveObjectBoundsForLayout(data, width, height, normalizedLayout);
-  if (!objectBoundsResult) {
+  const planned = analyzeAndPlanAutoScaleFromRgba({
+    pixelData: data,
+    width,
+    height,
+    layout: normalizedLayout,
+    preferTargetCanvas: false,
+  });
+  if (!planned) {
     throw new Error('No visible object pixels were detected to center.');
   }
-  const sourceObjectBounds = objectBoundsResult.bounds;
-  const outputWidth = normalizedLayout.fillMissingCanvasWhite
-    ? Math.max(width, normalizedLayout.targetCanvasWidth ?? width)
-    : width;
-  const outputHeight = normalizedLayout.fillMissingCanvasWhite
-    ? Math.max(height, normalizedLayout.targetCanvasHeight ?? height)
-    : height;
-  const paddingXRatio = Math.max(
-    0,
-    Math.min(0.49, normalizedLayout.paddingXPercent / 100)
-  );
-  const paddingYRatio = Math.max(
-    0,
-    Math.min(0.49, normalizedLayout.paddingYPercent / 100)
-  );
-  const maxObjectWidth = Math.max(1, Math.round(outputWidth * (1 - paddingXRatio * 2)));
-  const maxObjectHeight = Math.max(1, Math.round(outputHeight * (1 - paddingYRatio * 2)));
-  const scale = Math.max(
-    0.0001,
-    Math.min(maxObjectWidth / sourceObjectBounds.width, maxObjectHeight / sourceObjectBounds.height)
-  );
-  const targetWidth = Math.max(1, Math.min(outputWidth, Math.round(sourceObjectBounds.width * scale)));
-  const targetHeight = Math.max(1, Math.min(outputHeight, Math.round(sourceObjectBounds.height * scale)));
-  const targetLeft = Math.max(0, Math.round((outputWidth - targetWidth) / 2));
-  const targetTop = Math.max(0, Math.round((outputHeight - targetHeight) / 2));
-  const targetObjectBounds: ImageStudioCenterObjectBounds = {
-    left: targetLeft,
-    top: targetTop,
-    width: targetWidth,
-    height: targetHeight,
-  };
+  const sourceObjectBounds = planned.analysis.sourceObjectBounds;
+  const targetObjectBounds = planned.plan.targetObjectBounds;
+  const outputWidth = planned.plan.outputWidth;
+  const outputHeight = planned.plan.outputHeight;
 
   const extracted = await sharp(sourceBuffer)
     .ensureAlpha()
@@ -284,7 +249,7 @@ export async function centerAndScaleObjectByLayout(
       width: sourceObjectBounds.width,
       height: sourceObjectBounds.height,
     })
-    .resize(targetWidth, targetHeight, {
+    .resize(targetObjectBounds.width, targetObjectBounds.height, {
       fit: 'fill',
       kernel: 'lanczos3',
     })
@@ -309,7 +274,9 @@ export async function centerAndScaleObjectByLayout(
     height: outputHeight,
     sourceObjectBounds,
     targetObjectBounds,
-    scale: Number(scale.toFixed(6)),
-    detectionUsed: objectBoundsResult.detectionUsed,
+    scale: planned.plan.scale,
+    detectionUsed: planned.analysis.detectionUsed,
+    confidenceBefore: planned.analysis.confidence,
+    detectionDetails: planned.analysis.detectionDetails,
   };
 }

@@ -105,7 +105,14 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
   const searchParams = useSearchParams();
   const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
   const caseResolverSessionId = searchParams?.get('sessionId')?.trim() ?? '';
-  const isCaseResolverReturnTarget = returnTo.startsWith('/admin/case-resolver');
+  const isCaseResolverReturnTarget = useMemo((): boolean => {
+    try {
+      const parsed = new URL(returnTo, 'https://local.prompt-exploder');
+      return parsed.pathname.startsWith('/admin/case-resolver');
+    } catch {
+      return false;
+    }
+  }, [returnTo]);
   const returnToCaseResolverFileId = useMemo((): string => {
     if (!isCaseResolverReturnTarget) return '';
     try {
@@ -423,97 +430,141 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
   }, [clearDocument, handleExplode]);
 
   const handleApplyToImageStudio = useCallback(async () => {
-    const reassembled = documentState
-      ? reassemblePromptSegments(documentState.segments)
-      : promptText.trim();
-    if (!reassembled) return;
-    if (returnTarget === 'case-resolver') {
-      const resolvedContextFileId =
-        incomingCaseResolverContext?.fileId?.trim() || returnToCaseResolverFileId;
-      const resolvedContextSessionId = incomingCaseResolverContext?.sessionId?.trim() ?? '';
-      if (!resolvedContextFileId) {
-        toast(
-          'Cannot apply to Case Resolver without a valid target document context.',
-          { variant: 'error' }
-        );
+    try {
+      const reassembled = documentState
+        ? reassemblePromptSegments(documentState.segments)
+        : promptText.trim();
+      if (!reassembled) {
+        toast('No reassembled text available to apply.', { variant: 'warning' });
         return;
       }
-      const hasExplicitSessionMismatch =
-        caseResolverSessionId.length > 0 &&
-        resolvedContextSessionId.length > 0 &&
-        resolvedContextSessionId !== caseResolverSessionId;
-      if (
-        !isCaseResolverReturnTarget ||
-        hasExplicitSessionMismatch
-      ) {
-        toast(
-          'Prompt Exploder session is not bound to the current Case Resolver document. Reopen Prompt Exploder from the document editor and try again.',
-          { variant: 'error' }
+      if (returnTarget === 'case-resolver') {
+        const incomingContextFileId = incomingCaseResolverContext?.fileId?.trim() ?? '';
+        const routeContextFileId = returnToCaseResolverFileId;
+        const hasExplicitContextFileMismatch =
+          routeContextFileId.length > 0 &&
+          incomingContextFileId.length > 0 &&
+          incomingContextFileId !== routeContextFileId;
+        const resolvedContextFileId = routeContextFileId || incomingContextFileId;
+        const incomingContextSessionId = incomingCaseResolverContext?.sessionId?.trim() ?? '';
+        const routeContextSessionId = caseResolverSessionId;
+        const resolvedContextSessionId = routeContextSessionId || incomingContextSessionId;
+        if (!resolvedContextFileId) {
+          toast(
+            'Cannot apply to Case Resolver without a valid target document context.',
+            { variant: 'error' }
+          );
+          return;
+        }
+        if (hasExplicitContextFileMismatch) {
+          toast(
+            'Target document context mismatch detected. Applying to the return target document.',
+            { variant: 'warning' }
+          );
+        }
+        const hasExplicitSessionMismatch =
+          routeContextSessionId.length > 0 &&
+          incomingContextSessionId.length > 0 &&
+          incomingContextSessionId !== routeContextSessionId;
+        if (hasExplicitSessionMismatch) {
+          toast(
+            'Session metadata mismatch detected; applying with the current return session.',
+            { variant: 'warning' }
+          );
+        }
+
+        const transferSegments = documentState?.segments ?? [];
+        let captureParties;
+        let captureMetadata;
+        let hasCaptureData = false;
+
+        if (transferSegments.length > 0) {
+          const captureRules = buildCaseResolverSegmentCaptureRules(
+            runtimeSelection.runtimeValidationRules,
+            runtimeSelection.identity.scope
+          );
+          if (
+            promptExploderSettings.runtime.caseResolverCaptureMode === 'rules_only' &&
+            captureRules.length === 0
+          ) {
+            toast(
+              'No Case Resolver capture rules are active for this validation scope. Configure capture rules before applying.',
+              { variant: 'warning' }
+            );
+          }
+          const transferPayload = resolveCaseResolverBridgePayloadForTransfer({
+            segments: transferSegments,
+            captureRules,
+            mode: promptExploderSettings.runtime.caseResolverCaptureMode,
+          });
+          if (transferPayload.usedFallback) {
+            toast(
+              'Unexpected capture fallback path detected. Transfer was blocked; review extraction mode and rules.',
+              { variant: 'error' }
+            );
+            return;
+          }
+          hasCaptureData = transferPayload.hasCaptureData;
+          captureParties = transferPayload.payload.parties;
+          captureMetadata = transferPayload.payload.metadata;
+        } else {
+          toast(
+            'No exploded segments detected. Applying raw prompt text without structured captures.',
+            { variant: 'info' }
+          );
+        }
+
+        if (!hasCaptureData) {
+          toast(
+            'No addresser/addressee/date captures found in rules-only mode. No fallback extraction will run; applying will transfer text only.',
+            { variant: 'warning' }
+          );
+        }
+        const transferContext: PromptExploderCaseResolverContext = {
+          fileId: resolvedContextFileId,
+          fileName:
+            incomingCaseResolverContext?.fileName?.trim() || resolvedContextFileId,
+          ...(resolvedContextSessionId
+            ? {
+              sessionId:
+                resolvedContextSessionId,
+            }
+            : {}),
+          ...(typeof incomingCaseResolverContext?.documentVersionAtStart === 'number'
+            ? {
+              documentVersionAtStart:
+                incomingCaseResolverContext.documentVersionAtStart,
+            }
+            : {}),
+        };
+        savePromptExploderApplyPromptForCaseResolver(
+          reassembled,
+          transferContext,
+          captureParties,
+          captureMetadata
         );
-        return;
+      } else {
+        savePromptExploderApplyPrompt(reassembled);
       }
-      const captureRules = buildCaseResolverSegmentCaptureRules(
-        runtimeSelection.runtimeValidationRules,
-        runtimeSelection.identity.scope
-      );
-      if (
-        promptExploderSettings.runtime.caseResolverCaptureMode === 'rules_only' &&
-        captureRules.length === 0
-      ) {
-        toast(
-          'No Case Resolver capture rules are active for this validation scope. Configure capture rules before applying.',
-          { variant: 'warning' }
-        );
-      }
-      const transferPayload = resolveCaseResolverBridgePayloadForTransfer({
-        segments: documentState.segments,
-        captureRules,
-        mode: promptExploderSettings.runtime.caseResolverCaptureMode,
+      router.push(returnTo);
+    } catch (error) {
+      logClientError(error, {
+        context: {
+          source: 'DocumentProvider',
+          action: 'handleApplyToImageStudio',
+          scope: runtimeSelection.identity.scope,
+          stack: runtimeSelection.identity.stack,
+          level: 'error',
+        },
       });
-      if (transferPayload.usedFallback) {
-        toast(
-          'Unexpected capture fallback path detected. Transfer was blocked; review extraction mode and rules.',
-          { variant: 'error' }
-        );
-        return;
-      }
-      if (!transferPayload.hasCaptureData) {
-        toast(
-          'No addresser/addressee/date captures found in rules-only mode. No fallback extraction will run; applying will transfer text only.',
-          { variant: 'warning' }
-        );
-      }
-      const transferContext: PromptExploderCaseResolverContext = {
-        fileId: resolvedContextFileId,
-        fileName:
-          incomingCaseResolverContext?.fileName?.trim() || resolvedContextFileId,
-        ...(resolvedContextSessionId || caseResolverSessionId
-          ? {
-            sessionId:
-              resolvedContextSessionId || caseResolverSessionId,
-          }
-          : {}),
-        ...(typeof incomingCaseResolverContext?.documentVersionAtStart === 'number'
-          ? {
-            documentVersionAtStart:
-              incomingCaseResolverContext.documentVersionAtStart,
-          }
-          : {}),
-      };
-      savePromptExploderApplyPromptForCaseResolver(
-        reassembled,
-        transferContext,
-        transferPayload.payload.parties,
-        transferPayload.payload.metadata
+      toast(
+        error instanceof Error ? error.message : 'Failed to apply prompt output.',
+        { variant: 'error' }
       );
-    } else {
-      savePromptExploderApplyPrompt(reassembled);
     }
-    router.push(returnTo);
   }, [
     documentState,
     caseResolverSessionId,
-    isCaseResolverReturnTarget,
     incomingCaseResolverContext,
     promptText,
     promptExploderSettings.runtime.caseResolverCaptureMode,

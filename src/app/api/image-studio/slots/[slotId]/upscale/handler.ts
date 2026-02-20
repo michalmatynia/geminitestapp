@@ -10,6 +10,7 @@ import {
   IMAGE_STUDIO_UPSCALE_MAX_OUTPUT_SIDE_PX,
   IMAGE_STUDIO_UPSCALE_MAX_SCALE,
   imageStudioUpscaleRequestSchema,
+  imageStudioUpscaleResponseSchema,
   type ImageStudioUpscaleErrorCode,
   type ImageStudioUpscaleModeDto as ImageStudioUpscaleMode,
   type ImageStudioUpscaleRequestDto as ImageStudioUpscaleRequest,
@@ -36,8 +37,8 @@ import {
 } from '@/features/ai/image-studio/server/upscale-utils';
 import { getDiskPathFromPublicPath, getImageFileRepository } from '@/features/files/server';
 import { logSystemEvent } from '@/features/observability/server';
-import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'upscale');
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
@@ -719,26 +720,24 @@ export async function postUpscaleSlotHandler(
       const existingSlot = await getImageStudioSlotById(existingByRequest.targetSlotId);
       if (existingSlot) {
         const existingUpscale = readUpscaleMetadataFromSlot(existingSlot);
-        return NextResponse.json(
-          {
-            sourceSlotId: sourceSlot.id,
-            mode: payload.mode,
-            effectiveMode: existingUpscale.effectiveMode ?? payload.mode,
-            strategy: existingUpscale.strategy ?? resolvedRequest.strategy,
-            scale: existingUpscale.scale ?? (resolvedRequest.strategy === 'scale' ? resolvedRequest.scale : null),
-            targetWidth: existingUpscale.targetWidth ?? resolvedRequest.targetWidth,
-            targetHeight: existingUpscale.targetHeight ?? resolvedRequest.targetHeight,
-            smoothingQuality: existingUpscale.smoothingQuality,
-            slot: existingSlot,
-            requestId: idempotencyKey,
-            fingerprint,
-            deduplicated: true,
-            dedupeReason: 'request',
-            lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
-            pipelineVersion: UPSCALE_PIPELINE_VERSION,
-          },
-          { status: 200 }
-        );
+        const responseBody = imageStudioUpscaleResponseSchema.parse({
+          sourceSlotId: sourceSlot.id,
+          mode: payload.mode,
+          effectiveMode: existingUpscale.effectiveMode ?? payload.mode,
+          strategy: existingUpscale.strategy ?? resolvedRequest.strategy,
+          scale: existingUpscale.scale ?? (resolvedRequest.strategy === 'scale' ? resolvedRequest.scale : null),
+          targetWidth: existingUpscale.targetWidth ?? resolvedRequest.targetWidth,
+          targetHeight: existingUpscale.targetHeight ?? resolvedRequest.targetHeight,
+          smoothingQuality: existingUpscale.smoothingQuality,
+          slot: existingSlot,
+          requestId: idempotencyKey,
+          fingerprint,
+          deduplicated: true,
+          dedupeReason: 'request',
+          lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
+          pipelineVersion: UPSCALE_PIPELINE_VERSION,
+        });
+        return NextResponse.json(responseBody, { status: 200 });
       }
     }
   }
@@ -752,26 +751,24 @@ export async function postUpscaleSlotHandler(
     const existingSlot = await getImageStudioSlotById(existingFingerprintLink.targetSlotId);
     if (existingSlot) {
       const existingUpscale = readUpscaleMetadataFromSlot(existingSlot);
-      return NextResponse.json(
-        {
-          sourceSlotId: sourceSlot.id,
-          mode: payload.mode,
-          effectiveMode: existingUpscale.effectiveMode ?? payload.mode,
-          strategy: existingUpscale.strategy ?? resolvedRequest.strategy,
-          scale: existingUpscale.scale ?? (resolvedRequest.strategy === 'scale' ? resolvedRequest.scale : null),
-          targetWidth: existingUpscale.targetWidth ?? resolvedRequest.targetWidth,
-          targetHeight: existingUpscale.targetHeight ?? resolvedRequest.targetHeight,
-          smoothingQuality: existingUpscale.smoothingQuality,
-          slot: existingSlot,
-          requestId: idempotencyKey,
-          fingerprint,
-          deduplicated: true,
-          dedupeReason: 'fingerprint',
-          lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
-          pipelineVersion: UPSCALE_PIPELINE_VERSION,
-        },
-        { status: 200 }
-      );
+      const responseBody = imageStudioUpscaleResponseSchema.parse({
+        sourceSlotId: sourceSlot.id,
+        mode: payload.mode,
+        effectiveMode: existingUpscale.effectiveMode ?? payload.mode,
+        strategy: existingUpscale.strategy ?? resolvedRequest.strategy,
+        scale: existingUpscale.scale ?? (resolvedRequest.strategy === 'scale' ? resolvedRequest.scale : null),
+        targetWidth: existingUpscale.targetWidth ?? resolvedRequest.targetWidth,
+        targetHeight: existingUpscale.targetHeight ?? resolvedRequest.targetHeight,
+        smoothingQuality: existingUpscale.smoothingQuality,
+        slot: existingSlot,
+        requestId: idempotencyKey,
+        fingerprint,
+        deduplicated: true,
+        dedupeReason: 'fingerprint',
+        lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
+        pipelineVersion: UPSCALE_PIPELINE_VERSION,
+      });
+      return NextResponse.json(responseBody, { status: 200 });
     }
   }
 
@@ -948,29 +945,28 @@ export async function postUpscaleSlotHandler(
       },
     });
 
-    return NextResponse.json(
-      {
-        sourceSlotId: sourceSlot.id,
-        mode: payload.mode,
-        effectiveMode: processed.effectiveMode,
-        strategy: processed.strategy,
-        scale: processed.scale,
-        targetWidth: processed.targetWidth,
-        targetHeight: processed.targetHeight,
-        smoothingQuality: processed.smoothingQuality,
-        slot: createdSlot,
-        output: imageFile,
-        requestId: idempotencyKey,
-        fingerprint,
-        deduplicated: false,
-        lifecycle: {
-          state: 'persisted',
-          durationMs,
-        },
-        pipelineVersion: UPSCALE_PIPELINE_VERSION,
+    const responseBody = imageStudioUpscaleResponseSchema.parse({
+      sourceSlotId: sourceSlot.id,
+      mode: payload.mode,
+      effectiveMode: processed.effectiveMode,
+      strategy: processed.strategy,
+      scale: processed.scale,
+      targetWidth: processed.targetWidth,
+      targetHeight: processed.targetHeight,
+      smoothingQuality: processed.smoothingQuality,
+      slot: createdSlot,
+      output: imageFile,
+      requestId: idempotencyKey,
+      fingerprint,
+      deduplicated: false,
+      lifecycle: {
+        state: 'persisted',
+        durationMs,
       },
-      { status: 201 }
-    );
+      pipelineVersion: UPSCALE_PIPELINE_VERSION,
+    });
+
+    return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {
     void logSystemEvent({
       level: 'warn',

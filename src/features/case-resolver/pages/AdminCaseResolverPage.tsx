@@ -91,6 +91,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     at: string;
   } | null>(null);
   const captureApplyInFlightRef = React.useRef(false);
+  const printInFlightRef = React.useRef(false);
   const {
     workspace,
     workspaceRef,
@@ -1119,7 +1120,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     });
     const returnTo = `/admin/case-resolver?openEditor=1&fileId=${encodeURIComponent(
       editingDocumentDraft.id
-    )}`;
+    )}&promptExploderSessionId=${encodeURIComponent(promptExploderSessionId)}`;
     router.push(
       `/admin/prompt-exploder?returnTo=${encodeURIComponent(returnTo)}&sessionId=${encodeURIComponent(promptExploderSessionId)}`
     );
@@ -1243,7 +1244,13 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const printDocumentMarkup = useCallback((markup: string): void => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    if (printInFlightRef.current) return;
+    printInFlightRef.current = true;
     const frame = document.createElement('iframe');
+    let hasTriggeredPrint = false;
+    const releasePrintLockTimeout = window.setTimeout((): void => {
+      printInFlightRef.current = false;
+    }, 10_000);
     frame.setAttribute('aria-hidden', 'true');
     frame.style.position = 'fixed';
     frame.style.width = '0';
@@ -1254,6 +1261,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
     const cleanup = (): void => {
       window.setTimeout((): void => {
+        window.clearTimeout(releasePrintLockTimeout);
+        printInFlightRef.current = false;
         if (frame.parentNode) {
           frame.parentNode.removeChild(frame);
         }
@@ -1261,6 +1270,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     };
 
     frame.onload = (): void => {
+      if (hasTriggeredPrint) return;
+      hasTriggeredPrint = true;
       window.setTimeout((): void => {
         const frameWindow = frame.contentWindow;
         if (!frameWindow) {
@@ -1278,8 +1289,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       }, 120);
     };
 
-    document.body.appendChild(frame);
     frame.srcdoc = markup;
+    document.body.appendChild(frame);
   }, [toast]);
 
   const handlePreviewDraftPdf = useCallback((): void => {

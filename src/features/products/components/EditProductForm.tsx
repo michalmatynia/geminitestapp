@@ -7,7 +7,6 @@ import ProductForm from '@/features/products/components/ProductForm';
 import { ProductFormProvider, useProductFormContext } from '@/features/products/context/ProductFormContext';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { Button, Card } from '@/shared/ui';
-import { cn } from '@/shared/utils';
 
 const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
   ssr: false,

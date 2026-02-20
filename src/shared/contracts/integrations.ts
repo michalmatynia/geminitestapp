@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-export * from './integrations/index';
-
 import { dtoBaseSchema, namedDtoSchema } from './base';
 import { productParameterValueSchema } from './products';
 
@@ -706,12 +704,15 @@ export type BaseParameterImportSummaryDto = z.infer<typeof baseParameterImportSu
 
 export const baseImportParameterImportModeSchema = z.enum(['all', 'mapped']);
 export type BaseImportParameterImportModeDto = z.infer<typeof baseImportParameterImportModeSchema>;
+export type BaseImportParameterImportMode = BaseImportParameterImportModeDto;
 
 export const baseImportParameterLanguageScopeSchema = z.enum(['catalog_languages', 'default_only']);
 export type BaseImportParameterLanguageScopeDto = z.infer<typeof baseImportParameterLanguageScopeSchema>;
+export type BaseImportParameterLanguageScope = BaseImportParameterLanguageScopeDto;
 
 export const baseImportParameterMatchBySchema = z.enum(['base_id_then_name', 'name_only']);
 export type BaseImportParameterMatchByDto = z.infer<typeof baseImportParameterMatchBySchema>;
+export type BaseImportParameterMatchBy = BaseImportParameterMatchByDto;
 
 export const baseImportParameterImportSettingsSchema = z.object({
   enabled: z.boolean(),
@@ -723,6 +724,7 @@ export const baseImportParameterImportSettingsSchema = z.object({
 });
 
 export type BaseImportParameterImportSettingsDto = z.infer<typeof baseImportParameterImportSettingsSchema>;
+export type BaseImportParameterImportSettings = BaseImportParameterImportSettingsDto;
 
 export const DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS: BaseImportParameterImportSettingsDto =
   {
@@ -733,6 +735,23 @@ export const DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS: BaseImportParameterI
     overwriteExistingValues: false,
     matchBy: 'base_id_then_name',
   };
+
+export const defaultBaseImportParameterImportSettings = DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS;
+
+export function normalizeBaseImportParameterImportSettings(input: unknown): BaseImportParameterImportSettings {
+  if (input && typeof input === 'object' && !Array.isArray(input)) {
+    const record = input as any;
+    return {
+      enabled: typeof record.enabled === 'boolean' ? record.enabled : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.enabled,
+      mode: typeof record.mode === 'string' && ['all', 'mapped'].includes(record.mode) ? record.mode as any : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.mode,
+      languageScope: typeof record.languageScope === 'string' && ['catalog_languages', 'default_only'].includes(record.languageScope) ? record.languageScope as any : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.languageScope,
+      createMissingParameters: typeof record.createMissingParameters === 'boolean' ? record.createMissingParameters : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.createMissingParameters,
+      overwriteExistingValues: typeof record.overwriteExistingValues === 'boolean' ? record.overwriteExistingValues : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.overwriteExistingValues,
+      matchBy: typeof record.matchBy === 'string' && ['base_id_then_name', 'name_only'].includes(record.matchBy) ? record.matchBy as any : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.matchBy,
+    };
+  }
+  return DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS;
+}
 
 export const applyBaseParameterImportInputSchema = z.object({
   record: z.record(z.string(), z.unknown()),

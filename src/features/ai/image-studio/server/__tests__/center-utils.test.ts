@@ -187,6 +187,8 @@ describe('center-utils', () => {
     expect(laidOut.width).toBe(24);
     expect(laidOut.height).toBe(24);
     expect(laidOut.detectionUsed).toBe('white_bg_first_colored_pixel');
+    expect(laidOut.confidenceBefore).toBeGreaterThan(0);
+    expect(laidOut.detectionDetails).not.toBeNull();
     expect(laidOut.sourceObjectBounds).toEqual({ left: 2, top: 3, width: 6, height: 6 });
     expect(laidOut.targetObjectBounds.left).toBeGreaterThan(0);
     expect(laidOut.targetObjectBounds.top).toBeGreaterThan(0);
@@ -231,6 +233,7 @@ describe('center-utils', () => {
 
     expect(laidOut.width).toBe(40);
     expect(laidOut.height).toBe(30);
+    expect(laidOut.confidenceBefore).toBeGreaterThan(0);
     expect(laidOut.targetObjectBounds.left).toBeGreaterThanOrEqual(0);
     expect(laidOut.targetObjectBounds.top).toBeGreaterThanOrEqual(0);
 

@@ -26,6 +26,10 @@ const RECOVERY_REPEAT_MS = resolveAiPathsStaleRunningCleanupIntervalMs();
 const buildRetryJobId = (runId: string): string => `${runId}:retry`;
 const DEBUG_AI_PATH_QUEUE = process.env['AI_PATHS_QUEUE_DEBUG'] === 'true';
 const localFallbackTimers = new Map<string, NodeJS.Timeout>();
+const REQUIRE_DURABLE_QUEUE =
+  process.env['AI_PATHS_REQUIRE_DURABLE_QUEUE'] === 'true' ||
+  (process.env.NODE_ENV === 'production' &&
+    process.env['AI_PATHS_ALLOW_LOCAL_QUEUE_FALLBACK'] !== 'true');
 
 const debugQueueLog = (message: string, context?: Record<string, unknown>): void => {
   if (!DEBUG_AI_PATH_QUEUE) return;
@@ -549,6 +553,11 @@ export const enqueuePathRunJob = async (
   const delayMs = normalizeDelayMs(options.delayMs);
   const { queue: bullQueue, owned } = resolveAiPathRunQueue();
   if (!bullQueue) {
+    if (REQUIRE_DURABLE_QUEUE) {
+      throw new Error(
+        `AI Paths durable queue unavailable; local fallback is disabled for run ${runId}.`
+      );
+    }
     debugQueueWarn(
       `[aiPathRunQueue] Redis unavailable; scheduling local fallback execution for run ${runId}.`,
       { runId, delayMs }
@@ -656,12 +665,20 @@ export const removePathRunQueueEntries = async (
     return { removed: 0, requested: 0 };
   }
 
+  let removed = 0;
+  uniqueRunIds.forEach((runId: string): void => {
+    const timer = localFallbackTimers.get(runId);
+    if (!timer) return;
+    clearTimeout(timer);
+    localFallbackTimers.delete(runId);
+    removed += 1;
+  });
+
   const { queue: bullQueue, owned } = resolveAiPathRunQueue();
   if (!bullQueue) {
-    return { removed: 0, requested: uniqueRunIds.length };
+    return { removed, requested: uniqueRunIds.length };
   }
 
-  let removed = 0;
   const pendingRunIds = new Set(uniqueRunIds);
   try {
     for (const runId of uniqueRunIds) {

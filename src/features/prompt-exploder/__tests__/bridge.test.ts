@@ -153,7 +153,7 @@ describe('prompt exploder bridge parties', () => {
     expect(payload?.caseResolverParties?.addressee?.kind).toBeUndefined();
   });
 
-  it('uses a deterministic createdAt fallback for malformed payloads', () => {
+  it('expires malformed payloads missing createdAt metadata', () => {
     window.localStorage.setItem(
       PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
       JSON.stringify({
@@ -164,7 +164,107 @@ describe('prompt exploder bridge parties', () => {
     );
 
     const payload = consumePromptExploderApplyPromptForCaseResolver();
-    expect(payload?.createdAt).toBe('1970-01-01T00:00:00.000Z');
+    expect(payload).toBeNull();
+  });
+
+  it('falls back to sessionStorage when localStorage quota is exceeded', () => {
+    const sessionStorage = createLocalStorageMock();
+    const localStorage = createLocalStorageMock();
+    const quotaError = new Error('Quota exceeded');
+    (quotaError as Error & { name: string }).name = 'QuotaExceededError';
+    const failingLocalStorage: StorageMock = {
+      getItem: localStorage.getItem,
+      setItem: (_key: string, _value: string): void => {
+        throw quotaError;
+      },
+      removeItem: localStorage.removeItem,
+    };
+
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      writable: true,
+      value: {
+        localStorage: failingLocalStorage,
+        sessionStorage,
+      },
+    });
+
+    savePromptExploderApplyPromptForCaseResolver('Stored in session fallback', {
+      fileId: 'file-s',
+      fileName: 'Session',
+    });
+
+    const payload = consumePromptExploderApplyPromptForCaseResolver();
+    expect(payload?.prompt).toBe('Stored in session fallback');
+    expect(payload?.caseResolverContext?.fileId).toBe('file-s');
+  });
+
+  it('clears stale apply payload when storage write fails in all storages', () => {
+    const sessionStorage = createLocalStorageMock();
+    const localStorage = createLocalStorageMock();
+    const quotaError = new Error('Quota exceeded');
+    (quotaError as Error & { name: string }).name = 'QuotaExceededError';
+
+    localStorage.setItem(
+      PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
+      JSON.stringify({
+        prompt: 'stale-local-payload',
+        source: 'prompt-exploder',
+        target: 'case-resolver',
+        caseResolverContext: {
+          fileId: 'stale-local-file',
+          fileName: 'Stale Local',
+          sessionId: 'stale-local-session',
+        },
+        createdAt: '2026-02-20T00:00:00.000Z',
+      })
+    );
+    sessionStorage.setItem(
+      PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
+      JSON.stringify({
+        prompt: 'stale-session-payload',
+        source: 'prompt-exploder',
+        target: 'case-resolver',
+        caseResolverContext: {
+          fileId: 'stale-session-file',
+          fileName: 'Stale Session',
+          sessionId: 'stale-session',
+        },
+        createdAt: '2026-02-20T00:00:00.000Z',
+      })
+    );
+
+    const failingLocalStorage: StorageMock = {
+      getItem: localStorage.getItem,
+      setItem: (_key: string, _value: string): void => {
+        throw quotaError;
+      },
+      removeItem: localStorage.removeItem,
+    };
+    const failingSessionStorage: StorageMock = {
+      getItem: sessionStorage.getItem,
+      setItem: (_key: string, _value: string): void => {
+        throw quotaError;
+      },
+      removeItem: sessionStorage.removeItem,
+    };
+
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      writable: true,
+      value: {
+        localStorage: failingLocalStorage,
+        sessionStorage: failingSessionStorage,
+      },
+    });
+
+    savePromptExploderApplyPromptForCaseResolver('New payload', {
+      fileId: 'fresh-file',
+      fileName: 'Fresh',
+    });
+
+    const payload = consumePromptExploderApplyPromptForCaseResolver();
+    expect(payload).toBeNull();
   });
 
   it('keeps case resolver context when fileName is missing', () => {

@@ -7,6 +7,7 @@ import sharp from 'sharp';
 import {
   IMAGE_STUDIO_CROP_ERROR_CODES,
   imageStudioCropRequestSchema,
+  imageStudioCropResponseSchema,
   type ImageStudioCropErrorCode,
   type ImageStudioCropPointDto as ImageStudioCropPoint,
   type ImageStudioCropRectDto as ImageStudioCropRect,
@@ -30,8 +31,8 @@ import {
 } from '@/features/ai/image-studio/server/slot-repository';
 import { getImageFileRepository, getDiskPathFromPublicPath } from '@/features/files/server';
 import { logSystemEvent } from '@/features/observability/server';
-import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'crops');
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
@@ -677,21 +678,21 @@ export async function postCropSlotHandler(
     if (existingByRequest) {
       const existingSlot = await getImageStudioSlotById(existingByRequest.targetSlotId);
       if (existingSlot) {
-        return NextResponse.json(
-          {
-            slot: existingSlot,
-            mode: payload.mode,
-            effectiveMode: payload.mode,
-            cropRect: payload.cropRect ?? null,
-            canvasContext: payload.canvasContext ?? null,
-            requestId: idempotencyKey,
-            fingerprint,
-            deduplicated: true,
-            dedupeReason: 'request',
-            lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
-          },
-          { status: 200 }
-        );
+        const responseBody = imageStudioCropResponseSchema.parse({
+          sourceSlotId: sourceSlot.id,
+          slot: existingSlot,
+          mode: payload.mode,
+          effectiveMode: payload.mode,
+          cropRect: payload.cropRect ?? null,
+          canvasContext: payload.canvasContext ?? null,
+          requestId: idempotencyKey,
+          fingerprint,
+          deduplicated: true,
+          dedupeReason: 'request',
+          lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
+          pipelineVersion: CROP_PIPELINE_VERSION,
+        });
+        return NextResponse.json(responseBody, { status: 200 });
       }
     }
   }
@@ -704,21 +705,21 @@ export async function postCropSlotHandler(
   if (existingFingerprintLink) {
     const existingSlot = await getImageStudioSlotById(existingFingerprintLink.targetSlotId);
     if (existingSlot) {
-      return NextResponse.json(
-        {
-          slot: existingSlot,
-          mode: payload.mode,
-          effectiveMode: payload.mode,
-          cropRect: payload.cropRect ?? null,
-          canvasContext: payload.canvasContext ?? null,
-          requestId: idempotencyKey,
-          fingerprint,
-          deduplicated: true,
-          dedupeReason: 'fingerprint',
-          lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
-        },
-        { status: 200 }
-      );
+      const responseBody = imageStudioCropResponseSchema.parse({
+        sourceSlotId: sourceSlot.id,
+        slot: existingSlot,
+        mode: payload.mode,
+        effectiveMode: payload.mode,
+        cropRect: payload.cropRect ?? null,
+        canvasContext: payload.canvasContext ?? null,
+        requestId: idempotencyKey,
+        fingerprint,
+        deduplicated: true,
+        dedupeReason: 'fingerprint',
+        lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
+        pipelineVersion: CROP_PIPELINE_VERSION,
+      });
+      return NextResponse.json(responseBody, { status: 200 });
     }
   }
 
@@ -872,25 +873,25 @@ export async function postCropSlotHandler(
       },
     });
 
-    return NextResponse.json(
-      {
-        slot: createdSlot,
-        imageFile,
-        mode: payload.mode,
-        effectiveMode: processed.effectiveMode,
-        cropRect: processed.cropRect,
-        canvasContext: payload.canvasContext ?? null,
-        requestId: idempotencyKey,
-        fingerprint,
-        deduplicated: false,
-        lifecycle: {
-          state: 'persisted',
-          durationMs,
-        },
-        pipelineVersion: CROP_PIPELINE_VERSION,
+    const responseBody = imageStudioCropResponseSchema.parse({
+      sourceSlotId: sourceSlot.id,
+      slot: createdSlot,
+      imageFile,
+      mode: payload.mode,
+      effectiveMode: processed.effectiveMode,
+      cropRect: processed.cropRect,
+      canvasContext: payload.canvasContext ?? null,
+      requestId: idempotencyKey,
+      fingerprint,
+      deduplicated: false,
+      lifecycle: {
+        state: 'persisted',
+        durationMs,
       },
-      { status: 201 }
-    );
+      pipelineVersion: CROP_PIPELINE_VERSION,
+    });
+
+    return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {
     void logSystemEvent({
       level: 'warn',

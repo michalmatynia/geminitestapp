@@ -18,7 +18,7 @@ export type {
   PanelConfig,
   UsePanelStateOptions,
   UsePanelStateReturn,
-} from './types';
+} from '@/shared/contracts/ui';
 
 // Re-export FilterPanel from parent templates directory
 export { FilterPanel } from '../FilterPanel';

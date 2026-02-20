@@ -6,7 +6,7 @@ import { cn } from '@/shared/utils';
 
 import { usePickerSearch } from './usePickerSearch';
 
-import type { GenericGridPickerProps, GridPickerItem } from './types';
+import type { GenericGridPickerProps, GridPickerItem } from '@/shared/contracts/ui';
 
 /**
  * GenericGridPicker - Reusable grid-based picker component

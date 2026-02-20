@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { initializeQueues } from '@/features/jobs/lib/queue-init';
 import { getQueueHealth, isRedisAvailable } from '@/shared/lib/queue';
-import type { QueueHealthStatus } from '@/shared/lib/queue/types';
+import type { QueueHealthStatus } from '@/shared/contracts/jobs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 type TraderaQueueHealthResponse = {

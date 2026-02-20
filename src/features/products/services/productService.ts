@@ -54,7 +54,7 @@ import type {
 import type {
   ProductFilters,
   ProductRepository,
-} from '@/shared/contracts/products/services/product-repository';
+} from '@/shared/contracts/products';
 import {
   validateProductCreate,
   validateProductUpdate,

@@ -10,7 +10,7 @@ import {
   PRODUCT_SYNC_PROFILE_SETTINGS_KEY as PROFILE_SETTINGS_KEY,
   PRODUCT_SYNC_RUN_KEY_PREFIX as RUN_KEY_PREFIX,
   PRODUCT_SYNC_ITEM_KEY_PREFIX as ITEM_KEY_PREFIX,
-} from '@/shared/contracts/product-sync/product-sync';
+} from '@/shared/contracts/product-sync';
 import type {
   ProductSyncAppField,
   ProductSyncConflictPolicy,
@@ -22,7 +22,7 @@ import type {
   ProductSyncRunStats,
   ProductSyncRunStatus,
   ProductSyncRunTrigger,
-} from '@/shared/contracts/product-sync/product-sync';
+} from '@/shared/contracts/product-sync';
 import { getProductDataProvider } from '@/features/products/server';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';

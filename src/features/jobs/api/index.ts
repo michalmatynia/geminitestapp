@@ -1,5 +1,5 @@
 import { api } from '@/shared/lib/api-client';
-import type { QueueHealthStatus } from '@/shared/lib/queue/types';
+import type { QueueHealthStatus } from '@/shared/contracts/jobs';
 import type { ProductAiJob } from '@/shared/contracts/jobs';
 import type { ProductJob } from '@/shared/contracts/integrations';
 

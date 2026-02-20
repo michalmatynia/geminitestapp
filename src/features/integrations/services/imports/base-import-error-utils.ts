@@ -6,7 +6,7 @@ import type {
   BaseImportErrorClass,
   BaseImportErrorCode,
   BaseImportRunRecord,
-} from '@/shared/contracts/integrations/base-import-runs';
+} from '@/shared/contracts/integrations';
 import { AppErrorCodes, isAppError } from '@/shared/errors/app-error';
 
 type ClassifiedBaseImportError = {

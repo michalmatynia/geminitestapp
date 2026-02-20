@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
-import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/shared/contracts/integrations/integrations';
+import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/shared/contracts/integrations';
 import { FormField, FormSection, SelectSimple, Alert, LoadingState } from '@/shared/ui';
 
 import { BaseListingSettings } from '../BaseListingSettings';

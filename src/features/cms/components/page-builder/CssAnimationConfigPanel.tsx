@@ -10,7 +10,7 @@ import {
   CSS_EASINGS,
   DEFAULT_CSS_ANIMATION_CONFIG,
   type CssAnimationConfig,
-} from '@/shared/contracts/cms/css-animations';
+} from '@/shared/contracts/cms';
 import { Checkbox, FormSection } from '@/shared/ui';
 import { SettingsFieldsRenderer, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 

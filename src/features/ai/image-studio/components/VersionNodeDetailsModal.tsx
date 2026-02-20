@@ -66,6 +66,7 @@ const resolveOperationSummary = (slot: ImageStudioSlotRecord): OperationSummary 
   const cropMeta = asRecord(metadata['crop']);
   const centerMeta = asRecord(metadata['center']);
   const upscaleMeta = asRecord(metadata['upscale']);
+  const autoscaleMeta = asRecord(metadata['autoscale']);
 
   if (relationType.startsWith('crop:')) {
     return {
@@ -89,6 +90,14 @@ const resolveOperationSummary = (slot: ImageStudioSlotRecord): OperationSummary 
       relationType,
       timestamp: asString(upscaleMeta?.['timestamp']) ?? asString(metadata['timestamp']) ?? null,
       operationMetadata: upscaleMeta,
+    };
+  }
+  if (relationType.startsWith('autoscale:')) {
+    return {
+      label: 'Auto Scaler',
+      relationType,
+      timestamp: asString(autoscaleMeta?.['timestamp']) ?? asString(metadata['timestamp']) ?? null,
+      operationMetadata: autoscaleMeta,
     };
   }
   if (relationType.startsWith('mask:')) {

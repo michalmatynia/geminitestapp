@@ -111,7 +111,9 @@ export function FileAttachments(): React.JSX.Element {
                 <Button
                   type='button'
                   onClick={(): void => onInsertFileReference(file)}
-                  className='rounded-full bg-blue-600 p-1.5 text-white hover:bg-blue-700'
+                  variant='solid'
+                  size='icon'
+                  className='h-7 w-7'
                   title='Insert into content'
                 >
                   <Link2 size={12} />
@@ -119,7 +121,9 @@ export function FileAttachments(): React.JSX.Element {
                 <Button
                   type='button'
                   onClick={(): void => { void onFileDelete(file.slotIndex); }}
-                  className='rounded-full bg-red-600 p-1.5 text-white hover:bg-red-700'
+                  variant='solid-destructive'
+                  size='icon'
+                  className='h-7 w-7'
                   title='Delete file'
                 >
                   <Trash2 size={12} />

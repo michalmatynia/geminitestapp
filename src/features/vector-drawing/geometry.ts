@@ -1,4 +1,4 @@
-import type { VectorPoint, VectorShape } from './types';
+import type { VectorPoint, VectorShape } from '@/shared/contracts/vector';
 
 const distanceSq = (a: VectorPoint, b: VectorPoint): number => {
   const dx = a.x - b.x;

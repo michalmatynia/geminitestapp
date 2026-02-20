@@ -28,7 +28,7 @@ import {
   collectBackgroundImages,
   getBlockMinHeight,
 } from '@/features/cms/components/page-builder/preview/preview-utils';
-import type { BlockInstance, SectionInstance } from '@/shared/contracts/cms/page-builder';
+import type { BlockInstance, SectionInstance } from '@/shared/contracts/cms';
 import {
   buildScopedCustomCss,
   getCustomCssSelector,

@@ -312,6 +312,70 @@ export const imageStudioCenterRequestSchema = z.object({
 export type ImageStudioCenterRequestDto = z.infer<typeof imageStudioCenterRequestSchema>;
 export type ImageStudioCenterRequest = ImageStudioCenterRequestDto;
 
+export const IMAGE_STUDIO_ANALYSIS_ERROR_CODES = {
+  INVALID_PAYLOAD: 'IMAGE_STUDIO_ANALYSIS_INVALID_PAYLOAD',
+  SOURCE_SLOT_MISSING: 'IMAGE_STUDIO_ANALYSIS_SOURCE_SLOT_MISSING',
+  SOURCE_IMAGE_MISSING: 'IMAGE_STUDIO_ANALYSIS_SOURCE_IMAGE_MISSING',
+  SOURCE_IMAGE_INVALID: 'IMAGE_STUDIO_ANALYSIS_SOURCE_IMAGE_INVALID',
+  SOURCE_DIMENSIONS_INVALID: 'IMAGE_STUDIO_ANALYSIS_SOURCE_DIMENSIONS_INVALID',
+  SOURCE_OBJECT_NOT_FOUND: 'IMAGE_STUDIO_ANALYSIS_SOURCE_OBJECT_NOT_FOUND',
+  OUTPUT_INVALID: 'IMAGE_STUDIO_ANALYSIS_OUTPUT_INVALID',
+} as const;
+
+export type ImageStudioAnalysisErrorCode =
+  (typeof IMAGE_STUDIO_ANALYSIS_ERROR_CODES)[keyof typeof IMAGE_STUDIO_ANALYSIS_ERROR_CODES];
+
+export const imageStudioAnalysisModeSchema = z.enum([
+  'client_analysis_v1',
+  'server_analysis_v1',
+]);
+export type ImageStudioAnalysisModeDto = z.infer<typeof imageStudioAnalysisModeSchema>;
+
+export const imageStudioAnalysisRequestSchema = z.object({
+  mode: imageStudioAnalysisModeSchema.optional().default('server_analysis_v1'),
+  dataUrl: z.string().trim().min(1).optional(),
+  name: z.string().trim().min(1).max(180).optional(),
+  requestId: z.string().trim().min(8).max(160).optional(),
+  layout: imageStudioCenterLayoutConfigSchema.optional(),
+});
+
+export type ImageStudioAnalysisRequestDto = z.infer<typeof imageStudioAnalysisRequestSchema>;
+export type ImageStudioAnalysisRequest = ImageStudioAnalysisRequestDto;
+
+export const IMAGE_STUDIO_AUTOSCALER_ERROR_CODES = {
+  INVALID_PAYLOAD: 'IMAGE_STUDIO_AUTOSCALER_INVALID_PAYLOAD',
+  SOURCE_SLOT_MISSING: 'IMAGE_STUDIO_AUTOSCALER_SOURCE_SLOT_MISSING',
+  SOURCE_IMAGE_MISSING: 'IMAGE_STUDIO_AUTOSCALER_SOURCE_IMAGE_MISSING',
+  SOURCE_IMAGE_INVALID: 'IMAGE_STUDIO_AUTOSCALER_SOURCE_IMAGE_INVALID',
+  SOURCE_DIMENSIONS_INVALID: 'IMAGE_STUDIO_AUTOSCALER_SOURCE_DIMENSIONS_INVALID',
+  SOURCE_IMAGE_TOO_LARGE: 'IMAGE_STUDIO_AUTOSCALER_SOURCE_IMAGE_TOO_LARGE',
+  SOURCE_OBJECT_NOT_FOUND: 'IMAGE_STUDIO_AUTOSCALER_SOURCE_OBJECT_NOT_FOUND',
+  CLIENT_IMAGE_REQUIRED: 'IMAGE_STUDIO_AUTOSCALER_CLIENT_IMAGE_REQUIRED',
+  CLIENT_DATA_URL_INVALID: 'IMAGE_STUDIO_AUTOSCALER_CLIENT_DATA_URL_INVALID',
+  OUTPUT_INVALID: 'IMAGE_STUDIO_AUTOSCALER_OUTPUT_INVALID',
+  OUTPUT_PERSIST_FAILED: 'IMAGE_STUDIO_AUTOSCALER_OUTPUT_PERSIST_FAILED',
+} as const;
+
+export type ImageStudioAutoScalerErrorCode =
+  (typeof IMAGE_STUDIO_AUTOSCALER_ERROR_CODES)[keyof typeof IMAGE_STUDIO_AUTOSCALER_ERROR_CODES];
+
+export const imageStudioAutoScalerModeSchema = z.enum([
+  'client_auto_scaler_v1',
+  'server_auto_scaler_v1',
+]);
+export type ImageStudioAutoScalerModeDto = z.infer<typeof imageStudioAutoScalerModeSchema>;
+
+export const imageStudioAutoScalerRequestSchema = z.object({
+  mode: imageStudioAutoScalerModeSchema,
+  dataUrl: z.string().trim().min(1).optional(),
+  name: z.string().trim().min(1).max(180).optional(),
+  requestId: z.string().trim().min(8).max(160).optional(),
+  layout: imageStudioCenterLayoutConfigSchema.optional(),
+});
+
+export type ImageStudioAutoScalerRequestDto = z.infer<typeof imageStudioAutoScalerRequestSchema>;
+export type ImageStudioAutoScalerRequest = ImageStudioAutoScalerRequestDto;
+
 // --- Composite ---
 
 export const compositeLayerConfigSchema = z.object({
@@ -349,6 +413,7 @@ export const slotGenerationMetadataSchema = z.object({
   crop: z.record(z.string(), z.unknown()).optional(),
   center: z.record(z.string(), z.unknown()).optional(),
   upscale: z.record(z.string(), z.unknown()).optional(),
+  autoscale: z.record(z.string(), z.unknown()).optional(),
   generationCosts: z.object({
     currency: z.literal('USD'),
     estimated: z.literal(true),

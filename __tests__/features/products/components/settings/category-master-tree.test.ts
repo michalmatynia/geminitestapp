@@ -6,7 +6,7 @@ import {
   isCategoryMasterNodeId,
   toCategoryMasterNodeId,
 } from '@/features/products/components/settings/category-master-tree';
-import type { ProductCategoryWithChildren } from '@/features/products/types';
+import type { ProductCategoryWithChildren } from '@/shared/contracts/products';
 
 const createCategory = (
   overrides: Partial<ProductCategoryWithChildren>

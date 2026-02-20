@@ -5,7 +5,7 @@ import { ChevronDown, ChevronRight, Download, RefreshCw, Save, Check } from 'luc
 import React, { useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
-import type { ExternalCategory } from '@/shared/contracts/integrations/category-mapping';
+import type { ExternalCategory } from '@/shared/contracts/integrations';
 import { Button, SelectSimple, StandardDataTablePanel, EmptyState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

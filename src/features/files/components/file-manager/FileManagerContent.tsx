@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { Asset3dDto as Asset3DRecord } from '@/shared/contracts/viewer3d';
-import { Tabs, TabsContent, TabsList, TabsTrigger, Button, Tag } from '@/shared/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger, Button, Tag, Card } from '@/shared/ui';
 
 import { FileManagerGrid } from './FileManagerGrid';
 import { useFileManager } from '../../contexts/FileManagerContext';
@@ -38,7 +38,7 @@ export function FileManagerContent(): React.JSX.Element {
       <TabsContent value='assets3d'>
         <div className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4'>
           {assets3d.map((asset: Asset3DRecord) => (
-            <div key={asset.id} className='rounded-md border border-border/60 bg-gray-900/40 p-3'>
+            <Card key={asset.id} className='border-border/60 bg-gray-900/40 p-3'>
               <div className='text-xs uppercase tracking-wide text-gray-400'>3D Asset</div>
               <div className='mt-2 text-sm font-semibold text-white break-words'>{asset.name ?? asset.filename}</div>
               <div className='text-xs text-gray-400 break-words'>{asset.filename}</div>
@@ -62,7 +62,7 @@ export function FileManagerContent(): React.JSX.Element {
                   View
                 </Button>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       </TabsContent>

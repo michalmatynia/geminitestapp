@@ -13,6 +13,7 @@ import {
   PATH_DEBUG_PREFIX,
   TRIGGER_EVENTS,
   appendLocalRun,
+  compileGraph,
   evaluateAiPathsValidationPreflight,
   evaluateGraph,
   inspectPathDependencies,
@@ -21,11 +22,10 @@ import {
 } from '@/features/ai/ai-paths/lib';
 import { updateAiPathsSetting } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability';
-
 import {
   LOCAL_RUN_STEP_CHUNK,
-  type LocalExecutionArgs,
-} from './types';
+} from '@/shared/contracts/ai-paths-runtime';
+
 import { 
   buildActivePathConfig, 
   buildDebugSnapshot, 
@@ -33,6 +33,8 @@ import {
   createRunId, 
   safeJsonStringify 
 } from './utils';
+
+import type { LocalExecutionArgs } from './types';
 
 const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -671,6 +673,54 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       });
       args.toast(warningMessage, { variant: 'warning' });
     }
+
+    const compileReport = compileGraph(args.normalizedNodes, args.edges);
+    if (!compileReport.ok) {
+      const timestamp = new Date().toISOString();
+      const primaryError = compileReport.findings.find(
+        (finding): boolean => finding.severity === 'error'
+      );
+      const blockedMessage =
+        primaryError?.message ??
+        `Graph compile blocked run: ${compileReport.errors} issue(s) require fixes.`;
+      args.appendRuntimeEvent({
+        source: 'local',
+        kind: 'run_blocked',
+        level: 'warn',
+        timestamp,
+        message: blockedMessage,
+        nodeId: triggerNode.id,
+        nodeType: triggerNode.type,
+        nodeTitle: triggerNode.title ?? null,
+        metadata: {
+          compile: {
+            errors: compileReport.errors,
+            warnings: compileReport.warnings,
+            findings: compileReport.findings,
+          },
+        },
+      });
+      args.setNodeStatus({
+        nodeId: triggerNode.id,
+        status: 'blocked',
+        source: 'local',
+        nodeType: triggerNode.type,
+        nodeTitle: triggerNode.title ?? null,
+        kind: 'node_status',
+        level: 'warn',
+        message: blockedMessage,
+        metadata: {
+          graphCompileBlocked: true,
+          graphCompileErrors: compileReport.errors,
+        },
+      });
+      args.toast(
+        `Graph compile blocked run (${compileReport.errors} error${compileReport.errors === 1 ? '' : 's'}).`,
+        { variant: 'error' }
+      );
+      return;
+    }
+
     if (args.strictFlowMode) {
       const dependencyReport = inspectPathDependencies(args.normalizedNodes, args.sanitizedEdges);
       if (dependencyReport.errors > 0) {

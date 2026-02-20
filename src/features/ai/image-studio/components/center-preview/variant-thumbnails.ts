@@ -16,7 +16,7 @@ import {
 import type { VersionNode } from '../../context/VersionGraphContext';
 import type { ImageStudioSlotRecord, SlotGenerationMetadata } from '../../types';
 
-const GENERATED_SOURCE_PATH_REGEX = /^\/uploads\/studio\/(?:center|crops|upscale)\/[^/]+\/([^/]+)\//i;
+const GENERATED_SOURCE_PATH_REGEX = /^\/uploads\/studio\/(?:center|crops|upscale|autoscale)\/[^/]+\/([^/]+)\//i;
 
 type LandingSlotLike = {
   index: number;
@@ -91,7 +91,8 @@ export const isTreeRevealableCardSlot = (slot: ImageStudioSlotRecord | null): bo
     relationType.startsWith('generation:') ||
     relationType.startsWith('center:') ||
     relationType.startsWith('crop:') ||
-    relationType.startsWith('upscale:');
+    relationType.startsWith('upscale:') ||
+    relationType.startsWith('autoscale:');
 
   return !isGenerationDerived;
 };
@@ -118,7 +119,8 @@ const isGenerationSlotLinkedToRoot = (
     relationType.startsWith('generation:') ||
     relationType.startsWith('center:') ||
     relationType.startsWith('crop:') ||
-    relationType.startsWith('upscale:');
+    relationType.startsWith('upscale:') ||
+    relationType.startsWith('autoscale:');
   const imageSrc = getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl);
 
   return linkedToSource && isGeneration && Boolean(imageSrc || slot.imageFileId);

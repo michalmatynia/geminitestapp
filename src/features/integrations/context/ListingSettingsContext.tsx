@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 
 import { DEFAULT_TRADERA_SYSTEM_SETTINGS } from '@/features/integrations/constants/tradera';
-import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/shared/contracts/integrations/integrations';
+import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/shared/contracts/integrations';
 import type { BaseInventoryDto as BaseInventory, TemplateDto as Template } from '@/shared/contracts/integrations';
 import { internalError } from '@/shared/errors/app-error';
 

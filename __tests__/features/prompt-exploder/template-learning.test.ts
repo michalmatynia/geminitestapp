@@ -3,7 +3,7 @@ import {
   normalizeLearningText,
   upsertLearnedTemplate,
 } from '@/features/prompt-exploder/template-learning';
-import type { PromptExploderLearnedTemplate } from '@/features/prompt-exploder/types';
+import type { PromptExploderLearnedTemplate } from '@/shared/contracts/prompt-exploder';
 
 const buildTemplate = (
   id: string,

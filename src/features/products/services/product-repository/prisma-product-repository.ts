@@ -9,7 +9,7 @@ import type {
   ProductFilters,
   ProductRepository,
   UpdateProductInput,
-} from '@/shared/contracts/products/services/product-repository';
+} from '@/shared/contracts/products';
 import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import { conflictError, internalError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';

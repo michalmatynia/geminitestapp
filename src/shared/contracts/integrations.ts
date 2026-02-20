@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export * from './integrations/index';
+
 import { dtoBaseSchema, namedDtoSchema } from './base';
 import { productParameterValueSchema } from './products';
 

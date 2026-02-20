@@ -26,7 +26,7 @@ import {
   type MasterFolderTreePersistOperation,
   type MasterFolderTreeUndoEntry,
   type UseMasterFolderTreeOptions,
-} from './types';
+} from '@/shared/contracts/master-folder-tree';
 
 type InternalMasterFolderTreeState = {
   nodes: MasterTreeNode[];

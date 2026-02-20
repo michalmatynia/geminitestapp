@@ -5,7 +5,7 @@ import {
   buildFieldIssues,
   mergeFieldIssueMaps,
 } from '@/features/products/validation-engine/core';
-import type { ProductValidationPattern } from '@/shared/types/domain/products';
+import type { ProductValidationPattern } from '@/shared/contracts/products';
 
 const basePattern = (
   overrides: Partial<ProductValidationPattern> = {}

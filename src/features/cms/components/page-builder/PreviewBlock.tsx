@@ -9,7 +9,7 @@ import React from 'react';
 
 import {
   EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
-import type { CssAnimationConfig } from '@/shared/contracts/cms/css-animations';
+import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import {
   buildScopedCustomCss,
   getCustomCssSelector,

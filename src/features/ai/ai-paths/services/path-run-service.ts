@@ -1,16 +1,16 @@
 import 'server-only';
 
-import { normalizeNodes, sanitizeEdges } from '@/features/ai/ai-paths/lib';
+import { compileGraph, normalizeNodes, sanitizeEdges } from '@/features/ai/ai-paths/lib';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import {
   recordRuntimeRunFinished,
   recordRuntimeRunQueued,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
-import type { AiPathRunRepository } from '@/shared/contracts/ai-paths/path-run-repository';
 import { enqueuePathRunJob } from '@/features/jobs/workers/aiPathRunQueue';
 import { ErrorSystem } from '@/features/observability/services/error-system';
 import type { AiNode, Edge, AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import type { AiPathRunRepository } from '@/shared/contracts/ai-paths/path-run-repository';
 
 type EnqueueRunInput = {
   userId?: string | null;
@@ -134,13 +134,30 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       }
     }
 
+    const rawEdges = input.edges ?? [];
     const nodes = normalizeNodes(input.nodes ?? []);
-    const edges = sanitizeEdges(nodes, input.edges ?? []);
+    const edges = sanitizeEdges(nodes, rawEdges);
+    const compileReport = compileGraph(nodes, rawEdges);
+    if (!compileReport.ok) {
+      const primaryError = compileReport.findings.find(
+        (finding): boolean => finding.severity === 'error'
+      );
+      throw new Error(
+        primaryError?.message ??
+          `Graph compile failed with ${compileReport.errors} blocking issue(s).`
+      );
+    }
     const meta = {
       ...(input.meta ?? {}),
       ...(requestId ? { requestId } : {}),
       backoffMs: input.backoffMs ?? undefined,
       backoffMaxMs: input.backoffMaxMs ?? undefined,
+      graphCompile: {
+        errors: compileReport.errors,
+        warnings: compileReport.warnings,
+        findings: compileReport.findings,
+        compiledAt: new Date().toISOString(),
+      },
     };
     const run = await repo.createRun({
       userId: input.userId ?? null,

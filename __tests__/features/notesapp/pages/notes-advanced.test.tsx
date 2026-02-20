@@ -12,7 +12,7 @@ import { AdminLayoutProvider } from '@/features/admin/context/AdminLayoutContext
 import { NoteSettingsProvider } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { AdminNotesPage } from '@/features/notesapp/pages/AdminNotesPage';
 import { server } from '@/mocks/server';
-import type { NoteWithRelations } from '@/shared/types/domain/notes';
+import type { NoteWithRelations } from '@/shared/contracts/notes';
 import { ToastProvider } from '@/shared/ui/toast';
 
 

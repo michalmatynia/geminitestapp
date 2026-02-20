@@ -7,7 +7,7 @@ import type {
   BaseProducer,
   ExternalProducer,
   ExternalProducerSyncInput,
-} from '@/shared/contracts/integrations/producer-mapping';
+} from '@/shared/contracts/integrations';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';

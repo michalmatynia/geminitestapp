@@ -6,7 +6,7 @@ import type {
   ProductSyncProfile,
   ProductSyncRunDetail,
   ProductSyncRunRecord,
-} from '@/shared/contracts/product-sync/product-sync';
+} from '@/shared/contracts/product-sync';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,

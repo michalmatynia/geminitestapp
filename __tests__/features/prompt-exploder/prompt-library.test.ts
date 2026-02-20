@@ -11,7 +11,7 @@ import {
   parsePromptExploderLibrary,
 } from '@/features/prompt-exploder/prompt-library';
 import type { PromptExploderLibraryItem } from '@/features/prompt-exploder/prompt-library';
-import type { PromptExploderDocument } from '@/features/prompt-exploder/types';
+import type { PromptExploderDocument } from '@/shared/contracts/prompt-exploder';
 
 describe('prompt exploder prompt library', () => {
   it('returns defaults for empty input', () => {

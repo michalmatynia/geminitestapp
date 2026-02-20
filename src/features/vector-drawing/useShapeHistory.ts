@@ -2,7 +2,7 @@
 
 import { useCallback, useRef } from 'react';
 
-import type { VectorShape } from './types';
+import type { VectorShape } from '@/shared/contracts/vector';
 
 export interface ShapeHistoryControls {
   /** Push a snapshot into the history stack. Call on meaningful changes (not intermediate drags). */

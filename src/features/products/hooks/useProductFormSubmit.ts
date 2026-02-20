@@ -11,7 +11,7 @@ import type {
   ProductFormData,
   ProductParameterValue,
 } from '@/shared/contracts/products';
-import type { ProductImageSlot } from '@/shared/contracts/products/products-ui';
+import type { ProductImageSlot } from '@/shared/contracts/products';
 import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';

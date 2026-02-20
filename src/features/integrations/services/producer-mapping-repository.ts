@@ -20,7 +20,7 @@ import type {
   ProducerMappingCreateInput,
   ProducerMappingUpdateInput,
   ProducerMappingWithDetails,
-} from '@/shared/contracts/integrations/producer-mapping';
+} from '@/shared/contracts/integrations';
 import { getProducerRepository } from '@/features/products/services/producer-repository';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';

@@ -2,7 +2,7 @@ import 'server-only';
 
 import { ErrorSystem } from '@/features/observability/server';
 import { getProductDataProvider, type ProductDbProvider } from '@/features/products/services/product-provider';
-import type { ProductValidationPatternRepository } from '@/shared/contracts/products/services/validation-pattern-repository';
+import type { ProductValidationPatternRepository } from '@/shared/contracts/products';
 
 import { mongoValidationPatternRepository } from './mongo-validation-pattern-repository';
 import { prismaValidationPatternRepository } from './prisma-validation-pattern-repository';

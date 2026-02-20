@@ -6,7 +6,7 @@ import {
   toSlotMasterNodeId,
 } from '@/features/ai/image-studio/utils/master-folder-tree';
 import { createImageStudioMasterTreeAdapter } from '@/features/ai/image-studio/utils/studio-master-tree-adapter';
-import type { MasterFolderTreePersistContext } from '@/features/foldertree/master/types';
+import type { MasterFolderTreePersistContext } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const folderNode = (

@@ -21,7 +21,7 @@ import type {
   ProductStudioExecutionRoute,
   ProductStudioSequenceGenerationMode,
   ProductStudioSequenceReadiness,
-} from '@/shared/contracts/products/product-studio';
+} from '@/shared/contracts/products';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';

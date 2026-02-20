@@ -15,11 +15,16 @@ export const CSS_ANIMATION_EFFECTS = [
   'pulse',
 ] as const;
 
+export type CssAnimationEffect = (typeof CSS_ANIMATION_EFFECTS)[number];
+
 export const CSS_ANIMATION_TRIGGERS = ['none', 'load', 'scroll', 'hover', 'click'] as const;
+export type CssAnimationTrigger = (typeof CSS_ANIMATION_TRIGGERS)[number];
 
 export const CSS_ANIMATION_DIRECTIONS = ['normal', 'reverse', 'alternate', 'alternate-reverse'] as const;
+export type CssAnimationDirection = (typeof CSS_ANIMATION_DIRECTIONS)[number];
 
 export const CSS_ANIMATION_FILL_MODES = ['none', 'forwards', 'backwards', 'both'] as const;
+export type CssAnimationFillMode = (typeof CSS_ANIMATION_FILL_MODES)[number];
 
 export const CSS_EASINGS = [
   'linear',
@@ -30,6 +35,7 @@ export const CSS_EASINGS = [
   'step-start',
   'step-end',
 ] as const;
+export type CssAnimationEasing = (typeof CSS_EASINGS)[number];
 
 export const cssAnimationConfigSchema = z.object({
   effect: z.enum(CSS_ANIMATION_EFFECTS),

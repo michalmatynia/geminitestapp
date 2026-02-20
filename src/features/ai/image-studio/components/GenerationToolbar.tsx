@@ -18,13 +18,18 @@ import { useSettingsState, useSettingsActions } from '../context/SettingsContext
 import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 import { useUiActions, useUiState } from '../context/UiContext';
 import { createGenerationToolbarActionHandlers } from './generation-toolbar/generation-toolbar-action-handlers';
+import { GenerationToolbarAutoScalerSection } from './generation-toolbar/GenerationToolbarAutoScalerSection';
 import { GenerationToolbarCenterSection } from './generation-toolbar/GenerationToolbarCenterSection';
 import { GenerationToolbarCropSection } from './generation-toolbar/GenerationToolbarCropSection';
 import { GenerationToolbarDefaultsSection } from './generation-toolbar/GenerationToolbarDefaultsSection';
 import {
+  autoScaleCanvasImageObject,
+  buildAutoScalerRequestId,
   buildCenterRequestId,
   centerCanvasImageObject,
   dataUrlToUploadBlob,
+  isAutoScalerAbortError,
+  isClientAutoScalerCrossOriginError,
   isCenterAbortError,
   isClientCenterCrossOriginError,
   layoutCanvasImageObject,
@@ -37,6 +42,7 @@ import {
   resolveCropRectFromShapesWithDiagnostics,
   resolveClientProcessingImageSrc,
   shapeHasUsableCropGeometry,
+  withAutoScalerRetry,
   withCenterRetry,
   type CropCanvasContext,
   type CropRectResolutionDiagnostics,
@@ -63,6 +69,9 @@ type CenterMode =
   | 'server_alpha_bbox'
   | 'client_object_layout_v1'
   | 'server_object_layout_v1';
+type AutoScalerMode =
+  | 'client_auto_scaler_v1'
+  | 'server_auto_scaler_v1';
 
 type CenterActionResponse = {
   slot?: ImageStudioSlotRecord;
@@ -82,6 +91,38 @@ type CenterActionResponse = {
     detectionUsed?: 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel' | null;
     scale?: number | null;
   } | null;
+  requestId?: string | null;
+  deduplicated?: boolean;
+};
+
+type AutoScaleActionResponse = {
+  slot?: ImageStudioSlotRecord;
+  mode?: AutoScalerMode;
+  effectiveMode?: AutoScalerMode;
+  sourceObjectBounds?: { left: number; top: number; width: number; height: number } | null;
+  targetObjectBounds?: { left: number; top: number; width: number; height: number } | null;
+  layout?: {
+    paddingPercent?: number;
+    paddingXPercent?: number;
+    paddingYPercent?: number;
+    fillMissingCanvasWhite?: boolean;
+    targetCanvasWidth?: number;
+    targetCanvasHeight?: number;
+    whiteThreshold?: number;
+    chromaThreshold?: number;
+  } | null;
+  detectionUsed?: 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel' | null;
+  scale?: number | null;
+  whitespaceBefore?: {
+    px?: { left?: number; top?: number; right?: number; bottom?: number };
+    percent?: { left?: number; top?: number; right?: number; bottom?: number };
+  } | null;
+  whitespaceAfter?: {
+    px?: { left?: number; top?: number; right?: number; bottom?: number };
+    percent?: { left?: number; top?: number; right?: number; bottom?: number };
+  } | null;
+  objectAreaPercentBefore?: number | null;
+  objectAreaPercentAfter?: number | null;
   requestId?: string | null;
   deduplicated?: boolean;
 };
@@ -109,11 +150,19 @@ type UpscaleStatus =
   | 'uploading'
   | 'processing'
   | 'persisting';
+type AutoScaleStatus =
+  | 'idle'
+  | 'resolving'
+  | 'preparing'
+  | 'uploading'
+  | 'processing'
+  | 'persisting';
 
 const UPSCALE_REQUEST_TIMEOUT_MS = 60_000;
 const UPSCALE_MAX_OUTPUT_SIDE = 32_768;
 const CROP_REQUEST_TIMEOUT_MS = 60_000;
 const CENTER_REQUEST_TIMEOUT_MS = 60_000;
+const AUTOSCALER_REQUEST_TIMEOUT_MS = 60_000;
 const CENTER_LAYOUT_MIN_PADDING_PERCENT = 0;
 const CENTER_LAYOUT_MAX_PADDING_PERCENT = 40;
 const CENTER_LAYOUT_DEFAULT_PADDING_PERCENT = 8;
@@ -126,6 +175,44 @@ const normalizeCenterPaddingPercent = (value: string): number => {
     CENTER_LAYOUT_MIN_PADDING_PERCENT,
     Math.min(CENTER_LAYOUT_MAX_PADDING_PERCENT, Number(parsed.toFixed(2)))
   );
+};
+
+const normalizeMaskShapeForExport = (shape: unknown): MaskShapeForExport | null => {
+  if (!shape || typeof shape !== 'object') return null;
+  const candidate = shape as Record<string, unknown>;
+  const id = typeof candidate['id'] === 'string' ? candidate['id'].trim() : '';
+  if (!id) return null;
+
+  const rawType = candidate['type'];
+  if (typeof rawType !== 'string') return null;
+  const type = rawType === 'circle' ? 'ellipse' : rawType;
+  if (!type) return null;
+
+  const points = Array.isArray(candidate['points'])
+    ? candidate['points']
+      .map((point) => {
+        if (!point || typeof point !== 'object') return null;
+        const pointRecord = point as Record<string, unknown>;
+        const x = pointRecord['x'];
+        const y = pointRecord['y'];
+        if (typeof x !== 'number' || !Number.isFinite(x)) return null;
+        if (typeof y !== 'number' || !Number.isFinite(y)) return null;
+        return { x, y };
+      })
+      .filter((point): point is { x: number; y: number } => Boolean(point))
+    : [];
+  if (points.length === 0) return null;
+
+  const closed = typeof candidate['closed'] === 'boolean' ? candidate['closed'] : true;
+  const visible = typeof candidate['visible'] === 'boolean' ? candidate['visible'] : true;
+
+  return {
+    id,
+    type,
+    points,
+    closed,
+    visible,
+  };
 };
 
 export function GenerationToolbar(): React.JSX.Element {
@@ -165,6 +252,7 @@ export function GenerationToolbar(): React.JSX.Element {
   const [upscaleStrategy, setUpscaleStrategy] = useState<UpscaleStrategy>('scale');
   const [cropMode, setCropMode] = useState<CropMode>('client_bbox');
   const [centerMode, setCenterMode] = useState<CenterMode>('client_alpha_bbox');
+  const [autoScaleMode, setAutoScaleMode] = useState<AutoScalerMode>('client_auto_scaler_v1');
   const [centerLayoutPadding, setCenterLayoutPadding] = useState<string>(
     String(CENTER_LAYOUT_DEFAULT_PADDING_PERCENT)
   );
@@ -176,6 +264,17 @@ export function GenerationToolbar(): React.JSX.Element {
   );
   const [centerLayoutSplitAxes, setCenterLayoutSplitAxes] = useState(false);
   const [centerLayoutFillMissingCanvasWhite, setCenterLayoutFillMissingCanvasWhite] = useState(false);
+  const [autoScaleLayoutPadding, setAutoScaleLayoutPadding] = useState<string>(
+    String(CENTER_LAYOUT_DEFAULT_PADDING_PERCENT)
+  );
+  const [autoScaleLayoutPaddingX, setAutoScaleLayoutPaddingX] = useState<string>(
+    String(CENTER_LAYOUT_DEFAULT_PADDING_PERCENT)
+  );
+  const [autoScaleLayoutPaddingY, setAutoScaleLayoutPaddingY] = useState<string>(
+    String(CENTER_LAYOUT_DEFAULT_PADDING_PERCENT)
+  );
+  const [autoScaleLayoutSplitAxes, setAutoScaleLayoutSplitAxes] = useState(false);
+  const [autoScaleLayoutFillMissingCanvasWhite, setAutoScaleLayoutFillMissingCanvasWhite] = useState(false);
   const [upscaleScale, setUpscaleScale] = useState('2');
   const [upscaleTargetWidth, setUpscaleTargetWidth] = useState('');
   const [upscaleTargetHeight, setUpscaleTargetHeight] = useState('');
@@ -186,23 +285,34 @@ export function GenerationToolbar(): React.JSX.Element {
   const [cropStatus, setCropStatus] = useState<CropStatus>('idle');
   const [centerBusy, setCenterBusy] = useState(false);
   const [centerStatus, setCenterStatus] = useState<CenterStatus>('idle');
+  const [autoScaleBusy, setAutoScaleBusy] = useState(false);
+  const [autoScaleStatus, setAutoScaleStatus] = useState<AutoScaleStatus>('idle');
   const upscaleRequestInFlightRef = useRef(false);
   const upscaleAbortControllerRef = useRef<AbortController | null>(null);
   const cropRequestInFlightRef = useRef(false);
   const cropAbortControllerRef = useRef<AbortController | null>(null);
   const centerRequestInFlightRef = useRef(false);
   const centerAbortControllerRef = useRef<AbortController | null>(null);
+  const autoScaleRequestInFlightRef = useRef(false);
+  const autoScaleAbortControllerRef = useRef<AbortController | null>(null);
 
+  const maskShapesForExport = useMemo<MaskShapeForExport[]>(
+    () =>
+      maskShapes
+        .map((shape) => normalizeMaskShapeForExport(shape))
+        .filter((shape): shape is MaskShapeForExport => Boolean(shape)),
+    [maskShapes]
+  );
   const eligibleMaskShapes = useMemo<MaskShapeForExport[]>(
     () =>
-      (maskShapes as MaskShapeForExport[]).filter(
+      maskShapesForExport.filter(
         (shape) =>
           shape.visible &&
           ((shape.type === 'rect' || shape.type === 'ellipse')
             ? shape.points.length >= 2
             : shape.closed && shape.points.length >= 3)
       ),
-    [maskShapes]
+    [maskShapesForExport]
   );
 
   const selectedEligibleMaskShapes = useMemo<MaskShapeForExport[]>(
@@ -370,12 +480,12 @@ export function GenerationToolbar(): React.JSX.Element {
       ...previous,
       {
         id: shapeId,
-        name: `Crop Box ${previous.filter((shape) => shape.name.startsWith('Crop Box')).length + 1}`,
+        name: `Crop Box ${previous.length + 1}`,
         type: 'rect',
         points: [{ x: 0.1, y: 0.1 }, { x: 0.9, y: 0.9 }],
         closed: true,
         visible: true,
-      },
+      } as unknown as (typeof previous)[number],
     ]);
     setActiveMaskId(shapeId);
     setTool('select');
@@ -632,6 +742,35 @@ export function GenerationToolbar(): React.JSX.Element {
       detection: 'auto' as const,
     }
     : undefined;
+  const autoScaleLayoutPaddingPercent = useMemo(() => {
+    return normalizeCenterPaddingPercent(autoScaleLayoutPadding);
+  }, [autoScaleLayoutPadding]);
+  const autoScaleLayoutPaddingXPercent = useMemo(() => {
+    return normalizeCenterPaddingPercent(autoScaleLayoutPaddingX);
+  }, [autoScaleLayoutPaddingX]);
+  const autoScaleLayoutPaddingYPercent = useMemo(() => {
+    return normalizeCenterPaddingPercent(autoScaleLayoutPaddingY);
+  }, [autoScaleLayoutPaddingY]);
+  const autoScaleLayoutResolvedFillMissingCanvasWhite = autoScaleLayoutFillMissingCanvasWhite && Boolean(projectCanvasSize);
+  const autoScaleLayoutPayload = {
+    paddingPercent: autoScaleLayoutSplitAxes
+      ? Number(((autoScaleLayoutPaddingXPercent + autoScaleLayoutPaddingYPercent) / 2).toFixed(2))
+      : autoScaleLayoutPaddingPercent,
+    ...(autoScaleLayoutSplitAxes
+      ? {
+        paddingXPercent: autoScaleLayoutPaddingXPercent,
+        paddingYPercent: autoScaleLayoutPaddingYPercent,
+      }
+      : {}),
+    fillMissingCanvasWhite: autoScaleLayoutResolvedFillMissingCanvasWhite,
+    ...(autoScaleLayoutResolvedFillMissingCanvasWhite && projectCanvasSize
+      ? {
+        targetCanvasWidth: projectCanvasSize.width,
+        targetCanvasHeight: projectCanvasSize.height,
+      }
+      : {}),
+    detection: 'auto' as const,
+  };
 
   const handleCenterObject = async (): Promise<void> => {
     if (!workingSlot?.id) {
@@ -853,6 +992,201 @@ export function GenerationToolbar(): React.JSX.Element {
     controller.abort();
   };
 
+  const handleAutoScale = async (): Promise<void> => {
+    if (!workingSlot?.id) {
+      toast('No active source slot selected.', { variant: 'info' });
+      return;
+    }
+    if (!workingSlotImageSrc) {
+      toast('Select a slot image before auto scaling.', { variant: 'info' });
+      return;
+    }
+    const isClientAutoMode = autoScaleMode === 'client_auto_scaler_v1';
+    if (isClientAutoMode && !clientProcessingImageSrc) {
+      toast('No client image source is available for auto scaling.', { variant: 'info' });
+      return;
+    }
+    if (autoScaleRequestInFlightRef.current) {
+      return;
+    }
+
+    autoScaleRequestInFlightRef.current = true;
+    setAutoScaleBusy(true);
+    setAutoScaleStatus('resolving');
+    const autoScaleRequestId = buildAutoScalerRequestId();
+    const abortController = new AbortController();
+    autoScaleAbortControllerRef.current = abortController;
+    try {
+      let response: AutoScaleActionResponse;
+      let resolvedMode: AutoScalerMode = autoScaleMode;
+      if (isClientAutoMode) {
+        const sourceForClientAutoScale = clientProcessingImageSrc || workingSlotImageSrc;
+        if (!sourceForClientAutoScale) {
+          throw new Error('No client image source is available for auto scaling.');
+        }
+        try {
+          setAutoScaleStatus('preparing');
+          const autoScaledDataUrl = (
+            await autoScaleCanvasImageObject(
+              sourceForClientAutoScale,
+              autoScaleLayoutPayload,
+              { preferTargetCanvas: true }
+            )
+          ).dataUrl;
+          let uploadBlob: Blob;
+          try {
+            uploadBlob = await dataUrlToUploadBlob(autoScaledDataUrl);
+          } catch {
+            throw new Error('Failed to prepare client auto scaler output for upload.');
+          }
+
+          setAutoScaleStatus('uploading');
+          response = await withAutoScalerRetry(
+            () => {
+              const formData = new FormData();
+              formData.append('mode', autoScaleMode);
+              formData.append('requestId', autoScaleRequestId);
+              formData.append('layout', JSON.stringify(autoScaleLayoutPayload));
+              formData.append('image', uploadBlob, `autoscale-client-${Date.now()}.png`);
+              return api.post<AutoScaleActionResponse>(
+                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/autoscale`,
+                formData,
+                {
+                  signal: abortController.signal,
+                  timeout: AUTOSCALER_REQUEST_TIMEOUT_MS,
+                  headers: {
+                    'x-idempotency-key': autoScaleRequestId,
+                  },
+                }
+              );
+            },
+            abortController.signal
+          );
+        } catch (error) {
+          if (!isClientAutoScalerCrossOriginError(error)) {
+            throw error;
+          }
+          setAutoScaleStatus('processing');
+          const fallbackMode: AutoScalerMode = 'server_auto_scaler_v1';
+          response = await withAutoScalerRetry(
+            () =>
+              api.post<AutoScaleActionResponse>(
+                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/autoscale`,
+                {
+                  mode: fallbackMode,
+                  requestId: autoScaleRequestId,
+                  layout: autoScaleLayoutPayload,
+                },
+                {
+                  signal: abortController.signal,
+                  timeout: AUTOSCALER_REQUEST_TIMEOUT_MS,
+                  headers: {
+                    'x-idempotency-key': autoScaleRequestId,
+                  },
+                }
+              ),
+            abortController.signal
+          );
+          resolvedMode = fallbackMode;
+          toast(
+            'Client auto scaler was blocked by cross-origin restrictions; used server auto scaler instead.',
+            { variant: 'info' }
+          );
+        }
+      } else {
+        setAutoScaleStatus('processing');
+        response = await withAutoScalerRetry(
+          () =>
+            api.post<AutoScaleActionResponse>(
+              `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/autoscale`,
+              {
+                mode: autoScaleMode,
+                requestId: autoScaleRequestId,
+                layout: autoScaleLayoutPayload,
+              },
+              {
+                signal: abortController.signal,
+                timeout: AUTOSCALER_REQUEST_TIMEOUT_MS,
+                headers: {
+                  'x-idempotency-key': autoScaleRequestId,
+                },
+              }
+            ),
+          abortController.signal
+        );
+      }
+
+      const normalizedProjectId = projectId?.trim() ?? '';
+      if (normalizedProjectId) {
+        setAutoScaleStatus('persisting');
+        await invalidateImageStudioSlots(queryClient, normalizedProjectId);
+        const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
+        const createdSlotId = response.slot?.id ?? '';
+        const mergedSlots =
+          createdSlotId
+            ? [response.slot!, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
+            : slotsSnapshot;
+        queryClient.setQueryData<StudioSlotsResponse>(
+          studioKeys.slots(normalizedProjectId),
+          { slots: mergedSlots }
+        );
+      }
+
+      if (response.slot?.id) {
+        setSelectedSlotId(response.slot.id);
+        setWorkingSlotId(response.slot.id);
+      }
+
+      const createdLabel = response.slot?.name?.trim() || 'Auto-scaled variant';
+      const effectiveMode = response.effectiveMode ?? resolvedMode;
+      const modeLabel =
+        effectiveMode === 'client_auto_scaler_v1'
+          ? 'Client auto scaler'
+          : 'Server auto scaler';
+      const sourceBounds = response.sourceObjectBounds ?? null;
+      const targetBounds = response.targetObjectBounds ?? null;
+      const autoScaleShiftedObject = Boolean(
+        sourceBounds &&
+        targetBounds &&
+        (
+          sourceBounds.left !== targetBounds.left ||
+          sourceBounds.top !== targetBounds.top ||
+          sourceBounds.width !== targetBounds.width ||
+          sourceBounds.height !== targetBounds.height
+        )
+      );
+      if (autoScaleShiftedObject) {
+        toast(`Created ${createdLabel} (${modeLabel}).`, { variant: 'success' });
+      } else {
+        toast(`${createdLabel} created, but the object already matched current canvas/padding.`, {
+          variant: 'info',
+        });
+      }
+    } catch (error) {
+      if (isAutoScalerAbortError(error)) {
+        toast('Auto scaler canceled.', { variant: 'info' });
+        return;
+      }
+      toast(
+        error instanceof Error
+          ? error.message
+          : 'Failed to auto scale image object.',
+        { variant: 'error' }
+      );
+    } finally {
+      autoScaleRequestInFlightRef.current = false;
+      autoScaleAbortControllerRef.current = null;
+      setAutoScaleBusy(false);
+      setAutoScaleStatus('idle');
+    }
+  };
+
+  const handleCancelAutoScale = (): void => {
+    const controller = autoScaleAbortControllerRef.current;
+    if (!controller) return;
+    controller.abort();
+  };
+
   const maskGenerationBusy = maskGenLoading;
   const maskGenerationLabel = maskGenerationBusy
     ? 'Generating Mask...'
@@ -908,6 +1242,23 @@ export function GenerationToolbar(): React.JSX.Element {
         return centerIsObjectLayoutMode ? 'Object Layouting' : 'Center Object';
     }
   }, [centerBusy, centerIsObjectLayoutMode, centerStatus]);
+  const autoScaleBusyLabel = useMemo(() => {
+    if (!autoScaleBusy) return 'Auto Scale';
+    switch (autoScaleStatus) {
+      case 'resolving':
+        return 'Auto Scale: Resolving';
+      case 'preparing':
+        return 'Auto Scale: Preparing';
+      case 'uploading':
+        return 'Auto Scale: Uploading';
+      case 'processing':
+        return 'Auto Scale: Processing';
+      case 'persisting':
+        return 'Auto Scale: Persisting';
+      default:
+        return 'Auto Scale';
+    }
+  }, [autoScaleBusy, autoScaleStatus]);
 
   const quickSwitchModels = useMemo(
     () =>
@@ -971,6 +1322,13 @@ export function GenerationToolbar(): React.JSX.Element {
     ]),
     []
   );
+  const autoScaleModeOptions = useMemo(
+    () => ([
+      { value: 'client_auto_scaler_v1', label: 'Auto Scaler Client: Canvas' },
+      { value: 'server_auto_scaler_v1', label: 'Auto Scaler Server: Sharp' },
+    ]),
+    []
+  );
   const upscaleScaleOptions = useMemo(
     () => ['1.5', '2', '3', '4'].map((value: string) => ({ value, label: `${value}x` })),
     []
@@ -997,6 +1355,16 @@ export function GenerationToolbar(): React.JSX.Element {
     []
   );
   const centerTooltipContent = useMemo(
+    () => ({
+      mode: getImageStudioDocTooltip('object_layout_mode'),
+      padding: getImageStudioDocTooltip('object_layout_padding'),
+      paddingAxes: getImageStudioDocTooltip('object_layout_padding_axes'),
+      fillMissingCanvasWhite: getImageStudioDocTooltip('object_layout_fill_missing_canvas_white'),
+      apply: getImageStudioDocTooltip('object_layout_apply'),
+    }),
+    []
+  );
+  const autoScaleTooltipContent = useMemo(
     () => ({
       mode: getImageStudioDocTooltip('object_layout_mode'),
       padding: getImageStudioDocTooltip('object_layout_padding'),
@@ -1203,6 +1571,66 @@ export function GenerationToolbar(): React.JSX.Element {
         }}
         onToggleCenterGuides={() => {
           setCenterGuidesEnabled(!centerGuidesEnabled);
+        }}
+      />
+
+      <GenerationToolbarAutoScalerSection
+        autoScaleBusy={autoScaleBusy}
+        autoScaleBusyLabel={autoScaleBusyLabel}
+        autoScaleLayoutPadding={autoScaleLayoutPadding}
+        autoScaleLayoutPaddingX={autoScaleLayoutPaddingX}
+        autoScaleLayoutPaddingY={autoScaleLayoutPaddingY}
+        autoScaleLayoutSplitAxes={autoScaleLayoutSplitAxes}
+        autoScaleLayoutFillMissingCanvasWhite={autoScaleLayoutFillMissingCanvasWhite}
+        autoScaleLayoutProjectCanvasSize={projectCanvasSize}
+        autoScaleTooltipContent={autoScaleTooltipContent}
+        autoScaleTooltipsEnabled={cropTooltipsEnabled}
+        autoScaleMode={autoScaleMode}
+        autoScaleModeOptions={autoScaleModeOptions}
+        hasSourceImage={hasSourceImage}
+        onAutoScale={() => {
+          void handleAutoScale();
+        }}
+        onCancelAutoScale={handleCancelAutoScale}
+        onAutoScaleLayoutPaddingChange={(value: string) => {
+          const normalized = sanitizeCenterPaddingInput(value);
+          setAutoScaleLayoutPadding(normalized);
+          if (!autoScaleLayoutSplitAxes) {
+            setAutoScaleLayoutPaddingX(normalized);
+            setAutoScaleLayoutPaddingY(normalized);
+          }
+        }}
+        onAutoScaleLayoutPaddingXChange={(value: string) => {
+          const normalized = sanitizeCenterPaddingInput(value);
+          setAutoScaleLayoutPaddingX(normalized);
+        }}
+        onAutoScaleLayoutPaddingYChange={(value: string) => {
+          const normalized = sanitizeCenterPaddingInput(value);
+          setAutoScaleLayoutPaddingY(normalized);
+        }}
+        onAutoScaleLayoutFillMissingCanvasWhiteChange={(checked: boolean) => {
+          setAutoScaleLayoutFillMissingCanvasWhite(checked);
+        }}
+        onAutoScaleModeChange={(value: string) => {
+          setAutoScaleMode(value as AutoScalerMode);
+        }}
+        onToggleAutoScaleLayoutSplitAxes={() => {
+          setAutoScaleLayoutSplitAxes((previous) => {
+            const next = !previous;
+            if (next) {
+              const normalized = sanitizeCenterPaddingInput(autoScaleLayoutPadding);
+              setAutoScaleLayoutPaddingX(normalized);
+              setAutoScaleLayoutPaddingY(normalized);
+            } else {
+              const mergedPadding = String(
+                Number(((autoScaleLayoutPaddingXPercent + autoScaleLayoutPaddingYPercent) / 2).toFixed(2))
+              );
+              setAutoScaleLayoutPadding(mergedPadding);
+              setAutoScaleLayoutPaddingX(mergedPadding);
+              setAutoScaleLayoutPaddingY(mergedPadding);
+            }
+            return next;
+          });
         }}
       />
     </div>

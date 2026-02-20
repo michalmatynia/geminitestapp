@@ -8,7 +8,7 @@ import {
   TRADERA_INTEGRATION_SLUGS,
 } from '@/features/integrations/constants/slugs';
 import { ProductListingsProvider, useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
-import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
+import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';

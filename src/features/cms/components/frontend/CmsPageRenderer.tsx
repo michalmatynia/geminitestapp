@@ -1,6 +1,6 @@
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
-import type { CssAnimationConfig } from '@/shared/contracts/cms/css-animations';
-import type { ColorSchemeColors } from '@/shared/contracts/cms/theme-settings';
+import type { CssAnimationConfig } from '@/shared/contracts/cms';
+import type { ColorSchemeColors } from '@/shared/contracts/cms';
 import type { GsapAnimationConfig } from '@/features/gsap';
 
 import { CmsPageProvider } from './CmsPageContext';

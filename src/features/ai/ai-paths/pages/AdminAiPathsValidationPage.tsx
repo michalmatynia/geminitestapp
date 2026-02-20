@@ -37,6 +37,7 @@ import {
   StatusBadge,
   Textarea,
   useToast,
+  Card,
 } from '@/shared/ui';
 
 type SettingsRecord = { key: string; value: string };
@@ -990,7 +991,7 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
         }}
       />
 
-      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+      <Card className='border-border/60 bg-card/40 p-4'>
         <div className='flex flex-wrap items-end gap-3'>
           <div className='min-w-[260px] flex-1'>
             <Label className='text-xs text-gray-400'>Path</Label>
@@ -1082,16 +1083,16 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
             </Badge>
           ) : null}
         </div>
-      </div>
+      </Card>
 
       {!selectedPathConfig ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-6 text-sm text-gray-400'>
+        <Card className='border-border/60 bg-card/40 p-6 text-sm text-gray-400'>
           No AI Path config found for the selected path.
-        </div>
+        </Card>
       ) : (
         <div className='grid gap-6 xl:grid-cols-12'>
           <div className='space-y-6 xl:col-span-7'>
-            <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+            <Card className='border-border/60 bg-card/40 p-4'>
               <div className='mb-4 flex flex-wrap items-center justify-between gap-2'>
                 <h3 className='text-sm font-semibold text-white'>Validation Engine</h3>
                 <div className='flex items-center gap-2'>
@@ -1199,9 +1200,9 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                   />
                 </div>
               </div>
-            </div>
+            </Card>
 
-            <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+            <Card className='border-border/60 bg-card/40 p-4'>
               <div className='mb-4 flex flex-wrap items-center justify-between gap-2'>
                 <h3 className='text-sm font-semibold text-white'>Docs Connections</h3>
                 <div className='flex items-center gap-2'>
@@ -1275,9 +1276,9 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                   );
                 })}
               </div>
-            </div>
+            </Card>
 
-            <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+            <Card className='border-border/60 bg-card/40 p-4'>
               <div className='mb-4 flex flex-wrap items-center justify-between gap-2'>
                 <h3 className='text-sm font-semibold text-white'>
                   Central Docs Inference Sync
@@ -1487,9 +1488,9 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                   </div>
                 </div>
               ) : null}
-            </div>
+            </Card>
 
-            <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+            <Card className='border-border/60 bg-card/40 p-4'>
               <div className='mb-4 flex flex-wrap items-center justify-between gap-2'>
                 <h3 className='text-sm font-semibold text-white'>Entity Collection Map</h3>
                 <Button type='button' variant='outline' size='sm' onClick={handleApplyCollectionMap}>
@@ -1502,9 +1503,9 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                 value={collectionMapDraft}
                 onChange={(event) => setCollectionMapDraft(event.target.value)}
               />
-            </div>
+            </Card>
 
-            <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+            <Card className='border-border/60 bg-card/40 p-4'>
               <div className='mb-4 flex flex-wrap items-center justify-between gap-2'>
                 <h3 className='text-sm font-semibold text-white'>Patterns and Sequences</h3>
                 <StatusBadge
@@ -1599,11 +1600,11 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                   <div className='mt-2 text-xs text-rose-300'>{rulesDraftError}</div>
                 ) : null}
               </div>
-            </div>
+            </Card>
           </div>
 
           <div className='space-y-6 xl:col-span-5'>
-            <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+            <Card className='border-border/60 bg-card/40 p-4'>
               <div className='mb-4 flex items-center gap-2'>
                 <BookOpenText className='size-4 text-sky-300' />
                 <h3 className='text-sm font-semibold text-white'>Validation Preview</h3>
@@ -1691,9 +1692,9 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
               ) : (
                 <div className='text-sm text-gray-400'>Select a path to preview validation.</div>
               )}
-            </div>
+            </Card>
 
-            <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+            <Card className='border-border/60 bg-card/40 p-4'>
               <h3 className='text-sm font-semibold text-white'>How This Is Separate</h3>
               <ul className='mt-3 space-y-2 text-xs text-gray-400'>
                 <li>Uses only AI-Paths path configs (`ai_paths_config_*`).</li>
@@ -1701,7 +1702,7 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                 <li>Builds patterns from AI-Paths docs sources and node docs bindings.</li>
                 <li>Saves per-path validator profiles back into the path config.</li>
               </ul>
-            </div>
+            </Card>
           </div>
         </div>
       )}

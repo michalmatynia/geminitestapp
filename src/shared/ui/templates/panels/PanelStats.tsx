@@ -5,7 +5,7 @@ import React from 'react';
 
 import { cn } from '@/shared/utils/ui-utils';
 
-import { PanelStat } from './types';
+import { PanelStat } from '@/shared/contracts/ui';
 
 
 interface PanelStatsProps {

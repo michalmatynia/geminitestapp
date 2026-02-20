@@ -9,7 +9,7 @@ import {
   toFolderMasterNodeId,
   toNoteMasterNodeId,
 } from '@/features/notesapp/utils/master-folder-tree';
-import type { CategoryWithChildren } from '@/shared/types/domain/notes';
+import type { CategoryWithChildren } from '@/shared/contracts/notes';
 
 const createTree = (): CategoryWithChildren[] => [
   {

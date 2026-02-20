@@ -14,7 +14,7 @@ import { ProductFormData } from '@/shared/contracts/products';
 import {
   PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
   type ProductDraftOpenFormTab,
-} from '@/shared/contracts/products/drafts';
+} from '@/shared/contracts/products';
 import {
   normalizeProductValidationDenyBehavior,
   normalizeProductValidationInstanceDenyBehaviorMap,

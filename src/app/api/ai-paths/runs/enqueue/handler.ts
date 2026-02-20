@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
+  compileGraph,
   evaluateAiPathsValidationPreflight,
   normalizeAiPathsValidationConfig,
 } from '@/features/ai/ai-paths/lib';
@@ -9,9 +10,9 @@ import { enforceAiPathsRunRateLimit, requireAiPathsRunAccess } from '@/features/
 import { enqueuePathRun } from '@/features/ai/ai-paths/services/path-run-service';
 import { startAiPathRunQueue } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
-import { badRequestError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError } from '@/shared/errors/app-error';
 
 const enqueueSchema = z.object({
   pathId: z.string().trim().min(1),
@@ -86,6 +87,24 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     ...metaRecord,
     aiPathsValidation: validationConfig,
     validationPreflight: validationReport,
+  };
+
+  const compileReport = compileGraph(normalizedNodes, normalizedEdges);
+  if (!compileReport.ok) {
+    const primaryError = compileReport.findings.find((finding) => finding.severity === 'error');
+    throw badRequestError(
+      primaryError?.message ??
+        `Graph compile failed with ${compileReport.errors} blocking issue(s).`
+    );
+  }
+  normalizedMeta = {
+    ...(normalizedMeta ?? {}),
+    graphCompile: {
+      errors: compileReport.errors,
+      warnings: compileReport.warnings,
+      findings: compileReport.findings,
+      compiledAt: new Date().toISOString(),
+    },
   };
 
   const run = await enqueuePathRun({

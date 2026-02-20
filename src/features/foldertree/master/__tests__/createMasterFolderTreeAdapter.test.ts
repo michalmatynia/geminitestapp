@@ -5,7 +5,7 @@ import { createMasterFolderTreeAdapter } from '@/features/foldertree/master/crea
 import type {
   MasterFolderTreePersistContext,
   MasterFolderTreePersistOperation,
-} from '@/features/foldertree/master/types';
+} from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 type DecodedNode =

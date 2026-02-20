@@ -1,3 +1,7 @@
+import {
+  analyzeAndPlanAutoScaleFromRgba,
+  detectObjectBoundsForLayoutFromRgba,
+} from '@/features/ai/image-studio/analysis/shared';
 import { ApiError } from '@/shared/lib/api-client';
 
 import type { ImageStudioSlotRecord } from '../../types';
@@ -83,6 +87,38 @@ export type CenterLayoutResult = {
   };
 };
 
+export type ClientImageObjectAnalysisResult = {
+  width: number;
+  height: number;
+  sourceObjectBounds: { left: number; top: number; width: number; height: number };
+  detectionUsed: Exclude<CenterDetectionMode, 'auto'>;
+  whitespace: {
+    px: { left: number; top: number; right: number; bottom: number };
+    percent: { left: number; top: number; right: number; bottom: number };
+  };
+  objectAreaPercent: number;
+  layout: CenterLayoutResult['layout'];
+  suggestedPlan: {
+    outputWidth: number;
+    outputHeight: number;
+    targetObjectBounds: { left: number; top: number; width: number; height: number };
+    scale: number;
+    whitespace: {
+      px: { left: number; top: number; right: number; bottom: number };
+      percent: { left: number; top: number; right: number; bottom: number };
+    };
+  };
+};
+
+export type AutoScaleCanvasResult = CenterLayoutResult & {
+  outputWidth: number;
+  outputHeight: number;
+  whitespaceBefore: ClientImageObjectAnalysisResult['whitespace'];
+  whitespaceAfter: ClientImageObjectAnalysisResult['whitespace'];
+  objectAreaPercentBefore: number;
+  objectAreaPercentAfter: number;
+};
+
 const CENTER_LAYOUT_DEFAULT_PADDING_PERCENT = 8;
 const CENTER_LAYOUT_MIN_PADDING_PERCENT = 0;
 const CENTER_LAYOUT_MAX_PADDING_PERCENT = 40;
@@ -94,27 +130,12 @@ const CENTER_LAYOUT_MIN_CHROMA_THRESHOLD = 0;
 const CENTER_LAYOUT_MAX_CHROMA_THRESHOLD = 80;
 const CENTER_LAYOUT_MIN_TARGET_CANVAS_SIDE = 1;
 const CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE = 32_768;
-const WHITE_BACKGROUND_BORDER_TARGET_SAMPLES = 4_096;
-const WHITE_BACKGROUND_BORDER_MIN_SAMPLES = 48;
-const WHITE_FOREGROUND_HIT_RATIO = 0.03;
-const WHITE_FOREGROUND_MIN_DIMENSION_RATIO = 0.001;
-const WHITE_FOREGROUND_STRICT_RUN_LENGTH = 2;
 
 type ShapeBounds = {
   minX: number;
   maxX: number;
   minY: number;
   maxY: number;
-};
-
-type WhiteBackgroundModel = {
-  r: number;
-  g: number;
-  b: number;
-  chroma: number;
-  whiteThreshold: number;
-  chromaThreshold: number;
-  chromaDeltaThreshold: number;
 };
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
@@ -447,8 +468,12 @@ export const resolveClientProcessingImageSrc = (
   const inlineBase64 = normalizeLocalImageSource(slot?.imageBase64 ?? null);
   if (inlineBase64) return inlineBase64;
 
-  const localFilepath = normalizeLocalImageSource(slot?.imageFile?.url ?? null);
+  const localFilepath = normalizeLocalImageSource(slot?.imageFile?.filepath ?? null);
   if (localFilepath) return localFilepath;
+
+  const legacyImageFile = slot?.imageFile as { url?: string } | undefined;
+  const legacyLocalFilepath = normalizeLocalImageSource(legacyImageFile?.url ?? null);
+  if (legacyLocalFilepath) return legacyLocalFilepath;
 
   const localUrl = normalizeLocalImageSource(slot?.imageUrl ?? null);
   if (localUrl) return localUrl;
@@ -849,6 +874,46 @@ export const withCenterRetry = async <T,>(
   }
 };
 
+export const isClientAutoScalerCrossOriginError = (error: unknown): boolean =>
+  error instanceof Error && /cross-origin restrictions/i.test(error.message);
+
+export const isAutoScalerAbortError = (error: unknown): boolean =>
+  error instanceof DOMException && error.name === 'AbortError';
+
+export const isRetryableAutoScalerError = (error: unknown): boolean => {
+  if (isAutoScalerAbortError(error)) return false;
+  if (error instanceof ApiError) {
+    return error.status === 408 || error.status === 425 || error.status === 429 || error.status >= 500;
+  }
+  return (
+    error instanceof Error &&
+    /timeout|network|failed to fetch|temporarily unavailable|retry/i.test(error.message.toLowerCase())
+  );
+};
+
+export const buildAutoScalerRequestId = (): string =>
+  `autoscale_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+
+export const withAutoScalerRetry = async <T,>(
+  run: () => Promise<T>,
+  signal: AbortSignal,
+  retries = 1,
+  retryDelayMs = 350
+): Promise<T> => {
+  let attempt = 0;
+  while (true) {
+    try {
+      return await run();
+    } catch (error) {
+      if (attempt >= retries || !isRetryableAutoScalerError(error) || signal.aborted) {
+        throw error;
+      }
+      attempt += 1;
+      await sleep(retryDelayMs * attempt);
+    }
+  }
+};
+
 const resolveAlphaObjectBounds = (
   data: Uint8ClampedArray,
   width: number,
@@ -882,291 +947,18 @@ const resolveAlphaObjectBounds = (
   };
 };
 
-const computeMedian = (values: number[]): number => {
-  if (values.length === 0) return 0;
-  const sorted = [...values].sort((a, b) => a - b);
-  const midpoint = Math.floor(sorted.length / 2);
-  if (sorted.length % 2 === 0) {
-    const left = sorted[midpoint - 1] ?? sorted[midpoint] ?? 0;
-    const right = sorted[midpoint] ?? left;
-    return (left + right) / 2;
-  }
-  return sorted[midpoint] ?? 0;
-};
-
-const resolveWhiteBackgroundModel = (
-  data: Uint8ClampedArray,
-  width: number,
-  height: number,
-  whiteThreshold: number,
-  chromaThreshold: number
-): WhiteBackgroundModel => {
-  const samplesR: number[] = [];
-  const samplesG: number[] = [];
-  const samplesB: number[] = [];
-  const chromaSamples: number[] = [];
-  const perimeter = Math.max(1, (width * 2) + (Math.max(0, height - 2) * 2));
-  const step = Math.max(1, Math.floor(perimeter / WHITE_BACKGROUND_BORDER_TARGET_SAMPLES));
-  let cursor = 0;
-
-  const maybePushBorderSample = (x: number, y: number): void => {
-    if (cursor % step !== 0) {
-      cursor += 1;
-      return;
-    }
-    cursor += 1;
-    const offset = ((y * width) + x) * 4;
-    const a = data[offset + 3] ?? 0;
-    if (a <= 8) return;
-    const r = data[offset] ?? 0;
-    const g = data[offset + 1] ?? 0;
-    const b = data[offset + 2] ?? 0;
-    samplesR.push(r);
-    samplesG.push(g);
-    samplesB.push(b);
-    chromaSamples.push(Math.max(r, g, b) - Math.min(r, g, b));
-  };
-
-  for (let x = 0; x < width; x += 1) {
-    maybePushBorderSample(x, 0);
-  }
-  for (let y = 1; y < Math.max(1, height - 1); y += 1) {
-    maybePushBorderSample(Math.max(0, width - 1), y);
-  }
-  if (height > 1) {
-    for (let x = Math.max(0, width - 1); x >= 0; x -= 1) {
-      maybePushBorderSample(x, height - 1);
-    }
-  }
-  if (width > 1) {
-    for (let y = Math.max(0, height - 2); y >= 1; y -= 1) {
-      maybePushBorderSample(0, y);
-    }
-  }
-
-  if (samplesR.length < WHITE_BACKGROUND_BORDER_MIN_SAMPLES) {
-    return {
-      r: 255,
-      g: 255,
-      b: 255,
-      chroma: 0,
-      whiteThreshold,
-      chromaThreshold,
-      chromaDeltaThreshold: chromaThreshold,
-    };
-  }
-
-  const backgroundR = computeMedian(samplesR);
-  const backgroundG = computeMedian(samplesG);
-  const backgroundB = computeMedian(samplesB);
-  const backgroundChroma = computeMedian(chromaSamples);
-  const distanceSamples = samplesR.map((sampleR, index) => {
-    const sampleG = samplesG[index] ?? backgroundG;
-    const sampleB = samplesB[index] ?? backgroundB;
-    return Math.max(
-      Math.abs(sampleR - backgroundR),
-      Math.abs(sampleG - backgroundG),
-      Math.abs(sampleB - backgroundB)
-    );
-  });
-  const chromaDeltaSamples = chromaSamples.map((sample) => Math.abs(sample - backgroundChroma));
-  const distanceMedian = computeMedian(distanceSamples);
-  const chromaDeltaMedian = computeMedian(chromaDeltaSamples);
-
-  return {
-    r: backgroundR,
-    g: backgroundG,
-    b: backgroundB,
-    chroma: backgroundChroma,
-    whiteThreshold: Math.min(255, Math.max(whiteThreshold, Math.ceil(distanceMedian * 3 + 2))),
-    chromaThreshold: Math.min(
-      255,
-      Math.max(chromaThreshold, Math.ceil(backgroundChroma + chromaDeltaMedian * 3 + 2))
-    ),
-    chromaDeltaThreshold: Math.min(255, Math.max(chromaThreshold, Math.ceil(chromaDeltaMedian * 3 + 2))),
-  };
-};
-
-const isWhiteBackgroundForegroundPixel = (
-  r: number,
-  g: number,
-  b: number,
-  a: number,
-  model: WhiteBackgroundModel
-): boolean => {
-  if (a <= 8) return false;
-  const distanceFromBackground = Math.max(
-    Math.abs(r - model.r),
-    Math.abs(g - model.g),
-    Math.abs(b - model.b)
-  );
-  const chroma = Math.max(r, g, b) - Math.min(r, g, b);
-  const chromaDelta = Math.abs(chroma - model.chroma);
-  return (
-    distanceFromBackground > model.whiteThreshold ||
-    chroma > model.chromaThreshold ||
-    chromaDelta > model.chromaDeltaThreshold
-  );
-};
-
-const findLeadingHitIndex = (
-  hits: Uint32Array,
-  minHits: number,
-  minRunLength: number
-): number => {
-  let runLength = 0;
-  for (let index = 0; index < hits.length; index += 1) {
-    if ((hits[index] ?? 0) >= minHits) {
-      runLength += 1;
-      if (runLength >= minRunLength) {
-        return index - runLength + 1;
-      }
-    } else {
-      runLength = 0;
-    }
-  }
-  return -1;
-};
-
-const findTrailingHitIndex = (
-  hits: Uint32Array,
-  minHits: number,
-  minRunLength: number
-): number => {
-  let runLength = 0;
-  for (let index = hits.length - 1; index >= 0; index -= 1) {
-    if ((hits[index] ?? 0) >= minHits) {
-      runLength += 1;
-      if (runLength >= minRunLength) {
-        return index + runLength - 1;
-      }
-    } else {
-      runLength = 0;
-    }
-  }
-  return -1;
-};
-
-const resolveLineBounds = (
-  hits: Uint32Array,
-  perpendicularSize: number
-): { start: number; end: number } | null => {
-  const maxHit = hits.reduce((max, value) => Math.max(max, value), 0);
-  if (maxHit <= 0) return null;
-  const strictMinHits = Math.max(
-    1,
-    Math.max(
-      Math.ceil(maxHit * WHITE_FOREGROUND_HIT_RATIO),
-      Math.ceil(perpendicularSize * WHITE_FOREGROUND_MIN_DIMENSION_RATIO)
-    )
-  );
-  const strictMinRunLength = hits.length >= 12 ? WHITE_FOREGROUND_STRICT_RUN_LENGTH : 1;
-  let start = findLeadingHitIndex(hits, strictMinHits, strictMinRunLength);
-  let end = findTrailingHitIndex(hits, strictMinHits, strictMinRunLength);
-  if (start < 0 || end < start) {
-    start = findLeadingHitIndex(hits, 1, 1);
-    end = findTrailingHitIndex(hits, 1, 1);
-  }
-  if (start < 0 || end < start) return null;
-  return { start, end };
-};
-
-const resolveWhiteForegroundObjectBounds = (
-  data: Uint8ClampedArray,
-  width: number,
-  height: number,
-  whiteThreshold: number,
-  chromaThreshold: number
-): { left: number; top: number; width: number; height: number } | null => {
-  const backgroundModel = resolveWhiteBackgroundModel(
-    data,
-    width,
-    height,
-    whiteThreshold,
-    chromaThreshold
-  );
-  const columnHits = new Uint32Array(width);
-  const rowHits = new Uint32Array(height);
-  let foregroundCount = 0;
-
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const offset = ((y * width) + x) * 4;
-      const r = data[offset] ?? 0;
-      const g = data[offset + 1] ?? 0;
-      const b = data[offset + 2] ?? 0;
-      const a = data[offset + 3] ?? 0;
-      if (!isWhiteBackgroundForegroundPixel(r, g, b, a, backgroundModel)) continue;
-      columnHits[x] = (columnHits[x] ?? 0) + 1;
-      rowHits[y] = (rowHits[y] ?? 0) + 1;
-      foregroundCount += 1;
-    }
-  }
-
-  if (foregroundCount <= 0) return null;
-  const horizontalBounds = resolveLineBounds(columnHits, height);
-  const verticalBounds = resolveLineBounds(rowHits, width);
-  if (!horizontalBounds || !verticalBounds) return null;
-
-  const left = Math.max(0, horizontalBounds.start);
-  const right = Math.min(width - 1, horizontalBounds.end);
-  const top = Math.max(0, verticalBounds.start);
-  const bottom = Math.min(height - 1, verticalBounds.end);
-  if (right < left || bottom < top) return null;
-
-  return {
-    left,
-    top,
-    width: Math.max(1, right - left + 1),
-    height: Math.max(1, bottom - top + 1),
-  };
-};
-
 const resolveObjectBoundsForLayout = (
   data: Uint8ClampedArray,
   width: number,
   height: number,
   layout: NormalizedCenterLayoutConfig
 ): { bounds: { left: number; top: number; width: number; height: number }; detectionUsed: Exclude<CenterDetectionMode, 'auto'> } | null => {
-  if (layout.detection === 'alpha_bbox') {
-    const alpha = resolveAlphaObjectBounds(data, width, height);
-    return alpha ? { bounds: alpha, detectionUsed: 'alpha_bbox' } : null;
-  }
-  if (layout.detection === 'white_bg_first_colored_pixel') {
-    const white = resolveWhiteForegroundObjectBounds(
-      data,
-      width,
-      height,
-      layout.whiteThreshold,
-      layout.chromaThreshold
-    );
-    return white ? { bounds: white, detectionUsed: 'white_bg_first_colored_pixel' } : null;
-  }
-
-  const white = resolveWhiteForegroundObjectBounds(
-    data,
-    width,
-    height,
-    layout.whiteThreshold,
-    layout.chromaThreshold
-  );
-  const alpha = resolveAlphaObjectBounds(data, width, height);
-
-  if (white && alpha) {
-    const whiteArea = white.width * white.height;
-    const alphaArea = alpha.width * alpha.height;
-    if (whiteArea <= alphaArea * 0.995) {
-      return { bounds: white, detectionUsed: 'white_bg_first_colored_pixel' };
-    }
-    return { bounds: alpha, detectionUsed: 'alpha_bbox' };
-  }
-  if (white) {
-    return { bounds: white, detectionUsed: 'white_bg_first_colored_pixel' };
-  }
-  if (alpha) {
-    return { bounds: alpha, detectionUsed: 'alpha_bbox' };
-  }
-  return null;
+  const detected = detectObjectBoundsForLayoutFromRgba(data, width, height, layout);
+  if (!detected) return null;
+  return {
+    bounds: detected.bounds,
+    detectionUsed: detected.detectionUsed,
+  };
 };
 
 export const centerCanvasImageObject = async (src: string): Promise<string> => {
@@ -1227,10 +1019,15 @@ export const centerCanvasImageObject = async (src: string): Promise<string> => {
   }
 };
 
-export const layoutCanvasImageObject = async (
+const loadSourceCanvasWithImageData = async (
   src: string,
-  layoutConfig?: CenterLayoutConfig | null
-): Promise<CenterLayoutResult> => {
+  crossOriginErrorMessage: string
+): Promise<{
+  sourceCanvas: HTMLCanvasElement;
+  sourceWidth: number;
+  sourceHeight: number;
+  imageData: ImageData;
+}> => {
   const image = await loadImageElement(src, { crossOrigin: 'anonymous' });
   const sourceWidth = image.naturalWidth || image.width;
   const sourceHeight = image.naturalHeight || image.height;
@@ -1247,12 +1044,27 @@ export const layoutCanvasImageObject = async (
   }
   sourceContext.drawImage(image, 0, 0, sourceWidth, sourceHeight);
 
-  let imageData: ImageData;
   try {
-    imageData = sourceContext.getImageData(0, 0, sourceWidth, sourceHeight);
+    const imageData = sourceContext.getImageData(0, 0, sourceWidth, sourceHeight);
+    return {
+      sourceCanvas,
+      sourceWidth,
+      sourceHeight,
+      imageData,
+    };
   } catch {
-    throw new Error('Client layouting failed due to cross-origin restrictions. Use "Object Layout Server".');
+    throw new Error(crossOriginErrorMessage);
   }
+};
+
+export const layoutCanvasImageObject = async (
+  src: string,
+  layoutConfig?: CenterLayoutConfig | null
+): Promise<CenterLayoutResult> => {
+  const { sourceCanvas, sourceWidth, sourceHeight, imageData } = await loadSourceCanvasWithImageData(
+    src,
+    'Client layouting failed due to cross-origin restrictions. Use "Object Layout Server".'
+  );
 
   const normalizedLayout = normalizeCenterLayoutConfig(layoutConfig);
   const objectBoundsResult = resolveObjectBoundsForLayout(
@@ -1266,21 +1078,22 @@ export const layoutCanvasImageObject = async (
   }
 
   const bounds = objectBoundsResult.bounds;
-  const outputWidth = normalizedLayout.fillMissingCanvasWhite
-    ? Math.max(sourceWidth, normalizedLayout.targetCanvasWidth ?? sourceWidth)
-    : sourceWidth;
-  const outputHeight = normalizedLayout.fillMissingCanvasWhite
-    ? Math.max(sourceHeight, normalizedLayout.targetCanvasHeight ?? sourceHeight)
-    : sourceHeight;
-  const paddingXRatio = Math.max(0, Math.min(0.49, normalizedLayout.paddingXPercent / 100));
-  const paddingYRatio = Math.max(0, Math.min(0.49, normalizedLayout.paddingYPercent / 100));
-  const maxObjectWidth = Math.max(1, Math.round(outputWidth * (1 - paddingXRatio * 2)));
-  const maxObjectHeight = Math.max(1, Math.round(outputHeight * (1 - paddingYRatio * 2)));
-  const scale = Math.max(0.0001, Math.min(maxObjectWidth / bounds.width, maxObjectHeight / bounds.height));
-  const targetWidth = Math.max(1, Math.min(outputWidth, Math.round(bounds.width * scale)));
-  const targetHeight = Math.max(1, Math.min(outputHeight, Math.round(bounds.height * scale)));
-  const targetLeft = Math.max(0, Math.round((outputWidth - targetWidth) / 2));
-  const targetTop = Math.max(0, Math.round((outputHeight - targetHeight) / 2));
+  const planned = analyzeAndPlanAutoScaleFromRgba({
+    pixelData: imageData.data,
+    width: sourceWidth,
+    height: sourceHeight,
+    layout: normalizedLayout,
+    preferTargetCanvas: false,
+  });
+  if (!planned) {
+    throw new Error('No visible object pixels were detected to layout.');
+  }
+  const outputWidth = planned.plan.outputWidth;
+  const outputHeight = planned.plan.outputHeight;
+  const targetWidth = planned.plan.targetObjectBounds.width;
+  const targetHeight = planned.plan.targetObjectBounds.height;
+  const targetLeft = planned.plan.targetObjectBounds.left;
+  const targetTop = planned.plan.targetObjectBounds.top;
 
   const outputCanvas = document.createElement('canvas');
   outputCanvas.width = outputWidth;
@@ -1321,8 +1134,114 @@ export const layoutCanvasImageObject = async (
       height: targetHeight,
     },
     detectionUsed: objectBoundsResult.detectionUsed,
-    scale: Number(scale.toFixed(6)),
+    scale: planned.plan.scale,
     layout: normalizedLayout,
+  };
+};
+
+export const analyzeCanvasImageObject = async (
+  src: string,
+  layoutConfig?: CenterLayoutConfig | null,
+  options?: { preferTargetCanvas?: boolean }
+): Promise<ClientImageObjectAnalysisResult> => {
+  const { sourceWidth, sourceHeight, imageData } = await loadSourceCanvasWithImageData(
+    src,
+    'Client analysis failed due to cross-origin restrictions. Use "Analysis Server".'
+  );
+  const normalizedLayout = normalizeCenterLayoutConfig(layoutConfig);
+  const planned = analyzeAndPlanAutoScaleFromRgba({
+    pixelData: imageData.data,
+    width: sourceWidth,
+    height: sourceHeight,
+    layout: normalizedLayout,
+    preferTargetCanvas: options?.preferTargetCanvas !== false,
+  });
+  if (!planned) {
+    throw new Error('No visible object pixels were detected to analyze.');
+  }
+  return {
+    width: sourceWidth,
+    height: sourceHeight,
+    sourceObjectBounds: planned.analysis.sourceObjectBounds,
+    detectionUsed: planned.analysis.detectionUsed,
+    whitespace: planned.analysis.whitespace,
+    objectAreaPercent: planned.analysis.objectAreaPercent,
+    layout: planned.analysis.layout,
+    suggestedPlan: planned.plan,
+  };
+};
+
+export const autoScaleCanvasImageObject = async (
+  src: string,
+  layoutConfig?: CenterLayoutConfig | null,
+  options?: { preferTargetCanvas?: boolean }
+): Promise<AutoScaleCanvasResult> => {
+  const { sourceCanvas, sourceWidth, sourceHeight, imageData } = await loadSourceCanvasWithImageData(
+    src,
+    'Client auto scaling failed due to cross-origin restrictions. Use "Auto Scaler Server".'
+  );
+  const normalizedLayout = normalizeCenterLayoutConfig(layoutConfig);
+  const planned = analyzeAndPlanAutoScaleFromRgba({
+    pixelData: imageData.data,
+    width: sourceWidth,
+    height: sourceHeight,
+    layout: normalizedLayout,
+    preferTargetCanvas: options?.preferTargetCanvas !== false,
+  });
+  if (!planned) {
+    throw new Error('No visible object pixels were detected to auto scale.');
+  }
+
+  const sourceObjectBounds = planned.analysis.sourceObjectBounds;
+  const targetObjectBounds = planned.plan.targetObjectBounds;
+  const outputWidth = planned.plan.outputWidth;
+  const outputHeight = planned.plan.outputHeight;
+
+  const outputCanvas = document.createElement('canvas');
+  outputCanvas.width = outputWidth;
+  outputCanvas.height = outputHeight;
+  const outputContext = outputCanvas.getContext('2d');
+  if (!outputContext) {
+    throw new Error('Canvas context is unavailable.');
+  }
+
+  outputContext.fillStyle = '#ffffff';
+  outputContext.fillRect(0, 0, outputWidth, outputHeight);
+  outputContext.drawImage(
+    sourceCanvas,
+    sourceObjectBounds.left,
+    sourceObjectBounds.top,
+    sourceObjectBounds.width,
+    sourceObjectBounds.height,
+    targetObjectBounds.left,
+    targetObjectBounds.top,
+    targetObjectBounds.width,
+    targetObjectBounds.height
+  );
+
+  let dataUrl: string;
+  try {
+    dataUrl = outputCanvas.toDataURL('image/png');
+  } catch {
+    throw new Error('Client auto scaling failed while exporting image. Use "Auto Scaler Server".');
+  }
+
+  const objectAreaAfter = Math.max(1, targetObjectBounds.width * targetObjectBounds.height);
+  const canvasAreaAfter = Math.max(1, outputWidth * outputHeight);
+
+  return {
+    dataUrl,
+    sourceObjectBounds,
+    targetObjectBounds,
+    detectionUsed: planned.analysis.detectionUsed,
+    scale: planned.plan.scale,
+    layout: planned.analysis.layout,
+    outputWidth,
+    outputHeight,
+    whitespaceBefore: planned.analysis.whitespace,
+    whitespaceAfter: planned.plan.whitespace,
+    objectAreaPercentBefore: planned.analysis.objectAreaPercent,
+    objectAreaPercentAfter: Number(((objectAreaAfter / canvasAreaAfter) * 100).toFixed(4)),
   };
 };
 

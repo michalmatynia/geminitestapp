@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildBaseProductData } from '@/features/integrations/services/exports/base-exporter';
-import type { ProductWithImages } from '@/shared/types/domain/products';
+import type { ProductWithImages } from '@/shared/contracts/products';
 
 const createProduct = (): ProductWithImages =>
   ({

@@ -2,7 +2,7 @@ import React from 'react';
 
 import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
 import type { ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
-import { ActionMenu, DropdownMenuItem } from '@/shared/ui';
+import { ActionMenu, DropdownMenuItem, Alert } from '@/shared/ui';
 
 import { useImageRetryPresets } from '../useImageRetryPresets';
 import { useListProductModalFormContext } from './context/ListProductModalFormContext';
@@ -21,7 +21,7 @@ export function ListProductErrorPanel(): React.JSX.Element {
   }
 
   return (
-    <div className='rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200'>
+    <Alert variant='error' className='p-3'>
       <div className='flex flex-col gap-3'>
         <span>{error}</span>
         {isBaseComIntegration && isImageExportError(error) ? (
@@ -53,6 +53,6 @@ export function ListProductErrorPanel(): React.JSX.Element {
           </div>
         ) : null}
       </div>
-    </div>
+    </Alert>
   );
 }

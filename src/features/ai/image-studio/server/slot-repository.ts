@@ -6,9 +6,9 @@ import { getImageFileRepository } from '@/features/files/server';
 import { getDiskPathFromPublicPath } from '@/features/files/utils/fileUploader';
 import { getProductRepository } from '@/features/products/services/product-repository';
 import { pruneProductStudioSourceSlotsForProject } from '@/features/products/services/product-studio-config';
+import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { Asset3dDto as Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import type { ImageFileRecord } from '@/shared/contracts/files';
 
 import { removeImageStudioRunOutputs } from './run-repository';
 import {
@@ -374,6 +374,7 @@ const isGenerationDerivedSlotMetadata = (metadata: Record<string, unknown> | nul
     relationType.startsWith('center:') ||
     relationType.startsWith('crop:') ||
     relationType.startsWith('upscale:') ||
+    relationType.startsWith('autoscale:') ||
     relationType.startsWith('sequence:')
   );
 };

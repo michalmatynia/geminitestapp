@@ -17,6 +17,18 @@ export const agentPersonaSchema = namedDtoSchema.extend({
 });
 
 export type AgentPersonaDto = z.infer<typeof agentPersonaSchema>;
+export type AgentPersona = AgentPersonaDto;
+
+export const agentPersonaSettingsSchema = z.object({
+  personaId: z.string(),
+  customInstructions: z.string().optional(),
+  modelId: z.string().optional(),
+  temperature: z.number().optional(),
+  maxTokens: z.number().optional(),
+});
+
+export type AgentPersonaSettingsDto = z.infer<typeof agentPersonaSettingsSchema>;
+export type AgentPersonaSettings = AgentPersonaSettingsDto;
 
 export const createAgentPersonaSchema = agentPersonaSchema.omit({
   id: true,
@@ -46,3 +58,11 @@ export const createAgentSchema = agentSchema.omit({
 
 export type CreateAgentDto = z.infer<typeof createAgentSchema>;
 export type UpdateAgentDto = Partial<CreateAgentDto>;
+
+export const executeAgentSchema = z.object({
+  agentId: z.string(),
+  prompt: z.string(),
+  context: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type ExecuteAgentDto = z.infer<typeof executeAgentSchema>;

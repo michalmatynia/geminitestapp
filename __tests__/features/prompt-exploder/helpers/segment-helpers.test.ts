@@ -11,7 +11,7 @@ import {
   promptExploderCreateApprovalDraftFromSegment as createApprovalDraftFromSegment,
   promptExploderIsPromptExploderManagedRule as isPromptExploderManagedRule,
 } from '@/features/prompt-exploder/helpers/segment-helpers';
-import type { PromptExploderSegment } from '@/features/prompt-exploder/types';
+import type { PromptExploderSegment } from '@/shared/contracts/prompt-exploder';
 
 const makeSegment = (overrides: Partial<PromptExploderSegment> & { id: string }): PromptExploderSegment => ({
   type: 'assigned_text',

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { ManagedQueue, QueueHealthStatus } from './types';
+import type { ManagedQueue, QueueHealthStatus } from '@/shared/contracts/jobs';
 
 const logSystemEvent = async (params: { level: 'info' | 'warn' | 'error'; message: string; source: string; context?: Record<string, unknown> }): Promise<void> => {
   try {

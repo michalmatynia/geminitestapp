@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
+import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
 
 export type ProductListingsViewContextValue = {
   filteredListings: ProductListingWithDetails[];

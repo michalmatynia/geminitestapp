@@ -9,7 +9,7 @@ import type {
 } from '@/shared/utils/master-folder-tree-contract';
 import type { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
 
-import type { MasterFolderTreeController } from './types';
+import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 
 const MASTER_TREE_DRAG_NODE_ID = 'application/x-master-tree-node-id';
 

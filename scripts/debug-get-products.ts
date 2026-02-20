@@ -2,7 +2,7 @@ import { prismaProductRepository } from '../src/features/products/services/produ
 
 async function debug() {
   try {
-    const products = await prismaProductRepository.getProducts({});
+    const products = await prismaProductRepository.getProducts({ page: 1, pageSize: 10 });
     console.log('Total products found:', products.length);
     if (products.length > 0) {
       console.log('First product sample:', JSON.stringify(products[0], null, 2));

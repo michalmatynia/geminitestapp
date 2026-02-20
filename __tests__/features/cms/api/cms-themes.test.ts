@@ -3,7 +3,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { GET as GET_themes, POST as POST_themes } from '@/app/api/cms/themes/route';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
-import type { CmsTheme } from '@/features/cms/types';
+import type { CmsTheme } from '@/shared/contracts/cms';
 
 vi.mock('@/features/cms/services/cms-repository', () => ({
   getCmsRepository: vi.fn(),

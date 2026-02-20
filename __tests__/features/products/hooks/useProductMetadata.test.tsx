@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useProductMetadata } from '@/features/products/hooks/useProductMetadata';
 import * as metadataQueries from '@/features/products/hooks/useProductMetadataQueries';
-import type { ProductCategory, ProductWithImages } from '@/features/products/types';
+import type { ProductCategory, ProductWithImages } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 
 vi.mock('@/shared/lib/api-client', () => ({

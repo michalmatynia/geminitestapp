@@ -9,7 +9,7 @@ import { getCmsMenuSettings } from '@/features/cms/services/cms-menu-settings';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings';
 import type { Slug } from '@/shared/contracts/cms';
-import { buildColorSchemeMap } from '@/shared/contracts/cms/theme-settings';
+import { buildColorSchemeMap } from '@/shared/contracts/cms';
 import { productService } from '@/features/products/server';
 
 import { HomeCmsDefaultContent } from './home-cms-default-content';

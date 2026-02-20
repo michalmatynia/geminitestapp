@@ -3595,7 +3595,7 @@ The file was not found in any of the provided project(s): .next-dev/dev/static/d
   278:36  error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/lib/core/runtime/engine.ts
-  9:1  error  `@/shared/contracts/ai-paths-runtime` type import should occur before type import of `@/shared/types/domain/ai-paths`  import/order
+  9:1  error  `@/shared/contracts/ai-paths-runtime` type import should occur before type import of `@/shared/contracts/ai-paths`  import/order
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/lib/core/runtime/handlers/__tests__/engine-trigger-cache-guardrail.test.ts
   75:45  error  Unsafe member access .cached on an `any` value  @typescript-eslint/no-unsafe-member-access

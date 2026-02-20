@@ -88,3 +88,13 @@ export const createVectorDrawingSchema = vectorDrawingSchema.omit({
 
 export type CreateVectorDrawingDto = z.infer<typeof createVectorDrawingSchema>;
 export type UpdateVectorDrawingDto = Partial<CreateVectorDrawingDto>;
+
+export type VectorTool = 'select' | 'pencil' | 'line' | 'rect' | 'circle' | 'text' | 'eraser';
+
+export interface VectorCanvasState {
+  shapes: VectorShape[];
+  selectedIds: string[];
+  tool: VectorTool;
+  zoom: number;
+  pan: { x: number; y: number };
+}

@@ -35,6 +35,7 @@ import {
   Label,
   SectionHeader,
   LoadingState,
+  Card,
 } from '@/shared/ui';
 
 type ParsedParameterTarget = {
@@ -256,10 +257,10 @@ function ImportsPageContent(): React.JSX.Element {
   if (!isBaseConnected) {
     return (
       <div className='w-full py-10 container mx-auto'>
-        <div className='rounded-lg border border-amber-500/40 bg-amber-500/10 p-8 text-sm text-amber-300 shadow-lg shadow-amber-900/10'>
-          <h3 className='text-lg font-bold mb-2'>Base.com integration required</h3>
-          <p>Please configure your Base.com API connection in the Integrations settings before using import/export tools.</p>
-        </div>
+        <Card variant='warning' padding='lg'>
+          <h3 className='text-lg font-bold mb-2 text-amber-300'>Base.com integration required</h3>
+          <p className='text-sm text-amber-300'>Please configure your Base.com API connection in the Integrations settings before using import/export tools.</p>
+        </Card>
       </div>
     );
   }
@@ -308,7 +309,7 @@ function ImportsPageContent(): React.JSX.Element {
         </TabsContent>
 
         <TabsContent value='templates' className='mt-6 outline-none'>
-          <div className='bg-card/40 p-6 border border-border/60 rounded-xl'>
+          <Card variant='subtle' padding='lg'>
             <div className='flex flex-wrap justify-between items-start gap-4 mb-6'>
               <Tabs value={templateScope} onValueChange={(v: string): void => setTemplateScope(v as 'import' | 'export')}>
                 <TabsList className='bg-muted/60'>
@@ -721,7 +722,7 @@ function ImportsPageContent(): React.JSX.Element {
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
         </TabsContent>
       </Tabs>
 

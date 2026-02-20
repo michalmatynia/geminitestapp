@@ -45,7 +45,7 @@ import {
   IntegrationConnection,
   TestLogEntry,
   integrationDefinitions,
-} from '@/shared/contracts/integrations/integrations-ui';
+} from '@/shared/contracts/integrations';
 import { normalizeSteps } from '@/features/integrations/utils/connections';
 import { logClientError } from '@/features/observability';
 import { defaultPlaywrightSettings } from '@/features/playwright';
@@ -141,7 +141,6 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   // Playwright State
   const [playwrightSettings, setPlaywrightSettings] = useState(defaultPlaywrightSettings);
   const [playwrightPersonaId, setPlaywrightPersonaId] = useState<string | null>(null);
-  const [showPlaywrightSaved, setShowPlaywrightSaved] = useState(false);
 
   // Allegro State
   const [savingAllegroSandbox, setSavingAllegroSandbox] = useState(false);
@@ -197,12 +196,6 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     if (integrations.find((item: Integration) => item.id === activeIntegration.id)) return;
     setActiveIntegration(null);
   }, [activeIntegration, integrations]);
-
-  useEffect(() => {
-    if (!showPlaywrightSaved) return;
-    const timeout = setTimeout(() => setShowPlaywrightSaved(false), 2500);
-    return () => clearTimeout(timeout);
-  }, [showPlaywrightSaved]);
 
   const refreshConnections = useCallback((integrationId: string): void => {
     void invalidateIntegrationConnections(queryClient, integrationId);
@@ -596,7 +589,7 @@ ${errorBody}`;
           proxyPassword: playwrightSettings.proxyPassword, // Ensure password is sent if provided
         } as Record<string, unknown>,
       });
-      setShowPlaywrightSaved(true);
+      toast('Playwright settings saved.', { variant: 'success' });
     } catch (error: unknown) {
       toast((error as Error)?.message ?? 'Failed to save Playwright settings.', { variant: 'error' });
     }
@@ -777,7 +770,6 @@ ${errorBody}`;
     playwrightSettings,
     setPlaywrightSettings,
     playwrightPersonaId,
-    showPlaywrightSaved,
     baseApiMethod,
     setBaseApiMethod,
     baseApiParams,
@@ -864,7 +856,6 @@ ${errorBody}`;
     sessionOrigins,
     sessionQuery.isFetching,
     sessionUpdatedAt,
-    showPlaywrightSaved,
     showSessionModal,
     showTestErrorModal,
     showTestLogModal,

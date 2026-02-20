@@ -18,6 +18,7 @@ import {
 
 import { AdminImageStudioPromptsPage } from './AdminImageStudioPromptsPage';
 import { AdminImageStudioSettingsPage } from './AdminImageStudioSettingsPage';
+import { ImageStudioAnalysisTab } from '../components/ImageStudioAnalysisTab';
 import { ImageStudioDocsContent } from '../components/ImageStudioDocsContent';
 import { StudioMainContent } from '../components/StudioMainContent';
 import { StudioModals } from '../components/StudioModals';
@@ -30,7 +31,7 @@ import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState, type PreviewCanvasSize } from '../context/UiContext';
 import { getImageStudioDocTooltip } from '../utils/studio-docs';
 
-type StudioTab = 'studio' | 'projects' | 'settings' | 'prompts' | 'docs';
+type StudioTab = 'studio' | 'analysis' | 'projects' | 'settings' | 'prompts' | 'docs';
 const PREVIEW_CANVAS_SIZE_OPTIONS: Array<{ value: PreviewCanvasSize; label: string }> = [
   { value: 'regular', label: 'Regular' },
   { value: 'large', label: 'Large' },
@@ -67,6 +68,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   useEffect(() => {
     const rawTab = searchParams?.get('tab');
     const nextTab: StudioTab =
+      rawTab === 'analysis' ||
       rawTab === 'projects' ||
       rawTab === 'settings' ||
       rawTab === 'prompts' ||
@@ -120,6 +122,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
 
   const handleTabChange = useCallback((value: string): void => {
     const nextTab: StudioTab =
+      value === 'analysis' ||
       value === 'projects' ||
       value === 'settings' ||
       value === 'prompts' ||
@@ -181,6 +184,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
               <div className='flex items-center gap-3'>
                 <TabsList className='bg-card'>
                   <TabsTrigger value='studio'>Studio</TabsTrigger>
+                  <TabsTrigger value='analysis'>Analysis</TabsTrigger>
                   <TabsTrigger value='projects'>Projects</TabsTrigger>
                   <TabsTrigger value='settings'>Settings</TabsTrigger>
                   <TabsTrigger value='prompts'>Prompts</TabsTrigger>
@@ -245,6 +249,10 @@ function AdminImageStudioPageContent(): React.JSX.Element {
               <div className='p-4'>
                 <StudioProjectsList onOpenProject={handleOpenProjectEditor} />
               </div>
+            </TabsContent>
+
+            <TabsContent value='analysis' className='h-full m-0 overflow-y-auto p-4'>
+              <ImageStudioAnalysisTab />
             </TabsContent>
 
             <TabsContent value='settings' className='h-full m-0 overflow-y-auto p-4'>

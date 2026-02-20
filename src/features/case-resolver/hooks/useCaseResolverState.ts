@@ -23,6 +23,16 @@ import {
 } from '@/features/filemaker/settings';
 import { useCountries } from '@/features/internationalization/hooks/useInternationalizationQueries';
 import { PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY } from '@/features/prompt-exploder/bridge';
+import type {
+  CaseResolverCategory,
+  CaseResolverEditorNodeContext,
+  CaseResolverFile,
+  CaseResolverFileEditDraft,
+  CaseResolverFolderRecord,
+  CaseResolverIdentifier,
+  CaseResolverTag,
+  CaseResolverWorkspace,
+} from '@/shared/contracts/case-resolver';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { usePrompt } from '@/shared/hooks/ui/usePrompt';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -88,17 +98,6 @@ import {
   type CaseResolverPromptExploderPendingPayload,
 } from './useCaseResolverState.prompt-exploder-sync';
 import { useCaseResolverStateSelectionActions } from './useCaseResolverState.selection-actions';
-
-import type {
-  CaseResolverCategory,
-  CaseResolverEditorNodeContext,
-  CaseResolverFile,
-  CaseResolverFileEditDraft,
-  CaseResolverFolderRecord,
-  CaseResolverIdentifier,
-  CaseResolverTag,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
 
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';
 const CASE_RESOLVER_REQUESTED_FILE_REFRESH_MAX_ATTEMPTS = 20;
@@ -230,9 +229,13 @@ export function useCaseResolverState() {
   const [promptExploderPayloadRefreshVersion, setPromptExploderPayloadRefreshVersion] = useState(0);
   const [promptExploderApplyDiagnostics, setPromptExploderApplyDiagnostics] =
     useState<PromptExploderApplyUiDiagnostics | null>(null);
-  const [persistedWorkspaceSnapshot, setPersistedWorkspaceSnapshot] = useState<string>(
+  const [, setPersistedWorkspaceSnapshot] = useState<string>(
     JSON.stringify(initialWorkspaceState)
   );
+  const [persistedWorkspaceComparableSnapshot, setPersistedWorkspaceComparableSnapshot] =
+    useState<string>(() =>
+      serializeWorkspaceForUnsavedChangesCheck(initialWorkspaceState)
+    );
   const [isWorkspaceSaving, setIsWorkspaceSaving] = useState(false);
   const [workspaceSaveStatus, setWorkspaceSaveStatus] = useState<
     'idle' | 'dirty' | 'saving' | 'saved' | 'conflict' | 'error'
@@ -299,6 +302,19 @@ export function useCaseResolverState() {
     workspaceRef.current = workspace;
   }, [workspace]);
 
+  const syncPersistedWorkspaceTracking = useCallback(
+    (nextWorkspace: CaseResolverWorkspace): void => {
+      const serialized = JSON.stringify(nextWorkspace);
+      lastPersistedValueRef.current = serialized;
+      setPersistedWorkspaceSnapshot(serialized);
+      setPersistedWorkspaceComparableSnapshot(
+        serializeWorkspaceForUnsavedChangesCheck(nextWorkspace)
+      );
+      lastPersistedRevisionRef.current = getCaseResolverWorkspaceRevision(nextWorkspace);
+    },
+    []
+  );
+
   const flushWorkspacePersist = useCallback((): void => {
     if (persistWorkspaceInFlightRef.current) return;
 
@@ -344,10 +360,7 @@ export function useCaseResolverState() {
       if (result.ok) {
         workspaceConflictAutoRetryCountRef.current = 0;
         const persistedWorkspace = result.workspace;
-        const persistedSerialized = JSON.stringify(persistedWorkspace);
-        lastPersistedValueRef.current = persistedSerialized;
-        setPersistedWorkspaceSnapshot(persistedSerialized);
-        lastPersistedRevisionRef.current = getCaseResolverWorkspaceRevision(persistedWorkspace);
+        syncPersistedWorkspaceTracking(persistedWorkspace);
         logCaseResolverWorkspaceEvent({
           source: 'case_view',
           action: 'manual_save_success',
@@ -374,11 +387,8 @@ export function useCaseResolverState() {
 
       if (result.conflict) {
         const serverWorkspace = result.workspace;
-        const serverSerialized = JSON.stringify(serverWorkspace);
-        lastPersistedValueRef.current = serverSerialized;
-        setPersistedWorkspaceSnapshot(serverSerialized);
         const serverRevision = getCaseResolverWorkspaceRevision(serverWorkspace);
-        lastPersistedRevisionRef.current = serverRevision;
+        syncPersistedWorkspaceTracking(serverWorkspace);
         logCaseResolverWorkspaceEvent({
           source: 'case_view',
           action: 'manual_save_conflict',
@@ -451,20 +461,14 @@ export function useCaseResolverState() {
       }
       setIsWorkspaceSaving(false);
     });
-  }, [toast]);
+  }, [syncPersistedWorkspaceTracking, toast]);
 
   // Sync with store
   useEffect(() => {
     if (!canHydrateWorkspaceFromStore) return;
     if (isApplyingPromptExploderPartyProposalRef.current) return;
-    const incomingSerialized = JSON.stringify(parsedWorkspace);
     const incomingRevision = getCaseResolverWorkspaceRevision(parsedWorkspace);
     setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
-      const currentSerialized = JSON.stringify(current);
-      if (incomingSerialized === currentSerialized) {
-        return current;
-      }
-
       if (requestedFileId) {
         const currentHasRequestedFile = current.files.some(
           (file: CaseResolverFile): boolean => file.id === requestedFileId
@@ -473,9 +477,7 @@ export function useCaseResolverState() {
           (file: CaseResolverFile): boolean => file.id === requestedFileId
         );
         if (!currentHasRequestedFile && incomingHasRequestedFile) {
-          lastPersistedValueRef.current = incomingSerialized;
-          setPersistedWorkspaceSnapshot(incomingSerialized);
-          lastPersistedRevisionRef.current = incomingRevision;
+          syncPersistedWorkspaceTracking(parsedWorkspace);
           queuedSerializedWorkspaceRef.current = null;
           queuedExpectedRevisionRef.current = null;
           queuedMutationIdRef.current = null;
@@ -486,9 +488,7 @@ export function useCaseResolverState() {
       const currentRevision = getCaseResolverWorkspaceRevision(current);
       if (incomingRevision <= currentRevision) return current;
 
-      lastPersistedValueRef.current = incomingSerialized;
-      setPersistedWorkspaceSnapshot(incomingSerialized);
-      lastPersistedRevisionRef.current = incomingRevision;
+      syncPersistedWorkspaceTracking(parsedWorkspace);
       queuedSerializedWorkspaceRef.current = null;
       queuedExpectedRevisionRef.current = null;
       queuedMutationIdRef.current = null;
@@ -499,6 +499,7 @@ export function useCaseResolverState() {
     isApplyingPromptExploderPartyProposal,
     parsedWorkspace,
     requestedFileId,
+    syncPersistedWorkspaceTracking,
   ]);
 
   useEffect(() => {
@@ -872,13 +873,14 @@ export function useCaseResolverState() {
     workspaceFileIdsSignature,
   ]);
 
+  const workspaceComparableSnapshot = useMemo(
+    (): string => serializeWorkspaceForUnsavedChangesCheck(workspace),
+    [workspace]
+  );
   const isWorkspaceDirty = useMemo(
     (): boolean =>
-      serializeWorkspaceForUnsavedChangesCheck(workspace) !==
-      serializeWorkspaceForUnsavedChangesCheck(
-        parseCaseResolverWorkspace(persistedWorkspaceSnapshot)
-      ),
-    [persistedWorkspaceSnapshot, workspace]
+      workspaceComparableSnapshot !== persistedWorkspaceComparableSnapshot,
+    [persistedWorkspaceComparableSnapshot, workspaceComparableSnapshot]
   );
 
   useEffect(() => {
@@ -1050,11 +1052,7 @@ export function useCaseResolverState() {
         const recoveredCaseId = resolveCaseIdForWorkspace(refreshedWorkspace);
         if (!recoveredCaseId) return null;
 
-        const refreshedSerialized = JSON.stringify(refreshedWorkspace);
-        lastPersistedValueRef.current = refreshedSerialized;
-        setPersistedWorkspaceSnapshot(refreshedSerialized);
-        lastPersistedRevisionRef.current =
-          getCaseResolverWorkspaceRevision(refreshedWorkspace);
+        syncPersistedWorkspaceTracking(refreshedWorkspace);
         queuedSerializedWorkspaceRef.current = null;
         queuedExpectedRevisionRef.current = null;
         queuedMutationIdRef.current = null;
@@ -1076,7 +1074,7 @@ export function useCaseResolverState() {
         createContextRecoveryInFlightRef.current = false;
       }
     },
-    [requestedFileId, resolveCaseIdForWorkspace]
+    [requestedFileId, resolveCaseIdForWorkspace, syncPersistedWorkspaceTracking]
   );
 
   const createFolderForCase = useCallback(
@@ -1340,10 +1338,7 @@ export function useCaseResolverState() {
           );
           if (refreshedHasRequestedFile) {
             requestedWorkspaceMissingFileIdRef.current = null;
-            const refreshedSerialized = JSON.stringify(refreshedWorkspace);
-            lastPersistedValueRef.current = refreshedSerialized;
-            setPersistedWorkspaceSnapshot(refreshedSerialized);
-            lastPersistedRevisionRef.current = getCaseResolverWorkspaceRevision(refreshedWorkspace);
+            syncPersistedWorkspaceTracking(refreshedWorkspace);
             queuedSerializedWorkspaceRef.current = null;
             queuedExpectedRevisionRef.current = null;
             queuedMutationIdRef.current = null;
@@ -1405,9 +1400,7 @@ export function useCaseResolverState() {
             ...current,
             activeFileId: null,
           };
-          const serialized = JSON.stringify(nextWorkspace);
-          lastPersistedValueRef.current = serialized;
-          setPersistedWorkspaceSnapshot(serialized);
+          syncPersistedWorkspaceTracking(nextWorkspace);
           queuedSerializedWorkspaceRef.current = null;
           queuedExpectedRevisionRef.current = null;
           queuedMutationIdRef.current = null;
@@ -1437,9 +1430,7 @@ export function useCaseResolverState() {
           ...current,
           activeFileId: requestedFileId,
         };
-        const serialized = JSON.stringify(nextWorkspace);
-        lastPersistedValueRef.current = serialized;
-        setPersistedWorkspaceSnapshot(serialized);
+        syncPersistedWorkspaceTracking(nextWorkspace);
         queuedSerializedWorkspaceRef.current = null;
         queuedExpectedRevisionRef.current = null;
         queuedMutationIdRef.current = null;
@@ -1453,6 +1444,7 @@ export function useCaseResolverState() {
     selectedFileId,
     selectedFolderPath,
     setRequestedCaseStatusSafe,
+    syncPersistedWorkspaceTracking,
     workspace.activeFileId,
   ]);
 

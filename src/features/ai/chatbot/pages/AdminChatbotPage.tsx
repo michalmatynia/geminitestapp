@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import React, { Suspense } from 'react';
 
 import { AgentCreatorSettingsProvider } from '@/features/ai/agentcreator';
-import { Tabs, TabsContent, TabsList, TabsTrigger, LoadingState } from '@/shared/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger, LoadingState, Card } from '@/shared/ui';
 
 import { ChatInterface } from '../components/ChatInterface';
 import { DebugPanel } from '../components/DebugPanel';
@@ -33,12 +33,12 @@ function ChatbotPageInner(): React.JSX.Element | null {
     <div className='container mx-auto h-[calc(100vh-120px)] py-6'>
       <div className='grid h-full grid-cols-1 gap-6 lg:grid-cols-5'>
         {/* Session Sidebar */}
-        <div className='hidden overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0 lg:block'>
+        <Card className='hidden overflow-hidden border-border/60 bg-card/40 p-0 lg:block'>
           <SessionSidebar />
-        </div>
+        </Card>
 
         {/* Main Chat Area */}
-        <div className='flex flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0 lg:col-span-3'>
+        <Card className='flex flex-col overflow-hidden border-border/60 bg-card/40 p-0 lg:col-span-3'>
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
@@ -59,10 +59,10 @@ function ChatbotPageInner(): React.JSX.Element | null {
               </TabsContent>
             </div>
           </Tabs>
-        </div>
-        <div className='hidden overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0 lg:block'>
+        </Card>
+        <Card className='hidden overflow-hidden border-border/60 bg-card/40 p-0 lg:block'>
           <DebugPanel />
-        </div>
+        </Card>
       </div>
     </div>
   );

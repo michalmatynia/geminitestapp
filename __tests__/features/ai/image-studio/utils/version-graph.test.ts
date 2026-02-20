@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ImageStudioSlotRecord } from '@/features/ai/image-studio/types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import {
   computeVersionGraph,
   computeTimelineLayout,

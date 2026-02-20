@@ -22,7 +22,7 @@ import {
   parseRuntimeState,
 } from '../../AiPathsSettingsUtils';
 
-import type { ServerExecutionArgs } from '@/shared/contracts/ai-paths';
+import type { ServerExecutionArgs } from './types';
 
 interface ServerStreamMessage {
   type: string;

@@ -2,7 +2,7 @@ import 'server-only';
 
 
 import { decryptSecret } from '@/features/integrations/server';
-import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/integrations';
+import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations';
 import {
   defaultPlaywrightSettings,
   PLAYWRIGHT_PERSONA_SETTINGS_KEY,

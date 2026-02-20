@@ -57,7 +57,7 @@ import type {
   BaseImportRunDetailResponse,
   BaseImportRunParams,
   BaseImportRunRecord,
-} from '@/shared/contracts/integrations/base-import-runs';
+} from '@/shared/contracts/integrations';
 import { getCatalogRepository } from '@/features/products/services/catalog-repository';
 import { getParameterRepository } from '@/features/products/services/parameter-repository';
 import { getProductDataProvider } from '@/features/products/services/product-provider';

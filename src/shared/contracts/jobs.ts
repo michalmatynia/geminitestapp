@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 import { dtoBaseSchema } from './base';
 
+import type { JobsOptions, Queue, WorkerOptions } from 'bullmq';
+
 /**
  * Core Job DTOs
  */
@@ -41,6 +43,36 @@ export const jobRowDataSchema = z.object({
 
 export type JobRowDataDto = z.infer<typeof jobRowDataSchema>;
 export type JobRowData = JobRowDataDto;
+
+/**
+ * Queue DTOs
+ */
+
+export const queueNameSchema = z.enum([
+  'ai-paths',
+  'product-sync',
+  'chatbot',
+  'agents',
+  'data-import',
+  'data-export',
+  'system',
+]);
+
+export type QueueNameDto = z.infer<typeof queueNameSchema>;
+export type QueueName = QueueNameDto;
+
+export const queueHealthStatusSchema = z.object({
+  name: queueNameSchema,
+  isPaused: z.boolean(),
+  waitingCount: z.number(),
+  activeCount: z.number(),
+  completedCount: z.number(),
+  failedCount: z.number(),
+  delayedCount: z.number(),
+});
+
+export type QueueHealthStatusDto = z.infer<typeof queueHealthStatusSchema>;
+export type QueueHealthStatus = QueueHealthStatusDto;
 
 /**
  * Product AI Job DTOs
@@ -148,4 +180,38 @@ export type ProductAiJobRepository = {
   deleteTerminalJobs(): Promise<{ count: number }>;
   deleteAllJobs(): Promise<{ count: number }>;
   markStaleRunningJobs(maxAgeMs: number): Promise<{ count: number }>;
+};
+
+type QueueJobOptions = Omit<JobsOptions, 'connection'>;
+type QueueWorkerOptions = Omit<WorkerOptions, 'connection' | 'concurrency'>;
+
+/**
+ * Queue Configuration Types
+ */
+
+export type QueueConfig<TJobData = unknown> = {
+  name: QueueName;
+  concurrency: number;
+  defaultJobOptions?: QueueJobOptions;
+  workerOptions?: QueueWorkerOptions;
+  processor: (data: TJobData, jobId: string) => Promise<unknown>;
+  onCompleted?: (jobId: string, result: unknown, data: TJobData) => Promise<void>;
+  onFailed?: (
+    jobId: string,
+    error: Error,
+    data: TJobData,
+    context?: { attemptsMade: number; maxAttempts: number }
+  ) => Promise<void>;
+};
+
+export type ManagedQueue<TJobData = unknown> = {
+  enqueue: (
+    data: TJobData,
+    opts?: Partial<QueueJobOptions> & { repeat?: { every: number }; jobId?: string }
+  ) => Promise<string>;
+  startWorker: () => void;
+  stopWorker: () => Promise<void>;
+  getHealthStatus: () => Promise<QueueHealthStatus>;
+  processInline: (data: TJobData) => Promise<unknown>;
+  getQueue: () => Queue | null;
 };

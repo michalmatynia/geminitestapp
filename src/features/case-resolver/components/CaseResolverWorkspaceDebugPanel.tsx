@@ -2,6 +2,8 @@
 
 import React from 'react';
 
+import { Card } from '@/shared/ui';
+
 import {
   getCaseResolverWorkspaceDebugEventName,
   readCaseResolverWorkspaceDebugEvents,
@@ -35,7 +37,7 @@ export function CaseResolverWorkspaceDebugPanel({
 
   const recent = events.slice(-25).reverse();
   return (
-    <div className='fixed bottom-4 right-4 z-50 flex max-h-[60vh] w-[420px] flex-col rounded-lg border border-border/70 bg-black/80 p-2 text-[11px] text-gray-100 shadow-xl backdrop-blur'>
+    <Card className='fixed bottom-4 right-4 z-50 flex max-h-[60vh] w-[420px] flex-col border-border/70 bg-black/80 p-2 text-[11px] text-gray-100 shadow-xl backdrop-blur'>
       <div className='mb-2 flex items-center justify-between gap-2'>
         <span className='font-medium text-gray-100'>Workspace Debug</span>
         <span className='font-mono text-[10px] text-gray-300'>
@@ -59,12 +61,15 @@ export function CaseResolverWorkspaceDebugPanel({
               rev={entry.workspaceRevision ?? '-'} exp={entry.expectedRevision ?? '-'} cur=
               {entry.currentRevision ?? '-'} mut={entry.mutationId ?? '-'}
             </div>
+            <div className='text-[10px] text-gray-400'>
+              dur={entry.durationMs ?? '-'}ms size={entry.payloadBytes ?? '-'}B
+            </div>
             {entry.message ? (
               <div className='text-[10px] text-amber-200'>{entry.message}</div>
             ) : null}
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }

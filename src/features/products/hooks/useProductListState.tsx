@@ -49,7 +49,7 @@ import { useProductOperations } from '@/features/products/hooks/useProductOperat
 import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import { useQueuedProductIds } from '@/features/products/state/queued-product-ops';
 import type { ProductCategory, ProductWithImages } from '@/shared/contracts/products';
-import type { ProductDraftDto } from '@/shared/contracts/products/drafts';
+import type { ProductDraftDto } from '@/shared/contracts/products';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
 import { ApiError, api } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';

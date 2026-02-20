@@ -6,7 +6,7 @@ import {
   prependPatternSnapshot,
   removePatternSnapshotById,
 } from '@/features/prompt-exploder/pattern-snapshots';
-import type { PromptExploderPatternSnapshot } from '@/features/prompt-exploder/types';
+import type { PromptExploderPatternSnapshot } from '@/shared/contracts/prompt-exploder';
 
 const buildRule = (
   id: string,

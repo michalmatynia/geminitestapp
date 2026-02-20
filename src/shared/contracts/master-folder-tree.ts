@@ -26,6 +26,8 @@ export const masterTreeNodeSchema = z.object({
 });
 
 export type MasterTreeNodeDto = z.infer<typeof masterTreeNodeSchema>;
+export type MasterTreeNode = MasterTreeNodeDto;
+export type MasterTreeId = string;
 
 export const masterTreeViewNodeSchema: z.ZodType<MasterTreeViewNodeDto> = masterTreeNodeSchema.extend({
   children: z.array(z.lazy(() => masterTreeViewNodeSchema)),
@@ -131,6 +133,7 @@ export const masterFolderTreePersistOperationSchema = z.discriminatedUnion('type
 ]);
 
 export type MasterFolderTreePersistOperationDto = z.infer<typeof masterFolderTreePersistOperationSchema>;
+export type MasterFolderTreePersistOperation = 'create' | 'update' | 'delete' | 'move' | 'refresh';
 
 export const masterFolderTreeDragStateSchema = z.object({
   draggedNodeId: z.string(),
@@ -149,6 +152,10 @@ export const masterFolderTreeUndoEntrySchema = z.object({
 });
 
 export type MasterFolderTreeUndoEntryDto = z.infer<typeof masterFolderTreeUndoEntrySchema>;
+export type MasterFolderTreeUndoEntry = {
+  operation: MasterFolderTreePersistOperation;
+  nodes: MasterTreeNode[];
+};
 
 export const masterFolderTreeErrorSchema = z.object({
   code: z.string(),
@@ -159,6 +166,11 @@ export const masterFolderTreeErrorSchema = z.object({
 });
 
 export type MasterFolderTreeErrorDto = z.infer<typeof masterFolderTreeErrorSchema>;
+export type MasterFolderTreeError = {
+  message: string;
+  code?: string;
+  details?: unknown;
+};
 
 export const masterFolderTreePersistContextSchema = z.object({
   previousNodes: z.array(masterTreeNodeSchema),
@@ -186,6 +198,10 @@ export const masterFolderTreeActionResultSchema = z.discriminatedUnion('ok', [
 ]);
 
 export type MasterFolderTreeActionResultDto = z.infer<typeof masterFolderTreeActionResultSchema>;
+export type MasterFolderTreeActionResult = {
+  success: boolean;
+  error?: MasterFolderTreeError;
+};
 
 export const useMasterFolderTreeOptionsSchema = z.object({
   initialNodes: z.array(masterTreeNodeSchema),
@@ -196,3 +212,31 @@ export const useMasterFolderTreeOptionsSchema = z.object({
 });
 
 export type UseMasterFolderTreeOptionsDto = z.infer<typeof useMasterFolderTreeOptionsSchema>;
+export interface UseMasterFolderTreeOptions {
+  adapter?: any;
+  initialExpandedIds?: MasterTreeId[];
+  onAction?: (action: MasterFolderTreePersistOperation, result: MasterFolderTreeActionResult) => void;
+}
+
+export interface MasterFolderTreeController {
+  nodes: MasterTreeNode[];
+  selectedIds: Set<MasterTreeId>;
+  expandedIds: Set<MasterTreeId>;
+  isProcessing: boolean;
+  canUndo: boolean;
+  toggleExpand: (id: MasterTreeId) => void;
+  toggleSelect: (id: MasterTreeId, multi?: boolean) => void;
+  createFolder: (name?: string) => Promise<MasterFolderTreeActionResult>;
+  renameNode: (id: MasterTreeId, name: string) => Promise<MasterFolderTreeActionResult>;
+  deleteNodes: (ids: MasterTreeId[]) => Promise<MasterFolderTreeActionResult>;
+  moveNode: (id: MasterTreeId, targetParentId: MasterTreeId | null, targetIndex?: number) => Promise<MasterFolderTreeActionResult>;
+  refresh: () => Promise<MasterFolderTreeActionResult>;
+  undo: () => Promise<MasterFolderTreeActionResult>;
+}
+
+export function toMasterFolderTreeActionFail(message: string, code?: string): MasterFolderTreeActionResult {
+  return {
+    success: false,
+    error: { message, code },
+  };
+}

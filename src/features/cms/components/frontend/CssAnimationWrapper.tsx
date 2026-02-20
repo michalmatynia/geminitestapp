@@ -2,8 +2,8 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
-import type { CssAnimationConfig } from '@/shared/contracts/cms/css-animations';
-import { DEFAULT_CSS_ANIMATION_CONFIG } from '@/shared/contracts/cms/css-animations';
+import type { CssAnimationConfig } from '@/shared/contracts/cms';
+import { DEFAULT_CSS_ANIMATION_CONFIG } from '@/shared/contracts/cms';
 import { cn } from '@/shared/utils';
 
 import { useBlockSettings } from './sections/FrontendBlockRenderer';

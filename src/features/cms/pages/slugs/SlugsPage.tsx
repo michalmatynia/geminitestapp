@@ -14,7 +14,7 @@ import {
   useDeleteSlug,
 } from '@/features/cms/hooks/useCmsQueries';
 import type { CmsDomain, Slug } from '@/shared/contracts/cms';
-import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from '@/shared/contracts/cms/domain-settings';
+import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from '@/shared/contracts/cms';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {

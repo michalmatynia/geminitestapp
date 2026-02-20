@@ -8,6 +8,6 @@ export * from './context/ProductListContext';
 export * from './context/ProductFormContext';
 export * from './api';
 export * from '@/shared/contracts/products';
-export * from '@/shared/contracts/products/drafts';
-export * from '@/shared/contracts/products/products-ui';
+export * from '@/shared/contracts/products';
+export * from '@/shared/contracts/products';
 export * from './validations';

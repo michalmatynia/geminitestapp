@@ -4,7 +4,7 @@ import { useCallback, useMemo } from 'react';
 
 import { useCmsDomains } from '@/features/cms/hooks/useCmsQueries';
 import type { CmsDomain } from '@/shared/contracts/cms';
-import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from '@/shared/contracts/cms/domain-settings';
+import { CMS_DOMAIN_SETTINGS_KEY, normalizeCmsDomainSettings } from '@/shared/contracts/cms';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

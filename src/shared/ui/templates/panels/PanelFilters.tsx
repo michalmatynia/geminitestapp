@@ -10,7 +10,7 @@ import { Input } from '@/shared/ui/input';
 import { MultiSelect } from '@/shared/ui/multi-select';
 import { cn } from '@/shared/utils/ui-utils';
 
-import { FilterField } from './types';
+import { FilterField } from '@/shared/contracts/ui';
 
 const isActiveFilterValue = (value: unknown): boolean => {
   if (value === undefined || value === null) return false;

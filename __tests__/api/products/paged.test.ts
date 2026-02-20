@@ -4,7 +4,7 @@ import { vi, beforeEach, afterAll, describe, it, expect } from 'vitest';
 // Stub the missing documentation/types module and its dependents so the
 // broken import chain in src/features/documentation/catalogs/ai-paths.ts
 // doesn't prevent the test suite from loading (pre-existing project issue).
-vi.mock('@/features/documentation/types', () => ({ DOCUMENTATION_MODULE_IDS: {} }));
+vi.mock('@/shared/contracts/documentation', () => ({ DOCUMENTATION_MODULE_IDS: {} }));
 vi.mock('@/features/documentation', () => ({ DOCUMENTATION_MODULE_IDS: {}, AI_PATHS_TOOLTIP_CATALOG: [] }));
 
 // Mock Prisma client

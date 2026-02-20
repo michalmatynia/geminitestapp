@@ -1,4 +1,4 @@
-import type { BaseImportParameterImportSettings } from '@/shared/contracts/integrations/base-import-parameter-import';
+import type { BaseImportParameterImportSettings } from '@/shared/contracts/integrations';
 
 import type { BaseProductRecord } from '../base-client';
 import type { ExtractedBaseParameter } from '@/shared/contracts/integrations';

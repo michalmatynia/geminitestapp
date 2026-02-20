@@ -33,7 +33,7 @@ import type {
   BaseImportItemRecord,
   BaseImportMode,
   BaseImportRunRecord,
-} from '@/shared/contracts/integrations/base-import-runs';
+} from '@/shared/contracts/integrations';
 import { getProducerRepository } from '@/features/products/services/producer-repository';
 import { getProductRepository } from '@/features/products/services/product-repository';
 import { getTagRepository } from '@/features/products/services/tag-repository';

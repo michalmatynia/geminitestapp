@@ -10,7 +10,7 @@ import {
 } from '@/features/image-slots';
 import { logClientError } from '@/features/observability';
 import type { ProductWithImages, ProductImageRecord } from '@/shared/contracts/products';
-import type { ProductImageSlot } from '@/shared/contracts/products/products-ui';
+import type { ProductImageSlot } from '@/shared/contracts/products';
 import type { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
 import { api } from '@/shared/lib/api-client';
 import { createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';

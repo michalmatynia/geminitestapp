@@ -4,7 +4,7 @@ import {
   applyInternalMasterTreeDrop,
   isInternalMasterTreeNode,
 } from '@/features/foldertree/master/internal-drop';
-import type { MasterFolderTreeController } from '@/features/foldertree/master/types';
+import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const createController = () =>

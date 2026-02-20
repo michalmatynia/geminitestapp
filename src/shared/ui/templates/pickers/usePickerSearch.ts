@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 
-import type { UsePickerSearchOptions, UsePickerSearchReturn } from './types';
+import type { UsePickerSearchOptions, UsePickerSearchReturn } from '@/shared/contracts/ui';
 
 /**
  * usePickerSearch - Reusable search/filter hook for picker components

@@ -4,7 +4,7 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useDeleteStudioSlot } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
-import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/features/ai/image-studio/types';
+import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -93,7 +93,7 @@ describe('useDeleteStudioSlot', () => {
     );
 
     const cached = queryClient.getQueryData<StudioSlotsResponse>(slotsKey);
-    expect(cached?.slots.map((slot) => slot.id)).toEqual(['slot-keep']);
+    expect(cached?.slots.map((slot: any) => slot.id)).toEqual(['slot-keep']);
     await waitFor(() => {
       expect(invalidateImageStudioSlots).toHaveBeenCalledWith(queryClient, projectId);
     });
@@ -129,7 +129,7 @@ describe('useDeleteStudioSlot', () => {
     });
 
     const cached = queryClient.getQueryData<StudioSlotsResponse>(slotsKey);
-    expect(cached?.slots.map((slot) => slot.id)).toEqual(['slot-keep']);
+    expect(cached?.slots.map((slot: any) => slot.id)).toEqual(['slot-keep']);
     await waitFor(() => {
       expect(invalidateImageStudioSlots).toHaveBeenCalledWith(queryClient, projectId);
     });

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   inferCaseResolverOcrProviderFromModel,
+  isRetryableCaseResolverOcrError,
   resolveCaseResolverOcrModel,
 } from '@/features/jobs/workers/caseResolverOcrQueue';
 
@@ -35,5 +36,22 @@ describe('case resolver OCR queue model routing helpers', () => {
     expect(() => resolveCaseResolverOcrModel('', '')).toThrow(
       'OCR model is not configured.'
     );
+  });
+
+  it('classifies transient transport/provider errors as retryable', () => {
+    expect(
+      isRetryableCaseResolverOcrError(
+        new Error('OpenAI OCR request timed out after 120000ms.')
+      )
+    ).toBe(true);
+    expect(
+      isRetryableCaseResolverOcrError(new Error('HTTP 429 rate limit'))
+    ).toBe(true);
+    expect(
+      isRetryableCaseResolverOcrError(new Error('read ECONNRESET'))
+    ).toBe(true);
+    expect(
+      isRetryableCaseResolverOcrError(new Error('Invalid filepath.'))
+    ).toBe(false);
   });
 });

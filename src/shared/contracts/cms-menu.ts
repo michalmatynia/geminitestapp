@@ -14,6 +14,7 @@ export const menuItemSchema = z.object({
 });
 
 export type MenuItemDto = z.infer<typeof menuItemSchema>;
+export type MenuItem = MenuItemDto;
 
 export const menuSettingsSchema = z.object({
   // Visibility
@@ -82,6 +83,83 @@ export const menuSettingsSchema = z.object({
 });
 
 export type MenuSettingsDto = z.infer<typeof menuSettingsSchema>;
+export type MenuSettings = MenuSettingsDto;
 
 export const CMS_MENU_SETTINGS_KEY = 'cms_menu_settings.v1';
 export const CMS_MENU_SETTINGS_ZONE_PREFIX = 'cms_menu_settings.v1.zone.';
+
+export const DEFAULT_MENU_SETTINGS: MenuSettings = {
+  showMenu: true,
+  menuPlacement: 'top',
+  positionMode: 'sticky',
+  collapsible: false,
+  collapsedByDefault: false,
+  sideWidth: 260,
+  collapsedWidth: 72,
+  layoutStyle: 'horizontal',
+  alignment: 'left',
+  maxWidth: 1200,
+  fullWidth: false,
+  menuColorSchemeId: 'custom',
+  items: [
+    { id: '1', label: 'Home', url: '/', imageUrl: '' },
+    { id: '2', label: 'About', url: '/about', imageUrl: '' },
+    { id: '3', label: 'Contact', url: '/contact', imageUrl: '' },
+  ],
+  showItemImages: false,
+  itemImageSize: 20,
+  fontFamily: 'Inter, sans-serif',
+  fontSize: 14,
+  fontWeight: '500',
+  letterSpacing: 0,
+  textTransform: 'none',
+  backgroundColor: '#111827',
+  textColor: '#d1d5db',
+  activeItemColor: '#3b82f6',
+  borderColor: '#1f2937',
+  paddingTop: 12,
+  paddingRight: 24,
+  paddingBottom: 12,
+  paddingLeft: 24,
+  itemGap: 16,
+  mobileBreakpoint: '768',
+  mobileAnimation: 'slide-left',
+  hamburgerColor: '#d1d5db',
+  mobileOverlay: true,
+  dropdownBg: '#1f2937',
+  dropdownTextColor: '#d1d5db',
+  dropdownRadius: 8,
+  dropdownShadow: 'medium',
+  dropdownMinWidth: 200,
+  stickyEnabled: true,
+  stickyOffset: 0,
+  shrinkOnScroll: false,
+  stickyBackground: '#111827',
+  hideOnScroll: false,
+  showOnScrollUpAfterPx: 80,
+  activeStyle: 'underline',
+  activeColor: '#3b82f6',
+  hoverStyle: 'color-shift',
+  hoverColor: '#ffffff',
+  transitionSpeed: 200,
+  menuEntryAnimation: 'none',
+  menuHoverAnimation: 'none',
+};
+
+export function getCmsMenuSettingsKey(domainId?: string | null): string {
+  if (!domainId) return CMS_MENU_SETTINGS_KEY;
+  return `${CMS_MENU_SETTINGS_ZONE_PREFIX}${domainId}`;
+}
+
+export function normalizeMenuSettings(input: unknown): MenuSettings {
+  if (input && typeof input === 'object' && !Array.isArray(input)) {
+    const record = input as any;
+    return {
+      ...DEFAULT_MENU_SETTINGS,
+      ...record,
+      items: Array.isArray(record.items) ? record.items : DEFAULT_MENU_SETTINGS.items,
+      showMenu: typeof record.showMenu === 'boolean' ? record.showMenu : DEFAULT_MENU_SETTINGS.showMenu,
+    };
+  }
+  return DEFAULT_MENU_SETTINGS;
+}

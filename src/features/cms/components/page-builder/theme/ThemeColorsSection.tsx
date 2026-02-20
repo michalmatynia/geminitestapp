@@ -3,7 +3,7 @@
 import { ArrowLeft, ChevronDown } from 'lucide-react';
 import React, { useCallback } from 'react';
 
-import type { ColorScheme, ThemeSettings } from '@/shared/contracts/cms/theme-settings';
+import type { ColorScheme, ThemeSettings } from '@/shared/contracts/cms';
 import { Button, Badge } from '@/shared/ui';
 
 import { useThemeColors } from './ThemeColorsContext';
@@ -192,7 +192,7 @@ export function ThemeColorsSection(): React.JSX.Element {
               <Button
                 size='sm'
                 onClick={handleSaveScheme}
-                className='bg-blue-600 text-white hover:bg-blue-700'
+                variant='solid'
               >
                 {editingSchemeId ? 'Save scheme' : 'Create scheme'}
               </Button>

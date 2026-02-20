@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { ColorScheme, ThemeSettings } from '@/shared/contracts/cms/theme-settings';
+import type { ColorScheme, ThemeSettings } from '@/shared/contracts/cms';
 import {
   SettingsField,
   SettingsFieldsRenderer,

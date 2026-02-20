@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { MasterFolderTreePersistContext } from '@/features/foldertree/master/types';
+import type { MasterFolderTreePersistContext } from '@/shared/contracts/master-folder-tree';
 import {
   toFolderMasterNodeId,
   toNoteMasterNodeId,

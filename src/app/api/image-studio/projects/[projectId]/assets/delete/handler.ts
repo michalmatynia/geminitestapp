@@ -13,8 +13,8 @@ import {
 } from '@/features/ai/image-studio/server/slot-repository';
 import { deleteImageStudioVariant } from '@/features/ai/image-studio/server/variant-delete';
 import { getImageFileRepository } from '@/features/files/server';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
 
@@ -27,6 +27,7 @@ const isProjectScopedStudioPath = (filepath: string, projectId: string): boolean
     `/uploads/studio/crops/${projectId}`,
     `/uploads/studio/center/${projectId}`,
     `/uploads/studio/upscale/${projectId}`,
+    `/uploads/studio/autoscale/${projectId}`,
   ];
   return scopes.some((scope) => filepath === scope || filepath.startsWith(`${scope}/`));
 };
@@ -53,7 +54,8 @@ const isGenerationDerivedSlot = (metadata: unknown): boolean => {
     relationType.startsWith('generation:') ||
     relationType.startsWith('center:') ||
     relationType.startsWith('crop:') ||
-    relationType.startsWith('upscale:')
+    relationType.startsWith('upscale:') ||
+    relationType.startsWith('autoscale:')
   );
 };
 

@@ -8,7 +8,7 @@ import {
   getProductSyncProfile,
   updateProductSyncProfile,
 } from '@/features/product-sync/services/product-sync-repository';
-import type { ProductSyncProfile } from '@/shared/contracts/product-sync/product-sync';
+import type { ProductSyncProfile } from '@/shared/contracts/product-sync';
 import { notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 

@@ -2,7 +2,7 @@ import 'server-only';
 
 import { ErrorSystem } from '@/features/observability/server';
 import { getProductDataProvider, type ProductDbProvider } from '@/features/products/services/product-provider';
-import type { ParameterRepository } from '@/shared/contracts/products/services/parameter-repository';
+import type { ParameterRepository } from '@/shared/contracts/products';
 
 import { mongoParameterRepository } from './mongo-parameter-repository';
 import { prismaParameterRepository } from './prisma-parameter-repository';

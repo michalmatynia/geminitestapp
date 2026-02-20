@@ -178,6 +178,7 @@ const isGenerationDerivedSlotMetadata = (metadataRaw: unknown): boolean => {
     relationType.startsWith('center:') ||
     relationType.startsWith('crop:') ||
     relationType.startsWith('upscale:') ||
+    relationType.startsWith('autoscale:') ||
     relationType.startsWith('sequence:')
   );
 };

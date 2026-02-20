@@ -20,7 +20,7 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   AI_PATHS_ENTITY_STALE_MS,
   type ToastFn,
-} from './types';
+} from '@/shared/contracts/ai-paths-runtime';
 import { 
   buildSimulationContext, 
 } from './utils';

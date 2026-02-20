@@ -5,7 +5,7 @@ import type { StartBaseImportRunInput } from '@/features/integrations/services/i
 import type {
   BaseImportRunRecord,
   BaseImportStartResponse,
-} from '@/features/integrations/types/base-import-runs';
+} from '@/shared/contracts/integrations';
 
 const prepareBaseImportRunMock = vi.hoisted(() => vi.fn());
 const updateBaseImportRunQueueJobMock = vi.hoisted(() => vi.fn());

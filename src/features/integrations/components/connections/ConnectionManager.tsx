@@ -5,7 +5,7 @@ import {
   isTraderaIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
-import { IntegrationConnection, TestLogEntry } from '@/shared/contracts/integrations/integrations-ui';
+import { IntegrationConnection, TestLogEntry } from '@/shared/contracts/integrations';
 import { Button, Input,  StatusBadge, FormSection, FormField, SimpleSettingsList } from '@/shared/ui';
 
 const NEW_CONNECTION_DRAFT_ID = '__new_connection__';

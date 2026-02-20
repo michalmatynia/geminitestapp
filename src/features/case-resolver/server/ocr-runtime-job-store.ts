@@ -275,3 +275,11 @@ export const markCaseResolverOcrJobFailed = async (
   });
 };
 
+export const markCaseResolverOcrJobQueuedForRetry = async (
+  jobId: string
+): Promise<CaseResolverOcrJobRecord | null> => {
+  return updateCaseResolverOcrJob(jobId, {
+    status: 'queued',
+    finishedAt: null,
+  });
+};

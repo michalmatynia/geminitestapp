@@ -9,7 +9,7 @@ import {
 } from '@/features/cms/components/frontend/theme-styles';
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
 import { usePreviewEditor } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
-import type { BlockInstance, SectionInstance } from '@/shared/contracts/cms/page-builder';
+import type { BlockInstance, SectionInstance } from '@/shared/contracts/cms';
 
 interface PreviewHeroSectionProps {
   section: SectionInstance;

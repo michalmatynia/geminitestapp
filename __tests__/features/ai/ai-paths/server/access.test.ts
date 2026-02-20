@@ -13,7 +13,7 @@ import {
   canAccessGlobalAiPathRuns,
   type AiPathsAccessContext,
 } from '@/features/ai/ai-paths/server/access';
-import type { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
 const buildRun = (userId: string | null): AiPathRunRecord =>
   ({

@@ -3,7 +3,7 @@ import { Prisma, ProductTag as PrismaProductTag } from '@prisma/client';
 import type { 
   TagRepository, 
   TagFilters 
-} from '@/shared/contracts/products/services/tag-repository';
+} from '@/shared/contracts/products';
 import prisma from '@/shared/lib/db/prisma';
 import type { 
   ProductTag 

@@ -1,7 +1,7 @@
 import { Link2, Palette } from 'lucide-react';
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
-import type { ColorScheme } from '@/shared/contracts/cms/theme-settings';
+import type { ColorScheme } from '@/shared/contracts/cms';
 import {
   Input,
   Label,

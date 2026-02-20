@@ -7,7 +7,7 @@ import { logClientError } from '@/features/observability';
 import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries';
 import { useUserPreferences, useUpdateUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import type { Catalog } from '@/shared/contracts/products';
-import type { ProductListPreferences } from '@/shared/contracts/products/products-ui';
+import type { ProductListPreferences } from '@/shared/contracts/products';
 import { Button, SelectSimple, Input, useToast, FormSection, FormField, LoadingState, PageLayout } from '@/shared/ui';
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {

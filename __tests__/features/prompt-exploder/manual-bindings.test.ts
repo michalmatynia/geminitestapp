@@ -6,7 +6,7 @@ import {
 import type {
   PromptExploderSegment,
   PromptExploderSubsection,
-} from '@/features/prompt-exploder/types';
+} from '@/shared/contracts/prompt-exploder';
 
 const buildSubsection = (id: string, title: string): PromptExploderSubsection => ({
   id,

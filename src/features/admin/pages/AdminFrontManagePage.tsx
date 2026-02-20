@@ -135,7 +135,8 @@ function AdminFrontManageContent({
             <Button
               onClick={() => void handleSave()}
               disabled={updateSetting.isPending}
-              className='bg-blue-600 hover:bg-blue-700 text-white min-w-[140px]'
+              variant='solid'
+              className='min-w-[140px]'
             >
               {updateSetting.isPending ? 'Saving...' : (
                 <>

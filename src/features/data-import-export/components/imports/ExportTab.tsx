@@ -28,6 +28,7 @@ import {
   FormField,
   ToggleRow,
   MetadataItem,
+  Card,
 } from '@/shared/ui';
 
 export function ExportTab(): React.JSX.Element {
@@ -133,7 +134,7 @@ export function ExportTab(): React.JSX.Element {
   };
 
   return (
-    <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+    <Card className='border-border/60 bg-card/40 p-4'>
       <div className='flex items-center justify-between'>
         <div>
           <h2 className='text-lg font-semibold text-white'>
@@ -341,7 +342,7 @@ export function ExportTab(): React.JSX.Element {
             ) : null}
         </div>
 
-        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+        <Card className='border-border/60 bg-card/40 p-4'>
           <SectionHeader
             title='Image retry presets'
             description='Used by Retry image export and Re-export images only actions.'
@@ -459,7 +460,7 @@ export function ExportTab(): React.JSX.Element {
           </ul>
         </DocumentationSection>
 
-        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+        <Card className='border-border/60 bg-card/40 p-4'>
           <SectionHeader
             title='Quick Actions'
             size='xs'
@@ -528,7 +529,7 @@ export function ExportTab(): React.JSX.Element {
           </div>
         </div>
         {debugWarehouses ? (
-          <div className='rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300'>
+          <Card className='border-border bg-card/60 p-3 text-xs text-gray-300'>
             <div className='flex flex-wrap items-center justify-between gap-2 mb-2'>
               <span className='font-semibold text-gray-200'>
                 Warehouse debug (raw IDs)
@@ -621,6 +622,6 @@ export function ExportTab(): React.JSX.Element {
           </div>
         ) : null}
       </div>
-    </div>
+    </Card>
   );
 }

@@ -1,6 +1,7 @@
 import { z } from 'zod';
+import { namedDtoSchema } from '../base';
 
-export const CMS_THEME_SETTINGS_KEY = 'cms_theme_settings';
+export const CMS_THEME_SETTINGS_KEY = 'cms_theme_settings.v1';
 
 export const colorSchemeSchema = z.object({
   id: z.string(),
@@ -97,15 +98,15 @@ export function normalizeThemeSettings(input: unknown): ThemeSettings {
       fullWidth: typeof record.fullWidth === 'boolean' ? record.fullWidth : DEFAULT_THEME.fullWidth,
       enableAnimations: typeof record.enableAnimations === 'boolean' ? record.enableAnimations : DEFAULT_THEME.enableAnimations,
       socialFacebook: typeof record.socialFacebook === 'string' ? record.socialFacebook : DEFAULT_THEME.socialFacebook,
-      socialInstagram: typeof record.socialInstagram === 'string' ? record.socialInstagram : DEFAULT_THEME.socialFacebook,
-      socialYoutube: typeof record.socialYoutube === 'string' ? record.socialYoutube : DEFAULT_THEME.socialFacebook,
-      socialTiktok: typeof record.socialTiktok === 'string' ? record.socialTiktok : DEFAULT_THEME.socialFacebook,
-      socialTwitter: typeof record.socialTwitter === 'string' ? record.socialTwitter : DEFAULT_THEME.socialFacebook,
-      socialSnapchat: typeof record.socialSnapchat === 'string' ? record.socialSnapchat : DEFAULT_THEME.socialFacebook,
-      socialPinterest: typeof record.socialPinterest === 'string' ? record.socialPinterest : DEFAULT_THEME.socialFacebook,
-      socialTumblr: typeof record.socialTumblr === 'string' ? record.socialTumblr : DEFAULT_THEME.socialFacebook,
-      socialVimeo: typeof record.socialVimeo === 'string' ? record.socialVimeo : DEFAULT_THEME.socialFacebook,
-      socialLinkedin: typeof record.socialLinkedin === 'string' ? record.socialLinkedin : DEFAULT_THEME.socialFacebook,
+      socialInstagram: typeof record.socialInstagram === 'string' ? record.socialInstagram : DEFAULT_THEME.socialInstagram,
+      socialYoutube: typeof record.socialYoutube === 'string' ? record.socialYoutube : DEFAULT_THEME.socialYoutube,
+      socialTiktok: typeof record.socialTiktok === 'string' ? record.socialTiktok : DEFAULT_THEME.socialTiktok,
+      socialTwitter: typeof record.socialTwitter === 'string' ? record.socialTwitter : DEFAULT_THEME.socialTwitter,
+      socialSnapchat: typeof record.socialSnapchat === 'string' ? record.socialSnapchat : DEFAULT_THEME.socialSnapchat,
+      socialPinterest: typeof record.socialPinterest === 'string' ? record.socialPinterest : DEFAULT_THEME.socialPinterest,
+      socialTumblr: typeof record.socialTumblr === 'string' ? record.socialTumblr : DEFAULT_THEME.socialTumblr,
+      socialVimeo: typeof record.socialVimeo === 'string' ? record.socialVimeo : DEFAULT_THEME.socialVimeo,
+      socialLinkedin: typeof record.socialLinkedin === 'string' ? record.socialLinkedin : DEFAULT_THEME.socialLinkedin,
     };
   }
   return DEFAULT_THEME;

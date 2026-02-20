@@ -5,7 +5,7 @@ import {
   evaluateAiPathsValidationPreflight,
   normalizeAiPathsValidationConfig,
 } from '@/features/ai/ai-paths/lib';
-import type { AiNode, Edge } from '@/shared/types/domain/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 
 const createNode = (overrides: Partial<AiNode>): AiNode =>
   ({

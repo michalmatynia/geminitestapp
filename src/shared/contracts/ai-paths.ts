@@ -715,11 +715,23 @@ export const nodeCacheModeSchema = z.enum(['auto', 'force', 'disabled']);
 export type NodeCacheModeDto = z.infer<typeof nodeCacheModeSchema>;
 export type NodeCacheMode = NodeCacheModeDto;
 
+export const nodePortCardinalitySchema = z.enum(['single', 'many']);
+export type NodePortCardinalityDto = z.infer<typeof nodePortCardinalitySchema>;
+export type NodePortCardinality = NodePortCardinalityDto;
+
+export const nodePortContractSchema = z.object({
+  required: z.boolean().optional(),
+  cardinality: nodePortCardinalitySchema.optional(),
+});
+export type NodePortContractDto = z.infer<typeof nodePortContractSchema>;
+export type NodePortContract = NodePortContractDto;
+
 export const nodeRuntimeConfigSchema = z.object({
   cache: z.object({
     mode: nodeCacheModeSchema.optional(),
     ttlMs: z.number().optional(),
   }).optional(),
+  inputCardinality: z.record(z.string(), nodePortCardinalitySchema).optional(),
   waitForInputs: z.boolean().optional(),
   timeoutMs: z.number().optional(),
   retry: z.object({
@@ -944,7 +956,6 @@ export const createAiPathRunSchema = aiPathRunSchema
   });
 
 export type CreateAiPathRunDto = z.infer<typeof createAiPathRunSchema>;
-export type AiPathRunCreateInput = CreateAiPathRunDto;
 export type UpdateAiPathRunDto = Partial<CreateAiPathRunDto>;
 export type AiPathRunUpdateInput = UpdateAiPathRunDto;
 
@@ -1072,6 +1083,8 @@ export const nodeDefinitionSchema = z.object({
   description: z.string(),
   inputs: z.array(z.string()),
   outputs: z.array(z.string()),
+  inputContracts: z.record(z.string(), nodePortContractSchema).optional(),
+  outputContracts: z.record(z.string(), nodePortContractSchema).optional(),
   config: nodeConfigSchema.optional(),
 });
 

@@ -2,10 +2,15 @@ import 'server-only';
 
 import { Queue, Worker } from 'bullmq';
 
+import type {
+  ManagedQueue,
+  QueueConfig,
+  QueueHealthStatus,
+} from '@/shared/contracts/jobs';
+
 import { getRedisConnection } from './redis-connection';
 import { registerQueue } from './registry';
 
-import type { QueueConfig, ManagedQueue, QueueHealthStatus } from './types';
 import type { Job } from 'bullmq';
 
 const logSystemEvent = async (params: { level: 'info' | 'warn' | 'error'; message: string; source: string; context?: Record<string, unknown> }): Promise<void> => {
@@ -170,7 +175,17 @@ export function createManagedQueue<TJobData>(
     if (config.onFailed) {
       worker.on('failed', (job: Job | undefined, error: Error) => {
         if (job) {
-          void config.onFailed!(job.id ?? 'unknown', error, job.data as TJobData);
+          const maxAttempts =
+            typeof job.opts.attempts === 'number' && Number.isFinite(job.opts.attempts)
+              ? Math.max(1, Math.floor(job.opts.attempts))
+              : 1;
+          const attemptsMade = Math.max(1, Math.floor(job.attemptsMade || 0));
+          void config.onFailed!(
+            job.id ?? 'unknown',
+            error,
+            job.data as TJobData,
+            { attemptsMade, maxAttempts }
+          );
         }
       });
     }

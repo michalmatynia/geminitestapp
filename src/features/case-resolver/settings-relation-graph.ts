@@ -1,5 +1,4 @@
 import { typeStyles } from '@/features/ai/ai-paths/lib';
-
 import {
   CASE_RESOLVER_RELATION_ROOT_FOLDER_ID,
   DEFAULT_CASE_RESOLVER_RELATION_EDGE_META,
@@ -552,6 +551,9 @@ export const buildCaseResolverRelationGraph = ({
   const nextEdges: Edge[] = [];
   const nextEdgeMeta: Record<string, CaseResolverRelationEdgeMeta> = {};
   const usedEdgeIds = new Set<string>();
+  const existingEdgeById = new Map<string, Edge>(
+    rawEdges.map((edge: Edge): [string, Edge] => [edge.id, edge])
+  );
 
   const upsertEdge = (input: {
     id: string;
@@ -564,7 +566,7 @@ export const buildCaseResolverRelationGraph = ({
     if (!input.id || usedEdgeIds.has(input.id)) return;
     if (!nextNodeIdSet.has(input.from) || !nextNodeIdSet.has(input.to)) return;
     usedEdgeIds.add(input.id);
-    const existingEdge = rawEdges.find((edge: Edge): boolean => edge.id === input.id);
+    const existingEdge = existingEdgeById.get(input.id);
     const edgeLabel = input.label;
     const fromPort =
       typeof existingEdge?.fromPort === 'string' && existingEdge.fromPort.length > 0

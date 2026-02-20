@@ -4,7 +4,7 @@ import type {
   MasterTreeNode,
 } from '@/shared/utils/master-folder-tree-contract';
 
-import type { MasterFolderTreeController } from './types';
+import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 
 export type MasterTreeRootDropZone = 'top' | 'bottom';
 

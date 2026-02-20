@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useCmsThemes } from '@/features/cms/hooks/useCmsQueries';
 import type { CmsTheme } from '@/shared/contracts/cms';
-import type { ColorScheme, ThemeSettings } from '@/shared/contracts/cms/theme-settings';
+import type { ColorScheme, ThemeSettings } from '@/shared/contracts/cms';
 import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
 import {
   Button,

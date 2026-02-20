@@ -3,6 +3,7 @@
 import React from 'react';
 
 import type { ImageFileSelection } from '@/shared/contracts/files';
+import { Card } from '@/shared/ui';
 
 import { FileManagerProvider } from '../contexts/FileManagerContext';
 import { FileManagerBulkActions } from './file-manager/FileManagerBulkActions';
@@ -44,13 +45,13 @@ export default function FileManager({
       {...(showBulkActions !== undefined ? { showBulkActions } : {})}
       {...(showTagSearch !== undefined ? { showTagSearch } : {})}
     >
-      <div className='p-4 bg-gray-900 text-white rounded-lg shadow-xl border border-gray-800'>
+      <Card className='p-4 bg-gray-900 text-white shadow-xl border border-gray-800'>
         <FileManagerHeader />
         <FileManagerFilters />
         <FileManagerBulkActions />
         <FileManagerContent />
         <FileManagerModals />
-      </div>
+      </Card>
     </FileManagerProvider>
   );
 }

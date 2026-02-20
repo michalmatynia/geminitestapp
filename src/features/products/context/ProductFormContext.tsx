@@ -40,7 +40,7 @@ import type {
 } from '@/shared/contracts/products';
 import {
   ProductImageSlot,
-} from '@/shared/contracts/products/products-ui';
+} from '@/shared/contracts/products';
 import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import {
   productCreateSchema,

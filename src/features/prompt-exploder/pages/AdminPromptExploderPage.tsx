@@ -3,7 +3,7 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
 
-import { Button, ListPanel, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
+import { Alert, Button, ListPanel, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
 
 import { BenchmarkReportPanel } from '../components/BenchmarkReportPanel';
 import { BindingsPanel } from '../components/BindingsPanel';
@@ -49,9 +49,9 @@ class PromptExploderErrorBoundary extends React.Component<
 
     return (
       <div className='space-y-3'>
-        <div className='rounded border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-100'>
+        <Alert variant='error'>
           Prompt Exploder encountered a runtime error: {this.state.errorMessage ?? 'Unknown error'}
-        </div>
+        </Alert>
         <Button
           type='button'
           variant='outline'

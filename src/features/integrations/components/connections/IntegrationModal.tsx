@@ -40,7 +40,6 @@ export function IntegrationModal(): React.JSX.Element {
     setShowTestLogModal,
     showSessionModal,
     setShowSessionModal,
-    showPlaywrightSaved,
     onOpenSessionModal,
     sessionLoading,
     sessionError,
@@ -167,12 +166,6 @@ export function IntegrationModal(): React.JSX.Element {
           origins={(sessionOrigins || []) as string[]}
           updatedAt={sessionUpdatedAt}
         />
-
-        {showPlaywrightSaved && (
-          <div className='fixed right-6 top-6 z-[200] rounded-md border border-emerald-400/40 bg-emerald-500/20 px-3 py-2 text-xs font-medium text-emerald-100 shadow-lg animate-in fade-in zoom-in duration-300'>
-            Playwright settings saved
-          </div>
-        )}
       </DetailModal>
     </IntegrationModalViewProvider>
   );

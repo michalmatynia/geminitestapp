@@ -5,7 +5,7 @@ import React from 'react';
 
 import { cn } from '@/shared/utils/ui-utils';
 
-import { PanelAlert } from './types';
+import { PanelAlert } from '@/shared/contracts/ui';
 
 
 interface PanelAlertsProps {

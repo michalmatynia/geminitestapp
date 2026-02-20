@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { aiPathRunSchema } from './ai-paths';
+import { aiPathRunSchema, type AiNode, type Edge } from './ai-paths';
 
 /**
  * AI Path Runtime DTOs
@@ -323,3 +323,65 @@ export const aiPathRunQueueSloStatusSchema = z.object({
   ),
 });
 export type AiPathRunQueueSloStatusDto = z.infer<typeof aiPathRunQueueSloStatusSchema>;
+
+/**
+ * AI Path Runtime UI and Constants
+ */
+
+export const MAX_RUNTIME_EVENTS = 300;
+export const LOCAL_RUN_STEP_CHUNK = 5;
+export const AI_PATHS_ENTITY_STALE_MS = 30000;
+
+export type ToastFn = (props: { title: string; description?: string; variant?: 'default' | 'destructive' }) => void;
+
+/**
+ * AI Path Execution Node Handler Types
+ */
+
+export interface NodeHandlerContext {
+  node: AiNode;
+  nodeInputs: RuntimePortValues;
+  prevOutputs: RuntimePortValues;
+  edges: Edge[];
+  nodes: AiNode[];
+  nodeById: Map<string, AiNode>;
+  runId: string;
+  runStartedAt: string;
+  activePathId: string | null;
+  triggerNodeId?: string | undefined;
+  triggerEvent?: string | undefined;
+  triggerContext?: Record<string, unknown> | null | undefined;
+  deferPoll?: boolean | undefined;
+  skipAiJobs?: boolean | undefined;
+  now: string;
+  abortSignal?: AbortSignal | undefined;
+  allOutputs: Record<string, RuntimePortValues>;
+  allInputs: Record<string, RuntimePortValues>;
+  fetchEntityCached: (
+    entityType: string,
+    entityId: string
+  ) => Promise<Record<string, unknown> | null>;
+  reportAiPathsError: (
+    error: unknown,
+    meta: Record<string, unknown>,
+    summary?: string
+  ) => void;
+  toast: ToastFn;
+  simulationEntityType: string | null;
+  simulationEntityId: string | null;
+  resolvedEntity: Record<string, unknown> | null;
+  fallbackEntityId: string | null;
+  strictFlowMode: boolean;
+  executed: {
+    notification: Set<string>;
+    updater: Set<string>;
+    http: Set<string>;
+    delay: Set<string>;
+    poll: Set<string>;
+    ai: Set<string>;
+    schema: Set<string>;
+    mapper: Set<string>;
+  };
+}
+
+export type NodeHandler = (context: NodeHandlerContext) => Promise<RuntimePortValues>;

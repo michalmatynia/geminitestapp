@@ -5,7 +5,7 @@ import type {
   TagMappingCreateInput,
   TagMappingUpdateInput,
   TagMappingWithDetails,
-} from '@/shared/contracts/integrations/tag-mapping';
+} from '@/shared/contracts/integrations';
 import prisma from '@/shared/lib/db/prisma';
 
 export type TagMappingRepository = {

@@ -14,7 +14,7 @@ import {
 import {
   normalizeProductStudioSequenceGenerationMode,
   type ProductStudioSequenceGenerationMode,
-} from '@/shared/contracts/products/product-studio';
+} from '@/shared/contracts/products';
 import { normalizeProductImageExternalBaseUrl } from '@/features/products/utils/image-routing';
 import { useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

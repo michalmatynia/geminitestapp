@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const CMS_MENU_SETTINGS_KEY = 'cms_menu_settings';
+export const CMS_MENU_SETTINGS_KEY = 'cms_menu_settings.v1';
 
 export const menuItemSchema: z.ZodType<any> = z.lazy(() =>
   z.object({

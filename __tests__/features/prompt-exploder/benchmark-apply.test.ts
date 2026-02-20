@@ -1,8 +1,8 @@
 import type { PromptValidationRule } from '@/features/prompt-engine/settings';
 import { applyBenchmarkSuggestions } from '@/features/prompt-exploder/benchmark-apply';
 import { benchmarkSuggestionRuleId } from '@/features/prompt-exploder/benchmark-suggestions';
-import type { PromptExploderBenchmarkSuggestion } from '@/features/prompt-exploder/types';
-import type { PromptExploderLearnedTemplate } from '@/features/prompt-exploder/types';
+import type { PromptExploderBenchmarkSuggestion } from '@/shared/contracts/prompt-exploder';
+import type { PromptExploderLearnedTemplate } from '@/shared/contracts/prompt-exploder';
 
 const buildRegexRule = (
   id: string,

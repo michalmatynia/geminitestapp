@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export * from './cms/index';
+
 import { dtoBaseSchema, namedDtoSchema } from './base';
 
 export const cmsPageStatusSchema = z.enum(['draft', 'published', 'scheduled']);
@@ -404,6 +406,13 @@ export const DEFAULT_CMS_DOMAIN_SETTINGS: CmsDomainSettings = {
   zoningEnabled: true,
 };
 
+export function normalizeCmsDomainSettings(input?: Partial<CmsDomainSettings> | null): CmsDomainSettings {
+  return {
+    ...DEFAULT_CMS_DOMAIN_SETTINGS,
+    ...(input ?? {}),
+  };
+}
+
 /**
  * CMS Event Effects Contract
  */
@@ -574,9 +583,11 @@ export const CSS_EASINGS: { label: string; value: string }[] = [
   { label: 'Custom', value: 'custom' },
 ];
 
-/**
- * CMS Page Builder Definitions DTOs
- */
+export * from './cms/theme-settings';
+export * from './cms/menu-settings';
+export * from './cms/css-animations';
+export * from './cms/custom-css-ai';
+export * from './cms/domain-settings';
 
 export const settingsFieldOptionSchema = z.object({
   label: z.string(),
@@ -646,3 +657,44 @@ export const blockDefinitionSchema = z.object({
 
 export type BlockDefinitionDto = z.infer<typeof blockDefinitionSchema>;
 export type BlockDefinition = BlockDefinitionDto;
+
+/**
+ * CMS Repository Interfaces
+ */
+
+export type PageUpdateData = Partial<Omit<CmsPageDto, 'id' | 'createdAt' | 'updatedAt'>>;
+
+export type CmsRepository = {
+  // Pages
+  getPages(): Promise<Page[]>;
+  getPageById(id: string): Promise<Page | null>;
+  getPageBySlug(slug: string): Promise<Page | null>;
+  createPage(data: any): Promise<Page>;
+  updatePage(id: string, data: any): Promise<Page | null>;
+  deletePage(id: string): Promise<Page | null>;
+  replacePageSlugs(pageId: string, slugIds: string[]): Promise<void>;
+  replacePageComponents(pageId: string, components: any): Promise<void>;
+
+  // Slugs
+  getSlugs(): Promise<Slug[]>;
+  getSlugById(id: string): Promise<Slug | null>;
+  createSlug(data: any): Promise<Slug>;
+  updateSlug(id: string, data: any): Promise<Slug | null>;
+  deleteSlug(id: string): Promise<Slug | null>;
+
+  // Themes
+  getThemes(): Promise<CmsTheme[]>;
+  getThemeById(id: string): Promise<CmsTheme | null>;
+  createTheme(data: any): Promise<CmsTheme>;
+  updateTheme(id: string, data: any): Promise<CmsTheme | null>;
+  deleteTheme(id: string): Promise<CmsTheme | null>;
+  getDefaultTheme(): Promise<CmsTheme | null>;
+  setDefaultTheme(id: string): Promise<void>;
+
+  // Domains
+  getDomains(): Promise<CmsDomainDto[]>;
+  getDomainById(id: string): Promise<CmsDomainDto | null>;
+  createDomain(data: any): Promise<CmsDomainDto>;
+  updateDomain(id: string, data: any): Promise<CmsDomainDto>;
+  deleteDomain(id: string): Promise<void>;
+};

@@ -1,7 +1,7 @@
 import {
   TestLogEntry,
   TestStatus,
-} from '@/shared/contracts/integrations/integrations-ui';
+} from '@/shared/contracts/integrations';
 
 export const coerceStatus = (value: unknown): TestStatus => {
   if (value === 'pending' || value === 'ok' || value === 'failed') {

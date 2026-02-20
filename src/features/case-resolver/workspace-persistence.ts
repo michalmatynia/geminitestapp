@@ -1,10 +1,10 @@
+import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+
 import {
   CASE_RESOLVER_WORKSPACE_KEY,
   normalizeCaseResolverWorkspace,
   parseCaseResolverWorkspace,
 } from './settings';
-
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
 const CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY = '__caseResolverWorkspaceDebugEvents';
 const CASE_RESOLVER_WORKSPACE_DEBUG_EVENT_NAME = 'case-resolver-workspace-debug';
@@ -20,6 +20,8 @@ type CaseResolverWorkspaceDebugEvent = {
   expectedRevision?: number | null;
   currentRevision?: number | null;
   workspaceRevision?: number | null;
+  durationMs?: number;
+  payloadBytes?: number;
 };
 
 type SettingsRecordLike = {
@@ -94,7 +96,9 @@ export const createCaseResolverWorkspaceMutationId = (prefix = 'case-resolver-wo
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}-${Date.now()}`;
 };
 
-export const getCaseResolverWorkspaceRevision = (workspace: CaseResolverWorkspace): number => {
+export const getCaseResolverWorkspaceRevision = (
+  workspace: { workspaceRevision?: unknown }
+): number => {
   const candidate = workspace.workspaceRevision;
   if (typeof candidate !== 'number' || !Number.isFinite(candidate)) return 0;
   if (candidate <= 0) return 0;
@@ -161,6 +165,7 @@ const readWorkspaceFromSettingRecord = (record: SettingsRecordLike | null, fallb
 export const fetchCaseResolverWorkspaceSnapshot = async (
   source: string
 ): Promise<CaseResolverWorkspace | null> => {
+  const startedAt = Date.now();
   try {
     const response = await fetch('/api/settings?scope=light&fresh=1', {
       method: 'GET',
@@ -185,6 +190,7 @@ export const fetchCaseResolverWorkspaceSnapshot = async (
       source,
       action: 'refresh_success',
       workspaceRevision: getCaseResolverWorkspaceRevision(workspace),
+      durationMs: Date.now() - startedAt,
     });
     return workspace;
   } catch (error: unknown) {
@@ -192,6 +198,7 @@ export const fetchCaseResolverWorkspaceSnapshot = async (
       source,
       action: 'refresh_failed',
       message: error instanceof Error ? error.message : 'Unknown refresh error.',
+      durationMs: Date.now() - startedAt,
     });
     return null;
   }
@@ -200,14 +207,17 @@ export const fetchCaseResolverWorkspaceSnapshot = async (
 export const persistCaseResolverWorkspaceSnapshot = async (
   input: PersistWorkspaceInput
 ): Promise<PersistCaseResolverWorkspaceResult> => {
+  const startedAt = Date.now();
   const normalizedWorkspace = normalizeCaseResolverWorkspace(input.workspace);
   const serializedWorkspace = JSON.stringify(normalizedWorkspace);
+  const payloadBytes = serializedWorkspace.length;
   logCaseResolverWorkspaceEvent({
     source: input.source,
     action: 'persist_attempt',
     mutationId: input.mutationId,
     expectedRevision: input.expectedRevision,
     workspaceRevision: getCaseResolverWorkspaceRevision(normalizedWorkspace),
+    payloadBytes,
   });
 
   let response: Response;
@@ -244,6 +254,8 @@ export const persistCaseResolverWorkspaceSnapshot = async (
       expectedRevision: input.expectedRevision,
       workspaceRevision: getCaseResolverWorkspaceRevision(nextWorkspace),
       currentRevision: getCaseResolverWorkspaceRevision(nextWorkspace),
+      payloadBytes,
+      durationMs: Date.now() - startedAt,
       ...(payload?.idempotent === true ? { message: 'idempotent' } : {}),
     });
     return {
@@ -263,6 +275,8 @@ export const persistCaseResolverWorkspaceSnapshot = async (
       expectedRevision: input.expectedRevision,
       currentRevision,
       workspaceRevision: getCaseResolverWorkspaceRevision(normalizedWorkspace),
+      payloadBytes,
+      durationMs: Date.now() - startedAt,
     });
     return {
       ok: false,
@@ -284,6 +298,8 @@ export const persistCaseResolverWorkspaceSnapshot = async (
     mutationId: input.mutationId,
     expectedRevision: input.expectedRevision,
     workspaceRevision: getCaseResolverWorkspaceRevision(normalizedWorkspace),
+    payloadBytes,
+    durationMs: Date.now() - startedAt,
     message,
   });
   return {

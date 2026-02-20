@@ -146,6 +146,9 @@ function resolveNodeOperationVisual(node: VersionNode): NodeOperationVisual {
   if (relationType.startsWith('upscale:') || meta.upscale) {
     return { label: 'Upscale', icon: 'U', color: '#60a5fa' };
   }
+  if (relationType.startsWith('autoscale:') || meta.autoscale) {
+    return { label: 'Auto Scaler', icon: 'A', color: '#3b82f6' };
+  }
   if (relationType.startsWith('mask:') || meta.maskData || node.hasMask) {
     return { label: 'Mask', icon: 'K', color: '#a855f7' };
   }

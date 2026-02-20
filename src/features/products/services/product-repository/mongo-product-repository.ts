@@ -18,7 +18,7 @@ import type {
   ProductRepository,
   TransactionalProductRepository,
   UpdateProductInput,
-} from '@/shared/contracts/products/services/product-repository';
+} from '@/shared/contracts/products';
 import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import { conflictError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

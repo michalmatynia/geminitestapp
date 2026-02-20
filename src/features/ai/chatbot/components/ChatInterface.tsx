@@ -70,7 +70,8 @@ export function ChatInterface(): React.JSX.Element {
           />
           <Button
             type='submit'
-            className='rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50'
+            variant='solid'
+            className='rounded-md px-4 py-2 font-medium disabled:opacity-50'
             disabled={isSending || !input.trim()}
           >
             {isSending ? 'Sending...' : 'Send'}

@@ -7,7 +7,7 @@ import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import type { NoteWithRelationsDto as NoteWithRelations, NoteThemeDto as ThemeRecord } from '@/shared/contracts/notes';
 import { Button, EmptyState, Pagination } from '@/shared/ui';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
-import type { PickerGroup, PickerOption } from '@/shared/ui/templates/pickers/types';
+import type { PickerGroup, PickerOption } from '@/shared/contracts/ui';
 
 import { NoteCard } from './NoteCard';
 import { NotesFilters } from './NotesFilters';

@@ -4,7 +4,7 @@ import type {
   MasterFolderTreeAdapter,
   MasterFolderTreePersistContext,
   MasterFolderTreePersistOperation,
-} from './types';
+} from '@/shared/contracts/master-folder-tree';
 
 type MoveOperation = Extract<MasterFolderTreePersistOperation, { type: 'move' }>;
 type ReorderOperation = Extract<MasterFolderTreePersistOperation, { type: 'reorder' }>;

@@ -10,7 +10,7 @@ import type {
   BaseImportMode,
   BaseImportRunParams,
   BaseImportRunStatus,
-} from '@/shared/contracts/integrations/base-import-runs';
+} from '@/shared/contracts/integrations';
 import type {
   PriceGroupLookupDto,
   BaseImportRunParamsDto,

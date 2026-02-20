@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { Asset3DCard } from '@/features/viewer3d/components/Asset3DCard';
-import type { Asset3DRecord } from '@/features/viewer3d/types';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 const mockAsset: Asset3DRecord = {
   id: '1',

@@ -14,12 +14,13 @@ import {
   clampScale,
   clampTranslate,
   getDefaultConfigForType,
+  getNodeInputPortCardinality,
   getPortOffsetY,
   sanitizeEdges,
   validateConnection,
 } from '@/features/ai/ai-paths/lib';
+import type { ToastFn } from '@/shared/contracts/ai-paths-runtime';
 import { type ConfirmConfig, useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { ToastFn } from '@/shared/contracts/ai-paths-runtime';
 import { DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils/drag-drop';
 
 type UseAiPathsCanvasInteractionsArgs = {
@@ -756,6 +757,22 @@ export function useAiPathsCanvasInteractions({
       setConnecting(null);
       setConnectingPos(null);
       return;
+    }
+
+    const targetCardinality = getNodeInputPortCardinality(node, port);
+    if (targetCardinality === 'single') {
+      const existingIncoming = edges.find(
+        (edge: Edge): boolean => edge.to === node.id && edge.toPort === port
+      );
+      if (existingIncoming) {
+        toast(
+          'This input accepts one connection. Insert a merge/select node for fan-in.',
+          { variant: 'error' }
+        );
+        setConnecting(null);
+        setConnectingPos(null);
+        return;
+      }
     }
 
     const validation = validateConnection(

@@ -6,7 +6,7 @@ import { useEffect, useMemo } from 'react';
 
 import { useCreateIntegration } from '@/features/integrations/hooks/useIntegrationMutations';
 import { useIntegrations } from '@/features/integrations/hooks/useIntegrationQueries';
-import type { Integration } from '@/shared/contracts/integrations/integrations-ui';
+import type { Integration } from '@/shared/contracts/integrations';
 import { logClientError } from '@/features/observability';
 import { useToast, Button, SectionHeader, StatusBadge, SimpleSettingsList } from '@/shared/ui';
 

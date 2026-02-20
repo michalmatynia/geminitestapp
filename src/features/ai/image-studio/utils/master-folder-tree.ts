@@ -115,7 +115,8 @@ const isGenerationDerivedTreeSlot = (slot: ImageStudioSlotRecord): boolean => {
     relationType?.startsWith('generation:') ||
     relationType?.startsWith('center:') ||
     relationType?.startsWith('crop:') ||
-    relationType?.startsWith('upscale:')
+    relationType?.startsWith('upscale:') ||
+    relationType?.startsWith('autoscale:')
   );
 };
 

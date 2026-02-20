@@ -12,7 +12,7 @@ import { usePreviewEditor } from '@/features/cms/components/page-builder/preview
 import { 
   normalizeSlideshowAnimationType,
 } from '@/features/cms/components/page-builder/preview/preview-utils';
-import type { BlockInstance, SectionInstance } from '@/shared/contracts/cms/page-builder';
+import type { BlockInstance, SectionInstance } from '@/shared/contracts/cms';
 
 interface PreviewSlideshowSectionProps {
   section: SectionInstance;

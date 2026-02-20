@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 
 import { evaluateGraph } from '@/features/ai/ai-paths/lib/core/runtime/engine';
-import type { AiNode, Edge } from '@/shared/types/domain/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 
 describe('evaluateGraph', () => {
   const mockFetchEntityByType = vi.fn();

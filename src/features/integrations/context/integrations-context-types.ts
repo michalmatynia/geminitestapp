@@ -1,4 +1,4 @@
-import { integrationDefinitions } from '@/shared/contracts/integrations/integrations-ui';
+import { integrationDefinitions } from '@/shared/contracts/integrations';
 import type { 
   IntegrationDto as Integration, 
   IntegrationConnectionDto as IntegrationConnection, 
@@ -94,7 +94,6 @@ export interface IntegrationsContextType {
   playwrightSettings: PlaywrightSettings;
   setPlaywrightSettings: Dispatch<SetStateAction<PlaywrightSettings>>;
   playwrightPersonaId: string | null;
-  showPlaywrightSaved: boolean;
   baseApiMethod: string;
   setBaseApiMethod: (method: string) => void;
   baseApiParams: string;

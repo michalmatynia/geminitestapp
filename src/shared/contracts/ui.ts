@@ -1,4 +1,5 @@
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query';
+import { ReactNode } from 'react';
 import type { ListResponse } from './base';
 
 /**
@@ -117,4 +118,311 @@ export interface ParseJsonOptions {
   maxSize?: number;
   allowEmpty?: boolean;
   logPrefix?: string;
+}
+
+// ============================================================
+// Panel Configuration Types
+// ============================================================
+
+export interface FilterField {
+  key: string;
+  label: string;
+  type: 'text' | 'select' | 'date' | 'dateRange' | 'checkbox' | 'number';
+  placeholder?: string;
+  options?: Array<{ label: string; value: string | number }>;
+  multi?: boolean;
+  width?: string; // CSS width value
+}
+
+export interface PanelStat {
+  key: string;
+  label: string;
+  value: string | number | ReactNode;
+  icon?: ReactNode;
+  color?: 'default' | 'success' | 'warning' | 'error' | 'info';
+  tooltip?: string;
+  valueClassName?: string;
+}
+
+export interface PanelAction {
+  key: string;
+  label: string;
+  icon?: ReactNode;
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary';
+  disabled?: boolean;
+  onClick: () => void | Promise<void>;
+  tooltip?: string;
+}
+
+// ============================================================
+// Generic Column Definition (for tables/lists)
+// ============================================================
+
+export interface ColumnDef<T> {
+  key: keyof T;
+  header: string;
+  width?: string;
+  render?: (value: unknown, row: T) => ReactNode;
+  sortable?: boolean;
+  align?: 'left' | 'center' | 'right';
+}
+
+// ============================================================
+// Panel State & Events
+// ============================================================
+
+export interface PanelState {
+  page: number;
+  pageSize: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  filters: Record<string, unknown>;
+  search?: string;
+}
+
+export interface PanelCallbacks {
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (size: number) => void;
+  onFilterChange?: (key: string, value: unknown) => void;
+  onSearchChange?: (search: string) => void;
+  onRefresh?: () => void | Promise<void>;
+  onSort?: (key: string, order: 'asc' | 'desc') => void;
+  onRowClick?: (row: unknown) => void;
+}
+
+// ============================================================
+// Alert/Error Types
+// ============================================================
+
+export interface PanelAlert {
+  type: 'error' | 'warning' | 'info' | 'success';
+  title: string;
+  message?: string;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
+  dismissible?: boolean;
+}
+
+// ============================================================
+// Main Panel Config Type
+// ============================================================
+
+export interface PanelConfig<T> {
+  // Identity
+  id?: string;
+  testId?: string;
+
+  // Data
+  data: T[];
+  isLoading: boolean;
+  error?: Error | null;
+  totalCount?: number;
+
+  // Header
+  title: string;
+  description?: string;
+  subtitle?: ReactNode;
+  icon?: ReactNode;
+  refreshable?: boolean;
+  isRefreshing?: boolean;
+
+  // Filters & Search
+  filters?: FilterField[];
+  filterValues?: Record<string, unknown>;
+  searchable?: boolean;
+  searchPlaceholder?: string;
+
+  // Pagination
+  page?: number;
+  pageSize?: number;
+  pageSizeOptions?: number[];
+  showPagination?: boolean;
+
+  // Stats (optional metrics grid)
+  stats?: PanelStat[];
+  showStats?: boolean;
+
+  // Alerts & Notices
+  alerts?: PanelAlert[];
+  showAlerts?: boolean;
+
+  // Actions
+  actions?: PanelAction[];
+  headerActions?: ReactNode;
+
+  // Layout
+  compact?: boolean;
+  className?: string;
+  contentClassName?: string;
+
+  // Callbacks
+  callbacks?: PanelCallbacks;
+}
+
+export interface UsePanelStateOptions {
+  initialPage?: number;
+  initialPageSize?: number;
+  initialFilters?: Record<string, unknown>;
+  onStateChange?: (state: PanelState) => void;
+}
+
+export interface UsePanelStateReturn {
+  state: PanelState;
+  setPage: (page: number) => void;
+  setPageSize: (pageSize: number) => void;
+  setFilter: (key: string, value: unknown) => void;
+  setFilters: (filters: Record<string, unknown>) => void;
+  setSearch: (search: string) => void;
+  reset: () => void;
+}
+
+/**
+ * Generic Picker Type Definitions
+ * Provides shared types for all picker and selector components
+ */
+
+/**
+ * Base option type for picker dropdowns
+ */
+export interface PickerOption {
+  key: string;
+  label: string;
+  icon?: React.ReactNode;
+  disabled?: boolean;
+  description?: string;
+}
+
+/**
+ * Grouped options for structured pickers
+ */
+export interface PickerGroup {
+  label: string;
+  options: PickerOption[];
+  description?: string;
+}
+
+/**
+ * Grid picker item with custom rendering support
+ */
+export interface GridPickerItem<T = unknown> {
+  id: string;
+  label: string;
+  value?: T;
+  icon?: React.ReactNode;
+  disabled?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Search configuration for picker search functionality
+ */
+export interface PickerSearchConfig {
+  query: string;
+  setQuery: (query: string) => void;
+  filtered: PickerOption[] | GridPickerItem[];
+  isSearching: boolean;
+}
+
+/**
+ * Generic picker state management
+ */
+export interface PickerState<T = unknown> {
+  selected: T | null;
+  isOpen: boolean;
+  focused: string | null;
+  query: string;
+}
+
+/**
+ * Props for GenericPickerDropdown component
+ */
+export interface GenericPickerDropdownProps<T extends PickerOption = PickerOption> {
+  groups: PickerGroup[];
+  onSelect: (option: T) => void;
+  selectedKey?: string | undefined;
+  ariaLabel?: string | undefined;
+  triggerClassName?: string | undefined;
+  dropdownClassName?: string | undefined;
+  triggerContent?: React.ReactNode | undefined;
+  disabled?: boolean | undefined;
+  searchable?: boolean | undefined;
+  searchPlaceholder?: string | undefined;
+}
+
+/**
+ * Props for GenericGridPicker component
+ */
+export interface GenericGridPickerProps<T extends GridPickerItem = GridPickerItem> {
+  items: T[];
+  selectedId?: string | undefined;
+  onSelect: (item: T) => void;
+  renderItem: (item: T, selected: boolean) => React.ReactNode;
+  columns?: number | undefined;
+  gap?: string | undefined;
+  searchable?: boolean | undefined;
+  searchPlaceholder?: string | undefined;
+  searchMatcher?: ((query: string, item: T) => boolean) | undefined;
+  emptyState?: React.ReactNode | undefined;
+  className?: string | undefined;
+  gridClassName?: string | undefined;
+  disabled?: boolean | undefined;
+}
+
+/**
+ * Hook return type for usePickerSearch
+ */
+export interface UsePickerSearchReturn<T> {
+  query: string;
+  setQuery: (query: string) => void;
+  filtered: T[];
+  isSearching: boolean;
+  clearSearch: () => void;
+}
+
+/**
+ * Hook options for usePickerSearch
+ */
+export interface UsePickerSearchOptions<T> {
+  initialQuery?: string | undefined;
+  matcher?: ((query: string, item: T) => boolean) | undefined;
+  debounce?: number | undefined;
+}
+
+/**
+ * Generic selector props with multiple selection support
+ */
+export interface GenericMultiSelectorProps<T extends PickerOption = PickerOption> {
+  groups: PickerGroup[];
+  selectedKeys?: Set<string> | undefined;
+  onSelect: (option: T, selected: boolean) => void;
+  ariaLabel?: string | undefined;
+  maxSelections?: number | undefined;
+  showSelectedCount?: boolean | undefined;
+}
+
+/**
+ * Template management for pickers that support saved items
+ */
+export interface PickerTemplate {
+  id: string;
+  name: string;
+  description?: string | undefined;
+  category: string;
+  createdAt: Date;
+  metadata?: Record<string, unknown> | undefined;
+}
+
+/**
+ * Configuration for modal-based pickers
+ */
+export interface PickerModalConfig<T = unknown> {
+  title: string;
+  description?: string | undefined;
+  confirmLabel?: string | undefined;
+  cancelLabel?: string | undefined;
+  searchable?: boolean | undefined;
+  onConfirm: (value: T) => void;
+  onCancel?: (() => void) | undefined;
 }

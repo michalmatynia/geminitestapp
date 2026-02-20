@@ -12,8 +12,8 @@ import {
   type MenuItem,
   type MenuSettings,
   normalizeMenuSettings,
-} from '@/shared/contracts/cms/menu-settings';
-import type { ColorScheme } from '@/shared/contracts/cms/theme-settings';
+} from '@/shared/contracts/cms';
+import type { ColorScheme } from '@/shared/contracts/cms';
 import { ANIMATION_PRESETS } from '@/shared/contracts/gsap';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

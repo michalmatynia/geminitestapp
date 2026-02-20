@@ -4,6 +4,7 @@ import {
   AI_PATHS_HISTORY_RETENTION_DEFAULT,
   AI_PATHS_HISTORY_RETENTION_MAX,
   AI_PATHS_HISTORY_RETENTION_MIN,
+  compileGraph,
   evaluateAiPathsValidationPreflight,
   evaluateGraphWithIteratorAutoContinue,
   inspectPathDependencies,
@@ -440,6 +441,26 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   const toast = (): void => {};
 
   try {
+    const compileReport = compileGraph(nodes, edges);
+    if (!compileReport.ok) {
+      await repo.createRunEvent({
+        runId: run.id,
+        level: 'error',
+        message: 'Run blocked by graph compile validation.',
+        metadata: {
+          compile: {
+            errors: compileReport.errors,
+            warnings: compileReport.warnings,
+            findings: compileReport.findings.slice(0, 10),
+          },
+          runStartedAt,
+        },
+      });
+      throw new Error(
+        `Graph compile blocked run: ${compileReport.errors} issue(s) detected.`
+      );
+    }
+
     const validationReport = evaluateAiPathsValidationPreflight({
       nodes,
       edges,

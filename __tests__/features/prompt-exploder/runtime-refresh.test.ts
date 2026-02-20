@@ -9,7 +9,7 @@ import type {
   PromptExploderDocument,
   PromptExploderLearnedTemplate,
   PromptExploderSegment,
-} from '@/features/prompt-exploder/types';
+} from '@/shared/contracts/prompt-exploder';
 
 const buildRegexRule = (id: string, pattern: string): PromptValidationRule => ({
   kind: 'regex',

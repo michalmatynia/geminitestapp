@@ -2,7 +2,7 @@ import 'server-only';
 
 import { productService } from '@/features/products/services/productService';
 import type { ProductWithImages } from '@/shared/contracts/products';
-import type { ProductFilters } from '@/shared/contracts/products/services/product-repository';
+import type { ProductFilters } from '@/shared/contracts/products';
 
 import { withQueryCache, ProductCacheHelpers, queryCache } from './query-cache';
 

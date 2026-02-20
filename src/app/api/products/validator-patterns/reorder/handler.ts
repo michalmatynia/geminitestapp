@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { getValidationPatternRepository } from '@/features/products/server';
 import { invalidateValidationPatternRuntimeCache } from '@/features/products/services/validation-pattern-runtime-cache';
-import type { UpdateProductValidationPatternInput } from '@/shared/contracts/products/services/validation-pattern-repository';
+import type { UpdateProductValidationPatternInput } from '@/shared/contracts/products';
 import type { ProductValidationPatternDto as ProductValidationPattern } from '@/shared/contracts/products';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

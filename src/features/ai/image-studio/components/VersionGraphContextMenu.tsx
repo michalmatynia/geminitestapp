@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
+import { Card } from '@/shared/ui';
 import { useVersionGraphContextMenuContext } from './VersionGraphContextMenuContext';
 import { useSettingsState } from '../context/SettingsContext';
 import { getImageStudioDocTooltip } from '../utils/studio-docs';
@@ -47,8 +48,8 @@ export function VersionGraphContextMenu(): React.JSX.Element {
   return (
     <>
       <div className='fixed inset-0 z-50' onClick={onClose} role='presentation' />
-      <div
-        className='fixed z-50 min-w-[140px] rounded border border-border/60 bg-card py-1 shadow-lg'
+      <Card
+        className='fixed z-50 min-w-[140px] py-1 shadow-lg'
         style={{ left: menu.x, top: menu.y }}
       >
         <button
@@ -131,7 +132,7 @@ export function VersionGraphContextMenu(): React.JSX.Element {
           <Copy className='size-3' />
           Copy ID
         </button>
-      </div>
+      </Card>
     </>
   );
 }

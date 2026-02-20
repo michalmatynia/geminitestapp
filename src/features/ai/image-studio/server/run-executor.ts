@@ -29,8 +29,8 @@ import {
 } from '@/features/ai/image-studio/utils/studio-settings';
 import { getImageFileRepository } from '@/features/files/server';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
-import { badRequestError, configurationError, operationFailedError } from '@/shared/errors/app-error';
 import type { ImageFileRecord } from '@/shared/contracts/files';
+import { badRequestError, configurationError, operationFailedError } from '@/shared/errors/app-error';
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 const publicRoot = path.join(process.cwd(), 'public');
@@ -170,7 +170,7 @@ export type ImageStudioRunExecutionResult = {
 export const sanitizeImageStudioProjectId = (value: string): string =>
   value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
-const PROJECT_SCOPED_STUDIO_ASSET_GROUPS = ['crops', 'center', 'upscale'] as const;
+const PROJECT_SCOPED_STUDIO_ASSET_GROUPS = ['crops', 'center', 'upscale', 'autoscale'] as const;
 
 export const resolveExpectedOutputCount = (rawRequest: unknown): number => {
   const parsed = imageStudioRunRequestSchema.safeParse(rawRequest);

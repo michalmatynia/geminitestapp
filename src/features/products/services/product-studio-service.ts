@@ -65,7 +65,7 @@ import {
   type ProductStudioSequencingConfig,
   type ProductStudioSequencingDiagnostics,
   type ProductStudioSequenceReadiness,
-} from '@/shared/contracts/products/product-studio';
+} from '@/shared/contracts/products';
 import {
   badRequestError,
   notFoundError,

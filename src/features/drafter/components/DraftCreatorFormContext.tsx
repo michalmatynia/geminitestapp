@@ -11,7 +11,7 @@ import type {
   ProductParameterValue,
   ProductTag,
 } from '@/shared/contracts/products';
-import type { ProductDraftOpenFormTab } from '@/shared/contracts/products/drafts';
+import type { ProductDraftOpenFormTab } from '@/shared/contracts/products';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 
 export interface DraftCreatorFormContextValue {

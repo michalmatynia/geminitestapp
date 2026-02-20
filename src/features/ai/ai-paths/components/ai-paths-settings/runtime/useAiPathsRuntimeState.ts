@@ -14,7 +14,7 @@ import {
   type RunStatus,
   type RuntimeEventInput,
   type SetNodeStatusInput,
-} from './types';
+} from '@/shared/contracts/ai-paths-runtime';
 
 export function useAiPathsRuntimeState() {
   const [runStatus, setRunStatus] = useState<RunStatus>('idle');

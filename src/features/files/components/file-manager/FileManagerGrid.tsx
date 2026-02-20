@@ -6,7 +6,7 @@ import React, { useCallback } from 'react';
 
 import type { ExpandedImageFile } from '@/features/products';
 import { ImageFileSelection } from '@/shared/contracts/files';
-import { Button } from '@/shared/ui';
+import { Button, Card } from '@/shared/ui';
 
 import { useFileManager } from '../../contexts/FileManagerContext';
 
@@ -61,9 +61,9 @@ export function FileManagerGrid(): React.JSX.Element {
   return (
     <div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4'>
       {filteredFiles.map((file: ExpandedImageFile) => (
-        <div
+        <Card
           key={file.id}
-          className={`relative border-2 transition-all cursor-pointer rounded overflow-hidden ${
+          className={`relative border-2 transition-all cursor-pointer overflow-hidden ${
             selectedFiles.some((f: ImageFileSelection) => f.id === file.id)
               ? 'border-blue-500 bg-blue-500/5'
               : 'border-transparent hover:border-gray-700'
@@ -131,7 +131,7 @@ export function FileManagerGrid(): React.JSX.Element {
               </Button>
             </div>
           </div>
-        </div>
+        </Card>
       ))}
     </div>
   );

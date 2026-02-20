@@ -4,7 +4,7 @@ import { prismaProductRepository } from '@/features/products/services/product-re
 
 describe('Debug getProducts', () => {
   it('should list products', async () => {
-    const products = await prismaProductRepository.getProducts({});
+    const products = await prismaProductRepository.getProducts({ page: 1, pageSize: 10 });
     console.log('Total products found:', products.length);
     if (products.length > 0) {
       const firstProduct = products[0];

@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 import { useProductValidatorIssues } from '@/features/products/hooks/useProductValidatorIssues';
-import type { ProductValidationPattern } from '@/shared/types/domain/products';
+import type { ProductValidationPattern } from '@/shared/contracts/products';
 
 const { postMock, logClientErrorMock } = vi.hoisted(() => ({
   postMock: vi.fn(),

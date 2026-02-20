@@ -3,7 +3,7 @@ import 'server-only';
 import type {
   BaseImportRunRecord,
   BaseImportStartResponse,
-} from '@/shared/contracts/integrations/base-import-runs';
+} from '@/shared/contracts/integrations';
 import { enqueueBaseImportRunJob } from '@/features/jobs/workers/baseImportQueue';
 
 import {

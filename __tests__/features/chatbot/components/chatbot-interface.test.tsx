@@ -18,8 +18,8 @@ describe('ChatInterface', () => {
   });
 
   const mockMessages = [
-    { role: 'user' as const, content: 'Hello' },
-    { role: 'assistant' as const, content: 'Hi there!' },
+    { id: '1', sessionId: 's1', role: 'user' as const, content: 'Hello', timestamp: new Date().toISOString() },
+    { id: '2', sessionId: 's1', role: 'assistant' as const, content: 'Hi there!', timestamp: new Date().toISOString() },
   ];
 
   const defaultMockValue = {
@@ -94,7 +94,7 @@ describe('ChatInterface', () => {
     setAgentLoopBackoffMaxMs: vi.fn(),
     latestAgentRunId: null,
     setLatestAgentRunId: vi.fn(),
-    debugState: {},
+    debugState: { activeRunId: null, isPaused: false, stepMode: false, lastUpdateAt: new Date().toISOString() },
     setDebugState: vi.fn(),
     globalContext: '',
     setGlobalContext: vi.fn(),

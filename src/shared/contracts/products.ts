@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export * from './products/index';
+
 import { localizedSchema, dtoBaseSchema, namedDtoSchema } from './base';
 import { imageFileRecordSchema } from './files';
 import { commonListQuerySchema } from '../validations/api-schemas';

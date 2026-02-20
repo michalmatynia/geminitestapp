@@ -17,7 +17,7 @@ export type DebugInfo = {
   timestamp: string;
 };
 
-export type ProductFormData = any; // Placeholder to avoid complex imports here
+export type ProductFormData = any; // Placeholder
 
 export type ProductListPreferencesDto = {
   nameLocale: 'name_en' | 'name_pl' | 'name_de';

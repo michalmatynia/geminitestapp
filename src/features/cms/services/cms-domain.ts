@@ -5,7 +5,7 @@ import { randomUUID } from 'crypto';
 import { getCmsDomainSettings } from '@/features/cms/services/cms-domain-settings';
 import { getCmsDataProvider } from '@/features/cms/services/cms-provider';
 import type { CmsDomain, Slug } from '@/shared/contracts/cms';
-import type { CmsRepository } from '@/shared/contracts/cms/services/cms-repository';
+import type { CmsRepository } from '@/shared/contracts/cms';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 

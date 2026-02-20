@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { Page, Slug, PageComponent, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from '@/shared/contracts/cms';
-import type { CmsRepository, PageUpdateData } from '@/shared/contracts/cms/services/cms-repository';
+import type { CmsRepository, PageUpdateData } from '@/shared/contracts/cms';
 import { ErrorSystem, logActivity, ActivityTypes } from '@/features/observability/server';
 
 import { getCmsRepository } from './cms-repository';

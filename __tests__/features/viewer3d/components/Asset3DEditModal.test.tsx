@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { updateAsset3D } from '@/features/viewer3d/api';
 import { Asset3DEditModal } from '@/features/viewer3d/components/Asset3DEditModal';
-import type { Asset3DRecord } from '@/features/viewer3d/types';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 const { logClientErrorMock } = vi.hoisted(() => ({
   logClientErrorMock: vi.fn(),

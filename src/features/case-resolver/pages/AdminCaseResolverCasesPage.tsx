@@ -15,12 +15,28 @@ import {
   Trash2,
 } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
+import type { UserPreferences } from '@/shared/contracts/auth';
+import type {
+  CaseResolverAssetFile,
+  CaseResolverCategory,
+  CaseResolverFile,
+  CaseResolverFolderRecord,
+  CaseResolverIdentifier,
+  CaseResolverTag,
+  CaseResolverWorkspace,
+} from '@/shared/contracts/case-resolver';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import type { UserPreferences } from '@/shared/contracts/auth';
 import {
   Badge,
   Button,
@@ -65,16 +81,6 @@ import {
   persistCaseResolverWorkspaceSnapshot,
   stampCaseResolverWorkspaceMutation,
 } from '../workspace-persistence';
-
-import type {
-  CaseResolverAssetFile,
-  CaseResolverCategory,
-  CaseResolverFile,
-  CaseResolverFolderRecord,
-  CaseResolverIdentifier,
-  CaseResolverTag,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
 
 const createId = (prefix: string): string => {
   if (
@@ -752,14 +758,11 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         'cases_page_route_sync',
       );
       if (!latestWorkspace || isCancelled) return;
-      const latestSerialized = JSON.stringify(latestWorkspace);
       const latestRevision = getCaseResolverWorkspaceRevision(latestWorkspace);
       setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
-        const currentSerialized = JSON.stringify(current);
-        if (latestSerialized === currentSerialized) return current;
         const currentRevision = getCaseResolverWorkspaceRevision(current);
         if (latestRevision <= currentRevision) return current;
-        lastPersistedWorkspaceValueRef.current = latestSerialized;
+        lastPersistedWorkspaceValueRef.current = JSON.stringify(latestWorkspace);
         lastPersistedWorkspaceRevisionRef.current = latestRevision;
         logCaseResolverWorkspaceEvent({
           source: 'cases_page',
@@ -777,14 +780,11 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   useEffect(() => {
     if (pathname !== '/admin/case-resolver/cases') return;
     if (!canHydrateWorkspaceFromStore) return;
-    const incomingSerialized = JSON.stringify(parsedWorkspace);
     const incomingRevision = getCaseResolverWorkspaceRevision(parsedWorkspace);
     setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
-      const currentSerialized = JSON.stringify(current);
-      if (currentSerialized === incomingSerialized) return current;
       const currentRevision = getCaseResolverWorkspaceRevision(current);
       if (incomingRevision <= currentRevision) return current;
-      lastPersistedWorkspaceValueRef.current = incomingSerialized;
+      lastPersistedWorkspaceValueRef.current = JSON.stringify(parsedWorkspace);
       lastPersistedWorkspaceRevisionRef.current = incomingRevision;
       logCaseResolverWorkspaceEvent({
         source: 'cases_page',
@@ -1088,6 +1088,19 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       },
     [caseSortBy, caseSortOrder],
   );
+  const deferredCaseSearchQuery = useDeferredValue(caseSearchQuery);
+  const caseFilterTagIdSet = useMemo(
+    (): Set<string> => new Set(caseFilterTagIds),
+    [caseFilterTagIds],
+  );
+  const caseFilterCaseIdentifierIdSet = useMemo(
+    (): Set<string> => new Set(caseFilterCaseIdentifierIds),
+    [caseFilterCaseIdentifierIds],
+  );
+  const caseFilterCategoryIdSet = useMemo(
+    (): Set<string> => new Set(caseFilterCategoryIds),
+    [caseFilterCategoryIds],
+  );
   const indexedCases = useMemo(
     (): IndexedCaseRow[] =>
       files.map(
@@ -1116,10 +1129,10 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     [caseCategoryPathById, caseIdentifierPathById, caseTagPathById, files],
   );
   const filteredCases = useMemo((): CaseResolverFile[] => {
-    const normalizedQuery = caseSearchQuery.trim().toLowerCase();
-    const hasTagFilter = caseFilterTagIds.length > 0;
-    const hasCaseIdentifierFilter = caseFilterCaseIdentifierIds.length > 0;
-    const hasCategoryFilter = caseFilterCategoryIds.length > 0;
+    const normalizedQuery = deferredCaseSearchQuery.trim().toLowerCase();
+    const hasTagFilter = caseFilterTagIdSet.size > 0;
+    const hasCaseIdentifierFilter = caseFilterCaseIdentifierIdSet.size > 0;
+    const hasCategoryFilter = caseFilterCategoryIdSet.size > 0;
 
     const matchesSearch = (row: IndexedCaseRow): boolean => {
       if (!normalizedQuery) return true;
@@ -1153,20 +1166,20 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           return false;
         if (
           hasTagFilter &&
-          (!row.file.tagId || !caseFilterTagIds.includes(row.file.tagId))
+          (!row.file.tagId || !caseFilterTagIdSet.has(row.file.tagId))
         )
           return false;
         if (
           hasCaseIdentifierFilter &&
           (!row.file.caseIdentifierId ||
-            !caseFilterCaseIdentifierIds.includes(row.file.caseIdentifierId))
+            !caseFilterCaseIdentifierIdSet.has(row.file.caseIdentifierId))
         ) {
           return false;
         }
         if (
           hasCategoryFilter &&
           (!row.file.categoryId ||
-            !caseFilterCategoryIds.includes(row.file.categoryId))
+            !caseFilterCategoryIdSet.has(row.file.categoryId))
         ) {
           return false;
         }
@@ -1176,11 +1189,11 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       .sort(caseSortComparator);
   }, [
     caseFileTypeFilter,
-    caseFilterCaseIdentifierIds,
-    caseFilterCategoryIds,
+    caseFilterCaseIdentifierIdSet,
+    caseFilterCategoryIdSet,
     caseFilterFolder,
-    caseFilterTagIds,
-    caseSearchQuery,
+    caseFilterTagIdSet,
+    deferredCaseSearchQuery,
     caseSearchScope,
     caseSortComparator,
     indexedCases,

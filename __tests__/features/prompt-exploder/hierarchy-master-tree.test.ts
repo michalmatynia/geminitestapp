@@ -7,7 +7,7 @@ import {
   toPromptExploderMasterNodeId,
   updatePromptExploderListItemById,
 } from '@/features/prompt-exploder/hierarchy-master-tree';
-import type { PromptExploderListItem } from '@/features/prompt-exploder/types';
+import type { PromptExploderListItem } from '@/shared/contracts/prompt-exploder';
 
 const SAMPLE_ITEMS: PromptExploderListItem[] = [
   {

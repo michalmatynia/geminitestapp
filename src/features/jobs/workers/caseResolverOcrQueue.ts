@@ -3,6 +3,7 @@ import 'server-only';
 import fs from 'fs/promises';
 import path from 'path';
 
+import { UnrecoverableError } from 'bullmq';
 import OpenAI from 'openai';
 
 import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/features/ai/image-studio/utils/studio-settings';
@@ -11,6 +12,7 @@ import { resolveCaseResolverOcrDiskPath } from '@/features/case-resolver/server/
 import {
   markCaseResolverOcrJobCompleted,
   markCaseResolverOcrJobFailed,
+  markCaseResolverOcrJobQueuedForRetry,
   markCaseResolverOcrJobRunning,
 } from '@/features/case-resolver/server/ocr-runtime-job-store';
 import { DEFAULT_CASE_RESOLVER_OCR_PROMPT } from '@/features/case-resolver/settings';
@@ -24,6 +26,8 @@ const LOG_SOURCE = 'case-resolver-ocr-queue';
 const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env['OLLAMA_MODEL']?.trim() || '';
 const MAX_PDF_OCR_TEXT_CHARS = 80_000;
+const OLLAMA_OCR_TIMEOUT_MS = 90_000;
+const REMOTE_OCR_TIMEOUT_MS = 120_000;
 
 type CaseResolverOcrQueueJobData = {
   jobId: string;
@@ -65,6 +69,14 @@ type GeminiResponse = {
       }>;
     };
   }>;
+};
+
+type PdfParseResult = {
+  text?: unknown;
+};
+
+type PdfParseModule = {
+  default: (buffer: Buffer) => Promise<PdfParseResult>;
 };
 
 export type CaseResolverOcrDispatchMode = 'queued' | 'inline';
@@ -247,6 +259,66 @@ const parseGeminiResponseText = (payload: GeminiResponse): string => {
     .trim();
 };
 
+const fetchWithTimeout = async (
+  input: RequestInfo | URL,
+  init: RequestInit,
+  timeoutMs: number,
+  source: string
+): Promise<Response> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`${source} request timed out after ${timeoutMs}ms.`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
+const withPromiseTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  source: string
+): Promise<T> => {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`${source} request timed out after ${timeoutMs}ms.`));
+    }, timeoutMs);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+};
+
+export const isRetryableCaseResolverOcrError = (error: unknown): boolean => {
+  const message =
+    error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  return (
+    message.includes('timed out') ||
+    message.includes('timeout') ||
+    message.includes('temporarily unavailable') ||
+    message.includes('rate limit') ||
+    message.includes('429') ||
+    message.includes('503') ||
+    message.includes('502') ||
+    message.includes('504') ||
+    message.includes('econnreset') ||
+    message.includes('econnrefused') ||
+    message.includes('socket hang up') ||
+    message.includes('network')
+  );
+};
+
 const runOllamaOcrRequest = async (input: {
   model: string;
   prompt: string;
@@ -260,21 +332,26 @@ const runOllamaOcrRequest = async (input: {
     extractedDocumentText: input.extractedDocumentText,
   });
 
-  const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: input.model,
-      stream: false,
-      messages: [
-        {
-          role: 'user',
-          content,
-          ...(input.images && input.images.length > 0 ? { images: input.images } : {}),
-        },
-      ],
-    }),
-  });
+  const response = await fetchWithTimeout(
+    `${OLLAMA_BASE_URL}/api/chat`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: input.model,
+        stream: false,
+        messages: [
+          {
+            role: 'user',
+            content,
+            ...(input.images && input.images.length > 0 ? { images: input.images } : {}),
+          },
+        ],
+      }),
+    },
+    OLLAMA_OCR_TIMEOUT_MS,
+    'Ollama OCR'
+  );
 
   if (!response.ok) {
     const responseBody = await response.text();
@@ -324,11 +401,15 @@ const runOpenAiOcrRequest = async (input: {
   ];
 
   try {
-    const completion = await client.chat.completions.create({
-      model: input.model,
-      messages,
-      max_completion_tokens: 1500,
-    });
+    const completion = await withPromiseTimeout(
+      client.chat.completions.create({
+        model: input.model,
+        messages,
+        max_completion_tokens: 1500,
+      }),
+      REMOTE_OCR_TIMEOUT_MS,
+      'OpenAI OCR'
+    );
     return parseOpenAiResponseText(completion as unknown as OpenAiChatCompletionPayload);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : '';
@@ -336,11 +417,15 @@ const runOpenAiOcrRequest = async (input: {
     if (!/max_completion_tokens/i.test(errorMessage)) {
       throw error;
     }
-    const completion = await client.chat.completions.create({
-      model: input.model,
-      messages,
-      max_tokens: 1500,
-    });
+    const completion = await withPromiseTimeout(
+      client.chat.completions.create({
+        model: input.model,
+        messages,
+        max_tokens: 1500,
+      }),
+      REMOTE_OCR_TIMEOUT_MS,
+      'OpenAI OCR'
+    );
     return parseOpenAiResponseText(completion as unknown as OpenAiChatCompletionPayload);
   }
 };
@@ -379,24 +464,29 @@ const runAnthropicOcrRequest = async (input: {
       ]
       : []),
   ];
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
+  const response = await fetchWithTimeout(
+    'https://api.anthropic.com/v1/messages',
+    {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: input.model,
+        max_tokens: 1500,
+        messages: [
+          {
+            role: 'user',
+            content,
+          },
+        ],
+      }),
     },
-    body: JSON.stringify({
-      model: input.model,
-      max_tokens: 1500,
-      messages: [
-        {
-          role: 'user',
-          content,
-        },
-      ],
-    }),
-  });
+    REMOTE_OCR_TIMEOUT_MS,
+    'Anthropic OCR'
+  );
   if (!response.ok) {
     const responseBody = await response.text();
     throw new Error(responseBody.trim() || `Anthropic OCR request failed (${response.status}).`);
@@ -436,7 +526,7 @@ const runGeminiOcrRequest = async (input: {
       ]
       : []),
   ];
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
       input.model
     )}:generateContent?key=${encodeURIComponent(apiKey)}`,
@@ -447,7 +537,9 @@ const runGeminiOcrRequest = async (input: {
         contents: [{ role: 'user', parts }],
         generationConfig: { maxOutputTokens: 1500 },
       }),
-    }
+    },
+    REMOTE_OCR_TIMEOUT_MS,
+    'Gemini OCR'
   );
   if (!response.ok) {
     const responseBody = await response.text();
@@ -465,7 +557,7 @@ const resolveOcrModel = (model: string): CaseResolverResolvedOcrModel => {
 
 const extractPdfTextForOcr = async (diskPath: string): Promise<string> => {
   const fileBuffer = await fs.readFile(diskPath);
-  const pdfParseModule = await import('pdf-parse');
+  const pdfParseModule = (await import('pdf-parse')) as PdfParseModule;
   const parsed = await pdfParseModule.default(fileBuffer);
   const text = typeof parsed.text === 'string' ? parsed.text.trim() : '';
   if (!text) return '';
@@ -558,7 +650,11 @@ const queue = createManagedQueue<CaseResolverOcrQueueJobData>({
   name: 'case-resolver-ocr',
   concurrency: 1,
   defaultJobOptions: {
-    attempts: 1,
+    attempts: 3,
+    backoff: {
+      type: 'exponential',
+      delay: 1_500,
+    },
     removeOnComplete: true,
     removeOnFail: false,
   },
@@ -575,7 +671,9 @@ const queue = createManagedQueue<CaseResolverOcrQueueJobData>({
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'OCR runtime job failed.';
-      await markCaseResolverOcrJobFailed(data.jobId, errorMessage);
+      if (!isRetryableCaseResolverOcrError(error)) {
+        throw new UnrecoverableError(errorMessage);
+      }
       throw error;
     }
   },
@@ -587,12 +685,35 @@ const queue = createManagedQueue<CaseResolverOcrQueueJobData>({
       context: { queueJobId: jobId, runtimeJobId: data.jobId },
     });
   },
-  onFailed: async (jobId, error, data) => {
+  onFailed: async (jobId, error, data, context) => {
+    const attemptsMade = context?.attemptsMade ?? 1;
+    const maxAttempts = context?.maxAttempts ?? 1;
+    const isFinalAttempt = attemptsMade >= maxAttempts;
+    const errorMessage = error instanceof Error ? error.message : 'OCR runtime job failed.';
+
+    if (!isFinalAttempt && isRetryableCaseResolverOcrError(error)) {
+      await markCaseResolverOcrJobQueuedForRetry(data.jobId);
+      await logSystemEvent({
+        level: 'warn',
+        source: LOG_SOURCE,
+        message: `OCR job ${data.jobId} failed transiently (attempt ${attemptsMade}/${maxAttempts}); retrying`,
+        context: {
+          queueJobId: jobId,
+          runtimeJobId: data.jobId,
+          reason: errorMessage,
+        },
+      });
+      return;
+    }
+
+    await markCaseResolverOcrJobFailed(data.jobId, errorMessage);
     await ErrorSystem.captureException(error, {
       service: LOG_SOURCE,
       action: 'onFailed',
       queueJobId: jobId,
       runtimeJobId: data.jobId,
+      attemptsMade,
+      maxAttempts,
     });
   },
 });

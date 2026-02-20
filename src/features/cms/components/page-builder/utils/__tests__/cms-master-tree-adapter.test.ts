@@ -7,7 +7,7 @@ import {
   toCmsZoneNodeId,
 } from '@/features/cms/components/page-builder/utils/cms-master-tree';
 import { createCmsMasterTreeAdapter } from '@/features/cms/components/page-builder/utils/cms-master-tree-adapter';
-import type { MasterFolderTreePersistContext } from '@/features/foldertree/master/types';
+import type { MasterFolderTreePersistContext } from '@/shared/contracts/master-folder-tree';
 import type { SectionInstance } from '@/shared/contracts/cms';
 
 const createSection = (overrides: Partial<SectionInstance>): SectionInstance =>

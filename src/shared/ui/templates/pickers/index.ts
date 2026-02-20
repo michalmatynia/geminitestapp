@@ -17,4 +17,4 @@ export type {
   GenericMultiSelectorProps,
   PickerTemplate,
   PickerModalConfig,
-} from './types';
+} from '@/shared/contracts/ui';

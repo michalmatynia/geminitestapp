@@ -6,7 +6,7 @@ import { getCmsMenuSettings } from '@/features/cms/services/cms-menu-settings';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings';
 import type { CmsTheme, PageComponent } from '@/shared/contracts/cms';
-import { buildColorSchemeMap } from '@/shared/contracts/cms/theme-settings';
+import { buildColorSchemeMap } from '@/shared/contracts/cms';
 
 import type { Session } from 'next-auth';
 

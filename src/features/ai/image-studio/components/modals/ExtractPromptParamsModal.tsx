@@ -4,7 +4,7 @@ import { Loader2, Zap, Cpu, Sparkles, Wand2 } from 'lucide-react';
 import React from 'react';
 
 import type { ModalStateProps } from '@/shared/contracts/ui';
-import { FormModal, Button, Label, Textarea, StandardDataTablePanel } from '@/shared/ui';
+import { FormModal, Button, Label, Textarea, StandardDataTablePanel, EmptyState } from '@/shared/ui';
 
 import type {
   PromptExtractHistoryEntry,
@@ -264,9 +264,12 @@ export function ExtractPromptParamsModal({
               maxHeight='20rem'
             />
           ) : (
-            <div className='rounded-lg border border-dashed border-border bg-card/20 py-12 text-center text-xs text-muted-foreground italic'>
-              No parameters extracted yet. Use one of the extraction methods above.
-            </div>
+            <EmptyState
+              title='No parameters'
+              description='No parameters extracted yet. Use one of the extraction methods above.'
+              variant='compact'
+              className='bg-card/20 border-dashed border-border py-12'
+            />
           )}
         </div>
       </div>

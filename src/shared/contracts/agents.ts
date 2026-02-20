@@ -22,11 +22,22 @@ export type AgentPersonaDto = z.infer<typeof agentPersonaSchema>;
 export type AgentPersona = AgentPersonaDto;
 
 export const agentPersonaSettingsSchema = z.object({
-  personaId: z.string(),
+  personaId: z.string().optional(),
   customInstructions: z.string().optional(),
   modelId: z.string().optional(),
   temperature: z.number().optional(),
   maxTokens: z.number().optional(),
+  executorModel: z.string().optional(),
+  plannerModel: z.string().optional(),
+  selfCheckModel: z.string().optional(),
+  extractionValidationModel: z.string().optional(),
+  toolRouterModel: z.string().optional(),
+  memoryValidationModel: z.string().optional(),
+  memorySummarizationModel: z.string().optional(),
+  loopGuardModel: z.string().optional(),
+  approvalGateModel: z.string().optional(),
+  selectorInferenceModel: z.string().optional(),
+  outputNormalizationModel: z.string().optional(),
 });
 
 export type AgentPersonaSettingsDto = z.infer<typeof agentPersonaSettingsSchema>;

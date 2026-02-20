@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type { RegexConfig, RegexTemplate } from '@/features/ai/ai-paths/lib';
-import { Button, Input, SelectSimple, ToggleRow, FormField, Label } from '@/shared/ui';
+import { Button, Input, SelectSimple, ToggleRow, FormField, Label, EmptyState } from '@/shared/ui';
 
 type RegexTemplatesTabContentProps = {
   globalTemplates: RegexTemplate[];
@@ -38,9 +38,12 @@ export function RegexTemplatesTabContent({
           <span className='text-[11px] text-gray-500'>{regexTemplates.length} saved</span>
         </div>
         {regexTemplates.length === 0 ? (
-          <div className='rounded-md border border-dashed border-border/70 bg-card/40 p-4 text-xs text-gray-400'>
-            No node templates yet. Save one from the Config tab.
-          </div>
+          <EmptyState
+            title='No node templates'
+            description='No node templates yet. Save one from the Config tab.'
+            variant='compact'
+            className='bg-card/40 border-dashed border-border/70 py-4'
+          />
         ) : (
           <div className='space-y-4'>
             {regexTemplates.map((template: RegexTemplate) => (
@@ -205,13 +208,19 @@ export function RegexTemplatesTabContent({
           <span className='text-[11px] text-gray-500'>{globalTemplates.length} shared</span>
         </div>
         {settingsLoading && globalTemplates.length === 0 ? (
-          <div className='rounded-md border border-dashed border-border/70 bg-card/40 p-4 text-xs text-gray-400'>
-            Loading global templates…
-          </div>
+          <EmptyState
+            title='Loading...'
+            description='Loading global templates…'
+            variant='compact'
+            className='bg-card/40 border-dashed border-border/70 py-4'
+          />
         ) : globalTemplates.length === 0 ? (
-          <div className='rounded-md border border-dashed border-border/70 bg-card/40 p-4 text-xs text-gray-400'>
-            No global templates yet. Save one from the Config tab.
-          </div>
+          <EmptyState
+            title='No global templates'
+            description='No global templates yet. Save one from the Config tab.'
+            variant='compact'
+            className='bg-card/40 border-dashed border-border/70 py-4'
+          />
         ) : (
           <div className='space-y-4'>
             {globalTemplates.map((template: RegexTemplate) => (

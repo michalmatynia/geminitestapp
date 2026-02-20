@@ -79,6 +79,8 @@ export async function listTeachingAgents(): Promise<AgentTeachingAgentRecord[]> 
     .toArray();
   return docs.map((doc: AgentDoc) => ({
     id: doc._id,
+    agentId: (doc as any).agentId ?? '',
+    enabled: (doc as any).enabled ?? true,
     name: doc.name,
     description: doc.description ?? null,
     llmModel: doc.llmModel,
@@ -132,7 +134,9 @@ export async function upsertTeachingAgent(input: Partial<AgentTeachingAgentRecor
 
   const next: AgentTeachingAgentRecord = {
     id,
-    name: input.name.trim(),
+    agentId: input.agentId ?? '',
+    enabled: input.enabled ?? true,
+    name: (input.name ?? '').trim(),
     description: typeof input.description === 'string' ? input.description.trim() || null : null,
     llmModel: typeof input.llmModel === 'string' && input.llmModel.trim() ? input.llmModel.trim() : (existing?.llmModel ?? ''),
     embeddingModel: typeof input.embeddingModel === 'string' && input.embeddingModel.trim() ? input.embeddingModel.trim() : (existing?.embeddingModel ?? ''),
@@ -289,6 +293,7 @@ export async function listEmbeddingDocuments(collectionId: string, options?: { l
       name: docName,
       description: docMetadata.source ?? null,
       collectionId: doc.collectionId,
+      content: doc.text,
       text: doc.text,
       metadata: docMetadata,
       embeddingModel: doc.embeddingModel,
@@ -334,6 +339,7 @@ export async function createEmbeddingDocument(params: {
     name: returnName,
     description: returnMetadata.source ?? null,
     collectionId: params.collectionId,
+    content: params.text,
     text: params.text,
     metadata: returnMetadata,
     embeddingModel: params.embeddingModel,

@@ -24,6 +24,7 @@ import {
   MetadataItem,
   Badge,
   FilterPanel,
+  Hint,
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
@@ -325,7 +326,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                 />
                 
                 <div className='md:col-span-3 space-y-1.5'>
-                  <span className='text-[10px] uppercase text-gray-600 font-bold ml-1'>Error Message</span>
+                  <Hint size='xxs' uppercase className='text-gray-600 font-bold ml-1'>Error Message</Hint>
                   <Alert variant='error' className='px-3 py-3 text-xs leading-relaxed'>
                     {detail.run.errorMessage || 'No error message provided.'}
                   </Alert>
@@ -352,7 +353,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
 
             <div className='space-y-3'>
               <div className='flex items-center justify-between'>
-                <h3 className='text-xs font-semibold uppercase tracking-wider text-gray-500'>Nodes Execution</h3>
+                <Hint size='xs' uppercase className='font-semibold text-gray-500'>Nodes Execution</Hint>
                 <div className='flex gap-2'>
                   <Button
                     variant='outline'
@@ -434,13 +435,13 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                     <div className='p-4 bg-black/40 border-t border-white/5'>
                       <div className='grid gap-4 md:grid-cols-2'>
                         <div className='space-y-1'>
-                          <span className='text-[10px] uppercase text-gray-600 font-bold'>Inputs</span>
+                          <Hint size='xxs' uppercase className='text-gray-600 font-bold'>Inputs</Hint>
                           <Card variant='subtle-compact' padding='sm' className='border-white/5 bg-black/40 overflow-auto max-h-40 font-mono text-[10px]'>
                             {JSON.stringify(row.original.inputs || {}, null, 2)}
                           </Card>
                         </div>
                         <div className='space-y-1'>
-                          <span className='text-[10px] uppercase text-gray-600 font-bold'>Outputs</span>
+                          <Hint size='xxs' uppercase className='text-gray-600 font-bold'>Outputs</Hint>
                           <Card variant='subtle-compact' padding='sm' className='border-white/5 bg-black/40 overflow-auto max-h-40 font-mono text-[10px]'>
                             {JSON.stringify(row.original.outputs || {}, null, 2)}
                           </Card>
@@ -455,7 +456,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
             <div className='space-y-3'>
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-2'>
-                  <h3 className='text-xs font-semibold uppercase tracking-wider text-gray-500'>Event Log</h3>
+                  <Hint size='xs' uppercase className='font-semibold text-gray-500'>Event Log</Hint>
                   {eventsOverflow && (
                     <StatusBadge
                       status='Truncated'

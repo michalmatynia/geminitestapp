@@ -13,6 +13,11 @@ export const aiTriggerButtonLocationSchema = z.enum([
   'cms_page_header',
   'cms_block_header',
   'admin_dashboard',
+  'product_modal',
+  'product_list',
+  'product_row',
+  'note_modal',
+  'note_list',
 ]);
 
 export type AiTriggerButtonLocation = z.infer<typeof aiTriggerButtonLocationSchema>;
@@ -44,7 +49,10 @@ export const aiTriggerButtonDisplaySchema = z.union([
 export type AiTriggerButtonDisplay = z.infer<typeof aiTriggerButtonDisplaySchema>;
 
 export const aiTriggerButtonSchema = dtoBaseSchema.extend({
-  location: aiTriggerButtonLocationSchema,
+  name: z.string(),
+  iconId: z.string().nullable().optional(),
+  location: aiTriggerButtonLocationSchema.optional(),
+  locations: z.array(aiTriggerButtonLocationSchema).optional(),
   mode: aiTriggerButtonModeSchema,
   display: aiTriggerButtonDisplaySchema,
   pathId: z.string().nullable().optional(),
@@ -53,6 +61,7 @@ export const aiTriggerButtonSchema = dtoBaseSchema.extend({
   contextTemplate: z.record(z.string(), z.unknown()).nullable().optional(),
   condition: z.string().nullable().optional(),
   isActive: z.boolean(),
+  enabled: z.boolean().optional(),
   sortIndex: z.number(),
 });
 

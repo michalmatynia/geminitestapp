@@ -10,7 +10,7 @@ import { cn } from '@/shared/utils';
 import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
 import { useDeleteTeachingAgentMutation, useUpsertTeachingAgentMutation } from '../hooks/useAgentTeachingQueries';
 
-const isEmbeddingModel = (model: string): boolean => buildModelProfile(model).isEmbedding;
+const isEmbeddingModel = (model: string): boolean => Boolean(buildModelProfile(model).isEmbedding);
 type AgentTeachingLibraryItem = Omit<AgentTeachingAgentRecord, 'description'> & {
   description?: string | null;
 };

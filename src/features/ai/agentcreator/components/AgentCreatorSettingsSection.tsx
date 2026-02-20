@@ -83,19 +83,19 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
             <ToggleRow
               label='Run Headless'
               description='Don&apos;t show browser window'
-              checked={agentRunHeadless}
+              checked={agentRunHeadless ?? false}
               onCheckedChange={setAgentRunHeadless}
             />
             <ToggleRow
               label='Ignore robots.txt'
               description='Bypass scraping restrictions'
-              checked={agentIgnoreRobotsTxt}
+              checked={agentIgnoreRobotsTxt ?? false}
               onCheckedChange={setAgentIgnoreRobotsTxt}
             />
             <ToggleRow
               label='Require Approval'
               description='Ask before critical actions'
-              checked={agentRequireHumanApproval}
+              checked={agentRequireHumanApproval ?? false}
               onCheckedChange={setAgentRequireHumanApproval}
             />
           </div>

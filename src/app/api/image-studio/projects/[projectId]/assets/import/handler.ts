@@ -234,7 +234,7 @@ export async function postImageStudioProjectAssetsImportHandler(
       const now = new Date();
       uploaded.push({
         id: randomUUID(),
-        filename: recordInput.filename,
+        name: recordInput.filename, filename: recordInput.filename,
         filepath: recordInput.filepath,
         mimetype: recordInput.mimetype,
         size: recordInput.size,
@@ -277,7 +277,7 @@ export async function postImageStudioProjectAssetsImportHandler(
         const now = new Date();
         uploaded.push({
           id: randomUUID(),
-          filename: recordInput.filename,
+          name: recordInput.filename, filename: recordInput.filename,
           filepath: recordInput.filepath,
           mimetype: recordInput.mimetype,
           size: recordInput.size,
@@ -333,7 +333,7 @@ export async function postImageStudioProjectAssetsImportHandler(
     const now = new Date();
     uploaded.push({
       id: randomUUID(),
-      filename: recordInput.filename,
+      name: recordInput.filename, filename: recordInput.filename,
       filepath: recordInput.filepath,
       mimetype: recordInput.mimetype,
       size: recordInput.size,

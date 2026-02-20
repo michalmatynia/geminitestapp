@@ -42,7 +42,7 @@ import {
 } from '../utils/database-node-utils';
 
 
-import type { SchemaData, AiQuery, DatabasePresetOption } from '../components/node-config/database/types';
+import type { SchemaData, AiQuery, DatabasePresetOption } from '@/shared/contracts/database';
 
 type SchemaConfig = {
   provider?: 'auto' | 'mongodb' | 'prisma' | 'all';

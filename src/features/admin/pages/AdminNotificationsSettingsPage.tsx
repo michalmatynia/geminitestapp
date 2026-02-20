@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 
-import { Button, SelectSimple, useToast, useToastSettings, SectionHeader, FormSection, FormField, Breadcrumbs, FormActions, Hint, PropertyRow, Tooltip, Card } from '@/shared/ui';
+import { Button, SelectSimple, useToast, useToastSettings, SectionHeader, FormSection, FormField, Breadcrumbs, FormActions, Hint, PropertyRow, Tooltip } from '@/shared/ui';
 
 const positionOptions = [
   { value: 'top-right', label: 'Top Right', description: 'Corner top right' },

@@ -1,7 +1,7 @@
 'use client';
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
-import { Button, Checkbox, StatusBadge, FormSection } from '@/shared/ui';
+import { Button, Checkbox, StatusBadge, FormSection, EmptyState } from '@/shared/ui';
 
 export function AllegroSettings(): React.JSX.Element {
   const {
@@ -43,9 +43,12 @@ export function AllegroSettings(): React.JSX.Element {
       </FormSection>
 
       {!activeConnection ? (
-        <div className='rounded-md border border-dashed border-border p-4 text-xs text-gray-400'>
-          Add a connection first to enable Allegro authorization.
-        </div>
+        <EmptyState
+          title='No connection'
+          description='Add a connection first to enable Allegro authorization.'
+          variant='compact'
+          className='bg-card/20 py-8'
+        />
       ) : (
         <div className='space-y-3'>
           <FormSection variant='subtle' className='p-3 text-xs text-gray-300'>

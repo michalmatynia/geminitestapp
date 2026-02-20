@@ -409,7 +409,7 @@ export async function postExportToBaseHandler(
       const existingListing = await listingRepo.getListingById(listingId);
       const history = existingListing?.exportHistory ?? [];
       const prior = history.find(
-        (event) => event.requestId === requestId && event.status === 'success'
+         (event: any) => event.requestId === requestId && event.status === 'success'
       );
       if (prior) {
         if (runId) {

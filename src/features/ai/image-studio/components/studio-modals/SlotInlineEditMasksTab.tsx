@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { TabsContent } from '@/shared/ui';
+import { Hint } from '@/shared/ui';
 
 import type { LinkedMaskSlotViewModel } from './slot-inline-edit-tab-types';
 
@@ -18,7 +19,7 @@ export function SlotInlineEditMasksTab({
   return (
     <TabsContent value='masks' className='mt-0 space-y-4'>
       <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
-        <div className='text-[10px] uppercase tracking-wide text-gray-500'>Linked Masks</div>
+        <Hint size='xxs' uppercase className='text-gray-500'>Linked Masks</Hint>
         <div className='text-xs text-gray-300'>
           Masks attached to this card via mask metadata links.
         </div>

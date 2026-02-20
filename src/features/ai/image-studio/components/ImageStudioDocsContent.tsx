@@ -5,7 +5,7 @@ import React, { useMemo, useState } from 'react';
 import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings } from '@/features/prompt-engine/settings';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { CopyButton, Input,  FormSection, MetadataItem, DocumentationSection, Card, Badge } from '@/shared/ui';
+import { CopyButton, Input, FormSection, MetadataItem, DocumentationSection, Card, Badge, Hint } from '@/shared/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { useGenerationState } from '../context/GenerationContext';
@@ -687,7 +687,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
           <div className='grid gap-2'>
             {filteredSettingsRows.map((row) => (
               <Card key={row.path} variant='subtle-compact' padding='sm' className='border-border/60 bg-card/40'>
-                <div className='text-[11px] uppercase tracking-wide text-gray-500'>{row.path}</div>
+                <Hint size='xxs' uppercase className='text-gray-500'>{row.path}</Hint>
                 <div className='mt-1 text-sm text-gray-100'>{row.label}: {row.value}</div>
                 <div className='mt-1 text-xs text-gray-400'>{row.description}</div>
               </Card>
@@ -702,7 +702,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
           <div className='grid gap-2'>
             {filteredCropControlDocs.map((entry) => (
               <Card key={entry.key} variant='subtle-compact' padding='sm' className='border-border/60 bg-card/40'>
-                <div className='text-[11px] uppercase tracking-wide text-gray-500'>crop.{entry.key}</div>
+                <Hint size='xxs' uppercase className='text-gray-500'>crop.{entry.key}</Hint>
                 <div className='mt-1 text-sm text-gray-100'>{entry.title}</div>
                 <div className='mt-1 text-xs text-gray-400'>{entry.description}</div>
               </Card>
@@ -717,7 +717,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
           <div className='grid gap-2'>
             {filteredSequenceFieldDocs.map((entry) => (
               <Card key={entry.key} variant='subtle-compact' padding='sm' className='border-border/60 bg-card/40'>
-                <div className='text-[11px] uppercase tracking-wide text-gray-500'>sequence.{entry.key}</div>
+                <Hint size='xxs' uppercase className='text-gray-500'>sequence.{entry.key}</Hint>
                 <div className='mt-1 text-sm text-gray-100'>{entry.title}</div>
                 <div className='mt-1 text-xs text-gray-400'>{entry.description}</div>
               </Card>
@@ -732,7 +732,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
           <div className='grid gap-2'>
             {filteredObjectLayoutDocs.map((entry) => (
               <Card key={entry.key} variant='subtle-compact' padding='sm' className='border-border/60 bg-card/40'>
-                <div className='text-[11px] uppercase tracking-wide text-gray-500'>object_layout.{entry.key}</div>
+                <Hint size='xxs' uppercase className='text-gray-500'>object_layout.{entry.key}</Hint>
                 <div className='mt-1 text-sm text-gray-100'>{entry.title}</div>
                 <div className='mt-1 text-xs text-gray-400'>{entry.description}</div>
               </Card>
@@ -747,7 +747,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
           <div className='grid gap-2'>
             {filteredVersionGraphDocs.map((entry) => (
               <Card key={entry.key} variant='subtle-compact' padding='sm' className='border-border/60 bg-card/40'>
-                <div className='text-[11px] uppercase tracking-wide text-gray-500'>{entry.key}</div>
+                <Hint size='xxs' uppercase className='text-gray-500'>{entry.key}</Hint>
                 <div className='mt-1 text-sm text-gray-100'>{entry.title}</div>
                 <div className='mt-1 text-xs text-gray-400'>{entry.description}</div>
               </Card>

@@ -26,7 +26,7 @@ type RightSidebarHistoryTabProps = {
   onRestoreActionStep: (targetIndex: number) => void;
 };
 
-export function RightSidebarHistoryTab({
+export const RightSidebarHistoryTab = React.memo(function RightSidebarHistoryTab({
   actionHistoryEntriesLength,
   actionHistoryItems,
   actionHistoryMaxSteps,
@@ -116,4 +116,4 @@ export function RightSidebarHistoryTab({
       )}
     </div>
   );
-}
+});

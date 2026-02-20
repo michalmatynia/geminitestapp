@@ -140,7 +140,7 @@ export function VariantPanel({
                         className='h-20 w-full rounded object-cover'
                       />
                     ) : (
-                      <div className='flex h-20 w-full items-center justify-center rounded border border-dashed border-border/70 text-[10px] text-gray-500'>
+                      <Card variant='subtle-compact' padding='none' className='flex h-20 w-full items-center justify-center border-dashed border-border/70 text-[10px] text-gray-500'>
                         {variant.status === 'pending' ? (
                           <span className='inline-flex items-center gap-1'>
                             <Loader2 className='size-3 animate-spin' />
@@ -149,7 +149,7 @@ export function VariantPanel({
                         ) : (
                           <span>Failed</span>
                         )}
-                      </div>
+                      </Card>
                     )}
                   </button>
                   <div className='mt-1 flex items-center justify-between gap-1'>

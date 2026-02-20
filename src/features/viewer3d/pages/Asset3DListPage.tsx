@@ -2,29 +2,27 @@
 
 import {
   Box,
-  Loader2,
   Grid,
   List
 } from 'lucide-react';
 import React, { useMemo } from 'react';
 
+import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
+import { useAsset3DListState } from '../hooks/useAsset3DListState';
+
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import {
   Button,
   StandardDataTablePanel,
-  SelectSimple,
-  SearchInput,
   Alert,
   EmptyState,
   StatusBadge,
   PanelHeader,
   Card,
-  FilterPanel
+  FilterPanel,
+  LoadingState,
 } from '@/shared/ui';
 
-import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
-import { useAsset3DListState } from '../hooks/useAsset3DListState';
-
-import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import type { ColumnDef } from '@tanstack/react-table';
 
 const formatFileSize = (bytes: number): string => {
@@ -216,9 +214,7 @@ export function Asset3DListPage(): React.JSX.Element {
       isLoading={loading}
     >
       {loading && (
-        <div className='flex items-center justify-center rounded-md border border-dashed border-border py-16 text-muted-foreground'>
-          <Loader2 className='h-7 w-7 animate-spin text-blue-400' />
-        </div>
+        <LoadingState className='py-16' />
       )}
 
       {!loading && assets.length === 0 && (

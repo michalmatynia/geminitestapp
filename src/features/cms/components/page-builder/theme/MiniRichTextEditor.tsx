@@ -12,6 +12,7 @@ import {
   Label,
   SelectSimple,
   Card,
+  Hint,
 } from '@/shared/ui';
 
 function RichTextToolbarButton({
@@ -111,7 +112,7 @@ export function MiniRichTextEditor({
   if (!editor) {
     return (
       <div className='space-y-2'>
-        <Label className='text-[10px] uppercase tracking-wider text-gray-500'>{label}</Label>
+        <Hint size='xxs' uppercase className='text-gray-500'>{label}</Hint>
         <Card variant='subtle-compact' padding='sm' className='text-xs text-gray-500'>
           Loading editor...
         </Card>
@@ -121,7 +122,7 @@ export function MiniRichTextEditor({
 
   return (
     <div className='space-y-2'>
-      <Label className='text-[10px] uppercase tracking-wider text-gray-500'>{label}</Label>
+      <Hint size='xxs' uppercase className='text-gray-500'>{label}</Hint>
       <Card variant='subtle-compact' padding='none' className='flex flex-wrap items-center gap-1 bg-card/60 px-2 py-1'>
         {showFormatSelect && (
           <div className='mr-2'>

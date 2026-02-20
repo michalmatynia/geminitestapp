@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 
+import type { DatabaseColumnInfo, DatabaseTableDetail, DatabaseType } from '@/shared/contracts/database';
 import {
   Button,
   Input,
@@ -19,12 +20,12 @@ import {
   Alert,
   StandardDataTablePanel,
   Card,
+  EmptyState,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useCrudPanelState } from '../hooks/useCrudPanelState';
 
-import type { DatabaseColumnInfo, DatabaseTableDetail, DatabaseType } from '@/shared/contracts/database';
 import type { ColumnDef } from '@tanstack/react-table';
 
 function formatCellValue(value: unknown): string {
@@ -310,9 +311,12 @@ export function CrudPanel(props: {
             {filters}
           </Card>
           {alerts}
-          <Card variant='subtle' padding='lg' className='flex flex-col items-center justify-center py-20 bg-card/40 border-dashed border-border/60'>
-            <p className='text-sm text-muted-foreground'>Please select a table from the list above to view and manage its data.</p>
-          </Card>
+          <EmptyState
+            title='No table selected'
+            description='Please select a table from the list above to view and manage its data.'
+            variant='compact'
+            className='bg-card/40 border-dashed border-border/60 py-20'
+          />
         </div>
       )}
 

@@ -17,20 +17,20 @@ import {
 
 import { useAiPathConfig } from '../AiPathConfigContext';
 
-import type { CollectionSchema, SchemaData } from './database/types';
+import type { CollectionSchema, SchemaData } from '@/shared/contracts/database';
 
 const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema[] => {
   if (!schema) return [];
 
   const stripUndefinedProvider = (
-    collection: SchemaData['collections'][number]
+    collection: any
   ): CollectionSchema => {
     const { provider, ...rest } = collection;
     return provider ? { ...rest, provider } : rest;
   };
 
   if (schema.provider === 'multi') {
-    if (schema.collections?.length) return schema.collections.map((collection) => stripUndefinedProvider(collection));
+    if ((schema.collections as any)?.length) return (schema.collections as any).map((collection) => stripUndefinedProvider(collection));
     const merged: CollectionSchema[] = [];
     (['mongodb', 'prisma'] as const).forEach((provider) => {
       const source = schema['sources']?.[provider] as
@@ -44,8 +44,8 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
     });
     return merged;
   }
-  const provider: 'mongodb' | 'prisma' = schema.provider;
-  return schema.collections.map((collection) => ({
+  const provider: 'mongodb' | 'prisma' = schema.provider as any;
+  return (schema.collections as any).map((collection) => ({
     ...stripUndefinedProvider(collection),
     provider,
   }));

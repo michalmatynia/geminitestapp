@@ -32,6 +32,7 @@ import {
   LoadingState,
   Card,
   type StatusVariant,
+  EmptyState,
 } from '@/shared/ui';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
 
@@ -1560,10 +1561,12 @@ export function AiPathsSettingsView(): React.JSX.Element {
                       </div>
                     ))
                   ) : (
-                    <div className='rounded-md border border-dashed border-border/60 px-3 py-4 text-xs text-gray-500'>
-                      Runtime log is empty. Fire a trigger to stream node/run
-                      events.
-                    </div>
+                    <EmptyState
+                      title='Log empty'
+                      description='Runtime log is empty. Fire a trigger to stream node/run events.'
+                      variant='compact'
+                      className='border-dashed border-border/60 py-4'
+                    />
                   )}
                 </div>
               </div>

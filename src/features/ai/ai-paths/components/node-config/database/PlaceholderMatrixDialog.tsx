@@ -5,6 +5,7 @@ import React from 'react';
 import {
   Button,
   SelectSimple,
+  EmptyState,
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
@@ -102,9 +103,12 @@ export function PlaceholderMatrixDialog({
       </div>
       <div className='mt-4 space-y-4'>
         {visibleGroups.length === 0 ? (
-          <div className='rounded-md border border-dashed border-border/70 bg-card/40 p-4 text-xs text-gray-400'>
-            No placeholders available yet. Connect inputs to surface placeholders (or sync schema placeholders where available).
-          </div>
+          <EmptyState
+            title='No placeholders'
+            description='No placeholders available yet. Connect inputs to surface placeholders (or sync schema placeholders where available).'
+            variant='compact'
+            className='bg-card/40 border-dashed border-border/70 py-4'
+          />
         ) : (
           visibleGroups.map((group: PlaceholderGroup) => (
             <div key={group.id} className='space-y-2'>

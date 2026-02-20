@@ -33,7 +33,7 @@ const buildRagSystemPrompt = (params: {
     params.sources.forEach((src: AgentTeachingChatSource, _index: number) => {
       const title = src.metadata?.title?.trim() ? ` (${src.metadata?.title?.trim()})` : '';
       const header = `[doc:${src.documentId}]${title} score=${src.score.toFixed(3)}`;
-      const body = src.text.trim();
+      const body = (src.text ?? '').trim();
       // Keep each chunk bounded so we don't blow up the context window.
       const snippet = body.length > 2000 ? `${body.slice(0, 2000)}…` : body;
       lines.push('', header, snippet);

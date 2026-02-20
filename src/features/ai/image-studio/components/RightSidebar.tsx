@@ -863,6 +863,44 @@ export function RightSidebar(): React.JSX.Element {
     toast('All shapes removed from canvas.', { variant: 'info' });
   }, [maskShapes.length, setActiveMaskId, setMaskShapes, setSelectedPointIndex, toast]);
 
+  const handleModelChange = useCallback((value: string): void => {
+    setStudioSettings((prev) => ({
+      ...prev,
+      targetAi: {
+        ...prev.targetAi,
+        openai: {
+          ...prev.targetAi.openai,
+          api: 'images',
+          model: value,
+        },
+      },
+    }));
+  }, [setStudioSettings]);
+
+  const handleOpenControls = useCallback((): void => {
+    setControlsOpen(true);
+  }, []);
+
+  const handleOpenPromptControl = useCallback((): void => {
+    setPromptControlOpen(true);
+  }, []);
+
+  const handleOpenRequestPreview = useCallback((): void => {
+    setRequestPreviewOpen(true);
+  }, []);
+
+  const handleApplyCanvasSizePresetClick = useCallback((): void => {
+    void handleApplyCanvasSizePreset();
+  }, [handleApplyCanvasSizePreset]);
+
+  const handleToggleMoveImage = useCallback((): void => {
+    setImageTransformMode(isMoveImageActive ? 'none' : 'move');
+  }, [isMoveImageActive, setImageTransformMode]);
+
+  const handleToggleCanvasBackgroundLayer = useCallback((): void => {
+    setCanvasBackgroundLayerEnabled(!canvasBackgroundLayerEnabled);
+  }, [canvasBackgroundLayerEnabled, setCanvasBackgroundLayerEnabled]);
+
   const requestPreview = useMemo(
     () =>
       buildRunRequestPreview({
@@ -1131,7 +1169,7 @@ export function RightSidebar(): React.JSX.Element {
     />
   );
 
-  const quickActionsPanelContent = (
+  const quickActionsPanelContent = useMemo(() => (
     <RightSidebarQuickActions
       estimatedGenerationCost={estimatedGenerationCost}
       estimatedPromptTokens={estimatedPromptTokens}
@@ -1140,29 +1178,34 @@ export function RightSidebar(): React.JSX.Element {
       hasExtractedControls={hasExtractedControls}
       modelSupportsSequenceGeneration={modelSupportsSequenceGeneration}
       modelValue={studioSettings.targetAi.openai.model}
-      onModelChange={(value: string) => {
-        setStudioSettings((prev) => ({
-          ...prev,
-          targetAi: {
-            ...prev.targetAi,
-            openai: {
-              ...prev.targetAi.openai,
-              api: 'images',
-              model: value,
-            },
-          },
-        }));
-      }}
-      onOpenControls={() => setControlsOpen(true)}
-      onOpenPromptControl={() => setPromptControlOpen(true)}
-      onOpenRequestPreview={() => setRequestPreviewOpen(true)}
+      onModelChange={handleModelChange}
+      onOpenControls={handleOpenControls}
+      onOpenPromptControl={handleOpenPromptControl}
+      onOpenRequestPreview={handleOpenRequestPreview}
       onRunGeneration={handleRunGeneration}
       onRunSequenceGeneration={handleRunSequenceGeneration}
       quickModelOptions={quickModelOptions}
       selectedModelId={selectedModelId}
       sequenceRunBusy={sequenceRunBusy}
     />
-  );
+  ), [
+    estimatedGenerationCost,
+    estimatedPromptTokens,
+    generationBusy,
+    generationLabel,
+    handleModelChange,
+    handleOpenControls,
+    handleOpenPromptControl,
+    handleOpenRequestPreview,
+    handleRunGeneration,
+    handleRunSequenceGeneration,
+    hasExtractedControls,
+    modelSupportsSequenceGeneration,
+    quickModelOptions,
+    selectedModelId,
+    sequenceRunBusy,
+    studioSettings.targetAi.openai.model,
+  ]);
 
   return (
     <>
@@ -1341,19 +1384,13 @@ export function RightSidebar(): React.JSX.Element {
               onMaskEdgeSensitivityChange={setMaskEdgeSensitivity}
               onMaskFeatherChange={setMaskFeather}
               onMaskThresholdSensitivityChange={setMaskThresholdSensitivity}
-              onApplyCanvasSizePreset={() => {
-                void handleApplyCanvasSizePreset();
-              }}
+              onApplyCanvasSizePreset={handleApplyCanvasSizePresetClick}
               onCanvasSizePresetChange={setCanvasSizePresetValue}
               onOpenResizeCanvasModal={handleOpenResizeCanvasModal}
               onRecenterCanvasImage={resetCanvasImageOffset}
               onSelectShapeTool={handleSelectShapeTool}
-              onToggleMoveImage={() => {
-                setImageTransformMode(isMoveImageActive ? 'none' : 'move');
-              }}
-              onToggleCanvasBackgroundLayer={() => {
-                setCanvasBackgroundLayerEnabled(!canvasBackgroundLayerEnabled);
-              }}
+              onToggleMoveImage={handleToggleMoveImage}
+              onToggleCanvasBackgroundLayer={handleToggleCanvasBackgroundLayer}
               onToggleSelectTool={handleToggleSelectTool}
               quickActionsHostEl={quickActionsHostEl}
               quickActionsPanelContent={quickActionsPanelContent}

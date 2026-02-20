@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 
 import type { AiNode, NodeDefinition } from '@/features/ai/ai-paths/lib';
 import { createParserMappings, formatRuntimeValue } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, Textarea, StatusBadge, Card, Badge } from '@/shared/ui';
+import { Button, Input, Label, Textarea, StatusBadge, Card, Badge, EmptyState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import {
@@ -214,15 +214,21 @@ export function CanvasSidebar(): React.JSX.Element {
           ) : null}
         </div>
         {paletteCollapsed ? (
-          <div className='rounded-md border border-dashed border-border/60 px-3 py-2 text-[11px] text-gray-500'>
-            Palette collapsed. Expand to add nodes.
-          </div>
+          <EmptyState
+            title='Palette collapsed'
+            description='Expand to add nodes.'
+            variant='compact'
+            className='border-dashed border-border/60 bg-transparent py-4'
+          />
         ) : (
           <div className='max-h-[520px] space-y-1 overflow-y-auto pr-1'>
             {filteredPaletteGroups.length === 0 ? (
-              <div className='rounded-md border border-dashed border-border/60 px-3 py-2 text-[11px] text-gray-500'>
-                No nodes match your search.
-              </div>
+              <EmptyState
+                title='No matches'
+                description='No nodes match your search.'
+                variant='compact'
+                className='border-dashed border-border/60 bg-transparent py-4'
+              />
             ) : (
               filteredPaletteGroups.map(({ group, items }) => {
                 const isExpanded = isPaletteSearchActive || expandedPaletteGroups.has(group.title);

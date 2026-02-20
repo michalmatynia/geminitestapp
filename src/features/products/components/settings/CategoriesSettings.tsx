@@ -365,217 +365,220 @@ export function CategoriesSettings(): React.JSX.Element {
   return (
     <>
       <div className='space-y-5'>
-      {/* Catalog Selector */}
-      <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
-        <p className='text-sm font-semibold text-white mb-3'>Select Catalog</p>
-        <p className='text-xs text-gray-400 mb-3'>
+        {/* Catalog Selector */}
+        <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
+          <p className='text-sm font-semibold text-white mb-3'>Select Catalog</p>
+          <p className='text-xs text-gray-400 mb-3'>
           Each catalog has its own category tree. Select a catalog to manage its categories.
-        </p>
-        <div className='w-full max-w-xs'>
-          <SelectSimple size='sm'
-            value={selectedCatalogId || ''}
-            onValueChange={onCatalogChange}
-            options={catalogs.map((catalog: Catalog) => ({
-              value: catalog.id,
-              label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`
-            }))}
-            placeholder='Select a catalog...'
-          />
-        </div>
-      </Card>
-
-      {/* Category Tree */}
-      {selectedCatalogId && (
-        <>
-          <div className='flex justify-start'>
-            <Button
-              onClick={(): void => handleOpenCreateModal(null)}
-              variant='solid'
-              className='flex items-center gap-2'
-            >
-              <Plus className='size-4' />
-              Add Category
-            </Button>
+          </p>
+          <div className='w-full max-w-xs'>
+            <SelectSimple size='sm'
+              value={selectedCatalogId || ''}
+              onValueChange={onCatalogChange}
+              options={catalogs.map((catalog: Catalog) => ({
+                value: catalog.id,
+                label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`
+              }))}
+              placeholder='Select a catalog...'
+            />
           </div>
+        </Card>
 
-          <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
-            <p className='text-sm font-semibold text-white mb-4'>
-              Category Tree for &quot;{selectedCatalog?.name}&quot;
-            </p>
-
-            {loading && treeData.length === 0 ? (
-              <div className='space-y-2 p-4'>
-                <Skeleton className='h-8 w-full' />
-                <Skeleton className='h-8 w-full' />
-                <Skeleton className='h-8 w-full' />
-              </div>
-            ) : treeData.length === 0 ? (
-              <EmptyState
-                title='No categories yet'
-                description='Categories help you organize products into a hierarchical tree.'
-                action={
-                  <Button onClick={(): void => handleOpenCreateModal(null)} variant='outline'>
-                    <Plus className='size-4 mr-2' />
-                    Add Category
-                  </Button>
-                }
-              />
-            ) : (
-              <FolderTreePanel
-                className='relative rounded-md border border-border bg-gray-900 p-2'
-                bodyClassName='space-y-0.5'
-                masterInstance='product_categories'
+        {/* Category Tree */}
+        {selectedCatalogId && (
+          <>
+            <div className='flex justify-start'>
+              <Button
+                onClick={(): void => handleOpenCreateModal(null)}
+                variant='solid'
+                className='flex items-center gap-2'
               >
-                <div className='mb-2 flex items-center justify-end'>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    size='sm'
-                    className='h-7 px-2 text-xs'
-                    onClick={(): void => setPanelCollapsed(!panelCollapsed)}
-                    title={panelCollapsed ? 'Show category tree' : 'Collapse category tree'}
-                  >
-                    {panelCollapsed ? (
-                      <>
-                        <ChevronRight className='mr-1 size-3.5 -scale-x-100' />
-                        Show Tree
-                      </>
-                    ) : (
-                      <>
-                        <ChevronLeft className='mr-1 size-3.5' />
-                        Collapse
-                      </>
-                    )}
-                  </Button>
+                <Plus className='size-4' />
+              Add Category
+              </Button>
+            </div>
+
+            <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
+              <p className='text-sm font-semibold text-white mb-4'>
+              Category Tree for &quot;{selectedCatalog?.name}&quot;
+              </p>
+
+              {loading && treeData.length === 0 ? (
+                <div className='space-y-2 p-4'>
+                  <Skeleton className='h-8 w-full' />
+                  <Skeleton className='h-8 w-full' />
+                  <Skeleton className='h-8 w-full' />
                 </div>
-                {panelCollapsed ? (
-                  <div className='rounded border border-dashed border-border/70 bg-card/30 px-3 py-4 text-center text-xs text-gray-400'>
-                    Category tree is collapsed.
+              ) : treeData.length === 0 ? (
+                <EmptyState
+                  title='No categories yet'
+                  description='Categories help you organize products into a hierarchical tree.'
+                  action={
+                    <Button onClick={(): void => handleOpenCreateModal(null)} variant='outline'>
+                      <Plus className='size-4 mr-2' />
+                    Add Category
+                    </Button>
+                  }
+                />
+              ) : (
+                <FolderTreePanel
+                  className='relative rounded-md border border-border bg-gray-900 p-2'
+                  bodyClassName='space-y-0.5'
+                  masterInstance='product_categories'
+                >
+                  <div className='mb-2 flex items-center justify-end'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      className='h-7 px-2 text-xs'
+                      onClick={(): void => setPanelCollapsed(!panelCollapsed)}
+                      title={panelCollapsed ? 'Show category tree' : 'Collapse category tree'}
+                    >
+                      {panelCollapsed ? (
+                        <>
+                          <ChevronRight className='mr-1 size-3.5 -scale-x-100' />
+                        Show Tree
+                        </>
+                      ) : (
+                        <>
+                          <ChevronLeft className='mr-1 size-3.5' />
+                        Collapse
+                        </>
+                      )}
+                    </Button>
                   </div>
-                ) : (
-                  <MasterFolderTree
-                    controller={controller}
-                    className='space-y-0.5'
-                    rootDropUi={rootDropUi}
-                    renderNode={({
-                      node,
-                      depth,
-                      hasChildren,
-                      isExpanded,
-                      isSelected,
-                      dropPosition,
-                      select,
-                      toggleExpand,
-                    }) => {
-                      const categoryId = fromCategoryMasterNodeId(node.id);
-                      if (!categoryId) return null;
-                      const category = categoryById.get(categoryId);
-                      if (!category) return null;
-                      const Icon = isExpanded ? FolderOpenIcon : FolderClosedIcon;
-                      const showDropLine = dropPosition === 'before' || dropPosition === 'after';
+                  {panelCollapsed ? (
+                    <EmptyState
+                      title='Tree Collapsed'
+                      description='Category tree is collapsed.'
+                      variant='compact'
+                      className='bg-card/30 border-dashed border-border/70 py-4'
+                    />
+                  ) : (
+                    <MasterFolderTree
+                      controller={controller}
+                      className='space-y-0.5'
+                      rootDropUi={rootDropUi}
+                      renderNode={({
+                        node,
+                        depth,
+                        hasChildren,
+                        isExpanded,
+                        isSelected,
+                        dropPosition,
+                        select,
+                        toggleExpand,
+                      }) => {
+                        const categoryId = fromCategoryMasterNodeId(node.id);
+                        if (!categoryId) return null;
+                        const category = categoryById.get(categoryId);
+                        if (!category) return null;
+                        const Icon = isExpanded ? FolderOpenIcon : FolderClosedIcon;
+                        const showDropLine = dropPosition === 'before' || dropPosition === 'after';
 
-                      return (
-                        <div className='relative'>
-                          <div
-                            className={cn(
-                              'pointer-events-none absolute inset-x-2 h-px rounded-full transition-opacity duration-150',
-                              dropPosition === 'before' ? 'top-[2px]' : 'bottom-[2px]',
-                              placeholderClasses.lineActive,
-                              showDropLine ? 'opacity-100' : 'opacity-0'
-                            )}
-                          />
-                          <div
-                            role='button'
-                            tabIndex={0}
-                            onClick={select}
-                            onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-                              if (event.target !== event.currentTarget) return;
-                              if (event.key === 'Enter' || event.key === ' ') {
-                                event.preventDefault();
-                                select();
-                              }
-                            }}
-                            className={cn(
-                              'group flex w-full items-center gap-1 rounded px-2 py-1.5 text-left text-sm transition',
-                              isSelected ? 'bg-blue-600 text-white' : 'text-gray-200 hover:bg-muted/40',
-                              dropPosition === 'inside' && !isSelected ? 'bg-blue-500/10 ring-1 ring-inset ring-blue-500/45' : ''
-                            )}
-                            style={{ paddingLeft: `${depth * 16 + 8}px` }}
-                            title={category.name}
-                          >
-                            <span className='inline-flex items-center justify-center opacity-0 transition group-hover:opacity-100'>
-                              <DragHandleIcon className='size-3 shrink-0 text-gray-500' />
-                            </span>
-                            <TreeCaret
-                              isOpen={isExpanded}
-                              hasChildren={hasChildren}
-                              onToggle={
-                                hasChildren
-                                  ? (): void => {
-                                    toggleExpand();
-                                  }
-                                  : undefined
-                              }
-                              ariaLabel={isExpanded ? `Collapse ${category.name}` : `Expand ${category.name}`}
-                              placeholderClassName='w-4'
-                              buttonClassName='hover:bg-gray-700'
-                              iconClassName='size-3.5'
+                        return (
+                          <div className='relative'>
+                            <div
+                              className={cn(
+                                'pointer-events-none absolute inset-x-2 h-px rounded-full transition-opacity duration-150',
+                                dropPosition === 'before' ? 'top-[2px]' : 'bottom-[2px]',
+                                placeholderClasses.lineActive,
+                                showDropLine ? 'opacity-100' : 'opacity-0'
+                              )}
                             />
-                            <Icon className='size-3.5 shrink-0 text-gray-400' />
-                            <span className='flex-1 truncate'>{category.name}</span>
+                            <div
+                              role='button'
+                              tabIndex={0}
+                              onClick={select}
+                              onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
+                                if (event.target !== event.currentTarget) return;
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                  event.preventDefault();
+                                  select();
+                                }
+                              }}
+                              className={cn(
+                                'group flex w-full items-center gap-1 rounded px-2 py-1.5 text-left text-sm transition',
+                                isSelected ? 'bg-blue-600 text-white' : 'text-gray-200 hover:bg-muted/40',
+                                dropPosition === 'inside' && !isSelected ? 'bg-blue-500/10 ring-1 ring-inset ring-blue-500/45' : ''
+                              )}
+                              style={{ paddingLeft: `${depth * 16 + 8}px` }}
+                              title={category.name}
+                            >
+                              <span className='inline-flex items-center justify-center opacity-0 transition group-hover:opacity-100'>
+                                <DragHandleIcon className='size-3 shrink-0 text-gray-500' />
+                              </span>
+                              <TreeCaret
+                                isOpen={isExpanded}
+                                hasChildren={hasChildren}
+                                onToggle={
+                                  hasChildren
+                                    ? (): void => {
+                                      toggleExpand();
+                                    }
+                                    : undefined
+                                }
+                                ariaLabel={isExpanded ? `Collapse ${category.name}` : `Expand ${category.name}`}
+                                placeholderClassName='w-4'
+                                buttonClassName='hover:bg-gray-700'
+                                iconClassName='size-3.5'
+                              />
+                              <Icon className='size-3.5 shrink-0 text-gray-400' />
+                              <span className='flex-1 truncate'>{category.name}</span>
 
-                            <TreeActionSlot show='hover' align='inline'>
-                              <TreeActionButton
-                                onClick={(event: React.MouseEvent): void => {
-                                  event.stopPropagation();
-                                  handleOpenCreateModal(category.id);
-                                }}
-                                size='sm'
-                                tone='muted'
-                                className='px-1.5 text-[11px]'
-                                title='Add subcategory'
-                              >
+                              <TreeActionSlot show='hover' align='inline'>
+                                <TreeActionButton
+                                  onClick={(event: React.MouseEvent): void => {
+                                    event.stopPropagation();
+                                    handleOpenCreateModal(category.id);
+                                  }}
+                                  size='sm'
+                                  tone='muted'
+                                  className='px-1.5 text-[11px]'
+                                  title='Add subcategory'
+                                >
                                 Add
-                              </TreeActionButton>
-                              <TreeActionButton
-                                onClick={(event: React.MouseEvent): void => {
-                                  event.stopPropagation();
-                                  handleOpenEditModal(category);
-                                }}
-                                size='sm'
-                                tone='muted'
-                                className='px-1.5 text-[11px]'
-                                title='Edit category'
-                              >
+                                </TreeActionButton>
+                                <TreeActionButton
+                                  onClick={(event: React.MouseEvent): void => {
+                                    event.stopPropagation();
+                                    handleOpenEditModal(category);
+                                  }}
+                                  size='sm'
+                                  tone='muted'
+                                  className='px-1.5 text-[11px]'
+                                  title='Edit category'
+                                >
                                 Edit
-                              </TreeActionButton>
-                              <TreeActionButton
-                                onClick={(event: React.MouseEvent): void => {
-                                  event.stopPropagation();
-                                  handleDelete(category);
-                                }}
-                                size='sm'
-                                tone='danger'
-                                className='px-1.5 text-[11px]'
-                                title='Delete category'
-                              >
+                                </TreeActionButton>
+                                <TreeActionButton
+                                  onClick={(event: React.MouseEvent): void => {
+                                    event.stopPropagation();
+                                    handleDelete(category);
+                                  }}
+                                  size='sm'
+                                  tone='danger'
+                                  className='px-1.5 text-[11px]'
+                                  title='Delete category'
+                                >
                                 Delete
-                              </TreeActionButton>
-                            </TreeActionSlot>
+                                </TreeActionButton>
+                              </TreeActionSlot>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    }}
-                  />
-                )}
-                                              </FolderTreePanel>
-                                            )}
-                                          </Card>
-                                        </>
-                                      )}
-                                    </div>
+                        );
+                      }}
+                    />
+                  )}
+                </FolderTreePanel>
+              )}
+            </Card>
+          </>
+        )}
+      </div>
                               
-                    {!selectedCatalogId && catalogs.length === 0 && (
+      {!selectedCatalogId && catalogs.length === 0 && (
         <EmptyState
           title='No catalogs found'
           description='Please create a catalog first in the Catalogs section before adding categories.'

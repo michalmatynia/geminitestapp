@@ -9,6 +9,7 @@ import {
   SelectSimple,
   ToggleRow,
   FormField,
+  EmptyState,
 } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -97,9 +98,12 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
         <div className='text-[11px] text-gray-400'>Operations</div>
         <div className='mt-3 space-y-3'>
           {operations.length === 0 ? (
-            <div className='rounded-md border border-dashed border-border/70 bg-card/30 px-3 py-2 text-xs text-gray-500'>
-              No operations yet. Add a step to transform the incoming string.
-            </div>
+            <EmptyState
+              title='No operations'
+              description='No operations yet. Add a step to transform the incoming string.'
+              variant='compact'
+              className='bg-card/30 border-dashed border-border/70 py-4'
+            />
           ) : (
             operations.map((operation: StringMutatorOperation, index: number) => (
               <div key={`${operation.type}-${index}`} className='rounded-md border border-border bg-card/40 p-3'>

@@ -345,7 +345,7 @@ export const MAX_RUNTIME_EVENTS = 300;
 export const LOCAL_RUN_STEP_CHUNK = 5;
 export const AI_PATHS_ENTITY_STALE_MS = 30000;
 
-export type ToastFn = (props: { title: string; description?: string; variant?: 'default' | 'destructive' }) => void;
+export type ToastFn = (message: any, options?: any) => void;
 
 /**
  * AI Path Execution Node Handler Types

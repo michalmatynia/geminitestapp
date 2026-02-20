@@ -65,6 +65,11 @@ export const chatMessageSchema = z.object({
 export type ChatMessageDto = z.infer<typeof chatMessageSchema>;
 export type ChatMessage = ChatMessageDto;
 
+export interface SimpleChatMessage {
+  role: 'user' | 'assistant' | 'system' | string;
+  content: string;
+}
+
 /**
  * Chat Session Contract
  */
@@ -339,17 +344,24 @@ export const modelProfileSchema = z.object({
   capabilities: z.array(z.string()),
   contextWindow: z.number(),
   maxOutputTokens: z.number(),
+  isEmbedding: z.boolean().optional(),
 });
 
 export type ModelProfileDto = z.infer<typeof modelProfileSchema>;
 export type ModelProfile = ModelProfileDto;
 
 export const modelTaskRuleSchema = z.object({
-  id: z.string(),
-  taskId: z.string(),
-  rule: z.string(),
-  priority: z.number(),
-  enabled: z.boolean(),
+  id: z.string().optional(),
+  taskId: z.string().optional(),
+  rule: z.string().optional(),
+  priority: z.number().optional(),
+  enabled: z.boolean().optional(),
+  preferLarge: z.boolean().optional(),
+  minSize: z.number().optional(),
+  preferReasoning: z.boolean().optional(),
+  preferSmall: z.boolean().optional(),
+  targetSize: z.number().optional(),
+  maxSize: z.number().optional(),
 });
 
 export type ModelTaskRuleDto = z.infer<typeof modelTaskRuleSchema>;
@@ -360,6 +372,28 @@ export const agentSettingsPayloadSchema = z.object({
   systemPrompt: z.string().optional(),
   modelId: z.string().optional(),
   temperature: z.number().optional(),
+  agentBrowser: z.string().optional(),
+  runHeadless: z.boolean().optional(),
+  ignoreRobotsTxt: z.boolean().optional(),
+  requireHumanApproval: z.boolean().optional(),
+  memoryValidationModel: z.string().nullable().optional(),
+  plannerModel: z.string().nullable().optional(),
+  selfCheckModel: z.string().nullable().optional(),
+  extractionValidationModel: z.string().nullable().optional(),
+  toolRouterModel: z.string().nullable().optional(),
+  loopGuardModel: z.string().nullable().optional(),
+  approvalGateModel: z.string().nullable().optional(),
+  memorySummarizationModel: z.string().nullable().optional(),
+  selectorInferenceModel: z.string().nullable().optional(),
+  outputNormalizationModel: z.string().nullable().optional(),
+  maxSteps: z.number().optional(),
+  maxStepAttempts: z.number().optional(),
+  maxReplanCalls: z.number().optional(),
+  replanEverySteps: z.number().optional(),
+  maxSelfChecks: z.number().optional(),
+  loopGuardThreshold: z.number().optional(),
+  loopBackoffBaseMs: z.number().optional(),
+  loopBackoffMaxMs: z.number().optional(),
 });
 
 export type AgentSettingsPayloadDto = z.infer<typeof agentSettingsPayloadSchema>;

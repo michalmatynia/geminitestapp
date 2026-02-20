@@ -11,6 +11,7 @@ import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, Card, SelectSimple, useToast } from '@/shared/ui';
 
+import { ImageStudioAnalysisSummaryChip } from './ImageStudioAnalysisSummaryChip';
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsState } from '../context/SlotsContext';
 import {
@@ -817,6 +818,16 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
         <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/30'>
           {result ? (
             <div className='space-y-3 text-xs text-gray-200'>
+              <ImageStudioAnalysisSummaryChip
+                data={{
+                  detectionUsed: result.detectionUsed,
+                  confidence: result.confidence,
+                  fallbackApplied: result.fallbackApplied,
+                  policyReason: result.policyReason,
+                  policyVersion: result.policyVersion,
+                }}
+                label='Analysis Summary'
+              />
               <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-8'>
                 <Card variant='subtle-compact' padding='sm' className='border-border/50 bg-card/30'>
                   <div className='text-[10px] uppercase tracking-wide text-gray-500'>Detection</div>

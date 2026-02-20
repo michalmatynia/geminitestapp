@@ -60,6 +60,7 @@ export const asset3DListFiltersSchema = z.object({
   search: z.string().optional(),
   tags: z.array(z.string()).optional(),
   filename: z.string().optional(),
+  isPublic: z.boolean().optional(),
 });
 
 export type Asset3DListFiltersDto = z.infer<typeof asset3DListFiltersSchema>;

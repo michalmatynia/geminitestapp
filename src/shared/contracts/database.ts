@@ -203,27 +203,37 @@ export const fieldInfoSchema = z.object({
 });
 
 export type FieldInfoDto = z.infer<typeof fieldInfoSchema>;
+export type FieldSchema = FieldInfoDto;
 
 export const collectionSchemaSchema = z.object({
   name: z.string(),
   fields: z.array(fieldInfoSchema),
   count: z.number().optional(),
   documentCount: z.number().optional(),
+  provider: z.string().optional(),
 }).catchall(z.any());
 
 export type CollectionSchemaDto = z.infer<typeof collectionSchemaSchema>;
+export type CollectionSchema = CollectionSchemaDto;
 
-export const schemaProviderSchema = z.enum(['prisma', 'mongodb']);
+export const schemaProviderSchema = z.enum(['prisma', 'mongodb', 'multi']);
 export type SchemaProviderDto = z.infer<typeof schemaProviderSchema>;
+export type SchemaProvider = SchemaProviderDto;
 
 export const multiSchemaResponseSchema = z.object({
   provider: z.string(),
-  collections: z.record(z.string(), collectionSchemaSchema),
+  collections: z.union([
+    z.record(z.string(), collectionSchemaSchema),
+    z.array(z.any())
+  ]),
+  sources: z.record(z.string(), z.any()).optional(),
 });
 
 export type MultiSchemaResponseDto = z.infer<typeof multiSchemaResponseSchema>;
 export type SchemaResponseDto = MultiSchemaResponseDto;
 export type SchemaResponsePayloadDto = SchemaResponseDto;
+export type SchemaResponse = SchemaResponseDto;
+export type SchemaData = SchemaResponseDto;
 
 export const databaseEngineOperationJobSchema = dtoBaseSchema.extend({
   status: z.enum(['queued', 'running', 'completed', 'failed', 'canceled']),
@@ -333,3 +343,6 @@ export const redisStatusSchema = z.object({
 
 export type RedisStatusDto = z.infer<typeof redisStatusSchema>;
 export type RedisOverviewDto = RedisStatusDto;
+
+export type AiQuery = any;
+export type DatabasePresetOption = any;

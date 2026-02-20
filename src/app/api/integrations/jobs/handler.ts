@@ -16,10 +16,10 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   const allListings = await listingRepo.listAllListings();
 
   // Group by product and get product details
-  const productIds = Array.from(new Set(allListings.map((l) => l.productId)));
+  const productIds = Array.from(new Set(allListings.map( (l: any) => l.productId)));
 
   const jobs = await Promise.all(
-    productIds.map(async (productId) => {
+    productIds.map(async (productId: any) => {
       const product = await productRepo.getProductById(productId);
       const listings = await listingRepo.getListingsByProductId(productId);
 
@@ -27,7 +27,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
         productId,
         productName: product?.name_en || product?.name_pl || product?.name_de || 'Unknown',
         productSku: product?.sku || null,
-        listings: listings.map((listing) => ({
+        listings: listings.map( (listing: any) => ({
           id: listing.id,
           productId: listing.productId,
           integrationId: listing.integrationId,

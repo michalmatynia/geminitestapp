@@ -4,7 +4,7 @@ import { ArrowLeft, ChevronDown } from 'lucide-react';
 import React, { useCallback } from 'react';
 
 import type { ColorScheme, ThemeSettings } from '@/shared/contracts/cms';
-import { Button, Badge, Card } from '@/shared/ui';
+import { Button, Badge, Card, Hint } from '@/shared/ui';
 
 import { useThemeColors } from './ThemeColorsContext';
 import { ColorField, TextField } from '../shared-fields';
@@ -243,7 +243,7 @@ export function ThemeColorsSection(): React.JSX.Element {
           onClick={toggleGlobalPalette}
           className='flex w-full items-center justify-between gap-2 text-left'
         >
-          <span className='text-[10px] uppercase tracking-wider text-gray-500'>Global palette</span>
+          <Hint size='xxs' uppercase className='text-gray-500'>Global palette</Hint>
           <ChevronDown className={`size-3 text-gray-500 transition ${isGlobalPaletteOpen ? 'rotate-180' : ''}`} />
         </button>
         {isGlobalPaletteOpen && (

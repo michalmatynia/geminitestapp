@@ -52,27 +52,24 @@ export type JobRowData = JobRowDataDto;
  * Queue DTOs
  */
 
-export const queueNameSchema = z.enum([
-  'ai-paths',
-  'product-sync',
-  'chatbot',
-  'agents',
-  'data-import',
-  'data-export',
-  'system',
-]);
+export const queueNameSchema = z.string();
 
 export type QueueNameDto = z.infer<typeof queueNameSchema>;
 export type QueueName = QueueNameDto;
 
 export const queueHealthStatusSchema = z.object({
-  name: queueNameSchema,
-  isPaused: z.boolean(),
+  name: queueNameSchema.optional(),
+  isPaused: z.boolean().optional(),
+  running: z.boolean().optional(),
+  healthy: z.boolean().optional(),
+  processing: z.boolean().optional(),
   waitingCount: z.number(),
   activeCount: z.number(),
   completedCount: z.number(),
   failedCount: z.number(),
-  delayedCount: z.number(),
+  delayedCount: z.number().optional(),
+  lastPollTime: z.number().optional(),
+  timeSinceLastPoll: z.number().optional(),
 });
 
 export type QueueHealthStatusDto = z.infer<typeof queueHealthStatusSchema>;
@@ -196,13 +193,13 @@ export type ProductAiJobRepository = {
  */
 
 export type QueueConfig<TJobData = unknown> = {
-  name: QueueName;
+  name: string; // QueueName
   concurrency: number;
   defaultJobOptions?: any; // Omit<JobsOptions, 'connection'>
   workerOptions?: any; // Omit<WorkerOptions, 'connection' | 'concurrency'>
   processor: (data: TJobData, jobId: string) => Promise<unknown>;
   onCompleted?: (jobId: string, result: unknown, data: TJobData) => Promise<void>;
-  onFailed?: (jobId: string, error: Error, data: TJobData) => Promise<void>;
+  onFailed?: (jobId: string, error: Error, data: TJobData, context?: any) => Promise<void>;
 };
 
 export type ManagedQueue<TJobData = unknown> = {

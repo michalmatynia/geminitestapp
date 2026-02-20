@@ -16,7 +16,7 @@ import {
   PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
   type ProductDraftOpenFormTab,
 } from '@/shared/contracts/products';
-import { Button, Input, Textarea, SelectSimple, FormField, FormSection, Card } from '@/shared/ui';
+import { Button, Input, Textarea, SelectSimple, FormField, FormSection, Card, EmptyState } from '@/shared/ui';
 
 import { useDraftCreatorFormContext } from './DraftCreatorFormContext';
 
@@ -641,17 +641,25 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
       }
     >
       {parametersLoading ? (
-        <Card variant='subtle-compact' padding='md' className='border-dashed text-center text-sm text-gray-400'>
-          Loading parameters...
-        </Card>
+        <EmptyState
+          title='Loading parameters...'
+          variant='compact'
+          className='border-dashed border-border/60 py-8'
+        />
       ) : parameters.length === 0 ? (
-        <Card variant='subtle-compact' padding='md' className='border-dashed text-center text-sm text-gray-400'>
-          No parameters available for the selected catalog(s).
-        </Card>
+        <EmptyState
+          title='No parameters'
+          description='No parameters available for the selected catalog(s).'
+          variant='compact'
+          className='border-dashed border-border/60 py-8'
+        />
       ) : parameterValues.length === 0 ? (
-        <Card variant='subtle-compact' padding='md' className='border-dashed text-center text-sm text-gray-400'>
-          Add your first parameter to start defining defaults.
-        </Card>
+        <EmptyState
+          title='No values'
+          description='Add your first parameter to start defining defaults.'
+          variant='compact'
+          className='border-dashed border-border/60 py-8'
+        />
       ) : (
         <div className='space-y-3'>
           {parameterValues.map((entry: ProductParameterValue, index: number): React.JSX.Element => {

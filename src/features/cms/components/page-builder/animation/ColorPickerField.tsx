@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Label } from '@/shared/ui';
+import { Hint } from '@/shared/ui';
 
 export function ColorPickerField({
   label,
@@ -16,9 +16,9 @@ export function ColorPickerField({
   const resolved = value || '#ffffff';
   return (
     <div className='space-y-1'>
-      <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
+      <Hint size='xxs' uppercase className='text-gray-500'>
         {label}
-      </Label>
+      </Hint>
       <div className='flex items-center gap-2'>
         <label className='relative flex size-8 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded border border-border/50'>
           <input

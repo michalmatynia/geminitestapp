@@ -53,7 +53,7 @@ type RightSidebarControlsTabProps = {
   workingSlotPresent: boolean;
 };
 
-export function RightSidebarControlsTab({
+export const RightSidebarControlsTab = React.memo(function RightSidebarControlsTab({
   activeShapeDrawingTool,
   brushRadius,
   canvasBackgroundColor,
@@ -327,4 +327,4 @@ export function RightSidebarControlsTab({
       </div>
     </>
   );
-}
+});

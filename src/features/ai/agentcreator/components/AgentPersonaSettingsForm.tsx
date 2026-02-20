@@ -6,8 +6,8 @@ import { SelectSimple, FormField } from '@/shared/ui';
 
 const DEFAULT_VALUE = '__default__';
 
-const toSelectValue = (value: string | null | undefined): string =>
-  value && value.trim().length > 0 ? value : DEFAULT_VALUE;
+const toSelectValue = (value: any): string =>
+  typeof value === 'string' && value.trim().length > 0 ? value : DEFAULT_VALUE;
 
 const fromSelectValue = (value: string): string =>
   value === DEFAULT_VALUE ? '' : value;

@@ -25,12 +25,16 @@ declare module 'next-auth' {
       image?: string | null;
       isElevated?: boolean;
       permissions?: string[];
+      accountDisabled?: boolean;
+      accountBanned?: boolean;
     };
   }
 
   interface User {
     isElevated?: boolean;
     permissions?: string[];
+    accountDisabled?: boolean;
+    accountBanned?: boolean;
   }
 }
 
@@ -39,5 +43,7 @@ declare module 'next-auth/jwt' {
     id?: string;
     isElevated?: boolean;
     permissions?: string[];
+    accountDisabled?: boolean;
+    accountBanned?: boolean;
   }
 }

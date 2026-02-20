@@ -34,6 +34,6 @@ async function GET_handler(_req: NextRequest,
 }
 
 export const GET = apiHandlerWithParams<{ snapshotId: string }>(
-  async (_req, _ctx, params) => GET_handler(_req, { params: Promise.resolve(params) }),
+  async (_req: any, _ctx: any, params: any) => GET_handler(_req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.snapshots.[snapshotId].GET' }
 );

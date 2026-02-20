@@ -455,6 +455,186 @@ describe('image-studio center handler', () => {
     expect(centerMetadata?.['scale']).toBe(3.5);
   });
 
+  it('propagates analysis-derived layout settings into object layout processing and metadata', async () => {
+    const analysisDerivedLayout = {
+      paddingPercent: 12,
+      paddingXPercent: 10,
+      paddingYPercent: 14,
+      fillMissingCanvasWhite: true,
+      targetCanvasWidth: 44,
+      targetCanvasHeight: 32,
+      whiteThreshold: 18,
+      chromaThreshold: 9,
+      shadowPolicy: 'include_shadow',
+      detection: 'white_bg_first_colored_pixel',
+    } as const;
+
+    const postCenterSlotHandler = await loadHandler();
+    const response = await postCenterSlotHandler(
+      buildRequest(
+        {
+          mode: 'server_object_layout_v1',
+          requestId: 'req_center_phase_k_chain_1',
+          layout: analysisDerivedLayout,
+        },
+        {
+          'x-idempotency-key': 'req_center_phase_k_chain_1',
+        }
+      ),
+      buildApiContext(),
+      { slotId: 'source-slot' }
+    );
+
+    const payload = (await response.json()) as Record<string, unknown>;
+    const responseLayout = payload['layout'] as Record<string, unknown>;
+    expect(response.status).toBe(201);
+    expect(centerAndScaleObjectByLayoutMock).toHaveBeenCalledTimes(1);
+    expect(centerAndScaleObjectByLayoutMock).toHaveBeenCalledWith(sourceBuffer, analysisDerivedLayout);
+    expect(responseLayout['whiteThreshold']).toBe(18);
+    expect(responseLayout['chromaThreshold']).toBe(9);
+    expect(responseLayout['shadowPolicy']).toBe('include_shadow');
+    expect(responseLayout['paddingPercent']).toBe(12);
+    expect(responseLayout['paddingXPercent']).toBe(10);
+    expect(responseLayout['paddingYPercent']).toBe(14);
+    expect(responseLayout['targetCanvasWidth']).toBe(44);
+    expect(responseLayout['targetCanvasHeight']).toBe(32);
+
+    const createSlotPayload = createImageStudioSlotsMock.mock.calls[0]?.[1]?.[0];
+    const metadata =
+      createSlotPayload &&
+      typeof createSlotPayload['metadata'] === 'object' &&
+      !Array.isArray(createSlotPayload['metadata'])
+        ? (createSlotPayload['metadata'] as Record<string, unknown>)
+        : null;
+    const centerMetadata =
+      metadata &&
+      typeof metadata['center'] === 'object' &&
+      !Array.isArray(metadata['center'])
+        ? (metadata['center'] as Record<string, unknown>)
+        : null;
+    const centerLayout =
+      centerMetadata &&
+      typeof centerMetadata['layout'] === 'object' &&
+      !Array.isArray(centerMetadata['layout'])
+        ? (centerMetadata['layout'] as Record<string, unknown>)
+        : null;
+
+    expect(centerLayout).not.toBeNull();
+    expect(centerLayout?.['whiteThreshold']).toBe(18);
+    expect(centerLayout?.['chromaThreshold']).toBe(9);
+    expect(centerLayout?.['shadowPolicy']).toBe('include_shadow');
+    expect(centerLayout?.['paddingPercent']).toBe(12);
+    expect(centerLayout?.['paddingXPercent']).toBe(10);
+    expect(centerLayout?.['paddingYPercent']).toBe(14);
+    expect(centerLayout?.['targetCanvasWidth']).toBe(44);
+    expect(centerLayout?.['targetCanvasHeight']).toBe(32);
+  });
+
+  it('persists low-confidence fallback policy metadata for object-layout responses', async () => {
+    centerAndScaleObjectByLayoutMock.mockResolvedValueOnce({
+      outputBuffer,
+      width: 40,
+      height: 30,
+      sourceObjectBounds: { left: 1, top: 1, width: 7, height: 7 },
+      targetObjectBounds: { left: 8, top: 6, width: 24, height: 18 },
+      scale: 3.2,
+      detectionUsed: 'alpha_bbox',
+      confidenceBefore: 0.41,
+      layoutPolicyVersion: 'v2',
+      detectionPolicyDecision: 'auto_white_low_confidence_fallback_alpha',
+      detectionDetails: {
+        shadowPolicyRequested: 'auto',
+        shadowPolicyApplied: 'exclude_shadow',
+        componentCount: 2,
+        coreComponentCount: 1,
+        selectedComponentPixels: 49,
+        selectedComponentCoverage: 0.73,
+        foregroundPixels: 67,
+        corePixels: 49,
+        touchesBorder: false,
+        maskSource: 'core',
+        policyVersion: 'v2',
+        policyReason: 'auto_white_low_confidence_fallback_alpha',
+        fallbackApplied: true,
+        candidateDetections: {
+          alpha_bbox: { confidence: 0.41, area: 49 },
+          white_bg_first_colored_pixel: { confidence: 0.2, area: 31 },
+        },
+      },
+    });
+
+    const postCenterSlotHandler = await loadHandler();
+    const response = await postCenterSlotHandler(
+      buildRequest(
+        {
+          mode: 'server_object_layout_v1',
+          requestId: 'req_center_phase_k_policy_1',
+        },
+        {
+          'x-idempotency-key': 'req_center_phase_k_policy_1',
+        }
+      ),
+      buildApiContext(),
+      { slotId: 'source-slot' }
+    );
+
+    const payload = (await response.json()) as Record<string, unknown>;
+    const responseLayout = payload['layout'] as Record<string, unknown>;
+    const responseDetectionDetails = payload['detectionDetails'] as Record<string, unknown>;
+    const responseCandidates = responseDetectionDetails['candidateDetections'] as Record<string, unknown>;
+
+    expect(response.status).toBe(201);
+    expect(payload['detectionUsed']).toBe('alpha_bbox');
+    expect(payload['confidenceBefore']).toBe(0.41);
+    expect(responseLayout['layoutPolicyVersion']).toBe('v2');
+    expect(responseLayout['detectionPolicyDecision']).toBe('auto_white_low_confidence_fallback_alpha');
+    expect(responseDetectionDetails['policyVersion']).toBe('v2');
+    expect(responseDetectionDetails['policyReason']).toBe('auto_white_low_confidence_fallback_alpha');
+    expect(responseDetectionDetails['fallbackApplied']).toBe(true);
+    expect(responseCandidates['alpha_bbox']).toEqual({ confidence: 0.41, area: 49 });
+    expect(responseCandidates['white_bg_first_colored_pixel']).toEqual({ confidence: 0.2, area: 31 });
+
+    const createSlotPayload = createImageStudioSlotsMock.mock.calls[0]?.[1]?.[0];
+    const metadata =
+      createSlotPayload &&
+      typeof createSlotPayload['metadata'] === 'object' &&
+      !Array.isArray(createSlotPayload['metadata'])
+        ? (createSlotPayload['metadata'] as Record<string, unknown>)
+        : null;
+    const centerMetadata =
+      metadata &&
+      typeof metadata['center'] === 'object' &&
+      !Array.isArray(metadata['center'])
+        ? (metadata['center'] as Record<string, unknown>)
+        : null;
+    const centerLayout =
+      centerMetadata &&
+      typeof centerMetadata['layout'] === 'object' &&
+      !Array.isArray(centerMetadata['layout'])
+        ? (centerMetadata['layout'] as Record<string, unknown>)
+        : null;
+    const centerDetectionDetails =
+      centerMetadata &&
+      typeof centerMetadata['detectionDetails'] === 'object' &&
+      !Array.isArray(centerMetadata['detectionDetails'])
+        ? (centerMetadata['detectionDetails'] as Record<string, unknown>)
+        : null;
+    const centerCandidates =
+      centerDetectionDetails &&
+      typeof centerDetectionDetails['candidateDetections'] === 'object' &&
+      !Array.isArray(centerDetectionDetails['candidateDetections'])
+        ? (centerDetectionDetails['candidateDetections'] as Record<string, unknown>)
+        : null;
+
+    expect(centerLayout?.['layoutPolicyVersion']).toBe('v2');
+    expect(centerLayout?.['detectionPolicyDecision']).toBe('auto_white_low_confidence_fallback_alpha');
+    expect(centerDetectionDetails?.['policyVersion']).toBe('v2');
+    expect(centerDetectionDetails?.['policyReason']).toBe('auto_white_low_confidence_fallback_alpha');
+    expect(centerDetectionDetails?.['fallbackApplied']).toBe(true);
+    expect(centerCandidates?.['alpha_bbox']).toEqual({ confidence: 0.41, area: 49 });
+    expect(centerCandidates?.['white_bg_first_colored_pixel']).toEqual({ confidence: 0.2, area: 31 });
+  });
+
   it('supports fingerprint dedupe mode when enabled via env flag', async () => {
     process.env['IMAGE_STUDIO_CENTER_DEDUPE_BY_FINGERPRINT'] = 'true';
 

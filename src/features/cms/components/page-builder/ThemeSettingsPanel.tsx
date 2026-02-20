@@ -17,6 +17,7 @@ import {
   Textarea,
   FormSection,
   Card,
+  Hint,
 } from '@/shared/ui';
 import {
   SettingsField,
@@ -401,7 +402,7 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
           return (
             <div className='space-y-3'>
               <Card variant='subtle-compact' padding='sm' className='border-dashed border-border/50 bg-card/30'>
-                <div className='text-[10px] font-semibold uppercase tracking-wider text-gray-500'>Logo preview</div>
+                <Hint size='xxs' uppercase className='font-semibold text-gray-500'>Logo preview</Hint>
                 <div className='mt-3 flex items-center justify-center rounded border border-border/40 bg-card/50 p-4'>
                   {logoPreviewUrl ? (
                     <Image
@@ -486,7 +487,7 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
                 }}
               />
               <div className='border-t border-border/30 pt-2'>
-                <Label className='text-[10px] uppercase tracking-wider text-gray-500 mb-2 block'>Footer description</Label>
+                <Hint size='xxs' uppercase className='mb-2 block text-gray-500'>Footer description</Hint>
                 <div className='space-y-3'>
                   <MiniRichTextEditor
                     label='Headline'

@@ -1,4 +1,4 @@
-import type { CollectionSchema, FieldSchema, SchemaData } from '@/shared/contracts/ai-paths';
+import type { CollectionSchema, FieldSchema, SchemaData } from '@/shared/contracts/database';
 
 export function extractCodeSnippets(text: string): string[] {
   const regex = /```[\w]*\n?([\s\S]*?)```/g;
@@ -58,21 +58,21 @@ export const formatCollectionSchema = (collectionName: string, fields: FieldSche
 };
 
 export const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema[] => {
-  if (!schema?.collections?.length) return [];
+  if (!schema || !(schema as any)?.collections?.length) return [];
 
   const stripUndefinedProvider = (
-    collection: SchemaData['collections'][number]
+    collection: any
   ): CollectionSchema => {
     const { provider, ...rest } = collection;
     return provider ? { ...rest, provider } : rest;
   };
 
-  if (schema.provider === 'multi') {
-    return schema.collections.map((collection) => stripUndefinedProvider(collection));
+  if (schema && schema.provider === 'multi') {
+    return (schema.collections as any[]).map((collection) => stripUndefinedProvider(collection));
   }
 
-  const provider: 'mongodb' | 'prisma' = schema.provider;
-  return schema.collections.map((collection) => ({
+  const provider: 'mongodb' | 'prisma' = (schema ? schema.provider : 'mongodb') as any;
+  return (schema ? (schema.collections as any[]) : []).map((collection) => ({
     ...stripUndefinedProvider(collection),
     provider,
   }));

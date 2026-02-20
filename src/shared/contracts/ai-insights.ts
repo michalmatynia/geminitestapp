@@ -82,6 +82,12 @@ export const aiInsightNotificationSchema = z.object({
 export type AiInsightNotificationDto = z.infer<typeof aiInsightNotificationSchema>;
 export type AiInsightNotification = AiInsightNotificationDto;
 
+export interface AiInsightNotificationsResponseDto {
+  notifications: AiInsightNotificationDto[];
+  total: number;
+  unreadCount: number;
+}
+
 export const AI_INSIGHTS_SETTINGS_KEYS = {
   analyticsHistory: 'ai_insights_analytics_history',
   runtimeAnalyticsHistory: 'ai_insights_runtime_analytics_history',

@@ -6,7 +6,7 @@ import { aiNodeTypeSchema } from './ai-paths';
 /**
  * Agent Documentation / Context Extraction Contract
  */
-export const agentTeachingChatSourceSchema = z.enum([
+export const agentTeachingSourceTypeSchema = z.enum([
   'cms-page',
   'cms-domain',
   'product-list',
@@ -16,11 +16,11 @@ export const agentTeachingChatSourceSchema = z.enum([
   'manual-text',
 ]);
 
-export type AgentTeachingChatSourceDto = z.infer<typeof agentTeachingChatSourceSchema>;
-export type AgentTeachingChatSource = AgentTeachingChatSourceDto;
+export type AgentTeachingSourceTypeDto = z.infer<typeof agentTeachingSourceTypeSchema>;
+export type AgentTeachingSourceType = AgentTeachingSourceTypeDto;
 
 export const agentTeachingDocumentMetadataSchema = z.object({
-  source: agentTeachingChatSourceSchema.optional(),
+  source: agentTeachingSourceTypeSchema.optional(),
   sourceId: z.string().optional(),
   title: z.string().optional(),
   description: z.string().optional(),
@@ -30,12 +30,29 @@ export const agentTeachingDocumentMetadataSchema = z.object({
 export type AgentTeachingDocumentMetadataDto = z.infer<typeof agentTeachingDocumentMetadataSchema>;
 export type AgentTeachingEmbeddingDocumentMetadata = AgentTeachingDocumentMetadataDto;
 
+export const agentTeachingChatSourceSchema = z.object({
+  documentId: z.string(),
+  collectionId: z.string(),
+  content: z.string().optional(),
+  text: z.string().optional(),
+  score: z.number(),
+  metadata: agentTeachingDocumentMetadataSchema.optional(),
+});
+
+export type AgentTeachingChatSourceDto = z.infer<typeof agentTeachingChatSourceSchema>;
+export type AgentTeachingChatSource = AgentTeachingChatSourceDto;
+
 export const agentTeachingDocumentSchema = dtoBaseSchema.extend({
   collectionId: z.string(),
+  name: z.string().optional(),
+  description: z.string().nullable().optional(),
   content: z.string(),
+  text: z.string().optional(),
   embedding: z.array(z.number()).optional(),
   tokens: z.number().optional(),
   metadata: agentTeachingDocumentMetadataSchema.optional(),
+  embeddingModel: z.string().optional(),
+  embeddingDimensions: z.number().optional(),
 });
 
 export type AgentTeachingDocumentDto = z.infer<typeof agentTeachingDocumentSchema>;
@@ -61,14 +78,14 @@ export type AgentTeachingEmbeddingCollectionRecord = AgentTeachingCollectionDto;
  */
 export const agentTeachingAgentSchema = z.object({
   id: z.string(),
-  agentId: z.string(),
+  agentId: z.string().optional(),
   name: z.string(),
   description: z.string().nullable(),
   llmModel: z.string(),
   embeddingModel: z.string(),
   systemPrompt: z.string(),
   collectionIds: z.array(z.string()),
-  enabled: z.boolean(),
+  enabled: z.boolean().optional(),
   temperature: z.number().optional(),
   maxTokens: z.number().optional(),
   retrievalTopK: z.number().optional(),
@@ -86,14 +103,7 @@ export type AgentTeachingAgentRecord = AgentTeachingAgentDto;
 
 export const agentTeachingContextSchema = z.object({
   query: z.string(),
-  results: z.array(
-    z.object({
-      documentId: z.string(),
-      content: z.string(),
-      score: z.number(),
-      metadata: agentTeachingDocumentMetadataSchema.optional(),
-    })
-  ),
+  results: z.array(agentTeachingChatSourceSchema),
   tokensUsed: z.number(),
 });
 

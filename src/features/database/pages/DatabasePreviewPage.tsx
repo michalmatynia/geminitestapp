@@ -21,27 +21,6 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import React, { Suspense, useMemo, useState } from 'react';
 
-import {
-  Badge,
-  Button,
-  Pagination,
-  SectionHeader,
-  FormSection,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  StandardDataTablePanel,
-  StatusBadge,
-  Alert,
-  SearchInput,
-  CollapsibleSection,
-  MetadataItem,
-  LoadingState,
-  EmptyState,
-  PageLayout,
-} from '@/shared/ui';
-
 import { CrudPanel } from '../components/CrudPanel';
 import { SqlQueryConsole } from '../components/SqlQueryConsole';
 import { DatabaseProvider } from '../context/DatabaseContext';
@@ -56,6 +35,27 @@ import type {
   DatabaseType,
   DatabasePreviewMode,
 } from '@/shared/contracts/database';
+import {
+  Badge,
+  Button,
+  Pagination,
+  FormSection,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  StandardDataTablePanel,
+  StatusBadge,
+  Alert,
+  SearchInput,
+  CollapsibleSection,
+  MetadataItem,
+  LoadingState,
+  EmptyState,
+  PageLayout,
+  Hint,
+} from '@/shared/ui';
+
 import type { ColumnDef } from '@tanstack/react-table';
 
 const groupIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -101,9 +101,9 @@ function TableDetailCard({
         <div className='flex flex-1 items-center gap-3'>
           <TableIcon className='size-4 text-emerald-300' />
           <span className='text-sm font-semibold text-gray-200'>{detail.name}</span>
-          <span className='text-[10px] uppercase tracking-wider text-gray-500'>
+          <Hint size='xxs' uppercase className='text-gray-500'>
             {detail.rowEstimate.toLocaleString()} rows • {detail.sizeFormatted}
-          </span>
+          </Hint>
         </div>
       )}
       actions={(
@@ -351,9 +351,9 @@ function DataTab({
 
   return (
     <div className='p-2 space-y-2'>
-      <div className='px-2 text-[10px] uppercase font-bold text-gray-500'>
+      <Hint size='xxs' uppercase className='px-2 font-bold text-gray-500'>
         Rows {startRow}–{startRow + tableRows.rows.length - 1} of {tableRows.totalRows.toLocaleString()}
-      </div>
+      </Hint>
       <StandardDataTablePanel
         columns={columns}
         data={tableRows.rows}

@@ -67,10 +67,10 @@ export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
               >
                 <div className='flex items-center justify-between gap-2'>
                   <span className='text-[10px] uppercase text-gray-500'>
-                    {new Date(notification.createdAt).toLocaleString()}
+                    {notification.createdAt ? new Date(notification.createdAt).toLocaleString() : 'N/A'}
                   </span>
                   <StatusBadge
-                    status={notification.status}
+                    status={notification.status ?? 'new'}
                     variant={
                       notification.status === 'ok'
                         ? 'success'
@@ -83,10 +83,10 @@ export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
                   />
                 </div>
                 <div className='mt-2 text-sm text-white'>{notification.summary}</div>
-                {notification.warnings.length > 0 ? (
+                {notification.warnings && notification.warnings.length > 0 ? (
                   <DocumentationSection title='Issues' className='mt-3 p-3 bg-amber-500/5 border-amber-500/20'>
                     <ul className='list-disc space-y-1 pl-4 text-[11px] text-amber-200'>
-                      {notification.warnings.map((warning: string, index: number) => (
+                      {(notification.warnings ?? []).map((warning: string, index: number) => (
                         <li key={`${notification.id}-warn-${index}`}>{warning}</li>
                       ))}
                     </ul>

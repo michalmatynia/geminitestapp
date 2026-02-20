@@ -4,9 +4,9 @@ import { Edit2, Plus, Trash2, Database } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useCountries } from '@/features/internationalization/hooks/useInternationalizationQueries';
+import type { CountryOption } from '@/shared/contracts/internationalization';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import type { CountryOption } from '@/shared/contracts/internationalization';
 import {
   Badge,
   Button,
@@ -14,6 +14,7 @@ import {
   PanelHeader,
   useToast,
   Card,
+  EmptyState,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
@@ -399,9 +400,12 @@ export function AdminFilemakerPage(): React.JSX.Element {
       >
         <div className='space-y-2'>
           {persons.length === 0 ? (
-            <Card variant='subtle-compact' padding='md' className='border-dashed border-border/60 bg-card/20 text-center text-sm text-gray-400'>
-              No persons added yet.
-            </Card>
+            <EmptyState
+              title='No persons'
+              description='No persons added yet.'
+              variant='compact'
+              className='bg-card/20 border-dashed border-border/60 py-8'
+            />
           ) : (
             persons.map((person: FilemakerPerson) => (
               <Card key={person.id} variant='subtle-compact' padding='md' className='border-border/60 bg-card/35'>
@@ -467,9 +471,12 @@ export function AdminFilemakerPage(): React.JSX.Element {
       >
         <div className='space-y-2'>
           {organizations.length === 0 ? (
-            <Card variant='subtle-compact' padding='md' className='border-dashed border-border/60 bg-card/20 text-center text-sm text-gray-400'>
-              No organizations added yet.
-            </Card>
+            <EmptyState
+              title='No organizations'
+              description='No organizations added yet.'
+              variant='compact'
+              className='bg-card/20 border-dashed border-border/60 py-8'
+            />
           ) : (
             organizations.map((organization: FilemakerOrganization) => (
               <Card key={organization.id} variant='subtle-compact' padding='md' className='border-border/60 bg-card/35'>

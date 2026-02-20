@@ -1650,3 +1650,15 @@ export type AiPathRunRepository = {
   listRunEvents(runId: string, options?: AiPathRunEventListOptions): Promise<AiPathRunEventRecord[]>;
   markStaleRunningRuns(maxAgeMs: number): Promise<{ count: number }>;
 };
+
+/**
+ * Legacy aliases / Runtime Types
+ */
+export type RuntimeState = any;
+export type RuntimePortValues = Record<string, unknown>;
+export type RuntimeEventInputDto = any;
+export type RunStatusDto = any;
+export type SetNodeStatusInputDto = any;
+export type PathExecutionMode = any;
+export type PathRunMode = any;
+export type QueuedRunDto = any;

@@ -197,6 +197,127 @@ describe('image-studio analysis handler', () => {
     expect(parseImageDataUrlMock).not.toHaveBeenCalled();
   });
 
+  it('propagates shared preset layout settings into analysis execution', async () => {
+    const sharedPresetLayout = {
+      paddingPercent: 12,
+      paddingXPercent: 10,
+      paddingYPercent: 14,
+      fillMissingCanvasWhite: true,
+      targetCanvasWidth: 40,
+      targetCanvasHeight: 30,
+      whiteThreshold: 18,
+      chromaThreshold: 9,
+      shadowPolicy: 'include_shadow',
+      detection: 'white_bg_first_colored_pixel',
+    } as const;
+
+    const postAnalyzeSlotHandler = await loadHandler();
+    const response = await postAnalyzeSlotHandler(
+      buildRequest({
+        mode: 'server_analysis_v1',
+        layout: sharedPresetLayout,
+      }),
+      buildApiContext(),
+      { slotId: 'source-slot' }
+    );
+
+    expect(response.status).toBe(200);
+    expect(analyzeImageByAutoScalerLayoutMock).toHaveBeenCalledTimes(1);
+    expect(analyzeImageByAutoScalerLayoutMock).toHaveBeenCalledWith(
+      sourceBuffer,
+      sharedPresetLayout,
+      { preferTargetCanvas: true }
+    );
+  });
+
+  it('returns low-confidence fallback policy metadata in analysis payload', async () => {
+    analyzeImageByAutoScalerLayoutMock.mockResolvedValueOnce({
+      width: 20,
+      height: 20,
+      sourceObjectBounds: { left: 1, top: 1, width: 7, height: 7 },
+      detectionUsed: 'alpha_bbox',
+      confidence: 0.44,
+      detectionDetails: {
+        shadowPolicyRequested: 'auto',
+        shadowPolicyApplied: 'exclude_shadow',
+        componentCount: 2,
+        coreComponentCount: 1,
+        selectedComponentPixels: 49,
+        selectedComponentCoverage: 0.73,
+        foregroundPixels: 67,
+        corePixels: 49,
+        touchesBorder: false,
+        maskSource: 'core',
+        policyVersion: 'v2',
+        policyReason: 'auto_white_low_confidence_fallback_alpha',
+        fallbackApplied: true,
+        candidateDetections: {
+          alpha_bbox: { confidence: 0.44, area: 49 },
+          white_bg_first_colored_pixel: { confidence: 0.21, area: 30 },
+        },
+      },
+      policyVersion: 'v2',
+      policyReason: 'auto_white_low_confidence_fallback_alpha',
+      fallbackApplied: true,
+      candidateDetections: {
+        alpha_bbox: { confidence: 0.44, area: 49 },
+        white_bg_first_colored_pixel: { confidence: 0.21, area: 30 },
+      },
+      whitespace: {
+        px: { left: 1, top: 1, right: 12, bottom: 12 },
+        percent: { left: 5, top: 5, right: 60, bottom: 60 },
+      },
+      objectAreaPercent: 12.25,
+      layout: {
+        paddingPercent: 8,
+        paddingXPercent: 8,
+        paddingYPercent: 8,
+        fillMissingCanvasWhite: true,
+        targetCanvasWidth: 20,
+        targetCanvasHeight: 20,
+        whiteThreshold: 16,
+        chromaThreshold: 10,
+        shadowPolicy: 'auto',
+        detection: 'auto',
+      },
+      suggestedPlan: {
+        outputWidth: 20,
+        outputHeight: 20,
+        targetObjectBounds: { left: 5, top: 5, width: 10, height: 10 },
+        scale: 1.428571,
+        whitespace: {
+          px: { left: 5, top: 5, right: 5, bottom: 5 },
+          percent: { left: 25, top: 25, right: 25, bottom: 25 },
+        },
+      },
+    });
+
+    const postAnalyzeSlotHandler = await loadHandler();
+    const response = await postAnalyzeSlotHandler(
+      buildRequest({
+        mode: 'server_analysis_v1',
+      }),
+      buildApiContext(),
+      { slotId: 'source-slot' }
+    );
+
+    const payload = (await response.json()) as Record<string, unknown>;
+    const analysis = payload['analysis'] as Record<string, unknown>;
+    const detectionDetails = analysis['detectionDetails'] as Record<string, unknown>;
+    const candidates = detectionDetails['candidateDetections'] as Record<string, unknown>;
+
+    expect(response.status).toBe(200);
+    expect(analysis['detectionUsed']).toBe('alpha_bbox');
+    expect(analysis['confidence']).toBe(0.44);
+    expect(analysis['policyVersion']).toBe('v2');
+    expect(analysis['policyReason']).toBe('auto_white_low_confidence_fallback_alpha');
+    expect(analysis['fallbackApplied']).toBe(true);
+    expect(detectionDetails['fallbackApplied']).toBe(true);
+    expect(detectionDetails['policyReason']).toBe('auto_white_low_confidence_fallback_alpha');
+    expect(candidates['alpha_bbox']).toEqual({ confidence: 0.44, area: 49 });
+    expect(candidates['white_bg_first_colored_pixel']).toEqual({ confidence: 0.21, area: 30 });
+  });
+
   it('falls back to client data URL source in client mode when source slot image cannot be loaded', async () => {
     loadSourceBufferFromSlotMock.mockRejectedValueOnce(new Error('source unavailable'));
     const parsedDataBuffer = await createPngBuffer(24, 24);

@@ -52,7 +52,7 @@ export function IteratorNodeConfigSection(): React.JSX.Element | null {
               className='font-bold'
             />
             {done ? (
-              <Badge variant='success' size='sm' className='font-bold'>
+              <Badge variant='success' className='font-bold'>
                 done
               </Badge>
             ) : null}

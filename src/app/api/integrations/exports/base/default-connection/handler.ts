@@ -36,7 +36,7 @@ const resolveFallbackBaseConnectionId = async (
 ): Promise<string | null> => {
   const integrationRepository = await getIntegrationRepository();
   const integrations = await integrationRepository.listIntegrations();
-  const baseIntegrations = integrations.filter((integration) =>
+  const baseIntegrations = integrations.filter( (integration: any) =>
     BASE_INTEGRATION_SLUGS.has((integration.slug ?? '').trim().toLowerCase())
   );
 
@@ -44,7 +44,7 @@ const resolveFallbackBaseConnectionId = async (
 
   const baseConnections = (
     await Promise.all(
-      baseIntegrations.map((integration) =>
+      baseIntegrations.map( (integration: any) =>
         integrationRepository.listConnections(integration.id)
       )
     )
@@ -53,14 +53,14 @@ const resolveFallbackBaseConnectionId = async (
   if (baseConnections.length === 0) return null;
 
   const currentConnection =
-    baseConnections.find((connection) => connection.id === currentConnectionId) ??
+    baseConnections.find( (connection: any) => connection.id === currentConnectionId) ??
     null;
   if (currentConnection && hasBaseCredentials(currentConnection)) {
     return currentConnection.id;
   }
 
   const credentialedConnection =
-    baseConnections.find((connection) => hasBaseCredentials(connection)) ?? null;
+    baseConnections.find( (connection: any) => hasBaseCredentials(connection)) ?? null;
   if (credentialedConnection) {
     return credentialedConnection.id;
   }

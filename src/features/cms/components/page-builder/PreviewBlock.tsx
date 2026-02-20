@@ -9,13 +9,13 @@ import React from 'react';
 
 import {
   EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
-import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import {
   buildScopedCustomCss,
   getCustomCssSelector,
 } from '@/features/cms/utils/custom-css';
 import type { GsapAnimationConfig } from '@/features/gsap';
-import { Button } from '@/shared/ui';
+import type { CssAnimationConfig } from '@/shared/contracts/cms';
+import { Button, Card } from '@/shared/ui';
 
 import { CssAnimationWrapper } from '../frontend/CssAnimationWrapper';
 import { GsapAnimationWrapper } from '../frontend/GsapAnimationWrapper';
@@ -339,7 +339,7 @@ export function PreviewSection({
       >
         {renderSectionActions()}
         {divider}
-        {text ? <p className='m-0 p-0 text-base leading-relaxed text-gray-200' style={typoStyles}>{text}</p> : <div className='rounded border border-dashed border-border/40 bg-gray-800/20 px-3 py-2 text-sm text-gray-500'>Text element</div>}
+        {text ? <p className='m-0 p-0 text-base leading-relaxed text-gray-200' style={typoStyles}>{text}</p> : <Card variant='subtle-compact' padding='sm' className='border-dashed border-border/40 bg-gray-800/20 text-gray-500'>Text element</Card>}
       </div>,
     );
   }

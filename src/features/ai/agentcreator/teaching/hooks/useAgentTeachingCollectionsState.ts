@@ -9,7 +9,7 @@ import { useToast } from '@/shared/ui';
 import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
 import { useDeleteEmbeddingCollectionMutation, useUpsertEmbeddingCollectionMutation } from '../hooks/useAgentTeachingQueries';
 
-const isEmbeddingModel = (model: string): boolean => buildModelProfile(model).isEmbedding;
+const isEmbeddingModel = (model: string): boolean => Boolean(buildModelProfile(model).isEmbedding);
 
 export function useAgentTeachingQueriesCollectionsState() {
   const { toast } = useToast();

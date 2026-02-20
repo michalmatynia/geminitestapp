@@ -8,7 +8,7 @@ import { useDefaultExportConnection } from '@/features/integrations/hooks/useInt
 import { useSettings, useUpdateSetting } from '@/shared/hooks/useSettings';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Button, Input, SelectSimple, StatusBadge, FormSection, FormField } from '@/shared/ui';
+import { Button, Input, SelectSimple, StatusBadge, FormSection, FormField, EmptyState } from '@/shared/ui';
 
 export function BaselinkerSettings(): React.JSX.Element {
   const { connections, handleBaselinkerTest, isTesting } = useIntegrationsContext();
@@ -127,9 +127,12 @@ export function BaselinkerSettings(): React.JSX.Element {
       className='space-y-4 text-sm text-gray-200'
     >
       {!activeConnection ? (
-        <div className='rounded-md border border-dashed border-border p-4 text-xs text-gray-400'>
-          Add a connection first to enable Baselinker API access.
-        </div>
+        <EmptyState
+          title='No connection'
+          description='Add a connection first to enable Baselinker API access.'
+          variant='compact'
+          className='bg-card/20 py-8'
+        />
       ) : (
         <div className='space-y-3'>
           <FormSection variant='subtle' className='p-3 text-xs text-gray-300'>

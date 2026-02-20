@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import React from 'react';
 
-import { SectionHeader } from '@/shared/ui';
+import { SectionHeader, EmptyState } from '@/shared/ui';
 
 export default function AllegroListingManagementPage(): React.JSX.Element {
   return (
@@ -20,9 +20,12 @@ export default function AllegroListingManagementPage(): React.JSX.Element {
         className='mb-6'
       />
 
-      <div className='rounded-md border border-dashed border-border/60 bg-card/40 p-4 text-sm text-muted-foreground'>
-        Listing management controls will appear here.
-      </div>
+      <EmptyState
+        title='No listings'
+        description='Listing management controls will appear here.'
+        variant='compact'
+        className='bg-card/40 border-dashed border-border/60 py-8'
+      />
     </div>
   );
 }

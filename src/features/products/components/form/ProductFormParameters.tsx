@@ -4,8 +4,8 @@ import { X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
-import type { ProductParameter, ProductParameterValue } from '@/shared/contracts/products';
 import type { LanguageDto as Language } from '@/shared/contracts/internationalization';
+import type { ProductParameter, ProductParameterValue } from '@/shared/contracts/products';
 import {
   Alert,
   Button,
@@ -20,6 +20,8 @@ import {
   TabsTrigger,
   Textarea,
   ToggleRow,
+  EmptyState,
+  LoadingState,
 } from '@/shared/ui';
 
 const getParameterLabel = (
@@ -186,17 +188,21 @@ export default function ProductFormParameters(): React.JSX.Element {
         </div>
 
         {parametersLoading ? (
-          <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
-            Loading parameters...
-          </div>
+          <LoadingState message='Loading parameters...' className='py-8 border border-dashed' />
         ) : parameters.length === 0 ? (
-          <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
-            No parameters available for the selected catalog(s).
-          </div>
+          <EmptyState
+            title='No parameters'
+            description='No parameters available for the selected catalog(s).'
+            variant='compact'
+            className='bg-card/20 py-8'
+          />
         ) : parameterValues.length === 0 ? (
-          <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
-            Add your first parameter to start building values.
-          </div>
+          <EmptyState
+            title='No values'
+            description='Add your first parameter to start building values.'
+            variant='compact'
+            className='bg-card/20 py-8'
+          />
         ) : (
           <div className='space-y-3'>
             <Tabs

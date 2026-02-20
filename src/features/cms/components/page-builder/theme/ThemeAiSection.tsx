@@ -8,6 +8,7 @@ import {
   Label,
   Textarea,
   SelectSimple,
+  Hint,
 } from '@/shared/ui';
 
 import { useThemeColors } from './ThemeColorsContext';
@@ -37,9 +38,9 @@ export function ThemeAiSection(): React.JSX.Element {
   return (
     <div className='rounded border border-border/40 bg-gray-900/40 p-3 space-y-3'>
       <div className='flex items-center justify-between'>
-        <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
+        <Hint size='xxs' uppercase className='text-gray-500'>
           AI scheme generator
-        </Label>
+        </Hint>
         <span className='text-[10px] text-gray-500'>On demand</span>
       </div>
       <div className='space-y-1.5'>

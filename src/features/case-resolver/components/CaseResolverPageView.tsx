@@ -59,8 +59,8 @@ import {
   CaseResolverPageProvider,
 } from '../context/CaseResolverPageContext';
 import { emitCaseResolverShowDocumentInCanvas } from '../drag';
-import { useCaseResolverState } from '../hooks/useCaseResolverState';
 import { resolvePromptExploderTransferStatusLabel } from '../hooks/prompt-exploder-transfer-lifecycle';
+import { useCaseResolverState } from '../hooks/useCaseResolverState';
 import { buildCaseResolverNodeFileRelationIndexFromAssets } from '../nodefile-relations';
 import { resolveCaseResolverOcrProviderLabel } from '../ocr-provider';
 
@@ -869,6 +869,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                   icon={<FileText className='size-12 text-gray-600' />}
                   title='No case selected'
                   description='Select a file from the tree to begin.'
+                  variant='compact'
                   className='border-none p-0'
                 />
               </Card>
@@ -1539,7 +1540,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                         ? ` from "${pendingPromptExploderPayload.caseResolverContext.fileName}".`
                         : pendingPromptExploderTargetFileLabel
                           ? ` targeting "${pendingPromptExploderTargetFileLabel}".`
-                        : '.'}
+                          : '.'}
                     </div>
                     <div className='mt-1 flex flex-wrap gap-1'>
                       <Badge variant='outline' className='text-[10px]'>

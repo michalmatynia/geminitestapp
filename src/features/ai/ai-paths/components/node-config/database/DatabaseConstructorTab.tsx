@@ -42,7 +42,7 @@ import { DatabaseTemplateSnippetsDialog } from './DatabaseTemplateSnippetsDialog
 import { PlaceholderMatrixDialog, type PlaceholderGroup, type PlaceholderTarget } from './PlaceholderMatrixDialog';
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
-import type { AiQuery, CollectionSchema, DatabasePresetOption, FieldSchema } from '@/shared/contracts/ai-paths';
+import type { AiQuery, CollectionSchema, DatabasePresetOption, FieldSchema } from '@/shared/contracts/database';
 
 export function DatabaseConstructorTab(): React.JSX.Element | null {
   const {

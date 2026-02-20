@@ -8,7 +8,7 @@ import {
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, FolderTreePanel, TreeHeader } from '@/shared/ui';
+import { Button, FolderTreePanel, TreeHeader, EmptyState } from '@/shared/ui';
 import {
   canNestTreeNodeV2,
   cn,
@@ -270,9 +270,12 @@ export function ComponentTreePanel(): React.ReactNode {
             <div className='p-4' />
           ) : panelCollapsed ? (
             <div className='p-4'>
-              <div className='rounded border border-dashed border-border/70 bg-card/30 px-3 py-6 text-center text-xs text-gray-400'>
-                Structure tree is collapsed.
-              </div>
+              <EmptyState
+                title='Tree Collapsed'
+                description='Structure tree is collapsed.'
+                variant='compact'
+                className='bg-card/30 border-dashed border-border/70 py-6'
+              />
             </div>
           ) : (
             <MasterFolderTree

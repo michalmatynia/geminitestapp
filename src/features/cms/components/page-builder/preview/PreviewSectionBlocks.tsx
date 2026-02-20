@@ -4,13 +4,14 @@ import { Image as ImageIcon } from 'lucide-react';
 import NextImage from 'next/image';
 
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
+import type { PreviewSectionBlockProps, PreviewBlockItemProps } from '@/shared/contracts/cms';
+import { Card } from '@/shared/ui';
 
 import { useBlockContext, BlockContextProvider } from './context/BlockContext';
 import { usePreviewEditor } from './context/PreviewEditorContext';
 import { getSpacingValue, resolveJustifyContent, resolveAlignItems } from './preview-utils';
 import { getSectionStyles, getTextAlign } from '../../frontend/theme-styles';
 
-import type { PreviewSectionBlockProps, PreviewBlockItemProps } from '@/shared/contracts/cms';
 import type { BlockInstance } from '../../../types/page-builder';
 
 // ---------------------------------------------------------------------------
@@ -227,9 +228,9 @@ export function PreviewBlockSectionBlock({
     >
       {blockCustomCss ? <style data-cms-custom-css={block.id}>{blockCustomCss}</style> : null}
       {children.length === 0 && showEditorChrome ? (
-        <div className='flex min-h-[48px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-card/20 text-[10px] uppercase tracking-wider text-gray-600'>
+        <Card variant='subtle-compact' padding='none' className='flex min-h-[48px] items-center justify-center border-dashed border-gray-700/50 bg-card/20 text-[10px] uppercase tracking-wider text-gray-600'>
           Empty block
-        </div>
+        </Card>
       ) : (
         <div
           className={`flex ${flexDirClass} ${wrapClass}`}

@@ -1,7 +1,7 @@
 # Image Studio Object Layout Improvement Plan
 
 Date: 2026-02-20  
-Status: In Progress (Phase A complete, Phase B foundation complete, Phase C complete, Integration Phase H complete, Phase I complete)
+Status: In Progress (Phase A complete, Phase B foundation complete, Phase C complete, Integration Phase H complete, Phase I complete, Phase J complete, Phase K complete)
 
 ## 1. Scope
 
@@ -100,11 +100,20 @@ Completed:
    - Analysis snapshot/apply intent now include source image signature metadata.
    - Stale-plan guard now validates source signature (slot image revision), not only slot id.
    - Optional one-click apply-and-run flow is available from Analysis tab for Object Layout and Auto Scaler.
+6. Phase J complete (visual coherence and diagnostics):
+   - Shared analysis summary chip now shows detection used, confidence, fallback flag, policy version, and policy reason.
+   - Analysis summary chip is rendered in Analysis tab, Object Layout panel, and Auto Scaler panel.
+   - Runtime-vs-analysis config mismatch warning now appears when detection/threshold/shadow settings diverge.
+7. Phase K complete (end-to-end integration testing):
+   - Added deterministic analysis handler assertions for shared preset propagation and low-confidence fallback policy metadata.
+   - Added deterministic object-layout handler assertions for analysis-derived layout propagation and persisted/response fallback policy metadata.
+   - Added deterministic autoscaler handler assertions for analysis-derived layout propagation and persisted/response fallback policy metadata.
+   - Verified all three handler suites together in one Phase K run.
 
 Remaining:
 1. Phase B rollout hardening:
    - policy decision metadata surfaced in all UI diagnostics where useful.
-2. Phase J onward unchanged.
+2. Phase L onward unchanged.
 
 ### Phase A: Detection Quality Framework
 

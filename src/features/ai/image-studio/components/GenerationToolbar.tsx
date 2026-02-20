@@ -91,6 +91,7 @@ import type {
   ImageStudioCenterShadowPolicy,
 } from '../contracts/center';
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
+import type { ImageStudioAnalysisSummaryChipData } from './ImageStudioAnalysisSummaryChip';
 
 type MaskAttachMode = 'client_canvas_polygon' | 'server_polygon';
 type UpscaleMode = 'client_canvas' | 'server_sharp';
@@ -1774,15 +1775,72 @@ export function GenerationToolbar(): React.JSX.Element {
   const analysisPlanSlotId = analysisPlanSnapshot?.slotId?.trim() ?? '';
   const analysisPlanSourceSignature = analysisPlanSnapshot?.sourceSignature?.trim() ?? '';
   const analysisPlanHasSourceSignature = analysisPlanSourceSignature.length > 0;
-  const analysisPlanAvailable = Boolean(analysisPlanSnapshot);
-  const analysisPlanMatchesWorkingSlot = Boolean(
+  const analysisPlanMatchesSlotId = Boolean(
     analysisPlanSnapshot &&
     normalizedWorkingSlotId &&
-    analysisPlanSlotId === normalizedWorkingSlotId &&
+    analysisPlanSlotId === normalizedWorkingSlotId
+  );
+  const analysisPlanSourceMatchesWorking = Boolean(
     analysisPlanHasSourceSignature &&
     workingSourceSignature &&
     analysisPlanSourceSignature === workingSourceSignature
   );
+  const analysisPlanAvailable = Boolean(analysisPlanSnapshot);
+  const analysisPlanIsStale = Boolean(
+    analysisPlanSnapshot &&
+    (!analysisPlanMatchesSlotId || !analysisPlanSourceMatchesWorking)
+  );
+  const analysisSummaryData = useMemo<ImageStudioAnalysisSummaryChipData | null>(
+    () => (analysisPlanSnapshot
+      ? {
+        detectionUsed: analysisPlanSnapshot.detectionUsed,
+        confidence: analysisPlanSnapshot.confidence,
+        fallbackApplied: analysisPlanSnapshot.fallbackApplied,
+        policyReason: analysisPlanSnapshot.policyReason,
+        policyVersion: analysisPlanSnapshot.policyVersion,
+      }
+      : null),
+    [analysisPlanSnapshot]
+  );
+  const analysisPlanMatchesWorkingSlot = Boolean(
+    analysisPlanSnapshot &&
+    analysisPlanMatchesSlotId &&
+    analysisPlanSourceMatchesWorking
+  );
+  const centerAnalysisConfigMismatchMessage = useMemo(() => {
+    if (!analysisPlanSnapshot || analysisPlanIsStale) return null;
+    const layout = analysisPlanSnapshot.layout;
+    const detectionMismatch = layout.detection !== centerLayoutDetection;
+    const whiteMismatch = layout.whiteThreshold !== centerLayoutWhiteThresholdValue;
+    const chromaMismatch = layout.chromaThreshold !== centerLayoutChromaThresholdValue;
+    const shadowMismatch = layout.shadowPolicy !== centerLayoutShadowPolicy;
+    if (!(detectionMismatch || whiteMismatch || chromaMismatch || shadowMismatch)) return null;
+    return 'Current Object Layout detection config differs from latest analysis plan.';
+  }, [
+    analysisPlanIsStale,
+    analysisPlanSnapshot,
+    centerLayoutChromaThresholdValue,
+    centerLayoutDetection,
+    centerLayoutShadowPolicy,
+    centerLayoutWhiteThresholdValue,
+  ]);
+  const autoScaleAnalysisConfigMismatchMessage = useMemo(() => {
+    if (!analysisPlanSnapshot || analysisPlanIsStale) return null;
+    const layout = analysisPlanSnapshot.layout;
+    const detectionMismatch = layout.detection !== centerLayoutDetection;
+    const whiteMismatch = layout.whiteThreshold !== centerLayoutWhiteThresholdValue;
+    const chromaMismatch = layout.chromaThreshold !== centerLayoutChromaThresholdValue;
+    const shadowMismatch = layout.shadowPolicy !== autoScaleLayoutShadowPolicy;
+    if (!(detectionMismatch || whiteMismatch || chromaMismatch || shadowMismatch)) return null;
+    return 'Current Auto Scaler detection config differs from latest analysis plan.';
+  }, [
+    analysisPlanIsStale,
+    analysisPlanSnapshot,
+    autoScaleLayoutShadowPolicy,
+    centerLayoutChromaThresholdValue,
+    centerLayoutDetection,
+    centerLayoutWhiteThresholdValue,
+  ]);
 
   const handleApplyAnalysisPlanToCenter = (): void => {
     if (!analysisPlanSnapshot) {
@@ -1959,6 +2017,9 @@ export function GenerationToolbar(): React.JSX.Element {
       <GenerationToolbarCenterSection
         analysisPlanAvailable={analysisPlanAvailable}
         analysisPlanMatchesWorkingSlot={analysisPlanMatchesWorkingSlot}
+        analysisSummaryData={analysisSummaryData}
+        analysisSummaryIsStale={analysisPlanIsStale}
+        analysisConfigMismatchMessage={centerAnalysisConfigMismatchMessage}
         centerBusy={centerBusy}
         centerBusyLabel={centerBusyLabel}
         centerGuidesEnabled={centerGuidesEnabled}
@@ -2101,6 +2162,9 @@ export function GenerationToolbar(): React.JSX.Element {
       <GenerationToolbarAutoScalerSection
         analysisPlanAvailable={analysisPlanAvailable}
         analysisPlanMatchesWorkingSlot={analysisPlanMatchesWorkingSlot}
+        analysisSummaryData={analysisSummaryData}
+        analysisSummaryIsStale={analysisPlanIsStale}
+        analysisConfigMismatchMessage={autoScaleAnalysisConfigMismatchMessage}
         autoScaleBusy={autoScaleBusy}
         autoScaleBusyLabel={autoScaleBusyLabel}
         autoScaleLayoutPadding={autoScaleLayoutPadding}

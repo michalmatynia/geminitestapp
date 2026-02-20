@@ -9,7 +9,7 @@ type ScoredDocument = {
   collectionId: string;
   score: number;
   text: string;
-  metadata: AgentTeachingEmbeddingDocumentMetadata | null;
+  metadata?: AgentTeachingEmbeddingDocumentMetadata | undefined;
 };
 
 const dot = (a: number[], b: number[]): number => {
@@ -54,10 +54,10 @@ export async function retrieveTopContext(params: {
       collectionId: doc.collectionId,
       score: cosineSimilarity(params.queryEmbedding, doc.embedding),
       text: doc.text,
-      metadata: doc.metadata,
+      metadata: doc.metadata ?? undefined,
     }))
     .filter((item: { score: number }): boolean => Number.isFinite(item.score) && item.score >= params.minScore);
 
-  scored.sort((a: AgentTeachingChatSource, b: AgentTeachingChatSource): number => b.score - a.score);
+  scored.sort((a: ScoredDocument, b: ScoredDocument): number => b.score - a.score);
   return scored.slice(0, Math.max(0, Math.min(params.topK, 50)));
 }

@@ -7,7 +7,6 @@ import {
   FormField,
   FormSection,
   Input,
-  Label,
   PanelHeader,
   SelectSimple,
   StatusBadge,
@@ -18,6 +17,7 @@ import {
   Textarea,
   ToggleRow,
   Card,
+  Hint,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -388,7 +388,7 @@ export function AdminImageStudioSettingsView(
                 )}
 
                 <div className='space-y-3 pt-2'>
-                  <Label className='text-xs font-semibold uppercase tracking-wider text-gray-500'>Operation Order</Label>
+                  <Hint size='xs' uppercase className='font-semibold text-gray-500'>Operation Order</Hint>
                   <div className='grid gap-2'>
                     {IMAGE_STUDIO_SEQUENCE_OPERATIONS.map((operation) => {
                       const operations = studioSettings.projectSequencing.operations;
@@ -647,9 +647,9 @@ export function AdminImageStudioSettingsView(
                 </div>
 
                 <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
-                  <Label className='mb-3 block text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground'>
+                  <Hint size='xxs' uppercase className='mb-3 block font-semibold tracking-[0.08em] text-muted-foreground'>
                     Quick-switch Presets
-                  </Label>
+                  </Hint>
                   <div className='flex flex-wrap gap-2 mb-4'>
                     {quickSwitchModels.map((modelId) => {
                       const isActive = modelId === studioSettings.targetAi.openai.model;
@@ -758,7 +758,7 @@ export function AdminImageStudioSettingsView(
                 </div>
 
                 <Card variant='subtle' padding='md' className='space-y-4 border-border/40 bg-card/20'>
-                  <Label className='text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2 block'>Request Parameters</Label>
+                  <Hint size='xs' uppercase className='font-semibold text-gray-500 mb-2 block'>Request Parameters</Hint>
                   <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
                     <FormField label='Image Size'>
                       <SelectSimple
@@ -957,7 +957,7 @@ export function AdminImageStudioSettingsView(
 
                 {backfillResultText && (
                   <div className='space-y-2'>
-                    <Label className='text-[10px] uppercase font-bold text-gray-500'>Result Summary</Label>
+                    <Hint size='xxs' uppercase className='font-bold text-gray-500'>Result Summary</Hint>
                     <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/60 p-4 font-mono text-[11px] text-emerald-400 whitespace-pre-wrap leading-relaxed shadow-inner overflow-auto max-h-80'>
                       {backfillResultText}
                     </Card>

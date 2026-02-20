@@ -8,7 +8,7 @@ import {
   EVENT_HOVER_EFFECT_OPTIONS,
   EVENT_SCROLL_BEHAVIOR_OPTIONS,
 } from '@/features/cms/utils/event-effects';
-import { Input, Label } from '@/shared/ui';
+import { Input, Label, Hint } from '@/shared/ui';
 
 import { useComponentSettings } from '../context/ComponentSettingsContext';
 import { RangeField, SelectField } from '../shared-fields';
@@ -65,9 +65,9 @@ function EventEffectsTab(): React.ReactNode {
 
         {eventConfig.clickAction === 'navigate' && (
           <div className='space-y-2'>
-            <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
+            <Hint size='xxs' uppercase className='text-gray-500'>
               URL
-            </Label>
+            </Hint>
             <Input
               value={eventConfig.clickUrl}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
@@ -87,9 +87,9 @@ function EventEffectsTab(): React.ReactNode {
 
         {eventConfig.clickAction === 'scroll' && (
           <div className='space-y-2'>
-            <Label className='text-[10px] uppercase tracking-wider text-gray-500'>
+            <Hint size='xxs' uppercase className='text-gray-500'>
               Target ID
-            </Label>
+            </Hint>
             <Input
               value={eventConfig.clickScrollTarget}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>

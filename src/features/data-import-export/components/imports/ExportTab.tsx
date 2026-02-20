@@ -230,9 +230,9 @@ export function ExportTab(): React.JSX.Element {
         <div className='rounded-md border border-border/60 bg-card/30 p-3'>
           <div className='flex items-center justify-between gap-3'>
             <div>
-              <div className='text-xs font-semibold uppercase tracking-wide text-gray-300'>
+              <Hint size='xs' uppercase className='font-semibold text-gray-300'>
                 Category Mapping Status
-              </div>
+              </Hint>
               <p className='mt-1 text-xs text-gray-500'>
                 Pre-export validation for template category field mapping.
               </p>
@@ -580,9 +580,9 @@ export function ExportTab(): React.JSX.Element {
                       }
                       return (
                         <div className='rounded border border-border bg-card/60 p-2 text-[10px] text-gray-300 mt-2'>
-                          <div className='text-[11px] uppercase tracking-wide text-gray-500 mb-1'>
+                          <Hint size='xxs' uppercase className='text-gray-500 mb-1'>
                             Selected inventory details
-                          </div>
+                          </Hint>
                           <pre className='whitespace-pre-wrap font-mono'>
                             {JSON.stringify(match, null, 2)}
                           </pre>

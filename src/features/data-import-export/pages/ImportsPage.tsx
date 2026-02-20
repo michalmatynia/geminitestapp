@@ -16,11 +16,11 @@ import {
   ImportExportProvider,
   useImportExport,
 } from '@/features/data-import-export/context/ImportExportContext';
+import { useParameters as useProductParameters } from '@/features/products/hooks/useProductSettingsQueries';
 import type {
   Template,
   TemplateMapping,
 } from '@/shared/contracts/data-import-export';
-import { useParameters as useProductParameters } from '@/features/products/hooks/useProductSettingsQueries';
 import type { ProductParameterDto as ProductParameter } from '@/shared/contracts/products';
 import {
   Button,
@@ -36,6 +36,7 @@ import {
   SectionHeader,
   LoadingState,
   Card,
+  Hint,
 } from '@/shared/ui';
 
 type ParsedParameterTarget = {
@@ -359,7 +360,7 @@ function ImportsPageContent(): React.JSX.Element {
             
             <div className='grid md:grid-cols-[240px_1fr] gap-6'>
               <Card variant='subtle-compact' padding='sm' className='bg-black/20 border-border/40 max-h-[500px] overflow-y-auto space-y-1'>
-                <div className='px-2 py-1.5 text-[10px] uppercase font-bold text-gray-500'>Saved Templates</div>
+                <Hint size='xxs' uppercase className='px-2 py-1.5 font-bold text-gray-500'>Saved Templates</Hint>
                 {currentTemplates.length === 0 ? (
                   <p className='px-2 py-4 text-xs text-gray-600 italic'>No templates found.</p>
                 ) : (
@@ -520,7 +521,7 @@ function ImportsPageContent(): React.JSX.Element {
                 )}
 
                 <div className='space-y-3'>
-                  <Label className='text-xs font-bold uppercase tracking-wider text-gray-500 block mb-1'>Field Mappings</Label>
+                  <Hint size='xs' uppercase className='font-bold text-gray-500 block mb-1'>Field Mappings</Hint>
                   <div className='space-y-2'>
                     {currentTemplateMappings.map((m: TemplateMapping, i: number) => (
                       <div key={i} className='space-y-1'>

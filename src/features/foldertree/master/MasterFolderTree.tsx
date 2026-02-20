@@ -8,6 +8,7 @@ import type {
   MasterTreeId,
 } from '@/shared/utils/master-folder-tree-contract';
 import type { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
+import { EmptyState } from '@/shared/ui';
 
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 
@@ -580,9 +581,11 @@ export function MasterFolderTree({
         {controller.roots.length > 0 ? (
           renderTree(controller.roots, 0)
         ) : (
-          <div className='rounded border border-dashed border-border/50 px-3 py-4 text-sm text-gray-400'>
-            {emptyLabel}
-          </div>
+          <EmptyState
+            title={emptyLabel}
+            variant='compact'
+            className='border-dashed border-border/50 py-4'
+          />
         )}
         {showRootDropZones ? (
           <div

@@ -63,6 +63,6 @@ async function POST_handler(req: NextRequest,
 }
 
 export const POST = apiHandlerWithParams<{ runId: string }>(
-  async (req, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }),
+  async (req: any, _ctx: any, params: any) => POST_handler(req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.[runId].controls.POST' }
 );

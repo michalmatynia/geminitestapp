@@ -9,6 +9,7 @@ import { readMeta } from '../utils/metadata';
 
 import type { VersionNode } from '../context/VersionGraphContext';
 import type { ImageStudioSlotRecord } from '../types';
+import { Hint } from '@/shared/ui';
 
 type VersionNodeDetailsModalProps = EntityModalProps<VersionNode> & {
   getSlotImageSrc: (slot: ImageStudioSlotRecord) => string | null;
@@ -242,7 +243,7 @@ export function VersionNodeDetailsModal({
       <div className='space-y-4 text-xs text-gray-200'>
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-[220px_1fr]'>
           <div className='rounded border border-border/60 bg-card/30 p-2'>
-            <div className='text-[10px] uppercase tracking-wide text-gray-500'>Preview</div>
+            <Hint size='xxs' uppercase className='text-gray-500'>Preview</Hint>
             <div className='mt-2 aspect-square overflow-hidden rounded border border-border/50 bg-black/30'>
               {imageSrc ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -258,28 +259,28 @@ export function VersionNodeDetailsModal({
           </div>
           <div className='space-y-4'>
             <div className='rounded border border-border/60 bg-card/30 p-3'>
-              <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Node Summary</div>
+              <Hint size='xxs' uppercase className='mb-2 text-gray-500'>Node Summary</Hint>
               <DetailsGrid rows={baseRows} />
             </div>
             <div className='rounded border border-border/60 bg-card/30 p-3'>
-              <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Lineage</div>
+              <Hint size='xxs' uppercase className='mb-2 text-gray-500'>Lineage</Hint>
               <DetailsGrid rows={lineageRows} />
             </div>
           </div>
         </div>
 
         <div className='rounded border border-border/60 bg-card/30 p-3'>
-          <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Image File</div>
+          <Hint size='xxs' uppercase className='mb-2 text-gray-500'>Image File</Hint>
           <DetailsGrid rows={imageFileRows} />
         </div>
 
         <div className='rounded border border-border/60 bg-card/30 p-3'>
-          <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Generation Info</div>
+          <Hint size='xxs' uppercase className='mb-2 text-gray-500'>Generation Info</Hint>
           <DetailsGrid rows={promptRows} />
         </div>
 
         <div className='rounded border border-border/60 bg-card/30 p-3'>
-          <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Operation Metadata</div>
+          <Hint size='xxs' uppercase className='mb-2 text-gray-500'>Operation Metadata</Hint>
           <pre className='max-h-48 overflow-auto rounded border border-border/40 bg-black/30 p-2 text-[11px] text-gray-100 whitespace-pre-wrap'>
             {operationMetadataJson}
           </pre>
@@ -287,7 +288,7 @@ export function VersionNodeDetailsModal({
 
         {generationRequestJson ? (
           <div className='rounded border border-border/60 bg-card/30 p-3'>
-            <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Generation Request</div>
+            <Hint size='xxs' uppercase className='mb-2 text-gray-500'>Generation Request</Hint>
             <pre className='max-h-48 overflow-auto rounded border border-border/40 bg-black/30 p-2 text-[11px] text-gray-100 whitespace-pre-wrap'>
               {generationRequestJson}
             </pre>
@@ -296,7 +297,7 @@ export function VersionNodeDetailsModal({
 
         {generationSettingsJson ? (
           <div className='rounded border border-border/60 bg-card/30 p-3'>
-            <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Generation Settings</div>
+            <Hint size='xxs' uppercase className='mb-2 text-gray-500'>Generation Settings</Hint>
             <pre className='max-h-48 overflow-auto rounded border border-border/40 bg-black/30 p-2 text-[11px] text-gray-100 whitespace-pre-wrap'>
               {generationSettingsJson}
             </pre>
@@ -304,7 +305,7 @@ export function VersionNodeDetailsModal({
         ) : null}
 
         <div className='rounded border border-border/60 bg-card/30 p-3'>
-          <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Raw Metadata</div>
+          <Hint size='xxs' uppercase className='mb-2 text-gray-500'>Raw Metadata</Hint>
           <pre className='max-h-56 overflow-auto rounded border border-border/40 bg-black/30 p-2 text-[11px] text-gray-100 whitespace-pre-wrap'>
             {metadataJson}
           </pre>

@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useId, useCallback } from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
 
 import { useOptionalPreviewEditor } from './context/PreviewEditorContext';
-import { Card } from '@/shared/ui';
+import { Card, Hint } from '@/shared/ui';
 
 const INSPECTOR_TOOLTIP_DELAY_MS = 500;
 const INSPECTOR_TOOLTIP_WIDTH = 260;
@@ -64,7 +64,7 @@ export const renderInspectorEntries = (entries: InspectorEntry[]): React.ReactNo
   <div className='space-y-1'>
     {entries.map((entry: InspectorEntry) => (
       <div key={`${entry.label}-${entry.value}`} className='flex items-start gap-2'>
-        <span className='min-w-[110px] text-[10px] uppercase tracking-wider text-gray-400'>{entry.label}</span>
+        <Hint size='xxs' uppercase className='min-w-[110px] text-gray-400'>{entry.label}</Hint>
         <span className='text-[11px] text-gray-200 break-all'>
           {entry.value.length > 80 ? `${entry.value.slice(0, 80)}…` : entry.value}
         </span>
@@ -83,13 +83,13 @@ export const InspectorTooltip = ({
   const visibleSections = sections.filter((section: InspectorSection) => section.entries.length > 0);
   return (
     <div className='space-y-2 text-xs'>
-      <div className='text-[10px] uppercase tracking-wider text-blue-200'>{title}</div>
+      <Hint size='xxs' uppercase className='text-blue-200'>{title}</Hint>
       {visibleSections.length === 0 ? (
         <div className='text-[11px] text-gray-400'>No inspector details</div>
       ) : (
         visibleSections.map((section: InspectorSection) => (
           <div key={section.title} className='space-y-1'>
-            <div className='text-[10px] uppercase tracking-wider text-gray-500'>{section.title}</div>
+            <Hint size='xxs' uppercase className='text-gray-500'>{section.title}</Hint>
             {renderInspectorEntries(section.entries)}
           </div>
         ))

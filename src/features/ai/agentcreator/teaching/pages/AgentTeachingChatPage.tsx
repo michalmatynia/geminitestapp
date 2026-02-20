@@ -4,7 +4,7 @@ import Link from 'next/link';
 import React from 'react';
 
 import type { AgentTeachingAgentRecord, AgentTeachingChatSource, AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
-import type { ChatMessage } from '@/shared/contracts/chatbot';
+import type { SimpleChatMessage } from '@/shared/contracts/chatbot';
 import { Button, SectionHeader, Textarea, useToast, FormSection, FormField } from '@/shared/ui';
 
 import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
@@ -17,7 +17,7 @@ export function AgentTeachingChatPage(): React.JSX.Element {
 
   const [selectedAgentId, setSelectedAgentId] = React.useState<string>('');
   const [input, setInput] = React.useState('');
-  const [messages, setMessages] = React.useState<ChatMessage[]>([]);
+  const [messages, setMessages] = React.useState<SimpleChatMessage[]>([]);
   const [lastSources, setLastSources] = React.useState<AgentTeachingChatSource[]>([]);
 
   const sending = chatMutation.isPending;
@@ -40,18 +40,18 @@ export function AgentTeachingChatPage(): React.JSX.Element {
     const content = input.trim();
     if (!content) return;
 
-    const nextMessages: ChatMessage[] = [...messages, { role: 'user', content }];
+    const nextMessages: SimpleChatMessage[] = [...messages, { role: 'user', content }];
     setMessages(nextMessages);
     setInput('');
     setLastSources([]);
 
     try {
-      const data = await chatMutation.mutateAsync({ agentId: selectedAgentId, messages: nextMessages });
-      setMessages((prev: ChatMessage[]) => [...prev, { role: 'assistant', content: data.message }]);
+      const data = await chatMutation.mutateAsync({ agentId: selectedAgentId, messages: nextMessages as any });
+      setMessages((prev: SimpleChatMessage[]) => [...prev, { role: 'assistant', content: data.message }]);
       setLastSources(Array.isArray(data.sources) ? data.sources : []);
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Chat failed.', { variant: 'error' });
-      setMessages((prev: ChatMessage[]) => [...prev, { role: 'assistant', content: 'Error: failed to generate response.' }]);
+      setMessages((prev: SimpleChatMessage[]) => [...prev, { role: 'assistant', content: 'Error: failed to generate response.' }]);
     }
   };
 
@@ -128,7 +128,7 @@ export function AgentTeachingChatPage(): React.JSX.Element {
               </div>
             ) : (
               <div className='space-y-3'>
-                {messages.map((msg: ChatMessage, idx: number) => (
+                {messages.map((msg: SimpleChatMessage, idx: number) => (
                   <div key={`${msg.role}-${idx}`} className='space-y-1'>
                     <div className='text-[11px] text-gray-500'>{msg.role}</div>
                     <div className='whitespace-pre-wrap text-sm text-gray-200'>{msg.content}</div>

@@ -858,9 +858,9 @@ export function DocsTabPanel(): React.JSX.Element {
 
                   <div className='mt-4 grid gap-4 md:grid-cols-2'>
                     <div className='rounded-md border border-border/60 bg-card/30 p-3'>
-                      <div className='text-xs font-semibold uppercase tracking-wide text-gray-300'>
+                      <Hint size='xs' uppercase className='font-semibold text-gray-300'>
                       Inputs
-                      </div>
+                      </Hint>
                       {doc.inputs.length ? (
                         <div className='mt-2 flex flex-wrap gap-2'>
                           {doc.inputs.map((port: string) => (
@@ -878,9 +878,9 @@ export function DocsTabPanel(): React.JSX.Element {
                     </div>
 
                     <div className='rounded-md border border-border/60 bg-card/30 p-3'>
-                      <div className='text-xs font-semibold uppercase tracking-wide text-gray-300'>
+                      <Hint size='xs' uppercase className='font-semibold text-gray-300'>
                       Outputs
-                      </div>
+                      </Hint>
                       {doc.outputs.length ? (
                         <div className='mt-2 flex flex-wrap gap-2'>
                           {doc.outputs.map((port: string) => (
@@ -929,9 +929,9 @@ export function DocsTabPanel(): React.JSX.Element {
 
                   <div className='mt-4 rounded-md border border-border/60 bg-card/30 p-3'>
                     <div className='flex flex-wrap items-center justify-between gap-2'>
-                      <div className='text-xs font-semibold uppercase tracking-wide text-gray-300'>
+                      <Hint size='xs' uppercase className='font-semibold text-gray-300'>
                         Code Snippet (JSON)
-                      </div>
+                      </Hint>
                       <Button
                         type='button'
                         className='rounded-md border text-[11px] text-white hover:bg-muted/60'
@@ -949,9 +949,9 @@ export function DocsTabPanel(): React.JSX.Element {
 
                   {doc.notes?.length ? (
                     <div className='mt-4 rounded-md border border-border/60 bg-card/30 p-3'>
-                      <div className='text-xs font-semibold uppercase tracking-wide text-gray-300'>
+                      <Hint size='xs' uppercase className='font-semibold text-gray-300'>
                       Notes
-                      </div>
+                      </Hint>
                       <ul className='mt-2 list-disc space-y-1 pl-5 text-xs text-gray-400'>
                         {doc.notes.map((note: string) => (
                           <li key={note}>{note}</li>

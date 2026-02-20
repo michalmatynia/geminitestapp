@@ -19,9 +19,11 @@ import type {
   ProductValidationInstanceScope,
   ProductValidationPattern,
 } from '@/shared/contracts/products';
+import type { SequenceGroupDraft } from '@/shared/contracts/products';
 import { 
   Button, 
-  EmptyState, 
+  EmptyState,
+  LoadingState,
   Input, 
   StatusToggle, 
   FormSection, 
@@ -33,7 +35,6 @@ import { INSTANCE_SCOPE_LABELS } from './constants';
 import { ValidatorDocTooltip } from './ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 
-import type { SequenceGroupDraft } from '@/shared/contracts/products';
 
 type PatternRowProps = {
   pattern: ProductValidationPattern;
@@ -554,9 +555,7 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
     >
       <div className='mt-4'>
         {loading ? (
-          <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
-            Loading validator patterns...
-          </div>
+          <LoadingState message='Loading validator patterns...' className='py-8 border border-dashed' />
         ) : patterns.length === 0 ? (
           <EmptyState
             title='No validator patterns'

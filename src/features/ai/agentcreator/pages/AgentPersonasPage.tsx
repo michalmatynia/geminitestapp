@@ -27,7 +27,7 @@ export function AgentPersonasPage(): React.JSX.Element {
     const nextPersona: AgentPersona = {
       id: existing?.id ?? createAgentPersonaId(),
       name,
-      description: draft.description?.trim() || null,
+      description: draft.description?.trim() || undefined,
       settings: buildAgentPersonaSettings(draft.settings),
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
@@ -79,6 +79,7 @@ export function AgentPersonasPage(): React.JSX.Element {
       })}
       renderItemTags={(persona) => {
         const s = persona.settings;
+        if (!s) return [];
         const tags = [
           `Exec: ${s.executorModel || 'default'}`,
           `Plan: ${s.plannerModel || 'default'}`,

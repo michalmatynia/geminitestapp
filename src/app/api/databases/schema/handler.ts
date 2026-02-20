@@ -188,7 +188,7 @@ async function getMongoSchema(includeCounts = false): Promise<SchemaResponse> {
   }
 
   collections.sort((a: CollectionSchema, b: CollectionSchema) => a.name.localeCompare(b.name));
-  return { provider: 'mongodb', collections };
+  return { provider: 'mongodb', collections } as any;
 }
 
 async function getPrismaSchema(includeCounts = false): Promise<SchemaResponse> {
@@ -233,14 +233,14 @@ async function getPrismaSchema(includeCounts = false): Promise<SchemaResponse> {
   }
 
   collections.sort((a: CollectionSchema, b: CollectionSchema) => a.name.localeCompare(b.name));
-  return { provider: 'prisma', collections };
+  return { provider: 'prisma', collections } as any;
 }
 
 const enrichCollections = (
   schema: SchemaResponse,
   provider: SchemaProvider
 ): Array<CollectionSchema & { provider: SchemaProvider }> =>
-  schema.collections.map((collection: CollectionSchema) => ({
+  (schema.collections as any).map((collection: CollectionSchema) => ({
     ...collection,
     provider,
   }));
@@ -288,7 +288,7 @@ export async function getDatabasesSchemaHandler(
       provider: 'multi',
       collections,
       sources,
-    };
+    } as any;
     return NextResponse.json(payload);
   }
 

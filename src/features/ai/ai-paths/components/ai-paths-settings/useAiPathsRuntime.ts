@@ -301,7 +301,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
   );
 
   return {
-    handleRunSimulation: simulation.handleRunSimulation,
+    handleRunSimulation: simulation.handleRunSimulation as any,
     handleFireTrigger,
     handleFireTriggerPersistent,
     handlePauseRun: () => { pauseRequestedRef.current = true; },

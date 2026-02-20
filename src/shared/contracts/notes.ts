@@ -196,8 +196,10 @@ export type NoteRelationRecord = NoteRelationDto;
 export const relatedNoteSchema = z.object({
   id: z.string(),
   title: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+  color: z.string().nullable().optional(),
+  content: z.string().optional(),
 });
 
 export type RelatedNoteDto = z.infer<typeof relatedNoteSchema>;

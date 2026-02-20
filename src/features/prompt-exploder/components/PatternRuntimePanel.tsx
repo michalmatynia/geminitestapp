@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { getPromptValidationObservabilitySnapshot } from '@/features/prompt-core/runtime-observability';
-import { Button, FormSection, Input, Label, StatusToggle, SelectSimple, EmptyState, Card, Badge } from '@/shared/ui';
+import { Button, FormSection, Input, Label, StatusToggle, SelectSimple, EmptyState, Card, Badge, Hint } from '@/shared/ui';
 
 import { useBenchmarkState } from '../context/hooks/useBenchmark';
 import { useDocumentState } from '../context/hooks/useDocument';
@@ -205,49 +205,49 @@ export function PatternRuntimePanel(): React.JSX.Element {
       ) : null}
       <div className='mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4'>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
-          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Validation Stack</div>
+          <Hint size='xxs' uppercase className='text-gray-500'>Validation Stack</Hint>
           <div className='mt-1 text-gray-100 break-words'>{activeStackLabel}</div>
         </Card>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
-          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Runtime Profile</div>
+          <Hint size='xxs' uppercase className='text-gray-500'>Runtime Profile</Hint>
           <div className='mt-1 text-gray-100'>{learningDraft.runtimeRuleProfile}</div>
         </Card>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
-          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Learned Templates</div>
+          <Hint size='xxs' uppercase className='text-gray-500'>Learned Templates</Hint>
           <div className='mt-1 text-gray-100'>{effectiveLearnedTemplates.length}</div>
         </Card>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
-          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Runtime Templates</div>
+          <Hint size='xxs' uppercase className='text-gray-500'>Runtime Templates</Hint>
           <div className='mt-1 text-gray-100'>{runtimeLearnedTemplates.length}</div>
         </Card>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
-          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Merge Threshold</div>
+          <Hint size='xxs' uppercase className='text-gray-500'>Merge Threshold</Hint>
           <div className='mt-1 text-gray-100'>{templateMergeThreshold.toFixed(2)}</div>
         </Card>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
-          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Benchmark Suite</div>
+          <Hint size='xxs' uppercase className='text-gray-500'>Benchmark Suite</Hint>
           <div className='mt-1 text-gray-100'>{benchmarkSuiteDraft}</div>
         </Card>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
-          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Low Confidence</div>
+          <Hint size='xxs' uppercase className='text-gray-500'>Low Confidence</Hint>
           <div className='mt-1 text-gray-100'>
             {promptExploderClampNumber(benchmarkLowConfidenceThresholdDraft, 0.3, 0.9).toFixed(2)}
           </div>
         </Card>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
-          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Suggestion Cap</div>
+          <Hint size='xxs' uppercase className='text-gray-500'>Suggestion Cap</Hint>
           <div className='mt-1 text-gray-100'>
             {promptExploderClampNumber(Math.floor(benchmarkSuggestionLimitDraft), 1, 20)}
           </div>
         </Card>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20 sm:col-span-2 xl:col-span-4'>
-          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Benchmark Template Upsert</div>
+          <Hint size='xxs' uppercase className='text-gray-500'>Benchmark Template Upsert</Hint>
           <div className='mt-1 text-gray-100'>
             {learningDraft.benchmarkSuggestionUpsertTemplates ? 'on' : 'off'}
           </div>
         </Card>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20 sm:col-span-2 xl:col-span-4'>
-          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Fallback Policy</div>
+          <Hint size='xxs' uppercase className='text-gray-500'>Fallback Policy</Hint>
           <div className='mt-1 text-gray-100'>
             {promptExploderSettings.runtime.allowValidationStackFallback
               ? 'validation stack fallback enabled'
@@ -255,7 +255,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
           </div>
         </Card>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20 sm:col-span-2 xl:col-span-4'>
-          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Case Resolver Capture Mode</div>
+          <Hint size='xxs' uppercase className='text-gray-500'>Case Resolver Capture Mode</Hint>
           <div className='mt-1 text-gray-100'>
             {promptExploderSettings.runtime.caseResolverCaptureMode === 'rules_only'
               ? 'rules only (UI-defined capture rules)'
@@ -450,9 +450,9 @@ export function PatternRuntimePanel(): React.JSX.Element {
         </div>
       </div>
       <Card variant='subtle-compact' padding='sm' className='mt-3 border-border/60 bg-card/20 text-xs text-gray-300'>
-        <div className='mb-2 text-[11px] uppercase tracking-wide text-gray-400'>
+        <Hint size='xxs' uppercase className='mb-2 text-gray-400'>
           Runtime Health
-        </div>
+        </Hint>
         <div className='grid gap-2 md:grid-cols-4'>
           <div>
             <div className='text-[10px] text-gray-500'>Pipeline p95 (ms)</div>
@@ -494,9 +494,9 @@ export function PatternRuntimePanel(): React.JSX.Element {
         </div>
       </Card>
       <Card variant='subtle-compact' padding='sm' className='mt-4 border-border/60 bg-card/20'>
-        <div className='mb-2 text-[11px] uppercase tracking-wide text-gray-400'>
+        <Hint size='xxs' uppercase className='mb-2 text-gray-400'>
           Pattern Snapshot Governance
-        </div>
+        </Hint>
         <div className='grid gap-2 md:grid-cols-4'>
           <Input
             className='md:col-span-2'
@@ -560,9 +560,9 @@ export function PatternRuntimePanel(): React.JSX.Element {
         )}
       </Card>
       <Card variant='subtle-compact' padding='sm' className='mt-4 border-border/60 bg-card/20'>
-        <div className='mb-2 text-[11px] uppercase tracking-wide text-gray-400'>
+        <Hint size='xxs' uppercase className='mb-2 text-gray-400'>
           Learned Template Lifecycle
-        </div>
+        </Hint>
         {effectiveLearnedTemplates.length === 0 ? (
           <EmptyState
             title='No learned templates'

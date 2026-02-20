@@ -95,6 +95,16 @@ Primary in-app tabs (Prompt Exploder main page):
 - **Case Resolver bridge**
   - Incoming extracted content and context.
   - Apply reassembled output back into Case Resolver flow.
+  - Payload carries transfer metadata:
+    - `transferId`
+    - `payloadVersion`
+    - `checksum`
+    - `status`
+    - `createdAt` / `expiresAt`
+  - Case Resolver side performs:
+    - document/session binding checks
+    - text apply
+    - optional capture mapping review + cleanup commit
 - **Prompt Validator pattern scopes**
   - Supports Prompt Exploder-specific and Case Resolver Prompt Exploder stacks.
 

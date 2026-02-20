@@ -26,6 +26,7 @@ import {
   EmptyState,
   MetadataItem,
   Badge,
+  FilterPanel,
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
@@ -197,60 +198,54 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
 
       <StandardDataTablePanel
         filters={(
-          <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
-            <FormField label='Path ID'>
-              <SearchInput
-                size='sm'
-                value={pathId}
-                onChange={(e) => setPathId(e.target.value)}
-                onClear={() => setPathId('')}
-                placeholder='Filter by path...'
-                className='h-8'
-              />
-            </FormField>
-            <FormField label='Search content'>
-              <SearchInput
-                size='sm'
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onClear={() => setSearchQuery('')}
-                placeholder='Run ID, entity, error...'
-                className='h-8'
-              />
-            </FormField>
-            <FormField label='Requeue Mode'>
-              <SelectSimple
-                size='sm'
-                value={requeueMode}
-                onValueChange={(v) => setRequeueMode(v as 'resume' | 'replay')}
-                options={[
+          <FilterPanel
+            search={{
+              value: searchQuery,
+              onChange: setSearchQuery,
+              placeholder: 'Run ID, entity, error...',
+            }}
+            fields={[
+              {
+                key: 'pathId',
+                label: 'Path ID',
+                type: 'text',
+                value: pathId,
+                onValueChange: setPathId,
+                placeholder: 'Filter by path...',
+              },
+              {
+                key: 'requeueMode',
+                label: 'Requeue Mode',
+                type: 'select',
+                value: requeueMode,
+                onValueChange: (v) => setRequeueMode(v as 'resume' | 'replay'),
+                options: [
                   { value: 'resume', label: 'Resume (Continue)' },
                   { value: 'replay', label: 'Replay (From start)' },
-                ]}
-                className='h-8'
-              />
-            </FormField>
-            <div className='flex items-end gap-2'>
-              <Button
-                variant='outline'
-                size='sm'
-                className='h-8 flex-1'
-                onClick={requeueSelected}
-                disabled={selectedIds.size === 0 || requeueingSelected}
-              >
-                {requeueingSelected ? 'Queuing...' : `Requeue ${selectedIds.size || 'Selected'}`}
-              </Button>
-              <Button
-                variant='secondary'
-                size='sm'
-                className='h-8 flex-1'
-                onClick={requeueAll}
-                disabled={requeueingAll || total === 0}
-              >
-                {requeueingAll ? 'Queuing...' : 'Requeue All'}
-              </Button>
-            </div>
-          </div>
+                ],
+              }
+            ]}
+            actions={
+              <div className='flex gap-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={requeueSelected}
+                  disabled={selectedIds.size === 0 || requeueingSelected}
+                >
+                  {requeueingSelected ? 'Queuing...' : `Requeue ${selectedIds.size || 'Selected'}`}
+                </Button>
+                <Button
+                  variant='secondary'
+                  size='sm'
+                  onClick={requeueAll}
+                  disabled={requeueingAll || total === 0}
+                >
+                  {requeueingAll ? 'Queuing...' : 'Requeue All'}
+                </Button>
+              </div>
+            }
+          />
         )}
         footer={
           <PanelPagination
@@ -373,7 +368,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                 </div>
               </div>
               
-              <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
+              <Card variant='subtle' padding='none' className='border-border bg-gray-950/20 overflow-hidden'>
                 <DataTable
                   columns={[
                     {
@@ -443,21 +438,21 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                       <div className='grid gap-4 md:grid-cols-2'>
                         <div className='space-y-1'>
                           <span className='text-[10px] uppercase text-gray-600 font-bold'>Inputs</span>
-                          <pre className='text-[10px] p-2 bg-black/40 rounded border border-white/5 overflow-auto max-h-40 font-mono'>
+                          <Card variant='subtle-compact' padding='sm' className='border-white/5 bg-black/40 overflow-auto max-h-40 font-mono text-[10px]'>
                             {JSON.stringify(row.original.inputs || {}, null, 2)}
-                          </pre>
+                          </Card>
                         </div>
                         <div className='space-y-1'>
                           <span className='text-[10px] uppercase text-gray-600 font-bold'>Outputs</span>
-                          <pre className='text-[10px] p-2 bg-black/40 rounded border border-white/5 overflow-auto max-h-40 font-mono'>
+                          <Card variant='subtle-compact' padding='sm' className='border-white/5 bg-black/40 overflow-auto max-h-40 font-mono text-[10px]'>
                             {JSON.stringify(row.original.outputs || {}, null, 2)}
-                          </pre>
+                          </Card>
                         </div>
                       </div>
                     </div>
                   )}
                 />
-              </div>
+              </Card>
             </div>
 
             <div className='space-y-3'>
@@ -476,7 +471,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                 <span className='text-[10px] text-gray-600'>{detail.events.length} Events</span>
               </div>
               
-              <div className='rounded-md border border-border bg-black/30 overflow-hidden'>
+              <Card variant='subtle' padding='none' className='border-border bg-black/30 overflow-hidden'>
                 <div className='max-h-60 overflow-y-auto divide-y divide-white/5'>
                   {detail.events.map((event: AiPathRunEventRecord) => (
                     <div key={event.id} className='p-2 hover:bg-white/5 transition-colors'>
@@ -501,7 +496,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                     </div>
                   ))}
                 </div>
-              </div>
+              </Card>
             </div>
           </div>
         ) : (

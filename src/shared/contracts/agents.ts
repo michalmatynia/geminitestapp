@@ -7,13 +7,15 @@ import { dtoBaseSchema, namedDtoSchema } from './base';
  */
 
 export const agentPersonaSchema = namedDtoSchema.extend({
-  role: z.string(),
-  instructions: z.string(),
-  modelId: z.string(),
-  temperature: z.number(),
-  maxTokens: z.number(),
-  tools: z.array(z.string()),
-  isDefault: z.boolean(),
+  description: z.string().optional(),
+  role: z.string().optional(),
+  instructions: z.string().optional(),
+  modelId: z.string().optional(),
+  temperature: z.number().optional(),
+  maxTokens: z.number().optional(),
+  tools: z.array(z.string()).optional(),
+  isDefault: z.boolean().optional(),
+  settings: z.lazy(() => agentPersonaSettingsSchema).optional(),
 });
 
 export type AgentPersonaDto = z.infer<typeof agentPersonaSchema>;

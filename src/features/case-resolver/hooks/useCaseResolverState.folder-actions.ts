@@ -37,8 +37,14 @@ type UpdateWorkspaceFn = (
   options?: UpdateWorkspaceOptions
 ) => void;
 
+type CaseResolverToast = (
+  message: string,
+  options?: { variant?: 'success' | 'error' | 'warning' | 'info' }
+) => void;
+
 type UseCaseResolverStateFolderActionsInput = {
   confirm: ConfirmFn;
+  toast: CaseResolverToast;
   updateWorkspace: UpdateWorkspaceFn;
   workspace: CaseResolverWorkspace;
   selectedCaseScopeIds: Set<string> | null;
@@ -60,6 +66,7 @@ type UseCaseResolverStateFolderActionsResult = {
 
 export const useCaseResolverStateFolderActions = ({
   confirm,
+  toast,
   updateWorkspace,
   workspace,
   selectedCaseScopeIds,
@@ -69,6 +76,12 @@ export const useCaseResolverStateFolderActions = ({
   setSelectedFolderPath,
   treeSaveToast,
 }: UseCaseResolverStateFolderActionsInput): UseCaseResolverStateFolderActionsResult => {
+  const isLockedEditableFile = useCallback(
+    (file: CaseResolverFile): boolean =>
+      file.fileType !== 'case' && file.isLocked === true,
+    []
+  );
+
   const handleDeleteFolder = useCallback((folderPath: string): void => {
     const normalizedFolder = normalizeFolderPath(folderPath);
     if (!normalizedFolder) return;
@@ -84,6 +97,18 @@ export const useCaseResolverStateFolderActions = ({
           .map((file: CaseResolverFile): string => file.id)
       )
       : null;
+    const hasLockedFilesInFolder = workspace.files.some(
+      (file: CaseResolverFile): boolean =>
+        isLockedEditableFile(file) &&
+        isPathWithinFolder(file.folder, normalizedFolder) &&
+        (!scopedCaseIds || Boolean(file.parentCaseId && scopedCaseIds.has(file.parentCaseId)))
+    );
+    if (hasLockedFilesInFolder) {
+      toast('Folder contains locked documents. Unlock them before deleting this folder.', {
+        variant: 'warning',
+      });
+      return;
+    }
 
     confirm({
       title: 'Delete Folder?',
@@ -112,6 +137,14 @@ export const useCaseResolverStateFolderActions = ({
             current.files,
             selectedCaseContainerId
           );
+          const currentHasLockedFilesInFolder = current.files.some(
+            (file: CaseResolverFile): boolean =>
+              isLockedEditableFile(file) &&
+              isPathWithinFolder(file.folder, normalizedFolder) &&
+              (!currentScopeCaseIds ||
+                Boolean(file.parentCaseId && currentScopeCaseIds.has(file.parentCaseId)))
+          );
+          if (currentHasLockedFilesInFolder) return current;
           const currentScopeFileIds = currentScopeCaseIds
             ? new Set<string>(
               current.files
@@ -201,11 +234,13 @@ export const useCaseResolverStateFolderActions = ({
     });
   }, [
     confirm,
+    isLockedEditableFile,
     selectedCaseContainerId,
     selectedCaseScopeIds,
     setSelectedAssetId,
     setSelectedFileId,
     setSelectedFolderPath,
+    toast,
     treeSaveToast,
     updateWorkspace,
     workspace.assets,
@@ -214,22 +249,35 @@ export const useCaseResolverStateFolderActions = ({
 
   const handleMoveFile = useCallback(
     async (fileId: string, targetFolder: string): Promise<void> => {
+      const targetFile = workspace.files.find(
+        (file: CaseResolverFile): boolean => file.id === fileId
+      );
+      if (targetFile && isLockedEditableFile(targetFile)) {
+        toast('Document is locked. Unlock it before moving.', { variant: 'warning' });
+        return;
+      }
       const normalizedTarget = normalizeFolderPath(targetFolder);
-      updateWorkspace((current) => ({
-        ...current,
-        files: current.files.map((file) =>
-          file.id === fileId
-            ? { ...file, folder: normalizedTarget, updatedAt: new Date().toISOString() }
-            : file
-        ),
-        folders: normalizeFolderPaths(
-          normalizedTarget
-            ? [...current.folders, normalizedTarget]
-            : current.folders
-        ),
-      }), { persistToast: treeSaveToast });
+      updateWorkspace((current) => {
+        const currentTargetFile = current.files.find(
+          (file: CaseResolverFile): boolean => file.id === fileId
+        );
+        if (currentTargetFile && isLockedEditableFile(currentTargetFile)) return current;
+        return {
+          ...current,
+          files: current.files.map((file) =>
+            file.id === fileId
+              ? { ...file, folder: normalizedTarget, updatedAt: new Date().toISOString() }
+              : file
+          ),
+          folders: normalizeFolderPaths(
+            normalizedTarget
+              ? [...current.folders, normalizedTarget]
+              : current.folders
+          ),
+        };
+      }, { persistToast: treeSaveToast });
     },
-    [treeSaveToast, updateWorkspace]
+    [isLockedEditableFile, toast, treeSaveToast, updateWorkspace, workspace.files]
   );
 
   const handleMoveAsset = useCallback(
@@ -256,16 +304,29 @@ export const useCaseResolverStateFolderActions = ({
     async (fileId: string, nextName: string): Promise<void> => {
       const trimmedName = nextName.trim();
       if (!trimmedName) return;
-      updateWorkspace((current) => ({
-        ...current,
-        files: current.files.map((file) =>
-          file.id === fileId
-            ? { ...file, name: trimmedName, updatedAt: new Date().toISOString() }
-            : file
-        ),
-      }), { persistToast: treeSaveToast });
+      const targetFile = workspace.files.find(
+        (file: CaseResolverFile): boolean => file.id === fileId
+      );
+      if (targetFile && isLockedEditableFile(targetFile)) {
+        toast('Document is locked. Unlock it before renaming.', { variant: 'warning' });
+        return;
+      }
+      updateWorkspace((current) => {
+        const currentTargetFile = current.files.find(
+          (file: CaseResolverFile): boolean => file.id === fileId
+        );
+        if (currentTargetFile && isLockedEditableFile(currentTargetFile)) return current;
+        return {
+          ...current,
+          files: current.files.map((file) =>
+            file.id === fileId
+              ? { ...file, name: trimmedName, updatedAt: new Date().toISOString() }
+              : file
+          ),
+        };
+      }, { persistToast: treeSaveToast });
     },
-    [treeSaveToast, updateWorkspace]
+    [isLockedEditableFile, toast, treeSaveToast, updateWorkspace, workspace.files]
   );
 
   const handleRenameAsset = useCallback(
@@ -290,6 +351,21 @@ export const useCaseResolverStateFolderActions = ({
       const normalizedTarget = normalizeFolderPath(nextFolderPath);
       if (!normalizedSource || !normalizedTarget) return;
       if (normalizedSource === normalizedTarget) return;
+      const hasLockedFilesInFolder = workspace.files.some(
+        (file: CaseResolverFile): boolean =>
+          isLockedEditableFile(file) &&
+          isPathWithinFolder(file.folder, normalizedSource) &&
+          (
+            !selectedCaseScopeIds ||
+            Boolean(file.parentCaseId && selectedCaseScopeIds.has(file.parentCaseId))
+          )
+      );
+      if (hasLockedFilesInFolder) {
+        toast('Folder contains locked documents. Unlock them before renaming this folder.', {
+          variant: 'warning',
+        });
+        return;
+      }
 
       updateWorkspace((current) => {
         const now = new Date().toISOString();
@@ -299,6 +375,16 @@ export const useCaseResolverStateFolderActions = ({
           current.files,
           selectedCaseContainerId
         );
+        const currentHasLockedFilesInFolder = current.files.some(
+          (file: CaseResolverFile): boolean =>
+            isLockedEditableFile(file) &&
+            isPathWithinFolder(file.folder, normalizedSource) &&
+            (
+              !currentScopeCaseIds ||
+              Boolean(file.parentCaseId && currentScopeCaseIds.has(file.parentCaseId))
+            )
+        );
+        if (currentHasLockedFilesInFolder) return current;
         const currentScopeFileIds = currentScopeCaseIds
           ? new Set<string>(
             current.files
@@ -360,7 +446,16 @@ export const useCaseResolverStateFolderActions = ({
         return renameFolderPath(current, normalizedSource, normalizedTarget);
       });
     },
-    [selectedCaseContainerId, setSelectedFolderPath, treeSaveToast, updateWorkspace]
+    [
+      isLockedEditableFile,
+      selectedCaseContainerId,
+      selectedCaseScopeIds,
+      setSelectedFolderPath,
+      toast,
+      treeSaveToast,
+      updateWorkspace,
+      workspace.files,
+    ]
   );
 
   return {

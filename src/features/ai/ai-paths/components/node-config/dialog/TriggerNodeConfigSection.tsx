@@ -7,7 +7,7 @@ import { TRIGGER_EVENTS, triggerButtonsApi } from '@/features/ai/ai-paths/lib';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
-import { Label, SelectSimple } from '@/shared/ui';
+import { Label, SelectSimple, Card } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -92,7 +92,7 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
         />
       </div>
       {isScheduled ? (
-        <div className='rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100'>
+        <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
           <div className='text-[10px] font-semibold uppercase tracking-wide text-amber-200'>
             Server Schedule
           </div>
@@ -100,7 +100,7 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
             This trigger runs from server schedules or cron. Context input is optional,
             and manual runs are allowed for testing.
           </div>
-        </div>
+        </Card>
       ) : null}
     </div>
   );

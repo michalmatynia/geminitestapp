@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 
 import type { AiNode, NodeDefinition } from '@/features/ai/ai-paths/lib';
 import { createParserMappings, formatRuntimeValue } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, Textarea, StatusBadge, Card } from '@/shared/ui';
+import { Button, Input, Label, Textarea, StatusBadge, Card, Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import {
@@ -303,7 +303,7 @@ export function CanvasSidebar(): React.JSX.Element {
                     <Card className='border-border/60 bg-card/40 p-4'>
                       <div className='mb-3 text-sm font-semibold text-white'>Inspector</div>          {selectedNode ? (
             <div className='space-y-3 text-xs text-gray-300'>
-              <div className='rounded-md border border-border/60 bg-card/50 px-3 py-2 text-[11px] text-gray-400'>
+              <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/50 text-[11px] text-gray-400'>
                 <div className='flex items-center justify-between'>
                   <span className='uppercase text-gray-500'>Type</span>
                   <div className='flex items-center gap-1'>
@@ -315,7 +315,7 @@ export function CanvasSidebar(): React.JSX.Element {
                     </span>
                   </div>
                 </div>
-              </div>
+              </Card>
               {selectedNode.type === 'trigger' && (
                 <div className='space-y-2'>
                   <Button
@@ -381,7 +381,7 @@ export function CanvasSidebar(): React.JSX.Element {
                   }}
                 />
               </div>
-              <div className='rounded-md border border-border/60 bg-card/50 p-3 text-[11px] text-gray-400'>
+              <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/50 text-[11px] text-gray-400'>
                 Inputs:{' '}
                 {selectedNode.inputs.map((port) => formatPortLabel(port)).join(', ') ||
                   'None'}{' '}
@@ -389,7 +389,7 @@ export function CanvasSidebar(): React.JSX.Element {
                 Outputs:{' '}
                 {selectedNode.outputs.map((port) => formatPortLabel(port)).join(', ') ||
                   'None'}
-              </div>
+              </Card>
               {selectedNode.type === 'prompt' && ((): React.JSX.Element | null => {
                 const incomingEdges = edges.filter((edge) => edge.to === selectedNode.id);
                 const inputPorts = incomingEdges
@@ -428,17 +428,18 @@ export function CanvasSidebar(): React.JSX.Element {
                 const directPlaceholders = inputPorts.filter((port) => port !== 'bundle');
                 if (bundleKeys.size === 0 && directPlaceholders.length === 0) return null;
                 return (
-                  <div className='rounded-md border border-border/60 bg-card/50 p-3 text-[11px] text-gray-400'>
+                  <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/50 text-[11px] text-gray-400'>
                     <div className='text-gray-300'>Prompt placeholders</div>
                     {bundleKeys.size > 0 && (
                       <div className='mt-2 flex flex-wrap gap-2'>
                         {Array.from(bundleKeys).map((key) => (
-                          <span
+                          <Badge
                             key={key}
-                            className='rounded-full border px-2 py-0.5 text-[10px] text-gray-200'
+                            variant='outline'
+                            className='text-[10px] font-normal'
                           >
                             {formatPlaceholderLabel(key)}
-                          </span>
+                          </Badge>
                         ))}
                       </div>
                     )}
@@ -450,7 +451,7 @@ export function CanvasSidebar(): React.JSX.Element {
                           .join(', ')}
                       </div>
                     )}
-                  </div>
+                  </Card>
                 );
               })()}
               <Button
@@ -583,10 +584,10 @@ export function CanvasSidebar(): React.JSX.Element {
               ? readPortRuntimeValue(targetInputs, selectedEdge.toPort)
               : undefined;
             return selectedEdge ? (
-              <div className='space-y-3 rounded-md border border-blue-500/30 bg-blue-500/5 p-3'>
+              <Card variant='info' padding='sm' className='space-y-3 border-blue-500/30 bg-blue-500/5'>
                 <div className='text-xs font-medium text-blue-300'>Selected Wire</div>
                 <div className='space-y-2'>
-                  <div className='rounded border border-border/60 bg-card/50 p-2'>
+                  <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/50'>
                     <div className='text-[10px] uppercase text-gray-500'>From</div>
                     <div className='text-sm text-white'>
                       {fromNode?.title ?? selectedEdge.from}
@@ -603,9 +604,9 @@ export function CanvasSidebar(): React.JSX.Element {
                         {selectedEdge.fromPort ?? 'default'}
                       </span>
                     </div>
-                  </div>
+                  </Card>
                   <div className='flex justify-center text-gray-500'>↓</div>
-                  <div className='rounded border border-border/60 bg-card/50 p-2'>
+                  <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/50'>
                     <div className='text-[10px] uppercase text-gray-500'>To</div>
                     <div className='text-sm text-white'>
                       {toNode?.title ?? selectedEdge.to}
@@ -622,9 +623,9 @@ export function CanvasSidebar(): React.JSX.Element {
                         {selectedEdge.toPort ?? 'default'}
                       </span>
                     </div>
-                  </div>
+                  </Card>
                 </div>
-                <div className='space-y-2 rounded border border-border/60 bg-card/40 p-2'>
+                <Card variant='subtle-compact' padding='sm' className='space-y-2 border-border/60 bg-card/40'>
                   <div className='text-[10px] uppercase tracking-wide text-gray-500'>
                     Connector Data
                   </div>
@@ -644,7 +645,7 @@ export function CanvasSidebar(): React.JSX.Element {
                       {targetValue === undefined ? 'No runtime input yet.' : formatRuntimeValue(targetValue)}
                     </pre>
                   </div>
-                </div>
+                </Card>
                 <div className='flex gap-2'>
                   <Button
                     className='flex-1'
@@ -665,7 +666,7 @@ export function CanvasSidebar(): React.JSX.Element {
                     Remove
                   </Button>
                 </div>
-              </div>
+              </Card>
             ) : null;
           })() : (
             <div className='text-[11px] text-gray-500'>Click a wire to select it.</div>

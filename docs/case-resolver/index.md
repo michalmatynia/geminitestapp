@@ -29,6 +29,7 @@ This section is the centralized source of truth for the Case Resolver feature.
 - [OCR Failures and Retry](./runbooks/ocr-failures-and-retry.md)
 - [Workspace Conflict Recovery](./runbooks/workspace-conflict-recovery.md)
 - [Case List Degradation](./runbooks/case-list-degradation.md)
+- [Prompt Exploder Capture Handoff](./runbooks/prompt-exploder-capture-handoff.md)
 - [Release and Rollback](./runbooks/release-and-rollback.md)
 - [Data Integrity Checks](./runbooks/data-integrity-checks.md)
 

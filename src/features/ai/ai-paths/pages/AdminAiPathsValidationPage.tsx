@@ -1230,15 +1230,17 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                 placeholder='Search node docs by type, title, ports...'
                 className='mt-2 h-9'
               />
-              <div className='mt-3 max-h-56 space-y-2 overflow-y-auto rounded-md border border-border/60 bg-card/30 p-2'>
+              <Card variant='subtle-compact' padding='sm' className='mt-3 max-h-56 space-y-2 overflow-y-auto border-border/60 bg-card/30'>
                 {filteredNodeDocs.map((doc) => {
                   const sourceId = `ai-paths:node-docs:${doc.type}`;
                   const docsSet = new Set(parseDocsSourcesText(docsSourcesDraft));
                   const connected = docsSet.has(sourceId);
                   return (
-                    <div
+                    <Card
                       key={doc.type}
-                      className='flex items-start justify-between gap-3 rounded border border-border/50 bg-card/40 p-2'
+                      variant='subtle-compact'
+                      padding='sm'
+                      className='flex items-start justify-between gap-3 border-border/50 bg-card/40'
                     >
                       <div className='min-w-0'>
                         <div className='text-xs font-semibold text-gray-100'>
@@ -1260,10 +1262,10 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                       >
                         {connected ? 'Connected' : 'Connect'}
                       </Button>
-                    </div>
+                    </Card>
                   );
                 })}
-              </div>
+              </Card>
             </Card>
 
             <Card className='border-border/60 bg-card/40 p-4'>
@@ -1346,15 +1348,15 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
               ) : null}
 
               {syncWarnings.length > 0 ? (
-                <div className='mb-3 space-y-1 rounded-md border border-amber-500/30 bg-amber-500/10 p-2 text-[11px] text-amber-200'>
+                <Card variant='warning' padding='sm' className='mb-3 space-y-1 text-[11px]'>
                   {syncWarnings.map((warning, index) => (
                     <div key={`${warning}-${index}`}>{warning}</div>
                   ))}
-                </div>
+                </Card>
               ) : null}
 
               {centralSnapshot?.sources?.length ? (
-                <div className='mb-3 max-h-28 space-y-1 overflow-y-auto rounded-md border border-border/60 bg-card/30 p-2'>
+                <Card variant='subtle-compact' padding='sm' className='mb-3 max-h-28 space-y-1 overflow-y-auto border-border/60 bg-card/30'>
                   {centralSnapshot.sources.map((source) => (
                     <div
                       key={`${source.id}:${source.hash}`}
@@ -1367,7 +1369,7 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                       </span>
                     </div>
                   ))}
-                </div>
+                </Card>
               ) : null}
 
               <div className='mb-3 grid gap-2 sm:grid-cols-2'>
@@ -1393,11 +1395,13 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                   Inferred Candidates ({candidateRules.length})
                 </div>
                 {candidateRules.length > 0 ? (
-                  <div className='max-h-60 space-y-2 overflow-y-auto rounded-md border border-border/60 bg-card/30 p-2'>
+                  <Card variant='subtle-compact' padding='sm' className='max-h-60 space-y-2 overflow-y-auto border-border/60 bg-card/30'>
                     {candidateRules.map((rule: AiPathsValidationRule) => (
-                      <div
+                      <Card
                         key={rule.id}
-                        className='rounded-md border border-border/50 bg-card/40 p-2'
+                        variant='subtle-compact'
+                        padding='sm'
+                        className='border-border/50 bg-card/40'
                       >
                         <div className='flex flex-wrap items-start justify-between gap-2'>
                           <div className='min-w-0'>
@@ -1452,18 +1456,18 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                             </Button>
                           </div>
                         </div>
-                      </div>
+                      </Card>
                     ))}
-                  </div>
+                  </Card>
                 ) : (
-                  <div className='rounded-md border border-border/60 bg-card/30 p-3 text-xs text-gray-500'>
+                  <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/30 text-xs text-gray-500'>
                     Sync from central docs to generate inference candidates.
-                  </div>
+                  </Card>
                 )}
               </div>
 
               {rejectedCandidates.length > 0 ? (
-                <div className='mt-3 space-y-1 rounded-md border border-border/60 bg-card/30 p-2'>
+                <Card variant='subtle-compact' padding='sm' className='mt-3 space-y-1 border-border/60 bg-card/30'>
                   <div className='text-[11px] font-medium text-gray-300'>
                     Rejected candidates
                   </div>
@@ -1474,7 +1478,7 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                       </div>
                     ))}
                   </div>
-                </div>
+                </Card>
               ) : null}
             </Card>
 
@@ -1506,9 +1510,11 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
               {filteredRules.length > 0 ? (
                 <div className='space-y-2'>
                   {filteredRules.map((rule: AiPathsValidationRule) => (
-                    <div
+                    <Card
                       key={rule.id}
-                      className='rounded-md border border-border/60 bg-card/30 p-3'
+                      variant='subtle-compact'
+                      padding='md'
+                      className='border-border/60 bg-card/30'
                     >
                       <div className='flex flex-wrap items-start justify-between gap-3'>
                         <div className='min-w-0'>
@@ -1563,13 +1569,13 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                           Docs bindings: {rule.docsBindings.join(', ')}
                         </div>
                       ) : null}
-                    </div>
+                    </Card>
                   ))}
                 </div>
               ) : (
-                <div className='rounded-md border border-border/60 bg-card/30 p-3 text-xs text-gray-500'>
+                <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/30 text-xs text-gray-500'>
                   No validation rules match the current focus filter.
-                </div>
+                </Card>
               )}
 
               <div className='mt-4'>
@@ -1634,16 +1640,18 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                     />
                   </div>
 
-                  <div className='rounded-md border border-border/60 bg-card/30 p-3 text-xs text-gray-400'>
+                  <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/30 text-xs text-gray-400'>
                     Graph nodes: {validationReport.graphStats.nodes} | edges: {validationReport.graphStats.edges}
-                  </div>
+                  </Card>
 
                   {validationReport.findings.length > 0 ? (
                     <div className='space-y-2'>
                       {validationReport.findings.slice(0, 14).map((finding) => (
-                        <div
+                        <Card
                           key={finding.id}
-                          className='rounded-md border border-amber-500/20 bg-amber-500/5 p-3'
+                          variant='warning'
+                          padding='sm'
+                          className='border-amber-500/20 bg-amber-500/5'
                         >
                           <div className='flex flex-wrap items-center gap-2'>
                             <Badge
@@ -1668,13 +1676,13 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                               {finding.recommendation}
                             </div>
                           ) : null}
-                        </div>
+                        </Card>
                       ))}
                     </div>
                   ) : (
-                    <div className='rounded-md border border-emerald-500/20 bg-emerald-500/5 p-3 text-xs text-emerald-200'>
+                    <Card variant='subtle-compact' padding='sm' className='border-emerald-500/20 bg-emerald-500/5 text-xs text-emerald-200'>
                       No findings. This path is ready under the current validation profile.
-                    </div>
+                    </Card>
                   )}
                 </div>
               ) : (

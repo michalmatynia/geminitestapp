@@ -6,7 +6,7 @@ import React, { useCallback } from 'react';
 
 import type { ExpandedImageFile } from '@/features/products';
 import { ImageFileSelection } from '@/shared/contracts/files';
-import { Button, Card } from '@/shared/ui';
+import { Button, Card, Badge } from '@/shared/ui';
 
 import { useFileManager } from '../../contexts/FileManagerContext';
 
@@ -70,9 +70,9 @@ export function FileManagerGrid(): React.JSX.Element {
           }`}
           onClick={(): void => handleClick(file)}
         >
-          <div className='absolute left-2 top-2 rounded bg-gray-900/80 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-gray-300 z-10'>
+          <Badge variant='neutral' className='absolute left-2 top-2 bg-gray-900/80 text-[10px] font-bold uppercase tracking-wide z-10'>
             {resolveFolder(file.filepath)}
-          </div>
+          </Badge>
           <div className='aspect-square relative w-full'>
             <Image
               src={file.filepath}
@@ -88,9 +88,9 @@ export function FileManagerGrid(): React.JSX.Element {
             {(file.tags ?? []).length > 0 && (
               <div className='mt-1 flex flex-wrap justify-center gap-1'>
                 {(file.tags ?? []).slice(0, 3).map((tag: string) => (
-                  <span key={tag} className='rounded-full bg-gray-800/70 px-2 py-0.5 text-[10px] text-gray-400'>
+                  <Badge key={tag} variant='neutral' className='bg-card/70 text-[10px] font-normal'>
                     #{tag}
-                  </span>
+                  </Badge>
                 ))}
               </div>
             )}

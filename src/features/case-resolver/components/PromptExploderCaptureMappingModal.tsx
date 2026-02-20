@@ -41,6 +41,9 @@ type PromptExploderCaptureMappingModalProps = {
     workspaceRevision: number;
     attempts: number;
     at: string;
+    cleanupDurationMs?: number | null;
+    mutationDurationMs?: number | null;
+    totalDurationMs?: number | null;
   } | null;
 };
 
@@ -109,15 +112,27 @@ export function PromptExploderCaptureMappingModal({
       title='Prompt Exploder Capture Mapping'
       subtitle='Review and edit addresser/addressee mapping before it updates this document.'
       size='lg'
-      headerActions={
-        <Button
-          type='button'
-          onClick={onApply}
-          disabled={!draft || applying}
-          size='sm'
-        >
-          {applying ? 'Applying...' : 'Apply Mapping'}
-        </Button>
+      showClose={false}
+      footer={
+        <div className='flex w-full justify-end gap-2'>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={onClose}
+            disabled={applying}
+            size='sm'
+          >
+            Dismiss (No Mapping)
+          </Button>
+          <Button
+            type='button'
+            onClick={onApply}
+            disabled={!draft || applying}
+            size='sm'
+          >
+            {applying ? 'Applying...' : 'Apply Mapping'}
+          </Button>
+        </div>
       }
     >
       {draft ? (
@@ -137,6 +152,13 @@ export function PromptExploderCaptureMappingModal({
               <div className='mt-0.5 text-gray-400'>
                 target: {diagnostics.targetFileId ?? '(none)'} · resolved: {diagnostics.resolvedTargetFileId ?? '(none)'} · rev: {diagnostics.workspaceRevision} · attempts: {diagnostics.attempts}
               </div>
+              {(diagnostics.cleanupDurationMs !== null && diagnostics.cleanupDurationMs !== undefined) ||
+              (diagnostics.mutationDurationMs !== null && diagnostics.mutationDurationMs !== undefined) ||
+              (diagnostics.totalDurationMs !== null && diagnostics.totalDurationMs !== undefined) ? (
+                <div className='mt-0.5 text-gray-500'>
+                  cleanup: {diagnostics.cleanupDurationMs ?? '-'}ms · mutation: {diagnostics.mutationDurationMs ?? '-'}ms · total: {diagnostics.totalDurationMs ?? '-'}ms
+                </div>
+              ) : null}
             </div>
           ) : null}
 

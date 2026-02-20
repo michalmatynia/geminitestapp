@@ -10,6 +10,7 @@ import {
   hashRuntimeValue,
   renderTemplate,
 } from '../../utils';
+import { evaluateOutboundUrlPolicy } from '../security/outbound-url-policy';
 import {
   buildPromptOutput,
   extractImageUrls,
@@ -48,6 +49,61 @@ interface PromptCandidate {
   fromNode: AiNode | undefined;
   value: unknown;
 }
+
+const filterImageUrlsByOutboundPolicy = (input: {
+  imageUrls: string[];
+  nodeId: string;
+  action: 'graphModel' | 'aiDescription';
+  reportAiPathsError: NodeHandlerContext['reportAiPathsError'];
+  toast: NodeHandlerContext['toast'];
+}): string[] => {
+  if (input.imageUrls.length === 0) return [];
+
+  const allowed: string[] = [];
+  const blocked: Array<{
+    url: string;
+    reason: string | null;
+    hostname: string | null;
+  }> = [];
+
+  input.imageUrls.forEach((url: string): void => {
+    const decision = evaluateOutboundUrlPolicy(url);
+    if (decision.allowed) {
+      allowed.push(url);
+      return;
+    }
+    blocked.push({
+      url,
+      reason: decision.reason,
+      hostname: decision.hostname,
+    });
+  });
+
+  if (blocked.length > 0) {
+    const reasons = Array.from(
+      new Set(blocked.map((entry) => entry.reason ?? 'policy_violation'))
+    )
+      .slice(0, 3)
+      .join(', ');
+    const summary = `Blocked ${blocked.length} image URL${blocked.length === 1 ? '' : 's'} by outbound policy (${reasons}).`;
+    input.reportAiPathsError(
+      new Error(summary),
+      {
+        action: input.action,
+        nodeId: input.nodeId,
+        blockedImageUrlCount: blocked.length,
+        blockedImageUrls: blocked.slice(0, 5),
+      },
+      summary
+    );
+    input.toast(
+      `Blocked ${blocked.length} image URL${blocked.length === 1 ? '' : 's'} by outbound policy.`,
+      { variant: 'warning' }
+    );
+  }
+
+  return allowed;
+};
 
 export const handleModel: NodeHandler = async ({ 
   node,
@@ -224,7 +280,13 @@ export const handleModel: NodeHandler = async ({
     nodeInputs['entityJson'] ??
     nodeInputs['value'] ??
     nodeInputs['result'];
-  const imageUrls = extractImageUrls(imageSource);
+  const imageUrls = filterImageUrlsByOutboundPolicy({
+    imageUrls: extractImageUrls(imageSource),
+    nodeId: node.id,
+    action: 'graphModel',
+    reportAiPathsError,
+    toast,
+  });
   const payload = {
     prompt,
     imageUrls,
@@ -352,6 +414,7 @@ export const handleAiDescription: NodeHandler = async ({
   prevOutputs,
   executed,
   reportAiPathsError,
+  toast,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (executed.ai.has(node.id)) return prevOutputs;
   const entityJson = coerceInput(nodeInputs['entityJson']) as
@@ -365,7 +428,7 @@ export const handleAiDescription: NodeHandler = async ({
     (entityJson['imageLinks'] as unknown[] | undefined) ??
     (entityJson['images'] as unknown[] | undefined) ??
     [];
-  const imageUrls = rawImages
+  const rawImageUrls = rawImages
     .map((item: unknown) => {
       if (typeof item === 'string') return item;
       if (item && typeof item === 'object') {
@@ -375,6 +438,13 @@ export const handleAiDescription: NodeHandler = async ({
       return null;
     })
     .filter((item: unknown): item is string => Boolean(item));
+  const imageUrls = filterImageUrlsByOutboundPolicy({
+    imageUrls: rawImageUrls,
+    nodeId: node.id,
+    action: 'aiDescription',
+    reportAiPathsError,
+    toast,
+  });
   const body = {
     entityJson,
     imageUrls,

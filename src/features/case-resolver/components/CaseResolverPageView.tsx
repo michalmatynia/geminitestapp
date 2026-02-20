@@ -19,6 +19,16 @@ import {
   encodeFilemakerPartyReference,
 } from '@/features/filemaker/settings';
 import {
+  CASE_RESOLVER_QUOTE_MODE_OPTIONS,
+  type CaseResolverDocumentHistoryEntry,
+  type CaseResolverFileEditDraft,
+  type CaseResolverFile,
+  type CaseResolverGraph,
+  type CaseResolverIdentifier,
+  type CaseResolverNodeMeta,
+  type CaseResolverRelationGraph,
+} from '@/shared/contracts/case-resolver';
+import {
   AppModal,
   Badge,
   Button,
@@ -36,7 +46,6 @@ import {
   EmptyState,
   FileUploadTrigger,
   Card,
-  Alert,
 } from '@/shared/ui';
 import { sanitizeHtml } from '@/shared/utils';
 
@@ -51,18 +60,9 @@ import {
 } from '../context/CaseResolverPageContext';
 import { emitCaseResolverShowDocumentInCanvas } from '../drag';
 import { useCaseResolverState } from '../hooks/useCaseResolverState';
+import { resolvePromptExploderTransferStatusLabel } from '../hooks/prompt-exploder-transfer-lifecycle';
 import { buildCaseResolverNodeFileRelationIndexFromAssets } from '../nodefile-relations';
 import { resolveCaseResolverOcrProviderLabel } from '../ocr-provider';
-import {
-  CASE_RESOLVER_QUOTE_MODE_OPTIONS,
-  type CaseResolverDocumentHistoryEntry,
-  type CaseResolverFileEditDraft,
-  type CaseResolverFile,
-  type CaseResolverGraph,
-  type CaseResolverIdentifier,
-  type CaseResolverNodeMeta,
-  type CaseResolverRelationGraph,
-} from '@/shared/contracts/case-resolver';
 
 const ENABLE_CASE_RESOLVER_MULTIFORMAT_EDITOR =
   process.env['NEXT_PUBLIC_CASE_RESOLVER_MULTIFORMAT_EDITOR'] !== 'false';
@@ -179,6 +179,9 @@ type CaseResolverPageViewProps = {
     workspaceRevision: number;
     attempts: number;
     at: string;
+    cleanupDurationMs?: number | null;
+    mutationDurationMs?: number | null;
+    totalDurationMs?: number | null;
   } | null;
 };
 
@@ -262,6 +265,9 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     activeCaseId,
     requestedCaseStatus,
     canCreateInActiveCase,
+    requestedFileId,
+    requestedPromptExploderSessionId,
+    shouldOpenEditorFromQuery,
     selectedFileId,
     selectedAssetId,
     selectedFolderPath,
@@ -378,10 +384,92 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     [partyOptions]
   );
   const canApplyPendingPromptOutput = Boolean(pendingPromptExploderPayload);
+  const hasExpiredPromptTransfer =
+    !pendingPromptExploderPayload &&
+    promptExploderApplyDiagnostics?.status === 'expired';
+  const pendingPromptTransferId =
+    pendingPromptExploderPayload?.transferId?.trim() ??
+    promptExploderApplyDiagnostics?.transferId?.trim() ??
+    '';
+  const promptTransferStatus = promptExploderApplyDiagnostics?.status ?? (
+    pendingPromptExploderPayload ? 'pending' : 'idle'
+  );
+  const promptTransferStatusLabel = resolvePromptExploderTransferStatusLabel(promptTransferStatus);
+  const pendingPromptTransferCreatedAt =
+    pendingPromptExploderPayload?.createdAt ??
+    promptExploderApplyDiagnostics?.payloadCreatedAt ??
+    null;
+  const pendingPromptExploderContextFileId =
+    pendingPromptExploderPayload?.caseResolverContext?.fileId?.trim() ??
+    promptExploderApplyDiagnostics?.requestedTargetFileId?.trim() ??
+    '';
+  const pendingPromptExploderSessionId =
+    pendingPromptExploderPayload?.caseResolverContext?.sessionId?.trim() ?? '';
+  const requestedContextFileId = requestedFileId?.trim() ?? '';
+  const requestedSessionId = requestedPromptExploderSessionId?.trim() ?? '';
+  const hasPendingPromptExploderDocumentMismatch =
+    Boolean(
+      pendingPromptExploderPayload &&
+      shouldOpenEditorFromQuery &&
+      requestedContextFileId.length > 0 &&
+      pendingPromptExploderContextFileId.length > 0 &&
+      requestedContextFileId !== pendingPromptExploderContextFileId
+    );
+  const hasPendingPromptExploderSessionMismatch =
+    Boolean(
+      pendingPromptExploderPayload &&
+      requestedSessionId.length > 0 &&
+      pendingPromptExploderSessionId !== requestedSessionId
+    );
+  const promptExploderMismatchReason =
+    hasPendingPromptExploderDocumentMismatch
+      ? 'document'
+      : hasPendingPromptExploderSessionMismatch
+        ? 'session'
+        : null;
+  const hasBlockingPendingPromptExploderMismatch = promptExploderMismatchReason !== null;
+  const pendingPromptExploderTargetFile = React.useMemo((): CaseResolverFile | null => {
+    if (!pendingPromptExploderContextFileId) return null;
+    return (
+      workspace.files.find((file: CaseResolverFile): boolean =>
+        file.id.trim() === pendingPromptExploderContextFileId
+      ) ?? null
+    );
+  }, [pendingPromptExploderContextFileId, workspace.files]);
+  const pendingPromptExploderTargetFileLabel =
+    pendingPromptExploderTargetFile?.name ??
+    pendingPromptExploderPayload?.caseResolverContext?.fileName ??
+    promptExploderApplyDiagnostics?.requestedTargetFileId ??
+    (pendingPromptExploderContextFileId || null);
+  const currentPromptExploderBindingFileLabel = React.useMemo((): string | null => {
+    if (requestedContextFileId.length > 0) {
+      const requestedFile = workspace.files.find(
+        (file: CaseResolverFile): boolean => file.id.trim() === requestedContextFileId
+      );
+      return requestedFile?.name ?? requestedContextFileId;
+    }
+    return editingDocumentDraft?.name ?? null;
+  }, [editingDocumentDraft?.name, requestedContextFileId, workspace.files]);
+  const handleOpenPromptExploderTargetDocument = useCallback((): void => {
+    if (!pendingPromptExploderContextFileId) return;
+    const params = new URLSearchParams();
+    params.set('openEditor', '1');
+    params.set('fileId', pendingPromptExploderContextFileId);
+    if (pendingPromptExploderSessionId.length > 0) {
+      params.set('promptExploderSessionId', pendingPromptExploderSessionId);
+    }
+    router.push(`/admin/case-resolver?${params.toString()}`);
+  }, [pendingPromptExploderContextFileId, pendingPromptExploderSessionId, router]);
   const showPromptExploderManualRetry = Boolean(
     pendingPromptExploderPayload && promptExploderApplyDiagnostics?.status === 'failed'
   );
+  const showPromptExploderTransferCard = Boolean(
+    pendingPromptExploderPayload || hasExpiredPromptTransfer
+  );
   const showPromptExploderApplyAction = Boolean(pendingPromptExploderPayload);
+  const showPromptExploderDiscardAction = Boolean(
+    pendingPromptExploderPayload || hasExpiredPromptTransfer
+  ) && !hasBlockingPendingPromptExploderMismatch;
 
   const addresserPartyOptions = React.useMemo(
     () =>
@@ -551,6 +639,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
     setActiveMainView('workspace');
     handleOpenFileEditor(id);
   }, [handleOpenFileEditor, setActiveMainView]);
+  const isEditingDocumentLocked = editingDocumentDraft?.isLocked === true;
   const fileEditorTitle = editingDocumentDraft?.fileType === 'scanfile'
     ? 'Edit Scan'
     : 'Edit Document';
@@ -802,13 +891,18 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                     type='button'
                     onClick={handleSaveFileEditor}
                     size='sm'
-                    disabled={!isEditorDraftDirty}
+                    disabled={!isEditorDraftDirty || isEditingDocumentLocked}
                     variant={isEditorDraftDirty ? 'success' : 'default'}
                     className='min-w-[100px]'
                   >
                     Save Changes
                   </Button>
                   <h2 className='truncate text-2xl font-bold tracking-tight text-white'>{fileEditorTitle}</h2>
+                  {isEditingDocumentLocked ? (
+                    <Badge variant='outline' className='border-amber-500/50 text-amber-200'>
+                      Locked · View only
+                    </Badge>
+                  ) : null}
                 </div>
               </div>
               <div className='flex flex-wrap items-center justify-end gap-2'>
@@ -856,7 +950,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                 <FileUploadTrigger
                   accept='image/*,application/pdf,.pdf'
                   onFilesSelected={(files) => handleUploadScanFiles(editingDocumentDraft.id, files)}
-                  disabled={isUploadingScanDraftFiles}
+                  disabled={isUploadingScanDraftFiles || isEditingDocumentLocked}
                   multiple
                   asChild
                 >
@@ -874,7 +968,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                       <div className='ml-auto flex items-center gap-2'>
                         <Button
                           type='button'
-                          disabled={isUploadingScanDraftFiles}
+                          disabled={isUploadingScanDraftFiles || isEditingDocumentLocked}
                           className='h-8 rounded-md border border-border text-xs text-gray-100 hover:bg-muted/60 disabled:opacity-60'
                         >
                           {isUploadingScanDraftFiles ? 'Uploading...' : 'Upload Files'}
@@ -888,7 +982,8 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                           disabled={
                             (editingDocumentDraft.scanSlots ?? []).length === 0 ||
                             isUploadingScanDraftFiles ||
-                            uploadingScanSlotId !== null
+                            uploadingScanSlotId !== null ||
+                            isEditingDocumentLocked
                           }
                           className='h-8 rounded-md border border-cyan-500/40 text-xs text-cyan-100 hover:bg-cyan-500/15 disabled:opacity-60'
                         >
@@ -955,7 +1050,11 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                                   type='button'
                                   variant='ghost'
                                   size='xs'
-                                  disabled={isUploadingScanDraftFiles || uploadingScanSlotId !== null}
+                                  disabled={
+                                    isUploadingScanDraftFiles ||
+                                    uploadingScanSlotId !== null ||
+                                    isEditingDocumentLocked
+                                  }
                                   className='h-6 px-2 text-[10px] text-red-300 hover:bg-red-500/10 hover:text-red-200'
                                   onClick={(e): void => {
                                     e.stopPropagation();
@@ -1000,6 +1099,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                     <FormField label='Name'>
                       <Input
                         value={editingDocumentDraft.name}
+                        disabled={isEditingDocumentLocked}
                         onChange={(event) => {
                           updateEditingDocumentDraft({ name: event.target.value });
                         }}
@@ -1010,6 +1110,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                       <Input
                         type='date'
                         value={editingDocumentDraft.documentDate}
+                        disabled={isEditingDocumentLocked}
                         onChange={(event) => {
                           updateEditingDocumentDraft({ documentDate: event.target.value });
                         }}
@@ -1022,6 +1123,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                           <SelectSimple
                             size='sm'
                             value={addresserPartySearchKind}
+                            disabled={isEditingDocumentLocked}
                             onValueChange={(value: string): void => {
                               if (value !== 'person' && value !== 'organization') return;
                               setAddresserPartySearchKind(value);
@@ -1032,6 +1134,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                           />
                           <SearchInput
                             value={addresserPartyQuery}
+                            disabled={isEditingDocumentLocked}
                             onChange={(event): void => {
                               setAddresserPartyQuery(event.target.value);
                             }}
@@ -1046,6 +1149,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                         <SelectSimple
                           size='sm'
                           value={encodeFilemakerPartyReference(editingDocumentDraft.addresser)}
+                          disabled={isEditingDocumentLocked}
                           onValueChange={(value: string): void => {
                             const nextReference = decodeFilemakerPartyReference(value);
                             if (nextReference?.kind) {
@@ -1065,7 +1169,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                             variant='ghost'
                             size='sm'
                             className='h-6 px-2 text-[11px] text-gray-400 hover:text-gray-200'
-                            disabled={editingDocumentDraft.addresser === null}
+                            disabled={editingDocumentDraft.addresser === null || isEditingDocumentLocked}
                             onClick={(): void => {
                               updateEditingDocumentDraft({ addresser: null });
                             }}
@@ -1082,6 +1186,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                           <SelectSimple
                             size='sm'
                             value={addresseePartySearchKind}
+                            disabled={isEditingDocumentLocked}
                             onValueChange={(value: string): void => {
                               if (value !== 'person' && value !== 'organization') return;
                               setAddresseePartySearchKind(value);
@@ -1092,6 +1197,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                           />
                           <SearchInput
                             value={addresseePartyQuery}
+                            disabled={isEditingDocumentLocked}
                             onChange={(event): void => {
                               setAddresseePartyQuery(event.target.value);
                             }}
@@ -1106,6 +1212,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                         <SelectSimple
                           size='sm'
                           value={encodeFilemakerPartyReference(editingDocumentDraft.addressee)}
+                          disabled={isEditingDocumentLocked}
                           onValueChange={(value: string): void => {
                             const nextReference = decodeFilemakerPartyReference(value);
                             if (nextReference?.kind) {
@@ -1125,7 +1232,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                             variant='ghost'
                             size='sm'
                             className='h-6 px-2 text-[11px] text-gray-400 hover:text-gray-200'
-                            disabled={editingDocumentDraft.addressee === null}
+                            disabled={editingDocumentDraft.addressee === null || isEditingDocumentLocked}
                             onClick={(): void => {
                               updateEditingDocumentDraft({ addressee: null });
                             }}
@@ -1148,6 +1255,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                           variant='outline'
                           size='sm'
                           className='h-7 text-[11px]'
+                          disabled={isEditingDocumentLocked}
                           onClick={(): void => {
                             handleCreateNodeFile(editingDocumentDraft.folder ?? null);
                           }}
@@ -1191,6 +1299,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                               <SelectSimple
                                 size='sm'
                                 value={editingDocumentNodeMeta.quoteMode}
+                                disabled={isEditingDocumentLocked}
                                 onValueChange={(value: string): void => {
                                   if (value === 'none' || value === 'double' || value === 'single') {
                                     updateEditingDocumentNodeMeta({ quoteMode: value });
@@ -1205,6 +1314,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                               <div className='text-xs text-gray-300'>Append new line at end</div>
                               <Checkbox
                                 checked={editingDocumentNodeMeta.appendTrailingNewline === true}
+                                disabled={isEditingDocumentLocked}
                                 onCheckedChange={(checked: boolean): void => {
                                   updateEditingDocumentNodeMeta({
                                     appendTrailingNewline: checked,
@@ -1217,6 +1327,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                               <div className='flex flex-wrap items-center gap-2'>
                                 <Input
                                   type='color'
+                                  disabled={isEditingDocumentLocked}
                                   value={
                                     CASE_RESOLVER_NODE_TEXT_COLOR_PATTERN.test(
                                       editingDocumentNodeMeta.textColor ?? ''
@@ -1236,7 +1347,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                                   variant='ghost'
                                   size='sm'
                                   className='h-7 px-2 text-[11px] text-gray-400 hover:text-gray-200'
-                                  disabled={!editingDocumentNodeMeta.textColor}
+                                  disabled={!editingDocumentNodeMeta.textColor || isEditingDocumentLocked}
                                   onClick={(): void => {
                                     updateEditingDocumentNodeMeta({ textColor: '' });
                                   }}
@@ -1271,6 +1382,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                         selected={(editingDocumentDraft.referenceCaseIds ?? []).filter(
                           (referenceId: string) => referenceId !== editingDocumentDraft.id
                         )}
+                        disabled={isEditingDocumentLocked}
                         onChange={(values: string[]): void => {
                           updateEditingDocumentDraft({
                             referenceCaseIds: values.filter(
@@ -1289,6 +1401,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                       <SelectSimple
                         size='sm'
                         value={editingDocumentDraft.parentCaseId ?? '__none__'}
+                        disabled={isEditingDocumentLocked}
                         onValueChange={(value: string): void => {
                           updateEditingDocumentDraft({
                             parentCaseId: value === '__none__' ? null : value,
@@ -1306,6 +1419,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                       <SelectSimple
                         size='sm'
                         value={editingDocumentDraft.tagId ?? '__none__'}
+                        disabled={isEditingDocumentLocked}
                         onValueChange={(value: string): void => {
                           updateEditingDocumentDraft({
                             tagId: value === '__none__' ? null : value,
@@ -1321,6 +1435,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                       <SelectSimple
                         size='sm'
                         value={editingDocumentDraft.caseIdentifierId ?? '__none__'}
+                        disabled={isEditingDocumentLocked}
                         onValueChange={(value: string): void => {
                           updateEditingDocumentDraft({
                             caseIdentifierId: value === '__none__' ? null : value,
@@ -1336,6 +1451,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                       <SelectSimple
                         size='sm'
                         value={editingDocumentDraft.categoryId ?? '__none__'}
+                        disabled={isEditingDocumentLocked}
                         onValueChange={(value: string): void => {
                           updateEditingDocumentDraft({
                             categoryId: value === '__none__' ? null : value,
@@ -1392,6 +1508,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                                 variant='outline'
                                 size='sm'
                                 className='h-7 text-[11px]'
+                                disabled={isEditingDocumentLocked}
                                 onClick={(): void => {
                                   handleUseHistoryEntry(entry);
                                 }}
@@ -1408,16 +1525,88 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
               </Tabs>
 
               <div className='flex justify-end gap-2'>
-                {pendingPromptExploderPayload ? (
-                  <div className='rounded border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-100'>
-                    Pending Prompt Exploder output
-                    {pendingPromptExploderPayload.caseResolverContext?.fileName
-                      ? ` from "${pendingPromptExploderPayload.caseResolverContext.fileName}".`
-                      : '.'}
-                    {' '}
-                    {showPromptExploderManualRetry
-                      ? 'Automatic apply failed. Retry apply or discard this output.'
-                      : 'Apply this output manually, or keep waiting for automatic apply.'}
+                {showPromptExploderTransferCard ? (
+                  <div
+                    className={
+                      hasExpiredPromptTransfer || hasBlockingPendingPromptExploderMismatch
+                        ? 'rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-100'
+                        : 'rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-100'
+                    }
+                  >
+                    <div className='font-medium'>
+                      Pending Prompt Exploder output
+                      {pendingPromptExploderPayload?.caseResolverContext?.fileName
+                        ? ` from "${pendingPromptExploderPayload.caseResolverContext.fileName}".`
+                        : pendingPromptExploderTargetFileLabel
+                          ? ` targeting "${pendingPromptExploderTargetFileLabel}".`
+                        : '.'}
+                    </div>
+                    <div className='mt-1 flex flex-wrap gap-1'>
+                      <Badge variant='outline' className='text-[10px]'>
+                        Stage: {promptTransferStatusLabel}
+                      </Badge>
+                      {pendingPromptExploderTargetFileLabel ? (
+                        <Badge variant='outline' className='text-[10px]'>
+                          Target: {pendingPromptExploderTargetFileLabel}
+                        </Badge>
+                      ) : null}
+                      {pendingPromptExploderSessionId ? (
+                        <Badge variant='outline' className='text-[10px]'>
+                          Session: {pendingPromptExploderSessionId}
+                        </Badge>
+                      ) : null}
+                      {pendingPromptTransferId ? (
+                        <Badge variant='outline' className='text-[10px]'>
+                          Transfer: {pendingPromptTransferId}
+                        </Badge>
+                      ) : null}
+                      {pendingPromptTransferCreatedAt ? (
+                        <Badge variant='outline' className='text-[10px]'>
+                          Created: {formatHistoryTimestamp(pendingPromptTransferCreatedAt)}
+                        </Badge>
+                      ) : null}
+                    </div>
+                    <div className='mt-1'>
+                      {hasExpiredPromptTransfer ? (
+                        'This transfer expired before apply. Discard it and re-send from Prompt Exploder.'
+                      ) : hasBlockingPendingPromptExploderMismatch ? (
+                        <>
+                          {promptExploderMismatchReason === 'document'
+                            ? `This output targets "${pendingPromptExploderTargetFileLabel ?? pendingPromptExploderContextFileId}", but you are editing "${currentPromptExploderBindingFileLabel ?? requestedContextFileId}".`
+                            : 'This output belongs to a different Prompt Exploder session.'}
+                          {' '}
+                          Open the target document or discard this pending output.
+                        </>
+                      ) : showPromptExploderManualRetry ? (
+                        'Automatic apply failed. Retry apply or discard this output.'
+                      ) : (
+                        'Apply this output manually, or keep waiting for automatic apply.'
+                      )}
+                    </div>
+                    {hasBlockingPendingPromptExploderMismatch ? (
+                      <div className='mt-2 flex flex-wrap justify-end gap-2'>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          className='h-7 text-[11px]'
+                          onClick={handleOpenPromptExploderTargetDocument}
+                          disabled={!pendingPromptExploderContextFileId}
+                        >
+                          Open Target Document
+                        </Button>
+                        <Button
+                          type='button'
+                          variant='ghost'
+                          className='h-7 text-[11px]'
+                          disabled={isApplyingPromptExploderPartyProposal}
+                          onClick={(): void => {
+                            handleDiscardPendingPromptExploderPayload();
+                          }}
+                        >
+                          Discard Pending Output
+                        </Button>
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
@@ -1441,6 +1630,26 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                     <div>
                       <span className='text-cyan-200'>Apply Attempt:</span>{' '}
                       {promptExploderApplyDiagnostics.applyAttemptId}
+                    </div>
+                    <div>
+                      <span className='text-cyan-200'>Transfer ID:</span>{' '}
+                      {promptExploderApplyDiagnostics.transferId ?? '(none)'}
+                    </div>
+                    <div>
+                      <span className='text-cyan-200'>Payload Version:</span>{' '}
+                      {promptExploderApplyDiagnostics.payloadVersion ?? '(none)'}
+                    </div>
+                    <div>
+                      <span className='text-cyan-200'>Payload Status:</span>{' '}
+                      {promptExploderApplyDiagnostics.payloadStatus ?? '(none)'}
+                    </div>
+                    <div>
+                      <span className='text-cyan-200'>Payload Checksum:</span>{' '}
+                      {promptExploderApplyDiagnostics.payloadChecksum ?? '(none)'}
+                    </div>
+                    <div>
+                      <span className='text-cyan-200'>Payload Created At:</span>{' '}
+                      {promptExploderApplyDiagnostics.payloadCreatedAt ?? '(none)'}
                     </div>
                     <div>
                       <span className='text-cyan-200'>Precheck Resolution:</span>{' '}
@@ -1502,6 +1711,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                     type='button'
                     variant='outline'
                     className='h-8'
+                    disabled={isEditingDocumentLocked}
                     onClick={(): void => {
                       setIsPromptExploderPartyProposalOpen(true);
                     }}
@@ -1513,6 +1723,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                   type='button'
                   variant='outline'
                   className='h-8'
+                  disabled={isEditingDocumentLocked}
                   onClick={handleOpenPromptExploderForDraft}
                 >
                   Prompt Exploder: Extract + Reassemble
@@ -1522,7 +1733,12 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                     type='button'
                     variant='outline'
                     className='h-8'
-                    disabled={!canApplyPendingPromptOutput || isApplyingPromptExploderPartyProposal}
+                    disabled={
+                      !canApplyPendingPromptOutput ||
+                      isApplyingPromptExploderPartyProposal ||
+                      hasBlockingPendingPromptExploderMismatch ||
+                      isEditingDocumentLocked
+                    }
                     onClick={(): void => {
                       void handleApplyPendingPromptExploderPayload();
                     }}
@@ -1532,7 +1748,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                       : 'Apply Prompt Exploder Output'}
                   </Button>
                 ) : null}
-                {pendingPromptExploderPayload ? (
+                {showPromptExploderDiscardAction ? (
                   <Button
                     type='button'
                     variant='ghost'
@@ -1569,6 +1785,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                       key={`case-resolver-wysiwyg-${editorContentRevisionSeed}`}
                       value={editingDocumentDraft.documentContentHtml ?? ''}
                       onChange={handleUpdateDraftDocumentContent}
+                      disabled={isEditingDocumentLocked}
                       allowFontFamily
                       allowTextAlign
                       enableAdvancedTools
@@ -1580,6 +1797,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                       key={`case-resolver-markdown-${editorContentRevisionSeed}`}
                       value={editingDocumentDraft.documentContentMarkdown ?? ''}
                       onChange={handleUpdateDraftDocumentContent}
+                      readOnly={isEditingDocumentLocked}
                       showPreview={showMarkdownPreview}
                       renderPreviewHtml={(value: string): string => ensureHtmlForPreview(value, 'markdown')}
                       sanitizePreviewHtml={sanitizeHtml}
@@ -1599,6 +1817,7 @@ export function CaseResolverPageView(props: CaseResolverPageViewProps): React.JS
                   key={`case-resolver-wysiwyg-fallback-${editorContentRevisionSeed}`}
                   value={editingDocumentDraft.documentContentHtml ?? ''}
                   onChange={handleUpdateDraftDocumentContent}
+                  disabled={isEditingDocumentLocked}
                   allowFontFamily
                   allowTextAlign
                   enableAdvancedTools

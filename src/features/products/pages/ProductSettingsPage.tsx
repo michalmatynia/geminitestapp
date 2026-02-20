@@ -29,7 +29,7 @@ import {
   useUpdatePriceGroupMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
 import { Catalog, PriceGroup } from '@/shared/contracts/products';
-import { Button, PageLayout, useToast } from '@/shared/ui';
+import { Button, PageLayout, useToast, Card } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import {
@@ -251,7 +251,7 @@ export function ProductSettingsPage(): React.JSX.Element {
       <PageLayout
         title='Product Settings'
       >
-        <div className='mb-4 rounded-lg border border-border/60 bg-card/30 p-4'>
+        <Card variant='subtle-compact' padding='sm' className='mb-4 border-border/60 bg-card/30'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <div>
               <p className='text-sm font-medium text-gray-100'>Image Studio Integration</p>
@@ -267,28 +267,24 @@ export function ProductSettingsPage(): React.JSX.Element {
               Open Integration Settings
             </Button>
           </div>
-        </div>
+        </Card>
         <div className='grid gap-6 md:grid-cols-[240px_1fr]'>
-          <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+          <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
             <div className='flex flex-col gap-2'>
               {settingSections.map((section: typeof settingSections[number]) => (
                 <Button size='xs'
                   key={section}
-                  variant='ghost'
+                  variant={activeSection === section ? 'secondary' : 'ghost'}
                   onClick={() => setActiveSection(section)}
-                  className={`justify-start rounded px-3 py-2 text-left text-sm transition ${
-                    activeSection === section
-                      ? 'bg-gray-800 text-white hover:bg-gray-800'
-                      : 'text-gray-300 hover:bg-muted/50'
-                  }`}
+                  className='justify-start px-3 py-2 text-left text-sm'
                 >
                   {section}
                 </Button>
               ))}
             </div>
-          </div>
+          </Card>
           <ProductSettingsProvider value={sharedSettingsContextValue}>
-            <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
+            <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40'>
               {activeSection === 'Categories' && <CategoriesSettings />}
               {activeSection === 'Tags' && <TagsSettings />}
               {activeSection === 'Parameters' && (
@@ -323,7 +319,7 @@ export function ProductSettingsPage(): React.JSX.Element {
               {activeSection === 'Internationalization' && (
                 <InternationalizationSettings />
               )}
-            </div>
+            </Card>
           </ProductSettingsProvider>
         </div>
 

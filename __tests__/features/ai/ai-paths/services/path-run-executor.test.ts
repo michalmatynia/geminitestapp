@@ -268,6 +268,94 @@ describe('PathRunExecutor', () => {
     ).toBe(true);
   });
 
+  it('should persist structured node spans in runtime trace metadata', async () => {
+    (evaluateGraphWithIteratorAutoContinue as any).mockImplementation(async (options: any) => {
+      const runStartedAt = options.runStartedAt;
+      const runId = options.runId;
+      await options.onNodeStart({
+        node: mockNodes[0],
+        nodeInputs: {},
+        prevOutputs: {},
+        iteration: 0,
+        runStartedAt,
+      });
+      await options.onNodeFinish({
+        node: mockNodes[0],
+        nodeInputs: {},
+        nextOutputs: { value: 'span-ok' },
+        iteration: 0,
+        runStartedAt,
+        runId,
+      });
+      return { outputs: { 'node-1': { value: 'span-ok' } } };
+    });
+
+    const run = await repo.createRun({
+      pathId: 'test-span-trace',
+      graph: { nodes: mockNodes, edges: mockEdges },
+      meta: { aiPathsValidation: { enabled: false } },
+    });
+    await repo.createRunNodes(run.id, mockNodes);
+
+    await executePathRun(run);
+
+    const updatedRun = await repo.findRunById(run.id);
+    const runtimeTrace = (updatedRun.meta as Record<string, unknown>)?.['runtimeTrace'] as
+      | {
+        profile?:
+          | {
+            nodeSpans?: Array<Record<string, unknown>>;
+          }
+          | null;
+      }
+      | undefined;
+    const nodeSpans = runtimeTrace?.profile?.nodeSpans ?? [];
+    expect(nodeSpans.length).toBe(1);
+    expect(nodeSpans[0]).toMatchObject({
+      spanId: 'node-1:1:0',
+      nodeId: 'node-1',
+      nodeType: 'constant',
+      status: 'completed',
+      attempt: 1,
+      iteration: 0,
+      cached: false,
+      error: null,
+    });
+    expect(typeof nodeSpans[0]?.['startedAt']).toBe('string');
+    expect(typeof nodeSpans[0]?.['finishedAt']).toBe('string');
+    expect(typeof nodeSpans[0]?.['durationMs'] === 'number' || nodeSpans[0]?.['durationMs'] === null).toBe(true);
+  });
+
+  it('should block execution when disabled node policy is violated', async () => {
+    const previous = process.env['AI_PATHS_DISABLED_NODE_TYPES'];
+    process.env['AI_PATHS_DISABLED_NODE_TYPES'] = 'constant';
+    try {
+      const run = await repo.createRun({
+        pathId: 'test-policy-executor',
+        graph: { nodes: mockNodes, edges: mockEdges },
+        meta: { aiPathsValidation: { enabled: false } },
+      });
+      await repo.createRunNodes(run.id, mockNodes);
+
+      await expect(executePathRun(run)).rejects.toThrow('Path blocked by node policy');
+      expect(evaluateGraphWithIteratorAutoContinue).not.toHaveBeenCalled();
+
+      const updatedRun = await repo.findRunById(run.id);
+      expect(updatedRun.status).toBe('failed');
+
+      const events = await repo.listRunEvents(run.id);
+      expect(events.some((event: any) => event.message === 'Run blocked by node policy.')).toBe(
+        true
+      );
+    } finally {
+      if (previous === undefined) {
+        delete process.env['AI_PATHS_DISABLED_NODE_TYPES'];
+      } else {
+        process.env['AI_PATHS_DISABLED_NODE_TYPES'] = previous;
+      }
+    }
+  });
+
   it('should block strict runs when dependency inspector reports errors', async () => {
     const riskyNodes: AiNode[] = [
       {

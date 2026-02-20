@@ -11,6 +11,10 @@ import {
   inspectPathDependencies,
   normalizeAiPathsValidationConfig,
 } from '@/features/ai/ai-paths/lib';
+import {
+  evaluateDisabledNodeTypesPolicy,
+  formatDisabledNodeTypesPolicyMessage,
+} from '@/features/ai/ai-paths/services/path-run-policy';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import {
@@ -57,6 +61,10 @@ const RUNTIME_PROFILE_SAMPLE_LIMIT = Math.max(
 const RUNTIME_PROFILE_HIGHLIGHT_LIMIT = Math.max(
   5,
   Number.parseInt(process.env['AI_PATHS_RUNTIME_PROFILE_HIGHLIGHT_LIMIT'] ?? '', 10) || 10
+);
+const RUNTIME_TRACE_SPAN_LIMIT = Math.max(
+  20,
+  Number.parseInt(process.env['AI_PATHS_RUNTIME_TRACE_SPAN_LIMIT'] ?? '', 10) || 200
 );
 const RUNTIME_PROFILE_SLOW_NODE_MS = Math.max(
   10,
@@ -185,6 +193,23 @@ type RuntimeProfileHighlight = {
   hashMs?: number;
 };
 
+type RuntimeProfileNodeSpanStatus = 'running' | 'completed' | 'failed' | 'cached';
+
+type RuntimeProfileNodeSpan = {
+  spanId: string;
+  nodeId: string;
+  nodeType: string;
+  nodeTitle: string | null;
+  iteration: number;
+  attempt: number;
+  status: RuntimeProfileNodeSpanStatus;
+  startedAt: string | null;
+  finishedAt: string | null;
+  durationMs: number | null;
+  error: string | null;
+  cached: boolean;
+};
+
 type RuntimeProfileSnapshot = {
   traceId: string;
   recordedAt: string;
@@ -209,6 +234,18 @@ type RuntimeProfileSnapshot = {
     }>;
   } | null;
   highlights: RuntimeProfileHighlight[];
+  nodeSpans: RuntimeProfileNodeSpan[];
+};
+
+const computeDurationMs = (
+  startedAt: string | null | undefined,
+  finishedAt: string | null | undefined
+): number | null => {
+  if (!startedAt || !finishedAt) return null;
+  const startMs = Date.parse(startedAt);
+  const finishMs = Date.parse(finishedAt);
+  if (!Number.isFinite(startMs) || !Number.isFinite(finishMs)) return null;
+  return Math.max(0, finishMs - startMs);
 };
 
 const shouldCaptureRuntimeProfileHighlight = (
@@ -258,6 +295,7 @@ const buildRuntimeProfileSnapshot = (input: {
   eventCount: number;
   sampledHighlights: RuntimeProfileHighlight[];
   summary: RuntimeProfileSummaryDto | null;
+  nodeSpans: RuntimeProfileNodeSpan[];
 }): RuntimeProfileSnapshot => {
   const hottestNodes = input.summary?.hottestNodes.slice(0, 5).map((node) => ({
     nodeId: node.nodeId,
@@ -286,6 +324,7 @@ const buildRuntimeProfileSnapshot = (input: {
       }
       : null,
     highlights: input.sampledHighlights.slice(0, RUNTIME_PROFILE_HIGHLIGHT_LIMIT),
+    nodeSpans: input.nodeSpans,
   };
 };
 
@@ -510,6 +549,83 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   const runtimeProfileHighlights: RuntimeProfileHighlight[] = [];
   let runtimeProfileSummary: RuntimeProfileSummaryDto | null = null;
   let runtimeProfilePersisted = false;
+  const runtimeNodeSpans = new Map<string, RuntimeProfileNodeSpan>();
+  const runtimeNodeSpanOrder: string[] = [];
+
+  const setRuntimeNodeSpan = (span: RuntimeProfileNodeSpan): void => {
+    if (!runtimeNodeSpans.has(span.spanId)) {
+      runtimeNodeSpanOrder.push(span.spanId);
+    }
+    runtimeNodeSpans.set(span.spanId, span);
+    while (runtimeNodeSpanOrder.length > RUNTIME_TRACE_SPAN_LIMIT) {
+      const dropped = runtimeNodeSpanOrder.shift();
+      if (dropped) {
+        runtimeNodeSpans.delete(dropped);
+      }
+    }
+  };
+
+  const beginRuntimeNodeSpan = (input: {
+    spanId: string;
+    nodeId: string;
+    nodeType: string;
+    nodeTitle: string | null;
+    iteration: number;
+    attempt: number;
+    startedAt: string;
+  }): void => {
+    setRuntimeNodeSpan({
+      spanId: input.spanId,
+      nodeId: input.nodeId,
+      nodeType: input.nodeType,
+      nodeTitle: input.nodeTitle,
+      iteration: input.iteration,
+      attempt: input.attempt,
+      status: 'running',
+      startedAt: input.startedAt,
+      finishedAt: null,
+      durationMs: null,
+      error: null,
+      cached: false,
+    });
+  };
+
+  const finalizeRuntimeNodeSpan = (input: {
+    spanId: string;
+    nodeId: string;
+    nodeType: string;
+    nodeTitle: string | null;
+    iteration: number;
+    attempt: number;
+    status: Exclude<RuntimeProfileNodeSpanStatus, 'running'>;
+    finishedAt: string;
+    error?: string | null;
+    cached?: boolean;
+  }): void => {
+    const existing = runtimeNodeSpans.get(input.spanId);
+    const startedAt = existing?.startedAt ?? null;
+    setRuntimeNodeSpan({
+      spanId: input.spanId,
+      nodeId: input.nodeId,
+      nodeType: input.nodeType,
+      nodeTitle: input.nodeTitle,
+      iteration: input.iteration,
+      attempt: input.attempt,
+      status: input.status,
+      startedAt,
+      finishedAt: input.finishedAt,
+      durationMs: computeDurationMs(startedAt, input.finishedAt),
+      error: input.error ?? null,
+      cached: input.cached ?? input.status === 'cached',
+    });
+  };
+
+  const getRuntimeNodeSpansSnapshot = (): RuntimeProfileNodeSpan[] =>
+    runtimeNodeSpanOrder
+      .map((spanId: string): RuntimeProfileNodeSpan | undefined => runtimeNodeSpans.get(spanId))
+      .filter((span: RuntimeProfileNodeSpan | undefined): span is RuntimeProfileNodeSpan =>
+        Boolean(span)
+      );
 
   const captureRuntimeProfileEvent = (event: AiPathRuntimeProfileEventDto): void => {
     runtimeProfileEventCount += 1;
@@ -534,13 +650,15 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     message: string
   ): Promise<RuntimeProfileSnapshot | null> => {
     if (runtimeProfilePersisted) return null;
+    const nodeSpans = getRuntimeNodeSpansSnapshot();
     const snapshot =
-      runtimeProfileEventCount > 0 || runtimeProfileSummary
+      runtimeProfileEventCount > 0 || runtimeProfileSummary || nodeSpans.length > 0
         ? buildRuntimeProfileSnapshot({
           traceId,
           eventCount: runtimeProfileEventCount,
           sampledHighlights: runtimeProfileHighlights,
           summary: runtimeProfileSummary,
+          nodeSpans,
         })
         : null;
     runtimeProfilePersisted = true;
@@ -733,6 +851,21 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         },
       });
     }
+    const policyReport = evaluateDisabledNodeTypesPolicy(nodes);
+    if (policyReport.violations.length > 0) {
+      await repo.createRunEvent({
+        runId: run.id,
+        level: 'error',
+        message: 'Run blocked by node policy.',
+        metadata: {
+          traceId,
+          runStartedAt,
+          disabledNodeTypes: policyReport.disabledNodeTypes,
+          blockedNodes: policyReport.violations.slice(0, 10),
+        },
+      });
+      throw new Error(formatDisabledNodeTypesPolicyMessage(policyReport.violations));
+    }
 
     const validationReport = evaluateAiPathsValidationPreflight({
       nodes,
@@ -871,6 +1004,16 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           const nextAttempt = (nodeAttemptMap.get(node.id) ?? 0) + 1;
           nodeAttemptMap.set(node.id, nextAttempt);
           const nodeSpanId = `${node.id}:${nextAttempt}:${iteration}`;
+          const nodeStartedAt = new Date().toISOString();
+          beginRuntimeNodeSpan({
+            spanId: nodeSpanId,
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            iteration,
+            attempt: nextAttempt,
+            startedAt: nodeStartedAt,
+          });
 
           // Track intermediate state so SSE stream can deliver per-node progress
           const safeInputs = toJsonSafe(nodeInputs) as RuntimePortValues;
@@ -886,7 +1029,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               attempt: nextAttempt,
               inputs: safeInputs,
               outputs: safePrevOutputs,
-              startedAt: new Date().toISOString(),
+              startedAt: nodeStartedAt,
               errorMessage: null,
             }),
             throttledSaveIntermediateState(),
@@ -961,6 +1104,18 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           accOutputs[node.id] = { ...(safeOutputs), status: 'completed' } as RuntimePortValues;
           const attempt = nodeAttemptMap.get(node.id) ?? 0;
           const nodeSpanId = `${node.id}:${attempt}:${iteration}`;
+          const nodeFinishedAt = new Date().toISOString();
+          finalizeRuntimeNodeSpan({
+            spanId: nodeSpanId,
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            iteration,
+            attempt,
+            status: cached ? 'cached' : 'completed',
+            finishedAt: nodeFinishedAt,
+            cached: Boolean(cached),
+          });
 
           if (cached) {
             if (iteration === 0) {
@@ -972,7 +1127,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
                   attempt,
                   inputs: safeInputs,
                   outputs: safeOutputs,
-                  finishedAt: new Date().toISOString(),
+                  finishedAt: nodeFinishedAt,
                   errorMessage: null,
                 }),
                 repo.createRunEvent({
@@ -1020,7 +1175,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               attempt,
               inputs: safeInputs,
               outputs: safeOutputs,
-              finishedAt: new Date().toISOString(),
+              finishedAt: nodeFinishedAt,
               errorMessage: null,
             }),
             repo.createRunEvent({
@@ -1086,6 +1241,19 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           accOutputs[node.id] = { ...(accOutputs[node.id] ?? {}), status: 'failed' } as RuntimePortValues;
           const attempt = nodeAttemptMap.get(node.id) ?? 0;
           const nodeSpanId = `${node.id}:${attempt}:${iteration}`;
+          const nodeFinishedAt = new Date().toISOString();
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          finalizeRuntimeNodeSpan({
+            spanId: nodeSpanId,
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            iteration,
+            attempt,
+            status: 'failed',
+            finishedAt: nodeFinishedAt,
+            error: errorMessage,
+          });
 
           await Promise.all([
             repo.upsertRunNode(run.id, node.id, {
@@ -1095,8 +1263,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               attempt,
               inputs: safeInputs,
               outputs: safePrevOutputs,
-              finishedAt: new Date().toISOString(),
-              errorMessage: error instanceof Error ? error.message : String(error),
+              finishedAt: nodeFinishedAt,
+              errorMessage,
             }),
             repo.createRunEvent({
               runId: run.id,
@@ -1110,7 +1278,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
                 nodeTitle: node.title ?? null,
                 status: 'failed',
                 attempt,
-                error: error instanceof Error ? error.message : String(error),
+                error: errorMessage,
                 iteration,
                 runStartedAt: cbRunStartedAt,
               },
@@ -1129,7 +1297,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             nodeType: node.type,
             nodeTitle: node.title ?? null,
             status: 'failed',
-            error: error instanceof Error ? error.message : String(error),
+            error: errorMessage,
             iteration,
           });
         } catch (dbError) {

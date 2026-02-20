@@ -60,3 +60,11 @@ Implementation reference: `src/features/case-resolver/workspace-persistence.ts`.
 - Timeout wrappers for external OCR providers.
 - Retryable error classification and model candidate failover.
 - Debug event stream (`durationMs`, `payloadBytes`, revision metadata).
+
+## Prompt Exploder Handoff Controls
+
+- Bridge payloads now include transfer metadata (`transferId`, `payloadVersion`, `checksum`, `status`, `expiresAt`).
+- Case Resolver apply diagnostics include transfer metadata to support deterministic triage.
+- Binding guardrails block cross-document/cross-session apply attempts.
+- Capture mapping mutations resolve strictly against proposal target document (no implicit editing-draft fallback).
+- Duplicate transfers are rejected using transfer-id idempotency cache.

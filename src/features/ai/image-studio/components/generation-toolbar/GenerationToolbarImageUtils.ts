@@ -81,6 +81,13 @@ export type CenterDetectionDetails = {
   corePixels: number;
   touchesBorder: boolean;
   maskSource: 'foreground' | 'core';
+  policyVersion?: string;
+  policyReason?: string;
+  fallbackApplied?: boolean;
+  candidateDetections?: {
+    alpha_bbox: { confidence: number; area: number } | null;
+    white_bg_first_colored_pixel: { confidence: number; area: number } | null;
+  };
 };
 
 export type CenterLayoutResult = {
@@ -110,6 +117,13 @@ export type ClientImageObjectAnalysisResult = {
   detectionUsed: Exclude<CenterDetectionMode, 'auto'>;
   confidence: number;
   detectionDetails: CenterDetectionDetails | null;
+  policyVersion: string;
+  policyReason: string;
+  fallbackApplied: boolean;
+  candidateDetections: {
+    alpha_bbox: { confidence: number; area: number } | null;
+    white_bg_first_colored_pixel: { confidence: number; area: number } | null;
+  };
   whitespace: {
     px: { left: number; top: number; right: number; bottom: number };
     percent: { left: number; top: number; right: number; bottom: number };
@@ -1192,6 +1206,10 @@ export const analyzeCanvasImageObject = async (
     detectionUsed: planned.analysis.detectionUsed,
     confidence: planned.analysis.confidence,
     detectionDetails: planned.analysis.detectionDetails,
+    policyVersion: planned.analysis.policyVersion,
+    policyReason: planned.analysis.policyReason,
+    fallbackApplied: planned.analysis.fallbackApplied,
+    candidateDetections: planned.analysis.candidateDetections,
     whitespace: planned.analysis.whitespace,
     objectAreaPercent: planned.analysis.objectAreaPercent,
     layout: planned.analysis.layout,

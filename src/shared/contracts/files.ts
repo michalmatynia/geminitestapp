@@ -69,6 +69,8 @@ export const imageFileCreateInputSchema = imageFileSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  name: z.string().optional(),
 });
 
 export type ImageFileCreateInputDto = z.infer<typeof imageFileCreateInputSchema>;
@@ -76,6 +78,7 @@ export type ImageFileCreateInput = ImageFileCreateInputDto;
 
 export const imageFileListFiltersSchema = z.object({
   search: z.string().optional(),
+  filename: z.string().optional(),
   tags: z.array(z.string()).optional(),
   mimetypes: z.array(z.string()).optional(),
 });

@@ -19,7 +19,7 @@ import {
   palette,
   stableStringify,
 } from '@/features/ai/ai-paths/lib';
-import { Button, useToast, Badge, Hint, SelectSimple, EmptyState } from '@/shared/ui';
+import { Button, useToast, Badge, Hint, SelectSimple, EmptyState, Card } from '@/shared/ui';
 import { PanelHeader } from '@/shared/ui/templates/panels';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
@@ -92,7 +92,7 @@ function NodeFilePanel({ meta, file, onOpen }: NodeFilePanelProps): React.JSX.El
   const TypeIcon = meta.fileType === 'scanfile' ? ScanLine : FileText;
 
   return (
-    <div className='flex w-72 flex-shrink-0 flex-col gap-3 overflow-y-auto rounded-lg border border-border/60 bg-card/40 p-4'>
+    <Card variant='glass' padding='none' className='flex w-72 flex-shrink-0 flex-col gap-3 overflow-y-auto p-4'>
       <PanelHeader
         title={meta.fileName}
         subtitle={typeLabel}
@@ -106,9 +106,9 @@ function NodeFilePanel({ meta, file, onOpen }: NodeFilePanelProps): React.JSX.El
         <div className='flex flex-col gap-1'>
           <p className='text-[10px] uppercase tracking-wide text-gray-500'>Content preview</p>
           {preview ? (
-            <div className='max-h-52 overflow-y-auto rounded border border-border/40 bg-background/60 p-2 text-[11px] leading-relaxed text-gray-300 whitespace-pre-wrap'>
+            <Card variant='subtle-compact' padding='sm' className='max-h-52 overflow-y-auto border-border/40 bg-background/60 text-[11px] leading-relaxed text-gray-300 whitespace-pre-wrap'>
               {preview}
-            </div>
+            </Card>
           ) : (
             <Hint size='xs' italic className='text-[11px]'>No text content yet.</Hint>
           )}
@@ -124,13 +124,15 @@ function NodeFilePanel({ meta, file, onOpen }: NodeFilePanelProps): React.JSX.El
         <Button
           type='button'
           onClick={onOpen}
-          className='h-8 w-full rounded-md border border-blue-500/40 text-xs text-blue-100 hover:bg-blue-500/15'
+          variant='info'
+          size='sm'
+          className='w-full'
         >
           <ExternalLink className='mr-1.5 size-3.5' />
           Open &ldquo;{meta.fileName}&rdquo;
         </Button>
       ) : null}
-    </div>
+    </Card>
   );
 }
 
@@ -510,7 +512,7 @@ function CaseResolverNodeFileWorkspaceInner({
   return (
     <div className='flex h-[calc(100vh-120px)] w-full gap-3'>
       {/* ── Main canvas panel ── */}
-      <div className='flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0'>
+      <Card variant='glass' padding='none' className='flex min-h-0 flex-1 flex-col overflow-hidden'>
         {/* Toolbar */}
         <div className='flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3'>
           <FileCode2 className='size-4 flex-shrink-0 text-violet-400' />
@@ -539,7 +541,8 @@ function CaseResolverNodeFileWorkspaceInner({
           <Button
             type='button'
             onClick={addExplanatoryNode}
-            className='h-8 rounded-md border border-emerald-500/40 text-xs text-emerald-100 hover:bg-emerald-500/15'
+            variant='success'
+            size='sm'
           >
             <Sparkles className='mr-1 size-3.5' />
             Explanatory Node
@@ -573,7 +576,8 @@ function CaseResolverNodeFileWorkspaceInner({
           <Button
             type='button'
             onClick={addGenericNode}
-            className='h-8 rounded-md border border-border text-xs text-gray-100 hover:bg-muted/60'
+            variant='outline'
+            size='sm'
           >
             Add Node
           </Button>
@@ -584,14 +588,17 @@ function CaseResolverNodeFileWorkspaceInner({
               onClick={(): void => {
                 setIsSidePanelVisible((previous) => !previous);
               }}
-              className='mr-2 h-8 rounded-md border border-border text-xs text-gray-200 hover:bg-muted/60'
+              variant='outline'
+              size='sm'
+              className='mr-2'
             >
               {isSidePanelVisible ? 'Hide Sidebar' : 'Show Sidebar'}
             </Button>
             <Button
               type='button'
               onClick={handleManualSave}
-              className='h-8 rounded-md border border-border text-xs text-gray-200 hover:bg-muted/60'
+              variant='outline'
+              size='sm'
             >
               <Save className='mr-1 size-3.5' />
               Save Canvas
@@ -617,7 +624,7 @@ function CaseResolverNodeFileWorkspaceInner({
             </div>
           ) : null}
         </div>
-      </div>
+      </Card>
 
       {/* ── File reference side panel ── */}
       {isSidePanelVisible && selectedNodeMeta ? (

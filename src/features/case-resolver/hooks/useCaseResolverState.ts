@@ -94,19 +94,28 @@ import {
 import {
   applyPendingPromptExploderPayloadToCaseResolver,
   discardPendingCaseResolverPromptExploderPayload,
-  readPendingCaseResolverPromptExploderPayload,
+  readCaseResolverPromptExploderPayloadState,
+  resolvePromptExploderPendingPayloadIdentity,
   type CaseResolverPromptExploderApplyDiagnostics,
+  type CaseResolverPromptExploderPayloadReadState,
   type CaseResolverPromptExploderPendingPayload,
 } from './useCaseResolverState.prompt-exploder-sync';
+import {
+  applyPromptExploderTransferLifecycleUpdate,
+  type PromptExploderTransferUiStatus,
+} from './prompt-exploder-transfer-lifecycle';
 import { useCaseResolverStateSelectionActions } from './useCaseResolverState.selection-actions';
 
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';
 const CASE_RESOLVER_REQUESTED_FILE_REFRESH_MAX_ATTEMPTS = 20;
 const CASE_RESOLVER_REQUESTED_FILE_REFRESH_INTERVAL_MS = 250;
 const CASE_RESOLVER_WORKSPACE_CONFLICT_AUTO_RETRY_LIMIT = 5;
+const CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_KEY =
+  'case_resolver:applied_prompt_exploder_transfer_ids';
+const CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_LIMIT = 80;
 
 type PromptExploderApplyUiDiagnostics = CaseResolverPromptExploderApplyDiagnostics & {
-  status: 'idle' | 'applied' | 'failed' | 'discarded';
+  status: PromptExploderTransferUiStatus;
   reason: string | null;
   updatedAt: string;
 };
@@ -262,6 +271,7 @@ export function useCaseResolverState() {
   const lastPromptExploderPayloadKeyRef = useRef<string | null>(null);
   const autoAppliedPromptExploderPayloadKeysRef = useRef<Set<string>>(new Set());
   const blockedPromptExploderGuardrailKeysRef = useRef<Set<string>>(new Set());
+  const appliedPromptExploderTransferIdsRef = useRef<Set<string>>(new Set());
   const requestedCaseStatusRef = useRef<CaseResolverRequestedCaseStatus>(
     requestedFileId ? 'loading' : 'ready'
   );
@@ -293,6 +303,24 @@ export function useCaseResolverState() {
     },
     []
   );
+  const transitionPromptExploderApplyDiagnostics = useCallback(
+    (input: {
+      nextStatus: PromptExploderTransferUiStatus;
+      reason?: string | null;
+      force?: boolean;
+      patch?: Partial<PromptExploderApplyUiDiagnostics>;
+    }): void => {
+      setPromptExploderApplyDiagnostics((current) =>
+        applyPromptExploderTransferLifecycleUpdate(current, {
+          nextStatus: input.nextStatus,
+          reason: input.reason,
+          force: input.force,
+          patch: input.patch,
+        })
+      );
+    },
+    []
+  );
   const logPromptExploderBindingGuardrailEvent = useCallback((input: {
     mode: 'manual' | 'auto';
     reason: 'document_mismatch' | 'session_mismatch';
@@ -318,6 +346,55 @@ export function useCaseResolverState() {
       }),
     });
   }, [shouldOpenEditorFromQuery]);
+
+  const persistAppliedPromptExploderTransferIds = useCallback((): void => {
+    if (typeof window === 'undefined') return;
+    try {
+      const payload = JSON.stringify(
+        [...appliedPromptExploderTransferIdsRef.current].slice(
+          -CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_LIMIT
+        )
+      );
+      window.localStorage.setItem(CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_KEY, payload);
+    } catch {
+      // Ignore storage persistence failures for idempotency cache.
+    }
+  }, []);
+
+  const markPromptExploderTransferApplied = useCallback((transferId: string | null): void => {
+    const normalizedTransferId = transferId?.trim() ?? '';
+    if (!normalizedTransferId) return;
+    appliedPromptExploderTransferIdsRef.current.add(normalizedTransferId);
+    if (
+      appliedPromptExploderTransferIdsRef.current.size >
+      CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_LIMIT
+    ) {
+      const values = [...appliedPromptExploderTransferIdsRef.current];
+      const trimmed = values.slice(-CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_LIMIT);
+      appliedPromptExploderTransferIdsRef.current = new Set(trimmed);
+    }
+    persistAppliedPromptExploderTransferIds();
+  }, [persistAppliedPromptExploderTransferIds]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = window.localStorage.getItem(CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as unknown;
+      if (!Array.isArray(parsed)) return;
+      const next = new Set<string>();
+      parsed.forEach((entry: unknown): void => {
+        if (typeof entry !== 'string') return;
+        const normalized = entry.trim();
+        if (!normalized) return;
+        next.add(normalized);
+      });
+      appliedPromptExploderTransferIdsRef.current = next;
+    } catch {
+      // Ignore idempotency cache restoration issues.
+    }
+  }, []);
 
   useEffect(() => {
     requestedCaseStatusRef.current = requestedCaseStatus;
@@ -614,31 +691,35 @@ export function useCaseResolverState() {
     setPromptExploderPayloadRefreshVersion((current) => current + 1);
   }, []);
 
-  const pendingPromptExploderPayload = useMemo<CaseResolverPromptExploderPendingPayload | null>(
-    () => readPendingCaseResolverPromptExploderPayload(),
+  const promptExploderPayloadReadState = useMemo<CaseResolverPromptExploderPayloadReadState>(
+    () => readCaseResolverPromptExploderPayloadState(),
     [promptExploderPayloadRefreshVersion]
   );
+  const pendingPromptExploderPayload = promptExploderPayloadReadState.pendingPayload;
+  const expiredPromptExploderPayload = promptExploderPayloadReadState.expiredPayload;
+  const observedPromptExploderPayload =
+    pendingPromptExploderPayload ?? expiredPromptExploderPayload;
+  const pendingPromptExploderPayloadKey = useMemo<string | null>(() => {
+    if (!pendingPromptExploderPayload) return null;
+    return resolvePromptExploderPendingPayloadIdentity(pendingPromptExploderPayload);
+  }, [pendingPromptExploderPayload]);
   const workspaceFileIdsSignature = useMemo(
     () => workspace.files.map((file: CaseResolverFile): string => file.id.trim()).join('|'),
     [workspace.files]
   );
-  const pendingPromptExploderPayloadKey = useMemo<string | null>(() => {
-    if (!pendingPromptExploderPayload) return null;
-    return [
-      pendingPromptExploderPayload.createdAt,
-      pendingPromptExploderPayload.caseResolverContext?.fileId ?? '',
-      pendingPromptExploderPayload.prompt.length,
-    ].join('|');
-  }, [pendingPromptExploderPayload]);
+  const observedPromptExploderPayloadKey = useMemo<string | null>(() => {
+    if (!observedPromptExploderPayload) return null;
+    return resolvePromptExploderPendingPayloadIdentity(observedPromptExploderPayload);
+  }, [observedPromptExploderPayload]);
 
   useEffect(() => {
-    if (!pendingPromptExploderPayload) {
+    if (!observedPromptExploderPayload) {
       lastPromptExploderPayloadKeyRef.current = null;
       return;
     }
     if (
-      lastPromptExploderPayloadKeyRef.current === pendingPromptExploderPayloadKey &&
-      pendingPromptExploderPayloadKey !== null
+      lastPromptExploderPayloadKeyRef.current === observedPromptExploderPayloadKey &&
+      observedPromptExploderPayloadKey !== null
     ) {
       setPromptExploderApplyDiagnostics((current) => (
         current
@@ -650,17 +731,27 @@ export function useCaseResolverState() {
       ));
       return;
     }
-    lastPromptExploderPayloadKeyRef.current = pendingPromptExploderPayloadKey;
+    lastPromptExploderPayloadKeyRef.current = observedPromptExploderPayloadKey;
     const payloadContextFileId =
-      pendingPromptExploderPayload.caseResolverContext?.fileId?.trim() || null;
+      observedPromptExploderPayload.caseResolverContext?.fileId?.trim() || null;
     const precheckResolvedTargetFileId = resolveCaseResolverFileById(
       workspace.files,
       payloadContextFileId
     )?.id ?? null;
     const precheckResolutionStrategy = precheckResolvedTargetFileId ? 'requested_id' : 'unresolved';
+    const isExpiredPayload = Boolean(expiredPromptExploderPayload);
     const diagnostics: PromptExploderApplyUiDiagnostics = {
       applyAttemptId: 'pending',
-      payloadKey: pendingPromptExploderPayloadKey,
+      transferId: observedPromptExploderPayload.transferId?.trim() || null,
+      payloadVersion:
+        typeof observedPromptExploderPayload.payloadVersion === 'number' &&
+        Number.isFinite(observedPromptExploderPayload.payloadVersion)
+          ? Math.trunc(observedPromptExploderPayload.payloadVersion)
+          : null,
+      payloadChecksum: observedPromptExploderPayload.checksum?.trim() || null,
+      payloadStatus: observedPromptExploderPayload.status?.trim() || null,
+      payloadCreatedAt: observedPromptExploderPayload.createdAt ?? null,
+      payloadKey: observedPromptExploderPayloadKey,
       requestedTargetFileId: payloadContextFileId,
       payloadContextFileId,
       fallbackTargetFileId: null,
@@ -672,28 +763,29 @@ export function useCaseResolverState() {
       mutationWorkspaceFileCount: workspace.files.length,
       resolvedTargetFileId: precheckResolvedTargetFileId,
       resolutionStrategy: precheckResolutionStrategy,
-      hasPartiesPayload: Boolean(pendingPromptExploderPayload.caseResolverParties),
-      hasMetadataPayload: Boolean(pendingPromptExploderPayload.caseResolverMetadata?.placeDate),
+      hasPartiesPayload: Boolean(observedPromptExploderPayload.caseResolverParties),
+      hasMetadataPayload: Boolean(observedPromptExploderPayload.caseResolverMetadata?.placeDate),
       captureSettingsEnabled: caseResolverCaptureSettings.enabled,
       proposalBuilt: false,
       proposalReason: caseResolverCaptureSettings.enabled
         ? (
-          (pendingPromptExploderPayload.caseResolverParties ||
-          pendingPromptExploderPayload.caseResolverMetadata?.placeDate)
+          (observedPromptExploderPayload.caseResolverParties ||
+          observedPromptExploderPayload.caseResolverMetadata?.placeDate)
             ? 'proposal_builder_returned_null'
             : 'no_capture_payload'
         )
         : 'capture_disabled',
       mutationMissingAfterPrecheck: false,
-      status: 'idle',
-      reason: null,
+      status: isExpiredPayload ? 'expired' : 'pending',
+      reason: isExpiredPayload ? 'payload_expired' : null,
       updatedAt: new Date().toISOString(),
     };
     setPromptExploderApplyDiagnostics(diagnostics);
   }, [
     caseResolverCaptureSettings.enabled,
-    pendingPromptExploderPayload,
-    pendingPromptExploderPayloadKey,
+    expiredPromptExploderPayload,
+    observedPromptExploderPayload,
+    observedPromptExploderPayloadKey,
     workspaceFileIdsSignature,
     workspace.files,
   ]);
@@ -730,6 +822,15 @@ export function useCaseResolverState() {
     setIsApplyingPromptExploderPartyProposal(false);
     const diagnostics: PromptExploderApplyUiDiagnostics = {
       applyAttemptId: 'discarded',
+      transferId: discardedPayload.transferId?.trim() || null,
+      payloadVersion:
+        typeof discardedPayload.payloadVersion === 'number' &&
+        Number.isFinite(discardedPayload.payloadVersion)
+          ? Math.trunc(discardedPayload.payloadVersion)
+          : null,
+      payloadChecksum: discardedPayload.checksum?.trim() || null,
+      payloadStatus: discardedPayload.status?.trim() || null,
+      payloadCreatedAt: discardedPayload.createdAt ?? null,
       payloadKey: [
         discardedPayload.createdAt,
         discardedPayload.caseResolverContext?.fileId ?? '',
@@ -777,9 +878,71 @@ export function useCaseResolverState() {
     async (): Promise<boolean> => {
       const payload = pendingPromptExploderPayload;
       if (!payload) {
+        if (expiredPromptExploderPayload) {
+          transitionPromptExploderApplyDiagnostics({
+            nextStatus: 'expired',
+            reason: 'payload_expired',
+          });
+          toast(
+            'Pending Prompt Exploder output expired before apply. Discard it and re-send from Prompt Exploder.',
+            { variant: 'warning' }
+          );
+          refreshPendingPromptExploderPayload();
+          return false;
+        }
         toast('No pending Prompt Exploder output to apply.', { variant: 'info' });
         refreshPendingPromptExploderPayload();
         return false;
+      }
+      const payloadTransferId = payload.transferId?.trim() ?? '';
+      if (
+        payloadTransferId.length > 0 &&
+        appliedPromptExploderTransferIdsRef.current.has(payloadTransferId)
+      ) {
+        discardPendingCaseResolverPromptExploderPayload();
+        setPromptExploderApplyDiagnostics({
+          applyAttemptId: 'already_applied',
+          transferId: payloadTransferId,
+          payloadVersion:
+            typeof payload.payloadVersion === 'number' && Number.isFinite(payload.payloadVersion)
+              ? Math.trunc(payload.payloadVersion)
+              : null,
+          payloadChecksum: payload.checksum?.trim() || null,
+          payloadStatus: payload.status?.trim() || null,
+          payloadCreatedAt: payload.createdAt ?? null,
+          payloadKey: pendingPromptExploderPayloadKey,
+          requestedTargetFileId: payload.caseResolverContext?.fileId?.trim() || null,
+          payloadContextFileId: payload.caseResolverContext?.fileId?.trim() || null,
+          fallbackTargetFileId: null,
+          precheckResolvedTargetFileId: null,
+          precheckResolutionStrategy: 'unresolved',
+          precheckWorkspaceFileCount: workspaceRef.current.files.length,
+          mutationResolvedTargetFileId: null,
+          mutationResolutionStrategy: 'unresolved',
+          mutationWorkspaceFileCount: workspaceRef.current.files.length,
+          resolvedTargetFileId: null,
+          resolutionStrategy: 'unresolved',
+          hasPartiesPayload: Boolean(payload.caseResolverParties),
+          hasMetadataPayload: Boolean(payload.caseResolverMetadata?.placeDate),
+          captureSettingsEnabled: caseResolverCaptureSettings.enabled,
+          proposalBuilt: false,
+          proposalReason: caseResolverCaptureSettings.enabled
+            ? (
+              payload.caseResolverParties || payload.caseResolverMetadata?.placeDate
+                ? 'proposal_builder_returned_null'
+                : 'no_capture_payload'
+            )
+            : 'capture_disabled',
+          mutationMissingAfterPrecheck: false,
+          status: 'applied',
+          reason: 'duplicate_transfer_id',
+          updatedAt: new Date().toISOString(),
+        });
+        refreshPendingPromptExploderPayload();
+        toast('This Prompt Exploder transfer was already applied. Duplicate payload was discarded.', {
+          variant: 'info',
+        });
+        return true;
       }
       const requestedContextFileId = requestedFileId?.trim() ?? '';
       const payloadContextFileId = payload.caseResolverContext?.fileId?.trim() ?? '';
@@ -800,6 +963,10 @@ export function useCaseResolverState() {
           'Pending Prompt Exploder output belongs to a different document. Reopen Prompt Exploder from this document and apply again.',
           { variant: 'warning' }
         );
+        transitionPromptExploderApplyDiagnostics({
+          nextStatus: 'blocked',
+          reason: 'document_mismatch',
+        });
         return false;
       }
       const payloadSessionId = payload.caseResolverContext?.sessionId?.trim() ?? '';
@@ -818,6 +985,10 @@ export function useCaseResolverState() {
           'Pending Prompt Exploder output belongs to a different editing session. Reopen Prompt Exploder from this document and apply again.',
           { variant: 'warning' }
         );
+        transitionPromptExploderApplyDiagnostics({
+          nextStatus: 'blocked',
+          reason: 'session_mismatch',
+        });
         return false;
       }
 
@@ -841,14 +1012,22 @@ export function useCaseResolverState() {
       refreshPendingPromptExploderPayload();
       setPromptExploderApplyDiagnostics({
         ...result.diagnostics,
-        status: result.applied ? 'applied' : 'failed',
-        reason: result.applied ? null : result.reason,
+        status: result.applied
+          ? (result.proposalState ? 'capture_review' : 'applied')
+          : 'failed',
+        reason: result.applied
+          ? (result.proposalState ? 'awaiting_capture_mapping' : null)
+          : result.reason,
         updatedAt: new Date().toISOString(),
       });
 
       if (!result.applied) {
         if (result.reason === 'empty_prompt') {
           toast('Prompt Exploder output is empty. Reassemble text before applying.', {
+            variant: 'warning',
+          });
+        } else if (result.reason === 'target_file_locked') {
+          toast('Target document is locked. Unlock it in Case Resolver before applying output.', {
             variant: 'warning',
           });
         } else if (result.reason === 'missing_context_file_id') {
@@ -874,6 +1053,7 @@ export function useCaseResolverState() {
         }
         return false;
       }
+      markPromptExploderTransferApplied(result.diagnostics.transferId);
 
       if (result.proposalState) {
         setPromptExploderPartyProposal(result.proposalState);
@@ -917,14 +1097,18 @@ export function useCaseResolverState() {
     },
     [
       caseResolverCaptureSettings,
+      expiredPromptExploderPayload,
       filemakerDatabase,
       logPromptExploderBindingGuardrailEvent,
+      markPromptExploderTransferApplied,
       pendingPromptExploderPayload,
+      pendingPromptExploderPayloadKey,
       requestedFileId,
       requestedPromptExploderSessionId,
       refreshPendingPromptExploderPayload,
       shouldOpenEditorFromQuery,
       toast,
+      transitionPromptExploderApplyDiagnostics,
       updateWorkspace,
       flushWorkspacePersist,
       workspaceRef,
@@ -949,6 +1133,10 @@ export function useCaseResolverState() {
       requestedContextFileId.length > 0 &&
       contextFileId !== requestedContextFileId
     ) {
+      transitionPromptExploderApplyDiagnostics({
+        nextStatus: 'blocked',
+        reason: 'document_mismatch',
+      });
       const blockKey = `${pendingPromptExploderPayloadKey}:document_mismatch`;
       if (!blockedPromptExploderGuardrailKeysRef.current.has(blockKey)) {
         blockedPromptExploderGuardrailKeysRef.current.add(blockKey);
@@ -970,6 +1158,10 @@ export function useCaseResolverState() {
       requestedPromptExploderSessionId.length > 0 &&
       payloadSessionId !== requestedPromptExploderSessionId;
     if (hasPromptSessionMismatch) {
+      transitionPromptExploderApplyDiagnostics({
+        nextStatus: 'blocked',
+        reason: 'session_mismatch',
+      });
       const blockKey = `${pendingPromptExploderPayloadKey}:session_mismatch`;
       if (!blockedPromptExploderGuardrailKeysRef.current.has(blockKey)) {
         blockedPromptExploderGuardrailKeysRef.current.add(blockKey);
@@ -1010,6 +1202,7 @@ export function useCaseResolverState() {
     requestedFileId,
     requestedPromptExploderSessionId,
     shouldOpenEditorFromQuery,
+    transitionPromptExploderApplyDiagnostics,
     workspaceFileIdsSignature,
   ]);
 
@@ -1599,6 +1792,7 @@ export function useCaseResolverState() {
     handleRenameFolder,
   } = useCaseResolverStateFolderActions({
     confirm,
+    toast,
     updateWorkspace,
     workspace,
     selectedCaseScopeIds,
@@ -1629,6 +1823,7 @@ export function useCaseResolverState() {
     const baseDraft = buildFileEditDraft(target);
     const recoveredDraft = readStoredEditorDraft(fileId);
     const canRecoverStoredDraft =
+      !target.isLocked &&
       recoveredDraft !== null &&
       recoveredDraft.baseDocumentContentVersion === baseDraft.baseDocumentContentVersion;
     const mergedDraft: CaseResolverFileEditDraft = canRecoverStoredDraft
@@ -1711,6 +1906,15 @@ export function useCaseResolverState() {
     );
     if (!currentFile) {
       toast('Document no longer exists. Please refresh list.', { variant: 'warning' });
+      return;
+    }
+    if (currentFile.isLocked) {
+      setEditingDocumentDraft((current) => (
+        current?.id === currentFile.id ? buildFileEditDraft(currentFile) : current
+      ));
+      toast('Document is locked. Unlock it in Case Resolver before saving.', {
+        variant: 'warning',
+      });
       return;
     }
     const hasVersionDrift =

@@ -1,5 +1,3 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import {
@@ -14,10 +12,9 @@ import {
   resolveAiPathsStaleRunningMaxAgeMs,
 } from '@/features/ai/ai-paths/services/path-run-recovery-service';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
-import type { AiPathRunListOptions } from '@/shared/contracts/ai-paths';
-import { removePathRunQueueEntries } from '@/features/jobs/workers/aiPathRunQueue';
+import { deletePathRunsWithRepository } from '@/features/ai/ai-paths/services/path-run-service';
+import type { AiPathRunListOptions, AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import type { AiPathRunStatus } from '@/shared/contracts/ai-paths';
 
 let lastStaleRunningCleanupAt = 0;
 let staleRunningCleanupPromise: Promise<void> | null = null;
@@ -197,14 +194,7 @@ export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext):
   if (scope === 'terminal') {
     listOptions.statuses = TERMINAL_STATUSES;
   }
-  const { runs } = await repo.listRuns(listOptions);
-  const runIds = runs.map((run) => run.id).filter((runId): runId is string => Boolean(runId));
-  if (runIds.length > 0) {
-    await removePathRunQueueEntries(runIds);
-  }
-  const result = await repo.deleteRuns({
-    ...listOptions,
-  });
+  const result = await deletePathRunsWithRepository(repo, listOptions);
 
   return NextResponse.json({ deleted: result.count, scope });
 }

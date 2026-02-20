@@ -665,31 +665,34 @@ export type BlockDefinition = BlockDefinitionDto;
  * CMS Repository Interfaces
  */
 
-export type PageUpdateData = Partial<Omit<CmsPageDto, 'id' | 'createdAt' | 'updatedAt'>>;
+export type PageUpdateData = Partial<Omit<CmsPageDto, 'id' | 'createdAt' | 'updatedAt'>> & {
+  components?: Array<Partial<PageComponent> & Pick<PageComponent, 'type' | 'order' | 'content'>>;
+};
 
 export type CmsRepository = {
   // Pages
   getPages(): Promise<Page[]>;
   getPageById(id: string): Promise<Page | null>;
   getPageBySlug(slug: string): Promise<Page | null>;
-  createPage(data: any): Promise<Page>;
-  updatePage(id: string, data: any): Promise<Page | null>;
+  createPage(data: { name: string; themeId?: string | null | undefined }): Promise<Page>;
+  updatePage(id: string, data: PageUpdateData): Promise<Page | null>;
   deletePage(id: string): Promise<Page | null>;
+  addSlugToPage(pageId: string, slugId: string): Promise<void>;
   replacePageSlugs(pageId: string, slugIds: string[]): Promise<void>;
-  replacePageComponents(pageId: string, components: any): Promise<void>;
+  replacePageComponents(pageId: string, components: Array<Partial<PageComponent> & Pick<PageComponent, 'type' | 'order' | 'content'>>): Promise<void>;
 
   // Slugs
   getSlugs(): Promise<Slug[]>;
   getSlugById(id: string): Promise<Slug | null>;
-  createSlug(data: any): Promise<Slug>;
-  updateSlug(id: string, data: any): Promise<Slug | null>;
+  createSlug(data: { slug: string; pageId?: string | null; isDefault?: boolean }): Promise<Slug>;
+  updateSlug(id: string, data: Partial<{ slug: string; pageId: string | null; isDefault: boolean }>): Promise<Slug | null>;
   deleteSlug(id: string): Promise<Slug | null>;
 
   // Themes
   getThemes(): Promise<CmsTheme[]>;
   getThemeById(id: string): Promise<CmsTheme | null>;
-  createTheme(data: any): Promise<CmsTheme>;
-  updateTheme(id: string, data: any): Promise<CmsTheme | null>;
+  createTheme(data: CreateCmsThemeDto): Promise<CmsTheme>;
+  updateTheme(id: string, data: UpdateCmsThemeDto): Promise<CmsTheme | null>;
   deleteTheme(id: string): Promise<CmsTheme | null>;
   getDefaultTheme(): Promise<CmsTheme | null>;
   setDefaultTheme(id: string): Promise<void>;
@@ -697,7 +700,7 @@ export type CmsRepository = {
   // Domains
   getDomains(): Promise<CmsDomainDto[]>;
   getDomainById(id: string): Promise<CmsDomainDto | null>;
-  createDomain(data: any): Promise<CmsDomainDto>;
-  updateDomain(id: string, data: any): Promise<CmsDomainDto>;
+  createDomain(data: CreateCmsDomainDto): Promise<CmsDomainDto>;
+  updateDomain(id: string, data: UpdateCmsDomainDto): Promise<CmsDomainDto>;
   deleteDomain(id: string): Promise<void>;
 };

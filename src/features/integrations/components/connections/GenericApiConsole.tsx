@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Button, Input, Textarea, Label, Alert, SelectSimple, StatusBadge, Badge } from '@/shared/ui';
+import { Button, Input, Textarea, Label, Alert, SelectSimple, StatusBadge, Badge, Card } from '@/shared/ui';
 
 export interface ApiPreset {
   label: string;
@@ -113,7 +113,7 @@ export function GenericApiConsole({
   };
 
   return (
-    <div className='rounded-lg border border-border bg-card/60 p-4'>
+    <Card variant='subtle' padding='md' className='bg-card/60'>
       {/* Header */}
       <div className='mb-3'>
         <h3 className='text-sm font-semibold text-white'>{title}</h3>
@@ -211,7 +211,7 @@ export function GenericApiConsole({
 
       {/* Response Display */}
       {response && (
-        <div className='mt-3 rounded-md border border-border bg-card p-3'>
+        <Card variant='subtle-compact' padding='sm' className='mt-3 bg-card'>
           {(response.status || response.statusText) && (
             <div className='mb-2 text-xs text-gray-400'>
               Status:{' '}
@@ -231,8 +231,8 @@ export function GenericApiConsole({
           <pre className='mt-2 max-h-80 overflow-auto whitespace-pre-wrap text-xs text-gray-200'>
             {JSON.stringify(response.data, null, 2)}
           </pre>
-        </div>
+        </Card>
       )}
-    </div>
+    </Card>
   );
 }

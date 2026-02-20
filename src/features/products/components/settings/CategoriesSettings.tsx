@@ -34,6 +34,7 @@ import {
   TreeCaret,
   SelectSimple,
   useToast,
+  Card,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import {
@@ -362,9 +363,10 @@ export function CategoriesSettings(): React.JSX.Element {
   );
 
   return (
-    <div className='space-y-5'>
+    <>
+      <div className='space-y-5'>
       {/* Catalog Selector */}
-      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+      <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
         <p className='text-sm font-semibold text-white mb-3'>Select Catalog</p>
         <p className='text-xs text-gray-400 mb-3'>
           Each catalog has its own category tree. Select a catalog to manage its categories.
@@ -380,7 +382,7 @@ export function CategoriesSettings(): React.JSX.Element {
             placeholder='Select a catalog...'
           />
         </div>
-      </div>
+      </Card>
 
       {/* Category Tree */}
       {selectedCatalogId && (
@@ -388,14 +390,15 @@ export function CategoriesSettings(): React.JSX.Element {
           <div className='flex justify-start'>
             <Button
               onClick={(): void => handleOpenCreateModal(null)}
-              className='bg-white text-gray-900 hover:bg-gray-200'
+              variant='solid'
+              className='flex items-center gap-2'
             >
-              <Plus className='size-4 mr-2' />
+              <Plus className='size-4' />
               Add Category
             </Button>
           </div>
 
-          <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+          <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
             <p className='text-sm font-semibold text-white mb-4'>
               Category Tree for &quot;{selectedCatalog?.name}&quot;
             </p>
@@ -565,13 +568,14 @@ export function CategoriesSettings(): React.JSX.Element {
                     }}
                   />
                 )}
-              </FolderTreePanel>
-            )}
-          </div>
-        </>
-      )}
-
-      {!selectedCatalogId && catalogs.length === 0 && (
+                                              </FolderTreePanel>
+                                            )}
+                                          </Card>
+                                        </>
+                                      )}
+                                    </div>
+                              
+                    {!selectedCatalogId && catalogs.length === 0 && (
         <EmptyState
           title='No catalogs found'
           description='Please create a catalog first in the Catalogs section before adding categories.'
@@ -610,6 +614,6 @@ export function CategoriesSettings(): React.JSX.Element {
       >
         <CategoryForm />
       </CategoryFormProvider>
-    </div>
+    </>
   );
 }

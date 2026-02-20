@@ -1,15 +1,27 @@
 import 'server-only';
 
 import { compileGraph, normalizeNodes, sanitizeEdges } from '@/features/ai/ai-paths/lib';
+import {
+  evaluateDisabledNodeTypesPolicy,
+  formatDisabledNodeTypesPolicyMessage,
+} from '@/features/ai/ai-paths/services/path-run-policy';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import {
   recordRuntimeRunFinished,
   recordRuntimeRunQueued,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
-import { enqueuePathRunJob } from '@/features/jobs/workers/aiPathRunQueue';
+import {
+  enqueuePathRunJob,
+  removePathRunQueueEntries,
+} from '@/features/jobs/workers/aiPathRunQueue';
 import { ErrorSystem } from '@/features/observability/services/error-system';
-import type { AiNode, Edge, AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import type {
+  AiNode,
+  Edge,
+  AiPathRunListOptions,
+  AiPathRunRecord,
+} from '@/shared/contracts/ai-paths';
 import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 
 type EnqueueRunInput = {
@@ -32,6 +44,7 @@ type EnqueueRunInput = {
 
 const ACTIVE_RUN_STATUSES = new Set(['queued', 'running']);
 const ACTIVE_RUN_STATUS_FILTER = ['queued', 'running', 'paused'] as const;
+const CANCELLABLE_RUN_STATUS_FILTER = ['queued', 'running', 'paused'] as const;
 const enqueueIdempotencyLocks = new Map<string, Promise<void>>();
 
 const resolveRunStartedAt = (run: AiPathRunRecord): string | null => {
@@ -57,6 +70,40 @@ const dispatchRun = async (
         queueError instanceof Error ? queueError.message : String(queueError)
       }`
     );
+  }
+};
+
+const cleanupRunQueueEntries = async (runId: string): Promise<void> => {
+  try {
+    await removePathRunQueueEntries([runId]);
+  } catch (error) {
+    void ErrorSystem.logWarning(`Non-critical queue cleanup failure for run ${runId}`, {
+      service: 'ai-paths-service',
+      action: 'cleanupRunQueueEntries',
+      runId,
+      error,
+    });
+  }
+};
+
+const cleanupRunQueueEntriesBatch = async (runIds: string[]): Promise<void> => {
+  const uniqueRunIds = Array.from(
+    new Set(
+      runIds
+        .map((runId: string): string => runId.trim())
+        .filter((runId: string): boolean => runId.length > 0)
+    )
+  );
+  if (uniqueRunIds.length === 0) return;
+  try {
+    await removePathRunQueueEntries(uniqueRunIds);
+  } catch (error) {
+    void ErrorSystem.logWarning('Non-critical queue cleanup failure for bulk run deletion', {
+      service: 'ai-paths-service',
+      action: 'cleanupRunQueueEntriesBatch',
+      runCount: uniqueRunIds.length,
+      error,
+    });
   }
 };
 
@@ -147,11 +194,22 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
           `Graph compile failed with ${compileReport.errors} blocking issue(s).`
       );
     }
+    const policyReport = evaluateDisabledNodeTypesPolicy(nodes);
+    if (policyReport.violations.length > 0) {
+      throw new Error(formatDisabledNodeTypesPolicyMessage(policyReport.violations));
+    }
     const meta = {
       ...(input.meta ?? {}),
       ...(requestId ? { requestId } : {}),
       backoffMs: input.backoffMs ?? undefined,
       backoffMaxMs: input.backoffMaxMs ?? undefined,
+      nodePolicy:
+        policyReport.disabledNodeTypes.length > 0
+          ? {
+            disabledNodeTypes: policyReport.disabledNodeTypes,
+            blockedCount: policyReport.violations.length,
+          }
+          : undefined,
       graphCompile: {
         errors: compileReport.errors,
         warnings: compileReport.warnings,
@@ -395,6 +453,48 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
   }
 };
 
+export const deletePathRun = async (runId: string): Promise<boolean> => {
+  return deletePathRunWithRepository(await getPathRunRepository(), runId);
+};
+
+export const deletePathRunWithRepository = async (
+  repo: AiPathRunRepository,
+  runId: string
+): Promise<boolean> => {
+  try {
+    await cleanupRunQueueEntries(runId);
+    return await repo.deleteRun(runId);
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'ai-paths-service',
+      action: 'deletePathRun',
+      runId,
+    });
+    throw error;
+  }
+};
+
+export const deletePathRunsWithRepository = async (
+  repo: AiPathRunRepository,
+  options: AiPathRunListOptions = {}
+): Promise<{ count: number }> => {
+  try {
+    const { runs } = await repo.listRuns(options);
+    const runIds = runs
+      .map((run: AiPathRunRecord): string | undefined => run.id)
+      .filter((runId: string | undefined): runId is string => Boolean(runId));
+    await cleanupRunQueueEntriesBatch(runIds);
+    return await repo.deleteRuns(options);
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'ai-paths-service',
+      action: 'deletePathRuns',
+      options,
+    });
+    throw error;
+  }
+};
+
 export const cancelPathRun = async (runId: string): Promise<AiPathRunRecord> => {
   return cancelPathRunWithRepository(await getPathRunRepository(), runId);
 };
@@ -407,9 +507,11 @@ export const cancelPathRunWithRepository = async (
     const run = await repo.findRunById(runId);
     if (!run) throw new Error(`Run ${runId} not found`);
     if (run.status === 'canceled') {
+      await cleanupRunQueueEntries(runId);
       return run;
     }
     if (run.status === 'completed' || run.status === 'failed' || run.status === 'dead_lettered') {
+      await cleanupRunQueueEntries(runId);
       return run;
     }
     const wasInFlight = run.status === 'running' || run.status === 'paused';
@@ -429,7 +531,7 @@ export const cancelPathRunWithRepository = async (
         phase: wasInFlight ? 'requested' : 'completed',
       },
     };
-    const updated = await repo.updateRunIfStatus(runId, [run.status], {
+    const updated = await repo.updateRunIfStatus(runId, [...CANCELLABLE_RUN_STATUS_FILTER], {
       status: 'canceled',
       finishedAt: finishedAt.toISOString(),
       meta: nextMeta,
@@ -437,6 +539,7 @@ export const cancelPathRunWithRepository = async (
     if (!updated) {
       const latest = await repo.findRunById(runId);
       if (!latest) throw new Error(`Run ${runId} not found`);
+      await cleanupRunQueueEntries(runId);
       return latest;
     }
 
@@ -472,6 +575,7 @@ export const cancelPathRunWithRepository = async (
     }
 
     publishRunUpdate(runId, 'done', { status: 'canceled', traceId: runId });
+    await cleanupRunQueueEntries(runId);
 
     return updated;
   } catch (error) {

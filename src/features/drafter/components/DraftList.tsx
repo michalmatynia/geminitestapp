@@ -9,7 +9,7 @@ import { useDraftQueries, useDeleteDraft } from '@/features/drafter/hooks/useDra
 import { ICON_LIBRARY_MAP } from '@/features/icons';
 import { logClientError } from '@/features/observability';
 import type { ProductDraftDto } from '@/shared/contracts/products';
-import { Button, ListPanel, useToast, SimpleSettingsList, StatusBadge } from '@/shared/ui';
+import { Button, ListPanel, useToast, SimpleSettingsList, StatusBadge, Badge } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 
 import { useDrafterContext } from '../context/DrafterContext';
@@ -116,24 +116,24 @@ export function DraftList(): React.JSX.Element {
         renderCustomContent={(item) => (
           <div className='flex flex-wrap gap-2 text-xs text-gray-500'>
             {item.original.sku && (
-              <span className='rounded bg-gray-800 px-2 py-1'>
+              <Badge variant='neutral' className='font-normal'>
                 SKU: {item.original.sku}
-              </span>
+              </Badge>
             )}
             {item.original.catalogIds && item.original.catalogIds.length > 0 && (
-              <span className='rounded bg-gray-800 px-2 py-1'>
+              <Badge variant='neutral' className='font-normal'>
                 {item.original.catalogIds.length} Catalog(s)
-              </span>
+              </Badge>
             )}
             {item.original.categoryId && (
-              <span className='rounded bg-gray-800 px-2 py-1'>
+              <Badge variant='neutral' className='font-normal'>
                 Category set
-              </span>
+              </Badge>
             )}
             {item.original.tagIds && item.original.tagIds.length > 0 && (
-              <span className='rounded bg-gray-800 px-2 py-1'>
+              <Badge variant='neutral' className='font-normal'>
                 {item.original.tagIds.length} Tag(s)
-              </span>
+              </Badge>
             )}
           </div>
         )}

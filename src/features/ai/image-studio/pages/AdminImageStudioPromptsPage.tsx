@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Input, Label, Textarea, useToast, EmptyState } from '@/shared/ui';
+import { Button, Input, Label, Textarea, useToast, EmptyState, Card } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
@@ -130,7 +130,7 @@ export function AdminImageStudioPromptsPage(): React.JSX.Element {
 
   return (
     <div className='container mx-auto max-w-6xl py-2'>
-      <div className='space-y-4 rounded-lg border border-border/60 bg-card/40 p-4'>
+      <Card variant='subtle' padding='md' className='space-y-4 bg-card/40'>
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <div>
             <div className='text-lg text-gray-100'>Prompt Library</div>
@@ -161,7 +161,7 @@ export function AdminImageStudioPromptsPage(): React.JSX.Element {
         </div>
 
         <div className='grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]'>
-          <div className='space-y-2 rounded border border-border/60 bg-card/30 p-2'>
+          <Card variant='subtle-compact' padding='sm' className='space-y-2 bg-card/30'>
             <div className='px-1 text-[11px] text-gray-500'>
               {promptEntries.length} prompt{promptEntries.length === 1 ? '' : 's'}
             </div>
@@ -176,12 +176,14 @@ export function AdminImageStudioPromptsPage(): React.JSX.Element {
               promptEntries.map((entry: ImageStudioPromptEntry) => {
                 const isSelected = entry.id === selectedPromptId;
                 return (
-                  <div
+                  <Card
                     key={entry.id}
+                    variant={isSelected ? 'default' : 'subtle-compact'}
+                    padding='none'
                     className={
                       isSelected
-                        ? 'flex items-start gap-2 rounded border border-primary/60 bg-primary/5'
-                        : 'flex items-start gap-2 rounded border border-border/60 bg-card/40'
+                        ? 'flex items-start gap-2 border-primary/60 bg-primary/5'
+                        : 'flex items-start gap-2 bg-card/40'
                     }
                   >
                     <button
@@ -205,13 +207,13 @@ export function AdminImageStudioPromptsPage(): React.JSX.Element {
                     >
                       <Trash2 className='size-3.5' />
                     </Button>
-                  </div>
+                  </Card>
                 );
               })
             )}
-          </div>
+          </Card>
 
-          <div className='rounded border border-border/60 bg-card/30 p-4'>
+          <Card variant='subtle-compact' padding='md' className='bg-card/30'>
             {activePrompt ? (
               <div className='space-y-4'>
                 <div className='space-y-1'>
@@ -249,13 +251,13 @@ export function AdminImageStudioPromptsPage(): React.JSX.Element {
                 className='min-h-[260px] border-none bg-transparent'
               />
             )}
-          </div>
+          </Card>
         </div>
 
         <div className='text-[11px] text-gray-500'>
           {isDirty ? 'Unsaved changes.' : 'All changes saved.'}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

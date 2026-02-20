@@ -16,6 +16,7 @@ import {
   SectionHeader,
   Textarea,
   FormSection,
+  Card,
 } from '@/shared/ui';
 import {
   SettingsField,
@@ -399,9 +400,9 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
         case 'Logo':
           return (
             <div className='space-y-3'>
-              <div className='rounded border border-dashed border-border/50 bg-gray-800/30 p-3'>
+              <Card variant='subtle-compact' padding='sm' className='border-dashed border-border/50 bg-card/30'>
                 <div className='text-[10px] font-semibold uppercase tracking-wider text-gray-500'>Logo preview</div>
-                <div className='mt-3 flex items-center justify-center rounded border border-border/40 bg-gray-900/50 p-4'>
+                <div className='mt-3 flex items-center justify-center rounded border border-border/40 bg-card/50 p-4'>
                   {logoPreviewUrl ? (
                     <Image
                       src={logoPreviewUrl}
@@ -415,7 +416,7 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
                     <div className='text-xs text-gray-500'>No logo selected</div>
                   )}
                 </div>
-              </div>
+              </Card>
               <SettingsFieldsRenderer
                 fields={[{ key: 'logoWidth', label: 'Desktop logo width', type: 'range', min: 50, max: 300, suffix: 'px' } as SettingsField<{ logoWidth: number }>]}
                 values={{ logoWidth }}
@@ -430,7 +431,7 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
                   <Button
                     type='button'
                     variant='outline'
-                    className='flex w-full items-center justify-center rounded border border-border/50 bg-gray-800/30 px-3 py-3 text-xs font-medium text-gray-300 hover:bg-muted/40'
+                    className='flex w-full items-center justify-center rounded border border-border/50 bg-card/30 px-3 py-3 text-xs font-medium text-gray-300 hover:bg-muted/40'
                   >
                     Image upload box
                   </Button>
@@ -554,7 +555,7 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
                   value={theme.customCss}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => update('customCss', e.target.value)}
                   placeholder={'.my-class {\n  color: red;\n}'}
-                  className='w-full bg-gray-800/40 p-2 font-mono text-xs text-gray-300 placeholder:text-gray-600 min-h-[120px]'
+                  className='w-full bg-card/40 p-2 font-mono text-xs text-gray-300 placeholder:text-gray-600 min-h-[120px]'
                   spellCheck={false}
                 />
               </div>

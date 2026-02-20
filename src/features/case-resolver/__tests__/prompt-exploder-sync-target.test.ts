@@ -3,19 +3,21 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   applyPendingPromptExploderPayloadToCaseResolver,
   discardPendingCaseResolverPromptExploderPayload,
+  readCaseResolverPromptExploderPayloadState,
   readPendingCaseResolverPromptExploderPayload,
+  resolvePromptExploderPendingPayloadIdentity,
 } from '@/features/case-resolver/hooks/useCaseResolverState.prompt-exploder-sync';
 import {
   createCaseResolverFile,
   parseCaseResolverWorkspace,
 } from '@/features/case-resolver/settings';
+import { parseCaseResolverCaptureSettings } from '@/features/case-resolver-capture/settings';
+import { parseFilemakerDatabase } from '@/features/filemaker/settings';
+import { savePromptExploderApplyPromptForCaseResolver } from '@/features/prompt-exploder/bridge';
 import type {
   CaseResolverFileEditDraft,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
-import { parseCaseResolverCaptureSettings } from '@/features/case-resolver-capture/settings';
-import { parseFilemakerDatabase } from '@/features/filemaker/settings';
-import { savePromptExploderApplyPromptForCaseResolver } from '@/features/prompt-exploder/bridge';
 
 import type { Dispatch, SetStateAction } from 'react';
 
@@ -104,6 +106,11 @@ describe('case resolver prompt exploder manual apply flow', () => {
 
     expect(firstRead?.prompt).toBe('Pending content');
     expect(secondRead?.prompt).toBe('Pending content');
+    if (firstRead && secondRead) {
+      expect(resolvePromptExploderPendingPayloadIdentity(firstRead)).toBe(
+        resolvePromptExploderPendingPayloadIdentity(secondRead)
+      );
+    }
   });
 
   it('applies pending payload only on explicit apply call and then consumes it', () => {
@@ -130,9 +137,13 @@ describe('case resolver prompt exploder manual apply flow', () => {
       expect(result.diagnostics.resolutionStrategy).toBe('requested_id');
       expect(result.diagnostics.proposalBuilt).toBe(false);
       expect(result.diagnostics.proposalReason).toBe('no_capture_payload');
+      expect(typeof result.diagnostics.transferId).toBe('string');
+      expect(result.diagnostics.payloadVersion).toBe(2);
+      expect(result.diagnostics.payloadStatus).toBe('pending');
     }
 
     const updatedDocument = harness.getWorkspace().files.find((file) => file.id === 'doc-1');
+    expect(updatedDocument?.name).toBe('Document');
     expect(updatedDocument?.documentContentPlainText).toContain('Exploded output body');
     expect(readPendingCaseResolverPromptExploderPayload()).toBeNull();
   });
@@ -155,6 +166,47 @@ describe('case resolver prompt exploder manual apply flow', () => {
       expect(result.diagnostics.resolutionStrategy).toBe('unresolved');
     }
     expect(readPendingCaseResolverPromptExploderPayload()?.prompt).toBe('Exploded output body');
+  });
+
+  it('does not apply payload to a locked document', () => {
+    const lockedDocument = createCaseResolverFile({
+      id: 'doc-1',
+      fileType: 'document',
+      name: 'Document',
+      isLocked: true,
+    });
+    let workspace: CaseResolverWorkspace = {
+      ...parseCaseResolverWorkspace(null),
+      files: [lockedDocument],
+      activeFileId: lockedDocument.id,
+    };
+    const updateWorkspace = (
+      updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace
+    ): void => {
+      workspace = updater(workspace);
+    };
+    const setEditingDocumentDraft: Dispatch<SetStateAction<CaseResolverFileEditDraft | null>> = () => {};
+
+    savePromptExploderApplyPromptForCaseResolver('Locked payload', {
+      fileId: 'doc-1',
+      fileName: 'Document',
+    });
+
+    const result = applyPendingPromptExploderPayloadToCaseResolver({
+      workspaceFiles: workspace.files,
+      updateWorkspace,
+      setEditingDocumentDraft,
+      filemakerDatabase: parseFilemakerDatabase(null),
+      caseResolverCaptureSettings: parseCaseResolverCaptureSettings(null),
+    });
+
+    expect(result.applied).toBe(false);
+    if (!result.applied) {
+      expect(result.reason).toBe('target_file_locked');
+      expect(result.diagnostics.resolutionStrategy).toBe('requested_id');
+      expect(result.diagnostics.resolvedTargetFileId).toBe('doc-1');
+    }
+    expect(readPendingCaseResolverPromptExploderPayload()?.prompt).toBe('Locked payload');
   });
 
   it('does not rely on synchronous updateWorkspace execution to resolve target diagnostics', () => {
@@ -256,6 +308,31 @@ describe('case resolver prompt exploder manual apply flow', () => {
     const discarded = discardPendingCaseResolverPromptExploderPayload();
     expect(discarded?.prompt).toBe('Discard me');
     expect(readPendingCaseResolverPromptExploderPayload()).toBeNull();
+  });
+
+  it('keeps expired payload out of pending flow but allows explicit discard recovery', () => {
+    savePromptExploderApplyPromptForCaseResolver(
+      'Expired payload',
+      {
+        fileId: 'doc-1',
+        fileName: 'Document',
+      },
+      undefined,
+      undefined,
+      {
+        createdAt: '2026-01-01T00:00:00.000Z',
+        expiresAt: '2026-01-01T00:05:00.000Z',
+        transferId: 'pe-transfer-expired-test',
+      }
+    );
+
+    const state = readCaseResolverPromptExploderPayloadState();
+    expect(state.pendingPayload).toBeNull();
+    expect(state.expiredPayload?.prompt).toBe('Expired payload');
+
+    const discarded = discardPendingCaseResolverPromptExploderPayload();
+    expect(discarded?.transferId).toBe('pe-transfer-expired-test');
+    expect(readCaseResolverPromptExploderPayloadState().expiredPayload).toBeNull();
   });
 
   it('resolves target ids using normalized id lookup', () => {

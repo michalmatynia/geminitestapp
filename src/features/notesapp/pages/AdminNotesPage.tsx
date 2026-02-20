@@ -7,6 +7,7 @@ import { NoteDetailView } from '@/features/notesapp/components/NoteDetailView';
 import { NoteListView } from '@/features/notesapp/components/NoteListView';
 import { NotesAppFolderTree } from '@/features/notesapp/components/NotesAppFolderTree';
 import { NotesAppProvider, useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
+import { Card } from '@/shared/ui';
 
 function AdminNotesPageContent(): React.JSX.Element {
   const { isMenuCollapsed } = useAdminLayout();
@@ -30,18 +31,20 @@ function AdminNotesPageContent(): React.JSX.Element {
         }`}
       >
         {/* Sidebar */}
-        <div
-          className={`overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0 ${
+        <Card
+          variant='subtle'
+          padding='none'
+          className={`overflow-hidden border-border/60 bg-card/40 ${
             isFolderTreeCollapsed ? 'hidden' : 'hidden lg:block'
           }`}
         >
           <NotesAppFolderTree />
-        </div>
+        </Card>
 
         {/* Main Content */}
-        <div className='flex min-h-0 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-6'>
+        <Card variant='subtle' padding='lg' className='flex min-h-0 flex-col overflow-hidden border-border/60 bg-card/40'>
           {selectedNote ? <NoteDetailView /> : <NoteListView />}
-        </div>
+        </Card>
 
         {/* Modals */}
         <CreateNoteModal

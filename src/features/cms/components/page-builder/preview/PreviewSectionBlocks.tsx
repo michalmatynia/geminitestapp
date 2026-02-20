@@ -75,7 +75,7 @@ export function PreviewImageWithTextBlock({
             unoptimized
           />
         ) : showEditorChrome ? (
-          <div className='flex min-h-[120px] w-full items-center justify-center bg-gray-800'>
+          <div className='flex min-h-[120px] w-full items-center justify-center bg-card/40'>
             <ImageIcon className='size-10 text-gray-600' />
           </div>
         ) : null}
@@ -126,7 +126,7 @@ export function PreviewHeroBlock({
           <div className='absolute inset-0 bg-black/50' />
         </div>
       ) : (
-        <div className='absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-800' />
+        <div className='absolute inset-0 bg-gradient-to-br from-card/60 to-card/40' />
       )}
       <div className='relative z-10 flex min-h-[200px] flex-col items-center justify-center gap-3 p-6 text-center'>
         {children.length > 0 ? (
@@ -227,7 +227,7 @@ export function PreviewBlockSectionBlock({
     >
       {blockCustomCss ? <style data-cms-custom-css={block.id}>{blockCustomCss}</style> : null}
       {children.length === 0 && showEditorChrome ? (
-        <div className='flex min-h-[48px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600'>
+        <div className='flex min-h-[48px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-card/20 text-[10px] uppercase tracking-wider text-gray-600'>
           Empty block
         </div>
       ) : (

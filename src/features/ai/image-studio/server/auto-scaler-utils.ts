@@ -7,6 +7,7 @@ import {
   analyzeImageObjectFromRgba,
   normalizeImageStudioAnalysisLayoutConfig,
   type ImageStudioAutoScalePlan,
+  type ImageStudioDetectionCandidateSummary,
   type ImageStudioDetectionDetails,
   type ImageStudioObjectAnalysisResult,
   type NormalizedImageStudioAnalysisLayoutConfig,
@@ -34,6 +35,9 @@ export type ImageStudioAutoScalerResult = {
   detectionUsed: Exclude<ImageStudioCenterDetectionMode, 'auto'>;
   confidenceBefore: number;
   detectionDetails: ImageStudioDetectionDetails | null;
+  policyVersion: string;
+  policyReason: string;
+  fallbackApplied: boolean;
   scale: number;
   layout: NormalizedImageStudioAnalysisLayoutConfig;
   whitespaceBefore: ImageStudioObjectAnalysisResult['whitespace'];
@@ -49,6 +53,10 @@ export type ImageStudioAnalysisSummary = {
   detectionUsed: Exclude<ImageStudioCenterDetectionMode, 'auto'>;
   confidence: number;
   detectionDetails: ImageStudioDetectionDetails | null;
+  policyVersion: string;
+  policyReason: string;
+  fallbackApplied: boolean;
+  candidateDetections: ImageStudioDetectionCandidateSummary;
   whitespace: ImageStudioObjectAnalysisResult['whitespace'];
   objectAreaPercent: number;
   layout: NormalizedImageStudioAnalysisLayoutConfig;
@@ -180,6 +188,10 @@ export async function analyzeImageByAutoScalerLayout(
     detectionUsed: analysis.detectionUsed,
     confidence: analysis.confidence,
     detectionDetails: analysis.detectionDetails,
+    policyVersion: analysis.policyVersion,
+    policyReason: analysis.policyReason,
+    fallbackApplied: analysis.fallbackApplied,
+    candidateDetections: analysis.candidateDetections,
     whitespace: analysis.whitespace,
     objectAreaPercent: analysis.objectAreaPercent,
     layout: analysis.layout,
@@ -263,6 +275,9 @@ export async function autoScaleObjectByAnalysis(
     detectionUsed: planned.analysis.detectionUsed,
     confidenceBefore: planned.analysis.confidence,
     detectionDetails: planned.analysis.detectionDetails,
+    policyVersion: planned.analysis.policyVersion,
+    policyReason: planned.analysis.policyReason,
+    fallbackApplied: planned.analysis.fallbackApplied,
     scale: planned.plan.scale,
     layout: normalizedLayout,
     whitespaceBefore: planned.analysis.whitespace,

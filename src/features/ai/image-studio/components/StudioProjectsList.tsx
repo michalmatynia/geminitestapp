@@ -599,7 +599,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
 
   return (
     <div className='space-y-4'>
-      <div className='flex flex-wrap items-end gap-2 rounded-lg border border-border/60 bg-card/40 p-3'>
+      <Card variant='subtle' padding='sm' className='flex flex-wrap items-end gap-2 border-border/60 bg-card/40'>
         <div className='min-w-[220px] flex-1 space-y-1'>
           <div className='text-[11px] text-gray-500'>Project ID</div>
           <Input
@@ -656,9 +656,11 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
               normalizedDraftCanvasWidth === template.width &&
               normalizedDraftCanvasHeight === template.height;
             return (
-              <div
+              <Card
                 key={template.id}
-                className='inline-flex items-center gap-1 rounded border border-border/60 bg-card/20 p-0.5'
+                variant='subtle-compact'
+                padding='none'
+                className='inline-flex items-center gap-1 border-border/60 bg-card/20 p-0.5'
               >
                 <Button
                   type='button'
@@ -686,7 +688,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
                 >
                   <Trash2 className='size-3.5' />
                 </Button>
-              </div>
+              </Card>
             );
           })}
           <Button
@@ -711,7 +713,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
           <Plus className='mr-2 size-4' />
           Add Project
         </Button>
-      </div>
+      </Card>
 
       <StandardDataTablePanel
         filters={

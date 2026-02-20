@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 import { useNoteSettings, DEFAULT_NOTE_SETTINGS } from '@/features/notesapp/hooks/NoteSettingsContext';
 import type { NoteSettings } from '@/shared/contracts/notes';
-import { Button, SelectSimple, useToast, Label, RadioGroup, RadioGroupItem, SectionHeader, FormSection, FormField, ToggleRow } from '@/shared/ui';
+import { Button, SelectSimple, useToast, Label, RadioGroup, RadioGroupItem, SectionHeader, FormSection, FormField, ToggleRow, Card } from '@/shared/ui';
 
 const sortByOptions = [
   { value: 'created', label: 'Created Date' },
@@ -209,7 +209,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
 
         {/* Navigation State */}
         <FormSection title='Navigation' className='p-6'>
-          <div className='flex items-center justify-between rounded-lg border border-border/60 bg-card/30 p-3'>
+          <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border/60 bg-card/30'>
             <div className='flex-1 space-y-0.5'>
               <p className='text-sm font-medium text-gray-200'>Remember Selected Folder</p>
               <p className='text-[11px] text-gray-500'>Your selected folder is saved to the database and persists across sessions.</p>
@@ -229,7 +229,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             ) : (
               <span className='text-xs text-gray-500'>Using default</span>
             )}
-          </div>
+          </Card>
         </FormSection>
 
         {/* Reset Button */}
@@ -246,7 +246,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
         </div>
 
         {/* Current Settings Summary */}
-        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+        <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
           <h3 className='mb-2 text-sm font-medium text-gray-400'>
             Current Settings Summary
           </h3>
@@ -281,7 +281,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
               {editorModeOptions.find((o: { value: string }) => o.value === settings.editorMode)?.label}
             </span>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import type { AiNode, Edge, ModelConfig } from '@/features/ai/ai-paths/lib';
 import { DEFAULT_MODELS, toNumber } from '@/features/ai/ai-paths/lib';
 import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } from '@/features/ai/brain';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, Input, Label, SelectSimple } from '@/shared/ui';
+import { Button, Input, Label, SelectSimple, Card } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -144,15 +144,12 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
           />
         </div>
       </div>
-      <div className='flex items-center justify-between rounded-md border border-border/60 bg-card/30 p-2 text-xs text-gray-300'>
+      <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border/60 bg-card/30 text-xs text-gray-300'>
         <span>Accepts Images</span>
         <Button
+          variant={modelConfig.vision ? 'success' : 'default'}
+          size='xs'
           type='button'
-          className={`rounded border px-3 py-1 text-xs ${
-            modelConfig.vision
-              ? 'text-emerald-200 hover:bg-emerald-500/10'
-              : 'text-gray-300 hover:bg-muted/50'
-          }`}
           onClick={(): void =>
             updateSelectedNodeConfig({
               model: { ...modelConfig, vision: !modelConfig.vision },
@@ -161,16 +158,13 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
         >
           {modelConfig.vision ? 'Enabled' : 'Disabled'}
         </Button>
-      </div>
-      <div className='flex items-center justify-between rounded-md border border-border/60 bg-card/30 p-2 text-xs text-gray-300'>
+      </Card>
+      <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border/60 bg-card/30 text-xs text-gray-300'>
         <span>Wait for result</span>
         <Button
+          variant={modelConfig.waitForResult !== false ? 'success' : 'default'}
+          size='xs'
           type='button'
-          className={`rounded border px-3 py-1 text-xs ${
-            modelConfig.waitForResult !== false
-              ? 'text-emerald-200 hover:bg-emerald-500/10'
-              : 'text-gray-300 hover:bg-muted/50'
-          }`}
           onClick={(): void =>
             updateSelectedNodeConfig({
               model: {
@@ -182,13 +176,13 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
         >
           {modelConfig.waitForResult === false ? 'Disabled' : 'Enabled'}
         </Button>
-      </div>
+      </Card>
       {hasPollConsumer && (
-        <div className='rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-[11px] text-amber-100'>
+        <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
           {modelConfig.waitForResult === false
             ? 'Poll is connected to this Model\'s jobId. The Model will emit only jobId, so use Poll.result for your Viewer.'
             : 'Poll is connected to this Model\'s jobId. Wait for result is enabled, so the Model will still emit result; Poll will also fetch the job.'}
-        </div>
+        </Card>
       )}
       <p className='text-[11px] text-gray-500'>
         When enabled, the Model node polls the job until completion and emits

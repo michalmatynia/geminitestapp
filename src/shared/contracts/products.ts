@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-export * from './products/index';
-
 import { localizedSchema, dtoBaseSchema, namedDtoSchema } from './base';
 import { imageFileRecordSchema } from './files';
 import { commonListQuerySchema } from '../validations/api-schemas';
@@ -981,6 +979,7 @@ export const productStudioSequenceGenerationModeSchema = z.enum([
 ]);
 
 export type ProductStudioSequenceGenerationModeDto = z.infer<typeof productStudioSequenceGenerationModeSchema>;
+export type ProductStudioSequenceGenerationMode = ProductStudioSequenceGenerationModeDto;
 
 export const productStudioExecutionRouteSchema = z.enum([
   'studio_sequencer',
@@ -990,6 +989,7 @@ export const productStudioExecutionRouteSchema = z.enum([
 ]);
 
 export type ProductStudioExecutionRouteDto = z.infer<typeof productStudioExecutionRouteSchema>;
+export type ProductStudioExecutionRoute = ProductStudioExecutionRouteDto;
 
 export const productStudioSequencingDiagnosticsScopeSchema = z.enum(['project', 'global', 'default']);
 
@@ -1025,6 +1025,7 @@ export const productStudioSequencingConfigSchema = z.object({
 });
 
 export type ProductStudioSequencingConfigDto = z.infer<typeof productStudioSequencingConfigSchema>;
+export type ProductStudioSequencingConfig = ProductStudioSequencingConfigDto;
 
 export const productStudioSequencingDiagnosticsSchema = z.object({
   projectId: z.string().nullable(),
@@ -1043,6 +1044,7 @@ export const productStudioSequencingDiagnosticsSchema = z.object({
 });
 
 export type ProductStudioSequencingDiagnosticsDto = z.infer<typeof productStudioSequencingDiagnosticsSchema>;
+export type ProductStudioSequencingDiagnostics = ProductStudioSequencingDiagnosticsDto;
 
 export const productStudioSequenceReadinessSchema = z.object({
   ready: z.boolean(),
@@ -1052,6 +1054,26 @@ export const productStudioSequenceReadinessSchema = z.object({
 });
 
 export type ProductStudioSequenceReadinessDto = z.infer<typeof productStudioSequenceReadinessSchema>;
+export type ProductStudioSequenceReadiness = ProductStudioSequenceReadinessDto;
+
+export const DEFAULT_PRODUCT_STUDIO_SEQUENCE_READINESS: ProductStudioSequenceReadiness = {
+  ready: false,
+  requiresProjectSequence: false,
+  state: 'project_settings_missing',
+  message: 'Loading...',
+};
+
+export function normalizeProductStudioSequenceGenerationMode(value: unknown): ProductStudioSequenceGenerationMode {
+  if (
+    value === 'studio_prompt_then_sequence' ||
+    value === 'model_full_sequence' ||
+    value === 'studio_native_sequencer_prior_generation' ||
+    value === 'auto'
+  ) {
+    return value;
+  }
+  return 'auto';
+}
 
 /**
  * Product Draft Contracts
@@ -1192,12 +1214,21 @@ export type ProducerRepository = {
   findByName(name: string): Promise<Producer | null>;
 };
 
-export type ProductFilters = ProductFilterDto & {
+export type ProductFilters = Partial<ProductFilterDto> & {
   ids?: string[];
   excludeIds?: string[];
   tagIds?: string[];
   producerIds?: string[];
   priceGroupIds?: string[];
+  minPrice?: number;
+  maxPrice?: number;
+  searchLanguage?: 'name_en' | 'name_pl' | 'name_de';
+  baseExported?: boolean;
+  search?: string;
+  sku?: string;
+  description?: string;
+  categoryId?: string;
+  catalogId?: string;
 };
 
 export type TransactionalProductRepository = {

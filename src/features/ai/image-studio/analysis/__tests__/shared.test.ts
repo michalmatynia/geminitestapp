@@ -89,6 +89,10 @@ describe('image-studio analysis shared', () => {
     expect(excludeShadow?.detectionDetails?.shadowPolicyApplied).toBe('exclude_shadow');
     expect(includeShadow?.detectionDetails?.maskSource).toBe('foreground');
     expect(excludeShadow?.detectionDetails?.maskSource).toBe('core');
+    expect(includeShadow?.detectionDetails?.policyVersion).toBe('v2');
+    expect(excludeShadow?.detectionDetails?.policyVersion).toBe('v2');
+    expect(includeShadow?.detectionDetails?.policyReason).toBe('forced_white_detection');
+    expect(excludeShadow?.detectionDetails?.policyReason).toBe('forced_white_detection');
   });
 
   it('returns confidence and detection details in analysis summary', () => {
@@ -113,5 +117,9 @@ describe('image-studio analysis shared', () => {
     expect(analysis?.confidence).toBeGreaterThan(0);
     expect(analysis?.detectionDetails).not.toBeNull();
     expect(analysis?.layout.shadowPolicy).toBe('auto');
+    expect(analysis?.policyVersion).toBe('v2');
+    expect(typeof analysis?.policyReason).toBe('string');
+    expect(typeof analysis?.fallbackApplied).toBe('boolean');
+    expect(analysis?.candidateDetections).not.toBeNull();
   });
 });

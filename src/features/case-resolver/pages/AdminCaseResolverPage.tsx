@@ -61,6 +61,9 @@ import {
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
 } from '../workspace-persistence';
+import {
+  resolveCaptureMappingApplyGuardReason,
+} from '../capture-mapping-apply-guard';
 
 import type {
   CaseResolverAssetFile,
@@ -73,6 +76,17 @@ import type {
   CaseResolverRelationGraph,
   CaseResolverTag,
 } from '@/shared/contracts/case-resolver';
+
+const readCaptureApplyNowMs = (): number => (
+  typeof performance !== 'undefined' && typeof performance.now === 'function'
+    ? performance.now()
+    : Date.now()
+);
+
+const resolveCaptureApplyDurationMs = (startAtMs: number | null): number | null => {
+  if (startAtMs === null) return null;
+  return Math.max(0, Math.round(readCaptureApplyNowMs() - startAtMs));
+};
 
 export function AdminCaseResolverPage(): React.JSX.Element {
   const state = useCaseResolverState();
@@ -89,8 +103,13 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     workspaceRevision: number;
     attempts: number;
     at: string;
+    cleanupDurationMs?: number | null;
+    mutationDurationMs?: number | null;
+    totalDurationMs?: number | null;
   } | null>(null);
   const captureApplyInFlightRef = React.useRef(false);
+  const captureMappingDismissedRef = React.useRef(false);
+  const captureMappingDismissToastShownRef = React.useRef(false);
   const printInFlightRef = React.useRef(false);
   const {
     workspace,
@@ -365,6 +384,12 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   }, [promptExploderProposalDraft, workspace.files]);
 
   React.useEffect(() => {
+    if (!isPromptExploderPartyProposalOpen) return;
+    captureMappingDismissedRef.current = false;
+    captureMappingDismissToastShownRef.current = false;
+  }, [isPromptExploderPartyProposalOpen]);
+
+  React.useEffect(() => {
     if (!isPromptExploderPartyProposalOpen || !promptExploderPartyProposal) {
       setPromptExploderProposalDraft(null);
       setCaptureApplyDiagnostics(null);
@@ -400,9 +425,34 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   }, [isPromptExploderPartyProposalOpen, promptExploderPartyProposal]);
 
   const handleClosePromptExploderProposalModal = useCallback((): void => {
-    if (isApplyingPromptExploderPartyProposal) return;
+    if (captureApplyInFlightRef.current || isApplyingPromptExploderPartyProposal) return;
+    if (captureMappingDismissedRef.current) return;
+    captureMappingDismissedRef.current = true;
     setIsPromptExploderPartyProposalOpen(false);
-  }, [isApplyingPromptExploderPartyProposal, setIsPromptExploderPartyProposalOpen]);
+    setPromptExploderProposalDraft(null);
+    setPromptExploderPartyProposal(null);
+    setCaptureApplyDiagnostics(null);
+    if (!captureMappingDismissToastShownRef.current) {
+      captureMappingDismissToastShownRef.current = true;
+      toast('Capture mapping dismissed. No party/date fields were changed.', {
+        variant: 'info',
+      });
+    }
+    logCaseResolverWorkspaceEvent({
+      source: 'capture_mapping_apply',
+      action: 'capture_mapping_dismissed',
+      message: JSON.stringify({
+        targetFileId: promptExploderProposalDraft?.targetFileId ?? null,
+      }),
+    });
+  }, [
+    isApplyingPromptExploderPartyProposal,
+    promptExploderProposalDraft?.targetFileId,
+    setCaptureApplyDiagnostics,
+    setIsPromptExploderPartyProposalOpen,
+    setPromptExploderPartyProposal,
+    toast,
+  ]);
 
   const updatePromptExploderProposalAction = useCallback(
     (role: 'addresser' | 'addressee', action: CaseResolverCaptureAction): void => {
@@ -457,23 +507,45 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   );
 
   const handleApplyPromptExploderProposal = useCallback((): void => {
+    const applyGuardReason = resolveCaptureMappingApplyGuardReason({
+      modalOpen: isPromptExploderPartyProposalOpen,
+      dismissed: captureMappingDismissedRef.current,
+      hasDraft: Boolean(promptExploderProposalDraft),
+      inFlight: captureApplyInFlightRef.current,
+    });
+    if (applyGuardReason) {
+      if (applyGuardReason === 'modal_closed' || applyGuardReason === 'dismissed') {
+        logCaseResolverWorkspaceEvent({
+          source: 'capture_mapping_apply',
+          action: 'capture_mapping_apply_blocked',
+          message: JSON.stringify({
+            reason: applyGuardReason,
+            targetFileId: promptExploderProposalDraft?.targetFileId ?? null,
+          }),
+        });
+      }
+      return;
+    }
     if (!promptExploderProposalDraft) {
       setIsPromptExploderPartyProposalOpen(false);
       return;
     }
-    if (captureApplyInFlightRef.current) return;
     captureApplyInFlightRef.current = true;
+    captureMappingDismissedRef.current = false;
 
     void (async (): Promise<void> => {
       setIsApplyingPromptExploderPartyProposal(true);
       try {
+        const applyStartedAtMs = readCaptureApplyNowMs();
+        let cleanupDurationMs: number | null = null;
+        let mutationDurationMs: number | null = null;
         const requestedTargetFileId = promptExploderProposalDraft.targetFileId;
         const workspaceSnapshot = workspaceRef.current;
         const targetResolution = resolveCaptureTargetFile({
           workspaceFiles: workspaceSnapshot.files,
           proposalTargetFileId: requestedTargetFileId,
-          contextFileId: promptExploderPartyProposal?.targetFileId ?? null,
-          editingDraftFileId: editingDocumentDraft?.id ?? null,
+          contextFileId: null,
+          editingDraftFileId: null,
         });
         const resolvedTargetFile = targetResolution.file;
         if (!resolvedTargetFile) {
@@ -487,6 +559,9 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             workspaceRevision: precheckRevision,
             attempts: 1,
             at: new Date().toISOString(),
+            cleanupDurationMs,
+            mutationDurationMs,
+            totalDurationMs: resolveCaptureApplyDurationMs(applyStartedAtMs),
           });
           logCaseResolverWorkspaceEvent({
             source: 'capture_mapping_apply',
@@ -500,6 +575,26 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             }),
           });
           toast('Capture mapping failed: target file missing (precheck).', {
+            variant: 'warning',
+          });
+          return;
+        }
+        if (resolvedTargetFile.isLocked) {
+          const workspaceRevision = getCaseResolverWorkspaceRevision(workspaceSnapshot);
+          setCaptureApplyDiagnostics({
+            status: 'failed',
+            stage: 'precheck',
+            message: 'Capture target is locked before mutation.',
+            targetFileId: requestedTargetFileId,
+            resolvedTargetFileId: resolvedTargetFile.id,
+            workspaceRevision,
+            attempts: 1,
+            at: new Date().toISOString(),
+            cleanupDurationMs,
+            mutationDurationMs,
+            totalDurationMs: resolveCaptureApplyDurationMs(applyStartedAtMs),
+          });
+          toast('Document is locked. Unlock it in Case Resolver before applying capture mapping.', {
             variant: 'warning',
           });
           return;
@@ -676,6 +771,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           }
           return '';
         })();
+        const cleanupStartedAtMs = readCaptureApplyNowMs();
         const cleanupResult =
           sourceExplodedContent.trim().length > 0
             ? stripAcceptedCaptureContentFromTextWithReport(
@@ -693,6 +789,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                 removedDateLineCount: 0,
               },
             };
+        cleanupDurationMs = resolveCaptureApplyDurationMs(cleanupStartedAtMs);
         const cleanedExplodedContent = cleanupResult.text;
         const hasExplodedCleanup = cleanupResult.report.changed;
         logCaseResolverWorkspaceEvent({
@@ -709,6 +806,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             removedAddresserLineCount: cleanupResult.report.removedAddresserLineCount,
             removedAddresseeLineCount: cleanupResult.report.removedAddresseeLineCount,
             removedDateLineCount: cleanupResult.report.removedDateLineCount,
+            cleanupDurationMs,
           }),
         });
         const cleanedExplodedCanonical = hasExplodedCleanup
@@ -731,6 +829,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           shouldPatchDocumentDate ||
           hasExplodedCleanup;
         let captureApplyAttempts = 1;
+        const mutationStartedAtMs = shouldPersistPatch ? readCaptureApplyNowMs() : null;
 
         if (shouldPersistPatch) {
           const now = new Date().toISOString();
@@ -756,6 +855,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                 persistToast: 'Capture mapping applied.',
                 skipNormalization: true,
                 mutate: (file) => {
+                  if (file.isLocked) return null;
                   const fileShouldPatchDocumentDate =
                     acceptedDateValue !== null && file.documentDate !== acceptedDateValue;
                   const fileShouldPersistPatch =
@@ -824,8 +924,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             const retryTargetResolution = resolveCaptureTargetFile({
               workspaceFiles: retryWorkspaceSnapshot.files,
               proposalTargetFileId: mutationTargetFileId,
-              contextFileId: promptExploderPartyProposal?.targetFileId ?? null,
-              editingDraftFileId: editingDocumentDraft?.id ?? null,
+              contextFileId: null,
+              editingDraftFileId: null,
             });
             if (retryTargetResolution.file) {
               captureApplyAttempts = 2;
@@ -848,6 +948,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           }
 
           if (!mutationResult.ok) {
+            mutationDurationMs = resolveCaptureApplyDurationMs(mutationStartedAtMs);
             const failureStage = mutationResult.stage ?? 'mutation';
             const workspaceRevision = getCaseResolverWorkspaceRevision(workspaceRef.current);
             const failureMessage =
@@ -863,6 +964,9 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               workspaceRevision,
               attempts: captureApplyAttempts,
               at: new Date().toISOString(),
+              cleanupDurationMs,
+              mutationDurationMs,
+              totalDurationMs: resolveCaptureApplyDurationMs(applyStartedAtMs),
             });
             logCaseResolverWorkspaceEvent({
               source: 'capture_mapping_apply',
@@ -875,6 +979,9 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                 mutationResult,
                 workspaceRevision,
                 attempts: captureApplyAttempts,
+                cleanupDurationMs,
+                mutationDurationMs,
+                totalDurationMs: resolveCaptureApplyDurationMs(applyStartedAtMs),
               }),
             });
             toast(
@@ -892,6 +999,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             return;
           }
           if (!mutationResult.fileFound) {
+            mutationDurationMs = resolveCaptureApplyDurationMs(mutationStartedAtMs);
             setCaptureApplyDiagnostics({
               status: 'failed',
               stage: 'rebase',
@@ -901,16 +1009,33 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               workspaceRevision: getCaseResolverWorkspaceRevision(workspaceRef.current),
               attempts: captureApplyAttempts,
               at: new Date().toISOString(),
+              cleanupDurationMs,
+              mutationDurationMs,
+              totalDurationMs: resolveCaptureApplyDurationMs(applyStartedAtMs),
             });
             toast('Capture mapping failed: target file missing during draft rebase.', {
               variant: 'warning',
             });
             return;
           }
+          mutationDurationMs = resolveCaptureApplyDurationMs(mutationStartedAtMs);
         }
 
         setPromptExploderPartyProposal(nextProposalState);
         setPromptExploderProposalDraft(nextProposalState);
+        const totalDurationMs = resolveCaptureApplyDurationMs(applyStartedAtMs);
+        logCaseResolverWorkspaceEvent({
+          source: 'capture_mapping_apply',
+          action: 'capture_mapping_apply_timing',
+          message: JSON.stringify({
+            targetFileId,
+            attempts: captureApplyAttempts,
+            shouldPersistPatch,
+            cleanupDurationMs,
+            mutationDurationMs,
+            totalDurationMs,
+          }),
+        });
         setCaptureApplyDiagnostics({
           status: 'success',
           stage: null,
@@ -920,6 +1045,9 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           workspaceRevision: getCaseResolverWorkspaceRevision(workspaceRef.current),
           attempts: captureApplyAttempts,
           at: new Date().toISOString(),
+          cleanupDurationMs,
+          mutationDurationMs,
+          totalDurationMs,
         });
 
         if (failedRoles.length > 0) {
@@ -957,6 +1085,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     captureApplyInFlightRef,
     editingDocumentDraft,
     filemakerDatabase,
+    isPromptExploderPartyProposalOpen,
     promptExploderPartyProposal,
     promptExploderProposalDraft,
     setCaptureApplyDiagnostics,
@@ -1029,6 +1158,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         if (canvasFileIndex < 0) return current;
         const canvasFile = current.files[canvasFileIndex];
         if (!canvasFile) return current;
+        if (canvasFile.isLocked) return current;
         const hasNode = canvasFile.graph.nodes.some((node) => node.id === nodeId);
         if (!hasNode) return current;
 
@@ -1078,13 +1208,22 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const updateEditingDocumentDraft = useCallback(
     (patch: Partial<CaseResolverFileEditDraft>): void => {
-      setEditingDocumentDraft((current) => (current ? { ...current, ...patch } : current));
+      setEditingDocumentDraft((current) => {
+        if (!current || current.isLocked) return current;
+        return { ...current, ...patch };
+      });
     },
     [setEditingDocumentDraft]
   );
 
   const handleOpenPromptExploderForDraft = useCallback((): void => {
     if (!editingDocumentDraft) return;
+    if (editingDocumentDraft.isLocked) {
+      toast('Document is locked. Unlock it in Case Resolver before opening Prompt Exploder.', {
+        variant: 'warning',
+      });
+      return;
+    }
     const promptExploderSessionId = createId('case-prompt-session');
     const promptSource = (() => {
       const sourceHtml = (
@@ -1383,6 +1522,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const handleTriggerScanDraftUpload = useCallback((): void => {
     if (editingDocumentDraft?.fileType !== 'scanfile') return;
+    if (editingDocumentDraft.isLocked) return;
     if (isUploadingScanDraftFiles) return;
     scanDraftUploadInputRef.current?.click();
   }, [editingDocumentDraft, isUploadingScanDraftFiles]);
@@ -1390,6 +1530,10 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const uploadScanDraftFiles = useCallback(
     (files: File[]): void => {
       if (editingDocumentDraft?.fileType !== 'scanfile') return;
+      if (editingDocumentDraft.isLocked) {
+        toast('Document is locked. Unlock it before uploading files.', { variant: 'warning' });
+        return;
+      }
       if (files.length === 0) return;
       void handleUploadScanFiles(editingDocumentDraft.id, files).catch((error: unknown) => {
         toast(
@@ -1413,6 +1557,10 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const handleDeleteScanDraftSlot = useCallback(
     (slotId: string): void => {
       if (editingDocumentDraft?.fileType !== 'scanfile') return;
+      if (editingDocumentDraft.isLocked) {
+        toast('Document is locked. Unlock it before editing scan slots.', { variant: 'warning' });
+        return;
+      }
       if (isUploadingScanDraftFiles) return;
       const fileId = editingDocumentDraft.id;
       const targetSlot = (editingDocumentDraft.scanSlots ?? []).find((slot) => slot.id === slotId);
@@ -1424,6 +1572,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           let changed = false;
           const nextFiles = current.files.map((file) => {
             if (file.id !== fileId || file.fileType !== 'scanfile') return file;
+            if (file.isLocked) return file;
             const currentSlots = file.scanSlots ?? [];
             const nextSlots = currentSlots.filter((slot) => slot.id !== slotId);
             if (nextSlots.length === currentSlots.length) return file;
@@ -1444,6 +1593,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       );
       setEditingDocumentDraft((current) => {
         if (current?.id !== fileId || current.fileType !== 'scanfile') return current;
+        if (current.isLocked) return current;
         const currentSlots = current.scanSlots ?? [];
         const nextSlots = currentSlots.filter((slot) => slot.id !== slotId);
         if (nextSlots.length === currentSlots.length) return current;
@@ -1462,6 +1612,10 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const handleRunScanDraftOcr = useCallback((): void => {
     if (editingDocumentDraft?.fileType !== 'scanfile') return;
+    if (editingDocumentDraft.isLocked) {
+      toast('Document is locked. Unlock it before running OCR.', { variant: 'warning' });
+      return;
+    }
     void handleRunScanFileOcr(editingDocumentDraft.id).catch((error: unknown) => {
       toast(
         error instanceof Error ? error.message : 'Failed to run OCR.',
@@ -1476,6 +1630,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       event.stopPropagation();
       setIsScanDraftDropActive(false);
       if (editingDocumentDraft?.fileType !== 'scanfile') return;
+      if (editingDocumentDraft.isLocked) return;
       if (isUploadingScanDraftFiles) return;
       const files = Array.from(event.dataTransfer.files ?? []);
       uploadScanDraftFiles(files);
@@ -1486,6 +1641,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const handleScanDraftDragEnter = useCallback(
     (event: React.DragEvent<HTMLDivElement>): void => {
       if (editingDocumentDraft?.fileType !== 'scanfile') return;
+      if (editingDocumentDraft.isLocked) return;
       const hasFiles = Array.from(event.dataTransfer.types ?? []).includes('Files');
       if (!hasFiles) return;
       event.preventDefault();
@@ -1497,6 +1653,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const handleScanDraftDragOver = useCallback(
     (event: React.DragEvent<HTMLDivElement>): void => {
       if (editingDocumentDraft?.fileType !== 'scanfile') return;
+      if (editingDocumentDraft.isLocked) return;
       const hasFiles = Array.from(event.dataTransfer.types ?? []).includes('Files');
       if (!hasFiles) return;
       event.preventDefault();
@@ -1523,6 +1680,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     }): void => {
       setEditingDocumentDraft((current) => {
         if (!current) return current;
+        if (current.isLocked) return current;
         const canonical = deriveDocumentContentSync({
           mode: 'wysiwyg',
           value: input.value,
@@ -1572,6 +1730,12 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const handleUseHistoryEntry = useCallback((entry: CaseResolverDocumentHistoryEntry): void => {
     if (!editingDocumentDraft) return;
+    if (editingDocumentDraft.isLocked) {
+      toast('Document is locked. Unlock it before loading another revision.', {
+        variant: 'warning',
+      });
+      return;
+    }
     const nextHtml = (() => {
       if (entry.documentContentHtml.trim().length > 0) {
         return entry.documentContentHtml;
@@ -1621,14 +1785,16 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     (folderPath: string): void => {
       const normalizedFolderPath = normalizeFolderPath(folderPath);
       if (!normalizedFolderPath) return;
+      const folderFiles = workspace.files.filter((file) =>
+        isPathWithinFolder(file.folder, normalizedFolderPath)
+      );
+      const shouldLock = folderFiles.some((file) => !file.isLocked);
       updateWorkspace(
         (current) => {
           const folderFiles = current.files.filter((file) =>
             isPathWithinFolder(file.folder, normalizedFolderPath)
           );
           if (folderFiles.length === 0) return current;
-
-          const shouldLock = folderFiles.some((file) => !file.isLocked);
           const now = new Date().toISOString();
           let changed = false;
           const nextFiles = current.files.map((file) => {
@@ -1649,8 +1815,18 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         },
         { persistToast: 'Case Resolver tree changes saved.' }
       );
+      setEditingDocumentDraft((current) => {
+        if (!current) return current;
+        if (!isPathWithinFolder(current.folder, normalizedFolderPath)) return current;
+        if (current.isLocked === shouldLock) return current;
+        return {
+          ...current,
+          isLocked: shouldLock,
+          updatedAt: new Date().toISOString(),
+        };
+      });
     },
-    [updateWorkspace]
+    [setEditingDocumentDraft, updateWorkspace, workspace.files]
   );
 
   const handleToggleFileLock = useCallback(
@@ -1677,8 +1853,16 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         },
         { persistToast: 'Case Resolver tree changes saved.' }
       );
+      setEditingDocumentDraft((current) => {
+        if (!current || current.id !== fileId) return current;
+        return {
+          ...current,
+          isLocked: !current.isLocked,
+          updatedAt: new Date().toISOString(),
+        };
+      });
     },
-    [updateWorkspace]
+    [setEditingDocumentDraft, updateWorkspace]
   );
 
   const handleDeleteFile = useCallback(
@@ -1710,6 +1894,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           (current) => {
             const exists = current.files.some((file) => file.id === fileId);
             if (!exists) return current;
+            const currentTarget = current.files.find((file) => file.id === fileId) ?? null;
+            if (currentTarget?.isLocked) return current;
             const nextFiles = current.files.filter((file) => file.id !== fileId);
             return {
               ...current,
@@ -1820,6 +2006,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         if (!current.activeFileId) return current;
         const activeFile = current.files.find((file) => file.id === current.activeFileId);
         if (!activeFile) return current;
+        if (activeFile.isLocked) return current;
 
         const activeGraph = activeFile.graph;
         const previousSourceFileIdByNode = activeGraph.documentSourceFileIdByNode ?? {};

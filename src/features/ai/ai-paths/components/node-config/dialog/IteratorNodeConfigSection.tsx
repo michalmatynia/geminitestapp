@@ -5,7 +5,7 @@ import React from 'react';
 
 import type { IteratorConfig } from '@/features/ai/ai-paths/lib';
 import { formatRuntimeValue } from '@/features/ai/ai-paths/lib';
-import { Input, Textarea, ToggleRow, FormField } from '@/shared/ui';
+import { Input, Textarea, ToggleRow, FormField, Card, Badge, StatusBadge } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -30,30 +30,31 @@ export function IteratorNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div className='rounded-md border border-border bg-card/50 p-3'>
+      <Card variant='subtle-compact' padding='sm' className='border-border bg-card/50'>
         <div className='flex items-center justify-between'>
           <div className='text-[11px] text-gray-400'>Runtime</div>
           <div className='flex items-center gap-2 text-[11px]'>
-            <span className='rounded-full border border-border bg-card/70 px-2 py-0.5 text-gray-200'>
+            <Badge variant='outline' className='bg-card/70 font-normal'>
               {total > 0 ? `${Math.min(index + 1, total)}/${total}` : '0/0'}
-            </span>
-            <span
-              className={`rounded-full border px-2 py-0.5 ${
+            </Badge>
+            <StatusBadge
+              status={status}
+              variant={
                 status === 'completed'
-                  ? 'border-emerald-400/50 bg-emerald-500/10 text-emerald-200'
+                  ? 'success'
                   : status === 'advance_pending'
-                    ? 'border-amber-400/50 bg-amber-500/10 text-amber-200'
+                    ? 'warning'
                     : status === 'waiting_callback'
-                      ? 'border-sky-400/50 bg-sky-500/10 text-sky-200'
-                      : 'border-border bg-card/70 text-gray-200'
-              }`}
-            >
-              {status}
-            </span>
+                      ? 'info'
+                      : 'neutral'
+              }
+              size='sm'
+              className='font-bold'
+            />
             {done ? (
-              <span className='rounded-full border border-emerald-400/50 bg-emerald-500/10 px-2 py-0.5 text-emerald-200'>
+              <Badge variant='success' size='sm' className='font-bold'>
                 done
-              </span>
+              </Badge>
             ) : null}
           </div>
         </div>
@@ -83,9 +84,9 @@ export function IteratorNodeConfigSection(): React.JSX.Element | null {
           Best callback tokens: <span className='text-gray-300'>jobId</span> or{' '}
           <span className='text-gray-300'>result</span> from the processing node.
         </p>
-      </div>
+      </Card>
 
-      <div className='rounded-md border border-border bg-card/50 p-3'>
+      <Card variant='subtle-compact' padding='sm' className='border-border bg-card/50'>
         <div className='text-[11px] text-gray-400'>Behavior</div>
         
         <ToggleRow
@@ -120,7 +121,7 @@ export function IteratorNodeConfigSection(): React.JSX.Element | null {
             />
           </FormField>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

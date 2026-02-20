@@ -70,6 +70,8 @@ type AutoScaleLayoutMetadata = {
   whiteThreshold: number;
   chromaThreshold: number;
   shadowPolicy?: ImageStudioCenterShadowPolicy;
+  layoutPolicyVersion?: string | null;
+  detectionPolicyDecision?: string | null;
 };
 type AutoScaleProcessingResult = {
   outputBuffer: Buffer;
@@ -307,6 +309,36 @@ const readAutoScaleMetadataFromSlot = (
       maskSourceRaw === 'foreground' || maskSourceRaw === 'core'
         ? maskSourceRaw
         : null;
+    const policyVersionRaw = details['policyVersion'];
+    const policyReasonRaw = details['policyReason'];
+    const fallbackAppliedRaw = details['fallbackApplied'];
+    const candidateDetectionsRaw =
+      details['candidateDetections'] && typeof details['candidateDetections'] === 'object'
+        ? (details['candidateDetections'] as Record<string, unknown>)
+        : null;
+
+    const parseCandidateSummary = (
+      candidate: unknown
+    ): { confidence: number; area: number } | null => {
+      if (candidate === null) return null;
+      if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) return null;
+      const record = candidate as Record<string, unknown>;
+      const confidenceRaw = record['confidence'];
+      const areaRaw = record['area'];
+      const confidence =
+        typeof confidenceRaw === 'number' && Number.isFinite(confidenceRaw)
+          ? Math.max(0, Math.min(1, confidenceRaw))
+          : NaN;
+      const area =
+        typeof areaRaw === 'number' && Number.isFinite(areaRaw)
+          ? Math.max(1, Math.floor(areaRaw))
+          : NaN;
+      if (!Number.isFinite(confidence) || !Number.isFinite(area)) return null;
+      return {
+        confidence: Number(confidence.toFixed(4)),
+        area,
+      };
+    };
 
     const componentCount =
       typeof componentCountRaw === 'number' && Number.isFinite(componentCountRaw)
@@ -347,6 +379,31 @@ const readAutoScaleMetadataFromSlot = (
       return null;
     }
 
+    const policyVersion =
+      typeof policyVersionRaw === 'string' && policyVersionRaw.trim().length > 0
+        ? policyVersionRaw.trim()
+        : undefined;
+    const policyReason =
+      typeof policyReasonRaw === 'string' && policyReasonRaw.trim().length > 0
+        ? policyReasonRaw.trim()
+        : undefined;
+    const fallbackApplied =
+      typeof fallbackAppliedRaw === 'boolean'
+        ? fallbackAppliedRaw
+        : undefined;
+    const alphaCandidate = candidateDetectionsRaw
+      ? parseCandidateSummary(candidateDetectionsRaw['alpha_bbox'])
+      : null;
+    const whiteCandidate = candidateDetectionsRaw
+      ? parseCandidateSummary(candidateDetectionsRaw['white_bg_first_colored_pixel'])
+      : null;
+    const candidateDetections = candidateDetectionsRaw
+      ? {
+        alpha_bbox: alphaCandidate,
+        white_bg_first_colored_pixel: whiteCandidate,
+      }
+      : undefined;
+
     return {
       shadowPolicyRequested,
       shadowPolicyApplied,
@@ -358,6 +415,10 @@ const readAutoScaleMetadataFromSlot = (
       corePixels,
       touchesBorder,
       maskSource,
+      ...(policyVersion ? { policyVersion } : {}),
+      ...(policyReason ? { policyReason } : {}),
+      ...(typeof fallbackApplied === 'boolean' ? { fallbackApplied } : {}),
+      ...(candidateDetections ? { candidateDetections } : {}),
     };
   };
 
@@ -383,6 +444,16 @@ const readAutoScaleMetadataFromSlot = (
     const whiteThreshold = typeof layoutRaw['whiteThreshold'] === 'number' ? layoutRaw['whiteThreshold'] : NaN;
     const chromaThreshold = typeof layoutRaw['chromaThreshold'] === 'number' ? layoutRaw['chromaThreshold'] : NaN;
     const shadowPolicy = parseShadowPolicy(layoutRaw['shadowPolicy']);
+    const layoutPolicyVersionRaw = layoutRaw['layoutPolicyVersion'];
+    const detectionPolicyDecisionRaw = layoutRaw['detectionPolicyDecision'];
+    const layoutPolicyVersion =
+      typeof layoutPolicyVersionRaw === 'string' && layoutPolicyVersionRaw.trim().length > 0
+        ? layoutPolicyVersionRaw.trim()
+        : null;
+    const detectionPolicyDecision =
+      typeof detectionPolicyDecisionRaw === 'string' && detectionPolicyDecisionRaw.trim().length > 0
+        ? detectionPolicyDecisionRaw.trim()
+        : null;
     if (
       !Number.isFinite(paddingPercent) ||
       !Number.isFinite(paddingXPercent) ||
@@ -401,6 +472,8 @@ const readAutoScaleMetadataFromSlot = (
       targetCanvasHeight,
       whiteThreshold,
       chromaThreshold,
+      ...(layoutPolicyVersion ? { layoutPolicyVersion } : {}),
+      ...(detectionPolicyDecision ? { detectionPolicyDecision } : {}),
       ...(shadowPolicy ? { shadowPolicy } : {}),
     };
   };
@@ -560,6 +633,8 @@ async function processAutoScalerPayload(input: {
         whiteThreshold: scaled.layout.whiteThreshold,
         chromaThreshold: scaled.layout.chromaThreshold,
         shadowPolicy: scaled.layout.shadowPolicy,
+        layoutPolicyVersion: scaled.policyVersion,
+        detectionPolicyDecision: scaled.policyReason,
       },
       detectionUsed: scaled.detectionUsed,
       confidenceBefore: scaled.confidenceBefore,
@@ -612,6 +687,8 @@ async function processAutoScalerPayload(input: {
         whiteThreshold: normalizedLayout.whiteThreshold,
         chromaThreshold: normalizedLayout.chromaThreshold,
         shadowPolicy: normalizedLayout.shadowPolicy,
+        layoutPolicyVersion: null,
+        detectionPolicyDecision: null,
       },
       detectionUsed: null,
       confidenceBefore: null,
@@ -662,6 +739,8 @@ async function processAutoScalerPayload(input: {
       whiteThreshold: normalizedLayout.whiteThreshold,
       chromaThreshold: normalizedLayout.chromaThreshold,
       shadowPolicy: normalizedLayout.shadowPolicy,
+      layoutPolicyVersion: null,
+      detectionPolicyDecision: null,
     },
     detectionUsed: null,
     confidenceBefore: null,

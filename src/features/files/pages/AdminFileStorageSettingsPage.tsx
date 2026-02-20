@@ -24,6 +24,8 @@ import {
   ToggleRow,
   Breadcrumbs,
   Hint,
+  Card,
+  Alert,
 } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
@@ -199,7 +201,7 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
             </Hint>
           </FormField>
 
-          <div className='rounded-lg border border-border bg-muted/20 p-4 space-y-1'>
+          <Card variant='subtle-compact' padding='md' className='border-border bg-muted/20 space-y-1'>
             <div className='flex justify-between text-sm text-gray-300'>
               <span>Current mode</span>
               <span className='font-medium text-gray-100'>
@@ -209,7 +211,7 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
             <Hint variant='muted'>
               Existing file records are not auto-migrated. This setting affects new uploads.
             </Hint>
-          </div>
+          </Card>
         </FormSection>
 
         <FormSection
@@ -323,9 +325,9 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
       </div>
 
       {isFastCometMisconfigured ? (
-        <div className='mt-6 rounded-md border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100'>
+        <Alert variant='warning' className='mt-6'>
           FastComet mode requires an upload endpoint. Add it before saving.
-        </div>
+        </Alert>
       ) : null}
 
       <FormActions

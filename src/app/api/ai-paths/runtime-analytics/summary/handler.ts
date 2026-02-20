@@ -6,14 +6,14 @@ import {
   resolveRuntimeAnalyticsRangeWindow,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { startAiInsightsQueue, startAiPathRunQueue } from '@/features/jobs/server';
+import type { AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   AppErrorCodes,
   badRequestError,
   isAppError,
 } from '@/shared/errors/app-error';
 import { getQueryParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import type { AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
 
 const RANGE_VALUES: readonly AiPathRuntimeAnalyticsRange[] = ['1h', '24h', '7d', '30d'];
 
@@ -67,6 +67,20 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
             totalReports: 0,
             warningReports: 0,
             errorReports: 0,
+          },
+          traces: {
+            source: 'none',
+            sampledRuns: 0,
+            sampledSpans: 0,
+            completedSpans: 0,
+            failedSpans: 0,
+            cachedSpans: 0,
+            avgDurationMs: null,
+            p95DurationMs: null,
+            slowestSpan: null,
+            topSlowNodes: [],
+            topFailedNodes: [],
+            truncated: false,
           },
           generatedAt: new Date().toISOString(),
         },

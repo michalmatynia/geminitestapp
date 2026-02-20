@@ -14,6 +14,9 @@ import {
   Tooltip,
   FormField,
   CollapsibleSection,
+  Card,
+  Badge,
+  StatusBadge,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -161,9 +164,11 @@ export function RuleItem({
     addAutofixOperationToRule(rule, patchRule, kind);
 
   return (
-    <div
+    <Card
+      variant='subtle'
+      padding='md'
       className={cn(
-        'space-y-3 rounded-lg border border-border/60 bg-card/40 p-4 transition-opacity',
+        'space-y-3 border-border/60 bg-card/40 transition-opacity',
         isDragging ? 'opacity-50' : 'opacity-100',
         isDragTarget ? 'ring-1 ring-cyan-300/55' : '',
         rule?.sequenceGroupId ? 'border-l-2 border-cyan-400/35' : ''
@@ -193,27 +198,30 @@ export function RuleItem({
           >
             <GripVertical className='size-3.5' />
           </button>
-          <span className={cn('rounded-full border px-2 py-0.5 text-[11px]', rule ? getSeverityBadgeClasses(rule.severity) : 'border-gray-600/40 text-gray-300')}>
-            {rule ? formatSeverityLabel(rule.severity) : 'Invalid'}
-          </span>
+          {rule ? (
+            <Badge variant={rule.severity === 'error' ? 'error' : rule.severity === 'warning' ? 'warning' : 'info'} size='sm' className='font-bold uppercase'>
+              {formatSeverityLabel(rule.severity)}
+            </Badge>
+          ) : (
+            <Badge variant='neutral' size='sm' className='font-bold uppercase'>Invalid</Badge>
+          )}
           {rule ? (
             <button
               type='button'
-              className={cn(
-                'rounded border px-2 py-0.5 text-[10px] uppercase',
-                rule.enabled
-                  ? 'border-emerald-500/45 bg-emerald-500/10 text-emerald-200'
-                  : 'border-red-500/45 bg-red-500/10 text-red-200'
-              )}
               onClick={() => handleToggleRuleEnabled(draft.uid, !rule.enabled)}
             >
-              {rule.enabled ? 'Enabled' : 'Disabled'}
+              <StatusBadge
+                status={rule.enabled ? 'Enabled' : 'Disabled'}
+                variant={rule.enabled ? 'active' : 'neutral'}
+                size='sm'
+                className='font-bold uppercase'
+              />
             </button>
           ) : null}
           {isImageStudioRule ? (
-            <span className='rounded border border-teal-500/45 bg-teal-500/10 px-2 py-0.5 text-[10px] uppercase text-teal-200'>
+            <Badge variant='info' size='sm' className='border-teal-500/45 bg-teal-500/10 text-teal-200 font-bold uppercase'>
               Image Studio Rule
-            </span>
+            </Badge>
           ) : null}
           <span className='text-sm font-medium text-gray-100'>
             {rule?.title ?? 'Invalid rule'}
@@ -547,7 +555,7 @@ export function RuleItem({
             ) : null}
           </div>
 
-          <div className='grid gap-2 rounded border border-border/40 bg-foreground/5 p-3 md:grid-cols-4'>
+          <Card variant='subtle-compact' padding='sm' className='grid gap-2 border-border/40 bg-foreground/5 md:grid-cols-4'>
             <FormField label='Sequence'>
               <Input
                 type='number'
@@ -708,7 +716,7 @@ export function RuleItem({
                 <span className='ml-2 text-cyan-200/70'>({rule.sequenceGroupId})</span>
               </div>
             ) : null}
-          </div>
+          </Card>
 
           <RuleItemSimilarPatternsSection
             rule={rule}
@@ -717,7 +725,7 @@ export function RuleItem({
             onRemoveSimilar={removeSimilar}
           />
 
-          <div className='space-y-3 rounded border border-border/40 bg-foreground/5 p-3'>
+          <Card variant='subtle-compact' padding='sm' className='space-y-3 border-border/40 bg-foreground/5'>
             <div className='flex flex-wrap items-center justify-between gap-2'>
               <div className='text-xs font-semibold uppercase tracking-wide text-gray-300'>
                 Autofix Operations
@@ -725,12 +733,6 @@ export function RuleItem({
               <div className='flex items-center gap-2'>
                 <button
                   type='button'
-                  className={cn(
-                    'rounded border px-2 py-1 text-[11px]',
-                    rule.autofix?.enabled !== false
-                      ? 'border-emerald-500/45 bg-emerald-500/10 text-emerald-200'
-                      : 'border-red-500/45 bg-red-500/10 text-red-200'
-                  )}
                   onClick={() =>
                     patchRule({
                       autofix: {
@@ -740,7 +742,12 @@ export function RuleItem({
                     })
                   }
                 >
-                  {rule.autofix?.enabled !== false ? 'Autofix ON' : 'Autofix OFF'}
+                  <StatusBadge
+                    status={rule.autofix?.enabled !== false ? 'Autofix ON' : 'Autofix OFF'}
+                    variant={rule.autofix?.enabled !== false ? 'active' : 'neutral'}
+                    size='sm'
+                    className='font-bold uppercase'
+                  />
                 </button>
                 <Button
                   type='button'
@@ -764,9 +771,11 @@ export function RuleItem({
               <div className='text-xs text-gray-400'>No autofix operations configured.</div>
             ) : null}
             {(rule.autofix?.operations ?? []).map((op, index) => (
-              <div
+              <Card
                 key={`${rule.id}-autofix-${index}`}
-                className='space-y-2 rounded border border-border/40 bg-background/40 p-2'
+                variant='subtle-compact'
+                padding='sm'
+                className='space-y-2 border-border/40 bg-background/40'
               >
                 <div className='flex items-center justify-between gap-2'>
                   <div className='text-xs text-gray-300'>{formatAutofixOperation(op)}</div>
@@ -844,9 +853,9 @@ export function RuleItem({
                     />
                   </FormField>
                 )}
-              </div>
+              </Card>
             ))}
-          </div>
+          </Card>
         </div>
       ) : (
         <div className='space-y-2'>
@@ -883,6 +892,6 @@ export function RuleItem({
           ) : null}
         </div>
       </CollapsibleSection>
-    </div>
+    </Card>
   );
 }

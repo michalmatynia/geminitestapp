@@ -5,7 +5,7 @@ import { useCallback, useMemo } from 'react';
 
 import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Label, Textarea, SelectSimple, useToast } from '@/shared/ui';
+import { Button, Label, Textarea, SelectSimple, useToast, Card } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { IMAGE_STUDIO_UI_ACTIVE_KEY, IMAGE_STUDIO_UI_PRESETS_KEY, parseImageStudioUiPresets, type ImageStudioUiPreset } from '../utils/ui-presets';
@@ -92,7 +92,7 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
         </div>
       </div>
 
-      <div className='rounded-lg border border-border/60 bg-card/40 p-6 space-y-4'>
+      <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40 space-y-4'>
         <div className='space-y-1'>
           <Label className='text-xs text-gray-400'>Active UI preset</Label>
           <SelectSimple size='sm'
@@ -121,7 +121,7 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
         ) : (
           <div className='grid gap-4 md:grid-cols-2'>
             {presets.map((preset: ImageStudioUiPreset) => (
-              <div key={preset.id} className='rounded border border-border bg-card/50 p-3'>
+              <Card key={preset.id} variant='subtle-compact' padding='sm' className='border-border bg-card/50'>
                 <div className='flex items-start justify-between gap-3'>
                   <div>
                     <div className='text-sm text-gray-100'>{preset.name}</div>
@@ -135,7 +135,6 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
                   </div>
                   <div className='flex flex-col gap-2'>
                     <Button size='xs'
-                     
                       variant={activeId === preset.id ? 'default' : 'outline'}
                       onClick={() => void handleSetActive(preset.id)}
                     >
@@ -146,19 +145,19 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
                     </Button>
                   </div>
                 </div>
-                <div className='mt-3 rounded border border-border bg-card/60 p-2'>
+                <Card variant='subtle-compact' padding='sm' className='mt-3 border-border bg-card/60'>
                   <div className='text-[11px] text-gray-400'>Param UI overrides</div>
                   <Textarea size='sm'
                     readOnly
                     className='mt-1 h-20 font-mono text-[10px]'
                     value={JSON.stringify(preset.paramUiOverrides ?? {}, null, 2)}
                   />
-                </div>
-              </div>
+                </Card>
+              </Card>
             ))}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

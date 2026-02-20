@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import { Card } from '@/shared/ui';
 import { FileUploadEventsProvider } from '../contexts/FileUploadEventsContext';
 import { FileUploadEventsPanelProvider } from './file-upload-events/context/FileUploadEventsPanelContext';
 import { FileUploadEventsFilters } from './file-upload-events/FileUploadEventsFilters';
@@ -21,12 +22,12 @@ export function FileUploadEventsPanel({
   return (
     <FileUploadEventsProvider>
       <FileUploadEventsPanelProvider value={{ title, description }}>
-        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+        <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
           <FileUploadEventsHeader />
           <FileUploadEventsFilters />
           <FileUploadEventsTable />
           <FileUploadEventsPagination />
-        </div>
+        </Card>
       </FileUploadEventsPanelProvider>
     </FileUploadEventsProvider>
   );

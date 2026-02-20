@@ -41,6 +41,20 @@ type RuntimeTraceSnapshot = {
     eventCount?: number;
     sampledEventCount?: number;
     droppedEventCount?: number;
+    nodeSpans?: Array<{
+      spanId?: string;
+      nodeId?: string;
+      nodeType?: string;
+      nodeTitle?: string | null;
+      status?: string;
+      iteration?: number;
+      attempt?: number;
+      startedAt?: string | null;
+      finishedAt?: string | null;
+      durationMs?: number | null;
+      error?: string | null;
+      cached?: boolean;
+    }>;
     summary?: {
       durationMs?: number;
       iterationCount?: number;
@@ -109,6 +123,32 @@ export function RunDetailDialog({
     if (!runtimeTraceRaw || typeof runtimeTraceRaw !== 'object') return null;
     return runtimeTraceRaw as RuntimeTraceSnapshot;
   }, [runDetail]);
+
+  const slowestRuntimeNodeSpan = useMemo(() => {
+    const spans = runtimeTrace?.profile?.nodeSpans;
+    if (!Array.isArray(spans) || spans.length === 0) return null;
+    return spans.reduce<
+      | {
+        spanId?: string;
+        nodeId?: string;
+        nodeType?: string;
+        durationMs?: number | null;
+      }
+      | null
+    >((slowest, current) => {
+      const currentDuration =
+        typeof current.durationMs === 'number' && Number.isFinite(current.durationMs)
+          ? current.durationMs
+          : null;
+      if (currentDuration === null) return slowest;
+      const slowestDuration =
+        slowest && typeof slowest.durationMs === 'number' ? slowest.durationMs : null;
+      if (slowestDuration === null || currentDuration > slowestDuration) {
+        return current;
+      }
+      return slowest;
+    }, null);
+  }, [runtimeTrace]);
 
   const isScheduledRun = Boolean(runDetail?.run?.triggerEvent === 'scheduled_run');
 
@@ -220,12 +260,22 @@ export function RunDetailDialog({
                 <div>
                   Iterations: {runtimeTrace.profile?.summary?.iterationCount ?? 0}
                 </div>
+                <div>
+                  Node spans: {runtimeTrace.profile?.nodeSpans?.length ?? 0}
+                </div>
               </div>
               {runtimeTrace.profile?.summary?.hottestNodes?.[0] ? (
                 <div className='mt-2 text-[11px] text-sky-100'>
                   Hottest node: {runtimeTrace.profile.summary.hottestNodes[0]?.nodeId ?? 'n/a'} (
                   {runtimeTrace.profile.summary.hottestNodes[0]?.nodeType ?? 'unknown'}) ·
                   avg {Math.round(runtimeTrace.profile.summary.hottestNodes[0]?.avgMs ?? 0)}ms
+                </div>
+              ) : null}
+              {slowestRuntimeNodeSpan ? (
+                <div className='mt-1 text-[11px] text-sky-100/90'>
+                  Slowest span: {slowestRuntimeNodeSpan.nodeId ?? 'n/a'} (
+                  {slowestRuntimeNodeSpan.nodeType ?? 'unknown'}) ·
+                  {Math.round(slowestRuntimeNodeSpan.durationMs ?? 0)}ms
                 </div>
               ) : null}
             </div>

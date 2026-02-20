@@ -1,6 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 
+import { Card } from '@/shared/ui';
 import { formatBytes, formatUsd, type VariantThumbnailInfo } from './preview-utils';
 
 export type VariantTooltipState = {
@@ -23,8 +24,10 @@ export function VariantTooltipPortal({
   }
 
   return createPortal(
-    <div
-      className='pointer-events-none fixed z-50 w-[250px] rounded border border-border/60 bg-black/85 p-2 text-[10px] text-gray-100 shadow-xl backdrop-blur-sm'
+    <Card
+      variant='subtle-compact'
+      padding='sm'
+      className='pointer-events-none fixed z-50 w-[250px] border-border/60 bg-black/85 text-[10px] text-gray-100 shadow-xl backdrop-blur-sm'
       style={{ left: position.left, top: position.top }}
     >
       <div className='truncate'><span className='text-gray-400'>Model:</span> {tooltip.variant.model || 'n/a'}</div>
@@ -41,7 +44,7 @@ export function VariantTooltipPortal({
         <span className='text-gray-400'>Actual cost:</span> {formatUsd(tooltip.variant.actualCostUsd)}
         {tooltip.variant.costEstimated ? ' (est.)' : ''}
       </div>
-    </div>,
+    </Card>,
     document.body,
   );
 }

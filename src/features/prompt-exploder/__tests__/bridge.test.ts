@@ -90,6 +90,13 @@ describe('prompt exploder bridge parties', () => {
 
     const payload = consumePromptExploderApplyPromptForCaseResolver();
     expect(payload?.prompt).toBe('Reassembled text');
+    expect(payload?.payloadVersion).toBe(2);
+    expect(payload?.status).toBe('pending');
+    expect(typeof payload?.transferId).toBe('string');
+    expect((payload?.transferId ?? '').length).toBeGreaterThan(0);
+    expect(typeof payload?.checksum).toBe('string');
+    expect((payload?.checksum ?? '').startsWith('pe-')).toBe(true);
+    expect(typeof payload?.expiresAt).toBe('string');
     expect(payload?.caseResolverContext).toEqual({
       fileId: 'file-1',
       fileName: 'Notice',
@@ -123,7 +130,38 @@ describe('prompt exploder bridge parties', () => {
     expect(secondRead).toBeNull();
   });
 
+  it('keeps provided transfer metadata when writing explicit options', () => {
+    const createdAt = new Date().toISOString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+    savePromptExploderApplyPromptForCaseResolver(
+      'Reassembled text',
+      {
+        fileId: 'file-1',
+        fileName: 'Notice',
+      },
+      undefined,
+      undefined,
+      {
+        transferId: 'transfer-fixed',
+        payloadVersion: 7,
+        status: 'pending',
+        createdAt,
+        expiresAt,
+        checksum: 'pe-fixed-checksum',
+      }
+    );
+
+    const payload = consumePromptExploderApplyPromptForCaseResolver();
+    expect(payload?.transferId).toBe('transfer-fixed');
+    expect(payload?.payloadVersion).toBe(7);
+    expect(payload?.createdAt).toBe(createdAt);
+    expect(payload?.expiresAt).toBe(expiresAt);
+    expect(payload?.checksum).toBe('pe-fixed-checksum');
+    expect(payload?.status).toBe('pending');
+  });
+
   it('sanitizes malformed party payloads', () => {
+    const freshCreatedAt = new Date().toISOString();
     window.localStorage.setItem(
       PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
       JSON.stringify({
@@ -143,7 +181,7 @@ describe('prompt exploder bridge parties', () => {
             kind: 'invalid-kind',
           },
         },
-        createdAt: '2026-02-15T00:00:00.000Z',
+        createdAt: freshCreatedAt,
       })
     );
 
@@ -204,6 +242,7 @@ describe('prompt exploder bridge parties', () => {
     const localStorage = createLocalStorageMock();
     const quotaError = new Error('Quota exceeded');
     (quotaError as Error & { name: string }).name = 'QuotaExceededError';
+    const freshCreatedAt = new Date().toISOString();
 
     localStorage.setItem(
       PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
@@ -216,7 +255,7 @@ describe('prompt exploder bridge parties', () => {
           fileName: 'Stale Local',
           sessionId: 'stale-local-session',
         },
-        createdAt: '2026-02-20T00:00:00.000Z',
+        createdAt: freshCreatedAt,
       })
     );
     sessionStorage.setItem(
@@ -230,7 +269,7 @@ describe('prompt exploder bridge parties', () => {
           fileName: 'Stale Session',
           sessionId: 'stale-session',
         },
-        createdAt: '2026-02-20T00:00:00.000Z',
+        createdAt: freshCreatedAt,
       })
     );
 
@@ -268,6 +307,7 @@ describe('prompt exploder bridge parties', () => {
   });
 
   it('keeps case resolver context when fileName is missing', () => {
+    const freshCreatedAt = new Date().toISOString();
     window.localStorage.setItem(
       PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
       JSON.stringify({
@@ -279,7 +319,7 @@ describe('prompt exploder bridge parties', () => {
           sessionId: 'ctx-session',
           documentVersionAtStart: 5,
         },
-        createdAt: '2026-02-19T00:00:00.000Z',
+        createdAt: freshCreatedAt,
       })
     );
 
@@ -293,6 +333,7 @@ describe('prompt exploder bridge parties', () => {
   });
 
   it('sanitizes malformed case resolver context metadata', () => {
+    const freshCreatedAt = new Date().toISOString();
     window.localStorage.setItem(
       PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
       JSON.stringify({
@@ -305,7 +346,7 @@ describe('prompt exploder bridge parties', () => {
           sessionId: '   ',
           documentVersionAtStart: -3,
         },
-        createdAt: '2026-02-19T00:00:00.000Z',
+        createdAt: freshCreatedAt,
       })
     );
 

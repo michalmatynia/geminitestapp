@@ -1,7 +1,7 @@
 'use client';
 
 import { DB_COLLECTION_OPTIONS } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, SelectSimple } from '@/shared/ui';
+import { Button, Input, Label, SelectSimple, Card } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -68,9 +68,9 @@ export function SimulationNodeConfigSection(): React.JSX.Element | null {
           }
         />
         {showIdHint ? (
-          <div className='mt-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100'>
+          <Card variant='warning' padding='sm' className='mt-2 text-[11px] text-amber-100'>
             This looks like a UUID, but its length is {idLength}. UUIDs should be 36 characters.
-          </div>
+          </Card>
         ) : null}
       </div>
       <p className='text-[11px] text-gray-500'>

@@ -11,10 +11,10 @@ import { prismaPathRunRepository } from '@/features/ai/ai-paths/services/path-ru
 import {
   cancelPathRunWithRepository,
 } from '@/features/ai/ai-paths/services/path-run-service';
-import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 import { removePathRunQueueEntries } from '@/features/jobs/workers/aiPathRunQueue';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 
@@ -22,10 +22,14 @@ const resolveFallbackRepository = (
   primary: AiPathRunRepository
 ): AiPathRunRepository | null => {
   if (primary === prismaPathRunRepository) {
-    return process.env['MONGODB_URI'] ? mongoPathRunRepository : null;
+    return process.env['MONGODB_URI']
+      ? (mongoPathRunRepository as AiPathRunRepository)
+      : null;
   }
   if (primary === mongoPathRunRepository) {
-    return process.env['DATABASE_URL'] ? prismaPathRunRepository : null;
+    return process.env['DATABASE_URL']
+      ? prismaPathRunRepository
+      : null;
   }
   return null;
 };
@@ -62,7 +66,7 @@ export async function POST_handler(
   }
   assertAiPathRunAccess(access, existing);
   if (TERMINAL_STATUSES.has(existing.status)) {
-    await removePathRunQueueEntries([runId]);
+    await cancelPathRunWithRepository(repoForRun, runId);
     return NextResponse.json({
       run: existing,
       canceled: false,
@@ -71,6 +75,5 @@ export async function POST_handler(
     });
   }
   const run: unknown = await cancelPathRunWithRepository(repoForRun, runId);
-  await removePathRunQueueEntries([runId]);
   return NextResponse.json({ run, canceled: true, runId });
 }

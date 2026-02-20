@@ -127,6 +127,9 @@ export function GenerationToolbarAutoScalerSection({
           />,
           'inline-flex w-full'
         )}
+        <div className='text-[10px] text-gray-500'>
+          Detection mode and thresholds follow Object Layout advanced settings.
+        </div>
       </div>
       <div className='mt-2 space-y-2'>
         <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_72px] sm:items-center'>

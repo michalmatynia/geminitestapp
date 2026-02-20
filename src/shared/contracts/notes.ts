@@ -7,6 +7,8 @@ import { dtoBaseSchema, namedDtoSchema } from './base';
  */
 export const notebookSchema = namedDtoSchema.extend({
   description: z.string().nullable(),
+  color: z.string().nullable().optional(),
+  defaultThemeId: z.string().nullable().optional(),
 });
 
 export type NotebookDto = z.infer<typeof notebookSchema>;
@@ -53,11 +55,14 @@ export type ThemeUpdateInput = UpdateNoteThemeDto;
 /**
  * Note Category Contract
  */
-export const noteCategorySchema = namedDtoSchema.extend({
-  description: z.string().nullable(),
-  color: z.string().nullable(),
-  parentId: z.string().nullable(),
-  notebookId: z.string().nullable(),
+export const noteCategorySchema = dtoBaseSchema.extend({
+  name: z.string().optional(),
+  description: z.string().nullable().optional(),
+  color: z.string().nullable().optional(),
+  parentId: z.string().nullable().optional(),
+  notebookId: z.string().nullable().optional(),
+  themeId: z.string().nullable().optional(),
+  sortIndex: z.number().nullable().optional(),
 });
 
 export type NoteCategoryDto = z.infer<typeof noteCategorySchema>;
@@ -85,8 +90,10 @@ export type NoteCategoryRecordWithChildrenDto = z.infer<typeof noteCategoryRecor
 /**
  * Note Tag Contract
  */
-export const noteTagSchema = namedDtoSchema.extend({
-  color: z.string().nullable(),
+export const noteTagSchema = dtoBaseSchema.extend({
+  name: z.string().optional(),
+  color: z.string().nullable().optional(),
+  notebookId: z.string().nullable().optional(),
 });
 
 export type NoteTagDto = z.infer<typeof noteTagSchema>;
@@ -111,20 +118,29 @@ export type TagUpdateInput = UpdateNoteTagDto;
 export const noteEditorTypeSchema = z.enum(['markdown', 'rich-text', 'plain-text']);
 export type NoteEditorType = z.infer<typeof noteEditorTypeSchema>;
 
-export const noteSchema = namedDtoSchema.extend({
+export const noteSchema = dtoBaseSchema.extend({
+  name: z.string().optional(),
   title: z.string(),
   content: z.string(),
   description: z.string().nullable().optional(),
   editorType: noteEditorTypeSchema,
   notebookId: z.string().nullable(),
-  categoryId: z.string().nullable(),
-  themeId: z.string().nullable(),
+  categoryId: z.string().nullable().optional(),
+  themeId: z.string().nullable().optional(),
+  color: z.string().nullable().optional(),
   isPinned: z.boolean().optional(),
   isFavorite: z.boolean().optional(),
   isArchived: z.boolean().optional(),
   isPublic: z.boolean().optional(),
   shareLink: z.string().nullable().optional(),
-  tags: z.array(z.string()).optional(),
+  tags: z.array(z.string()).default([]),
+  tagIds: z.array(z.string()).default([]),
+  categories: z.array(z.string()).default([]),
+  categoryIds: z.array(z.string()).default([]),
+  relatedNoteIds: z.array(z.string()).default([]),
+  relations: z.array(z.any()).default([]),
+  relationsFrom: z.array(z.any()).optional(),
+  relationsTo: z.array(z.any()).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -187,11 +203,12 @@ export type RelatedNoteDto = z.infer<typeof relatedNoteSchema>;
 export type RelatedNote = RelatedNoteDto;
 
 export const noteWithRelationsSchema = noteSchema.extend({
-  tags: z.array(noteTagSchema),
-  category: noteCategorySchema.nullable(),
-  notebook: notebookSchema.nullable(),
-  theme: noteThemeSchema.nullable(),
-  relations: z.array(noteRelationSchema),
+  tags: z.array(z.union([noteTagSchema, noteTagRelationSchema.extend({ tag: noteTagSchema.optional() })])).optional(),
+  category: z.union([noteCategorySchema, noteCategoryRelationSchema.extend({ category: noteCategorySchema.optional() })]).nullable().optional(),
+  categories: z.array(z.union([noteCategorySchema, noteCategoryRelationSchema.extend({ category: noteCategorySchema.optional() })])).optional(),
+  notebook: notebookSchema.nullable().optional(),
+  theme: noteThemeSchema.nullable().optional(),
+  relations: z.array(noteRelationSchema).optional(),
 });
 
 export type NoteWithRelationsDto = z.infer<typeof noteWithRelationsSchema>;

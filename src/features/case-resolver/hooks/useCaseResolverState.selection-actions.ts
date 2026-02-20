@@ -77,14 +77,18 @@ export const useCaseResolverStateSelectionActions = ({
   const handleUpdateActiveFileParties = useCallback(
     (patch: Partial<Pick<CaseResolverFile, 'addresser' | 'addressee' | 'referenceCaseIds'>>): void => {
       if (!workspace.activeFileId) return;
-      updateWorkspace((current) => ({
-        ...current,
-        files: current.files.map((file) =>
-          file.id === current.activeFileId
-            ? { ...file, ...patch, updatedAt: new Date().toISOString() }
-            : file
-        ),
-      }), { persistToast: 'Parties updated.' });
+      updateWorkspace((current) => {
+        const activeFile = current.files.find((file) => file.id === current.activeFileId) ?? null;
+        if (activeFile?.isLocked) return current;
+        return {
+          ...current,
+          files: current.files.map((file) =>
+            file.id === current.activeFileId
+              ? { ...file, ...patch, updatedAt: new Date().toISOString() }
+              : file
+          ),
+        };
+      }, { persistToast: 'Parties updated.' });
     },
     [updateWorkspace, workspace.activeFileId]
   );

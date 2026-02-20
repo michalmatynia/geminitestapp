@@ -12,6 +12,8 @@ import {
   SelectSimple,
   Textarea,
   LoadingState,
+  Card,
+  Alert,
 } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -82,19 +84,19 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
         <LoadingState message='Loading learner agents...' size='sm' className='py-2' />
       )}
       {agentsQuery.error && (
-        <div className='rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100'>
+        <Alert variant='warning'>
           Failed to load learner agents.
-        </div>
+        </Alert>
       )}
 
       {selectedAgent ? (
-        <div className='rounded-md border border-border bg-card/60 px-3 py-2 text-[11px] text-gray-300'>
+        <Card variant='subtle-compact' padding='sm' className='border-border bg-card/60 text-[11px] text-gray-300'>
           <div className='text-gray-200'>{selectedAgent.name}</div>
           <div className='mt-1 text-gray-400'>
             LLM: {selectedAgent.llmModel} • Embed: {selectedAgent.embeddingModel} • Collections:{' '}
             {(selectedAgent.collectionIds ?? []).length}
           </div>
-        </div>
+        </Card>
       ) : null}
 
       <div>
@@ -118,15 +120,12 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
         </div>
       </div>
 
-      <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
+      <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border bg-card/50 text-xs text-gray-300'>
         <span>Include sources</span>
         <Button
+          variant={learnerConfig.includeSources ? 'success' : 'default'}
+          size='xs'
           type='button'
-          className={`rounded border px-3 py-1 text-xs ${
-            learnerConfig.includeSources
-              ? 'text-emerald-200 hover:bg-emerald-500/10'
-              : 'text-gray-300 hover:bg-muted/50'
-          }`}
           onClick={(): void =>
             updateSelectedNodeConfig({
               learnerAgent: {
@@ -138,7 +137,7 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
         >
           {learnerConfig.includeSources ? 'Enabled' : 'Disabled'}
         </Button>
-      </div>
+      </Card>
     </div>
   );
 }

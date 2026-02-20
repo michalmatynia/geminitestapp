@@ -21,6 +21,16 @@ related_components:
 - Added focused CI regression workflow for Case Resolver save/OCR runtime paths.
 - Added `GET /api/case-resolver/ocr/observability` snapshot endpoint for OCR SLO monitoring.
 - Added workspace debug observability snapshot (`p95`, conflict/success rates, payload trends) in debug panel.
+- Added Prompt Exploder transfer metadata contract (`transferId`, `payloadVersion`, `checksum`, `status`, `expiresAt`).
+- Added transfer idempotency cache to prevent duplicate Prompt Exploder apply replay after refresh or stale bridge state.
+- Hardened capture mapping target resolution to proposal-bound file only (removed implicit fallback target mutation path).
+- Expanded Prompt Exploder transfer diagnostics to expose transfer identity/version/status/checksum in Case Resolver UI.
+- Added Prompt Exploder -> Case Resolver Capture handoff runbook.
+- Added transfer lifecycle module for Prompt Exploder handoff (`pending|blocked|capture_review|applied|failed|dismissed|discarded|expired`).
+- Added expired transfer recovery path in Case Resolver banner (`status=expired`, explicit discard action).
+- Added bridge payload snapshot readers and expired-payload discard recovery without auto-applying stale payloads.
+- Added capture mapping apply timing instrumentation (`cleanupDurationMs`, `mutationDurationMs`, `totalDurationMs`) in diagnostics/events.
+- Added regression coverage for transfer lifecycle and stale transfer discard behavior.
 
 ## Changelog Entry Template
 

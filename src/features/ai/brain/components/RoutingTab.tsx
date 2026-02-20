@@ -1,6 +1,6 @@
 'use client';
 
-import { Checkbox, SimpleSettingsList } from '@/shared/ui';
+import { Checkbox, SimpleSettingsList, Card } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 import { type AiBrainFeature, type AiBrainAssignment } from '../settings';
@@ -42,19 +42,19 @@ export function RoutingTab(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <div className='rounded-lg border border-border/60 bg-card/30 p-4'>
+      <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/30'>
         <div className='text-xs text-gray-300'>
           Configure global defaults first, then enable per-feature overrides where needed.
         </div>
-      </div>
+      </Card>
 
-      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+      <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
         <div className='text-xs uppercase text-gray-500 font-semibold mb-2'>Global defaults</div>
         <AssignmentEditor
           assignment={settings.defaults}
           onChange={handleDefaultChange}
         />
-      </div>
+      </Card>
 
       <SimpleSettingsList
         items={ROUTING_FEATURES.map((feature: FeatureConfig) => {

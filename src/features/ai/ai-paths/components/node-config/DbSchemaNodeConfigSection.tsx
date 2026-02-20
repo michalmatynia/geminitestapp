@@ -11,7 +11,8 @@ import {
   Label, 
   SelectSimple, 
   SearchInput,
-  Pagination
+  Pagination,
+  Card,
 } from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
@@ -239,7 +240,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div className='rounded-md border border-purple-800/50 bg-purple-950/20 p-4'>
+      <Card variant='subtle' padding='md' className='border-purple-800/50 bg-purple-950/20'>
         <div className='mb-3 text-sm font-medium text-purple-300'>
           Database Schema Browser
         </div>
@@ -300,7 +301,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                 <Label className='text-xs text-gray-400'>
                   Select Collections ({schemaConfig.collections?.length ?? 0} selected)
                 </Label>
-                <div className='mt-2 max-h-[200px] space-y-1 overflow-y-auto rounded-md border border-border bg-card/50 p-2'>
+                <Card variant='subtle-compact' padding='sm' className='mt-2 max-h-[200px] space-y-1 overflow-y-auto border-border bg-card/50'>
                   {schemaCollections.map((coll) => {
                     const includeProvider = fetchedDbSchema?.provider === 'multi';
                     const key = buildCollectionKey(coll, includeProvider);
@@ -330,43 +331,37 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                       </button>
                     );
                   })}
-                </div>
+                </Card>
               </div>
             )}
 
             <div className='grid grid-cols-2 gap-3'>
-              <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
+              <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border bg-card/50 text-xs text-gray-300'>
                 <span>Include Fields</span>
                 <Button
+                  variant={schemaConfig.includeFields ? 'success' : 'default'}
+                  size='xs'
                   type='button'
-                  className={`rounded border px-3 py-1 text-xs ${
-                    schemaConfig.includeFields
-                      ? 'text-emerald-200 hover:bg-emerald-500/10'
-                      : 'text-gray-500 hover:bg-muted/50'
-                  }`}
                   onClick={() =>
                     updateSchemaConfig({ includeFields: !schemaConfig.includeFields })
                   }
                 >
                   {schemaConfig.includeFields ? 'Yes' : 'No'}
                 </Button>
-              </div>
-              <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
+              </Card>
+              <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border bg-card/50 text-xs text-gray-300'>
                 <span>Include Relations</span>
                 <Button
+                  variant={schemaConfig.includeRelations ? 'success' : 'default'}
+                  size='xs'
                   type='button'
-                  className={`rounded border px-3 py-1 text-xs ${
-                    schemaConfig.includeRelations
-                      ? 'text-emerald-200 hover:bg-emerald-500/10'
-                      : 'text-gray-500 hover:bg-muted/50'
-                  }`}
                   onClick={() =>
                     updateSchemaConfig({ includeRelations: !schemaConfig.includeRelations })
                   }
                 >
                   {schemaConfig.includeRelations ? 'Yes' : 'No'}
                 </Button>
-              </div>
+              </Card>
             </div>
 
             <div>
@@ -386,7 +381,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
             </div>
 
             {/* Preview of selected collections */}
-            <div className='rounded-md border border-border bg-card/40 p-3'>
+            <Card variant='subtle-compact' padding='sm' className='border-border bg-card/40'>
               <div className='mb-2 text-[10px] uppercase text-gray-500'>Preview</div>
               <div className='max-h-[150px] overflow-y-auto text-[11px] text-gray-300'>
                 {(schemaConfig.mode === 'all'
@@ -420,10 +415,10 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                   <div className='italic text-gray-500'>No collections selected</div>
                 )}
               </div>
-            </div>
+            </Card>
 
             {/* Data Browser */}
-            <div className='rounded-md border border-cyan-800/50 bg-cyan-950/20 p-3'>
+            <Card variant='subtle-compact' padding='sm' className='border-cyan-800/50 bg-cyan-950/20'>
               <div className='mb-3 text-[11px] font-medium text-cyan-300'>
                 Data Browser
               </div>
@@ -471,7 +466,8 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                   {browseCollection && (
                     <Button
                       type='button'
-                      className='rounded border px-3 text-xs text-gray-300 hover:bg-muted/50'
+                      variant='outline'
+                      size='sm'
                       onClick={() => {
                         setBrowseCollection(null);
                         setBrowseSkip(0);
@@ -510,7 +506,8 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                     />
                     <Button
                       type='button'
-                      className='rounded border border-cyan-700 px-3 text-xs text-cyan-300 hover:bg-cyan-500/10'
+                      variant='info'
+                      size='sm'
                       onClick={() => {
                         setBrowseSkip(0);
                         setBrowseQuery(browseSearch.trim());
@@ -563,9 +560,11 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                           displayName = '';
                         }
                         return (
-                          <div
+                          <Card
                             key={docId}
-                            className='rounded-md border border-border bg-card/50'
+                            variant='subtle-compact'
+                            padding='none'
+                            className='border-border bg-card/50'
                           >
                             <button
                               type='button'
@@ -592,7 +591,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                                 </pre>
                               </div>
                             )}
-                          </div>
+                          </Card>
                         );
                       })}
                     </div>
@@ -615,7 +614,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                   )}
                 </div>
               )}
-            </div>
+            </Card>
           </div>
         ) : (
           <div className='space-y-3'>
@@ -624,7 +623,8 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
             </div>
             <Button
               type='button'
-              className='w-full rounded-md border border-purple-700 text-xs text-purple-200 hover:bg-purple-500/10'
+              variant='outline'
+              className='w-full'
               onClick={(): void => {
                 void schemaQuery.refetch();
               }}
@@ -633,7 +633,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
             </Button>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

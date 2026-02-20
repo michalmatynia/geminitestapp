@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Button, Input, Textarea, Alert, SelectSimple, StatusBadge, FormField } from '@/shared/ui';
+import { Button, Input, Textarea, Alert, SelectSimple, StatusBadge, FormField, Card } from '@/shared/ui';
 
 export interface ApiPreset {
   label: string;
@@ -66,7 +66,7 @@ export function ApiConsole({
     { value: 'DELETE', label: 'DELETE' },
   ];
   return (
-    <div className='rounded-lg border border-border bg-card/60 p-4'>
+    <Card variant='subtle' padding='md' className='bg-card/60'>
       <div className='mb-3'>
         <h3 className='text-sm font-semibold text-white'>{title}</h3>
         <p className='text-xs text-gray-400'>{description}</p>
@@ -78,7 +78,7 @@ export function ApiConsole({
             type='button'
             variant='outline'
             size='xs'
-            className='rounded-full border px-3 py-1'
+            className='rounded-full px-3'
             onClick={() => {
               setMethod(preset.method);
               if (setPath && preset.path) setPath(preset.path);
@@ -156,7 +156,7 @@ export function ApiConsole({
         </Alert>
       )}
       {response && (
-        <div className='mt-3 rounded-md border border-border bg-card p-3'>
+        <Card variant='subtle-compact' padding='sm' className='mt-3 bg-card'>
           {(response.status || response.statusText) && (
             <div className='text-xs text-gray-400 mb-2'>
               Status:{' '}
@@ -176,8 +176,8 @@ export function ApiConsole({
           <pre className='mt-2 max-h-80 overflow-auto whitespace-pre-wrap text-xs text-gray-200'>
             {JSON.stringify(response.data, null, 2)}
           </pre>
-        </div>
+        </Card>
       )}
-    </div>
+    </Card>
   );
 }

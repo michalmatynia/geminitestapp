@@ -25,7 +25,7 @@ import type {
 } from '@/features/ai/ai-paths/lib';
 import { DB_PROVIDER_PLACEHOLDERS } from '@/features/ai/ai-paths/lib';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import { Button, Label, Textarea, SelectSimple, Input, Tooltip } from '@/shared/ui';
+import { Button, Label, Textarea, SelectSimple, Input, Tooltip, Card } from '@/shared/ui';
 
 import {
   extractCodeSnippets,
@@ -387,7 +387,7 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
       <div onFocusCapture={(): void => setPlaceholderTarget('query')}>
         <DatabaseQueryInputControls />
       </div>
-      <div className='flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-card/35 px-3 py-2 text-[10px] text-gray-300'>
+      <Card variant='subtle-compact' padding='sm' className='flex flex-wrap items-center gap-2 border-border/60 bg-card/35 text-[10px] text-gray-300'>
         <span className='uppercase tracking-wide text-gray-500'>Provider</span>
         <span className='rounded border border-border/70 bg-card/70 px-2 py-0.5'>
           Requested: {queryConfig.provider}
@@ -395,7 +395,7 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
         <span className='rounded border border-border/70 bg-card/70 px-2 py-0.5'>
           Effective: {resolvedProvider}
         </span>
-      </div>
+      </Card>
 
       <DatabaseAiQueryReviewSection
         pendingAiQuery={pendingAiQuery}
@@ -485,7 +485,7 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
         </div>
       </div>
 
-      <div className='flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-card/40 px-3 py-2'>
+      <Card variant='subtle-compact' padding='sm' className='flex flex-wrap items-center justify-between gap-2 border-border/60 bg-card/40'>
         <div>
           <div className='text-xs font-medium text-gray-200'>Placeholders</div>
           <div className='text-[10px] text-gray-400'>
@@ -494,13 +494,14 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
         </div>
         <Button
           type='button'
-          className='h-7 rounded-md border border-sky-500/40 px-3 text-[10px] text-sky-100 hover:bg-sky-500/10'
+          variant='info'
+          size='xs'
           onClick={(): void => setPlaceholderMatrixOpen(true)}
         >
           <LayoutGrid className='mr-2 h-3.5 w-3.5' />
           Placeholders
         </Button>
-      </div>
+      </Card>
 
       <PlaceholderMatrixDialog
         open={placeholderMatrixOpen}
@@ -571,7 +572,7 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
                         <Button
                           key={field.name}
                           type='button'
-                          className='rounded-md border border/50 bg-gray-800/30 px-2 py-0.5 text-[9px] text-gray-300 hover:bg-gray-700/50'
+                          className='rounded-md border border/50 bg-card/30 px-2 py-0.5 text-[9px] text-gray-300 hover:bg-gray-700/50'
                           onClick={(): void => {
                             const fieldQuery = `"${field.name}": "{{value}}"`;
                             const current = queryTemplateValue.trim();

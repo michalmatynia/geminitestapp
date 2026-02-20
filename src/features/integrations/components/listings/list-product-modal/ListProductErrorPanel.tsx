@@ -28,9 +28,9 @@ export function ListProductErrorPanel(): React.JSX.Element {
           <div className='flex flex-wrap items-center gap-2'>
             <ActionMenu
               trigger='Retry image export'
-              variant='secondary'
+              variant='destructive'
               size='sm'
-              triggerClassName='bg-red-500/20 text-red-100 hover:bg-red-500/30 px-3 py-1.5 h-auto w-auto'
+              triggerClassName='px-3 py-1.5 h-auto w-auto'
               disabled={submitting}
               align='start'
             >
@@ -38,7 +38,7 @@ export function ListProductErrorPanel(): React.JSX.Element {
                 <DropdownMenuItem
                   key={preset.id}
                   onSelect={() => onRetryImageExport(preset)}
-                  className='text-gray-200 focus:bg-gray-800/70'
+                  className='text-gray-200 focus:bg-card/60'
                 >
                   <div className='flex flex-col'>
                     <span className='text-sm'>{preset.label}</span>

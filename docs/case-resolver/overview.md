@@ -26,6 +26,7 @@ Case Resolver is the legal/case workspace module for:
 3. Open case content in editor, save with conflict-safe persistence.
 4. Filter/search/sort high-volume case lists.
 5. Export documents to PDF.
+6. Round-trip content through Prompt Exploder and optionally apply Case Resolver Capture mapping.
 
 ## Runtime Guarantees
 
@@ -33,6 +34,7 @@ Case Resolver is the legal/case workspace module for:
 - Save conflicts return server state and support client-side retry flows.
 - OCR jobs run via queue where available, with inline fallback if Redis is unavailable.
 - OCR uses timeout + retryable classification + retry attempts.
+- Prompt Exploder transfers are bound to file/session context and guarded against wrong-target apply.
 
 ## Current Health Targets
 

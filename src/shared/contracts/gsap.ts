@@ -7,6 +7,11 @@ import { z } from 'zod';
 export const animationPresetSchema = z.enum([
   'none',
   'fade',
+  'fadeIn',
+  'fadeInUp',
+  'fadeInDown',
+  'fadeInLeft',
+  'fadeInRight',
   'slide-up',
   'slide-down',
   'slide-left',

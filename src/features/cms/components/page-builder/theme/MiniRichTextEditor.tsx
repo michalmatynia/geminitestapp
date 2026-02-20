@@ -122,7 +122,7 @@ export function MiniRichTextEditor({
   return (
     <div className='space-y-2'>
       <Label className='text-[10px] uppercase tracking-wider text-gray-500'>{label}</Label>
-      <Card variant='subtle-compact' padding='none' className='flex flex-wrap items-center gap-1 bg-gray-900/60 px-2 py-1'>
+      <Card variant='subtle-compact' padding='none' className='flex flex-wrap items-center gap-1 bg-card/60 px-2 py-1'>
         {showFormatSelect && (
           <div className='mr-2'>
             <SelectSimple
@@ -135,7 +135,7 @@ export function MiniRichTextEditor({
                 { value: 'heading-2', label: 'Heading 2' },
                 { value: 'heading-3', label: 'Heading 3' },
               ]}
-              triggerClassName='h-7 w-32 bg-gray-800/60 text-xs'
+              triggerClassName='h-7 w-32 bg-card/40 text-xs'
             />
           </div>
         )}
@@ -179,7 +179,7 @@ export function MiniRichTextEditor({
           <Link2 className='size-4' />
         </RichTextToolbarButton>
       </Card>
-      <Card variant='subtle-compact' padding='none' className='bg-gray-800/40'>
+      <Card variant='subtle-compact' padding='none' className='bg-card/40'>
         <EditorContent
           editor={editor}
           className='px-3 py-2 [&_.ProseMirror]:min-h-[80px] [&_.ProseMirror]:outline-none [&_.ProseMirror_h1]:text-xl [&_.ProseMirror_h1]:font-semibold [&_.ProseMirror_h2]:text-lg [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h3]:text-base [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_p]:my-1 [&_.ProseMirror_ul]:ml-5 [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ol]:ml-5 [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_a]:text-blue-400 [&_.ProseMirror_a]:underline'

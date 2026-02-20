@@ -26,6 +26,7 @@ import {
   LOCAL_RUN_STEP_CHUNK,
 } from '@/shared/contracts/ai-paths-runtime';
 
+import { evaluateLocalExecutionSecurity } from './local-execution-security';
 import { 
   buildActivePathConfig, 
   buildDebugSnapshot, 
@@ -592,6 +593,60 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       args.toast('This path is deactivated. Activate it to run.', { variant: 'info' });
       return;
     }
+    const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id ?? 'manual';
+    const pendingSimulationContext = args.pendingSimulationContextRef.current ?? null;
+    const triggerContextArgs = {
+      triggerNode,
+      triggerEvent,
+      event: event || undefined,
+      sessionUser: args.sessionUser,
+      activePathId: args.activePathId,
+      pathName: args.pathName,
+      activeTab: args.activeTab,
+      activeTrigger: args.activeTrigger,
+    };
+    const triggerContext = {
+      ...buildTriggerContext(triggerContextArgs),
+      ...(pendingSimulationContext ?? {}),
+      ...(contextOverride ?? {}),
+    };
+    const localSecurityIssues = evaluateLocalExecutionSecurity(args.normalizedNodes);
+    if (args.executionMode === 'local' && localSecurityIssues.length > 0) {
+      const timestamp = new Date().toISOString();
+      const message =
+        'Local run blocked: inline credentials detected. Switch execution mode to Server or use connection-based auth.';
+      args.appendRuntimeEvent({
+        source: 'local',
+        kind: 'run_blocked',
+        level: 'warn',
+        timestamp,
+        message,
+        nodeId: triggerNode.id,
+        nodeType: triggerNode.type,
+        nodeTitle: triggerNode.title ?? null,
+        metadata: {
+          localExecutionSecurityBlocked: true,
+          issueCount: localSecurityIssues.length,
+          issues: localSecurityIssues.slice(0, 6),
+        },
+      });
+      args.setNodeStatus({
+        nodeId: triggerNode.id,
+        status: 'blocked',
+        source: 'local',
+        nodeType: triggerNode.type,
+        nodeTitle: triggerNode.title ?? null,
+        kind: 'node_status',
+        level: 'warn',
+        message,
+        metadata: {
+          localExecutionSecurityBlocked: true,
+          issueCount: localSecurityIssues.length,
+        },
+      });
+      args.toast(message, { variant: 'error' });
+      return;
+    }
     const validationReport = evaluateAiPathsValidationPreflight({
       nodes: args.normalizedNodes,
       edges: args.sanitizedEdges,
@@ -790,29 +845,26 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
     if (args.serverRunActiveRef.current) {
       args.stopServerRunStream();
     }
-    const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id ?? 'manual';
+    if (args.executionMode === 'server') {
+      if (mode === 'step') {
+        args.toast('Step mode is only available in Local execution.', { variant: 'info' });
+        return;
+      }
+      if (args.runInFlightRef.current) {
+        args.toast('A local run is already in progress.', { variant: 'info' });
+        return;
+      }
+      args.pendingSimulationContextRef.current = null;
+      await args.runServerStream(triggerNode, triggerEvent, triggerContext);
+      return;
+    }
     if (args.runInFlightRef.current) {
       if (args.runMode === 'automatic' && mode === 'run') {
-        const triggerContextArgs = {
-          triggerNode,
-          triggerEvent,
-          event: event || undefined,
-          sessionUser: args.sessionUser,
-          activePathId: args.activePathId,
-          pathName: args.pathName,
-          activeTab: args.activeTab,
-          activeTrigger: args.activeTrigger
-        };
-        const queuedContext = {
-          ...buildTriggerContext(triggerContextArgs),
-          ...(args.pendingSimulationContextRef.current ?? {}),
-          ...(contextOverride ?? {}),
-        };
         args.pendingSimulationContextRef.current = null;
         args.queuedRunsRef.current.push({
           triggerNodeId: triggerNode.id,
           pathId: args.activePathId ?? null,
-          contextOverride: queuedContext,
+          contextOverride: triggerContext,
           queuedAt: new Date().toISOString(),
         });
         const position = args.queuedRunsRef.current.length;
@@ -865,22 +917,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       message: `Node ${triggerNode.title ?? triggerNode.id} started.`,
     });
     args.abortControllerRef.current = new AbortController();
-    const simulationContext = args.pendingSimulationContextRef.current ?? null;
-    const triggerContextArgs = {
-      triggerNode,
-      triggerEvent,
-      event: event || undefined,
-      sessionUser: args.sessionUser,
-      activePathId: args.activePathId,
-      pathName: args.pathName,
-      activeTab: args.activeTab,
-      activeTrigger: args.activeTrigger
-    };
-    const triggerContext = {
-      ...buildTriggerContext(triggerContextArgs),
-      ...(simulationContext ?? {}),
-      ...(contextOverride ?? {}),
-    };
+    const simulationContext = pendingSimulationContext;
     args.triggerContextRef.current = triggerContext;
     args.pendingSimulationContextRef.current = null;
     const immediateEntityId =

@@ -60,7 +60,7 @@ export function ImagePickerField({
   return (
     <FormField label={label}>
       <div className='space-y-2 mt-1'>
-        <div className='relative flex h-28 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-gray-800/30'>
+        <div className='relative flex h-28 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-card/30'>
           {value ? (
             <NextImage
               src={value}
@@ -147,7 +147,7 @@ export function Asset3DPickerField({
   return (
     <FormField label={label}>
       <div className='space-y-2 mt-1'>
-        <div className='relative flex h-40 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-gray-800/30'>
+        <div className='relative flex h-40 items-center justify-center overflow-hidden rounded border border-dashed border-border/50 bg-card/30'>
           {selectedAsset && modelUrl ? (
             <Viewer3D
               modelUrl={modelUrl}
@@ -258,7 +258,7 @@ export function ColorField({
         <Input
           value={value || '#ffffff'}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
-          className='h-7 flex-1 bg-gray-800/40 text-xs font-mono'
+          className='h-7 flex-1 bg-card/40 text-xs font-mono'
           maxLength={7}
           disabled={disabled}
         />
@@ -288,7 +288,7 @@ export function NumberField({
           max={max}
           step={step}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(Number(e.target.value))}
-          className='h-7 flex-1 bg-gray-800/40 text-xs'
+          className='h-7 flex-1 bg-card/40 text-xs'
           disabled={disabled}
         />
         {suffix && <span className='text-[10px] text-gray-500'>{suffix}</span>}
@@ -342,7 +342,7 @@ export function SelectField({
         disabled={disabled || false}
         options={options}
         placeholder={placeholder}
-        triggerClassName='h-7 bg-gray-800/40 text-xs mt-1'
+        triggerClassName='h-7 bg-card/40 text-xs mt-1'
       />
     </FormField>
   );
@@ -387,7 +387,7 @@ export function TextField({
         value={value || ''}
         onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
         placeholder={placeholder}
-        className='h-7 bg-gray-800/40 text-xs mt-1'
+        className='h-7 bg-card/40 text-xs mt-1'
         disabled={disabled}
       />
     </FormField>

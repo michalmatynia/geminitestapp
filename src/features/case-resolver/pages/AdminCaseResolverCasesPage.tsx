@@ -2124,12 +2124,40 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
 
   const handleDeleteCase = useCallback(
     async (fileId: string): Promise<void> => {
+      const hasLockedDescendantFiles = (
+        files: CaseResolverFile[],
+        rootId: string
+      ): boolean => {
+        const descendantIds = new Set<string>([rootId]);
+        let expanded = true;
+        while (expanded) {
+          expanded = false;
+          files.forEach((file: CaseResolverFile): void => {
+            if (descendantIds.has(file.id)) return;
+            if (!file.parentCaseId) return;
+            if (!descendantIds.has(file.parentCaseId)) return;
+            descendantIds.add(file.id);
+            expanded = true;
+          });
+        }
+        return files.some(
+          (file: CaseResolverFile): boolean =>
+            file.id !== rootId && descendantIds.has(file.id) && file.isLocked
+        );
+      };
+
       const target = workspace.files.find(
         (file: CaseResolverFile) => file.id === fileId,
       );
       if (!target) return;
       if (target.isLocked) {
         toast('Case is locked. Unlock it in Case Resolver before removing.', {
+          variant: 'warning',
+        });
+        return;
+      }
+      if (hasLockedDescendantFiles(workspace.files, fileId)) {
+        toast('Case contains locked documents. Unlock them in Case Resolver before removing the case.', {
           variant: 'warning',
         });
         return;
@@ -2258,6 +2286,12 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           }
           if (targetInBase.isLocked) {
             toast('Case is locked. Unlock it in Case Resolver before removing.', {
+              variant: 'warning',
+            });
+            return;
+          }
+          if (hasLockedDescendantFiles(baseWorkspace.files, fileId)) {
+            toast('Case contains locked documents. Unlock them in Case Resolver before removing the case.', {
               variant: 'warning',
             });
             return;

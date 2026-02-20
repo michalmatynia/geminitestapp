@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
@@ -57,11 +57,26 @@ import { GenerationToolbarMaskSection } from './generation-toolbar/GenerationToo
 import { GenerationToolbarUpscaleSection } from './generation-toolbar/GenerationToolbarUpscaleSection';
 import { studioKeys } from '../hooks/useImageStudioQueries';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
+import {
+  buildObjectLayoutPresetOptions,
+  deleteObjectLayoutCustomPreset,
+  getObjectLayoutPresetValuesFromOption,
+  IMAGE_STUDIO_OBJECT_LAYOUT_PRESETS_CHANGED_EVENT,
+  loadObjectLayoutAdvancedDefaults,
+  loadObjectLayoutCustomPresets,
+  resolveCustomPresetIdFromOptionValue,
+  resolveObjectLayoutPresetOptionValue,
+  saveObjectLayoutCustomPreset,
+  saveObjectLayoutAdvancedDefaults,
+  type ObjectLayoutCustomPreset,
+  type ObjectLayoutPresetOptionValue,
+} from '../utils/object-layout-presets';
 import { getImageStudioDocTooltip } from '../utils/studio-docs';
 import { normalizeImageStudioModelPresets } from '../utils/studio-settings';
 
 import type { ImageStudioAutoScalerResponse } from '../contracts/autoscaler';
 import type {
+  ImageStudioCenterDetectionMode,
   ImageStudioCenterResponse,
   ImageStudioCenterShadowPolicy,
 } from '../contracts/center';
@@ -79,6 +94,7 @@ type CenterMode =
 type AutoScalerMode =
   | 'client_auto_scaler_v1'
   | 'server_auto_scaler_v1';
+type CenterDetectionMode = ImageStudioCenterDetectionMode;
 type CenterShadowPolicy = ImageStudioCenterShadowPolicy;
 type CenterActionResponse = ImageStudioCenterResponse;
 type AutoScaleActionResponse = ImageStudioAutoScalerResponse;
@@ -122,8 +138,16 @@ const AUTOSCALER_REQUEST_TIMEOUT_MS = 60_000;
 const CENTER_LAYOUT_MIN_PADDING_PERCENT = 0;
 const CENTER_LAYOUT_MAX_PADDING_PERCENT = 40;
 const CENTER_LAYOUT_DEFAULT_PADDING_PERCENT = 8;
+const CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD = 16;
+const CENTER_LAYOUT_MIN_WHITE_THRESHOLD = 1;
+const CENTER_LAYOUT_MAX_WHITE_THRESHOLD = 80;
+const CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD = 10;
+const CENTER_LAYOUT_MIN_CHROMA_THRESHOLD = 0;
+const CENTER_LAYOUT_MAX_CHROMA_THRESHOLD = 80;
 const sanitizeCenterPaddingInput = (value: string): string =>
   value.replace(/[^0-9.]/g, '');
+const sanitizeCenterThresholdInput = (value: string): string =>
+  value.replace(/[^0-9]/g, '');
 const normalizeCenterPaddingPercent = (value: string): number => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return CENTER_LAYOUT_DEFAULT_PADDING_PERCENT;
@@ -131,6 +155,16 @@ const normalizeCenterPaddingPercent = (value: string): number => {
     CENTER_LAYOUT_MIN_PADDING_PERCENT,
     Math.min(CENTER_LAYOUT_MAX_PADDING_PERCENT, Number(parsed.toFixed(2)))
   );
+};
+const normalizeCenterThreshold = (
+  value: string,
+  min: number,
+  max: number,
+  fallback: number
+): number => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(min, Math.min(max, Math.round(parsed)));
 };
 
 const normalizeMaskShapeForExport = (shape: unknown): MaskShapeForExport | null => {
@@ -219,8 +253,18 @@ export function GenerationToolbar(): React.JSX.Element {
     String(CENTER_LAYOUT_DEFAULT_PADDING_PERCENT)
   );
   const [centerLayoutSplitAxes, setCenterLayoutSplitAxes] = useState(false);
+  const [centerLayoutAdvancedEnabled, setCenterLayoutAdvancedEnabled] = useState(false);
+  const [centerLayoutDetection, setCenterLayoutDetection] = useState<CenterDetectionMode>('auto');
+  const [centerLayoutWhiteThreshold, setCenterLayoutWhiteThreshold] = useState<string>(
+    String(CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD)
+  );
+  const [centerLayoutChromaThreshold, setCenterLayoutChromaThreshold] = useState<string>(
+    String(CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD)
+  );
   const [centerLayoutFillMissingCanvasWhite, setCenterLayoutFillMissingCanvasWhite] = useState(false);
   const [centerLayoutShadowPolicy, setCenterLayoutShadowPolicy] = useState<CenterShadowPolicy>('auto');
+  const [centerLayoutCustomPresets, setCenterLayoutCustomPresets] = useState<ObjectLayoutCustomPreset[]>([]);
+  const [centerLayoutPresetDraftName, setCenterLayoutPresetDraftName] = useState('');
   const [autoScaleLayoutPadding, setAutoScaleLayoutPadding] = useState<string>(
     String(CENTER_LAYOUT_DEFAULT_PADDING_PERCENT)
   );
@@ -253,6 +297,8 @@ export function GenerationToolbar(): React.JSX.Element {
   const centerAbortControllerRef = useRef<AbortController | null>(null);
   const autoScaleRequestInFlightRef = useRef(false);
   const autoScaleAbortControllerRef = useRef<AbortController | null>(null);
+  const skipCenterAdvancedDefaultsSaveRef = useRef(true);
+  const selectedCenterCustomPresetIdRef = useRef<string | null>(null);
 
   const maskShapesForExport = useMemo<MaskShapeForExport[]>(
     () =>
@@ -308,6 +354,7 @@ export function GenerationToolbar(): React.JSX.Element {
       null,
     [projectId, projectsQuery.data]
   );
+  const activeProjectId = projectId?.trim() ?? '';
   const projectCanvasSize = useMemo((): { width: number; height: number } | null => {
     const width =
       typeof activeProject?.canvasWidthPx === 'number' &&
@@ -323,6 +370,36 @@ export function GenerationToolbar(): React.JSX.Element {
     if (width < 64 || width > 32_768 || height < 64 || height > 32_768) return null;
     return { width, height };
   }, [activeProject?.canvasHeightPx, activeProject?.canvasWidthPx]);
+
+  useEffect(() => {
+    skipCenterAdvancedDefaultsSaveRef.current = true;
+    selectedCenterCustomPresetIdRef.current = null;
+    setCenterLayoutPresetDraftName('');
+    setCenterLayoutCustomPresets(loadObjectLayoutCustomPresets(activeProjectId));
+    const persistedDefaults = loadObjectLayoutAdvancedDefaults(activeProjectId);
+    if (!persistedDefaults) return;
+    setCenterLayoutDetection(persistedDefaults.detection);
+    setCenterLayoutShadowPolicy(persistedDefaults.shadowPolicy);
+    setCenterLayoutWhiteThreshold(String(persistedDefaults.whiteThreshold));
+    setCenterLayoutChromaThreshold(String(persistedDefaults.chromaThreshold));
+  }, [activeProjectId]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const syncCustomPresets = (): void => {
+      setCenterLayoutCustomPresets(loadObjectLayoutCustomPresets(activeProjectId));
+    };
+    const handleStorage = (event: StorageEvent): void => {
+      if (event.key && !event.key.includes('image_studio_object_layout_custom_presets_')) return;
+      syncCustomPresets();
+    };
+    syncCustomPresets();
+    window.addEventListener(IMAGE_STUDIO_OBJECT_LAYOUT_PRESETS_CHANGED_EVENT, syncCustomPresets);
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener(IMAGE_STUDIO_OBJECT_LAYOUT_PRESETS_CHANGED_EVENT, syncCustomPresets);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [activeProjectId]);
 
   const cropDiagnosticsRef = useRef<CropRectResolutionDiagnostics | null>(null);
 
@@ -678,6 +755,84 @@ export function GenerationToolbar(): React.JSX.Element {
   const centerLayoutPaddingYPercent = useMemo(() => {
     return normalizeCenterPaddingPercent(centerLayoutPaddingY);
   }, [centerLayoutPaddingY]);
+  const centerLayoutWhiteThresholdValue = useMemo(() => {
+    return normalizeCenterThreshold(
+      centerLayoutWhiteThreshold,
+      CENTER_LAYOUT_MIN_WHITE_THRESHOLD,
+      CENTER_LAYOUT_MAX_WHITE_THRESHOLD,
+      CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD
+    );
+  }, [centerLayoutWhiteThreshold]);
+  const centerLayoutChromaThresholdValue = useMemo(() => {
+    return normalizeCenterThreshold(
+      centerLayoutChromaThreshold,
+      CENTER_LAYOUT_MIN_CHROMA_THRESHOLD,
+      CENTER_LAYOUT_MAX_CHROMA_THRESHOLD,
+      CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD
+    );
+  }, [centerLayoutChromaThreshold]);
+  const centerLayoutPresetOptions = useMemo(
+    () => buildObjectLayoutPresetOptions(centerLayoutCustomPresets),
+    [centerLayoutCustomPresets]
+  );
+  const centerLayoutPresetOptionValue = useMemo(
+    () =>
+      resolveObjectLayoutPresetOptionValue(
+        {
+          detection: centerLayoutDetection,
+          shadowPolicy: centerLayoutShadowPolicy,
+          whiteThreshold: centerLayoutWhiteThresholdValue,
+          chromaThreshold: centerLayoutChromaThresholdValue,
+        },
+        centerLayoutCustomPresets
+      ),
+    [
+      centerLayoutChromaThresholdValue,
+      centerLayoutCustomPresets,
+      centerLayoutDetection,
+      centerLayoutShadowPolicy,
+      centerLayoutWhiteThresholdValue,
+    ]
+  );
+  const selectedCenterCustomPresetId = useMemo(
+    () => resolveCustomPresetIdFromOptionValue(centerLayoutPresetOptionValue),
+    [centerLayoutPresetOptionValue]
+  );
+  const selectedCenterCustomPreset = useMemo(
+    () =>
+      centerLayoutCustomPresets.find((preset) => preset.id === selectedCenterCustomPresetId) ??
+      null,
+    [centerLayoutCustomPresets, selectedCenterCustomPresetId]
+  );
+  const centerLayoutCanDeletePreset = Boolean(selectedCenterCustomPresetId);
+  const centerLayoutCanSavePreset = centerLayoutPresetDraftName.trim().length > 0;
+  const centerLayoutSavePresetLabel = selectedCenterCustomPresetId ? 'Update Preset' : 'Save Preset';
+  useEffect(() => {
+    const nextSelectedId = selectedCenterCustomPreset?.id ?? null;
+    if (selectedCenterCustomPresetIdRef.current === nextSelectedId) return;
+    selectedCenterCustomPresetIdRef.current = nextSelectedId;
+    if (selectedCenterCustomPreset?.name) {
+      setCenterLayoutPresetDraftName(selectedCenterCustomPreset.name);
+    }
+  }, [selectedCenterCustomPreset?.id, selectedCenterCustomPreset?.name]);
+  useEffect(() => {
+    if (skipCenterAdvancedDefaultsSaveRef.current) {
+      skipCenterAdvancedDefaultsSaveRef.current = false;
+      return;
+    }
+    saveObjectLayoutAdvancedDefaults(activeProjectId, {
+      detection: centerLayoutDetection,
+      shadowPolicy: centerLayoutShadowPolicy,
+      whiteThreshold: centerLayoutWhiteThresholdValue,
+      chromaThreshold: centerLayoutChromaThresholdValue,
+    });
+  }, [
+    activeProjectId,
+    centerLayoutChromaThresholdValue,
+    centerLayoutDetection,
+    centerLayoutShadowPolicy,
+    centerLayoutWhiteThresholdValue,
+  ]);
   const centerLayoutResolvedFillMissingCanvasWhite = centerLayoutFillMissingCanvasWhite && Boolean(projectCanvasSize);
   const centerLayoutPayload = centerIsObjectLayoutMode
     ? {
@@ -697,8 +852,10 @@ export function GenerationToolbar(): React.JSX.Element {
           targetCanvasHeight: projectCanvasSize.height,
         }
         : {}),
+      whiteThreshold: centerLayoutWhiteThresholdValue,
+      chromaThreshold: centerLayoutChromaThresholdValue,
       shadowPolicy: centerLayoutShadowPolicy,
-      detection: 'auto' as const,
+      detection: centerLayoutDetection,
     }
     : undefined;
   const autoScaleLayoutPaddingPercent = useMemo(() => {
@@ -728,8 +885,10 @@ export function GenerationToolbar(): React.JSX.Element {
         targetCanvasHeight: projectCanvasSize.height,
       }
       : {}),
+    whiteThreshold: centerLayoutWhiteThresholdValue,
+    chromaThreshold: centerLayoutChromaThresholdValue,
     shadowPolicy: autoScaleLayoutShadowPolicy,
-    detection: 'auto' as const,
+    detection: centerLayoutDetection,
   };
 
   const handleCenterObject = async (): Promise<void> => {
@@ -928,6 +1087,24 @@ export function GenerationToolbar(): React.JSX.Element {
           centerIsObjectLayoutMode
             ? `${createdLabel} created, but the object was already well-positioned with current padding.`
             : `${createdLabel} created, but the object was already centered in-frame.`,
+          { variant: 'info' }
+        );
+      }
+      if (centerIsObjectLayoutMode && response.detectionDetails?.fallbackApplied) {
+        const reason = response.detectionDetails.policyReason ?? response.layout?.detectionPolicyDecision;
+        toast(
+          reason
+            ? `Object layout policy fallback applied (${reason}).`
+            : 'Object layout policy fallback applied.',
+          { variant: 'info' }
+        );
+      } else if (
+        centerIsObjectLayoutMode &&
+        typeof response.confidenceBefore === 'number' &&
+        response.confidenceBefore < 0.35
+      ) {
+        toast(
+          'Object layout confidence is low. Try detection override or threshold adjustments in Analysis tab.',
           { variant: 'info' }
         );
       }
@@ -1134,6 +1311,23 @@ export function GenerationToolbar(): React.JSX.Element {
           variant: 'info',
         });
       }
+      if (response.detectionDetails?.fallbackApplied) {
+        const reason = response.detectionDetails.policyReason ?? response.layout?.detectionPolicyDecision;
+        toast(
+          reason
+            ? `Auto scaler policy fallback applied (${reason}).`
+            : 'Auto scaler policy fallback applied.',
+          { variant: 'info' }
+        );
+      } else if (
+        typeof response.confidenceBefore === 'number' &&
+        response.confidenceBefore < 0.35
+      ) {
+        toast(
+          'Auto scaler confidence is low. Run Analysis tab and tune detection mode or thresholds.',
+          { variant: 'info' }
+        );
+      }
     } catch (error) {
       if (isAutoScalerAbortError(error)) {
         toast('Auto scaler canceled.', { variant: 'info' });
@@ -1309,6 +1503,14 @@ export function GenerationToolbar(): React.JSX.Element {
     ]),
     []
   );
+  const detectionModeOptions = useMemo(
+    () => ([
+      { value: 'auto', label: 'Detection: Auto' },
+      { value: 'white_bg_first_colored_pixel', label: 'Detection: White FG' },
+      { value: 'alpha_bbox', label: 'Detection: Alpha BBox' },
+    ]),
+    []
+  );
   const upscaleScaleOptions = useMemo(
     () => ['1.5', '2', '3', '4'].map((value: string) => ({ value, label: `${value}x` })),
     []
@@ -1337,7 +1539,9 @@ export function GenerationToolbar(): React.JSX.Element {
   const centerTooltipContent = useMemo(
     () => ({
       mode: getImageStudioDocTooltip('object_layout_mode'),
+      detection: getImageStudioDocTooltip('object_layout_mode'),
       padding: getImageStudioDocTooltip('object_layout_padding'),
+      thresholds: getImageStudioDocTooltip('object_layout_mode'),
       paddingAxes: getImageStudioDocTooltip('object_layout_padding_axes'),
       fillMissingCanvasWhite: getImageStudioDocTooltip('object_layout_fill_missing_canvas_white'),
       shadowPolicy: getImageStudioDocTooltip('object_layout_mode'),
@@ -1500,6 +1704,17 @@ export function GenerationToolbar(): React.JSX.Element {
         centerLayoutPaddingX={centerLayoutPaddingX}
         centerLayoutPaddingY={centerLayoutPaddingY}
         centerLayoutSplitAxes={centerLayoutSplitAxes}
+        centerLayoutAdvancedEnabled={centerLayoutAdvancedEnabled}
+        centerLayoutPreset={centerLayoutPresetOptionValue}
+        centerLayoutPresetOptions={centerLayoutPresetOptions}
+        centerLayoutPresetDraftName={centerLayoutPresetDraftName}
+        centerLayoutCanDeletePreset={centerLayoutCanDeletePreset}
+        centerLayoutCanSavePreset={centerLayoutCanSavePreset}
+        centerLayoutSavePresetLabel={centerLayoutSavePresetLabel}
+        centerLayoutDetection={centerLayoutDetection}
+        centerLayoutDetectionOptions={detectionModeOptions}
+        centerLayoutWhiteThreshold={centerLayoutWhiteThreshold}
+        centerLayoutChromaThreshold={centerLayoutChromaThreshold}
         centerLayoutFillMissingCanvasWhite={centerLayoutFillMissingCanvasWhite}
         centerLayoutProjectCanvasSize={projectCanvasSize}
         centerLayoutShadowPolicy={centerLayoutShadowPolicy}
@@ -1525,6 +1740,61 @@ export function GenerationToolbar(): React.JSX.Element {
         onCenterLayoutPaddingYChange={(value: string) => {
           const normalized = sanitizeCenterPaddingInput(value);
           setCenterLayoutPaddingY(normalized);
+        }}
+        onCenterLayoutDetectionChange={(value: string) => {
+          setCenterLayoutDetection(value as CenterDetectionMode);
+        }}
+        onCenterLayoutPresetChange={(value: string) => {
+          const presetValues = getObjectLayoutPresetValuesFromOption(
+            value as ObjectLayoutPresetOptionValue,
+            centerLayoutCustomPresets
+          );
+          if (!presetValues) return;
+          setCenterLayoutDetection(presetValues.detection);
+          setCenterLayoutShadowPolicy(presetValues.shadowPolicy);
+          setCenterLayoutWhiteThreshold(String(presetValues.whiteThreshold));
+          setCenterLayoutChromaThreshold(String(presetValues.chromaThreshold));
+        }}
+        onCenterLayoutPresetDraftNameChange={(value: string) => {
+          setCenterLayoutPresetDraftName(value);
+        }}
+        onCenterLayoutSavePreset={() => {
+          try {
+            const saved = saveObjectLayoutCustomPreset(activeProjectId, {
+              presetId: selectedCenterCustomPresetId,
+              name: centerLayoutPresetDraftName,
+              values: {
+                detection: centerLayoutDetection,
+                shadowPolicy: centerLayoutShadowPolicy,
+                whiteThreshold: centerLayoutWhiteThresholdValue,
+                chromaThreshold: centerLayoutChromaThresholdValue,
+              },
+            });
+            setCenterLayoutCustomPresets(saved.presets);
+            setCenterLayoutPresetDraftName(saved.savedPreset.name);
+            toast(`Saved preset "${saved.savedPreset.name}".`, { variant: 'success' });
+          } catch (error) {
+            toast(error instanceof Error ? error.message : 'Failed to save custom preset.', { variant: 'error' });
+          }
+        }}
+        onCenterLayoutDeletePreset={() => {
+          if (!selectedCenterCustomPresetId) return;
+          const deletedName = selectedCenterCustomPreset?.name?.trim() ?? '';
+          const nextPresets = deleteObjectLayoutCustomPreset(activeProjectId, selectedCenterCustomPresetId);
+          setCenterLayoutCustomPresets(nextPresets);
+          setCenterLayoutPresetDraftName('');
+          toast(
+            deletedName
+              ? `Deleted preset "${deletedName}".`
+              : 'Deleted selected custom preset.',
+            { variant: 'success' }
+          );
+        }}
+        onCenterLayoutWhiteThresholdChange={(value: string) => {
+          setCenterLayoutWhiteThreshold(sanitizeCenterThresholdInput(value));
+        }}
+        onCenterLayoutChromaThresholdChange={(value: string) => {
+          setCenterLayoutChromaThreshold(sanitizeCenterThresholdInput(value));
         }}
         onCenterLayoutFillMissingCanvasWhiteChange={(checked: boolean) => {
           setCenterLayoutFillMissingCanvasWhite(checked);
@@ -1555,6 +1825,9 @@ export function GenerationToolbar(): React.JSX.Element {
             }
             return next;
           });
+        }}
+        onToggleCenterLayoutAdvanced={() => {
+          setCenterLayoutAdvancedEnabled((previous) => !previous);
         }}
         onToggleCenterGuides={() => {
           setCenterGuidesEnabled(!centerGuidesEnabled);

@@ -411,6 +411,76 @@ const CAPTURE_COUNTRY_HINTS = [
 ];
 const CAPTURE_STREET_HINT_PATTERN =
   /\b(ul\.?|ulica|street|st\.?|avenue|ave\.?|road|rd\.?|al\.?|aleja|plac|pl\.)\b/i;
+const CAPTURE_PARTY_LABEL_LINE_PATTERN =
+  /^(addresser|nadawca|sender|wnioskodawca|addressee|adresat|recipient|odbiorca|organ)\s*[:-]?$/i;
+const CAPTURE_ORGANIZATION_HINTS = [
+  'zus',
+  'inspektorat',
+  'oddzial',
+  'zaklad',
+  'urzad',
+  'sad',
+  'ministerstwo',
+  'fundacja',
+  'stowarzyszenie',
+  'spolka',
+  'sp z o o',
+  'sa',
+  'kancelaria',
+  'office',
+  'department',
+  'agency',
+  'court',
+  'inc',
+  'llc',
+  'corp',
+  'company',
+  'university',
+  'uniwersytet',
+];
+
+const normalizeCaptureWordToken = (token: string): string =>
+  token.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
+
+const lineContainsComparableHint = (line: string, hints: string[]): boolean => {
+  const normalizedLine = normalizeCaseResolverComparable(line);
+  if (!normalizedLine) return false;
+  const paddedLine = ` ${normalizedLine} `;
+  return hints.some((hint: string): boolean => {
+    const normalizedHint = normalizeCaseResolverComparable(hint);
+    if (!normalizedHint) return false;
+    return paddedLine.includes(` ${normalizedHint} `);
+  });
+};
+
+const isLikelyCapturePersonNameLine = (line: string): boolean => {
+  const tokens = line
+    .split(/\s+/)
+    .map((token: string): string => normalizeCaptureWordToken(token))
+    .filter(Boolean);
+  if (tokens.length < 2 || tokens.length > 4) return false;
+  if (tokens.some((token: string): boolean => /\d/.test(token))) return false;
+
+  const letterTokens = tokens.filter((token: string): boolean => /[\p{L}]/u.test(token));
+  if (letterTokens.length < 2) return false;
+  return letterTokens.every((token: string): boolean => {
+    if (!/^[\p{L}][\p{L}'’`-]*$/u.test(token)) return false;
+    const first = token.charAt(0);
+    if (first !== first.toLocaleUpperCase()) return false;
+    const rest = token.slice(1);
+    if (!rest) return true;
+    if (token === token.toLocaleUpperCase()) return true;
+    return rest === rest.toLocaleLowerCase();
+  });
+};
+
+const isLikelyCaptureOrganizationLine = (line: string): boolean => {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  const wordCount = trimmed.split(/\s+/).filter(Boolean).length;
+  if (wordCount === 0 || wordCount > 10) return false;
+  return lineContainsComparableHint(trimmed, CAPTURE_ORGANIZATION_HINTS);
+};
 
 const decodeBasicCaptureHtmlEntities = (value: string): string =>
   value
@@ -508,7 +578,11 @@ const isLikelyCaptureHeaderPartyLine = (line: string): boolean => {
   if (trimmed.length > 90) return false;
   const wordCount = trimmed.split(/\s+/).filter(Boolean).length;
   if (wordCount > 10) return false;
-  return true;
+  if (isLikelyCaptureAddressContinuationLine(trimmed)) return true;
+  if (CAPTURE_PARTY_LABEL_LINE_PATTERN.test(trimmed)) return true;
+  if (isLikelyCapturePersonNameLine(trimmed)) return true;
+  if (isLikelyCaptureOrganizationLine(trimmed)) return true;
+  return false;
 };
 
 const isLikelyCaptureAddressContinuationLine = (line: string): boolean => {
@@ -897,7 +971,10 @@ const stripAcceptedAddressLinesFromTextDetailed = (
       const continuationMatchesCandidate = key
         ? candidateLikelyContainsSourceLine(candidateComparableText, key)
         : false;
-      if (!isLikelyCaptureAddressContinuationLine(trimmed) && !continuationMatchesCandidate) {
+      const continuationLooksLikeHeader =
+        isLikelyCaptureAddressContinuationLine(trimmed) ||
+        (isLikelyCaptureHeaderPartyLine(trimmed) && continuationMatchesCandidate);
+      if (!continuationLooksLikeHeader) {
         break;
       }
       markForRemoval(index, role);

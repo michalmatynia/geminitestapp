@@ -678,6 +678,44 @@ describe('case-resolver-capture proposals', () => {
     );
   });
 
+  it('keeps document heading lines even when candidate raw text includes them', () => {
+    const sourceText = [
+      'Michał Matynia',
+      'Fioletowa 71/2',
+      '70-781 Szczecin',
+      'Poland',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+      'Treść uzasadnienia wniosku.',
+    ].join('\n');
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: {
+        ...createAddresserCandidate(),
+        rawText: [
+          'Michał Matynia',
+          'Fioletowa 71/2',
+          '70-781 Szczecin',
+          'Poland',
+          'Wniosek o ponowne rozpatrzenie sprawy',
+        ].join('\n'),
+      },
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        sourceText,
+      }
+    );
+
+    expect(stripCapturedAddressLinesFromText(sourceText, state)).toBe(
+      ['Wniosek o ponowne rozpatrzenie sprawy', 'Treść uzasadnienia wniosku.'].join('\n')
+    );
+  });
+
   it('removes split header lines when captured addressee text is flattened into one line', () => {
     const sourceText = [
       'Zakład Ubezpieczeń Społecznych',

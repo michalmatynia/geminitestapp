@@ -6,7 +6,7 @@ import React from 'react';
 
 import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFileDto as NoteFileRecord } from '@/shared/contracts/notes';
-import { Button, Label, FileUploadTrigger, type FileUploadHelpers } from '@/shared/ui';
+import { Button, Label, FileUploadTrigger, type FileUploadHelpers, Card } from '@/shared/ui';
 
 
 export function FileAttachments(): React.JSX.Element {
@@ -26,9 +26,9 @@ export function FileAttachments(): React.JSX.Element {
 
   if (!note?.id) {
     return (
-      <div className='rounded-lg border border-dashed border-border/60 bg-gray-800/50 p-4 text-center text-sm text-gray-400'>
+      <Card variant='subtle-compact' padding='md' className='border-dashed border-border/60 bg-card/30 text-center text-sm text-gray-400'>
         Save the note first to enable file attachments ({maxSlots} slots available)
-      </div>
+      </Card>
     );
   }
 
@@ -42,8 +42,10 @@ export function FileAttachments(): React.JSX.Element {
           const nextSlot = getNextAvailableSlot();
           const isUploading = nextSlot !== null && uploadingSlots.has(nextSlot);
           return (
-            <div
-              className='relative h-20 w-20 rounded-md border bg-gray-800'
+            <Card
+              variant='subtle-compact'
+              padding='none'
+              className='relative h-20 w-20 border-border bg-card/40'
               onDragOver={(e: React.DragEvent): void => e.preventDefault()}
               onDrop={(e: React.DragEvent): void => {
                 if (nextSlot === null) return;
@@ -63,7 +65,7 @@ export function FileAttachments(): React.JSX.Element {
                   Full
                 </div>
               ) : (
-                <Label className='flex h-full cursor-pointer flex-col items-center justify-center text-gray-500 hover:bg-gray-700/50 hover:text-gray-400 transition-colors'>
+                <Label className='flex h-full cursor-pointer flex-col items-center justify-center text-gray-500 hover:bg-card/60 hover:text-gray-400 transition-colors'>
                   <FileUploadTrigger
                     multiple
                     asChild
@@ -79,14 +81,16 @@ export function FileAttachments(): React.JSX.Element {
                   </FileUploadTrigger>
                 </Label>
               )}
-            </div>
+            </Card>
           );
         })()}
 
         {noteFiles.map((file: NoteFileRecord) => (
-          <div
+          <Card
             key={file.slotIndex}
-            className='relative h-20 w-24 rounded-md border bg-gray-800/70'
+            variant='subtle-compact'
+            padding='none'
+            className='relative h-20 w-24 border-border bg-card/50'
           >
             <div className='group relative h-full'>
               {isImageFile(file.mimetype) ? (
@@ -133,7 +137,7 @@ export function FileAttachments(): React.JSX.Element {
                 {formatFileSize(file.size)}
               </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
       <p className='text-xs text-gray-500'>

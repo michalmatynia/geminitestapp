@@ -11,7 +11,7 @@ import {
   safeStringify,
   toggleContextTarget,
 } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Textarea, SelectSimple, CopyButton, Label } from '@/shared/ui';
+import { Button, Input, Textarea, SelectSimple, CopyButton, Label, Card } from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
 
@@ -237,24 +237,24 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
         )}
       </div>
       <div className='grid gap-3 md:grid-cols-2'>
-        <div className='rounded-md border border-border bg-card/60 p-3'>
+        <Card variant='subtle-compact' padding='sm' className='border-border bg-card/60'>
           <div className='text-[11px] text-gray-400'>Resolved Entity</div>
           <div className='mt-2 text-[12px] text-gray-200'>
             {resolvedEntityId
               ? `${resolvedEntityType || 'entity'} · ${resolvedEntityId}`
               : 'No entity resolved yet'}
           </div>
-        </div>
-        <div className='rounded-md border border-border bg-card/60 p-3'>
+        </Card>
+        <Card variant='subtle-compact' padding='sm' className='border-border bg-card/60'>
           <div className='text-[11px] text-gray-400'>Received context summary</div>
           <div className='mt-2 text-[12px] text-gray-200'>
             {receivedContextText
               ? `${receivedContextText.length} chars`
               : 'No context input received'}
           </div>
-        </div>
+        </Card>
       </div>
-      <div className='rounded-md border border-border bg-card/60 p-3'>
+      <Card variant='subtle-compact' padding='sm' className='border-border bg-card/60'>
         <div className='text-[11px] text-gray-400'>Received payload (context input)</div>
         {receivedContextText ? (
           <pre className='mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200'>
@@ -266,8 +266,8 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
             context input to inspect the payload.
           </p>
         )}
-      </div>
-      <div className='rounded-md border border-border bg-card/60 p-3'>
+      </Card>
+      <Card variant='subtle-compact' padding='sm' className='border-border bg-card/60'>
         <div className='text-[11px] text-gray-400'>All incoming inputs</div>
         {Object.keys(receivedInputs).length > 0 ? (
           <pre className='mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200'>
@@ -278,8 +278,8 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
             No inputs recorded yet for this node.
           </p>
         )}
-      </div>
-      <div className='rounded-md border border-border bg-card/60 p-3'>
+      </Card>
+      <Card variant='subtle-compact' padding='sm' className='border-border bg-card/60'>
         <div className='text-[11px] text-gray-400'>Resolved outputs</div>
         {Object.keys(resolvedOutputs).length > 0 ? (
           <pre className='mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200'>
@@ -290,9 +290,9 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
             No resolved outputs yet. Trigger the path to populate this panel.
           </p>
         )}
-      </div>
+      </Card>
       {showDiff && (
-        <div className='rounded-md border border-border bg-card/60 p-3'>
+        <Card variant='subtle-compact' padding='sm' className='border-border bg-card/60'>
           <div className='text-[11px] text-gray-400'>
             Diff (inputs vs outputs)
           </div>
@@ -311,7 +311,7 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
               No differences detected yet.
             </p>
           )}
-        </div>
+        </Card>
       )}
       <div>
         <Label className='text-xs text-gray-400'>Filter Role</Label>

@@ -91,6 +91,20 @@ describe('analysis/autoscaler response schemas', () => {
           corePixels: 854320,
           touchesBorder: false,
           maskSource: 'core',
+          policyVersion: 'v2',
+          policyReason: 'auto_white_tighter_bounds',
+          fallbackApplied: false,
+          candidateDetections: {
+            alpha_bbox: { confidence: 0.52, area: 1_440_000 },
+            white_bg_first_colored_pixel: { confidence: 0.9475, area: 855000 },
+          },
+        },
+        policyVersion: 'v2',
+        policyReason: 'auto_white_tighter_bounds',
+        fallbackApplied: false,
+        candidateDetections: {
+          alpha_bbox: { confidence: 0.52, area: 1_440_000 },
+          white_bg_first_colored_pixel: { confidence: 0.9475, area: 855000 },
         },
         whitespace: {
           px: { left: 120, top: 100, right: 180, bottom: 150 },
@@ -150,6 +164,8 @@ describe('analysis/autoscaler response schemas', () => {
         whiteThreshold: 16,
         chromaThreshold: 10,
         shadowPolicy: 'auto',
+        layoutPolicyVersion: 'v2',
+        detectionPolicyDecision: 'auto_white_tighter_bounds',
       },
       detectionUsed: 'white_bg_first_colored_pixel',
       confidenceBefore: 0.9134,
@@ -164,6 +180,13 @@ describe('analysis/autoscaler response schemas', () => {
         corePixels: 1200040,
         touchesBorder: false,
         maskSource: 'core',
+        policyVersion: 'v2',
+        policyReason: 'auto_white_tighter_bounds',
+        fallbackApplied: false,
+        candidateDetections: {
+          alpha_bbox: { confidence: 0.52, area: 1_440_000 },
+          white_bg_first_colored_pixel: { confidence: 0.9134, area: 1_200_000 },
+        },
       },
       scale: 1.24,
       whitespaceBefore: {

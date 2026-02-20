@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
-import { Pagination } from '@/shared/ui';
+import { Pagination, Card, Badge, Alert } from '@/shared/ui';
 
 import { useProjectsState } from '../context/ProjectsContext';
 import { studioKeys } from '../hooks/useImageStudioQueries';
@@ -255,40 +255,40 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
 
   if (!projectId) {
     return (
-      <div className='rounded border border-border/60 bg-card/40 p-4 text-sm text-muted-foreground'>
+      <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/40 text-sm text-muted-foreground'>
         Select a project to view generation history.
-      </div>
+      </Card>
     );
   }
 
   if (runsQuery.isLoading) {
     return (
-      <div className='flex items-center gap-2 rounded border border-border/60 bg-card/40 p-4 text-sm text-muted-foreground'>
+      <Card variant='subtle-compact' padding='md' className='flex items-center gap-2 border-border/60 bg-card/40 text-sm text-muted-foreground'>
         <Loader2 className='size-4 animate-spin' />
         Loading generation history...
-      </div>
+      </Card>
     );
   }
 
   if (runsQuery.error) {
     return (
-      <div className='rounded border border-rose-500/40 bg-rose-500/10 p-4 text-sm text-rose-200'>
+      <Alert variant='error'>
         {runsQuery.error.message || 'Failed to load generation history.'}
-      </div>
+      </Alert>
     );
   }
 
   if (runs.length === 0) {
     return (
-      <div className='rounded border border-border/60 bg-card/40 p-4 text-sm text-muted-foreground'>
+      <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/40 text-sm text-muted-foreground'>
         No generation runs yet for this project.
-      </div>
+      </Card>
     );
   }
 
   return (
     <div className='space-y-3'>
-      <div className='flex flex-wrap items-center justify-between gap-2 rounded border border-border/60 bg-card/40 px-3 py-2 text-xs text-muted-foreground'>
+      <Card variant='subtle-compact' padding='sm' className='flex flex-wrap items-center justify-between gap-2 border-border/60 bg-card/40 text-xs text-muted-foreground'>
         <span>
           Showing {pageStart}-{pageEnd} of {total} runs
         </span>
@@ -299,7 +299,7 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
           variant='compact'
           showLabels={false}
         />
-      </div>
+      </Card>
       {runs.map((run) => {
         const prompt = run.request?.prompt?.trim() ?? '';
         const promptSummary = prompt.length > 120 ? `${prompt.slice(0, 120)}...` : prompt || 'No prompt';
@@ -320,16 +320,24 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
         };
 
         return (
-          <div key={run.id} className='rounded-lg border border-border/60 bg-card/40 p-3'>
+          <Card key={run.id} variant='subtle' padding='sm' className='border-border/60 bg-card/40'>
             <button
               type='button'
               onClick={() => setExpandedRunId(isExpanded ? null : run.id)}
               className='w-full text-left'
             >
               <div className='flex flex-wrap items-center gap-2'>
-                <span className={`inline-flex rounded border px-2 py-0.5 text-[11px] uppercase ${getStatusClass(run.status)}`}>
+                <Badge
+                  variant={
+                    run.status === 'completed' ? 'success' :
+                      run.status === 'failed' ? 'error' :
+                        run.status === 'running' ? 'info' : 'warning'
+                  }
+                  size='sm'
+                  className='font-bold uppercase'
+                >
                   {run.status}
-                </span>
+                </Badge>
                 <span className='text-xs text-muted-foreground'>
                   {formatDateTime(run.createdAt)}
                 </span>
@@ -361,13 +369,13 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
                   <div className='mb-1 text-xs font-semibold text-foreground'>Lifecycle Events</div>
                   <div className='space-y-1'>
                     {timeline.map((event) => (
-                      <div key={event.id} className='rounded border border-border/50 bg-card/50 p-2 text-xs'>
+                      <Card key={event.id} variant='subtle-compact' padding='sm' className='border-border/50 bg-card/50 text-xs'>
                         <div className='text-foreground'>{event.label}</div>
                         <div className='text-muted-foreground'>{formatDateTime(event.at)}</div>
                         <pre className='mt-1 max-h-24 overflow-auto rounded bg-black/30 p-1.5 text-[11px] text-gray-200'>
                           {toPrettyJson(event.payload)}
                         </pre>
-                      </div>
+                      </Card>
                     ))}
                   </div>
                 </div>
@@ -377,7 +385,7 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
                     <div className='mb-1 text-xs font-semibold text-foreground'>Generated Outputs</div>
                     <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-3'>
                       {run.outputs.map((output, index) => (
-                        <div key={output.id} className='rounded border border-border/50 bg-card/50 p-2'>
+                        <Card key={output.id} variant='subtle-compact' padding='sm' className='border-border/50 bg-card/50'>
                           <a href={output.filepath} target='_blank' rel='noopener noreferrer'>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
@@ -393,14 +401,14 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
                             <div>Size: {formatBytes(output.size)}</div>
                             <div>Resolution: {output.width ?? '?'} x {output.height ?? '?'}</div>
                           </div>
-                        </div>
+                        </Card>
                       ))}
                     </div>
                   </div>
                 ) : (
-                  <div className='rounded border border-border/50 bg-card/50 p-2 text-xs text-muted-foreground'>
+                  <Card variant='subtle-compact' padding='sm' className='border-border/50 bg-card/50 text-xs text-muted-foreground'>
                     No output files were recorded for this run.
-                  </div>
+                  </Card>
                 )}
 
                 <div className='grid gap-3 lg:grid-cols-2'>
@@ -426,7 +434,7 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
                 </div>
               </div>
             ) : null}
-          </div>
+          </Card>
         );
       })}
     </div>

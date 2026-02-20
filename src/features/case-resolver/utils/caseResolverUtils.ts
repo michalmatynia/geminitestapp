@@ -219,11 +219,12 @@ export const buildDocumentPdfMarkup = ({
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Case Resolver Document - PDF Preview</title>
+    <title></title>
     <style>
       @page {
         size: A4;
-        margin: 14mm;
+        /* Zero print margins suppress browser header/footer metadata (title/date/url). */
+        margin: 0;
       }
 
       * {
@@ -336,15 +337,23 @@ export const buildDocumentPdfMarkup = ({
       }
 
       @media print {
+        html,
+        body {
+          width: 210mm;
+          min-height: 297mm;
+        }
+
         body {
           background: #ffffff;
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
         }
 
         .sheet {
           width: auto;
           min-height: auto;
           margin: 0;
-          padding: 0;
+          padding: 14mm;
           box-shadow: none;
         }
       }

@@ -15,6 +15,8 @@ const cardVariants = cva(
         glass: 'bg-card/40 backdrop-blur border-border/60',
         danger: 'border-red-500/50 bg-red-500/10',
         warning: 'border-amber-500/50 bg-amber-500/10',
+        info: 'border-blue-500/50 bg-blue-500/10',
+        success: 'border-emerald-500/50 bg-emerald-500/10',
         outline: 'bg-transparent',
       },
       padding: {

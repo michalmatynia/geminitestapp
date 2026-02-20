@@ -11,6 +11,7 @@ export type DocumentWysiwygEditorAppearance = 'default' | 'document-preview';
 export interface DocumentWysiwygEditorProps {
   value: string;
   onChange: (nextValue: string) => void;
+  disabled?: boolean | undefined;
   placeholder?: string | undefined;
   appearance?: DocumentWysiwygEditorAppearance | undefined;
   allowFontFamily?: boolean | undefined;
@@ -25,6 +26,7 @@ export interface DocumentWysiwygEditorProps {
 export function DocumentWysiwygEditor({
   value,
   onChange,
+  disabled = false,
   placeholder,
   appearance = 'default',
   allowFontFamily = false,
@@ -41,6 +43,7 @@ export function DocumentWysiwygEditor({
     <RichTextEditor
       value={value}
       onChange={onChange}
+      disabled={disabled}
       placeholder={placeholder}
       variant='full'
       headingLevels={[1, 2, 3]}

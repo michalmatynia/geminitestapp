@@ -260,7 +260,11 @@ export const databaseEngineOperationsJobsSchema = z.object({
 export type DatabaseEngineOperationsJobsDto = z.infer<typeof databaseEngineOperationsJobsSchema>;
 
 export const databaseEngineProviderPreviewSchema = z.object({
-  provider: z.string(),
+  timestamp: z.string().optional(),
+  policy: z.record(z.string(), z.unknown()).optional(),
+  appProvider: z.string().optional(),
+  appProviderError: z.string().nullable().optional(),
+  provider: z.string().optional(),
   collections: z.array(z.object({
     name: z.string(),
     count: z.number(),
@@ -286,10 +290,16 @@ export const databaseEngineBackupRunNowResponseSchema = z.object({
 export type DatabaseEngineBackupRunNowResponseDto = z.infer<typeof databaseEngineBackupRunNowResponseSchema>;
 
 export const databaseEngineBackupSchedulerStatusSchema = z.object({
-  enabled: z.boolean(),
-  nextRunAt: z.string().nullable(),
-  lastRunAt: z.string().nullable(),
-  lastRunStatus: z.string().nullable(),
+  timestamp: z.string().optional(),
+  enabled: z.boolean().optional(),
+  schedulerEnabled: z.boolean().optional(),
+  lastCheckedAt: z.string().optional(),
+  nextRunAt: z.string().nullable().optional(),
+  lastRunAt: z.string().nullable().optional(),
+  lastRunStatus: z.string().nullable().optional(),
+  queue: z.record(z.string(), z.unknown()).optional(),
+  repeatEveryMs: z.number().optional(),
+  targets: z.record(z.string(), z.any()).optional(),
 });
 
 export type DatabaseEngineBackupSchedulerStatusDto = z.infer<typeof databaseEngineBackupSchedulerStatusSchema>;

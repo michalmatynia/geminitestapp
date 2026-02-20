@@ -1,4 +1,9 @@
 import {
+  decideObjectDetectionCandidate,
+  type ImageStudioDetectionCandidateSummary,
+  type ImageStudioDetectionPolicyDecision,
+} from '@/features/ai/image-studio/analysis/policy';
+import {
   IMAGE_STUDIO_CENTER_ALPHA_THRESHOLD,
   IMAGE_STUDIO_CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD,
   IMAGE_STUDIO_CENTER_LAYOUT_DEFAULT_PADDING_PERCENT,
@@ -73,6 +78,10 @@ export type ImageStudioDetectionDetails = {
   corePixels: number;
   touchesBorder: boolean;
   maskSource: WhiteForegroundMaskSource;
+  policyVersion?: string;
+  policyReason?: string;
+  fallbackApplied?: boolean;
+  candidateDetections?: ImageStudioDetectionCandidateSummary;
 };
 
 export type ImageStudioObjectWhitespaceMetrics = {
@@ -95,6 +104,10 @@ export type ImageStudioObjectAnalysisResult = {
   detectionUsed: Exclude<ImageStudioCenterDetectionMode, 'auto'>;
   confidence: number;
   detectionDetails: ImageStudioDetectionDetails | null;
+  policyVersion: string;
+  policyReason: string;
+  fallbackApplied: boolean;
+  candidateDetections: ImageStudioDetectionCandidateSummary;
   whitespace: ImageStudioObjectWhitespaceMetrics;
   objectAreaPercent: number;
   canvasAreaPx: number;
@@ -892,52 +905,33 @@ export const detectObjectBoundsForLayoutFromRgba = (
   detectionUsed: Exclude<ImageStudioCenterDetectionMode, 'auto'>;
   confidence: number;
   detectionDetails: ImageStudioDetectionDetails | null;
+  policyVersion: string;
+  policyReason: string;
+  fallbackApplied: boolean;
+  candidateDetections: ImageStudioDetectionCandidateSummary;
 } | null => {
   const normalizedLayout = isNormalizedImageStudioAnalysisLayoutConfig(layout)
     ? layout
     : normalizeImageStudioAnalysisLayoutConfig(layout);
 
-  if (normalizedLayout.detection === 'alpha_bbox') {
-    const alpha = resolveAlphaObjectBoundsFromRgba(pixelData, width, height);
-    return alpha
-      ? {
-        bounds: alpha,
-        detectionUsed: 'alpha_bbox',
-        confidence: computeAlphaDetectionConfidence(alpha, width, height),
-        detectionDetails: null,
-      }
-      : null;
-  }
-
-  if (normalizedLayout.detection === 'white_bg_first_colored_pixel') {
-    const white = resolveWhiteForegroundObjectDetectionFromRgba(
-      pixelData,
-      width,
-      height,
-      normalizedLayout.whiteThreshold,
-      normalizedLayout.chromaThreshold,
-      normalizedLayout.shadowPolicy
-    );
-    return white
-      ? {
-        bounds: white.bounds,
-        detectionUsed: 'white_bg_first_colored_pixel',
-        confidence: white.confidence,
-        detectionDetails: white.details,
-      }
-      : null;
-  }
-
-  const white = resolveWhiteForegroundObjectDetectionFromRgba(
-    pixelData,
-    width,
-    height,
-    normalizedLayout.whiteThreshold,
-    normalizedLayout.chromaThreshold,
-    normalizedLayout.shadowPolicy
+  const whiteCandidate = (
+    normalizedLayout.detection === 'alpha_bbox'
+      ? null
+      : resolveWhiteForegroundObjectDetectionFromRgba(
+        pixelData,
+        width,
+        height,
+        normalizedLayout.whiteThreshold,
+        normalizedLayout.chromaThreshold,
+        normalizedLayout.shadowPolicy
+      )
   );
-  const alphaBounds = resolveAlphaObjectBoundsFromRgba(pixelData, width, height);
-  const alpha = alphaBounds
+
+  const alphaBounds = normalizedLayout.detection === 'white_bg_first_colored_pixel'
+    ? null
+    : resolveAlphaObjectBoundsFromRgba(pixelData, width, height);
+
+  const alphaCandidate = alphaBounds
     ? {
       bounds: alphaBounds,
       detectionUsed: 'alpha_bbox' as const,
@@ -946,41 +940,44 @@ export const detectObjectBoundsForLayoutFromRgba = (
     }
     : null;
 
-  if (white && alpha) {
-    if ((white.confidence - alpha.confidence) >= 0.08) {
-      return {
-        bounds: white.bounds,
-        detectionUsed: 'white_bg_first_colored_pixel',
-        confidence: white.confidence,
-        detectionDetails: white.details,
-      };
+  const whiteDetectionCandidate = whiteCandidate
+    ? {
+      bounds: whiteCandidate.bounds,
+      detectionUsed: 'white_bg_first_colored_pixel' as const,
+      confidence: whiteCandidate.confidence,
+      detectionDetails: whiteCandidate.details,
     }
-    if ((alpha.confidence - white.confidence) >= 0.08) {
-      return alpha;
-    }
-    const whiteArea = white.bounds.width * white.bounds.height;
-    const alphaArea = alpha.bounds.width * alpha.bounds.height;
-    if (whiteArea <= alphaArea * 0.995) {
-      return {
-        bounds: white.bounds,
-        detectionUsed: 'white_bg_first_colored_pixel',
-        confidence: white.confidence,
-        detectionDetails: white.details,
-      };
-    }
-    return alpha;
-  }
+    : null;
 
-  if (white) {
-    return {
-      bounds: white.bounds,
-      detectionUsed: 'white_bg_first_colored_pixel',
-      confidence: white.confidence,
-      detectionDetails: white.details,
-    };
-  }
-  if (alpha) return alpha;
-  return null;
+  const decision: ImageStudioDetectionPolicyDecision<ImageStudioDetectionDetails> =
+    decideObjectDetectionCandidate({
+      requestedDetection: normalizedLayout.detection,
+      alphaCandidate,
+      whiteCandidate: whiteDetectionCandidate,
+    });
+
+  if (!decision.selected) return null;
+
+  const details = decision.selected.detectionDetails
+    ? {
+      ...decision.selected.detectionDetails,
+      policyVersion: decision.policyVersion,
+      policyReason: decision.reason,
+      fallbackApplied: decision.fallbackApplied,
+      candidateDetections: decision.candidateDetections,
+    }
+    : null;
+
+  return {
+    bounds: decision.selected.bounds,
+    detectionUsed: decision.selected.detectionUsed,
+    confidence: decision.selected.confidence,
+    detectionDetails: details,
+    policyVersion: decision.policyVersion,
+    policyReason: decision.reason,
+    fallbackApplied: decision.fallbackApplied,
+    candidateDetections: decision.candidateDetections,
+  };
 };
 
 export const computeObjectWhitespaceMetrics = (
@@ -1042,6 +1039,10 @@ export const analyzeImageObjectFromRgba = (params: {
     detectionUsed: detected.detectionUsed,
     confidence: detected.confidence,
     detectionDetails: detected.detectionDetails,
+    policyVersion: detected.policyVersion,
+    policyReason: detected.policyReason,
+    fallbackApplied: detected.fallbackApplied,
+    candidateDetections: detected.candidateDetections,
     whitespace,
     objectAreaPx,
     canvasAreaPx,

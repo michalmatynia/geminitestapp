@@ -30,6 +30,8 @@ import {
   Button,
   useToast,
   EmptyState,
+  Card,
+  SelectSimple,
 } from '@/shared/ui';
 
 import { compileCaseResolverPrompt } from '../composer';
@@ -715,12 +717,13 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
 
   return (
     <div className='h-[calc(100vh-120px)] w-full'>
-      <div className='flex min-h-0 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0'>
+      <Card variant='glass' padding='none' className='flex min-h-0 flex-col overflow-hidden'>
         <div className='flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3'>
           <Button
             type='button'
             onClick={addPromptNode}
-            className='h-8 rounded-md border border-emerald-500/40 text-xs text-emerald-100 hover:bg-emerald-500/15'
+            variant='success'
+            size='sm'
           >
             <Sparkles className='mr-1 size-3.5' />
             Explanatory Node
@@ -729,10 +732,10 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
           <div className='mx-1 h-6 w-px bg-border/60' />
 
           <div className='w-[170px]'>
-            <select
+            <SelectSimple
+              size='sm'
               value={newNodeType}
-              onChange={(event): void => {
-                const value = event.target.value;
+              onValueChange={(value: string): void => {
                 if (
                   value === 'prompt' ||
                   value === 'model' ||
@@ -743,20 +746,16 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
                   setNewNodeType(value);
                 }
               }}
-              className='h-8 w-full rounded-md border border-border bg-card/60 px-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-ring/40'
-              aria-label='Node type'
-            >
-              {nodeTypeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              options={nodeTypeOptions.map(opt => ({ value: opt.value, label: opt.label }))}
+              triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
+              ariaLabel='Node type'
+            />
           </div>
           <Button
             type='button'
             onClick={addGenericNode}
-            className='h-8 rounded-md border border-border text-xs text-gray-100 hover:bg-muted/60'
+            variant='outline'
+            size='sm'
           >
             Add Node
           </Button>
@@ -764,27 +763,22 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
           <div className='mx-1 h-6 w-px bg-border/60' />
 
           <div className='w-[220px]'>
-            <select
+            <SelectSimple
+              size='sm'
               value={pdfExtractionPresetId}
-              onChange={(event): void => {
-                const value = event.target.value;
+              onValueChange={(value: string): void => {
                 if (
                   value === 'plain_text' ||
                   value === 'structured_sections' ||
                   value === 'facts_entities'
                 ) {
-                  setPdfExtractionPresetId(value);
+                  setPdfExtractionPresetId(value as CaseResolverPdfExtractionPresetId);
                 }
               }}
-              className='h-8 w-full rounded-md border border-border bg-card/60 px-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-ring/40'
-              aria-label='PDF extraction preset'
-            >
-              {CASE_RESOLVER_PDF_EXTRACTION_PRESETS.map((preset) => (
-                <option key={preset.value} value={preset.value}>
-                  {preset.label}
-                </option>
-              ))}
-            </select>
+              options={CASE_RESOLVER_PDF_EXTRACTION_PRESETS.map(opt => ({ value: opt.value, label: opt.label }))}
+              triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
+              ariaLabel='PDF extraction preset'
+            />
           </div>
           {isDropImporting ? (
             <span className='text-[11px] text-gray-400'>Importing dropped files...</span>
@@ -796,7 +790,8 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
               onClick={(): void => {
                 setIsNodeInspectorOpen(true);
               }}
-              className='h-8 rounded-md border border-border text-xs text-gray-200 hover:bg-muted/60'
+              variant='outline'
+              size='sm'
             >
               Node Inspector
             </Button>
@@ -805,7 +800,8 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
               onClick={(): void => {
                 setIsLinkedPreviewOpen(true);
               }}
-              className='h-8 rounded-md border border-border text-xs text-gray-200 hover:bg-muted/60'
+              variant='outline'
+              size='sm'
             >
               Linked Preview
             </Button>
@@ -814,7 +810,8 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
               onClick={(): void => {
                 void copyCompiledPrompt();
               }}
-              className='h-8 rounded-md border border-cyan-500/40 text-xs text-cyan-100 hover:bg-cyan-500/15'
+              variant='info'
+              size='sm'
             >
               <Copy className='mr-1 size-3.5' />
               Copy Prompt
@@ -833,7 +830,8 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
                   documentSourceFileIdByNode: normalizedDocumentSourceFileIdByNode,
                 })
               }
-              className='h-8 rounded-md border border-border text-xs text-gray-200 hover:bg-muted/60'
+              variant='outline'
+              size='sm'
             >
               <Save className='mr-1 size-3.5' />
               Save Graph
@@ -848,11 +846,12 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
             void handleCanvasDropCapture(event);
           }}
         >
-          <CanvasBoard resolveConnectorTooltip={resolveConnectorTooltip} />
-        </div>
-      </div>
-
-      <CaseResolverNodeInspectorModal
+                      <CanvasBoard resolveConnectorTooltip={resolveConnectorTooltip} />
+                    </div>
+                  </Card>
+          
+                  <CaseResolverNodeInspectorModal
+          
         open={isNodeInspectorOpen}
         onOpenChange={setIsNodeInspectorOpen}
         selectedNode={selectedNode}

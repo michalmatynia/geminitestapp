@@ -1146,6 +1146,66 @@ export const aiPathRuntimeAnalyticsRangeSchema = z.enum(['1h', '24h', '7d', '30d
 export type AiPathRuntimeAnalyticsRangeDto = z.infer<typeof aiPathRuntimeAnalyticsRangeSchema>;
 export type AiPathRuntimeAnalyticsRange = AiPathRuntimeAnalyticsRangeDto;
 
+export const aiPathRuntimeAnalyticsSlowestSpanSchema = z.object({
+  runId: z.string(),
+  spanId: z.string(),
+  nodeId: z.string(),
+  nodeType: z.string(),
+  status: z.string(),
+  durationMs: z.number(),
+});
+
+export type AiPathRuntimeAnalyticsSlowestSpanDto = z.infer<
+  typeof aiPathRuntimeAnalyticsSlowestSpanSchema
+>;
+export type AiPathRuntimeAnalyticsSlowestSpan = AiPathRuntimeAnalyticsSlowestSpanDto;
+
+export const aiPathRuntimeTraceSlowNodeSchema = z.object({
+  nodeId: z.string(),
+  nodeType: z.string(),
+  spanCount: z.number(),
+  avgDurationMs: z.number(),
+  maxDurationMs: z.number(),
+  totalDurationMs: z.number(),
+});
+
+export type AiPathRuntimeTraceSlowNodeDto = z.infer<
+  typeof aiPathRuntimeTraceSlowNodeSchema
+>;
+export type AiPathRuntimeTraceSlowNode = AiPathRuntimeTraceSlowNodeDto;
+
+export const aiPathRuntimeTraceFailedNodeSchema = z.object({
+  nodeId: z.string(),
+  nodeType: z.string(),
+  failedCount: z.number(),
+  spanCount: z.number(),
+});
+
+export type AiPathRuntimeTraceFailedNodeDto = z.infer<
+  typeof aiPathRuntimeTraceFailedNodeSchema
+>;
+export type AiPathRuntimeTraceFailedNode = AiPathRuntimeTraceFailedNodeDto;
+
+export const aiPathRuntimeTraceAnalyticsSchema = z.object({
+  source: z.enum(['none', 'db_sample']),
+  sampledRuns: z.number(),
+  sampledSpans: z.number(),
+  completedSpans: z.number(),
+  failedSpans: z.number(),
+  cachedSpans: z.number(),
+  avgDurationMs: z.number().nullable(),
+  p95DurationMs: z.number().nullable(),
+  slowestSpan: aiPathRuntimeAnalyticsSlowestSpanSchema.nullable(),
+  topSlowNodes: z.array(aiPathRuntimeTraceSlowNodeSchema),
+  topFailedNodes: z.array(aiPathRuntimeTraceFailedNodeSchema),
+  truncated: z.boolean(),
+});
+
+export type AiPathRuntimeTraceAnalyticsDto = z.infer<
+  typeof aiPathRuntimeTraceAnalyticsSchema
+>;
+export type AiPathRuntimeTraceAnalytics = AiPathRuntimeTraceAnalyticsDto;
+
 export const aiPathRuntimeAnalyticsSummarySchema = z.object({
   from: z.string(),
   to: z.string(),
@@ -1182,6 +1242,7 @@ export const aiPathRuntimeAnalyticsSummarySchema = z.object({
     warningReports: z.number(),
     errorReports: z.number(),
   }),
+  traces: aiPathRuntimeTraceAnalyticsSchema,
   generatedAt: z.string(),
 });
 

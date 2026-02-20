@@ -215,7 +215,7 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
             >
               <DropdownMenuItem
                 onSelect={(): void => { void handleExportImagesOnly(listing.id); }}
-                className='text-gray-200 focus:bg-gray-800/70'
+                className='text-gray-200 focus:bg-card/60'
               >
                 <div className='flex flex-col'>
                   <span className='text-sm'>No resize (base-only)</span>
@@ -230,7 +230,7 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
                   onSelect={(): void => {
                     void handleExportImagesOnly(listing.id, preset);
                   }}
-                  className='text-gray-200 focus:bg-gray-800/70'
+                  className='text-gray-200 focus:bg-card/60'
                 >
                   <div className='flex flex-col'>
                     <span className='text-sm'>{preset.label}</span>

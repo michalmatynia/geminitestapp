@@ -216,6 +216,8 @@ export async function centerAndScaleObjectByLayout(
   detectionUsed: ImageStudioCenterDetectionMode;
   confidenceBefore: number;
   detectionDetails: ImageStudioDetectionDetails | null;
+  layoutPolicyVersion: string | null;
+  detectionPolicyDecision: string | null;
 }> {
   const normalizedLayout = normalizeCenterLayoutConfig(layout);
   const sourceWithAlpha = sharp(sourceBuffer).ensureAlpha();
@@ -278,5 +280,7 @@ export async function centerAndScaleObjectByLayout(
     detectionUsed: planned.analysis.detectionUsed,
     confidenceBefore: planned.analysis.confidence,
     detectionDetails: planned.analysis.detectionDetails,
+    layoutPolicyVersion: planned.analysis.policyVersion,
+    detectionPolicyDecision: planned.analysis.policyReason,
   };
 }

@@ -818,11 +818,8 @@ export function AiPathsSettingsView(): React.JSX.Element {
                       <Button
                         data-doc-id='canvas_enable_node_validation'
                         type='button'
-                        className={`rounded-md border text-sm ${
-                          normalizedAiPathsValidation.enabled === false
-                            ? 'border-amber-500/40 text-amber-200 hover:bg-amber-500/10'
-                            : 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
-                        }`}
+                        variant={normalizedAiPathsValidation.enabled === false ? 'warning' : 'success'}
+                        className='rounded-md text-sm'
                         onClick={() => {
                           const nextEnabled = normalizedAiPathsValidation.enabled === false;
                           updateAiPathsValidation({ enabled: nextEnabled });
@@ -849,7 +846,8 @@ export function AiPathsSettingsView(): React.JSX.Element {
                       <Button
                         data-doc-id='canvas_validate_nodes'
                         type='button'
-                        className='rounded-md border border-sky-500/40 text-sm text-sky-200 hover:bg-sky-500/10'
+                        variant='info'
+                        className='rounded-md text-sm'
                         onClick={handleRunNodeValidationCheck}
                         disabled={
                           !activePathId || normalizedAiPathsValidation.enabled === false
@@ -861,7 +859,8 @@ export function AiPathsSettingsView(): React.JSX.Element {
                       <Button
                         data-doc-id='canvas_open_node_validator'
                         type='button'
-                        className='rounded-md border border-indigo-500/40 text-sm text-indigo-200 hover:bg-indigo-500/10'
+                        variant='secondary'
+                        className='rounded-md text-sm border-indigo-500/40 text-indigo-200 hover:bg-indigo-500/10'
                         onClick={handleOpenNodeValidator}
                         disabled={!activePathId}
                         title='Open AI-Paths Node Validator patterns and sequences'
@@ -1368,6 +1367,58 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         runtimeAnalyticsQuery.data?.runs.p95DurationMs,
                       )}
                     </div>
+                    <div className='mt-2 text-[10px] uppercase text-gray-500'>
+                      Node spans
+                    </div>
+                    <div className='mt-1 text-gray-200'>
+                      Runs sampled {runtimeAnalyticsQuery.data?.traces.sampledRuns ?? 0} ·
+                      spans {runtimeAnalyticsQuery.data?.traces.sampledSpans ?? 0}
+                    </div>
+                    <div className='mt-1 text-gray-400'>
+                      Span avg{' '}
+                      {formatDurationMs(
+                        runtimeAnalyticsQuery.data?.traces.avgDurationMs,
+                      )}{' '}
+                      · p95{' '}
+                      {formatDurationMs(
+                        runtimeAnalyticsQuery.data?.traces.p95DurationMs,
+                      )}
+                    </div>
+                    {runtimeAnalyticsQuery.data?.traces.slowestSpan ? (
+                      <div className='mt-1 text-gray-500'>
+                        Slowest {runtimeAnalyticsQuery.data.traces.slowestSpan.nodeId} (
+                        {runtimeAnalyticsQuery.data.traces.slowestSpan.nodeType}) ·{' '}
+                        {formatDurationMs(
+                          runtimeAnalyticsQuery.data.traces.slowestSpan.durationMs,
+                        )}
+                      </div>
+                    ) : null}
+                    {(runtimeAnalyticsQuery.data?.traces.topSlowNodes.length ?? 0) > 0 ? (
+                      <div className='mt-1 text-gray-500'>
+                        Top slow:{' '}
+                        {runtimeAnalyticsQuery.data?.traces.topSlowNodes
+                          .slice(0, 2)
+                          .map(
+                            (entry) =>
+                              `${entry.nodeId} (${formatDurationMs(
+                                entry.avgDurationMs,
+                              )} avg)`,
+                          )
+                          .join(' · ')}
+                      </div>
+                    ) : null}
+                    {(runtimeAnalyticsQuery.data?.traces.topFailedNodes.length ?? 0) > 0 ? (
+                      <div className='mt-1 text-gray-500'>
+                        Top failed:{' '}
+                        {runtimeAnalyticsQuery.data?.traces.topFailedNodes
+                          .slice(0, 2)
+                          .map(
+                            (entry) =>
+                              `${entry.nodeId} (${entry.failedCount}/${entry.spanCount})`,
+                          )
+                          .join(' · ')}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </div>

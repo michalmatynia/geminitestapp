@@ -29,6 +29,7 @@ import {
   ToggleRow,
   MetadataItem,
   Card,
+  Badge,
 } from '@/shared/ui';
 
 export function ExportTab(): React.JSX.Element {
@@ -237,25 +238,25 @@ export function ExportTab(): React.JSX.Element {
               </p>
             </div>
             {!usesCategoryMapper ? (
-              <span className='rounded border border-slate-500/40 bg-slate-500/10 px-2 py-1 text-[11px] text-slate-200'>
+              <Badge variant='neutral' className='text-[11px] font-normal'>
                 Not used by template
-              </span>
+              </Badge>
             ) : !selectedBaseConnectionId ? (
-              <span className='rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200'>
+              <Badge variant='warning' className='text-[11px] font-normal'>
                 Select connection
-              </span>
+              </Badge>
             ) : categoryMappingsQuery.isLoading ? (
-              <span className='rounded border border-blue-500/40 bg-blue-500/10 px-2 py-1 text-[11px] text-blue-200'>
+              <Badge variant='info' className='text-[11px] font-normal'>
                 Checking mappings...
-              </span>
+              </Badge>
             ) : activeCategoryMappings.length > 0 ? (
-              <span className='rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-[11px] text-emerald-200'>
+              <Badge variant='success' className='text-[11px] font-normal'>
                 Ready
-              </span>
+              </Badge>
             ) : (
-              <span className='rounded border border-rose-500/40 bg-rose-500/10 px-2 py-1 text-[11px] text-rose-200'>
+              <Badge variant='error' className='text-[11px] font-normal'>
                 Missing mappings
-              </span>
+              </Badge>
             )}
           </div>
           <div className='mt-2 text-xs text-gray-400'>

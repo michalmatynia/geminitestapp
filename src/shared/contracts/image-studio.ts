@@ -562,6 +562,8 @@ export const imageStudioCenterLayoutMetadataSchema = z.object({
   whiteThreshold: z.number().int().finite(),
   chromaThreshold: z.number().int().finite(),
   shadowPolicy: imageStudioCenterShadowPolicySchema,
+  layoutPolicyVersion: z.string().trim().min(1).nullable().optional(),
+  detectionPolicyDecision: z.string().trim().min(1).nullable().optional(),
   detectionUsed: imageStudioCenterDetectionModeSchema.nullable().optional(),
   scale: z.number().finite().nullable().optional(),
 });
@@ -579,6 +581,8 @@ export const imageStudioAutoScalerLayoutMetadataSchema = z.object({
   whiteThreshold: z.number().int().finite(),
   chromaThreshold: z.number().int().finite(),
   shadowPolicy: imageStudioCenterShadowPolicySchema.optional(),
+  layoutPolicyVersion: z.string().trim().min(1).nullable().optional(),
+  detectionPolicyDecision: z.string().trim().min(1).nullable().optional(),
 });
 
 export type ImageStudioAutoScalerLayoutMetadataDto = z.infer<typeof imageStudioAutoScalerLayoutMetadataSchema>;
@@ -592,6 +596,22 @@ export const imageStudioOperationLifecycleSchema = z.object({
 export type ImageStudioOperationLifecycleDto = z.infer<typeof imageStudioOperationLifecycleSchema>;
 export type ImageStudioOperationLifecycle = ImageStudioOperationLifecycleDto;
 
+export const imageStudioDetectionCandidateScoreSchema = z.object({
+  confidence: z.number().finite().min(0).max(1),
+  area: z.number().int().positive(),
+});
+
+export type ImageStudioDetectionCandidateScoreDto = z.infer<typeof imageStudioDetectionCandidateScoreSchema>;
+export type ImageStudioDetectionCandidateScore = ImageStudioDetectionCandidateScoreDto;
+
+export const imageStudioDetectionCandidateSummarySchema = z.object({
+  alpha_bbox: imageStudioDetectionCandidateScoreSchema.nullable(),
+  white_bg_first_colored_pixel: imageStudioDetectionCandidateScoreSchema.nullable(),
+});
+
+export type ImageStudioDetectionCandidateSummaryDto = z.infer<typeof imageStudioDetectionCandidateSummarySchema>;
+export type ImageStudioDetectionCandidateSummary = ImageStudioDetectionCandidateSummaryDto;
+
 export const imageStudioDetectionDetailsSchema = z.object({
   shadowPolicyRequested: imageStudioCenterShadowPolicySchema,
   shadowPolicyApplied: imageStudioCenterShadowPolicySchema,
@@ -603,6 +623,10 @@ export const imageStudioDetectionDetailsSchema = z.object({
   corePixels: z.number().int().nonnegative(),
   touchesBorder: z.boolean(),
   maskSource: z.enum(['foreground', 'core']),
+  policyVersion: z.string().trim().min(1).optional(),
+  policyReason: z.string().trim().min(1).optional(),
+  fallbackApplied: z.boolean().optional(),
+  candidateDetections: imageStudioDetectionCandidateSummarySchema.optional(),
 });
 
 export type ImageStudioDetectionDetailsDto = z.infer<typeof imageStudioDetectionDetailsSchema>;
@@ -615,6 +639,10 @@ export const imageStudioAnalysisSummarySchema = z.object({
   detectionUsed: imageStudioObjectDetectionUsedSchema,
   confidence: z.number().finite().min(0).max(1),
   detectionDetails: imageStudioDetectionDetailsSchema.nullable().optional(),
+  policyVersion: z.string().trim().min(1),
+  policyReason: z.string().trim().min(1),
+  fallbackApplied: z.boolean(),
+  candidateDetections: imageStudioDetectionCandidateSummarySchema,
   whitespace: imageStudioWhitespaceMetricsSchema,
   objectAreaPercent: z.number().finite(),
   layout: imageStudioNormalizedCenterLayoutSchema,

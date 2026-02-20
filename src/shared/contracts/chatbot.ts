@@ -6,10 +6,11 @@ import { dtoBaseSchema } from './base';
  * Chatbot Settings & Config
  */
 export const chatbotSettingsSchema = z.object({
-  enabled: z.boolean(),
-  defaultModelId: z.string(),
-  welcomeMessage: z.string(),
-  systemPrompt: z.string(),
+  enabled: z.boolean().optional(),
+  model: z.string().optional(),
+  defaultModelId: z.string().optional(),
+  welcomeMessage: z.string().optional(),
+  systemPrompt: z.string().optional(),
   personaId: z.string().optional(),
   temperature: z.number().optional(),
   maxTokens: z.number().optional(),
@@ -130,7 +131,7 @@ export const chatbotJobStatusSchema = z.enum([
 export type ChatbotJobStatusDto = z.infer<typeof chatbotJobStatusSchema>;
 
 export const chatbotJobPayloadSchema = z.object({
-  sessionId: z.string(),
+  sessionId: z.string().optional(),
   model: z.string().optional(),
   prompt: z.string().optional(),
   messages: z.array(z.object({

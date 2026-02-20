@@ -6,7 +6,7 @@ import {
   CategoryMapperPageProvider,
   useCategoryMapperPageContext,
 } from '@/features/integrations/context/CategoryMapperPageContext';
-import { SectionHeader } from '@/shared/ui';
+import { SectionHeader, Card } from '@/shared/ui';
 
 function CategoryMapperPageContent(): React.JSX.Element {
   const { selectedConnectionId, isSupportedConnection } = useCategoryMapperPageContext();
@@ -21,12 +21,12 @@ function CategoryMapperPageContent(): React.JSX.Element {
 
       <div className='grid gap-6 md:grid-cols-[280px_1fr]'>
         {/* Sidebar */}
-        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+        <Card variant='subtle' padding='md' className='bg-card/40'>
           <MarketplaceSelector />
-        </div>
+        </Card>
 
         {/* Main Content */}
-        <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
+        <Card variant='subtle' padding='lg' className='bg-card/40'>
           {!selectedConnectionId ? (
             <div className='flex h-64 items-center justify-center text-gray-500'>
               <p>Select a marketplace connection to start mapping categories.</p>
@@ -38,7 +38,7 @@ function CategoryMapperPageContent(): React.JSX.Element {
               <p>Category mapping is not yet supported for this marketplace.</p>
             </div>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );

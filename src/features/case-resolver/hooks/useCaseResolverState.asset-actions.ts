@@ -336,6 +336,9 @@ export const useCaseResolverStateAssetActions = ({
       if (targetFile?.fileType !== 'scanfile') {
         throw new Error('Scan file no longer exists.');
       }
+      if (targetFile.isLocked) {
+        throw new Error('Document is locked. Unlock it before uploading files.');
+      }
 
       const sourceFiles = files.filter(
         (file: File): boolean => file instanceof File && file.size >= 0
@@ -388,11 +391,17 @@ export const useCaseResolverStateAssetActions = ({
       }
 
       if (createdSlots.length > 0) {
+        let didAttachSlots = false;
+        let attachBlockedByLock = false;
         updateWorkspace((current) => {
           const now = new Date().toISOString();
           let didUpdate = false;
           const nextFiles = current.files.map((file: CaseResolverFile): CaseResolverFile => {
             if (file.id !== fileId || file.fileType !== 'scanfile') return file;
+            if (file.isLocked) {
+              attachBlockedByLock = true;
+              return file;
+            }
             didUpdate = true;
             return {
               ...file,
@@ -400,6 +409,7 @@ export const useCaseResolverStateAssetActions = ({
               updatedAt: now,
             };
           });
+          didAttachSlots = didUpdate;
           if (!didUpdate) return current;
           return {
             ...current,
@@ -412,18 +422,25 @@ export const useCaseResolverStateAssetActions = ({
         }, { persistToast: treeSaveToast });
         setEditingDocumentDraft((current) => {
           if (current?.id !== fileId || current?.fileType !== 'scanfile') return current;
+          if (current.isLocked) return current;
           return {
             ...current,
             scanSlots: [...(current.scanSlots ?? []), ...createdSlots],
             updatedAt: new Date().toISOString(),
           };
         });
-        toast(
-          createdSlots.length === 1
-            ? '1 file uploaded to scan file.'
-            : `${createdSlots.length} files uploaded to scan file.`,
-          { variant: 'success' }
-        );
+        if (didAttachSlots) {
+          toast(
+            createdSlots.length === 1
+              ? '1 file uploaded to scan file.'
+              : `${createdSlots.length} files uploaded to scan file.`,
+            { variant: 'success' }
+          );
+        } else if (attachBlockedByLock) {
+          toast('Document was locked before uploaded files could be attached.', {
+            variant: 'warning',
+          });
+        }
       }
 
       if (failedFiles.length > 0) {
@@ -445,6 +462,9 @@ export const useCaseResolverStateAssetActions = ({
       );
       if (targetFile?.fileType !== 'scanfile') {
         throw new Error('Scan file no longer exists.');
+      }
+      if (targetFile.isLocked) {
+        throw new Error('Document is locked. Unlock it before running OCR.');
       }
       const draftScanSlots =
         editingDocumentDraft?.id === fileId && editingDocumentDraft.fileType === 'scanfile'
@@ -519,11 +539,17 @@ export const useCaseResolverStateAssetActions = ({
         }
 
         if (successfulSlots > 0) {
+          let didPersistOcrResult = false;
+          let ocrPersistBlockedByLock = false;
           updateWorkspace((current) => {
             const now = new Date().toISOString();
             let didUpdate = false;
             const nextFiles = current.files.map((file: CaseResolverFile): CaseResolverFile => {
               if (file.id !== fileId || file.fileType !== 'scanfile') return file;
+              if (file.isLocked) {
+                ocrPersistBlockedByLock = true;
+                return file;
+              }
               didUpdate = true;
               const mergedText = buildCombinedOcrText(nextSlots);
               const canonicalDocument = deriveDocumentContentSync({
@@ -557,54 +583,62 @@ export const useCaseResolverStateAssetActions = ({
                 updatedAt: now,
               };
             });
+            didPersistOcrResult = didUpdate;
             if (!didUpdate) return current;
             return {
               ...current,
               files: nextFiles,
             };
           }, { persistToast: treeSaveToast });
-          setEditingDocumentDraft((current) => {
-            if (current?.id !== fileId || current?.fileType !== 'scanfile') return current;
-            const now = new Date().toISOString();
-            const mergedText = buildCombinedOcrText(nextSlots);
-            const canonicalDocument = deriveDocumentContentSync({
-              mode: 'wysiwyg',
-              value: ensureSafeDocumentHtml(mergedText),
+          if (didPersistOcrResult) {
+            setEditingDocumentDraft((current) => {
+              if (current?.id !== fileId || current?.fileType !== 'scanfile') return current;
+              if (current.isLocked) return current;
+              const now = new Date().toISOString();
+              const mergedText = buildCombinedOcrText(nextSlots);
+              const canonicalDocument = deriveDocumentContentSync({
+                mode: 'wysiwyg',
+                value: ensureSafeDocumentHtml(mergedText),
+              });
+              const storedDocumentContent = toStorageDocumentValue(canonicalDocument);
+              const nextOriginalDocumentContent: string =
+                current.activeDocumentVersion === 'original'
+                  ? storedDocumentContent
+                  : (current.originalDocumentContent ?? '');
+              const nextExplodedDocumentContent: string =
+                current.activeDocumentVersion === 'exploded'
+                  ? storedDocumentContent
+                  : (current.explodedDocumentContent ?? '');
+              return {
+                ...current,
+                scanSlots: nextSlots,
+                scanOcrModel: runtime.model,
+                scanOcrPrompt: runtime.prompt,
+                editorType: canonicalDocument.mode,
+                baseDocumentContentVersion: (current.baseDocumentContentVersion ?? 0) + 1,
+                documentContentVersion: (current.documentContentVersion ?? 0) + 1,
+                documentContent: storedDocumentContent,
+                documentContentMarkdown: canonicalDocument.markdown,
+                documentContentHtml: canonicalDocument.html,
+                documentContentPlainText: canonicalDocument.plainText,
+                originalDocumentContent: nextOriginalDocumentContent,
+                explodedDocumentContent: nextExplodedDocumentContent,
+                documentConversionWarnings: canonicalDocument.warnings,
+                lastContentConversionAt: now,
+                updatedAt: now,
+              };
             });
-            const storedDocumentContent = toStorageDocumentValue(canonicalDocument);
-            const nextOriginalDocumentContent: string =
-              current.activeDocumentVersion === 'original'
-                ? storedDocumentContent
-                : (current.originalDocumentContent ?? '');
-            const nextExplodedDocumentContent: string =
-              current.activeDocumentVersion === 'exploded'
-                ? storedDocumentContent
-                : (current.explodedDocumentContent ?? '');
-            return {
-              ...current,
-              scanSlots: nextSlots,
-              scanOcrModel: runtime.model,
-              scanOcrPrompt: runtime.prompt,
-              editorType: canonicalDocument.mode,
-              baseDocumentContentVersion: (current.baseDocumentContentVersion ?? 0) + 1,
-              documentContentVersion: (current.documentContentVersion ?? 0) + 1,
-              documentContent: storedDocumentContent,
-              documentContentMarkdown: canonicalDocument.markdown,
-              documentContentHtml: canonicalDocument.html,
-              documentContentPlainText: canonicalDocument.plainText,
-              originalDocumentContent: nextOriginalDocumentContent,
-              explodedDocumentContent: nextExplodedDocumentContent,
-              documentConversionWarnings: canonicalDocument.warnings,
-              lastContentConversionAt: now,
-              updatedAt: now,
-            };
-          });
-          toast(
-            successfulSlots === 1
-              ? 'OCR finished for 1 file.'
-              : `OCR finished for ${successfulSlots} files.`,
-            { variant: 'success' }
-          );
+            toast(
+              successfulSlots === 1
+                ? 'OCR finished for 1 file.'
+                : `OCR finished for ${successfulSlots} files.`,
+              { variant: 'success' }
+            );
+          } else if (ocrPersistBlockedByLock) {
+            toast('Document was locked before OCR output could be applied.', {
+              variant: 'warning',
+            });
+          }
         }
 
         if (failedSlots.length > 0) {

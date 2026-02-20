@@ -3,25 +3,38 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 vi.unmock('@/shared/lib/db/prisma');
 vi.unmock('@/features/ai/ai-paths/services/path-run-repository');
 
+const {
+  enqueuePathRunJobMock,
+  removePathRunQueueEntriesMock,
+} = vi.hoisted(() => ({
+  enqueuePathRunJobMock: vi.fn().mockResolvedValue(undefined),
+  removePathRunQueueEntriesMock: vi.fn().mockResolvedValue({ removed: 0, requested: 0 }),
+}));
+
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import {
   enqueuePathRun, 
   resumePathRun, 
   cancelPathRun, 
   cancelPathRunWithRepository,
+  deletePathRunWithRepository,
+  deletePathRunsWithRepository,
   retryPathRunNode 
 } from '@/features/ai/ai-paths/services/path-run-service';
 import type { AiNode } from '@/shared/contracts/ai-paths';
 import prisma from '@/shared/lib/db/prisma';
 
 vi.mock('@/features/jobs/workers/aiPathRunQueue', () => ({
-  enqueuePathRunJob: vi.fn().mockResolvedValue(undefined),
+  enqueuePathRunJob: enqueuePathRunJobMock,
+  removePathRunQueueEntries: removePathRunQueueEntriesMock,
 }));
 
 describe('PathRunService', () => {
   let repo: any;
 
   beforeEach(async () => {
+    enqueuePathRunJobMock.mockClear();
+    removePathRunQueueEntriesMock.mockClear();
     repo = await getPathRunRepository();
     // Direct prisma cleanup since repo doesn't have deleteMany
     await prisma.aiPathRunEvent.deleteMany();
@@ -78,6 +91,29 @@ describe('PathRunService', () => {
         backoffMs: 5000,
         custom: 'value'
       }));
+    });
+
+    it('should block enqueue when disabled node policy is violated', async () => {
+      const previous = process.env['AI_PATHS_DISABLED_NODE_TYPES'];
+      process.env['AI_PATHS_DISABLED_NODE_TYPES'] = 'trigger';
+      try {
+        await expect(
+          enqueuePathRun({
+            pathId: 'test-path-policy-block',
+            nodes: mockNodes,
+            edges: [],
+          })
+        ).rejects.toThrow('Path blocked by node policy');
+
+        const runs = await repo.listRuns({ pathId: 'test-path-policy-block' });
+        expect(runs.total).toBe(0);
+      } finally {
+        if (previous === undefined) {
+          delete process.env['AI_PATHS_DISABLED_NODE_TYPES'];
+        } else {
+          process.env['AI_PATHS_DISABLED_NODE_TYPES'] = previous;
+        }
+      }
     });
 
     it('should dedupe active runs by requestId', async () => {
@@ -162,6 +198,7 @@ describe('PathRunService', () => {
       const canceled = await cancelPathRun(run.id);
       expect(canceled.status).toBe('canceled');
       expect(canceled.finishedAt).toBeDefined();
+      expect(removePathRunQueueEntriesMock).toHaveBeenCalledWith([run.id]);
 
       const events = await repo.listRunEvents(run.id);
       expect(events.some((e: any) => e.message === 'Run canceled.')).toBe(true);
@@ -177,6 +214,7 @@ describe('PathRunService', () => {
       const canceled = await cancelPathRunWithRepository(repo, run.id);
       expect(canceled.status).toBe('canceled');
       expect(canceled.finishedAt).toBeDefined();
+      expect(removePathRunQueueEntriesMock).toHaveBeenCalledWith([run.id]);
     });
 
     it('should mark in-flight cancellation metadata when canceling a running run', async () => {
@@ -204,6 +242,20 @@ describe('PathRunService', () => {
           String(e.message).includes('Cancellation requested')
         )
       ).toBe(true);
+      expect(removePathRunQueueEntriesMock).toHaveBeenCalledWith([run.id]);
+    });
+
+    it('should still clear queued entries when run is already terminal', async () => {
+      const run = await enqueuePathRun({
+        pathId: 'test-path-terminal-cancel',
+        nodes: mockNodes,
+        edges: []
+      });
+      await repo.updateRun(run.id, { status: 'completed', finishedAt: new Date().toISOString() });
+
+      const result = await cancelPathRun(run.id);
+      expect(result.status).toBe('completed');
+      expect(removePathRunQueueEntriesMock).toHaveBeenCalledWith([run.id]);
     });
   });
 
@@ -232,6 +284,51 @@ describe('PathRunService', () => {
 
       const events = await repo.listRunEvents(run.id);
       expect(events.some((e: any) => e.message === 'Retry node node-1.')).toBe(true);
+    });
+  });
+
+  describe('delete run helpers', () => {
+    it('should delete a single run and clean queue entries', async () => {
+      const run = await enqueuePathRun({
+        pathId: 'test-path-delete-single',
+        nodes: mockNodes,
+        edges: []
+      });
+
+      const deleted = await deletePathRunWithRepository(repo, run.id);
+      expect(deleted).toBe(true);
+      expect(removePathRunQueueEntriesMock).toHaveBeenCalledWith([run.id]);
+      await expect(repo.findRunById(run.id)).resolves.toBeNull();
+    });
+
+    it('should delete filtered runs in bulk and clean queue entries', async () => {
+      const runA = await enqueuePathRun({
+        pathId: 'test-path-delete-bulk',
+        nodes: mockNodes,
+        edges: []
+      });
+      const runB = await enqueuePathRun({
+        pathId: 'test-path-delete-bulk',
+        nodes: mockNodes,
+        edges: []
+      });
+      const runOther = await enqueuePathRun({
+        pathId: 'test-path-delete-other',
+        nodes: mockNodes,
+        edges: []
+      });
+
+      const result = await deletePathRunsWithRepository(repo, {
+        pathId: 'test-path-delete-bulk',
+      });
+
+      expect(result.count).toBe(2);
+      expect(removePathRunQueueEntriesMock).toHaveBeenCalledTimes(1);
+      const queueCleanupArg = removePathRunQueueEntriesMock.mock.calls[0]?.[0];
+      expect(queueCleanupArg).toEqual(expect.arrayContaining([runA.id, runB.id]));
+      await expect(repo.findRunById(runOther.id)).resolves.toMatchObject({
+        id: runOther.id,
+      });
     });
   });
 });

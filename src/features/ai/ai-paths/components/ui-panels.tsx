@@ -38,6 +38,7 @@ const DOCS_COPY_SYSTEM_OVERVIEW_LINES = [
   'Ports are strict and type-safe by name: result -> result, images -> images.',
   'Multiple wires into the same input are collected as arrays; the runtime resolves the first value for single-input nodes.',
   'Image data travels as image URLs (not raw files), and the Model node converts URLs to base64 when calling the model.',
+  'Outbound URL policy blocks local/private image URLs before model calls.',
 ];
 
 const DOCS_COPY_EXECUTION_STATE_LINES = [
@@ -599,6 +600,9 @@ export function DocsTabPanel(): React.JSX.Element {
               Image data travels as <span className='text-white'>image URLs</span> (not raw
               files), and the Model node converts URLs to base64 when calling the model.
             </li>
+            <li>
+              Outbound URL policy blocks local/private image URLs before model calls.
+            </li>
           </ul>
         </DocumentationSection>
       ) : null}
@@ -633,6 +637,10 @@ export function DocsTabPanel(): React.JSX.Element {
               <span className='text-white'>Execution (Server / Local):</span> controls where the
               run executes. Server runs are queued/executed on the server and streamed back;
               Local runs execute in the browser runtime engine.
+            </li>
+            <li>
+              Local mode blocks runs when nodes contain inline API credentials
+              (for example API key/bearer/basic/OAuth templates or auth headers).
             </li>
             <li>
               <span className='text-white'>Flow (Off / Low / Medium / High):</span> controls

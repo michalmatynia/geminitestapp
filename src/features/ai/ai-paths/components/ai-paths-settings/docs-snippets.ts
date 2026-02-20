@@ -23,6 +23,7 @@ export const DOCS_OVERVIEW_SNIPPET = [
   '- Ports are strict by name (e.g., result → result).',
   '- Multiple wires into one input collect as arrays; most nodes use the first value unless configured.',
   '- Image data flows as URLs; Model nodes resolve to base64 when invoking vision models.',
+  '- Outbound URL policy blocks local/private image URLs before model or description calls.',
   '',
   'Core node roles:',
   '- Trigger: start signal + triggerName + context/meta payloads.',

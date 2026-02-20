@@ -8,8 +8,9 @@ import {
   toStorageDocumentValue,
 } from '@/features/document-editor/content-format';
 import {
+  clearPromptExploderApplyPayload,
   consumePromptExploderApplyPromptForCaseResolver,
-  readPromptExploderApplyPayload,
+  readPromptExploderApplyPayloadSnapshot,
   savePromptExploderApplyPromptForCaseResolver,
   type PromptExploderBridgePayload,
 } from '@/features/prompt-exploder/bridge';
@@ -62,10 +63,17 @@ export type CaseResolverPromptExploderPendingPayload = PromptExploderBridgePaylo
   target: 'case-resolver';
 };
 
+export type CaseResolverPromptExploderPayloadReadState = {
+  pendingPayload: CaseResolverPromptExploderPendingPayload | null;
+  expiredPayload: CaseResolverPromptExploderPendingPayload | null;
+  expiresAt: string | null;
+};
+
 export type CaseResolverPromptExploderApplyFailureReason =
   | 'no_payload'
   | 'empty_prompt'
   | 'missing_context_file_id'
+  | 'target_file_locked'
   | 'target_file_missing_precheck'
   | 'target_file_missing_mutation_snapshot'
   | 'target_missing_in_live_workspace_after_precheck';
@@ -82,6 +90,11 @@ export type CaseResolverPromptExploderApplyTargetResolutionStrategy =
 
 export type CaseResolverPromptExploderApplyDiagnostics = {
   applyAttemptId: string;
+  transferId: string | null;
+  payloadVersion: number | null;
+  payloadChecksum: string | null;
+  payloadStatus: string | null;
+  payloadCreatedAt: string | null;
   payloadKey: string | null;
   requestedTargetFileId: string | null;
   payloadContextFileId: string | null;
@@ -180,12 +193,26 @@ const normalizePayloadCreatedAt = (value: string | null | undefined): string =>
 const buildPromptExploderPayloadKey = (
   payload: PromptExploderBridgePayload
 ): string =>
+  payload.transferId?.trim()
+    ? payload.transferId.trim()
+    : (
+      [
+        normalizePayloadCreatedAt(payload.createdAt),
+        payload.caseResolverContext?.fileId ?? '',
+        payload.prompt,
+        JSON.stringify(payload.caseResolverParties ?? null),
+        JSON.stringify(payload.caseResolverMetadata ?? null),
+      ].join('|')
+    );
+
+export const resolvePromptExploderPendingPayloadIdentity = (
+  payload: Pick<PromptExploderBridgePayload, 'transferId' | 'createdAt' | 'caseResolverContext' | 'prompt'>
+): string =>
   [
+    payload.transferId?.trim() || '',
     normalizePayloadCreatedAt(payload.createdAt),
     payload.caseResolverContext?.fileId ?? '',
-    payload.prompt,
-    JSON.stringify(payload.caseResolverParties ?? null),
-    JSON.stringify(payload.caseResolverMetadata ?? null),
+    String(payload.prompt.length),
   ].join('|');
 
 const toCaseResolverPendingPayload = (
@@ -198,17 +225,53 @@ const toCaseResolverPendingPayload = (
   };
 };
 
+export const readCaseResolverPromptExploderPayloadState =
+(): CaseResolverPromptExploderPayloadReadState => {
+  const snapshot = readPromptExploderApplyPayloadSnapshot();
+  const payload = toCaseResolverPendingPayload(snapshot.payload);
+  if (!payload) {
+    return {
+      pendingPayload: null,
+      expiredPayload: null,
+      expiresAt: snapshot.expiresAt,
+    };
+  }
+  if (!payload.prompt.trim()) {
+    return {
+      pendingPayload: null,
+      expiredPayload: null,
+      expiresAt: snapshot.expiresAt,
+    };
+  }
+  if (snapshot.isExpired) {
+    return {
+      pendingPayload: null,
+      expiredPayload: payload,
+      expiresAt: snapshot.expiresAt,
+    };
+  }
+  return {
+    pendingPayload: payload,
+    expiredPayload: null,
+    expiresAt: snapshot.expiresAt,
+  };
+};
+
 export const readPendingCaseResolverPromptExploderPayload =
 (): CaseResolverPromptExploderPendingPayload | null => {
-  const payload = toCaseResolverPendingPayload(readPromptExploderApplyPayload());
-  if (!payload) return null;
-  if (!payload.prompt.trim()) return null;
-  return payload;
+  return readCaseResolverPromptExploderPayloadState().pendingPayload;
 };
 
 export const discardPendingCaseResolverPromptExploderPayload =
-(): CaseResolverPromptExploderPendingPayload | null =>
-  toCaseResolverPendingPayload(consumePromptExploderApplyPromptForCaseResolver());
+(): CaseResolverPromptExploderPendingPayload | null => {
+  const consumed = toCaseResolverPendingPayload(consumePromptExploderApplyPromptForCaseResolver());
+  if (consumed) return consumed;
+  const snapshot = readPromptExploderApplyPayloadSnapshot();
+  const snapshotPayload = toCaseResolverPendingPayload(snapshot.payload);
+  if (!snapshotPayload) return null;
+  clearPromptExploderApplyPayload();
+  return snapshotPayload;
+};
 
 export const applyPendingPromptExploderPayloadToCaseResolver = ({
   payload,
@@ -231,6 +294,15 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
   const payloadContextFileId = payloadToApply?.caseResolverContext?.fileId ?? null;
   const normalizedFallbackTargetFileId: string | null = null;
   const payloadKey = payloadToApply ? buildPromptExploderPayloadKey(payloadToApply) : null;
+  const payloadTransferId = payloadToApply?.transferId?.trim() || null;
+  const payloadVersion =
+    typeof payloadToApply?.payloadVersion === 'number' &&
+    Number.isFinite(payloadToApply.payloadVersion)
+      ? Math.trunc(payloadToApply.payloadVersion)
+      : null;
+  const payloadChecksum = payloadToApply?.checksum?.trim() || null;
+  const payloadStatus = payloadToApply?.status?.trim() || null;
+  const payloadCreatedAt = payloadToApply?.createdAt?.trim() || null;
   const hasPartiesPayload = Boolean(payloadToApply?.caseResolverParties);
   const hasMetadataPayload = Boolean(payloadToApply?.caseResolverMetadata?.placeDate);
   const precheckTargetResolution = resolvePromptExploderApplyTargetFileId({
@@ -254,6 +326,11 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
     >>
   ): CaseResolverPromptExploderApplyDiagnostics => ({
     applyAttemptId,
+    transferId: payloadTransferId,
+    payloadVersion,
+    payloadChecksum,
+    payloadStatus,
+    payloadCreatedAt,
     payloadKey,
     requestedTargetFileId,
     payloadContextFileId,
@@ -396,6 +473,22 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
     ) ??
     findWorkspaceFileByNormalizedId(workspaceFiles, mutationResolvedTargetFileId);
 
+  if (mutationSourceFile?.isLocked) {
+    return {
+      applied: false,
+      payload: payloadToApply,
+      proposalState: null,
+      reason: 'target_file_locked',
+      diagnostics: buildDiagnostics({
+        mutationResolvedTargetFileId: mutationSourceFile.id,
+        mutationResolutionStrategy,
+        mutationWorkspaceFileCount,
+        resolvedTargetFileId: mutationSourceFile.id,
+        resolutionStrategy: mutationResolutionStrategy,
+      }),
+    };
+  }
+
   if (!mutationSourceFile) {
     const missingAfterPrecheck = Boolean(precheckTargetResolution.resolvedTargetFileId);
     return {
@@ -430,6 +523,7 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
   let liveMutationNextFile: CaseResolverFile | null = null;
   let liveMutationChanged = false;
   let liveMutationAttempted = false;
+  let liveMutationBlockedByLock = false;
 
   updateWorkspace((current) => {
     liveMutationAttempted = true;
@@ -445,6 +539,13 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
     if (!existingTarget) {
       liveMutationResolvedTargetFileId = null;
       liveMutationResolutionStrategy = 'unresolved';
+      return current;
+    }
+    if (existingTarget.isLocked) {
+      liveMutationSourceFile = existingTarget;
+      liveMutationNextFile = existingTarget;
+      liveMutationChanged = false;
+      liveMutationBlockedByLock = true;
       return current;
     }
     liveMutationSourceFile = existingTarget;
@@ -485,6 +586,22 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
     source: 'prompt_exploder_apply_manual',
     skipNormalization: true,
   });
+
+  if (liveMutationBlockedByLock && liveMutationResolvedTargetFileId) {
+    return {
+      applied: false,
+      payload: payloadToApply,
+      proposalState: null,
+      reason: 'target_file_locked',
+      diagnostics: buildDiagnostics({
+        mutationResolvedTargetFileId: liveMutationResolvedTargetFileId,
+        mutationResolutionStrategy: liveMutationResolutionStrategy,
+        mutationWorkspaceFileCount: liveMutationWorkspaceFileCount,
+        resolvedTargetFileId: liveMutationResolvedTargetFileId,
+        resolutionStrategy: liveMutationResolutionStrategy,
+      }),
+    };
+  }
 
   if (
     liveMutationAttempted &&
@@ -579,7 +696,16 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
         consumedPayload.prompt,
         consumedPayload.caseResolverContext ?? null,
         consumedPayload.caseResolverParties ?? null,
-        consumedPayload.caseResolverMetadata ?? null
+        consumedPayload.caseResolverMetadata ?? null,
+        {
+          transferId: consumedPayload.transferId ?? null,
+          payloadVersion: consumedPayload.payloadVersion ?? null,
+          createdAt: consumedPayload.createdAt ?? null,
+          expiresAt: consumedPayload.expiresAt ?? null,
+          checksum: consumedPayload.checksum ?? null,
+          status: consumedPayload.status ?? null,
+          appliedAt: consumedPayload.appliedAt ?? null,
+        }
       );
     }
   }

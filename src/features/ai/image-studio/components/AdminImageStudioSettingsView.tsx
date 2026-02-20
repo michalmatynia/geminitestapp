@@ -17,6 +17,7 @@ import {
   TabsTrigger,
   Textarea,
   ToggleRow,
+  Card,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -394,10 +395,12 @@ export function AdminImageStudioSettingsView(
                       const enabled = operations.includes(operation);
                       const orderIndex = operations.indexOf(operation);
                       return (
-                        <div
+                        <Card
                           key={operation}
+                          variant='subtle-compact'
+                          padding='none'
                           className={cn(
-                            'flex items-center justify-between rounded-lg border border-border/40 bg-card/30 px-4 py-2 transition-colors',
+                            'flex items-center justify-between border-border/40 bg-card/30 px-4 py-2 transition-colors',
                             enabled ? 'border-primary/20 bg-primary/5' : 'opacity-60'
                           )}
                         >
@@ -428,7 +431,7 @@ export function AdminImageStudioSettingsView(
                               <ArrowDown className='size-3.5' />
                             </Button>
                           </div>
-                        </div>
+                        </Card>
                       );
                     })}
                   </div>
@@ -643,7 +646,7 @@ export function AdminImageStudioSettingsView(
                   </Button>
                 </div>
 
-                <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+                <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
                   <Label className='mb-3 block text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground'>
                     Quick-switch Presets
                   </Label>
@@ -652,10 +655,12 @@ export function AdminImageStudioSettingsView(
                       const isActive = modelId === studioSettings.targetAi.openai.model;
                       const canRemove = quickSwitchModels.length > 1 || !isActive;
                       return (
-                        <div
+                        <Card
                           key={modelId}
+                          variant='subtle-compact'
+                          padding='none'
                           className={cn(
-                            'group inline-flex items-center gap-1 rounded-md border px-1 py-1 text-xs transition-colors',
+                            'group inline-flex items-center gap-1 border px-1 py-1 text-xs transition-colors',
                             isActive
                               ? 'border-sky-400/50 bg-sky-500/10 text-sky-100'
                               : 'border-border/60 bg-card/30 text-muted-foreground hover:border-sky-400/40 hover:bg-card/60'
@@ -687,7 +692,7 @@ export function AdminImageStudioSettingsView(
                           >
                             <X className='size-3' />
                           </button>
-                        </div>
+                        </Card>
                       );
                     })}
                   </div>
@@ -718,7 +723,7 @@ export function AdminImageStudioSettingsView(
                       Add
                     </Button>
                   </div>
-                </div>
+                </Card>
 
                 {isGpt52Model ? (
                   <Alert variant='success' className='bg-emerald-500/5 border-emerald-500/20'>
@@ -752,7 +757,7 @@ export function AdminImageStudioSettingsView(
                   )}
                 </div>
 
-                <div className='space-y-4 rounded-lg border border-border/40 bg-card/20 p-4'>
+                <Card variant='subtle' padding='md' className='space-y-4 border-border/40 bg-card/20'>
                   <Label className='text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2 block'>Request Parameters</Label>
                   <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
                     <FormField label='Image Size'>
@@ -852,13 +857,13 @@ export function AdminImageStudioSettingsView(
                       className='w-fit mt-2'
                     />
                   )}
-                </div>
+                </Card>
 
                 <FormField label='Advanced Overrides (JSON)' description='Inject raw parameters directly into the Images API request.'>
                   <Textarea
                     value={advancedOverridesText}
                     onChange={(e) => handleAdvancedOverridesChange(e.target.value)}
-                    className={cn('min-h-[120px] font-mono text-[11px] bg-gray-950/40', advancedOverridesError && 'border-destructive focus-visible:ring-destructive')}
+                    className={cn('min-h-[120px] font-mono text-[11px] bg-card/40', advancedOverridesError && 'border-destructive focus-visible:ring-destructive')}
                     placeholder='{"metadata": {"project": "xyz"}}'
                   />
                   {advancedOverridesError && (
@@ -888,7 +893,7 @@ export function AdminImageStudioSettingsView(
                   <Textarea
                     value={promptValidationRulesText}
                     onChange={(e) => handlePromptValidationRulesChange(e.target.value)}
-                    className={cn('min-h-[300px] font-mono text-[11px] bg-gray-950/40', promptValidationRulesError && 'border-destructive')}
+                    className={cn('min-h-[300px] font-mono text-[11px] bg-card/40', promptValidationRulesError && 'border-destructive')}
                     placeholder='[{ "ruleId": "no-brand-names", ... }]'
                   />
                   {promptValidationRulesError && (
@@ -953,9 +958,9 @@ export function AdminImageStudioSettingsView(
                 {backfillResultText && (
                   <div className='space-y-2'>
                     <Label className='text-[10px] uppercase font-bold text-gray-500'>Result Summary</Label>
-                    <pre className='max-h-80 overflow-auto rounded-lg border border-border/60 bg-gray-950/60 p-4 font-mono text-[11px] text-emerald-400 whitespace-pre-wrap leading-relaxed shadow-inner'>
+                    <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/60 p-4 font-mono text-[11px] text-emerald-400 whitespace-pre-wrap leading-relaxed shadow-inner overflow-auto max-h-80'>
                       {backfillResultText}
-                    </pre>
+                    </Card>
                   </div>
                 )}
               </div>

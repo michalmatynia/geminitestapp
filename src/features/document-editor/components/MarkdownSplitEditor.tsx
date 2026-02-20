@@ -7,6 +7,7 @@ import { Textarea } from '@/shared/ui';
 export interface MarkdownSplitEditorProps {
   value: string;
   onChange: (nextValue: string) => void;
+  readOnly?: boolean | undefined;
   showPreview: boolean;
   renderPreviewHtml: (value: string) => string;
   sanitizePreviewHtml?: ((value: string) => string) | undefined;
@@ -32,6 +33,7 @@ export interface MarkdownSplitEditorProps {
 export function MarkdownSplitEditor({
   value,
   onChange,
+  readOnly = false,
   showPreview,
   renderPreviewHtml,
   sanitizePreviewHtml,
@@ -147,12 +149,18 @@ export function MarkdownSplitEditor({
             }
             value={value}
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
+              if (readOnly) return;
               onChange(event.target.value);
             }}
             onPaste={(event: React.ClipboardEvent<HTMLTextAreaElement>): void => {
+              if (readOnly) {
+                event.preventDefault();
+                return;
+              }
               if (!onPaste) return;
               void onPaste(event);
             }}
+            readOnly={readOnly}
             rows={12}
             className={textareaClassName || 'w-full rounded-lg border px-4 py-2 font-mono'}
             style={{
@@ -182,6 +190,7 @@ export function MarkdownSplitEditor({
           <div
             className='mx-3 flex w-3 cursor-col-resize items-stretch'
             onPointerDown={(event: React.PointerEvent): void => {
+              if (readOnly) return;
               event.preventDefault();
               updateDragging(true);
             }}

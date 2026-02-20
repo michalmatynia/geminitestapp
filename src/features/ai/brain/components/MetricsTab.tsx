@@ -3,7 +3,7 @@
 import { Activity, Radar } from 'lucide-react';
 import React from 'react';
 
-import { Button, MetadataItem, StatusBadge, Alert, SectionHeader, FormSection, EmptyState } from '@/shared/ui';
+import { Button, MetadataItem, StatusBadge, Alert, SectionHeader, FormSection, EmptyState, Card } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 
@@ -101,7 +101,7 @@ export function MetricsTab(): React.JSX.Element {
       </div>
 
       <div className='grid gap-4 lg:grid-cols-2'>
-        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+        <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
           <div className='flex items-center gap-2 text-sm font-semibold text-white'>
             <Activity className='size-4 text-cyan-300' />
             Top Analytics Pages (24h)
@@ -122,9 +122,9 @@ export function MetricsTab(): React.JSX.Element {
               />
             ) : null}
           </div>
-        </div>
+        </Card>
 
-        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+        <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
           <div className='flex items-center gap-2 text-sm font-semibold text-white'>
             <Radar className='size-4 text-amber-300' />
             Top Error Sources (logs)
@@ -145,7 +145,7 @@ export function MetricsTab(): React.JSX.Element {
               />
             ) : null}
           </div>
-        </div>
+        </Card>
       </div>
 
       <div className='grid gap-4 lg:grid-cols-2'>
@@ -196,7 +196,7 @@ export function MetricsTab(): React.JSX.Element {
         title='Runtime Analysis (Redis)'
         className='p-4'
       >
-        <div className='grid gap-3 md:grid-cols-2 lg:grid-cols-4'>
+        <div className='grid gap-3 md:grid-cols-2 lg:grid-cols-6'>
           <MetadataItem
             label='Queued / Started'
             value={`${formatNumber(runtimeAnalyticsQuery.data?.runs.queued)} / ${formatNumber(runtimeAnalyticsQuery.data?.runs.started)}`}
@@ -213,7 +213,47 @@ export function MetricsTab(): React.JSX.Element {
             label='p95 Runtime'
             value={formatDurationMs(runtimeAnalyticsQuery.data?.runs.p95DurationMs)}
           />
+          <MetadataItem
+            label='Trace Spans'
+            value={`${formatNumber(runtimeAnalyticsQuery.data?.traces.sampledSpans)} / ${formatNumber(runtimeAnalyticsQuery.data?.traces.sampledRuns)}`}
+            hint={runtimeAnalyticsQuery.data?.traces.truncated ? 'Run sample truncated' : 'Full run sample'}
+          />
+          <MetadataItem
+            label='Avg / p95 Span'
+            value={`${formatDurationMs(runtimeAnalyticsQuery.data?.traces.avgDurationMs)} / ${formatDurationMs(runtimeAnalyticsQuery.data?.traces.p95DurationMs)}`}
+            hint={
+              runtimeAnalyticsQuery.data?.traces.slowestSpan
+                ? `Slowest ${runtimeAnalyticsQuery.data.traces.slowestSpan.nodeId} (${formatDurationMs(
+                  runtimeAnalyticsQuery.data.traces.slowestSpan.durationMs
+                )})`
+                : 'No span durations'
+            }
+          />
         </div>
+        {(runtimeAnalyticsQuery.data?.traces.topSlowNodes.length ?? 0) > 0 ? (
+          <div className='mt-3 text-[11px] text-gray-400'>
+            Slowest nodes:{' '}
+            {runtimeAnalyticsQuery.data?.traces.topSlowNodes
+              .slice(0, 3)
+              .map(
+                (entry) =>
+                  `${entry.nodeId} (${formatDurationMs(entry.avgDurationMs)} avg)`,
+              )
+              .join(' · ')}
+          </div>
+        ) : null}
+        {(runtimeAnalyticsQuery.data?.traces.topFailedNodes.length ?? 0) > 0 ? (
+          <div className='mt-1 text-[11px] text-gray-400'>
+            Most failures:{' '}
+            {runtimeAnalyticsQuery.data?.traces.topFailedNodes
+              .slice(0, 3)
+              .map(
+                (entry) =>
+                  `${entry.nodeId} (${entry.failedCount}/${entry.spanCount})`,
+              )
+              .join(' · ')}
+          </div>
+        ) : null}
         <div className='mt-3 text-[11px] text-gray-500'>
           Storage: {runtimeAnalyticsQuery.data?.storage ?? '—'} · Updated {runtimeAnalyticsQuery.data?.generatedAt ? formatDate(runtimeAnalyticsQuery.data.generatedAt) : '—'}
         </div>

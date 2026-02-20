@@ -4,8 +4,8 @@ import { Undo2, Redo2, Eye, EyeOff } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CmsDomainSelector } from '@/features/cms';
-import { buildColorSchemeMap } from '@/shared/contracts/cms';
 import { logClientError } from '@/features/observability';
+import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { useUserPreferences } from '@/shared/hooks/useUserPreferences';
 import {
   Button,

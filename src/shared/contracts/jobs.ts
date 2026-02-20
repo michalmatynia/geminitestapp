@@ -2,18 +2,18 @@ import { z } from 'zod';
 
 import { dtoBaseSchema } from './base';
 
-import type { JobsOptions, Queue, WorkerOptions } from 'bullmq';
-
 /**
  * Core Job DTOs
  */
 
 export const jobStatusSchema = z.enum([
+  'pending',
   'queued',
   'running',
   'completed',
   'failed',
   'canceled',
+  'cancelled',
 ]);
 
 export type JobStatusDto = z.infer<typeof jobStatusSchema>;
@@ -21,11 +21,15 @@ export type JobStatus = JobStatusDto;
 
 export const jobSchema = dtoBaseSchema.extend({
   status: jobStatusSchema,
-  progress: z.number().min(0).max(100),
+  type: z.string().optional(),
+  progress: z.number().min(0).max(100).optional(),
+  payload: z.unknown().optional(),
   error: z.string().nullable().optional(),
+  errorMessage: z.string().nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   startedAt: z.string().nullable().optional(),
   finishedAt: z.string().nullable().optional(),
+  completedAt: z.string().nullable().optional(),
 });
 
 export type JobDto = z.infer<typeof jobSchema>;
@@ -95,7 +99,9 @@ export type ProductAiJobResult = ProductAiJobResultDto;
 
 export const productAiJobSchema = jobSchema.extend({
   productId: z.string(),
-  jobType: productAiJobTypeSchema,
+  jobType: productAiJobTypeSchema.optional(),
+  payload: z.unknown().optional(),
+  errorMessage: z.string().nullable().optional(),
   result: productAiJobResultSchema.nullable().optional(),
 });
 
@@ -120,10 +126,12 @@ export type UpdateProductAiJobDto = z.infer<typeof updateProductAiJobSchema>;
 
 export type ProductAiJobStatus =
   | 'pending'
+  | 'queued'
   | 'running'
   | 'completed'
   | 'failed'
-  | 'canceled';
+  | 'canceled'
+  | 'cancelled';
 
 export type ProductAiJobRecord = {
   id: string;
@@ -182,9 +190,6 @@ export type ProductAiJobRepository = {
   markStaleRunningJobs(maxAgeMs: number): Promise<{ count: number }>;
 };
 
-type QueueJobOptions = Omit<JobsOptions, 'connection'>;
-type QueueWorkerOptions = Omit<WorkerOptions, 'connection' | 'concurrency'>;
-
 /**
  * Queue Configuration Types
  */
@@ -192,26 +197,18 @@ type QueueWorkerOptions = Omit<WorkerOptions, 'connection' | 'concurrency'>;
 export type QueueConfig<TJobData = unknown> = {
   name: QueueName;
   concurrency: number;
-  defaultJobOptions?: QueueJobOptions;
-  workerOptions?: QueueWorkerOptions;
+  defaultJobOptions?: any; // Omit<JobsOptions, 'connection'>
+  workerOptions?: any; // Omit<WorkerOptions, 'connection' | 'concurrency'>
   processor: (data: TJobData, jobId: string) => Promise<unknown>;
   onCompleted?: (jobId: string, result: unknown, data: TJobData) => Promise<void>;
-  onFailed?: (
-    jobId: string,
-    error: Error,
-    data: TJobData,
-    context?: { attemptsMade: number; maxAttempts: number }
-  ) => Promise<void>;
+  onFailed?: (jobId: string, error: Error, data: TJobData) => Promise<void>;
 };
 
 export type ManagedQueue<TJobData = unknown> = {
-  enqueue: (
-    data: TJobData,
-    opts?: Partial<QueueJobOptions> & { repeat?: { every: number }; jobId?: string }
-  ) => Promise<string>;
+  enqueue: (data: TJobData, opts?: any) => Promise<string>;
   startWorker: () => void;
   stopWorker: () => Promise<void>;
   getHealthStatus: () => Promise<QueueHealthStatus>;
   processInline: (data: TJobData) => Promise<unknown>;
-  getQueue: () => Queue | null;
+  getQueue: () => any; // import('bullmq').Queue | null
 };

@@ -17,7 +17,8 @@ import {
   EmptyState,
   StatusBadge,
   PanelHeader,
-  Card
+  Card,
+  FilterPanel
 } from '@/shared/ui';
 
 import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
@@ -147,34 +148,49 @@ export function Asset3DListPage(): React.JSX.Element {
       }
       alerts={error ? <Alert variant='error'>{error}</Alert> : null}
       filters={
-        <div className='flex flex-wrap items-center gap-3 rounded-lg border border-border/60 bg-card/50 p-3'>
-          <SearchInput
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onClear={() => setSearchQuery('')}
-            placeholder='Search assets...'
-            size='sm'
-            containerClassName='flex-1 min-w-[200px] max-w-md'
-          />
-
-          {categories.length > 0 && (
-            <div className='w-[180px]'>
-              <SelectSimple 
-                size='sm'
-                value={selectedCategory ?? '__all__'}
-                onValueChange={(v) => setSelectedCategory(v === '__all__' ? null : v)}
-                options={[
-                  { value: '__all__', label: 'All categories' },
-                  ...categories.map((cat) => ({ value: cat, label: cat })),
-                ]}
-                placeholder='All categories'
-                triggerClassName='h-8'
-              />
+        <FilterPanel
+          search={{
+            value: searchQuery,
+            onChange: (val) => setSearchQuery(val),
+            placeholder: 'Search assets...',
+          }}
+          fields={[
+            ...(categories.length > 0 ? [{
+              key: 'category',
+              label: 'Category',
+              type: 'select' as const,
+              value: selectedCategory ?? '__all__',
+              options: [
+                { value: '__all__', label: 'All categories' },
+                ...categories.map((cat) => ({ value: cat, label: cat })),
+              ],
+              onValueChange: (v: string) => setSelectedCategory(v === '__all__' ? null : v),
+              width: '180px',
+            }] : []),
+          ]}
+          actions={
+            <div className='flex items-center overflow-hidden rounded-md border border-border bg-muted/20'>
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size='icon'
+                className='h-8 w-8 rounded-none'
+                onClick={() => setViewMode('grid')}
+              >
+                <Grid className='h-4 w-4' />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size='icon'
+                className='h-8 w-8 rounded-none'
+                onClick={() => setViewMode('list')}
+              >
+                <List className='h-4 w-4' />
+              </Button>
             </div>
-          )}
-
+          }
+        >
           {allTags.length > 0 && (
-            <div className='flex flex-wrap gap-2'>
+            <div className='flex flex-wrap gap-2 pt-2'>
               {allTags.slice(0, 5).map((tag) => (
                 <Button
                   key={tag}
@@ -192,26 +208,7 @@ export function Asset3DListPage(): React.JSX.Element {
               ))}
             </div>
           )}
-
-          <div className='ml-auto flex items-center overflow-hidden rounded-md border border-border bg-muted/20'>
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-              size='icon'
-              className='h-8 w-8 rounded-none'
-              onClick={() => setViewMode('grid')}
-            >
-              <Grid className='h-4 w-4' />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size='icon'
-              className='h-8 w-8 rounded-none'
-              onClick={() => setViewMode('list')}
-            >
-              <List className='h-4 w-4' />
-            </Button>
-          </div>
-        </div>
+        </FilterPanel>
       }
       footer={stats}
       columns={columns}

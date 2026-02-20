@@ -80,6 +80,8 @@ type CenterProcessingResult = {
     whiteThreshold: number;
     chromaThreshold: number;
     shadowPolicy: ImageStudioCenterShadowPolicy;
+    layoutPolicyVersion: string | null;
+    detectionPolicyDecision: string | null;
     detectionUsed: ImageStudioCenterDetectionMode | null;
     scale: number | null;
   } | null;
@@ -262,6 +264,36 @@ const readCenterMetadataFromSlot = (
     const touchesBorder = details['touchesBorder'] === true;
     const maskSourceRaw = details['maskSource'];
     const maskSource = maskSourceRaw === 'foreground' || maskSourceRaw === 'core' ? maskSourceRaw : null;
+    const policyVersionRaw = details['policyVersion'];
+    const policyReasonRaw = details['policyReason'];
+    const fallbackAppliedRaw = details['fallbackApplied'];
+    const candidateDetectionsRaw =
+      details['candidateDetections'] && typeof details['candidateDetections'] === 'object'
+        ? (details['candidateDetections'] as Record<string, unknown>)
+        : null;
+
+    const parseCandidateSummary = (
+      candidate: unknown
+    ): { confidence: number; area: number } | null => {
+      if (candidate === null) return null;
+      if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) return null;
+      const record = candidate as Record<string, unknown>;
+      const confidenceRaw = record['confidence'];
+      const areaRaw = record['area'];
+      const confidence =
+        typeof confidenceRaw === 'number' && Number.isFinite(confidenceRaw)
+          ? Math.max(0, Math.min(1, confidenceRaw))
+          : NaN;
+      const area =
+        typeof areaRaw === 'number' && Number.isFinite(areaRaw)
+          ? Math.max(1, Math.floor(areaRaw))
+          : NaN;
+      if (!Number.isFinite(confidence) || !Number.isFinite(area)) return null;
+      return {
+        confidence: Number(confidence.toFixed(4)),
+        area,
+      };
+    };
 
     const componentCount =
       typeof componentCountRaw === 'number' && Number.isFinite(componentCountRaw)
@@ -302,6 +334,31 @@ const readCenterMetadataFromSlot = (
       return null;
     }
 
+    const policyVersion =
+      typeof policyVersionRaw === 'string' && policyVersionRaw.trim().length > 0
+        ? policyVersionRaw.trim()
+        : undefined;
+    const policyReason =
+      typeof policyReasonRaw === 'string' && policyReasonRaw.trim().length > 0
+        ? policyReasonRaw.trim()
+        : undefined;
+    const fallbackApplied =
+      typeof fallbackAppliedRaw === 'boolean'
+        ? fallbackAppliedRaw
+        : undefined;
+    const alphaCandidate = candidateDetectionsRaw
+      ? parseCandidateSummary(candidateDetectionsRaw['alpha_bbox'])
+      : null;
+    const whiteCandidate = candidateDetectionsRaw
+      ? parseCandidateSummary(candidateDetectionsRaw['white_bg_first_colored_pixel'])
+      : null;
+    const candidateDetections = candidateDetectionsRaw
+      ? {
+        alpha_bbox: alphaCandidate,
+        white_bg_first_colored_pixel: whiteCandidate,
+      }
+      : undefined;
+
     return {
       shadowPolicyRequested,
       shadowPolicyApplied,
@@ -313,6 +370,10 @@ const readCenterMetadataFromSlot = (
       corePixels,
       touchesBorder,
       maskSource,
+      ...(policyVersion ? { policyVersion } : {}),
+      ...(policyReason ? { policyReason } : {}),
+      ...(typeof fallbackApplied === 'boolean' ? { fallbackApplied } : {}),
+      ...(candidateDetections ? { candidateDetections } : {}),
     };
   };
 
@@ -332,6 +393,8 @@ const readCenterMetadataFromSlot = (
     const whiteThresholdRaw = layoutRaw['whiteThreshold'];
     const chromaThresholdRaw = layoutRaw['chromaThreshold'];
     const shadowPolicyRaw = layoutRaw['shadowPolicy'];
+    const layoutPolicyVersionRaw = layoutRaw['layoutPolicyVersion'];
+    const detectionPolicyDecisionRaw = layoutRaw['detectionPolicyDecision'];
     const detectionUsedRaw = layoutRaw['detectionUsed'];
     const scaleRaw = layoutRaw['scale'];
     const paddingXFromRaw = typeof paddingXPercentRaw === 'number' ? paddingXPercentRaw : NaN;
@@ -364,6 +427,14 @@ const readCenterMetadataFromSlot = (
       shadowPolicyRaw === 'exclude_shadow'
         ? shadowPolicyRaw
         : 'auto';
+    const layoutPolicyVersion =
+      typeof layoutPolicyVersionRaw === 'string' && layoutPolicyVersionRaw.trim().length > 0
+        ? layoutPolicyVersionRaw.trim()
+        : null;
+    const detectionPolicyDecision =
+      typeof detectionPolicyDecisionRaw === 'string' && detectionPolicyDecisionRaw.trim().length > 0
+        ? detectionPolicyDecisionRaw.trim()
+        : null;
     const detectionUsed: ImageStudioCenterDetectionMode | null =
       detectionUsedRaw === 'auto' ||
       detectionUsedRaw === 'alpha_bbox' ||
@@ -390,6 +461,8 @@ const readCenterMetadataFromSlot = (
       whiteThreshold,
       chromaThreshold,
       shadowPolicy,
+      layoutPolicyVersion,
+      detectionPolicyDecision,
       detectionUsed,
       scale,
     };
@@ -543,6 +616,8 @@ async function processCenterPayload(input: {
           whiteThreshold: normalizedLayout.whiteThreshold,
           chromaThreshold: normalizedLayout.chromaThreshold,
           shadowPolicy: normalizedLayout.shadowPolicy,
+          layoutPolicyVersion: centered.layoutPolicyVersion,
+          detectionPolicyDecision: centered.detectionPolicyDecision,
           detectionUsed: centered.detectionUsed,
           scale: centered.scale,
         },
@@ -641,6 +716,8 @@ async function processCenterPayload(input: {
           whiteThreshold: normalizedLayout.whiteThreshold,
           chromaThreshold: normalizedLayout.chromaThreshold,
           shadowPolicy: normalizedLayout.shadowPolicy,
+          layoutPolicyVersion: null,
+          detectionPolicyDecision: null,
           detectionUsed: null,
           scale: null,
         }
@@ -691,6 +768,8 @@ async function processCenterPayload(input: {
         whiteThreshold: normalizedLayout.whiteThreshold,
         chromaThreshold: normalizedLayout.chromaThreshold,
         shadowPolicy: normalizedLayout.shadowPolicy,
+        layoutPolicyVersion: null,
+        detectionPolicyDecision: null,
         detectionUsed: null,
         scale: null,
       }

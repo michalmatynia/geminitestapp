@@ -82,7 +82,7 @@ function MassListProductModalContent(): React.JSX.Element {
               <p className='text-sm text-gray-300'>Processing {progress.current} of {progress.total}...</p>
               <LoadingState size='sm' className='p-0' />
             </div>
-            <div className='h-2 w-full rounded-full bg-gray-800'>
+            <div className='h-2 w-full rounded-full bg-card/40'>
               <div
                 className='h-full rounded-full bg-primary transition-all duration-300'
                 style={{ width: `${(progress.current / progress.total) * 100}%` }}

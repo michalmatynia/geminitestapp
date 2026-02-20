@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 
 import * as api from '@/features/ai/ai-paths/lib/api';
 import { 
@@ -23,8 +23,26 @@ vi.mock('@/features/ai/ai-paths/lib/api', () => ({
 }));
 
 describe('Generation Handlers', () => {
+  const originalAllowedHosts = process.env['AI_PATHS_OUTBOUND_ALLOWED_HOSTS'];
+  const originalDeniedHosts = process.env['AI_PATHS_OUTBOUND_DENY_HOSTS'];
+
   beforeEach(() => {
     vi.clearAllMocks();
+    delete process.env['AI_PATHS_OUTBOUND_ALLOWED_HOSTS'];
+    delete process.env['AI_PATHS_OUTBOUND_DENY_HOSTS'];
+  });
+
+  afterAll(() => {
+    if (originalAllowedHosts === undefined) {
+      delete process.env['AI_PATHS_OUTBOUND_ALLOWED_HOSTS'];
+    } else {
+      process.env['AI_PATHS_OUTBOUND_ALLOWED_HOSTS'] = originalAllowedHosts;
+    }
+    if (originalDeniedHosts === undefined) {
+      delete process.env['AI_PATHS_OUTBOUND_DENY_HOSTS'];
+    } else {
+      process.env['AI_PATHS_OUTBOUND_DENY_HOSTS'] = originalDeniedHosts;
+    }
   });
 
   describe('handleTemplate', () => {
@@ -78,6 +96,56 @@ describe('Generation Handlers', () => {
       expect(result['status']).toBe('queued');
       expect(api.aiJobsApi.enqueue).toHaveBeenCalled();
     });
+
+    it('should filter blocked image URLs by outbound policy before enqueue', async () => {
+      vi.mocked(api.aiJobsApi.enqueue).mockResolvedValue({
+        ok: true,
+        data: { jobId: 'job-123' }
+      } as any);
+      const reportAiPathsError = vi.fn();
+      const toast = vi.fn();
+
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'model',
+          inputs: ['prompt', 'images'],
+          config: { model: { modelId: 'gpt-4o', waitForResult: false } }
+        } as any,
+        nodeInputs: {
+          prompt: 'Do something',
+          images: [
+            'https://cdn.example.com/image-1.jpg',
+            'http://169.254.169.254/latest/meta-data/',
+          ],
+        },
+        reportAiPathsError,
+        toast,
+      });
+      const result = await handleModel(ctx);
+      expect(result['jobId']).toBe('job-123');
+      expect(result['status']).toBe('queued');
+      expect(api.aiJobsApi.enqueue).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'graph_model',
+          payload: expect.objectContaining({
+            imageUrls: ['https://cdn.example.com/image-1.jpg'],
+          }),
+        })
+      );
+      expect(reportAiPathsError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          action: 'graphModel',
+          blockedImageUrlCount: 1,
+        }),
+        expect.stringContaining('Blocked 1 image URL')
+      );
+      expect(toast).toHaveBeenCalledWith(
+        expect.stringContaining('Blocked 1 image URL'),
+        expect.objectContaining({ variant: 'warning' })
+      );
+    });
   });
 
   describe('handleAiDescription', () => {
@@ -93,6 +161,52 @@ describe('Generation Handlers', () => {
       const result = await handleAiDescription(ctx);
       expect(result['description_en']).toBe('Generated description');
       expect(api.aiGenerationApi.generateDescription).toHaveBeenCalled();
+    });
+
+    it('should filter blocked image URLs by outbound policy before description generation', async () => {
+      vi.mocked(api.aiGenerationApi.generateDescription).mockResolvedValue({
+        ok: true,
+        data: { description: 'Generated description' }
+      } as any);
+      const reportAiPathsError = vi.fn();
+      const toast = vi.fn();
+
+      const ctx = createMockContext({
+        node: {
+          id: 'n-description',
+          type: 'description',
+        } as any,
+        nodeInputs: {
+          entityJson: {
+            id: 'p1',
+            images: [
+              'https://cdn.example.com/image-2.jpg',
+              'http://127.0.0.1/private.jpg',
+            ],
+          },
+        },
+        reportAiPathsError,
+        toast,
+      });
+      const result = await handleAiDescription(ctx);
+      expect(result['description_en']).toBe('Generated description');
+      expect(api.aiGenerationApi.generateDescription).toHaveBeenCalledWith(
+        expect.objectContaining({
+          imageUrls: ['https://cdn.example.com/image-2.jpg'],
+        })
+      );
+      expect(reportAiPathsError).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          action: 'aiDescription',
+          blockedImageUrlCount: 1,
+        }),
+        expect.stringContaining('Blocked 1 image URL')
+      );
+      expect(toast).toHaveBeenCalledWith(
+        expect.stringContaining('Blocked 1 image URL'),
+        expect.objectContaining({ variant: 'warning' })
+      );
     });
   });
 

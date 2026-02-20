@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { ModalStateProps } from '@/shared/contracts/ui';
-import { StatusBadge, MetadataItem, Hint, FormField } from '@/shared/ui';
+import { StatusBadge, MetadataItem, Hint, FormField, Card } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 interface TestLogModalProps extends Omit<ModalStateProps, 'onSuccess'> {
@@ -52,9 +52,9 @@ export function TestLogModal({
 
         {selectedStep.detail && (
           <FormField label='Extended Details' className='ml-1'>
-            <div className='rounded-lg border border-border bg-gray-950 p-4 font-mono text-[11px] text-gray-300 leading-relaxed'>
+            <Card variant='subtle-compact' padding='md' className='border-border bg-gray-950 font-mono text-[11px] text-gray-300 leading-relaxed'>
               {selectedStep.detail}
-            </div>
+            </Card>
           </FormField>
         )}
 

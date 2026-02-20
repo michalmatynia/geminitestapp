@@ -41,7 +41,8 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
-    "test:case-resolver:regression": "vitest run src/features/case-resolver/__tests__/workspace-persistence.test.ts src/features/case-resolver/__tests__/workspace-observability.test.ts src/features/case-resolver/__tests__/ocr-queue-model-routing.test.ts src/features/case-resolver/__tests__/ocr-runtime.test.ts src/features/case-resolver/__tests__/ocr-observability.test.ts",
+    "test:case-resolver:regression": "vitest run src/features/case-resolver/__tests__/workspace-persistence.test.ts src/features/case-resolver/__tests__/workspace-observability.test.ts src/features/case-resolver/__tests__/ocr-queue-model-routing.test.ts src/features/case-resolver/__tests__/ocr-runtime.test.ts src/features/case-resolver/__tests__/ocr-observability.test.ts src/features/case-resolver/__tests__/prompt-exploder-sync-target.test.ts src/features/case-resolver/__tests__/prompt-exploder-capture-modal.test.tsx src/features/case-resolver/__tests__/capture-mapping-apply-guard.test.ts src/features/case-resolver-capture/__tests__/proposals.test.ts",
+    "test:e2e:case-resolver:capture-mapping": "playwright test e2e/features/case-resolver/case-resolver.spec.ts --grep \"capture mapping\"",
     "test:e2e": "playwright test"
   },
   "engines": {

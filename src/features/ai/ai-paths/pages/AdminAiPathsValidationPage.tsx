@@ -13,6 +13,7 @@ import {
 } from '@/features/ai/ai-paths/lib/core/constants';
 import {
   AI_PATHS_NODE_DOCS as NODE_DOCS_LIST,
+  type AiPathsNodeDoc,
 } from '@/features/ai/ai-paths/lib/core/docs/node-docs';
 import type {
   AiPathsValidationConfig,
@@ -27,6 +28,7 @@ import {
   evaluateAiPathsValidationPreflight,
   normalizeAiPathsValidationConfig,
   rejectInferredAiPathsValidationRule,
+  type AiPathsValidationFinding,
 } from '@/features/ai/ai-paths/lib/core/validation-engine';
 import { createDefaultPathConfig } from '@/features/ai/ai-paths/lib/core/utils/factory';
 import { updateAiPathsSettingsBulk } from '@/features/ai/ai-paths/lib/settings-store-client';
@@ -46,7 +48,6 @@ import {
   Card,
   Hint,
 } from '@/shared/ui';
-import type { AiPathsValidationFinding } from '@/features/ai/ai-paths/lib/core/validation-engine';
 
 type SettingsRecord = { key: string; value: string };
 

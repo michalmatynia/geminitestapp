@@ -31,17 +31,26 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
   };
 
   if (schema.provider === 'multi') {
-    if (schema.collections?.length) {
-      return schema.collections.map((collection) => stripUndefinedProvider(collection));
+    const collections = Array.isArray(schema.collections)
+      ? schema.collections
+      : Object.values(schema.collections ?? {});
+    
+    if (collections.length) {
+      return collections.map((collection) => stripUndefinedProvider(collection as CollectionSchema));
     }
     const merged: CollectionSchema[] = [];
     (['mongodb', 'prisma'] as const).forEach((provider) => {
       const source = schema.sources?.[provider] as
-        | { collections?: CollectionSchema[] }
+        | { collections?: CollectionSchema[] | Record<string, CollectionSchema> }
         | null
         | undefined;
-      if (!source?.collections?.length) return;
-      source.collections.forEach((collection) => {
+      if (!source?.collections) return;
+      const sourceCollections = Array.isArray(source.collections)
+        ? source.collections
+        : Object.values(source.collections);
+      
+      if (!sourceCollections.length) return;
+      sourceCollections.forEach((collection) => {
         merged.push({ ...stripUndefinedProvider(collection), provider });
       });
     });
@@ -49,8 +58,12 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
   }
   
   const provider = schema.provider as 'mongodb' | 'prisma';
-  return (schema.collections ?? []).map((collection) => ({
-    ...stripUndefinedProvider(collection),
+  const baseCollections = Array.isArray(schema.collections)
+    ? schema.collections
+    : Object.values(schema.collections ?? {});
+
+  return baseCollections.map((collection) => ({
+    ...stripUndefinedProvider(collection as CollectionSchema),
     provider,
   }));
 };
@@ -100,13 +113,12 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
   const browseLimit = 10;
 
   const schemaConfig: SchemaConfig = {
-    provider: 'all',
-    mode: 'all',
-    collections: [],
-    includeFields: true,
-    includeRelations: true,
-    formatAs: 'text',
-    ...(selectedNode.config?.db_schema ?? {}),
+    provider: selectedNode.config?.db_schema?.provider ?? 'all',
+    mode: selectedNode.config?.db_schema?.mode ?? 'all',
+    collections: selectedNode.config?.db_schema?.collections ?? [],
+    includeFields: selectedNode.config?.db_schema?.includeFields ?? true,
+    includeRelations: selectedNode.config?.db_schema?.includeRelations ?? true,
+    formatAs: selectedNode.config?.db_schema?.formatAs ?? 'text',
   };
 
   const schemaQuery = createListQueryV2<SchemaData, SchemaData>({
@@ -496,7 +508,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                       className='flex-1 border-border bg-card/70'
                       placeholder='Search documents...'
                       value={browseSearch}
-                      onChange={(e: string) => setBrowseSearch(e)}
+                      onChange={(e) => setBrowseSearch(e.target.value)}
                       onClear={() => {
                         setBrowseSearch('');
                         setBrowseSkip(0);
@@ -612,7 +624,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                     <div className='flex justify-end pt-2'>
                       <Pagination
                         page={Math.floor(browseSkip / browseLimit) + 1}
-                        total={browseTotal}
+                        totalPages={Math.ceil(browseTotal / browseLimit)}
                         pageSize={browseLimit}
                         onPageChange={(p) => setBrowseSkip((p - 1) * browseLimit)}
                         variant='compact'

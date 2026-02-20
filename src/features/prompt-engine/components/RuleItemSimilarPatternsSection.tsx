@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button, Input, Label } from '@/shared/ui';
+import { Button, Input, Label, Hint } from '@/shared/ui';
 
 import type {
   PromptValidationRule,
@@ -26,9 +26,9 @@ export function RuleItemSimilarPatternsSection({
   return (
     <div className='space-y-3 rounded border border-border/40 bg-foreground/5 p-3'>
       <div className='flex items-center justify-between gap-2'>
-        <div className='text-xs font-semibold uppercase tracking-wide text-gray-300'>
+        <Hint size='xs' uppercase className='font-semibold text-gray-300'>
           Similar Patterns
-        </div>
+        </Hint>
         <Button type='button' variant='outline' size='sm' onClick={onAddSimilar}>
           Add Similar
         </Button>

@@ -1,10 +1,10 @@
 import type { Edge, PathConfig } from '@/shared/contracts/ai-paths';
 import type {
-  CanvasSemanticDocument,
-  SemanticEdge,
-  SemanticNode,
-  SemanticNodeConnections,
-  SemanticPortBinding,
+  CanvasSemanticDocumentDto as CanvasSemanticDocument,
+  SemanticEdgeDto as SemanticEdge,
+  SemanticNodeDto as SemanticNode,
+  SemanticNodeConnectionsDto as SemanticNodeConnections,
+  SemanticPortBindingDto as SemanticPortBinding,
 } from '@/shared/contracts/ai-paths-semantic-grammar';
 
 const SEMANTIC_SPEC_VERSION = 'ai-paths.semantic-grammar.v1' as const;

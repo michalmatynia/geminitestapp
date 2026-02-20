@@ -42,7 +42,7 @@ function ValidatorPatternListLinkPanel(): React.JSX.Element {
       className='p-4'
     >
       <Link
-        href='/admin/validator'
+        href='/admin/validator/lists'
         className='inline-flex items-center rounded-md border border-border/70 bg-card/40 px-3 py-2 text-sm text-white transition-colors hover:bg-card/70'
       >
         Open Pattern Validations List

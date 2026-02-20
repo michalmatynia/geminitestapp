@@ -118,6 +118,26 @@ const parseNumberSetting = (value: string | null | undefined, fallback: number, 
   return parsed;
 };
 
+const LEGACY_INSIGHT_SCHEDULE_KEYS = {
+  analyticsScheduleEnabled: 'ai_analytics_schedule_enabled',
+  analyticsScheduleMinutes: 'ai_analytics_schedule_minutes',
+  runtimeAnalyticsScheduleEnabled: 'ai_runtime_analytics_schedule_enabled',
+  runtimeAnalyticsScheduleMinutes: 'ai_runtime_analytics_schedule_minutes',
+  logsScheduleEnabled: 'ai_logs_schedule_enabled',
+  logsScheduleMinutes: 'ai_logs_schedule_minutes',
+  logsAutoOnError: 'ai_logs_auto_on_error',
+} as const;
+
+const readSettingWithFallback = async (
+  keys: readonly string[]
+): Promise<string | null> => {
+  for (const key of keys) {
+    const value = await readInsightSettingValue(key);
+    if (value !== null) return value;
+  }
+  return null;
+};
+
 const sanitizeEvents = (events: AnalyticsSummaryDto['recent'] | undefined): Record<string, unknown>[] =>
   (events ?? []).map((event: AnalyticsEventDto) => ({
     id: event.id,
@@ -503,6 +523,7 @@ export const generateAnalyticsInsight = async (params: {
   rangeHours?: number;
   scope?: 'all' | 'public' | 'admin';
 }): Promise<AiInsightRecord> => {
+  await assertScheduledInsightEnabled(params.source, 'analytics');
   const brainAssignment = await getBrainAssignmentForFeature('analytics');
   if (!brainAssignment.enabled) {
     throw new Error('AI Brain is disabled for Analytics.');
@@ -586,6 +607,7 @@ export const generateLogsInsight = async (params: {
   source: AiInsightSource;
   windowHours?: number;
 }): Promise<AiInsightRecord> => {
+  await assertScheduledInsightEnabled(params.source, 'logs');
   const brainAssignment = await getBrainAssignmentForFeature('system_logs');
   if (!brainAssignment.enabled) {
     throw new Error('AI Brain is disabled for System Logs.');
@@ -664,6 +686,7 @@ export const generateRuntimeAnalyticsInsight = async (params: {
   source: AiInsightSource;
   range?: AiPathRuntimeAnalyticsRange;
 }): Promise<AiInsightRecord> => {
+  await assertScheduledInsightEnabled(params.source, 'runtime_analytics');
   const brainAssignment = await getBrainAssignmentForFeature('runtime_analytics');
   if (!brainAssignment.enabled) {
     throw new Error('AI Brain is disabled for Runtime Analytics.');
@@ -817,22 +840,65 @@ export const getScheduleSettings = async (): Promise<{
     logsAutoRaw,
   ] =
     await Promise.all([
-      readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled),
-      readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleMinutes),
-      readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled),
-      readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleMinutes),
-      readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled),
-      readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleMinutes),
-      readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsAutoOnError),
+      readSettingWithFallback([
+        AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled,
+        LEGACY_INSIGHT_SCHEDULE_KEYS.analyticsScheduleEnabled,
+      ]),
+      readSettingWithFallback([
+        AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleMinutes,
+        LEGACY_INSIGHT_SCHEDULE_KEYS.analyticsScheduleMinutes,
+      ]),
+      readSettingWithFallback([
+        AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled,
+        LEGACY_INSIGHT_SCHEDULE_KEYS.runtimeAnalyticsScheduleEnabled,
+      ]),
+      readSettingWithFallback([
+        AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleMinutes,
+        LEGACY_INSIGHT_SCHEDULE_KEYS.runtimeAnalyticsScheduleMinutes,
+      ]),
+      readSettingWithFallback([
+        AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled,
+        LEGACY_INSIGHT_SCHEDULE_KEYS.logsScheduleEnabled,
+      ]),
+      readSettingWithFallback([
+        AI_INSIGHTS_SETTINGS_KEYS.logsScheduleMinutes,
+        LEGACY_INSIGHT_SCHEDULE_KEYS.logsScheduleMinutes,
+      ]),
+      readSettingWithFallback([
+        AI_INSIGHTS_SETTINGS_KEYS.logsAutoOnError,
+        LEGACY_INSIGHT_SCHEDULE_KEYS.logsAutoOnError,
+      ]),
     ]);
 
   return {
-    analyticsEnabled: parseBooleanSetting(analyticsEnabledRaw, true),
+    analyticsEnabled: parseBooleanSetting(analyticsEnabledRaw, false),
     analyticsMinutes: parseNumberSetting(analyticsMinutesRaw, 30, 5),
-    runtimeAnalyticsEnabled: parseBooleanSetting(runtimeAnalyticsEnabledRaw, true),
+    runtimeAnalyticsEnabled: parseBooleanSetting(runtimeAnalyticsEnabledRaw, false),
     runtimeAnalyticsMinutes: parseNumberSetting(runtimeAnalyticsMinutesRaw, 30, 5),
-    logsEnabled: parseBooleanSetting(logsEnabledRaw, true),
+    logsEnabled: parseBooleanSetting(logsEnabledRaw, false),
     logsMinutes: parseNumberSetting(logsMinutesRaw, 15, 5),
-    logsAutoOnError: parseBooleanSetting(logsAutoRaw, true),
+    logsAutoOnError: parseBooleanSetting(logsAutoRaw, false),
   };
+};
+
+const SCHEDULED_INSIGHT_SOURCES = new Set<string>([
+  'scheduled',
+  'scheduled_job',
+]);
+
+const assertScheduledInsightEnabled = async (
+  source: AiInsightSource | string,
+  type: 'analytics' | 'runtime_analytics' | 'logs',
+): Promise<void> => {
+  if (!SCHEDULED_INSIGHT_SOURCES.has(String(source))) return;
+  const schedule = await getScheduleSettings();
+  if (type === 'analytics' && !schedule.analyticsEnabled) {
+    throw new Error('Analytics insight schedule is disabled.');
+  }
+  if (type === 'runtime_analytics' && !schedule.runtimeAnalyticsEnabled) {
+    throw new Error('Runtime analytics insight schedule is disabled.');
+  }
+  if (type === 'logs' && !schedule.logsEnabled) {
+    throw new Error('Logs insight schedule is disabled.');
+  }
 };

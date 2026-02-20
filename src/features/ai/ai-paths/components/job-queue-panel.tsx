@@ -21,6 +21,7 @@ import {
   useToast,
   Pagination,
   FilterPanel,
+  Hint,
 } from '@/shared/ui';
 import type { FilterField } from '@/shared/ui/templates/panels';
 
@@ -881,7 +882,7 @@ export function JobQueuePanel({
     <div className='space-y-4'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div>
-          <div className='text-sm font-semibold text-white'>{panelLabel}</div>
+          <Hint size='sm' uppercase={false} className='font-semibold text-white'>{panelLabel}</Hint>
           <div className='text-xs text-gray-400'>{panelDescription}</div>
         </div>
         <div className='flex flex-wrap gap-2'>

@@ -5,6 +5,7 @@ import React, { useMemo, useState } from 'react';
 
 import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu, type TreeContextMenuItem, EmptyState } from '@/shared/ui';
 import { DRAG_KEYS, hasDragType, resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
+import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
 
 import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';
@@ -92,7 +93,7 @@ export function SectionNodeItem({
   const [isContentDragOver, setIsContentDragOver] = useState(false);
   const [sectionDropPosition, setSectionDropPosition] = useState<'above' | 'below' | null>(null);
   const isDraggingSection = draggedSectionId === section.id;
-  const isHidden = Boolean(section.settings['isHidden']);
+  const isHidden = isCmsSectionHidden(section.settings['isHidden']);
 
   const sectionMenuItems: TreeContextMenuItem[] = useMemo(
     () => [

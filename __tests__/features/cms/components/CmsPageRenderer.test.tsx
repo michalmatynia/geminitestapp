@@ -70,6 +70,35 @@ describe('CmsPageRenderer Component', () => {
     expect(screen.getByTestId('section-grid')).toBeInTheDocument();
   });
 
+  it('should handle invalid zone by defaulting to \'template\'', () => {
+    const components = [
+      {
+        type: 'Grid',
+        content: { zone: 'invalid-zone', settings: {}, blocks: [] }
+      }
+    ];
+
+    render(<CmsPageRenderer components={components as any} />);
+    expect(screen.getByTestId('section-grid')).toBeInTheDocument();
+  });
+
+  it('should treat string visibility flags consistently', () => {
+    const components = [
+      {
+        type: 'Hero',
+        content: { zone: 'template', settings: { isHidden: 'false' }, blocks: [] }
+      },
+      {
+        type: 'RichText',
+        content: { zone: 'template', settings: { isHidden: 'true' }, blocks: [] }
+      }
+    ];
+
+    render(<CmsPageRenderer components={components as any} />);
+    expect(screen.getByTestId('section-hero')).toBeInTheDocument();
+    expect(screen.queryByTestId('section-rich-text')).not.toBeInTheDocument();
+  });
+
   it('should render multiple sections in the same zone in their original order', () => {
     const components = [
       {

@@ -307,6 +307,7 @@ export function RightSidebar(): React.JSX.Element {
   const [promptControlOpen, setPromptControlOpen] = useState(false);
   const [promptSaveBusy, setPromptSaveBusy] = useState(false);
   const [sequenceRunBusy, setSequenceRunBusy] = useState(false);
+  const extractBusy: 'none' | 'programmatic' | 'smart' | 'ai' | 'ui' = 'none';
   const [controlsOpen, setControlsOpen] = useState(false);
   const [resizeCanvasOpen, setResizeCanvasOpen] = useState(false);
   const [resizeCanvasWidthDraft, setResizeCanvasWidthDraft] = useState('');

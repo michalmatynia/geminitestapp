@@ -7,7 +7,7 @@ import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
-import { api } from '@/shared/lib/api-client';
+import { api, ApiError } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
@@ -179,6 +179,19 @@ const normalizeCenterThreshold = (
 };
 const formatLayoutPercent = (value: number): string =>
   String(Number(value.toFixed(2)));
+
+const isAutoScalerMode = (value: string): value is AutoScalerMode =>
+  value === 'client_auto_scaler_v1' || value === 'server_auto_scaler_v1';
+
+const normalizeAutoScalerMode = (value: string): AutoScalerMode =>
+  isAutoScalerMode(value) ? value : 'server_auto_scaler_v1';
+
+const shouldFallbackToServerAutoScaler = (error: unknown): boolean => {
+  if (!(error instanceof ApiError) || error.status !== 400) return false;
+  return /invalid request payload|invalid auto scaler payload|invalid autoscaler payload/i.test(
+    error.message
+  );
+};
 
 const normalizeMaskShapeForExport = (shape: unknown): MaskShapeForExport | null => {
   if (!shape || typeof shape !== 'object') return null;
@@ -1334,7 +1347,8 @@ export function GenerationToolbar(): React.JSX.Element {
       toast('Select a slot image before auto scaling.', { variant: 'info' });
       return;
     }
-    const isClientAutoMode = autoScaleMode === 'client_auto_scaler_v1';
+    const requestedMode = normalizeAutoScalerMode(autoScaleMode);
+    const isClientAutoMode = requestedMode === 'client_auto_scaler_v1';
     if (isClientAutoMode && !clientProcessingImageSrc) {
       toast('No client image source is available for auto scaling.', { variant: 'info' });
       return;
@@ -1351,7 +1365,7 @@ export function GenerationToolbar(): React.JSX.Element {
     autoScaleAbortControllerRef.current = abortController;
     try {
       let response: AutoScaleActionResponse;
-      let resolvedMode: AutoScalerMode = autoScaleMode;
+      let resolvedMode: AutoScalerMode = requestedMode;
       if (isClientAutoMode) {
         const sourceForClientAutoScale = clientProcessingImageSrc || workingSlotImageSrc;
         if (!sourceForClientAutoScale) {
@@ -1377,7 +1391,7 @@ export function GenerationToolbar(): React.JSX.Element {
           response = await withAutoScalerRetry(
             () => {
               const formData = new FormData();
-              formData.append('mode', autoScaleMode);
+              formData.append('mode', requestedMode);
               formData.append('requestId', autoScaleRequestId);
               formData.append('layout', JSON.stringify(autoScaleLayoutPayload));
               formData.append('image', uploadBlob, `autoscale-client-${Date.now()}.png`);
@@ -1398,7 +1412,9 @@ export function GenerationToolbar(): React.JSX.Element {
             abortController.signal
           );
         } catch (error) {
-          if (!isClientAutoScalerCrossOriginError(error)) {
+          const fallbackDueToCrossOrigin = isClientAutoScalerCrossOriginError(error);
+          const fallbackDueToInvalidPayload = shouldFallbackToServerAutoScaler(error);
+          if (!fallbackDueToCrossOrigin && !fallbackDueToInvalidPayload) {
             throw error;
           }
           setAutoScaleStatus('processing');
@@ -1426,7 +1442,9 @@ export function GenerationToolbar(): React.JSX.Element {
           );
           resolvedMode = fallbackMode;
           toast(
-            'Client auto scaler was blocked by cross-origin restrictions; used server auto scaler instead.',
+            fallbackDueToCrossOrigin
+              ? 'Client auto scaler was blocked by cross-origin restrictions; used server auto scaler instead.'
+              : 'Client auto scaler payload was rejected; used server auto scaler instead.',
             { variant: 'info' }
           );
         }
@@ -1438,7 +1456,7 @@ export function GenerationToolbar(): React.JSX.Element {
               .post<unknown>(
                 `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/autoscale`,
                 {
-                  mode: autoScaleMode,
+                  mode: requestedMode,
                   requestId: autoScaleRequestId,
                   layout: autoScaleLayoutPayload,
                 },
@@ -2208,7 +2226,7 @@ export function GenerationToolbar(): React.JSX.Element {
         }}
         onApplyAnalysisPlan={handleApplyAnalysisPlanToAutoScaler}
         onAutoScaleModeChange={(value: string) => {
-          setAutoScaleMode(value as AutoScalerMode);
+          setAutoScaleMode(normalizeAutoScalerMode(value));
         }}
         onToggleAutoScaleLayoutSplitAxes={() => {
           setAutoScaleLayoutSplitAxes((previous) => {

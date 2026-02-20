@@ -1334,46 +1334,4 @@ export type ProductFormData = ProductCreateInputDto;
 
 export type ProductListPreferences = ProductListPreferencesDto;
 
-/**
- * Legacy Product Type Aliases
- */
-export type ProductTag = ProductTagDto;
-export type Catalog = CatalogDto;
-export type CatalogRecord = CatalogDto;
-export type PriceGroup = PriceGroupDto;
-export type PriceGroupRecord = PriceGroupDto;
-export type Producer = ProducerDto;
-export type ProductParameter = ProductParameterDto;
-export type ProductParameterValue = ProductParameterValueDto;
-export type ProductSimpleParameter = ProductSimpleParameterDto;
-export type ProductSimpleParameterValue = ProductSimpleParameterValueDto;
-export type ProductValidationPattern = ProductValidationPatternDto;
-export type ProductValidationTarget = ProductValidationTargetDto;
-export type ProductValidationSeverity = ProductValidationSeverityDto;
-export type ProductValidationDenyBehavior = ProductValidationDenyBehaviorDto;
-export type ProductValidationInstanceScope = ProductValidationInstanceScopeDto;
-export type ProductValidationPostAcceptBehavior = ProductValidationPostAcceptBehaviorDto;
-export type ProductValidationRuntimeType = ProductValidationRuntimeTypeDto;
-export type ProductValidationChainMode = ProductValidationChainModeDto;
-export type ProductValidationLaunchSourceMode = ProductValidationLaunchSourceModeDto;
-export type ProductValidationLaunchOperator = ProductValidationLaunchOperatorDto;
-export type ProductValidationLaunchScopeBehavior = ProductValidationLaunchScopeBehaviorDto;
-export type ProductValidatorConfig = ProductValidatorConfigDto;
-export type ProductValidatorSettings = ProductValidatorSettingsDto;
-export type PriceGroupType = PriceGroupTypeDto;
-export type SyncDirection = SyncDirectionDto;
-export type ProductDbProvider = ProductDbProviderDto;
-export type IntegrationDbProvider = IntegrationDbProviderDto;
-export type ProductMigrationDirection = ProductMigrationDirectionDto;
-export type ProductMigrationBatchResult = ProductMigrationBatchResultDto;
-export type PriceGroupWithDetails = PriceGroupWithDetailsDto;
-export type PriceGroupForCalculation = PriceGroupForCalculationDto;
-export type ProductWithImages = ProductWithImagesDto;
-export type ProductImageRecord = ProductImageRecordDto;
-export type ProductCatalogRecord = ProductCatalogRecordDto;
-export type ProductRecord = ProductDto;
-export type CurrencyRecord = ProductCurrencyDto;
-export type ProductValidationInstanceDenyBehaviorMap = Record<
-  ProductValidationInstanceScope,
-  ProductValidationDenyBehavior
->;
+

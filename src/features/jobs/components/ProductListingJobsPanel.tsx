@@ -15,6 +15,7 @@ import {
   FormSection,
   Alert,
   MetadataItem,
+  Hint,
 } from '@/shared/ui';
 
 import { ProductListingJobsPanelViewProvider, useProductListingJobsPanelView } from './context/ProductListingJobsPanelViewContext';
@@ -117,7 +118,7 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
       <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         <FormSection title='Tradera Status' variant='subtle-compact' className='p-3'>
           <div className='flex items-center justify-between'>
-            <span className='text-[10px] text-gray-500 uppercase font-bold'>Runtime Mode</span>
+            <Hint size='xxs' uppercase className='font-bold text-gray-500'>Runtime Mode</Hint>
             <StatusBadge status={traderaQueueHealth?.redisAvailable ? 'Redis Up' : 'No Redis'} variant={traderaQueueHealth?.redisAvailable ? 'success' : 'error'} className='text-[9px]' />
           </div>
           
@@ -128,7 +129,7 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
 
         <FormSection title='Listing Queue' variant='subtle-compact' className='p-3'>
           <div className='flex items-center justify-between mb-2'>
-            <span className='text-[10px] text-gray-500 uppercase font-bold'>Health</span>
+            <Hint size='xxs' uppercase className='font-bold text-gray-500'>Health</Hint>
             <StatusBadge status={traderaListingsQueue?.running ? 'Active' : 'Paused'} variant={traderaListingsQueue?.running ? 'success' : 'warning'} className='text-[9px]' />
           </div>
           
@@ -156,7 +157,7 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
 
         <FormSection title='Relist Scheduler' variant='subtle-compact' className='p-3'>
           <div className='flex items-center justify-between mb-2'>
-            <span className='text-[10px] text-gray-500 uppercase font-bold'>Service</span>
+            <Hint size='xxs' uppercase className='font-bold text-gray-500'>Service</Hint>
             <StatusBadge status={traderaSchedulerQueue?.running ? 'Polling' : 'Idle'} variant={traderaSchedulerQueue?.running ? 'success' : 'warning'} className='text-[9px]' />
           </div>
           

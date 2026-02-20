@@ -13,6 +13,7 @@ import {
   SearchInput,
   Pagination,
   Card,
+  Hint,
 } from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
@@ -23,29 +24,32 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
   if (!schema) return [];
 
   const stripUndefinedProvider = (
-    collection: any
+    collection: CollectionSchema
   ): CollectionSchema => {
     const { provider, ...rest } = collection;
     return provider ? { ...rest, provider } : rest;
   };
 
   if (schema.provider === 'multi') {
-    if ((schema.collections as any)?.length) return (schema.collections as any).map((collection) => stripUndefinedProvider(collection));
+    if (schema.collections?.length) {
+      return schema.collections.map((collection) => stripUndefinedProvider(collection));
+    }
     const merged: CollectionSchema[] = [];
     (['mongodb', 'prisma'] as const).forEach((provider) => {
-      const source = schema['sources']?.[provider] as
-        | { collections?: SchemaData['collections'] }
+      const source = schema.sources?.[provider] as
+        | { collections?: CollectionSchema[] }
         | null
         | undefined;
       if (!source?.collections?.length) return;
-      source.collections.forEach((collection: any) => {
+      source.collections.forEach((collection) => {
         merged.push({ ...stripUndefinedProvider(collection), provider });
       });
     });
     return merged;
   }
-  const provider: 'mongodb' | 'prisma' = schema.provider as any;
-  return (schema.collections as any).map((collection) => ({
+  
+  const provider = schema.provider as 'mongodb' | 'prisma';
+  return (schema.collections ?? []).map((collection) => ({
     ...stripUndefinedProvider(collection),
     provider,
   }));
@@ -72,6 +76,15 @@ const matchesCollectionSelection = (
   return false;
 };
 
+interface SchemaConfig {
+  provider: 'auto' | 'mongodb' | 'prisma' | 'all';
+  mode: 'all' | 'selected';
+  collections: string[];
+  includeFields: boolean;
+  includeRelations: boolean;
+  formatAs: 'json' | 'text';
+}
+
 export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
 
@@ -86,21 +99,14 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
   const [browseProvider, setBrowseProvider] = React.useState<'mongodb' | 'prisma' | null>(null);
   const browseLimit = 10;
 
-  const schemaConfig = {
+  const schemaConfig: SchemaConfig = {
     provider: 'all',
     mode: 'all',
-    collections: [] as string[],
+    collections: [],
     includeFields: true,
     includeRelations: true,
     formatAs: 'text',
     ...(selectedNode.config?.db_schema ?? {}),
-  } as {
-    provider: 'auto' | 'mongodb' | 'prisma' | 'all';
-    mode: 'all' | 'selected';
-    collections: string[];
-    includeFields: boolean;
-    includeRelations: boolean;
-    formatAs: 'json' | 'text';
   };
 
   const schemaQuery = createListQueryV2<SchemaData, SchemaData>({
@@ -241,9 +247,9 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
   return (
     <div className='space-y-4'>
       <Card variant='subtle' padding='md' className='border-purple-800/50 bg-purple-950/20'>
-        <div className='mb-3 text-sm font-medium text-purple-300'>
+        <Hint size='sm' uppercase={false} className='mb-3 font-medium text-purple-300'>
           Database Schema Browser
-        </div>
+        </Hint>
 
         {schemaLoading ? (
           <div className='py-4 text-center text-sm text-gray-400'>
@@ -404,7 +410,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                     </div>
                     {schemaConfig.includeFields && coll.fields && (
                       <div className='ml-2 text-[10px] text-gray-500'>
-                        {coll.fields.slice(0, 5).map((f: { name: string }) => f.name).join(', ')}
+                        {coll.fields.slice(0, 5).map((f) => f.name).join(', ')}
                         {coll.fields.length > 5 && ` +${coll.fields.length - 5} more`}
                       </div>
                     )}
@@ -419,9 +425,9 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
 
             {/* Data Browser */}
             <Card variant='subtle-compact' padding='sm' className='border-cyan-800/50 bg-cyan-950/20'>
-              <div className='mb-3 text-[11px] font-medium text-cyan-300'>
+              <Hint size='xs' uppercase={false} className='mb-3 font-medium text-cyan-300'>
                 Data Browser
-              </div>
+              </Hint>
               <div className='space-y-2'>
                 <Label className='text-xs text-gray-400'>Browse Collection</Label>
                 <div className='flex gap-2'>
@@ -490,7 +496,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                       className='flex-1 border-border bg-card/70'
                       placeholder='Search documents...'
                       value={browseSearch}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBrowseSearch(e.target.value)}
+                      onChange={(e: string) => setBrowseSearch(e)}
                       onClear={() => {
                         setBrowseSearch('');
                         setBrowseSkip(0);
@@ -606,7 +612,8 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                     <div className='flex justify-end pt-2'>
                       <Pagination
                         page={Math.floor(browseSkip / browseLimit) + 1}
-                        totalPages={Math.ceil(browseTotal / browseLimit)}
+                        total={browseTotal}
+                        pageSize={browseLimit}
                         onPageChange={(p) => setBrowseSkip((p - 1) * browseLimit)}
                         variant='compact'
                       />

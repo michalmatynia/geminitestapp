@@ -1,8 +1,9 @@
 import { subgraphSemanticDocumentSchema } from '@/shared/contracts/ai-paths-semantic-grammar';
 import type { AiNode, Edge, PathConfig } from '@/shared/contracts/ai-paths';
 import type {
-  SemanticNode,
-  SubgraphSemanticDocument,
+  SemanticNodeDto as SemanticNode,
+  SubgraphSemanticDocumentDto as SubgraphSemanticDocument,
+  SemanticEdgeDto as SemanticEdge,
 } from '@/shared/contracts/ai-paths-semantic-grammar';
 
 import { serializePathConfigToSemanticCanvas } from './serialize';
@@ -72,12 +73,12 @@ export const buildSemanticSubgraphFromPathConfig = (
     selected.has(node.id),
   );
   const edges = full.edges.filter(
-    (edge): boolean =>
+    (edge: SemanticEdge): boolean =>
       selected.has(edge.fromNodeId) && selected.has(edge.toNodeId),
   );
   const boundaryIncoming = full.edges
-    .filter((edge): boolean => !selected.has(edge.fromNodeId) && selected.has(edge.toNodeId))
-    .map((edge) => ({
+    .filter((edge: SemanticEdge): boolean => !selected.has(edge.fromNodeId) && selected.has(edge.toNodeId))
+    .map((edge: SemanticEdge) => ({
       edgeId: edge.id,
       fromNodeId: edge.fromNodeId,
       ...(edge.fromPort !== undefined ? { fromPort: edge.fromPort } : {}),
@@ -85,8 +86,8 @@ export const buildSemanticSubgraphFromPathConfig = (
       ...(edge.toPort !== undefined ? { toPort: edge.toPort } : {}),
     }));
   const boundaryOutgoing = full.edges
-    .filter((edge): boolean => selected.has(edge.fromNodeId) && !selected.has(edge.toNodeId))
-    .map((edge) => ({
+    .filter((edge: SemanticEdge): boolean => selected.has(edge.fromNodeId) && !selected.has(edge.toNodeId))
+    .map((edge: SemanticEdge) => ({
       edgeId: edge.id,
       fromNodeId: edge.fromNodeId,
       ...(edge.fromPort !== undefined ? { fromPort: edge.fromPort } : {}),
@@ -176,8 +177,8 @@ export const applySemanticSubgraphToPathConfig = (
   });
 
   const appendedEdges = subgraph.edges
-    .filter((edge): boolean => Boolean(nodeIdMap[edge.fromNodeId] && nodeIdMap[edge.toNodeId]))
-    .map((edge): Edge => {
+    .filter((edge: SemanticEdge): boolean => Boolean(nodeIdMap[edge.fromNodeId] && nodeIdMap[edge.toNodeId]))
+    .map((edge: SemanticEdge): Edge => {
       const remappedId = resolveUniqueId(`${idPrefix}${edge.id}`, existingEdgeIds);
       edgeIdMap[edge.id] = remappedId;
       const fromNodeId = nodeIdMap[edge.fromNodeId] as string;

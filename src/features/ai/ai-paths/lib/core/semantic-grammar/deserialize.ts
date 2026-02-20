@@ -4,10 +4,10 @@ import {
 } from '@/shared/contracts/ai-paths-semantic-grammar';
 import type { AiNode, Edge, PathConfig } from '@/shared/contracts/ai-paths';
 import type {
-  CanvasSemanticDocument,
-  SemanticDocument,
-  SemanticEdge,
-  SemanticNode,
+  CanvasSemanticDocumentDto as CanvasSemanticDocument,
+  SemanticDocumentDto as SemanticDocument,
+  SemanticEdgeDto as SemanticEdge,
+  SemanticNodeDto as SemanticNode,
 } from '@/shared/contracts/ai-paths-semantic-grammar';
 
 import { createDefaultPathConfig } from '../utils/factory';

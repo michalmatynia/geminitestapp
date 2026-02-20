@@ -25,7 +25,7 @@ import type {
 } from '@/features/ai/ai-paths/lib';
 import { DB_PROVIDER_PLACEHOLDERS } from '@/features/ai/ai-paths/lib';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import { Button, Label, Textarea, SelectSimple, Input, Tooltip, Card } from '@/shared/ui';
+import { Button, Label, Textarea, SelectSimple, Input, Tooltip, Card, Hint } from '@/shared/ui';
 
 import {
   extractCodeSnippets,

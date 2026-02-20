@@ -14,6 +14,7 @@ import {
   Alert,
   EmptyState,
   Card,
+  Hint,
 } from '@/shared/ui';
 
 import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
@@ -89,7 +90,7 @@ export function RunHistoryPanel(): React.JSX.Element {
   return (
     <Card variant='subtle' padding='md' className='bg-card/60'>
       <div className='mb-3 flex items-center justify-between'>
-        <span className='text-sm font-semibold text-white'>Run History</span>
+        <Hint size='sm' uppercase={false} className='font-semibold text-white'>Run History</Hint>
         <Button
           type='button'
           className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'

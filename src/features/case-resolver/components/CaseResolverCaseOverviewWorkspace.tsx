@@ -3,6 +3,7 @@
 import { Network } from 'lucide-react';
 import React from 'react';
 
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import {
   Badge,
   Card,
@@ -14,8 +15,6 @@ import {
 } from '@/shared/ui';
 
 import { CaseResolverRelationsWorkspace } from './CaseResolverRelationsWorkspace';
-
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 type SelectOption = {
   value: string;

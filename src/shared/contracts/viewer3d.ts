@@ -42,8 +42,6 @@ export const asset3DCreateInputSchema = asset3DRecordSchema.omit({
   filepath: z.string().optional(),
   mimetype: z.string().optional(),
   size: z.number().optional(),
-  thumbnailId: z.string().nullable().optional(),
-  tagIds: z.array(z.string()).optional(),
 });
 
 export type Asset3DCreateInputDto = z.infer<typeof asset3DCreateInputSchema>;

@@ -57,7 +57,7 @@ export function PromptExploderParserTuningPanel(): React.JSX.Element {
           <div key={draft.id} className='space-y-2 rounded border border-border/50 bg-card/30 p-2'>
             <div className='flex items-center justify-between gap-2'>
               <div>
-                <div className='text-xs font-medium text-gray-200'>{draft.label}</div>
+                <Label className='text-xs font-medium text-gray-200'>{draft.label}</Label>
                 <div className='font-mono text-[10px] text-gray-500'>{draft.id}</div>
               </div>
               <div className='flex items-center gap-2'>

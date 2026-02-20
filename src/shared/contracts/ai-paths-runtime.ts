@@ -403,4 +403,4 @@ export interface NodeHandlerContext {
   };
 }
 
-export type NodeHandler = (context: NodeHandlerContext) => Promise<RuntimePortValues>;
+export type NodeHandler = (context: NodeHandlerContext) => Promise<RuntimePortValues> | RuntimePortValues;

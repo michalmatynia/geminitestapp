@@ -4,6 +4,7 @@ import React from 'react';
 
 import { getPromptValidationObservabilitySnapshot } from '@/features/prompt-core/runtime-observability';
 import { Button, FormSection, Input, Label, StatusToggle, SelectSimple, EmptyState, Card, Badge, Hint } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import { useBenchmarkState } from '../context/hooks/useBenchmark';
 import { useDocumentState } from '../context/hooks/useDocument';

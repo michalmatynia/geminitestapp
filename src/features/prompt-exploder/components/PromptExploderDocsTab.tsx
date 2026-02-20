@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { FormSection, Input } from '@/shared/ui';
+import { FormSection, Input, Hint } from '@/shared/ui';
 
 import { PROMPT_EXPLODER_DOC_CATALOG } from '../docs/catalog';
 
@@ -63,9 +63,9 @@ export function PromptExploderDocsTab(): React.JSX.Element {
           <div className='space-y-4'>
             {grouped.map(([section, entries]) => (
               <div key={section} className='rounded border border-border/60 bg-card/20 p-3'>
-                <div className='mb-2 text-xs font-semibold uppercase tracking-wide text-gray-300'>
+                <Hint size='xs' uppercase className='mb-2 font-semibold text-gray-300'>
                   {section}
-                </div>
+                </Hint>
                 <div className='space-y-2'>
                   {entries.map((entry) => (
                     <div key={entry.id} className='rounded border border-border/50 bg-card/30 p-2 text-xs'>

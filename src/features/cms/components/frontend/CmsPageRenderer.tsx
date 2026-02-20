@@ -1,4 +1,5 @@
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
+import { isCmsSectionHidden, normalizePageZone } from '@/features/cms/utils/page-builder-normalization';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import type { ColorSchemeColors } from '@/shared/contracts/cms';
 import type { GsapAnimationConfig } from '@/features/gsap';
@@ -66,11 +67,11 @@ export function CmsPageRenderer({
       key: `section-${idx}`,
       id: `section-${idx}`,
       type: comp.type,
-      zone: (content.zone as PageZone) ?? 'template',
+      zone: normalizePageZone(content.zone),
       settings: content.settings ?? {},
       blocks: content.blocks ?? [],
     };
-  }).filter((section: { key: string; id: string; type: string; zone: PageZone; settings: Record<string, unknown>; blocks: BlockInstance[] }) => !section.settings['isHidden']);
+  }).filter((section: { key: string; id: string; type: string; zone: PageZone; settings: Record<string, unknown>; blocks: BlockInstance[] }) => !isCmsSectionHidden(section.settings['isHidden']));
 
   const sectionsByZone: Record<PageZone, typeof sections> = {
     header: [],
@@ -122,7 +123,7 @@ interface SectionRendererProps {
   blocks: BlockInstance[];
 }
 
-function SectionRenderer({ type, sectionId, settings, blocks }: SectionRendererProps): React.ReactNode {
+export function SectionRenderer({ type, sectionId, settings, blocks }: SectionRendererProps): React.ReactNode {
   return (
     <SectionBlockProvider sectionId={sectionId} settings={settings} blocks={blocks}>
       <SectionRendererInner type={type} />

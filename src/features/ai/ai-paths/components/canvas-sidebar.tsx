@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 
 import type { AiNode, NodeDefinition } from '@/features/ai/ai-paths/lib';
 import { createParserMappings, formatRuntimeValue } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, Textarea, StatusBadge, Card, Badge, EmptyState } from '@/shared/ui';
+import { Button, Input, Label, Textarea, StatusBadge, Card, Badge, EmptyState, Hint } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import {
@@ -160,7 +160,7 @@ export function CanvasSidebar(): React.JSX.Element {
         data-edge-panel
       >
         <div className='mb-3 flex items-center justify-between'>
-          <span className='text-sm font-semibold text-white'>Node Palette</span>
+          <Hint size='sm' uppercase={false} className='font-semibold text-white'>Node Palette</Hint>
           <button
             data-doc-id='palette_toggle'
             type='button'
@@ -244,9 +244,9 @@ export function CanvasSidebar(): React.JSX.Element {
                     >
                       <div className='flex items-center gap-2'>
                         <span className='text-sm'>{group.icon}</span>
-                        <span className='text-[11px] font-medium uppercase tracking-wide text-gray-300'>
+                        <Hint size='xs' uppercase className='font-medium text-gray-300'>
                           {group.title}
-                        </span>
+                        </Hint>
                         <span className='rounded-full bg-muted/60 px-1.5 py-0.5 text-[10px] text-gray-400'>
                           {items.length}
                         </span>
@@ -276,9 +276,9 @@ export function CanvasSidebar(): React.JSX.Element {
                               node.type === 'trigger' && node.config?.trigger?.event === 'scheduled_run';
                               return (
                                 <div className='flex items-center justify-between gap-2'>
-                                  <span className='text-xs font-semibold text-white'>
+                                  <Hint size='xs' uppercase={false} className='font-semibold text-white'>
                                     {node.title}
-                                  </span>
+                                  </Hint>
                                   <div className='flex items-center gap-1'>
                                     {isScheduledTrigger ? (
                                       <StatusBadge status='Scheduled' variant='warning' size='sm' className='font-bold h-4 px-1.5' />
@@ -307,7 +307,7 @@ export function CanvasSidebar(): React.JSX.Element {
             
                   {!selectedEdgeId && (
                     <Card className='border-border/60 bg-card/40 p-4'>
-                      <div className='mb-3 text-sm font-semibold text-white'>Inspector</div>          {selectedNode ? (
+                      <Hint size='sm' uppercase={false} className='mb-3 font-semibold text-white'>Inspector</Hint>          {selectedNode ? (
             <div className='space-y-3 text-xs text-gray-300'>
               <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/50 text-[11px] text-gray-400'>
                 <div className='flex items-center justify-between'>
@@ -568,7 +568,7 @@ export function CanvasSidebar(): React.JSX.Element {
       )}
 
       <Card className='border-border/60 bg-card/40 p-4'>
-        <div className='mb-3 text-sm font-semibold text-white'>Connections</div>
+        <Hint size='sm' uppercase={false} className='mb-3 font-semibold text-white'>Connections</Hint>
         <div className='space-y-2 text-xs text-gray-400'>
           <div>Active wires: {edges.length}</div>
           {selectedEdgeId ? ((): React.JSX.Element | null => {
@@ -591,10 +591,10 @@ export function CanvasSidebar(): React.JSX.Element {
               : undefined;
             return selectedEdge ? (
               <Card variant='info' padding='sm' className='space-y-3 border-blue-500/30 bg-blue-500/5'>
-                <div className='text-xs font-medium text-blue-300'>Selected Wire</div>
+                <Hint size='xs' uppercase={false} className='font-medium text-blue-300'>Selected Wire</Hint>
                 <div className='space-y-2'>
                   <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/50'>
-                    <div className='text-[10px] uppercase text-gray-500'>From</div>
+                    <Hint size='xxs' uppercase className='text-gray-500'>From</Hint>
                     <div className='text-sm text-white'>
                       {fromNode?.title ?? selectedEdge.from}
                     </div>
@@ -613,7 +613,7 @@ export function CanvasSidebar(): React.JSX.Element {
                   </Card>
                   <div className='flex justify-center text-gray-500'>↓</div>
                   <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/50'>
-                    <div className='text-[10px] uppercase text-gray-500'>To</div>
+                    <Hint size='xxs' uppercase className='text-gray-500'>To</Hint>
                     <div className='text-sm text-white'>
                       {toNode?.title ?? selectedEdge.to}
                     </div>
@@ -632,9 +632,9 @@ export function CanvasSidebar(): React.JSX.Element {
                   </Card>
                 </div>
                 <Card variant='subtle-compact' padding='sm' className='space-y-2 border-border/60 bg-card/40'>
-                  <div className='text-[10px] uppercase tracking-wide text-gray-500'>
+                  <Hint size='xxs' uppercase className='text-gray-500'>
                     Connector Data
-                  </div>
+                  </Hint>
                   <div>
                     <div className='text-[10px] text-amber-300'>
                       Source ({selectedEdge.fromPort ?? 'default'})

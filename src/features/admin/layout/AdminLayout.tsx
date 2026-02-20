@@ -129,7 +129,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
   return (
     <div className='dark relative h-screen w-full max-w-full overflow-hidden bg-background text-white'>
       <aside
-        className={`fixed inset-y-0 left-0 z-30 flex flex-col overflow-x-hidden border-r border-border/60 bg-card/80 backdrop-blur transition-all duration-300 ${sidebarClassName}`}
+        className={`fixed inset-y-0 left-0 z-30 flex flex-col overflow-x-hidden border-r border-border/70 bg-slate-900/95 backdrop-blur transition-all duration-300 ${sidebarClassName}`}
         aria-hidden={isMenuHidden}
       >
         {!isMenuHidden ? (

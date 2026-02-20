@@ -23,6 +23,7 @@ import {
 } from './block-helpers';
 import { reducePageBuilderMoveActions } from './page-builder-reducer-move-actions';
 import { getSectionDefinition, getBlockDefinition } from '../../components/page-builder/section-registry';
+import { normalizePageZone } from '../../utils/page-builder-normalization';
 
 import type {
   PageBuilderState,
@@ -62,7 +63,7 @@ export function reducePageBuilderStateCore(
           return {
             id: `loaded-${idx}-${uid()}`,
             type: comp.type,
-            zone: (content.zone as PageZone) ?? 'template',
+            zone: normalizePageZone(content.zone),
             settings: buildSectionSettings(comp.type, content.settings ?? {}),
             blocks: content.blocks ?? [],
           };

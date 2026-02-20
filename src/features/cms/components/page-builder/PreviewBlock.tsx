@@ -13,10 +13,12 @@ import {
   buildScopedCustomCss,
   getCustomCssSelector,
 } from '@/features/cms/utils/custom-css';
+import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
 import type { GsapAnimationConfig } from '@/features/gsap';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import { Button, Card } from '@/shared/ui';
 
+import { SectionRenderer as FrontendSectionRenderer } from '../frontend/CmsPageRenderer';
 import { CssAnimationWrapper } from '../frontend/CssAnimationWrapper';
 import { GsapAnimationWrapper } from '../frontend/GsapAnimationWrapper';
 import {
@@ -70,6 +72,18 @@ import type {
 
 export type { MediaReplaceTarget };
 
+const FRONTEND_PREVIEW_SECTION_TYPES = new Set<string>([
+  'Accordion',
+  'Testimonials',
+  'Video',
+  'Newsletter',
+  'ContactForm',
+  'ImageElement',
+  'Model3DElement',
+  'ButtonElement',
+  'TextAtom',
+]);
+
 // ---------------------------------------------------------------------------
 // Top-level section preview
 // ---------------------------------------------------------------------------
@@ -99,7 +113,7 @@ export function PreviewSection({
 
   const isSectionSelected = selectedNodeId === section.id;
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
-  const isHidden = Boolean(section.settings['isHidden']);
+  const isHidden = isCmsSectionHidden(section.settings['isHidden']);
   const label = resolveNodeLabel(section.type, section.settings['label']);
   const animConfig = section.settings['gsapAnimation'] as Partial<GsapAnimationConfig> | undefined;
   const cssAnimConfig = section.settings['cssAnimation'] as CssAnimationConfig | undefined;
@@ -340,6 +354,28 @@ export function PreviewSection({
         {renderSectionActions()}
         {divider}
         {text ? <p className='m-0 p-0 text-base leading-relaxed text-gray-200' style={typoStyles}>{text}</p> : <Card variant='subtle-compact' padding='sm' className='border-dashed border-border/40 bg-gray-800/20 text-gray-500'>Text element</Card>}
+      </div>,
+    );
+  }
+
+  // Render section types via the storefront renderer when a dedicated editor preview is not implemented.
+  if (FRONTEND_PREVIEW_SECTION_TYPES.has(section.type)) {
+    return wrapInspector(
+      <div
+        role='button'
+        tabIndex={0}
+        onClick={handleSelect}
+        onKeyDown={(e: React.KeyboardEvent): void => { if (e.key === 'Enter' || e.key === ' ') handleSelect(); }}
+        className={`relative w-full text-left transition cursor-pointer ${selectedRing}`}
+      >
+        {renderSectionActions()}
+        {divider}
+        <FrontendSectionRenderer
+          type={section.type}
+          sectionId={section.id}
+          settings={section.settings}
+          blocks={section.blocks}
+        />
       </div>,
     );
   }

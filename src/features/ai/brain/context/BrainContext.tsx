@@ -69,6 +69,7 @@ const hasAnyBrainOrInsightsSetting = (map: Map<string, string>): boolean => {
   for (const key of map.keys()) {
     if (
       key.startsWith('ai_brain_') ||
+      key.startsWith('ai_insights_') ||
       key.startsWith('ai_analytics_') ||
       key.startsWith('ai_runtime_analytics_') ||
       key.startsWith('ai_logs_')

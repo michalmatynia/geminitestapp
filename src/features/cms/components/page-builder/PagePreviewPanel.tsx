@@ -23,6 +23,8 @@ import { VectorOverlay } from './VectorOverlay';
 import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
 import { useCmsSlugs, useUpdatePage } from '../../hooks/useCmsQueries';
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
+import { CmsPageProvider } from '../frontend/CmsPageContext';
+import { MediaStylesProvider } from '../frontend/media-styles-context';
 import { getHoverEffectVars, getMediaInlineStyles, getMediaStyleVars } from '../frontend/theme-styles';
 
 
@@ -81,6 +83,7 @@ export function PagePreviewPanel(): React.ReactNode {
   );
   const mediaVars = useMemo(() => getMediaStyleVars(theme), [theme]);
   const mediaStyles = useMemo(() => getMediaInlineStyles(theme), [theme]);
+  const previewLayout = useMemo(() => ({ fullWidth: theme.fullWidth }), [theme.fullWidth]);
   const outOfZoneSlugs = useMemo(() => {
     if (!domainSlugSet) return [];
     const values = normalizePageSlugValues(state.currentPage?.slugs);
@@ -618,29 +621,33 @@ export function PagePreviewPanel(): React.ReactNode {
                 }}
               >
                 <div style={contentStyle} className={isVectorOverlayOpen ? 'pointer-events-none' : ''}>
-                  <PreviewEditorProvider value={previewEditorValue}>
-                    {ZONE_ORDER.map((zone: PageZone) => {
-                      const zoneSections = sectionsByZone[zone];
-                      if (zoneSections.length === 0) return null;
+                  <MediaStylesProvider value={mediaStyles ?? null}>
+                    <CmsPageProvider colorSchemes={colorSchemes || {}} layout={previewLayout}>
+                      <PreviewEditorProvider value={previewEditorValue}>
+                        {ZONE_ORDER.map((zone: PageZone) => {
+                          const zoneSections = sectionsByZone[zone];
+                          if (zoneSections.length === 0) return null;
 
-                      return (
-                        <div key={zone}>
-                          {/* Zone sections */}
-                          <div>
-                            {zoneSections.map((section: SectionInstance) => (
-                              <PreviewSection
-                                key={section.id}
-                                section={section}
-                                layout={{ fullWidth: theme.fullWidth }}
-                                colorSchemes={colorSchemes || {}}
-                                mediaStyles={mediaStyles}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </PreviewEditorProvider>
+                          return (
+                            <div key={zone}>
+                              {/* Zone sections */}
+                              <div>
+                                {zoneSections.map((section: SectionInstance) => (
+                                  <PreviewSection
+                                    key={section.id}
+                                    section={section}
+                                    layout={previewLayout}
+                                    colorSchemes={colorSchemes || {}}
+                                    mediaStyles={mediaStyles}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </PreviewEditorProvider>
+                    </CmsPageProvider>
+                  </MediaStylesProvider>
                 </div>
                 {vectorOverlay ? (
                   <VectorOverlay request={vectorOverlay} onClose={closeVectorOverlay} />

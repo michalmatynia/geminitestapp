@@ -34,6 +34,7 @@ export type CaseResolverPageContextValue = {
   panelCollapsed: boolean;
   onPanelCollapsedChange: (collapsed: boolean) => void;
   onSaveWorkspace: () => void;
+  onDeactivateActiveFile: () => void;
   onSelectFile: (
     fileId: string,
     options?: { preserveSelectedAsset?: boolean }

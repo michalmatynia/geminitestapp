@@ -27,7 +27,7 @@ import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contr
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, FormField, FormSection, SelectSimple, useToast, StatusBadge, Alert } from '@/shared/ui';
+import { Button, FormField, FormSection, SelectSimple, useToast, StatusBadge, Alert, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 type ProductStudioSequenceStepPlanEntry = {

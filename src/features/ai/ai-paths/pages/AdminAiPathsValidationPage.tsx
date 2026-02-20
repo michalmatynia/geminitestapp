@@ -4,13 +4,31 @@ import { BookOpenText, RefreshCw, Save, ShieldCheck } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
-import { useAiPathsSettingsQuery } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
+import {
+  useAiPathsSettingsQuery,
+} from '@/features/ai/ai-paths/hooks/useAiPathQueries';
+import {
+  PATH_CONFIG_PREFIX,
+  PATH_INDEX_KEY,
+} from '@/features/ai/ai-paths/lib/core/constants';
+import {
+  AI_PATHS_NODE_DOCS as NODE_DOCS_LIST,
+} from '@/features/ai/ai-paths/lib/core/docs/node-docs';
 import type {
   AiPathsValidationConfig,
   AiPathsValidationRule,
   PathConfig,
   PathMeta,
 } from '@/features/ai/ai-paths/lib';
+import {
+  approveInferredAiPathsValidationRule,
+  buildAiPathsValidationRulesFromDocs,
+  DEFAULT_AI_PATHS_VALIDATION_DOC_SOURCES,
+  evaluateAiPathsValidationPreflight,
+  normalizeAiPathsValidationConfig,
+  rejectInferredAiPathsValidationRule,
+} from '@/features/ai/ai-paths/lib/core/validation-engine';
+import { createDefaultPathConfig } from '@/features/ai/ai-paths/lib/core/utils/factory';
 import { updateAiPathsSettingsBulk } from '@/features/ai/ai-paths/lib/settings-store-client';
 import {
   Badge,
@@ -26,7 +44,9 @@ import {
   Textarea,
   useToast,
   Card,
+  Hint,
 } from '@/shared/ui';
+import type { AiPathsValidationFinding } from '@/features/ai/ai-paths/lib/core/validation-engine';
 
 type SettingsRecord = { key: string; value: string };
 
@@ -380,15 +400,15 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
 
   const filteredNodeDocs = useMemo(() => {
     const query = docsSearch.trim().toLowerCase();
-    if (!query) return AI_PATHS_NODE_DOCS;
-    return AI_PATHS_NODE_DOCS.filter((doc) => {
+    if (!query) return NODE_DOCS_LIST;
+    return NODE_DOCS_LIST.filter((doc: AiPathsNodeDoc) => {
       const haystack = [
         doc.type,
         doc.title,
         doc.purpose,
         doc.inputs.join(' '),
         doc.outputs.join(' '),
-        doc.config.map((entry) => `${entry.path} ${entry.description}`).join(' '),
+        doc.config.map((entry: { path: string; description: string }) => `${entry.path} ${entry.description}`).join(' '),
       ]
         .join(' ')
         .toLowerCase();
@@ -538,7 +558,7 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
           coveredNodeTypes.add(nodeType),
         );
       });
-    const docsNodeTypes = AI_PATHS_NODE_DOCS.map((doc) => doc.type);
+    const docsNodeTypes = NODE_DOCS_LIST.map((doc: AiPathsNodeDoc) => doc.type);
     const uncoveredNodeTypes = docsNodeTypes.filter(
       (nodeType: string): boolean => !coveredNodeTypes.has(nodeType),
     );
@@ -1221,7 +1241,7 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
               <div className='mt-4 flex flex-wrap items-center justify-between gap-2'>
                 <Label className='text-xs text-gray-400'>Node Docs Catalog</Label>
                 <div className='text-xs text-gray-500'>
-                  {filteredNodeDocs.length}/{AI_PATHS_NODE_DOCS.length}
+                  {filteredNodeDocs.length}/{NODE_DOCS_LIST.length}
                 </div>
               </div>
               <SearchInput
@@ -1246,9 +1266,9 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                       <div className='min-w-0'>
                         <div className='text-xs font-semibold text-gray-100'>
                           {doc.title}
-                          <span className='ml-2 text-[10px] uppercase tracking-wide text-gray-400'>
+                          <Hint size='xxs' uppercase className='ml-2 text-gray-400'>
                             {doc.type}
-                          </span>
+                          </Hint>
                         </div>
                         <div className='line-clamp-2 text-[11px] text-gray-400'>{doc.purpose}</div>
                       </div>
@@ -1392,9 +1412,9 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                 />
               </div>
               <div className='space-y-2'>
-                <div className='text-xs font-medium text-gray-300'>
+                <Hint size='xs' uppercase={false} className='font-medium text-gray-300'>
                   Inferred Candidates ({candidateRules.length})
-                </div>
+                </Hint>
                 {candidateRules.length > 0 ? (
                   <Card variant='subtle-compact' padding='sm' className='max-h-60 space-y-2 overflow-y-auto border-border/60 bg-card/30'>
                     {candidateRules.map((rule: AiPathsValidationRule) => (
@@ -1647,7 +1667,7 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
 
                   {validationReport.findings.length > 0 ? (
                     <div className='space-y-2'>
-                      {validationReport.findings.slice(0, 14).map((finding) => (
+                      {validationReport.findings.slice(0, 14).map((finding: AiPathsValidationFinding) => (
                         <Card
                           key={finding.id}
                           variant='warning'
@@ -1666,12 +1686,11 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                               className='text-[10px] uppercase'
                             >
                               {finding.severity}
-                            </Badge>
-                            <span className='text-xs font-medium text-gray-100'>
-                              {finding.ruleTitle}
-                            </span>
-                          </div>
-                          <div className='mt-1 text-[11px] text-gray-400'>{finding.message}</div>
+                                                          </Badge>
+                                                          <Hint size='xs' uppercase={false} className='font-medium text-gray-100'>
+                                                            {finding.ruleTitle}
+                                                          </Hint>
+                                                        </div>                          <div className='mt-1 text-[11px] text-gray-400'>{finding.message}</div>
                           {finding.recommendation ? (
                             <div className='mt-1 text-[11px] text-sky-200'>
                               {finding.recommendation}

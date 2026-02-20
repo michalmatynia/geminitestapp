@@ -1,6 +1,15 @@
 'use client';
 
-import { ArrowLeft, Lock, Plus, Save, Trash2, Unlock } from 'lucide-react';
+import {
+  ArrowLeft,
+  ExternalLink,
+  Lock,
+  Pencil,
+  Plus,
+  Save,
+  Trash2,
+  Unlock,
+} from 'lucide-react';
 import Link from 'next/link';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -9,15 +18,20 @@ import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   Badge,
   Button,
+  EmptyState,
   FormSection,
   Input,
   Pagination,
+  SearchInput,
   SectionHeader,
   SelectSimple,
-  ToggleRow,
+  StandardDataTablePanel,
   useToast,
-  Card,
 } from '@/shared/ui';
+import {
+  SettingsPanelBuilder,
+  type SettingsField,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
@@ -29,6 +43,8 @@ import {
   type ValidatorPatternList,
   type ValidatorScope,
 } from './validator-scope';
+
+import type { ColumnDef } from '@tanstack/react-table';
 
 const scopeOptions: Array<{ value: ValidatorScope; label: string }> = [
   { value: 'products', label: VALIDATOR_SCOPE_LABELS.products },
@@ -65,6 +81,53 @@ const formatUpdatedAt = (value: string | null | undefined): string => {
   return new Date(parsed).toLocaleString();
 };
 
+type ValidatorPatternListEditorState = {
+  id: string;
+  name: string;
+  description: string;
+  scope: ValidatorScope;
+  deletionLocked: boolean;
+};
+
+const EMPTY_EDITOR_STATE: ValidatorPatternListEditorState = {
+  id: '',
+  name: '',
+  description: '',
+  scope: 'products',
+  deletionLocked: true,
+};
+
+const EDITOR_FIELDS: SettingsField<ValidatorPatternListEditorState>[] = [
+  {
+    key: 'name',
+    label: 'List Name',
+    type: 'text',
+    placeholder: 'List name',
+    required: true,
+  },
+  {
+    key: 'scope',
+    label: 'Scope',
+    type: 'select',
+    options: scopeOptions.map((option) => ({
+      label: option.label,
+      value: option.value,
+    })),
+  },
+  {
+    key: 'description',
+    label: 'Description',
+    type: 'textarea',
+    placeholder: 'Optional description',
+  },
+  {
+    key: 'deletionLocked',
+    label: 'Deletion Locked',
+    type: 'switch',
+    helperText: 'Keep this on to prevent accidental list removal.',
+  },
+];
+
 /**
  * Validator docs: see docs/validator/function-reference.md#ui.adminvalidatorpatternlistspage
  */
@@ -84,6 +147,10 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
   const [newListName, setNewListName] = useState('');
   const [newListDescription, setNewListDescription] = useState('');
   const [newListScope, setNewListScope] = useState<ValidatorScope>('products');
+  const [query, setQuery] = useState('');
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorState, setEditorState] =
+    useState<ValidatorPatternListEditorState>(EMPTY_EDITOR_STATE);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -136,6 +203,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
     setLists((current: ValidatorPatternList[]) => [...current, nextList]);
     const nextTotalPages = Math.max(1, Math.ceil((lists.length + 1) / pageSize));
     setPage(nextTotalPages);
+    setQuery('');
     setNewListName('');
     setNewListDescription('');
     setNewListScope('products');
@@ -166,15 +234,18 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
             current.filter((entry: ValidatorPatternList) => entry.id !== list.id)
           );
           toast('List removed. Save to persist.', { variant: 'success' });
-        }
+        },
       });
     },
-    [lists.length, toast, confirm]
+    [confirm, lists.length, toast]
   );
 
   const handleReset = useCallback((): void => {
     setLists(parsedPatternLists);
     setPage(1);
+    setQuery('');
+    setEditorOpen(false);
+    setEditorState(EMPTY_EDITOR_STATE);
     setNewListName('');
     setNewListDescription('');
     setNewListScope('products');
@@ -219,29 +290,45 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
     }
   }, [lists, toast, updateSetting]);
 
+  const filteredLists = useMemo((): ValidatorPatternList[] => {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) return lists;
+    return lists.filter((list: ValidatorPatternList) => {
+      const scopeLabel = VALIDATOR_SCOPE_LABELS[list.scope].toLowerCase();
+      const scopeDescription = VALIDATOR_SCOPE_DESCRIPTIONS[list.scope].toLowerCase();
+      return (
+        list.name.toLowerCase().includes(normalizedQuery) ||
+        list.id.toLowerCase().includes(normalizedQuery) ||
+        list.description.toLowerCase().includes(normalizedQuery) ||
+        scopeLabel.includes(normalizedQuery) ||
+        scopeDescription.includes(normalizedQuery)
+      );
+    });
+  }, [lists, query]);
+
   const totalLocked = useMemo(
     () =>
       lists.filter((list: ValidatorPatternList): boolean => list.deletionLocked).length,
     [lists]
   );
   const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(lists.length / pageSize)),
-    [lists.length, pageSize]
+    () => Math.max(1, Math.ceil(filteredLists.length / pageSize)),
+    [filteredLists.length, pageSize]
   );
   const paginatedLists = useMemo((): ValidatorPatternList[] => {
     const clampedPage = Math.min(page, totalPages);
     const start = (clampedPage - 1) * pageSize;
-    return lists.slice(start, start + pageSize);
-  }, [lists, page, pageSize, totalPages]);
+    return filteredLists.slice(start, start + pageSize);
+  }, [filteredLists, page, pageSize, totalPages]);
   const pageStart = useMemo((): number => {
-    if (lists.length === 0) return 0;
+    if (filteredLists.length === 0) return 0;
     const clampedPage = Math.min(page, totalPages);
     return (clampedPage - 1) * pageSize + 1;
-  }, [lists.length, page, pageSize, totalPages]);
+  }, [filteredLists.length, page, pageSize, totalPages]);
   const pageEnd = useMemo((): number => {
-    if (lists.length === 0) return 0;
-    return Math.min(lists.length, pageStart + pageSize - 1);
-  }, [lists.length, pageSize, pageStart]);
+    if (filteredLists.length === 0) return 0;
+    return Math.min(filteredLists.length, pageStart + pageSize - 1);
+  }, [filteredLists.length, pageSize, pageStart]);
 
   useEffect(() => {
     if (page > totalPages) {
@@ -249,12 +336,197 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
     }
   }, [page, totalPages]);
 
+  const handleOpenEditor = useCallback((list: ValidatorPatternList): void => {
+    setEditorState({
+      id: list.id,
+      name: list.name,
+      description: list.description,
+      scope: list.scope,
+      deletionLocked: list.deletionLocked,
+    });
+    setEditorOpen(true);
+  }, []);
+
+  const handleCloseEditor = useCallback((): void => {
+    setEditorOpen(false);
+    setEditorState(EMPTY_EDITOR_STATE);
+  }, []);
+
+  const handleEditorChange = useCallback(
+    (patch: Partial<ValidatorPatternListEditorState>): void => {
+      setEditorState((current: ValidatorPatternListEditorState) => ({
+        ...current,
+        ...patch,
+      }));
+    },
+    []
+  );
+
+  const handleSaveEditor = useCallback(async (): Promise<void> => {
+    const normalizedName = editorState.name.trim();
+    if (!normalizedName) {
+      toast('List name is required.', { variant: 'error' });
+      return;
+    }
+    handleListChange(editorState.id, {
+      name: normalizedName,
+      description: editorState.description.trim(),
+      scope: editorState.scope,
+      deletionLocked: editorState.deletionLocked,
+    });
+    setEditorOpen(false);
+    setEditorState(EMPTY_EDITOR_STATE);
+    toast('List updated. Save to persist.', { variant: 'success' });
+  }, [editorState, handleListChange, toast]);
+
+  const columns = useMemo<ColumnDef<ValidatorPatternList>[]>(() => [
+    {
+      id: 'name',
+      header: 'List',
+      cell: ({ row }) => {
+        const list = row.original;
+        return (
+          <div className='min-w-0 space-y-1'>
+            <Link
+              href={`/admin/validator?list=${encodeURIComponent(list.id)}`}
+              className='block truncate text-sm font-medium text-gray-100 transition-colors hover:text-white hover:underline'
+            >
+              {list.name.trim() || 'Unnamed List'}
+            </Link>
+            <p className='truncate text-[11px] text-muted-foreground'>
+              ID: {list.id}
+            </p>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'scope',
+      header: 'Scope',
+      cell: ({ row }) => {
+        const list = row.original;
+        return (
+          <Badge variant='outline' className='text-[10px]'>
+            {VALIDATOR_SCOPE_LABELS[list.scope]}
+          </Badge>
+        );
+      },
+    },
+    {
+      id: 'description',
+      header: 'Description',
+      cell: ({ row }) => {
+        const list = row.original;
+        const description =
+          list.description.trim() || VALIDATOR_SCOPE_DESCRIPTIONS[list.scope];
+        return (
+          <p className='line-clamp-2 text-xs text-muted-foreground'>
+            {description}
+          </p>
+        );
+      },
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      cell: ({ row }) => {
+        const list = row.original;
+        return list.deletionLocked ? (
+          <Badge variant='outline' className='text-[10px] border-amber-300/40 text-amber-300'>
+            Locked
+          </Badge>
+        ) : (
+          <Badge variant='outline' className='text-[10px] border-emerald-300/40 text-emerald-300'>
+            Unlocked
+          </Badge>
+        );
+      },
+    },
+    {
+      id: 'updatedAt',
+      header: 'Updated',
+      cell: ({ row }) => (
+        <span className='text-xs text-muted-foreground'>
+          {formatUpdatedAt(row.original.updatedAt ?? undefined)}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: () => <div className='text-right'>Actions</div>,
+      cell: ({ row }) => {
+        const list = row.original;
+        return (
+          <div className='flex flex-wrap items-center justify-end gap-2'>
+            <Button type='button' size='xs' variant='outline' asChild>
+              <Link href={`/admin/validator?list=${encodeURIComponent(list.id)}`}>
+                <ExternalLink className='mr-1.5 size-3.5' />
+                Enter
+              </Link>
+            </Button>
+            <Button
+              type='button'
+              size='xs'
+              variant='outline'
+              onClick={(): void => {
+                handleOpenEditor(list);
+              }}
+            >
+              <Pencil className='mr-1.5 size-3.5' />
+              Edit
+            </Button>
+            <Button
+              type='button'
+              size='xs'
+              variant='outline'
+              onClick={(): void => {
+                handleListChange(list.id, {
+                  deletionLocked: !list.deletionLocked,
+                });
+              }}
+              disabled={updateSetting.isPending}
+            >
+              {list.deletionLocked ? (
+                <Unlock className='mr-1.5 size-3.5 text-emerald-300' />
+              ) : (
+                <Lock className='mr-1.5 size-3.5 text-amber-300' />
+              )}
+              {list.deletionLocked ? 'Unlock' : 'Lock'}
+            </Button>
+            <Button
+              type='button'
+              size='xs'
+              variant='outline'
+              onClick={(): void => {
+                handleRemoveList(list);
+              }}
+              disabled={list.deletionLocked || updateSetting.isPending}
+              className='text-red-300 hover:text-red-200'
+              title={
+                list.deletionLocked
+                  ? 'Unlock list before removing'
+                  : 'Remove list'
+              }
+            >
+              <Trash2 className='size-3.5' />
+            </Button>
+          </div>
+        );
+      },
+    },
+  ], [
+    handleListChange,
+    handleOpenEditor,
+    handleRemoveList,
+    updateSetting.isPending,
+  ]);
+
   return (
     <div className='container mx-auto space-y-6 py-10'>
       <SectionHeader
         eyebrow='AI · Global Validator'
         title='Validation Pattern List Manager'
-        description='Create, rename, lock, and remove available validation pattern lists.'
+        description='Create, manage, and enter validation pattern lists.'
         actions={(
           <div className='flex flex-wrap items-center gap-2'>
             <Button type='button' variant='outline' size='xs' asChild>
@@ -317,12 +589,31 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
         </div>
       </FormSection>
 
-      <FormSection
+      <StandardDataTablePanel
         title='Available Lists'
-        description='Use the lock toggle to prevent accidental deletions.'
-        className='space-y-3 p-4'
+        description='Browse lists like product list rows and enter any list to edit its validation rules.'
+        filters={(
+          <div className='max-w-sm'>
+            <SearchInput
+              placeholder='Search lists by name, id, scope, or description...'
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setPage(1);
+              }}
+              onClear={() => {
+                setQuery('');
+                setPage(1);
+              }}
+              size='sm'
+            />
+          </div>
+        )}
         actions={(
-          <div className='flex items-center gap-2'>
+          <div className='flex flex-wrap items-center gap-2'>
+            <Badge variant='outline' className='text-[10px]'>
+              {filteredLists.length} shown
+            </Badge>
             <Badge variant='outline' className='text-[10px]'>
               {lists.length} total
             </Badge>
@@ -343,111 +634,49 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
             </Button>
           </div>
         )}
-      >
-        {lists.length === 0 ? (
-          <Card variant='subtle-compact' padding='md' className='border-dashed border-border/60 bg-card/20 text-center text-sm text-gray-400'>
-            No lists available.
-          </Card>
-        ) : (
-          <div className='space-y-3'>
-            {paginatedLists.map((list: ValidatorPatternList) => (
-              <Card
-                key={list.id}
-                variant='subtle-compact'
-                padding='md'
-                className='space-y-3 border-border/60 bg-card/30'
-              >
-                <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_280px_minmax(0,1fr)_auto] md:items-center'>
-                  <Input
-                    value={list.name}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                      handleListChange(list.id, { name: event.target.value });
-                    }}
-                    placeholder='List name'
-                    className='h-9'
-                  />
-                  <SelectSimple
-                    size='sm'
-                    value={list.scope}
-                    onValueChange={(value: string): void => {
-                      const matched = scopeOptions.find((option) => option.value === value);
-                      handleListChange(list.id, {
-                        scope: matched?.value ?? 'products',
-                      });
-                    }}
-                    options={scopeOptions}
-                    triggerClassName='h-9'
-                  />
-                  <Input
-                    value={list.description}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                      handleListChange(list.id, { description: event.target.value });
-                    }}
-                    placeholder='Optional description'
-                    className='h-9'
-                  />
-                  <Button
-                    type='button'
-                    variant='outline'
-                    className='h-9 text-red-300 hover:text-red-200'
-                    onClick={(): void => {
-                      handleRemoveList(list);
-                    }}
-                    disabled={list.deletionLocked || updateSetting.isPending}
-                    title={
-                      list.deletionLocked
-                        ? 'Unlock list before removing'
-                        : 'Remove list'
-                    }
-                  >
-                    <Trash2 className='mr-1.5 size-3.5' />
-                    Remove
-                  </Button>
-                </div>
-                <div className='flex flex-wrap items-center justify-between gap-3 border-t border-border/50 pt-3'>
-                  <div className='flex items-center gap-2'>
-                    <ToggleRow
-                      label={list.deletionLocked ? 'Deletion locked' : 'Deletion unlocked'}
-                      checked={list.deletionLocked}
-                      onCheckedChange={(checked: boolean): void => {
-                        handleListChange(list.id, { deletionLocked: checked });
-                      }}
-                      icon={list.deletionLocked ? (
-                        <Lock className='size-3.5 text-amber-300' />
-                      ) : (
-                        <Unlock className='size-3.5 text-emerald-300' />
-                      )}
-                      className='bg-transparent border-none p-0 hover:bg-transparent'
-                      labelClassName='text-xs text-gray-300 normal-case tracking-normal font-normal'
-                    />
-                    <Badge variant='outline' className='text-[10px] ml-2'>
-                      {VALIDATOR_SCOPE_LABELS[list.scope]}
-                    </Badge>
-                  </div>
-                  <div className='text-[11px] text-gray-500'>
-                    {list.description.trim() ||
-                      VALIDATOR_SCOPE_DESCRIPTIONS[list.scope]}
-                    {' '}| Updated: {formatUpdatedAt(list.updatedAt ?? undefined)}
-                  </div>
-                </div>
-              </Card>
-            ))}
-            <div className='flex justify-end border-t border-border/50 pt-3'>
-              <Pagination
-                page={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-                pageSize={pageSize}
-                onPageSizeChange={setPageSize}
-                pageSizeOptions={[5, 10, 20, 50]}
-                showPageSize
-                showLabels={false}
-                variant='compact'
-              />
-            </div>
+        columns={columns}
+        data={paginatedLists}
+        isLoading={settingsQuery.isLoading && !settingsQuery.data}
+        loadingVariant='table'
+        emptyState={(
+          <EmptyState
+            title='No validation pattern lists'
+            description={
+              query.trim()
+                ? 'No lists match your search query.'
+                : 'Create a validation pattern list to get started.'
+            }
+          />
+        )}
+        footer={(
+          <div className='flex justify-end border-t border-border/50 pt-3'>
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+              pageSizeOptions={[5, 10, 20, 50]}
+              showPageSize
+              showLabels={false}
+              variant='compact'
+            />
           </div>
         )}
-      </FormSection>
+      />
+
+      <SettingsPanelBuilder<ValidatorPatternListEditorState>
+        open={editorOpen}
+        onClose={handleCloseEditor}
+        title='Edit Validation Pattern List'
+        subtitle='Update list metadata and scope. Save Lists to persist changes.'
+        fields={EDITOR_FIELDS}
+        values={editorState}
+        onChange={handleEditorChange}
+        onSave={handleSaveEditor}
+        size='sm'
+      />
+
       <ConfirmationModal />
     </div>
   );

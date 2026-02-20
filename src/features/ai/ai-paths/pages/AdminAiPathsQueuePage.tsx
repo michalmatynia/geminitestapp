@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 
 import { FileUploadEventsPanel } from '@/features/files/components/FileUploadEventsPanel';
 import ProductListingJobsPanel from '@/features/jobs/components/ProductListingJobsPanel';
-import { Badge, Button, ListPanel, Tabs, TabsContent, TabsList, TabsTrigger, Breadcrumbs } from '@/shared/ui';
+import { Badge, Button, ListPanel, Tabs, TabsContent, TabsList, TabsTrigger, Breadcrumbs, Hint } from '@/shared/ui';
 
 import { ImageStudioRunsQueuePanel } from '../components/ImageStudioRunsQueuePanel';
 import { JobQueuePanel } from '../components/job-queue-panel';
@@ -87,7 +87,7 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
                 return (
                   <TabsTrigger key={tab.id} value={tab.id} className='h-11 justify-start gap-2 px-3 text-left'>
                     <Icon className='size-3.5' />
-                    <span className='text-xs font-semibold uppercase tracking-wide'>{tab.label}</span>
+                    <Hint size='xs' uppercase className='font-semibold'>{tab.label}</Hint>
                   </TabsTrigger>
                 );
               })}

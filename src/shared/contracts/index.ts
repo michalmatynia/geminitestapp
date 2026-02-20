@@ -7,6 +7,17 @@ export * from './ai-insights';
 export * from './ai-paths-runtime';
 export * from './ai-paths-semantic-grammar';
 export * from './ai-paths';
+// Resolve TS2308: ai-paths.ts has legacy shims for these names; prefer the concrete types from ai-paths-runtime.
+export type {
+  PathExecutionMode,
+  PathRunMode,
+  QueuedRunDto,
+  RuntimeEventInputDto,
+  RuntimePortValues,
+  RuntimeState,
+  RunStatusDto,
+  SetNodeStatusInputDto,
+} from './ai-paths-runtime';
 export * from './ai-trigger-buttons';
 export * from './analytics';
 export * from './app-embeds';

@@ -3,11 +3,10 @@
 import { Link2, Network } from 'lucide-react';
 import React from 'react';
 
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import { Button, StatusBadge, EmptyState, Card } from '@/shared/ui';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
-
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 type CaseRelationEdgeKind = 'parent_case' | 'references';
 

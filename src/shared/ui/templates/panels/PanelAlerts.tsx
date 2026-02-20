@@ -3,9 +3,9 @@
 import { AlertCircle } from 'lucide-react';
 import React from 'react';
 
+import { PanelAlert } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils/ui-utils';
 
-import { PanelAlert } from '@/shared/contracts/ui';
 
 
 interface PanelAlertsProps {

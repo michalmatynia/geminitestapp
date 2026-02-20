@@ -31,7 +31,6 @@ const toErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
 export async function tick(): Promise<void> {
-  const runRepository = await getPathRunRepository();
   const baseMeta: Record<string, unknown> = {
     source: 'ai_insights',
     sourceInfo: {
@@ -43,9 +42,96 @@ export async function tick(): Promise<void> {
     queue: 'ai-insights',
     jobType: 'scheduled_tick',
   };
+  const schedule = await getScheduleSettings();
+  const [analyticsBrain, runtimeAnalyticsBrain, logsBrain] = await Promise.all([
+    getBrainAssignmentForFeature('analytics'),
+    getBrainAssignmentForFeature('runtime_analytics'),
+    getBrainAssignmentForFeature('system_logs'),
+  ]);
+
+  const analyticsEnabled = schedule.analyticsEnabled && analyticsBrain.enabled;
+  const runtimeAnalyticsEnabled =
+    schedule.runtimeAnalyticsEnabled && runtimeAnalyticsBrain.enabled;
+  const logsEnabled = schedule.logsEnabled && logsBrain.enabled;
+  const logsAutoEnabled = schedule.logsAutoOnError && logsBrain.enabled;
+
+  if (
+    !analyticsEnabled &&
+    !runtimeAnalyticsEnabled &&
+    !logsEnabled &&
+    !logsAutoEnabled
+  ) {
+    return;
+  }
+
+  const [
+    analyticsLastRunRaw,
+    runtimeAnalyticsLastRunRaw,
+    logsLastRunRaw,
+    logsLastErrorSeenRaw,
+  ] = await Promise.all([
+    analyticsEnabled
+      ? getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.analyticsLastRunAt)
+      : Promise.resolve(null),
+    runtimeAnalyticsEnabled
+      ? getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsLastRunAt)
+      : Promise.resolve(null),
+    logsEnabled
+      ? getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.logsLastRunAt)
+      : Promise.resolve(null),
+    logsAutoEnabled
+      ? getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.logsLastErrorSeenAt)
+      : Promise.resolve(null),
+  ]);
+
+  const analyticsLastRun = parseDate(analyticsLastRunRaw);
+  const runtimeAnalyticsLastRun = parseDate(runtimeAnalyticsLastRunRaw);
+  const logsLastRun = parseDate(logsLastRunRaw);
+  const logsLastErrorSeenAt = parseDate(logsLastErrorSeenRaw);
+
+  const shouldRunAnalytics =
+    analyticsEnabled &&
+    shouldRun(analyticsLastRun, schedule.analyticsMinutes);
+  const shouldRunRuntimeAnalytics =
+    runtimeAnalyticsEnabled &&
+    shouldRun(runtimeAnalyticsLastRun, schedule.runtimeAnalyticsMinutes);
+  const shouldRunLogs =
+    logsEnabled &&
+    shouldRun(logsLastRun, schedule.logsMinutes);
+
+  let shouldRunLogsAuto = false;
+  let logsAutoLatestAtIso: string | null = null;
+  if (logsAutoEnabled) {
+    const latestError = await listSystemLogs({ level: 'error', page: 1, pageSize: 1 });
+    const latest = latestError.logs[0];
+    const latestAt = latest ? new Date(latest.createdAt || 0) : null;
+    if (
+      latestAt &&
+      Number.isFinite(latestAt.getTime()) &&
+      (!logsLastErrorSeenAt ||
+        latestAt.getTime() > logsLastErrorSeenAt.getTime())
+    ) {
+      shouldRunLogsAuto = true;
+      logsAutoLatestAtIso = latestAt.toISOString();
+    }
+  }
+
+  if (
+    !shouldRunAnalytics &&
+    !shouldRunRuntimeAnalytics &&
+    !shouldRunLogs &&
+    !shouldRunLogsAuto
+  ) {
+    return;
+  }
+
+  const runRepository = await getPathRunRepository();
   let runId: string | null = null;
   const runEvents: string[] = [];
-  const appendRunEvent = async (message: string, level: 'info' | 'warning' | 'error' = 'info'): Promise<void> => {
+  const appendRunEvent = async (
+    message: string,
+    level: 'info' | 'warning' | 'error' = 'info',
+  ): Promise<void> => {
     runEvents.push(message);
     if (!runId) return;
     try {
@@ -79,21 +165,6 @@ export async function tick(): Promise<void> {
     // Continue processing even if run logging cannot be initialized.
   }
 
-  const schedule = await getScheduleSettings();
-  const [analyticsBrain, runtimeAnalyticsBrain, logsBrain] = await Promise.all([
-    getBrainAssignmentForFeature('analytics'),
-    getBrainAssignmentForFeature('runtime_analytics'),
-    getBrainAssignmentForFeature('system_logs'),
-  ]);
-  const analyticsLastRun = parseDate(
-    await getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.analyticsLastRunAt),
-  );
-  const runtimeAnalyticsLastRun = parseDate(
-    await getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsLastRunAt),
-  );
-  const logsLastRun = parseDate(
-    await getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.logsLastRunAt),
-  );
   const executedJobs: string[] = [];
   const failedJobs: Array<{ job: string; error: string }> = [];
   const runInsightStep = async (job: string, action: () => Promise<void>): Promise<void> => {
@@ -107,42 +178,30 @@ export async function tick(): Promise<void> {
     }
   };
 
-  if (
-    schedule.analyticsEnabled &&
-    analyticsBrain.enabled &&
-    shouldRun(analyticsLastRun, schedule.analyticsMinutes)
-  ) {
+  if (shouldRunAnalytics) {
     await runInsightStep('analytics', async () => {
       await appendRunEvent('Generating analytics insight.');
-      await generateAnalyticsInsight({ source: 'scheduled' });
+      await generateAnalyticsInsight({ source: 'scheduled_job' });
       await appendRunEvent('Analytics insight generated.');
     });
   } else if (schedule.analyticsEnabled && !analyticsBrain.enabled) {
     await appendRunEvent('Skipping analytics insight: disabled in Brain settings.', 'info');
   }
 
-  if (
-    schedule.runtimeAnalyticsEnabled &&
-    runtimeAnalyticsBrain.enabled &&
-    shouldRun(runtimeAnalyticsLastRun, schedule.runtimeAnalyticsMinutes)
-  ) {
+  if (shouldRunRuntimeAnalytics) {
     await runInsightStep('runtime_analytics', async () => {
       await appendRunEvent('Generating runtime analytics insight.');
-      await generateRuntimeAnalyticsInsight({ source: 'scheduled', range: '24h' });
+      await generateRuntimeAnalyticsInsight({ source: 'scheduled_job', range: '24h' });
       await appendRunEvent('Runtime analytics insight generated.');
     });
   } else if (schedule.runtimeAnalyticsEnabled && !runtimeAnalyticsBrain.enabled) {
     await appendRunEvent('Skipping runtime analytics insight: disabled in Brain settings.', 'info');
   }
 
-  if (
-    schedule.logsEnabled &&
-    logsBrain.enabled &&
-    shouldRun(logsLastRun, schedule.logsMinutes)
-  ) {
+  if (shouldRunLogs) {
     await runInsightStep('logs', async () => {
       await appendRunEvent('Generating logs insight.');
-      await generateLogsInsight({ source: 'scheduled' });
+      await generateLogsInsight({ source: 'scheduled_job' });
       await appendRunEvent('Logs insight generated.');
     });
   } else if (schedule.logsEnabled && !logsBrain.enabled) {
@@ -150,24 +209,16 @@ export async function tick(): Promise<void> {
   }
 
   try {
-    if (schedule.logsAutoOnError && logsBrain.enabled) {
-      const latestError = await listSystemLogs({ level: 'error', page: 1, pageSize: 1 });
-      const latest = latestError.logs[0];
-      const lastErrorSeen = parseDate(
-        await getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.logsLastErrorSeenAt),
-      );
-      const latestAt = latest ? new Date(latest.createdAt || 0) : null;
-      if (latestAt && (!lastErrorSeen || latestAt.getTime() > lastErrorSeen.getTime())) {
-        await runInsightStep('logs_auto', async () => {
-          await appendRunEvent('Detected new system error log. Generating auto logs insight.');
-          await generateLogsInsight({ source: 'auto' });
-          await setAiInsightsMeta(
-            AI_INSIGHTS_SETTINGS_KEYS.logsLastErrorSeenAt,
-            latestAt.toISOString(),
-          );
-          await appendRunEvent('Auto logs insight generated.');
-        });
-      }
+    if (shouldRunLogsAuto && logsAutoLatestAtIso) {
+      await runInsightStep('logs_auto', async () => {
+        await appendRunEvent('Detected new system error log. Generating auto logs insight.');
+        await generateLogsInsight({ source: 'system' });
+        await setAiInsightsMeta(
+          AI_INSIGHTS_SETTINGS_KEYS.logsLastErrorSeenAt,
+          logsAutoLatestAtIso,
+        );
+        await appendRunEvent('Auto logs insight generated.');
+      });
     } else if (schedule.logsAutoOnError && !logsBrain.enabled) {
       await appendRunEvent('Skipping auto logs insight: disabled in Brain settings.', 'info');
     }

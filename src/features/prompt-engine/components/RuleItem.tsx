@@ -17,6 +17,7 @@ import {
   Card,
   Badge,
   StatusBadge,
+  Hint,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -727,9 +728,9 @@ export function RuleItem({
 
           <Card variant='subtle-compact' padding='sm' className='space-y-3 border-border/40 bg-foreground/5'>
             <div className='flex flex-wrap items-center justify-between gap-2'>
-              <div className='text-xs font-semibold uppercase tracking-wide text-gray-300'>
+              <Hint size='xs' uppercase className='font-semibold text-gray-300'>
                 Autofix Operations
-              </div>
+              </Hint>
               <div className='flex items-center gap-2'>
                 <button
                   type='button'
@@ -875,7 +876,7 @@ export function RuleItem({
       )}
 
       <CollapsibleSection
-        title={<span className='text-xs font-medium text-gray-200'>Raw JSON editor</span>}
+        title={<Hint size='xs' uppercase={false} className='font-medium text-gray-200'>Raw JSON editor</Hint>}
         variant='subtle'
         className='mt-2'
       >

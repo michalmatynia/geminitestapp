@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { dtoBaseSchema } from './base';
 import { aiNodeTypeSchema } from './ai-paths';
+import { dtoBaseSchema } from './base';
 
 /**
  * Agent Documentation / Context Extraction Contract

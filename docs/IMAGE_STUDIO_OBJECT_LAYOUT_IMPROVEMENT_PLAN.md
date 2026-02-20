@@ -1,7 +1,7 @@
 # Image Studio Object Layout Improvement Plan
 
 Date: 2026-02-20  
-Status: In Progress (Phase A complete, Phase B foundation complete, Phase C complete, Integration Phase H started)
+Status: In Progress (Phase A complete, Phase B foundation complete, Phase C complete, Integration Phase H complete, Phase I complete)
 
 ## 1. Scope
 
@@ -89,17 +89,22 @@ Completed:
    - Advanced controls now support shared presets (`default product`, `with shadow`, `hard background`, `transparent PNG`).
    - Advanced defaults are persisted per project/session and reused across Object Layout + Analysis tab.
    - User-defined custom presets (create/update/delete) are now available and shared across Object Layout + Analysis tab.
-4. Integration Phase H started:
+4. Integration Phase H complete:
    - Auto Scaler now consumes shared detection mode and white/chroma thresholds used by Object Layout + Analysis.
    - Auto Scaler UI now explicitly indicates it follows shared Object Layout detection settings.
+5. Phase I complete (analysis-to-action bridge):
+   - Analysis tab now persists latest analysis snapshot (layout + policy/confidence metadata) as shared bridge state.
+   - Analysis tab can queue apply intents for Object Layout or Auto Scaler.
+   - Generation toolbar consumes queued intents for matching slot and auto-applies analysis plan to target tool controls.
+   - Manual `Use Analysis Plan` controls added in Object Layout and Auto Scaler panels.
+   - Analysis snapshot/apply intent now include source image signature metadata.
+   - Stale-plan guard now validates source signature (slot image revision), not only slot id.
+   - Optional one-click apply-and-run flow is available from Analysis tab for Object Layout and Auto Scaler.
 
 Remaining:
 1. Phase B rollout hardening:
    - policy decision metadata surfaced in all UI diagnostics where useful.
-2. Integration Phase H completion:
-   - one-click "Apply Analysis Plan" execution path into Object Layout and Auto Scaler.
-   - explicit sync status UI showing current shared detection config source.
-3. Phase D onward unchanged.
+2. Phase J onward unchanged.
 
 ### Phase A: Detection Quality Framework
 

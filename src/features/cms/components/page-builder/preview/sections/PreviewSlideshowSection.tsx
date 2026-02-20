@@ -13,6 +13,7 @@ import {
   normalizeSlideshowAnimationType,
 } from '@/features/cms/components/page-builder/preview/preview-utils';
 import type { BlockInstance, SectionInstance } from '@/shared/contracts/cms';
+import { EmptyState } from '@/shared/ui';
 
 interface PreviewSlideshowSectionProps {
   section: SectionInstance;
@@ -123,10 +124,13 @@ export function PreviewSlideshowSection({
       {divider}
       {slideCount === 0 ? (
         showEditorChrome ? (
-          <div className='container mx-auto px-4 md:px-6'>
-            <p className='text-gray-500 text-center py-12'>
-              Add blocks to create slideshow slides
-            </p>
+          <div className='container mx-auto px-4 md:px-6 py-12'>
+            <EmptyState
+              title='No slides'
+              description='Add blocks to create slideshow slides.'
+              variant='compact'
+              className='bg-card/20'
+            />
           </div>
         ) : null
       ) : (
@@ -220,9 +224,12 @@ export function PreviewSlideshowSection({
                         );
                       })
                     ) : (
-                      <div className='flex h-full w-full items-center justify-center text-sm text-gray-500'>
-                        Empty slide
-                      </div>
+                      <EmptyState
+                        title='Empty slide'
+                        description='Add content to this slide.'
+                        variant='compact'
+                        className='bg-transparent border-none'
+                      />
                     )}
                   </div>
                 </div>

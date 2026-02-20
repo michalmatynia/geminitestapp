@@ -7,6 +7,7 @@ import { useCmsPageContext } from '../CmsPageContext';
 import { useMediaStyles } from '../media-styles-context';
 import { useOptionalSectionBlockData } from './SectionBlockContext';
 import { SectionDataProvider } from './SectionDataContext';
+import { EmptyState } from '@/shared/ui';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
@@ -65,7 +66,12 @@ export function FrontendHeroSection({
             ))}
           </div>
           {blocks.length === 0 && (
-            <p className='text-lg text-gray-400'>Hero section</p>
+            <EmptyState
+              title='Hero section'
+              description='Add content blocks here.'
+              variant='compact'
+              className='bg-transparent border-none'
+            />
           )}
         </div>
       </section>

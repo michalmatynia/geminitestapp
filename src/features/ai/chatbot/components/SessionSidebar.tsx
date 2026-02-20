@@ -17,11 +17,11 @@ export function SessionSidebar(): React.JSX.Element {
   } = useChatbot();
 
   return (
-    <div className='flex h-full flex-col bg-gray-900 border-r border-border'>
+    <div className='flex h-full flex-col bg-card/80 border-r border-border'>
       <div className='p-4 border-b border-border'>
         <Button
           onClick={() => { void onNewSession(); }}
-          className='w-full bg-blue-600 text-white hover:bg-blue-700'
+          className='w-full'
         >
           <Plus className='mr-2 size-4' />
           New Chat
@@ -40,8 +40,8 @@ export function SessionSidebar(): React.JSX.Element {
                 key={session.id}
                 className={`group flex items-center gap-2 rounded-lg p-3 cursor-pointer transition ${
                   currentSessionId === session.id
-                    ? 'bg-gray-800 text-white'
-                    : 'text-gray-400 hover:bg-muted/50/50 hover:text-white'
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-gray-400 hover:bg-muted/50 hover:text-white'
                 }`}
                 onClick={(): void => onSelectSession(session.id)}
               >
@@ -55,14 +55,16 @@ export function SessionSidebar(): React.JSX.Element {
                   </div>
                 </div>
                 <Button
+                  variant='ghost'
+                  size='icon'
                   onClick={(e: React.MouseEvent): void => {
                     e.stopPropagation();
                     void onDeleteSession(session.id);
                   }}
-                  className='opacity-0 group-hover:opacity-100 transition p-1 hover:bg-red-600 rounded'
+                  className='opacity-0 group-hover:opacity-100 transition h-7 w-7 text-red-400 hover:text-red-300 hover:bg-red-500/10'
                   aria-label='Delete session'
                 >
-                  <Trash2 className='size-3' />
+                  <Trash2 className='size-3.5' />
                 </Button>
               </div>
             ))}

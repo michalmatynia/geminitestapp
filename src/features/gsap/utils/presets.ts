@@ -1,6 +1,8 @@
-import { PARALLAX_DEFAULTS } from '../types/animation';
-
-import type { AnimationPreset, ParallaxPreset } from '../types/animation';
+import {
+  PARALLAX_DEFAULTS,
+  type AnimationPreset,
+  type ParallaxPreset,
+} from '@/shared/contracts/gsap';
 
 export function getGsapFromVars(preset: AnimationPreset): GSAPTweenVars {
   switch (preset) {

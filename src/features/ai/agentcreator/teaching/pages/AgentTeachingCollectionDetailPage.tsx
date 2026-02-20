@@ -16,6 +16,7 @@ import {
   ConfirmModal,
   Alert,
   PanelHeader,
+  Card,
 } from '@/shared/ui';
 
 import { useAgentTeachingQueriesCollectionDetailState } from '../hooks/useAgentTeachingQueriesCollectionDetailState';
@@ -152,9 +153,9 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
               />
             </FormField>
             <div className='flex justify-end'>
-              <Button onClick={() => void handleAdd()} disabled={adding || deleting || !collectionId || !text.trim()}>
+              <Button onClick={() => void handleAdd()} loading={adding} disabled={deleting || !collectionId || !text.trim()}>
                 <Plus className='mr-2 size-4' />
-                {adding ? 'Embedding...' : 'Add Document'}
+                Add Document
               </Button>
             </div>
           </div>
@@ -169,11 +170,12 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
               variant='outline'
               size='xs'
               onClick={() => void handleSearch()}
-              disabled={searching || !collectionId || !searchQuery.trim()}
+              loading={searching}
+              disabled={!collectionId || !searchQuery.trim()}
               className='gap-2'
             >
-              {searching ? <RefreshCw className='size-3 animate-spin' /> : <Search className='size-3' />}
-              {searching ? 'Searching...' : 'Run Search'}
+              <Search className='size-3' />
+              Run Search
             </Button>
           }
           className='p-6'
@@ -219,7 +221,7 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
               </Alert>
             )}
 
-            <div className='rounded-md border border-border bg-black/20 p-0 overflow-hidden'>
+            <Card variant='subtle-compact' padding='none' className='border-border bg-black/20 overflow-hidden'>
               <div className='px-3 py-2 border-b border-border/40 text-xs font-semibold text-gray-400'>Results</div>
               <div className='max-h-[200px] overflow-y-auto p-2 space-y-2'>
                 {searchResults.length === 0 ? (
@@ -228,17 +230,17 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
                   </div>
                 ) : (
                   searchResults.map((src: AgentTeachingChatSource) => (
-                    <div key={src.documentId} className='text-xs p-2 rounded bg-white/5 border border-white/5'>
+                    <Card key={src.documentId} variant='subtle-compact' padding='sm' className='text-xs bg-white/5 border-white/5'>
                       <div className='flex justify-between mb-1 text-gray-400'>
                         <span>Score: {src.score.toFixed(3)}</span>
                         <span>{src.metadata?.title}</span>
                       </div>
                       <p className='text-gray-300 line-clamp-3'>{src.text}</p>
-                    </div>
+                    </Card>
                   ))
                 )}
               </div>
-            </div>
+            </Card>
           </div>
         </FormSection>
       </div>

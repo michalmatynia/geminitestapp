@@ -9,7 +9,6 @@ import {
   FileUploadButton,
   SectionHeader,
 } from '@/shared/ui';
-import { cn } from '@/shared/utils';
 
 import { usePromptEngine } from '../context/PromptEngineContext';
 import { useOptionalPromptEngineValidationPageContext } from '../context/PromptEngineValidationPageContext';
@@ -98,18 +97,19 @@ export function PromptEngineToolbar(): React.JSX.Element {
           <Button
             type='button'
             onClick={() => void handleSave()}
-            disabled={isSaving || (!isDirty && !learnedDirty)}
+            loading={isSaving}
+            disabled={!isDirty && !learnedDirty}
           >
-            {isSaving ? 'Saving...' : 'Save changes'}
+            Save changes
           </Button>
           <Button
             type='button'
             variant='outline'
             onClick={() => void handleRefresh()}
-            disabled={isLoading}
+            loading={isLoading}
             title='Reload settings'
           >
-            <RefreshCcw className={cn('mr-2 size-4', isLoading ? 'animate-spin' : '')} />
+            <RefreshCcw className='mr-2 size-4' />
             Refresh
           </Button>
         </>

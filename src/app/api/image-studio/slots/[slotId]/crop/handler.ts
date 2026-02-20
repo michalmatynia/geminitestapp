@@ -769,8 +769,8 @@ export async function postCropSlotHandler(
       filepath: publicPath,
       mimetype: processed.outputMime,
       size: processed.outputBuffer.length,
-      width: processed.outputWidth,
-      height: processed.outputHeight,
+      width: processed.outputWidth ?? undefined,
+      height: processed.outputHeight ?? undefined,
     });
 
     const sourceLabel = sourceSlot.name?.trim() || sourceSlot.id;

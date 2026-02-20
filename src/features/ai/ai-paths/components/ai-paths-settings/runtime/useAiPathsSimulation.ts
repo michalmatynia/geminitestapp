@@ -19,7 +19,6 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import {
   AI_PATHS_ENTITY_STALE_MS,
-  type ToastFn,
 } from '@/shared/contracts/ai-paths-runtime';
 import { 
   buildSimulationContext, 
@@ -33,7 +32,7 @@ type SimulationArgs = {
   runtimeStateRef: React.MutableRefObject<RuntimeState>;
   pendingSimulationContextRef: React.MutableRefObject<Record<string, unknown> | null>;
   reportAiPathsError: (error: unknown, context: Record<string, unknown>, fallbackMessage?: string) => void;
-  toast: ToastFn;
+  toast: (message: string, options?: { variant?: 'success' | 'error' | 'info' | 'warning'; duration?: number; error?: unknown }) => void;
   // Local logic callbacks
   runGraphForTrigger: (triggerNode: AiNode, event?: React.MouseEvent, contextOverride?: Record<string, unknown>) => Promise<void>;
 };

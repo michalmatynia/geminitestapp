@@ -9,7 +9,7 @@ import type {
   AgentSnapshot,
 } from '@/shared/contracts/chatbot';
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { Tabs, TabsList, TabsTrigger, TabsContent, StatusBadge, LogList } from '@/shared/ui';
+import { Tabs, TabsList, TabsTrigger, TabsContent, StatusBadge, LogList, Card } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 export interface AgentRunDetailModalProps extends EntityModalProps<AiPathRunRecord> {
@@ -48,7 +48,7 @@ export function AgentRunDetailModal({
         </TabsList>
         
         <TabsContent value='summary' className='space-y-4 pt-4'>
-          <div className='rounded-lg border border-border/60 bg-card/35 p-4'>
+          <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/35'>
             <h3 className='text-sm font-medium text-white mb-2'>Run Information</h3>
             <div className='grid grid-cols-2 gap-4 text-xs'>
               <div>
@@ -64,7 +64,7 @@ export function AgentRunDetailModal({
                 <p className='text-gray-200 whitespace-pre-wrap'>{selectedAgentRun.prompt}</p>
               </div>
             </div>
-          </div>
+          </Card>
         </TabsContent>
 
         <TabsContent value='logs' className='space-y-2 pt-4'>

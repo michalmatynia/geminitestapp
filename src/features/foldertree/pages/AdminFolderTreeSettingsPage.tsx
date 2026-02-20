@@ -435,20 +435,22 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                   />
                 </FormField>
 
-                <label className='flex items-start gap-2 rounded border border-border/50 p-3 text-xs text-gray-300'>
-                  <Checkbox
-                    checked={profile.nesting.defaultAllow}
-                    onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                      updateProfile(meta.id, (current) => ({
-                        ...current,
-                        nesting: {
-                          ...current.nesting,
-                          defaultAllow: checked === true,
-                        },
-                      }));
-                    }}
-                  />
-                  <span>Default allow (fallback)</span>
+                <label className='block cursor-pointer'>
+                  <Card variant='subtle-compact' padding='sm' className='flex items-start gap-2 border-border/50 bg-card/30'>
+                    <Checkbox
+                      checked={profile.nesting.defaultAllow}
+                      onCheckedChange={(checked: boolean | 'indeterminate'): void => {
+                        updateProfile(meta.id, (current) => ({
+                          ...current,
+                          nesting: {
+                            ...current.nesting,
+                            defaultAllow: checked === true,
+                          },
+                        }));
+                      }}
+                    />
+                    <span className='text-xs text-gray-300'>Default allow (fallback)</span>
+                  </Card>
                 </label>
               </div>
 
@@ -485,52 +487,60 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
               </div>
 
               <div className='grid gap-4 md:grid-cols-2'>
-                <label className='flex items-start gap-2 rounded border border-border/50 p-3 text-xs text-gray-300'>
-                  <Checkbox
-                    checked={allowFolderToFolder}
-                    onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                      updateProfile(meta.id, (current) =>
-                        upsertRule(current, 'folder_to_folder', { allow: checked === true })
-                      );
-                    }}
-                  />
-                  <span>Allow folder inside folder</span>
+                <label className='block cursor-pointer'>
+                  <Card variant='subtle-compact' padding='sm' className='flex items-start gap-2 border-border/50 bg-card/30'>
+                    <Checkbox
+                      checked={allowFolderToFolder}
+                      onCheckedChange={(checked: boolean | 'indeterminate'): void => {
+                        updateProfile(meta.id, (current) =>
+                          upsertRule(current, 'folder_to_folder', { allow: checked === true })
+                        );
+                      }}
+                    />
+                    <span className='text-xs text-gray-300'>Allow folder inside folder</span>
+                  </Card>
                 </label>
 
-                <label className='flex items-start gap-2 rounded border border-border/50 p-3 text-xs text-gray-300'>
-                  <Checkbox
-                    checked={allowFileToFolder}
-                    onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                      updateProfile(meta.id, (current) =>
-                        upsertRule(current, 'file_to_folder', { allow: checked === true })
-                      );
-                    }}
-                  />
-                  <span>Allow file inside folder</span>
+                <label className='block cursor-pointer'>
+                  <Card variant='subtle-compact' padding='sm' className='flex items-start gap-2 border-border/50 bg-card/30'>
+                    <Checkbox
+                      checked={allowFileToFolder}
+                      onCheckedChange={(checked: boolean | 'indeterminate'): void => {
+                        updateProfile(meta.id, (current) =>
+                          upsertRule(current, 'file_to_folder', { allow: checked === true })
+                        );
+                      }}
+                    />
+                    <span className='text-xs text-gray-300'>Allow file inside folder</span>
+                  </Card>
                 </label>
 
-                <label className='flex items-start gap-2 rounded border border-border/50 p-3 text-xs text-gray-300'>
-                  <Checkbox
-                    checked={allowFolderToRoot}
-                    onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                      updateProfile(meta.id, (current) =>
-                        upsertRule(current, 'folder_to_root', { allow: checked === true })
-                      );
-                    }}
-                  />
-                  <span>Allow folder drop to root</span>
+                <label className='block cursor-pointer'>
+                  <Card variant='subtle-compact' padding='sm' className='flex items-start gap-2 border-border/50 bg-card/30'>
+                    <Checkbox
+                      checked={allowFolderToRoot}
+                      onCheckedChange={(checked: boolean | 'indeterminate'): void => {
+                        updateProfile(meta.id, (current) =>
+                          upsertRule(current, 'folder_to_root', { allow: checked === true })
+                        );
+                      }}
+                    />
+                    <span className='text-xs text-gray-300'>Allow folder drop to root</span>
+                  </Card>
                 </label>
 
-                <label className='flex items-start gap-2 rounded border border-border/50 p-3 text-xs text-gray-300'>
-                  <Checkbox
-                    checked={allowFileToRoot}
-                    onCheckedChange={(checked: boolean | 'indeterminate'): void => {
-                      updateProfile(meta.id, (current) =>
-                        upsertRule(current, 'file_to_root', { allow: checked === true })
-                      );
-                    }}
-                  />
-                  <span>Allow file drop to root</span>
+                <label className='block cursor-pointer'>
+                  <Card variant='subtle-compact' padding='sm' className='flex items-start gap-2 border-border/50 bg-card/30'>
+                    <Checkbox
+                      checked={allowFileToRoot}
+                      onCheckedChange={(checked: boolean | 'indeterminate'): void => {
+                        updateProfile(meta.id, (current) =>
+                          upsertRule(current, 'file_to_root', { allow: checked === true })
+                        );
+                      }}
+                    />
+                    <span className='text-xs text-gray-300'>Allow file drop to root</span>
+                  </Card>
                 </label>
               </div>
 

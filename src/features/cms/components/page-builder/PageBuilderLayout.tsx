@@ -95,7 +95,7 @@ function PageBuilderInner(): React.ReactNode {
   }, [dispatch, state.leftPanelCollapsed]);
 
   return (
-    <div className='flex h-[calc(100vh-64px)] flex-col bg-gray-900 text-white'>
+    <div className='flex h-[calc(100vh-64px)] flex-col bg-background text-white'>
       <div className='relative flex flex-1 overflow-hidden'>
         {/* Left panel toggle (shown when collapsed) */}
         {state.leftPanelCollapsed && !isViewing && (
@@ -117,7 +117,7 @@ function PageBuilderInner(): React.ReactNode {
             state.leftPanelCollapsed ? 'w-0 opacity-0 -translate-x-2 pointer-events-none' : 'w-72 opacity-100 translate-x-0'
           }`}
         >
-          <div className='flex w-72 min-h-0 flex-col border-r border-border bg-gray-900'>
+          <div className='flex w-72 min-h-0 flex-col border-r border-border bg-card'>
             <SectionHeader
               title={leftPanelLabel}
               size='xs'

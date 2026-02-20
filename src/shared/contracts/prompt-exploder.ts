@@ -6,7 +6,7 @@ import { dtoBaseSchema, namedDtoSchema } from './base';
  * Prompt Exploder Basic DTOs
  */
 
-export const promptExploderSegmentTypeSchema = z.enum(['static', 'dynamic', 'conditional', 'list', 'parameter_block', 'metadata', 'sequence', 'qa_matrix', 'hierarchical_list', 'referential_list', 'conditional_list', 'assigned_text']);
+export const promptExploderSegmentTypeSchema = z.enum(['static', 'dynamic', 'conditional', 'list', 'parameter_block', 'metadata', 'sequence', 'qa_matrix', 'hierarchical_list', 'referential_list', 'conditional_list', 'assigned_text', 'prompt_exploder']);
 export type PromptExploderSegmentTypeDto = z.infer<typeof promptExploderSegmentTypeSchema>;
 export type PromptExploderSegmentType = PromptExploderSegmentTypeDto;
 
@@ -89,7 +89,7 @@ export const promptExploderBindingTypeSchema = z.enum(['text', 'number', 'boolea
 export type PromptExploderBindingTypeDto = z.infer<typeof promptExploderBindingTypeSchema>;
 export type PromptExploderBindingType = PromptExploderBindingTypeDto;
 
-export const promptExploderBindingOriginSchema = z.enum(['user', 'system', 'learned', 'inferred']);
+export const promptExploderBindingOriginSchema = z.enum(['user', 'system', 'learned', 'inferred', 'manual', 'auto']);
 export type PromptExploderBindingOriginDto = z.infer<typeof promptExploderBindingOriginSchema>;
 export type PromptExploderBindingOrigin = PromptExploderBindingOriginDto;
 
@@ -98,14 +98,19 @@ export type PromptExploderParamUiControlDto = z.infer<typeof promptExploderParam
 export type PromptExploderParamUiControl = PromptExploderParamUiControlDto;
 
 export const promptExploderBindingSchema = z.object({
-  key: z.string(),
-  type: promptExploderBindingTypeSchema,
-  label: z.string(),
+  key: z.string().optional(),
+  type: z.union([promptExploderBindingTypeSchema, z.string()]).optional(),
+  label: z.string().optional(),
   description: z.string().optional(),
   defaultValue: z.unknown().optional(),
   uiControl: promptExploderParamUiControlSchema.optional(),
   options: z.array(promptExploderListItemSchema).optional(),
-  origin: promptExploderBindingOriginSchema,
+  origin: promptExploderBindingOriginSchema.optional(),
+  id: z.string().optional(),
+  fromSegmentId: z.string().optional(),
+  toSegmentId: z.string().optional(),
+  sourceLabel: z.string().optional(),
+  targetLabel: z.string().optional(),
 });
 
 export type PromptExploderBindingDto = z.infer<typeof promptExploderBindingSchema>;
@@ -134,17 +139,42 @@ export const promptExploderSegmentSchema = z.object({
   matchedPatternIds: z.array(z.string()).optional(),
   matchedPatternLabels: z.array(z.string()).optional(),
   matchedSequenceLabels: z.array(z.string()).optional(),
+  isHeading: z.boolean().optional(),
+  treatAsHeading: z.boolean().optional(),
+  suggestedTreatAsHeading: z.boolean().optional(),
+  ruleCount: z.number().optional(),
+  ruleStack: z.record(z.string(), z.unknown()).optional(),
+  validationResults: z.array(z.any()).optional(),
+  bindings: z.record(z.string(), z.unknown()).optional(),
+  segments: z.array(z.any()).optional(),
 });
 
 export type PromptExploderSegmentDto = z.infer<typeof promptExploderSegmentSchema>;
 export type PromptExploderSegment = PromptExploderSegmentDto;
 
 export const promptExploderDocumentSchema = dtoBaseSchema.extend({
-  name: z.string(),
-  description: z.string().nullable(),
-  bindings: z.array(promptExploderBindingSchema),
-  sections: z.array(promptExploderSubsectionSchema),
-  isActive: z.boolean(),
+  id: z.string().optional(),
+  name: z.string().optional(),
+  description: z.string().nullable().optional(),
+  bindings: z.array(promptExploderBindingSchema).optional(),
+  sections: z.array(promptExploderSubsectionSchema).optional(),
+  isActive: z.boolean().optional(),
+  version: z.number().optional(),
+  sourcePrompt: z.string().optional(),
+  segments: z.array(z.any()).optional(),
+  subsections: z.array(z.any()).optional(),
+  variables: z.array(z.any()).optional(),
+  dependencies: z.array(z.any()).optional(),
+  rules: z.array(z.any()).optional(),
+  tags: z.array(z.string()).optional(),
+  warnings: z.array(z.any()).optional(),
+  errors: z.array(z.any()).optional(),
+  diagnostics: z.array(z.any()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+  reassembledPrompt: z.string().optional(),
+  promptLength: z.number().optional(),
+  estimatedTokens: z.number().optional(),
+  lastReassembledAt: z.string().optional(),
 });
 
 export type PromptExploderDocumentDto = z.infer<typeof promptExploderDocumentSchema>;
@@ -160,14 +190,18 @@ export type PromptExploderPatternRuleMap = PromptExploderPatternRuleMapDto;
 
 export const promptExploderLearnedTemplateSchema = z.object({
   id: z.string(),
-  pattern: z.string(),
+  pattern: z.string().optional(),
   title: z.string().optional(),
   normalizedTitle: z.string().optional(),
   anchorTokens: z.array(z.string()).optional(),
+  sampleText: z.string().optional(),
+  approvals: z.union([z.number(), z.record(z.string(), z.unknown())]).optional(),
   segmentType: promptExploderSegmentTypeSchema.optional(),
-  usageCount: z.number(),
-  lastUsedAt: z.string(),
+  usageCount: z.number().optional(),
+  lastUsedAt: z.string().optional(),
   state: z.union([z.string(), z.record(z.string(), z.unknown())]).optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
 });
 
 export type PromptExploderLearnedTemplateDto = z.infer<typeof promptExploderLearnedTemplateSchema>;
@@ -175,9 +209,13 @@ export type PromptExploderLearnedTemplate = PromptExploderLearnedTemplateDto;
 
 export const promptExploderPatternSnapshotSchema = z.object({
   id: z.string(),
-  timestamp: z.string(),
-  bindings: z.record(z.string(), z.unknown()),
-  result: z.string(),
+  timestamp: z.string().optional(),
+  bindings: z.record(z.string(), z.unknown()).optional(),
+  result: z.string().optional(),
+  name: z.string().optional(),
+  ruleCount: z.number().optional(),
+  rulesJson: z.string().optional(),
+  createdAt: z.string().optional(),
 });
 
 export type PromptExploderPatternSnapshotDto = z.infer<typeof promptExploderPatternSnapshotSchema>;
@@ -223,6 +261,8 @@ export const promptExploderBenchmarkSuggestionSchema = z.object({
   sampleText: z.string().optional(),
   confidence: z.number().optional(),
   matchedPatternIds: z.array(z.string()).optional(),
+  matchedPatternLabels: z.array(z.string()).optional(),
+  matchedSequenceLabels: z.array(z.string()).optional(),
 });
 
 export type PromptExploderBenchmarkSuggestionDto = z.infer<typeof promptExploderBenchmarkSuggestionSchema>;
@@ -245,15 +285,15 @@ export type PromptExploderCaseResolverCaptureModeDto = z.infer<typeof promptExpl
 export type PromptExploderCaseResolverCaptureMode = PromptExploderCaseResolverCaptureModeDto;
 
 export const promptExploderValidationRuleStackSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  ruleIds: z.array(z.string()),
+  id: z.string().optional(),
+  name: z.string().optional(),
+  ruleIds: z.array(z.string()).optional(),
 });
 
 export type PromptExploderValidationRuleStackDto = z.infer<typeof promptExploderValidationRuleStackSchema>;
-export type PromptExploderValidationRuleStack = PromptExploderValidationRuleStackDto;
+export type PromptExploderValidationRuleStack = string; // Always a string ID in runtime logic
 
-export const promptExploderRuntimeValidationScopeSchema = z.enum(['segment', 'document', 'global', 'case_resolver_prompt_exploder']);
+export const promptExploderRuntimeValidationScopeSchema = z.enum(['segment', 'document', 'global', 'case_resolver_prompt_exploder', 'prompt_exploder']);
 export type PromptExploderRuntimeValidationScopeDto = z.infer<typeof promptExploderRuntimeValidationScopeSchema>;
 export type PromptExploderRuntimeValidationScope = PromptExploderRuntimeValidationScopeDto;
 
@@ -262,7 +302,7 @@ export type PromptExploderValidationStackResolutionReasonDto = z.infer<typeof pr
 export type PromptExploderValidationStackResolutionReason = PromptExploderValidationStackResolutionReasonDto;
 
 export const promptExploderValidationStackResolutionSchema = z.object({
-  stack: promptExploderValidationRuleStackSchema.optional(),
+  stack: z.union([z.string(), promptExploderValidationRuleStackSchema]).optional(),
   stackId: z.string().optional(),
   passed: z.boolean().optional(),
   results: z.array(z.object({
@@ -271,6 +311,11 @@ export const promptExploderValidationStackResolutionSchema = z.object({
     reason: promptExploderValidationStackResolutionReasonSchema,
     message: z.string().optional(),
   })).optional(),
+  usedFallback: z.boolean().optional(),
+  scope: promptExploderRuntimeValidationScopeSchema.optional(),
+  reason: z.string().optional(),
+  validatorScope: z.string().optional(),
+  list: z.any().optional(),
 });
 
 export type PromptExploderValidationStackResolutionDto = z.infer<typeof promptExploderValidationStackResolutionSchema>;

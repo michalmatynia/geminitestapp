@@ -184,7 +184,10 @@ export function SegmentEditorPanel(): React.JSX.Element {
                   key={segment.id}
                   role='button'
                   tabIndex={0}
-                  className={`relative w-full rounded border px-2 py-2 text-left text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${selectedSegmentId === segment.id ? 'border-blue-400 bg-blue-500/10 text-gray-100' : 'border-border/50 bg-card/30 text-gray-300 hover:border-blue-300/50'} ${draggingSegmentId === segment.id ? 'opacity-60' : ''}`}
+                  className={cn(
+                    'relative w-full transition-all group',
+                    draggingSegmentId === segment.id && 'opacity-60'
+                  )}
                   onClick={() => setSelectedSegmentId(segment.id)}
                   onKeyDown={(event) => {
                     if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -198,101 +201,110 @@ export function SegmentEditorPanel(): React.JSX.Element {
                     handleSegmentDrop(event, segment.id);
                   }}
                 >
-                  {isDropBefore ? (
-                    <div className='pointer-events-none absolute inset-x-1 top-0 h-0.5 rounded bg-blue-400' />
-                  ) : null}
-                  {isDropAfter ? (
-                    <div className='pointer-events-none absolute inset-x-1 bottom-0 h-0.5 rounded bg-blue-400' />
-                  ) : null}
-                  <div className='flex items-center justify-between gap-2'>
-                    <div className='flex min-w-0 items-center gap-2'>
-                      <button
-                        type='button'
-                        className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/50 text-gray-300 transition-colors hover:bg-card/70 hover:text-gray-100 active:cursor-grabbing'
-                        aria-label='Drag to reorder segment'
-                        draggable
-                        onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
-                          event.stopPropagation();
-                        }}
-                        onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
-                          event.stopPropagation();
-                        }}
-                        onDragStart={(event: React.DragEvent<HTMLButtonElement>) => {
-                          event.stopPropagation();
-                          handleSegmentDragStart(segment.id);
-                        }}
-                        onDragEnd={() => {
-                          handleSegmentDragEnd();
-                        }}
-                      >
-                        <GripVertical className='size-3.5' />
-                      </button>
-                      <span className='truncate font-medium'>{segment.title}</span>
+                  <Card
+                    variant={selectedSegmentId === segment.id ? 'info' : 'subtle-compact'}
+                    padding='sm'
+                    className={cn(
+                      'text-left text-xs transition-colors',
+                      selectedSegmentId === segment.id ? 'bg-primary/10 border-primary/40 text-gray-100' : 'border-border/50 bg-card/30 text-gray-300 hover:border-primary/30 hover:bg-card/50'
+                    )}
+                  >
+                    {isDropBefore ? (
+                      <div className='pointer-events-none absolute inset-x-1 top-0 h-0.5 rounded bg-primary shadow-[0_0_8px_rgba(var(--primary),0.6)]' />
+                    ) : null}
+                    {isDropAfter ? (
+                      <div className='pointer-events-none absolute inset-x-1 bottom-0 h-0.5 rounded bg-primary shadow-[0_0_8px_rgba(var(--primary),0.6)]' />
+                    ) : null}
+                    <div className='flex items-center justify-between gap-2'>
+                      <div className='flex min-w-0 items-center gap-2'>
+                        <button
+                          type='button'
+                          className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/50 text-gray-300 transition-colors hover:bg-card/70 hover:text-gray-100 active:cursor-grabbing'
+                          aria-label='Drag to reorder segment'
+                          draggable
+                          onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
+                            event.stopPropagation();
+                          }}
+                          onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                            event.stopPropagation();
+                          }}
+                          onDragStart={(event: React.DragEvent<HTMLButtonElement>) => {
+                            event.stopPropagation();
+                            handleSegmentDragStart(segment.id);
+                          }}
+                          onDragEnd={() => {
+                            handleSegmentDragEnd();
+                          }}
+                        >
+                          <GripVertical className='size-3.5' />
+                        </button>
+                        <span className='truncate font-medium'>{segment.title}</span>
+                      </div>
+                      <div className='flex items-center gap-1'>
+                        <Badge variant='neutral' className='bg-card/50 px-1 py-0 text-[9px] font-normal uppercase'>
+                          {segment.type.replaceAll('_', ' ')}
+                        </Badge>
+                        <ActionMenu
+                          align='end'
+                          ariaLabel='Segment actions'
+                          triggerClassName='h-6 w-6 text-gray-400 hover:text-gray-100'
+                        >
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              addSegmentRelative(segment.id, 'before');
+                            }}
+                          >
+                            Add Segment Above
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              addSegmentRelative(segment.id, 'after');
+                            }}
+                          >
+                            Add Segment Below
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            disabled={!canSplitSegment}
+                            onSelect={() => {
+                              splitSegment(segment.id, segment.text.length, segment.text.length);
+                            }}
+                          >
+                            Split at End
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={segmentIndex === 0}
+                            onSelect={() => {
+                              mergeSegmentWithPrevious(segment.id);
+                            }}
+                          >
+                            Merge with Previous
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={segmentIndex === documentState.segments.length - 1}
+                            onSelect={() => {
+                              mergeSegmentWithNext(segment.id);
+                            }}
+                          >
+                            Merge with Next
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className='text-red-300 focus:text-red-200'
+                            onSelect={() => {
+                              removeSegment(segment.id);
+                            }}
+                          >
+                            Remove Segment
+                          </DropdownMenuItem>
+                        </ActionMenu>
+                      </div>
                     </div>
-                    <div className='flex items-center gap-1'>
-                      <span className='rounded border border-border/50 bg-card/50 px-1 py-0.5 text-[10px] uppercase'>
-                        {segment.type.replaceAll('_', ' ')}
-                      </span>
-                      <ActionMenu
-                        align='end'
-                        ariaLabel='Segment actions'
-                        triggerClassName='h-6 w-6 text-gray-400 hover:text-gray-100'
-                      >
-                        <DropdownMenuItem
-                          onSelect={() => {
-                            addSegmentRelative(segment.id, 'before');
-                          }}
-                        >
-                          Add Segment Above
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={() => {
-                            addSegmentRelative(segment.id, 'after');
-                          }}
-                        >
-                          Add Segment Below
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          disabled={!canSplitSegment}
-                          onSelect={() => {
-                            splitSegment(segment.id, segment.text.length, segment.text.length);
-                          }}
-                        >
-                          Split at End
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          disabled={segmentIndex === 0}
-                          onSelect={() => {
-                            mergeSegmentWithPrevious(segment.id);
-                          }}
-                        >
-                          Merge with Previous
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          disabled={segmentIndex === documentState.segments.length - 1}
-                          onSelect={() => {
-                            mergeSegmentWithNext(segment.id);
-                          }}
-                        >
-                          Merge with Next
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className='text-red-300 focus:text-red-200'
-                          onSelect={() => {
-                            removeSegment(segment.id);
-                          }}
-                        >
-                          Remove Segment
-                        </DropdownMenuItem>
-                      </ActionMenu>
+                    <div className='mt-1 flex items-center justify-between text-[10px] text-gray-500'>
+                      <span>Confidence {(segment.confidence * 100).toFixed(0)}%</span>
+                      <span>{segment.includeInOutput ? 'Included' : 'Omitted'}</span>
                     </div>
-                  </div>
-                  <div className='mt-1 flex items-center justify-between text-[10px] text-gray-500'>
-                    <span>Confidence {(segment.confidence * 100).toFixed(0)}%</span>
-                    <span>{segment.includeInOutput ? 'Included' : 'Omitted'}</span>
-                  </div>
+                  </Card>
                 </div>
               );
             })}
@@ -882,7 +894,10 @@ export function SegmentEditorPanel(): React.JSX.Element {
                         {selectedSegment.listItems.map((item: PromptExploderListItem, index: number) => (
                           <div
                             key={item.id}
-                            className={`relative rounded border border-border/50 bg-card/20 p-2 ${draggingListItemIndex === index ? 'opacity-60' : ''}`}
+                            className={cn(
+                              'relative transition-all',
+                              draggingListItemIndex === index && 'opacity-60'
+                            )}
                             onDragOver={(event: React.DragEvent<HTMLDivElement>) => {
                               handleListItemDragOver(event, index);
                             }}
@@ -890,71 +905,77 @@ export function SegmentEditorPanel(): React.JSX.Element {
                               handleListItemDrop(event, index);
                             }}
                           >
-                            {listItemDropTargetIndex === index && listItemDropPosition === 'before' ? (
-                              <div className='pointer-events-none absolute inset-x-1 top-0 h-0.5 rounded bg-blue-400' />
-                            ) : null}
-                            {listItemDropTargetIndex === index && listItemDropPosition === 'after' ? (
-                              <div className='pointer-events-none absolute inset-x-1 bottom-0 h-0.5 rounded bg-blue-400' />
-                            ) : null}
-                            {(() => {
-                              const rgbLiteral = extractRgbLiteral(item.text);
-                              return (
-                                <div className='flex items-center gap-1'>
-                                  <button
-                                    type='button'
-                                    className='inline-flex size-9 items-center justify-center rounded border border-border/60 bg-card/50 text-gray-300 transition-colors hover:bg-card/70 hover:text-gray-100 active:cursor-grabbing'
-                                    aria-label='Drag to reorder list item'
-                                    draggable
-                                    onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
-                                      event.stopPropagation();
-                                    }}
-                                    onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
-                                      event.stopPropagation();
-                                    }}
-                                    onDragStart={(event: React.DragEvent<HTMLButtonElement>) => {
-                                      event.stopPropagation();
-                                      handleListItemDragStart(index);
-                                    }}
-                                    onDragEnd={() => {
-                                      handleListItemDragEnd();
-                                    }}
-                                  >
-                                    <GripVertical className='size-3.5' />
-                                  </button>
-                                  <Input
-                                    value={item.text}
-                                    onChange={(event) => {
-                                      updateTopLevelListItem(selectedSegment.id, index, (currentItem) => ({
-                                        ...currentItem,
-                                        text: event.target.value,
-                                      }));
-                                    }}
-                                  />
-                                  {rgbLiteral ? (
-                                    <input
-                                      type='color'
-                                      className='h-9 w-10 cursor-pointer rounded border border-border/60 bg-transparent p-1'
-                                      value={rgbToHex(rgbLiteral)}
+                            <Card
+                              variant='subtle-compact'
+                              padding='sm'
+                              className='border-border/50 bg-card/20'
+                            >
+                              {listItemDropTargetIndex === index && listItemDropPosition === 'before' ? (
+                                <div className='pointer-events-none absolute inset-x-1 top-0 h-0.5 rounded bg-primary shadow-[0_0_8px_rgba(var(--primary),0.6)]' />
+                              ) : null}
+                              {listItemDropTargetIndex === index && listItemDropPosition === 'after' ? (
+                                <div className='pointer-events-none absolute inset-x-1 bottom-0 h-0.5 rounded bg-primary shadow-[0_0_8px_rgba(var(--primary),0.6)]' />
+                              ) : null}
+                              {(() => {
+                                const rgbLiteral = extractRgbLiteral(item.text);
+                                return (
+                                  <div className='flex items-center gap-1'>
+                                    <button
+                                      type='button'
+                                      className='inline-flex size-9 items-center justify-center rounded border border-border/60 bg-card/50 text-gray-300 transition-colors hover:bg-card/70 hover:text-gray-100 active:cursor-grabbing'
+                                      aria-label='Drag to reorder list item'
+                                      draggable
+                                      onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                        event.stopPropagation();
+                                      }}
+                                      onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                        event.stopPropagation();
+                                      }}
+                                      onDragStart={(event: React.DragEvent<HTMLButtonElement>) => {
+                                        event.stopPropagation();
+                                        handleListItemDragStart(index);
+                                      }}
+                                      onDragEnd={() => {
+                                        handleListItemDragEnd();
+                                      }}
+                                    >
+                                      <GripVertical className='size-3.5' />
+                                    </button>
+                                    <Input
+                                      value={item.text}
                                       onChange={(event) => {
-                                        const parsed = hexToRgb(event.target.value);
-                                        if (!parsed) return;
                                         updateTopLevelListItem(selectedSegment.id, index, (currentItem) => ({
                                           ...currentItem,
-                                          text: replaceRgbLiteral(currentItem.text, parsed),
+                                          text: event.target.value,
                                         }));
                                       }}
-                                      aria-label='RGB color picker'
                                     />
-                                  ) : null}
-                                </div>
-                              );
-                            })()}
-                            {renderListItemLogicalEditor({
-                              item,
-                              onChange: (updater) => {
-                                updateTopLevelListItem(selectedSegment.id, index, updater);
-                              },
-                            })}
+                                    {rgbLiteral ? (
+                                      <input
+                                        type='color'
+                                        className='h-9 w-10 cursor-pointer rounded border border-border/60 bg-transparent p-1'
+                                        value={rgbToHex(rgbLiteral)}
+                                        onChange={(event) => {
+                                          const parsed = hexToRgb(event.target.value);
+                                          if (!parsed) return;
+                                          updateTopLevelListItem(selectedSegment.id, index, (currentItem) => ({
+                                            ...currentItem,
+                                            text: replaceRgbLiteral(currentItem.text, parsed),
+                                          }));
+                                        }}
+                                        aria-label='RGB color picker'
+                                      />
+                                    ) : null}
+                                  </div>
+                                );
+                              })()}
+                              {renderListItemLogicalEditor({
+                                item,
+                                onChange: (updater) => {
+                                  updateTopLevelListItem(selectedSegment.id, index, updater);
+                                },
+                              })}
+                            </Card>
                           </div>
                         ))}
                       </div>

@@ -102,6 +102,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const access = await requireAiPathsRunAccess();
   const url = new URL(req.url);
   const pathId = url.searchParams.get('pathId')?.trim() || undefined;
+  const nodeId = url.searchParams.get('nodeId')?.trim() || undefined;
   const query = url.searchParams.get('query')?.trim() || undefined;
   const source = url.searchParams.get('source')?.trim() || undefined;
   const sourceModeParam = url.searchParams.get('sourceMode')?.trim() || '';
@@ -124,6 +125,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const cacheKey = JSON.stringify({
     userScope: hasGlobalRunAccess ? 'global' : access.userId,
     pathId: pathId ?? null,
+    nodeId: nodeId ?? null,
     query: query ?? null,
     source: source ?? null,
     sourceMode,
@@ -147,6 +149,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const result = await repo.listRuns({
     ...(!hasGlobalRunAccess ? { userId: access.userId } : {}),
     ...(pathId ? { pathId } : {}),
+    ...(nodeId ? { nodeId } : {}),
     ...(query ? { query } : {}),
     ...(source ? { source, sourceMode } : {}),
     ...(status ? { status } : {}),

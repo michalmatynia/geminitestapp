@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import React, { useState } from 'react';
 
-import { Button, SectionHeader,  useToast } from '@/shared/ui';
+import { Button, SectionHeader,  useToast, Card } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 
 import { useSyncAllBaseImagesMutation } from '../../hooks/useIntegrationMutations';
@@ -56,19 +56,25 @@ export default function MarketplacesPage(): React.JSX.Element {
           <Link
             key={marketplace.name}
             href={marketplace.href}
-            className='rounded-md border border-border bg-gray-900 p-4 transition hover:border-border/60'
+            className='block group'
           >
-            <h2 className='text-lg font-semibold text-white'>
-              {marketplace.name}
-            </h2>
-            <p className='mt-1 text-sm text-gray-400'>
-              {marketplace.description}
-            </p>
+            <Card
+              variant='subtle'
+              padding='md'
+              className='border-border bg-card/40 transition group-hover:border-primary/40 group-hover:bg-card/60 h-full'
+            >
+              <h2 className='text-lg font-semibold text-white'>
+                {marketplace.name}
+              </h2>
+              <p className='mt-1 text-sm text-gray-400'>
+                {marketplace.description}
+              </p>
+            </Card>
           </Link>
         ))}
       </div>
 
-      <div className='mt-6 rounded-md border border-border bg-gray-900 p-4'>
+      <Card variant='subtle' padding='md' className='mt-6 border-border bg-card/40'>
         <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
           <div>
             <h3 className='text-base font-semibold text-white'>Base.com image sync</h3>
@@ -80,12 +86,12 @@ export default function MarketplacesPage(): React.JSX.Element {
             type='button'
             variant='outline'
             onClick={() => setShowSyncConfirm(true)}
-            disabled={syncMutation.isPending}
+            loading={syncMutation.isPending}
           >
-            {syncMutation.isPending ? 'Queueing...' : 'Sync all Base images'}
+            Sync all Base images
           </Button>
         </div>
-      </div>
+      </Card>
 
       <ConfirmModal
         isOpen={showSyncConfirm}

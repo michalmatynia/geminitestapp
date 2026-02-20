@@ -3,6 +3,7 @@
 import React from 'react';
 
 import { APP_EMBED_OPTIONS, type AppEmbedId } from '@/features/app-embeds/lib/constants';
+import { Card } from '@/shared/ui';
 
 import { useRequiredBlockSettings } from './BlockContext';
 
@@ -15,7 +16,7 @@ export function AppEmbedBlock(): React.ReactNode {
   const appLabel = APP_EMBED_OPTIONS.find((option: { id: AppEmbedId; label: string }) => option.id === appId)?.label ?? 'App';
 
   return (
-    <div className='cms-hover-card w-full rounded-lg border border-border/40 bg-gray-900/40 p-4'>
+    <Card variant='subtle' padding='md' className='cms-hover-card w-full border-border/40 bg-card/40'>
       <div className='mb-3'>
         <div className='text-sm font-semibold text-white'>{title || appLabel}</div>
         <div className='text-[10px] uppercase tracking-wide text-gray-500'>App embed</div>
@@ -28,13 +29,15 @@ export function AppEmbedBlock(): React.ReactNode {
           style={{ height }}
         />
       ) : (
-        <div
-          className='flex items-center justify-center rounded-md border border-dashed border-border/40 bg-gray-800/40 text-xs text-gray-400'
+        <Card
+          variant='subtle-compact'
+          padding='none'
+          className='flex items-center justify-center border-dashed border-border/40 bg-card/20 text-xs text-gray-400'
           style={{ height }}
         >
           Provide an embed URL to render the {appLabel} app here.
-        </div>
+        </Card>
       )}
-    </div>
+    </Card>
   );
 }

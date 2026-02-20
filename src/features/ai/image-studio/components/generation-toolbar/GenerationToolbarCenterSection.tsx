@@ -1,5 +1,9 @@
 import React from 'react';
 
+import {
+  ImageStudioAnalysisSummaryChip,
+  type ImageStudioAnalysisSummaryChipData,
+} from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
 import { Button, SelectSimple, Tooltip } from '@/shared/ui';
 
 type SelectOption = {
@@ -19,6 +23,11 @@ type CenterTooltipContent = {
 };
 
 type GenerationToolbarCenterSectionProps = {
+  analysisPlanAvailable: boolean;
+  analysisPlanMatchesWorkingSlot: boolean;
+  analysisSummaryData: ImageStudioAnalysisSummaryChipData | null;
+  analysisSummaryIsStale: boolean;
+  analysisConfigMismatchMessage: string | null;
   centerBusy: boolean;
   centerBusyLabel: string;
   centerGuidesEnabled: boolean;
@@ -60,6 +69,7 @@ type GenerationToolbarCenterSectionProps = {
   onCenterLayoutWhiteThresholdChange: (value: string) => void;
   onCenterLayoutChromaThresholdChange: (value: string) => void;
   onCenterLayoutShadowPolicyChange: (value: string) => void;
+  onApplyAnalysisPlan: () => void;
   onCenterObject: () => void;
   onCenterModeChange: (value: string) => void;
   onToggleCenterLayoutAdvanced: () => void;
@@ -68,6 +78,11 @@ type GenerationToolbarCenterSectionProps = {
 };
 
 export function GenerationToolbarCenterSection({
+  analysisPlanAvailable,
+  analysisPlanMatchesWorkingSlot,
+  analysisSummaryData,
+  analysisSummaryIsStale,
+  analysisConfigMismatchMessage,
   centerBusy,
   centerBusyLabel,
   centerGuidesEnabled,
@@ -109,6 +124,7 @@ export function GenerationToolbarCenterSection({
   onCenterLayoutWhiteThresholdChange,
   onCenterLayoutChromaThresholdChange,
   onCenterLayoutShadowPolicyChange,
+  onApplyAnalysisPlan,
   onCenterObject,
   onCenterModeChange,
   onToggleCenterLayoutAdvanced,
@@ -132,6 +148,19 @@ export function GenerationToolbarCenterSection({
   return (
     <div className='rounded border border-border/60 bg-card/40 p-3'>
       <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Center</div>
+      {analysisSummaryData ? (
+        <ImageStudioAnalysisSummaryChip
+          data={analysisSummaryData}
+          stale={analysisSummaryIsStale}
+          label='Object Layout Summary'
+          className='mb-2'
+        />
+      ) : null}
+      {analysisConfigMismatchMessage ? (
+        <div className='mb-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-100'>
+          {analysisConfigMismatchMessage}
+        </div>
+      ) : null}
       <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
         {maybeWrapTooltip(
           centerTooltipContent.mode,
@@ -389,6 +418,18 @@ export function GenerationToolbarCenterSection({
         </div>
       ) : null}
       <div className='mt-2 flex flex-wrap items-center gap-2'>
+        <Button
+          size='xs'
+          type='button'
+          variant='outline'
+          onClick={onApplyAnalysisPlan}
+          disabled={!analysisPlanAvailable || !analysisPlanMatchesWorkingSlot || centerBusy}
+          title={analysisPlanMatchesWorkingSlot
+            ? 'Apply latest analysis plan to object layout controls'
+            : 'Latest analysis plan is stale or for a different slot'}
+        >
+          Use Analysis Plan
+        </Button>
         {maybeWrapTooltip(
           centerTooltipContent.apply,
           <Button size='xs'

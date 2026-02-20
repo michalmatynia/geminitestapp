@@ -15,7 +15,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const tagsParam = searchParams.get('tags')?.trim() || null;
   const tags = tagsParam ? tagsParam.split(',').map((tag) => tag.trim()).filter(Boolean) : [];
 
-  const files = await imageFileService.listImageFiles({ filename, tags });
+  const files = await imageFileService.listImageFiles({ filename: filename ?? undefined, tags });
 
   const getProductDisplayName = (product: ProductWithImages): string =>
     product.name_en ?? product.name_pl ?? product.name_de ?? 'Product';

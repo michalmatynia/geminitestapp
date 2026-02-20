@@ -5,6 +5,7 @@ import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useOptionalSectionBlockData } from './SectionBlockContext';
 import { useCmsPageContext } from '../CmsPageContext';
+import { EmptyState } from '@/shared/ui';
 
 import type { BlockInstance } from '../../../types/page-builder';
 

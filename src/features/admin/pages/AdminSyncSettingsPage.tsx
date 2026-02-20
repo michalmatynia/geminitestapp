@@ -21,6 +21,7 @@ import {
   PropertyRow,
   Hint,
   EmptyState,
+  Card,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -180,7 +181,7 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
             </Button>
           </FormActions>
 
-          <div className='rounded-lg border border-border bg-muted/20 p-4 space-y-2'>
+          <Card variant='subtle-compact' padding='md' className='border-border bg-muted/20 space-y-2'>
             <PropertyRow
               label='Status'
               value={syncStatus.isOnline ? 'Online' : 'Offline'}
@@ -194,7 +195,7 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
               label='Active interval'
               value={`${syncStatus.intervalSeconds}s`}
             />
-          </div>
+          </Card>
         </FormSection>
 
         <FormSection
@@ -221,7 +222,7 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
             </Button>
           </div>
 
-          <div className='max-h-60 space-y-2 overflow-y-auto rounded border border-border bg-muted/10 p-3 text-xs text-gray-300'>
+          <Card variant='subtle-compact' padding='sm' className='max-h-60 space-y-2 overflow-y-auto border-border bg-muted/10 text-xs text-gray-300'>
             {offlineQueue.items.length === 0 ? (
               <EmptyState
                 title='Queue Empty'
@@ -231,15 +232,15 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
               />
             ) : (
               offlineQueue.items.map((item: OfflineQueueItem) => (
-                <div key={item.id} className='rounded border border-white/10 p-2'>
+                <Card key={item.id} variant='subtle-compact' padding='sm' className='border-white/10'>
                   <div className='truncate text-gray-200'>{JSON.stringify(item.queryKey)}</div>
                   <div className='mt-1 text-[10px] text-gray-500'>
                     {new Date(item.timestamp).toLocaleString()}
                   </div>
-                </div>
+                </Card>
               ))
             )}
-          </div>
+          </Card>
         </FormSection>
       </div>
     </div>

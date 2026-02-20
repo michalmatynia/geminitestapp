@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { getPromptValidationObservabilitySnapshot } from '@/features/prompt-core/runtime-observability';
-import { Button, FormSection, Input, Label, StatusToggle, SelectSimple, EmptyState } from '@/shared/ui';
+import { Button, FormSection, Input, Label, StatusToggle, SelectSimple, EmptyState, Card, Badge } from '@/shared/ui';
 
 import { useBenchmarkState } from '../context/hooks/useBenchmark';
 import { useDocumentState } from '../context/hooks/useDocument';
@@ -163,21 +163,21 @@ export function PatternRuntimePanel(): React.JSX.Element {
       variant='subtle'
       className='p-4'
       actions={
-        <div className='flex flex-wrap items-center justify-end gap-2 text-xs'>
-          <span className='rounded border border-border/60 bg-card/30 px-2 py-1 text-gray-300'>
-            Rules <span className='text-gray-100'>{runtimeValidationRules.length}</span>
-          </span>
-          <span className='rounded border border-border/60 bg-card/30 px-2 py-1 text-gray-300'>
-            Templates <span className='text-gray-100'>{runtimeLearnedTemplates.length}</span>
-          </span>
-          <span className='rounded border border-border/60 bg-card/30 px-2 py-1 text-gray-300'>
-            Health <span className={runtimeStatusClass}>{runtimeHealth.status}</span>
-          </span>
+        <div className='flex flex-wrap items-center justify-end gap-2'>
+          <Badge variant='neutral' className='border-border/60 bg-card/30 font-normal'>
+            Rules <span className='ml-1 text-gray-100'>{runtimeValidationRules.length}</span>
+          </Badge>
+          <Badge variant='neutral' className='border-border/60 bg-card/30 font-normal'>
+            Templates <span className='ml-1 text-gray-100'>{runtimeLearnedTemplates.length}</span>
+          </Badge>
+          <Badge variant='neutral' className='border-border/60 bg-card/30 font-normal'>
+            Health <span className={cn('ml-1', runtimeStatusClass)}>{runtimeHealth.status}</span>
+          </Badge>
         </div>
       }
     >
       {shouldSuggestCaseResolverStack ? (
-        <div className='mt-3 flex flex-col gap-2 rounded border border-amber-500/40 bg-amber-500/10 p-3 text-xs sm:flex-row sm:items-center sm:justify-between'>
+        <Card variant='warning' padding='sm' className='mt-3 flex flex-col gap-2 border-amber-500/40 bg-amber-500/10 sm:flex-row sm:items-center sm:justify-between'>
           <div className='text-amber-100'>
             This prompt looks like a Case Resolver document, but the active stack is{' '}
             <span className='font-medium'>{activeStackLabel}</span>.
@@ -196,72 +196,72 @@ export function PatternRuntimePanel(): React.JSX.Element {
           >
             Switch to Case Resolver Stack
           </Button>
-        </div>
+        </Card>
       ) : null}
       {runtimeGuardrailIssue ? (
-        <div className='mt-3 rounded border border-rose-500/40 bg-rose-500/10 p-3 text-xs text-rose-100'>
+        <Card variant='danger' padding='sm' className='mt-3 border-rose-500/40 text-xs'>
           {runtimeGuardrailIssue}
-        </div>
+        </Card>
       ) : null}
       <div className='mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4'>
-        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'>
+        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
           <div className='text-[10px] uppercase tracking-wide text-gray-500'>Validation Stack</div>
           <div className='mt-1 text-gray-100 break-words'>{activeStackLabel}</div>
-        </div>
-        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'>
+        </Card>
+        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
           <div className='text-[10px] uppercase tracking-wide text-gray-500'>Runtime Profile</div>
           <div className='mt-1 text-gray-100'>{learningDraft.runtimeRuleProfile}</div>
-        </div>
-        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'>
+        </Card>
+        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
           <div className='text-[10px] uppercase tracking-wide text-gray-500'>Learned Templates</div>
           <div className='mt-1 text-gray-100'>{effectiveLearnedTemplates.length}</div>
-        </div>
-        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'>
+        </Card>
+        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
           <div className='text-[10px] uppercase tracking-wide text-gray-500'>Runtime Templates</div>
           <div className='mt-1 text-gray-100'>{runtimeLearnedTemplates.length}</div>
-        </div>
-        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'>
+        </Card>
+        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
           <div className='text-[10px] uppercase tracking-wide text-gray-500'>Merge Threshold</div>
           <div className='mt-1 text-gray-100'>{templateMergeThreshold.toFixed(2)}</div>
-        </div>
-        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'>
+        </Card>
+        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
           <div className='text-[10px] uppercase tracking-wide text-gray-500'>Benchmark Suite</div>
           <div className='mt-1 text-gray-100'>{benchmarkSuiteDraft}</div>
-        </div>
-        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'>
+        </Card>
+        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
           <div className='text-[10px] uppercase tracking-wide text-gray-500'>Low Confidence</div>
           <div className='mt-1 text-gray-100'>
             {promptExploderClampNumber(benchmarkLowConfidenceThresholdDraft, 0.3, 0.9).toFixed(2)}
           </div>
-        </div>
-        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'>
+        </Card>
+        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
           <div className='text-[10px] uppercase tracking-wide text-gray-500'>Suggestion Cap</div>
           <div className='mt-1 text-gray-100'>
             {promptExploderClampNumber(Math.floor(benchmarkSuggestionLimitDraft), 1, 20)}
           </div>
-        </div>
-        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs sm:col-span-2 xl:col-span-4'>
+        </Card>
+        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20 sm:col-span-2 xl:col-span-4'>
           <div className='text-[10px] uppercase tracking-wide text-gray-500'>Benchmark Template Upsert</div>
           <div className='mt-1 text-gray-100'>
             {learningDraft.benchmarkSuggestionUpsertTemplates ? 'on' : 'off'}
           </div>
-        </div>
-        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs sm:col-span-2 xl:col-span-4'>
+        </Card>
+        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20 sm:col-span-2 xl:col-span-4'>
           <div className='text-[10px] uppercase tracking-wide text-gray-500'>Fallback Policy</div>
           <div className='mt-1 text-gray-100'>
             {promptExploderSettings.runtime.allowValidationStackFallback
               ? 'validation stack fallback enabled'
               : 'validation stack fallback blocked'}
           </div>
-        </div>
-        <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs sm:col-span-2 xl:col-span-4'>
+        </Card>
+        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20 sm:col-span-2 xl:col-span-4'>
           <div className='text-[10px] uppercase tracking-wide text-gray-500'>Case Resolver Capture Mode</div>
           <div className='mt-1 text-gray-100'>
             {promptExploderSettings.runtime.caseResolverCaptureMode === 'rules_only'
               ? 'rules only (UI-defined capture rules)'
               : 'rules with heuristics (legacy fallback enabled)'}
           </div>
-        </div>
+        </Card>
       </div>
       <div className='mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3'>
         <div className='min-w-0 space-y-1'>
@@ -425,31 +425,31 @@ export function PatternRuntimePanel(): React.JSX.Element {
         >
           Save Learning Settings
         </Button>
-        <div className='flex flex-wrap items-center gap-2 text-[11px] text-gray-400'>
-          <span className='rounded border border-border/60 bg-card/20 px-2 py-1'>
+        <div className='flex flex-wrap items-center gap-2'>
+          <Badge variant='neutral' className='border-border/60 bg-card/20 font-normal'>
             Similarity {learningDraft.similarityThreshold.toFixed(2)}
-          </span>
-          <span className='rounded border border-border/60 bg-card/20 px-2 py-1'>
+          </Badge>
+          <Badge variant='neutral' className='border-border/60 bg-card/20 font-normal'>
             Merge {learningDraft.templateMergeThreshold.toFixed(2)}
-          </span>
-          <span className='rounded border border-border/60 bg-card/20 px-2 py-1'>
+          </Badge>
+          <Badge variant='neutral' className='border-border/60 bg-card/20 font-normal'>
             Min approvals {learningDraft.minApprovalsForMatching}
-          </span>
-          <span className='rounded border border-border/60 bg-card/20 px-2 py-1'>
+          </Badge>
+          <Badge variant='neutral' className='border-border/60 bg-card/20 font-normal'>
             Template cap {learningDraft.maxTemplates}
-          </span>
-          <span className='rounded border border-border/60 bg-card/20 px-2 py-1'>
+          </Badge>
+          <Badge variant='neutral' className='border-border/60 bg-card/20 font-normal'>
             Auto activate {learningDraft.autoActivateLearnedTemplates ? 'on' : 'off'}
-          </span>
-          <span className='rounded border border-border/60 bg-card/20 px-2 py-1'>
+          </Badge>
+          <Badge variant='neutral' className='border-border/60 bg-card/20 font-normal'>
             Bench upsert {learningDraft.benchmarkSuggestionUpsertTemplates ? 'on' : 'off'}
-          </span>
-          <span className='rounded border border-border/60 bg-card/20 px-2 py-1'>
+          </Badge>
+          <Badge variant='neutral' className='border-border/60 bg-card/20 font-normal'>
             Suite {benchmarkSuiteDraft}
-          </span>
+          </Badge>
         </div>
       </div>
-      <div className='mt-3 rounded border border-border/60 bg-card/20 p-3 text-xs text-gray-300'>
+      <Card variant='subtle-compact' padding='sm' className='mt-3 border-border/60 bg-card/20 text-xs text-gray-300'>
         <div className='mb-2 text-[11px] uppercase tracking-wide text-gray-400'>
           Runtime Health
         </div>
@@ -492,8 +492,8 @@ export function PatternRuntimePanel(): React.JSX.Element {
             </div>
           </div>
         </div>
-      </div>
-      <div className='mt-4 rounded border border-border/60 bg-card/20 p-3'>
+      </Card>
+      <Card variant='subtle-compact' padding='sm' className='mt-4 border-border/60 bg-card/20'>
         <div className='mb-2 text-[11px] uppercase tracking-wide text-gray-400'>
           Pattern Snapshot Governance
         </div>
@@ -558,8 +558,8 @@ export function PatternRuntimePanel(): React.JSX.Element {
             No snapshot selected.
           </div>
         )}
-      </div>
-      <div className='mt-4 rounded border border-border/60 bg-card/20 p-3'>
+      </Card>
+      <Card variant='subtle-compact' padding='sm' className='mt-4 border-border/60 bg-card/20'>
         <div className='mb-2 text-[11px] uppercase tracking-wide text-gray-400'>
           Learned Template Lifecycle
         </div>
@@ -573,7 +573,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
         ) : (
           <div className='max-h-[220px] space-y-2 overflow-auto'>
             {effectiveLearnedTemplates.slice(0, 20).map((template) => (
-              <div key={template.id} className='rounded border border-border/50 bg-card/30 p-2'>
+              <Card key={template.id} variant='subtle-compact' padding='sm' className='border-border/50 bg-card/30'>
                 <div className='flex items-center justify-between gap-2'>
                   <div className='truncate text-xs text-gray-200'>
                     {template.title}
@@ -609,11 +609,11 @@ export function PatternRuntimePanel(): React.JSX.Element {
                     Remove
                   </Button>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         )}
-      </div>
+      </Card>
     </FormSection>
   );
 }

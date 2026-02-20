@@ -68,6 +68,10 @@ const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOp
         : null,
     errorMessage: ((job as any)['errorMessage'] as string) ?? null,
     resultSummary,
+    payload: payload ?? {},
+    result: result ?? null,
+    progress: (job as any)['progress'] ?? 0,
+    completedAt: (job as any)['completedAt'] ?? null,
   };
 };
 

@@ -24,7 +24,7 @@ export default function CmsEditorLayout({
   return (
     <AdminLayout>
       <CmsEditorProvider value={editorContextValue}>
-        <div className='flex h-screen bg-gray-900 text-white'>
+        <div className='flex h-screen bg-background text-white'>
           <CmsSideMenu />
           <main className='flex-1 p-4 overflow-y-auto'>{children}</main>
         </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { Tabs, TabsList, TabsTrigger } from '@/shared/ui';
+import { Tabs, TabsList, TabsTrigger, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { AiPathsSettings } from '../components/AiPathsSettings';
@@ -46,10 +46,14 @@ export function AdminAiPathsPage(): React.JSX.Element {
         )}
         <div id='ai-paths-name' className='text-sm text-gray-300' />
       </div>
-      <div className={cn(
-        'min-h-0 flex-1 overflow-x-hidden overflow-y-auto rounded-lg border border-border/60 bg-card/40 transition-all duration-300 ease-in-out',
-        isFocusMode ? 'h-full p-0 border-0 rounded-none' : 'p-2'
-      )}>
+      <Card
+        variant='subtle'
+        padding='none'
+        className={cn(
+          'min-h-0 flex-1 overflow-x-hidden overflow-y-auto border-border/60 bg-card/40 transition-all duration-300 ease-in-out',
+          isFocusMode ? 'h-full border-0 rounded-none' : 'p-2'
+        )}
+      >
         <div className={`mb-2 flex items-center ${isFocusMode ? 'hidden' : ''}`}>
           <div id='ai-paths-actions' className='flex w-full items-center' />
         </div>
@@ -62,7 +66,7 @@ export function AdminAiPathsPage(): React.JSX.Element {
           isFocusMode={isFocusMode}
           onFocusModeChange={setIsFocusMode}
         />
-      </div>
+      </Card>
     </div>
   );
 }

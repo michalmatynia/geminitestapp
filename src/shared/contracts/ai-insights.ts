@@ -15,6 +15,7 @@ export const aiInsightTypeSchema = z.enum([
   'analytics',
   'runtime_analytics',
   'system_logs',
+  'logs',
 ]);
 
 export type AiInsightTypeDto = z.infer<typeof aiInsightTypeSchema>;
@@ -25,6 +26,9 @@ export const aiInsightStatusSchema = z.enum([
   'dismissed',
   'applied',
   'ignored',
+  'ok',
+  'warning',
+  'error',
 ]);
 
 export type AiInsightStatusDto = z.infer<typeof aiInsightStatusSchema>;
@@ -34,6 +38,7 @@ export const aiInsightSourceSchema = z.enum([
   'system',
   'user_triggered',
   'scheduled_job',
+  'manual',
 ]);
 
 export type AiInsightSourceDto = z.infer<typeof aiInsightSourceSchema>;
@@ -56,15 +61,22 @@ export const aiInsightRecordSchema = namedDtoSchema.extend({
   content: z.record(z.string(), z.unknown()),
   actionUrl: z.string().nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
+  summary: z.string().optional(),
+  warnings: z.array(z.string()).optional(),
 });
 
 export type AiInsightRecordDto = z.infer<typeof aiInsightRecordSchema>;
 export type AiInsightRecord = AiInsightRecordDto;
 
 export const aiInsightNotificationSchema = z.object({
+  id: z.string().optional(),
   insightId: z.string(),
   userId: z.string(),
   readAt: z.string().nullable(),
+  createdAt: z.string().optional(),
+  status: aiInsightStatusSchema.optional(),
+  summary: z.string().optional(),
+  warnings: z.array(z.string()).optional(),
 });
 
 export type AiInsightNotificationDto = z.infer<typeof aiInsightNotificationSchema>;

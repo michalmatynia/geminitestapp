@@ -13,6 +13,7 @@ import {
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
 import { usePreviewEditor } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
 import type { BlockInstance, SectionInstance } from '@/shared/contracts/cms';
+import { EmptyState } from '@/shared/ui';
 
 interface PreviewImageWithTextSectionProps {
   section: SectionInstance;
@@ -115,7 +116,12 @@ export function PreviewImageWithTextSection({
                 ))}
               </BlockContextProvider>
             ) : showEditorChrome ? (
-              <p className='text-gray-500'>Add content blocks</p>
+              <EmptyState
+                title='No content'
+                description='Add content blocks here.'
+                variant='compact'
+                className='bg-card/20'
+              />
             ) : null}
           </div>
         </div>

@@ -358,7 +358,7 @@ function ImportsPageContent(): React.JSX.Element {
             </div>
             
             <div className='grid md:grid-cols-[240px_1fr] gap-6'>
-              <div className='bg-black/20 p-2 border border-border/40 rounded-lg max-h-[500px] overflow-y-auto space-y-1'>
+              <Card variant='subtle-compact' padding='sm' className='bg-black/20 border-border/40 max-h-[500px] overflow-y-auto space-y-1'>
                 <div className='px-2 py-1.5 text-[10px] uppercase font-bold text-gray-500'>Saved Templates</div>
                 {currentTemplates.length === 0 ? (
                   <p className='px-2 py-4 text-xs text-gray-600 italic'>No templates found.</p>
@@ -375,7 +375,7 @@ function ImportsPageContent(): React.JSX.Element {
                     </Button>
                   ))
                 )}
-              </div>
+              </Card>
               
               <div className='space-y-6'>
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
@@ -411,7 +411,7 @@ function ImportsPageContent(): React.JSX.Element {
                 )}
 
                 {templateScope === 'import' && (
-                  <div className='rounded-md border border-border/50 bg-gray-950/30 p-4 space-y-3'>
+                  <Card variant='subtle-compact' padding='md' className='border-border/50 bg-gray-950/30 space-y-3'>
                     <div className='flex items-center justify-between gap-3'>
                       <div>
                         <p className='text-sm font-medium text-gray-200'>Parameter Import</p>
@@ -516,7 +516,7 @@ function ImportsPageContent(): React.JSX.Element {
                         <span className='text-xs text-gray-300'>Overwrite existing values</span>
                       </label>
                     </div>
-                  </div>
+                  </Card>
                 )}
 
                 <div className='space-y-3'>
@@ -564,7 +564,7 @@ function ImportsPageContent(): React.JSX.Element {
                                       : field,
                                   })),
                                 ]}
-                                triggerClassName='w-full h-9 bg-gray-950/40'
+                                triggerClassName='w-full h-9 bg-card/40'
                                 placeholder='Select source field'
                               />
                             </div>
@@ -593,7 +593,7 @@ function ImportsPageContent(): React.JSX.Element {
                                   : []),
                                 ...templateTargetFieldOptions,
                               ]}
-                              triggerClassName='w-full h-9 bg-gray-950/40'
+                              triggerClassName='w-full h-9 bg-card/40'
                               placeholder='Target Field'
                             />
                           </div>

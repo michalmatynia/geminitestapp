@@ -1,19 +1,32 @@
+import { z } from 'zod';
+
 import type {
   PromptExploderBindingDto as PromptExploderBinding,
   PromptExploderDocumentDto as PromptExploderDocument,
-  PromptExploderLibraryItemDto as PromptExploderLibraryItem,
-  PromptExploderLibraryStateDto as PromptExploderLibraryState,
 } from '@/shared/contracts/prompt-exploder';
 import {
-  promptExploderLibraryStateSchema,
+  promptExploderDocumentSchema,
 } from '@/shared/contracts/prompt-exploder';
 
 export const PROMPT_EXPLODER_LIBRARY_KEY = 'image_studio_prompt_exploder_library';
 
-export type {
-  PromptExploderLibraryItem,
-  PromptExploderLibraryState,
-};
+export const promptExploderLibraryItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  prompt: z.string(),
+  document: promptExploderDocumentSchema.nullable().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type PromptExploderLibraryItem = z.infer<typeof promptExploderLibraryItemSchema>;
+
+export const promptExploderLibraryStateSchema = z.object({
+  version: z.number().int().positive().default(1),
+  items: z.array(promptExploderLibraryItemSchema).default([]),
+});
+
+export type PromptExploderLibraryState = z.infer<typeof promptExploderLibraryStateSchema>;
 
 export const defaultPromptExploderLibraryState: PromptExploderLibraryState = {
   version: 1,

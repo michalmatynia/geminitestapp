@@ -1,5 +1,10 @@
 import { DefaultSession } from 'next-auth';
 
+declare module 'pdf-parse' {
+  function PDFParse(dataBuffer: Buffer | Uint8Array, options?: any): Promise<any>;
+  export = PDFParse;
+}
+
 declare module 'next-auth' {
   interface Session {
     user: DefaultSession['user'] & {

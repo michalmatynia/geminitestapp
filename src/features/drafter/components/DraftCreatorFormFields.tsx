@@ -16,7 +16,7 @@ import {
   PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
   type ProductDraftOpenFormTab,
 } from '@/shared/contracts/products';
-import { Button, Input, Textarea, SelectSimple, FormField, FormSection } from '@/shared/ui';
+import { Button, Input, Textarea, SelectSimple, FormField, FormSection, Card } from '@/shared/ui';
 
 import { useDraftCreatorFormContext } from './DraftCreatorFormContext';
 
@@ -154,7 +154,7 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
         label='Icon'
         description='Icons are shown only after you click Choose Icon.'
       >
-        <div className='flex items-center gap-3 rounded-md border border-border bg-gray-900 px-3 py-2'>
+        <Card variant='subtle-compact' padding='sm' className='flex items-center gap-3 border-border bg-card/40'>
           <div
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-gray-800 ${
               iconColorMode === 'custom' ? '' : 'text-gray-200'
@@ -185,7 +185,7 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
               </Button>
             ) : null}
           </div>
-        </div>
+        </Card>
         <div className='grid grid-cols-1 gap-3 md:grid-cols-[12rem_minmax(0,1fr)] mt-3'>
           <FormField label='Icon Color' id='iconColorMode'>
             <SelectSimple size='sm'
@@ -641,17 +641,17 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
       }
     >
       {parametersLoading ? (
-        <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
+        <Card variant='subtle-compact' padding='md' className='border-dashed text-center text-sm text-gray-400'>
           Loading parameters...
-        </div>
+        </Card>
       ) : parameters.length === 0 ? (
-        <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
+        <Card variant='subtle-compact' padding='md' className='border-dashed text-center text-sm text-gray-400'>
           No parameters available for the selected catalog(s).
-        </div>
+        </Card>
       ) : parameterValues.length === 0 ? (
-        <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
+        <Card variant='subtle-compact' padding='md' className='border-dashed text-center text-sm text-gray-400'>
           Add your first parameter to start defining defaults.
-        </div>
+        </Card>
       ) : (
         <div className='space-y-3'>
           {parameterValues.map((entry: ProductParameterValue, index: number): React.JSX.Element => {
@@ -661,9 +661,11 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
                 parameter.id === entry.parameterId
             );
             return (
-              <div
+              <Card
                 key={`${entry.parameterId || 'new'}-${index}`}
-                className='flex flex-col gap-3 rounded-md border border-border bg-card/60 p-3 md:flex-row md:items-center'
+                variant='subtle-compact'
+                padding='sm'
+                className='flex flex-col gap-3 border-border bg-card/60 md:flex-row md:items-center'
               >
                 <div className='w-full md:w-64'>
                   <SelectSimple size='sm'
@@ -693,7 +695,7 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
                 >
                   Remove
                 </Button>
-              </div>
+              </Card>
             );
           })}
         </div>

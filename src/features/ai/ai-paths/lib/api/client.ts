@@ -10,6 +10,9 @@ import {
   aiTriggerButtonReorderSchema,
   aiTriggerButtonUpdateSchema,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
+import type { AgentTeachingAgentRecord, AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
+import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
+import type { ChatMessage } from '@/shared/contracts/chatbot';
 import type {
   DatabaseBrowseDto,
   SchemaResponsePayloadDto,
@@ -19,9 +22,6 @@ import type {
   SettingRecordDto,
   SettingsScopeDto,
 } from '@/shared/contracts/settings';
-import type { AgentTeachingAgentRecord, AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
-import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
-import type { ChatMessage } from '@/shared/contracts/chatbot';
 
 import type { AiPathRuntimeAnalyticsSummary } from '..';
 
@@ -659,6 +659,7 @@ export const runsApi = {
 
   async list(options?: {
     pathId?: string;
+    nodeId?: string;
     source?: string;
     sourceMode?: 'include' | 'exclude';
     status?: string;
@@ -668,6 +669,7 @@ export const runsApi = {
   }): Promise<ApiResponse<{ runs: unknown[]; total: number }>> {
     const params = new URLSearchParams();
     if (options?.pathId) params.set('pathId', options.pathId);
+    if (options?.nodeId) params.set('nodeId', options.nodeId);
     if (options?.source) params.set('source', options.source);
     if (options?.sourceMode) params.set('sourceMode', options.sourceMode);
     if (options?.status) params.set('status', options.status);

@@ -48,6 +48,7 @@ import {
   useToast,
   Breadcrumbs,
   PanelHeader,
+  Card,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import type { FilterField } from '@/shared/ui/templates/panels';
@@ -2446,8 +2447,10 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
 
           return (
             <div key={file.id} className='space-y-2'>
-              <div
-                className='relative rounded-lg border border-border/60 bg-card/35 p-3 pb-9'
+              <Card
+                variant='subtle-compact'
+                padding='sm'
+                className='relative border-border/60 bg-card/35 pb-9'
                 style={{ marginLeft: `${depth * 16}px` }}
               >
                 {isEditing ? (
@@ -2715,7 +2718,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                 >
                   ID: {file.id}
                 </button>
-              </div>
+              </Card>
               {hasChildren && !isCollapsed
                 ? renderCaseTree(node.children, depth + 1)
                 : null}
@@ -2890,7 +2893,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
 
           <div className='min-h-[400px]'>
             {files.length === 0 ? (
-              <div className='flex flex-col items-center justify-center rounded-lg border border-dashed border-border/60 bg-card/20 py-20 text-center'>
+              <Card variant='subtle' padding='lg' className='flex flex-col items-center justify-center border-dashed border-border/60 bg-card/20 py-20 text-center'>
                 <Folder className='size-10 text-muted-foreground/20 mb-4' />
                 <p className='text-sm text-muted-foreground'>
                   No cases found. Create your first case to get started.
@@ -2904,9 +2907,9 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                   <Plus className='mr-2 size-4' />
                   Add Case
                 </Button>
-              </div>
+              </Card>
             ) : filteredCases.length === 0 ? (
-              <div className='flex flex-col items-center justify-center rounded-lg border border-dashed border-border/60 bg-card/20 py-20 text-center'>
+              <Card variant='subtle' padding='lg' className='flex flex-col items-center justify-center border-dashed border-border/60 bg-card/20 py-20 text-center'>
                 <p className='text-sm text-muted-foreground font-medium'>
                   No cases match your current filters.
                 </p>
@@ -2918,7 +2921,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                 >
                   Reset all filters
                 </Button>
-              </div>
+              </Card>
             ) : (
               <div className='space-y-3'>
                 {renderCaseTree(visibleCaseNodes, 0)}

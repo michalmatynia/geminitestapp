@@ -3,9 +3,8 @@
 import { gsap } from 'gsap';
 import React, { useEffect, useRef } from 'react';
 
+import type { AnimationPreset } from '@/shared/contracts/gsap';
 import { cn } from '@/shared/utils';
-
-import type { AnimationPreset } from '../types/animation';
 
 interface AnimationPreviewIconProps {
   preset: AnimationPreset;

@@ -3,7 +3,7 @@
 import { AlertTriangleIcon, DatabaseIcon, Table2Icon, TerminalSquareIcon } from 'lucide-react';
 import Link from 'next/link';
 
-import { Alert, Badge, EmptyState, FormSection, ListPanel, Tabs, TabsContent, TabsList, TabsTrigger, SimpleSettingsList } from '@/shared/ui';
+import { Alert, Badge, EmptyState, FormSection, ListPanel, Tabs, TabsContent, TabsList, TabsTrigger, SimpleSettingsList, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { CrudPanel } from './CrudPanel';
@@ -116,9 +116,9 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
 
         <TabsContent value='crud'>
           {previewLoading && (
-            <div className='rounded-lg border border-border/60 bg-card/50 p-5'>
+            <Card variant='subtle' padding='lg' className='border-border/60 bg-card/50'>
               <p className='text-xs text-gray-400'>Loading table metadata...</p>
-            </div>
+            </Card>
           )}
           {!previewLoading && tableDetails.length === 0 && (
             <EmptyState

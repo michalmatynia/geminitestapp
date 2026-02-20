@@ -3,79 +3,83 @@ import { z } from 'zod';
 import { dtoBaseSchema, namedDtoSchema } from './base';
 
 /**
- * Asset 3D Contracts
+ * 3D Asset Contracts
  */
 
-export const asset3dCategorySchema = namedDtoSchema.extend({
+export const asset3DRecordSchema = namedDtoSchema.extend({
   description: z.string().nullable(),
-});
-
-export type Asset3dCategoryDto = z.infer<typeof asset3dCategorySchema>;
-
-export const asset3dTagSchema = namedDtoSchema.extend({
-  color: z.string().nullable(),
-});
-
-export type Asset3dTagDto = z.infer<typeof asset3dTagSchema>;
-
-export const asset3dViewerConfigSchema = z.object({
-  autoRotate: z.boolean(),
-  autoRotateSpeed: z.number(),
-  exposure: z.number(),
-  environmentImage: z.string().nullable(),
-  backgroundColor: z.string().nullable(),
-  showGrid: z.boolean(),
-  showAxes: z.boolean(),
-});
-
-export type Asset3dViewerConfigDto = z.infer<typeof asset3dViewerConfigSchema>;
-
-export const asset3dSchema = namedDtoSchema.extend({
-  description: z.string().nullable(),
-  fileId: z.string(),
+  fileId: z.string().optional(),
+  thumbnailId: z.string().nullable().optional(),
+  categoryId: z.string().nullable(),
+  tagIds: z.array(z.string()).optional(),
+  fileUrl: z.string().optional(),
+  thumbnailUrl: z.string().nullable().optional(),
   filename: z.string().optional(),
   filepath: z.string().optional(),
   mimetype: z.string().optional(),
   size: z.number().optional(),
-  thumbnailId: z.string().nullable(),
-  categoryId: z.string().nullable(),
-  tagIds: z.array(z.string()),
-  viewerConfig: asset3dViewerConfigSchema.optional(),
+  fileSize: z.number().optional(),
+  format: z.string().optional(),
+  isPublic: z.boolean().optional(),
+  tags: z.array(z.any()).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
+  viewerConfig: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type Asset3dDto = z.infer<typeof asset3dSchema>;
-export type Asset3DRecord = Asset3dDto;
+export type Asset3DRecordDto = z.infer<typeof asset3DRecordSchema>;
+export type Asset3DRecord = Asset3DRecordDto;
 
-export const createAsset3dSchema = asset3dSchema.omit({
+export const asset3DCreateInputSchema = asset3DRecordSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  description: z.string().nullable().optional(),
+  fileId: z.string().optional(),
+  thumbnailId: z.string().nullable().optional(),
+  tagIds: z.array(z.string()).optional(),
+  filename: z.string().optional(),
+  filepath: z.string().optional(),
+  mimetype: z.string().optional(),
+  size: z.number().optional(),
+  thumbnailId: z.string().nullable().optional(),
+  tagIds: z.array(z.string()).optional(),
 });
 
-export type Asset3dCreateInput = z.infer<typeof createAsset3dSchema>;
-export type Asset3DCreateInput = Asset3dCreateInput;
+export type Asset3DCreateInputDto = z.infer<typeof asset3DCreateInputSchema>;
+export type Asset3DCreateInput = Asset3DCreateInputDto;
 
-export const updateAsset3dSchema = createAsset3dSchema.partial();
+export const asset3DUpdateInputSchema = asset3DCreateInputSchema.partial();
 
-export type Asset3dUpdateInput = z.infer<typeof updateAsset3dSchema>;
-export type Asset3DUpdateInput = Asset3dUpdateInput;
+export type Asset3DUpdateInputDto = z.infer<typeof asset3DUpdateInputSchema>;
+export type Asset3DUpdateInput = Asset3DUpdateInputDto;
 
-export const asset3dListFiltersSchema = z.object({
+export const asset3DListFiltersSchema = z.object({
   categoryId: z.string().optional(),
   tagId: z.string().optional(),
   search: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  filename: z.string().optional(),
 });
 
-export type Asset3dListFiltersDto = z.infer<typeof asset3dListFiltersSchema>;
-export type Asset3DListFilters = Asset3dListFiltersDto;
+export type Asset3DListFiltersDto = z.infer<typeof asset3DListFiltersSchema>;
+export type Asset3DListFilters = Asset3DListFiltersDto;
 
-export interface Asset3DRepository {
+/**
+ * 3D Viewer Repository Interface
+ */
+
+export type Asset3DRepository = {
+  createAsset(data: Asset3DCreateInput): Promise<Asset3DRecord>;
   createAsset3D(data: Asset3DCreateInput): Promise<Asset3DRecord>;
+  getAssetById(id: string): Promise<Asset3DRecord | null>;
   getAsset3DById(id: string): Promise<Asset3DRecord | null>;
+  listAssets(filters?: Asset3DListFilters): Promise<Asset3DRecord[]>;
   listAssets3D(filters?: Asset3DListFilters): Promise<Asset3DRecord[]>;
+  updateAsset(id: string, data: Asset3DUpdateInput): Promise<Asset3DRecord | null>;
   updateAsset3D(id: string, data: Asset3DUpdateInput): Promise<Asset3DRecord | null>;
+  deleteAsset(id: string): Promise<Asset3DRecord | null>;
   deleteAsset3D(id: string): Promise<Asset3DRecord | null>;
-  getCategories(): Promise<string[]>;
-  getTags(): Promise<string[]>;
-}
+  getCategories(): Promise<any[]>;
+  getTags(): Promise<any[]>;
+};

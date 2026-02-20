@@ -34,6 +34,7 @@ import {
   useToast,
   PanelHeader,
   ConfirmModal,
+  Card,
 } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { cn } from '@/shared/utils';
@@ -468,7 +469,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
               </Button>
             ) : null}
           </div>
-          <div className='flex items-center gap-2 rounded-lg border border-border bg-card/40 px-3 py-2'>
+          <Card variant='subtle-compact' padding='sm' className='flex items-center gap-2 border-border bg-card/40'>
             {selectedIconItem ? (
               <selectedIconItem.icon className='size-4 text-primary' />
             ) : (
@@ -477,7 +478,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
             <span className='text-xs text-gray-300'>
               {selectedIconItem?.label ?? 'No icon selected'}
             </span>
-          </div>
+          </Card>
         </div>
       ),
       helperText: 'Choose a visual representation for the button.',
@@ -509,24 +510,30 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
             return (
               <label
                 key={option.value}
-                className={cn(
-                  'flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-card/30 px-3 py-2.5 transition-all hover:bg-card/50',
-                  checked && 'border-primary/30 bg-primary/5'
-                )}
+                className='block cursor-pointer'
               >
-                <Checkbox
-                  checked={checked}
-                  onCheckedChange={(value: boolean | 'indeterminate') => {
-                    const nextChecked = Boolean(value);
-                    setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => {
-                      const next = new Set(prev.locations);
-                      if (nextChecked) next.add(option.value);
-                      else next.delete(option.value);
-                      return { ...prev, locations: Array.from(next.values()) };
-                    });
-                  }}
-                />
-                <span className='text-xs font-medium'>{option.label}</span>
+                <Card
+                  variant='subtle-compact'
+                  padding='none'
+                  className={cn(
+                    'flex items-center gap-3 border-border bg-card/30 px-3 py-2.5 transition-all hover:bg-card/50',
+                    checked && 'border-primary/30 bg-primary/5'
+                  )}
+                >
+                  <Checkbox
+                    checked={checked}
+                    onCheckedChange={(value: boolean | 'indeterminate') => {
+                      const nextChecked = Boolean(value);
+                      setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => {
+                        const next = new Set(prev.locations);
+                        if (nextChecked) next.add(option.value);
+                        else next.delete(option.value);
+                        return { ...prev, locations: Array.from(next.values()) };
+                      });
+                    }}
+                  />
+                  <span className='text-xs font-medium'>{option.label}</span>
+                </Card>
               </label>
             );
           })}

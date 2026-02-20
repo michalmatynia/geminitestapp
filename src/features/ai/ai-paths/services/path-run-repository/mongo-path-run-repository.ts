@@ -6,23 +6,20 @@ import {
   AI_PATHS_RUN_SOURCE_TABS,
   AI_PATHS_RUN_SOURCE_VALUES,
 } from '@/features/ai/ai-paths/lib/run-sources';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
-  AiPathRunEventRecord,
-  AiPathRunNodeRecord,
-  AiPathRunRecord,
-} from '@/shared/contracts/ai-paths';
-import type { AiNode } from '@/shared/contracts/ai-paths';
-
-import {
+  AiNode,
+  AiPathRunCreateInput,
   AiPathRunEventCreateInput,
   AiPathRunEventListOptions,
+  AiPathRunEventRecord,
   AiPathRunListOptions,
-  AiPathRunCreateInput,
+  AiPathRunNodeRecord,
+  AiPathRunNodeUpdate,
+  AiPathRunRecord,
   AiPathRunRepository,
   AiPathRunUpdate,
-  AiPathRunNodeUpdate,
-} from '../../types/path-run-repository';
+} from '@/shared/contracts/ai-paths';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 const RUNS_COLLECTION = 'ai_path_runs';
 const NODES_COLLECTION = 'ai_path_run_nodes';
@@ -327,6 +324,38 @@ const buildRunFilter = (options: AiPathRunListOptions = {}): Record<string, unkn
   return andFilters.length > 0 ? { $and: andFilters } : {};
 };
 
+const buildRunIdConstraint = (runIds: string[]): Record<string, unknown> => ({
+  $or: [{ _id: { $in: runIds } }, { id: { $in: runIds } }],
+});
+
+const appendRunIdConstraint = (
+  filter: Record<string, unknown>,
+  runIds: string[],
+): Record<string, unknown> => {
+  const runIdConstraint = buildRunIdConstraint(runIds);
+  const existingAnd = Array.isArray(filter['$and'])
+    ? (filter['$and'] as Record<string, unknown>[])
+    : null;
+  if (existingAnd) {
+    return { $and: [...existingAnd, runIdConstraint] };
+  }
+  if (Object.keys(filter).length === 0) return runIdConstraint;
+  return { $and: [filter, runIdConstraint] };
+};
+
+const resolveRunIdsForNodeFilter = async (
+  db: Awaited<ReturnType<typeof getMongoDb>>,
+  nodeId: string,
+): Promise<string[]> => {
+  const runIds = await db
+    .collection<NodeDocument>(NODES_COLLECTION)
+    .distinct('runId', { nodeId });
+  return runIds.filter(
+    (value: unknown): value is string =>
+      typeof value === 'string' && value.trim().length > 0,
+  );
+};
+
 export const mongoPathRunRepository: AiPathRunRepository = {
   async createRun(input: AiPathRunCreateInput) {
     await ensureIndexes();
@@ -478,7 +507,15 @@ export const mongoPathRunRepository: AiPathRunRepository = {
   async listRuns(options: AiPathRunListOptions = {}) {
     await ensureIndexes();
     const db = await getMongoDb();
-    const filter = buildRunFilter(options);
+    let filter = buildRunFilter(options);
+    const nodeId = options.nodeId?.trim();
+    if (nodeId) {
+      const runIds = await resolveRunIdsForNodeFilter(db, nodeId);
+      if (runIds.length === 0) {
+        return { runs: [], total: 0 };
+      }
+      filter = appendRunIdConstraint(filter, runIds);
+    }
     const cursor = db
       .collection<RunDocument>(RUNS_COLLECTION)
       .find(filter, { projection: RUN_LIST_PROJECTION })
@@ -499,7 +536,15 @@ export const mongoPathRunRepository: AiPathRunRepository = {
   async deleteRuns(options: AiPathRunListOptions = {}): Promise<{ count: number }> {
     await ensureIndexes();
     const db = await getMongoDb();
-    const filter = buildRunFilter(options);
+    let filter = buildRunFilter(options);
+    const nodeId = options.nodeId?.trim();
+    if (nodeId) {
+      const runIdsForNode = await resolveRunIdsForNodeFilter(db, nodeId);
+      if (runIdsForNode.length === 0) {
+        return { count: 0 };
+      }
+      filter = appendRunIdConstraint(filter, runIdsForNode);
+    }
     const runDocs = await db
       .collection<RunDocument>(RUNS_COLLECTION)
       .find(filter, { projection: { _id: 1, id: 1 } })

@@ -170,18 +170,19 @@ export function BaselinkerSettings(): React.JSX.Element {
                     : 'Token not detected',
                 }))}
                 placeholder='Select default connection...'
-                disabled={connections.length === 0 || savingDefaultConnection}
-                triggerClassName='w-full bg-gray-900 border-border text-xs text-white'
+                disabled={connections.length === 0}
+                triggerClassName='w-full bg-card/40 border-border text-xs text-white'
                 size='sm'
               />
               <div className='flex items-center gap-2'>
                 <Button
                   type='button'
                   onClick={(): void => { void handleSaveDefaultConnection(); }}
-                  disabled={savingDefaultConnection || connections.length === 0}
-                  className='rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 hover:bg-gray-200 disabled:opacity-50'
+                  loading={savingDefaultConnection}
+                  disabled={connections.length === 0}
+                  size='sm'
                 >
-                  {savingDefaultConnection ? 'Saving...' : 'Save Default'}
+                  Save Default
                 </Button>
                 {defaultExportConnectionQuery.data?.connectionId?.trim() ? (
                   <span className='text-[10px] text-gray-400'>
@@ -210,15 +211,15 @@ export function BaselinkerSettings(): React.JSX.Element {
                     min='1'
                     value={syncIntervalMinutes}
                     onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setSyncIntervalMinutes(event.target.value)}
-                    className='w-32 rounded-md border border-border bg-gray-900 px-2 py-1 text-xs text-white'
+                    className='w-32 border-border bg-card/40 text-xs text-white'
                   />
                   <Button
                     type='button'
                     onClick={(): void => { void handleSaveSyncInterval(); }}
-                    disabled={updateSettingMutation.isPending}
-                    className='rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 hover:bg-gray-200 disabled:opacity-50'
+                    loading={updateSettingMutation.isPending}
+                    size='sm'
                   >
-                    {updateSettingMutation.isPending ? 'Saving...' : 'Save'}
+                    Save
                   </Button>
                 </div>
               </FormField>
@@ -232,14 +233,12 @@ export function BaselinkerSettings(): React.JSX.Element {
             <Button
               type='button'
               onClick={() => { void handleBaselinkerTest(activeConnection); }}
-              disabled={isTesting}
-              className='rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:opacity-50'
+              loading={isTesting}
+              variant='solid'
             >
-              {isTesting
-                ? 'Testing...'
-                : baselinkerConnected
-                  ? 'Re-test Connection'
-                  : 'Test Connection'}
+              {baselinkerConnected
+                ? 'Re-test Connection'
+                : 'Test Connection'}
             </Button>
           </div>
 

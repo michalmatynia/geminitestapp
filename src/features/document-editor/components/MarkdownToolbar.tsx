@@ -3,7 +3,7 @@
 import { Redo, Undo } from 'lucide-react';
 import React from 'react';
 
-import { Button, Input, Label, SelectSimple } from '@/shared/ui';
+import { Button, Input, Label, SelectSimple, Card, Badge } from '@/shared/ui';
 
 import type { DocumentEditorMode } from '../types';
 
@@ -64,13 +64,13 @@ export function MarkdownToolbar({
   onApplySpanStyle,
 }: MarkdownToolbarProps): React.JSX.Element {
   return (
-    <div className='mb-2 flex flex-wrap items-center gap-2 rounded-lg border bg-gray-900 px-3 py-2'>
+    <Card variant='subtle-compact' padding='none' className='mb-2 flex flex-wrap items-center gap-2 border bg-card/40 px-3 py-2'>
       <div className='flex items-center gap-2'>
         {isModeLocked ? (
           <>
-            <span className='rounded border border-border/60 bg-gray-800 px-2 py-1 text-xs text-gray-300'>
+            <Badge variant='neutral' className='bg-card/70 font-normal'>
               {mode === 'markdown' ? 'Markdown' : mode === 'wysiwyg' ? 'WYSIWYG' : 'Code'}
-            </span>
+            </Badge>
             {mode === 'markdown' ? (
               <Button
                 type='button'
@@ -78,7 +78,8 @@ export function MarkdownToolbar({
                   onMigrateToWysiwyg?.();
                 }}
                 disabled={isMigrating}
-                className='rounded border border-purple-500/40 bg-purple-600/20 px-2 py-1 text-xs text-purple-300 hover:bg-purple-600/30 disabled:opacity-50'
+                variant='outline'
+                className='border-purple-500/40 bg-purple-600/20 px-2 py-1 text-xs text-purple-300 hover:bg-purple-600/30'
                 title='Convert this document to WYSIWYG format'
               >
                 {isMigrating ? 'Migrating...' : 'To WYSIWYG'}
@@ -91,7 +92,8 @@ export function MarkdownToolbar({
                   onMigrateToMarkdown?.();
                 }}
                 disabled={isMigrating}
-                className='rounded border border-purple-500/40 bg-purple-600/20 px-2 py-1 text-xs text-purple-300 hover:bg-purple-600/30 disabled:opacity-50'
+                variant='outline'
+                className='border-purple-500/40 bg-purple-600/20 px-2 py-1 text-xs text-purple-300 hover:bg-purple-600/30'
                 title='Convert this document to Markdown format'
               >
                 {isMigrating ? 'Migrating...' : 'To Markdown'}
@@ -103,11 +105,8 @@ export function MarkdownToolbar({
             <Button
               type='button'
               onClick={(): void => onModeChange('markdown')}
-              className={`px-2 py-1 text-xs transition-colors ${
-                mode === 'markdown'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-              }`}
+              variant={mode === 'markdown' ? 'solid' : 'ghost'}
+              className='px-2 py-1 text-xs rounded-none h-auto'
               title='Markdown editor'
             >
               Markdown
@@ -115,11 +114,8 @@ export function MarkdownToolbar({
             <Button
               type='button'
               onClick={(): void => onModeChange('wysiwyg')}
-              className={`px-2 py-1 text-xs transition-colors ${
-                mode === 'wysiwyg'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-              }`}
+              variant={mode === 'wysiwyg' ? 'solid' : 'ghost'}
+              className='px-2 py-1 text-xs rounded-none h-auto border-x border-border/60'
               title='WYSIWYG editor'
             >
               WYSIWYG
@@ -127,11 +123,8 @@ export function MarkdownToolbar({
             <Button
               type='button'
               onClick={(): void => onModeChange('code')}
-              className={`px-2 py-1 text-xs transition-colors ${
-                mode === 'code'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-              }`}
+              variant={mode === 'code' ? 'success' : 'ghost'}
+              className='px-2 py-1 text-xs rounded-none h-auto'
               title='Code snippets editor'
             >
               Code
@@ -147,7 +140,8 @@ export function MarkdownToolbar({
           <Button
             type='button'
             onClick={(): void => onTogglePreview?.()}
-            className='rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            variant='outline'
+            className='h-7 px-2 text-xs text-gray-200'
             title='Toggle preview'
           >
             {showPreview ? 'Hide Preview' : 'Show Preview'}
@@ -159,7 +153,8 @@ export function MarkdownToolbar({
             type='button'
             onClick={(): void => onUndo?.()}
             disabled={!canUndo}
-            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50'
+            variant='outline'
+            className='h-7 px-2 text-xs text-gray-200'
             title='Undo'
           >
             <Undo className='size-3.5' />
@@ -168,7 +163,8 @@ export function MarkdownToolbar({
             type='button'
             onClick={(): void => onRedo?.()}
             disabled={!canRedo}
-            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50'
+            variant='outline'
+            className='h-7 px-2 text-xs text-gray-200'
             title='Redo'
           >
             <Redo className='size-3.5' />
@@ -179,7 +175,8 @@ export function MarkdownToolbar({
           <Button
             type='button'
             onClick={(): void => onApplyWrap('**', '**', 'bold text')}
-            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            variant='outline'
+            className='h-7 px-2 text-xs text-gray-200'
             title='Bold'
           >
             Bold
@@ -187,7 +184,8 @@ export function MarkdownToolbar({
           <Button
             type='button'
             onClick={(): void => onApplyWrap('*', '*', 'italic text')}
-            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            variant='outline'
+            className='h-7 px-2 text-xs text-gray-200'
             title='Italic'
           >
             Italic
@@ -195,7 +193,8 @@ export function MarkdownToolbar({
           <Button
             type='button'
             onClick={(): void => onApplyWrap('`', '`', 'code')}
-            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            variant='outline'
+            className='h-7 px-2 text-xs text-gray-200'
             title='Inline code'
           >
             Code
@@ -203,7 +202,8 @@ export function MarkdownToolbar({
           <Button
             type='button'
             onClick={onApplyBulletList}
-            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            variant='outline'
+            className='h-7 px-2 text-xs text-gray-200'
             title='Bullet list'
           >
             Bullet
@@ -211,7 +211,8 @@ export function MarkdownToolbar({
           <Button
             type='button'
             onClick={onApplyChecklist}
-            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            variant='outline'
+            className='h-7 px-2 text-xs text-gray-200'
             title='Checklist'
           >
             Checklist
@@ -219,7 +220,8 @@ export function MarkdownToolbar({
           <Button
             type='button'
             onClick={(): void => onApplyLinePrefix('# ')}
-            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            variant='outline'
+            className='h-7 px-2 text-xs text-gray-200'
             title='Heading 1'
           >
             H1
@@ -227,7 +229,8 @@ export function MarkdownToolbar({
           <Button
             type='button'
             onClick={(): void => onApplyLinePrefix('## ')}
-            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            variant='outline'
+            className='h-7 px-2 text-xs text-gray-200'
             title='Heading 2'
           >
             H2
@@ -235,7 +238,8 @@ export function MarkdownToolbar({
           <Button
             type='button'
             onClick={(): void => onApplyLinePrefix('### ')}
-            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            variant='outline'
+            className='h-7 px-2 text-xs text-gray-200'
             title='Heading 3'
           >
             H3
@@ -243,7 +247,8 @@ export function MarkdownToolbar({
           <Button
             type='button'
             onClick={(): void => onApplyLinePrefix('> ')}
-            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            variant='outline'
+            className='h-7 px-2 text-xs text-gray-200'
             title='Blockquote'
           >
             Quote
@@ -251,7 +256,8 @@ export function MarkdownToolbar({
           <Button
             type='button'
             onClick={(): void => onInsertAtCursor('\n---\n')}
-            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            variant='outline'
+            className='h-7 px-2 text-xs text-gray-200'
             title='Horizontal rule'
           >
             HR
@@ -259,7 +265,8 @@ export function MarkdownToolbar({
           <Button
             type='button'
             onClick={(): void => onInsertAtCursor('\n```text\ncode\n```\n')}
-            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            variant='outline'
+            className='h-7 px-2 text-xs text-gray-200'
             title='Code block'
           >
             Code Block
@@ -267,7 +274,8 @@ export function MarkdownToolbar({
           <Button
             type='button'
             onClick={(): void => onApplyWrap('[', '](https://example.com)', 'link text')}
-            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            variant='outline'
+            className='h-7 px-2 text-xs text-gray-200'
             title='Link'
           >
             Link
@@ -275,7 +283,8 @@ export function MarkdownToolbar({
           <Button
             type='button'
             onClick={(): void => onInsertAtCursor('\n| Header | Header |\n| --- | --- |\n| Cell | Cell |\n')}
-            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            variant='outline'
+            className='h-7 px-2 text-xs text-gray-200'
             title='Table'
           >
             Table
@@ -289,8 +298,8 @@ export function MarkdownToolbar({
               }}
               options={fileReferenceOptions}
               placeholder='Insert File'
-              triggerClassName='h-auto rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200'
-              contentClassName='border-border bg-gray-800 text-white'
+              triggerClassName='h-7 rounded border bg-card/40 px-2 text-xs text-gray-200'
+              contentClassName='border-border bg-card text-white'
             />
           ) : null}
 
@@ -305,8 +314,8 @@ export function MarkdownToolbar({
                 { value: 'Trebuchet MS, sans-serif', label: 'Sans' },
                 { value: 'Courier New, monospace', label: 'Mono' },
               ]}
-              triggerClassName='h-auto rounded border bg-gray-800 px-2 py-1 text-xs text-gray-200'
-              contentClassName='border-border bg-gray-800 text-white'
+              triggerClassName='h-7 rounded border bg-card/40 px-2 text-xs text-gray-200'
+              contentClassName='border-border bg-card text-white'
             />
           </div>
 
@@ -318,19 +327,20 @@ export function MarkdownToolbar({
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                 onTextColorChange(event.target.value);
               }}
-              className='h-7 w-10 border-none bg-gray-800 p-0'
+              className='h-7 w-10 border-none bg-card/40 p-0'
             />
           </div>
           <Button
             type='button'
             onClick={(): void => onApplySpanStyle(textColor, fontFamily)}
-            className='rounded border border-border/40 bg-gray-800 px-2 py-1 text-xs text-gray-200 hover:bg-gray-700'
+            variant='outline'
+            className='h-7 px-2 text-xs text-gray-200 border-border/40'
             title='Apply font and color'
           >
             Apply
           </Button>
         </>
       ) : null}
-    </div>
+    </Card>
   );
 }

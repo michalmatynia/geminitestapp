@@ -3,7 +3,7 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import { Button, Input, Label, DocumentationSection, EmptyState } from '@/shared/ui';
+import { Button, Input, Label, EmptyState, Card } from '@/shared/ui';
 
 import { RuleListDragProvider } from './context/RuleListDragContext';
 import { RuleItem } from './RuleItem';
@@ -203,7 +203,8 @@ export function RuleList(): React.JSX.Element {
           />
         ) : null}
         {sequencingLocked ? (
-          <DocumentationSection title='Sequencing Locked' className='bg-amber-500/10 border-amber-500/40 p-4'>
+          <Card variant='warning' padding='md' className='border-amber-500/40 bg-amber-500/10'>
+            <div className='mb-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-200/70'>Sequencing Locked</div>
             <div className='text-xs text-amber-200'>
               Sequence drag-and-drop is disabled while filters are active. Clear search, set severity to
               <span className='mx-1 font-medium'>All</span>
@@ -213,7 +214,7 @@ export function RuleList(): React.JSX.Element {
               <span className='mx-1 font-medium'>Include disabled</span>
               to reorder/group rules.
             </div>
-          </DocumentationSection>
+          </Card>
         ) : null}
         {entries.map((entry) => {
           if (entry.kind === 'rule') {
@@ -263,8 +264,13 @@ export function RuleList(): React.JSX.Element {
           const isGroupDropTarget = dragOverKey === groupDropKey && draggedUid !== null;
           return (
             <div key={group.id} className='space-y-2'>
-              <div
-                className={`rounded-md border p-3 ${isGroupDropTarget ? 'border-cyan-200/60 bg-cyan-500/12' : 'border-cyan-500/35 bg-cyan-500/8'}`}
+              <Card
+                variant='info'
+                padding='sm'
+                className={cn(
+                  'border-cyan-500/35 bg-cyan-500/8 transition-all',
+                  isGroupDropTarget && 'border-cyan-200/60 bg-cyan-500/12 ring-2 ring-cyan-400/20'
+                )}
                 onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
                   if (sequencingLocked) return;
                   event.preventDefault();
@@ -318,7 +324,7 @@ export function RuleList(): React.JSX.Element {
                     <div>
                       <Label className='text-[11px] text-cyan-100/80'>Group Label</Label>
                       <Input
-                        className='mt-1 h-8'
+                        className='mt-1 h-8 bg-black/20 border-cyan-500/20'
                         value={groupDraft.label}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                           setGroupDrafts((prev: Record<string, SequenceGroupDraft>) => {
@@ -343,7 +349,7 @@ export function RuleList(): React.JSX.Element {
                         type='number'
                         min={0}
                         max={30000}
-                        className='mt-1 h-8'
+                        className='mt-1 h-8 bg-black/20 border-cyan-500/20'
                         value={groupDraft.debounceMs}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                           setGroupDrafts((prev: Record<string, SequenceGroupDraft>) => {
@@ -365,7 +371,9 @@ export function RuleList(): React.JSX.Element {
                     <div className='flex items-end'>
                       <Button
                         type='button'
-                        className='h-8 rounded bg-slate-800 px-3 text-xs text-slate-100 hover:bg-slate-700'
+                        size='xs'
+                        variant='solid'
+                        className='h-8'
                         onClick={() => {
                           const parsed = Number(groupDraft.debounceMs);
                           const debounceMs = Number.isFinite(parsed) ? parsed : group.debounceMs;
@@ -378,7 +386,9 @@ export function RuleList(): React.JSX.Element {
                     <div className='flex items-end'>
                       <Button
                         type='button'
-                        className='h-8 rounded border border-amber-500/45 bg-amber-500/15 px-3 text-xs text-amber-100 hover:bg-amber-500/25'
+                        variant='outline'
+                        size='xs'
+                        className='h-8 border-amber-500/45 bg-amber-500/15 text-amber-100 hover:bg-amber-500/25'
                         onClick={() => handleUngroupSequenceGroup(group.id)}
                       >
                         Ungroup
@@ -386,7 +396,7 @@ export function RuleList(): React.JSX.Element {
                     </div>
                   </div>
                 ) : null}
-              </div>
+              </Card>
 
               {!isCollapsed ? (
                 <div className='ml-6 space-y-2'>

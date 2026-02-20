@@ -190,13 +190,6 @@ const resolveExecutionMeta = (run: HistoryRunRecord): Record<string, unknown> | 
   return null;
 };
 
-const getStatusClass = (status: HistoryRunRecord['status']): string => {
-  if (status === 'completed') return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200';
-  if (status === 'failed') return 'border-rose-500/40 bg-rose-500/10 text-rose-200';
-  if (status === 'running') return 'border-sky-500/40 bg-sky-500/10 text-sky-200';
-  return 'border-amber-500/40 bg-amber-500/10 text-amber-200';
-};
-
 const PAGE_SIZE = 50;
 
 export function ProjectGenerationHistoryTab(): React.JSX.Element {

@@ -5,7 +5,7 @@ import React, { useMemo, useState } from 'react';
 import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings } from '@/features/prompt-engine/settings';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { CopyButton, Input,  FormSection, MetadataItem, DocumentationSection } from '@/shared/ui';
+import { CopyButton, Input,  FormSection, MetadataItem, DocumentationSection, Card, Badge } from '@/shared/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { useGenerationState } from '../context/GenerationContext';
@@ -654,7 +654,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
       />
 
       {includeByQuery(['runtime state', 'project', 'slot', 'prompt', 'mask', 'generation']) ? (
-        <div className='space-y-3 rounded-lg border border-border/60 bg-card/40 p-5'>
+        <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40 space-y-3'>
           <h3 className='text-base font-semibold text-white'>Current Runtime State</h3>
           <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-4'>
             <MetadataItem label='Project' value={projectId || 'none'} hint={`${projectsQuery.data?.length ?? 0} total`} />
@@ -678,86 +678,86 @@ export function ImageStudioDocsContent(): React.JSX.Element {
             <MetadataItem label='Extraction Review' value={metricValue(extractReviewOpen)} hint={`draft length: ${extractDraftPrompt.length}`} />
             <MetadataItem label='Slot UI Drafts' value={`url=${slotImageUrlDraft.trim().length}`} hint={`base64=${slotBase64Draft.trim().length}`} />
           </div>
-        </div>
+        </Card>
       ) : null}
 
       {filteredSettingsRows.length > 0 ? (
-        <div className='space-y-3 rounded-lg border border-border/60 bg-card/40 p-5'>
+        <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40 space-y-3'>
           <h3 className='text-base font-semibold text-white'>Settings Reference</h3>
           <div className='grid gap-2'>
             {filteredSettingsRows.map((row) => (
-              <div key={row.path} className='rounded-md border border-border/60 bg-card/40 px-3 py-2'>
+              <Card key={row.path} variant='subtle-compact' padding='sm' className='border-border/60 bg-card/40'>
                 <div className='text-[11px] uppercase tracking-wide text-gray-500'>{row.path}</div>
                 <div className='mt-1 text-sm text-gray-100'>{row.label}: {row.value}</div>
                 <div className='mt-1 text-xs text-gray-400'>{row.description}</div>
-              </div>
+              </Card>
             ))}
           </div>
-        </div>
+        </Card>
       ) : null}
 
       {filteredCropControlDocs.length > 0 ? (
-        <div className='space-y-3 rounded-lg border border-border/60 bg-card/40 p-5'>
+        <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40 space-y-3'>
           <h3 className='text-base font-semibold text-white'>Crop Controls Reference</h3>
           <div className='grid gap-2'>
             {filteredCropControlDocs.map((entry) => (
-              <div key={entry.key} className='rounded-md border border-border/60 bg-card/40 px-3 py-2'>
+              <Card key={entry.key} variant='subtle-compact' padding='sm' className='border-border/60 bg-card/40'>
                 <div className='text-[11px] uppercase tracking-wide text-gray-500'>crop.{entry.key}</div>
                 <div className='mt-1 text-sm text-gray-100'>{entry.title}</div>
                 <div className='mt-1 text-xs text-gray-400'>{entry.description}</div>
-              </div>
+              </Card>
             ))}
           </div>
-        </div>
+        </Card>
       ) : null}
 
       {filteredSequenceFieldDocs.length > 0 ? (
-        <div className='space-y-3 rounded-lg border border-border/60 bg-card/40 p-5'>
+        <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40 space-y-3'>
           <h3 className='text-base font-semibold text-white'>Sequencer Field Reference</h3>
           <div className='grid gap-2'>
             {filteredSequenceFieldDocs.map((entry) => (
-              <div key={entry.key} className='rounded-md border border-border/60 bg-card/40 px-3 py-2'>
+              <Card key={entry.key} variant='subtle-compact' padding='sm' className='border-border/60 bg-card/40'>
                 <div className='text-[11px] uppercase tracking-wide text-gray-500'>sequence.{entry.key}</div>
                 <div className='mt-1 text-sm text-gray-100'>{entry.title}</div>
                 <div className='mt-1 text-xs text-gray-400'>{entry.description}</div>
-              </div>
+              </Card>
             ))}
           </div>
-        </div>
+        </Card>
       ) : null}
 
       {filteredObjectLayoutDocs.length > 0 ? (
-        <div className='space-y-3 rounded-lg border border-border/60 bg-card/40 p-5'>
+        <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40 space-y-3'>
           <h3 className='text-base font-semibold text-white'>Object Layout Controls Reference</h3>
           <div className='grid gap-2'>
             {filteredObjectLayoutDocs.map((entry) => (
-              <div key={entry.key} className='rounded-md border border-border/60 bg-card/40 px-3 py-2'>
+              <Card key={entry.key} variant='subtle-compact' padding='sm' className='border-border/60 bg-card/40'>
                 <div className='text-[11px] uppercase tracking-wide text-gray-500'>object_layout.{entry.key}</div>
                 <div className='mt-1 text-sm text-gray-100'>{entry.title}</div>
                 <div className='mt-1 text-xs text-gray-400'>{entry.description}</div>
-              </div>
+              </Card>
             ))}
           </div>
-        </div>
+        </Card>
       ) : null}
 
       {filteredVersionGraphDocs.length > 0 ? (
-        <div className='space-y-3 rounded-lg border border-border/60 bg-card/40 p-5'>
+        <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40 space-y-3'>
           <h3 className='text-base font-semibold text-white'>Version Graph Controls Reference</h3>
           <div className='grid gap-2'>
             {filteredVersionGraphDocs.map((entry) => (
-              <div key={entry.key} className='rounded-md border border-border/60 bg-card/40 px-3 py-2'>
+              <Card key={entry.key} variant='subtle-compact' padding='sm' className='border-border/60 bg-card/40'>
                 <div className='text-[11px] uppercase tracking-wide text-gray-500'>{entry.key}</div>
                 <div className='mt-1 text-sm text-gray-100'>{entry.title}</div>
                 <div className='mt-1 text-xs text-gray-400'>{entry.description}</div>
-              </div>
+              </Card>
             ))}
           </div>
-        </div>
+        </Card>
       ) : null}
 
       {includeByQuery(['runtime snapshot', 'json', 'state']) ? (
-        <div className='space-y-2 rounded-lg border border-border/60 bg-card/40 p-5'>
+        <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40 space-y-2'>
           <div className='flex items-center justify-between gap-2'>
             <h3 className='text-base font-semibold text-white'>Runtime Snapshot JSON</h3>
             <CopyButton value={runtimeSnapshotJson} variant='outline' size='sm' showText />
@@ -765,11 +765,11 @@ export function ImageStudioDocsContent(): React.JSX.Element {
           <pre className='max-h-[360px] overflow-auto rounded-md border border-border/60 bg-black/30 p-3 text-xs text-gray-200'>
             {runtimeSnapshotJson}
           </pre>
-        </div>
+        </Card>
       ) : null}
 
       {includeByQuery(['settings snapshot', 'json', 'config']) ? (
-        <div className='space-y-2 rounded-lg border border-border/60 bg-card/40 p-5'>
+        <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40 space-y-2'>
           <div className='flex items-center justify-between gap-2'>
             <h3 className='text-base font-semibold text-white'>Settings Snapshot JSON</h3>
             <CopyButton value={settingsSnapshotJson} variant='outline' size='sm' showText />
@@ -777,20 +777,20 @@ export function ImageStudioDocsContent(): React.JSX.Element {
           <pre className='max-h-[420px] overflow-auto rounded-md border border-border/60 bg-black/30 p-3 text-xs text-gray-200'>
             {settingsSnapshotJson}
           </pre>
-        </div>
+        </Card>
       ) : null}
 
       {noResults ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
+        <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40'>
           <div className='text-sm text-gray-400'>No documentation sections match "{docsQuery}".</div>
-        </div>
+        </Card>
       ) : null}
 
       {heavySettings.error ? (
-        <div className='space-y-1 rounded-lg border border-red-500/40 bg-red-500/10 p-5'>
+        <Card variant='danger' padding='lg' className='space-y-1'>
           <div className='font-medium text-red-100'>Failed to load heavy settings snapshot</div>
           <div className='text-xs text-red-200/80'>{heavySettings.error.message}</div>
-        </div>
+        </Card>
       ) : null}
 
       {includeByQuery(['docs coverage', 'what is included']) ? (
@@ -806,9 +806,9 @@ export function ImageStudioDocsContent(): React.JSX.Element {
       ) : null}
 
       {slotsQuery.isLoading || projectsQuery.isLoading || heavySettings.isLoading ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+        <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/40'>
           <div className='text-xs text-gray-500'>Refreshing live state…</div>
-        </div>
+        </Card>
       ) : null}
     </div>
   );

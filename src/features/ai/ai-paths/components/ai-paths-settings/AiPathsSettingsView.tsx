@@ -14,7 +14,6 @@ import type {
   AiPathsValidationOperator,
   AiPathsValidationRule,
   AiPathsValidationSeverity,
-  RuntimeHistoryEntry,
 } from '@/features/ai/ai-paths/lib';
 import {
   buildAiPathsValidationRulesFromDocs,
@@ -23,6 +22,7 @@ import {
   evaluateAiPathsValidationPreflight,
   inspectPathDependencies,
   normalizeAiPathsValidationConfig,
+  runsApi,
 } from '@/features/ai/ai-paths/lib';
 import {
   Button,
@@ -468,50 +468,59 @@ export function AiPathsSettingsView(): React.JSX.Element {
     [runtimeEvents],
   );
 
-  const findLatestRunWithNodeHistory = useCallback(
-    (nodeId: string): string | null => {
-      const targetNodeId = nodeId.trim();
-      if (!targetNodeId) return null;
-      const sortedRuns = [...state.runList].sort((left, right) => {
-        const leftMs = left.createdAt ? Date.parse(left.createdAt) : 0;
-        const rightMs = right.createdAt ? Date.parse(right.createdAt) : 0;
-        if (!Number.isFinite(leftMs) && !Number.isFinite(rightMs)) return 0;
-        if (!Number.isFinite(leftMs)) return 1;
-        if (!Number.isFinite(rightMs)) return -1;
-        return rightMs - leftMs;
-      });
-      const matchedRun = sortedRuns.find((run) => {
-        const history = (
-          run.runtimeState as
-            | { history?: Record<string, RuntimeHistoryEntry[]> }
-            | undefined
-        )?.history;
-        const nodeHistory = history?.[targetNodeId];
-        if (Array.isArray(nodeHistory)) {
-          return nodeHistory.length > 0;
-        }
-        if (history && targetNodeId in history) return true;
-        return Boolean(
-          run.graph?.nodes?.some((node: AiNode): boolean => node.id === targetNodeId),
-        );
-      });
-      return matchedRun?.id ?? null;
+  const fetchLatestRunIdForTraceNode = useCallback(
+    async (nodeId: string, preferFailed: boolean): Promise<string | null> => {
+      const baseOptions: {
+        pathId?: string;
+        nodeId: string;
+        limit: number;
+        offset: number;
+      } = {
+        ...(activePathId ? { pathId: activePathId } : {}),
+        nodeId,
+        limit: 1,
+        offset: 0,
+      };
+      const readFirstRunId = (
+        payload: Awaited<ReturnType<typeof runsApi.list>>,
+      ): string | null => {
+        if (!payload.ok || !payload.data || !Array.isArray(payload.data.runs)) return null;
+        const firstRun = payload.data.runs[0] as { id?: unknown } | undefined;
+        return typeof firstRun?.id === 'string' && firstRun.id.trim().length > 0
+          ? firstRun.id.trim()
+          : null;
+      };
+
+      if (preferFailed) {
+        const failedResult = await runsApi.list({
+          ...baseOptions,
+          status: 'failed',
+        });
+        const failedRunId = readFirstRunId(failedResult);
+        if (failedRunId) return failedRunId;
+      }
+
+      const fallbackResult = await runsApi.list(baseOptions);
+      return readFirstRunId(fallbackResult);
     },
-    [state.runList],
+    [activePathId],
   );
 
   const handleInspectTraceNode = useCallback(
-    (nodeId: string, focus: 'all' | 'failed'): void => {
+    async (nodeId: string, focus: 'all' | 'failed'): Promise<void> => {
       const targetNodeId = nodeId.trim();
       if (!targetNodeId) return;
-      const runId = findLatestRunWithNodeHistory(targetNodeId);
+      const runId = await fetchLatestRunIdForTraceNode(
+        targetNodeId,
+        focus === 'failed',
+      );
       if (!runId) {
         toast(`No recent runs found for ${targetNodeId}.`, { variant: 'warning' });
         return;
       }
       state.setRunHistoryNodeId(targetNodeId);
       state.setRunFilter(focus);
-      void state.handleOpenRunDetail(runId).catch((error: unknown) => {
+      await state.handleOpenRunDetail(runId).catch((error: unknown) => {
         state.reportAiPathsError(
           error,
           {
@@ -525,7 +534,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
       });
     },
     [
-      findLatestRunWithNodeHistory,
+      fetchLatestRunIdForTraceNode,
       state,
       toast,
     ],
@@ -1284,7 +1293,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
             </div>
           </div>
           {!isFocusMode && <RuntimeEventLogPanel />}
-          {!isFocusMode ? (
+          {!isFocusMode && (
             <div className='grid gap-4 lg:grid-cols-2'>
               <Card variant='subtle' padding='md' className='space-y-3 border-border/60 bg-card/50'>
                 <div className='flex items-start justify-between gap-3'>
@@ -1467,7 +1476,9 @@ export function AiPathsSettingsView(): React.JSX.Element {
                                 key={`slow-${entry.nodeId}-${entry.nodeType}`}
                                 type='button'
                                 className='rounded border border-sky-500/40 bg-sky-500/10 px-1.5 py-0.5 text-[10px] text-sky-100 hover:bg-sky-500/20'
-                                onClick={() => handleInspectTraceNode(entry.nodeId, 'all')}
+                                onClick={() => {
+                                  void handleInspectTraceNode(entry.nodeId, 'all');
+                                }}
                                 title='Open latest run detail for this node'
                               >
                                 {entry.nodeId} (
@@ -1488,9 +1499,9 @@ export function AiPathsSettingsView(): React.JSX.Element {
                                 key={`failed-${entry.nodeId}-${entry.nodeType}`}
                                 type='button'
                                 className='rounded border border-rose-500/40 bg-rose-500/10 px-1.5 py-0.5 text-[10px] text-rose-100 hover:bg-rose-500/20'
-                                onClick={() =>
-                                  handleInspectTraceNode(entry.nodeId, 'failed')
-                                }
+                                onClick={() => {
+                                  void handleInspectTraceNode(entry.nodeId, 'failed');
+                                }}
                                 title='Open latest failed run detail for this node'
                               >
                                 {entry.nodeId} ({entry.failedCount}/{entry.spanCount})
@@ -1499,7 +1510,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         </div>
                       </div>
                     ) : null}
-                  </div>
+                  </Card>
                 </div>
               </Card>
 
@@ -1557,7 +1568,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                 </div>
               </div>
             </div>
-          ) : null}
+          )}
           {!isFocusMode && (
             <div className='mt-4 flex justify-end'>
               <Button

@@ -5,6 +5,7 @@ import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useOptionalSectionBlockData } from './SectionBlockContext';
 import { useCmsPageContext } from '../CmsPageContext';
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
+import { EmptyState, Card } from '@/shared/ui';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
@@ -27,8 +28,13 @@ export function FrontendTestimonialsSection({
   if (blocks.length === 0) {
     return (
       <section style={sectionStyles}>
-        <div className='container mx-auto px-4 md:px-6'>
-          <p className='text-gray-500 text-center py-8'>Add blocks to create testimonial cards</p>
+        <div className='container mx-auto px-4 md:px-6 py-8'>
+          <EmptyState
+            title='No testimonials'
+            description='Add blocks to create testimonial cards.'
+            variant='compact'
+            className='bg-card/20'
+          />
         </div>
       </section>
     );
@@ -42,9 +48,11 @@ export function FrontendTestimonialsSection({
           style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
         >
           {blocks.map((block: BlockInstance) => (
-            <div
+            <Card
               key={block.id}
-              className='cms-hover-card rounded-xl border border-gray-700/50 bg-gray-800/30 p-6'
+              variant='subtle'
+              padding='lg'
+              className='cms-hover-card border-gray-700/50 bg-gray-800/30'
             >
               <svg
                 className='mb-4 size-6 text-gray-500'
@@ -54,7 +62,7 @@ export function FrontendTestimonialsSection({
                 <path d='M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H14.017zM0 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151C7.546 6.068 5.983 8.789 5.983 11h4v10H0z' />
               </svg>
               <FrontendBlockRenderer block={block} />
-            </div>
+            </Card>
           ))}
         </div>
       </div>

@@ -9,7 +9,10 @@ import {
   SectionHeader, 
   FormField, 
   StandardDataTablePanel,
-  Tag
+  Tag,
+  Card,
+  Badge,
+  Hint,
 } from '@/shared/ui';
 
 import { useChatbotMemoryState, type ExtendedMemoryItem } from '../hooks/useChatbotMemoryState';
@@ -120,9 +123,9 @@ export default function AgentMemoryPage(): React.JSX.Element {
             variant='outline'
             size='xs'
             onClick={refetch}
-            disabled={isFetching}
+            loading={isFetching}
           >
-            {isFetching ? 'Refreshing...' : 'Refresh'}
+            Refresh
           </Button>
         )}
         className='mb-6'
@@ -180,14 +183,14 @@ export default function AgentMemoryPage(): React.JSX.Element {
           <div className='p-4 space-y-4 bg-black/20'>
             <div className='grid gap-4 md:grid-cols-2'>
               <div>
-                <h4 className='text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-2'>Full Content</h4>
-                <pre className='whitespace-pre-wrap rounded border border-border/60 bg-black/40 p-3 font-mono text-[11px] text-gray-300'>
+                <Hint size='xxs' uppercase className='mb-2'>Full Content</Hint>
+                <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-black/40 font-mono text-[11px] text-gray-300 whitespace-pre-wrap'>
                   {row.original.content}
-                </pre>
+                </Card>
               </div>
               <div>
-                <h4 className='text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-2'>Context Details</h4>
-                <div className='space-y-2 text-xs text-gray-400'>
+                <Hint size='xxs' uppercase className='mb-2'>Context Details</Hint>
+                <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-black/40 space-y-2 text-xs text-gray-400'>
                   <div className='flex justify-between border-b border-white/5 pb-1'>
                     <span>Created</span>
                     <span className='text-gray-200'>{formatDate(row.original.createdAt)}</span>
@@ -200,13 +203,13 @@ export default function AgentMemoryPage(): React.JSX.Element {
                     <span>Run ID</span>
                     <span className='font-mono text-gray-200'>{row.original.runId || '—'}</span>
                   </div>
-                </div>
+                </Card>
                 {row.original.metadata && (
                   <div className='mt-4'>
-                    <h4 className='text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-2'>Metadata</h4>
-                    <pre className='whitespace-pre-wrap rounded border border-border/60 bg-black/40 p-2 font-mono text-[10px] text-gray-400'>
+                    <Hint size='xxs' uppercase className='mb-2'>Metadata</Hint>
+                    <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-black/40 font-mono text-[10px] text-gray-400 whitespace-pre-wrap'>
                       {JSON.stringify(row.original.metadata, null, 2)}
-                    </pre>
+                    </Card>
                   </div>
                 )}
               </div>

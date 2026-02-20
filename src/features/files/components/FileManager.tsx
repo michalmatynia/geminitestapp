@@ -45,7 +45,7 @@ export default function FileManager({
       {...(showBulkActions !== undefined ? { showBulkActions } : {})}
       {...(showTagSearch !== undefined ? { showTagSearch } : {})}
     >
-      <Card className='p-4 bg-gray-900 text-white shadow-xl border border-gray-800'>
+      <Card variant='glass' padding='md' className='text-white shadow-xl border-border/60'>
         <FileManagerHeader />
         <FileManagerFilters />
         <FileManagerBulkActions />

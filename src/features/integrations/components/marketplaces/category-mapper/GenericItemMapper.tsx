@@ -1,6 +1,6 @@
 'use client';
 
-import { Download, RefreshCw, Save } from 'lucide-react';
+import { Download, Save } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
@@ -235,18 +235,19 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
               variant='outline'
               size='sm'
               onClick={() => void handleFetch()}
-              disabled={isFetching}
+              loading={isFetching}
             >
-              {isFetching ? <RefreshCw className='mr-2 h-3.5 w-3.5 animate-spin' /> : <Download className='mr-2 h-3.5 w-3.5' />}
-              {isFetching ? 'Fetching...' : 'Fetch'}
+              <Download className='mr-2 h-3.5 w-3.5' />
+              Fetch
             </Button>
             <Button
               size='sm'
               onClick={() => void handleSave()}
-              disabled={isSaving || pendingMappings.size === 0}
+              loading={isSaving}
+              disabled={pendingMappings.size === 0}
             >
-              {isSaving ? <RefreshCw className='mr-2 h-3.5 w-3.5 animate-spin' /> : <Save className='mr-2 h-3.5 w-3.5' />}
-              {isSaving ? 'Saving...' : `Save (${pendingMappings.size})`}
+              <Save className='mr-2 h-3.5 w-3.5' />
+              Save {pendingMappings.size > 0 ? `(${pendingMappings.size})` : ''}
             </Button>
           </div>
         }

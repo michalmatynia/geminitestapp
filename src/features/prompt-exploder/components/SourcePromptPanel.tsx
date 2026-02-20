@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Button, FormSection, Textarea } from '@/shared/ui';
+import { Button, FormSection, Textarea, Card } from '@/shared/ui';
 
 import { useDocumentState, useDocumentActions } from '../context/hooks/useDocument';
 import { useSettingsState } from '../context/hooks/useSettings';
@@ -47,14 +47,14 @@ export function SourcePromptPanel(): React.JSX.Element {
     >
       <div className='mt-3 space-y-2'>
         {runtimeGuardrailIssue ? (
-          <div className='rounded border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-xs text-rose-100'>
+          <Card variant='danger' padding='sm' className='border-rose-500/40 text-xs'>
             {runtimeGuardrailIssue}
-          </div>
+          </Card>
         ) : null}
         {returnTarget === 'case-resolver' ? (
-          <div className='rounded border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-100'>
+          <Card variant='info' padding='sm' className='border-cyan-500/30 bg-cyan-500/10 text-xs text-cyan-100'>
             Case Resolver capture mode: {caseResolverCaptureModeLabel}
-          </div>
+          </Card>
         ) : null}
         <Textarea
           className='min-h-[280px] font-mono text-[12px]'

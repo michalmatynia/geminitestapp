@@ -4,7 +4,7 @@ import React from 'react';
 
 import type { Asset3dDto as Asset3DRecord } from '@/shared/contracts/viewer3d';
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { StatusBadge, MetadataItem, Badge, FormField } from '@/shared/ui';
+import { StatusBadge, MetadataItem, Badge, FormField, Card } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 interface AssetPreviewModalProps extends EntityModalProps<Asset3DRecord> {}
@@ -74,18 +74,18 @@ export function AssetPreviewModal({
 
         {previewAsset.description && (
           <FormField label='Description'>
-            <div className='rounded-lg border border-border bg-card/30 p-4 text-sm text-gray-300 leading-relaxed'>
+            <Card variant='subtle-compact' padding='md' className='border-border bg-card/30 text-sm text-gray-300 leading-relaxed'>
               {previewAsset.description}
-            </div>
+            </Card>
           </FormField>
         )}
 
         <FormField label='System Metadata'>
-          <div className='rounded-lg border border-border bg-gray-950 p-4'>
+          <Card variant='subtle-compact' padding='md' className='border-border bg-gray-950'>
             <pre className='max-h-64 overflow-auto text-[11px] text-gray-400 font-mono leading-relaxed'>
               {JSON.stringify(previewAsset.metadata ?? {}, null, 2)}
             </pre>
-          </div>
+          </Card>
         </FormField>
       </div>
     </DetailModal>

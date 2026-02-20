@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { dtoBaseSchema } from './base';
 import { imageFileSchema } from './files';
-import { asset3dSchema } from './viewer3d';
+import { asset3DRecordSchema } from './viewer3d';
 
 /**
  * Image Studio DTOs
@@ -471,9 +471,16 @@ export type SlotGenerationMetadata = SlotGenerationMetadataDto;
 
 export const imageStudioSlotSchema = dtoBaseSchema.extend({
   projectId: z.string(),
+  index: z.number().optional(),
   name: z.string().nullable(),
   folderPath: z.string().nullable(),
   position: z.number().nullable().optional(),
+  filename: z.string().nullable().optional(),
+  filepath: z.string().nullable().optional(),
+  mimetype: z.string().nullable().optional(),
+  size: z.number().nullable().optional(),
+  width: z.number().nullable().optional(),
+  height: z.number().nullable().optional(),
   imageFileId: z.string().nullable().optional(),
   imageUrl: z.string().nullable().optional(),
   imageBase64: z.string().nullable().optional(),
@@ -482,7 +489,7 @@ export const imageStudioSlotSchema = dtoBaseSchema.extend({
   metadata: slotGenerationMetadataSchema.nullable().optional(),
   imageFile: imageFileSchema.nullable().optional(),
   screenshotFile: imageFileSchema.nullable().optional(),
-  asset3d: asset3dSchema.nullable().optional(),
+  asset3d: asset3DRecordSchema.nullable().optional(),
 });
 
 export type ImageStudioSlotDto = z.infer<typeof imageStudioSlotSchema>;
@@ -678,8 +685,8 @@ const imageStudioOutputImageSchema = z.object({
   filepath: z.string(),
   mimetype: z.string(),
   size: z.number().finite().nonnegative(),
-  width: z.number().finite().nullable().optional(),
-  height: z.number().finite().nullable().optional(),
+  width: z.number().finite().optional(),
+  height: z.number().finite().optional(),
 }).passthrough();
 
 export const imageStudioCropResponseSchema = z.object({

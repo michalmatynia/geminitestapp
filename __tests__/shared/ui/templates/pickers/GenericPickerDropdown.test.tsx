@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers/GenericPickerDropdown';
-import type { PickerGroup, PickerOption } from '@/shared/ui/templates/pickers/types';
+import type { PickerGroup, PickerOption } from '@/shared/contracts/ui';
 
 describe('GenericPickerDropdown', () => {
   const mockOptions: PickerOption[] = [

@@ -7,21 +7,19 @@ import {
   AI_PATHS_RUN_SOURCE_VALUES,
 } from '@/features/ai/ai-paths/lib/run-sources';
 import type {
+  AiNode,
   AiPathRunCreateInput,
   AiPathRunEventCreateInput,
+  AiPathRunEventRecord,
   AiPathRunEventListOptions,
   AiPathRunListOptions,
+  AiPathRunNodeRecord,
   AiPathRunRepository,
+  AiPathRunRecord,
   AiPathRunUpdate,
   AiPathRunNodeUpdate,
 } from '@/shared/contracts/ai-paths';
 import prisma from '@/shared/lib/db/prisma';
-import type {
-  AiPathRunEventRecord,
-  AiPathRunNodeRecord,
-  AiPathRunRecord,
-} from '@/shared/contracts/ai-paths';
-import type { AiNode } from '@/shared/contracts/ai-paths';
 
 const prismaAny = prisma as unknown as {
   aiPathRun?: {
@@ -170,6 +168,15 @@ const buildRunWhere = (options: AiPathRunListOptions = {}): Prisma.AiPathRunWher
   }
   if (options.pathId) {
     andFilters.push({ pathId: options.pathId });
+  }
+  if (options.nodeId?.trim()) {
+    andFilters.push({
+      nodes: {
+        some: {
+          nodeId: options.nodeId.trim(),
+        },
+      },
+    });
   }
   if (options.requestId?.trim()) {
     andFilters.push({ meta: { path: ['requestId'], equals: options.requestId.trim() } });

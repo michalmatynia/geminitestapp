@@ -23,6 +23,13 @@ import {
   analyzeCanvasImageObject,
   resolveClientProcessingImageSrc,
 } from './generation-toolbar/GenerationToolbarImageUtils';
+import {
+  buildImageStudioAnalysisSourceSignature,
+  saveImageStudioAnalysisApplyIntent,
+  saveImageStudioAnalysisPlanSnapshot,
+  type ImageStudioAnalysisApplyTarget,
+  type ImageStudioAnalysisSharedLayout,
+} from '../utils/analysis-bridge';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
 import {
   buildObjectLayoutPresetOptions,
@@ -38,12 +45,6 @@ import {
   type ObjectLayoutCustomPreset,
   type ObjectLayoutPresetOptionValue,
 } from '../utils/object-layout-presets';
-import {
-  saveImageStudioAnalysisApplyIntent,
-  saveImageStudioAnalysisPlanSnapshot,
-  type ImageStudioAnalysisApplyTarget,
-  type ImageStudioAnalysisSharedLayout,
-} from '../utils/analysis-bridge';
 
 import type {
   ImageStudioCenterDetectionMode,
@@ -121,6 +122,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
   const [status, setStatus] = useState<AnalysisStatus>('idle');
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [resultSourceSlotId, setResultSourceSlotId] = useState('');
+  const [resultSourceSignature, setResultSourceSignature] = useState('');
   const abortControllerRef = useRef<AbortController | null>(null);
   const skipAdvancedDefaultsSaveRef = useRef(true);
   const selectedCustomPresetIdRef = useRef<string | null>(null);
@@ -331,6 +333,67 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
     }
   }, [busy, status]);
 
+  const toSharedLayout = (layout: AnalysisResult['layout']): ImageStudioAnalysisSharedLayout => {
+    const splitAxes = Math.abs(layout.paddingXPercent - layout.paddingYPercent) >= 0.01;
+    return {
+      paddingPercent: layout.paddingPercent,
+      paddingXPercent: layout.paddingXPercent,
+      paddingYPercent: layout.paddingYPercent,
+      splitAxes,
+      fillMissingCanvasWhite: layout.fillMissingCanvasWhite,
+      targetCanvasWidth: layout.targetCanvasWidth,
+      targetCanvasHeight: layout.targetCanvasHeight,
+      whiteThreshold: layout.whiteThreshold,
+      chromaThreshold: layout.chromaThreshold,
+      shadowPolicy: layout.shadowPolicy,
+      detection: layout.detection,
+    };
+  };
+
+  const openStudioTab = (): void => {
+    const params = new URLSearchParams(searchParams?.toString() ?? '');
+    if (!params.has('tab')) return;
+    params.delete('tab');
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  };
+
+  const queueAnalysisApplyIntent = (
+    target: ImageStudioAnalysisApplyTarget,
+    options?: { runAfterApply?: boolean }
+  ): void => {
+    if (!result) {
+      toast('Run analysis before applying plan to tools.', { variant: 'info' });
+      return;
+    }
+    const analyzedSlotId = resultSourceSlotId.trim();
+    if (!analyzedSlotId) {
+      toast('Analysis slot context is missing. Rerun analysis first.', { variant: 'info' });
+      return;
+    }
+    const analyzedSourceSignature = resultSourceSignature.trim();
+    if (!analyzedSourceSignature) {
+      toast('Analysis source signature is missing. Rerun analysis first.', { variant: 'info' });
+      return;
+    }
+    const runAfterApply = Boolean(options?.runAfterApply);
+    saveImageStudioAnalysisApplyIntent(activeProjectId, {
+      slotId: analyzedSlotId,
+      sourceSignature: analyzedSourceSignature,
+      runAfterApply,
+      target,
+      layout: toSharedLayout(result.layout),
+    });
+    const targetLabel = target === 'object_layout' ? 'Object Layout' : 'Auto Scaler';
+    toast(
+      runAfterApply
+        ? `Queued analysis plan and execution for ${targetLabel}.`
+        : `Queued analysis plan for ${targetLabel}.`,
+      { variant: 'success' }
+    );
+    openStudioTab();
+  };
+
   const handleAnalyze = async (): Promise<void> => {
     const slotId = workingSlot?.id?.trim() ?? '';
     if (!slotId) {
@@ -342,12 +405,28 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
       return;
     }
     if (busy) return;
+    const sourceSignature = buildImageStudioAnalysisSourceSignature({
+      slotId,
+      imageFileId: workingSlot?.imageFileId ?? null,
+      imageFile: workingSlot?.imageFile ?? null,
+      imageUrl: workingSlot?.imageUrl ?? null,
+      imageBase64: workingSlot?.imageBase64 ?? null,
+      resolvedImageSrc: workingSlotImageSrc,
+      clientProcessingImageSrc,
+    });
+    if (!sourceSignature) {
+      toast('Unable to capture source signature for analysis. Reselect slot image and retry.', {
+        variant: 'info',
+      });
+      return;
+    }
 
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
     setBusy(true);
     setStatus('resolving');
     try {
+      let nextResult: AnalysisResult;
       if (mode === 'client_analysis_v1') {
         const source = clientProcessingImageSrc || workingSlotImageSrc;
         if (!source) {
@@ -357,11 +436,11 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
         const analysis = await analyzeCanvasImageObject(source, layoutPayload, {
           preferTargetCanvas: true,
         });
-        setResult({
+        nextResult = {
           ...analysis,
           effectiveMode: 'client_analysis_v1',
           authoritativeSource: 'client_upload',
-        });
+        };
       } else {
         setStatus('processing');
         const response = await api
@@ -377,12 +456,28 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
             }
           )
           .then((raw) => imageStudioAnalysisResponseSchema.parse(raw));
-        setResult({
+        nextResult = {
           ...response.analysis,
           effectiveMode: response.effectiveMode,
           authoritativeSource: response.authoritativeSource,
-        });
+        };
       }
+      setResult(nextResult);
+      setResultSourceSlotId(slotId);
+      setResultSourceSignature(sourceSignature);
+      saveImageStudioAnalysisPlanSnapshot(activeProjectId, {
+        slotId,
+        sourceSignature,
+        savedAt: new Date().toISOString(),
+        layout: toSharedLayout(nextResult.layout),
+        effectiveMode: nextResult.effectiveMode,
+        authoritativeSource: nextResult.authoritativeSource,
+        detectionUsed: nextResult.detectionUsed,
+        confidence: nextResult.confidence,
+        policyVersion: nextResult.policyVersion,
+        policyReason: nextResult.policyReason,
+        fallbackApplied: nextResult.fallbackApplied,
+      });
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
         toast('Image analysis canceled.', { variant: 'info' });
@@ -759,6 +854,56 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
                   <div className='text-[10px] uppercase tracking-wide text-gray-500'>Suggested Scale</div>
                   <div>{result.suggestedPlan.scale.toFixed(6)}</div>
                 </Card>
+              </div>
+
+              <div className='flex flex-wrap items-center gap-2'>
+                <Button
+                  type='button'
+                  size='xs'
+                  variant='outline'
+                  onClick={() => {
+                    queueAnalysisApplyIntent('object_layout');
+                  }}
+                  disabled={!resultSourceSlotId}
+                >
+                  Apply To Object Layout
+                </Button>
+                <Button
+                  type='button'
+                  size='xs'
+                  variant='outline'
+                  onClick={() => {
+                    queueAnalysisApplyIntent('auto_scaler');
+                  }}
+                  disabled={!resultSourceSlotId}
+                >
+                  Apply To Auto Scaler
+                </Button>
+                <Button
+                  type='button'
+                  size='xs'
+                  variant='outline'
+                  onClick={() => {
+                    queueAnalysisApplyIntent('object_layout', { runAfterApply: true });
+                  }}
+                  disabled={!resultSourceSlotId}
+                >
+                  Apply + Run Object Layout
+                </Button>
+                <Button
+                  type='button'
+                  size='xs'
+                  variant='outline'
+                  onClick={() => {
+                    queueAnalysisApplyIntent('auto_scaler', { runAfterApply: true });
+                  }}
+                  disabled={!resultSourceSlotId}
+                >
+                  Apply + Run Auto Scaler
+                </Button>
+                <span className='text-[10px] text-gray-500'>
+                  Applies this analysis plan to Studio controls; optional run executes automatically after apply.
+                </span>
               </div>
 
               {result.fallbackApplied || result.confidence < 0.35 ? (

@@ -13,6 +13,7 @@ import {
   FormSection,
   PanelHeader,
   useToast,
+  Card,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
@@ -398,12 +399,12 @@ export function AdminFilemakerPage(): React.JSX.Element {
       >
         <div className='space-y-2'>
           {persons.length === 0 ? (
-            <div className='rounded border border-dashed border-border/60 bg-card/20 px-3 py-6 text-sm text-gray-400'>
+            <Card variant='subtle-compact' padding='md' className='border-dashed border-border/60 bg-card/20 text-center text-sm text-gray-400'>
               No persons added yet.
-            </div>
+            </Card>
           ) : (
             persons.map((person: FilemakerPerson) => (
-              <div key={person.id} className='rounded-lg border border-border/60 bg-card/35 p-3'>
+              <Card key={person.id} variant='subtle-compact' padding='md' className='border-border/60 bg-card/35'>
                 <div className='flex flex-wrap items-start justify-between gap-3'>
                   <div className='min-w-0 flex-1 space-y-1'>
                     <div className='text-sm font-semibold text-white'>
@@ -443,7 +444,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
                     </Button>
                   </div>
                 </div>
-              </div>
+              </Card>
             ))
           )}
         </div>
@@ -466,12 +467,12 @@ export function AdminFilemakerPage(): React.JSX.Element {
       >
         <div className='space-y-2'>
           {organizations.length === 0 ? (
-            <div className='rounded border border-dashed border-border/60 bg-card/20 px-3 py-6 text-sm text-gray-400'>
+            <Card variant='subtle-compact' padding='md' className='border-dashed border-border/60 bg-card/20 text-center text-sm text-gray-400'>
               No organizations added yet.
-            </div>
+            </Card>
           ) : (
             organizations.map((organization: FilemakerOrganization) => (
-              <div key={organization.id} className='rounded-lg border border-border/60 bg-card/35 p-3'>
+              <Card key={organization.id} variant='subtle-compact' padding='md' className='border-border/60 bg-card/35'>
                 <div className='flex flex-wrap items-start justify-between gap-3'>
                   <div className='min-w-0 flex-1 space-y-1'>
                     <div className='text-sm font-semibold text-white'>{organization.name}</div>
@@ -503,7 +504,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
                     </Button>
                   </div>
                 </div>
-              </div>
+              </Card>
             ))
           )}
         </div>

@@ -2,7 +2,7 @@ import React from 'react';
 
 import type { ListingAttempt, ListingJob, ProductJob } from '@/shared/contracts/integrations';
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { StatusBadge } from '@/shared/ui';
+import { StatusBadge, Card } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 export interface ExportJobDetailItem {
@@ -38,7 +38,7 @@ export function ExportJobDetailModal({
       size='lg'
     >
       <div className='space-y-6 text-sm'>
-        <div className='rounded-lg border border-border/60 bg-card/35 p-4'>
+        <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/35'>
           <h3 className='text-sm font-medium text-white mb-4'>Listing Information</h3>
           <div className='grid grid-cols-2 gap-y-4'>
             <div>
@@ -58,10 +58,10 @@ export function ExportJobDetailModal({
               <p className='text-gray-200'>{formatDateTime(listing.updatedAt)}</p>
             </div>
           </div>
-        </div>
+        </Card>
 
         {selectedListing.listing.exportHistory && (
-          <div className='rounded-lg border border-border/60 bg-card/35 p-4'>
+          <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/35'>
             <h3 className='text-sm font-medium text-white mb-4'>Sync History</h3>
             <div className='space-y-2'>
               {selectedListing.listing.exportHistory.length === 0 ? (
@@ -75,7 +75,7 @@ export function ExportJobDetailModal({
                 ))
               )}
             </div>
-          </div>
+          </Card>
         )}
       </div>
     </DetailModal>

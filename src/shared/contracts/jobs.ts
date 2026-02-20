@@ -87,6 +87,7 @@ export const productAiJobTypeSchema = z.enum([
   'translation',
   'attribute_extraction',
   'image_analysis',
+  'db_backup',
 ]);
 
 export type ProductAiJobTypeDto = z.infer<typeof productAiJobTypeSchema>;

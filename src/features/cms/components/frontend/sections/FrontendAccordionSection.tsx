@@ -6,6 +6,7 @@ import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useOptionalSectionBlockData } from './SectionBlockContext';
 import { useCmsPageContext } from '../CmsPageContext';
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
+import { EmptyState } from '@/shared/ui';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
@@ -48,7 +49,12 @@ export function FrontendAccordionSection({
     return (
       <section style={sectionStyles}>
         <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
-          <p className='text-gray-500 text-center py-8'>Add Heading and Text blocks to create accordion items</p>
+          <EmptyState
+            title='No accordion items'
+            description='Add Heading and Text blocks to create accordion items.'
+            variant='compact'
+            className='bg-card/20 py-8'
+          />
         </div>
       </section>
     );

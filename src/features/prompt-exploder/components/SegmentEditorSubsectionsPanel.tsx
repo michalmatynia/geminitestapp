@@ -9,6 +9,7 @@ import {
   SelectSimple,
   FormField,
   SectionHeader,
+  Card,
 } from '@/shared/ui';
 
 import { PromptExploderHierarchyTreeProvider } from './PromptExploderHierarchyTreeContext';
@@ -98,7 +99,7 @@ export function SegmentEditorSubsectionsPanel(args: {
         <div className='text-xs text-gray-500'>No subsections detected.</div>
       ) : null}
       {segment.subsections.map((subsection: PromptExploderSubsection, subsectionIndex: number) => (
-        <div key={subsection.id} className='space-y-2 rounded border border-border/50 bg-card/20 p-3'>
+        <Card key={subsection.id} variant='subtle-compact' padding='md' className='space-y-2 border-border/50 bg-card/20'>
           <SectionHeader
             title={`Subsection ${subsectionIndex + 1}`}
             size='xxs'
@@ -403,7 +404,7 @@ export function SegmentEditorSubsectionsPanel(args: {
           >
             <PromptExploderHierarchyTreeEditor />
           </PromptExploderHierarchyTreeProvider>
-        </div>
+        </Card>
       ))}
     </div>
   );

@@ -57,7 +57,7 @@ export default async function Home(): Promise<JSX.Element> {
 
   if (defaultSlug) {
     // Try to load the published CMS page linked to this slug
-    const cmsPage = await withTiming('cmsPageBySlug', () => cmsRepository.getPageBySlug(defaultSlug.slug));
+    const cmsPage = (await withTiming('cmsPageBySlug', () => cmsRepository.getPageBySlug(defaultSlug.slug))) as any;
     let allowDrafts = false;
     if (cmsPage && cmsPage.status !== 'published') {
       const session = await withTiming('auth', () => auth());
@@ -68,7 +68,7 @@ export default async function Home(): Promise<JSX.Element> {
       (allowDrafts || cmsPage.status === 'published') &&
       cmsPage.components.length > 0
     );
-    const rendererComponents = (cmsPage?.components ?? []).map((component) => ({
+    const rendererComponents = (cmsPage?.components ?? []).map((component: any) => ({
       type: component.type,
       order: component.order || 0,
       content: (component.content as Record<string, unknown>) ?? {},

@@ -8,6 +8,7 @@ import {
   Input,
   Label,
   SelectSimple,
+  Card,
 } from '@/shared/ui';
 
 import { promptExploderSafeJsonStringify } from '../helpers/formatting';
@@ -198,7 +199,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
   };
 
   return (
-    <div className='mt-2 space-y-2 rounded border border-border/50 bg-card/20 p-2'>
+    <Card variant='subtle-compact' padding='sm' className='mt-2 space-y-2 border-border/50 bg-card/20'>
       <div className='space-y-1'>
         <Label className='text-[10px] text-gray-500'>Logical Operator</Label>
         <SelectSimple size='sm'
@@ -253,9 +254,9 @@ export function SegmentEditorListItemLogicalEditor(args: {
                 <div className='space-y-1'>
                   <Label className='text-[10px] text-gray-500'>Join</Label>
                   {conditionIndex === 0 ? (
-                    <div className='h-9 rounded border border-dashed border-border/60 bg-card/20 px-2 text-[11px] leading-9 text-gray-500'>
+                    <Card variant='subtle-compact' padding='none' className='h-9 flex items-center border-dashed border-border/60 bg-card/20 px-2 text-[11px] text-gray-500'>
                       START
-                    </div>
+                    </Card>
                   ) : (
                     <SelectSimple size='sm'
                       value={condition.joinWithPrevious === 'or' ? 'or' : 'and'}
@@ -382,9 +383,9 @@ export function SegmentEditorListItemLogicalEditor(args: {
                         />
                       )
                   ) : (
-                    <div className='h-9 rounded border border-dashed border-border/60 bg-card/20 px-2 text-[11px] leading-9 text-gray-500'>
+                    <Card variant='subtle-compact' padding='none' className='h-9 flex items-center border-dashed border-border/60 bg-card/20 px-2 text-[11px] text-gray-500'>
                       {selectedParamPath ? 'Value not needed' : 'Select parameter'}
-                    </div>
+                    </Card>
                   )}
                 </div>
 
@@ -418,10 +419,10 @@ export function SegmentEditorListItemLogicalEditor(args: {
           </div>
         </div>
       ) : (
-        <div className='h-9 rounded border border-dashed border-border/60 bg-card/20 px-2 text-[11px] leading-9 text-gray-500'>
+        <Card variant='subtle-compact' padding='none' className='h-9 flex items-center border-dashed border-border/60 bg-card/20 px-2 text-[11px] text-gray-500'>
           No condition
-        </div>
+        </Card>
       )}
-    </div>
+    </Card>
   );
 }

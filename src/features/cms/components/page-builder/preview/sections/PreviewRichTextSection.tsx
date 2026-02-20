@@ -10,6 +10,7 @@ import {
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
 import { usePreviewEditor } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
 import type { BlockInstance, SectionInstance } from '@/shared/contracts/cms';
+import { EmptyState } from '@/shared/ui';
 
 interface PreviewRichTextSectionProps {
   section: SectionInstance;
@@ -84,7 +85,12 @@ export function PreviewRichTextSection({
             ))}
           </BlockContextProvider>
           {showEditorChrome && section.blocks.length === 0 && (
-            <p className='text-gray-500'>Rich text section</p>
+            <EmptyState
+              title='Rich text section'
+              description='Add content blocks here.'
+              variant='compact'
+              className='bg-card/20'
+            />
           )}
         </div>
       </div>

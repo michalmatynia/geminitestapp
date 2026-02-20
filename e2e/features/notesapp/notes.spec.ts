@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 import type {
   NoteRelationWithSource,
   NoteRelationWithTarget,
-} from '@/shared/types/domain/notes';
+} from '@/shared/contracts/notes';
 
 test.describe('Notes page', () => {
   test('lists, filters, and creates notes', async ({ page }) => {

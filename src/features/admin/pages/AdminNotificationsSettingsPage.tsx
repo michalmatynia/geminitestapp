@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 
-import { Button, SelectSimple, useToast, useToastSettings, SectionHeader, FormSection, FormField, Breadcrumbs, FormActions, Hint, PropertyRow } from '@/shared/ui';
+import { Button, SelectSimple, useToast, useToastSettings, SectionHeader, FormSection, FormField, Breadcrumbs, FormActions, Hint, PropertyRow, Tooltip, Card } from '@/shared/ui';
 
 const positionOptions = [
   { value: 'top-right', label: 'Top Right', description: 'Corner top right' },
@@ -121,20 +121,18 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
               <FormField label='Available Colors'>
                 <div className='grid grid-cols-5 gap-2'>
                   {accentOptions.map((option: { value: string; label: string; color: string }) => (
-                    <Button
-                      key={option.value}
-                      onClick={() => setAccent(option.value as AccentType)}
-                      className={`group relative flex items-center justify-center rounded-lg px-3 py-2 transition-all ${
-                        accent === option.value
-                          ? 'ring-2 ring-offset-2 ring-offset-gray-950 ring-white'
-                          : 'border hover:border-border/60'
-                      }`}
-                    >
-                      <div className={`size-6 rounded-md ${option.color}`} />
-                      <span className='absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-xs font-medium text-white group-hover:block'>
-                        {option.label}
-                      </span>
-                    </Button>
+                    <Tooltip key={option.value} content={option.label}>
+                      <Button
+                        onClick={() => setAccent(option.value as AccentType)}
+                        className={`group relative flex items-center justify-center rounded-lg px-3 py-2 transition-all ${
+                          accent === option.value
+                            ? 'ring-2 ring-offset-2 ring-offset-gray-950 ring-white'
+                            : 'border hover:border-border/60'
+                        }`}
+                      >
+                        <div className={`size-6 rounded-md ${option.color}`} />
+                      </Button>
+                    </Tooltip>
                   ))}
                 </div>
               </FormField>
@@ -162,7 +160,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
         {/* Preview Panel */}
         <div>
           <FormSection title='Position Preview' className='sticky top-6 p-6'>
-            <FormSection variant='subtle' className='relative aspect-video w-full bg-gray-900'>
+            <FormSection variant='subtle' className='relative aspect-video w-full bg-card/40'>
               {/* Position indicator */}
               <div
                 className={`absolute size-10 rounded-lg border-2 border-dashed border-emerald-400/50 bg-emerald-400/10 ${preview.x}-3 ${preview.y}-3 flex items-center justify-center`}
@@ -177,7 +175,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
               <div className='absolute bottom-2 right-2 text-xs text-gray-500'>BR</div>
             </FormSection>
 
-            <FormSection variant='subtle-compact' className='mt-4 space-y-2 bg-gray-900 p-3'>
+            <FormSection variant='subtle-compact' className='mt-4 space-y-2 bg-card/40 p-3'>
               <p className='text-xs font-medium text-gray-300'>Current Settings:</p>
               <div className='space-y-1.5'>
                 <PropertyRow

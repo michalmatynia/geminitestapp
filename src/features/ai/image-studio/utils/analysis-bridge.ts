@@ -26,6 +26,7 @@ export type ImageStudioAnalysisSharedLayout = {
 export type ImageStudioAnalysisPlanSnapshot = {
   version: 1;
   slotId: string;
+  sourceSignature: string;
   savedAt: string;
   layout: ImageStudioAnalysisSharedLayout;
   effectiveMode: string;
@@ -40,9 +41,30 @@ export type ImageStudioAnalysisPlanSnapshot = {
 export type ImageStudioAnalysisApplyIntent = {
   version: 1;
   slotId: string;
+  sourceSignature: string;
   createdAt: string;
+  runAfterApply: boolean;
   target: ImageStudioAnalysisApplyTarget;
   layout: ImageStudioAnalysisSharedLayout;
+};
+
+export type ImageStudioAnalysisSourceSignatureInput = {
+  slotId: string | null | undefined;
+  imageFileId?: string | null | undefined;
+  imageFile?: {
+    id?: string | null | undefined;
+    updatedAt?: string | null | undefined;
+    size?: number | null | undefined;
+    width?: number | null | undefined;
+    height?: number | null | undefined;
+    filepath?: string | null | undefined;
+    filename?: string | null | undefined;
+    mimetype?: string | null | undefined;
+  } | null;
+  imageUrl?: string | null | undefined;
+  imageBase64?: string | null | undefined;
+  resolvedImageSrc?: string | null | undefined;
+  clientProcessingImageSrc?: string | null | undefined;
 };
 
 const ANALYSIS_PLAN_SNAPSHOT_LOCAL_KEY_PREFIX =
@@ -54,8 +76,59 @@ const ANALYSIS_APPLY_INTENT_LOCAL_KEY_PREFIX =
 const ANALYSIS_APPLY_INTENT_SESSION_KEY =
   'image_studio_analysis_apply_intent_session';
 
+const normalizeSourceSignature = (raw: unknown): string =>
+  typeof raw === 'string' ? raw.trim() : '';
+
 const clampNumber = (value: number, min: number, max: number): number =>
   Math.max(min, Math.min(max, value));
+
+const normalizeSignatureString = (raw: string | null | undefined): string =>
+  typeof raw === 'string' ? raw.trim() : '';
+
+const normalizeSignatureNumber = (raw: number | null | undefined): string =>
+  Number.isFinite(raw) ? String(Math.floor(Number(raw))) : '';
+
+const encodeSignatureValue = (value: string): string =>
+  encodeURIComponent(value);
+
+const normalizeBase64Signature = (raw: string | null | undefined): string => {
+  const normalized = normalizeSignatureString(raw);
+  if (!normalized) return '';
+  const prefix = normalized.slice(0, 24);
+  const suffix = normalized.slice(-12);
+  return `${normalized.length}:${prefix}:${suffix}`;
+};
+
+export const buildImageStudioAnalysisSourceSignature = (
+  input: ImageStudioAnalysisSourceSignatureInput
+): string => {
+  const slotId = normalizeSignatureString(input.slotId);
+  if (!slotId) return '';
+
+  const imageFile = input.imageFile ?? null;
+  const imageFileWidth = normalizeSignatureNumber(imageFile?.width ?? null);
+  const imageFileHeight = normalizeSignatureNumber(imageFile?.height ?? null);
+  const imageFileDimensions =
+    imageFileWidth && imageFileHeight ? `${imageFileWidth}x${imageFileHeight}` : '';
+
+  const parts = [
+    'v1',
+    `slot=${encodeSignatureValue(slotId)}`,
+    `imageFileId=${encodeSignatureValue(normalizeSignatureString(input.imageFileId))}`,
+    `imageFileRecordId=${encodeSignatureValue(normalizeSignatureString(imageFile?.id))}`,
+    `imageFileUpdatedAt=${encodeSignatureValue(normalizeSignatureString(imageFile?.updatedAt))}`,
+    `imageFileSize=${encodeSignatureValue(normalizeSignatureNumber(imageFile?.size ?? null))}`,
+    `imageFileDimensions=${encodeSignatureValue(imageFileDimensions)}`,
+    `imageFilePath=${encodeSignatureValue(normalizeSignatureString(imageFile?.filepath))}`,
+    `imageFileName=${encodeSignatureValue(normalizeSignatureString(imageFile?.filename))}`,
+    `imageFileMime=${encodeSignatureValue(normalizeSignatureString(imageFile?.mimetype))}`,
+    `imageUrl=${encodeSignatureValue(normalizeSignatureString(input.imageUrl))}`,
+    `resolvedSrc=${encodeSignatureValue(normalizeSignatureString(input.resolvedImageSrc))}`,
+    `clientSrc=${encodeSignatureValue(normalizeSignatureString(input.clientProcessingImageSrc))}`,
+    `base64=${encodeSignatureValue(normalizeBase64Signature(input.imageBase64))}`,
+  ];
+  return parts.join('|');
+};
 
 const normalizeSplitAxes = (
   splitAxesRaw: unknown,
@@ -169,6 +242,7 @@ const parseSnapshot = (raw: string | null): ImageStudioAnalysisPlanSnapshot | nu
     const candidate = parsed as Partial<ImageStudioAnalysisPlanSnapshot>;
     const slotId = typeof candidate.slotId === 'string' ? candidate.slotId.trim() : '';
     if (!slotId) return null;
+    const sourceSignature = normalizeSourceSignature(candidate.sourceSignature);
     const effectiveMode = typeof candidate.effectiveMode === 'string'
       ? candidate.effectiveMode.trim()
       : '';
@@ -203,6 +277,7 @@ const parseSnapshot = (raw: string | null): ImageStudioAnalysisPlanSnapshot | nu
     return {
       version: 1,
       slotId,
+      sourceSignature,
       savedAt,
       layout: normalizeLayout(candidate.layout),
       effectiveMode,
@@ -226,18 +301,24 @@ const parseIntent = (raw: string | null): ImageStudioAnalysisApplyIntent | null 
     const candidate = parsed as Partial<ImageStudioAnalysisApplyIntent>;
     const slotId = typeof candidate.slotId === 'string' ? candidate.slotId.trim() : '';
     if (!slotId) return null;
+    const sourceSignature = normalizeSourceSignature(candidate.sourceSignature);
     const target =
       candidate.target === 'auto_scaler' || candidate.target === 'object_layout'
         ? candidate.target
         : null;
     if (!target) return null;
+    const runAfterApply = typeof candidate.runAfterApply === 'boolean'
+      ? candidate.runAfterApply
+      : false;
     const createdAt = typeof candidate.createdAt === 'string'
       ? candidate.createdAt
       : new Date().toISOString();
     return {
       version: 1,
       slotId,
+      sourceSignature,
       createdAt,
+      runAfterApply,
       target,
       layout: normalizeLayout(candidate.layout),
     };
@@ -274,6 +355,7 @@ export const saveImageStudioAnalysisPlanSnapshot = (
   const normalized: ImageStudioAnalysisPlanSnapshot = {
     version: 1,
     slotId: payload.slotId.trim(),
+    sourceSignature: normalizeSourceSignature(payload.sourceSignature),
     savedAt: payload.savedAt,
     layout: normalizeLayout(payload.layout),
     effectiveMode: payload.effectiveMode.trim(),
@@ -310,14 +392,17 @@ export const loadImageStudioAnalysisApplyIntent = (
 
 export const saveImageStudioAnalysisApplyIntent = (
   projectId: string | null | undefined,
-  payload: Omit<ImageStudioAnalysisApplyIntent, 'version' | 'createdAt'> & {
+  payload: Omit<ImageStudioAnalysisApplyIntent, 'version' | 'createdAt' | 'runAfterApply'> & {
     createdAt?: string;
+    runAfterApply?: boolean;
   }
 ): ImageStudioAnalysisApplyIntent => {
   const normalized: ImageStudioAnalysisApplyIntent = {
     version: 1,
     slotId: payload.slotId.trim(),
+    sourceSignature: normalizeSourceSignature(payload.sourceSignature),
     createdAt: payload.createdAt ?? new Date().toISOString(),
+    runAfterApply: Boolean(payload.runAfterApply),
     target: payload.target,
     layout: normalizeLayout(payload.layout),
   };

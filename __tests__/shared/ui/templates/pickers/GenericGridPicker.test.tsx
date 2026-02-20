@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 
 import { GenericGridPicker } from '@/shared/ui/templates/pickers/GenericGridPicker';
-import type { GridPickerItem } from '@/shared/ui/templates/pickers/types';
+import type { GridPickerItem } from '@/shared/contracts/ui';
 
 describe('GenericGridPicker', () => {
   const mockItems: GridPickerItem[] = [

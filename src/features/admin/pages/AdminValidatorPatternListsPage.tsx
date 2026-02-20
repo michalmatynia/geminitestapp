@@ -16,6 +16,7 @@ import {
   SelectSimple,
   ToggleRow,
   useToast,
+  Card,
 } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -344,15 +345,17 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
         )}
       >
         {lists.length === 0 ? (
-          <div className='rounded border border-dashed border-border/60 bg-card/20 px-3 py-6 text-sm text-gray-400'>
+          <Card variant='subtle-compact' padding='md' className='border-dashed border-border/60 bg-card/20 text-center text-sm text-gray-400'>
             No lists available.
-          </div>
+          </Card>
         ) : (
           <div className='space-y-3'>
             {paginatedLists.map((list: ValidatorPatternList) => (
-              <div
+              <Card
                 key={list.id}
-                className='space-y-3 rounded-lg border border-border/60 bg-card/30 p-3'
+                variant='subtle-compact'
+                padding='md'
+                className='space-y-3 border-border/60 bg-card/30'
               >
                 <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_280px_minmax(0,1fr)_auto] md:items-center'>
                   <Input
@@ -427,7 +430,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
                     {' '}| Updated: {formatUpdatedAt(list.updatedAt ?? undefined)}
                   </div>
                 </div>
-              </div>
+              </Card>
             ))}
             <div className='flex justify-end border-t border-border/50 pt-3'>
               <Pagination

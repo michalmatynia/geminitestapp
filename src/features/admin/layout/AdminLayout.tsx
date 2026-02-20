@@ -127,17 +127,18 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
       : 'ml-56 xl:ml-64';
 
   return (
-    <div className='dark relative h-screen w-full max-w-full overflow-hidden bg-gray-900 text-white'>
+    <div className='dark relative h-screen w-full max-w-full overflow-hidden bg-background text-white'>
       <aside
-        className={`fixed inset-y-0 left-0 z-30 flex flex-col overflow-x-hidden border-r border-gray-700/60 bg-gray-800 transition-all duration-300 ${sidebarClassName}`}
+        className={`fixed inset-y-0 left-0 z-30 flex flex-col overflow-x-hidden border-r border-border/60 bg-card/80 backdrop-blur transition-all duration-300 ${sidebarClassName}`}
         aria-hidden={isMenuHidden}
       >
         {!isMenuHidden ? (
           <>
             <div className={`flex items-center mb-4 ${isMenuCollapsed ? 'justify-center' : 'justify-end'}`}>
               <Button
+                variant='ghost'
                 onClick={handleToggleCollapse}
-                className='p-2 rounded-full hover:bg-gray-700'
+                className='p-2 rounded-full hover:bg-muted/40'
               >
                 <ChevronLeftIcon
                   className={`transition-transform duration-300 ${

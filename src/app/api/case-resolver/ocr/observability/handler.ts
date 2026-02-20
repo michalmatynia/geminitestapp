@@ -16,7 +16,13 @@ const parseLimit = (value: string | null): number | undefined => {
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const url = new URL(req.url);
   const limit = parseLimit(url.searchParams.get('limit'));
-  const snapshot = await getCaseResolverOcrObservabilitySnapshot({ limit });
+  
+  const options: { limit?: number } = {};
+  if (typeof limit === 'number') {
+    options.limit = limit;
+  }
+  
+  const snapshot = await getCaseResolverOcrObservabilitySnapshot(options);
   return NextResponse.json({
     snapshot,
   });

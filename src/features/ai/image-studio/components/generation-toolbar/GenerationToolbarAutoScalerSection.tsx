@@ -1,5 +1,9 @@
 import React from 'react';
 
+import {
+  ImageStudioAnalysisSummaryChip,
+  type ImageStudioAnalysisSummaryChipData,
+} from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
 import { Button, SelectSimple, Tooltip } from '@/shared/ui';
 
 type SelectOption = {
@@ -17,6 +21,11 @@ type AutoScaleTooltipContent = {
 };
 
 type GenerationToolbarAutoScalerSectionProps = {
+  analysisPlanAvailable: boolean;
+  analysisPlanMatchesWorkingSlot: boolean;
+  analysisSummaryData: ImageStudioAnalysisSummaryChipData | null;
+  analysisSummaryIsStale: boolean;
+  analysisConfigMismatchMessage: string | null;
   autoScaleBusy: boolean;
   autoScaleBusyLabel: string;
   autoScaleLayoutPadding: string;
@@ -39,11 +48,17 @@ type GenerationToolbarAutoScalerSectionProps = {
   onAutoScaleLayoutPaddingYChange: (value: string) => void;
   onAutoScaleModeChange: (value: string) => void;
   onAutoScaleShadowPolicyChange: (value: string) => void;
+  onApplyAnalysisPlan: () => void;
   onCancelAutoScale: () => void;
   onToggleAutoScaleLayoutSplitAxes: () => void;
 };
 
 export function GenerationToolbarAutoScalerSection({
+  analysisPlanAvailable,
+  analysisPlanMatchesWorkingSlot,
+  analysisSummaryData,
+  analysisSummaryIsStale,
+  analysisConfigMismatchMessage,
   autoScaleBusy,
   autoScaleBusyLabel,
   autoScaleLayoutPadding,
@@ -66,6 +81,7 @@ export function GenerationToolbarAutoScalerSection({
   onAutoScaleLayoutPaddingYChange,
   onAutoScaleModeChange,
   onAutoScaleShadowPolicyChange,
+  onApplyAnalysisPlan,
   onCancelAutoScale,
   onToggleAutoScaleLayoutSplitAxes,
 }: GenerationToolbarAutoScalerSectionProps): React.JSX.Element {
@@ -86,6 +102,19 @@ export function GenerationToolbarAutoScalerSection({
   return (
     <div className='rounded border border-border/60 bg-card/40 p-3'>
       <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Auto Scaler</div>
+      {analysisSummaryData ? (
+        <ImageStudioAnalysisSummaryChip
+          data={analysisSummaryData}
+          stale={analysisSummaryIsStale}
+          label='Auto Scaler Summary'
+          className='mb-2'
+        />
+      ) : null}
+      {analysisConfigMismatchMessage ? (
+        <div className='mb-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-100'>
+          {analysisConfigMismatchMessage}
+        </div>
+      ) : null}
       <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
         {maybeWrapTooltip(
           autoScaleTooltipContent.mode,
@@ -222,6 +251,18 @@ export function GenerationToolbarAutoScalerSection({
         )}
       </div>
       <div className='mt-2 flex flex-wrap items-center gap-2'>
+        <Button
+          size='xs'
+          type='button'
+          variant='outline'
+          onClick={onApplyAnalysisPlan}
+          disabled={!analysisPlanAvailable || !analysisPlanMatchesWorkingSlot || autoScaleBusy}
+          title={analysisPlanMatchesWorkingSlot
+            ? 'Apply latest analysis plan to auto scaler controls'
+            : 'Latest analysis plan is stale or for a different slot'}
+        >
+          Use Analysis Plan
+        </Button>
         {maybeWrapTooltip(
           autoScaleTooltipContent.apply,
           <Button

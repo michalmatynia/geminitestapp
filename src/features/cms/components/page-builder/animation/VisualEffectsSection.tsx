@@ -6,6 +6,7 @@ import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
 import {
   FormSection,
   FormField,
+  Card,
 } from '@/shared/ui';
 
 import { useAnimationConfigContext } from './AnimationConfigContext';
@@ -179,7 +180,7 @@ export function VisualEffectsSection(): React.ReactNode {
   return (
     <FormSection title='Visual FX' variant='subtle-compact' className='p-3 space-y-4'>
       <div className='space-y-3 mt-4'>
-        <div className='rounded-lg border border-border/40 bg-gray-900/30 p-3 space-y-3'>
+        <Card variant='subtle-compact' padding='sm' className='border-border/40 bg-card/30 space-y-3'>
           <FormField label='Filter type'>
             <SelectField
               label='Filter type'
@@ -210,9 +211,9 @@ export function VisualEffectsSection(): React.ReactNode {
               />
             </div>
           )}
-        </div>
+        </Card>
 
-        <div className='rounded-lg border border-border/40 bg-gray-900/30 p-3 space-y-3'>
+        <Card variant='subtle-compact' padding='sm' className='border-border/40 bg-card/30 space-y-3'>
           <FormField label='Clip path'>
             <SelectField
               label='Clip path'
@@ -243,9 +244,9 @@ export function VisualEffectsSection(): React.ReactNode {
               />
             </div>
           )}
-        </div>
+        </Card>
 
-        <div className='rounded-lg border border-border/40 bg-gray-900/30 p-3 space-y-3'>
+        <Card variant='subtle-compact' padding='sm' className='border-border/40 bg-card/30 space-y-3'>
           <div className='grid gap-3 sm:grid-cols-2'>
             <RangeField
               label='Radius from'
@@ -266,9 +267,9 @@ export function VisualEffectsSection(): React.ReactNode {
               suffix='px'
             />
           </div>
-        </div>
+        </Card>
 
-        <div className='rounded-lg border border-border/40 bg-gray-900/30 p-3 space-y-3'>
+        <Card variant='subtle-compact' padding='sm' className='border-border/40 bg-card/30 space-y-3'>
           <FormSection title='Shadow' variant='subtle-compact' className='p-0'>
             <div className='grid gap-4 lg:grid-cols-2 mt-2'>
               <div className='space-y-3'>
@@ -385,9 +386,9 @@ export function VisualEffectsSection(): React.ReactNode {
               </div>
             </div>
           </FormSection>
-        </div>
+        </Card>
 
-        <div className='rounded-lg border border-border/40 bg-gray-900/30 p-3 space-y-3'>
+        <Card variant='subtle-compact' padding='sm' className='border-border/40 bg-card/30 space-y-3'>
           <div className='grid gap-3 sm:grid-cols-2'>
             <ColorPickerField
               label='Background from'
@@ -400,7 +401,7 @@ export function VisualEffectsSection(): React.ReactNode {
               onChange={handleVisualBackgroundToChange}
             />
           </div>
-        </div>
+        </Card>
       </div>
     </FormSection>
   );

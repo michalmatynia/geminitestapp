@@ -92,6 +92,11 @@ export interface ApiHandlerContext {
   rateLimitHeaders?: Record<string, string>;
 }
 
+export type ApiRouteHandler = (
+  req: any, // NextRequest
+  ctx: ApiHandlerContext
+) => Promise<Response>;
+
 export interface ApiHandlerOptions {
   requireAuth?: boolean;
   allowedMethods?: string[];

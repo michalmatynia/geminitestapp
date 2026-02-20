@@ -1536,6 +1536,7 @@ export type AiPathRunEventListOptions = AiPathRunEventListOptionsDto;
 export const aiPathRunListOptionsSchema = z.object({
   userId: z.string().nullable().optional(),
   pathId: z.string().optional(),
+  nodeId: z.string().optional(),
   requestId: z.string().optional(),
   source: z.string().optional(),
   sourceMode: z.enum(['include', 'exclude']).optional(),

@@ -5,7 +5,7 @@ import React from 'react';
 
 import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
 import type { NoteTagDto as TagRecord, NoteWithRelationsDto as NoteWithRelations } from '@/shared/contracts/notes';
-import { Button, Input, Label, Checkbox, SelectSimple, Badge, FormField } from '@/shared/ui';
+import { Button, Input, Label, Checkbox, SelectSimple, Badge, FormField, Card } from '@/shared/ui';
 
 
 interface NoteMetadataProps {
@@ -72,7 +72,7 @@ export function NoteMetadata({
             placeholder='Enter note title'
             value={title}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setTitle(e.target.value)}
-            className='w-full rounded-lg border bg-gray-800 px-4 py-2 text-white'
+            className='w-full rounded-lg border bg-card/40 px-4 py-2 text-white'
             required
           />
         </FormField>
@@ -100,7 +100,7 @@ export function NoteMetadata({
             type='color'
             value={color}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setColor(e.target.value)}
-            className='h-10 w-full cursor-pointer rounded-lg border bg-gray-800 p-1'
+            className='h-10 w-full cursor-pointer rounded-lg border bg-card/40 p-1'
           />
           <Button
             type='button'
@@ -169,13 +169,13 @@ export function NoteMetadata({
           </FormField>
 
           {isTagDropdownOpen && (tagInput || filteredTags.length > 0) && (
-            <div className='absolute z-10 mt-1 w-full rounded-md border bg-gray-800 shadow-lg'>
+            <Card variant='glass' padding='none' className='absolute z-10 mt-1 w-full border bg-card shadow-lg'>
               <ul className='max-h-60 overflow-auto py-1 text-sm text-gray-300'>
                 {filteredTags.map((tag: TagRecord) => (
                   <li
                     key={tag.id}
                     onClick={(): void => handleAddTag(tag)}
-                    className='cursor-pointer px-4 py-2 hover:bg-gray-700 hover:text-white'
+                    className='cursor-pointer px-4 py-2 hover:bg-muted/50 hover:text-white'
                   >
                     {tag.name}
                   </li>
@@ -186,13 +186,13 @@ export function NoteMetadata({
                   ) && (
                   <li
                     onClick={(): void => { void handleCreateTag(); }}
-                    className='cursor-pointer px-4 py-2 text-blue-400 hover:bg-gray-700'
+                    className='cursor-pointer px-4 py-2 text-blue-400 hover:bg-muted/50'
                   >
                       Create &quot;{tagInput}&quot;
                   </li>
                 )}
               </ul>
-            </div>
+            </Card>
           )}
           {isTagDropdownOpen && (
             <div
@@ -258,7 +258,7 @@ export function NoteMetadata({
             />
 
             {isRelatedDropdownOpen && relatedNoteQuery && (
-              <div className='absolute z-10 mt-1 w-full rounded-md border bg-gray-800 shadow-lg'>
+              <Card variant='glass' padding='none' className='absolute z-10 mt-1 w-full border bg-card shadow-lg'>
                 <ul className='max-h-60 overflow-auto py-1 text-sm text-gray-300'>
                   {isRelatedLoading && (
                     <li className='px-4 py-2 text-gray-500'>Searching...</li>
@@ -292,7 +292,7 @@ export function NoteMetadata({
                           setRelatedNoteQuery('');
                           setIsRelatedDropdownOpen(false);
                         }}
-                        className='cursor-pointer px-4 py-2 hover:bg-gray-700 hover:text-white'
+                        className='cursor-pointer px-4 py-2 hover:bg-muted/50 hover:text-white'
                       >
                         {candidate.title}
                       </li>
@@ -311,7 +311,7 @@ export function NoteMetadata({
                     <li className='px-4 py-2 text-gray-500'>No matches</li>
                   )}
                 </ul>
-              </div>
+              </Card>
             )}
             {isRelatedDropdownOpen && (
               <div

@@ -19,7 +19,6 @@ import {
   sanitizeEdges,
   validateConnection,
 } from '@/features/ai/ai-paths/lib';
-import type { ToastFn } from '@/shared/contracts/ai-paths-runtime';
 import { type ConfirmConfig, useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils/drag-drop';
 
@@ -35,7 +34,7 @@ type UseAiPathsCanvasInteractionsArgs = {
   confirm: (config: ConfirmConfig) => void;
   clearRuntimeInputsForEdges: (removed: Edge[], remaining: Edge[]) => void;
   reportAiPathsError: (error: unknown, context: Record<string, unknown>, fallbackMessage?: string) => void;
-  toast: ToastFn;
+  toast: (message: string, options?: { variant?: 'success' | 'error' | 'info' | 'warning'; duration?: number; error?: unknown }) => void;
 };
 
 type ConnectingState = {

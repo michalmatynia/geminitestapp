@@ -34,6 +34,7 @@ export const noteThemeSchema = namedDtoSchema.extend({
   description: z.string().nullable(),
   isDefault: z.boolean(),
   themeData: z.record(z.string(), z.unknown()),
+  notebookId: z.string().nullable().optional(),
 });
 
 export type NoteThemeDto = z.infer<typeof noteThemeSchema>;
@@ -222,6 +223,13 @@ export const noteFiltersSchema = z.object({
   pinnedOnly: z.boolean().optional(),
   favoriteOnly: z.boolean().optional(),
   archivedOnly: z.boolean().optional(),
+  truncateContent: z.boolean().optional(),
+  searchScope: z.enum(['both', 'title', 'content']).optional(),
+  isPinned: z.boolean().optional(),
+  isArchived: z.boolean().optional(),
+  isFavorite: z.boolean().optional(),
+  tagIds: z.array(z.string()).optional(),
+  categoryIds: z.array(z.string()).optional(),
 });
 
 export type NoteFiltersDto = z.infer<typeof noteFiltersSchema>;

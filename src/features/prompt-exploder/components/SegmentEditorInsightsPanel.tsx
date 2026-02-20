@@ -62,9 +62,11 @@ export function SegmentEditorInsightsPanel(args: {
       ) : (
         <div className='space-y-2'>
           {matchedRuleDetails.map((matchedRule) => (
-            <div
+            <Card
               key={matchedRule.id}
-              className='rounded border border-border/50 bg-card/20 p-2'
+              variant='subtle-compact'
+              padding='sm'
+              className='border-border/50 bg-card/20'
             >
               <div className='flex items-center justify-between gap-2'>
                 <span className='truncate text-[11px] font-medium text-gray-200'>
@@ -80,7 +82,7 @@ export function SegmentEditorInsightsPanel(args: {
                 {matchedRule.confidenceBoost.toFixed(2)} · heading{' '}
                 {matchedRule.treatAsHeading ? 'yes' : 'no'}
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}
@@ -145,9 +147,11 @@ export function SegmentEditorInsightsPanel(args: {
         ) : (
           <div className='space-y-2'>
             {similarTemplateCandidates.map((candidate) => (
-              <div
+              <Card
                 key={candidate.id}
-                className='rounded border border-border/50 bg-card/20 p-2'
+                variant='subtle-compact'
+                padding='sm'
+                className='border-border/50 bg-card/20'
               >
                 <div className='flex items-center justify-between gap-2'>
                   <span className='truncate text-[11px] font-medium text-gray-200'>
@@ -184,7 +188,7 @@ export function SegmentEditorInsightsPanel(args: {
                     Use Target
                   </Button>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         )}

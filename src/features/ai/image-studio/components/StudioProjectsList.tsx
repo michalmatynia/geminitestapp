@@ -19,6 +19,7 @@ import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   Badge,
   Button,
+  Card,
   Input,
   SearchInput,
   useToast,

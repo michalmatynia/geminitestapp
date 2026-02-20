@@ -13,6 +13,7 @@ import {
   FormSection,
   SelectSimple,
   EmptyState,
+  Card,
 } from '@/shared/ui';
 
 import { CrudPanel } from '../components/CrudPanel';
@@ -49,10 +50,10 @@ function DatabaseOperationsContent(): React.JSX.Element {
       }
     >
       {isProduction && (
-        <div className='mb-6 flex items-center gap-2 rounded-lg border border-yellow-500/40 bg-yellow-500/10 p-4 text-xs text-yellow-300'>
+        <Card variant='warning' padding='md' className='mb-6 flex items-center gap-2 text-xs'>
           <AlertTriangleIcon className='size-4' />
           Database operations are disabled in production environments.
-        </div>
+        </Card>
       )}
 
       <Tabs defaultValue='sql' className='w-full'>
@@ -71,9 +72,9 @@ function DatabaseOperationsContent(): React.JSX.Element {
 
         <TabsContent value='crud'>
           {previewLoading && (
-            <div className='rounded-lg border border-border/60 bg-card/50 p-5'>
+            <Card variant='subtle' padding='lg' className='border-border/60 bg-card/50'>
               <p className='text-xs text-gray-400'>Loading table metadata...</p>
-            </div>
+            </Card>
           )}
           {!previewLoading && tableDetails.length === 0 && (
             <EmptyState

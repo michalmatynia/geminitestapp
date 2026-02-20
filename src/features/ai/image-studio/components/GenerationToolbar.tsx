@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
@@ -56,6 +56,16 @@ import {
 import { GenerationToolbarMaskSection } from './generation-toolbar/GenerationToolbarMaskSection';
 import { GenerationToolbarUpscaleSection } from './generation-toolbar/GenerationToolbarUpscaleSection';
 import { studioKeys } from '../hooks/useImageStudioQueries';
+import {
+  buildImageStudioAnalysisSourceSignature,
+  clearImageStudioAnalysisApplyIntent,
+  IMAGE_STUDIO_ANALYSIS_PLAN_CHANGED_EVENT,
+  loadImageStudioAnalysisApplyIntent,
+  loadImageStudioAnalysisPlanSnapshot,
+  type ImageStudioAnalysisApplyTarget,
+  type ImageStudioAnalysisPlanSnapshot,
+  type ImageStudioAnalysisSharedLayout,
+} from '../utils/analysis-bridge';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
 import {
   buildObjectLayoutPresetOptions,
@@ -166,6 +176,8 @@ const normalizeCenterThreshold = (
   if (!Number.isFinite(parsed)) return fallback;
   return Math.max(min, Math.min(max, Math.round(parsed)));
 };
+const formatLayoutPercent = (value: number): string =>
+  String(Number(value.toFixed(2)));
 
 const normalizeMaskShapeForExport = (shape: unknown): MaskShapeForExport | null => {
   if (!shape || typeof shape !== 'object') return null;
@@ -265,6 +277,8 @@ export function GenerationToolbar(): React.JSX.Element {
   const [centerLayoutShadowPolicy, setCenterLayoutShadowPolicy] = useState<CenterShadowPolicy>('auto');
   const [centerLayoutCustomPresets, setCenterLayoutCustomPresets] = useState<ObjectLayoutCustomPreset[]>([]);
   const [centerLayoutPresetDraftName, setCenterLayoutPresetDraftName] = useState('');
+  const [analysisPlanSnapshot, setAnalysisPlanSnapshot] = useState<ImageStudioAnalysisPlanSnapshot | null>(null);
+  const [queuedAnalysisRunTarget, setQueuedAnalysisRunTarget] = useState<ImageStudioAnalysisApplyTarget | null>(null);
   const [autoScaleLayoutPadding, setAutoScaleLayoutPadding] = useState<string>(
     String(CENTER_LAYOUT_DEFAULT_PADDING_PERCENT)
   );
@@ -299,6 +313,7 @@ export function GenerationToolbar(): React.JSX.Element {
   const autoScaleAbortControllerRef = useRef<AbortController | null>(null);
   const skipCenterAdvancedDefaultsSaveRef = useRef(true);
   const selectedCenterCustomPresetIdRef = useRef<string | null>(null);
+  const lastConsumedAnalysisIntentRef = useRef<string | null>(null);
 
   const maskShapesForExport = useMemo<MaskShapeForExport[]>(
     () =>
@@ -348,6 +363,19 @@ export function GenerationToolbar(): React.JSX.Element {
     () => resolveClientProcessingImageSrc(workingSlot, workingSlotImageSrc),
     [workingSlot, workingSlotImageSrc]
   );
+  const workingSourceSignature = useMemo(() => {
+    const slotId = workingSlot?.id?.trim() ?? '';
+    if (!slotId) return '';
+    return buildImageStudioAnalysisSourceSignature({
+      slotId,
+      imageFileId: workingSlot?.imageFileId ?? null,
+      imageFile: workingSlot?.imageFile ?? null,
+      imageUrl: workingSlot?.imageUrl ?? null,
+      imageBase64: workingSlot?.imageBase64 ?? null,
+      resolvedImageSrc: workingSlotImageSrc,
+      clientProcessingImageSrc,
+    });
+  }, [clientProcessingImageSrc, workingSlot, workingSlotImageSrc]);
   const activeProject = useMemo(
     () =>
       (projectsQuery.data ?? []).find((project) => project.id === projectId) ??
@@ -400,6 +428,167 @@ export function GenerationToolbar(): React.JSX.Element {
       window.removeEventListener('storage', handleStorage);
     };
   }, [activeProjectId]);
+
+  const applyAnalysisLayoutToCenter = useCallback((
+    layout: ImageStudioAnalysisSharedLayout,
+    source: 'manual' | 'queued'
+  ): void => {
+    const splitAxes =
+      layout.splitAxes ||
+      Math.abs(layout.paddingXPercent - layout.paddingYPercent) >= 0.01;
+    const linkedPadding = formatLayoutPercent(
+      splitAxes
+        ? (layout.paddingXPercent + layout.paddingYPercent) / 2
+        : layout.paddingPercent
+    );
+    const paddingX = formatLayoutPercent(layout.paddingXPercent);
+    const paddingY = formatLayoutPercent(layout.paddingYPercent);
+
+    setCenterMode((previous) => (
+      previous === 'client_object_layout_v1' || previous === 'server_object_layout_v1'
+        ? previous
+        : 'server_object_layout_v1'
+    ));
+    setCenterLayoutAdvancedEnabled(true);
+    setCenterLayoutDetection(layout.detection);
+    setCenterLayoutWhiteThreshold(String(layout.whiteThreshold));
+    setCenterLayoutChromaThreshold(String(layout.chromaThreshold));
+    setCenterLayoutShadowPolicy(layout.shadowPolicy);
+    setCenterLayoutSplitAxes(splitAxes);
+    setCenterLayoutPadding(linkedPadding);
+    setCenterLayoutPaddingX(splitAxes ? paddingX : linkedPadding);
+    setCenterLayoutPaddingY(splitAxes ? paddingY : linkedPadding);
+
+    const fillMissingCanvasWhite = layout.fillMissingCanvasWhite && Boolean(projectCanvasSize);
+    setCenterLayoutFillMissingCanvasWhite(fillMissingCanvasWhite);
+    if (layout.fillMissingCanvasWhite && !projectCanvasSize) {
+      toast('Analysis plan requested canvas fill, but current project canvas size is unavailable.', {
+        variant: 'info',
+      });
+    }
+    if (source === 'manual') {
+      toast('Applied analysis plan to Object Layout controls.', { variant: 'success' });
+    } else {
+      toast('Applied queued analysis plan to Object Layout controls.', { variant: 'success' });
+    }
+  }, [projectCanvasSize, toast]);
+
+  const applyAnalysisLayoutToAutoScaler = useCallback((
+    layout: ImageStudioAnalysisSharedLayout,
+    source: 'manual' | 'queued'
+  ): void => {
+    const splitAxes =
+      layout.splitAxes ||
+      Math.abs(layout.paddingXPercent - layout.paddingYPercent) >= 0.01;
+    const linkedPadding = formatLayoutPercent(
+      splitAxes
+        ? (layout.paddingXPercent + layout.paddingYPercent) / 2
+        : layout.paddingPercent
+    );
+    const paddingX = formatLayoutPercent(layout.paddingXPercent);
+    const paddingY = formatLayoutPercent(layout.paddingYPercent);
+
+    // Auto scaler shares detection policy with object layout controls.
+    setCenterLayoutAdvancedEnabled(true);
+    setCenterLayoutDetection(layout.detection);
+    setCenterLayoutWhiteThreshold(String(layout.whiteThreshold));
+    setCenterLayoutChromaThreshold(String(layout.chromaThreshold));
+    setCenterLayoutShadowPolicy(layout.shadowPolicy);
+
+    setAutoScaleLayoutShadowPolicy(layout.shadowPolicy);
+    setAutoScaleLayoutSplitAxes(splitAxes);
+    setAutoScaleLayoutPadding(linkedPadding);
+    setAutoScaleLayoutPaddingX(splitAxes ? paddingX : linkedPadding);
+    setAutoScaleLayoutPaddingY(splitAxes ? paddingY : linkedPadding);
+
+    const fillMissingCanvasWhite = layout.fillMissingCanvasWhite && Boolean(projectCanvasSize);
+    setAutoScaleLayoutFillMissingCanvasWhite(fillMissingCanvasWhite);
+    if (layout.fillMissingCanvasWhite && !projectCanvasSize) {
+      toast('Analysis plan requested canvas fill, but current project canvas size is unavailable.', {
+        variant: 'info',
+      });
+    }
+    if (source === 'manual') {
+      toast('Applied analysis plan to Auto Scaler controls.', { variant: 'success' });
+    } else {
+      toast('Applied queued analysis plan to Auto Scaler controls.', { variant: 'success' });
+    }
+  }, [projectCanvasSize, toast]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const syncSnapshot = (): void => {
+      setAnalysisPlanSnapshot(loadImageStudioAnalysisPlanSnapshot(activeProjectId));
+    };
+    const handleStorage = (event: StorageEvent): void => {
+      if (
+        event.key &&
+        !event.key.includes('image_studio_analysis_plan_snapshot_') &&
+        !event.key.includes('image_studio_analysis_apply_intent_')
+      ) {
+        return;
+      }
+      syncSnapshot();
+    };
+    syncSnapshot();
+    window.addEventListener(IMAGE_STUDIO_ANALYSIS_PLAN_CHANGED_EVENT, syncSnapshot);
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener(IMAGE_STUDIO_ANALYSIS_PLAN_CHANGED_EVENT, syncSnapshot);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [activeProjectId]);
+
+  useEffect(() => {
+    const intent = loadImageStudioAnalysisApplyIntent(activeProjectId);
+    if (!intent) return;
+    const intentSignature = `${intent.createdAt}:${intent.slotId}:${intent.target}`;
+    if (lastConsumedAnalysisIntentRef.current === intentSignature) return;
+
+    const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
+    if (!normalizedWorkingSlotId || intent.slotId !== normalizedWorkingSlotId) return;
+    const intentSourceSignature = intent.sourceSignature.trim();
+    if (!intentSourceSignature) {
+      clearImageStudioAnalysisApplyIntent(activeProjectId);
+      lastConsumedAnalysisIntentRef.current = intentSignature;
+      toast('Queued analysis plan is missing source metadata. Run analysis again before applying.', {
+        variant: 'info',
+      });
+      return;
+    }
+    if (!workingSourceSignature || intentSourceSignature !== workingSourceSignature) {
+      clearImageStudioAnalysisApplyIntent(activeProjectId);
+      lastConsumedAnalysisIntentRef.current = intentSignature;
+      toast('Queued analysis plan is stale for the current image revision. Rerun analysis first.', {
+        variant: 'info',
+      });
+      return;
+    }
+
+    if (intent.target === 'object_layout') {
+      applyAnalysisLayoutToCenter(intent.layout, 'queued');
+    } else {
+      applyAnalysisLayoutToAutoScaler(intent.layout, 'queued');
+    }
+    if (intent.runAfterApply) {
+      setQueuedAnalysisRunTarget(intent.target);
+      toast(
+        intent.target === 'object_layout'
+          ? 'Running queued Object Layout action from analysis plan.'
+          : 'Running queued Auto Scaler action from analysis plan.',
+        { variant: 'info' }
+      );
+    }
+    clearImageStudioAnalysisApplyIntent(activeProjectId);
+    lastConsumedAnalysisIntentRef.current = intentSignature;
+  }, [
+    activeProjectId,
+    applyAnalysisLayoutToAutoScaler,
+    applyAnalysisLayoutToCenter,
+    toast,
+    workingSourceSignature,
+    workingSlot?.id,
+  ]);
 
   const cropDiagnosticsRef = useRef<CropRectResolutionDiagnostics | null>(null);
 
@@ -1353,6 +1542,25 @@ export function GenerationToolbar(): React.JSX.Element {
     controller.abort();
   };
 
+  useEffect(() => {
+    if (!queuedAnalysisRunTarget) return;
+    if (queuedAnalysisRunTarget === 'object_layout') {
+      if (centerBusy || centerRequestInFlightRef.current) return;
+      setQueuedAnalysisRunTarget(null);
+      void handleCenterObject();
+      return;
+    }
+    if (autoScaleBusy || autoScaleRequestInFlightRef.current) return;
+    setQueuedAnalysisRunTarget(null);
+    void handleAutoScale();
+  }, [
+    autoScaleBusy,
+    centerBusy,
+    handleAutoScale,
+    handleCenterObject,
+    queuedAnalysisRunTarget,
+  ]);
+
   const maskGenerationBusy = maskGenLoading;
   const maskGenerationLabel = maskGenerationBusy
     ? 'Generating Mask...'
@@ -1562,6 +1770,59 @@ export function GenerationToolbar(): React.JSX.Element {
   );
   const generationModel = studioSettings.targetAi.openai.model;
   const generationImageCount = String(studioSettings.targetAi.openai.image.n ?? 1);
+  const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
+  const analysisPlanSlotId = analysisPlanSnapshot?.slotId?.trim() ?? '';
+  const analysisPlanSourceSignature = analysisPlanSnapshot?.sourceSignature?.trim() ?? '';
+  const analysisPlanHasSourceSignature = analysisPlanSourceSignature.length > 0;
+  const analysisPlanAvailable = Boolean(analysisPlanSnapshot);
+  const analysisPlanMatchesWorkingSlot = Boolean(
+    analysisPlanSnapshot &&
+    normalizedWorkingSlotId &&
+    analysisPlanSlotId === normalizedWorkingSlotId &&
+    analysisPlanHasSourceSignature &&
+    workingSourceSignature &&
+    analysisPlanSourceSignature === workingSourceSignature
+  );
+
+  const handleApplyAnalysisPlanToCenter = (): void => {
+    if (!analysisPlanSnapshot) {
+      toast('No analysis plan is available yet. Run analysis first.', { variant: 'info' });
+      return;
+    }
+    if (!normalizedWorkingSlotId || analysisPlanSlotId !== normalizedWorkingSlotId) {
+      toast('Latest analysis plan belongs to a different slot. Select that slot first.', { variant: 'info' });
+      return;
+    }
+    if (!analysisPlanHasSourceSignature) {
+      toast('Analysis plan is missing source metadata. Rerun analysis first.', { variant: 'info' });
+      return;
+    }
+    if (!workingSourceSignature || analysisPlanSourceSignature !== workingSourceSignature) {
+      toast('Latest analysis plan is stale for the current slot image. Rerun analysis first.', { variant: 'info' });
+      return;
+    }
+    applyAnalysisLayoutToCenter(analysisPlanSnapshot.layout, 'manual');
+  };
+
+  const handleApplyAnalysisPlanToAutoScaler = (): void => {
+    if (!analysisPlanSnapshot) {
+      toast('No analysis plan is available yet. Run analysis first.', { variant: 'info' });
+      return;
+    }
+    if (!normalizedWorkingSlotId || analysisPlanSlotId !== normalizedWorkingSlotId) {
+      toast('Latest analysis plan belongs to a different slot. Select that slot first.', { variant: 'info' });
+      return;
+    }
+    if (!analysisPlanHasSourceSignature) {
+      toast('Analysis plan is missing source metadata. Rerun analysis first.', { variant: 'info' });
+      return;
+    }
+    if (!workingSourceSignature || analysisPlanSourceSignature !== workingSourceSignature) {
+      toast('Latest analysis plan is stale for the current slot image. Rerun analysis first.', { variant: 'info' });
+      return;
+    }
+    applyAnalysisLayoutToAutoScaler(analysisPlanSnapshot.layout, 'manual');
+  };
 
   return (
     <div className='space-y-3'>
@@ -1696,6 +1957,8 @@ export function GenerationToolbar(): React.JSX.Element {
       />
 
       <GenerationToolbarCenterSection
+        analysisPlanAvailable={analysisPlanAvailable}
+        analysisPlanMatchesWorkingSlot={analysisPlanMatchesWorkingSlot}
         centerBusy={centerBusy}
         centerBusyLabel={centerBusyLabel}
         centerGuidesEnabled={centerGuidesEnabled}
@@ -1802,6 +2065,7 @@ export function GenerationToolbar(): React.JSX.Element {
         onCenterLayoutShadowPolicyChange={(value: string) => {
           setCenterLayoutShadowPolicy(value as CenterShadowPolicy);
         }}
+        onApplyAnalysisPlan={handleApplyAnalysisPlanToCenter}
         onCenterModeChange={(value: string) => {
           setCenterMode(value as CenterMode);
         }}
@@ -1835,6 +2099,8 @@ export function GenerationToolbar(): React.JSX.Element {
       />
 
       <GenerationToolbarAutoScalerSection
+        analysisPlanAvailable={analysisPlanAvailable}
+        analysisPlanMatchesWorkingSlot={analysisPlanMatchesWorkingSlot}
         autoScaleBusy={autoScaleBusy}
         autoScaleBusyLabel={autoScaleBusyLabel}
         autoScaleLayoutPadding={autoScaleLayoutPadding}
@@ -1876,6 +2142,7 @@ export function GenerationToolbar(): React.JSX.Element {
         onAutoScaleShadowPolicyChange={(value: string) => {
           setAutoScaleLayoutShadowPolicy(value as CenterShadowPolicy);
         }}
+        onApplyAnalysisPlan={handleApplyAnalysisPlanToAutoScaler}
         onAutoScaleModeChange={(value: string) => {
           setAutoScaleMode(value as AutoScalerMode);
         }}

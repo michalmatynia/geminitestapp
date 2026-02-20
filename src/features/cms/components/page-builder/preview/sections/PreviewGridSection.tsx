@@ -33,7 +33,7 @@ import {
   buildScopedCustomCss,
   getCustomCssSelector,
 } from '@/features/cms/utils/custom-css';
-import { Separator } from '@/shared/ui';
+import { Separator, EmptyState } from '@/shared/ui';
 
 interface PreviewGridSectionProps {
   section: SectionInstance;
@@ -190,8 +190,13 @@ export function PreviewGridSection({
         <div className='relative z-10'>
           {rowsToRender.length === 0 ? (
             showEditorChrome ? (
-              <div className='flex min-h-[60px] items-center justify-center text-sm text-gray-500'>
-                No rows
+              <div className='py-8'>
+                <EmptyState
+                  title='No rows'
+                  description='Add rows to this grid section.'
+                  variant='compact'
+                  className='bg-card/20'
+                />
               </div>
             ) : null
           ) : showEditorChrome && isEmptyGrid && hasZeroSpacing && !hasFixedHeights ? (
@@ -371,7 +376,15 @@ export function PreviewGridSection({
                                         return ((b.settings?.['backgroundTarget'] as string) || 'none') === 'none';
                                       });
                                       if (contentBlocks.length === 0 && showEditorChrome) {
-                                        return <div className='flex min-h-[60px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600'>Column</div>;
+                                        return (
+                                          <div className='flex h-full items-center justify-center p-4'>
+                                            <EmptyState
+                                              title='Empty Column'
+                                              variant='compact'
+                                              className='bg-transparent border-none'
+                                            />
+                                          </div>
+                                        );
                                       }
                                       const isSingleBlock = contentBlocks.length === 1;
                                       const shouldStretch = isSingleBlock && (rowHeightMode === 'fixed' || columnHeightMode === 'fixed');
@@ -404,7 +417,13 @@ export function PreviewGridSection({
                                       );
                                     })()
                                   ) : showEditorChrome ? (
-                                    <div className='flex min-h-[60px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600'>Column</div>
+                                    <div className='flex h-full items-center justify-center p-4'>
+                                      <EmptyState
+                                        title='Empty Column'
+                                        variant='compact'
+                                        className='bg-transparent border-none'
+                                      />
+                                    </div>
                                   ) : null}
                                 </div>
                               </InspectorHover>

@@ -1,7 +1,7 @@
 'use client';
 
 import { ColumnDef, ExpandedState, Updater } from '@tanstack/react-table';
-import { ChevronDown, ChevronRight, Download, RefreshCw, Save, Check } from 'lucide-react';
+import { ChevronDown, ChevronRight, Download, Save, Check } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
@@ -194,20 +194,21 @@ export function CategoryMapperTable(): React.JSX.Element {
             size='xs'
             className='h-8'
             onClick={(): void => { void handleFetchFromBase(); }}
-            disabled={isFetchPending}
+            loading={isFetchPending}
           >
-            {isFetchPending ? <RefreshCw className='mr-2 h-3.5 w-3.5 animate-spin' /> : <Download className='mr-2 h-3.5 w-3.5' />}
-            {isFetchPending ? 'Fetching...' : 'Fetch Categories'}
+            <Download className='mr-2 h-3.5 w-3.5' />
+            Fetch Categories
           </Button>
 
           <Button
             size='xs'
             className='h-8'
             onClick={(): void => { void handleSave(); }}
-            disabled={isSavePending || pendingCount === 0}
+            loading={isSavePending}
+            disabled={pendingCount === 0}
           >
-            {isSavePending ? <RefreshCw className='mr-2 h-3.5 w-3.5 animate-spin' /> : <Save className='mr-2 h-3.5 w-3.5' />}
-            {isSavePending ? 'Saving...' : `Save (${pendingCount})`}
+            <Save className='mr-2 h-3.5 w-3.5' />
+            Save {pendingCount > 0 ? `(${pendingCount})` : ''}
           </Button>
         </div>
       }

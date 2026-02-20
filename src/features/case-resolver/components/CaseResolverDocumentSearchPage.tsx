@@ -4,7 +4,7 @@ import { ArrowDown, ArrowUp, FileImage, FileText, FolderOpen, Plus } from 'lucid
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { DocumentSearchPage } from '@/features/document-search';
-import { Button, EmptyState, Pagination, SearchInput, SelectSimple } from '@/shared/ui';
+import { Button, EmptyState, Pagination, SearchInput, SelectSimple, Card, Badge } from '@/shared/ui';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 
@@ -258,9 +258,9 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
         </>
       )}
       titleAdornment={(
-        <div className='rounded-md border border-border/50 bg-card/40 px-2 py-1 text-xs text-gray-300'>
+        <Badge variant='neutral' className='bg-card/40 font-normal'>
           {filteredFiles.length} result{filteredFiles.length === 1 ? '' : 's'}
-        </div>
+        </Badge>
       )}
       endAdornment={(
         <Pagination
@@ -379,7 +379,7 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
             : 'No case identifier';
           const categoryLabel = file.categoryId ? categoryPathById.get(file.categoryId) ?? 'Unknown category' : 'No category';
           return (
-            <div key={file.id} className='rounded-lg border border-border/60 bg-card/45 p-3'>
+            <Card key={file.id} variant='subtle' padding='md' className='bg-card/45'>
               <div className='mb-1 flex items-start justify-between gap-2'>
                 <button
                   type='button'
@@ -390,9 +390,9 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
                 >
                   {file.name}
                 </button>
-                <div className='shrink-0 rounded border border-border/60 bg-black/30 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-300'>
+                <Badge variant='neutral' className='shrink-0 border-border/60 bg-black/30 font-normal uppercase'>
                   {file.fileType}
-                </div>
+                </Badge>
               </div>
               <div className='mb-2 text-[11px] text-gray-500'>{file.folder || '(root)'}</div>
               <div className='mb-2 line-clamp-3 text-xs text-gray-300'>
@@ -424,7 +424,8 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
                 <Button
                   type='button'
                   size='sm'
-                  className='h-8 border border-white/20 px-2 text-xs'
+                  variant='outline'
+                  className='h-8 border-white/20 px-2 text-xs'
                   onClick={(): void => {
                     onEditFileFromSearch(file.id);
                   }}
@@ -432,7 +433,7 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
                   Edit
                 </Button>
               </div>
-            </div>
+            </Card>
           );
         })}
       </div>

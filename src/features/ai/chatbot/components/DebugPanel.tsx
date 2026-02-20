@@ -1,6 +1,6 @@
 'use client';
 
-import { LogList } from '@/shared/ui';
+import { LogList, Card } from '@/shared/ui';
 
 import { useChatbot } from '../context/ChatbotContext';
 
@@ -26,15 +26,19 @@ export function DebugPanel({
       <div className='space-y-4'>
         <div>
           <h4 className='mb-1 font-medium text-gray-400'>Last Request</h4>
-          <pre className='overflow-x-auto rounded bg-gray-900 p-2'>
-            {JSON.stringify(debugState.lastRequest, null, 2)}
-          </pre>
+          <Card variant='subtle-compact' padding='sm' className='overflow-x-auto bg-black/40 border-border/40'>
+            <pre className='text-[11px] font-mono'>
+              {JSON.stringify(debugState.lastRequest, null, 2)}
+            </pre>
+          </Card>
         </div>
         <div>
           <h4 className='mb-1 font-medium text-gray-400'>Last Response</h4>
-          <pre className='overflow-x-auto rounded bg-gray-900 p-2'>
-            {JSON.stringify(debugState.lastResponse, null, 2)}
-          </pre>
+          <Card variant='subtle-compact' padding='sm' className='overflow-x-auto bg-black/40 border-border/40'>
+            <pre className='text-[11px] font-mono'>
+              {JSON.stringify(debugState.lastResponse, null, 2)}
+            </pre>
+          </Card>
         </div>
         <div>
           <h4 className='mb-1 font-medium text-gray-400'>Agent Logs</h4>
@@ -46,7 +50,7 @@ export function DebugPanel({
               message: log.message,
             }))}
             maxHeight='240px'
-            className='rounded bg-gray-900 p-2'
+            className='rounded border border-border/40 bg-black/40 p-2'
           />
         </div>
       </div>

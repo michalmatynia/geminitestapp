@@ -4,7 +4,7 @@ import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import type { ImageStudioProjectRecord } from '@/features/ai/image-studio/types';
+import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
 import {
   IMAGE_STUDIO_SETTINGS_KEY,
   getImageStudioProjectSettingsKey,

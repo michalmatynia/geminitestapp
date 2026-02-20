@@ -1215,20 +1215,24 @@ export type ProducerRepository = {
 };
 
 export type ProductFilters = Partial<ProductFilterDto> & {
-  ids?: string[];
-  excludeIds?: string[];
-  tagIds?: string[];
-  producerIds?: string[];
-  priceGroupIds?: string[];
-  minPrice?: number;
-  maxPrice?: number;
-  searchLanguage?: 'name_en' | 'name_pl' | 'name_de';
-  baseExported?: boolean;
-  search?: string;
-  sku?: string;
-  description?: string;
-  categoryId?: string;
-  catalogId?: string;
+  ids?: string[] | undefined;
+  excludeIds?: string[] | undefined;
+  tagIds?: string[] | undefined;
+  producerIds?: string[] | undefined;
+  priceGroupIds?: string[] | undefined;
+  minPrice?: number | undefined;
+  maxPrice?: number | undefined;
+  searchLanguage?: 'name_en' | 'name_pl' | 'name_de' | undefined;
+  baseExported?: boolean | undefined;
+  search?: string | undefined;
+  sku?: string | undefined;
+  description?: string | undefined;
+  categoryId?: string | undefined;
+  catalogId?: string | undefined;
+  page?: number | undefined;
+  pageSize?: number | undefined;
+  startDate?: string | undefined;
+  endDate?: string | undefined;
 };
 
 export type TransactionalProductRepository = {

@@ -189,64 +189,56 @@ export const databaseTableDetailSchema = z.object({
 export type DatabaseTableDetailDto = z.infer<typeof databaseTableDetailSchema>;
 export type DatabaseTableDetail = DatabaseTableDetailDto;
 
+export const fieldInfoSchema = z.object({
+  name: z.string(),
+  type: z.string(),
+  nullable: z.boolean().optional(),
+  isRequired: z.boolean().nullable().optional(),
+  isId: z.boolean().nullable().optional(),
+  isPrimaryKey: z.boolean().optional(),
+  isForeignKey: z.boolean().optional(),
+  isUnique: z.boolean().nullable().optional(),
+  hasDefault: z.boolean().nullable().optional(),
+  relationTo: z.string().nullable().optional(),
+});
+
+export type FieldInfoDto = z.infer<typeof fieldInfoSchema>;
+
+export const collectionSchemaSchema = z.object({
+  name: z.string(),
+  fields: z.array(fieldInfoSchema),
+  count: z.number().optional(),
+  documentCount: z.number().optional(),
+}).catchall(z.any());
+
+export type CollectionSchemaDto = z.infer<typeof collectionSchemaSchema>;
+
+export const schemaProviderSchema = z.enum(['prisma', 'mongodb']);
+export type SchemaProviderDto = z.infer<typeof schemaProviderSchema>;
+
 export const multiSchemaResponseSchema = z.object({
   provider: z.string(),
-  collections: z.record(z.string(), z.object({
-    count: z.number().optional(),
-    fields: z.array(z.object({ name: z.string(), type: z.string() })),
-  })),
+  collections: z.record(z.string(), collectionSchemaSchema),
 });
 
 export type MultiSchemaResponseDto = z.infer<typeof multiSchemaResponseSchema>;
+export type SchemaResponseDto = MultiSchemaResponseDto;
+export type SchemaResponsePayloadDto = SchemaResponseDto;
 
-export const redisOverviewSchema = z.object({
-  enabled: z.boolean(),
-  connected: z.boolean(),
-  urlConfigured: z.boolean(),
-  dbSize: z.number(),
-  usedMemory: z.string().nullable(),
-  maxMemory: z.string().nullable(),
-  namespaces: z.array(z.object({
-    namespace: z.string(),
-    keyCount: z.number(),
-    sampleKeys: z.array(z.string()),
-  })),
-  sampleKeys: z.array(z.string()),
-  status: z.string(),
-  version: z.string(),
-  keysCount: z.number(),
-  memoryUsed: z.string(),
-  uptime: z.string(),
-  clients: z.number(),
-});
-
-export type RedisOverviewDto = z.infer<typeof redisOverviewSchema>;
-
-export const databaseEngineStatusSchema = z.object({
-  providers: z.record(z.string(), z.object({
-    connected: z.boolean(),
-    latencyMs: z.number().nullable(),
-    error: z.string().nullable(),
-  })),
-  activeProvider: z.string(),
-  uptimeSeconds: z.number(),
-});
-
-export type DatabaseEngineStatusDto = z.infer<typeof databaseEngineStatusSchema>;
-
-export const databaseEngineOperationJobSchema = z.object({
-  id: z.string(),
-  type: z.enum(['db_backup', 'db_sync']),
-  status: z.string(),
-  dbType: z.enum(['mongodb', 'postgresql']).nullable(),
-  direction: z.enum(['mongo_to_prisma', 'prisma_to_mongo']).nullable(),
-  source: z.string().nullable(),
-  createdAt: z.string(),
-  updatedAt: z.string().nullable(),
-  startedAt: z.string().nullable(),
-  finishedAt: z.string().nullable(),
-  errorMessage: z.string().nullable(),
-  resultSummary: z.string().nullable(),
+export const databaseEngineOperationJobSchema = dtoBaseSchema.extend({
+  status: z.enum(['queued', 'running', 'completed', 'failed', 'canceled']),
+  type: z.string(),
+  dbType: z.string().nullable().optional(),
+  direction: z.string().nullable().optional(),
+  source: z.string().nullable().optional(),
+  payload: z.record(z.string(), z.unknown()).optional(),
+  result: z.record(z.string(), z.unknown()).nullable().optional(),
+  resultSummary: z.union([z.string(), z.record(z.string(), z.unknown())]).nullable().optional(),
+  errorMessage: z.string().nullable().optional(),
+  progress: z.number().optional(),
+  startedAt: z.string().nullable().optional(),
+  finishedAt: z.string().nullable().optional(),
+  completedAt: z.string().nullable().optional(),
 });
 
 export type DatabaseEngineOperationJobDto = z.infer<typeof databaseEngineOperationJobSchema>;
@@ -316,29 +308,28 @@ export const databaseEngineBackupSchedulerTickResponseSchema = z.object({
 
 export type DatabaseEngineBackupSchedulerTickResponseDto = z.infer<typeof databaseEngineBackupSchedulerTickResponseSchema>;
 
-export const settingsBackfillResultSchema = z.object({
-  processedCount: z.number(),
-  updatedCount: z.number(),
-  errors: z.array(z.string()),
+export const redisNamespaceSchema = z.object({
+  namespace: z.string(),
+  keyCount: z.number(),
+  sampleKeys: z.array(z.string()),
 });
 
-export type SettingsBackfillResultDto = z.infer<typeof settingsBackfillResultSchema>;
-
-export const databaseEngineBackupTargetScheduleSchema = z.object({
+export const redisStatusSchema = z.object({
   enabled: z.boolean(),
-  cron: z.string(),
-  keepMax: z.number(),
+  connected: z.boolean(),
+  urlConfigured: z.boolean(),
+  dbSize: z.number(),
+  usedMemory: z.string().nullable(),
+  maxMemory: z.string().nullable(),
+  namespaces: z.array(redisNamespaceSchema),
+  sampleKeys: z.array(z.string()),
+  status: z.string().optional(),
+  version: z.string().optional(),
+  keysCount: z.number().optional(),
+  memoryUsed: z.string().nullable().optional(),
+  uptime: z.string().optional(),
+  clients: z.number().optional(),
 });
 
-export type DatabaseEngineBackupTargetScheduleDto = z.infer<typeof databaseEngineBackupTargetScheduleSchema>;
-export type DatabaseEngineBackupTargetSchedule = DatabaseEngineBackupTargetScheduleDto;
-
-export const databaseEngineBackupScheduleSchema = z.object({
-  enabled: z.boolean(),
-  lastExecutedAt: z.string().nullable(),
-  mongodb: databaseEngineBackupTargetScheduleSchema,
-  postgresql: databaseEngineBackupTargetScheduleSchema,
-});
-
-export type DatabaseEngineBackupScheduleDto = z.infer<typeof databaseEngineBackupScheduleSchema>;
-export type DatabaseEngineBackupSchedule = DatabaseEngineBackupScheduleDto;
+export type RedisStatusDto = z.infer<typeof redisStatusSchema>;
+export type RedisOverviewDto = RedisStatusDto;

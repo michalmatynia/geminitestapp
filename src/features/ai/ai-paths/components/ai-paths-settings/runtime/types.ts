@@ -1,0 +1,132 @@
+'use client';
+
+import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
+
+import type {
+  AiNode,
+  AiPathRuntimeEvent,
+  AiPathRuntimeNodeStatus,
+  AiPathRuntimeNodeStatusMap,
+  AiPathsValidationConfig,
+  Edge,
+  PathConfig,
+  PathDebugSnapshot,
+  PathExecutionMode,
+  PathRunMode,
+  ParserSampleState,
+  QueuedRunDto,
+  RuntimeEventInputDto,
+  RuntimePortValues,
+  RuntimeState,
+  RunStatusDto,
+  SetNodeStatusInputDto,
+  UpdaterSampleState,
+} from '@/features/ai/ai-paths/lib';
+
+/**
+ * The actual UI toast function type used in runtime hooks.
+ * Different from ToastFn in @/shared/contracts/ai-paths-runtime which is the
+ * shadcn-style API used inside NodeHandlerContext by engine handlers.
+ */
+export type UiToastFn = (
+  message: string,
+  options?: { variant?: 'success' | 'error' | 'info' | 'warning'; duration?: number; error?: unknown }
+) => void;
+
+/**
+ * Args required by useAiPathsServerExecution
+ */
+export interface ServerExecutionArgs {
+  activePathId: string | null;
+  pathName: string;
+  pathDescription: string;
+  activeTrigger: string;
+  executionMode: PathExecutionMode;
+  runMode: PathRunMode;
+  strictFlowMode: boolean;
+  aiPathsValidation?: AiPathsValidationConfig | undefined;
+  normalizedNodes: AiNode[];
+  sanitizedEdges: Edge[];
+  parserSamples: Record<string, ParserSampleState>;
+  updaterSamples: Record<string, UpdaterSampleState>;
+  runtimeStateRef: MutableRefObject<RuntimeState>;
+  resetRuntimeNodeStatuses: (next?: AiPathRuntimeNodeStatusMap) => void;
+  setRuntimeState: Dispatch<SetStateAction<RuntimeState>>;
+  setRuntimeEvents: Dispatch<SetStateAction<AiPathRuntimeEvent[]>>;
+  setPathConfigs: Dispatch<SetStateAction<Record<string, PathConfig>>>;
+  appendRuntimeEvent: (input: RuntimeEventInputDto) => void;
+  setNodeStatus: (input: SetNodeStatusInputDto) => void;
+  normalizeNodeStatus: (value: unknown) => AiPathRuntimeNodeStatus | null;
+  formatStatusLabel: (status: AiPathRuntimeNodeStatus) => string;
+  settleTransientNodeStatuses: (
+    terminalStatus: 'completed' | 'failed' | 'canceled',
+    currentOutputs?: Record<string, unknown>
+  ) => void;
+  setLastRunAt: (at: string | null) => void;
+}
+
+/**
+ * Args required by useAiPathsLocalExecution
+ */
+export interface LocalExecutionArgs {
+  activePathId: string | null;
+  activeTab: string;
+  activeTrigger: string;
+  executionMode: PathExecutionMode;
+  runMode: PathRunMode;
+  strictFlowMode: boolean;
+  aiPathsValidation: AiPathsValidationConfig;
+  historyRetentionPasses: number;
+  isPathActive: boolean;
+  edges: Edge[];
+  normalizedNodes: AiNode[];
+  sanitizedEdges: Edge[];
+  pathName: string;
+  pathDescription: string;
+  parserSamples: Record<string, ParserSampleState>;
+  updaterSamples: Record<string, UpdaterSampleState>;
+  sessionUser: { id: string; name: string | null; email: string | null } | null;
+  runtimeStateRef: MutableRefObject<RuntimeState>;
+  currentRunIdRef: MutableRefObject<string | null>;
+  currentRunStartedAtRef: MutableRefObject<string | null>;
+  currentRunStartedAtMsRef: MutableRefObject<number | null>;
+  lastTriggerNodeIdRef: MutableRefObject<string | null>;
+  lastTriggerEventRef: MutableRefObject<string | null>;
+  triggerContextRef: MutableRefObject<Record<string, unknown>>;
+  pendingSimulationContextRef: MutableRefObject<Record<string, unknown> | null>;
+  runLoopActiveRef: MutableRefObject<boolean>;
+  runInFlightRef: MutableRefObject<boolean>;
+  abortControllerRef: MutableRefObject<AbortController | null>;
+  pauseRequestedRef: MutableRefObject<boolean>;
+  queuedRunsRef: MutableRefObject<QueuedRunDto[]>;
+  serverRunActiveRef: MutableRefObject<boolean>;
+  setRunStatus: (status: RunStatusDto) => void;
+  appendRuntimeEvent: (input: RuntimeEventInputDto) => void;
+  setNodeStatus: (input: SetNodeStatusInputDto) => void;
+  setRuntimeState: Dispatch<SetStateAction<RuntimeState>>;
+  setPathConfigs: Dispatch<SetStateAction<Record<string, PathConfig>>>;
+  setPathDebugSnapshots: Dispatch<SetStateAction<Record<string, PathDebugSnapshot>>>;
+  setLastRunAt: (at: string | null) => void;
+  settleTransientNodeStatuses: (
+    terminalStatus: 'completed' | 'failed' | 'canceled',
+    currentOutputs?: Record<string, unknown>
+  ) => void;
+  resetRuntimeNodeStatuses: (next?: AiPathRuntimeNodeStatusMap) => void;
+  normalizeNodeStatus: (value: unknown) => AiPathRuntimeNodeStatus | null;
+  formatStatusLabel: (status: AiPathRuntimeNodeStatus) => string;
+  seedImmediateDownstreamInputs: (
+    inputs: Record<string, RuntimePortValues>,
+    outputs: Record<string, RuntimePortValues>,
+    triggerId: string
+  ) => Record<string, RuntimePortValues>;
+  hasPendingIteratorAdvance: (state: RuntimeState) => boolean;
+  fetchEntityByType: (entityType: string, entityId: string) => Promise<Record<string, unknown> | null>;
+  reportAiPathsError: (error: unknown, context: Record<string, unknown>, fallbackMessage?: string) => void;
+  toast: UiToastFn;
+  stopServerRunStream: () => void;
+  runServerStream: (
+    triggerNode: AiNode,
+    triggerEvent: string,
+    triggerContext: Record<string, unknown>
+  ) => Promise<void>;
+}

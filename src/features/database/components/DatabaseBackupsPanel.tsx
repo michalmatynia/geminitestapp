@@ -17,6 +17,7 @@ import {
   SimpleSettingsList,
   Breadcrumbs,
   StandardDataTablePanel,
+  Card,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { cn } from '@/shared/utils';
@@ -152,9 +153,9 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
         padding='md'
       />
 
-      <div className='rounded-lg border border-border/60 bg-card/20 px-3 py-2 text-xs text-gray-300'>
+      <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20 text-xs text-gray-300'>
         Active source: <span className='font-semibold text-white'>{selectedDatabase.label}</span>
-      </div>
+      </Card>
     </div>
   );
 

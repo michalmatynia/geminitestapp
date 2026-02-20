@@ -89,6 +89,7 @@ export type AiPathRuntimeEvent = AiPathRuntimeEventDto;
 
 export const runStatusSchema = z.enum(['idle', 'running', 'paused', 'stepping']);
 export type RunStatusDto = z.infer<typeof runStatusSchema>;
+export type RunStatus = RunStatusDto;
 
 export const runtimeEventInputSchema = z.object({
   id: z.string().optional(),
@@ -108,6 +109,7 @@ export const runtimeEventInputSchema = z.object({
 });
 
 export type RuntimeEventInputDto = z.infer<typeof runtimeEventInputSchema>;
+export type RuntimeEventInput = RuntimeEventInputDto;
 
 export const setNodeStatusInputSchema = z.object({
   nodeId: z.string(),
@@ -125,6 +127,7 @@ export const setNodeStatusInputSchema = z.object({
 });
 
 export type SetNodeStatusInputDto = z.infer<typeof setNodeStatusInputSchema>;
+export type SetNodeStatusInput = SetNodeStatusInputDto;
 
 export const pathExecutionModeSchema = z.enum(['local', 'server']);
 export type PathExecutionModeDto = z.infer<typeof pathExecutionModeSchema>;
@@ -166,6 +169,7 @@ export const queuedRunSchema = z.object({
 });
 
 export type QueuedRunDto = z.infer<typeof queuedRunSchema>;
+export type QueuedRun = QueuedRunDto;
 
 export const aiPathRuntimeProfileEventSchema = z.discriminatedUnion('type', [
   z.object({

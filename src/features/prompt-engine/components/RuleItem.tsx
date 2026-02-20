@@ -189,8 +189,8 @@ export function RuleItem({
               onDragEnd?.();
             }}
             className={cn(
-              'rounded border border-slate-600/70 bg-slate-800/60 p-1 text-slate-300',
-              draggableEnabled ? 'cursor-grab hover:bg-slate-700/70 active:cursor-grabbing' : 'cursor-not-allowed opacity-50'
+              'rounded border p-1',
+              draggableEnabled ? 'cursor-grab border-border/60 bg-card/50 text-slate-300 hover:bg-card/70 active:cursor-grabbing' : 'cursor-not-allowed border-slate-600/70 bg-slate-800/60 text-slate-300 opacity-50'
             )}
             title='Drag and drop onto another rule to create/join a sequence group'
             aria-label='Drag and drop onto another rule to create/join a sequence group'

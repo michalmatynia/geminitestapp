@@ -3,7 +3,7 @@
 import { ExternalLink as ExternalLinkIcon, FileText, FolderOpen, Image as ImageIcon } from 'lucide-react';
 import React from 'react';
 
-import { Button, ExternalLink, Label, Textarea, useToast, FileUploadTrigger, EmptyState } from '@/shared/ui';
+import { Button, ExternalLink, Label, Textarea, useToast, FileUploadTrigger, EmptyState, Card } from '@/shared/ui';
 import { PanelHeader } from '@/shared/ui/templates/panels';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
@@ -38,7 +38,7 @@ export function CaseResolverFileViewer(): React.JSX.Element {
 
   if (!selectedAsset) {
     return (
-      <div className='flex h-[calc(100vh-120px)] flex-col gap-4 rounded-lg border border-border/60 bg-card/35 p-4'>
+      <Card variant='glass' padding='md' className='flex h-[calc(100vh-120px)] flex-col gap-4'>
         <PanelHeader
           title='File Viewer'
           refreshable={false}
@@ -53,7 +53,7 @@ export function CaseResolverFileViewer(): React.JSX.Element {
           icon={<FolderOpen className='size-12' />}
           className='flex-1 border-none bg-transparent'
         />
-      </div>
+      </Card>
     );
   }
 
@@ -82,7 +82,7 @@ export function CaseResolverFileViewer(): React.JSX.Element {
   );
 
   return (
-    <div className='flex h-[calc(100vh-120px)] flex-col gap-4 rounded-lg border border-border/60 bg-card/35 p-4'>
+    <Card variant='glass' padding='md' className='flex h-[calc(100vh-120px)] flex-col gap-4'>
       <PanelHeader
         title={selectedAsset.name}
         subtitle={resolveAssetSubtitle(selectedAsset)}
@@ -100,22 +100,22 @@ export function CaseResolverFileViewer(): React.JSX.Element {
       <div className='mt-3 grid grid-cols-1 gap-2 text-xs text-gray-300 md:grid-cols-2'>
 
         <div className='mt-3 grid grid-cols-1 gap-2 text-xs text-gray-300 md:grid-cols-2'>
-          <div className='flex items-center justify-between rounded border border-border/50 bg-card/20 px-2 py-1.5'>
+          <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border/50 bg-card/20'>
             <span className='text-gray-500'>Kind</span>
             <span className='uppercase text-[10px]'>{selectedAsset.kind}</span>
-          </div>
-          <div className='flex items-center justify-between rounded border border-border/50 bg-card/20 px-2 py-1.5'>
+          </Card>
+          <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border/50 bg-card/20'>
             <span className='text-gray-500'>Size</span>
             <span>{formatFileSize(selectedAsset.size)}</span>
-          </div>
-          <div className='flex items-center justify-between rounded border border-border/50 bg-card/20 px-2 py-1.5'>
+          </Card>
+          <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border/50 bg-card/20'>
             <span className='text-gray-500'>MIME</span>
             <span className='truncate pl-2'>{selectedAsset.mimeType ?? 'Unknown'}</span>
-          </div>
-          <div className='flex items-center justify-between rounded border border-border/50 bg-card/20 px-2 py-1.5'>
+          </Card>
+          <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border/50 bg-card/20'>
             <span className='text-gray-500'>Folder</span>
             <span className='truncate pl-2'>{selectedAsset.folder || '(root)'}</span>
-          </div>
+          </Card>
         </div>
 
         <div className='mt-3 space-y-2'>
@@ -131,7 +131,7 @@ export function CaseResolverFileViewer(): React.JSX.Element {
         </div>
       </div>
 
-      <div className='min-h-0 flex-1 overflow-hidden rounded border border-border/60 bg-card/25'>
+      <Card variant='subtle-compact' padding='none' className='min-h-0 flex-1 overflow-hidden border-border/60 bg-card/25'>
         {isImageAsset ? (
           <div className='h-full p-3'>
             <FileUploadTrigger
@@ -142,8 +142,10 @@ export function CaseResolverFileViewer(): React.JSX.Element {
               disabled={isAttachingImage}
               asChild
             >
-              <div
-                className={`relative flex h-full items-center justify-center overflow-hidden rounded border border-dashed p-3 transition ${
+              <Card
+                variant='subtle-compact'
+                padding='sm'
+                className={`relative flex h-full items-center justify-center overflow-hidden border-dashed transition ${
                   isDragActive
                     ? 'border-blue-500 bg-blue-500/10'
                     : 'border-border/70 bg-card/40 hover:bg-card/55'
@@ -170,7 +172,7 @@ export function CaseResolverFileViewer(): React.JSX.Element {
                     <div className='text-xs text-gray-400'>or click to browse files</div>
                   </div>
                 )}
-              </div>
+              </Card>
             </FileUploadTrigger>
           </div>
         ) : null}
@@ -204,13 +206,13 @@ export function CaseResolverFileViewer(): React.JSX.Element {
                 <ExternalLinkIcon className='size-3.5' />
               </ExternalLink>
             ) : (
-              <Button type='button' disabled className='h-8 rounded border border-border/50 text-xs text-gray-500'>
+              <Button type='button' disabled variant='outline' className='h-8 text-xs text-gray-500'>
                 File path unavailable
               </Button>
             )}
           </div>
         ) : null}
-      </div>
-    </div>
+      </Card>
+    </Card>
   );
 }

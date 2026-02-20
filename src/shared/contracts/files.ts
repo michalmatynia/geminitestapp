@@ -71,6 +71,9 @@ export const imageFileCreateInputSchema = imageFileSchema.omit({
   updatedAt: true,
 }).extend({
   name: z.string().optional(),
+  publicUrl: z.string().optional(),
+  storageProvider: z.string().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type ImageFileCreateInputDto = z.infer<typeof imageFileCreateInputSchema>;

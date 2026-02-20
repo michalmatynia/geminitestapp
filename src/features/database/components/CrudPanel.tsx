@@ -18,6 +18,7 @@ import {
   StatusBadge,
   Alert,
   StandardDataTablePanel,
+  Card,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -305,13 +306,13 @@ export function CrudPanel(props: {
         />
       ) : (
         <div className='space-y-4'>
-          <div className='flex flex-wrap items-center gap-3 bg-card/30 p-3 rounded-lg border border-border/60'>
+          <Card variant='subtle-compact' padding='sm' className='flex flex-wrap items-center gap-3 bg-card/30 border-border/60'>
             {filters}
-          </div>
+          </Card>
           {alerts}
-          <div className='flex flex-col items-center justify-center py-20 bg-card/40 rounded-lg border border-dashed border-border/60'>
+          <Card variant='subtle' padding='lg' className='flex flex-col items-center justify-center py-20 bg-card/40 border-dashed border-border/60'>
             <p className='text-sm text-muted-foreground'>Please select a table from the list above to view and manage its data.</p>
-          </div>
+          </Card>
         </div>
       )}
 

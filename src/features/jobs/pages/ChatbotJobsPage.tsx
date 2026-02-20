@@ -1,6 +1,6 @@
 'use client';
 
-import { Bot, RefreshCw, Trash2, ExternalLink, XCircle } from 'lucide-react';
+import { Bot, Trash2, ExternalLink, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
 
@@ -139,14 +139,10 @@ function ChatbotJobsPageContent(): React.JSX.Element {
                 variant='destructive'
                 size='xs'
                 className='h-7 gap-1.5'
-                disabled={isCancellingChatbotJob(job.id)}
+                loading={isCancellingChatbotJob(job.id)}
                 onClick={(): void => { void handleCancelChatbotJob(job.id); }}
               >
-                {isCancellingChatbotJob(job.id) ? (
-                  <RefreshCw className='size-3 animate-spin' />
-                ) : (
-                  <XCircle className='size-3' />
-                )}
+                <XCircle className='size-3' />
                 Cancel
               </Button>
             )}

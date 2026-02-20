@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 
 import type { Slug } from '@/shared/contracts/cms';
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { FormModal, Checkbox, FormField, SearchInput, LoadingState } from '@/shared/ui';
+import { FormModal, Checkbox, FormField, SearchInput, LoadingState, Card } from '@/shared/ui';
 
 interface AttachSlugModalProps extends EntityModalProps<Slug, Slug> {
   onAttach: (selectedIds: string[]) => Promise<void>;
@@ -115,7 +115,7 @@ export function AttachSlugModal({
             </div>
           </div>
 
-          <div className='max-h-60 overflow-y-auto rounded-lg border border-border/60 bg-black/20 p-1 divide-y divide-white/5'>
+          <Card variant='subtle-compact' padding='none' className='max-h-60 overflow-y-auto border-border/60 bg-black/20 divide-y divide-white/5'>
             {loading ? (
               <LoadingState message='Fetching global slug index...' className='py-8' size='sm' />
             ) : availableSlugs.length === 0 ? (
@@ -139,7 +139,7 @@ export function AttachSlugModal({
                 </label>
               ))
             )}
-          </div>
+          </Card>
 
           {error && <p className='text-xs text-destructive font-medium px-1'>{error}</p>}
         </div>

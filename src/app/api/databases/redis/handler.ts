@@ -110,7 +110,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     sampleKeys: cappedKeys.slice(0, 25),
   };
 
-  return NextResponse.json(payload, {
+  return NextResponse.json(payload as any, {
     headers: { 'Cache-Control': 'no-store' },
   });
 }

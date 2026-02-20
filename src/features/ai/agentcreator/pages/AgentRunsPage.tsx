@@ -14,6 +14,7 @@ import {
   Badge,
   Alert,
   ListPanel,
+  Card,
 } from '@/shared/ui';
 
 import { AgentRunDetailModal } from '../components/AgentRunDetailModal';
@@ -79,9 +80,11 @@ export default function AgentRunsPage(): React.JSX.Element {
       >
         <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
           {agentRuns.map((job: AiPathRunRecord) => (
-            <div
+            <Card
               key={job.id}
-              className='flex flex-col gap-4 rounded-lg border border-border/60 bg-card/50 p-5 transition-colors hover:bg-card/60'
+              variant='subtle'
+              padding='md'
+              className='flex flex-col gap-4 border-border/60 bg-card/50 transition-colors hover:bg-card/60'
             >
               <div className='flex items-start justify-between gap-4'>
                 <div className='min-w-0 flex-1 space-y-3'>
@@ -95,7 +98,7 @@ export default function AgentRunsPage(): React.JSX.Element {
                     <PropertyRow label='Created' value={job.createdAt ? new Date(job.createdAt).toLocaleString() : '—'} />
                   </div>
 
-                  <div className='space-y-2 rounded border border-white/5 bg-black/20 p-2 text-xs'>
+                  <Card variant='subtle-compact' padding='sm' className='space-y-2 border-white/5 bg-black/20 text-xs'>
                     <p className='text-gray-300 line-clamp-2 italic'>
                       "{job.prompt}"
                     </p>
@@ -106,7 +109,7 @@ export default function AgentRunsPage(): React.JSX.Element {
                         <Badge variant='warning' className='h-4 px-1 text-[9px] uppercase'>Needs Input</Badge>
                       )}
                     </div>
-                  </div>
+                  </Card>
 
                   {job.errorMessage ? (
                     <Alert variant='error' className='px-2 py-1.5 text-[10px]'>
@@ -125,7 +128,7 @@ export default function AgentRunsPage(): React.JSX.Element {
                   View details
                 </Button>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       </ListPanel>

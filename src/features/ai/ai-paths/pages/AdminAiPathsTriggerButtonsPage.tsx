@@ -13,9 +13,7 @@ import {
 import { ICON_LIBRARY, IconSelector } from '@/features/icons';
 import { logClientError } from '@/features/observability';
 import type {
-  AiTriggerButtonDisplay,
   AiTriggerButtonLocation,
-  AiTriggerButtonMode,
   AiTriggerButtonDto,
 } from '@/shared/contracts/ai-trigger-buttons';
 import {
@@ -35,6 +33,7 @@ import {
   PanelHeader,
   ConfirmModal,
   Card,
+  Hint,
 } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { cn } from '@/shared/utils';
@@ -47,18 +46,29 @@ type TriggerButtonPathUsage = { id: string; name: string };
 
 const LOCATION_OPTIONS: Array<{ value: AiTriggerButtonLocation; label: string }> = [
   { value: 'product_modal', label: 'Products: Product Modal' },
-  { value: 'product_list', label: 'Products: Product List' },
+  { value: 'product_list', label: 'Products: Product List (Footer)' },
   { value: 'product_row', label: 'Products: Product Row' },
+  { value: 'product_list_header', label: 'Products: List Header' },
+  { value: 'product_list_item', label: 'Products: List Item (Context)' },
+  { value: 'product_form_header', label: 'Products: Form Header' },
+  { value: 'product_form_footer', label: 'Products: Form Footer' },
   { value: 'note_modal', label: 'Notes: Note Modal' },
   { value: 'note_list', label: 'Notes: Note List' },
+  { value: 'cms_page_header', label: 'CMS: Page Header' },
+  { value: 'cms_block_header', label: 'CMS: Block Header' },
+  { value: 'admin_dashboard', label: 'Admin: Dashboard' },
 ];
 
-const MODE_OPTIONS: Array<{ value: AiTriggerButtonMode; label: string }> = [
+const MODE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'click', label: 'On click' },
   { value: 'toggle', label: 'Toggle (On/Off)' },
+  { value: 'execute_path', label: 'Execute AI Path' },
+  { value: 'open_chat', label: 'Open Chatbot' },
+  { value: 'open_url', label: 'Open URL' },
+  { value: 'copy_text', label: 'Copy Text' },
 ];
 
-const DISPLAY_OPTIONS: Array<{ value: AiTriggerButtonDisplay; label: string }> = [
+const DISPLAY_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'icon_label', label: 'Icon + label' },
   { value: 'icon', label: 'Icon only (name in tooltip)' },
 ];
@@ -532,7 +542,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                       });
                     }}
                   />
-                  <span className='text-xs font-medium'>{option.label}</span>
+                  <Hint size='xs' className='font-medium'>{option.label}</Hint>
                 </Card>
               </label>
             );

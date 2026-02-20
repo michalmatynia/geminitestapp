@@ -8,9 +8,23 @@ export const aiTriggerButtonLocationSchema = z.enum([
   'product_row',
   'note_modal',
   'note_list',
+  'product_list_header',
+  'product_list_item',
+  'product_form_header',
+  'product_form_footer',
+  'cms_page_header',
+  'cms_block_header',
+  'admin_dashboard',
 ]);
 
-export const aiTriggerButtonModeSchema = z.enum(['click', 'toggle']);
+export const aiTriggerButtonModeSchema = z.enum([
+  'click',
+  'toggle',
+  'execute_path',
+  'open_chat',
+  'open_url',
+  'copy_text',
+]);
 export const aiTriggerButtonDisplaySchema = z.enum(['icon', 'icon_label']);
 
 const coerceOptionalBoolean = (value: unknown): boolean | undefined => {
@@ -36,10 +50,18 @@ const normalizeDisplayForRead = (value: unknown): 'icon' | 'icon_label' | undefi
   return undefined;
 };
 
-const normalizeModeForRead = (value: unknown): 'click' | 'toggle' | undefined => {
+const normalizeModeForRead = (value: unknown): 'click' | 'toggle' | 'execute_path' | 'open_chat' | 'open_url' | 'copy_text' | undefined => {
   if (typeof value !== 'string') return undefined;
   const normalized = value.trim().toLowerCase();
-  if (normalized === 'click' || normalized === 'toggle') return normalized;
+  if (
+    normalized === 'click' ||
+    normalized === 'toggle' ||
+    normalized === 'execute_path' ||
+    normalized === 'open_chat' ||
+    normalized === 'open_url' ||
+    normalized === 'copy_text'
+  )
+    return normalized as any;
   return undefined;
 };
 
@@ -51,6 +73,13 @@ const normalizeLocationsForRead = (
   | 'product_row'
   | 'note_modal'
   | 'note_list'
+  | 'product_list_header'
+  | 'product_list_item'
+  | 'product_form_header'
+  | 'product_form_footer'
+  | 'cms_page_header'
+  | 'cms_block_header'
+  | 'admin_dashboard'
 > | undefined => {
   const source = Array.isArray(value)
     ? value
@@ -58,7 +87,18 @@ const normalizeLocationsForRead = (
       ? [value]
       : [];
   const seen = new Set<
-    'product_modal' | 'product_list' | 'product_row' | 'note_modal' | 'note_list'
+    | 'product_modal'
+    | 'product_list'
+    | 'product_row'
+    | 'note_modal'
+    | 'note_list'
+    | 'product_list_header'
+    | 'product_list_item'
+    | 'product_form_header'
+    | 'product_form_footer'
+    | 'cms_page_header'
+    | 'cms_block_header'
+    | 'admin_dashboard'
   >();
   source.forEach((entry: unknown) => {
     if (typeof entry !== 'string') return;

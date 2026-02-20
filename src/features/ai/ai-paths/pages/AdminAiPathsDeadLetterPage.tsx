@@ -25,6 +25,7 @@ import {
   Badge,
   FilterPanel,
   Hint,
+  Card,
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
@@ -197,33 +198,35 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
       <StandardDataTablePanel
         filters={(
           <FilterPanel
-            search={{
-              value: searchQuery,
-              onChange: setSearchQuery,
-              placeholder: 'Run ID, entity, error...',
+            search={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder='Run ID, entity, error...'
+            values={{
+              pathId,
+              requeueMode,
             }}
-            fields={[
+            onFilterChange={(key, value) => {
+              if (key === 'pathId') setPathId(value as string);
+              if (key === 'requeueMode') setRequeueMode(value as 'resume' | 'replay');
+            }}
+            filters={[
               {
                 key: 'pathId',
                 label: 'Path ID',
                 type: 'text',
-                value: pathId,
-                onValueChange: setPathId,
                 placeholder: 'Filter by path...',
               },
               {
                 key: 'requeueMode',
                 label: 'Requeue Mode',
                 type: 'select',
-                value: requeueMode,
-                onValueChange: (v) => setRequeueMode(v as 'resume' | 'replay'),
                 options: [
                   { value: 'resume', label: 'Resume (Continue)' },
                   { value: 'replay', label: 'Replay (From start)' },
                 ],
               }
             ]}
-            actions={
+            headerAction={
               <div className='flex gap-2'>
                 <Button
                   variant='outline'

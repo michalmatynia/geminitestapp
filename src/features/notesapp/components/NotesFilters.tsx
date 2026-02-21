@@ -32,7 +32,7 @@ export function NotesFilters(): React.JSX.Element {
 
   // Build filter configuration for FilterPanel
   const filterConfig: FilterField[] = useMemo(() => {
-    const tagOptions = tags.map((t: TagRecord) => ({ value: t.id, label: t.name }));
+    const tagOptions = tags.map((t: TagRecord) => ({ value: t.id, label: t.name || 'Unnamed' }));
     return [
       {
         key: 'tags',

@@ -23,6 +23,8 @@ export function NoteListView(): React.JSX.Element {
     folderTree,
     themes,
     loading,
+    selectedFolderId,
+    selectedNotebookId,
     sortedNotes,
     pagedNotes,
     totalPages,
@@ -71,8 +73,8 @@ export function NoteListView(): React.JSX.Element {
   return (
     <DocumentSearchPage
       title={
-        settings.selectedFolderId
-          ? buildBreadcrumbPath(settings.selectedFolderId, null, folderTree).slice(-1)[0]?.name ?? 'Notes'
+        selectedFolderId
+          ? buildBreadcrumbPath(selectedFolderId, null, folderTree).slice(-1)[0]?.name ?? 'Notes'
           : 'Notes'
       }
       startAdornment={(

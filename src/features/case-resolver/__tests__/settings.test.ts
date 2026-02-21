@@ -577,27 +577,27 @@ describe('case-resolver settings', () => {
     );
     expect(preservedCaseNode?.position).toEqual({ x: 2222, y: 1111 });
 
-          expect(
-            relationGraph.edges.some(
-              (edge: Edge): boolean =>
-                edge.from === 'case:case-a' &&
+    expect(
+      relationGraph.edges.some(
+        (edge: Edge): boolean =>
+          edge.from === 'case:case-a' &&
                 edge.to === 'case:case-b' &&
                 relationGraph.edgeMeta?.[edge.id]?.relationType === 'parent_case'
-            )
-          ).toBe(true);
-          expect(
-            relationGraph.edges.some(
-              (edge: Edge): boolean =>
-                edge.from === 'case:case-a' &&
+      )
+    ).toBe(true);
+    expect(
+      relationGraph.edges.some(
+        (edge: Edge): boolean =>
+          edge.from === 'case:case-a' &&
                 edge.to === 'case:case-b' &&
                 relationGraph.edgeMeta?.[edge.id]?.relationType === 'references'
-            )
-          ).toBe(true);
+      )
+    ).toBe(true);
     
-          expect(
-            relationGraph.edges.some((edge: Edge): boolean => edge.id === 'custom-edge')
-          ).toBe(true);
-          expect(relationGraph.edgeMeta?.['custom-edge']?.relationType).toBe('custom');
+    expect(
+      relationGraph.edges.some((edge: Edge): boolean => edge.id === 'custom-edge')
+    ).toBe(true);
+    expect(relationGraph.edgeMeta?.['custom-edge']?.relationType).toBe('custom');
     
     expect(relationGraph.edgeMeta['custom-edge']?.isStructural).toBe(false);
     expect(relationGraph.edgeMeta['custom-edge']?.label).toBe('cross');
@@ -653,9 +653,9 @@ describe('case-resolver settings', () => {
       activeFileId: 'case-a',
     });
 
-          const workspace = parseCaseResolverWorkspace(raw);
-          const unknownNode = workspace.relationGraph.nodes.find((node: AiNode): boolean => node.id === 'custom-unknown');
-        expect(unknownNode).toBeDefined();
+    const workspace = parseCaseResolverWorkspace(raw);
+    const unknownNode = workspace.relationGraph.nodes.find((node: AiNode): boolean => node.id === 'custom-unknown');
+    expect(unknownNode).toBeDefined();
     
     expect(unknownNode?.type).toBe('template');
   });
@@ -753,9 +753,9 @@ describe('case-resolver settings', () => {
       activeFileId: 'case-x',
     });
 
-          const workspace = parseCaseResolverWorkspace(raw);
-          const relationGraph = workspace.relationGraph;
-          const edgeIds = relationGraph.edges.map((edge: Edge) => edge.id);
+    const workspace = parseCaseResolverWorkspace(raw);
+    const relationGraph = workspace.relationGraph;
+    const edgeIds = relationGraph.edges.map((edge: Edge) => edge.id);
     
     expect(edgeIds.includes('stale-edge')).toBe(false);
     expect(edgeIds.includes('custom-edge-keep')).toBe(true);
@@ -893,13 +893,13 @@ describe('case-resolver settings', () => {
       })
     );
 
-          const defaultScan = workspace.files.find((file: CaseResolverFile) => file.id === 'scan-default');
-          expect(defaultScan?.scanOcrModel).toBe('');
-          expect(defaultScan?.scanOcrPrompt).toBe(DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT);
+    const defaultScan = workspace.files.find((file: CaseResolverFile) => file.id === 'scan-default');
+    expect(defaultScan?.scanOcrModel).toBe('');
+    expect(defaultScan?.scanOcrPrompt).toBe(DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT);
     
-          const customScan = workspace.files.find((file: CaseResolverFile) => file.id === 'scan-custom');
-          expect(customScan?.scanOcrModel).toBe('llama3.2-vision');
-        expect(customScan?.scanOcrPrompt).toBe('Use this custom OCR prompt.');
+    const customScan = workspace.files.find((file: CaseResolverFile) => file.id === 'scan-custom');
+    expect(customScan?.scanOcrModel).toBe('llama3.2-vision');
+    expect(customScan?.scanOcrPrompt).toBe('Use this custom OCR prompt.');
   });
 
   it('extracts document date from exploded text formats', () => {
@@ -1140,8 +1140,8 @@ describe('case-resolver settings', () => {
       })
     );
 
-          const graph = workspace.files.find((file: CaseResolverFile) => file.id === 'doc-valid')?.graph;
-        expect(graph?.documentSourceFileIdByNode).toEqual({
+    const graph = workspace.files.find((file: CaseResolverFile) => file.id === 'doc-valid')?.graph;
+    expect(graph?.documentSourceFileIdByNode).toEqual({
       'node-valid': 'doc-valid',
     });
     expect(graph?.nodeFileAssetIdByNode).toEqual({
@@ -1254,8 +1254,8 @@ describe('case-resolver settings', () => {
       })
     );
 
-          const legacyNodeFile = workspace.assets.find((asset: CaseResolverAssetFile) => asset.id === 'node-file-legacy');
-        expect(legacyNodeFile).toBeDefined();
+    const legacyNodeFile = workspace.assets.find((asset: CaseResolverAssetFile) => asset.id === 'node-file-legacy');
+    expect(legacyNodeFile).toBeDefined();
     expect(legacyNodeFile?.sourceFileId).toBeNull();
     const snapshot = parseNodeFileSnapshot(legacyNodeFile?.textContent ?? '');
     expect(snapshot.nodeFileMeta).toEqual({});
@@ -1343,8 +1343,8 @@ describe('case-resolver settings', () => {
     );
 
     const graph = workspace.files[0]?.graph;
-          const edgeById = new Map<string, Edge>((graph?.edges ?? []).map((edge: Edge) => [edge.id, edge]));
-        expect(edgeById.get('edge-in-prompt')?.toPort).toBe('content');
+    const edgeById = new Map<string, Edge>((graph?.edges ?? []).map((edge: Edge) => [edge.id, edge]));
+    expect(edgeById.get('edge-in-prompt')?.toPort).toBe('content');
     expect(edgeById.get('edge-in-unknown')?.toPort).toBe('content');
     expect(edgeById.get('edge-in-legacy-textfield')?.toPort).toBe(CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0]);
     expect(edgeById.get('edge-out-result')?.fromPort).toBe('content');

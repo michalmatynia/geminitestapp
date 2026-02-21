@@ -142,8 +142,8 @@ describe('case resolver prompt exploder manual apply flow', () => {
       expect(result.diagnostics.payloadStatus).toBe('pending');
     }
 
-          const updatedDocument = harness.getWorkspace().files.find((file: CaseResolverFile) => file.id === 'doc-1');
-          expect(updatedDocument?.name).toBe('Document');
+    const updatedDocument = harness.getWorkspace().files.find((file: CaseResolverFile) => file.id === 'doc-1');
+    expect(updatedDocument?.name).toBe('Document');
     
     expect(updatedDocument?.documentContentPlainText).toContain('Exploded output body');
     expect(readPendingCaseResolverPromptExploderPayload()).toBeNull();

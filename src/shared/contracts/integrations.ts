@@ -740,14 +740,14 @@ export const defaultBaseImportParameterImportSettings = DEFAULT_BASE_IMPORT_PARA
 
 export function normalizeBaseImportParameterImportSettings(input: unknown): BaseImportParameterImportSettings {
   if (input && typeof input === 'object' && !Array.isArray(input)) {
-    const record = input as any;
+    const record = input as Record<string, unknown>;
     return {
-      enabled: typeof record.enabled === 'boolean' ? record.enabled : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.enabled,
-      mode: typeof record.mode === 'string' && ['all', 'mapped'].includes(record.mode) ? record.mode : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.mode,
-      languageScope: typeof record.languageScope === 'string' && ['catalog_languages', 'default_only'].includes(record.languageScope) ? record.languageScope : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.languageScope,
-      createMissingParameters: typeof record.createMissingParameters === 'boolean' ? record.createMissingParameters : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.createMissingParameters,
-      overwriteExistingValues: typeof record.overwriteExistingValues === 'boolean' ? record.overwriteExistingValues : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.overwriteExistingValues,
-      matchBy: typeof record.matchBy === 'string' && ['base_id_then_name', 'name_only'].includes(record.matchBy) ? record.matchBy : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.matchBy,
+      enabled: typeof record['enabled'] === 'boolean' ? record['enabled'] : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.enabled,
+      mode: typeof record['mode'] === 'string' && ['all', 'mapped'].includes(record['mode']) ? (record['mode'] as BaseImportParameterImportMode) : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.mode,
+      languageScope: typeof record['languageScope'] === 'string' && ['catalog_languages', 'default_only'].includes(record['languageScope']) ? (record['languageScope'] as BaseImportParameterLanguageScope) : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.languageScope,
+      createMissingParameters: typeof record['createMissingParameters'] === 'boolean' ? record['createMissingParameters'] : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.createMissingParameters,
+      overwriteExistingValues: typeof record['overwriteExistingValues'] === 'boolean' ? record['overwriteExistingValues'] : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.overwriteExistingValues,
+      matchBy: typeof record['matchBy'] === 'string' && ['base_id_then_name', 'name_only'].includes(record['matchBy']) ? (record['matchBy'] as BaseImportParameterMatchBy) : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.matchBy,
     };
   }
   return DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS;

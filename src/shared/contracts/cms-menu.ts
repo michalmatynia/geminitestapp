@@ -153,13 +153,13 @@ export function getCmsMenuSettingsKey(domainId?: string | null): string {
 
 export function normalizeMenuSettings(input: unknown): MenuSettings {
   if (input && typeof input === 'object' && !Array.isArray(input)) {
-    const record = input as any;
+    const record = input as Record<string, unknown>;
     return {
       ...DEFAULT_MENU_SETTINGS,
       ...record,
-      items: Array.isArray(record.items) ? record.items : DEFAULT_MENU_SETTINGS.items,
-      showMenu: typeof record.showMenu === 'boolean' ? record.showMenu : DEFAULT_MENU_SETTINGS.showMenu,
-    };
+      items: Array.isArray(record['items']) ? (record['items'] as MenuItemDto[]) : DEFAULT_MENU_SETTINGS.items,
+      showMenu: typeof record['showMenu'] === 'boolean' ? record['showMenu'] : DEFAULT_MENU_SETTINGS.showMenu,
+    } as MenuSettings;
   }
   return DEFAULT_MENU_SETTINGS;
 }

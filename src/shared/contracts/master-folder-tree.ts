@@ -172,6 +172,19 @@ export const masterFolderTreePersistContextSchema = z.object({
 
 export type MasterFolderTreePersistContextDto = z.infer<typeof masterFolderTreePersistContextSchema>;
 
+export interface MasterFolderTreePersistContext {
+  previousNodes: MasterTreeNode[];
+  nextNodes: MasterTreeNode[];
+}
+
+export interface MasterFolderTreeAdapter {
+  loadNodes?: () => Promise<MasterTreeNode[]>;
+  applyOperation: (
+    operation: MasterFolderTreePersistOperation,
+    context: MasterFolderTreePersistContext
+  ) => Promise<MasterTreeNode[] | void>;
+}
+
 export const masterFolderTreeActionOkSchema = z.object({
   ok: z.literal(true),
 });
@@ -197,6 +210,46 @@ export type MasterFolderTreeActionResult = {
   error?: { message: string; code?: string; details?: unknown };
 };
 
+/**
+ * Master Folder Tree Profile DTOs
+ */
+export type FolderTreePlaceholderPreset = 'sublime' | 'classic' | 'vivid';
+export type FolderTreePlaceholderStyle = 'line' | 'pill' | 'ghost';
+export type FolderTreePlaceholderEmphasis = 'subtle' | 'balanced' | 'bold';
+export type FolderTreeSelectionBehavior = 'click_away' | 'toggle_only';
+export type FolderTreeIconSlot = 'folderClosed' | 'folderOpen' | 'file' | 'root' | 'dragHandle';
+
+export type FolderTreeNestingRuleV2 = {
+  childType: MasterTreeNodeTypeDto;
+  childKinds: string[];
+  targetType: MasterTreeTargetTypeDto;
+  targetKinds: string[];
+  allow: boolean;
+};
+
+export type FolderTreeProfileV2 = {
+  version: 2;
+  placeholders: {
+    preset: FolderTreePlaceholderPreset;
+    style: FolderTreePlaceholderStyle;
+    emphasis: FolderTreePlaceholderEmphasis;
+    rootDropLabel: string;
+    inlineDropLabel: string;
+  };
+  icons: {
+    slots: Record<FolderTreeIconSlot, string | null>;
+    byKind: Record<string, string | null>;
+  };
+  nesting: {
+    defaultAllow: boolean;
+    blockedTargetKinds: string[];
+    rules: FolderTreeNestingRuleV2[];
+  };
+  interactions: {
+    selectionBehavior: FolderTreeSelectionBehavior;
+  };
+};
+
 export const useMasterFolderTreeOptionsSchema = z.object({
   initialNodes: z.array(masterTreeNodeSchema),
   initialSelectedNodeId: z.string().nullable().optional(),
@@ -207,8 +260,8 @@ export const useMasterFolderTreeOptionsSchema = z.object({
 
 export type UseMasterFolderTreeOptionsDto = z.infer<typeof useMasterFolderTreeOptionsSchema>;
 export interface UseMasterFolderTreeOptions {
-  profile?: any;
-  adapter?: any;
+  profile?: FolderTreeProfileV2 | undefined;
+  adapter?: MasterFolderTreeAdapter | undefined;
   initialNodes: MasterTreeNode[];
   initialSelectedNodeId?: MasterTreeId | null;
   initiallyExpandedNodeIds?: MasterTreeId[];

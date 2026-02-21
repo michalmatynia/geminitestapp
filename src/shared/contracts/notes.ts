@@ -240,9 +240,9 @@ export type NoteWithRelationsDto = z.infer<typeof noteWithRelationsSchema>;
 export type NoteWithRelations = NoteWithRelationsDto;
 
 export const noteFiltersSchema = z.object({
-  notebookId: z.string().optional(),
-  categoryId: z.string().optional(),
-  tagId: z.string().optional(),
+  notebookId: z.string().nullable().optional(),
+  categoryId: z.string().nullable().optional(),
+  tagId: z.string().nullable().optional(),
   search: z.string().optional(),
   pinnedOnly: z.boolean().optional(),
   favoriteOnly: z.boolean().optional(),

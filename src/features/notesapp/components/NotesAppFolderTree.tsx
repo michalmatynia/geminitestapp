@@ -63,6 +63,7 @@ export function NotesAppFolderTree(): React.JSX.Element {
     undoHistory,
     handleUndoFolderTree,
     handleUndoAtIndex,
+    selectedFolderId,
     setSelectedFolderId,
     handleSelectNoteFromTree,
   } = useNotesAppContext();
@@ -81,9 +82,9 @@ export function NotesAppFolderTree(): React.JSX.Element {
   );
   const selectedMasterNodeId = useMemo((): MasterTreeId | null => {
     if (selectedNote?.id) return toNoteMasterNodeId(selectedNote.id);
-    if (settings.selectedFolderId) return toFolderMasterNodeId(settings.selectedFolderId);
+    if (selectedFolderId) return toFolderMasterNodeId(selectedFolderId);
     return null;
-  }, [selectedNote?.id, settings.selectedFolderId]);
+  }, [selectedNote?.id, selectedFolderId]);
 
   const notesAdapter = useMemo(
     () => createNotesMasterTreeAdapter(operations),

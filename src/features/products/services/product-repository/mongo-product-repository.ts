@@ -175,6 +175,16 @@ const applyBaseExportedFilter = async (
   baseExported: boolean | undefined
 ): Promise<Filter<ProductDocument>> => {
   if (baseExported === undefined) return filter;
+  const exportedByBaseProductId: Filter<ProductDocument> = {
+    baseProductId: { $exists: true, $nin: [null, ''] },
+  };
+  const unexportedByBaseProductId: Filter<ProductDocument> = {
+    $or: [
+      { baseProductId: { $exists: false } },
+      { baseProductId: null },
+      { baseProductId: '' },
+    ],
+  } as Filter<ProductDocument>;
 
   const db = await getMongoDb();
   const integrations = await db
@@ -211,12 +221,11 @@ const applyBaseExportedFilter = async (
 
   if (baseExported) {
     if (exportedProductIds.length === 0) {
-      return appendAndCondition(filter, {
-        id: '__no_base_exported_products__',
-      } as Filter<ProductDocument>);
+      return appendAndCondition(filter, exportedByBaseProductId);
     }
     return appendAndCondition(filter, {
       $or: [
+        exportedByBaseProductId,
         { id: { $in: exportedProductIds } },
         { _id: { $in: exportedProductIds } },
       ],
@@ -224,11 +233,12 @@ const applyBaseExportedFilter = async (
   }
 
   if (exportedProductIds.length === 0) {
-    return filter;
+    return appendAndCondition(filter, unexportedByBaseProductId);
   }
 
   return appendAndCondition(filter, {
     $and: [
+      unexportedByBaseProductId,
       { id: { $nin: exportedProductIds } },
       { _id: { $nin: exportedProductIds } },
     ],

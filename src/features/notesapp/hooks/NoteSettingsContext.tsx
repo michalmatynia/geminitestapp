@@ -136,7 +136,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
     if (!isInitialized) return;
 
     if (settings.selectedFolderId !== previousFolderIdRef.current) {
-      previousFolderIdRef.current = settings.selectedFolderId;
+      previousFolderIdRef.current = settings.selectedFolderId ?? null;
       updateSetting.mutate({ key: DB_SETTING_KEY, value: settings.selectedFolderId ?? '' });
     }
   }, [settings.selectedFolderId, isInitialized, updateSetting]);
@@ -144,7 +144,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
   useEffect((): void => {
     if (!isInitialized) return;
     if (settings.selectedNotebookId !== previousNotebookIdRef.current) {
-      previousNotebookIdRef.current = settings.selectedNotebookId;
+      previousNotebookIdRef.current = settings.selectedNotebookId ?? null;
       updateSetting.mutate({ key: DB_NOTEBOOK_KEY, value: settings.selectedNotebookId ?? '' });
     }
   }, [settings.selectedNotebookId, isInitialized, updateSetting]);

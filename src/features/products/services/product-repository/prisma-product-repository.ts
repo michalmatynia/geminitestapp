@@ -176,24 +176,47 @@ const buildProductWhere = (filters: ProductFilters): Prisma.ProductWhereInput =>
     });
   }
 
-  if (filters.baseExported === true) {
-    where.listings = {
-      some: {
-        integration: {
-          slug: { in: [...BASE_INTEGRATION_SLUGS] },
+  if (filters.baseExported !== undefined) {
+    const exportedByListing: Prisma.ProductWhereInput = {
+      listings: {
+        some: {
+          integration: {
+            slug: { in: [...BASE_INTEGRATION_SLUGS] },
+          },
+          externalListingId: { not: null },
         },
-        externalListingId: { not: null },
       },
     };
-  } else if (filters.baseExported === false) {
-    where.listings = {
-      none: {
-        integration: {
-          slug: { in: [...BASE_INTEGRATION_SLUGS] },
-        },
-        externalListingId: { not: null },
-      },
+    const exportedByBaseProductId: Prisma.ProductWhereInput = {
+      AND: [
+        { baseProductId: { not: null } },
+        { baseProductId: { not: '' } },
+      ],
     };
+
+    if (filters.baseExported === true) {
+      andConditions.push({
+        OR: [exportedByListing, exportedByBaseProductId],
+      });
+    } else {
+      andConditions.push({
+        AND: [
+          {
+            OR: [{ baseProductId: null }, { baseProductId: '' }],
+          },
+          {
+            listings: {
+              none: {
+                integration: {
+                  slug: { in: [...BASE_INTEGRATION_SLUGS] },
+                },
+                externalListingId: { not: null },
+              },
+            },
+          },
+        ],
+      });
+    }
   }
 
   if (andConditions.length > 0) {

@@ -159,7 +159,7 @@ const toRuntimeNodes = (nodes: CaseResolverRelationGraph['nodes']): AiNode[] =>
         createdAt;
       const data =
         node['data'] && typeof node['data'] === 'object' && !Array.isArray(node['data'])
-          ? (node['data'] as Record<string, unknown>)
+          ? (node['data'])
           : {};
       return {
         id,

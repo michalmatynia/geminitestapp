@@ -38,7 +38,7 @@ export function useNoteTags(
   const filteredTags = useMemo((): TagRecord[] => 
     availableTags.filter(
       (tag: TagRecord) =>
-        tag.name.toLowerCase().includes(tagInput.toLowerCase()) &&
+        (tag.name || '').toLowerCase().includes(tagInput.toLowerCase()) &&
         !selectedTagIds.includes(tag.id)
     ), 
   [availableTags, tagInput, selectedTagIds]
@@ -54,7 +54,7 @@ export function useNoteTags(
     if (!tagInput.trim()) return;
 
     const existingTag = availableTags.find(
-      (t: TagRecord) => t.name.toLowerCase() === tagInput.trim().toLowerCase()
+      (t: TagRecord) => (t.name || '').toLowerCase() === tagInput.trim().toLowerCase()
     );
 
     if (existingTag) {

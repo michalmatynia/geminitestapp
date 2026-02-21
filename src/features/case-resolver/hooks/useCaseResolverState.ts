@@ -1353,11 +1353,6 @@ export function useCaseResolverState() {
     [workspace.files]
   );
 
-  const assetsById = useMemo(
-    () => new Map<string, CaseResolverAssetFile>(workspace.assets.map((asset: CaseResolverAssetFile): [string, CaseResolverAssetFile] => [asset.id, asset])),
-    [workspace.assets]
-  );
-
   const requestedCaseContainerId = useMemo(
     (): string | null => resolveCaseContainerIdForFileId(filesById, requestedFileId),
     [filesById, requestedFileId]

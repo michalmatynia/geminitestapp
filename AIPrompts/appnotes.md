@@ -3,6 +3,9 @@ Cases
 Full document name
 interrelations between douccmenta
 
+Validator has to work on Auto
+Opis i tytuł doesn't seem to work
+
 
 In Image Studio
 I want to be be able to centre based on white pixel to non white pixel ratio.

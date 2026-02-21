@@ -878,7 +878,7 @@ export const normalizeFolderRecords = (
     byKey.set(key, {
       path: normalizedPath,
       ownerCaseId,
-    } as any);
+    });
   });
   return Array.from(byKey.values()).sort((left: CaseResolverFolderRecord, right: CaseResolverFolderRecord) => {
     const pathDelta = left.path.localeCompare(right.path);
@@ -910,7 +910,7 @@ export const appendOwnedFolderRecords = ({
   expandFolderPath(normalizedPath).forEach((path: string): void => {
     const key = buildFolderRecordKey(path, ownerCaseId);
     if (byKey.has(key)) return;
-    byKey.set(key, { path, ownerCaseId } as any);
+    byKey.set(key, { path, ownerCaseId });
   });
   return normalizeFolderRecords(Array.from(byKey.values()));
 };

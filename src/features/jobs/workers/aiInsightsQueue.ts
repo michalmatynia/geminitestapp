@@ -98,7 +98,7 @@ const hasRepeatableQueueApi = (
   typeof (value as { removeRepeatableByKey?: unknown }).removeRepeatableByKey === 'function';
 
 const removeInsightsTickRepeatJobs = async (): Promise<void> => {
-  const bullQueueUnknown = queue.getQueue() as unknown;
+  const bullQueueUnknown = queue.getQueue();
   if (!hasRepeatableQueueApi(bullQueueUnknown)) return;
   const bullQueue = bullQueueUnknown;
   const repeatableJobs = await bullQueue.getRepeatableJobs();

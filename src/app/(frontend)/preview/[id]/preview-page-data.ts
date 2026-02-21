@@ -57,7 +57,7 @@ export const loadPreviewRenderData = async (id: string): Promise<PreviewRenderDa
   const showMenu = page.showMenu !== false;
   const rendererComponents: PageComponent[] = (page.components ?? []).map((component) => ({
     id: component.id ?? `component-${Math.random().toString(36).slice(2, 9)}`,
-    type: component.type as string,
+    type: component.type,
     order: component.order || 0,
     content: (component.content as Record<string, unknown>) ?? {},
     pageId: page.id,

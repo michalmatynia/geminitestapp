@@ -338,7 +338,7 @@ export const compileCaseResolverPrompt = (
       };
 
       segments.push({
-        id: `seg-${node.id}` || '',
+        id: `seg-${node.id}`,
         nodeId: node.id || null,
         role: meta.role || '',
         content: wrappedText || '',

@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
+  findProductListingByIdAcrossProviders,
   getExportDefaultConnectionId,
   getExportDefaultInventoryId,
   getProductListingRepository,
@@ -76,15 +77,39 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, pa
       throw badRequestError('Product id is required');
     }
     let listings = await listProductListingsByProductIdAcrossProviders(productId);
+    const productRepo = await getProductRepository();
+    const product = await productRepo.getProductById(productId);
+    const normalizedBaseProductId = product?.baseProductId?.trim() || '';
+
+    if (normalizedBaseProductId) {
+      const baseListingsWithoutExternalId = listings.filter(
+        (listing: (typeof listings)[number]) =>
+          isBaseIntegrationSlug(listing.integration.slug) &&
+          !(listing.externalListingId?.trim())
+      );
+
+      if (baseListingsWithoutExternalId.length > 0) {
+        await Promise.all(
+          baseListingsWithoutExternalId.map(async (listing) => {
+            const resolved = await findProductListingByIdAcrossProviders(listing.id);
+            if (!resolved) return;
+            await resolved.repository.updateListingExternalId(
+              listing.id,
+              normalizedBaseProductId
+            );
+            if ((resolved.listing.status ?? '').trim().length === 0) {
+              await resolved.repository.updateListingStatus(listing.id, 'active');
+            }
+          })
+        );
+        listings = await listProductListingsByProductIdAcrossProviders(productId);
+      }
+    }
 
     const hasBaseListing = listings.some((listing: (typeof listings)[number]) =>
       isBaseIntegrationSlug(listing.integration.slug)
     );
     if (!hasBaseListing) {
-      const productRepo = await getProductRepository();
-      const product = await productRepo.getProductById(productId);
-      const normalizedBaseProductId = product?.baseProductId?.trim() || '';
-
       if (normalizedBaseProductId) {
         const linkContext = await resolveBaseListingLinkContext();
         if (linkContext) {

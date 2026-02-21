@@ -110,7 +110,7 @@ export function useNoteOperations({
 
   const handleRenameFolder = useCallback(async (folderId: string, newName: string): Promise<void> => {
     const currentFolder = findTreeNodeById(folderTreeRef.current, folderId);
-    const previousName = currentFolder?.name ?? '';
+    const previousName = (currentFolder?.name as string) ?? '';
     try {
       await updateCategoryMutation.mutateAsync({ id: folderId, name: newName });
 
@@ -169,11 +169,11 @@ export function useNoteOperations({
         isPinned: note.isPinned,
         isArchived: note.isArchived,
         isFavorite: note.isFavorite,
-        tagIds: note.tags.map((t: { tagId: string }) => t.tagId),
-        categoryIds: note.categories.map((c: { categoryId: string }) => c.categoryId),
+        tagIds: note.tags?.map((t: { tagId: string }) => t.tagId) || [],
+        categoryIds: note.categories?.map((c: { categoryId: string }) => c.categoryId) || [],
         relatedNoteIds: (note.relations ?? []).map((related: { id: string }) => related.id),
         notebookId: note.notebookId ?? selectedNotebookId ?? null,
-      });
+      } as any);
 
       toast('Note duplicated successfully');
     } catch (error: unknown) {

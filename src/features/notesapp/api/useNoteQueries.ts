@@ -62,7 +62,7 @@ export function useNoteFolderTree(notebookId?: string, options?: QueryOptions): 
         ? `/api/notes/categories/tree?notebookId=${encodeURIComponent(notebookId)}`
         : '/api/notes/categories/tree';
       const data = await api.get<CategoryRecord[]>(url);
-      return z.array(noteCategoryWithChildrenSchema).parse(data);
+      return z.array(noteCategoryWithChildrenSchema).parse(data) as unknown as CategoryRecord[];
     },
     enabled: options?.enabled ?? true,
     staleTime: NOTES_STALE_MS,

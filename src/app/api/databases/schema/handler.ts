@@ -188,7 +188,7 @@ async function getMongoSchema(includeCounts = false): Promise<SchemaResponse> {
   }
 
   collections.sort((a: CollectionSchema, b: CollectionSchema) => a.name.localeCompare(b.name));
-  return { provider: 'mongodb', collections } as any;
+  return { provider: 'mongodb', collections };
 }
 
 async function getPrismaSchema(includeCounts = false): Promise<SchemaResponse> {
@@ -233,17 +233,22 @@ async function getPrismaSchema(includeCounts = false): Promise<SchemaResponse> {
   }
 
   collections.sort((a: CollectionSchema, b: CollectionSchema) => a.name.localeCompare(b.name));
-  return { provider: 'prisma', collections } as any;
+  return { provider: 'prisma', collections };
 }
 
 const enrichCollections = (
   schema: SchemaResponse,
   provider: SchemaProvider
-): Array<CollectionSchema & { provider: SchemaProvider }> =>
-  (schema.collections as any).map((collection: CollectionSchema) => ({
+): Array<CollectionSchema & { provider: SchemaProvider }> => {
+  const collections = Array.isArray(schema.collections)
+    ? (schema.collections as CollectionSchema[])
+    : Object.values(schema.collections);
+
+  return collections.map((collection: CollectionSchema) => ({
     ...collection,
     provider,
   }));
+};
 
 export async function getDatabasesSchemaHandler(
   request: NextRequest,
@@ -263,12 +268,12 @@ export async function getDatabasesSchemaHandler(
   }
 
   if (providerParam === 'all') {
-    const sources: Partial<Record<SchemaProvider, SchemaResponse>> = {};
+    const sources: Record<string, Record<string, unknown>> = {};
     const collections: Array<CollectionSchema & { provider: SchemaProvider }> = [];
 
     try {
       const mongoSchema = await getMongoSchema(includeCounts);
-      sources.mongodb = mongoSchema;
+      sources['mongodb'] = mongoSchema as unknown as Record<string, unknown>;
       collections.push(...enrichCollections(mongoSchema, 'mongodb'));
     } catch (error) {
       const { ErrorSystem } = await import('@/features/observability/server');
@@ -277,7 +282,7 @@ export async function getDatabasesSchemaHandler(
 
     try {
       const prismaSchema = await getPrismaSchema(includeCounts);
-      sources.prisma = prismaSchema;
+      sources['prisma'] = prismaSchema as unknown as Record<string, unknown>;
       collections.push(...enrichCollections(prismaSchema, 'prisma'));
     } catch (error) {
       const { ErrorSystem } = await import('@/features/observability/server');
@@ -288,7 +293,7 @@ export async function getDatabasesSchemaHandler(
       provider: 'multi',
       collections,
       sources,
-    } as any;
+    };
     return NextResponse.json(payload);
   }
 

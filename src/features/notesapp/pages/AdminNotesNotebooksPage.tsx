@@ -47,6 +47,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
     try {
       await createNotebook.mutateAsync({
         name: name.trim(),
+        description: null,
         color: null,
         defaultThemeId: null,
       });

@@ -229,8 +229,8 @@ export function NotesAppProvider({
     fetchFolderTree,
     fetchTags,
   } = useNoteData({
-    selectedNotebookId: settings.selectedNotebookId,
-    selectedFolderId: settings.selectedFolderId,
+    selectedNotebookId: settings.selectedNotebookId ?? null,
+    selectedFolderId: settings.selectedFolderId ?? null,
     searchQuery: filters.debouncedSearchQuery,
     searchScope: settings.searchScope,
     filterPinned: filters.filterPinned,
@@ -241,7 +241,7 @@ export function NotesAppProvider({
   });
 
   const operations = useNoteOperations({
-    selectedNotebookId: settings.selectedNotebookId,
+    selectedNotebookId: settings.selectedNotebookId ?? null,
     notesRef,
     folderTreeRef,
     fetchNotes,
@@ -259,8 +259,8 @@ export function NotesAppProvider({
     themes,
     notebook,
     folderTree,
-    selectedFolderId: settings.selectedFolderId,
-    selectedNotebookId: settings.selectedNotebookId,
+    selectedFolderId: settings.selectedFolderId ?? null,
+    selectedNotebookId: settings.selectedNotebookId ?? null,
     selectedNote,
     fetchFolderTree,
     setNotebook,
@@ -313,7 +313,9 @@ export function NotesAppProvider({
         tagMap.set(noteTag.tagId, noteTag.tag);
       });
     });
-    return Array.from(tagMap.values()).sort((a: TagRecord, b: TagRecord): number => a.name.localeCompare(b.name));
+    return Array.from(tagMap.values()).sort((a: TagRecord, b: TagRecord): number => 
+      (a.name || '').localeCompare(b.name || '')
+    );
   }, [notesInScope]);
 
   // Handlers
@@ -488,8 +490,8 @@ export function NotesAppProvider({
       loading,
       selectedNote,
       setSelectedNote,
-      selectedFolderId: settings.selectedFolderId,
-      selectedNotebookId: settings.selectedNotebookId,
+      selectedFolderId: settings.selectedFolderId ?? null,
+      selectedNotebookId: settings.selectedNotebookId ?? null,
       isEditing,
       setIsEditing,
       isCreating,

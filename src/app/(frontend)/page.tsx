@@ -70,7 +70,7 @@ export default async function Home(): Promise<JSX.Element> {
     );
     const rendererComponents = (cmsPage?.components ?? []).map((component) => ({
       id: component.id ?? `home-component-${Math.random().toString(36).slice(2, 9)}`,
-      type: component.type as string,
+      type: component.type,
       order: component.order || 0,
       content: (component.content as Record<string, unknown>) ?? {},
       pageId: cmsPage?.id ?? 'home',

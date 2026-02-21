@@ -48,6 +48,7 @@ const toProductAiJob = (record: ProductAiJobRecord): ProductAiJob => ({
   productId: record.productId,
   status: record.status === 'canceled' ? 'cancelled' : record.status,
   type: record.type,
+  jobType: record.type as ProductAiJobType,
   payload: isRecord(record.payload) ? record.payload : undefined,
   result: toJobResult(record.result),
   errorMessage: record.errorMessage ?? null,

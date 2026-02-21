@@ -1,5 +1,15 @@
 import { z } from 'zod';
 
+import type {
+  FolderTreeIconSlot,
+  FolderTreeNestingRuleV2,
+  FolderTreePlaceholderEmphasis,
+  FolderTreePlaceholderPreset,
+  FolderTreePlaceholderStyle,
+  FolderTreeProfileV2,
+  FolderTreeSelectionBehavior,
+} from '@/shared/contracts/master-folder-tree';
+
 import {
   normalizeMasterTreeKind,
   type MasterTreeNodeType,
@@ -18,8 +28,7 @@ export const folderTreeInstanceValues = [
 
 export type FolderTreeInstance = (typeof folderTreeInstanceValues)[number];
 
-export const folderTreePlaceholderPresetValues = ['sublime', 'classic', 'vivid'] as const;
-export type FolderTreePlaceholderPreset = (typeof folderTreePlaceholderPresetValues)[number];
+export const folderTreePlaceholderPresetValues: FolderTreePlaceholderPreset[] = ['sublime', 'classic', 'vivid'];
 
 export type FolderTreePlaceholderClassSet = {
   rootIdle: string;
@@ -74,54 +83,19 @@ export const folderTreePlaceholderPresetOptions: Array<{
   { value: 'vivid', label: 'Vivid' },
 ];
 
-export const folderTreePlaceholderStyleValues = ['line', 'pill', 'ghost'] as const;
-export type FolderTreePlaceholderStyle = (typeof folderTreePlaceholderStyleValues)[number];
+export const folderTreePlaceholderStyleValues: FolderTreePlaceholderStyle[] = ['line', 'pill', 'ghost'];
 
-export const folderTreePlaceholderEmphasisValues = ['subtle', 'balanced', 'bold'] as const;
-export type FolderTreePlaceholderEmphasis = (typeof folderTreePlaceholderEmphasisValues)[number];
+export const folderTreePlaceholderEmphasisValues: FolderTreePlaceholderEmphasis[] = ['subtle', 'balanced', 'bold'];
 
-export const folderTreeSelectionBehaviorValues = ['click_away', 'toggle_only'] as const;
-export type FolderTreeSelectionBehavior = (typeof folderTreeSelectionBehaviorValues)[number];
+export const folderTreeSelectionBehaviorValues: FolderTreeSelectionBehavior[] = ['click_away', 'toggle_only'];
 
-export const folderTreeIconSlotValues = [
+export const folderTreeIconSlotValues: FolderTreeIconSlot[] = [
   'folderClosed',
   'folderOpen',
   'file',
   'root',
   'dragHandle',
-] as const;
-export type FolderTreeIconSlot = (typeof folderTreeIconSlotValues)[number];
-
-export type FolderTreeNestingRuleV2 = {
-  childType: MasterTreeNodeType;
-  childKinds: string[];
-  targetType: MasterTreeTargetType;
-  targetKinds: string[];
-  allow: boolean;
-};
-
-export type FolderTreeProfileV2 = {
-  version: 2;
-  placeholders: {
-    preset: FolderTreePlaceholderPreset;
-    style: FolderTreePlaceholderStyle;
-    emphasis: FolderTreePlaceholderEmphasis;
-    rootDropLabel: string;
-    inlineDropLabel: string;
-  };
-  icons: {
-    slots: Record<FolderTreeIconSlot, string | null>;
-    byKind: Record<string, string | null>;
-  };
-  nesting: {
-    defaultAllow: boolean;
-    blockedTargetKinds: string[];
-    rules: FolderTreeNestingRuleV2[];
-  };
-  interactions: {
-    selectionBehavior: FolderTreeSelectionBehavior;
-  };
-};
+];
 
 export type FolderTreeProfilesV2Map = Record<FolderTreeInstance, FolderTreeProfileV2>;
 
@@ -133,10 +107,10 @@ export type CanNestTreeNodeV2Input = {
   targetFolderKind?: string | null;
 };
 
-const placeholderPresetSchema = z.enum(folderTreePlaceholderPresetValues);
-const placeholderStyleSchema = z.enum(folderTreePlaceholderStyleValues);
-const placeholderEmphasisSchema = z.enum(folderTreePlaceholderEmphasisValues);
-const selectionBehaviorSchema = z.enum(folderTreeSelectionBehaviorValues);
+const placeholderPresetSchema = z.enum(folderTreePlaceholderPresetValues as [string, ...string[]]);
+const placeholderStyleSchema = z.enum(folderTreePlaceholderStyleValues as [string, ...string[]]);
+const placeholderEmphasisSchema = z.enum(folderTreePlaceholderEmphasisValues as [string, ...string[]]);
+const selectionBehaviorSchema = z.enum(folderTreeSelectionBehaviorValues as [string, ...string[]]);
 const nodeTypeSchema = z.enum(['folder', 'file']);
 const targetTypeSchema = z.enum(['folder', 'root']);
 const iconSlotSchema = z.string().trim().min(1).nullable();

@@ -1102,7 +1102,7 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
     ) {
       const record = parsed as Record<string, unknown>;
       const parsedNodes = (Array.isArray(record['nodes']) ? record['nodes'] : []) as CaseResolverNodeFileSnapshot['nodes'];
-      const parsedEdges = (Array.isArray(record['edges']) ? record['edges'] : []);
+      const parsedEdges = (Array.isArray(record['edges']) ? record['edges'] : []) as CaseResolverNodeFileSnapshot['edges'];
       const parsedNodeFileMeta =
         record['nodeFileMeta'] !== null &&
         typeof record['nodeFileMeta'] === 'object' &&

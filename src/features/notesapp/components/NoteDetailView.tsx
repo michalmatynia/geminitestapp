@@ -246,10 +246,10 @@ export function NoteDetailView(): React.JSX.Element | null {
           </Button>
         )}
         {buildBreadcrumbPath(
-          selectedNote.categories[0]?.categoryId || null,
+          selectedNote.categories?.[0]?.categoryId || null,
           selectedNote.title,
           folderTree
-        ).map((crumb: { id: string | null; name: string; isNote?: boolean }, index: number, array: Array<{ id: string | null; name: string; isNote?: boolean }>) => (
+        ).map((crumb: any, index: number, array: any[]) => (
           <React.Fragment key={index}>
             {crumb.isNote ? (
               <span className='text-gray-300'>{crumb.name}</span>
@@ -369,7 +369,7 @@ export function NoteDetailView(): React.JSX.Element | null {
             style={previewTypographyStyle}
             dangerouslySetInnerHTML={{
               __html: sanitizeHtml(
-                selectedNote.editorType === 'wysiwyg'
+                (selectedNote.editorType as string) === 'wysiwyg'
                   ? selectedNote.content
                   : renderMarkdownToHtml(selectedNote.content)
               ),

@@ -177,12 +177,12 @@ export function NoteMetadata({
                     onClick={(): void => handleAddTag(tag)}
                     className='cursor-pointer px-4 py-2 hover:bg-muted/50 hover:text-white'
                   >
-                    {tag.name}
+                    {tag.name || 'Unnamed'}
                   </li>
                 ))}
                 {tagInput &&
                   !filteredTags.find(
-                    (t: TagRecord) => t.name.toLowerCase() === tagInput.toLowerCase()
+                    (t: TagRecord) => (t.name || '').toLowerCase() === tagInput.toLowerCase()
                   ) && (
                   <li
                     onClick={(): void => { void handleCreateTag(); }}

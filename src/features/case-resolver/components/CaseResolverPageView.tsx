@@ -21,7 +21,6 @@ import {
   type CaseResolverGraph,
   type CaseResolverNodeMeta,
   type CaseResolverRelationGraph,
-  type CaseResolverFileType,
 } from '@/shared/contracts/case-resolver';
 import {
   Badge,

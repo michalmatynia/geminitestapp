@@ -79,11 +79,11 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
 
   // Use provided theme or fall back to dark mode theme
   const effectiveTheme = getThemeForNote(note) ?? FALLBACK_THEME;
-  const isCodeNote = note.editorType === 'code';
+  const isCodeNote = (note.editorType as string) === 'code';
 
   const contentHtml = React.useMemo(
     (): string => {
-      let html = note.editorType === 'wysiwyg'
+      let html = (note.editorType as string) === 'wysiwyg'
         ? note.content
         : renderMarkdownToHtml(note.content);
       // Remove image tags from preview to avoid duplication with thumbnail
@@ -256,11 +256,11 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
           dangerouslySetInnerHTML={{ __html: contentHtml }}
         />
         <div className='flex flex-wrap gap-2'>
-          {note.tags.map((nt: { tagId: string; tag: { color: string | null; name: string } }) => (
+          {note.tags?.map((nt: { tagId: string; tag: { color?: string | null; name?: string } }) => (
             <Tag
               key={nt.tagId}
-              color={nt.tag.color}
-              label={nt.tag.name}
+              color={nt.tag.color ?? null}
+              label={nt.tag.name || 'Unnamed'}
             />
           ))}
         </div>
@@ -278,10 +278,10 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
             <div className={showTimestamps ? 'mt-3' : ''}>
               <BreadcrumbScroller backgroundColor={darkenColor(backgroundColor, 20)}>
                 {buildBreadcrumbPath(
-                  note.categories[0]?.categoryId || null,
+                  note.categories?.[0]?.categoryId || null,
                   null,
                   folderTree
-                ).map((crumb: { id: string | null; name: string; isNote?: boolean }, index: number, array: Array<{ id: string | null; name: string; isNote?: boolean }>) => (
+                ).map((crumb: any, index: number, array: any[]) => (
                   <React.Fragment key={index}>
                     <Button
                       variant='link'

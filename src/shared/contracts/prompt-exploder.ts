@@ -445,3 +445,65 @@ export interface PromptExploderCaseResolverMetadataDto {
   documentType?: string | undefined;
   placeDate?: PromptExploderCaseResolverPlaceDateDto | undefined;
 }
+
+/**
+ * Prompt Exploder Bridge DTOs
+ */
+
+export const promptExploderBridgePayloadStatusSchema = z.enum(['pending', 'applied', 'dismissed', 'failed']);
+export type PromptExploderBridgePayloadStatusDto = z.infer<typeof promptExploderBridgePayloadStatusSchema>;
+
+export const promptExploderBridgeSourceSchema = z.enum(['manual', 'auto', 'external', 'draft', 'template', 'sequence', 'qa_matrix', 'prompt_exploder']);
+export type PromptExploderBridgeSourceDto = z.infer<typeof promptExploderBridgeSourceSchema>;
+
+export const promptExploderBridgeTargetSchema = z.enum(['studio', 'case-resolver', 'external', 'clipboard', 'file', 'prompt_exploder']);
+export type PromptExploderBridgeTargetDto = z.infer<typeof promptExploderBridgeTargetSchema>;
+
+export const promptExploderCaseResolverContextSchema = z.object({
+  fileId: z.string().optional(),
+  fileName: z.string().optional(),
+  sessionId: z.string().optional(),
+  documentVersionAtStart: z.number().optional(),
+});
+
+export interface PromptExploderCaseResolverContextDto {
+  fileId?: string | undefined;
+  fileName?: string | undefined;
+  sessionId?: string | undefined;
+  documentVersionAtStart?: number | undefined;
+}
+
+export const promptExploderBridgePayloadSchema = z.object({
+  prompt: z.string(),
+  source: promptExploderBridgeSourceSchema,
+  target: promptExploderBridgeTargetSchema,
+  createdAt: z.string(),
+  transferId: z.string().optional(),
+  payloadVersion: z.number().optional(),
+  expiresAt: z.string().optional(),
+  status: promptExploderBridgePayloadStatusSchema.optional(),
+  appliedAt: z.string().optional(),
+  checksum: z.string().optional(),
+  caseResolverContext: promptExploderCaseResolverContextSchema.optional(),
+  caseResolverParties: promptExploderCaseResolverPartyBundleSchema.optional(),
+  caseResolverMetadata: promptExploderCaseResolverMetadataSchema.optional(),
+});
+
+export interface PromptExploderBridgePayloadDto {
+  prompt: string;
+  source: PromptExploderBridgeSourceDto;
+  target: PromptExploderBridgeTargetDto;
+  createdAt: string;
+  transferId?: string | undefined;
+  payloadVersion?: number | undefined;
+  expiresAt?: string | undefined;
+  status?: PromptExploderBridgePayloadStatusDto | undefined;
+  appliedAt?: string | undefined;
+  checksum?: string | undefined;
+  caseResolverContext?: PromptExploderCaseResolverContextDto | undefined;
+  caseResolverParties?: PromptExploderCaseResolverPartyBundleDto | undefined;
+  caseResolverMetadata?: PromptExploderCaseResolverMetadataDto | undefined;
+}
+
+export type PromptExploderCaseResolverPartyKindDto = 'person' | 'organization';
+export type PromptExploderCaseResolverPartyRoleDto = 'addresser' | 'addressee' | 'subject' | 'reference' | 'other';

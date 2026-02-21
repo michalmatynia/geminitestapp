@@ -151,7 +151,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
 
         return (
           <Tag 
-            label={tag.name} 
+            label={tag.name || 'Unnamed'} 
             color={tag.color || '#3b82f6'} 
             dot 
             className='h-7 font-semibold' 

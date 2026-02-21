@@ -12,7 +12,10 @@ import type {
 } from '@/shared/contracts/case-resolver';
 import { Button, EmptyState, Pagination, SearchInput, SelectSimple, Card, Badge } from '@/shared/ui';
 
-import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
+import {
+  CaseResolverPageContextValue,
+  useCaseResolverPageContext,
+} from '../context/CaseResolverPageContext';
 
 
 type SortKey = 'updated' | 'created' | 'name';
@@ -87,6 +90,7 @@ const buildPathLabelMap = <T extends { id: string; name: string; parentId?: stri
 };
 
 export function CaseResolverDocumentSearchPage(): React.JSX.Element {
+  const context: CaseResolverPageContextValue = useCaseResolverPageContext();
   const {
     workspace,
     caseResolverTags: tags,
@@ -95,8 +99,8 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
     onCreateDocumentFromSearch,
     onOpenFileFromSearch,
     onEditFileFromSearch,
-  } = useCaseResolverPageContext();
-  const files = useMemo(
+  } = context;
+  const files: CaseResolverFile[] = useMemo(
     (): CaseResolverFile[] =>
       workspace.files.filter((file: CaseResolverFile): boolean => file.fileType !== 'case'),
     [workspace.files]

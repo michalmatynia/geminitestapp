@@ -60,6 +60,22 @@ export const databaseBackupFileSchema = z.object({
 
 export type DatabaseBackupFileDto = z.infer<typeof databaseBackupFileSchema>;
 
+export const databaseBackupResultSchema = z.object({
+  message: z.string(),
+  backupName: z.string(),
+  log: z.string().optional(),
+  warning: z.string().optional(),
+});
+
+export type DatabaseBackupResultDto = z.infer<typeof databaseBackupResultSchema>;
+
+export const fullDatabaseBackupResultSchema = z.object({
+  mongo: databaseBackupResultSchema,
+  postgres: databaseBackupResultSchema,
+});
+
+export type FullDatabaseBackupResultDto = z.infer<typeof fullDatabaseBackupResultSchema>;
+
 export const databaseBrowseParamsSchema = z.object({
   collection: z.string(),
   limit: z.number().optional(),
@@ -97,6 +113,42 @@ export const databaseRestoreOperationResponseSchema = z.object({
 
 export type DatabaseRestoreOperationResponseDto = z.infer<typeof databaseRestoreOperationResponseSchema>;
 export type DatabaseRestoreResponse = DatabaseRestoreOperationResponseDto;
+
+/**
+ * Database Sync DTOs
+ */
+
+export const databaseSyncOptionsSchema = z.object({
+  skipCollections: z.array(z.string()).optional(),
+  skipAuthCollections: z.boolean().optional(),
+  includeCollections: z.array(z.string()).optional(),
+  dryRun: z.boolean().optional(),
+  verbose: z.boolean().optional(),
+});
+
+export type DatabaseSyncOptionsDto = z.infer<typeof databaseSyncOptionsSchema>;
+
+export const databaseSyncCollectionResultSchema = z.object({
+  name: z.string(),
+  status: z.enum(['completed', 'failed', 'skipped']),
+  sourceCount: z.number(),
+  targetDeleted: z.number(),
+  targetInserted: z.number(),
+  warnings: z.array(z.string()).optional(),
+  error: z.string().optional(),
+});
+
+export type DatabaseSyncCollectionResultDto = z.infer<typeof databaseSyncCollectionResultSchema>;
+
+export const databaseSyncResultSchema = z.object({
+  direction: databaseSyncDirectionSchema,
+  startedAt: z.string(),
+  finishedAt: z.string(),
+  backups: z.any().optional(),
+  collections: z.array(databaseSyncCollectionResultSchema),
+});
+
+export type DatabaseSyncResultDto = z.infer<typeof databaseSyncResultSchema>;
 
 /**
  * Database Engine DTOs
@@ -285,9 +337,9 @@ export const multiSchemaResponseSchema = z.object({
   provider: z.string(),
   collections: z.union([
     z.record(z.string(), collectionSchemaSchema),
-    z.array(z.any())
+    z.array(collectionSchemaSchema.and(z.object({ provider: z.string().optional() })))
   ]),
-  sources: z.record(z.string(), z.any()).optional(),
+  sources: z.record(z.string(), z.record(z.string(), z.unknown())).optional(),
 });
 
 export type MultiSchemaResponseDto = z.infer<typeof multiSchemaResponseSchema>;
@@ -372,12 +424,73 @@ export const databaseEngineBackupSchedulerStatusSchema = z.object({
 
 export type DatabaseEngineBackupSchedulerStatusDto = z.infer<typeof databaseEngineBackupSchedulerStatusSchema>;
 
+export const databaseEngineBackupSchedulerTickResultSchema = z.object({
+  checkedAt: z.string(),
+  schedulerEnabled: z.boolean(),
+  triggered: z.array(z.object({
+    dbType: z.string(),
+    jobId: z.string(),
+  })),
+  skipped: z.array(z.object({
+    dbType: z.string(),
+    reason: z.string(),
+  })),
+});
+
+export type DatabaseEngineBackupSchedulerTickResultDto = z.infer<typeof databaseEngineBackupSchedulerTickResultSchema>;
+
 export const databaseEngineBackupSchedulerTickResponseSchema = z.object({
   executed: z.boolean(),
   jobsQueued: z.number(),
 });
 
 export type DatabaseEngineBackupSchedulerTickResponseDto = z.infer<typeof databaseEngineBackupSchedulerTickResponseSchema>;
+
+/**
+ * Database Engine Status DTOs
+ */
+
+export const databaseEngineCollectionStatusSchema = z.object({
+  knownCollections: z.array(z.string()),
+  configuredCount: z.number(),
+  missingExplicitRoutes: z.array(z.string()),
+  orphanedRoutes: z.array(z.string()),
+  unavailableConfiguredRoutes: z.array(z.object({
+    collection: z.string(),
+    provider: z.string(),
+  })),
+});
+
+export type DatabaseEngineCollectionStatusDto = z.infer<typeof databaseEngineCollectionStatusSchema>;
+
+export const databaseEngineServiceStatusSchema = z.object({
+  service: z.string(),
+  configuredProvider: z.string().nullable(),
+  effectiveProvider: z.string().nullable(),
+  missingExplicitRoute: z.boolean(),
+  unsupportedConfiguredProvider: z.boolean(),
+  unavailableConfiguredProvider: z.boolean(),
+  resolutionError: z.string().nullable(),
+});
+
+export type DatabaseEngineServiceStatusDto = z.infer<typeof databaseEngineServiceStatusSchema>;
+
+export const databaseEngineStatusSchema = z.object({
+  timestamp: z.string(),
+  policy: databaseEnginePolicySchema,
+  providers: z.object({
+    prismaConfigured: z.boolean(),
+    mongodbConfigured: z.boolean(),
+    redisConfigured: z.boolean(),
+  }),
+  serviceRouteMap: z.record(z.string(), z.string()),
+  collectionRouteMap: z.record(z.string(), z.string()),
+  services: z.array(databaseEngineServiceStatusSchema),
+  collections: databaseEngineCollectionStatusSchema,
+  blockingIssues: z.array(z.string()),
+});
+
+export type DatabaseEngineStatusDto = z.infer<typeof databaseEngineStatusSchema>;
 
 export const redisNamespaceSchema = z.object({
   namespace: z.string(),
@@ -405,5 +518,5 @@ export const redisStatusSchema = z.object({
 export type RedisStatusDto = z.infer<typeof redisStatusSchema>;
 export type RedisOverviewDto = RedisStatusDto;
 
-export type AiQuery = any;
-export type DatabasePresetOption = any;
+export type AiQuery = unknown;
+export type DatabasePresetOption = unknown;

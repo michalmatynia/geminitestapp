@@ -162,9 +162,10 @@ export const normalizeCaseResolverTags = (input: unknown): CaseResolverTag[] => 
     seen.add(rawId);
 
     const rawName = typeof record['name'] === 'string' ? record['name'].trim() : '';
+    const rawLabel = typeof record['label'] === 'string' ? record['label'].trim() : '';
     raw.push({
       id: rawId,
-      name: rawName || `Tag ${raw.length + 1}`,
+      label: rawLabel || rawName || `Tag ${raw.length + 1}`,
       parentId: sanitizeOptionalId(record['parentId']),
       color: normalizeHexColor(record['color'], '#38bdf8'),
       createdAt: normalizeTimestamp(record['createdAt'], now),
@@ -194,7 +195,7 @@ export const normalizeCaseResolverTags = (input: unknown): CaseResolverTag[] => 
     const group = grouped.get(getGroupKey(parentId)) ?? [];
     group
       .sort((left: CaseResolverTag, right: CaseResolverTag) => {
-        const nameDelta = left.name.localeCompare(right.name);
+        const nameDelta = left.label.localeCompare(right.label);
         if (nameDelta !== 0) return nameDelta;
         return left.id.localeCompare(right.id);
       })

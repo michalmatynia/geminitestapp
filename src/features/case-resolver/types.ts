@@ -63,6 +63,7 @@ export interface CaseResolverFileEditDraft {
   createdAt?: string;
   updatedAt?: string;
   documentDate?: CaseResolverDocumentDateProposal | null;
+  documentCity?: string | null;
   originalDocumentContent?: string;
   explodedDocumentContent?: string;
   activeDocumentVersion?: CaseResolverDocumentVersion;

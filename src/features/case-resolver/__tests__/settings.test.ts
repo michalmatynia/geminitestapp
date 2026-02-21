@@ -214,7 +214,7 @@ describe('case-resolver settings', () => {
     expect(workspace.assets).toEqual([]);
     expect(workspace.files[0]?.id).toBe('dup-file');
     expect(workspace.files[0]?.folder).toBe('Root_A/Sub__');
-    expect(workspace.files[0]?.documentDate).toBe('');
+    expect(workspace.files[0]?.documentDate).toBeNull();
     expect(workspace.files[0]?.addresser).toEqual({ kind: 'person', id: 'p-1' });
     expect(workspace.files[0]?.addressee).toBeNull();
     expect(workspace.files[0]?.caseIdentifierId).toBe('identifier-1');

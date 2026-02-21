@@ -493,6 +493,60 @@ export const buildCaseResolverTagPickerOptions = (
     );
 };
 
+const normalizeDraftDocumentDate = (value: unknown): CaseResolverFileEditDraft['documentDate'] => {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const record = value as Record<string, unknown>;
+    const isoDate = typeof record['isoDate'] === 'string' ? record['isoDate'].trim() : '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return null;
+    return {
+      isoDate,
+      source: record['source'] === 'metadata' ? 'metadata' : 'text',
+      sourceLine:
+        typeof record['sourceLine'] === 'string' && record['sourceLine'].trim().length > 0
+          ? record['sourceLine'].trim()
+          : null,
+      cityHint:
+        typeof record['cityHint'] === 'string' && record['cityHint'].trim().length > 0
+          ? record['cityHint'].trim()
+          : null,
+      city:
+        typeof record['city'] === 'string' && record['city'].trim().length > 0
+          ? record['city'].trim()
+          : null,
+      action:
+        record['action'] === 'keepText' || record['action'] === 'ignore'
+          ? record['action']
+          : 'useDetectedDate',
+    };
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    const isoDate = /^\d{4}-\d{2}-\d{2}$/.test(trimmed)
+      ? trimmed
+      : /^\d{4}-\d{2}-\d{2}T/.test(trimmed)
+        ? trimmed.slice(0, 10)
+        : '';
+    if (!isoDate) return null;
+    return {
+      isoDate,
+      source: 'text',
+      sourceLine: null,
+      cityHint: null,
+      city: null,
+      action: 'useDetectedDate',
+    };
+  }
+
+  return null;
+};
+
+const normalizeDraftDocumentCity = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
 export const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEditDraft => {
   const originalDocumentContent = file.originalDocumentContent ?? file.documentContent;
   const explodedDocumentContent = file.explodedDocumentContent ?? '';
@@ -543,7 +597,8 @@ export const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEdit
     referenceCaseIds: file.referenceCaseIds,
     createdAt: file.createdAt,
     updatedAt: file.updatedAt,
-    documentDate: file.documentDate,
+    documentDate: normalizeDraftDocumentDate(file.documentDate),
+    documentCity: normalizeDraftDocumentCity(file.documentCity),
     originalDocumentContent,
     explodedDocumentContent,
     activeDocumentVersion,

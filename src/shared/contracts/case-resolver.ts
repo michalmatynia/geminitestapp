@@ -101,6 +101,7 @@ export const caseResolverDocumentDateProposalSchema = z.object({
   source: z.enum(['metadata', 'text']),
   sourceLine: z.string().nullable(),
   cityHint: z.string().nullable(),
+  city: z.string().nullable().optional(),
   action: caseResolverDocumentDateActionSchema,
 });
 export type CaseResolverDocumentDateProposalDto = z.infer<typeof caseResolverDocumentDateProposalSchema>;
@@ -118,7 +119,6 @@ export const caseResolverTagSchema = z.object({
 
 export interface CaseResolverTagDto {
   id: string;
-  name: string;
   label: string;
   color?: string | undefined;
   parentId?: string | null | undefined;
@@ -404,6 +404,8 @@ export const caseResolverFileSchema = dtoBaseSchema.extend({
   documentContentHtml: z.string().optional(),
   documentContentMarkdown: z.string().optional(),
   originalDocumentContent: z.string().optional(),
+  documentCity: z.string().nullable().optional(),
+  documentDate: caseResolverDocumentDateProposalSchema.nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -422,6 +424,8 @@ export type CaseResolverFileDto = DtoBase & {
   documentContentHtml?: string | undefined;
   documentContentMarkdown?: string | undefined;
   originalDocumentContent?: string | undefined;
+  documentCity?: string | null | undefined;
+  documentDate?: CaseResolverDocumentDateProposal | null | undefined;
   metadata?: Record<string, unknown> | undefined;
 };
 
@@ -438,6 +442,7 @@ export const caseResolverFileEditDraftSchema = z.object({
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
   documentDate: caseResolverDocumentDateProposalSchema.nullable().optional(),
+  documentCity: z.string().nullable().optional(),
   originalDocumentContent: z.string().optional(),
   explodedDocumentContent: z.string().optional(),
   activeDocumentVersion: z.enum(['original', 'exploded']).optional(),
@@ -475,6 +480,7 @@ export interface CaseResolverFileEditDraftDto {
   createdAt?: string | undefined;
   updatedAt?: string | undefined;
   documentDate?: CaseResolverDocumentDateProposal | null | undefined;
+  documentCity?: string | null | undefined;
   originalDocumentContent?: string | undefined;
   explodedDocumentContent?: string | undefined;
   activeDocumentVersion?: 'original' | 'exploded' | undefined;

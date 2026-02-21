@@ -1,6 +1,6 @@
 import { CmsMenu } from '@/features/cms/components/frontend/CmsMenu';
-import type { MenuSettings } from '@/shared/contracts/cms';
-import type { ColorSchemeColors, ThemeSettings } from '@/shared/contracts/cms';
+import type { MenuSettings } from '@/shared/contracts/cms-menu';
+import type { ColorSchemeColors, ThemeSettings } from '@/shared/contracts/cms-theme';
 
 import type { CSSProperties } from 'react';
 

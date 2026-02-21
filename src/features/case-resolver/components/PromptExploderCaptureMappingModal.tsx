@@ -184,6 +184,11 @@ export function PromptExploderCaptureMappingModal({
                   <div>
                   Detected date: <span className='font-medium'>{draft.documentDate.isoDate}</span>
                   </div>
+                  {draft.documentDate.city ? (
+                    <div className='mt-1'>
+                    Captured city: <span className='font-medium'>{draft.documentDate.city}</span>
+                    </div>
+                  ) : null}
                   {draft.documentDate.sourceLine ? (
                     <div className='mt-1 text-[11px] text-gray-400'>
                     Source line: {draft.documentDate.sourceLine}

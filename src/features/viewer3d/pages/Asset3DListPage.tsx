@@ -21,7 +21,7 @@ import {
 } from '@/shared/ui';
 
 import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
-import { useAsset3DListState, type UseAsset3DListStateReturn } from '../hooks/useAsset3DListState';
+import { useAsset3DListState } from '../hooks/useAsset3DListState';
 
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -133,6 +133,12 @@ export function Asset3DListPage(): React.JSX.Element {
     </div>
   ) : null;
 
+  const searchConfig = useMemo(() => ({
+    value: searchQuery,
+    onChange: (val: string) => setSearchQuery(val),
+    placeholder: 'Search assets...',
+  }), [searchQuery, setSearchQuery]);
+
   return (
     <StandardDataTablePanel
       header={
@@ -148,11 +154,7 @@ export function Asset3DListPage(): React.JSX.Element {
       alerts={error ? <Alert variant='error'>{error}</Alert> : null}
       filters={
         <FilterPanel
-          search={{
-            value: String(searchQuery),
-            onChange: (val) => setSearchQuery(val),
-            placeholder: 'Search assets...',
-          }}
+          search={searchConfig}
           fields={[
             ...(categories.length > 0 ? [{
               key: 'category',

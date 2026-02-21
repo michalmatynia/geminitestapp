@@ -1,5 +1,5 @@
 
-import type { CmsTheme } from '../../types/theme';
+import type { CmsTheme } from '@/shared/contracts/cms';
 
 interface ThemeProviderProps {
   theme: CmsTheme;

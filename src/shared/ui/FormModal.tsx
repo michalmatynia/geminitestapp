@@ -55,6 +55,11 @@ export function FormModal({
 }: FormModalProps): React.JSX.Element | null {
   const isCurrentlyOpen = isOpen ?? open;
   if (!isCurrentlyOpen) return null;
+  const handleOpenChange = (nextOpen: boolean): void => {
+    if (!nextOpen) {
+      onClose();
+    }
+  };
   const shouldHighlightSave = hasUnsavedChanges ?? !isSaveDisabled;
   const isSaveButtonDisabled =
     isSaving || isSaveDisabled || hasUnsavedChanges === false;
@@ -114,7 +119,7 @@ export function FormModal({
   return (
     <AppModal
       open={isCurrentlyOpen}
-      onOpenChange={onClose}
+      onOpenChange={handleOpenChange}
       title={title}
       subtitle={subtitle}
       size={size}

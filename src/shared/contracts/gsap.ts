@@ -334,11 +334,21 @@ export const VELOCITY_EFFECTS: { label: string; value: VelocityEffect }[] = [
   { label: 'Blur', value: 'blur' },
 ];
 
-export const PARALLAX_DEFAULTS = {
+export const PARALLAX_DEFAULTS: Record<string, any> = {
   scrub: 0.6,
   start: 'top 85%',
   end: 'bottom top',
   ease: 'sine.inOut',
+  'slow-scroll': { offset: 40 },
+  'fast-scroll': { offset: 120 },
+  'zoom-scroll': { offset: 0, scale: 1.2 },
+  tilt: { offset: 20 },
+  float: { offset: 30 },
+  'horizontal-parallax': { offset: 60 },
+  'scale-parallax': { offset: 0, scale: 1.15 },
+  'blur-parallax': { offset: 0 },
+  depth: { offset: 50, scale: 0.85 },
+  none: { offset: 0 },
 };
 
 export const DEFAULT_ANIMATION_CONFIG: GsapAnimationConfig = {

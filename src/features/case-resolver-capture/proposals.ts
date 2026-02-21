@@ -40,6 +40,7 @@ export type CaseResolverCaptureDocumentDateProposal = {
   source: 'metadata' | 'text';
   sourceLine: string | null;
   cityHint: string | null;
+  city: string | null;
   action: CaseResolverCaptureDocumentDateAction;
 };
 
@@ -369,6 +370,19 @@ export const buildCaseResolverCaptureProposalState = (
     }
     return null;
   })();
+  const sourceDateLineCity = (() => {
+    if (!sourceDateLine) return null;
+    const withoutDate = sourceDateLine
+      .replace(
+        /\b(?:\d{4}[.\-/](?:0?[1-9]|1[0-2])[.\-/](?:0?[1-9]|[12]\d|3[01])|(?:0?[1-9]|[12]\d|3[01])[.\-/](?:0?[1-9]|1[0-2])[.\-/](?:\d{2}|\d{4})|(?:0?[1-9]|1[0-2])\/(?:0?[1-9]|[12]\d|3[01])\/(?:\d{2}|\d{4}))\b/gi,
+        ' '
+      )
+      .replace(/\b(dnia|z dnia)\b/gi, ' ')
+      .replace(/[,\s]+/g, ' ')
+      .trim();
+    return withoutDate.length > 0 ? withoutDate : null;
+  })();
+  const resolvedDocumentCity = cityHint || sourceDateLineCity;
 
   const documentDateProposal: CaseResolverCaptureDocumentDateProposal | null =
     detectedDate && detectedDateSource
@@ -377,6 +391,7 @@ export const buildCaseResolverCaptureProposalState = (
         source: detectedDateSource,
         sourceLine: sourceDateLine,
         cityHint,
+        city: resolvedDocumentCity,
         action: 'useDetectedDate',
       }
       : null;
@@ -1048,8 +1063,8 @@ const stripAcceptedDateLineFromTextDetailed = (
   const sourceLineKey = documentDate.sourceLine
     ? normalizeCaptureTextLine(documentDate.sourceLine)
     : '';
-  const normalizedCityHint = documentDate.cityHint
-    ? normalizeCaseResolverComparable(documentDate.cityHint)
+  const normalizedCityHint = (documentDate.city ?? documentDate.cityHint)
+    ? normalizeCaseResolverComparable(documentDate.city ?? documentDate.cityHint ?? '')
     : '';
 
   let removalIndex = -1;

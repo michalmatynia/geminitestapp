@@ -81,7 +81,8 @@ type CaseResolverComparableDocumentSnapshot = {
   folder: string;
   parentCaseId: string | null;
   referenceCaseIds: string[];
-  documentDate: string;
+  documentDate: CaseResolverFileEditDraft['documentDate'];
+  documentCity: string | null;
   tagId: string | null;
   caseIdentifierId: string | null;
   categoryId: string | null;
@@ -172,6 +173,10 @@ const buildCaseResolverFileComparableSnapshot = (
   parentCaseId: file.parentCaseId,
   referenceCaseIds: normalizeComparableReferenceCaseIds(file.referenceCaseIds),
   documentDate: file.documentDate,
+  documentCity:
+    typeof (file as { documentCity?: unknown }).documentCity === 'string'
+      ? (file as { documentCity?: string }).documentCity?.trim() || null
+      : null,
   tagId: file.tagId,
   caseIdentifierId: file.caseIdentifierId,
   categoryId: file.categoryId,
@@ -201,6 +206,7 @@ const buildCaseResolverDraftComparableSnapshot = (
   parentCaseId: draft.parentCaseId,
   referenceCaseIds: normalizeComparableReferenceCaseIds(draft.referenceCaseIds),
   documentDate: draft.documentDate,
+  documentCity: typeof draft.documentCity === 'string' ? draft.documentCity.trim() || null : null,
   tagId: draft.tagId,
   caseIdentifierId: draft.caseIdentifierId,
   categoryId: draft.categoryId,
@@ -595,6 +601,7 @@ const buildStoredEditorDraftPatch = (
       referenceCaseIds: [...(draft.referenceCaseIds ?? [])],
       updatedAt: draft.updatedAt,
       documentDate: draft.documentDate,
+      documentCity: draft.documentCity,
       activeDocumentVersion: draft.activeDocumentVersion,
       editorType: draft.editorType,
       documentContentFormatVersion: draft.documentContentFormatVersion,

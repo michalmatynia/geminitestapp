@@ -10,6 +10,7 @@ import type {
 } from '@/shared/contracts/case-resolver';
 import {
   type CaseResolverAssetFile,
+  type CaseResolverDocumentDateProposal,
   type CaseResolverDocumentFormatVersion,
   type CaseResolverDocumentHistoryEntry,
   type CaseResolverDocumentVersion,
@@ -201,7 +202,13 @@ const normalizeWorkspaceRevision = (value: unknown): number => {
   return Math.floor(value);
 };
 
-const normalizeDocumentDate = (value: unknown): string => {
+const normalizeDocumentCity = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const normalizeIsoDocumentDate = (value: string): string | null => {
   if (typeof value === 'string') {
     const trimmed = value.trim();
     if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
@@ -211,7 +218,54 @@ const normalizeDocumentDate = (value: unknown): string => {
       return trimmed.slice(0, 10);
     }
   }
-  return '';
+  return null;
+};
+
+const normalizeDocumentDateAction = (
+  value: unknown
+): CaseResolverDocumentDateProposal['action'] => {
+  if (value === 'useDetectedDate' || value === 'keepText' || value === 'ignore') {
+    return value;
+  }
+  return 'useDetectedDate';
+};
+
+const normalizeDocumentDateSource = (
+  value: unknown
+): CaseResolverDocumentDateProposal['source'] => (value === 'metadata' ? 'metadata' : 'text');
+
+const normalizeDocumentDate = (value: unknown): CaseResolverDocumentDateProposal | null => {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const record = value as Record<string, unknown>;
+    const isoDate = normalizeIsoDocumentDate(
+      typeof record['isoDate'] === 'string' ? record['isoDate'] : ''
+    );
+    if (!isoDate) return null;
+    const cityHint = normalizeDocumentCity(record['cityHint']);
+    const city = normalizeDocumentCity(record['city']);
+    return {
+      isoDate,
+      source: normalizeDocumentDateSource(record['source']),
+      sourceLine:
+        typeof record['sourceLine'] === 'string' && record['sourceLine'].trim().length > 0
+          ? record['sourceLine'].trim()
+          : null,
+      cityHint,
+      city: city ?? cityHint,
+      action: normalizeDocumentDateAction(record['action']),
+    };
+  }
+
+  const isoDate = normalizeIsoDocumentDate(typeof value === 'string' ? value : '');
+  if (!isoDate) return null;
+  return {
+    isoDate,
+    source: 'text',
+    sourceLine: null,
+    cityHint: null,
+    city: null,
+    action: 'useDetectedDate',
+  };
 };
 
 const CASE_RESOLVER_DATE_LABEL_REGEX = /\b(date|document\s*date|data|data\s*dokumentu)\b/i;
@@ -568,7 +622,8 @@ export const createCaseResolverFile = (input: {
   folder?: string;
   parentCaseId?: string | null | undefined;
   referenceCaseIds?: string[] | null | undefined;
-  documentDate?: string | null | undefined;
+  documentDate?: CaseResolverDocumentDateProposal | string | null | undefined;
+  documentCity?: string | null | undefined;
   originalDocumentContent?: string | null | undefined;
   explodedDocumentContent?: string | null | undefined;
   activeDocumentVersion?: CaseResolverDocumentVersion | null | undefined;
@@ -681,6 +736,7 @@ export const createCaseResolverFile = (input: {
     parentCaseId,
     referenceCaseIds,
     documentDate: normalizeDocumentDate(input.documentDate),
+    documentCity: normalizeDocumentCity(input.documentCity),
     originalDocumentContent,
     explodedDocumentContent,
     activeDocumentVersion,
@@ -794,6 +850,7 @@ export const normalizeCaseResolverWorkspace = (
         parentCaseId: file.parentCaseId,
         referenceCaseIds: file.referenceCaseIds,
         documentDate: file.documentDate,
+        documentCity: (fileRecord['documentCity'] as string | null | undefined) ?? null,
         originalDocumentContent: file.originalDocumentContent,
         explodedDocumentContent: file.explodedDocumentContent,
         activeDocumentVersion: file.activeDocumentVersion,

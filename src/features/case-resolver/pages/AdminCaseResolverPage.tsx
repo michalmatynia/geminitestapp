@@ -436,7 +436,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     setCaptureApplyDiagnostics(null);
     if (!captureMappingDismissToastShownRef.current) {
       captureMappingDismissToastShownRef.current = true;
-      toast('Capture mapping dismissed. No party/date fields were changed.', {
+      toast('Capture mapping dismissed. No party/city/date fields were changed.', {
         variant: 'info',
       });
     }
@@ -754,7 +754,25 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         let appliedAddresserReferencePatch = false;
         let appliedAddresseeReferencePatch = false;
         let appliedDocumentDatePatch = false;
+        let appliedDocumentCityPatch = false;
         let appliedExplodedCleanupPatch = false;
+        const normalizeDocumentDateIso = (value: unknown): string => {
+          if (value && typeof value === 'object' && !Array.isArray(value)) {
+            const isoDate = (value as { isoDate?: unknown }).isoDate;
+            return typeof isoDate === 'string' ? isoDate.trim() : '';
+          }
+          if (typeof value === 'string') {
+            const trimmed = value.trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+            if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) return trimmed.slice(0, 10);
+          }
+          return '';
+        };
+        const normalizeDocumentCity = (value: unknown): string | null => {
+          if (typeof value !== 'string') return null;
+          const normalized = value.trim();
+          return normalized.length > 0 ? normalized : null;
+        };
 
         const dateProposal = nextProposalState.documentDate;
         const shouldAcceptDate =
@@ -763,8 +781,24 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         const acceptedDateValue = shouldAcceptDate
           ? dateProposal.isoDate.trim()
           : null;
+        const acceptedCityValue = shouldAcceptDate
+          ? normalizeDocumentCity(dateProposal?.city ?? dateProposal?.cityHint ?? null)
+          : null;
+        const acceptedDocumentDateValue =
+          acceptedDateValue && dateProposal
+            ? {
+              ...dateProposal,
+              isoDate: acceptedDateValue,
+              city: acceptedCityValue ?? dateProposal.city ?? dateProposal.cityHint ?? null,
+            }
+            : null;
         const precheckShouldPatchDocumentDate =
-          acceptedDateValue !== null && targetFile.documentDate !== acceptedDateValue;
+          acceptedDateValue !== null &&
+          normalizeDocumentDateIso(targetFile.documentDate) !== acceptedDateValue;
+        const precheckShouldPatchDocumentCity =
+          acceptedCityValue !== null &&
+          normalizeDocumentCity((targetFile as { documentCity?: unknown }).documentCity) !==
+            acceptedCityValue;
         const cleanupProposalState: CaseResolverCaptureProposalState = {
           ...nextProposalState,
           addresser: acceptedAddresser
@@ -855,6 +889,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             changedAddresserReference: precheckShouldPatchAddresser,
             changedAddresseeReference: precheckShouldPatchAddressee,
             appliedDate: shouldAcceptDate,
+            appliedCity: acceptedCityValue !== null,
             cleanupChanged: hasExplodedCleanup,
             cleanupSourceWasHtml: cleanupResult.report.sourceWasHtml,
             removedAddressLineCount: cleanupResult.report.removedAddressLineCount,
@@ -883,6 +918,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           acceptedAddresser ||
           acceptedAddressee ||
           acceptedDateValue !== null ||
+          acceptedCityValue !== null ||
           hasExplodedCleanup;
         let captureApplyAttempts = 1;
         let mutationResult: ReturnType<typeof applyCaseResolverFileMutationAndRebaseDraft> | null = null;
@@ -920,13 +956,19 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                     acceptedAddressee &&
                     !areRolePatchReferencesEqual(file.addressee, nextAddresseeReference);
                   const fileShouldPatchDocumentDate =
-                    acceptedDateValue !== null && file.documentDate !== acceptedDateValue;
+                    acceptedDateValue !== null &&
+                    normalizeDocumentDateIso(file.documentDate) !== acceptedDateValue;
+                  const fileShouldPatchDocumentCity =
+                    acceptedCityValue !== null &&
+                    normalizeDocumentCity((file as { documentCity?: unknown }).documentCity) !==
+                      acceptedCityValue;
                   const fileShouldApplyExplodedCleanup =
                     hasExplodedCleanup && Boolean(cleanedExplodedCanonical && cleanedExplodedStored);
                   const fileShouldPersistPatch =
                     fileShouldPatchAddresser ||
                     fileShouldPatchAddressee ||
                     fileShouldPatchDocumentDate ||
+                    fileShouldPatchDocumentCity ||
                     fileShouldApplyExplodedCleanup;
                   if (!fileShouldPersistPatch) return null;
                   appliedAddresserReferencePatch =
@@ -935,6 +977,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                     appliedAddresseeReferencePatch || fileShouldPatchAddressee;
                   appliedDocumentDatePatch =
                     appliedDocumentDatePatch || fileShouldPatchDocumentDate;
+                  appliedDocumentCityPatch =
+                    appliedDocumentCityPatch || fileShouldPatchDocumentCity;
                   appliedExplodedCleanupPatch =
                     appliedExplodedCleanupPatch || fileShouldApplyExplodedCleanup;
                   const nextContentVersion = file.documentContentVersion + 1;
@@ -957,7 +1001,10 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                   return {
                     ...(fileShouldPatchAddresser ? { addresser: rolePatches.addresser ?? null } : {}),
                     ...(fileShouldPatchAddressee ? { addressee: rolePatches.addressee ?? null } : {}),
-                    ...(fileShouldPatchDocumentDate ? { documentDate: acceptedDateValue ?? '' } : {}),
+                    ...(fileShouldPatchDocumentDate && acceptedDocumentDateValue
+                      ? { documentDate: acceptedDocumentDateValue }
+                      : {}),
+                    ...(fileShouldPatchDocumentCity ? { documentCity: acceptedCityValue } : {}),
                     ...(fileShouldApplyExplodedCleanup && cleanedExplodedCanonical && cleanedExplodedStored
                       ? {
                         explodedDocumentContent: cleanedExplodedStored,
@@ -1119,9 +1166,11 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             precheckShouldPatchAddresser,
             precheckShouldPatchAddressee,
             precheckShouldPatchDocumentDate,
+            precheckShouldPatchDocumentCity,
             appliedAddresserReferencePatch,
             appliedAddresseeReferencePatch,
             appliedDocumentDatePatch,
+            appliedDocumentCityPatch,
             appliedExplodedCleanupPatch,
             cleanupDurationMs,
             mutationDurationMs,
@@ -1157,11 +1206,13 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         if (
           changedPartyRoles.length > 0 ||
           appliedDocumentDatePatch ||
+          appliedDocumentCityPatch ||
           appliedExplodedCleanupPatch
         ) {
           const successParts: string[] = [];
           if (changedPartyRoles.length > 0) successParts.push('document parties');
           if (appliedDocumentDatePatch) successParts.push('document date');
+          if (appliedDocumentCityPatch) successParts.push('city');
           if (appliedExplodedCleanupPatch) successParts.push('reassembled text cleanup');
           toast(`Capture mapping applied to ${successParts.join(', ')}.`, { variant: 'success' });
           if (cleanupMissedAcceptedRoles.length > 0) {
@@ -1491,9 +1542,23 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     });
     const addresser = resolvePartyPdfLabel(draft.addresser);
     const addressee = resolvePartyPdfLabel(draft.addressee);
+    const resolvedDocumentDate = (() => {
+      const rawDocumentDate = draft.documentDate;
+      if (!rawDocumentDate) return '';
+      if (typeof rawDocumentDate === 'string') {
+        const trimmed = rawDocumentDate.trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+        if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) return trimmed.slice(0, 10);
+        return '';
+      }
+      const isoDate = rawDocumentDate.isoDate?.trim() ?? '';
+      return /^\d{4}-\d{2}-\d{2}$/.test(isoDate) ? isoDate : '';
+    })();
+    const resolvedDocumentCity =
+      typeof draft.documentCity === 'string' ? draft.documentCity.trim() : '';
     return buildDocumentPdfMarkup({
-      documentDate: draft.documentDate ?? '',
-      documentPlace: addresser.city || addressee.city,
+      documentDate: resolvedDocumentDate,
+      documentPlace: resolvedDocumentCity || addresser.city || addressee.city,
       addresserLabel: addresser.label,
       addresseeLabel: addressee.label,
       documentContent: canonical.html,

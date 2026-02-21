@@ -6,8 +6,8 @@ import { usePathname } from 'next/navigation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { getGsapFromVars } from '@/features/gsap/utils/presets';
-import type { MenuSettings } from '@/shared/contracts/cms';
-import type { ColorSchemeColors } from '@/shared/contracts/cms';
+import type { MenuSettings } from '@/shared/contracts/cms-menu';
+import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
 
 const isExternalUrl = (url: string): boolean => /^https?:\/\//i.test(url);
 

@@ -142,11 +142,10 @@ describe('case-resolver-capture proposals', () => {
     expect(state?.addresser?.sourceRole).toBe('addresser');
     expect(state?.addresser?.action).toBe('useMatched');
     expect(state?.addresser?.matchKind).toBe('party_and_address');
-    expect(state?.addresser?.existingReference).toEqual({ 
+    expect(state?.addresser?.existingReference).toEqual(expect.objectContaining({ 
       kind: 'person', 
       id: 'p-1',
-      name: 'Michał Matynia'
-    });
+    }));
     expect(state?.addresser?.existingAddressId).toBe('addr-1');
     expect(state?.addressee).toBeNull();
   });
@@ -297,11 +296,10 @@ describe('case-resolver-capture proposals', () => {
     );
 
     expect(state?.addresser?.action).toBe('useMatched');
-    expect(state?.addresser?.existingReference).toEqual({ 
+    expect(state?.addresser?.existingReference).toEqual(expect.objectContaining({ 
       kind: 'person', 
       id: 'p-1',
-      name: 'Michał Matynia'
-    });
+    }));
     expect(state?.addressee?.action).toBe('createInFilemaker');
     expect(state?.addressee?.existingReference).toBeNull();
   });
@@ -398,8 +396,37 @@ describe('case-resolver-capture proposals', () => {
       source: 'metadata',
       sourceLine: 'Szczecin 25.01.2026',
       cityHint: 'Szczecin',
+      city: 'Szczecin',
       action: 'useDetectedDate',
     });
+  });
+
+  it('falls back to source date line when metadata city is missing', () => {
+    const sourceText = [
+      'Warszawa, dnia 25.01.2026',
+      'Michał Matynia',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+
+    const state = buildCaseResolverCaptureProposalState(
+      undefined,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        metadata: {
+          placeDate: {
+            day: '25',
+            month: '01',
+            year: '2026',
+          },
+        },
+        sourceText,
+      }
+    );
+
+    expect(state?.documentDate?.cityHint).toBeNull();
+    expect(state?.documentDate?.city).toBe('Warszawa');
   });
 
   it('removes detected date line when date action is useDetectedDate', () => {

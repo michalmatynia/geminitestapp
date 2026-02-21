@@ -1493,9 +1493,29 @@ export function CaseResolverPageView(
                               updateEditingDocumentDraft({
                                 documentDate: current 
                                   ? { ...current, isoDate } 
-                                  : { isoDate, source: 'text', sourceLine: null, cityHint: null, action: 'useDetectedDate' },
+                                  : {
+                                    isoDate,
+                                    source: 'text',
+                                    sourceLine: null,
+                                    cityHint: null,
+                                    city: null,
+                                    action: 'useDetectedDate',
+                                  },
                               });
                             }}
+                          />
+                        </FormField>
+
+                        <FormField label='City'>
+                          <Input
+                            value={editingDocumentDraft.documentCity ?? ''}
+                            disabled={isEditingDocumentLocked}
+                            onChange={(event) => {
+                              updateEditingDocumentDraft({
+                                documentCity: event.target.value,
+                              });
+                            }}
+                            placeholder='City'
                           />
                         </FormField>
 

@@ -2,7 +2,8 @@ import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffec
 import { isCmsSectionHidden, normalizePageZone } from '@/features/cms/utils/page-builder-normalization';
 import type { GsapAnimationConfig } from '@/features/gsap';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
-import type { ColorSchemeColors } from '@/shared/contracts/cms';
+import type { PageComponent, BlockInstance, PageZone } from '@/shared/contracts/cms';
+import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
 
 import { CmsPageProvider } from './CmsPageContext';
 import { CssAnimationWrapper } from './CssAnimationWrapper';
@@ -28,8 +29,6 @@ import { FrontendVideoSection } from './sections/FrontendVideoSection';
 import { SectionBlockProvider } from './sections/SectionBlockContext';
 import { getHoverEffectVars } from './theme-styles';
 
-import type { PageComponent } from '../../types';
-import type { BlockInstance, PageZone } from '../../types/page-builder';
 
 
 interface SectionContent {

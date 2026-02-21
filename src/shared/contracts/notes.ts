@@ -138,6 +138,8 @@ export const noteFileSchema = dtoBaseSchema.extend({
   filepath: z.string(),
   mimetype: z.string(),
   size: z.number(),
+  width: z.number().nullable().optional(),
+  height: z.number().nullable().optional(),
   publicUrl: z.string().optional(),
 });
 

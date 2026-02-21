@@ -36,9 +36,10 @@ const toIsoUpdatedAt = (value: unknown): string | null => {
 
 export const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => {
   const id = doc.id ?? doc._id;
-  const tags = (Array.isArray(doc.tags) ? doc.tags : []) as any;
-  const categories = (Array.isArray(doc.categories) ? doc.categories : []) as any;
-  const relationsFrom = (Array.isArray(doc.relationsFrom) ? doc.relationsFrom : []) as any;
+  const tags = (Array.isArray(doc.tags) ? doc.tags : []) as NoteTagEmbedded[];
+  const categories = (Array.isArray(doc.categories) ? doc.categories : []) as NoteCategoryEmbedded[];
+  const relationsFrom = (Array.isArray(doc.relationsFrom) ? doc.relationsFrom : []) as NoteRelationFromEmbedded[];
+  const relationsTo = (Array.isArray(doc.relationsTo) ? doc.relationsTo : []) as NoteRelationToEmbedded[];
 
   return {
     id,
@@ -55,10 +56,10 @@ export const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => {
     tags,
     categories,
     relationsFrom,
-    relationsTo: (Array.isArray(doc.relationsTo) ? doc.relationsTo : []) as any,
-    tagIds: (Array.isArray(doc.tags) ? doc.tags : []).map((t: { tagId: string }) => t.tagId),
-    categoryIds: (Array.isArray(doc.categories) ? doc.categories : []).map((c: { categoryId: string }) => c.categoryId),
-    relatedNoteIds: (Array.isArray(doc.relationsFrom) ? doc.relationsFrom : []).map((r: { targetNoteId: string }) => r.targetNoteId),
+    relationsTo,
+    tagIds: tags.map((t) => t.tagId),
+    categoryIds: categories.map((c) => c.categoryId),
+    relatedNoteIds: relationsFrom.map((r) => r.targetNoteId),
   } as NoteRecord;
 };
 

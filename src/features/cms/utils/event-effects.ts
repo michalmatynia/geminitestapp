@@ -4,7 +4,7 @@ import type {
   CmsEventEffectsConfig,
   CmsHoverEffect,
   CmsScrollBehavior,
-} from '../types/event-effects';
+} from '@/shared/contracts/cms';
 import type React from 'react';
 
 export const EVENT_HOVER_EFFECT_OPTIONS: Array<{ label: string; value: CmsHoverEffect }> = [

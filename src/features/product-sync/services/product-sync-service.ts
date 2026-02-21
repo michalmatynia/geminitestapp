@@ -31,7 +31,7 @@ import type {
 } from '@/shared/contracts/product-sync';
 import type {
   ProductWithImagesDto as ProductWithImages,
-  ProductUpdateInput,
+  UpdateProductInput,
 } from '@/shared/contracts/products';
 
 const BASE_INTEGRATION_SLUGS = new Set(['base', 'base-com', 'baselinker']);
@@ -452,9 +452,8 @@ const syncSingleLinkedProduct = async (input: {
   if (Object.keys(localPatch).length > 0) {
     const updated = await productRepository.updateProduct(
       input.product.id,
-      localPatch as ProductUpdateInput
-    );
-    if (!updated) {
+      localPatch as UpdateProductInput
+    );    if (!updated) {
       return {
         status: 'failed',
         localChanges,

@@ -2,26 +2,30 @@
 
 import React, { createContext, useContext, useReducer, useMemo, useState, useCallback, type ReactNode } from 'react';
 
-import type { VectorShape } from '@/shared/ui';
-
-import { DEFAULT_INSPECTOR_SETTINGS } from '../types/page-builder';
-import { findSection, findBlock, findColumn } from './page-builder/block-helpers';
-import { pageBuilderReducer } from './page-builder/page-builder-reducer';
-
 import type { 
-  CmsSectionInstanceDto as SectionInstance, 
-  CmsBlockInstanceDto as BlockInstance 
-} from '@/shared/contracts/cms';
-import type {
+  SectionInstance, 
+  BlockInstance,
   PageBuilderState,
   PageBuilderAction,
-} from '../types/page-builder';
+  InspectorSettings,
+} from '@/shared/contracts/cms';
+import type { VectorShape } from '@/shared/ui';
+
+import { findSection, findBlock, findColumn } from './page-builder/block-helpers';
+import { pageBuilderReducer } from './page-builder/page-builder-reducer';
 
 export { pageBuilderReducer } from './page-builder/page-builder-reducer';
 
 // ---------------------------------------------------------------------------
 // Context
 // ---------------------------------------------------------------------------
+
+const DEFAULT_INSPECTOR_SETTINGS: InspectorSettings = {
+  showIdentifiers: false,
+  showLayoutGuides: true,
+  showEditorChrome: true,
+  pauseAnimations: false,
+};
 
 export const initialState: PageBuilderState = {
   pages: [],

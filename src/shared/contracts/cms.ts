@@ -193,17 +193,23 @@ export const pageZoneSchema = z.enum(['header', 'template', 'footer']);
 export type PageZoneDto = z.infer<typeof pageZoneSchema>;
 export type PageZone = PageZoneDto;
 
-export const cmsSectionInstanceSchema = z.object({
-  id: z.string(),
-  type: z.string(),
-  zone: pageZoneSchema,
-  settings: z.record(z.string(), z.unknown()),
-  blocks: z.array(cmsBlockInstanceSchema),
-});
-
-export type CmsSectionInstanceDto = z.infer<typeof cmsSectionInstanceSchema>;
-export type SectionInstance = CmsSectionInstanceDto;
-
+    export type CmsSectionInstanceDto = {
+      id: string;
+      type: string;
+      zone: PageZone;
+      settings: Record<string, unknown>;
+      blocks: CmsBlockInstanceDto[];
+    };
+  
+    export const cmsSectionInstanceSchema: z.ZodType<CmsSectionInstanceDto> = z.object({
+      id: z.string(),
+      type: z.string(),
+      zone: pageZoneSchema,
+      settings: z.record(z.string(), z.unknown()),
+      blocks: z.array(cmsBlockInstanceSchema),
+    });
+  
+    export type SectionInstance = CmsSectionInstanceDto;
 export const clipboardDataSchema = z.object({
   type: z.enum(['section', 'block']),
   data: z.union([cmsSectionInstanceSchema, cmsBlockInstanceSchema]),

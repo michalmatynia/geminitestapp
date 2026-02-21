@@ -10,8 +10,6 @@ import {
 import type { 
   PageZone, 
   SectionInstance,
-  PageBuilderState,
-  PageBuilderAction,
 } from '@/shared/contracts/cms';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, FolderTreePanel, TreeHeader, EmptyState } from '@/shared/ui';
